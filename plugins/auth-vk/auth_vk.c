@@ -17,6 +17,7 @@
 #include "ejudge/config.h"
 #include "ejudge/auth_plugin.h"
 #include "ejudge/auth_base_plugin.h"
+#include "ejudge/cJSON.h"
 #include "ejudge/random.h"
 #include "ejudge/base64.h"
 #include "ejudge/misctext.h"
@@ -365,7 +366,6 @@ packet_handler_auth_vk(int uid, int argc, char **argv, void *user)
     const unsigned char *request_id = argv[1];
     const unsigned char *request_code = argv[2];
     const char *error_message = "unknown error";
-    const unsigned char *response_name = NULL;
     const unsigned char *response_email = NULL;
     const unsigned char *access_token = NULL;
     int request_status = 2;
@@ -377,6 +377,9 @@ packet_handler_auth_vk(int uid, int argc, char **argv, void *user)
     size_t json_z = 0;
     FILE *json_f = NULL;
     CURLcode res = 0;
+    cJSON *root = NULL;
+    int vk_user_id = 0;
+    unsigned char email_buf[128];
 
     url_f = open_memstream(&url_s, &url_z);
     fprintf(url_f, "%s", token_endpoint);
@@ -401,107 +404,52 @@ packet_handler_auth_vk(int uid, int argc, char **argv, void *user)
         goto done;
     }
 
-    fprintf(stderr, ">>%s<<\n", json_s);
-
-    /*
-
+    //fprintf(stderr, ">>%s<<\n", json_s);
 
     if (!(root = cJSON_Parse(json_s))) {
-        error_message = "google JSON parse failed";
+        error_message = "vk JSON parse failed";
         goto done;
     }
     free(json_s); json_s = NULL; json_z = 0;
 
     if (root->type != cJSON_Object) {
-        error_message = "google root document expected";
+        error_message = "vk root document expected";
         goto done;
     }
-
     cJSON *j = cJSON_GetObjectItem(root, "access_token");
     if (!j || j->type != cJSON_String) {
-        error_message = "invalid google json: access_token";
+        error_message = "invalid vk json: access_token";
         goto done;
     }
     access_token = j->valuestring;
 
-    if (!(j = cJSON_GetObjectItem(root, "id_token")) || j->type != cJSON_String) {
-        error_message = "invalid google json: id_token";
+    j = cJSON_GetObjectItem(root, "user_id");
+    if (!j || j->type != cJSON_Number) {
+        error_message = "invalid vk json: user_id";
         goto done;
     }
-    id_token = j->valuestring;
+    vk_user_id = j->valueint;
 
-    // parse payload of JWT
-    {
-        char *p1 = strchr(id_token, '.');
-        if (!p1) {
-            error_message = "invalid google json: invalid JWT (1)";
-            goto done;
-        }
-        char *p2 = strchr(p1 + 1, '.');
-        if (!p2) {
-            error_message = "invalid google json: invalid JWT (2)";
-            goto done;
-        }
-
-        jwt_payload = xmalloc(strlen(id_token) + 1);
-        int err = 0;
-        int len = base64u_decode(p1 + 1, p2 - p1 - 1, jwt_payload, &err);
-        if (err) {
-            error_message = "invalid google json: base64u payload decode error";
-            goto done;
-        }
-        jwt_payload[len] = 0;
+    j = cJSON_GetObjectItem(root, "email");
+    if (j && j->type == cJSON_String) {
+        response_email = j->valuestring;
     }
-
-    if (!(jwt = cJSON_Parse(jwt_payload))) {
-        error_message = "JWT payload parse failed";
-        goto done;
-    }
-    if (jwt->type != cJSON_Object) {
-        error_message = "JWT payload root document expected";
-        goto done;
-    }
-
-    if (!(j = cJSON_GetObjectItem(jwt, "email")) || j->type != cJSON_String) {
-        error_message = "JWT payload email expected";
-        goto done;
-    }
-    response_email = j->valuestring;
-
-    if ((j = cJSON_GetObjectItem(jwt, "name")) && j->type == cJSON_String) {
-        response_name = j->valuestring;
+    if (!response_email || !*response_email) {
+        snprintf(email_buf, sizeof(email_buf), "user%d@vk", vk_user_id);
+        response_email = email_buf;
     }
 
     // success
     request_status = 3;
     error_message = NULL;
 
-done:
-    state->bi->update_stage2(state->bd, request_id,
-                             request_status, error_message,
-                             response_name, response_email,
-                             access_token, id_token);
-
-    free(jwt_payload);
-    if (root) cJSON_Delete(root);
-    html_armor_free(&ab);
-    if (json_f) fclose(json_f);
-    free(json_s);
-    if (post_f) fclose(post_f);
-    free(post_s);
-    if (jwt) cJSON_Delete(jwt);
-    */
-
-    // success
-    //request_status = 3;
-    //error_message = NULL;
-
 done:;
     state->bi->update_stage2(state->bd, request_id,
                              request_status, error_message,
-                             response_name, response_email,
+                             NULL /*response_name*/, response_email,
                              access_token, NULL /*id_token*/);
 
+    if (root) cJSON_Delete(root);
     if (url_f) fclose(url_f);
     if (json_f) fclose(json_f);
     free(url_s);
