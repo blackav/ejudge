@@ -1044,6 +1044,10 @@ struct AppState
     const struct auth_plugin_iface *auth_google_iface;
     void *auth_google_data;
 
+    // VK Auth plugin
+    const struct auth_plugin_iface *auth_vk_iface;
+    void *auth_vk_data;
+
     int child_flag;
     int term_flag;
     int restart_flag;
@@ -2470,10 +2474,57 @@ load_auth_google_plugin(struct AppState *as)
 }
 
 static int
+load_auth_vk_plugin(struct AppState *as)
+{
+    struct xml_tree *vk_cfg = ejudge_cfg_get_plugin_config(as->config, "auth", "vk");
+    if (!vk_cfg) return 0;
+
+    const struct common_loaded_plugin *vk_plugin = plugin_load_external(NULL, "auth", "vk", as->config);
+    if (!vk_plugin) {
+        err("failed to load auth_vk plugin");
+        return -1;
+    }
+
+    if (vk_plugin->iface->b.size != sizeof(struct auth_plugin_iface)) {
+        err("auth_vk plugin interface size mismatch");
+        return -1;
+    }
+
+    const struct auth_plugin_iface *auth_iface = (const struct auth_plugin_iface *) vk_plugin->iface;
+    if (auth_iface->auth_version != AUTH_PLUGIN_IFACE_VERSION) {
+        err("auth plugin interface version mismatch");
+        return -1;
+    }
+
+    as->auth_vk_iface = auth_iface;
+    as->auth_vk_data = vk_plugin->data;
+
+    as->auth_vk_iface->set_set_command_handler(as->auth_vk_data, add_handler_wrapper, as);
+
+    if (as->auth_vk_iface->open(as->auth_vk_data) < 0) {
+        err("auth_vk plugin 'open' failed");
+        return -1;
+    }
+
+    if (as->auth_vk_iface->check(as->auth_vk_data) < 0) {
+        err("auth_vk plugin 'check' failed");
+        return -1;
+    }
+
+    if (as->auth_vk_iface->start_thread(as->auth_vk_data) < 0) {
+        err("auth_vk plugin 'start_thread' failed");
+        return -1;
+    }
+
+    return 0;
+}
+
+static int
 load_plugins(struct AppState *as)
 {
     if (load_telegram_plugin(as) < 0) return -1;
     if (load_auth_google_plugin(as) < 0) return -1;
+    if (load_auth_vk_plugin(as) < 0) return -1;
 
     return 0;
 }
