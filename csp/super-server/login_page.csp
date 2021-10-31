@@ -48,12 +48,12 @@
 </s:url>
 <p>
 <%
-    if (oauth_is_available_num(phr->config, 1)) {
+    if (oauth_is_configured(phr->config, "google")) {
 %>
 <s:a url="LoginWithGoogleUrl"><img src="<s:config name="style-prefix" />icons/btn_google_signin_dark_normal_web.png" alt="google auth"></img></s:a>
 <%
     }
-    if (oauth_is_available_num(phr->config, 2)) {
+    if (oauth_is_configured(phr->config, "vk")) {
 %>
 <s:a url="LoginWithVKUrl"><img src="<s:config name="style-prefix" />icons/vk-logo.jpeg" alt="vk auth" width="46"></img></s:a>
 <%

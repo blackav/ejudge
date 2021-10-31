@@ -248,3 +248,11 @@ oauth_is_available_num(
     }
     return get_provider(config, providers[provider_id - 1].name) != NULL;
 }
+
+int
+oauth_is_configured(
+        const struct ejudge_cfg *config,
+        const unsigned char *provider)
+{
+    return ejudge_cfg_get_plugin_config(config, "auth", provider) != NULL;
+}

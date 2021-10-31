@@ -90,4 +90,9 @@ oauth_is_available_num(
         const struct ejudge_cfg *config,
         unsigned long long provider_id);
 
+int
+oauth_is_configured(
+        const struct ejudge_cfg *config,
+        const unsigned char *provider);
+
 #endif /* __OAUTH_H__ */
