@@ -77,7 +77,7 @@ get_provider(
         return NULL;
     }
     if (info->failed) {
-        err("oauth_get_provider: provider '%s' not available", provider);
+        //err("oauth_get_provider: provider '%s' not available", provider);
         return NULL;
     }
     if (info->d) return info;
@@ -230,4 +230,21 @@ oauth_get_provider(
     struct ProviderInfo *info = get_provider_num(config, provider_id);
     if (!info) return NULL;
     return info->name;
+}
+
+int
+oauth_is_available_num(
+        const struct ejudge_cfg *config,
+        unsigned long long provider_id)
+{
+    if (provider_id <= 0 || provider_id > PROVIDER_COUNT) {
+        return 0;
+    }
+    if (providers[provider_id - 1].failed) {
+        return 0;
+    }
+    if (providers[provider_id - 1].d) {
+        return 1;
+    }
+    return get_provider(config, providers[provider_id - 1].name) != NULL;
 }
