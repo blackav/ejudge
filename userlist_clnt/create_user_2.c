@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2011-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2011-2021 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -100,8 +100,12 @@ userlist_clnt_create_user_2(
   memcpy(cnts_name_ptr, cnts_name_str, cnts_name_len + 1);
 
   int r = 0;
-  if ((r = userlist_clnt_send_packet(clnt, out_size, out)) < 0) return r;
+  if ((r = userlist_clnt_send_packet(clnt, out_size, out)) < 0) {
+    free(out);
+    return r;
+  }
 
+  free(out);
   size_t in_size = 0;
   void *void_in = 0;
   if ((r = userlist_clnt_read_and_notify(clnt, &in_size, &void_in)) < 0)

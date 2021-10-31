@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2020 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2020-2021 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -132,6 +132,7 @@ userlist_clnt_api_key_request(
     }
     *p_out_count = 0;
     *p_out_api_keys = NULL;
+    xfree(in_data);
     return 0;
   }
 

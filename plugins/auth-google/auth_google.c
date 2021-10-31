@@ -209,6 +209,7 @@ fetch_google_endpoints(struct auth_google_state *state)
         goto fail;
     }
     root = cJSON_Parse(page_text);
+    free(page_text); page_text = NULL;
     if (!root) {
         err("JSON parse failed");
         goto fail;
@@ -230,6 +231,7 @@ fetch_google_endpoints(struct auth_google_state *state)
         goto fail;
     }
     state->token_endpoint = xstrdup(jtoken->valuestring);
+    cJSON_Delete(root);
 
     return 0;
 
