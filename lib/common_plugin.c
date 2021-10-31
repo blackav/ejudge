@@ -127,6 +127,10 @@ plugin_load_external(
   }
 
   pcfg = ejudge_cfg_get_plugin_config(config, type, name);
+  if (!pcfg) {
+    err("%s: plugin configuration not found for %s, %s", fname, type, name);
+    return NULL;
+  }
   if (!(data = common_iface->init())) {
     err("%s: init failed for %s, %s", fname, type, name);
     return NULL;
