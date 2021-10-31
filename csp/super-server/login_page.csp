@@ -1,6 +1,7 @@
 <%
-/* $Id$ */
 %><%@include "includes.csp"
+%><%
+#include "ejudge/oauth.h"
 %><%@set getter_name = "csp_get_login_page"
 %><%@set ac_prefix = "SSERV_CMD_"
 %><%@page csp_view_login_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
@@ -45,8 +46,20 @@
     <s:param name="role" value='"admin"' />
     <s:param name="provider" value='"vk"' />
 </s:url>
-<p><s:a url="LoginWithGoogleUrl"><img src="<s:config name="style-prefix" />icons/btn_google_signin_dark_normal_web.png" alt="google auth"></img></s:a>
-<s:a url="LoginWithVKUrl"><img src="<s:config name="style-prefix" />icons/vk-logo.jpeg" alt="vk auth" width="46"></img></s:a></p>
+<p>
+<%
+    if (oauth_is_available_num(phr->config, 1)) {
+%>
+<s:a url="LoginWithGoogleUrl"><img src="<s:config name="style-prefix" />icons/btn_google_signin_dark_normal_web.png" alt="google auth"></img></s:a>
+<%
+    }
+    if (oauth_is_available_num(phr->config, 2)) {
+%>
+<s:a url="LoginWithVKUrl"><img src="<s:config name="style-prefix" />icons/vk-logo.jpeg" alt="vk auth" width="46"></img></s:a>
+<%
+    }
+%>
+</p>
 <%
   }
 %>
