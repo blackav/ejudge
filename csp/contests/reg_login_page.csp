@@ -105,11 +105,11 @@
   if (phr->action != NEW_SRV_ACTION_REG_ACCOUNT_CREATED_PAGE && phr->config && phr->config->enable_oauth) {
 %>
 <s:url name="LoginWithGoogleUrl" script="client" ac="'oauth-login-1'">
-    <s:param name="role" value='"admin"' />
+    <s:param name="contest_id" value="phr->contest_id" />
     <s:param name="provider" value='"google"' />
 </s:url>
 <s:url name="LoginWithVKUrl" script="client" ac="'oauth-login-1'">
-    <s:param name="role" value='"admin"' />
+    <s:param name="contest_id" value="phr->contest_id" />
     <s:param name="provider" value='"vk"' />
 </s:url>
 <p>

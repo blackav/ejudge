@@ -243,7 +243,7 @@
       }
     }
   }
-  if (uc->status == USERLIST_REG_OK) {
+  if (uc->status == USERLIST_REG_OK && (uc->flags & USERLIST_UC_INCOMPLETE) == 0) {
     // create team cookie and redirect to contest
     if (!contests_check_team_ip_2(cnts, &phr->ip, phr->ssl_flag)) {
       FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
@@ -264,7 +264,7 @@
     phr->session_id = out_c.cookie;
 
 %><s:url name="MainUrl" ac="main-page" ></s:url><s:redirect url="MainUrl" /><%
-  } else if (uc->status == USERLIST_REG_PENDING) {
+  } else if (uc->status == USERLIST_REG_PENDING || (uc->flags & USERLIST_UC_INCOMPLETE) != 0) {
     // create contest cookie and redirect to register
     if (!contests_check_register_ip_2(cnts, &phr->ip, phr->ssl_flag)) {
       FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
