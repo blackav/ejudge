@@ -1608,6 +1608,7 @@ extract_size(const char **ppos, int init_offset, const char *opt_name)
  *   mb     - unlimited real time
  *   md     - enable /dev filesystem
  *   mD     - enable subdirectory mode
+ *   mC     - switch to ejcompile user instead of ejexec
  *   w<DIR> - working directory (cwd by default)
  *   rn     - redirect to/from /dev/null for standard streams
  *   rm     - merge stdout and stderr output
@@ -1746,6 +1747,13 @@ main(int argc, char *argv[])
                 opt += 2;
             } else if (*opt == 'm' && opt[1] == 'D') {
                 enable_subdir_mode = 1;
+                opt += 2;
+            } else if (*opt == 'm' && opt[1] == 'C') {
+                if (compile_uid <= 0 || compile_gid <= 0) {
+                    ffatal("ejcompile user not set up");
+                }
+                slave_uid = compile_uid;
+                slave_gid = compile_gid;
                 opt += 2;
             } else if (*opt == 'w') {
                 working_dir = extract_string(&opt, 1, "w");
