@@ -536,12 +536,15 @@ reconfigure_fs(void)
 
     char bind_path[PATH_MAX];
     if (snprintf(bind_path, sizeof(bind_path), "%s/root", safe_dir_path) >= sizeof(bind_path)) abort();
-    if ((r = mount(bind_path, "/root", NULL, MS_BIND, NULL)) < 0) {
-        ffatal("failed to mount %s as /root: %s", bind_path, strerror(errno));
+    struct stat stb;
+    if (lstat(bind_path, &stb) >= 0 && S_ISDIR(stb.st_mode)) {
+        if ((r = mount(bind_path, "/root", NULL, MS_BIND, NULL)) < 0) {
+            ffatal("failed to mount %s as /root: %s", bind_path, strerror(errno));
+        }
     }
+
     if (!enable_etc) {
         if (snprintf(bind_path, sizeof(bind_path), "%s/etc", safe_dir_path) >= sizeof(bind_path)) abort();
-        struct stat stb;
         if (lstat(bind_path, &stb) >= 0 && S_ISDIR(stb.st_mode)) {
             if (lstat(alternatives_dir, &stb) >= 0 && S_ISDIR(stb.st_mode)) {
                 // need to preserve the current /etc/alternatives
