@@ -79,6 +79,8 @@
 #define SECCOMP_RET_KILL_PROCESS SECCOMP_RET_KILL
 #endif
 
+static char const sandbox_dir[] = "/sandbox";
+
 static char safe_dir_path[PATH_MAX];
 static char proc_path[PATH_MAX] = "/proc";
 static char cgroup_path[PATH_MAX] = "/sys/fs/cgroup";
@@ -480,20 +482,20 @@ reconfigure_fs(void)
 
     if (enable_sandbox_dir) {
         if (working_dir_parent && *working_dir_parent) {
-            if ((r = mount(working_dir_parent, "/sandbox", NULL, MS_BIND, NULL)) < 0) {
-                ffatal("failed to mount '%s' to /sandbox: %s", working_dir_parent, strerror(errno));
+            if ((r = mount(working_dir_parent, sandbox_dir, NULL, MS_BIND, NULL)) < 0) {
+                ffatal("failed to mount '%s' to %s: %s", working_dir_parent, sandbox_dir, strerror(errno));
             }
         } else if (working_dir && *working_dir) {
-            if ((r = mount(working_dir, "/sandbox", NULL, MS_BIND, NULL)) < 0) {
-                ffatal("failed to mount '%s' to /sandbox: %s", working_dir, strerror(errno));
+            if ((r = mount(working_dir, sandbox_dir, NULL, MS_BIND, NULL)) < 0) {
+                ffatal("failed to mount '%s' to %s: %s", working_dir, sandbox_dir, strerror(errno));
             }
         } else {
             char wd[PATH_MAX];
             if (!getcwd(wd, sizeof(wd))) {
                 ffatal("failed to get current dir: %s", strerror(errno));
             }
-            if ((r = mount(wd, "/sandbox", NULL, MS_BIND, NULL)) < 0) {
-                ffatal("failed to mount /sandbox: %s", strerror(errno));
+            if ((r = mount(wd, sandbox_dir, NULL, MS_BIND, NULL)) < 0) {
+                ffatal("failed to mount %s: %s", sandbox_dir, strerror(errno));
             }
         }
     }
@@ -1958,8 +1960,8 @@ main(int argc, char *argv[])
                 if (setsid() < 0) fprintf(stderr, "setsid() failed: %s\n", strerror(errno));
             }
             if (enable_sandbox_dir) {
-                if (chdir("/sandbox") < 0) {
-                    fprintf(stderr, "failed to change dir to /sandbox: %s\n", strerror(errno));
+                if (chdir(sandbox_dir) < 0) {
+                    fprintf(stderr, "failed to change dir to %s: %s\n", sandbox_dir, strerror(errno));
                     _exit(127);
                 }
                 if (working_dir_name && *working_dir_name) {
