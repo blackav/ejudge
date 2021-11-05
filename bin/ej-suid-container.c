@@ -147,6 +147,8 @@ static int primary_uid = -1;
 static int primary_gid = -1;
 static int compile_uid = -1;
 static int compile_gid = -1;
+static int slave_uid = -1;
+static int slave_gid = -1;
 
 // standard stream redirections
 static int enable_redirect_null = 0;
@@ -670,12 +672,12 @@ open_redirections(void)
 {
     int retval = -1;
 
-    if (setegid(exec_gid) < 0) {
-        flog("setegid failed to group %d: %s", exec_gid, strerror(errno));
+    if (setegid(slave_gid) < 0) {
+        flog("setegid failed to group %d: %s", slave_gid, strerror(errno));
         goto failed;
     }
-    if (seteuid(exec_uid) < 0) {
-        flog("seteuid failed to user %d: %s", exec_uid, strerror(errno));
+    if (seteuid(slave_uid) < 0) {
+        flog("seteuid failed to user %d: %s", slave_uid, strerror(errno));
         goto failed_2;
     }
 
@@ -751,7 +753,7 @@ kill_all(void)
         return -1;
     }
     if (!pid) {
-        if (setuid(exec_uid) < 0) {
+        if (setuid(slave_uid) < 0) {
             fprintf(stderr, "killing all processes: setuid() failed: %s\n", strerror(errno));
             _exit(127);
         }
@@ -1649,6 +1651,9 @@ main(int argc, char *argv[])
 
     get_user_ids();
 
+    slave_uid = exec_uid;
+    slave_gid = exec_gid;
+
     snprintf(safe_dir_path, sizeof(safe_dir_path), "%s/share/ejudge/container", EJUDGE_PREFIX_DIR);
 
 #ifndef ENABLE_ANY_USER
@@ -1918,12 +1923,12 @@ main(int argc, char *argv[])
     }
 
     if (enable_chown) {
-        change_ownership(exec_uid, exec_gid, primary_uid);
+        change_ownership(slave_uid, slave_gid, primary_uid);
     }
 
     if (open_redirections() < 0) {
         if (enable_chown) {
-            change_ownership(primary_uid, primary_gid, exec_uid);
+            change_ownership(primary_uid, primary_gid, slave_uid);
         }
         fatal();
     }
@@ -1941,7 +1946,7 @@ main(int argc, char *argv[])
     pid_t tidptr = 0;
     int pid = syscall(__NR_clone, clone_flags, NULL, NULL, &tidptr);
     if (pid < 0) {
-        change_ownership(primary_uid, primary_gid, exec_uid);
+        change_ownership(primary_uid, primary_gid, slave_uid);
         if (cgroup_unified_path[0]) rmdir(cgroup_unified_path);
         if (cgroup_cpu_path[0]) rmdir(cgroup_cpu_path);
         if (cgroup_memory_path[0]) rmdir(cgroup_memory_path);
@@ -2091,16 +2096,16 @@ main(int argc, char *argv[])
             sigprocmask(SIG_SETMASK, &ss, NULL);
 
             // switch to ejexec user
-            if (setgid(exec_gid) < 0) {
+            if (setgid(slave_gid) < 0) {
                 fprintf(stderr, "setgid failed: %s\n", strerror(errno));
                 _exit(127);
             }
-            gid_t supp_groups[1] = { exec_gid };
+            gid_t supp_groups[1] = { slave_gid };
             if (setgroups(1, supp_groups) < 0) {
                 fprintf(stderr, "setgroups failed: %s\n", strerror(errno));
                 _exit(127);
             }
-            if (setuid(exec_uid) < 0) {
+            if (setuid(slave_uid) < 0) {
                 fprintf(stderr, "setuid setuid failed: %s\n", strerror(errno));
                 _exit(127);
             }
@@ -2337,10 +2342,10 @@ main(int argc, char *argv[])
 
         int ipc_objects = 0;
         if (enable_ipc_count) {
-            ipc_objects += scan_posix_mqueue(exec_uid);
-            ipc_objects += scan_msg(exec_uid);
-            ipc_objects += scan_sem(exec_uid);
-            ipc_objects += scan_shm(exec_uid);
+            ipc_objects += scan_posix_mqueue(slave_uid);
+            ipc_objects += scan_msg(slave_uid);
+            ipc_objects += scan_sem(slave_uid);
+            ipc_objects += scan_shm(slave_uid);
         }
 
         if (WIFEXITED(prc_status)) {
@@ -2400,7 +2405,7 @@ main(int argc, char *argv[])
         printf("parent: %d, %d\n", pid, tidptr);
     }
 
-    change_ownership(primary_uid, primary_gid, exec_uid);
+    change_ownership(primary_uid, primary_gid, slave_uid);
     if (cgroup_unified_path[0]) rmdir(cgroup_unified_path);
     if (cgroup_cpu_path[0]) rmdir(cgroup_cpu_path);
     if (cgroup_memory_path[0]) rmdir(cgroup_memory_path);
