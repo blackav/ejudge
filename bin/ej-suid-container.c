@@ -80,6 +80,7 @@
 #endif
 
 static char const sandbox_dir[] = "/sandbox";
+static char const alternatives_dir[] = "/etc/alternatives";
 
 static char safe_dir_path[PATH_MAX];
 static char proc_path[PATH_MAX] = "/proc";
@@ -542,6 +543,14 @@ reconfigure_fs(void)
         if (snprintf(bind_path, sizeof(bind_path), "%s/etc", safe_dir_path) >= sizeof(bind_path)) abort();
         struct stat stb;
         if (lstat(bind_path, &stb) >= 0 && S_ISDIR(stb.st_mode)) {
+            if (lstat(alternatives_dir, &stb) >= 0 && S_ISDIR(stb.st_mode)) {
+                // need to preserve the current /etc/alternatives
+                char alt_path[PATH_MAX];
+                if (snprintf(alt_path, sizeof(alt_path), "%s/alternatives", bind_path) >= sizeof(alt_path)) abort();
+                if ((r = mount(alternatives_dir, alt_path, NULL, MS_BIND, NULL)) < 0) {
+                    ffatal("failed to mount %s to %s: %s", alternatives_dir, alt_path, strerror(errno));
+                }
+            }
             if ((r = mount(bind_path, "/etc", NULL, MS_BIND, NULL)) < 0) {
                 ffatal("failed to mount %s as /etc: %s", bind_path, strerror(errno));
             }
