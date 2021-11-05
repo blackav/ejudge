@@ -571,8 +571,10 @@ reconfigure_fs(void)
     }
     if (!enable_dev) {
         if (snprintf(bind_path, sizeof(bind_path), "%s/dev", safe_dir_path) >= sizeof(bind_path)) abort();
-        if ((r = mount(bind_path, "/dev", NULL, MS_BIND, NULL)) < 0) {
-            ffatal("failed to mount %s as /dev: %s", bind_path, strerror(errno));
+        if (lstat(bind_path, &stb) >= 0 && S_ISDIR(stb.st_mode)) {
+            if ((r = mount(bind_path, "/dev", NULL, MS_BIND, NULL)) < 0) {
+                ffatal("failed to mount %s as /dev: %s", bind_path, strerror(errno));
+            }
         }
     }
 
