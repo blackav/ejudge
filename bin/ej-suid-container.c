@@ -71,6 +71,14 @@
 #define EXEC_GROUP "ejexec"
 #endif
 
+#if defined EJUDGE_COMPILE_USER
+#define COMPILE_USER EJUDGE_COMPILE_USER
+#define COMPILE_GROUP EJUDGE_COMPILE_USER
+#else
+#define COMPILE_USER "ejcompile"
+#define COMPILE_GROUP "ejcompile"
+#endif
+
 #ifndef EJUDGE_PREFIX_DIR
 #define EJUDGE_PREFIX_DIR "/opt/ejudge"
 #endif
