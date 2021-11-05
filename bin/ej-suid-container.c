@@ -145,6 +145,8 @@ static int exec_uid = -1;
 static int exec_gid = -1;
 static int primary_uid = -1;
 static int primary_gid = -1;
+static int compile_uid = -1;
+static int compile_gid = -1;
 
 // standard stream redirections
 static int enable_redirect_null = 0;
@@ -265,6 +267,7 @@ get_user_ids(void)
         int *dest_uid = NULL;
         if (!strcmp(user_name, EXEC_USER)) dest_uid = &exec_uid;
         else if (!strcmp(user_name, PRIMARY_USER)) dest_uid = &primary_uid;
+        else if (!strcmp(user_name, COMPILE_USER)) dest_uid = &compile_uid;
         if (dest_uid) {
             char *eptr = NULL;
             errno = 0;
@@ -299,6 +302,7 @@ get_user_ids(void)
         int *dest_gid = NULL;
         if (!strcmp(group_name, EXEC_GROUP)) dest_gid = &exec_gid;
         else if (!strcmp(group_name, PRIMARY_GROUP)) dest_gid = &primary_gid;
+        else if (!strcmp(group_name, COMPILE_GROUP)) dest_gid = &compile_gid;
         if (dest_gid) {
             char *eptr = NULL;
             errno = 0;
