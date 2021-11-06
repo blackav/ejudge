@@ -138,6 +138,7 @@ enum
     AT_OAUTH_USER,
     AT_PROVIDER,
     AT_ENABLE_OAUTH,
+    AT_ENABLE_COMPILE_CONTAINER,
 
     AT__BARRIER,
     AT__DEFAULT,
@@ -240,6 +241,7 @@ static char const * const attr_map[] =
   "oauth_user",
   "provider",
   "enable_oauth",
+  "enable_compile_container",
   0,
   "_default",
 
@@ -692,6 +694,9 @@ ejudge_cfg_do_parse(char const *path, FILE *in_file, int no_system_lookup)
       break;
     case AT_ENABLE_OAUTH:
       if (xml_attr_bool(a, &cfg->enable_oauth) < 0) goto failed;
+      break;
+    case AT_ENABLE_COMPILE_CONTAINER:
+      if (xml_attr_bool(a, &cfg->enable_compile_container) < 0) goto failed;
       break;
     default:
       xml_err_attr_not_allowed(&cfg->b, a);

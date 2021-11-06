@@ -75,6 +75,7 @@ struct ejudge_cfg
   int enable_contest_select;
   int disable_new_users;
   int force_container;
+  int enable_compile_container;
   int enable_oauth;
 
   // WebSocket port number
