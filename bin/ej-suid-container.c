@@ -564,9 +564,11 @@ reconfigure_fs(void)
     if (!enable_etc) {
         if (snprintf(bind_path, sizeof(bind_path), "%s/etc", safe_dir_path) >= sizeof(bind_path)) abort();
         if (lstat(bind_path, &stb) >= 0 && S_ISDIR(stb.st_mode)) {
+            char alt_path[PATH_MAX];
+            int need_alternatives = 0;
             if (lstat(alternatives_dir, &stb) >= 0 && S_ISDIR(stb.st_mode)) {
                 // need to preserve the current /etc/alternatives
-                char alt_path[PATH_MAX];
+                need_alternatives = 1;
                 if (snprintf(alt_path, sizeof(alt_path), "%s/alternatives", bind_path) >= sizeof(alt_path)) abort();
                 if ((r = mount(alternatives_dir, alt_path, NULL, MS_BIND, NULL)) < 0) {
                     ffatal("failed to mount %s to %s: %s", alternatives_dir, alt_path, strerror(errno));
@@ -574,6 +576,11 @@ reconfigure_fs(void)
             }
             if ((r = mount(bind_path, "/etc", NULL, MS_BIND, NULL)) < 0) {
                 ffatal("failed to mount %s as /etc: %s", bind_path, strerror(errno));
+            }
+            if (need_alternatives) {
+                if ((r = mount(alt_path, alternatives_dir, NULL, MS_BIND, NULL)) < 0) {
+                    ffatal("failed to mount %s to %s: %s", alt_path, alternatives_dir, strerror(errno));
+                }
             }
         } else {
             // FIXME: report error?
