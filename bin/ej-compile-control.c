@@ -852,7 +852,20 @@ int main(int argc, char *argv[])
     if (setresuid(-1, euid, euid) < 0) {
         syscall_error("setresuid failed");
     }
-    if (primary_uid != compile_uid) {
+    if (config->enable_compile_container) {
+        // in this mode the ej-compile service is started as ejudge
+        // and ej-suid-container is responsible for switching to ejcompile
+        if (setgid(primary_gid) < 0) {
+            syscall_error("cannot change group to %d", primary_gid);
+        }
+        int supp_groups[1] = { primary_gid };
+        if (setgroups(1, supp_groups) < 0) {
+            syscall_error("cannot change groups to %d", primary_gid);
+        }
+        if (setuid(primary_uid) < 0) {
+            syscall_error("cannot change user to %d", primary_uid);
+        }
+    } else if (primary_uid != compile_uid) {
         // change the identity
         if (setgid(compile_gid) < 0) {
             syscall_error("cannot change group to %d", compile_gid);
