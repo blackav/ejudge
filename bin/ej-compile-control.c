@@ -439,14 +439,14 @@ check_directories_2(int primary_uid, int primary_gid, const struct ejudge_cfg *c
         if (!S_ISDIR(stb.st_mode)) {
             system_error("'%s' is not a directory", d3);
         }
-        chown(d2, primary_uid, primary_gid);
-        chmod(d2, 0770);
+        chown(d3, primary_uid, primary_gid);
+        chmod(d3, 0770);
     } else {
         if (mkdir(d3, 0770) < 0) {
             syscall_error("cannot create '%s'", d3);
         }
-        chown(d2, primary_uid, primary_gid);
-        chmod(d2, 0770);
+        chown(d3, primary_uid, primary_gid);
+        chmod(d3, 0770);
     }
 #endif
     d1[0] = 0;
@@ -466,12 +466,14 @@ check_directories_2(int primary_uid, int primary_gid, const struct ejudge_cfg *c
         if (!S_ISDIR(stb.st_mode)) {
             system_error("'%s' is not a directory", d2);
         }
+        chown(d2, primary_uid, primary_gid);
+        chmod(d2, 0755);
     } else {
         if (mkdir(d2, 0750) < 0) {
             syscall_error("cannot create '%s'", d2);
         }
-        chown(d3, primary_uid, primary_gid);
-        chmod(d3, 0755);
+        chown(d2, primary_uid, primary_gid);
+        chmod(d2, 0755);
     }
     // reserve working directory
     snprintf(d3, sizeof(d3), "%s/work", d2);
