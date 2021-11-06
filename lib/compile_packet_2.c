@@ -211,6 +211,7 @@ compile_request_packet_write(
   out_data->max_vm_size = cvt_host_to_bin_64(in_data->max_vm_size);
   out_data->max_stack_size = cvt_host_to_bin_64(in_data->max_stack_size);
   out_data->max_file_size = cvt_host_to_bin_64(in_data->max_file_size);
+  out_data->max_rss_size = cvt_host_to_bin_64(in_data->max_rss_size);
   out_data->use_container = cvt_host_to_bin_32(in_data->use_container);
   out_data->use_uuid = cvt_host_to_bin_32(in_data->use_uuid);
   out_data->uuid.v[0] = cvt_host_to_bin_32(in_data->uuid.v[0]);

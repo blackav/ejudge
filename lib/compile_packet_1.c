@@ -91,6 +91,7 @@ compile_request_packet_read(
   pout->max_vm_size = cvt_bin_to_host_64(pin->max_vm_size);
   pout->max_stack_size = cvt_bin_to_host_64(pin->max_stack_size);
   pout->max_file_size = cvt_bin_to_host_64(pin->max_file_size);
+  pout->max_rss_size = cvt_bin_to_host_64(pin->max_rss_size);
 
   pout->use_uuid = cvt_bin_to_host_32(pin->use_uuid);
   pout->uuid.v[0] = cvt_bin_to_host_32(pin->uuid.v[0]);

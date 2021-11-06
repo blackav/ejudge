@@ -40,6 +40,7 @@ struct compile_request_packet
   ej_size64_t max_vm_size;
   ej_size64_t max_stack_size;
   ej_size64_t max_file_size;
+  ej_size64_t max_rss_size;
   unsigned char *style_checker;
   unsigned char *src_sfx;
   unsigned char *lang_short_name; // additional suffix for multi-header/footer

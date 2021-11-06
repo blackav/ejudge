@@ -37,6 +37,7 @@ struct compile_request_bin_packet
   ej_size64_t max_vm_size;      /* the process VM limit */
   ej_size64_t max_stack_size;   /* the process stack size */
   ej_size64_t max_file_size;    /* the maximum file size */
+  ej_size64_t max_rss_size;     /* the maximum resident set size */
   rint32_t style_check_only;    /* only perform style check */
   rint32_t ts1;                 /* the time, when comp. request was queued */
   rint32_t ts1_us;              /* the microsecond component */
