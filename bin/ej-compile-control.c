@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2006-2020 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2021 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
