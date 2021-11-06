@@ -130,6 +130,7 @@ static int enable_pgroup = 1;
 static int enable_prc_count = 0;
 static int enable_ipc_count = 0;
 static int enable_subdir_mode = 0;
+static int enable_compile_mode = 0;
 
 static int enable_seccomp = 1;
 static int enable_sys_execve = 0;
@@ -166,15 +167,18 @@ static int stdin_external_fd = -1;
 static int stdout_external_fd = -1;
 static char *language_name = NULL;
 
+enum { DEFAULT_LIMIT_VM_SIZE = 67108864 };
+enum { DEFAULT_LIMIT_CPU_TIME_MS = 1000 };
+
 // resource limits
 static int limit_umask = -1;
 static int limit_open_files = -1;
 static long long limit_stack_size = -1;
-static long long limit_vm_size = 67108864;  // 64M
+static long long limit_vm_size = DEFAULT_LIMIT_VM_SIZE;
 static long long limit_rss_size = -1;
 static long long limit_file_size = -1;
 static int limit_processes = 5;
-static int limit_cpu_time_ms = 1000;
+static int limit_cpu_time_ms = DEFAULT_LIMIT_CPU_TIME_MS;
 static int limit_real_time_ms = 5000;
 
 static char *start_program;
@@ -609,16 +613,23 @@ reconfigure_fs(void)
     if (!enable_home) {
         if (snprintf(bind_path, sizeof(bind_path), "%s/home", safe_dir_path) >= sizeof(bind_path)) abort();
         if (lstat(bind_path, &stb) >= 0 && S_ISDIR(stb.st_mode)) {
+            int preserve_compile = 0;
+            char alt_path[PATH_MAX];
             if (lstat("/home/judges/compile", &stb) >= 0 && S_ISDIR(stb.st_mode)) {
                 // need to preserve /home/judges/compile
-                char alt_path[PATH_MAX];
                 if (snprintf(alt_path, sizeof(alt_path), "%s/judges/compile", bind_path) >= sizeof(alt_path)) abort();
                 if ((r = mount("/home/judges/compile", alt_path, NULL, MS_BIND, NULL)) < 0) {
                     ffatal("failed to mount %s to %s: %s", "/home/judges/compile", alt_path, strerror(errno));
                 }
+                preserve_compile = 1;
             }
             if ((r = mount(bind_path, "/home", NULL, MS_BIND, NULL)) < 0) {
                 ffatal("failed to mount %s as /etc: %s", bind_path, strerror(errno));
+            }
+            if (preserve_compile) {
+                if ((r = mount(alt_path, "/home/judges/compile", NULL, MS_BIND, NULL)) < 0) {
+                    ffatal("failed to mount %s to %s: %s", "/home/judges/compile", alt_path, strerror(errno));
+                }
             }
         } else {
             // FIXME: report error?
@@ -1772,6 +1783,13 @@ main(int argc, char *argv[])
                 }
                 slave_uid = compile_uid;
                 slave_gid = compile_gid;
+                enable_compile_mode = 1;
+                if (limit_vm_size == DEFAULT_LIMIT_VM_SIZE) {
+                    limit_vm_size = -1;
+                }
+                if (limit_cpu_time_ms == DEFAULT_LIMIT_CPU_TIME_MS) {
+                    limit_cpu_time_ms = 60000;
+                }
                 opt += 2;
             } else if (*opt == 'w') {
                 working_dir = extract_string(&opt, 1, "w");

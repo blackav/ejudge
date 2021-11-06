@@ -376,6 +376,7 @@ invoke_compiler(
   // FIXME: handle max_rss_size
 
   if (ejudge_config->enable_compile_container) {
+    task_SetSuidHelperDir(tsk, EJUDGE_SERVER_BIN_PATH);
     task_EnableContainer(tsk);
     task_AppendContainerOptions(tsk, "mCs0mPmSmd");
     if (req->container_options && req->container_options[0]) {
@@ -398,7 +399,7 @@ invoke_compiler(
   } else {
     task_SetRedir(tsk, 1, TSR_FILE, log_path, TSK_APPEND, 0777);
   }
-  task_SetRedir(tsk, 2, TSR_DUP, 1);
+  task_SetRedir(tsk, 2, TSR_FILE, log_path, TSK_APPEND, 0777);
   if (lang->compile_real_time_limit > 0) {
     task_SetMaxRealTime(tsk, lang->compile_real_time_limit);
   }
