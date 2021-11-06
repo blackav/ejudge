@@ -995,6 +995,7 @@ merge_problem_section(
         { CNTSPROB_score_view_text, META_PROBLEM_CONFIG_SECTION_score_view_text },
 
         { CNTSPROB_lang_compiler_env, META_PROBLEM_CONFIG_SECTION_lang_compiler_env },
+        { CNTSPROB_lang_compiler_container_options, META_PROBLEM_CONFIG_SECTION_lang_compiler_container_options },
         { CNTSPROB_checker_env, META_PROBLEM_CONFIG_SECTION_checker_env },
         { CNTSPROB_valuer_env, META_PROBLEM_CONFIG_SECTION_valuer_env },
         { CNTSPROB_interactor_env, META_PROBLEM_CONFIG_SECTION_interactor_env },
