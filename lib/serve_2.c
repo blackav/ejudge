@@ -1372,6 +1372,7 @@ serve_compile_request(
   char **comp_env_mem = NULL;
   char **comp_env_mem_2 = NULL;
   char **compiler_env_copy = NULL;
+  char **compiler_container_options = NULL;
   const unsigned char *compile_src_dir = 0;
   const unsigned char *compile_queue_dir = 0;
   int errcode = -SERVE_ERR_GENERIC;
@@ -1463,6 +1464,9 @@ serve_compile_request(
   if (prob && prob->lang_compiler_env && lang) {
     comp_env_mem_2 = filter_lang_environ(config, state, prob, lang, NULL, prob->lang_compiler_env);
   }
+  if (prob && lang && prob->lang_compiler_container_options) {
+    compiler_container_options = filter_lang_environ(config, state, prob, lang, NULL, prob->lang_compiler_container_options);
+  }
 
   if (compiler_env && compiler_env[0] && comp_env_mem_2 && comp_env_mem_2[0]) {
     comp_env_mem = sarray_merge_pp(compiler_env, comp_env_mem_2);
@@ -1491,6 +1495,9 @@ serve_compile_request(
   cp.run_block = &rx;
   cp.env_num = -1;
   cp.env_vars = (unsigned char**) compiler_env;
+  if (compiler_container_options) {
+    cp.container_options = compiler_container_options[0];
+  }
   cp.style_check_only = !!style_check_only;
   cp.max_vm_size = ~(ej_size64_t) 0;
   cp.max_stack_size = ~(ej_size64_t) 0;
@@ -1696,6 +1703,7 @@ serve_compile_request(
 
   sarray_free(comp_env_mem_2);
   sarray_free(comp_env_mem);
+  sarray_free(compiler_container_options);
   sarray_free(sc_env_mem);
   sarray_free(compiler_env_copy);
   xfree(pkt_buf);
@@ -1708,6 +1716,7 @@ serve_compile_request(
  failed:
   sarray_free(comp_env_mem_2);
   sarray_free(comp_env_mem);
+  sarray_free(compiler_container_options);
   sarray_free(sc_env_mem);
   sarray_free(compiler_env_copy);
   xfree(pkt_buf);
