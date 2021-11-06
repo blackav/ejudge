@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2005-2019 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2021 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -231,6 +231,17 @@ compile_request_packet_read(
     memcpy(pout->contest_server_id, pin_ptr, contest_server_id_len);
     pout->contest_server_id[contest_server_id_len] = 0;
     pin_ptr += pkt_bin_align(contest_server_id_len);
+  }
+
+  pout->container_options = NULL;
+  int container_options_len = cvt_bin_to_host_32(pin->container_options_len);
+  FAIL_IF(container_options_len < 0 || container_options_len >= PATH_MAX);
+  FAIL_IF(pin_ptr + container_options_len > end_ptr);
+  if (container_options_len > 0) {
+    pout->container_options = xmalloc(container_options_len + 1);
+    memcpy(pout->container_options, pin_ptr, container_options_len);
+    pout->container_options[container_options_len] = 0;
+    pin_ptr += pkt_bin_align(container_options_len);
   }
 
   pout->env_num = cvt_bin_to_host_32(pin->env_num);

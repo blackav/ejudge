@@ -2,7 +2,7 @@
 #ifndef __COMPILE_PACKET_H__
 #define __COMPILE_PACKET_H__
 
-/* Copyright (C) 2005-2019 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2021 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -49,6 +49,7 @@ struct compile_request_packet
   unsigned char *user_login;
   unsigned char *exam_cypher;
   unsigned char *contest_server_id; // contest server to pass the compilation result to
+  unsigned char *container_options;
   int run_block_len;
   void *run_block;
   int env_num;
