@@ -505,6 +505,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(allow_ip, "x"),
   PROBLEM_PARAM(standard_checker, "S"),
   PROBLEM_PARAM(lang_compiler_env, "x"),
+  PROBLEM_PARAM(lang_compiler_container_options, "x"),
   PROBLEM_PARAM(checker_env, "x"),
   PROBLEM_PARAM(valuer_env, "x"),
   PROBLEM_PARAM(interactor_env, "x"),
@@ -1395,6 +1396,7 @@ prepare_problem_free_func(struct generic_section_config *gp)
   sarray_free(p->provide_ok);
   sarray_free(p->allow_ip);
   sarray_free(p->lang_compiler_env);
+  sarray_free(p->lang_compiler_container_options);
   sarray_free(p->checker_env);
   sarray_free(p->valuer_env);
   sarray_free(p->interactor_env);
@@ -3884,6 +3886,10 @@ set_defaults(
         prob->lang_compiler_env = sarray_merge_pf(aprob->lang_compiler_env,
                                                   prob->lang_compiler_env);
       }
+      if (si != -1 && aprob->lang_compiler_container_options) {
+        prob->lang_compiler_container_options = sarray_merge_pf(aprob->lang_compiler_container_options,
+                                                  prob->lang_compiler_container_options);
+      }
       /*
       if (prob->lang_compiler_env) {
         for (j = 0; prob->lang_compiler_env[j]; j++) {
@@ -6104,6 +6110,7 @@ prepare_copy_problem(const struct section_problem_data *in)
   //out->require = NULL;
   //out->provide_ok = NULL;
   out->lang_compiler_env = sarray_copy(in->lang_compiler_env);
+  out->lang_compiler_container_options = sarray_copy(in->lang_compiler_container_options);
   out->checker_env = sarray_copy(in->checker_env);
   out->valuer_env = sarray_copy(in->valuer_env);
   out->interactor_env = sarray_copy(in->interactor_env);
