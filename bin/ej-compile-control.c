@@ -406,6 +406,210 @@ spool_change_ownership_and_permissions(const unsigned char *dir, const unsigned 
 }
 
 static void
+check_directories_2(int primary_uid, int primary_gid, const struct ejudge_cfg *config)
+{
+    // check compile working directory
+    unsigned char d1[PATH_MAX];
+    unsigned char d2[PATH_MAX];
+    unsigned char d3[PATH_MAX];
+    unsigned char d4[PATH_MAX];
+    struct stat stb;
+
+#if defined EJUDGE_LOCAL_DIR
+    snprintf(d1, sizeof(d1), "%s", EJUDGE_LOCAL_DIR);
+    if (stat(d1, &stb) < 0 || !S_ISDIR(stb.st_mode)) {
+        system_error("directory '%s' does not exist", d1);
+    }
+    snprintf(d2, sizeof(d2), "%s/compile", d1);
+    if (stat(d2, &stb) >= 0) {
+        if (!S_ISDIR(stb.st_mode)) {
+            system_error("'%s' is not a directory", d2);
+        }
+        chown(d2, primary_uid, primary_gid);
+        chmod(d2, 0770);
+    } else {
+        if (mkdir(d2, 0770) < 0) {
+            syscall_error("cannot create '%s'", d2);
+        }
+        chown(d2, primary_uid, primary_gid);
+        chmod(d2, 0770);
+    }
+    snprintf(d3, sizeof(d3), "%s/work", d2);
+    if (stat(d3, &stb) >= 0) {
+        if (!S_ISDIR(stb.st_mode)) {
+            system_error("'%s' is not a directory", d3);
+        }
+        chown(d2, primary_uid, primary_gid);
+        chmod(d2, 0770);
+    } else {
+        if (mkdir(d3, 0770) < 0) {
+            syscall_error("cannot create '%s'", d3);
+        }
+        chown(d2, primary_uid, primary_gid);
+        chmod(d2, 0770);
+    }
+#endif
+    d1[0] = 0;
+    if (config && config->compile_home_dir && config->compile_home_dir[0]) {
+        snprintf(d1, sizeof(d1), "%s", config->compile_home_dir);
+    }
+#if defined EJUDGE_CONTESTS_HOME_DIR
+    if (!d1[0]) {
+        snprintf(d1, sizeof(d1), "%s/compile", EJUDGE_CONTESTS_HOME_DIR);
+    }
+#endif
+    if (stat(d1, &stb) < 0 || !S_ISDIR(stb.st_mode)) {
+        system_error("'%s' is not a directory", d1);
+    }
+    snprintf(d2, sizeof(d2), "%s/var", d1);
+    if (stat(d2, &stb) >= 0) {
+        if (!S_ISDIR(stb.st_mode)) {
+            system_error("'%s' is not a directory", d2);
+        }
+    } else {
+        if (mkdir(d2, 0750) < 0) {
+            syscall_error("cannot create '%s'", d2);
+        }
+        chown(d3, primary_uid, primary_gid);
+        chmod(d3, 0755);
+    }
+    // reserve working directory
+    snprintf(d3, sizeof(d3), "%s/work", d2);
+    if (stat(d3, &stb) >= 0) {
+        if (!S_ISDIR(stb.st_mode)) {
+            system_error("'%s' is not a directory", d3);
+        }
+        chown(d3, primary_uid, primary_gid);
+        chmod(d3, 0770);
+    } else {
+        if (mkdir(d3, 0755) < 0) {
+            syscall_error("cannot create '%s'", d3);
+        }
+        chown(d3, primary_uid, primary_gid);
+        chmod(d3, 0770);
+    }
+
+#if defined EJUDGE_COMPILE_SPOOL_DIR
+    if (snprintf(d1, sizeof(d1), "%s", EJUDGE_COMPILE_SPOOL_DIR) >= sizeof(d1)) {
+        system_error("path '%s' is too long", EJUDGE_COMPILE_SPOOL_DIR);
+    }
+    if (stat(d1, &stb) < 0) {
+        system_error("directory '%s' does not exist. please, create it", d1);
+    }
+    if (!S_ISDIR(stb.st_mode)) {
+        system_error("'%s' is not a directory", d1);
+    }
+    const unsigned char *compile_server_id = getenv("EJ_COMPILE_SERVER_ID");
+    if (!compile_server_id || !*compile_server_id) {
+        compile_server_id = os_NodeName();
+    }
+    if (!compile_server_id || !*compile_server_id) {
+        compile_server_id = "localhost";
+    }
+    if (snprintf(d3, sizeof(d3), "%s/%s", d1, compile_server_id) >= sizeof(d3)) {
+        system_error("path '%s/%s' is too long", d1, compile_server_id);
+    }
+#else
+    // spool directory: /home/judges/compile/var
+    snprintf(d3, sizeof(d3), "%s/compile", d2);
+#endif
+
+    if (stat(d3, &stb) >= 0) {
+        if (!S_ISDIR(stb.st_mode)) {
+            system_error("'%s' is not a directory", d3);
+        }
+        chown(d3, primary_uid, primary_gid);
+        chmod(d3, 0770);
+    } else {
+        if (mkdir(d3, 0755) < 0) {
+            syscall_error("cannot create '%s'", d3);
+        }
+        chown(d3, primary_uid, primary_gid);
+        chmod(d3, 0770);
+    }
+
+    // spool directory skeleton
+    snprintf(d4, sizeof(d4), "%s/upgrade-v2", d3);
+    if (lstat(d4, &stb) >= 0) {
+        if (!S_ISREG(stb.st_mode)) {
+            system_error("'%s' is not a regular file", d4);
+        }
+        return;
+    }
+
+    change_ownership_and_permissions(d3, "src", primary_uid, primary_gid, 0770);
+    spool_change_ownership_and_permissions(d3, "queue", primary_uid, primary_gid, 0770);
+
+#if defined EJUDGE_COMPILE_SPOOL_DIR
+    // scan all hosts in EJUDGE_COMPILE_SPOOL_DIR
+    {
+        DIR *hd = opendir(d1);
+        if (hd) {
+            struct dirent *hdd;
+            while ((hdd = readdir(hd))) {
+                if (!strcmp(hdd->d_name, ".") || !strcmp(hdd->d_name, "..")) continue;
+                if (snprintf(d2, sizeof(d2), "%s/%s", d1, hdd->d_name) >= sizeof(d2)) {
+                    system_error("path '%s/%s' is too long", d1, hdd->d_name);
+                }
+                if (stat(d2, &stb) < 0) continue;
+                if (!S_ISDIR(stb.st_mode)) continue;
+
+                DIR *d = opendir(d2);
+                if (d) {
+                    struct dirent *dd;
+                    while ((dd = readdir(d))) {
+                        if (strlen(dd->d_name) == 6) {
+                            errno = 0;
+                            char *eptr = 0;
+                            long cnts_id = strtol(dd->d_name, &eptr, 10);
+                            if (!errno && !*eptr && (int) cnts_id == cnts_id && cnts_id > 0) {
+                                snprintf(d4, sizeof(d4), "%s/%s", d2, dd->d_name);
+                                if (stat(d4, &stb) >= 0 && S_ISDIR(stb.st_mode)) {
+                                    change_ownership_and_permissions(d4, "report", primary_uid, primary_gid, 0770);
+                                    spool_change_ownership_and_permissions(d4, "status", primary_uid, primary_gid, 0770);
+                                }
+                            }
+                        }
+                    }
+                    closedir(d);
+                }
+
+                snprintf(d4, sizeof(d4), "%s/upgrade-v2", d2);
+                close(open(d4, O_WRONLY | O_CREAT | O_NONBLOCK, 0660));
+            }
+
+            closedir(hd);
+        }
+    }
+#else
+    {
+        DIR *d = opendir(d3);
+        if (d) {
+            struct dirent *dd;
+            while ((dd = readdir(d))) {
+                if (strlen(dd->d_name) == 6) {
+                    errno = 0;
+                    char *eptr = 0;
+                    long cnts_id = strtol(dd->d_name, &eptr, 10);
+                    if (!errno && !*eptr && (int) cnts_id == cnts_id && cnts_id > 0) {
+                        snprintf(d4, sizeof(d4), "%s/%s", d3, dd->d_name);
+                        if (stat(d4, &stb) >= 0 && S_ISDIR(stb.st_mode)) {
+                            change_ownership_and_permissions(d4, "report", primary_uid, primary_gid, 0770);
+                            spool_change_ownership_and_permissions(d4, "status", primary_uid, primary_gid, 0770);
+                        }
+                    }
+                }
+            }
+            closedir(d);
+        }
+    }
+#endif
+
+    snprintf(d4, sizeof(d4), "%s/upgrade-v2", d3);
+    close(open(d4, O_WRONLY | O_CREAT | O_NONBLOCK, 0660));
+}
+
+static void
 check_directories(int primary_uid, int compile_uid, int primary_gid, int compile_gid, const struct ejudge_cfg *config)
 {
     // check compile working directory
@@ -846,7 +1050,11 @@ int main(int argc, char *argv[])
     }
 
     if (op == OPERATION_START && primary_uid != compile_uid) {
-        check_directories(primary_uid, primary_gid, compile_uid, compile_gid, config);
+        if (config->enable_compile_container) {
+            check_directories_2(primary_uid, primary_gid, config);
+        } else {
+            check_directories(primary_uid, primary_gid, compile_uid, compile_gid, config);
+        }
     }
 
     if (setresuid(-1, euid, euid) < 0) {
