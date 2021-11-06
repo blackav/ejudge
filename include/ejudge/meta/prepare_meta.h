@@ -483,6 +483,7 @@ enum
   CNTSPROB_provide_ok,
   CNTSPROB_allow_ip,
   CNTSPROB_lang_compiler_env,
+  CNTSPROB_lang_compiler_container_options,
   CNTSPROB_checker_env,
   CNTSPROB_valuer_env,
   CNTSPROB_interactor_env,

@@ -1141,6 +1141,8 @@ struct section_problem_data
   char **allow_ip;
   /** environment variables for compilation */
   ejenvlist_t lang_compiler_env;
+  /** container options for compilation */
+  ejenvlist_t lang_compiler_container_options;
   /** environment variables for the problem checker */
   ejenvlist_t checker_env;
   /** environment variables for the problem valuer */
