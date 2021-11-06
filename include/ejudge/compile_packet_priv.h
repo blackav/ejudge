@@ -61,7 +61,7 @@ struct compile_request_bin_packet
   rint32_t exam_cypher_len;
   rint32_t contest_server_id_len;/* the length of the contest server id */
   rint32_t container_options_len;/* the length of the container options */
-  unsigned char pad[0] ;        /* padding to 16-byte boundary */
+  unsigned char pad[8];          /* padding to 16-byte boundary */
   /* style checker command (aligned to 16 byte boundary) */
   /* run_block (aligned to 16 byte boundary) */
   /* env variable length array (aligned to 16-byte address boundary) */
