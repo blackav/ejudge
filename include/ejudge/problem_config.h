@@ -218,6 +218,7 @@ struct problem_config_section
   ejenvlist_t init_env;
   ejenvlist_t start_env;
   ejenvlist_t statement_env;
+  ejenvlist_t lang_compiler_container_options;
 };
 
 void

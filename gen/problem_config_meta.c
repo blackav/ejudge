@@ -189,6 +189,7 @@ static struct meta_info_item meta_info_problem_config_section_data[] =
   [META_PROBLEM_CONFIG_SECTION_init_env] = { META_PROBLEM_CONFIG_SECTION_init_env, 'X', XSIZE(struct problem_config_section, init_env), "init_env", XOFFSET(struct problem_config_section, init_env) },
   [META_PROBLEM_CONFIG_SECTION_start_env] = { META_PROBLEM_CONFIG_SECTION_start_env, 'X', XSIZE(struct problem_config_section, start_env), "start_env", XOFFSET(struct problem_config_section, start_env) },
   [META_PROBLEM_CONFIG_SECTION_statement_env] = { META_PROBLEM_CONFIG_SECTION_statement_env, 'X', XSIZE(struct problem_config_section, statement_env), "statement_env", XOFFSET(struct problem_config_section, statement_env) },
+  [META_PROBLEM_CONFIG_SECTION_lang_compiler_container_options] = { META_PROBLEM_CONFIG_SECTION_lang_compiler_container_options, 'X', XSIZE(struct problem_config_section, lang_compiler_container_options), "lang_compiler_container_options", XOFFSET(struct problem_config_section, lang_compiler_container_options) },
 };
 
 int meta_problem_config_section_get_type(int tag)
