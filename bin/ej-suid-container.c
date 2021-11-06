@@ -607,9 +607,27 @@ reconfigure_fs(void)
     }
 
     if (!enable_home) {
+        if (snprintf(bind_path, sizeof(bind_path), "%s/home", safe_dir_path) >= sizeof(bind_path)) abort();
+        if (lstat(bind_path, &stb) >= 0 && S_ISDIR(stb.st_mode)) {
+            if (lstat("/home/judges/compile", &stb) >= 0 && S_ISDIR(stb.st_mode)) {
+                // need to preserve /home/judges/compile
+                char alt_path[PATH_MAX];
+                if (snprintf(alt_path, sizeof(alt_path), "%s/judges/compile", bind_path) >= sizeof(alt_path)) abort();
+                if ((r = mount("/home/judges/compile", alt_path, NULL, MS_BIND, NULL)) < 0) {
+                    ffatal("failed to mount %s to %s: %s", "/home/judges/compile", alt_path, strerror(errno));
+                }
+            }
+            if ((r = mount(bind_path, "/home", NULL, MS_BIND, NULL)) < 0) {
+                ffatal("failed to mount %s as /etc: %s", bind_path, strerror(errno));
+            }
+        } else {
+            // FIXME: report error?
+        }
+        /*
         if ((r = mount(empty_bind_path, "/home", NULL, MS_BIND, NULL)) < 0) {
             ffatal("failed to mount /home: %s", strerror(errno));
         }
+        */
     } else {
         struct stat stb;
         if (lstat("/home/judges", &stb) && S_ISDIR(stb.st_mode)) {
