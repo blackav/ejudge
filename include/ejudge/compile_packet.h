@@ -35,6 +35,7 @@ struct compile_request_packet
   int multi_header;                // 1, if multi-header/footer mode requested
   int lang_header;                 // 1, if header/footer lang-specific
   int user_id;
+  int use_container;
   ej_uuid_t uuid;
   ej_size64_t max_vm_size;
   ej_size64_t max_stack_size;

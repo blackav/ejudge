@@ -18,7 +18,7 @@
 
 #include "ejudge/integral.h"
 
-#define EJ_COMPILE_PACKET_VERSION 7
+#define EJ_COMPILE_PACKET_VERSION 8
 
 /* various private data structures and constants for compile packets */
 
@@ -46,6 +46,7 @@ struct compile_request_bin_packet
   rint32_t env_num;             /* the number of env. variables */
   rint32_t sc_env_num;          /* the number of style checker env. vars */
   rint32_t use_uuid;            /* use UUID instead of run_id */
+  rint32_t use_container;       /* use ej-suid-container for compilation */
   ej_uuid_t uuid;               /* UUID */
   rint32_t multi_header;        /* multi-header mode */
   rint32_t lang_header;         /* lang-specific multi-header mode */

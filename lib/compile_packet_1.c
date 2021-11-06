@@ -98,6 +98,8 @@ compile_request_packet_read(
   pout->uuid.v[2] = cvt_bin_to_host_32(pin->uuid.v[2]);
   pout->uuid.v[3] = cvt_bin_to_host_32(pin->uuid.v[3]);
 
+  pout->use_container = cvt_bin_to_host_32(pin->use_container);
+
   pout->multi_header = cvt_bin_to_host_32(pin->multi_header);
   FAIL_IF(pout->multi_header < 0 || pout->multi_header > 1);
   pout->lang_header = cvt_bin_to_host_32(pin->lang_header);
