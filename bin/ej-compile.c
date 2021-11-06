@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2000-2020 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2021 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -372,6 +372,15 @@ invoke_compiler(
     task_SetMaxFileSize(tsk, lang->max_file_size);
   } else if (VALID_SIZE(global->compile_max_file_size)) {
     task_SetMaxFileSize(tsk, global->compile_max_file_size);
+  }
+  // FIXME: handle max_rss_size
+
+  if (ejudge_config->enable_compile_container) {
+    task_EnableContainer(tsk);
+    task_AppendContainerOptions(tsk, "mCs0mPmSmd");
+    if (req->container_options && req->container_options[0]) {
+      task_AppendContainerOptions(tsk, req->container_options);
+    }
   }
 
   if (req->env_num > 0) {
