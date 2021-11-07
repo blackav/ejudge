@@ -89,6 +89,7 @@
 
 static char const sandbox_dir[] = "/sandbox";
 static char const alternatives_dir[] = "/etc/alternatives";
+static char const compile_dir[] = "/home/judges/compile";
 
 static char safe_dir_path[PATH_MAX];
 static char proc_path[PATH_MAX] = "/proc";
@@ -622,11 +623,11 @@ reconfigure_fs(void)
         if (lstat(bind_path, &stb) >= 0 && S_ISDIR(stb.st_mode)) {
             int preserve_compile = 0;
             char alt_path[PATH_MAX];
-            if (lstat("/home/judges/compile", &stb) >= 0 && S_ISDIR(stb.st_mode)) {
+            if (lstat(compile_dir, &stb) >= 0 && S_ISDIR(stb.st_mode)) {
                 // need to preserve /home/judges/compile
                 if (snprintf(alt_path, sizeof(alt_path), "%s/judges/compile", bind_path) >= sizeof(alt_path)) abort();
-                if ((r = mount("/home/judges/compile", alt_path, NULL, MS_BIND, NULL)) < 0) {
-                    ffatal("failed to mount %s to %s: %s", "/home/judges/compile", alt_path, strerror(errno));
+                if ((r = mount(compile_dir, alt_path, NULL, MS_BIND, NULL)) < 0) {
+                    ffatal("failed to mount %s to %s: %s", compile_dir, alt_path, strerror(errno));
                 }
                 preserve_compile = 1;
             }
@@ -634,8 +635,8 @@ reconfigure_fs(void)
                 ffatal("failed to mount %s as /etc: %s", bind_path, strerror(errno));
             }
             if (preserve_compile) {
-                if ((r = mount(alt_path, "/home/judges/compile", NULL, MS_BIND, NULL)) < 0) {
-                    ffatal("failed to mount %s to %s: %s", "/home/judges/compile", alt_path, strerror(errno));
+                if ((r = mount(alt_path, compile_dir, NULL, MS_BIND, NULL)) < 0) {
+                    ffatal("failed to mount %s to %s: %s", compile_dir, alt_path, strerror(errno));
                 }
             }
         } else {
