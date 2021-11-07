@@ -56,6 +56,7 @@
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/socket.h>
 #include <fcntl.h>
 #include <signal.h>
 #include <utime.h>
@@ -1870,6 +1871,7 @@ invoke_interactor(
         struct testinfo_struct *ti,
         int stdin_fd,
         int stdout_fd,
+        int control_fd,
         int program_pid,
         const struct super_run_in_global_packet *srgp,
         const struct super_run_in_problem_packet *srpp,
@@ -1887,6 +1889,7 @@ invoke_interactor(
         struct testinfo_struct *ti,
         int stdin_fd,
         int stdout_fd,
+        int control_fd,
         int program_pid,
         const struct super_run_in_global_packet *srgp,
         const struct super_run_in_problem_packet *srpp,
@@ -1946,6 +1949,11 @@ invoke_interactor(
     task_SetEnv(tsk_int, "EJUDGE_TEST_NUM", buf);
     task_SetEnv(tsk_int, "EJUDGE_USER_LOGIN", srgp->user_login);
     task_SetEnv(tsk_int, "EJUDGE_USER_NAME", srgp->user_name);
+  }
+  if (control_fd >= 0) {
+    unsigned char buf[64];
+    snprintf(buf, sizeof(buf), "%d", control_fd);
+    task_SetEnv(tsk_int, "EJUDGE_CONTROL_FD", buf);
   }
   task_EnableAllSignals(tsk_int);
   task_IgnoreSIGPIPE(tsk_int);
@@ -2785,10 +2793,6 @@ run_one_test(
   snprintf(output_path, sizeof(output_path), "%s/%s", check_dir, srpp->output_file);
   snprintf(error_path, sizeof(error_path), "%s/%s", check_dir, error_file);
 
-  if (interactor_cmd) {
-    snprintf(output_path, sizeof(output_path), "%s/%s", global->run_work_dir, srpp->output_file);
-  }
-
   if (srpp->init_cmd && srpp->init_cmd[0]) {
     status = invoke_init_cmd(srpp->init_cmd, "start", test_src, corr_src,
                              info_src, working_dir, check_out_path,
@@ -2799,6 +2803,17 @@ run_one_test(
       goto check_failed;
     }
     init_cmd_started = 1;
+  }
+
+  if (interactor_cmd) {
+    snprintf(output_path, sizeof(output_path), "%s/%s", global->run_work_dir, srpp->output_file);
+    if (srpp->enable_control_socket > 0) {
+      if (socketpair(PF_UNIX, SOCK_STREAM, 0, cfd) < 0) {
+        append_msg_to_log(check_out_path, "socketpair failed: %s", os_ErrorMsg());
+        status = RUN_CHECK_FAILED;
+        goto check_failed;
+      }
+    }
   }
 
 #ifndef __WIN32__
@@ -3161,6 +3176,9 @@ run_one_test(
       task_SetUmask(tsk, umask);
     }
   }
+  if (srpp->enable_control_socket) {
+    task_SetControlSocket(tsk, cfd[0], cfd[1]);
+  }
 
   //task_PrintArgs(tsk);
 
@@ -3171,11 +3189,15 @@ run_one_test(
     goto check_failed;
   }
 
+  if (cfd[0] >= 0) {
+    close(cfd[0]); cfd[0] = -1;
+  }
+
 #ifndef __WIN32__
   if (interactor_cmd) {
     tsk_int = invoke_interactor(interactor_cmd, test_src, output_path, corr_src, info_src,
                                 working_dir, check_out_path,
-                                &tstinfo, pfd1[0], pfd2[1], task_GetPid(tsk), srgp, srpp, cur_test);
+                                &tstinfo, pfd1[0], pfd2[1], cfd[1], task_GetPid(tsk), srgp, srpp, cur_test);
     if (!tsk_int) {
       append_msg_to_log(check_out_path, "interactor failed to start");
       goto check_failed;
@@ -3188,6 +3210,10 @@ run_one_test(
   if (pfd2[0] >= 0) close(pfd2[0]);
   if (pfd2[1] >= 0) close(pfd2[1]);
   pfd1[0] = pfd1[1] = pfd2[0] = pfd2[1] = -1;
+
+  if (cfd[1] >= 0) {
+    close(cfd[1]); cfd[1] = -1;
+  }
 
   task_NewWait(tsk);
 

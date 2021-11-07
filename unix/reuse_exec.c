@@ -482,8 +482,8 @@ task_Delete(tTask *tsk)
   xfree(tsk->container_options);
   xfree(tsk->language_name);
   if (tsk->status_fd >= 0) close(tsk->status_fd);
-  if (tsk->ctl_socket_fd_1 >= 0) close(tsk->ctl_socket_fd_1);
-  if (tsk->ctl_socket_fd_2 >= 0) close(tsk->ctl_socket_fd_2);
+  //if (tsk->ctl_socket_fd_1 >= 0) close(tsk->ctl_socket_fd_1);
+  //if (tsk->ctl_socket_fd_2 >= 0) close(tsk->ctl_socket_fd_2);
   xfree(tsk);
 }
 
