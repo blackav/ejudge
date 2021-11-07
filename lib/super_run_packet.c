@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2012-2019 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2021 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -154,6 +154,7 @@ super_run_in_problem_packet_init(struct generic_section_config *gp)
   p->enable_kill_all = -1;
   p->enable_extended_info = -1;
   p->stop_on_first_fail = -1;
+  p->enable_control_socket = -1;
 
   p->type_val = -1;
 }

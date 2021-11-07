@@ -204,6 +204,7 @@ static struct meta_info_item meta_info_super_run_in_problem_packet_data[] =
   [META_SUPER_RUN_IN_PROBLEM_PACKET_uuid] = { META_SUPER_RUN_IN_PROBLEM_PACKET_uuid, 's', XSIZE(struct super_run_in_problem_packet, uuid), "uuid", XOFFSET(struct super_run_in_problem_packet, uuid) },
   [META_SUPER_RUN_IN_PROBLEM_PACKET_enable_extended_info] = { META_SUPER_RUN_IN_PROBLEM_PACKET_enable_extended_info, 'B', XSIZE(struct super_run_in_problem_packet, enable_extended_info), "enable_extended_info", XOFFSET(struct super_run_in_problem_packet, enable_extended_info) },
   [META_SUPER_RUN_IN_PROBLEM_PACKET_stop_on_first_fail] = { META_SUPER_RUN_IN_PROBLEM_PACKET_stop_on_first_fail, 'B', XSIZE(struct super_run_in_problem_packet, stop_on_first_fail), "stop_on_first_fail", XOFFSET(struct super_run_in_problem_packet, stop_on_first_fail) },
+  [META_SUPER_RUN_IN_PROBLEM_PACKET_enable_control_socket] = { META_SUPER_RUN_IN_PROBLEM_PACKET_enable_control_socket, 'B', XSIZE(struct super_run_in_problem_packet, enable_control_socket), "enable_control_socket", XOFFSET(struct super_run_in_problem_packet, enable_control_socket) },
   [META_SUPER_RUN_IN_PROBLEM_PACKET_container_options] = { META_SUPER_RUN_IN_PROBLEM_PACKET_container_options, 's', XSIZE(struct super_run_in_problem_packet, container_options), "container_options", XOFFSET(struct super_run_in_problem_packet, container_options) },
 };
 

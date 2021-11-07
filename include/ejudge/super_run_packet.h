@@ -178,6 +178,7 @@ struct super_run_in_problem_packet
   unsigned char *uuid;
   ejintbool_t enable_extended_info;
   ejintbool_t stop_on_first_fail;
+  ejintbool_t enable_control_socket;
   unsigned char *container_options;
 
   int type_val META_ATTRIB((meta_hidden));
