@@ -106,6 +106,7 @@ int      task_IgnoreSIGPIPE(tpTask);
 int      task_SetContainerOptions(tpTask, const char *);
 int      task_AppendContainerOptions(tpTask, const char *);
 int      task_SetLanguageName(tpTask, const char *);
+int      task_SetControlSocket(tpTask, int fd1, int fd2);
 
 int      task_SetSuidHelperDir(tpTask, const char *);
 

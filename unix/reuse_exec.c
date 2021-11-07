@@ -119,6 +119,8 @@ struct tTask
   int    max_prio_value;        /* max real-time priority */
   int    max_pending_count;     /* max number of pending signals */
   int    umask;                 /* process umask */
+  int    ctl_socket_fd_1;       /* this side of the control socket */
+  int    ctl_socket_fd_2;       /* other side of the control socket */
   struct rusage usage;          /* process resource utilization */
   struct timeval start_time;    /* start real-time */
   struct timeval stop_time;     /* stop real-time */
@@ -413,6 +415,8 @@ task_New(void)
   r->max_pending_count = -1;
   r->umask = -1;
   r->status_fd = -1;
+  r->ctl_socket_fd_1 = -1;
+  r->ctl_socket_fd_2 = -1;
 
   /* find an empty slot */
   for (i = 0; i < task_u; i++)
@@ -478,6 +482,8 @@ task_Delete(tTask *tsk)
   xfree(tsk->container_options);
   xfree(tsk->language_name);
   if (tsk->status_fd >= 0) close(tsk->status_fd);
+  if (tsk->ctl_socket_fd_1 >= 0) close(tsk->ctl_socket_fd_1);
+  if (tsk->ctl_socket_fd_2 >= 0) close(tsk->ctl_socket_fd_2);
   xfree(tsk);
 }
 
@@ -1330,6 +1336,16 @@ task_SetLanguageName(tTask *tsk, const char *language_name)
 }
 
 int
+task_SetControlSocket(tTask *tsk, int fd1, int fd2)
+{
+  task_init_module();
+  ASSERT(tsk);
+  tsk->ctl_socket_fd_1 = fd1;
+  tsk->ctl_socket_fd_2 = fd2;
+  return 0;
+}
+
+int
 task_SetKillSignal(tTask *tsk, char const *signame)
 {
   task_init_module();
@@ -1609,12 +1625,19 @@ task_StartContainer(tTask *tsk)
 
   // in child
   close(status_pipe[0]);
+  if (tsk->ctl_socket_fd_2 >= 0) {
+    close(tsk->ctl_socket_fd_2);
+    tsk->ctl_socket_fd_2 = -1;
+  }
 
   // make container spec
   char *spec_s = NULL;
   size_t spec_z = 0;
   FILE *spec_f = open_memstream(&spec_s, &spec_z);
   fprintf(spec_f, "-f%d", status_pipe[1]);
+  if (tsk->ctl_socket_fd_1 >= 0) {
+    fprintf(spec_f, "cf%d", tsk->ctl_socket_fd_1);
+  }
 
   // add redirections
   for (int i = 0; i < tsk->redirs.u; i++) {
@@ -1993,6 +2016,11 @@ task_Start(tTask *tsk)
 
     /* close the reading end of communication pipe */
     close(comm_fd);
+
+    if (tsk->ctl_socket_fd_2 >= 0) {
+      close(tsk->ctl_socket_fd_2);
+      tsk->ctl_socket_fd_2 = -1;
+    }
 
     /* perform redirections */
     for (i = 0, rdr = tsk->redirs.v; i < tsk->redirs.u; i++, rdr++)
