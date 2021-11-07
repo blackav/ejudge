@@ -2430,6 +2430,7 @@ run_one_test(
 
   int pfd1[2] = { -1, -1 };
   int pfd2[2] = { -1, -1 };
+  int cfd[2] = { -1, -1 }; // control socket for container
   testinfo_t tstinfo;
   tpTask tsk_int = NULL;
   tpTask tsk = NULL;
@@ -3510,6 +3511,8 @@ cleanup:;
   if (pfd1[1] >= 0) close(pfd1[1]);
   if (pfd2[0] >= 0) close(pfd2[0]);
   if (pfd2[1] >= 0) close(pfd2[1]);
+  if (cfd[0] >= 0) close(cfd[0]);
+  if (cfd[1] >= 0) close(cfd[1]);
 
   if (check_out_path[0]) unlink(check_out_path);
   if (score_out_path[0]) unlink(score_out_path);
