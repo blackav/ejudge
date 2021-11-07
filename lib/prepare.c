@@ -448,6 +448,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(enable_testlib_mode, "L"),
   PROBLEM_PARAM(enable_extended_info, "L"),
   PROBLEM_PARAM(stop_on_first_fail, "L"),
+  PROBLEM_PARAM(enable_control_socket, "L"),
   PROBLEM_PARAM(hide_variant, "L"),
   PROBLEM_PARAM(autoassign_variants, "L"),
   PROBLEM_PARAM(enable_text_form, "L"),
@@ -1329,6 +1330,7 @@ prepare_problem_init_func(struct generic_section_config *gp)
   p->enable_testlib_mode = -1;
   p->enable_extended_info = -1;
   p->stop_on_first_fail = -1;
+  p->enable_control_socket = -1;
   p->hide_variant = -1;
   p->autoassign_variants = -1;
   p->enable_text_form = -1;
@@ -3701,6 +3703,7 @@ set_defaults(
     prepare_set_prob_value(CNTSPROB_enable_testlib_mode, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_enable_extended_info, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_stop_on_first_fail, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_enable_control_socket, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_hide_variant, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_autoassign_variants, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_enable_text_form, prob, aprob, g);
@@ -6081,6 +6084,7 @@ prepare_copy_problem(const struct section_problem_data *in)
   out->enable_testlib_mode = in->enable_testlib_mode;
   out->enable_extended_info = in->enable_extended_info;
   out->stop_on_first_fail = in->stop_on_first_fail;
+  out->enable_control_socket = in->enable_control_socket;
   xstrdup3(&out->test_pat, in->test_pat);
   xstrdup3(&out->corr_pat, in->corr_pat);
   xstrdup3(&out->info_pat, in->info_pat);
@@ -6374,6 +6378,7 @@ prepare_set_prob_value(
   INHERIT_BOOLEAN(enable_testlib_mode);
   INHERIT_BOOLEAN(enable_extended_info);
   INHERIT_BOOLEAN(stop_on_first_fail);
+  INHERIT_BOOLEAN(enable_control_socket);
   INHERIT_BOOLEAN(hide_variant);
   INHERIT_BOOLEAN(autoassign_variants);
   INHERIT_BOOLEAN(enable_text_form);
@@ -6942,6 +6947,7 @@ prepare_set_all_prob_values(
     CNTSPROB_enable_testlib_mode,
     CNTSPROB_enable_extended_info,
     CNTSPROB_stop_on_first_fail,
+    CNTSPROB_enable_control_socket,
     CNTSPROB_hide_variant,
     CNTSPROB_test_pat,
     CNTSPROB_corr_pat,

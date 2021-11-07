@@ -965,6 +965,8 @@ struct section_problem_data
   ejbyteflag_t enable_extended_info;
   /** stop testing after the first failed test (like ACM) */
   ejbyteflag_t stop_on_first_fail;
+  /** create a controlling socket pair for interactor */
+  ejbyteflag_t enable_control_socket;
 
   /** enable headers/footers specific for each test */
   ejbyteflag_t enable_multi_header;
@@ -975,7 +977,7 @@ struct section_problem_data
   ejbyteflag_t notify_on_submit;
 
   // padding to 8-byte boundary
-  unsigned char _pad1[1];
+  //unsigned char _pad1[1];
 
   /** number of independent examinations */
   int examinator_num;

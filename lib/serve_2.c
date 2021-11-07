@@ -2385,6 +2385,7 @@ serve_run_request(
   srgp->testlib_mode = prob->enable_testlib_mode;
   srpp->enable_extended_info = prob->enable_extended_info;
   srpp->stop_on_first_fail = prob->stop_on_first_fail;
+  srpp->enable_control_socket = prob->enable_control_socket;
   if (prob->umask && prob->umask[0]) {
     srpp->umask = xstrdup(prob->umask);
   }

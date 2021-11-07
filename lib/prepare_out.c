@@ -1561,6 +1561,10 @@ prepare_unparse_prob(
       || (!prob->abstract && prob->stop_on_first_fail >= 0)) {
     unparse_bool(f, "stop_on_first_fail", prob->stop_on_first_fail);
   }
+  if ((prob->abstract > 0 && prob->enable_control_socket > 0)
+      || (!prob->abstract && prob->enable_control_socket >= 0)) {
+    unparse_bool(f, "enable_control_socket", prob->enable_control_socket);
+  }
   if ((prob->abstract > 0 && prob->hide_variant > 0)
       || (!prob->abstract && prob->hide_variant >= 0)) {
     unparse_bool(f, "hide_variant", prob->hide_variant);
@@ -1973,6 +1977,8 @@ prepare_unparse_actual_prob(
     unparse_bool(f, "enable_extended_info", prob->enable_extended_info);
   if (prob->stop_on_first_fail > 0)
     unparse_bool(f, "stop_on_first_fail", prob->stop_on_first_fail);
+  if (prob->enable_control_socket > 0)
+    unparse_bool(f, "enable_control_socket", prob->enable_control_socket);
   if (prob->hide_variant > 0)
     unparse_bool(f, "hide_variant", prob->hide_variant);
   if (prob->enable_text_form > 0)
