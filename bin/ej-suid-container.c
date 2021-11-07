@@ -113,6 +113,7 @@ static int response_fd = 2;
 static char *log_s = NULL;
 static size_t log_z = 0;
 static FILE *log_f = NULL;
+static int control_socket_fd = -1;
 
 static int enable_cgroup = 1;
 static int enable_ipc_ns = 1;
@@ -1677,6 +1678,7 @@ extract_size(const char **ppos, int init_offset, const char *opt_name)
  *   s0     - disable syscall filtering
  *   se     - enable execve(at)
  *   sf     - enable fork, vfork, clone, clone3
+ *   cf     - specify control socket fd
  */
 
 int
@@ -1918,6 +1920,19 @@ main(int argc, char *argv[])
                 opt += 2;
             } else if (*opt == 'o' && opt[1] == 'l') {
                 language_name = extract_string(&opt, 2, "ol");
+            } else if (*opt == 'c' && opt[1] == 'f') {
+                char *eptr = NULL;
+                errno = 0;
+                long v = strtol(opt + 2, &eptr, 10);
+                if (errno || eptr == opt + 2 || v < 0 || (int) v != v) {
+                    ffatal("invalid control socket fd");
+                }
+                struct stat stb;
+                if (fstat(v, &stb) < 0 || !S_ISSOCK(stb.st_mode)) {
+                    ffatal("invalid control socket fd");
+                }
+                control_socket_fd = v;
+                opt = eptr;
             } else {
                 flog("invalid option: %s", opt);
                 fatal();
@@ -2060,6 +2075,10 @@ main(int argc, char *argv[])
         }
 
         if (!pid2) {
+            if (control_socket_fd >= 0) {
+                close(control_socket_fd);
+                control_socket_fd = -1;
+            }
             if (enable_cgroup) {
                 move_to_cgroup();
             }
@@ -2456,6 +2475,8 @@ main(int argc, char *argv[])
     if (stdout_fd >= 0) close(stdout_fd);
     if (stderr_fd >= 0) close(stderr_fd);
     stdin_fd = -1; stdout_fd = -1; stderr_fd = -1;
+    if (control_socket_fd >= 0) close(control_socket_fd);
+    control_socket_fd = -1;
 
     siginfo_t infop = {};
     waitid(P_PID, pid, &infop, WEXITED);
