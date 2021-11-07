@@ -103,6 +103,7 @@ struct problem_config_section
   ejintbool_t hide_variant;
   ejintbool_t enable_extended_info;
   ejintbool_t stop_on_first_fail;
+  ejintbool_t enable_control_socket;
 
   int id;
   int real_time_limit;
