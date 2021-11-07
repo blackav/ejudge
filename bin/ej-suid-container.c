@@ -2263,6 +2263,14 @@ main(int argc, char *argv[])
             ffatal("failed epoll_ctl: %s", strerror(errno));
         }
 
+        if (control_socket_fd >= 0) {
+            struct epoll_event ee = { .events = EPOLLIN, .data = { .fd = control_socket_fd } };
+            if (epoll_ctl(efd, EPOLL_CTL_ADD, control_socket_fd, &ee) < 0) {
+                kill_all();
+                ffatal("failed epoll_ctl: %s", strerror(errno));
+            }
+        }
+
         long clock_ticks = sysconf(_SC_CLK_TCK);
 
         int prc_finished = 0;
@@ -2372,6 +2380,27 @@ main(int argc, char *argv[])
                             flag = 0;
                             prc_real_time_exceeded = 1;
                             break;
+                        }
+                    }
+                } else if (control_socket_fd >= 0 && curev->data.fd == control_socket_fd) {
+                    uint32_t val;
+                    int r = read(tfd, &val, sizeof(val));
+                    if (r < 0) {
+                        kill_all();
+                        ffatal("control socket read error: %s", strerror(errno));
+                    } else if (!r) {
+                        epoll_ctl(efd, EPOLL_CTL_DEL, control_socket_fd, NULL);
+                        close(control_socket_fd); control_socket_fd = -1;
+                    } else if (r != sizeof(val)) {
+                        kill_all();
+                        ffatal("invalid control socket read: %d", r);
+                    } else {
+                        if ((val & 0xc0000000) == 0x80000000) {
+                            uint32_t cmd = (val & 0x03ffff00) >> 8;
+                            if (cmd == 1) {
+                                // send signal
+                                kill(pid2, val & 0xff);
+                            }
                         }
                     }
                 }
