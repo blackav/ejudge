@@ -1562,6 +1562,13 @@ apply_language_profiles(void)
         enable_sys_execve = 1;
         enable_proc = 1;
         limit_vm_size = -1;
+    } else if (!strcmp(language_name, "dotnet-cs") || !strcmp(language_name, "dotnet-vb")) {
+        enable_seccomp = 0;
+        enable_proc = 1;
+        limit_processes = 20;
+        limit_stack_size = 1024 * 1024; // 1M
+        limit_vm_size = -1;     // use max_rss_size
+        //limit_open_files = 100;
     }
 }
 
