@@ -571,7 +571,7 @@ parse_line(const unsigned char *str, size_t len, testinfo_t *pt, struct testinfo
     if (cmd.u < 1) FAIL(TINF_E_EMPTY_VALUE);
     if (cmd.u > 1) FAIL(TINF_E_MULTIPLE_VALUE);
     if (sscanf(cmd.v[0], "%d%n", &x, &n) != 1 || cmd.v[0][n]
-        || x < 0 || x > 127)
+        || x < 0 || x > 255)
       FAIL(TINF_E_INVALID_VALUE);
     pt->exit_code = x;
   } else if (!strcmp(name_buf, "max_open_file_count")) {
