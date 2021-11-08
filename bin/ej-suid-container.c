@@ -2395,8 +2395,8 @@ main(int argc, char *argv[])
                         kill_all();
                         ffatal("invalid control socket read: %d", r);
                     } else {
-                        if ((val & 0xc0000000) == 0x80000000) {
-                            uint32_t cmd = (val & 0x03ffff00) >> 8;
+                        if ((val & 0xf0000000) == 0xe0000000) {
+                            uint32_t cmd = (val & 0x0fffff00) >> 8;
                             if (cmd == 1) {
                                 // send signal
                                 kill(pid2, val & 0xff);
