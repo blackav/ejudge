@@ -2384,7 +2384,7 @@ main(int argc, char *argv[])
                     }
                 } else if (control_socket_fd >= 0 && curev->data.fd == control_socket_fd) {
                     uint32_t val;
-                    int r = read(tfd, &val, sizeof(val));
+                    int r = read(control_socket_fd, &val, sizeof(val));
                     if (r < 0) {
                         kill_all();
                         ffatal("control socket read error: %s", strerror(errno));
