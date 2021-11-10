@@ -1807,6 +1807,7 @@ main(int argc, char *argv[])
                 if (limit_cpu_time_ms == DEFAULT_LIMIT_CPU_TIME_MS) {
                     limit_cpu_time_ms = 60000;
                 }
+                limit_processes = 20;
                 opt += 2;
             } else if (*opt == 'w') {
                 working_dir = extract_string(&opt, 1, "w");
