@@ -2340,6 +2340,8 @@ main(int argc, char *argv[])
                                 prc_stop_time_us = tv.tv_sec * 1000000LL + tv.tv_usec;
                             }
                             flag = 0;
+                        } else if (!res) {
+                            break;
                         }
                     }
                 } else if (curev->data.fd == tfd) {
