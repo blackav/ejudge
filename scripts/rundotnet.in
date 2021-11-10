@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright (c) 2019 Alexander Chernov <cher@ejudge.ru>
+# Copyright (c) 2019-2021 Alexander Chernov <cher@ejudge.ru>
 
 # A helper script to start C#/VB programs using the dotnet runtime.
 # Usage: dotnet file
@@ -26,10 +26,10 @@ mv "${runfile}" solution.dll
 cat <<EOF > solution.runtimeconfig.json
 {
   "runtimeOptions": {
-    "tfm": "netcoreapp3.0",
+    "tfm": "netcoreapp5.0",
     "framework": {
       "name": "Microsoft.NETCore.App",
-      "version": "3.0.0"
+      "version": "5.0.0"
     }
   }
 }

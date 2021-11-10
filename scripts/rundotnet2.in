@@ -20,10 +20,10 @@ mv "${runfile}" solution.dll
 cat <<EOF > solution.runtimeconfig.json
 {
   "runtimeOptions": {
-    "tfm": "netcoreapp3.0",
+    "tfm": "netcoreapp5.0",
     "framework": {
       "name": "Microsoft.NETCore.App",
-      "version": "3.0.0"
+      "version": "5.0.0"
     }
   }
 }
