@@ -1549,7 +1549,7 @@ apply_language_profiles(void)
         enable_proc = 1;
         limit_vm_size = -1;     // VM limit set by environment var
         limit_stack_size = 1024 * 1024; // 1M
-        limit_processes = 20;
+        limit_processes = 40;
     } else if (!strcmp(language_name, "mcs") || !strcmp(language_name, "vbnc")
                || !strcmp(language_name, "pasabc-linux")) {
         enable_sys_fork = 1;
@@ -1566,10 +1566,9 @@ apply_language_profiles(void)
     } else if (!strcmp(language_name, "dotnet-cs") || !strcmp(language_name, "dotnet-vb")) {
         enable_seccomp = 0;
         enable_proc = 1;
-        limit_processes = 20;
+        limit_processes = 40;
         limit_stack_size = 1024 * 1024; // 1M
         limit_vm_size = -1;     // use max_rss_size
-        //limit_open_files = 100;
     }
 }
 
