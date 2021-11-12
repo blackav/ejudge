@@ -126,6 +126,10 @@ struct super_run_in_problem_packet
   ejintbool_t accept_partial;
   int min_tests_to_accept;
   int checker_real_time_limit_ms;
+  int checker_time_limit_ms;
+  ej_size64_t checker_max_vm_size;
+  ej_size64_t checker_max_stack_size;
+  ej_size64_t checker_max_rss_size;
   unsigned char *short_name;
   unsigned char *long_name;
   unsigned char *internal_name;
