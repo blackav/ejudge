@@ -1761,17 +1761,14 @@ cleanup:
 
 static int
 invoke_init_cmd(
-        const unsigned char *init_cmd,
+        const struct super_run_in_problem_packet *srpp,
         const unsigned char *subcommand,
         const unsigned char *test_src_path,
         const unsigned char *corr_src_path,
         const unsigned char *info_src_path,
         const unsigned char *working_dir,
         const unsigned char *check_out_path,
-        char **init_env,
-        testinfo_t *ti,
-        long real_time_limit_ms,
-        int disable_pe)
+        testinfo_t *ti)
 {
   tpTask tsk = NULL;
   int status = 0;
@@ -1784,7 +1781,7 @@ invoke_init_cmd(
   }
 
   tsk = task_New();
-  task_AddArg(tsk, init_cmd);
+  task_AddArg(tsk, srpp->init_cmd);
   if (subcommand && *subcommand) {
     task_AddArg(tsk, subcommand);
   }
@@ -1801,17 +1798,17 @@ invoke_init_cmd(
   if (working_dir && *working_dir) {
     task_SetWorkingDir(tsk, working_dir);
   }
-  setup_environment(tsk, init_env, env_u, env_v, 1);
+  setup_environment(tsk, srpp->init_env, env_u, env_v, 1);
   task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", TSK_READ);
   task_SetRedir(tsk, 1, TSR_FILE, check_out_path, TSK_APPEND, TSK_FULL_RW);
   task_SetRedir(tsk, 2, TSR_DUP, 1);
   task_EnableAllSignals(tsk);
-  if (real_time_limit_ms > 0) {
-    task_SetMaxRealTimeMillis(tsk, real_time_limit_ms);
+  if (srpp->checker_real_time_limit_ms > 0) {
+    task_SetMaxRealTimeMillis(tsk, srpp->checker_real_time_limit_ms);
   }
 
   if (task_Start(tsk) < 0) {
-    append_msg_to_log(check_out_path, "failed to start init_cmd %s", init_cmd);
+    append_msg_to_log(check_out_path, "failed to start init_cmd %s", srpp->init_cmd);
     status = RUN_CHECK_FAILED;
     goto cleanup;
   }
@@ -1846,7 +1843,7 @@ invoke_init_cmd(
     break;
 
   case RUN_PRESENTATION_ERR:
-    if (disable_pe > 0) {
+    if (srpp->disable_pe > 0) {
       exitcode = RUN_WRONG_ANSWER_ERR;
     }
     break;
@@ -2803,9 +2800,9 @@ run_one_test(
   snprintf(error_path, sizeof(error_path), "%s/%s", check_dir, error_file);
 
   if (srpp->init_cmd && srpp->init_cmd[0]) {
-    status = invoke_init_cmd(srpp->init_cmd, "start", test_src, corr_src,
+    status = invoke_init_cmd(srpp, "start", test_src, corr_src,
                              info_src, working_dir, check_out_path,
-                             srpp->init_env, &tstinfo, srpp->checker_real_time_limit_ms, srpp->disable_pe);
+                             &tstinfo);
     if (status != 0) {
       append_msg_to_log(check_out_path, "init_cmd failed to start with code 0");
       status = RUN_CHECK_FAILED;
@@ -3516,9 +3513,9 @@ run_checker:;
   // read the checker output
 read_checker_output:;
   if (init_cmd_started) {
-    int new_status = invoke_init_cmd(srpp->init_cmd, "stop", test_src,
+    int new_status = invoke_init_cmd(srpp, "stop", test_src,
                                      corr_src, info_src, working_dir, check_out_path,
-                                     srpp->init_env, &tstinfo, srpp->checker_real_time_limit_ms, srpp->disable_pe);
+                                     &tstinfo);
     if (!status) status = new_status;
     init_cmd_started = 0;
   }
@@ -3535,8 +3532,8 @@ read_checker_output:;
 
 cleanup:;
   if (init_cmd_started) {
-    int new_status = invoke_init_cmd(srpp->init_cmd, "stop", test_src, corr_src,  info_src, working_dir, check_out_path,
-                                     srpp->init_env, &tstinfo, srpp->checker_real_time_limit_ms, srpp->disable_pe);
+    int new_status = invoke_init_cmd(srpp, "stop", test_src, corr_src,  info_src, working_dir, check_out_path,
+                                     &tstinfo);
     if (!status) status = new_status;
     init_cmd_started = 0;
   }
