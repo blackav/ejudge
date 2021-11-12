@@ -120,6 +120,7 @@ struct problem_config_section
   int compile_error_penalty;
   int min_tests_to_accept;
   int checker_real_time_limit;
+  int checker_time_limit;
   int priority_adjustment;
   int score_multiplier;
   int prev_runs_to_show;
@@ -139,6 +140,9 @@ struct problem_config_section
   size_t max_rss_size;
   size_t max_core_size;
   size_t max_file_size;
+  size_t checker_max_vm_size;
+  size_t checker_max_stack_size;
+  size_t checker_max_rss_size;
 
   unsigned char *type;
   unsigned char *short_name;
