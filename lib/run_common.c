@@ -1055,6 +1055,15 @@ invoke_valuer(
   if (srpp->checker_time_limit_ms > 0) {
     task_SetMaxTimeMillis(tsk, srpp->checker_time_limit_ms);
   }
+  if (srpp->checker_max_stack_size > 0) {
+    task_SetStackSize(tsk, srpp->checker_max_stack_size);
+  }
+  if (srpp->checker_max_vm_size > 0) {
+    task_SetVMSize(tsk, srpp->checker_max_vm_size);
+  }
+  if (srpp->checker_max_rss_size > 0) {
+    task_SetRSSSize(tsk, srpp->checker_max_rss_size);
+  }
   setup_environment(tsk, srpp->valuer_env, 0, NULL, 1);
   if (srgp->separate_user_score > 0) {
     task_SetEnv(tsk, "EJUDGE_USER_SCORE", "1");
@@ -1164,6 +1173,15 @@ start_interactive_valuer(
   }
   if (srpp->checker_time_limit_ms > 0) {
     task_SetMaxTimeMillis(tsk, srpp->checker_time_limit_ms);
+  }
+  if (srpp->checker_max_stack_size > 0) {
+    task_SetStackSize(tsk, srpp->checker_max_stack_size);
+  }
+  if (srpp->checker_max_vm_size > 0) {
+    task_SetVMSize(tsk, srpp->checker_max_vm_size);
+  }
+  if (srpp->checker_max_rss_size > 0) {
+    task_SetRSSSize(tsk, srpp->checker_max_rss_size);
   }
   setup_environment(tsk, srpp->valuer_env, 0, NULL, 1);
   if (srgp->separate_user_score > 0) {
@@ -1809,6 +1827,15 @@ invoke_init_cmd(
   if (srpp->checker_time_limit_ms > 0) {
     task_SetMaxTimeMillis(tsk, srpp->checker_time_limit_ms);
   }
+  if (srpp->checker_max_stack_size > 0) {
+    task_SetStackSize(tsk, srpp->checker_max_stack_size);
+  }
+  if (srpp->checker_max_vm_size > 0) {
+    task_SetVMSize(tsk, srpp->checker_max_vm_size);
+  }
+  if (srpp->checker_max_rss_size > 0) {
+    task_SetRSSSize(tsk, srpp->checker_max_rss_size);
+  }
 
   if (task_Start(tsk) < 0) {
     append_msg_to_log(check_out_path, "failed to start init_cmd %s", srpp->init_cmd);
@@ -2115,6 +2142,15 @@ invoke_checker(
   }
   if (srpp->checker_time_limit_ms > 0) {
     task_SetMaxTimeMillis(tsk, srpp->checker_time_limit_ms);
+  }
+  if (srpp->checker_max_stack_size > 0) {
+    task_SetStackSize(tsk, srpp->checker_max_stack_size);
+  }
+  if (srpp->checker_max_vm_size > 0) {
+    task_SetVMSize(tsk, srpp->checker_max_vm_size);
+  }
+  if (srpp->checker_max_rss_size > 0) {
+    task_SetRSSSize(tsk, srpp->checker_max_rss_size);
   }
   setup_environment(tsk, srpp->checker_env, env_u, env_v, 1);
   if (srpp->scoring_checker > 0) {
