@@ -145,7 +145,7 @@ struct virtual_end_info_s
   int checker_comment_mode;
 };
 
-/* sizeof(struct section_global_data) == 1204/1912 */
+/* sizeof(struct section_global_data) == 1208/1920 */
 struct section_global_data
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));
@@ -791,7 +791,7 @@ struct section_global_data
   ejintbool_t disable_passed_tests META_ATTRIB((meta_private));
 };
 
-/* sizeof(struct section_problem_data) == 764/1208 */
+/* sizeof(struct section_problem_data) == 820/1280 */
 struct section_problem_data
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));   // 32 bytes
@@ -1003,6 +1003,8 @@ struct section_problem_data
   int min_tests_to_accept;
   /** real time limit for checkers */
   int checker_real_time_limit;
+  /** time limit for checkers */
+  int checker_time_limit_ms;
   /** priority adjustment for this problem */
   int priority_adjustment;
   /** additional score multiplier for this problem */
@@ -1232,6 +1234,12 @@ struct section_problem_data
   ej_size64_t max_core_size;
   /** max file size */
   ej_size64_t max_file_size;
+  /** max virtual size limit for checkers */
+  ej_size64_t checker_max_vm_size;
+  /** max stack size limit for checkers */
+  ej_size64_t checker_max_stack_size;
+  /** max RSS limit for checkers */
+  ej_size64_t checker_max_rss_size;
   /** max number of opened files per process */
   int max_open_file_count;
   /** max number of processes per user */
@@ -1260,7 +1268,7 @@ struct section_problem_data
   } xml META_ATTRIB((meta_hidden));
 };
 
-/* sizeof(struct section_language_data) == 296/376 */
+/* sizeof(struct section_language_data) == 312/400 */
 struct section_language_data
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));
@@ -1357,7 +1365,7 @@ struct section_language_data
   int disabled_by_config META_ATTRIB((meta_private));
 };
 
-/* sizeof(struct section_tester_data) == 288/392 */
+/* sizeof(struct section_tester_data) == 292/400 */
 struct section_tester_data
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));
