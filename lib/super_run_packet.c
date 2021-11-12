@@ -144,6 +144,7 @@ super_run_in_problem_packet_init(struct generic_section_config *gp)
   p->accept_partial = -1;
   p->min_tests_to_accept = -1;
   p->checker_real_time_limit_ms = -1;
+  p->checker_time_limit_ms = -1;
   p->valuer_sets_marked = -1;
   p->interactor_time_limit_ms = -1;
   p->interactor_real_time_limit_ms = -1;
@@ -192,6 +193,7 @@ super_run_in_problem_packet_set_default(struct generic_section_config *gp)
   if (p->tests_to_accept < 0) p->tests_to_accept = 0;
   if (p->accept_partial < 0) p->accept_partial = 0;
   if (p->checker_real_time_limit_ms < 0) p->checker_real_time_limit_ms = 0;
+  if (p->checker_time_limit_ms < 0) p->checker_time_limit_ms = 0;
   if (p->valuer_sets_marked < 0) p->valuer_sets_marked = 0;
   if (p->interactor_time_limit_ms < 0) p->interactor_time_limit_ms = 0;
   if (p->interactor_real_time_limit_ms < 0) p->interactor_real_time_limit_ms = 0;
