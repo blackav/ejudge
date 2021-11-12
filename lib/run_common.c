@@ -1806,6 +1806,9 @@ invoke_init_cmd(
   if (srpp->checker_real_time_limit_ms > 0) {
     task_SetMaxRealTimeMillis(tsk, srpp->checker_real_time_limit_ms);
   }
+  if (srpp->checker_time_limit_ms > 0) {
+    task_SetMaxTimeMillis(tsk, srpp->checker_time_limit_ms);
+  }
 
   if (task_Start(tsk) < 0) {
     append_msg_to_log(check_out_path, "failed to start init_cmd %s", srpp->init_cmd);
