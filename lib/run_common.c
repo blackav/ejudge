@@ -1052,6 +1052,9 @@ invoke_valuer(
   if (srpp->checker_real_time_limit_ms > 0) {
     task_SetMaxRealTimeMillis(tsk, srpp->checker_real_time_limit_ms);
   }
+  if (srpp->checker_time_limit_ms > 0) {
+    task_SetMaxTimeMillis(tsk, srpp->checker_time_limit_ms);
+  }
   setup_environment(tsk, srpp->valuer_env, 0, NULL, 1);
   if (srgp->separate_user_score > 0) {
     task_SetEnv(tsk, "EJUDGE_USER_SCORE", "1");
@@ -1158,6 +1161,9 @@ start_interactive_valuer(
   task_SetPathAsArg0(tsk);
   if (srpp->checker_real_time_limit_ms > 0) {
     task_SetMaxRealTimeMillis(tsk, srpp->checker_real_time_limit_ms);
+  }
+  if (srpp->checker_time_limit_ms > 0) {
+    task_SetMaxTimeMillis(tsk, srpp->checker_time_limit_ms);
   }
   setup_environment(tsk, srpp->valuer_env, 0, NULL, 1);
   if (srgp->separate_user_score > 0) {
@@ -2106,6 +2112,9 @@ invoke_checker(
   task_SetWorkingDir(tsk, check_dir);
   if (srpp->checker_real_time_limit_ms > 0) {
     task_SetMaxRealTimeMillis(tsk, srpp->checker_real_time_limit_ms);
+  }
+  if (srpp->checker_time_limit_ms > 0) {
+    task_SetMaxTimeMillis(tsk, srpp->checker_time_limit_ms);
   }
   setup_environment(tsk, srpp->checker_env, env_u, env_v, 1);
   if (srpp->scoring_checker > 0) {
