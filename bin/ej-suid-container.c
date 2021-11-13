@@ -1106,34 +1106,6 @@ enable_controllers(void)
 {
     write_buf_to_file_fatal("/sys/fs/cgroup/cgroup.subtree_control", "+cpu", 4);
     write_buf_to_file_fatal("/sys/fs/cgroup/ejudge/cgroup.subtree_control", "+cpu +memory", 12);
-    return;
-
-    const char *path = "/sys/fs/cgroup/ejudge/cgroup.subtree_control";
-    static const char buf[] = "+cpu +memory";
-    enum { len = sizeof(buf) - 1 };
-    int count = 0;
-
-    int fd = open(path, O_WRONLY);
-    if (fd < 0) {
-        ffatal("failed to open %s: %s", path, strerror(errno));
-    }
-
-    /*
-this fixes weird ENOENT on first creation of cgroup
-     */
-restart_write:
-    int z;
-    errno = 0;
-    if ((z = write(fd, buf, len)) != len) {
-        if (z < 0 && errno == ENOENT && ++count < 5) {
-            usleep(100000);
-            goto restart_write;
-        }
-        ffatal("failed to write to %s: %d, %s", path, z, strerror(errno));
-    }
-    if (close(fd) < 0) {
-        ffatal("failed to close %s: %s", path, strerror(errno));
-    }
 }
 
 static void
