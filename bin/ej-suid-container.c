@@ -1569,6 +1569,13 @@ apply_language_profiles(void)
         limit_processes = 40;
         limit_stack_size = 1024 * 1024; // 1M
         limit_vm_size = -1;     // use max_rss_size
+    } else if (!strcmp(language_name, "make")) {
+        enable_seccomp = 0;
+        enable_proc = 1;
+    } else if (!strcmp(language_name, "make-vg")) {
+        enable_seccomp = 0;
+        enable_proc = 1;
+        limit_vm_size = -1;
     }
 }
 
