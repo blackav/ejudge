@@ -347,6 +347,15 @@ invoke_test_checker(
   if (srpp->checker_real_time_limit_ms > 0) {
     task_SetMaxRealTimeMillis(tsk, srpp->checker_real_time_limit_ms);
   }
+  if (srpp->checker_time_limit_ms > 0) {
+    task_SetMaxTimeMillis(tsk, srpp->checker_time_limit_ms);
+  }
+  if (srpp->checker_max_stack_size > 0) {
+    task_SetStackSize(tsk, srpp->checker_max_stack_size);
+  }
+  if (srpp->checker_max_vm_size > 0) {
+    task_SetVMSize(tsk, srpp->checker_max_vm_size);
+  }
 
   fflush(log_f);
 
@@ -634,6 +643,15 @@ invoke_checker(
   task_AddArg(tsk, correct_path);
   if (srpp->checker_real_time_limit_ms > 0) {
     task_SetMaxRealTimeMillis(tsk, srpp->checker_real_time_limit_ms);
+  }
+  if (srpp->checker_time_limit_ms > 0) {
+    task_SetMaxTimeMillis(tsk, srpp->checker_time_limit_ms);
+  }
+  if (srpp->checker_max_stack_size > 0) {
+    task_SetStackSize(tsk, srpp->checker_max_stack_size);
+  }
+  if (srpp->checker_max_vm_size > 0) {
+    task_SetVMSize(tsk, srpp->checker_max_vm_size);
   }
   if (srpp->checker_env) {
     for (i = 0; srpp->checker_env[i]; ++i)
