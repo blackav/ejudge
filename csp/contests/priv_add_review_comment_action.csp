@@ -6,11 +6,11 @@
 %><%@page csp_view_priv_add_review_comment_action(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 %><%@include "priv_stdvars.csp"
 %><%
-  if (opcaps_check(phr->caps, OPCAP_CONTROL_CONTEST) < 0)
-    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
-
   int run_id = 0;
   unsigned char *review_comment = NULL;
+
+  if (opcaps_check(phr->caps, OPCAP_CONTROL_CONTEST) < 0)
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
 
 %><s:read var="run_id" name="run_id" default="0" error="inv-run-id" /><%
 %><s:read var="review_comment" normalize="yes" /><%
