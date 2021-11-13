@@ -23,6 +23,10 @@
 
         <%@expand MENU_TEXTFIELD_WITH_DEFAULT "check_cmd" "checking" "Checker name" "250" %>
         <%@expand MENU_TEXTFIELD_WITH_DEFAULT "checker_real_time_limit" "checking" "Real time limit for checker(s)" "250" %>
+        <%@expand MENU_TEXTFIELD_WITH_DEFAULT "checker_time_limit_ms" "checking" "Time limit for checker(in ms)" "250" %>
+        <%@expand MENU_TEXTFIELD_WITH_DEFAULT "checker_max_vm_size" "limits" "Checker maximum virtual memory size" "250" %>
+        <%@expand MENU_TEXTFIELD_WITH_DEFAULT "checker_max_stack_size" "limits" "Checker maximum virtual memory size" "250" %>
+        <%@expand MENU_TEXTFIELD_WITH_DEFAULT "checker_max_rss_size" "limits" "Checker maximum virtual memory size" "250" %>
         <%@expand MENU_TEXTFIELD "checker_env" "checking" "Checker environment" "250" %>
         <%@expand MENU_YESNO3 "scoring_checker" "checking" "Checker calculates score" "250" %>
         <%@expand MENU_YESNO3 "enable_checker_token" "checking" "Scoring checker produces a token" "250" %>
@@ -100,6 +104,10 @@ function popupCheckingDialog(e, skipField)
     <%@expand COPY_SIMPLE "standard_checker" %>
     <%@expand COPY_TEXTFIELD_WITH_DEFAULT "check_cmd" "!prob->check_cmd" %>
     <%@expand COPY_TEXTFIELD_WITH_DEFAULT "checker_real_time_limit" "prob->checker_real_time_limit < 0" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "checker_time_limit_ms" "prob->checker_time_limit_ms < 0" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "checker_max_vm_size" "prob->checker_max_vm_size < 0" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "checker_max_stack_size" "prob->checker_max_stack_size < 0" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "checker_max_rss_size" "prob->checker_max_rss_size < 0" %>
     <%@expand COPY_TEXTFIELD "checker_env" %>
     <%@expand COPY_YESNO3 "scoring_checker" %>
     <%@expand COPY_YESNO3 "enable_checker_token" %>
@@ -119,6 +127,10 @@ function popupCheckingDialog(e, skipField)
 
     <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "check_cmd" %>
     <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "checker_real_time_limit" %>
+    <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "checker_time_limit_ms" %>
+    <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "checker_max_vm_size" %>
+    <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "checker_max_stack_size" %>
+    <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "checker_max_rss_size" %>
     <%@expand CLEAR_TEXTFIELD "checker_env" %>
     <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "valuer_cmd" %>
     <%@expand CLEAR_TEXTFIELD "valuer_env" %>
@@ -138,6 +150,10 @@ function checkingDialogOnChange(field)
 {
     <%@expand ONCHANGE_WITH_DEFAULT "check_cmd" %>
     <%@expand ONCHANGE_WITH_DEFAULT "checker_real_time_limit" %>
+    <%@expand ONCHANGE_WITH_DEFAULT "checker_time_limit_ms" %>
+    <%@expand ONCHANGE_WITH_DEFAULT "checker_max_vm_size" %>
+    <%@expand ONCHANGE_WITH_DEFAULT "checker_max_stack_size" %>
+    <%@expand ONCHANGE_WITH_DEFAULT "checker_max_rss_size" %>
     <%@expand ONCHANGE_WITH_DEFAULT "valuer_cmd" %>
     <%@expand ONCHANGE_WITH_DEFAULT "interactor_cmd" %>
     <%@expand ONCHANGE_WITH_DEFAULT "interactor_time_limit" %>

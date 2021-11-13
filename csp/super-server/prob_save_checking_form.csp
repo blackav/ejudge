@@ -21,6 +21,14 @@
     ejintbool_t check_cmd_dflt = 0;
     int checker_real_time_limit = -1;
     ejintbool_t checker_real_time_limit_dflt = 0;
+    int checker_time_limit_ms = -1;
+    ejintbool_t checker_time_limit_ms_dflt = 0;
+    ej_size64_t checker_max_vm_size = -1LL;
+    ejintbool_t checker_max_vm_size_dflt = 0;
+    ej_size64_t checker_max_stack_size = -1LL;
+    ejintbool_t checker_max_stack_size_dflt = 0;
+    ej_size64_t checker_max_rss_size = -1LL;
+    ejintbool_t checker_max_rss_size_dflt = 0;
     char **checker_env = NULL;
     int scoring_checker = -1;
     int enable_checker_token = -1;
@@ -56,6 +64,14 @@
 %><s:read var="check_cmd_dflt" default="0" /><%
 %><s:read var="checker_real_time_limit" default="-1" /><%
 %><s:read var="checker_real_time_limit_dflt" default="0" /><%
+%><s:read var="checker_time_limit_ms" default="-1" /><%
+%><s:read var="checker_time_limit_ms_dflt" default="0" /><%
+%><s:read var="checker_max_vm_size" default="-1LL" /><%
+%><s:read var="checker_max_vm_size_dflt" default="0" /><%
+%><s:read var="checker_max_stack_size" default="-1LL" /><%
+%><s:read var="checker_max_stack_size_dflt" default="0" /><%
+%><s:read var="checker_max_rss_size" default="-1LL" /><%
+%><s:read var="checker_max_rss_size_dflt" default="0" /><%
 %><s:read var="checker_env" /><%
 %><s:read var="scoring_checker" default="-1" /><%
 %><s:read var="enable_checker_token" default="-1" /><%
@@ -95,6 +111,26 @@
     }
     if (checker_real_time_limit < 0) checker_real_time_limit = -1;
     if (checker_real_time_limit_dflt) checker_real_time_limit = -1;
+    if (checker_time_limit_ms < 0) checker_time_limit_ms = -1;
+    if (checker_time_limit_ms_dflt) checker_time_limit_ms = -1;
+    if (checker_max_vm_size < 0) checker_max_vm_size = -1LL;
+    if (checker_max_vm_size_dflt) checker_max_vm_size = -1LL;
+    if (checker_max_vm_size > 0 && checker_max_vm_size != (size_t) checker_max_vm_size) {
+        fprintf(msg_f, "checker_max_vm_size is too large<br/>");
+        FAIL(SSERV_ERR_INVALID_PARAMETER);
+    }
+    if (checker_max_stack_size < 0) checker_max_stack_size = -1LL;
+    if (checker_max_stack_size_dflt) checker_max_stack_size = -1LL;
+    if (checker_max_stack_size > 0 && checker_max_stack_size != (size_t) checker_max_stack_size) {
+        fprintf(msg_f, "checker_max_stack_size is too large<br/>");
+        FAIL(SSERV_ERR_INVALID_PARAMETER);
+    }
+    if (checker_max_rss_size < 0) checker_max_rss_size = -1LL;
+    if (checker_max_rss_size_dflt) checker_max_rss_size = -1LL;
+    if (checker_max_rss_size > 0 && checker_max_rss_size != (size_t) checker_max_rss_size) {
+        fprintf(msg_f, "checker_max_rss_size is too large<br/>");
+        FAIL(SSERV_ERR_INVALID_PARAMETER);
+    }
     if (scoring_checker > 0) scoring_checker = 1;
     if (enable_checker_token > 0) enable_checker_token = 1;
     if (enable_testlib_mode > 0) enable_testlib_mode = 1;
@@ -148,6 +184,22 @@
         xstrdup3(&prob->standard_checker, standard_checker);
         MOVESTR(check_cmd);
         prob->checker_real_time_limit = checker_real_time_limit;
+        prob->checker_time_limit_ms = checker_time_limit_ms;
+        if (checker_max_vm_size >= 0) {
+            prob->checker_max_vm_size = (size_t) checker_max_vm_size;
+        } else {
+            prob->checker_max_vm_size = -1LL;
+        }
+        if (checker_max_stack_size >= 0) {
+            prob->checker_max_stack_size = (size_t) checker_max_stack_size;
+        } else {
+            prob->checker_max_stack_size = -1LL;
+        }
+        if (checker_max_rss_size >= 0) {
+            prob->checker_max_rss_size = (size_t) checker_max_rss_size;
+        } else {
+            prob->checker_max_rss_size = -1LL;
+        }
         MOVEENV(checker_env);
         prob->scoring_checker = scoring_checker;
         prob->enable_checker_token = enable_checker_token;

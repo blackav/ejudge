@@ -1678,6 +1678,106 @@ function viewDialogOnChange(field)
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:checker_real_time_limit" /></td>
             </s:tr>
 
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-checker_time_limit_ms-div">
+                <td>Time limit for checker(ms):</td>
+                <td><s:textfield id="orig-checker_time_limit_ms" readonly="readonly" name="param" value="prob->checker_time_limit_ms" size="48" maxlength="1024" checkExpr=" >= 0" /><%
+    if (prob_id <= 0) {
+      if (prob->checker_time_limit_ms < 0) {
+%>(<i>Not set</i>)<%
+      } else if (!prob->checker_time_limit_ms) {
+%>(<i>Unlimited</i>)<%
+      }
+    } else {
+      if (prob->checker_time_limit_ms < 0 && tmp_prob->checker_time_limit_ms < 0) {
+%>(<i>Not set</i>)<%
+      } else if (prob->checker_time_limit_ms < 0 && !tmp_prob->checker_time_limit_ms) {
+%>(<i>Default: Unlimited</i>)<%
+      } else if (prob->checker_time_limit_ms < 0) {
+%>(<i>Default: <s:v value="tmp_prob->checker_time_limit_ms" /></i>)<%
+      } else if (!prob->checker_time_limit_ms) {
+%>(<i>Unlimited</i>)<%
+      }
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:checker_time_limit_ms" /></td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-checker_max_vm_size-div">
+                <td>VM limit for checker:</td>
+                <td><s:textfield id="orig-checker_max_vm_size" readonly="readonly" name="param" value="prob->checker_max_vm_size" size="48" maxlength="1024" checkExpr=" >= 0" /><%
+    if (prob_id <= 0) {
+      if (prob->checker_max_vm_size < 0) {
+%>(<i>Not set</i>)<%
+      } else if (!prob->checker_max_vm_size) {
+%>(<i>Unlimited</i>)<%
+      }
+    } else {
+      if (prob->checker_max_vm_size < 0 && tmp_prob->checker_max_vm_size < 0) {
+%>(<i>Not set</i>)<%
+      } else if (prob->checker_max_vm_size < 0 && !tmp_prob->checker_max_vm_size) {
+%>(<i>Default: Unlimited</i>)<%
+      } else if (prob->checker_max_vm_size < 0) {
+%>(<i>Default: <s:v value="tmp_prob->checker_max_vm_size" /></i>)<%
+      } else if (!prob->checker_max_vm_size) {
+%>(<i>Unlimited</i>)<%
+      }
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:checker_max_vm_size" /></td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-checker_max_stack_size-div">
+                <td>Stack limit for checker:</td>
+                <td><s:textfield id="orig-checker_max_stack_size" readonly="readonly" name="param" value="prob->checker_max_stack_size" size="48" maxlength="1024" checkExpr=" >= 0" /><%
+    if (prob_id <= 0) {
+      if (prob->checker_max_stack_size < 0) {
+%>(<i>Not set</i>)<%
+      } else if (!prob->checker_max_stack_size) {
+%>(<i>Unlimited</i>)<%
+      }
+    } else {
+      if (prob->checker_max_stack_size < 0 && tmp_prob->checker_max_stack_size < 0) {
+%>(<i>Not set</i>)<%
+      } else if (prob->checker_max_stack_size < 0 && !tmp_prob->checker_max_stack_size) {
+%>(<i>Default: Unlimited</i>)<%
+      } else if (prob->checker_max_stack_size < 0) {
+%>(<i>Default: <s:v value="tmp_prob->checker_max_stack_size" /></i>)<%
+      } else if (!prob->checker_max_stack_size) {
+%>(<i>Unlimited</i>)<%
+      }
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:checker_max_stack_size" /></td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-checker_max_rss_size-div">
+                <td>Stack limit for checker:</td>
+                <td><s:textfield id="orig-checker_max_rss_size" readonly="readonly" name="param" value="prob->checker_max_rss_size" size="48" maxlength="1024" checkExpr=" >= 0" /><%
+    if (prob_id <= 0) {
+      if (prob->checker_max_rss_size < 0) {
+%>(<i>Not set</i>)<%
+      } else if (!prob->checker_max_rss_size) {
+%>(<i>Unlimited</i>)<%
+      }
+    } else {
+      if (prob->checker_max_rss_size < 0 && tmp_prob->checker_max_rss_size < 0) {
+%>(<i>Not set</i>)<%
+      } else if (prob->checker_max_rss_size < 0 && !tmp_prob->checker_max_rss_size) {
+%>(<i>Default: Unlimited</i>)<%
+      } else if (prob->checker_max_rss_size < 0) {
+%>(<i>Default: <s:v value="tmp_prob->checker_max_rss_size" /></i>)<%
+      } else if (!prob->checker_max_rss_size) {
+%>(<i>Unlimited</i>)<%
+      }
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:checker_max_rss_size" /></td>
+            </s:tr>
+
             <%@expand ORIG_ENV "checker_env" "Checking" "Checker environment" %>
             <%@expand ORIG_INHERITABLE_BOOLEAN "scoring_checker" "Checking" "Checker calculates score" %>
             <%@expand ORIG_INHERITABLE_BOOLEAN "enable_checker_token" "Checking" "Scoring checker produces token" %>
