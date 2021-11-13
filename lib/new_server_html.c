@@ -16077,9 +16077,11 @@ batch_entry_point(
     goto invalid_parameter;
   }
 
+  /*
   //success:
   fprintf(fout, "Content-type: text/plain; charset=%s\n\n", EJUDGE_CHARSET);
   fprintf(fout, "ok\n");
+  */
 
   for (int i = 0; i < phr->param_num; ++i) {
     fprintf(fout, "<%s>=<%s>\n", phr->param_names[i], phr->params[i]);
