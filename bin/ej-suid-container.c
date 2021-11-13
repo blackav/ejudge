@@ -1102,6 +1102,37 @@ write_buf_to_file_fatal(const char *path, const char *buf, int len)
 }
 
 static void
+enable_controllers(void)
+{
+    const char *path = "/sys/fs/cgroup/ejudge/cgroup.subtree_control";
+    static const char buf[] = "+cpu +memory";
+    enum { len = sizeof(buf) - 1 };
+    int count = 0;
+
+    int fd = open(path, O_WRONLY);
+    if (fd < 0) {
+        ffatal("failed to open %s: %s", path, strerror(errno));
+    }
+
+    /*
+this fixes weird ENOENT on first creation of cgroup
+     */
+restart_write:
+    int z;
+    errno = 0;
+    if ((z = write(fd, buf, len)) != len) {
+        if (z < 0 && errno == ENOENT && ++count < 5) {
+            usleep(100000);
+            goto restart_write;
+        }
+        ffatal("failed to write to %s: %d, %s", path, z, strerror(errno));
+    }
+    if (close(fd) < 0) {
+        ffatal("failed to close %s: %s", path, strerror(errno));
+    }
+}
+
+static void
 create_cgroup(void)
 {
     // generate random cgroup name
@@ -1122,7 +1153,7 @@ create_cgroup(void)
             ffatal("cannot create directory /sys/fs/cgroup/ejudge: %s", strerror(errno));
         }
         if (r >= 0) {
-            write_buf_to_file_fatal("/sys/fs/cgroup/ejudge/cgroup.subtree_control", "+cpu +memory", 12);
+            enable_controllers();
         }
         if (snprintf(cgroup_unified_path, sizeof(cgroup_unified_path), "/sys/fs/cgroup/ejudge/%s", cgroup_name) >= sizeof(cgroup_unified_path)) {
             ffatal("invalid cgroup path");
