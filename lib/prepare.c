@@ -412,6 +412,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(accept_partial, "L"),
   PROBLEM_PARAM(min_tests_to_accept, "d"),
   PROBLEM_PARAM(checker_real_time_limit, "d"),
+  PROBLEM_PARAM(checker_time_limit_ms, "d"),
   PROBLEM_PARAM(disable_auto_testing, "L"),
   PROBLEM_PARAM(disable_testing, "L"),
   PROBLEM_PARAM(disable_user_submit, "L"),
@@ -469,6 +470,9 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM_2(type, do_problem_parse_type),
   PROBLEM_PARAM(interactor_time_limit, "d"),
   PROBLEM_PARAM(interactor_real_time_limit, "d"),
+  PROBLEM_PARAM(checker_max_vm_size, "E"),
+  PROBLEM_PARAM(checker_max_stack_size, "E"),
+  PROBLEM_PARAM(checker_max_rss_size, "E"),
 
   PROBLEM_PARAM(super, "s"),
   PROBLEM_PARAM(short_name, "s"),
@@ -1291,6 +1295,7 @@ prepare_problem_init_func(struct generic_section_config *gp)
   p->disqualified_penalty = -1;
   p->compile_error_penalty = -1;
   p->checker_real_time_limit = -1;
+  p->checker_time_limit_ms = -1;
   p->variant_num = -1;
   p->disable_auto_testing = -1;
   p->disable_testing = -1;
@@ -1348,6 +1353,9 @@ prepare_problem_init_func(struct generic_section_config *gp)
   p->interactor_time_limit = -1;
   p->interactor_real_time_limit = -1;
   p->max_user_run_count = -1;
+  p->checker_max_vm_size = -1LL;
+  p->checker_max_stack_size = -1LL;
+  p->checker_max_rss_size = -1LL;
 }
 
 void prepare_free_testsets(int t, struct testset_info *p);
@@ -3767,6 +3775,9 @@ set_defaults(
     prepare_set_prob_value(CNTSPROB_max_file_size, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_max_open_file_count, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_max_process_count, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_checker_max_vm_size, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_checker_max_stack_size, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_checker_max_rss_size, prob, aprob, g);
 
     prepare_set_prob_value(CNTSPROB_source_header, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_source_footer, prob, aprob, g);
@@ -4136,6 +4147,7 @@ set_defaults(
     prepare_set_prob_value(CNTSPROB_use_corr, prob, aprob, g);
 
     prepare_set_prob_value(CNTSPROB_checker_real_time_limit, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_checker_time_limit_ms, prob, aprob, g);
 
     if (prob->test_sets) {
       if (prepare_parse_testsets(prob->test_sets,
@@ -6002,6 +6014,7 @@ prepare_copy_problem(const struct section_problem_data *in)
   out->accept_partial = in->accept_partial;
   out->min_tests_to_accept = in->min_tests_to_accept;
   out->checker_real_time_limit = in->checker_real_time_limit;
+  out->checker_time_limit_ms = in->checker_time_limit_ms;
   out->disable_user_submit = in->disable_user_submit;
   out->notify_on_submit = in->notify_on_submit;
   out->disable_tab = in->disable_tab;
@@ -6162,6 +6175,9 @@ prepare_copy_problem(const struct section_problem_data *in)
   out->max_file_size = in->max_file_size;
   out->max_open_file_count = in->max_open_file_count;
   out->max_process_count = in->max_process_count;
+  out->checker_max_vm_size = in->checker_max_vm_size;
+  out->checker_max_stack_size = in->checker_max_stack_size;
+  out->checker_max_rss_size = in->checker_max_rss_size;
   xstrdup3(&out->extid, in->extid);
   //out->unhandled_vars = NULL;
   //out->score_view = NULL;
@@ -6391,6 +6407,10 @@ prepare_set_prob_value(
     if (out->checker_real_time_limit < 0) out->checker_real_time_limit = DFLT_G_CHECKER_REAL_TIME_LIMIT;
     break;
 
+  case CNTSPROB_checker_time_limit_ms:
+    if (out->checker_time_limit_ms < 0 && abstr) out->checker_time_limit_ms = abstr->checker_time_limit_ms;
+    break;
+
   case CNTSPROB_max_vm_size:
     if (out->max_vm_size < 0 && abstr) out->max_vm_size = abstr->max_vm_size;
     break;
@@ -6421,6 +6441,18 @@ prepare_set_prob_value(
 
   case CNTSPROB_max_process_count:
     if (out->max_process_count < 0 && abstr) out->max_process_count = abstr->max_process_count;
+    break;
+
+  case CNTSPROB_checker_max_vm_size:
+    if (out->checker_max_vm_size < 0 && abstr) out->checker_max_vm_size = abstr->checker_max_vm_size;
+    break;
+
+  case CNTSPROB_checker_max_stack_size:
+    if (out->checker_max_stack_size < 0 && abstr) out->checker_max_stack_size = abstr->checker_max_stack_size;
+    break;
+
+  case CNTSPROB_checker_max_rss_size:
+    if (out->checker_max_rss_size < 0 && abstr) out->checker_max_rss_size = abstr->checker_max_rss_size;
     break;
 
   case CNTSPROB_input_file:
@@ -6872,6 +6904,7 @@ prepare_set_all_prob_values(
     CNTSPROB_accept_partial,
     CNTSPROB_min_tests_to_accept,
     CNTSPROB_checker_real_time_limit,
+    CNTSPROB_checker_time_limit_ms,
     CNTSPROB_disable_user_submit,
     CNTSPROB_notify_on_submit,
     CNTSPROB_disable_tab,
@@ -7003,6 +7036,9 @@ prepare_set_all_prob_values(
     CNTSPROB_max_file_size,
     CNTSPROB_max_open_file_count,
     CNTSPROB_max_process_count,
+    CNTSPROB_checker_max_vm_size,
+    CNTSPROB_checker_max_stack_size,
+    CNTSPROB_checker_max_rss_size,
     //CNTSPROB_extid,
     //CNTSPROB_score_view,
     //CNTSPROB_score_view_text,

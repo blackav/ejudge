@@ -2174,6 +2174,10 @@ serve_run_request(
   srpp->accept_partial = prob->accept_partial;
   srpp->min_tests_to_accept = prob->min_tests_to_accept;
   srpp->checker_real_time_limit_ms = prob->checker_real_time_limit * 1000;
+  srpp->checker_time_limit_ms = prob->checker_time_limit_ms;
+  srpp->checker_max_vm_size = prob->checker_max_vm_size;
+  srpp->checker_max_stack_size = prob->checker_max_stack_size;
+  srpp->checker_max_rss_size = prob->checker_max_rss_size;
   srpp->short_name = xstrdup(prob->short_name);
   srpp->long_name = xstrdup2(prob->long_name);
   srpp->internal_name = xstrdup2(prob->internal_name);

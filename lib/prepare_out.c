@@ -1275,6 +1275,14 @@ prepare_unparse_prob(
     fprintf(f, "real_time_limit = %d\n", prob->real_time_limit);
   if (prob->checker_real_time_limit >= 0)
     fprintf(f, "checker_real_time_limit = %d\n", prob->checker_real_time_limit);
+  if (prob->checker_time_limit_ms >= 0)
+    fprintf(f, "checker_time_limit_ms = %d\n", prob->checker_time_limit_ms);
+  if (prob->checker_max_vm_size >= 0)
+    fprintf(f, "checker_max_vm_size = %s\n", ll_to_size_str(size_buf, sizeof(size_buf), prob->checker_max_vm_size));
+  if (prob->checker_max_stack_size >= 0)
+    fprintf(f, "checker_max_stack_size = %s\n", ll_to_size_str(size_buf, sizeof(size_buf), prob->checker_max_stack_size));
+  if (prob->checker_max_rss_size >= 0)
+    fprintf(f, "checker_max_rss_size = %s\n", ll_to_size_str(size_buf, sizeof(size_buf), prob->checker_max_rss_size));
 
   if (prob->max_vm_size >= 0)
     fprintf(f, "max_vm_size = %s\n", ll_to_size_str(size_buf, sizeof(size_buf), prob->max_vm_size));
@@ -1739,6 +1747,14 @@ prepare_unparse_actual_prob(
     fprintf(f, "real_time_limit = %d\n", prob->real_time_limit);
   if (prob->checker_real_time_limit > 0)
     fprintf(f, "checker_real_time_limit = %d\n", prob->checker_real_time_limit);
+  if (prob->checker_time_limit_ms > 0)
+    fprintf(f, "checker_time_limit_ms = %d\n", prob->checker_time_limit_ms);
+  if (prob->checker_max_vm_size >= 0)
+    fprintf(f, "checker_max_vm_size = %s\n", ll_to_size_str(size_buf, sizeof(size_buf), prob->checker_max_vm_size));
+  if (prob->checker_max_stack_size >= 0)
+    fprintf(f, "checker_max_stack_size = %s\n", ll_to_size_str(size_buf, sizeof(size_buf), prob->checker_max_stack_size));
+  if (prob->checker_max_rss_size >= 0)
+    fprintf(f, "checker_max_rss_size = %s\n", ll_to_size_str(size_buf, sizeof(size_buf), prob->checker_max_rss_size));
 
   if (prob->max_vm_size >= 0)
     fprintf(f, "max_vm_size = %s\n", ll_to_size_str(size_buf, sizeof(size_buf), prob->max_vm_size));
