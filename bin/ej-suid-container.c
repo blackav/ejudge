@@ -1104,6 +1104,10 @@ write_buf_to_file_fatal(const char *path, const char *buf, int len)
 static void
 enable_controllers(void)
 {
+    write_buf_to_file_fatal("/sys/fs/cgroup/cgroup.subtree_control", "+cpu", 4);
+    write_buf_to_file_fatal("/sys/fs/cgroup/ejudge/cgroup.subtree_control", "+cpu +memory", 12);
+    return;
+
     const char *path = "/sys/fs/cgroup/ejudge/cgroup.subtree_control";
     static const char buf[] = "+cpu +memory";
     enum { len = sizeof(buf) - 1 };
