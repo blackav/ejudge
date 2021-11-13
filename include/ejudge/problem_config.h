@@ -120,7 +120,7 @@ struct problem_config_section
   int compile_error_penalty;
   int min_tests_to_accept;
   int checker_real_time_limit;
-  int checker_time_limit;
+  int checker_time_limit_ms;
   int priority_adjustment;
   int score_multiplier;
   int prev_runs_to_show;

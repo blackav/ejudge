@@ -91,7 +91,7 @@ enum
   META_PROBLEM_CONFIG_SECTION_compile_error_penalty,
   META_PROBLEM_CONFIG_SECTION_min_tests_to_accept,
   META_PROBLEM_CONFIG_SECTION_checker_real_time_limit,
-  META_PROBLEM_CONFIG_SECTION_checker_time_limit,
+  META_PROBLEM_CONFIG_SECTION_checker_time_limit_ms,
   META_PROBLEM_CONFIG_SECTION_priority_adjustment,
   META_PROBLEM_CONFIG_SECTION_score_multiplier,
   META_PROBLEM_CONFIG_SECTION_prev_runs_to_show,

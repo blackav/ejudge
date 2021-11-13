@@ -811,6 +811,7 @@ merge_problem_section(
         { CNTSPROB_min_tests_to_accept, META_PROBLEM_CONFIG_SECTION_min_tests_to_accept, 0 },
         { CNTSPROB_tests_to_accept, META_PROBLEM_CONFIG_SECTION_tests_to_accept, 0 },
         { CNTSPROB_checker_real_time_limit, META_PROBLEM_CONFIG_SECTION_checker_real_time_limit, 0 },
+        { CNTSPROB_checker_time_limit_ms, META_PROBLEM_CONFIG_SECTION_checker_time_limit_ms, 0 },
         { CNTSPROB_score_multiplier, META_PROBLEM_CONFIG_SECTION_score_multiplier, 0 },
         { CNTSPROB_prev_runs_to_show, META_PROBLEM_CONFIG_SECTION_prev_runs_to_show, 0 },
         { CNTSPROB_max_user_run_count, META_PROBLEM_CONFIG_SECTION_max_user_run_count, 0 },
@@ -881,6 +882,9 @@ merge_problem_section(
         { CNTSPROB_max_stack_size, META_PROBLEM_CONFIG_SECTION_max_stack_size },
         { CNTSPROB_max_core_size, META_PROBLEM_CONFIG_SECTION_max_core_size },
         { CNTSPROB_max_file_size, META_PROBLEM_CONFIG_SECTION_max_file_size },
+        { CNTSPROB_checker_max_vm_size, META_PROBLEM_CONFIG_SECTION_checker_max_vm_size },
+        { CNTSPROB_checker_max_stack_size, META_PROBLEM_CONFIG_SECTION_checker_max_stack_size },
+        { CNTSPROB_checker_max_rss_size, META_PROBLEM_CONFIG_SECTION_checker_max_rss_size },
 
         { 0, 0 },
     };
