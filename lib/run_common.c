@@ -1996,6 +1996,15 @@ invoke_interactor(
   if (srpp->interactor_real_time_limit_ms > 0) {
     task_SetMaxRealTimeMillis(tsk_int, srpp->interactor_real_time_limit_ms);
   }
+  if (srpp->checker_max_stack_size > 0) {
+    task_SetStackSize(tsk_int, srpp->checker_max_stack_size);
+  }
+  if (srpp->checker_max_vm_size > 0) {
+    task_SetVMSize(tsk_int, srpp->checker_max_vm_size);
+  }
+  if (srpp->checker_max_rss_size > 0) {
+    task_SetRSSSize(tsk_int, srpp->checker_max_rss_size);
+  }
 
   task_PrintArgs(tsk_int);
 
