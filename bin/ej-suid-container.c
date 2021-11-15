@@ -1563,6 +1563,10 @@ apply_language_profiles(void)
         enable_sys_execve = 1;
         enable_proc = 1;
         limit_stack_size = 1024 * 1024; // 1M
+        if (limit_vm_size > 0 && limit_rss_size <= 0) {
+            limit_rss_size = limit_vm_size;
+            limit_vm_size = -1;
+        }
     } else if (!strcmp(language_name, "pypy") || !strcmp(language_name, "pypy3")) {
         enable_proc = 1;
     } else if (!strcmp(language_name, "gcc-vg") || !strcmp(language_name, "g++-vg")) {
@@ -1575,7 +1579,10 @@ apply_language_profiles(void)
         enable_proc = 1;
         limit_processes = 40;
         limit_stack_size = 1024 * 1024; // 1M
-        limit_vm_size = -1;     // use max_rss_size
+        if (limit_vm_size > 0 && limit_rss_size <= 0) {
+            limit_rss_size = limit_vm_size;
+            limit_vm_size = -1;
+        }
     } else if (!strcmp(language_name, "make")) {
         enable_seccomp = 0;
         enable_proc = 1;
@@ -1583,6 +1590,15 @@ apply_language_profiles(void)
         enable_seccomp = 0;
         enable_proc = 1;
         limit_vm_size = -1;
+    } else if (!strcmp(language_name, "gccgo")) {
+        enable_sys_fork = 1;
+        enable_sys_execve = 1;
+        enable_proc = 1;
+        limit_processes = 20;
+        if (limit_vm_size > 0 && limit_rss_size <= 0) {
+            limit_rss_size = limit_vm_size;
+            limit_vm_size = -1;
+        }
     }
 }
 
