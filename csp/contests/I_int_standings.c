@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2017-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2017-2021 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -984,6 +984,8 @@ sort_moscow(
         StandingsExtraInfo *sii,
         struct serve_state *cs)
 {
+    if (pg->t_tot <= 0) return;
+
     int *pen_cnt = NULL;
     int *pen_st = NULL;
     int max_pen = -1;
