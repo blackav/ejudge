@@ -1658,13 +1658,16 @@ extract_size(const char **ppos, int init_offset, const char *opt_name)
     pos = eptr;
     if (*pos == 'k' || *pos == 'K') {
         if (__builtin_mul_overflow(v, 1024LL, &v)) fatal("size overflow for option %s", opt_name);
+        ++pos;
     } else if (*pos == 'm' || *pos == 'M') {
         if (__builtin_mul_overflow(v, 1048576LL, &v)) fatal("size overflow for option %s", opt_name);
+        ++pos;
     } else if (*pos == 'g' || *pos == 'G') {
         if (__builtin_mul_overflow(v, 1073741824LL, &v)) fatal("size overflow for option %s", opt_name);
+        ++pos;
     }
     if ((size_t) v != v) ffatal("size overflow for option %s", opt_name);
-    *ppos = eptr;
+    *ppos = pos;
     return v;
 }
 
