@@ -121,6 +121,7 @@ struct tTask
   int    umask;                 /* process umask */
   int    ctl_socket_fd_1;       /* this side of the control socket */
   int    ctl_socket_fd_2;       /* other side of the control socket */
+  int    user_serial;           /* executing user serial */
   struct rusage usage;          /* process resource utilization */
   struct timeval start_time;    /* start real-time */
   struct timeval stop_time;     /* stop real-time */
@@ -1346,6 +1347,15 @@ task_SetControlSocket(tTask *tsk, int fd1, int fd2)
 }
 
 int
+task_SetUserSerial(tTask *tsk, int serial)
+{
+  task_init_module();
+  ASSERT(tsk);
+  tsk->user_serial = serial;
+  return 0;
+}
+
+int
 task_SetKillSignal(tTask *tsk, char const *signame)
 {
   task_init_module();
@@ -1637,6 +1647,9 @@ task_StartContainer(tTask *tsk)
   fprintf(spec_f, "-f%d", status_pipe[1]);
   if (tsk->ctl_socket_fd_1 >= 0) {
     fprintf(spec_f, "cf%d", tsk->ctl_socket_fd_1);
+  }
+  if (tsk->user_serial > 0) {
+    fprintf(spec_f, "cu%d", tsk->user_serial);
   }
 
   // add redirections
