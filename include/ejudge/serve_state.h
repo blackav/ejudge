@@ -335,6 +335,9 @@ struct serve_state
 
   // compiler options to report
   unsigned char **compiler_options;
+
+  // serial number for the testing user
+  int exec_user_serial;
 };
 typedef struct serve_state *serve_state_t;
 
