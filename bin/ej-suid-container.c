@@ -1735,7 +1735,7 @@ extract_size(const char **ppos, int init_offset, const char *opt_name)
  *   s0     - disable syscall filtering
  *   se     - enable execve(at)
  *   sf     - enable fork, vfork, clone, clone3
- *   cf     - specify control socket fd
+ *   cf<FD> - specify control socket fd
  *   cu<N>  - specify ejcompile/ejexec serial (ejexec1, ejexec2...)
  */
 
