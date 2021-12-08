@@ -144,6 +144,7 @@ static char *working_dir_name = NULL;
 
 static int bash_mode = 0;
 
+static int exec_user_serial = 0;
 static int exec_uid = -1;
 static int exec_gid = -1;
 static int primary_uid = -1;
@@ -254,6 +255,22 @@ static void
 get_user_ids(void)
 {
     // don't use getpwnam because it depends on PAM, etc
+    char exec_user_str[64];
+    if (exec_user_serial > 0) {
+        if (snprintf(exec_user_str, sizeof(exec_user_str), "%s%d", EXEC_USER, exec_user_serial) >= sizeof(exec_user_str))
+            ffatal("invalid user %s%d", EXEC_USER, exec_user_serial);
+    } else {
+        if (snprintf(exec_user_str, sizeof(exec_user_str), "%s", EXEC_USER) >= sizeof(exec_user_str))
+            ffatal("invalid user %s", EXEC_USER);
+    }
+    char exec_group_str[64];
+    if (exec_user_serial > 0) {
+        if (snprintf(exec_group_str, sizeof(exec_group_str), "%s%d", EXEC_GROUP, exec_user_serial) >= sizeof(exec_group_str))
+            ffatal("invalid group %s%d", EXEC_GROUP, exec_user_serial);
+    } else {
+        if (snprintf(exec_group_str, sizeof(exec_group_str), "%s", EXEC_GROUP) >= sizeof(exec_group_str))
+            ffatal("invalid group %s", EXEC_GROUP);
+    }
 
     FILE *f = fopen("/etc/passwd", "r");
     if (!f) ffatal("cannot open /etc/passwd: %s", strerror(errno));
@@ -273,7 +290,7 @@ get_user_ids(void)
         if (!s) ffatal("invalid /etc/passwd (3)");
         *s = 0;
         int *dest_uid = NULL;
-        if (!strcmp(user_name, EXEC_USER)) dest_uid = &exec_uid;
+        if (!strcmp(user_name, exec_user_str)) dest_uid = &exec_uid;
         else if (!strcmp(user_name, PRIMARY_USER)) dest_uid = &primary_uid;
         else if (!strcmp(user_name, COMPILE_USER)) dest_uid = &compile_uid;
         if (dest_uid) {
@@ -287,8 +304,8 @@ get_user_ids(void)
     }
     fclose(f); f = NULL;
 
-    if (exec_uid < 0) ffatal("no user %s", EXEC_USER);
-    if (exec_uid == 0) ffatal("user %s cannot be root", EXEC_USER);
+    if (exec_uid < 0) ffatal("no user %s", exec_user_str);
+    if (exec_uid == 0) ffatal("user %s cannot be root", exec_user_str);
     if (primary_uid < 0) ffatal("no user %s", PRIMARY_USER);
     if (primary_uid == 0) ffatal("user %s cannot be root", PRIMARY_USER);
 
@@ -308,7 +325,7 @@ get_user_ids(void)
         if (!s) ffatal("invalid /etc/group (3)");
         *s = 0;
         int *dest_gid = NULL;
-        if (!strcmp(group_name, EXEC_GROUP)) dest_gid = &exec_gid;
+        if (!strcmp(group_name, exec_group_str)) dest_gid = &exec_gid;
         else if (!strcmp(group_name, PRIMARY_GROUP)) dest_gid = &primary_gid;
         else if (!strcmp(group_name, COMPILE_GROUP)) dest_gid = &compile_gid;
         if (dest_gid) {
@@ -322,8 +339,8 @@ get_user_ids(void)
     }
     fclose(f); f = NULL;
 
-    if (exec_gid < 0) ffatal("no group %s", EXEC_GROUP);
-    if (exec_gid == 0) ffatal("group %s cannot be root", EXEC_GROUP);
+    if (exec_gid < 0) ffatal("no group %s", exec_group_str);
+    if (exec_gid == 0) ffatal("group %s cannot be root", exec_group_str);
     if (primary_gid < 0) ffatal("no group %s", PRIMARY_GROUP);
     if (primary_gid == 0) ffatal("group %s cannot be root", PRIMARY_GROUP);
 }
@@ -1719,6 +1736,7 @@ extract_size(const char **ppos, int init_offset, const char *opt_name)
  *   se     - enable execve(at)
  *   sf     - enable fork, vfork, clone, clone3
  *   cf     - specify control socket fd
+ *   cu<N>  - specify ejcompile/ejexec serial (ejexec1, ejexec2...)
  */
 
 int
@@ -1973,6 +1991,15 @@ main(int argc, char *argv[])
                     ffatal("invalid control socket fd");
                 }
                 control_socket_fd = v;
+                opt = eptr;
+            } else if (*opt == 'c' && opt[1] == 'u') {
+                char *eptr = NULL;
+                errno = 0;
+                long v = strtol(opt + 2, &eptr, 10);
+                if (errno || eptr == opt + 2 || v < 0 || (int) v != v) {
+                    ffatal("invalid user serial");
+                }
+                exec_user_serial = v;
                 opt = eptr;
             } else {
                 flog("invalid option: %s", opt);
