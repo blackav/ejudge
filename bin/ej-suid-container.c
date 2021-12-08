@@ -1754,21 +1754,7 @@ main(int argc, char *argv[])
     signal(SIGCHLD, SIG_DFL);
     log_f = open_memstream(&log_s, &log_z);
 
-    get_user_ids();
-
-    slave_uid = exec_uid;
-    slave_gid = exec_gid;
-
     snprintf(safe_dir_path, sizeof(safe_dir_path), "%s/share/ejudge/container", EJUDGE_PREFIX_DIR);
-
-#ifndef ENABLE_ANY_USER
-    {
-        int self_uid = getuid();
-        if (self_uid != primary_uid && self_uid != 0) {
-            ffatal("not allowed");
-        }
-    }
-#endif
 
     if (argc < 1) {
         flog("wrong number of arguments");
@@ -1853,19 +1839,7 @@ main(int argc, char *argv[])
                 enable_subdir_mode = 1;
                 opt += 2;
             } else if (*opt == 'm' && opt[1] == 'C') {
-                if (compile_uid <= 0 || compile_gid <= 0) {
-                    ffatal("ejcompile user not set up");
-                }
-                slave_uid = compile_uid;
-                slave_gid = compile_gid;
                 enable_compile_mode = 1;
-                if (limit_vm_size == DEFAULT_LIMIT_VM_SIZE) {
-                    limit_vm_size = -1;
-                }
-                if (limit_cpu_time_ms == DEFAULT_LIMIT_CPU_TIME_MS) {
-                    limit_cpu_time_ms = 60000;
-                }
-                limit_processes = 100;
                 opt += 2;
             } else if (*opt == 'w') {
                 working_dir = extract_string(&opt, 1, "w");
@@ -2009,6 +1983,35 @@ main(int argc, char *argv[])
 
         char *p = argv[argi - 1];
         while (*p) *p++ = 0;
+    }
+
+    get_user_ids();
+
+    slave_uid = exec_uid;
+    slave_gid = exec_gid;
+
+#ifndef ENABLE_ANY_USER
+    {
+        int self_uid = getuid();
+        if (self_uid != primary_uid && self_uid != 0) {
+            ffatal("not allowed");
+        }
+    }
+#endif
+
+    if (enable_compile_mode) {
+        if (compile_uid <= 0 || compile_gid <= 0) {
+            ffatal("ejcompile user not set up");
+        }
+        slave_uid = compile_uid;
+        slave_gid = compile_gid;
+        if (limit_vm_size == DEFAULT_LIMIT_VM_SIZE) {
+            limit_vm_size = -1;
+        }
+        if (limit_cpu_time_ms == DEFAULT_LIMIT_CPU_TIME_MS) {
+            limit_cpu_time_ms = 60000;
+        }
+        limit_processes = 100;
     }
 
     apply_language_profiles();
