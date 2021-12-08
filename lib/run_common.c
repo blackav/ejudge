@@ -3233,6 +3233,9 @@ run_one_test(
   if (srpp->enable_control_socket) {
     task_SetControlSocket(tsk, cfd[0], cfd[1]);
   }
+  if (state->exec_user_serial > 0) {
+    task_SetUserSerial(tsk, state->exec_user_serial);
+  }
 
   //task_PrintArgs(tsk);
 

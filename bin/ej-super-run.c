@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2012-2020 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2021 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1298,6 +1298,17 @@ main(int argc, char *argv[])
     } else if (!strcmp(argv[cur_arg], "-e")) {
       if (cur_arg + 1 >= argc) fatal("argument expected for -e");
       parse_remap_spec(argv[cur_arg + 1]);
+      argv_restart[argc_restart++] = argv[cur_arg];
+      argv_restart[argc_restart++] = argv[cur_arg + 1];
+      cur_arg += 2;
+    } else if (!strcmp(argv[cur_arg], "-x")) {
+      if (cur_arg + 1 >= argc) fatal("argument expected for -x");
+      errno = 0;
+      char *ep = NULL;
+      long val = strtol(argv[cur_arg + 1], &ep, 10);
+      if (errno || *ep || ep == argv[cur_arg + 1] || val < 0 || (int) val != val)
+        fatal("invalid argument for -x");
+      state->exec_user_serial = val;
       argv_restart[argc_restart++] = argv[cur_arg];
       argv_restart[argc_restart++] = argv[cur_arg + 1];
       cur_arg += 2;
