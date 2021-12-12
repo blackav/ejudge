@@ -2446,22 +2446,21 @@ main(int argc, char *argv[])
                         long long cur_cpu_time = (long long) prc_info.utime + (long long) prc_info.stime;
                         cur_cpu_time = (cur_cpu_time * 1000) / clock_ticks;
                         if (limit_cpu_time_ms > 0 && cur_cpu_time >= limit_cpu_time_ms) {
-                            flag = 0;
                             prc_time_exceeded = 1;
-                            break;
-                        }
-                        long long cur_time_us = 0;
-                        {
-                            struct timeval tv;
-                            gettimeofday(&tv, NULL);
-                            cur_time_us = tv.tv_sec * 1000000LL + tv.tv_usec;
-                        }
+                            kill(pid2, SIGKILL);
+                        } else {
+                            long long cur_time_us = 0;
+                            {
+                                struct timeval tv;
+                                gettimeofday(&tv, NULL);
+                                cur_time_us = tv.tv_sec * 1000000LL + tv.tv_usec;
+                            }
 
-                        if (limit_real_time_ms > 0 && (cur_time_us - prc_start_time_us) >= limit_real_time_ms * 1000LL) {
-                            // REAL-TIME limit exceeded
-                            flag = 0;
-                            prc_real_time_exceeded = 1;
-                            break;
+                            if (limit_real_time_ms > 0 && (cur_time_us - prc_start_time_us) >= limit_real_time_ms * 1000LL) {
+                                // REAL-TIME limit exceeded
+                                prc_real_time_exceeded = 1;
+                                kill(pid2, SIGKILL);
+                            }
                         }
                     }
                 } else if (control_socket_fd >= 0 && curev->data.fd == control_socket_fd) {
@@ -2489,34 +2488,6 @@ main(int argc, char *argv[])
             }
         }
 
-        if (prc_time_exceeded) {
-            kill_all();
-
-            if (log_f) {
-                fclose(log_f); log_f = NULL;
-            }
-            dprintf(response_fd, "tT%lldu%lldk%lld", limit_cpu_time_ms * 1000LL, limit_cpu_time_ms * 1000LL, 0LL);
-            if (log_s && *log_s) {
-                int len = strlen(log_s);
-                dprintf(response_fd, "L%d,%s", len, log_s);
-            }
-            _exit(0);
-        }
-
-        if (prc_real_time_exceeded) {
-            kill_all();
-
-            if (log_f) {
-                fclose(log_f); log_f = NULL;
-            }
-            dprintf(response_fd, "rR%lld", limit_real_time_ms * 1000LL);
-            if (log_s && *log_s) {
-                int len = strlen(log_s);
-                dprintf(response_fd, "L%d,%s", len, log_s);
-            }
-            _exit(0);
-        }
-
         if (!WIFEXITED(prc_status) && !WIFSIGNALED(prc_status)) {
             kill_all();
             ffatal("wait4 process is neither exited nor signaled");
@@ -2537,7 +2508,26 @@ main(int argc, char *argv[])
             ipc_objects += scan_shm(slave_uid);
         }
 
-        if (WIFEXITED(prc_status)) {
+        long long cpu_utime_us = prc_usage.ru_utime.tv_sec * 1000000LL + prc_usage.ru_utime.tv_usec;
+        long long cpu_stime_us = prc_usage.ru_stime.tv_sec * 1000000LL + prc_usage.ru_stime.tv_usec;
+        long long cpu_time_us = cpu_utime_us + cpu_stime_us;
+        long long real_time_us = prc_stop_time_us - prc_start_time_us;
+
+        // recheck TLs after termination
+        if (limit_cpu_time_ms > 0 && cpu_time_us >= limit_cpu_time_ms * 1000LL) {
+            prc_time_exceeded = 1;
+            cpu_time_us = limit_cpu_time_ms * 1000LL;
+        }
+        if (limit_real_time_ms > 0 && real_time_us >= limit_real_time_ms * 1000LL) {
+            prc_real_time_exceeded = 1;
+            real_time_us = limit_real_time_ms * 1000LL;
+        }
+
+        if (prc_time_exceeded) {
+            dprintf(response_fd, "t");
+        } else if (prc_real_time_exceeded) {
+            dprintf(response_fd, "r");
+        } else if (WIFEXITED(prc_status)) {
             dprintf(response_fd, "e%d", WEXITSTATUS(prc_status));
         } else if (WIFSIGNALED(prc_status)) {
             dprintf(response_fd, "s%d", WTERMSIG(prc_status));
@@ -2550,10 +2540,7 @@ main(int argc, char *argv[])
             read_cgroup_stats(&cgstat);
         }
 
-        long long cpu_utime_us = prc_usage.ru_utime.tv_sec * 1000000LL + prc_usage.ru_utime.tv_usec;
-        long long cpu_stime_us = prc_usage.ru_stime.tv_sec * 1000000LL + prc_usage.ru_stime.tv_usec;
-        long long cpu_time_us = cpu_utime_us + cpu_stime_us;
-        dprintf(response_fd, "T%lldR%lldu%lldk%lld", cpu_time_us, prc_stop_time_us - prc_start_time_us, cpu_utime_us, cpu_stime_us);
+        dprintf(response_fd, "T%lldR%lldu%lldk%lld", cpu_time_us, real_time_us, cpu_utime_us, cpu_stime_us);
         if (prc_vm_size > 0) dprintf(response_fd, "v%lld", prc_vm_size);
         if (prc_usage.ru_maxrss > 0) dprintf(response_fd, "e%lld", (long long) prc_usage.ru_maxrss * 1024LL);
         dprintf(response_fd, "a%lldb%lld", (long long) prc_usage.ru_nvcsw, (long long) prc_usage.ru_nivcsw);
