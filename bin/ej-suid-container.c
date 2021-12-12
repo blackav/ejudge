@@ -2517,6 +2517,8 @@ main(int argc, char *argv[])
         if (limit_cpu_time_ms > 0 && cpu_time_us >= limit_cpu_time_ms * 1000LL) {
             prc_time_exceeded = 1;
             cpu_time_us = limit_cpu_time_ms * 1000LL;
+            cpu_utime_us = cpu_time_us;
+            cpu_stime_us = 0;
         }
         if (limit_real_time_ms > 0 && real_time_us >= limit_real_time_ms * 1000LL) {
             prc_real_time_exceeded = 1;
