@@ -802,6 +802,14 @@ failed:
 static int
 kill_all(void)
 {
+    return 0;
+    /*
+     * this is not necessary if pid namespace is enabled:
+     * all the remaining processes are killed by the kernel anyway
+     * and more, this seems to break using of several instances
+     * of ej-suid-container on the same host
+     */
+#if 0
     int pid = fork();
     if (pid < 0) {
         fprintf(stderr, "killing all processes: fork() failed: %s\n", strerror(errno));
@@ -821,6 +829,7 @@ kill_all(void)
     while (wait(NULL) > 0) {}
 
     return 0;
+#endif
 }
 
 struct process_info
