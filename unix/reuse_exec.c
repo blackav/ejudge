@@ -2665,6 +2665,7 @@ task_WaitContainer(tTask *tsk)
       }
       char tmp = eptr[v]; eptr[v] = 0;
       write_log(LOG_REUSE, LOG_ERROR, "task_WaitContainer: container messages: %s\n", eptr);
+      xfree(tsk->last_error_msg); tsk->last_error_msg = xstrdup(eptr);
       eptr[v] = tmp;
       resp_p = eptr + v;
     }
