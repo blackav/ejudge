@@ -3462,6 +3462,13 @@ run_one_test(
     goto cleanup;
   }
 
+  if (task_GetIPCObjectCount(tsk) > 0) {
+    status = RUN_SECURITY_ERR;
+    append_msg_to_log(check_out_path, "%s", task_GetErrorMessage(tsk));
+    if (tsk_int) goto read_checker_output;
+    goto cleanup;
+  }
+
   // terminated with a signal
   if (task_Status(tsk) == TSK_SIGNALED) {
     cur_info->code = 256; /* FIXME: magic */
