@@ -2663,10 +2663,10 @@ task_WaitContainer(tTask *tsk)
         tsk->was_check_failed = 1;
         return NULL;
       }
-      char tmp = eptr[v];
+      char tmp = eptr[v]; eptr[v] = 0;
       write_log(LOG_REUSE, LOG_ERROR, "task_WaitContainer: container messages: %s\n", eptr);
       eptr[v] = tmp;
-      resp_p = eptr;
+      resp_p = eptr + v;
     }
   }
 
