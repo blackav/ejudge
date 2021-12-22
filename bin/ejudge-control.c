@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2021 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -260,6 +260,12 @@ command_start(
       if (workdir) {
         task_AddArg(tsk, "-C");
         task_AddArg(tsk, workdir);
+      }
+      if (i > 0) {
+        char buf[64];
+        sprintf(buf, "%d", i);
+        task_AddArg(tsk, "-x");
+        task_AddArg(tsk, buf);
       }
       task_SetPathAsArg0(tsk);
       task_Start(tsk);
