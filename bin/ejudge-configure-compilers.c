@@ -1,6 +1,6 @@
 /* -*- mode:c -*- */
 
-/* Copyright (C) 2008-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2021 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -281,6 +281,18 @@ save_config_files(FILE *log_f, WINDOW *out_win)
     save_config_file(pcfg, log_f, out_win);
   }
   if (!preserve_compile_cfg) save_compile_cfg(log_f, out_win);
+
+  char upd_scripts_cmd[PATH_MAX];
+#if defined EJUDGE_SERVER_BIN_PATH
+  snprintf(upd_scripts_cmd, sizeof(upd_scripts_cmd),
+           "%s/ej-suid-update-scripts all", EJUDGE_SERVER_BIN_PATH);
+#elif defined EJUDGE_PREFIX_DIR
+  snprintf(upd_scripts_cmd, sizeof(upd_scripts_cmd),
+           "%s/bin/ej-suid-update-scripts all", EJUDGE_PREFIX_DIR);
+#else
+#error invalid configuration
+#endif
+  system(upd_scripts_cmd);
 }
 
 static void
