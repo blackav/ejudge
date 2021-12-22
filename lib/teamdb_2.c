@@ -1,7 +1,6 @@
 /* -*- c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2010-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2010-2021 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -80,6 +79,7 @@ teamdb_get_user_map(
     if (filter && filter->stand_user_tree) {
       for (i = 1; i < u_max; ++i) {
         if (!state->users->user_map[i]) continue;
+        if (state->u_contests[i]->status != 0) continue;
         f = state->u_contests[i]->flags;
         if ((f & (USERLIST_UC_INVISIBLE
                   | USERLIST_UC_BANNED
@@ -94,6 +94,7 @@ teamdb_get_user_map(
     } else {
       for (i = 1; i < u_max; ++i) {
         if (!state->users->user_map[i]) continue;
+        if (state->u_contests[i]->status != 0) continue;
         f = state->u_contests[i]->flags;
         if ((f & (USERLIST_UC_INVISIBLE
                   | USERLIST_UC_BANNED
@@ -108,6 +109,7 @@ teamdb_get_user_map(
     if (filter && filter->stand_user_tree) {
       for (i = 1; i < u_max; ++i) {
         if (!state->users->user_map[i]) continue;
+        if (state->u_contests[i]->status != 0) continue;
         f = state->u_contests[i]->flags;
         if ((f & (USERLIST_UC_INVISIBLE
                   | USERLIST_UC_BANNED
@@ -121,6 +123,7 @@ teamdb_get_user_map(
     } else {
       for (i = 1; i < u_max; ++i) {
         if (!state->users->user_map[i]) continue;
+        if (state->u_contests[i]->status != 0) continue;
         f = state->u_contests[i]->flags;
         if ((f & (USERLIST_UC_INVISIBLE
                   | USERLIST_UC_BANNED
