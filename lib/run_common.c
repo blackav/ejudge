@@ -1049,9 +1049,11 @@ invoke_valuer(
   task_SetRedir(tsk, 2, TSR_FILE, score_err, TSK_REWRITE, TSK_FULL_RW);
   task_SetWorkingDir(tsk, global->run_work_dir);
   task_SetPathAsArg0(tsk);
+  /*
   if (srpp->checker_real_time_limit_ms > 0) {
     task_SetMaxRealTimeMillis(tsk, srpp->checker_real_time_limit_ms);
   }
+  */
   if (srpp->checker_time_limit_ms > 0) {
     task_SetMaxTimeMillis(tsk, srpp->checker_time_limit_ms);
   }
@@ -1168,9 +1170,11 @@ start_interactive_valuer(
   task_SetRedir(tsk, 2, TSR_FILE, valuer_err_file, TSK_APPEND, TSK_FULL_RW);
   task_SetWorkingDir(tsk, global->run_work_dir);
   task_SetPathAsArg0(tsk);
+  /*
   if (srpp->checker_real_time_limit_ms > 0) {
     task_SetMaxRealTimeMillis(tsk, srpp->checker_real_time_limit_ms);
   }
+  */
   if (srpp->checker_time_limit_ms > 0) {
     task_SetMaxTimeMillis(tsk, srpp->checker_time_limit_ms);
   }
