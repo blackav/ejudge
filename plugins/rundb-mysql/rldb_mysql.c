@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2008-2019 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -297,7 +297,18 @@ do_open(struct rldb_mysql_state *state)
       return -1;
     run_version = 10;
   }
-  if (run_version != 10) {
+  if (run_version == 10) {
+    if (mi->simple_fquery(md, create_userrunheaders_query, md->table_prefix) < 0)
+      return -1;
+    if (mi->simple_fquery(md, "ALTER TABLE %suserrunheaders ADD INDEX userrunheaders_contest_id_idx (contest_id);", md->table_prefix) < 0)
+      return -1;
+    if (mi->simple_fquery(md, "ALTER TABLE %suserrunheaders ADD INDEX userrunheaders_user_id_idx (user_id);", md->table_prefix) < 0)
+      return -1;
+    if (mi->simple_fquery(md, "UPDATE %sconfig SET config_val = '11' WHERE config_key = 'run_version' ;", md->table_prefix) < 0)
+      return -1;
+    run_version = 11;
+  }
+  if (run_version != 11) {
     err("run_version == %d is not supported", run_version);
     return -1;
   }
