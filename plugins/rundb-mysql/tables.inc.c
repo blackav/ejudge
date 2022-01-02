@@ -245,7 +245,7 @@ static const char create_userrunheaders_query[] =
 "        last_change_time DATETIME DEFAULT NULL, "
 "        last_change_user_id INT UNSIGNED DEFAULT NULL, "
 "        PRIMARY KEY (user_id, contest_id)"
-"        );";
+"        ) DEFAULT CHARSET=utf8 COLLATE=utf8_bin;";
 
 struct user_run_header_internal
 {
