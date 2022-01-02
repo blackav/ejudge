@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2008-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -229,4 +229,53 @@ static const struct common_mysql_parse_spec headers_spec[RUNS_ROW_WIDTH] =
   { 0, 't', "last_change_time", HEADERS_OFFSET(last_change_time), 0 },
   { 0, 'd', "last_change_nsec", HEADERS_OFFSET(last_change_nsec), 0 },
   { 0, 'd', "next_run_id", HEADERS_OFFSET(next_run_id), 0 },
+};
+
+static const char create_userrunheaders_query[] =
+"CREATE TABLE %suserrunheaders( "
+"        user_id INT UNSIGNED NOT NULL, "
+"        contest_id INT UNSIGNED NOT NULL, "
+"        start_time TIMESTAMP DEFAULT NULL, "
+"        sched_time TIMESTAMP DEFAULT NULL, "
+"        duration INT UNSIGNED, "
+"        stop_time TIMESTAMP DEFAULT NULL, "
+"        finish_time TIMESTAMP DEFAULT NULL, "
+"        create_time TIMESTAMP NOT NULL DEFAULT NOW(), "
+"        create_user_id INT UNSIGNED NOT NULL, "
+"        last_change_time TIMESTAMP DEFAULT NULL, "
+"        last_change_user_id INT UNSIGNED DEFAULT NULL, "
+"        PRIMARY KEY (user_id, contest_id)"
+"        );";
+
+struct user_run_header_internal
+{
+  int user_id;
+  int contest_id;
+  time_t start_time;
+  time_t sched_time;
+  int duration;
+  time_t stop_time;
+  time_t finish_time;
+  time_t create_time;
+  int create_user_id;
+  time_t last_change_time;
+  int last_change_user_id;
+};
+
+enum { USERRUNHEADERS_ROW_WIDTH = 11 };
+
+#define USERRUNHEADERS_OFFSET(f) XOFFSET(struct user_run_header_internal, f)
+static const struct common_mysql_parse_spec user_run_headers_spec[USERRUNHEADERS_ROW_WIDTH] =
+{
+  { 0, 'd', "user_id", USERRUNHEADERS_OFFSET(user_id), 0 },
+  { 0, 'd', "contest_id", USERRUNHEADERS_OFFSET(contest_id), 0 },
+  { 1, 't', "start_time", USERRUNHEADERS_OFFSET(start_time), 0 },
+  { 1, 't', "sched_time", USERRUNHEADERS_OFFSET(sched_time), 0 },
+  { 1, 'd', "duration", USERRUNHEADERS_OFFSET(duration), 0 },
+  { 1, 't', "stop_time", USERRUNHEADERS_OFFSET(stop_time), 0 },
+  { 1, 't', "finish_time", USERRUNHEADERS_OFFSET(finish_time), 0 },
+  { 1, 't', "create_time", USERRUNHEADERS_OFFSET(create_time), 0 },
+  { 1, 'd', "create_user_id", USERRUNHEADERS_OFFSET(create_user_id), 0 },
+  { 1, 't', "last_change_time", USERRUNHEADERS_OFFSET(last_change_time), 0 },
+  { 1, 'd', "last_change_user_id", USERRUNHEADERS_OFFSET(last_change_user_id), 0 },
 };
