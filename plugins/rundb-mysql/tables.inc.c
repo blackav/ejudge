@@ -240,7 +240,7 @@ static const char create_userrunheaders_query[] =
 "        duration INT UNSIGNED, "
 "        stop_time TIMESTAMP DEFAULT NULL, "
 "        finish_time TIMESTAMP DEFAULT NULL, "
-"        create_time TIMESTAMP NOT NULL DEFAULT NOW(), "
+"        create_time TIMESTAMP NOT NULL, "
 "        create_user_id INT UNSIGNED NOT NULL, "
 "        last_change_time TIMESTAMP DEFAULT NULL, "
 "        last_change_user_id INT UNSIGNED DEFAULT NULL, "
