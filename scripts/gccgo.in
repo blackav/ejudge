@@ -1,6 +1,5 @@
 #!/bin/sh
-# $Id$
-# Copyright (c) 2012-2013 Alexander Chernov <cher@ejudge.ru>
+# Copyright (c) 2012-2022 Alexander Chernov <cher@ejudge.ru>
 
 # using EJUDGE_FLAGS we may pass additional flags
 
@@ -12,8 +11,8 @@ then
   . "${EJUDGE_LANG_CONFIG}"
 else
   version="unknown"
-  GCCRUN="gccgo"
-  GCCDIR=
+  GORUN="go"
+  GODIR=
 fi
 
 if [ x"${version}" = x ]
@@ -22,9 +21,9 @@ then
   exit 1
 fi
 
-if [ x"${GCCDIR}" != x ]
+if [ x"${GODIR}" != x ]
 then
-    PATH="${GCCDIR}:${PATH}"
+    PATH="${GODIR}:${PATH}"
 fi
 
 [ x"${EJUDGE_FLAGS}" = x ] && EJUDGE_FLAGS="-O2"
@@ -34,4 +33,4 @@ unset LC_ALL
 unset LC_MESSAGES
 unset LANGUAGE
 
-exec "${GCCRUN}" -g ${EJUDGE_FLAGS} "$1" -o "$2"
+exec "${GORUN}" build -o "$2" ${EJUDGE_FLAGS} "$1"

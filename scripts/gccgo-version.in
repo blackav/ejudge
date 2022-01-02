@@ -1,6 +1,5 @@
 #!/bin/sh
-# $Id$
-# Copyright (c) 2012-2013 Alexander Chernov <cher@ejudge.ru>
+# Copyright (c) 2012-2022 Alexander Chernov <cher@ejudge.ru>
 
 # compiler script interface is as follows
 # <comp>-version [OPTION]
@@ -20,7 +19,7 @@
 LANG_CONFIG_DIR="@lang_config_dir@"
 
 common_config() {
-  echo 'long_name="GNU go"'
+  echo 'long_name="go"'
   echo 'src_sfx=".go"'
   echo 'arch="linux-shared"'
 }
@@ -30,8 +29,8 @@ failure() {
   echo 'version='
   echo 'arg="'"${arg}"'"'
   common_config
-  echo 'GCCRUN=false'
-  echo 'GCCDIR='
+  echo 'GORUN=false'
+  echo 'GODIR='
   [ "${verbose}" = 1 ] && echo "no" >&2
   exit 1
 }
@@ -51,36 +50,36 @@ fi
 if [ x"$1" = x-r ]
 then
   arg="$2"
-  [ x"$2" != x ] && GCCRUN="$2"
-  [ "${GCCRUN}" = "" ] && GCCRUN="gccgo"
+  [ x"$2" != x ] && GORUN="$2"
+  [ "${GORUN}" = "" ] && GORUN="go"
 
-  [ "${verbose}" = 1 ] && echo -n "checking whether GNU go is available... " >&2
-  "${GCCRUN}" -v >/dev/null 2>&1 || failure
-  version=`"${GCCRUN}" -v 2>&1 | grep "gcc version" | gawk '{ print $3; }'`|| failure
+  [ "${verbose}" = 1 ] && echo -n "checking whether go is available... " >&2
+  "${GORUN}" version >/dev/null 2>&1 || failure
+  version=`"${GORUN}" version 2>&1 | grep "go version" | gawk '{ print $3; }'`|| failure
   cat > conftest.go <<EOF
 package main
 func main() {
 }
 EOF
-  "${GCCRUN}" -g conftest.go -o conftest >/dev/null 2>&1 || failure
+  "${GORUN}" build -o conftest conftest.go >/dev/null 2>&1 || failure
   [ -x conftest ] || failure
   ./conftest >/dev/null 2>&1 || failure
 
   rm -f ./conftest*
-  GCCDIR=`dirname "${GCCRUN}"`
-  [ "${GCCDIR}" = . ] && GCCDIR=""
+  GODIR=`dirname "${GORUN}"`
+  [ "${GODIR}" = . ] && GODIR=""
   echo 'version="'"${version}"'"'
   echo 'arg="'"${arg}"'"'
   common_config
-  echo 'GCCRUN="'"${GCCRUN}"'"'
-  echo 'GCCDIR="'"${GCCDIR}"'"'
-  [ "${verbose}" = 1 ] && echo "yes, ${GCCRUN}, ${version}" >&2
+  echo 'GORUN="'"${GORUN}"'"'
+  echo 'GODIR="'"${GODIR}"'"'
+  [ "${verbose}" = 1 ] && echo "yes, ${GORUN}, ${version}" >&2
   exit 0
 fi
 
 if [ x"$1" = x-l ]
 then
-  echo "GNU go compiler [http://gcc.gnu.org]"
+  echo "go compiler [http://gcc.gnu.org]"
   exit 0
 fi
 
@@ -90,29 +89,29 @@ if [ -f "${EJUDGE_LANG_CONFIG}" ]
 then
   . "${EJUDGE_LANG_CONFIG}"
 else
-  GCCRUN="gccgo"
-  GCCDIR=
+  GORUN="go"
+  GODIR=
 fi
 
-if [ x"${GCCRUN}" = x -o x"${GCCRUN}" = xfalse ]
+if [ x"${GORUN}" = x -o x"${GORUN}" = xfalse ]
 then
   echo "This language is not supported." >&2
   exit 1
 fi
 
-if [ x"${GCCDIR}" != x ]
+if [ x"${GODIR}" != x ]
 then
-    PATH="${GCCDIR}:${PATH}"
+    PATH="${GODIR}:${PATH}"
 fi
 
 if [ x"$1" = x-p ]
 then
-    echo "${GCCRUN}"
+    echo "${GORUN}"
     exit 0
 fi
     
-"${GCCRUN}" -v >/dev/null 2>&1 || exit 1
+"${GORUN}" version >/dev/null 2>&1 || exit 1
 
-[ x"$1" = x-f ] && echo -n "GNU go "
+[ x"$1" = x-f ] && echo -n "go "
 
-"${GCCRUN}" -v 2>&1 | grep "gcc version" | gawk '{ print $3; }'
+"${GORUN}" version 2>&1 | grep "go version" | gawk '{ print $3; }'
