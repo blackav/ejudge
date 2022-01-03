@@ -1830,8 +1830,3 @@ add_entry_2_func(
 
   return do_update_entry(cs, run_id, re, flags, prob_uuid);
 }
-
-/*
- * Local variables:
- * End:
- */
