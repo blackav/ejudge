@@ -235,6 +235,7 @@ static const char create_userrunheaders_query[] =
 "CREATE TABLE %suserrunheaders( "
 "        user_id INT UNSIGNED NOT NULL, "
 "        contest_id INT UNSIGNED NOT NULL, "
+"        is_virtual TINYINT NOT NULL DEFAULT 0, "
 "        start_time DATETIME DEFAULT NULL, "
 "        sched_time DATETIME DEFAULT NULL, "
 "        duration INT UNSIGNED, "
@@ -251,6 +252,7 @@ struct user_run_header_internal
 {
   int user_id;
   int contest_id;
+  int is_virtual;
   time_t start_time;
   time_t sched_time;
   int duration;
@@ -262,13 +264,14 @@ struct user_run_header_internal
   int last_change_user_id;
 };
 
-enum { USERRUNHEADERS_ROW_WIDTH = 11 };
+enum { USERRUNHEADERS_ROW_WIDTH = 12 };
 
 #define USERRUNHEADERS_OFFSET(f) XOFFSET(struct user_run_header_internal, f)
 static const struct common_mysql_parse_spec user_run_headers_spec[USERRUNHEADERS_ROW_WIDTH] =
 {
   { 0, 'd', "user_id", USERRUNHEADERS_OFFSET(user_id), 0 },
   { 0, 'd', "contest_id", USERRUNHEADERS_OFFSET(contest_id), 0 },
+  { 0, 'd', "is_virtual", USERRUNHEADERS_OFFSET(is_virtual), 0 },
   { 1, 't', "start_time", USERRUNHEADERS_OFFSET(start_time), 0 },
   { 1, 't', "sched_time", USERRUNHEADERS_OFFSET(sched_time), 0 },
   { 1, 'd', "duration", USERRUNHEADERS_OFFSET(duration), 0 },
