@@ -2,7 +2,7 @@
 #ifndef __RUNLOG_STATE_H__
 #define __RUNLOG_STATE_H__
 
-/* Copyright (C) 2008-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -15,6 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  */
+
+#include <stdint.h>
 
 #define RUNLOG_MAX_SIZE    15625000         // 2000000000 bytes
 
@@ -62,6 +64,38 @@ struct rldb_plugin_cnts;
 #define RUNS_ACCESS const
 #endif /* RUNS_ACCESS */
 
+struct user_run_header_info
+{
+  int user_id;
+  int contest_id;
+  int duration;
+  unsigned char is_virtual;
+  unsigned char run_id_valid;
+  unsigned char has_db_record;
+  unsigned char pad[1];
+  int run_id_first;
+  int run_id_last;
+  int create_user_id;
+  int last_change_user_id;
+  time_t start_time;
+  time_t sched_time;
+  time_t stop_time;
+  time_t finish_time;
+  time_t create_time;
+  time_t last_change_time;
+};
+
+struct user_run_header_state
+{
+  // range of users
+  int low_user_id;
+  int high_user_id;
+  uint32_t *umap;    // indices in infos array
+  int size;          // number of users
+  int reserved;      // reserved in infos
+  struct user_run_header_info *infos; // user infos
+};
+
 struct runlog_state
 {
   RUNS_ACCESS struct run_header  head;
@@ -89,6 +123,9 @@ struct runlog_state
   struct uuid_hash_entry *uuid_hash;
   int uuid_hash_last_added_run_id;
   int uuid_hash_last_added_index;
+
+  // userrunheader information
+  struct user_run_header_state urh;
 
   // the managing plugin information
   struct rldb_plugin_iface *iface;
