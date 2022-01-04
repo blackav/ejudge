@@ -133,4 +133,9 @@ struct runlog_state
   struct rldb_plugin_cnts *cnts;
 };
 
+void
+run_extend_user_run_header_map(
+        runlog_state_t state,
+        int user_id);
+
 #endif /* __RUNLOG_STATE_H__ */

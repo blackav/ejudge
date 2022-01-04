@@ -282,3 +282,17 @@ static const struct common_mysql_parse_spec user_run_headers_spec[USERRUNHEADERS
   { 1, 't', "last_change_time", USERRUNHEADERS_OFFSET(last_change_time), 0 },
   { 1, 'd', "last_change_user_id", USERRUNHEADERS_OFFSET(last_change_user_id), 0 },
 };
+
+struct user_run_user_id_internal
+{
+  int min_user_id;
+  int max_user_id;
+};
+
+enum { USERRUNUSERID_ROW_WIDTH = 2 };
+#define USERRUNUSERID_OFFSET(f) XOFFSET(struct user_run_user_id_internal, f)
+static const struct common_mysql_parse_spec user_run_user_id_spec[USERRUNUSERID_ROW_WIDTH] =
+{
+  { 0, 'd', "min_user_id", USERRUNUSERID_OFFSET(min_user_id), 0 },
+  { 0, 'd', "max_user_id", USERRUNUSERID_OFFSET(max_user_id), 0 },
+};

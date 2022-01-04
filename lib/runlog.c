@@ -3066,6 +3066,57 @@ run_try_user_run_header(
   return NULL;
 }
 
+void
+run_extend_user_run_header_map(
+        runlog_state_t state,
+        int user_id)
+{
+  struct user_run_header_state *urh = &state->urh;
+
+  if (user_id > 0) {
+    if (!urh->low_user_id) {
+      int low = user_id - 16;
+      if (low < 1) low = 1;
+      int high = low + 32;
+      int count = high - low;
+      XCALLOC(urh->umap, count);
+      urh->low_user_id = low;
+      urh->high_user_id = high;
+    } else if (user_id < urh->low_user_id) {
+      int count = urh->high_user_id - urh->low_user_id;
+      int new_size = count;
+      int low = user_id;
+      while (low + new_size < urh->high_user_id) {
+        new_size *= 2;
+      }
+      int new_count = urh->high_user_id - low;
+      if (new_count < new_size) {
+        low -= (new_size - new_count) / 2;
+        if (low < 1) low = 1;
+      }
+      uint32_t *umap;
+      XCALLOC(umap, new_size);
+      memcpy(&umap[urh->high_user_id - low], urh->umap, count * sizeof(umap[0]));
+      xfree(urh->umap);
+      urh->umap = umap;
+      urh->low_user_id = low;
+      urh->high_user_id = low + new_size;
+    } else if (user_id >= urh->high_user_id) {
+      int count = urh->high_user_id - urh->low_user_id;
+      int new_size = count;
+      while (urh->low_user_id + new_size <= user_id) {
+        new_size *= 2;
+      }
+      uint32_t *umap;
+      XCALLOC(umap, new_size);
+      memcpy(umap, urh->umap, count * sizeof(umap[0]));
+      xfree(urh->umap);
+      urh->umap = umap;
+      urh->high_user_id = urh->low_user_id + new_size;
+    }
+  }
+}
+
 struct user_run_header_info *
 run_get_user_run_header(
         runlog_state_t state,
@@ -3076,49 +3127,8 @@ run_get_user_run_header(
   struct user_run_header_state *urh = &state->urh;
   if (user_id <= 0) return NULL;
 
-  if (!urh->low_user_id) {
-    int low = user_id - 16;
-    if (low < 1) low = 1;
-    int high = low + 32;
-    int count = high - low;
-    XCALLOC(urh->umap, count);
-    urh->low_user_id = low;
-    urh->high_user_id = high;
-  } else if (user_id < urh->low_user_id) {
-    int count = urh->high_user_id - urh->low_user_id;
-    int low = user_id - count;
-    if (low < 1) low = 1;
-    while (low + count < urh->high_user_id) {
-      count *= 2;
-    }
-    int high = low + count;
-    uint32_t *umap;
-    XCALLOC(umap, count);
-    for (int i = 1; i < urh->size; ++i) {
-      int offset = urh->infos[i].user_id - low;
-      umap[offset] = i;
-    }
-    xfree(urh->umap);
-    urh->umap = umap;
-    urh->low_user_id = low;
-    urh->high_user_id = high;
-  } else if (user_id >= urh->high_user_id) {
-    int count = urh->high_user_id - urh->low_user_id;
-    int low = urh->low_user_id;
-    while (low + count <= user_id) {
-      count *= 2;
-    }
-    int high = low + count;
-    uint32_t *umap;
-    XCALLOC(umap, count);
-    for (int i = 1; i < urh->size; ++i) {
-      int offset = urh->infos[i].user_id - low;
-      umap[offset] = i;
-    }
-    xfree(urh->umap);
-    urh->umap = umap;
-    urh->low_user_id = low;
-    urh->high_user_id = high;
+  if (user_id < urh->low_user_id || user_id >= urh->high_user_id) {
+    run_extend_user_run_header_map(state, user_id);
   }
 
   int offset = user_id - urh->low_user_id;
