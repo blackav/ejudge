@@ -322,7 +322,6 @@ run_add_record(
         int            store_flags)
 {
   int i;
-  struct user_entry *ue;
   struct run_entry re;
   int flags = 0;
 
@@ -380,13 +379,9 @@ run_add_record(
     return -1;
   }
 
-  ue = get_user_entry(state, team);
-  ASSERT(ue);
-  ASSERT(ue->run_id_valid > 0); // run index is ok
-
-  if (!is_hidden && ue->status != V_VIRTUAL_USER) {
-    ue->status = V_REAL_USER;
-  }
+  struct user_run_header_info *urh = run_get_user_run_header(state, team, 0, NULL);
+  ASSERT(urh);
+  ASSERT(urh->run_id_valid);
 
   if ((i = state->iface->get_insert_run_id(state->cnts,timestamp,team,nsec))<0)
     return -1;
@@ -455,17 +450,17 @@ run_add_record(
   extend_run_extras(state);
   if (i == state->run_u - 1) {
     // inserting at the last position
-    state->run_extras[i - state->run_extra_f].prev_user_id = ue->run_id_last;
+    state->run_extras[i - state->run_extra_f].prev_user_id = urh->run_id_last;
     state->run_extras[i - state->run_extra_f].next_user_id = -1;
-    if (ue->run_id_last < 0) {
-      ue->run_id_first = i;
+    if (urh->run_id_last < 0) {
+      urh->run_id_first = i;
     } else {
-      state->run_extras[ue->run_id_last - state->run_extra_f].next_user_id = i;
+      state->run_extras[urh->run_id_last - state->run_extra_f].next_user_id = i;
     }
-    ue->run_id_last = i;
+    urh->run_id_last = i;
   } else {
     // inserting somewhere in the middle
-    ue->run_id_valid = 0;
+    urh->run_id_valid = 0;
     state->run_extras[i - state->run_extra_f].prev_user_id = -1;
     state->run_extras[i - state->run_extra_f].next_user_id = -1;
     // drop the following indices
