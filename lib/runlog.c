@@ -136,6 +136,9 @@ run_destroy(runlog_state_t state)
 
   run_drop_uuid_hash(state);
 
+  xfree(state->urh.umap);
+  xfree(state->urh.infos);
+
   if (state->iface) state->iface->close(state->cnts);
 
   memset(state, 0, sizeof(*state));
@@ -1060,6 +1063,15 @@ run_reset(
   state->run_extra_u = 0;
   state->run_extra_a = 0;
   state->run_extra_f = 0;
+
+  xfree(state->urh.umap);
+  xfree(state->urh.infos);
+  state->urh.low_user_id = 0;
+  state->urh.high_run_id = 0;
+  state->urh.umap = NULL;
+  state->urh.size = 0;
+  state->urh.reserved = 0;
+  state->urh.infos = NULL;
 
   run_drop_uuid_hash(state);
 
