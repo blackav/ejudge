@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2000-2019 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -3047,4 +3047,98 @@ run_fetch_user_runs(
   *p_count = count;
   *p_entries = out;
   return count;
+}
+
+struct user_run_header_info *
+run_try_user_run_header(
+        runlog_state_t state,
+        int user_id,
+        int contest_id)
+{
+  struct user_run_header_state *urh = &state->urh;
+  if (user_id >= urh->low_user_id && user_id < urh->high_user_id) {
+    int offset = user_id - urh->low_user_id;
+    uint32_t index = urh->umap[offset];
+    if (index) {
+      return &urh->infos[index];
+    }
+  }
+  return NULL;
+}
+
+struct user_run_header_info *
+run_get_user_run_header(
+        runlog_state_t state,
+        int user_id,
+        int contest_id,
+        int *p_is_created)
+{
+  struct user_run_header_state *urh = &state->urh;
+  if (user_id <= 0) return NULL;
+
+  if (!urh->low_user_id) {
+    int low = user_id - 16;
+    if (low < 1) low = 1;
+    int high = low + 32;
+    int count = high - low;
+    XCALLOC(urh->umap, count);
+    urh->low_user_id = low;
+    urh->high_user_id = high;
+  } else if (user_id < urh->low_user_id) {
+    int count = urh->high_user_id - urh->low_user_id;
+    int low = user_id - count;
+    if (low < 1) low = 1;
+    while (low + count < urh->high_user_id) {
+      count *= 2;
+    }
+    int high = low + count;
+    uint32_t *umap;
+    XCALLOC(umap, count);
+    for (int i = 1; i < urh->size; ++i) {
+      int offset = urh->infos[i].user_id - low;
+      umap[offset] = i;
+    }
+    xfree(urh->umap);
+    urh->umap = umap;
+    urh->low_user_id = low;
+    urh->high_user_id = high;
+  } else if (user_id >= urh->high_user_id) {
+    int count = urh->high_user_id - urh->low_user_id;
+    int low = urh->low_user_id;
+    while (low + count <= user_id) {
+      count *= 2;
+    }
+    int high = low + count;
+    uint32_t *umap;
+    XCALLOC(umap, count);
+    for (int i = 1; i < urh->size; ++i) {
+      int offset = urh->infos[i].user_id - low;
+      umap[offset] = i;
+    }
+    xfree(urh->umap);
+    urh->umap = umap;
+    urh->low_user_id = low;
+    urh->high_user_id = high;
+  }
+
+  int offset = user_id - urh->low_user_id;
+  int index = urh->umap[offset];
+  if (index) {
+    if (p_is_created) *p_is_created = 0;
+    return &urh->infos[index];
+  }
+
+  if (!urh->reserved) {
+    urh->reserved = 32;
+    XCALLOC(urh->infos, urh->reserved);
+    urh->size = 1;
+  } else if (urh->size == urh->reserved) {
+    urh->reserved *= 2;
+    XREALLOC(urh->infos, urh->reserved);
+  }
+
+  index = urh->size++;
+  urh->umap[offset] = index;
+  if (p_is_created) *p_is_created = 1;
+  return &urh->infos[index];
 }
