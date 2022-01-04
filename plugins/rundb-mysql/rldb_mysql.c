@@ -304,6 +304,8 @@ do_open(struct rldb_mysql_state *state)
       return -1;
     if (mi->simple_fquery(md, "ALTER TABLE %suserrunheaders ADD INDEX userrunheaders_user_id_idx (user_id);", md->table_prefix) < 0)
       return -1;
+    // ignore error
+    mi->simple_fquery(md, "ALTER TABLE %sruns ADD INDEX runs_user_id_idx (user_id) ;", md->table_prefix);
     if (mi->simple_fquery(md, "UPDATE %sconfig SET config_val = '11' WHERE config_key = 'run_version' ;", md->table_prefix) < 0)
       return -1;
     run_version = 11;
@@ -396,6 +398,140 @@ load_header(
  fail:
   if (cmd_f) fclose(cmd_f);
   xfree(cmd_t);
+  mi->free_res(md);
+  return -1;
+}
+
+static int
+load_user_header(
+        struct rldb_mysql_cnts *cs)
+{
+  struct rldb_mysql_state *state = cs->plugin_state;
+  struct common_mysql_iface *mi = state->mi;
+  struct common_mysql_state *md = state->md;
+  struct runlog_state *rls = cs->rl_state;
+
+  int min_user_id = 0, max_user_id = 0;
+
+  if (mi->fquery(md, 2,
+                 "SELECT MIN(user_id), MAX(user_id) FROM %suserrunheaders WHERE contest_id = %d ;", md->table_prefix, cs->contest_id) < 0) {
+    goto fail;
+  }
+  if (md->row_count == 1) {
+    if (mi->next_row(md) < 0) goto fail;
+    struct user_run_user_id_internal ri = {};
+    if (mi->parse_spec(md, md->field_count, md->row, md->lengths,
+                       USERRUNUSERID_ROW_WIDTH, user_run_user_id_spec, &ri) < 0)
+      goto fail;
+    if (ri.min_user_id > 0) min_user_id = ri.min_user_id;
+    if (ri.max_user_id > 0) max_user_id = ri.max_user_id;
+  }
+  mi->free_res(md);
+
+  if (mi->fquery(md, 2,
+                 "SELECT MIN(user_id), MAX(user_id) FROM %sruns WHERE contest_id = %d ;", md->table_prefix, cs->contest_id) < 0) {
+    goto fail;
+  }
+  if (md->row_count == 1) {
+    if (mi->next_row(md) < 0) goto fail;
+    struct user_run_user_id_internal ri = {};
+    if (mi->parse_spec(md, md->field_count, md->row, md->lengths,
+                       USERRUNUSERID_ROW_WIDTH, user_run_user_id_spec, &ri) < 0)
+      goto fail;
+    if (ri.min_user_id > 0) {
+      if (min_user_id <= 0 || ri.min_user_id < min_user_id) {
+        min_user_id = ri.min_user_id;
+      }
+    }
+    if (ri.max_user_id > 0 && ri.max_user_id > max_user_id) {
+      max_user_id = ri.max_user_id;
+    }
+  }
+  mi->free_res(md);
+
+  // if user_id range is available, preallocate map
+  if (min_user_id > 0 && max_user_id > 0 && min_user_id <= max_user_id) {
+    int count = max_user_id - min_user_id + 1;
+    int size = 32;
+    while (size < count) {
+      size *= 2;
+    }
+    if (count < size) {
+      min_user_id -= (size - count) / 2;
+      if (min_user_id < 1) min_user_id = 1;
+    }
+    rls->urh.low_user_id = min_user_id;
+    rls->urh.high_user_id = min_user_id + size;
+    XCALLOC(rls->urh.umap, size);
+  }
+
+  if (mi->fquery(md, USERRUNHEADERS_ROW_WIDTH,
+                 "SELECT * FROM %suserrunheaders WHERE contest_id = %d ORDER BY user_id ;",
+                 md->table_prefix, cs->contest_id) < 0) {
+    goto fail;
+  }
+  if (md->row_count <= 0) {
+    return 0;
+  }
+
+  // preallocate entries
+  if (md->row_count > 0) {
+    int reserved = 32;
+    while (reserved <= md->row_count) {
+      reserved *= 2;
+    }
+    rls->urh.reserved = reserved;
+    XCALLOC(rls->urh.infos, reserved);
+    rls->urh.size = 1;
+  }
+
+  for (int i = 0; i < md->row_count; ++i) {
+    struct user_run_header_internal urhi = {};
+    if (mi->next_row(md) < 0) goto fail;
+    if (mi->parse_spec(md, md->field_count, md->row, md->lengths,
+                       USERRUNHEADERS_ROW_WIDTH, user_run_headers_spec, &urhi) < 0)
+      goto fail;
+
+    if (urhi.user_id > 0) {
+      if (urhi.user_id < rls->urh.low_user_id || urhi.user_id >= rls->urh.high_user_id) {
+        run_extend_user_run_header_map(rls, urhi.user_id);
+      }
+      int offset = urhi.user_id - rls->urh.low_user_id;
+      if (!rls->urh.umap[offset]) {
+        if (rls->urh.size == rls->urh.reserved) {
+          if (!rls->urh.reserved) {
+            rls->urh.reserved = 32;
+            XCALLOC(rls->urh.infos, rls->urh.reserved);
+            rls->urh.size = 1;
+          } else {
+            rls->urh.reserved *= 2;
+            XREALLOC(rls->urh.infos, rls->urh.reserved);
+          }
+        }
+        int index = rls->urh.size++;
+        rls->urh.umap[offset] = index;
+        struct user_run_header_info *p = &rls->urh.infos[index];
+        p->user_id = urhi.user_id;
+        p->contest_id = urhi.contest_id;
+        p->duration = urhi.duration;
+        p->is_virtual = urhi.is_virtual;
+        p->has_db_record = 1;
+        p->create_user_id = urhi.create_user_id;
+        p->last_change_user_id = urhi.last_change_user_id;
+        p->start_time = urhi.start_time;
+        p->sched_time = urhi.sched_time;
+        p->stop_time = urhi.stop_time;
+        p->finish_time = urhi.finish_time;
+        p->create_time = urhi.create_time;
+        p->last_change_time = urhi.last_change_time;
+      }
+    }
+  }
+
+  mi->free_res(md);
+  return 1;
+
+fail:
   mi->free_res(md);
   return -1;
 }
@@ -598,6 +734,8 @@ open_func(
     goto fail;
   if (!r) return (struct rldb_plugin_cnts*) cs;
   if (load_runs(cs) < 0) goto fail;
+  state->mi->free_res(state->md);
+  if (load_user_header(cs) < 0) goto fail;
   state->mi->free_res(state->md);
   return (struct rldb_plugin_cnts*) cs;
 
