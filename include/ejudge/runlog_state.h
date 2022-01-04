@@ -142,7 +142,6 @@ struct user_run_header_info *
 run_get_user_run_header(
         runlog_state_t state,
         int user_id,
-        int contest_id,
         int *p_is_created);
 
 #endif /* __RUNLOG_STATE_H__ */
