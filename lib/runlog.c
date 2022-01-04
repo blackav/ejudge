@@ -126,11 +126,11 @@ run_destroy(runlog_state_t state)
 
   if (!state) return 0;
 
-  for (i = 0; i < state->zut_size; i++) {
-    if (!(ue = state->zut_table[i])) continue;
+  for (i = 0; i < state->ut_size; i++) {
+    if (!(ue = state->ut_table[i])) continue;
     xfree(ue);
   }
-  xfree(state->zut_table);
+  xfree(state->ut_table);
   xfree(state->user_flags.flags);
   xfree(state->run_extras);
 
@@ -1051,11 +1051,11 @@ run_reset(
 {
   int i;
 
-  for (i = 0; i < state->zut_size; i++)
-    xfree(state->zut_table[i]);
-  xfree(state->zut_table);
-  state->zut_table = 0;
-  state->zut_size = 0;
+  for (i = 0; i < state->ut_size; i++)
+    xfree(state->ut_table[i]);
+  xfree(state->ut_table);
+  state->ut_table = 0;
+  state->ut_size = 0;
   state->max_user_id = -1;
   state->user_count = -1;
   xfree(state->run_extras);
@@ -1067,7 +1067,7 @@ run_reset(
   xfree(state->urh.umap);
   xfree(state->urh.infos);
   state->urh.low_user_id = 0;
-  state->urh.high_run_id = 0;
+  state->urh.high_user_id = 0;
   state->urh.umap = NULL;
   state->urh.size = 0;
   state->urh.reserved = 0;
