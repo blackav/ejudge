@@ -379,7 +379,7 @@ run_add_record(
     return -1;
   }
 
-  struct user_run_header_info *urh = run_get_user_run_header(state, team, 0, NULL);
+  struct user_run_header_info *urh = run_get_user_run_header(state, team, NULL);
   ASSERT(urh);
   ASSERT(urh->run_id_valid);
 
@@ -3128,7 +3128,6 @@ struct user_run_header_info *
 run_get_user_run_header(
         runlog_state_t state,
         int user_id,
-        int contest_id,
         int *p_is_created)
 {
   struct user_run_header_state *urh = &state->urh;
