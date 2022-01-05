@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2008-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -211,3 +211,8 @@ add_entry_2_func(
         const struct run_entry *re,
         int flags,
         const unsigned char *prob_uuid);
+
+static int
+delete_user_run_header_func(
+        struct rldb_plugin_cnts *cdata,
+        int user_id);
