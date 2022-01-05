@@ -1568,6 +1568,7 @@ extend_run_extras(runlog_state_t state)
   state->run_extra_f = state->run_f;
 }
 
+/*
 static const unsigned char valid_user_run_statuses[256] =
 {
   [RUN_OK]                  = 1,
@@ -1604,10 +1605,13 @@ static const unsigned char valid_user_run_statuses[256] =
   //[RUN_REJUDGE]             = 1,
   //[RUN_TRANSIENT_LAST]      = 1,
 };
+*/
 
 static __attribute__((unused)) struct user_entry *
 get_user_entry(runlog_state_t state, int user_id)
 {
+  return NULL;
+  /*
   ASSERT(user_id > 0);
 
   if (user_id >= state->ut_size) {
@@ -1662,24 +1666,30 @@ get_user_entry(runlog_state_t state, int user_id)
   }
 
   return ut;
+  */
 }
 
 static __attribute__((unused)) struct user_entry *
 try_user_entry(runlog_state_t state, int user_id)
 {
+  return NULL;
+  /*
   if (user_id <= 0 || user_id >= state->ut_size) return NULL;
   return state->ut_table[user_id];
+  */
 }
 
 static __attribute__((unused)) void
 drop_user_entry(runlog_state_t state, int user_id)
 {
+  /*
   if (user_id <= 0 || user_id >= state->ut_size) return;
   if (state->ut_table[user_id]) {
     // ...
     xfree(state->ut_table[user_id]);
     state->ut_table[user_id] = NULL;
   }
+  */
 }
 
 time_t
@@ -2500,16 +2510,17 @@ build_indices(runlog_state_t state, int flags)
 {
   int i;
   int max_team_id = -1;
-  struct user_entry *ue;
 
-  if (state->ut_table) {
-    for (i = 0; i < state->ut_size; i++)
-      xfree(state->ut_table[i]);
-    xfree(state->ut_table);
-    state->ut_table = 0;
+  struct user_run_header_state *urh = &state->urh;
+  for (int i = urh->low_user_id; i < urh->high_user_id; ++i) {
+    int index = urh->umap[i - urh->low_user_id];
+    if (index > 0) {
+      struct user_run_header_info *urhi = &urh->infos[index];
+      urhi->run_id_valid = 0;
+      urhi->run_id_first = -1;
+      urhi->run_id_last = -1;
+    }
   }
-  state->ut_size = 0;
-  state->ut_table = 0;
 
   /* assume, that the runlog is consistent
    * scan the whole runlog and build various indices
@@ -2529,47 +2540,35 @@ build_indices(runlog_state_t state, int flags)
 
   state->max_user_id = max_team_id;
 
-  state->ut_size = 128;
-  while (state->ut_size <= max_team_id)
-    state->ut_size *= 2;
-
   extend_run_extras(state);
-  XCALLOC(state->ut_table, state->ut_size);
+
   for (i = state->run_f; i < state->run_u; i++) {
     int i_off = i - state->run_f;
     if (state->runs[i_off].status == RUN_EMPTY) continue;
     ASSERT(state->runs[i_off].user_id > 0);
-    if (!(ue = state->ut_table[state->runs[i_off].user_id])) {
-      ue = state->ut_table[state->runs[i_off].user_id] = xcalloc(1, sizeof(state->ut_table[0][0]));
-      ue->run_id_first = -1;
-      ue->run_id_last = -1;
-    }
+    struct user_run_header_info *urhi = run_get_user_run_header(state, state->runs[i_off].user_id, NULL);
 
     // append to the double-linked list
-    state->run_extras[i - state->run_extra_f].prev_user_id = ue->run_id_last;
+    state->run_extras[i - state->run_extra_f].prev_user_id = urhi->run_id_last;
     state->run_extras[i - state->run_extra_f].next_user_id = -1;
-    if (ue->run_id_first < 0) {
-      ue->run_id_first = i;
+    if (urhi->run_id_first < 0) {
+      urhi->run_id_first = i;
     }
-    if (ue->run_id_last >= 0) {
-      state->run_extras[ue->run_id_last - state->run_extra_f].next_user_id = i;
+    if (urhi->run_id_last >= 0) {
+      state->run_extras[urhi->run_id_last - state->run_extra_f].next_user_id = i;
     }
-    ue->run_id_last = i;
+    urhi->run_id_last = i;
+    urhi->run_id_valid = 1;
 
     if (state->runs[i_off].is_hidden) continue;
     switch (state->runs[i_off].status) {
     case RUN_VIRTUAL_START:
-      ASSERT(!ue->status);
-      ue->status = V_VIRTUAL_USER;
-      ue->start_time = state->runs[i_off].time;
+      urhi->is_virtual = 1;
+      urhi->start_time = state->runs[i_off].time;
       break;
     case RUN_VIRTUAL_STOP:
-      ASSERT(ue->status == V_VIRTUAL_USER);
-      ASSERT(ue->start_time > 0);
-      ue->stop_time = state->runs[i_off].time;
-      break;
-    default:
-      if (!ue->status) ue->status = V_REAL_USER;
+      ASSERT(urhi->start_time > 0);
+      urhi->stop_time = state->runs[i_off].time;
       break;
     }
   }
@@ -3147,8 +3146,12 @@ run_get_user_run_header(
 
   index = urh->size++;
   urh->umap[offset] = index;
+  struct user_run_header_info *urhi = &urh->infos[index];
+  memset(urhi, 0, sizeof(*urhi));
+  urhi->run_id_first = -1;
+  urhi->run_id_last = -1;
   if (p_is_created) *p_is_created = 1;
-  return &urh->infos[index];
+  return urhi;
 }
 
 void
