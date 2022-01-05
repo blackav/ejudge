@@ -113,6 +113,7 @@ struct rldb_plugin_iface plugin_rldb_mysql =
   change_status_4_func,
   NULL,
   add_entry_2_func,
+  delete_user_run_header_func,
 };
 
 static struct common_plugin_data *
@@ -1967,4 +1968,31 @@ add_entry_2_func(
   (void) de;
 
   return do_update_entry(cs, run_id, re, flags, prob_uuid);
+}
+
+static int
+delete_user_run_header_func(
+        struct rldb_plugin_cnts *cdata,
+        int user_id)
+{
+  struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts*) cdata;
+  struct rldb_mysql_state *state = cs->plugin_state;
+  struct runlog_state *rls = cs->rl_state;
+  char *cmd_s = 0;
+  size_t cmd_z = 0;
+  FILE *cmd_f = 0;
+
+  cmd_f = open_memstream(&cmd_s, &cmd_z);
+  fprintf(cmd_f, "DELETE FROM %suserrunheaders WHERE user_id = %d and contest_id = %d ;", state->md->table_prefix, user_id, cs->contest_id);
+  fclose(cmd_f); cmd_f = NULL;
+  if (state->mi->simple_query(state->md, cmd_s, cmd_z) < 0) {
+    free(cmd_s);
+    return -1;
+  }
+  free(cmd_s); cmd_s = NULL;
+  if (user_id >= rls->urh.low_user_id && user_id < rls->urh.high_user_id) {
+    rls->urh.umap[user_id - rls->urh.low_user_id] = 0;
+  }
+  // FIXME: the user_run_header_info entry for user_id in vector infos is just lost...
+  return 0;
 }
