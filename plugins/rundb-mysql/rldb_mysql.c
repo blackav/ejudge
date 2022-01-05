@@ -797,10 +797,20 @@ reset_func(
   rls->head.duration = init_duration;
   rls->head.sched_time = init_sched_time;
   rls->head.finish_time = init_finish_time;
+  xfree(rls->urh.umap);
+  xfree(rls->urh.infos);
+  rls->urh.low_user_id = 0;
+  rls->urh.high_user_id = 0;
+  rls->urh.umap = NULL;
+  rls->urh.size = 0;
+  rls->urh.reserved = 0;
+  rls->urh.infos = NULL;
 
   mi->simple_fquery(md, "DELETE FROM %sruns WHERE contest_id = %d ;",
                     md->table_prefix, cs->contest_id);
   mi->simple_fquery(md, "DELETE FROM %srunheaders WHERE contest_id = %d ;",
+                    md->table_prefix, cs->contest_id);
+  mi->simple_fquery(md, "DELETE FROM %suserrunheaders WHERE contest_id = %d ;",
                     md->table_prefix, cs->contest_id);
 
   memset(&rh, 0, sizeof(rh));
