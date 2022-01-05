@@ -1707,14 +1707,6 @@ run_get_virtual_stop_time(runlog_state_t state, int user_id, time_t cur_time)
 }
 
 int
-run_get_virtual_status(runlog_state_t state, int user_id)
-{
-  struct user_entry *pvt = try_user_entry(state, user_id);
-  if (!pvt) return 0;
-  return pvt->status;
-}
-
-int
 run_get_is_virtual(runlog_state_t state, int user_id)
 {
   struct user_run_header_info *urh = run_try_user_run_header(state, user_id);
