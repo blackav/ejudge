@@ -1274,7 +1274,6 @@ run_set_entry(
   const struct run_entry *out;
   struct run_entry te;
   int f = 0;
-  struct user_entry *ue = 0;
   time_t stop_time;
   int old_user_id = 0;
 
@@ -1445,13 +1444,13 @@ run_set_entry(
   }
 
   if (!te.is_hidden) {
-    ue = get_user_entry(state, te.user_id);
-    if (ue->status == V_VIRTUAL_USER) {
-      ASSERT(ue->start_time > 0);
-      stop_time = ue->stop_time;
+    struct user_run_header_info *urh = run_get_user_run_header(state, te.user_id, NULL);
+    if (urh->is_virtual) {
+      ASSERT(urh->start_time > 0);
+      stop_time = urh->stop_time;
       if (!stop_time && state->head.duration > 0)
-        stop_time = ue->start_time + state->head.duration;
-      if (te.time < ue->start_time) {
+        stop_time = urh->start_time + state->head.duration;
+      if (te.time < urh->start_time) {
         err("run_set_entry: %d: timestamp < virtual start_time", run_id);
         return -1;
       }
@@ -1530,9 +1529,9 @@ run_set_entry(
 
   if (!f) return 0;
 
-  if (!te.is_hidden && !ue->status) ue->status = V_REAL_USER;
   if (state->iface->set_entry(state->cnts, run_id, &te, mask) < 0) return -1;
   if (state->runs[run_id - state->run_f].user_id != old_user_id) {
+    struct user_entry *ue = NULL;
     if ((ue = try_user_entry(state, old_user_id))) {
       ue->run_id_valid = 0;
     }
@@ -1685,7 +1684,8 @@ drop_user_entry(runlog_state_t state, int user_id)
 time_t
 run_get_virtual_start_time(runlog_state_t state, int user_id)
 {
-  struct user_entry *pvt = get_user_entry(state, user_id);
+  struct user_entry *pvt = try_user_entry(state, user_id);
+  if (!pvt) return state->head.start_time;
   if (pvt->status == V_REAL_USER) return state->head.start_time;
   return pvt->start_time;
 }
@@ -1693,7 +1693,8 @@ run_get_virtual_start_time(runlog_state_t state, int user_id)
 time_t
 run_get_virtual_stop_time(runlog_state_t state, int user_id, time_t cur_time)
 {
-  struct user_entry *pvt = get_user_entry(state, user_id);
+  struct user_entry *pvt = try_user_entry(state, user_id);
+  if (!pvt) return 0;
   if (!pvt->start_time) return 0;
   if (!cur_time) return pvt->stop_time;
   if (pvt->status == V_REAL_USER) return state->head.stop_time;
@@ -1708,7 +1709,8 @@ run_get_virtual_stop_time(runlog_state_t state, int user_id, time_t cur_time)
 int
 run_get_virtual_status(runlog_state_t state, int user_id)
 {
-  struct user_entry *pvt = get_user_entry(state, user_id);
+  struct user_entry *pvt = try_user_entry(state, user_id);
+  if (!pvt) return 0;
   return pvt->status;
 }
 
@@ -1721,7 +1723,7 @@ run_virtual_start(
         int ssl_flag,
         int nsec)
 {
-  struct user_entry *pvt = get_user_entry(state, user_id);
+  struct user_run_header_info *urh = run_get_user_run_header(state, user_id, NULL);
   int i;
   struct run_entry re;
 
@@ -1734,11 +1736,7 @@ run_virtual_start(
     err("run_virtual_start: timestamp < start_time");
     return -1;
   }
-  if (pvt->status == V_REAL_USER) {
-    err("run_virtual_start: user %d is not virtual", user_id);
-    return -1;
-  }
-  if (pvt->status == V_VIRTUAL_USER) {
+  if (urh->is_virtual) {
     err("run_virtual_start: virtual contest for %d already started", user_id);
     return -1;
   }
@@ -1754,8 +1752,8 @@ run_virtual_start(
   ipv6_to_run_entry(pip, &re);
   re.ssl_flag = ssl_flag;
   re.status = RUN_VIRTUAL_START;
-  pvt->start_time = t;
-  pvt->status = V_VIRTUAL_USER;
+  urh->start_time = t;
+  urh->is_virtual = 1;
 
   if (state->max_user_id >= 0 && user_id > state->max_user_id) {
     state->max_user_id = user_id;
@@ -1777,7 +1775,7 @@ run_virtual_stop(
         int ssl_flag,
         int nsec)
 {
-  struct user_entry *pvt = get_user_entry(state, user_id);
+  struct user_run_header_info *urh = run_get_user_run_header(state, user_id, NULL);
   int i;
   time_t exp_stop_time = 0;
   struct run_entry re;
@@ -1791,16 +1789,16 @@ run_virtual_stop(
     err("run_virtual_stop: timestamp < start_time");
     return -1;
   }
-  if (pvt->status != V_VIRTUAL_USER) {
+  if (!urh->is_virtual) {
     err("run_virtual_stop: user %d is not virtual", user_id);
     return -1;
   }
-  ASSERT(pvt->start_time > 0);
-  if (pvt->stop_time) {
+  ASSERT(urh->start_time > 0);
+  if (urh->stop_time) {
     err("run_virtual_stop: virtual contest for %d already stopped", user_id);
     return -1;
   }
-  if (state->head.duration > 0) exp_stop_time = pvt->start_time + state->head.duration;
+  if (state->head.duration > 0) exp_stop_time = urh->start_time + state->head.duration;
   if (t > exp_stop_time) {
     err("run_virtual_stop: the virtual time ended");
     return -1;
@@ -1813,8 +1811,8 @@ run_virtual_stop(
   ipv6_to_run_entry(pip, &re);
   re.ssl_flag = ssl_flag;
   re.status = RUN_VIRTUAL_STOP;
-  pvt->stop_time = t;
-  pvt->run_id_valid = 0; // rebuild index later
+  urh->stop_time = t;
+  urh->run_id_valid = 0; // rebuild index later
 
   if (state->max_user_id >= 0 && user_id > state->max_user_id) {
     state->max_user_id = user_id;
@@ -1864,8 +1862,8 @@ run_is_readonly(runlog_state_t state, int run_id)
 int
 run_clear_entry(runlog_state_t state, int run_id)
 {
-  struct user_entry *ue;
   int i;
+  struct user_run_header_info *urh = NULL;
 
   if (run_id < state->run_f || run_id >= state->run_u) ERR_R("bad runid: %d", run_id);
   if (state->runs[run_id - state->run_f].is_readonly) ERR_R("run %d is readonly", run_id);
@@ -1874,10 +1872,10 @@ run_clear_entry(runlog_state_t state, int run_id)
     break;
   case RUN_VIRTUAL_STOP:
     /* VSTOP events can safely be cleared */
-    ue = get_user_entry(state, state->runs[run_id - state->run_f].user_id);
-    ASSERT(ue->status == V_VIRTUAL_USER);
-    ASSERT(ue->start_time > 0);
-    ue->stop_time = 0;
+    urh = run_get_user_run_header(state, state->runs[run_id - state->run_f].user_id, NULL);
+    ASSERT(urh->is_virtual);
+    ASSERT(urh->start_time > 0);
+    urh->stop_time = 0;
     break;
   case RUN_VIRTUAL_START:
     /* VSTART event must be the only event of this team */
@@ -1891,18 +1889,19 @@ run_clear_entry(runlog_state_t state, int run_id)
       err("run_clear_entry: VSTART must be the only record for a team");
       return -1;
     }
-    ue = get_user_entry(state, state->runs[run_id - state->run_f].user_id);
-    ASSERT(ue->status == V_VIRTUAL_USER);
-    ASSERT(ue->start_time == state->runs[run_id - state->run_f].time);
-    ASSERT(!ue->stop_time);
-    ue->status = 0;
-    ue->start_time = 0;
+    urh = run_get_user_run_header(state, state->runs[run_id - state->run_f].user_id, NULL);
+    ASSERT(urh->is_virtual);
+    ASSERT(urh->start_time == state->runs[run_id - state->run_f].time);
+    ASSERT(!urh->stop_time);
+    urh->is_virtual = 0;
+    urh->start_time = 0;
     break;
   default:
     /* maybe update indices */
     break;
   }
 
+  struct user_entry *ue = NULL;
   if ((ue = try_user_entry(state, state->runs[run_id - state->run_f].user_id))) {
     ue->run_id_valid = 0;
   }
@@ -2728,12 +2727,11 @@ run_get_virtual_info(
         struct run_entry *ve)
 {
   int count = 0, i, run_start = -1, run_end = -1, s;
+  struct user_run_header_info *urh = run_get_user_run_header(state, user_id, NULL);
+  ASSERT(urh);
+  ASSERT(urh->run_id_valid);
 
-  struct user_entry *ue = get_user_entry(state, user_id);
-  ASSERT(ue);
-  ASSERT(ue->run_id_valid);
-
-  for (i = ue->run_id_last; i >= state->run_f; i = state->run_extras[i - state->run_extra_f].prev_user_id) {
+  for (i = urh->run_id_last; i >= state->run_f; i = state->run_extras[i - state->run_extra_f].prev_user_id) {
     ASSERT(i < state->run_u);
     ASSERT(state->runs[i - state->run_f].user_id == user_id);
     if ((s = state->runs[i - state->run_f].status) == RUN_EMPTY) continue;
