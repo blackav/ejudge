@@ -1715,6 +1715,14 @@ run_get_virtual_status(runlog_state_t state, int user_id)
 }
 
 int
+run_get_is_virtual(runlog_state_t state, int user_id)
+{
+  struct user_run_header_info *urh = run_try_user_run_header(state, user_id);
+  if (!urh) return 0;
+  return urh->is_virtual;
+}
+
+int
 run_virtual_start(
         runlog_state_t state,
         int user_id,
@@ -3057,8 +3065,7 @@ run_fetch_user_runs(
 struct user_run_header_info *
 run_try_user_run_header(
         runlog_state_t state,
-        int user_id,
-        int contest_id)
+        int user_id)
 {
   struct user_run_header_state *urh = &state->urh;
   if (user_id >= urh->low_user_id && user_id < urh->high_user_id) {
