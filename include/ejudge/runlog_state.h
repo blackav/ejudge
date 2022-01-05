@@ -20,6 +20,7 @@
 
 #define RUNLOG_MAX_SIZE    15625000         // 2000000000 bytes
 
+#if 0
 enum
   {
     V_REAL_USER = 1,
@@ -37,6 +38,7 @@ struct user_entry
   int run_id_first;             /* first run_id of that user, -1, if none */
   int run_id_last;              /* last run_id of that user, -1, if none */
 };
+#endif
 
 struct user_flags_info_s
 {

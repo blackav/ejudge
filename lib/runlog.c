@@ -2055,13 +2055,13 @@ runlog_check(
 {
   int i, j;
   int max_team_id;
-  struct user_entry *ventries = NULL, *v;
+  //struct user_entry *ventries = NULL, *v;
   const struct run_entry *e;
   int nerr = 0;
   struct run_entry te;
   unsigned char *pp;
   time_t prev_time = 0;
-  time_t stop_time = 0, v_stop_time;
+  time_t stop_time = 0;
   int retcode = 0;
   int prev_nsec = 0;
 
@@ -2276,7 +2276,10 @@ runlog_check(
     check_msg(0,ferr, "The runlog contains only EMPTY records");
     return 0;
   }
+
+  /*
   XCALLOC(ventries, max_team_id + 1);
+  */
 
   stop_time = phead->stop_time;
   if (!stop_time && phead->start_time && phead->duration) {
@@ -2291,6 +2294,7 @@ runlog_check(
     case RUN_EMPTY: break;
     case RUN_VIRTUAL_START:
       ASSERT(e->user_id <= max_team_id);
+      /*
       v = &ventries[e->user_id];
       if (v->status == V_VIRTUAL_USER) {
         ASSERT(v->start_time > 0);
@@ -2308,9 +2312,11 @@ runlog_check(
         v->status = V_VIRTUAL_USER;
         v->start_time = e->time;
       }
+      */
       break;
     case RUN_VIRTUAL_STOP:
       ASSERT(e->user_id <= max_team_id);
+      /*
       v = &ventries[e->user_id];
       ASSERT(v->status >= 0 && v->status <= V_LAST);
       if (v->status == V_VIRTUAL_USER) {
@@ -2336,9 +2342,11 @@ runlog_check(
         nerr++;
         continue;
       }
+      */
       break;
     default:
       ASSERT(e->user_id <= max_team_id);
+#if 0
       v = &ventries[e->user_id];
       ASSERT(v->status >= 0 && v->status <= V_LAST);
       if (v->status == V_VIRTUAL_USER) {
@@ -2384,11 +2392,12 @@ runlog_check(
         */
         v->status = V_REAL_USER;
       }
+#endif
       break;
     }
   }
 
-  xfree(ventries); ventries = NULL;
+  //xfree(ventries); ventries = NULL;
 
   if (nerr > 0) return -1;
 
