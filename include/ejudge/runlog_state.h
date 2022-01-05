@@ -20,26 +20,6 @@
 
 #define RUNLOG_MAX_SIZE    15625000         // 2000000000 bytes
 
-#if 0
-enum
-  {
-    V_REAL_USER = 1,
-    V_VIRTUAL_USER = 2,
-    V_LAST = 2,
-  };
-
-struct user_entry
-{
-  int status;                   /* virtual or real user */
-  time_t start_time;
-  time_t stop_time;
-
-  int run_id_valid;             /* 1, if the following two fields are properly computed */
-  int run_id_first;             /* first run_id of that user, -1, if none */
-  int run_id_last;              /* last run_id of that user, -1, if none */
-};
-#endif
-
 struct user_flags_info_s
 {
   int nuser;
@@ -106,10 +86,6 @@ struct runlog_state
   RUNS_ACCESS int                run_u;
   RUNS_ACCESS int                run_a;
   teamdb_state_t     teamdb_state;
-  /*
-  int ut_size;
-  struct user_entry **ut_table;
-  */
 
   struct user_flags_info_s user_flags; // banned/invisible/locked flags for users
 

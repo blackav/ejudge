@@ -123,16 +123,6 @@ run_destroy(runlog_state_t state)
 {
   if (!state) return 0;
 
-  /*
-  int i;
-  struct user_entry *ue;
-  for (i = 0; i < state->ut_size; i++) {
-    if (!(ue = state->ut_table[i])) continue;
-    xfree(ue);
-  }
-  xfree(state->ut_table);
-  */
-
   xfree(state->user_flags.flags);
   xfree(state->run_extras);
 
@@ -1046,15 +1036,6 @@ run_reset(
         time_t init_sched_time,
         time_t init_finish_time)
 {
-  /*
-  int i;
-
-  for (i = 0; i < state->ut_size; i++)
-    xfree(state->ut_table[i]);
-  xfree(state->ut_table);
-  state->ut_table = 0;
-  state->ut_size = 0;
-  */
   state->max_user_id = -1;
   state->user_count = -1;
   xfree(state->run_extras);
@@ -1572,128 +1553,21 @@ extend_run_extras(runlog_state_t state)
   state->run_extra_f = state->run_f;
 }
 
-/*
-static const unsigned char valid_user_run_statuses[256] =
-{
-  [RUN_OK]                  = 1,
-  [RUN_COMPILE_ERR]         = 1,
-  [RUN_RUN_TIME_ERR]        = 1,
-  [RUN_TIME_LIMIT_ERR]      = 1,
-  [RUN_PRESENTATION_ERR]    = 1,
-  [RUN_WRONG_ANSWER_ERR]    = 1,
-  [RUN_CHECK_FAILED]        = 1,
-  [RUN_PARTIAL]             = 1,
-  [RUN_ACCEPTED]            = 1,
-  [RUN_IGNORED]             = 1,
-  [RUN_DISQUALIFIED]        = 1,
-  [RUN_PENDING]             = 1,
-  [RUN_MEM_LIMIT_ERR]       = 1,
-  [RUN_SECURITY_ERR]        = 1,
-  [RUN_SYNC_ERR]            = 1,
-  [RUN_STYLE_ERR]           = 1,
-  [RUN_WALL_TIME_LIMIT_ERR] = 1,
-  [RUN_PENDING_REVIEW]      = 1,
-  [RUN_SUMMONED]            = 1,
-  [RUN_REJECTED]            = 1,
-  [RUN_SKIPPED]             = 0,
-
-  [RUN_VIRTUAL_START]       = 1,
-  [RUN_VIRTUAL_STOP]        = 1,
-  [RUN_EMPTY]               = 0,
-
-  [RUN_FULL_REJUDGE]        = 0,
-  [RUN_RUNNING]             = 1,
-  [RUN_COMPILED]            = 1,
-  [RUN_COMPILING]           = 1,
-  [RUN_AVAILABLE]           = 1,
-  //[RUN_REJUDGE]             = 1,
-  //[RUN_TRANSIENT_LAST]      = 1,
-};
-*/
-
 static __attribute__((unused)) struct user_entry *
 get_user_entry(runlog_state_t state, int user_id)
 {
   return NULL;
-  /*
-  ASSERT(user_id > 0);
-
-  if (user_id >= state->ut_size) {
-    struct user_entry **new_ut_table = 0;
-    int new_ut_size = state->ut_size;
-
-    if (!new_ut_size) new_ut_size = 16;
-    while (new_ut_size <= user_id)
-      new_ut_size *= 2;
-    new_ut_table = xcalloc(new_ut_size, sizeof(new_ut_table[0]));
-    if (state->ut_size > 0) {
-      memcpy(new_ut_table, state->ut_table, state->ut_size * sizeof(state->ut_table[0]));
-    }
-    state->ut_size = new_ut_size;
-    xfree(state->ut_table);
-    state->ut_table = new_ut_table;
-    info("runlog: ut_table is extended to %d", state->ut_size);
-  }
-
-  if (!state->ut_table[user_id]) {
-    state->ut_table[user_id] = xcalloc(1, sizeof(state->ut_table[user_id][0]));
-  }
-
-  // check user indices and rebuild them, if necessary
-  struct user_entry *ut = state->ut_table[user_id];
-  if (ut->run_id_valid <= 0) {
-    info("runlog: rebuilding indices for user_id %d", user_id);
-    ut->run_id_first = -1;
-    ut->run_id_last = -1;
-
-    if (state->run_extra_u != state->run_u) {
-      extend_run_extras(state);
-    }
-
-    for (int run_id = state->run_f; run_id < state->run_u; ++run_id) {
-      const struct run_entry *re = &state->runs[run_id - state->run_f];
-      if (valid_user_run_statuses[re->status] && re->user_id == user_id) {
-        // append to the double-linked list
-        state->run_extras[run_id - state->run_extra_f].prev_user_id = ut->run_id_last;
-        state->run_extras[run_id - state->run_extra_f].next_user_id = -1;
-        if (ut->run_id_first < 0) {
-          ut->run_id_first = run_id;
-        }
-        if (ut->run_id_last >= 0) {
-          state->run_extras[ut->run_id_last - state->run_extra_f].next_user_id = run_id;
-        }
-        ut->run_id_last = run_id;
-      }
-    }
-
-    ut->run_id_valid = 1;
-  }
-
-  return ut;
-  */
 }
 
 static __attribute__((unused)) struct user_entry *
 try_user_entry(runlog_state_t state, int user_id)
 {
   return NULL;
-  /*
-  if (user_id <= 0 || user_id >= state->ut_size) return NULL;
-  return state->ut_table[user_id];
-  */
 }
 
 static __attribute__((unused)) void
 drop_user_entry(runlog_state_t state, int user_id)
 {
-  /*
-  if (user_id <= 0 || user_id >= state->ut_size) return;
-  if (state->ut_table[user_id]) {
-    // ...
-    xfree(state->ut_table[user_id]);
-    state->ut_table[user_id] = NULL;
-  }
-  */
 }
 
 time_t
@@ -2294,110 +2168,15 @@ runlog_check(
     case RUN_EMPTY: break;
     case RUN_VIRTUAL_START:
       ASSERT(e->user_id <= max_team_id);
-      /*
-      v = &ventries[e->user_id];
-      if (v->status == V_VIRTUAL_USER) {
-        ASSERT(v->start_time > 0);
-        check_msg(1, ferr, "Run %d: duplicated VSTART", i);
-        nerr++;
-        continue;
-      } else if (v->status == V_REAL_USER) {
-        ASSERT(!v->start_time);
-        ASSERT(!v->stop_time);
-        check_msg(1, ferr, "Run %d: VSTART for non-virtual user", i);
-        nerr++;
-        continue;
-      } else {
-        ASSERT(!v->start_time);
-        v->status = V_VIRTUAL_USER;
-        v->start_time = e->time;
-      }
-      */
       break;
     case RUN_VIRTUAL_STOP:
       ASSERT(e->user_id <= max_team_id);
-      /*
-      v = &ventries[e->user_id];
-      ASSERT(v->status >= 0 && v->status <= V_LAST);
-      if (v->status == V_VIRTUAL_USER) {
-        ASSERT(v->start_time > 0);
-        ASSERT(v->stop_time >= 0);
-        if (v->stop_time) {
-          check_msg(1, ferr, "Run %d: duplicated VSTOP", i);
-          nerr++;
-          continue;
-        }
-        if (phead->duration
-            && e->time > v->start_time + phead->duration) {
-          check_msg(1, ferr, "Run %d: VSTOP after expiration of contest", i);
-          nerr++;
-          continue;
-        }
-        v->stop_time = e->time;
-      } else {
-        ASSERT(!v->start_time);
-        ASSERT(!v->stop_time);
-        ASSERT(v->status == 0 || v->status == V_REAL_USER);
-        check_msg(1, ferr, "Run %d: unexpected VSTOP without VSTART", i);
-        nerr++;
-        continue;
-      }
-      */
       break;
     default:
       ASSERT(e->user_id <= max_team_id);
-#if 0
-      v = &ventries[e->user_id];
-      ASSERT(v->status >= 0 && v->status <= V_LAST);
-      if (v->status == V_VIRTUAL_USER) {
-        ASSERT(v->start_time > 0);
-        ASSERT(v->stop_time >= 0);
-        v_stop_time = v->stop_time;
-        if (!v_stop_time && phead->duration)
-          v_stop_time = v->start_time + phead->duration;
-        if (e->time < v->start_time) {
-          check_msg(1, ferr,
-                    "Run %d timestamp %" EJ_PRINTF_LLSPEC "d is less that virtual start %ld",
-                    i, e->time, (long) v->start_time);
-          nerr++;
-          continue;
-        }
-        /* not needed, because it brokes upsolving
-        if (v_stop_time && e->time > v_stop_time) {
-          check_msg(1, ferr,
-                    "Run %d timestamp %" EJ_PRINTF_LLSPEC "d is greater than virtual stop %ld",
-                    i, e->time, (long) v_stop_time);
-          nerr++;
-          continue;
-        }*/
-      } else {
-        ASSERT(!v->start_time);
-        ASSERT(!v->stop_time);
-        ASSERT(v->status == 0 || v->status == V_REAL_USER);
-        if (e->time < phead->start_time) {
-          check_msg(1,ferr,
-                    "Run %d timestamp %" EJ_PRINTF_LLSPEC "d is less than contest start %" EJ_PRINTF_LLSPEC "d",
-                    i, e->time, phead->start_time);
-          nerr++;
-          continue;
-        }
-        /*
-        if (stop_time && e->time > stop_time) {
-          check_msg(1, ferr,
-                    "Run %d timestamp %" EJ_PRINTF_LLSPEC "d is greater than contest stop %ld",
-                    i, e->time, (long) stop_time);
-          nerr++;
-          continue;
-        }
-        */
-        v->status = V_REAL_USER;
-      }
-#endif
       break;
     }
   }
-
-  //xfree(ventries); ventries = NULL;
 
   if (nerr > 0) return -1;
 
