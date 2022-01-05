@@ -1671,7 +1671,7 @@ try_user_entry(runlog_state_t state, int user_id)
   return state->ut_table[user_id];
 }
 
-static void
+static __attribute__((unused)) void
 drop_user_entry(runlog_state_t state, int user_id)
 {
   if (user_id <= 0 || user_id >= state->ut_size) return;
@@ -1924,7 +1924,7 @@ run_clear_user_entries(
     }
   }
 
-  drop_user_entry(state, user_id);
+  run_delete_user_run_header(state, user_id);
   return 0;
 }
 
@@ -3149,4 +3149,19 @@ run_get_user_run_header(
   urh->umap[offset] = index;
   if (p_is_created) *p_is_created = 1;
   return &urh->infos[index];
+}
+
+void
+run_delete_user_run_header(
+        runlog_state_t state,
+        int user_id)
+{
+  if (state->iface->delete_user_run_header) {
+    state->iface->delete_user_run_header(state->cnts, user_id);
+  }
+
+  struct user_run_header_state *urh = &state->urh;
+  if (user_id >= urh->low_user_id && user_id < urh->high_user_id) {
+    urh->umap[user_id - urh->low_user_id] = 0;
+  }
 }

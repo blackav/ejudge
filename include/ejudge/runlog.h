@@ -465,6 +465,11 @@ run_fetch_user_runs(
         int *p_count,
         struct run_entry **p_entries);
 
+void
+run_delete_user_run_header(
+        runlog_state_t state,
+        int user_id);
+
 static inline _Bool __attribute__((always_inline)) run_is_normal_status(unsigned char status)
 {
   return status <= RUN_LOW_LAST && (status < RUN_PSEUDO_FIRST || status > RUN_PSEUDO_LAST);
