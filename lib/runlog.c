@@ -93,9 +93,6 @@ struct run_entry_v1
 
 static int update_user_flags(runlog_state_t state);
 static void build_indices(runlog_state_t state, int flags);
-static struct user_entry *get_user_entry(runlog_state_t state, int user_id);
-static struct user_entry *try_user_entry(runlog_state_t state, int user_id);
-static void drop_user_entry(runlog_state_t state, int user_id);
 static void extend_run_extras(runlog_state_t state);
 static void run_drop_uuid_hash(runlog_state_t state);
 static int find_free_uuid_hash_index(runlog_state_t state, const ej_uuid_t *puuid);
@@ -1551,23 +1548,6 @@ extend_run_extras(runlog_state_t state)
   state->run_extra_a = new_a;
   state->run_extra_u = state->run_u;
   state->run_extra_f = state->run_f;
-}
-
-static __attribute__((unused)) struct user_entry *
-get_user_entry(runlog_state_t state, int user_id)
-{
-  return NULL;
-}
-
-static __attribute__((unused)) struct user_entry *
-try_user_entry(runlog_state_t state, int user_id)
-{
-  return NULL;
-}
-
-static __attribute__((unused)) void
-drop_user_entry(runlog_state_t state, int user_id)
-{
 }
 
 time_t
