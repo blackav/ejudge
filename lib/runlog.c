@@ -121,16 +121,18 @@ run_init(teamdb_state_t ts)
 runlog_state_t
 run_destroy(runlog_state_t state)
 {
-  int i;
-  struct user_entry *ue;
-
   if (!state) return 0;
 
+  /*
+  int i;
+  struct user_entry *ue;
   for (i = 0; i < state->ut_size; i++) {
     if (!(ue = state->ut_table[i])) continue;
     xfree(ue);
   }
   xfree(state->ut_table);
+  */
+
   xfree(state->user_flags.flags);
   xfree(state->run_extras);
 
@@ -1044,6 +1046,7 @@ run_reset(
         time_t init_sched_time,
         time_t init_finish_time)
 {
+  /*
   int i;
 
   for (i = 0; i < state->ut_size; i++)
@@ -1051,6 +1054,7 @@ run_reset(
   xfree(state->ut_table);
   state->ut_table = 0;
   state->ut_size = 0;
+  */
   state->max_user_id = -1;
   state->user_count = -1;
   xfree(state->run_extras);

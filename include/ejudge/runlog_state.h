@@ -104,8 +104,10 @@ struct runlog_state
   RUNS_ACCESS int                run_u;
   RUNS_ACCESS int                run_a;
   teamdb_state_t     teamdb_state;
+  /*
   int ut_size;
   struct user_entry **ut_table;
+  */
 
   struct user_flags_info_s user_flags; // banned/invisible/locked flags for users
 
