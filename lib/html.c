@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2000-2020 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -4258,13 +4258,10 @@ do_write_standings(
           global->stand_self_row_attr && global->stand_self_row_attr[0]) {
         bgcolor_ptr = ss.self_row_attr;
       } else if (global->is_virtual) {
-        int vstat = run_get_virtual_status(state->runlog_state, t_ind[t]);
-        if (vstat == 1 && ss.r_row_attr[0]) {
-          bgcolor_ptr = ss.r_row_attr;
-        } else if (vstat == 2 && ss.v_row_attr[0]) {
-          bgcolor_ptr = ss.v_row_attr;
-        } else if (!vstat && ss.u_row_attr[0]) {
-          bgcolor_ptr = ss.u_row_attr;
+        if (run_get_is_virtual(state->runlog_state, t_ind[t])) {
+          if (ss.v_row_attr[0]) bgcolor_ptr = ss.v_row_attr;
+        } else {
+          if (ss.r_row_attr[0]) bgcolor_ptr = ss.r_row_attr;
         }
       }
       if ((!bgcolor_ptr || !*bgcolor_ptr)
