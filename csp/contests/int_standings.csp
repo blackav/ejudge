@@ -572,13 +572,10 @@ sec_to_min(int rounding_mode, int secs)
             && global->stand_self_row_attr && global->stand_self_row_attr[0]) {
             row_attr = global->stand_self_row_attr;
         } else if (global->is_virtual) {
-            int vstat = run_get_virtual_status(cs->runlog_state, user_id);
-            if (vstat == 1 && ss.r_row_attr[0]) {
-                row_attr = ss.r_row_attr;
-            } else if (vstat == 2 && ss.v_row_attr[0]) {
-                row_attr = ss.v_row_attr;
-            } else if (!vstat && ss.u_row_attr[0]) {
-                row_attr = ss.u_row_attr;
+            if (run_get_is_virtual(cs->runlog_state, user_id)) {
+                if (ss.v_row_attr[0]) row_attr = ss.v_row_attr;
+            } else {
+                if (ss.r_row_attr[0]) row_attr = ss.r_row_attr;
             }
         }
 
