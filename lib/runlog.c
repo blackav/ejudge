@@ -1558,6 +1558,14 @@ run_get_virtual_start_time(runlog_state_t state, int user_id)
   return urh->start_time;
 }
 
+int
+run_get_virtual_is_checked(runlog_state_t state, int user_id)
+{
+  struct user_run_header_info *urh = run_try_user_run_header(state, user_id);
+  if (!urh) return 0;
+  return urh->is_checked;
+}
+
 time_t
 run_get_virtual_stop_time(runlog_state_t state, int user_id, time_t cur_time)
 {
@@ -2337,6 +2345,7 @@ build_indices(runlog_state_t state, int flags)
     case RUN_VIRTUAL_START:
       urhi->is_virtual = 1;
       urhi->start_time = state->runs[i_off].time;
+      if (state->runs[i_off].judge_id) urhi->is_checked = 1;
       break;
     case RUN_VIRTUAL_STOP:
       ASSERT(urhi->start_time > 0);
@@ -2939,4 +2948,10 @@ run_delete_user_run_header(
   if (user_id >= urh->low_user_id && user_id < urh->high_user_id) {
     urh->umap[user_id - urh->low_user_id] = 0;
   }
+}
+
+void
+run_set_virtual_is_checked(runlog_state_t, int user_id, int is_checked)
+{
+  // TODO
 }
