@@ -221,6 +221,13 @@ user_run_header_set_start_time_func(
         int last_change_user_id);
 
 static int
+user_run_header_set_is_checked_func(
+        struct rldb_plugin_cnts *cdata,
+        int user_id,
+        int is_checked,
+        int last_change_user_id);
+
+static int
 delete_user_run_header_func(
         struct rldb_plugin_cnts *cdata,
         int user_id);
