@@ -1230,23 +1230,6 @@ run_get_entry(runlog_state_t state, int run_id, struct run_entry *out)
 }
 
 int
-run_get_virtual_start_entry(
-        runlog_state_t state,
-        int user_id,
-        struct run_entry *out)
-{
-  int i;
-
-  for (i = state->run_f; i < state->run_u; i++)
-    if (state->runs[i - state->run_f].status == RUN_VIRTUAL_START
-        && state->runs[i - state->run_f].user_id == user_id)
-      break;
-  if (i >= state->run_u) return -1;
-  if (out) memcpy(out, &state->runs[i - state->run_f], sizeof(*out));
-  return i;
-}
-
-int
 run_set_entry(
         runlog_state_t state,
         int run_id,
