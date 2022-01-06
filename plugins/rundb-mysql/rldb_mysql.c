@@ -114,6 +114,7 @@ struct rldb_plugin_iface plugin_rldb_mysql =
   NULL,
   add_entry_2_func,
   user_run_header_set_start_time_func,
+  user_run_header_set_stop_time_func,
   user_run_header_set_is_checked_func,
   user_run_header_delete_func,
 };
@@ -2052,6 +2053,51 @@ user_run_header_set_start_time_func(
     urhi->has_db_record = 1;
     urhi->last_change_user_id = last_change_user_id;
     urhi->start_time = start_time;
+    urhi->last_change_time = time(NULL);
+  }
+
+  return 0;
+}
+
+static int
+user_run_header_set_stop_time_func(
+        struct rldb_plugin_cnts *cdata,
+        int user_id,
+        time_t stop_time,
+        int last_change_user_id)
+{
+  struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts*) cdata;
+  struct rldb_mysql_state *state = cs->plugin_state;
+  struct runlog_state *rls = cs->rl_state;
+  char *cmd_s = 0;
+  size_t cmd_z = 0;
+  FILE *cmd_f = 0;
+
+  cmd_f = open_memstream(&cmd_s, &cmd_z);
+  fprintf(cmd_f, "INSERT INTO %suserrunheaders SET stop_time = ", state->md->table_prefix);
+  state->mi->write_timestamp(state->md, cmd_f, 0, stop_time);
+  fprintf(cmd_f, ", user_id = %d", user_id);
+  fprintf(cmd_f, ", contest_id = %d", cs->contest_id);
+  fprintf(cmd_f, ", last_change_user_id = %d", last_change_user_id);
+  fprintf(cmd_f, ", last_change_time = NOW()");
+  fprintf(cmd_f, " ON DUPLICATE KEY UPDATE stop_time = ");
+  state->mi->write_timestamp(state->md, cmd_f, 0, stop_time);
+  fprintf(cmd_f, ", last_change_user_id = %d", last_change_user_id);
+  fprintf(cmd_f, ", last_change_time = NOW() ;");
+  fclose(cmd_f); cmd_f = NULL;
+
+  if (state->mi->simple_query(state->md, cmd_s, cmd_z) < 0) {
+    free(cmd_s);
+    return -1;
+  }
+  free(cmd_s); cmd_s = NULL;
+
+  struct user_run_header_info *urhi = run_get_user_run_header(rls, user_id, NULL);
+  if (urhi) {
+    urhi->user_id = user_id;
+    urhi->has_db_record = 1;
+    urhi->last_change_user_id = last_change_user_id;
+    urhi->stop_time = stop_time;
     urhi->last_change_time = time(NULL);
   }
 
