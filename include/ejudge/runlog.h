@@ -338,7 +338,7 @@ int run_virtual_start(runlog_state_t, int user_id, time_t, const ej_ip_t *, int,
 int run_virtual_stop(runlog_state_t, int user_id, time_t, const ej_ip_t *, int, int);
 int run_get_virtual_info(runlog_state_t state, int user_id,
                          struct run_entry *vs, struct run_entry *ve);
-void run_set_virtual_is_checked(runlog_state_t, int user_id, int is_checked);
+int run_set_virtual_is_checked(runlog_state_t, int user_id, int is_checked, int last_change_user_id);
 
 int run_clear_entry(runlog_state_t, int run_id);
 int run_squeeze_log(runlog_state_t);
