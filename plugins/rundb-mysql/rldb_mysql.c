@@ -516,6 +516,7 @@ load_user_header(
         p->user_id = urhi.user_id;
         p->duration = urhi.duration;
         p->is_virtual = urhi.is_virtual;
+        p->is_checked = urhi.is_checked;
         p->has_db_record = 1;
         p->last_change_user_id = urhi.last_change_user_id;
         p->start_time = urhi.start_time;

@@ -55,7 +55,7 @@ struct user_run_header_info
   unsigned char is_virtual;
   unsigned char run_id_valid;
   unsigned char has_db_record;
-  unsigned char pad[1];
+  unsigned char is_checked;
   int run_id_first;
   int run_id_last;
   int last_change_user_id;

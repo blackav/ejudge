@@ -236,6 +236,7 @@ static const char create_userrunheaders_query[] =
 "        user_id INT UNSIGNED NOT NULL, "
 "        contest_id INT UNSIGNED NOT NULL, "
 "        is_virtual TINYINT NOT NULL DEFAULT 0, "
+"        is_checked TINYINT NOT NULL DEFAULT 0, "
 "        start_time DATETIME DEFAULT NULL, "
 "        duration INT UNSIGNED, "
 "        stop_time DATETIME DEFAULT NULL, "
@@ -249,6 +250,7 @@ struct user_run_header_internal
   int user_id;
   int contest_id;
   int is_virtual;
+  int is_checked;
   time_t start_time;
   int duration;
   time_t stop_time;
@@ -256,7 +258,7 @@ struct user_run_header_internal
   int last_change_user_id;
 };
 
-enum { USERRUNHEADERS_ROW_WIDTH = 8 };
+enum { USERRUNHEADERS_ROW_WIDTH = 9 };
 
 #define USERRUNHEADERS_OFFSET(f) XOFFSET(struct user_run_header_internal, f)
 static const struct common_mysql_parse_spec user_run_headers_spec[USERRUNHEADERS_ROW_WIDTH] =
@@ -264,6 +266,7 @@ static const struct common_mysql_parse_spec user_run_headers_spec[USERRUNHEADERS
   { 0, 'd', "user_id", USERRUNHEADERS_OFFSET(user_id), 0 },
   { 0, 'd', "contest_id", USERRUNHEADERS_OFFSET(contest_id), 0 },
   { 0, 'd', "is_virtual", USERRUNHEADERS_OFFSET(is_virtual), 0 },
+  { 0, 'd', "is_checked", USERRUNHEADERS_OFFSET(is_checked), 0 },
   { 1, 't', "start_time", USERRUNHEADERS_OFFSET(start_time), 0 },
   { 1, 'd', "duration", USERRUNHEADERS_OFFSET(duration), 0 },
   { 1, 't', "stop_time", USERRUNHEADERS_OFFSET(stop_time), 0 },
