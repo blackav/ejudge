@@ -115,7 +115,7 @@ struct rldb_plugin_iface plugin_rldb_mysql =
   add_entry_2_func,
   user_run_header_set_start_time_func,
   user_run_header_set_is_checked_func,
-  delete_user_run_header_func,
+  user_run_header_delete_func,
 };
 
 static struct common_plugin_data *
@@ -1979,7 +1979,7 @@ add_entry_2_func(
 }
 
 static int
-delete_user_run_header_func(
+user_run_header_delete_func(
         struct rldb_plugin_cnts *cdata,
         int user_id)
 {

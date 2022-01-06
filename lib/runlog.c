@@ -2940,8 +2940,8 @@ run_delete_user_run_header(
         runlog_state_t state,
         int user_id)
 {
-  if (state->iface->delete_user_run_header) {
-    state->iface->delete_user_run_header(state->cnts, user_id);
+  if (state->iface->user_run_header_delete) {
+    state->iface->user_run_header_delete(state->cnts, user_id);
   }
 
   struct user_run_header_state *urh = &state->urh;
