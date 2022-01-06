@@ -2950,8 +2950,25 @@ run_delete_user_run_header(
   }
 }
 
-void
-run_set_virtual_is_checked(runlog_state_t, int user_id, int is_checked)
+int
+run_set_virtual_is_checked(
+        runlog_state_t state,
+        int user_id,
+        int is_checked,
+        int last_change_user_id)
 {
-  // TODO
+  if (state->iface->user_run_header_set_is_checked) {
+    return state->iface->user_run_header_set_is_checked(state->cnts, user_id, is_checked, last_change_user_id);
+  } else {
+    // FIXME: scan for runs better
+    int run_id;
+    for (run_id = state->run_f; run_id < state->run_u; run_id++)
+      if (state->runs[run_id - state->run_f].status == RUN_VIRTUAL_START
+          && state->runs[run_id - state->run_f].user_id == user_id)
+        break;
+    if (run_id < state->run_u) {
+      run_set_judge_id(state, run_id, is_checked);
+    }
+  }
+  return 0;
 }

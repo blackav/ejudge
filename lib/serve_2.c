@@ -5546,7 +5546,7 @@ serve_judge_virtual_olympiad(
       serve_rejudge_run(extra, config, cnts, cs, latest_runs[i], user_id, 0, 0, 1,
                         priority_adjustment);
   }
-  run_set_virtual_is_checked(cs->runlog_state, user_id, 1);
+  run_set_virtual_is_checked(cs->runlog_state, user_id, 1, 0);
 }
 
 void
