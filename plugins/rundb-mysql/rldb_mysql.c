@@ -2014,7 +2014,7 @@ user_run_header_set_start_time_func(
 {
   struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts*) cdata;
   struct rldb_mysql_state *state = cs->plugin_state;
-  //struct runlog_state *rls = cs->rl_state;
+  struct runlog_state *rls = cs->rl_state;
   char *cmd_s = 0;
   size_t cmd_z = 0;
   FILE *cmd_f = 0;
@@ -2039,6 +2039,17 @@ user_run_header_set_start_time_func(
     return -1;
   }
   free(cmd_s); cmd_s = NULL;
+
+  struct user_run_header_info *urhi = run_get_user_run_header(rls, user_id, NULL);
+  if (urhi) {
+    urhi->user_id = user_id;
+    urhi->contest_id = cs->contest_id;
+    urhi->is_virtual = is_virtual;
+    urhi->has_db_record = 1;
+    urhi->last_change_user_id = last_change_user_id;
+    urhi->start_time = start_time;
+    urhi->last_change_time = time(NULL);
+  }
 
   return 0;
 }
