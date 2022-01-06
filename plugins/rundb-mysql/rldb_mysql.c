@@ -517,13 +517,9 @@ load_user_header(
         p->duration = urhi.duration;
         p->is_virtual = urhi.is_virtual;
         p->has_db_record = 1;
-        p->create_user_id = urhi.create_user_id;
         p->last_change_user_id = urhi.last_change_user_id;
         p->start_time = urhi.start_time;
-        p->sched_time = urhi.sched_time;
         p->stop_time = urhi.stop_time;
-        p->finish_time = urhi.finish_time;
-        p->create_time = urhi.create_time;
         p->last_change_time = urhi.last_change_time;
       }
     }
