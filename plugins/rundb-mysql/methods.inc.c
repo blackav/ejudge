@@ -213,6 +213,14 @@ add_entry_2_func(
         const unsigned char *prob_uuid);
 
 static int
+user_run_header_set_start_time_func(
+        struct rldb_plugin_cnts *cdata,
+        int user_id,
+        time_t start_time,
+        int is_virtual,
+        int last_change_user_id);
+
+static int
 delete_user_run_header_func(
         struct rldb_plugin_cnts *cdata,
         int user_id);

@@ -113,6 +113,7 @@ struct rldb_plugin_iface plugin_rldb_mysql =
   change_status_4_func,
   NULL,
   add_entry_2_func,
+  user_run_header_set_start_time_func,
   delete_user_run_header_func,
 };
 
@@ -2000,5 +2001,44 @@ delete_user_run_header_func(
     rls->urh.umap[user_id - rls->urh.low_user_id] = 0;
   }
   // FIXME: the user_run_header_info entry for user_id in vector infos is just lost...
+  return 0;
+}
+
+static int
+user_run_header_set_start_time_func(
+        struct rldb_plugin_cnts *cdata,
+        int user_id,
+        time_t start_time,
+        int is_virtual,
+        int last_change_user_id)
+{
+  struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts*) cdata;
+  struct rldb_mysql_state *state = cs->plugin_state;
+  //struct runlog_state *rls = cs->rl_state;
+  char *cmd_s = 0;
+  size_t cmd_z = 0;
+  FILE *cmd_f = 0;
+
+  cmd_f = open_memstream(&cmd_s, &cmd_z);
+  fprintf(cmd_f, "INSERT INTO %suserrunheaders SET start_time = ", state->md->table_prefix);
+  state->mi->write_timestamp(state->md, cmd_f, 0, start_time);
+  fprintf(cmd_f, ", is_virtual = %d", is_virtual);
+  fprintf(cmd_f, ", user_id = %d", user_id);
+  fprintf(cmd_f, ", contest_id = %d", cs->contest_id);
+  fprintf(cmd_f, ", last_change_user_id = %d", last_change_user_id);
+  fprintf(cmd_f, ", last_change_time = NOW()");
+  fprintf(cmd_f, " ON DUPLICATE KEY UPDATE start_time = ");
+  state->mi->write_timestamp(state->md, cmd_f, 0, start_time);
+  fprintf(cmd_f, ", is_virtual = %d", is_virtual);
+  fprintf(cmd_f, ", last_change_user_id = %d", last_change_user_id);
+  fprintf(cmd_f, ", last_change_time = NOW() ;");
+  fclose(cmd_f); cmd_f = NULL;
+
+  if (state->mi->simple_query(state->md, cmd_s, cmd_z) < 0) {
+    free(cmd_s);
+    return -1;
+  }
+  free(cmd_s); cmd_s = NULL;
+
   return 0;
 }

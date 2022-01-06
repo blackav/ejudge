@@ -177,6 +177,14 @@ struct rldb_plugin_iface
         int,
         const unsigned char *prob_uuid);
 
+  // set virtual start time
+  int (*user_run_header_set_start_time)(
+        struct rldb_plugin_cnts *cdata,
+        int user_id,
+        time_t start_time,
+        int is_virtual,
+        int last_change_user_id);
+
   // remove the user run header
   int (*delete_user_run_header)(
         struct rldb_plugin_cnts *cdata,
