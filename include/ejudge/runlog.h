@@ -332,11 +332,13 @@ const struct run_entry *run_get_entries_ptr(runlog_state_t);
 
 time_t run_get_virtual_start_time(runlog_state_t, int user_id);
 time_t run_get_virtual_stop_time(runlog_state_t, int user_id, time_t cur_time);
+int run_get_virtual_is_checked(runlog_state_t, int user_id);
 int run_get_is_virtual(runlog_state_t, int user_id);
 int run_virtual_start(runlog_state_t, int user_id, time_t, const ej_ip_t *, int, int);
 int run_virtual_stop(runlog_state_t, int user_id, time_t, const ej_ip_t *, int, int);
 int run_get_virtual_info(runlog_state_t state, int user_id,
                          struct run_entry *vs, struct run_entry *ve);
+void run_set_virtual_is_checked(runlog_state_t, int user_id, int is_checked);
 
 int run_clear_entry(runlog_state_t, int run_id);
 int run_squeeze_log(runlog_state_t);

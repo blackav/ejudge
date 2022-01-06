@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2021 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -5509,14 +5509,11 @@ serve_judge_virtual_olympiad(
   const struct section_problem_data *prob;
   struct run_entry re;
   int *latest_runs, s, i;
-  int vstart_id;
 
   if (global->score_system != SCORE_OLYMPIAD || !global->is_virtual) return;
   if (user_id <= 0) return;
-  if (run_get_virtual_start_entry(cs->runlog_state, user_id, &re) < 0) return;
-  if (re.judge_id > 0) return;
+  if (run_get_virtual_is_checked(cs->runlog_state, user_id)) return;
   if (run_id < 0) return;
-  vstart_id = re.run_id;
 
   // Fully rejudge latest submits
   if (run_get_entry(cs->runlog_state, run_id, &re) < 0) return;
@@ -5549,7 +5546,7 @@ serve_judge_virtual_olympiad(
       serve_rejudge_run(extra, config, cnts, cs, latest_runs[i], user_id, 0, 0, 1,
                         priority_adjustment);
   }
-  run_set_judge_id(cs->runlog_state, vstart_id, 1);
+  run_set_virtual_is_checked(cs->runlog_state, user_id, 1);
 }
 
 void
