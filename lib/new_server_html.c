@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2021 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -12368,10 +12368,7 @@ get_last_answer_select_one(serve_state_t cs, int user_id, int prob_id)
 int
 is_judged_virtual_olympiad(serve_state_t cs, int user_id)
 {
-  struct run_entry vs, ve;
-
-  if (run_get_virtual_info(cs->runlog_state, user_id, &vs, &ve) < 0) return 0;
-  return (vs.judge_id > 0);
+  return run_get_virtual_is_checked(cs->runlog_state, user_id);
 }
 
 void

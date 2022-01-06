@@ -5441,25 +5441,10 @@ handle_judge_olympiad_event(
         serve_state_t cs,
         struct serve_event_queue *p)
 {
-  int count;
-  struct run_entry rs, re;
-
   if (cs->global->score_system != SCORE_OLYMPIAD
       || !cs->global->is_virtual) goto done;
-  count = run_get_virtual_info(cs->runlog_state, p->user_id, &rs, &re);
-  if (count < 0) {
-    err("virtual user %d cannot be judged", p->user_id);
-    goto done;
-  }
-  // cannot do judging before all transint runs are done
-  if (count > 0) return;
-  if (rs.status != RUN_VIRTUAL_START || rs.user_id != p->user_id)
-    goto done;
-  if (re.status != RUN_VIRTUAL_STOP || re.user_id != p->user_id)
-    goto done;
-  // already judged somehow
-  if (rs.judge_id > 0) goto done;
-  serve_judge_virtual_olympiad(extra, config, cnts, cs, p->user_id, re.run_id,
+  if (run_get_virtual_is_checked(cs->runlog_state, p->user_id)) return;
+  serve_judge_virtual_olympiad(extra, config, cnts, cs, p->user_id, 0,
                                DFLT_G_REJUDGE_PRIORITY_ADJUSTMENT);
   if (p->handler) (*p->handler)(cnts, cs, p);
 
@@ -5513,11 +5498,10 @@ serve_judge_virtual_olympiad(
   if (global->score_system != SCORE_OLYMPIAD || !global->is_virtual) return;
   if (user_id <= 0) return;
   if (run_get_virtual_is_checked(cs->runlog_state, user_id)) return;
-  if (run_id < 0) return;
 
   // Fully rejudge latest submits
-  if (run_get_entry(cs->runlog_state, run_id, &re) < 0) return;
-  if (re.status != RUN_VIRTUAL_STOP) return;
+  run_id = run_get_total(cs->runlog_state) - 1;
+  if (run_id < 0) return;
   if (cs->max_prob <= 0) return;
 
   XALLOCA(latest_runs, cs->max_prob + 1);
