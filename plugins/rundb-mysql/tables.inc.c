@@ -254,17 +254,13 @@ struct user_run_header_internal
   int contest_id;
   int is_virtual;
   time_t start_time;
-  time_t sched_time;
   int duration;
   time_t stop_time;
-  time_t finish_time;
-  time_t create_time;
-  int create_user_id;
   time_t last_change_time;
   int last_change_user_id;
 };
 
-enum { USERRUNHEADERS_ROW_WIDTH = 12 };
+enum { USERRUNHEADERS_ROW_WIDTH = 8 };
 
 #define USERRUNHEADERS_OFFSET(f) XOFFSET(struct user_run_header_internal, f)
 static const struct common_mysql_parse_spec user_run_headers_spec[USERRUNHEADERS_ROW_WIDTH] =
@@ -273,12 +269,8 @@ static const struct common_mysql_parse_spec user_run_headers_spec[USERRUNHEADERS
   { 0, 'd', "contest_id", USERRUNHEADERS_OFFSET(contest_id), 0 },
   { 0, 'd', "is_virtual", USERRUNHEADERS_OFFSET(is_virtual), 0 },
   { 1, 't', "start_time", USERRUNHEADERS_OFFSET(start_time), 0 },
-  { 1, 't', "sched_time", USERRUNHEADERS_OFFSET(sched_time), 0 },
   { 1, 'd', "duration", USERRUNHEADERS_OFFSET(duration), 0 },
   { 1, 't', "stop_time", USERRUNHEADERS_OFFSET(stop_time), 0 },
-  { 1, 't', "finish_time", USERRUNHEADERS_OFFSET(finish_time), 0 },
-  { 1, 't', "create_time", USERRUNHEADERS_OFFSET(create_time), 0 },
-  { 1, 'd', "create_user_id", USERRUNHEADERS_OFFSET(create_user_id), 0 },
   { 1, 't', "last_change_time", USERRUNHEADERS_OFFSET(last_change_time), 0 },
   { 1, 'd', "last_change_user_id", USERRUNHEADERS_OFFSET(last_change_user_id), 0 },
 };

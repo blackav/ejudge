@@ -16,6 +16,8 @@
  * GNU General Public License for more details.
  */
 
+#include "ejudge/ej_types.h"
+
 #include <stdint.h>
 
 #define RUNLOG_MAX_SIZE    15625000         // 2000000000 bytes
@@ -57,14 +59,11 @@ struct user_run_header_info
   unsigned char pad[1];
   int run_id_first;
   int run_id_last;
-  int create_user_id;
   int last_change_user_id;
-  time_t start_time;
-  time_t sched_time;
-  time_t stop_time;
-  time_t finish_time;
-  time_t create_time;
-  time_t last_change_time;
+  ej_time64_t start_time;
+  ej_time64_t stop_time;
+  ej_time64_t last_change_time;
+  unsigned char pad2[8];
 };
 
 struct user_run_header_state
