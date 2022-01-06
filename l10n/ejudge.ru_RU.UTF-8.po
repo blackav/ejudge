@@ -4405,6 +4405,9 @@ msgstr ""
 msgid "User report"
 msgstr "Пользовательский протокол"
 
+msgid "User run headers"
+msgstr "Прохождения участников"
+
 msgid "User standings"
 msgstr "Положение участников"
 

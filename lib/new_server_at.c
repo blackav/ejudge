@@ -319,4 +319,5 @@ const unsigned char * const ns_symbolic_action_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_OAUTH_LOGIN_1] = "oauth-login-1",
   [NEW_SRV_ACTION_OAUTH_LOGIN_2] = "oauth-login-2",
   [NEW_SRV_ACTION_OAUTH_LOGIN_3] = "oauth-login-3",
+  [NEW_SRV_ACTION_USER_RUN_HEADERS_PAGE] = "user-run-headers-page",
 };

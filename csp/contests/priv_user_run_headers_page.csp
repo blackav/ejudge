@@ -1,0 +1,24 @@
+<%
+%><%@include "priv_includes.csp"
+%><%@set getter_name = "csp_get_priv_user_run_headers_page"
+%><%@set ac_prefix = "NEW_SRV_ACTION_"
+%><%@page csp_view_priv_user_run_headers_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "priv_stdvars.csp"
+%><%
+  const unsigned char *title = NULL;
+  int enable_main_menu = 0;
+
+  if (phr->role < USER_ROLE_JUDGE) FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+
+  l10n_setlocale(phr->locale_id);
+  title = _("User run headers");
+%><%@include "priv_header.csp"
+%>
+</div>
+
+<%@include "priv_footer.csp"
+%><%
+cleanup:
+  l10n_resetlocale();
+  html_armor_free(&ab);
+%>

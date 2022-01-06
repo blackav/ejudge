@@ -3,7 +3,7 @@
 #ifndef __NEW_SERVER_PROTO_H__
 #define __NEW_SERVER_PROTO_H__
 
-/* Copyright (C) 2006-2021 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -363,6 +363,7 @@ enum
   NEW_SRV_ACTION_OAUTH_LOGIN_1,
   NEW_SRV_ACTION_OAUTH_LOGIN_2,
   NEW_SRV_ACTION_OAUTH_LOGIN_3,
+  NEW_SRV_ACTION_USER_RUN_HEADERS_PAGE,
 
   NEW_SRV_ACTION_LAST,
 };
