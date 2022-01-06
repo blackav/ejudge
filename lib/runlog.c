@@ -2480,39 +2480,6 @@ update_user_flags(runlog_state_t state)
 }
 
 int
-run_get_virtual_info(
-        runlog_state_t state,
-        int user_id,
-        struct run_entry *vs,
-        struct run_entry *ve)
-{
-  int count = 0, i, run_start = -1, run_end = -1, s;
-  struct user_run_header_info *urh = run_get_user_run_header(state, user_id, NULL);
-  ASSERT(urh);
-  ASSERT(urh->run_id_valid);
-
-  for (i = urh->run_id_last; i >= state->run_f; i = state->run_extras[i - state->run_extra_f].prev_user_id) {
-    ASSERT(i < state->run_u);
-    ASSERT(state->runs[i - state->run_f].user_id == user_id);
-    if ((s = state->runs[i - state->run_f].status) == RUN_EMPTY) continue;
-    if (s >= RUN_TRANSIENT_FIRST && s <= RUN_TRANSIENT_LAST) {
-      count++;
-    } else if (s == RUN_VIRTUAL_START) {
-      if (run_start >= 0) return -1;
-      run_start = i;
-    } else if (s == RUN_VIRTUAL_STOP) {
-      if (run_end >= 0) return -1;
-      run_end = i;
-    }
-  }
-
-  if (run_start < 0 || run_end < 0) return -1;
-  if (vs) memcpy(vs, &state->runs[run_start - state->run_f], sizeof(*vs));
-  if (ve) memcpy(ve, &state->runs[run_end - state->run_f], sizeof(*ve));
-  return count;
-}
-
-int
 run_count_examinable_runs(
         runlog_state_t state,
         int prob_id,
