@@ -51,7 +51,6 @@ struct rldb_plugin_cnts;
 struct user_run_header_info
 {
   int user_id;
-  int contest_id;
   int duration;
   unsigned char is_virtual;
   unsigned char run_id_valid;
@@ -63,8 +62,10 @@ struct user_run_header_info
   ej_time64_t start_time;
   ej_time64_t stop_time;
   ej_time64_t last_change_time;
-  unsigned char pad2[8];
+  unsigned char pad2[16];
 };
+
+_Static_assert(sizeof(struct user_run_header_info) == 64);
 
 struct user_run_header_state
 {
