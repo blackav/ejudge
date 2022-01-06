@@ -514,7 +514,6 @@ load_user_header(
         rls->urh.umap[offset] = index;
         struct user_run_header_info *p = &rls->urh.infos[index];
         p->user_id = urhi.user_id;
-        p->contest_id = urhi.contest_id;
         p->duration = urhi.duration;
         p->is_virtual = urhi.is_virtual;
         p->has_db_record = 1;
@@ -2043,7 +2042,6 @@ user_run_header_set_start_time_func(
   struct user_run_header_info *urhi = run_get_user_run_header(rls, user_id, NULL);
   if (urhi) {
     urhi->user_id = user_id;
-    urhi->contest_id = cs->contest_id;
     urhi->is_virtual = is_virtual;
     urhi->has_db_record = 1;
     urhi->last_change_user_id = last_change_user_id;
