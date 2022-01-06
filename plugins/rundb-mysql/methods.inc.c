@@ -228,6 +228,6 @@ user_run_header_set_is_checked_func(
         int last_change_user_id);
 
 static int
-delete_user_run_header_func(
+user_run_header_delete_func(
         struct rldb_plugin_cnts *cdata,
         int user_id);

@@ -193,7 +193,7 @@ struct rldb_plugin_iface
         int last_change_user_id);
 
   // remove the user run header
-  int (*delete_user_run_header)(
+  int (*user_run_header_delete)(
         struct rldb_plugin_cnts *cdata,
         int user_id);
 };
