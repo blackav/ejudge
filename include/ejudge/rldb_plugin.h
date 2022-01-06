@@ -192,6 +192,13 @@ struct rldb_plugin_iface
         time_t stop_time,
         int last_change_user_id);
 
+  // set duration
+  int (*user_run_header_set_duration)(
+        struct rldb_plugin_cnts *cdata,
+        int user_id,
+        int duration,
+        int last_change_user_id);
+
   // set is_checked flag
   int (*user_run_header_set_is_checked)(
         struct rldb_plugin_cnts *cdata,

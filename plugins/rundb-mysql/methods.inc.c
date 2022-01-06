@@ -228,6 +228,13 @@ user_run_header_set_stop_time_func(
         int last_change_user_id);
 
 static int
+user_run_header_set_duration_func(
+        struct rldb_plugin_cnts *cdata,
+        int user_id,
+        int duration,
+        int last_change_user_id);
+
+static int
 user_run_header_set_is_checked_func(
         struct rldb_plugin_cnts *cdata,
         int user_id,
