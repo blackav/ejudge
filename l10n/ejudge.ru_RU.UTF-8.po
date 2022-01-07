@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-01-07 14:25+0300\n"
-"PO-Revision-Date: 2020-07-13 22:56+0300\n"
+"POT-Creation-Date: 2022-01-07 17:26+0300\n"
+"PO-Revision-Date: 2022-01-07 17:34+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "Language: ru\n"
@@ -452,6 +452,9 @@ msgstr "Все вопросы и комментарии"
 msgid "All entries"
 msgstr "Все записи"
 
+msgid "All headers"
+msgstr "Все заголовки"
+
 msgid "Allow"
 msgstr "Разрешить"
 
@@ -776,6 +779,9 @@ msgstr "Очистить отображённые посылки!"
 
 msgid "Clear disqualification"
 msgstr "Сбросить дисквалификацию"
+
+msgid "Clear entry"
+msgstr "Очистить запись"
 
 msgid "Clear finished flag"
 msgstr "Сбросить флаг проверенности решений"
@@ -4435,6 +4441,9 @@ msgstr ""
 
 msgid "User report"
 msgstr "Пользовательский протокол"
+
+msgid "User run header"
+msgstr "Заголовок прохождения"
 
 msgid "User run headers"
 msgstr "Прохождения участников"

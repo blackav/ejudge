@@ -4,16 +4,36 @@
 #include "ejudge/runlog_state.h"
 %><%@set getter_name = "csp_get_priv_user_run_header_page"
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
+%><%@set err_prefix = "NEW_SRV_ERR_"
 %><%@page csp_view_priv_user_run_header_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 %><%@include "priv_stdvars.csp"
 %><%
   const unsigned char *title = NULL;
   int enable_main_menu = 0;
+  int view_user_id = 0;
+  const unsigned char *login = NULL;
+  const unsigned char *name = NULL;
+  const unsigned char *last_change_login = NULL;
+  const struct user_run_header_info *urhi = NULL;
 
   if (phr->role < USER_ROLE_JUDGE) FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
 
   l10n_setlocale(phr->locale_id);
   title = _("User run header");
+%><s:read var="view_user_id" required="yes" name="user_id" error="inv-user-id" /><%
+  if (!teamdb_lookup(cs->teamdb_state, view_user_id))
+    FAIL(NEW_SRV_ERR_INV_USER_ID);
+
+  login = teamdb_get_login(cs->teamdb_state, view_user_id);
+  name = teamdb_get_name(cs->teamdb_state, view_user_id);
+
+  urhi = run_try_user_run_header(cs->runlog_state, view_user_id);
+  if (!urhi)
+    FAIL(NEW_SRV_ERR_INV_USER_ID);
+  if (urhi->last_change_user_id > 0) {
+    last_change_login = teamdb_get_login(cs->teamdb_state, urhi->last_change_user_id);
+  }
+
 %><%@include "priv_header.csp"
 %>
 </div>
@@ -23,6 +43,84 @@
 <td class="b0"><s:a ac="user-run-headers-page"><s:_>All headers</s:_></s:a></td>
 </tr></table>
 
+<table>
+  <tr>
+    <td class="b1"><s:_>User Id</s:_></td>
+    <td class="b1"><s:v value="view_user_id" /></td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td class="b1"><s:_>User login</s:_></td>
+    <td class="b1"><s:v value="login" checkExpr="" /></td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td class="b1"><s:_>User name</s:_></td>
+    <td class="b1"><s:v value="name" checkExpr="" /></td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td class="b1"><s:_>In DB?</s:_></td>
+    <td class="b1"><s:vb value="urhi->has_db_record" /></td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td class="b1"><s:_>Virtual?</s:_></td>
+    <td class="b1"><s:vb value="urhi->is_virtual" /></td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td class="b1"><s:_>Checked?</s:_></td>
+    <td class="b1"><s:vb value="urhi->is_checked" /></td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td class="b1"><s:_>Start Time</s:_></td>
+    <td class="b1"><s:v value="urhi->start_time" checkExpr=" > 0" /></td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td class="b1"><s:_>Stop Time</s:_></td>
+    <td class="b1"><s:v value="urhi->stop_time" checkExpr=" > 0" /></td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td class="b1"><s:_>Duration</s:_></td>
+    <td class="b1"><s:v value="urhi->duration" checkExpr=" > 0" /></td>
+    <td><s:form><s:hidden name="view_user_id" /><input type="text" name="duration" /><s:submit ac="user-run-header-change-duration" /></s:form></td>
+  </tr>
+<%
+    if (urhi->run_id_valid) {
+%>
+  <tr>
+    <td class="b1"><s:_>First Run</s:_></td>
+    <td class="b1"><s:v value="urhi->run_id_first" /></td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td class="b1"><s:_>Last Run</s:_></td>
+    <td class="b1"><s:v value="urhi->run_id_last" /></td>
+    <td>&nbsp;</td>
+  </tr>
+<%
+    }
+%>
+  <tr>
+    <td class="b1"><s:_>Last Change</s:_></td>
+    <td class="b1"><s:v value="last_change_login" checkExpr=" > 0" /></td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td class="b1"><s:_>Last Change Time</s:_></td>
+    <td class="b1"><s:v value="urhi->last_change_time" checkExpr=" > 0" /></td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td class="b1"><s:_>Actions</s:_></td>
+    <td class="b1"></td>
+    <td><s:form><s:hidden name="view_user_id" /><s:submit ac="user-run-header-delete" /></s:form></td>
+  </tr>
+</table>
 
 <table class="b0"><tr>
 <td class="b0"><s:a ac="main-page"><s:_>Main page</s:_></s:a></td>

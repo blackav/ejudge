@@ -9104,6 +9104,8 @@ static const unsigned char * const external_priv_action_names[NEW_SRV_ACTION_LAS
   [NEW_SRV_ACTION_DELETE_API_KEY] = "priv_delete_api_key",
   [NEW_SRV_ACTION_USER_RUN_HEADERS_PAGE] = "priv_user_run_headers_page",
   [NEW_SRV_ACTION_USER_RUN_HEADER_PAGE] = "priv_user_run_header_page",
+  [NEW_SRV_ACTION_USER_RUN_HEADER_DELETE] = "priv_user_run_header_delete",
+  [NEW_SRV_ACTION_USER_RUN_HEADER_CHANGE_DURATION] = "priv_user_run_header_change_duration",
 };
 
 static const int external_priv_action_aliases[NEW_SRV_ACTION_LAST] =

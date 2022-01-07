@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-01-07 14:25+0300\n"
+"POT-Creation-Date: 2022-01-07 17:26+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Ukrainian <uk@li.org>\n"
@@ -406,6 +406,9 @@ msgstr ""
 msgid "All entries"
 msgstr ""
 
+msgid "All headers"
+msgstr ""
+
 msgid "Allow"
 msgstr ""
 
@@ -722,6 +725,9 @@ msgid "Clear displayed runs!"
 msgstr ""
 
 msgid "Clear disqualification"
+msgstr ""
+
+msgid "Clear entry"
 msgstr ""
 
 msgid "Clear finished flag"
@@ -4235,6 +4241,9 @@ msgid ""
 msgstr ""
 
 msgid "User report"
+msgstr ""
+
+msgid "User run header"
 msgstr ""
 
 msgid "User run headers"
