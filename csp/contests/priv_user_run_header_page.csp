@@ -20,7 +20,7 @@
 
   l10n_setlocale(phr->locale_id);
   title = _("User run header");
-%><s:read var="view_user_id" required="yes" name="user_id" error="inv-user-id" /><%
+%><s:read var="view_user_id" required="yes" name="view_user_id" error="inv-user-id" /><%
   if (!teamdb_lookup(cs->teamdb_state, view_user_id))
     FAIL(NEW_SRV_ERR_INV_USER_ID);
 
