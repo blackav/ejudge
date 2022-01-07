@@ -49,7 +49,7 @@
     </tr>
 <%
     for (user_id = urh->low_user_id; user_id < urh->high_user_id; ++user_id) {
-        int index = urh->umap[user_id];
+        int index = urh->umap[user_id - urh->low_user_id];
         if (index <= 0 || index >= urh->size) continue;
         urhi = &urh->infos[index];
         ++serial;
