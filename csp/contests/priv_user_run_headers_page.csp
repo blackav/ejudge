@@ -13,7 +13,8 @@
   int serial = 0;
   int user_id;
   const struct user_run_header_info *urhi = NULL;
-  struct teamdb_export td;
+  const char *login = NULL;
+  const char *name = NULL;
 
   if (phr->role < USER_ROLE_JUDGE) FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
 
@@ -57,14 +58,27 @@
         <td class="b1"><s:v value="serial" /></td>
         <td class="b1"><s:v value="user_id" /></td>
 <%
-    if (teamdb_export_team(cs->teamdb_state, user_id, &td) >= 0) {
+    login = teamdb_get_login(cs->teamdb_state, user_id);
+    name = teamdb_get_name(cs->teamdb_state, user_id);
 %>
-        <td class="b1"><s:v value="td.login" /></td>
-        <td class="b1"><s:v value="td.name" /></td>
+<%
+    if (login && *login) {
+%>
+        <td class="b1"><s:v value="login" /></td>
 <%
     } else {
 %>
         <td class="b1">&nbsp;</td>
+<%
+    }
+%>
+<%
+    if (name && *name) {
+%>
+        <td class="b1"><s:v value="name" /></td>
+<%
+    } else {
+%>
         <td class="b1">&nbsp;</td>
 <%
     }
