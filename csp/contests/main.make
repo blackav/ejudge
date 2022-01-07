@@ -70,6 +70,7 @@ SOFILES = \
  csp_priv_user_ips_page.so\
  csp_priv_user_info_page.so\
  csp_priv_user_run_headers_page.so\
+ csp_priv_user_run_header_page.so\
  csp_priv_users_page.so\
  csp_priv_users_new_page.so\
  csp_priv_users_new_ajax.so\
@@ -189,6 +190,7 @@ csp_priv_tokenize_displayed_1_page.c : priv_tokenize_displayed_1_page.csp priv_i
 csp_priv_crop_avatar_page.c : priv_crop_avatar_page.csp priv_includes.csp priv_stdvars.csp priv_header_croppie.csp priv_footer.csp
 csp_priv_save_cropped_avatar_ajax.c : priv_save_cropped_avatar_ajax.csp priv_includes.csp priv_stdvars.csp
 csp_priv_user_run_headers_page.c : priv_user_run_headers_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
+csp_priv_user_run_header_page.c : priv_user_run_header_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 
 csp_priv_error_internal.c : priv_error_internal.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 csp_priv_error_inv_param.c : priv_error_inv_param.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
