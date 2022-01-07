@@ -1,0 +1,59 @@
+<%
+%><%@include "priv_includes.csp"
+%><%
+#include "ejudge/runlog_state.h"
+%><%@set getter_name = "csp_get_priv_user_run_header_page"
+%><%@set ac_prefix = "NEW_SRV_ACTION_"
+%><%@set err_prefix = "NEW_SRV_ERR_"
+%><%@page csp_view_priv_user_run_header_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "priv_stdvars.csp"
+%><%
+  int view_user_id = 0;
+  const unsigned char *duration_str = NULL;
+  int h = 0, m = 0, s = 0, n = 0;
+
+  if (phr->role < USER_ROLE_ADMIN) FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+
+%><s:read var="view_user_id" required="yes" name="view_user_id" error="inv-user-id" /><%
+%><s:read var="duration_str" name="duration" ignoreerrors="yes" /><%
+  if (!teamdb_lookup(cs->teamdb_state, view_user_id))
+    FAIL(NEW_SRV_ERR_INV_USER_ID);
+
+  /* duration format:
+       MIN
+       HOUR:MIN
+       HOUR:MIN:SEC
+       SECs
+  */
+  if (sscanf(duration_str, "%d:%d:%d%n", &h, &m, &s, &n) == 3 && !duration_str[n]) {
+    if (h < 0
+        || m < 0
+        || s < 0
+        || __builtin_mul_overflow(h, 3600, &h)
+        || __builtin_mul_overflow(m, 60, &m)
+        || __builtin_add_overflow(h, s, &s)
+        || __builtin_add_overflow(m, s, &s))
+      FAIL(NEW_SRV_ERR_INV_PARAM);
+  } else if (sscanf(duration_str, "%d:%d%n", &h, &m, &n) == 2 && !duration_str[n]) {
+    if (h < 0
+        || m < 0
+        || __builtin_mul_overflow(h, 3600, &h)
+        || __builtin_mul_overflow(m, 60, &m)
+        || __builtin_add_overflow(h, m, &s))
+      FAIL(NEW_SRV_ERR_INV_PARAM);
+  } else if (sscanf(duration_str, "%d%n", &m, &n) == 1 && !duration_str[n]) {
+    if (__builtin_mul_overflow(m, 60, &s)) FAIL(NEW_SRV_ERR_INV_PARAM);
+  } else if (sscanf(duration_str, "%ds%n", &s, &n) == 1 && !duration_str[n]) {
+    // nothing
+  } else {
+    FAIL(NEW_SRV_ERR_INV_PARAM);
+  }
+  if (s <= 0) FAIL(NEW_SRV_ERR_INV_PARAM);
+
+  if (run_set_user_duration(cs->runlog_state, view_user_id, s, phr->user_id) < 0) {
+    FAIL(NEW_SRV_ERR_OPERATION_FAILED);
+  }
+%><s:redirect ac="user-run-headers-page" /><%
+cleanup:
+  html_armor_free(&ab);
+%>
