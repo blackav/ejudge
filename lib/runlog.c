@@ -1594,10 +1594,14 @@ run_virtual_start(
     err("run_virtual_start: timestamp < start_time");
     return -1;
   }
-  if (urh->is_virtual) {
+  if (urh->is_virtual || urh->start_time > 0) {
     err("run_virtual_start: virtual contest for %d already started", user_id);
     return -1;
   }
+  if (state->iface->user_run_header_set_start_time) {
+    return state->iface->user_run_header_set_start_time(state->cnts, user_id, t, 1, user_id);
+  }
+
   if (nsec < 0 || nsec > NSEC_MAX) {
     err("run_virtual_start: nsec field value %d is invalid", nsec);
     return -1;
@@ -1657,6 +1661,21 @@ run_virtual_stop(
     err("run_virtual_stop: virtual contest for %d already stopped", user_id);
     return -1;
   }
+  if (state->iface->user_run_header_set_stop_time) {
+    int duration = urh->duration;
+    if (duration <= 0) {
+      duration = state->head.duration;
+      if (duration < 0) duration = 0;
+    }
+    if (duration > 0) {
+      exp_stop_time = urh->start_time + duration;
+    }
+    if (exp_stop_time > 0 && t > exp_stop_time) {
+      t = exp_stop_time;
+    }
+    return state->iface->user_run_header_set_stop_time(state->cnts, user_id, t, user_id);
+  }
+
   if (state->head.duration > 0) exp_stop_time = urh->start_time + state->head.duration;
   if (t > exp_stop_time) {
     err("run_virtual_stop: the virtual time ended");
