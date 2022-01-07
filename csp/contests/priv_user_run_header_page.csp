@@ -43,7 +43,7 @@
 <td class="b0"><s:a ac="user-run-headers-page"><s:_>All headers</s:_></s:a></td>
 </tr></table>
 
-<table>
+<table class="b1">
   <tr>
     <td class="b1"><s:_>User Id</s:_></td>
     <td class="b1"><s:v value="view_user_id" /></td>
