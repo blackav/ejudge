@@ -11529,6 +11529,29 @@ int ns_match_action(const unsigned char *str)
                                               return 0;
                                             }
                                             return 0;
+                                          } else if (c < 's') {
+                                            if (c == '-') {
+                                              c = str[16];
+                                              if (c == 'p') {
+                                                c = str[17];
+                                                if (c == 'a') {
+                                                  c = str[18];
+                                                  if (c == 'g') {
+                                                    c = str[19];
+                                                    if (c == 'e') {
+                                                      c = str[20];
+                                                      if (!c) return NEW_SRV_ACTION_USER_RUN_HEADER_PAGE;
+                                                      return 0;
+                                                    }
+                                                    return 0;
+                                                  }
+                                                  return 0;
+                                                }
+                                                return 0;
+                                              }
+                                              return 0;
+                                            }
+                                          } else {
                                           }
                                           return 0;
                                         }

@@ -183,8 +183,10 @@
         <td class="b1">&nbsp;</td>
 <%
     }
+%><%
+%><s:url name="ViewUrl" ac="user-run-header-page"><s:param name="user_id" value="user_id" /></s:url><%
 %>
-        <td class="b1">TODO: Action</td>
+        <td class="b1">[<s:a url="ViewUrl">View</s:a>]</td>
     </tr>
 <%
     }
