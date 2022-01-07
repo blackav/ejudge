@@ -469,6 +469,13 @@ run_delete_user_run_header(
         runlog_state_t state,
         int user_id);
 
+int
+run_set_user_duration(
+        runlog_state_t state,
+        int user_id,
+        int duration,
+        int last_change_user_id);
+
 static inline _Bool __attribute__((always_inline)) run_is_normal_status(unsigned char status)
 {
   return status <= RUN_LOW_LAST && (status < RUN_PSEUDO_FIRST || status > RUN_PSEUDO_LAST);
