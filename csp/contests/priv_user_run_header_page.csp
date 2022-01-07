@@ -15,6 +15,7 @@
   const unsigned char *name = NULL;
   const unsigned char *last_change_login = NULL;
   const struct user_run_header_info *urhi = NULL;
+  unsigned char duration_buf[256];
 
   if (phr->role < USER_ROLE_JUDGE) FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
 
@@ -85,8 +86,13 @@
     <td class="b1">&nbsp;</td>
   </tr>
   <tr>
-    <td class="b1"><s:_>Duration</s:_></td>
-    <td class="b1"><s:v value="urhi->duration" checkExpr=" > 0" /></td>
+    <td class="b1"><s:_>Duration</s:_></td><%
+    duration_buf[0] = 0;
+    if (urhi->duration > 0) {
+      duration_str(0, urhi->duration, 0, duration_buf, sizeof(duration_buf));
+    }
+%>
+    <td class="b1"><s:v value="duration_buf" /></td>
     <td class="b1"><s:form><s:hidden name="view_user_id" /><input type="text" name="duration" /><s:submit ac="user-run-header-change-duration" /></s:form></td>
   </tr>
 <%

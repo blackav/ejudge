@@ -15,6 +15,7 @@
   const struct user_run_header_info *urhi = NULL;
   const char *login = NULL;
   const char *name = NULL;
+  unsigned char duration_buf[256];
 
   if (phr->role < USER_ROLE_JUDGE) FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
 
@@ -140,8 +141,9 @@
 %>
 <%
     if (urhi->duration > 0) {
+        duration_str(0, urhi->duration, 0, duration_buf, sizeof(duration_buf));
 %>
-        <td class="b1"><s:v value="urhi->duration" /></td>
+        <td class="b1"><s:v value="duration_buf" /></td>
 <%
     } else {
 %>
