@@ -2922,3 +2922,18 @@ run_set_virtual_is_checked(
   }
   return 0;
 }
+
+int
+run_set_user_duration(
+        runlog_state_t state,
+        int user_id,
+        int duration,
+        int last_change_user_id)
+{
+  if (!state->iface->user_run_header_set_duration) {
+    err("run_set_user_duration: not implemented");
+    return -1;
+  }
+
+  return state->iface->user_run_header_set_duration(state->cnts, user_id, duration, last_change_user_id);
+}
