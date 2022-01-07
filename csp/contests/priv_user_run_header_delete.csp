@@ -1,0 +1,24 @@
+<%
+%><%@include "priv_includes.csp"
+%><%
+#include "ejudge/runlog_state.h"
+%><%@set getter_name = "csp_get_priv_user_run_header_delete"
+%><%@set ac_prefix = "NEW_SRV_ACTION_"
+%><%@set err_prefix = "NEW_SRV_ERR_"
+%><%@page csp_view_priv_user_run_header_delete(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "priv_stdvars.csp"
+%><%
+  int view_user_id = 0;
+
+  if (phr->role < USER_ROLE_ADMIN) FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+
+%><s:read var="view_user_id" required="yes" name="view_user_id" error="inv-user-id" /><%
+
+  if (view_user_id > 0) {
+    run_delete_user_run_header(cs->runlog_state, view_user_id);
+  }
+
+%><s:redirect ac="user-run-headers-page" /><%
+cleanup:
+  html_armor_free(&ab);
+%>
