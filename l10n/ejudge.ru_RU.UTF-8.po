@@ -686,6 +686,9 @@ msgstr "Ошибка проверяющей системы"
 msgid "Check failed runs"
 msgstr "Посылки с ошибкой проверяющей системы"
 
+msgid "Checked?"
+msgstr "Проверено?"
+
 msgid "Checker Token"
 msgstr "Токен проверяющей программы"
 
@@ -1497,6 +1500,9 @@ msgstr "Завершить экзамен"
 msgid "Finish time"
 msgstr "Время окончания"
 
+msgid "First Run"
+msgstr "Первая посылка"
+
 msgid "First User_Id"
 msgstr "Первый User_Id"
 
@@ -1875,6 +1881,9 @@ msgstr "Импорт"
 msgid "Imported?"
 msgstr "Импортирована?"
 
+msgid "In DB?"
+msgstr "В БД?"
+
 msgid ""
 "In order to complete the registration procedure, hit the \"Confirm "
 "registration\" link."
@@ -2186,6 +2195,15 @@ msgstr "Настройки языков программирования (serve.
 
 msgid "Language statistics"
 msgstr "Статистика по языкам программирования"
+
+msgid "Last Change"
+msgstr "Последнее изменение"
+
+msgid "Last Change Time"
+msgstr "Время последнего изменения"
+
+msgid "Last Run"
+msgstr "Последняя посылка"
 
 msgid "Last User_Id (incl.)"
 msgstr "Последний User_Id (вкл.)"
@@ -3716,6 +3734,9 @@ msgstr "Время разморозки таблицы результатов"
 msgid "Start"
 msgstr "Начать"
 
+msgid "Start Time"
+msgstr "Время начала"
+
 msgid "Start at"
 msgstr "Начало в"
 
@@ -3760,6 +3781,9 @@ msgstr "Статус Вашей посылки был изменён\n"
 
 msgid "Stop"
 msgstr "Остановить"
+
+msgid "Stop Time"
+msgstr "Время окончания"
 
 msgid "Stop exam"
 msgstr "Завершить экзамен"
@@ -4549,6 +4573,9 @@ msgstr "Виртуальный турнир не может быть начат"
 
 msgid "Virtual stop"
 msgstr "Окончание виртуального турнира"
+
+msgid "Virtual?"
+msgstr "Виртуал?"
 
 msgid "Wall time-limit exceeded"
 msgstr "Превышено реальное время работы"

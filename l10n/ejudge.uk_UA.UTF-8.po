@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-01-07 02:31+0300\n"
+"POT-Creation-Date: 2022-01-07 14:25+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Ukrainian <uk@li.org>\n"
@@ -638,6 +638,9 @@ msgid "Check failed"
 msgstr ""
 
 msgid "Check failed runs"
+msgstr ""
+
+msgid "Checked?"
 msgstr ""
 
 msgid "Checker Token"
@@ -1449,6 +1452,9 @@ msgstr ""
 msgid "Finish time"
 msgstr ""
 
+msgid "First Run"
+msgstr ""
+
 msgid "First User_Id"
 msgstr ""
 
@@ -1757,6 +1763,9 @@ msgstr ""
 msgid "Imported?"
 msgstr ""
 
+msgid "In DB?"
+msgstr ""
+
 msgid ""
 "In order to complete the registration procedure, hit the \"Confirm "
 "registration\" link."
@@ -2063,6 +2072,15 @@ msgid "Language settings (serve.cfg)"
 msgstr ""
 
 msgid "Language statistics"
+msgstr ""
+
+msgid "Last Change"
+msgstr ""
+
+msgid "Last Change Time"
+msgstr ""
+
+msgid "Last Run"
 msgstr ""
 
 msgid "Last User_Id (incl.)"
@@ -3566,6 +3584,9 @@ msgstr ""
 msgid "Start"
 msgstr ""
 
+msgid "Start Time"
+msgstr ""
+
 msgid "Start at"
 msgstr ""
 
@@ -3609,6 +3630,9 @@ msgid "Status of your submit is changed\n"
 msgstr ""
 
 msgid "Stop"
+msgstr ""
+
+msgid "Stop Time"
 msgstr ""
 
 msgid "Stop exam"
@@ -4356,6 +4380,9 @@ msgid "Virtual start failed"
 msgstr ""
 
 msgid "Virtual stop"
+msgstr ""
+
+msgid "Virtual?"
 msgstr ""
 
 msgid "Wall time-limit exceeded"
