@@ -2,10 +2,10 @@
 %><%@include "priv_includes.csp"
 %><%
 #include "ejudge/runlog_state.h"
-%><%@set getter_name = "csp_get_priv_user_run_header_page"
+%><%@set getter_name = "csp_get_priv_user_run_header_change_duration"
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
 %><%@set err_prefix = "NEW_SRV_ERR_"
-%><%@page csp_view_priv_user_run_header_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@page csp_view_priv_user_run_header_change_duration(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 %><%@include "priv_stdvars.csp"
 %><%
   int view_user_id = 0;
