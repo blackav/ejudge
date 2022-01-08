@@ -2921,6 +2921,8 @@ run_get_user_run_header(
   urh->umap[offset] = index;
   struct user_run_header_info *urhi = &urh->infos[index];
   memset(urhi, 0, sizeof(*urhi));
+  urhi->user_id = user_id;
+  urhi->run_id_valid = 1;
   urhi->run_id_first = -1;
   urhi->run_id_last = -1;
   if (p_is_created) *p_is_created = 1;
