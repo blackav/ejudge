@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2008-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -23,6 +23,7 @@
 #include "ejudge/runlog.h"
 #include "ejudge/xml_utils.h"
 #include "ejudge/compat.h"
+#include "ejudge/base64.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/osdeps.h"
@@ -138,6 +139,7 @@ void *forced_link_table[] =
   ipv6_is_empty,
   xml_unparse_full_cookie,
   xml_parse_full_cookie,
+  base64u_decode,
 
   close_memstream,
 };
