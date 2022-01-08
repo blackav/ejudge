@@ -1,13 +1,13 @@
 # -*- mode: po; coding: UTF-8 -*-
 # ejudge messages catalog
-# Copyright (C) 2002-2021 Alexander Chernov <cher@ejudge.ru>
+# Copyright (C) 2002-2022 Alexander Chernov <cher@ejudge.ru>
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 3\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-10-06 09:53+0300\n"
-"PO-Revision-Date: 2020-07-13 22:56+0300\n"
+"PO-Revision-Date: 2022-01-09 01:53+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "Language: ru\n"
@@ -141,7 +141,7 @@ msgstr "<i>Недопустимый ответ: %d</i>"
 msgid "<i>Not set</i>"
 msgstr "<i>Не установлено</i>"
 
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "<p class=\"ejudge_copyright\">This is <a href=\"%s\"><b>ejudge</b></a> "
 "contest administration system, version %s, compiled %s.</p>\n"
