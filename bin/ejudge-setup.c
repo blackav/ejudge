@@ -1,6 +1,6 @@
 /* -*- mode:c -*- */
 
-/* Copyright (C) 2004-2020 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1764,6 +1764,9 @@ initialize_setting_var(int idx)
     if (access("/usr/sbin/sendmail", X_OK) >= 0) {
       snprintf(config_sendmail, sizeof(config_sendmail), "%s",
                "/usr/sbin/sendmail");
+    } else if (access("/bin/false", X_OK) >= 0) {
+      snprintf(config_sendmail, sizeof(config_sendmail), "%s",
+               "/bin/false");
     } else {
       config_sendmail[0] = 0;
     }
