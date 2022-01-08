@@ -1238,7 +1238,7 @@ do_write_kirov_standings(
   /* Check that the contest is started */
   start_time = run_get_start_time(state->runlog_state);
   stop_time = run_get_stop_time(state->runlog_state);
-  contest_dur = run_get_duration(state->runlog_state);
+  contest_dur = run_get_duration(state->runlog_state, user_id);
   if (start_time && global->is_virtual && user_id > 0) {
     start_time = run_get_virtual_start_time(state->runlog_state, user_id);
     stop_time = run_get_virtual_stop_time(state->runlog_state, user_id, 0);
@@ -2968,7 +2968,7 @@ do_write_moscow_standings(
   if (cur_time <= 0) cur_time = time(0);
   last_submit_start = last_success_start = start_time = run_get_start_time(state->runlog_state);
   stop_time = run_get_stop_time(state->runlog_state);
-  contest_dur = run_get_duration(state->runlog_state);
+  contest_dur = run_get_duration(state->runlog_state, user_id);
   if (start_time && global->is_virtual && user_id > 0) {
     start_time = run_get_virtual_start_time(state->runlog_state, user_id);
     stop_time = run_get_virtual_stop_time(state->runlog_state, user_id, 0);
@@ -3878,7 +3878,7 @@ do_write_standings(
 
   start_time = run_get_start_time(state->runlog_state);
   stop_time = run_get_stop_time(state->runlog_state);
-  contest_dur = run_get_duration(state->runlog_state);
+  contest_dur = run_get_duration(state->runlog_state, user_id);
   if (start_time && global->is_virtual && user_id > 0) {
     start_time = run_get_virtual_start_time(state->runlog_state, user_id);
     stop_time = run_get_virtual_stop_time(state->runlog_state, user_id, 0);

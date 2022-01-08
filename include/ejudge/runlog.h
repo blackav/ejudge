@@ -178,7 +178,7 @@ int run_save_times(runlog_state_t);
 int run_set_finish_time(runlog_state_t state, time_t finish_time);
 time_t run_get_finish_time(runlog_state_t state);
 
-time_t run_get_duration(runlog_state_t);
+time_t run_get_duration(runlog_state_t, int user_id);
 
 void run_get_team_usage(runlog_state_t, int, int *, size_t*);
 int  run_get_attempts(runlog_state_t, int, int *, int *, int *, time_t *, int, int);

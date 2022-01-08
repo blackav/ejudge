@@ -714,9 +714,18 @@ run_get_stop_time(runlog_state_t state)
 }
 
 time_t
-run_get_duration(runlog_state_t state)
+run_get_duration(runlog_state_t state, int user_id)
 {
-  return state->head.duration;
+  struct user_run_header_state *urh = &state->urh;
+  if (user_id < urh->low_user_id || user_id >= urh->high_user_id)
+    return state->head.duration;
+  int index = urh->umap[user_id - urh->low_user_id];
+  if (index <= 0)
+    return state->head.duration;
+  struct user_run_header_info *urhi = &urh->infos[index];
+  if (urhi->duration <= 0)
+    return state->head.duration;
+  return urhi->duration;
 }
 
 time_t
