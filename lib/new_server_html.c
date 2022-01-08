@@ -2282,9 +2282,12 @@ priv_force_start_virtual(
   // FIXME: it's a bit risky, need to check the database...
   if (nsec + uset.u >= NSEC_MAX + 1) nsec = NSEC_MAX - 1 - uset.u;
 
+  int legacy_mode = run_is_virtual_legacy_mode(cs->runlog_state);
   for (i = 0; i < uset.u; i++, nsec++) {
     run_id = run_virtual_start(cs->runlog_state, uset.v[i], tt.tv_sec,0,0,nsec);
-    if (run_id >= 0) serve_move_files_to_insert_run(cs, run_id);
+    if (run_id >= 0 && legacy_mode) {
+      serve_move_files_to_insert_run(cs, run_id);
+    }
   }
 
  cleanup:
@@ -11888,7 +11891,9 @@ unpriv_command(
     if (run_id < 0) {
       FAIL2(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
     }
-    serve_move_files_to_insert_run(cs, run_id);
+    if (run_is_virtual_legacy_mode(cs->runlog_state)) {
+      serve_move_files_to_insert_run(cs, run_id);
+    }
     serve_event_add(cs,
                     precise_time.tv_sec + run_get_duration(cs->runlog_state, phr->user_id),
                     SERVE_EVENT_VIRTUAL_STOP, phr->user_id,
@@ -11911,7 +11916,9 @@ unpriv_command(
     if (run_id < 0) {
       FAIL2(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
     }
-    serve_move_files_to_insert_run(cs, run_id);
+    if (run_is_virtual_legacy_mode(cs->runlog_state)) {
+      serve_move_files_to_insert_run(cs, run_id);
+    }
     if (global->score_system == SCORE_OLYMPIAD && global->is_virtual > 0) {
       serve_event_remove_matching(cs, 0, 0, phr->user_id);
       if (global->disable_virtual_auto_judge <= 0) {
@@ -15826,7 +15833,9 @@ batch_login(
                                      precise_time.tv_sec, &phr->ip, phr->ssl_flag,
                                      precise_time.tv_usec * 1000);
       if (run_id >= 0) {
-        serve_move_files_to_insert_run(cs, run_id);
+        if (run_is_virtual_legacy_mode(cs->runlog_state)) {
+          serve_move_files_to_insert_run(cs, run_id);
+        }
         serve_event_add(cs,
                         precise_time.tv_sec + run_get_duration(cs->runlog_state, phr->user_id),
                         SERVE_EVENT_VIRTUAL_STOP, phr->user_id,

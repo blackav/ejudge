@@ -5424,7 +5424,9 @@ handle_virtual_stop_event(
     return;
   }
   info("inserted virtual stop as run %d", run_id);
-  serve_move_files_to_insert_run(cs, run_id);
+  if (run_is_virtual_legacy_mode(cs->runlog_state)) {
+    serve_move_files_to_insert_run(cs, run_id);
+  }
   if (cs->global->score_system == SCORE_OLYMPIAD
       && cs->global->is_virtual && cs->global->disable_virtual_auto_judge<= 0) {
     serve_event_add(cs, p->time + 1, SERVE_EVENT_JUDGE_OLYMPIAD, p->user_id, 0);
