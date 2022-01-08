@@ -11890,7 +11890,7 @@ unpriv_command(
     }
     serve_move_files_to_insert_run(cs, run_id);
     serve_event_add(cs,
-                    precise_time.tv_sec + run_get_duration(cs->runlog_state),
+                    precise_time.tv_sec + run_get_duration(cs->runlog_state, phr->user_id),
                     SERVE_EVENT_VIRTUAL_STOP, phr->user_id,
                     virtual_stop_callback);
     break;
@@ -12698,7 +12698,7 @@ do_json_user_state(
     start_time = run_get_start_time(cs->runlog_state);
     stop_time = run_get_stop_time(cs->runlog_state);
   }
-  duration = run_get_duration(cs->runlog_state);
+  duration = run_get_duration(cs->runlog_state, user_id);
 
   ptm = localtime(&cs->current_time);
   fprintf(fout, "{"
@@ -15828,7 +15828,7 @@ batch_login(
       if (run_id >= 0) {
         serve_move_files_to_insert_run(cs, run_id);
         serve_event_add(cs,
-                        precise_time.tv_sec + run_get_duration(cs->runlog_state),
+                        precise_time.tv_sec + run_get_duration(cs->runlog_state, phr->user_id),
                         SERVE_EVENT_VIRTUAL_STOP, phr->user_id,
                         virtual_stop_callback);
       }
