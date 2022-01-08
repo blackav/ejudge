@@ -1901,7 +1901,9 @@ cmd_force_start_virtual(
   run_id = run_virtual_start(cs->runlog_state, user_id_2,
                              tt.tv_sec, 0, 0, tt.tv_usec * 1000);
   if (run_id < 0) FAIL(NEW_SRV_ERR_VIRTUAL_START_FAILED);
-  serve_move_files_to_insert_run(cs, run_id);
+  if (run_is_virtual_legacy_mode(cs->runlog_state)) {
+    serve_move_files_to_insert_run(cs, run_id);
+  }
 
  cleanup:
   return retval;
