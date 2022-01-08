@@ -1225,7 +1225,7 @@ ns_check_contest_events(
     serve_check_telegram_reminder(ejudge_config, cs, cnts);
   }
 
-  run_get_times(cs->runlog_state, &start_time, &sched_time,
+  run_get_times(cs->runlog_state, 0, &start_time, &sched_time,
                 &duration, &stop_time, &finish_time);
 
   if (start_time > 0 && finish_time > 0 && finish_time < start_time) {
@@ -2364,7 +2364,7 @@ do_schedule(FILE *log_f,
   }
 
   if (sloc > 0) {
-    run_get_times(cs->runlog_state, &start_time, 0, 0, &stop_time, 0);
+    run_get_times(cs->runlog_state, 0, &start_time, 0, 0, &stop_time, 0);
     if (stop_time > 0) {
       ns_error(log_f, NEW_SRV_ERR_CONTEST_ALREADY_FINISHED);
       return;
@@ -2407,7 +2407,7 @@ do_change_duration(FILE *log_f,
   }
   d *= 60;
 
-  run_get_times(cs->runlog_state, &start_time, 0, 0, &stop_time, 0);
+  run_get_times(cs->runlog_state, 0, &start_time, 0, 0, &stop_time, 0);
 
   if (stop_time > 0 && !cs->global->enable_continue) {
     ns_error(log_f, NEW_SRV_ERR_CONTEST_ALREADY_FINISHED);
@@ -2449,7 +2449,7 @@ do_change_finish_time(
     }
   }
 
-  run_get_times(cs->runlog_state, &start_time, 0, 0, &stop_time, 0);
+  run_get_times(cs->runlog_state, 0, &start_time, 0, 0, &stop_time, 0);
   if (stop_time > 0) {
     ns_error(log_f, NEW_SRV_ERR_CONTEST_ALREADY_FINISHED);
     return;
@@ -2534,7 +2534,7 @@ priv_contest_operation(FILE *fout,
     goto cleanup;
   }
 
-  run_get_times(cs->runlog_state, &start_time, 0, &duration, &stop_time, 0);
+  run_get_times(cs->runlog_state, 0, &start_time, 0, &duration, &stop_time, 0);
 
   switch (phr->action) {
   case NEW_SRV_ACTION_START_CONTEST:
@@ -8227,7 +8227,7 @@ priv_contest_status_json(
   time_t server_start_time = nsf_get_server_start_time(phr->fw_state);
   int online_users = 0;
 
-  run_get_times(cs->runlog_state, 0, &sched_time, &duration, 0, &finish_time);
+  run_get_times(cs->runlog_state, 0, 0, &sched_time, &duration, 0, &finish_time);
   start_time = run_get_start_time(cs->runlog_state);
   stop_time = run_get_stop_time(cs->runlog_state);
 
@@ -13079,7 +13079,7 @@ unpriv_contest_status_json(
     stop_time = run_get_stop_time(cs->runlog_state);
     accepting_mode = cs->accepting_mode;
   }
-  run_get_times(cs->runlog_state, 0, &sched_time, &duration, 0, &finish_time);
+  run_get_times(cs->runlog_state, phr->user_id, 0, &sched_time, &duration, 0, &finish_time);
   if (duration > 0 && start_time > 0 && stop_time <= 0 && global->board_fog_time > 0) {
     fog_start_time = start_time + duration - global->board_fog_time;
     if (fog_start_time < start_time) fog_start_time = start_time;

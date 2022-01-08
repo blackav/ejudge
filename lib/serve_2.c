@@ -317,7 +317,7 @@ serve_update_status_file(
   int p;
 
   status.cur_time = state->current_time;
-  run_get_times(state->runlog_state, &t1, &t2, &t3, &t4, &t5);
+  run_get_times(state->runlog_state, 0, &t1, &t2, &t3, &t4, &t5);
   if (t1 > 0 && t5 > 0 && t5 <= t1) {
     t5 = 0;
   }

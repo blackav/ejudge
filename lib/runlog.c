@@ -737,6 +737,7 @@ run_get_finish_time(runlog_state_t state)
 void
 run_get_times(
         runlog_state_t state,
+        int user_id,
         time_t *start,
         time_t *sched,
         time_t *dur,
@@ -745,7 +746,20 @@ run_get_times(
 {
   if (start) *start = state->head.start_time;
   if (sched) *sched = state->head.sched_time;
-  if (dur)   *dur   = state->head.duration;
+  if (dur) {
+    int duration = 0;
+    struct user_run_header_state *urh = &state->urh;
+    int index;
+    struct user_run_header_info *urhi;
+    if (user_id >= urh->low_user_id && user_id < urh->high_user_id
+        && (index = urh->umap[user_id - urh->low_user_id]) > 0
+        && (urhi = &urh->infos[index])->duration > 0) {
+      duration = urhi->duration;
+    } else {
+      duration = state->head.duration;
+    }
+    *dur = duration;
+  }
   if (stop)  *stop  = state->head.stop_time;
   if (p_finish_time) *p_finish_time = state->head.finish_time;
 }
