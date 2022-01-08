@@ -2979,3 +2979,9 @@ run_set_user_duration(
 
   return state->iface->user_run_header_set_duration(state->cnts, user_id, duration, last_change_user_id);
 }
+
+int
+run_is_virtual_legacy_mode(runlog_state_t state)
+{
+  return state->iface->user_run_header_set_start_time == NULL;
+}
