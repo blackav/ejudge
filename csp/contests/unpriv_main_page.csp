@@ -109,7 +109,7 @@ ns_unparse_answers(
     stop_time = run_get_stop_time(cs->runlog_state);
     accepting_mode = cs->accepting_mode;
   }
-  run_get_times(cs->runlog_state, 0, &sched_time, &duration, 0, &finish_time);
+  run_get_times(cs->runlog_state, phr->user_id, 0, &sched_time, &duration, 0, &finish_time);
   if (duration > 0 && start_time && !stop_time && global->board_fog_time > 0)
     fog_start_time = start_time + duration - global->board_fog_time;
   if (fog_start_time < 0) fog_start_time = 0;
