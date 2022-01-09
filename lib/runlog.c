@@ -702,9 +702,24 @@ run_get_start_time(runlog_state_t state)
 }
 
 time_t
-run_get_stop_time(runlog_state_t state)
+run_get_stop_time(runlog_state_t state, int user_id, time_t current_time)
 {
-  return state->head.stop_time;
+  // FIXME: consider is_virtual for user?
+  if (state->head.duration <= 0) return state->head.stop_time;
+  if (state->head.start_time <= 0) return state->head.stop_time;
+  struct user_run_header_state *urh = &state->urh;
+  if (user_id < urh->low_user_id || user_id >= urh->high_user_id) {
+    return state->head.stop_time;
+  }
+  int index = urh->umap[user_id - urh->low_user_id];
+  if (index <= 0) return state->head.stop_time;
+  struct user_run_header_info *urhi = &urh->infos[index];
+  if (urhi->duration <= 0) return state->head.stop_time;
+  // FIXME: handle urhi->start_time
+  time_t exp_stop_time = state->head.start_time + urhi->duration;
+  if (current_time < exp_stop_time) return 0;
+  // FIXME: save to DB
+  return exp_stop_time;
 }
 
 time_t

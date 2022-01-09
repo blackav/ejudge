@@ -1081,7 +1081,7 @@ csp_execute_int_standings(
         goto cleanup;
     }
 
-    pg->stop_time = run_get_stop_time(cs->runlog_state);
+    pg->stop_time = run_get_stop_time(cs->runlog_state, 0, 0);
     pg->duration = run_get_duration(cs->runlog_state, 0);
 
     if (sii->user_filter && sii->user_filter->stand_time_expr_mode == 1) {

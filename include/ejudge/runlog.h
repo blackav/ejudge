@@ -165,7 +165,7 @@ void run_get_times(runlog_state_t, int user_id, time_t *, time_t *, time_t *, ti
                    time_t *);
 int  run_set_duration(runlog_state_t, time_t);
 
-time_t run_get_stop_time(runlog_state_t);
+time_t run_get_stop_time(runlog_state_t, int user_id, time_t current_time);
 int    run_stop_contest(runlog_state_t, time_t);
 int    run_sched_contest(runlog_state_t, time_t);
 
