@@ -449,20 +449,10 @@ run_add_record(
     urh->run_id_last = i;
   } else {
     // inserting somewhere in the middle
-    urh->run_id_valid = 0;
-    state->run_extras[i - state->run_extra_f].prev_user_id = -1;
-    state->run_extras[i - state->run_extra_f].next_user_id = -1;
-    // drop the following indices
+    run_rebuild_user_run_index(state, team);
     for (int j = i + 1; j < state->run_u; ++j) {
       int uu = state->runs[j - state->run_f].user_id;
-      state->run_extras[j - state->run_extra_f].prev_user_id = -1;
-      state->run_extras[j - state->run_extra_f].next_user_id = -1;
-      if (uu > 0) {
-        struct user_run_header_info *urh = run_try_user_run_header(state, uu);
-        if (urh) {
-          urh->run_id_valid = 0;
-        }
-      }
+      run_rebuild_user_run_index(state, uu);
     }
     // increase run_id for runs inserted after the given
     if (state->uuid_hash_state > 0) {
@@ -493,10 +483,8 @@ run_undo_add_record(runlog_state_t state, int run_id)
     return -1;
   }
   state->user_count = -1;
-  struct user_run_header_info *urh = run_try_user_run_header(state, state->runs[run_id - state->run_f].user_id);
-  if (urh) {
-    urh->run_id_valid = 0;
-  }
+  int user_id = state->runs[run_id - state->run_f].user_id;
+  struct user_run_header_info *urh = run_try_user_run_header(state, user_id);
   if (state->uuid_hash_state > 0) {
     if (state->uuid_hash_last_added_run_id == run_id) {
       state->uuid_hash[state->uuid_hash_last_added_index].run_id = -1;
@@ -508,7 +496,11 @@ run_undo_add_record(runlog_state_t state, int run_id)
     state->uuid_hash_last_added_run_id = -1;
     state->uuid_hash_last_added_index = -1;
   }
-  return state->iface->undo_add_entry(state->cnts, run_id);
+  int result = state->iface->undo_add_entry(state->cnts, run_id);
+  if (urh) {
+    run_rebuild_user_run_index(state, user_id);
+  }
+  return result;
 }
 
 int
@@ -1518,14 +1510,15 @@ run_set_entry(
   if (!f) return 0;
 
   if (state->iface->set_entry(state->cnts, run_id, &te, mask) < 0) return -1;
-  if (state->runs[run_id - state->run_f].user_id != old_user_id) {
+  int new_user_id = state->runs[run_id - state->run_f].user_id;
+  if (new_user_id != old_user_id) {
     struct user_run_header_info *urh = NULL;
 
     if ((urh = run_try_user_run_header(state, old_user_id))) {
-      urh->run_id_valid = 0;
+      run_rebuild_user_run_index(state, old_user_id);
     }
-    if ((urh = run_try_user_run_header(state, state->runs[run_id - state->run_f].user_id))) {
-      urh->run_id_valid = 0;
+    if ((urh = run_try_user_run_header(state, new_user_id))) {
+      run_rebuild_user_run_index(state, new_user_id);
     }
   }
   return 0;
@@ -1647,8 +1640,10 @@ run_virtual_start(
 
   if ((i = state->iface->add_entry(state->cnts, i, &re, RE_USER_ID | RE_IP | RE_SSL_FLAG | RE_STATUS)) < 0) return -1;
 
-  urh = run_try_user_run_header(state, user_id);
-  if (urh) urh->run_id_valid = 0;
+  urh = run_get_user_run_header(state, user_id, NULL);
+  if (urh) {
+    run_rebuild_user_run_index(state, user_id);
+  }
   return i;
 }
 
@@ -1724,21 +1719,14 @@ run_virtual_stop(
 
   // updating user_id index
   extend_run_extras(state);
-  state->run_extras[i - state->run_extra_f].prev_user_id = -1;
-  state->run_extras[i - state->run_extra_f].next_user_id = -1;
+
+  run_rebuild_user_run_index(state, user_id);
   if (i < state->run_u - 1) {
     // inserting somewhere in the middle
     // drop the following indices
     for (int j = i + 1; j < state->run_u; ++j) {
       int uu = state->runs[j - state->run_f].user_id;
-      state->run_extras[j - state->run_extra_f].prev_user_id = -1;
-      state->run_extras[j - state->run_extra_f].next_user_id = -1;
-      if (uu > 0) {
-        urh = run_try_user_run_header(state, uu);
-        if (urh) {
-          urh->run_id_valid = 0;
-        }
-      }
+      run_rebuild_user_run_index(state, uu);
     }
     // increase run_id for runs inserted after the given
     if (state->uuid_hash_state > 0) {
@@ -2321,7 +2309,7 @@ build_indices(runlog_state_t state, int flags)
     int index = urh->umap[i - urh->low_user_id];
     if (index > 0) {
       struct user_run_header_info *urhi = &urh->infos[index];
-      urhi->run_id_valid = 0;
+      urhi->run_id_valid = 1;
       urhi->run_id_first = -1;
       urhi->run_id_last = -1;
     }
@@ -2363,7 +2351,6 @@ build_indices(runlog_state_t state, int flags)
       state->run_extras[urhi->run_id_last - state->run_extra_f].next_user_id = i;
     }
     urhi->run_id_last = i;
-    urhi->run_id_valid = 1;
 
     if (state->runs[i_off].is_hidden) continue;
     switch (state->runs[i_off].status) {
@@ -2986,4 +2973,32 @@ int
 run_is_virtual_legacy_mode(runlog_state_t state)
 {
   return state->iface->user_run_header_set_start_time == NULL;
+}
+
+void
+run_rebuild_user_run_index(runlog_state_t state, int user_id)
+{
+  struct user_run_header_info *urhi = run_get_user_run_header(state, user_id, NULL);
+  urhi->run_id_valid = 1;
+  urhi->run_id_first = -1;
+  urhi->run_id_last = -1;
+
+  extend_run_extras(state);
+
+  for (int run_id = state->run_f; run_id < state->run_u; ++run_id) {
+    const struct run_entry *re = &state->runs[run_id - state->run_f];
+    if (re->status == RUN_EMPTY) continue;
+    if (re->user_id != user_id) continue;
+    struct run_entry_extra *rex = &state->run_extras[run_id - state->run_extra_f];
+
+    // add to the end of list
+    rex->prev_user_id = urhi->run_id_last;
+    rex->next_user_id = -1;
+    if (urhi->run_id_last < 0) {
+      urhi->run_id_first = run_id;
+    } else {
+      state->run_extras[urhi->run_id_last - state->run_extra_f].next_user_id = run_id;
+    }
+    urhi->run_id_last = run_id;
+  }
 }
