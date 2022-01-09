@@ -981,7 +981,7 @@ cmd_submit_run(
                                             cs->current_time);
     } else {
       start_time = run_get_start_time(cs->runlog_state);
-      stop_time = run_get_stop_time(cs->runlog_state);
+      stop_time = run_get_stop_time(cs->runlog_state, phr->user_id, cs->current_time);
     }
     if (cs->clients_suspended)
       FAIL(NEW_SRV_ERR_CLIENTS_SUSPENDED);

@@ -6375,7 +6375,7 @@ priv_upsolving_operation(
 
   /* check that the contest is stopped */
   run_get_saved_times(cs->runlog_state, &duration, &saved_stop_time, 0);
-  stop_time = run_get_stop_time(cs->runlog_state);
+  stop_time = run_get_stop_time(cs->runlog_state, 0, 0);
   if (!cs->global->is_virtual && stop_time <= 0 && saved_stop_time <= 0) return 0;
 
   hr_cgi_param(phr, "freeze_standings", &freeze_standings);
@@ -7861,7 +7861,7 @@ priv_run_status_json(
     if (stop_time <= 0 || cs->upsolving_mode) accepting_mode = 1;
   } else {
     start_time = run_get_start_time(cs->runlog_state);
-    stop_time = run_get_stop_time(cs->runlog_state);
+    stop_time = run_get_stop_time(cs->runlog_state, 0, 0);
     accepting_mode = cs->accepting_mode;
   }
 
@@ -8232,7 +8232,7 @@ priv_contest_status_json(
 
   run_get_times(cs->runlog_state, 0, 0, &sched_time, &duration, 0, &finish_time);
   start_time = run_get_start_time(cs->runlog_state);
-  stop_time = run_get_stop_time(cs->runlog_state);
+  stop_time = run_get_stop_time(cs->runlog_state, 0, 0);
 
   if (duration > 0 && global->is_virtual <= 0 && start_time > 0 && global->board_fog_time > 0) {
     if (stop_time <= 0) {
@@ -10080,7 +10080,7 @@ unpriv_use_token(
     stop_time = run_get_virtual_stop_time(cs->runlog_state, phr->user_id, cs->current_time);
   } else {
     start_time = run_get_start_time(cs->runlog_state);
-    stop_time = run_get_stop_time(cs->runlog_state);
+    stop_time = run_get_stop_time(cs->runlog_state, phr->user_id, cs->current_time);
   }
 
   if (cs->clients_suspended) goto back_action;
@@ -10484,7 +10484,7 @@ ns_submit_run(
     stop_time = run_get_virtual_stop_time(cs->runlog_state, user_id, cs->current_time);
   } else {
     start_time = run_get_start_time(cs->runlog_state);
-    stop_time = run_get_stop_time(cs->runlog_state);
+    stop_time = run_get_stop_time(cs->runlog_state, user_id, cs->current_time);
   }
 
   // availability checks
@@ -11134,7 +11134,7 @@ unpriv_submit_run(
                                           cs->current_time);
   } else {
     start_time = run_get_start_time(cs->runlog_state);
-    stop_time = run_get_stop_time(cs->runlog_state);
+    stop_time = run_get_stop_time(cs->runlog_state, phr->user_id, cs->current_time);
   }
 
   if (cs->clients_suspended) {
@@ -11563,7 +11563,7 @@ unpriv_submit_clar(FILE *fout,
                                           cs->current_time);
   } else {
     start_time = run_get_start_time(cs->runlog_state);
-    stop_time = run_get_stop_time(cs->runlog_state);
+    stop_time = run_get_stop_time(cs->runlog_state, phr->user_id, cs->current_time);
   }
 
   if (cs->clients_suspended) {
@@ -11702,7 +11702,7 @@ unpriv_submit_appeal(FILE *fout,
                                           cs->current_time);
   } else {
     start_time = run_get_start_time(cs->runlog_state);
-    stop_time = run_get_stop_time(cs->runlog_state);
+    stop_time = run_get_stop_time(cs->runlog_state, phr->user_id, cs->current_time);
   }
 
   if (cs->clients_suspended) {
@@ -12703,7 +12703,7 @@ do_json_user_state(
                                           cs->current_time);
   } else {
     start_time = run_get_start_time(cs->runlog_state);
-    stop_time = run_get_stop_time(cs->runlog_state);
+    stop_time = run_get_stop_time(cs->runlog_state, user_id, cs->current_time);
   }
   duration = run_get_duration(cs->runlog_state, user_id);
 
@@ -12813,13 +12813,13 @@ unpriv_xml_update_answer(
   if (global->is_virtual) {
     start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
     if (cs->upsolving_mode)
-      stop_time = run_get_stop_time(cs->runlog_state);
+      stop_time = run_get_stop_time(cs->runlog_state, phr->user_id, cs->current_time);
     else
       stop_time = run_get_virtual_stop_time(cs->runlog_state, phr->user_id,
                                             cs->current_time);
   } else {
     start_time = run_get_start_time(cs->runlog_state);
-    stop_time = run_get_stop_time(cs->runlog_state);
+    stop_time = run_get_stop_time(cs->runlog_state, phr->user_id, cs->current_time);
   }
 
   if (cs->clients_suspended) FAIL(NEW_SRV_ERR_CLIENTS_SUSPENDED);
@@ -12967,13 +12967,13 @@ unpriv_get_file(
   if (global->is_virtual) {
     start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
     if (cs->upsolving_mode)
-      stop_time = run_get_stop_time(cs->runlog_state);
+      stop_time = run_get_stop_time(cs->runlog_state, phr->user_id, cs->current_time);
     else
       stop_time = run_get_virtual_stop_time(cs->runlog_state, phr->user_id,
                                             cs->current_time);
   } else {
     start_time = run_get_start_time(cs->runlog_state);
-    stop_time = run_get_stop_time(cs->runlog_state);
+    stop_time = run_get_stop_time(cs->runlog_state, phr->user_id, cs->current_time);
   }
 
   if (cs->clients_suspended) FAIL(NEW_SRV_ERR_CLIENTS_SUSPENDED);
@@ -13083,7 +13083,7 @@ unpriv_contest_status_json(
     }
   } else {
     start_time = run_get_start_time(cs->runlog_state);
-    stop_time = run_get_stop_time(cs->runlog_state);
+    stop_time = run_get_stop_time(cs->runlog_state, phr->user_id, cs->current_time);
     accepting_mode = cs->accepting_mode;
   }
   run_get_times(cs->runlog_state, phr->user_id, 0, &sched_time, &duration, 0, &finish_time);
@@ -13268,7 +13268,7 @@ unpriv_problem_status_json(
     if (stop_time <= 0 || cs->upsolving_mode) accepting_mode = 1;
   } else {
     start_time = run_get_start_time(cs->runlog_state);
-    stop_time = run_get_stop_time(cs->runlog_state);
+    stop_time = run_get_stop_time(cs->runlog_state, phr->user_id, cs->current_time);
     accepting_mode = cs->accepting_mode;
   }
   if (start_time <= 0) {
@@ -13637,7 +13637,7 @@ unpriv_problem_statement_json(
     if (stop_time <= 0 || cs->upsolving_mode) accepting_mode = 1;
   } else {
     start_time = run_get_start_time(cs->runlog_state);
-    stop_time = run_get_stop_time(cs->runlog_state);
+    stop_time = run_get_stop_time(cs->runlog_state, phr->user_id, cs->current_time);
     accepting_mode = cs->accepting_mode;
   }
   if (start_time <= 0) {
@@ -13718,7 +13718,7 @@ unpriv_list_runs_json(
     if (stop_time <= 0 || cs->upsolving_mode) accepting_mode = 1;
   } else {
     start_time = run_get_start_time(cs->runlog_state);
-    stop_time = run_get_stop_time(cs->runlog_state);
+    stop_time = run_get_stop_time(cs->runlog_state, phr->user_id, cs->current_time);
     accepting_mode = cs->accepting_mode;
   }
   if (start_time <= 0) {
@@ -13804,7 +13804,7 @@ unpriv_run_status_json(
     if (stop_time <= 0 || cs->upsolving_mode) accepting_mode = 1;
   } else {
     start_time = run_get_start_time(cs->runlog_state);
-    stop_time = run_get_stop_time(cs->runlog_state);
+    stop_time = run_get_stop_time(cs->runlog_state, phr->user_id, cs->current_time);
     accepting_mode = cs->accepting_mode;
   }
   if (start_time <= 0) {
@@ -13967,7 +13967,7 @@ unpriv_run_test_json(
     if (stop_time <= 0 || cs->upsolving_mode) accepting_mode = 1;
   } else {
     start_time = run_get_start_time(cs->runlog_state);
-    stop_time = run_get_stop_time(cs->runlog_state);
+    stop_time = run_get_stop_time(cs->runlog_state, phr->user_id, cs->current_time);
     accepting_mode = cs->accepting_mode;
   }
   if (start_time <= 0) {

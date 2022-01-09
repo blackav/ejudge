@@ -37,7 +37,7 @@
   show_astr_time = global->show_astr_time;
   if (global->is_virtual) show_astr_time = 1;
   start_time = run_get_start_time(cs->runlog_state);
-  stop_time = run_get_stop_time(cs->runlog_state);
+  stop_time = run_get_stop_time(cs->runlog_state, phr->user_id, cs->current_time);
   if (global->is_virtual) {
     start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
     stop_time = run_get_virtual_stop_time(cs->runlog_state, phr->user_id, cs->current_time);
