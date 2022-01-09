@@ -478,6 +478,9 @@ run_set_user_duration(
 
 int run_is_virtual_legacy_mode(runlog_state_t state);
 
+void
+run_rebuild_user_run_index(runlog_state_t state, int user_id);
+
 static inline _Bool __attribute__((always_inline)) run_is_normal_status(unsigned char status)
 {
   return status <= RUN_LOW_LAST && (status < RUN_PSEUDO_FIRST || status > RUN_PSEUDO_LAST);
