@@ -370,7 +370,9 @@ run_add_record(
 
   struct user_run_header_info *urh = run_get_user_run_header(state, team, NULL);
   ASSERT(urh);
-  ASSERT(urh->run_id_valid);
+  if (!urh->run_id_valid) {
+    run_rebuild_user_run_index(state, team);
+  }
 
   if ((i = state->iface->get_insert_run_id(state->cnts,timestamp,team,nsec))<0)
     return -1;
@@ -801,7 +803,9 @@ run_get_team_usage(
 
   struct user_run_header_info *urh = run_get_user_run_header(state, user_id, NULL);
   ASSERT(urh);
-  ASSERT(urh->run_id_valid);
+  if (!urh->run_id_valid) {
+    run_rebuild_user_run_index(state, user_id);
+  }
 
   for (int run_id = urh->run_id_first; run_id >= state->run_f; run_id = state->run_extras[run_id - state->run_extra_f].next_user_id) {
     ASSERT(run_id < state->run_u);
@@ -842,7 +846,9 @@ run_get_attempts(
 
   struct user_run_header_info *urh = run_get_user_run_header(state, sample_re->user_id, NULL);
   ASSERT(urh);
-  ASSERT(urh->run_id_valid);
+  if (!urh->run_id_valid){
+    run_rebuild_user_run_index(state, sample_re->user_id);
+  }
 
   // FIXME: use user_id+prob_id index
 
@@ -891,7 +897,9 @@ run_count_all_attempts(runlog_state_t state, int user_id, int prob_id)
 
   struct user_run_header_info *urh = run_get_user_run_header(state, user_id, NULL);
   ASSERT(urh);
-  ASSERT(urh->run_id_valid);
+  if (!urh->run_id_valid) {
+    run_rebuild_user_run_index(state, user_id);
+  }
 
   // FIXME: use user_id+prob_id index
 
@@ -916,7 +924,9 @@ run_count_all_attempts_2(runlog_state_t state, int user_id, int prob_id, int ign
 
   struct user_run_header_info *urh = run_get_user_run_header(state, user_id, NULL);
   ASSERT(urh);
-  ASSERT(urh->run_id_valid);
+  if (!urh->run_id_valid) {
+    run_rebuild_user_run_index(state, user_id);
+  }
 
   for (i = urh->run_id_first; i >= state->run_f; i = state->run_extras[i - state->run_extra_f].next_user_id) {
     ASSERT(i < state->run_u);
@@ -940,7 +950,9 @@ run_count_tokens(runlog_state_t state, int user_id, int prob_id)
 
   struct user_run_header_info *urh = run_get_user_run_header(state, user_id, NULL);
   ASSERT(urh);
-  ASSERT(urh->run_id_valid);
+  if (!urh->run_id_valid) {
+    run_rebuild_user_run_index(state, user_id);
+  }
 
   for (i = urh->run_id_first; i >= state->run_f; i = state->run_extras[i - state->run_extra_f].next_user_id) {
     ASSERT(i < state->run_u);
@@ -1082,7 +1094,9 @@ run_check_duplicate(runlog_state_t state, int run_id)
 
   struct user_run_header_info *urh = run_get_user_run_header(state, p->user_id, NULL);
   ASSERT(urh);
-  ASSERT(urh->run_id_valid);
+  if (!urh->run_id_valid) {
+    run_rebuild_user_run_index(state, p->user_id);
+  }
 
   // FIXME: use user_id+prob_id index
 
@@ -1130,7 +1144,9 @@ run_find_duplicate(
 
   struct user_run_header_info *urh = run_get_user_run_header(state, user_id, NULL);
   ASSERT(urh);
-  ASSERT(urh->run_id_valid);
+  if (!urh->run_id_valid) {
+    run_rebuild_user_run_index(state, user_id);
+  }
 
   // FIXME: use user_id+prob_id index
 
@@ -1170,7 +1186,9 @@ run_get_accepted_set(
 
   struct user_run_header_info *urh = run_get_user_run_header(state, user_id, NULL);
   ASSERT(urh);
-  ASSERT(urh->run_id_valid);
+  if (!urh->run_id_valid) {
+    run_rebuild_user_run_index(state, user_id);
+  }
 
   for (i = urh->run_id_first; i >= state->run_f; i = state->run_extras[i - state->run_extra_f].next_user_id) {
     ASSERT(i < state->run_u);
@@ -1202,7 +1220,9 @@ run_get_ok_and_reject_count(
 
   struct user_run_header_info *urh = run_get_user_run_header(state, user_id, NULL);
   ASSERT(urh);
-  ASSERT(urh->run_id_valid);
+  if (!urh->run_id_valid) {
+    run_rebuild_user_run_index(state, user_id);
+  }
 
   for (i = urh->run_id_first; i >= state->run_f; i = state->run_extras[i - state->run_extra_f].next_user_id) {
     ASSERT(i < state->run_u);
@@ -1708,7 +1728,6 @@ run_virtual_stop(
   re.ssl_flag = ssl_flag;
   re.status = RUN_VIRTUAL_STOP;
   urh->stop_time = t;
-  urh->run_id_valid = 0; // rebuild index later
 
   if (state->max_user_id >= 0 && user_id > state->max_user_id) {
     state->max_user_id = user_id;
@@ -1790,13 +1809,12 @@ run_clear_entry(runlog_state_t state, int run_id)
     break;
   }
 
-  if ((urh = run_try_user_run_header(state, state->runs[run_id - state->run_f].user_id))) {
-    urh->run_id_valid = 0;
+  int user_id = state->runs[run_id - state->run_f].user_id;
+  int result = state->iface->clear_entry(state->cnts, run_id);
+  if (result >= 0) {
+    run_rebuild_user_run_index(state, user_id);
   }
-  state->max_user_id = -1;
-  state->user_count = -1;
-
-  return state->iface->clear_entry(state->cnts, run_id);
+  return result;
 }
 
 int
@@ -1823,7 +1841,11 @@ run_forced_clear_entry(runlog_state_t state, int run_id)
   if (run_id < state->run_f || run_id >= state->run_u) ERR_R("bad runid: %d", run_id);
 
   struct user_run_header_info *urh = run_try_user_run_header(state, state->runs[run_id - state->run_f].user_id);
-  if (urh) urh->run_id_valid = 0;
+  if (urh) {
+    urh->run_id_valid = 0;
+    urh->run_id_first = -1;
+    urh->run_id_last = -1;
+  }
   state->max_user_id = -1;
   state->user_count = -1;
 
@@ -1853,7 +1875,9 @@ run_has_transient_user_runs(runlog_state_t state, int user_id)
 
   struct user_run_header_info *urh = run_get_user_run_header(state, user_id, NULL);
   ASSERT(urh);
-  ASSERT(urh->run_id_valid);
+  if (!urh->run_id_valid){
+    run_rebuild_user_run_index(state, user_id);
+  }
 
   for (i = urh->run_id_first; i >= state->run_f; i = state->run_extras[i - state->run_extra_f].next_user_id) {
     ASSERT(i < state->run_u);
@@ -2428,7 +2452,9 @@ run_find(
     // use user index
     struct user_run_header_info *urh = run_get_user_run_header(state, team_id, NULL);
     ASSERT(urh);
-    ASSERT(urh->run_id_valid);
+    if (!urh->run_id_valid) {
+      run_rebuild_user_run_index(state, team_id);
+    }
 
     if (first_run <= last_run) {
       // forward search
@@ -2686,7 +2712,11 @@ run_clear_index(runlog_state_t state, int run_id)
   if (run_id < state->run_f || run_id >= state->run_u) return 0;
   if (state->runs[run_id - state->run_f].status == RUN_EMPTY) return 0;
   struct user_run_header_info *urh = run_try_user_run_header(state, state->runs[run_id - state->run_f].user_id);
-  if (urh) urh->run_id_valid = 0;
+  if (urh) {
+    urh->run_id_valid = 0;
+    urh->run_id_first = -1;
+    urh->run_id_last = -1;
+  }
   return 0;
 }
 
@@ -2695,7 +2725,9 @@ run_get_user_last_run_id(runlog_state_t state, int user_id)
 {
   struct user_run_header_info *urh = run_get_user_run_header(state, user_id, NULL);
   ASSERT(urh);
-  ASSERT(urh->run_id_valid);
+  if (!urh->run_id_valid) {
+    run_rebuild_user_run_index(state, user_id);
+  }
   return urh->run_id_last;
 }
 
@@ -2704,7 +2736,9 @@ run_get_user_first_run_id(runlog_state_t state, int user_id)
 {
   struct user_run_header_info *urh = run_get_user_run_header(state, user_id, NULL);
   ASSERT(urh);
-  ASSERT(urh->run_id_valid);
+  if (!urh->run_id_valid) {
+    run_rebuild_user_run_index(state, user_id);
+  }
   return urh->run_id_first;
 }
 
@@ -2777,7 +2811,9 @@ run_fetch_user_runs(
   int count = 0;
   struct user_run_header_info *urh = run_get_user_run_header(state, user_id, NULL);
   ASSERT(urh);
-  ASSERT(urh->run_id_valid);
+  if (!urh->run_id_valid) {
+    run_rebuild_user_run_index(state, user_id);
+  }
 
   for (int run_id = urh->run_id_first; run_id >= state->run_f; run_id = state->run_extras[run_id - state->run_extra_f].next_user_id) {
     ASSERT(run_id < state->run_u);
