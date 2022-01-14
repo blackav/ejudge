@@ -1,4 +1,4 @@
-/* Copyright (C) 2012-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -121,7 +121,7 @@ class Group
     string group_id;
     int first = 0;
     int last = 0;
-    vector<string> requires;
+    vector<string> requirez;    // requires is a new C++ keyword :-(
     vector<string> sets_marked_if_passed;
     bool offline = false;
     bool sets_marked = false;
@@ -156,8 +156,8 @@ public:
     int get_first() const { return first; }
     int get_last() const { return last; }
 
-    void add_requires(const string &s) { requires.push_back(s); }
-    const vector<string> &get_requires() const { return requires; }
+    void add_requires(const string &s) { requirez.push_back(s); }
+    const vector<string> &get_requires() const { return requirez; }
 
     void add_sets_marked_if_passed(const string &s) { sets_marked_if_passed.push_back(s); }
     const vector<string> &get_sets_marked_if_passed() const { return sets_marked_if_passed; }
@@ -720,18 +720,18 @@ ConfigParser::scan_error(const string &msg) const
 bool
 Group::meet_requirements(const ConfigParser &cfg, const Group *&grp) const
 {
-    if (requires.size() <= 0) {
+    if (requirez.size() <= 0) {
         grp = NULL;
         return true;
     }
     int i;
     const Group *gg = NULL;
-    for (i = 0; i < int(requires.size()); ++i) {
-        gg = cfg.find_group(requires[i]);
-        if (gg == NULL) die("group %s not found", requires[i].c_str());
+    for (i = 0; i < int(requirez.size()); ++i) {
+        gg = cfg.find_group(requirez[i]);
+        if (gg == NULL) die("group %s not found", requirez[i].c_str());
         if (!gg->is_passed()) break;
     }
-    if (i >= int(requires.size())) {
+    if (i >= int(requirez.size())) {
         grp = NULL;
         return true;
     }
