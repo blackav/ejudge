@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2008-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -211,3 +211,37 @@ add_entry_2_func(
         const struct run_entry *re,
         int flags,
         const unsigned char *prob_uuid);
+
+static int
+user_run_header_set_start_time_func(
+        struct rldb_plugin_cnts *cdata,
+        int user_id,
+        time_t start_time,
+        int is_virtual,
+        int last_change_user_id);
+
+static int
+user_run_header_set_stop_time_func(
+        struct rldb_plugin_cnts *cdata,
+        int user_id,
+        time_t stop_time,
+        int last_change_user_id);
+
+static int
+user_run_header_set_duration_func(
+        struct rldb_plugin_cnts *cdata,
+        int user_id,
+        int duration,
+        int last_change_user_id);
+
+static int
+user_run_header_set_is_checked_func(
+        struct rldb_plugin_cnts *cdata,
+        int user_id,
+        int is_checked,
+        int last_change_user_id);
+
+static int
+user_run_header_delete_func(
+        struct rldb_plugin_cnts *cdata,
+        int user_id);

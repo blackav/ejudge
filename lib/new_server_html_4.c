@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2019 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -310,7 +310,7 @@ do_schedule(
     return -NEW_SRV_ERR_INV_TIME_SPEC;
 
   if (sloc > 0) {
-    run_get_times(cs->runlog_state, &start_time, 0, 0, &stop_time, 0);
+    run_get_times(cs->runlog_state, 0, &start_time, 0, 0, &stop_time, 0);
     if (stop_time > 0) return -NEW_SRV_ERR_CONTEST_ALREADY_FINISHED;
     if (start_time > 0) return -NEW_SRV_ERR_CONTEST_ALREADY_STARTED;
   }
@@ -362,7 +362,7 @@ cmd_operation(
     ns_reload_server_all();
     break;
   case NEW_SRV_ACTION_START_CONTEST:
-    run_get_times(cs->runlog_state, &start_time, 0, &duration, &stop_time, 0);
+    run_get_times(cs->runlog_state, 0, &start_time, 0, &duration, &stop_time, 0);
     if (stop_time > 0) return -NEW_SRV_ERR_CONTEST_ALREADY_FINISHED;
     if (start_time > 0) return -NEW_SRV_ERR_CONTEST_ALREADY_STARTED;
     run_start_contest(cs->runlog_state, cs->current_time);
@@ -371,7 +371,7 @@ cmd_operation(
     serve_update_standings_file(extra, cs, cnts, 0);
     break;
   case NEW_SRV_ACTION_STOP_CONTEST:
-    run_get_times(cs->runlog_state, &start_time, 0, &duration, &stop_time, 0);
+    run_get_times(cs->runlog_state, 0, &start_time, 0, &duration, &stop_time, 0);
     if (stop_time > 0) return -NEW_SRV_ERR_CONTEST_ALREADY_FINISHED;
     if (start_time <= 0) return -NEW_SRV_ERR_CONTEST_NOT_STARTED;
     run_stop_contest(cs->runlog_state, cs->current_time);
@@ -379,7 +379,7 @@ cmd_operation(
     serve_update_status_file(ejudge_config, cnts, cs, 1);
     break;
   case NEW_SRV_ACTION_CONTINUE_CONTEST:
-    run_get_times(cs->runlog_state, &start_time, 0, &duration, &stop_time, 0);
+    run_get_times(cs->runlog_state, 0, &start_time, 0, &duration, &stop_time, 0);
     if (!global->enable_continue) return -NEW_SRV_ERR_CANNOT_CONTINUE_CONTEST;
     if (start_time <= 0) return -NEW_SRV_ERR_CONTEST_NOT_STARTED;
     if (stop_time <= 0) return -NEW_SRV_ERR_CONTEST_NOT_FINISHED;
@@ -525,7 +525,7 @@ cmd_operation_2(
   const struct section_global_data *global = cs->global;
   time_t start_time = 0, duration = 0, stop_time = 0, sched = 0;
 
-  run_get_times(cs->runlog_state, &start_time, &sched, &duration, &stop_time, 0);
+  run_get_times(cs->runlog_state, 0, &start_time, &sched, &duration, &stop_time, 0);
   switch (phr->action) {
   case NEW_SRV_ACTION_GET_CONTEST_NAME:
     fprintf(fout, "%s", cnts->name);
@@ -981,7 +981,7 @@ cmd_submit_run(
                                             cs->current_time);
     } else {
       start_time = run_get_start_time(cs->runlog_state);
-      stop_time = run_get_stop_time(cs->runlog_state);
+      stop_time = run_get_stop_time(cs->runlog_state, phr->user_id, cs->current_time);
     }
     if (cs->clients_suspended)
       FAIL(NEW_SRV_ERR_CLIENTS_SUSPENDED);
@@ -1901,7 +1901,9 @@ cmd_force_start_virtual(
   run_id = run_virtual_start(cs->runlog_state, user_id_2,
                              tt.tv_sec, 0, 0, tt.tv_usec * 1000);
   if (run_id < 0) FAIL(NEW_SRV_ERR_VIRTUAL_START_FAILED);
-  serve_move_files_to_insert_run(cs, run_id);
+  if (run_is_virtual_legacy_mode(cs->runlog_state)) {
+    serve_move_files_to_insert_run(cs, run_id);
+  }
 
  cleanup:
   return retval;

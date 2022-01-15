@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2008-2019 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -113,6 +113,11 @@ struct rldb_plugin_iface plugin_rldb_mysql =
   change_status_4_func,
   NULL,
   add_entry_2_func,
+  user_run_header_set_start_time_func,
+  user_run_header_set_stop_time_func,
+  user_run_header_set_duration_func,
+  user_run_header_set_is_checked_func,
+  user_run_header_delete_func,
 };
 
 static struct common_plugin_data *
@@ -297,7 +302,20 @@ do_open(struct rldb_mysql_state *state)
       return -1;
     run_version = 10;
   }
-  if (run_version != 10) {
+  if (run_version == 10) {
+    if (mi->simple_fquery(md, create_userrunheaders_query, md->table_prefix) < 0)
+      return -1;
+    if (mi->simple_fquery(md, "ALTER TABLE %suserrunheaders ADD INDEX userrunheaders_contest_id_idx (contest_id);", md->table_prefix) < 0)
+      return -1;
+    if (mi->simple_fquery(md, "ALTER TABLE %suserrunheaders ADD INDEX userrunheaders_user_id_idx (user_id);", md->table_prefix) < 0)
+      return -1;
+    // ignore error
+    mi->simple_fquery(md, "ALTER TABLE %sruns ADD INDEX runs_user_id_idx (user_id) ;", md->table_prefix);
+    if (mi->simple_fquery(md, "UPDATE %sconfig SET config_val = '11' WHERE config_key = 'run_version' ;", md->table_prefix) < 0)
+      return -1;
+    run_version = 11;
+  }
+  if (run_version != 11) {
     err("run_version == %d is not supported", run_version);
     return -1;
   }
@@ -385,6 +403,136 @@ load_header(
  fail:
   if (cmd_f) fclose(cmd_f);
   xfree(cmd_t);
+  mi->free_res(md);
+  return -1;
+}
+
+static int
+load_user_header(
+        struct rldb_mysql_cnts *cs)
+{
+  struct rldb_mysql_state *state = cs->plugin_state;
+  struct common_mysql_iface *mi = state->mi;
+  struct common_mysql_state *md = state->md;
+  struct runlog_state *rls = cs->rl_state;
+
+  int min_user_id = 0, max_user_id = 0;
+
+  if (mi->fquery(md, 2,
+                 "SELECT MIN(user_id), MAX(user_id) FROM %suserrunheaders WHERE contest_id = %d ;", md->table_prefix, cs->contest_id) < 0) {
+    goto fail;
+  }
+  if (md->row_count == 1) {
+    if (mi->next_row(md) < 0) goto fail;
+    struct user_run_user_id_internal ri = {};
+    if (mi->parse_spec(md, md->field_count, md->row, md->lengths,
+                       USERRUNUSERID_ROW_WIDTH, user_run_user_id_spec, &ri) < 0)
+      goto fail;
+    if (ri.min_user_id > 0) min_user_id = ri.min_user_id;
+    if (ri.max_user_id > 0) max_user_id = ri.max_user_id;
+  }
+  mi->free_res(md);
+
+  if (mi->fquery(md, 2,
+                 "SELECT MIN(user_id), MAX(user_id) FROM %sruns WHERE contest_id = %d ;", md->table_prefix, cs->contest_id) < 0) {
+    goto fail;
+  }
+  if (md->row_count == 1) {
+    if (mi->next_row(md) < 0) goto fail;
+    struct user_run_user_id_internal ri = {};
+    if (mi->parse_spec(md, md->field_count, md->row, md->lengths,
+                       USERRUNUSERID_ROW_WIDTH, user_run_user_id_spec, &ri) < 0)
+      goto fail;
+    if (ri.min_user_id > 0) {
+      if (min_user_id <= 0 || ri.min_user_id < min_user_id) {
+        min_user_id = ri.min_user_id;
+      }
+    }
+    if (ri.max_user_id > 0 && ri.max_user_id > max_user_id) {
+      max_user_id = ri.max_user_id;
+    }
+  }
+  mi->free_res(md);
+
+  // if user_id range is available, preallocate map
+  if (min_user_id > 0 && max_user_id > 0 && min_user_id <= max_user_id) {
+    int count = max_user_id - min_user_id + 1;
+    int size = 32;
+    while (size < count) {
+      size *= 2;
+    }
+    if (count < size) {
+      min_user_id -= (size - count) / 2;
+      if (min_user_id < 1) min_user_id = 1;
+    }
+    rls->urh.low_user_id = min_user_id;
+    rls->urh.high_user_id = min_user_id + size;
+    XCALLOC(rls->urh.umap, size);
+  }
+
+  if (mi->fquery(md, USERRUNHEADERS_ROW_WIDTH,
+                 "SELECT * FROM %suserrunheaders WHERE contest_id = %d ORDER BY user_id ;",
+                 md->table_prefix, cs->contest_id) < 0) {
+    goto fail;
+  }
+  if (md->row_count <= 0) {
+    return 0;
+  }
+
+  // preallocate entries
+  if (md->row_count > 0) {
+    int reserved = 32;
+    while (reserved <= md->row_count) {
+      reserved *= 2;
+    }
+    rls->urh.reserved = reserved;
+    XCALLOC(rls->urh.infos, reserved);
+    rls->urh.size = 1;
+  }
+
+  for (int i = 0; i < md->row_count; ++i) {
+    struct user_run_header_internal urhi = {};
+    if (mi->next_row(md) < 0) goto fail;
+    if (mi->parse_spec(md, md->field_count, md->row, md->lengths,
+                       USERRUNHEADERS_ROW_WIDTH, user_run_headers_spec, &urhi) < 0)
+      goto fail;
+
+    if (urhi.user_id > 0) {
+      if (urhi.user_id < rls->urh.low_user_id || urhi.user_id >= rls->urh.high_user_id) {
+        run_extend_user_run_header_map(rls, urhi.user_id);
+      }
+      int offset = urhi.user_id - rls->urh.low_user_id;
+      if (!rls->urh.umap[offset]) {
+        if (rls->urh.size == rls->urh.reserved) {
+          if (!rls->urh.reserved) {
+            rls->urh.reserved = 32;
+            XCALLOC(rls->urh.infos, rls->urh.reserved);
+            rls->urh.size = 1;
+          } else {
+            rls->urh.reserved *= 2;
+            XREALLOC(rls->urh.infos, rls->urh.reserved);
+          }
+        }
+        int index = rls->urh.size++;
+        rls->urh.umap[offset] = index;
+        struct user_run_header_info *p = &rls->urh.infos[index];
+        p->user_id = urhi.user_id;
+        p->duration = urhi.duration;
+        p->is_virtual = urhi.is_virtual;
+        p->is_checked = urhi.is_checked;
+        p->has_db_record = 1;
+        p->last_change_user_id = urhi.last_change_user_id;
+        p->start_time = urhi.start_time;
+        p->stop_time = urhi.stop_time;
+        p->last_change_time = urhi.last_change_time;
+      }
+    }
+  }
+
+  mi->free_res(md);
+  return 1;
+
+fail:
   mi->free_res(md);
   return -1;
 }
@@ -588,6 +736,8 @@ open_func(
   if (!r) return (struct rldb_plugin_cnts*) cs;
   if (load_runs(cs) < 0) goto fail;
   state->mi->free_res(state->md);
+  if (load_user_header(cs) < 0) goto fail;
+  state->mi->free_res(state->md);
   return (struct rldb_plugin_cnts*) cs;
 
  fail:
@@ -647,10 +797,20 @@ reset_func(
   rls->head.duration = init_duration;
   rls->head.sched_time = init_sched_time;
   rls->head.finish_time = init_finish_time;
+  xfree(rls->urh.umap);
+  xfree(rls->urh.infos);
+  rls->urh.low_user_id = 0;
+  rls->urh.high_user_id = 0;
+  rls->urh.umap = NULL;
+  rls->urh.size = 0;
+  rls->urh.reserved = 0;
+  rls->urh.infos = NULL;
 
   mi->simple_fquery(md, "DELETE FROM %sruns WHERE contest_id = %d ;",
                     md->table_prefix, cs->contest_id);
   mi->simple_fquery(md, "DELETE FROM %srunheaders WHERE contest_id = %d ;",
+                    md->table_prefix, cs->contest_id);
+  mi->simple_fquery(md, "DELETE FROM %suserrunheaders WHERE contest_id = %d ;",
                     md->table_prefix, cs->contest_id);
 
   memset(&rh, 0, sizeof(rh));
@@ -1820,7 +1980,213 @@ add_entry_2_func(
   return do_update_entry(cs, run_id, re, flags, prob_uuid);
 }
 
-/*
- * Local variables:
- * End:
- */
+static int
+user_run_header_delete_func(
+        struct rldb_plugin_cnts *cdata,
+        int user_id)
+{
+  struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts*) cdata;
+  struct rldb_mysql_state *state = cs->plugin_state;
+  struct runlog_state *rls = cs->rl_state;
+  char *cmd_s = 0;
+  size_t cmd_z = 0;
+  FILE *cmd_f = 0;
+
+  cmd_f = open_memstream(&cmd_s, &cmd_z);
+  fprintf(cmd_f, "DELETE FROM %suserrunheaders WHERE user_id = %d and contest_id = %d ;", state->md->table_prefix, user_id, cs->contest_id);
+  fclose(cmd_f); cmd_f = NULL;
+  if (state->mi->simple_query(state->md, cmd_s, cmd_z) < 0) {
+    free(cmd_s);
+    return -1;
+  }
+  free(cmd_s); cmd_s = NULL;
+  if (user_id >= rls->urh.low_user_id && user_id < rls->urh.high_user_id) {
+    int index = rls->urh.umap[user_id - rls->urh.low_user_id];
+    rls->urh.umap[user_id - rls->urh.low_user_id] = 0;
+    if (index > 0) {
+      memset(&rls->urh.infos[index], 0, sizeof(rls->urh.infos[index]));
+    }
+  }
+  // FIXME: the user_run_header_info entry for user_id in vector infos is just lost...
+  return 0;
+}
+
+static int
+user_run_header_set_start_time_func(
+        struct rldb_plugin_cnts *cdata,
+        int user_id,
+        time_t start_time,
+        int is_virtual,
+        int last_change_user_id)
+{
+  struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts*) cdata;
+  struct rldb_mysql_state *state = cs->plugin_state;
+  struct runlog_state *rls = cs->rl_state;
+  char *cmd_s = 0;
+  size_t cmd_z = 0;
+  FILE *cmd_f = 0;
+
+  cmd_f = open_memstream(&cmd_s, &cmd_z);
+  fprintf(cmd_f, "INSERT INTO %suserrunheaders SET start_time = ", state->md->table_prefix);
+  state->mi->write_timestamp(state->md, cmd_f, 0, start_time);
+  fprintf(cmd_f, ", is_virtual = %d", is_virtual);
+  fprintf(cmd_f, ", user_id = %d", user_id);
+  fprintf(cmd_f, ", contest_id = %d", cs->contest_id);
+  fprintf(cmd_f, ", last_change_user_id = %d", last_change_user_id);
+  fprintf(cmd_f, ", last_change_time = NOW()");
+  fprintf(cmd_f, " ON DUPLICATE KEY UPDATE start_time = ");
+  state->mi->write_timestamp(state->md, cmd_f, 0, start_time);
+  fprintf(cmd_f, ", is_virtual = %d", is_virtual);
+  fprintf(cmd_f, ", last_change_user_id = %d", last_change_user_id);
+  fprintf(cmd_f, ", last_change_time = NOW() ;");
+  fclose(cmd_f); cmd_f = NULL;
+
+  if (state->mi->simple_query(state->md, cmd_s, cmd_z) < 0) {
+    free(cmd_s);
+    return -1;
+  }
+  free(cmd_s); cmd_s = NULL;
+
+  struct user_run_header_info *urhi = run_get_user_run_header(rls, user_id, NULL);
+  if (urhi) {
+    urhi->user_id = user_id;
+    urhi->is_virtual = is_virtual;
+    urhi->has_db_record = 1;
+    urhi->last_change_user_id = last_change_user_id;
+    urhi->start_time = start_time;
+    urhi->last_change_time = time(NULL);
+  }
+
+  return 0;
+}
+
+static int
+user_run_header_set_stop_time_func(
+        struct rldb_plugin_cnts *cdata,
+        int user_id,
+        time_t stop_time,
+        int last_change_user_id)
+{
+  struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts*) cdata;
+  struct rldb_mysql_state *state = cs->plugin_state;
+  struct runlog_state *rls = cs->rl_state;
+  char *cmd_s = 0;
+  size_t cmd_z = 0;
+  FILE *cmd_f = 0;
+
+  cmd_f = open_memstream(&cmd_s, &cmd_z);
+  fprintf(cmd_f, "INSERT INTO %suserrunheaders SET stop_time = ", state->md->table_prefix);
+  state->mi->write_timestamp(state->md, cmd_f, 0, stop_time);
+  fprintf(cmd_f, ", user_id = %d", user_id);
+  fprintf(cmd_f, ", contest_id = %d", cs->contest_id);
+  fprintf(cmd_f, ", last_change_user_id = %d", last_change_user_id);
+  fprintf(cmd_f, ", last_change_time = NOW()");
+  fprintf(cmd_f, " ON DUPLICATE KEY UPDATE stop_time = ");
+  state->mi->write_timestamp(state->md, cmd_f, 0, stop_time);
+  fprintf(cmd_f, ", last_change_user_id = %d", last_change_user_id);
+  fprintf(cmd_f, ", last_change_time = NOW() ;");
+  fclose(cmd_f); cmd_f = NULL;
+
+  if (state->mi->simple_query(state->md, cmd_s, cmd_z) < 0) {
+    free(cmd_s);
+    return -1;
+  }
+  free(cmd_s); cmd_s = NULL;
+
+  struct user_run_header_info *urhi = run_get_user_run_header(rls, user_id, NULL);
+  if (urhi) {
+    urhi->user_id = user_id;
+    urhi->has_db_record = 1;
+    urhi->last_change_user_id = last_change_user_id;
+    urhi->stop_time = stop_time;
+    urhi->last_change_time = time(NULL);
+  }
+
+  return 0;
+}
+
+static int
+user_run_header_set_duration_func(
+        struct rldb_plugin_cnts *cdata,
+        int user_id,
+        int duration,
+        int last_change_user_id)
+{
+  struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts*) cdata;
+  struct rldb_mysql_state *state = cs->plugin_state;
+  struct runlog_state *rls = cs->rl_state;
+  char *cmd_s = 0;
+  size_t cmd_z = 0;
+  FILE *cmd_f = 0;
+
+  cmd_f = open_memstream(&cmd_s, &cmd_z);
+  fprintf(cmd_f, "INSERT INTO %suserrunheaders SET duration = %d", state->md->table_prefix, duration);
+  fprintf(cmd_f, ", user_id = %d", user_id);
+  fprintf(cmd_f, ", contest_id = %d", cs->contest_id);
+  fprintf(cmd_f, ", last_change_user_id = %d", last_change_user_id);
+  fprintf(cmd_f, ", last_change_time = NOW()");
+  fprintf(cmd_f, " ON DUPLICATE KEY UPDATE duration = %d", duration);
+  fprintf(cmd_f, ", last_change_user_id = %d", last_change_user_id);
+  fprintf(cmd_f, ", last_change_time = NOW() ;");
+  fclose(cmd_f); cmd_f = NULL;
+
+  if (state->mi->simple_query(state->md, cmd_s, cmd_z) < 0) {
+    free(cmd_s);
+    return -1;
+  }
+  free(cmd_s); cmd_s = NULL;
+
+  struct user_run_header_info *urhi = run_get_user_run_header(rls, user_id, NULL);
+  if (urhi) {
+    urhi->user_id = user_id;
+    urhi->has_db_record = 1;
+    urhi->last_change_user_id = last_change_user_id;
+    urhi->duration = duration;
+    urhi->last_change_time = time(NULL);
+  }
+
+  return 0;
+}
+
+static int
+user_run_header_set_is_checked_func(
+        struct rldb_plugin_cnts *cdata,
+        int user_id,
+        int is_checked,
+        int last_change_user_id)
+{
+  struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts*) cdata;
+  struct rldb_mysql_state *state = cs->plugin_state;
+  struct runlog_state *rls = cs->rl_state;
+  char *cmd_s = 0;
+  size_t cmd_z = 0;
+  FILE *cmd_f = 0;
+
+  cmd_f = open_memstream(&cmd_s, &cmd_z);
+  fprintf(cmd_f, "INSERT INTO %suserrunheaders SET is_checked = %d", state->md->table_prefix, is_checked);
+  fprintf(cmd_f, ", user_id = %d", user_id);
+  fprintf(cmd_f, ", contest_id = %d", cs->contest_id);
+  fprintf(cmd_f, ", last_change_user_id = %d", last_change_user_id);
+  fprintf(cmd_f, ", last_change_time = NOW()");
+  fprintf(cmd_f, " ON DUPLICATE KEY UPDATE is_checked = %d", is_checked);
+  fprintf(cmd_f, ", last_change_user_id = %d", last_change_user_id);
+  fprintf(cmd_f, ", last_change_time = NOW() ;");
+  fclose(cmd_f); cmd_f = NULL;
+
+  if (state->mi->simple_query(state->md, cmd_s, cmd_z) < 0) {
+    free(cmd_s);
+    return -1;
+  }
+  free(cmd_s); cmd_s = NULL;
+
+  struct user_run_header_info *urhi = run_get_user_run_header(rls, user_id, NULL);
+  if (urhi) {
+    urhi->user_id = user_id;
+    urhi->is_checked = is_checked;
+    urhi->has_db_record = 1;
+    urhi->last_change_user_id = last_change_user_id;
+    urhi->last_change_time = time(NULL);
+  }
+
+  return 0;
+}

@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2021 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1225,7 +1225,7 @@ ns_check_contest_events(
     serve_check_telegram_reminder(ejudge_config, cs, cnts);
   }
 
-  run_get_times(cs->runlog_state, &start_time, &sched_time,
+  run_get_times(cs->runlog_state, 0, &start_time, &sched_time,
                 &duration, &stop_time, &finish_time);
 
   if (start_time > 0 && finish_time > 0 && finish_time < start_time) {
@@ -2282,9 +2282,12 @@ priv_force_start_virtual(
   // FIXME: it's a bit risky, need to check the database...
   if (nsec + uset.u >= NSEC_MAX + 1) nsec = NSEC_MAX - 1 - uset.u;
 
+  int legacy_mode = run_is_virtual_legacy_mode(cs->runlog_state);
   for (i = 0; i < uset.u; i++, nsec++) {
     run_id = run_virtual_start(cs->runlog_state, uset.v[i], tt.tv_sec,0,0,nsec);
-    if (run_id >= 0) serve_move_files_to_insert_run(cs, run_id);
+    if (run_id >= 0 && legacy_mode) {
+      serve_move_files_to_insert_run(cs, run_id);
+    }
   }
 
  cleanup:
@@ -2364,7 +2367,7 @@ do_schedule(FILE *log_f,
   }
 
   if (sloc > 0) {
-    run_get_times(cs->runlog_state, &start_time, 0, 0, &stop_time, 0);
+    run_get_times(cs->runlog_state, 0, &start_time, 0, 0, &stop_time, 0);
     if (stop_time > 0) {
       ns_error(log_f, NEW_SRV_ERR_CONTEST_ALREADY_FINISHED);
       return;
@@ -2407,7 +2410,7 @@ do_change_duration(FILE *log_f,
   }
   d *= 60;
 
-  run_get_times(cs->runlog_state, &start_time, 0, 0, &stop_time, 0);
+  run_get_times(cs->runlog_state, 0, &start_time, 0, 0, &stop_time, 0);
 
   if (stop_time > 0 && !cs->global->enable_continue) {
     ns_error(log_f, NEW_SRV_ERR_CONTEST_ALREADY_FINISHED);
@@ -2449,7 +2452,7 @@ do_change_finish_time(
     }
   }
 
-  run_get_times(cs->runlog_state, &start_time, 0, 0, &stop_time, 0);
+  run_get_times(cs->runlog_state, 0, &start_time, 0, 0, &stop_time, 0);
   if (stop_time > 0) {
     ns_error(log_f, NEW_SRV_ERR_CONTEST_ALREADY_FINISHED);
     return;
@@ -2534,7 +2537,7 @@ priv_contest_operation(FILE *fout,
     goto cleanup;
   }
 
-  run_get_times(cs->runlog_state, &start_time, 0, &duration, &stop_time, 0);
+  run_get_times(cs->runlog_state, 0, &start_time, 0, &duration, &stop_time, 0);
 
   switch (phr->action) {
   case NEW_SRV_ACTION_START_CONTEST:
@@ -6372,7 +6375,7 @@ priv_upsolving_operation(
 
   /* check that the contest is stopped */
   run_get_saved_times(cs->runlog_state, &duration, &saved_stop_time, 0);
-  stop_time = run_get_stop_time(cs->runlog_state);
+  stop_time = run_get_stop_time(cs->runlog_state, 0, 0);
   if (!cs->global->is_virtual && stop_time <= 0 && saved_stop_time <= 0) return 0;
 
   hr_cgi_param(phr, "freeze_standings", &freeze_standings);
@@ -7858,7 +7861,7 @@ priv_run_status_json(
     if (stop_time <= 0 || cs->upsolving_mode) accepting_mode = 1;
   } else {
     start_time = run_get_start_time(cs->runlog_state);
-    stop_time = run_get_stop_time(cs->runlog_state);
+    stop_time = run_get_stop_time(cs->runlog_state, 0, 0);
     accepting_mode = cs->accepting_mode;
   }
 
@@ -8227,9 +8230,9 @@ priv_contest_status_json(
   time_t server_start_time = nsf_get_server_start_time(phr->fw_state);
   int online_users = 0;
 
-  run_get_times(cs->runlog_state, 0, &sched_time, &duration, 0, &finish_time);
+  run_get_times(cs->runlog_state, 0, 0, &sched_time, &duration, 0, &finish_time);
   start_time = run_get_start_time(cs->runlog_state);
-  stop_time = run_get_stop_time(cs->runlog_state);
+  stop_time = run_get_stop_time(cs->runlog_state, 0, 0);
 
   if (duration > 0 && global->is_virtual <= 0 && start_time > 0 && global->board_fog_time > 0) {
     if (stop_time <= 0) {
@@ -9102,6 +9105,10 @@ static const unsigned char * const external_priv_action_names[NEW_SRV_ACTION_LAS
   [NEW_SRV_ACTION_API_KEYS_PAGE] = "priv_api_keys_page",
   [NEW_SRV_ACTION_CREATE_API_KEY] = "priv_create_api_key",
   [NEW_SRV_ACTION_DELETE_API_KEY] = "priv_delete_api_key",
+  [NEW_SRV_ACTION_USER_RUN_HEADERS_PAGE] = "priv_user_run_headers_page",
+  [NEW_SRV_ACTION_USER_RUN_HEADER_PAGE] = "priv_user_run_header_page",
+  [NEW_SRV_ACTION_USER_RUN_HEADER_DELETE] = "priv_user_run_header_delete",
+  [NEW_SRV_ACTION_USER_RUN_HEADER_CHANGE_DURATION] = "priv_user_run_header_change_duration",
 };
 
 static const int external_priv_action_aliases[NEW_SRV_ACTION_LAST] =
@@ -10073,7 +10080,7 @@ unpriv_use_token(
     stop_time = run_get_virtual_stop_time(cs->runlog_state, phr->user_id, cs->current_time);
   } else {
     start_time = run_get_start_time(cs->runlog_state);
-    stop_time = run_get_stop_time(cs->runlog_state);
+    stop_time = run_get_stop_time(cs->runlog_state, phr->user_id, cs->current_time);
   }
 
   if (cs->clients_suspended) goto back_action;
@@ -10477,7 +10484,7 @@ ns_submit_run(
     stop_time = run_get_virtual_stop_time(cs->runlog_state, user_id, cs->current_time);
   } else {
     start_time = run_get_start_time(cs->runlog_state);
-    stop_time = run_get_stop_time(cs->runlog_state);
+    stop_time = run_get_stop_time(cs->runlog_state, user_id, cs->current_time);
   }
 
   // availability checks
@@ -11127,7 +11134,7 @@ unpriv_submit_run(
                                           cs->current_time);
   } else {
     start_time = run_get_start_time(cs->runlog_state);
-    stop_time = run_get_stop_time(cs->runlog_state);
+    stop_time = run_get_stop_time(cs->runlog_state, phr->user_id, cs->current_time);
   }
 
   if (cs->clients_suspended) {
@@ -11556,7 +11563,7 @@ unpriv_submit_clar(FILE *fout,
                                           cs->current_time);
   } else {
     start_time = run_get_start_time(cs->runlog_state);
-    stop_time = run_get_stop_time(cs->runlog_state);
+    stop_time = run_get_stop_time(cs->runlog_state, phr->user_id, cs->current_time);
   }
 
   if (cs->clients_suspended) {
@@ -11695,7 +11702,7 @@ unpriv_submit_appeal(FILE *fout,
                                           cs->current_time);
   } else {
     start_time = run_get_start_time(cs->runlog_state);
-    stop_time = run_get_stop_time(cs->runlog_state);
+    stop_time = run_get_stop_time(cs->runlog_state, phr->user_id, cs->current_time);
   }
 
   if (cs->clients_suspended) {
@@ -11884,9 +11891,11 @@ unpriv_command(
     if (run_id < 0) {
       FAIL2(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
     }
-    serve_move_files_to_insert_run(cs, run_id);
+    if (run_is_virtual_legacy_mode(cs->runlog_state)) {
+      serve_move_files_to_insert_run(cs, run_id);
+    }
     serve_event_add(cs,
-                    precise_time.tv_sec + run_get_duration(cs->runlog_state),
+                    precise_time.tv_sec + run_get_duration(cs->runlog_state, phr->user_id),
                     SERVE_EVENT_VIRTUAL_STOP, phr->user_id,
                     virtual_stop_callback);
     break;
@@ -11907,7 +11916,9 @@ unpriv_command(
     if (run_id < 0) {
       FAIL2(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
     }
-    serve_move_files_to_insert_run(cs, run_id);
+    if (run_is_virtual_legacy_mode(cs->runlog_state)) {
+      serve_move_files_to_insert_run(cs, run_id);
+    }
     if (global->score_system == SCORE_OLYMPIAD && global->is_virtual > 0) {
       serve_event_remove_matching(cs, 0, 0, phr->user_id);
       if (global->disable_virtual_auto_judge <= 0) {
@@ -12368,10 +12379,7 @@ get_last_answer_select_one(serve_state_t cs, int user_id, int prob_id)
 int
 is_judged_virtual_olympiad(serve_state_t cs, int user_id)
 {
-  struct run_entry vs, ve;
-
-  if (run_get_virtual_info(cs->runlog_state, user_id, &vs, &ve) < 0) return 0;
-  return (vs.judge_id > 0);
+  return run_get_virtual_is_checked(cs->runlog_state, user_id);
 }
 
 void
@@ -12695,9 +12703,9 @@ do_json_user_state(
                                           cs->current_time);
   } else {
     start_time = run_get_start_time(cs->runlog_state);
-    stop_time = run_get_stop_time(cs->runlog_state);
+    stop_time = run_get_stop_time(cs->runlog_state, user_id, cs->current_time);
   }
-  duration = run_get_duration(cs->runlog_state);
+  duration = run_get_duration(cs->runlog_state, user_id);
 
   ptm = localtime(&cs->current_time);
   fprintf(fout, "{"
@@ -12805,13 +12813,13 @@ unpriv_xml_update_answer(
   if (global->is_virtual) {
     start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
     if (cs->upsolving_mode)
-      stop_time = run_get_stop_time(cs->runlog_state);
+      stop_time = run_get_stop_time(cs->runlog_state, phr->user_id, cs->current_time);
     else
       stop_time = run_get_virtual_stop_time(cs->runlog_state, phr->user_id,
                                             cs->current_time);
   } else {
     start_time = run_get_start_time(cs->runlog_state);
-    stop_time = run_get_stop_time(cs->runlog_state);
+    stop_time = run_get_stop_time(cs->runlog_state, phr->user_id, cs->current_time);
   }
 
   if (cs->clients_suspended) FAIL(NEW_SRV_ERR_CLIENTS_SUSPENDED);
@@ -12959,13 +12967,13 @@ unpriv_get_file(
   if (global->is_virtual) {
     start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
     if (cs->upsolving_mode)
-      stop_time = run_get_stop_time(cs->runlog_state);
+      stop_time = run_get_stop_time(cs->runlog_state, phr->user_id, cs->current_time);
     else
       stop_time = run_get_virtual_stop_time(cs->runlog_state, phr->user_id,
                                             cs->current_time);
   } else {
     start_time = run_get_start_time(cs->runlog_state);
-    stop_time = run_get_stop_time(cs->runlog_state);
+    stop_time = run_get_stop_time(cs->runlog_state, phr->user_id, cs->current_time);
   }
 
   if (cs->clients_suspended) FAIL(NEW_SRV_ERR_CLIENTS_SUSPENDED);
@@ -13075,10 +13083,10 @@ unpriv_contest_status_json(
     }
   } else {
     start_time = run_get_start_time(cs->runlog_state);
-    stop_time = run_get_stop_time(cs->runlog_state);
+    stop_time = run_get_stop_time(cs->runlog_state, phr->user_id, cs->current_time);
     accepting_mode = cs->accepting_mode;
   }
-  run_get_times(cs->runlog_state, 0, &sched_time, &duration, 0, &finish_time);
+  run_get_times(cs->runlog_state, phr->user_id, 0, &sched_time, &duration, 0, &finish_time);
   if (duration > 0 && start_time > 0 && stop_time <= 0 && global->board_fog_time > 0) {
     fog_start_time = start_time + duration - global->board_fog_time;
     if (fog_start_time < start_time) fog_start_time = start_time;
@@ -13260,7 +13268,7 @@ unpriv_problem_status_json(
     if (stop_time <= 0 || cs->upsolving_mode) accepting_mode = 1;
   } else {
     start_time = run_get_start_time(cs->runlog_state);
-    stop_time = run_get_stop_time(cs->runlog_state);
+    stop_time = run_get_stop_time(cs->runlog_state, phr->user_id, cs->current_time);
     accepting_mode = cs->accepting_mode;
   }
   if (start_time <= 0) {
@@ -13629,7 +13637,7 @@ unpriv_problem_statement_json(
     if (stop_time <= 0 || cs->upsolving_mode) accepting_mode = 1;
   } else {
     start_time = run_get_start_time(cs->runlog_state);
-    stop_time = run_get_stop_time(cs->runlog_state);
+    stop_time = run_get_stop_time(cs->runlog_state, phr->user_id, cs->current_time);
     accepting_mode = cs->accepting_mode;
   }
   if (start_time <= 0) {
@@ -13710,7 +13718,7 @@ unpriv_list_runs_json(
     if (stop_time <= 0 || cs->upsolving_mode) accepting_mode = 1;
   } else {
     start_time = run_get_start_time(cs->runlog_state);
-    stop_time = run_get_stop_time(cs->runlog_state);
+    stop_time = run_get_stop_time(cs->runlog_state, phr->user_id, cs->current_time);
     accepting_mode = cs->accepting_mode;
   }
   if (start_time <= 0) {
@@ -13796,7 +13804,7 @@ unpriv_run_status_json(
     if (stop_time <= 0 || cs->upsolving_mode) accepting_mode = 1;
   } else {
     start_time = run_get_start_time(cs->runlog_state);
-    stop_time = run_get_stop_time(cs->runlog_state);
+    stop_time = run_get_stop_time(cs->runlog_state, phr->user_id, cs->current_time);
     accepting_mode = cs->accepting_mode;
   }
   if (start_time <= 0) {
@@ -13959,7 +13967,7 @@ unpriv_run_test_json(
     if (stop_time <= 0 || cs->upsolving_mode) accepting_mode = 1;
   } else {
     start_time = run_get_start_time(cs->runlog_state);
-    stop_time = run_get_stop_time(cs->runlog_state);
+    stop_time = run_get_stop_time(cs->runlog_state, phr->user_id, cs->current_time);
     accepting_mode = cs->accepting_mode;
   }
   if (start_time <= 0) {
@@ -15825,9 +15833,11 @@ batch_login(
                                      precise_time.tv_sec, &phr->ip, phr->ssl_flag,
                                      precise_time.tv_usec * 1000);
       if (run_id >= 0) {
-        serve_move_files_to_insert_run(cs, run_id);
+        if (run_is_virtual_legacy_mode(cs->runlog_state)) {
+          serve_move_files_to_insert_run(cs, run_id);
+        }
         serve_event_add(cs,
-                        precise_time.tv_sec + run_get_duration(cs->runlog_state),
+                        precise_time.tv_sec + run_get_duration(cs->runlog_state, phr->user_id),
                         SERVE_EVENT_VIRTUAL_STOP, phr->user_id,
                         virtual_stop_callback);
       }

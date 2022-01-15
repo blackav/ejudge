@@ -1,6 +1,6 @@
 # -*- Makefile -*-
 
-# Copyright (C) 2014-2021 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2014-2022 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -69,6 +69,10 @@ SOFILES = \
  csp_priv_upsolving_page.so\
  csp_priv_user_ips_page.so\
  csp_priv_user_info_page.so\
+ csp_priv_user_run_headers_page.so\
+ csp_priv_user_run_header_page.so\
+ csp_priv_user_run_header_delete.so\
+ csp_priv_user_run_header_change_duration.so\
  csp_priv_users_page.so\
  csp_priv_users_new_page.so\
  csp_priv_users_new_ajax.so\
@@ -187,6 +191,10 @@ csp_priv_users_new_ajax.c : priv_users_new_ajax.csp priv_includes.csp priv_stdva
 csp_priv_tokenize_displayed_1_page.c : priv_tokenize_displayed_1_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 csp_priv_crop_avatar_page.c : priv_crop_avatar_page.csp priv_includes.csp priv_stdvars.csp priv_header_croppie.csp priv_footer.csp
 csp_priv_save_cropped_avatar_ajax.c : priv_save_cropped_avatar_ajax.csp priv_includes.csp priv_stdvars.csp
+csp_priv_user_run_headers_page.c : priv_user_run_headers_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
+csp_priv_user_run_header_page.c : priv_user_run_header_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
+csp_priv_user_run_header_delete.c : priv_user_run_header_delete.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
+csp_priv_user_run_header_change_duration.c : priv_user_run_header_change_duration.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 
 csp_priv_error_internal.c : priv_error_internal.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 csp_priv_error_inv_param.c : priv_error_inv_param.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp

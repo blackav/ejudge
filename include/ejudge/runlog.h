@@ -2,7 +2,7 @@
 #ifndef __RUNLOG_H__
 #define __RUNLOG_H__
 
-/* Copyright (C) 2000-2019 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -161,11 +161,11 @@ run_change_status_4(
         int newstatus);
 int run_get_status(runlog_state_t state, int runid);
 int run_is_imported(runlog_state_t state, int runid);
-void run_get_times(runlog_state_t, time_t *, time_t *, time_t *, time_t *,
+void run_get_times(runlog_state_t, int user_id, time_t *, time_t *, time_t *, time_t *,
                    time_t *);
 int  run_set_duration(runlog_state_t, time_t);
 
-time_t run_get_stop_time(runlog_state_t);
+time_t run_get_stop_time(runlog_state_t, int user_id, time_t current_time);
 int    run_stop_contest(runlog_state_t, time_t);
 int    run_sched_contest(runlog_state_t, time_t);
 
@@ -178,7 +178,7 @@ int run_save_times(runlog_state_t);
 int run_set_finish_time(runlog_state_t state, time_t finish_time);
 time_t run_get_finish_time(runlog_state_t state);
 
-time_t run_get_duration(runlog_state_t);
+time_t run_get_duration(runlog_state_t, int user_id);
 
 void run_get_team_usage(runlog_state_t, int, int *, size_t*);
 int  run_get_attempts(runlog_state_t, int, int *, int *, int *, time_t *, int, int);
@@ -324,7 +324,6 @@ struct run_data
 void run_get_header(runlog_state_t, struct run_header *out);
 void run_get_all_entries(runlog_state_t, struct run_entry *out);
 int run_get_entry(runlog_state_t, int run_id, struct run_entry *out);
-int run_get_virtual_start_entry(runlog_state_t, int user, struct run_entry *);
 int run_set_entry(runlog_state_t, int run_id, unsigned int mask,
                   struct run_entry const *in);
 int run_is_readonly(runlog_state_t, int run_id);
@@ -332,11 +331,11 @@ const struct run_entry *run_get_entries_ptr(runlog_state_t);
 
 time_t run_get_virtual_start_time(runlog_state_t, int user_id);
 time_t run_get_virtual_stop_time(runlog_state_t, int user_id, time_t cur_time);
-int run_get_virtual_status(runlog_state_t, int user_id);
+int run_get_virtual_is_checked(runlog_state_t, int user_id);
+int run_get_is_virtual(runlog_state_t, int user_id);
 int run_virtual_start(runlog_state_t, int user_id, time_t, const ej_ip_t *, int, int);
 int run_virtual_stop(runlog_state_t, int user_id, time_t, const ej_ip_t *, int, int);
-int run_get_virtual_info(runlog_state_t state, int user_id,
-                         struct run_entry *vs, struct run_entry *ve);
+int run_set_virtual_is_checked(runlog_state_t, int user_id, int is_checked, int last_change_user_id);
 
 int run_clear_entry(runlog_state_t, int run_id);
 int run_squeeze_log(runlog_state_t);
@@ -464,6 +463,23 @@ run_fetch_user_runs(
         int prob_id,
         int *p_count,
         struct run_entry **p_entries);
+
+void
+run_delete_user_run_header(
+        runlog_state_t state,
+        int user_id);
+
+int
+run_set_user_duration(
+        runlog_state_t state,
+        int user_id,
+        int duration,
+        int last_change_user_id);
+
+int run_is_virtual_legacy_mode(runlog_state_t state);
+
+void
+run_rebuild_user_run_index(runlog_state_t state, int user_id);
 
 static inline _Bool __attribute__((always_inline)) run_is_normal_status(unsigned char status)
 {

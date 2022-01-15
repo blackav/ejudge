@@ -3,7 +3,7 @@
 #ifndef __RLDB_PLUGIN_H__
 #define __RLDB_PLUGIN_H__
 
-/* Copyright (C) 2008-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -176,6 +176,40 @@ struct rldb_plugin_iface
         const struct run_entry *,
         int,
         const unsigned char *prob_uuid);
+
+  // set virtual start time
+  int (*user_run_header_set_start_time)(
+        struct rldb_plugin_cnts *cdata,
+        int user_id,
+        time_t start_time,
+        int is_virtual,
+        int last_change_user_id);
+
+  // set virtual stop time
+  int (*user_run_header_set_stop_time)(
+        struct rldb_plugin_cnts *cdata,
+        int user_id,
+        time_t stop_time,
+        int last_change_user_id);
+
+  // set duration
+  int (*user_run_header_set_duration)(
+        struct rldb_plugin_cnts *cdata,
+        int user_id,
+        int duration,
+        int last_change_user_id);
+
+  // set is_checked flag
+  int (*user_run_header_set_is_checked)(
+        struct rldb_plugin_cnts *cdata,
+        int user_id,
+        int is_checked,
+        int last_change_user_id);
+
+  // remove the user run header
+  int (*user_run_header_delete)(
+        struct rldb_plugin_cnts *cdata,
+        int user_id);
 };
 
 /* default plugin: compiled into new-server */

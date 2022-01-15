@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2008-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -229,4 +229,61 @@ static const struct common_mysql_parse_spec headers_spec[RUNS_ROW_WIDTH] =
   { 0, 't', "last_change_time", HEADERS_OFFSET(last_change_time), 0 },
   { 0, 'd', "last_change_nsec", HEADERS_OFFSET(last_change_nsec), 0 },
   { 0, 'd', "next_run_id", HEADERS_OFFSET(next_run_id), 0 },
+};
+
+static const char create_userrunheaders_query[] =
+"CREATE TABLE %suserrunheaders( "
+"        user_id INT UNSIGNED NOT NULL, "
+"        contest_id INT UNSIGNED NOT NULL, "
+"        is_virtual TINYINT NOT NULL DEFAULT 0, "
+"        is_checked TINYINT NOT NULL DEFAULT 0, "
+"        start_time DATETIME DEFAULT NULL, "
+"        duration INT UNSIGNED, "
+"        stop_time DATETIME DEFAULT NULL, "
+"        last_change_time DATETIME DEFAULT NULL, "
+"        last_change_user_id INT UNSIGNED DEFAULT NULL, "
+"        PRIMARY KEY (user_id, contest_id)"
+"        ) DEFAULT CHARSET=utf8 COLLATE=utf8_bin;";
+
+struct user_run_header_internal
+{
+  int user_id;
+  int contest_id;
+  int is_virtual;
+  int is_checked;
+  time_t start_time;
+  int duration;
+  time_t stop_time;
+  time_t last_change_time;
+  int last_change_user_id;
+};
+
+enum { USERRUNHEADERS_ROW_WIDTH = 9 };
+
+#define USERRUNHEADERS_OFFSET(f) XOFFSET(struct user_run_header_internal, f)
+static const struct common_mysql_parse_spec user_run_headers_spec[USERRUNHEADERS_ROW_WIDTH] =
+{
+  { 0, 'd', "user_id", USERRUNHEADERS_OFFSET(user_id), 0 },
+  { 0, 'd', "contest_id", USERRUNHEADERS_OFFSET(contest_id), 0 },
+  { 0, 'd', "is_virtual", USERRUNHEADERS_OFFSET(is_virtual), 0 },
+  { 0, 'd', "is_checked", USERRUNHEADERS_OFFSET(is_checked), 0 },
+  { 1, 't', "start_time", USERRUNHEADERS_OFFSET(start_time), 0 },
+  { 1, 'd', "duration", USERRUNHEADERS_OFFSET(duration), 0 },
+  { 1, 't', "stop_time", USERRUNHEADERS_OFFSET(stop_time), 0 },
+  { 1, 't', "last_change_time", USERRUNHEADERS_OFFSET(last_change_time), 0 },
+  { 1, 'd', "last_change_user_id", USERRUNHEADERS_OFFSET(last_change_user_id), 0 },
+};
+
+struct user_run_user_id_internal
+{
+  int min_user_id;
+  int max_user_id;
+};
+
+enum { USERRUNUSERID_ROW_WIDTH = 2 };
+#define USERRUNUSERID_OFFSET(f) XOFFSET(struct user_run_user_id_internal, f)
+static const struct common_mysql_parse_spec user_run_user_id_spec[USERRUNUSERID_ROW_WIDTH] =
+{
+  { 1, 'd', "min_user_id", USERRUNUSERID_OFFSET(min_user_id), 0 },
+  { 1, 'd', "max_user_id", USERRUNUSERID_OFFSET(max_user_id), 0 },
 };

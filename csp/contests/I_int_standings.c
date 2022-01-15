@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2017-2021 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2017-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1081,8 +1081,8 @@ csp_execute_int_standings(
         goto cleanup;
     }
 
-    pg->stop_time = run_get_stop_time(cs->runlog_state);
-    pg->duration = run_get_duration(cs->runlog_state);
+    pg->stop_time = run_get_stop_time(cs->runlog_state, 0, 0);
+    pg->duration = run_get_duration(cs->runlog_state, 0);
 
     if (sii->user_filter && sii->user_filter->stand_time_expr_mode == 1) {
         // relative to the contest start

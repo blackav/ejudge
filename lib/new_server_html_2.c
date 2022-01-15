@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2021 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -4420,19 +4420,21 @@ ns_write_olympiads_user_runs(
 
   ASSERT(global->score_system == SCORE_OLYMPIAD);
   if (global->is_virtual) {
-    if (run_get_virtual_start_entry(cs->runlog_state, phr->user_id, &re) < 0) {
+    start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
+    if (start_time <= 0) {
       accepting_mode = 0;
       start_time = run_get_start_time(cs->runlog_state);
     } else {
       if (run_get_virtual_stop_time(cs->runlog_state, phr->user_id, 0) <= 0) {
         accepting_mode = 1;
       } else {
-        if (!re.judge_id && global->disable_virtual_auto_judge <= 0)
+        if (!run_get_virtual_is_checked(cs->runlog_state, phr->user_id)
+            && global->disable_virtual_auto_judge <= 0) {
           accepting_mode = 1;
+        }
         if (global->disable_virtual_auto_judge > 0 && cs->testing_finished <= 0)
           accepting_mode = 1;
       }
-      start_time = re.time;
     }
     if (cs->upsolving_mode) accepting_mode = 1;
   } else {

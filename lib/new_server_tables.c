@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2019 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -205,6 +205,8 @@ const unsigned char * const ns_submit_button_labels[NEW_SRV_ACTION_LAST]=
   [NEW_SRV_ACTION_USER_CHANGE_STATUS_2] = __("Change Status"),
   [NEW_SRV_ACTION_CONFIRM_AVATAR] = __("Confirm Avatar"),
   [NEW_SRV_ACTION_LOCK_FILTER] = __("Lock filter"),
+  [NEW_SRV_ACTION_USER_RUN_HEADER_DELETE] = __("Clear entry"),
+  [NEW_SRV_ACTION_USER_RUN_HEADER_CHANGE_DURATION] = __("Change"),
 };
 
 const int ns_priv_next_state[NEW_SRV_ACTION_LAST] =

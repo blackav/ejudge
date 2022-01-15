@@ -1,0 +1,208 @@
+<%
+%><%@include "priv_includes.csp"
+%><%
+#include "ejudge/runlog_state.h"
+%><%@set getter_name = "csp_get_priv_user_run_headers_page"
+%><%@set ac_prefix = "NEW_SRV_ACTION_"
+%><%@page csp_view_priv_user_run_headers_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "priv_stdvars.csp"
+%><%
+  const unsigned char *title = NULL;
+  int enable_main_menu = 0;
+  const struct user_run_header_state *urh = &cs->runlog_state->urh;
+  int serial = 0;
+  int user_id;
+  const struct user_run_header_info *urhi = NULL;
+  const char *login = NULL;
+  const char *name = NULL;
+  unsigned char duration_buf[256];
+
+  if (phr->role < USER_ROLE_JUDGE) FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+
+  l10n_setlocale(phr->locale_id);
+  title = _("User run headers");
+%><%@include "priv_header.csp"
+%>
+</div>
+
+<table class="b0"><tr>
+<td class="b0"><s:a ac="main-page"><s:_>Main page</s:_></s:a></td>
+<td class="b0"><s:a ac="user-run-headers-page"><s:_>Refresh</s:_></s:a></td>
+</tr></table>
+
+<table class="b1">
+    <tr>
+        <th class="b1">NN</th>
+        <th class="b1"><s:_>User Id</s:_></th>
+        <th class="b1"><s:_>User login</s:_></th>
+        <th class="b1"><s:_>User name</s:_></th>
+        <th class="b1"><s:_>In DB?</s:_></th>
+        <th class="b1"><s:_>Virtual?</s:_></th>
+        <th class="b1"><s:_>Checked?</s:_></th>
+        <th class="b1"><s:_>Start Time</s:_></th>
+        <th class="b1"><s:_>Stop Time</s:_></th>
+        <th class="b1"><s:_>Duration</s:_></th>
+        <th class="b1"><s:_>First Run</s:_></th>
+        <th class="b1"><s:_>Last Run</s:_></th>
+        <th class="b1"><s:_>Last Change</s:_></th>
+        <th class="b1"><s:_>Last Change Time</s:_></th>
+        <th class="b1"><s:_>Actions</s:_></th>
+    </tr>
+<%
+    for (user_id = urh->low_user_id; user_id < urh->high_user_id; ++user_id) {
+        int index = urh->umap[user_id - urh->low_user_id];
+        if (index <= 0 || index >= urh->size) continue;
+        urhi = &urh->infos[index];
+        ++serial;
+%>
+    <tr>
+        <td class="b1"><s:v value="serial" /></td>
+        <td class="b1"><s:v value="user_id" /></td>
+<%
+    login = teamdb_get_login(cs->teamdb_state, user_id);
+    name = teamdb_get_name(cs->teamdb_state, user_id);
+%>
+<%
+    if (login && *login) {
+%>
+        <td class="b1"><s:v value="login" /></td>
+<%
+    } else {
+%>
+        <td class="b1">&nbsp;</td>
+<%
+    }
+%>
+<%
+    if (name && *name) {
+%>
+        <td class="b1"><s:v value="name" /></td>
+<%
+    } else {
+%>
+        <td class="b1">&nbsp;</td>
+<%
+    }
+%>
+<%
+    if (urhi->has_db_record) {
+%>
+        <td class="b1">DB</td>
+<%
+    } else {
+%>
+        <td class="b1">&nbsp;</td>
+<%
+    }
+%>
+<%
+    if (urhi->is_virtual) {
+%>
+        <td class="b1">Virtual</td>
+<%
+    } else {
+%>
+        <td class="b1">&nbsp;</td>
+<%
+    }
+%>
+<%
+    if (urhi->is_checked) {
+%>
+        <td class="b1">Checked</td>
+<%
+    } else {
+%>
+        <td class="b1">&nbsp;</td>
+<%
+    }
+%>
+<%
+    if (urhi->start_time > 0) {
+%>
+        <td class="b1"><s:v value="urhi->start_time" /></td>
+<%
+    } else {
+%>
+        <td class="b1">&nbsp;</td>
+<%
+    }
+%>
+<%
+    if (urhi->stop_time > 0) {
+%>
+        <td class="b1"><s:v value="urhi->stop_time" /></td>
+<%
+    } else {
+%>
+        <td class="b1">&nbsp;</td>
+<%
+    }
+%>
+<%
+    if (urhi->duration > 0) {
+        duration_str(0, urhi->duration, 0, duration_buf, sizeof(duration_buf));
+%>
+        <td class="b1"><s:v value="duration_buf" /></td>
+<%
+    } else {
+%>
+        <td class="b1">&nbsp;</td>
+<%
+    }
+%>
+<%
+    if (urhi->run_id_valid) {
+%>
+        <td class="b1"><s:v value="urhi->run_id_first" /></td>
+        <td class="b1"><s:v value="urhi->run_id_last" /></td>
+<%
+    } else {
+%>
+        <td class="b1">&nbsp;</td>
+        <td class="b1">&nbsp;</td>
+<%
+    }
+%>
+<%
+    if (urhi->last_change_user_id > 0) {
+%>
+        <td class="b1"><s:v value="teamdb_get_login(cs->teamdb_state, urhi->last_change_user_id)" /></td>
+<%
+    } else {
+%>
+        <td class="b1">&nbsp;</td>
+<%
+    }
+%>
+<%
+    if (urhi->last_change_time > 0) {
+%>
+        <td class="b1"><s:v value="urhi->last_change_time" /></td>
+<%
+    } else {
+%>
+        <td class="b1">&nbsp;</td>
+<%
+    }
+%><%
+%><s:url name="ViewUrl" ac="user-run-header-page"><s:param name="view_user_id" value="user_id" /></s:url><%
+%>
+        <td class="b1">[<s:a url="ViewUrl">View</s:a>]</td>
+    </tr>
+<%
+    }
+%>
+</table>
+
+<table class="b0"><tr>
+<td class="b0"><s:a ac="main-page"><s:_>Main page</s:_></s:a></td>
+<td class="b0"><s:a ac="user-run-headers-page"><s:_>Refresh</s:_></s:a></td>
+</tr></table>
+
+<%@include "priv_footer.csp"
+%><%
+cleanup:
+  l10n_resetlocale();
+  html_armor_free(&ab);
+%>

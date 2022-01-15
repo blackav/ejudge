@@ -2,7 +2,7 @@
 #ifndef __RUNLOG_STATE_H__
 #define __RUNLOG_STATE_H__
 
-/* Copyright (C) 2008-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -16,25 +16,11 @@
  * GNU General Public License for more details.
  */
 
+#include "ejudge/ej_types.h"
+
+#include <stdint.h>
+
 #define RUNLOG_MAX_SIZE    15625000         // 2000000000 bytes
-
-enum
-  {
-    V_REAL_USER = 1,
-    V_VIRTUAL_USER = 2,
-    V_LAST = 2,
-  };
-
-struct user_entry
-{
-  int status;                   /* virtual or real user */
-  time_t start_time;
-  time_t stop_time;
-
-  int run_id_valid;             /* 1, if the following two fields are properly computed */
-  int run_id_first;             /* first run_id of that user, -1, if none */
-  int run_id_last;              /* last run_id of that user, -1, if none */
-};
 
 struct user_flags_info_s
 {
@@ -62,6 +48,36 @@ struct rldb_plugin_cnts;
 #define RUNS_ACCESS const
 #endif /* RUNS_ACCESS */
 
+struct user_run_header_info
+{
+  int user_id;
+  int duration;
+  unsigned char is_virtual;
+  unsigned char run_id_valid;
+  unsigned char has_db_record;
+  unsigned char is_checked;
+  int run_id_first;
+  int run_id_last;
+  int last_change_user_id;
+  ej_time64_t start_time;
+  ej_time64_t stop_time;
+  ej_time64_t last_change_time;
+  unsigned char pad2[16];
+};
+
+_Static_assert(sizeof(struct user_run_header_info) == 64);
+
+struct user_run_header_state
+{
+  // range of users
+  int low_user_id;
+  int high_user_id;
+  uint32_t *umap;    // indices in infos array
+  int size;          // number of users
+  int reserved;      // reserved in infos
+  struct user_run_header_info *infos; // user infos
+};
+
 struct runlog_state
 {
   RUNS_ACCESS struct run_header  head;
@@ -70,8 +86,6 @@ struct runlog_state
   RUNS_ACCESS int                run_u;
   RUNS_ACCESS int                run_a;
   teamdb_state_t     teamdb_state;
-  int ut_size;
-  struct user_entry **ut_table;
 
   struct user_flags_info_s user_flags; // banned/invisible/locked flags for users
 
@@ -90,10 +104,29 @@ struct runlog_state
   int uuid_hash_last_added_run_id;
   int uuid_hash_last_added_index;
 
+  // userrunheader information
+  struct user_run_header_state urh;
+
   // the managing plugin information
   struct rldb_plugin_iface *iface;
   struct rldb_plugin_data *data;
   struct rldb_plugin_cnts *cnts;
 };
+
+void
+run_extend_user_run_header_map(
+        runlog_state_t state,
+        int user_id);
+
+struct user_run_header_info *
+run_get_user_run_header(
+        runlog_state_t state,
+        int user_id,
+        int *p_is_created);
+
+struct user_run_header_info *
+run_try_user_run_header(
+        runlog_state_t state,
+        int user_id);
 
 #endif /* __RUNLOG_STATE_H__ */

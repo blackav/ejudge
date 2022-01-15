@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2000-2020 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -845,7 +845,7 @@ write_standings_header(const serve_state_t state,
   int show_astr_time;
 
   start_time = run_get_start_time(state->runlog_state);
-  stop_time = run_get_stop_time(state->runlog_state);
+  stop_time = run_get_stop_time(state->runlog_state, 0, 0);
   if (global->is_virtual && user_id > 0) {
     start_time = run_get_virtual_start_time(state->runlog_state, user_id);
     stop_time = run_get_virtual_stop_time(state->runlog_state, user_id, 0);
@@ -1237,8 +1237,8 @@ do_write_kirov_standings(
 
   /* Check that the contest is started */
   start_time = run_get_start_time(state->runlog_state);
-  stop_time = run_get_stop_time(state->runlog_state);
-  contest_dur = run_get_duration(state->runlog_state);
+  stop_time = run_get_stop_time(state->runlog_state, 0, 0);
+  contest_dur = run_get_duration(state->runlog_state, 0);
   if (start_time && global->is_virtual && user_id > 0) {
     start_time = run_get_virtual_start_time(state->runlog_state, user_id);
     stop_time = run_get_virtual_stop_time(state->runlog_state, user_id, 0);
@@ -2967,8 +2967,8 @@ do_write_moscow_standings(
 
   if (cur_time <= 0) cur_time = time(0);
   last_submit_start = last_success_start = start_time = run_get_start_time(state->runlog_state);
-  stop_time = run_get_stop_time(state->runlog_state);
-  contest_dur = run_get_duration(state->runlog_state);
+  stop_time = run_get_stop_time(state->runlog_state, 0, 0);
+  contest_dur = run_get_duration(state->runlog_state, 0);
   if (start_time && global->is_virtual && user_id > 0) {
     start_time = run_get_virtual_start_time(state->runlog_state, user_id);
     stop_time = run_get_virtual_stop_time(state->runlog_state, user_id, 0);
@@ -3877,8 +3877,8 @@ do_write_standings(
   }
 
   start_time = run_get_start_time(state->runlog_state);
-  stop_time = run_get_stop_time(state->runlog_state);
-  contest_dur = run_get_duration(state->runlog_state);
+  stop_time = run_get_stop_time(state->runlog_state, 0, 0);
+  contest_dur = run_get_duration(state->runlog_state, 0);
   if (start_time && global->is_virtual && user_id > 0) {
     start_time = run_get_virtual_start_time(state->runlog_state, user_id);
     stop_time = run_get_virtual_stop_time(state->runlog_state, user_id, 0);
@@ -4258,13 +4258,10 @@ do_write_standings(
           global->stand_self_row_attr && global->stand_self_row_attr[0]) {
         bgcolor_ptr = ss.self_row_attr;
       } else if (global->is_virtual) {
-        int vstat = run_get_virtual_status(state->runlog_state, t_ind[t]);
-        if (vstat == 1 && ss.r_row_attr[0]) {
-          bgcolor_ptr = ss.r_row_attr;
-        } else if (vstat == 2 && ss.v_row_attr[0]) {
-          bgcolor_ptr = ss.v_row_attr;
-        } else if (!vstat && ss.u_row_attr[0]) {
-          bgcolor_ptr = ss.u_row_attr;
+        if (run_get_is_virtual(state->runlog_state, t_ind[t])) {
+          if (ss.v_row_attr[0]) bgcolor_ptr = ss.v_row_attr;
+        } else {
+          if (ss.r_row_attr[0]) bgcolor_ptr = ss.r_row_attr;
         }
       }
       if ((!bgcolor_ptr || !*bgcolor_ptr)
@@ -4563,7 +4560,7 @@ do_write_public_log(
   int separate_user_score = 0;
 
   start_time = run_get_start_time(state->runlog_state);
-  stop_time = run_get_stop_time(state->runlog_state);
+  stop_time = run_get_stop_time(state->runlog_state, 0, 0);
   begin = run_get_first(state->runlog_state);
   total = run_get_total(state->runlog_state);
   runs = run_get_entries_ptr(state->runlog_state);

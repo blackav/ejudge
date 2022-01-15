@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2021 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -317,7 +317,7 @@ serve_update_status_file(
   int p;
 
   status.cur_time = state->current_time;
-  run_get_times(state->runlog_state, &t1, &t2, &t3, &t4, &t5);
+  run_get_times(state->runlog_state, 0, &t1, &t2, &t3, &t4, &t5);
   if (t1 > 0 && t5 > 0 && t5 <= t1) {
     t5 = 0;
   }
@@ -5424,7 +5424,9 @@ handle_virtual_stop_event(
     return;
   }
   info("inserted virtual stop as run %d", run_id);
-  serve_move_files_to_insert_run(cs, run_id);
+  if (run_is_virtual_legacy_mode(cs->runlog_state)) {
+    serve_move_files_to_insert_run(cs, run_id);
+  }
   if (cs->global->score_system == SCORE_OLYMPIAD
       && cs->global->is_virtual && cs->global->disable_virtual_auto_judge<= 0) {
     serve_event_add(cs, p->time + 1, SERVE_EVENT_JUDGE_OLYMPIAD, p->user_id, 0);
@@ -5441,25 +5443,10 @@ handle_judge_olympiad_event(
         serve_state_t cs,
         struct serve_event_queue *p)
 {
-  int count;
-  struct run_entry rs, re;
-
   if (cs->global->score_system != SCORE_OLYMPIAD
       || !cs->global->is_virtual) goto done;
-  count = run_get_virtual_info(cs->runlog_state, p->user_id, &rs, &re);
-  if (count < 0) {
-    err("virtual user %d cannot be judged", p->user_id);
-    goto done;
-  }
-  // cannot do judging before all transint runs are done
-  if (count > 0) return;
-  if (rs.status != RUN_VIRTUAL_START || rs.user_id != p->user_id)
-    goto done;
-  if (re.status != RUN_VIRTUAL_STOP || re.user_id != p->user_id)
-    goto done;
-  // already judged somehow
-  if (rs.judge_id > 0) goto done;
-  serve_judge_virtual_olympiad(extra, config, cnts, cs, p->user_id, re.run_id,
+  if (run_get_virtual_is_checked(cs->runlog_state, p->user_id)) return;
+  serve_judge_virtual_olympiad(extra, config, cnts, cs, p->user_id, 0,
                                DFLT_G_REJUDGE_PRIORITY_ADJUSTMENT);
   if (p->handler) (*p->handler)(cnts, cs, p);
 
@@ -5509,18 +5496,14 @@ serve_judge_virtual_olympiad(
   const struct section_problem_data *prob;
   struct run_entry re;
   int *latest_runs, s, i;
-  int vstart_id;
 
   if (global->score_system != SCORE_OLYMPIAD || !global->is_virtual) return;
   if (user_id <= 0) return;
-  if (run_get_virtual_start_entry(cs->runlog_state, user_id, &re) < 0) return;
-  if (re.judge_id > 0) return;
-  if (run_id < 0) return;
-  vstart_id = re.run_id;
+  if (run_get_virtual_is_checked(cs->runlog_state, user_id)) return;
 
   // Fully rejudge latest submits
-  if (run_get_entry(cs->runlog_state, run_id, &re) < 0) return;
-  if (re.status != RUN_VIRTUAL_STOP) return;
+  run_id = run_get_total(cs->runlog_state) - 1;
+  if (run_id < 0) return;
   if (cs->max_prob <= 0) return;
 
   XALLOCA(latest_runs, cs->max_prob + 1);
@@ -5549,7 +5532,7 @@ serve_judge_virtual_olympiad(
       serve_rejudge_run(extra, config, cnts, cs, latest_runs[i], user_id, 0, 0, 1,
                         priority_adjustment);
   }
-  run_set_judge_id(cs->runlog_state, vstart_id, 1);
+  run_set_virtual_is_checked(cs->runlog_state, user_id, 1, 0);
 }
 
 void

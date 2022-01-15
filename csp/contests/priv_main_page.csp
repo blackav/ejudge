@@ -66,7 +66,7 @@
     }
   }
 
-  run_get_times(cs->runlog_state, &start_time, &sched_time, &duration,
+  run_get_times(cs->runlog_state, 0, &start_time, &sched_time, &duration,
                 &stop_time, &finish_time);
   if (duration > 0 && start_time && !stop_time && global->board_fog_time > 0)
     fog_start_time = start_time + duration - global->board_fog_time;
@@ -87,7 +87,7 @@
 <ul id="menu-inside-green">
     <li><s:a ac="main-page"><s:_>Refresh</s:_></s:a></li>
     <li><s:a ac="view-users-new-page"><s:_>Regular users</s:_></s:a></li>
-    <li><s:a ac="view-online-users"><s:_>Online users</s:_></s:a></li>
+    <li><s:a ac="user-run-headers-page"><s:_>User run headers</s:_></s:a></li>
     <li><s:a ac="standings"><s:_>Standings</s:_></s:a></li>
 <%
   if (phr->role == USER_ROLE_ADMIN) {
@@ -99,6 +99,7 @@
     <li><a><s:_>View</s:_></a>
         <ul>
             <li><s:a ac="view-users-new-page"><s:_>Regular users</s:_></s:a></li><br/>
+            <li><s:a ac="view-online-users"><s:_>Online users</s:_></s:a></li><br/>
 <%
   if (phr->role == USER_ROLE_ADMIN) {
 %>

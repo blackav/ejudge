@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2007-2019 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2007-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -507,7 +507,7 @@ user_report_generate(
                                           cs->current_time);
   } else {
     start_time = run_get_start_time(cs->runlog_state);
-    stop_time = run_get_stop_time(cs->runlog_state);
+    stop_time = run_get_stop_time(cs->runlog_state, user_id, cs->current_time);
   }
 
   fprintf(fout, "\\noindent\\begin{tabular}{ll}\n");
@@ -1257,7 +1257,7 @@ full_user_report_generate(
                                           cs->current_time);
   } else {
     start_time = run_get_start_time(cs->runlog_state);
-    stop_time = run_get_stop_time(cs->runlog_state);
+    stop_time = run_get_stop_time(cs->runlog_state, user_id, cs->current_time);
   }
 
   fprintf(fout, "\\noindent\\begin{tabular}{ll}\n");
@@ -2466,7 +2466,7 @@ ns_olympiad_final_user_report(
                                           cs->current_time);
   } else {
     start_time = run_get_start_time(cs->runlog_state);
-    stop_time = run_get_stop_time(cs->runlog_state);
+    stop_time = run_get_stop_time(cs->runlog_state, user_id, cs->current_time);
   }
 
   fprintf(fout, "<table class=\"b0\">\n");
