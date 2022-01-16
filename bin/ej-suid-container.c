@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2021 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2021-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -611,6 +611,8 @@ reconfigure_fs(void)
             if ((r = mount(bind_path, "/var", NULL, MS_BIND, NULL)) < 0) {
                 ffatal("failed to mount %s as /var: %s", bind_path, strerror(errno));
             }
+        } else {
+            ffatal("no safe directory substitution for /var");
         }
     }
     if (!enable_dev) {
@@ -658,7 +660,7 @@ reconfigure_fs(void)
                 }
             }
         } else {
-            // FIXME: report error?
+            ffatal("no safe directory substitution for /home");
         }
         /*
         if ((r = mount(empty_bind_path, "/home", NULL, MS_BIND, NULL)) < 0) {
