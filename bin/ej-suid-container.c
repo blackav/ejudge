@@ -650,7 +650,7 @@ reconfigure_fs(void)
                 preserve_compile = 1;
             }
             if ((r = mount(bind_path, "/home", NULL, MS_BIND, NULL)) < 0) {
-                ffatal("failed to mount %s as /etc: %s", bind_path, strerror(errno));
+                ffatal("failed to mount %s as /home: %s", bind_path, strerror(errno));
             }
             if (preserve_compile) {
                 if ((r = mount(alt_path, compile_dir, NULL, MS_BIND, NULL)) < 0) {
