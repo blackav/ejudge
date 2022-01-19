@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2016-2021 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2016-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -467,6 +467,7 @@ send_message(
         err("cannot initialize curl");
         goto cleanup;
     }
+    curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1L);
 
     {
         size_t url_z = 0;

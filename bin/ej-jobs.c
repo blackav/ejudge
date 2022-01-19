@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2006-2021 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -2532,6 +2532,13 @@ load_plugins(struct AppState *as)
 int main(int argc, char *argv[])
 {
     signal(SIGPIPE, SIG_IGN);
+
+    {
+        sigset_t ss;
+        sigemptyset(&ss);
+        sigaddset(&ss, SIGPIPE);
+        sigprocmask(SIG_BLOCK, &ss, NULL);
+    }
 
     struct AppState as;
     app_state_init(&as);

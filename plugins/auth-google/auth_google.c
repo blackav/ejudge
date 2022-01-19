@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2021 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2021-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -129,6 +129,7 @@ init_func(void)
     XCALLOC(state, 1);
 
     state->curl = curl_easy_init();
+    curl_easy_setopt(state->curl, CURLOPT_NOSIGNAL, 1L);
 
     return (struct common_plugin_data*) state;
 }
