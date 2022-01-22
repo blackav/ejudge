@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2000-2021 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1968,7 +1968,7 @@ main(int argc, char *argv[])
       return 1;
     }
     if (access(EJUDGE_COMPILE_SPOOL_DIR, X_OK | W_OK | R_OK) < 0) {
-      fprintf(stderr, "%s: compile spool '%s' has unsufficient permissions\n", argv[0], EJUDGE_COMPILE_SPOOL_DIR);
+      fprintf(stderr, "%s: compile spool '%s' has insufficient permissions\n", argv[0], EJUDGE_COMPILE_SPOOL_DIR);
       return 1;
     }
   }
