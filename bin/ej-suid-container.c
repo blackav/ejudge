@@ -2157,6 +2157,10 @@ main(int argc, char *argv[])
         }
 
         if (!pid2) {
+            if (response_fd != 2) {
+                close(response_fd);
+                response_fd = -1;
+            }
             if (control_socket_fd >= 0) {
                 close(control_socket_fd);
                 control_socket_fd = -1;
