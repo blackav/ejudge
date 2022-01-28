@@ -2150,7 +2150,7 @@ run_process(struct AppState *as, char * const *args, const char *stdin_buf)
     fdi_stdout->rd_data[0] = 0;
     app_state_arm_for_read(as, fdi_stdout);
 
-    fdi_stderr = fdinfo_create(as, p1[0], &pipe_ops); p1[0] = -1;
+    fdi_stderr = fdinfo_create(as, p2[0], &pipe_ops); p2[0] = -1;
     fdi_stderr->rd_data = xmalloc(fdi_stderr->rd_rsrv = 16);
     fdi_stderr->rd_data[0] = 0;
     app_state_arm_for_read(as, fdi_stderr);
