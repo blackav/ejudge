@@ -1626,6 +1626,7 @@ pipe_write_func(struct AppState *as, struct FDInfo *fdi)
             err("pipe_write_func: write returned 0");
             goto done;
         }
+        fdi->wr_pos += r;
     }
     return;
 
