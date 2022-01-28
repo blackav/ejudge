@@ -1,0 +1,27 @@
+#!/bin/sh
+# Copyright (c) 2022 Alexander Chernov <cher@ejudge.ru>
+
+# using EJUDGE_FLAGS we may pass additional flags
+
+LANG_CONFIG_DIR="@lang_config_dir@"
+[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/rars.cfg"
+
+if [ -f "${EJUDGE_LANG_CONFIG}" ]
+then
+  . "${EJUDGE_LANG_CONFIG}"
+else
+  version="unknown"
+  RARSPATH="rars-simulator"
+fi
+
+if [ x"${version}" = x ]
+then
+  echo "This language is not supported." >&2
+  exit 1
+fi
+
+echo "#! ${RARSPATH} ${EJUDGE_FLAGS}" > $2
+echo >> $2
+cat $1 >> $2
+chmod +x $2
+exit 0

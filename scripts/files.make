@@ -1,6 +1,6 @@
 # -*- Makefile -*-
 
-# Copyright (C) 2017-2021 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2017-2022 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -120,6 +120,8 @@ SCRIPTS_IN = \
  pasabc-linux-version.in\
  mars.in\
  mars-version.in\
+ rars.in\
+ rars-version.in\
  dotnet-cs-version.in\
  dotnet-cs.in\
  dotnet-vb-version.in\

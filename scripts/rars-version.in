@@ -1,0 +1,90 @@
+#!/bin/sh
+# Copyright (c) 2022 Alexander Chernov <cher@ejudge.ru>
+
+LANG_CONFIG_DIR="@lang_config_dir@"
+
+common_config() {
+  echo 'long_name="RARS RiscV Simulator"'
+  echo 'src_sfx=".asm"'
+  echo 'exe_sfx=".s"'
+  echo 'arch="linux-shared"'
+  echo 'insecure=1'
+}
+
+failure() {
+  rm -f conftest*
+  echo 'version='
+  echo 'arg="'"${arg}"'"'
+  common_config
+  echo 'RARSPATH=/bin/false'
+  [ "${verbose}" = 1 ] && echo "no" >&2
+  exit 1
+}
+
+unset LANG
+unset LC_ALL
+unset LC_MESSAGES
+unset LANGUAGE
+
+if [ x"$1" = x-v ]
+then
+  verbose=1
+  shift
+fi
+
+# recheck the language
+if [ x"$1" = x-r ]
+then
+  arg="$2"
+  [ x"$2" != x ] && rars="$2"
+  [ "${rars}" = "" ] && rars="rars-simulator"
+
+  [ "${verbose}" = 1 ] && echo -n "checking whether RARS is available..." >&2
+  export RARS_HELP=1
+  "${rars}" >/dev/null 2>&1 || failure
+  version=`"${rars}" | head -1 | gawk '{ print $2; }'` || failure
+  [ "${version}" != "" ] || failure
+  RARSPATH=`which "${rars}"` || failure
+  [ "${RARSPATH}" != "" ] || failure
+  echo 'version="'"${version}"'"'
+  echo 'arg="'"${arg}"'"'
+  common_config
+  echo 'RARSPATH="'"${RARSPATH}"'"'
+  [ "${verbose}" = 1 ] && echo "yes, ${RARSPATH}, ${version}" >&2
+  exit 0
+fi
+
+if [ x"$1" = x-l ]
+then
+  echo "RARS RiscV Simulator [TODO]"
+  exit 0
+fi
+
+[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/rars.cfg"
+
+if [ -f "${EJUDGE_LANG_CONFIG}" ]
+then
+  . "${EJUDGE_LANG_CONFIG}"
+else
+  RARSPATH="rars-simulator"
+fi
+
+if [ x"${RARSPATH}" = x -o x"${RARSPATH}" = x/bin/false ]
+then
+  echo "This language is not supported." >&2
+  exit 1
+fi
+
+if [ x"$1" = x-p ]
+then
+    echo "${RARSPATH}"
+    exit 0
+fi
+
+export RARS_HELP=1
+
+"${RARSPATH}" 2>/dev/null >/dev/null || exit 1
+    
+[ x"$1" = x-f ] && echo -n "RARS "
+
+"${RARSPATH}" | head -1 | gawk '{ print $2 }'

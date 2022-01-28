@@ -1,0 +1,18 @@
+#! /bin/bash
+# Copyright (c) 2022 Alexander Chernov <cher@ejudge.ru>
+
+# FIXME: set correct values automatically
+EJUDGE_HOME=/opt/ejudge
+JAVA_HOME=/usr/local/java
+USER=ejudge
+LOGNAME=ejudge
+PATH=/usr/local/java/bin:/usr/local/bin:/usr/bin:/usr/sbin
+
+export JAVA_HOME USER LOGNAME
+
+if [ "${RARS_HELP}" != "" ]
+then
+    exec "${JAVA_HOME}/bin/java" -jar "${EJUDGE_HOME}/share/ejudge/mars-emulator/Mars4_5.jar" h
+fi
+
+exec "${JAVA_HOME}/bin/java" -jar "${EJUDGE_HOME}/share/ejudge/mars-emulator/Mars4_5.jar" nc me ${RARS_FLAGS} $@
