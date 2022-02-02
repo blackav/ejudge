@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2005-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -41,7 +40,7 @@ new_contest_access(int tag)
   p = (struct contest_access*) contests_new_node(tag);
   q = (struct contest_ip*) contests_new_node(CONTEST_IP);
   q->allow = 1;
-  q->addr.u.v4.addr = 127U << 24 | 1U;
+  q->addr.u.v4.addr = 1U << 24 | 127U;
   q->mask.u.v4.addr = 0xffffffff;
   xml_link_node_last(&p->b, &q->b);
   return p;
