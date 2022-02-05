@@ -11559,35 +11559,35 @@ int ns_match_action(const unsigned char *str)
                                               } else if (c < 'd') {
                                                 if (c == 'c') {
                                                   c = str[17];
-                                                  if (c == 'h') {
+                                                  if (c == 'l') {
                                                     c = str[18];
-                                                    if (c == 'a') {
+                                                    if (c == 'e') {
                                                       c = str[19];
-                                                      if (c == 'n') {
+                                                      if (c == 'a') {
                                                         c = str[20];
-                                                        if (c == 'g') {
+                                                        if (c == 'r') {
                                                           c = str[21];
-                                                          if (c == 'e') {
+                                                          if (c == '-') {
                                                             c = str[22];
-                                                            if (c == '-') {
+                                                            if (c == 's') {
                                                               c = str[23];
-                                                              if (c == 'd') {
+                                                              if (c == 't') {
                                                                 c = str[24];
-                                                                if (c == 'u') {
+                                                                if (c == 'o') {
                                                                   c = str[25];
-                                                                  if (c == 'r') {
+                                                                  if (c == 'p') {
                                                                     c = str[26];
-                                                                    if (c == 'a') {
+                                                                    if (c == '-') {
                                                                       c = str[27];
                                                                       if (c == 't') {
                                                                         c = str[28];
                                                                         if (c == 'i') {
                                                                           c = str[29];
-                                                                          if (c == 'o') {
+                                                                          if (c == 'm') {
                                                                             c = str[30];
-                                                                            if (c == 'n') {
+                                                                            if (c == 'e') {
                                                                               c = str[31];
-                                                                              if (!c) return NEW_SRV_ACTION_USER_RUN_HEADER_CHANGE_DURATION;
+                                                                              if (!c) return NEW_SRV_ACTION_USER_RUN_HEADER_CLEAR_STOP_TIME;
                                                                               return 0;
                                                                             }
                                                                             return 0;
@@ -11615,6 +11615,65 @@ int ns_match_action(const unsigned char *str)
                                                       return 0;
                                                     }
                                                     return 0;
+                                                  } else if (c < 'l') {
+                                                    if (c == 'h') {
+                                                      c = str[18];
+                                                      if (c == 'a') {
+                                                        c = str[19];
+                                                        if (c == 'n') {
+                                                          c = str[20];
+                                                          if (c == 'g') {
+                                                            c = str[21];
+                                                            if (c == 'e') {
+                                                              c = str[22];
+                                                              if (c == '-') {
+                                                                c = str[23];
+                                                                if (c == 'd') {
+                                                                  c = str[24];
+                                                                  if (c == 'u') {
+                                                                    c = str[25];
+                                                                    if (c == 'r') {
+                                                                      c = str[26];
+                                                                      if (c == 'a') {
+                                                                        c = str[27];
+                                                                        if (c == 't') {
+                                                                          c = str[28];
+                                                                          if (c == 'i') {
+                                                                            c = str[29];
+                                                                            if (c == 'o') {
+                                                                              c = str[30];
+                                                                              if (c == 'n') {
+                                                                                c = str[31];
+                                                                                if (!c) return NEW_SRV_ACTION_USER_RUN_HEADER_CHANGE_DURATION;
+                                                                                return 0;
+                                                                              }
+                                                                              return 0;
+                                                                            }
+                                                                            return 0;
+                                                                          }
+                                                                          return 0;
+                                                                        }
+                                                                        return 0;
+                                                                      }
+                                                                      return 0;
+                                                                    }
+                                                                    return 0;
+                                                                  }
+                                                                  return 0;
+                                                                }
+                                                                return 0;
+                                                              }
+                                                              return 0;
+                                                            }
+                                                            return 0;
+                                                          }
+                                                          return 0;
+                                                        }
+                                                        return 0;
+                                                      }
+                                                      return 0;
+                                                    }
+                                                  } else {
                                                   }
                                                   return 0;
                                                 }

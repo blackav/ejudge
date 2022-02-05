@@ -83,7 +83,7 @@
   <tr>
     <td class="b1"><s:_>Stop Time</s:_></td>
     <td class="b1"><s:v value="urhi->stop_time" checkExpr=" > 0" /></td>
-    <td class="b1">&nbsp;</td>
+    <td class="b1"><s:form><s:hidden name="view_user_id" /><s:submit ac="user-run-header-clear-stop-time" /></s:form></td>
   </tr>
   <tr>
     <td class="b1"><s:_>Duration</s:_></td><%

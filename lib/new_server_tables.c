@@ -207,6 +207,7 @@ const unsigned char * const ns_submit_button_labels[NEW_SRV_ACTION_LAST]=
   [NEW_SRV_ACTION_LOCK_FILTER] = __("Lock filter"),
   [NEW_SRV_ACTION_USER_RUN_HEADER_DELETE] = __("Clear entry"),
   [NEW_SRV_ACTION_USER_RUN_HEADER_CHANGE_DURATION] = __("Change"),
+  [NEW_SRV_ACTION_USER_RUN_HEADER_CLEAR_STOP_TIME] = __("Clear"),
 };
 
 const int ns_priv_next_state[NEW_SRV_ACTION_LAST] =
