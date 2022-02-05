@@ -1587,8 +1587,9 @@ extend_run_extras(runlog_state_t state)
 time_t
 run_get_virtual_start_time(runlog_state_t state, int user_id)
 {
+  // this function is called only for is_virtual
   struct user_run_header_info *urh = run_try_user_run_header(state, user_id);
-  if (!urh || !urh->is_virtual) return state->head.start_time;
+  if (!urh || !urh->is_virtual) return 0;
   return urh->start_time;
 }
 
@@ -1603,11 +1604,12 @@ run_get_virtual_is_checked(runlog_state_t state, int user_id)
 time_t
 run_get_virtual_stop_time(runlog_state_t state, int user_id, time_t cur_time)
 {
+  // this function is called only for is_virtual
   struct user_run_header_info *urh = run_try_user_run_header(state, user_id);
   if (!urh) return 0;
   if (!urh->start_time) return 0;
   if (!cur_time) return urh->stop_time;
-  if (!urh->is_virtual) return state->head.stop_time;
+  if (!urh->is_virtual) return state->head.stop_time;   // FIXME: check this case: start_time > 0 but !is_virtual
   if (!state->head.duration || urh->stop_time) return urh->stop_time;
   if (urh->start_time + state->head.duration < cur_time) {
     urh->stop_time = urh->start_time + state->head.duration;
