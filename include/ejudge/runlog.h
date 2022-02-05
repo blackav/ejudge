@@ -476,6 +476,13 @@ run_set_user_duration(
         int duration,
         int last_change_user_id);
 
+int
+run_set_user_stop_time(
+        runlog_state_t state,
+        int user_id,
+        time_t stop_time,
+        int last_change_user_id);
+
 int run_is_virtual_legacy_mode(runlog_state_t state);
 
 void

@@ -2994,6 +2994,21 @@ run_delete_user_run_header(
 }
 
 int
+run_set_user_stop_time(
+        runlog_state_t state,
+        int user_id,
+        time_t stop_time,
+        int last_change_user_id)
+{
+  if (!state->iface->user_run_header_set_stop_time) {
+    err("run_clear_user_stop_time: not implemented");
+    return -1;
+  }
+
+  return state->iface->user_run_header_set_stop_time(state->cnts, user_id, stop_time, last_change_user_id);
+}
+
+int
 run_set_virtual_is_checked(
         runlog_state_t state,
         int user_id,
