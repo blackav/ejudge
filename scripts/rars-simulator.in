@@ -6,13 +6,19 @@ EJUDGE_HOME=/opt/ejudge
 JAVA_HOME=/usr/local/java
 USER=ejudge
 LOGNAME=ejudge
-PATH=/usr/local/java/bin:/usr/local/bin:/usr/bin:/usr/sbin
+PATH=${JAVA_HOME}/bin:/usr/local/bin:/usr/bin:/usr/sbin
+JAVA_ENV="-Xmx256m -XX:MaxMetaspaceSize=64m -XX:MetaspaceSize=64m"
+RARS_JAR="${EJUDGE_HOME}/share/ejudge/rars-emulator/rars1_5.jar"
+RARS_EXEC="${JAVA_HOME}/bin/java ${JAVA_ENV} -jar ${RARS_JAR}"
+RARS_STDERR="${RARS_STDERR:-/dev/null}"
 
 export JAVA_HOME USER LOGNAME
 
 if [ "${RARS_HELP}" != "" ]
 then
-    exec "${JAVA_HOME}/bin/java" -jar "${EJUDGE_HOME}/share/ejudge/mars-emulator/Mars4_5.jar" h
+    exec ${RARS_EXEC} h
 fi
 
-exec "${JAVA_HOME}/bin/java" -jar "${EJUDGE_HOME}/share/ejudge/mars-emulator/Mars4_5.jar" nc me ${RARS_FLAGS} $@
+export MALLOC_ARENA_MAX=4
+
+exec ${RARS_EXEC} ae1 se2 sm nc me ${RARS_FLAGS} $@ 2> ${RARS_STDERR}
