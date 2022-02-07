@@ -2895,17 +2895,20 @@ run_extend_user_run_header_map(
 
   if (user_id > 0) {
     if (!urh->low_user_id) {
-      int low = user_id - 16;
-      if (low < 1) low = 1;
-      int high = low + 32;
+      int low = 1;
+      int high = user_id + 16;
       int count = high - low;
+      int new_count = 8;
+      while (new_count <= count) new_count *= 2;
+      high = low + new_count;
+      count = new_count;
       XCALLOC(urh->umap, count);
       urh->low_user_id = low;
       urh->high_user_id = high;
     } else if (user_id < urh->low_user_id) {
       int count = urh->high_user_id - urh->low_user_id;
       int new_size = count;
-      int low = user_id;
+      int low = 1;
       while (low + new_size < urh->high_user_id) {
         new_size *= 2;
       }
@@ -2916,7 +2919,7 @@ run_extend_user_run_header_map(
       }
       uint32_t *umap;
       XCALLOC(umap, new_size);
-      memcpy(&umap[urh->high_user_id - low], urh->umap, count * sizeof(umap[0]));
+      memcpy(&umap[urh->low_user_id - low], urh->umap, count * sizeof(umap[0]));
       xfree(urh->umap);
       urh->umap = umap;
       urh->low_user_id = low;
