@@ -937,6 +937,9 @@ prepare_unparse_lang(
     fprintf(f, "compiler_env = \"EJUDGE_LIBS=%s\"\n", CARMOR(libs));
   }
   do_xstr(f, &ab, "style_checker_env", lang->style_checker_env);
+  if (lang->container_options && *lang->container_options) {
+    fprintf(f, "container_options = \"%s\"\n", CARMOR(lang->container_options));
+  }
   fprintf(f, "\n");
 
   if (lang->unhandled_vars) fprintf(f, "%s\n", lang->unhandled_vars);
