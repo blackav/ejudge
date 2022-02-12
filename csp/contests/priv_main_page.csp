@@ -229,6 +229,14 @@
 <p><big><b><s:_>Participants' requests are suspended</s:_></b></big></p>
 <%  } %>
 
+<%  if (global->is_virtual > 0 && global->disable_virtual_start > 0) { %>
+<p><big><b><s:_>Virtual start is disabled by config</s:_></b></big></p>
+<%  } %>
+
+<%  if (global->is_virtual > 0 && cs->disable_virtual_start > 0) { %>
+<p><big><b><s:_>Virtual start is disabled</s:_></b></big></p>
+<%  } %>
+
 <%  if (cs->testing_suspended) { %>
 <p><big><b><s:_>Testing of participants' submits is suspended</s:_></b></big></p>
 <%  } %>
@@ -375,6 +383,13 @@
 <%    action = NEW_SRV_ACTION_TEST_SUSPEND;
     if (cs->testing_suspended) action = NEW_SRV_ACTION_TEST_RESUME; %>
 <s:submit action="action" />
+<%
+    if (global->is_virtual > 0 && global->disable_virtual_start <= 0) {
+      action = NEW_SRV_ACTION_DISABLE_VIRTUAL_START;
+      if (cs->disable_virtual_start > 0) action = NEW_SRV_ACTION_ENABLE_VIRTUAL_START;
+      %><s:submit action="action" /><%
+    }
+%>
 <%
     if (global->enable_printing) {
       action = NEW_SRV_ACTION_PRINT_SUSPEND;

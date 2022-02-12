@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-02-12 21:26+0300\n"
+"POT-Creation-Date: 2022-02-12 21:34+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Ukrainian <uk@li.org>\n"
@@ -4392,6 +4392,12 @@ msgid "Virtual start"
 msgstr ""
 
 msgid "Virtual start failed"
+msgstr ""
+
+msgid "Virtual start is disabled"
+msgstr ""
+
+msgid "Virtual start is disabled by config"
 msgstr ""
 
 msgid "Virtual stop"

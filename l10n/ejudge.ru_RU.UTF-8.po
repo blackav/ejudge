@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-02-12 21:26+0300\n"
+"POT-Creation-Date: 2022-02-12 21:34+0300\n"
 "PO-Revision-Date: 2022-01-12 13:17+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -4592,6 +4592,12 @@ msgstr "Начало виртуального турнира"
 
 msgid "Virtual start failed"
 msgstr "Виртуальный турнир не может быть начат"
+
+msgid "Virtual start is disabled"
+msgstr "Виртуальный старт запрещен"
+
+msgid "Virtual start is disabled by config"
+msgstr "Виртуальный старт запрещен в конфигурационном файле"
 
 msgid "Virtual stop"
 msgstr "Окончание виртуального турнира"
