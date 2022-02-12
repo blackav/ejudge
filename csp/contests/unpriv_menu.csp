@@ -41,7 +41,7 @@
 %></s:a><%
   }
 %></div></li><%
-  if (global && cnts && global->is_virtual > 0 && ((start_time <= 0 && global->disable_virtual_start <= 0) || stop_time <= 0)) {
+  if (global && cnts && global->is_virtual > 0 && ((start_time <= 0 && (global->disable_virtual_start <= 0 && cs->disable_virtual_start <= 0)) || stop_time <= 0)) {
 %><%
 
     // start/stop virtual contest

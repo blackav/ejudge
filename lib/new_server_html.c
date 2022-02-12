@@ -11872,7 +11872,7 @@ unpriv_command(
     run_clear_user_entries(cs->runlog_state, phr->user_id);
     // FALLTHROUGH!
   case NEW_SRV_ACTION_VIRTUAL_START:
-    if (global->disable_virtual_start) {
+    if (global->disable_virtual_start || cs->disable_virtual_start > 0) {
       FAIL2(NEW_SRV_ERR_PERMISSION_DENIED);
     }
     if (cnts->open_time > 0 && cs->current_time < cnts->open_time) {
@@ -15814,7 +15814,7 @@ batch_login(
   if (phr->extra && phr->extra->serve_state && phr->extra->serve_state->global && phr->extra->serve_state->global->start_on_first_login > 0) {
     serve_state_t cs = phr->extra->serve_state;
     const struct section_global_data *global = cs->global;
-    if (global->disable_virtual_start > 0) {
+    if (global->disable_virtual_start > 0 || cs->disable_virtual_start > 0) {
       err("batch_login: virtual start disabled");
       goto database_error;
     }
