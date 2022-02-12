@@ -9076,6 +9076,8 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_RUN_STATUS_JSON] = priv_run_status_json,
   [NEW_SRV_ACTION_RAW_AUDIT_LOG] = priv_raw_audit_log,
   [NEW_SRV_ACTION_RAW_REPORT] = priv_raw_report,
+  [NEW_SRV_ACTION_ENABLE_VIRTUAL_START] = priv_generic_operation,
+  [NEW_SRV_ACTION_DISABLE_VIRTUAL_START] = priv_generic_operation,
 };
 
 static const unsigned char * const external_priv_action_names[NEW_SRV_ACTION_LAST] =
