@@ -324,4 +324,6 @@ const unsigned char * const ns_symbolic_action_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_USER_RUN_HEADER_DELETE] = "user-run-header-delete",
   [NEW_SRV_ACTION_USER_RUN_HEADER_CHANGE_DURATION] = "user-run-header-change-duration",
   [NEW_SRV_ACTION_USER_RUN_HEADER_CLEAR_STOP_TIME] = "user-run-header-clear-stop-time",
+  [NEW_SRV_ACTION_DISABLE_VIRTUAL_START] = "disable-virtual-start",
+  [NEW_SRV_ACTION_ENABLE_VIRTUAL_START] = "enable-virtual-start",
 };

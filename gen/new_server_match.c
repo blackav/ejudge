@@ -3028,6 +3028,81 @@ int ns_match_action(const unsigned char *str)
                   return 0;
                 }
                 return 0;
+              } else if (c < 't') {
+                if (c == 'a') {
+                  c = str[3];
+                  if (c == 'b') {
+                    c = str[4];
+                    if (c == 'l') {
+                      c = str[5];
+                      if (c == 'e') {
+                        c = str[6];
+                        if (c == '-') {
+                          c = str[7];
+                          if (c == 'v') {
+                            c = str[8];
+                            if (c == 'i') {
+                              c = str[9];
+                              if (c == 'r') {
+                                c = str[10];
+                                if (c == 't') {
+                                  c = str[11];
+                                  if (c == 'u') {
+                                    c = str[12];
+                                    if (c == 'a') {
+                                      c = str[13];
+                                      if (c == 'l') {
+                                        c = str[14];
+                                        if (c == '-') {
+                                          c = str[15];
+                                          if (c == 's') {
+                                            c = str[16];
+                                            if (c == 't') {
+                                              c = str[17];
+                                              if (c == 'a') {
+                                                c = str[18];
+                                                if (c == 'r') {
+                                                  c = str[19];
+                                                  if (c == 't') {
+                                                    c = str[20];
+                                                    if (!c) return NEW_SRV_ACTION_ENABLE_VIRTUAL_START;
+                                                    return 0;
+                                                  }
+                                                  return 0;
+                                                }
+                                                return 0;
+                                              }
+                                              return 0;
+                                            }
+                                            return 0;
+                                          }
+                                          return 0;
+                                        }
+                                        return 0;
+                                      }
+                                      return 0;
+                                    }
+                                    return 0;
+                                  }
+                                  return 0;
+                                }
+                                return 0;
+                              }
+                              return 0;
+                            }
+                            return 0;
+                          }
+                          return 0;
+                        }
+                        return 0;
+                      }
+                      return 0;
+                    }
+                    return 0;
+                  }
+                  return 0;
+                }
+              } else {
               }
               return 0;
             }
@@ -3215,6 +3290,81 @@ int ns_match_action(const unsigned char *str)
                       return 0;
                     }
                     return 0;
+                  } else if (c < 'q') {
+                    if (c == 'a') {
+                      c = str[4];
+                      if (c == 'b') {
+                        c = str[5];
+                        if (c == 'l') {
+                          c = str[6];
+                          if (c == 'e') {
+                            c = str[7];
+                            if (c == '-') {
+                              c = str[8];
+                              if (c == 'v') {
+                                c = str[9];
+                                if (c == 'i') {
+                                  c = str[10];
+                                  if (c == 'r') {
+                                    c = str[11];
+                                    if (c == 't') {
+                                      c = str[12];
+                                      if (c == 'u') {
+                                        c = str[13];
+                                        if (c == 'a') {
+                                          c = str[14];
+                                          if (c == 'l') {
+                                            c = str[15];
+                                            if (c == '-') {
+                                              c = str[16];
+                                              if (c == 's') {
+                                                c = str[17];
+                                                if (c == 't') {
+                                                  c = str[18];
+                                                  if (c == 'a') {
+                                                    c = str[19];
+                                                    if (c == 'r') {
+                                                      c = str[20];
+                                                      if (c == 't') {
+                                                        c = str[21];
+                                                        if (!c) return NEW_SRV_ACTION_DISABLE_VIRTUAL_START;
+                                                        return 0;
+                                                      }
+                                                      return 0;
+                                                    }
+                                                    return 0;
+                                                  }
+                                                  return 0;
+                                                }
+                                                return 0;
+                                              }
+                                              return 0;
+                                            }
+                                            return 0;
+                                          }
+                                          return 0;
+                                        }
+                                        return 0;
+                                      }
+                                      return 0;
+                                    }
+                                    return 0;
+                                  }
+                                  return 0;
+                                }
+                                return 0;
+                              }
+                              return 0;
+                            }
+                            return 0;
+                          }
+                          return 0;
+                        }
+                        return 0;
+                      }
+                      return 0;
+                    }
+                  } else {
                   }
                   return 0;
                 }

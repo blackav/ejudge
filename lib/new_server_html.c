@@ -2692,6 +2692,16 @@ priv_contest_operation(FILE *fout,
     serve_squeeze_runs(cs);
     break;
 
+  case NEW_SRV_ACTION_DISABLE_VIRTUAL_START:
+    cs->disable_virtual_start = 1;
+    serve_update_status_file(ejudge_config, cnts, cs, 1);
+    break;
+
+  case NEW_SRV_ACTION_ENABLE_VIRTUAL_START:
+    cs->disable_virtual_start = 0;
+    serve_update_status_file(ejudge_config, cnts, cs, 1);
+    break;
+
   case NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_VIEW_SOURCE:
   case NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_VIEW_REPORT:
   case NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_VIEW_JUDGE_SCORE:
@@ -7360,6 +7370,8 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_RELOAD_CONTEST_PAGES] = priv_contest_operation,
   [NEW_SRV_ACTION_RELOAD_ALL_CONTEST_PAGES] = priv_contest_operation,
   [NEW_SRV_ACTION_LOCK_FILTER] = priv_reset_filter,
+  [NEW_SRV_ACTION_DISABLE_VIRTUAL_START] = priv_contest_operation,
+  [NEW_SRV_ACTION_ENABLE_VIRTUAL_START] = priv_contest_operation,
 };
 
 static void

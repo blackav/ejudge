@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-01-07 17:26+0300\n"
+"POT-Creation-Date: 2022-02-12 21:26+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Ukrainian <uk@li.org>\n"
@@ -1131,6 +1131,9 @@ msgstr ""
 msgid "Disable team member deletion"
 msgstr ""
 
+msgid "Disable virtual start"
+msgstr ""
+
 msgid "Disabled"
 msgstr ""
 
@@ -1282,6 +1285,9 @@ msgid "Enable password restoration"
 msgstr ""
 
 msgid "Enable simple registration (no email)"
+msgstr ""
+
+msgid "Enable virtual start"
 msgstr ""
 
 msgid "End time"
