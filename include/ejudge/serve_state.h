@@ -2,7 +2,7 @@
 #ifndef __SERVE_STATE_H__
 #define __SERVE_STATE_H__
 
-/* Copyright (C) 2006-2021 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -285,6 +285,11 @@ struct serve_state
      0 - no, 1 - yes
    */
   int online_valuer_judge_comments;
+  /**
+     Disable virtual start
+     0 - no, 1 - yes
+  */
+  int disable_virtual_start;
 
   time_t stat_last_check_time;
   time_t stat_reported_before;

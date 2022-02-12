@@ -352,6 +352,7 @@ serve_update_status_file(
   status.online_view_judge_score = state->online_view_judge_score;
   status.online_final_visibility = state->online_final_visibility;
   status.online_valuer_judge_comments = state->online_valuer_judge_comments;
+  status.disable_virtual_start = state->disable_virtual_start;
 
   if (status.start_time && status.duration && global->board_fog_time > 0
       && !status.is_virtual) {
@@ -432,6 +433,7 @@ serve_load_status_file(
   state->online_view_judge_score = status.online_view_judge_score;
   state->online_final_visibility = status.online_final_visibility;
   state->online_valuer_judge_comments = status.online_valuer_judge_comments;
+  state->disable_virtual_start = status.disable_virtual_start;
 
   state->max_online_time = status.max_online_time;
   state->max_online_count = status.max_online_count;

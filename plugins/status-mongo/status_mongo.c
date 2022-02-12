@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2019 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2019-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -423,6 +423,7 @@ serve_status_bson_unparse(
     UNPARSE_BOOLEAN_FIELD(online_view_judge_score);
     UNPARSE_BOOLEAN_FIELD(online_final_visibility);
     UNPARSE_BOOLEAN_FIELD(online_valuer_judge_comments);
+    UNPARSE_BOOLEAN_FIELD(disable_virtual_start);
 
     bson_append_int32(res, "score_system", -1, status->score_system);
 
@@ -497,6 +498,7 @@ serve_status_bson_unparse(
     UNPARSE_BOOLEAN_FIELD(online_view_judge_score);
     UNPARSE_BOOLEAN_FIELD(online_final_visibility);
     UNPARSE_BOOLEAN_FIELD(online_valuer_judge_comments);
+    UNPARSE_BOOLEAN_FIELD(disable_virtual_start);
 
     bson_append_int32(res, "score_system", status->score_system);
 
@@ -618,6 +620,8 @@ serve_status_bson_parse(
             if (ej_bson_parse_boolean_uc_new(bc, "online_final_visibility", &status->online_final_visibility) < 0) goto fail;
         } else if (!strcmp(key, "online_valuer_judge_comments")) {
             if (ej_bson_parse_boolean_uc_new(bc, "online_valuer_judge_comments", &status->online_valuer_judge_comments) < 0) goto fail;
+        } else if (!strcmp(key, "disable_virtual_start")) {
+            if (ej_bson_parse_boolean_uc_new(bc, "disable_virtual_start", &status->disable_virtual_start) < 0) goto fail;
         } else if (!strcmp(key, "score_system")) {
             int ss;
             if (ej_bson_parse_int_new(bc, "score_system", &ss, 1, 0, 1, 100) < 0) goto fail;
@@ -745,6 +749,8 @@ fail:;
             if (ej_bson_parse_boolean_uc(bc, "online_final_visibility", &status->online_final_visibility) < 0) goto fail;
         } else if (!strcmp(key, "online_valuer_judge_comments")) {
             if (ej_bson_parse_boolean_uc(bc, "online_valuer_judge_comments", &status->online_valuer_judge_comments) < 0) goto fail;
+        } else if (!strcmp(key, "disable_virtual_start")) {
+            if (ej_bson_parse_boolean_uc(bc, "disable_virtual_start", &status->disable_virtual_start) < 0) goto fail;
         } else if (!strcmp(key, "score_system")) {
             int ss;
             if (ej_bson_parse_int(bc, "score_system", &ss, 1, 0, 1, 100) < 0) goto fail;
