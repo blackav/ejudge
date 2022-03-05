@@ -582,8 +582,10 @@ run_program(int argc, char *argv[], long *p_cpu_time, long *p_real_time)
     if (task_SetKillSignal(tsk, kill_signal) < 0)
       fatal("invalid value for --kill-signal option");
   if (no_core_dump) task_DisableCoreDump(tsk);
-  if (max_vm_size) task_SetVMSize(tsk, max_vm_size);
-  if (max_stack_size) task_SetStackSize(tsk, max_stack_size);
+  if (tinfo.max_vm_size) task_SetVMSize(tsk, tinfo.max_vm_size);
+  if (max_vm_size) task_SetVMSize(tsk, max_vm_size);  // override
+  if (tinfo.max_stack_size) task_SetVMSize(tsk, tinfo.max_stack_size);
+  if (max_stack_size) task_SetStackSize(tsk, max_stack_size);  // override
   if (max_data_size) task_SetDataSize(tsk, max_data_size);
   if (memory_limit)
     if (task_EnableMemoryLimitError(tsk) < 0)
