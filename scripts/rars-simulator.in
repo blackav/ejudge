@@ -3,12 +3,12 @@
 
 # FIXME: set correct values automatically
 EJUDGE_HOME=/opt/ejudge
-JAVA_HOME=/usr/local/java
+JAVA_HOME=/usr
 USER=ejudge
 LOGNAME=ejudge
 PATH=${JAVA_HOME}/bin:/usr/local/bin:/usr/bin:/usr/sbin
 JAVA_ENV="-Xmx256m -XX:MaxMetaspaceSize=64m -XX:MetaspaceSize=64m"
-RARS_JAR="${EJUDGE_HOME}/share/ejudge/rars-emulator/rars1_5.jar"
+RARS_JAR="${EJUDGE_HOME}/share/ejudge/rars-emulator/rars_533d3c0.jar"
 RARS_EXEC="${JAVA_HOME}/bin/java ${JAVA_ENV} -jar ${RARS_JAR}"
 RARS_STDERR="${RARS_STDERR:-/dev/null}"
 
