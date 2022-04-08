@@ -9,7 +9,7 @@ chmod +x ~/user-data.sh
 if head -1 ~/user-data.sh | grep "/bin/bash"
 then
     . ~/user-data.sh
-    if [ "${EJ_SUPER_RUN}" = "1" ]
+    if [ "${EJ_SUPER_RUN}" = "1" -o "${EJ_COMPILE}" = "1" ]
     then
        ./1start-testing.sh 
     fi
