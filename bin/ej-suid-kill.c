@@ -103,7 +103,8 @@ main(int argc, char **argv)
     errno = 0;
     char *eptr = NULL;
     int dst_pid = strtol(argv[1], &eptr, 10);
-    if (errno || *eptr || dst_pid < -1000000 || dst_pid > 1000000 || dst_pid == 0) {
+    enum { PID_MAX_LIMIT = 1 << 22 };
+    if (errno || *eptr || dst_pid < -PID_MAX_LIMIT || dst_pid > PID_MAX_LIMIT || dst_pid == 0) {
         fprintf(stderr, "%s: invalid pid '%s'\n", argv[0], argv[1]);
         abort();
     }
