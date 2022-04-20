@@ -93,6 +93,7 @@ struct testinfo_struct
   char *program_name;
 
   int allow_compile_error;
+  int ignore_exit_code;
 };
 typedef struct testinfo_struct testinfo_t;
 

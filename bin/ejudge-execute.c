@@ -623,8 +623,11 @@ run_program(int argc, char *argv[], long *p_cpu_time, long *p_real_time)
     }
     retcode = RUN_TIME_LIMIT_ERR;
   } else if (task_IsAbnormal(tsk)
-             && (!info_file || tinfo.exit_code <= 0 || task_Status(tsk) != TSK_EXITED
-                 || task_ExitCode(tsk) != tinfo.exit_code)) {
+             && (!info_file
+                 || task_Status(tsk) != TSK_EXITED
+                 || (tinfo.ignore_exit_code <= 0
+                     && (tinfo.exit_code <= 0
+                         || task_ExitCode(tsk) != tinfo.exit_code)))) {
     if (all_tests <= 0) {
       fprintf(stderr, "Status: RT\n");
       if (task_Status(tsk) == TSK_SIGNALED) {

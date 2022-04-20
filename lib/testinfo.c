@@ -646,6 +646,8 @@ parse_line(const unsigned char *str, size_t len, testinfo_t *pt, struct testinfo
     if ((parse_res = parse_flag(&cmd, &pt->allow_compile_error)) != 0) FAIL(parse_res);
   } else if (!strcmp(name_buf, "disable_valgrind")) {
     if ((parse_res = parse_flag(&cmd, &pt->disable_valgrind)) != 0) FAIL(parse_res);
+  } else if (!strcmp(name_buf, "ignore_exit_code")) {
+    if ((parse_res = parse_flag(&cmd, &pt->ignore_exit_code)) != 0) FAIL(parse_res);
   } else {
     FAIL(TINF_E_INVALID_VAR_NAME);
   }
@@ -701,6 +703,7 @@ testinfo_parse(const char *path, testinfo_t *pt, struct testinfo_subst_handler *
   pt->max_stack_size = -1LL;
   pt->max_file_size = -1LL;
   pt->max_rss_size = -1LL;
+  pt->ignore_exit_code = -1;
   if (!(fin = fopen(path, "r"))) {
     memset(pt, 0, sizeof(*pt));
     return -TINF_E_CANNOT_OPEN;
