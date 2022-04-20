@@ -460,6 +460,25 @@ parse_size(const unsigned char *str, long long *p_value)
 }
 
 static int
+parse_flag(struct cmdline_buf *cmd, int *dst)
+{
+  if (cmd->u > 1) {
+    return TINF_E_MULTIPLE_VALUE;
+  }
+  int x, n;
+  if (cmd->u < 1) {
+    x = 1;
+  } else {
+    if (sscanf(cmd->v[0], "%d%n", &x, &n) != 1 || cmd->v[0][n]
+        || x < 0 || x > 1) {
+      return TINF_E_INVALID_VALUE;
+    }
+  }
+  *dst = x;
+  return 0;
+}
+
+static int
 parse_line(const unsigned char *str, size_t len, testinfo_t *pt, struct testinfo_subst_handler *sh)
 {
   unsigned char *subst_str = NULL;
@@ -470,6 +489,7 @@ parse_line(const unsigned char *str, size_t len, testinfo_t *pt, struct testinfo
   size_t len2;
   struct cmdline_buf cmd;
   int retval = 0, x, n;
+  int parse_res;
 
   if (sh && pt->enable_subst > 0) {
     subst_str = sh->substitute(sh, str);
@@ -615,65 +635,17 @@ parse_line(const unsigned char *str, size_t len, testinfo_t *pt, struct testinfo
     if (cmd.u > 1) FAIL(TINF_E_MULTIPLE_VALUE);
     if (parse_size(cmd.v[0], &pt->max_rss_size) < 0) FAIL(TINF_E_INVALID_VALUE);
   } else if (!strcmp(name_buf, "check_stderr")) {
-    if (cmd.u < 1) {
-      x = 1;
-    } else {
-      if (cmd.u > 1) FAIL(TINF_E_MULTIPLE_VALUE);
-      if (sscanf(cmd.v[0], "%d%n", &x, &n) != 1 || cmd.v[0][n]
-          || x < 0 || x > 1)
-        FAIL(TINF_E_INVALID_VALUE);
-    }
-    pt->check_stderr = x;
+    if ((parse_res = parse_flag(&cmd, &pt->check_stderr)) != 0) FAIL(parse_res);
   } else if (!strcmp(name_buf, "disable_stderr")) {
-    if (cmd.u < 1) {
-      x = 1;
-    } else {
-      if (cmd.u > 1) FAIL(TINF_E_MULTIPLE_VALUE);
-      if (sscanf(cmd.v[0], "%d%n", &x, &n) != 1 || cmd.v[0][n]
-          || x < 0 || x > 1)
-        FAIL(TINF_E_INVALID_VALUE);
-    }
-    pt->disable_stderr = x;
+    if ((parse_res = parse_flag(&cmd, &pt->disable_stderr)) != 0) FAIL(parse_res);
   } else if (!strcmp(name_buf, "enable_subst")) {
-    if (cmd.u < 1) {
-      x = 1;
-    } else {
-      if (cmd.u > 1) FAIL(TINF_E_MULTIPLE_VALUE);
-      if (sscanf(cmd.v[0], "%d%n", &x, &n) != 1 || cmd.v[0][n]
-          || x < 0 || x > 1)
-        FAIL(TINF_E_INVALID_VALUE);
-    }
-    pt->enable_subst = x;
+    if ((parse_res = parse_flag(&cmd, &pt->enable_subst)) != 0) FAIL(parse_res);
   } else if (!strcmp(name_buf, "compiler_must_fail")) {
-    if (cmd.u < 1) {
-      x = 1;
-    } else {
-      if (cmd.u > 1) FAIL(TINF_E_MULTIPLE_VALUE);
-      if (sscanf(cmd.v[0], "%d%n", &x, &n) != 1 || cmd.v[0][n]
-          || x < 0 || x > 1)
-        FAIL(TINF_E_INVALID_VALUE);
-    }
-    pt->compiler_must_fail = x;
+    if ((parse_res = parse_flag(&cmd, &pt->compiler_must_fail)) != 0) FAIL(parse_res);
   } else if (!strcmp(name_buf, "allow_compile_error")) {
-    if (cmd.u < 1) {
-      x = 1;
-    } else {
-      if (cmd.u > 1) FAIL(TINF_E_MULTIPLE_VALUE);
-      if (sscanf(cmd.v[0], "%d%n", &x, &n) != 1 || cmd.v[0][n]
-          || x < 0 || x > 1)
-        FAIL(TINF_E_INVALID_VALUE);
-    }
-    pt->allow_compile_error = x;
+    if ((parse_res = parse_flag(&cmd, &pt->allow_compile_error)) != 0) FAIL(parse_res);
   } else if (!strcmp(name_buf, "disable_valgrind")) {
-    if (cmd.u < 1) {
-      x = 1;
-    } else {
-      if (cmd.u > 1) FAIL(TINF_E_MULTIPLE_VALUE);
-      if (sscanf(cmd.v[0], "%d%n", &x, &n) != 1 || cmd.v[0][n]
-          || x < 0 || x > 1)
-        FAIL(TINF_E_INVALID_VALUE);
-    }
-    pt->disable_valgrind = x;
+    if ((parse_res = parse_flag(&cmd, &pt->disable_valgrind)) != 0) FAIL(parse_res);
   } else {
     FAIL(TINF_E_INVALID_VAR_NAME);
   }
