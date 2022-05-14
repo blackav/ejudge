@@ -1,4 +1,4 @@
-/* Copyright (C) 1998-2021 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 1998-2022 Alexander Chernov <cher@ejudge.ru> */
 /* Created: <1998-01-21 14:33:28 cher> */
 
 /*

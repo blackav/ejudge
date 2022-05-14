@@ -2258,6 +2258,7 @@ main(int argc, char *argv[])
             sigset_t ss;
             sigemptyset(&ss);
             sigprocmask(SIG_SETMASK, &ss, NULL);
+            signal(SIGPIPE, SIG_DFL);
 
             // switch to ejexec user
             if (setgid(slave_gid) < 0) {
