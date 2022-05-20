@@ -2668,7 +2668,7 @@ run_get_total_users(runlog_state_t state)
 }
 
 int
-run_get_insert_position(runlog_state_t state, time_t t, int uid, int nsec)
+obsolete_run_get_insert_position(runlog_state_t state, time_t t, int uid, int nsec)
 {
   if (state->run_u <= 0) return 0;
 
