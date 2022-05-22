@@ -62,7 +62,7 @@ static int
 flush_func(struct rldb_plugin_cnts *cdata);
 
 static int
-get_insert_run_id(
+get_insert_run_id_func(
         struct rldb_plugin_cnts *cdata,
         time_t create_time,
         int user_id,

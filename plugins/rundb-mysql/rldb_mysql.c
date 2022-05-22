@@ -88,7 +88,7 @@ struct rldb_plugin_iface plugin_rldb_mysql =
   set_runlog_func,
   backup_func,
   flush_func,
-  get_insert_run_id,
+  get_insert_run_id_func,
   add_entry_func,
   undo_add_entry_func,
   change_status_func,
@@ -992,7 +992,7 @@ find_insert_point(
 }
 
 static int
-get_insert_run_id(
+get_insert_run_id_func(
         struct rldb_plugin_cnts *cdata,
         time_t create_time,
         int user_id,
