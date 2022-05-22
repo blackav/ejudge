@@ -310,6 +310,62 @@ struct run_entry
   /* total is 128 bytes */
 };
 
+struct run_entry_v3
+{
+  rint32_t       run_id;        /* 4 */
+  ej_size_t      size;          /* 4 */
+  ej_time64_t    time;          /* 8 */
+  rint32_t       nsec;          /* 4 */
+  rint32_t       user_id;       /* 4 */
+  rint32_t       prob_id;       /* 4 */
+  rint32_t       lang_id;       /* 4 */
+  unsigned int   ipv6_flag:1;
+  unsigned int   sha256_flag:1;
+  unsigned int   ssl_flag:1;
+  unsigned int   judge_uuid_flag:1;
+  unsigned int   is_imported:1;
+  unsigned int   is_hidden:1;
+  unsigned int   is_readonly:1;
+  unsigned int   is_marked:1;
+  unsigned int   is_saved:1;
+  unsigned int   _pad2:23;
+  rint32_t       score;         /* 4 */
+  unsigned char  status;        /* 1 */
+  signed char    passed_mode;   /* 1 */
+  unsigned char  store_flags;   /* 1 */
+  unsigned char  variant;       /* 1 */
+  rint16_t       test;          /* 2 */
+  unsigned char  token_flags;   /* 1 */
+  unsigned char  token_count;   /* 1 */
+  union
+  {
+    ej_ip4_t       ip;
+    unsigned char  ipv6[16];
+  }              a;             /* 16 */
+  union
+  {
+    ruint32_t      sha1[5];     /* 20 */
+    unsigned char  sha256[32];  /* 32 */
+  };                            /* 32 */
+  ej_uuid_t      run_uuid;      /* 16 */
+  union
+  {
+    ruint16_t      judge_id;    /* 2 */
+    ej_uuid_t      judge_uuid;  /* 16 */
+  };
+  ej_uuid_t      prob_uuid;     /* 16 */
+  rint32_t       score_adj;     /* 4 */
+  rint32_t       saved_score;   /* 4 */
+  rint16_t       saved_test;    /* 2 */
+  unsigned char  saved_status;  /* 1 */
+  unsigned char  eoln_type;     /* 1 */
+  rint16_t       locale_id;     /* 2 */
+  rint16_t       mime_type;     /* 2 */
+  unsigned char  pages;         /* 1 */
+  char _pad[95];
+  /* total is 256 bytes */
+};
+
 struct run_file
 {
   unsigned char *data;
