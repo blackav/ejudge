@@ -190,10 +190,12 @@ do_create(struct rldb_mysql_state *state)
     db_error_fail(md);
   if (mi->simple_fquery(md, create_runs_query, md->table_prefix) < 0)
     db_error_fail(md);
+  if (mi->simple_fquery(md, create_userrunheaders_query, md->table_prefix) < 0)
+    db_error_fail(md);
   if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD INDEX runs_contest_id_idx (contest_id);", md->table_prefix) < 0)
       return -1;
   if (mi->simple_fquery(md,
-                        "INSERT INTO %sconfig VALUES ('run_version', '10') ;",
+                        "INSERT INTO %sconfig VALUES ('run_version', '11') ;",
                         md->table_prefix) < 0)
     db_error_fail(md);
   return 0;
