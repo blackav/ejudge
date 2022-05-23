@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2006-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -35,7 +34,7 @@ random_init(void)
 {
   if (urandom_fd >= 0) return 0;
 
-  if((urandom_fd = open("/dev/urandom", O_RDONLY)) < 0) {
+  if((urandom_fd = open("/dev/urandom", O_RDONLY | O_CLOEXEC, 0)) < 0) {
     err("open of /dev/urandom failed: %s", os_ErrorMsg());
     return -1;
   }
@@ -47,7 +46,7 @@ random_cleanup(void)
 {
   if (urandom_fd < 0) return;
   close(urandom_fd);
-  urandom_fd = 0;
+  urandom_fd = -1;
 }
 
 int
