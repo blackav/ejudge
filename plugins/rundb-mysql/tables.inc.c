@@ -16,6 +16,7 @@
 
 static const char create_runs_query[] =
 "CREATE TABLE %sruns( "
+"        serial_id INT(18) NOT NULL PRIMARY KEY AUTO_INCREMENT, "
 "        run_id INT UNSIGNED NOT NULL, "
 "        contest_id INT UNSIGNED NOT NULL, "
 "        size INT UNSIGNED NOT NULL DEFAULT 0, "
@@ -61,63 +62,66 @@ static const char create_runs_query[] =
 "        token_flags INT NOT NULL DEFAULT 0, "
 "        token_count INT NOT NULL DEFAULT 0, "
 "        prob_uuid VARCHAR(40) DEFAULT NULL, "
-"        PRIMARY KEY (run_id, contest_id)"
-"        );";
+"        UNIQUE KEY runs_run_contest_id_idx(run_id, contest_id), "
+"        KEY runs_contest_id_idx (contest_id) "
+"        ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;";
 
 struct run_entry_internal
 {
-  int run_id;                   /* 0 */
+  int serial_id;                /* 0 */
+  int run_id;
   int contest_id;
   int size;
   time_t create_time;
-  int create_nsec;
-  int user_id;                  /* 5 */
+  int create_nsec;              /* 5 */
+  int user_id;
   int prob_id;
   int lang_id;
   int status;
-  int ssl_flag;
-  int ip_version;               /* 10 */
+  int ssl_flag;                 /* 10 */
+  int ip_version;
   ej_ip_t ip;
   unsigned char *hash;
   unsigned char *run_uuid;
-  int score;
-  int test_num;                 /* 15 */
+  int score;                    /* 15 */
+  int test_num;
   int score_adj;
   int locale_id;
   int judge_id;
-  int variant;
-  int pages;                    /* 20 */
+  int variant;                  /* 20 */
+  int pages;
   int is_imported;
   int is_hidden;
   int is_readonly;
-  int is_examinable;
-  unsigned char *mime_type;     /* 25 */
+  int is_examinable;            /* 25 */
+  unsigned char *mime_type;
   int examiners0;
   int examiners1;
   int examiners2;
-  int exam_score0;
-  int exam_score1;              /* 30 */
+  int exam_score0;              /* 30 */
+  int exam_score1;
   int exam_score2;
   time_t last_change_time;
   int last_change_nsec;
-  int is_marked;
-  int is_saved;                 /* 35 */
+  int is_marked;                /* 35 */
+  int is_saved;
   int saved_status;
   int saved_score;
   int saved_test;
-  int passed_mode;
-  int eoln_type;                /* 40 */
+  int passed_mode;              /* 40 */
+  int eoln_type;
   int store_flags;
   int token_flags;
   int token_count;
-  unsigned char *prob_uuid;
+  unsigned char *prob_uuid;     /* 45 */
 };
 
-enum { RUNS_ROW_WIDTH = 45 };
+enum { RUNS_ROW_WIDTH = 46 };
 
 #define RUNS_OFFSET(f) XOFFSET(struct run_entry_internal, f)
 static const struct common_mysql_parse_spec runs_spec[RUNS_ROW_WIDTH] =
 {
+  { 0, 'd', "serial_id", RUNS_OFFSET(serial_id), 0 },
   { 0, 'd', "run_id", RUNS_OFFSET(run_id), 0 },
   { 0, 'd', "contest_id", RUNS_OFFSET(contest_id), 0 },
   { 0, 'd', "size", RUNS_OFFSET(size), 0 },

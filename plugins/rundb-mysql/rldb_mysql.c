@@ -192,10 +192,8 @@ do_create(struct rldb_mysql_state *state)
     db_error_fail(md);
   if (mi->simple_fquery(md, create_userrunheaders_query, md->table_prefix) < 0)
     db_error_fail(md);
-  if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD INDEX runs_contest_id_idx (contest_id);", md->table_prefix) < 0)
-      return -1;
   if (mi->simple_fquery(md,
-                        "INSERT INTO %sconfig VALUES ('run_version', '11') ;",
+                        "INSERT INTO %sconfig VALUES ('run_version', '12') ;",
                         md->table_prefix) < 0)
     db_error_fail(md);
   return 0;
@@ -317,7 +315,21 @@ do_open(struct rldb_mysql_state *state)
       return -1;
     run_version = 11;
   }
-  if (run_version != 11) {
+  if (run_version == 11) {
+    if (mi->simple_fquery(md, "ALTER TABLE %sruns ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin ;", md->table_prefix) < 0)
+      return -1;
+    if (mi->simple_fquery(md, "ALTER TABLE %sruns DROP PRIMARY KEY ;", md->table_prefix) < 0)
+      return -1;
+    if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD UNIQUE KEY runs_run_contest_id_idx(run_id, contest_id) ;", md->table_prefix) < 0)
+      return -1;
+    if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD COLUMN serial_id INT(18) NOT NULL PRIMARY KEY AUTO_INCREMENT FIRST ;", md->table_prefix) < 0)
+      return -1;
+
+    if (mi->simple_fquery(md, "UPDATE %sconfig SET config_val = '12' WHERE config_key = 'run_version' ;", md->table_prefix) < 0)
+      return -1;
+    run_version = 12;
+  }
+  if (run_version != 12) {
     err("run_version == %d is not supported", run_version);
     return -1;
   }
