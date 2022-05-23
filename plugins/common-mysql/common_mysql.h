@@ -3,7 +3,7 @@
 #ifndef __COMMON_MYSQL_H__
 #define __COMMON_MYSQL_H__
 
-/* Copyright (C) 2008-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -152,6 +152,12 @@ struct common_mysql_iface
         struct common_mysql_state *state,
         FILE *f,
         const unsigned char *str);
+
+  void (*write_datetime)(
+        struct common_mysql_state *state,
+        FILE *f,
+        const unsigned char *pfx,
+        const struct timeval *ptv);
 };
 
 #define db_error_fail(s) do { s->i->error(s); goto fail; } while (0)

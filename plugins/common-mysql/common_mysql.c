@@ -135,6 +135,12 @@ escape_string_func(
         struct common_mysql_state *state,
         FILE *f,
         const unsigned char *str);
+static void
+write_datetime_func(
+        struct common_mysql_state *state,
+        FILE *f,
+        const unsigned char *pfx,
+        const struct timeval *ptv);
 
 /* plugin entry point */
 struct common_mysql_iface plugin_common_mysql =
@@ -178,6 +184,7 @@ struct common_mysql_iface plugin_common_mysql =
   parse_int_func,
 
   escape_string_func,
+  write_datetime_func,
 };
 
 static struct common_plugin_data *
@@ -969,6 +976,11 @@ unparse_spec_func(
       write_timestamp_func(state, fout, sep, *p_time);
       break;
 
+    case 'T': {
+      const struct timeval *ptv = XPDEREF(struct timeval, data, specs[i].offset);
+      write_datetime_func(state, fout, sep, ptv);
+      break;
+    }
     case 'a':
       p_time = XPDEREF(time_t, data, specs[i].offset);
       write_date_func(state, fout, sep, *p_time);
@@ -1096,7 +1108,31 @@ parse_int_func(
   return 0;
 }
 
-/*
- * Local variables:
- * End:
- */
+static void
+write_datetime_func(
+        struct common_mysql_state *state,
+        FILE *f,
+        const unsigned char *pfx,
+        const struct timeval *ptv)
+{
+  if (!pfx) pfx = "";
+
+  if (!ptv) {
+    fprintf(f, "%sNULL", pfx);
+    return;
+  }
+  if (ptv->tv_sec <= 0) {
+    fprintf(f, "%sDEFAULT", pfx);
+    return;
+  }
+
+  struct tm ttm = {};
+  localtime_r(&ptv->tv_sec, &ttm);
+  fprintf(f, "%s'%04d-%02d-%02d %02d:%02d:%02d",
+          pfx, ttm.tm_year + 1900, ttm.tm_mon + 1, ttm.tm_mday,
+          ttm.tm_hour, ttm.tm_min, ttm.tm_sec);
+  if (ptv->tv_usec > 0) {
+    fprintf(f, ".%06d", (int) ptv->tv_usec);
+  }
+  fprintf(f, "'");
+}
