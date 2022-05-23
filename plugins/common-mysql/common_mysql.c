@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2008-2020 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -33,6 +33,7 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <sys/time.h>
 
 static struct common_plugin_data *
 init_func(void);
@@ -768,6 +769,40 @@ parse_spec_func(
       p_time = XPDEREF(time_t, data, specs[i].offset);
       *p_time = t;
       break;
+    case 'T': {
+      struct timeval *ptv = NULL;
+      const char *str = row[i];
+      int us = 0;
+      ptv = XPDEREF(struct timeval, data, specs[i].offset);
+      ptv->tv_sec = 0; ptv->tv_usec = 0;
+      if (!str) break;
+      // special handling for '0' case
+      if (sscanf(str, "%d%n", &x, &n) == 1 && !str[n] && !x) break;
+      // 'YYYY-MM-DD hh:mm:ss[.uuuuuu]'
+      if (sscanf(str, "%d-%d-%d %d:%d:%d%n",
+                 &d_year, &d_mon, &d_day, &d_hour, &d_min, &d_sec, &n) != 6)
+        goto invalid_format;
+      if (str[n] == '.') {
+        str += n + 1; n = 0;
+        if (sscanf(str, "%d%n", &us, &n) != 1) goto invalid_format;
+      }
+      if (str[n]) goto invalid_format;
+      if (!d_year && !d_mon && !d_day && !d_hour && !d_min && !d_sec && !us)
+        break;
+      memset(&tt, 0, sizeof(tt));
+      tt.tm_year = d_year - 1900;
+      tt.tm_mon = d_mon - 1;
+      tt.tm_mday = d_day;
+      tt.tm_hour = d_hour;
+      tt.tm_min = d_min;
+      tt.tm_sec = d_sec;
+      tt.tm_isdst = -1;
+      if ((t = mktime(&tt)) == (time_t) -1) goto invalid_format;
+      if (t < 0) t = 0;
+      ptv->tv_sec = t;
+      ptv->tv_usec = us;
+      break;
+    }
     case 'a':
       if (!row[i]) {
         p_time = XPDEREF(time_t, data, specs[i].offset);
