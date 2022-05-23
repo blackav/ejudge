@@ -23,6 +23,7 @@
 #include "ejudge/osdeps.h"
 #include "ejudge/exec.h"
 #include "ejudge/process_stats.h"
+#include "ejudge/random.h"
 
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -2275,6 +2276,8 @@ task_Start(tTask *tsk)
       // SIGPIPE may have been ignored in parent process (e.g. ejudge-super-run)
       signal(SIGPIPE, SIG_DFL);
     }
+    // prevent fd leak (random can be used in scan_dir from unix/fileutl.c)
+    random_cleanup();
 
     if (tsk->enable_suid_exec) {
       invoke_execv_helper(tsk, tsk->path, tsk->args.v);
