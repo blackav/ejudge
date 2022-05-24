@@ -3356,14 +3356,13 @@ do_add_row(
 
   ej_uuid_t run_uuid;
   int store_flags = 0;
-  gettimeofday(&precise_time, 0);
   ej_uuid_generate(&run_uuid);
   if (cs->global->uuid_run_store > 0 && run_get_uuid_hash_state(cs->runlog_state) >= 0 && ej_uuid_is_nonempty(run_uuid)) {
     store_flags = STORE_FLAGS_UUID;
     if (testing_report_bson_available()) store_flags = STORE_FLAGS_UUID_BSON;
   }
   run_id = run_add_record(cs->runlog_state,
-                          precise_time.tv_sec, precise_time.tv_usec * 1000,
+                          &precise_time,
                           run_size, re->sha1, &run_uuid,
                           &phr->ip, phr->ssl_flag, phr->locale_id,
                           re->user_id, re->prob_id, re->lang_id, re->eoln_type,

@@ -41,6 +41,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdint.h>
+#include <sys/time.h>
 
 #if CONF_HAS_LIBINTL - 0 == 1
 #include <libintl.h>
@@ -292,8 +293,7 @@ runlog_flush(runlog_state_t state)
 int
 run_add_record(
         runlog_state_t state,
-        time_t         timestamp,
-        int            nsec,
+        struct timeval *p_tv,
         size_t         size,
         const ruint32_t sha1[5],
         const ej_uuid_t *puuid,
@@ -314,21 +314,21 @@ run_add_record(
   struct run_entry re;
   int flags = 0;
 
+  gettimeofday(p_tv, NULL);
+
   state->uuid_hash_last_added_index = -1;
   state->uuid_hash_last_added_run_id = -1;
-  if (timestamp <= 0) {
-    err("run_add_record: invalid timestamp %ld", (long) timestamp);
-    return -1;
-  }
   if (!is_hidden) {
     if (!state->head.start_time) {
       err("run_add_record: contest is not yet started");
       return -1;
     }
+    /*
     if (timestamp < state->head.start_time) {
       err("run_add_record: timestamp < start_time");
       return -1;
     }
+    */
   }
 
   if (locale_id < -1 || locale_id > EJ_MAX_LOCALE_ID) {
@@ -355,10 +355,6 @@ run_add_record(
     err("run_add_record: is_hidden field value is invalid");
     return -1;
   }
-  if (nsec < 0 || nsec > NSEC_MAX) {
-    err("run_add_record: nsec field value %d is invalid", nsec);
-    return -1;
-  }
   if (mime_type < 0 || mime_type > EJ_MAX_MIME_TYPE) {
     err("run_add_record: mime_type field value %d is invalid", mime_type);
     return -1;
@@ -374,7 +370,7 @@ run_add_record(
     run_rebuild_user_run_index(state, team);
   }
 
-  if ((i = state->iface->get_insert_run_id(state->cnts,timestamp,team,nsec,NULL,NULL,NULL,NULL))<0)
+  if ((i = state->iface->get_insert_run_id(state->cnts,p_tv->tv_sec,team,p_tv->tv_usec * 1000,NULL,NULL,NULL,NULL))<0)
     return -1;
 
   memset(&re, 0, sizeof(re));

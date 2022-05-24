@@ -1092,7 +1092,6 @@ cmd_submit_run(
     FAIL(NEW_SRV_ERR_INV_PROB_ID);
   }
 
-  gettimeofday(&precise_time, 0);
   ej_uuid_t run_uuid;
   int store_flags = 0;
   ej_uuid_generate(&run_uuid);
@@ -1101,7 +1100,7 @@ cmd_submit_run(
     if (testing_report_bson_available()) store_flags = STORE_FLAGS_UUID_BSON;
   }
   run_id = run_add_record(cs->runlog_state,
-                          precise_time.tv_sec, precise_time.tv_usec * 1000,
+                          &precise_time,
                           run_size, shaval, &run_uuid,
                           &phr->ip, phr->ssl_flag,
                           phr->locale_id, phr->user_id,

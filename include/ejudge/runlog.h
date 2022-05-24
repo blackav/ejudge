@@ -102,8 +102,7 @@ run_open(
 int
 run_add_record(
         runlog_state_t state,
-        time_t         timestamp,
-        int            nsec,
+        struct timeval *p_tv,    // filled as a result
         size_t         size,
         const ruint32_t sha1[5],
         const ej_uuid_t *puuid,

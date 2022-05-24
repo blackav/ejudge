@@ -3476,7 +3476,6 @@ priv_submit_run(
 
   // OK, so all checks are done, now we add this submit to the database
   sha_buffer(run_text, run_size, shaval);
-  gettimeofday(&precise_time, 0);
 
   ej_uuid_t run_uuid;
   int store_flags = 0;
@@ -3486,7 +3485,7 @@ priv_submit_run(
     if (testing_report_bson_available()) store_flags = STORE_FLAGS_UUID_BSON;
   }
   run_id = run_add_record(cs->runlog_state,
-                          precise_time.tv_sec, precise_time.tv_usec * 1000,
+                          &precise_time,
                           run_size, shaval, &run_uuid,
                           &sender_ip, sender_ssl_flag,
                           phr->locale_id, sender_user_id,
@@ -5392,7 +5391,6 @@ priv_new_run(FILE *fout,
   }
 
   if (!lang) lang_id = 0;
-  gettimeofday(&precise_time, 0);
 
   ej_uuid_t run_uuid;
   int store_flags = 0;
@@ -5402,7 +5400,7 @@ priv_new_run(FILE *fout,
     if (testing_report_bson_available()) store_flags = STORE_FLAGS_UUID_BSON;
   }
   run_id = run_add_record(cs->runlog_state,
-                          precise_time.tv_sec, precise_time.tv_usec * 1000,
+                          &precise_time,
                           run_size, shaval, &run_uuid,
                           &phr->ip, phr->ssl_flag, phr->locale_id,
                           user_id, prob_id, lang_id, 0, variant,
@@ -10679,7 +10677,6 @@ ns_submit_run(
   // OK, so all checks are done, now we add this submit to the database
   int db_variant = variant;
   struct timeval precise_time;
-  gettimeofday(&precise_time, 0);
   if (admin_mode) {
     if (is_hidden < 0) is_hidden = 0;
     if (is_hidden > 1) is_hidden = 1;
@@ -10698,7 +10695,7 @@ ns_submit_run(
     if (testing_report_bson_available()) store_flags = STORE_FLAGS_UUID_BSON;
   }
   run_id = run_add_record(cs->runlog_state,
-                          precise_time.tv_sec, precise_time.tv_usec * 1000,
+                          &precise_time,
                           run_size, shaval, uuid_ptr,
                           &phr->ip, phr->ssl_flag,
                           phr->locale_id, user_id,
@@ -11319,8 +11316,6 @@ unpriv_submit_run(
   }
 
   // OK, so all checks are done, now we add this submit to the database
-  gettimeofday(&precise_time, 0);
-
   ej_uuid_t run_uuid;
   int store_flags = 0;
   ej_uuid_generate(&run_uuid);
@@ -11329,7 +11324,7 @@ unpriv_submit_run(
     if (testing_report_bson_available()) store_flags = STORE_FLAGS_UUID_BSON;
   }
   run_id = run_add_record(cs->runlog_state,
-                          precise_time.tv_sec, precise_time.tv_usec * 1000,
+                          &precise_time,
                           run_size, shaval, &run_uuid,
                           &phr->ip, phr->ssl_flag,
                           phr->locale_id, phr->user_id,
@@ -12890,14 +12885,13 @@ unpriv_xml_update_answer(
   int store_flags = 0;
   run_id = run_find(cs->runlog_state, -1, 0, phr->user_id, prob->id, 0, &run_uuid, &store_flags);
   if (run_id < 0) {
-    gettimeofday(&precise_time, 0);
     ej_uuid_generate(&run_uuid);
     if (global->uuid_run_store > 0 && run_get_uuid_hash_state(cs->runlog_state) >= 0 && ej_uuid_is_nonempty(run_uuid)) {
       store_flags = STORE_FLAGS_UUID;
       if (testing_report_bson_available()) store_flags = STORE_FLAGS_UUID_BSON;
     }
     run_id = run_add_record(cs->runlog_state,
-                            precise_time.tv_sec, precise_time.tv_usec * 1000,
+                            &precise_time,
                             run_size, shaval, &run_uuid,
                             &phr->ip, phr->ssl_flag,
                             phr->locale_id, phr->user_id,
