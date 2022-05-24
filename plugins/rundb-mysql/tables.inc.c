@@ -20,7 +20,7 @@ static const char create_runs_query[] =
 "        run_id INT UNSIGNED NOT NULL, "
 "        contest_id INT UNSIGNED NOT NULL, "
 "        size INT UNSIGNED NOT NULL DEFAULT 0, "
-"        create_time TIMESTAMP NOT NULL DEFAULT '0000-00-00 00:00:00', "
+"        create_time DATETIME(6) NOT NULL, "
 "        create_nsec INT UNSIGNED NOT NULL DEFAULT 0, "
 "        user_id INT UNSIGNED NOT NULL, "
 "        prob_id INT UNSIGNED NOT NULL, "
@@ -72,7 +72,8 @@ struct run_entry_internal
   int run_id;
   int contest_id;
   int size;
-  time_t create_time;
+  struct timeval create_tv;
+  //time_t create_time;
   int create_nsec;              /* 5 */
   int user_id;
   int prob_id;
@@ -125,7 +126,7 @@ static const struct common_mysql_parse_spec runs_spec[RUNS_ROW_WIDTH] =
   { 0, 'd', "run_id", RUNS_OFFSET(run_id), 0 },
   { 0, 'd', "contest_id", RUNS_OFFSET(contest_id), 0 },
   { 0, 'd', "size", RUNS_OFFSET(size), 0 },
-  { 0, 't', "create_time", RUNS_OFFSET(create_time), 0 },
+  { 0, 'T', "create_time", RUNS_OFFSET(create_tv), 0 },
   { 0, 'd', "create_nsec", RUNS_OFFSET(create_nsec), 0 },
   { 0, 'd', "user_id", RUNS_OFFSET(user_id), 0, },
   { 0, 'd', "prob_id", RUNS_OFFSET(prob_id), 0, },

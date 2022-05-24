@@ -193,7 +193,7 @@ do_create(struct rldb_mysql_state *state)
   if (mi->simple_fquery(md, create_userrunheaders_query, md->table_prefix) < 0)
     db_error_fail(md);
   if (mi->simple_fquery(md,
-                        "INSERT INTO %sconfig VALUES ('run_version', '12') ;",
+                        "INSERT INTO %sconfig VALUES ('run_version', '13') ;",
                         md->table_prefix) < 0)
     db_error_fail(md);
   return 0;
@@ -329,7 +329,15 @@ do_open(struct rldb_mysql_state *state)
       return -1;
     run_version = 12;
   }
-  if (run_version != 12) {
+  if (run_version == 12) {
+    if (mi->simple_fquery(md, "ALTER TABLE %sruns MODIFY create_time DATETIME(6) NOT NULL ;", md->table_prefix) < 0)
+      return -1;
+
+    if (mi->simple_fquery(md, "UPDATE %sconfig SET config_val = '13' WHERE config_key = 'run_version' ;", md->table_prefix) < 0)
+      return -1;
+    run_version = 13;
+  }
+  if (run_version != 13) {
     err("run_version == %d is not supported", run_version);
     return -1;
   }
@@ -645,8 +653,13 @@ load_runs(struct rldb_mysql_cnts *cs)
       memset(re, 0, sizeof(*re));
 
       re->run_id = ri.run_id;
+      /*
       re->time = ri.create_time;
       re->nsec = ri.create_nsec;
+      */
+      re->time = ri.create_tv.tv_sec;
+      re->nsec = ri.create_nsec;
+      if (re->nsec <= 0) re->nsec = ri.create_tv.tv_usec * 1000;
       re->status = ri.status;
       continue;
     }
@@ -673,8 +686,13 @@ load_runs(struct rldb_mysql_cnts *cs)
 
     re->run_id = ri.run_id;
     re->size = ri.size;
+    /*
     re->time = ri.create_time;
     re->nsec = ri.create_nsec;
+    */
+    re->time = ri.create_tv.tv_sec;
+    re->nsec = ri.create_nsec;
+    if (re->nsec <= 0) re->nsec = ri.create_tv.tv_usec * 1000;
     re->user_id = ri.user_id;
     re->prob_id = ri.prob_id;
     re->lang_id = ri.lang_id;
@@ -1050,7 +1068,12 @@ get_insert_run_id_func(
   gettimeofday(&curtime, 0);
   ri.run_id = run_id;
   ri.contest_id = cs->contest_id;
+  /*
   ri.create_time = create_time;
+  ri.create_nsec = create_nsec;
+  */
+  ri.create_tv.tv_sec = create_time;
+  ri.create_tv.tv_usec = (create_nsec + 500) / 1000;
   ri.create_nsec = create_nsec;
   ri.status = RUN_EMPTY;
   //ri.user_id = user_id;
@@ -1786,7 +1809,11 @@ put_entry_func(
   ri.run_id = re->run_id;
   ri.contest_id = cs->contest_id;
   ri.size = re->size;
+  /*
   ri.create_time = re->time;
+  */
+  ri.create_tv.tv_sec = re->time;
+  ri.create_tv.tv_usec = (re->nsec + 500) / 1000;
   ri.create_nsec = re->nsec;
   ri.user_id = re->user_id;
   ri.prob_id = re->prob_id;
