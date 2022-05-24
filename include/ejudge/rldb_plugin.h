@@ -75,8 +75,15 @@ struct rldb_plugin_iface
   // flush the whole runlog
   int (*flush)(struct rldb_plugin_cnts *cdata);
   // get the position to insert a new run
-  int (*get_insert_run_id)(struct rldb_plugin_cnts *,
-                           time_t t, int uid, int nsec);
+  int (*get_insert_run_id)(
+        struct rldb_plugin_cnts *cdata,
+        time_t t,
+        int uid,
+        int nsec,
+        time_t *p_ins_t,
+        int *p_ins_ns,
+        int64_t *p_serial_id,
+        ej_uuid_t *p_uuid);
   // write a new run to the database
   int (*add_entry)(struct rldb_plugin_cnts *, int i,
                    const struct run_entry *, int);

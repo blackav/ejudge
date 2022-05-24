@@ -374,7 +374,7 @@ run_add_record(
     run_rebuild_user_run_index(state, team);
   }
 
-  if ((i = state->iface->get_insert_run_id(state->cnts,timestamp,team,nsec))<0)
+  if ((i = state->iface->get_insert_run_id(state->cnts,timestamp,team,nsec,NULL,NULL,NULL,NULL))<0)
     return -1;
 
   memset(&re, 0, sizeof(re));
@@ -1668,7 +1668,7 @@ run_virtual_start(
     err("run_virtual_start: nsec field value %d is invalid", nsec);
     return -1;
   }
-  if ((i = state->iface->get_insert_run_id(state->cnts, t, user_id, nsec)) < 0)
+  if ((i = state->iface->get_insert_run_id(state->cnts, t, user_id, nsec, NULL, NULL, NULL, NULL)) < 0)
     return -1;
 
   memset(&re, 0, sizeof(re));
@@ -1746,7 +1746,7 @@ run_virtual_stop(
     return -1;
   }
 
-  if ((i = state->iface->get_insert_run_id(state->cnts, t, user_id, nsec)) < 0)
+  if ((i = state->iface->get_insert_run_id(state->cnts, t, user_id, nsec, NULL, NULL, NULL, NULL)) < 0)
     return -1;
   memset(&re, 0, sizeof(re));
   re.user_id = user_id;

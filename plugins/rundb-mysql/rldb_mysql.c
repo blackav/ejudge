@@ -1028,7 +1028,11 @@ get_insert_run_id_func(
         struct rldb_plugin_cnts *cdata,
         time_t create_time,
         int user_id,
-        int create_nsec)
+        int create_nsec,
+        time_t *p_ins_t,
+        int *p_ins_ns,
+        int64_t *p_serial_id,
+        ej_uuid_t *p_uuid)
 {
   struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts *) cdata;
   struct rldb_mysql_state *state = cs->plugin_state;
