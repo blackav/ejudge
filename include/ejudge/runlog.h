@@ -361,8 +361,9 @@ struct run_entry_v3
   unsigned char  eoln_type;     /* 1 */
   rint16_t       locale_id;     /* 2 */
   rint16_t       mime_type;     /* 2 */
+  int64_t        serial_id;     /* 8 */
   unsigned char  pages;         /* 1 */
-  char _pad[95];
+  char _pad[87];
   /* total is 256 bytes */
 };
 
