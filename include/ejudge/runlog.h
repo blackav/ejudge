@@ -105,7 +105,7 @@ run_add_record(
         struct timeval *p_tv,    // filled as a result
         size_t         size,
         const ruint32_t sha1[5],
-        const ej_uuid_t *puuid,
+        ej_uuid_t     *puuid,    // filled as a result, if empty
         const ej_ip_t *pip,
         int            ssl_flag,
         int            locale_id,

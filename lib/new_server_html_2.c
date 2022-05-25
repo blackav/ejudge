@@ -3354,10 +3354,9 @@ do_add_row(
     prob_uuid = prob->uuid;
   }
 
-  ej_uuid_t run_uuid;
+  ej_uuid_t run_uuid = {};
   int store_flags = 0;
-  ej_uuid_generate(&run_uuid);
-  if (cs->global->uuid_run_store > 0 && run_get_uuid_hash_state(cs->runlog_state) >= 0 && ej_uuid_is_nonempty(run_uuid)) {
+  if (cs->global->uuid_run_store > 0 && run_get_uuid_hash_state(cs->runlog_state) >= 0) {
     store_flags = STORE_FLAGS_UUID;
     if (testing_report_bson_available()) store_flags = STORE_FLAGS_UUID_BSON;
   }

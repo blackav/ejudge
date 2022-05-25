@@ -3477,10 +3477,9 @@ priv_submit_run(
   // OK, so all checks are done, now we add this submit to the database
   sha_buffer(run_text, run_size, shaval);
 
-  ej_uuid_t run_uuid;
+  ej_uuid_t run_uuid = {};
   int store_flags = 0;
-  ej_uuid_generate(&run_uuid);
-  if (global->uuid_run_store > 0 && run_get_uuid_hash_state(cs->runlog_state) >= 0 && ej_uuid_is_nonempty(run_uuid)) {
+  if (global->uuid_run_store > 0 && run_get_uuid_hash_state(cs->runlog_state) >= 0) {
     store_flags = STORE_FLAGS_UUID;
     if (testing_report_bson_available()) store_flags = STORE_FLAGS_UUID_BSON;
   }
@@ -5392,10 +5391,9 @@ priv_new_run(FILE *fout,
 
   if (!lang) lang_id = 0;
 
-  ej_uuid_t run_uuid;
+  ej_uuid_t run_uuid = {};
   int store_flags = 0;
-  ej_uuid_generate(&run_uuid);
-  if (global->uuid_run_store > 0 && run_get_uuid_hash_state(cs->runlog_state) >= 0 && ej_uuid_is_nonempty(run_uuid)) {
+  if (global->uuid_run_store > 0 && run_get_uuid_hash_state(cs->runlog_state) >= 0) {
     store_flags = STORE_FLAGS_UUID;
     if (testing_report_bson_available()) store_flags = STORE_FLAGS_UUID_BSON;
   }
@@ -10687,10 +10685,9 @@ ns_submit_run(
 
   int store_flags = 0;
   if (uuid_ptr == NULL) {
-    ej_uuid_generate(&run_uuid);
     uuid_ptr = &run_uuid;
   }
-  if (global->uuid_run_store > 0 && run_get_uuid_hash_state(cs->runlog_state) >= 0 && ej_uuid_is_nonempty(run_uuid)) {
+  if (global->uuid_run_store > 0 && run_get_uuid_hash_state(cs->runlog_state) >= 0) {
     store_flags = STORE_FLAGS_UUID;
     if (testing_report_bson_available()) store_flags = STORE_FLAGS_UUID_BSON;
   }
@@ -11316,10 +11313,9 @@ unpriv_submit_run(
   }
 
   // OK, so all checks are done, now we add this submit to the database
-  ej_uuid_t run_uuid;
+  ej_uuid_t run_uuid = {};
   int store_flags = 0;
-  ej_uuid_generate(&run_uuid);
-  if (global->uuid_run_store > 0 && run_get_uuid_hash_state(cs->runlog_state) >= 0 && ej_uuid_is_nonempty(run_uuid)) {
+  if (global->uuid_run_store > 0 && run_get_uuid_hash_state(cs->runlog_state) >= 0) {
     store_flags = STORE_FLAGS_UUID;
     if (testing_report_bson_available()) store_flags = STORE_FLAGS_UUID_BSON;
   }
@@ -12881,12 +12877,11 @@ unpriv_xml_update_answer(
     FAIL(NEW_SRV_ERR_INV_PROB_ID);
   }
 
-  ej_uuid_t run_uuid;
+  ej_uuid_t run_uuid = {};
   int store_flags = 0;
   run_id = run_find(cs->runlog_state, -1, 0, phr->user_id, prob->id, 0, &run_uuid, &store_flags);
   if (run_id < 0) {
-    ej_uuid_generate(&run_uuid);
-    if (global->uuid_run_store > 0 && run_get_uuid_hash_state(cs->runlog_state) >= 0 && ej_uuid_is_nonempty(run_uuid)) {
+    if (global->uuid_run_store > 0 && run_get_uuid_hash_state(cs->runlog_state) >= 0) {
       store_flags = STORE_FLAGS_UUID;
       if (testing_report_bson_available()) store_flags = STORE_FLAGS_UUID_BSON;
     }

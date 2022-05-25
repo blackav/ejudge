@@ -296,7 +296,7 @@ run_add_record(
         struct timeval *p_tv,
         size_t         size,
         const ruint32_t sha1[5],
-        const ej_uuid_t *puuid,
+        ej_uuid_t     *puuid,
         const ej_ip_t *pip,
         int            ssl_flag,
         int            locale_id,
@@ -315,6 +315,9 @@ run_add_record(
   int flags = 0;
 
   gettimeofday(p_tv, NULL);
+  if (!ej_uuid_is_nonempty(*puuid)) {
+    ej_uuid_generate(puuid);
+  }
 
   state->uuid_hash_last_added_index = -1;
   state->uuid_hash_last_added_run_id = -1;
