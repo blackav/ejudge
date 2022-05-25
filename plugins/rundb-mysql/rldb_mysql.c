@@ -194,7 +194,7 @@ do_create(struct rldb_mysql_state *state)
   if (mi->simple_fquery(md, create_userrunheaders_query, md->table_prefix) < 0)
     db_error_fail(md);
   if (mi->simple_fquery(md,
-                        "INSERT INTO %sconfig VALUES ('run_version', '13') ;",
+                        "INSERT INTO %sconfig VALUES ('run_version', '14') ;",
                         md->table_prefix) < 0)
     db_error_fail(md);
   return 0;
@@ -338,7 +338,39 @@ do_open(struct rldb_mysql_state *state)
       return -1;
     run_version = 13;
   }
-  if (run_version != 13) {
+  if (run_version == 13) {
+    if (mi->simple_fquery(md,
+                          "ALTER TABLE %sruns MODIFY"
+                          " prob_id INT UNSIGNED NOT NULL DEFAULT 0,"
+                          " lang_id INT UNSIGNED NOT NULL DEFAULT 0,"
+                          " status INT NOT NULL DEFAULT 99,"
+                          " ip VARCHAR(64) DEFAULT NULL,"
+                          " hash VARCHAR (128) DEFAULT NULL,"
+                          " run_uuid CHAR(40) DEFAULT NULL,"
+                          " score INT NOT NULL DEFAULT -1,"
+                          " test_num INT NOT NULL DEFAULT -1,"
+                          " score_adj INT NOT NULL DEFAULT 0,"
+                          " locale_id INT NOT NULL DEFAULT 0,"
+                          " judge_id INT NOT NULL DEFAULT 0,"
+                          " variant INT NOT NULL DEFAULT 0,"
+                          " pages INT NOT NULL DEFAULT 0,"
+                          " mime_type VARCHAR(64) DEFAULT NULL,"
+                          " examiners0 INT NOT NULL DEFAULT 0,"
+                          " examiners1 INT NOT NULL DEFAULT 0,"
+                          " examiners2 INT NOT NULL DEFAULT 0,"
+                          " exam_score0 INT NOT NULL DEFAULT 0,"
+                          " exam_score1 INT NOT NULL DEFAULT 0,"
+                          " exam_score2 INT NOT NULL DEFAULT 0,"
+                          " last_change_time DATETIME DEFAULT NULL,"
+                          " last_change_nsec INT UNSIGNED NOT NULL DEFAULT 0"
+                          ";", md->table_prefix) < 0)
+      return -1;
+
+    if (mi->simple_fquery(md, "UPDATE %sconfig SET config_val = '14' WHERE config_key = 'run_version' ;", md->table_prefix) < 0)
+      return -1;
+    run_version = 14;
+  }
+  if (run_version != 14) {
     err("run_version == %d is not supported", run_version);
     return -1;
   }
