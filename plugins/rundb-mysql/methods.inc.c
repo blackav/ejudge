@@ -249,3 +249,11 @@ static int
 user_run_header_delete_func(
         struct rldb_plugin_cnts *cdata,
         int user_id);
+
+static int
+get_append_run_id_func(
+        struct rldb_plugin_cnts *cdata,
+        int uid,
+        struct timeval *p_tv,
+        int64_t *p_serial_id,
+        ej_uuid_t *p_uuid);

@@ -118,6 +118,7 @@ struct rldb_plugin_iface plugin_rldb_mysql =
   user_run_header_set_duration_func,
   user_run_header_set_is_checked_func,
   user_run_header_delete_func,
+  get_append_run_id_func,
 };
 
 static struct common_plugin_data *
@@ -2234,4 +2235,79 @@ user_run_header_set_is_checked_func(
   }
 
   return 0;
+}
+
+static int
+get_append_run_id_func(
+        struct rldb_plugin_cnts *cdata,
+        int uid,
+        struct timeval *p_tv,
+        int64_t *p_serial_id,
+        ej_uuid_t *p_uuid)
+{
+  /*
+  "INSERT INTO %sruns(run_id,contest_id,create_time,user_id,prob_id,lang_id,status,ip,hash,run_uuid,score,test_num,score_adj,locale_id,judge_id,variant,pages,)
+  struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts *) cdata;
+  struct rldb_mysql_state *state = cs->plugin_state;
+  struct common_mysql_iface *mi = state->mi;
+  struct common_mysql_state *md = state->md;
+  struct runlog_state *rls = cs->rl_state;
+  struct run_entry_internal ri;
+  struct run_entry *re;
+  struct timeval curtime;
+  int run_id, i;
+  char *cmd_t = 0;
+  size_t cmd_z = 0;
+  FILE *cmd_f = 0;
+
+  if ((run_id = find_insert_point(rls, create_time, create_nsec, user_id)) < 0)
+    goto fail;
+  ASSERT(run_id < rls->run_u);
+
+  if (rls->runs[run_id - rls->run_f].status != RUN_EMPTY) {
+    // move [run_id, run_u - 1) one forward
+    memmove(&rls->runs[run_id + 1 - rls->run_f], &rls->runs[run_id - rls->run_f],
+            (rls->run_u - run_id - 1) * sizeof(rls->runs[0]));
+    for (i = run_id + 1; i < rls->run_u; ++i)
+      rls->runs[i - rls->run_f].run_id = i;
+    if (mi->simple_fquery(md, "UPDATE %sruns SET run_id = run_id + 1 WHERE contest_id = %d AND run_id >= %d ORDER BY run_id DESC;", md->table_prefix, cs->contest_id, run_id) < 0)
+      goto fail;
+  }
+  re = &rls->runs[run_id - rls->run_f];
+  memset(re, 0, sizeof(*re));
+  re->run_id = run_id;
+  re->time = create_time;
+  re->nsec = create_nsec;
+  //re->user_id = user_id;
+  re->status = RUN_EMPTY;
+
+  memset(&ri, 0, sizeof(ri));
+  gettimeofday(&curtime, 0);
+  ri.run_id = run_id;
+  ri.contest_id = cs->contest_id;
+  //ri.create_time = create_time;
+  //ri.create_nsec = create_nsec;
+  ri.create_tv.tv_sec = create_time;
+  ri.create_tv.tv_usec = (create_nsec + 500) / 1000;
+  ri.create_nsec = create_nsec;
+  ri.status = RUN_EMPTY;
+  //ri.user_id = user_id;
+  ri.last_change_time = curtime.tv_sec;
+  ri.last_change_nsec = curtime.tv_usec * 1000;
+
+  cmd_f = open_memstream(&cmd_t, &cmd_z);
+  fprintf(cmd_f, "INSERT INTO %sruns VALUES ( ", md->table_prefix);
+  mi->unparse_spec(md, cmd_f, RUNS_ROW_WIDTH, runs_spec, &ri);
+  fprintf(cmd_f, " ) ;");
+  close_memstream(cmd_f); cmd_f = 0;
+  if (mi->simple_query(md, cmd_t, cmd_z) < 0) goto fail;
+  xfree(cmd_t); cmd_t = 0;
+  return run_id;
+
+ fail:
+  if (cmd_f) fclose(cmd_f);
+  xfree(cmd_t);
+  return -1;
+   */
+  return -1;
 }

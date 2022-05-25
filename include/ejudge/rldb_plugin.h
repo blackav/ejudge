@@ -217,6 +217,14 @@ struct rldb_plugin_iface
   int (*user_run_header_delete)(
         struct rldb_plugin_cnts *cdata,
         int user_id);
+
+  // append run safely to the end
+  int (*get_append_run_id)(
+        struct rldb_plugin_cnts *cdata,
+        int uid,
+        struct timeval *p_tv,
+        int64_t *p_serial_id,
+        ej_uuid_t *p_uuid);
 };
 
 /* default plugin: compiled into new-server */
