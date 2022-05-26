@@ -314,11 +314,6 @@ run_add_record(
   struct run_entry re;
   int flags = 0;
 
-  gettimeofday(p_tv, NULL);
-  if (!ej_uuid_is_nonempty(*puuid)) {
-    ej_uuid_generate(puuid);
-  }
-
   state->uuid_hash_last_added_index = -1;
   state->uuid_hash_last_added_run_id = -1;
   if (!is_hidden) {
@@ -373,8 +368,21 @@ run_add_record(
     run_rebuild_user_run_index(state, team);
   }
 
-  if ((i = state->iface->get_insert_run_id(state->cnts,p_tv->tv_sec,team,p_tv->tv_usec * 1000,NULL,NULL,NULL,NULL))<0)
-    return -1;
+  int64_t serial_id = 0;
+  if (state->iface->get_append_run_id) {
+    i = state->iface->get_append_run_id(state->cnts, team, p_tv, &serial_id, puuid);
+    if (i < 0) {
+      return -1;
+    }
+  } else {
+    gettimeofday(p_tv, NULL);
+    if (!ej_uuid_is_nonempty(*puuid)) {
+      ej_uuid_generate(puuid);
+    }
+
+    if ((i = state->iface->get_insert_run_id(state->cnts,p_tv->tv_sec,team,p_tv->tv_usec * 1000,NULL,NULL,NULL,NULL))<0)
+      return -1;
+  }
 
   memset(&re, 0, sizeof(re));
   re.size = size;

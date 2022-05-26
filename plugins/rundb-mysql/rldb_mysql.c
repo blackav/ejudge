@@ -2296,6 +2296,8 @@ get_append_run_id_func(
   struct rldb_mysql_state *state = cs->plugin_state;
   struct common_mysql_iface *mi = state->mi;
   struct common_mysql_state *md = state->md;
+  struct runlog_state *rls = cs->rl_state;
+  struct run_entry *re;
   char *cmd_s = NULL;
   size_t cmd_z = 0;
   FILE *cmd_f = NULL;
@@ -2346,6 +2348,14 @@ get_append_run_id_func(
     goto fail;
   }
   mi->free_res(md);
+
+  expand_runs(rls, ri.run_id);
+  re = &rls->runs[ri.run_id - rls->run_f];
+  memset(re, 0, sizeof(*re));
+  re->run_id = ri.run_id;
+  re->time = ri.create_time.tv_sec;
+  re->nsec = ri.create_time.tv_usec * 1000;
+  re->status = RUN_EMPTY;
 
   if (p_tv) *p_tv = ri.create_time;
   if (p_serial_id) *p_serial_id = serial_id;
