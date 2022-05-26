@@ -97,11 +97,7 @@ get_insert_run_id(
         struct rldb_plugin_cnts *cdata,
         time_t t,
         int uid,
-        int nsec,
-        time_t *p_ins_t,
-        int *p_ins_ns,
-        int64_t *p_serial_id,
-        ej_uuid_t *p_uuid);
+        int nsec);
 static int
 add_entry_func(
         struct rldb_plugin_cnts *cdata,
@@ -1015,11 +1011,7 @@ get_insert_run_id(
         struct rldb_plugin_cnts *cdata,
         time_t t,
         int uid,
-        int nsec,
-        time_t *p_ins_t,
-        int *p_ins_ns,
-        int64_t *p_serial_id,
-        ej_uuid_t *p_uuid)
+        int nsec)
 {
   struct rldb_file_cnts *cs = (struct rldb_file_cnts*) cdata;
   struct runlog_state *rls = cs->rl_state;

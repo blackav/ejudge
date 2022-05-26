@@ -66,11 +66,7 @@ get_insert_run_id_func(
         struct rldb_plugin_cnts *cdata,
         time_t create_time,
         int user_id,
-        int nsec,
-        time_t *p_ins_t,
-        int *p_ins_ns,
-        int64_t *p_serial_id,
-        ej_uuid_t *p_uuid);
+        int nsec);
 
 static int
 add_entry_func(

@@ -380,7 +380,7 @@ run_add_record(
       ej_uuid_generate(puuid);
     }
 
-    if ((i = state->iface->get_insert_run_id(state->cnts,p_tv->tv_sec,team,p_tv->tv_usec * 1000,NULL,NULL,NULL,NULL))<0)
+    if ((i = state->iface->get_insert_run_id(state->cnts,p_tv->tv_sec,team,p_tv->tv_usec * 1000))<0)
       return -1;
   }
 
@@ -1675,7 +1675,7 @@ run_virtual_start(
     err("run_virtual_start: nsec field value %d is invalid", nsec);
     return -1;
   }
-  if ((i = state->iface->get_insert_run_id(state->cnts, t, user_id, nsec, NULL, NULL, NULL, NULL)) < 0)
+  if ((i = state->iface->get_insert_run_id(state->cnts, t, user_id, nsec)) < 0)
     return -1;
 
   memset(&re, 0, sizeof(re));
@@ -1753,7 +1753,7 @@ run_virtual_stop(
     return -1;
   }
 
-  if ((i = state->iface->get_insert_run_id(state->cnts, t, user_id, nsec, NULL, NULL, NULL, NULL)) < 0)
+  if ((i = state->iface->get_insert_run_id(state->cnts, t, user_id, nsec)) < 0)
     return -1;
   memset(&re, 0, sizeof(re));
   re.user_id = user_id;
