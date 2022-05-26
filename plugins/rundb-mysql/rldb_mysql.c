@@ -31,6 +31,7 @@
 #include "ejudge/mime_type.h"
 #include "ejudge/misctext.h"
 #include "ejudge/compat.h"
+#include "ejudge/ej_uuid.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -2269,6 +2270,20 @@ user_run_header_set_is_checked_func(
   return 0;
 }
 
+struct run_id_create_time_internal
+{
+  int run_id;
+  struct timeval create_time;
+};
+
+enum { RUNIDCREATETIME_WIDTH = 2 };
+#define RUNIDCREATETIME_OFFSET(f) XOFFSET(struct run_id_create_time_internal, f)
+static const struct common_mysql_parse_spec run_id_create_time_spec[RUNIDCREATETIME_WIDTH] =
+{
+  { 1, 'q', "run_id", RUNIDCREATETIME_OFFSET(run_id), 0 },
+  { 1, 'T', "create_time", RUNIDCREATETIME_OFFSET(create_time), 0 },
+};
+
 static int
 get_append_run_id_func(
         struct rldb_plugin_cnts *cdata,
@@ -2277,69 +2292,67 @@ get_append_run_id_func(
         int64_t *p_serial_id,
         ej_uuid_t *p_uuid)
 {
-  /*
-  "INSERT INTO %sruns(run_id,contest_id,create_time,user_id,prob_id,lang_id,status,ip,hash,run_uuid,score,test_num,score_adj,locale_id,judge_id,variant,pages,)
   struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts *) cdata;
   struct rldb_mysql_state *state = cs->plugin_state;
   struct common_mysql_iface *mi = state->mi;
   struct common_mysql_state *md = state->md;
-  struct runlog_state *rls = cs->rl_state;
-  struct run_entry_internal ri;
-  struct run_entry *re;
-  struct timeval curtime;
-  int run_id, i;
-  char *cmd_t = 0;
+  char *cmd_s = NULL;
   size_t cmd_z = 0;
-  FILE *cmd_f = 0;
+  FILE *cmd_f = NULL;
+  ej_uuid_t tmp_uuid = {};
+  unsigned char uuid_buf[64];
+  long long serial_id = -1;
 
-  if ((run_id = find_insert_point(rls, create_time, create_nsec, user_id)) < 0)
+  if (!p_uuid) p_uuid = &tmp_uuid;
+  if (!ej_uuid_is_nonempty(*p_uuid)) ej_uuid_generate(p_uuid);
+
+  cmd_f = open_memstream(&cmd_s, &cmd_z);
+  fprintf(cmd_f, "INSERT INTO %sruns(run_id,contest_id,create_time,create_nsec,user_id,run_uuid,last_change_time,last_change_nsec) SELECT IFNULL(MAX(run_id),-1)+1, %d, NOW(6), MICROSECOND(NOW(6)) * 1000, %d, '%s', NOW(), MICROSECOND(NOW(6)) * 1000 FROM %sruns WHERE contest_id=%d ;",
+          md->table_prefix,
+          cs->contest_id,
+          uid,
+          ej_uuid_unparse_r(uuid_buf, sizeof(uuid_buf), p_uuid, ""),
+          md->table_prefix,
+          cs->contest_id);
+  fclose(cmd_f); cmd_f = NULL;
+  if (mi->simple_query(md, cmd_s, cmd_z) < 0) goto fail;
+  free(cmd_s); cmd_s = NULL; cmd_z = 0;
+
+  if (mi->fquery(md, 1, "SELECT LAST_INSERT_ID();") < 0) {
     goto fail;
-  ASSERT(run_id < rls->run_u);
-
-  if (rls->runs[run_id - rls->run_f].status != RUN_EMPTY) {
-    // move [run_id, run_u - 1) one forward
-    memmove(&rls->runs[run_id + 1 - rls->run_f], &rls->runs[run_id - rls->run_f],
-            (rls->run_u - run_id - 1) * sizeof(rls->runs[0]));
-    for (i = run_id + 1; i < rls->run_u; ++i)
-      rls->runs[i - rls->run_f].run_id = i;
-    if (mi->simple_fquery(md, "UPDATE %sruns SET run_id = run_id + 1 WHERE contest_id = %d AND run_id >= %d ORDER BY run_id DESC;", md->table_prefix, cs->contest_id, run_id) < 0)
-      goto fail;
   }
-  re = &rls->runs[run_id - rls->run_f];
-  memset(re, 0, sizeof(*re));
-  re->run_id = run_id;
-  re->time = create_time;
-  re->nsec = create_nsec;
-  //re->user_id = user_id;
-  re->status = RUN_EMPTY;
+  if (md->row_count <= 0) {
+    goto fail;
+  }
+  if (mi->next_row(md) < 0) {
+    goto fail;
+  }
+  if (mi->parse_int64(md, 0, &serial_id) < 0 || serial_id <= 0) {
+    goto fail;
+  }
+  mi->free_res(md);
 
-  memset(&ri, 0, sizeof(ri));
-  gettimeofday(&curtime, 0);
-  ri.run_id = run_id;
-  ri.contest_id = cs->contest_id;
-  //ri.create_time = create_time;
-  //ri.create_nsec = create_nsec;
-  ri.create_tv.tv_sec = create_time;
-  ri.create_tv.tv_usec = (create_nsec + 500) / 1000;
-  ri.create_nsec = create_nsec;
-  ri.status = RUN_EMPTY;
-  //ri.user_id = user_id;
-  ri.last_change_time = curtime.tv_sec;
-  ri.last_change_nsec = curtime.tv_usec * 1000;
+  cmd_f = open_memstream(&cmd_s, &cmd_z);
+  fprintf(cmd_f, "SELECT run_id, create_time FROM %sruns WHERE serial_id = %lld; ", md->table_prefix, serial_id);
+  fclose(cmd_f); cmd_f = NULL;
 
-  cmd_f = open_memstream(&cmd_t, &cmd_z);
-  fprintf(cmd_f, "INSERT INTO %sruns VALUES ( ", md->table_prefix);
-  mi->unparse_spec(md, cmd_f, RUNS_ROW_WIDTH, runs_spec, &ri);
-  fprintf(cmd_f, " ) ;");
-  close_memstream(cmd_f); cmd_f = 0;
-  if (mi->simple_query(md, cmd_t, cmd_z) < 0) goto fail;
-  xfree(cmd_t); cmd_t = 0;
-  return run_id;
+  if (mi->query_one_row(md, cmd_s, cmd_z, RUNIDCREATETIME_WIDTH) < 0) {
+    goto fail;
+  }
+  free(cmd_s); cmd_s = NULL; cmd_z = 0;
+  struct run_id_create_time_internal ri = {};
+  if (mi->parse_spec(md, md->field_count, md->row, md->lengths,
+                     RUNIDCREATETIME_WIDTH, run_id_create_time_spec, &ri) < 0) {
+    goto fail;
+  }
+  mi->free_res(md);
 
- fail:
+  if (p_tv) *p_tv = ri.create_time;
+  if (p_serial_id) *p_serial_id = serial_id;
+  return ri.run_id;
+
+fail:
   if (cmd_f) fclose(cmd_f);
-  xfree(cmd_t);
-  return -1;
-   */
+  xfree(cmd_s);
   return -1;
 }
