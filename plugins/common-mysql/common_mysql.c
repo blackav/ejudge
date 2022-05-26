@@ -141,6 +141,11 @@ write_datetime_func(
         FILE *f,
         const unsigned char *pfx,
         const struct timeval *ptv);
+static int
+parse_int64_func(
+        struct common_mysql_state *state,
+        int index,
+        long long *p_val);
 
 /* plugin entry point */
 struct common_mysql_iface plugin_common_mysql =
@@ -185,6 +190,7 @@ struct common_mysql_iface plugin_common_mysql =
 
   escape_string_func,
   write_datetime_func,
+  parse_int64_func,
 };
 
 static struct common_plugin_data *
@@ -1135,4 +1141,27 @@ write_datetime_func(
     fprintf(f, ".%06d", (int) ptv->tv_usec);
   }
   fprintf(f, "'");
+}
+
+static int
+parse_int64_func(
+        struct common_mysql_state *state,
+        int index,
+        long long *p_val)
+{
+  if (index >= state->field_count) {
+    return -1;
+  }
+  const char *s = state->row[index];
+  if (!s) {
+    return -1;
+  }
+  char *eptr = NULL;
+  errno = 0;
+  long long val = strtoll(s, &eptr, 10);
+  if (*eptr || errno || s == eptr) {
+    return -1;
+  }
+  *p_val = val;
+  return 0;
 }
