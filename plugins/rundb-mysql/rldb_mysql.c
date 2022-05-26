@@ -2276,7 +2276,7 @@ enum { RUNIDCREATETIME_WIDTH = 2 };
 #define RUNIDCREATETIME_OFFSET(f) XOFFSET(struct run_id_create_time_internal, f)
 static const struct common_mysql_parse_spec run_id_create_time_spec[RUNIDCREATETIME_WIDTH] =
 {
-  { 1, 'q', "run_id", RUNIDCREATETIME_OFFSET(run_id), 0 },
+  { 1, 'd', "run_id", RUNIDCREATETIME_OFFSET(run_id), 0 },
   { 1, 'T', "create_time", RUNIDCREATETIME_OFFSET(create_time), 0 },
 };
 
