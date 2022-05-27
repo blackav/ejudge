@@ -23,6 +23,8 @@
 #include "ejudge/iterators.h"
 #include "ejudge/ejudge_cfg.h"
 
+#include <stdint.h>
+
 struct ejudge_cfg;
 struct contest_desc;
 struct section_global_data;
@@ -215,9 +217,10 @@ struct rldb_plugin_iface
         int user_id);
 
   // append run safely to the end
-  int (*get_append_run_id)(
+  int (*append_run)(
         struct rldb_plugin_cnts *cdata,
-        int uid,
+        const struct run_entry *re,
+        uint64_t mask,
         struct timeval *p_tv,
         int64_t *p_serial_id,
         ej_uuid_t *p_uuid);

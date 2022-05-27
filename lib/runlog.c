@@ -368,9 +368,13 @@ run_add_record(
     run_rebuild_user_run_index(state, team);
   }
 
+  memset(&re, 0, sizeof(re));
+
   int64_t serial_id = 0;
-  if (state->iface->get_append_run_id) {
-    i = state->iface->get_append_run_id(state->cnts, team, p_tv, &serial_id, puuid);
+  if (state->iface->append_run) {
+    re.user_id = team;
+    uint64_t flags = RE_USER_ID;
+    i = state->iface->append_run(state->cnts, &re, flags, p_tv, &serial_id, puuid);
     if (i < 0) {
       return -1;
     }
@@ -384,7 +388,6 @@ run_add_record(
       return -1;
   }
 
-  memset(&re, 0, sizeof(re));
   re.size = size;
   re.locale_id = locale_id;
   re.user_id = team;

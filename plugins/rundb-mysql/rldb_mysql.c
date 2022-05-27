@@ -119,7 +119,7 @@ struct rldb_plugin_iface plugin_rldb_mysql =
   user_run_header_set_duration_func,
   user_run_header_set_is_checked_func,
   user_run_header_delete_func,
-  get_append_run_id_func,
+  append_run_func,
 };
 
 static struct common_plugin_data *
@@ -2281,9 +2281,10 @@ static const struct common_mysql_parse_spec run_id_create_time_spec[RUNIDCREATET
 };
 
 static int
-get_append_run_id_func(
+append_run_func(
         struct rldb_plugin_cnts *cdata,
-        int uid,
+        const struct run_entry *in_re,
+        uint64_t flags,
         struct timeval *p_tv,
         int64_t *p_serial_id,
         ej_uuid_t *p_uuid)
@@ -2308,7 +2309,7 @@ get_append_run_id_func(
   fprintf(cmd_f, "INSERT INTO %sruns(run_id,contest_id,create_time,create_nsec,user_id,run_uuid,last_change_time,last_change_nsec) SELECT IFNULL(MAX(run_id),-1)+1, %d, NOW(6), MICROSECOND(NOW(6)) * 1000, %d, '%s', NOW(), MICROSECOND(NOW(6)) * 1000 FROM %sruns WHERE contest_id=%d ;",
           md->table_prefix,
           cs->contest_id,
-          uid,
+          in_re->user_id,
           ej_uuid_unparse_r(uuid_buf, sizeof(uuid_buf), p_uuid, ""),
           md->table_prefix,
           cs->contest_id);
