@@ -374,7 +374,7 @@ run_add_record(
   if (state->iface->append_run) {
     re.user_id = team;
     uint64_t flags = RE_USER_ID;
-    i = state->iface->append_run(state->cnts, &re, flags, p_tv, &serial_id, puuid);
+    i = state->iface->append_run(state->cnts, &re, flags, prob_uuid, p_tv, &serial_id, puuid);
     if (i < 0) {
       return -1;
     }

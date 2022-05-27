@@ -2285,6 +2285,7 @@ append_run_func(
         struct rldb_plugin_cnts *cdata,
         const struct run_entry *in_re,
         uint64_t flags,
+        const unsigned char *prob_uuid,
         struct timeval *p_tv,
         int64_t *p_serial_id,
         ej_uuid_t *p_uuid)
@@ -2402,7 +2403,7 @@ append_run_func(
     fputs(",store_flags", cmd_f);
   }
   if ((flags & RE_PROB_UUID)) {
-    //fputs(",prob_uuid", cmd_f);
+    fputs(",prob_uuid", cmd_f);
   }
   fprintf(cmd_f, ") SELECT IFNULL(MAX(run_id),-1)+1, %d, NOW(6), MICROSECOND(NOW(6)) * 1000, '%s', NOW(), MICROSECOND(NOW(6)) * 1000",
           cs->contest_id,
@@ -2513,7 +2514,9 @@ append_run_func(
     fprintf(cmd_f, ",%d", in_re->store_flags);
   }
   if ((flags & RE_PROB_UUID)) {
-    //{ 1, 's', "prob_uuid", RUNS_OFFSET(prob_uuid), 0 },
+    fputs(",'", cmd_f);
+    mi->write_escaped_string(md, cmd_f, NULL, prob_uuid);
+    fputs("'", cmd_f);
   }
   fprintf(cmd_f, " FROM %sruns WHERE contest_id=%d ;",
           md->table_prefix,

@@ -251,6 +251,7 @@ append_run_func(
         struct rldb_plugin_cnts *cdata,
         const struct run_entry *re,
         uint64_t flags,
+        const unsigned char *prob_uuid,
         struct timeval *p_tv,
         int64_t *p_serial_id,
         ej_uuid_t *p_uuid);
