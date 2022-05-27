@@ -2294,7 +2294,7 @@ append_run_func(
   struct common_mysql_iface *mi = state->mi;
   struct common_mysql_state *md = state->md;
   struct runlog_state *rls = cs->rl_state;
-  struct run_entry *re;
+  struct run_entry *new_re;
   char *cmd_s = NULL;
   size_t cmd_z = 0;
   FILE *cmd_f = NULL;
@@ -2302,15 +2302,220 @@ append_run_func(
   unsigned char uuid_buf[64];
   long long serial_id = -1;
 
+  flags &= ~((uint64_t) RE_RUN_UUID);
+
   if (!p_uuid) p_uuid = &tmp_uuid;
   if (!ej_uuid_is_nonempty(*p_uuid)) ej_uuid_generate(p_uuid);
 
   cmd_f = open_memstream(&cmd_s, &cmd_z);
-  fprintf(cmd_f, "INSERT INTO %sruns(run_id,contest_id,create_time,create_nsec,user_id,run_uuid,last_change_time,last_change_nsec) SELECT IFNULL(MAX(run_id),-1)+1, %d, NOW(6), MICROSECOND(NOW(6)) * 1000, %d, '%s', NOW(), MICROSECOND(NOW(6)) * 1000 FROM %sruns WHERE contest_id=%d ;",
-          md->table_prefix,
+  fprintf(cmd_f, "INSERT INTO %sruns(run_id,contest_id,create_time,create_nsec,run_uuid,last_change_time,last_change_nsec",
+          md->table_prefix);
+  if ((flags & RE_SIZE)) {
+    fputs(",size", cmd_f);
+  }
+  if ((flags & RE_IP)) {
+    fputs(",ip_version", cmd_f);
+    fputs(",ip", cmd_f);
+  }
+  if ((flags & RE_SHA1)) {
+    fputs(",hash", cmd_f);
+  }
+  if ((flags & RE_USER_ID)) {
+    fputs(",user_id", cmd_f);
+  }
+  if ((flags & RE_PROB_ID)) {
+    fputs(",prob_id", cmd_f);
+  }
+  if ((flags & RE_LANG_ID)) {
+    fputs(",lang_id", cmd_f);
+  }
+  if ((flags & RE_LOCALE_ID)) {
+    fputs(",locale_id", cmd_f);
+  }
+  if ((flags & RE_STATUS)) {
+    fputs(",status", cmd_f);
+  }
+  if ((flags & RE_TEST)) {
+    fputs(",test_num", cmd_f);
+  }
+  if ((flags & RE_SCORE)) {
+    fputs(",score", cmd_f);
+  }
+  if ((flags & RE_IS_IMPORTED)) {
+    fputs(",is_imported", cmd_f);
+  }
+  if ((flags & RE_VARIANT)) {
+    fputs(",variant", cmd_f);
+  }
+  if ((flags & RE_IS_HIDDEN)) {
+    fputs(",is_hidden", cmd_f);
+  }
+  if ((flags & RE_IS_READONLY)) {
+    fputs(",is_readonly", cmd_f);
+  }
+  if ((flags & RE_PAGES)) {
+    fputs(",pages", cmd_f);
+  }
+  if ((flags & RE_SCORE_ADJ)) {
+    fputs(",score_adj", cmd_f);
+  }
+  if ((flags & RE_JUDGE_ID)) {
+    fputs(",judge_id", cmd_f);
+  }
+  if ((flags & RE_SSL_FLAG)) {
+    fputs(",ssl_flag", cmd_f);
+  }
+  if ((flags & RE_MIME_TYPE)) {
+    fputs(",mime_type", cmd_f);
+  }
+  if ((flags & RE_TOKEN_FLAGS)) {
+    fputs(",token_flags", cmd_f);
+  }
+  if ((flags & RE_TOKEN_COUNT)) {
+    fputs(",token_count", cmd_f);
+  }
+  if ((flags & RE_IS_MARKED)) {
+    fputs(",is_marked", cmd_f);
+  }
+  if ((flags & RE_IS_SAVED)) {
+    fputs(",is_saved", cmd_f);
+  }
+  if ((flags & RE_SAVED_STATUS)) {
+    fputs(",saved_status", cmd_f);
+  }
+  if ((flags & RE_SAVED_SCORE)) {
+    fputs(",saved_score", cmd_f);
+  }
+  if ((flags & RE_SAVED_TEST)) {
+    fputs(",saved_test", cmd_f);
+  }
+  if ((flags & RE_RUN_UUID)) {
+    fputs(",run_uuid", cmd_f);
+  }
+  if ((flags & RE_PASSED_MODE)) {
+    fputs(",passed_mode", cmd_f);
+  }
+  if ((flags & RE_EOLN_TYPE)) {
+    fputs(",eoln_type", cmd_f);
+  }
+  if ((flags & RE_STORE_FLAGS)) {
+    fputs(",store_flags", cmd_f);
+  }
+  if ((flags & RE_PROB_UUID)) {
+    //fputs(",prob_uuid", cmd_f);
+  }
+  fprintf(cmd_f, ") SELECT IFNULL(MAX(run_id),-1)+1, %d, NOW(6), MICROSECOND(NOW(6)) * 1000, '%s', NOW(), MICROSECOND(NOW(6)) * 1000",
           cs->contest_id,
-          in_re->user_id,
-          ej_uuid_unparse_r(uuid_buf, sizeof(uuid_buf), p_uuid, ""),
+          ej_uuid_unparse_r(uuid_buf, sizeof(uuid_buf), p_uuid, ""));
+  if ((flags & RE_SIZE)) {
+    fprintf(cmd_f, ",%u", (unsigned) in_re->size);
+  }
+  if ((flags & RE_IP)) {
+    int ip_version = 4;
+    if (in_re->ipv6_flag) ip_version = 6;
+    fprintf(cmd_f, ",ip_version = %d", ip_version);
+    ej_ip_t ipv6;
+    run_entry_to_ipv6(in_re, &ipv6);
+    fprintf(cmd_f, ",ip = '%s'", xml_unparse_ipv6(&ipv6));
+  }
+  if ((flags & RE_SHA1)) {
+    if (!in_re->sha1[0] && !in_re->sha1[1] && !in_re->sha1[2]
+        && !in_re->sha1[3] && !in_re->sha1[4]) {
+      fprintf(cmd_f, ",NULL");
+    } else {
+      fprintf(cmd_f, ",'%s'", unparse_sha1(in_re->sha1));
+    }
+  }
+  if ((flags & RE_USER_ID)) {
+    fprintf(cmd_f, ",%d", in_re->user_id);
+  }
+  if ((flags & RE_PROB_ID)) {
+    fprintf(cmd_f, ",%d", in_re->prob_id);
+  }
+  if ((flags & RE_LANG_ID)) {
+    fprintf(cmd_f, ",%d", in_re->lang_id);
+  }
+  if ((flags & RE_LOCALE_ID)) {
+    fprintf(cmd_f, ",%d", in_re->locale_id);
+  }
+  if ((flags & RE_STATUS)) {
+    fprintf(cmd_f, ",%d", in_re->status);
+  }
+  if ((flags & RE_TEST)) {
+    fprintf(cmd_f, ",%d", in_re->test);
+  }
+  if ((flags & RE_SCORE)) {
+    fprintf(cmd_f, ",%d", in_re->score);
+  }
+  if ((flags & RE_IS_IMPORTED)) {
+    fprintf(cmd_f, ",%d", !!in_re->is_imported);
+  }
+  if ((flags & RE_VARIANT)) {
+    fprintf(cmd_f, ",%d", in_re->variant);
+  }
+  if ((flags & RE_IS_HIDDEN)) {
+    fprintf(cmd_f, ",%d", !!in_re->is_hidden);
+  }
+  if ((flags & RE_IS_READONLY)) {
+    fprintf(cmd_f, ",%d", !!in_re->is_readonly);
+  }
+  if ((flags & RE_PAGES)) {
+    fprintf(cmd_f, ",%d", in_re->pages);
+  }
+  if ((flags & RE_SCORE_ADJ)) {
+    fprintf(cmd_f, ",%d", in_re->score_adj);
+  }
+  if ((flags & RE_JUDGE_ID)) {
+    fprintf(cmd_f, ",%d", in_re->judge_id);
+  }
+  if ((flags & RE_SSL_FLAG)) {
+    fprintf(cmd_f, ",%d", !!in_re->ssl_flag);
+  }
+  if ((flags & RE_MIME_TYPE)) {
+    if (in_re->mime_type > 0) {
+      fprintf(cmd_f, ",'%s'", mime_type_get_type(in_re->mime_type));
+    } else {
+      fprintf(cmd_f, ",NULL");
+    }
+  }
+  if ((flags & RE_TOKEN_FLAGS)) {
+    fprintf(cmd_f, ",%d", in_re->token_flags);
+  }
+  if ((flags & RE_TOKEN_COUNT)) {
+    fprintf(cmd_f, ",%d", in_re->token_count);
+  }
+  if ((flags & RE_IS_MARKED)) {
+    fprintf(cmd_f, ",%d", !!in_re->is_marked);
+  }
+  if ((flags & RE_IS_SAVED)) {
+    fprintf(cmd_f, ",%d", !!in_re->is_saved);
+  }
+  if ((flags & RE_SAVED_STATUS)) {
+    fprintf(cmd_f, ",%d", in_re->saved_status);
+  }
+  if ((flags & RE_SAVED_SCORE)) {
+    fprintf(cmd_f, ",%d", in_re->saved_score);
+  }
+  if ((flags & RE_SAVED_TEST)) {
+    fprintf(cmd_f, ",%d", in_re->saved_test);
+  }
+  if ((flags & RE_RUN_UUID)) {
+    fprintf(cmd_f, ",'%s'",
+          ej_uuid_unparse_r(uuid_buf, sizeof(uuid_buf), &in_re->run_uuid, ""));
+  }
+  if ((flags & RE_PASSED_MODE)) {
+    fprintf(cmd_f, ",%d", in_re->passed_mode);
+  }
+  if ((flags & RE_EOLN_TYPE)) {
+    fprintf(cmd_f, ",%d", in_re->eoln_type);
+  }
+  if ((flags & RE_STORE_FLAGS)) {
+    fprintf(cmd_f, ",%d", in_re->store_flags);
+  }
+  if ((flags & RE_PROB_UUID)) {
+    //{ 1, 's', "prob_uuid", RUNS_OFFSET(prob_uuid), 0 },
+  }
+  fprintf(cmd_f, " FROM %sruns WHERE contest_id=%d ;",
           md->table_prefix,
           cs->contest_id);
   fclose(cmd_f); cmd_f = NULL;
@@ -2347,12 +2552,106 @@ append_run_func(
   mi->free_res(md);
 
   expand_runs(rls, ri.run_id);
-  re = &rls->runs[ri.run_id - rls->run_f];
-  memset(re, 0, sizeof(*re));
-  re->run_id = ri.run_id;
-  re->time = ri.create_time.tv_sec;
-  re->nsec = ri.create_time.tv_usec * 1000;
-  re->status = RUN_EMPTY;
+  new_re = &rls->runs[ri.run_id - rls->run_f];
+  memset(new_re, 0, sizeof(*new_re));
+  new_re->run_id = ri.run_id;
+  new_re->time = ri.create_time.tv_sec;
+  new_re->nsec = ri.create_time.tv_usec * 1000;
+  new_re->run_uuid = *p_uuid;
+  if ((flags & RE_SIZE)) {
+    new_re->size = in_re->size;
+  }
+  if ((flags & RE_IP)) {
+    new_re->ipv6_flag = in_re->ipv6_flag;
+    new_re->a = in_re->a;
+  }
+  if ((flags & RE_SHA1)) {
+    memcpy(new_re->sha1, in_re->sha1, sizeof(new_re->sha1));
+  }
+  if ((flags & RE_USER_ID)) {
+    new_re->user_id = in_re->user_id;
+  }
+  if ((flags & RE_PROB_ID)) {
+    new_re->prob_id = in_re->prob_id;
+  }
+  if ((flags & RE_LANG_ID)) {
+    new_re->lang_id = in_re->lang_id;
+  }
+  if ((flags & RE_LOCALE_ID)) {
+    new_re->locale_id = in_re->locale_id;
+  }
+  if ((flags & RE_STATUS)) {
+    new_re->status = in_re->status;
+  }
+  if ((flags & RE_TEST)) {
+    new_re->test = in_re->test;
+  }
+  if ((flags & RE_SCORE)) {
+    new_re->score = in_re->score;
+  }
+  if ((flags & RE_IS_IMPORTED)) {
+    new_re->is_imported = in_re->is_imported;
+  }
+  if ((flags & RE_VARIANT)) {
+    new_re->variant = in_re->variant;
+  }
+  if ((flags & RE_IS_HIDDEN)) {
+    new_re->is_hidden = in_re->is_hidden;
+  }
+  if ((flags & RE_IS_READONLY)) {
+    new_re->is_readonly = in_re->is_readonly;
+  }
+  if ((flags & RE_PAGES)) {
+    new_re->pages = in_re->pages;
+  }
+  if ((flags & RE_SCORE_ADJ)) {
+    new_re->score_adj = in_re->score_adj;
+  }
+  if ((flags & RE_JUDGE_ID)) {
+    new_re->judge_id = in_re->judge_id;
+  }
+  if ((flags & RE_SSL_FLAG)) {
+    new_re->ssl_flag = in_re->ssl_flag;
+  }
+  if ((flags & RE_MIME_TYPE)) {
+    new_re->mime_type = in_re->mime_type;
+  }
+  if ((flags & RE_TOKEN_FLAGS)) {
+    new_re->token_flags = in_re->token_flags;
+  }
+  if ((flags & RE_TOKEN_COUNT)) {
+    new_re->token_count = in_re->token_count;
+  }
+  if ((flags & RE_IS_MARKED)) {
+    new_re->is_marked = in_re->is_marked;
+  }
+  if ((flags & RE_IS_SAVED)) {
+    new_re->is_saved = in_re->is_saved;
+  }
+  if ((flags & RE_SAVED_STATUS)) {
+    new_re->saved_status = in_re->saved_status;
+  }
+  if ((flags & RE_SAVED_SCORE)) {
+    new_re->saved_score = in_re->saved_score;
+  }
+  if ((flags & RE_SAVED_TEST)) {
+    new_re->saved_test = in_re->saved_test;
+  }
+  if ((flags & RE_RUN_UUID)) {
+    new_re->run_uuid = in_re->run_uuid;
+  }
+  if ((flags & RE_PASSED_MODE)) {
+    new_re->passed_mode = in_re->passed_mode;
+  }
+  if ((flags & RE_EOLN_TYPE)) {
+    new_re->eoln_type = in_re->eoln_type;
+  }
+  if ((flags & RE_STORE_FLAGS)) {
+    new_re->store_flags = in_re->store_flags;
+  }
+  if ((flags & RE_PROB_UUID)) {
+    //{ 1, 's', "prob_uuid", RUNS_OFFSET(prob_uuid), 0 },
+  }
 
   if (p_tv) *p_tv = ri.create_time;
   if (p_serial_id) *p_serial_id = serial_id;
