@@ -2414,10 +2414,10 @@ append_run_func(
   if ((flags & RE_IP)) {
     int ip_version = 4;
     if (in_re->ipv6_flag) ip_version = 6;
-    fprintf(cmd_f, ",ip_version = %d", ip_version);
+    fprintf(cmd_f, ",%d", ip_version);
     ej_ip_t ipv6;
     run_entry_to_ipv6(in_re, &ipv6);
-    fprintf(cmd_f, ",ip = '%s'", xml_unparse_ipv6(&ipv6));
+    fprintf(cmd_f, ",'%s'", xml_unparse_ipv6(&ipv6));
   }
   if ((flags & RE_SHA1)) {
     if (!in_re->sha1[0] && !in_re->sha1[1] && !in_re->sha1[2]
