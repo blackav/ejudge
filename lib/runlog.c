@@ -369,25 +369,6 @@ run_add_record(
   }
 
   memset(&re, 0, sizeof(re));
-
-  int64_t serial_id = 0;
-  if (state->iface->append_run) {
-    re.user_id = team;
-    uint64_t flags = RE_USER_ID;
-    i = state->iface->append_run(state->cnts, &re, flags, prob_uuid, p_tv, &serial_id, puuid);
-    if (i < 0) {
-      return -1;
-    }
-  } else {
-    gettimeofday(p_tv, NULL);
-    if (!ej_uuid_is_nonempty(*puuid)) {
-      ej_uuid_generate(puuid);
-    }
-
-    if ((i = state->iface->get_insert_run_id(state->cnts,p_tv->tv_sec,team,p_tv->tv_usec * 1000))<0)
-      return -1;
-  }
-
   re.size = size;
   re.locale_id = locale_id;
   re.user_id = team;
@@ -403,24 +384,44 @@ run_add_record(
   re.is_hidden = is_hidden;
   re.mime_type = mime_type;
   re.store_flags = store_flags;
-  flags = RE_SIZE | RE_LOCALE_ID | RE_USER_ID | RE_LANG_ID | RE_PROB_ID | RE_STATUS | RE_TEST | RE_SCORE | RE_IP | RE_SSL_FLAG | RE_VARIANT | RE_IS_HIDDEN | RE_MIME_TYPE | RE_EOLN_TYPE | RE_STORE_FLAGS;
+  if (prob_uuid) {
+    flags |= RE_PROB_UUID;
+  }
   if (sha1) {
     memcpy(re.sha1, sha1, sizeof(state->runs[i].sha1));
     flags |= RE_SHA1;
   }
-#if CONF_HAS_LIBUUID - 0 != 0
-  if (!puuid) {
-    ej_uuid_t tmp_uuid;
-    ej_uuid_generate(&tmp_uuid);
-    memcpy(&re.run_uuid, &tmp_uuid, sizeof(ej_uuid_t));
-    flags |= RE_RUN_UUID;
+  flags = RE_SIZE | RE_LOCALE_ID | RE_USER_ID | RE_LANG_ID | RE_PROB_ID | RE_STATUS | RE_TEST | RE_SCORE | RE_IP | RE_SSL_FLAG | RE_VARIANT | RE_IS_HIDDEN | RE_MIME_TYPE | RE_EOLN_TYPE | RE_STORE_FLAGS;
+
+  int64_t serial_id = 0;
+  if (state->iface->append_run) {
+    i = state->iface->append_run(state->cnts, &re, flags, prob_uuid, p_tv, &serial_id, puuid);
+    if (i < 0) {
+      return -1;
+    }
+
+    re.run_id = i;
+    re.run_uuid = *puuid;
   } else {
-    memcpy(&re.run_uuid, puuid, sizeof(ej_uuid_t));
-    flags |= RE_RUN_UUID;
-  }
+    gettimeofday(p_tv, NULL);
+    if (!ej_uuid_is_nonempty(*puuid)) {
+      ej_uuid_generate(puuid);
+    }
+
+    if ((i = state->iface->get_insert_run_id(state->cnts,p_tv->tv_sec,team,p_tv->tv_usec * 1000))<0)
+      return -1;
+
+#if CONF_HAS_LIBUUID - 0 != 0
+    if (!puuid) {
+      ej_uuid_t tmp_uuid;
+      ej_uuid_generate(&tmp_uuid);
+      memcpy(&re.run_uuid, &tmp_uuid, sizeof(ej_uuid_t));
+      flags |= RE_RUN_UUID;
+    } else {
+      memcpy(&re.run_uuid, puuid, sizeof(ej_uuid_t));
+      flags |= RE_RUN_UUID;
+    }
 #endif
-  if (prob_uuid) {
-    flags |= RE_PROB_UUID;
   }
 
   int uuid_hash_index = -1;
@@ -441,10 +442,12 @@ run_add_record(
   }
   state->user_count = -1;
 
-  if (state->iface->add_entry_2 && (flags & RE_PROB_UUID)) {
-    if (state->iface->add_entry_2(state->cnts, i, &re, flags, prob_uuid) < 0) return -1;
-  } else {
-    if (state->iface->add_entry(state->cnts, i, &re, flags) < 0) return -1;
+  if (!state->iface->append_run) {
+    if (state->iface->add_entry_2 && (flags & RE_PROB_UUID)) {
+      if (state->iface->add_entry_2(state->cnts, i, &re, flags, prob_uuid) < 0) return -1;
+    } else {
+      if (state->iface->add_entry(state->cnts, i, &re, flags) < 0) return -1;
+    }
   }
 
   // updating user_id index
