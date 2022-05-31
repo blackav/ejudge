@@ -3152,7 +3152,7 @@ priv_submit_run(
     for (prob_id = 1; prob_id <= cs->max_prob; ++prob_id) {
       prob = cs->probs[prob_id];
       if (prob) {
-        if ((prob->short_name && !strcmp(s, prob->short_name))
+        if ((/*prob->short_name &&*/ !strcmp(s, prob->short_name))
             || (prob->internal_name && !strcmp(s, prob->internal_name))) {
           break;
         }
@@ -3219,7 +3219,7 @@ priv_submit_run(
     if (hr_cgi_param(phr, "language_name", &s) > 0) {
       for (lang_id = 1; lang_id <= cs->max_lang; ++lang_id) {
         lang = cs->langs[lang_id];
-        if (lang && lang->short_name && !strcmp(lang->short_name, s)) {
+        if (lang && /*lang->short_name &&*/ !strcmp(lang->short_name, s)) {
           break;
         }
       }
@@ -7940,7 +7940,7 @@ priv_run_status_json(
   }
   fprintf(fout, ",\n      \"prob_id\": %d", re.prob_id);
   if (re.prob_id > 0 && re.prob_id <= cs->max_prob) prob = cs->probs[re.prob_id];
-  if (prob && prob->short_name && prob->short_name[0]) {
+  if (prob && /*prob->short_name &&*/ prob->short_name[0]) {
     fprintf(fout, ",\n      \"prob_name\": \"%s\"", JARMOR(prob->short_name));
   }
   if (prob && prob->internal_name && prob->internal_name[0]) {
@@ -7962,7 +7962,7 @@ priv_run_status_json(
   }
   fprintf(fout, ",\n      \"lang_id\": %d", re.lang_id);
   if (re.lang_id > 0 && re.lang_id <= cs->max_lang) lang = cs->langs[re.lang_id];
-  if (lang && lang->short_name && lang->short_name[0]) {
+  if (lang && /*lang->short_name &&*/ lang->short_name[0]) {
     fprintf(fout, ",\n      \"lang_name\": \"%s\"", JARMOR(lang->short_name));
   }
   fprintf(fout, ",\n      \"ip\": \"%s\"", xml_unparse_ip(re.a.ip));
@@ -8760,7 +8760,7 @@ priv_list_runs_json(
           }
         }
         if ((run_fields & (1 << RUN_VIEW_PROB_NAME)) && prob) {
-          if (prob->short_name && prob->short_name[0]) {
+          if (/*prob->short_name &&*/ prob->short_name[0]) {
             fprintf(fout, ",\n%s\"prob_name\" : \"%s\"", indent, JARMOR(prob->short_name));
           }
           if (prob->internal_name && prob->internal_name[0]) {
@@ -8774,7 +8774,7 @@ priv_list_runs_json(
           fprintf(fout, ",\n%s\"lang_id\" : %d", indent, pe->lang_id);
         }
         if ((run_fields & (1 << RUN_VIEW_LANG_NAME)) && lang) {
-          if (lang->short_name && lang->short_name[0]) {
+          if (/*lang->short_name &&*/ lang->short_name[0]) {
             fprintf(fout, ",\n%s\"lang_name\": \"%s\"", indent, JARMOR(lang->short_name));
           }
         }
@@ -13477,7 +13477,7 @@ unpriv_problem_status_json(
       const unsigned char *lng = prob->enable_language[j];
       for (int lang_id = 1; lang_id <= cs->max_lang; ++lang_id) {
         const struct section_language_data *lang = cs->langs[lang_id];
-        if (lang && lang->short_name && !strcmp(lang->short_name, lng) && lang->disabled <= 0) {
+        if (lang && /*lang->short_name &&*/ !strcmp(lang->short_name, lng) && lang->disabled <= 0) {
           lset[lang_id / 32] |= 1U << (lang_id % 32);
           break;
         }
@@ -13489,7 +13489,7 @@ unpriv_problem_status_json(
     memset(lset, 0, ssize * sizeof(lset[0]));
     for (int lang_id = 1; lang_id <= cs->max_lang; ++lang_id) {
       const struct section_language_data *lang = cs->langs[lang_id];
-      if (lang && lang->short_name && lang->disabled <= 0) {
+      if (lang && /*lang->short_name &&*/ lang->disabled <= 0) {
         lset[lang_id / 32] |= 1U << (lang_id % 32);
       }
     }
@@ -13497,7 +13497,7 @@ unpriv_problem_status_json(
       const unsigned char *lng = prob->enable_language[j];
       for (int lang_id = 1; lang_id <= cs->max_lang; ++lang_id) {
         const struct section_language_data *lang = cs->langs[lang_id];
-        if (lang && lang->short_name && !strcmp(lang->short_name, lng) && lang->disabled <= 0) {
+        if (lang && /*lang->short_name &&*/ !strcmp(lang->short_name, lng) && lang->disabled <= 0) {
           lset[lang_id / 32] &= ~(1U << (lang_id % 32));
           break;
         }

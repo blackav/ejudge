@@ -5783,7 +5783,7 @@ ns_get_user_problems_summary(
         for (int other_id = 1; other_id <= cs->max_prob; ++other_id) {
           const struct section_problem_data *other_prob = cs->probs[other_id];
           if (other_prob) {
-            if (other_prob->short_name && !strcmp(cur_prob->provide_ok[jj], other_prob->short_name)) {
+            if (/*other_prob->short_name &&*/ !strcmp(cur_prob->provide_ok[jj], other_prob->short_name)) {
               pinfo[other_id].status &= ~PROB_STATUS_SUBMITTABLE;
               break;
             } else if (other_prob->internal_name && !strcmp(cur_prob->provide_ok[jj], other_prob->internal_name)) {
@@ -9022,7 +9022,7 @@ write_json_run_info(
       fprintf(fout, ",\n      \"is_src_enabled\": %s", to_json_bool(ri.is_src_enabled));
       const struct section_language_data *lang = NULL;
       if (ri.lang_id > 0 && ri.lang_id <= cs->max_lang) lang = cs->langs[ri.lang_id];
-      if (lang && lang->src_sfx) {
+      if (lang /*&& lang->src_sfx*/) {
         fprintf(fout, ",\n      \"src_sfx\": \"%s\"", json_armor_buf(&ab, lang->src_sfx));
       }
     }
