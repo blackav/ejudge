@@ -1144,10 +1144,10 @@ super_html_serve_unparse_serve_cfg(
     const struct section_problem_data *prob = sstate->probs[i];
     if (!prob) continue;
     const struct section_problem_data *aprob = NULL;
-    if (prob->super && prob->super[0]) {
+    if (/*prob->super &&*/ prob->super[0]) {
       for (int j = 0; j < sstate->aprob_u; ++j) {
         const struct section_problem_data *aa = sstate->aprobs[j];
-        if (aa && aa->short_name && !strcmp(prob->super, aa->short_name)) {
+        if (aa && /*aa->short_name &&*/ !strcmp(prob->super, aa->short_name)) {
           aprob = aa;
           break;
         }

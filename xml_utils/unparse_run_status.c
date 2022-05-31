@@ -54,7 +54,7 @@ static const unsigned char tree_result_strs[RUN_STATUS_SIZE][4] =
 int
 run_status_to_str_short(unsigned char *buf, size_t size, int val)
 {
-  if (((unsigned) val) < RUN_STATUS_SIZE && tree_result_strs[val]) {
+  if (((unsigned) val) < RUN_STATUS_SIZE /*&& tree_result_strs[val]*/) {
     return snprintf(buf, size, "%s", tree_result_strs[val]);
   }
   return snprintf(buf, size, "result_%d", val);

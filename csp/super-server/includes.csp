@@ -23,4 +23,6 @@
 #define _(x) gettext(x)
 
 #define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
+
+#pragma GCC diagnostic ignored "-Waddress"
 %>

@@ -1554,7 +1554,7 @@ serve_compile_request(
   if (cp.lang_header) {
     if (lang->multi_header_suffix && lang->multi_header_suffix[0]) {
       cp.lang_short_name = lang->multi_header_suffix;
-    } else if (lang->short_name && lang->short_name[0]) {
+    } else if (/*lang->short_name &&*/ lang->short_name[0]) {
       cp.lang_short_name = (unsigned char*) lang->short_name;
     }
   }

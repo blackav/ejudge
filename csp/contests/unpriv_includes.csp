@@ -31,4 +31,6 @@ unpriv_load_html_style(struct http_request_info *phr,
 void
 do_json_user_state(FILE *fout, const serve_state_t cs, int user_id,
                    int need_reload_check);
+
+#pragma GCC diagnostic ignored "-Waddress"
 %>

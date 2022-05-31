@@ -147,7 +147,7 @@ prepare_func(
         struct xml_tree *tree)
 {
     struct auth_google_state *state = (struct auth_google_state*) data;
-    const struct xml_parse_spec *spec = ejudge_cfg_get_spec();
+    //const struct xml_parse_spec *spec = ejudge_cfg_get_spec();
 
     // load auth base plugin
     const struct common_loaded_plugin *mplg;

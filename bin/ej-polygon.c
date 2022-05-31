@@ -2169,7 +2169,7 @@ find_revision(FILE *log_f, const unsigned char *text, int revision, struct Revis
         ri->comment = strdup(buf);
 
         if (!(s = strstr(s, "<td "))) {
-            fprintf(log_f, "expected column 6 (download), but got nothing in row %s\n", s);
+            fprintf(log_f, "expected column 6 (download), but got nothing\n");
             goto cleanup;
         }
         if (extract_raw_td_content(s, buf, &s) < 0) {
@@ -2226,7 +2226,7 @@ is_file_unchanged(const unsigned char *path, const unsigned char *bytes, ssize_t
 {
     struct stat stb;
     unsigned char *b = NULL, *s;
-    ssize_t z = 0, r;
+    ssize_t z = 0, r = 0;
     int fd = -1;
 
     if (stat(path, &stb) < 0) {
