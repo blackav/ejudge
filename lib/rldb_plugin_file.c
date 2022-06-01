@@ -681,6 +681,168 @@ read_runlog_version_1(struct rldb_file_cnts *cs)
   return 0;
 }
 
+/* structure size is 128 bytes */
+struct run_header_v2
+{
+  unsigned char version;        /* current version is 2 */
+  unsigned char _pad1[19];      /* skip fields of version 1 header */
+  unsigned char byte_order;     /* 0 - little-endian, the only supported yet */
+  unsigned char _pad2[11];      /* pad to the 32-byte boundary */
+  ej_time64_t start_time;
+  ej_time64_t sched_time;
+  ej_time64_t duration;
+  ej_time64_t stop_time;
+  ej_time64_t finish_time;      /* when the contest expected to finish */
+  ej_time64_t saved_duration;
+  ej_time64_t saved_stop_time;
+  ej_time64_t saved_finish_time;
+  int next_run_id;              /* the first free run_id + 1 (i.e. 0 means "unknown", 1 means 0, etc) */
+  unsigned char _pad3[28];
+};
+
+/* structure size is 128 bytes */
+struct run_entry_v2
+{
+  rint32_t       run_id;        /* 4 */
+  ej_size_t      size;          /* 4 */
+  ej_time64_t    time;          /* 8 */
+  rint32_t       nsec;          /* 4 */
+  rint32_t       user_id;       /* 4 */
+  rint32_t       prob_id;       /* 4 */
+  rint32_t       lang_id;       /* 4 */
+  union
+  {
+    ej_ip4_t       ip;
+    unsigned char  ipv6[16];
+  }              a;             /* 16 */
+  ruint32_t      sha1[5];       /* 20 */
+  rint32_t       score;         /* 4 */
+  rint16_t       test;          /* 2 */
+  signed char    passed_mode;   /* 1 */
+  unsigned char  store_flags;   /* 1 */
+  rint32_t       score_adj;     /* 4 */
+  rint16_t       locale_id;     /* 2 */
+  ruint16_t      judge_id;      /* 2 */
+  unsigned char  status;        /* 1 */
+  unsigned char  is_imported;   /* 1 */
+  unsigned char  variant;       /* 1 */
+  unsigned char  is_hidden;     /* 1 */
+  unsigned char  is_readonly;   /* 1 */
+  unsigned char  pages;         /* 1 */
+  unsigned char  ipv6_flag;     /* 1 */
+  unsigned char  ssl_flag;      /* 1 */
+  rint16_t       mime_type;     /* 2 */
+  unsigned char  eoln_type;     /* 1 */
+  unsigned char  is_marked;     /* 1 */
+  ej_uuid_t      run_uuid;      /* 16 */
+  unsigned char  token_flags;   /* 1 */
+  unsigned char  token_count;   /* 1 */
+  unsigned char  _unused[6];    /* 6 */
+  rint32_t       saved_score;   /* 4 */
+  rint16_t       saved_test;    /* 2 */
+  unsigned char  saved_status;  /* 1 */
+  unsigned char  is_saved;      /* 1 */
+  /* total is 128 bytes */
+};
+
+static __attribute__((unused)) int
+is_runlog_version_2(struct rldb_file_cnts *cs)
+{
+  struct run_header_v2 header_v2;
+  struct stat stbuf;
+  int r;
+
+  memset(&header_v2, 0, sizeof(header_v2));
+  if (sf_lseek(cs->run_fd, 0, SEEK_SET, "run") == (off_t) -1) return -1;
+  if ((r = sf_read(cs->run_fd, &header_v2, sizeof(header_v2), "run")) < 0)
+    return -1;
+  if (r != sizeof(header_v2)) return 0;
+  if (header_v2.version != 2) return 0;
+  if (fstat(cs->run_fd, &stbuf) < 0) return -1;
+  if (stbuf.st_size < sizeof(header_v2)) return 0;
+  stbuf.st_size -= sizeof(header_v2);
+  if (stbuf.st_size % sizeof(struct run_entry_v2) != 0) return 0;
+  return 1;
+}
+
+static __attribute__((unused)) int
+read_runlog_version_2(struct rldb_file_cnts *cs)
+{
+  struct runlog_state *rls = cs->rl_state;
+  int rem;
+  struct stat stbuf;
+  struct run_header_v2 header_v2;
+  int run_v2_u, i;
+  struct run_entry_v2 *runs_v2 = 0;
+  struct run_entry_v2 *po;
+  struct run_entry *pn;
+
+  info("reading runs log version 2 (binary)");
+
+  /* calculate the size of the file */
+  if (fstat(cs->run_fd, &stbuf) < 0) {
+    err("read_runlog_version_2: fstat() failed: %s", os_ErrorMsg());
+    return -1;
+  }
+  if (sf_lseek(cs->run_fd, 0, SEEK_SET, "run") == (off_t) -1) return -1;
+  if (stbuf.st_size < sizeof (header_v2)) {
+    err("read_runlog_version_2: file is too small");
+    return -1;
+  }
+
+  // read header
+  if (do_read(cs->run_fd, &header_v2, sizeof(header_v2)) < 0) return -1;
+  info("run log version %d", header_v2.version);
+  if (header_v2.version != 2) {
+    err("unsupported run log version %d", rls->head.version);
+    return -1;
+  }
+
+  stbuf.st_size -= sizeof(header_v2);
+  if ((rem = stbuf.st_size % sizeof(struct run_entry_v2)) != 0) {
+    err("bad runs file size: remainder %d", rem);
+    return -1;
+  }
+  run_v2_u = stbuf.st_size / sizeof(struct run_entry_v2);
+  if (run_v2_u > 0) {
+    XCALLOC(runs_v2, run_v2_u);
+    if (do_read(cs->run_fd, runs_v2, sizeof(runs_v2[0]) * run_v2_u) < 0)
+      return -1;
+  }
+
+  // assign the header
+  memset(&rls->head, 0, sizeof(rls->head));
+  rls->head.version = 3;
+  rls->head.byte_order = 0;
+  rls->head.start_time = header_v2.start_time;
+  rls->head.sched_time = header_v2.sched_time;
+  rls->head.duration = header_v2.duration;
+  rls->head.stop_time = header_v2.stop_time;
+  rls->head.finish_time = header_v2.finish_time;
+  rls->head.saved_duration = header_v2.saved_duration;
+  rls->head.saved_stop_time = header_v2.saved_stop_time;
+  rls->head.saved_finish_time = header_v2.saved_finish_time;
+  rls->head.next_run_id = header_v2.next_run_id;
+
+  // copy version 2 runlog to version 3 runlog
+  rls->run_a = 128;
+  rls->run_u = run_v2_u;
+  while (run_v2_u > rls->run_a) rls->run_a *= 2;
+  XCALLOC(rls->runs, rls->run_a);
+  for (i = 0; i < rls->run_a; ++i)
+    rls->runs[i].status = RUN_EMPTY;
+
+  for (i = 0; i < rls->run_u; i++) {
+    po = &runs_v2[i];
+    pn = &rls->runs[i];
+
+    memcpy(pn, po, sizeof(*pn)); // FIXME
+  }
+
+  xfree(runs_v2);
+  return 0;
+}
+
 static int
 run_flush_header(struct rldb_file_cnts *cs)
 {
