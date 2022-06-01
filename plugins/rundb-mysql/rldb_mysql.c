@@ -372,7 +372,7 @@ do_open(struct rldb_mysql_state *state)
     run_version = 14;
   }
   if (run_version == 14) {
-    if (mi->simple_fquery(md, "ALTER TABLE %sruns DROP COLUMN next_run_id ;", md->table_prefix) < 0)
+    if (mi->simple_fquery(md, "ALTER TABLE %srunheaders DROP COLUMN next_run_id ;", md->table_prefix) < 0)
       return -1;
 
     if (mi->simple_fquery(md, "UPDATE %sconfig SET config_val = '15' WHERE config_key = 'run_version' ;", md->table_prefix) < 0)
