@@ -196,7 +196,6 @@ static const char create_runheaders_query[] =
 "        saved_finish_time TIMESTAMP NOT NULL DEFAULT '0000-00-00 00:00:00', "
 "        last_change_time TIMESTAMP NOT NULL DEFAULT '0000-00-00 00:00:00', "
 "        last_change_nsec INT UNSIGNED NOT NULL, "
-"        next_run_id INT NOT NULL DEFAULT 0, "
 "        PRIMARY KEY (contest_id)"
 "        );";
 
@@ -213,10 +212,9 @@ struct run_header_internal
   time_t saved_finish_time;
   time_t last_change_time;
   int last_change_nsec;
-  int next_run_id;
 };
 
-enum { HEADERS_ROW_WIDTH = 12 };
+enum { HEADERS_ROW_WIDTH = 11 };
 
 #define HEADERS_OFFSET(f) XOFFSET(struct run_header_internal, f)
 static const struct common_mysql_parse_spec headers_spec[RUNS_ROW_WIDTH] =
@@ -232,7 +230,6 @@ static const struct common_mysql_parse_spec headers_spec[RUNS_ROW_WIDTH] =
   { 0, 't', "saved_finish_time", HEADERS_OFFSET(saved_finish_time), 0 },
   { 0, 't', "last_change_time", HEADERS_OFFSET(last_change_time), 0 },
   { 0, 'd', "last_change_nsec", HEADERS_OFFSET(last_change_nsec), 0 },
-  { 0, 'd', "next_run_id", HEADERS_OFFSET(next_run_id), 0 },
 };
 
 static const char create_userrunheaders_query[] =
