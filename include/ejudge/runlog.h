@@ -223,7 +223,7 @@ struct run_header
   ej_time64_t saved_duration;
   ej_time64_t saved_stop_time;
   ej_time64_t saved_finish_time;
-  unsigned char _pad3[28];
+  unsigned char _pad3[32];
 };
 
 enum
