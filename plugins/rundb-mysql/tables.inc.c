@@ -180,8 +180,7 @@ enum
   RH_SAVED_DURATION    = 0x00000020,
   RH_SAVED_STOP_TIME   = 0x00000040,
   RH_SAVED_FINISH_TIME = 0x00000080,
-  RH_NEXT_RUN_ID       = 0x00000100,
-  RH_ALL               = 0x000001FF,
+  RH_ALL               = 0x000000FF,
 };
 
 static const char create_runheaders_query[] =

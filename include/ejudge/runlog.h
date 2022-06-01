@@ -223,7 +223,6 @@ struct run_header
   ej_time64_t saved_duration;
   ej_time64_t saved_stop_time;
   ej_time64_t saved_finish_time;
-  int next_run_id;              /* the first free run_id + 1 (i.e. 0 means "unknown", 1 means 0, etc) */
   unsigned char _pad3[28];
 };
 

@@ -822,7 +822,6 @@ read_runlog_version_2(struct rldb_file_cnts *cs)
   rls->head.saved_duration = header_v2.saved_duration;
   rls->head.saved_stop_time = header_v2.saved_stop_time;
   rls->head.saved_finish_time = header_v2.saved_finish_time;
-  rls->head.next_run_id = header_v2.next_run_id;
 
   // copy version 2 runlog to version 3 runlog
   rls->run_a = 128;
