@@ -264,7 +264,7 @@ enum
   };
 
 /* structure size is 128 bytes */
-struct run_entry
+struct run_entry_v2
 {
   rint32_t       run_id;        /* 4 */
   ej_size_t      size;          /* 4 */
@@ -308,7 +308,7 @@ struct run_entry
   /* total is 128 bytes */
 };
 
-struct run_entry_v3
+struct run_entry
 {
   rint32_t       run_id;        /* 4 */
   ej_size_t      size;          /* 4 */

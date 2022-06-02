@@ -700,6 +700,7 @@ struct run_header_v2
   unsigned char _pad3[28];
 };
 
+#if 0
 /* structure size is 128 bytes */
 struct run_entry_v2
 {
@@ -744,6 +745,7 @@ struct run_entry_v2
   unsigned char  is_saved;      /* 1 */
   /* total is 128 bytes */
 };
+#endif
 
 static __attribute__((unused)) int
 is_runlog_version_2(struct rldb_file_cnts *cs)
@@ -766,7 +768,7 @@ is_runlog_version_2(struct rldb_file_cnts *cs)
 }
 
 static void
-copy_entry_v2_to_v3(struct run_entry_v3 *pn, const struct run_entry_v2 *po)
+copy_entry_v2_to_v3(struct run_entry *pn, const struct run_entry_v2 *po)
 {
   memset(pn, 0, sizeof(*pn));
 
@@ -875,13 +877,7 @@ read_runlog_version_2(struct rldb_file_cnts *cs)
     rls->runs[i].status = RUN_EMPTY;
 
   for (i = 0; i < rls->run_u; i++) {
-    //pn = &rls->runs[i];
-    // FIXME:
-    struct run_entry_v3 *pn = malloc(sizeof(*pn));
-    copy_entry_v2_to_v3(pn, &runs_v2[i]);
-
-    // FIXME
-    free(pn);
+    copy_entry_v2_to_v3(&rls->runs[i], &runs_v2[i]);
   }
 
   xfree(runs_v2);
