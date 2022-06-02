@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2002-2019 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -627,7 +627,7 @@ write_runs_dump(const serve_state_t state, FILE *f, const unsigned char *url,
     fprintf(f, "%u;", re.size);
     fprintf(f, "%d;%s;%d;", re.ipv6_flag, xml_unparse_ip(re.a.ip), re.ssl_flag);
 
-    s = (unsigned char*) re.sha1;
+    s = (unsigned char*) re.h.sha1;
     for (j = 0; j < 20; j++) fprintf(f, "%02x", *s++);
     fprintf(f, ";");
 

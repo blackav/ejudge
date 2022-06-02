@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2003-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -452,7 +452,7 @@ runlog_import_xml(
         fprintf(flog, "Local run %d, imported %d: `ip' does not match\n",
                 i, j);
       }
-      if (memcmp(pa->sha1, pb->sha1, sizeof(pa->sha1)) != 0) {
+      if (memcmp(pa->h.sha1, pb->h.sha1, sizeof(pa->h.sha1)) != 0) {
         fprintf(flog, "Local run %d, imported %d: `sha1' does not match\n",
                 i, j);
       }
@@ -520,8 +520,8 @@ runlog_import_xml(
         pa->a.ip = pb->a.ip;
         r = 1;
       }
-      if (memcmp(pa->sha1, pb->sha1, sizeof(pa->sha1)) != 0) {
-        memcpy(pa->sha1, pb->sha1, sizeof(pa->sha1));
+      if (memcmp(pa->h.sha1, pb->h.sha1, sizeof(pa->h.sha1)) != 0) {
+        memcpy(pa->h.sha1, pb->h.sha1, sizeof(pa->h.sha1));
         r = 1;
       }
       if (pa->score != pb->score) {

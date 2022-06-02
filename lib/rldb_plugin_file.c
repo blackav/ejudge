@@ -659,7 +659,7 @@ read_runlog_version_1(struct rldb_file_cnts *cs)
     pn->time = po->timestamp;
     pn->size = po->size;
     pn->a.ip = po->ip;
-    memcpy(&pn->sha1, &po->sha1, sizeof(pn->sha1));
+    memcpy(&pn->h.sha1, &po->sha1, sizeof(pn->h.sha1));
     pn->user_id = po->team;
     pn->prob_id = po->problem;
     pn->score = po->score;
@@ -799,7 +799,7 @@ copy_entry_v2_to_v3(struct run_entry *pn, const struct run_entry_v2 *po)
   pn->test = po->test;
   pn->token_flags = po->token_flags;
   pn->token_count = po->token_count;
-  memcpy(pn->sha1, po->sha1, sizeof(pn->sha1));
+  memcpy(pn->h.sha1, po->sha1, sizeof(pn->h.sha1));
   pn->run_uuid = po->run_uuid;
   pn->judge_id = po->judge_id;
   pn->score_adj = po->score_adj;
@@ -1363,7 +1363,7 @@ add_entry_func(
     de->ipv6_flag = re->ipv6_flag;
   }
   if ((flags & RE_SHA1)) {
-    memcpy(de->sha1, re->sha1, sizeof(de->sha1));
+    memcpy(de->h.sha1, re->h.sha1, sizeof(de->h.sha1));
   }
   if ((flags & RE_RUN_UUID)) {
     memcpy(&de->run_uuid, &re->run_uuid, sizeof(de->run_uuid));

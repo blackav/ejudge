@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2002-2019 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -351,7 +351,7 @@ do_eval(struct filter_env *env,
     case TOK_HASH:
       res->kind = TOK_HASH_L;
       res->type = FILTER_TYPE_HASH;
-      memcpy(res->v.h, env->rentries[r1.v.i].sha1, sizeof(env->cur->sha1));
+      memcpy(res->v.h, env->rentries[r1.v.i].h.sha1, sizeof(env->cur->h.sha1));
       break;
     case TOK_UUID:
       res->kind = TOK_STRING_L;
@@ -696,7 +696,7 @@ do_eval(struct filter_env *env,
   case TOK_CURHASH:
     res->kind = TOK_HASH_L;
     res->type = FILTER_TYPE_HASH;
-    memcpy(res->v.h, env->cur->sha1, sizeof(env->cur->sha1));
+    memcpy(res->v.h, env->cur->h.sha1, sizeof(env->cur->h.sha1));
     break;
   case TOK_CURUUID:
     res->kind = TOK_STRING_L;

@@ -7972,7 +7972,7 @@ priv_run_status_json(
   if (re.ipv6_flag) {
     fprintf(fout, ",\n      \"ipv6_flag\": %s", to_json_bool(re.ipv6_flag));
   }
-  fprintf(fout, ",\n      \"sha1\": \"%s\"", unparse_sha1(re.sha1));
+  fprintf(fout, ",\n      \"sha1\": \"%s\"", unparse_sha1(re.h.sha1));
   if (re.locale_id > 0) {
     fprintf(fout, ",\n      \"locale_id\": %d", re.locale_id);
   }
@@ -8739,7 +8739,7 @@ priv_list_runs_json(
           fprintf(fout, ",\n%s\"ssl_flag\" : %d", indent, pe->ssl_flag);
         }
         if (run_fields & (1 << RUN_VIEW_SHA1)) {
-          fprintf(fout, ",\n%s\"sha1\" : \"%s\"", indent, unparse_sha1(pe->sha1));
+          fprintf(fout, ",\n%s\"sha1\" : \"%s\"", indent, unparse_sha1(pe->h.sha1));
         }
         if (run_fields & (1 << RUN_VIEW_PROB_ID)) {
           fprintf(fout, ",\n%s\"prob_id\" : %d", indent, pe->prob_id);
@@ -12918,7 +12918,7 @@ unpriv_xml_update_answer(
 
   memset(&nv, 0, sizeof(nv));
   nv.size = run_size;
-  memcpy(nv.sha1, shaval, sizeof(nv.sha1));
+  memcpy(nv.h.sha1, shaval, sizeof(nv.h.sha1));
   nv.status = RUN_ACCEPTED;
   nv.test = 0;
   nv.score = -1;

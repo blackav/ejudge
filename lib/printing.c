@@ -1,7 +1,6 @@
 /* -*- c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2004-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -82,7 +81,7 @@ print_banner_page(const serve_state_t state,
   fprintf(f, "Size:             %u\n", info.size);
   if (is_privileged) {
     fprintf(f, "Hash code (SHA1): ");
-    s = (unsigned char *) &info.sha1;
+    s = (unsigned char *) &info.h.sha1;
     for (i = 0; i < 20; i++) fprintf(f, "%02x", *s++);
     fprintf(f, "\n");
   }

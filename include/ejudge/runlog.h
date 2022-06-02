@@ -344,7 +344,7 @@ struct run_entry
   {
     ruint32_t      sha1[5];     /* 20 */
     unsigned char  sha256[32];  /* 32 */
-  };                            /* 32 */
+  }              h;             /* 32 */
   ej_uuid_t      run_uuid;      /* 16 */
   union
   {

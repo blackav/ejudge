@@ -754,7 +754,7 @@ load_runs(struct rldb_mysql_cnts *cs)
     re->prob_id = ri.prob_id;
     re->lang_id = ri.lang_id;
     ipv6_to_run_entry(&ri.ip, re);
-    memcpy(re->sha1, sha1, sizeof(re->sha1));
+    memcpy(re->h.sha1, sha1, sizeof(re->h.sha1));
     memcpy(&re->run_uuid, &run_uuid, sizeof(re->run_uuid));
     re->score = ri.score;
     re->test = ri.test_num;
@@ -1198,11 +1198,11 @@ generate_update_entry_clause(
     fprintf(f, "%sip = '%s'", sep, xml_unparse_ipv6(&ipv6));
   }
   if ((flags & RE_SHA1)) {
-    if (!re->sha1[0] && !re->sha1[1] && !re->sha1[2]
-        && !re->sha1[3] && !re->sha1[4]) {
+    if (!re->h.sha1[0] && !re->h.sha1[1] && !re->h.sha1[2]
+        && !re->h.sha1[3] && !re->h.sha1[4]) {
       fprintf(f, "%shash = NULL", sep);
     } else {
-      fprintf(f, "%shash = '%s'", sep, unparse_sha1(re->sha1));
+      fprintf(f, "%shash = '%s'", sep, unparse_sha1(re->h.sha1));
     }
     sep =comma;
   }
@@ -1342,7 +1342,7 @@ update_entry(
     dst->ipv6_flag = src->ipv6_flag;
   }
   if ((flags & RE_SHA1)) {
-    memcpy(dst->sha1, src->sha1, sizeof(dst->sha1));
+    memcpy(dst->h.sha1, src->h.sha1, sizeof(dst->h.sha1));
   }
   if ((flags & RE_RUN_UUID)) {
     memcpy(&dst->run_uuid, &src->run_uuid, sizeof(dst->run_uuid));
@@ -1873,9 +1873,9 @@ put_entry_func(
   if (re->ipv6_flag) ri.ip_version = 6;
   run_entry_to_ipv6(re, &ri.ip);
   ri.ssl_flag = re->ssl_flag;
-  if (re->sha1[0] || re->sha1[1] || re->sha1[2] || re->sha1[3]
-      || re->sha1[4]) {
-    ri.hash = unparse_sha1(re->sha1);
+  if (re->h.sha1[0] || re->h.sha1[1] || re->h.sha1[2] || re->h.sha1[3]
+      || re->h.sha1[4]) {
+    ri.hash = unparse_sha1(re->h.sha1);
   }
 #if CONF_HAS_LIBUUID
   {
@@ -2436,11 +2436,11 @@ append_run_func(
     fprintf(cmd_f, ",'%s'", xml_unparse_ipv6(&ipv6));
   }
   if ((flags & RE_SHA1)) {
-    if (!in_re->sha1[0] && !in_re->sha1[1] && !in_re->sha1[2]
-        && !in_re->sha1[3] && !in_re->sha1[4]) {
+    if (!in_re->h.sha1[0] && !in_re->h.sha1[1] && !in_re->h.sha1[2]
+        && !in_re->h.sha1[3] && !in_re->h.sha1[4]) {
       fprintf(cmd_f, ",NULL");
     } else {
-      fprintf(cmd_f, ",'%s'", unparse_sha1(in_re->sha1));
+      fprintf(cmd_f, ",'%s'", unparse_sha1(in_re->h.sha1));
     }
   }
   if ((flags & RE_USER_ID)) {
@@ -2585,7 +2585,7 @@ append_run_func(
     new_re->a = in_re->a;
   }
   if ((flags & RE_SHA1)) {
-    memcpy(new_re->sha1, in_re->sha1, sizeof(new_re->sha1));
+    memcpy(new_re->h.sha1, in_re->h.sha1, sizeof(new_re->h.sha1));
   }
   if ((flags & RE_USER_ID)) {
     new_re->user_id = in_re->user_id;

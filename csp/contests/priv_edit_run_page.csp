@@ -229,7 +229,7 @@
 <tr><td class="b0">IP:</td><td class="b0"><s:textfield name="ip" size="20" disabledExpr="info.is_readonly" value="info.a.ip" /></td></tr>
 <tr><td class="b0">SSL:</td><td class="b0"><s:checkbox name="ssl_flag" checkedExpr="info.ssl_flag" disabledExpr="info.is_readonly" /></td></tr>
 <tr><td class="b0">Size:</td><td class="b0"><s:textfield name="size" size="20" disabledExpr="info.is_readonly" value="info.size" /></td></tr>
-<tr><td class="b0">SHA1:</td><td class="b0"><s:textfield name="sha1" size="60" disabledExpr="info.is_readonly" escape="false" value="unparse_sha1(info.sha1)" /></td></tr>
+<tr><td class="b0">SHA1:</td><td class="b0"><s:textfield name="sha1" size="60" disabledExpr="info.is_readonly" escape="false" value="unparse_sha1(info.h.sha1)" /></td></tr>
 <% #if CONF_HAS_LIBUUID - 0 != 0 %>
 <tr><td class="b0">UUID:</td><td class="b0"><s:textfield name="uuid" size="60" disabledExpr="info.is_readonly" escape="false" value='ej_uuid_unparse(&info.run_uuid, "")' /></td></tr>
 <% #endif %>

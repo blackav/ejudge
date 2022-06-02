@@ -365,7 +365,7 @@ process_run_elements(struct xml_tree *xt, struct run_xml_helpers *helper)
         break;
       case RUNLOG_A_SHA1:
         if (!xa->text) goto empty_attr_value;
-        if (parse_sha1(xr->r.sha1, xa->text) < 0) goto invalid_attr_value;
+        if (parse_sha1(xr->r.h.sha1, xa->text) < 0) goto invalid_attr_value;
         break;
       case RUNLOG_A_USER_ID:
         if (!xa->text) goto empty_attr_value;
@@ -933,9 +933,9 @@ unparse_runlog_xml(
       if (pp->ssl_flag)
         fprintf(f, " %s=\"yes\"", attr_map[RUNLOG_A_SSL]);
     }
-    if (!external_mode && is_non_empty_sha1(pp->sha1)) {
+    if (!external_mode && is_non_empty_sha1(pp->h.sha1)) {
       fprintf(f, " %s=\"%s\"", attr_map[RUNLOG_A_SHA1],
-              unparse_sha1(pp->sha1));
+              unparse_sha1(pp->h.sha1));
     }
     run_status_to_str_short(status_buf, sizeof(status_buf), pp->status);
     fprintf(f, " %s=\"%s\"", attr_map[RUNLOG_A_STATUS], status_buf);

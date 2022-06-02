@@ -812,7 +812,7 @@ ns_write_priv_all_runs(
         fprintf(f, "<td%s>%s</td>", cl, xml_unparse_ip(pe->a.ip));
       }
       if (run_fields & (1 << RUN_VIEW_SHA1)) {
-        fprintf(f, "<td%s>%s</td>", cl, unparse_sha1(pe->sha1));
+        fprintf(f, "<td%s>%s</td>", cl, unparse_sha1(pe->h.sha1));
       }
       if (run_fields & (1 << RUN_VIEW_USER_ID)) {
         fprintf(f, "<td%s>%d</td>", cl, pe->user_id);
@@ -2179,8 +2179,8 @@ ns_priv_edit_run_action(
       fprintf(log_f, "invalid 'sha1' field value\n");
       FAIL(NEW_SRV_ERR_INV_PARAM);
     }
-    if (r > 0 && memcmp(info.sha1, new_sha1, sizeof(info.sha1)) != 0) {
-      memcpy(new_info.sha1, new_sha1, sizeof(new_info.sha1));
+    if (r > 0 && memcmp(info.h.sha1, new_sha1, sizeof(info.h.sha1)) != 0) {
+      memcpy(new_info.h.sha1, new_sha1, sizeof(new_info.h.sha1));
       mask |= RE_SHA1;
     }
   }
@@ -3362,7 +3362,7 @@ do_add_row(
   }
   run_id = run_add_record(cs->runlog_state,
                           &precise_time,
-                          run_size, re->sha1, &run_uuid,
+                          run_size, re->h.sha1, &run_uuid,
                           &phr->ip, phr->ssl_flag, phr->locale_id,
                           re->user_id, re->prob_id, re->lang_id, re->eoln_type,
                           re->variant, re->is_hidden, re->mime_type,
@@ -3641,7 +3641,7 @@ ns_upload_csv_runs(
         }
       }
     }
-    sha_buffer(run_text, run_size, runs[row].sha1);
+    sha_buffer(run_text, run_size, runs[row].h.sha1);
 
     if (col_ind[CSV_TESTS] >= 0) {
       if (!(s = rr->v[col_ind[CSV_TESTS]]) || !*s) {
@@ -3841,7 +3841,7 @@ ns_upload_csv_results(
         if (run_id < 0 && add_flag) {
           pe->run_id = -1;
           pe->size = run_size;
-          memcpy(pe->sha1, sha1, sizeof(pe->sha1));
+          memcpy(pe->h.sha1, sha1, sizeof(pe->h.sha1));
           ipv6_to_run_entry(&phr->ip, pe);
           pe->ssl_flag = phr->ssl_flag;
           pe->locale_id = phr->locale_id;
@@ -3877,7 +3877,7 @@ ns_upload_csv_results(
         if (run_id < 0 && add_flag) {
           pe->run_id = -1;
           pe->size = run_size;
-          memcpy(pe->sha1, sha1, sizeof(pe->sha1));
+          memcpy(pe->h.sha1, sha1, sizeof(pe->h.sha1));
           ipv6_to_run_entry(&phr->ip, pe);
           pe->ssl_flag = phr->ssl_flag;
           pe->locale_id = phr->locale_id;
@@ -3912,7 +3912,7 @@ ns_upload_csv_results(
         if (run_id < 0 && add_flag) {
           pe->run_id = -1;
           pe->size = run_size;
-          memcpy(pe->sha1, sha1, sizeof(pe->sha1));
+          memcpy(pe->h.sha1, sha1, sizeof(pe->h.sha1));
           ipv6_to_run_entry(&phr->ip, pe);
           pe->ssl_flag = phr->ssl_flag;
           pe->locale_id = phr->locale_id;
@@ -3949,7 +3949,7 @@ ns_upload_csv_results(
         if (run_id < 0 && add_flag) {
           pe->run_id = -1;
           pe->size = run_size;
-          memcpy(pe->sha1, sha1, sizeof(pe->sha1));
+          memcpy(pe->h.sha1, sha1, sizeof(pe->h.sha1));
           ipv6_to_run_entry(&phr->ip, pe);
           pe->ssl_flag = phr->ssl_flag;
           pe->locale_id = phr->locale_id;
@@ -6542,7 +6542,7 @@ fill_user_run_info(
   ri->size = pre->size;
 
   if (global->show_sha1 > 0 && gen_strings_flag > 0) {
-    ri->abbrev_sha1 = strdup(unparse_abbrev_sha1(pre->sha1));
+    ri->abbrev_sha1 = strdup(unparse_abbrev_sha1(pre->h.sha1));
   }
 
   collect_run_status(cs, start_time, pre, separate_user_score,
@@ -6893,7 +6893,7 @@ new_write_user_runs(
     fprintf(f, "<td%s>%s</td>", cl, prob_str);
     fprintf(f, "<td%s>%s</td>", cl, lang_str);
     if (global->show_sha1 > 0) {
-      fprintf(f, "<td%s><tt>%s</tt></td>", cl, unparse_abbrev_sha1(re.sha1));
+      fprintf(f, "<td%s><tt>%s</tt></td>", cl, unparse_abbrev_sha1(re.h.sha1));
     }
 
     write_html_run_status(state, f, start_time, &re, separate_user_score /* user_mode */,

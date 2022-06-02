@@ -388,7 +388,7 @@ run_add_record(
     flags |= RE_PROB_UUID;
   }
   if (sha1) {
-    memcpy(re.sha1, sha1, sizeof(state->runs[i].sha1));
+    memcpy(re.h.sha1, sha1, sizeof(state->runs[i].h.sha1));
     flags |= RE_SHA1;
   }
   flags = RE_SIZE | RE_LOCALE_ID | RE_USER_ID | RE_LANG_ID | RE_PROB_ID | RE_STATUS | RE_TEST | RE_SCORE | RE_IP | RE_SSL_FLAG | RE_VARIANT | RE_IS_HIDDEN | RE_MIME_TYPE | RE_EOLN_TYPE | RE_STORE_FLAGS;
@@ -1136,11 +1136,11 @@ run_check_duplicate(runlog_state_t state, int run_id)
       continue;
     if (p->size == q->size
         && p->a.ip == q->a.ip
-        && p->sha1[0] == q->sha1[0]
-        && p->sha1[1] == q->sha1[1]
-        && p->sha1[2] == q->sha1[2]
-        && p->sha1[3] == q->sha1[3]
-        && p->sha1[4] == q->sha1[4]
+        && p->h.sha1[0] == q->h.sha1[0]
+        && p->h.sha1[1] == q->h.sha1[1]
+        && p->h.sha1[2] == q->h.sha1[2]
+        && p->h.sha1[3] == q->h.sha1[3]
+        && p->h.sha1[4] == q->h.sha1[4]
         && p->prob_id == q->prob_id
         && p->lang_id == q->lang_id
         && p->variant == q->variant) {
@@ -1187,11 +1187,11 @@ run_find_duplicate(
     if (q->prob_id == prob_id && q->variant == variant) {
       if (q->lang_id == lang_id
           && q->size == size
-          && q->sha1[0] == sha1[0]
-          && q->sha1[1] == sha1[1]
-          && q->sha1[2] == sha1[2]
-          && q->sha1[3] == sha1[3]
-          && q->sha1[4] == sha1[4])
+          && q->h.sha1[0] == sha1[0]
+          && q->h.sha1[1] == sha1[1]
+          && q->h.sha1[2] == sha1[2]
+          && q->h.sha1[3] == sha1[3]
+          && q->h.sha1[4] == sha1[4])
         return i;
       return -1;
     }
@@ -1347,8 +1347,8 @@ run_set_entry(
     te.a.ip = in->a.ip;
     f = 1;
   }
-  if ((mask & RE_SHA1) && memcmp(te.sha1,in->sha1,sizeof(te.sha1))) {
-    memcpy(te.sha1, in->sha1, sizeof(te.sha1));
+  if ((mask & RE_SHA1) && memcmp(te.h.sha1,in->h.sha1,sizeof(te.h.sha1))) {
+    memcpy(te.h.sha1, in->h.sha1, sizeof(te.h.sha1));
     f = 1;
   }
   if ((mask & RE_RUN_UUID) && memcmp(&te.run_uuid, &in->run_uuid, sizeof(te.run_uuid))) {
@@ -2144,7 +2144,7 @@ runlog_check(
     if (!e->a.ip) {
       check_msg(0, ferr, "Run %d IP is not set", i);
     }
-    if (!e->sha1[0]&&!e->sha1[1]&&!e->sha1[2]&&!e->sha1[3]&&!e->sha1[4]) {
+    if (!e->h.sha1[0]&&!e->h.sha1[1]&&!e->h.sha1[2]&&!e->h.sha1[3]&&!e->h.sha1[4]) {
       //check_msg(0, ferr, "Run %d SHA1 is not set", i);
     }
     if (e->prob_id <= 0) {

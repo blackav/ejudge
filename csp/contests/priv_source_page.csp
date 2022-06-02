@@ -439,7 +439,7 @@ function setDivVisibility(oper, value)
 <% snprintf(filtbuf1, sizeof(filtbuf1), "size == size(%d)", run_id); %>
 <td><s:a url="FilteredMainUrl"><s:v value="info.size" /></s:a></td>
 <% snprintf(filtbuf1, sizeof(filtbuf1), "hash == hash(%d)", run_id); %>
-<td><s:a url="FilteredMainUrl"><s:v type="sha1" value="info.sha1" /></s:a></td>
+<td><s:a url="FilteredMainUrl"><s:v type="sha1" value="info.h.sha1" /></s:a></td>
 <td><s:v value="(int) info.pages" /></td>
 </tr>
 

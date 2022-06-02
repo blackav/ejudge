@@ -1663,7 +1663,7 @@ do_dump_master_runs(
     if (pe->is_hidden) csv_rec[F_IS_HIDDEN] = "1";
     if (pe->is_imported) csv_rec[F_IS_IMPORTED] = "1";
     if (pe->is_readonly) csv_rec[F_IS_READONLY] = "1";
-    snprintf(sha1_buf, sizeof(sha1_buf), "%s", unparse_sha1(pe->sha1));
+    snprintf(sha1_buf, sizeof(sha1_buf), "%s", unparse_sha1(pe->h.sha1));
     csv_rec[F_SHA1] = sha1_buf;
     if (pe->locale_id >= 0) {
       snprintf(locale_id_buf, sizeof(locale_id_buf), "%d", pe->locale_id);
