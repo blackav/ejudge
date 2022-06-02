@@ -8010,8 +8010,8 @@ priv_run_status_json(
   if (re.score_adj != 0) {
     fprintf(fout, ",\n      \"score_adj\": %d", re.score_adj);
   }
-  if (re.judge_id) {
-    fprintf(fout, ",\n      \"judge_id\": %d", re.judge_id);
+  if (re.j.judge_id) {
+    fprintf(fout, ",\n      \"judge_id\": %d", re.j.judge_id);
   }
   if (re.pages) {
     fprintf(fout, ",\n      \"pages\": %d", re.pages);
@@ -8678,7 +8678,7 @@ priv_list_runs_json(
         }
       }
       if (pe->status == RUN_VIRTUAL_START || pe->status == RUN_VIRTUAL_STOP) {
-        if (pe->judge_id > 0) {
+        if (pe->j.judge_id > 0) {
           fprintf(fout, ",\n%s\"is_examinable\" : %s", indent, to_json_bool(1));
         }
       } else {

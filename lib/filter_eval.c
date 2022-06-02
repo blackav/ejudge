@@ -628,7 +628,7 @@ do_eval(struct filter_env *env,
     case TOK_JUDGE_ID:
       res->kind = TOK_INT_L;
       res->type = FILTER_TYPE_INT;
-      res->v.i = env->rentries[r1.v.i].judge_id;
+      res->v.i = env->rentries[r1.v.i].j.judge_id;
       break;
     case TOK_PASSED_MODE:
       res->kind = TOK_BOOL_L;
@@ -978,7 +978,7 @@ do_eval(struct filter_env *env,
   case TOK_CURJUDGE_ID:
     res->kind = TOK_INT_L;
     res->type = FILTER_TYPE_INT;
-    res->v.i = env->cur->judge_id;
+    res->v.i = env->cur->j.judge_id;
     break;
   case TOK_CURPASSED_MODE:
     res->kind = TOK_BOOL_L;

@@ -691,7 +691,7 @@ write_runs_dump(const serve_state_t state, FILE *f, const unsigned char *url,
     fprintf(f, "%d;", re.is_imported);
     fprintf(f, "%d;", re.is_hidden);
     fprintf(f, "%d;", re.is_readonly);
-    fprintf(f, "%d;%d;%d", re.locale_id, re.pages, re.judge_id);
+    fprintf(f, "%d;%d;%d", re.locale_id, re.pages, re.j.judge_id);
 
     fprintf(f, "\n");
   }

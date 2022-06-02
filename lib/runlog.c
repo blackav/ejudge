@@ -2420,7 +2420,7 @@ build_indices(runlog_state_t state, int flags)
     case RUN_VIRTUAL_START:
       urhi->is_virtual = 1;
       urhi->start_time = state->runs[i_off].time;
-      if (state->runs[i_off].judge_id) urhi->is_checked = 1;
+      if (state->runs[i_off].j.judge_id) urhi->is_checked = 1;
       break;
     case RUN_VIRTUAL_STOP:
       ASSERT(urhi->start_time > 0);

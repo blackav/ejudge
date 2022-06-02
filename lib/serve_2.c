@@ -2965,9 +2965,9 @@ serve_read_compile_packet(
       goto non_fatal_error;
     }
   }
-  if (comp_pkt->judge_id != re.judge_id) {
+  if (comp_pkt->judge_id != re.j.judge_id) {
     err("read_compile_packet: judge_id mismatch: %d, %d", comp_pkt->judge_id,
-        re.judge_id);
+        re.j.judge_id);
     goto non_fatal_error;
   }
   if (re.status != RUN_COMPILING) {
@@ -2993,7 +2993,7 @@ serve_read_compile_packet(
       snprintf(errmsg, sizeof(errmsg), "generic_read_file: %s/%s.txt failed\n", compile_report_dir, pname);
       goto report_check_failed;
     }
-    testing_report = testing_report_alloc(comp_pkt->contest_id, comp_pkt->run_id, re.judge_id);
+    testing_report = testing_report_alloc(comp_pkt->contest_id, comp_pkt->run_id, re.j.judge_id);
     testing_report->status = comp_pkt->status;
     testing_report->compiler_output = xstrdup(txt_text);
     utf8_fix_string(testing_report->compiler_output, NULL);
@@ -3081,7 +3081,7 @@ serve_read_compile_packet(
     snprintf(txt_packet_path, sizeof(txt_packet_path), "%s/%s.txt", compile_report_dir, pname);
     generic_read_file(&txt_text, 0, &txt_size, REMOVE, NULL, txt_packet_path, NULL);
 
-    testing_report = testing_report_alloc(comp_pkt->contest_id, comp_pkt->run_id, re.judge_id);
+    testing_report = testing_report_alloc(comp_pkt->contest_id, comp_pkt->run_id, re.j.judge_id);
     testing_report->status = RUN_RUNNING;
     if (txt_text) {
       testing_report->compiler_output = xstrdup(txt_text);
@@ -3338,7 +3338,7 @@ prepare_run_request:
   report_size = strlen(errmsg);
 
   if (re.store_flags == STORE_FLAGS_UUID_BSON) {
-    testing_report = testing_report_alloc(comp_pkt->contest_id, comp_pkt->run_id, re.judge_id);
+    testing_report = testing_report_alloc(comp_pkt->contest_id, comp_pkt->run_id, re.j.judge_id);
     testing_report->status = RUN_CHECK_FAILED;
     if (txt_text) {
       testing_report->compiler_output = xstrdup(errmsg);
@@ -3585,9 +3585,9 @@ serve_read_run_packet(
     err("read_run_packet: run %d status is not RUNNING", reply_pkt->run_id);
     goto failed;
   }
-  if (re.judge_id != reply_pkt->judge_id) {
+  if (re.j.judge_id != reply_pkt->judge_id) {
     err("read_run_packet: judge_id mismatch: packet: %d, db: %d",
-        reply_pkt->judge_id, re.judge_id);
+        reply_pkt->judge_id, re.j.judge_id);
     goto failed;
   }
 
@@ -5889,7 +5889,7 @@ serve_testing_queue_delete(
 
   if (run_get_entry(state->runlog_state, srp->global->run_id, &re) >= 0
       && re.status == RUN_RUNNING
-      && re.judge_id == srp->global->judge_id) {
+      && re.j.judge_id == srp->global->judge_id) {
     run_change_status_4(state->runlog_state, srp->global->run_id, RUN_PENDING);
   }
 

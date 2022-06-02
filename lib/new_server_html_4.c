@@ -1673,8 +1673,8 @@ do_dump_master_runs(
       snprintf(pages_buf, sizeof(pages_buf), "%d", pe->pages);
       csv_rec[F_PAGES] = pages_buf;
     }
-    if (pe->judge_id > 0) {
-      snprintf(judge_id_buf, sizeof(judge_id_buf), "%d", pe->judge_id);
+    if (pe->j.judge_id > 0) {
+      snprintf(judge_id_buf, sizeof(judge_id_buf), "%d", pe->j.judge_id);
       csv_rec[F_JUDGE_ID] = judge_id_buf;
     }
 

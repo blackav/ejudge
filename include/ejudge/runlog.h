@@ -350,7 +350,7 @@ struct run_entry
   {
     ruint16_t      judge_id;    /* 2 */
     ej_uuid_t      judge_uuid;  /* 16 */
-  };
+  }              j;
   ej_uuid_t      prob_uuid;     /* 16 */
   rint32_t       score_adj;     /* 4 */
   rint32_t       saved_score;   /* 4 */

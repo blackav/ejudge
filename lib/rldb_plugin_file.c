@@ -673,7 +673,7 @@ read_runlog_version_1(struct rldb_file_cnts *cs)
     pn->is_readonly = po->is_readonly;
     pn->pages = po->pages;
     pn->score_adj = po->score_adj;
-    pn->judge_id = po->judge_id;
+    pn->j.judge_id = po->judge_id;
     pn->nsec = po->nsec;
   }
 
@@ -801,7 +801,7 @@ copy_entry_v2_to_v3(struct run_entry *pn, const struct run_entry_v2 *po)
   pn->token_count = po->token_count;
   memcpy(pn->h.sha1, po->sha1, sizeof(pn->h.sha1));
   pn->run_uuid = po->run_uuid;
-  pn->judge_id = po->judge_id;
+  pn->j.judge_id = po->judge_id;
   pn->score_adj = po->score_adj;
   pn->saved_score = po->saved_score;
   pn->saved_test = po->saved_test;
@@ -1408,7 +1408,7 @@ add_entry_func(
     de->score_adj = re->score_adj;
   }
   if ((flags & RE_JUDGE_ID)) {
-    de->judge_id = re->judge_id;
+    de->j.judge_id = re->j.judge_id;
   }
   if ((flags & RE_SSL_FLAG)) {
     de->ssl_flag = re->ssl_flag;
@@ -1494,7 +1494,7 @@ change_status_func(
   rls->runs[run_id].test = new_test;
   rls->runs[run_id].passed_mode = !!new_passed_mode;
   rls->runs[run_id].score = new_score;
-  rls->runs[run_id].judge_id = judge_id;
+  rls->runs[run_id].j.judge_id = judge_id;
   return do_flush_entry(cs, run_id);
 }
 
@@ -1640,7 +1640,7 @@ set_judge_id_func(
   ASSERT(rls->run_f == 0);
   ASSERT(run_id >= 0 && run_id < rls->run_u);
 
-  rls->runs[run_id].judge_id = new_judge_id;
+  rls->runs[run_id].j.judge_id = new_judge_id;
   return do_flush_entry(cs, run_id);
 }
 
@@ -1755,7 +1755,7 @@ change_status_2_func(
   rls->runs[run_id].test = new_test;
   rls->runs[run_id].passed_mode = !!new_passed_mode;
   rls->runs[run_id].score = new_score;
-  rls->runs[run_id].judge_id = judge_id;
+  rls->runs[run_id].j.judge_id = judge_id;
   rls->runs[run_id].is_marked = is_marked;
   return do_flush_entry(cs, run_id);
 }
@@ -1802,7 +1802,7 @@ change_status_3_func(
   rls->runs[run_id].test = new_test;
   rls->runs[run_id].passed_mode = !!new_passed_mode;
   rls->runs[run_id].score = new_score;
-  rls->runs[run_id].judge_id = judge_id;
+  rls->runs[run_id].j.judge_id = judge_id;
   rls->runs[run_id].is_marked = is_marked;
   rls->runs[run_id].is_saved = has_user_score;
   rls->runs[run_id].saved_status = user_status;
@@ -1826,7 +1826,7 @@ change_status_4_func(
   rls->runs[run_id].status = new_status;
   rls->runs[run_id].test = 0;
   rls->runs[run_id].score = -1;
-  rls->runs[run_id].judge_id = 0;
+  rls->runs[run_id].j.judge_id = 0;
   rls->runs[run_id].is_marked = 0;
   rls->runs[run_id].is_saved = 0;
   rls->runs[run_id].saved_status = 0;

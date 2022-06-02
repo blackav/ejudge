@@ -760,7 +760,7 @@ load_runs(struct rldb_mysql_cnts *cs)
     re->test = ri.test_num;
     re->score_adj = ri.score_adj;
     re->locale_id = ri.locale_id;
-    re->judge_id = ri.judge_id;
+    re->j.judge_id = ri.judge_id;
     re->status = ri.status;
     re->is_imported = ri.is_imported;
     re->variant = ri.variant;
@@ -1235,7 +1235,7 @@ generate_update_entry_clause(
     sep = comma;
   }
   if ((flags & RE_JUDGE_ID)) {
-    fprintf(f, "%sjudge_id = %d", sep, re->judge_id);
+    fprintf(f, "%sjudge_id = %d", sep, re->j.judge_id);
     sep = comma;
   }
   if ((flags & RE_VARIANT)) {
@@ -1360,7 +1360,7 @@ update_entry(
     dst->locale_id = src->locale_id;
   }
   if ((flags & RE_JUDGE_ID)) {
-    dst->judge_id = src->judge_id;
+    dst->j.judge_id = src->j.judge_id;
   }
   if ((flags & RE_STATUS)) {
     dst->status = src->status;
@@ -1518,7 +1518,7 @@ change_status_func(
   te.test = new_test;
   te.passed_mode = !!new_passed_mode;
   te.score = new_score;
-  te.judge_id = new_judge_id;
+  te.j.judge_id = new_judge_id;
 
   return do_update_entry(cs, run_id, &te,
                          RE_STATUS | RE_TEST | RE_SCORE | RE_JUDGE_ID | RE_PASSED_MODE,
@@ -1786,7 +1786,7 @@ set_judge_id_func(
   struct run_entry te;
 
   memset(&te, 0, sizeof(te));
-  te.judge_id = new_judge_id;
+  te.j.judge_id = new_judge_id;
 
   return do_update_entry(cs, run_id, &te, RE_JUDGE_ID, NULL);
 }
@@ -1890,7 +1890,7 @@ put_entry_func(
   ri.test_num = re->test;
   ri.score_adj = re->score_adj;
   ri.locale_id = re->locale_id;
-  ri.judge_id = re->judge_id;
+  ri.judge_id = re->j.judge_id;
   ri.variant = re->variant;
   ri.pages = re->pages;
   ri.is_imported = re->is_imported;
@@ -1959,7 +1959,7 @@ change_status_2_func(
   te.test = new_test;
   te.passed_mode = !!new_passed_mode;
   te.score = new_score;
-  te.judge_id = new_judge_id;
+  te.j.judge_id = new_judge_id;
   te.is_marked = new_is_marked;
 
   return do_update_entry(cs, run_id, &te,
@@ -2006,7 +2006,7 @@ change_status_3_func(
   te.test = new_test;
   te.passed_mode = !!new_passed_mode;
   te.score = new_score;
-  te.judge_id = new_judge_id;
+  te.j.judge_id = new_judge_id;
   te.is_marked = new_is_marked;
   te.is_saved = has_user_score;
   te.saved_status = user_status;
@@ -2032,7 +2032,7 @@ change_status_4_func(
   te.status = new_status;
   // te.test = 0;
   te.score = -1;
-  te.judge_id = 0;
+  te.j.judge_id = 0;
   te.is_marked = 0;
   te.is_saved = 0;
   te.saved_status = 0;
@@ -2483,7 +2483,7 @@ append_run_func(
     fprintf(cmd_f, ",%d", in_re->score_adj);
   }
   if ((flags & RE_JUDGE_ID)) {
-    fprintf(cmd_f, ",%d", in_re->judge_id);
+    fprintf(cmd_f, ",%d", in_re->j.judge_id);
   }
   if ((flags & RE_SSL_FLAG)) {
     fprintf(cmd_f, ",%d", !!in_re->ssl_flag);
@@ -2627,7 +2627,7 @@ append_run_func(
     new_re->score_adj = in_re->score_adj;
   }
   if ((flags & RE_JUDGE_ID)) {
-    new_re->judge_id = in_re->judge_id;
+    new_re->j.judge_id = in_re->j.judge_id;
   }
   if ((flags & RE_SSL_FLAG)) {
     new_re->ssl_flag = in_re->ssl_flag;
