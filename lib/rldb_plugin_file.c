@@ -765,6 +765,51 @@ is_runlog_version_2(struct rldb_file_cnts *cs)
   return 1;
 }
 
+static void
+copy_entry_v2_to_v3(struct run_entry_v3 *pn, const struct run_entry_v2 *po)
+{
+  memset(pn, 0, sizeof(*pn));
+
+  pn->run_id = po->run_id;
+  pn->size = po->size;
+  pn->time = po->time;
+  pn->nsec = po->nsec;
+  pn->user_id = po->user_id;
+  pn->prob_id = po->prob_id;
+  pn->lang_id = po->lang_id;
+  pn->ipv6_flag = po->ipv6_flag;
+  if (po->ipv6_flag) {
+    memcpy(pn->a.ipv6, po->a.ipv6, sizeof(pn->a.ipv6));
+  } else {
+    pn->a.ip = po->a.ip;
+  }
+  pn->ssl_flag = po->ssl_flag;
+  pn->is_imported = po->is_imported;
+  pn->is_hidden = po->is_hidden;
+  pn->is_readonly = po->is_readonly;
+  pn->is_marked = po->is_marked;
+  pn->is_saved = po->is_saved;
+  pn->score = po->score;
+  pn->status = po->status;
+  pn->passed_mode = po->passed_mode;
+  pn->store_flags = po->store_flags;
+  pn->variant = po->variant;
+  pn->test = po->test;
+  pn->token_flags = po->token_flags;
+  pn->token_count = po->token_count;
+  memcpy(pn->sha1, po->sha1, sizeof(pn->sha1));
+  pn->run_uuid = po->run_uuid;
+  pn->judge_id = po->judge_id;
+  pn->score_adj = po->score_adj;
+  pn->saved_score = po->saved_score;
+  pn->saved_test = po->saved_test;
+  pn->saved_status = po->saved_status;
+  pn->eoln_type = po->eoln_type;
+  pn->locale_id = po->locale_id;
+  pn->mime_type = po->mime_type;
+  pn->pages = po->pages;
+}
+
 static __attribute__((unused)) int
 read_runlog_version_2(struct rldb_file_cnts *cs)
 {
@@ -774,8 +819,6 @@ read_runlog_version_2(struct rldb_file_cnts *cs)
   struct run_header_v2 header_v2;
   int run_v2_u, i;
   struct run_entry_v2 *runs_v2 = 0;
-  struct run_entry_v2 *po;
-  struct run_entry *pn;
 
   info("reading runs log version 2 (binary)");
 
@@ -832,10 +875,13 @@ read_runlog_version_2(struct rldb_file_cnts *cs)
     rls->runs[i].status = RUN_EMPTY;
 
   for (i = 0; i < rls->run_u; i++) {
-    po = &runs_v2[i];
-    pn = &rls->runs[i];
+    //pn = &rls->runs[i];
+    // FIXME:
+    struct run_entry_v3 *pn = malloc(sizeof(*pn));
+    copy_entry_v2_to_v3(pn, &runs_v2[i]);
 
-    memcpy(pn, po, sizeof(*pn)); // FIXME
+    // FIXME
+    free(pn);
   }
 
   xfree(runs_v2);
