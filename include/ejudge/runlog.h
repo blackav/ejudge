@@ -263,53 +263,6 @@ enum
     RE_ALL           = 0xFFFFFFFF,
   };
 
-#if 0
-/* structure size is 128 bytes */
-struct run_entry_v2
-{
-  rint32_t       run_id;        /* 4 */
-  ej_size_t      size;          /* 4 */
-  ej_time64_t    time;          /* 8 */
-  rint32_t       nsec;          /* 4 */
-  rint32_t       user_id;       /* 4 */
-  rint32_t       prob_id;       /* 4 */
-  rint32_t       lang_id;       /* 4 */
-  union
-  {
-    ej_ip4_t       ip;
-    unsigned char  ipv6[16];
-  }              a;             /* 16 */
-  ruint32_t      sha1[5];       /* 20 */
-  rint32_t       score;         /* 4 */
-  rint16_t       test;          /* 2 */
-  signed char    passed_mode;   /* 1 */
-  unsigned char  store_flags;   /* 1 */
-  rint32_t       score_adj;     /* 4 */
-  rint16_t       locale_id;     /* 2 */
-  ruint16_t      judge_id;      /* 2 */
-  unsigned char  status;        /* 1 */
-  unsigned char  is_imported;   /* 1 */
-  unsigned char  variant;       /* 1 */
-  unsigned char  is_hidden;     /* 1 */
-  unsigned char  is_readonly;   /* 1 */
-  unsigned char  pages;         /* 1 */
-  unsigned char  ipv6_flag;     /* 1 */
-  unsigned char  ssl_flag;      /* 1 */
-  rint16_t       mime_type;     /* 2 */
-  unsigned char  eoln_type;     /* 1 */
-  unsigned char  is_marked;     /* 1 */
-  ej_uuid_t      run_uuid;      /* 16 */
-  unsigned char  token_flags;   /* 1 */
-  unsigned char  token_count;   /* 1 */
-  unsigned char  _unused[6];    /* 6 */
-  rint32_t       saved_score;   /* 4 */
-  rint16_t       saved_test;    /* 2 */
-  unsigned char  saved_status;  /* 1 */
-  unsigned char  is_saved;      /* 1 */
-  /* total is 128 bytes */
-};
-#endif
-
 struct run_entry
 {
   rint32_t       run_id;        /* 4 */
