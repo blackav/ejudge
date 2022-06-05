@@ -263,6 +263,7 @@ enum
     RE_ALL           = 0xFFFFFFFF,
   };
 
+#if 0
 /* structure size is 128 bytes */
 struct run_entry_v2
 {
@@ -307,6 +308,7 @@ struct run_entry_v2
   unsigned char  is_saved;      /* 1 */
   /* total is 128 bytes */
 };
+#endif
 
 struct run_entry
 {
