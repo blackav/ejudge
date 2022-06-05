@@ -41,6 +41,12 @@
 #include <sys/stat.h>
 #include <errno.h>
 
+enum
+{
+  RUNLOG_VERSION_3 = 3,
+  RUNLOG_CURRENT_VERSION = RUNLOG_VERSION_3,
+};
+
 struct rldb_file_state
 {
   int nref;
@@ -525,7 +531,7 @@ write_full_runlog_current_version(
   if ((run_fd = sf_open(path, O_RDWR | O_CREAT | O_TRUNC, 0666)) < 0)
     return -1;
 
-  rls->head.version = 2;
+  rls->head.version = RUNLOG_CURRENT_VERSION;
   if (do_write(run_fd, &rls->head, sizeof(rls->head)) < 0) return -1;
   if (rls->run_u > 0) {
     if (do_write(run_fd, rls->runs, sizeof(rls->runs[0]) * rls->run_u) < 0)
@@ -745,7 +751,7 @@ struct run_entry_v2
   /* total is 128 bytes */
 };
 
-static __attribute__((unused)) int
+static int
 is_runlog_version_2(struct rldb_file_cnts *cs)
 {
   struct run_header_v2 header_v2;
@@ -810,7 +816,7 @@ copy_entry_v2_to_v3(struct run_entry *pn, const struct run_entry_v2 *po)
   pn->pages = po->pages;
 }
 
-static __attribute__((unused)) int
+static int
 read_runlog_version_2(struct rldb_file_cnts *cs)
 {
   struct runlog_state *rls = cs->rl_state;
@@ -916,7 +922,7 @@ read_runlog(
   if (filesize == 0) {
     /* runs file is empty */
     XMEMZERO(&rls->head, 1);
-    rls->head.version = 2;
+    rls->head.version = RUNLOG_CURRENT_VERSION;
     rls->head.duration = init_duration;
     rls->head.sched_time = init_sched_time;
     rls->head.finish_time = init_finish_time;
@@ -925,13 +931,13 @@ read_runlog(
     return 0;
   }
 
-  if (sizeof(struct run_entry) != 128) abort();
+  if (sizeof(struct run_entry) != 256) abort();
 
   // read header
   if (do_read(cs->run_fd, &rls->head, sizeof(rls->head)) < 0)
     return -1;
   info("run log version %d", rls->head.version);
-  if (rls->head.version != 2) {
+  if (rls->head.version != RUNLOG_CURRENT_VERSION) {
     err("unsupported run log version %d", rls->head.version);
     return -1;
   }
@@ -1003,8 +1009,9 @@ do_run_open(
   }
   if ((cs->run_fd = sf_open(path, oflags, 0666)) < 0) return -1;
 
-  if ((i = is_runlog_version_0(cs)) < 0) return -1;
-  else if (i) {
+  if ((i = is_runlog_version_0(cs)) < 0) {
+    return -1;
+  } else if (i) {
     if (read_runlog_version_0(cs) < 0) return -1;
     if (flags != RUN_LOG_READONLY) {
       if (save_runlog_backup(path, 0) < 0) return -1;
@@ -1012,11 +1019,22 @@ do_run_open(
       if ((cs->run_fd = write_full_runlog_current_version(cs, path)) < 0)
         return -1;
     }
-  } else if ((i = is_runlog_version_1(cs)) < 0) return -1;
-  else if (i) {
+  } else if ((i = is_runlog_version_1(cs)) < 0) {
+    return -1;
+  } else if (i) {
     if (read_runlog_version_1(cs) < 0) return -1;
     if (flags != RUN_LOG_READONLY) {
       if (save_runlog_backup(path, ".v1") < 0) return -1;
+      close(cs->run_fd);
+      if ((cs->run_fd = write_full_runlog_current_version(cs, path)) < 0)
+        return -1;
+    }
+  } else if ((i = is_runlog_version_2(cs)) < 0) {
+    return -1;
+  } else if (i) {
+    if (read_runlog_version_2(cs) < 0) return -1;
+    if (flags != RUN_LOG_READONLY) {
+      if (save_runlog_backup(path, ".v2") < 0) return -1;
       close(cs->run_fd);
       if ((cs->run_fd = write_full_runlog_current_version(cs, path)) < 0)
         return -1;
