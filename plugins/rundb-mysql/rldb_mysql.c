@@ -196,7 +196,7 @@ do_create(struct rldb_mysql_state *state)
   if (mi->simple_fquery(md, create_userrunheaders_query, md->table_prefix) < 0)
     db_error_fail(md);
   if (mi->simple_fquery(md,
-                        "INSERT INTO %sconfig VALUES ('run_version', '16') ;",
+                        "INSERT INTO %sconfig VALUES ('run_version', '17') ;",
                         md->table_prefix) < 0)
     db_error_fail(md);
   return 0;
@@ -396,7 +396,24 @@ do_open(struct rldb_mysql_state *state)
       return -1;
     run_version = 16;
   }
-  if (run_version != 16) {
+  if (run_version == 16) {
+    if (mi->simple_fquery(md,
+                          "ALTER TABLE %sruns"
+                          " DROP COLUMN is_examinable,"
+                          " DROP COLUMN examiners0,"
+                          " DROP COLUMN examiners1,"
+                          " DROP COLUMN examiners2,"
+                          " DROP COLUMN exam_score0,"
+                          " DROP COLUMN exam_score1,"
+                          " DROP COLUMN exam_score2"
+                          ";", md->table_prefix) < 0)
+      return -1;
+
+    if (mi->simple_fquery(md, "UPDATE %sconfig SET config_val = '17' WHERE config_key = 'run_version' ;", md->table_prefix) < 0)
+      return -1;
+    run_version = 17;
+  }
+  if (run_version != 17) {
     err("run_version == %d is not supported", run_version);
     return -1;
   }

@@ -41,14 +41,7 @@ static const char create_runs_query[] =
 "        is_imported TINYINT NOT NULL DEFAULT 0, "
 "        is_hidden TINYINT NOT NULL DEFAULT 0, "
 "        is_readonly TINYINT NOT NULL DEFAULT 0, "
-"        is_examinable TINYINT NOT NULL DEFAULT 0, "
 "        mime_type VARCHAR(64) DEFAULT NULL, "
-"        examiners0 INT NOT NULL DEFAULT 0, "
-"        examiners1 INT NOT NULL DEFAULT 0, "
-"        examiners2 INT NOT NULL DEFAULT 0, "
-"        exam_score0 INT NOT NULL DEFAULT 0, "
-"        exam_score1 INT NOT NULL DEFAULT 0, "
-"        exam_score2 INT NOT NULL DEFAULT 0, "
 "        last_change_time DATETIME DEFAULT NULL, "
 "        last_change_nsec INT UNSIGNED NOT NULL DEFAULT 0, "
 "        is_marked TINYINT NOT NULL DEFAULT 0, "
@@ -94,30 +87,23 @@ struct run_entry_internal
   int is_imported;
   int is_hidden;
   int is_readonly;
-  int is_examinable;            /* 25 */
-  unsigned char *mime_type;
-  int examiners0;
-  int examiners1;
-  int examiners2;
-  int exam_score0;              /* 30 */
-  int exam_score1;
-  int exam_score2;
+  unsigned char *mime_type;     /* 25 */
   time_t last_change_time;
   int last_change_nsec;
-  int is_marked;                /* 35 */
+  int is_marked;
   int is_saved;
-  int saved_status;
+  int saved_status;             /* 30 */
   int saved_score;
   int saved_test;
-  int passed_mode;              /* 40 */
+  int passed_mode;
   int eoln_type;
-  int store_flags;
+  int store_flags;              /* 35 */
   int token_flags;
   int token_count;
-  unsigned char *prob_uuid;     /* 45 */
+  unsigned char *prob_uuid;
 };
 
-enum { RUNS_ROW_WIDTH = 46 };
+enum { RUNS_ROW_WIDTH = 39 };
 
 #define RUNS_OFFSET(f) XOFFSET(struct run_entry_internal, f)
 static const struct common_mysql_parse_spec runs_spec[RUNS_ROW_WIDTH] =
@@ -147,14 +133,7 @@ static const struct common_mysql_parse_spec runs_spec[RUNS_ROW_WIDTH] =
   { 0, 'b', "is_imported", RUNS_OFFSET(is_imported), 0 },
   { 0, 'b', "is_hidden", RUNS_OFFSET(is_hidden), 0 },
   { 0, 'b', "is_readonly", RUNS_OFFSET(is_readonly), 0 },
-  { 0, 'b', "is_examinable", RUNS_OFFSET(is_examinable), 0 },
   { 1, 's', "mime_type", RUNS_OFFSET(mime_type), 0 },
-  { 0, 'd', "examiners0", RUNS_OFFSET(examiners0), 0 },
-  { 0, 'd', "examiners1", RUNS_OFFSET(examiners1), 0 },
-  { 0, 'd', "examiners2", RUNS_OFFSET(examiners2), 0 },
-  { 0, 'd', "exam_score0", RUNS_OFFSET(exam_score0), 0 },
-  { 0, 'd', "exam_score1", RUNS_OFFSET(exam_score1), 0 },
-  { 0, 'd', "exam_score2", RUNS_OFFSET(exam_score2), 0 },
   { 0, 't', "last_change_time", RUNS_OFFSET(last_change_time), 0 },
   { 0, 'd', "last_change_nsec", RUNS_OFFSET(last_change_nsec), 0 },
   { 0, 'b', "is_marked", RUNS_OFFSET(is_marked), 0 },
