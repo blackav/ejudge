@@ -1455,6 +1455,10 @@ run_set_entry(
     te.token_count = in->token_count;
     f = 1;
   }
+  if ((mask & RE_IS_CHECKED) && te.is_checked != in->is_checked) {
+    te.is_checked = in->is_checked;
+    f = 1;
+  }
 
   /* check consistency of a new record */
   if (te.status == RUN_VIRTUAL_START || te.status == RUN_VIRTUAL_STOP

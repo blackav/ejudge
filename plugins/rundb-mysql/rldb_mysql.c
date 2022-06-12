@@ -196,7 +196,7 @@ do_create(struct rldb_mysql_state *state)
   if (mi->simple_fquery(md, create_userrunheaders_query, md->table_prefix) < 0)
     db_error_fail(md);
   if (mi->simple_fquery(md,
-                        "INSERT INTO %sconfig VALUES ('run_version', '17') ;",
+                        "INSERT INTO %sconfig VALUES ('run_version', '18') ;",
                         md->table_prefix) < 0)
     db_error_fail(md);
   return 0;
@@ -413,7 +413,14 @@ do_open(struct rldb_mysql_state *state)
       return -1;
     run_version = 17;
   }
-  if (run_version != 17) {
+  if (run_version == 17) {
+    if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD COLUMN is_checked TINYINT NOT NULL DEFAULT 0 AFTER prob_uuid", md->table_prefix) < 0)
+      return -1;
+    if (mi->simple_fquery(md, "UPDATE %sconfig SET config_val = '18' WHERE config_key = 'run_version' ;", md->table_prefix) < 0)
+      return -1;
+    run_version = 18;
+  }
+  if (run_version != 18) {
     err("run_version == %d is not supported", run_version);
     return -1;
   }
@@ -797,6 +804,7 @@ load_runs(struct rldb_mysql_cnts *cs)
     re->store_flags = ri.store_flags;
     re->token_flags = ri.token_flags;
     re->token_count = ri.token_count;
+    re->is_checked = ri.is_checked;
   }
   return 1;
 
@@ -1329,6 +1337,10 @@ generate_update_entry_clause(
     state->mi->write_escaped_string(state->md, f, NULL, prob_uuid);
     sep = comma;
   }
+  if ((flags & RE_IS_CHECKED)) {
+    fprintf(f, "%sis_checked = %d", sep, re->is_checked);
+    sep = comma;
+  }
 
   gettimeofday(&curtime, 0);
   fprintf(f, "%slast_change_time = ", sep);
@@ -1433,6 +1445,9 @@ update_entry(
   }
   if ((flags & RE_TOKEN_COUNT)) {
     dst->token_count = src->token_count;
+  }
+  if ((flags & RE_IS_CHECKED)) {
+    dst->is_checked = src->is_checked;
   }
 }
 
@@ -1929,6 +1944,7 @@ put_entry_func(
   ri.store_flags = re->store_flags;
   ri.token_flags = re->token_flags;
   ri.token_count = re->token_count;
+  ri.is_checked = re->is_checked;
 
   cmd_f = open_memstream(&cmd_t, &cmd_z);
   fprintf(cmd_f, "INSERT INTO %sruns VALUES ( ", state->md->table_prefix);
@@ -2439,6 +2455,9 @@ append_run_func(
   if ((flags & RE_PROB_UUID)) {
     fputs(",prob_uuid", cmd_f);
   }
+  if ((flags & RE_IS_CHECKED)) {
+    fputs(",is_checked", cmd_f);
+  }
   fprintf(cmd_f, ") SELECT IFNULL(MAX(run_id),-1)+1, %d, NOW(6), MICROSECOND(NOW(6)) * 1000, '%s', NOW(), MICROSECOND(NOW(6)) * 1000",
           cs->contest_id,
           ej_uuid_unparse_r(uuid_buf, sizeof(uuid_buf), p_uuid, ""));
@@ -2551,6 +2570,9 @@ append_run_func(
     fputs(",'", cmd_f);
     mi->write_escaped_string(md, cmd_f, NULL, prob_uuid);
     fputs("'", cmd_f);
+  }
+  if ((flags & RE_IS_CHECKED)) {
+    fprintf(cmd_f, ",%d", !!in_re->is_checked);
   }
   fprintf(cmd_f, " FROM %sruns WHERE contest_id=%d ;",
           md->table_prefix,
@@ -2689,6 +2711,9 @@ append_run_func(
   if ((flags & RE_PROB_UUID)) {
     //{ 1, 's', "prob_uuid", RUNS_OFFSET(prob_uuid), 0 },
   }
+  if ((flags & RE_IS_CHECKED)) {
+    new_re->is_checked = in_re->is_checked;
+  }
 
   if (p_tv) *p_tv = ri.create_time;
   if (p_serial_id) *p_serial_id = serial_id;
@@ -2706,5 +2731,11 @@ run_set_is_checked_func(
         int run_id,
         int is_checked)
 {
-  return -1;
+  struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts *) cdata;
+  struct run_entry te;
+
+  memset(&te, 0, sizeof(te));
+  te.is_checked = !!is_checked;
+
+  return do_update_entry(cs, run_id, &te, RE_IS_CHECKED, NULL);
 }

@@ -244,7 +244,7 @@ enum
     RE_IS_READONLY   = 0x00002000,
     RE_PAGES         = 0x00004000,
     RE_SCORE_ADJ     = 0x00008000,
-    RE__UNUSED       = 0x00010000,
+    RE_IS_CHECKED    = 0x00010000,
     RE_JUDGE_ID      = 0x00020000,
     RE_SSL_FLAG      = 0x00040000,
     RE_MIME_TYPE     = 0x00080000,

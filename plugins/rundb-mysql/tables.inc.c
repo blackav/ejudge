@@ -55,6 +55,7 @@ static const char create_runs_query[] =
 "        token_flags INT NOT NULL DEFAULT 0, "
 "        token_count INT NOT NULL DEFAULT 0, "
 "        prob_uuid VARCHAR(40) DEFAULT NULL, "
+"        is_checked TINYINT NOT NULL DEFAULT 0, "
 "        UNIQUE KEY runs_run_contest_id_idx(run_id, contest_id), "
 "        KEY runs_contest_id_idx (contest_id) "
 "        ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;";
@@ -101,9 +102,10 @@ struct run_entry_internal
   int token_flags;
   int token_count;
   unsigned char *prob_uuid;
+  int is_checked;
 };
 
-enum { RUNS_ROW_WIDTH = 39 };
+enum { RUNS_ROW_WIDTH = 40 };
 
 #define RUNS_OFFSET(f) XOFFSET(struct run_entry_internal, f)
 static const struct common_mysql_parse_spec runs_spec[RUNS_ROW_WIDTH] =
@@ -147,6 +149,7 @@ static const struct common_mysql_parse_spec runs_spec[RUNS_ROW_WIDTH] =
   { 0, 'd', "token_flags", RUNS_OFFSET(token_flags), 0 },
   { 0, 'd', "token_count", RUNS_OFFSET(token_count), 0 },
   { 1, 's', "prob_uuid", RUNS_OFFSET(prob_uuid), 0 },
+  { 0, 'b', "is_checked", RUNS_OFFSET(is_checked), 0 },
 };
 
 enum
