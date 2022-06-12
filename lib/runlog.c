@@ -2415,7 +2415,7 @@ build_indices(runlog_state_t state, int flags)
     case RUN_VIRTUAL_START:
       urhi->is_virtual = 1;
       urhi->start_time = state->runs[i_off].time;
-      if (state->runs[i_off].j.judge_id) urhi->is_checked = 1;
+      if (state->runs[i_off].is_checked) urhi->is_checked = 1;
       break;
     case RUN_VIRTUAL_STOP:
       ASSERT(urhi->start_time > 0);
@@ -3036,7 +3036,7 @@ run_set_virtual_is_checked(
           && state->runs[run_id - state->run_f].user_id == user_id)
         break;
     if (run_id < state->run_u) {
-      state->iface->set_judge_id(state->cnts, run_id, is_checked);
+      state->iface->run_set_is_checked(state->cnts, run_id, is_checked);
     }
   }
   return 0;

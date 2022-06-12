@@ -600,7 +600,7 @@ ns_write_priv_all_runs(
       }
       if (pe->status == RUN_VIRTUAL_START || pe->status == RUN_VIRTUAL_STOP) {
         examinable_str = "";
-        if (pe->j.judge_id > 0) examinable_str = "!";
+        if (pe->is_checked > 0) examinable_str = "!";
         run_time = pe->time;
         if (!env.rhead.start_time) run_time = 0;
         if (env.rhead.start_time > run_time) run_time = env.rhead.start_time;

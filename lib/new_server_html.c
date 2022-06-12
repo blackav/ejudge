@@ -8678,7 +8678,7 @@ priv_list_runs_json(
         }
       }
       if (pe->status == RUN_VIRTUAL_START || pe->status == RUN_VIRTUAL_STOP) {
-        if (pe->j.judge_id > 0) {
+        if (pe->is_checked > 0) {
           fprintf(fout, ",\n%s\"is_examinable\" : %s", indent, to_json_bool(1));
         }
       } else {
