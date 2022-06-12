@@ -210,6 +210,11 @@ change_status_4_func(
         struct rldb_plugin_cnts *cdata,
         int run_id,
         int new_status);
+static int
+run_set_is_checked_func(
+        struct rldb_plugin_cnts *cdata,
+        int run_id,
+        int is_checked);
 
 struct rldb_plugin_iface rldb_plugin_file =
 {
@@ -256,6 +261,15 @@ struct rldb_plugin_iface rldb_plugin_file =
   check_func,
   change_status_3_func,
   change_status_4_func,
+  NULL, // fetch_user_runs
+  NULL, // add_entry_2
+  NULL, // user_run_header_set_start_time
+  NULL, // user_run_header_set_stop_time
+  NULL, // user_run_header_set_duration
+  NULL, // user_run_header_set_is_checked
+  NULL, // user_run_header_delete
+  NULL, // append_run
+  run_set_is_checked_func,
 };
 
 static struct common_plugin_data *
@@ -1849,4 +1863,13 @@ change_status_4_func(
   rls->runs[run_id].saved_test = 0;
   rls->runs[run_id].saved_score = 0;
   return do_flush_entry(cs, run_id);
+}
+
+static int
+run_set_is_checked_func(
+        struct rldb_plugin_cnts *cdata,
+        int run_id,
+        int is_checked)
+{
+  return -1;
 }

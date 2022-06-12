@@ -120,6 +120,7 @@ struct rldb_plugin_iface plugin_rldb_mysql =
   user_run_header_set_is_checked_func,
   user_run_header_delete_func,
   append_run_func,
+  run_set_is_checked_func,
 };
 
 static struct common_plugin_data *
@@ -2679,5 +2680,14 @@ append_run_func(
 fail:
   if (cmd_f) fclose(cmd_f);
   xfree(cmd_s);
+  return -1;
+}
+
+static int
+run_set_is_checked_func(
+        struct rldb_plugin_cnts *cdata,
+        int run_id,
+        int is_checked)
+{
   return -1;
 }

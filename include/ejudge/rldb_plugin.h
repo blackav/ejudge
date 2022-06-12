@@ -225,6 +225,12 @@ struct rldb_plugin_iface
         struct timeval *p_tv,
         int64_t *p_serial_id,
         ej_uuid_t *p_uuid);
+
+  // set is_checked flag of the run (legacy)
+  int (*run_set_is_checked)(
+        struct rldb_plugin_cnts *cdata,
+        int run_id,
+        int is_checked);
 };
 
 /* default plugin: compiled into new-server */

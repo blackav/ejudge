@@ -255,3 +255,9 @@ append_run_func(
         struct timeval *p_tv,
         int64_t *p_serial_id,
         ej_uuid_t *p_uuid);
+
+static int
+run_set_is_checked_func(
+        struct rldb_plugin_cnts *cdata,
+        int run_id,
+        int is_checked);

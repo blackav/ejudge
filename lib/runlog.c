@@ -3095,3 +3095,14 @@ run_rebuild_user_run_index(runlog_state_t state, int user_id)
     urhi->run_id_last = run_id;
   }
 }
+
+int
+run_set_run_is_checked(runlog_state_t state, int run_id, int is_checked)
+{
+  if (run_id < 0 || run_id >= state->run_u) ERR_R("bad runid: %d", run_id);
+  if (!state->iface->run_set_is_checked) {
+    ERR_R("run_set_is_checked is not implemented");
+  } else {
+    return state->iface->run_set_is_checked(state->cnts, run_id, is_checked);
+  }
+}

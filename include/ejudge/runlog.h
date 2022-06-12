@@ -498,6 +498,12 @@ run_set_user_stop_time(
 
 int run_is_virtual_legacy_mode(runlog_state_t state);
 
+int
+run_set_run_is_checked(
+        runlog_state_t state,
+        int run_id,
+        int is_checked);
+
 void
 run_rebuild_user_run_index(runlog_state_t state, int user_id);
 
