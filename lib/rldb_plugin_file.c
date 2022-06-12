@@ -1871,5 +1871,12 @@ run_set_is_checked_func(
         int run_id,
         int is_checked)
 {
-  return -1;
+  struct rldb_file_cnts *cs = (struct rldb_file_cnts*) cdata;
+  struct runlog_state *rls = cs->rl_state;
+
+  ASSERT(rls->run_f == 0);
+  ASSERT(run_id >= 0 && run_id < rls->run_u);
+
+  rls->runs[run_id].is_checked = is_checked;
+  return do_flush_entry(cs, run_id);
 }
