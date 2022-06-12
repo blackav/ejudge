@@ -45,7 +45,7 @@ int main(void)
   printf("prot_serve_status:     %zu\n", sizeof(struct prot_serve_status));
   printf("run_header:            %zu\n", sizeof(struct run_header));
   printf("run_entry:             %zu\n", sizeof(struct run_entry));
-  printf("run_entry_v3:          %zu\n", sizeof(struct run_entry_v3));
+  //printf("run_entry_v3:          %zu\n", sizeof(struct run_entry_v3));
   //printf("clar_entry_v1:         %zu\n", sizeof(struct clar_entry_v1));
   printf("clar_entry_v2:         %zu\n", sizeof(struct clar_entry_v2));
   printf("group_dates:           %zu\n", sizeof(struct group_dates));

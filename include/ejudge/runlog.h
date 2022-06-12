@@ -281,7 +281,8 @@ struct run_entry
   unsigned int   is_readonly:1;
   unsigned int   is_marked:1;
   unsigned int   is_saved:1;
-  unsigned int   _pad2:23;
+  unsigned int   is_checked:1;
+  unsigned int   _pad2:22;
   rint32_t       score;         /* 4 */
   unsigned char  status;        /* 1 */
   signed char    passed_mode;   /* 1 */
