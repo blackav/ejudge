@@ -1903,15 +1903,6 @@ run_set_hidden(runlog_state_t state, int run_id)
 }
 
 int
-run_set_judge_id(runlog_state_t state, int run_id, int judge_id)
-{
-  if (run_id < 0 || run_id >= state->run_u) ERR_R("bad runid: %d", run_id);
-  if (judge_id < 0 || judge_id > EJ_MAX_JUDGE_ID)
-    ERR_R("bad judge_id: %d", judge_id);
-  return state->iface->set_judge_id(state->cnts, run_id, judge_id);
-}
-
-int
 run_has_transient_user_runs(runlog_state_t state, int user_id)
 {
   int i;
@@ -3045,7 +3036,7 @@ run_set_virtual_is_checked(
           && state->runs[run_id - state->run_f].user_id == user_id)
         break;
     if (run_id < state->run_u) {
-      run_set_judge_id(state, run_id, is_checked);
+      state->iface->set_judge_id(state->cnts, run_id, is_checked);
     }
   }
   return 0;
