@@ -136,7 +136,7 @@ static const struct common_mysql_parse_spec runs_spec[RUNS_ROW_WIDTH] =
   { 0, 'b', "is_hidden", RUNS_OFFSET(is_hidden), 0 },
   { 0, 'b', "is_readonly", RUNS_OFFSET(is_readonly), 0 },
   { 1, 's', "mime_type", RUNS_OFFSET(mime_type), 0 },
-  { 0, 't', "last_change_time", RUNS_OFFSET(last_change_time), 0 },
+  { 1, 't', "last_change_time", RUNS_OFFSET(last_change_time), 0 },
   { 0, 'd', "last_change_nsec", RUNS_OFFSET(last_change_nsec), 0 },
   { 0, 'b', "is_marked", RUNS_OFFSET(is_marked), 0 },
   { 0, 'b', "is_saved", RUNS_OFFSET(is_saved), 0 },
@@ -202,15 +202,15 @@ enum { HEADERS_ROW_WIDTH = 11 };
 static const struct common_mysql_parse_spec headers_spec[RUNS_ROW_WIDTH] =
 {
   { 0, 'd', "contest_id", HEADERS_OFFSET(contest_id), 0 },
-  { 0, 't', "start_time", HEADERS_OFFSET(start_time), 0 },
-  { 0, 't', "sched_time", HEADERS_OFFSET(sched_time), 0 },
+  { 1, 't', "start_time", HEADERS_OFFSET(start_time), 0 },
+  { 1, 't', "sched_time", HEADERS_OFFSET(sched_time), 0 },
   { 0, 'd', "duration", HEADERS_OFFSET(duration), 0 },
-  { 0, 't', "stop_time", HEADERS_OFFSET(stop_time), 0 },
-  { 0, 't', "finish_time", HEADERS_OFFSET(finish_time), 0 },
+  { 1, 't', "stop_time", HEADERS_OFFSET(stop_time), 0 },
+  { 1, 't', "finish_time", HEADERS_OFFSET(finish_time), 0 },
   { 0, 'd', "saved_duration", HEADERS_OFFSET(saved_duration), 0 },
-  { 0, 't', "saved_stop_time", HEADERS_OFFSET(saved_stop_time), 0 },
-  { 0, 't', "saved_finish_time", HEADERS_OFFSET(saved_finish_time), 0 },
-  { 0, 't', "last_change_time", HEADERS_OFFSET(last_change_time), 0 },
+  { 1, 't', "saved_stop_time", HEADERS_OFFSET(saved_stop_time), 0 },
+  { 1, 't', "saved_finish_time", HEADERS_OFFSET(saved_finish_time), 0 },
+  { 1, 't', "last_change_time", HEADERS_OFFSET(last_change_time), 0 },
   { 0, 'd', "last_change_nsec", HEADERS_OFFSET(last_change_nsec), 0 },
 };
 
