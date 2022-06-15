@@ -136,12 +136,6 @@ set_hidden_func(
         int new_hidden);
 
 static int
-set_judge_id_func(
-        struct rldb_plugin_cnts *cdata,
-        int run_id,
-        int new_judge_id);
-
-static int
 set_pages_func(
         struct rldb_plugin_cnts *cdata,
         int run_id,

@@ -118,7 +118,7 @@ struct rldb_plugin_iface
                     int run_id,
                     int new_hidden);
   // set the judge_id value
-  int (*set_judge_id)(struct rldb_plugin_cnts *,
+  __attribute__((deprecated)) int (*deprecated_set_judge_id)(struct rldb_plugin_cnts *,
                       int run_id,
                       int new_judge_id);
   // set the pages value

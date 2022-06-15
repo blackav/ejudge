@@ -102,7 +102,7 @@ struct rldb_plugin_iface plugin_rldb_mysql =
   set_status_func,
   clear_entry_func,
   set_hidden_func,
-  set_judge_id_func,
+  NULL, //set_judge_id,
   set_pages_func,
   set_entry_func,
   squeeze_func,
@@ -1807,21 +1807,6 @@ set_hidden_func(
   te.is_hidden = new_hidden;
 
   return do_update_entry(cs, run_id, &te, RE_IS_HIDDEN, NULL);
-}
-
-static int
-set_judge_id_func(
-        struct rldb_plugin_cnts *cdata,
-        int run_id,
-        int new_judge_id)
-{
-  struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts *) cdata;
-  struct run_entry te;
-
-  memset(&te, 0, sizeof(te));
-  te.j.judge_id = new_judge_id;
-
-  return do_update_entry(cs, run_id, &te, RE_JUDGE_ID, NULL);
 }
 
 static int

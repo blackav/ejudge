@@ -160,11 +160,6 @@ set_hidden_func(
         int run_id,
         int new_hidden);
 static int
-set_judge_id_func(
-        struct rldb_plugin_cnts *cdata,
-        int run_id,
-        int new_judge_id);
-static int
 set_pages_func(
         struct rldb_plugin_cnts *cdata,
         int run_id,
@@ -251,7 +246,7 @@ struct rldb_plugin_iface rldb_plugin_file =
   set_status_func,
   clear_entry_func,
   set_hidden_func,
-  set_judge_id_func,
+  NULL, //set_judge_id,
   set_pages_func,
   set_entry_func,
   squeeze_func,
@@ -1655,22 +1650,6 @@ set_hidden_func(
   ASSERT(run_id >= 0 && run_id < rls->run_u);
 
   rls->runs[run_id].is_hidden = new_hidden;
-  return do_flush_entry(cs, run_id);
-}
-
-static int
-set_judge_id_func(
-        struct rldb_plugin_cnts *cdata,
-        int run_id,
-        int new_judge_id)
-{
-  struct rldb_file_cnts *cs = (struct rldb_file_cnts*) cdata;
-  struct runlog_state *rls = cs->rl_state;
-
-  ASSERT(rls->run_f == 0);
-  ASSERT(run_id >= 0 && run_id < rls->run_u);
-
-  rls->runs[run_id].j.judge_id = new_judge_id;
   return do_flush_entry(cs, run_id);
 }
 
