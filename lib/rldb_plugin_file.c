@@ -109,7 +109,7 @@ add_entry_func(
         struct rldb_plugin_cnts *cdata,
         int i,
         const struct run_entry *re,
-        int flags);
+        int mask);
 static int
 undo_add_entry_func(
         struct rldb_plugin_cnts *cdata,
@@ -169,7 +169,7 @@ set_entry_func(
         struct rldb_plugin_cnts *cdata,
         int run_id,
         const struct run_entry *in,
-        int flags);
+        int mask);
 static int
 squeeze_func(struct rldb_plugin_cnts *cdata);
 static int
@@ -1370,7 +1370,7 @@ add_entry_func(
         struct rldb_plugin_cnts *cdata,
         int run_id,
         const struct run_entry *re,
-        int flags)
+        int mask)
 {
   struct rldb_file_cnts *cs = (struct rldb_file_cnts*) cdata;
   struct runlog_state *rls = cs->rl_state;
@@ -1379,95 +1379,95 @@ add_entry_func(
   ASSERT(run_id >= 0 && run_id < rls->run_a);
   de = &rls->runs[run_id];
 
-  if ((flags & RE_SIZE)) {
+  if ((mask & RE_SIZE)) {
     de->size = re->size;
   }
-  if ((flags & RE_IP)) {
+  if ((mask & RE_IP)) {
     de->a = re->a;
     de->ipv6_flag = re->ipv6_flag;
   }
-  if ((flags & RE_SHA1)) {
+  if ((mask & RE_SHA1)) {
     memcpy(de->h.sha1, re->h.sha1, sizeof(de->h.sha1));
   }
-  if ((flags & RE_RUN_UUID)) {
+  if ((mask & RE_RUN_UUID)) {
     memcpy(&de->run_uuid, &re->run_uuid, sizeof(de->run_uuid));
   }
-  if ((flags & RE_USER_ID)) {
+  if ((mask & RE_USER_ID)) {
     de->user_id = re->user_id;
   }
-  if ((flags & RE_PROB_ID)) {
+  if ((mask & RE_PROB_ID)) {
     de->prob_id = re->prob_id;
   }
-  if ((flags & RE_LANG_ID)) {
+  if ((mask & RE_LANG_ID)) {
     de->lang_id = re->lang_id;
   }
-  if ((flags & RE_LOCALE_ID)) {
+  if ((mask & RE_LOCALE_ID)) {
     de->locale_id = re->locale_id;
   }
-  if ((flags & RE_STATUS)) {
+  if ((mask & RE_STATUS)) {
     de->status = re->status;
   }
-  if ((flags & RE_TEST)) {
+  if ((mask & RE_TEST)) {
     de->test = re->test;
   }
-  if ((flags & RE_SCORE)) {
+  if ((mask & RE_SCORE)) {
     de->score = re->score;
   }
-  if ((flags & RE_IS_IMPORTED)) {
+  if ((mask & RE_IS_IMPORTED)) {
     de->is_imported = re->is_imported;
   }
-  if ((flags & RE_VARIANT)) {
+  if ((mask & RE_VARIANT)) {
     de->variant = re->variant;
   }
-  if ((flags & RE_IS_HIDDEN)) {
+  if ((mask & RE_IS_HIDDEN)) {
     de->is_hidden = re->is_hidden;
   }
-  if ((flags & RE_IS_READONLY)) {
+  if ((mask & RE_IS_READONLY)) {
     de->is_readonly = re->is_readonly;
   }
-  if ((flags & RE_PAGES)) {
+  if ((mask & RE_PAGES)) {
     de->pages = re->pages;
   }
-  if ((flags & RE_SCORE_ADJ)) {
+  if ((mask & RE_SCORE_ADJ)) {
     de->score_adj = re->score_adj;
   }
-  if ((flags & RE_JUDGE_ID)) {
+  if ((mask & RE_JUDGE_ID)) {
     de->j.judge_id = re->j.judge_id;
   }
-  if ((flags & RE_SSL_FLAG)) {
+  if ((mask & RE_SSL_FLAG)) {
     de->ssl_flag = re->ssl_flag;
   }
-  if ((flags & RE_MIME_TYPE)) {
+  if ((mask & RE_MIME_TYPE)) {
     de->mime_type = re->mime_type;
   }
-  if ((flags & RE_IS_MARKED)) {
+  if ((mask & RE_IS_MARKED)) {
     de->is_marked = re->is_marked;
   }
-  if ((flags & RE_IS_SAVED)) {
+  if ((mask & RE_IS_SAVED)) {
     de->is_saved = re->is_saved;
   }
-  if ((flags & RE_SAVED_STATUS)) {
+  if ((mask & RE_SAVED_STATUS)) {
     de->saved_status = re->saved_status;
   }
-  if ((flags & RE_SAVED_SCORE)) {
+  if ((mask & RE_SAVED_SCORE)) {
     de->saved_score = re->saved_score;
   }
-  if ((flags & RE_SAVED_TEST)) {
+  if ((mask & RE_SAVED_TEST)) {
     de->saved_test = re->saved_test;
   }
-  if ((flags & RE_PASSED_MODE)) {
+  if ((mask & RE_PASSED_MODE)) {
     de->passed_mode = re->passed_mode;
   }
-  if ((flags & RE_EOLN_TYPE)) {
+  if ((mask & RE_EOLN_TYPE)) {
     de->eoln_type = re->eoln_type;
   }
-  if ((flags & RE_STORE_FLAGS)) {
+  if ((mask & RE_STORE_FLAGS)) {
     de->store_flags = re->store_flags;
   }
-  if ((flags & RE_TOKEN_FLAGS)) {
+  if ((mask & RE_TOKEN_FLAGS)) {
     de->token_flags = re->token_flags;
   }
-  if ((flags & RE_TOKEN_COUNT)) {
+  if ((mask & RE_TOKEN_COUNT)) {
     de->token_count = re->token_count;
   }
 
@@ -1673,7 +1673,7 @@ set_entry_func(
         struct rldb_plugin_cnts *cdata,
         int run_id,
         const struct run_entry *in,
-        int flags)
+        int mask)
 {
   struct rldb_file_cnts *cs = (struct rldb_file_cnts*) cdata;
   struct runlog_state *rls = cs->rl_state;
