@@ -601,8 +601,6 @@ run_change_status_3(
         int newtest,
         int newpassedmode,
         int newscore,
-        int judge_id,
-        const ej_uuid_t *puuid,
         int is_marked,
         int has_user_score,
         int user_status,
@@ -617,8 +615,6 @@ run_change_status_3(
   if (newtest < -1) ERR_R("bad newtest: %d", newtest);
   if (newscore < -1 || newscore > EJ_MAX_SCORE)
     ERR_R("bad newscore: %d", newscore);
-  if (judge_id < 0 || judge_id > EJ_MAX_JUDGE_ID)
-    ERR_R("bad judge_id: %d", judge_id);
 
   if (newstatus == RUN_VIRTUAL_START || newstatus == RUN_VIRTUAL_STOP)
     ERR_R("virtual status cannot be changed that way");
@@ -638,7 +634,7 @@ run_change_status_3(
                                        newtest,     /* new_test */
                                        newpassedmode, /* new_passed_mode */
                                        newscore,      /* new_score */
-                                       judge_id,      /* judge_id */
+                                       0,         /* judge_id */
                                        is_marked,     /* is_marked */
                                        has_user_score, /* has_user_score */
                                        user_status,    /* user_status */

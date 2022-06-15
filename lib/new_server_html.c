@@ -4064,8 +4064,6 @@ priv_submit_run_comment(
                         full_score,       /* newtest? */
                         re.test,          /* newpassedmode? */
                         re.passed_mode,   /* newscore? */
-                        0,                /* judge_id */
-                        NULL,             /* puuid */
                         0,                /* is_marked */
                         re.saved_score,   /* has_user_score? */
                         user_status,      /* user_status */
