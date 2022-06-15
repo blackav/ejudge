@@ -2010,7 +2010,6 @@ change_status_3_func(
         int new_test,
         int new_passed_mode,
         int new_score,
-        int new_judge_id,
         int new_is_marked,
         int has_user_score,
         int user_status,
@@ -2025,7 +2024,7 @@ change_status_3_func(
   te.test = new_test;
   te.passed_mode = !!new_passed_mode;
   te.score = new_score;
-  te.j.judge_id = new_judge_id;
+  te.j.judge_id = 0;
   te.is_marked = new_is_marked;
   te.is_saved = has_user_score;
   te.saved_status = user_status;

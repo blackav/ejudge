@@ -154,7 +154,6 @@ struct rldb_plugin_iface
                          int new_test,
                          int new_passed_mode,
                          int new_score,
-                         int judge_id,
                          int is_marked,
                          int has_user_score,
                          int user_status,

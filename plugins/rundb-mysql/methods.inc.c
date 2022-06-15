@@ -185,7 +185,6 @@ change_status_3_func(
         int new_test,
         int new_passed_mode,
         int new_score,
-        int new_judge_id,
         int new_is_marked,
         int has_user_score,
         int user_status,

@@ -634,7 +634,6 @@ run_change_status_3(
                                        newtest,     /* new_test */
                                        newpassedmode, /* new_passed_mode */
                                        newscore,      /* new_score */
-                                       0,         /* judge_id */
                                        is_marked,     /* is_marked */
                                        has_user_score, /* has_user_score */
                                        user_status,    /* user_status */
