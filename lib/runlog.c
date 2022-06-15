@@ -602,6 +602,7 @@ run_change_status_3(
         int newpassedmode,
         int newscore,
         int judge_id,
+        const ej_uuid_t *puuid,
         int is_marked,
         int has_user_score,
         int user_status,
@@ -631,10 +632,18 @@ run_change_status_3(
   if (state->runs[off_run_id].is_readonly)
     ERR_R("this entry is read-only");
 
-  return state->iface->change_status_3(state->cnts, runid, newstatus, newtest,
-                                       newpassedmode, newscore, judge_id, is_marked,
-                                       has_user_score, user_status,
-                                       user_tests_passed, user_score);
+  return state->iface->change_status_3(state->cnts, /* cntx */
+                                       runid,       /* run_id */
+                                       newstatus,   /* new_status */
+                                       newtest,     /* new_test */
+                                       newpassedmode, /* new_passed_mode */
+                                       newscore,      /* new_score */
+                                       judge_id,      /* judge_id */
+                                       is_marked,     /* is_marked */
+                                       has_user_score, /* has_user_score */
+                                       user_status,    /* user_status */
+                                       user_tests_passed, /* user_tests_passed */
+                                       user_score);       /* user_score */
 }
 
 int

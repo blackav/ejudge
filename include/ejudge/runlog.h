@@ -148,6 +148,7 @@ run_change_status_3(
         int newpassedmode,
         int newscore,
         int judge_id,
+        const ej_uuid_t *puuid,
         int is_marked,
         int has_user_score,
         int user_status,

@@ -4057,10 +4057,20 @@ priv_submit_run_comment(
       if (prob && user_score < 0) user_score = prob->full_score;
       if (user_score < 0) user_score = 0;
     }
-    run_change_status_3(cs->runlog_state, run_id, RUN_OK,
-                        full_score, re.test, re.passed_mode, 0, 0,
-                        re.saved_score, user_status, re.saved_test,
-                        user_score);
+    // FIXME: is the parameter ordering correct???
+    run_change_status_3(cs->runlog_state, /* state */
+                        run_id,           /* runid */
+                        RUN_OK,           /* newstatus */
+                        full_score,       /* newtest? */
+                        re.test,          /* newpassedmode? */
+                        re.passed_mode,   /* newscore? */
+                        0,                /* judge_id */
+                        NULL,             /* puuid */
+                        0,                /* is_marked */
+                        re.saved_score,   /* has_user_score? */
+                        user_status,      /* user_status */
+                        re.saved_test,    /* user_tests_passed? */
+                        user_score);      /* user_score */
   }
 
   const unsigned char *audit_cmd = NULL;
