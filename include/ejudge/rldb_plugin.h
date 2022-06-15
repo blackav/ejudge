@@ -84,7 +84,7 @@ struct rldb_plugin_iface
         int nsec);
   // write a new run to the database
   int (*add_entry)(struct rldb_plugin_cnts *, int i,
-                   const struct run_entry *, int);
+                   const struct run_entry *, uint64_t mask);
   // undo the last append
   int (*undo_add_entry)(struct rldb_plugin_cnts *, int run_id);
   // change the status
@@ -129,7 +129,7 @@ struct rldb_plugin_iface
   int (*set_entry)(struct rldb_plugin_cnts *,
                    int run_id,
                    const struct run_entry *in,
-                   int flags);
+                   uint64_t mask);
   // remove the EMPTY records
   int (*squeeze)(struct rldb_plugin_cnts *);
   // insert the whole record
@@ -178,7 +178,7 @@ struct rldb_plugin_iface
         struct rldb_plugin_cnts *,
         int i,
         const struct run_entry *,
-        int,
+        uint64_t mask,
         const unsigned char *prob_uuid);
 
   // set virtual start time

@@ -73,7 +73,7 @@ add_entry_func(
         struct rldb_plugin_cnts *cdata,
         int run_id,
         const struct run_entry *re,
-        int mask);
+        uint64_t mask);
 
 static int
 undo_add_entry_func(
@@ -146,7 +146,7 @@ set_entry_func(
         struct rldb_plugin_cnts *cdata,
         int run_id,
         const struct run_entry *in,
-        int mask);
+        uint64_t mask);
 
 static int
 squeeze_func(struct rldb_plugin_cnts *cdata);
@@ -202,7 +202,7 @@ add_entry_2_func(
         struct rldb_plugin_cnts *cdata,
         int run_id,
         const struct run_entry *re,
-        int mask,
+        uint64_t mask,
         const unsigned char *prob_uuid);
 
 static int

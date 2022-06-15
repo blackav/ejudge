@@ -1183,7 +1183,7 @@ generate_update_entry_clause(
         struct rldb_mysql_state *state,
         FILE *f,
         const struct run_entry *re,
-        int mask,
+        uint64_t mask,
         const unsigned char *prob_uuid)
 {
   struct timeval curtime;
@@ -1353,7 +1353,7 @@ static void
 update_entry(
         struct run_entry *dst,
         const struct run_entry *src,
-        int mask)
+        uint64_t mask)
 {
   if ((mask & RE_SIZE)) {
     dst->size = src->size;
@@ -1456,7 +1456,7 @@ do_update_entry(
         struct rldb_mysql_cnts *cs,
         int run_id,
         const struct run_entry *re,
-        int mask,
+        uint64_t mask,
         const unsigned char *prob_uuid)
 {
   struct rldb_mysql_state *state = cs->plugin_state;
@@ -1491,7 +1491,7 @@ add_entry_func(
         struct rldb_plugin_cnts *cdata,
         int run_id,
         const struct run_entry *re,
-        int mask)
+        uint64_t mask)
 {
   struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts *) cdata;
   struct runlog_state *rls = cs->rl_state;
@@ -1563,7 +1563,7 @@ generate_update_header_clause(
         struct rldb_mysql_state *state,
         FILE *f,
         const struct run_header *rh,
-        int mask)
+        uint64_t mask)
 {
   struct timeval curtime;
   const unsigned char *sep = "";
@@ -1619,7 +1619,7 @@ static void
 update_header(
         struct run_header *dst,
         const struct run_header *src,
-        int mask)
+        uint64_t mask)
 {
   if ((mask & RH_START_TIME)) {
     dst->start_time = src->start_time;
@@ -1829,7 +1829,7 @@ set_entry_func(
         struct rldb_plugin_cnts *cdata,
         int run_id,
         const struct run_entry *in,
-        int mask)
+        uint64_t mask)
 {
   struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts *) cdata;
   struct runlog_state *rls = cs->rl_state;
@@ -2070,7 +2070,7 @@ add_entry_2_func(
         struct rldb_plugin_cnts *cdata,
         int run_id,
         const struct run_entry *re,
-        int mask,
+        uint64_t mask,
         const unsigned char *prob_uuid)
 {
   // FIXME
