@@ -1183,38 +1183,38 @@ generate_update_entry_clause(
         struct rldb_mysql_state *state,
         FILE *f,
         const struct run_entry *re,
-        int flags,
+        int mask,
         const unsigned char *prob_uuid)
 {
   struct timeval curtime;
   const unsigned char *sep = "";
   const unsigned char *comma = ", ";
 
-  if ((flags & RE_SIZE)) {
+  if ((mask & RE_SIZE)) {
     fprintf(f, "%ssize = %d", sep, re->size);
     sep = comma;
   }
-  if ((flags & RE_USER_ID)) {
+  if ((mask & RE_USER_ID)) {
     fprintf(f, "%suser_id = %d", sep, re->user_id);
     sep = comma;
   }
-  if ((flags & RE_PROB_ID)) {
+  if ((mask & RE_PROB_ID)) {
     fprintf(f, "%sprob_id = %d", sep, re->prob_id);
     sep = comma;
   }
-  if ((flags & RE_LANG_ID)) {
+  if ((mask & RE_LANG_ID)) {
     fprintf(f, "%slang_id = %d", sep, re->lang_id);
     sep = comma;
   }
-  if ((flags & RE_STATUS)) {
+  if ((mask & RE_STATUS)) {
     fprintf(f, "%sstatus = %d", sep, re->status);
     sep = comma;
   }
-  if ((flags & RE_SSL_FLAG)) {
+  if ((mask & RE_SSL_FLAG)) {
     fprintf(f, "%sssl_flag = %d", sep, re->ssl_flag);
     sep = comma;
   }
-  if ((flags & RE_IP)) {
+  if ((mask & RE_IP)) {
     int ip_version = 4;
     if (re->ipv6_flag) ip_version = 6;
     fprintf(f, "%sip_version = %d", sep, ip_version);
@@ -1223,7 +1223,7 @@ generate_update_entry_clause(
     run_entry_to_ipv6(re, &ipv6);
     fprintf(f, "%sip = '%s'", sep, xml_unparse_ipv6(&ipv6));
   }
-  if ((flags & RE_SHA1)) {
+  if ((mask & RE_SHA1)) {
     if (!re->h.sha1[0] && !re->h.sha1[1] && !re->h.sha1[2]
         && !re->h.sha1[3] && !re->h.sha1[4]) {
       fprintf(f, "%shash = NULL", sep);
@@ -1232,7 +1232,7 @@ generate_update_entry_clause(
     }
     sep =comma;
   }
-  if ((flags & RE_RUN_UUID)) {
+  if ((mask & RE_RUN_UUID)) {
 #if CONF_HAS_LIBUUID - 0 != 0
     if (!re->run_uuid.v[0] && !re->run_uuid.v[1] && !re->run_uuid.v[2] && !re->run_uuid.v[3]) {
       fprintf(f, "%srun_uuid = NULL", sep);
@@ -1244,47 +1244,47 @@ generate_update_entry_clause(
     sep =comma;
 #endif
   }
-  if ((flags & RE_SCORE)) {
+  if ((mask & RE_SCORE)) {
     fprintf(f, "%sscore = %d", sep, re->score);
     sep = comma;
   }
-  if ((flags & RE_TEST)) {
+  if ((mask & RE_TEST)) {
     fprintf(f, "%stest_num = %d", sep, re->test);
     sep = comma;
   }
-  if ((flags & RE_SCORE_ADJ)) {
+  if ((mask & RE_SCORE_ADJ)) {
     fprintf(f, "%sscore_adj = %d", sep, re->score_adj);
     sep = comma;
   }
-  if ((flags & RE_LOCALE_ID)) {
+  if ((mask & RE_LOCALE_ID)) {
     fprintf(f, "%slocale_id = %d", sep, re->locale_id);
     sep = comma;
   }
-  if ((flags & RE_JUDGE_ID)) {
+  if ((mask & RE_JUDGE_ID)) {
     fprintf(f, "%sjudge_id = %d", sep, re->j.judge_id);
     sep = comma;
   }
-  if ((flags & RE_VARIANT)) {
+  if ((mask & RE_VARIANT)) {
     fprintf(f, "%svariant = %d", sep, re->variant);
     sep = comma;
   }
-  if ((flags & RE_PAGES)) {
+  if ((mask & RE_PAGES)) {
     fprintf(f, "%spages = %d", sep, re->pages);
     sep = comma;
   }
-  if ((flags & RE_IS_IMPORTED)) {
+  if ((mask & RE_IS_IMPORTED)) {
     fprintf(f, "%sis_imported = %d", sep, re->is_imported);
     sep = comma;
   }
-  if ((flags & RE_IS_HIDDEN)) {
+  if ((mask & RE_IS_HIDDEN)) {
     fprintf(f, "%sis_hidden = %d", sep, re->is_hidden);
     sep = comma;
   }
-  if ((flags & RE_IS_READONLY)) {
+  if ((mask & RE_IS_READONLY)) {
     fprintf(f, "%sis_readonly = %d", sep, re->is_readonly);
     sep = comma;
   }
-  if ((flags & RE_MIME_TYPE)) {
+  if ((mask & RE_MIME_TYPE)) {
     if (re->mime_type > 0) {
       fprintf(f, "%smime_type = '%s'", sep, mime_type_get_type(re->mime_type));
     } else {
@@ -1292,52 +1292,52 @@ generate_update_entry_clause(
     }
     sep = comma;
   }
-  if ((flags & RE_IS_MARKED)) {
+  if ((mask & RE_IS_MARKED)) {
     fprintf(f, "%sis_marked = %d", sep, re->is_marked);
     sep = comma;
   }
-  if ((flags & RE_IS_SAVED)) {
+  if ((mask & RE_IS_SAVED)) {
     fprintf(f, "%sis_saved = %d", sep, re->is_saved);
     sep = comma;
   }
-  if ((flags & RE_SAVED_STATUS)) {
+  if ((mask & RE_SAVED_STATUS)) {
     fprintf(f, "%ssaved_status = %d", sep, re->saved_status);
     sep = comma;
   }
-  if ((flags & RE_SAVED_SCORE)) {
+  if ((mask & RE_SAVED_SCORE)) {
     fprintf(f, "%ssaved_score = %d", sep, re->saved_score);
     sep = comma;
   }
-  if ((flags & RE_SAVED_TEST)) {
+  if ((mask & RE_SAVED_TEST)) {
     fprintf(f, "%ssaved_test = %d", sep, re->saved_test);
     sep = comma;
   }
-  if ((flags & RE_PASSED_MODE)) {
+  if ((mask & RE_PASSED_MODE)) {
     fprintf(f, "%spassed_mode = %d", sep, !!re->passed_mode);
     sep = comma;
   }
-  if ((flags & RE_EOLN_TYPE)) {
+  if ((mask & RE_EOLN_TYPE)) {
     fprintf(f, "%seoln_type = %d", sep, re->eoln_type);
     sep = comma;
   }
-  if ((flags & RE_STORE_FLAGS)) {
+  if ((mask & RE_STORE_FLAGS)) {
     fprintf(f, "%sstore_flags = %d", sep, re->store_flags);
     sep = comma;
   }
-  if ((flags & RE_TOKEN_FLAGS)) {
+  if ((mask & RE_TOKEN_FLAGS)) {
     fprintf(f, "%stoken_flags = %d", sep, re->token_flags);
     sep = comma;
   }
-  if ((flags & RE_TOKEN_COUNT)) {
+  if ((mask & RE_TOKEN_COUNT)) {
     fprintf(f, "%stoken_count = %d", sep, re->token_count);
     sep = comma;
   }
-  if ((flags & RE_PROB_UUID) && prob_uuid) {
+  if ((mask & RE_PROB_UUID) && prob_uuid) {
     fprintf(f, "%sprob_uuid = ", sep);
     state->mi->write_escaped_string(state->md, f, NULL, prob_uuid);
     sep = comma;
   }
-  if ((flags & RE_IS_CHECKED)) {
+  if ((mask & RE_IS_CHECKED)) {
     fprintf(f, "%sis_checked = %d", sep, re->is_checked);
     sep = comma;
   }
@@ -1353,100 +1353,100 @@ static void
 update_entry(
         struct run_entry *dst,
         const struct run_entry *src,
-        int flags)
+        int mask)
 {
-  if ((flags & RE_SIZE)) {
+  if ((mask & RE_SIZE)) {
     dst->size = src->size;
   }
-  if ((flags & RE_USER_ID)) {
+  if ((mask & RE_USER_ID)) {
     dst->user_id = src->user_id;
   }
-  if ((flags & RE_PROB_ID)) {
+  if ((mask & RE_PROB_ID)) {
     dst->prob_id = src->prob_id;
   }
-  if ((flags & RE_LANG_ID)) {
+  if ((mask & RE_LANG_ID)) {
     dst->lang_id = src->lang_id;
   }
-  if ((flags & RE_IP)) {
+  if ((mask & RE_IP)) {
     dst->a = src->a;
     dst->ipv6_flag = src->ipv6_flag;
   }
-  if ((flags & RE_SHA1)) {
+  if ((mask & RE_SHA1)) {
     memcpy(dst->h.sha1, src->h.sha1, sizeof(dst->h.sha1));
   }
-  if ((flags & RE_RUN_UUID)) {
+  if ((mask & RE_RUN_UUID)) {
     memcpy(&dst->run_uuid, &src->run_uuid, sizeof(dst->run_uuid));
   }
-  if ((flags & RE_SCORE)) {
+  if ((mask & RE_SCORE)) {
     dst->score = src->score;
   }
-  if ((flags & RE_TEST)) {
+  if ((mask & RE_TEST)) {
     dst->test = src->test;
   }
-  if ((flags & RE_SCORE_ADJ)) {
+  if ((mask & RE_SCORE_ADJ)) {
     dst->score_adj = src->score_adj;
   }
-  if ((flags & RE_LOCALE_ID)) {
+  if ((mask & RE_LOCALE_ID)) {
     dst->locale_id = src->locale_id;
   }
-  if ((flags & RE_JUDGE_ID)) {
+  if ((mask & RE_JUDGE_ID)) {
     dst->j.judge_id = src->j.judge_id;
   }
-  if ((flags & RE_STATUS)) {
+  if ((mask & RE_STATUS)) {
     dst->status = src->status;
   }
-  if ((flags & RE_IS_IMPORTED)) {
+  if ((mask & RE_IS_IMPORTED)) {
     dst->is_imported = src->is_imported;
   }
-  if ((flags & RE_VARIANT)) {
+  if ((mask & RE_VARIANT)) {
     dst->variant = src->variant;
   }
-  if ((flags & RE_IS_HIDDEN)) {
+  if ((mask & RE_IS_HIDDEN)) {
     dst->is_hidden = src->is_hidden;
   }
-  if ((flags & RE_IS_READONLY)) {
+  if ((mask & RE_IS_READONLY)) {
     dst->is_readonly = src->is_readonly;
   }
-  if ((flags & RE_PAGES)) {
+  if ((mask & RE_PAGES)) {
     dst->pages = src->pages;
   }
-  if ((flags & RE_SSL_FLAG)) {
+  if ((mask & RE_SSL_FLAG)) {
     dst->ssl_flag = src->ssl_flag;
   }
-  if ((flags & RE_MIME_TYPE)) {
+  if ((mask & RE_MIME_TYPE)) {
     dst->mime_type = src->mime_type;
   }
-  if ((flags & RE_IS_MARKED)) {
+  if ((mask & RE_IS_MARKED)) {
     dst->is_marked = src->is_marked;
   }
-  if ((flags & RE_IS_SAVED)) {
+  if ((mask & RE_IS_SAVED)) {
     dst->is_saved = src->is_saved;
   }
-  if ((flags & RE_SAVED_STATUS)) {
+  if ((mask & RE_SAVED_STATUS)) {
     dst->saved_status = src->saved_status;
   }
-  if ((flags & RE_SAVED_SCORE)) {
+  if ((mask & RE_SAVED_SCORE)) {
     dst->saved_score = src->saved_score;
   }
-  if ((flags & RE_SAVED_TEST)) {
+  if ((mask & RE_SAVED_TEST)) {
     dst->saved_test = src->saved_test;
   }
-  if ((flags & RE_PASSED_MODE)) {
+  if ((mask & RE_PASSED_MODE)) {
     dst->passed_mode = src->passed_mode;
   }
-  if ((flags & RE_EOLN_TYPE)) {
+  if ((mask & RE_EOLN_TYPE)) {
     dst->eoln_type = src->eoln_type;
   }
-  if ((flags & RE_STORE_FLAGS)) {
+  if ((mask & RE_STORE_FLAGS)) {
     dst->store_flags = src->store_flags;
   }
-  if ((flags & RE_TOKEN_FLAGS)) {
+  if ((mask & RE_TOKEN_FLAGS)) {
     dst->token_flags = src->token_flags;
   }
-  if ((flags & RE_TOKEN_COUNT)) {
+  if ((mask & RE_TOKEN_COUNT)) {
     dst->token_count = src->token_count;
   }
-  if ((flags & RE_IS_CHECKED)) {
+  if ((mask & RE_IS_CHECKED)) {
     dst->is_checked = src->is_checked;
   }
 }
@@ -1456,7 +1456,7 @@ do_update_entry(
         struct rldb_mysql_cnts *cs,
         int run_id,
         const struct run_entry *re,
-        int flags,
+        int mask,
         const unsigned char *prob_uuid)
 {
   struct rldb_mysql_state *state = cs->plugin_state;
@@ -1471,13 +1471,13 @@ do_update_entry(
 
   cmd_f = open_memstream(&cmd_t, &cmd_z);
   fprintf(cmd_f, "UPDATE %sruns SET ", state->md->table_prefix);
-  generate_update_entry_clause(state, cmd_f, re, flags, prob_uuid);
+  generate_update_entry_clause(state, cmd_f, re, mask, prob_uuid);
   fprintf(cmd_f, " WHERE contest_id = %d AND run_id = %d ;",
           cs->contest_id, run_id);
   close_memstream(cmd_f); cmd_f = 0;
   if (state->mi->simple_query(state->md, cmd_t, cmd_z) < 0) goto fail;
   xfree(cmd_t); cmd_t = 0; cmd_z = 0;
-  update_entry(de, re, flags);
+  update_entry(de, re, mask);
   return run_id;
 
  fail:
@@ -1491,7 +1491,7 @@ add_entry_func(
         struct rldb_plugin_cnts *cdata,
         int run_id,
         const struct run_entry *re,
-        int flags)
+        int mask)
 {
   struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts *) cdata;
   struct runlog_state *rls = cs->rl_state;
@@ -1505,7 +1505,7 @@ add_entry_func(
   ASSERT(de->time > 0);
   (void) de;
 
-  return do_update_entry(cs, run_id, re, flags, NULL);
+  return do_update_entry(cs, run_id, re, mask, NULL);
 }
 
 static int
@@ -1563,46 +1563,46 @@ generate_update_header_clause(
         struct rldb_mysql_state *state,
         FILE *f,
         const struct run_header *rh,
-        int flags)
+        int mask)
 {
   struct timeval curtime;
   const unsigned char *sep = "";
   const unsigned char *comma = ", ";
 
-  if ((flags & RH_START_TIME)) {
+  if ((mask & RH_START_TIME)) {
     fprintf(f, "%sstart_time = ", sep);
     state->mi->write_timestamp(state->md, f, 0, rh->start_time);
     sep = comma;
   }
-  if ((flags & RH_SCHED_TIME)) {
+  if ((mask & RH_SCHED_TIME)) {
     fprintf(f, "%ssched_time = ", sep);
     state->mi->write_timestamp(state->md, f, 0, rh->sched_time);
     sep = comma;
   }
-  if ((flags & RH_DURATION)) {
+  if ((mask & RH_DURATION)) {
     fprintf(f, "%sduration = %lld", sep, rh->duration);
     sep = comma;
   }
-  if ((flags & RH_STOP_TIME)) {
+  if ((mask & RH_STOP_TIME)) {
     fprintf(f, "%sstop_time = ", sep);
     state->mi->write_timestamp(state->md, f, 0, rh->stop_time);
     sep = comma;
   }
-  if ((flags & RH_FINISH_TIME)) {
+  if ((mask & RH_FINISH_TIME)) {
     fprintf(f, "%sfinish_time = ", sep);
     state->mi->write_timestamp(state->md, f, 0, rh->finish_time);
     sep = comma;
   }
-  if ((flags & RH_SAVED_DURATION)) {
+  if ((mask & RH_SAVED_DURATION)) {
     fprintf(f, "%ssaved_duration = %lld", sep, rh->saved_duration);
     sep = comma;
   }
-  if ((flags & RH_SAVED_STOP_TIME)) {
+  if ((mask & RH_SAVED_STOP_TIME)) {
     fprintf(f, "%ssaved_stop_time = ", sep);
     state->mi->write_timestamp(state->md, f, 0, rh->saved_stop_time);
     sep = comma;
   }
-  if ((flags & RH_SAVED_FINISH_TIME)) {
+  if ((mask & RH_SAVED_FINISH_TIME)) {
     fprintf(f, "%ssaved_finish_time = ", sep);
     state->mi->write_timestamp(state->md, f, 0, rh->saved_finish_time);
     sep = comma;
@@ -1619,30 +1619,30 @@ static void
 update_header(
         struct run_header *dst,
         const struct run_header *src,
-        int flags)
+        int mask)
 {
-  if ((flags & RH_START_TIME)) {
+  if ((mask & RH_START_TIME)) {
     dst->start_time = src->start_time;
   }
-  if ((flags & RH_SCHED_TIME)) {
+  if ((mask & RH_SCHED_TIME)) {
     dst->sched_time = src->sched_time;
   }
-  if ((flags & RH_DURATION)) {
+  if ((mask & RH_DURATION)) {
     dst->duration = src->duration;
   }
-  if ((flags & RH_STOP_TIME)) {
+  if ((mask & RH_STOP_TIME)) {
     dst->stop_time = src->stop_time;
   }
-  if ((flags & RH_FINISH_TIME)) {
+  if ((mask & RH_FINISH_TIME)) {
     dst->finish_time = src->finish_time;
   }
-  if ((flags & RH_SAVED_DURATION)) {
+  if ((mask & RH_SAVED_DURATION)) {
     dst->saved_duration = src->saved_duration;
   }
-  if ((flags & RH_SAVED_STOP_TIME)) {
+  if ((mask & RH_SAVED_STOP_TIME)) {
     dst->saved_stop_time = src->saved_stop_time;
   }
-  if ((flags & RH_SAVED_FINISH_TIME)) {
+  if ((mask & RH_SAVED_FINISH_TIME)) {
     dst->saved_finish_time = src->saved_finish_time;
   }
 }
@@ -1651,7 +1651,7 @@ static int
 do_update_header(
         struct rldb_mysql_cnts *cs,
         const struct run_header *rh,
-        int flags)
+        int mask)
 {
   struct rldb_mysql_state *state = cs->plugin_state;
   struct runlog_state *rls = cs->rl_state;
@@ -1661,12 +1661,12 @@ do_update_header(
 
   cmd_f = open_memstream(&cmd_t, &cmd_z);
   fprintf(cmd_f, "UPDATE %srunheaders SET ", state->md->table_prefix);
-  generate_update_header_clause(state, cmd_f, rh, flags);
+  generate_update_header_clause(state, cmd_f, rh, mask);
   fprintf(cmd_f, " WHERE contest_id = %d ;", cs->contest_id);
   close_memstream(cmd_f); cmd_f = 0;
   if (state->mi->simple_query(state->md, cmd_t, cmd_z) < 0) goto fail;
   xfree(cmd_t); cmd_t = 0; cmd_z = 0;
-  update_header(&rls->head, rh, flags);
+  update_header(&rls->head, rh, mask);
   return 0;
 
  fail:
@@ -1829,7 +1829,7 @@ set_entry_func(
         struct rldb_plugin_cnts *cdata,
         int run_id,
         const struct run_entry *in,
-        int flags)
+        int mask)
 {
   struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts *) cdata;
   struct runlog_state *rls = cs->rl_state;
@@ -1838,7 +1838,7 @@ set_entry_func(
   ASSERT(rls->runs[run_id - rls->run_f].status != RUN_EMPTY);
 
   (void) rls;
-  return do_update_entry(cs, run_id, in, flags, NULL);
+  return do_update_entry(cs, run_id, in, mask, NULL);
 }
 
 static int
@@ -2070,7 +2070,7 @@ add_entry_2_func(
         struct rldb_plugin_cnts *cdata,
         int run_id,
         const struct run_entry *re,
-        int flags,
+        int mask,
         const unsigned char *prob_uuid)
 {
   // FIXME
@@ -2086,7 +2086,7 @@ add_entry_2_func(
   ASSERT(de->time > 0);
   (void) de;
 
-  return do_update_entry(cs, run_id, re, flags, prob_uuid);
+  return do_update_entry(cs, run_id, re, mask, prob_uuid);
 }
 
 static int
@@ -2318,7 +2318,7 @@ static int
 append_run_func(
         struct rldb_plugin_cnts *cdata,
         const struct run_entry *in_re,
-        uint64_t flags,
+        uint64_t mask,
         const unsigned char *prob_uuid,
         struct timeval *p_tv,
         int64_t *p_serial_id,
@@ -2337,7 +2337,7 @@ append_run_func(
   unsigned char uuid_buf[64];
   long long serial_id = -1;
 
-  flags &= ~((uint64_t) RE_RUN_UUID);
+  mask &= ~((uint64_t) RE_RUN_UUID);
 
   if (!p_uuid) p_uuid = &tmp_uuid;
   if (!ej_uuid_is_nonempty(*p_uuid)) ej_uuid_generate(p_uuid);
@@ -2345,110 +2345,110 @@ append_run_func(
   cmd_f = open_memstream(&cmd_s, &cmd_z);
   fprintf(cmd_f, "INSERT INTO %sruns(run_id,contest_id,create_time,create_nsec,run_uuid,last_change_time,last_change_nsec",
           md->table_prefix);
-  if ((flags & RE_SIZE)) {
+  if ((mask & RE_SIZE)) {
     fputs(",size", cmd_f);
   }
-  if ((flags & RE_IP)) {
+  if ((mask & RE_IP)) {
     fputs(",ip_version", cmd_f);
     fputs(",ip", cmd_f);
   }
-  if ((flags & RE_SHA1)) {
+  if ((mask & RE_SHA1)) {
     fputs(",hash", cmd_f);
   }
-  if ((flags & RE_USER_ID)) {
+  if ((mask & RE_USER_ID)) {
     fputs(",user_id", cmd_f);
   }
-  if ((flags & RE_PROB_ID)) {
+  if ((mask & RE_PROB_ID)) {
     fputs(",prob_id", cmd_f);
   }
-  if ((flags & RE_LANG_ID)) {
+  if ((mask & RE_LANG_ID)) {
     fputs(",lang_id", cmd_f);
   }
-  if ((flags & RE_LOCALE_ID)) {
+  if ((mask & RE_LOCALE_ID)) {
     fputs(",locale_id", cmd_f);
   }
-  if ((flags & RE_STATUS)) {
+  if ((mask & RE_STATUS)) {
     fputs(",status", cmd_f);
   }
-  if ((flags & RE_TEST)) {
+  if ((mask & RE_TEST)) {
     fputs(",test_num", cmd_f);
   }
-  if ((flags & RE_SCORE)) {
+  if ((mask & RE_SCORE)) {
     fputs(",score", cmd_f);
   }
-  if ((flags & RE_IS_IMPORTED)) {
+  if ((mask & RE_IS_IMPORTED)) {
     fputs(",is_imported", cmd_f);
   }
-  if ((flags & RE_VARIANT)) {
+  if ((mask & RE_VARIANT)) {
     fputs(",variant", cmd_f);
   }
-  if ((flags & RE_IS_HIDDEN)) {
+  if ((mask & RE_IS_HIDDEN)) {
     fputs(",is_hidden", cmd_f);
   }
-  if ((flags & RE_IS_READONLY)) {
+  if ((mask & RE_IS_READONLY)) {
     fputs(",is_readonly", cmd_f);
   }
-  if ((flags & RE_PAGES)) {
+  if ((mask & RE_PAGES)) {
     fputs(",pages", cmd_f);
   }
-  if ((flags & RE_SCORE_ADJ)) {
+  if ((mask & RE_SCORE_ADJ)) {
     fputs(",score_adj", cmd_f);
   }
-  if ((flags & RE_JUDGE_ID)) {
+  if ((mask & RE_JUDGE_ID)) {
     fputs(",judge_id", cmd_f);
   }
-  if ((flags & RE_SSL_FLAG)) {
+  if ((mask & RE_SSL_FLAG)) {
     fputs(",ssl_flag", cmd_f);
   }
-  if ((flags & RE_MIME_TYPE)) {
+  if ((mask & RE_MIME_TYPE)) {
     fputs(",mime_type", cmd_f);
   }
-  if ((flags & RE_TOKEN_FLAGS)) {
+  if ((mask & RE_TOKEN_FLAGS)) {
     fputs(",token_flags", cmd_f);
   }
-  if ((flags & RE_TOKEN_COUNT)) {
+  if ((mask & RE_TOKEN_COUNT)) {
     fputs(",token_count", cmd_f);
   }
-  if ((flags & RE_IS_MARKED)) {
+  if ((mask & RE_IS_MARKED)) {
     fputs(",is_marked", cmd_f);
   }
-  if ((flags & RE_IS_SAVED)) {
+  if ((mask & RE_IS_SAVED)) {
     fputs(",is_saved", cmd_f);
   }
-  if ((flags & RE_SAVED_STATUS)) {
+  if ((mask & RE_SAVED_STATUS)) {
     fputs(",saved_status", cmd_f);
   }
-  if ((flags & RE_SAVED_SCORE)) {
+  if ((mask & RE_SAVED_SCORE)) {
     fputs(",saved_score", cmd_f);
   }
-  if ((flags & RE_SAVED_TEST)) {
+  if ((mask & RE_SAVED_TEST)) {
     fputs(",saved_test", cmd_f);
   }
-  if ((flags & RE_RUN_UUID)) {
+  if ((mask & RE_RUN_UUID)) {
     fputs(",run_uuid", cmd_f);
   }
-  if ((flags & RE_PASSED_MODE)) {
+  if ((mask & RE_PASSED_MODE)) {
     fputs(",passed_mode", cmd_f);
   }
-  if ((flags & RE_EOLN_TYPE)) {
+  if ((mask & RE_EOLN_TYPE)) {
     fputs(",eoln_type", cmd_f);
   }
-  if ((flags & RE_STORE_FLAGS)) {
+  if ((mask & RE_STORE_FLAGS)) {
     fputs(",store_flags", cmd_f);
   }
-  if ((flags & RE_PROB_UUID)) {
+  if ((mask & RE_PROB_UUID)) {
     fputs(",prob_uuid", cmd_f);
   }
-  if ((flags & RE_IS_CHECKED)) {
+  if ((mask & RE_IS_CHECKED)) {
     fputs(",is_checked", cmd_f);
   }
   fprintf(cmd_f, ") SELECT IFNULL(MAX(run_id),-1)+1, %d, NOW(6), MICROSECOND(NOW(6)) * 1000, '%s', NOW(), MICROSECOND(NOW(6)) * 1000",
           cs->contest_id,
           ej_uuid_unparse_r(uuid_buf, sizeof(uuid_buf), p_uuid, ""));
-  if ((flags & RE_SIZE)) {
+  if ((mask & RE_SIZE)) {
     fprintf(cmd_f, ",%u", (unsigned) in_re->size);
   }
-  if ((flags & RE_IP)) {
+  if ((mask & RE_IP)) {
     int ip_version = 4;
     if (in_re->ipv6_flag) ip_version = 6;
     fprintf(cmd_f, ",%d", ip_version);
@@ -2456,7 +2456,7 @@ append_run_func(
     run_entry_to_ipv6(in_re, &ipv6);
     fprintf(cmd_f, ",'%s'", xml_unparse_ipv6(&ipv6));
   }
-  if ((flags & RE_SHA1)) {
+  if ((mask & RE_SHA1)) {
     if (!in_re->h.sha1[0] && !in_re->h.sha1[1] && !in_re->h.sha1[2]
         && !in_re->h.sha1[3] && !in_re->h.sha1[4]) {
       fprintf(cmd_f, ",NULL");
@@ -2464,98 +2464,98 @@ append_run_func(
       fprintf(cmd_f, ",'%s'", unparse_sha1(in_re->h.sha1));
     }
   }
-  if ((flags & RE_USER_ID)) {
+  if ((mask & RE_USER_ID)) {
     fprintf(cmd_f, ",%d", in_re->user_id);
   }
-  if ((flags & RE_PROB_ID)) {
+  if ((mask & RE_PROB_ID)) {
     fprintf(cmd_f, ",%d", in_re->prob_id);
   }
-  if ((flags & RE_LANG_ID)) {
+  if ((mask & RE_LANG_ID)) {
     fprintf(cmd_f, ",%d", in_re->lang_id);
   }
-  if ((flags & RE_LOCALE_ID)) {
+  if ((mask & RE_LOCALE_ID)) {
     fprintf(cmd_f, ",%d", in_re->locale_id);
   }
-  if ((flags & RE_STATUS)) {
+  if ((mask & RE_STATUS)) {
     fprintf(cmd_f, ",%d", in_re->status);
   }
-  if ((flags & RE_TEST)) {
+  if ((mask & RE_TEST)) {
     fprintf(cmd_f, ",%d", in_re->test);
   }
-  if ((flags & RE_SCORE)) {
+  if ((mask & RE_SCORE)) {
     fprintf(cmd_f, ",%d", in_re->score);
   }
-  if ((flags & RE_IS_IMPORTED)) {
+  if ((mask & RE_IS_IMPORTED)) {
     fprintf(cmd_f, ",%d", !!in_re->is_imported);
   }
-  if ((flags & RE_VARIANT)) {
+  if ((mask & RE_VARIANT)) {
     fprintf(cmd_f, ",%d", in_re->variant);
   }
-  if ((flags & RE_IS_HIDDEN)) {
+  if ((mask & RE_IS_HIDDEN)) {
     fprintf(cmd_f, ",%d", !!in_re->is_hidden);
   }
-  if ((flags & RE_IS_READONLY)) {
+  if ((mask & RE_IS_READONLY)) {
     fprintf(cmd_f, ",%d", !!in_re->is_readonly);
   }
-  if ((flags & RE_PAGES)) {
+  if ((mask & RE_PAGES)) {
     fprintf(cmd_f, ",%d", in_re->pages);
   }
-  if ((flags & RE_SCORE_ADJ)) {
+  if ((mask & RE_SCORE_ADJ)) {
     fprintf(cmd_f, ",%d", in_re->score_adj);
   }
-  if ((flags & RE_JUDGE_ID)) {
+  if ((mask & RE_JUDGE_ID)) {
     fprintf(cmd_f, ",%d", in_re->j.judge_id);
   }
-  if ((flags & RE_SSL_FLAG)) {
+  if ((mask & RE_SSL_FLAG)) {
     fprintf(cmd_f, ",%d", !!in_re->ssl_flag);
   }
-  if ((flags & RE_MIME_TYPE)) {
+  if ((mask & RE_MIME_TYPE)) {
     if (in_re->mime_type > 0) {
       fprintf(cmd_f, ",'%s'", mime_type_get_type(in_re->mime_type));
     } else {
       fprintf(cmd_f, ",NULL");
     }
   }
-  if ((flags & RE_TOKEN_FLAGS)) {
+  if ((mask & RE_TOKEN_FLAGS)) {
     fprintf(cmd_f, ",%d", in_re->token_flags);
   }
-  if ((flags & RE_TOKEN_COUNT)) {
+  if ((mask & RE_TOKEN_COUNT)) {
     fprintf(cmd_f, ",%d", in_re->token_count);
   }
-  if ((flags & RE_IS_MARKED)) {
+  if ((mask & RE_IS_MARKED)) {
     fprintf(cmd_f, ",%d", !!in_re->is_marked);
   }
-  if ((flags & RE_IS_SAVED)) {
+  if ((mask & RE_IS_SAVED)) {
     fprintf(cmd_f, ",%d", !!in_re->is_saved);
   }
-  if ((flags & RE_SAVED_STATUS)) {
+  if ((mask & RE_SAVED_STATUS)) {
     fprintf(cmd_f, ",%d", in_re->saved_status);
   }
-  if ((flags & RE_SAVED_SCORE)) {
+  if ((mask & RE_SAVED_SCORE)) {
     fprintf(cmd_f, ",%d", in_re->saved_score);
   }
-  if ((flags & RE_SAVED_TEST)) {
+  if ((mask & RE_SAVED_TEST)) {
     fprintf(cmd_f, ",%d", in_re->saved_test);
   }
-  if ((flags & RE_RUN_UUID)) {
+  if ((mask & RE_RUN_UUID)) {
     fprintf(cmd_f, ",'%s'",
           ej_uuid_unparse_r(uuid_buf, sizeof(uuid_buf), &in_re->run_uuid, ""));
   }
-  if ((flags & RE_PASSED_MODE)) {
+  if ((mask & RE_PASSED_MODE)) {
     fprintf(cmd_f, ",%d", in_re->passed_mode);
   }
-  if ((flags & RE_EOLN_TYPE)) {
+  if ((mask & RE_EOLN_TYPE)) {
     fprintf(cmd_f, ",%d", in_re->eoln_type);
   }
-  if ((flags & RE_STORE_FLAGS)) {
+  if ((mask & RE_STORE_FLAGS)) {
     fprintf(cmd_f, ",%d", in_re->store_flags);
   }
-  if ((flags & RE_PROB_UUID)) {
+  if ((mask & RE_PROB_UUID)) {
     fputs(",'", cmd_f);
     mi->write_escaped_string(md, cmd_f, NULL, prob_uuid);
     fputs("'", cmd_f);
   }
-  if ((flags & RE_IS_CHECKED)) {
+  if ((mask & RE_IS_CHECKED)) {
     fprintf(cmd_f, ",%d", !!in_re->is_checked);
   }
   fprintf(cmd_f, " FROM %sruns WHERE contest_id=%d ;",
@@ -2601,101 +2601,101 @@ append_run_func(
   new_re->time = ri.create_time.tv_sec;
   new_re->nsec = ri.create_time.tv_usec * 1000;
   new_re->run_uuid = *p_uuid;
-  if ((flags & RE_SIZE)) {
+  if ((mask & RE_SIZE)) {
     new_re->size = in_re->size;
   }
-  if ((flags & RE_IP)) {
+  if ((mask & RE_IP)) {
     new_re->ipv6_flag = in_re->ipv6_flag;
     new_re->a = in_re->a;
   }
-  if ((flags & RE_SHA1)) {
+  if ((mask & RE_SHA1)) {
     memcpy(new_re->h.sha1, in_re->h.sha1, sizeof(new_re->h.sha1));
   }
-  if ((flags & RE_USER_ID)) {
+  if ((mask & RE_USER_ID)) {
     new_re->user_id = in_re->user_id;
   }
-  if ((flags & RE_PROB_ID)) {
+  if ((mask & RE_PROB_ID)) {
     new_re->prob_id = in_re->prob_id;
   }
-  if ((flags & RE_LANG_ID)) {
+  if ((mask & RE_LANG_ID)) {
     new_re->lang_id = in_re->lang_id;
   }
-  if ((flags & RE_LOCALE_ID)) {
+  if ((mask & RE_LOCALE_ID)) {
     new_re->locale_id = in_re->locale_id;
   }
-  if ((flags & RE_STATUS)) {
+  if ((mask & RE_STATUS)) {
     new_re->status = in_re->status;
   }
-  if ((flags & RE_TEST)) {
+  if ((mask & RE_TEST)) {
     new_re->test = in_re->test;
   }
-  if ((flags & RE_SCORE)) {
+  if ((mask & RE_SCORE)) {
     new_re->score = in_re->score;
   }
-  if ((flags & RE_IS_IMPORTED)) {
+  if ((mask & RE_IS_IMPORTED)) {
     new_re->is_imported = in_re->is_imported;
   }
-  if ((flags & RE_VARIANT)) {
+  if ((mask & RE_VARIANT)) {
     new_re->variant = in_re->variant;
   }
-  if ((flags & RE_IS_HIDDEN)) {
+  if ((mask & RE_IS_HIDDEN)) {
     new_re->is_hidden = in_re->is_hidden;
   }
-  if ((flags & RE_IS_READONLY)) {
+  if ((mask & RE_IS_READONLY)) {
     new_re->is_readonly = in_re->is_readonly;
   }
-  if ((flags & RE_PAGES)) {
+  if ((mask & RE_PAGES)) {
     new_re->pages = in_re->pages;
   }
-  if ((flags & RE_SCORE_ADJ)) {
+  if ((mask & RE_SCORE_ADJ)) {
     new_re->score_adj = in_re->score_adj;
   }
-  if ((flags & RE_JUDGE_ID)) {
+  if ((mask & RE_JUDGE_ID)) {
     new_re->j.judge_id = in_re->j.judge_id;
   }
-  if ((flags & RE_SSL_FLAG)) {
+  if ((mask & RE_SSL_FLAG)) {
     new_re->ssl_flag = in_re->ssl_flag;
   }
-  if ((flags & RE_MIME_TYPE)) {
+  if ((mask & RE_MIME_TYPE)) {
     new_re->mime_type = in_re->mime_type;
   }
-  if ((flags & RE_TOKEN_FLAGS)) {
+  if ((mask & RE_TOKEN_FLAGS)) {
     new_re->token_flags = in_re->token_flags;
   }
-  if ((flags & RE_TOKEN_COUNT)) {
+  if ((mask & RE_TOKEN_COUNT)) {
     new_re->token_count = in_re->token_count;
   }
-  if ((flags & RE_IS_MARKED)) {
+  if ((mask & RE_IS_MARKED)) {
     new_re->is_marked = in_re->is_marked;
   }
-  if ((flags & RE_IS_SAVED)) {
+  if ((mask & RE_IS_SAVED)) {
     new_re->is_saved = in_re->is_saved;
   }
-  if ((flags & RE_SAVED_STATUS)) {
+  if ((mask & RE_SAVED_STATUS)) {
     new_re->saved_status = in_re->saved_status;
   }
-  if ((flags & RE_SAVED_SCORE)) {
+  if ((mask & RE_SAVED_SCORE)) {
     new_re->saved_score = in_re->saved_score;
   }
-  if ((flags & RE_SAVED_TEST)) {
+  if ((mask & RE_SAVED_TEST)) {
     new_re->saved_test = in_re->saved_test;
   }
-  if ((flags & RE_RUN_UUID)) {
+  if ((mask & RE_RUN_UUID)) {
     new_re->run_uuid = in_re->run_uuid;
   }
-  if ((flags & RE_PASSED_MODE)) {
+  if ((mask & RE_PASSED_MODE)) {
     new_re->passed_mode = in_re->passed_mode;
   }
-  if ((flags & RE_EOLN_TYPE)) {
+  if ((mask & RE_EOLN_TYPE)) {
     new_re->eoln_type = in_re->eoln_type;
   }
-  if ((flags & RE_STORE_FLAGS)) {
+  if ((mask & RE_STORE_FLAGS)) {
     new_re->store_flags = in_re->store_flags;
   }
-  if ((flags & RE_PROB_UUID)) {
+  if ((mask & RE_PROB_UUID)) {
     //{ 1, 's', "prob_uuid", RUNS_OFFSET(prob_uuid), 0 },
   }
-  if ((flags & RE_IS_CHECKED)) {
+  if ((mask & RE_IS_CHECKED)) {
     new_re->is_checked = in_re->is_checked;
   }
 
