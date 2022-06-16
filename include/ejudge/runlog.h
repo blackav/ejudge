@@ -22,6 +22,7 @@
 #include <time.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdint.h>
 
 enum
 {
@@ -334,7 +335,7 @@ struct run_data
 void run_get_header(runlog_state_t, struct run_header *out);
 void run_get_all_entries(runlog_state_t, struct run_entry *out);
 int run_get_entry(runlog_state_t, int run_id, struct run_entry *out);
-int run_set_entry(runlog_state_t, int run_id, unsigned int mask,
+int run_set_entry(runlog_state_t, int run_id, uint64_t mask,
                   struct run_entry const *in);
 int run_is_readonly(runlog_state_t, int run_id);
 const struct run_entry *run_get_entries_ptr(runlog_state_t);

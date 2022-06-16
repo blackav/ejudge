@@ -1300,7 +1300,7 @@ int
 run_set_entry(
         runlog_state_t state,
         int run_id,
-        unsigned int mask,
+        uint64_t mask,
         const struct run_entry *in)
 {
   const struct run_entry *out;
