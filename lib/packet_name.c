@@ -1,7 +1,6 @@
 /* -*- c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2014-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -24,6 +23,7 @@
 
 #include <string.h>
 #include <sys/time.h>
+#include <stdint.h>
 
 static const unsigned char b32_digits[]=
 "0123456789ABCDEFGHIJKLMNOPQRSTUV";
@@ -63,11 +63,22 @@ b32_number_3(unsigned char *dst, unsigned int num)
   return b32_number_2(dst, num, digits);
 }
 
+static unsigned char *
+b32_ull(unsigned char *dst, const void *pv, int shift)
+{
+  uint64_t value = *(const uint64_t*) pv;
+  for (; shift >= 0; shift -= 5) {
+    *dst++ = b32_digits[(value >> shift) & 0x1f];
+  }
+  return dst;
+}
+
 void
 serve_packet_name(
         int contest_id,
         int run_id,
         int prio,
+        const ej_uuid_t *judge_uuid,
         unsigned char buf[],
         int size) // ignored yet
 {
@@ -127,6 +138,7 @@ serve_packet_name(
   b32_number(num, buf);
   */
 
+  /*
   // version 3 of the packet name
   // variable length: priority sec msec contest_id run_id: 1 + 8 + 2 + 8 + 8 = 27
   int msec = (ts.tv_usec / 1000) & 1023;
@@ -137,10 +149,16 @@ serve_packet_name(
   out = b32_number_3(out, contest_id);
   out = b32_number_3(out, run_id);
   *out = 0;
-}
+  */
 
-/*
- * Local variables:
- *  c-basic-offset: 4
- * End:
- */
+  // version 4 of the packet name
+  // priority timestamp_us uuid
+  // 5 + 40 + 64 + 64 -> base32 35 chars
+  unsigned char *out = buf;
+  *out++ = b32_digits[prio];
+  uint64_t tsu = ((uint64_t) ts.tv_sec << 8) + ((ts.tv_usec >> 12) & 0xff);
+  out = b32_ull(out, &tsu, 35);
+  out = b32_ull(out, &judge_uuid->v[2], 60);
+  out = b32_ull(out, &judge_uuid->v[0], 60);
+  *out = 0;
+}

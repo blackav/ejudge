@@ -1,9 +1,8 @@
 /* -*- c -*- */
-/* $Id$ */
 #ifndef __PACKET_NAME_H__
 #define __PACKET_NAME_H__
 
-/* Copyright (C) 2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2014-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -17,6 +16,8 @@
  * GNU General Public License for more details.
  */
 
+#include "ejudge/ej_uuid.h"
+
 unsigned char *b32_number_2(unsigned char *dst, unsigned int num, int digits);
 unsigned char *b32_number_3(unsigned char *dst, unsigned int num);
 
@@ -25,6 +26,7 @@ serve_packet_name(
         int contest_id,
         int run_id,
         int prio,
+        const ej_uuid_t *judge_uuid,
         unsigned char buf[],
         int size);
 
