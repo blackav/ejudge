@@ -260,7 +260,8 @@ enum
     RE_EOLN_TYPE     = 0x20000000,
     RE_STORE_FLAGS   = 0x40000000,
     RE_PROB_UUID     = 0x80000000, // not a part of run_entry structure
-    RE_ALL           = 0xFFFFFFFF,
+    RE_JUDGE_UUID   = 0x100000000ULL,
+    RE_ALL          = 0x1FFFFFFFFULL,
   };
 
 struct run_entry

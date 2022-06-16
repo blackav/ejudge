@@ -1431,7 +1431,12 @@ add_entry_func(
   if ((mask & RE_SCORE_ADJ)) {
     de->score_adj = re->score_adj;
   }
-  if ((mask & RE_JUDGE_ID)) {
+  if ((mask & RE_JUDGE_UUID)) {
+    de->judge_uuid_flag = 1;
+    de->j.judge_uuid = re->j.judge_uuid;
+  } else if ((mask & RE_JUDGE_ID)) {
+    de->judge_uuid_flag = 0;
+    memset(&de->j, 0, sizeof(de->j));
     de->j.judge_id = re->j.judge_id;
   }
   if ((mask & RE_SSL_FLAG)) {

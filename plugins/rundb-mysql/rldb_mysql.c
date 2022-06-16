@@ -1178,6 +1178,19 @@ get_insert_run_id_func(
   return -1;
 }
 
+static const unsigned char *
+to_uuid_str(unsigned char *buf, size_t size, const ej_uuid_t *p_uuid)
+{
+  if (!p_uuid->v[0] && !p_uuid->v[1] && !p_uuid->v[2] && !p_uuid->v[3]) {
+    snprintf(buf, size, "NULL");
+  } else {
+    char uuid_buf[40];
+    uuid_unparse((void*) p_uuid, uuid_buf);
+    snprintf(buf, size, "'%s'", uuid_buf);
+  }
+  return buf;
+}
+
 static void
 generate_update_entry_clause(
         struct rldb_mysql_state *state,
@@ -1189,6 +1202,7 @@ generate_update_entry_clause(
   struct timeval curtime;
   const unsigned char *sep = "";
   const unsigned char *comma = ", ";
+  unsigned char uuid_buf[128];
 
   if ((mask & RE_SIZE)) {
     fprintf(f, "%ssize = %d", sep, re->size);
@@ -1230,19 +1244,12 @@ generate_update_entry_clause(
     } else {
       fprintf(f, "%shash = '%s'", sep, unparse_sha1(re->h.sha1));
     }
-    sep =comma;
+    sep = comma;
   }
   if ((mask & RE_RUN_UUID)) {
-#if CONF_HAS_LIBUUID - 0 != 0
-    if (!re->run_uuid.v[0] && !re->run_uuid.v[1] && !re->run_uuid.v[2] && !re->run_uuid.v[3]) {
-      fprintf(f, "%srun_uuid = NULL", sep);
-    } else {
-      char uuid_buf[40];
-      uuid_unparse((void*) &re->run_uuid, uuid_buf);
-      fprintf(f, "%srun_uuid = '%s'", sep, uuid_buf);
-    }
-    sep =comma;
-#endif
+    fprintf(f, "%srun_uuid = %s", sep,
+            to_uuid_str(uuid_buf, sizeof(uuid_buf), &re->run_uuid));
+    sep = comma;
   }
   if ((mask & RE_SCORE)) {
     fprintf(f, "%sscore = %d", sep, re->score);
@@ -1260,9 +1267,15 @@ generate_update_entry_clause(
     fprintf(f, "%slocale_id = %d", sep, re->locale_id);
     sep = comma;
   }
-  if ((mask & RE_JUDGE_ID)) {
+  if ((mask & RE_JUDGE_UUID)) {
+    fprintf(f, "%sjudge_id = 0", sep);
+    sep = comma;
+    fprintf(f, "%sjudge_uuid = %s", sep,
+            to_uuid_str(uuid_buf, sizeof(uuid_buf), &re->j.judge_uuid));
+  } else if ((mask & RE_JUDGE_ID)) {
     fprintf(f, "%sjudge_id = %d", sep, re->j.judge_id);
     sep = comma;
+    fprintf(f, "%sjudge_uuid = NULL", sep);
   }
   if ((mask & RE_VARIANT)) {
     fprintf(f, "%svariant = %d", sep, re->variant);
@@ -1389,7 +1402,12 @@ update_entry(
   if ((mask & RE_LOCALE_ID)) {
     dst->locale_id = src->locale_id;
   }
-  if ((mask & RE_JUDGE_ID)) {
+  if ((mask & RE_JUDGE_UUID)) {
+    dst->judge_uuid_flag = 1;
+    dst->j.judge_uuid = src->j.judge_uuid;
+  } else if ((mask & RE_JUDGE_ID)) {
+    dst->judge_uuid_flag = 0;
+    memset(&dst->j, 0, sizeof(dst->j));
     dst->j.judge_id = src->j.judge_id;
   }
   if ((mask & RE_STATUS)) {
@@ -2394,7 +2412,9 @@ append_run_func(
   if ((mask & RE_SCORE_ADJ)) {
     fputs(",score_adj", cmd_f);
   }
-  if ((mask & RE_JUDGE_ID)) {
+  if ((mask & RE_JUDGE_UUID)) {
+    fputs(",judge_uuid", cmd_f);
+  } else if ((mask & RE_JUDGE_ID)) {
     fputs(",judge_id", cmd_f);
   }
   if ((mask & RE_SSL_FLAG)) {
@@ -2503,7 +2523,9 @@ append_run_func(
   if ((mask & RE_SCORE_ADJ)) {
     fprintf(cmd_f, ",%d", in_re->score_adj);
   }
-  if ((mask & RE_JUDGE_ID)) {
+  if ((mask & RE_JUDGE_UUID)) {
+    fprintf(cmd_f, ",%s", to_uuid_str(uuid_buf, sizeof(uuid_buf), &in_re->j.judge_uuid));
+  } else if ((mask & RE_JUDGE_ID)) {
     fprintf(cmd_f, ",%d", in_re->j.judge_id);
   }
   if ((mask & RE_SSL_FLAG)) {
@@ -2650,7 +2672,12 @@ append_run_func(
   if ((mask & RE_SCORE_ADJ)) {
     new_re->score_adj = in_re->score_adj;
   }
-  if ((mask & RE_JUDGE_ID)) {
+  if ((mask & RE_JUDGE_UUID)) {
+    new_re->judge_uuid_flag = 1;
+    new_re->j.judge_uuid = in_re->j.judge_uuid;
+  } else if ((mask & RE_JUDGE_ID)) {
+    new_re->judge_uuid_flag = 0;
+    memset(&new_re->j, 0, sizeof(new_re->j));
     new_re->j.judge_id = in_re->j.judge_id;
   }
   if ((mask & RE_SSL_FLAG)) {
