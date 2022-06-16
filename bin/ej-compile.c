@@ -1026,6 +1026,7 @@ new_loop(int parallel_mode)
     struct compile_reply_packet rpl;
     memset(&rpl, 0, sizeof(rpl));
     rpl.judge_id = req->judge_id;
+    rpl.judge_uuid = req->judge_uuid;
     rpl.contest_id = req->contest_id;
     rpl.run_id = req->run_id;
     rpl.ts1 = req->ts1;
@@ -1353,6 +1354,7 @@ do_loop(void)
 
     memset(&rpl, 0, sizeof(rpl));
     rpl.judge_id = req->judge_id;
+    rpl.judge_uuid = req->judge_uuid;
     rpl.contest_id = req->contest_id;
     rpl.run_id = req->run_id;
     rpl.ts1 = req->ts1;
