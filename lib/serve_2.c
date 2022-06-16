@@ -1381,8 +1381,10 @@ serve_compile_request(
   struct sformat_extra_data sformat_extra;
   __attribute__((unused)) unsigned char compile_src_buf[PATH_MAX];
   __attribute__((unused)) unsigned char compile_queue_buf[PATH_MAX];
+  ej_uuid_t judge_uuid;
 
   memset(&sformat_extra, 0, sizeof(sformat_extra));
+  ej_uuid_generate(&judge_uuid);
 
   // perform substitutions
   compiler_env_copy = prepare_sarray_varsubst(state, prob, lang, NULL, compiler_env);
@@ -1487,6 +1489,7 @@ serve_compile_request(
 
   memset(&cp, 0, sizeof(cp));
   cp.judge_id = state->compile_request_id++;
+  cp.judge_uuid = judge_uuid;
   cp.contest_id = contest_id;
   cp.run_id = run_id;
   cp.lang_id = lang_id;
@@ -1625,7 +1628,7 @@ serve_compile_request(
 #endif
 
   if (!sfx) sfx = "";
-  serve_packet_name(contest_id, run_id, prio, pkt_name, sizeof(pkt_name));
+  serve_packet_name(contest_id, run_id, prio, &judge_uuid, pkt_name, sizeof(pkt_name));
 
   if (src_header_size > 0 || src_footer_size > 0) {
     if (len < 0) {
@@ -1982,7 +1985,7 @@ serve_run_request(
   }
 
   /* generate a packet name */
-  serve_packet_name(contest_id, run_id, prio, pkt_base, sizeof(pkt_base));
+  serve_packet_name(contest_id, run_id, prio, &comp_pkt->judge_uuid, pkt_base, sizeof(pkt_base));
   snprintf(exe_out_name, sizeof(exe_out_name), "%s%s", pkt_base, exe_sfx);
 
   if (!run_text) {
