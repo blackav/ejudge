@@ -2,7 +2,7 @@
 #ifndef __RUN_PACKET_H__
 #define __RUN_PACKET_H__
 
-/* Copyright (C) 2005-2019 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -59,6 +59,7 @@ struct run_reply_packet
   int ts7_us;
   /* UUID of the run */
   ej_uuid_t uuid;
+  ej_uuid_t judge_uuid;
 };
 
 int

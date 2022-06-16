@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2005-2019 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -90,10 +90,14 @@ run_reply_packet_write(
   out_data->ts7 = cvt_host_to_bin_32(in_data->ts7);
   out_data->ts7_us = cvt_host_to_bin_32(in_data->ts7_us);
 
+  out_data->uuid = in_data->uuid;
+  out_data->judge_uuid = in_data->judge_uuid;
+  /*
   out_data->uuid.v[0] = cvt_host_to_bin_32(in_data->uuid.v[0]);
   out_data->uuid.v[1] = cvt_host_to_bin_32(in_data->uuid.v[1]);
   out_data->uuid.v[2] = cvt_host_to_bin_32(in_data->uuid.v[2]);
   out_data->uuid.v[3] = cvt_host_to_bin_32(in_data->uuid.v[3]);
+  */
 
   *p_out_size = out_size;
   *p_out_data = out_data;
