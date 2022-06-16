@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2005-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -70,10 +70,14 @@ compile_reply_packet_write(const struct compile_reply_packet *in_data,
   out_data->ts3 = cvt_host_to_bin_32(in_data->ts3);
   out_data->ts3_us = cvt_host_to_bin_32(in_data->ts3_us);
   out_data->use_uuid = cvt_host_to_bin_32(in_data->use_uuid);
+  out_data->uuid = in_data->uuid;
+  out_data->judge_uuid = in_data->judge_uuid;
+  /*
   out_data->uuid.v[0] = cvt_host_to_bin_32(in_data->uuid.v[0]);
   out_data->uuid.v[1] = cvt_host_to_bin_32(in_data->uuid.v[1]);
   out_data->uuid.v[2] = cvt_host_to_bin_32(in_data->uuid.v[2]);
   out_data->uuid.v[3] = cvt_host_to_bin_32(in_data->uuid.v[3]);
+  */
   out_data->zip_mode = cvt_host_to_bin_32(in_data->zip_mode);
   out_data->run_block_len = cvt_host_to_bin_32(in_data->run_block_len);
   if (in_data->run_block_len) {

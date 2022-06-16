@@ -27,6 +27,7 @@ static struct meta_info_item meta_info_compile_request_packet_data[] =
   [META_COMPILE_REQUEST_PACKET_user_id] = { META_COMPILE_REQUEST_PACKET_user_id, 'i', XSIZE(struct compile_request_packet, user_id), "user_id", XOFFSET(struct compile_request_packet, user_id) },
   [META_COMPILE_REQUEST_PACKET_use_container] = { META_COMPILE_REQUEST_PACKET_use_container, 'i', XSIZE(struct compile_request_packet, use_container), "use_container", XOFFSET(struct compile_request_packet, use_container) },
   [META_COMPILE_REQUEST_PACKET_uuid] = { META_COMPILE_REQUEST_PACKET_uuid, '?', XSIZE(struct compile_request_packet, uuid), "uuid", XOFFSET(struct compile_request_packet, uuid) },
+  [META_COMPILE_REQUEST_PACKET_judge_uuid] = { META_COMPILE_REQUEST_PACKET_judge_uuid, '?', XSIZE(struct compile_request_packet, judge_uuid), "judge_uuid", XOFFSET(struct compile_request_packet, judge_uuid) },
   [META_COMPILE_REQUEST_PACKET_max_vm_size] = { META_COMPILE_REQUEST_PACKET_max_vm_size, 'E', XSIZE(struct compile_request_packet, max_vm_size), "max_vm_size", XOFFSET(struct compile_request_packet, max_vm_size) },
   [META_COMPILE_REQUEST_PACKET_max_stack_size] = { META_COMPILE_REQUEST_PACKET_max_stack_size, 'E', XSIZE(struct compile_request_packet, max_stack_size), "max_stack_size", XOFFSET(struct compile_request_packet, max_stack_size) },
   [META_COMPILE_REQUEST_PACKET_max_file_size] = { META_COMPILE_REQUEST_PACKET_max_file_size, 'E', XSIZE(struct compile_request_packet, max_file_size), "max_file_size", XOFFSET(struct compile_request_packet, max_file_size) },

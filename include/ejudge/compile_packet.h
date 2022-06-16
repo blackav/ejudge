@@ -2,7 +2,7 @@
 #ifndef __COMPILE_PACKET_H__
 #define __COMPILE_PACKET_H__
 
-/* Copyright (C) 2005-2021 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -37,6 +37,7 @@ struct compile_request_packet
   int user_id;
   int use_container;
   ej_uuid_t uuid;
+  ej_uuid_t judge_uuid;
   ej_size64_t max_vm_size;
   ej_size64_t max_stack_size;
   ej_size64_t max_file_size;
@@ -80,6 +81,7 @@ struct compile_reply_packet
   int use_uuid;
   ej_uuid_t uuid;
   int zip_mode;       // reply file is an archive of executables
+  ej_uuid_t judge_uuid;
 };
 
 int

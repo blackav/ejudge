@@ -2,7 +2,7 @@
 #ifndef __COMPILE_PACKET_PRIV_H__
 #define __COMPILE_PACKET_PRIV_H__
 
-/* Copyright (C) 2005-2021 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -18,7 +18,7 @@
 
 #include "ejudge/integral.h"
 
-#define EJ_COMPILE_PACKET_VERSION 8
+#define EJ_COMPILE_PACKET_VERSION 9
 
 /* various private data structures and constants for compile packets */
 
@@ -49,6 +49,7 @@ struct compile_request_bin_packet
   rint32_t use_uuid;            /* use UUID instead of run_id */
   rint32_t use_container;       /* use ej-suid-container for compilation */
   ej_uuid_t uuid;               /* UUID */
+  ej_uuid_t judge_uuid;         /* judging UUID */
   rint32_t multi_header;        /* multi-header mode */
   rint32_t lang_header;         /* lang-specific multi-header mode */
   rint32_t user_id;
@@ -92,6 +93,7 @@ struct compile_reply_bin_packet
   rint32_t run_block_len;       /* the length of the run block */
   rint32_t use_uuid;
   ej_uuid_t uuid;              /* UUID */
+  ej_uuid_t judge_uuid;        /* judgind UUID */
   rint32_t zip_mode;
   unsigned char pad[4];        /* padding to 64-byte boundary */
   /* run block (aligned to 16 byte boundary) */

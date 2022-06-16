@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2005-2021 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -214,10 +214,14 @@ compile_request_packet_write(
   out_data->max_rss_size = cvt_host_to_bin_64(in_data->max_rss_size);
   out_data->use_container = cvt_host_to_bin_32(in_data->use_container);
   out_data->use_uuid = cvt_host_to_bin_32(in_data->use_uuid);
+  out_data->uuid = in_data->uuid;
+  out_data->judge_uuid = in_data->judge_uuid;
+  /*
   out_data->uuid.v[0] = cvt_host_to_bin_32(in_data->uuid.v[0]);
   out_data->uuid.v[1] = cvt_host_to_bin_32(in_data->uuid.v[1]);
   out_data->uuid.v[2] = cvt_host_to_bin_32(in_data->uuid.v[2]);
   out_data->uuid.v[3] = cvt_host_to_bin_32(in_data->uuid.v[3]);
+  */
   out_data->multi_header = cvt_host_to_bin_32(in_data->multi_header);
   out_data->lang_header = cvt_host_to_bin_32(in_data->lang_header);
   out_data->style_checker_len = cvt_host_to_bin_32(style_checker_len);
