@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2012-2021 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -368,6 +368,9 @@ handle_packet(
     get_current_time(&reply_pkt.ts5, &reply_pkt.ts5_us);
     if (srgp->run_uuid && srgp->run_uuid[0]) {
       ej_uuid_parse(srgp->run_uuid, &reply_pkt.uuid);
+    }
+    if (srgp->judge_uuid && srgp->judge_uuid[0]) {
+      ej_uuid_parse(srgp->judge_uuid, &reply_pkt.judge_uuid);
     }
 
     run_listener.contest_id = srgp->contest_id;
