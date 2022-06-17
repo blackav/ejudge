@@ -558,44 +558,6 @@ run_change_status(
 }
 
 int
-run_change_status_2(
-        runlog_state_t state,
-        int runid,
-        int newstatus,
-        int newtest,
-        int newpassedmode,
-        int newscore,
-        int judge_id,
-        int is_marked)
-{
-  if (runid < state->run_f || runid >= state->run_u) ERR_R("bad runid: %d", runid);
-
-  int off_run_id = runid - state->run_f;
-
-  if (newstatus < 0 || newstatus > 255) ERR_R("bad newstatus: %d", newstatus);
-  if (newtest < -1) ERR_R("bad newtest: %d", newtest);
-  if (newscore < -1 || newscore > EJ_MAX_SCORE)
-    ERR_R("bad newscore: %d", newscore);
-  if (judge_id < 0 || judge_id > EJ_MAX_JUDGE_ID)
-    ERR_R("bad judge_id: %d", judge_id);
-
-  if (newstatus == RUN_VIRTUAL_START || newstatus == RUN_VIRTUAL_STOP)
-    ERR_R("virtual status cannot be changed that way");
-  if (newstatus == RUN_EMPTY)
-    ERR_R("EMPTY status cannot be set this way");
-  if (state->runs[off_run_id].status == RUN_VIRTUAL_START
-      || state->runs[off_run_id].status == RUN_VIRTUAL_STOP
-      || state->runs[off_run_id].status == RUN_EMPTY)
-    ERR_R("this entry cannot be changed");
-
-  if (state->runs[off_run_id].is_readonly)
-    ERR_R("this entry is read-only");
-
-  return state->iface->change_status_2(state->cnts, runid, newstatus, newtest,
-                                       newpassedmode, newscore, judge_id, is_marked);
-}
-
-int
 run_change_status_3(
         runlog_state_t state,
         int runid,

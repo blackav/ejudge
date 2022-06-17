@@ -132,16 +132,6 @@ run_change_status(
         int judge_id,
         const ej_uuid_t *judge_uuid);
 int
-run_change_status_2(
-        runlog_state_t state,
-        int runid,
-        int newstatus,
-        int newtest,
-        int newpassedmode,
-        int newscore,
-        int judge_id,
-        int is_marked);
-int
 run_change_status_3(
         runlog_state_t state,
         int runid,
