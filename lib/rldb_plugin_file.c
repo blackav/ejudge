@@ -175,16 +175,6 @@ set_entry_func(
 static int
 squeeze_func(struct rldb_plugin_cnts *cdata);
 static int
-change_status_2_func(
-        struct rldb_plugin_cnts *cdata,
-        int run_id,
-        int new_status,
-        int new_test,
-        int new_passed_mode,
-        int new_score,
-        int judge_id,
-        int is_marked);
-static int
 check_func(
         struct rldb_plugin_cnts *cdata,
         FILE *log_f);
@@ -253,7 +243,7 @@ struct rldb_plugin_iface rldb_plugin_file =
   squeeze_func,
   NULL, // put_entry
   NULL, // put_header
-  change_status_2_func,
+  NULL, // change_status_2
   check_func,
   change_status_3_func,
   change_status_4_func,
@@ -1756,32 +1746,6 @@ squeeze_func(struct rldb_plugin_cnts *cdata)
     ptr += w;
   }
   return retval;
-}
-
-static int
-change_status_2_func(
-        struct rldb_plugin_cnts *cdata,
-        int run_id,
-        int new_status,
-        int new_test,
-        int new_passed_mode,
-        int new_score,
-        int judge_id,
-        int is_marked)
-{
-  struct rldb_file_cnts *cs = (struct rldb_file_cnts*) cdata;
-  struct runlog_state *rls = cs->rl_state;
-
-  ASSERT(rls->run_f == 0);
-  ASSERT(run_id >= 0 && run_id < rls->run_u);
-
-  rls->runs[run_id].status = new_status;
-  rls->runs[run_id].test = new_test;
-  rls->runs[run_id].passed_mode = !!new_passed_mode;
-  rls->runs[run_id].score = new_score;
-  rls->runs[run_id].j.judge_id = judge_id;
-  rls->runs[run_id].is_marked = is_marked;
-  return do_flush_entry(cs, run_id);
 }
 
 static int

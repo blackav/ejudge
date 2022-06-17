@@ -163,17 +163,6 @@ put_header_func(
         const struct run_header *rh);
 
 static int
-change_status_2_func(
-        struct rldb_plugin_cnts *cdata,
-        int run_id,
-        int new_status,
-        int new_test,
-        int new_passed_mode,
-        int new_score,
-        int new_judge_id,
-        int new_is_marked);
-
-static int
 check_func(
         struct rldb_plugin_cnts *cdata,
         FILE *log_f);

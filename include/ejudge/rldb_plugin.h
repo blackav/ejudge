@@ -138,7 +138,7 @@ struct rldb_plugin_iface
   // insert the whole header
   int (*put_header)(struct rldb_plugin_cnts *, const struct run_header *);
   // change the status (extended version)
-  int (*change_status_2)(struct rldb_plugin_cnts *,
+  __attribute__((deprecated)) int (*deprecated_change_status_2)(struct rldb_plugin_cnts *,
                          int run_id,
                          int new_status,
                          int new_test,

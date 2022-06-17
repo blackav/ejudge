@@ -102,13 +102,13 @@ struct rldb_plugin_iface plugin_rldb_mysql =
   set_status_func,
   clear_entry_func,
   set_hidden_func,
-  NULL, //set_judge_id,
+  NULL, // set_judge_id - deprecated
   set_pages_func,
   set_entry_func,
   squeeze_func,
   put_entry_func,
   put_header_func,
-  change_status_2_func,
+  NULL, // change_status_2 - deprecated
   check_func,
   change_status_3_func,
   change_status_4_func,
@@ -2008,33 +2008,6 @@ put_header_func(
   struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts *) cdata;
 
   return do_update_header(cs, rh, RH_ALL);
-}
-
-static int
-change_status_2_func(
-        struct rldb_plugin_cnts *cdata,
-        int run_id,
-        int new_status,
-        int new_test,
-        int new_passed_mode,
-        int new_score,
-        int new_judge_id,
-        int new_is_marked)
-{
-  struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts *) cdata;
-  struct run_entry te;
-
-  memset(&te, 0, sizeof(te));
-  te.status = new_status;
-  te.test = new_test;
-  te.passed_mode = !!new_passed_mode;
-  te.score = new_score;
-  te.j.judge_id = new_judge_id;
-  te.is_marked = new_is_marked;
-
-  return do_update_entry(cs, run_id, &te,
-                         RE_STATUS | RE_TEST | RE_SCORE | RE_JUDGE_ID | RE_IS_MARKED | RE_PASSED_MODE,
-                         NULL);
 }
 
 static int
