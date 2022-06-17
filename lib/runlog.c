@@ -553,7 +553,8 @@ run_change_status(
     ERR_R("this entry is read-only");
 
   return state->iface->change_status(state->cnts, runid, newstatus, newtest,
-                                     newpassedmode, newscore, judge_id);
+                                     newpassedmode, newscore, judge_id,
+                                     judge_uuid);
 }
 
 int

@@ -88,7 +88,8 @@ change_status_func(
         int new_test,
         int new_passed_mode,
         int new_score,
-        int judge_id);
+        int judge_id,
+        const ej_uuid_t *judge_uuid);
 
 static int
 start_func(

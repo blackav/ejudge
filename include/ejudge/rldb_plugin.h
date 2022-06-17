@@ -94,7 +94,8 @@ struct rldb_plugin_iface
                        int new_test,
                        int new_passed_mode,
                        int new_score,
-                       int judge_id);
+                       int judge_id,
+                       const ej_uuid_t *judge_uuid);
   // start the contest
   int (*start)(struct rldb_plugin_cnts *, time_t);
   // stop the contest

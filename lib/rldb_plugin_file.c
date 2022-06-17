@@ -30,6 +30,7 @@
 #include "unix/unix_fileutl.h"
 #include "ejudge/xml_utils.h"
 #include "ejudge/random.h"
+#include "ejudge/ej_uuid.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -122,7 +123,8 @@ change_status_func(
         int new_test,
         int new_passed_mode,
         int new_score,
-        int judge_id);
+        int judge_id,
+        const ej_uuid_t *judge_uuid);
 static int
 start_func(
         struct rldb_plugin_cnts *cdata,
@@ -1511,7 +1513,8 @@ change_status_func(
         int new_test,
         int new_passed_mode,
         int new_score,
-        int judge_id)
+        int judge_id,
+        const ej_uuid_t *judge_uuid)
 {
   struct rldb_file_cnts *cs = (struct rldb_file_cnts*) cdata;
   struct runlog_state *rls = cs->rl_state;
@@ -1519,11 +1522,19 @@ change_status_func(
   ASSERT(rls->run_f == 0);
   ASSERT(run_id >= 0 && run_id < rls->run_u);
 
-  rls->runs[run_id].status = new_status;
-  rls->runs[run_id].test = new_test;
-  rls->runs[run_id].passed_mode = !!new_passed_mode;
-  rls->runs[run_id].score = new_score;
-  rls->runs[run_id].j.judge_id = judge_id;
+  struct run_entry *re = &rls->runs[run_id];
+  re->status = new_status;
+  re->test = new_test;
+  re->passed_mode = !!new_passed_mode;
+  re->score = new_score;
+  if (judge_uuid && ej_uuid_is_nonempty(*judge_uuid)) {
+    re->judge_uuid_flag = 1;
+    re->j.judge_uuid = *judge_uuid;
+  } else {
+    re->judge_uuid_flag = 0;
+    memset(&re->j, 0, sizeof(re->j));
+    re->j.judge_id = judge_id;
+  }
   return do_flush_entry(cs, run_id);
 }
 

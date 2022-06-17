@@ -1585,21 +1585,28 @@ change_status_func(
         int new_test,
         int new_passed_mode,
         int new_score,
-        int new_judge_id)
+        int new_judge_id,
+        const ej_uuid_t *judge_uuid)
 {
   struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts *) cdata;
   struct run_entry te;
+  uint64_t mask = RE_STATUS | RE_TEST | RE_SCORE | RE_PASSED_MODE;
 
   memset(&te, 0, sizeof(te));
   te.status = new_status;
   te.test = new_test;
   te.passed_mode = !!new_passed_mode;
   te.score = new_score;
-  te.j.judge_id = new_judge_id;
+  if (judge_uuid && ej_uuid_is_nonempty(*judge_uuid)) {
+    te.judge_uuid_flag = 1;
+    te.j.judge_uuid = *judge_uuid;
+    mask |= RE_JUDGE_UUID;
+  } else {
+    te.j.judge_id = new_judge_id;
+    mask |= RE_JUDGE_ID;
+  }
 
-  return do_update_entry(cs, run_id, &te,
-                         RE_STATUS | RE_TEST | RE_SCORE | RE_JUDGE_ID | RE_PASSED_MODE,
-                         NULL);
+  return do_update_entry(cs, run_id, &te, mask, NULL);
 }
 
 static void
