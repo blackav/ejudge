@@ -526,7 +526,8 @@ run_change_status(
         int newtest,
         int newpassedmode,
         int newscore,
-        int judge_id)
+        int judge_id,
+        const ej_uuid_t *judge_uuid)
 {
   if (runid < state->run_f || runid >= state->run_u) ERR_R("bad runid: %d", runid);
 

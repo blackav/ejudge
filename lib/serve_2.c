@@ -1700,7 +1700,7 @@ serve_compile_request(
 
   if (!no_db_flag) {
     if (run_change_status(state->runlog_state, run_id, RUN_COMPILING, 0, 1, -1,
-                          cp.judge_id) < 0) {
+                          cp.judge_id, &cp.judge_uuid) < 0) {
       errcode = -SERVE_ERR_DB;
       goto failed;
     }
@@ -2474,7 +2474,7 @@ serve_run_request(
 
   /* update status */
   if (!no_db_flag) {
-    if (run_change_status(state->runlog_state, run_id, RUN_RUNNING, 0, 1, -1, judge_id) < 0) {
+    if (run_change_status(state->runlog_state, run_id, RUN_RUNNING, 0, 1, -1, judge_id, judge_uuid) < 0) {
       goto fail;
     }
   }
