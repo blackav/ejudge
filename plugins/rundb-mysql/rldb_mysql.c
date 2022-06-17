@@ -196,7 +196,7 @@ do_create(struct rldb_mysql_state *state)
   if (mi->simple_fquery(md, create_userrunheaders_query, md->table_prefix) < 0)
     db_error_fail(md);
   if (mi->simple_fquery(md,
-                        "INSERT INTO %sconfig VALUES ('run_version', '18') ;",
+                        "INSERT INTO %sconfig VALUES ('run_version', '19') ;",
                         md->table_prefix) < 0)
     db_error_fail(md);
   return 0;
@@ -420,7 +420,14 @@ do_open(struct rldb_mysql_state *state)
       return -1;
     run_version = 18;
   }
-  if (run_version != 18) {
+  if (run_version == 18) {
+    if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD COLUMN judge_uuid VARCHAR(40) DEFAULT NULL AFTER is_checked", md->table_prefix) < 0)
+      return -1;
+    if (mi->simple_fquery(md, "UPDATE %sconfig SET config_val = '19' WHERE config_key = 'run_version' ;", md->table_prefix) < 0)
+      return -1;
+    run_version = 19;
+  }
+  if (run_version != 19) {
     err("run_version == %d is not supported", run_version);
     return -1;
   }
@@ -682,6 +689,8 @@ load_runs(struct rldb_mysql_cnts *cs)
   int i, mime_type;
   ruint32_t sha1[5];
   ej_uuid_t run_uuid;
+  ej_uuid_t prob_uuid;
+  ej_uuid_t judge_uuid;
 
   memset(&ri, 0, sizeof(ri));
   if (state->window > 0) {
@@ -707,6 +716,8 @@ load_runs(struct rldb_mysql_cnts *cs)
     memset(&ri, 0, sizeof(ri));
     memset(sha1, 0, sizeof(sha1));
     memset(&run_uuid, 0, sizeof(run_uuid));
+    memset(&prob_uuid, 0, sizeof(prob_uuid));
+    memset(&judge_uuid, 0, sizeof(judge_uuid));
     if (mi->next_row(md) < 0) goto fail;
     mime_type = 0;
     if (mi->parse_spec(md, md->field_count, md->row, md->lengths,
@@ -729,6 +740,7 @@ load_runs(struct rldb_mysql_cnts *cs)
       xfree(ri.mime_type); ri.mime_type = 0;
       xfree(ri.run_uuid); ri.run_uuid = 0;
       xfree(ri.prob_uuid); ri.prob_uuid = NULL;
+      xfree(ri.judge_uuid); ri.judge_uuid = NULL;
 
       expand_runs(rls, ri.run_id);
       re = &rls->runs[ri.run_id - rls->run_f];
@@ -755,6 +767,12 @@ load_runs(struct rldb_mysql_cnts *cs)
       uuid_parse(ri.run_uuid, (void*) &run_uuid);
 #endif
     }
+    if (ri.prob_uuid) {
+      uuid_parse(ri.prob_uuid, (void*) &prob_uuid);
+    }
+    if (ri.judge_uuid) {
+      uuid_parse(ri.judge_uuid, (void*) &judge_uuid);
+    }
     //if (ri.ip_version != 4) db_error_inv_value_fail(md, "ip_version");
     if (ri.mime_type && (mime_type = mime_type_parse(ri.mime_type)) < 0)
       db_error_inv_value_fail(md, "mime_type");
@@ -762,6 +780,7 @@ load_runs(struct rldb_mysql_cnts *cs)
     xfree(ri.mime_type); ri.mime_type = 0;
     xfree(ri.run_uuid); ri.run_uuid = 0;
     xfree(ri.prob_uuid); ri.prob_uuid = NULL;
+    xfree(ri.judge_uuid); ri.judge_uuid = NULL;
 
     expand_runs(rls, ri.run_id);
     re = &rls->runs[ri.run_id - rls->run_f];
@@ -781,11 +800,17 @@ load_runs(struct rldb_mysql_cnts *cs)
     ipv6_to_run_entry(&ri.ip, re);
     memcpy(re->h.sha1, sha1, sizeof(re->h.sha1));
     memcpy(&re->run_uuid, &run_uuid, sizeof(re->run_uuid));
+    re->prob_uuid = prob_uuid;
+    if (ej_uuid_is_nonempty(judge_uuid)) {
+      re->judge_uuid_flag = 1;
+      re->j.judge_uuid = judge_uuid;
+    } else if (ri.judge_id > 0) {
+      re->j.judge_id = ri.judge_id;
+    }
     re->score = ri.score;
     re->test = ri.test_num;
     re->score_adj = ri.score_adj;
     re->locale_id = ri.locale_id;
-    re->j.judge_id = ri.judge_id;
     re->status = ri.status;
     re->is_imported = ri.is_imported;
     re->variant = ri.variant;
@@ -813,6 +838,7 @@ load_runs(struct rldb_mysql_cnts *cs)
   xfree(ri.mime_type);
   xfree(ri.run_uuid);
   xfree(ri.prob_uuid);
+  xfree(ri.judge_uuid);
   mi->free_res(md);
   return -1;
 }
