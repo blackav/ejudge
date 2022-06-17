@@ -1791,8 +1791,7 @@ change_status_3_func(
   re->passed_mode = !!new_passed_mode;
   re->score = new_score;
   re->judge_uuid_flag = 0;
-  re->j.judge_id = 0;
-  memset(&re->run_uuid, 0, sizeof(re->run_uuid));
+  memset(&re->j, 0, sizeof(re->j));
   re->is_marked = is_marked;
   re->is_saved = has_user_score;
   re->saved_status = user_status;
@@ -1813,15 +1812,17 @@ change_status_4_func(
   ASSERT(rls->run_f == 0);
   ASSERT(run_id >= 0 && run_id < rls->run_u);
 
-  rls->runs[run_id].status = new_status;
-  rls->runs[run_id].test = 0;
-  rls->runs[run_id].score = -1;
-  rls->runs[run_id].j.judge_id = 0;
-  rls->runs[run_id].is_marked = 0;
-  rls->runs[run_id].is_saved = 0;
-  rls->runs[run_id].saved_status = 0;
-  rls->runs[run_id].saved_test = 0;
-  rls->runs[run_id].saved_score = 0;
+  struct run_entry *re = &rls->runs[run_id];
+  re->status = new_status;
+  re->test = 0;
+  re->score = -1;
+  re->judge_uuid_flag = 0;
+  memset(&re->j, 0, sizeof(re->j));
+  re->is_marked = 0;
+  re->is_saved = 0;
+  re->saved_status = 0;
+  re->saved_test = 0;
+  re->saved_score = 0;
   return do_flush_entry(cs, run_id);
 }
 
