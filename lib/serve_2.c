@@ -3895,6 +3895,7 @@ serve_judge_built_in_problem(
         const struct contest_desc *cnts,
         int run_id,
         int judge_id,
+        const ej_uuid_t *judge_uuid,
         int variant,
         int accepting_mode,
         struct run_entry *re,
@@ -4205,7 +4206,9 @@ serve_rejudge_run(
     }
 
     if (prob->type == PROB_TYPE_SELECT_ONE && px && px->ans_num > 0) {
-      serve_judge_built_in_problem(extra, config, state, cnts, run_id, 1 /* judge_id*/,
+      serve_judge_built_in_problem(extra, config, state, cnts, run_id,
+                                   1 /* judge_id*/,
+                                   NULL, /* judge_uuid */
                                    variant, accepting_mode, &re, prob,
                                    px, user_id, ip, ssl_flag);
       return;

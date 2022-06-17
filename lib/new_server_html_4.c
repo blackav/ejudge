@@ -1213,7 +1213,9 @@ cmd_submit_run(
         run_get_entry(cs->runlog_state, run_id, &re);
         serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                         "submit", "ok", RUN_RUNNING, NULL);
-        serve_judge_built_in_problem(extra, ejudge_config, cs, cnts, run_id, 1 /* judge_id */,
+        serve_judge_built_in_problem(extra, ejudge_config, cs, cnts, run_id,
+                                     1 /* judge_id */,
+                                     NULL, /* judge_uuid */
                                      variant, cs->accepting_mode, &re,
                                      prob, px, phr->user_id, &phr->ip,
                                      phr->ssl_flag);

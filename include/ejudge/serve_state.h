@@ -720,6 +720,7 @@ serve_judge_built_in_problem(
         const struct contest_desc *cnts,
         int run_id,
         int judge_id,
+        const ej_uuid_t *judge_uuid,
         int variant,
         int accepting_mode,
         struct run_entry *re,
