@@ -1185,7 +1185,10 @@ cmd_submit_run(
       } else {
         if (serve_run_request(phr->config, cs, cnts, stderr, run_text, run_size,
                               cnts->id, run_id,
-                              phr->user_id, prob->id, 0, variant, 0, -1, -1, 0,
+                              phr->user_id, prob->id, 0, variant, 0,
+                              -1, /* judge_id */
+                              NULL, /* judge_uuid */
+                              -1, 0,
                               mime_type, 0, phr->locale_id, 0, 0, 0, &run_uuid,
                               0 /* rejudge_flag */, 0 /* zip_mode */, store_flags) < 0)
           FAIL(NEW_SRV_ERR_DISK_WRITE_ERROR);
@@ -1238,7 +1241,10 @@ cmd_submit_run(
                         "submit", "ok", RUN_RUNNING, NULL);
         if (serve_run_request(phr->config, cs, cnts, stderr, run_text, run_size,
                               cnts->id, run_id,
-                              phr->user_id, prob->id, 0, variant, 0, -1, -1, 0,
+                              phr->user_id, prob->id, 0, variant, 0,
+                              -1, /* judge_id */
+                              NULL, /* judge_uuid */
+                              -1, 0,
                               mime_type, 0, phr->locale_id, 0, 0, 0, &run_uuid,
                               0 /* rejudge_flag */, 0 /* zip_mode */, store_flags) < 0)
           FAIL(NEW_SRV_ERR_DISK_WRITE_ERROR);

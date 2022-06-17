@@ -523,6 +523,7 @@ serve_run_request(
         int variant,
         int priority_adjustment,
         int judge_id,
+        const ej_uuid_t *judge_uuid,
         int accepting_mode,
         int notify_flag,
         int mime_type,

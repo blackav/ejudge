@@ -1797,6 +1797,7 @@ serve_run_request(
         int variant,
         int priority_adjustment,
         int judge_id,
+        const ej_uuid_t *judge_uuid,
         int accepting_mode,
         int notify_flag,
         int mime_type,
@@ -1841,6 +1842,7 @@ serve_run_request(
   char *srp_t = NULL;
   size_t srp_z = 0;
   ej_size64_t lang_specific_size = 0;
+  ej_uuid_t local_judge_uuid;
 
   get_current_time(&current_time, &current_time_us);
 
@@ -1967,6 +1969,10 @@ serve_run_request(
     if (!state->compile_request_id) state->compile_request_id++;
     judge_id = state->compile_request_id++;
   }
+  if (!judge_uuid) {
+    ej_uuid_generate(&local_judge_uuid);
+    judge_uuid = &local_judge_uuid;
+  }
   if (accepting_mode < 0) {
     if (global->score_system == SCORE_OLYMPIAD && global->is_virtual > 0) {
       accepting_mode = 1;
@@ -2030,6 +2036,7 @@ serve_run_request(
 
   srgp->contest_id = contest_id;
   srgp->judge_id = judge_id;
+  srgp->judge_uuid = xstrdup(ej_uuid_unparse(judge_uuid, NULL));
   srgp->run_id = run_id;
   srgp->variant = variant;
   srgp->user_id = user_id;
@@ -3307,7 +3314,8 @@ prepare_run_request:
                         cnts->id, comp_pkt->run_id,
                         re.user_id, re.prob_id, re.lang_id, re.variant,
                         comp_extra->priority_adjustment,
-                        comp_pkt->judge_id, comp_extra->accepting_mode,
+                        comp_pkt->judge_id, &comp_pkt->judge_uuid,
+                        comp_extra->accepting_mode,
                         comp_extra->notify_flag, re.mime_type, re.eoln_type,
                         re.locale_id, compile_report_dir, comp_pkt, 0, &re.run_uuid,
                         comp_extra->rejudge_flag, comp_pkt->zip_mode, re.store_flags) < 0) {
@@ -4237,7 +4245,9 @@ serve_rejudge_run(
                       cnts->id, run_id,
                       re.user_id, re.prob_id, re.lang_id,
                       re.variant, priority_adjustment,
-                      -1, accepting_mode, 1, re.mime_type, re.eoln_type,
+                      -1,       /* judge_id */
+                      NULL,     /* judge_uuid */
+                      accepting_mode, 1, re.mime_type, re.eoln_type,
                       re.locale_id, 0, 0, 0, &re.run_uuid,
                       1 /* rejudge_flag */, 0 /* zip_mode */, re.store_flags);
     xfree(run_text);

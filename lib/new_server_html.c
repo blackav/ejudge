@@ -3576,7 +3576,10 @@ priv_submit_run(
       } else {
         if (serve_run_request(phr->config, cs, cnts, log_f, run_text, run_size,
                               cnts->id, run_id,
-                              sender_user_id, prob_id, 0, variant, 0, -1, -1, 0,
+                              sender_user_id, prob_id, 0, variant, 0,
+                              -1, /* judge_id */
+                              NULL, /* judge_uuid */
+                              -1, 0,
                               mime_type, 0, phr->locale_id, 0, 0, 0, &run_uuid,
                               0 /* rejudge_flag */, 0 /* zip_mode */, store_flags) < 0) {
           FAIL(NEW_SRV_ERR_DISK_WRITE_ERROR);
@@ -3619,7 +3622,10 @@ priv_submit_run(
       } else {
         if (serve_run_request(phr->config, cs, cnts, log_f, run_text, run_size,
                               cnts->id, run_id,
-                              sender_user_id, prob_id, 0, variant, 0, -1, -1, 0,
+                              sender_user_id, prob_id, 0, variant, 0,
+                              -1, /* judge_id */
+                              NULL, /* judge_uuid */
+                              -1, 0,
                               mime_type, 0, phr->locale_id, 0, 0, 0, &run_uuid,
                               0 /* rejudge_flag */, 0 /* zip_mode */, store_flags) < 0) {
           FAIL(NEW_SRV_ERR_DISK_WRITE_ERROR);
@@ -10825,7 +10831,10 @@ ns_submit_run(
                     "submit", "ok", RUN_RUNNING, NULL);
     r = serve_run_request(phr->config, cs, cnts, log_f, run_text, run_size,
                           cnts->id, run_id,
-                          user_id, prob_id, 0, variant, 0, -1, -1, 1,
+                          user_id, prob_id, 0, variant, 0,
+                          -1,   /* judge_id */
+                          NULL, /* judge_uuid */
+                          -1, 1,
                           mime_type, 0, phr->locale_id, 0, 0, 0, &run_uuid,
                           0 /* rejudge_flag */, 0 /* zip_mode */, store_flags);
     if (r < 0) {
@@ -10878,7 +10887,10 @@ ns_submit_run(
 
   r = serve_run_request(phr->config, cs, cnts, log_f, run_text, run_size,
                         cnts->id, run_id,
-                        user_id, prob_id, 0, variant, 0, -1, -1, 1,
+                        user_id, prob_id, 0, variant, 0,
+                        -1,     /* judge_id */
+                        NULL,   /* judge_uuid */
+                        -1, 1,
                         mime_type, 0, phr->locale_id, 0, 0, 0, &run_uuid,
                         0 /* rejudge_flag */, 0 /* zip_mode */, store_flags);
   if (r < 0) {
@@ -11417,7 +11429,10 @@ unpriv_submit_run(
       } else {
         if (serve_run_request(phr->config, cs, cnts, phr->log_f, run_text, run_size,
                               cnts->id, run_id,
-                              phr->user_id, prob_id, 0, variant, 0, -1, -1, 1,
+                              phr->user_id, prob_id, 0, variant, 0,
+                              -1, /* judge_id */
+                              NULL, /* judge_uuid */
+                              -1, 1,
                               mime_type, 0, phr->locale_id, 0, 0, 0, &run_uuid,
                               0 /* rejudge_flag */, 0 /* zip_mode */, store_flags) < 0) {
           FAIL2(NEW_SRV_ERR_DISK_WRITE_ERROR);
@@ -11479,7 +11494,10 @@ unpriv_submit_run(
 
         if (serve_run_request(phr->config, cs, cnts, phr->log_f, run_text, run_size,
                               cnts->id, run_id,
-                              phr->user_id, prob_id, 0, variant, 0, -1, -1, 1,
+                              phr->user_id, prob_id, 0, variant, 0,
+                              -1, /* judge_id */
+                              NULL, /* judge_uuid */
+                              -1, 1,
                               mime_type, 0, phr->locale_id, 0, 0, 0, &run_uuid,
                               0 /* rejudge_flag */, 0 /* zip_mode */, store_flags) < 0) {
           FAIL2(NEW_SRV_ERR_DISK_WRITE_ERROR);

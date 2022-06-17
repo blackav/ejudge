@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2010-2020 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2010-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -681,6 +681,7 @@ process_compile_packet(
                         0 /* variant */,
                         0 /* priority_adjustment */,
                         pkt->run_id, /* judge_id */
+                        NULL,        /* judge_uuid */
                         0 /* accepting_mode */,
                         0 /* notify_flag */,
                         0 /* mime_type */,
