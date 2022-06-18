@@ -51,9 +51,15 @@
       }
     }
   }
-  long long longest_judge_request_us = current_time_us - earlier_run_queue_us;
+  long long longest_judge_request_us = 0;
+  if (earlier_judge_request_us > 0) {
+    longest_judge_request_us = current_time_us - earlier_judge_request_us;
+  }
   if (longest_judge_request_us < 0) longest_judge_request_us = 0;
-  long long longest_run_queue_us = current_time_us - earlier_run_queue_us;
+  long long longest_run_queue_us = 0;
+  if (earlier_run_queue_us > 0) {
+    longest_run_queue_us = current_time_us - earlier_run_queue_us;
+  }
   if (longest_run_queue_us < 0) longest_run_queue_us = 0;
 
   l10n_setlocale(phr->locale_id);
