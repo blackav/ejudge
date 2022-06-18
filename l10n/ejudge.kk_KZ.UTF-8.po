@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-02-12 21:34+0300\n"
+"POT-Creation-Date: 2022-06-19 01:04+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Kazakh <uk@li.org>\n"
@@ -1293,9 +1293,6 @@ msgstr ""
 msgid "End time"
 msgstr ""
 
-msgid "Enqueue Time"
-msgstr ""
-
 msgid "Error"
 msgstr ""
 
@@ -2013,6 +2010,9 @@ msgid "Jan"
 msgstr ""
 
 msgid "Judge"
+msgstr ""
+
+msgid "Judge Request Time"
 msgstr ""
 
 msgid "Judge scores are opened"

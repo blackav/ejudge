@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-02-12 21:34+0300\n"
+"POT-Creation-Date: 2022-06-19 01:04+0300\n"
 "PO-Revision-Date: 2022-01-12 13:17+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -1348,9 +1348,6 @@ msgstr "Разрешить виртуальный старт"
 msgid "End time"
 msgstr "Время окончания"
 
-msgid "Enqueue Time"
-msgstr "Время постановки"
-
 msgid "Error"
 msgstr "Ошибка"
 
@@ -2143,6 +2140,9 @@ msgstr "Янв"
 
 msgid "Judge"
 msgstr "Судья"
+
+msgid "Judge Request Time"
+msgstr "Время запроса на проверку"
 
 msgid "Judge scores are opened"
 msgstr "Финальные баллы открыты"
