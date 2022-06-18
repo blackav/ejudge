@@ -74,6 +74,11 @@
 </tr></table>
 
 <%
+  if (vec.u > 0) {
+%>
+<p><big>Queue length: <s:v value="vec.u" /></big></p>
+<%
+  }
   if (longest_judge_request_us > 0) {
     snprintf(durbuf, sizeof(durbuf), "%lld.%06lld",
              longest_judge_request_us / 1000000,
@@ -209,8 +214,10 @@
         <th class="b1">Problem</th>
         <th class="b1">Language</th>
         <th class="b1">Test</th>
-        <th class="b1">Enqueue Time</th>
+        <th class="b1">Judge Request Time</th>
+        <th class="b1">Judging Dur</th>
         <th class="b1">Testing Start<br/>Time</th>
+        <th class="b1">Testing Dur</th>
         <th class="b1">Ops</th>
     </tr>
 <%
@@ -277,10 +284,18 @@
     if (srs->status == SRS_TESTING) {
       time_t run_queue_time = srs->queue_ts / 1000;
       time_t testing_start_time = srs->testing_start_ts / 1000;
-      int wait_time = -1;
-      if (run_queue_time > 0 && testing_start_time > 0) {
-          wait_time = testing_start_time - run_queue_time;
+      long long judging_dur = 0;
+      long long testing_dur = 0;
+      if (srs->queue_ts > 0) {
+        judging_dur = current_time_ms - srs->queue_ts;
       }
+      if (judging_dur < 0) judging_dur = 0;
+      judging_dur /= 1000;
+      if (srs->testing_start_ts > 0) {
+        testing_dur = current_time_ms - srs->testing_start_ts;
+      }
+      if (testing_dur < 0) testing_dur = 0;
+      testing_dur /= 1000;
 %>
         <td class="b1"><s:v value="srs->contest_id" /></td>
         <td class="b1"><s:v value="srs->run_id" /></td>
@@ -289,11 +304,13 @@
         <td class="b1"><s:v value="lang_short_name" /></td>
         <td class="b1"><s:v value="srs->test_num" /></td>
         <td class="b1"><% if (run_queue_time <= 0) { %>&nbsp;<% } else { %><s:v value="run_queue_time" /><% } %></td>
-        <td class="b1"><% if (testing_start_time <= 0) { %>&nbsp;<% } else { %><s:v value="testing_start_time" /><% } %><% if (wait_time >= 0) { %> (<s:v value="wait_time" /> s)<% } %></td>
+        <td class="b1"><% if (judging_dur <= 0) { %>&nbsp;<% } else { %><s:v value="judging_dur" /><% } %></td>
+        <td class="b1"><% if (testing_start_time <= 0) { %>&nbsp;<% } else { %><s:v value="testing_start_time" /><% } %></td>
+        <td class="b1"><% if (testing_dur <= 0) { %>&nbsp;<% } else { %><s:v value="testing_dur" /><% } %></td>
 <%
     } else {
 %>
-        <td class="b1" colspan="8">&nbsp;</td>
+        <td class="b1" colspan="10">&nbsp;</td>
 <%
     }
 %><%
