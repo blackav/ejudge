@@ -1376,7 +1376,11 @@ do_loop(void)
     snprintf(status_dir, sizeof(status_dir),
              "%s/%06d/status", global->compile_dir, rpl.contest_id);
     if (req->use_uuid > 0) {
-      snprintf(run_name, sizeof(run_name), "%s", ej_uuid_unparse(&req->uuid, NULL));
+      if (ej_uuid_is_nonempty(req->judge_uuid)) {
+        snprintf(run_name, sizeof(run_name), "%s", ej_uuid_unparse(&req->judge_uuid, NULL));
+      } else {
+        snprintf(run_name, sizeof(run_name), "%s", ej_uuid_unparse(&req->uuid, NULL));
+      }
     } else {
       snprintf(run_name, sizeof(run_name), "%06d", rpl.run_id);
     }

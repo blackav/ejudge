@@ -2106,7 +2106,9 @@ serve_run_request(
   if (exe_sfx) {
     srgp->exe_sfx = xstrdup(exe_sfx);
   }
-  if (srgp->run_uuid) {
+  if (srgp->judge_uuid && srgp->judge_uuid[0]) {
+    srgp->reply_packet_name = xstrdup(srgp->judge_uuid);
+  } else if (srgp->run_uuid) {
     srgp->reply_packet_name = xstrdup(srgp->run_uuid);
   } else {
     snprintf(buf, sizeof(buf), "%06d", run_id);
