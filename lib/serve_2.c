@@ -2975,10 +2975,21 @@ serve_read_compile_packet(
       goto non_fatal_error;
     }
   }
-  if (comp_pkt->judge_id != re.j.judge_id) {
-    err("read_compile_packet: judge_id mismatch: %d, %d", comp_pkt->judge_id,
-        re.j.judge_id);
-    goto non_fatal_error;
+  if (re.judge_uuid_flag) {
+    if (memcmp(&comp_pkt->judge_uuid, &re.j.judge_uuid, sizeof(re.j.judge_uuid)) != 0) {
+      unsigned char b1[64];
+      unsigned char b2[64];
+      err("read_compile_packet: judge_uuid mismatch: %s, %s",
+          ej_uuid_unparse_r(b1, sizeof(b1), &comp_pkt->judge_uuid, NULL),
+          ej_uuid_unparse_r(b2, sizeof(b2), &re.j.judge_uuid, NULL));
+      goto non_fatal_error;
+    }
+  } else {
+    if (comp_pkt->judge_id != re.j.judge_id) {
+      err("read_compile_packet: judge_id mismatch: %d, %d", comp_pkt->judge_id,
+          re.j.judge_id);
+      goto non_fatal_error;
+    }
   }
   if (re.status != RUN_COMPILING) {
     err("read_compile_packet: run %d is not compiling", comp_pkt->run_id);
@@ -3608,10 +3619,21 @@ serve_read_run_packet(
     err("read_run_packet: run %d status is not RUNNING", reply_pkt->run_id);
     goto failed;
   }
-  if (re.j.judge_id != reply_pkt->judge_id) {
-    err("read_run_packet: judge_id mismatch: packet: %d, db: %d",
-        reply_pkt->judge_id, re.j.judge_id);
-    goto failed;
+  if (re.judge_uuid_flag) {
+    if (memcmp(&reply_pkt->judge_uuid, &re.j.judge_uuid, sizeof(re.j.judge_uuid)) != 0) {
+      unsigned char b1[64];
+      unsigned char b2[64];
+      err("read_run_packet: judge_uuid mismatch: %s, %s",
+          ej_uuid_unparse_r(b1, sizeof(b1), &reply_pkt->judge_uuid, NULL),
+          ej_uuid_unparse_r(b2, sizeof(b2), &re.j.judge_uuid, NULL));
+      goto failed;
+    }
+  } else {
+    if (re.j.judge_id != reply_pkt->judge_id) {
+      err("read_run_packet: judge_id mismatch: packet: %d, db: %d",
+          reply_pkt->judge_id, re.j.judge_id);
+      goto failed;
+    }
   }
 
   if (!serve_is_valid_status(state, reply_pkt->status, 2))
@@ -5916,9 +5938,20 @@ serve_testing_queue_delete(
   unlink(exe_path);
 
   if (run_get_entry(state->runlog_state, srp->global->run_id, &re) >= 0
-      && re.status == RUN_RUNNING
-      && re.j.judge_id == srp->global->judge_id) {
-    run_change_status_4(state->runlog_state, srp->global->run_id, RUN_PENDING);
+      && re.status == RUN_RUNNING) {
+    if (re.judge_uuid_flag) {
+      ej_uuid_t judge_uuid = {};
+      if (srp->global->judge_uuid
+          && srp->global->judge_uuid[0]
+          && ej_uuid_parse(srp->global->judge_uuid, &judge_uuid) >= 0
+          && !memcmp(&re.j.judge_uuid, &judge_uuid, sizeof(re.j.judge_uuid))) {
+        run_change_status_4(state->runlog_state, srp->global->run_id, RUN_PENDING);
+      }
+    } else {
+      if (re.j.judge_id == srp->global->judge_id) {
+        run_change_status_4(state->runlog_state, srp->global->run_id, RUN_PENDING);
+      }
+    }
   }
 
   srp = super_run_in_packet_free(srp);
