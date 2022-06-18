@@ -1995,11 +1995,14 @@ serve_run_request(
   snprintf(exe_out_name, sizeof(exe_out_name), "%s%s", pkt_base, exe_sfx);
 
   if (!run_text) {
-    if (comp_pkt && comp_pkt->use_uuid > 0
-        && comp_pkt->uuid.v[0] && comp_pkt->uuid.v[1]
-        && comp_pkt->uuid.v[2] && comp_pkt->uuid.v[3]) {
-      snprintf(exe_in_name, sizeof(exe_in_name), "%s%s",
-               ej_uuid_unparse(&comp_pkt->uuid, NULL), exe_sfx);
+    if (comp_pkt && comp_pkt->use_uuid > 0) {
+      if (ej_uuid_is_nonempty(comp_pkt->judge_uuid)) {
+        snprintf(exe_in_name, sizeof(exe_in_name), "%s%s",
+                 ej_uuid_unparse(&comp_pkt->judge_uuid, NULL), exe_sfx);
+      } else {
+        snprintf(exe_in_name, sizeof(exe_in_name), "%s%s",
+                 ej_uuid_unparse(&comp_pkt->uuid, NULL), exe_sfx);
+      }
     } else {
       snprintf(exe_in_name, sizeof(exe_in_name), "%06d%s", run_id, exe_sfx);
     }
