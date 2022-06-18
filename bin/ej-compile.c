@@ -1088,7 +1088,11 @@ new_loop(int parallel_mode)
 
     unsigned char run_name[PATH_MAX];
     if (req->use_uuid > 0) {
-      snprintf(run_name, sizeof(run_name), "%s", ej_uuid_unparse(&req->uuid, NULL));
+      if (ej_uuid_is_nonempty(req->judge_uuid)) {
+        snprintf(run_name, sizeof(run_name), "%s", ej_uuid_unparse(&req->judge_uuid, NULL));
+      } else {
+        snprintf(run_name, sizeof(run_name), "%s", ej_uuid_unparse(&req->uuid, NULL));
+      }
     } else {
       snprintf(run_name, sizeof(run_name), "%06d", rpl.run_id);
     }
