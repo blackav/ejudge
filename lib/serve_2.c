@@ -1991,7 +1991,7 @@ serve_run_request(
   }
 
   /* generate a packet name */
-  serve_packet_name(contest_id, run_id, prio, &comp_pkt->judge_uuid, pkt_base, sizeof(pkt_base));
+  serve_packet_name(contest_id, run_id, prio, judge_uuid, pkt_base, sizeof(pkt_base));
   snprintf(exe_out_name, sizeof(exe_out_name), "%s%s", pkt_base, exe_sfx);
 
   if (!run_text) {
