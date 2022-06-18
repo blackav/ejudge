@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2012-2021 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -216,7 +216,12 @@ generate_xml_report(
   unsigned char *msg = 0;
   const struct super_run_in_global_packet *srgp = srp->global;
 
-  testing_report_xml_t tr = testing_report_alloc(srgp->contest_id, srgp->run_id, srgp->judge_id);
+  ej_uuid_t judge_uuid = {};
+  if (srgp->judge_uuid && srgp->judge_uuid[0]) {
+    ej_uuid_parse(srgp->judge_uuid, &judge_uuid);
+  }
+
+  testing_report_xml_t tr = testing_report_alloc(srgp->contest_id, srgp->run_id, srgp->judge_id, &judge_uuid);
   tr->status = reply_pkt->status;
   tr->scoring_system = srgp->scoring_system_val;
   tr->archive_available = (srgp->enable_full_archive > 0);

@@ -2,7 +2,7 @@
 #ifndef __TESTING_REPORT_XML_H__
 #define __TESTING_REPORT_XML_H__
 
-/* Copyright (C) 2005-2019 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -157,6 +157,7 @@ typedef struct testing_report_xml
   unsigned char *compiler_output;
 
   ej_uuid_t uuid;
+  ej_uuid_t judge_uuid;
 
   struct testing_report_test **tests;
 
@@ -169,7 +170,7 @@ typedef struct testing_report_xml
 struct testing_report_test *
 testing_report_test_alloc(int num, int status);
 
-testing_report_xml_t testing_report_alloc(int contest_id, int run_id, int judge_id);
+testing_report_xml_t testing_report_alloc(int contest_id, int run_id, int judge_id, const ej_uuid_t *judge_uuid);
 testing_report_xml_t testing_report_parse_xml(const unsigned char *path);
 struct testing_report_test *testing_report_test_free(struct testing_report_test *p);
 testing_report_xml_t testing_report_free(testing_report_xml_t r);

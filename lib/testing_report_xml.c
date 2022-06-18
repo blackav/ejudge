@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2005-2019 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -35,7 +35,7 @@
 #endif /* EJUDGE_CHARSET */
 
 /*
-<testing-report run-id="N" judge-id="N" status="O" scoring="R" archive-available="B" [correct-available="B"] [info-available="B"] run-tests="N" [variant="N"] [accepting-mode="B"] [failed-test="N"] [tests-passed="N"] [score="N"] [time_limit_ms="T" real_time_limit_ms="T" [real-time-available="B"] [max-memory-used-available="T"] [marked-flag="B"] [tests-mode="B"] [tt-row-count="N"] [tt-column-count="N"] [user-status="O"] [user-tests-passed="N"] [user-score="N"] [user-max-score="N"] [user-run-tests="N"] >
+<testing-report run-id="N" judge-id="N" judge-uuid="U" status="O" scoring="R" archive-available="B" [correct-available="B"] [info-available="B"] run-tests="N" [variant="N"] [accepting-mode="B"] [failed-test="N"] [tests-passed="N"] [score="N"] [time_limit_ms="T" real_time_limit_ms="T" [real-time-available="B"] [max-memory-used-available="T"] [marked-flag="B"] [tests-mode="B"] [tt-row-count="N"] [tt-column-count="N"] [user-status="O"] [user-tests-passed="N"] [user-score="N"] [user-max-score="N"] [user-run-tests="N"] >
   <comment>T</comment>
   <valuer_comment>T</valuer_comment>
   <valuer_judge_comment>T</valuer_judge_comment>
@@ -157,6 +157,7 @@ enum
   TR_A_HAS_USER,
   TR_A_USER_NOMINAL_SCORE,
   TR_A_CHECKER_TOKEN,
+  TR_A_JUDGE_UUID,
 
   TR_A_LAST_ATTR,
 };
@@ -253,6 +254,7 @@ static const char * const attr_map[] =
   [TR_A_HAS_USER] = "has-user",
   [TR_A_USER_NOMINAL_SCORE] = "user-nominal-score",
   [TR_A_CHECKER_TOKEN] = "checker-token",
+  [TR_A_JUDGE_UUID] = "judge-uuid",
 
   [TR_A_LAST_ATTR] = 0,
 };
@@ -1077,6 +1079,15 @@ parse_testing_report(struct xml_tree *t, testing_report_xml_t r)
       r->tt_column_count = x;
       break;
 
+    case TR_A_JUDGE_UUID:
+      if (a->text && a->text[0]) {
+        if (ej_uuid_parse(a->text, &r->judge_uuid) < 0) {
+          xml_err_attr_invalid(a);
+          return -1;
+        }
+      }
+      break;
+
     default:
       xml_err_attr_not_allowed(t, a);
       return -1;
@@ -1401,7 +1412,7 @@ testing_report_test_alloc(int num, int status)
 }
 
 testing_report_xml_t
-testing_report_alloc(int contest_id, int run_id, int judge_id)
+testing_report_alloc(int contest_id, int run_id, int judge_id, const ej_uuid_t *judge_uuid)
 {
   testing_report_xml_t r = 0;
   XCALLOC(r, 1);
@@ -1416,6 +1427,9 @@ testing_report_alloc(int contest_id, int run_id, int judge_id)
   r->user_score = -1;
   r->user_max_score = -1;
   r->user_run_tests = -1;
+  if (judge_uuid) {
+    r->judge_uuid = *judge_uuid;
+  }
   return r;
 }
 
@@ -1539,6 +1553,11 @@ testing_report_unparse_xml(
           attr_map[TR_A_STATUS], buf1,
           attr_map[TR_A_SCORING], scoring,
           attr_map[TR_A_RUN_TESTS], r->run_tests);
+
+  if (ej_uuid_is_nonempty(r->judge_uuid)) {
+    fprintf(out, " %s=\"%s\"", attr_map[TR_A_JUDGE_UUID],
+            ej_uuid_unparse(&r->judge_uuid, NULL));
+  }
 
   if (r->contest_id > 0) {
     fprintf(out, " %s=\"%d\"", attr_map[TR_A_CONTEST_ID], r->contest_id);

@@ -3003,7 +3003,11 @@ serve_read_compile_packet(
       snprintf(errmsg, sizeof(errmsg), "generic_read_file: %s/%s.txt failed\n", compile_report_dir, pname);
       goto report_check_failed;
     }
-    testing_report = testing_report_alloc(comp_pkt->contest_id, comp_pkt->run_id, re.j.judge_id);
+    if (re.judge_uuid_flag) {
+      testing_report = testing_report_alloc(comp_pkt->contest_id, comp_pkt->run_id, 0, &re.j.judge_uuid);
+    } else {
+      testing_report = testing_report_alloc(comp_pkt->contest_id, comp_pkt->run_id, re.j.judge_id, NULL);
+    }
     testing_report->status = comp_pkt->status;
     testing_report->compiler_output = xstrdup(txt_text);
     utf8_fix_string(testing_report->compiler_output, NULL);
@@ -3091,7 +3095,11 @@ serve_read_compile_packet(
     snprintf(txt_packet_path, sizeof(txt_packet_path), "%s/%s.txt", compile_report_dir, pname);
     generic_read_file(&txt_text, 0, &txt_size, REMOVE, NULL, txt_packet_path, NULL);
 
-    testing_report = testing_report_alloc(comp_pkt->contest_id, comp_pkt->run_id, re.j.judge_id);
+    if (re.judge_uuid_flag) {
+      testing_report = testing_report_alloc(comp_pkt->contest_id, comp_pkt->run_id, 0, &re.j.judge_uuid);
+    } else {
+      testing_report = testing_report_alloc(comp_pkt->contest_id, comp_pkt->run_id, re.j.judge_id, NULL);
+    }
     testing_report->status = RUN_RUNNING;
     if (txt_text) {
       testing_report->compiler_output = xstrdup(txt_text);
@@ -3349,7 +3357,11 @@ prepare_run_request:
   report_size = strlen(errmsg);
 
   if (re.store_flags == STORE_FLAGS_UUID_BSON) {
-    testing_report = testing_report_alloc(comp_pkt->contest_id, comp_pkt->run_id, re.j.judge_id);
+    if (re.judge_uuid_flag) {
+      testing_report = testing_report_alloc(comp_pkt->contest_id, comp_pkt->run_id, 0, &re.j.judge_uuid);
+    } else {
+      testing_report = testing_report_alloc(comp_pkt->contest_id, comp_pkt->run_id, re.j.judge_id, NULL);
+    }
     testing_report->status = RUN_CHECK_FAILED;
     if (txt_text) {
       testing_report->compiler_output = xstrdup(errmsg);
@@ -4095,7 +4107,7 @@ serve_report_check_failed(
         const unsigned char *error_text)
 {
   const struct section_global_data *global = state->global;
-  testing_report_xml_t tr = testing_report_alloc(cnts->id, run_id, 0);
+  testing_report_xml_t tr = testing_report_alloc(cnts->id, run_id, 0, NULL);
   size_t tr_z = 0;
   char *tr_t = NULL;
   unsigned char tr_p[PATH_MAX];
