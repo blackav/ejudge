@@ -16,6 +16,11 @@
   int enable_main_menu = 0;
   struct timeval td;
   long long current_time_ms;
+  long long current_time_us;
+  char durbuf[64];
+  time_t judge_request_time;
+  long long tv2;
+  long long tv1;
 
   memset(&vec, 0, sizeof(vec));
   memset(&srsv, 0, sizeof(srsv));
@@ -24,9 +29,32 @@
 
   gettimeofday(&td, NULL);
   current_time_ms = ((long long) td.tv_sec) * 1000 + td.tv_usec / 1000;
+  current_time_us = td.tv_sec * 1000000LL + td.tv_usec;
 
   ns_scan_run_queue(cs, &vec);
   ns_scan_heartbeat_dirs(cs, &srsv);
+
+  long long earlier_judge_request_us = 0;
+  long long earlier_run_queue_us = 0;
+  for (i = 0; i < vec.u; ++i) {
+    const struct super_run_in_global_packet *srgp = vec.v[i].packet->global;
+    if (srgp->ts1 > 0) {
+      long long us = srgp->ts1 * 1000000LL + srgp->ts1_us;
+      if (earlier_judge_request_us <= 0 || us < earlier_judge_request_us) {
+        earlier_judge_request_us = us;
+      }
+    }
+    if (srgp->ts4 > 0) {
+      long long us = srgp->ts4 * 1000000LL + srgp->ts4_us;
+      if (earlier_run_queue_us <= 0 || us < earlier_run_queue_us) {
+        earlier_run_queue_us = us;
+      }
+    }
+  }
+  long long longest_judge_request_us = current_time_us - earlier_run_queue_us;
+  if (longest_judge_request_us < 0) longest_judge_request_us = 0;
+  long long longest_run_queue_us = current_time_us - earlier_run_queue_us;
+  if (longest_run_queue_us < 0) longest_run_queue_us = 0;
 
   l10n_setlocale(phr->locale_id);
   title = _("Testing queue");
@@ -38,6 +66,25 @@
 <td class="b0"><s:a ac="main-page"><s:_>Main page</s:_></s:a></td>
 <td class="b0"><s:a ac="view-testing-queue"><s:_>Refresh</s:_></s:a></td>
 </tr></table>
+
+<%
+  if (longest_judge_request_us > 0) {
+    snprintf(durbuf, sizeof(durbuf), "%lld.%06lld",
+             longest_judge_request_us / 1000000,
+             longest_judge_request_us % 1000000);
+%>
+<p><big>Longest judge request in queue: <s:v value="durbuf" /></big></p>
+<%
+  }
+  if (longest_run_queue_us > 0) {
+    snprintf(durbuf, sizeof(durbuf), "%lld.%06lld",
+             longest_run_queue_us / 1000000,
+             longest_run_queue_us % 1000000);
+%>
+<p><big>Longest run request in queue: <s:v value="durbuf" /></big></p>
+<%
+  }
+%>
 
 <s:form>
 <table class="b1">
@@ -51,8 +98,9 @@
         <th class="b1"><s:_>User</s:_></th>
         <th class="b1"><s:_>Problem</s:_></th>
         <th class="b1"><s:_>Language</s:_></th>
-        <th class="b1">JudgeId</th>
-        <th class="b1"><s:_>Enqueue Time</s:_></th>
+        <th class="b1"><s:_>Judge Request Time</s:_></th>
+        <th class="b1">Compile Dur</th>
+        <th class="b1">Full Compile Dur</th>
         <th class="b1"><s:_>Actions</s:_></th>
     </tr>
 <%  for (i = 0; i < vec.u; ++i) {
@@ -61,6 +109,7 @@
 
     lang_short_name = srgp->lang_short_name;
     if (!lang_short_name) lang_short_name = "";
+    judge_request_time = srgp->ts1;
 %>
     <tr>
         <td class="b1"><s:v value="i + 1" /></td>
@@ -99,8 +148,25 @@
 %></td>
 <%    } %>
         <td class="b1"><s:v value="lang_short_name" /></td>
-        <td class="b1"><s:v value="srgp->judge_id" /></td>
-        <td class="b1"><s:v value="vec.v[i].mtime" /></td>
+        <td class="b1"><s:v value="judge_request_time" /></td>
+<%
+      tv1 = srgp->ts2 * 1000000LL + srgp->ts2_us;
+      tv2 = srgp->ts3 * 1000000LL + srgp->ts3_us;
+      tv2 -= tv1;
+      if (tv2 < 0) tv2 = 0;
+      snprintf(durbuf, sizeof(durbuf), "%lld.%06lld",
+               tv2 / 1000000, tv2 % 1000000);
+%>
+        <td class="b1"><s:v value="durbuf" /></td>
+<%
+      tv1 = srgp->ts1 * 1000000LL + srgp->ts1_us;
+      tv2 = srgp->ts4 * 1000000LL + srgp->ts4_us;
+      tv2 -= tv1;
+      if (tv2 < 0) tv2 = 0;
+      snprintf(durbuf, sizeof(durbuf), "%lld.%06lld",
+               tv2 / 1000000, tv2 % 1000000);
+%>
+        <td class="b1"><s:v value="durbuf" /></td>
         <td class="b1"><%
 %><s:url name="DeleteUrl" ac="testing-delete"><s:param name="queue" value="vec.v[i].queue_id" /><s:param name="packet" value="vec.v[i].entry_name" /></s:url><%
 %><s:url name="UpUrl" ac="testing-up"><s:param name="queue" value="vec.v[i].queue_id" /><s:param name="packet" value="vec.v[i].entry_name" /></s:url><%
