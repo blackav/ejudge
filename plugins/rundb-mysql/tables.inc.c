@@ -152,7 +152,7 @@ static const struct common_mysql_parse_spec runs_spec[RUNS_ROW_WIDTH] =
   { 0, 'd', "token_count", RUNS_OFFSET(token_count), 0 },
   { 1, 's', "prob_uuid", RUNS_OFFSET(prob_uuid), 0 },
   { 0, 'b', "is_checked", RUNS_OFFSET(is_checked), 0 },
-  { 1, 's', "prob_uuid", RUNS_OFFSET(judge_uuid), 0 },
+  { 1, 's', "judge_uuid", RUNS_OFFSET(judge_uuid), 0 },
 };
 
 enum
