@@ -384,8 +384,9 @@ run_add_record(
   re.is_hidden = is_hidden;
   re.mime_type = mime_type;
   re.store_flags = store_flags;
-  if (prob_uuid) {
+  if (prob_uuid && prob_uuid[0]) {
     flags |= RE_PROB_UUID;
+    ej_uuid_parse(prob_uuid, &re.prob_uuid);
   }
   if (sha1) {
     memcpy(re.h.sha1, sha1, sizeof(state->runs[i].h.sha1));
@@ -395,7 +396,7 @@ run_add_record(
 
   int64_t serial_id = 0;
   if (state->iface->append_run) {
-    i = state->iface->append_run(state->cnts, &re, flags, prob_uuid, p_tv, &serial_id, puuid);
+    i = state->iface->append_run(state->cnts, &re, flags, p_tv, &serial_id, puuid);
     if (i < 0) {
       return -1;
     }

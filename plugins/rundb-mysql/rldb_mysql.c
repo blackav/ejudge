@@ -2343,7 +2343,6 @@ append_run_func(
         struct rldb_plugin_cnts *cdata,
         const struct run_entry *in_re,
         uint64_t mask,
-        const unsigned char *prob_uuid,
         struct timeval *p_tv,
         int64_t *p_serial_id,
         ej_uuid_t *p_uuid)
@@ -2567,7 +2566,7 @@ append_run_func(
   }
   if ((mask & RE_RUN_UUID)) {
     fprintf(cmd_f, ",'%s'",
-          ej_uuid_unparse_r(uuid_buf, sizeof(uuid_buf), &in_re->run_uuid, ""));
+            ej_uuid_unparse_r(uuid_buf, sizeof(uuid_buf), &in_re->run_uuid, ""));
   }
   if ((mask & RE_PASSED_MODE)) {
     fprintf(cmd_f, ",%d", in_re->passed_mode);
@@ -2579,9 +2578,8 @@ append_run_func(
     fprintf(cmd_f, ",%d", in_re->store_flags);
   }
   if ((mask & RE_PROB_UUID)) {
-    fputs(",'", cmd_f);
-    mi->write_escaped_string(md, cmd_f, NULL, prob_uuid);
-    fputs("'", cmd_f);
+    fprintf(cmd_f, ",'%s'",
+            ej_uuid_unparse_r(uuid_buf, sizeof(uuid_buf), &in_re->prob_uuid, ""));
   }
   if ((mask & RE_IS_CHECKED)) {
     fprintf(cmd_f, ",%d", !!in_re->is_checked);
