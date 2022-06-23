@@ -113,7 +113,7 @@ struct rldb_plugin_iface plugin_rldb_mysql =
   change_status_3_func,
   change_status_4_func,
   NULL,
-  add_entry_2_func,
+  NULL, // add_entry_2_func - deprecated
   user_run_header_set_start_time_func,
   user_run_header_set_stop_time_func,
   user_run_header_set_duration_func,
@@ -2085,28 +2085,6 @@ change_status_4_func(
                          RE_STATUS /* | RE_TEST */ | RE_SCORE | RE_JUDGE_ID
                          | RE_IS_MARKED | RE_IS_SAVED | RE_SAVED_STATUS
                          /* | RE_SAVED_TEST */ | RE_SAVED_SCORE | RE_PASSED_MODE);
-}
-
-static int
-add_entry_2_func(
-        struct rldb_plugin_cnts *cdata,
-        int run_id,
-        const struct run_entry *re,
-        uint64_t mask)
-{
-  struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts *) cdata;
-  struct runlog_state *rls = cs->rl_state;
-  struct run_entry *de;
-
-  ASSERT(run_id >= rls->run_f && run_id < rls->run_u);
-  de = &rls->runs[run_id - rls->run_f];
-
-  ASSERT(de->run_id == run_id);
-  ASSERT(de->status == RUN_EMPTY);
-  ASSERT(de->time > 0);
-  (void) de;
-
-  return do_update_entry(cs, run_id, re, mask);
 }
 
 static int

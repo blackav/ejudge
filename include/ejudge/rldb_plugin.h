@@ -175,7 +175,7 @@ struct rldb_plugin_iface
         struct run_entry **p_entries);
 
   // write a new run to the database, including problem UUID
-  int (*add_entry_2)(
+  __attribute__((deprecated)) int (*deprecated_add_entry_2)(
         struct rldb_plugin_cnts *,
         int i,
         const struct run_entry *,
