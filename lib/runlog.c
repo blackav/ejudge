@@ -312,7 +312,7 @@ run_add_record(
 {
   int i;
   struct run_entry re;
-  int flags = 0;
+  uint64_t flags = 0;
 
   state->uuid_hash_last_added_index = -1;
   state->uuid_hash_last_added_run_id = -1;
@@ -392,7 +392,7 @@ run_add_record(
     memcpy(re.h.sha1, sha1, sizeof(state->runs[i].h.sha1));
     flags |= RE_SHA1;
   }
-  flags = RE_SIZE | RE_LOCALE_ID | RE_USER_ID | RE_LANG_ID | RE_PROB_ID | RE_STATUS | RE_TEST | RE_SCORE | RE_IP | RE_SSL_FLAG | RE_VARIANT | RE_IS_HIDDEN | RE_MIME_TYPE | RE_EOLN_TYPE | RE_STORE_FLAGS;
+  flags |= RE_SIZE | RE_LOCALE_ID | RE_USER_ID | RE_LANG_ID | RE_PROB_ID | RE_STATUS | RE_TEST | RE_SCORE | RE_IP | RE_SSL_FLAG | RE_VARIANT | RE_IS_HIDDEN | RE_MIME_TYPE | RE_EOLN_TYPE | RE_STORE_FLAGS;
 
   int64_t serial_id = 0;
   if (state->iface->append_run) {
