@@ -179,8 +179,7 @@ struct rldb_plugin_iface
         struct rldb_plugin_cnts *,
         int i,
         const struct run_entry *,
-        uint64_t mask,
-        const unsigned char *prob_uuid);
+        uint64_t mask);
 
   // set virtual start time
   int (*user_run_header_set_start_time)(

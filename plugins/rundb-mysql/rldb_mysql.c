@@ -1222,8 +1222,7 @@ generate_update_entry_clause(
         struct rldb_mysql_state *state,
         FILE *f,
         const struct run_entry *re,
-        uint64_t mask,
-        const unsigned char *prob_uuid)
+        uint64_t mask)
 {
   struct timeval curtime;
   const unsigned char *sep = "";
@@ -1371,10 +1370,12 @@ generate_update_entry_clause(
     fprintf(f, "%stoken_count = %d", sep, re->token_count);
     sep = comma;
   }
-  if ((mask & RE_PROB_UUID) && prob_uuid) {
-    fprintf(f, "%sprob_uuid = ", sep);
-    state->mi->write_escaped_string(state->md, f, NULL, prob_uuid);
+  if ((mask & RE_PROB_UUID)) {
+    fprintf(f, "%prob_uuid = %s", sep,
+            to_uuid_str(uuid_buf, sizeof(uuid_buf), &re->prob_uuid));
     sep = comma;
+    /*
+     */
   }
   if ((mask & RE_IS_CHECKED)) {
     fprintf(f, "%sis_checked = %d", sep, re->is_checked);
@@ -1500,8 +1501,7 @@ do_update_entry(
         struct rldb_mysql_cnts *cs,
         int run_id,
         const struct run_entry *re,
-        uint64_t mask,
-        const unsigned char *prob_uuid)
+        uint64_t mask)
 {
   struct rldb_mysql_state *state = cs->plugin_state;
   struct runlog_state *rls = cs->rl_state;
@@ -1515,7 +1515,7 @@ do_update_entry(
 
   cmd_f = open_memstream(&cmd_t, &cmd_z);
   fprintf(cmd_f, "UPDATE %sruns SET ", state->md->table_prefix);
-  generate_update_entry_clause(state, cmd_f, re, mask, prob_uuid);
+  generate_update_entry_clause(state, cmd_f, re, mask);
   fprintf(cmd_f, " WHERE contest_id = %d AND run_id = %d ;",
           cs->contest_id, run_id);
   close_memstream(cmd_f); cmd_f = 0;
@@ -1549,7 +1549,7 @@ add_entry_func(
   ASSERT(de->time > 0);
   (void) de;
 
-  return do_update_entry(cs, run_id, re, mask, NULL);
+  return do_update_entry(cs, run_id, re, mask);
 }
 
 static int
@@ -1606,7 +1606,7 @@ change_status_func(
     mask |= RE_JUDGE_ID;
   }
 
-  return do_update_entry(cs, run_id, &te, mask, NULL);
+  return do_update_entry(cs, run_id, &te, mask);
 }
 
 static void
@@ -1817,7 +1817,7 @@ set_status_func(
   memset(&te, 0, sizeof(te));
   te.status = new_status;
 
-  return do_update_entry(cs, run_id, &te, RE_STATUS, NULL);
+  return do_update_entry(cs, run_id, &te, RE_STATUS);
 }
 
 static int
@@ -1857,7 +1857,7 @@ set_hidden_func(
   memset(&te, 0, sizeof(te));
   te.is_hidden = new_hidden;
 
-  return do_update_entry(cs, run_id, &te, RE_IS_HIDDEN, NULL);
+  return do_update_entry(cs, run_id, &te, RE_IS_HIDDEN);
 }
 
 static int
@@ -1872,7 +1872,7 @@ set_pages_func(
   memset(&te, 0, sizeof(te));
   te.pages = new_pages;
 
-  return do_update_entry(cs, run_id, &te, RE_PAGES, NULL);
+  return do_update_entry(cs, run_id, &te, RE_PAGES);
 }
 
 static int
@@ -1889,7 +1889,7 @@ set_entry_func(
   ASSERT(rls->runs[run_id - rls->run_f].status != RUN_EMPTY);
 
   (void) rls;
-  return do_update_entry(cs, run_id, in, mask, NULL);
+  return do_update_entry(cs, run_id, in, mask);
 }
 
 static int
@@ -2057,8 +2057,7 @@ change_status_3_func(
 
   return do_update_entry(cs, run_id, &te,
                          RE_STATUS | RE_TEST | RE_SCORE | RE_JUDGE_ID | RE_IS_MARKED
-                         | RE_IS_SAVED | RE_SAVED_STATUS | RE_SAVED_TEST | RE_SAVED_SCORE | RE_PASSED_MODE,
-                         NULL);
+                         | RE_IS_SAVED | RE_SAVED_STATUS | RE_SAVED_TEST | RE_SAVED_SCORE | RE_PASSED_MODE);
 }
 
 static int
@@ -2085,8 +2084,7 @@ change_status_4_func(
   return do_update_entry(cs, run_id, &te,
                          RE_STATUS /* | RE_TEST */ | RE_SCORE | RE_JUDGE_ID
                          | RE_IS_MARKED | RE_IS_SAVED | RE_SAVED_STATUS
-                         /* | RE_SAVED_TEST */ | RE_SAVED_SCORE | RE_PASSED_MODE,
-                         NULL);
+                         /* | RE_SAVED_TEST */ | RE_SAVED_SCORE | RE_PASSED_MODE);
 }
 
 static int
@@ -2094,10 +2092,8 @@ add_entry_2_func(
         struct rldb_plugin_cnts *cdata,
         int run_id,
         const struct run_entry *re,
-        uint64_t mask,
-        const unsigned char *prob_uuid)
+        uint64_t mask)
 {
-  // FIXME
   struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts *) cdata;
   struct runlog_state *rls = cs->rl_state;
   struct run_entry *de;
@@ -2110,7 +2106,7 @@ add_entry_2_func(
   ASSERT(de->time > 0);
   (void) de;
 
-  return do_update_entry(cs, run_id, re, mask, prob_uuid);
+  return do_update_entry(cs, run_id, re, mask);
 }
 
 static int
@@ -2752,5 +2748,5 @@ run_set_is_checked_func(
   memset(&te, 0, sizeof(te));
   te.is_checked = !!is_checked;
 
-  return do_update_entry(cs, run_id, &te, RE_IS_CHECKED, NULL);
+  return do_update_entry(cs, run_id, &te, RE_IS_CHECKED);
 }

@@ -445,7 +445,7 @@ run_add_record(
 
   if (!state->iface->append_run) {
     if (state->iface->add_entry_2 && (flags & RE_PROB_UUID)) {
-      if (state->iface->add_entry_2(state->cnts, i, &re, flags, prob_uuid) < 0) return -1;
+      if (state->iface->add_entry_2(state->cnts, i, &re, flags) < 0) return -1;
     } else {
       if (state->iface->add_entry(state->cnts, i, &re, flags) < 0) return -1;
     }
