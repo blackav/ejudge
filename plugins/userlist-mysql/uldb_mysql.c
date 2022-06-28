@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2021 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -672,9 +672,30 @@ check_func(void *data)
       return -1;
     version = 11;
   }
-  if (version != 11) {
-    err("cannot handle database version %d", version);
-    return -1;
+  while (version >= 0) {
+    switch (version) {
+    case 1 ... 10:
+      // see above
+      break;
+    case 11:
+      if (state->mi->simple_fquery(state->md,
+                                   "ALTER TABLE %slogins"
+                                   " MODIFY logintime DATETIME DEFAULT NULL,"
+                                   " MODIFY pwdtime DATETIME DEFAULT NULL,"
+                                   " MODIFY changetime DATETIME DEFAULT NULL;",
+                                   state->md->table_prefix) < 0)
+        return -1;
+      break;
+
+    default:
+      version = -1;
+      break;
+    }
+    if (version >= 0) {
+      ++version;
+      if (state->mi->simple_fquery(state->md, "UPDATE %sconfig SET config_val = '%d' WHERE config_key = 'version' ;", state->md->table_prefix, version) < 0)
+      return -1;
+    }
   }
 
   // the current version is OK, no upgrade necessary

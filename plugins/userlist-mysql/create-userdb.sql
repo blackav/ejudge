@@ -17,9 +17,9 @@ CREATE TABLE %slogins
        neverclean TINYINT NOT NULL DEFAULT 0,
        simplereg TINYINT NOT NULL DEFAULT 0,
        regtime TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-       logintime TIMESTAMP DEFAULT '0000-00-00 00:00:00',
-       pwdtime TIMESTAMP DEFAULT '0000-00-00 00:00:00',
-       changetime TIMESTAMP DEFAULT '0000-00-00 00:00:00'
+       logintime DATETIME DEFAULT NULL,
+       pwdtime DATETIME DEFAULT NULL,
+       changetime DATETIME DEFAULT NULL
        ) ENGINE=InnoDB;
 
 CREATE TABLE %scookies
@@ -194,4 +194,4 @@ ALTER TABLE %smembers  ADD INDEX members_user_id_idx (user_id),
 ALTER TABLE %sgroupmembers ADD INDEX groupmembers_group_id_idx (group_id),
                            ADD INDEX groupmembers_user_id_idx (user_id);
 
-INSERT INTO %sconfig VALUES ('version', '11');
+INSERT INTO %sconfig VALUES ('version', '12');

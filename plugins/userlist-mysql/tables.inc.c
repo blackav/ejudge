@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2008-2020 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -112,11 +112,11 @@ static struct common_mysql_parse_spec login_spec[LOGIN_WIDTH] =
   { 0, 'b', "simplereg", LOGIN_OFFSET(simple_registration) },
   //[12]   regtime TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   { 1, 't', "regtime", LOGIN_OFFSET(registration_time) },
-  //[13]   logintime TIMESTAMP DEFAULT NULL,
+  //[13]   logintime DATETIME DEFAULT NULL,
   { 1, 't', "logintime", LOGIN_OFFSET(last_login_time) },
-  //[14]   pwdtime TIMESTAMP DEFAULT NULL,
+  //[14]   pwdtime DATETIME DEFAULT NULL,
   { 1, 't', "pwdtime", LOGIN_OFFSET(last_pwdchange_time) },
-  //[15]   changetime TIMESTAMP DEFAULT NULL
+  //[15]   changetime DATETIME DEFAULT NULL
   { 1, 't', "changetime", LOGIN_OFFSET(last_change_time) },
 };
 
