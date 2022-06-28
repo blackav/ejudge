@@ -64,10 +64,10 @@ CREATE TABLE %susers
        username VARCHAR(512),
        pwdmethod TINYINT NOT NULL DEFAULT 0,
        password VARCHAR(128),
-       pwdtime TIMESTAMP NOT NULL DEFAULT '0000-00-00 00:00:00',
+       pwdtime DATETIME DEFAULT NULL,
        createtime TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-       changetime TIMESTAMP NOT NULL DEFAULT '0000-00-00 00:00:00',
-       logintime TIMESTAMP NOT NULL DEFAULT '0000-00-00 00:00:00',
+       changetime DATETIME DEFAULT NULL,
+       logintime DATETIME DEFAULT NULL,
        inst VARCHAR(512),
        inst_en VARCHAR (512),
        instshort VARCHAR (512),
@@ -194,4 +194,4 @@ ALTER TABLE %smembers  ADD INDEX members_user_id_idx (user_id),
 ALTER TABLE %sgroupmembers ADD INDEX groupmembers_group_id_idx (group_id),
                            ADD INDEX groupmembers_user_id_idx (user_id);
 
-INSERT INTO %sconfig VALUES ('version', '13');
+INSERT INTO %sconfig VALUES ('version', '14');
