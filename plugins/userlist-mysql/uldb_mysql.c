@@ -677,11 +677,20 @@ check_func(void *data)
     case 1 ... 10:
       // see above
       break;
+
     case 11:
       if (state->mi->simple_fquery(state->md,
                                    "ALTER TABLE %slogins"
                                    " MODIFY logintime DATETIME DEFAULT NULL,"
                                    " MODIFY pwdtime DATETIME DEFAULT NULL,"
+                                   " MODIFY changetime DATETIME DEFAULT NULL;",
+                                   state->md->table_prefix) < 0)
+        return -1;
+      break;
+
+    case 12:
+      if (state->mi->simple_fquery(state->md,
+                                   "ALTER TABLE %scntsregs"
                                    " MODIFY changetime DATETIME DEFAULT NULL;",
                                    state->md->table_prefix) < 0)
         return -1;

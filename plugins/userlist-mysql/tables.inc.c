@@ -77,7 +77,7 @@ static struct common_mysql_parse_spec cntsreg_spec[CNTSREG_WIDTH] =
   //[10]    createtime TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   { 0, 't', "createtime", CONTEST_OFFSET(create_time), 0 },
   //[11]    changetime TIMESTAMP DEFAULT 0,
-  { 0, 't', "changetime", CONTEST_OFFSET(last_change_time), 0 },
+  { 1, 't', "changetime", CONTEST_OFFSET(last_change_time), 0 },
 };
 
 // the number of columns in `logins' table

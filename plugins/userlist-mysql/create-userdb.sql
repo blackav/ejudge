@@ -51,7 +51,7 @@ CREATE TABLE %scntsregs
        privileged TINYINT NOT NULL DEFAULT 0,
        reg_readonly TINYINT NOT NULL DEFAULT 0,
        createtime TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-       changetime TIMESTAMP NOT NULL DEFAULT '0000-00-00 00:00:00',
+       changetime DATETIME DEFAULT NULL,
        PRIMARY KEY (user_id, contest_id),
        FOREIGN KEY (user_id) REFERENCES logins (user_id)
        ) ENGINE=InnoDB;
@@ -194,4 +194,4 @@ ALTER TABLE %smembers  ADD INDEX members_user_id_idx (user_id),
 ALTER TABLE %sgroupmembers ADD INDEX groupmembers_group_id_idx (group_id),
                            ADD INDEX groupmembers_user_id_idx (user_id);
 
-INSERT INTO %sconfig VALUES ('version', '12');
+INSERT INTO %sconfig VALUES ('version', '13');
