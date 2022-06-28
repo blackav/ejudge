@@ -116,7 +116,7 @@ CREATE TABLE %smembers
        contest_id INT UNSIGNED NOT NULL,
        role_id TINYINT NOT NULL,
        createtime TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-       changetime TIMESTAMP DEFAULT '0000-00-00 00:00:00',
+       changetime DATETIME DEFAULT NULL,
        firstname VARCHAR(512),
        firstname_en VARCHAR(512),
        middlename VARCHAR(512),
@@ -194,4 +194,4 @@ ALTER TABLE %smembers  ADD INDEX members_user_id_idx (user_id),
 ALTER TABLE %sgroupmembers ADD INDEX groupmembers_group_id_idx (group_id),
                            ADD INDEX groupmembers_user_id_idx (user_id);
 
-INSERT INTO %sconfig VALUES ('version', '14');
+INSERT INTO %sconfig VALUES ('version', '15');

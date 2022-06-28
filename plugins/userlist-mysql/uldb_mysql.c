@@ -706,6 +706,14 @@ check_func(void *data)
         return -1;
       break;
 
+    case 14:
+      if (state->mi->simple_fquery(state->md,
+                                   "ALTER TABLE %smembers"
+                                   " MODIFY changetime DATETIME DEFAULT NULL;",
+                                   state->md->table_prefix) < 0)
+        return -1;
+      break;
+
     default:
       version = -1;
       break;
