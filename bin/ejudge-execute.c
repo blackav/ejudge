@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2006-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -573,17 +573,34 @@ run_program(int argc, char *argv[], long *p_cpu_time, long *p_real_time)
   for (i = 0; i < tinfo.env_u; ++i) {
     task_PutEnv(tsk, tinfo.env_v[i]);
   }
-  if (time_limit_millis > 0)
-    if (task_SetMaxTimeMillis(tsk, time_limit_millis) < 0)
-      fatal("--time-limit-millis is not supported");
-  if (time_limit > 0) task_SetMaxTime(tsk, time_limit);
-  if (real_time_limit > 0) task_SetMaxRealTime(tsk, real_time_limit);
+  if (tinfo.time_limit_ms > 0) {
+    if (task_SetMaxTimeMillis(tsk, tinfo.time_limit_ms) < 0)
+      fatal("time limit in ms is not supported");
+  } else {
+    if (time_limit_millis > 0)
+      if (task_SetMaxTimeMillis(tsk, time_limit_millis) < 0)
+        fatal("--time-limit-millis is not supported");
+    if (time_limit > 0) task_SetMaxTime(tsk, time_limit);
+  }
+  if (tinfo.real_time_limit_ms > 0) {
+    task_SetMaxRealTimeMillis(tsk, tinfo.real_time_limit_ms);
+  } else {
+    if (real_time_limit > 0) task_SetMaxRealTime(tsk, real_time_limit);
+  }
   if (kill_signal)
     if (task_SetKillSignal(tsk, kill_signal) < 0)
       fatal("invalid value for --kill-signal option");
   if (no_core_dump) task_DisableCoreDump(tsk);
-  if (max_vm_size) task_SetVMSize(tsk, max_vm_size);
-  if (max_stack_size) task_SetStackSize(tsk, max_stack_size);
+  if (tinfo.max_vm_size > 0) {
+    task_SetVMSize(tsk, tinfo.max_vm_size);
+  } else if (max_vm_size) {
+    task_SetVMSize(tsk, max_vm_size);
+  }
+  if (tinfo.max_stack_size > 0) {
+    task_SetStackSize(tsk, tinfo.max_stack_size);
+  } else if (max_stack_size) {
+    task_SetStackSize(tsk, max_stack_size);
+  }
   if (max_data_size) task_SetDataSize(tsk, max_data_size);
   if (memory_limit)
     if (task_EnableMemoryLimitError(tsk) < 0)
