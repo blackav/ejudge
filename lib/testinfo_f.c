@@ -627,12 +627,15 @@ switch ((tag = match(name_buf))) {
     pt->max_process_count = x;
     break;
   case Tag_time_limit_ms:
+  {
+    int *pint = XPDEREF(int, pt, tag_offsets[tag]);
     if (cmd.u < 1) FAIL(TINF_E_EMPTY_VALUE);
     if (cmd.u > 1) FAIL(TINF_E_MULTIPLE_VALUE);
     if (sscanf(cmd.v[0], "%d%n", &x, &n) != 1 || cmd.v[0][n] || x <= 0)
       FAIL(TINF_E_INVALID_VALUE);
-    pt->time_limit_ms = x;
+    *pint = x;
     break;
+  }
   case Tag_real_time_limit_ms:
     if (cmd.u < 1) FAIL(TINF_E_EMPTY_VALUE);
     if (cmd.u > 1) FAIL(TINF_E_MULTIPLE_VALUE);
