@@ -661,6 +661,8 @@ switch ((tag = match(name_buf))) {
     if (parse_size(cmd.v[0], &pt->max_rss_size) < 0) FAIL(TINF_E_INVALID_VALUE);
     break;
   case Tag_check_stderr:
+  {
+    int *pint = XPDEREF(int, pt, tag_offsets[tag]);
     if (cmd.u < 1) {
       x = 1;
     } else {
@@ -669,8 +671,9 @@ switch ((tag = match(name_buf))) {
           || x < 0 || x > 1)
         FAIL(TINF_E_INVALID_VALUE);
     }
-    pt->check_stderr = x;
+    *pint = x;
     break;
+  }
   case Tag_disable_stderr:
     if (cmd.u < 1) {
       x = 1;
