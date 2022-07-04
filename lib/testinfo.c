@@ -729,6 +729,7 @@ testinfo_parse(const char *path, testinfo_t *pt, struct testinfo_subst_handler *
   pt->max_stack_size = -1LL;
   pt->max_file_size = -1LL;
   pt->max_rss_size = -1LL;
+  pt->ignore_exit_code = -1;
   if (!(fin = fopen(path, "r"))) {
     memset(pt, 0, sizeof(*pt));
     return -TINF_E_CANNOT_OPEN;

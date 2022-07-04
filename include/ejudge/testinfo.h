@@ -2,7 +2,7 @@
 #ifndef __TESTINFO_H__
 #define __TESTINFO_H__
 
-/* Copyright (C) 2003-2021 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -46,6 +46,7 @@ enum
 struct testinfo_struct
 {
   int exit_code;
+  int ignore_exit_code;
   int check_stderr;
   int disable_stderr;
   int enable_subst;
