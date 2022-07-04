@@ -87,9 +87,9 @@ enum
     Tag_data,
     Tag_bzip2
 };
-static const char * const tag_table[] =
+static __attribute__((unused)) const char * const tag_table[] =
 {
-    NULL,
+    0,
     "tests",
     "test",
     "args",
@@ -176,7 +176,7 @@ static const char * const tag_table[] =
     "data",
     "bzip2",
 };
-static int
+static __attribute__((unused)) int
 match(const char *s)
 {
     if (s[0] == 'a') {
