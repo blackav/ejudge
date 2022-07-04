@@ -279,9 +279,9 @@ invoke_style_checker(
     for (int i = 0; i < req->sc_env_num; i++)
       task_PutEnv(tsk, req->sc_env_vars[i]);
   }
-  if (tinf && tinf->style_checker_env_u > 0) {
-    for (int i = 0; i < tinf->style_checker_env_u; ++i)
-      task_PutEnv(tsk, tinf->style_checker_env_v[i]);
+  if (tinf && tinf->style_checker_env.u > 0) {
+    for (int i = 0; i < tinf->style_checker_env.u; ++i)
+      task_PutEnv(tsk, tinf->style_checker_env.v[i]);
   }
   if (lang && lang->compile_real_time_limit > 0) {
     task_SetMaxRealTime(tsk, lang->compile_real_time_limit);

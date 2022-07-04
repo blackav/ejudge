@@ -615,7 +615,7 @@ testinfo_unparse_compiler_env(const struct testinfo_struct *ti)
 unsigned char *
 testinfo_unparse_style_checker_env(const struct testinfo_struct *ti)
 {
-  return unparse_str_array(ti->style_checker_env_u, ti->style_checker_env_v);
+  return unparse_str_array(ti->style_checker_env.u, ti->style_checker_env.v);
 }
 
 unsigned char *
@@ -766,9 +766,9 @@ switch ((tag = match(name_buf))) {
     memset(&cmd, 0, sizeof(cmd));
     break;
   case Tag_style_checker_env:
-    if (pt->style_checker_env_u > 0) FAIL(TINF_E_VAR_REDEFINED);
-    pt->style_checker_env_u = cmd.u;
-    pt->style_checker_env_v = (char**) cmd.v;
+    if (pt->style_checker_env.u > 0) FAIL(TINF_E_VAR_REDEFINED);
+    pt->style_checker_env.u = cmd.u;
+    pt->style_checker_env.v = (char**) cmd.v;
     memset(&cmd, 0, sizeof(cmd));
     break;
   case Tag_ok_language:
@@ -959,11 +959,11 @@ testinfo_free(testinfo_t *pt)
     }
     free(pt->compiler_env.v);
   }
-  if (pt->style_checker_env_u > 0 && pt->style_checker_env_v) {
-    for (i = 0; i < pt->style_checker_env_u; ++i) {
-      if (pt->style_checker_env_v[i]) free(pt->style_checker_env_v[i]);
+  if (pt->style_checker_env.u > 0 && pt->style_checker_env.v) {
+    for (i = 0; i < pt->style_checker_env.u; ++i) {
+      if (pt->style_checker_env.v[i]) free(pt->style_checker_env.v[i]);
     }
-    free(pt->style_checker_env_v);
+    free(pt->style_checker_env.v);
   }
   if (pt->ok_language_u > 0 && pt->ok_language_v) {
     for (i = 0; i < pt->ok_language_u; ++i) {
