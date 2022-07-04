@@ -59,32 +59,26 @@ struct testinfo_struct
   struct testinfo_array compiler_env;
   struct testinfo_array style_checker_env;
   struct testinfo_array ok_language;
+  char *comment;
+  char *team_comment;
+  char *source_stub;
+  char *working_dir;
+  char *program_name;
+  long long max_vm_size;
+  long long max_stack_size;
+  long long max_file_size;
+  long long max_rss_size;
   int exit_code;
   int ignore_exit_code;
   int check_stderr;
   int disable_stderr;
   int enable_subst;
   int compiler_must_fail;
-  char *comment;
-  char *team_comment;
-  char *source_stub;
-
   int disable_valgrind;
   int max_open_file_count;
   int max_process_count;
-
-  long long max_vm_size;
-  long long max_stack_size;
-  long long max_file_size;
-  long long max_rss_size;
-
-  char *working_dir;
-
   int time_limit_ms;
   int real_time_limit_ms;
-
-  char *program_name;
-
   int allow_compile_error;
 };
 typedef struct testinfo_struct testinfo_t;
