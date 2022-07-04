@@ -1803,8 +1803,8 @@ invoke_init_cmd(
   char **env_v = NULL;
 
   if (ti) {
-    env_u = ti->init_env_u;
-    env_v = ti->init_env_v;
+    env_u = ti->init_env.u;
+    env_v = ti->init_env.v;
   }
 
   tsk = task_New();

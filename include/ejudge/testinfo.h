@@ -55,6 +55,7 @@ struct testinfo_struct
   struct testinfo_array env;
   struct testinfo_array checker_env;
   struct testinfo_array interactor_env;
+  struct testinfo_array init_env;
   int exit_code;
   int ignore_exit_code;
   int check_stderr;
@@ -64,9 +65,6 @@ struct testinfo_struct
   char *comment;
   char *team_comment;
   char *source_stub;
-
-  int init_env_u;
-  char **init_env_v;
 
   int compiler_env_u;
   char **compiler_env_v;
