@@ -679,17 +679,6 @@ switch ((tag = match(name_buf))) {
     *pint = x;
     break;
   }
-  case Tag_disable_valgrind:
-    if (cmd.u < 1) {
-      x = 1;
-    } else {
-      if (cmd.u > 1) FAIL(TINF_E_MULTIPLE_VALUE);
-      if (sscanf(cmd.v[0], "%d%n", &x, &n) != 1 || cmd.v[0][n]
-          || x < 0 || x > 1)
-        FAIL(TINF_E_INVALID_VALUE);
-    }
-    pt->disable_valgrind = x;
-    break;
   default:
     FAIL(TINF_E_INVALID_VAR_NAME);
   }
