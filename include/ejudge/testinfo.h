@@ -51,14 +51,13 @@ struct testinfo_array
 
 struct testinfo_struct
 {
+  struct testinfo_array cmd;
   int exit_code;
   int ignore_exit_code;
   int check_stderr;
   int disable_stderr;
   int enable_subst;
   int compiler_must_fail;
-  int cmd_argc;
-  char **cmd_argv;
   char *comment;
   char *team_comment;
   char *source_stub;

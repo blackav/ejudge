@@ -2073,19 +2073,19 @@ report_args_and_env(testinfo_t *ti)
   int cmd_args_len = 0;
   unsigned char *s, *args = NULL;
 
-  if (!ti || ti->cmd_argc <= 0) return NULL;
+  if (!ti || ti->cmd.u <= 0) return NULL;
 
-  for (i = 0; i < ti->cmd_argc; i++) {
+  for (i = 0; i < ti->cmd.u; i++) {
     cmd_args_len += 16;
-    if (ti->cmd_argv[i]) {
-      cmd_args_len += strlen(ti->cmd_argv[i]) + 16;
+    if (ti->cmd.v[i]) {
+      cmd_args_len += strlen(ti->cmd.v[i]) + 16;
     }
   }
   if (cmd_args_len > 0) {
     s = args = (unsigned char *) xmalloc(cmd_args_len + 1);
-    for (i = 0; i < ti->cmd_argc; i++) {
-      if (ti->cmd_argv[i]) {
-        s += sprintf(s, "[%3d]: >%s<\n", i + 1, ti->cmd_argv[i]);
+    for (i = 0; i < ti->cmd.u; i++) {
+      if (ti->cmd.v[i]) {
+        s += sprintf(s, "[%3d]: >%s<\n", i + 1, ti->cmd.v[i]);
       } else {
         s += sprintf(s, "[%3d]: NULL\n", i + 1);
       }
@@ -2965,8 +2965,8 @@ run_one_test(
     task_SetPathAsArg0(tsk);
   }
 
-  if (srpp->use_info > 0 && tstinfo.cmd_argc >= 1) {
-    task_pnAddArgs(tsk, tstinfo.cmd_argc, (char**) tstinfo.cmd_argv);
+  if (srpp->use_info > 0 && tstinfo.cmd.u >= 1) {
+    task_pnAddArgs(tsk, tstinfo.cmd.u, (char**) tstinfo.cmd.v);
   }
   /*
   if (tstinfo.working_dir) {

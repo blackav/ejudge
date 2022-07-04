@@ -545,7 +545,7 @@ run_program(int argc, char *argv[], long *p_cpu_time, long *p_real_time)
   if (!(tsk = task_New())) fatal("cannot create task");
   task_SetQuietFlag(tsk);
   task_pnAddArgs(tsk, argc, argv);
-  task_pnAddArgs(tsk, tinfo.cmd_argc, tinfo.cmd_argv);
+  task_pnAddArgs(tsk, tinfo.cmd.u, tinfo.cmd.v);
   task_SetPathAsArg0(tsk);
   if (working_dir) task_SetWorkingDir(tsk, working_dir);
   if (test_file) {

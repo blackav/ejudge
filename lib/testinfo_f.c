@@ -394,7 +394,7 @@ unparse_str_array(int arr_u, char **arr_v)
 unsigned char *
 testinfo_unparse_cmdline(const struct testinfo_struct *ti)
 {
-  return unparse_str_array(ti->cmd_argc, ti->cmd_argv);
+  return unparse_str_array(ti->cmd.u, ti->cmd.v);
 }
 
 unsigned char *
@@ -545,9 +545,9 @@ parse_line(const unsigned char *str, size_t len, testinfo_t *pt, struct testinfo
 
 switch ((tag = match(name_buf))) {
   case Tag_params:
-    if (pt->cmd_argc >= 0) FAIL(TINF_E_VAR_REDEFINED);
-    pt->cmd_argc = cmd.u;
-    pt->cmd_argv = (char**) cmd.v;
+    if (pt->cmd.u >= 0) FAIL(TINF_E_VAR_REDEFINED);
+    pt->cmd.u = cmd.u;
+    pt->cmd.v = (char**) cmd.v;
     memset(&cmd, 0, sizeof(cmd));
     break;
   case Tag_environ:
@@ -710,7 +710,7 @@ testinfo_parse(const char *path, testinfo_t *pt, struct testinfo_subst_handler *
   int retval;
 
   memset(pt, 0, sizeof(*pt));
-  pt->cmd_argc = -1;
+  pt->cmd.u = -1;
   pt->disable_stderr = -1;
   pt->max_open_file_count = -1;
   pt->max_process_count = -1;
@@ -739,10 +739,10 @@ testinfo_free(testinfo_t *pt)
 
   if (!pt) return;
 
-  if (pt->cmd_argc > 0 && pt->cmd_argv) {
-    for (i = 0; i < pt->cmd_argc; i++)
-      if (pt->cmd_argv[i]) free(pt->cmd_argv[i]);
-    free(pt->cmd_argv);
+  if (pt->cmd.u > 0 && pt->cmd.v) {
+    for (i = 0; i < pt->cmd.u; i++)
+      if (pt->cmd.v[i]) free(pt->cmd.v[i]);
+    free(pt->cmd.v);
   }
   if (pt->env_u > 0 && pt->env_v) {
     for (i = 0; i < pt->env_u; ++i) {
