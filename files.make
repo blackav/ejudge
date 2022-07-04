@@ -1,6 +1,6 @@
 # -*- Makefile -*-
 
-# Copyright (C) 2002-2021 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2002-2022 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -269,7 +269,6 @@ COMMON_CFILES=\
  lib/teamdb_2.c\
  lib/team_extra.c\
  lib/team_extra_xml.c\
- lib/testinfo.c\
  lib/testing_report_bson.c\
  lib/testing_report_xml.c\
  lib/tex_dom.c\

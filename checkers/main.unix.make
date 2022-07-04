@@ -1,6 +1,6 @@
 # -*- Makefile -*-
 
-# Copyright (C) 2015-2020 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2015-2022 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -204,8 +204,8 @@ pic/testinfo.o: testinfo.c testinfo.h
 
 testinfo.h: ../include/ejudge/testinfo.h
 	ln -sf ../include/ejudge/testinfo.h .
-testinfo.c: ../lib/testinfo.c
-	ln -sf ../lib/testinfo.c
+testinfo.c: ../gen/testinfo.c
+	ln -sf ../gen/testinfo.c
 
 ifdef STATIC
 cmp_% : cmp_%.c checker.h checker_internal.h libchecker.a
