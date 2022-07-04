@@ -892,52 +892,19 @@ testinfo_free(testinfo_t *pt)
 
   if (!pt) return;
 
-  if (pt->cmd.u > 0 && pt->cmd.v) {
-    for (i = 0; i < pt->cmd.u; i++)
-      if (pt->cmd.v[i]) free(pt->cmd.v[i]);
-    free(pt->cmd.v);
-  }
-  if (pt->env.u > 0 && pt->env.v) {
-    for (i = 0; i < pt->env.u; ++i) {
-      if (pt->env.v[i]) free(pt->env.v[i]);
+  static const int array_tags[] =
+  {
+    Tag_params, Tag_environ, Tag_checker_env, Tag_interactor_env,
+    Tag_init_env, Tag_compiler_env, Tag_style_checker_env, Tag_ok_language, 0
+  };
+  for (int ti = 0; array_tags[ti]; ++ti) {
+    struct testinfo_array *ta = XPDEREF(struct testinfo_array, pt, tag_offsets[array_tags[ti]]);
+    if (ta->u > 0 && ta->v) {
+      for (i = 0; i < ta->u; ++i) {
+        free(ta->v[i]);
+      }
     }
-    free(pt->env.v);
-  }
-  if (pt->checker_env.u > 0 && pt->checker_env.v) {
-    for (i = 0; i < pt->checker_env.u; ++i) {
-      if (pt->checker_env.v[i]) free(pt->checker_env.v[i]);
-    }
-    free(pt->checker_env.v);
-  }
-  if (pt->interactor_env.u > 0 && pt->interactor_env.v) {
-    for (i = 0; i < pt->interactor_env.u; ++i) {
-      if (pt->interactor_env.v[i]) free(pt->interactor_env.v[i]);
-    }
-    free(pt->interactor_env.v);
-  }
-  if (pt->init_env.u > 0 && pt->init_env.v) {
-    for (i = 0; i < pt->init_env.u; ++i) {
-      if (pt->init_env.v[i]) free(pt->init_env.v[i]);
-    }
-    free(pt->init_env.v);
-  }
-  if (pt->compiler_env.u > 0 && pt->compiler_env.v) {
-    for (i = 0; i < pt->compiler_env.u; ++i) {
-      if (pt->compiler_env.v[i]) free(pt->compiler_env.v[i]);
-    }
-    free(pt->compiler_env.v);
-  }
-  if (pt->style_checker_env.u > 0 && pt->style_checker_env.v) {
-    for (i = 0; i < pt->style_checker_env.u; ++i) {
-      if (pt->style_checker_env.v[i]) free(pt->style_checker_env.v[i]);
-    }
-    free(pt->style_checker_env.v);
-  }
-  if (pt->ok_language.u > 0 && pt->ok_language.v) {
-    for (i = 0; i < pt->ok_language.u; ++i) {
-      free(pt->ok_language.v[i]);
-    }
-    free(pt->ok_language.v);
+    free(ta->v);
   }
   if (pt->comment) free(pt->comment);
   if (pt->team_comment) free(pt->team_comment);
