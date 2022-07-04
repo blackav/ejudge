@@ -43,6 +43,12 @@ enum
   TINF_E_LAST,
 };
 
+struct testinfo_array
+{
+  char **v;
+  int u;
+};
+
 struct testinfo_struct
 {
   int exit_code;
