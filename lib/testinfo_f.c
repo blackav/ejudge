@@ -661,6 +661,11 @@ switch ((tag = match(name_buf))) {
     if (parse_size(cmd.v[0], &pt->max_rss_size) < 0) FAIL(TINF_E_INVALID_VALUE);
     break;
   case Tag_check_stderr:
+  case Tag_disable_stderr:
+  case Tag_enable_subst:
+  case Tag_compiler_must_fail:
+  case Tag_allow_compile_error:
+  case Tag_disable_valgrind:
   {
     int *pint = XPDEREF(int, pt, tag_offsets[tag]);
     if (cmd.u < 1) {
@@ -674,50 +679,6 @@ switch ((tag = match(name_buf))) {
     *pint = x;
     break;
   }
-  case Tag_disable_stderr:
-    if (cmd.u < 1) {
-      x = 1;
-    } else {
-      if (cmd.u > 1) FAIL(TINF_E_MULTIPLE_VALUE);
-      if (sscanf(cmd.v[0], "%d%n", &x, &n) != 1 || cmd.v[0][n]
-          || x < 0 || x > 1)
-        FAIL(TINF_E_INVALID_VALUE);
-    }
-    pt->disable_stderr = x;
-    break;
-  case Tag_enable_subst:
-    if (cmd.u < 1) {
-      x = 1;
-    } else {
-      if (cmd.u > 1) FAIL(TINF_E_MULTIPLE_VALUE);
-      if (sscanf(cmd.v[0], "%d%n", &x, &n) != 1 || cmd.v[0][n]
-          || x < 0 || x > 1)
-        FAIL(TINF_E_INVALID_VALUE);
-    }
-    pt->enable_subst = x;
-    break;
-  case Tag_compiler_must_fail:
-    if (cmd.u < 1) {
-      x = 1;
-    } else {
-      if (cmd.u > 1) FAIL(TINF_E_MULTIPLE_VALUE);
-      if (sscanf(cmd.v[0], "%d%n", &x, &n) != 1 || cmd.v[0][n]
-          || x < 0 || x > 1)
-        FAIL(TINF_E_INVALID_VALUE);
-    }
-    pt->compiler_must_fail = x;
-    break;
-  case Tag_allow_compile_error:
-    if (cmd.u < 1) {
-      x = 1;
-    } else {
-      if (cmd.u > 1) FAIL(TINF_E_MULTIPLE_VALUE);
-      if (sscanf(cmd.v[0], "%d%n", &x, &n) != 1 || cmd.v[0][n]
-          || x < 0 || x > 1)
-        FAIL(TINF_E_INVALID_VALUE);
-    }
-    pt->allow_compile_error = x;
-    break;
   case Tag_disable_valgrind:
     if (cmd.u < 1) {
       x = 1;
