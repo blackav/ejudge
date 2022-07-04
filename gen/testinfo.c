@@ -828,7 +828,7 @@ switch ((tag = match(name_buf))) {
   case Tag_max_vm_size:
     if (cmd.u < 1) FAIL(TINF_E_EMPTY_VALUE);
     if (cmd.u > 1) FAIL(TINF_E_MULTIPLE_VALUE);
-    if (parse_size(cmd.v[0], &pt->max_vm_size) < 0) FAIL(TINF_E_INVALID_VALUE);
+    if (parse_size(cmd.v[0], XPDEREF(long long, pt, tag_offsets[tag])) < 0) FAIL(TINF_E_INVALID_VALUE);
     break;
   case Tag_max_stack_size:
     if (cmd.u < 1) FAIL(TINF_E_EMPTY_VALUE);
