@@ -215,8 +215,9 @@ match(const char *s)
 #include <malloc.h>
 #endif
 
-#define XOFFSET(type,field) ((long) &((type*) 0)->field)
-#define TESTINFO_OFFSET(f)  XOFFSET(struct testinfo_struct, f)
+#define XOFFSET(type,field)       ((long) &((type*) 0)->field)
+#define TESTINFO_OFFSET(f)        XOFFSET(struct testinfo_struct, f)
+#define XPDEREF(type,base,offset) (((type*) (((char*) (base)) + (offset))))
 static __attribute__((unused)) unsigned int tag_offsets[] =
 {
   [Tag_params] = 0,
@@ -690,6 +691,7 @@ parse_line(const unsigned char *str, size_t len, testinfo_t *pt, struct testinfo
   size_t len2;
   struct cmdline_buf cmd;
   int retval = 0, x, n;
+  int tag;
 
   if (sh && pt->enable_subst > 0) {
     subst_str = sh->substitute(sh, str);
@@ -726,118 +728,124 @@ parse_line(const unsigned char *str, size_t len, testinfo_t *pt, struct testinfo
     return retval;
   }
 
-  int tag = match(name_buf);
-  (void) tag;
-
-  if (!strcmp(name_buf, "params")) {
+switch ((tag = match(name_buf))) {
+  case Tag_params:
     if (pt->cmd_argc >= 0) FAIL(TINF_E_VAR_REDEFINED);
     pt->cmd_argc = cmd.u;
     pt->cmd_argv = (char**) cmd.v;
     memset(&cmd, 0, sizeof(cmd));
-  } else if (!strcmp(name_buf, "environ")) {
+    break;
+  case Tag_environ:
     if (pt->env_u > 0) FAIL(TINF_E_VAR_REDEFINED);
     pt->env_u = cmd.u;
     pt->env_v = (char**) cmd.v;
     memset(&cmd, 0, sizeof(cmd));
-  } else if (!strcmp(name_buf, "checker_env")) {
+    break;
+  case Tag_checker_env:
     if (pt->checker_env_u > 0) FAIL(TINF_E_VAR_REDEFINED);
     pt->checker_env_u = cmd.u;
     pt->checker_env_v = (char**) cmd.v;
     memset(&cmd, 0, sizeof(cmd));
-  } else if (!strcmp(name_buf, "interactor_env")) {
+    break;
+  case Tag_interactor_env:
     if (pt->interactor_env_u > 0) FAIL(TINF_E_VAR_REDEFINED);
     pt->interactor_env_u = cmd.u;
     pt->interactor_env_v = (char**) cmd.v;
     memset(&cmd, 0, sizeof(cmd));
-  } else if (!strcmp(name_buf, "init_env")) {
+    break;
+  case Tag_init_env:
     if (pt->init_env_u > 0) FAIL(TINF_E_VAR_REDEFINED);
     pt->init_env_u = cmd.u;
     pt->init_env_v = (char**) cmd.v;
     memset(&cmd, 0, sizeof(cmd));
-  } else if (!strcmp(name_buf, "compiler_env")) {
+    break;
+  case Tag_compiler_env:
     if (pt->compiler_env_u > 0) FAIL(TINF_E_VAR_REDEFINED);
     pt->compiler_env_u = cmd.u;
     pt->compiler_env_v = (char**) cmd.v;
     memset(&cmd, 0, sizeof(cmd));
-  } else if (!strcmp(name_buf, "style_checker_env")) {
+    break;
+  case Tag_style_checker_env:
     if (pt->style_checker_env_u > 0) FAIL(TINF_E_VAR_REDEFINED);
     pt->style_checker_env_u = cmd.u;
     pt->style_checker_env_v = (char**) cmd.v;
     memset(&cmd, 0, sizeof(cmd));
-  } else if (!strcmp(name_buf, "ok_language")) {
+    break;
+  case Tag_ok_language:
     if (pt->ok_language_u > 0) FAIL(TINF_E_VAR_REDEFINED);
     pt->ok_language_u = cmd.u;
     pt->ok_language_v = (char**) cmd.v;
     memset(&cmd, 0, sizeof(cmd));
-  } else if (!strcmp(name_buf, "comment")
-             || !strcmp(name_buf, "team_comment")
-             || !strcmp(name_buf, "source_stub")
-             || !strcmp(name_buf, "working_dir")
-             || !strcmp(name_buf, "program_name")) {
-    if (!strcmp(name_buf, "comment")) {
-      ppval = (unsigned char**) ((void*) &pt->comment);
-    } else if (!strcmp(name_buf, "source_stub")) {
-      ppval = (unsigned char**) ((void*) &pt->source_stub);
-    } else if (!strcmp(name_buf, "working_dir")) {
-      ppval = (unsigned char**) ((void*)&pt->working_dir);
-    } else if (!strcmp(name_buf, "program_name")) {
-      ppval = (unsigned char**) ((void*)&pt->program_name);
-    } else {
-      ppval = (unsigned char**) ((void*)&pt->team_comment);
-    }
+    break;
+  case Tag_comment:
+  case Tag_team_comment:
+  case Tag_source_stub:
+  case Tag_working_dir:
+  case Tag_program_name:
+    ppval = XPDEREF(unsigned char *, pt, tag_offsets[tag]);
     if (*ppval) FAIL(TINF_E_VAR_REDEFINED);
     if (cmd.u < 1) FAIL(TINF_E_EMPTY_VALUE);
     if (cmd.u > 1) FAIL(TINF_E_MULTIPLE_VALUE);
     *ppval = cmd.v[0];
     cmd.v[0] = 0;
-  } else if (!strcmp(name_buf, "exit_code")) {
+    break;
+  case Tag_exit_code:
     if (cmd.u < 1) FAIL(TINF_E_EMPTY_VALUE);
     if (cmd.u > 1) FAIL(TINF_E_MULTIPLE_VALUE);
     if (sscanf(cmd.v[0], "%d%n", &x, &n) != 1 || cmd.v[0][n]
         || x < 0 || x > 255)
       FAIL(TINF_E_INVALID_VALUE);
     pt->exit_code = x;
-  } else if (!strcmp(name_buf, "max_open_file_count")) {
+    break;
+  case Tag_max_open_file_count:
     if (cmd.u < 1) FAIL(TINF_E_EMPTY_VALUE);
     if (cmd.u > 1) FAIL(TINF_E_MULTIPLE_VALUE);
     if (sscanf(cmd.v[0], "%d%n", &x, &n) != 1 || cmd.v[0][n] || x < 0 || x > 1024)
       FAIL(TINF_E_INVALID_VALUE);
     pt->max_open_file_count = x;
-  } else if (!strcmp(name_buf, "max_process_count")) {
+    break;
+  case Tag_max_process_count:
     if (cmd.u < 1) FAIL(TINF_E_EMPTY_VALUE);
     if (cmd.u > 1) FAIL(TINF_E_MULTIPLE_VALUE);
     if (sscanf(cmd.v[0], "%d%n", &x, &n) != 1 || cmd.v[0][n] || x < 0 || x > 1024)
       FAIL(TINF_E_INVALID_VALUE);
     pt->max_process_count = x;
-  } else if (!strcmp(name_buf, "time_limit_ms")) {
+    break;
+  case Tag_time_limit_ms:
     if (cmd.u < 1) FAIL(TINF_E_EMPTY_VALUE);
     if (cmd.u > 1) FAIL(TINF_E_MULTIPLE_VALUE);
     if (sscanf(cmd.v[0], "%d%n", &x, &n) != 1 || cmd.v[0][n] || x <= 0)
       FAIL(TINF_E_INVALID_VALUE);
     pt->time_limit_ms = x;
-  } else if (!strcmp(name_buf, "real_time_limit_ms")) {
+    break;
+  case Tag_real_time_limit_ms:
     if (cmd.u < 1) FAIL(TINF_E_EMPTY_VALUE);
     if (cmd.u > 1) FAIL(TINF_E_MULTIPLE_VALUE);
     if (sscanf(cmd.v[0], "%d%n", &x, &n) != 1 || cmd.v[0][n] || x <= 0)
       FAIL(TINF_E_INVALID_VALUE);
     pt->real_time_limit_ms = x;
-  } else if (!strcmp(name_buf, "max_vm_size")) {
+    break;
+  case Tag_max_vm_size:
     if (cmd.u < 1) FAIL(TINF_E_EMPTY_VALUE);
     if (cmd.u > 1) FAIL(TINF_E_MULTIPLE_VALUE);
     if (parse_size(cmd.v[0], &pt->max_vm_size) < 0) FAIL(TINF_E_INVALID_VALUE);
-  } else if (!strcmp(name_buf, "max_stack_size")) {
+    break;
+  case Tag_max_stack_size:
     if (cmd.u < 1) FAIL(TINF_E_EMPTY_VALUE);
     if (cmd.u > 1) FAIL(TINF_E_MULTIPLE_VALUE);
     if (parse_size(cmd.v[0], &pt->max_stack_size) < 0) FAIL(TINF_E_INVALID_VALUE);
-  } else if (!strcmp(name_buf, "max_file_size")) {
+    break;
+  case Tag_max_file_size:
     if (cmd.u < 1) FAIL(TINF_E_EMPTY_VALUE);
     if (cmd.u > 1) FAIL(TINF_E_MULTIPLE_VALUE);
     if (parse_size(cmd.v[0], &pt->max_file_size) < 0) FAIL(TINF_E_INVALID_VALUE);
-  } else if (!strcmp(name_buf, "max_rss_size")) {
+    break;
+  case Tag_max_rss_size:
     if (cmd.u < 1) FAIL(TINF_E_EMPTY_VALUE);
     if (cmd.u > 1) FAIL(TINF_E_MULTIPLE_VALUE);
     if (parse_size(cmd.v[0], &pt->max_rss_size) < 0) FAIL(TINF_E_INVALID_VALUE);
-  } else if (!strcmp(name_buf, "check_stderr")) {
+    break;
+  case Tag_check_stderr:
     if (cmd.u < 1) {
       x = 1;
     } else {
@@ -847,7 +855,8 @@ parse_line(const unsigned char *str, size_t len, testinfo_t *pt, struct testinfo
         FAIL(TINF_E_INVALID_VALUE);
     }
     pt->check_stderr = x;
-  } else if (!strcmp(name_buf, "disable_stderr")) {
+    break;
+  case Tag_disable_stderr:
     if (cmd.u < 1) {
       x = 1;
     } else {
@@ -857,7 +866,8 @@ parse_line(const unsigned char *str, size_t len, testinfo_t *pt, struct testinfo
         FAIL(TINF_E_INVALID_VALUE);
     }
     pt->disable_stderr = x;
-  } else if (!strcmp(name_buf, "enable_subst")) {
+    break;
+  case Tag_enable_subst:
     if (cmd.u < 1) {
       x = 1;
     } else {
@@ -867,7 +877,8 @@ parse_line(const unsigned char *str, size_t len, testinfo_t *pt, struct testinfo
         FAIL(TINF_E_INVALID_VALUE);
     }
     pt->enable_subst = x;
-  } else if (!strcmp(name_buf, "compiler_must_fail")) {
+    break;
+  case Tag_compiler_must_fail:
     if (cmd.u < 1) {
       x = 1;
     } else {
@@ -877,7 +888,8 @@ parse_line(const unsigned char *str, size_t len, testinfo_t *pt, struct testinfo
         FAIL(TINF_E_INVALID_VALUE);
     }
     pt->compiler_must_fail = x;
-  } else if (!strcmp(name_buf, "allow_compile_error")) {
+    break;
+  case Tag_allow_compile_error:
     if (cmd.u < 1) {
       x = 1;
     } else {
@@ -887,7 +899,8 @@ parse_line(const unsigned char *str, size_t len, testinfo_t *pt, struct testinfo
         FAIL(TINF_E_INVALID_VALUE);
     }
     pt->allow_compile_error = x;
-  } else if (!strcmp(name_buf, "disable_valgrind")) {
+    break;
+  case Tag_disable_valgrind:
     if (cmd.u < 1) {
       x = 1;
     } else {
@@ -897,9 +910,11 @@ parse_line(const unsigned char *str, size_t len, testinfo_t *pt, struct testinfo
         FAIL(TINF_E_INVALID_VALUE);
     }
     pt->disable_valgrind = x;
-  } else {
+    break;
+  default:
     FAIL(TINF_E_INVALID_VAR_NAME);
   }
+
   free_cmdline(&cmd);
   free(subst_str);
   return 0;
