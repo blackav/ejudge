@@ -35,14 +35,14 @@
 #define XPDEREF(type,base,offset) (((type*) (((char*) (base)) + (offset))))
 static __attribute__((unused)) unsigned int tag_offsets[] =
 {
-  [Tag_params] = 0,
-  [Tag_environ] = 0,
-  [Tag_checker_env] = 0,
-  [Tag_interactor_env] = 0,
-  [Tag_init_env] = 0,
-  [Tag_compiler_env] = 0,
-  [Tag_style_checker_env] = 0,
-  [Tag_ok_language] = 0,
+  [Tag_params] = TESTINFO_OFFSET(cmd),
+  [Tag_environ] = TESTINFO_OFFSET(env),
+  [Tag_checker_env] = TESTINFO_OFFSET(checker_env),
+  [Tag_interactor_env] = TESTINFO_OFFSET(interactor_env),
+  [Tag_init_env] = TESTINFO_OFFSET(init_env),
+  [Tag_compiler_env] = TESTINFO_OFFSET(compiler_env),
+  [Tag_style_checker_env] = TESTINFO_OFFSET(style_checker_env),
+  [Tag_ok_language] = TESTINFO_OFFSET(ok_language),
   [Tag_comment] = TESTINFO_OFFSET(comment),
   [Tag_team_comment] = TESTINFO_OFFSET(team_comment),
   [Tag_source_stub] = TESTINFO_OFFSET(source_stub),
