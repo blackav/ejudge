@@ -458,12 +458,24 @@ handle_options(const unsigned char *opt)
 }
 
 static int
+is_runtime_error(tTask *tsk, struct testinfo_struct *ptinfo)
+{
+  if (task_IsAbnormal(tsk) <= 0) return 0;
+  if (!ptinfo) return 1;
+  if (ptinfo->exit_code > 0) {
+    return task_Status(tsk) != TSK_EXITED || task_ExitCode(tsk) != ptinfo->exit_code;
+  }
+  return ptinfo->ignore_exit_code <= 0;
+}
+
+static int
 run_program(int argc, char *argv[], long *p_cpu_time, long *p_real_time)
 {
   tTask *tsk = 0;
   int i;
   int retcode = RUN_CHECK_FAILED;
   struct testinfo_struct tinfo;
+  struct testinfo_struct *ptinfo = NULL;
   unsigned char input_path[PATH_MAX];
   unsigned char output_path[PATH_MAX];
   unsigned char error_path[PATH_MAX];
@@ -511,8 +523,11 @@ run_program(int argc, char *argv[], long *p_cpu_time, long *p_real_time)
     }
   }
 
-  if (info_file && (i = testinfo_parse(info_file, &tinfo, NULL)) < 0) {
-    fatal("testinfo file parse error: %s", testinfo_strerror(-i));
+  if (info_file) {
+    if ((i = testinfo_parse(info_file, &tinfo, NULL)) < 0) {
+      fatal("testinfo file parse error: %s", testinfo_strerror(-i));
+    }
+    ptinfo = &tinfo;
   }
 
   if (test_file) {
@@ -639,9 +654,7 @@ run_program(int argc, char *argv[], long *p_cpu_time, long *p_real_time)
               "Description: time limit exceeded\n");
     }
     retcode = RUN_TIME_LIMIT_ERR;
-  } else if (task_IsAbnormal(tsk)
-             && (!info_file || tinfo.exit_code <= 0 || task_Status(tsk) != TSK_EXITED
-                 || task_ExitCode(tsk) != tinfo.exit_code)) {
+  } else if (is_runtime_error(tsk, ptinfo)) {
     if (all_tests <= 0) {
       fprintf(stderr, "Status: RT\n");
       if (task_Status(tsk) == TSK_SIGNALED) {

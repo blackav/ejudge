@@ -3500,12 +3500,18 @@ run_one_test(
       if (tsk_int) goto read_checker_output;
       goto cleanup;
     }
-  } else if (srpp->ignore_exit_code > 0) {
-    // do not analyze exit code
-  } else if (cur_info->code != 0) {
-    status = RUN_RUN_TIME_ERR;
-    if (tsk_int) goto read_checker_output;
-    goto cleanup;
+  } else {
+    int ignore_exit_code = -1;
+    if (srpp->use_info > 0 && tstinfo.ignore_exit_code >= 0) {
+      ignore_exit_code = tstinfo.ignore_exit_code;
+    } else {
+      ignore_exit_code = srpp->ignore_exit_code;
+    }
+    if (ignore_exit_code <= 0 && cur_info->code != 0) {
+      status = RUN_RUN_TIME_ERR;
+      if (tsk_int) goto read_checker_output;
+      goto cleanup;
+    }
   }
 
   if (pg_not_empty) {
