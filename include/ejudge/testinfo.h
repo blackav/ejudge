@@ -52,6 +52,7 @@ struct testinfo_array
 struct testinfo_struct
 {
   struct testinfo_array cmd;
+  struct testinfo_array env;
   int exit_code;
   int ignore_exit_code;
   int check_stderr;
@@ -61,8 +62,6 @@ struct testinfo_struct
   char *comment;
   char *team_comment;
   char *source_stub;
-  int env_u;
-  char **env_v;
 
   int checker_env_u;
   char **checker_env_v;

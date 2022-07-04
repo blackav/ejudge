@@ -3033,7 +3033,7 @@ run_one_test(
   }
 
   if (tst && tst->clear_env > 0) task_ClearEnv(tsk);
-  setup_environment(tsk, start_env, tstinfo.env_u, tstinfo.env_v, 0);
+  setup_environment(tsk, start_env, tstinfo.env.u, tstinfo.env.v, 0);
 
   if (tstinfo.time_limit_ms > 0) {
     task_SetMaxTimeMillis(tsk, tstinfo.time_limit_ms);

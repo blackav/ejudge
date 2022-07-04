@@ -570,8 +570,8 @@ run_program(int argc, char *argv[], long *p_cpu_time, long *p_real_time)
   if (clear_env_flag) task_ClearEnv(tsk);
   for (i = 0; i < env_vars.u; i++)
     task_PutEnv(tsk, env_vars.v[i]);
-  for (i = 0; i < tinfo.env_u; ++i) {
-    task_PutEnv(tsk, tinfo.env_v[i]);
+  for (i = 0; i < tinfo.env.u; ++i) {
+    task_PutEnv(tsk, tinfo.env.v[i]);
   }
   if (tinfo.time_limit_ms > 0) {
     if (task_SetMaxTimeMillis(tsk, tinfo.time_limit_ms) < 0)
