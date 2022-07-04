@@ -826,24 +826,12 @@ switch ((tag = match(name_buf))) {
     pt->real_time_limit_ms = x;
     break;
   case Tag_max_vm_size:
-    if (cmd.u < 1) FAIL(TINF_E_EMPTY_VALUE);
-    if (cmd.u > 1) FAIL(TINF_E_MULTIPLE_VALUE);
-    if (parse_size(cmd.v[0], XPDEREF(long long, pt, tag_offsets[tag])) < 0) FAIL(TINF_E_INVALID_VALUE);
-    break;
   case Tag_max_stack_size:
-    if (cmd.u < 1) FAIL(TINF_E_EMPTY_VALUE);
-    if (cmd.u > 1) FAIL(TINF_E_MULTIPLE_VALUE);
-    if (parse_size(cmd.v[0], &pt->max_stack_size) < 0) FAIL(TINF_E_INVALID_VALUE);
-    break;
   case Tag_max_file_size:
-    if (cmd.u < 1) FAIL(TINF_E_EMPTY_VALUE);
-    if (cmd.u > 1) FAIL(TINF_E_MULTIPLE_VALUE);
-    if (parse_size(cmd.v[0], &pt->max_file_size) < 0) FAIL(TINF_E_INVALID_VALUE);
-    break;
   case Tag_max_rss_size:
     if (cmd.u < 1) FAIL(TINF_E_EMPTY_VALUE);
     if (cmd.u > 1) FAIL(TINF_E_MULTIPLE_VALUE);
-    if (parse_size(cmd.v[0], &pt->max_rss_size) < 0) FAIL(TINF_E_INVALID_VALUE);
+    if (parse_size(cmd.v[0], XPDEREF(long long, pt, tag_offsets[tag])) < 0) FAIL(TINF_E_INVALID_VALUE);
     break;
   case Tag_check_stderr:
   case Tag_disable_stderr:
