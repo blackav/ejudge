@@ -58,6 +58,7 @@ struct testinfo_struct
   struct testinfo_array init_env;
   struct testinfo_array compiler_env;
   struct testinfo_array style_checker_env;
+  struct testinfo_array ok_language;
   int exit_code;
   int ignore_exit_code;
   int check_stderr;
@@ -76,9 +77,6 @@ struct testinfo_struct
   long long max_stack_size;
   long long max_file_size;
   long long max_rss_size;
-
-  int ok_language_u;
-  char **ok_language_v;
 
   char *working_dir;
 

@@ -2665,13 +2665,13 @@ run_one_test(
     }
     xfree(eff_inf_text); eff_inf_text = NULL;
 
-    if (srgp->lang_short_name && srgp->lang_short_name[0] && tstinfo.ok_language_u > 0) {
+    if (srgp->lang_short_name && srgp->lang_short_name[0] && tstinfo.ok_language.u > 0) {
       int i;
-      for (i = 0; i < tstinfo.ok_language_u; ++i) {
-        if (tstinfo.ok_language_v[i] && !strcmp(tstinfo.ok_language_v[i], srgp->lang_short_name))
+      for (i = 0; i < tstinfo.ok_language.u; ++i) {
+        if (tstinfo.ok_language.v[i] && !strcmp(tstinfo.ok_language.v[i], srgp->lang_short_name))
           break;
       }
-      if (i < tstinfo.ok_language_u) {
+      if (i < tstinfo.ok_language.u) {
         // mark this test as successfully passed
         status = RUN_OK; // FIXME: RUN_SKIPPED?
         cur_info->input = xstrdup("");

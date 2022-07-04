@@ -436,7 +436,7 @@ testinfo_unparse_style_checker_env(const struct testinfo_struct *ti)
 unsigned char *
 testinfo_unparse_ok_language(const struct testinfo_struct *ti)
 {
-  return unparse_str_array(ti->ok_language_u, ti->ok_language_v);
+  return unparse_str_array(ti->ok_language.u, ti->ok_language.v);
 }
 
 static void
@@ -587,9 +587,9 @@ switch ((tag = match(name_buf))) {
     memset(&cmd, 0, sizeof(cmd));
     break;
   case Tag_ok_language:
-    if (pt->ok_language_u > 0) FAIL(TINF_E_VAR_REDEFINED);
-    pt->ok_language_u = cmd.u;
-    pt->ok_language_v = (char**) cmd.v;
+    if (pt->ok_language.u > 0) FAIL(TINF_E_VAR_REDEFINED);
+    pt->ok_language.u = cmd.u;
+    pt->ok_language.v = (char**) cmd.v;
     memset(&cmd, 0, sizeof(cmd));
     break;
   case Tag_comment:
@@ -780,11 +780,11 @@ testinfo_free(testinfo_t *pt)
     }
     free(pt->style_checker_env.v);
   }
-  if (pt->ok_language_u > 0 && pt->ok_language_v) {
-    for (i = 0; i < pt->ok_language_u; ++i) {
-      free(pt->ok_language_v[i]);
+  if (pt->ok_language.u > 0 && pt->ok_language.v) {
+    for (i = 0; i < pt->ok_language.u; ++i) {
+      free(pt->ok_language.v[i]);
     }
-    free(pt->ok_language_v);
+    free(pt->ok_language.v);
   }
   if (pt->comment) free(pt->comment);
   if (pt->team_comment) free(pt->team_comment);
