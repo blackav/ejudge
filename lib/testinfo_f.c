@@ -424,7 +424,7 @@ testinfo_unparse_init_env(const struct testinfo_struct *ti)
 unsigned char *
 testinfo_unparse_compiler_env(const struct testinfo_struct *ti)
 {
-  return unparse_str_array(ti->compiler_env_u, ti->compiler_env_v);
+  return unparse_str_array(ti->compiler_env.u, ti->compiler_env.v);
 }
 
 unsigned char *
@@ -575,9 +575,9 @@ switch ((tag = match(name_buf))) {
     memset(&cmd, 0, sizeof(cmd));
     break;
   case Tag_compiler_env:
-    if (pt->compiler_env_u > 0) FAIL(TINF_E_VAR_REDEFINED);
-    pt->compiler_env_u = cmd.u;
-    pt->compiler_env_v = (char**) cmd.v;
+    if (pt->compiler_env.u > 0) FAIL(TINF_E_VAR_REDEFINED);
+    pt->compiler_env.u = cmd.u;
+    pt->compiler_env.v = (char**) cmd.v;
     memset(&cmd, 0, sizeof(cmd));
     break;
   case Tag_style_checker_env:
@@ -768,11 +768,11 @@ testinfo_free(testinfo_t *pt)
     }
     free(pt->init_env.v);
   }
-  if (pt->compiler_env_u > 0 && pt->compiler_env_v) {
-    for (i = 0; i < pt->compiler_env_u; ++i) {
-      if (pt->compiler_env_v[i]) free(pt->compiler_env_v[i]);
+  if (pt->compiler_env.u > 0 && pt->compiler_env.v) {
+    for (i = 0; i < pt->compiler_env.u; ++i) {
+      if (pt->compiler_env.v[i]) free(pt->compiler_env.v[i]);
     }
-    free(pt->compiler_env_v);
+    free(pt->compiler_env.v);
   }
   if (pt->style_checker_env_u > 0 && pt->style_checker_env_v) {
     for (i = 0; i < pt->style_checker_env_u; ++i) {
