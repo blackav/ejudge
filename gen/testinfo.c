@@ -730,11 +730,14 @@ parse_line(const unsigned char *str, size_t len, testinfo_t *pt, struct testinfo
 
 switch ((tag = match(name_buf))) {
   case Tag_params:
-    if (pt->cmd.u >= 0) FAIL(TINF_E_VAR_REDEFINED);
-    pt->cmd.u = cmd.u;
-    pt->cmd.v = (char**) cmd.v;
+  {
+    struct testinfo_array *ta = XPDEREF(struct testinfo_array, pt, tag_offsets[tag]);
+    if (ta->u >= 0) FAIL(TINF_E_VAR_REDEFINED);
+    ta->u = cmd.u;
+    ta->v = (char**) cmd.v;
     memset(&cmd, 0, sizeof(cmd));
     break;
+  }
   case Tag_environ:
     if (pt->env.u > 0) FAIL(TINF_E_VAR_REDEFINED);
     pt->env.u = cmd.u;
