@@ -1,3 +1,17 @@
+/* Copyright (C) 2020-2022 Alexander Chernov <cher@ejudge.ru> */
+
+/*
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
@@ -190,15 +204,15 @@ main(int argc, char *argv[])
         printf("\n");
     }
     printf("};\n");
-    printf("static const char * const %s[] =\n"
+    printf("static __attribute__((unused)) const char * const %s[] =\n"
            "{\n"
-           "    NULL,\n", table_name);
+           "    0,\n", table_name);
     for (int i = 0; i < strsu; ++i) {
         printf("    \"%s\",\n", strs[i]);
     }
     printf("};\n");
     qsort(enums, strsu, sizeof(strs[0]), sort_func);
-    printf("static int\n"
+    printf("static __attribute__((unused)) int\n"
            "%s(const char *s)\n"
            "{\n", function_name);
     separate(0, strsu, sorted_strs, 0, enums, 1, "    ", "\n", 0);
