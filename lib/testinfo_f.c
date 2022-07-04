@@ -654,6 +654,7 @@ switch ((tag = match(name_buf))) {
   case Tag_compiler_must_fail:
   case Tag_allow_compile_error:
   case Tag_disable_valgrind:
+  case Tag_ignore_exit_code:
   {
     int *pint = XPDEREF(int, pt, tag_offsets[tag]);
     if (cmd.u < 1) {
