@@ -597,7 +597,7 @@ testinfo_unparse_checker_env(const struct testinfo_struct *ti)
 unsigned char *
 testinfo_unparse_interactor_env(const struct testinfo_struct *ti)
 {
-  return unparse_str_array(ti->interactor_env_u, ti->interactor_env_v);
+  return unparse_str_array(ti->interactor_env.u, ti->interactor_env.v);
 }
 
 unsigned char *
@@ -748,9 +748,9 @@ switch ((tag = match(name_buf))) {
     memset(&cmd, 0, sizeof(cmd));
     break;
   case Tag_interactor_env:
-    if (pt->interactor_env_u > 0) FAIL(TINF_E_VAR_REDEFINED);
-    pt->interactor_env_u = cmd.u;
-    pt->interactor_env_v = (char**) cmd.v;
+    if (pt->interactor_env.u > 0) FAIL(TINF_E_VAR_REDEFINED);
+    pt->interactor_env.u = cmd.u;
+    pt->interactor_env.v = (char**) cmd.v;
     memset(&cmd, 0, sizeof(cmd));
     break;
   case Tag_init_env:
@@ -941,11 +941,11 @@ testinfo_free(testinfo_t *pt)
     }
     free(pt->checker_env.v);
   }
-  if (pt->interactor_env_u > 0 && pt->interactor_env_v) {
-    for (i = 0; i < pt->interactor_env_u; ++i) {
-      if (pt->interactor_env_v[i]) free(pt->interactor_env_v[i]);
+  if (pt->interactor_env.u > 0 && pt->interactor_env.v) {
+    for (i = 0; i < pt->interactor_env.u; ++i) {
+      if (pt->interactor_env.v[i]) free(pt->interactor_env.v[i]);
     }
-    free(pt->interactor_env_v);
+    free(pt->interactor_env.v);
   }
   if (pt->init_env_u > 0 && pt->init_env_v) {
     for (i = 0; i < pt->init_env_u; ++i) {

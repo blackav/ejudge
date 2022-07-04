@@ -1942,8 +1942,8 @@ invoke_interactor(
   char **env_v = NULL;
 
   if (ti) {
-    env_u = ti->interactor_env_u;
-    env_v = ti->interactor_env_v;
+    env_u = ti->interactor_env.u;
+    env_v = ti->interactor_env.v;
   }
 
   tsk_int = task_New();
