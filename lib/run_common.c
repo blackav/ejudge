@@ -2124,8 +2124,8 @@ invoke_checker(
   int user_score_mode = 0;
 
   if (ti) {
-    env_u = ti->checker_env_u;
-    env_v = ti->checker_env_v;
+    env_u = ti->checker_env.u;
+    env_v = ti->checker_env.v;
   }
 
   tsk = task_New();
