@@ -730,6 +730,13 @@ parse_line(const unsigned char *str, size_t len, testinfo_t *pt, struct testinfo
 
 switch ((tag = match(name_buf))) {
   case Tag_params:
+  case Tag_environ:
+  case Tag_checker_env:
+  case Tag_interactor_env:
+  case Tag_init_env:
+  case Tag_compiler_env:
+  case Tag_style_checker_env:
+  case Tag_ok_language:
   {
     struct testinfo_array *ta = XPDEREF(struct testinfo_array, pt, tag_offsets[tag]);
     if (ta->u >= 0) FAIL(TINF_E_VAR_REDEFINED);
@@ -738,48 +745,6 @@ switch ((tag = match(name_buf))) {
     memset(&cmd, 0, sizeof(cmd));
     break;
   }
-  case Tag_environ:
-    if (pt->env.u > 0) FAIL(TINF_E_VAR_REDEFINED);
-    pt->env.u = cmd.u;
-    pt->env.v = (char**) cmd.v;
-    memset(&cmd, 0, sizeof(cmd));
-    break;
-  case Tag_checker_env:
-    if (pt->checker_env.u > 0) FAIL(TINF_E_VAR_REDEFINED);
-    pt->checker_env.u = cmd.u;
-    pt->checker_env.v = (char**) cmd.v;
-    memset(&cmd, 0, sizeof(cmd));
-    break;
-  case Tag_interactor_env:
-    if (pt->interactor_env.u > 0) FAIL(TINF_E_VAR_REDEFINED);
-    pt->interactor_env.u = cmd.u;
-    pt->interactor_env.v = (char**) cmd.v;
-    memset(&cmd, 0, sizeof(cmd));
-    break;
-  case Tag_init_env:
-    if (pt->init_env.u > 0) FAIL(TINF_E_VAR_REDEFINED);
-    pt->init_env.u = cmd.u;
-    pt->init_env.v = (char**) cmd.v;
-    memset(&cmd, 0, sizeof(cmd));
-    break;
-  case Tag_compiler_env:
-    if (pt->compiler_env.u > 0) FAIL(TINF_E_VAR_REDEFINED);
-    pt->compiler_env.u = cmd.u;
-    pt->compiler_env.v = (char**) cmd.v;
-    memset(&cmd, 0, sizeof(cmd));
-    break;
-  case Tag_style_checker_env:
-    if (pt->style_checker_env.u > 0) FAIL(TINF_E_VAR_REDEFINED);
-    pt->style_checker_env.u = cmd.u;
-    pt->style_checker_env.v = (char**) cmd.v;
-    memset(&cmd, 0, sizeof(cmd));
-    break;
-  case Tag_ok_language:
-    if (pt->ok_language.u > 0) FAIL(TINF_E_VAR_REDEFINED);
-    pt->ok_language.u = cmd.u;
-    pt->ok_language.v = (char**) cmd.v;
-    memset(&cmd, 0, sizeof(cmd));
-    break;
   case Tag_comment:
   case Tag_team_comment:
   case Tag_source_stub:
