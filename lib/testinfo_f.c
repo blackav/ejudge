@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2003-2021 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -29,6 +29,41 @@
 #if defined __GNUC__ && defined __MINGW32__
 #include <malloc.h>
 #endif
+
+#define XOFFSET(type,field) ((long) &((type*) 0)->field)
+#define TESTINFO_OFFSET(f)  XOFFSET(struct testinfo_struct, f)
+static __attribute__((unused)) unsigned int tag_offsets[] =
+{
+  [Tag_params] = 0,
+  [Tag_environ] = 0,
+  [Tag_checker_env] = 0,
+  [Tag_interactor_env] = 0,
+  [Tag_init_env] = 0,
+  [Tag_compiler_env] = 0,
+  [Tag_style_checker_env] = 0,
+  [Tag_ok_language] = 0,
+  [Tag_comment] = TESTINFO_OFFSET(comment),
+  [Tag_team_comment] = TESTINFO_OFFSET(team_comment),
+  [Tag_source_stub] = TESTINFO_OFFSET(source_stub),
+  [Tag_working_dir] = TESTINFO_OFFSET(working_dir),
+  [Tag_program_name] = TESTINFO_OFFSET(program_name),
+  [Tag_exit_code] = TESTINFO_OFFSET(exit_code),
+  [Tag_max_open_file_count] = TESTINFO_OFFSET(max_open_file_count),
+  [Tag_max_process_count] = TESTINFO_OFFSET(max_process_count),
+  [Tag_time_limit_ms] = TESTINFO_OFFSET(time_limit_ms),
+  [Tag_real_time_limit_ms] = TESTINFO_OFFSET(real_time_limit_ms),
+  [Tag_max_vm_size] = TESTINFO_OFFSET(max_vm_size),
+  [Tag_max_stack_size] = TESTINFO_OFFSET(max_stack_size),
+  [Tag_max_file_size] = TESTINFO_OFFSET(max_file_size),
+  [Tag_max_rss_size] = TESTINFO_OFFSET(max_rss_size),
+  [Tag_check_stderr] = TESTINFO_OFFSET(check_stderr),
+  [Tag_disable_stderr] = TESTINFO_OFFSET(disable_stderr),
+  [Tag_enable_subst] = TESTINFO_OFFSET(enable_subst),
+  [Tag_compiler_must_fail] = TESTINFO_OFFSET(compiler_must_fail),
+  [Tag_allow_compile_error] = TESTINFO_OFFSET(allow_compile_error),
+  [Tag_disable_valgrind] = TESTINFO_OFFSET(disable_valgrind),
+  [Tag_ignore_exit_code] = TESTINFO_OFFSET(ignore_exit_code),
+};
 
 struct line_buf
 {
@@ -505,6 +540,9 @@ parse_line(const unsigned char *str, size_t len, testinfo_t *pt, struct testinfo
     free(subst_str);
     return retval;
   }
+
+  int tag = match(name_buf);
+  (void) tag;
 
   if (!strcmp(name_buf, "params")) {
     if (pt->cmd_argc >= 0) FAIL(TINF_E_VAR_REDEFINED);

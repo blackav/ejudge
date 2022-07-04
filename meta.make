@@ -70,6 +70,6 @@ tools/genmatcher2 : tools/genmatcher2.c
 gen/testing_report_tags.c : tools/genmatcher2 lib/testing_report_tags.txt
 	./tools/genmatcher2 < lib/testing_report_tags.txt > gen/testing_report_tags.c
 
-gen/testinfo.c : tools/genmatcher2 lib/testinfo_tags.txt
+gen/testinfo.c : tools/genmatcher2 lib/testinfo_tags.txt lib/testinfo_f.c
 	./tools/genmatcher2 < lib/testinfo_tags.txt > gen/testinfo.c
 	cat < lib/testinfo_f.c >> gen/testinfo.c
