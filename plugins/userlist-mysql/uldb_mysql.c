@@ -3496,7 +3496,7 @@ clear_user_member_field_func(
     fprintf(cmd_f, "%s = 0", fields[field_id].sql_name);
     break;
   case USERLIST_NM_GRADE:
-    fprintf(cmd_f, "%s = 0", fields[field_id].sql_name);
+    fprintf(cmd_f, "%s = -1", fields[field_id].sql_name);
     break;
   case USERLIST_NM_FIRSTNAME:
     fprintf(cmd_f, "%s = NULL", fields[field_id].sql_name);
