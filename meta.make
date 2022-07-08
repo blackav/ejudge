@@ -67,11 +67,11 @@ csp/contests/%.o : csp/contests/%.c
 tools/genmatcher2 : tools/genmatcher2.c
 	$(CC) $(CFLAGS) $< -o $@
 
-tools/genmatcher3 : tools/genmatcher3.c
-	$(CC) $(CFLAGS) $< -o $@
+tools/genmatcher3 : tools/genmatcher3.c lib/trie_3.c
+	$(CC) $(CFLAGS) $^ -o $@
 
 gen/testing_report_tags.c : tools/genmatcher2 lib/testing_report_tags.txt
 	./tools/genmatcher2 < lib/testing_report_tags.txt > gen/testing_report_tags.c
 
 gen/testinfo_lookup.c : tools/genmatcher3 lib/testinfo.c
-	./tools/genmatcher3 > gen/testinfo_lookup.c
+	./tools/genmatcher3 lib/testinfo.c testinfo > gen/testinfo_lookup.c

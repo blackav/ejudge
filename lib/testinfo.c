@@ -62,6 +62,8 @@ enum
   Tag_disable_valgrind,
   Tag_ignore_exit_code
 };
+
+/// TRIE_STRINGS_BEGIN
 static __attribute__((unused)) const char * const tag_table[] =
 {
   "params",
@@ -94,11 +96,12 @@ static __attribute__((unused)) const char * const tag_table[] =
   "disable_valgrind",
   "ignore_exit_code",
 };
+/// TRIE_STRINGS_END
 
 #define XOFFSET(type,field)       ((long) &((type*) 0)->field)
 #define TESTINFO_OFFSET(f)        XOFFSET(struct testinfo_struct, f)
 #define XPDEREF(type,base,offset) (((type*) (((char*) (base)) + (offset))))
-static __attribute__((unused)) unsigned int tag_offsets[] =
+static unsigned int tag_offsets[] =
 {
   [Tag_params] = TESTINFO_OFFSET(cmd),
   [Tag_environ] = TESTINFO_OFFSET(env),
@@ -132,6 +135,7 @@ static __attribute__((unused)) unsigned int tag_offsets[] =
 };
 
 struct trie_data;
+extern const struct trie_data testinfo_trie;
 
 int
 trie_check_16(
@@ -615,7 +619,7 @@ parse_line(const unsigned char *str, size_t len, testinfo_t *pt, struct testinfo
     return retval;
   }
 
-  switch ((tag = trie_check_16(NULL, name_buf))) {
+  switch ((tag = trie_check_16(&testinfo_trie, name_buf))) {
   case Tag_params:
   case Tag_environ:
   case Tag_checker_env:

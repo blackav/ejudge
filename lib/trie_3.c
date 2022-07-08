@@ -307,7 +307,7 @@ trie_compile_f_16(unsigned char *(*index_func)(void *cntx, unsigned int index), 
     for (uint32_t i = 0; i < count; ++i) {
         strs[i] = index_func(cntx, i);
     }
-    struct trie_data *res = trie_compile(count, strs);
+    struct trie_data *res = trie_compile_16(count, strs);
     free(strs);
     return res;
 }
@@ -331,7 +331,18 @@ trie_generate_c_16(struct trie_data *trie, const char *varname, FILE *fout)
     }
     if (trie->size % 16 != 0) fprintf(fout, "\n");
     fprintf(fout, "};\n");
+    fprintf(fout,
+            "struct trie_data\n"
+            "{\n"
+            "  const unsigned char *ptr;\n"
+            "  unsigned int reserved;\n"
+            "  unsigned int size;\n"
+            "  unsigned int root_offset;\n"
+            "  unsigned char mode_16;\n"
+            "};\n");
+
     fprintf(fout, "const struct trie_data %s_trie =\n{\n"
-            "  %s_data, %u, %u, %u,\n};\n",
-            varname, varname, trie->reserved, trie->size, trie->root_offset);
+            "  %s_data, %u, %u, %u, %d\n};\n",
+            varname, varname, trie->size, trie->size, trie->root_offset,
+            trie->mode_16);
 }
