@@ -269,6 +269,7 @@ COMMON_CFILES=\
  lib/teamdb_2.c\
  lib/team_extra.c\
  lib/team_extra_xml.c\
+ lib/testinfo.c\
  lib/testing_report_bson.c\
  lib/testing_report_xml.c\
  lib/tex_dom.c\

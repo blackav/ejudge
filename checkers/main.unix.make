@@ -46,10 +46,10 @@ AR=ar
 
 include files.make
 
-OFILES=$(CFILES:.c=.o) testinfo_lookup.o
-PICOFILES = $(CFILES:%.c=pic/%.o) pic/testinfo_lookup.o
-PIC32OFILES = $(CFILES:%.c=pic32/%.o) pic32/testinfo_lookup.o
-O32FILES=$(CFILES:%.c=m32/%.o) m32/testinfo_lookup.o
+OFILES=$(CFILES:.c=.o) trie_4.o testinfo.o testinfo_lookup.o
+PICOFILES = $(CFILES:%.c=pic/%.o) pic/trie_4.o pic/testinfo.o pic/testinfo_lookup.o
+PIC32OFILES = $(CFILES:%.c=pic32/%.o) pic32/trie_4.o pic32/testinfo.o pic32/testinfo_lookup.o
+O32FILES=$(CFILES:%.c=m32/%.o) m32/trie_4.o m32/testinfo.o m32/testinfo_lookup.o
 CHKXFILES = $(CHKCFILES:.c=)
 STYLEXFILES = $(STYLECFILES:.c=)
 
@@ -69,7 +69,7 @@ TARGETLIBS = libchecker.a libchecker2.a
 all : ${TARGETS} mo
 
 clean :
-	-rm -fr *.o *.a *.so *~ *.bak testinfo.h testinfo_lookup.c pic pic32 m32 ${CHKXFILES} ${STYLEXFILES}
+	-rm -fr *.o *.a *.so *~ *.bak testinfo.h trie.h trie_private.h trie_4.c testinfo.c testinfo_lookup.c pic pic32 m32 ${CHKXFILES} ${STYLEXFILES}
 pic :
 	mkdir pic
 
@@ -199,13 +199,25 @@ xrealloc.o: xrealloc.c checker_internal.h
 pic/xrealloc.o: xrealloc.c checker_internal.h
 xstrdup.o: xstrdup.c checker_internal.h
 pic/xstrdup.o: xstrdup.c checker_internal.h
+trie_4.o: trie_4.c trie.h trie_private.h
+pic/trie_4.o: trie_4.c trie.h trie_private.h
+testinfo.o: testinfo.c testinfo.h
+pic/testinfo.o: testinfo.c testinfo.h
 testinfo_lookup.o: testinfo_lookup.c testinfo.h
 pic/testinfo_lookup.o: testinfo_lookup.c testinfo.h
 
+trie.h: ../include/ejudge/trie.h
+	ln -sf ../include/ejudge/trie.h .
+trie_private.h: ../include/ejudge/trie_private.h
+	ln -sf ../include/ejudge/trie_private.h .
 testinfo.h: ../include/ejudge/testinfo.h
 	ln -sf ../include/ejudge/testinfo.h .
 testinfo_lookup.c: ../gen/testinfo_lookup.c
 	ln -sf ../gen/testinfo_lookup.c
+testinfo.c: ../lib/testinfo.c
+	ln -sf ../lib/testinfo.c
+trie_4.c: ../lib/trie_4.c
+	ln -sf ../lib/trie_4.c
 
 ifdef STATIC
 cmp_% : cmp_%.c checker.h checker_internal.h libchecker.a

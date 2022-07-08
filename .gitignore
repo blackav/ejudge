@@ -54,7 +54,6 @@ csp_header.make
 filter_expr.c
 filter_expr.h
 filter_scan.c
-genmatcher
 /Makefile.in
 autom4te.cache
 struct-sizes
@@ -64,7 +63,6 @@ ej-suid-chown
 ej-suid-kill
 ej-suid-ipcrm
 ej-suid-container
-genmatcher2
 ejudge-suid-setup
 make-js-actions
 ejudge-change-contests

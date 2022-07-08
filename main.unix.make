@@ -1,6 +1,6 @@
 # -*- Makefile -*-
 
-# Copyright (C) 2014-2021 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2014-2022 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -420,7 +420,7 @@ ejudge-install.sh : ejudge-setup
 	./ejudge-setup -b -i scripts/lang_ids.cfg
 
 local_clean:
-	-rm -f *.o *~ *.a $(TARGETS) revinfo tools/newrevinfo version.c $(ARCH)/*.o ejudge.po mkChangeLog2 userlist_clnt/*.o xml_utils/*.o super_clnt/*.o cdeps deps.make gen/filter_expr.[ch] gen/filter_scan.c cgi-bin/users cgi-bin/users${CGI_PROG_SUFFIX} ejudge-config cgi-bin/serve-control cgu-bin/serve-control${CGI_PROG_SUFFIX} prjutils2/*.o tools/make-js-actions new_server_clnt/*.o mktable tools/struct-sizes *.debug lib/*.o gen/*.o cgi-bin/*.o bin/*.o tools/genmatcher2 tools/genmatcher
+	-rm -f *.o *~ *.a $(TARGETS) revinfo tools/newrevinfo version.c $(ARCH)/*.o ejudge.po mkChangeLog2 userlist_clnt/*.o xml_utils/*.o super_clnt/*.o cdeps deps.make gen/filter_expr.[ch] gen/filter_scan.c cgi-bin/users cgi-bin/users${CGI_PROG_SUFFIX} ejudge-config cgi-bin/serve-control cgu-bin/serve-control${CGI_PROG_SUFFIX} prjutils2/*.o tools/make-js-actions new_server_clnt/*.o mktable tools/struct-sizes *.debug lib/*.o gen/*.o cgi-bin/*.o bin/*.o tools/genmatcher2 tools/genmatcher tools/genmatcher3
 	-rm -rf locale
 clean: subdir_clean local_clean
 

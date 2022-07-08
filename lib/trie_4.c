@@ -14,8 +14,13 @@
  * GNU General Public License for more details.
  */
 
+#ifdef EJUDGE_CHECKER
+#include "trie.h"
+#include "trie_private.h"
+#else
 #include "ejudge/trie.h"
 #include "ejudge/trie_private.h"
+#endif
 
 #include <stdint.h>
 #include <stdlib.h>

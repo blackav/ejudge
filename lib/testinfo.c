@@ -30,6 +30,71 @@
 #include <malloc.h>
 #endif
 
+enum
+{
+  Tag_params = 0,
+  Tag_environ,
+  Tag_checker_env,
+  Tag_interactor_env,
+  Tag_init_env,
+  Tag_compiler_env,
+  Tag_style_checker_env,
+  Tag_ok_language,
+  Tag_comment,
+  Tag_team_comment,
+  Tag_source_stub,
+  Tag_working_dir,
+  Tag_program_name,
+  Tag_exit_code,
+  Tag_max_open_file_count,
+  Tag_max_process_count,
+  Tag_time_limit_ms,
+  Tag_real_time_limit_ms,
+  Tag_max_vm_size,
+  Tag_max_stack_size,
+  Tag_max_file_size,
+  Tag_max_rss_size,
+  Tag_check_stderr,
+  Tag_disable_stderr,
+  Tag_enable_subst,
+  Tag_compiler_must_fail,
+  Tag_allow_compile_error,
+  Tag_disable_valgrind,
+  Tag_ignore_exit_code
+};
+static __attribute__((unused)) const char * const tag_table[] =
+{
+  "params",
+  "environ",
+  "checker_env",
+  "interactor_env",
+  "init_env",
+  "compiler_env",
+  "style_checker_env",
+  "ok_language",
+  "comment",
+  "team_comment",
+  "source_stub",
+  "working_dir",
+  "program_name",
+  "exit_code",
+  "max_open_file_count",
+  "max_process_count",
+  "time_limit_ms",
+  "real_time_limit_ms",
+  "max_vm_size",
+  "max_stack_size",
+  "max_file_size",
+  "max_rss_size",
+  "check_stderr",
+  "disable_stderr",
+  "enable_subst",
+  "compiler_must_fail",
+  "allow_compile_error",
+  "disable_valgrind",
+  "ignore_exit_code",
+};
+
 #define XOFFSET(type,field)       ((long) &((type*) 0)->field)
 #define TESTINFO_OFFSET(f)        XOFFSET(struct testinfo_struct, f)
 #define XPDEREF(type,base,offset) (((type*) (((char*) (base)) + (offset))))
@@ -65,6 +130,13 @@ static __attribute__((unused)) unsigned int tag_offsets[] =
   [Tag_disable_valgrind] = TESTINFO_OFFSET(disable_valgrind),
   [Tag_ignore_exit_code] = TESTINFO_OFFSET(ignore_exit_code),
 };
+
+struct trie_data;
+
+int
+trie_check_16(
+        const struct trie_data *td,
+        const unsigned char *str);
 
 struct line_buf
 {
@@ -543,7 +615,7 @@ parse_line(const unsigned char *str, size_t len, testinfo_t *pt, struct testinfo
     return retval;
   }
 
-switch ((tag = match(name_buf))) {
+  switch ((tag = trie_check_16(NULL, name_buf))) {
   case Tag_params:
   case Tag_environ:
   case Tag_checker_env:
