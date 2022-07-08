@@ -275,6 +275,10 @@ COMMON_CFILES=\
  lib/tex_dom_parse.c\
  lib/tex_dom_doc.c\
  lib/tex_dom_render.c\
+ lib/trie_1.c\
+ lib/trie_2.c\
+ lib/trie_3.c\
+ lib/trie_4.c\
  lib/tsc.c\
  lib/type_info.c\
  lib/uldb_plugin_xml.c\
@@ -644,6 +648,8 @@ HFILES=\
  ./include/ejudge/testing_report_xml.h\
  ./include/ejudge/tex_dom.h\
  ./include/ejudge/timestamp.h\
+ ./include/ejudge/trie.h\
+ ./include/ejudge/trie_private.h\
  ./include/ejudge/tsc.h\
  ./include/ejudge/type_info.h\
  ./include/ejudge/uldb_plugin.h\
