@@ -24,4 +24,5 @@ style_c
 new_style_c
 testinfo.c
 testinfo.h
+testinfo_lookup.c
 gvaluer

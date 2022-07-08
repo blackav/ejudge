@@ -12,7 +12,7 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 # Lesser General Public License for more details.
 
-META_C_FILES = gen/contests_meta.c gen/super-serve_meta.c gen/prepare_meta.c gen/super_html_6_meta.c gen/super_run_packet_meta.c gen/problem_config_meta.c gen/polygon_packet_meta.c gen/ej_import_packet_meta.c gen/new_server_match.c gen/dates_config_meta.c gen/compile_packet_meta.c gen/testinfo.c
+META_C_FILES = gen/contests_meta.c gen/super-serve_meta.c gen/prepare_meta.c gen/super_html_6_meta.c gen/super_run_packet_meta.c gen/problem_config_meta.c gen/polygon_packet_meta.c gen/ej_import_packet_meta.c gen/new_server_match.c gen/dates_config_meta.c gen/compile_packet_meta.c gen/testinfo_lookup.c
 META_H_FILES = ./include/ejudge/meta/contests_meta.h ./include/ejudge/meta/super-serve_meta.h ./include/ejudge/meta/prepare_meta.h ./include/ejudge/meta/super_html_6_meta.h ./include/ejudge/meta/super_run_packet_meta.h ./include/ejudge/meta/problem_config_meta.h ./include/ejudge/meta/polygon_packet_meta.h ./include/ejudge/meta/ej_import_packet_meta.h ./include/ejudge/meta/dates_config_meta.h ./include/ejudge/meta/compile_packet_meta.h
 META_O_FILES = $(META_C_FILES:.c=.o)
 
@@ -70,6 +70,6 @@ tools/genmatcher2 : tools/genmatcher2.c
 gen/testing_report_tags.c : tools/genmatcher2 lib/testing_report_tags.txt
 	./tools/genmatcher2 < lib/testing_report_tags.txt > gen/testing_report_tags.c
 
-gen/testinfo.c : tools/genmatcher2 lib/testinfo_tags.txt lib/testinfo_f.c
-	./tools/genmatcher2 < lib/testinfo_tags.txt > gen/testinfo.c
-	cat < lib/testinfo_f.c >> gen/testinfo.c
+gen/testinfo_lookup.c : tools/genmatcher2 lib/testinfo_tags.txt lib/testinfo_f.c
+	./tools/genmatcher2 < lib/testinfo_tags.txt > gen/testinfo_lookup.c
+	cat < lib/testinfo_f.c >> gen/testinfo_lookup.c
