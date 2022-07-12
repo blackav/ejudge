@@ -159,6 +159,7 @@ COMMON_CFILES=\
  lib/digest_5.c\
  lib/dos2unix_str.c\
  lib/dwarf_parse.c\
+ lib/dyntrie.c\
  lib/ej_import_packet.c\
  lib/ejudge_cfg.c\
  lib/ejudge_cfg_var.c\
@@ -556,6 +557,7 @@ HFILES=\
  ./include/ejudge/diff.h\
  ./include/ejudge/digest_io.h\
  ./include/ejudge/dwarf_parse.h\
+ ./include/ejudge/dyntrie.h\
  ./include/ejudge/ejudge_cfg.h\
  ./include/ejudge/ejudge_plugin.h\
  ./include/ejudge/ej_byteorder.h\
