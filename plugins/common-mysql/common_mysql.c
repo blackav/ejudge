@@ -155,6 +155,15 @@ unparse_spec_2_func(
         unsigned long long skip_mask,
         const void *data,
         ...);
+static void
+unparse_spec_3_func(
+        struct common_mysql_state *state,
+        FILE *fout,
+        int spec_num,
+        const struct common_mysql_parse_spec *specs,
+        unsigned long long skip_mask,
+        const void *data,
+        ...);
 
 /* plugin entry point */
 struct common_mysql_iface plugin_common_mysql =
@@ -201,6 +210,7 @@ struct common_mysql_iface plugin_common_mysql =
   write_datetime_func,
   parse_int64_func,
   unparse_spec_2_func,
+  unparse_spec_3_func,
 };
 
 static struct common_plugin_data *
@@ -1283,6 +1293,128 @@ unparse_spec_2_func(
     case 'u': // 128-bit
       p_uq = XPDEREF(ej_cookie_t, data, specs[i].offset);
       fprintf(fout, "%s'%s'", sep,
+              xml_unparse_full_cookie(u_buf, sizeof(u_buf), p_uq, p_uq + 1));
+      break;
+
+    default:
+      err("unhandled format %d", specs[i].format);
+      abort();
+    }
+    sep = ", ";
+  }
+  va_end(args);
+}
+
+static void
+unparse_spec_3_func(
+        struct common_mysql_state *state,
+        FILE *fout,
+        int spec_num,
+        const struct common_mysql_parse_spec *specs,
+        unsigned long long skip_mask,
+        const void *data,
+        ...)
+{
+  int i, val;
+  va_list args;
+  const unsigned char *sep = "";
+  const unsigned char *str;
+  unsigned char **p_str;
+  const time_t *p_time;
+  const int *p_int;
+  const unsigned long long *p_uq;
+  unsigned long long uq;
+  ej_ip4_t *p_ip;
+  ej_ip_t *p_ipv6;
+  unsigned char u_buf[64];
+
+  va_start(args, data);
+  for (i = 0; i < spec_num; ++i) {
+    if ((skip_mask & (1ULL << i)) != 0) continue;
+
+    if (specs[i].format) {
+      fprintf(fout, "%s%s = ", sep, specs[i].name);
+    }
+    switch (specs[i].format) {
+    case 0: break;
+    case 'q':
+      p_uq = XPDEREF(unsigned long long, data, specs[i].offset);
+      uq = *p_uq;
+      fprintf(fout, "'%016llx'", uq);
+      break;
+
+    case 'e':
+      p_int = XPDEREF(int, data, specs[i].offset);
+      val = *p_int;
+      if (val == -1) {
+        fprintf(fout, "DEFAULT");
+      } else {
+        fprintf(fout, "%d", val);
+      }
+      break;
+
+    case 'd':
+      p_int = XPDEREF(int, data, specs[i].offset);
+      val = *p_int;
+      fprintf(fout, "%d", val);
+      break;
+
+    case 'D':
+      val = va_arg(args, int);
+      fprintf(fout, "%d", val);
+      break;
+
+    case 'b':
+      p_int = XPDEREF(int, data, specs[i].offset);
+      val = *p_int;
+      if (val) val = 1;
+      fprintf(fout, "%d", val);
+      break;
+
+    case 'B':
+      val = va_arg(args, int);
+      if (val) val = 1;
+      fprintf(fout, "%d", val);
+      break;
+
+    case 's':
+      p_str = XPDEREF(unsigned char *, data, specs[i].offset);
+      write_escaped_string_func(state, fout, "", *p_str);
+      break;
+
+    case 'S':
+      str = va_arg(args, const unsigned char *);
+      write_escaped_string_func(state, fout, "", str);
+      break;
+
+    case 't':
+      p_time = XPDEREF(time_t, data, specs[i].offset);
+      write_timestamp_func(state, fout, "", *p_time);
+      break;
+
+    case 'T': {
+      const struct timeval *ptv = XPDEREF(struct timeval, data, specs[i].offset);
+      write_datetime_func(state, fout, "", ptv);
+      break;
+    }
+    case 'a':
+      p_time = XPDEREF(time_t, data, specs[i].offset);
+      write_date_func(state, fout, "", *p_time);
+      break;
+
+    case 'i':
+      p_ip = XPDEREF(ej_ip4_t, data, specs[i].offset);
+      fprintf(fout, "'%s'", xml_unparse_ip(*p_ip));
+      break;
+
+    case 'I':
+      p_ipv6 = XPDEREF(ej_ip_t, data, specs[i].offset);
+      fprintf(fout, "'%s'", xml_unparse_ipv6(p_ipv6));
+      break;
+
+    case 'u': // 128-bit
+      p_uq = XPDEREF(ej_cookie_t, data, specs[i].offset);
+      fprintf(fout, "'%s'",
               xml_unparse_full_cookie(u_buf, sizeof(u_buf), p_uq, p_uq + 1));
       break;
 

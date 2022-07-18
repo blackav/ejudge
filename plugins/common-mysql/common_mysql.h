@@ -172,6 +172,15 @@ struct common_mysql_iface
         unsigned long long skip_mask,
         const void *data,
         ...);
+
+  void (*unparse_spec_3_func)(
+        struct common_mysql_state *state,
+        FILE *fout,
+        int spec_num,
+        const struct common_mysql_parse_spec *specs,
+        unsigned long long skip_mask,
+        const void *data,
+        ...);
 };
 
 #define db_error_fail(s) do { s->i->error(s); goto fail; } while (0)
