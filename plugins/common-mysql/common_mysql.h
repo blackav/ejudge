@@ -164,7 +164,7 @@ struct common_mysql_iface
         int index,
         long long *p_val);
 
-  void (*unparse_spec_2_func)(
+  void (*unparse_spec_2)(
         struct common_mysql_state *state,
         FILE *fout,
         int spec_num,
@@ -173,7 +173,7 @@ struct common_mysql_iface
         const void *data,
         ...);
 
-  void (*unparse_spec_3_func)(
+  void (*unparse_spec_3)(
         struct common_mysql_state *state,
         FILE *fout,
         int spec_num,
