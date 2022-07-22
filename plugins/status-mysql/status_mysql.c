@@ -446,6 +446,7 @@ save_func(
     FILE *cmd_f = NULL;
 
     struct status_internal stint = {};
+    stint.contest_id = sdsm->contest_id;
     stint.cur_time = stat->cur_time;
     stint.start_time = stat->start_time;
     stint.sched_time = stat->sched_time;
