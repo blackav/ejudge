@@ -230,6 +230,9 @@ create_database(
     if (mi->simple_fquery(md, create_query, md->table_prefix) < 0)
         db_error_fail(md);
 
+    if (mi->simple_fquery(md, "INSERT INTO %sconfig VALUES ('status_version', '%d') ;", md->table_prefix, 1) < 0)
+        db_error_fail(md);
+
     state->is_db_checked = 1;
     return 0;
 
