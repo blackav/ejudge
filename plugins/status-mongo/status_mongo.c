@@ -1,4 +1,4 @@
-/* -*- mode: c -*- */
+/* -*- mode: c; c-basic-offset: 4 -*- */
 
 /* Copyright (C) 2019-2022 Alexander Chernov <cher@ejudge.ru> */
 
@@ -88,6 +88,13 @@ remove_func(
         const struct ejudge_cfg *config,
         const struct contest_desc *cnts,
         const struct section_global_data *global);
+static int
+has_status_func(
+        const struct common_loaded_plugin *self,
+        const struct ejudge_cfg *config,
+        const struct contest_desc *cnts,
+        const struct section_global_data *global,
+        int flags);
 
 static int
 serve_status_bson_parse(
@@ -120,7 +127,7 @@ struct status_plugin_iface plugin_status_mongo =
     load_func,
     save_func,
     remove_func,
-    NULL, // has_status_func
+    has_status_func,
 };
 
 static struct common_plugin_data *
@@ -372,6 +379,83 @@ remove_func(
         const struct section_global_data *global)
 {
     struct status_mongo_state *sms __attribute__((unused)) = (struct status_mongo_state *) sds;
+}
+
+static int
+has_status_func(
+        const struct common_loaded_plugin *self,
+        const struct ejudge_cfg *config,
+        const struct contest_desc *cnts,
+        const struct section_global_data *global,
+        int flags)
+{
+    struct status_mongo_plugin_state *ps = (struct status_mongo_plugin_state *) self->data;
+#if HAVE_LIBMONGOC - 0 > 0
+    int retval = -1;
+    bson_t *query = NULL;
+    int count;
+    bson_t **results = NULL;
+
+    query = bson_new();
+    bson_append_int32(query, "contest_id", -1, cnts->id);
+    count = ps->common->i->query(ps->common, "status", 0, 1, query, NULL, &results);
+    if (count < 0) goto cleanup;
+    if (count > 1) {
+        err("load_func: multiple entries returned: %d", count);
+        goto cleanup;
+    }
+    if (count == 1 && results[0]) {
+        retval = 1;
+    } else {
+        retval = 0;
+    }
+
+cleanup:;
+    if (query) bson_destroy(query);
+    if (results) {
+        for (int i = 0; i < count; ++i) {
+            bson_destroy(results[i]);
+        }
+        xfree(results);
+    }
+    return retval;
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
+    bson *query = NULL;
+    int count = 0;
+    bson **results = NULL;
+    int retval = -1;
+
+    query = bson_new();
+    bson_append_int32(query, "contest_id", cnts->id);
+    bson_finish(query);
+
+    count = ps->common->i->query(ps->common, "status", 0, 1, query, NULL, &results);
+    if (count < 0) goto done;
+    if (count > 1) {
+        err("load_func: multiple entries returned: %d", count);
+        goto done;
+    }
+    if (count == 1) {
+            retval = 1;
+        } else {
+            retval = 0;
+        }
+    } else {
+        retval = 0;
+    }
+
+done:
+    if (query) bson_free(query);
+    if (results) {
+        for (int i = 0; i < count; ++i) {
+            bson_free(results[i]);
+        }
+        xfree(results);
+    }
+    return retval;
+#else
+    return -1;
+#endif
 }
 
 static ej_bson_t *
