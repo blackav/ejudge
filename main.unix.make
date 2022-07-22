@@ -189,6 +189,7 @@ subdirs_all:
 	$(MAKE) -C plugins/rundb-mysql DESTDIR="${DESTDIR}" all
 	$(MAKE) -C plugins/common-mongo DESTDIR="${DESTDIR}" all
 	$(MAKE) -C plugins/xuser-mongo DESTDIR="${DESTDIR}" all
+	$(MAKE) -C plugins/xuser-mysql DESTDIR="${DESTDIR}" all
 	$(MAKE) -C plugins/avatar-mongo DESTDIR="${DESTDIR}" all
 	$(MAKE) -C plugins/status-mongo DESTDIR="${DESTDIR}" all
 	$(MAKE) -C plugins/status-mysql DESTDIR="${DESTDIR}" all
@@ -257,6 +258,7 @@ install: local_install
 	$(MAKE) -C plugins/rundb-mysql DESTDIR="${DESTDIR}" install
 	$(MAKE) -C plugins/common-mongo DESTDIR="${DESTDIR}" install
 	$(MAKE) -C plugins/xuser-mongo DESTDIR="${DESTDIR}" install
+	$(MAKE) -C plugins/xuser-mysql DESTDIR="${DESTDIR}" install
 	$(MAKE) -C plugins/avatar-mongo DESTDIR="${DESTDIR}" install
 	$(MAKE) -C plugins/status-mongo DESTDIR="${DESTDIR}" install
 	$(MAKE) -C plugins/status-mysql DESTDIR="${DESTDIR}" install
@@ -441,6 +443,7 @@ subdir_clean:
 	$(MAKE) -C plugins/rundb-mysql DESTDIR="${DESTDIR}" clean
 	$(MAKE) -C plugins/common-mongo DESTDIR="${DESTDIR}" clean
 	$(MAKE) -C plugins/xuser-mongo DESTDIR="${DESTDIR}" clean
+	$(MAKE) -C plugins/xuser-mysql DESTDIR="${DESTDIR}" clean
 	$(MAKE) -C plugins/avatar-mongo DESTDIR="${DESTDIR}" clean
 	$(MAKE) -C plugins/status-mongo DESTDIR="${DESTDIR}" clean
 	$(MAKE) -C plugins/status-mysql DESTDIR="${DESTDIR}" clean
@@ -470,6 +473,7 @@ subdir_distclean :
 	$(MAKE) -C plugins/rundb-mysql DESTDIR="${DESTDIR}" distclean
 	$(MAKE) -C plugins/common-mongo DESTDIR="${DESTDIR}" distclean
 	$(MAKE) -C plugins/xuser-mongo DESTDIR="${DESTDIR}" distclean
+	$(MAKE) -C plugins/xuser-mysql DESTDIR="${DESTDIR}" distclean
 	$(MAKE) -C plugins/avatar-mongo DESTDIR="${DESTDIR}" distclean
 	$(MAKE) -C plugins/status-mongo DESTDIR="${DESTDIR}" distclean
 	$(MAKE) -C plugins/status-mysql DESTDIR="${DESTDIR}" distclean
