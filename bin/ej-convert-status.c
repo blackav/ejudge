@@ -22,6 +22,9 @@
 #include "ejudge/serve_state.h"
 #include "ejudge/prepare.h"
 #include "ejudge/statusdb.h"
+#include "ejudge/xml_utils.h"
+#include "ejudge/base64.h"
+#include "ejudge/compat.h"
 #include "ejudge/osdeps.h"
 #include "ejudge/xalloc.h"
 
@@ -185,6 +188,63 @@ done:
     statusdb_close(new_sdb_state);
     serve_state_destroy(NULL, ejudge_config, state, cnts, NULL);
 }
+
+/* force linking of certain functions that may be needed by plugins */
+void *forced_link_table[] =
+{
+  xml_parse_ip,
+  xml_parse_date,
+  xml_parse_int,
+  xml_parse_ip_mask,
+  xml_parse_bool,
+  xml_unparse_text,
+  xml_unparse_bool,
+  xml_unparse_ip,
+  xml_unparse_date,
+  xml_unparse_ip_mask,
+  xml_err_get_elem_name,
+  xml_err_get_attr_name,
+  xml_err,
+  xml_err_a,
+  xml_err_attrs,
+  xml_err_nested_elems,
+  xml_err_attr_not_allowed,
+  xml_err_elem_not_allowed,
+  xml_err_elem_redefined,
+  xml_err_top_level,
+  xml_err_top_level_s,
+  xml_err_attr_invalid,
+  xml_err_elem_undefined,
+  xml_err_elem_undefined_s,
+  xml_err_attr_undefined,
+  xml_err_attr_undefined_s,
+  xml_err_elem_invalid,
+  xml_err_elem_empty,
+  xml_leaf_elem,
+  xml_empty_text,
+  xml_empty_text_c,
+  xml_attr_bool,
+  xml_attr_bool_byte,
+  xml_attr_int,
+  xml_attr_ulong,
+  xml_attr_date,
+  xml_do_parse_ipv6,
+  xml_parse_ipv6_2,
+  xml_parse_ipv6,
+  xml_unparse_ipv6,
+  ipv6cmp,
+  ipv6_match_mask,
+  xml_msg,
+  xml_unparse_ipv6_mask,
+  xml_parse_ipv6_mask,
+  xml_elem_ipv6_mask,
+  ipv6_is_empty,
+  xml_unparse_full_cookie,
+  xml_parse_full_cookie,
+  base64u_decode,
+
+  close_memstream,
+};
 
 int
 main(int argc, char *argv[])
