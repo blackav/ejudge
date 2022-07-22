@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2019 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -797,7 +797,7 @@ serve_state_load_contest(
     }
   }
 
-  state->statusdb_state = statusdb_open(config, cnts, global, NULL, 0);
+  state->statusdb_state = statusdb_open(config, cnts, global, NULL, 0, 1);
   if (!state->statusdb_state) {
     err("load_contest: contest %d statusdb plugin failed to load", contest_id);
     goto failure;

@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2019 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2019-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -31,7 +31,8 @@ statusdb_open(
         const struct contest_desc *cnts,
         const struct section_global_data *global,
         const unsigned char *plugin_name,
-        int flags)
+        int flags,
+        int enable_migrate)
 {
     if (!plugin_registered) {
         if (!plugin_register_builtin(&plugin_status_file.b, config)) {
@@ -93,6 +94,8 @@ statusdb_open(
     const struct status_plugin_iface *iface = (struct status_plugin_iface*) loaded_plugin->iface;
     struct statusdb_state *sds = iface->open(loaded_plugin, config, cnts, global, flags);
     if (!sds) return NULL;
+
+    if (enable_migrate <= 0) return sds;
 
     // check if we need to upgrade from the file plugin
     const struct status_plugin_iface *fif = (struct status_plugin_iface*) file_plugin->iface;

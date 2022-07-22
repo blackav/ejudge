@@ -96,7 +96,8 @@ statusdb_open(
         const struct contest_desc *cnts,
         const struct section_global_data *global,
         const unsigned char *plugin_name,
-        int flags);
+        int flags,
+        int enable_migrate);
 
 void
 statusdb_close(
