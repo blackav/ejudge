@@ -162,7 +162,8 @@ process_contest(
         goto done;
     }
     if (!res) {
-        printf("contest %d no status, skipping\n", contest_id);
+        printf("contest %d no status with plugin %s, skipping\n",
+               contest_id, current_plugin);
         goto done;
     }
 
