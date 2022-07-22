@@ -283,11 +283,6 @@ check_database(
         }
     }
 
-    if (status_version != 1) {
-        err("status_version == %d is not supported", status_version);
-        goto fail;
-    }
-
     state->is_db_checked = 1;
     return 0;
 
