@@ -174,7 +174,7 @@ struct statusdb_state_mysql
 };
 
 static const char create_query[] =
-"CREATE TABLE %sstatus("
+"CREATE TABLE %sstatuses("
 "    contest_id INT NOT NULL PRIMARY KEY,"
 "    cur_time DATETIME DEFAULT NULL,"
 "    start_time DATETIME DEFAULT NULL,"
@@ -345,7 +345,7 @@ load_func(
     struct status_internal stint = {};
 
     if (mi->fquery(md, STATUS_ROW_WIDTH,
-                   "SELECT * FROM %sstatus WHERE contest_id=%d;",
+                   "SELECT * FROM %sstatuses WHERE contest_id=%d;",
                    md->table_prefix, sdsm->contest_id) < 0)
         db_error_fail(md);
     if (!md->row_count) {
@@ -506,7 +506,7 @@ save_func(
     }
 
     cmd_f = open_memstream(&cmd_s, &cmd_z);
-    fprintf(cmd_f, "INSERT INTO %sstatus VALUES ( ", md->table_prefix);
+    fprintf(cmd_f, "INSERT INTO %sstatuses VALUES ( ", md->table_prefix);
     // skip the last field 'last_update_time'
     mi->unparse_spec_2(md, cmd_f, STATUS_ROW_WIDTH, status_spec,
                        (1ULL << (STATUS_ROW_WIDTH - 1)), &stint);
@@ -542,7 +542,7 @@ remove_func(
     struct common_mysql_state *md = data->md;
 
     // errors ignored
-    mi->simple_fquery(md, "DELETE FROM %sstatus WHERE contest_id = %d ;", md->table_prefix, sdsm->contest_id);
+    mi->simple_fquery(md, "DELETE FROM %sstatuses WHERE contest_id = %d ;", md->table_prefix, sdsm->contest_id);
 }
 
 static int
@@ -557,7 +557,7 @@ has_status_func(
     struct common_mysql_iface *mi = data->mi;
     struct common_mysql_state *md = data->md;
 
-    if (mi->fquery(md, 1, "SELECT contest_id FROM %sstatus WHERE contest_id = %d ;", md->table_prefix, cnts->id) < 0) {
+    if (mi->fquery(md, 1, "SELECT contest_id FROM %sstatuses WHERE contest_id = %d ;", md->table_prefix, cnts->id) < 0) {
         return -1;
     }
     return md->row_count == 1;
