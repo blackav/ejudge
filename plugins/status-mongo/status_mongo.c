@@ -436,10 +436,7 @@ cleanup:;
         goto done;
     }
     if (count == 1) {
-            retval = 1;
-        } else {
-            retval = 0;
-        }
+        retval = 1;
     } else {
         retval = 0;
     }
