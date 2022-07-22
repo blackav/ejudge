@@ -128,4 +128,12 @@ statusdb_remove(
         const struct contest_desc *cnts,
         const struct section_global_data *global);
 
+int
+statusdb_has_status(
+        struct statusdb_state *sds,
+        const struct ejudge_cfg *config,
+        const struct contest_desc *cnts,
+        const struct section_global_data *global,
+        int flags);
+
 #endif /* __STATUSDB_H__ */

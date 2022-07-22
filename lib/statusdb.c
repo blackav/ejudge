@@ -178,3 +178,15 @@ statusdb_remove(
     const struct status_plugin_iface *iface = (struct status_plugin_iface*) sds->plugin->iface;
     iface->remove(sds, config, cnts, global);
 }
+
+int
+statusdb_has_status(
+        struct statusdb_state *sds,
+        const struct ejudge_cfg *config,
+        const struct contest_desc *cnts,
+        const struct section_global_data *global,
+        int flags)
+{
+    const struct status_plugin_iface *iface = (struct status_plugin_iface*) sds->plugin->iface;
+    return iface->has_status(sds->plugin, config, cnts, global, flags);
+}
