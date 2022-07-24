@@ -196,7 +196,7 @@ do_create(struct rldb_mysql_state *state)
   if (mi->simple_fquery(md, create_userrunheaders_query, md->table_prefix) < 0)
     db_error_fail(md);
   if (mi->simple_fquery(md,
-                        "INSERT INTO %sconfig VALUES ('run_version', '19') ;",
+                        "INSERT INTO %sconfig VALUES ('run_version', '20') ;",
                         md->table_prefix) < 0)
     db_error_fail(md);
   return 0;
@@ -427,7 +427,14 @@ do_open(struct rldb_mysql_state *state)
       return -1;
     run_version = 19;
   }
-  if (run_version != 19) {
+  if (run_version == 19) {
+    if (mi->simple_fquery(md, "ALTER TABLE %srunheaders ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin ;", md->table_prefix) < 0)
+      return -1;
+    if (mi->simple_fquery(md, "UPDATE %sconfig SET config_val = '20' WHERE config_key = 'run_version' ;", md->table_prefix) < 0)
+      return -1;
+    run_version = 20;
+  }
+  if (run_version != 20) {
     err("run_version == %d is not supported", run_version);
     return -1;
   }

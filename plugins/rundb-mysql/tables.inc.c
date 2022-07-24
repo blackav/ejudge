@@ -182,7 +182,7 @@ static const char create_runheaders_query[] =
 "        last_change_time DATETIME DEFAULT NULL, "
 "        last_change_nsec INT UNSIGNED NOT NULL, "
 "        PRIMARY KEY (contest_id)"
-"        );";
+"        ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;";
 
 struct run_header_internal
 {
