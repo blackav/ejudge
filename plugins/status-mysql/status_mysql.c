@@ -218,7 +218,7 @@ static const char create_query[] =
 "    disable_virtual_start TINYINT NOT NULL DEFAULT 0,"
 "    prob_prio_str VARCHAR(512) DEFAULT NULL,"
 "    last_update_time DATETIME(6) NOT NULL"
-");";
+") ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;";
 
 static int
 create_database(
