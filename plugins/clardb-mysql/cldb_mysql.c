@@ -206,7 +206,7 @@ struct clar_entry_internal
   unsigned char *subj;
 };
 
-#define CLAR_VERSION 8
+#define CLAR_VERSION 9
 
 enum { CLARS_ROW_WIDTH = 24 };
 
@@ -242,7 +242,7 @@ static const struct common_mysql_parse_spec clars_spec[CLARS_ROW_WIDTH] =
 static const char create_clars_query[] =
 "CREATE TABLE %sclars("
 "        clar_id INT UNSIGNED NOT NULL,"
-"        uuid CHAR(40) NOT NULL,"
+"        uuid CHAR(40) CHARSET utf8 COLLATE utf8_bin NOT NULL,"
 "        contest_id INT UNSIGNED NOT NULL,"
 "        size INT UNSIGNED NOT NULL DEFAULT 0,"
 "        create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
@@ -437,6 +437,13 @@ do_open(struct cldb_mysql_state *state)
     if (mi->simple_fquery(md, "UPDATE %sconfig SET config_val = '8' WHERE config_key = 'clar_version' ;", md->table_prefix) < 0)
       return -1;
     clar_version = 8;
+  }
+  if (clar_version == 8) {
+    if (mi->simple_fquery(md, "ALTER TABLE %sclars MODIFY uuid CHAR(40) CHARSET utf8 COLLATE utf8_bin NOT NULL;", md->table_prefix) < 0)
+      return -1;
+    if (mi->simple_fquery(md, "UPDATE %sconfig SET config_val = '9' WHERE config_key = 'clar_version' ;", md->table_prefix) < 0)
+      return -1;
+    clar_version = 9;
   }
 
   // just in case
