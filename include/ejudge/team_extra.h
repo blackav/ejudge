@@ -24,6 +24,7 @@
 
 struct team_warning
 {
+  int serial_id;                /* primary key for warnings table */
   time_t date;                  /* the date of issue */
   int issuer_id;                /* the issuer id */
   ej_ip_t issuer_ip;            /* the ip of the issuer */
