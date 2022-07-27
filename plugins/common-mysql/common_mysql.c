@@ -21,6 +21,7 @@
 #include "ejudge/pathutl.h"
 #include "ejudge/errlog.h"
 #include "ejudge/base64.h"
+#include "ejudge/ej_uuid.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -907,6 +908,15 @@ parse_spec_func(
       }
       break;
     }
+    case 'g': {
+      ej_uuid_t *dst_ptr = XPDEREF(ej_uuid_t, data, specs[i].offset);
+      if (!row[i] || !lengths[i]) {
+        memset(dst_ptr, 0, sizeof(*dst_ptr));
+      } else {
+        if (ej_uuid_parse(row[i], dst_ptr) < 0) goto invalid_format;
+      }
+      break;
+    }
     default:
       err("unhandled format %d", specs[i].format);
       abort();
@@ -1027,6 +1037,18 @@ unparse_spec_func(
       fprintf(fout, "%s'%s'", sep,
               xml_unparse_full_cookie(u_buf, sizeof(u_buf), p_uq, p_uq + 1));
       break;
+
+    case 'g': {
+      ej_uuid_t *p_uuid = XPDEREF(ej_uuid_t, data, specs[i].offset);
+      char uuid_str[40];
+      if (!ej_uuid_is_nonempty(*p_uuid) && specs[i].null_allowed) {
+        fprintf(fout, "%sNULL", sep);
+      } else {
+        ej_uuid_unparse_r(uuid_str, sizeof(uuid_str), p_uuid, NULL);
+        fprintf(fout, "%s'%s'", sep, uuid_str);
+      }
+      break;
+    }
 
     default:
       err("unhandled format %d", specs[i].format);
@@ -1296,6 +1318,18 @@ unparse_spec_2_func(
               xml_unparse_full_cookie(u_buf, sizeof(u_buf), p_uq, p_uq + 1));
       break;
 
+    case 'g': {
+      ej_uuid_t *p_uuid = XPDEREF(ej_uuid_t, data, specs[i].offset);
+      char uuid_str[40];
+      if (!ej_uuid_is_nonempty(*p_uuid) && specs[i].null_allowed) {
+        fprintf(fout, "%sNULL", sep);
+      } else {
+        ej_uuid_unparse_r(uuid_str, sizeof(uuid_str), p_uuid, NULL);
+        fprintf(fout, "%s'%s'", sep, uuid_str);
+      }
+      break;
+    }
+
     default:
       err("unhandled format %d", specs[i].format);
       abort();
@@ -1417,6 +1451,18 @@ unparse_spec_3_func(
       fprintf(fout, "'%s'",
               xml_unparse_full_cookie(u_buf, sizeof(u_buf), p_uq, p_uq + 1));
       break;
+
+    case 'g': {
+      ej_uuid_t *p_uuid = XPDEREF(ej_uuid_t, data, specs[i].offset);
+      char uuid_str[40];
+      if (!ej_uuid_is_nonempty(*p_uuid) && specs[i].null_allowed) {
+        fprintf(fout, "NULL");
+      } else {
+        ej_uuid_unparse_r(uuid_str, sizeof(uuid_str), p_uuid, NULL);
+        fprintf(fout, "'%s'", uuid_str);
+      }
+      break;
+    }
 
     default:
       err("unhandled format %d", specs[i].format);
