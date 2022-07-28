@@ -20,6 +20,7 @@ ej-contests-control
 ej-convert-clars
 ej-convert-runs
 ej-convert-status
+ej-convert-xuser
 ej-fix-db
 ej-import-contest
 ej-jobs

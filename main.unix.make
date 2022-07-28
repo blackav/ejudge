@@ -109,6 +109,9 @@ CR_OBJECTS = ${CR_CFILES:.c=.o} libcommon.a libuserlist_clnt.a libplatform.a lib
 CVTS_CFILES = bin/ej-convert-status.c version.c
 CVTS_OBJECTS = ${CVTS_CFILES:.c=.o} libcommon.a libuserlist_clnt.a libplatform.a libcommon.a
 
+CVTX_CFILES = bin/ej-convert-xuser.c version.c
+CVTX_OBJECTS = ${CVTX_CFILES:.c=.o} libcommon.a libuserlist_clnt.a libplatform.a libcommon.a
+
 FIX_DB_CFILES = bin/ej-fix-db.c version.c
 FIX_DB_OBJECTS = ${FIX_DB_CFILES:.c=.o} libcommon.a libuserlist_clnt.a libplatform.a libcommon.a
 
@@ -162,7 +165,7 @@ PB_OBJECTS = $(PB_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a
 
 INSTALLSCRIPT = ejudge-install.sh
 BINTARGETS = ejudge-jobs-cmd ejudge-edit-users ejudge-setup ejudge-configure-compilers ejudge-control ejudge-execute ejudge-contests-cmd ejudge-suid-setup ejudge-change-contests
-SERVERBINTARGETS = ej-compile ej-run ej-nwrun ej-ncheck ej-batch ej-serve ej-users ej-users-control ej-jobs ej-jobs-control ej-super-server ej-super-server-control ej-contests ej-contests-control uudecode ej-convert-clars ej-convert-runs ej-fix-db ej-super-run ej-super-run-control ej-normalize ej-polygon ej-import-contest ej-page-gen ej-parblock ej-convert-status
+SERVERBINTARGETS = ej-compile ej-run ej-nwrun ej-ncheck ej-batch ej-serve ej-users ej-users-control ej-jobs ej-jobs-control ej-super-server ej-super-server-control ej-contests ej-contests-control uudecode ej-convert-clars ej-convert-runs ej-fix-db ej-super-run ej-super-run-control ej-normalize ej-polygon ej-import-contest ej-page-gen ej-parblock ej-convert-status ej-convert-xuser
 SUIDBINTARGETS = ej-suid-chown ej-suid-exec ej-suid-ipcrm ej-suid-kill ej-suid-container ej-suid-update-scripts
 CGITARGETS = cgi-bin/users${CGI_PROG_SUFFIX} cgi-bin/serve-control${CGI_PROG_SUFFIX} cgi-bin/new-client${CGI_PROG_SUFFIX}
 TARGETS = ${SERVERBINTARGETS} ${BINTARGETS} ${CGITARGETS} tools/newrevinfo ${SUIDBINTARGETS} ej-compile-control
@@ -352,6 +355,9 @@ ej-convert-runs: ${CR_OBJECTS}
 	${LD} ${LDFLAGS} -rdynamic $^ libcommon.a -o $@ ${LDLIBS} ${EXPAT_LIB} -ldl ${LIBUUID} $(MONGO_LIBS) $(MONGOC_LIBS)
 
 ej-convert-status: ${CVTS_OBJECTS}
+	${LD} ${LDFLAGS} -rdynamic $^ libcommon.a -o $@ ${LDLIBS} ${EXPAT_LIB} -ldl ${LIBUUID} $(MONGO_LIBS) $(MONGOC_LIBS)
+
+ej-convert-xuser: ${CVTX_OBJECTS}
 	${LD} ${LDFLAGS} -rdynamic $^ libcommon.a -o $@ ${LDLIBS} ${EXPAT_LIB} -ldl ${LIBUUID} $(MONGO_LIBS) $(MONGOC_LIBS)
 
 ej-fix-db: ${FIX_DB_OBJECTS}
