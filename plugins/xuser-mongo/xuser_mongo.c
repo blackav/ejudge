@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2015-2019 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2015-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -152,6 +152,11 @@ set_problem_dir_prefix_func(
         struct xuser_cnts_state *data,
         int user_id,
         const unsigned char *problem_dir_prefix);
+static int
+get_user_ids_func(
+        struct xuser_cnts_state *data,
+        int *p_count,
+        int **p_user_ids);
 
 struct xuser_plugin_iface plugin_xuser_mongo =
 {
@@ -182,6 +187,7 @@ struct xuser_plugin_iface plugin_xuser_mongo =
     count_read_clars_func,
     get_entries_func,
     set_problem_dir_prefix_func,
+    get_user_ids_func,
 };
 
 static struct common_plugin_data *
@@ -1083,5 +1089,103 @@ set_problem_dir_prefix_func(
     }
 #else
     return -1;
+#endif
+}
+
+static int
+get_user_ids_func(
+        struct xuser_cnts_state *data,
+        int *p_count,
+        int **p_user_ids)
+{
+    // db.xuser.find({"contest_id":ID},{"user_id":1}).sort({"user_id":1})
+    struct xuser_mongo_cnts_state *state = (struct xuser_mongo_cnts_state *) data;
+    *p_count = 0;
+    int size = 0;
+    int reserved = 0;
+    int *user_ids = NULL;
+
+#if HAVE_LIBMONGOC - 0 > 0
+    bson_t *query = NULL;
+    bson_t *sel = NULL;
+    bson_t **results = NULL;
+    bson_iter_t iter;
+    int count = 0;
+    query = bson_new();
+    bson_append_int32(query, "contest_id", -1, state->contest_id);
+    sel = bson_new();
+    bson_append_int32(sel, "user_id", -1, 1);
+    count = state->plugin_state->common->i->query(state->plugin_state->common, "xuser", 0, 1, query, sel, &results);
+    if (count > 0) {
+        for (int i = 0; i < count; ++i) {
+            bson_iter_init(&iter, results[i]);
+            if (bson_iter_find(&iter, "user_id")) {
+                if (bson_iter_type(&iter) == BSON_TYPE_INT32) {
+                    int user_id = bson_iter_int32(&iter);
+                    if (size == reserved) {
+                        if (!(reserved *= 2)) reserved = 16;
+                        XREALLOC(user_ids, reserved);
+                    }
+                    user_ids[size++] = user_id;
+                }
+            }
+        }
+    }
+    if (size > 1) {
+        qsort(user_ids, size, sizeof(user_ids[0]), isort_func);
+    }
+    if (results) {
+        for (int i = 0; i < count; ++i) {
+            bson_destroy(results[i]);
+        }
+        xfree(results);
+    }
+    if (query) bson_destroy(query);
+    if (sel) bson_destroy(sel);
+    *p_count = size;
+    *p_user_ids = user_ids;
+    return 0;
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
+    bson *query = NULL;
+    bson *sel = NULL;
+    int count = 0;
+    bson **results = NULL;
+    bson_cursor *bc = NULL;
+
+    query = bson_new();
+    bson_append_int32(query, "contest_id", state->contest_id);
+    bson_finish(query);
+    sel = bson_new();
+    bson_append_int32(sel, "user_id", 1);
+    bson_finish(sel);
+    count = state->plugin_state->common->i->query(state->plugin_state->common, "xuser", 0, 1, query, sel, &results);
+    if (count > 0) {
+        for (int i = 0; i < count; ++i) {
+            int user_id = 0;
+            bc = bson_cursor_new(results[i]);
+            if (bson_cursor_find(bc, "user_id")
+                && bson_cursor_type(bc) == BSON_TYPE_INT32
+                && bson_cursor_get_int32(bc, &user_id)) {
+                if (size == reserved) {
+                    if (!(reserved *= 2)) reserved = 16;
+                    XREALLOC(user_ids, reserved);
+                }
+                user_ids[size++] = user_id;
+            }
+            bson_cursor_free(bc); bc = NULL;
+        }
+    }
+    if (bc) bson_cursor_free(bc);
+    if (query) bson_free(query);
+    if (sel) bson_free(sel);
+    if (results) {
+        for (int i = 0; i < count; ++i) {
+            bson_free(results[i]);
+        }
+        xfree(results);
+    }
+    return 0;
+#else
+    return 0;
 #endif
 }
