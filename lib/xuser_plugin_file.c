@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2015-2019 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2015-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -30,6 +30,7 @@
 #include <string.h>
 #include <errno.h>
 #include <unistd.h>
+#include <dirent.h>
 
 /* plugin state */
 struct xuser_file_state
@@ -129,6 +130,11 @@ set_problem_dir_prefix_func(
         struct xuser_cnts_state *data,
         int user_id,
         const unsigned char *problem_dir_prefix);
+static int
+get_user_ids_func(
+        struct xuser_cnts_state *data,
+        int *p_count,
+        int **p_user_ids);
 
 struct xuser_plugin_iface plugin_xuser_file =
 {
@@ -159,6 +165,7 @@ struct xuser_plugin_iface plugin_xuser_file =
     count_read_clars_func,
     get_entries_func,
     set_problem_dir_prefix_func,
+    get_user_ids_func,
 };
 
 static struct common_plugin_data *
@@ -702,4 +709,74 @@ set_problem_dir_prefix_func(
     te->problem_dir_prefix = xstrdup(problem_dir_prefix);
     te->is_dirty = 1;
     return 1;
+}
+
+static int
+get_user_ids_func(
+        struct xuser_cnts_state *data,
+        int *p_count,
+        int **p_user_ids)
+{
+    struct xuser_file_cnts_state *state = (struct xuser_file_cnts_state *) data;
+    int count = 0;
+    int reserved = 0;
+    int *user_ids = NULL;
+    int top_flag[32] = {};
+
+    DIR *d = opendir(state->team_extra_dir);
+    if (!d) {
+        *p_count = 0;
+        return 0;
+    }
+    struct dirent *dd;
+    int max_top_digit = -1;
+    while ((dd = readdir(d))) {
+        if (strlen(dd->d_name) == 1) {
+            int c = (unsigned char) dd->d_name[0];
+            if (c >= '0' && c <= '9') {
+                c -= '0';
+            } else if (c >= 'A' && c <= 'V') {
+                c -= ('A' - 10);
+            } else {
+                c = -1;
+            }
+            if (c >= 0) {
+                top_flag[c] = 1;
+                if (c > max_top_digit) max_top_digit = c;
+            }
+        }
+    }
+    closedir(d); d = NULL;
+
+    for (int user_id = 1; user_id <= EJ_MAX_USER_ID; ++user_id) {
+        unsigned char b32[16];
+        b32_number(user_id, MAX_USER_ID_32DIGITS + 1, b32);
+        int top_dig = -1;
+        if (b32[0] >= '0' && b32[0] <= '9') {
+            top_dig = (unsigned char) b32[0] - '0';
+        } else if (b32[0] >= 'A' && b32[0] <= 'V') {
+            top_dig = (unsigned char) b32[0] - ('A' - 10);
+        }
+        if (top_dig < 0 || top_dig > max_top_digit) break;
+        if (top_flag[top_dig]) {
+            char path[PATH_MAX];
+            if (snprintf(path, sizeof(path), "%s/%c/%c/%c/%06d.xml",
+                         state->team_extra_dir, b32[0], b32[1], b32[2],
+                         user_id) >= (int) sizeof(path)) {
+                break;
+            }
+            if (access(path, R_OK) >= 0) {
+                if (count == reserved) {
+                    if (!(reserved *= 2)) reserved = 16;
+                    XREALLOC(user_ids, reserved);
+                }
+                user_ids[count++] = user_id;
+            }
+        }
+    }
+
+    *p_count = count;
+    *p_user_ids = user_ids;
+
+    return 0;
 }
