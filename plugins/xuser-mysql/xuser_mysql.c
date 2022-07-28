@@ -18,11 +18,14 @@
 #include "ejudge/common_plugin.h"
 #include "ejudge/xuser_plugin.h"
 #include "../common-mysql/common_mysql.h"
+#include "ejudge/team_extra.h"
 #include "ejudge/contests.h"
+#include "ejudge/ej_uuid.h"
 #include "ejudge/errlog.h"
 #include "ejudge/xalloc.h"
 
 #include <stdint.h>
+#include <string.h>
 
 struct xuser_mysql_state
 {
@@ -76,6 +79,8 @@ struct xuser_mysql_cnts_state
     struct xuser_cnts_state b;
     struct xuser_mysql_state *xms;
     int contest_id;
+    struct team_extra **extras;
+    int extra_u, extra_a;
 };
 
 static const char create_query_1[] =
@@ -256,6 +261,12 @@ close_func(
 {
     struct xuser_mysql_cnts_state *xmcs = (struct xuser_mysql_cnts_state *) data;
     if (xmcs) {
+        if (xmcs->extra_u > 0) {
+            for (int i = 0; i < xmcs->extra_u; ++i) {
+                team_extra_free(xmcs->extras[i]);
+            }
+        }
+        free(xmcs->extras);
         if (xmcs->xms && xmcs->xms->nref > 0) {
             --xmcs->xms->nref;
         }
@@ -268,12 +279,26 @@ struct user_warning_internal
 {
     int serial_id;
     int user_extra_id;
-    ej_time64_t issue_date;
-    int isser_id;
-    char *isser_ip;
+    time_t issue_date;
+    int issuer_id;
+    ej_ip_t issuer_ip;
     char *user_text;
     char *judge_text;
     struct timeval last_update_time;
+};
+
+enum { USER_WARNING_ROW_WIDTH = 8 };
+#define USER_WARNING_OFFSET(f) XOFFSET(struct user_warning_internal, f)
+static const struct common_mysql_parse_spec user_warning_spec[USER_WARNING_ROW_WIDTH] =
+{
+    { 0, 'd', "serial_id", USER_WARNING_OFFSET(serial_id), 0 },
+    { 0, 'd', "user_extra_id", USER_WARNING_OFFSET(user_extra_id), 0 },
+    { 1, 't', "issue_date", USER_WARNING_OFFSET(issue_date), 0 },
+    { 0, 'd', "issuer_id", USER_WARNING_OFFSET(issuer_id), 0 },
+    { 1, 'I', "issuer_ip", USER_WARNING_OFFSET(issuer_ip), 0 },
+    { 1, 's', "user_text", USER_WARNING_OFFSET(user_text), 0 },
+    { 1, 's', "judge_text", USER_WARNING_OFFSET(judge_text), 0 },
+    { 1, 'T', "last_update_time", USER_WARNING_OFFSET(last_update_time), 0 },
 };
 
 struct viewed_clar_internal
@@ -286,12 +311,12 @@ struct viewed_clar_internal
 
 enum { VIEWED_CLAR_ROW_WIDTH = 4 };
 #define VIEWED_CLAR_OFFSET(f) XOFFSET(struct viewed_clar_internal, f)
-static __attribute__((unused)) const struct common_mysql_parse_spec viewed_clar_spec[VIEWED_CLAR_ROW_WIDTH] =
+static const struct common_mysql_parse_spec viewed_clar_spec[VIEWED_CLAR_ROW_WIDTH] =
 {
     { 0, 'd', "serial_id", VIEWED_CLAR_OFFSET(serial_id), 0 },
     { 0, 'd', "user_extra_id", VIEWED_CLAR_OFFSET(user_extra_id), 0 },
-    //{ 0, 'd', "user_id", USER_EXTRA_OFFSET(user_id), 0 },
-    { 1, 'T', "last_update_time", VIEWED_CLAR_OFFSET(last_update_time), 0 },    
+    { 1, 'g', "clar_uuid", VIEWED_CLAR_OFFSET(clar_uuid), 0 },
+    { 1, 'T', "last_update_time", VIEWED_CLAR_OFFSET(last_update_time), 0 },
 };
 
 struct user_extra_internal
@@ -308,7 +333,7 @@ struct user_extra_internal
 
 enum { USER_EXTRA_ROW_WIDTH = 8 };
 #define USER_EXTRA_OFFSET(f) XOFFSET(struct user_extra_internal, f)
-static __attribute__((unused)) const struct common_mysql_parse_spec user_extra_spec[USER_EXTRA_ROW_WIDTH] =
+static const struct common_mysql_parse_spec user_extra_spec[USER_EXTRA_ROW_WIDTH] =
 {
     { 0, 'd', "serial_id", USER_EXTRA_OFFSET(serial_id), 0 },
     { 0, 'd', "contest_id", USER_EXTRA_OFFSET(contest_id), 0 },
@@ -317,68 +342,178 @@ static __attribute__((unused)) const struct common_mysql_parse_spec user_extra_s
     { 0, 'd', "status", USER_EXTRA_OFFSET(status), 0 },
     { 0, 'q', "run_fields", USER_EXTRA_OFFSET(run_fields), 0 },
     { 1, 's', "problem_dir_prefix", USER_EXTRA_OFFSET(problem_dir_prefix), 0 },
-    { 1, 'T', "last_update_time", USER_EXTRA_OFFSET(last_update_time), 0 },    
+    { 1, 'T', "last_update_time", USER_EXTRA_OFFSET(last_update_time), 0 },
 };
 
-/*
-enum { STATUS_ROW_WIDTH = 43 };
-static __attribute__((unused)) const struct common_mysql_parse_spec status_spec[STATUS_ROW_WIDTH] =
+static int
+uuid_sort_func(const void *p1, const void *p2)
 {
-    { 0, 'd', "contest_id", STATUS_OFFSET(contest_id), 0 },
-    { 1, 't', "cur_time", STATUS_OFFSET(cur_time), 0 },
-    { 1, 't', "start_time", STATUS_OFFSET(start_time), 0 },
-    { 1, 't', "sched_time", STATUS_OFFSET(sched_time), 0 },
-    { 1, 't', "stop_time", STATUS_OFFSET(stop_time), 0 },
-    { 1, 't', "freeze_time", STATUS_OFFSET(freeze_time), 0 },
-    { 1, 't', "finish_time", STATUS_OFFSET(finish_time), 0 },
-    { 1, 't', "stat_reported_before", STATUS_OFFSET(stat_reported_before), 0 },
-    { 1, 't', "stat_report_time", STATUS_OFFSET(stat_report_time), 0 },
-    { 1, 't', "max_online_time", STATUS_OFFSET(max_online_time), 0 },
-    { 1, 't', "last_daily_reminder", STATUS_OFFSET(last_daily_reminder), 0 },
-    { 0, 'd', "duration", STATUS_OFFSET(duration), 0 },
-    { 0, 'd', "total_runs", STATUS_OFFSET(total_runs), 0 },
-    { 0, 'd', "total_clars", STATUS_OFFSET(total_clars), 0 },
-    { 0, 'd', "download_interval", STATUS_OFFSET(download_interval), 0 },
-    { 0, 'd', "max_online_count", STATUS_OFFSET(max_online_count), 0 },
-    { 0, 'd', "clars_disabled", STATUS_OFFSET(clars_disabled), 0 },
-    { 0, 'd', "team_clars_disabled", STATUS_OFFSET(team_clars_disabled), 0 },
-    { 0, 'd', "standings_frozen", STATUS_OFFSET(standings_frozen), 0 },
-    { 0, 'd', "score_system", STATUS_OFFSET(score_system), 0 },
-    { 0, 'd', "clients_suspended", STATUS_OFFSET(clients_suspended), 0 },
-    { 0, 'd', "testing_suspended", STATUS_OFFSET(testing_suspended), 0 },
-    { 0, 'd', "is_virtual", STATUS_OFFSET(is_virtual), 0 },
-    { 0, 'd', "continuation_enabled", STATUS_OFFSET(continuation_enabled), 0 },
-    { 0, 'd', "printing_enabled", STATUS_OFFSET(printing_enabled), 0 },
-    { 0, 'd', "printing_suspended", STATUS_OFFSET(printing_suspended), 0 },
-    { 0, 'd', "always_show_problems", STATUS_OFFSET(always_show_problems), 0 },
-    { 0, 'd', "accepting_mode", STATUS_OFFSET(accepting_mode), 0 },
-    { 0, 'd', "upsolving_mode", STATUS_OFFSET(upsolving_mode), 0 },
-    { 0, 'd', "upsolving_freeze_standings", STATUS_OFFSET(upsolving_freeze_standings), 0 },
-    { 0, 'd', "upsolving_view_source", STATUS_OFFSET(upsolving_view_source), 0 },
-    { 0, 'd', "upsolving_view_protocol", STATUS_OFFSET(upsolving_view_protocol), 0 },
-    { 0, 'd', "upsolving_full_protocol", STATUS_OFFSET(upsolving_full_protocol), 0 },
-    { 0, 'd', "upsolving_disable_clars", STATUS_OFFSET(upsolving_disable_clars), 0 },
-    { 0, 'd', "testing_finished", STATUS_OFFSET(testing_finished), 0 },
-    { 0, 'd', "online_view_source", STATUS_OFFSET(online_view_source), 0 },
-    { 0, 'd', "online_view_report", STATUS_OFFSET(online_view_report), 0 },
-    { 0, 'd', "online_view_judge_score", STATUS_OFFSET(online_view_judge_score), 0 },
-    { 0, 'd', "online_final_visibility", STATUS_OFFSET(online_final_visibility), 0 },
-    { 0, 'd', "online_valuer_judge_comments", STATUS_OFFSET(online_valuer_judge_comments), 0 },
-    { 0, 'd', "disable_virtual_start", STATUS_OFFSET(disable_virtual_start), 0 },
-    { 1, 's', "prob_prio_str", STATUS_OFFSET(prob_prio_str), 0 },
-    { 1, 'T', "last_update_time", STATUS_OFFSET(last_update_time), 0 },
-};
-*/
+    return memcmp(p1, p2, sizeof(ej_uuid_t));
+}
 
-static __attribute__((unused)) struct team_extra *
-do_get_entry(
+static struct team_extra *
+fetch_user(
+        struct xuser_mysql_cnts_state *xmcs,
+        int user_id)
+{
+    struct common_mysql_iface *mi = xmcs->xms->mi;
+    struct common_mysql_state *md = xmcs->xms->md;
+    struct team_extra *te = NULL;
+    struct user_extra_internal uxi = {};
+
+    XCALLOC(te, 1);
+    if (mi->fquery(md, USER_EXTRA_ROW_WIDTH,
+                   "SELECT * FROM %suserextras WHERE contest_id=%d AND user_id=%d;", md->table_prefix, xmcs->contest_id, user_id) < 0)
+        db_error_fail(md);
+    if (!md->row_count) {
+        return NULL;
+    }
+    if (mi->next_row(md) < 0) db_error_fail(md);
+    if (mi->parse_spec(md, -1, md->row, md->lengths, USER_EXTRA_ROW_WIDTH, user_extra_spec, &uxi) < 0) goto fail;
+
+    te->serial_id = uxi.serial_id;
+    te->contest_id = uxi.contest_id;
+    te->user_id = uxi.user_id;
+    te->disq_comment = uxi.disq_comment; uxi.disq_comment = NULL;
+    te->status = uxi.status;
+    te->run_fields = uxi.run_fields;
+    te->problem_dir_prefix = uxi.problem_dir_prefix; uxi.problem_dir_prefix = NULL;
+
+    if (mi->fquery(md, VIEWED_CLAR_ROW_WIDTH,
+                   "SELECT * FROM %sviewedclars WHERE user_extra_id=%d",
+                   md->table_prefix, te->serial_id) < 0)
+        db_error_fail(md);
+    if (md->row_count > 0) {
+        te->clar_uuids_alloc = 4;
+        while (te->clar_uuids_alloc < md->row_count)
+            te->clar_uuids_alloc *= 2;
+        XCALLOC(te->clar_uuids, te->clar_uuids_alloc);
+        te->clar_uuids_size = md->row_count;
+        for (int i = 0; i < md->row_count; ++i) {
+            struct viewed_clar_internal vci = {};
+            if (mi->next_row(md) < 0) db_error_fail(md);
+            if (mi->parse_spec(md, -1, md->row, md->lengths, VIEWED_CLAR_ROW_WIDTH, viewed_clar_spec, &vci) < 0) goto fail;
+            te->clar_uuids[i] = vci.clar_uuid;
+        }
+        qsort(te->clar_uuids, md->row_count, sizeof(te->clar_uuids[0]), uuid_sort_func);
+    }
+
+    if (mi->fquery(md, USER_WARNING_ROW_WIDTH,
+                   "SELECT * FROM %suserwarnings WHERE user_extra_id=%d",
+                   md->table_prefix, te->serial_id) < 0)
+        db_error_fail(md);
+    if (md->row_count > 0) {
+        te->warn_a = 4;
+        while (te->warn_a < md->row_count)
+            te->warn_a *= 2;
+        XCALLOC(te->warns, te->warn_a);
+        te->warn_u = md->row_count;
+        for (int i = 0; i < md->row_count; ++i) {
+            struct user_warning_internal uwi = {};
+            if (mi->next_row(md) < 0) db_error_fail(md);
+            if (mi->parse_spec(md, -1, md->row, md->lengths, USER_WARNING_ROW_WIDTH, user_warning_spec, &uwi) < 0) goto fail;
+            struct team_warning *tw = NULL;
+            XCALLOC(tw, 1);
+            te->warns[i] = tw;
+            tw->serial_id = uwi.serial_id;
+            tw->date = uwi.issue_date;
+            tw->issuer_id = uwi.issuer_id;
+            tw->issuer_ip = uwi.issuer_ip;
+            tw->text = uwi.user_text; uwi.user_text = NULL;
+            tw->comment = uwi.judge_text; uwi.judge_text = NULL;
+        }
+    }
+
+    return te;
+
+fail:
+    free(uxi.problem_dir_prefix);
+    free(uxi.disq_comment);
+    team_extra_free(te);
+    return NULL;
+}
+
+static struct team_extra *
+find_user(
+        struct xuser_mysql_cnts_state *xmcs,
+        int user_id,
+        int *p_index)
+{
+    int low = 0, high = xmcs->extra_u, mid;
+    while (low < high) {
+        mid = (low + high) / 2;
+        if (xmcs->extras[mid]->user_id == user_id) {
+            if (p_index) *p_index = mid;
+            return xmcs->extras[mid];
+        } else if (xmcs->extras[mid]->user_id < user_id) {
+            low = mid + 1;
+        } else {
+            high = mid;
+        }
+    }
+    if (p_index) *p_index = low;
+    return NULL;
+}
+
+static void
+insert_user(
+        struct xuser_mysql_cnts_state *xmcs,
+        int index,
+        struct team_extra *te)
+{
+    if (xmcs->extra_u == xmcs->extra_a) {
+        if (!(xmcs->extra_a *= 2)) xmcs->extra_a = 16;
+        xmcs->extras = xrealloc(xmcs->extras, xmcs->extra_a * sizeof(xmcs->extras[0]));
+    }
+    if (index < xmcs->extra_u) {
+        memmove(&xmcs->extras[index + 1], &xmcs->extras[index],
+                (xmcs->extra_u - index) * sizeof(xmcs->extras[0]));
+    }
+    ++xmcs->extra_u;
+    xmcs->extras[index] = te;
+}
+
+static struct team_extra *
+create_user(
         struct xuser_mysql_cnts_state *xmcs,
         int user_id)
 {
     struct common_mysql_iface *mi = xmcs->xms->mi;
     struct common_mysql_state *md = xmcs->xms->md;
 
+    if (mi->simple_fquery(md,
+                          "INSERT IGNORE INTO %suserextras(contest_id,user_id,last_update_time) VALUES(%d,%d,NOW(6));",
+                          md->table_prefix,
+                          xmcs->contest_id, user_id) < 0)
+        db_error_fail(md);
+    return fetch_user(xmcs, user_id);
+
+fail:
     return NULL;
+}
+
+static struct team_extra *
+fetch_or_create_user(
+        struct xuser_mysql_cnts_state *xmcs,
+        int user_id)
+{
+    int index = 0;
+    struct team_extra *te = find_user(xmcs, user_id, &index);
+    if (te && te->serial_id <= 0) {
+        te = create_user(xmcs, user_id);
+        team_extra_free(xmcs->extras[index]);
+        xmcs->extras[index] = te;
+    } else {
+        te = fetch_user(xmcs, user_id);
+        if (!te) {
+            te = create_user(xmcs, user_id);
+            if (!te) {
+                return NULL;
+            }
+        }
+        insert_user(xmcs, index, te);
+    }
+    return te;
 }
 
 static const struct team_extra *
@@ -386,9 +521,21 @@ get_entry_func(
         struct xuser_cnts_state *data,
         int user_id)
 {
-    __attribute__((unused)) struct xuser_mysql_cnts_state *xmcs = (struct xuser_mysql_cnts_state *) data;
-    /// TODO
-    return NULL;
+    struct xuser_mysql_cnts_state *xmcs = (struct xuser_mysql_cnts_state *) data;
+    int index = 0;
+    struct team_extra *te = find_user(xmcs, user_id, &index);
+    if (te) {
+        return te;
+    }
+    te = fetch_user(xmcs, user_id);
+    if (!te) {
+        XCALLOC(te, 1);
+        te->serial_id = -1;
+        te->contest_id = xmcs->contest_id;
+        te->user_id = user_id;
+    }
+    insert_user(xmcs, index, te);
+    return te;
 }
 
 static int
@@ -398,9 +545,18 @@ get_clar_status_func(
         int clar_id,
         const ej_uuid_t *p_clar_uuid)
 {
-    __attribute__((unused)) struct xuser_mysql_cnts_state *xmcs = (struct xuser_mysql_cnts_state *) data;
-    /// TODO
-    return 0;
+    struct xuser_mysql_cnts_state *xmcs = (struct xuser_mysql_cnts_state *) data;
+    if (!p_clar_uuid) return 0;
+    int index = 0;
+    struct team_extra *te = find_user(xmcs, user_id, &index);
+    if (!te) {
+        te = fetch_user(xmcs, user_id);
+        if (te) {
+            insert_user(xmcs, index, te);
+        }
+    }
+    if (!te) return 0;
+    return team_extra_find_clar_uuid(te, p_clar_uuid);
 }
 
 static int
@@ -410,17 +566,30 @@ set_clar_status_func(
         int clar_id,
         const ej_uuid_t *p_clar_uuid)
 {
-    __attribute__((unused)) struct xuser_mysql_cnts_state *xmcs = (struct xuser_mysql_cnts_state *) data;
-    /// TODO
+    struct xuser_mysql_cnts_state *xmcs = (struct xuser_mysql_cnts_state *) data;
+    struct common_mysql_iface *mi = xmcs->xms->mi;
+    struct common_mysql_state *md = xmcs->xms->md;
+    if (!p_clar_uuid) return -1;
+    struct team_extra *te = fetch_or_create_user(xmcs, user_id);
+    if (!te) goto fail;
+
+    if (team_extra_find_clar_uuid(te, p_clar_uuid) >= 0) return 0;
+    team_extra_add_clar_uuid(te, p_clar_uuid);
+    char uuid_buf[64];
+    ej_uuid_unparse_r(uuid_buf, sizeof(uuid_buf), p_clar_uuid, NULL);
+    mi->simple_fquery(md,
+                      "INSERT IGNORE INTO %sviewedclars(user_extra_id,clar_uuid,last_update_time) VALUES(%d,%s,NOW(6));",
+                      md->table_prefix, te->serial_id, uuid_buf);
     return 0;
+
+fail:
+    return -1;
 }
 
 static void
 flush_func(
         struct xuser_cnts_state *data)
 {
-    __attribute__((unused)) struct xuser_mysql_cnts_state *xmcs = (struct xuser_mysql_cnts_state *) data;
-    /// TODO
 }
 
 static int
@@ -433,9 +602,54 @@ append_warning_func(
         const unsigned char *txt,
         const unsigned char *cmt)
 {
-    __attribute__((unused)) struct xuser_mysql_cnts_state *xmcs = (struct xuser_mysql_cnts_state *) data;
-    /// TODO
+    struct xuser_mysql_cnts_state *xmcs = (struct xuser_mysql_cnts_state *) data;
+    struct common_mysql_iface *mi = xmcs->xms->mi;
+    struct common_mysql_state *md = xmcs->xms->md;
+    struct team_extra *te = fetch_or_create_user(xmcs, user_id);
+    FILE *cmd_f = NULL;
+    char *cmd_s = NULL;
+    size_t cmd_z = 0;
+    if (!te) goto fail;
+
+    struct user_warning_internal uwi = {};
+    uwi.user_extra_id = te->serial_id;
+    uwi.issue_date = issue_date;
+    uwi.issuer_id = issuer_id;
+    uwi.issuer_ip = *issuer_ip;
+    uwi.user_text = (char*) txt;
+    uwi.judge_text = (char*) cmt;
+
+    cmd_f = open_memstream(&cmd_s, &cmd_z);
+    fprintf(cmd_f, "INSERT INTO %suserwarnings VALUES (DEFAULT,", md->table_prefix);
+    mi->unparse_spec_2(md, cmd_f, USER_WARNING_ROW_WIDTH,
+                       user_warning_spec,
+                       (1ULL << (USER_WARNING_ROW_WIDTH - 1)) | 1,
+                       &uwi);
+    fprintf(cmd_f, ",NOW(6))");
+    fclose(cmd_f); cmd_f = NULL;
+    if (mi->simple_query(md, cmd_s, cmd_z) < 0) goto fail;
+    free(cmd_s); cmd_s = NULL; cmd_z = 0;
+
+    if (te->warn_u == te->warn_a) {
+        if (!(te->warn_a *= 2)) te->warn_a = 4;
+        XREALLOC(te->warns, te->warn_a);
+    }
+    struct team_warning *tw = NULL;
+    XCALLOC(tw, 1);
+    te->warns[te->warn_u++] = tw;
+    tw->serial_id = -1;
+    tw->date = issue_date;
+    tw->issuer_id = issuer_id;
+    tw->issuer_ip = *issuer_ip;
+    tw->text = xstrdup(txt);
+    tw->comment = xstrdup(cmt);
+
     return 0;
+
+fail:
+    if (cmd_f) fclose(cmd_f);
+    if (cmd_s) free(cmd_s);
+    return -1;
 }
 
 static int
@@ -444,9 +658,30 @@ set_status_func(
         int user_id,
         int status)
 {
-    __attribute__((unused)) struct xuser_mysql_cnts_state *xmcs = (struct xuser_mysql_cnts_state *) data;
-    /// TODO
+    struct xuser_mysql_cnts_state *xmcs = (struct xuser_mysql_cnts_state *) data;
+    struct common_mysql_iface *mi = xmcs->xms->mi;
+    struct common_mysql_state *md = xmcs->xms->md;
+    FILE *cmd_f = NULL;
+    char *cmd_s = NULL;
+    size_t cmd_z = 0;
+    struct team_extra *te = fetch_or_create_user(xmcs, user_id);
+    if (!te) goto fail;
+
+    cmd_f = open_memstream(&cmd_s, &cmd_z);
+    fprintf(cmd_f, "UPDATE %suserextras SET status = %d, last_update_time = NOW(6) WHERE serial_id = %d;",
+            md->table_prefix,
+            status, te->serial_id);
+    fclose(cmd_f); cmd_f = NULL;
+    if (mi->simple_query(md, cmd_s, cmd_z) < 0) goto fail;
+    free(cmd_s); cmd_s = NULL; cmd_z = 0;
+
+    te->status = status;
     return 0;
+
+fail:
+    if (cmd_f) fclose(cmd_f);
+    if (cmd_s) free(cmd_s);
+    return -1;
 }
 
 static int
@@ -455,9 +690,33 @@ set_disq_comment_func(
         int user_id,
         const unsigned char *disq_comment)
 {
-    __attribute__((unused)) struct xuser_mysql_cnts_state *xmcs = (struct xuser_mysql_cnts_state *) data;
-    /// TODO
+    struct xuser_mysql_cnts_state *xmcs = (struct xuser_mysql_cnts_state *) data;
+    struct common_mysql_iface *mi = xmcs->xms->mi;
+    struct common_mysql_state *md = xmcs->xms->md;
+    FILE *cmd_f = NULL;
+    char *cmd_s = NULL;
+    size_t cmd_z = 0;
+    struct team_extra *te = fetch_or_create_user(xmcs, user_id);
+    if (!te) goto fail;
+
+    cmd_f = open_memstream(&cmd_s, &cmd_z);
+    fprintf(cmd_f, "UPDATE %suserextras SET disq_comment = ", md->table_prefix);
+    mi->write_escaped_string(md, cmd_f, NULL, disq_comment);
+    fprintf(cmd_f, ", last_update_time = NOW(6) WHERE serial_id = %d;",
+            te->serial_id);
+    fclose(cmd_f); cmd_f = NULL;
+    if (mi->simple_query(md, cmd_s, cmd_z) < 0) goto fail;
+    free(cmd_s); cmd_s = NULL; cmd_z = 0;
+
+    xfree(te->disq_comment);
+    te->disq_comment = xstrdup(disq_comment);
+
     return 0;
+
+fail:
+    if (cmd_f) fclose(cmd_f);
+    if (cmd_s) free(cmd_s);
+    return -1;
 }
 
 static int
@@ -465,9 +724,18 @@ get_run_fields_func(
         struct xuser_cnts_state *data,
         int user_id)
 {
-    __attribute__((unused)) struct xuser_mysql_cnts_state *xmcs = (struct xuser_mysql_cnts_state *) data;
-    /// TODO
-    return 0;
+    struct xuser_mysql_cnts_state *xmcs = (struct xuser_mysql_cnts_state *) data;
+    int index = 0;
+    struct team_extra *te = find_user(xmcs, user_id, &index);
+    if (te) {
+        return te->run_fields;
+    }
+    te = fetch_user(xmcs, user_id);
+    if (!te) {
+        return 0;
+    }
+    insert_user(xmcs, index, te);
+    return te->run_fields;
 }
 
 static int
@@ -476,9 +744,30 @@ set_run_fields_func(
         int user_id,
         int run_fields)
 {
-    __attribute__((unused)) struct xuser_mysql_cnts_state *xmcs = (struct xuser_mysql_cnts_state *) data;
-    /// TODO
+    struct xuser_mysql_cnts_state *xmcs = (struct xuser_mysql_cnts_state *) data;
+    struct common_mysql_iface *mi = xmcs->xms->mi;
+    struct common_mysql_state *md = xmcs->xms->md;
+    FILE *cmd_f = NULL;
+    char *cmd_s = NULL;
+    size_t cmd_z = 0;
+    struct team_extra *te = fetch_or_create_user(xmcs, user_id);
+    if (!te) goto fail;
+
+    cmd_f = open_memstream(&cmd_s, &cmd_z);
+    fprintf(cmd_f, "UPDATE %suserextras SET run_fields = %d, last_update_time = NOW(6) WHERE serial_id = %d;",
+            md->table_prefix,
+            run_fields, te->serial_id);
+    fclose(cmd_f); cmd_f = NULL;
+    if (mi->simple_query(md, cmd_s, cmd_z) < 0) goto fail;
+    free(cmd_s); cmd_s = NULL; cmd_z = 0;
+
+    te->run_fields = run_fields;
     return 0;
+
+fail:
+    if (cmd_f) fclose(cmd_f);
+    if (cmd_s) free(cmd_s);
+    return -1;
 }
 
 static int
@@ -486,9 +775,57 @@ count_read_clars_func(
         struct xuser_cnts_state *data,
         int user_id)
 {
-    __attribute__((unused)) struct xuser_mysql_cnts_state *xmcs = (struct xuser_mysql_cnts_state *) data;
-    /// TODO
-    return 0;
+    struct xuser_mysql_cnts_state *xmcs = (struct xuser_mysql_cnts_state *) data;
+    int index = 0;
+    struct team_extra *te = find_user(xmcs, user_id, &index);
+    if (te) {
+        return te->clar_uuids_size;
+    }
+    te = fetch_user(xmcs, user_id);
+    if (!te) {
+        return 0;
+    }
+    insert_user(xmcs, index, te);
+    return te->clar_uuids_size;
+}
+
+struct xuser_mysql_team_extras
+{
+    struct xuser_team_extras b;
+    struct xuser_mysql_cnts_state *xmcs;
+};
+
+static struct xuser_team_extras *
+xuser_mysql_team_extras_free_func(struct xuser_team_extras *e)
+{
+    if (e) {
+        struct xuser_mysql_team_extras *xmte = (struct xuser_mysql_team_extras *) e;
+        free(xmte);
+    }
+    return NULL;
+}
+static const struct team_extra * 
+xuser_mysql_team_extras_get_func(struct xuser_team_extras *e, int user_id)
+{
+    return NULL;
+}
+
+static int
+sort_int_func(const void *p1, const void *p2)
+{
+    int v1 = *(const int *) p1;
+    int v2 = *(const int *) p2;
+    if (v1 < v2) return -1;
+    return v1 > v2;
+}
+
+static int
+team_extra_user_sort_func(const void *p1, const void *p2)
+{
+    const struct team_extra *te1 = *(const struct team_extra **) p1;
+    const struct team_extra *te2 = *(const struct team_extra **) p2;
+    // user_id > 0!
+    return te1->user_id - te2->user_id;
 }
 
 static struct xuser_team_extras *
@@ -497,8 +834,216 @@ get_entries_func(
         int count,
         int *user_ids)
 {
-    __attribute__((unused)) struct xuser_mysql_cnts_state *xmcs = (struct xuser_mysql_cnts_state *) data;
-    /// TODO
+    struct xuser_mysql_cnts_state *xmcs = (struct xuser_mysql_cnts_state *) data;
+    struct common_mysql_iface *mi = xmcs->xms->mi;
+    struct common_mysql_state *md = xmcs->xms->md;
+    struct xuser_mysql_team_extras *xmte = NULL;
+    int *local_ids = NULL;
+    int *fetch_ids = NULL;
+    int fetch_count = 0;
+    char *cmd_s = NULL;
+    size_t cmd_z = 0;
+    FILE *cmd_f = NULL;
+    struct team_extra **new_te = NULL;
+    int new_count = 0;
+
+    if (count <= 0 || !user_ids) return NULL;
+
+    local_ids = xmalloc(count * sizeof(local_ids[0]));
+    memcpy(local_ids, user_ids, count * sizeof(local_ids[0]));
+    qsort(local_ids, count, sizeof(local_ids[0]), sort_int_func);
+    if (count > 1) {
+        int i1, i2;
+        for (i1 = i2 = 1; i1 < count; ++i1) {
+            if (local_ids[i1] != local_ids[i1 - 1]) {
+                if (i1 != i2) {
+                    local_ids[i2] = local_ids[i1];
+                }
+                ++i2;
+            }
+        }
+        count = i2;
+    }
+    fetch_ids = xmalloc(count * sizeof(fetch_ids[0]));
+
+    {
+        int i1 = 0, i2 = 0;
+        while (i1 < count && i2 < xmcs->extra_u) {
+            if (local_ids[i1] < xmcs->extras[i2]->user_id) {
+                fetch_ids[fetch_count++] = local_ids[i1++];
+            } else if (local_ids[i1] > xmcs->extras[i2]->user_id) {
+                ++i2;
+            } else {
+                ++i1; ++i2;
+            }
+        }
+        if (i1 < count) {
+            for (; i1 < count; ++i1) {
+                fetch_ids[fetch_count++] = local_ids[i1];
+            }
+        }
+    }
+
+    XCALLOC(xmte, 1);
+    xmte->b.free = xuser_mysql_team_extras_free_func;
+    xmte->b.get = xuser_mysql_team_extras_get_func;
+    xmte->xmcs = xmcs;
+
+    if (fetch_count > 0) {
+        cmd_f = open_memstream(&cmd_s, &cmd_z);
+        fprintf(cmd_f, "SELECT * FROM %suserextras WHERE contest_id=%d AND user_id IN (", md->table_prefix, xmcs->contest_id);
+        for (int i = 0; i < fetch_count; ++i) {
+            if (i > 0) fprintf(cmd_f, ",");
+            fprintf(cmd_f, "%d", fetch_ids[i]);
+        }
+        fprintf(cmd_f, ") ORDER BY serial_id;");
+        fclose(cmd_f); cmd_f = NULL;
+        if (mi->query(md, cmd_s, cmd_z, USER_EXTRA_ROW_WIDTH) < 0)
+            db_error_fail(md);
+        free(cmd_s); cmd_s = NULL; cmd_z = 0;
+        if (md->row_count > 0) {
+            new_count = md->row_count;
+            XCALLOC(new_te, new_count);
+            for (int i = 0; i < new_count; ++i) {
+                struct user_extra_internal uxi = {};
+                if (mi->next_row(md) < 0) db_error_fail(md);
+                if (mi->parse_spec(md, -1, md->row, md->lengths, USER_EXTRA_ROW_WIDTH, user_extra_spec, &uxi) < 0) goto fail;
+                struct team_extra *te = NULL;
+                XCALLOC(te, 1);
+                new_te[i] = te;
+                te->serial_id = uxi.serial_id;
+                te->contest_id = uxi.contest_id;
+                te->user_id = uxi.user_id;
+                te->disq_comment = uxi.disq_comment; uxi.disq_comment = NULL;
+                te->status = uxi.status;
+                te->run_fields = uxi.run_fields;
+                te->problem_dir_prefix = uxi.problem_dir_prefix; uxi.problem_dir_prefix = NULL;
+            }
+            cmd_f = open_memstream(&cmd_s, &cmd_z);
+            fprintf(cmd_f, "SELECT * FROM %sviewedclars WHERE user_extra_id IN (",
+                    md->table_prefix);
+            for (int i = 0; i < new_count; ++i) {
+                if (i > 0) fprintf(cmd_f, ",");
+                fprintf(cmd_f, "%d", new_te[i]->serial_id);
+            }
+            fprintf(cmd_f, ") ORDER BY user_extra_id;");
+            fclose(cmd_f); cmd_f = NULL;
+            if (mi->query(md, cmd_s, cmd_z, VIEWED_CLAR_ROW_WIDTH) < 0)
+                db_error_fail(md);
+            free(cmd_s); cmd_s = NULL; cmd_z = 0;
+            if (md->row_count > 0) {
+                int i1 = 0;
+                for (int i2 = 0; i2 < md->row_count; ++i2) {
+                    struct viewed_clar_internal vci = {};
+                    if (mi->next_row(md) < 0) db_error_fail(md);
+                    if (mi->parse_spec(md, -1, md->row, md->lengths, VIEWED_CLAR_ROW_WIDTH, viewed_clar_spec, &vci) < 0) goto fail;
+                    while (i1 < new_count && new_te[i1]->serial_id < vci.serial_id) {
+                        ++i1;
+                    }
+                    if (i1 < new_count && new_te[i1]->serial_id == vci.serial_id) {
+                        struct team_extra *te = new_te[i1];
+                        if (te->clar_uuids_size == te->clar_uuids_alloc) {
+                            if (!(te->clar_uuids_alloc *= 2)) te->clar_uuids_alloc = 4;
+                            XREALLOC(te->clar_uuids, te->clar_uuids_alloc);
+                        }
+                        te->clar_uuids[te->clar_uuids_size++] = vci.clar_uuid;
+                    }
+                }
+                for (i1 = 0; i1 < new_count; ++i1) {
+                    struct team_extra *te = new_te[i1];
+                    if (te->clar_uuids_size > 1) {
+                        qsort(te->clar_uuids, te->clar_uuids_size, sizeof(te->clar_uuids[0]), uuid_sort_func);
+                    }
+                }
+            }
+            cmd_f = open_memstream(&cmd_s, &cmd_z);
+            fprintf(cmd_f, "SELECT * FROM %suserwarnings WHERE user_extra_id IN (",
+                    md->table_prefix);
+            for (int i = 0; i < new_count; ++i) {
+                if (i > 0) fprintf(cmd_f, ",");
+                fprintf(cmd_f, "%d", new_te[i]->serial_id);
+            }
+            fprintf(cmd_f, ") ORDER BY user_extra_id, serial_id;");
+            fclose(cmd_f); cmd_f = NULL;
+            if (mi->query(md, cmd_s, cmd_z, USER_WARNING_ROW_WIDTH) < 0)
+                db_error_fail(md);
+            free(cmd_s); cmd_s = NULL; cmd_z = 0;
+            if (md->row_count > 0) {
+                int i1 = 0;
+                for (int i2 = 0; i2 < md->row_count; ++i2) {
+                    struct user_warning_internal uwi = {};
+                    if (mi->next_row(md) < 0) db_error_fail(md);
+                    if (mi->parse_spec(md, -1, md->row, md->lengths, USER_WARNING_ROW_WIDTH, user_warning_spec, &uwi) < 0) goto fail;
+                    while (i1 < new_count && new_te[i1]->serial_id < uwi.serial_id) {
+                        ++i1;
+                    }
+                    if (i1 < new_count && new_te[i1]->serial_id == uwi.serial_id) {
+                        struct team_extra *te = new_te[i1];
+                        if (te->warn_u == te->warn_a) {
+                            if (!(te->warn_a *= 2)) te->warn_a = 4;
+                            XREALLOC(te->warns, te->warn_a);
+                        }
+                        struct team_warning *tw = NULL;
+                        XCALLOC(tw, 1);
+                        te->warns[te->warn_u++] = tw;
+                        tw->serial_id = uwi.serial_id;
+                        tw->date = uwi.issue_date;
+                        tw->issuer_id = uwi.issuer_id;
+                        tw->issuer_ip = uwi.issuer_ip;
+                        tw->text = uwi.user_text; uwi.user_text = NULL;
+                        tw->comment = uwi.judge_text; uwi.judge_text = NULL;
+                    }
+                }
+            }
+            qsort(new_te, new_count, sizeof(new_te[0]), team_extra_user_sort_func);
+
+            {
+                int new_a = 1;
+                while (new_a < xmcs->extra_u + new_count) {
+                    new_a *= 2;
+                }
+                struct team_extra **new_x = xmalloc(new_a * sizeof(new_x[0]));
+                int i1 = 0, i2 = 0, i3 = 0;
+                while (i2 < xmcs->extra_u && i3 < new_count) {
+                    if (xmcs->extras[i2]->user_id < new_te[i3]->user_id) {
+                        new_x[i1++] = xmcs->extras[i2++];
+                    } else if (xmcs->extras[i2]->user_id < new_te[i3]->user_id) {
+                        new_x[i1++] = new_te[i3++];
+                    } else {
+                        abort();
+                    }
+                }
+                while (i2 < xmcs->extra_u) {
+                    new_x[i1++] = xmcs->extras[i2++];
+                }
+                while (i3 < new_count) {
+                    new_x[i1++] = new_te[i3++];
+                }
+                free(xmcs->extras);
+                xmcs->extras = new_x;
+                xmcs->extra_a = new_a;
+                xmcs->extra_u = i3;
+            }
+        }
+    }
+
+    free(new_te);
+    free(fetch_ids);
+    free(local_ids);
+    return &xmte->b;
+
+fail:
+    if (new_te) {
+        for (int i = 0; i < new_count; ++i) {
+            team_extra_free(new_te[i]);
+        }
+        xfree(new_te);
+    }
+    if (cmd_f) fclose(cmd_f);
+    free(cmd_s);
+    free(fetch_ids);
+    free(local_ids);
+    if (xmte) xmte->b.free(&xmte->b);
     return NULL;
 }
 
@@ -508,9 +1053,33 @@ set_problem_dir_prefix_func(
         int user_id,
         const unsigned char *problem_dir_prefix)
 {
-    __attribute__((unused)) struct xuser_mysql_cnts_state *xmcs = (struct xuser_mysql_cnts_state *) data;
-    /// TODO
+    struct xuser_mysql_cnts_state *xmcs = (struct xuser_mysql_cnts_state *) data;
+    struct common_mysql_iface *mi = xmcs->xms->mi;
+    struct common_mysql_state *md = xmcs->xms->md;
+    FILE *cmd_f = NULL;
+    char *cmd_s = NULL;
+    size_t cmd_z = 0;
+    struct team_extra *te = fetch_or_create_user(xmcs, user_id);
+    if (!te) goto fail;
+
+    cmd_f = open_memstream(&cmd_s, &cmd_z);
+    fprintf(cmd_f, "UPDATE %suserextras SET problem_dir_prefix = ", md->table_prefix);
+    mi->write_escaped_string(md, cmd_f, NULL, problem_dir_prefix);
+    fprintf(cmd_f, ", last_update_time = NOW(6) WHERE serial_id = %d;",
+            te->serial_id);
+    fclose(cmd_f); cmd_f = NULL;
+    if (mi->simple_query(md, cmd_s, cmd_z) < 0) goto fail;
+    free(cmd_s); cmd_s = NULL; cmd_z = 0;
+
+    xfree(te->problem_dir_prefix);
+    te->problem_dir_prefix = xstrdup(problem_dir_prefix);
+
     return 0;
+
+fail:
+    if (cmd_f) fclose(cmd_f);
+    if (cmd_s) free(cmd_s);
+    return -1;
 }
 
 struct xuser_plugin_iface plugin_xuser_mysql =
