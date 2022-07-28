@@ -3,7 +3,7 @@
 #ifndef __XUSER_PLUGIN_H__
 #define __XUSER_PLUGIN_H__
 
-/* Copyright (C) 2015-2019 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2015-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -24,7 +24,7 @@
 #include "ejudge/ejudge_cfg.h"
 
 /* version of the plugin interface structure */
-#define XUSER_PLUGIN_IFACE_VERSION 2
+#define XUSER_PLUGIN_IFACE_VERSION 3
 
 struct ejudge_cfg;
 struct contest_desc;
@@ -100,6 +100,10 @@ struct xuser_plugin_iface
         struct xuser_cnts_state *data,
         int user_id,
         const unsigned char *problem_dir_prefix);
+    int (*get_user_ids)(
+        struct xuser_cnts_state *data,
+        int *p_count,
+        int **p_user_ids);
 };
 
 struct xuser_cnts_state
