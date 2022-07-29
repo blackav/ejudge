@@ -94,7 +94,6 @@ static const char create_query_1[] =
 "    judge_text MEDIUMTEXT DEFAULT NULL,\n"
 "    last_update_time DATETIME(6) DEFAULT NULL,\n"
 "    KEY (contest_id, user_id),\n"
-"    FOREIGN KEY uw_user_id_1_fk(user_id) REFERENCES %slogins(user_id),\n"
 "    FOREIGN KEY uw_user_id_2_fk(issuer_id) REFERENCES %slogins(user_id),\n"
 "    KEY uw_contest_id_idx(contest_id)\n"
 ") ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;\n";
@@ -106,7 +105,6 @@ static const char create_query_2[] =
 "    clar_uuid CHAR(40) CHARSET utf8 COLLATE utf8_bin NOT NULL,\n"
 "    last_update_time DATETIME(6) DEFAULT NULL,\n"
 "    KEY (contest_id, user_id),\n"
-"    FOREIGN KEY vc_user_id_fk(user_id) REFERENCES %slogins(user_id),\n"
 "    KEY uw_contest_id_idx(contest_id),\n"
 "    KEY vc_clar_uuid_k(clar_uuid),\n"
 "    UNIQUE KEY vc_clar_user_uuid_uk(user_id, clar_uuid)\n"
@@ -144,11 +142,10 @@ create_database(
     struct common_mysql_state *md = xms->md;
 
     if (mi->simple_fquery(md, create_query_1,
-                          md->table_prefix, md->table_prefix,
+                          md->table_prefix,
                           md->table_prefix) < 0)
         db_error_fail(md);
     if (mi->simple_fquery(md, create_query_2,
-                          md->table_prefix,
                           md->table_prefix) < 0)
         db_error_fail(md);
     if (mi->simple_fquery(md, create_query_3,
