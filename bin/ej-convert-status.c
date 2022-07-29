@@ -196,7 +196,7 @@ process_contest(
         if (remove_mode) {
             statusdb_remove(old_sdb_state, ejudge_config, cnts, global);
             printf("contest %d old status removed from plugin %s\n",
-                   contest_id, to_plugin);
+                   contest_id, from_plugin);
         }
     }
 
