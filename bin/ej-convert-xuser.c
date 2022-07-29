@@ -185,36 +185,63 @@ process_contest(
     }
     printf("\n");
 
-    // TODO
-    /*
-    int res = statusdb_has_status(old_sdb_state, ejudge_config, cnts, global, 0);
-    if (res < 0) {
-        fprintf(stderr, "contest %d status check failed\n", contest_id);
-        goto done;
-    }
-    if (!res) {
-        printf("contest %d no status with plugin %s, skipping\n",
-               contest_id, current_plugin);
-        goto done;
-    }
-
-    struct prot_serve_status ss = {};
-    if (statusdb_load(old_sdb_state, ejudge_config, cnts, global, 0, &ss) > 0) {
-        res = statusdb_save(new_sdb_state, ejudge_config, cnts, global, 0, &ss);
-        if (res < 0) {
-            fprintf(stderr, "contest %d saving to plugin %s failed\n",
-                    contest_id, to_plugin);
-            goto done;
+    for (int i = 0; i < user_idz; ++i) {
+        int user_id = user_ids[i];
+        const struct team_extra *te = old_xuser_state->vt->get_entry(old_xuser_state, user_id);
+        if (!te) {
+            fprintf(stderr, "contest %d user %d entry is NULL\n",
+                    contest_id, user_id);
+            continue;
         }
-        printf("contest %d saved to plugin %s\n",
-               contest_id, to_plugin);
-        if (remove_mode) {
-            statusdb_remove(old_sdb_state, ejudge_config, cnts, global);
-            printf("contest %d old status removed from plugin %s\n",
-                   contest_id, from_plugin);
+        if (te->disq_comment && *te->disq_comment) {
+            if (new_xuser_state->vt->set_disq_comment(new_xuser_state, user_id, te->disq_comment) < 0) {
+                fprintf(stderr, "contest %d user %d set_disq_comment failed\n",
+                        contest_id, user_id);
+                continue;
+            }
+        }
+        if (te->status) {
+            if (new_xuser_state->vt->set_status(new_xuser_state, user_id, te->status) < 0) {
+                fprintf(stderr, "contest %d user %d set_status failed\n",
+                        contest_id, user_id);
+                continue;
+            }
+        }
+        if (te->run_fields) {
+            if (new_xuser_state->vt->set_run_fields(new_xuser_state, user_id, te->status) < 0) {
+                fprintf(stderr, "contest %d user %d set_run_fields failed\n",
+                        contest_id, user_id);
+                continue;
+            }
+        }
+        if (te->problem_dir_prefix && *te->problem_dir_prefix) {
+            if (new_xuser_state->vt->set_problem_dir_prefix(new_xuser_state, user_id, te->disq_comment) < 0) {
+                fprintf(stderr, "contest %d user %d set_problem_dir_prefix failed\n",
+                        contest_id, user_id);
+                continue;
+            }
+        }
+        for (int j = 0; j < te->clar_uuids_size; ++j) {
+            if (new_xuser_state->vt->set_clar_status(new_xuser_state, user_id, 0, &te->clar_uuids[j]) < 0) {
+                fprintf(stderr, "contest %d user %d set_clar_status failed\n",
+                        contest_id, user_id);
+                continue;
+            }
+        }
+        for (int j = 0; j < te->warn_u; ++j) {
+            struct team_warning *tw = te->warns[j];
+            if (new_xuser_state->vt->append_warning(new_xuser_state, user_id,
+                                                    tw->issuer_id,
+                                                    &tw->issuer_ip,
+                                                    tw->date,
+                                                    tw->text,
+                                                    tw->comment) < 0) {
+                fprintf(stderr, "contest %d user %d append_warning failed\n",
+                        contest_id, user_id);
+                continue;
+            }
         }
     }
-     */
 
 done:;
     free(user_ids);
