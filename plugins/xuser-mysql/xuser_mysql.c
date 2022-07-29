@@ -345,7 +345,28 @@ static const struct common_mysql_parse_spec user_extra_spec[USER_EXTRA_ROW_WIDTH
 static int
 uuid_sort_func(const void *p1, const void *p2)
 {
-    return memcmp(p1, p2, sizeof(ej_uuid_t));
+    const ej_uuid_t *u1 = (const ej_uuid_t *) p1;
+    const ej_uuid_t *u2 = (const ej_uuid_t *) p2;
+    // reverse order, because of team_extra.c binary search!
+    if (u1->v[0] < u2->v[0]) {
+        return 1;
+    } else if (u1->v[0] > u2->v[0]) {
+        return -1;
+    } else if (u1->v[1] < u2->v[1]) {
+        return 1;
+    } else if (u1->v[1] > u2->v[1]) {
+        return -1;
+    } else if (u1->v[2] < u2->v[2]) {
+        return 1;
+    } else if (u1->v[2] > u2->v[2]) {
+        return -1;
+    } else if (u1->v[3] < u2->v[3]) {
+        return 1;
+    } else if (u1->v[3] > u2->v[3]) {
+        return -1;
+    } else {
+        return 0;
+    }
 }
 
 static struct team_extra *
