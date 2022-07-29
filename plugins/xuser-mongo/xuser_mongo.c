@@ -1115,7 +1115,7 @@ get_user_ids_func(
     bson_append_int32(query, "contest_id", -1, state->contest_id);
     sel = bson_new();
     bson_append_int32(sel, "user_id", -1, 1);
-    count = state->plugin_state->common->i->query(state->plugin_state->common, "xuser", 0, 1, query, sel, &results);
+    count = state->plugin_state->common->i->query(state->plugin_state->common, "xuser", 0, 1, query, NULL, &results);
     if (count > 0) {
         for (int i = 0; i < count; ++i) {
             bson_iter_init(&iter, results[i]);
@@ -1158,7 +1158,7 @@ get_user_ids_func(
     sel = bson_new();
     bson_append_int32(sel, "user_id", 1);
     bson_finish(sel);
-    count = state->plugin_state->common->i->query(state->plugin_state->common, "xuser", 0, 1, query, sel, &results);
+    count = state->plugin_state->common->i->query(state->plugin_state->common, "xuser", 0, 1, query, NULL, &results);
     if (count > 0) {
         for (int i = 0; i < count; ++i) {
             int user_id = 0;
@@ -1175,6 +1175,9 @@ get_user_ids_func(
             bson_cursor_free(bc); bc = NULL;
         }
     }
+    if (size > 1) {
+        qsort(user_ids, size, sizeof(user_ids[0]), isort_func);
+    }
     if (bc) bson_cursor_free(bc);
     if (query) bson_free(query);
     if (sel) bson_free(sel);
@@ -1184,6 +1187,8 @@ get_user_ids_func(
         }
         xfree(results);
     }
+    *p_count = size;
+    *p_user_ids = user_ids;
     return 0;
 #else
     return 0;
