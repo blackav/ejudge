@@ -21,7 +21,8 @@
 #include "ejudge/contests.h"
 #include "ejudge/serve_state.h"
 #include "ejudge/prepare.h"
-#include "ejudge/statusdb.h"
+#include "ejudge/team_extra.h"
+#include "ejudge/xuser_plugin.h"
 #include "ejudge/xml_utils.h"
 #include "ejudge/base64.h"
 #include "ejudge/compat.h"
@@ -76,6 +77,10 @@ process_contest(
     unsigned char config_path[PATH_MAX] = {};
     serve_state_t state = NULL;
     const struct section_global_data *global = NULL;
+    struct xuser_cnts_state *old_xuser_state = NULL;
+    struct xuser_cnts_state *new_xuser_state = NULL;
+    int user_idz = 0;
+    int *user_ids = NULL;
 
     const struct contest_desc *cnts = NULL;
     if (contests_get(contest_id, &cnts) < 0 || !cnts) {
@@ -155,9 +160,66 @@ process_contest(
         goto done;
     }
 
+    old_xuser_state = team_extra_open(ejudge_config, cnts, global, current_plugin, 0);
+    if (!old_xuser_state) {
+        fprintf(stderr, "contest %d failed to load plugin %s\n",
+                contest_id, current_plugin);
+        goto done;
+    }
+    new_xuser_state = team_extra_open(ejudge_config, cnts, global, to_plugin, 0);
+    if (!new_xuser_state) {
+        fprintf(stderr, "contest %d failed to load plugin %s\n",
+                contest_id, to_plugin);
+        goto done;
+    }
+
+    if (old_xuser_state->vt->get_user_ids(old_xuser_state, &user_idz, &user_ids) < 0) {
+        fprintf(stderr, "contest %d failed to get list of users\n",
+                contest_id);
+        goto done;
+    }
+
+    printf("contest %d, users %d:", contest_id, user_idz);
+    for (int i = 0; i < user_idz; ++i) {
+        printf(" %d", user_ids[i]);
+    }
+    printf("\n");
+
     // TODO
+    /*
+    int res = statusdb_has_status(old_sdb_state, ejudge_config, cnts, global, 0);
+    if (res < 0) {
+        fprintf(stderr, "contest %d status check failed\n", contest_id);
+        goto done;
+    }
+    if (!res) {
+        printf("contest %d no status with plugin %s, skipping\n",
+               contest_id, current_plugin);
+        goto done;
+    }
+
+    struct prot_serve_status ss = {};
+    if (statusdb_load(old_sdb_state, ejudge_config, cnts, global, 0, &ss) > 0) {
+        res = statusdb_save(new_sdb_state, ejudge_config, cnts, global, 0, &ss);
+        if (res < 0) {
+            fprintf(stderr, "contest %d saving to plugin %s failed\n",
+                    contest_id, to_plugin);
+            goto done;
+        }
+        printf("contest %d saved to plugin %s\n",
+               contest_id, to_plugin);
+        if (remove_mode) {
+            statusdb_remove(old_sdb_state, ejudge_config, cnts, global);
+            printf("contest %d old status removed from plugin %s\n",
+                   contest_id, from_plugin);
+        }
+    }
+     */
 
 done:;
+    free(user_ids);
+    if (old_xuser_state) old_xuser_state->vt->close(old_xuser_state);
+    if (new_xuser_state) new_xuser_state->vt->close(new_xuser_state);
 }
 
 /* force linking of certain functions that may be needed by plugins */
