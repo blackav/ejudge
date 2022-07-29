@@ -86,7 +86,7 @@ struct xuser_mysql_cnts_state
 static const char create_query_1[] =
 "CREATE TABLE %suserwarnings (\n"
 "    serial_id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,\n"
-"    user_extra_id INT NOT NULL\n"
+"    user_extra_id INT NOT NULL,\n"
 "    issue_date DATETIME NOT NULL,\n"
 "    issuer_id INT UNSIGNED NOT NULL,\n"
 "    issuer_ip VARCHAR(128) DEFAULT NULL,\n"
@@ -102,7 +102,7 @@ static const char create_query_1[] =
 static const char create_query_2[] =
 "CREATE TABLE %sviewedclars (\n"
 "    serial_id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,\n"
-"    user_extra_id INT NOT NULL\n"
+"    user_extra_id INT NOT NULL,\n"
 "    clar_uuid CHAR(40) CHARSET utf8 COLLATE utf8_bin NOT NULL,\n"
 "    last_update_time DATETIME(6) DEFAULT NULL,\n"
 "    KEY (contest_id, user_id),\n"
