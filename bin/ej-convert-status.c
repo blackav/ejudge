@@ -323,7 +323,7 @@ main(int argc, char *argv[])
                 die("invalid contest id '%s'", argv[argi]);
             if (!*eptr) {
                 if (cnts_idu == cnts_ida) {
-                    if (!(cnts_ida *= 2)) cnts_ida *= 2;
+                    if (!(cnts_ida *= 2)) cnts_ida *= 16;
                     cnts_ids = realloc(cnts_ids, cnts_ida * sizeof(cnts_ids[0]));
                 }
                 cnts_ids[cnts_idu++] = id1;
@@ -337,7 +337,7 @@ main(int argc, char *argv[])
                 if (id2 - id1 > 1000000) die("invalid contest range");
                 for (long cc = id1; cc <= id2; ++cc) {
                     if (cnts_idu == cnts_ida) {
-                        if (!(cnts_ida *= 2)) cnts_ida *= 2;
+                        if (!(cnts_ida *= 2)) cnts_ida *= 16;
                         cnts_ids = realloc(cnts_ids, cnts_ida * sizeof(cnts_ids[0]));
                     }
                     cnts_ids[cnts_idu++] = cc;
