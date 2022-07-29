@@ -378,7 +378,22 @@ remove_func(
         const struct contest_desc *cnts,
         const struct section_global_data *global)
 {
-    struct status_mongo_state *sms __attribute__((unused)) = (struct status_mongo_state *) sds;
+    struct status_mongo_state *sms = (struct status_mongo_state *) sds;
+    struct status_mongo_plugin_state *ps = (struct status_mongo_plugin_state *) sms->b.plugin->data;
+
+#if HAVE_LIBMONGOC - 0 > 0
+    bson_t *filter = NULL;
+    filter = bson_new();
+    bson_append_int32(filter, "contest_id", -1, cnts->id);
+    ps->common->i->remove(ps->common, "status", filter);
+    if (filter) bson_destroy(filter);
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
+    bson *filter = bson_new();
+    bson_append_int32(filter, "contest_id", cnts->id);
+    bson_finish(filter);
+    ps->common->i->remove(ps->common, "status", filter);
+    if (filter) bson_free(filter);
+#endif
 }
 
 static int
