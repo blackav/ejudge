@@ -70,7 +70,8 @@ process_contest(
         int contest_id,
         const unsigned char *from_plugin,
         const unsigned char *to_plugin,
-        int remove_mode)
+        int remove_mode,
+        int try_mode)
 {
     unsigned char config_path[PATH_MAX] = {};
     serve_state_t state = NULL;
@@ -140,6 +141,20 @@ process_contest(
         printf("contest %d current statusdb already %s, done\n",
                contest_id, current_plugin);
         goto done;
+    }
+
+    if (!strcmp(from_plugin, "auto")) {
+        // use the currently configured plugin
+    } else {
+        if (try_mode) {
+            current_plugin = from_plugin;
+        } else {
+            if (strcmp(current_plugin, from_plugin) != 0) {
+                printf("contest %d current statusdb it not %s, skipping\n",
+                       contest_id, from_plugin);
+                goto done;
+            }
+        }
     }
 
     old_sdb_state = statusdb_open(ejudge_config, cnts, global, current_plugin, 0, 0);
@@ -252,6 +267,7 @@ main(int argc, char *argv[])
 {
     int all_mode = 0;
     int remove_mode = 0;
+    int try_mode = 0;
     const char *from_plugin = NULL;
     const char *to_plugin = NULL;
     int *cnts_ids = NULL;
@@ -279,6 +295,9 @@ main(int argc, char *argv[])
             ++argi;
         } else if (!strcmp(argv[argi], "--remove-old")) {
             remove_mode = 1;
+            ++argi;
+        } else if (!strcmp(argv[argi], "--try")) {
+            try_mode = 1;
             ++argi;
         } else if (!strcmp(argv[argi], "--from")) {
             if (argi + 1 >= argc) die("argument expected for --from");
@@ -386,7 +405,7 @@ main(int argc, char *argv[])
             ++i2;
         } else {
             process_contest(ejudge_config, cnts_ids[i1],
-                            from_plugin, to_plugin, remove_mode);
+                            from_plugin, to_plugin, remove_mode, try_mode);
             ++i1; ++i2;
         }
     }
