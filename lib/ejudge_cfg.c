@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2002-2021 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -111,6 +111,8 @@ enum
     TG_DEFAULT_STATUS_PLUGIN,
     TG_OAUTH_USER_MAP,
     TG_OAUTH_ENTRY,
+    TG_COMPILER_OPTIONS,
+    TG_COMPILER_OPTION,
 
     TG__BARRIER,
     TG__DEFAULT,
@@ -139,6 +141,8 @@ enum
     AT_PROVIDER,
     AT_ENABLE_OAUTH,
     AT_ENABLE_COMPILE_CONTAINER,
+    AT_COMPILER,
+    AT_OPTION,
 
     AT__BARRIER,
     AT__DEFAULT,
@@ -213,6 +217,8 @@ static char const * const elem_map[] =
   "default_status_plugin",
   "oauth_user_map",
   "oauth_entry",
+  "compiler_options",
+  "compiler_option",
   0,
   "_default",
 
@@ -242,6 +248,8 @@ static char const * const attr_map[] =
   "provider",
   "enable_oauth",
   "enable_compile_container",
+  "compiler",
+  "option",
   0,
   "_default",
 
@@ -750,6 +758,9 @@ ejudge_cfg_do_parse(char const *path, FILE *in_file, int no_system_lookup)
       break;
     case TG_BUTTONS:
       cfg->buttons = p;
+      break;
+    case TG_COMPILER_OPTIONS:
+      cfg->compiler_options = p;
       break;
     case TG_CONTESTS_WS_PORT:
       {
