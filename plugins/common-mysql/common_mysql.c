@@ -704,7 +704,7 @@ parse_spec_func(
       err("column %d (%s) cannot be NULL", i, specs[i].name);
       return -1;
     }
-    if (row[i] && strlen(row[i]) != lengths[i]) {
+    if (specs[i].format != 'x' && row[i] && strlen(row[i]) != lengths[i]) {
       err("column %d (%s) cannot be binary", i, specs[i].name);
       return -1;
     }
@@ -924,6 +924,19 @@ parse_spec_func(
       }
       break;
     }
+
+    case 'x': {
+      struct common_mysql_binary *bin = XPDEREF(struct common_mysql_binary, data, specs[i].offset);
+      if (!row[i]) {
+        bin->size = 0;
+        bin->data = NULL;
+      } else {
+        bin->size = lengths[i];
+        bin->data = xmemdup(row[i], lengths[i]);
+      }
+      break;
+    }
+
     default:
       err("unhandled format %d", specs[i].format);
       abort();
@@ -1054,6 +1067,12 @@ unparse_spec_func(
         ej_uuid_unparse_r(uuid_str, sizeof(uuid_str), p_uuid, NULL);
         fprintf(fout, "%s'%s'", sep, uuid_str);
       }
+      break;
+    }
+
+    case 'x': {
+      const struct common_mysql_binary *bin = XPDEREF(struct common_mysql_binary, data, specs[i].offset);
+      write_escaped_bin_func(state, fout, sep, bin);
       break;
     }
 
@@ -1337,6 +1356,12 @@ unparse_spec_2_func(
       break;
     }
 
+    case 'x': {
+      const struct common_mysql_binary *bin = XPDEREF(struct common_mysql_binary, data, specs[i].offset);
+      write_escaped_bin_func(state, fout, sep, bin);
+      break;
+    }
+
     default:
       err("unhandled format %d", specs[i].format);
       abort();
@@ -1468,6 +1493,12 @@ unparse_spec_3_func(
         ej_uuid_unparse_r(uuid_str, sizeof(uuid_str), p_uuid, NULL);
         fprintf(fout, "'%s'", uuid_str);
       }
+      break;
+    }
+
+    case 'x': {
+      const struct common_mysql_binary *bin = XPDEREF(struct common_mysql_binary, data, specs[i].offset);
+      write_escaped_bin_func(state, fout, "", bin);
       break;
     }
 
