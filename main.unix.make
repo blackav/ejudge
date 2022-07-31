@@ -308,7 +308,7 @@ cgi-bin/serve-control${CGI_PROG_SUFFIX}: ${SC_OBJECTS}
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB}
 
 ej-users: ${UL_OBJECTS}
-	${LD} ${LDFLAGS} $^  libcommon.a libplatform.a -rdynamic -o $@ ${LDLIBS} -ldl ${EXPAT_LIB}
+	${LD} ${LDFLAGS} $^  libcommon.a libplatform.a -rdynamic -o $@ ${LDLIBS} -ldl ${EXPAT_LIB} ${LIBUUID}
 
 ej-users-control: ${ULC_OBJECTS}
 	${LD} ${LDFLAGS} $^  libcommon.a -rdynamic -o $@ ${LDLIBS} ${EXPAT_LIB}

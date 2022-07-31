@@ -43,6 +43,7 @@
 #include "ejudge/bitset.h"
 #include "ejudge/sha256utils.h"
 #include "ejudge/userlist_bin.h"
+#include "ejudge/ej_uuid.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
