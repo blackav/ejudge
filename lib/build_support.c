@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2012-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1041,7 +1041,9 @@ do_generate_makefile(
     compiler_flags = NULL;
     if (need_cpp_libchecker) {
       if (enable_testlib_mode) {
-        fprintf(mk_f, "CXXLIBCHECKERFLAGS =%s -DEJUDGE -Wall -g -O2 -std=gnu++11\n", m32_opt);
+        const unsigned char *options = ejudge_cfg_get_compiler_option(ejudge_config, "g++");
+        if (!options) options = "-Wall -g -O2 -std=gnu++11";
+        fprintf(mk_f, "CXXLIBCHECKERFLAGS =%s -DEJUDGE %s\n", m32_opt, options);
       } else {
         fprintf(mk_f, "CXXLIBCHECKERFLAGS =%s -Wall -g -O2 -I${EJUDGE_PREFIX_DIR}/include/ejudge -L%s -Wl,--rpath,%s\n",
                 m32_opt, libdir, libdir);
