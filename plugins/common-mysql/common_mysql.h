@@ -27,6 +27,12 @@ struct common_mysql_state;
 
 #include <mysql.h>
 
+struct common_mysql_binary
+{
+  size_t size;
+  unsigned char *data;
+};
+
 struct common_mysql_state
 {
   struct common_mysql_iface *i;
@@ -181,6 +187,12 @@ struct common_mysql_iface
         unsigned long long skip_mask,
         const void *data,
         ...);
+
+  void (*write_escaped_bin)(
+        struct common_mysql_state *state,
+        FILE *f,
+        const unsigned char *pfx,
+        const struct common_mysql_binary *bin);
 };
 
 #define db_error_fail(s) do { s->i->error(s); goto fail; } while (0)

@@ -165,6 +165,12 @@ unparse_spec_3_func(
         unsigned long long skip_mask,
         const void *data,
         ...);
+static void
+write_escaped_bin_func(
+        struct common_mysql_state *state,
+        FILE *f,
+        const unsigned char *pfx,
+        const struct common_mysql_binary *bin);
 
 /* plugin entry point */
 struct common_mysql_iface plugin_common_mysql =
@@ -212,6 +218,7 @@ struct common_mysql_iface plugin_common_mysql =
   parse_int64_func,
   unparse_spec_2_func,
   unparse_spec_3_func,
+  write_escaped_bin_func,
 };
 
 static struct common_plugin_data *
@@ -1471,4 +1478,35 @@ unparse_spec_3_func(
     sep = ", ";
   }
   va_end(args);
+}
+
+static void
+write_escaped_bin_func(
+        struct common_mysql_state *state,
+        FILE *f,
+        const unsigned char *pfx,
+        const struct common_mysql_binary *bin)
+{
+  size_t len2;
+  unsigned char *str2;
+
+  if (!pfx) pfx = "";
+  if (!bin || !bin->data) {
+    fprintf(f, "%sNULL", pfx);
+    return;
+  }
+
+  if (bin->size < 128000) {
+    len2 = 2 * bin->size + 1;
+    str2 = (unsigned char *) alloca(len2);
+    mysql_real_escape_string(state->conn, str2, bin->data, bin->size);
+    fprintf(f, "%s'%s'", pfx, str2);
+    return;
+  }
+
+  len2 = 2 * bin->size + 1;
+  str2 = (unsigned char*) malloc(len2);
+  mysql_real_escape_string(state->conn, str2, bin->data, bin->size);
+  fprintf(f, "%s'%s'", pfx, str2);
+  free(str2);
 }
