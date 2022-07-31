@@ -22,6 +22,7 @@
 
 struct common_mysql_iface;
 struct common_mysql_state;
+struct common_mysql_binary;
 
 #ifndef EJUDGE_SKIP_MYSQL
 
