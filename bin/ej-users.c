@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2002-2021 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -12060,6 +12060,7 @@ forced_symbols[] =
 {
   xml_err_elem_undefined_s,
   base64u_decode,
+  ej_uuid_parse,
 };
 
 int
