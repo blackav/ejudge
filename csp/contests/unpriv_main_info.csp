@@ -216,7 +216,7 @@ function setOperationVisibility(oper, value)
   for (cur_lang_id = 1; cur_lang_id <= cs->max_lang; ++cur_lang_id) {
     const struct section_language_data *lang = cs->langs[cur_lang_id];
     if (!lang || lang->disabled > 0) continue;
-    const unsigned char *opts = serve_get_compiler_options(cs, cur_lang_id);
+    const unsigned char *opts = serve_get_compiler_options(phr->config, cs, cur_lang_id);
 %>
   <tr>
     <td class="b0"><tt><s:v value="lang->short_name" /></tt></td>

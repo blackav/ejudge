@@ -6408,6 +6408,7 @@ serve_count_unread_clars(
 
 static unsigned char *
 get_compiler_option(
+        const struct ejudge_cfg *config,
         const serve_state_t state,
         const struct section_language_data *lang)
 {
@@ -6459,6 +6460,10 @@ get_compiler_option(
     mandatory = "--min-size";
   } else if (!strcmp(lang->short_name, "nasm-x86")) {
     mandatory = "-DUNIX -f elf";
+  }
+
+  if (!flags) {
+    flags = ejudge_cfg_get_compiler_option(config, lang->short_name);
   }
 
   if (!flags) {
@@ -6547,7 +6552,9 @@ get_compiler_option(
 }
 
 static void
-fill_compiler_options(const serve_state_t state)
+fill_compiler_options(
+        const struct ejudge_cfg *config,
+        const serve_state_t state)
 {
   if (state->compiler_options) return;
   if (state->max_lang <= 0) return;
@@ -6555,12 +6562,13 @@ fill_compiler_options(const serve_state_t state)
 
   for (int lang_id = 1; lang_id <= state->max_lang; ++lang_id) {
     const struct section_language_data *lang = state->langs[lang_id];
-    state->compiler_options[lang_id] = get_compiler_option(state, lang);
+    state->compiler_options[lang_id] = get_compiler_option(config, state, lang);
   }
 }
 
 const unsigned char *
 serve_get_compiler_options(
+        const struct ejudge_cfg *config,
         const serve_state_t state,
         int lang_id)
 {
@@ -6569,7 +6577,7 @@ serve_get_compiler_options(
   if (lang_id <= 0 || lang_id > state->max_lang) return "";
 
   if (!state->compiler_options) {
-    fill_compiler_options(state);
+    fill_compiler_options(config, state);
   }
 
   s = state->compiler_options[lang_id];

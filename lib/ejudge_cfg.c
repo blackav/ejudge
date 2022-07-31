@@ -1471,3 +1471,28 @@ ejudge_cfg_oauth_user_map_find(
 
   return NULL;
 }
+
+const unsigned char *
+ejudge_cfg_get_compiler_option(
+        const struct ejudge_cfg *cfg,
+        const unsigned char *compiler)
+{
+  if (!cfg->compiler_options) return NULL;
+  for (const struct xml_tree *p = cfg->compiler_options->first_down; p; p = p->right) {
+    if (p->tag == TG_COMPILER_OPTION) {
+      const unsigned char *option = NULL;
+      const unsigned char *comp = NULL;
+      for (const struct xml_attr *a = p->first; a; a = a->next) {
+        if (a->tag == AT_COMPILER) {
+          comp = a->text;
+        } else if (a->tag == AT_OPTION) {
+          option = a->text;
+        }
+      }
+      if (comp && !strcmp(comp, compiler)) {
+        return option;
+      }
+    }
+  }
+  return NULL;
+}

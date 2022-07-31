@@ -901,6 +901,7 @@ serve_make_audit_read_path(
 
 const unsigned char *
 serve_get_compiler_options(
+        const struct ejudge_cfg *config,
         const serve_state_t state,
         int lang_id);
 

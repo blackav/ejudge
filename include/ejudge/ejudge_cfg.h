@@ -220,4 +220,9 @@ ejudge_cfg_oauth_user_map_find(
         const unsigned char *oauth_user_str,
         const unsigned char *provider);
 
+const unsigned char *
+ejudge_cfg_get_compiler_option(
+        const struct ejudge_cfg *cfg,
+        const unsigned char *compiler);
+
 #endif /* __EJUDGE_CFG_H__ */
