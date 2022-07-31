@@ -6482,9 +6482,9 @@ get_compiler_option(
     } else if (!strcmp(lang->short_name, "gcc-vg")) {
       flags = "-g -O2 -std=gnu11";
     } else if (!strcmp(lang->short_name, "g++")) {
-      flags = "-Wall -O2 -std=gnu++11";
+      flags = "-Wall -O2 -std=gnu++17";
     } else if (!strcmp(lang->short_name, "g++-32")) {
-      flags = "-Wall -O2";
+      flags = "-Wall -O2 -std=gnu++17";
     } else if (!strcmp(lang->short_name, "g++-vg")) {
       flags = "-g -O2";
     } else if (!strcmp(lang->short_name, "g77")) {

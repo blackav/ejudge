@@ -1042,7 +1042,7 @@ do_generate_makefile(
     if (need_cpp_libchecker) {
       if (enable_testlib_mode) {
         const unsigned char *options = ejudge_cfg_get_compiler_option(ejudge_config, "g++");
-        if (!options) options = "-Wall -g -O2 -std=gnu++11";
+        if (!options) options = "-Wall -g -O2 -std=gnu++17";
         fprintf(mk_f, "CXXLIBCHECKERFLAGS =%s -DEJUDGE %s\n", m32_opt, options);
       } else {
         fprintf(mk_f, "CXXLIBCHECKERFLAGS =%s -Wall -g -O2 -I${EJUDGE_PREFIX_DIR}/include/ejudge -L%s -Wl,--rpath,%s\n",
