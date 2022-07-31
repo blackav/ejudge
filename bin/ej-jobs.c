@@ -896,6 +896,7 @@ main(int argc, char *argv[])
 #include "ejudge/bson_utils.h"
 #include "ejudge/auth_plugin.h"
 #include "ejudge/base64.h"
+#include "ejudge/ej_uuid.h"
 
 #include <stdio.h>
 #include <errno.h>
@@ -2676,6 +2677,7 @@ job_server_force_link_2[] =
     base64u_decode,
     xml_parse_full_cookie,
     xml_err_elem_undefined_s,
+    ej_uuid_parse,
 };
 
 #if HAVE_LIBMONGOC - 0 > 0
