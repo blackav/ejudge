@@ -18,14 +18,6 @@
 
 #include "ejudge/config.h"
 
-#if HAVE_LIBMONGOC - 0 > 0
-struct _bson_t;
-typedef struct _bson_t ej_bson_t;
-#elif HAVE_LIBMONGO_CLIENT - 0 == 1
-struct _bson;
-typedef struct _bson ej_bson_t;
-#endif
-
 /*
 id 	Integer 	Unique identifier for this chat. This number may be greater than 32 bits and some programming languages may have difficulty/silent defects in interpreting it. But it smaller than 52 bits, so a signed 64 bit integer or double-precision float type are safe for storing this identifier.
 type 	String 	Type of chat, can be either “private”, “group”, “supergroup” or “channel”
@@ -48,9 +40,5 @@ struct telegram_chat *
 telegram_chat_free(struct telegram_chat *tc);
 struct telegram_chat *
 telegram_chat_create(void);
-struct telegram_chat *
-telegram_chat_parse_bson(const ej_bson_t *bson);
-ej_bson_t *
-telegram_chat_unparse_bson(const struct telegram_chat *tc);
 
 #endif
