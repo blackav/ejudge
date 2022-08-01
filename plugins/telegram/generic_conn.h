@@ -21,6 +21,7 @@
 struct generic_conn;
 struct telegram_pbs;
 struct telegram_token;
+struct telegram_chat;
 
 struct generic_conn_iface
 {
@@ -52,6 +53,10 @@ struct generic_conn_iface
     void (*token_remove_expired)(
         struct generic_conn *gc,
         time_t current_time);
+
+    struct telegram_chat *(*chat_fetch)(
+        struct generic_conn *gc,
+        long long _id);
 };
 
 struct generic_conn

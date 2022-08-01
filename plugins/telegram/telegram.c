@@ -761,7 +761,7 @@ packet_handler_telegram_reviewed(int uid, int argc, char **argv, void *user)
         goto cleanup;
     }
 
-    tc = telegram_chat_fetch((struct mongo_conn *) state->conn, sub->chat_id);
+    tc = state->conn->vt->chat_fetch(state->conn, sub->chat_id);
     if (!tc) {
         err("chat_id %lld is not registered", sub->chat_id);
     }
@@ -841,7 +841,7 @@ packet_handler_telegram_replied(int uid, int argc, char **argv, void *user)
         goto cleanup;
     }
 
-    tc = telegram_chat_fetch((struct mongo_conn *) state->conn, sub->chat_id);
+    tc = state->conn->vt->chat_fetch(state->conn, sub->chat_id);
     if (!tc) {
         err("chat_id %lld is not registered", sub->chat_id);
     }
@@ -918,7 +918,7 @@ packet_handler_telegram_cf(int uid, int argc, char **argv, void *user)
         goto cleanup;
     }
 
-    tc = telegram_chat_fetch((struct mongo_conn *) state->conn, chat_id);
+    tc = state->conn->vt->chat_fetch(state->conn, chat_id);
     if (!tc) {
         tc = telegram_chat_create();
         tc->_id = chat_id;
@@ -998,7 +998,7 @@ packet_handler_telegram_notify(int uid, int argc, char **argv, void *user)
         goto cleanup;
     }
 
-    tc = telegram_chat_fetch((struct mongo_conn *) state->conn, chat_id);
+    tc = state->conn->vt->chat_fetch(state->conn, chat_id);
     if (!tc) {
         tc = telegram_chat_create();
         tc->_id = chat_id;
@@ -1084,7 +1084,7 @@ packet_handler_telegram_reminder(int uid, int argc, char **argv, void *user)
     if (pr_total < 20 && pr_too_old == 0 && unans_clars == 0) goto cleanup;
 
 
-    tc = telegram_chat_fetch((struct mongo_conn *) state->conn, chat_id);
+    tc = state->conn->vt->chat_fetch(state->conn, chat_id);
     if (!tc) {
         tc = telegram_chat_create();
         tc->_id = chat_id;
@@ -1239,7 +1239,7 @@ handle_incoming_message(
     }
     if (tem->chat) {
         TeChat *tc = tem->chat;
-        mc = telegram_chat_fetch((struct mongo_conn *) state->conn, tc->id);
+        mc = state->conn->vt->chat_fetch(state->conn, tc->id);
         if (need_update_chat(mc, tc)) {
             info("updating chat info for %lld", tc->id);
             telegram_chat_free(mc);

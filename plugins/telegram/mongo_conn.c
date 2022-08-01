@@ -69,6 +69,11 @@ token_remove_expired_func(
         struct generic_conn *gc,
         time_t current_time);
 
+static struct telegram_chat *
+chat_fetch_func(
+        struct generic_conn *gc,
+        long long _id);
+
 static struct generic_conn_iface mongo_iface =
 {
     free_func,
@@ -80,6 +85,7 @@ static struct generic_conn_iface mongo_iface =
     token_save_func,
     token_remove_func,
     token_remove_expired_func,
+    chat_fetch_func,
 };
 
 struct generic_conn *
@@ -304,4 +310,15 @@ token_remove_expired_func(
         time_t current_time)
 {
     telegram_token_remove_expired((struct mongo_conn *) gc, current_time);
+}
+
+struct telegram_chat *
+telegram_chat_fetch(struct mongo_conn *conn, long long _id);
+
+static struct telegram_chat *
+chat_fetch_func(
+        struct generic_conn *gc,
+        long long _id)
+{
+    return telegram_chat_fetch((struct mongo_conn *) gc, _id);
 }
