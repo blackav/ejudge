@@ -689,7 +689,7 @@ packet_handler_telegram_token(int uid, int argc, char **argv, void *user)
     }
 
     time_t current_time = time(NULL);
-    telegram_token_remove_expired((struct mongo_conn *) state->conn, current_time);
+    state->conn->vt->token_remove_expired(state->conn, current_time);
 
     int res = state->conn->vt->token_fetch(state->conn, token->token, &other_token);
     if (res < 0) {
@@ -1358,7 +1358,7 @@ handle_incoming_message(
             } else {
                 unsigned char buf[64];
                 snprintf(buf, sizeof(buf), "%d", token_val);
-                telegram_token_remove_expired((struct mongo_conn *) state->conn, 0);
+                state->conn->vt->token_remove_expired(state->conn, 0);
 
                 int r = state->conn->vt->token_fetch(state->conn, buf, &token);
                 if (r < 0) {

@@ -53,9 +53,4 @@ telegram_token_create(void);
 ej_bson_t *
 telegram_token_unparse_bson(const struct telegram_token *token);
 
-struct mongo_conn;
-
-void
-telegram_token_remove_expired(struct mongo_conn *conn, time_t current_time);
-
 #endif

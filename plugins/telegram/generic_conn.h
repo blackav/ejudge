@@ -16,6 +16,8 @@
  * GNU General Public License for more details.
  */
 
+#include <time.h>
+
 struct generic_conn;
 struct telegram_pbs;
 struct telegram_token;
@@ -47,6 +49,9 @@ struct generic_conn_iface
     void (*token_remove)(
         struct generic_conn *gc,
         const unsigned char *token);
+    void (*token_remove_expired)(
+        struct generic_conn *gc,
+        time_t current_time);
 };
 
 struct generic_conn
