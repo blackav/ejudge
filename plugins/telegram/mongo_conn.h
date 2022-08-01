@@ -45,8 +45,7 @@ struct mongo_conn
 
 struct mongo_conn *
 mongo_conn_create(void);
-struct mongo_conn *
-mongo_conn_free(struct mongo_conn *conn);
+
 int
 mongo_conn_open(struct mongo_conn *conn);
 const unsigned char *

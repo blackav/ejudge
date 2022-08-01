@@ -274,7 +274,7 @@ finish_func(struct common_plugin_data *data)
 {
     struct telegram_plugin_data *state = (struct telegram_plugin_data*) data;
 
-    mongo_conn_free(state->conn);
+    state->conn->b.vt->free(&state->conn->b);
     xfree(state->password_file);
     memset(state, 0, sizeof(*state));
     xfree(state);

@@ -49,7 +49,7 @@ mongo_conn_create(void)
     return conn;
 }
 
-struct mongo_conn *
+static struct mongo_conn *
 mongo_conn_free(struct mongo_conn *conn)
 {
 #if HAVE_LIBMONGOC - 0 > 0
