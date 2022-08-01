@@ -103,4 +103,7 @@ struct generic_conn
 struct generic_conn *
 mongo_conn_create(void);
 
+struct generic_conn *
+mysql_conn_create(void);
+
 #endif
