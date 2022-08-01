@@ -30,7 +30,7 @@
 #include "telegram_chat.h"
 #include "telegram_chat_state.h"
 #include "telegram_subscription.h"
-#include "mongo_conn.h"
+#include "generic_conn.h"
 
 #include "ejudge/cJSON.h"
 
