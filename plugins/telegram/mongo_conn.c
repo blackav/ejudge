@@ -34,10 +34,14 @@
 
 static struct generic_conn *
 free_func(struct generic_conn *gc);
+static int
+open_func(
+        struct generic_conn *gc);
 
 static struct generic_conn_iface mongo_iface =
 {
     free_func,
+    open_func,
 };
 
 struct mongo_conn *
@@ -92,7 +96,7 @@ free_func(struct generic_conn *gc)
     return NULL;
 }
 
-int
+static int
 mongo_conn_open(struct mongo_conn *state)
 {
 #if HAVE_LIBMONGOC - 0 > 0
@@ -173,6 +177,13 @@ mongo_conn_open(struct mongo_conn *state)
 #else
     return 0;
 #endif
+}
+
+static int
+open_func(
+        struct generic_conn *gc)
+{
+    return mongo_conn_open((struct mongo_conn *) gc);
 }
 
 const unsigned char *

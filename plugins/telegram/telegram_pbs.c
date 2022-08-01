@@ -138,7 +138,7 @@ int
 telegram_pbs_save(struct mongo_conn *conn, const struct telegram_pbs *pbs)
 {
 #if HAVE_LIBMONGOC - 0 > 0
-    if (!mongo_conn_open(conn)) return -1;
+    if (!conn->b.vt->open(&conn->b)) return -1;
 
     int retval = -1;
     mongoc_collection_t *coll = NULL;
@@ -194,7 +194,7 @@ struct telegram_pbs *
 telegram_pbs_fetch(struct mongo_conn *conn, const unsigned char *bot_id)
 {
 #if HAVE_LIBMONGOC - 0 > 0
-    if (!mongo_conn_open(conn)) return NULL;
+    if (!conn->b.vt->open(&conn->b)) return NULL;
 
     bson_t *query = NULL;
     mongoc_cursor_t *cursor = NULL;

@@ -188,7 +188,7 @@ struct telegram_chat_state *
 telegram_chat_state_fetch(struct mongo_conn *conn, long long _id)
 {
 #if HAVE_LIBMONGOC - 0 > 0
-    if (!mongo_conn_open(conn)) return NULL;
+    if (!conn->b.vt->open(&conn->b)) return NULL;
 
     mongoc_collection_t *coll = NULL;
     struct telegram_chat_state *retval = NULL;
@@ -267,7 +267,7 @@ int
 telegram_chat_state_save(struct mongo_conn *conn, const struct telegram_chat_state *tcs)
 {
 #if HAVE_LIBMONGOC - 0 > 0
-    if (!mongo_conn_open(conn)) return -1;
+    if (!conn->b.vt->open(&conn->b)) return -1;
 
     int retval = -1;
     mongoc_collection_t *coll = NULL;

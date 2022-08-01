@@ -197,7 +197,7 @@ struct telegram_subscription *
 telegram_subscription_fetch(struct mongo_conn *conn, const unsigned char *bot_id, int contest_id, int user_id)
 {
 #if HAVE_LIBMONGOC - 0 > 0
-    if (!mongo_conn_open(conn)) return NULL;
+    if (!conn->b.vt->open(&conn->b)) return NULL;
 
     unsigned char buf[1024];
     if (!bot_id || !*bot_id || contest_id <= 0 || user_id <= 0) return NULL;
@@ -283,7 +283,7 @@ int
 telegram_subscription_save(struct mongo_conn *conn, const struct telegram_subscription *sub)
 {
 #if HAVE_LIBMONGOC - 0 > 0
-    if (!mongo_conn_open(conn)) return -1;
+    if (!conn->b.vt->open(&conn->b)) return -1;
 
     int retval = -1;
     mongoc_collection_t *coll = NULL;

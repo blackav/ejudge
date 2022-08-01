@@ -235,7 +235,7 @@ telegram_token_remove_expired(struct mongo_conn *conn, time_t current_time)
 #if HAVE_LIBMONGOC - 0 > 0
     if (current_time <= 0) current_time = time(NULL);
 
-    if (!mongo_conn_open(conn)) return;
+    if (!conn->b.vt->open(&conn->b)) return;
 
     mongoc_collection_t *coll = NULL;
     bson_t *qq = NULL;
@@ -285,7 +285,7 @@ void
 telegram_token_remove(struct mongo_conn *conn, const unsigned char *token)
 {
 #if HAVE_LIBMONGOC - 0 > 0
-    if (!mongo_conn_open(conn)) return;
+    if (!conn->b.vt->open(&conn->b)) return;
 
     mongoc_collection_t *coll = NULL;
     bson_t *query = NULL;
@@ -324,7 +324,7 @@ int
 telegram_token_fetch(struct mongo_conn *conn, const unsigned char *token_str, struct telegram_token **p_token)
 {
 #if HAVE_LIBMONGOC - 0 > 0
-    if (!mongo_conn_open(conn)) return -1;
+    if (!conn->b.vt->open(&conn->b)) return -1;
 
     int retval = -1;
     mongoc_collection_t *coll = NULL;
@@ -416,7 +416,7 @@ int
 telegram_token_save(struct mongo_conn *conn, const struct telegram_token *token)
 {
 #if HAVE_LIBMONGOC - 0 > 0
-    if (!mongo_conn_open(conn)) return -1;
+    if (!conn->b.vt->open(&conn->b)) return -1;
 
     int retval = -1;
     mongoc_database_t *db = NULL;

@@ -161,7 +161,7 @@ struct telegram_user *
 telegram_user_fetch(struct mongo_conn *conn, long long _id)
 {
 #if HAVE_LIBMONGOC - 0 > 0
-    if (!mongo_conn_open(conn)) return NULL;
+    if (!conn->b.vt->open(&conn->b)) return NULL;
 
     struct telegram_user *retval = NULL;
     mongoc_collection_t *coll = NULL;
@@ -240,7 +240,7 @@ int
 telegram_user_save(struct mongo_conn *conn, const struct telegram_user *tu)
 {
 #if HAVE_LIBMONGOC - 0 > 0
-    if (!mongo_conn_open(conn)) return -1;
+    if (!conn->b.vt->open(&conn->b)) return -1;
 
     int retval = -1;
     mongoc_collection_t *coll = NULL;
