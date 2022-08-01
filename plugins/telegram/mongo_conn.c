@@ -110,6 +110,7 @@ subscription_save_func(
 static struct generic_conn_iface mongo_iface =
 {
     free_func,
+    NULL,                       /* prepare_func */
     open_func,
     ns_func,
     pbs_fetch_func,

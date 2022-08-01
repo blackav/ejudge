@@ -348,6 +348,9 @@ prepare_func(
     conn->database = database; database = NULL;
     conn->table_prefix = table_prefix; table_prefix = NULL;
     conn->ejudge_config = config;
+    if (conn->vt->prepare && conn->vt->prepare(conn, config, NULL) < 0) {
+        return -1;
+    }
 
     if (state->password_file) {
         unsigned char ppath[PATH_MAX];

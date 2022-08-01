@@ -19,6 +19,7 @@
 #include <time.h>
 
 struct ejudge_cfg;
+struct xml_tree;
 struct generic_conn;
 struct telegram_pbs;
 struct telegram_token;
@@ -30,6 +31,10 @@ struct generic_conn_iface
 {
     struct generic_conn *(*free)(
         struct generic_conn *gc);
+    int (*prepare)(
+        struct generic_conn *gc,
+        const struct ejudge_cfg *config,
+        struct xml_tree *tree);
     int (*open)(
         struct generic_conn *gc);
     const unsigned char *(*ns)(
