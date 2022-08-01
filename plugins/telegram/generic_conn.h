@@ -18,6 +18,7 @@
 
 struct generic_conn;
 struct telegram_pbs;
+struct telegram_token;
 
 struct generic_conn_iface
 {
@@ -35,6 +36,11 @@ struct generic_conn_iface
     int (*pbs_save)(
         struct generic_conn *gc,
         const struct telegram_pbs *pbs);
+
+    int (*token_fetch)(
+        struct generic_conn *gc,
+        const unsigned char *token_str,
+        struct telegram_token **p_token);
 };
 
 struct generic_conn

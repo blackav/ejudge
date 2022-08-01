@@ -691,7 +691,7 @@ packet_handler_telegram_token(int uid, int argc, char **argv, void *user)
     time_t current_time = time(NULL);
     telegram_token_remove_expired((struct mongo_conn *) state->conn, current_time);
 
-    int res = telegram_token_fetch((struct mongo_conn *) state->conn, token->token, &other_token);
+    int res = state->conn->vt->token_fetch(state->conn, token->token, &other_token);
     if (res < 0) {
         err("telegram_token: get_token failed");
     } else if (res > 0) {
@@ -1360,7 +1360,7 @@ handle_incoming_message(
                 snprintf(buf, sizeof(buf), "%d", token_val);
                 telegram_token_remove_expired((struct mongo_conn *) state->conn, 0);
 
-                int r = telegram_token_fetch((struct mongo_conn *) state->conn, buf, &token);
+                int r = state->conn->vt->token_fetch(state->conn, buf, &token);
                 if (r < 0) {
                     send_result = send_message(state, bs, mc, "Internal error. Operation canceled.", NULL, NULL);
                     telegram_chat_state_reset(tcs);
@@ -1411,7 +1411,7 @@ handle_incoming_message(
             telegram_chat_state_reset(tcs);
             update_state = 1;
         } else if (!strcmp(tem->text, "/done")) {
-            int r = telegram_token_fetch((struct mongo_conn *) state->conn, tcs->token, &token);
+            int r = state->conn->vt->token_fetch(state->conn, tcs->token, &token);
             if (r < 0) {
                 send_result = send_message(state, bs, mc, "Internal error. Operation canceled.", NULL, NULL);
             } else if (!r) {

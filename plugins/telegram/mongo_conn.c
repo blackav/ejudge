@@ -51,6 +51,12 @@ pbs_save_func(
         struct generic_conn *gc,
         const struct telegram_pbs *pbs);
 
+static int
+token_fetch_func(
+        struct generic_conn *gc,
+        const unsigned char *token_str,
+        struct telegram_token **p_token);
+
 static struct generic_conn_iface mongo_iface =
 {
     free_func,
@@ -58,6 +64,7 @@ static struct generic_conn_iface mongo_iface =
     ns_func,
     pbs_fetch_func,
     pbs_save_func,
+    token_fetch_func,
 };
 
 struct generic_conn *
@@ -237,4 +244,16 @@ pbs_save_func(
         const struct telegram_pbs *pbs)
 {
     return telegram_pbs_save((struct mongo_conn *) gc, pbs);
+}
+
+int
+telegram_token_fetch(struct mongo_conn *conn, const unsigned char *token_str, struct telegram_token **p_token);
+
+static int
+token_fetch_func(
+        struct generic_conn *gc,
+        const unsigned char *token_str,
+        struct telegram_token **p_token)
+{
+    return telegram_token_fetch((struct mongo_conn*) gc, token_str, p_token);
 }

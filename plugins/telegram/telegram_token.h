@@ -1,8 +1,8 @@
-/* -*- c -*- */
+/* -*- mode: c; c-basic-offset: 4 -*- */
 #ifndef __TELEGRAM_TOKEN_H__
 #define __TELEGRAM_TOKEN_H__
 
-/* Copyright (C) 2016-2019 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2016-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -60,14 +60,6 @@ telegram_token_remove_expired(struct mongo_conn *conn, time_t current_time);
 void
 telegram_token_remove(struct mongo_conn *conn, const unsigned char *token);
 int
-telegram_token_fetch(struct mongo_conn *conn, const unsigned char *token_str, struct telegram_token **p_token);
-int
 telegram_token_save(struct mongo_conn *conn, const struct telegram_token *token);
 
 #endif
-
-/*
- * Local variables:
- *  c-basic-offset: 4
- * End:
- */
