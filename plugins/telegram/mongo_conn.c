@@ -96,6 +96,13 @@ chat_state_save_func(
         struct generic_conn *gc,
         const struct telegram_chat_state *tcs);
 
+static struct telegram_subscription *
+subscription_fetch_func(
+        struct generic_conn *gc,
+        const unsigned char *bot_id,
+        int user_id,
+        int contest_id);
+
 static struct generic_conn_iface mongo_iface =
 {
     free_func,
@@ -113,6 +120,7 @@ static struct generic_conn_iface mongo_iface =
     user_save_func,
     chat_state_fetch_func,
     chat_state_save_func,
+    subscription_fetch_func,
 };
 
 struct generic_conn *
@@ -403,4 +411,17 @@ chat_state_save_func(
         const struct telegram_chat_state *tcs)
 {
     return telegram_chat_state_save((struct mongo_conn *) gc, tcs);
+}
+
+struct telegram_subscription *
+telegram_subscription_fetch(struct mongo_conn *conn, const unsigned char *bot_id, int user_id, int contest_id);
+
+static struct telegram_subscription *
+subscription_fetch_func(
+        struct generic_conn *gc,
+        const unsigned char *bot_id,
+        int user_id,
+        int contest_id)
+{
+    return telegram_subscription_fetch((struct mongo_conn *) gc, bot_id, user_id, contest_id);
 }

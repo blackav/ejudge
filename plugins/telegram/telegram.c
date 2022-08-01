@@ -753,7 +753,7 @@ packet_handler_telegram_reviewed(int uid, int argc, char **argv, void *user)
         goto cleanup;
     }
 
-    sub = telegram_subscription_fetch((struct mongo_conn *) state->conn, argv[1], contest_id, user_id);
+    sub = state->conn->vt->subscription_fetch(state->conn, argv[1], contest_id, user_id);
     if (!sub) goto cleanup;
     if (!sub->review_flag) goto cleanup;
     if (!sub->chat_id) {
@@ -833,7 +833,7 @@ packet_handler_telegram_replied(int uid, int argc, char **argv, void *user)
         goto cleanup;
     }
 
-    sub = telegram_subscription_fetch((struct mongo_conn *) state->conn, argv[1], contest_id, user_id);
+    sub = state->conn->vt->subscription_fetch(state->conn, argv[1], contest_id, user_id);
     if (!sub) goto cleanup;
     if (!sub->reply_flag) goto cleanup;
     if (!sub->chat_id) {
@@ -1417,7 +1417,7 @@ handle_incoming_message(
             } else if (!r) {
                 send_result = send_message(state, bs, mc, "Token expired. Operation failed.", NULL, NULL);
             } else {
-                sub = telegram_subscription_fetch((struct mongo_conn *) state->conn, bs->bot_id, token->contest_id, token->user_id);
+                sub = state->conn->vt->subscription_fetch(state->conn, bs->bot_id, token->contest_id, token->user_id);
                 if (!sub && !strcmp(tcs->command, "/unsubscribe")) {
                     send_result = send_message(state, bs, mc, "You have no subscriptions. Nothing to unsubscribe.", NULL, "{ \"hide_keyboard\": true}");
                 } else {

@@ -1,8 +1,8 @@
-/* -*- c -*- */
+/* -*- mode: c; c-basic-offset: 4 -*- */
 #ifndef __TELEGRAM_SUBSCRIPTION_H__
 #define __TELEGRAM_SUBSCRIPTION_H__
 
-/* Copyright (C) 2016-2019 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2016-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -52,15 +52,7 @@ telegram_subscription_unparse_bson(const struct telegram_subscription *subscript
 
 struct mongo_conn;
 
-struct telegram_subscription *
-telegram_subscription_fetch(struct mongo_conn *conn, const unsigned char *bot_id, int user_id, int contest_id);
 int
 telegram_subscription_save(struct mongo_conn *conn, const struct telegram_subscription *subscription);
 
 #endif
-
-/*
- * Local variables:
- *  c-basic-offset: 4
- * End:
- */

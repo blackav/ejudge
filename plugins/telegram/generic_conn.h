@@ -75,6 +75,12 @@ struct generic_conn_iface
     int (*chat_state_save)(
         struct generic_conn *gc,
         const struct telegram_chat_state *tcs);
+
+    struct telegram_subscription * (*subscription_fetch)(
+        struct generic_conn *gc,
+        const unsigned char *bot_id,
+        int user_id,
+        int contest_id);
 };
 
 struct generic_conn
