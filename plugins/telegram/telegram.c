@@ -445,7 +445,7 @@ get_persistent_bot_state(struct generic_conn *gc, struct bot_state *bs)
 {
     if (bs->pbs) return bs->pbs;
 
-    bs->pbs = telegram_pbs_fetch((struct mongo_conn *) gc, bs->bot_id);
+    bs->pbs = gc->vt->pbs_fetch(gc, bs->bot_id);
     return bs->pbs;
 }
 

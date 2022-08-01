@@ -42,11 +42,17 @@ ns_func(
         struct generic_conn *gc,
         const unsigned char *collection_name);
 
+static struct telegram_pbs *
+pbs_fetch_func(
+        struct generic_conn *gc,
+        const unsigned char *bot_id);
+
 static struct generic_conn_iface mongo_iface =
 {
     free_func,
     open_func,
     ns_func,
+    pbs_fetch_func,
 };
 
 struct generic_conn *
@@ -204,4 +210,16 @@ ns_func(
         const unsigned char *collection_name)
 {
     return mongo_conn_ns((struct mongo_conn *) gc, collection_name);
+}
+
+struct telegram_pbs;
+struct telegram_pbs *
+telegram_pbs_fetch(struct mongo_conn *conn, const unsigned char *bot_id);
+
+static struct telegram_pbs *
+pbs_fetch_func(
+        struct generic_conn *gc,
+        const unsigned char *bot_id)
+{
+    return telegram_pbs_fetch((struct mongo_conn *) gc, bot_id);
 }

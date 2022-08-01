@@ -17,6 +17,7 @@
  */
 
 struct generic_conn;
+struct telegram_pbs;
 
 struct generic_conn_iface
 {
@@ -27,6 +28,10 @@ struct generic_conn_iface
     const unsigned char *(*ns)(
         struct generic_conn *gc,
         const unsigned char *collection_name);
+
+    struct telegram_pbs *(*pbs_fetch)(
+        struct generic_conn *gc,
+        const unsigned char *bot_id);
 };
 
 struct generic_conn
