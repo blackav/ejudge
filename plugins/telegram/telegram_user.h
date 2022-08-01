@@ -1,8 +1,8 @@
-/* -*- c -*- */
+/* -*- mode: c; c-basic-offset: 4 -*- */
 #ifndef __TELEGRAM_USER_H__
 #define __TELEGRAM_USER_H__
 
-/* Copyright (C) 2016-2019 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2016-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -45,15 +45,7 @@ telegram_user_unparse_bson(const struct telegram_user *tu);
 
 struct mongo_conn;
 
-struct telegram_user *
-telegram_user_fetch(struct mongo_conn *conn, long long _id);
 int
 telegram_user_save(struct mongo_conn *conn, const struct telegram_user *tu);
 
 #endif
-
-/*
- * Local variables:
- *  c-basic-offset: 4
- * End:
- */

@@ -60,6 +60,11 @@ struct generic_conn_iface
     int (*chat_save)(
         struct generic_conn *gc,
         const struct telegram_chat *tc);
+
+    struct telegram_user *(*user_fetch)(
+        struct generic_conn *gc,
+        long long _id);
+
 };
 
 struct generic_conn

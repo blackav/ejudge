@@ -1225,7 +1225,7 @@ handle_incoming_message(
 
     if (tem->from) {
         TeUser *teu = tem->from;
-        mu = telegram_user_fetch((struct mongo_conn *) state->conn, teu->id);
+        mu = state->conn->vt->user_fetch(state->conn, teu->id);
         if (need_update_user(mu, teu)) {
             info("updating user info for %lld", teu->id);
             telegram_user_free(mu);
