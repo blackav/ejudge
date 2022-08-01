@@ -1,6 +1,6 @@
-/* -*- mode: c -*- */
+/* -*- mode: c; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2016-2019 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2016-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -196,7 +196,7 @@ telegram_chat_state_fetch(struct mongo_conn *conn, long long _id)
     mongoc_cursor_t *cursor = NULL;
     const bson_t *doc = NULL;
 
-    if (!(coll = mongoc_client_get_collection(conn->client, conn->database, TELEGRAM_CHAT_STATES_TABLE_NAME))) {
+    if (!(coll = mongoc_client_get_collection(conn->client, conn->b.database, TELEGRAM_CHAT_STATES_TABLE_NAME))) {
         err("get_collection failed\n");
         goto cleanup;
     }
@@ -275,7 +275,7 @@ telegram_chat_state_save(struct mongo_conn *conn, const struct telegram_chat_sta
     bson_t *bson = NULL;
     bson_error_t error;
 
-    if (!(coll = mongoc_client_get_collection(conn->client, conn->database, TELEGRAM_CHAT_STATES_TABLE_NAME))) {
+    if (!(coll = mongoc_client_get_collection(conn->client, conn->b.database, TELEGRAM_CHAT_STATES_TABLE_NAME))) {
         err("get_collection failed\n");
         goto cleanup;
     }
@@ -319,9 +319,3 @@ cleanup:
     return 0;
 #endif
 }
-
-/*
- * Local variables:
- *  c-basic-offset: 4
- * End:
- */

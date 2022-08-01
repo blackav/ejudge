@@ -1,6 +1,6 @@
-/* -*- mode: c -*- */
+/* -*- mode: c; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2016-2019 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2016-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -32,11 +32,20 @@
 
 #define MONGO_RETRY_TIMEOUT 60
 
+static struct generic_conn *
+free_func(struct generic_conn *gc);
+
+static struct generic_conn_iface mongo_iface =
+{
+    free_func,
+};
+
 struct mongo_conn *
 mongo_conn_create(void)
 {
     struct mongo_conn *conn = NULL;
     XCALLOC(conn, 1);
+    conn->b.vt = &mongo_iface;
     return conn;
 }
 
@@ -45,11 +54,11 @@ mongo_conn_free(struct mongo_conn *conn)
 {
 #if HAVE_LIBMONGOC - 0 > 0
     if (conn) {
-        xfree(conn->database);
-        xfree(conn->host);
-        xfree(conn->table_prefix);
-        xfree(conn->user);
-        xfree(conn->password);
+        xfree(conn->b.database);
+        xfree(conn->b.host);
+        xfree(conn->b.table_prefix);
+        xfree(conn->b.user);
+        xfree(conn->b.password);
         if (conn->client) {
             mongoc_client_destroy(conn->client);
         }
@@ -76,6 +85,13 @@ mongo_conn_free(struct mongo_conn *conn)
 #endif
 }
 
+static struct generic_conn *
+free_func(struct generic_conn *gc)
+{
+    mongo_conn_free((struct mongo_conn *) gc);
+    return NULL;
+}
+
 int
 mongo_conn_open(struct mongo_conn *state)
 {
@@ -87,22 +103,22 @@ mongo_conn_open(struct mongo_conn *state)
         return 0;
     }
 
-    if (!state->database) {
-        if (!state->database) state->database = xstrdup("ejudge");
-        state->show_queries = 1;
+    if (!state->b.database) {
+        if (!state->b.database) state->b.database = xstrdup("ejudge");
+        state->b.show_queries = 1;
     }
-    if (!state->table_prefix) state->table_prefix = xstrdup("");
-    if (!state->host) state->host = xstrdup("localhost");
-    if (state->port <= 0) state->port = 27017;
+    if (!state->b.table_prefix) state->b.table_prefix = xstrdup("");
+    if (!state->b.host) state->b.host = xstrdup("localhost");
+    if (state->b.port <= 0) state->b.port = 27017;
 
     unsigned char uri[1024];
-    if (state->user && state->password) {
-        if (snprintf(uri, sizeof(uri), "mongodb://%s:%s@%s:%d", state->user, state->password, state->host, state->port) >= sizeof(uri)) {
+    if (state->b.user && state->b.password) {
+        if (snprintf(uri, sizeof(uri), "mongodb://%s:%s@%s:%d", state->b.user, state->b.password, state->b.host, state->b.port) >= sizeof(uri)) {
             err("mongodb URI is too long");
             return 0;
         }
     } else {
-        if (snprintf(uri, sizeof(uri), "mongodb://%s:%d", state->host, state->port) >= sizeof(uri)) {
+        if (snprintf(uri, sizeof(uri), "mongodb://%s:%d", state->b.host, state->b.port) >= sizeof(uri)) {
             err("mongodb URI is too long");
             return 0;
         }
@@ -162,12 +178,6 @@ mongo_conn_open(struct mongo_conn *state)
 const unsigned char *
 mongo_conn_ns(struct mongo_conn *conn, const unsigned char *collection_name)
 {
-    snprintf(conn->ns, sizeof(conn->ns), "%s.%s%s", conn->database, conn->table_prefix, collection_name);
+    snprintf(conn->ns, sizeof(conn->ns), "%s.%s%s", conn->b.database, conn->b.table_prefix, collection_name);
     return conn->ns;
 }
-
-/*
- * Local variables:
- *  c-basic-offset: 4
- * End:
- */

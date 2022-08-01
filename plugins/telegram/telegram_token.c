@@ -1,6 +1,6 @@
-/* -*- mode: c -*- */
+/* -*- mode: c; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2016-2019 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2016-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -242,7 +242,7 @@ telegram_token_remove_expired(struct mongo_conn *conn, time_t current_time)
     bson_t *q = NULL;
     bson_error_t error;
 
-    if (!(coll = mongoc_client_get_collection(conn->client, conn->database, TELEGRAM_TOKENS_TABLE_NAME))) {
+    if (!(coll = mongoc_client_get_collection(conn->client, conn->b.database, TELEGRAM_TOKENS_TABLE_NAME))) {
         err("get_collection failed\n");
         goto cleanup;
     }
@@ -291,7 +291,7 @@ telegram_token_remove(struct mongo_conn *conn, const unsigned char *token)
     bson_t *query = NULL;
     bson_error_t error;
 
-    if (!(coll = mongoc_client_get_collection(conn->client, conn->database, TELEGRAM_TOKENS_TABLE_NAME))) {
+    if (!(coll = mongoc_client_get_collection(conn->client, conn->b.database, TELEGRAM_TOKENS_TABLE_NAME))) {
         err("get_collection failed\n");
         goto cleanup;
     }
@@ -332,7 +332,7 @@ telegram_token_fetch(struct mongo_conn *conn, const unsigned char *token_str, st
     mongoc_cursor_t *cursor = NULL;
     const bson_t *doc = NULL;
 
-    if (!(coll = mongoc_client_get_collection(conn->client, conn->database, TELEGRAM_TOKENS_TABLE_NAME))) {
+    if (!(coll = mongoc_client_get_collection(conn->client, conn->b.database, TELEGRAM_TOKENS_TABLE_NAME))) {
         err("get_collection failed\n");
         goto cleanup;
     }
@@ -427,7 +427,7 @@ telegram_token_save(struct mongo_conn *conn, const struct telegram_token *token)
     char *ind_name = NULL;
     bson_t *create_bson = NULL;
 
-    if (!(coll = mongoc_client_get_collection(conn->client, conn->database, TELEGRAM_TOKENS_TABLE_NAME))) {
+    if (!(coll = mongoc_client_get_collection(conn->client, conn->b.database, TELEGRAM_TOKENS_TABLE_NAME))) {
         err("get_collection failed\n");
         goto cleanup;
     }
@@ -450,7 +450,7 @@ telegram_token_save(struct mongo_conn *conn, const struct telegram_token *token)
                                "indexes", "[", "{", "key", BCON_DOCUMENT(ind),
                                "name", BCON_UTF8(ind_name), "}", "]");
 
-        if ((db = mongoc_client_get_database(conn->client, conn->database))) {
+        if ((db = mongoc_client_get_database(conn->client, conn->b.database))) {
             mongoc_database_write_command_with_opts(db, create_bson, NULL, NULL, NULL);
         }
     }
@@ -489,10 +489,3 @@ cleanup:
     return 0;
 #endif
 }
-
-
-/*
- * Local variables:
- *  c-basic-offset: 4
- * End:
- */

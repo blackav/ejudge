@@ -1,4 +1,4 @@
-/* -*- mode: c -*- */
+/* -*- mode: c; c-basic-offset: 4 -*- */
 
 /* Copyright (C) 2016-2019 Alexander Chernov <cher@ejudge.ru> */
 
@@ -146,7 +146,7 @@ telegram_pbs_save(struct mongo_conn *conn, const struct telegram_pbs *pbs)
     bson_t *bson = NULL;
     bson_error_t error;
 
-    if (!(coll = mongoc_client_get_collection(conn->client, conn->database, TELEGRAM_BOTS_TABLE_NAME))) {
+    if (!(coll = mongoc_client_get_collection(conn->client, conn->b.database, TELEGRAM_BOTS_TABLE_NAME))) {
         err("get_collection failed\n");
         goto cleanup;
     }
@@ -202,7 +202,7 @@ telegram_pbs_fetch(struct mongo_conn *conn, const unsigned char *bot_id)
     struct telegram_pbs *retval = NULL;
     mongoc_collection_t *coll = NULL;
 
-    if (!(coll = mongoc_client_get_collection(conn->client, conn->database, TELEGRAM_BOTS_TABLE_NAME))) {
+    if (!(coll = mongoc_client_get_collection(conn->client, conn->b.database, TELEGRAM_BOTS_TABLE_NAME))) {
         err("get_collection failed\n");
         goto cleanup;
     }
@@ -275,9 +275,3 @@ cleanup:
     return NULL;
 #endif
 }
-
-/*
- * Local variables:
- *  c-basic-offset: 4
- * End:
- */

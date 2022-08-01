@@ -1,8 +1,8 @@
-/* -*- c -*- */
+/* -*- mode: c; c-basic-offset: 4 -*- */
 #ifndef __MONGO_CONN_H__
 #define __MONGO_CONN_H__
 
-/* Copyright (C) 2016-2019 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2016-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -17,6 +17,7 @@
  */
 
 #include "ejudge/config.h"
+#include "generic_conn.h"
 
 #include <time.h>
 
@@ -31,13 +32,7 @@ struct _mongo_sync_connection;
 // mongo connectivity
 struct mongo_conn
 {
-    unsigned char *database;
-    unsigned char *host;
-    unsigned char *table_prefix;
-    unsigned char *user;
-    unsigned char *password;
-    int port;
-    int show_queries;
+    struct generic_conn b;
 #if HAVE_LIBMONGOC - 0 > 0
     mongoc_client_t *client;
 #elif HAVE_LIBMONGO_CLIENT - 0 == 1
@@ -58,9 +53,3 @@ const unsigned char *
 mongo_conn_ns(struct mongo_conn *conn, const unsigned char *collection_name);
 
 #endif
-
-/*
- * Local variables:
- *  c-basic-offset: 4
- * End:
- */

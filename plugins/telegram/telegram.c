@@ -1,4 +1,4 @@
-/* -*- mode: c -*- */
+/* -*- mode: c; c-basic-offset: 4 -*- */
 
 /* Copyright (C) 2016-2022 Alexander Chernov <cher@ejudge.ru> */
 
@@ -227,8 +227,8 @@ parse_passwd_file(
     goto cleanup;
   }
   fclose(f); f = 0;
-  state->conn->user = xstrdup(buser);
-  state->conn->password = xstrdup(bpwd);
+  state->conn->b.user = xstrdup(buser);
+  state->conn->b.password = xstrdup(bpwd);
 
   // debug
   //fprintf(stderr, "login: %s\npassword: %s\n", state->user, state->password);
@@ -306,17 +306,17 @@ prepare_func(
                 }
             }
         } else if (!strcmp(p->name[0], "host")) {
-            if (xml_leaf_elem(p, &state->conn->host, 1, 0) < 0) return -1;
+            if (xml_leaf_elem(p, &state->conn->b.host, 1, 0) < 0) return -1;
         } else if (!strcmp(p->name[0], "port")) {
-            if (xml_parse_int(NULL, "", p->line, p->column, p->text, &state->conn->port) < 0) return -1;
-            if (state->conn->port < 0 || state->conn->port > 65535) {
+            if (xml_parse_int(NULL, "", p->line, p->column, p->text, &state->conn->b.port) < 0) return -1;
+            if (state->conn->b.port < 0 || state->conn->b.port > 65535) {
                 xml_err_elem_invalid(p);
                 return -1;
             }
         } else if (!strcmp(p->name[0], "database")) {
-            if (xml_leaf_elem(p, &state->conn->database, 1, 0) < 0) return -1;
+            if (xml_leaf_elem(p, &state->conn->b.database, 1, 0) < 0) return -1;
         } else if (!strcmp(p->name[0], "table_prefix")) {
-            if (xml_leaf_elem(p, &state->conn->table_prefix, 1, 0) < 0) return -1;
+            if (xml_leaf_elem(p, &state->conn->b.table_prefix, 1, 0) < 0) return -1;
         } else if (!strcmp(p->name[0], "password_file")) {
             if (xml_leaf_elem(p, &state->password_file, 1, 0) < 0) return -1;
         } else if (!strcmp(p->name[0], "curl_verbose")) {
@@ -1598,9 +1598,3 @@ queue_periodic_handler(void *user)
     struct telegram_plugin_data *state = (struct telegram_plugin_data*) user;
     put_to_queue(state, periodic_handler, 0, 0, 0);
 }
-
-/*
- * Local variables:
- *  c-basic-offset: 4
- * End:
- */
