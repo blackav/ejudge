@@ -18,14 +18,6 @@
 
 #include "ejudge/config.h"
 
-#if HAVE_LIBMONGOC - 0 > 0
-struct _bson_t;
-typedef struct _bson_t ej_bson_t;
-#elif HAVE_LIBMONGO_CLIENT - 0 == 1
-struct _bson;
-typedef struct _bson ej_bson_t;
-#endif
-
 #include <time.h>
 
 /* tokens for bot interaction */
@@ -47,10 +39,6 @@ struct telegram_token
 struct telegram_token *
 telegram_token_free(struct telegram_token *token);
 struct telegram_token *
-telegram_token_parse_bson(const ej_bson_t *bson);
-struct telegram_token *
 telegram_token_create(void);
-ej_bson_t *
-telegram_token_unparse_bson(const struct telegram_token *token);
 
 #endif

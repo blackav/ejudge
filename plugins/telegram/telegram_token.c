@@ -22,6 +22,14 @@
 #include "telegram_token.h"
 #include "mongo_conn.h"
 
+#if HAVE_LIBMONGOC - 0 > 0
+struct _bson_t;
+typedef struct _bson_t ej_bson_t;
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
+struct _bson;
+typedef struct _bson ej_bson_t;
+#endif
+
 #if HAVE_LIBMONGOC - 0 > 1
 #include <mongoc/mongoc.h>
 #elif HAVE_LIBMONGOC - 0 > 0
@@ -33,6 +41,11 @@
 #include <errno.h>
 
 #define TELEGRAM_TOKENS_TABLE_NAME "telegram_tokens"
+
+static ej_bson_t *
+telegram_token_unparse_bson(const struct telegram_token *token);
+static struct telegram_token *
+telegram_token_parse_bson(const ej_bson_t *bson);
 
 struct telegram_token *
 telegram_token_free(struct telegram_token *token)
@@ -48,7 +61,7 @@ telegram_token_free(struct telegram_token *token)
     return NULL;
 }
 
-struct telegram_token *
+static struct telegram_token *
 telegram_token_parse_bson(const ej_bson_t *bson)
 {
 #if HAVE_LIBMONGOC - 0 > 0
@@ -135,7 +148,7 @@ telegram_token_create(void)
     return token;
 }
 
-ej_bson_t *
+static ej_bson_t *
 telegram_token_unparse_bson(const struct telegram_token *token)
 {
 #if HAVE_LIBMONGOC - 0 > 0
