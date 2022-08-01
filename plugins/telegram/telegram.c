@@ -136,7 +136,8 @@ struct telegram_plugin_data
         int a, u;
     } bots;
 
-    struct mongo_conn *conn;
+    struct generic_conn *conn;
+
     int curl_verbose_flag;
     unsigned char *password_file;
 
@@ -227,8 +228,8 @@ parse_passwd_file(
     goto cleanup;
   }
   fclose(f); f = 0;
-  state->conn->b.user = xstrdup(buser);
-  state->conn->b.password = xstrdup(bpwd);
+  state->conn->user = xstrdup(buser);
+  state->conn->password = xstrdup(bpwd);
 
   // debug
   //fprintf(stderr, "login: %s\npassword: %s\n", state->user, state->password);
@@ -274,7 +275,7 @@ finish_func(struct common_plugin_data *data)
 {
     struct telegram_plugin_data *state = (struct telegram_plugin_data*) data;
 
-    state->conn->b.vt->free(&state->conn->b);
+    state->conn->vt->free(state->conn);
     xfree(state->password_file);
     memset(state, 0, sizeof(*state));
     xfree(state);
@@ -306,17 +307,17 @@ prepare_func(
                 }
             }
         } else if (!strcmp(p->name[0], "host")) {
-            if (xml_leaf_elem(p, &state->conn->b.host, 1, 0) < 0) return -1;
+            if (xml_leaf_elem(p, &state->conn->host, 1, 0) < 0) return -1;
         } else if (!strcmp(p->name[0], "port")) {
-            if (xml_parse_int(NULL, "", p->line, p->column, p->text, &state->conn->b.port) < 0) return -1;
-            if (state->conn->b.port < 0 || state->conn->b.port > 65535) {
+            if (xml_parse_int(NULL, "", p->line, p->column, p->text, &state->conn->port) < 0) return -1;
+            if (state->conn->port < 0 || state->conn->port > 65535) {
                 xml_err_elem_invalid(p);
                 return -1;
             }
         } else if (!strcmp(p->name[0], "database")) {
-            if (xml_leaf_elem(p, &state->conn->b.database, 1, 0) < 0) return -1;
+            if (xml_leaf_elem(p, &state->conn->database, 1, 0) < 0) return -1;
         } else if (!strcmp(p->name[0], "table_prefix")) {
-            if (xml_leaf_elem(p, &state->conn->b.table_prefix, 1, 0) < 0) return -1;
+            if (xml_leaf_elem(p, &state->conn->table_prefix, 1, 0) < 0) return -1;
         } else if (!strcmp(p->name[0], "password_file")) {
             if (xml_leaf_elem(p, &state->password_file, 1, 0) < 0) return -1;
         } else if (!strcmp(p->name[0], "curl_verbose")) {
@@ -688,16 +689,16 @@ packet_handler_telegram_token(int uid, int argc, char **argv, void *user)
     }
 
     time_t current_time = time(NULL);
-    telegram_token_remove_expired(state->conn, current_time);
+    telegram_token_remove_expired((struct mongo_conn *) state->conn, current_time);
 
-    int res = telegram_token_fetch(state->conn, token->token, &other_token);
+    int res = telegram_token_fetch((struct mongo_conn *) state->conn, token->token, &other_token);
     if (res < 0) {
         err("telegram_token: get_token failed");
     } else if (res > 0) {
         err("duplicated token, removing all");
-        telegram_token_remove(state->conn, token->token);
+        telegram_token_remove((struct mongo_conn *) state->conn, token->token);
     } else {
-        telegram_token_save(state->conn, token);
+        telegram_token_save((struct mongo_conn *) state->conn, token);
     }
 
 cleanup:
@@ -752,7 +753,7 @@ packet_handler_telegram_reviewed(int uid, int argc, char **argv, void *user)
         goto cleanup;
     }
 
-    sub = telegram_subscription_fetch(state->conn, argv[1], contest_id, user_id);
+    sub = telegram_subscription_fetch((struct mongo_conn *) state->conn, argv[1], contest_id, user_id);
     if (!sub) goto cleanup;
     if (!sub->review_flag) goto cleanup;
     if (!sub->chat_id) {
@@ -760,7 +761,7 @@ packet_handler_telegram_reviewed(int uid, int argc, char **argv, void *user)
         goto cleanup;
     }
 
-    tc = telegram_chat_fetch(state->conn, sub->chat_id);
+    tc = telegram_chat_fetch((struct mongo_conn *) state->conn, sub->chat_id);
     if (!tc) {
         err("chat_id %lld is not registered", sub->chat_id);
     }
@@ -832,7 +833,7 @@ packet_handler_telegram_replied(int uid, int argc, char **argv, void *user)
         goto cleanup;
     }
 
-    sub = telegram_subscription_fetch(state->conn, argv[1], contest_id, user_id);
+    sub = telegram_subscription_fetch((struct mongo_conn *) state->conn, argv[1], contest_id, user_id);
     if (!sub) goto cleanup;
     if (!sub->reply_flag) goto cleanup;
     if (!sub->chat_id) {
@@ -840,7 +841,7 @@ packet_handler_telegram_replied(int uid, int argc, char **argv, void *user)
         goto cleanup;
     }
 
-    tc = telegram_chat_fetch(state->conn, sub->chat_id);
+    tc = telegram_chat_fetch((struct mongo_conn *) state->conn, sub->chat_id);
     if (!tc) {
         err("chat_id %lld is not registered", sub->chat_id);
     }
@@ -917,11 +918,11 @@ packet_handler_telegram_cf(int uid, int argc, char **argv, void *user)
         goto cleanup;
     }
 
-    tc = telegram_chat_fetch(state->conn, chat_id);
+    tc = telegram_chat_fetch((struct mongo_conn *) state->conn, chat_id);
     if (!tc) {
         tc = telegram_chat_create();
         tc->_id = chat_id;
-        telegram_chat_save(state->conn, tc);
+        telegram_chat_save((struct mongo_conn *) state->conn, tc);
     }
 
     {
@@ -997,11 +998,11 @@ packet_handler_telegram_notify(int uid, int argc, char **argv, void *user)
         goto cleanup;
     }
 
-    tc = telegram_chat_fetch(state->conn, chat_id);
+    tc = telegram_chat_fetch((struct mongo_conn *) state->conn, chat_id);
     if (!tc) {
         tc = telegram_chat_create();
         tc->_id = chat_id;
-        telegram_chat_save(state->conn, tc);
+        telegram_chat_save((struct mongo_conn *) state->conn, tc);
     }
 
     {
@@ -1083,11 +1084,11 @@ packet_handler_telegram_reminder(int uid, int argc, char **argv, void *user)
     if (pr_total < 20 && pr_too_old == 0 && unans_clars == 0) goto cleanup;
 
 
-    tc = telegram_chat_fetch(state->conn, chat_id);
+    tc = telegram_chat_fetch((struct mongo_conn *) state->conn, chat_id);
     if (!tc) {
         tc = telegram_chat_create();
         tc->_id = chat_id;
-        telegram_chat_save(state->conn, tc);
+        telegram_chat_save((struct mongo_conn *) state->conn, tc);
     }
 
     {
@@ -1224,7 +1225,7 @@ handle_incoming_message(
 
     if (tem->from) {
         TeUser *teu = tem->from;
-        mu = telegram_user_fetch(state->conn, teu->id);
+        mu = telegram_user_fetch((struct mongo_conn *) state->conn, teu->id);
         if (need_update_user(mu, teu)) {
             info("updating user info for %lld", teu->id);
             telegram_user_free(mu);
@@ -1233,12 +1234,12 @@ handle_incoming_message(
             mu->username = safe_strdup(teu->username);
             mu->first_name = safe_strdup(teu->first_name);
             mu->last_name = safe_strdup(teu->last_name);
-            telegram_user_save(state->conn, mu);
+            telegram_user_save((struct mongo_conn *) state->conn, mu);
         }
     }
     if (tem->chat) {
         TeChat *tc = tem->chat;
-        mc = telegram_chat_fetch(state->conn, tc->id);
+        mc = telegram_chat_fetch((struct mongo_conn *) state->conn, tc->id);
         if (need_update_chat(mc, tc)) {
             info("updating chat info for %lld", tc->id);
             telegram_chat_free(mc);
@@ -1249,7 +1250,7 @@ handle_incoming_message(
             mc->username = safe_strdup(tc->username);
             mc->first_name = safe_strdup(tc->first_name);
             mc->last_name = safe_strdup(tc->last_name);
-            telegram_chat_save(state->conn, mc);
+            telegram_chat_save((struct mongo_conn *) state->conn, mc);
         }
     }
 
@@ -1299,7 +1300,7 @@ handle_incoming_message(
     if (!tem->text) goto cleanup;
 
     // chat state machine is here
-    tcs = telegram_chat_state_fetch(state->conn, mc->_id);
+    tcs = telegram_chat_state_fetch((struct mongo_conn *) state->conn, mc->_id);
     if (!tcs) {
         tcs = telegram_chat_state_create();
         tcs->_id = mc->_id;
@@ -1357,9 +1358,9 @@ handle_incoming_message(
             } else {
                 unsigned char buf[64];
                 snprintf(buf, sizeof(buf), "%d", token_val);
-                telegram_token_remove_expired(state->conn, 0);
+                telegram_token_remove_expired((struct mongo_conn *) state->conn, 0);
 
-                int r = telegram_token_fetch(state->conn, buf, &token);
+                int r = telegram_token_fetch((struct mongo_conn *) state->conn, buf, &token);
                 if (r < 0) {
                     send_result = send_message(state, bs, mc, "Internal error. Operation canceled.", NULL, NULL);
                     telegram_chat_state_reset(tcs);
@@ -1410,13 +1411,13 @@ handle_incoming_message(
             telegram_chat_state_reset(tcs);
             update_state = 1;
         } else if (!strcmp(tem->text, "/done")) {
-            int r = telegram_token_fetch(state->conn, tcs->token, &token);
+            int r = telegram_token_fetch((struct mongo_conn *) state->conn, tcs->token, &token);
             if (r < 0) {
                 send_result = send_message(state, bs, mc, "Internal error. Operation canceled.", NULL, NULL);
             } else if (!r) {
                 send_result = send_message(state, bs, mc, "Token expired. Operation failed.", NULL, NULL);
             } else {
-                sub = telegram_subscription_fetch(state->conn, bs->bot_id, token->contest_id, token->user_id);
+                sub = telegram_subscription_fetch((struct mongo_conn *) state->conn, bs->bot_id, token->contest_id, token->user_id);
                 if (!sub && !strcmp(tcs->command, "/unsubscribe")) {
                     send_result = send_message(state, bs, mc, "You have no subscriptions. Nothing to unsubscribe.", NULL, "{ \"hide_keyboard\": true}");
                 } else {
@@ -1444,9 +1445,9 @@ handle_incoming_message(
                         send_result = send_message(state, bs, mc, msg_s, NULL, "{ \"hide_keyboard\": true}");
                         free(msg_s);
                     }
-                    telegram_subscription_save(state->conn, sub);
+                    telegram_subscription_save((struct mongo_conn *) state->conn, sub);
                 }
-                telegram_token_remove(state->conn, tcs->token);
+                telegram_token_remove((struct mongo_conn *) state->conn, tcs->token);
             }
             telegram_chat_state_reset(tcs);
             update_state = 1;
@@ -1462,7 +1463,7 @@ handle_incoming_message(
     }
 
     if (update_state) {
-        telegram_chat_state_save(state->conn, tcs);
+        telegram_chat_state_save((struct mongo_conn *) state->conn, tcs);
     }
 
 cleanup:
@@ -1508,7 +1509,7 @@ handle_reply(struct telegram_plugin_data *state,
                 */
             }
             if (need_update) {
-                telegram_pbs_save(state->conn, pbs);
+                telegram_pbs_save((struct mongo_conn *) state->conn, pbs);
             }
         }
     }
@@ -1527,7 +1528,7 @@ get_updates(struct telegram_plugin_data *state, struct bot_state *bs)
     char *url_s = NULL, *resp_s = NULL;
     size_t url_z = 0, resp_z = 0;
 
-    struct telegram_pbs *pbs = get_persistent_bot_state(state->conn, bs);
+    struct telegram_pbs *pbs = get_persistent_bot_state((struct mongo_conn *) state->conn, bs);
     if (!pbs) {
         err("cannot get persistent bot state for bot %s", bs->bot_id);
         return;

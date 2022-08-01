@@ -49,13 +49,13 @@ static struct generic_conn_iface mongo_iface =
     ns_func,
 };
 
-struct mongo_conn *
+struct generic_conn *
 mongo_conn_create(void)
 {
     struct mongo_conn *conn = NULL;
     XCALLOC(conn, 1);
     conn->b.vt = &mongo_iface;
-    return conn;
+    return &conn->b;
 }
 
 static struct mongo_conn *
