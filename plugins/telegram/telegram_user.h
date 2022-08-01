@@ -45,7 +45,5 @@ telegram_user_unparse_bson(const struct telegram_user *tu);
 
 struct mongo_conn;
 
-int
-telegram_user_save(struct mongo_conn *conn, const struct telegram_user *tu);
 
 #endif

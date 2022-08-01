@@ -1234,7 +1234,7 @@ handle_incoming_message(
             mu->username = safe_strdup(teu->username);
             mu->first_name = safe_strdup(teu->first_name);
             mu->last_name = safe_strdup(teu->last_name);
-            telegram_user_save((struct mongo_conn *) state->conn, mu);
+            state->conn->vt->user_save(state->conn, mu);
         }
     }
     if (tem->chat) {

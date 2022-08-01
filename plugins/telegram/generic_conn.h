@@ -64,7 +64,9 @@ struct generic_conn_iface
     struct telegram_user *(*user_fetch)(
         struct generic_conn *gc,
         long long _id);
-
+    int (*user_save)(
+        struct generic_conn *gc,
+        const struct telegram_user *tu);
 };
 
 struct generic_conn
