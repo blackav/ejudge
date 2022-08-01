@@ -42,4 +42,7 @@ struct generic_conn
     int show_queries;
 };
 
+struct generic_conn *
+mongo_conn_create(void);
+
 #endif

@@ -43,7 +43,4 @@ struct mongo_conn
     unsigned char ns[128];
 };
 
-struct generic_conn *
-mongo_conn_create(void);
-
 #endif
