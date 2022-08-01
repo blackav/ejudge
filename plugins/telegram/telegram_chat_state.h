@@ -50,7 +50,4 @@ telegram_chat_state_unparse_bson(const struct telegram_chat_state *tcs);
 
 struct mongo_conn;
 
-int
-telegram_chat_state_save(struct mongo_conn *conn, const struct telegram_chat_state *tcs);
-
 #endif

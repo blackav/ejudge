@@ -72,6 +72,9 @@ struct generic_conn_iface
     struct telegram_chat_state *(*chat_state_fetch)(
         struct generic_conn *gc,
         long long _id);
+    int (*chat_state_save)(
+        struct generic_conn *gc,
+        const struct telegram_chat_state *tcs);
 };
 
 struct generic_conn

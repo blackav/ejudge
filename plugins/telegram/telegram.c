@@ -1463,7 +1463,7 @@ handle_incoming_message(
     }
 
     if (update_state) {
-        telegram_chat_state_save((struct mongo_conn *) state->conn, tcs);
+        state->conn->vt->chat_state_save(state->conn, tcs);
     }
 
 cleanup:
