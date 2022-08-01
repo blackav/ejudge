@@ -52,7 +52,5 @@ telegram_subscription_unparse_bson(const struct telegram_subscription *subscript
 
 struct mongo_conn;
 
-int
-telegram_subscription_save(struct mongo_conn *conn, const struct telegram_subscription *subscription);
 
 #endif

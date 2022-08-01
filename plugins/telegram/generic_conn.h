@@ -23,6 +23,7 @@ struct telegram_pbs;
 struct telegram_token;
 struct telegram_chat;
 struct telegram_chat_state;
+struct telegram_subscription;
 
 struct generic_conn_iface
 {
@@ -81,6 +82,9 @@ struct generic_conn_iface
         const unsigned char *bot_id,
         int user_id,
         int contest_id);
+    int (*subscription_save)(
+        struct generic_conn *gc,
+        const struct telegram_subscription *subscription);
 };
 
 struct generic_conn

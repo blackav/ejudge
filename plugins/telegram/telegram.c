@@ -1445,7 +1445,7 @@ handle_incoming_message(
                         send_result = send_message(state, bs, mc, msg_s, NULL, "{ \"hide_keyboard\": true}");
                         free(msg_s);
                     }
-                    telegram_subscription_save((struct mongo_conn *) state->conn, sub);
+                    state->conn->vt->subscription_save(state->conn, sub);
                 }
                 state->conn->vt->token_remove(state->conn, tcs->token);
             }
