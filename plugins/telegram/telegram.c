@@ -264,7 +264,6 @@ init_func(void)
 {
     struct telegram_plugin_data *state = NULL;
     XCALLOC(state, 1);
-    state->conn = mongo_conn_create();
     pthread_mutex_init(&state->q_m, NULL);
     pthread_cond_init(&state->q_c, NULL);
     return (struct common_plugin_data*) state;
@@ -296,6 +295,12 @@ prepare_func(
         return -1;
     }
 
+    unsigned char *storage = NULL;
+    unsigned char *host = NULL;
+    int port = 0;
+    unsigned char *database = NULL;
+    unsigned char *table_prefix = NULL;
+
     for (struct xml_tree *p = tree->first_down; p; p = p->right) {
         ASSERT(p->tag == spec->default_elem);
         if (!strcmp(p->name[0], "bots")) {
@@ -306,18 +311,20 @@ prepare_func(
                     add_bot_id(state, bot_id);
                 }
             }
+        } else if (!strcmp(p->name[0], "storage")) {
+            if (xml_leaf_elem(p, &storage, 1, 0) < 0) return -1;
         } else if (!strcmp(p->name[0], "host")) {
-            if (xml_leaf_elem(p, &state->conn->host, 1, 0) < 0) return -1;
+            if (xml_leaf_elem(p, &host, 1, 0) < 0) return -1;
         } else if (!strcmp(p->name[0], "port")) {
-            if (xml_parse_int(NULL, "", p->line, p->column, p->text, &state->conn->port) < 0) return -1;
-            if (state->conn->port < 0 || state->conn->port > 65535) {
+            if (xml_parse_int(NULL, "", p->line, p->column, p->text, &port) < 0) return -1;
+            if (port < 0 || port > 65535) {
                 xml_err_elem_invalid(p);
                 return -1;
             }
         } else if (!strcmp(p->name[0], "database")) {
-            if (xml_leaf_elem(p, &state->conn->database, 1, 0) < 0) return -1;
+            if (xml_leaf_elem(p, &database, 1, 0) < 0) return -1;
         } else if (!strcmp(p->name[0], "table_prefix")) {
-            if (xml_leaf_elem(p, &state->conn->table_prefix, 1, 0) < 0) return -1;
+            if (xml_leaf_elem(p, &table_prefix, 1, 0) < 0) return -1;
         } else if (!strcmp(p->name[0], "password_file")) {
             if (xml_leaf_elem(p, &state->password_file, 1, 0) < 0) return -1;
         } else if (!strcmp(p->name[0], "curl_verbose")) {
@@ -325,7 +332,22 @@ prepare_func(
         }
     }
 
-    state->conn->ejudge_config = config;
+    struct generic_conn *conn = NULL;
+    if (!storage || !*storage) storage = "mysql";
+    if (!strcmp(storage, "mysql")) {
+        conn = mysql_conn_create();
+    } else if (!strcmp(storage, "mongo")) {
+        conn = mongo_conn_create();
+    } else {
+        err("telegram: invalid storage '%s'", storage);
+        return -1;
+    }
+    state->conn = conn;
+    conn->host = host; host = NULL;
+    conn->port = port;
+    conn->database = database; database = NULL;
+    conn->table_prefix = table_prefix; table_prefix = NULL;
+    conn->ejudge_config = config;
 
     if (state->password_file) {
         unsigned char ppath[PATH_MAX];
