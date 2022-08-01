@@ -18,6 +18,7 @@
 
 #include <time.h>
 
+struct ejudge_cfg;
 struct generic_conn;
 struct telegram_pbs;
 struct telegram_token;
@@ -98,6 +99,7 @@ struct generic_conn
     unsigned char *password;
     int port;
     int show_queries;
+    const struct ejudge_cfg *ejudge_config;
 };
 
 struct generic_conn *

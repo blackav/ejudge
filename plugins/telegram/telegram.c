@@ -325,6 +325,8 @@ prepare_func(
         }
     }
 
+    state->conn->ejudge_config = config;
+
     if (state->password_file) {
         unsigned char ppath[PATH_MAX];
         ppath[0] = 0;
