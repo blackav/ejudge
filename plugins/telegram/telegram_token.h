@@ -57,9 +57,5 @@ struct mongo_conn;
 
 void
 telegram_token_remove_expired(struct mongo_conn *conn, time_t current_time);
-void
-telegram_token_remove(struct mongo_conn *conn, const unsigned char *token);
-int
-telegram_token_save(struct mongo_conn *conn, const struct telegram_token *token);
 
 #endif

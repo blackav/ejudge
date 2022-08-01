@@ -56,6 +56,14 @@ token_fetch_func(
         struct generic_conn *gc,
         const unsigned char *token_str,
         struct telegram_token **p_token);
+static int
+token_save_func(
+        struct generic_conn *gc,
+        const struct telegram_token *token);
+static void
+token_remove_func(
+        struct generic_conn *gc,
+        const unsigned char *token);
 
 static struct generic_conn_iface mongo_iface =
 {
@@ -65,6 +73,8 @@ static struct generic_conn_iface mongo_iface =
     pbs_fetch_func,
     pbs_save_func,
     token_fetch_func,
+    token_save_func,
+    token_remove_func,
 };
 
 struct generic_conn *
@@ -256,4 +266,26 @@ token_fetch_func(
         struct telegram_token **p_token)
 {
     return telegram_token_fetch((struct mongo_conn*) gc, token_str, p_token);
+}
+
+int
+telegram_token_save(struct mongo_conn *conn, const struct telegram_token *token);
+
+static int
+token_save_func(
+        struct generic_conn *gc,
+        const struct telegram_token *token)
+{
+    return telegram_token_save((struct mongo_conn *) gc, token);
+}
+
+void
+telegram_token_remove(struct mongo_conn *conn, const unsigned char *token);
+
+static void
+token_remove_func(
+        struct generic_conn *gc,
+        const unsigned char *token)
+{
+    telegram_token_remove((struct mongo_conn *) gc, token);
 }

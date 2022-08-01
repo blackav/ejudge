@@ -696,9 +696,9 @@ packet_handler_telegram_token(int uid, int argc, char **argv, void *user)
         err("telegram_token: get_token failed");
     } else if (res > 0) {
         err("duplicated token, removing all");
-        telegram_token_remove((struct mongo_conn *) state->conn, token->token);
+        state->conn->vt->token_remove(state->conn, token->token);
     } else {
-        telegram_token_save((struct mongo_conn *) state->conn, token);
+        state->conn->vt->token_save(state->conn, token);
     }
 
 cleanup:
@@ -1447,7 +1447,7 @@ handle_incoming_message(
                     }
                     telegram_subscription_save((struct mongo_conn *) state->conn, sub);
                 }
-                telegram_token_remove((struct mongo_conn *) state->conn, tcs->token);
+                state->conn->vt->token_remove(state->conn, tcs->token);
             }
             telegram_chat_state_reset(tcs);
             update_state = 1;

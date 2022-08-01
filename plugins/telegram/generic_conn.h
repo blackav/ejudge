@@ -41,6 +41,12 @@ struct generic_conn_iface
         struct generic_conn *gc,
         const unsigned char *token_str,
         struct telegram_token **p_token);
+    int (*token_save)(
+        struct generic_conn *gc,
+        const struct telegram_token *token);
+    void (*token_remove)(
+        struct generic_conn *gc,
+        const unsigned char *token);
 };
 
 struct generic_conn
