@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2016-2019 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2016-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -23,6 +23,14 @@
 #include "telegram_pbs.h"
 #include "mongo_conn.h"
 
+#if HAVE_LIBMONGOC - 0 > 0
+struct _bson_t;
+typedef struct _bson_t ej_bson_t;
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
+struct _bson;
+typedef struct _bson ej_bson_t;
+#endif
+
 #if HAVE_LIBMONGOC - 0 > 1
 #include <mongoc/mongoc.h>
 #elif HAVE_LIBMONGOC - 0 > 0
@@ -34,6 +42,11 @@
 #include <errno.h>
 
 #define TELEGRAM_BOTS_TABLE_NAME "telegram_bots"
+
+static ej_bson_t *
+telegram_pbs_unparse_bson(const struct telegram_pbs *pbs);
+static struct telegram_pbs *
+telegram_pbs_parse_bson(const ej_bson_t *bson);
 
 struct telegram_pbs *
 telegram_pbs_free(struct telegram_pbs *pbs)
@@ -54,7 +67,7 @@ telegram_pbs_create(const unsigned char *_id)
     return pbs;
 }
 
-struct telegram_pbs *
+static struct telegram_pbs *
 telegram_pbs_parse_bson(const ej_bson_t *bson)
 {
 #if HAVE_LIBMONGOC - 0 > 0
@@ -103,7 +116,7 @@ cleanup:
 #endif
 }
 
-ej_bson_t *
+static ej_bson_t *
 telegram_pbs_unparse_bson(const struct telegram_pbs *pbs)
 {
 #if HAVE_LIBMONGOC - 0 > 0
