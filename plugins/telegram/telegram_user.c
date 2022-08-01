@@ -32,7 +32,20 @@
 
 #include <errno.h>
 
+#if HAVE_LIBMONGOC - 0 > 0
+struct _bson_t;
+typedef struct _bson_t ej_bson_t;
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
+struct _bson;
+typedef struct _bson ej_bson_t;
+#endif
+
 #define TELEGRAM_USERS_TABLE_NAME "telegram_users"
+
+static struct telegram_user *
+telegram_user_parse_bson(const ej_bson_t *bson);
+static ej_bson_t *
+telegram_user_unparse_bson(const struct telegram_user *tu);
 
 struct telegram_user *
 telegram_user_free(struct telegram_user *tu)
@@ -55,7 +68,7 @@ telegram_user_create(void)
     return tu;
 }
 
-struct telegram_user *
+static struct telegram_user *
 telegram_user_parse_bson(const ej_bson_t *bson)
 {
 #if HAVE_LIBMONGOC - 0 > 0
@@ -112,7 +125,7 @@ cleanup:
 #endif
 }
 
-ej_bson_t *
+static ej_bson_t *
 telegram_user_unparse_bson(const struct telegram_user *tu)
 {
 #if HAVE_LIBMONGOC - 0 > 0

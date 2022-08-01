@@ -18,14 +18,6 @@
 
 #include "ejudge/config.h"
 
-#if HAVE_LIBMONGOC - 0 > 0
-struct _bson_t;
-typedef struct _bson_t ej_bson_t;
-#elif HAVE_LIBMONGO_CLIENT - 0 == 1
-struct _bson;
-typedef struct _bson ej_bson_t;
-#endif
-
 struct telegram_user
 {
     long long _id;
@@ -38,12 +30,5 @@ struct telegram_user *
 telegram_user_free(struct telegram_user *tu);
 struct telegram_user *
 telegram_user_create(void);
-struct telegram_user *
-telegram_user_parse_bson(const ej_bson_t *bson);
-ej_bson_t *
-telegram_user_unparse_bson(const struct telegram_user *tu);
-
-struct mongo_conn;
-
 
 #endif
