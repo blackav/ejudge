@@ -32,6 +32,9 @@ struct generic_conn_iface
     struct telegram_pbs *(*pbs_fetch)(
         struct generic_conn *gc,
         const unsigned char *bot_id);
+    int (*pbs_save)(
+        struct generic_conn *gc,
+        const struct telegram_pbs *pbs);
 };
 
 struct generic_conn

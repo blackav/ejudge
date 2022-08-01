@@ -1509,7 +1509,7 @@ handle_reply(struct telegram_plugin_data *state,
                 */
             }
             if (need_update) {
-                telegram_pbs_save((struct mongo_conn *) state->conn, pbs);
+                state->conn->vt->pbs_save(state->conn, pbs);
             }
         }
     }

@@ -46,6 +46,10 @@ static struct telegram_pbs *
 pbs_fetch_func(
         struct generic_conn *gc,
         const unsigned char *bot_id);
+static int
+pbs_save_func(
+        struct generic_conn *gc,
+        const struct telegram_pbs *pbs);
 
 static struct generic_conn_iface mongo_iface =
 {
@@ -53,6 +57,7 @@ static struct generic_conn_iface mongo_iface =
     open_func,
     ns_func,
     pbs_fetch_func,
+    pbs_save_func,
 };
 
 struct generic_conn *
@@ -215,6 +220,8 @@ ns_func(
 struct telegram_pbs;
 struct telegram_pbs *
 telegram_pbs_fetch(struct mongo_conn *conn, const unsigned char *bot_id);
+int
+telegram_pbs_save(struct mongo_conn *conn, const struct telegram_pbs *pbs);
 
 static struct telegram_pbs *
 pbs_fetch_func(
@@ -222,4 +229,12 @@ pbs_fetch_func(
         const unsigned char *bot_id)
 {
     return telegram_pbs_fetch((struct mongo_conn *) gc, bot_id);
+}
+
+static int
+pbs_save_func(
+        struct generic_conn *gc,
+        const struct telegram_pbs *pbs)
+{
+    return telegram_pbs_save((struct mongo_conn *) gc, pbs);
 }
