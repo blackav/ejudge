@@ -16,6 +16,7 @@
 
 #include "mysql_conn.h"
 #include "telegram_pbs.h"
+#include "telegram_token.h"
 
 #include "ejudge/common_plugin.h"
 #include "../common-mysql/common_mysql.h"
@@ -64,8 +65,8 @@ static const char create_query_1[] =
 ") ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;\n";
 
 static const char create_query_2[] =
-"CREATE TABLE %stelegram_token (\n"
-"    id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,\n"
+"CREATE TABLE %stelegram_tokens (\n"
+"    id INT(18) NOT NULL PRIMARY KEY AUTO_INCREMENT,\n"
 "    bot_id CHAR(64) NOT NULL,\n"
 "    user_id INT UNSIGNED NOT NULL,\n"
 "    user_login VARCHAR(64) DEFAULT NULL,\n"
@@ -78,6 +79,7 @@ static const char create_query_2[] =
 "    KEY tt_bot_id_k(bot_id),\n"
 "    KEY tt_contest_id_k(contest_id),\n"
 "    KEY tt_contest_user_k(contest_id,user_id),\n"
+"    UNIQUE KEY tt_token_k(token),\n"
 "    FOREIGN KEY tt_user_id_fk(user_id) REFERENCES %slogins(user_id)\n"
 ") ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;\n";
 
@@ -233,7 +235,6 @@ struct telegram_pbs_internal
     unsigned char *id;
     long long update_id;
 };
-
 enum { TELEGRAM_PBS_ROW_WIDTH = 2 };
 #define TELEGRAM_PBS_OFFSET(f) XOFFSET(struct telegram_pbs_internal, f)
 static const struct common_mysql_parse_spec telegram_pbs_spec[TELEGRAM_PBS_ROW_WIDTH] =
@@ -264,7 +265,7 @@ pbs_fetch_func(
     mi->write_escaped_string(md, cmd_f, NULL, bot_id);
     fprintf(cmd_f, "'");
     fclose(cmd_f); cmd_f = NULL;
-    if (mi->query(md, cmd_s, cmd_z, 2) < 0)
+    if (mi->query(md, cmd_s, cmd_z, TELEGRAM_PBS_ROW_WIDTH) < 0)
         db_error_fail(md);
     free(cmd_s); cmd_s = NULL; cmd_z = 0;
     if (md->row_count > 0) {
@@ -325,6 +326,92 @@ fail:
     return -1;
 }
 
+struct telegram_token_internal
+{
+    long long id;
+    unsigned char *bot_id;
+    int user_id;
+    unsigned char *user_login;
+    unsigned char *user_name;
+    unsigned char *token;
+    int contest_id;
+    unsigned char *contest_name;
+    int locale_id;
+    time_t expiry_time;
+};
+enum { TELEGRAM_TOKEN_ROW_WIDTH = 10 };
+#define TELEGRAM_TOKEN_OFFSET(f) XOFFSET(struct telegram_token_internal, f)
+static const struct common_mysql_parse_spec telegram_token_spec[TELEGRAM_TOKEN_ROW_WIDTH] =
+{
+    { 0, 'q', "id", TELEGRAM_TOKEN_OFFSET(id), 0 },
+    { 1, 's', "bot_id", TELEGRAM_TOKEN_OFFSET(bot_id), 0 },
+    { 0, 'd', "user_id", TELEGRAM_TOKEN_OFFSET(user_id), 0 },
+    { 1, 's', "user_login", TELEGRAM_TOKEN_OFFSET(user_login), 0 },
+    { 1, 's', "user_name", TELEGRAM_TOKEN_OFFSET(user_name), 0 },
+    { 1, 's', "token", TELEGRAM_TOKEN_OFFSET(token), 0 },
+    { 0, 'd', "contest_id", TELEGRAM_TOKEN_OFFSET(contest_id), 0 },
+    { 1, 's', "contest_name", TELEGRAM_TOKEN_OFFSET(contest_name), 0 },
+    { 0, 'd', "locale_id", TELEGRAM_TOKEN_OFFSET(locale_id), 0 },
+    { 1, 't', "expiry_time", TELEGRAM_TOKEN_OFFSET(expiry_time), 0 },
+};
+
+static int
+token_fetch_func(
+        struct generic_conn *gc,
+        const unsigned char *token_str,
+        struct telegram_token **p_token)
+{
+    if (gc->vt->open(gc) < 0) return -1;
+
+    struct mysql_conn *conn = (struct mysql_conn *) gc;
+    struct common_mysql_iface *mi = conn->mi;
+    struct common_mysql_state *md = conn->md;
+    char *cmd_s = NULL;
+    size_t cmd_z = 0;
+    FILE *cmd_f = NULL;
+    struct telegram_token_internal tti = {};
+    struct telegram_token *tt = NULL;
+
+    cmd_f = open_memstream(&cmd_s, &cmd_z);
+    fprintf(cmd_f, "SELECT * FROM %stelegram_tokens WHERE token = '",
+            md->table_prefix);
+    mi->write_escaped_string(md, cmd_f, NULL, token_str);
+    fprintf(cmd_f, "'");
+    fclose(cmd_f); cmd_f = NULL;
+    if (mi->query(md, cmd_s, cmd_z, TELEGRAM_TOKEN_ROW_WIDTH) < 0)
+        db_error_fail(md);
+    free(cmd_s); cmd_s = NULL; cmd_z = 0;
+    if (md->row_count == 1) {
+        if (mi->next_row(md) < 0) db_error_fail(md);
+        if (mi->parse_spec(md, -1, md->row, md->lengths, TELEGRAM_TOKEN_ROW_WIDTH, telegram_token_spec, &tti) < 0) goto fail;
+        XCALLOC(tt, 1);
+        tt->bot_id = tti.bot_id; tti.bot_id = NULL;
+        tt->user_id = tti.user_id;
+        tt->user_login = tti.user_login; tti.user_login = NULL;
+        tt->user_name = tti.user_name; tti.user_name = NULL;
+        tt->token = tti.token; tti.token = NULL;
+        tt->contest_id = tti.contest_id;
+        tt->contest_name = tti.contest_name; tti.contest_name = NULL;
+        tt->locale_id = tti.locale_id;
+        tt->expiry_time = tti.expiry_time;
+        *p_token = tt;
+        return 1;
+    }
+
+    return 0;
+
+fail:
+    telegram_token_free(tt);
+    free(tti.bot_id);
+    free(tti.user_login);
+    free(tti.user_name);
+    free(tti.token);
+    free(tti.contest_name);
+    if (cmd_f) fclose(cmd_f);
+    free(cmd_s);
+    return -1;
+}
+
 static struct generic_conn_iface mysql_iface =
 {
     free_func,
@@ -333,6 +420,7 @@ static struct generic_conn_iface mysql_iface =
     NULL,
     pbs_fetch_func,
     pbs_save_func,
+    token_fetch_func,
 };
 
 struct generic_conn *
