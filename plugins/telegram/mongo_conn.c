@@ -73,6 +73,10 @@ static struct telegram_chat *
 chat_fetch_func(
         struct generic_conn *gc,
         long long _id);
+static int
+chat_save_func(
+        struct generic_conn *gc,
+        const struct telegram_chat *tc);
 
 static struct generic_conn_iface mongo_iface =
 {
@@ -86,6 +90,7 @@ static struct generic_conn_iface mongo_iface =
     token_remove_func,
     token_remove_expired_func,
     chat_fetch_func,
+    chat_save_func,
 };
 
 struct generic_conn *
@@ -321,4 +326,15 @@ chat_fetch_func(
         long long _id)
 {
     return telegram_chat_fetch((struct mongo_conn *) gc, _id);
+}
+
+int
+telegram_chat_save(struct mongo_conn *conn, const struct telegram_chat *tc);
+
+static int
+chat_save_func(
+        struct generic_conn *gc,
+        const struct telegram_chat *tc)
+{
+    return telegram_chat_save((struct mongo_conn *) gc, tc);
 }

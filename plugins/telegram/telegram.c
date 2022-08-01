@@ -922,7 +922,7 @@ packet_handler_telegram_cf(int uid, int argc, char **argv, void *user)
     if (!tc) {
         tc = telegram_chat_create();
         tc->_id = chat_id;
-        telegram_chat_save((struct mongo_conn *) state->conn, tc);
+        state->conn->vt->chat_save(state->conn, tc);
     }
 
     {
@@ -1002,7 +1002,7 @@ packet_handler_telegram_notify(int uid, int argc, char **argv, void *user)
     if (!tc) {
         tc = telegram_chat_create();
         tc->_id = chat_id;
-        telegram_chat_save((struct mongo_conn *) state->conn, tc);
+        state->conn->vt->chat_save(state->conn, tc);
     }
 
     {
@@ -1088,7 +1088,7 @@ packet_handler_telegram_reminder(int uid, int argc, char **argv, void *user)
     if (!tc) {
         tc = telegram_chat_create();
         tc->_id = chat_id;
-        telegram_chat_save((struct mongo_conn *) state->conn, tc);
+        state->conn->vt->chat_save(state->conn, tc);
     }
 
     {
@@ -1250,7 +1250,7 @@ handle_incoming_message(
             mc->username = safe_strdup(tc->username);
             mc->first_name = safe_strdup(tc->first_name);
             mc->last_name = safe_strdup(tc->last_name);
-            telegram_chat_save((struct mongo_conn *) state->conn, mc);
+            state->conn->vt->chat_save(state->conn, mc);
         }
     }
 

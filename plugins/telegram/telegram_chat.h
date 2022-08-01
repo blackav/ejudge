@@ -53,9 +53,4 @@ telegram_chat_parse_bson(const ej_bson_t *bson);
 ej_bson_t *
 telegram_chat_unparse_bson(const struct telegram_chat *tc);
 
-struct mongo_conn;
-
-int
-telegram_chat_save(struct mongo_conn *conn, const struct telegram_chat *tc);
-
 #endif
