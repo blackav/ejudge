@@ -18,14 +18,6 @@
 
 #include "ejudge/config.h"
 
-#if HAVE_LIBMONGOC - 0 > 0
-struct _bson_t;
-typedef struct _bson_t ej_bson_t;
-#elif HAVE_LIBMONGO_CLIENT - 0 == 1
-struct _bson;
-typedef struct _bson ej_bson_t;
-#endif
-
 #include <time.h>
 
 /* subscriptions */
@@ -44,13 +36,6 @@ struct telegram_subscription
 struct telegram_subscription *
 telegram_subscription_free(struct telegram_subscription *subscription);
 struct telegram_subscription *
-telegram_subscription_parse_bson(const ej_bson_t *bson);
-struct telegram_subscription *
 telegram_subscription_create(const unsigned char *bot_id, int contest_id, int user_id);
-ej_bson_t *
-telegram_subscription_unparse_bson(const struct telegram_subscription *subscription);
-
-struct mongo_conn;
-
 
 #endif
