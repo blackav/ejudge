@@ -1300,7 +1300,7 @@ handle_incoming_message(
     if (!tem->text) goto cleanup;
 
     // chat state machine is here
-    tcs = telegram_chat_state_fetch((struct mongo_conn *) state->conn, mc->_id);
+    tcs = state->conn->vt->chat_state_fetch(state->conn, mc->_id);
     if (!tcs) {
         tcs = telegram_chat_state_create();
         tcs->_id = mc->_id;

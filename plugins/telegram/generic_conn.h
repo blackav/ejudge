@@ -22,6 +22,7 @@ struct generic_conn;
 struct telegram_pbs;
 struct telegram_token;
 struct telegram_chat;
+struct telegram_chat_state;
 
 struct generic_conn_iface
 {
@@ -67,6 +68,10 @@ struct generic_conn_iface
     int (*user_save)(
         struct generic_conn *gc,
         const struct telegram_user *tu);
+
+    struct telegram_chat_state *(*chat_state_fetch)(
+        struct generic_conn *gc,
+        long long _id);
 };
 
 struct generic_conn

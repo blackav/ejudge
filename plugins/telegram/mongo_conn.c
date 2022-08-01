@@ -87,6 +87,11 @@ user_save_func(
         struct generic_conn *gc,
         const struct telegram_user *tu);
 
+static struct telegram_chat_state *
+chat_state_fetch_func(
+        struct generic_conn *gc,
+        long long _id);
+
 static struct generic_conn_iface mongo_iface =
 {
     free_func,
@@ -102,6 +107,7 @@ static struct generic_conn_iface mongo_iface =
     chat_save_func,
     user_fetch_func,
     user_save_func,
+    chat_state_fetch_func,
 };
 
 struct generic_conn *
@@ -370,4 +376,15 @@ user_save_func(
         const struct telegram_user *tu)
 {
     return telegram_user_save((struct mongo_conn *) gc, tu);
+}
+
+struct telegram_chat_state *
+telegram_chat_state_fetch(struct mongo_conn *conn, long long _id);
+
+static struct telegram_chat_state *
+chat_state_fetch_func(
+        struct generic_conn *gc,
+        long long _id)
+{
+    return telegram_chat_state_fetch((struct mongo_conn *) gc, _id);
 }
