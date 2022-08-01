@@ -441,11 +441,11 @@ start_func(void *data)
 }
 
 struct telegram_pbs *
-get_persistent_bot_state(struct mongo_conn *conn, struct bot_state *bs)
+get_persistent_bot_state(struct generic_conn *gc, struct bot_state *bs)
 {
     if (bs->pbs) return bs->pbs;
 
-    bs->pbs = telegram_pbs_fetch(conn, bs->bot_id);
+    bs->pbs = telegram_pbs_fetch((struct mongo_conn *) gc, bs->bot_id);
     return bs->pbs;
 }
 
@@ -1528,7 +1528,7 @@ get_updates(struct telegram_plugin_data *state, struct bot_state *bs)
     char *url_s = NULL, *resp_s = NULL;
     size_t url_z = 0, resp_z = 0;
 
-    struct telegram_pbs *pbs = get_persistent_bot_state((struct mongo_conn *) state->conn, bs);
+    struct telegram_pbs *pbs = get_persistent_bot_state(state->conn, bs);
     if (!pbs) {
         err("cannot get persistent bot state for bot %s", bs->bot_id);
         return;
