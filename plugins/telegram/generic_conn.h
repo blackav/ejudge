@@ -24,6 +24,9 @@ struct generic_conn_iface
         struct generic_conn *gc);
     int (*open)(
         struct generic_conn *gc);
+    const unsigned char *(*ns)(
+        struct generic_conn *gc,
+        const unsigned char *collection_name);
 };
 
 struct generic_conn

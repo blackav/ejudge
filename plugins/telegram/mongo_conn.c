@@ -37,11 +37,16 @@ free_func(struct generic_conn *gc);
 static int
 open_func(
         struct generic_conn *gc);
+static const unsigned char *
+ns_func(
+        struct generic_conn *gc,
+        const unsigned char *collection_name);
 
 static struct generic_conn_iface mongo_iface =
 {
     free_func,
     open_func,
+    ns_func,
 };
 
 struct mongo_conn *
@@ -186,9 +191,17 @@ open_func(
     return mongo_conn_open((struct mongo_conn *) gc);
 }
 
-const unsigned char *
+static const unsigned char *
 mongo_conn_ns(struct mongo_conn *conn, const unsigned char *collection_name)
 {
     snprintf(conn->ns, sizeof(conn->ns), "%s.%s%s", conn->b.database, conn->b.table_prefix, collection_name);
     return conn->ns;
+}
+
+static const unsigned char *
+ns_func(
+        struct generic_conn *gc,
+        const unsigned char *collection_name)
+{
+    return mongo_conn_ns((struct mongo_conn *) gc, collection_name);
 }

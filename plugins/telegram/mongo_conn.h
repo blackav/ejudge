@@ -46,7 +46,4 @@ struct mongo_conn
 struct mongo_conn *
 mongo_conn_create(void);
 
-const unsigned char *
-mongo_conn_ns(struct mongo_conn *conn, const unsigned char *collection_name);
-
 #endif
