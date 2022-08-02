@@ -96,14 +96,6 @@ static const char create_query_3[] =
 ") ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;\n";
 
 static const char create_query_4[] =
-"CREATE TABLE %stelegram_users (\n"
-"    id INT(18) NOT NULL PRIMARY KEY,\n"
-"    username VARCHAR(512) DEFAULT NULL,\n"
-"    first_name VARCHAR(512) DEFAULT NULL,\n"
-"    last_name VARCHAR(512) DEFAULT NULL\n"
-") ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;\n";
-
-static const char create_query_5[] =
 "CREATE TABLE %stelegram_chats (\n"
 "    id INT(18) NOT NULL PRIMARY KEY,\n"
 "    chat_type VARCHAR(64) DEFAULT NULL,\n"
@@ -113,7 +105,7 @@ static const char create_query_5[] =
 "    last_name VARCHAR(512) DEFAULT NULL\n"
 ") ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;\n";
 
-static const char create_query_6[] =
+static const char create_query_5[] =
 "CREATE TABLE %stelegram_chat_states (\n"
 "    id INT(18) NOT NULL PRIMARY KEY,\n"
 "    command VARCHAR(64) DEFAULT NULL,\n"
@@ -123,7 +115,7 @@ static const char create_query_6[] =
 "    reply_flag INT NOT NULL DEFAULT 0\n"
 ") ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;\n";
 
-static const char create_query_7[] =
+static const char create_query_6[] =
 "CREATE TABLE %stelegram_subscriptions (\n"
 "    id INT(18) NOT NULL PRIMARY KEY,\n"
 "    bot_id CHAR(64) NOT NULL,\n"
@@ -162,9 +154,6 @@ create_database(
                           md->table_prefix) < 0)
         db_error_fail(md);
     if (mi->simple_fquery(md, create_query_6,
-                          md->table_prefix) < 0)
-        db_error_fail(md);
-    if (mi->simple_fquery(md, create_query_7,
                           md->table_prefix,
                           md->table_prefix) < 0)
         db_error_fail(md);
