@@ -254,10 +254,10 @@ pbs_fetch_func(
     struct telegram_pbs *tp = NULL;
 
     cmd_f = open_memstream(&cmd_s, &cmd_z);
-    fprintf(cmd_f, "SELECT * FROM %stelegram_bots WHERE id = '",
+    fprintf(cmd_f, "SELECT * FROM %stelegram_bots WHERE id = ",
             md->table_prefix);
     mi->write_escaped_string(md, cmd_f, NULL, bot_id);
-    fprintf(cmd_f, "'");
+    fprintf(cmd_f, ";");
     fclose(cmd_f); cmd_f = NULL;
     if (mi->query(md, cmd_s, cmd_z, TELEGRAM_PBS_ROW_WIDTH) < 0)
         db_error_fail(md);
@@ -367,10 +367,10 @@ token_fetch_func(
     struct telegram_token *tt = NULL;
 
     cmd_f = open_memstream(&cmd_s, &cmd_z);
-    fprintf(cmd_f, "SELECT * FROM %stelegram_tokens WHERE token = '",
+    fprintf(cmd_f, "SELECT * FROM %stelegram_tokens WHERE token = ",
             md->table_prefix);
     mi->write_escaped_string(md, cmd_f, NULL, token_str);
-    fprintf(cmd_f, "'");
+    fprintf(cmd_f, ";");
     fclose(cmd_f); cmd_f = NULL;
     if (mi->query(md, cmd_s, cmd_z, TELEGRAM_TOKEN_ROW_WIDTH) < 0)
         db_error_fail(md);
@@ -463,10 +463,10 @@ token_remove_func(
     FILE *cmd_f = NULL;
 
     cmd_f = open_memstream(&cmd_s, &cmd_z);
-    fprintf(cmd_f, "DELETE FROM %stelegram_tokens WHERE token = '",
+    fprintf(cmd_f, "DELETE FROM %stelegram_tokens WHERE token = ",
             md->table_prefix);
     mi->write_escaped_string(md, cmd_f, NULL, token);
-    fprintf(cmd_f, "'");
+    fprintf(cmd_f, ";");
     fclose(cmd_f); cmd_f = NULL;
     if (mi->simple_query(md, cmd_s, cmd_z) < 0)
         db_error_fail(md);
@@ -882,10 +882,10 @@ subscription_fetch_func(
     struct telegram_subscription *ts = NULL;
 
     cmd_f = open_memstream(&cmd_s, &cmd_z);
-    fprintf(cmd_f, "SELECT * FROM %stelegram_subscriptions WHERE bot_id = '",
+    fprintf(cmd_f, "SELECT * FROM %stelegram_subscriptions WHERE bot_id = ",
             md->table_prefix);
     mi->write_escaped_string(md, cmd_f, NULL, bot_id);
-    fprintf(cmd_f, "' AND user_id = %d AND contest_id = %d;",
+    fprintf(cmd_f, " AND user_id = %d AND contest_id = %d;",
             user_id, contest_id);
     fclose(cmd_f); cmd_f = NULL;
     if (mi->query(md, cmd_s, cmd_z, TELEGRAM_SUBSCRIPTION_ROW_WIDTH) < 0)
