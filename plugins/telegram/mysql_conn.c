@@ -20,6 +20,7 @@
 #include "telegram_chat.h"
 #include "telegram_user.h"
 #include "telegram_chat_state.h"
+#include "telegram_subscription.h"
 
 #include "ejudge/common_plugin.h"
 #include "../common-mysql/common_mysql.h"
@@ -124,7 +125,7 @@ static const char create_query_6[] =
 
 static const char create_query_7[] =
 "CREATE TABLE %stelegram_subscriptions (\n"
-"    id CHAR(64) NOT NULL PRIMARY KEY,\n"
+"    id INT(18) NOT NULL PRIMARY KEY,\n"
 "    bot_id CHAR(64) NOT NULL,\n"
 "    user_id INT UNSIGNED NOT NULL,\n"
 "    contest_id INT NOT NULL DEFAULT 0,\n"
@@ -133,6 +134,7 @@ static const char create_query_7[] =
 "    chat_id INT(18) NOT NULL DEFAULT 0,\n"
 "    KEY ts_bot_id_k(bot_id),\n"
 "    KEY ts_contest_id_k(contest_id),\n"
+"    UNIQUE KEY ts_unique_k(bot_id,user_id,contest_id),\n"
 "    FOREIGN KEY ts_user_id_fk(user_id) REFERENCES %slogins(user_id)\n"
 ") ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;\n";
 
@@ -849,6 +851,124 @@ fail:
     return -1;
 }
 
+struct telegram_subscription_internal
+{
+    long long id;
+    unsigned char *bot_id;
+    int user_id;
+    int contest_id;
+    int review_flag;
+    int reply_flag;
+    long long chat_id;
+};
+enum { TELEGRAM_SUBSCRIPTION_ROW_WIDTH = 7 };
+#define TELEGRAM_SUBSCRIPTION_OFFSET(f) XOFFSET(struct telegram_subscription_internal, f)
+static const struct common_mysql_parse_spec telegram_subscription_spec[TELEGRAM_SUBSCRIPTION_ROW_WIDTH] =
+{
+    { 0, 'q', "id", TELEGRAM_SUBSCRIPTION_OFFSET(id), 0 },
+    { 1, 's', "bot_id", TELEGRAM_SUBSCRIPTION_OFFSET(bot_id), 0 },
+    { 0, 'd', "user_id", TELEGRAM_SUBSCRIPTION_OFFSET(user_id), 0 },
+    { 0, 'd', "contest_id", TELEGRAM_SUBSCRIPTION_OFFSET(contest_id), 0 },
+    { 0, 'd', "review_flag", TELEGRAM_SUBSCRIPTION_OFFSET(review_flag), 0 },
+    { 0, 'd', "reply_flag", TELEGRAM_SUBSCRIPTION_OFFSET(reply_flag), 0 },
+    { 0, 'q', "chat_id", TELEGRAM_SUBSCRIPTION_OFFSET(chat_id), 0 },
+};
+
+static struct telegram_subscription *
+subscription_fetch_func(
+        struct generic_conn *gc,
+        const unsigned char *bot_id,
+        int user_id,
+        int contest_id)
+{
+    if (gc->vt->open(gc) < 0) return NULL;
+
+    struct mysql_conn *conn = (struct mysql_conn *) gc;
+    struct common_mysql_iface *mi = conn->mi;
+    struct common_mysql_state *md = conn->md;
+    char *cmd_s = NULL;
+    size_t cmd_z = 0;
+    FILE *cmd_f = NULL;
+    struct telegram_subscription_internal tsi = {};
+    struct telegram_subscription *ts = NULL;
+
+    cmd_f = open_memstream(&cmd_s, &cmd_z);
+    fprintf(cmd_f, "SELECT * FROM %stelegram_subscriptions WHERE bot_id = '",
+            md->table_prefix);
+    mi->write_escaped_string(md, cmd_f, NULL, bot_id);
+    fprintf(cmd_f, "' AND user_id = %d AND contest_id = %d;",
+            user_id, contest_id);
+    fclose(cmd_f); cmd_f = NULL;
+    if (mi->query(md, cmd_s, cmd_z, TELEGRAM_SUBSCRIPTION_ROW_WIDTH) < 0)
+        db_error_fail(md);
+    free(cmd_s); cmd_s = NULL; cmd_z = 0;
+
+    if (md->row_count > 0) {
+        if (mi->next_row(md) < 0) db_error_fail(md);
+        if (mi->parse_spec(md, -1, md->row, md->lengths, TELEGRAM_SUBSCRIPTION_ROW_WIDTH, telegram_subscription_spec, &tsi) < 0) goto fail;
+        XCALLOC(ts, 1);
+        ts->bot_id = tsi.bot_id; tsi.bot_id = NULL;
+        ts->user_id = tsi.user_id;
+        ts->contest_id = tsi.contest_id;
+        ts->review_flag = tsi.review_flag;
+        ts->reply_flag = tsi.reply_flag;
+        ts->chat_id = tsi.chat_id;
+        return ts;
+    }
+
+    ts = telegram_subscription_create(bot_id, contest_id, user_id);
+    gc->vt->subscription_save(gc, ts);
+    return ts;
+
+fail:
+    free(tsi.bot_id);
+    telegram_subscription_free(ts);
+    if (cmd_f) fclose(cmd_f);
+    free(cmd_s);
+    return NULL;
+}
+
+static int
+subscription_save_func(
+        struct generic_conn *gc,
+        const struct telegram_subscription *ts)
+{
+    if (gc->vt->open(gc) < 0) return -1;
+
+    struct mysql_conn *conn = (struct mysql_conn *) gc;
+    struct common_mysql_iface *mi = conn->mi;
+    struct common_mysql_state *md = conn->md;
+    char *cmd_s = NULL;
+    size_t cmd_z = 0;
+    FILE *cmd_f = NULL;
+    struct telegram_subscription_internal tsi = {};
+
+    tsi.bot_id = ts->bot_id;
+    tsi.user_id = ts->user_id;
+    tsi.contest_id = ts->contest_id;
+    tsi.review_flag = ts->review_flag;
+    tsi.reply_flag = ts->reply_flag;
+    tsi.chat_id = ts->chat_id;
+
+    cmd_f = open_memstream(&cmd_s, &cmd_z);
+    fprintf(cmd_f, "INSERT INTO %stelegram_subscriptions SET ", md->table_prefix);
+    mi->unparse_spec_3(md, cmd_f, TELEGRAM_SUBSCRIPTION_ROW_WIDTH,
+                       telegram_subscription_spec, 1ULL, &tsi);
+    fprintf(cmd_f, " ON DUPLICATE KEY UPDATE ");
+    mi->unparse_spec_3(md, cmd_f, TELEGRAM_SUBSCRIPTION_ROW_WIDTH,
+                       telegram_subscription_spec, 15ULL, &tsi);
+    fprintf(cmd_f, ";");
+    fclose(cmd_f); cmd_f = NULL;
+    if (mi->simple_query(md, cmd_s, cmd_z) < 0) goto fail;
+    free(cmd_s); cmd_s = NULL; cmd_z = 0;
+    return 0;
+
+fail:
+    if (cmd_f) fclose(cmd_f);
+    free(cmd_s);
+    return -1;
+}
+
 static struct generic_conn_iface mysql_iface =
 {
     free_func,
@@ -867,6 +987,8 @@ static struct generic_conn_iface mysql_iface =
     user_save_func,
     chat_state_fetch_func,
     chat_state_save_func,
+    subscription_fetch_func,
+    subscription_save_func,
 };
 
 struct generic_conn *
