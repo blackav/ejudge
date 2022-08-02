@@ -25,6 +25,7 @@
 
 #include <errno.h>
 #include <string.h>
+#include <ctype.h>
 
 struct status_mysql_state
 {
