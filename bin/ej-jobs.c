@@ -1766,6 +1766,10 @@ app_state_prepare(struct AppState *as)
 
         addr.sun_family = AF_UNIX;
         snprintf(addr.sun_path, sizeof(addr.sun_path), "%s", as->job_server_socket);
+
+        // remove stale socket file
+        unlink(as->job_server_socket);
+
         if (bind(as->afd, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
             err("bind failed: %s", os_ErrorMsg());
             return -1;
