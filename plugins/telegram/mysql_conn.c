@@ -158,6 +158,9 @@ create_database(
                           md->table_prefix) < 0)
         db_error_fail(md);
 
+    if (mi->simple_fquery(md, "INSERT INTO %sconfig VALUES ('telegram_version', '%d') ;", md->table_prefix, 1) < 0)
+        db_error_fail(md);
+
     return 0;
 
 fail:
