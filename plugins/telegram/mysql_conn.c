@@ -412,6 +412,108 @@ fail:
     return -1;
 }
 
+static int
+token_save_func(
+        struct generic_conn *gc,
+        const struct telegram_token *token)
+{
+    if (gc->vt->open(gc) < 0) return -1;
+
+    struct mysql_conn *conn = (struct mysql_conn *) gc;
+    struct common_mysql_iface *mi = conn->mi;
+    struct common_mysql_state *md = conn->md;
+    char *cmd_s = NULL;
+    size_t cmd_z = 0;
+    FILE *cmd_f = NULL;
+    struct telegram_token_internal tti = {};
+
+    tti.bot_id = token->bot_id;
+    tti.user_id = token->user_id;
+    tti.user_login = token->user_login;
+    tti.user_name = token->user_name;
+    tti.token = token->token;
+    tti.contest_id = token->contest_id;
+    tti.contest_name = token->contest_name;
+    tti.locale_id = token->locale_id;
+    tti.expiry_time = token->expiry_time;
+
+    cmd_f = open_memstream(&cmd_s, &cmd_z);
+    fprintf(cmd_f, "INSERT INTO %stelegram_tokens VALUES (DEFAULT,",
+            md->table_prefix);
+    mi->unparse_spec_2(md, cmd_f, TELEGRAM_TOKEN_ROW_WIDTH,
+                       telegram_token_spec, 1ULL, &tti);
+    fprintf(cmd_f, ");");
+    fclose(cmd_f); cmd_f = NULL;
+    if (mi->simple_query(md, cmd_s, cmd_z) < 0) goto fail;
+    free(cmd_s); cmd_s = NULL; cmd_z = 0;
+    return 0;
+
+fail:
+    if (cmd_f) fclose(cmd_f);
+    free(cmd_s);
+    return -1;
+}
+
+static void
+token_remove_func(
+        struct generic_conn *gc,
+        const unsigned char *token)
+{
+    if (gc->vt->open(gc) < 0) return;
+
+    struct mysql_conn *conn = (struct mysql_conn *) gc;
+    struct common_mysql_iface *mi = conn->mi;
+    struct common_mysql_state *md = conn->md;
+    char *cmd_s = NULL;
+    size_t cmd_z = 0;
+    FILE *cmd_f = NULL;
+
+    cmd_f = open_memstream(&cmd_s, &cmd_z);
+    fprintf(cmd_f, "DELETE FROM %stelegram_tokens WHERE token = '",
+            md->table_prefix);
+    mi->write_escaped_string(md, cmd_f, NULL, token);
+    fprintf(cmd_f, "'");
+    fclose(cmd_f); cmd_f = NULL;
+    if (mi->simple_query(md, cmd_s, cmd_z) < 0)
+        db_error_fail(md);
+    free(cmd_s); cmd_s = NULL; cmd_z = 0;
+    return;
+
+fail:
+    if (cmd_f) fclose(cmd_f);
+    free(cmd_s);
+}
+
+static void
+token_remove_expired_func(
+        struct generic_conn *gc,
+        time_t current_time)
+{
+    if (gc->vt->open(gc) < 0) return;
+
+    struct mysql_conn *conn = (struct mysql_conn *) gc;
+    struct common_mysql_iface *mi = conn->mi;
+    struct common_mysql_state *md = conn->md;
+    char *cmd_s = NULL;
+    size_t cmd_z = 0;
+    FILE *cmd_f = NULL;
+
+    cmd_f = open_memstream(&cmd_s, &cmd_z);
+    fprintf(cmd_f, "DELETE FROM %stelegram_tokens WHERE expiry_time = '",
+            md->table_prefix);
+    mi->write_timestamp(md, cmd_f, NULL, current_time);
+    fprintf(cmd_f, "'");
+    fclose(cmd_f); cmd_f = NULL;
+    if (mi->simple_query(md, cmd_s, cmd_z) < 0)
+        db_error_fail(md);
+    free(cmd_s); cmd_s = NULL; cmd_z = 0;
+    return;
+
+fail:
+    if (cmd_f) fclose(cmd_f);
+    free(cmd_s);
+}
+
 static struct generic_conn_iface mysql_iface =
 {
     free_func,
@@ -421,6 +523,9 @@ static struct generic_conn_iface mysql_iface =
     pbs_fetch_func,
     pbs_save_func,
     token_fetch_func,
+    token_save_func,
+    token_remove_func,
+    token_remove_expired_func,
 };
 
 struct generic_conn *
