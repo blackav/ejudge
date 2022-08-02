@@ -18,6 +18,7 @@
 #include "telegram_pbs.h"
 #include "telegram_token.h"
 #include "telegram_chat.h"
+#include "telegram_user.h"
 
 #include "ejudge/common_plugin.h"
 #include "../common-mysql/common_mysql.h"
@@ -630,6 +631,111 @@ fail:
     return -1;
 }
 
+struct telegram_user_internal
+{
+    long long id;
+    unsigned char *username;
+    unsigned char *first_name;
+    unsigned char *last_name;
+};
+enum { TELEGRAM_USER_ROW_WIDTH = 6 };
+#define TELEGRAM_USER_OFFSET(f) XOFFSET(struct telegram_user_internal, f)
+static const struct common_mysql_parse_spec telegram_user_spec[TELEGRAM_USER_ROW_WIDTH] =
+{
+    { 0, 'q', "id", TELEGRAM_USER_OFFSET(id), 0 },
+    { 1, 's', "username", TELEGRAM_USER_OFFSET(username), 0 },
+    { 1, 's', "first_name", TELEGRAM_USER_OFFSET(first_name), 0 },
+    { 1, 's', "last_name", TELEGRAM_USER_OFFSET(last_name), 0 },
+};
+
+static struct telegram_user *
+user_fetch_func(
+        struct generic_conn *gc,
+        long long _id)
+{
+    if (gc->vt->open(gc) < 0) return NULL;
+
+    struct mysql_conn *conn = (struct mysql_conn *) gc;
+    struct common_mysql_iface *mi = conn->mi;
+    struct common_mysql_state *md = conn->md;
+    char *cmd_s = NULL;
+    size_t cmd_z = 0;
+    FILE *cmd_f = NULL;
+    struct telegram_user_internal tui = {};
+    struct telegram_user *tu = NULL;
+
+    cmd_f = open_memstream(&cmd_s, &cmd_z);
+    fprintf(cmd_f, "SELECT * FROM %stelegram_users WHERE id = %lld;",
+            md->table_prefix, _id);
+    fclose(cmd_f); cmd_f = NULL;
+    if (mi->query(md, cmd_s, cmd_z, TELEGRAM_USER_ROW_WIDTH) < 0)
+        db_error_fail(md);
+    free(cmd_s); cmd_s = NULL; cmd_z = 0;
+    if (md->row_count > 0) {
+        if (mi->next_row(md) < 0) db_error_fail(md);
+        if (mi->parse_spec(md, -1, md->row, md->lengths, TELEGRAM_USER_ROW_WIDTH, telegram_user_spec, &tui) < 0) goto fail;
+        XCALLOC(tu, 1);
+        tu->_id = tui.id;
+        tu->username = tui.username; tui.username = NULL;
+        tu->first_name = tui.first_name; tui.first_name = NULL;
+        tu->last_name = tui.last_name; tui.last_name = NULL;
+        return tu;
+    }
+
+    tu = telegram_user_create();
+    tu->_id = _id;
+    gc->vt->user_save(gc, tu);
+    return tu;
+
+fail:
+    free(tui.username);
+    free(tui.first_name);
+    free(tui.last_name);
+    telegram_user_free(tu);
+    if (cmd_f) fclose(cmd_f);
+    free(cmd_s);
+    return NULL;
+}
+
+static int
+user_save_func(
+        struct generic_conn *gc,
+        const struct telegram_user *tu)
+{
+    if (gc->vt->open(gc) < 0) return -1;
+
+    struct mysql_conn *conn = (struct mysql_conn *) gc;
+    struct common_mysql_iface *mi = conn->mi;
+    struct common_mysql_state *md = conn->md;
+    char *cmd_s = NULL;
+    size_t cmd_z = 0;
+    FILE *cmd_f = NULL;
+    struct telegram_user_internal tui = {};
+
+    tui.id = tu->_id;
+    tui.username = tu->username;
+    tui.first_name = tu->first_name;
+    tui.last_name = tu->last_name;
+
+    cmd_f = open_memstream(&cmd_s, &cmd_z);
+    fprintf(cmd_f, "INSERT INTO %stelegram_users SET ", md->table_prefix);
+    mi->unparse_spec_3(md, cmd_f, TELEGRAM_USER_ROW_WIDTH,
+                       telegram_user_spec, 0, &tui);
+    fprintf(cmd_f, " ON DUPLICATE KEY UPDATE ");
+    mi->unparse_spec_3(md, cmd_f, TELEGRAM_USER_ROW_WIDTH,
+                       telegram_user_spec, 1ULL, &tui);
+    fprintf(cmd_f, ";");
+    fclose(cmd_f); cmd_f = NULL;
+    if (mi->simple_query(md, cmd_s, cmd_z) < 0) goto fail;
+    free(cmd_s); cmd_s = NULL; cmd_z = 0;
+    return 0;
+
+fail:
+    if (cmd_f) fclose(cmd_f);
+    free(cmd_s);
+    return -1;
+}
+
 static struct generic_conn_iface mysql_iface =
 {
     free_func,
@@ -644,6 +750,8 @@ static struct generic_conn_iface mysql_iface =
     token_remove_expired_func,
     chat_fetch_func,
     chat_save_func,
+    user_fetch_func,
+    user_save_func,
 };
 
 struct generic_conn *
