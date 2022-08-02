@@ -19,6 +19,7 @@
 #include "telegram_token.h"
 #include "telegram_chat.h"
 #include "telegram_user.h"
+#include "telegram_chat_state.h"
 
 #include "ejudge/common_plugin.h"
 #include "../common-mysql/common_mysql.h"
@@ -736,6 +737,118 @@ fail:
     return -1;
 }
 
+struct telegram_chat_state_internal
+{
+    long long id;
+    unsigned char *command;
+    unsigned char *token;
+    int state;
+    int review_flag;
+    int reply_flag;
+};
+enum { TELEGRAM_CHAT_STATE_ROW_WIDTH = 6 };
+#define TELEGRAM_CHAT_STATE_OFFSET(f) XOFFSET(struct telegram_chat_state_internal, f)
+static const struct common_mysql_parse_spec telegram_chat_state_spec[TELEGRAM_CHAT_STATE_ROW_WIDTH] =
+{
+    { 0, 'q', "id", TELEGRAM_CHAT_STATE_OFFSET(id), 0 },
+    { 1, 's', "command", TELEGRAM_CHAT_STATE_OFFSET(command), 0 },
+    { 1, 's', "token", TELEGRAM_CHAT_STATE_OFFSET(token), 0 },
+    { 0, 'd', "state", TELEGRAM_CHAT_STATE_OFFSET(state), 0 },
+    { 0, 'd', "review_flag", TELEGRAM_CHAT_STATE_OFFSET(review_flag), 0 },
+    { 0, 'd', "reply_flag", TELEGRAM_CHAT_STATE_OFFSET(reply_flag), 0 },
+};
+
+static struct telegram_chat_state *
+chat_state_fetch_func(
+        struct generic_conn *gc,
+        long long _id)
+{
+    if (gc->vt->open(gc) < 0) return NULL;
+
+    struct mysql_conn *conn = (struct mysql_conn *) gc;
+    struct common_mysql_iface *mi = conn->mi;
+    struct common_mysql_state *md = conn->md;
+    char *cmd_s = NULL;
+    size_t cmd_z = 0;
+    FILE *cmd_f = NULL;
+    struct telegram_chat_state_internal tcsi = {};
+    struct telegram_chat_state *tcs = NULL;
+
+    cmd_f = open_memstream(&cmd_s, &cmd_z);
+    fprintf(cmd_f, "SELECT * FROM %stelegram_chat_states WHERE id = %lld;",
+            md->table_prefix, _id);
+    fclose(cmd_f); cmd_f = NULL;
+    if (mi->query(md, cmd_s, cmd_z, TELEGRAM_CHAT_STATE_ROW_WIDTH) < 0)
+        db_error_fail(md);
+    free(cmd_s); cmd_s = NULL; cmd_z = 0;
+    if (md->row_count > 0) {
+        if (mi->next_row(md) < 0) db_error_fail(md);
+        if (mi->parse_spec(md, -1, md->row, md->lengths, TELEGRAM_CHAT_STATE_ROW_WIDTH, telegram_chat_state_spec, &tcsi) < 0) goto fail;
+        XCALLOC(tcs, 1);
+        tcs->_id = tcsi.id;
+        tcs->command = tcsi.command; tcsi.command = NULL;
+        tcs->token = tcsi.token; tcsi.token = NULL;
+        tcs->state = tcsi.state;
+        tcs->review_flag = tcsi.review_flag;
+        tcs->reply_flag = tcsi.reply_flag;
+        return tcs;
+    }
+
+    tcs = telegram_chat_state_create();
+    tcs->_id = _id;
+    gc->vt->chat_state_save(gc, tcs);
+    return tcs;
+
+fail:
+    free(tcsi.command);
+    free(tcsi.token);
+    telegram_chat_state_free(tcs);
+    if (cmd_f) fclose(cmd_f);
+    free(cmd_s);
+    return NULL;
+}
+
+static int
+chat_state_save_func(
+        struct generic_conn *gc,
+        const struct telegram_chat_state *tcs)
+{
+    if (gc->vt->open(gc) < 0) return -1;
+
+    struct mysql_conn *conn = (struct mysql_conn *) gc;
+    struct common_mysql_iface *mi = conn->mi;
+    struct common_mysql_state *md = conn->md;
+    char *cmd_s = NULL;
+    size_t cmd_z = 0;
+    FILE *cmd_f = NULL;
+    struct telegram_chat_state_internal tcsi = {};
+
+    tcsi.id = tcs->_id;
+    tcsi.command = tcs->command;
+    tcsi.token = tcs->token;
+    tcsi.state = tcs->state;
+    tcsi.review_flag = tcs->review_flag;
+    tcsi.reply_flag = tcs->reply_flag;
+
+    cmd_f = open_memstream(&cmd_s, &cmd_z);
+    fprintf(cmd_f, "INSERT INTO %stelegram_chat_states SET ", md->table_prefix);
+    mi->unparse_spec_3(md, cmd_f, TELEGRAM_CHAT_STATE_ROW_WIDTH,
+                       telegram_chat_state_spec, 0, &tcsi);
+    fprintf(cmd_f, " ON DUPLICATE KEY UPDATE ");
+    mi->unparse_spec_3(md, cmd_f, TELEGRAM_CHAT_STATE_ROW_WIDTH,
+                       telegram_chat_state_spec, 1ULL, &tcsi);
+    fprintf(cmd_f, ";");
+    fclose(cmd_f); cmd_f = NULL;
+    if (mi->simple_query(md, cmd_s, cmd_z) < 0) goto fail;
+    free(cmd_s); cmd_s = NULL; cmd_z = 0;
+    return 0;
+
+fail:
+    if (cmd_f) fclose(cmd_f);
+    free(cmd_s);
+    return -1;
+}
+
 static struct generic_conn_iface mysql_iface =
 {
     free_func,
@@ -752,6 +865,8 @@ static struct generic_conn_iface mysql_iface =
     chat_save_func,
     user_fetch_func,
     user_save_func,
+    chat_state_fetch_func,
+    chat_state_save_func,
 };
 
 struct generic_conn *
