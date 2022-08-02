@@ -724,6 +724,16 @@ parse_spec_func(
       *p_uq = uq;
       break;
 
+    case 'l': {
+      errno = 0;
+      eptr = NULL;
+      long long llv = strtoll(row[i], &eptr, 10);
+      if (errno || *eptr) goto invalid_format;
+      long long *p_llv = XPDEREF(long long, data, specs[i].offset);
+      *p_llv = llv;
+      break;
+    }
+
     case 'd':
     case 'e':
       errno = 0;
@@ -992,6 +1002,12 @@ unparse_spec_func(
         fprintf(fout, "%s%d", sep, val);
       }
       break;
+
+    case 'l': {
+      long long *p_llv = XPDEREF(long long, data, specs[i].offset);
+      fprintf(fout, "%s%lld", sep, *p_llv);
+      break;
+    }
 
     case 'd':
       p_int = XPDEREF(int, data, specs[i].offset);
@@ -1279,6 +1295,12 @@ unparse_spec_2_func(
       }
       break;
 
+    case 'l': {
+      long long *p_llv = XPDEREF(long long, data, specs[i].offset);
+      fprintf(fout, "%s%lld", sep, *p_llv);
+      break;
+    }
+
     case 'd':
       p_int = XPDEREF(int, data, specs[i].offset);
       val = *p_int;
@@ -1418,6 +1440,12 @@ unparse_spec_3_func(
         fprintf(fout, "%d", val);
       }
       break;
+
+    case 'l': {
+      long long *p_llv = XPDEREF(long long, data, specs[i].offset);
+      fprintf(fout, "%lld", *p_llv);
+      break;
+    }
 
     case 'd':
       p_int = XPDEREF(int, data, specs[i].offset);
