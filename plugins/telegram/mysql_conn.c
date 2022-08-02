@@ -237,7 +237,7 @@ enum { TELEGRAM_PBS_ROW_WIDTH = 2 };
 static const struct common_mysql_parse_spec telegram_pbs_spec[TELEGRAM_PBS_ROW_WIDTH] =
 {
     { 1, 's', "id", TELEGRAM_PBS_OFFSET(id), 0 },
-    { 0, 'q', "update_id", TELEGRAM_PBS_OFFSET(update_id), 0 },
+    { 0, 'l', "update_id", TELEGRAM_PBS_OFFSET(update_id), 0 },
 };
 
 static struct telegram_pbs *
@@ -340,7 +340,7 @@ enum { TELEGRAM_TOKEN_ROW_WIDTH = 10 };
 #define TELEGRAM_TOKEN_OFFSET(f) XOFFSET(struct telegram_token_internal, f)
 static const struct common_mysql_parse_spec telegram_token_spec[TELEGRAM_TOKEN_ROW_WIDTH] =
 {
-    { 0, 'q', "id", TELEGRAM_TOKEN_OFFSET(id), 0 },
+    { 0, 'l', "id", TELEGRAM_TOKEN_OFFSET(id), 0 },
     { 1, 's', "bot_id", TELEGRAM_TOKEN_OFFSET(bot_id), 0 },
     { 0, 'd', "user_id", TELEGRAM_TOKEN_OFFSET(user_id), 0 },
     { 1, 's', "user_login", TELEGRAM_TOKEN_OFFSET(user_login), 0 },
@@ -524,7 +524,7 @@ enum { TELEGRAM_CHAT_ROW_WIDTH = 6 };
 #define TELEGRAM_CHAT_OFFSET(f) XOFFSET(struct telegram_chat_internal, f)
 static const struct common_mysql_parse_spec telegram_chat_spec[TELEGRAM_CHAT_ROW_WIDTH] =
 {
-    { 0, 'q', "id", TELEGRAM_CHAT_OFFSET(id), 0 },
+    { 0, 'l', "id", TELEGRAM_CHAT_OFFSET(id), 0 },
     { 1, 's', "type", TELEGRAM_CHAT_OFFSET(type), 0 },
     { 1, 's', "title", TELEGRAM_CHAT_OFFSET(title), 0 },
     { 1, 's', "username", TELEGRAM_CHAT_OFFSET(username), 0 },
@@ -637,7 +637,7 @@ enum { TELEGRAM_USER_ROW_WIDTH = 6 };
 #define TELEGRAM_USER_OFFSET(f) XOFFSET(struct telegram_user_internal, f)
 static const struct common_mysql_parse_spec telegram_user_spec[TELEGRAM_USER_ROW_WIDTH] =
 {
-    { 0, 'q', "id", TELEGRAM_USER_OFFSET(id), 0 },
+    { 0, 'l', "id", TELEGRAM_USER_OFFSET(id), 0 },
     { 1, 's', "username", TELEGRAM_USER_OFFSET(username), 0 },
     { 1, 's', "first_name", TELEGRAM_USER_OFFSET(first_name), 0 },
     { 1, 's', "last_name", TELEGRAM_USER_OFFSET(last_name), 0 },
@@ -744,7 +744,7 @@ enum { TELEGRAM_CHAT_STATE_ROW_WIDTH = 6 };
 #define TELEGRAM_CHAT_STATE_OFFSET(f) XOFFSET(struct telegram_chat_state_internal, f)
 static const struct common_mysql_parse_spec telegram_chat_state_spec[TELEGRAM_CHAT_STATE_ROW_WIDTH] =
 {
-    { 0, 'q', "id", TELEGRAM_CHAT_STATE_OFFSET(id), 0 },
+    { 0, 'l', "id", TELEGRAM_CHAT_STATE_OFFSET(id), 0 },
     { 1, 's', "command", TELEGRAM_CHAT_STATE_OFFSET(command), 0 },
     { 1, 's', "token", TELEGRAM_CHAT_STATE_OFFSET(token), 0 },
     { 0, 'd', "state", TELEGRAM_CHAT_STATE_OFFSET(state), 0 },
@@ -857,13 +857,13 @@ enum { TELEGRAM_SUBSCRIPTION_ROW_WIDTH = 7 };
 #define TELEGRAM_SUBSCRIPTION_OFFSET(f) XOFFSET(struct telegram_subscription_internal, f)
 static const struct common_mysql_parse_spec telegram_subscription_spec[TELEGRAM_SUBSCRIPTION_ROW_WIDTH] =
 {
-    { 0, 'q', "id", TELEGRAM_SUBSCRIPTION_OFFSET(id), 0 },
+    { 0, 'l', "id", TELEGRAM_SUBSCRIPTION_OFFSET(id), 0 },
     { 1, 's', "bot_id", TELEGRAM_SUBSCRIPTION_OFFSET(bot_id), 0 },
     { 0, 'd', "user_id", TELEGRAM_SUBSCRIPTION_OFFSET(user_id), 0 },
     { 0, 'd', "contest_id", TELEGRAM_SUBSCRIPTION_OFFSET(contest_id), 0 },
     { 0, 'd', "review_flag", TELEGRAM_SUBSCRIPTION_OFFSET(review_flag), 0 },
     { 0, 'd', "reply_flag", TELEGRAM_SUBSCRIPTION_OFFSET(reply_flag), 0 },
-    { 0, 'q', "chat_id", TELEGRAM_SUBSCRIPTION_OFFSET(chat_id), 0 },
+    { 0, 'l', "chat_id", TELEGRAM_SUBSCRIPTION_OFFSET(chat_id), 0 },
 };
 
 static struct telegram_subscription *

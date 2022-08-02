@@ -335,7 +335,7 @@ static const struct common_mysql_parse_spec user_extra_spec[USER_EXTRA_ROW_WIDTH
     { 0, 'd', "user_id", USER_EXTRA_OFFSET(user_id), 0 },
     { 1, 's', "disq_comment", USER_EXTRA_OFFSET(disq_comment), 0 },
     { 0, 'd', "status", USER_EXTRA_OFFSET(status), 0 },
-    { 0, 'q', "run_fields", USER_EXTRA_OFFSET(run_fields), 0 },
+    { 0, 'l', "run_fields", USER_EXTRA_OFFSET(run_fields), 0 },
     { 1, 's', "problem_dir_prefix", USER_EXTRA_OFFSET(problem_dir_prefix), 0 },
     { 1, 'T', "last_update_time", USER_EXTRA_OFFSET(last_update_time), 0 },
 };
