@@ -126,6 +126,8 @@ SCRIPTS_IN = \
  dotnet-cs.in\
  dotnet-vb-version.in\
  dotnet-vb.in\
+ swift-version.in\
+ swift.in\
  runvg.in\
  runvg2.in\
  runjava.in\
