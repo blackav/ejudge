@@ -1566,7 +1566,9 @@ set_cgroup_rss_limit(void)
         if (snprintf(path, sizeof(path), "%s/memory.memsw.limit_in_bytes", cgroup_memory_path) >= sizeof(path)) {
             ffatal("path too long");
         }
-        write_buf_to_file_fatal(path, data, len);
+        if (access(path, W_OK) >= 0) {
+            write_buf_to_file_fatal(path, data, len);
+        }
     }
 }
 
