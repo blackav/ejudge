@@ -1,7 +1,6 @@
 /* -*- c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2012-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -181,7 +180,7 @@ read_file(
 fail:
   e = errno;
   if (f) fclose(f);
-  xfree(f);
+  xfree(b);
   errno = e;
   return -1;
 }
