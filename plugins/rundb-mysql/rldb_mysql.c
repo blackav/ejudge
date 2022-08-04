@@ -308,10 +308,9 @@ do_open(struct rldb_mysql_state *state)
   if (run_version == 10) {
     if (mi->simple_fquery(md, create_userrunheaders_query, md->table_prefix) < 0)
       return -1;
-    if (mi->simple_fquery(md, "ALTER TABLE %suserrunheaders ADD INDEX userrunheaders_contest_id_idx (contest_id);", md->table_prefix) < 0)
-      return -1;
-    if (mi->simple_fquery(md, "ALTER TABLE %suserrunheaders ADD INDEX userrunheaders_user_id_idx (user_id);", md->table_prefix) < 0)
-      return -1;
+    // ignore errors
+    mi->simple_fquery(md, "ALTER TABLE %suserrunheaders ADD INDEX userrunheaders_contest_id_idx (contest_id);", md->table_prefix);
+    mi->simple_fquery(md, "ALTER TABLE %suserrunheaders ADD INDEX userrunheaders_user_id_idx (user_id);", md->table_prefix);
     // ignore error
     mi->simple_fquery(md, "ALTER TABLE %sruns ADD INDEX runs_user_id_idx (user_id) ;", md->table_prefix);
     if (mi->simple_fquery(md, "UPDATE %sconfig SET config_val = '11' WHERE config_key = 'run_version' ;", md->table_prefix) < 0)
