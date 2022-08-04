@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -581,6 +581,7 @@ flush_database(struct uldb_xml_state *state)
   }
   if (fclose(f) < 0) {
     err("bdflush: fclose() failed: %s", os_ErrorMsg());
+    f = NULL;
     goto failed;
   }
   f = 0;
