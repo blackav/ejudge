@@ -26,7 +26,7 @@ then
     PATH="${GODIR}:${PATH}"
 fi
 
-[ x"${EJUDGE_FLAGS}" = x ] && EJUDGE_FLAGS="-O2"
+#[ x"${EJUDGE_FLAGS}" = x ] && EJUDGE_FLAGS="-O2"
 
 unset LANG
 unset LC_ALL
