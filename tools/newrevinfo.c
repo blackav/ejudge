@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2014-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2014-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -228,7 +228,7 @@ read_git_commit_id_by_version(unsigned char *id_buf, int id_buf_size, const unsi
     }
     snprintf(id_buf, id_buf_size, "%s", buf);
     while (fgets(buf, sizeof(buf), f)) {}
-    fclose(f); f = NULL;
+    pclose(f); f = NULL;
     return 0;
 }
 
@@ -251,7 +251,7 @@ read_git_status(unsigned char *id_buf, int id_buf_size, int *p_has_changes)
     buf[len] = 0;
     snprintf(id_buf, id_buf_size, "%s", buf);
     while (fgets(buf, sizeof(buf), f)) {}
-    fclose(f); f = NULL;
+    pclose(f); f = NULL;
 
     int has_changes = 0;
     f = popen("git status --porcelain", "r");
@@ -263,7 +263,7 @@ read_git_status(unsigned char *id_buf, int id_buf_size, int *p_has_changes)
         if (!strncmp(buf, "NEWS", 4)) continue;
         if (len > 0) has_changes = 1;
     }
-    fclose(f); f = NULL;
+    pclose(f); f = NULL;
     if (p_has_changes) *p_has_changes = has_changes;
     return 0;
 }
