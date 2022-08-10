@@ -46,6 +46,9 @@ C_OBJECTS=$(C_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a
 CC_CFILES=bin/ej-compile-control.c
 CC_OBJECTS=$(CC_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a
 
+CA_CFILES=bin/ej-compile-agent.c
+CA_OBJECTS=$(CA_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a
+
 SERVE_CFILES=bin/ej-serve.c version.c
 SERVE_OBJECTS=$(SERVE_CFILES:.c=.o) libcommon.a libuserlist_clnt.a libplatform.a libcommon.a
 
@@ -165,7 +168,7 @@ PB_OBJECTS = $(PB_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a
 
 INSTALLSCRIPT = ejudge-install.sh
 BINTARGETS = ejudge-jobs-cmd ejudge-edit-users ejudge-setup ejudge-configure-compilers ejudge-control ejudge-execute ejudge-contests-cmd ejudge-suid-setup ejudge-change-contests
-SERVERBINTARGETS = ej-compile ej-run ej-nwrun ej-ncheck ej-batch ej-serve ej-users ej-users-control ej-jobs ej-jobs-control ej-super-server ej-super-server-control ej-contests ej-contests-control uudecode ej-convert-clars ej-convert-runs ej-fix-db ej-super-run ej-super-run-control ej-normalize ej-polygon ej-import-contest ej-page-gen ej-parblock ej-convert-status ej-convert-xuser
+SERVERBINTARGETS = ej-compile ej-run ej-nwrun ej-ncheck ej-batch ej-serve ej-users ej-users-control ej-jobs ej-jobs-control ej-super-server ej-super-server-control ej-contests ej-contests-control uudecode ej-convert-clars ej-convert-runs ej-fix-db ej-super-run ej-super-run-control ej-normalize ej-polygon ej-import-contest ej-page-gen ej-parblock ej-convert-status ej-convert-xuser ej-compile-agent
 SUIDBINTARGETS = ej-suid-chown ej-suid-exec ej-suid-ipcrm ej-suid-kill ej-suid-container ej-suid-update-scripts
 CGITARGETS = cgi-bin/users${CGI_PROG_SUFFIX} cgi-bin/serve-control${CGI_PROG_SUFFIX} cgi-bin/new-client${CGI_PROG_SUFFIX}
 TARGETS = ${SERVERBINTARGETS} ${BINTARGETS} ${CGITARGETS} tools/newrevinfo ${SUIDBINTARGETS} ej-compile-control
@@ -290,6 +293,9 @@ ej-compile$(EXESFX) : $(C_OBJECTS)
 
 ej-compile-control : $(CC_OBJECTS)
 	$(LD) $(LDFLAGS) $(CC_OBJECTS) -o $@ $(LDLIBS) ${EXPAT_LIB}
+
+ej-compile-agent : $(CA_OBJECTS)
+	$(LD) $(LDFLAGS) $(CA_OBJECTS) -o $@ $(LDLIBS) ${EXPAT_LIB}
 
 ej-run${EXESFX} : $(RUN_OBJECTS)
 	$(LD) $(LDFLAGS) $(RUN_OBJECTS) -o $@ $(LDLIBS) ${EXPAT_LIB} ${LIBZIP} ${LIBUUID} $(MONGO_LIBS) $(MONGOC_LIBS)

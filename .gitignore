@@ -15,6 +15,7 @@ newrevinfo
 ej-batch
 ej-compile
 ej-compile-control
+ej-compile-agent
 ej-contests
 ej-contests-control
 ej-convert-clars
