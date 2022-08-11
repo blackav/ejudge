@@ -15,7 +15,7 @@ newrevinfo
 ej-batch
 ej-compile
 ej-compile-control
-ej-compile-agent
+ej-agent
 ej-contests
 ej-contests-control
 ej-convert-clars
@@ -35,7 +35,6 @@ ej-run
 ej-serve
 ej-super-run
 ej-super-run-control
-ej-super-run-agent
 ej-super-server
 ej-super-server-control
 ej-users
