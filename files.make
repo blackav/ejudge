@@ -119,7 +119,7 @@ REUSE_CFILES=\
  reuse/reuse_xstrmerge3.c
 
 COMMON_CFILES=\
- lib/agent_client.c\
+ lib/agent_client_ssh.c\
  lib/allowed_list.c\
  lib/archive_paths.c\
  lib/avatar_plugin.c\
