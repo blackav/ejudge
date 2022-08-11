@@ -119,6 +119,7 @@ REUSE_CFILES=\
  reuse/reuse_xstrmerge3.c
 
 COMMON_CFILES=\
+ lib/agent_client.c\
  lib/allowed_list.c\
  lib/archive_paths.c\
  lib/avatar_plugin.c\
@@ -528,6 +529,7 @@ CFILES=\
  ${NEW_SERVER_CLNT_CFILES}
 
 HFILES=\
+ ./include/ejudge/agent_client.h\
  ./include/ejudge/archive_paths.h\
  ./include/ejudge/avatar_plugin.h\
  ./include/ejudge/base32.h\
