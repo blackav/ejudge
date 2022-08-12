@@ -1121,6 +1121,10 @@ new_loop(int parallel_mode)
     clear_directory(full_working_dir);
   }
 
+  if (agent_client) {
+    agent_client->ops->close(agent_client);
+  }
+
   return retval;
 }
 
