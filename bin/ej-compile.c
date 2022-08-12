@@ -844,21 +844,27 @@ new_loop(int parallel_mode)
 
     unsigned char pkt_name[PATH_MAX];
     pkt_name[0] = 0;
-    int r = scan_dir(compile_server_queue_dir, pkt_name, sizeof(pkt_name), 0);
-
-    if (r < 0) {
-      switch (-r) {
-      case ENOMEM:
-      case ENOENT:
-      case ENFILE:
-        err("trying to recover, sleep for 5 seconds");
-        interrupt_enable();
-        os_Sleep(5000);
-        interrupt_disable();
-        continue;
-      default:
-        err("unrecoverable error, exiting");
-        return -1;
+    int r;
+    if (agent_client) {
+      r = agent_client->ops->poll_queue(agent_client, pkt_name, sizeof(pkt_name));
+      err("unrecoverable error, exiting");
+      return -1;
+    } else {
+      r = scan_dir(compile_server_queue_dir, pkt_name, sizeof(pkt_name), 0);
+      if (r < 0) {
+        switch (-r) {
+        case ENOMEM:
+        case ENOENT:
+        case ENFILE:
+          err("trying to recover, sleep for 5 seconds");
+          interrupt_enable();
+          os_Sleep(5000);
+          interrupt_disable();
+          continue;
+        default:
+          err("unrecoverable error, exiting");
+          return -1;
+        }
       }
     }
 

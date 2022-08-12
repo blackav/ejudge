@@ -629,6 +629,7 @@ static cJSON *
 create_request(
         struct AgentClientSsh *acs,
         struct Future *f,
+        long long *p_time_ms,
         const unsigned char *query)
 {
     cJSON *jq = cJSON_CreateObject();
@@ -638,9 +639,10 @@ create_request(
 
     struct timeval tv;
     gettimeofday(&tv, NULL);
-    long long current_time_us = tv.tv_sec * 1000LL + tv.tv_usec / 1000;
+    long long current_time_ms = tv.tv_sec * 1000LL + tv.tv_usec / 1000;
+    if (p_time_ms) *p_time_ms = current_time_ms;
 
-    cJSON_AddNumberToObject(jq, "t", (double) current_time_us);
+    cJSON_AddNumberToObject(jq, "t", (double) current_time_ms);
     cJSON_AddNumberToObject(jq, "s", (double) serial);
     cJSON_AddStringToObject(jq, "q", query);
 
@@ -656,7 +658,8 @@ poll_queue_func(
     int result = 0;
     struct AgentClientSsh *acs = (struct AgentClientSsh *) ac;
     struct Future f;
-    cJSON *jq = create_request(acs, &f, "poll");
+    long long time_ms;
+    cJSON *jq = create_request(acs, &f, &time_ms, "poll");
     add_wchunk_json(acs, jq);
     cJSON_Delete(jq); jq = NULL;
 
@@ -672,6 +675,12 @@ poll_queue_func(
                 snprintf(pkt_name, pkt_len, "%s", jn->valuestring);
                 result = 1;
             }
+        }
+        cJSON *jt = cJSON_GetObjectItem(f.value, "t");
+        if (jt && jt->type == cJSON_Number) {
+            long long dur_ms = jt->valuedouble;
+            dur_ms -= time_ms;
+            fprintf(stderr, "poll: %lld ms\n", dur_ms);
         }
     }
 
