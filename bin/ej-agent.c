@@ -725,56 +725,6 @@ do_loop(struct AppState *as)
             as->ready_cbs[i].callback(as, as->ready_cbs[i].fdi);
         }
         as->ready_cbu = 0;
-
-        /*
-
-        for (int i = 0; i < as->fdq_u; ++i) {
-            accept_new_client(as, as->fdq[i]);
-        }
-        as->fdq_u = 0;
-
-        {
-            struct ClientState *p, *q;
-            for (p = as->rd_first; p; p = q) {
-                q = p->rd_next;
-                p->rd_prev = p->rd_next = NULL;
-                if (p->close_flag) {
-                    close_client(as, p);
-                } else if (p->data_ready_flag) {
-                    process_data(as, p);
-                }
-            }
-            as->rd_first = as->rd_last = NULL;
-        }
-
-        if (as->timer_flag) {
-            process_timer_event(as);
-            as->timer_flag = 0;
-        }
-
-        for (int i = 0; i < as->inq_u; ++i) {
-            process_job_file(as, as->inq[i]);
-            xfree(as->inq[i]);
-            as->inq[i] = NULL;
-        }
-        as->inq_u = 0;
-
-        if (as->child_flag) {
-            process_child_event(as);
-            as->child_flag = 0;
-        }
-
-        {
-            struct ProcessState *p, *q;
-            for (p = as->rd_prc_first; p; p = q) {
-                q = p->rd_next;
-                p->rd_prev = p->rd_next = NULL;
-                p->is_notified = 0;
-                handle_process_notification(as, p);
-            }
-            as->rd_prc_first = as->rd_prc_last = NULL;
-        }
-        */
     }
 }
 
