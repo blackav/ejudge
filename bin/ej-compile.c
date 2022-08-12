@@ -41,6 +41,7 @@
 #include "ejudge/misctext.h"
 #include "ejudge/random.h"
 #include "ejudge/ej_process.h"
+#include "ejudge/agent_client.h"
 
 #include "ejudge/meta_generic.h"
 #include "ejudge/meta/compile_packet_meta.h"
@@ -76,6 +77,9 @@ static unsigned char *compile_server_id;
 static __attribute__((unused)) unsigned char compile_server_spool_dir[PATH_MAX];
 static unsigned char compile_server_queue_dir[PATH_MAX];
 static unsigned char compile_server_src_dir[PATH_MAX];
+static unsigned char *agent;
+static struct AgentClient *agent_client;
+static unsigned char *instance_id;
 
 static int
 check_style_only(
@@ -944,6 +948,25 @@ new_loop(int parallel_mode)
     snprintf(full_working_dir, sizeof(full_working_dir), "%s", global->compile_work_dir);
   }
 
+  if (agent && *agent) {
+    if (!strncmp(agent, "ssh:", 4)) {
+      agent_client = agent_client_ssh_create();
+      if (agent_client->ops->init(agent_client, instance_id,
+                                  agent + 4, compile_server_id,
+                                  PREPARE_COMPILE) < 0) {
+        err("failed to initalize agent");
+        return -1;
+      }
+      if (agent_client->ops->connect(agent_client) < 0) {
+        err("failed to connect to client");
+        return -1;
+      }
+    } else {
+      err("invalid agent");
+      return -1;
+    }
+  }
+
 #if defined EJUDGE_COMPILE_SPOOL_DIR
   // nothing to do
 #else
@@ -1804,6 +1827,18 @@ main(int argc, char *argv[])
       struct stat stb;
       if (fstat(lval, &stb) < 0 || !S_ISREG(stb.st_mode)) goto print_usage;
       ejudge_xml_fd = lval;
+    } else if (!strcmp(argv[i], "-a")) {
+      if (++i >= argc) goto print_usage;
+      xfree(agent);
+      agent = xstrdup(argv[i++]);
+      argv_restart[j++] = "-a";
+      argv_restart[j++] = argv[i - 1];
+    } else if (!strcmp(argv[i], "-s")) {
+      if (++i >= argc) goto print_usage;
+      xfree(instance_id);
+      instance_id = xstrdup(argv[i++]);
+      argv_restart[j++] = "-s";
+      argv_restart[j++] = argv[i - 1];
     } else if (!strcmp(argv[i], "-p")) {
       parallel_mode = 1;
       ++i;
@@ -2133,5 +2168,7 @@ main(int argc, char *argv[])
   printf("  -i ID  - specify compile server id\n");
   printf("  -r S   - substitute ${CONTESTS_HOME_DIR} for S in the config\n");
   printf("  -c C   - substitute ${COMPILE_HOME_DIR} for C in the config\n");
+  printf("  -a A   - use agent A to access to compile queue\n");
+  printf("  -s I   - set instance Id to I\n");
   return code;
 }
