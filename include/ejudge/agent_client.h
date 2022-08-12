@@ -16,6 +16,8 @@
  * GNU General Public License for more details.
  */
 
+#include <stdlib.h>
+
 struct AgentClient;
 
 struct AgentClientOps
@@ -30,6 +32,11 @@ struct AgentClientOps
     int (*connect)(struct AgentClient *ac);
     void (*close)(struct AgentClient *ac);
     int (*is_closed)(struct AgentClient *ac);
+
+    int (*poll_queue)(
+        struct AgentClient *ac,
+        unsigned char *pkt_name,
+        size_t pkt_len);
 };
 
 struct AgentClient

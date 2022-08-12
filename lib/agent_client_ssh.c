@@ -21,6 +21,9 @@
 #include "ejudge/errlog.h"
 #include "ejudge/osdeps.h"
 
+#include <stdlib.h>
+#include "ejudge/cJSON.h"
+
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/epoll.h>
@@ -33,11 +36,23 @@
 #include <sys/eventfd.h>
 #include <errno.h>
 #include <sys/wait.h>
+#include <sys/time.h>
 
 struct FDChunk
 {
     unsigned char *data;
     int size;
+};
+
+struct Future
+{
+    int serial;
+
+    int ready;
+    pthread_mutex_t m;
+    pthread_cond_t c;
+
+    cJSON *value;
 };
 
 struct AgentClientSsh
@@ -70,6 +85,11 @@ struct AgentClientSsh
     int wchunka;
     uint32_t wevents;
 
+    pthread_mutex_t futurem;
+    struct Future **futures;
+    int futureu;
+    int futurea;
+
     int efd;
     int pid;                    /* ssh pid */
     int from_ssh;               /* pipe to ssh */
@@ -81,7 +101,33 @@ struct AgentClientSsh
     _Atomic _Bool is_stopped;
     pthread_mutex_t stop_m;
     pthread_cond_t stop_c;
+
+    int serial;
 };
+
+static void future_init(struct Future *f, int serial)
+{
+    memset(f, 0, sizeof(*f));
+    f->serial = serial;
+    pthread_mutex_init(&f->m, NULL);
+    pthread_cond_init(&f->c, NULL);
+}
+
+static void future_fini(struct Future *f)
+{
+    pthread_mutex_destroy(&f->m);
+    pthread_cond_destroy(&f->c);
+    if (f->value) cJSON_Delete(f->value);
+}
+
+static void future_wait(struct Future *f)
+{
+    pthread_mutex_lock(&f->m);
+    while (!f->ready) {
+        pthread_cond_wait(&f->c, &f->m);
+    }
+    pthread_mutex_unlock(&f->m);
+}
 
 static struct AgentClient *
 destroy_func(struct AgentClient *ac)
@@ -89,6 +135,8 @@ destroy_func(struct AgentClient *ac)
     struct AgentClientSsh *acs = (struct AgentClientSsh *) ac;
     if (!acs) return NULL;
 
+    pthread_mutex_destroy(&acs->futurem);
+    free(acs->futures);
     pthread_mutex_destroy(&acs->stop_m);
     pthread_cond_destroy(&acs->stop_c);
     pthread_mutex_destroy(&acs->wchunkm);
@@ -153,7 +201,7 @@ add_rchunk(struct AgentClientSsh *acs, const unsigned char *data, int size)
     pthread_mutex_unlock(&acs->rchunkm);
 }
 
-static __attribute__((unused)) void
+static void
 add_wchunk_move(struct AgentClientSsh *acs, unsigned char *data, int size)
 {
     pthread_mutex_lock(&acs->wchunkm);
@@ -167,6 +215,38 @@ add_wchunk_move(struct AgentClientSsh *acs, unsigned char *data, int size)
     pthread_mutex_unlock(&acs->wchunkm);
     uint64_t v = 1;
     write(acs->vfd, &v, sizeof(v));
+}
+
+static void
+add_future(struct AgentClientSsh *acs, struct Future *f)
+{
+    pthread_mutex_lock(&acs->futurem);
+    if (acs->futurea == acs->futureu) {
+        if (!(acs->futurea *= 2)) acs->futurea = 4;
+        XREALLOC(acs->futures, acs->futurea);
+    }
+    acs->futures[acs->futureu++] = f;
+    pthread_mutex_unlock(&acs->futurem);
+}
+
+static struct Future *
+get_future(struct AgentClientSsh *acs, int serial)
+{
+    struct Future *result = NULL;
+    pthread_mutex_lock(&acs->futurem);
+    for (int i = 0; i < acs->futureu; ++i) {
+        if (acs->futures[i]->serial == serial) {
+            result = acs->futures[i];
+            if (i < acs->futureu - 1) {
+                memcpy(&acs->futures[i], &acs->futures[i + 1],
+                       (acs->futureu - i - 1) * sizeof(acs->futures[0]));
+            }
+            --acs->futureu;
+            break;
+        }
+    }
+    pthread_mutex_unlock(&acs->futurem);
+    return result;
 }
 
 static void
@@ -291,6 +371,42 @@ do_notify_read(struct AgentClientSsh *acs)
     }
 }
 
+static void
+handle_rchunks(struct AgentClientSsh *acs)
+{
+    pthread_mutex_lock(&acs->rchunkm);
+    if (acs->rchunku <= 0) goto done1;
+
+    for (int i = 0; i < acs->rchunku; ++i) {
+        struct FDChunk *c = &acs->rchunks[i];
+        cJSON *j = cJSON_Parse(c->data);
+        if (!j) {
+            err("JSON parse error");
+        } else {
+            cJSON *js = cJSON_GetObjectItem(j, "s");
+            if (!js || js->type != cJSON_Number) {
+                err("invalid JSON");
+            } else {
+                int serial = js->valuedouble;
+                struct Future *f = get_future(acs, serial);
+                if (f) {
+                    f->value = j; j = NULL;
+                    pthread_mutex_lock(&f->m);
+                    f->ready = 1;
+                    pthread_cond_signal(&f->c);
+                    pthread_mutex_unlock(&f->m);
+                }
+            }
+            if (j) cJSON_Delete(j);
+        }
+        free(c->data); c->data = NULL; c->size = 0;
+    }
+    acs->rchunku = 0;
+
+done1:
+    pthread_mutex_unlock(&acs->rchunkm);
+}
+
 static void *
 thread_func(void *ptr)
 {
@@ -355,6 +471,7 @@ thread_func(void *ptr)
             // what else to do?
             break;
         }
+        handle_rchunks(acs);
     }
 
     if (acs->pid > 0) {
@@ -494,6 +611,49 @@ is_closed_func(struct AgentClient *ac)
     return acs->is_stopped;
 }
 
+static void
+add_wchunk_json(
+        struct AgentClientSsh *acs,
+        cJSON *json)
+{
+    char *str = cJSON_Print(json);
+    int len = strlen(str);
+    str = realloc(str, len + 2);
+    str[len++] = '\n';
+    str[len++] = '\n';
+    str[len] = 0;
+    add_wchunk_move(acs, str, len);
+}
+
+static int
+poll_queue_func(
+        struct AgentClient *ac,
+        unsigned char *pkt_name,
+        size_t pkt_len)
+{
+    struct AgentClientSsh *acs = (struct AgentClientSsh *) ac;
+    cJSON *jq = cJSON_CreateObject();
+    int serial = ++acs->serial;
+    struct Future f;
+    future_init(&f, serial);
+    add_future(acs, &f);
+
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    long long current_time_us = tv.tv_sec * 1000LL + tv.tv_usec / 1000;
+
+    cJSON_AddNumberToObject(jq, "t", (double) current_time_us);
+    cJSON_AddNumberToObject(jq, "s", (double) serial);
+    cJSON_AddStringToObject(jq, "q", "poll");
+    add_wchunk_json(acs, jq);
+    cJSON_Delete(jq); jq = NULL;
+
+    future_wait(&f);
+
+    future_fini(&f);
+    return 0;
+}
+
 static const struct AgentClientOps ops_ssh =
 {
     destroy_func,
@@ -501,6 +661,7 @@ static const struct AgentClientOps ops_ssh =
     connect_func,
     close_func,
     is_closed_func,
+    poll_queue_func,
 };
 
 struct AgentClient *
@@ -522,6 +683,7 @@ agent_client_ssh_create(void)
     pthread_mutex_init(&acs->wchunkm, NULL);
     pthread_mutex_init(&acs->stop_m, NULL);
     pthread_cond_init(&acs->stop_c, NULL);
+    pthread_mutex_init(&acs->futurem, NULL);
 
     return &acs->b;
 }
