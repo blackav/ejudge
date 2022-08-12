@@ -16,4 +16,27 @@
  * GNU General Public License for more details.
  */
 
+struct AgentClient;
+
+struct AgentClientOps
+{
+    struct AgentClient *(*destroy)(struct AgentClient *ac);
+    int (*init)(
+        struct AgentClient *ac,
+        const unsigned char *id,
+        const unsigned char *endpoint,
+        const unsigned char *name,
+        int mode);
+    int (*connect)(struct AgentClient *ac);
+    void (*close)(struct AgentClient *ac);
+    int (*is_closed)(struct AgentClient *ac);
+};
+
+struct AgentClient
+{
+    const struct AgentClientOps *ops;
+};
+
+struct AgentClient *agent_client_ssh_create(void);
+
 #endif /* __AGENT_CLIENT_H__ */
