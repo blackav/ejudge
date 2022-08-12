@@ -81,7 +81,7 @@ static unsigned char *agent;
 static struct AgentClient *agent_client;
 static unsigned char *instance_id;
 
-static int
+static __attribute__((unused)) int
 check_style_only(
         const struct section_global_data *global,
         struct compile_request_packet *req,
