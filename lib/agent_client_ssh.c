@@ -454,7 +454,7 @@ connect_func(struct AgentClient *ac)
 
     pthread_attr_t pa;
     pthread_attr_init(&pa);
-    pthread_attr_setstacksize(&pa, 64 * 1024);
+    pthread_attr_setstacksize(&pa, 1024 * 1024);
     pthread_attr_setdetachstate(&pa, PTHREAD_CREATE_DETACHED);
     int e = pthread_create(&acs->tid, &pa, thread_func, acs);
     if (e) {
