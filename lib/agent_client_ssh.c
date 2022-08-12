@@ -294,6 +294,10 @@ do_notify_read(struct AgentClientSsh *acs)
 static void *
 thread_func(void *ptr)
 {
+    sigset_t ss;
+    sigfillset(&ss);
+    pthread_sigmask(SIG_BLOCK, &ss, NULL);
+
     struct AgentClientSsh *acs = (struct AgentClientSsh *) ptr;
 
     while (1) {
@@ -386,7 +390,7 @@ connect_func(struct AgentClient *ac)
         char *cmd_s = NULL;
         size_t cmd_z = 0;
         FILE *cmd_f = open_memstream(&cmd_s, &cmd_z);
-        fprintf(cmd_f, "%s/ej-agent", EJUDGE_SERVER_BIN_PATH);
+        fprintf(cmd_f, "exec %s/ej-agent", EJUDGE_SERVER_BIN_PATH);
         if (acs->id && acs->id[0]) {
             fprintf(cmd_f, " -i '%s'", acs->id);
         }
