@@ -47,7 +47,7 @@ CC_CFILES=bin/ej-compile-control.c
 CC_OBJECTS=$(CC_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a
 
 CA_CFILES=bin/ej-agent.c
-CA_OBJECTS=$(CA_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a
+CA_OBJECTS=$(CA_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a libplatform.a
 
 SERVE_CFILES=bin/ej-serve.c version.c
 SERVE_OBJECTS=$(SERVE_CFILES:.c=.o) libcommon.a libuserlist_clnt.a libplatform.a libcommon.a

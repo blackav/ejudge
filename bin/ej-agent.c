@@ -20,6 +20,7 @@
 #include "ejudge/xalloc.h"
 #include "ejudge/dyntrie.h"
 #include "ejudge/prepare.h"
+#include "ejudge/fileutl.h"
 
 #include <stdlib.h>
 #include "ejudge/cJSON.h"
@@ -739,10 +740,10 @@ do_loop(struct AppState *as)
 
 static int
 ping_query_func(
-            struct AppState *as,
-            const struct QueryCallback *cb,
-            cJSON *query,
-            cJSON *reply)
+        struct AppState *as,
+        const struct QueryCallback *cb,
+        cJSON *query,
+        cJSON *reply)
 {
     cJSON_AddStringToObject(reply, "q", "pong");
     return 1;
@@ -750,10 +751,10 @@ ping_query_func(
 
 static int
 set_query_func(
-            struct AppState *as,
-            const struct QueryCallback *cb,
-            cJSON *query,
-            cJSON *reply)
+        struct AppState *as,
+        const struct QueryCallback *cb,
+        cJSON *query,
+        cJSON *reply)
 {
     cJSON *jn = cJSON_GetObjectItem(query, "name");
     if (jn && jn->type == cJSON_String) {
@@ -780,6 +781,27 @@ set_query_func(
         cJSON_AddStringToObject(reply, "mode", "run");
     }
     cJSON_AddStringToObject(reply, "q", "get");
+    return 1;
+}
+
+static int
+poll_func(
+        struct AppState *as,
+        const struct QueryCallback *cb,
+        cJSON *query,
+        cJSON *reply)
+{
+    unsigned char pkt_name[PATH_MAX];
+    int r = scan_dir(as->queue_dir, pkt_name, sizeof(pkt_name), 0);
+    if (r < 0) {
+        cJSON_AddStringToObject(reply, "message", "scan_dir failed");
+        err("%s: scan_dir failed: %s", as->id, strerror(-r));
+        return 0;
+    }
+    if (r > 0) {
+        cJSON_AddStringToObject(reply, "pkt-name", pkt_name);
+    }
+    cJSON_AddStringToObject(reply, "q", "poll-result");
     return 1;
 }
 
@@ -855,6 +877,7 @@ main(int argc, char *argv[])
 
     app_state_add_query_callback(&app, "ping", NULL, ping_query_func);
     app_state_add_query_callback(&app, "set", NULL, set_query_func);
+    app_state_add_query_callback(&app, "poll", NULL, poll_func);
 
     info("%s: started", app.id);
     do_loop(&app);
