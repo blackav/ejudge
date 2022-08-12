@@ -1810,11 +1810,11 @@ main(int argc, char *argv[])
       ejudge_xml_path = argv[i++];
       argv_restart[j++] = "-x";
       argv_restart[j++] = ejudge_xml_path;
-    } else if (!strcmp(argv[i], "-i")) {
+    } else if (!strcmp(argv[i], "-I")) {
       if (++i >= argc) goto print_usage;
       xfree(compile_server_id); compile_server_id = NULL;
       compile_server_id = xstrdup(argv[i++]);
-      argv_restart[j++] = "-i";
+      argv_restart[j++] = "-I";
       argv_restart[j++] = argv[i - 1];
     } else if (!strcmp(argv[i], "-l")) {
       if (++i >= argc) goto print_usage;
@@ -2165,7 +2165,7 @@ main(int argc, char *argv[])
   printf("  -g G   - start as group G (only as root)\n");
   printf("  -C D   - change directory to D\n");
   printf("  -x X   - specify a path to ejudge.xml file\n");
-  printf("  -i ID  - specify compile server id\n");
+  printf("  -I ID  - specify compile server id\n");
   printf("  -r S   - substitute ${CONTESTS_HOME_DIR} for S in the config\n");
   printf("  -c C   - substitute ${COMPILE_HOME_DIR} for C in the config\n");
   printf("  -a A   - use agent A to access to compile queue\n");
