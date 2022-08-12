@@ -625,18 +625,16 @@ add_wchunk_json(
     add_wchunk_move(acs, str, len);
 }
 
-static int
-poll_queue_func(
-        struct AgentClient *ac,
-        unsigned char *pkt_name,
-        size_t pkt_len)
+static cJSON *
+create_request(
+        struct AgentClientSsh *acs,
+        struct Future *f,
+        const unsigned char *query)
 {
-    struct AgentClientSsh *acs = (struct AgentClientSsh *) ac;
     cJSON *jq = cJSON_CreateObject();
     int serial = ++acs->serial;
-    struct Future f;
-    future_init(&f, serial);
-    add_future(acs, &f);
+    future_init(f, serial);
+    add_future(acs, f);
 
     struct timeval tv;
     gettimeofday(&tv, NULL);
@@ -644,14 +642,41 @@ poll_queue_func(
 
     cJSON_AddNumberToObject(jq, "t", (double) current_time_us);
     cJSON_AddNumberToObject(jq, "s", (double) serial);
-    cJSON_AddStringToObject(jq, "q", "poll");
+    cJSON_AddStringToObject(jq, "q", query);
+
+    return jq;
+}
+
+static int
+poll_queue_func(
+        struct AgentClient *ac,
+        unsigned char *pkt_name,
+        size_t pkt_len)
+{
+    int result = 0;
+    struct AgentClientSsh *acs = (struct AgentClientSsh *) ac;
+    struct Future f;
+    cJSON *jq = create_request(acs, &f, "poll");
     add_wchunk_json(acs, jq);
     cJSON_Delete(jq); jq = NULL;
 
     future_wait(&f);
 
+    // { "q" : "poll-result", "pkt-name" : N }
+    if (f.value) {
+        cJSON *jj = cJSON_GetObjectItem(f.value, "q");
+        if (jj && jj->type == cJSON_String
+            && !strcmp("poll-result", jj->valuestring)) {
+            cJSON *jn = cJSON_GetObjectItem(f.value, "pkt-name");
+            if (jn && jn->type == cJSON_String) {
+                snprintf(pkt_name, pkt_len, "%s", jn->valuestring);
+                result = 1;
+            }
+        }
+    }
+
     future_fini(&f);
-    return 0;
+    return result;
 }
 
 static const struct AgentClientOps ops_ssh =
