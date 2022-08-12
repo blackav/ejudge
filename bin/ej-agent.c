@@ -782,8 +782,6 @@ set_query_func(
     return 1;
 }
 
-// ssh -aTx ejudge@localhost ~/ejudge/ej-compile-agent 2>>LOG
-
 int
 main(int argc, char *argv[])
 {
