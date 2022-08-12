@@ -140,6 +140,7 @@ struct AppState
     long long current_time_us;
     unsigned char *name;
     int mode;
+    unsigned char *id;
 
     unsigned char *spool_dir;
     unsigned char *queue_dir;
@@ -837,6 +838,7 @@ int
 main(int argc, char *argv[])
 {
     int retval = 1;
+    const unsigned char *id = NULL;
     const unsigned char *name = NULL;
     int mode = 0;
     int argi = 1;
@@ -847,6 +849,10 @@ main(int argc, char *argv[])
         if (!strcmp(argv[argi], "-n")) {
             if (argi + 1 >= argc) die("argument expected for -n");
             name = argv[argi + 1];
+            argi += 2;
+        } else if (!strcmp(argv[argi], "-i")) {
+            if (argi + 1 >= argc) die("argument expected for -i");
+            id = argv[argi + 1];
             argi += 2;
         } else if (!strcmp(argv[argi], "-m")) {
             if (argi + 1 >= argc) die("argument expected for -m");
@@ -873,6 +879,24 @@ main(int argc, char *argv[])
     app_state_init(&app);
 
     if (app_state_prepare(&app) < 0) goto done;
+
+    {
+        char *id_s = NULL;
+        size_t id_z = 0;
+        FILE *id_f = open_memstream(&id_s, &id_z);
+        if (id && id[0]) {
+            fprintf(id_f, "%s", id);
+        } else {
+            const char *s = getenv("SSH_CLIENT");
+            if (s && *s) {
+                fprintf(id_f, "[%s]", s);
+            } else {
+                fprintf(id_f, "[pid %d]", getpid());
+            }
+        }
+        fclose(id_f);
+        app.id = id_s;
+    }
 
     if (name && *name) {
         app.name = xstrdup(name);
