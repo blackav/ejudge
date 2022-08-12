@@ -507,8 +507,8 @@ handle_stdin_rchunk(
     gettimeofday(&tv, NULL);
     as->current_time_us = tv.tv_sec * 1000LL + tv.tv_usec / 1000;
 
-    cJSON_AddNumberToObject(reply, "t", (double) as->current_time_us);
-    cJSON_AddNumberToObject(reply, "s", (double) ++as->serial);
+    cJSON_AddNumberToObject(reply, "T", (double) as->current_time_us);
+    cJSON_AddNumberToObject(reply, "S", (double) ++as->serial);
 
     if (strlen(data) != size) {
         cJSON_AddStringToObject(reply, "message", "binary data");
@@ -521,6 +521,15 @@ handle_stdin_rchunk(
         cJSON_AddStringToObject(reply, "message", "JSON parse error");
         err("%s: JSON parsing failed", as->id);
         goto done;
+    }
+
+    cJSON *jt = cJSON_GetObjectItem(root, "t");
+    if (jt && jt->type == cJSON_Number) {
+        cJSON_AddNumberToObject(reply, "t", jt->valuedouble);
+    }
+    cJSON *js = cJSON_GetObjectItem(root, "s");
+    if (js && js->type == cJSON_Number) {
+        cJSON_AddNumberToObject(reply, "s", js->valuedouble);
     }
 
     cJSON *jq = cJSON_GetObjectItem(root, "q");
@@ -735,14 +744,6 @@ ping_query_func(
             cJSON *query,
             cJSON *reply)
 {
-    cJSON *jt = cJSON_GetObjectItem(query, "t");
-    if (jt && jt->type == cJSON_Number) {
-        cJSON_AddNumberToObject(reply, "it", jt->valuedouble);
-    }
-    cJSON *js = cJSON_GetObjectItem(query, "s");
-    if (js && js->type == cJSON_Number) {
-        cJSON_AddNumberToObject(reply, "is", js->valuedouble);
-    }
     cJSON_AddStringToObject(reply, "q", "pong");
     return 1;
 }
