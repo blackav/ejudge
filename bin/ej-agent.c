@@ -308,7 +308,7 @@ app_state_arm_for_read(struct AppState *as, struct FDInfo *fdi)
     if (!fdi->events) {
         struct epoll_event ev = { .events = EPOLLIN, .data.ptr = fdi };
         if (epoll_ctl(as->efd, EPOLL_CTL_ADD, fdi->fd, &ev) < 0) {
-            err("epoll_ctl failed: %s", os_ErrorMsg());
+            err("%s: epoll_ctl failed: %s", as->id, os_ErrorMsg());
             return;
         }
         fdi->events = EPOLLIN;
@@ -316,7 +316,7 @@ app_state_arm_for_read(struct AppState *as, struct FDInfo *fdi)
 
     struct epoll_event ev = { .events = EPOLLIN, .data.ptr = fdi };
     if (epoll_ctl(as->efd, EPOLL_CTL_MOD, fdi->fd, &ev) < 0) {
-        err("epoll_ctl failed: %s", os_ErrorMsg());
+        err("%s: epoll_ctl failed: %s", as->id, os_ErrorMsg());
         return;
     }
     fdi->events = EPOLLIN;
@@ -330,7 +330,7 @@ app_state_arm_for_write(struct AppState *as, struct FDInfo *fdi)
     if (!fdi->events) {
         struct epoll_event ev = { .events = EPOLLOUT, .data.ptr = fdi };
         if (epoll_ctl(as->efd, EPOLL_CTL_ADD, fdi->fd, &ev) < 0) {
-            err("epoll_ctl failed: %s", os_ErrorMsg());
+            err("%s: epoll_ctl failed: %s", as->id, os_ErrorMsg());
             return;
         }
         fdi->events = EPOLLOUT;
@@ -338,7 +338,7 @@ app_state_arm_for_write(struct AppState *as, struct FDInfo *fdi)
 
     struct epoll_event ev = { .events = EPOLLOUT, .data.ptr = fdi };
     if (epoll_ctl(as->efd, EPOLL_CTL_MOD, fdi->fd, &ev) < 0) {
-        err("epoll_ctl failed: %s", os_ErrorMsg());
+        err("%s: epoll_ctl failed: %s", as->id, os_ErrorMsg());
         return;
     }
     fdi->events = EPOLLOUT;
@@ -351,7 +351,7 @@ app_state_disarm(struct AppState *as, struct FDInfo *fdi)
 
     struct epoll_event ev = { .events = 0, .data.ptr = fdi };
     if (epoll_ctl(as->efd, EPOLL_CTL_DEL, fdi->fd, &ev) < 0) {
-        err("epoll_ctl failed: %s", os_ErrorMsg());
+        err("%s: epoll_ctl failed: %s", as->id, os_ErrorMsg());
         return;
     }
     fdi->events = 0;
@@ -406,18 +406,18 @@ signal_read_func(struct AppState *as, struct FDInfo *fdi)
             break;
         }
         if (r < 0) {
-            err("signal_read_func: read failed: %s", os_ErrorMsg());
+            err("%s: signal_read_func: read failed: %s", as->id, os_ErrorMsg());
             break;
         }
         if (r != sizeof(sss)) {
-            err("signal_read_func: read returned invalid size %d", r);
+            err("%s: signal_read_func: read returned invalid size %d", as->id, r);
             break;
         }
         switch (sss.ssi_signo) {
         case SIGINT:  as->term_flag = 1; break;
         case SIGTERM: as->term_flag = 1; break;
         default:
-            err("signal_read_func: unexpected signal %d", sss.ssi_signo);
+            err("%s: signal_read_func: unexpected signal %d", as->id, sss.ssi_signo);
             break;
         }
     }
@@ -439,7 +439,7 @@ pipe_read_func(struct AppState *as, struct FDInfo *fdi)
             break;
         }
         if (r < 0) {
-            err("pipe_read_func: read failed: %s", os_ErrorMsg());
+            err("%s: pipe_read_func: read failed: %s", as->id, os_ErrorMsg());
             goto done;
         }
         if (!r) {
@@ -512,21 +512,21 @@ handle_stdin_rchunk(
 
     if (strlen(data) != size) {
         cJSON_AddStringToObject(reply, "message", "binary data");
-        err("binary data on stdin");
+        err("%s: binary data on stdin", as->id);
         goto done;
     }
 
     root = cJSON_Parse(data);
     if (!root) {
         cJSON_AddStringToObject(reply, "message", "JSON parse error");
-        err("JSON parsing failed");
+        err("%s: JSON parsing failed", as->id);
         goto done;
     }
 
     cJSON *jq = cJSON_GetObjectItem(root, "q");
     if (!jq || jq->type != cJSON_String) {
         cJSON_AddStringToObject(reply, "message", "Invalid json");
-        err("Invalid json");
+        err("%s: invalid json", as->id);
         goto done;
     }
     const unsigned char *query = jq->valuestring;
@@ -534,7 +534,7 @@ handle_stdin_rchunk(
     void *vp = dyntrie_get(&as->queryi, query);
     if (!vp) {
         cJSON_AddStringToObject(reply, "message", "Invalid query");
-        err("Invalid query");
+        err("%s: invalid query", as->id);
         goto done;
     }
     const struct QueryCallback *c = &as->querys[((int)(intptr_t) vp) - 1];
@@ -606,11 +606,11 @@ pipe_write_func(struct AppState *as, struct FDInfo *fdi)
             break;
         }
         if (r < 0) {
-            err("pipe_write_func: write failed: %s", os_ErrorMsg());
+            err("%s: pipe_write_func: write failed: %s", as->id, os_ErrorMsg());
             goto done;
         }
         if (!r) {
-            err("pipe_write_func: write returned 0");
+            err("%s: pipe_write_func: write returned 0", as->id);
             goto done;
         }
         fdi->wr_pos += r;
@@ -643,12 +643,12 @@ app_state_prepare(struct AppState *as)
     sigaddset(&ss, SIGTERM);
     sigprocmask(SIG_BLOCK, &ss, NULL);
     if ((as->sfd = signalfd(-1, &ss, SFD_CLOEXEC | SFD_NONBLOCK)) < 0) {
-        err("signalfd failed: %s", os_ErrorMsg());
+        err("%s: signalfd failed: %s", as->id, os_ErrorMsg());
         goto fail;
     }
     
     if ((as->efd = epoll_create1(EPOLL_CLOEXEC)) < 0) {
-        err("epoll_create failed: %s", os_ErrorMsg());
+        err("%s: epoll_create failed: %s", as->id, os_ErrorMsg());
         goto fail;
     }
 
@@ -696,15 +696,15 @@ do_loop(struct AppState *as)
         errno = 0;
         int n = epoll_wait(as->efd, evs, 16, -1);
         if (n < 0 && errno == EINTR) {
-            info("epoll_wait interrupted by a signal");
+            info("%s: epoll_wait interrupted by a signal", as->id);
             continue;
         }
         if (n < 0) {
-            err("epoll_wait failed: %s", os_ErrorMsg());
+            err("%s: epoll_wait failed: %s", as->id, os_ErrorMsg());
             return;
         }
         if (!n) {
-            err("epoll_wait returned 0");
+            err("%s: epoll_wait returned 0", as->id);
             return;
         }
 
@@ -855,7 +855,9 @@ main(int argc, char *argv[])
     app_state_add_query_callback(&app, "ping", NULL, ping_query_func);
     app_state_add_query_callback(&app, "set", NULL, set_query_func);
 
+    info("%s: started", app.id);
     do_loop(&app);
+    info("%s: finished", app.id);
 
     retval = 0;
 
