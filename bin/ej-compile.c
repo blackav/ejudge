@@ -301,6 +301,8 @@ handle_packet(
         const struct section_language_data *lang,
         const unsigned char *run_name,            // the incoming packet name
         const unsigned char *src_path,            // path to the source file in the spool directory
+        const unsigned char *src_buf,
+        size_t src_len,
         const unsigned char *exe_path,            // path to the resulting exe file in the spool directory
         const unsigned char *working_dir,         // the working directory
         const unsigned char *log_work_path,       // the path to the log file (open in APPEND mode)
@@ -317,10 +319,18 @@ handle_packet(
       unsigned char src_work_path[PATH_MAX];
       snprintf(src_work_path, sizeof(src_work_path), "%s/%s", working_dir, src_work_name);
 
-      if (generic_copy_file(0, NULL, src_path, "", 0, NULL, src_work_path, "") < 0) {
-        fprintf(log_f, "cannot copy '%s' -> '%s'\n", src_path, exe_path);
-        rpl->status = RUN_CHECK_FAILED;
-        goto cleanup;
+      if (src_buf) {
+        if (generic_write_file(src_buf, src_len, 0, NULL, src_work_path, "") < 0) {
+          fprintf(log_f, "cannot write to '%s'\n", src_work_path);
+          rpl->status = RUN_CHECK_FAILED;
+          goto cleanup;
+        }
+      } else {
+        if (generic_copy_file(0, NULL, src_path, "", 0, NULL, src_work_path, "") < 0) {
+          fprintf(log_f, "cannot copy '%s' -> '%s'\n", src_path, src_work_path);
+          rpl->status = RUN_CHECK_FAILED;
+          goto cleanup;
+        }
       }
 
       int r = invoke_style_checker(log_f, cs, lang, req, src_work_name, working_dir, log_work_path, NULL);
@@ -330,6 +340,16 @@ handle_packet(
       }
     }
 
+    if (src_buf) {
+      if (generic_write_file(src_buf, src_len, 0, NULL, exe_path, "") < 0) {
+        fprintf(log_f, "cannot write to '%s': %s\n", exe_path, strerror(errno));
+        rpl->status = RUN_CHECK_FAILED;
+        goto cleanup;
+      }
+      *p_exe_copied = 1;
+      rpl->status = RUN_OK;
+      goto cleanup;
+    }
     if (rename(src_path, exe_path) >= 0) {
       *p_exe_copied = 1;
       rpl->status = RUN_OK;
@@ -362,7 +382,13 @@ handle_packet(
   unsigned char src_work_path[PATH_MAX];
   snprintf(src_work_path, sizeof(src_work_path), "%s/%s", working_dir, src_work_name);
 
-  if (rename(src_path, src_work_path) >= 0) {
+  if (src_buf) {
+    if (generic_write_file(src_buf, src_len, 0, NULL, src_work_path, "") < 0) {
+      fprintf(log_f, "cannot write to '%s': %s\n", src_work_path, strerror(errno));
+      rpl->status = RUN_CHECK_FAILED;
+      goto cleanup;
+    }
+  } else if (rename(src_path, src_work_path) >= 0) {
   } else if (errno != EXDEV) {
     fprintf(stderr, "cannot move '%s' -> '%s': %s\n", src_path, src_work_path, strerror(errno));
     rpl->status = RUN_CHECK_FAILED;
@@ -1033,18 +1059,41 @@ new_loop(int parallel_mode)
     if (req->src_sfx) src_sfx = req->src_sfx;
     snprintf(src_path, sizeof(src_path), "%s/%s%s", compile_server_src_dir, pkt_name, src_sfx);
 
+    char *src_buf = NULL;
+    size_t src_len = 0;
+    if (agent_client) {
+      r = agent_client->ops->get_data(agent_client, pkt_name, src_sfx, &src_buf, &src_len);
+      if (r < 0) {
+        err("agent get_data failed");
+        fclose(log_f); log_f = NULL;
+        rpl.run_block = NULL;
+        compile_request_packet_free(req);
+        continue;
+      }
+      if (!r || !src_buf) {
+        fclose(log_f); log_f = NULL;
+        rpl.run_block = NULL;
+        compile_request_packet_free(req);
+        continue;
+      }
+    }
+
     override_exe = 0;
     exe_copied = 0;
     handle_packet(log_f, &serve_state, pkt_name, req, &rpl,
                   lang,
                   run_name,
                   src_path,
+                  src_buf,
+                  src_len,
                   exe_path,
                   full_working_dir,
                   log_work_path,
                   exe_work_name,
                   &override_exe,
                   &exe_copied);
+
+    free(src_buf); src_buf = NULL; src_len = 0;
 
     get_current_time(&rpl.ts3, &rpl.ts3_us);
 
