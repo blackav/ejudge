@@ -40,6 +40,7 @@
 #include <assert.h>
 #include <sys/time.h>
 #include <stdarg.h>
+#include <sys/timerfd.h>
 
 static const unsigned char *program_name;
 
@@ -133,6 +134,7 @@ struct AppState
     struct FDInfo *stdin_fdi;
     struct FDInfo *stdout_fdi;
     struct FDInfo *signal_fdi;
+    struct FDInfo *timer_fdi;
 
     struct FDCallback *ready_cbs;
     int ready_cba;
@@ -150,9 +152,13 @@ struct AppState
     int serial;
 
     int term_flag;
+    int timer_flag;
+    int wait_serial;
+    long long wait_time_ms;
 
     int sfd;                    /* signal file descriptor */
     int efd;                    /* epoll file descriptor */
+    int tfd;                    /* timer file descriptor */
 
     long long current_time_us;
     unsigned char *name;
@@ -172,6 +178,7 @@ app_state_init(struct AppState *as)
     memset(as, 0, sizeof(*as));
     as->sfd = -1;
     as->efd = -1;
+    as->tfd = -1;
 }
 
 static void
@@ -179,6 +186,7 @@ app_state_destroy(struct AppState *as)
 {
     if (as->sfd >= 0) close(as->sfd);
     if (as->efd >= 0) close(as->efd);
+    if (as->tfd >= 0) close(as->tfd);
 
     for (int i = 0; i < as->queryu; ++i) {
         free(as->querys[i].query);
@@ -446,6 +454,19 @@ static const struct FDInfoOps signal_ops =
 };
 
 static void
+timer_read_func(struct AppState *as, struct FDInfo *fdi)
+{
+    uint64_t value;
+    read(fdi->fd, &value, sizeof(value));
+    as->timer_flag = 1;
+}
+
+static const struct FDInfoOps timer_ops =
+{
+    .op_read = timer_read_func,
+};
+
+static void
 pipe_read_func(struct AppState *as, struct FDInfo *fdi)
 {
     char buf[65536];
@@ -673,6 +694,30 @@ app_state_prepare(struct AppState *as)
         err("%s: signalfd failed: %s", as->id, os_ErrorMsg());
         goto fail;
     }
+
+    if ((as->tfd = timerfd_create(CLOCK_REALTIME, TFD_CLOEXEC | TFD_NONBLOCK)) < 0) {
+        err("%s: timerfd_create failed: %s", as->id, os_ErrorMsg());
+        goto fail;
+    }
+    {
+        struct itimerspec spec =
+        {
+            .it_interval =
+            {
+                .tv_sec = 1,
+                .tv_nsec = 0,
+            },
+            .it_value =
+            {
+                .tv_sec = 1,
+                .tv_nsec = 0,
+            },
+        };
+        if (timerfd_settime(as->tfd, 0, &spec, NULL) < 0) {
+            err("%s: timerfd_settime failed: %s", as->id, os_ErrorMsg());
+            return -1;
+        }
+    }
     
     if ((as->efd = epoll_create1(EPOLL_CLOEXEC)) < 0) {
         err("%s: epoll_create failed: %s", as->id, os_ErrorMsg());
@@ -681,6 +726,9 @@ app_state_prepare(struct AppState *as)
 
     as->signal_fdi = fdinfo_create(as, as->sfd, &signal_ops);
     app_state_arm_for_read(as, as->signal_fdi);
+
+    as->timer_fdi = fdinfo_create(as, as->tfd, &timer_ops);
+    app_state_arm_for_read(as, as->timer_fdi);
     
     fcntl(0, F_SETFL, fcntl(0, F_GETFL) | O_NONBLOCK);
     as->stdin_fdi = fdinfo_create(as, 0, &stdin_ops);
@@ -716,6 +764,41 @@ app_state_configure_directories(struct AppState *as)
 }
 
 static void
+check_spool_state(struct AppState *as)
+{
+    unsigned char pkt_name[PATH_MAX];
+    int r = scan_dir(as->queue_dir, pkt_name, sizeof(pkt_name), 0);
+    if (r <= 0) return;
+
+    cJSON *reply = cJSON_CreateObject();
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    as->current_time_us = tv.tv_sec * 1000LL + tv.tv_usec / 1000;
+
+    cJSON_AddNumberToObject(reply, "T", (double) as->current_time_us);
+    cJSON_AddNumberToObject(reply, "S", (double) ++as->serial);
+    cJSON_AddNumberToObject(reply, "s", (double) as->wait_serial);
+    cJSON_AddNumberToObject(reply, "t", (double) as->wait_time_ms);
+    cJSON_AddStringToObject(reply, "q", "poll-result");
+    cJSON_AddStringToObject(reply, "pkt-name", pkt_name);
+    cJSON_AddTrueToObject(reply, "ok");
+    char *jstr = cJSON_PrintUnformatted(reply);
+    size_t jlen = strlen(jstr);
+    info("%s: json: %s", as->id, jstr);
+    jstr = realloc(jstr, jlen + 2);
+    jstr[jlen++] = '\n';
+    jstr[jlen++] = '\n';
+    jstr[jlen] = 0;
+    fdinfo_add_write_data_2(as->stdout_fdi, jstr, jlen);
+    jstr = NULL;
+    app_state_arm_for_write(as, as->stdout_fdi);
+
+    cJSON_Delete(reply);
+    as->wait_serial = 0;
+    as->wait_time_ms = 0;
+}
+
+static void
 do_loop(struct AppState *as)
 {
     while (!as->term_flag) {
@@ -745,6 +828,13 @@ do_loop(struct AppState *as)
             if ((ev->events & (EPOLLOUT | EPOLLERR)) != 0) {
                 struct FDInfo *fdi = (struct FDInfo *) ev->data.ptr;
                 fdi->ops->op_write(as, fdi);
+            }
+        }
+
+        if (as->timer_flag) {
+            as->timer_flag = 0;
+            if (as->wait_serial > 0) {
+                check_spool_state(as);
             }
         }
 
@@ -1138,6 +1228,34 @@ done:
     return result;
 }
 
+static int
+wait_func(
+        struct AppState *as,
+        const struct QueryCallback *cb,
+        cJSON *query,
+        cJSON *reply)
+{
+    unsigned char pkt_name[PATH_MAX];
+    int r = scan_dir(as->queue_dir, pkt_name, sizeof(pkt_name), 0);
+    if (r < 0) {
+        cJSON_AddStringToObject(reply, "message", "scan_dir failed");
+        err("%s: scan_dir failed: %s", as->id, strerror(-r));
+        return 0;
+    }
+    if (r > 0) {
+        cJSON_AddStringToObject(reply, "pkt-name", pkt_name);
+        cJSON_AddStringToObject(reply, "q", "poll-result");
+        return 1;
+    }
+
+    as->wait_serial = ++as->serial;
+    as->wait_time_ms = as->current_time_us;
+    cJSON_AddNumberToObject(reply, "channel", as->wait_serial);
+    cJSON_AddStringToObject(reply, "q", "channel-result");
+
+    return 1;
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -1215,6 +1333,7 @@ main(int argc, char *argv[])
     app_state_add_query_callback(&app, "get-data", NULL, get_data_func);
     app_state_add_query_callback(&app, "put-reply", NULL, put_reply_func);
     app_state_add_query_callback(&app, "put-output", NULL, put_output_func);
+    app_state_add_query_callback(&app, "wait", NULL, wait_func);
 
     info("%s: started", app.id);
     do_loop(&app);
