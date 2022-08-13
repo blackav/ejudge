@@ -847,8 +847,10 @@ new_loop(int parallel_mode)
     int r;
     if (agent_client) {
       r = agent_client->ops->poll_queue(agent_client, pkt_name, sizeof(pkt_name));
-      err("unrecoverable error, exiting");
-      return -1;
+      if (r < 0) {
+        err("unrecoverable error, exiting");
+        return -1;
+      }
     } else {
       r = scan_dir(compile_server_queue_dir, pkt_name, sizeof(pkt_name), 0);
       if (r < 0) {
