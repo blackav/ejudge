@@ -1112,6 +1112,11 @@ put_output_func(
         goto done;
     }
     const unsigned char *run_name = jrun->valuestring;
+    const unsigned char *suffix = NULL;
+    cJSON *jsuffix = cJSON_GetObjectItem(query, "suffix");
+    if (jsuffix && jsuffix->type == cJSON_String) {
+        suffix = jsuffix->valuestring;
+    }
 
     struct ContestInfo *ci = create_contest_dirs(as, server, contest_id);
     if (!ci) {
@@ -1120,7 +1125,7 @@ put_output_func(
         goto done;
     }
 
-    if (generic_write_file(data, size, 0, ci->report_dir, run_name, 0) < 0) {
+    if (generic_write_file(data, size, 0, ci->report_dir, run_name, suffix) < 0) {
         cJSON_AddStringToObject(reply, "message", "filesystem error");
         goto done;
     }
