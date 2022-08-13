@@ -1038,7 +1038,7 @@ put_reply_func(
         goto done;
     }
     const unsigned char *server = jserver->valuestring;
-    cJSON *jcid = cJSON_GetObjectItem(query, "contest_id");
+    cJSON *jcid = cJSON_GetObjectItem(query, "contest");
     if (!jcid || jcid->type != cJSON_Number || jcid->valuedouble <= 0) {
         err("%s: invalid json: invalid contest_id", as->id);
         cJSON_AddStringToObject(reply, "message", "invalid json");
