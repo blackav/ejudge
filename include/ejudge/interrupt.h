@@ -1,10 +1,9 @@
 /* -*- c -*- */
-/* $Id$ */
 
 #ifndef __INTERRUPT_H__
 #define __INTERRUPT_H__
 
-/* Copyright (C) 2004-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -28,5 +27,9 @@ int interrupt_restart_requested(void);
 
 void interrupt_flag_interrupt(void);
 void interrupt_flag_sighup(void);
+
+void interrupt_setup_usr1(void);
+void interrupt_reset_usr1(void);
+int interrupt_was_usr1(void);
 
 #endif /* __INTERRUPT_H__ */
