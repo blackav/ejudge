@@ -82,7 +82,13 @@ struct AgentClientOps
         int notify_signal,
         unsigned char *pkt_name,
         size_t pkt_len,
-        struct Future *future);
+        struct Future **p_future);
+
+    int (*async_wait_complete)(
+        struct AgentClient *ac,
+        struct Future **p_future,
+        unsigned char *pkt_name,
+        size_t pkt_len);
 };
 
 struct AgentClient

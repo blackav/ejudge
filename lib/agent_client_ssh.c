@@ -968,7 +968,7 @@ async_wait_init_func(
         int notify_signal,
         unsigned char *pkt_name,
         size_t pkt_len,
-        struct Future *future)
+        struct Future **p_future)
 {
     int result = 0;
     struct AgentClientSsh *acs = (struct AgentClientSsh *) ac;
@@ -995,6 +995,8 @@ async_wait_init_func(
             cJSON *jc = cJSON_GetObjectItem(f.value, "channel");
             if (jc && jc->type == cJSON_Number) {
                 int channel = jc->valuedouble;
+                struct Future *future = malloc(sizeof(*future));
+                *p_future = future;
                 future_init(future, channel);
                 future->notify_signal = notify_signal;
                 add_future(acs, future);
@@ -1004,6 +1006,42 @@ async_wait_init_func(
     }
 
     future_fini(&f);
+    return result;
+}
+
+static int
+async_wait_complete_func(
+        struct AgentClient *ac,
+        struct Future **p_future,
+        unsigned char *pkt_name,
+        size_t pkt_len)
+{
+    __attribute__((unused)) struct AgentClientSsh *acs = (struct AgentClientSsh *) ac;
+    struct Future *future = *p_future;
+    if (!future) return 0;
+    pthread_mutex_lock(&future->m);
+    int ready = future->ready;
+    pthread_mutex_unlock(&future->m);
+    if (!ready) return 0;
+
+    int result = -1;
+    cJSON *j = future->value;
+    cJSON *jq = cJSON_GetObjectItem(j, "q");
+    if (!jq || jq->type != cJSON_String || strcmp("poll-result", jq->valuestring) != 0) {
+        goto done;
+    }
+    cJSON *jn = cJSON_GetObjectItem(j, "pkt-name");
+    if (!jn || jq->type != cJSON_String) {
+        goto done;
+    }
+
+    snprintf(pkt_name, pkt_len, "%s", jn->valuestring);
+    result = 1;
+
+done:
+    future_fini(future);
+    free(future);
+    *p_future = NULL;
     return result;
 }
 
@@ -1021,6 +1059,7 @@ static const struct AgentClientOps ops_ssh =
     put_output_func,
     put_output_2_func,
     async_wait_init_func,
+    async_wait_complete_func,
 };
 
 struct AgentClient *
