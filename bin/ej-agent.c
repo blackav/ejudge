@@ -545,8 +545,8 @@ handle_stdin_rchunk(
     gettimeofday(&tv, NULL);
     as->current_time_ms = tv.tv_sec * 1000LL + tv.tv_usec / 1000;
 
-    cJSON_AddNumberToObject(reply, "T", (double) as->current_time_ms);
-    cJSON_AddNumberToObject(reply, "S", (double) ++as->serial);
+    cJSON_AddNumberToObject(reply, "tt", (double) as->current_time_ms);
+    cJSON_AddNumberToObject(reply, "ss", (double) ++as->serial);
 
     if (strlen(data) != size) {
         cJSON_AddStringToObject(reply, "message", "binary data");
@@ -775,8 +775,8 @@ check_spool_state(struct AppState *as)
     gettimeofday(&tv, NULL);
     as->current_time_ms = tv.tv_sec * 1000LL + tv.tv_usec / 1000;
 
-    cJSON_AddNumberToObject(reply, "T", (double) as->current_time_ms);
-    cJSON_AddNumberToObject(reply, "S", (double) ++as->serial);
+    cJSON_AddNumberToObject(reply, "tt", (double) as->current_time_ms);
+    cJSON_AddNumberToObject(reply, "ss", (double) ++as->serial);
     cJSON_AddNumberToObject(reply, "s", (double) as->wait_serial);
     cJSON_AddNumberToObject(reply, "t", (double) as->wait_time_ms);
     cJSON_AddStringToObject(reply, "q", "poll-result");
