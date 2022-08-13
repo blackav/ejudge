@@ -20,6 +20,7 @@
 #include "ejudge/xalloc.h"
 #include "ejudge/errlog.h"
 #include "ejudge/osdeps.h"
+#include "ejudge/base64.h"
 
 #include <stdlib.h>
 #include "ejudge/cJSON.h"
@@ -689,6 +690,91 @@ poll_queue_func(
     return result;
 }
 
+static int
+process_file_result(
+        struct AgentClientSsh *acs,
+        cJSON *j,
+        char **p_pkt_ptr,
+        size_t *p_pkt_len)
+{
+    cJSON *jok = cJSON_GetObjectItem(j, "ok");
+    if (!jok || jok->type != cJSON_True) {
+        return -1;
+    }
+    cJSON *jq = cJSON_GetObjectItem(j, "q");
+    if (!jq || jq->type != cJSON_String || strcmp("file-result", jq->valuestring) != 0) {
+        err("invalid json");
+        return -1;
+    }
+    cJSON *jf = cJSON_GetObjectItem(j, "found");
+    if (!jf || jf->type != cJSON_True) {
+        return 0;
+    }
+    cJSON *jz = cJSON_GetObjectItem(j, "size");
+    if (!jz || jz->type != cJSON_Number) {
+        err("invalid json: no size");
+        return -1;
+    }
+    int size = (int) jz->valuedouble;
+    if (size < 0 || size > 1000000000) {
+        err("invalid json: invalid size");
+        return -1;
+    }
+    if (!size) {
+        char *ptr = malloc(1);
+        *ptr = 0;
+        *p_pkt_ptr = ptr;
+        *p_pkt_len = 0;
+        return 1;
+    }
+    cJSON *jb64 = cJSON_GetObjectItem(j, "b64");
+    if (!jb64 || jb64->type != cJSON_True) {
+        err("invalid json: no encoding");
+        return -1;
+    }
+    cJSON *jd = cJSON_GetObjectItem(j, "data");
+    if (!jd || jd->type != cJSON_String) {
+        err("invalid json: no data");
+        return -1;
+    }
+    int len = strlen(jd->valuestring);
+    char *ptr = malloc(len + 1);
+    int b64err = 0;
+    int n = base64u_decode(jd->valuestring, len, ptr, &b64err);
+    if (n != size) {
+        err("invalid json: size mismatch");
+        free(ptr);
+        return -1;
+    }
+    ptr[size] = 0;
+    *p_pkt_ptr = ptr;
+    *p_pkt_len = size;
+    return 1;
+}
+
+static int
+get_packet_func(
+        struct AgentClient *ac,
+        const unsigned char *pkt_name,
+        char **p_pkt_ptr,
+        size_t *p_pkt_len)
+{
+    int result = 0;
+    struct AgentClientSsh *acs = (struct AgentClientSsh *) ac;
+    struct Future f;
+    long long time_ms;
+    cJSON *jq = create_request(acs, &f, &time_ms, "get-packet");
+    cJSON_AddStringToObject(jq, "pkt_name", pkt_name);
+    add_wchunk_json(acs, jq);
+    cJSON_Delete(jq); jq = NULL;
+
+    future_wait(&f);
+
+    result = process_file_result(acs, f.value, p_pkt_ptr, p_pkt_len);
+    future_fini(&f);
+    return result;
+}
+
 static const struct AgentClientOps ops_ssh =
 {
     destroy_func,
@@ -697,6 +783,7 @@ static const struct AgentClientOps ops_ssh =
     close_func,
     is_closed_func,
     poll_queue_func,
+    get_packet_func,
 };
 
 struct AgentClient *

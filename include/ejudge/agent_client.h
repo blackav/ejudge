@@ -37,6 +37,12 @@ struct AgentClientOps
         struct AgentClient *ac,
         unsigned char *pkt_name,
         size_t pkt_len);
+
+    int (*get_packet)(
+        struct AgentClient *ac,
+        const unsigned char *pkt_name,
+        char **p_pkt_ptr,
+        size_t *p_pkt_len);
 };
 
 struct AgentClient
