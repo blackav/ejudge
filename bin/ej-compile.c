@@ -879,7 +879,11 @@ new_loop(int parallel_mode)
 
     char *pkt_ptr = NULL;
     size_t pkt_len = 0;
-    r = generic_read_file(&pkt_ptr, 0, &pkt_len, SAFE | REMOVE, compile_server_queue_dir, pkt_name, "");
+    if (agent_client) {
+      r = agent_client->ops->get_packet(agent_client, pkt_name, &pkt_ptr, &pkt_len);
+    } else {
+      r = generic_read_file(&pkt_ptr, 0, &pkt_len, SAFE | REMOVE, compile_server_queue_dir, pkt_name, "");
+    }
     if (r == 0) continue;
     if (r < 0 || !pkt_ptr) {
       // it looks like there's no reasonable recovery strategy
