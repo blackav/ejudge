@@ -680,7 +680,8 @@ poll_queue_func(
         if (jt && jt->type == cJSON_Number) {
             long long dur_ms = jt->valuedouble;
             dur_ms -= time_ms;
-            fprintf(stderr, "poll: %lld ms\n", dur_ms);
+            (void) dur_ms;
+            //fprintf(stderr, "poll: %lld ms\n", dur_ms);
         }
     }
 
