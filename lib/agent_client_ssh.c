@@ -775,6 +775,33 @@ get_packet_func(
     return result;
 }
 
+static int
+get_data_func(
+        struct AgentClient *ac,
+        const unsigned char *pkt_name,
+        const unsigned char *suffix,
+        char **p_pkt_ptr,
+        size_t *p_pkt_len)
+{
+    int result = 0;
+    struct AgentClientSsh *acs = (struct AgentClientSsh *) ac;
+    struct Future f;
+    long long time_ms;
+    cJSON *jq = create_request(acs, &f, &time_ms, "get-data");
+    cJSON_AddStringToObject(jq, "pkt_name", pkt_name);
+    if (suffix) {
+        cJSON_AddStringToObject(jq, "suffix", suffix);
+    }
+    add_wchunk_json(acs, jq);
+    cJSON_Delete(jq); jq = NULL;
+
+    future_wait(&f);
+
+    result = process_file_result(acs, f.value, p_pkt_ptr, p_pkt_len);
+    future_fini(&f);
+    return result;
+}
+
 static const struct AgentClientOps ops_ssh =
 {
     destroy_func,
@@ -784,6 +811,7 @@ static const struct AgentClientOps ops_ssh =
     is_closed_func,
     poll_queue_func,
     get_packet_func,
+    get_data_func,
 };
 
 struct AgentClient *
