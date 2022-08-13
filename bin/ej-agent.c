@@ -115,6 +115,17 @@ struct QueryCallback
         cJSON *reply);
 };
 
+struct ContestInfo
+{
+    unsigned char *server;
+    int contest_id;
+
+    unsigned char *server_dir;
+    unsigned char *server_contest_dir;
+    unsigned char *status_dir;
+    unsigned char *report_dir;
+};
+
 struct AppState
 {
     struct FDInfo *fd_first, *fd_last;
@@ -131,6 +142,10 @@ struct AppState
     int querya;
     int queryu;
     struct dyntrie_node *queryi;
+
+    int cntsa;
+    int cntsu;
+    struct ContestInfo *cntss;
 
     int serial;
 
@@ -898,6 +913,166 @@ get_data_func(
     return 1;
 }
 
+static int
+extract_file(
+        struct AppState *as,
+        cJSON *j,
+        char **p_pkt_ptr,
+        size_t *p_pkt_len)
+{
+    cJSON *jz = cJSON_GetObjectItem(j, "size");
+    if (!jz || jz->type != cJSON_Number) {
+        err("%s: invalid json: no size", as->id);
+        return -1;
+    }
+    size_t size = (int) jz->valuedouble;
+    if (size < 0 || size > 1000000000) {
+        err("%s: invalid json: invalid size", as->id);
+        return -1;
+    }
+    if (!size) {
+        char *ptr = malloc(1);
+        *ptr = 0;
+        *p_pkt_ptr = ptr;
+        *p_pkt_len = 0;
+        return 1;
+    }
+    cJSON *jb64 = cJSON_GetObjectItem(j, "b64");
+    if (!jb64 || jb64->type != cJSON_True) {
+        err("%s: invalid json: no encoding", as->id);
+        return -1;
+    }
+    cJSON *jd = cJSON_GetObjectItem(j, "data");
+    if (!jd || jd->type != cJSON_String) {
+        err("%s: invalid json: no data", as->id);
+        return -1;
+    }
+    int len = strlen(jd->valuestring);
+    char *ptr = malloc(len + 1);
+    int b64err = 0;
+    int n = base64u_decode(jd->valuestring, len, ptr, &b64err);
+    if (n != size) {
+        err("%s: invalid json: size mismatch", as->id);
+        free(ptr);
+        return -1;
+    }
+    ptr[size] = 0;
+    *p_pkt_ptr = ptr;
+    *p_pkt_len = size;
+    return 1;
+}
+
+static struct ContestInfo *
+create_contest_dirs(
+        struct AppState *as,
+        const unsigned char *server,
+        int contest_id)
+{
+    for (int i = 0; i < as->cntsu; ++i) {
+        if (!strcmp(as->cntss[i].server, server) && as->cntss[i].contest_id == contest_id) {
+            return &as->cntss[i];
+        }
+    }
+
+    unsigned char server_dir[PATH_MAX];
+    snprintf(server_dir, sizeof(server_dir), "%s/%s", EJUDGE_COMPILE_SPOOL_DIR, server);
+    unsigned char server_contest_dir[PATH_MAX];
+    snprintf(server_contest_dir, sizeof(server_contest_dir), "%s/%06d", server_dir, contest_id);
+    unsigned char status_dir[PATH_MAX];
+    snprintf(status_dir, sizeof(status_dir), "%s/status", server_contest_dir);
+    unsigned char report_dir[PATH_MAX];
+    snprintf(report_dir, sizeof(report_dir), "%s/report", server_contest_dir);
+
+    if (make_dir(server_dir, 0777) < 0) {
+        return NULL;
+    }
+    if (make_dir(server_contest_dir, 0777) < 0) {
+        return NULL;
+    }
+    if (make_all_dir(status_dir, 0777) < 0) {
+        return NULL;
+    }
+    if (make_dir(report_dir, 0777) < 0) {
+        return NULL;
+    }
+
+    if (as->cntsu == as->cntsa) {
+        if (!(as->cntsa *= 2)) as->cntsa = 4;
+        XREALLOC(as->cntss, as->cntsa);
+    }
+
+    struct ContestInfo *ci = &as->cntss[as->cntsu++];
+    memset(ci, 0, sizeof(*ci));
+    ci->server = xstrdup(server);
+    ci->contest_id = contest_id;
+    ci->server_dir = xstrdup(server_dir);
+    ci->server_contest_dir = xstrdup(server_contest_dir);
+    ci->status_dir = xstrdup(status_dir);
+    ci->report_dir = xstrdup(report_dir);
+
+    return ci;
+}
+
+static int
+put_reply_func(
+        struct AppState *as,
+        const struct QueryCallback *cb,
+        cJSON *query,
+        cJSON *reply)
+{
+    /*
+{ "q" : "put-reply", "server" : "S", "contest" : C, "run_name" : "N", "b64" : T, "data" : "D", "size" : S }
+     */
+    char *data = NULL;
+    size_t size = 0;
+    int result = 0;
+
+    if (extract_file(as, query, &data, &size) < 0) {
+        cJSON_AddStringToObject(reply, "message", "invalid json");
+        return 0;
+    }
+    cJSON *jserver = cJSON_GetObjectItem(query, "server");
+    if (!jserver || jserver->type != cJSON_String || !jserver->valuestring) {
+        err("%s: invalid json: no server", as->id);
+        cJSON_AddStringToObject(reply, "message", "invalid json");
+        goto done;
+    }
+    const unsigned char *server = jserver->valuestring;
+    cJSON *jcid = cJSON_GetObjectItem(query, "contest_id");
+    if (!jcid || jcid->type != cJSON_Number || jcid->valuedouble <= 0) {
+        err("%s: invalid json: invalid contest_id", as->id);
+        cJSON_AddStringToObject(reply, "message", "invalid json");
+        goto done;
+    }
+    int contest_id = jcid->valuedouble;
+    cJSON *jrun = cJSON_GetObjectItem(query, "run_name");
+    if (!jrun || jrun->type != cJSON_String || !jrun->valuestring) {
+        err("%s: invalid json: no run_name", as->id);
+        cJSON_AddStringToObject(reply, "message", "invalid json");
+        goto done;
+    }
+    const unsigned char *run_name = jrun->valuestring;
+
+    struct ContestInfo *ci = create_contest_dirs(as, server, contest_id);
+    if (!ci) {
+        err("%s: directory creation failed", as->id);
+        cJSON_AddStringToObject(reply, "message", "filesystem error");
+        goto done;
+    }
+
+    if (generic_write_file(data, size, SAFE, ci->status_dir, run_name, 0) < 0) {
+        cJSON_AddStringToObject(reply, "message", "filesystem error");
+        goto done;
+    }
+
+    cJSON_AddStringToObject(reply, "q", "result");
+    result = 1;
+
+done:
+    free(data);
+    return result;
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -973,6 +1148,7 @@ main(int argc, char *argv[])
     app_state_add_query_callback(&app, "poll", NULL, poll_func);
     app_state_add_query_callback(&app, "get-packet", NULL, get_packet_func);
     app_state_add_query_callback(&app, "get-data", NULL, get_data_func);
+    app_state_add_query_callback(&app, "put-reply", NULL, put_reply_func);
 
     info("%s: started", app.id);
     do_loop(&app);
