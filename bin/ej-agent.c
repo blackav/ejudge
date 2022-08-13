@@ -850,6 +850,54 @@ get_packet_func(
     return 1;
 }
 
+static int
+get_data_func(
+        struct AppState *as,
+        const struct QueryCallback *cb,
+        cJSON *query,
+        cJSON *reply)
+{
+    cJSON *jp = cJSON_GetObjectItem(query, "pkt_name");
+    if (!jp || jp->type != cJSON_String) {
+        cJSON_AddStringToObject(reply, "message", "invalid json");
+        err("%s: get_packet: missing pkt_name", as->id);
+        return 0;
+    }
+    const unsigned char *pkt_name = jp->valuestring;
+    const unsigned char *suffix = NULL;
+    cJSON *js = cJSON_GetObjectItem(query, "suffix");
+    if (js && js->type == cJSON_String) {
+        suffix = js->valuestring;
+    }
+    char *pkt_ptr = NULL;
+    size_t pkt_len = 0;
+    int r = generic_read_file(&pkt_ptr, 0, &pkt_len, REMOVE,
+                              as->data_dir, pkt_name, suffix);
+    if (r < 0 || !pkt_ptr) {
+        cJSON_AddStringToObject(reply, "message", "failed to read file");
+        return 0;
+    }
+    cJSON_AddStringToObject(reply, "q", "file-result");
+    if (!r) {
+        // just file not found
+        return 1;
+    }
+    cJSON_AddTrueToObject(reply, "found");
+    cJSON_AddNumberToObject(reply, "size", (double) pkt_len);
+    if (!pkt_len) {
+        free(pkt_ptr);
+        return 1;
+    }
+    cJSON_AddTrueToObject(reply, "b64");
+    char *ptr = malloc(pkt_len * 2 + 16);
+    int n = base64u_encode(pkt_ptr, pkt_len, ptr);
+    ptr[n] = 0;
+    cJSON_AddStringToObject(reply, "data", ptr);
+    free(ptr);
+    free(pkt_ptr);
+    return 1;
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -924,6 +972,7 @@ main(int argc, char *argv[])
     app_state_add_query_callback(&app, "set", NULL, set_query_func);
     app_state_add_query_callback(&app, "poll", NULL, poll_func);
     app_state_add_query_callback(&app, "get-packet", NULL, get_packet_func);
+    app_state_add_query_callback(&app, "get-data", NULL, get_data_func);
 
     info("%s: started", app.id);
     do_loop(&app);
