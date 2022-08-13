@@ -1166,25 +1166,18 @@ new_loop(int parallel_mode)
       continue;
     }
     if (agent_client) {
-      if ((r = agent_client->ops->put_reply(agent_client, contest_server_id, rpl.contest_id, run_name, rpl_pkt, rpl_size)) < 0) {
-        rpl.run_block = NULL;
-        compile_request_packet_free(req);
-        xfree(rpl_pkt);
-        clear_directory(full_working_dir);
-        unlink(exe_path);
-        unlink(log_path);
-        continue;
-      }
+      r = agent_client->ops->put_reply(agent_client, contest_server_id, rpl.contest_id, run_name, rpl_pkt, rpl_size);
     } else {
-      if (generic_write_file(rpl_pkt, rpl_size, SAFE, status_dir, run_name, 0) < 0) {
-        rpl.run_block = NULL;
-        compile_request_packet_free(req);
-        xfree(rpl_pkt);
-        clear_directory(full_working_dir);
-        unlink(exe_path);
-        unlink(log_path);
-        continue;
-      }
+      r = generic_write_file(rpl_pkt, rpl_size, SAFE, status_dir, run_name, 0);
+    }
+    if (r < 0) {
+      rpl.run_block = NULL;
+      compile_request_packet_free(req);
+      xfree(rpl_pkt);
+      clear_directory(full_working_dir);
+      unlink(exe_path);
+      unlink(log_path);
+      continue;
     }
 
     // all good
