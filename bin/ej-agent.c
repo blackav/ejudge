@@ -829,6 +829,7 @@ get_packet_func(
         cJSON_AddStringToObject(reply, "message", "failed to read file");
         return 0;
     }
+    cJSON_AddStringToObject(reply, "q", "file-result");
     if (!r) {
         // just file not found
         return 1;
