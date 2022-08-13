@@ -1073,6 +1073,66 @@ done:
     return result;
 }
 
+static int
+put_output_func(
+        struct AppState *as,
+        const struct QueryCallback *cb,
+        cJSON *query,
+        cJSON *reply)
+{
+    /*
+{ "q" : "put-output", "server" : "S", "contest" : C, "run_name" : "N", "b64" : T, "data" : "D", "size" : S }
+     */
+    char *data = NULL;
+    size_t size = 0;
+    int result = 0;
+
+    if (extract_file(as, query, &data, &size) < 0) {
+        cJSON_AddStringToObject(reply, "message", "invalid json");
+        return 0;
+    }
+    cJSON *jserver = cJSON_GetObjectItem(query, "server");
+    if (!jserver || jserver->type != cJSON_String || !jserver->valuestring) {
+        err("%s: invalid json: no server", as->id);
+        cJSON_AddStringToObject(reply, "message", "invalid json");
+        goto done;
+    }
+    const unsigned char *server = jserver->valuestring;
+    cJSON *jcid = cJSON_GetObjectItem(query, "contest");
+    if (!jcid || jcid->type != cJSON_Number || jcid->valuedouble <= 0) {
+        err("%s: invalid json: invalid contest_id", as->id);
+        cJSON_AddStringToObject(reply, "message", "invalid json");
+        goto done;
+    }
+    int contest_id = jcid->valuedouble;
+    cJSON *jrun = cJSON_GetObjectItem(query, "run_name");
+    if (!jrun || jrun->type != cJSON_String || !jrun->valuestring) {
+        err("%s: invalid json: no run_name", as->id);
+        cJSON_AddStringToObject(reply, "message", "invalid json");
+        goto done;
+    }
+    const unsigned char *run_name = jrun->valuestring;
+
+    struct ContestInfo *ci = create_contest_dirs(as, server, contest_id);
+    if (!ci) {
+        err("%s: directory creation failed", as->id);
+        cJSON_AddStringToObject(reply, "message", "filesystem error");
+        goto done;
+    }
+
+    if (generic_write_file(data, size, 0, ci->report_dir, run_name, 0) < 0) {
+        cJSON_AddStringToObject(reply, "message", "filesystem error");
+        goto done;
+    }
+
+    cJSON_AddStringToObject(reply, "q", "result");
+    result = 1;
+
+done:
+    free(data);
+    return result;
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -1149,6 +1209,7 @@ main(int argc, char *argv[])
     app_state_add_query_callback(&app, "get-packet", NULL, get_packet_func);
     app_state_add_query_callback(&app, "get-data", NULL, get_data_func);
     app_state_add_query_callback(&app, "put-reply", NULL, put_reply_func);
+    app_state_add_query_callback(&app, "put-output", NULL, put_output_func);
 
     info("%s: started", app.id);
     do_loop(&app);
