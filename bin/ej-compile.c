@@ -299,10 +299,12 @@ handle_packet(
         const struct compile_request_packet *req,
         struct compile_reply_packet *rpl,
         const struct section_language_data *lang,
+        const unsigned char *contest_server_id,
         const unsigned char *run_name,            // the incoming packet name
         const unsigned char *src_path,            // path to the source file in the spool directory
         const unsigned char *src_buf,
         size_t src_len,
+        const unsigned char *exe_sfx,
         const unsigned char *exe_path,            // path to the resulting exe file in the spool directory
         const unsigned char *working_dir,         // the working directory
         const unsigned char *log_work_path,       // the path to the log file (open in APPEND mode)
@@ -341,8 +343,36 @@ handle_packet(
     }
 
     if (src_buf) {
-      if (generic_write_file(src_buf, src_len, 0, NULL, exe_path, "") < 0) {
-        fprintf(log_f, "cannot write to '%s': %s\n", exe_path, strerror(errno));
+      if (agent_client) {
+        if (agent_client->ops->put_output(agent_client,
+                                          contest_server_id,
+                                          rpl->contest_id,
+                                          run_name,
+                                          exe_sfx,
+                                          src_buf, src_len) < 0) {
+          fprintf(log_f, "put_output failed\n");
+          rpl->status = RUN_CHECK_FAILED;
+          goto cleanup;
+        }
+      } else {
+        if (generic_write_file(src_buf, src_len, 0, NULL, exe_path, "") < 0) {
+          fprintf(log_f, "cannot write to '%s': %s\n", exe_path, strerror(errno));
+          rpl->status = RUN_CHECK_FAILED;
+          goto cleanup;
+        }
+      }
+      *p_exe_copied = 1;
+      rpl->status = RUN_OK;
+      goto cleanup;
+    }
+    if (agent_client) {
+      if (agent_client->ops->put_output_2(agent_client,
+                                          contest_server_id,
+                                          rpl->contest_id,
+                                          run_name,
+                                          exe_sfx,
+                                          src_path) < 0) {
+        fprintf(log_f, "put_output_2 failed\n");
         rpl->status = RUN_CHECK_FAILED;
         goto cleanup;
       }
@@ -395,7 +425,7 @@ handle_packet(
     goto cleanup;
   } else {
     if (generic_copy_file(REMOVE, NULL, src_path, "", 0, NULL, src_work_path, "") < 0) {
-      fprintf(log_f, "cannot copy '%s' -> '%s'\n", src_path, exe_path);
+      fprintf(log_f, "cannot copy '%s' -> '%s'\n", src_path, src_work_path);
       rpl->status = RUN_CHECK_FAILED;
       goto cleanup;
     }
@@ -1082,10 +1112,12 @@ new_loop(int parallel_mode)
     exe_copied = 0;
     handle_packet(log_f, &serve_state, pkt_name, req, &rpl,
                   lang,
+                  contest_server_id,
                   run_name,
                   src_path,
                   src_buf,
                   src_len,
+                  exe_sfx,
                   exe_path,
                   full_working_dir,
                   log_work_path,
@@ -1121,7 +1153,18 @@ new_loop(int parallel_mode)
             fprintf(log_f, "\ncompiler output file '%s' is too large\n (size = %lld)", exe_work_path, (long long) stb.st_size);
             rpl.status = RUN_COMPILE_ERR;
           } else {
-            if (rename(exe_work_path, exe_path) >= 0) {
+            if (agent_client) {
+              if (agent_client->ops->put_output_2(agent_client,
+                                                  contest_server_id,
+                                                  rpl.contest_id,
+                                                  run_name,
+                                                  exe_sfx,
+                                                  exe_work_path) < 0) {
+                err("put_output failed");
+                fprintf(log_f, "\nput_output failed\n");
+                rpl.status = RUN_CHECK_FAILED;
+              }
+            } else if (rename(exe_work_path, exe_path) >= 0) {
               // good!
             } else if (errno != EXDEV) {
               int e = errno;
@@ -1141,7 +1184,16 @@ new_loop(int parallel_mode)
 
     fclose(log_f); log_f = NULL;
 
-    r = generic_copy_file(0, NULL, log_work_path, "", 0, NULL, log_path, "");
+    if (agent_client) {
+      r = agent_client->ops->put_output_2(agent_client,
+                                          contest_server_id,
+                                          rpl.contest_id,
+                                          run_name,
+                                          ".txt",
+                                          log_work_path);
+    } else {
+      r = generic_copy_file(0, NULL, log_work_path, "", 0, NULL, log_path, "");
+    }
     if (r < 0) {
       rpl.run_block = NULL;
       compile_request_packet_free(req);
@@ -1152,7 +1204,11 @@ new_loop(int parallel_mode)
     }
 
     if (override_exe || (rpl.status == RUN_STYLE_ERR || rpl.status == RUN_COMPILE_ERR || rpl.status == RUN_CHECK_FAILED)) {
-      generic_copy_file(0, NULL, log_work_path, "", 0, NULL, exe_path, "");
+      if (agent_client) {
+        agent_client->ops->put_output_2(agent_client, contest_server_id, rpl.contest_id, run_name, exe_sfx, log_work_path);
+      } else {
+        generic_copy_file(0, NULL, log_work_path, "", 0, NULL, exe_path, "");
+      }
     }
 
     void *rpl_pkt = NULL;
