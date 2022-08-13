@@ -160,7 +160,7 @@ struct AppState
     int efd;                    /* epoll file descriptor */
     int tfd;                    /* timer file descriptor */
 
-    long long current_time_us;
+    long long current_time_ms;
     unsigned char *name;
     int mode;
     unsigned char *id;
@@ -543,9 +543,9 @@ handle_stdin_rchunk(
 
     struct timeval tv;
     gettimeofday(&tv, NULL);
-    as->current_time_us = tv.tv_sec * 1000LL + tv.tv_usec / 1000;
+    as->current_time_ms = tv.tv_sec * 1000LL + tv.tv_usec / 1000;
 
-    cJSON_AddNumberToObject(reply, "T", (double) as->current_time_us);
+    cJSON_AddNumberToObject(reply, "T", (double) as->current_time_ms);
     cJSON_AddNumberToObject(reply, "S", (double) ++as->serial);
 
     if (strlen(data) != size) {
@@ -773,9 +773,9 @@ check_spool_state(struct AppState *as)
     cJSON *reply = cJSON_CreateObject();
     struct timeval tv;
     gettimeofday(&tv, NULL);
-    as->current_time_us = tv.tv_sec * 1000LL + tv.tv_usec / 1000;
+    as->current_time_ms = tv.tv_sec * 1000LL + tv.tv_usec / 1000;
 
-    cJSON_AddNumberToObject(reply, "T", (double) as->current_time_us);
+    cJSON_AddNumberToObject(reply, "T", (double) as->current_time_ms);
     cJSON_AddNumberToObject(reply, "S", (double) ++as->serial);
     cJSON_AddNumberToObject(reply, "s", (double) as->wait_serial);
     cJSON_AddNumberToObject(reply, "t", (double) as->wait_time_ms);
@@ -1249,7 +1249,7 @@ wait_func(
     }
 
     as->wait_serial = ++as->serial;
-    as->wait_time_ms = as->current_time_us;
+    as->wait_time_ms = as->current_time_ms;
     cJSON_AddNumberToObject(reply, "channel", as->wait_serial);
     cJSON_AddStringToObject(reply, "q", "channel-result");
 
