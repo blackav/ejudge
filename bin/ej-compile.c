@@ -1687,7 +1687,6 @@ main(int argc, char *argv[])
   xfree(lang_log_t); lang_log_t = 0; lang_log_z = 0;
 #endif /* HAVE_OPEN_MEMSTREAM */
 
-  //if (do_loop() < 0) return 1;
   if (new_loop(parallel_mode) < 0) return 1;
 
   if (interrupt_restart_requested()) start_restart();

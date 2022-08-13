@@ -568,7 +568,7 @@ handle_stdin_rchunk(
 
 done:
     cJSON_AddBoolToObject(reply, "ok", ok);
-    jstr = cJSON_Print(reply);
+    jstr = cJSON_PrintUnformatted(reply);
     jlen = strlen(jstr);
     info("%s: json: %s", as->id, jstr);
     jstr = realloc(jstr, jlen + 2);
