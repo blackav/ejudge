@@ -846,6 +846,7 @@ new_loop(int parallel_mode)
   int override_exe = 0;
   int exe_copied = 0;
   path_t full_working_dir = { 0 };
+  struct Future *future = NULL;
 
   if (parallel_mode) {
     random_init();
@@ -892,6 +893,7 @@ new_loop(int parallel_mode)
 #endif
 
   interrupt_init();
+  interrupt_setup_usr1();
   interrupt_disable();
 
   while (1) {
@@ -900,12 +902,24 @@ new_loop(int parallel_mode)
 
     unsigned char pkt_name[PATH_MAX];
     pkt_name[0] = 0;
-    int r;
+    int r = 0;
     if (agent_client) {
-      r = agent_client->ops->poll_queue(agent_client, pkt_name, sizeof(pkt_name));
-      if (r < 0) {
-        err("unrecoverable error, exiting");
-        return -1;
+      if (interrupt_was_usr1()) {
+        interrupt_reset_usr1();
+        if (future) {
+          r = agent_client->ops->async_wait_complete(agent_client, &future, pkt_name, sizeof(pkt_name));
+          if (r < 0) {
+            err("async_wait_complete failed");
+            break;
+          }
+        }
+      } else if (!future) {
+        r = agent_client->ops->async_wait_init(agent_client, SIGUSR1, pkt_name, sizeof(pkt_name), &future);
+        //r = agent_client->ops->poll_queue(agent_client, pkt_name, sizeof(pkt_name));
+        if (r < 0) {
+          err("async_wait_init failed");
+          break;
+        }
       }
     } else {
       r = scan_dir(compile_server_queue_dir, pkt_name, sizeof(pkt_name), 0);
@@ -927,8 +941,9 @@ new_loop(int parallel_mode)
     }
 
     if (!r) {
+      int sleep_time = agent_client?30:global->sleep_time;
       interrupt_enable();
-      os_Sleep(global->sleep_time);
+      os_Sleep(sleep_time);
       interrupt_disable();
       continue;
     }
