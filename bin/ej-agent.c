@@ -694,7 +694,7 @@ app_state_configure_directories(struct AppState *as)
         as->queue_dir = s; s = NULL;
         asprintf(&s, "%s/dir", as->queue_dir);
         as->queue_packet_dir = s; s = NULL;
-        asprintf(&s, "%s/src", EJUDGE_COMPILE_SPOOL_DIR);
+        asprintf(&s, "%s/%s/src", EJUDGE_COMPILE_SPOOL_DIR, as->name);
         as->data_dir = s; s = NULL;
 #endif
     }
