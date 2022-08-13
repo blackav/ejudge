@@ -49,6 +49,7 @@ struct FDChunk
 struct Future
 {
     int serial;
+    int notify_signal;
 
     int ready;
     pthread_mutex_t m;
@@ -397,6 +398,9 @@ handle_rchunks(struct AgentClientSsh *acs)
                     f->ready = 1;
                     pthread_cond_signal(&f->c);
                     pthread_mutex_unlock(&f->m);
+                    if (f->notify_signal > 0) {
+                        kill(getpid(), f->notify_signal);
+                    }
                 }
             }
             if (j) cJSON_Delete(j);
@@ -958,6 +962,51 @@ put_output_2_func(
     return result;
 }
 
+static int
+async_wait_init_func(
+        struct AgentClient *ac,
+        int notify_signal,
+        unsigned char *pkt_name,
+        size_t pkt_len,
+        struct Future *future)
+{
+    int result = 0;
+    struct AgentClientSsh *acs = (struct AgentClientSsh *) ac;
+    struct Future f;
+    long long time_ms;
+    cJSON *jq = create_request(acs, &f, &time_ms, "wait");
+    add_wchunk_json(acs, jq);
+    cJSON_Delete(jq); jq = NULL;
+
+    future_wait(&f);
+
+    // { "q" : "poll-result", "pkt-name" : N }
+    if (f.value) {
+        cJSON *jj = cJSON_GetObjectItem(f.value, "q");
+        if (jj && jj->type == cJSON_String
+            && !strcmp("poll-result", jj->valuestring)) {
+            cJSON *jn = cJSON_GetObjectItem(f.value, "pkt-name");
+            if (jn && jn->type == cJSON_String) {
+                snprintf(pkt_name, pkt_len, "%s", jn->valuestring);
+                result = 1;
+            }
+        }
+        if (jj && jj->type == cJSON_String && !strcmp("channel-result", jj->valuestring)) {
+            cJSON *jc = cJSON_GetObjectItem(f.value, "channel");
+            if (jc && jc->type == cJSON_Number) {
+                int channel = jc->valuedouble;
+                future_init(future, channel);
+                future->notify_signal = notify_signal;
+                add_future(acs, future);
+                result = 0;
+            }
+        }
+    }
+
+    future_fini(&f);
+    return result;
+}
+
 static const struct AgentClientOps ops_ssh =
 {
     destroy_func,
@@ -971,6 +1020,7 @@ static const struct AgentClientOps ops_ssh =
     put_reply_func,
     put_output_func,
     put_output_2_func,
+    async_wait_init_func,
 };
 
 struct AgentClient *

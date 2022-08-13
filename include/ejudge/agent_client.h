@@ -19,6 +19,7 @@
 #include <stdlib.h>
 
 struct AgentClient;
+struct Future;
 
 struct AgentClientOps
 {
@@ -75,6 +76,13 @@ struct AgentClientOps
         const unsigned char *run_name,
         const unsigned char *suffix,
         const unsigned char *path);
+
+    int (*async_wait_init)(
+        struct AgentClient *ac,
+        int notify_signal,
+        unsigned char *pkt_name,
+        size_t pkt_len,
+        struct Future *future);
 };
 
 struct AgentClient
