@@ -955,9 +955,9 @@ new_loop(int parallel_mode)
 
     unsigned char contest_server_reply_dir[PATH_MAX];
     contest_server_reply_dir[0] = 0;
+    const unsigned char *contest_server_id = NULL;
 #if defined EJUDGE_COMPILE_SPOOL_DIR
     {
-      const unsigned char *contest_server_id = NULL;
       if (req->contest_server_id && *req->contest_server_id) {
         contest_server_id = req->contest_server_id;
       }
@@ -1165,14 +1165,26 @@ new_loop(int parallel_mode)
       unlink(log_path);
       continue;
     }
-    if (generic_write_file(rpl_pkt, rpl_size, SAFE, status_dir, run_name, 0) < 0) {
-      rpl.run_block = NULL;
-      compile_request_packet_free(req);
-      xfree(rpl_pkt);
-      clear_directory(full_working_dir);
-      unlink(exe_path);
-      unlink(log_path);
-      continue;
+    if (agent_client) {
+      if ((r = agent_client->ops->put_reply(agent_client, contest_server_id, rpl.contest_id, run_name, rpl_pkt, rpl_size)) < 0) {
+        rpl.run_block = NULL;
+        compile_request_packet_free(req);
+        xfree(rpl_pkt);
+        clear_directory(full_working_dir);
+        unlink(exe_path);
+        unlink(log_path);
+        continue;
+      }
+    } else {
+      if (generic_write_file(rpl_pkt, rpl_size, SAFE, status_dir, run_name, 0) < 0) {
+        rpl.run_block = NULL;
+        compile_request_packet_free(req);
+        xfree(rpl_pkt);
+        clear_directory(full_working_dir);
+        unlink(exe_path);
+        unlink(log_path);
+        continue;
+      }
     }
 
     // all good
