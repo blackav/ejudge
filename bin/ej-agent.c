@@ -41,6 +41,7 @@
 #include <sys/time.h>
 #include <stdarg.h>
 #include <sys/timerfd.h>
+#include <sys/inotify.h>
 
 static const unsigned char *program_name;
 
@@ -135,6 +136,7 @@ struct AppState
     struct FDInfo *stdout_fdi;
     struct FDInfo *signal_fdi;
     struct FDInfo *timer_fdi;
+    struct FDInfo *inotify_fdi;
 
     struct FDCallback *ready_cbs;
     int ready_cba;
@@ -155,7 +157,10 @@ struct AppState
     int timer_flag;
     int wait_serial;
     long long wait_time_ms;
+    int spool_wd;
+    int wait_finished;
 
+    int ifd;                    /* inotify file descriptor */
     int sfd;                    /* signal file descriptor */
     int efd;                    /* epoll file descriptor */
     int tfd;                    /* timer file descriptor */
@@ -176,14 +181,17 @@ static void
 app_state_init(struct AppState *as)
 {
     memset(as, 0, sizeof(*as));
+    as->ifd = -1;
     as->sfd = -1;
     as->efd = -1;
     as->tfd = -1;
+    as->spool_wd = -1;
 }
 
 static void
 app_state_destroy(struct AppState *as)
 {
+    if (as->ifd >= 0) close(as->ifd);
     if (as->sfd >= 0) close(as->sfd);
     if (as->efd >= 0) close(as->efd);
     if (as->tfd >= 0) close(as->tfd);
@@ -467,6 +475,44 @@ static const struct FDInfoOps timer_ops =
 };
 
 static void
+inotify_read_func(struct AppState *as, struct FDInfo *fdi)
+{
+    unsigned char buf[4096];
+    while (1) {
+        errno = 0;
+        int r = read(fdi->fd, buf, sizeof(buf));
+        if (r < 0 && errno == EAGAIN) {
+            break;
+        }
+        if (r < 0) {
+            err("%s: inotify_read_func: read failed: %s", as->id, os_ErrorMsg());
+            break;
+        }
+        if (!r) {
+            err("%s: inotify_read_func: read returned 0", as->id);
+            break;
+        }
+        const unsigned char *bend = buf + r;
+        const unsigned char *p = buf;
+        while (p < bend) {
+            const struct inotify_event *ev = (const struct inotify_event *) p;
+            p += sizeof(*ev) + ev->len;
+            if (as->spool_wd == ev->wd) {
+                as->wait_finished = 1;
+            }
+        }
+        if (p > bend) {
+            err("%s: inotify_read_func: buffer overrun: end = %p, cur = %p", as->id, bend, p);
+        }
+    }
+}
+
+static const struct FDInfoOps inotify_ops =
+{
+    .op_read = inotify_read_func,
+};
+
+static void
 pipe_read_func(struct AppState *as, struct FDInfo *fdi)
 {
     char buf[65536];
@@ -704,12 +750,12 @@ app_state_prepare(struct AppState *as)
         {
             .it_interval =
             {
-                .tv_sec = 1,
+                .tv_sec = 60,
                 .tv_nsec = 0,
             },
             .it_value =
             {
-                .tv_sec = 1,
+                .tv_sec = 60,
                 .tv_nsec = 0,
             },
         };
@@ -718,7 +764,12 @@ app_state_prepare(struct AppState *as)
             return -1;
         }
     }
-    
+
+    if ((as->ifd = inotify_init1(IN_CLOEXEC | IN_NONBLOCK)) < 0) {
+        err("%s: inotify_init1 failed: %s", as->id, os_ErrorMsg());
+        goto fail;
+    }
+
     if ((as->efd = epoll_create1(EPOLL_CLOEXEC)) < 0) {
         err("%s: epoll_create failed: %s", as->id, os_ErrorMsg());
         goto fail;
@@ -729,6 +780,9 @@ app_state_prepare(struct AppState *as)
 
     as->timer_fdi = fdinfo_create(as, as->tfd, &timer_ops);
     app_state_arm_for_read(as, as->timer_fdi);
+
+    as->inotify_fdi = fdinfo_create(as, as->ifd, &inotify_ops);
+    app_state_arm_for_read(as, as->inotify_fdi);
     
     fcntl(0, F_SETFL, fcntl(0, F_GETFL) | O_NONBLOCK);
     as->stdin_fdi = fdinfo_create(as, 0, &stdin_ops);
@@ -796,6 +850,10 @@ check_spool_state(struct AppState *as)
     cJSON_Delete(reply);
     as->wait_serial = 0;
     as->wait_time_ms = 0;
+    if (as->spool_wd >= 0) {
+        inotify_rm_watch(as->ifd, as->spool_wd);
+        as->spool_wd = -1;
+    }
 }
 
 static void
@@ -833,9 +891,10 @@ do_loop(struct AppState *as)
 
         if (as->timer_flag) {
             as->timer_flag = 0;
-            if (as->wait_serial > 0) {
-                check_spool_state(as);
-            }
+        }
+        if (as->wait_finished) {
+            check_spool_state(as);
+            as->wait_finished = 0;
         }
 
         for (int i = 0; i < as->ready_cbu; ++i) {
@@ -1250,6 +1309,8 @@ wait_func(
 
     as->wait_serial = ++as->serial;
     as->wait_time_ms = as->current_time_ms;
+    as->spool_wd = inotify_add_watch(as->ifd, as->queue_packet_dir, IN_CREATE | IN_MOVED_TO);
+
     cJSON_AddNumberToObject(reply, "channel", as->wait_serial);
     cJSON_AddStringToObject(reply, "q", "channel-result");
 
