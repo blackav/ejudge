@@ -382,6 +382,7 @@ handle_rchunks(struct AgentClientSsh *acs)
 
     for (int i = 0; i < acs->rchunku; ++i) {
         struct FDChunk *c = &acs->rchunks[i];
+        info("agent: %s", c->data);
         cJSON *j = cJSON_Parse(c->data);
         if (!j) {
             err("JSON parse error");
