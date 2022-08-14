@@ -207,6 +207,7 @@ add_rchunk(struct AgentClientSsh *acs, const unsigned char *data, int size)
 static void
 add_wchunk_move(struct AgentClientSsh *acs, unsigned char *data, int size)
 {
+    info("to agent: %s", data);
     pthread_mutex_lock(&acs->wchunkm);
     if (acs->wchunka == acs->wchunku) {
         if (!(acs->wchunka *= 2)) acs->wchunka = 4;
@@ -382,7 +383,7 @@ handle_rchunks(struct AgentClientSsh *acs)
 
     for (int i = 0; i < acs->rchunku; ++i) {
         struct FDChunk *c = &acs->rchunks[i];
-        info("agent: %s", c->data);
+        info("from agent: %s", c->data);
         cJSON *j = cJSON_Parse(c->data);
         if (!j) {
             err("JSON parse error");

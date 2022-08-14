@@ -660,6 +660,7 @@ handle_stdin_read_func(struct AppState *as, struct FDInfo *fdi)
     }
 
     for (int i = 0; i < fdi->rchunku; ++i) {
+        info("%s: in: %s", as->id, fdi->rchunks[i].data);
         handle_stdin_rchunk(as, fdi, fdi->rchunks[i].data, fdi->rchunks[i].size);
     }
     fdinfo_clear_rchunks(fdi, 0);
