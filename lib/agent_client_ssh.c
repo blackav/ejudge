@@ -624,7 +624,7 @@ add_wchunk_json(
         struct AgentClientSsh *acs,
         cJSON *json)
 {
-    char *str = cJSON_Print(json);
+    char *str = cJSON_PrintUnformatted(json);
     int len = strlen(str);
     str = realloc(str, len + 2);
     str[len++] = '\n';
