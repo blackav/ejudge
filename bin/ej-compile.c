@@ -77,7 +77,7 @@ static unsigned char *compile_server_id;
 static __attribute__((unused)) unsigned char compile_server_spool_dir[PATH_MAX];
 static unsigned char compile_server_queue_dir[PATH_MAX];
 static unsigned char compile_server_src_dir[PATH_MAX];
-static unsigned char *agent;
+static unsigned char *agent_name;
 static struct AgentClient *agent_client;
 static unsigned char *instance_id;
 
@@ -860,11 +860,11 @@ new_loop(int parallel_mode)
     snprintf(full_working_dir, sizeof(full_working_dir), "%s", global->compile_work_dir);
   }
 
-  if (agent && *agent) {
-    if (!strncmp(agent, "ssh:", 4)) {
+  if (agent_name && *agent_name) {
+    if (!strncmp(agent_name, "ssh:", 4)) {
       agent_client = agent_client_ssh_create();
       if (agent_client->ops->init(agent_client, instance_id,
-                                  agent + 4, compile_server_id,
+                                  agent_name + 4, compile_server_id,
                                   PREPARE_COMPILE) < 0) {
         err("failed to initalize agent");
         return -1;
@@ -1441,8 +1441,8 @@ main(int argc, char *argv[])
       ejudge_xml_fd = lval;
     } else if (!strcmp(argv[i], "-a")) {
       if (++i >= argc) goto print_usage;
-      xfree(agent);
-      agent = xstrdup(argv[i++]);
+      xfree(agent_name);
+      agent_name = xstrdup(argv[i++]);
       argv_restart[j++] = "-a";
       argv_restart[j++] = argv[i - 1];
     } else if (!strcmp(argv[i], "-s")) {
