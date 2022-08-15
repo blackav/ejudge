@@ -26,7 +26,7 @@ struct AgentClientOps
     struct AgentClient *(*destroy)(struct AgentClient *ac);
     int (*init)(
         struct AgentClient *ac,
-        const unsigned char *id,
+        const unsigned char *inst_id,
         const unsigned char *endpoint,
         const unsigned char *name,
         int mode);

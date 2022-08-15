@@ -67,7 +67,7 @@ struct AgentClientSsh
 
     pthread_t tid;
 
-    unsigned char *id;
+    unsigned char *inst_id;
     unsigned char *endpoint;
     unsigned char *name;
     int mode;
@@ -181,13 +181,13 @@ destroy_func(struct AgentClient *ac)
 static int
 init_func(
         struct AgentClient *ac,
-        const unsigned char *id,
+        const unsigned char *inst_id,
         const unsigned char *endpoint,
         const unsigned char *name,
         int mode)
 {
     struct AgentClientSsh *acs = (struct AgentClientSsh *) ac;
-    acs->id = xstrdup(id);
+    acs->inst_id = xstrdup(inst_id);
     acs->endpoint = xstrdup(endpoint);
     if (name) {
         acs->name = xstrdup(name);
@@ -575,8 +575,8 @@ connect_func(struct AgentClient *ac)
         size_t cmd_z = 0;
         FILE *cmd_f = open_memstream(&cmd_s, &cmd_z);
         fprintf(cmd_f, "exec %s/ej-agent", EJUDGE_SERVER_BIN_PATH);
-        if (acs->id && acs->id[0]) {
-            fprintf(cmd_f, " -i '%s'", acs->id);
+        if (acs->inst_id && acs->inst_id[0]) {
+            fprintf(cmd_f, " -i '%s'", acs->inst_id);
         }
         if (acs->name) {
             fprintf(cmd_f, " -n '%s'", acs->name);
