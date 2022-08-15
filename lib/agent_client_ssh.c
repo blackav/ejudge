@@ -659,6 +659,10 @@ connect_func(struct AgentClient *ac)
         struct epoll_event ev = { .events = EPOLLIN, .data.fd = acs->from_ssh };
         epoll_ctl(acs->efd, EPOLL_CTL_ADD, acs->from_ssh, &ev);
     }
+    {
+        struct epoll_event ev = { .events = EPOLLIN, .data.fd = acs->tfd };
+        epoll_ctl(acs->efd, EPOLL_CTL_ADD, acs->tfd, &ev);
+    }
 
     pthread_attr_t pa;
     pthread_attr_init(&pa);
