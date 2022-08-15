@@ -81,6 +81,7 @@ static unsigned char *public_hostname = NULL;
 static unsigned char *super_run_name = NULL;
 static unsigned char *queue_name = NULL;
 static unsigned char *status_file_name = NULL;
+static unsigned char *agent_name = NULL;
 
 static int ignored_archs_count = 0;
 static int ignored_problems_count = 0;
@@ -1301,6 +1302,13 @@ main(int argc, char *argv[])
     } else if (!strcmp(argv[cur_arg], "-e")) {
       if (cur_arg + 1 >= argc) fatal("argument expected for -e");
       parse_remap_spec(argv[cur_arg + 1]);
+      argv_restart[argc_restart++] = argv[cur_arg];
+      argv_restart[argc_restart++] = argv[cur_arg + 1];
+      cur_arg += 2;
+    } else if (!strcmp(argv[cur_arg], "-A")) {
+      if (cur_arg + 1 >= argc) fatal("argument expected for -A");
+      xfree(agent_name);
+      agent_name = xstrdup(argv[cur_arg + 1]);
       argv_restart[argc_restart++] = argv[cur_arg];
       argv_restart[argc_restart++] = argv[cur_arg + 1];
       cur_arg += 2;
