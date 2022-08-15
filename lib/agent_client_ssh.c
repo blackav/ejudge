@@ -39,6 +39,7 @@
 #include <sys/wait.h>
 #include <sys/time.h>
 #include <sys/mman.h>
+#include <sys/timerfd.h>
 
 struct FDChunk
 {
@@ -98,6 +99,7 @@ struct AgentClientSsh
     int from_ssh;               /* pipe to ssh */
     int to_ssh;                 /* pipe from ssh */
     int vfd;                    /* to wake up connect thread */
+    int tfd;                    /* timer file descriptor */
 
     _Bool need_cleanup;         /* if read/write failed, clean-up */
     _Atomic _Bool stop_request;
@@ -163,6 +165,7 @@ destroy_func(struct AgentClient *ac)
     if (acs->from_ssh >= 0) close(acs->from_ssh);
     if (acs->to_ssh >= 0) close(acs->to_ssh);
     if (acs->vfd >= 0) close(acs->vfd);
+    if (acs->tfd >= 0) close(acs->tfd);
     free(acs);
     return NULL;
 }
@@ -376,6 +379,21 @@ do_notify_read(struct AgentClientSsh *acs)
 }
 
 static void
+do_timer_read(struct AgentClientSsh *acs)
+{
+    uint64_t value = 0;
+    int r;
+    if ((r = read(acs->tfd, &value, sizeof(value))) < 0) {
+        err("timer_read: read error: %s", os_ErrorMsg());
+        acs->need_cleanup = 1;
+    }
+    if (r == 0) {
+        err("timer_read: unexpected EOF");
+        acs->need_cleanup = 1;
+    }
+}
+
+static void
 handle_rchunks(struct AgentClientSsh *acs)
 {
     pthread_mutex_lock(&acs->rchunkm);
@@ -454,6 +472,13 @@ thread_func(void *ptr)
                     do_pipe_read(acs);
                 } else {
                     err("spurious wake-up on read from ssh");
+                }
+            }
+            if (ev->data.fd == acs->tfd) {
+                if ((ev->events & (EPOLLIN | EPOLLHUP)) != 0) {
+                    do_timer_read(acs);
+                } else {
+                    err("spurious wake-up on timer");
                 }
             }
             if (acs->to_ssh >= 0 && ev->data.fd == acs->to_ssh) {
@@ -562,6 +587,31 @@ connect_func(struct AgentClient *ac)
         err("eventfd create failed: %s", os_ErrorMsg());
         goto fail;
     }
+
+    if ((acs->tfd = timerfd_create(CLOCK_REALTIME, TFD_CLOEXEC)) < 0) {
+        err("timerfd_create failed: %s", os_ErrorMsg());
+        goto fail;
+    }
+    {
+        struct itimerspec spec =
+        {
+            .it_interval =
+            {
+                .tv_sec = 1,
+                .tv_nsec = 0,
+            },
+            .it_value =
+            {
+                .tv_sec = 1,
+                .tv_nsec = 0,
+            },
+        };
+        if (timerfd_settime(acs->tfd, 0, &spec, NULL) < 0) {
+            err("timerfd_settime failed: %s", os_ErrorMsg());
+            return -1;
+        }
+    }
+
 
     if ((acs->efd = epoll_create1(EPOLL_CLOEXEC)) < 0) {
         err("epoll_create failed: %s", os_ErrorMsg());
@@ -1077,6 +1127,7 @@ agent_client_ssh_create(void)
     acs->from_ssh = -1;
     acs->to_ssh = -1;
     acs->vfd = -1;
+    acs->tfd = -1;
 
     pthread_mutex_init(&acs->rchunkm, NULL);
     pthread_cond_init(&acs->rchunkc, NULL);
