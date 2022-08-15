@@ -51,6 +51,8 @@ struct Future
 {
     int serial;
     int notify_signal;
+    void (*callback)(struct Future *f, void *u);
+    void *user;
 
     int ready;
     pthread_mutex_t m;
@@ -110,6 +112,10 @@ struct AgentClientSsh
     int serial;
     long long current_time_ms;
     long long last_write_ms;
+    int timer_flag;
+
+    long long ping_time_ms;
+    struct Future *ping_future;
 };
 
 static void future_init(struct Future *f, int serial)
@@ -389,10 +395,11 @@ do_timer_read(struct AgentClientSsh *acs)
     if ((r = read(acs->tfd, &value, sizeof(value))) < 0) {
         err("timer_read: read error: %s", os_ErrorMsg());
         acs->need_cleanup = 1;
-    }
-    if (r == 0) {
+    } else if (r == 0) {
         err("timer_read: unexpected EOF");
         acs->need_cleanup = 1;
+    } else {
+        acs->timer_flag = 1;
     }
 }
 
@@ -416,13 +423,19 @@ handle_rchunks(struct AgentClientSsh *acs)
                 int serial = js->valuedouble;
                 struct Future *f = get_future(acs, serial);
                 if (f) {
-                    f->value = j; j = NULL;
-                    pthread_mutex_lock(&f->m);
-                    f->ready = 1;
-                    pthread_cond_signal(&f->c);
-                    pthread_mutex_unlock(&f->m);
-                    if (f->notify_signal > 0) {
-                        kill(getpid(), f->notify_signal);
+                    if (f->callback) {
+                        f->value = j; j = NULL;
+                        f->ready = 1;
+                        f->callback(f, f->user);
+                    } else {
+                        f->value = j; j = NULL;
+                        pthread_mutex_lock(&f->m);
+                        f->ready = 1;
+                        pthread_cond_signal(&f->c);
+                        pthread_mutex_unlock(&f->m);
+                        if (f->notify_signal > 0) {
+                            kill(getpid(), f->notify_signal);
+                        }
                     }
                 }
             }
@@ -435,6 +448,9 @@ handle_rchunks(struct AgentClientSsh *acs)
 done1:
     pthread_mutex_unlock(&acs->rchunkm);
 }
+
+static struct Future *
+internal_ping(struct AgentClientSsh *acs);
 
 static void *
 thread_func(void *ptr)
@@ -496,6 +512,14 @@ thread_func(void *ptr)
                     do_pipe_write(acs);
                 } else {
                     err("spurious wake-up on write from ssh");
+                }
+            }
+        }
+        if (acs->timer_flag) {
+            acs->timer_flag = 0;
+            if (!acs->ping_future) {
+                if (acs->current_time_ms - acs->last_write_ms > 120000) {
+                    acs->ping_future = internal_ping(acs);
                 }
             }
         }
@@ -1104,6 +1128,35 @@ done:
     free(future);
     *p_future = NULL;
     return result;
+}
+
+static void
+internal_ping_callback(
+    struct Future *f,
+    void *u)
+{
+    struct AgentClientSsh *acs = (struct AgentClientSsh *) u;
+    if (acs->ping_future) {
+        long long roundtrip_ms = acs->current_time_ms - acs->ping_time_ms;
+        info("ping roundtrip: %lld ms", roundtrip_ms);
+        acs->ping_future = NULL;
+        acs->ping_time_ms = 0;
+        future_fini(f);
+        free(f);
+    }
+}
+
+static struct Future *
+internal_ping(struct AgentClientSsh *acs)
+{
+    struct Future *f;
+    XCALLOC(f, 1);
+    cJSON *jq = create_request(acs, f, &acs->ping_time_ms, "ping");
+    f->callback = internal_ping_callback;
+    f->user = acs;
+    add_wchunk_json(acs, jq);
+    cJSON_Delete(jq); jq = NULL;
+    return f;
 }
 
 static const struct AgentClientOps ops_ssh =
