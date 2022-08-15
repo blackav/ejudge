@@ -1299,7 +1299,7 @@ wait_func(
     if (!jc || jc->type != cJSON_Number || jc->valuedouble <= 0) {
         err("%s: invalid json: no channel", as->id);
         cJSON_AddStringToObject(reply, "message", "invalid json");
-        goto done;
+        return 0;
     }
     int channel = (int) jc->valuedouble;
 
