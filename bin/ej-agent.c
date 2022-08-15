@@ -167,7 +167,7 @@ struct AppState
     int tfd;                    /* timer file descriptor */
 
     long long current_time_ms;
-    unsigned char *name;
+    unsigned char *queue_id;
     int mode;
     unsigned char *id;
 
@@ -810,18 +810,18 @@ fail:
 static void
 app_state_configure_directories(struct AppState *as)
 {
-    if (!as->mode || !as->name) return;
+    if (!as->mode || !as->queue_id) return;
 
     if (as->mode == PREPARE_COMPILE) {
 #if defined EJUDGE_COMPILE_SPOOL_DIR
         char *s = NULL;
-        asprintf(&s, "%s/%s", EJUDGE_COMPILE_SPOOL_DIR, as->name);
+        asprintf(&s, "%s/%s", EJUDGE_COMPILE_SPOOL_DIR, as->queue_id);
         as->spool_dir = s; s = NULL;
         asprintf(&s, "%s/queue", as->spool_dir);
         as->queue_dir = s; s = NULL;
         asprintf(&s, "%s/dir", as->queue_dir);
         as->queue_packet_dir = s; s = NULL;
-        asprintf(&s, "%s/%s/src", EJUDGE_COMPILE_SPOOL_DIR, as->name);
+        asprintf(&s, "%s/%s/src", EJUDGE_COMPILE_SPOOL_DIR, as->queue_id);
         as->data_dir = s; s = NULL;
 #endif
     }
@@ -934,8 +934,8 @@ set_query_func(
 {
     cJSON *jn = cJSON_GetObjectItem(query, "name");
     if (jn && jn->type == cJSON_String) {
-        free(as->name);
-        as->name = xstrdup(jn->valuestring);
+        free(as->queue_id);
+        as->queue_id = xstrdup(jn->valuestring);
     }
     cJSON *jm = cJSON_GetObjectItem(query, "mode");
     if (jm && jm->type == cJSON_String) {
@@ -948,8 +948,8 @@ set_query_func(
             return 0;
         }
     }
-    if (as->name && as->name[0]) {
-        cJSON_AddStringToObject(reply, "name", as->name);
+    if (as->queue_id && as->queue_id[0]) {
+        cJSON_AddStringToObject(reply, "name", as->queue_id);
     }
     if (as->mode == PREPARE_COMPILE) {
         cJSON_AddStringToObject(reply, "mode", "compile");
@@ -1340,7 +1340,7 @@ main(int argc, char *argv[])
 {
     int retval = 1;
     const unsigned char *id = NULL;
-    const unsigned char *name = NULL;
+    const unsigned char *queue_id = NULL;
     int mode = 0;
     int argi = 1;
 
@@ -1349,7 +1349,7 @@ main(int argc, char *argv[])
     while (argi < argc) {
         if (!strcmp(argv[argi], "-n")) {
             if (argi + 1 >= argc) die("argument expected for -n");
-            name = argv[argi + 1];
+            queue_id = argv[argi + 1];
             argi += 2;
         } else if (!strcmp(argv[argi], "-i")) {
             if (argi + 1 >= argc) die("argument expected for -i");
@@ -1399,8 +1399,8 @@ main(int argc, char *argv[])
         app.id = id_s;
     }
 
-    if (name && *name) {
-        app.name = xstrdup(name);
+    if (queue_id && *queue_id) {
+        app.queue_id = xstrdup(queue_id);
     }
     app.mode = mode;
     app_state_configure_directories(&app);
