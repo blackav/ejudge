@@ -78,7 +78,7 @@ static __attribute__((unused)) unsigned char compile_server_spool_dir[PATH_MAX];
 static unsigned char compile_server_queue_dir[PATH_MAX];
 static unsigned char compile_server_src_dir[PATH_MAX];
 static unsigned char *agent_name;
-static struct AgentClient *agent_client;
+static struct AgentClient *agent;
 static unsigned char *instance_id;
 
 struct testinfo_subst_handler_compile
@@ -343,13 +343,13 @@ handle_packet(
     }
 
     if (src_buf) {
-      if (agent_client) {
-        if (agent_client->ops->put_output(agent_client,
-                                          contest_server_id,
-                                          rpl->contest_id,
-                                          run_name,
-                                          exe_sfx,
-                                          src_buf, src_len) < 0) {
+      if (agent) {
+        if (agent->ops->put_output(agent,
+                                   contest_server_id,
+                                   rpl->contest_id,
+                                   run_name,
+                                   exe_sfx,
+                                   src_buf, src_len) < 0) {
           fprintf(log_f, "put_output failed\n");
           rpl->status = RUN_CHECK_FAILED;
           goto cleanup;
@@ -365,13 +365,13 @@ handle_packet(
       rpl->status = RUN_OK;
       goto cleanup;
     }
-    if (agent_client) {
-      if (agent_client->ops->put_output_2(agent_client,
-                                          contest_server_id,
-                                          rpl->contest_id,
-                                          run_name,
-                                          exe_sfx,
-                                          src_path) < 0) {
+    if (agent) {
+      if (agent->ops->put_output_2(agent,
+                                   contest_server_id,
+                                   rpl->contest_id,
+                                   run_name,
+                                   exe_sfx,
+                                   src_path) < 0) {
         fprintf(log_f, "put_output_2 failed\n");
         rpl->status = RUN_CHECK_FAILED;
         goto cleanup;
@@ -862,14 +862,14 @@ new_loop(int parallel_mode)
 
   if (agent_name && *agent_name) {
     if (!strncmp(agent_name, "ssh:", 4)) {
-      agent_client = agent_client_ssh_create();
-      if (agent_client->ops->init(agent_client, instance_id,
-                                  agent_name + 4, compile_server_id,
-                                  PREPARE_COMPILE) < 0) {
+      agent = agent_client_ssh_create();
+      if (agent->ops->init(agent, instance_id,
+                           agent_name + 4, compile_server_id,
+                           PREPARE_COMPILE) < 0) {
         err("failed to initalize agent");
         return -1;
       }
-      if (agent_client->ops->connect(agent_client) < 0) {
+      if (agent->ops->connect(agent) < 0) {
         err("failed to connect to client");
         return -1;
       }
@@ -903,19 +903,19 @@ new_loop(int parallel_mode)
     unsigned char pkt_name[PATH_MAX];
     pkt_name[0] = 0;
     int r = 0;
-    if (agent_client) {
+    if (agent) {
       if (interrupt_was_usr1()) {
         interrupt_reset_usr1();
         if (future) {
-          r = agent_client->ops->async_wait_complete(agent_client, &future, pkt_name, sizeof(pkt_name));
+          r = agent->ops->async_wait_complete(agent, &future, pkt_name, sizeof(pkt_name));
           if (r < 0) {
             err("async_wait_complete failed");
             break;
           }
         }
       } else if (!future) {
-        r = agent_client->ops->async_wait_init(agent_client, SIGUSR1, pkt_name, sizeof(pkt_name), &future);
-        //r = agent_client->ops->poll_queue(agent_client, pkt_name, sizeof(pkt_name));
+        r = agent->ops->async_wait_init(agent, SIGUSR1, pkt_name, sizeof(pkt_name), &future);
+        //r = agent->ops->poll_queue(agent, pkt_name, sizeof(pkt_name));
         if (r < 0) {
           err("async_wait_init failed");
           break;
@@ -941,7 +941,7 @@ new_loop(int parallel_mode)
     }
 
     if (!r) {
-      int sleep_time = agent_client?30:global->sleep_time;
+      int sleep_time = agent?30:global->sleep_time;
       interrupt_enable();
       os_Sleep(sleep_time);
       interrupt_disable();
@@ -950,8 +950,8 @@ new_loop(int parallel_mode)
 
     char *pkt_ptr = NULL;
     size_t pkt_len = 0;
-    if (agent_client) {
-      r = agent_client->ops->get_packet(agent_client, pkt_name, &pkt_ptr, &pkt_len);
+    if (agent) {
+      r = agent->ops->get_packet(agent, pkt_name, &pkt_ptr, &pkt_len);
     } else {
       r = generic_read_file(&pkt_ptr, 0, &pkt_len, SAFE | REMOVE, compile_server_queue_dir, pkt_name, "");
     }
@@ -1106,8 +1106,8 @@ new_loop(int parallel_mode)
 
     char *src_buf = NULL;
     size_t src_len = 0;
-    if (agent_client) {
-      r = agent_client->ops->get_data(agent_client, pkt_name, src_sfx, &src_buf, &src_len);
+    if (agent) {
+      r = agent->ops->get_data(agent, pkt_name, src_sfx, &src_buf, &src_len);
       if (r < 0) {
         err("agent get_data failed");
         fclose(log_f); log_f = NULL;
@@ -1168,13 +1168,13 @@ new_loop(int parallel_mode)
             fprintf(log_f, "\ncompiler output file '%s' is too large\n (size = %lld)", exe_work_path, (long long) stb.st_size);
             rpl.status = RUN_COMPILE_ERR;
           } else {
-            if (agent_client) {
-              if (agent_client->ops->put_output_2(agent_client,
-                                                  contest_server_id,
-                                                  rpl.contest_id,
-                                                  run_name,
-                                                  exe_sfx,
-                                                  exe_work_path) < 0) {
+            if (agent) {
+              if (agent->ops->put_output_2(agent,
+                                           contest_server_id,
+                                           rpl.contest_id,
+                                           run_name,
+                                           exe_sfx,
+                                           exe_work_path) < 0) {
                 err("put_output failed");
                 fprintf(log_f, "\nput_output failed\n");
                 rpl.status = RUN_CHECK_FAILED;
@@ -1199,13 +1199,13 @@ new_loop(int parallel_mode)
 
     fclose(log_f); log_f = NULL;
 
-    if (agent_client) {
-      r = agent_client->ops->put_output_2(agent_client,
-                                          contest_server_id,
-                                          rpl.contest_id,
-                                          run_name,
-                                          ".txt",
-                                          log_work_path);
+    if (agent) {
+      r = agent->ops->put_output_2(agent,
+                                   contest_server_id,
+                                   rpl.contest_id,
+                                   run_name,
+                                   ".txt",
+                                   log_work_path);
     } else {
       r = generic_copy_file(0, NULL, log_work_path, "", 0, NULL, log_path, "");
     }
@@ -1219,8 +1219,8 @@ new_loop(int parallel_mode)
     }
 
     if (override_exe || (rpl.status == RUN_STYLE_ERR || rpl.status == RUN_COMPILE_ERR || rpl.status == RUN_CHECK_FAILED)) {
-      if (agent_client) {
-        agent_client->ops->put_output_2(agent_client, contest_server_id, rpl.contest_id, run_name, exe_sfx, log_work_path);
+      if (agent) {
+        agent->ops->put_output_2(agent, contest_server_id, rpl.contest_id, run_name, exe_sfx, log_work_path);
       } else {
         generic_copy_file(0, NULL, log_work_path, "", 0, NULL, exe_path, "");
       }
@@ -1236,8 +1236,8 @@ new_loop(int parallel_mode)
       unlink(log_path);
       continue;
     }
-    if (agent_client) {
-      r = agent_client->ops->put_reply(agent_client, contest_server_id, rpl.contest_id, run_name, rpl_pkt, rpl_size);
+    if (agent) {
+      r = agent->ops->put_reply(agent, contest_server_id, rpl.contest_id, run_name, rpl_pkt, rpl_size);
     } else {
       r = generic_write_file(rpl_pkt, rpl_size, SAFE, status_dir, run_name, 0);
     }
@@ -1258,8 +1258,8 @@ new_loop(int parallel_mode)
     clear_directory(full_working_dir);
   }
 
-  if (agent_client) {
-    agent_client->ops->close(agent_client);
+  if (agent) {
+    agent->ops->close(agent);
   }
 
   return retval;
