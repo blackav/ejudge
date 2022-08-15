@@ -108,6 +108,8 @@ struct AgentClientSsh
     pthread_cond_t stop_c;
 
     int serial;
+    long long current_time_ms;
+    long long last_write_ms;
 };
 
 static void future_init(struct Future *f, int serial)
@@ -352,6 +354,7 @@ do_pipe_write(struct AgentClientSsh *acs)
             return;
         }
         acs->wr_pos += r;
+        acs->last_write_ms = acs->current_time_ms;
     }
 }
 
@@ -458,6 +461,13 @@ thread_func(void *ptr)
             err("epoll_wait returned 0");
             break;
         }
+
+        {
+            struct timeval tv;
+            gettimeofday(&tv, NULL);
+            acs->current_time_ms = tv.tv_sec * 1000LL + tv.tv_usec / 1000;
+        }
+
         for (int i = 0; i < n; ++i) {
             struct epoll_event *ev = &evs[i];
             if (ev->data.fd == acs->vfd) {
@@ -611,7 +621,6 @@ connect_func(struct AgentClient *ac)
             return -1;
         }
     }
-
 
     if ((acs->efd = epoll_create1(EPOLL_CLOEXEC)) < 0) {
         err("epoll_create failed: %s", os_ErrorMsg());
