@@ -631,12 +631,12 @@ connect_func(struct AgentClient *ac)
         {
             .it_interval =
             {
-                .tv_sec = 1,
+                .tv_sec = 10,
                 .tv_nsec = 0,
             },
             .it_value =
             {
-                .tv_sec = 1,
+                .tv_sec = 10,
                 .tv_nsec = 0,
             },
         };

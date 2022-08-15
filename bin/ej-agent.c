@@ -42,6 +42,7 @@
 #include <stdarg.h>
 #include <sys/timerfd.h>
 #include <sys/inotify.h>
+#include <ctype.h>
 
 static const unsigned char *program_name;
 
@@ -660,6 +661,14 @@ handle_stdin_read_func(struct AppState *as, struct FDInfo *fdi)
     }
 
     for (int i = 0; i < fdi->rchunku; ++i) {
+        {
+            unsigned char *data = fdi->rchunks[i].data;
+            int size = fdi->rchunks[i].size;
+            while (size > 0 && isspace(data[size - 1])) {
+                --size;
+            }
+            data[size] = 0;
+        }
         info("%s: in: %s", as->id, fdi->rchunks[i].data);
         handle_stdin_rchunk(as, fdi, fdi->rchunks[i].data, fdi->rchunks[i].size);
     }
