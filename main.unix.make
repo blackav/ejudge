@@ -337,7 +337,7 @@ ej-super-server-control: ${SSC_OBJECTS}
 	${LD} ${LDFLAGS} $^ libcommon.a -o $@ ${LDLIBS} ${EXPAT_LIB}
 
 ej-super-run: ${SR_OBJECTS}
-	${LD} ${LDFLAGS} -rdynamic $^ libcommon.a -o $@ ${LDLIBS} ${EXPAT_LIB} -ldl ${LIBZIP} ${LIBUUID} $(MONGO_LIBS) $(MONGOC_LIBS)
+	${LD} ${LDFLAGS} -pthread -rdynamic $^ libcommon.a -o $@ ${LDLIBS} ${EXPAT_LIB} -ldl ${LIBZIP} ${LIBUUID} $(MONGO_LIBS) $(MONGOC_LIBS)
 
 ej-super-run-control: ${SRC_OBJECTS}
 	${LD} ${LDFLAGS} -rdynamic $^ libcommon.a -o $@ ${LDLIBS} ${EXPAT_LIB} -ldl

@@ -31,6 +31,7 @@
 #include "ejudge/xml_utils.h"
 #include "ejudge/ej_uuid.h"
 #include "ejudge/super_run_status.h"
+#include "ejudge/agent_client.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/osdeps.h"
@@ -82,6 +83,7 @@ static unsigned char *super_run_name = NULL;
 static unsigned char *queue_name = NULL;
 static unsigned char *status_file_name = NULL;
 static unsigned char *agent_name = NULL;
+static struct AgentClient *agent;
 
 static int ignored_archs_count = 0;
 static int ignored_problems_count = 0;
@@ -543,6 +545,25 @@ do_loop(
   long long last_handled_ms = 0;
   long long current_time_ms = 0;
 
+  if (agent_name && *agent_name) {
+    if (!strncmp(agent_name, "ssh:", 4)) {
+      agent = agent_client_ssh_create();
+      if (agent->ops->init(agent, instance_id,
+                           agent_name + 4, run_server_id,
+                           PREPARE_RUN) < 0) {
+        err("failed to initalize agent");
+        return -1;
+      }
+      if (agent->ops->connect(agent) < 0) {
+        err("failed to connect to client");
+        return -1;
+      }
+    } else {
+      err("invalid agent");
+      return -1;
+    }
+  }
+
   gettimeofday(&ctv, NULL);
   last_handled = ctv.tv_sec;
   last_handled_ms = ((long long) ctv.tv_sec) * 1000 + ctv.tv_usec / 1000;
@@ -618,6 +639,11 @@ do_loop(
   }
 
   super_run_status_remove(super_run_heartbeat_path, status_file_name);
+
+  if (agent) {
+    agent->ops->close(agent);
+  }
+
   return 0;
 }
 
