@@ -1064,6 +1064,7 @@ async_wait_init_func(
     struct Future f;
     long long time_ms;
     cJSON *jq = create_request(acs, &f, &time_ms, "wait");
+    cJSON_AddNumberToObject(jq, "channel", (double) ++acs->serial);
     add_wchunk_json(acs, jq);
     cJSON_Delete(jq); jq = NULL;
 

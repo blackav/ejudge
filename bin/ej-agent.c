@@ -1295,6 +1295,14 @@ wait_func(
         cJSON *query,
         cJSON *reply)
 {
+    cJSON *jc = cJSON_GetObjectItem(query, "channel");
+    if (!jc || jc->type != cJSON_Number || jc->valuedouble <= 0) {
+        err("%s: invalid json: no channel", as->id);
+        cJSON_AddStringToObject(reply, "message", "invalid json");
+        goto done;
+    }
+    int channel = (int) jc->valuedouble;
+
     unsigned char pkt_name[PATH_MAX];
     int r = scan_dir(as->queue_dir, pkt_name, sizeof(pkt_name), 0);
     if (r < 0) {
@@ -1308,7 +1316,7 @@ wait_func(
         return 1;
     }
 
-    as->wait_serial = ++as->serial;
+    as->wait_serial = channel;
     as->wait_time_ms = as->current_time_ms;
     as->spool_wd = inotify_add_watch(as->ifd, as->queue_packet_dir, IN_CREATE | IN_MOVED_TO);
 
