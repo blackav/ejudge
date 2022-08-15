@@ -69,7 +69,7 @@ struct AgentClientSsh
 
     unsigned char *inst_id;
     unsigned char *endpoint;
-    unsigned char *name;
+    unsigned char *queue_id;
     int mode;
 
     // read buffer
@@ -183,14 +183,14 @@ init_func(
         struct AgentClient *ac,
         const unsigned char *inst_id,
         const unsigned char *endpoint,
-        const unsigned char *name,
+        const unsigned char *queue_id,
         int mode)
 {
     struct AgentClientSsh *acs = (struct AgentClientSsh *) ac;
     acs->inst_id = xstrdup(inst_id);
     acs->endpoint = xstrdup(endpoint);
-    if (name) {
-        acs->name = xstrdup(name);
+    if (queue_id) {
+        acs->queue_id = xstrdup(queue_id);
     }
     acs->mode = mode;
     return 0;
@@ -578,8 +578,8 @@ connect_func(struct AgentClient *ac)
         if (acs->inst_id && acs->inst_id[0]) {
             fprintf(cmd_f, " -i '%s'", acs->inst_id);
         }
-        if (acs->name) {
-            fprintf(cmd_f, " -n '%s'", acs->name);
+        if (acs->queue_id) {
+            fprintf(cmd_f, " -n '%s'", acs->queue_id);
         }
         if (acs->mode == PREPARE_COMPILE) {
             fprintf(cmd_f, " -m compile");

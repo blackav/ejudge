@@ -28,7 +28,7 @@ struct AgentClientOps
         struct AgentClient *ac,
         const unsigned char *inst_id,
         const unsigned char *endpoint,
-        const unsigned char *name,
+        const unsigned char *queue_id,
         int mode);
     int (*connect)(struct AgentClient *ac);
     void (*close)(struct AgentClient *ac);
