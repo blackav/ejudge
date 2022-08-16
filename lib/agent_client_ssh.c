@@ -1212,6 +1212,34 @@ add_ignored_func(
     return result;
 }
 
+static int
+put_packet_func(
+        struct AgentClient *ac,
+        const unsigned char *pkt_name,
+        const unsigned char *pkt_ptr,
+        size_t pkt_len)
+{
+    int result = 0;
+    struct AgentClientSsh *acs = (struct AgentClientSsh *) ac;
+    struct Future f;
+    long long time_ms;
+    cJSON *jq = create_request(acs, &f, &time_ms, "put-packet");
+    cJSON_AddStringToObject(jq, "pkt_name", pkt_name);
+    add_file_to_object(jq, pkt_ptr, pkt_len);
+    add_wchunk_json(acs, jq);
+    cJSON_Delete(jq); jq = NULL;
+
+    future_wait(&f);
+
+    cJSON *jok = cJSON_GetObjectItem(f.value, "ok");
+    if (!jok || jok->type != cJSON_True) {
+        result = -1;
+    }
+
+    future_fini(&f);
+    return result;
+}
+
 static const struct AgentClientOps ops_ssh =
 {
     destroy_func,
@@ -1228,6 +1256,7 @@ static const struct AgentClientOps ops_ssh =
     async_wait_init_func,
     async_wait_complete_func,
     add_ignored_func,
+    put_packet_func,
 };
 
 struct AgentClient *

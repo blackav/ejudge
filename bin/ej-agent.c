@@ -1383,13 +1383,50 @@ add_ignored_func(
     cJSON *jp = cJSON_GetObjectItem(query, "pkt_name");
     if (!jp || jp->type != cJSON_String) {
         cJSON_AddStringToObject(reply, "message", "invalid json");
+        cJSON_AddStringToObject(reply, "q", "result");
         err("%s: get_packet: missing pkt_name", as->inst_id);
         return 0;
     }
     const unsigned char *pkt_name = jp->valuestring;
 
     scan_dir_add_ignored(as->queue_dir, pkt_name);
+    cJSON_AddStringToObject(reply, "q", "result");
     return 1;
+}
+
+static int
+put_packet_func(
+        struct AppState *as,
+        const struct QueryCallback *cb,
+        cJSON *query,
+        cJSON *reply)
+{
+    int result = 0;
+    char *data = NULL;
+    size_t size = 0;
+    cJSON *jp = cJSON_GetObjectItem(query, "pkt_name");
+    if (!jp || jp->type != cJSON_String) {
+        cJSON_AddStringToObject(reply, "message", "invalid json");
+        err("%s: get_packet: missing pkt_name", as->inst_id);
+        goto done;
+    }
+    const unsigned char *pkt_name = jp->valuestring;
+
+    if (extract_file(as, query, &data, &size) < 0) {
+        cJSON_AddStringToObject(reply, "message", "invalid json");
+        goto done;
+    }
+
+    if (generic_write_file(data, size, SAFE, as->spool_dir, pkt_name, "") < 0) {
+        cJSON_AddStringToObject(reply, "message", "filesystem error");
+        goto done;
+    }
+    result = 1;
+
+done:
+    cJSON_AddStringToObject(reply, "q", "result");
+    free(data);
+    return result;
 }
 
 int
@@ -1476,6 +1513,7 @@ main(int argc, char *argv[])
     app_state_add_query_callback(&app, "put-output", NULL, put_output_func);
     app_state_add_query_callback(&app, "wait", NULL, wait_func);
     app_state_add_query_callback(&app, "add-ignored", NULL, add_ignored_func);
+    app_state_add_query_callback(&app, "put-packet", NULL, put_packet_func);
 
     info("%s: started", app.inst_id);
     do_loop(&app);

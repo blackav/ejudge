@@ -96,6 +96,12 @@ struct AgentClientOps
     int (*add_ignored)(
         struct AgentClient *ac,
         const unsigned char *pkt_name);
+
+    int (*put_packet)(
+        struct AgentClient *ac,
+        const unsigned char *pkt_name,
+        const unsigned char *pkt_ptr,
+        size_t pkt_len);
 };
 
 struct AgentClient

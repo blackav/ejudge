@@ -326,7 +326,11 @@ handle_packet(
 
   if (is_packet_to_ignore(pkt_name, srgp->contest_id, srgp->rejudge_flag, short_name, arch)) {
     retval = 0;
-    generic_write_file(srp_b, srp_z, SAFE, super_run_spool_path, pkt_name, "");
+    if (agent) {
+      agent->ops->put_packet(agent, pkt_name, srp_b, srp_z);
+    } else {
+      generic_write_file(srp_b, srp_z, SAFE, super_run_spool_path, pkt_name, "");
+    }
     goto cleanup;
   }
 
@@ -347,7 +351,11 @@ handle_packet(
       if (!tst) {
         err("no support for architecture %s here", arch);
         retval = 0;
-        generic_write_file(srp_b, srp_z, SAFE, super_run_spool_path, pkt_name, "");
+        if (agent) {
+          agent->ops->put_packet(agent, pkt_name, srp_b, srp_z);
+        } else {
+          generic_write_file(srp_b, srp_z, SAFE, super_run_spool_path, pkt_name, "");
+        }
         goto cleanup;
       }
     }
@@ -360,7 +368,11 @@ handle_packet(
     if (r <= 0) {
       // FIXME: handle this differently?
       retval = 0;
-      generic_write_file(srp_b, srp_z, SAFE, super_run_spool_path, pkt_name, "");
+      if (agent) {
+        agent->ops->put_packet(agent, pkt_name, srp_b, srp_z);
+      } else {
+        generic_write_file(srp_b, srp_z, SAFE, super_run_spool_path, pkt_name, "");
+      }
       goto cleanup;
     }
 
