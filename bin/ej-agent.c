@@ -43,6 +43,7 @@
 #include <sys/timerfd.h>
 #include <sys/inotify.h>
 #include <ctype.h>
+#include <sys/mman.h>
 
 static const unsigned char *program_name;
 
@@ -178,6 +179,7 @@ struct AppState
     unsigned char *data_dir;
     unsigned char *heartbeat_dir;
     unsigned char *heartbeat_packet_dir;
+    unsigned char *heartbeat_in_dir;
 
     int verbose_mode;
 };
@@ -847,6 +849,8 @@ app_state_configure_directories(struct AppState *as)
         as->heartbeat_dir = s; s = NULL;
         asprintf(&s, "%s/dir", as->heartbeat_dir);
         as->heartbeat_packet_dir = s; s = NULL;
+        asprintf(&s, "%s/in", as->heartbeat_dir);
+        as->heartbeat_in_dir = s; s = NULL;
 #endif
     }
 }
@@ -1436,6 +1440,86 @@ done:
     return result;
 }
 
+static int
+put_heartbeat_func(
+        struct AppState *as,
+        const struct QueryCallback *cb,
+        cJSON *query,
+        cJSON *reply)
+{
+    int result = 0;
+    char *data = NULL;
+    size_t size = 0;
+    unsigned char in_path[PATH_MAX];
+    int fd = -1;
+    unsigned char *mem = MAP_FAILED;
+    unsigned char dir_path[PATH_MAX];
+
+    in_path[0] = 0;
+    cJSON *jn = cJSON_GetObjectItem(query, "name");
+    if (!jn || jn->type != cJSON_String) {
+        cJSON_AddStringToObject(reply, "message", "invalid json");
+        err("%s: put_heartbeat: missing name", as->inst_id);
+        goto done;
+    }
+    const unsigned char *file_name = jn->valuestring;
+    if (extract_file(as, query, &data, &size) < 0) {
+        cJSON_AddStringToObject(reply, "message", "invalid json");
+        goto done;
+    }
+
+    snprintf(in_path, sizeof(in_path), "%s/%s", as->heartbeat_in_dir, file_name);
+
+    fd = open(in_path, O_RDWR | O_CREAT | O_TRUNC, 0600);
+    if (fd < 0) {
+        err("%s: put_heartbeat: open failed: %s", as->inst_id, os_ErrorMsg());
+        cJSON_AddStringToObject(reply, "message", "filesystem error");
+        goto done;
+    }
+    if (ftruncate(fd, size) < 0) {
+        err("%s: put_heartbeat: ftruncate failed: %s", as->inst_id, os_ErrorMsg());
+        cJSON_AddStringToObject(reply, "message", "filesystem error");
+        goto done;
+    }
+    if (size > 0) {
+        mem = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+        if (mem == MAP_FAILED) {
+            err("%s: put_heartbeat: mmap failed: %s", as->inst_id, os_ErrorMsg());
+            cJSON_AddStringToObject(reply, "message", "filesystem error");
+            goto done;
+        }
+        memmove(mem, data, size);
+    }
+
+    snprintf(dir_path, sizeof(dir_path), "%s/%s", as->heartbeat_packet_dir, file_name);
+    if (rename(in_path, dir_path) < 0) {
+        err("%s: rename failed: %s", as->inst_id, os_ErrorMsg());
+        goto done;
+    }
+    in_path[0] = 0;
+
+    snprintf(dir_path, sizeof(dir_path), "%s/%s@S", as->heartbeat_packet_dir, file_name);
+    if (access(dir_path, F_OK) >= 0) {
+        cJSON_AddTrueToObject(reply, "stop_flag");
+        unlink(dir_path);
+    }
+    snprintf(dir_path, sizeof(dir_path), "%s/%s@D", as->heartbeat_packet_dir, file_name);
+    if (access(dir_path, F_OK) >= 0) {
+        cJSON_AddTrueToObject(reply, "down_flag");
+        unlink(dir_path);
+    }
+
+    result = 1;
+
+done:;
+    cJSON_AddStringToObject(reply, "q", "heartbeat-result");
+    if (mem != MAP_FAILED) munmap(mem, size);
+    if (fd >= 0) close(fd);
+    if (in_path[0]) unlink(in_path);
+    free(data);
+    return result;
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -1521,6 +1605,7 @@ main(int argc, char *argv[])
     app_state_add_query_callback(&app, "wait", NULL, wait_func);
     app_state_add_query_callback(&app, "add-ignored", NULL, add_ignored_func);
     app_state_add_query_callback(&app, "put-packet", NULL, put_packet_func);
+    app_state_add_query_callback(&app, "put-heartbeat", NULL, put_heartbeat_func);
 
     info("%s: started", app.inst_id);
     do_loop(&app);

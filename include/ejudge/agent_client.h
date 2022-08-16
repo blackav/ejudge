@@ -110,6 +110,15 @@ struct AgentClientOps
         const unsigned char *dir,
         const unsigned char *name,
         const unsigned char *out_suffix);
+
+    int (*put_heartbeat)(
+        struct AgentClient *ac,
+        const unsigned char *file_name,
+        const void *data,
+        size_t size,
+        long long *p_last_saved_time_ms,
+        long long *p_stop_flag,
+        long long *p_down_flag);
 };
 
 struct AgentClient

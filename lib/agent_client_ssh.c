@@ -1296,6 +1296,51 @@ done:
     return retval;
 }
 
+static int
+put_heartbeat_func(
+        struct AgentClient *ac,
+        const unsigned char *file_name,
+        const void *data,
+        size_t size,
+        long long *p_last_saved_time_ms,
+        long long *p_stop_flag,
+        long long *p_down_flag)
+{
+    int result = -1;
+    struct AgentClientSsh *acs = (struct AgentClientSsh *) ac;
+    struct Future f;
+    long long time_ms;
+    cJSON *jq = create_request(acs, &f, &time_ms, "put-heartbeat");
+    cJSON_AddStringToObject(jq, "name", file_name);
+    add_file_to_object(jq, data, size);
+    add_wchunk_json(acs, jq);
+    cJSON_Delete(jq); jq = NULL;
+
+    future_wait(&f);
+
+    cJSON *jok = cJSON_GetObjectItem(f.value, "ok");
+    if (!jok || jok->type != cJSON_True) {
+        goto done;
+    }
+    cJSON *jtt = cJSON_GetObjectItem(f.value, "tt");
+    if (jtt && jtt->type == cJSON_Number && p_last_saved_time_ms) {
+        *p_last_saved_time_ms = (long long) jtt->valuedouble;
+    }
+    cJSON *jsf = cJSON_GetObjectItem(f.value, "stop_flag");
+    if (jsf && jsf->type == cJSON_True && p_stop_flag) {
+        *p_stop_flag = 1;
+    }
+    cJSON *jdf = cJSON_GetObjectItem(f.value, "down_flag");
+    if (jdf && jdf->type == cJSON_True && p_down_flag) {
+        *p_down_flag = 1;
+    }
+    result = 0;
+
+done:;
+    future_fini(&f);
+    return result;
+}
+
 static const struct AgentClientOps ops_ssh =
 {
     destroy_func,
@@ -1314,6 +1359,7 @@ static const struct AgentClientOps ops_ssh =
     add_ignored_func,
     put_packet_func,
     get_data_2_func,
+    put_heartbeat_func,
 };
 
 struct AgentClient *
