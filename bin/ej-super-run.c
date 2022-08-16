@@ -84,6 +84,7 @@ static unsigned char *queue_name = NULL;
 static unsigned char *status_file_name = NULL;
 static unsigned char *agent_name = NULL;
 static struct AgentClient *agent;
+static int verbose_mode;
 
 static int ignored_archs_count = 0;
 static int ignored_problems_count = 0;
@@ -283,7 +284,9 @@ handle_packet(
     goto cleanup;
   }
 
-  fprintf(stderr, "packet: <<%.*s>>\n", (int) srp_z, srp_b);
+  if (verbose_mode) {
+    fprintf(stderr, "packet: <<%.*s>>\n", (int) srp_z, srp_b);
+  }
 
   srp = super_run_in_packet_parse_cfg_str(pkt_name, srp_b, srp_z);
   if (!srp) {
@@ -1268,6 +1271,10 @@ main(int argc, char *argv[])
     } else if (!strcmp(argv[cur_arg], "-r")) {
       argv_restart[argc_restart++] = argv[cur_arg];
       ignore_rejudge = 1;
+      ++cur_arg;
+    } else if (!strcmp(argv[cur_arg], "-v")) {
+      argv_restart[argc_restart++] = argv[cur_arg];
+      verbose_mode = 1;
       ++cur_arg;
     } else if (!strcmp(argv[cur_arg], "-p")) {
       if (cur_arg + 1 >= argc) fatal("argument expected for -p");
