@@ -71,6 +71,7 @@ struct AgentClientSsh
     unsigned char *endpoint;
     unsigned char *queue_id;
     int mode;
+    int verbose_mode;
 
     // read buffer
     unsigned char *rd_data;
@@ -184,7 +185,8 @@ init_func(
         const unsigned char *inst_id,
         const unsigned char *endpoint,
         const unsigned char *queue_id,
-        int mode)
+        int mode,
+        int verbose_mode)
 {
     struct AgentClientSsh *acs = (struct AgentClientSsh *) ac;
     acs->inst_id = xstrdup(inst_id);
@@ -193,6 +195,7 @@ init_func(
         acs->queue_id = xstrdup(queue_id);
     }
     acs->mode = mode;
+    acs->verbose_mode = verbose_mode;
     return 0;
 }
 
@@ -218,7 +221,9 @@ add_rchunk(struct AgentClientSsh *acs, const unsigned char *data, int size)
 static void
 add_wchunk_move(struct AgentClientSsh *acs, unsigned char *data, int size)
 {
-    info("to agent: %s", data);
+    if (acs->verbose_mode) {
+        info("to agent: %s", data);
+    }
     pthread_mutex_lock(&acs->wchunkm);
     if (acs->wchunka == acs->wchunku) {
         if (!(acs->wchunka *= 2)) acs->wchunka = 4;
@@ -411,7 +416,9 @@ handle_rchunks(struct AgentClientSsh *acs)
 
     for (int i = 0; i < acs->rchunku; ++i) {
         struct FDChunk *c = &acs->rchunks[i];
-        info("from agent: %s", c->data);
+        if (acs->verbose_mode) {
+            info("from agent: %s", c->data);
+        }
         cJSON *j = cJSON_Parse(c->data);
         if (!j) {
             err("JSON parse error");
@@ -585,6 +592,9 @@ connect_func(struct AgentClient *ac)
             fprintf(cmd_f, " -m compile");
         } else if (acs->mode == PREPARE_RUN) {
             fprintf(cmd_f, " -m run");
+        }
+        if (acs->verbose_mode) {
+            fprintf(cmd_f, " -v");
         }
         fprintf(cmd_f, " 2>>%s/var/ej-agent.log", EJUDGE_CONTESTS_HOME_DIR);
         fclose(cmd_f); cmd_f = NULL;
@@ -1143,7 +1153,7 @@ internal_ping_callback(
     struct AgentClientSsh *acs = (struct AgentClientSsh *) u;
     if (acs->ping_future) {
         long long roundtrip_ms = acs->current_time_ms - acs->ping_time_ms;
-        info("ping roundtrip: %lld ms", roundtrip_ms);
+        info("agent: ping roundtrip: %lld ms", roundtrip_ms);
         acs->ping_future = NULL;
         acs->ping_time_ms = 0;
         future_fini(f);

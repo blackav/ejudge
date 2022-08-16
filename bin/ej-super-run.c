@@ -553,7 +553,7 @@ do_loop(
       agent = agent_client_ssh_create();
       if (agent->ops->init(agent, instance_id,
                            agent_name + 4, run_server_id,
-                           PREPARE_RUN) < 0) {
+                           PREPARE_RUN, verbose_mode) < 0) {
         err("failed to initalize agent");
         return -1;
       }

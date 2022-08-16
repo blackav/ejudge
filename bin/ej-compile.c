@@ -865,7 +865,7 @@ new_loop(int parallel_mode)
       agent = agent_client_ssh_create();
       if (agent->ops->init(agent, instance_id,
                            agent_name + 4, compile_server_id,
-                           PREPARE_COMPILE) < 0) {
+                           PREPARE_COMPILE, 0) < 0) {
         err("failed to initalize agent");
         return -1;
       }
