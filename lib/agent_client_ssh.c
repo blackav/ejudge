@@ -40,6 +40,7 @@
 #include <sys/time.h>
 #include <sys/mman.h>
 #include <sys/timerfd.h>
+#include <ctype.h>
 
 struct FDChunk
 {
@@ -221,9 +222,6 @@ add_rchunk(struct AgentClientSsh *acs, const unsigned char *data, int size)
 static void
 add_wchunk_move(struct AgentClientSsh *acs, unsigned char *data, int size)
 {
-    if (acs->verbose_mode) {
-        info("to agent: %s", data);
-    }
     pthread_mutex_lock(&acs->wchunkm);
     if (acs->wchunka == acs->wchunku) {
         if (!(acs->wchunka *= 2)) acs->wchunka = 4;
@@ -417,6 +415,10 @@ handle_rchunks(struct AgentClientSsh *acs)
     for (int i = 0; i < acs->rchunku; ++i) {
         struct FDChunk *c = &acs->rchunks[i];
         if (acs->verbose_mode) {
+            while (c->size > 0 && isspace(c->data[c->size - 1])) {
+                --c->size;
+            }
+            c->data[c->size] = 0;
             info("from agent: %s", c->data);
         }
         cJSON *j = cJSON_Parse(c->data);
@@ -723,6 +725,9 @@ add_wchunk_json(
 {
     char *str = cJSON_PrintUnformatted(json);
     int len = strlen(str);
+    if (acs->verbose_mode) {
+        info("to agent: %s", str);
+    }
     str = realloc(str, len + 2);
     str[len++] = '\n';
     str[len++] = '\n';
