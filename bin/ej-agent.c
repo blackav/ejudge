@@ -673,6 +673,7 @@ handle_stdin_read_func(struct AppState *as, struct FDInfo *fdi)
                 --size;
             }
             data[size] = 0;
+            fdi->rchunks[i].size = size;
         }
         if (as->verbose_mode) {
             info("%s: in: %s", as->inst_id, fdi->rchunks[i].data);
