@@ -994,7 +994,7 @@ poll_func(
 {
     unsigned char pkt_name[PATH_MAX];
     int random_mode = 0;
-    cJSON jrm = cJSON_GetObjectItem(query, "random_mode");
+    cJSON *jrm = cJSON_GetObjectItem(query, "random_mode");
     if (jrm && jrm->type == cJSON_True) {
         random_mode = 1;
     }
