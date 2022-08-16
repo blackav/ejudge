@@ -2,7 +2,7 @@
 #ifndef __SUPER_RUN_STATUS_H__
 #define __SUPER_RUN_STATUS_H__
 
-/* Copyright (C) 2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2015-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -82,8 +82,11 @@ super_run_status_check(
         const void *data,
         size_t size);
 
+struct AgentClient;
+
 void
 super_run_status_save(
+        struct AgentClient *agent,
         const unsigned char *heartbeat_dir,
         const unsigned char *file_name,
         const struct super_run_status *psrs,

@@ -223,7 +223,7 @@ super_run_before_tests(struct run_listener *gself, int test_no)
   rs.queue_ts = self->queue_ts;
   rs.testing_start_ts = self->testing_start_ts;
 
-  super_run_status_save(super_run_heartbeat_path, status_file_name, &rs,
+  super_run_status_save(agent, super_run_heartbeat_path, status_file_name, &rs,
                         current_time_ms, &last_heartbear_save_time, HEARTBEAT_SAVE_INTERVAL_MS,
                         &pending_stop_flag, &pending_down_flag);
   if (!master_stop_enabled) pending_stop_flag = 0;
@@ -561,7 +561,7 @@ report_waiting_state(long long current_time_ms, long long last_check_time_ms)
   rs.timestamp = current_time_ms;
   rs.last_run_ts = last_check_time_ms;
   rs.status = SRS_WAITING;
-  super_run_status_save(super_run_heartbeat_path, status_file_name, &rs,
+  super_run_status_save(agent, super_run_heartbeat_path, status_file_name, &rs,
                         current_time_ms, &last_heartbear_save_time, HEARTBEAT_SAVE_INTERVAL_MS,
                         &pending_stop_flag, &pending_down_flag);
   if (!master_stop_enabled) pending_stop_flag = 0;

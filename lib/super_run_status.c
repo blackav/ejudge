@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2015-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2015-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -17,6 +17,7 @@
 #include "ejudge/config.h"
 #include "ejudge/ej_limits.h"
 #include "ejudge/super_run_status.h"
+#include "ejudge/agent_client.h"
 
 #include "ejudge/xalloc.h"
 
@@ -90,6 +91,7 @@ super_run_status_check(const void *data, size_t size)
 
 void
 super_run_status_save(
+        struct AgentClient *agent,
         const unsigned char *heartbeat_dir,
         const unsigned char *file_name,
         const struct super_run_status *psrs,
@@ -107,6 +109,13 @@ super_run_status_save(
         if (timeout_ms > 0 && *p_last_saved_time_ms > 0 && *p_last_saved_time_ms + timeout_ms > current_time_ms) {
             return;
         }
+    }
+
+    if (agent) {
+        agent->ops->put_heartbeat(agent, file_name, psrs, sizeof(*psrs),
+                                  p_last_saved_time_ms, p_stop_flag,
+                                  p_down_flag);
+        return;
     }
 
     snprintf(in_path, sizeof(in_path), "%s/in/%s", heartbeat_dir, file_name);

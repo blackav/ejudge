@@ -1303,8 +1303,8 @@ put_heartbeat_func(
         const void *data,
         size_t size,
         long long *p_last_saved_time_ms,
-        long long *p_stop_flag,
-        long long *p_down_flag)
+        unsigned char *p_stop_flag,
+        unsigned char *p_down_flag)
 {
     int result = -1;
     struct AgentClientSsh *acs = (struct AgentClientSsh *) ac;
