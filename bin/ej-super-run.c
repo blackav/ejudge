@@ -567,6 +567,7 @@ do_loop(
   time_t last_handled = 0;
   long long last_handled_ms = 0;
   long long current_time_ms = 0;
+  struct Future *future = NULL;
 
   if (agent_name && *agent_name) {
     if (!strncmp(agent_name, "ssh:", 4)) {
@@ -602,6 +603,7 @@ do_loop(
   }
   */
   interrupt_init();
+  interrupt_setup_usr1();
   interrupt_disable();
 
   while (1) {
@@ -625,12 +627,31 @@ do_loop(
       break;
     }
 
+    r = 0;
     pkt_name[0] = 0;
     if (agent) {
+      if (interrupt_was_usr1()) {
+        interrupt_reset_usr1();
+        if (future) {
+          r = agent->ops->async_wait_complete(agent, &future, pkt_name, sizeof(pkt_name));
+          if (r < 0) {
+            err("async_wait_complete failed");
+            break;
+          }
+        }
+      } else if (!future) {
+        r = agent->ops->async_wait_init(agent, SIGUSR1, 1, pkt_name, sizeof(pkt_name), &future);
+        if (r < 0) {
+          err("async_wait_init failed");
+          break;
+        }
+      }
+      /*
       r = agent->ops->poll_queue(agent, pkt_name, sizeof(pkt_name), 1);
       if (r < 0) {
         err("agent poll_queue failed, waiting...");
       }
+      */
     } else {
       r = scan_dir(super_run_spool_path, pkt_name, sizeof(pkt_name), 1);
       if (r < 0) {
@@ -642,8 +663,9 @@ do_loop(
       current_time_ms = ((long long) ctv.tv_sec) * 1000 + ctv.tv_usec / 1000;
       report_waiting_state(current_time_ms, last_handled_ms);
 
+      int sleep_time = agent?30:global->sleep_time;
       interrupt_enable();
-      os_Sleep(global->sleep_time);
+      os_Sleep(sleep_time);
       interrupt_disable();
       continue;
     }
@@ -653,8 +675,9 @@ do_loop(
       current_time_ms = ((long long) ctv.tv_sec) * 1000 + ctv.tv_usec / 1000;
       report_waiting_state(current_time_ms, last_handled_ms);
 
+      int sleep_time = agent?30:global->sleep_time;
       interrupt_enable();
-      os_Sleep(global->sleep_time);
+      os_Sleep(sleep_time);
       interrupt_disable();
       continue;
     }
