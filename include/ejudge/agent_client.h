@@ -38,7 +38,8 @@ struct AgentClientOps
     int (*poll_queue)(
         struct AgentClient *ac,
         unsigned char *pkt_name,
-        size_t pkt_len);
+        size_t pkt_len,
+        int random_mode);
 
     int (*get_packet)(
         struct AgentClient *ac,

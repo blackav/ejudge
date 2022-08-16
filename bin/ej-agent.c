@@ -993,7 +993,12 @@ poll_func(
         cJSON *reply)
 {
     unsigned char pkt_name[PATH_MAX];
-    int r = scan_dir(as->queue_dir, pkt_name, sizeof(pkt_name), 0);
+    int random_mode = 0;
+    cJSON jrm = cJSON_GetObjectItem(query, "random_mode");
+    if (jrm && jrm->type == cJSON_True) {
+        random_mode = 1;
+    }
+    int r = scan_dir(as->queue_dir, pkt_name, sizeof(pkt_name), random_mode);
     if (r < 0) {
         cJSON_AddStringToObject(reply, "message", "scan_dir failed");
         err("%s: scan_dir failed: %s", as->inst_id, strerror(-r));

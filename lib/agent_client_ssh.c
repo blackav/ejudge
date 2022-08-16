@@ -758,13 +758,17 @@ static int
 poll_queue_func(
         struct AgentClient *ac,
         unsigned char *pkt_name,
-        size_t pkt_len)
+        size_t pkt_len,
+        int random_mode)
 {
     int result = 0;
     struct AgentClientSsh *acs = (struct AgentClientSsh *) ac;
     struct Future f;
     long long time_ms;
     cJSON *jq = create_request(acs, &f, &time_ms, "poll");
+    if (random_mode > 0) {
+        cJSON_AddTrueToObject(jq, "random_mode");
+    }
     add_wchunk_json(acs, jq);
     cJSON_Delete(jq); jq = NULL;
 
