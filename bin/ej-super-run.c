@@ -273,14 +273,22 @@ handle_packet(
   memset(&run_listener, 0, sizeof(run_listener));
   run_listener.b.ops = &super_run_listener_ops;
 
-  r = generic_read_file(&srp_b, 0, &srp_z, SAFE | REMOVE, super_run_spool_path, pkt_name, "");
+  if (agent) {
+    r = agent->ops->get_packet(agent, pkt_name, &srp_b, &srp_z);
+    if (r < 0) {
+      err("agent get_packet failed");
+      goto cleanup;
+    }
+  } else {
+    r = generic_read_file(&srp_b, 0, &srp_z, SAFE | REMOVE, super_run_spool_path, pkt_name, "");
+    if (r < 0) {
+      err("generic_read_file failed for packet %s in %s", pkt_name, super_run_spool_path);
+      goto cleanup;
+    }
+  }
   if (r == 0) {
     // ignore this packet
     retval = 0;
-    goto cleanup;
-  }
-  if (r < 0) {
-    err("generic_read_file failed for packet %s in %s", pkt_name, super_run_spool_path);
     goto cleanup;
   }
 
