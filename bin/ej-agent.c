@@ -177,6 +177,8 @@ struct AppState
     unsigned char *data_dir;
     unsigned char *heartbeat_dir;
     unsigned char *heartbeat_packet_dir;
+
+    int verbose_mode;
 };
 
 static void
@@ -639,7 +641,9 @@ done:
     cJSON_AddBoolToObject(reply, "ok", ok);
     jstr = cJSON_PrintUnformatted(reply);
     jlen = strlen(jstr);
-    info("%s: json: %s", as->inst_id, jstr);
+    if (as->verbose_mode) {
+        info("%s: json: %s", as->inst_id, jstr);
+    }
     jstr = realloc(jstr, jlen + 2);
     jstr[jlen++] = '\n';
     jstr[jlen++] = '\n';
@@ -670,7 +674,9 @@ handle_stdin_read_func(struct AppState *as, struct FDInfo *fdi)
             }
             data[size] = 0;
         }
-        info("%s: in: %s", as->inst_id, fdi->rchunks[i].data);
+        if (as->verbose_mode) {
+            info("%s: in: %s", as->inst_id, fdi->rchunks[i].data);
+        }
         handle_stdin_rchunk(as, fdi, fdi->rchunks[i].data, fdi->rchunks[i].size);
     }
     fdinfo_clear_rchunks(fdi, 0);
@@ -864,7 +870,9 @@ check_spool_state(struct AppState *as)
     cJSON_AddTrueToObject(reply, "ok");
     char *jstr = cJSON_PrintUnformatted(reply);
     size_t jlen = strlen(jstr);
-    info("%s: json: %s", as->inst_id, jstr);
+    if (as->verbose_mode) {
+        info("%s: json: %s", as->inst_id, jstr);
+    }
     jstr = realloc(jstr, jlen + 2);
     jstr[jlen++] = '\n';
     jstr[jlen++] = '\n';
@@ -1359,6 +1367,7 @@ main(int argc, char *argv[])
     const unsigned char *queue_id = NULL;
     int mode = 0;
     int argi = 1;
+    int verbose_mode = 0;
 
     signal(SIGPIPE, SIG_IGN);
 
@@ -1379,6 +1388,9 @@ main(int argc, char *argv[])
                 mode = PREPARE_SERVE;
             } else die("invalid mode");
             argi += 2;
+        } else if (!strcmp(argv[argi], "-v")) {
+            verbose_mode = 1;
+            ++argi;
         } else if (!strcmp(argv[argi], "--")) {
             ++argi;
             break;
@@ -1394,6 +1406,7 @@ main(int argc, char *argv[])
 
     struct AppState app;
     app_state_init(&app);
+    app.verbose_mode = verbose_mode;
 
     if (app_state_prepare(&app) < 0) goto done;
 
