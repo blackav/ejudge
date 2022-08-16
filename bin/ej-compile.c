@@ -80,6 +80,7 @@ static unsigned char compile_server_src_dir[PATH_MAX];
 static unsigned char *agent_name;
 static struct AgentClient *agent;
 static unsigned char *instance_id;
+static int verbose_mode;
 
 struct testinfo_subst_handler_compile
 {
@@ -865,7 +866,7 @@ new_loop(int parallel_mode)
       agent = agent_client_ssh_create();
       if (agent->ops->init(agent, instance_id,
                            agent_name + 4, compile_server_id,
-                           PREPARE_COMPILE, 0) < 0) {
+                           PREPARE_COMPILE, verbose_mode) < 0) {
         err("failed to initalize agent");
         return -1;
       }
@@ -1455,6 +1456,10 @@ main(int argc, char *argv[])
       parallel_mode = 1;
       ++i;
       argv_restart[j++] = "-p";
+    } else if (!strcmp(argv[i], "-v")) {
+      verbose_mode = 1;
+      ++i;
+      argv_restart[j++] = "-v";
     } else if (!strcmp(argv[i], "--help")) {
       code = 0;
       goto print_usage;
