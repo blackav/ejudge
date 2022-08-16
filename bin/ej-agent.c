@@ -724,7 +724,6 @@ pipe_write_func(struct AppState *as, struct FDInfo *fdi)
 done:
     app_state_disarm(as, fdi);
     close(fdi->fd); fdi->fd = -1;
-    //process_state_notify(as, fdi->prc);
 }
 
 static const struct FDInfoOps stdout_ops =
@@ -1339,7 +1338,7 @@ int
 main(int argc, char *argv[])
 {
     int retval = 1;
-    const unsigned char *id = NULL;
+    const unsigned char *inst_id = NULL;
     const unsigned char *queue_id = NULL;
     int mode = 0;
     int argi = 1;
@@ -1353,7 +1352,7 @@ main(int argc, char *argv[])
             argi += 2;
         } else if (!strcmp(argv[argi], "-i")) {
             if (argi + 1 >= argc) die("argument expected for -i");
-            id = argv[argi + 1];
+            inst_id = argv[argi + 1];
             argi += 2;
         } else if (!strcmp(argv[argi], "-m")) {
             if (argi + 1 >= argc) die("argument expected for -m");
@@ -1385,8 +1384,8 @@ main(int argc, char *argv[])
         char *id_s = NULL;
         size_t id_z = 0;
         FILE *id_f = open_memstream(&id_s, &id_z);
-        if (id && id[0]) {
-            fprintf(id_f, "%s", id);
+        if (inst_id && inst_id[0]) {
+            fprintf(id_f, "%s", inst_id);
         } else {
             const char *s = getenv("SSH_CLIENT");
             if (s && *s) {
