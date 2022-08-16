@@ -1165,8 +1165,15 @@ create_contest_dirs(
         }
     }
 
+    const unsigned char *root_dir = NULL;
+    if (as->mode == PREPARE_COMPILE) {
+        root_dir = EJUDGE_COMPILE_SPOOL_DIR;
+    } else if (as->mode == PREPARE_RUN) {
+        root_dir = EJUDGE_RUN_SPOOL_DIR;
+    }
+
     unsigned char server_dir[PATH_MAX];
-    snprintf(server_dir, sizeof(server_dir), "%s/%s", EJUDGE_COMPILE_SPOOL_DIR, server);
+    snprintf(server_dir, sizeof(server_dir), "%s/%s", root_dir, server);
     unsigned char server_contest_dir[PATH_MAX];
     snprintf(server_contest_dir, sizeof(server_contest_dir), "%s/%06d", server_dir, contest_id);
     unsigned char status_dir[PATH_MAX];
