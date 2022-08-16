@@ -614,10 +614,18 @@ do_loop(
     }
 
     pkt_name[0] = 0;
-    r = scan_dir(super_run_spool_path, pkt_name, sizeof(pkt_name), 1);
+    if (agent) {
+      r = agent->ops->poll_queue(agent, pkt_name, sizeof(pkt_name), 1);
+      if (r < 0) {
+        err("agent poll_queue failed, waiting...");
+      }
+    } else {
+      r = scan_dir(super_run_spool_path, pkt_name, sizeof(pkt_name), 1);
+      if (r < 0) {
+        err("scan_dir failed for %s, waiting...", super_run_spool_path);
+      }
+    }
     if (r < 0) {
-      err("scan_dir failed for %s, waiting...", super_run_spool_path);
-
       gettimeofday(&ctv, NULL);
       current_time_ms = ((long long) ctv.tv_sec) * 1000 + ctv.tv_usec / 1000;
       report_waiting_state(current_time_ms, last_handled_ms);
