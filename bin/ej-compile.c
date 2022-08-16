@@ -1440,17 +1440,17 @@ main(int argc, char *argv[])
       struct stat stb;
       if (fstat(lval, &stb) < 0 || !S_ISREG(stb.st_mode)) goto print_usage;
       ejudge_xml_fd = lval;
-    } else if (!strcmp(argv[i], "-a")) {
+    } else if (!strcmp(argv[i], "--agent")) {
       if (++i >= argc) goto print_usage;
       xfree(agent_name);
       agent_name = xstrdup(argv[i++]);
-      argv_restart[j++] = "-a";
+      argv_restart[j++] = "--agent";
       argv_restart[j++] = argv[i - 1];
-    } else if (!strcmp(argv[i], "-s")) {
+    } else if (!strcmp(argv[i], "--instance-id")) {
       if (++i >= argc) goto print_usage;
       xfree(instance_id);
       instance_id = xstrdup(argv[i++]);
-      argv_restart[j++] = "-s";
+      argv_restart[j++] = "--instance-id";
       argv_restart[j++] = argv[i - 1];
     } else if (!strcmp(argv[i], "-p")) {
       parallel_mode = 1;

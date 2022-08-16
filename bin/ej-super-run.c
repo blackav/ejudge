@@ -1346,10 +1346,17 @@ main(int argc, char *argv[])
       argv_restart[argc_restart++] = argv[cur_arg];
       argv_restart[argc_restart++] = argv[cur_arg + 1];
       cur_arg += 2;
-    } else if (!strcmp(argv[cur_arg], "-A")) {
-      if (cur_arg + 1 >= argc) fatal("argument expected for -A");
+    } else if (!strcmp(argv[cur_arg], "--agent")) {
+      if (cur_arg + 1 >= argc) fatal("argument expected for --agent");
       xfree(agent_name);
       agent_name = xstrdup(argv[cur_arg + 1]);
+      argv_restart[argc_restart++] = argv[cur_arg];
+      argv_restart[argc_restart++] = argv[cur_arg + 1];
+      cur_arg += 2;
+    } else if (!strcmp(argv[cur_arg], "--instance-id")) {
+      if (cur_arg + 1 >= argc) fatal("argument expected for --instance-id");
+      xfree(instance_id);
+      instance_id = xstrdup(argv[cur_arg + 1]);
       argv_restart[argc_restart++] = argv[cur_arg];
       argv_restart[argc_restart++] = argv[cur_arg + 1];
       cur_arg += 2;
