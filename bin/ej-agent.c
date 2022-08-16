@@ -1386,7 +1386,7 @@ main(int argc, char *argv[])
             if (!strcmp(argv[argi + 1], "compile")) {
                 mode = PREPARE_COMPILE;
             } else if (!strcmp(argv[argi + 1], "run")) {
-                mode = PREPARE_SERVE;
+                mode = PREPARE_RUN;
             } else die("invalid mode");
             argi += 2;
         } else if (!strcmp(argv[argi], "-v")) {
