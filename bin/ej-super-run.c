@@ -363,8 +363,13 @@ handle_packet(
     snprintf(exe_pkt_name, sizeof(exe_pkt_name), "%s%s", pkt_name, srgp->exe_sfx);
     snprintf(exe_name, sizeof(exe_name), "%s%s", run_base, srgp->exe_sfx);
 
-    r = generic_copy_file(REMOVE, super_run_exe_path, exe_pkt_name, "",
-                          0, global->run_work_dir, exe_name, "");
+    if (agent) {
+      r = agent->ops->get_data_2(agent, pkt_name, srgp->exe_sfx,
+                                 global->run_work_dir, run_base, srgp->exe_sfx);
+    } else {
+      r = generic_copy_file(REMOVE, super_run_exe_path, exe_pkt_name, "",
+                            0, global->run_work_dir, exe_name, "");
+    }
     if (r <= 0) {
       // FIXME: handle this differently?
       retval = 0;

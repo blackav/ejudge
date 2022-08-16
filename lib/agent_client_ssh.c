@@ -1240,6 +1240,62 @@ put_packet_func(
     return result;
 }
 
+static int
+get_data_2_func(
+        struct AgentClient *ac,
+        const unsigned char *pkt_name,
+        const unsigned char *suffix,
+        const unsigned char *dir,
+        const unsigned char *name,
+        const unsigned char *out_suffix)
+{
+    int retval = -1;
+    int fd = -1;
+    char *data = NULL;
+    size_t size = 0;
+    char *mem = MAP_FAILED;
+    int r = get_data_func(ac, pkt_name, suffix, &data, &size);
+    if (r <= 0) {
+        retval = r;
+        goto done;
+    }
+    if (!dir) dir = "";
+    if (!name) name = "";
+    if (!out_suffix) out_suffix = "";
+    unsigned char path[PATH_MAX];
+    if (!*dir) {
+        snprintf(path, sizeof(path), "%s%s", name, out_suffix);
+    } else {
+        snprintf(path, sizeof(path), "%s/%s%s", dir, name, out_suffix);
+    }
+    fd = open(path, O_RDWR | O_CREAT | O_TRUNC, 0600);
+    if (fd < 0) {
+        err("failed to open output file: %s", os_ErrorMsg());
+        goto done;
+    }
+    if (ftruncate(fd, size) < 0) {
+        err("failed to truncate output file: %s", os_ErrorMsg());
+        goto done;
+    }
+    if (!size) {
+        retval = 0;
+        goto done;
+    }
+    mem = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    if (mem == MAP_FAILED) {
+        err("failed to mmap output file: %s", os_ErrorMsg());
+        goto done;
+    }
+    memmove(mem, data, size);
+    retval = 0;
+
+done:
+    if (mem != MAP_FAILED) munmap(mem, size);
+    if (fd >= 0) close(fd);
+    free(data);
+    return retval;
+}
+
 static const struct AgentClientOps ops_ssh =
 {
     destroy_func,
@@ -1257,6 +1313,7 @@ static const struct AgentClientOps ops_ssh =
     async_wait_complete_func,
     add_ignored_func,
     put_packet_func,
+    get_data_2_func,
 };
 
 struct AgentClient *
