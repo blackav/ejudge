@@ -511,8 +511,17 @@ handle_packet(
     goto cleanup;
   }
 
-  if (generic_write_file(reply_pkt_buf, reply_pkt_buf_size, SAFE, full_status_dir, reply_packet_name, "") < 0) {
-    goto cleanup;
+  if (agent) {
+    if (agent->ops->put_reply(agent,
+                              srgp->contest_server_id,
+                              srgp->contest_id,
+                              reply_packet_name,
+                              reply_pkt_buf, reply_pkt_buf_size) < 0)
+      goto cleanup;
+  } else {
+    if (generic_write_file(reply_pkt_buf, reply_pkt_buf_size, SAFE, full_status_dir, reply_packet_name, "") < 0) {
+      goto cleanup;
+    }
   }
 
 cleanup:
