@@ -649,7 +649,11 @@ do_loop(
 
     r = handle_packet(state, pkt_name);
     if (!r) {
-      scan_dir_add_ignored(super_run_spool_path, pkt_name);
+      if (agent) {
+        agent->ops->add_ignored(agent, pkt_name);
+      } else {
+        scan_dir_add_ignored(super_run_spool_path, pkt_name);
+      }
     }
 
     gettimeofday(&ctv, NULL);

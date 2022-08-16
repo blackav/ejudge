@@ -92,6 +92,10 @@ struct AgentClientOps
         struct Future **p_future,
         unsigned char *pkt_name,
         size_t pkt_len);
+
+    int (*add_ignored)(
+        struct AgentClient *ac,
+        const unsigned char *pkt_name);
 };
 
 struct AgentClient

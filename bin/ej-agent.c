@@ -1373,6 +1373,25 @@ wait_func(
     return 1;
 }
 
+static int
+add_ignored_func(
+        struct AppState *as,
+        const struct QueryCallback *cb,
+        cJSON *query,
+        cJSON *reply)
+{
+    cJSON *jp = cJSON_GetObjectItem(query, "pkt_name");
+    if (!jp || jp->type != cJSON_String) {
+        cJSON_AddStringToObject(reply, "message", "invalid json");
+        err("%s: get_packet: missing pkt_name", as->inst_id);
+        return 0;
+    }
+    const unsigned char *pkt_name = jp->valuestring;
+
+    scan_dir_add_ignored(as->queue_dir, pkt_name);
+    return 1;
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -1456,6 +1475,7 @@ main(int argc, char *argv[])
     app_state_add_query_callback(&app, "put-reply", NULL, put_reply_func);
     app_state_add_query_callback(&app, "put-output", NULL, put_output_func);
     app_state_add_query_callback(&app, "wait", NULL, wait_func);
+    app_state_add_query_callback(&app, "add-ignored", NULL, add_ignored_func);
 
     info("%s: started", app.inst_id);
     do_loop(&app);
