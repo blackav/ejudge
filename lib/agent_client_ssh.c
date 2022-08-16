@@ -1287,7 +1287,7 @@ get_data_2_func(
         goto done;
     }
     memmove(mem, data, size);
-    retval = 0;
+    retval = 1;
 
 done:
     if (mem != MAP_FAILED) munmap(mem, size);

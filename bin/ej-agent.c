@@ -1417,7 +1417,7 @@ put_packet_func(
         goto done;
     }
 
-    if (generic_write_file(data, size, SAFE, as->spool_dir, pkt_name, "") < 0) {
+    if (generic_write_file(data, size, SAFE, as->queue_dir, pkt_name, "") < 0) {
         cJSON_AddStringToObject(reply, "message", "filesystem error");
         goto done;
     }
