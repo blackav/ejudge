@@ -915,7 +915,7 @@ new_loop(int parallel_mode)
           }
         }
       } else if (!future) {
-        r = agent->ops->async_wait_init(agent, SIGUSR1, pkt_name, sizeof(pkt_name), &future);
+        r = agent->ops->async_wait_init(agent, SIGUSR1, 0, pkt_name, sizeof(pkt_name), &future);
         //r = agent->ops->poll_queue(agent, pkt_name, sizeof(pkt_name));
         if (r < 0) {
           err("async_wait_init failed");

@@ -160,6 +160,7 @@ struct AppState
     long long wait_time_ms;
     int spool_wd;
     int wait_finished;
+    int wait_random_mode;
 
     int ifd;                    /* inotify file descriptor */
     int sfd;                    /* signal file descriptor */
@@ -854,7 +855,7 @@ static void
 check_spool_state(struct AppState *as)
 {
     unsigned char pkt_name[PATH_MAX];
-    int r = scan_dir(as->queue_dir, pkt_name, sizeof(pkt_name), 0);
+    int r = scan_dir(as->queue_dir, pkt_name, sizeof(pkt_name), as->wait_random_mode);
     if (r <= 0) return;
 
     cJSON *reply = cJSON_CreateObject();
@@ -885,6 +886,7 @@ check_spool_state(struct AppState *as)
     cJSON_Delete(reply);
     as->wait_serial = 0;
     as->wait_time_ms = 0;
+    as->wait_random_mode = 0;
     if (as->spool_wd >= 0) {
         inotify_rm_watch(as->ifd, as->spool_wd);
         as->spool_wd = -1;
@@ -1341,9 +1343,14 @@ wait_func(
         return 0;
     }
     int channel = (int) jc->valuedouble;
+    int random_mode = 0;
+    cJSON *jr = cJSON_GetObjectItem(query, "random_mode");
+    if (jr && jr->type == cJSON_True) {
+        random_mode = 1;
+    }
 
     unsigned char pkt_name[PATH_MAX];
-    int r = scan_dir(as->queue_dir, pkt_name, sizeof(pkt_name), 0);
+    int r = scan_dir(as->queue_dir, pkt_name, sizeof(pkt_name), random_mode);
     if (r < 0) {
         cJSON_AddStringToObject(reply, "message", "scan_dir failed");
         err("%s: scan_dir failed: %s", as->inst_id, strerror(-r));
@@ -1355,6 +1362,7 @@ wait_func(
         return 1;
     }
 
+    as->wait_random_mode = random_mode;
     as->wait_serial = channel;
     as->wait_time_ms = as->current_time_ms;
     as->spool_wd = inotify_add_watch(as->ifd, as->queue_packet_dir, IN_CREATE | IN_MOVED_TO);

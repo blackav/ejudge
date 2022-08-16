@@ -1074,6 +1074,7 @@ static int
 async_wait_init_func(
         struct AgentClient *ac,
         int notify_signal,
+        int random_mode,
         unsigned char *pkt_name,
         size_t pkt_len,
         struct Future **p_future)
@@ -1084,6 +1085,9 @@ async_wait_init_func(
     long long time_ms;
     cJSON *jq = create_request(acs, &f, &time_ms, "wait");
     cJSON_AddNumberToObject(jq, "channel", (double) ++acs->serial);
+    if (random_mode > 0) {
+        cJSON_AddTrueToObject(jq, "random_mode");
+    }
     add_wchunk_json(acs, jq);
     cJSON_Delete(jq); jq = NULL;
 

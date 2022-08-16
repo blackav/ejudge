@@ -82,6 +82,7 @@ struct AgentClientOps
     int (*async_wait_init)(
         struct AgentClient *ac,
         int notify_signal,
+        int random_mode,
         unsigned char *pkt_name,
         size_t pkt_len,
         struct Future **p_future);
