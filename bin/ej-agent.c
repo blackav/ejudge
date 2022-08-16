@@ -175,7 +175,8 @@ struct AppState
     unsigned char *queue_dir;
     unsigned char *queue_packet_dir;
     unsigned char *data_dir;
-    unsigned char *heartbeat_spool_dir;
+    unsigned char *heartbeat_dir;
+    unsigned char *heartbeat_packet_dir;
 };
 
 static void
@@ -822,6 +823,22 @@ app_state_configure_directories(struct AppState *as)
         as->queue_packet_dir = s; s = NULL;
         asprintf(&s, "%s/%s/src", EJUDGE_COMPILE_SPOOL_DIR, as->queue_id);
         as->data_dir = s; s = NULL;
+#endif
+    } else if (as->mode == PREPARE_RUN) {
+#if defined EJUDGE_RUN_SPOOL_DIR
+        char *s = NULL;
+        asprintf(&s, "%s/%s", EJUDGE_RUN_SPOOL_DIR, as->queue_id);
+        as->spool_dir = s; s = NULL;
+        asprintf(&s, "%s/queue", as->spool_dir);
+        as->queue_dir = s; s = NULL;
+        asprintf(&s, "%s/dir", as->queue_dir);
+        as->queue_packet_dir = s; s = NULL;
+        asprintf(&s, "%s/%s/exe", EJUDGE_RUN_SPOOL_DIR, as->queue_id);
+        as->data_dir = s; s = NULL;
+        asprintf(&s, "%s/%s/heartbeat", EJUDGE_RUN_SPOOL_DIR, as->queue_id);
+        as->heartbeat_dir = s; s = NULL;
+        asprintf(&s, "%s/dir", as->heartbeat_dir);
+        as->heartbeat_packet_dir = s; s = NULL;
 #endif
     }
 }
