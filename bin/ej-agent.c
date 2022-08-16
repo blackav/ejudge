@@ -169,7 +169,7 @@ struct AppState
     long long current_time_ms;
     unsigned char *queue_id;
     int mode;
-    unsigned char *id;
+    unsigned char *inst_id;
 
     unsigned char *spool_dir;
     unsigned char *queue_dir;
@@ -342,7 +342,7 @@ app_state_arm_for_read(struct AppState *as, struct FDInfo *fdi)
     if (!fdi->events) {
         struct epoll_event ev = { .events = EPOLLIN, .data.ptr = fdi };
         if (epoll_ctl(as->efd, EPOLL_CTL_ADD, fdi->fd, &ev) < 0) {
-            err("%s: epoll_ctl failed: %s", as->id, os_ErrorMsg());
+            err("%s: epoll_ctl failed: %s", as->inst_id, os_ErrorMsg());
             return;
         }
         fdi->events = EPOLLIN;
@@ -350,7 +350,7 @@ app_state_arm_for_read(struct AppState *as, struct FDInfo *fdi)
 
     struct epoll_event ev = { .events = EPOLLIN, .data.ptr = fdi };
     if (epoll_ctl(as->efd, EPOLL_CTL_MOD, fdi->fd, &ev) < 0) {
-        err("%s: epoll_ctl failed: %s", as->id, os_ErrorMsg());
+        err("%s: epoll_ctl failed: %s", as->inst_id, os_ErrorMsg());
         return;
     }
     fdi->events = EPOLLIN;
@@ -364,7 +364,7 @@ app_state_arm_for_write(struct AppState *as, struct FDInfo *fdi)
     if (!fdi->events) {
         struct epoll_event ev = { .events = EPOLLOUT, .data.ptr = fdi };
         if (epoll_ctl(as->efd, EPOLL_CTL_ADD, fdi->fd, &ev) < 0) {
-            err("%s: epoll_ctl failed: %s", as->id, os_ErrorMsg());
+            err("%s: epoll_ctl failed: %s", as->inst_id, os_ErrorMsg());
             return;
         }
         fdi->events = EPOLLOUT;
@@ -372,7 +372,7 @@ app_state_arm_for_write(struct AppState *as, struct FDInfo *fdi)
 
     struct epoll_event ev = { .events = EPOLLOUT, .data.ptr = fdi };
     if (epoll_ctl(as->efd, EPOLL_CTL_MOD, fdi->fd, &ev) < 0) {
-        err("%s: epoll_ctl failed: %s", as->id, os_ErrorMsg());
+        err("%s: epoll_ctl failed: %s", as->inst_id, os_ErrorMsg());
         return;
     }
     fdi->events = EPOLLOUT;
@@ -385,7 +385,7 @@ app_state_disarm(struct AppState *as, struct FDInfo *fdi)
 
     struct epoll_event ev = { .events = 0, .data.ptr = fdi };
     if (epoll_ctl(as->efd, EPOLL_CTL_DEL, fdi->fd, &ev) < 0) {
-        err("%s: epoll_ctl failed: %s", as->id, os_ErrorMsg());
+        err("%s: epoll_ctl failed: %s", as->inst_id, os_ErrorMsg());
         return;
     }
     fdi->events = 0;
@@ -440,18 +440,18 @@ signal_read_func(struct AppState *as, struct FDInfo *fdi)
             break;
         }
         if (r < 0) {
-            err("%s: signal_read_func: read failed: %s", as->id, os_ErrorMsg());
+            err("%s: signal_read_func: read failed: %s", as->inst_id, os_ErrorMsg());
             break;
         }
         if (r != sizeof(sss)) {
-            err("%s: signal_read_func: read returned invalid size %d", as->id, r);
+            err("%s: signal_read_func: read returned invalid size %d", as->inst_id, r);
             break;
         }
         switch (sss.ssi_signo) {
         case SIGINT:  as->term_flag = 1; break;
         case SIGTERM: as->term_flag = 1; break;
         default:
-            err("%s: signal_read_func: unexpected signal %d", as->id, sss.ssi_signo);
+            err("%s: signal_read_func: unexpected signal %d", as->inst_id, sss.ssi_signo);
             break;
         }
     }
@@ -486,11 +486,11 @@ inotify_read_func(struct AppState *as, struct FDInfo *fdi)
             break;
         }
         if (r < 0) {
-            err("%s: inotify_read_func: read failed: %s", as->id, os_ErrorMsg());
+            err("%s: inotify_read_func: read failed: %s", as->inst_id, os_ErrorMsg());
             break;
         }
         if (!r) {
-            err("%s: inotify_read_func: read returned 0", as->id);
+            err("%s: inotify_read_func: read returned 0", as->inst_id);
             break;
         }
         const unsigned char *bend = buf + r;
@@ -503,7 +503,7 @@ inotify_read_func(struct AppState *as, struct FDInfo *fdi)
             }
         }
         if (p > bend) {
-            err("%s: inotify_read_func: buffer overrun: end = %p, cur = %p", as->id, bend, p);
+            err("%s: inotify_read_func: buffer overrun: end = %p, cur = %p", as->inst_id, bend, p);
         }
     }
 }
@@ -524,7 +524,7 @@ pipe_read_func(struct AppState *as, struct FDInfo *fdi)
             break;
         }
         if (r < 0) {
-            err("%s: pipe_read_func: read failed: %s", as->id, os_ErrorMsg());
+            err("%s: pipe_read_func: read failed: %s", as->inst_id, os_ErrorMsg());
             goto done;
         }
         if (!r) {
@@ -597,14 +597,14 @@ handle_stdin_rchunk(
 
     if (strlen(data) != size) {
         cJSON_AddStringToObject(reply, "message", "binary data");
-        err("%s: binary data on stdin", as->id);
+        err("%s: binary data on stdin", as->inst_id);
         goto done;
     }
 
     root = cJSON_Parse(data);
     if (!root) {
         cJSON_AddStringToObject(reply, "message", "JSON parse error");
-        err("%s: JSON parsing failed", as->id);
+        err("%s: JSON parsing failed", as->inst_id);
         goto done;
     }
 
@@ -620,7 +620,7 @@ handle_stdin_rchunk(
     cJSON *jq = cJSON_GetObjectItem(root, "q");
     if (!jq || jq->type != cJSON_String) {
         cJSON_AddStringToObject(reply, "message", "Invalid json");
-        err("%s: invalid json", as->id);
+        err("%s: invalid json", as->inst_id);
         goto done;
     }
     const unsigned char *query = jq->valuestring;
@@ -628,7 +628,7 @@ handle_stdin_rchunk(
     void *vp = dyntrie_get(&as->queryi, query);
     if (!vp) {
         cJSON_AddStringToObject(reply, "message", "Invalid query");
-        err("%s: invalid query", as->id);
+        err("%s: invalid query", as->inst_id);
         goto done;
     }
     const struct QueryCallback *c = &as->querys[((int)(intptr_t) vp) - 1];
@@ -638,7 +638,7 @@ done:
     cJSON_AddBoolToObject(reply, "ok", ok);
     jstr = cJSON_PrintUnformatted(reply);
     jlen = strlen(jstr);
-    info("%s: json: %s", as->id, jstr);
+    info("%s: json: %s", as->inst_id, jstr);
     jstr = realloc(jstr, jlen + 2);
     jstr[jlen++] = '\n';
     jstr[jlen++] = '\n';
@@ -669,7 +669,7 @@ handle_stdin_read_func(struct AppState *as, struct FDInfo *fdi)
             }
             data[size] = 0;
         }
-        info("%s: in: %s", as->id, fdi->rchunks[i].data);
+        info("%s: in: %s", as->inst_id, fdi->rchunks[i].data);
         handle_stdin_rchunk(as, fdi, fdi->rchunks[i].data, fdi->rchunks[i].size);
     }
     fdinfo_clear_rchunks(fdi, 0);
@@ -710,11 +710,11 @@ pipe_write_func(struct AppState *as, struct FDInfo *fdi)
             break;
         }
         if (r < 0) {
-            err("%s: pipe_write_func: write failed: %s", as->id, os_ErrorMsg());
+            err("%s: pipe_write_func: write failed: %s", as->inst_id, os_ErrorMsg());
             goto done;
         }
         if (!r) {
-            err("%s: pipe_write_func: write returned 0", as->id);
+            err("%s: pipe_write_func: write returned 0", as->inst_id);
             goto done;
         }
         fdi->wr_pos += r;
@@ -746,12 +746,12 @@ app_state_prepare(struct AppState *as)
     sigaddset(&ss, SIGTERM);
     sigprocmask(SIG_BLOCK, &ss, NULL);
     if ((as->sfd = signalfd(-1, &ss, SFD_CLOEXEC | SFD_NONBLOCK)) < 0) {
-        err("%s: signalfd failed: %s", as->id, os_ErrorMsg());
+        err("%s: signalfd failed: %s", as->inst_id, os_ErrorMsg());
         goto fail;
     }
 
     if ((as->tfd = timerfd_create(CLOCK_REALTIME, TFD_CLOEXEC | TFD_NONBLOCK)) < 0) {
-        err("%s: timerfd_create failed: %s", as->id, os_ErrorMsg());
+        err("%s: timerfd_create failed: %s", as->inst_id, os_ErrorMsg());
         goto fail;
     }
     {
@@ -769,18 +769,18 @@ app_state_prepare(struct AppState *as)
             },
         };
         if (timerfd_settime(as->tfd, 0, &spec, NULL) < 0) {
-            err("%s: timerfd_settime failed: %s", as->id, os_ErrorMsg());
+            err("%s: timerfd_settime failed: %s", as->inst_id, os_ErrorMsg());
             return -1;
         }
     }
 
     if ((as->ifd = inotify_init1(IN_CLOEXEC | IN_NONBLOCK)) < 0) {
-        err("%s: inotify_init1 failed: %s", as->id, os_ErrorMsg());
+        err("%s: inotify_init1 failed: %s", as->inst_id, os_ErrorMsg());
         goto fail;
     }
 
     if ((as->efd = epoll_create1(EPOLL_CLOEXEC)) < 0) {
-        err("%s: epoll_create failed: %s", as->id, os_ErrorMsg());
+        err("%s: epoll_create failed: %s", as->inst_id, os_ErrorMsg());
         goto fail;
     }
 
@@ -847,7 +847,7 @@ check_spool_state(struct AppState *as)
     cJSON_AddTrueToObject(reply, "ok");
     char *jstr = cJSON_PrintUnformatted(reply);
     size_t jlen = strlen(jstr);
-    info("%s: json: %s", as->id, jstr);
+    info("%s: json: %s", as->inst_id, jstr);
     jstr = realloc(jstr, jlen + 2);
     jstr[jlen++] = '\n';
     jstr[jlen++] = '\n';
@@ -873,15 +873,15 @@ do_loop(struct AppState *as)
         errno = 0;
         int n = epoll_wait(as->efd, evs, 16, -1);
         if (n < 0 && errno == EINTR) {
-            info("%s: epoll_wait interrupted by a signal", as->id);
+            info("%s: epoll_wait interrupted by a signal", as->inst_id);
             continue;
         }
         if (n < 0) {
-            err("%s: epoll_wait failed: %s", as->id, os_ErrorMsg());
+            err("%s: epoll_wait failed: %s", as->inst_id, os_ErrorMsg());
             return;
         }
         if (!n) {
-            err("%s: epoll_wait returned 0", as->id);
+            err("%s: epoll_wait returned 0", as->inst_id);
             return;
         }
 
@@ -970,7 +970,7 @@ poll_func(
     int r = scan_dir(as->queue_dir, pkt_name, sizeof(pkt_name), 0);
     if (r < 0) {
         cJSON_AddStringToObject(reply, "message", "scan_dir failed");
-        err("%s: scan_dir failed: %s", as->id, strerror(-r));
+        err("%s: scan_dir failed: %s", as->inst_id, strerror(-r));
         return 0;
     }
     if (r > 0) {
@@ -990,7 +990,7 @@ get_packet_func(
     cJSON *jp = cJSON_GetObjectItem(query, "pkt_name");
     if (!jp || jp->type != cJSON_String) {
         cJSON_AddStringToObject(reply, "message", "invalid json");
-        err("%s: get_packet: missing pkt_name", as->id);
+        err("%s: get_packet: missing pkt_name", as->inst_id);
         return 0;
     }
     const unsigned char *pkt_name = jp->valuestring;
@@ -1033,7 +1033,7 @@ get_data_func(
     cJSON *jp = cJSON_GetObjectItem(query, "pkt_name");
     if (!jp || jp->type != cJSON_String) {
         cJSON_AddStringToObject(reply, "message", "invalid json");
-        err("%s: get_packet: missing pkt_name", as->id);
+        err("%s: get_packet: missing pkt_name", as->inst_id);
         return 0;
     }
     const unsigned char *pkt_name = jp->valuestring;
@@ -1080,12 +1080,12 @@ extract_file(
 {
     cJSON *jz = cJSON_GetObjectItem(j, "size");
     if (!jz || jz->type != cJSON_Number) {
-        err("%s: invalid json: no size", as->id);
+        err("%s: invalid json: no size", as->inst_id);
         return -1;
     }
     size_t size = (int) jz->valuedouble;
     if (size < 0 || size > 1000000000) {
-        err("%s: invalid json: invalid size", as->id);
+        err("%s: invalid json: invalid size", as->inst_id);
         return -1;
     }
     if (!size) {
@@ -1097,12 +1097,12 @@ extract_file(
     }
     cJSON *jb64 = cJSON_GetObjectItem(j, "b64");
     if (!jb64 || jb64->type != cJSON_True) {
-        err("%s: invalid json: no encoding", as->id);
+        err("%s: invalid json: no encoding", as->inst_id);
         return -1;
     }
     cJSON *jd = cJSON_GetObjectItem(j, "data");
     if (!jd || jd->type != cJSON_String) {
-        err("%s: invalid json: no data", as->id);
+        err("%s: invalid json: no data", as->inst_id);
         return -1;
     }
     int len = strlen(jd->valuestring);
@@ -1110,7 +1110,7 @@ extract_file(
     int b64err = 0;
     int n = base64u_decode(jd->valuestring, len, ptr, &b64err);
     if (n != size) {
-        err("%s: invalid json: size mismatch", as->id);
+        err("%s: invalid json: size mismatch", as->inst_id);
         free(ptr);
         return -1;
     }
@@ -1191,21 +1191,21 @@ put_reply_func(
     }
     cJSON *jserver = cJSON_GetObjectItem(query, "server");
     if (!jserver || jserver->type != cJSON_String || !jserver->valuestring) {
-        err("%s: invalid json: no server", as->id);
+        err("%s: invalid json: no server", as->inst_id);
         cJSON_AddStringToObject(reply, "message", "invalid json");
         goto done;
     }
     const unsigned char *server = jserver->valuestring;
     cJSON *jcid = cJSON_GetObjectItem(query, "contest");
     if (!jcid || jcid->type != cJSON_Number || jcid->valuedouble <= 0) {
-        err("%s: invalid json: invalid contest_id", as->id);
+        err("%s: invalid json: invalid contest_id", as->inst_id);
         cJSON_AddStringToObject(reply, "message", "invalid json");
         goto done;
     }
     int contest_id = jcid->valuedouble;
     cJSON *jrun = cJSON_GetObjectItem(query, "run_name");
     if (!jrun || jrun->type != cJSON_String || !jrun->valuestring) {
-        err("%s: invalid json: no run_name", as->id);
+        err("%s: invalid json: no run_name", as->inst_id);
         cJSON_AddStringToObject(reply, "message", "invalid json");
         goto done;
     }
@@ -1213,7 +1213,7 @@ put_reply_func(
 
     struct ContestInfo *ci = create_contest_dirs(as, server, contest_id);
     if (!ci) {
-        err("%s: directory creation failed", as->id);
+        err("%s: directory creation failed", as->inst_id);
         cJSON_AddStringToObject(reply, "message", "filesystem error");
         goto done;
     }
@@ -1251,21 +1251,21 @@ put_output_func(
     }
     cJSON *jserver = cJSON_GetObjectItem(query, "server");
     if (!jserver || jserver->type != cJSON_String || !jserver->valuestring) {
-        err("%s: invalid json: no server", as->id);
+        err("%s: invalid json: no server", as->inst_id);
         cJSON_AddStringToObject(reply, "message", "invalid json");
         goto done;
     }
     const unsigned char *server = jserver->valuestring;
     cJSON *jcid = cJSON_GetObjectItem(query, "contest");
     if (!jcid || jcid->type != cJSON_Number || jcid->valuedouble <= 0) {
-        err("%s: invalid json: invalid contest_id", as->id);
+        err("%s: invalid json: invalid contest_id", as->inst_id);
         cJSON_AddStringToObject(reply, "message", "invalid json");
         goto done;
     }
     int contest_id = jcid->valuedouble;
     cJSON *jrun = cJSON_GetObjectItem(query, "run_name");
     if (!jrun || jrun->type != cJSON_String || !jrun->valuestring) {
-        err("%s: invalid json: no run_name", as->id);
+        err("%s: invalid json: no run_name", as->inst_id);
         cJSON_AddStringToObject(reply, "message", "invalid json");
         goto done;
     }
@@ -1278,7 +1278,7 @@ put_output_func(
 
     struct ContestInfo *ci = create_contest_dirs(as, server, contest_id);
     if (!ci) {
-        err("%s: directory creation failed", as->id);
+        err("%s: directory creation failed", as->inst_id);
         cJSON_AddStringToObject(reply, "message", "filesystem error");
         goto done;
     }
@@ -1305,7 +1305,7 @@ wait_func(
 {
     cJSON *jc = cJSON_GetObjectItem(query, "channel");
     if (!jc || jc->type != cJSON_Number || jc->valuedouble <= 0) {
-        err("%s: invalid json: no channel", as->id);
+        err("%s: invalid json: no channel", as->inst_id);
         cJSON_AddStringToObject(reply, "message", "invalid json");
         return 0;
     }
@@ -1315,7 +1315,7 @@ wait_func(
     int r = scan_dir(as->queue_dir, pkt_name, sizeof(pkt_name), 0);
     if (r < 0) {
         cJSON_AddStringToObject(reply, "message", "scan_dir failed");
-        err("%s: scan_dir failed: %s", as->id, strerror(-r));
+        err("%s: scan_dir failed: %s", as->inst_id, strerror(-r));
         return 0;
     }
     if (r > 0) {
@@ -1395,7 +1395,7 @@ main(int argc, char *argv[])
             }
         }
         fclose(id_f);
-        app.id = id_s;
+        app.inst_id = id_s;
     }
 
     if (queue_id && *queue_id) {
@@ -1413,9 +1413,9 @@ main(int argc, char *argv[])
     app_state_add_query_callback(&app, "put-output", NULL, put_output_func);
     app_state_add_query_callback(&app, "wait", NULL, wait_func);
 
-    info("%s: started", app.id);
+    info("%s: started", app.inst_id);
     do_loop(&app);
-    info("%s: finished", app.id);
+    info("%s: finished", app.inst_id);
 
     retval = 0;
 
