@@ -110,6 +110,7 @@ struct AgentClientSsh
     _Atomic _Bool is_stopped;
     pthread_mutex_t stop_m;
     pthread_cond_t stop_c;
+    long long stop_initiated_ms;
 
     int serial;
     long long current_time_ms;
@@ -480,11 +481,11 @@ thread_func(void *ptr)
         }
         if (n < 0) {
             err("epoll_wait failed: %s", os_ErrorMsg());
-            break;
+            acs->need_cleanup = 1;
         }
         if (!n) {
             err("epoll_wait returned 0");
-            break;
+            acs->need_cleanup = 1;
         }
 
         {
@@ -531,16 +532,25 @@ thread_func(void *ptr)
                     acs->ping_future = internal_ping(acs);
                 }
             }
+            if (acs->stop_initiated_ms > 0) {
+                // nothing happened in 30s
+                if (acs->current_time_ms - acs->stop_initiated_ms > 30000) {
+                    acs->need_cleanup = 1;
+                }
+            }
         }
         if (acs->stop_request) {
-            // forcefully close write fd
-            if ((acs->wevents & EPOLLOUT) != 0) {
-                epoll_ctl(acs->efd, EPOLL_CTL_DEL, acs->to_ssh, NULL);
-                acs->wevents = 0;
-            }
-            if (acs->to_ssh >= 0) {
-                close(acs->to_ssh);
-                acs->to_ssh = -1;
+            if (acs->stop_initiated_ms <= 0) {
+                // forcefully close write fd
+                if ((acs->wevents & EPOLLOUT) != 0) {
+                    epoll_ctl(acs->efd, EPOLL_CTL_DEL, acs->to_ssh, NULL);
+                    acs->wevents = 0;
+                }
+                if (acs->to_ssh >= 0) {
+                    close(acs->to_ssh);
+                    acs->to_ssh = -1;
+                }
+                acs->stop_initiated_ms = acs->current_time_ms;
             }
         }
         if (acs->need_cleanup) {
