@@ -165,6 +165,7 @@ COMMON_CFILES=\
  lib/ejudge_cfg.c\
  lib/ejudge_cfg_var.c\
  lib/ej_libzip.c\
+ lib/ej_lzma.c\
  lib/ej_uuid.c\
  lib/errlog.c\
  lib/expat_iface.c\
@@ -568,6 +569,7 @@ HFILES=\
  ./include/ejudge/ej_process.h\
  ./include/ejudge/ej_types.h\
  ./include/ejudge/ej_libzip.h\
+ ./include/ejudge/ej_lzma.h\
  ./include/ejudge/ej_uuid.h\
  ./include/ejudge/errlog.h\
  ./include/ejudge/expat_iface.h\
