@@ -491,19 +491,43 @@ handle_packet(
   }
 
   // copy full report from temporary location
-  if (generic_copy_file(0, NULL, report_path, "", 0, full_report_dir, reply_packet_name, "") < 0) {
-    goto cleanup;
+  if (agent) {
+    if (agent->ops->put_output_2(agent,
+                                 srgp->contest_server_id,
+                                 srgp->contest_id,
+                                 reply_packet_name,
+                                 "",
+                                 report_path) < 0) {
+      goto cleanup;
+    }
+  } else {
+    if (generic_copy_file(0, NULL, report_path, "", 0, full_report_dir, reply_packet_name, "") < 0) {
+      goto cleanup;
+    }
   }
 
 #if defined CONF_HAS_LIBZIP
-  if (full_report_path[0] && generic_copy_file(0, NULL, full_report_path, "", 0, full_full_dir, reply_packet_name, ".zip") < 0) {
-    goto cleanup;
-  }
+  const unsigned char *zip_suffix = ".zip";
 #else
-  if (full_report_path[0] && generic_copy_file(0, NULL, full_report_path, "", 0, full_full_dir, reply_packet_name, "") < 0) {
-    goto cleanup;
-  }
+  const unsigned char *zip_suffix = "";
 #endif
+
+  if (full_report_path[0]) {
+    if (agent) {
+      if (agent->ops->put_archive_2(agent,
+                                    srgp->contest_server_id,
+                                    srgp->contest_id,
+                                    reply_packet_name,
+                                    zip_suffix,
+                                    full_report_path) < 0) {
+        goto cleanup;
+      }
+    } else {
+      if (generic_copy_file(0, NULL, full_report_path, "", 0, full_full_dir, reply_packet_name, zip_suffix) < 0) {
+        goto cleanup;
+      }
+    }
+  }
 
   //run_reply_packet_dump(&reply_pkt);
 
