@@ -1520,6 +1520,34 @@ done:;
     return result;
 }
 
+static int
+delete_heartbeat_func(
+        struct AppState *as,
+        const struct QueryCallback *cb,
+        cJSON *query,
+        cJSON *reply)
+{
+    int result = 0;
+    unsigned char path[PATH_MAX];
+
+    cJSON *jn = cJSON_GetObjectItem(query, "name");
+    if (!jn || jn->type != cJSON_String) {
+        cJSON_AddStringToObject(reply, "message", "invalid json");
+        err("%s: delete_heartbeat: missing name", as->inst_id);
+        goto done;
+    }
+    const unsigned char *file_name = jn->valuestring;
+
+    snprintf(path, sizeof(path), "%s/%s", as->heartbeat_packet_dir, file_name);
+    unlink(path);
+    result = 1;
+
+done:;
+    cJSON_AddStringToObject(reply, "q", "result");
+
+    return result;
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -1606,6 +1634,7 @@ main(int argc, char *argv[])
     app_state_add_query_callback(&app, "add-ignored", NULL, add_ignored_func);
     app_state_add_query_callback(&app, "put-packet", NULL, put_packet_func);
     app_state_add_query_callback(&app, "put-heartbeat", NULL, put_heartbeat_func);
+    app_state_add_query_callback(&app, "delete-heartbeat", NULL, delete_heartbeat_func);
 
     info("%s: started", app.inst_id);
     do_loop(&app);

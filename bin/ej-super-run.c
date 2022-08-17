@@ -710,7 +710,7 @@ do_loop(
     last_handled_ms = ((long long) ctv.tv_sec) * 1000 + ctv.tv_usec / 1000;
   }
 
-  super_run_status_remove(super_run_heartbeat_path, status_file_name);
+  super_run_status_remove(agent, super_run_heartbeat_path, status_file_name);
 
   if (agent) {
     agent->ops->close(agent);

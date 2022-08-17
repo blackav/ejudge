@@ -168,12 +168,17 @@ super_run_status_save(
 
 void
 super_run_status_remove(
+        struct AgentClient *agent,
         const unsigned char *heartbeat_dir,
         const unsigned char *file_name)
 {
-    unsigned char dir_path[PATH_MAX];
-    snprintf(dir_path, sizeof(dir_path), "%s/dir/%s", heartbeat_dir, file_name);
-    unlink(dir_path);
+    if (agent) {
+        agent->ops->delete_heartbeat(agent, file_name);
+    } else {
+        unsigned char dir_path[PATH_MAX];
+        snprintf(dir_path, sizeof(dir_path), "%s/dir/%s", heartbeat_dir, file_name);
+        unlink(dir_path);
+    }
 }
 
 struct super_run_status_vector *

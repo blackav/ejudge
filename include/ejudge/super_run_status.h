@@ -98,6 +98,7 @@ super_run_status_save(
 
 void
 super_run_status_remove(
+        struct AgentClient *agent,
         const unsigned char *heartbeat_dir,
         const unsigned char *file_name);
 

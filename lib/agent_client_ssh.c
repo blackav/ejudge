@@ -1341,6 +1341,33 @@ done:;
     return result;
 }
 
+static int
+delete_heartbeat_func(
+        struct AgentClient *ac,
+        const unsigned char *file_name)
+{
+    int result = -1;
+    struct AgentClientSsh *acs = (struct AgentClientSsh *) ac;
+    struct Future f;
+    long long time_ms;
+    cJSON *jq = create_request(acs, &f, &time_ms, "delete-heartbeat");
+    cJSON_AddStringToObject(jq, "name", file_name);
+    add_wchunk_json(acs, jq);
+    cJSON_Delete(jq); jq = NULL;
+
+    future_wait(&f);
+
+    cJSON *jok = cJSON_GetObjectItem(f.value, "ok");
+    if (!jok || jok->type != cJSON_True) {
+        goto done;
+    }
+
+    result = 0;
+done:;
+    future_fini(&f);
+    return result;
+}
+
 static const struct AgentClientOps ops_ssh =
 {
     destroy_func,
@@ -1360,6 +1387,7 @@ static const struct AgentClientOps ops_ssh =
     put_packet_func,
     get_data_2_func,
     put_heartbeat_func,
+    delete_heartbeat_func,
 };
 
 struct AgentClient *
