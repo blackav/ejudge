@@ -631,10 +631,14 @@ connect_func(struct AgentClient *ac)
         int fd = open("/dev/null", O_WRONLY);
         dup2(fd, 2); close(fd);
         */
+        // move this process to a separate process group, so SIGINT not delivered to it
+        setpgid(0, 0);
 
         execvp("ssh", args);
         _exit(1);
     }
+
+    setpgid(acs->pid, 0);
 
     close(tossh[0]); tossh[0] = -1;
     close(fromssh[1]); fromssh[1] = -1;
