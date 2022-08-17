@@ -128,6 +128,7 @@ struct ContestInfo
     unsigned char *server_contest_dir;
     unsigned char *status_dir;
     unsigned char *report_dir;
+    unsigned char *output_dir;
 };
 
 struct AppState
@@ -1184,6 +1185,8 @@ create_contest_dirs(
     snprintf(status_dir, sizeof(status_dir), "%s/status", server_contest_dir);
     unsigned char report_dir[PATH_MAX];
     snprintf(report_dir, sizeof(report_dir), "%s/report", server_contest_dir);
+    unsigned char output_dir[PATH_MAX];
+    snprintf(output_dir, sizeof(output_dir), "%s/output", server_contest_dir);
 
     if (make_dir(server_dir, 0777) < 0) {
         return NULL;
@@ -1195,6 +1198,9 @@ create_contest_dirs(
         return NULL;
     }
     if (make_dir(report_dir, 0777) < 0) {
+        return NULL;
+    }
+    if (make_dir(output_dir, 0777) < 0) {
         return NULL;
     }
 
@@ -1548,6 +1554,68 @@ done:;
     return result;
 }
 
+static int
+put_archive_func(
+        struct AppState *as,
+        const struct QueryCallback *cb,
+        cJSON *query,
+        cJSON *reply)
+{
+    char *data = NULL;
+    size_t size = 0;
+    int result = 0;
+
+    if (extract_file(as, query, &data, &size) < 0) {
+        cJSON_AddStringToObject(reply, "message", "invalid json");
+        return 0;
+    }
+    cJSON *jserver = cJSON_GetObjectItem(query, "server");
+    if (!jserver || jserver->type != cJSON_String || !jserver->valuestring) {
+        err("%s: invalid json: no server", as->inst_id);
+        cJSON_AddStringToObject(reply, "message", "invalid json");
+        goto done;
+    }
+    const unsigned char *server = jserver->valuestring;
+    cJSON *jcid = cJSON_GetObjectItem(query, "contest");
+    if (!jcid || jcid->type != cJSON_Number || jcid->valuedouble <= 0) {
+        err("%s: invalid json: invalid contest_id", as->inst_id);
+        cJSON_AddStringToObject(reply, "message", "invalid json");
+        goto done;
+    }
+    int contest_id = jcid->valuedouble;
+    cJSON *jrun = cJSON_GetObjectItem(query, "run_name");
+    if (!jrun || jrun->type != cJSON_String || !jrun->valuestring) {
+        err("%s: invalid json: no run_name", as->inst_id);
+        cJSON_AddStringToObject(reply, "message", "invalid json");
+        goto done;
+    }
+    const unsigned char *run_name = jrun->valuestring;
+    const unsigned char *suffix = NULL;
+    cJSON *jsuffix = cJSON_GetObjectItem(query, "suffix");
+    if (jsuffix && jsuffix->type == cJSON_String) {
+        suffix = jsuffix->valuestring;
+    }
+
+    struct ContestInfo *ci = create_contest_dirs(as, server, contest_id);
+    if (!ci) {
+        err("%s: directory creation failed", as->inst_id);
+        cJSON_AddStringToObject(reply, "message", "filesystem error");
+        goto done;
+    }
+
+    if (generic_write_file(data, size, 0, ci->output_dir, run_name, suffix) < 0) {
+        cJSON_AddStringToObject(reply, "message", "filesystem error");
+        goto done;
+    }
+
+    cJSON_AddStringToObject(reply, "q", "result");
+    result = 1;
+
+done:
+    free(data);
+    return result;
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -1635,6 +1703,7 @@ main(int argc, char *argv[])
     app_state_add_query_callback(&app, "put-packet", NULL, put_packet_func);
     app_state_add_query_callback(&app, "put-heartbeat", NULL, put_heartbeat_func);
     app_state_add_query_callback(&app, "delete-heartbeat", NULL, delete_heartbeat_func);
+    app_state_add_query_callback(&app, "put-archive", NULL, put_archive_func);
 
     info("%s: started", app.inst_id);
     do_loop(&app);

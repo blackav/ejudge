@@ -1368,6 +1368,77 @@ done:;
     return result;
 }
 
+static int
+put_archive_2_func(
+        struct AgentClient *ac,
+        const unsigned char *contest_server_name,
+        int contest_id,
+        const unsigned char *run_name,
+        const unsigned char *suffix,
+        const unsigned char *path)
+{
+    int fd = open(path, O_RDONLY | O_NONBLOCK | O_NOCTTY | O_NOFOLLOW, 0);
+    if (fd < 0) {
+        err("put_output_2: cannot open '%s': %s", path, os_ErrorMsg());
+        return -1;
+    }
+    struct stat stb;
+    if (fstat(fd, &stb) < 0) {
+        err("put_output_2: fstat failed '%s': %s", path, os_ErrorMsg());
+        close(fd);
+        return -1;
+    }
+    if (!S_ISREG(stb.st_mode)) {
+        err("put_output_2: not a regular file '%s'", path);
+        close(fd);
+        return -1;
+    }
+    if (stb.st_size < 0 || stb.st_size > 2000000000) {
+        err("put_output_2: file too big '%s': %lld", path, (long long) stb.st_mode);
+        close(fd);
+        return -1;
+    }
+    size_t pkt_len = stb.st_size;
+    char *pkt_ptr = NULL;
+    if (pkt_len > 0) {
+        pkt_ptr = mmap(NULL, pkt_len, PROT_READ, MAP_PRIVATE, fd, 0);
+        if (pkt_ptr == MAP_FAILED) {
+            err("put_output_2: mmap failed '%s': %s", path, os_ErrorMsg());
+            close(fd);
+            return -1;
+        }
+    }
+    close(fd); fd = -1;
+
+    int result = 0;
+    struct AgentClientSsh *acs = (struct AgentClientSsh *) ac;
+    struct Future f;
+    long long time_ms;
+    cJSON *jq = create_request(acs, &f, &time_ms, "put-archive");
+    cJSON_AddStringToObject(jq, "server", contest_server_name);
+    cJSON_AddNumberToObject(jq, "contest", contest_id);
+    cJSON_AddStringToObject(jq, "run_name", run_name);
+    if (suffix) {
+        cJSON_AddStringToObject(jq, "suffix", suffix);
+    }
+    add_file_to_object(jq, pkt_ptr, pkt_len);
+    add_wchunk_json(acs, jq);
+    cJSON_Delete(jq); jq = NULL;
+    if (pkt_ptr) {
+        munmap(pkt_ptr, pkt_len);
+    }
+
+    future_wait(&f);
+
+    cJSON *jok = cJSON_GetObjectItem(f.value, "ok");
+    if (!jok || jok->type != cJSON_True) {
+        result = -1;
+    }
+
+    future_fini(&f);
+    return result;
+}
+
 static const struct AgentClientOps ops_ssh =
 {
     destroy_func,
@@ -1388,6 +1459,7 @@ static const struct AgentClientOps ops_ssh =
     get_data_2_func,
     put_heartbeat_func,
     delete_heartbeat_func,
+    put_archive_2_func,
 };
 
 struct AgentClient *

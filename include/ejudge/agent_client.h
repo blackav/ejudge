@@ -123,6 +123,14 @@ struct AgentClientOps
     int (*delete_heartbeat)(
         struct AgentClient *ac,
         const unsigned char *file_name);
+
+    int (*put_archive_2)(
+        struct AgentClient *ac,
+        const unsigned char *contest_server_name,
+        int contest_id,
+        const unsigned char *run_name,
+        const unsigned char *suffix,
+        const unsigned char *path);
 };
 
 struct AgentClient
