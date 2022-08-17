@@ -21,6 +21,7 @@
 #include "ejudge/errlog.h"
 #include "ejudge/osdeps.h"
 #include "ejudge/base64.h"
+#include "ejudge/ej_lzma.h"
 
 #include <stdlib.h>
 #include "ejudge/cJSON.h"
@@ -950,12 +951,30 @@ add_file_to_object(cJSON *j, const char *data, size_t size)
     if (!size) {
         return;
     }
-    cJSON_AddTrueToObject(j, "b64");
-    char *ptr = malloc(size * 2 + 16);
-    int n = base64u_encode(data, size, ptr);
-    ptr[n] = 0;
-    cJSON_AddStringToObject(j, "data", ptr);
-    free(ptr);
+    if (size < 100) {
+        cJSON_AddTrueToObject(j, "b64");
+        char *ptr = malloc(size * 2 + 16);
+        int n = base64u_encode(data, size, ptr);
+        ptr[n] = 0;
+        cJSON_AddStringToObject(j, "data", ptr);
+        free(ptr);
+    } else {
+        unsigned char *lzma_buf = NULL;
+        size_t lzma_size = 0;
+        if (ej_lzma_encode_buf(data, size, &lzma_buf, &lzma_size) < 0) {
+            // FIXME: fallback to uncompressed
+            abort();
+        }
+        cJSON_AddTrueToObject(j, "lzma");
+        cJSON_AddNumberToObject(j, "lzma_size", (double) lzma_size);
+        char *b64_buf = malloc(lzma_size * 2 + 16);
+        int b64_size = base64u_encode(lzma_buf, lzma_size, b64_buf);
+        b64_buf[b64_size] = 0;
+        cJSON_AddTrueToObject(j, "b64");
+        cJSON_AddStringToObject(j, "data", b64_buf);
+        free(b64_buf);
+        free(lzma_buf);
+    }
 }
 
 static int

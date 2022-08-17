@@ -22,6 +22,7 @@
 #include "ejudge/prepare.h"
 #include "ejudge/fileutl.h"
 #include "ejudge/base64.h"
+#include "ejudge/ej_lzma.h"
 
 #include <stdlib.h>
 #include "ejudge/cJSON.h"
@@ -1144,17 +1145,45 @@ extract_file(
         return -1;
     }
     int len = strlen(jd->valuestring);
-    char *ptr = malloc(len + 1);
-    int b64err = 0;
-    int n = base64u_decode(jd->valuestring, len, ptr, &b64err);
-    if (n != size) {
-        err("%s: invalid json: size mismatch", as->inst_id);
-        free(ptr);
-        return -1;
+    cJSON *jlzma = cJSON_GetObjectItem(j, "lzma");
+    if (jlzma && jlzma->type == cJSON_True) {
+        cJSON *jlzmaz = cJSON_GetObjectItem(j, "lzma_size");
+        if (!jlzmaz || jlzmaz->type != cJSON_Number) {
+            err("%s: invalid json: no lzma_size", as->inst_id);
+            return -1;
+        }
+        size_t lzma_size = (size_t) jlzmaz->valuedouble;
+        char *lzma_buf = malloc(len + 1);
+        int b64err = 0;
+        int n = base64u_decode(jd->valuestring, len, lzma_buf, &b64err);
+        if (n != lzma_size) {
+            err("%s: invalid json: size mismatch", as->inst_id);
+            free(lzma_buf);
+            return -1;
+        }
+        unsigned char *ptr = NULL;
+        size_t ptr_size = 0;
+        if (ej_lzma_decode_buf(lzma_buf, lzma_size, size, &ptr, &ptr_size) < 0) {
+            err("%s: invalid json: lzma decode error", as->inst_id);
+            free(lzma_buf);
+            return -1;
+        }
+        free(lzma_buf);
+        *p_pkt_ptr = ptr;
+        *p_pkt_len = ptr_size;
+    } else {
+        char *ptr = malloc(len + 1);
+        int b64err = 0;
+        int n = base64u_decode(jd->valuestring, len, ptr, &b64err);
+        if (n != size) {
+            err("%s: invalid json: size mismatch", as->inst_id);
+            free(ptr);
+            return -1;
+        }
+        ptr[size] = 0;
+        *p_pkt_ptr = ptr;
+        *p_pkt_len = size;
     }
-    ptr[size] = 0;
-    *p_pkt_ptr = ptr;
-    *p_pkt_len = size;
     return 1;
 }
 

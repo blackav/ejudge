@@ -289,13 +289,13 @@ suid_install : ${SUIDBINTARGETS} ejudge-suid-setup ej-compile-control
 suid_bins : ${SUIDBINTARGETS}
 
 ej-compile$(EXESFX) : $(C_OBJECTS)
-	$(LD) $(LDFLAGS) $(C_OBJECTS) -pthread -o $@ $(LDLIBS) ${EXPAT_LIB} ${LIBZIP} ${LIBUUID}
+	$(LD) $(LDFLAGS) $(C_OBJECTS) -pthread -o $@ $(LDLIBS) ${EXPAT_LIB} ${LIBZIP} ${LIBUUID} -llzma
 
 ej-compile-control : $(CC_OBJECTS)
 	$(LD) $(LDFLAGS) $(CC_OBJECTS) -o $@ $(LDLIBS) ${EXPAT_LIB}
 
 ej-agent : $(CA_OBJECTS)
-	$(LD) $(LDFLAGS) $(CA_OBJECTS) -o $@ $(LDLIBS) ${EXPAT_LIB}
+	$(LD) $(LDFLAGS) $(CA_OBJECTS) -o $@ $(LDLIBS) ${EXPAT_LIB} -llzma
 
 ej-run${EXESFX} : $(RUN_OBJECTS)
 	$(LD) $(LDFLAGS) $(RUN_OBJECTS) -o $@ $(LDLIBS) ${EXPAT_LIB} ${LIBZIP} ${LIBUUID} $(MONGO_LIBS) $(MONGOC_LIBS)
@@ -337,7 +337,7 @@ ej-super-server-control: ${SSC_OBJECTS}
 	${LD} ${LDFLAGS} $^ libcommon.a -o $@ ${LDLIBS} ${EXPAT_LIB}
 
 ej-super-run: ${SR_OBJECTS}
-	${LD} ${LDFLAGS} -pthread -rdynamic $^ libcommon.a -o $@ ${LDLIBS} ${EXPAT_LIB} -ldl ${LIBZIP} ${LIBUUID} $(MONGO_LIBS) $(MONGOC_LIBS)
+	${LD} ${LDFLAGS} -pthread -rdynamic $^ libcommon.a -o $@ ${LDLIBS} ${EXPAT_LIB} -ldl ${LIBZIP} ${LIBUUID} $(MONGO_LIBS) $(MONGOC_LIBS) -llzma
 
 ej-super-run-control: ${SRC_OBJECTS}
 	${LD} ${LDFLAGS} -rdynamic $^ libcommon.a -o $@ ${LDLIBS} ${EXPAT_LIB} -ldl
