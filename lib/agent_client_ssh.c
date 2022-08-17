@@ -556,6 +556,20 @@ thread_func(void *ptr)
         acs->pid = -1;
     }
 
+    // wake up all futures
+    pthread_mutex_lock(&acs->futurem);
+    for (int i = 0; i < acs->futureu; ++i) {
+        struct Future *f = acs->futures[i];
+        pthread_mutex_lock(&f->m);
+        f->ready = 1;
+        pthread_cond_signal(&f->c);
+        pthread_mutex_unlock(&f->m);
+        if (f->notify_signal > 0) {
+            kill(getpid(), f->notify_signal);
+        }
+    }
+    pthread_mutex_unlock(&acs->futurem);
+
     pthread_mutex_lock(&acs->stop_m);
     acs->is_stopped = 1;
     pthread_cond_signal(&acs->stop_c);
