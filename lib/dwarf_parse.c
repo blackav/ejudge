@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2014-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2014-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -569,6 +569,8 @@ dump_die(FILE *out, Dwarf_Debug dbg, Dwarf_Die die)
     Dwarf_Error dwe = NULL;
     Dwarf_Off cu_offset = 0;
     Dwarf_Off offset = 0;
+
+    abort();
 
     if (dwarf_die_CU_offset(die, &cu_offset, &dwe) != DW_DLV_OK) goto fail;
     if (dwarf_dieoffset(die, &offset, &dwe) != DW_DLV_OK) goto fail;
@@ -1642,6 +1644,7 @@ static const struct TopDieParseTable top_die_table[] =
     { DW_TAG_variable, 0, NULL, NULL },
     { DW_TAG_subprogram, NODE_SUBROUTINE, "subprogram", parse_subroutine_die },
     { DW_TAG_dwarf_procedure, 0, NULL, NULL },
+    { DW_TAG_atomic_type, 0, NULL, NULL },
 
     { 0 },
 };
