@@ -570,8 +570,6 @@ dump_die(FILE *out, Dwarf_Debug dbg, Dwarf_Die die)
     Dwarf_Off cu_offset = 0;
     Dwarf_Off offset = 0;
 
-    abort();
-
     if (dwarf_die_CU_offset(die, &cu_offset, &dwe) != DW_DLV_OK) goto fail;
     if (dwarf_dieoffset(die, &offset, &dwe) != DW_DLV_OK) goto fail;
     fprintf(out, "DIE information: CU_offset = %llu (0x%llx), offset = %llu (0x%llx)\n", cu_offset, cu_offset, offset, offset);
