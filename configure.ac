@@ -429,6 +429,9 @@ dnl check zlib library
 AC_CHECK_HEADER([zip.h],[ac_cv_has_libzip=1],[ac_cv_has_libzip=0])
 AC_CHECK_LIB([zip],[zip_open],[ac_cv_has_lib_libzip=-lzip],[ac_cv_has_lib_libzip=])
 
+AC_CHECK_HEADER([lzma.h],[ac_cv_has_liblzma=1],[ac_cv_has_liblzma=0])
+AC_CHECK_LIB([lzma],[lzma_version_string],[ac_cv_has_lib_liblzma=-llzma],[ac_cv_has_lib_liblzma=])
+
 dnl check libcurl library
 AC_CHECK_HEADER([curl/curl.h],[ac_cv_has_libcurl=1],[ac_cv_has_libcurl=0])
 AC_CHECK_LIB([curl],[curl_easy_init],[ac_cv_has_lib_libcurl=-lcurl],[ac_cv_has_lib_libcurl=])
@@ -1215,6 +1218,7 @@ AC_SUBST(ac_cv_has_lib_iconv)
 AC_SUBST(ac_cv_has_lib_libiconv)
 AC_SUBST(ac_cv_has_lib_intl)
 AC_SUBST(ac_cv_has_lib_libzip)
+AC_SUBST(ac_cv_has_lib_liblzma)
 AC_SUBST(ac_cv_has_lib_libcurl)
 AC_SUBST(ac_cv_has_lib_libuuid)
 AC_SUBST(ac_cv_meta_cc)
@@ -1256,6 +1260,11 @@ fi
 if [[ x"${ac_cv_has_libzip}" = x1 -a x"${ac_cv_has_lib_libzip}" != x ]]
 then
   AC_DEFINE(CONF_HAS_LIBZIP,1)
+fi
+
+if [[ x"${ac_cv_has_liblzma}" = x1 -a x"${ac_cv_has_lib_liblzma}" != x ]]
+then
+  AC_DEFINE(CONF_HAS_LIBLZMA,1)
 fi
 
 if [[ x"${ac_cv_nls}" = x1 -a x"${ac_cv_ejudge_arch}" != xwin32 ]]
