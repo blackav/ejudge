@@ -1,7 +1,7 @@
 # -*- Makefile -*-
 # @configure_input@
 
-# Copyright (C) 2000-2019 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2000-2022 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -34,6 +34,7 @@ LIBICONV=@ac_cv_has_lib_iconv@
 LIBLIBICONV=@ac_cv_has_lib_libiconv@
 LIBINTL=@ac_cv_has_lib_intl@
 LIBZIP=@ac_cv_has_lib_libzip@
+LIBLZMA=@ac_cv_has_lib_liblzma@
 LIBCURL=@ac_cv_has_lib_libcurl@
 LIBUUID=@ac_cv_has_lib_libuuid@
 NCURSESINCLUDE=@ac_cv_ncurses_include@

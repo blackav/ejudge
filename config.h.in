@@ -187,5 +187,8 @@
 #undef EJUDGE_EXEC_USER
 #undef EJUDGE_COMPILE_USER
 
+/* liblzma available */
+#undef CONF_HAS_LIBLZMA
+
 #endif /* __CONFIG_H__ */
 

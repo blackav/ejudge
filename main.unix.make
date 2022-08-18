@@ -289,13 +289,13 @@ suid_install : ${SUIDBINTARGETS} ejudge-suid-setup ej-compile-control
 suid_bins : ${SUIDBINTARGETS}
 
 ej-compile$(EXESFX) : $(C_OBJECTS)
-	$(LD) $(LDFLAGS) $(C_OBJECTS) -pthread -o $@ $(LDLIBS) ${EXPAT_LIB} ${LIBZIP} ${LIBUUID} -llzma
+	$(LD) $(LDFLAGS) $(C_OBJECTS) -pthread -o $@ $(LDLIBS) ${EXPAT_LIB} ${LIBZIP} ${LIBUUID} ${LIBLZMA}
 
 ej-compile-control : $(CC_OBJECTS)
 	$(LD) $(LDFLAGS) $(CC_OBJECTS) -o $@ $(LDLIBS) ${EXPAT_LIB}
 
 ej-agent : $(CA_OBJECTS)
-	$(LD) $(LDFLAGS) $(CA_OBJECTS) -o $@ $(LDLIBS) ${EXPAT_LIB} -llzma
+	$(LD) $(LDFLAGS) $(CA_OBJECTS) -o $@ $(LDLIBS) ${EXPAT_LIB} ${LIBLZMA}
 
 ej-run${EXESFX} : $(RUN_OBJECTS)
 	$(LD) $(LDFLAGS) $(RUN_OBJECTS) -o $@ $(LDLIBS) ${EXPAT_LIB} ${LIBZIP} ${LIBUUID} $(MONGO_LIBS) $(MONGOC_LIBS)
@@ -337,7 +337,7 @@ ej-super-server-control: ${SSC_OBJECTS}
 	${LD} ${LDFLAGS} $^ libcommon.a -o $@ ${LDLIBS} ${EXPAT_LIB}
 
 ej-super-run: ${SR_OBJECTS}
-	${LD} ${LDFLAGS} -pthread -rdynamic $^ libcommon.a -o $@ ${LDLIBS} ${EXPAT_LIB} -ldl ${LIBZIP} ${LIBUUID} $(MONGO_LIBS) $(MONGOC_LIBS) -llzma
+	${LD} ${LDFLAGS} -pthread -rdynamic $^ libcommon.a -o $@ ${LDLIBS} ${EXPAT_LIB} -ldl ${LIBZIP} ${LIBUUID} $(MONGO_LIBS) $(MONGOC_LIBS) ${LIBLZMA}
 
 ej-super-run-control: ${SRC_OBJECTS}
 	${LD} ${LDFLAGS} -rdynamic $^ libcommon.a -o $@ ${LDLIBS} ${EXPAT_LIB} -ldl
@@ -352,7 +352,7 @@ ej-import-contest: ${IC_OBJECTS}
 	${LD} ${LDFLAGS} $^ libcommon.a -o $@ ${LDLIBS} ${EXPAT_LIB} ${LIBCURL} ${LIBZIP} -ldl
 
 ej-page-gen: ${G_OBJECTS} libuserlist_clnt.a libnew_server_clnt.a
-	${LD} -pthread ${LDFLAGS} -Wl,--whole-archive $^ -o $@ ${LDLIBS} libdwarf/libdwarf/.libs/libdwarf.a -lelf ${EXPAT_LIB} ${LIBZIP} -ldl -lpanel${NCURSES_SUFFIX} -lmenu${NCURSES_SUFFIX} -lncurses${NCURSES_SUFFIX} ${LIBUUID} -Wl,--no-whole-archive $(MONGO_LIBS) $(MONGOC_LIBS) -llzma
+	${LD} -pthread ${LDFLAGS} -Wl,--whole-archive $^ -o $@ ${LDLIBS} libdwarf/libdwarf/.libs/libdwarf.a -lelf ${EXPAT_LIB} ${LIBZIP} -ldl -lpanel${NCURSES_SUFFIX} -lmenu${NCURSES_SUFFIX} -lncurses${NCURSES_SUFFIX} ${LIBUUID} -Wl,--no-whole-archive $(MONGO_LIBS) $(MONGOC_LIBS) ${LIBLZMA}
 ej-page-gen.debug : ej-page-gen
 	objcopy --only-keep-debug $< $@
 

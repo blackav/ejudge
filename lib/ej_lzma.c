@@ -14,14 +14,21 @@
  * GNU General Public License for more details.
  */
 
+#include "ejudge/config.h"
 #include "ejudge/ej_lzma.h"
 
+#if CONF_HAS_LIBLZMA - 0 == 1
 #include <lzma.h>
+#endif
 
 int
 ej_lzma_is_supported(void)
 {
+#if CONF_HAS_LIBLZMA - 0 == 1
     return 1;
+#else
+    return 0;
+#endif
 }
 
 int
@@ -31,6 +38,7 @@ ej_lzma_encode_buf(
         unsigned char **p_out_buf,
         size_t *p_out_size)
 {
+#if CONF_HAS_LIBLZMA - 0 == 1
     // estimate compressed size as twice of the source size
     size_t out_size = 256 + 2 * in_size;
     uint8_t *out_buf = malloc(out_size);
@@ -51,6 +59,9 @@ ej_lzma_encode_buf(
     *p_out_size = out_pos;
 
     return 0;
+#else
+    return -1;
+#endif
 }
 
 int
@@ -61,6 +72,7 @@ ej_lzma_decode_buf(
         unsigned char **p_out_buf,
         size_t *p_out_size)
 {
+#if CONF_HAS_LIBLZMA - 0 == 1
     uint64_t mem_limit = UINT64_MAX;
     uint8_t *out_buf = malloc(expected_out_size + 1);
     size_t in_pos = 0;
@@ -80,4 +92,7 @@ ej_lzma_decode_buf(
     *p_out_size = out_pos;
 
     return 0;
+#else
+    return -1;
+#endif
 }
