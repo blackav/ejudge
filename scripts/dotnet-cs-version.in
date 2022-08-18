@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright (c) 2019-2020 Alexander Chernov <cher@ejudge.ru>
+# Copyright (c) 2019-2022 Alexander Chernov <cher@ejudge.ru>
 
 # compiler script interface is as follows
 # <comp>-version [OPTION]
@@ -58,6 +58,7 @@ then
   [ "${verbose}" = 1 ] && echo -n "checking whether .Net C# is available... " >&2
   "${DOTNETRUN}" --version >/dev/null 2>&1 || failure
   version=`"${DOTNETRUN}" --version 2>&1`|| failure
+  DOTNETMAJOR=(${version/./ })
   "${DOTNETRUN}" new console -lang 'c#' -n conftest >/dev/null 2>&1 || failure
   cat > conftest/Program.cs <<EOF
 using System;
@@ -89,6 +90,7 @@ EOF
   echo 'DOTNETRUN="'"${DOTNETRUN}"'"'
   echo 'DOTNETDIR="'"${DOTNETDIR}"'"'
   echo 'DOTNETTARGET="'"${target}"'"'
+  echo 'DOTNETMAJOR="'"${DOTNETMAJOR}"'"'
   [ "${verbose}" = 1 ] && echo "yes, ${DOTNETRUN}, ${version}" >&2
   exit 0
 fi
