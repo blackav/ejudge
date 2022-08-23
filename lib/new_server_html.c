@@ -10539,7 +10539,7 @@ ns_submit_run(
     if (lang->disabled > 0) {
       FAIL(NEW_SRV_ERR_LANG_DISABLED);
     }
-    if (lang->insecure > 0 && global->secure_run > 0 && prob->disable_security <= 0) {
+    if (prob->enable_container <= 0 && lang->insecure > 0 && global->secure_run > 0 && prob->disable_security <= 0) {
       FAIL(NEW_SRV_ERR_LANG_DISABLED);
     }
     if (prob->enable_language) {
@@ -11208,7 +11208,7 @@ unpriv_submit_run(
 
   /* check for disabled languages */
   if (lang_id > 0) {
-    if (lang->disabled || (lang->insecure > 0 && global->secure_run)) {
+    if (lang->disabled || (prob->enable_container <= 0 && lang->insecure > 0 && global->secure_run)) {
       FAIL2(NEW_SRV_ERR_LANG_DISABLED);
     }
 
