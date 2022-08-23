@@ -1026,7 +1026,7 @@ add_file_to_object(cJSON *j, const char *data, size_t size)
     if (!size) {
         return;
     }
-    if (size < 100) {
+    if (size < 160) {
         cJSON_AddTrueToObject(j, "b64");
         char *ptr = malloc(size * 2 + 16);
         int n = base64u_encode(data, size, ptr);
