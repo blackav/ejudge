@@ -701,7 +701,7 @@ do_loop(
       current_time_ms = ((long long) ctv.tv_sec) * 1000 + ctv.tv_usec / 1000;
       report_waiting_state(current_time_ms, last_handled_ms);
 
-      int sleep_time = agent?30:global->sleep_time;
+      int sleep_time = agent?30000:global->sleep_time;
       interrupt_enable();
       os_Sleep(sleep_time);
       interrupt_disable();
@@ -713,7 +713,7 @@ do_loop(
       current_time_ms = ((long long) ctv.tv_sec) * 1000 + ctv.tv_usec / 1000;
       report_waiting_state(current_time_ms, last_handled_ms);
 
-      int sleep_time = agent?30:global->sleep_time;
+      int sleep_time = agent?30000:global->sleep_time;
       interrupt_enable();
       os_Sleep(sleep_time);
       interrupt_disable();
