@@ -942,7 +942,7 @@ new_loop(int parallel_mode)
     }
 
     if (!r) {
-      int sleep_time = agent?30:global->sleep_time;
+      int sleep_time = agent?30000:global->sleep_time;
       interrupt_enable();
       os_Sleep(sleep_time);
       interrupt_disable();
