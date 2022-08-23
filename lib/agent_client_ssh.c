@@ -439,13 +439,14 @@ handle_rchunks(struct AgentClientSsh *acs)
                         f->ready = 1;
                         f->callback(f, f->user);
                     } else {
+                        int notify_signal = f->notify_signal;
                         f->value = j; j = NULL;
                         pthread_mutex_lock(&f->m);
                         f->ready = 1;
                         pthread_cond_signal(&f->c);
                         pthread_mutex_unlock(&f->m);
-                        if (f->notify_signal > 0) {
-                            kill(getpid(), f->notify_signal);
+                        if (notify_signal > 0) {
+                            kill(getpid(), notify_signal);
                         }
                     }
                 }
@@ -571,12 +572,13 @@ thread_func(void *ptr)
     pthread_mutex_lock(&acs->futurem);
     for (int i = 0; i < acs->futureu; ++i) {
         struct Future *f = acs->futures[i];
+        int notify_signal = f->notify_signal;
         pthread_mutex_lock(&f->m);
         f->ready = 1;
         pthread_cond_signal(&f->c);
         pthread_mutex_unlock(&f->m);
-        if (f->notify_signal > 0) {
-            kill(getpid(), f->notify_signal);
+        if (notify_signal > 0) {
+            kill(getpid(), notify_signal);
         }
     }
     pthread_mutex_unlock(&acs->futurem);
