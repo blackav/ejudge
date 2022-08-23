@@ -631,6 +631,11 @@ connect_func(struct AgentClient *ac)
         dup2(tossh[0], 0); close(tossh[0]); close(tossh[1]);
         dup2(fromssh[1], 1); close(fromssh[0]); close(fromssh[1]);
 
+        signal(SIGPIPE, SIG_DFL);
+        sigset_t ss;
+        sigemptyset(&ss);
+        sigprocmask(SIG_SETMASK, &ss, NULL);
+
         char *args[] =
         {
             "ssh",
