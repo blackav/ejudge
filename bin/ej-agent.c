@@ -1220,9 +1220,13 @@ create_contest_dirs(
 
     const unsigned char *root_dir = NULL;
     if (as->mode == PREPARE_COMPILE) {
+#if defined EJUDGE_COMPILE_SPOOL_DIR
         root_dir = EJUDGE_COMPILE_SPOOL_DIR;
+#endif
     } else if (as->mode == PREPARE_RUN) {
+#if defined EJUDGE_RUN_SPOOL_DIR
         root_dir = EJUDGE_RUN_SPOOL_DIR;
+#endif
     }
 
     unsigned char server_dir[PATH_MAX];
