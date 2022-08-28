@@ -185,6 +185,7 @@ struct super_run_in_problem_packet
   ejintbool_t stop_on_first_fail;
   ejintbool_t enable_control_socket;
   unsigned char *container_options;
+  int test_count;
 
   int type_val META_ATTRIB((meta_hidden));
 };
