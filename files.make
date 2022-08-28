@@ -272,6 +272,7 @@ COMMON_CFILES=\
  lib/teamdb_2.c\
  lib/team_extra.c\
  lib/team_extra_xml.c\
+ lib/test_count_cache.c\
  lib/testinfo.c\
  lib/testing_report_bson.c\
  lib/testing_report_xml.c\
@@ -651,6 +652,7 @@ HFILES=\
  ./include/ejudge/teamdb.h\
  ./include/ejudge/teamdb_priv.h\
  ./include/ejudge/team_extra.h\
+ ./include/ejudge/test_count_cache.h\
  ./include/ejudge/testinfo.h\
  ./include/ejudge/testing_report_xml.h\
  ./include/ejudge/tex_dom.h\
