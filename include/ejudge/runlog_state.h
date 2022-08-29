@@ -65,7 +65,7 @@ struct user_run_header_info
   unsigned char pad2[16];
 };
 
-_Static_assert(sizeof(struct user_run_header_info) == 64);
+_Static_assert(sizeof(struct user_run_header_info) == 64, "user_run_header_info must have size 64");
 
 struct user_run_header_state
 {
