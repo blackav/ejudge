@@ -17,5 +17,12 @@
  * GNU General Public License for more details.
  */
 
+struct test_count_cache_state;
+
+int
+test_count_cache_get(
+        struct test_count_cache_state *state,
+        const unsigned char *path,
+        const unsigned char *pattern);
 
 #endif /* __TEST_COUNT_CACHE_H__ */

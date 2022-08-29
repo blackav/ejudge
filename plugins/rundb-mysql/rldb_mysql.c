@@ -320,8 +320,7 @@ do_open(struct rldb_mysql_state *state)
   if (run_version == 11) {
     if (mi->simple_fquery(md, "ALTER TABLE %sruns ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin ;", md->table_prefix) < 0)
       return -1;
-    if (mi->simple_fquery(md, "ALTER TABLE %sruns DROP PRIMARY KEY ;", md->table_prefix) < 0)
-      return -1;
+    mi->simple_fquery(md, "ALTER TABLE %sruns DROP PRIMARY KEY ;", md->table_prefix);
     if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD UNIQUE KEY runs_run_contest_id_idx(run_id, contest_id) ;", md->table_prefix) < 0)
       return -1;
     if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD COLUMN serial_id INT(18) NOT NULL PRIMARY KEY AUTO_INCREMENT FIRST ;", md->table_prefix) < 0)
