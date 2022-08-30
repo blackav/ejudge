@@ -173,6 +173,7 @@ COMMON_CFILES=\
  lib/filehash.c\
  lib/filter_eval.c\
  lib/filter_tree.c\
+ lib/fs_mirror.c\
  lib/html.c\
  lib/html_checkbox.c\
  lib/html_date_select.c\
@@ -580,6 +581,7 @@ HFILES=\
  ./include/ejudge/fileutl.h\
  ./include/ejudge/filter_eval.h\
  ./include/ejudge/filter_tree.h\
+ ./include/ejudge/fs_mirror.h\
  ./include/ejudge/full_archive.h\
  ./include/ejudge/html.h\
  ./include/ejudge/html_parse.h\
