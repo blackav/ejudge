@@ -2533,6 +2533,10 @@ run_one_test(
     return -1;
   }
 
+  if (srpp->test_count > 0 && cur_test > srpp->test_count) {
+    return -1;
+  }
+
   test_base[0] = 0;
   test_src[0] = 0;
   if (srpp->test_pat && srpp->test_pat[0]) {
@@ -2562,7 +2566,8 @@ run_one_test(
     snprintf(tgzdir_src, sizeof(tgzdir_src), "%s/%s", srpp->tgz_dir, tgzdir_base);
   }
 
-  if (os_CheckAccess(test_src, REUSE_R_OK) < 0) {
+  // avoid check access operation if the test count is known
+  if (srpp->test_count <= 0 && os_CheckAccess(test_src, REUSE_R_OK) < 0) {
     return -1;
   }
 
