@@ -146,6 +146,7 @@ test_count_cache_get(
         const unsigned char *path,
         const unsigned char *pattern)
 {
+    fprintf(stderr, "test_count_cache_get: '%s', '%s'\n", path, pattern);
     if (!state) {
         state = get_global_state();
     }
