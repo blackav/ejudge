@@ -50,6 +50,7 @@
 #include "ejudge/xuser_plugin.h"
 #include "ejudge/random.h"
 #include "ejudge/statusdb.h"
+#include "ejudge/test_count_cache.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -2410,6 +2411,7 @@ serve_run_request(
   if (prob->umask && prob->umask[0]) {
     srpp->umask = xstrdup(prob->umask);
   }
+  srpp->test_count = test_count_cache_get(NULL, srpp->test_dir, srpp->test_pat);
 
   if (find_lang_specific_size(prob->lang_max_vm_size, lang, &lang_specific_size) > 0) {
     srpp->max_vm_size = lang_specific_size;
