@@ -173,5 +173,6 @@ test_count_cache_get(
         update_dir_info(dir, pattern, us);
     }
 
+    fprintf(stderr, "test_count_cache_get: result %d\n", dir->test_count);
     return dir->test_count;
 }
