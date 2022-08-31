@@ -17,4 +17,16 @@
  * GNU General Public License for more details.
  */
 
+struct fs_mirror_state;
+
+struct fs_mirror_state *fs_mirror_create(void);
+struct fs_mirror_state *fs_mirror_free(struct fs_mirror_state *ms);
+
+void
+fs_mirror_set_mirror_dir(
+        struct fs_mirror_state *ms,
+        const unsigned char *dir);
+void
+fs_mirror_set_agent_client(struct AgentClient *ac);
+
 #endif /* __FS_MIRROR_H__ */
