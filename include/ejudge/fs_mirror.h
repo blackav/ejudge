@@ -18,6 +18,7 @@
  */
 
 struct fs_mirror_state;
+struct AgentClient;
 
 struct fs_mirror_state *fs_mirror_create(void);
 struct fs_mirror_state *fs_mirror_free(struct fs_mirror_state *ms);
