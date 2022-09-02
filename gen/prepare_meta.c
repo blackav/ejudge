@@ -124,6 +124,7 @@ static struct meta_info_item meta_info_section_global_data_data[] =
   [CNTSGLOB_rundb_plugin] = { CNTSGLOB_rundb_plugin, 's', XSIZE(struct section_global_data, rundb_plugin), "rundb_plugin", XOFFSET(struct section_global_data, rundb_plugin) },
   [CNTSGLOB_xuser_plugin] = { CNTSGLOB_xuser_plugin, 's', XSIZE(struct section_global_data, xuser_plugin), "xuser_plugin", XOFFSET(struct section_global_data, xuser_plugin) },
   [CNTSGLOB_status_plugin] = { CNTSGLOB_status_plugin, 's', XSIZE(struct section_global_data, status_plugin), "status_plugin", XOFFSET(struct section_global_data, status_plugin) },
+  [CNTSGLOB_variant_plugin] = { CNTSGLOB_variant_plugin, 's', XSIZE(struct section_global_data, variant_plugin), "variant_plugin", XOFFSET(struct section_global_data, variant_plugin) },
   [CNTSGLOB_var_dir] = { CNTSGLOB_var_dir, 's', XSIZE(struct section_global_data, var_dir), "var_dir", XOFFSET(struct section_global_data, var_dir) },
   [CNTSGLOB_run_log_file] = { CNTSGLOB_run_log_file, 's', XSIZE(struct section_global_data, run_log_file), "run_log_file", XOFFSET(struct section_global_data, run_log_file) },
   [CNTSGLOB_clar_log_file] = { CNTSGLOB_clar_log_file, 's', XSIZE(struct section_global_data, clar_log_file), "clar_log_file", XOFFSET(struct section_global_data, clar_log_file) },
