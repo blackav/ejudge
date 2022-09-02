@@ -22,6 +22,7 @@ ej-convert-clars
 ej-convert-runs
 ej-convert-status
 ej-convert-xuser
+ej-convert-variant
 ej-fix-db
 ej-import-contest
 ej-jobs
