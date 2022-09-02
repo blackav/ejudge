@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2005-2021 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -527,6 +527,8 @@ prepare_unparse_global(
     fprintf(f, "xuser_plugin = \"%s\"\n", CARMOR(global->xuser_plugin));
   if (global->status_plugin && global->status_plugin[0] && strcmp(global->status_plugin, "file"))
     fprintf(f, "status_plugin = \"%s\"\n", CARMOR(global->status_plugin));
+  if (global->variant_plugin && global->variant_plugin[0] && strcmp(global->variant_plugin, "file"))
+    fprintf(f, "variant_plugin = \"%s\"\n", CARMOR(global->variant_plugin));
   do_xstr(f, &ab, "load_user_group", global->load_user_group);
   fprintf(f, "\n");
 

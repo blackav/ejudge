@@ -16,6 +16,7 @@
 
 #include "ejudge/config.h"
 #include "ejudge/variant_plugin.h"
+#include "ejudge/prepare.h"
 #include "ejudge/errlog.h"
 
 #include <string.h>
@@ -39,8 +40,7 @@ variant_plugin_open(
     }
 
     if (!plugin_name) {
-        // FIXME: implement and uncomment
-        //if (global) plugin_name = global->variant_plugin; 
+        if (global) plugin_name = global->variant_plugin;
     }
     if (!plugin_name) plugin_name = "";
 

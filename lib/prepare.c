@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2000-2021 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -169,6 +169,7 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(rundb_plugin, "S"),
   GLOBAL_PARAM(xuser_plugin, "S"),
   GLOBAL_PARAM(status_plugin, "S"),
+  GLOBAL_PARAM(variant_plugin, "S"),
 
   GLOBAL_PARAM(var_dir, "S"),
 
@@ -1206,6 +1207,7 @@ prepare_global_free_func(struct generic_section_config *gp)
   xfree(p->rundb_plugin);
   xfree(p->xuser_plugin);
   xfree(p->status_plugin);
+  xfree(p->variant_plugin);
 
   memset(p, 0xab, sizeof(*p));
   xfree(p);
@@ -2927,6 +2929,10 @@ set_defaults(
   if ((!g->status_plugin || !g->status_plugin[0]) && ejudge_config
       && ejudge_config->default_status_plugin && ejudge_config->default_status_plugin[0]) {
     xstrdup3(&g->status_plugin, ejudge_config->default_status_plugin);
+  }
+  if ((!g->variant_plugin || !g->variant_plugin[0]) && ejudge_config
+      && ejudge_config->default_variant_plugin && ejudge_config->default_variant_plugin[0]) {
+    xstrdup3(&g->variant_plugin, ejudge_config->default_variant_plugin);
   }
 
   if (!g->conf_dir || !g->conf_dir[0]) {
