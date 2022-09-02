@@ -2,7 +2,7 @@
 #ifndef __PREPARE_H__
 #define __PREPARE_H__
 
-/* Copyright (C) 2000-2021 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -388,6 +388,8 @@ struct section_global_data
   unsigned char *xuser_plugin;
   /** the contest status plugin */
   unsigned char *status_plugin;
+  /** the variant plugin */
+  unsigned char *variant_plugin;
 
   /* ====== VARIABLE FILES/DIRECTORIES SETUP ====== */
   /** root directory with working files, run sources/reports, etc */
