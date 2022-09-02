@@ -40,6 +40,7 @@ struct userlist_clnt;
 struct ejudge_cfg;
 struct xuser_cnts_state;
 struct statusdb_state;
+struct variant_cnts_plugin_data;
 
 /* error codes */
 enum
@@ -214,6 +215,9 @@ struct serve_state
 
   /* runlog internal state */
   struct runlog_state *runlog_state;
+
+  /* variant internal state */
+  struct variant_cnts_plugin_data *variant_state;
 
   /* for master_html to store the filter expressions */
   int users_a;

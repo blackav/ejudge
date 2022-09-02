@@ -294,6 +294,7 @@ COMMON_CFILES=\
  lib/userlist_proto.c\
  lib/userlist_xml.c\
  lib/variant_map.c\
+ lib/variant_plugin.c\
  lib/variant_plugin_file.c\
  lib/varsubst.c\
  lib/vcs.c\

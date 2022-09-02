@@ -39,6 +39,7 @@
 #include "ejudge/variant_map.h"
 #include "ejudge/xuser_plugin.h"
 #include "ejudge/statusdb.h"
+#include "ejudge/variant_plugin.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -122,6 +123,9 @@ serve_state_destroy(
   }
   teamdb_destroy(state->teamdb_state);
   clar_destroy(state->clarlog_state);
+  if (state->variant_state) {
+    state->variant_state->vt->close(state->variant_state);
+  }
 
   watched_file_clear(&state->description);
 
@@ -891,11 +895,20 @@ serve_state_load_contest(
   serve_build_compile_dirs(config, state);
   serve_build_run_dirs(config, state, cnts);
 
+  int need_variant_plugin = 0;
   XCALLOC(state->prob_extras, state->max_prob + 1);
   for (i = 1; i <= state->max_prob; i++) {
     if (!state->probs[i] || state->probs[i]->variant_num <= 0) continue;
+    need_variant_plugin = 1;
     XCALLOC(state->prob_extras[i].v_stmts, state->probs[i]->variant_num + 1);
     XCALLOC(state->prob_extras[i].v_alts, state->probs[i]->variant_num + 1);
+  }
+  if (need_variant_plugin) {
+    state->variant_state = variant_plugin_open(config, cnts, global, NULL, 0);
+    if (!state->variant_state) {
+      err("load_contest: contest %d variant plugin failed to load", contest_id);
+      goto failure;
+    }
   }
 
   teamdb_refresh(state->teamdb_state);

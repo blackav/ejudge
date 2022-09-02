@@ -53,4 +53,12 @@ struct variant_plugin_iface
         struct variant_cnts_plugin_data *data);
 };
 
+struct variant_cnts_plugin_data *
+variant_plugin_open(
+        const struct ejudge_cfg *config,
+        const struct contest_desc *cnts,
+        const struct section_global_data *global,
+        const unsigned char *plugin_name,
+        int flags);
+
 #endif /* __VARIANT_PLUGIN_H__ */
