@@ -62,7 +62,7 @@ variant_plugin_open(
         FILE *log_f,
         const struct ejudge_cfg *config,
         const struct contest_desc *cnts,
-        struct serve_state *state,
+        const struct serve_state *state,
         const unsigned char *plugin_name,
         int flags);
 

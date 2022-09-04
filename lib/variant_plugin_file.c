@@ -71,7 +71,7 @@ open_func(
         FILE *log_f,
         const struct ejudge_cfg *config,
         const struct contest_desc *cnts,
-        struct serve_state *state,
+        const struct serve_state *state,
         int flags)
 {
     struct variant_file_data *vfd = (struct variant_file_data *) data;
