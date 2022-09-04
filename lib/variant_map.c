@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2014-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2014-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -415,7 +415,7 @@ parse_vm_v2(
 struct variant_map *
 variant_map_parse(
         FILE *log_f,
-        struct serve_state *state,
+        const struct serve_state *state,
         const unsigned char *path)
 {
   int vintage, i, j, k, var_prob_num;

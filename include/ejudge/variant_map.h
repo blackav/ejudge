@@ -2,7 +2,7 @@
 #ifndef __VARIANT_MAP_H__
 #define __VARIANT_MAP_H__
 
-/* Copyright (C) 2014-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2014-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -69,7 +69,7 @@ variant_map_save(
 struct variant_map *
 variant_map_parse(
         FILE *log_f,
-        struct serve_state *state,
+        const struct serve_state *state,
         const unsigned char *path);
 int
 variant_map_set_variant(
