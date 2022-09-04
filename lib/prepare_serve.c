@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2005-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -36,7 +36,7 @@ find_variant(
         int *p_virtual_variant)
 {
   int i, new_vint, ui;
-  struct variant_map *pmap = state->global->variant_map;
+  struct variant_map *pmap = NULL; //state->global->variant_map;
   struct variant_map_item *vi;
   const struct section_problem_data *prob = NULL;
 
@@ -121,7 +121,7 @@ find_user_variant(
         int *p_virtual_variant)
 {
   int i, new_vint, ui;
-  struct variant_map *pmap = state->global->variant_map;
+  struct variant_map *pmap = NULL; //state->global->variant_map;
   struct variant_map_item *vi;
 
   if (!pmap) return 0;

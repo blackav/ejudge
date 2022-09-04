@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2005-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1737,7 +1737,7 @@ cleanup:
   return retval;
 }
 
-static int
+static __attribute__((unused)) int
 vmap_sort_func(const void *v1, const void *v2)
 {
   const struct variant_map_item *p1 = (typeof(p1)) v1;
@@ -1761,6 +1761,7 @@ super_html_update_variant_map(FILE *flog, int contest_id,
                               int total_probs,
                               struct section_problem_data **probs)
 {
+#if 0
   int r;
   unsigned char *xml_text = 0;
   struct userlist_list *users = 0;
@@ -1969,6 +1970,8 @@ super_html_update_variant_map(FILE *flog, int contest_id,
   xfree(xml_text);
   if (users) userlist_free(&users->b);
   return -1;
+#endif
+  return 0;
 }
 
 int
@@ -1976,6 +1979,7 @@ super_html_variant_param(struct sid_state *sstate, int cmd,
                          int map_i, const unsigned char *param2,
                          int param3, int param4)
 {
+#if 0
   struct variant_map *vmap = 0;
   const unsigned char *s;
   int n, total, i;
@@ -2025,13 +2029,14 @@ super_html_variant_param(struct sid_state *sstate, int cmd,
   default:
     abort();
   }
-
+#endif
   return 0;
 }
 
 int
 super_html_variant_prob_op(struct sid_state *sstate, int cmd, int prob_id)
 {
+#if 0
   struct variant_map *vmap = 0;
   struct section_problem_data *prob = 0;
   int j, i;
@@ -2063,6 +2068,6 @@ super_html_variant_prob_op(struct sid_state *sstate, int cmd, int prob_id)
   default:
     return -SSERV_ERR_INVALID_PARAMETER;
   }
-
+#endif
   return 0;
 }

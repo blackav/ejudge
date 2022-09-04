@@ -1056,7 +1056,7 @@ prepare_global_free_func(struct generic_section_config *gp)
   sarray_free(p->stand_row_attr);
   sarray_free(p->stand_page_row_attr);
   sarray_free(p->stand_page_col_attr);
-  variant_map_free(p->variant_map);
+  //variant_map_free(p->variant_map);
   free_user_adjustment_info(p->user_adjustment_info);
   free_user_adjustment_map(p->user_adjustment_map);
   xfree(p->unhandled_vars);
@@ -4181,8 +4181,10 @@ set_defaults(
         err("There are variant problems, but no variant file name");
         return -1;
       }
+      /*
       g->variant_map = variant_map_parse(stderr, state, g->variant_map_file);
       if (!g->variant_map) return -1;
+      */
     }
   }
 

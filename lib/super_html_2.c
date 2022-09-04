@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2005-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -527,7 +527,7 @@ super_html_commit_contest_2(
   int vcs_add_flag = 0, serve_vcs_add_flag = 0;
   int need_variant_map = 0, vmap_vcs_add_flag = 0, uid;
   char *vmap_txt = 0;
-  size_t vmap_size = 0;
+  __attribute__((unused)) size_t vmap_size = 0;
   FILE *vmap_f = 0;
   struct opcap_list_item *capp;
   int dir_mode = -1, dir_group = -1, file_mode = -1, file_group = -1;
@@ -579,6 +579,7 @@ super_html_commit_contest_2(
     if (need_variant_map && !sstate->global->variant_map_file)
       xstrdup3(&sstate->global->variant_map_file, "variant.map");
 
+    /*
     if (need_variant_map && !sstate->global->variant_map) {
       char *vlog_s = 0;
       size_t vlog_z = 0;
@@ -599,6 +600,7 @@ super_html_commit_contest_2(
       fprintf(log_f, "No variant map defined");
       return -1;
     }
+    */
   }
   // FIXME: what else we should validate
 
@@ -843,6 +845,7 @@ super_html_commit_contest_2(
                               plog_footer_path, plog_footer_path_2)) < 0)
       goto failed;
 
+    /*
     if (need_variant_map) {
       vmap_f = open_memstream(&vmap_txt, &vmap_size);
       variant_map_unparse(vmap_f, global->variant_map, 0);
@@ -854,6 +857,7 @@ super_html_commit_contest_2(
         goto failed;
       if (access(vmap_path, F_OK) < 0) vmap_vcs_add_flag = 1;
     }
+    */
   }
 
   /* 10. Load the previous contest.xml and extract header and footer */

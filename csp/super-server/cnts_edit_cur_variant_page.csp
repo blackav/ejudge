@@ -69,8 +69,8 @@ static const unsigned char * const form_row_attrs[]=
   }
   if (var_prob_num <= 0) {
 %><h2>Contest does not have variant problems</h2><%
-    variant_map_free(global->variant_map);
-    global->variant_map = 0;
+    //variant_map_free(global->variant_map);
+    //global->variant_map = 0;
     goto bottom_links;
   }
 %>
@@ -80,11 +80,11 @@ static const unsigned char * const form_row_attrs[]=
   char *vlog_s = 0;
   size_t vlog_z = 0;
   if (phr->action == SSERV_CMD_CNTS_EDIT_CUR_VARIANT_PAGE) {
-    vmap = global->variant_map;
+    //vmap = global->variant_map;
     if (!vmap || vmap->prob_map_size != phr->ss->prob_a || vmap->prob_rev_map_size <= 0) {
 %><h2>Variant map is obsolete</h2><%
-      variant_map_free(global->variant_map);
-      global->variant_map = 0;
+      //variant_map_free(global->variant_map);
+      //global->variant_map = 0;
       goto bottom_links;
     }
   } else {
@@ -114,7 +114,7 @@ static const unsigned char * const form_row_attrs[]=
 <pre><s:v value="vlog_s" /></pre><%
   }
   xfree(vlog_s); vlog_s = 0; vlog_z = 0;
-  vmap = global->variant_map;
+  //vmap = global->variant_map;
 %>
 
 <table border="0">
