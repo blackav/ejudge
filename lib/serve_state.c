@@ -904,7 +904,7 @@ serve_state_load_contest(
     XCALLOC(state->prob_extras[i].v_alts, state->probs[i]->variant_num + 1);
   }
   if (need_variant_plugin) {
-    state->variant_state = variant_plugin_open(config, cnts, global, NULL, 0);
+    state->variant_state = variant_plugin_open(NULL, config, cnts, state, NULL, 0);
     if (!state->variant_state) {
       err("load_contest: contest %d variant plugin failed to load", contest_id);
       goto failure;

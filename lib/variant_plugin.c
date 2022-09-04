@@ -25,9 +25,10 @@ extern struct variant_plugin_iface plugin_variant_file;
 
 struct variant_cnts_plugin_data *
 variant_plugin_open(
+        FILE *log_f,
         const struct ejudge_cfg *config,
         const struct contest_desc *cnts,
-        const struct section_global_data *global,
+        struct serve_state *state,
         const unsigned char *plugin_name,
         int flags)
 {
@@ -40,9 +41,10 @@ variant_plugin_open(
     }
 
     if (!plugin_name) {
-        if (global) plugin_name = global->variant_plugin;
+        if (state->global) plugin_name = state->global->variant_plugin;
     }
     if (!plugin_name) plugin_name = "";
+    if (!log_f) log_f = stderr;
 
     if (!plugin_name || !strcmp(plugin_name, "file")) {
         if (!(loaded_plugin = plugin_get("variant", "file"))) {
@@ -50,12 +52,12 @@ variant_plugin_open(
             return NULL;
         }
         iface = (struct variant_plugin_iface *) loaded_plugin->iface;
-        return iface->open(loaded_plugin->data, config, cnts, global, flags);
+        return iface->open(loaded_plugin->data, log_f, config, cnts, state, flags);
     }
 
     if ((loaded_plugin = plugin_get("variant", plugin_name))) {
         iface = (struct variant_plugin_iface*) loaded_plugin->iface;
-        return iface->open(loaded_plugin->data, config, cnts, global, flags);
+        return iface->open(loaded_plugin->data, log_f, config, cnts, state, flags);
     }
 
     if (!config) {
@@ -83,5 +85,5 @@ variant_plugin_open(
     }
 
     iface = (struct variant_plugin_iface*) loaded_plugin->iface;
-    return iface->open(loaded_plugin->data, config, cnts, global, flags);
+    return iface->open(loaded_plugin->data, log_f, config, cnts, state, flags);
 }

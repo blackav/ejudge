@@ -18,6 +18,8 @@
 
 #include "ejudge/common_plugin.h"
 
+#include <stdio.h>
+
 #define VARIANT_PLUGIN_IFACE_VERSION 1
 
 // the plugin state
@@ -37,6 +39,7 @@ struct variant_cnts_plugin_data
 struct ejudge_cfg;
 struct contest_desc;
 struct section_global_data;
+struct serve_state;
 
 struct variant_plugin_iface
 {
@@ -45,9 +48,10 @@ struct variant_plugin_iface
 
     struct variant_cnts_plugin_data * (*open)(
         struct common_plugin_data *data,
+        FILE *log_f,
         const struct ejudge_cfg *config,
         const struct contest_desc *cnts,
-        const struct section_global_data *global,
+        struct serve_state *state,
         int flags);
     struct variant_cnts_plugin_data * (*close)(
         struct variant_cnts_plugin_data *data);
@@ -55,9 +59,10 @@ struct variant_plugin_iface
 
 struct variant_cnts_plugin_data *
 variant_plugin_open(
+        FILE *log_f,
         const struct ejudge_cfg *config,
         const struct contest_desc *cnts,
-        const struct section_global_data *global,
+        struct serve_state *state,
         const unsigned char *plugin_name,
         int flags);
 
