@@ -730,7 +730,7 @@ struct section_global_data
   /** path to the file with variant assignment */
   unsigned char *variant_map_file;
   /** parsed variant map */
-  struct variant_map *variant_map META_ATTRIB((meta_private));
+  //struct variant_map *variant_map META_ATTRIB((meta_private));
 
   /** enable printing of submission by participants */
   ejintbool_t enable_printing;
