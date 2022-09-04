@@ -272,7 +272,6 @@ enum
   CNTSGLOB_skip_accept_testing,
   CNTSGLOB_enable_problem_history,
   CNTSGLOB_variant_map_file,
-  CNTSGLOB_variant_map,
   CNTSGLOB_enable_printing,
   CNTSGLOB_disable_banner_page,
   CNTSGLOB_printout_uses_login,

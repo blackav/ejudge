@@ -277,7 +277,6 @@ static struct meta_info_item meta_info_section_global_data_data[] =
   [CNTSGLOB_skip_accept_testing] = { CNTSGLOB_skip_accept_testing, 'B', XSIZE(struct section_global_data, skip_accept_testing), "skip_accept_testing", XOFFSET(struct section_global_data, skip_accept_testing) },
   [CNTSGLOB_enable_problem_history] = { CNTSGLOB_enable_problem_history, 'B', XSIZE(struct section_global_data, enable_problem_history), "enable_problem_history", XOFFSET(struct section_global_data, enable_problem_history) },
   [CNTSGLOB_variant_map_file] = { CNTSGLOB_variant_map_file, 's', XSIZE(struct section_global_data, variant_map_file), "variant_map_file", XOFFSET(struct section_global_data, variant_map_file) },
-  [CNTSGLOB_variant_map] = { CNTSGLOB_variant_map, '?', XSIZE(struct section_global_data, variant_map), NULL, XOFFSET(struct section_global_data, variant_map) },
   [CNTSGLOB_enable_printing] = { CNTSGLOB_enable_printing, 'B', XSIZE(struct section_global_data, enable_printing), "enable_printing", XOFFSET(struct section_global_data, enable_printing) },
   [CNTSGLOB_disable_banner_page] = { CNTSGLOB_disable_banner_page, 'B', XSIZE(struct section_global_data, disable_banner_page), "disable_banner_page", XOFFSET(struct section_global_data, disable_banner_page) },
   [CNTSGLOB_printout_uses_login] = { CNTSGLOB_printout_uses_login, 'B', XSIZE(struct section_global_data, printout_uses_login), "printout_uses_login", XOFFSET(struct section_global_data, printout_uses_login) },
