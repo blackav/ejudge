@@ -51,7 +51,7 @@ struct variant_plugin_iface
         FILE *log_f,
         const struct ejudge_cfg *config,
         const struct contest_desc *cnts,
-        struct serve_state *state,
+        const struct serve_state *state,
         int flags);
     struct variant_cnts_plugin_data * (*close)(
         struct variant_cnts_plugin_data *data);
