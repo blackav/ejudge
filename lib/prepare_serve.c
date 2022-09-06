@@ -25,11 +25,12 @@
 #include "ejudge/runlog.h"
 #include "ejudge/variant_map.h"
 #include "ejudge/random.h"
+#include "ejudge/variant_plugin.h"
 
 #include "ejudge/xalloc.h"
 
-int
-find_variant(
+static __attribute__((unused)) int
+to_remove_find_variant(
         const serve_state_t state,
         int user_id,
         int prob_id,
@@ -114,8 +115,8 @@ find_variant(
   return 0;
 }
 
-int
-find_user_variant(
+static __attribute__((unused)) int
+to_remove_find_user_variant(
         const serve_state_t state,
         int user_id,
         int *p_virtual_variant)
@@ -247,4 +248,32 @@ prepare_serve_defaults(
     xstrdup3(&state->global->name, (*p_cnts)->name);
   }
   return 0;
+}
+
+int
+find_variant(
+        const serve_state_t state,
+        int user_id,
+        int prob_id,
+        int *p_virtual_variant)
+{
+  return state->variant_state->vt->find_variant(
+    state->variant_state,
+    state,
+    user_id,
+    prob_id,
+    p_virtual_variant);
+}
+
+int
+find_user_variant(
+        const serve_state_t state,
+        int user_id,
+        int *p_virtual_variant)
+{
+  return state->variant_state->vt->find_user_variant(
+    state->variant_state,
+    state,
+    user_id,
+    p_virtual_variant);
 }
