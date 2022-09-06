@@ -20,8 +20,14 @@
 #include "ejudge/contests.h"
 #include "ejudge/variant_map.h"
 #include "ejudge/serve_state.h"
+#include "ejudge/teamdb.h"
+#include "ejudge/runlog.h"
 #include "ejudge/prepare.h"
+#include "ejudge/random.h"
 #include "ejudge/xalloc.h"
+#include "ejudge/errlog.h"
+
+#include <string.h>
 
 struct variant_file_data
 {
@@ -113,6 +119,153 @@ close_func(
     return NULL;
 }
 
+static int
+find_variant_func(
+        struct variant_cnts_plugin_data *data,
+        const struct serve_state *state,
+        int user_id,
+        int prob_id,
+        int *p_virtual_variant)
+{
+    struct variant_cnts_file_data *vcfd = (struct variant_cnts_file_data *) data;
+
+    int i, new_vint, ui;
+    struct variant_map *pmap = vcfd->vmap;
+    struct variant_map_item *vi;
+    const struct section_problem_data *prob = NULL;
+
+    if (!pmap) return 0;
+    if (prob_id <= 0 || prob_id > state->max_prob || !(prob = state->probs[prob_id])) return 0;
+    if (prob->variant_num <= 0) return 0;
+    if (!pmap->prob_map[prob_id]) return 0;
+
+    teamdb_refresh(state->teamdb_state);
+    new_vint = teamdb_get_vintage(state->teamdb_state);
+    if (new_vint != pmap->vintage || !pmap->user_ind_size || !pmap->user_inds) {
+        info("find_variant: new vintage: %d, old: %d, updating variant map", new_vint, pmap->vintage);
+        xfree(pmap->user_inds);
+        pmap->user_ind_size = 0;
+        pmap->user_inds = NULL;
+
+        if (state->global->disable_user_database > 0) {
+            pmap->user_ind_size = run_get_max_user_id(state->runlog_state) + 1;
+        } else {
+            pmap->user_ind_size = teamdb_get_max_team_id(state->teamdb_state) + 1;
+        }
+        pmap->user_inds = malloc(pmap->user_ind_size * sizeof(pmap->user_inds[0]));
+        memset(pmap->user_inds, -1, pmap->user_ind_size * sizeof(pmap->user_inds[0]));
+
+        for (i = 0; i < pmap->u; i++) {
+            pmap->v[i].user_id = teamdb_lookup_login(state->teamdb_state, pmap->v[i].login);
+            if (pmap->v[i].user_id < 0) pmap->v[i].user_id = 0;
+            if (!pmap->v[i].user_id) continue;
+            if (pmap->v[i].user_id >= pmap->user_ind_size) continue;
+            pmap->user_inds[pmap->v[i].user_id] = i;
+        }
+        pmap->vintage = new_vint;
+    }
+
+    if (user_id <= 0 || user_id >= pmap->user_ind_size) return 0;
+    if ((ui = pmap->user_inds[user_id]) >= 0) {
+        vi = pmap->v + ui;
+        if (vi->real_variant) {
+            if (p_virtual_variant) {
+                if (vi->virtual_variant) *p_virtual_variant = vi->virtual_variant;
+                else *p_virtual_variant = vi->real_variant;
+            }
+            // safety check
+            if (vi->real_variant < 0 || vi->real_variant > prob->variant_num)
+                return 0;
+            return vi->real_variant;
+        }
+        if (p_virtual_variant)
+            *p_virtual_variant = vi->variants[pmap->prob_map[prob_id]];
+        int v = vi->variants[pmap->prob_map[prob_id]];
+        if (!v && prob->autoassign_variants > 0) {
+            v = random_range(1, prob->variant_num + 1);
+            variant_map_set_variant(pmap, user_id,
+                                    teamdb_get_login(state->teamdb_state, user_id),
+                                    prob_id,
+                                    v);
+            // FIXME: handle errors
+            variant_map_save(stderr, pmap, state->global->variant_map_file, 1);
+        }
+        if (v < 0 || v > prob->variant_num)
+            return 0;
+        return v;
+    } else if (prob->autoassign_variants > 0) {
+        int v = random_range(1, prob->variant_num + 1);
+        variant_map_set_variant(pmap, user_id,
+                                teamdb_get_login(state->teamdb_state, user_id),
+                                prob_id,
+                                v);
+        // FIXME: handle errors
+        variant_map_save(stderr, pmap, state->global->variant_map_file, 1);
+        if (v < 0 || v > prob->variant_num)
+            return 0;
+        return v;
+    }
+    return 0;
+}
+
+static int
+find_user_variant_func(
+        struct variant_cnts_plugin_data *data,
+        const struct serve_state *state,
+        int user_id,
+        int *p_virtual_variant)
+{
+    struct variant_cnts_file_data *vcfd = (struct variant_cnts_file_data *) data;
+
+    int i, new_vint, ui;
+    struct variant_map *pmap = vcfd->vmap;
+    struct variant_map_item *vi;
+
+    if (!pmap) return 0;
+
+    teamdb_refresh(state->teamdb_state);
+    new_vint = teamdb_get_vintage(state->teamdb_state);
+    if (new_vint != pmap->vintage || !pmap->user_ind_size || !pmap->user_inds) {
+        info("find_variant: new vintage: %d, old: %d, updating variant map", new_vint, pmap->vintage);
+        xfree(pmap->user_inds);
+        pmap->user_ind_size = 0;
+        pmap->user_inds = NULL;
+
+        if (state->global->disable_user_database > 0) {
+            pmap->user_ind_size = run_get_max_user_id(state->runlog_state) + 1;
+        } else {
+            pmap->user_ind_size = teamdb_get_max_team_id(state->teamdb_state) + 1;
+        }
+        pmap->user_inds = malloc(pmap->user_ind_size * sizeof(pmap->user_inds[0]));
+        memset(pmap->user_inds, -1, pmap->user_ind_size * sizeof(pmap->user_inds[0]));
+
+        for (i = 0; i < pmap->u; i++) {
+            pmap->v[i].user_id = teamdb_lookup_login(state->teamdb_state, pmap->v[i].login);
+            if (pmap->v[i].user_id < 0) pmap->v[i].user_id = 0;
+            if (!pmap->v[i].user_id) continue;
+            if (pmap->v[i].user_id >= pmap->user_ind_size) continue;
+            pmap->user_inds[pmap->v[i].user_id] = i;
+        }
+        pmap->vintage = new_vint;
+    }
+
+    if (user_id <= 0 || user_id >= pmap->user_ind_size) return 0;
+    ui = pmap->user_inds[user_id];
+    if (ui >= 0) {
+        vi = pmap->v + ui;
+        if (vi->real_variant) {
+            if (p_virtual_variant) {
+                if (vi->virtual_variant) *p_virtual_variant = vi->virtual_variant;
+                else *p_virtual_variant = vi->real_variant;
+            }
+            return vi->real_variant;
+        }
+        if (p_virtual_variant) *p_virtual_variant = 0;
+        return 0;
+    }
+    return 0;
+}
+
 struct variant_plugin_iface plugin_variant_file =
 {
     {
@@ -130,4 +283,6 @@ struct variant_plugin_iface plugin_variant_file =
     VARIANT_PLUGIN_IFACE_VERSION,
     open_func,
     close_func,
+    find_variant_func,
+    find_user_variant_func,
 };

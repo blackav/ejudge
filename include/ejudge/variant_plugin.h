@@ -55,6 +55,17 @@ struct variant_plugin_iface
         int flags);
     struct variant_cnts_plugin_data * (*close)(
         struct variant_cnts_plugin_data *data);
+    int (*find_variant)(
+        struct variant_cnts_plugin_data *data,
+        const struct serve_state *state,
+        int user_id,
+        int prob_id,
+        int *p_virtual_variant);
+    int (*find_user_variant)(
+        struct variant_cnts_plugin_data *data,
+        const struct serve_state *state,
+        int user_id,
+        int *p_virtual_variant);
 };
 
 struct variant_cnts_plugin_data *
