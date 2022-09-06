@@ -1,0 +1,16 @@
+<%
+%><%@include "unpriv_includes.csp"
+%><%
+
+/* C includes here */
+
+%><%@set ac_prefix = "NEW_SRV_ACTION_"
+%><%@set err_prefix = "NEW_SRV_ERR_"
+%><%@set getter_name = "csp_get_unpriv_gitlab_webhook"
+%><%@page csp_view_unpriv_gitlab_webhook(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "unpriv_stdvars.csp"
+%><%
+
+/* C code here */
+
+%>

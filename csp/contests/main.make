@@ -107,6 +107,7 @@ SOFILES = \
  csp_unpriv_oauth_login_1.so\
  csp_unpriv_oauth_login_2.so\
  csp_unpriv_oauth_login_3.so\
+ csp_unpriv_gitlab_webhook.so\
  csp_unpriv_recover_1_page.so\
  csp_unpriv_recover_2_page.so\
  csp_unpriv_recover_3_page.so\
@@ -217,6 +218,7 @@ csp_unpriv_main_page.c : unpriv_main_page.csp unpriv_main_clars.csp unpriv_main_
 csp_unpriv_oauth_login_1.c : unpriv_oauth_login_1.csp $(UNPRIV_DEPS)
 csp_unpriv_oauth_login_2.c : unpriv_oauth_login_2.csp $(UNPRIV_DEPS)
 csp_unpriv_oauth_login_3.c : unpriv_oauth_login_3.csp $(UNPRIV_DEPS)
+csp_unpriv_gitlab_webhook.c : unpriv_gitlab_webhook.csp $(UNPRIV_DEPS)
 csp_unpriv_recover_1_page.c : unpriv_recover_1_page.csp $(UNPRIV_DEPS)
 csp_unpriv_recover_2_page.c : unpriv_recover_2_page.csp $(UNPRIV_DEPS)
 csp_unpriv_recover_3_page.c : unpriv_recover_3_page.csp $(UNPRIV_DEPS)
