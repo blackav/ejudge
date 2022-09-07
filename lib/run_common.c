@@ -270,6 +270,7 @@ generate_xml_report(
   }
   tr->tests_mode = 0;
   if (srgp->separate_user_score > 0) {
+    tr->has_user = 1;
     if (reply_pkt->user_status >= 0) {
       tr->user_status = reply_pkt->user_status;
     }
