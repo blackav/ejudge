@@ -633,7 +633,7 @@ struct telegram_user_internal
     unsigned char *first_name;
     unsigned char *last_name;
 };
-enum { TELEGRAM_USER_ROW_WIDTH = 6 };
+enum { TELEGRAM_USER_ROW_WIDTH = 4 };
 #define TELEGRAM_USER_OFFSET(f) XOFFSET(struct telegram_user_internal, f)
 static const struct common_mysql_parse_spec telegram_user_spec[TELEGRAM_USER_ROW_WIDTH] =
 {
