@@ -160,6 +160,7 @@ enum
   TR_A_JUDGE_UUID,
   TR_A_MAX_RSS_AVAILABLE,
   TR_A_SEPARATE_USER_SCORE,
+  TR_A_MAX_RSS,
 
   TR_A_LAST_ATTR,
 };
@@ -259,6 +260,7 @@ static const char * const attr_map[] =
   [TR_A_JUDGE_UUID] = "judge-uuid",
   [TR_A_MAX_RSS_AVAILABLE] = "max-rss-available",
   [TR_A_SEPARATE_USER_SCORE] = "separate-user-score",
+  [TR_A_MAX_RSS] = "max-rss",
 
   [TR_A_LAST_ATTR] = 0,
 };
@@ -450,6 +452,11 @@ parse_test(struct xml_tree *t, testing_report_xml_t r)
       ulx = 0;
       if (xml_attr_ulong(a, &ulx) < 0) goto failure;
       p->max_memory_used = ulx;
+      break;
+    case TR_A_MAX_RSS:
+      ulx = 0;
+      if (xml_attr_ulong(a, &ulx) < 0) goto failure;
+      p->max_rss = ulx;
       break;
     case TR_A_EXIT_CODE:
       if (xml_attr_int(a, &x) < 0) goto failure;
@@ -1692,6 +1699,9 @@ testing_report_unparse_xml(
       if (r->max_memory_used_available > 0 && t->max_memory_used > 0) {
         fprintf(out, " %s=\"%lu\"", attr_map[TR_A_MAX_MEMORY_USED],
                 t->max_memory_used);
+      }
+      if (r->max_rss_available > 0 && t->max_rss > 0) {
+        fprintf(out, " %s=\"%lld\"", attr_map[TR_A_MAX_RSS], t->max_rss);
       }
       if (r->scoring_system == SCORE_OLYMPIAD && r->accepting_mode <= 0) {
         fprintf(out, " %s=\"%d\" %s=\"%d\"",

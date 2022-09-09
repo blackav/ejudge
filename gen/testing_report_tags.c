@@ -87,7 +87,8 @@ enum
     Tag_data,
     Tag_bzip2,
     Tag_max_rss_available,
-    Tag_separate_user_score
+    Tag_separate_user_score,
+    Tag_max_rss
 };
 static __attribute__((unused)) const char * const tag_table[] =
 {
@@ -179,6 +180,7 @@ static __attribute__((unused)) const char * const tag_table[] =
     "bzip2",
     "max_rss_available",
     "separate_user_score",
+    "max_rss",
 };
 static __attribute__((unused)) int
 match(const char *s)
@@ -340,8 +342,14 @@ match(const char *s)
                     } else {
                         return 0;
                     }
-                } else if (s[4] == 'r' && s[5] == 's' && s[6] == 's' && s[7] == '_' && s[8] == 'a' && s[9] == 'v' && s[10] == 'a' && s[11] == 'i' && s[12] == 'l' && s[13] == 'a' && s[14] == 'b' && s[15] == 'l' && s[16] == 'e' && !s[17]) {
-                    return Tag_max_rss_available;
+                } else if (s[4] == 'r'&& s[5] == 's'&& s[6] == 's') {
+                    if (!s[7]) {
+                        return Tag_max_rss;
+                    } else if (s[7] == '_' && s[8] == 'a' && s[9] == 'v' && s[10] == 'a' && s[11] == 'i' && s[12] == 'l' && s[13] == 'a' && s[14] == 'b' && s[15] == 'l' && s[16] == 'e' && !s[17]) {
+                        return Tag_max_rss_available;
+                    } else {
+                        return 0;
+                    }
                 } else if (s[4] == 's' && s[5] == 'c' && s[6] == 'o' && s[7] == 'r' && s[8] == 'e' && !s[9]) {
                     return Tag_max_score;
                 } else {

@@ -141,6 +141,14 @@ parse_test(int index, bson_iter_t *bi, testing_report_xml_t r)
                 p->max_memory_used = v;
             }
             break;
+        case Tag_max_rss:
+            {
+                long long v;
+                if (ej_bson_parse_int64_new(bi, key, &v) < 0)
+                    goto cleanup;
+                p->max_rss = v;
+            }
+            break;
         case Tag_exit_code:
             if (ej_bson_parse_int_new(bi, key, &p->exit_code, 0, 0, 0, 0) < 0)
                 goto cleanup;
@@ -959,6 +967,9 @@ do_unparse(
             }
             if (r->max_memory_used_available > 0 && t->max_memory_used > 0) {
                 bson_append_int64(b_testp, tag_table[Tag_max_memory_used], -1, t->max_memory_used);
+            }
+            if (r->max_rss_available > 0 && t->max_rss > 0) {
+                bson_append_int64(b_testp, tag_table[Tag_max_rss], -1, t->max_rss);
             }
             if (r->scoring_system == SCORE_OLYMPIAD && r->accepting_mode <= 0) {
                 bson_append_int32(b_testp, tag_table[Tag_nominal_score], -1, t->nominal_score);

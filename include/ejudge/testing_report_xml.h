@@ -63,6 +63,7 @@ struct testing_report_test
   int has_info_digest;
   int visibility;
   unsigned long max_memory_used;
+  long long max_rss;
   int has_user;
   int user_status;
   int user_score;

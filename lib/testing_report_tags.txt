@@ -85,3 +85,4 @@ data
 bzip2
 max_rss_available
 separate_user_score
+max_rss
