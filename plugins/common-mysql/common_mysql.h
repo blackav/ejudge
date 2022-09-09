@@ -194,6 +194,11 @@ struct common_mysql_iface
         FILE *f,
         const unsigned char *pfx,
         const struct common_mysql_binary *bin);
+
+  int (*simple_query_bin)(
+        struct common_mysql_state *state,
+        const unsigned char *cmd,
+        int cmdlen);
 };
 
 #define db_error_fail(s) do { s->i->error(s); goto fail; } while (0)

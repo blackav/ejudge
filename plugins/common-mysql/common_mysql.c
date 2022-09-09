@@ -171,6 +171,11 @@ write_escaped_bin_func(
         FILE *f,
         const unsigned char *pfx,
         const struct common_mysql_binary *bin);
+static int
+simple_query_bin_func(
+        struct common_mysql_state *state,
+        const unsigned char *cmd,
+        int cmdlen);
 
 /* plugin entry point */
 struct common_mysql_iface plugin_common_mysql =
@@ -219,6 +224,8 @@ struct common_mysql_iface plugin_common_mysql =
   unparse_spec_2_func,
   unparse_spec_3_func,
   write_escaped_bin_func,
+
+  simple_query_bin_func,
 };
 
 static struct common_plugin_data *
@@ -1571,4 +1578,19 @@ write_escaped_bin_func(
   mysql_real_escape_string(state->conn, str2, bin->data, bin->size);
   fprintf(f, "%s'%s'", pfx, str2);
   free(str2);
+}
+
+static int
+simple_query_bin_func(
+        struct common_mysql_state *state,
+        const unsigned char *cmd,
+        int cmdlen)
+{
+  /*
+  if (state->show_queries) {
+    fprintf(stderr, "mysql: %s\n", cmd);
+  }
+  */
+  free_res_func(state);
+  return do_query(state, cmd, cmdlen);
 }
