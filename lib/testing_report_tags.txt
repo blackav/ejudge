@@ -83,3 +83,4 @@ user_nominal_score
 checker_token
 data
 bzip2
+max_rss_available

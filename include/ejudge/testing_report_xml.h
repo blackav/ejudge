@@ -128,6 +128,7 @@ typedef struct testing_report_xml
   int info_available;
   int real_time_available;
   int max_memory_used_available;
+  int max_rss_available;
   int run_tests;
   int variant;
   int accepting_mode;

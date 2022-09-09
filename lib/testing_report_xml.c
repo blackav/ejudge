@@ -158,6 +158,7 @@ enum
   TR_A_USER_NOMINAL_SCORE,
   TR_A_CHECKER_TOKEN,
   TR_A_JUDGE_UUID,
+  TR_A_MAX_RSS_AVAILABLE,
 
   TR_A_LAST_ATTR,
 };
@@ -255,6 +256,7 @@ static const char * const attr_map[] =
   [TR_A_USER_NOMINAL_SCORE] = "user-nominal-score",
   [TR_A_CHECKER_TOKEN] = "checker-token",
   [TR_A_JUDGE_UUID] = "judge-uuid",
+  [TR_A_MAX_RSS_AVAILABLE] = "max-rss-available",
 
   [TR_A_LAST_ATTR] = 0,
 };
@@ -934,6 +936,11 @@ parse_testing_report(struct xml_tree *t, testing_report_xml_t r)
       r->max_memory_used_available = x;
       break;
 
+    case TR_A_MAX_RSS_AVAILABLE:
+      if (xml_attr_bool(a, &x) < 0) return -1;
+      r->max_rss_available = x;
+      break;
+
     case TR_A_COMPILE_ERROR:
       if (xml_attr_bool(a, &x) < 0) return -1;
       r->compile_error = x;
@@ -1566,6 +1573,7 @@ testing_report_unparse_xml(
   unparse_bool_attr(out, TR_A_REAL_TIME_AVAILABLE, r->real_time_available);
   unparse_bool_attr(out, TR_A_MAX_MEMORY_USED_AVAILABLE,
                     r->max_memory_used_available);
+  unparse_bool_attr(out, TR_A_MAX_RSS_AVAILABLE, r->max_rss_available);
   unparse_bool_attr(out, TR_A_CORRECT_AVAILABLE, r->correct_available);
   unparse_bool_attr(out, TR_A_INFO_AVAILABLE, r->info_available);
   unparse_bool_attr(out, TR_A_COMPILE_ERROR, r->compile_error);
