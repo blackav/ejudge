@@ -99,6 +99,8 @@ create_database(struct avatar_mysql_state *ams)
                           md->table_prefix,
                           md->table_prefix) < 0)
         db_error_fail(md);
+    if (mi->simple_fquery(md, "INSERT INTO %sconfig VALUES ('avatar_version', '%d') ;", md->table_prefix, 1) < 0)
+        db_error_fail(md);
     return 0;
 
 fail:
