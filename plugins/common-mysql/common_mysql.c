@@ -607,16 +607,16 @@ query_one_row_func(
 static int
 next_row_func(struct common_mysql_state *state)
 {
-  int i;
-
   if (!(state->row = mysql_fetch_row(state->res)))
     db_error_no_data_fail(state);
   state->lengths = mysql_fetch_lengths(state->res);
 
+  /*
   // extra check...
-  for (i = 0; i < state->field_count; i++)
+  for (int i = 0; i < state->field_count; i++)
     if (state->row[i] && strlen(state->row[i]) != state->lengths[i])
       db_error_inv_value_fail(state, "in my_row");
+  */
   return 0;
 
  fail:
