@@ -242,7 +242,7 @@ insert_func(
                        avatar_info_spec, 1ULL,
                        &aii);
     fclose(cmd_f); cmd_f = NULL;
-    if (mi->simple_query(md, cmd_s, cmd_z) < 0) goto fail;
+    if (mi->simple_query_bin(md, cmd_s, cmd_z) < 0) goto fail;
     free(cmd_s); cmd_s = NULL; cmd_z = 0;
 
     if (mi->fquery(md, 1, "SELECT LAST_INSERT_ID();") < 0) {
