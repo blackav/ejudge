@@ -500,6 +500,7 @@ simple_query_func(
   if (state->show_queries) {
     fprintf(stderr, "mysql: %s\n", cmd);
   }
+  free_res_func(state);
   return do_query(state, cmd, cmdlen);
 }
 
@@ -533,6 +534,7 @@ query_func(
   if (state->show_queries) {
     fprintf(stderr, "mysql: %s\n", cmd);
   }
+  free_res_func(state);
   if (do_query(state, cmd, cmdlen)) db_error_fail(state);
   if((state->field_count = mysql_field_count(state->conn)) != colnum)
     db_error_field_count_fail(state, colnum);
@@ -578,6 +580,7 @@ query_one_row_func(
   if (state->show_queries) {
     fprintf(stderr, "mysql: %s\n", cmd);
   }
+  free_res_func(state);
   if (do_query(state, cmd, cmdlen))
     db_error_fail(state);
   if((state->field_count = mysql_field_count(state->conn)) != colnum)
