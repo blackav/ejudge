@@ -492,6 +492,10 @@ parse_testing_report_bson(bson_iter_t *bi, testing_report_xml_t r)
             if (ej_bson_parse_boolean_new(bi, key, &r->max_rss_available) < 0)
                 return -1;
             break;
+        case Tag_separate_user_score:
+            if (ej_bson_parse_boolean_new(bi, key, &r->separate_user_score) < 0)
+                return -1;
+            break;
         case Tag_compile_error:
             if (ej_bson_parse_boolean_new(bi, key, &r->compile_error) < 0)
                 return -1;
@@ -818,6 +822,9 @@ do_unparse(
     }
     if (r->max_rss_available > 0) {
         bson_append_bool(b, tag_table[Tag_max_rss_available], -1, 1);
+    }
+    if (r->separate_user_score > 0) {
+        bson_append_bool(b, tag_table[Tag_separate_user_score], -1, 1);
     }
     if (r->correct_available > 0) {
         bson_append_bool(b, tag_table[Tag_correct_available], -1, 1);

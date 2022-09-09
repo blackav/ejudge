@@ -84,3 +84,4 @@ checker_token
 data
 bzip2
 max_rss_available
+separate_user_score

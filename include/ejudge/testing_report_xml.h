@@ -141,6 +141,7 @@ typedef struct testing_report_xml
   int marked_flag;
   int tests_mode;
   /* user-visible scores */
+  int separate_user_score;
   int user_status;
   int user_tests_passed;
   int user_score;
