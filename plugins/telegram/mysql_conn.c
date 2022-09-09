@@ -117,7 +117,7 @@ static const char create_query_5[] =
 
 static const char create_query_6[] =
 "CREATE TABLE %stelegram_subscriptions (\n"
-"    id INT(18) NOT NULL PRIMARY KEY,\n"
+"    id INT(18) NOT NULL PRIMARY KEY AUTO_INCREMENT,\n"
 "    bot_id CHAR(64) NOT NULL,\n"
 "    user_id INT UNSIGNED NOT NULL,\n"
 "    contest_id INT NOT NULL DEFAULT 0,\n"

@@ -46,7 +46,7 @@ variant_plugin_open(
     if (!plugin_name) plugin_name = "";
     if (!log_f) log_f = stderr;
 
-    if (!plugin_name || !strcmp(plugin_name, "file")) {
+    if (!*plugin_name || !strcmp(plugin_name, "file")) {
         if (!(loaded_plugin = plugin_get("variant", "file"))) {
             err("cannot load default plugin");
             return NULL;
@@ -74,7 +74,7 @@ variant_plugin_open(
             break;
     }
     if (!p || !plg) {
-        err("xuser plugin '%s' is not registered", plugin_name);
+        err("variant plugin '%s' is not registered", plugin_name);
         return NULL;
     }
 
