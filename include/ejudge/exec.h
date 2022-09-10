@@ -1,7 +1,7 @@
 #ifndef __REUSE_EXEC_H__
 #define __REUSE_EXEC_H__
 
-/* Copyright (C) 1998-2021 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 1998-2022 Alexander Chernov <cher@ejudge.ru> */
 /* Created: <1998-01-21 14:26:50 cher> */
 
 /*
@@ -142,6 +142,9 @@ int      task_GetPid(tpTask);
 
 #define task_GetMemoryUsed task_GetMemoryUsed
 long     task_GetMemoryUsed(tpTask);
+
+#define task_GetMaxRSS task_GetMaxRSS
+long long task_GetMaxRSS(tpTask);
 
 /* setrlimit interface */
 // RLIMIT_CORE
