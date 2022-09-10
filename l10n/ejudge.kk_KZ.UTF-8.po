@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-06-19 01:04+0300\n"
+"POT-Creation-Date: 2022-09-10 10:15+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Kazakh <uk@li.org>\n"
@@ -2238,6 +2238,9 @@ msgid "Marked?"
 msgstr ""
 
 msgid "Master"
+msgstr ""
+
+msgid "Max RSS used"
 msgstr ""
 
 msgid "Max memory used"

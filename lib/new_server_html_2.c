@@ -8324,7 +8324,9 @@ write_xml_testing_report(
   if (r->real_time_available) {
     fprintf(f, "<th%s>%s</th>", cl1, _("Real time (sec)"));
   }
-  if (r->max_memory_used_available) {
+  if (r->max_rss_available) {
+    fprintf(f, "<th%s>%s</th>", cl1, _("Max RSS used"));
+  } else if (r->max_memory_used_available) {
     fprintf(f, "<th%s>%s</th>", cl1, _("Max memory used"));
   }
   fprintf(f, "<th%s>%s</th>", cl1, _("Extra info"));
@@ -8368,7 +8370,9 @@ write_xml_testing_report(
                 t->real_time / 1000, t->real_time % 1000);
       }
     }
-    if (r->max_memory_used_available) {
+    if (r->max_rss_available) {
+      fprintf(f, "<td%s>%lld</td>", cl1, t->max_rss);
+    } else if (r->max_memory_used_available) {
       fprintf(f, "<td%s>%lu</td>", cl1, t->max_memory_used);
     }
 
