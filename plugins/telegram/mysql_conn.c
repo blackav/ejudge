@@ -525,7 +525,7 @@ enum { TELEGRAM_CHAT_ROW_WIDTH = 6 };
 static const struct common_mysql_parse_spec telegram_chat_spec[TELEGRAM_CHAT_ROW_WIDTH] =
 {
     { 0, 'l', "id", TELEGRAM_CHAT_OFFSET(id), 0 },
-    { 1, 's', "type", TELEGRAM_CHAT_OFFSET(type), 0 },
+    { 1, 's', "chat_type", TELEGRAM_CHAT_OFFSET(type), 0 },
     { 1, 's', "title", TELEGRAM_CHAT_OFFSET(title), 0 },
     { 1, 's', "username", TELEGRAM_CHAT_OFFSET(username), 0 },
     { 1, 's', "first_name", TELEGRAM_CHAT_OFFSET(first_name), 0 },
