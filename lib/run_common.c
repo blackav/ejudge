@@ -202,6 +202,7 @@ generate_xml_report(
         int report_real_time_limit_ms,
         int has_real_time,
         int has_max_memory_used,
+        int has_max_rss,
         int marked_flag,
         int user_run_tests,
         const unsigned char *additional_comment,
@@ -229,6 +230,7 @@ generate_xml_report(
   tr->info_available = info_available_flag;
   tr->real_time_available = has_real_time;
   tr->max_memory_used_available = has_max_memory_used;
+  tr->max_rss_available = has_max_rss;
   tr->run_tests = total_tests - 1;
   tr->variant = variant;
   if (srgp->scoring_system_val == SCORE_OLYMPIAD) {
@@ -333,6 +335,9 @@ generate_xml_report(
       }
       if (ti->max_memory_used > 0) {
         trt->max_memory_used = ti->max_memory_used;
+      }
+      if (ti->max_rss > 0) {
+        trt->max_rss = ti->max_rss;
       }
       if (ti->program_stats_str) {
         trt->program_stats_str = xstrdup(ti->program_stats_str);
@@ -2450,6 +2455,7 @@ run_one_test(
         long long expected_free_space,
         int *p_has_real_time,
         int *p_has_max_memory_used,
+        int *p_has_max_rss,
         long *p_report_time_limit_ms,
         long *p_report_real_time_limit_ms,
         const unsigned char *mirror_dir,
@@ -3342,6 +3348,8 @@ run_one_test(
   cur_info->max_memory_used = task_GetMemoryUsed(tsk);
   if (cur_info->max_memory_used > 0) *p_has_max_memory_used = 1;
   cur_info->program_stats_str = get_process_stats_str(tsk);
+  cur_info->max_rss = task_GetMaxRSS(tsk);
+  if (cur_info->max_rss > 0) *p_has_max_rss = 1;
 
   // input file
   file_size = -1;
@@ -4123,6 +4131,7 @@ run_tests(
   int cur_test = 0;
   int has_real_time = 0;
   int has_max_memory_used = 0;
+  int has_max_rss = 0;
   int status = RUN_CHECK_FAILED;
   int failed_test;
   int total_score = 0;
@@ -4385,6 +4394,7 @@ run_tests(
                             test_score_count, test_score_val,
                             expected_free_space,
                             &has_real_time, &has_max_memory_used,
+                            &has_max_rss,
                             &report_time_limit_ms, &report_real_time_limit_ms,
                             mirror_dir, remaps);
       if (status != RUN_TIME_LIMIT_ERR && status != RUN_WALL_TIME_LIMIT_ERR)
@@ -4769,7 +4779,9 @@ done:;
                       cur_variant, total_score, srpp->full_score, srpp->full_user_score,
                       srpp->use_corr, srpp->use_info,
                       report_time_limit_ms, report_real_time_limit_ms,
-                      has_real_time, has_max_memory_used, marked_flag,
+                      has_real_time, has_max_memory_used,
+                      has_max_rss,
+                      marked_flag,
                       user_run_tests,
                       additional_comment, valuer_comment,
                       valuer_judge_comment, valuer_errors,
