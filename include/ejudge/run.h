@@ -2,7 +2,7 @@
 #ifndef __RUN_H__
 #define __RUN_H__
 
-/* Copyright (C) 2010-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2010-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -35,6 +35,7 @@ struct testinfo
   long           times;         /* execution time */
   long           real_time;     /* execution real time */
   unsigned long  max_memory_used;
+  long long      max_rss;
   char          *input;         /* the input */
   long           input_size;
   int            has_input_digest;

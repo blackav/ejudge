@@ -141,6 +141,7 @@ struct tTask
 
   char *last_error_msg;         /* last error text */
   unsigned long used_vm_size;   /* maximum used VM size (if available) */
+  long long used_max_rss;       /* max resident set size */
   int cleanup_invoked;          /* not to invoke cleanup handler several times */
   char *container_options;      /* options for containerization */
   char *language_name;          /* programming language name for container presets */
@@ -2589,7 +2590,7 @@ task_WaitContainer(tTask *tsk)
   int prc_ipc_object_count = 0;
   int prc_orphan_process_count = 0;
   long long prc_max_vm_size = 0;
-  long long prc_max_rss_size = 0;
+  long long prc_max_rss = 0;
   long long cgroup_ptime_us = 0;
   long long cgroup_utime_us = 0;
   long long cgroup_stime_us = 0;
@@ -2627,7 +2628,7 @@ task_WaitContainer(tTask *tsk)
       else if (*resp_p == 'u') prc_user_cpu_time_us = v;
       else if (*resp_p == 'k') prc_sys_cpu_time_us = v;
       else if (*resp_p == 'v') prc_max_vm_size = v;
-      else if (*resp_p == 'e') prc_max_rss_size = v;
+      else if (*resp_p == 'e') prc_max_rss = v;
       resp_p = eptr;
     } else if (*resp_p == 'c') {
       ++resp_p;
@@ -2701,6 +2702,7 @@ task_WaitContainer(tTask *tsk)
   }
 
   tsk->used_vm_size = prc_max_vm_size;
+  tsk->used_max_rss = prc_max_rss;
   memset(&tsk->usage, 0, sizeof(tsk->usage));
   tsk->usage.ru_utime.tv_sec = prc_user_cpu_time_us / 1000000;
   tsk->usage.ru_utime.tv_usec = prc_user_cpu_time_us % 1000000;
@@ -2712,7 +2714,7 @@ task_WaitContainer(tTask *tsk)
   tsk->stop_time.tv_sec = stop_time_us / 1000000;
   tsk->stop_time.tv_usec = stop_time_us % 1000000;
 
-  tsk->usage.ru_maxrss = prc_max_rss_size / 1024;
+  tsk->usage.ru_maxrss = prc_max_rss / 1024;
   tsk->usage.ru_nvcsw = prc_nvcsw;
   tsk->usage.ru_nivcsw = prc_nivcsw;
 
@@ -2984,6 +2986,13 @@ task_GetMemoryUsed(tTask *tsk)
 {
   ASSERT(tsk);
   return tsk->used_vm_size;
+}
+
+long long
+task_GetMaxRSS(tTask *tsk)
+{
+  ASSERT(tsk);
+  return tsk->used_max_rss;
 }
 
 int
