@@ -30,6 +30,7 @@
 #include "ejudge/testing_report_xml.h"
 #include "ejudge/super_run_packet.h"
 #include "ejudge/cpu.h"
+#include "ejudge/ej_uuid.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -1123,6 +1124,12 @@ run_inverse_testing(
   reply_pkt->ts3_us = srgp->ts3_us;
   reply_pkt->ts4 = srgp->ts4;
   reply_pkt->ts4_us = srgp->ts4_us;
+  if (srgp->run_uuid && srgp->run_uuid[0]) {
+    ej_uuid_parse(srgp->run_uuid, &reply_pkt->uuid);
+  }
+  if (srgp->judge_uuid && srgp->judge_uuid[0]) {
+    ej_uuid_parse(srgp->judge_uuid, &reply_pkt->judge_uuid);
+  }
   get_current_time(&reply_pkt->ts5, &reply_pkt->ts5_us);
 
   /* create the testing report */
