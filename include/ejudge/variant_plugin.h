@@ -68,6 +68,17 @@ struct variant_plugin_iface
         int *p_virtual_variant);
     int (*get_entry_count)(
         struct variant_cnts_plugin_data *data);
+    int (*get_keys)(
+        struct variant_cnts_plugin_data *data,
+        int *p_count,
+        int64_t **p_keys);
+    unsigned char *(*get_login)(
+        struct variant_cnts_plugin_data *data,
+        int64_t key);
+    int (*get_user_variant)(
+        struct variant_cnts_plugin_data *data,
+        int64_t key,
+        int *p_virtual_variant);
 };
 
 struct variant_cnts_plugin_data *

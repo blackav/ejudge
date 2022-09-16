@@ -274,6 +274,60 @@ get_entry_count_func(
     return vcfd->vmap->u;
 }
 
+static int
+get_keys_func(
+        struct variant_cnts_plugin_data *data,
+        int *p_count,
+        int64_t **p_keys)
+{
+    struct variant_cnts_file_data *vcfd = (struct variant_cnts_file_data *) data;
+    if (!vcfd->vmap->u) {
+        *p_count = 0;
+        *p_keys = NULL;
+        return 0;
+    }
+    int64_t *keys = NULL;
+    XCALLOC(keys, vcfd->vmap->u);
+    for (int64_t i = 0; i < vcfd->vmap->u; ++i) {
+        keys[i] = i;
+    }
+    *p_count = vcfd->vmap->u;
+    *p_keys = keys;
+    return vcfd->vmap->u;
+}
+
+static unsigned char *
+get_login_func(
+        struct variant_cnts_plugin_data *data,
+        int64_t key)
+{
+    struct variant_cnts_file_data *vcfd = (struct variant_cnts_file_data *) data;
+    if (key < 0 || key >= vcfd->vmap->u) return NULL;
+    unsigned char *login = vcfd->vmap->v[key].login;
+    if (!login) return NULL;
+    return xstrdup(login);
+}
+
+static int
+get_user_variant_func(
+        struct variant_cnts_plugin_data *data,
+        int64_t key,
+        int *p_virtual_variant)
+{
+    struct variant_cnts_file_data *vcfd = (struct variant_cnts_file_data *) data;
+    if (key < 0 || key >= vcfd->vmap->u) return 0;
+    struct variant_map_item *vi = &vcfd->vmap->v[key];
+    if (vi->real_variant <= 0) return 0;
+    if (p_virtual_variant) {
+        if (vi->virtual_variant >= 0) {
+            *p_virtual_variant = vi->virtual_variant;
+        } else {
+            *p_virtual_variant = vi->real_variant;
+        }
+    }
+    return vi->real_variant;
+}
+
 struct variant_plugin_iface plugin_variant_file =
 {
     {
@@ -294,4 +348,7 @@ struct variant_plugin_iface plugin_variant_file =
     find_variant_func,
     find_user_variant_func,
     get_entry_count_func,
+    get_keys_func,
+    get_login_func,
+    get_user_variant_func,
 };
