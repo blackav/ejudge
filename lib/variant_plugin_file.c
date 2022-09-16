@@ -266,6 +266,14 @@ find_user_variant_func(
     return 0;
 }
 
+static int
+get_entry_count_func(
+        struct variant_cnts_plugin_data *data)
+{
+    struct variant_cnts_file_data *vcfd = (struct variant_cnts_file_data *) data;
+    return vcfd->vmap->u;
+}
+
 struct variant_plugin_iface plugin_variant_file =
 {
     {
@@ -285,4 +293,5 @@ struct variant_plugin_iface plugin_variant_file =
     close_func,
     find_variant_func,
     find_user_variant_func,
+    get_entry_count_func,
 };

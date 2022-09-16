@@ -66,6 +66,8 @@ struct variant_plugin_iface
         const struct serve_state *state,
         int user_id,
         int *p_virtual_variant);
+    int (*get_entry_count)(
+        struct variant_cnts_plugin_data *data);
 };
 
 struct variant_cnts_plugin_data *
