@@ -20,8 +20,13 @@
 #include "ejudge/ejudge_cfg.h"
 #include "ejudge/contests.h"
 #include "ejudge/xml_utils.h"
+#include "ejudge/serve_state.h"
+#include "ejudge/prepare.h"
+#include "ejudge/variant_plugin.h"
 #include "ejudge/base64.h"
 #include "ejudge/compat.h"
+#include "ejudge/osdeps.h"
+#include "ejudge/xalloc.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -29,6 +34,10 @@
 #include <errno.h>
 #include <limits.h>
 #include <stdarg.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 static const char *program_name;
 
@@ -57,6 +66,16 @@ sort_func(const void *p1, const void *p2)
 }
 
 static void
+convert_contest(
+        struct ejudge_cfg *ejudge_config,
+        int contest_id,
+        struct variant_cnts_plugin_data *ovs,
+        struct variant_cnts_plugin_data *nvs,
+        int remove_mode)
+{
+}
+
+static void
 process_contest(
         struct ejudge_cfg *ejudge_config,
         int contest_id,
@@ -65,6 +84,124 @@ process_contest(
         int remove_mode,
         int force_from_mode)
 {
+    unsigned char config_path[PATH_MAX] = {};
+    serve_state_t state = NULL;
+    const struct section_global_data *global = NULL;
+    struct variant_cnts_plugin_data *old_variant_state = NULL;
+    struct variant_cnts_plugin_data *new_variant_state = NULL;
+
+    const struct contest_desc *cnts = NULL;
+    if (contests_get(contest_id, &cnts) < 0 || !cnts) {
+        fprintf(stderr, "failed to load contest %d\n", contest_id);
+        goto done;
+    }
+
+    if (cnts->conf_dir && os_IsAbsolutePath(cnts->conf_dir)) {
+        snprintf(config_path, sizeof(config_path), "%s/serve.cfg", cnts->conf_dir);
+    } else {
+        if (!cnts->root_dir) {
+            fprintf(stderr, "contest %d root dir is not set\n", contest_id);
+            goto done;
+        }
+        if (!os_IsAbsolutePath(cnts->root_dir)) {
+            fprintf(stderr, "contest %d root dir is not absolute\n", contest_id);
+            goto done;
+        }
+        const char *conf_dir = cnts->conf_dir;
+        if (!conf_dir) conf_dir = "conf";
+        snprintf(config_path, sizeof(config_path),
+                 "%s/%s/serve.cfg", cnts->root_dir, conf_dir);
+    }
+
+    struct stat stbuf;
+    if (stat(config_path, &stbuf) < 0) {
+        fprintf(stderr, "contest %d config file %s does not exist\n",
+                contest_id, config_path);
+        goto done;
+    }
+    if (!S_ISREG(stbuf.st_mode)) {
+        fprintf(stderr, "contest %d config file %s is not regular\n",
+                contest_id, config_path);
+        goto done;
+    }
+    if (access(config_path, R_OK) < 0) {
+        fprintf(stderr, "contest %d config file %s is not readable\n",
+                contest_id, config_path);
+        goto done;
+    }
+
+    state = serve_state_init(contest_id);
+    state->config_path = xstrdup(config_path);
+    state->current_time = time(NULL);
+    state->load_time = state->current_time;
+
+    if (prepare(cnts, state, state->config_path, 0, PREPARE_SERVE, "", 1, 0, 0) < 0)
+        goto done;
+    if (prepare_serve_defaults(cnts, state, NULL) < 0) goto done;
+    global = state->global;
+
+    const unsigned char *current_plugin = global->variant_plugin;
+    if (!current_plugin || !*current_plugin) {
+        current_plugin = ejudge_config->default_variant_plugin;
+    }
+    if (!current_plugin || !*current_plugin) {
+        current_plugin = "file";
+    }
+
+    if (!strcmp(from_plugin, "auto")) {
+        // use the currently configured plugin
+    } else {
+        if (force_from_mode) {
+            current_plugin = from_plugin;
+        } else {
+            if (strcmp(current_plugin, from_plugin) != 0) {
+                printf("contest %d current statusdb it not %s, skipping\n",
+                       contest_id, from_plugin);
+                goto done;
+            }
+        }
+    }
+
+    if (!strcmp(current_plugin, to_plugin)) {
+        printf("contest %d current variant already %s, done\n",
+               contest_id, current_plugin);
+        goto done;
+    }
+
+    old_variant_state = variant_plugin_open(
+        stderr,
+        ejudge_config,
+        cnts,
+        state,
+        current_plugin,
+        0);
+    if (!old_variant_state) {
+        fprintf(stderr, "contest %d failed to load variant plugin %s\n",
+                contest_id, current_plugin);
+        goto done;
+    }
+
+    new_variant_state = variant_plugin_open(
+        stderr,
+        ejudge_config,
+        cnts,
+        state,
+        to_plugin,
+        0);
+    if (!new_variant_state) {
+        fprintf(stderr, "contest %d failed to load variant plugin %s\n",
+                contest_id, to_plugin);
+        goto done;
+    }
+
+    convert_contest(ejudge_config, contest_id,
+                    old_variant_state,
+                    new_variant_state,
+                    remove_mode);
+
+done:;
+    if (old_variant_state) old_variant_state->vt->close(old_variant_state);
+    if (new_variant_state) new_variant_state->vt->close(new_variant_state);
 }
 
 /* force linking of certain functions that may be needed by plugins */
