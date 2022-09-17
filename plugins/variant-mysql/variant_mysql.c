@@ -76,18 +76,28 @@ struct variant_cnts_mysql_data
     int contest_id;
 };
 
-static const char create_query[] =
+static const char create_query_1[] =
 "CREATE TABLE %svariants (\n"
 "    serial_id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,\n"
 "    contest_id INT NOT NULL,\n"
 "    user_id INT UNSIGNED NOT NULL,\n"
-"    prob_id INT NOT NULL,\n"
 "    variant INT,\n"
+"    virtual_variant INT,\n"
 "    last_update_time DATETIME(6) DEFAULT NULL,\n"
 "    FOREIGN KEY v_user_id_fk(user_id) REFERENCES %slogins(user_id),\n"
 "    KEY v_contest_id_idx(contest_id),\n"
-"    KEY v_cu_id_idx(contest_id,user_id),\n"
-"    UNIQUE KEY v_cup_id_idx(contest_id,user_id,prob_id)\n"
+"    UNIQUE KEY v_cu_id_idx(contest_id,user_id)\n"
+") ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;\n";
+
+static const char create_query_2[] =
+"CREATE TABLE %svariantentries (\n"
+"    serial_id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,\n"
+"    entry_id INT NOT NULL,\n"
+"    prob_id INT NOT NULL,\n"
+"    variant INT,\n"
+"    last_update_time DATETIME(6) DEFAULT NULL,\n"
+"    FOREIGN KEY ve_entry_id_fk(entry_id) REFERENCES %svariants(serial_id),\n"
+"    UNIQUE KEY ve_ep_id_idx(entry_id, prob_id)\n"
 ") ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;\n";
 
 static int
@@ -97,7 +107,11 @@ create_database(
     struct common_mysql_iface *mi = vmd->mi;
     struct common_mysql_state *md = vmd->md;
 
-    if (mi->simple_fquery(md, create_query,
+    if (mi->simple_fquery(md, create_query_1,
+                          md->table_prefix,
+                          md->table_prefix) < 0)
+        db_error_fail(md);
+    if (mi->simple_fquery(md, create_query_2,
                           md->table_prefix,
                           md->table_prefix) < 0)
         db_error_fail(md);
@@ -164,9 +178,10 @@ extern struct variant_plugin_iface plugin_variant_mysql;
 static struct variant_cnts_plugin_data *
 open_func(
         struct common_plugin_data *data,
+        FILE *log_f,
         const struct ejudge_cfg *config,
         const struct contest_desc *cnts,
-        const struct section_global_data *global,
+        const struct serve_state *state,
         int flags)
 {
     struct variant_mysql_data *vmd = (struct variant_mysql_data *) data;
@@ -219,18 +234,4 @@ struct variant_plugin_iface plugin_variant_mysql =
     VARIANT_PLUGIN_IFACE_VERSION,
     open_func,
     close_func,
-    /*
-    get_entry_func,
-    get_clar_status_func,
-    set_clar_status_func,
-    flush_func,
-    append_warning_func,
-    set_status_func,
-    set_disq_comment_func,
-    get_run_fields_func,
-    set_run_fields_func,
-    count_read_clars_func,
-    get_entries_func,
-    set_problem_dir_prefix_func,
-    */
 };
