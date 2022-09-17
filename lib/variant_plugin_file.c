@@ -328,6 +328,29 @@ get_user_variant_func(
     return vi->real_variant;
 }
 
+static int
+get_problem_ids_func(
+        struct variant_cnts_plugin_data *data,
+        int *p_count,
+        int **p_ids)
+{
+    struct variant_cnts_file_data *vcfd = (struct variant_cnts_file_data *) data;
+    struct variant_map *pmap = vcfd->vmap;
+    if (pmap->prob_rev_map_size <= 1) {
+        *p_count = 0;
+        *p_ids = NULL;
+        return 0;
+    }
+    int *ids = NULL;
+    XCALLOC(ids, pmap->prob_rev_map_size - 1);
+    for (int i = 0; i < pmap->prob_rev_map_size - 1; ++i) {
+        ids[i] = pmap->prob_rev_map[i + 1];
+    }
+    *p_count = pmap->prob_rev_map_size - 1;
+    *p_ids = ids;
+    return pmap->prob_rev_map_size - 1;
+}
+
 struct variant_plugin_iface plugin_variant_file =
 {
     {
@@ -351,4 +374,5 @@ struct variant_plugin_iface plugin_variant_file =
     get_keys_func,
     get_login_func,
     get_user_variant_func,
+    get_problem_ids_func,
 };
