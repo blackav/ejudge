@@ -83,6 +83,11 @@ struct variant_plugin_iface
         struct variant_cnts_plugin_data *data,
         int *p_count,
         int **p_ids);
+    int (*get_variant)(
+        struct variant_cnts_plugin_data *data,
+        int64_t key,
+        int prob_id,
+        int *p_virtual_variant);
 };
 
 struct variant_cnts_plugin_data *

@@ -351,6 +351,25 @@ get_problem_ids_func(
     return pmap->prob_rev_map_size - 1;
 }
 
+static int
+get_variant_func(
+        struct variant_cnts_plugin_data *data,
+        int64_t key,
+        int prob_id,
+        int *p_virtual_variant)
+{
+    struct variant_cnts_file_data *vcfd = (struct variant_cnts_file_data *) data;
+    struct variant_map *pmap = vcfd->vmap;
+    if (key < 0 || key >= vcfd->vmap->u) {
+        return 0;
+    }
+    if (prob_id <= 0 || prob_id >= pmap->prob_map_size) {
+        return 0;
+    }
+    struct variant_map_item *vi = &vcfd->vmap->v[key];
+    return vi->variants[pmap->prob_map[prob_id]];
+}
+
 struct variant_plugin_iface plugin_variant_file =
 {
     {
@@ -375,4 +394,5 @@ struct variant_plugin_iface plugin_variant_file =
     get_login_func,
     get_user_variant_func,
     get_problem_ids_func,
+    get_variant_func,
 };
