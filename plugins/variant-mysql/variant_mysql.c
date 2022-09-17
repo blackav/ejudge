@@ -78,7 +78,7 @@ struct variant_cnts_mysql_data
 
 static const char create_query_1[] =
 "CREATE TABLE %svariants (\n"
-"    serial_id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,\n"
+"    serial_id BIGINT NOT NULL PRIMARY KEY AUTO_INCREMENT,\n"
 "    contest_id INT NOT NULL,\n"
 "    user_id INT UNSIGNED NOT NULL,\n"
 "    variant INT,\n"
@@ -91,8 +91,8 @@ static const char create_query_1[] =
 
 static const char create_query_2[] =
 "CREATE TABLE %svariantentries (\n"
-"    serial_id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,\n"
-"    entry_id INT NOT NULL,\n"
+"    serial_id BIGINT NOT NULL PRIMARY KEY AUTO_INCREMENT,\n"
+"    entry_id BIGINT NOT NULL,\n"
 "    prob_id INT NOT NULL,\n"
 "    variant INT,\n"
 "    last_update_time DATETIME(6) DEFAULT NULL,\n"
