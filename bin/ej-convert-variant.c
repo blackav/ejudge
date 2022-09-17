@@ -83,7 +83,7 @@ convert_contest(
     if (ovs->vt->get_problem_ids(ovs, &problem_count, &problem_ids) < 0)
         goto done;
 
-    printf("contest %d\n", contest_id);
+    printf("contest %d, problems %d\n", contest_id, problem_count);
     for (int i = 0; i < key_count; ++i) {
         unsigned char *login = ovs->vt->get_login(ovs, keys[i]);
         if (!login) continue;
