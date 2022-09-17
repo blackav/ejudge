@@ -73,6 +73,43 @@ convert_contest(
         struct variant_cnts_plugin_data *nvs,
         int remove_mode)
 {
+    int64_t *keys = NULL;
+    int key_count = 0;
+    int *problem_ids = NULL;
+    int problem_count = 0;
+
+    if (ovs->vt->get_keys(ovs, &key_count, &keys) <= 0)
+        goto done;
+    if (ovs->vt->get_problem_ids(ovs, &problem_count, &problem_ids) < 0)
+        goto done;
+
+    printf("contest %d\n", contest_id);
+    for (int i = 0; i < key_count; ++i) {
+        unsigned char *login = ovs->vt->get_login(ovs, keys[i]);
+        if (!login) continue;
+
+        printf("    login %s\n", login);
+        int user_variant = 0;
+        int virtual_user_variant = 0;
+        user_variant = ovs->vt->get_user_variant(ovs, keys[i], &virtual_user_variant);
+        if (user_variant > 0) {
+            printf("        user variant %d %d\n",
+                   user_variant, virtual_user_variant);
+        }
+        for (int j = 0; j < problem_count; ++j) {
+            int variant = ovs->vt->get_variant(ovs, keys[i], problem_ids[j]);
+            if (variant > 0) {
+                printf("        problem %d variant %d\n",
+                       problem_ids[j], variant);
+            }
+        }
+
+        free(login);
+    }
+
+done:;
+    free(keys);
+    free(problem_ids);
 }
 
 static void

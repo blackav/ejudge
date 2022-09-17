@@ -355,8 +355,7 @@ static int
 get_variant_func(
         struct variant_cnts_plugin_data *data,
         int64_t key,
-        int prob_id,
-        int *p_virtual_variant)
+        int prob_id)
 {
     struct variant_cnts_file_data *vcfd = (struct variant_cnts_file_data *) data;
     struct variant_map *pmap = vcfd->vmap;
