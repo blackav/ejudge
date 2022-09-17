@@ -271,6 +271,7 @@ get_entry_count_func(
         struct variant_cnts_plugin_data *data)
 {
     struct variant_cnts_file_data *vcfd = (struct variant_cnts_file_data *) data;
+    if (!vcfd->vmap) return 0;
     return vcfd->vmap->u;
 }
 
@@ -281,7 +282,7 @@ get_keys_func(
         int64_t **p_keys)
 {
     struct variant_cnts_file_data *vcfd = (struct variant_cnts_file_data *) data;
-    if (!vcfd->vmap->u) {
+    if (!vcfd->vmap || !vcfd->vmap->u) {
         *p_count = 0;
         *p_keys = NULL;
         return 0;
@@ -336,7 +337,7 @@ get_problem_ids_func(
 {
     struct variant_cnts_file_data *vcfd = (struct variant_cnts_file_data *) data;
     struct variant_map *pmap = vcfd->vmap;
-    if (pmap->prob_rev_map_size <= 1) {
+    if (!pmap || pmap->prob_rev_map_size <= 1) {
         *p_count = 0;
         *p_ids = NULL;
         return 0;
