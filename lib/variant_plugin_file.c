@@ -337,19 +337,19 @@ get_problem_ids_func(
 {
     struct variant_cnts_file_data *vcfd = (struct variant_cnts_file_data *) data;
     struct variant_map *pmap = vcfd->vmap;
-    if (!pmap || pmap->prob_rev_map_size <= 1) {
+    if (!pmap || pmap->var_prob_num <= 0) {
         *p_count = 0;
         *p_ids = NULL;
         return 0;
     }
     int *ids = NULL;
-    XCALLOC(ids, pmap->prob_rev_map_size - 1);
-    for (int i = 0; i < pmap->prob_rev_map_size - 1; ++i) {
+    XCALLOC(ids, pmap->var_prob_num);
+    for (int i = 0; i < pmap->var_prob_num; ++i) {
         ids[i] = pmap->prob_rev_map[i + 1];
     }
-    *p_count = pmap->prob_rev_map_size - 1;
+    *p_count = pmap->var_prob_num;
     *p_ids = ids;
-    return pmap->prob_rev_map_size - 1;
+    return pmap->var_prob_num;
 }
 
 static int
