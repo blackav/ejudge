@@ -21,6 +21,9 @@
 #include "ejudge/prepare.h"
 #include "ejudge/xalloc.h"
 #include "ejudge/errlog.h"
+#include "ejudge/dyntrie.h"
+
+#include <string.h>
 
 struct variant_mysql_data
 {
@@ -69,11 +72,26 @@ prepare_func(
     return 0;
 }
 
+struct user_variant_info
+{
+    int64_t serial_id;
+    int user_id;
+    unsigned char *login;
+    int variant;
+    int virtual_variant;
+    long long last_update_time_us;
+};
+
 struct variant_cnts_mysql_data
 {
     struct variant_cnts_plugin_data b;
     struct variant_mysql_data *vmd;
     int contest_id;
+
+    struct user_variant_info *uvis;
+    size_t uviu;
+    size_t uvia;
+    struct dyntrie_node *login_idx;
 };
 
 static const char create_query_1[] =
@@ -209,12 +227,140 @@ close_func(
 {
     struct variant_cnts_mysql_data *vcmd = (struct variant_cnts_mysql_data *) data;
     if (vcmd) {
+        dyntrie_free(&vcmd->login_idx, NULL, NULL);
+        for (size_t i = 0; i < vcmd->uviu; ++i) {
+            struct user_variant_info *vii = &vcmd->uvis[i];
+            free(vii->login);
+        }
         if (vcmd->vmd && vcmd->vmd->nref > 0) {
             --vcmd->vmd->nref;
         }
         xfree(vcmd);
     }
     return NULL;
+}
+
+struct variant_info_internal
+{
+    int64_t serial_id;
+    int contest_id;
+    int user_id;
+    int variant;
+    int virtual_variant;
+    struct timeval last_update_time;
+};
+
+enum { VARIANT_INFO_ROW_WIDTH = 6 };
+#define VARIANT_INFO_OFFSET(f) XOFFSET(struct variant_info_internal, f)
+static const struct common_mysql_parse_spec variant_info_spec[VARIANT_INFO_ROW_WIDTH] =
+{
+    { 0, 'l', "serial_id", VARIANT_INFO_OFFSET(serial_id), 0 },
+    { 0, 'd', "contest_id", VARIANT_INFO_OFFSET(contest_id), 0 },
+    { 0, 'd', "user_id", VARIANT_INFO_OFFSET(user_id), 0 },
+    { 1, 'd', "variant", VARIANT_INFO_OFFSET(variant), 0 },
+    { 1, 'd', "virtual_variant", VARIANT_INFO_OFFSET(virtual_variant), 0 },
+    { 1, 'T', "last_update_time", VARIANT_INFO_OFFSET(last_update_time), 0 },
+};
+
+static int
+upsert_user_variant_func(
+        struct variant_cnts_plugin_data *data,
+        const unsigned char *login,
+        int variant,
+        int virtual_variant,
+        int64_t *p_key)
+{
+    struct variant_cnts_mysql_data *vcmd = (struct variant_cnts_mysql_data *) data;
+    struct variant_mysql_data *vmd = vcmd->vmd;
+    struct common_mysql_iface *mi = vmd->mi;
+    struct common_mysql_state *md = vmd->md;
+    char *cmd_s = NULL;
+    size_t cmd_z = 0;
+    FILE *cmd_f = NULL;
+    struct variant_info_internal vii = {};
+
+    cmd_f = open_memstream(&cmd_s, &cmd_z);
+    fprintf(cmd_f, "INSERT INTO %svariants SET contest_id = %d, user_id = (SELECT user_id FROM logins where login = '",
+            md->table_prefix, vcmd->contest_id);
+    mi->escape_string(md, cmd_f, login);
+    fprintf(cmd_f, "'), variant = ");
+    if (variant > 0) {
+        fprintf(cmd_f, "%d", variant);
+    } else {
+        fprintf(cmd_f, "null");
+    }
+    fprintf(cmd_f, ", virtual_variant = ");
+    if (virtual_variant > 0) {
+        fprintf(cmd_f, "%d", virtual_variant);
+    } else {
+        fprintf(cmd_f, "null");
+    }
+    fprintf(cmd_f, ", last_update_time = NOW(6) ON DUPLICATE KEY UPDATE variant = ");
+    if (variant > 0) {
+        fprintf(cmd_f, "%d", variant);
+    } else {
+        fprintf(cmd_f, "null");
+    }
+    fprintf(cmd_f, ", virtual_variant = ");
+    if (virtual_variant > 0) {
+        fprintf(cmd_f, "%d", virtual_variant);
+    } else {
+        fprintf(cmd_f, "null");
+    }
+    fprintf(cmd_f, ", last_update_time = NOW(6);");
+    fclose(cmd_f); cmd_f = NULL;
+    if (mi->simple_query_bin(md, cmd_s, cmd_z) < 0) goto fail;
+    free(cmd_s); cmd_s = NULL; cmd_z = 0;
+
+    cmd_f = open_memstream(&cmd_s, &cmd_z);
+    fprintf(cmd_f, "SELECT * from %svariants WHERE contest_id = %d and user_in = (SELECT user_id FROM logins WHERE login = '",
+            md->table_prefix, vcmd->contest_id);
+    mi->escape_string(md, cmd_f, login);
+    fprintf(cmd_f, "');");
+    fclose(cmd_f); cmd_f = NULL;
+    if (mi->query(md, cmd_s, cmd_z, VARIANT_INFO_ROW_WIDTH) < 0)
+        db_error_fail(md);
+    free(cmd_s); cmd_s = NULL; cmd_z = 0;
+
+    if (md->row_count == 1) {
+        if (mi->next_row(md) < 0) db_error_fail(md);
+        if (mi->parse_spec(md, -1, md->row, md->lengths, VARIANT_INFO_ROW_WIDTH, variant_info_spec, &vii) < 0) goto fail;
+
+        int uvii = (int)(intptr_t) dyntrie_get(&vcmd->login_idx, login);
+        struct user_variant_info *uvi = NULL;
+        if (!uvii) {
+            if (!vcmd->uvia) {
+                vcmd->uvia = 16;
+                XCALLOC(vcmd->uvis, vcmd->uvia);
+                vcmd->uviu = 1;
+            }
+            if (vcmd->uviu == vcmd->uvia) {
+                vcmd->uvia *= 2;
+                XREALLOC(vcmd->uvis, vcmd->uvia);
+            }
+            uvii = vcmd->uviu++;
+            uvi = &vcmd->uvis[uvii];
+            memset(uvi, 0, sizeof(*uvi));
+            dyntrie_insert(&vcmd->login_idx, login, (void *) (intptr_t) uvii, 0, NULL);
+        } else {
+            uvi = &vcmd->uvis[uvii];
+            free(uvi->login); uvi->login = NULL;
+        }
+
+        uvi->serial_id = vii.serial_id;
+        uvi->user_id = vii.user_id;
+        uvi->login = xstrdup(login);
+        uvi->variant = vii.variant;
+        uvi->virtual_variant = vii.virtual_variant;
+        uvi->last_update_time_us = vii.last_update_time.tv_sec * 1000000LL + vii.last_update_time.tv_usec;
+    }
+
+    return 0;
+
+fail:
+    if (cmd_f) fclose(cmd_f);
+    free(cmd_s);
+    return -1;
 }
 
 struct variant_plugin_iface plugin_variant_mysql =
@@ -234,4 +380,13 @@ struct variant_plugin_iface plugin_variant_mysql =
     VARIANT_PLUGIN_IFACE_VERSION,
     open_func,
     close_func,
+    NULL, // find_variant
+    NULL, // find_user_variant
+    NULL, // get_entry_count
+    NULL, // get_keys
+    NULL, // get_login
+    NULL, // get_user_variant
+    NULL, // get_problem_ids
+    NULL, // get_variant
+    upsert_user_variant_func,
 };
