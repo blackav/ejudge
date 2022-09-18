@@ -92,15 +92,31 @@ convert_contest(
         int user_variant = 0;
         int virtual_user_variant = 0;
         user_variant = ovs->vt->get_user_variant(ovs, keys[i], &virtual_user_variant);
+        int has_user_variant = 0;
         if (user_variant > 0) {
             printf("        user variant %d %d\n",
                    user_variant, virtual_user_variant);
+            has_user_variant = 1;
         }
+        int has_variant = 0;
         for (int j = 0; j < problem_count; ++j) {
             int variant = ovs->vt->get_variant(ovs, keys[i], problem_ids[j]);
             if (variant > 0) {
+                has_variant = 1;
                 printf("        problem %d variant %d\n",
                        problem_ids[j], variant);
+            }
+        }
+
+        if (has_user_variant || has_variant) {
+            if (!has_user_variant) {
+                user_variant = 0;
+                virtual_user_variant = 0;
+            }
+            int64_t key = 0;
+            if (nvs->vt->upsert_user_variant(nvs, login, user_variant, virtual_user_variant, &key) < 0) {
+                fprintf(stderr, "operation failed\n");
+                goto done;
             }
         }
 
