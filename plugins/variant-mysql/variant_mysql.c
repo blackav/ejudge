@@ -262,6 +262,85 @@ static const struct common_mysql_parse_spec variant_info_spec[VARIANT_INFO_ROW_W
     { 1, 'T', "last_update_time", VARIANT_INFO_OFFSET(last_update_time), 0 },
 };
 
+static struct user_variant_info *
+get_user_variant_info(
+        struct variant_cnts_mysql_data *vcmd,
+        const unsigned char *login)
+{
+    struct variant_mysql_data *vmd = vcmd->vmd;
+    struct common_mysql_iface *mi = vmd->mi;
+    struct common_mysql_state *md = vmd->md;
+    char *cmd_s = NULL;
+    size_t cmd_z = 0;
+    FILE *cmd_f = NULL;
+    struct variant_info_internal vii = {};
+
+    int uvii = (int)(intptr_t) dyntrie_get(&vcmd->login_idx, login);
+    if (uvii > 0) {
+        return &vcmd->uvis[uvii];
+    }
+
+    cmd_f = open_memstream(&cmd_s, &cmd_z);
+    fprintf(cmd_f, "INSERT IGNORE INTO %svariants SET contest_id = %d, user_id = (SELECT user_id FROM logins where login = '",
+            md->table_prefix, vcmd->contest_id);
+    mi->escape_string(md, cmd_f, login);
+    fprintf(cmd_f, "'), last_update_time = NOW(6);");
+    fclose(cmd_f); cmd_f = NULL;
+    if (mi->simple_query(md, cmd_s, cmd_z) < 0) goto fail;
+    free(cmd_s); cmd_s = NULL; cmd_z = 0;
+
+    cmd_f = open_memstream(&cmd_s, &cmd_z);
+    fprintf(cmd_f, "SELECT * from %svariants WHERE contest_id = %d and user_id = (SELECT user_id FROM logins WHERE login = '",
+            md->table_prefix, vcmd->contest_id);
+    mi->escape_string(md, cmd_f, login);
+    fprintf(cmd_f, "');");
+    fclose(cmd_f); cmd_f = NULL;
+    if (mi->query(md, cmd_s, cmd_z, VARIANT_INFO_ROW_WIDTH) < 0)
+        db_error_fail(md);
+    free(cmd_s); cmd_s = NULL; cmd_z = 0;
+
+    if (md->row_count == 1) {
+        if (mi->next_row(md) < 0) db_error_fail(md);
+        if (mi->parse_spec(md, -1, md->row, md->lengths, VARIANT_INFO_ROW_WIDTH, variant_info_spec, &vii) < 0) goto fail;
+
+        int uvii = (int)(intptr_t) dyntrie_get(&vcmd->login_idx, login);
+        struct user_variant_info *uvi = NULL;
+        if (!uvii) {
+            if (!vcmd->uvia) {
+                vcmd->uvia = 16;
+                XCALLOC(vcmd->uvis, vcmd->uvia);
+                vcmd->uviu = 1;
+            }
+            if (vcmd->uviu == vcmd->uvia) {
+                vcmd->uvia *= 2;
+                XREALLOC(vcmd->uvis, vcmd->uvia);
+            }
+            uvii = vcmd->uviu++;
+            uvi = &vcmd->uvis[uvii];
+            memset(uvi, 0, sizeof(*uvi));
+            dyntrie_insert(&vcmd->login_idx, login, (void *) (intptr_t) uvii, 0, NULL);
+        } else {
+            uvi = &vcmd->uvis[uvii];
+            free(uvi->login); uvi->login = NULL;
+        }
+
+        uvi->serial_id = vii.serial_id;
+        uvi->user_id = vii.user_id;
+        uvi->login = xstrdup(login);
+        uvi->variant = vii.variant;
+        uvi->virtual_variant = vii.virtual_variant;
+        uvi->last_update_time_us = vii.last_update_time.tv_sec * 1000000LL + vii.last_update_time.tv_usec;
+        return uvi;
+    }
+
+    return NULL;
+
+fail:
+    if (cmd_f) fclose(cmd_f);
+    free(cmd_s);
+    return NULL;
+}
+
 static int
 upsert_user_variant_func(
         struct variant_cnts_plugin_data *data,
@@ -363,6 +442,39 @@ fail:
     return -1;
 }
 
+static int
+upsert_variant_func(
+        struct variant_cnts_plugin_data *data,
+        const unsigned char *login,
+        int prob_id,
+        int variant)
+{
+    struct variant_cnts_mysql_data *vcmd = (struct variant_cnts_mysql_data *) data;
+    struct variant_mysql_data *vmd = vcmd->vmd;
+    struct common_mysql_iface *mi = vmd->mi;
+    struct common_mysql_state *md = vmd->md;
+    char *cmd_s = NULL;
+    size_t cmd_z = 0;
+    FILE *cmd_f = NULL;
+
+    struct user_variant_info *uvi = get_user_variant_info(vcmd, login);
+    if (!uvi) goto fail;
+
+    cmd_f = open_memstream(&cmd_s, &cmd_z);
+    fprintf(cmd_f, "INSERT INTO %svariantentries SET entry_id = %lld, prob_id = %d, variant = %d, last_update_time = NOW(6) ON DUPLICATE KEY UPDATE variant = %d, last_update_time = NOW(6);",
+            md->table_prefix, (long long) uvi->serial_id,
+            prob_id, variant, variant);
+    fclose(cmd_f); cmd_f = NULL;
+    if (mi->simple_query(md, cmd_s, cmd_z) < 0) goto fail;
+    free(cmd_s); cmd_s = NULL; cmd_z = 0;
+    return 0;
+
+fail:;
+    if (cmd_f) fclose(cmd_f);
+    free(cmd_s);
+    return -1;
+}
+
 struct variant_plugin_iface plugin_variant_mysql =
 {
     {
@@ -389,4 +501,5 @@ struct variant_plugin_iface plugin_variant_mysql =
     NULL, // get_problem_ids
     NULL, // get_variant
     upsert_user_variant_func,
+    upsert_variant_func,
 };

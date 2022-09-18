@@ -93,6 +93,11 @@ struct variant_plugin_iface
         int variant,
         int virtual_variant,
         int64_t *p_key);
+    int (*upsert_variant)(
+        struct variant_cnts_plugin_data *data,
+        const unsigned char *login,
+        int prob_id,
+        int variant);
 };
 
 struct variant_cnts_plugin_data *

@@ -118,6 +118,15 @@ convert_contest(
                 fprintf(stderr, "operation failed\n");
                 goto done;
             }
+            for (int j = 0; j < problem_count; ++j) {
+                int variant = ovs->vt->get_variant(ovs, keys[i], problem_ids[j]);
+                if (variant > 0) {
+                    if (nvs->vt->upsert_variant(nvs, login, problem_ids[j], variant) < 0) {
+                        fprintf(stderr, "operation failed\n");
+                        goto done;
+                    }
+                }
+            }
         }
 
         free(login);
