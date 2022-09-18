@@ -309,11 +309,11 @@ upsert_user_variant_func(
     }
     fprintf(cmd_f, ", last_update_time = NOW(6);");
     fclose(cmd_f); cmd_f = NULL;
-    if (mi->simple_query_bin(md, cmd_s, cmd_z) < 0) goto fail;
+    if (mi->simple_query(md, cmd_s, cmd_z) < 0) goto fail;
     free(cmd_s); cmd_s = NULL; cmd_z = 0;
 
     cmd_f = open_memstream(&cmd_s, &cmd_z);
-    fprintf(cmd_f, "SELECT * from %svariants WHERE contest_id = %d and user_in = (SELECT user_id FROM logins WHERE login = '",
+    fprintf(cmd_f, "SELECT * from %svariants WHERE contest_id = %d and user_id = (SELECT user_id FROM logins WHERE login = '",
             md->table_prefix, vcmd->contest_id);
     mi->escape_string(md, cmd_f, login);
     fprintf(cmd_f, "');");
