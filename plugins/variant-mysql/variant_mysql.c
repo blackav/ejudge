@@ -92,6 +92,10 @@ struct variant_cnts_mysql_data
     size_t uviu;
     size_t uvia;
     struct dyntrie_node *login_idx;
+
+    // user index: indexed by user_id
+    int *uidxv;
+    int uidxa;
 };
 
 static const char create_query_1[] =
@@ -232,12 +236,52 @@ close_func(
             struct user_variant_info *vii = &vcmd->uvis[i];
             free(vii->login);
         }
+        free(vcmd->uidxv);
         if (vcmd->vmd && vcmd->vmd->nref > 0) {
             --vcmd->vmd->nref;
         }
         xfree(vcmd);
     }
     return NULL;
+}
+
+[[gnu::unused]]
+static int
+append_user_variant_info(
+        struct variant_cnts_mysql_data *vcmd,
+        int user_id,
+        const unsigned char *login)
+{
+    int uvii;
+
+    if (!vcmd->uvia) {
+        vcmd->uvia = 16;
+        XCALLOC(vcmd->uvis, vcmd->uvia);
+        vcmd->uviu = 1;
+    }
+    if (vcmd->uviu == vcmd->uvia) {
+        vcmd->uvia *= 2;
+        XREALLOC(vcmd->uvis, vcmd->uvia);
+    }
+    uvii = vcmd->uviu++;
+    struct user_variant_info *uvi = &vcmd->uvis[uvii];
+    memset(uvi, 0, sizeof(*uvi));
+    dyntrie_insert(&vcmd->login_idx, login, (void *) (intptr_t) uvii, 0, NULL);
+    if (user_id >= vcmd->uidxa) {
+        size_t new_size = 64;
+        while (new_size <= user_id) new_size *= 2;
+        int *new_index = NULL;
+        XCALLOC(new_index, new_size);
+        if (vcmd->uidxa > 0) {
+            memcpy(new_index, vcmd->uidxv, vcmd->uidxa * sizeof(new_index[0]));
+        }
+        free(vcmd->uidxv);
+        vcmd->uidxv = new_index;
+        vcmd->uidxa = new_size;
+    }
+    vcmd->uidxv[user_id] = uvii;
+
+    return uvii;
 }
 
 struct variant_info_internal
