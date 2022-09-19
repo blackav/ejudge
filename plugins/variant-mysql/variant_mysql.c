@@ -291,6 +291,7 @@ struct variant_info_internal
     int variant;
     int virtual_variant;
     struct timeval last_update_time;
+    unsigned char *login;
 };
 
 enum { VARIANT_INFO_ROW_WIDTH = 6 };
@@ -303,6 +304,18 @@ static const struct common_mysql_parse_spec variant_info_spec[VARIANT_INFO_ROW_W
     { 1, 'd', "variant", VARIANT_INFO_OFFSET(variant), 0 },
     { 1, 'd', "virtual_variant", VARIANT_INFO_OFFSET(virtual_variant), 0 },
     { 1, 'T', "last_update_time", VARIANT_INFO_OFFSET(last_update_time), 0 },
+};
+
+enum { VARIANT_INFO_ROW_WIDTH_2 = 7 };
+static const struct common_mysql_parse_spec variant_info_spec_2[VARIANT_INFO_ROW_WIDTH_2] =
+{
+    { 0, 'l', "serial_id", VARIANT_INFO_OFFSET(serial_id), 0 },
+    { 0, 'd', "contest_id", VARIANT_INFO_OFFSET(contest_id), 0 },
+    { 0, 'd', "user_id", VARIANT_INFO_OFFSET(user_id), 0 },
+    { 1, 'd', "variant", VARIANT_INFO_OFFSET(variant), 0 },
+    { 1, 'd', "virtual_variant", VARIANT_INFO_OFFSET(virtual_variant), 0 },
+    { 1, 'T', "last_update_time", VARIANT_INFO_OFFSET(last_update_time), 0 },
+    { 1, 's', "login", VARIANT_INFO_OFFSET(login), 0 },
 };
 
 static struct user_variant_info *
@@ -368,6 +381,65 @@ get_user_variant_info(
     return NULL;
 
 fail:
+    if (cmd_f) fclose(cmd_f);
+    free(cmd_s);
+    return NULL;
+}
+
+[[gnu::unused]]
+static struct user_variant_info *
+get_user_variant_info_2(
+        struct variant_cnts_mysql_data *vcmd,
+        int user_id)
+{
+    struct variant_mysql_data *vmd = vcmd->vmd;
+    struct common_mysql_iface *mi = vmd->mi;
+    struct common_mysql_state *md = vmd->md;
+    struct variant_info_internal vii = {};
+    char *cmd_s = NULL;
+    size_t cmd_z = 0;
+    FILE *cmd_f = NULL;
+
+    if (user_id <= 0) return NULL;
+    if (user_id < vcmd->uidxa && vcmd->uidxv[user_id] > 0) {
+        return &vcmd->uvis[vcmd->uidxv[user_id]];
+    }
+
+    if (mi->simple_fquery(md, "INSERT IGNORE INTO %svariants SET contest_id = %d, user_id = %d, last_update_time = NOW(6);",
+                          md->table_prefix, vcmd->contest_id, user_id) < 0)
+        goto fail;
+
+    cmd_f = open_memstream(&cmd_s, &cmd_z);
+    fprintf(cmd_f, "SELECT %svariants.*, %slogins.login FROM %svariants, %slogins WHERE %svariants.contest_id = %d AND %svariants.user_id = %d AND %slogins.user_id = %d;",
+            md->table_prefix, md->table_prefix,
+            md->table_prefix, md->table_prefix,
+            md->table_prefix, vcmd->contest_id,
+            md->table_prefix, user_id,
+            md->table_prefix, user_id);
+    fclose(cmd_f); cmd_f = NULL;
+    if (mi->query(md, cmd_s, cmd_z, VARIANT_INFO_ROW_WIDTH_2) < 0)
+        db_error_fail(md);
+    free(cmd_s); cmd_s = NULL; cmd_z = 0;
+
+    if (md->row_count == 1) {
+        if (mi->next_row(md) < 0) db_error_fail(md);
+        if (mi->parse_spec(md, -1, md->row, md->lengths, VARIANT_INFO_ROW_WIDTH_2, variant_info_spec_2, &vii) < 0) goto fail;
+
+        int uvii = append_user_variant_info(vcmd, vii.user_id, vii.login);
+        struct user_variant_info *uvi = &vcmd->uvis[uvii];
+        uvi->serial_id = vii.serial_id;
+        uvi->user_id = vii.user_id;
+        uvi->login = vii.login; vii.login = NULL;
+        uvi->variant = vii.variant;
+        uvi->virtual_variant = vii.virtual_variant;
+        uvi->last_update_time_us = vii.last_update_time.tv_sec * 1000000LL + vii.last_update_time.tv_usec;
+        return uvi;
+    }
+
+    return NULL;
+
+fail:
+    free(vii.login);
     if (cmd_f) fclose(cmd_f);
     free(cmd_s);
     return NULL;
