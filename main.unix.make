@@ -205,6 +205,7 @@ subdirs_all:
 	$(MAKE) -C plugins/status-mysql DESTDIR="${DESTDIR}" all
 	$(MAKE) -C plugins/variant-mysql DESTDIR="${DESTDIR}" all
 	$(MAKE) -C plugins/storage-mysql DESTDIR="${DESTDIR}" all
+	$(MAKE) -C plugins/cache-mysql DESTDIR="${DESTDIR}" all
 	$(MAKE) -C plugins/telegram DESTDIR="${DESTDIR}" all
 	$(MAKE) -C plugins/auth-base DESTDIR="${DESTDIR}" all
 	$(MAKE) -C plugins/auth-google DESTDIR="${DESTDIR}" all
@@ -277,6 +278,7 @@ install: local_install
 	$(MAKE) -C plugins/status-mysql DESTDIR="${DESTDIR}" install
 	$(MAKE) -C plugins/variant-mysql DESTDIR="${DESTDIR}" install
 	$(MAKE) -C plugins/storage-mysql DESTDIR="${DESTDIR}" install
+	$(MAKE) -C plugins/cache-mysql DESTDIR="${DESTDIR}" install
 	$(MAKE) -C plugins/telegram DESTDIR="${DESTDIR}" install
 	$(MAKE) -C plugins/auth-base DESTDIR="${DESTDIR}" install
 	$(MAKE) -C plugins/auth-google DESTDIR="${DESTDIR}" install
@@ -474,6 +476,7 @@ subdir_clean:
 	$(MAKE) -C plugins/status-mysql DESTDIR="${DESTDIR}" clean
 	$(MAKE) -C plugins/variant-mysql DESTDIR="${DESTDIR}" clean
 	$(MAKE) -C plugins/storage-mysql DESTDIR="${DESTDIR}" clean
+	$(MAKE) -C plugins/cache-mysql DESTDIR="${DESTDIR}" clean
 	$(MAKE) -C plugins/telegram DESTDIR="${DESTDIR}" clean
 	$(MAKE) -C plugins/auth-base DESTDIR="${DESTDIR}" clean
 	$(MAKE) -C plugins/auth-google DESTDIR="${DESTDIR}" clean
@@ -507,6 +510,7 @@ subdir_distclean :
 	$(MAKE) -C plugins/status-mysql DESTDIR="${DESTDIR}" distclean
 	$(MAKE) -C plugins/variant-mysql DESTDIR="${DESTDIR}" distclean
 	$(MAKE) -C plugins/storage-mysql DESTDIR="${DESTDIR}" distclean
+	$(MAKE) -C plugins/cache-mysql DESTDIR="${DESTDIR}" distclean
 	$(MAKE) -C plugins/telegram DESTDIR="${DESTDIR}" distclean
 	$(MAKE) -C plugins/auth-base DESTDIR="${DESTDIR}" distclean
 	$(MAKE) -C plugins/auth-google DESTDIR="${DESTDIR}" distclean
