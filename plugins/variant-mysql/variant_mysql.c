@@ -245,7 +245,6 @@ close_func(
     return NULL;
 }
 
-[[gnu::unused]]
 static int
 append_user_variant_info(
         struct variant_cnts_mysql_data *vcmd,
@@ -350,19 +349,8 @@ get_user_variant_info(
         int uvii = (int)(intptr_t) dyntrie_get(&vcmd->login_idx, login);
         struct user_variant_info *uvi = NULL;
         if (!uvii) {
-            if (!vcmd->uvia) {
-                vcmd->uvia = 16;
-                XCALLOC(vcmd->uvis, vcmd->uvia);
-                vcmd->uviu = 1;
-            }
-            if (vcmd->uviu == vcmd->uvia) {
-                vcmd->uvia *= 2;
-                XREALLOC(vcmd->uvis, vcmd->uvia);
-            }
-            uvii = vcmd->uviu++;
+            uvii = append_user_variant_info(vcmd, vii.user_id, login);
             uvi = &vcmd->uvis[uvii];
-            memset(uvi, 0, sizeof(*uvi));
-            dyntrie_insert(&vcmd->login_idx, login, (void *) (intptr_t) uvii, 0, NULL);
         } else {
             uvi = &vcmd->uvis[uvii];
             free(uvi->login); uvi->login = NULL;
@@ -452,19 +440,8 @@ upsert_user_variant_func(
         int uvii = (int)(intptr_t) dyntrie_get(&vcmd->login_idx, login);
         struct user_variant_info *uvi = NULL;
         if (!uvii) {
-            if (!vcmd->uvia) {
-                vcmd->uvia = 16;
-                XCALLOC(vcmd->uvis, vcmd->uvia);
-                vcmd->uviu = 1;
-            }
-            if (vcmd->uviu == vcmd->uvia) {
-                vcmd->uvia *= 2;
-                XREALLOC(vcmd->uvis, vcmd->uvia);
-            }
-            uvii = vcmd->uviu++;
+            uvii = append_user_variant_info(vcmd, vii.user_id, login);
             uvi = &vcmd->uvis[uvii];
-            memset(uvi, 0, sizeof(*uvi));
-            dyntrie_insert(&vcmd->login_idx, login, (void *) (intptr_t) uvii, 0, NULL);
         } else {
             uvi = &vcmd->uvis[uvii];
             free(uvi->login); uvi->login = NULL;
