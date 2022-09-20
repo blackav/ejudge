@@ -202,6 +202,11 @@ fail:
     return -1;
 }
 
+static void
+load_all(
+        struct variant_cnts_mysql_data *vcmd,
+        const struct serve_state *state);
+
 extern struct variant_plugin_iface plugin_variant_mysql;
 
 static struct variant_cnts_plugin_data *
@@ -228,6 +233,7 @@ open_func(
     vcmd->vmd = vmd;
     vcmd->contest_id = cnts->id;
     ++vmd->nref;
+    load_all(vcmd, state);
     
     return &vcmd->b;
 }
@@ -334,6 +340,7 @@ struct variantentry_info_internal
     int prob_id;
     int variant;
     struct timeval last_update_time;
+    int user_id;
 };
 
 enum { VARIANTENTRY_INFO_ROW_WIDTH = 5 };
@@ -345,6 +352,14 @@ static const struct common_mysql_parse_spec variantentry_info_spec[VARIANTENTRY_
     { 0, 'd', "prob_id", VARIANTENTRY_INFO_OFFSET(prob_id), 0 },
     { 0, 'd', "variant", VARIANTENTRY_INFO_OFFSET(variant), 0 },
     { 1, 'T', "last_update_time", VARIANTENTRY_INFO_OFFSET(last_update_time), 0 },
+};
+
+enum { VARIANTENTRY_INFO_ROW_WIDTH_2 = 3 };
+static const struct common_mysql_parse_spec variantentry_info_spec_2[VARIANTENTRY_INFO_ROW_WIDTH_2] =
+{
+    { 0, 'd', "prob_id", VARIANTENTRY_INFO_OFFSET(prob_id), 0 },
+    { 0, 'd', "variant", VARIANTENTRY_INFO_OFFSET(variant), 0 },
+    { 0, 'd', "user_id", VARIANTENTRY_INFO_OFFSET(user_id), 0 },
 };
 
 static struct user_variant_info *
@@ -695,6 +710,112 @@ fail:
     if (cmd_f) fclose(cmd_f);
     free(cmd_s);
     return -1;
+}
+
+static void
+load_all(
+        struct variant_cnts_mysql_data *vcmd,
+        const struct serve_state *state)
+{
+    struct variant_mysql_data *vmd = vcmd->vmd;
+    struct common_mysql_iface *mi = vmd->mi;
+    struct common_mysql_state *md = vmd->md;
+    char *cmd_s = NULL;
+    size_t cmd_z = 0;
+    FILE *cmd_f = NULL;
+
+    int max_prob_id = 0;
+    int var_prob_count = 0;
+    for (int prob_id = 1; prob_id <= state->max_prob; ++prob_id) {
+        const struct section_problem_data *prob = state->probs[prob_id];
+        if (prob && prob->variant_num > 0) {
+            max_prob_id = prob_id;
+            ++var_prob_count;
+        }
+    }
+    // no variant problems
+    if (!max_prob_id) {
+        return;
+    }
+
+    vcmd->prob_idxa = max_prob_id + 1;
+    XCALLOC(vcmd->prob_idxv, vcmd->prob_idxa);
+    vcmd->var_prob_count = var_prob_count;
+    for (int prob_id = 1, j = 0; prob_id <= state->max_prob; ++prob_id) {
+        const struct section_problem_data *prob = state->probs[prob_id];
+        if (prob && prob->variant_num > 0) {
+            vcmd->prob_idxv[prob_id] = j++;
+        }
+    }
+
+    cmd_f = open_memstream(&cmd_s, &cmd_z);
+    fprintf(cmd_f, "SELECT %svariants.*, %slogins.login FROM %svariants LEFT JOIN %slogins ON %svariants.user_id = %slogins.user_id WHERE %svariants.contest_id = %d order by %svariants.user_id;",
+            md->table_prefix, md->table_prefix,
+            md->table_prefix, md->table_prefix,
+            md->table_prefix, md->table_prefix,
+            md->table_prefix, vcmd->contest_id, md->table_prefix);
+    fclose(cmd_f); cmd_f = NULL;
+    if (mi->query(md, cmd_s, cmd_z, VARIANT_INFO_ROW_WIDTH_2) < 0)
+        db_error_fail(md);
+    free(cmd_s); cmd_s = NULL; cmd_z = 0;
+
+    for (int row = 0; row < md->row_count; ++row) {
+        struct variant_info_internal vii = {};
+        if (mi->next_row(md) < 0) db_error_fail(md);
+        if (mi->parse_spec(md, -1, md->row, md->lengths, VARIANT_INFO_ROW_WIDTH_2, variant_info_spec_2, &vii) < 0) goto fail;
+
+        int uvii = append_user_variant_info(vcmd, vii.user_id, vii.login);
+        struct user_variant_info *uvi = &vcmd->uvis[uvii];
+        uvi->serial_id = vii.serial_id;
+        uvi->user_id = vii.user_id;
+        uvi->login = vii.login; vii.login = NULL;
+        uvi->variant = vii.variant;
+        uvi->virtual_variant = vii.virtual_variant;
+        uvi->last_update_time_us = vii.last_update_time.tv_sec * 1000000LL + vii.last_update_time.tv_usec;
+    }
+
+    cmd_f = open_memstream(&cmd_s, &cmd_z);
+    fprintf(cmd_f, "SELECT %svariantentries.prob_id, %svariantentries.variant , %svariants.user_id FROM %svariantentries LEFT JOIN %svariants ON %svariantentries.entry_id = %svariants.serial_id WHERE %svariants.contest_id = %d ORDER BY %svariants.user_id, %svariantentries.prob_id;",
+            md->table_prefix, md->table_prefix, md->table_prefix,
+            md->table_prefix, md->table_prefix,
+            md->table_prefix, md->table_prefix,
+            md->table_prefix, vcmd->contest_id,
+            md->table_prefix, md->table_prefix);
+    fclose(cmd_f); cmd_f = NULL;
+    if (mi->query(md, cmd_s, cmd_z, VARIANTENTRY_INFO_ROW_WIDTH_2) < 0)
+        db_error_fail(md);
+    free(cmd_s); cmd_s = NULL; cmd_z = 0;
+
+    for (int row = 0; row < md->row_count; ++row) {
+        struct variantentry_info_internal veii = {};
+        if (mi->next_row(md) < 0) db_error_fail(md);
+        if (mi->parse_spec(md, -1, md->row, md->lengths, VARIANTENTRY_INFO_ROW_WIDTH_2, variantentry_info_spec_2, &veii) < 0) goto fail;
+
+        if (veii.user_id > 0 && veii.user_id < vcmd->uidxa) {
+            int index = vcmd->uidxv[veii.user_id];
+            if (index > 0) {
+                struct user_variant_info *uvi = &vcmd->uvis[index];
+                if (veii.prob_id > 0 && veii.prob_id < vcmd->prob_idxa) {
+                    int prob_index = vcmd->prob_idxv[veii.prob_id];
+                    const struct section_problem_data *prob = state->probs[veii.prob_id];
+                    if (prob && prob->variant_num > 0) {
+                        if (veii.variant > 0 && veii.variant <= prob->variant_num) {
+                            if (!uvi->prob_variants) {
+                                XCALLOC(uvi->prob_variants, vcmd->var_prob_count);
+                            }
+                            uvi->prob_variants[prob_index] = veii.variant;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return;
+
+fail:;
+    if (cmd_f) fclose(cmd_f);
+    free(cmd_s);
 }
 
 static int
