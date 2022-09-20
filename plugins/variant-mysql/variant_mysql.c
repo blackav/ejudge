@@ -518,7 +518,7 @@ find_variant_func(
         int var_prob_count = 0;
         for (int i = 1; i <= state->max_prob; ++i) {
             struct section_problem_data *prob = state->probs[i];
-            if (prob->variant_num > 0) {
+            if (prob && prob->variant_num > 0) {
                 max_prob_id = i;
                 ++var_prob_count;
             }
@@ -530,7 +530,7 @@ find_variant_func(
             int j = 0;
             for (int i = 1; i <= state->max_prob; ++i) {
                 struct section_problem_data *prob = state->probs[i];
-                if (prob->variant_num > 0) {
+                if (prob && prob->variant_num > 0) {
                     vcmd->prob_idxv[i] = j++;
                 }
             }
