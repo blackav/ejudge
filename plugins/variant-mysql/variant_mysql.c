@@ -534,10 +534,12 @@ find_variant_func(
                     vcmd->prob_idxv[i] = j++;
                 }
             }
+        } else {
+            return 0;
         }
     }
 
-    if (uvi->prob_variants) {
+    if (!uvi->prob_variants) {
         XCALLOC(uvi->prob_variants, vcmd->var_prob_count);
     }
 
