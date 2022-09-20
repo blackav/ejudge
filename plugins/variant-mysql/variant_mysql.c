@@ -22,6 +22,7 @@
 #include "ejudge/xalloc.h"
 #include "ejudge/errlog.h"
 #include "ejudge/dyntrie.h"
+#include "ejudge/random.h"
 
 #include <string.h>
 
@@ -80,6 +81,7 @@ struct user_variant_info
     int variant;
     int virtual_variant;
     long long last_update_time_us;
+    int *prob_variants;
 };
 
 struct variant_cnts_mysql_data
@@ -96,6 +98,11 @@ struct variant_cnts_mysql_data
     // user index: indexed by user_id
     int *uidxv;
     int uidxa;
+
+    // problem index
+    int *prob_idxv;
+    int prob_idxa;
+    int var_prob_count;
 };
 
 static const char create_query_1[] =
@@ -235,8 +242,10 @@ close_func(
         for (size_t i = 0; i < vcmd->uviu; ++i) {
             struct user_variant_info *vii = &vcmd->uvis[i];
             free(vii->login);
+            free(vii->prob_variants);
         }
         free(vcmd->uidxv);
+        free(vcmd->prob_idxv);
         if (vcmd->vmd && vcmd->vmd->nref > 0) {
             --vcmd->vmd->nref;
         }
@@ -318,6 +327,26 @@ static const struct common_mysql_parse_spec variant_info_spec_2[VARIANT_INFO_ROW
     { 1, 's', "login", VARIANT_INFO_OFFSET(login), 0 },
 };
 
+struct variantentry_info_internal
+{
+    int64_t serial_id;
+    int64_t entry_id;
+    int prob_id;
+    int variant;
+    struct timeval last_update_time;
+};
+
+enum { VARIANTENTRY_INFO_ROW_WIDTH = 5 };
+#define VARIANTENTRY_INFO_OFFSET(f) XOFFSET(struct variantentry_info_internal, f)
+static const struct common_mysql_parse_spec variantentry_info_spec[VARIANTENTRY_INFO_ROW_WIDTH] =
+{
+    { 0, 'l', "serial_id", VARIANTENTRY_INFO_OFFSET(serial_id), 0 },
+    { 0, 'l', "entry_id", VARIANTENTRY_INFO_OFFSET(entry_id), 0 },
+    { 0, 'd', "prob_id", VARIANTENTRY_INFO_OFFSET(prob_id), 0 },
+    { 0, 'd', "variant", VARIANTENTRY_INFO_OFFSET(variant), 0 },
+    { 1, 'T', "last_update_time", VARIANTENTRY_INFO_OFFSET(last_update_time), 0 },
+};
+
 static struct user_variant_info *
 get_user_variant_info(
         struct variant_cnts_mysql_data *vcmd,
@@ -386,7 +415,6 @@ fail:
     return NULL;
 }
 
-[[gnu::unused]]
 static struct user_variant_info *
 get_user_variant_info_2(
         struct variant_cnts_mysql_data *vcmd,
@@ -443,6 +471,138 @@ fail:
     if (cmd_f) fclose(cmd_f);
     free(cmd_s);
     return NULL;
+}
+
+static int
+find_variant_func(
+        struct variant_cnts_plugin_data *data,
+        const struct serve_state *state,
+        int user_id,
+        int prob_id,
+        int *p_virtual_variant)
+{
+    struct variant_cnts_mysql_data *vcmd = (struct variant_cnts_mysql_data *) data;
+    struct variant_mysql_data *vmd = vcmd->vmd;
+    struct common_mysql_iface *mi = vmd->mi;
+    struct common_mysql_state *md = vmd->md;
+    struct user_variant_info *uvi = get_user_variant_info_2(vcmd, user_id);
+    char *cmd_s = NULL;
+    size_t cmd_z = 0;
+    FILE *cmd_f = NULL;
+    struct variantentry_info_internal veii = {};
+
+    if (uvi->variant > 0) {
+        if (p_virtual_variant) {
+            if (uvi->virtual_variant > 0) {
+                *p_virtual_variant = uvi->virtual_variant;
+            } else {
+                *p_virtual_variant = uvi->variant;
+            }
+        }
+        return uvi->variant;
+    }
+
+    if (prob_id <= 0 || prob_id > state->max_prob) {
+        return 0;
+    }
+    struct section_problem_data *prob = state->probs[prob_id];
+    if (!prob) {
+        return 0;
+    }
+    if (prob->variant_num <= 0) {
+        return 0;
+    }
+
+    if (!vcmd->prob_idxv) {
+        int max_prob_id = 0;
+        int var_prob_count = 0;
+        for (int i = 1; i <= state->max_prob; ++i) {
+            struct section_problem_data *prob = state->probs[i];
+            if (prob->variant_num > 0) {
+                max_prob_id = i;
+                ++var_prob_count;
+            }
+        }
+        if (max_prob_id > 0) {
+            vcmd->prob_idxa = max_prob_id + 1;
+            XCALLOC(vcmd->prob_idxv, vcmd->prob_idxa);
+            vcmd->var_prob_count = var_prob_count;
+            int j = 0;
+            for (int i = 1; i <= state->max_prob; ++i) {
+                struct section_problem_data *prob = state->probs[i];
+                if (prob->variant_num > 0) {
+                    vcmd->prob_idxv[i] = j++;
+                }
+            }
+        }
+    }
+
+    if (uvi->prob_variants) {
+        XCALLOC(uvi->prob_variants, vcmd->var_prob_count);
+    }
+
+    int prob_variant = uvi->prob_variants[vcmd->prob_idxv[prob_id]];
+    if (prob_variant > 0) {
+        return prob_variant;
+    }
+
+    prob = state->probs[prob_id];
+    prob_variant = random_range(1, prob->variant_num + 1);
+
+    if (mi->simple_fquery(md, "INSERT IGNORE INTO %svariantentries SET entry_id = %lld, prob_id = %d, variant = %d, last_update_time = NOW(6);",
+                          md->table_prefix,
+                          (long long) uvi->serial_id,
+                          prob_id,
+                          prob_variant) < 0)
+        goto fail;
+
+    cmd_f = open_memstream(&cmd_s, &cmd_z);
+    fprintf(cmd_f, "SELECT * FROM %svariantentries WHERE entry_id = %lld AND prob_id = %d;",
+            md->table_prefix,
+            (long long) uvi->serial_id,
+            prob_id);
+    fclose(cmd_f); cmd_f = NULL;
+    if (mi->query(md, cmd_s, cmd_z, VARIANTENTRY_INFO_ROW_WIDTH) < 0)
+        db_error_fail(md);
+    free(cmd_s); cmd_s = NULL; cmd_z = 0;
+
+    if (md->row_count == 1) {
+        if (mi->next_row(md) < 0) db_error_fail(md);
+        if (mi->parse_spec(md, -1, md->row, md->lengths, VARIANTENTRY_INFO_ROW_WIDTH, variantentry_info_spec, &veii) < 0) goto fail;
+        prob_variant = veii.variant;
+        uvi->prob_variants[vcmd->prob_idxv[prob_id]] = prob_variant;
+        return prob_variant;
+    }
+
+    return 0;
+
+fail:
+    if (cmd_f) fclose(cmd_f);
+    free(cmd_s);
+    return 0;
+}
+
+static int
+find_user_variant_func(
+        struct variant_cnts_plugin_data *data,
+        const struct serve_state *state,
+        int user_id,
+        int *p_virtual_variant)
+{
+    struct variant_cnts_mysql_data *vcmd = (struct variant_cnts_mysql_data *) data;
+    struct user_variant_info *uvi = get_user_variant_info_2(vcmd, user_id);
+    if (uvi->variant > 0) {
+        if (p_virtual_variant) {
+            if (uvi->virtual_variant > 0) {
+                *p_virtual_variant = uvi->virtual_variant;
+            } else {
+                *p_virtual_variant = uvi->variant;
+            }
+        }
+        return uvi->variant;
+    }
+
+    return 0;
 }
 
 static int
@@ -585,8 +745,8 @@ struct variant_plugin_iface plugin_variant_mysql =
     VARIANT_PLUGIN_IFACE_VERSION,
     open_func,
     close_func,
-    NULL, // find_variant
-    NULL, // find_user_variant
+    find_variant_func,
+    find_user_variant_func,
     NULL, // get_entry_count
     NULL, // get_keys
     NULL, // get_login
