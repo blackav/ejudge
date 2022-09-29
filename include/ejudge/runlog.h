@@ -504,6 +504,8 @@ run_get_user_run_header_id_range(
         int *p_low_user_id,
         int *p_high_user_id);
 
+struct user_run_header_info;
+
 struct user_run_header_info *
 run_try_user_run_header(
         runlog_state_t state,

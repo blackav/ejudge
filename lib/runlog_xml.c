@@ -31,6 +31,7 @@
 #include "ejudge/fileutl.h"
 #include "ejudge/base64.h"
 #include "ejudge/ej_uuid.h"
+#include "ejudge/runlog_state.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -71,6 +72,8 @@ enum
   RUNLOG_T_AUDIT,
   RUNLOG_T_XML_REPORT,
   RUNLOG_T_FULL_ARCHIVE,
+  RUNLOG_T_USERRUNHEADERS,
+  RUNLOG_T_USERRUNHEADER,
 
   RUNLOG_LAST_TAG,
 };
@@ -121,6 +124,7 @@ enum
   RUNLOG_A_STORE_FLAGS,
   RUNLOG_A_TOKEN_FLAGS,
   RUNLOG_A_TOKEN_COUNT,
+  RUNLOG_A_IS_VIRTUAL,
 
   RUNLOG_LAST_ATTR,
 };
@@ -141,6 +145,8 @@ static const char * const elem_map[] =
   [RUNLOG_T_AUDIT]        = "audit",
   [RUNLOG_T_XML_REPORT]   = "xml_report",
   [RUNLOG_T_FULL_ARCHIVE] = "full_archive",
+  [RUNLOG_T_USERRUNHEADERS]="userrunheaders",
+  [RUNLOG_T_USERRUNHEADER]= "userrunheader",
 
   [RUNLOG_LAST_TAG] = 0,
 };
@@ -191,6 +197,7 @@ static const char * const attr_map[] =
   [RUNLOG_A_STORE_FLAGS]      = "store_flags",
   [RUNLOG_A_TOKEN_FLAGS]      = "token_flags",
   [RUNLOG_A_TOKEN_COUNT]      = "token_count",
+  [RUNLOG_A_IS_VIRTUAL]       = "is_virtual",
 
   [RUNLOG_LAST_ATTR] = 0,
 };
@@ -894,6 +901,43 @@ unparse_runlog_xml(
     }
     fprintf(f, "  </%s>\n", elem_map[RUNLOG_T_LANGUAGES]);
   }
+  fprintf(f, "  <%s>\n", elem_map[RUNLOG_T_USERRUNHEADERS]);
+  {
+    int user_id_low = 0, user_id_high = 0;
+    run_get_user_run_header_id_range(state->runlog_state,
+                                     &user_id_low, &user_id_high);
+    for (int user_id = user_id_low; user_id < user_id_high; ++user_id) {
+      const struct user_run_header_info *urhi = run_try_user_run_header(state->runlog_state, user_id);
+      if (urhi) {
+        fprintf(f, "    <%s", elem_map[RUNLOG_T_USERRUNHEADER]);
+        if (source_mode) {
+          fprintf(f, " %s=\"%s\"", attr_map[RUNLOG_A_LOGIN],
+                  teamdb_get_login(state->teamdb_state, user_id));
+        } else {
+          fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_USER_ID], user_id);
+        }
+        if (urhi->is_virtual > 0) {
+          fprintf(f, " %s=\"%s\"", attr_map[RUNLOG_A_IS_VIRTUAL],
+                  (urhi->is_virtual > 0)?"yes":"no");
+        }
+        if (urhi->duration > 0) {
+          fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_DURATION],
+                  urhi->duration);
+
+        }
+        if (urhi->start_time > 0) {
+          fprintf(f, " %s=\"%s\"", attr_map[RUNLOG_A_START_TIME],
+                  xml_unparse_date(urhi->start_time));
+        }
+        if (urhi->stop_time > 0) {
+          fprintf(f, " %s=\"%s\"", attr_map[RUNLOG_A_STOP_TIME],
+                  xml_unparse_date(urhi->stop_time));
+        }
+        fprintf(f, " />\n");
+      }
+    }
+  }
+  fprintf(f, "  </%s>\n", elem_map[RUNLOG_T_USERRUNHEADERS]);
   fprintf(f, "  <%s>\n", elem_map[RUNLOG_T_RUNS]);
   for (i = begin; i < nelems; i++) {
     pp = &entries[i];
