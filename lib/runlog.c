@@ -3066,3 +3066,14 @@ run_set_run_is_checked(runlog_state_t state, int run_id, int is_checked)
     return state->iface->run_set_is_checked(state->cnts, run_id, is_checked);
   }
 }
+
+void
+run_get_user_run_header_id_range(
+        runlog_state_t state,
+        int *p_low_user_id,
+        int *p_high_user_id)
+{
+  struct user_run_header_state *urh = &state->urh;
+  if (p_low_user_id) *p_low_user_id = urh->low_user_id;
+  if (p_high_user_id) *p_high_user_id = urh->high_user_id;
+}

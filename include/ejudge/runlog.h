@@ -498,6 +498,17 @@ run_set_run_is_checked(
 void
 run_rebuild_user_run_index(runlog_state_t state, int user_id);
 
+void
+run_get_user_run_header_id_range(
+        runlog_state_t state,
+        int *p_low_user_id,
+        int *p_high_user_id);
+
+struct user_run_header_info *
+run_try_user_run_header(
+        runlog_state_t state,
+        int user_id);
+
 static inline _Bool __attribute__((always_inline)) run_is_normal_status(unsigned char status)
 {
   return status <= RUN_LOW_LAST && (status < RUN_PSEUDO_FIRST || status > RUN_PSEUDO_LAST);
