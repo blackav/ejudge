@@ -245,6 +245,7 @@ COMMON_CFILES=\
  lib/standings.c\
  lib/statusdb.c\
  lib/status_plugin_file.c\
+ lib/storage_plugin.c\
  lib/stringset.c\
  lib/super_html.c\
  lib/super_html_2.c\
@@ -635,6 +636,7 @@ HFILES=\
  ./include/ejudge/sock_op.h\
  ./include/ejudge/startstop.h\
  ./include/ejudge/statusdb.h\
+ ./include/ejudge/storage_plugin.h\
  ./include/ejudge/stringset.h\
  ./include/ejudge/super_clnt.h\
  ./include/ejudge/super_html.h\
