@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2016-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -34,6 +34,28 @@ void sha256b64buf(char *out, size_t out_size, const unsigned char *in, size_t in
     } else {
         char buf[48];
         int z = base64_encode(hash, SHA256_BLOCK_SIZE, buf);
+        buf[z] = 0;
+        snprintf(out, out_size, "%s", buf);
+    }
+}
+
+void sha256b64ubuf(
+        char *out,
+        size_t out_size,
+        const unsigned char *in,
+        size_t in_size)
+{
+    unsigned char hash[SHA256_BLOCK_SIZE];
+    SHA256_CTX cntx;
+    sha256_init(&cntx);
+    sha256_update(&cntx, in, in_size);
+    sha256_final(&cntx, hash);
+    if (out_size >= 48) {
+        int z = base64u_encode(hash, SHA256_BLOCK_SIZE, out);
+        out[z] = 0;
+    } else {
+        char buf[48];
+        int z = base64u_encode(hash, SHA256_BLOCK_SIZE, buf);
         buf[z] = 0;
         snprintf(out, out_size, "%s", buf);
     }
