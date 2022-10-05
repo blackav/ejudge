@@ -257,6 +257,8 @@ find_variant(
         int prob_id,
         int *p_virtual_variant)
 {
+  if (!state->variant_state) return 0;
+
   return state->variant_state->vt->find_variant(
     state->variant_state,
     state,
@@ -271,6 +273,8 @@ find_user_variant(
         int user_id,
         int *p_virtual_variant)
 {
+  if (!state->variant_state) return 0;
+
   return state->variant_state->vt->find_user_variant(
     state->variant_state,
     state,
