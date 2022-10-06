@@ -73,6 +73,8 @@ static const unsigned char * const form_row_attrs[]=
     //global->variant_map = 0;
     goto bottom_links;
   }
+%><h2>Variant editing is not supported</h2><%
+  goto bottom_links;
 %>
 
 <%
