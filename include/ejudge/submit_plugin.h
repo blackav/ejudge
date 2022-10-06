@@ -17,10 +17,34 @@
  */
 
 #include "ejudge/common_plugin.h"
+#include "ejudge/ej_uuid.h"
 
 #include <stdio.h>
 
 #define SUBMIT_PLUGIN_IFACE_VERSION 1
+
+struct submit_entry
+{
+    ej_uuid_t     uuid;         /* submit own uuid */
+    ej_uuid_t     prob_uuid;    /* problem uuid */
+    ej_uuid_t     judge_uuid;   /* judge uuid */
+    int64_t       serial_id;
+    int64_t       source_id;
+    int64_t       input_id;
+    int64_t       protocol_id;
+    int64_t       create_time_us;
+    int64_t       last_status_change_time_us;
+    ej_ip_t       ip;           /* ip address */
+    int           contest_id;
+    int           user_id;
+    int           prob_id;
+    int           variant;
+    int           lang_id;
+    unsigned char status;
+    unsigned char locale_id;
+    unsigned char ssl_flag;
+    unsigned char eoln_type;
+};
 
 // the plugin state
 struct submit_plugin_data

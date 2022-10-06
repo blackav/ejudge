@@ -226,6 +226,57 @@ close_func(
     return NULL;
 }
 
+struct submit_entry_internal
+{
+    int64_t serial_id;
+    ej_uuid_t uuid;
+    int contest_id;
+    int user_id;
+    int prob_id;
+    ej_uuid_t prob_uuid;
+    int variant;
+    int lang_id;
+    int status;
+    int ssl_flag;
+    int ip_version;
+    ej_ip_t ip;
+    int locale_id;
+    int eoln_type;
+    ej_uuid_t judge_uuid;
+    struct timeval create_time;
+    struct timeval last_status_change_time;
+    int64_t source_id;
+    int64_t input_id;
+    int64_t protocol_id;
+};
+
+enum { SUBMIT_ROW_WIDTH = 20 };
+#define SUBMIT_OFFSET(f) XOFFSET(struct submit_entry_internal, f)
+[[gnu::unused]]
+static const struct common_mysql_parse_spec submit_spec[SUBMIT_ROW_WIDTH] =
+{
+    { 0, 'l', "serial_id", SUBMIT_OFFSET(serial_id), 0 },
+    { 1, 'g', "uuid", SUBMIT_OFFSET(uuid), 0 },
+    { 0, 'd', "contest_id", SUBMIT_OFFSET(contest_id), 0 },
+    { 0, 'd', "user_id", SUBMIT_OFFSET(user_id), 0 },
+    { 0, 'd', "prob_id", SUBMIT_OFFSET(prob_id), 0 },
+    { 1, 'g', "prob_uuid", SUBMIT_OFFSET(prob_uuid), 0 },
+    { 1, 'd', "variant", SUBMIT_OFFSET(variant), 0 },
+    { 0, 'd', "lang_id", SUBMIT_OFFSET(lang_id), 0 },
+    { 0, 'd', "status", SUBMIT_OFFSET(status), 0 },
+    { 0, 'd', "ssl_flag", SUBMIT_OFFSET(ssl_flag), 0 },
+    { 0, 'd', "ip_version", SUBMIT_OFFSET(ip_version), 0 },
+    { 1, 'I', "ip", SUBMIT_OFFSET(ip), 0 },
+    { 0, 'd', "locale_id", SUBMIT_OFFSET(locale_id), 0 },
+    { 0, 'd', "eoln_type", SUBMIT_OFFSET(eoln_type), 0 },
+    { 1, 'g', "judge_uuid", SUBMIT_OFFSET(judge_uuid), 0 },
+    { 1, 'T', "create_time", SUBMIT_OFFSET(create_time), 0 },
+    { 1, 'T', "last_status_change_time", SUBMIT_OFFSET(last_status_change_time), 0 },
+    { 1, 'l', "source_id", SUBMIT_OFFSET(source_id), 0 },
+    { 1, 'l', "input_id", SUBMIT_OFFSET(input_id), 0 },
+    { 1, 'l', "protocol_id", SUBMIT_OFFSET(protocol_id), 0 },
+};
+
 struct submit_plugin_iface plugin_submit_mysql =
 {
     {
