@@ -247,6 +247,7 @@ COMMON_CFILES=\
  lib/status_plugin_file.c\
  lib/storage_plugin.c\
  lib/stringset.c\
+ lib/submit_plugin.c\
  lib/super_html.c\
  lib/super_html_2.c\
  lib/super_html_3.c\
@@ -638,6 +639,7 @@ HFILES=\
  ./include/ejudge/statusdb.h\
  ./include/ejudge/storage_plugin.h\
  ./include/ejudge/stringset.h\
+ ./include/ejudge/submit_plugin.h\
  ./include/ejudge/super_clnt.h\
  ./include/ejudge/super_html.h\
  ./include/ejudge/super_proto.h\
