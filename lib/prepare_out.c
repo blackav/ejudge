@@ -1585,6 +1585,10 @@ prepare_unparse_prob(
   if (prob->enable_text_form >= 0
       && ((prob->abstract && prob->enable_text_form) || !prob->abstract))
       unparse_bool(f, "enable_text_form", prob->enable_text_form);
+  if ((prob->abstract > 0 && prob->enable_user_input > 0)
+      || (!prob->abstract && prob->enable_user_input >= 0)) {
+    unparse_bool(f, "enable_user_input", prob->enable_user_input);
+  }
   if (prob->stand_ignore_score >= 0
       && ((prob->abstract && prob->stand_ignore_score) || !prob->abstract))
       unparse_bool(f, "stand_ignore_score", prob->stand_ignore_score);
@@ -2004,6 +2008,8 @@ prepare_unparse_actual_prob(
     unparse_bool(f, "hide_variant", prob->hide_variant);
   if (prob->enable_text_form > 0)
     unparse_bool(f, "enable_text_form", prob->enable_text_form);
+  if (prob->enable_user_input > 0)
+    unparse_bool(f, "enable_user_input", prob->enable_user_input);
   if (prob->stand_ignore_score > 0)
     unparse_bool(f, "stand_ignore_score", prob->stand_ignore_score);
   if (prob->stand_last_column > 0)

@@ -978,6 +978,8 @@ struct section_problem_data
   /** send a notification to judges upon submit */
   ejbyteflag_t notify_on_submit;
 
+  ejbyteflag_t enable_user_input;
+
   // padding to 8-byte boundary
   //unsigned char _pad1[1];
 
