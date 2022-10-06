@@ -400,6 +400,7 @@ enum
   CNTSPROB_enable_multi_header,
   CNTSPROB_use_lang_multi_header,
   CNTSPROB_notify_on_submit,
+  CNTSPROB_enable_user_input,
   CNTSPROB_examinator_num,
   CNTSPROB_real_time_limit,
   CNTSPROB_time_limit,
