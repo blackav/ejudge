@@ -96,7 +96,11 @@ static int update_user_flags(runlog_state_t state);
 static void build_indices(runlog_state_t state, int flags);
 static void extend_run_extras(runlog_state_t state);
 static void run_drop_uuid_hash(runlog_state_t state);
-static int find_free_uuid_hash_index(runlog_state_t state, const ej_uuid_t *puuid);
+static int
+find_free_uuid_hash_index(
+    runlog_state_t state,
+    int run_id,
+    const ej_uuid_t *puuid);
 
 runlog_state_t
 run_init(teamdb_state_t ts)
@@ -313,6 +317,7 @@ run_add_record(
   int i;
   struct run_entry re;
   uint64_t flags = 0;
+  int run_to_ignore = -1;
 
   state->uuid_hash_last_added_index = -1;
   state->uuid_hash_last_added_run_id = -1;
@@ -401,6 +406,7 @@ run_add_record(
       return -1;
     }
 
+    run_to_ignore = i;
     re.run_id = i;
     re.run_uuid = *puuid;
   } else {
@@ -431,7 +437,7 @@ run_add_record(
       err("run_add_record: UUID is NULL");
       return -1;
     }
-    uuid_hash_index = find_free_uuid_hash_index(state, &re.run_uuid);
+    uuid_hash_index = find_free_uuid_hash_index(state, run_to_ignore, &re.run_uuid);
     if (uuid_hash_index < 0) {
       err("run_add_record: failed to find UUID hash index");
       return -1;
@@ -2226,7 +2232,10 @@ static const int primes[] =
 };
 
 static void
-build_uuid_hash(runlog_state_t state, int incr);
+build_uuid_hash(
+        runlog_state_t state,
+        int run_to_ignore,
+        int incr);
 
 int
 run_find_run_id_by_uuid(runlog_state_t state, const ej_uuid_t *puuid)
@@ -2243,13 +2252,16 @@ run_find_run_id_by_uuid(runlog_state_t state, const ej_uuid_t *puuid)
 }
 
 static int
-find_free_uuid_hash_index(runlog_state_t state, const ej_uuid_t *puuid)
+find_free_uuid_hash_index(
+        runlog_state_t state,
+        int run_to_ignore,
+        const ej_uuid_t *puuid)
 {
   ej_uuid_t tmp_uuid;
 
   if (state->uuid_hash_state < 0) return -1;
   if (!state->uuid_hash_state || 2 * (state->uuid_hash_used + 1) >= state->uuid_hash_size) {
-    build_uuid_hash(state, 1);
+    build_uuid_hash(state, run_to_ignore, 1);
     if (state->uuid_hash_state < 0) return -1;
   }
 
@@ -2265,7 +2277,10 @@ find_free_uuid_hash_index(runlog_state_t state, const ej_uuid_t *puuid)
 }
 
 static void
-build_uuid_hash(runlog_state_t state, int incr)
+build_uuid_hash(
+        runlog_state_t state,
+        int run_to_ignore,
+        int incr)
 {
   state->uuid_hash_state = -1;
   state->uuid_hash_size = 0;
@@ -2274,6 +2289,7 @@ build_uuid_hash(runlog_state_t state, int incr)
 
   int run_count = 0;
   for (int run_id = state->run_f; run_id < state->run_u; ++run_id) {
+    if (run_id == run_to_ignore) continue;
     const struct run_entry *re = &state->runs[run_id - state->run_f];
     if (!run_is_normal_or_transient_status(re->status)) continue;
     if (!re->run_uuid.v[0] && !re->run_uuid.v[1] && !re->run_uuid.v[2] && !re->run_uuid.v[3]) {
@@ -2349,7 +2365,7 @@ build_indices(runlog_state_t state, int flags)
   }
   if (max_team_id <= 0) {
     if ((flags & RUN_LOG_UUID_INDEX)) {
-      build_uuid_hash(state, 0);
+      build_uuid_hash(state, -1, 0);
     }
     return;
   }
@@ -2390,7 +2406,7 @@ build_indices(runlog_state_t state, int flags)
   }
 
   if ((flags & RUN_LOG_UUID_INDEX)) {
-    build_uuid_hash(state, 0);
+    build_uuid_hash(state, -1, 0);
   }
 }
 
