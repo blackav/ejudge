@@ -764,7 +764,7 @@ add_wchunk_json(
     if (acs->verbose_mode) {
         info("to agent: %s", str);
     }
-    str = realloc(str, len + 2);
+    str = realloc(str, len + 3);
     str[len++] = '\n';
     str[len++] = '\n';
     str[len] = 0;
