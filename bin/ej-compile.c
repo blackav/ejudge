@@ -1534,6 +1534,10 @@ main(int argc, char *argv[])
     return 1;
   }
   if (parallelism > 1) parallel_mode = 1;
+  for (int hi = 0; host_names[hi]; ++hi) {
+    free(host_names[hi]);
+  }
+  free(host_names); host_names = NULL;
 
   int *pids = NULL;
   int pid_count;
