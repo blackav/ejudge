@@ -32,6 +32,7 @@
 </s:form>
 <%
     } /* 14 */ else if (start_time > 0 && (stop_time <= 0 || cs->upsolving_mode) && prob_id > 0) {
+      // ----(0) active problem code begins here
       prob = cs->probs[prob_id];
 
       if (!cnts->exam_mode) {
@@ -461,5 +462,6 @@
         // ----(2) table ends here
       }
 %><%
+      // ----(0) active problem code ends here
     }
 %>
