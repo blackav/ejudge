@@ -12428,7 +12428,7 @@ ns_unparse_statement(
         int variant,
         problem_xml_t px,
         const unsigned char *bb,
-        int is_submittable)
+        int is_submittable /* unused */)
 {
   struct problem_stmt *pp = 0;
   struct xml_tree *p, *q;
@@ -12584,14 +12584,6 @@ ns_unparse_statement(
   if (pp->notes) {
     fprintf(fout, "<h3>%s</h3>", _("Notes"));
     problem_xml_unparse_node(fout, pp->notes, vars, vals);
-  }
-
-  if (is_submittable) {
-    if (prob->type == PROB_TYPE_SELECT_ONE) {
-      fprintf(fout, "<h3>%s</h3>", _("Choose an answer"));
-    } else {
-      fprintf(fout, "<h3>%s</h3>", _("Submit a solution"));
-    }
   }
 
   html_armor_free(&ab);
