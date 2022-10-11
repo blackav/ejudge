@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-09-10 10:15+0300\n"
+"POT-Creation-Date: 2022-10-11 17:25+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Kazakh <uk@li.org>\n"
@@ -2412,9 +2412,6 @@ msgstr ""
 msgid "New user account is created"
 msgstr ""
 
-msgid "Next problem"
-msgstr ""
-
 msgid "Next soft deadline"
 msgstr ""
 
@@ -2761,9 +2758,6 @@ msgstr ""
 msgid ""
 "Press \"Stop exam\" button to finish the exam. Your answers will be checked "
 "shortly after that."
-msgstr ""
-
-msgid "Previous problem"
 msgstr ""
 
 msgid "Previous submissions of this problem"

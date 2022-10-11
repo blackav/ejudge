@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-09-10 10:15+0300\n"
+"POT-Creation-Date: 2022-10-11 17:25+0300\n"
 "PO-Revision-Date: 2022-01-12 13:17+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -2547,9 +2547,6 @@ msgstr "Новый статус: %s\n"
 msgid "New user account is created"
 msgstr "Новая учётная запись создана"
 
-msgid "Next problem"
-msgstr "Следующая задача"
-
 msgid "Next soft deadline"
 msgstr "След. мягкий срок"
 
@@ -2909,9 +2906,6 @@ msgid ""
 msgstr ""
 "Нажмите на кнопку \"Завершить экзамен\" чтобы завершить экзамен. После этого "
 "Ваши ответы будут проверены."
-
-msgid "Previous problem"
-msgstr "Предыдущая задача"
 
 msgid "Previous submissions of this problem"
 msgstr "Предыдущие решения этой задачи"
