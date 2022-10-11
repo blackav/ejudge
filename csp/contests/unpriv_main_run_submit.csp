@@ -267,16 +267,54 @@
         } else {
         }
       }
+%>
+<%
+  if (prob->enable_user_input > 0 && prob->type == PROB_TYPE_STANDARD) {
+%>
+<script>
+  $(function() {
+    $("#ej-submit-tabs").tabs();
+  });
+</script>
+<%
+  }
+  unsigned char *av_langs = alloca(cs->max_lang + 1);
+  memset(av_langs, 0, cs->max_lang + 1);
+  lang_count = 0;
+  int last_av_lang = 0;
+  int last_eoln_type = 0;
+%>
+<%
+%><p>&nbsp;</p><div id="ej-submit-tabs">
+<%
+  if (prob->enable_user_input > 0 && prob->type == PROB_TYPE_STANDARD) {
+%>
+    <ul>
+      <li><a href="#ej-main-submit-tab"><s:_>Submit for judgement</s:_></a></li>
+      <li><a href="#ej-user-submit-tab"><s:_>Run on server</s:_></a></li>
+    </ul>
+<%
+  }
+%>
+<%
 
+%><div id="ej-main-submit-tab">
+<%
+      // ----(3) submit form and runs list begins here
       if ((pinfo[prob_id].status & PROB_STATUS_SUBMITTABLE)) {
         // ----(1) submit form begins here
+        if (prob->type == PROB_TYPE_SELECT_ONE) {
+%><h3><s:_>Choose an answer</s:_></h3><%
+        } else {
+%><h3><s:_>Submit a solution</s:_></h3><%
+        }
+
         if (!skip_start_form) {
 %><s:form enctype="multipart/form-data"><%
         }
 %><s:hidden name="prob_id" value="prob_id" />
 <table class="b0">
 <%        if (!prob->type) {
-          int last_eoln_type = 0;
           for (i = 1; i <= cs->max_lang; i++) {
             if (!cs->langs[i] || cs->langs[i]->disabled
                 || (prob->enable_container <= 0 && cs->langs[i]->insecure && global->secure_run)) continue;
@@ -293,9 +331,12 @@
             }
             lang_count++;
             lang_id = i;
+            last_av_lang = i;
+            av_langs[i] = 1;
           }
 
           if (lang_count == 1) {
+            lang_id = last_av_lang;
 %><s:hidden name="lang_id" value="lang_id" />
 <tr><td class="b0"><s:_>Language</s:_>:</td><td class="b0"><s:v value="cs->langs[lang_id]->short_name" escape="false" /> - <s:v value="cs->langs[lang_id]->long_name" checkExpr="" /></td></tr>
 <%
@@ -303,19 +344,7 @@
             last_lang_id = get_last_language(cs, phr->user_id, &last_eoln_type);
 %><tr><td class="b0"><s:_>Language</s:_>:</td><td class="b0"><s:select name="lang_id"><option value=""></option><%
             for (i = 1; i <= cs->max_lang; i++) {
-              if (!cs->langs[i] || cs->langs[i]->disabled
-                  || (prob->enable_container <= 0 && cs->langs[i]->insecure && global->secure_run)) continue;
-              if ((lang_list = prob->enable_language)) {
-                for (j = 0; lang_list[j]; j++)
-                  if (!strcmp(lang_list[j], cs->langs[i]->short_name))
-                    break;
-                if (!lang_list[j]) continue;
-              } else if ((lang_list = prob->disable_language)) {
-                for (j = 0; lang_list[j]; j++)
-                  if (!strcmp(lang_list[j], cs->langs[i]->short_name))
-                    break;
-                if (lang_list[j]) continue;
-              }
+              if (!av_langs[i]) continue;
 %><s:option value="i" selectedExpr="last_lang_id == i"><s:v value="cs->langs[i]->short_name" escape="false" /> - <s:v value="cs->langs[i]->long_name" checkExpr="" /></s:option><%
             }
 %></s:select></td></tr>
@@ -462,6 +491,77 @@
         // ----(2) table ends here
       }
 %><%
+      // ----(3) submit form and runs list ends here
+%></div>
+<% // ej-main-submit-tab
+
+%>
+<%
+      if (prob->enable_user_input > 0 && prob->type == PROB_TYPE_STANDARD) {
+%>
+<div id="ej-user-submit-tab">
+<h3><s:_>Run program on server</s:_></h3>
+<s:form enctype="multipart/form-data">
+<s:hidden name="prob_id" value="prob_id" />
+<table class="b0">
+<%
+          if (lang_count == 1) {
+            lang_id = last_av_lang;
+%><s:hidden name="lang_id" value="lang_id" />
+<tr><td class="b0"><s:_>Language</s:_>:</td><td class="b0"><s:v value="cs->langs[lang_id]->short_name" escape="false" /> - <s:v value="cs->langs[lang_id]->long_name" checkExpr="" /></td></tr>
+<%
+          } else {
+%><tr><td class="b0"><s:_>Language</s:_>:</td><td class="b0"><s:select name="lang_id"><option value=""></option><%
+            for (i = 1; i <= cs->max_lang; i++) {
+              if (!av_langs[i]) continue;
+%><s:option value="i" selectedExpr="last_lang_id == i"><s:v value="cs->langs[i]->short_name" escape="false" /> - <s:v value="cs->langs[i]->long_name" checkExpr="" /></s:option><%
+            }
+%></s:select></td></tr>
+<%
+          }
+%>
+<%
+          if (cs->global->enable_eoln_select > 0) {
+%><tr><td class="b0"><s:_>Desired EOLN Type</s:_>:</td><td class="b0"><s:select name="eoln_type">
+<option value="0"></option>
+<s:option value="1" selectedExpr="last_eoln_type == 1">LF (Unix/MacOS)</s:option>
+<s:option value="2" selectedExpr="last_eoln_type == 2">CRLF (Windows/DOS)</s:option>
+</s:select></td></tr>
+<%
+          }
+%>
+<tr><td class="b0" colspan="2" align="center"><b><s:_>Source code</s:_></b></td></tr>
+<%
+          if (prob->enable_text_form > 0) {
+%>
+<tr><td class="b0" colspan="2" align="center">(<s:_>Attach a file or copy text below</s:_>)</td></tr>
+<tr><td colspan="2" class="b0"><textarea name="text_form" rows="20" cols="60"></textarea></td></tr>
+<%
+          }
+%><tr><td class="b0"><s:_>File</s:_></td><td class="b0"><input type="file" name="file"/></td></tr>
+
+<tr><td class="b0" colspan="2" align="center"><b><s:_>Input data</s:_></b></td></tr>
+<%
+          if (prob->enable_text_form > 0) {
+%>
+<tr><td class="b0" colspan="2" align="center">(<s:_>Attach a file or copy text below</s:_>)</td></tr>
+<tr><td colspan="2" class="b0"><textarea name="text_form_input" rows="20" cols="60"></textarea></td></tr>
+<%
+          }
+%><tr><td class="b0"><s:_>File</s:_></td><td class="b0"><input type="file" name="file_input"/></td></tr>
+
+<tr><td class="b0"><s:_>Send!</s:_></td><td class="b0"><s:submit ac="submit-run" /></td></tr>
+
+</table>
+</s:form>
+<%
+%>
+</div>
+<% // ej-user-submit-tab
+      }
+%></div>
+<% // ej-submit-tabs
+
       // ----(0) active problem code ends here
     }
 %>
