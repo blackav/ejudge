@@ -78,6 +78,9 @@ struct submit_plugin_iface
         int flags);
     struct submit_cnts_plugin_data * (*close)(
         struct submit_cnts_plugin_data *data);
+    int (*insert)(
+        struct submit_cnts_plugin_data *data,
+        struct submit_entry *pse);
 };
 
 struct submit_cnts_plugin_data *

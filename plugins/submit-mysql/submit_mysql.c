@@ -21,6 +21,7 @@
 #include "ejudge/contests.h"
 #include "ejudge/errlog.h"
 #include "ejudge/xalloc.h"
+#include "ejudge/xml_utils.h"
 
 struct submit_mysql_data
 {
@@ -277,6 +278,106 @@ static const struct common_mysql_parse_spec submit_spec[SUBMIT_ROW_WIDTH] =
     { 1, 'l', "protocol_id", SUBMIT_OFFSET(protocol_id), 0 },
 };
 
+static int
+insert_func(
+        struct submit_cnts_plugin_data *data,
+        struct submit_entry *pse)
+{
+    struct submit_cnts_mysql_data *scmd = (struct submit_cnts_mysql_data *) data;
+    struct submit_mysql_data *smd = scmd->smd;
+    struct common_mysql_iface *mi = smd->mi;
+    struct common_mysql_state *md = smd->md;
+    char *cmd_s = NULL;
+    size_t cmd_z = 0;
+    FILE *cmd_f = NULL;
+    unsigned char uuid_buf[64];
+
+    if (!ej_uuid_is_nonempty(pse->uuid)) {
+        ej_uuid_generate(&pse->uuid);
+    }
+    pse->contest_id = scmd->contest_id;
+
+    cmd_f = open_memstream(&cmd_s, &cmd_z);
+    fprintf(cmd_f, "INSERT INTO %ssubmits VALUES(DEFAULT",
+            md->table_prefix);
+    fprintf(cmd_f, ",'%s'", ej_uuid_unparse_r(uuid_buf, sizeof(uuid_buf),
+                                              &pse->uuid, NULL));
+    fprintf(cmd_f, ",%d", pse->contest_id);
+    fprintf(cmd_f, ",%d", pse->user_id);
+    fprintf(cmd_f, ",%d", pse->prob_id);
+    if (ej_uuid_is_nonempty(pse->prob_uuid)) {
+        fprintf(cmd_f, ",'%s'", ej_uuid_unparse_r(uuid_buf, sizeof(uuid_buf),
+                                                  &pse->prob_uuid, NULL));
+    } else {
+        fprintf(cmd_f, ",NULL");
+    }
+    if (pse->variant > 0) {
+        fprintf(cmd_f, ",%d", pse->variant);
+    } else {
+        fprintf(cmd_f, ",NULL");
+    }
+    fprintf(cmd_f, ",%d", pse->lang_id);
+    fprintf(cmd_f, ",%d", pse->status);
+    fprintf(cmd_f, ",%d", pse->ssl_flag);
+    if (pse->ip.ipv6_flag) {
+        fprintf(cmd_f, ",6");
+    } else {
+        fprintf(cmd_f, ",4");
+    }
+    fprintf(cmd_f, ",'%s'", xml_unparse_ipv6(&pse->ip));
+    fprintf(cmd_f, ",%d", pse->locale_id);
+    fprintf(cmd_f, ",%d", pse->eoln_type);
+    if (ej_uuid_is_nonempty(pse->judge_uuid)) {
+        fprintf(cmd_f, ",'%s'", ej_uuid_unparse_r(uuid_buf, sizeof(uuid_buf),
+                                                  &pse->judge_uuid, NULL));
+    } else {
+        fprintf(cmd_f, ",NULL");
+    }
+    fprintf(cmd_f, ",NOW(6)");
+    fprintf(cmd_f, ",NOW(6)");
+    if (pse->source_id > 0) {
+        fprintf(cmd_f, ",%lld", (long long) pse->source_id);
+    } else {
+        fprintf(cmd_f, ",NULL");
+    }
+    if (pse->input_id > 0) {
+        fprintf(cmd_f, ",%lld", (long long) pse->input_id);
+    } else {
+        fprintf(cmd_f, ",NULL");
+    }
+    if (pse->protocol_id > 0) {
+        fprintf(cmd_f, ",%lld", (long long) pse->protocol_id);
+    } else {
+        fprintf(cmd_f, ",NULL");
+    }
+    fclose(cmd_f); cmd_f = NULL;
+
+    if (mi->simple_query(md, cmd_s, cmd_z) < 0) goto fail;
+    free(cmd_s); cmd_s = NULL; cmd_z = 0;
+
+    if (mi->fquery(md, 1, "SELECT LAST_INSERT_ID();") < 0) {
+        goto fail;
+    }
+    if (md->row_count <= 0) {
+        goto fail;
+    }
+    if (mi->next_row(md) < 0) {
+        goto fail;
+    }
+    long long serial_id = 0;
+    if (mi->parse_int64(md, 0, &serial_id) < 0) {
+        goto fail;
+    }
+    pse->serial_id = serial_id;
+    mi->free_res(md);
+
+    return 0;
+fail:
+    if (cmd_f) fclose(cmd_f);
+    free(cmd_s);
+    return -1;
+}
+
 struct submit_plugin_iface plugin_submit_mysql =
 {
     {
@@ -294,4 +395,5 @@ struct submit_plugin_iface plugin_submit_mysql =
     SUBMIT_PLUGIN_IFACE_VERSION,
     open_func,
     close_func,
+    insert_func,
 };
