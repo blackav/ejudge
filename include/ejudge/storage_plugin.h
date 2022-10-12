@@ -33,6 +33,7 @@ struct storage_entry
     int64_t serial_id;
     size_t size;
     int is_temporary;
+    int mime_type;
     unsigned char random_key[64];
     unsigned char sha256[64];
     int64_t create_time_us;
@@ -48,6 +49,7 @@ struct storage_plugin_iface
     int (*insert)(
         struct storage_plugin_data *data,
         int is_temporary,
+        int mime_type,
         size_t content_size,
         const unsigned char *content,
         struct storage_entry *p_se);

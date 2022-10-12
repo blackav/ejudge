@@ -79,6 +79,7 @@ static const char create_query[] =
 "    serial_id BIGINT NOT NULL PRIMARY KEY AUTO_INCREMENT,\n"
 "    size INT UNSIGNED NOT NULL DEFAULT 0,\n"
 "    is_temporary TINYINT NOT NULL DEFAULT 0,\n"
+"    mime_type INT NOT NULL DEFAULT 0,\n"
 "    random_key CHAR(64) NOT NULL,\n"
 "    sha256 CHAR(64) NOT NULL,\n"
 "    create_time DATETIME(6) NOT NULL,\n"
@@ -163,6 +164,7 @@ struct storage_info_internal
     int64_t serial_id;
     int64_t size;
     int is_temporary;
+    int mime_type;
     unsigned char *random_key;
     unsigned char *sha256;
     struct timeval create_time;
@@ -170,13 +172,14 @@ struct storage_info_internal
     struct common_mysql_binary content;
 };
 
-enum { STORAGE_INFO_ROW_WIDTH = 8 };
+enum { STORAGE_INFO_ROW_WIDTH = 9 };
 #define STORAGE_INFO_OFFSET(f) XOFFSET(struct storage_info_internal, f)
 static const struct common_mysql_parse_spec storage_info_spec[STORAGE_INFO_ROW_WIDTH] =
 {
     { 0, 'l', "serial_id", STORAGE_INFO_OFFSET(serial_id), 0 },
     { 0, 'l', "size", STORAGE_INFO_OFFSET(size), 0 },
     { 0, 'd', "is_temporary", STORAGE_INFO_OFFSET(is_temporary), 0 },
+    { 0, 'd', "mime_type", STORAGE_INFO_OFFSET(mime_type), 0 },
     { 0, 's', "random_key", STORAGE_INFO_OFFSET(random_key), 0 },
     { 0, 's', "sha256", STORAGE_INFO_OFFSET(sha256), 0 },
     { 1, 'T', "create_time", STORAGE_INFO_OFFSET(create_time), 0 },
@@ -188,6 +191,7 @@ static int
 insert_func(
         struct storage_plugin_data *data,
         int is_temporary,
+        int mime_type,
         size_t content_size,
         const unsigned char *content,
         struct storage_entry *p_se)
@@ -226,6 +230,7 @@ insert_func(
             md->table_prefix);
     fprintf(cmd_f, ", %zu", content_size);
     fprintf(cmd_f, ", %d", !!is_temporary);
+    fprintf(cmd_f, ", %d", mime_type);
     fprintf(cmd_f, ", '");
     mi->escape_string(md, cmd_f, random_id_str);
     fprintf(cmd_f, "', '");
@@ -242,7 +247,7 @@ insert_func(
     free(cmd_s); cmd_s = NULL; cmd_z = 0;
 
     cmd_f = open_memstream(&cmd_s, &cmd_z);
-    fprintf(cmd_f, "SELECT serial_id, size, is_temporary, random_key, sha256, create_time, last_access_time, NULL FROM %sstorage WHERE sha256 = '",
+    fprintf(cmd_f, "SELECT serial_id, size, is_temporary, mime_type, random_key, sha256, create_time, last_access_time, NULL FROM %sstorage WHERE sha256 = '",
             md->table_prefix);
     mi->escape_string(md, cmd_f, sha256_str);
     fprintf(cmd_f, "';");
@@ -257,6 +262,7 @@ insert_func(
         p_se->serial_id = sii.serial_id;
         p_se->size = sii.size;
         p_se->is_temporary = sii.is_temporary;
+        p_se->mime_type = sii.mime_type;
         p_se->random_key[0] = 0;
         if (sii.random_key) {
             snprintf(p_se->random_key, sizeof(p_se->random_key), "%s",
@@ -313,6 +319,7 @@ get_by_serial_id_func(
         p_se->serial_id = sii.serial_id;
         p_se->size = sii.size;
         p_se->is_temporary = sii.is_temporary;
+        p_se->mime_type = sii.mime_type;
         p_se->random_key[0] = 0;
         if (sii.random_key) {
             snprintf(p_se->random_key, sizeof(p_se->random_key), "%s",
