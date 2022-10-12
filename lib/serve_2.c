@@ -1336,6 +1336,7 @@ serve_compile_request(
         int len,
         int contest_id,
         int run_id,
+        int64_t submit_id,
         int user_id,
         int lang_id,
         int variant,
@@ -4257,7 +4258,7 @@ serve_rejudge_run(
 
     if (prob->style_checker_cmd && prob->style_checker_cmd[0]) {
       r = serve_compile_request(config, state, 0 /* str*/, -1 /* len*/, cnts->id,
-                                run_id, re.user_id, 0 /* lang_id */, re.variant,
+                                run_id, 0 /* submit_id */, re.user_id, 0 /* lang_id */, re.variant,
                                 0 /* locale_id */, 1 /* output_only*/,
                                 mime_type_get_suffix(re.mime_type),
                                 NULL /* compiler_env */,
@@ -4308,7 +4309,7 @@ serve_rejudge_run(
     accepting_mode = 0;
   }
 
-  r = serve_compile_request(config, state, 0, -1, cnts->id, run_id, re.user_id,
+  r = serve_compile_request(config, state, 0, -1, cnts->id, run_id, 0 /* submit_id */, re.user_id,
                             lang->compile_id, re.variant, re.locale_id,
                             (prob->type > 0),
                             lang->src_sfx,

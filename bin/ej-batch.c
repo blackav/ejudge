@@ -571,6 +571,7 @@ process_submit(
 
   r = serve_compile_request(ejudge_config, state, text, size, global->contest_id,
                             sb.run_id /* run_id */,
+                            0 /* submit_id */,
                             1 /* user_id */,
                             lang->compile_id,
                             0 /* variant */,

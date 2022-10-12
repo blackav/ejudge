@@ -491,6 +491,7 @@ serve_compile_request(
         int len,
         int contest_id,
         int run_id,
+        int64_t submit_id,
         int user_id,
         int lang_id,
         int variant,
