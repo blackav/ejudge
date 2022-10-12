@@ -31,6 +31,7 @@ storage_plugin_get(
     if (!plugin_name) plugin_name = "mysql";
 
     if ((loaded_plugin = plugin_get("storage", plugin_name))) {
+        ((struct storage_plugin_iface *) loaded_plugin->iface)->open((struct storage_plugin_data *)loaded_plugin->data);
         return (struct storage_plugin_data *) loaded_plugin->data;
     }
 
@@ -57,5 +58,6 @@ storage_plugin_get(
         err("cannot load plugin %s, %s", plg->type, plg->name);
         return NULL;
     }
+    ((struct storage_plugin_iface *) loaded_plugin->iface)->open((struct storage_plugin_data *)loaded_plugin->data);
     return (struct storage_plugin_data *) loaded_plugin->data;
 }

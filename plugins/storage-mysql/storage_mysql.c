@@ -159,6 +159,19 @@ fail:
     return -1;
 }
 
+static int
+open_func(
+        struct storage_plugin_data *data)
+{
+    struct storage_mysql_data *smd = (struct storage_mysql_data *) data;
+
+    if (!smd->is_db_checked) {
+        check_database(smd);
+    }
+
+    return 0;
+}
+
 struct storage_info_internal
 {
     int64_t serial_id;
@@ -237,13 +250,14 @@ insert_func(
     mi->escape_string(md, cmd_f, sha256_str);
     fprintf(cmd_f, "', NOW(6), NOW(6), '");
     mi->escape_string(md, cmd_f, content);
-    fprintf(cmd_f, "' ON DUPLICATE KEY UPDATE last_access_time = NOW(6)");
+    fprintf(cmd_f, "') ON DUPLICATE KEY UPDATE last_access_time = NOW(6)");
     if (!is_temporary) {
         fprintf(cmd_f, ", is_temporary = 0");
     }
     fprintf(cmd_f, ";");
     fclose(cmd_f); cmd_f = NULL;
-    if (mi->simple_query_bin(md, cmd_s, cmd_z) < 0) goto fail;
+    if (mi->simple_query(md, cmd_s, cmd_z) < 0) goto fail;
+    //if (mi->simple_query_bin(md, cmd_s, cmd_z) < 0) goto fail;
     free(cmd_s); cmd_s = NULL; cmd_z = 0;
 
     cmd_f = open_memstream(&cmd_s, &cmd_z);
@@ -363,6 +377,7 @@ struct storage_plugin_iface plugin_storage_mysql =
         prepare_func,
     },
     STORAGE_PLUGIN_IFACE_VERSION,
+    open_func,
     insert_func,
     get_by_serial_id_func,
 };

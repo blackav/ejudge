@@ -350,6 +350,7 @@ insert_func(
     } else {
         fprintf(cmd_f, ",NULL");
     }
+    fprintf(cmd_f, ")");
     fclose(cmd_f); cmd_f = NULL;
 
     if (mi->simple_query(md, cmd_s, cmd_z) < 0) goto fail;

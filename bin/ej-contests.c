@@ -36,6 +36,7 @@
 #include "ejudge/base64.h"
 #include "ejudge/userlist_clnt.h"
 #include "ejudge/oauth.h"
+#include "ejudge/sha256utils.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/osdeps.h"
@@ -897,6 +898,7 @@ static void *forced_symbols[] __attribute__((unused,used)) =
   &userlist_clnt_api_key_request,
   &oauth_get_redirect_url,
   &userlist_clnt_edit_field,
+  &sha256b64ubuf,
 };
 
 int

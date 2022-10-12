@@ -46,6 +46,9 @@ struct storage_plugin_iface
     struct common_plugin_iface b;
     int storage_version;
 
+    int (*open)(
+        struct storage_plugin_data *data);
+
     int (*insert)(
         struct storage_plugin_data *data,
         int is_temporary,
