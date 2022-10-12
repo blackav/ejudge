@@ -2313,6 +2313,7 @@ build_uuid_hash(
   int hash_count = 0;
   int conflicts = 0;
   for (int run_id = state->run_f; run_id < state->run_u; ++run_id) {
+    if (run_id == run_to_ignore) continue;
     const struct run_entry *re = &state->runs[run_id - state->run_f];
     if (!run_is_normal_or_transient_status(re->status)) continue;
     int index = re->run_uuid.v[0] % hash_size;
