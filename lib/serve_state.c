@@ -40,6 +40,7 @@
 #include "ejudge/xuser_plugin.h"
 #include "ejudge/statusdb.h"
 #include "ejudge/variant_plugin.h"
+#include "ejudge/submit_plugin.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -125,6 +126,9 @@ serve_state_destroy(
   clar_destroy(state->clarlog_state);
   if (state->variant_state) {
     state->variant_state->vt->close(state->variant_state);
+  }
+  if (state->submit_state) {
+    state->submit_state->vt->close(state->submit_state);
   }
 
   watched_file_clear(&state->description);

@@ -219,6 +219,12 @@ struct serve_state
   /* variant internal state */
   struct variant_cnts_plugin_data *variant_state;
 
+  /* storage plugin state: storage plugin is a singleton, so not released */
+  struct storage_plugin_data *storage_state;
+
+  /* submit plugin state */
+  struct submit_cnts_plugin_data *submit_state;
+
   /* for master_html to store the filter expressions */
   int users_a;
   struct user_state_info **users;
