@@ -18,7 +18,7 @@
 
 #include "ejudge/integral.h"
 
-#define EJ_COMPILE_PACKET_VERSION 9
+#define EJ_COMPILE_PACKET_VERSION 10
 
 /* various private data structures and constants for compile packets */
 
@@ -34,6 +34,7 @@ struct compile_request_bin_packet
   rint32_t lang_id;             /* the language [1..max_lang] */
   rint32_t locale_id;           /* the locale identifier */
   rint32_t output_only;         /* the problem is output only */
+  int64_t submit_id;
   ej_size64_t max_vm_size;      /* the process VM limit */
   ej_size64_t max_stack_size;   /* the process stack size */
   ej_size64_t max_file_size;    /* the maximum file size */
@@ -81,6 +82,7 @@ struct compile_reply_bin_packet
   rint32_t contest_id;
   rint32_t run_id;
   rint32_t status;
+  int64_t submit_id;
   /* time when the compile request was queued by serve */
   rint32_t ts1;
   rint32_t ts1_us;

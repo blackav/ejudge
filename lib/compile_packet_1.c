@@ -67,6 +67,7 @@ compile_request_packet_read(
   FAIL_IF(pout->contest_id < 0 || pout->contest_id > EJ_MAX_CONTEST_ID);
 
   /* from now on the contest id is available */
+  pout->submit_id = cvt_bin_to_host_64(pin->submit_id);
   pout->run_id = cvt_bin_to_host_32(pin->run_id);
   FAIL_IF(pout->run_id < 0 || pout->run_id > EJ_MAX_RUN_ID);
   pout->lang_id = cvt_bin_to_host_32(pin->lang_id);

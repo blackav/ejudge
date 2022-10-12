@@ -62,6 +62,7 @@ compile_reply_packet_write(const struct compile_reply_packet *in_data,
   out_data->judge_id = cvt_host_to_bin_32(in_data->judge_id);
   out_data->contest_id = cvt_host_to_bin_32(in_data->contest_id);
   out_data->run_id = cvt_host_to_bin_32(in_data->run_id);
+  out_data->submit_id = cvt_host_to_bin_64(in_data->submit_id);
   out_data->status = cvt_host_to_bin_32(in_data->status);
   out_data->ts1 = cvt_host_to_bin_32(in_data->ts1);
   out_data->ts1_us = cvt_host_to_bin_32(in_data->ts1_us);

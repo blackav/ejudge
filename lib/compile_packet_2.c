@@ -201,6 +201,7 @@ compile_request_packet_write(
   out_data->version = cvt_host_to_bin_32(EJ_COMPILE_PACKET_VERSION);
   out_data->judge_id = cvt_host_to_bin_32(in_data->judge_id);
   out_data->contest_id = cvt_host_to_bin_32(in_data->contest_id);
+  out_data->submit_id = cvt_host_to_bin_64(in_data->submit_id);
   out_data->run_id = cvt_host_to_bin_32(in_data->run_id);
   out_data->lang_id = cvt_host_to_bin_32(in_data->lang_id);
   out_data->locale_id = cvt_host_to_bin_32(in_data->locale_id);

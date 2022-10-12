@@ -58,6 +58,7 @@ compile_reply_packet_read(
   FAIL_IF(pout->contest_id <= 0 || pout->contest_id > EJ_MAX_CONTEST_ID);
   pout->run_id = cvt_bin_to_host_32(pin->run_id);
   FAIL_IF(pout->run_id < 0 || pout->run_id > EJ_MAX_RUN_ID);
+  pout->submit_id = cvt_bin_to_host_64(pin->submit_id);
   // OK, COMPILE_ERR, CHECK_FAILED are allowed
   pout->status = cvt_bin_to_host_32(pin->status);
   FAIL_IF(pout->status != RUN_OK && pout->status != RUN_COMPILE_ERR && pout->status != RUN_CHECK_FAILED && pout->status != RUN_STYLE_ERR);
