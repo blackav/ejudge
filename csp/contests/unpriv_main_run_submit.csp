@@ -501,8 +501,9 @@
 %>
 <div id="ej-user-submit-tab">
 <h3><s:_>Run program on server</s:_></h3>
-<s:form enctype="multipart/form-data">
+<s:form enctype="multipart/form-data" id="ej-run-input-form">
 <s:hidden name="prob_id" value="prob_id" />
+<s:hidden name="action" ac="submit-run-input" />
 <table class="b0">
 <%
           if (lang_count == 1) {
@@ -550,10 +551,36 @@
           }
 %><tr><td class="b0"><s:_>File</s:_></td><td class="b0"><input type="file" name="file_input"/></td></tr>
 
-<tr><td class="b0"><s:_>Send!</s:_></td><td class="b0"><s:submit ac="submit-run" /></td></tr>
+<tr><td class="b0"><s:_>Send!</s:_></td><td class="b0"><s:submit ac="submit-run-input" /></td></tr>
 
 </table>
 </s:form>
+
+<script>
+  $(function() {
+    $("#ej-run-input-form").submit(function(e) {
+      e.preventDefault();
+      var data = new FormData(this);
+      var action = $("#ej-run-input-form").attr("action");
+
+      console.log(data);
+      console.log(action);
+
+      $.ajax({
+        method: "POST",
+        contentType: false,
+        cache: false,
+        data: data,
+        processData: false,
+        success: function(data) {
+        },
+        error: function(xhr, options, err) {
+        }
+      });
+    });
+  });
+</script>
+
 <%
 %>
 </div>
