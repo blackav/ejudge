@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-10-11 17:25+0300\n"
+"POT-Creation-Date: 2022-10-11 23:30+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Ukrainian <uk@li.org>\n"
@@ -490,6 +490,9 @@ msgid "Assign random cyphers"
 msgstr ""
 
 msgid "Assigned cyphers"
+msgstr ""
+
+msgid "Attach a file or copy text below"
 msgstr ""
 
 msgid "Attempt to submit a binary file"
@@ -1802,6 +1805,9 @@ msgid "Information is not available."
 msgstr ""
 
 msgid "Input"
+msgstr ""
+
+msgid "Input data"
 msgstr ""
 
 msgid "Input file name"
@@ -3262,7 +3268,13 @@ msgstr ""
 msgid "Run log update failed"
 msgstr ""
 
+msgid "Run on server"
+msgstr ""
+
 msgid "Run penalty"
+msgstr ""
+
+msgid "Run program on server"
 msgstr ""
 
 msgid "Run selection"
@@ -3696,6 +3708,9 @@ msgstr ""
 msgid "Submit clar"
 msgstr ""
 
+msgid "Submit for judgement"
+msgstr ""
+
 msgid "Submit image"
 msgstr ""
 
@@ -4046,8 +4061,8 @@ msgid "Try again this operation later"
 msgstr ""
 
 msgid ""
-"Type the login and the password in to the form above and press the \"Log in"
-"\" button to activate the account."
+"Type the login and the password in to the form above and press the \"Log "
+"in\" button to activate the account."
 msgstr ""
 
 #, c-format
