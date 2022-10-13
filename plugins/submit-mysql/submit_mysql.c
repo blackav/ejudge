@@ -92,6 +92,8 @@ static const char create_query[] =
 "    source_id BIGINT DEFAULT NULL,\n"
 "    input_id BIGINT DEFAULT NULL,\n"
 "    protocol_id BIGINT DEFAULT NULL,\n"
+"    source_size BIGINT NOT NULL DEFAULT 0,\n"
+"    input_size BIGINT NOT NULL DEFAULT 0,\n"
 "    UNIQUE KEY s_uuid_idx(uuid),\n"
 "    KEY s_contest_id_idx(contest_id),\n"
 "    KEY s_user_id_idx(user_id),\n"
@@ -249,9 +251,11 @@ struct submit_entry_internal
     int64_t source_id;
     int64_t input_id;
     int64_t protocol_id;
+    int64_t source_size;
+    int64_t input_size;
 };
 
-enum { SUBMIT_ROW_WIDTH = 20 };
+enum { SUBMIT_ROW_WIDTH = 22 };
 #define SUBMIT_OFFSET(f) XOFFSET(struct submit_entry_internal, f)
 [[gnu::unused]]
 static const struct common_mysql_parse_spec submit_spec[SUBMIT_ROW_WIDTH] =
@@ -276,6 +280,8 @@ static const struct common_mysql_parse_spec submit_spec[SUBMIT_ROW_WIDTH] =
     { 1, 'l', "source_id", SUBMIT_OFFSET(source_id), 0 },
     { 1, 'l', "input_id", SUBMIT_OFFSET(input_id), 0 },
     { 1, 'l', "protocol_id", SUBMIT_OFFSET(protocol_id), 0 },
+    { 1, 'l', "source_size", SUBMIT_OFFSET(source_size), 0 },
+    { 1, 'l', "input_size", SUBMIT_OFFSET(input_size), 0 },
 };
 
 static int
@@ -350,6 +356,8 @@ insert_func(
     } else {
         fprintf(cmd_f, ",NULL");
     }
+    fprintf(cmd_f, ",%lld", (long long) pse->source_size);
+    fprintf(cmd_f, ",%lld", (long long) pse->input_size);
     fprintf(cmd_f, ")");
     fclose(cmd_f); cmd_f = NULL;
 

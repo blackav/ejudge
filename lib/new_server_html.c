@@ -11843,6 +11843,8 @@ ns_submit_run_input(
   se.locale_id = phr->locale_id;
   se.ssl_flag = phr->ssl_flag;
   se.eoln_type = eoln_type;
+  se.source_size = run_size;
+  se.input_size = inp_size;
 
   if ((cs->submit_state->vt->insert(cs->submit_state, &se)) < 0) {
     err_num = NEW_SRV_ERR_RUNLOG_UPDATE_FAILED;

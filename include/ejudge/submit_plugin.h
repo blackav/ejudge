@@ -32,6 +32,8 @@ struct submit_entry
     int64_t       source_id;
     int64_t       input_id;
     int64_t       protocol_id;
+    int64_t       source_size;
+    int64_t       input_size;
     int64_t       create_time_us;
     int64_t       last_status_change_time_us;
     ej_ip_t       ip;           /* ip address */
