@@ -23,6 +23,8 @@
 #include "ejudge/xalloc.h"
 #include "ejudge/xml_utils.h"
 
+#include <string.h>
+
 struct submit_mysql_data
 {
     struct submit_plugin_data b;
@@ -257,7 +259,6 @@ struct submit_entry_internal
 
 enum { SUBMIT_ROW_WIDTH = 22 };
 #define SUBMIT_OFFSET(f) XOFFSET(struct submit_entry_internal, f)
-[[gnu::unused]]
 static const struct common_mysql_parse_spec submit_spec[SUBMIT_ROW_WIDTH] =
 {
     { 0, 'l', "serial_id", SUBMIT_OFFSET(serial_id), 0 },
@@ -387,7 +388,6 @@ fail:
     return -1;
 }
 
-
 static int
 change_status_func(
         struct submit_cnts_plugin_data *data,
@@ -441,6 +441,72 @@ fail:
     return -1;
 }
 
+static void
+copy_to_submit_entry(
+        struct submit_entry *pse,
+        struct submit_entry_internal *psei)
+{
+    ej_uuid_copy(&pse->uuid, &psei->uuid);
+    ej_uuid_copy(&pse->prob_uuid, &psei->prob_uuid);
+    ej_uuid_copy(&pse->judge_uuid, &psei->judge_uuid);
+    pse->serial_id = psei->serial_id;
+    pse->source_id = psei->source_id;
+    pse->input_id = psei->input_id;
+    pse->protocol_id = psei->protocol_id;
+    pse->source_size = psei->source_size;
+    pse->input_size = psei->input_size;
+    pse->create_time_us = psei->create_time.tv_sec * 1000000LL + psei->create_time.tv_usec;
+    pse->last_status_change_time_us = psei->last_status_change_time.tv_sec * 1000000LL + psei->last_status_change_time.tv_usec;
+    pse->ip = psei->ip;
+    pse->contest_id = psei->contest_id;
+    pse->user_id = psei->user_id;
+    pse->prob_id = psei->prob_id;
+    pse->variant = psei->variant;
+    pse->lang_id = psei->lang_id;
+    pse->status = psei->status;
+    pse->locale_id = psei->locale_id;
+    pse->ssl_flag = psei->ssl_flag;
+    pse->eoln_type = psei->eoln_type;
+}
+
+static int
+fetch_func(
+        struct submit_cnts_plugin_data *data,
+        int64_t submit_id,
+        struct submit_entry *pse)
+{
+    struct submit_cnts_mysql_data *scmd = (struct submit_cnts_mysql_data *) data;
+    struct submit_mysql_data *smd = scmd->smd;
+    struct common_mysql_iface *mi = smd->mi;
+    struct common_mysql_state *md = smd->md;
+    char *cmd_s = NULL;
+    size_t cmd_z = 0;
+    FILE *cmd_f = NULL;
+    struct submit_entry_internal sei = {};
+
+    cmd_f = open_memstream(&cmd_s, &cmd_z);
+    fprintf(cmd_f, "SELECT * FROM `%ssubmits` WHERE serial_id = %lld ;",
+            md->table_prefix, (long long) submit_id);
+    fclose(cmd_f); cmd_f = NULL;
+    if (mi->query(md, cmd_s, cmd_z, SUBMIT_ROW_WIDTH) < 0)
+        db_error_fail(md);
+    free(cmd_s); cmd_s = NULL; cmd_z = 0;
+
+    if (md->row_count == 1) {
+        if (mi->next_row(md) < 0) db_error_fail(md);
+        if (mi->parse_spec(md, -1, md->row, md->lengths, SUBMIT_ROW_WIDTH, submit_spec, &sei) < 0) goto fail;
+        copy_to_submit_entry(pse, &sei);
+        return 1;
+    }
+
+    return 0;
+
+fail:
+    if (cmd_f) fclose(cmd_f);
+    free(cmd_s);
+    return -1;
+}
+
 struct submit_plugin_iface plugin_submit_mysql =
 {
     {
@@ -460,4 +526,5 @@ struct submit_plugin_iface plugin_submit_mysql =
     close_func,
     insert_func,
     change_status_func,
+    fetch_func,
 };

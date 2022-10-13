@@ -43,9 +43,9 @@ struct submit_entry
     int           variant;
     int           lang_id;
     unsigned char status;
-    unsigned char locale_id;
+    signed char   locale_id;
     unsigned char ssl_flag;
-    unsigned char eoln_type;
+    signed char   eoln_type;
 };
 
 // the plugin state
@@ -97,6 +97,10 @@ struct submit_plugin_iface
         int status,
         int64_t protocol_id,
         ej_uuid_t *p_judge_uuid);
+    int (*fetch)(
+        struct submit_cnts_plugin_data *data,
+        int64_t submit_id,
+        struct submit_entry *pse);
 };
 
 struct submit_cnts_plugin_data *
