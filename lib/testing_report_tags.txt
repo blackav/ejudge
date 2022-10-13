@@ -87,3 +87,4 @@ max_rss_available
 separate_user_score
 max_rss
 submit_id
+judge_uuid

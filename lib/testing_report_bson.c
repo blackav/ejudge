@@ -22,6 +22,7 @@
 #include "ejudge/xalloc.h"
 #include "ejudge/errlog.h"
 #include "ejudge/osdeps.h"
+#include "ejudge/ej_uuid.h"
 
 #include <stdio.h>
 #include <sys/mman.h>
@@ -624,6 +625,10 @@ parse_testing_report_bson(bson_iter_t *bi, testing_report_xml_t r)
             if (ej_bson_parse_uuid_new(bi, key, &r->uuid) < 0)
                 return -1;
             break;
+        case Tag_judge_uuid:
+            if (ej_bson_parse_uuid_new(bi, key, &r->judge_uuid) < 0)
+                return -1;
+            break;
         case Tag_tests:
             if (bson_iter_type(bi) == BSON_TYPE_ARRAY && bson_iter_recurse(bi, &tests_iter)) {
                 has_tests = 1;
@@ -918,6 +923,9 @@ do_unparse(
     }
     if (r->uuid.v[0] || r->uuid.v[1] || r->uuid.v[2] || r->uuid.v[3]) {
         ej_bson_append_uuid_new(b, tag_table[Tag_uuid], &r->uuid);
+    }
+    if (ej_uuid_is_nonempty(r->judge_uuid)) {
+        ej_bson_append_uuid_new(b, tag_table[Tag_judge_uuid], &r->judge_uuid);
     }
     if (r->comment && r->comment[0]) {
         bson_append_utf8(b, tag_table[Tag_comment], -1, r->comment, -1);

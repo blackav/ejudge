@@ -89,7 +89,8 @@ enum
     Tag_max_rss_available,
     Tag_separate_user_score,
     Tag_max_rss,
-    Tag_submit_id
+    Tag_submit_id,
+    Tag_judge_uuid
 };
 static __attribute__((unused)) const char * const tag_table[] =
 {
@@ -183,6 +184,7 @@ static __attribute__((unused)) const char * const tag_table[] =
     "separate_user_score",
     "max_rss",
     "submit_id",
+    "judge_uuid",
 };
 static __attribute__((unused)) int
 match(const char *s)
@@ -329,8 +331,14 @@ match(const char *s)
         } else {
             return 0;
         }
-    } else if (s[0] == 'j' && s[1] == 'u' && s[2] == 'd' && s[3] == 'g' && s[4] == 'e' && s[5] == '_' && s[6] == 'i' && s[7] == 'd' && !s[8]) {
-        return Tag_judge_id;
+    } else if (s[0] == 'j'&& s[1] == 'u'&& s[2] == 'd'&& s[3] == 'g'&& s[4] == 'e'&& s[5] == '_') {
+        if (s[6] == 'i' && s[7] == 'd' && !s[8]) {
+            return Tag_judge_id;
+        } else if (s[6] == 'u' && s[7] == 'u' && s[8] == 'i' && s[9] == 'd' && !s[10]) {
+            return Tag_judge_uuid;
+        } else {
+            return 0;
+        }
     } else if (s[0] == 'm') {
         if (s[1] == 'a') {
             if (s[2] == 'r' && s[3] == 'k' && s[4] == 'e' && s[5] == 'd' && s[6] == '_' && s[7] == 'f' && s[8] == 'l' && s[9] == 'a' && s[10] == 'g' && !s[11]) {
