@@ -11831,7 +11831,6 @@ ns_submit_run_input(
   if (prob->uuid && prob->uuid[0]) {
     ej_uuid_parse(prob->uuid, &se.prob_uuid);
   }
-  ej_uuid_generate(&se.judge_uuid);
   se.source_id = src_se.serial_id;
   se.input_id = inp_se.serial_id;
   se.ip = phr->ip;
@@ -11851,36 +11850,54 @@ ns_submit_run_input(
     goto done;
   }
 
+  ej_uuid_generate(&se.judge_uuid);
+  r = serve_compile_request(phr->config,
+                            cs,
+                            run_text,
+                            run_size,
+                            cnts->id,
+                            0  /* run_id */,
+                            se.serial_id,
+                            phr->user_id,
+                            lang->compile_id,
+                            variant,
+                            phr->locale_id,
+                            0 /* output_only */,
+                            lang->src_sfx,
+                            lang->compiler_env,
+                            0 /* style_check_only */,
+                            prob->style_checker_cmd,
+                            prob->style_checker_env,
+                            -1 /* accepting_mode */,
+                            0 /* priority_adjustment */,
+                            1 /* notify_flag */,
+                            prob,
+                            lang,
+                            0 /* no_db_flag */,
+                            NULL /* run_uuid */,
+                            0 /* store_flags */,
+                            0 /* rejudge_flag */,
+                            NULL);
+  if (r < 0) {
+    err_num = NEW_SRV_ERR_RUNLOG_UPDATE_FAILED;
+    goto done;
+  }
+
+
+  if ((cs->submit_state->vt->change_status(cs->submit_state,
+                                           se.serial_id,
+                                           SUBMIT_FIELD_STATUS | SUBMIT_FIELD_JUDGE_UUID,
+                                           RUN_COMPILING,
+                                           0,
+                                           &se.judge_uuid)) < 0) {
+    err_num = NEW_SRV_ERR_RUNLOG_UPDATE_FAILED;
+    goto done;
+  }
+
   cJSON *jrr = cJSON_CreateObject();
   cJSON_AddNumberToObject(jrr, "serial_id", se.serial_id);
   cJSON_AddItemToObject(jr, "result", jrr);
   ok = 1;
-
-  goto done;
-
-  //////////////////////////
-#if 0
-    r = serve_compile_request(phr->config, cs, run_text, run_size, cnts->id,
-                              run_id, ??? /* submit_id */, user_id,
-                              lang->compile_id, variant,
-                              phr->locale_id, 0 /* output_only */,
-                              lang->src_sfx,
-                              lang->compiler_env,
-                              0 /* style_check_only */,
-                              prob->style_checker_cmd,
-                              prob->style_checker_env,
-                              -1 /* accepting_mode */, 0 /* priority_adjustment */,
-                              1 /* notify_flag */, prob, lang,
-                              0 /* no_db_flag */, &run_uuid, store_flags,
-                              0 /* rejudge_flag */, user);
-    if (r < 0) {
-      serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
-      goto cleanup;
-    }
-    goto done;
-  }
-#endif
-  //////////////////////////
 
 done:;
   phr->json_reply = 1;
