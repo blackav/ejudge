@@ -735,10 +735,13 @@ parse_spec_func(
       break;
 
     case 'l': {
-      errno = 0;
-      eptr = NULL;
-      long long llv = strtoll(row[i], &eptr, 10);
-      if (errno || *eptr) goto invalid_format;
+      long long llv = 0;
+      if (row[i]) {
+        errno = 0;
+        eptr = NULL;
+        llv = strtoll(row[i], &eptr, 10);
+        if (errno || *eptr) goto invalid_format;
+      }
       long long *p_llv = XPDEREF(long long, data, specs[i].offset);
       *p_llv = llv;
       break;
