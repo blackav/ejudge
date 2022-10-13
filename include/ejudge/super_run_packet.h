@@ -35,6 +35,7 @@ struct super_run_in_global_packet
   int contest_id;
   int judge_id;
   int run_id;
+  ej_size64_t submit_id;
   unsigned char *reply_spool_dir;
   unsigned char *reply_report_dir;
   unsigned char *reply_full_archive_dir;
@@ -185,6 +186,8 @@ struct super_run_in_problem_packet
   ejintbool_t stop_on_first_fail;
   ejintbool_t enable_control_socket;
   unsigned char *container_options;
+  ejintbool_t enable_user_input;
+  unsigned char *user_input_file;
   int test_count;
 
   int type_val META_ATTRIB((meta_hidden));
