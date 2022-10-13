@@ -68,6 +68,7 @@ run_reply_packet_write(
   out_data->user_status = cvt_host_to_bin_32(in_data->user_status);
   out_data->user_tests_passed = cvt_host_to_bin_32(in_data->user_tests_passed);
   out_data->user_score = cvt_host_to_bin_32(in_data->user_score);
+  out_data->submit_id = cvt_host_to_bin_64(in_data->submit_id);
 
   if (in_data->notify_flag) flags |= FLAGS_NOTIFY;
   if (in_data->marked_flag) flags |= FLAGS_MARKED;

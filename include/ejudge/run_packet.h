@@ -19,11 +19,13 @@
 #include "ejudge/ej_types.h"
 
 #include <stdlib.h>
+#include <stdint.h>
 
 struct run_reply_packet
 {
   int judge_id;
   int contest_id;
+  int64_t submit_id;
   int run_id;
   int status;
   int failed_test;

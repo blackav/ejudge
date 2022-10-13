@@ -66,6 +66,7 @@ run_reply_packet_read(
   FAIL_IF(pout->tests_passed < -1 || pout->tests_passed > EJ_MAX_TEST_NUM);
   pout->score = cvt_bin_to_host_32(pin->score);
   FAIL_IF(pout->score < -1 || pout->score > EJ_MAX_SCORE);
+  pout->submit_id = cvt_bin_to_host_64(pin->submit_id);
 
   pout->user_status = cvt_bin_to_host_32(pin->user_status);
   FAIL_IF(!run_is_normal_status(pout->user_status) && pout->user_status != -1);

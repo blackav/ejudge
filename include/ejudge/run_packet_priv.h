@@ -48,6 +48,7 @@ struct run_reply_bin_packet
   rint32_t  version;
   rint32_t  judge_id;
   rint32_t  contest_id;
+  int64_t   submit_id;
   rint32_t  run_id;
   rint32_t  status;
   rint32_t  failed_test;
@@ -73,7 +74,7 @@ struct run_reply_bin_packet
   rint32_t  ts7_us;
   ej_uuid_t uuid;
   ej_uuid_t judge_uuid;
-  unsigned char pad[8];        /* padding to 128 bytes */
+  unsigned char pad[0];        /* padding to 128 bytes */
 };
 
 #endif /* __RUN_PACKET_PRIV_H__ */
