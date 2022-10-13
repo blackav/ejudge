@@ -11889,7 +11889,7 @@ ns_submit_run_input(
                             1 /* notify_flag */,
                             prob,
                             lang,
-                            0 /* no_db_flag */,
+                            1 /* no_db_flag */,
                             NULL /* run_uuid */,
                             &se.judge_uuid,
                             0 /* store_flags */,

@@ -421,7 +421,7 @@ change_status_func(
     }
     if ((mask & SUBMIT_FIELD_JUDGE_UUID)) {
         if (p_judge_uuid && ej_uuid_is_nonempty(*p_judge_uuid)) {
-            fprintf(cmd_f, ", '%s'",
+            fprintf(cmd_f, ", judge_uuid = '%s'",
                     ej_uuid_unparse_r(uuid_buf, sizeof(uuid_buf),
                                       p_judge_uuid, NULL));
         } else {

@@ -1514,8 +1514,8 @@ serve_compile_request(
   cp.max_vm_size = ~(ej_size64_t) 0;
   cp.max_stack_size = ~(ej_size64_t) 0;
   cp.max_file_size = ~(ej_size64_t) 0;
+  cp.use_uuid = 1;
   if (puuid && (puuid->v[0] || puuid->v[1] || puuid->v[2] || puuid->v[3])) {
-    cp.use_uuid = 1;
     cp.uuid = *puuid;
   }
   if (lang) {
