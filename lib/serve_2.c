@@ -51,6 +51,8 @@
 #include "ejudge/random.h"
 #include "ejudge/statusdb.h"
 #include "ejudge/test_count_cache.h"
+#include "ejudge/submit_plugin.h"
+#include "ejudge/storage_plugin.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -2919,6 +2921,177 @@ serve_notify_user_run_status_change(
   xfree(msg_t); msg_t = 0; msg_z = 0;
 }
 
+static void
+read_compile_packet_input(
+        struct contest_extra *extra,
+        const struct ejudge_cfg *config,
+        serve_state_t cs,
+        const struct contest_desc *cnts,
+        const unsigned char *compile_status_dir,
+        const unsigned char *compile_report_dir,
+        const unsigned char *pname,
+        const struct compile_reply_packet *comp_pkt)
+{
+  struct submit_entry se = {};
+  int r;
+  char *txt_text = NULL;
+  size_t txt_size = 0;
+  testing_report_xml_t tr = NULL;
+  int mime_type = 0;
+  struct storage_entry rep_se = {};
+
+  info("read_compile_packet_input: submit_id %lld", (long long) comp_pkt->submit_id);
+
+  if (ej_uuid_is_empty(comp_pkt->judge_uuid)) {
+    err("read_compile_packet_input: judge_uuid is empty");
+    goto done;
+  }
+
+  if (!cs->storage_state) {
+    cs->storage_state = storage_plugin_get(extra, cnts, ejudge_config, NULL);
+    if (!cs->storage_state) {
+      err("read_compile_packet_input: storage plugin not available");
+      goto done;
+    }
+  }
+  if (!cs->submit_state) {
+    cs->submit_state = submit_plugin_open(ejudge_config, cnts, cs, NULL, 0);
+    if (!cs->submit_state) {
+      err("read_compile_packet_input: submit plugin not available");
+      goto done;
+    }
+  }
+
+  r = cs->submit_state->vt->fetch(cs->submit_state, comp_pkt->submit_id, &se);
+  if (r < 0) {
+    err("read_compile_packet_input: fetch failed");
+    goto done;
+  }
+  if (!r) {
+    err("read_compile_packet_input: submit %lld not found", (long long) comp_pkt->submit_id);
+    goto done;
+  }
+
+  if (se.contest_id != cnts->id) {
+    err("read_compile_packet_input: contest_id mismatch: read %d", se.contest_id);
+    goto done;
+  }
+  if (se.status != RUN_COMPILING) {
+    err("read_compile_packet_input: submit_entry status not COMPILING");
+    goto done;
+  }
+  if (memcmp(&se.judge_uuid, &comp_pkt->judge_uuid, 16) != 0) {
+    unsigned char buf1[64], buf2[64];
+    err("read_compile_packet_input: judge_uuid mismatch: submit_entry: %s, compile_packet: %s",
+        ej_uuid_unparse_r(buf1, sizeof(buf1), &se.judge_uuid, NULL),
+        ej_uuid_unparse_r(buf2, sizeof(buf2), &comp_pkt->judge_uuid, NULL));
+    goto done;
+  }
+  if (comp_pkt->status != RUN_OK
+      && comp_pkt->status != RUN_COMPILE_ERR
+      && comp_pkt->status != RUN_STYLE_ERR
+      && comp_pkt->status != RUN_CHECK_FAILED) {
+    err("read_compile_packet_input: invalid compile packet status %d", comp_pkt->status);
+    goto done;
+  }
+
+  if (comp_pkt->status == RUN_COMPILE_ERR
+      || comp_pkt->status == RUN_STYLE_ERR
+      || comp_pkt->status == RUN_CHECK_FAILED) {
+    r = generic_read_file(&txt_text, 0, &txt_size, REMOVE, compile_report_dir, pname, ".txt");
+    if (r < 0) {
+      err("read_compile_packet_input: failed to read compiler output");
+      txt_text = xstrdup("");
+      txt_size = 0;
+    }
+    if (!txt_text) {
+      txt_text = xstrdup("");
+      txt_size = 0;
+    }
+    tr = testing_report_alloc(se.contest_id, 0, 0, &se.judge_uuid);
+    tr->scoring_system = 0;
+    tr->submit_id = se.serial_id;
+    tr->status = comp_pkt->status;
+    tr->compiler_output = txt_text;
+    txt_text = NULL; txt_size = 0;
+    utf8_fix_string(tr->compiler_output, NULL);
+    tr->compile_error = 1;
+    if (testing_report_bson_available()) {
+      testing_report_to_mem_bson(&txt_text, &txt_size, tr);
+      mime_type = MIME_TYPE_BSON;
+    } else {
+      testing_report_to_str(&txt_text, &txt_size, 1, tr);
+    }
+
+    r = cs->storage_state->vt->insert(cs->storage_state, 0, mime_type, txt_size, txt_text, &rep_se);
+    if (r < 0) {
+      err("read_compile_packet_input: failed to store the report");
+      goto done;
+    }
+
+    cs->submit_state->vt->change_status(cs->submit_state,
+                                        se.serial_id,
+                                        SUBMIT_FIELD_STATUS | SUBMIT_FIELD_PROTOCOL_ID | SUBMIT_FIELD_JUDGE_UUID,
+                                        comp_pkt->status,
+                                        rep_se.serial_id,
+                                        NULL);
+    goto done;
+  }
+
+  // compiled successfully
+  r = generic_read_file(&txt_text, 0, &txt_size, REMOVE, compile_report_dir, pname, ".txt");
+  if (r < 0) {
+  }
+  if (txt_text && !*txt_text) {
+    free(txt_text); txt_text = NULL;
+    txt_size = 0;
+  }
+
+  // do not store empty compiler output
+  unsigned flags = SUBMIT_FIELD_STATUS;
+  if (txt_size > 0) {
+    tr = testing_report_alloc(se.contest_id, 0, 0, &se.judge_uuid);
+    tr->scoring_system = 0;
+    tr->submit_id = se.serial_id;
+    tr->status = RUN_COMPILED;
+    tr->compiler_output = txt_text;
+    txt_text = NULL; txt_size = 0;
+    utf8_fix_string(tr->compiler_output, NULL);
+    tr->compile_error = 1;
+    if (testing_report_bson_available()) {
+      testing_report_to_mem_bson(&txt_text, &txt_size, tr);
+      mime_type = MIME_TYPE_BSON;
+    } else {
+      testing_report_to_str(&txt_text, &txt_size, 1, tr);
+    }
+
+    r = cs->storage_state->vt->insert(cs->storage_state, 0, mime_type, txt_size, txt_text, &rep_se);
+    if (r < 0) {
+      err("read_compile_packet_input: failed to store the report");
+      goto done;
+    }
+    flags |= SUBMIT_FIELD_PROTOCOL_ID;
+    se.protocol_id = rep_se.serial_id;
+  }
+  r = cs->submit_state->vt->change_status(cs->submit_state,
+                                          se.serial_id,
+                                          flags,
+                                          RUN_COMPILED,
+                                          se.protocol_id,
+                                          NULL);
+  if (r < 0) {
+    err("read_compile_packet_input: failed to change status");
+    goto done;
+  }
+
+  // TODO: run
+  err("read_compile_packet_input: not supported");
+
+done:;
+  testing_report_free(tr);
+  free(txt_text);
+}
+
 int
 serve_read_compile_packet(
         struct contest_extra *extra,
@@ -2963,6 +3136,17 @@ serve_read_compile_packet(
   }
   if (comp_pkt->contest_id != cnts->id) {
     err("read_compile_packet: mismatched contest_id %d", comp_pkt->contest_id);
+    goto non_fatal_error;
+  }
+  if (comp_pkt->submit_id > 0) {
+    read_compile_packet_input(extra,
+                              config,
+                              state,
+                              cnts,
+                              compile_status_dir,
+                              compile_report_dir,
+                              pname,
+                              comp_pkt);
     goto non_fatal_error;
   }
   int new_run_id = -1;
