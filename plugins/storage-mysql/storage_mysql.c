@@ -220,6 +220,7 @@ insert_func(
     size_t cmd_z = 0;
     FILE *cmd_f = NULL;
     struct storage_info_internal sii = {};
+    struct common_mysql_binary bin = {};
 
     if (!smd->is_db_checked) {
         check_database(smd);
@@ -248,9 +249,11 @@ insert_func(
     mi->escape_string(md, cmd_f, random_id_str);
     fprintf(cmd_f, "', '");
     mi->escape_string(md, cmd_f, sha256_str);
-    fprintf(cmd_f, "', NOW(6), NOW(6), '");
-    mi->escape_string(md, cmd_f, content);
-    fprintf(cmd_f, "') ON DUPLICATE KEY UPDATE last_access_time = NOW(6)");
+    fprintf(cmd_f, "', NOW(6), NOW(6), ");
+    bin.size = content_size;
+    bin.data = (unsigned char *) content;
+    mi->write_escaped_bin(md, cmd_f, "", &bin);
+    fprintf(cmd_f, ") ON DUPLICATE KEY UPDATE last_access_time = NOW(6)");
     if (!is_temporary) {
         fprintf(cmd_f, ", is_temporary = 0");
     }
