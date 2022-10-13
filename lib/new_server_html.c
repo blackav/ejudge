@@ -11587,6 +11587,7 @@ ns_submit_run_input(
   struct storage_entry src_se = {};
   struct storage_entry inp_se = {};
   struct submit_entry se = {};
+  const struct userlist_user *user = teamdb_get_userlist(cs->teamdb_state, phr->user_id);
 
   // parse prob_id
   if (hr_cgi_param(phr, "prob_id", &s) <= 0 || !s) {
@@ -11877,7 +11878,7 @@ ns_submit_run_input(
                             NULL /* run_uuid */,
                             0 /* store_flags */,
                             0 /* rejudge_flag */,
-                            NULL);
+                            user);
   if (r < 0) {
     err_num = NEW_SRV_ERR_RUNLOG_UPDATE_FAILED;
     goto done;
