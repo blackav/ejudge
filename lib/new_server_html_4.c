@@ -1189,6 +1189,7 @@ cmd_submit_run(
       } else {
         if (serve_run_request(phr->config, cs, cnts, stderr, run_text, run_size,
                               cnts->id, run_id,
+                              0 /* submit_id */,
                               phr->user_id, prob->id, 0, variant, 0,
                               -1, /* judge_id */
                               NULL, /* judge_uuid */
@@ -1249,6 +1250,7 @@ cmd_submit_run(
                         "submit", "ok", RUN_RUNNING, NULL);
         if (serve_run_request(phr->config, cs, cnts, stderr, run_text, run_size,
                               cnts->id, run_id,
+                              0 /* submit_id */,
                               phr->user_id, prob->id, 0, variant, 0,
                               -1, /* judge_id */
                               NULL, /* judge_uuid */

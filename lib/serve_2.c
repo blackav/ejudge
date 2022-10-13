@@ -1800,6 +1800,7 @@ serve_run_request(
         size_t run_size,
         int contest_id,
         int run_id,
+        int64_t submit_id,
         int user_id,
         int prob_id,
         int lang_id,
@@ -3528,6 +3529,7 @@ prepare_run_request:
 
   if (serve_run_request(config, state, cnts, stderr, run_text, run_size,
                         cnts->id, comp_pkt->run_id,
+                        0 /* submit_id */,
                         re.user_id, re.prob_id, re.lang_id, re.variant,
                         comp_extra->priority_adjustment,
                         comp_pkt->judge_id, &comp_pkt->judge_uuid,
@@ -4479,6 +4481,7 @@ serve_rejudge_run(
 
     serve_run_request(config, state, cnts, stderr, run_text, run_size,
                       cnts->id, run_id,
+                      0 /* submit_id */,
                       re.user_id, re.prob_id, re.lang_id,
                       re.variant, priority_adjustment,
                       -1,       /* judge_id */

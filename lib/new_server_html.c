@@ -3580,6 +3580,7 @@ priv_submit_run(
       } else {
         if (serve_run_request(phr->config, cs, cnts, log_f, run_text, run_size,
                               cnts->id, run_id,
+                              0 /* submit_id */,
                               sender_user_id, prob_id, 0, variant, 0,
                               -1, /* judge_id */
                               NULL, /* judge_uuid */
@@ -3627,6 +3628,7 @@ priv_submit_run(
       } else {
         if (serve_run_request(phr->config, cs, cnts, log_f, run_text, run_size,
                               cnts->id, run_id,
+                              0 /* submit_id */,
                               sender_user_id, prob_id, 0, variant, 0,
                               -1, /* judge_id */
                               NULL, /* judge_uuid */
@@ -10840,6 +10842,7 @@ ns_submit_run(
                     "submit", "ok", RUN_RUNNING, NULL);
     r = serve_run_request(phr->config, cs, cnts, log_f, run_text, run_size,
                           cnts->id, run_id,
+                          0 /* submit_id */,
                           user_id, prob_id, 0, variant, 0,
                           -1,   /* judge_id */
                           NULL, /* judge_uuid */
@@ -10900,6 +10903,7 @@ ns_submit_run(
 
   r = serve_run_request(phr->config, cs, cnts, log_f, run_text, run_size,
                         cnts->id, run_id,
+                        0 /* submit_id */,
                         user_id, prob_id, 0, variant, 0,
                         -1,     /* judge_id */
                         NULL,   /* judge_uuid */
@@ -11446,6 +11450,7 @@ unpriv_submit_run(
       } else {
         if (serve_run_request(phr->config, cs, cnts, phr->log_f, run_text, run_size,
                               cnts->id, run_id,
+                              0 /* submit_id */,
                               phr->user_id, prob_id, 0, variant, 0,
                               -1, /* judge_id */
                               NULL, /* judge_uuid */
@@ -11515,6 +11520,7 @@ unpriv_submit_run(
 
         if (serve_run_request(phr->config, cs, cnts, phr->log_f, run_text, run_size,
                               cnts->id, run_id,
+                              0 /* submit_id */,
                               phr->user_id, prob_id, 0, variant, 0,
                               -1, /* judge_id */
                               NULL, /* judge_uuid */

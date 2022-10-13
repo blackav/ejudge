@@ -677,6 +677,7 @@ process_compile_packet(
   r = serve_run_request(ejudge_config, extra->state, NULL, stderr, report_txt, report_len,
                         global->contest_id,
                         pkt->run_id,
+                        0 /* submit_id */,
                         1 /* user_id */,
                         t3sb.prob_id,
                         t3sb.lang_id,

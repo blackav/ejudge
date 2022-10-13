@@ -529,6 +529,7 @@ serve_run_request(
         size_t run_size,
         int contest_id,
         int run_id,
+        int64_t submit_id,
         int user_id,
         int prob_id,
         int lang_id,
