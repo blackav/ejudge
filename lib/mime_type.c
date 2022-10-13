@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2006-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -94,6 +93,8 @@ static const struct mime_type_info mime_types[MIME_TYPE_LAST] =
   { "image/vnd.djvu", ".djvu", "" },
   [MIME_TYPE_IMAGE_ICON] =
   { "image/x-icon", ".ico", "" },
+  [MIME_TYPE_BSON] =
+  { "application/bson", ".bson", "" },
 };
 
 const unsigned char *

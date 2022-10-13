@@ -1,9 +1,8 @@
 /* -*- c -*- */
-/* $Id$ */
 #ifndef __MIME_TYPE_H__
 #define __MIME_TYPE_H__
 
-/* Copyright (C) 2006-2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -50,6 +49,7 @@ enum
   MIME_TYPE_IMAGE_DJVU,         // image/vnd.djvu
   MIME_TYPE_IMAGE_ICON,         // image/x-icon
   MIME_TYPE_IMAGE_LAST = MIME_TYPE_IMAGE_ICON,
+  MIME_TYPE_BSON,               // application/bson
 
   MIME_TYPE_LAST,
 };
