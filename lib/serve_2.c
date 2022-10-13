@@ -1819,7 +1819,9 @@ serve_run_request(
         ej_uuid_t *puuid,
         int rejudge_flag,
         int zip_mode,
-        int store_flags)
+        int store_flags,
+        const unsigned char *inp_text,
+        size_t inp_size)
 {
   int cn;
   struct section_global_data *global = state->global;
@@ -3536,7 +3538,8 @@ prepare_run_request:
                         comp_extra->accepting_mode,
                         comp_extra->notify_flag, re.mime_type, re.eoln_type,
                         re.locale_id, compile_report_dir, comp_pkt, 0, &re.run_uuid,
-                        comp_extra->rejudge_flag, comp_pkt->zip_mode, re.store_flags) < 0) {
+                        comp_extra->rejudge_flag, comp_pkt->zip_mode, re.store_flags,
+                        NULL, 0) < 0) {
     snprintf(errmsg, sizeof(errmsg), "failed to write run packet\n");
     goto report_check_failed;
   }
@@ -4488,7 +4491,8 @@ serve_rejudge_run(
                       NULL,     /* judge_uuid */
                       accepting_mode, 1, re.mime_type, re.eoln_type,
                       re.locale_id, 0, 0, 0, &re.run_uuid,
-                      1 /* rejudge_flag */, 0 /* zip_mode */, re.store_flags);
+                      1 /* rejudge_flag */, 0 /* zip_mode */, re.store_flags,
+                      NULL, 0);
     xfree(run_text);
     return;
   }

@@ -696,7 +696,9 @@ process_compile_packet(
                         NULL /* uuid */,
                         0 /* rejudge_flag */,
                         0 /* zip_mode */,
-                        0 /* store_flags */);
+                        0 /* store_flags */,
+                        NULL /* inp_text */,
+                        0 /* inp_size*/);
   if (r < 0) abort();
 
   return 0;

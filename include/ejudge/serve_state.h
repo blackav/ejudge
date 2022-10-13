@@ -548,7 +548,9 @@ serve_run_request(
         ej_uuid_t *puuid,
         int rejudge_flag,
         int zip_mode,
-        int store_flags);
+        int store_flags,
+        const unsigned char *inp_text,
+        size_t inp_size);
 
 int serve_is_valid_status(serve_state_t state, int status, int mode);
 
