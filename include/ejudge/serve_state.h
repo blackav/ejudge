@@ -509,6 +509,7 @@ serve_compile_request(
         const struct section_language_data *lang,
         int no_db_flag,
         const ej_uuid_t *puuid,
+        const ej_uuid_t *p_judge_uuid,
         int store_flags,
         int rejudge_flag,
         const struct userlist_user *user)

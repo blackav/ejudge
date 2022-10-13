@@ -3540,6 +3540,7 @@ priv_submit_run(
                                      0, prob->style_checker_cmd,
                                      prob->style_checker_env,
                                      -1, 0, 0, prob, lang, 0, &run_uuid,
+                                     NULL /* judge_uuid */,
                                      store_flags, 0 /* rejudge_flag */, user)) < 0) {
         serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
       }
@@ -3569,6 +3570,7 @@ priv_submit_run(
                                   prob, NULL /* lang */,
                                   0 /* no_db_flag */,
                                   &run_uuid,
+                                  NULL /* judge_uuid */,
                                   store_flags,
                                   0 /* rejudge_flag*/,
                                   user);
@@ -3615,6 +3617,7 @@ priv_submit_run(
                                   prob, NULL /* lang */,
                                   0 /* no_db_flag */,
                                   &run_uuid,
+                                  NULL /* judge_uuid */,
                                   store_flags,
                                   0 /* rejudge_flag */,
                                   user);
@@ -10786,7 +10789,9 @@ ns_submit_run(
                               prob->style_checker_env,
                               -1 /* accepting_mode */, 0 /* priority_adjustment */,
                               1 /* notify_flag */, prob, lang,
-                              0 /* no_db_flag */, &run_uuid, store_flags,
+                              0 /* no_db_flag */, &run_uuid,
+                              NULL /* judge_uuid */,
+                              store_flags,
                               0 /* rejudge_flag */, user);
     if (r < 0) {
       serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
@@ -10820,7 +10825,9 @@ ns_submit_run(
                                 0 /* priority_adjustment */,
                                 0 /* notify flag */,
                                 prob, NULL /* lang */,
-                                0 /* no_db_flag */, &run_uuid, store_flags,
+                                0 /* no_db_flag */, &run_uuid,
+                                NULL /* judge_uuid */,
+                                store_flags,
                                 0 /* rejudge_flag */, user);
       if (r < 0) {
         serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
@@ -10880,7 +10887,9 @@ ns_submit_run(
                               0 /* priority_adjustment */,
                               0 /* notify flag */,
                               prob, NULL /* lang */,
-                              0 /* no_db_flag */, &run_uuid, store_flags,
+                              0 /* no_db_flag */, &run_uuid,
+                              NULL /* judge_uuid */,
+                              store_flags,
                               0 /* rejudge_flag */, user);
     if (r < 0) {
       serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
@@ -11397,7 +11406,9 @@ unpriv_submit_run(
                                      lang->compiler_env,
                                      0, prob->style_checker_cmd,
                                      prob->style_checker_env,
-                                     -1, 0, 1, prob, lang, 0, &run_uuid, store_flags,
+                                     -1, 0, 1, prob, lang, 0, &run_uuid,
+                                     NULL /* judge_uuid */,
+                                     store_flags,
                                      0 /* rejudge_flag */, user)) < 0) {
         serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
       }
@@ -11425,7 +11436,9 @@ unpriv_submit_run(
                                   0 /* priority_adjustment */,
                                   0 /* notify flag */,
                                   prob, NULL /* lang */,
-                                  0 /* no_db_flag */, &run_uuid, store_flags,
+                                  0 /* no_db_flag */, &run_uuid,
+                                  NULL /* judge_uuid */,
+                                  store_flags,
                                   0 /* rejudge_flag */, user);
         if (r < 0) {
           serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
@@ -11489,7 +11502,9 @@ unpriv_submit_run(
                                   0 /* priority_adjustment */,
                                   0 /* notify flag */,
                                   prob, NULL /* lang */,
-                                  0 /* no_db_flag */, &run_uuid, store_flags,
+                                  0 /* no_db_flag */, &run_uuid,
+                                  NULL /* judge_uuid */,
+                                  store_flags,
                                   0 /* rejudge_flag */, user);
         if (r < 0) {
           serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
@@ -11876,6 +11891,7 @@ ns_submit_run_input(
                             lang,
                             0 /* no_db_flag */,
                             NULL /* run_uuid */,
+                            &se.judge_uuid,
                             0 /* store_flags */,
                             0 /* rejudge_flag */,
                             user);

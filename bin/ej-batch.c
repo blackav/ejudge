@@ -588,6 +588,7 @@ process_submit(
                             prob, lang,
                             1 /* no_db_flag */,
                             NULL /* uuid */,
+                            NULL /* judge_uuid */,
                             0 /* store_flags */,
                             0 /* rejudge_flag */,
                             NULL /* user */);

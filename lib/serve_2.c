@@ -1354,6 +1354,7 @@ serve_compile_request(
         const struct section_language_data *lang,
         int no_db_flag,
         const ej_uuid_t *puuid,
+        const ej_uuid_t *p_judge_uuid,
         int store_flags,
         int rejudge_flag,
         const struct userlist_user *user)
@@ -4269,7 +4270,9 @@ serve_rejudge_run(
                                 priority_adjustment,
                                 1 /* notify flag */,
                                 prob, NULL /* lang */,
-                                0 /* no_db_flag */, &re.run_uuid, re.store_flags,
+                                0 /* no_db_flag */, &re.run_uuid,
+                                NULL /* judge_uuid */,
+                                re.store_flags,
                                 1 /* rejudge_flag */,
                                 user);
       if (r < 0) {
@@ -4317,7 +4320,9 @@ serve_rejudge_run(
                             0, prob->style_checker_cmd,
                             prob->style_checker_env,
                             accepting_mode, priority_adjustment, 1, prob, lang, 0,
-                            &re.run_uuid, re.store_flags,
+                            &re.run_uuid,
+                            NULL /* judge_uuid */,
+                            re.store_flags,
                             1 /* rejudge_flag */, user);
   if (r < 0) {
     serve_report_check_failed(config, cnts, state, run_id, serve_err_str(r));

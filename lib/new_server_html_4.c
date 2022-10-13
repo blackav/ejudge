@@ -1150,7 +1150,9 @@ cmd_submit_run(
                                      lang->compiler_env,
                                      0, prob->style_checker_cmd,
                                      prob->style_checker_env,
-                                     -1, 0, 0, prob, lang, 0, &run_uuid, store_flags,
+                                     -1, 0, 0, prob, lang, 0, &run_uuid,
+                                     NULL /* judge_uuid */,
+                                     store_flags,
                                      0 /* rejudge_flag */, user)) < 0) {
         serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
       }
@@ -1178,7 +1180,9 @@ cmd_submit_run(
                                        0 /* priority_adjustment */,
                                        0 /* notify flag */,
                                        prob, NULL /* lang */,
-                                       0 /* no_db_flag */, &run_uuid, store_flags,
+                                       0 /* no_db_flag */, &run_uuid,
+                                       NULL /* judge_uuid */,
+                                       store_flags,
                                        0 /* rejudge_flag */, user)) < 0) {
           serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
         }
@@ -1234,7 +1238,9 @@ cmd_submit_run(
                                        0 /* priority_adjustment */,
                                        0 /* notify flag */,
                                        prob, NULL /* lang */,
-                                       0 /* no_db_flag */, &run_uuid, store_flags,
+                                       0 /* no_db_flag */, &run_uuid,
+                                       NULL /* judge_uuid */,
+                                       store_flags,
                                        0 /* rejudge_flag */, user)) < 0) {
           serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
         }
