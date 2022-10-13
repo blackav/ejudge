@@ -256,8 +256,8 @@ insert_func(
     }
     fprintf(cmd_f, ";");
     fclose(cmd_f); cmd_f = NULL;
-    if (mi->simple_query(md, cmd_s, cmd_z) < 0) goto fail;
-    //if (mi->simple_query_bin(md, cmd_s, cmd_z) < 0) goto fail;
+    //if (mi->simple_query(md, cmd_s, cmd_z) < 0) goto fail;
+    if (mi->simple_query_bin(md, cmd_s, cmd_z) < 0) goto fail;
     free(cmd_s); cmd_s = NULL; cmd_z = 0;
 
     cmd_f = open_memstream(&cmd_s, &cmd_z);
