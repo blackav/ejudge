@@ -19,6 +19,7 @@
 #include "ejudge/ej_types.h"
 
 #include <stdio.h>
+#include <stdint.h>
 
 // outputs preserved in the testing report
 enum
@@ -119,6 +120,7 @@ struct testing_report_cell
 
 typedef struct testing_report_xml
 {
+  int64_t submit_id;
   int contest_id;
   int run_id;
   int judge_id;

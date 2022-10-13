@@ -88,7 +88,8 @@ enum
     Tag_bzip2,
     Tag_max_rss_available,
     Tag_separate_user_score,
-    Tag_max_rss
+    Tag_max_rss,
+    Tag_submit_id
 };
 static __attribute__((unused)) const char * const tag_table[] =
 {
@@ -181,6 +182,7 @@ static __attribute__((unused)) const char * const tag_table[] =
     "max_rss_available",
     "separate_user_score",
     "max_rss",
+    "submit_id",
 };
 static __attribute__((unused)) int
 match(const char *s)
@@ -444,6 +446,8 @@ match(const char *s)
             } else {
                 return 0;
             }
+        } else if (s[1] == 'u' && s[2] == 'b' && s[3] == 'm' && s[4] == 'i' && s[5] == 't' && s[6] == '_' && s[7] == 'i' && s[8] == 'd' && !s[9]) {
+            return Tag_submit_id;
         } else {
             return 0;
         }

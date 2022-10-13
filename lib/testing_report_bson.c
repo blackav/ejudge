@@ -460,6 +460,13 @@ parse_testing_report_bson(bson_iter_t *bi, testing_report_xml_t r)
             if (ej_bson_parse_int_new(bi, key, &r->run_id, 1, 0, 0, 0) < 0)
                 return -1;
             break;
+        case Tag_submit_id: {
+            long long v;
+            if (ej_bson_parse_int64_new(bi, key, &v) < 0)
+                return -1;
+            r->submit_id = v;
+            break;
+        }
         case Tag_judge_id:
             if (ej_bson_parse_int_new(bi, key, &r->judge_id, 1, 0, 0, 0) < 0)
                 return -1;
@@ -815,6 +822,9 @@ do_unparse(
     bson_append_int32(b, tag_table[Tag_status], -1, r->status);
     bson_append_int32(b, tag_table[Tag_scoring], -1, r->scoring_system);
     bson_append_int32(b, tag_table[Tag_run_tests], -1, r->run_tests);
+    if (r->submit_id > 0) {
+        bson_append_int64(b, tag_table[Tag_submit_id], -1, r->submit_id);
+    }
 
     if (r->contest_id > 0) {
         bson_append_int32(b, tag_table[Tag_contest_id], -1, r->contest_id);

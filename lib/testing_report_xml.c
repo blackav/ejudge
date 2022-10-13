@@ -161,6 +161,7 @@ enum
   TR_A_MAX_RSS_AVAILABLE,
   TR_A_SEPARATE_USER_SCORE,
   TR_A_MAX_RSS,
+  TR_A_SUBMIT_ID,
 
   TR_A_LAST_ATTR,
 };
@@ -261,6 +262,7 @@ static const char * const attr_map[] =
   [TR_A_MAX_RSS_AVAILABLE] = "max-rss-available",
   [TR_A_SEPARATE_USER_SCORE] = "separate-user-score",
   [TR_A_MAX_RSS] = "max-rss",
+  [TR_A_SUBMIT_ID] = "submit-id",
 
   [TR_A_LAST_ATTR] = 0,
 };
@@ -887,7 +889,12 @@ parse_testing_report(struct xml_tree *t, testing_report_xml_t r)
       }
       r->run_id = x;
       break;
-
+    case TR_A_SUBMIT_ID: {
+      long long v;
+      if (xml_attr_long_long(a, &v) < 0) return -1;
+      r->submit_id = v;
+      break;
+    }
     case TR_A_JUDGE_ID:
       if (xml_attr_int(a, &x) < 0) return -1;
       if (x < 0 || x > EJ_MAX_JUDGE_ID) {
@@ -1130,7 +1137,7 @@ parse_testing_report(struct xml_tree *t, testing_report_xml_t r)
     }
   }
 
-  if (r->run_id < 0) {
+  if (r->run_id < 0 && r->submit_id <= 0) {
     xml_err_attr_undefined(t, TR_A_RUN_ID);
     return -1;
   }
@@ -1574,6 +1581,10 @@ testing_report_unparse_xml(
           attr_map[TR_A_STATUS], buf1,
           attr_map[TR_A_SCORING], scoring,
           attr_map[TR_A_RUN_TESTS], r->run_tests);
+  if (r->submit_id > 0) {
+    fprintf(out, " %s=\"%lld\"", attr_map[TR_A_SUBMIT_ID],
+            (long long) r->submit_id);
+  }
 
   if (ej_uuid_is_nonempty(r->judge_uuid)) {
     fprintf(out, " %s=\"%s\"", attr_map[TR_A_JUDGE_UUID],
