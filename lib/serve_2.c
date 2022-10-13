@@ -1387,7 +1387,10 @@ serve_compile_request(
   ej_uuid_t judge_uuid;
 
   memset(&sformat_extra, 0, sizeof(sformat_extra));
-  ej_uuid_generate(&judge_uuid);
+  if (!p_judge_uuid || ej_uuid_is_empty(*p_judge_uuid)) {
+    ej_uuid_generate(&judge_uuid);
+    p_judge_uuid = &judge_uuid;
+  }
 
   // perform substitutions
   compiler_env_copy = prepare_sarray_varsubst(state, prob, lang, NULL, compiler_env);
@@ -1492,9 +1495,10 @@ serve_compile_request(
 
   memset(&cp, 0, sizeof(cp));
   cp.judge_id = state->compile_request_id++;
-  cp.judge_uuid = judge_uuid;
+  cp.judge_uuid = *p_judge_uuid;
   cp.contest_id = contest_id;
   cp.run_id = run_id;
+  cp.submit_id = submit_id;
   cp.lang_id = lang_id;
   cp.locale_id = locale_id;
   cp.output_only = output_only;
@@ -1631,7 +1635,7 @@ serve_compile_request(
 #endif
 
   if (!sfx) sfx = "";
-  serve_packet_name(contest_id, run_id, prio, &judge_uuid, pkt_name, sizeof(pkt_name));
+  serve_packet_name(contest_id, run_id, prio, p_judge_uuid, pkt_name, sizeof(pkt_name));
 
   if (src_header_size > 0 || src_footer_size > 0) {
     if (len < 0) {
