@@ -67,6 +67,13 @@ struct contest_desc;
 struct section_global_data;
 struct serve_state;
 
+enum
+{
+    SUBMIT_FIELD_STATUS = 1,
+    SUBMIT_FIELD_PROTOCOL_ID = 2,
+    SUBMIT_FIELD_JUDGE_UUID = 4,
+};
+
 struct submit_plugin_iface
 {
     struct common_plugin_iface b;
@@ -83,6 +90,13 @@ struct submit_plugin_iface
     int (*insert)(
         struct submit_cnts_plugin_data *data,
         struct submit_entry *pse);
+    int (*change_status)(
+        struct submit_cnts_plugin_data *data,
+        int64_t submit_id,
+        unsigned mask,
+        int status,
+        int64_t protocol_id,
+        ej_uuid_t *p_judge_uuid);
 };
 
 struct submit_cnts_plugin_data *

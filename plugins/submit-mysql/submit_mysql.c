@@ -387,6 +387,60 @@ fail:
     return -1;
 }
 
+
+static int
+change_status_func(
+        struct submit_cnts_plugin_data *data,
+        int64_t submit_id,
+        unsigned mask,
+        int status,
+        int64_t protocol_id,
+        ej_uuid_t *p_judge_uuid)
+{
+    struct submit_cnts_mysql_data *scmd = (struct submit_cnts_mysql_data *) data;
+    struct submit_mysql_data *smd = scmd->smd;
+    struct common_mysql_iface *mi = smd->mi;
+    struct common_mysql_state *md = smd->md;
+    char *cmd_s = NULL;
+    size_t cmd_z = 0;
+    FILE *cmd_f = NULL;
+    unsigned char uuid_buf[64];
+
+    cmd_f = open_memstream(&cmd_s, &cmd_z);
+    fprintf(cmd_f, "UPDATE %ssubmits SET last_status_change_time = NOW(6)",
+            md->table_prefix);
+    if ((mask & SUBMIT_FIELD_STATUS)) {
+        fprintf(cmd_f, ", status = %d", status);
+    }
+    if ((mask & SUBMIT_FIELD_PROTOCOL_ID)) {
+        if (protocol_id > 0) {
+            fprintf(cmd_f, ", protocol_id = %lld", (long long) protocol_id);
+        } else {
+            fprintf(cmd_f, ", protocol_id = NULL");
+        }
+    }
+    if ((mask & SUBMIT_FIELD_JUDGE_UUID)) {
+        if (p_judge_uuid && ej_uuid_is_nonempty(*p_judge_uuid)) {
+            fprintf(cmd_f, ", '%s'",
+                    ej_uuid_unparse_r(uuid_buf, sizeof(uuid_buf),
+                                      p_judge_uuid, NULL));
+        } else {
+            fprintf(cmd_f, ", judge_uuid = NULL");
+        }
+    }
+    fprintf(cmd_f, " WHERE serial_id = %lld;", (long long) submit_id);
+    fclose(cmd_f); cmd_f = NULL;
+
+    if (mi->simple_query(md, cmd_s, cmd_z) < 0) goto fail;
+    free(cmd_s); cmd_s = NULL; cmd_z = 0;
+    return 0;
+
+fail:
+    if (cmd_f) fclose(cmd_f);
+    free(cmd_s);
+    return -1;
+}
+
 struct submit_plugin_iface plugin_submit_mysql =
 {
     {
@@ -405,4 +459,5 @@ struct submit_plugin_iface plugin_submit_mysql =
     open_func,
     close_func,
     insert_func,
+    change_status_func,
 };
