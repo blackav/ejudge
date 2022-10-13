@@ -991,6 +991,7 @@ new_loop(int parallel_mode)
     rpl.judge_uuid = req->judge_uuid;
     rpl.contest_id = req->contest_id;
     rpl.run_id = req->run_id;
+    rpl.submit_id = req->submit_id;
     rpl.ts1 = req->ts1;
     rpl.ts1_us = req->ts1_us;
     rpl.use_uuid = req->use_uuid;
