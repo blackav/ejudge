@@ -3806,6 +3806,158 @@ dur_to_str(unsigned char *buf, size_t size, int sec1, int usec1,
 
 #define BAD_PACKET() do { bad_packet_line = __LINE__; goto bad_packet_error; } while (0)
 
+static void
+read_run_packet_input(
+        struct contest_extra *extra,
+        const struct ejudge_cfg *config,
+        serve_state_t cs,
+        const struct contest_desc *cnts,
+        const unsigned char *run_status_dir,
+        const unsigned char *run_report_dir,
+        const unsigned char *run_full_archive_dir,
+        const unsigned char *pname,
+        const struct run_reply_packet *reply_pkt)
+{
+  int r;
+  struct submit_entry se = {};
+  struct storage_entry cp_se = {};
+  char *rep_data = NULL;
+  size_t rep_size = 0;
+  testing_report_xml_t cp_tr = NULL;
+  testing_report_xml_t tr = NULL;
+  int mime_type = 0;
+  struct storage_entry tr_se = {};
+
+  info("read_run_packet_input: submit_id %lld", (long long) reply_pkt->submit_id);
+
+  if (!cs->storage_state) {
+    cs->storage_state = storage_plugin_get(extra, cnts, ejudge_config, NULL);
+    if (!cs->storage_state) {
+      err("read_run_packet_input: storage plugin not available");
+      goto done;
+    }
+  }
+  if (!cs->submit_state) {
+    cs->submit_state = submit_plugin_open(ejudge_config, cnts, cs, NULL, 0);
+    if (!cs->submit_state) {
+      err("read_run_packet_input: submit plugin not available");
+      goto done;
+    }
+  }
+
+  if (ej_uuid_is_empty(reply_pkt->judge_uuid)) {
+    err("read_run_packet_input: judge_uuid is empty");
+    goto done;
+  }
+
+  r = cs->submit_state->vt->fetch(cs->submit_state, reply_pkt->submit_id, &se);
+  if (r < 0) {
+    err("read_run_packet_input: fetch failed");
+    goto done;
+  }
+  if (!r) {
+    err("read_run_packet_input: submit %lld not found", (long long) reply_pkt->submit_id);
+    goto done;
+  }
+
+  if (se.contest_id != cnts->id) {
+    err("read_run_packet_input: contest_id mismatch: read %d", se.contest_id);
+    goto done;
+  }
+  if (se.status != RUN_RUNNING) {
+    err("read_compile_packet_input: submit_entry status not RUNNING");
+    goto done;
+  }
+  if (memcmp(&se.judge_uuid, &reply_pkt->judge_uuid, 16) != 0) {
+    unsigned char buf1[64], buf2[64];
+    err("read_run_packet_input: judge_uuid mismatch: submit_entry: %s, run_packet: %s",
+        ej_uuid_unparse_r(buf1, sizeof(buf1), &se.judge_uuid, NULL),
+        ej_uuid_unparse_r(buf2, sizeof(buf2), &reply_pkt->judge_uuid, NULL));
+    goto done;
+  }
+
+  if (generic_read_file(&rep_data, 0, &rep_size, REMOVE, run_report_dir, pname, NULL) < 0) {
+    err("read_run_packet_input: failed to read testing report");
+    goto done;
+  }
+
+  if (se.protocol_id > 0) {
+    // merge compilation and testing protocol
+    r = cs->storage_state->vt->get_by_serial_id(cs->storage_state,
+                                                se.protocol_id,
+                                                &cp_se);
+    if (r < 0) {
+      err("read_run_packet_input: failed to read compilation protocol");
+      goto done;
+    }
+    if (cp_se.mime_type == MIME_TYPE_BSON) {
+      cp_tr = testing_report_parse_bson_data(cp_se.content, cp_se.size);
+    } else if (!cp_se.mime_type) {
+      size_t len = strlen(cp_se.content);
+      if (len != cp_se.size) {
+        err("read_run_packet_input: invalid length of compilation XML report");
+        goto done;
+      }
+      cp_tr = testing_report_parse_xml(cp_se.content);
+    } else {
+      err("read_run_packet_input: invalid mime type of compilation protocol");
+      goto done;
+    }
+    if (!cp_tr) {
+      err("read_run_packet_input: failed to parse compilation report");
+      goto done;
+    }
+    if (reply_pkt->bson_flag) {
+      tr = testing_report_parse_bson_data(rep_data, rep_size);
+    } else {
+      size_t len = strlen(rep_data);
+      if (len != rep_size) {
+        err("read_run_packet_input: invalid length of testing report");
+        goto done;
+      }
+      tr = testing_report_parse_xml(rep_data);
+    }
+    if (!tr) {
+      err("read_run_packet_input: failed to parse testing report");
+      goto done;
+    }
+    if (cp_tr->compiler_output && *cp_tr->compiler_output) {
+      tr->compiler_output = xstrdup(cp_tr->compiler_output);
+    }
+    free(rep_data); rep_data = NULL; rep_size = 0;
+    if (testing_report_bson_available()) {
+      testing_report_to_mem_bson(&rep_data, &rep_size, tr);
+      mime_type = MIME_TYPE_BSON;
+    } else {
+      testing_report_to_str(&rep_data, &rep_size, 1, tr);
+    }
+  } else {
+    // just write protocols to the storage
+    if (reply_pkt->bson_flag) {
+      mime_type = MIME_TYPE_BSON;
+    }
+  }
+
+  r = cs->storage_state->vt->insert(cs->storage_state, 0, mime_type, rep_size, rep_data, &tr_se);
+  if (r < 0) {
+    err("read_run_packet_input: failed to store the report");
+    goto done;
+  }
+
+  cs->submit_state->vt->change_status(cs->submit_state,
+                                      se.serial_id,
+                                      SUBMIT_FIELD_STATUS | SUBMIT_FIELD_PROTOCOL_ID | SUBMIT_FIELD_JUDGE_UUID,
+                                      reply_pkt->status,
+                                      tr_se.serial_id,
+                                      NULL);
+
+done:;
+  free(rep_data);
+  free(cp_se.content);
+  testing_report_free(cp_tr);
+  testing_report_free(tr);
+}
+
 int
 serve_read_run_packet(
         struct contest_extra *extra,
@@ -3853,6 +4005,20 @@ serve_read_run_packet(
     err("read_run_packet: contest_id mismatch: %d in packet",
         reply_pkt->contest_id);
     goto failed;
+  }
+
+  if (reply_pkt->submit_id > 0) {
+    read_run_packet_input(extra,
+                          config,
+                          state,
+                          cnts,
+                          run_status_dir,
+                          run_report_dir,
+                          run_full_archive_dir,
+                          pname,
+                          reply_pkt);
+    run_reply_packet_free(reply_pkt);
+    return 1;
   }
 
   int new_run_id = -1;
