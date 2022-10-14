@@ -794,6 +794,8 @@ struct section_global_data
 
   /** time between user submits */
   int time_between_submits;
+  /** max size of a user input in bytes */
+  ejintsize_t max_input_size;
 };
 
 /* sizeof(struct section_problem_data) == 820/1280 */

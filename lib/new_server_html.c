@@ -11701,6 +11701,10 @@ ns_submit_run_input(
   }
   run_size = text_normalize_dup(run_text, run_size, TEXT_FIX_CR | TEXT_FIX_TR_SP | TEXT_FIX_FINAL_NL | TEXT_FIX_NP, &run_fixed_text, NULL, NULL);
   run_text = run_fixed_text;
+  if (global->max_run_size > 0 && run_size > global->max_run_size) {
+    err_num = NEW_SRV_ERR_RUN_QUOTA_EXCEEDED;
+    goto done;
+  }
 
   r = hr_cgi_param_bin(phr, "file_input", &inp_text, &tmpsz); inp_size = tmpsz;
   if ((r <= 0 || !inp_text || inp_size <= 0) && prob->enable_text_form > 0) {
@@ -11725,6 +11729,14 @@ ns_submit_run_input(
   }
   inp_size = text_normalize_dup(inp_text, inp_size, TEXT_FIX_CR | TEXT_FIX_TR_SP | TEXT_FIX_FINAL_NL | TEXT_FIX_NP, &inp_fixed_text, NULL, NULL);
   inp_text = inp_fixed_text;
+  {
+    int max_input_size = 1024;
+    if (global->max_input_size > 0) max_input_size = global->max_input_size;
+    if (inp_size > max_input_size) {
+      err_num = NEW_SRV_ERR_RUN_QUOTA_EXCEEDED;
+      goto done;
+    }
+  }
 
 
   time_t start_time = 0;

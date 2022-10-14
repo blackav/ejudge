@@ -327,6 +327,9 @@ prepare_unparse_global(
     fprintf(f, "team_page_quota = %d\n", global->team_page_quota);
   if (global->time_between_submits >= 0)
     fprintf(f, "time_between_submits = %d\n", global->time_between_submits);
+  if (global->max_input_size > 0)
+    fprintf(f, "max_input_size = %s\n",
+            num_to_size_str(nbuf, sizeof(nbuf), global->max_input_size));
 
   if (global->compile_max_vm_size > 0) {
     fprintf(f, "compile_max_vm_size = %s\n", ll_to_size_str(size_buf, sizeof(size_buf), global->compile_max_vm_size));
