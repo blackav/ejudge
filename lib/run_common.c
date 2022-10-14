@@ -329,6 +329,8 @@ generate_xml_report(
         } else {
           trt->exit_code = ti->code;
         }
+      } else {
+        trt->exit_code = ti->code;
       }
       trt->time = ti->times;
       if (ti->real_time >= 0 && has_real_time) {
