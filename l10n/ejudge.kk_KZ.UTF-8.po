@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-10-11 23:30+0300\n"
+"POT-Creation-Date: 2022-10-14 17:58+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Kazakh <uk@li.org>\n"
@@ -2955,6 +2955,9 @@ msgstr ""
 msgid "Random variants"
 msgstr ""
 
+msgid "Rate exceeded"
+msgstr ""
+
 msgid "Re"
 msgstr ""
 
@@ -4061,8 +4064,8 @@ msgid "Try again this operation later"
 msgstr ""
 
 msgid ""
-"Type the login and the password in to the form above and press the \"Log "
-"in\" button to activate the account."
+"Type the login and the password in to the form above and press the \"Log in"
+"\" button to activate the account."
 msgstr ""
 
 #, c-format
