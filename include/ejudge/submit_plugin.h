@@ -101,6 +101,13 @@ struct submit_plugin_iface
         struct submit_cnts_plugin_data *data,
         int64_t submit_id,
         struct submit_entry *pse);
+    int (*fetch_for_user)(
+        struct submit_cnts_plugin_data *data,
+        int user_id,
+        int limit,
+        int start,
+        size_t *p_count,
+        struct submit_entry **p_ses);
 };
 
 struct submit_cnts_plugin_data *

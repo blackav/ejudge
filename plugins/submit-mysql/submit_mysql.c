@@ -507,6 +507,69 @@ fail:
     return -1;
 }
 
+static int
+fetch_for_user_func(
+        struct submit_cnts_plugin_data *data,
+        int user_id,
+        int limit,
+        int start,
+        size_t *p_count,
+        struct submit_entry **p_ses)
+{
+    struct submit_cnts_mysql_data *scmd = (struct submit_cnts_mysql_data *) data;
+    struct submit_mysql_data *smd = scmd->smd;
+    struct common_mysql_iface *mi = smd->mi;
+    struct common_mysql_state *md = smd->md;
+    char *cmd_s = NULL;
+    size_t cmd_z = 0;
+    FILE *cmd_f = NULL;
+    struct submit_entry_internal sei = {};
+    size_t u = 0, a = 0;
+    struct submit_entry *v = NULL;
+
+    cmd_f = open_memstream(&cmd_s, &cmd_z);
+    fprintf(cmd_f, "SELECT * FROM `%ssubmits` WHERE user_id = %d AND contest_id = %d",
+            md->table_prefix, user_id, scmd->contest_id);
+    if (limit > 0) {
+        fprintf(cmd_f, " LIMIT %d", limit);
+        if (start > 0) {
+            fprintf(cmd_f, ", %d", start);
+        }
+    }
+    fprintf(cmd_f, ";");
+    fclose(cmd_f); cmd_f = NULL;
+
+    if (mi->query(md, cmd_s, cmd_z, SUBMIT_ROW_WIDTH) < 0)
+        db_error_fail(md);
+    free(cmd_s); cmd_s = NULL; cmd_z = 0;
+
+    for (int i = 0; i < md->row_count; ++i) {
+        memset(&sei, 0, sizeof(sei));
+        if (mi->next_row(md) < 0) db_error_fail(md);
+        if (mi->parse_spec(md, -1, md->row, md->lengths, SUBMIT_ROW_WIDTH, submit_spec, &sei) < 0) goto fail;
+        if (u == a) {
+            if (!a) {
+                a = 8;
+                XCALLOC(v, a);
+            } else {
+                a *= 2;
+                XREALLOC(v, a);
+            }
+        }
+        copy_to_submit_entry(&v[u++], &sei);
+    }
+
+    *p_count = u;
+    *p_ses = v;
+    return u;
+
+fail:
+    if (cmd_f) fclose(cmd_f);
+    free(cmd_s);
+    free(v);
+    return -1;
+}
+
 struct submit_plugin_iface plugin_submit_mysql =
 {
     {
@@ -527,4 +590,5 @@ struct submit_plugin_iface plugin_submit_mysql =
     insert_func,
     change_status_func,
     fetch_func,
+    fetch_for_user_func,
 };
