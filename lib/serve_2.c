@@ -2031,6 +2031,14 @@ serve_run_request(
     }
   }
 
+  if (submit_id > 0) {
+    if (generic_write_file(inp_text, inp_size, 0,
+                           run_exe_dir, pkt_base, ".input") < 0) {
+      fprintf(errf, "writing failed");
+      goto fail;
+    }
+  }
+
   if (!arch) {
     arch = "";
   }
@@ -2053,6 +2061,7 @@ serve_run_request(
   srgp->judge_id = judge_id;
   srgp->judge_uuid = xstrdup(ej_uuid_unparse(judge_uuid, NULL));
   srgp->run_id = run_id;
+  srgp->submit_id = submit_id;
   srgp->variant = variant;
   srgp->user_id = user_id;
   srgp->accepting_mode = accepting_mode;
@@ -2213,6 +2222,11 @@ serve_run_request(
   srpp->uuid = xstrdup2(prob->uuid);
   srpp->open_tests = xstrdup2(prob->open_tests);
   srpp->container_options = xstrdup2(prob->container_options);
+  if (submit_id > 0) {
+    char *inp_name = NULL;
+    asprintf(&inp_name, "%s.input", pkt_base);
+    srpp->user_input_file = inp_name;
+  }
 
   if (srgp->advanced_layout > 0) {
     get_advanced_layout_path(pathbuf, sizeof(pathbuf), global, prob, NULL, variant);
@@ -2942,6 +2956,9 @@ read_compile_packet_input(
   testing_report_xml_t tr = NULL;
   int mime_type = 0;
   struct storage_entry rep_se = {};
+  char *run_text = NULL;
+  size_t run_size = 0;
+  struct storage_entry inp_se = {};
 
   info("read_compile_packet_input: submit_id %lld", (long long) comp_pkt->submit_id);
 
@@ -3087,12 +3104,58 @@ read_compile_packet_input(
     goto done;
   }
 
-  // TODO: run
-  err("read_compile_packet_input: not supported");
+  r = generic_read_file(&run_text, 0, &run_size, REMOVE, compile_report_dir, pname, NULL);
+  if (r < 0) {
+    err("read_compile_packet_input: failed to read executable");
+    goto done;
+  }
+
+  r = cs->storage_state->vt->get_by_serial_id(cs->storage_state,
+                                              se.input_id,
+                                              &inp_se);
+  if (r < 0) {
+    err("read_compile_packet_input: failed to read input data");
+    goto done;
+  }
+
+  r = serve_run_request(config, cs, cnts, stderr,
+                        run_text, run_size, se.contest_id,
+                        0 /* run_id */, se.serial_id,
+                        se.user_id, se.prob_id, se.lang_id, se.variant,
+                        0 /* priority_adjustment */,
+                        0 /* judge_id */,
+                        &se.judge_uuid,
+                        0 /* accepting_mode */,
+                        0 /* notify_flag */,
+                        0 /* mime_type */,
+                        se.eoln_type,
+                        se.locale_id,
+                        compile_report_dir,
+                        comp_pkt,
+                        1 /* no_db_flag */,
+                        NULL /* puuid */,
+                        0 /* rejudge_flag */,
+                        0 /* zip_mode */,
+                        0 /* store_flags */,
+                        inp_se.content,
+                        inp_se.size);
+  if (r < 0) {
+    err("read_compile_packet_input: failed to send to testing");
+    goto done;
+  }
+
+  r = cs->submit_state->vt->change_status(cs->submit_state,
+                                          se.serial_id,
+                                          SUBMIT_FIELD_STATUS,
+                                          RUN_RUNNING,
+                                          0,
+                                          NULL);
 
 done:;
   testing_report_free(tr);
   free(txt_text);
+  free(run_text);
+  free(inp_se.content);
 }
 
 int
