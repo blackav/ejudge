@@ -384,6 +384,7 @@ handle_packet(
     reply_pkt.judge_id = srgp->judge_id;
     reply_pkt.contest_id = srgp->contest_id;
     reply_pkt.run_id = srgp->run_id;
+    reply_pkt.submit_id = srgp->submit_id;
     reply_pkt.notify_flag = srgp->notify_flag;
     reply_pkt.user_status = -1;
     reply_pkt.user_tests_passed = -1;
@@ -426,7 +427,10 @@ handle_packet(
               srgp->user_spelling,
               srpp->spelling, mirror_dir, utf8_mode,
               &run_listener.b, super_run_name,
-              remap_specs);
+              remap_specs,
+              0 /* user_input_mode */,
+              NULL /* inp_data */,
+              0 /* inp_size */);
     //if (cr_serialize_unlock(state) < 0) return -1;
   }
 

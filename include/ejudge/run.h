@@ -128,6 +128,9 @@ run_tests(
         int utf8_mode,
         struct run_listener *listener,
         const unsigned char *hostname,
-        const struct remap_spec *remaps);
+        const struct remap_spec *remaps,
+        int user_input_mode,
+        const unsigned char *inp_data,
+        size_t inp_size);
 
 #endif /* __RUN_H__ */

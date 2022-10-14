@@ -2459,7 +2459,9 @@ run_one_test(
         long *p_report_time_limit_ms,
         long *p_report_real_time_limit_ms,
         const unsigned char *mirror_dir,
-        const struct remap_spec *remaps)
+        const struct remap_spec *remaps,
+        const unsigned char *inp_data,
+        size_t inp_size)
 {
   const struct section_global_data *global = state->global;
 
@@ -4118,7 +4120,10 @@ run_tests(
         int utf8_mode,
         struct run_listener *listener,
         const unsigned char *hostname,
-        const struct remap_spec *remaps)
+        const struct remap_spec *remaps,
+        int user_input_mode,
+        const unsigned char *inp_data,
+        size_t inp_size)
 {
   const struct section_global_data *global = state->global;
   const struct super_run_in_global_packet *srgp = srp->global;
@@ -4396,7 +4401,7 @@ run_tests(
                             &has_real_time, &has_max_memory_used,
                             &has_max_rss,
                             &report_time_limit_ms, &report_real_time_limit_ms,
-                            mirror_dir, remaps);
+                            mirror_dir, remaps, NULL, 0);
       if (status != RUN_TIME_LIMIT_ERR && status != RUN_WALL_TIME_LIMIT_ERR)
         break;
       if (++tl_retry >= tl_retry_count) break;

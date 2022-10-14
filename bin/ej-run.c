@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2000-2019 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -352,7 +352,10 @@ do_loop(void)
                 exe_name, run_base,
                 report_path, full_report_path,
                 srgp->user_spelling,
-                srpp->spelling, NULL /* mirror_dir */, utf8_mode, NULL, NULL, NULL /* remaps */);
+                srpp->spelling, NULL /* mirror_dir */, utf8_mode, NULL, NULL, NULL /* remaps */,
+                0 /* user_input_mode*/,
+                NULL /* inp_data */,
+                0 /* inp_size*/);
       //if (cr_serialize_unlock(&serve_state) < 0) return -1;
 
       if (tst == &tn) {
