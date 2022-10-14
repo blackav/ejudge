@@ -11858,7 +11858,7 @@ ns_submit_run_input(
     goto done;
   }
   // rate limit check
-  if (sez > 0 && ses[sez].create_time_us + 5000000 > cs->current_time * 1000000LL) {
+  if (sez > 0 && ses[0].create_time_us + 5000000 > cs->current_time * 1000000LL) {
     err_num = NEW_SRV_ERR_RATE_EXCEEDED;
     goto done;
   }
@@ -12022,6 +12022,204 @@ unpriv_submit_run_input(
         struct contest_extra *extra)
 {
   ns_submit_run_input(fout, phr, cnts, extra, 0);
+}
+
+static void
+unpriv_get_submit(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  serve_state_t cs = extra->serve_state;
+  int ok = 0;
+  int err_num = 0;
+  unsigned char *err_msg = NULL;
+  unsigned err_id = 0;
+  cJSON *jr = cJSON_CreateObject(); // reply object
+  unsigned char *jrstr = NULL;
+  int64_t submit_id = 0;
+  const unsigned char *s = NULL;
+  struct submit_entry se = {};
+  struct storage_entry prot_se = {};
+  int r;
+  testing_report_xml_t tr = NULL;
+
+  if (hr_cgi_param(phr, "submit_id", &s) <= 0 || !s) {
+    err_num = NEW_SRV_ERR_INV_SUBMIT_ID;
+    goto done;
+  }
+  {
+    char *eptr = NULL;
+    errno = 0;
+    long long v = strtoll(s, &eptr, 10);
+    if (errno || *eptr || (unsigned char *) eptr == s || v <= 0) {
+      err_num = NEW_SRV_ERR_INV_SUBMIT_ID;
+      goto done;
+    }
+    submit_id = v;
+  }
+
+  if (!cs->storage_state) {
+    cs->storage_state = storage_plugin_get(extra, cnts, ejudge_config, NULL);
+    if (!cs->storage_state) {
+      err_num = NEW_SRV_ERR_PLUGIN_NOT_AVAIL;
+      goto done;
+    }
+  }
+
+  if (!cs->submit_state) {
+    cs->submit_state = submit_plugin_open(ejudge_config, cnts, cs, NULL, 0);
+    if (!cs->submit_state) {
+      err_num = NEW_SRV_ERR_PLUGIN_NOT_AVAIL;
+      goto done;
+    }
+  }
+
+  r = cs->submit_state->vt->fetch(cs->submit_state, submit_id, &se);
+  if (r < 0) {
+    err_num = NEW_SRV_ERR_INV_SUBMIT_ID;
+    goto done;
+  }
+  if (se.contest_id != cnts->id) {
+    err("submit %lld contest_id mismatch", (long long) submit_id);
+    err_num = NEW_SRV_ERR_INV_SUBMIT_ID;
+    goto done;
+  }
+  if (se.user_id != phr->user_id) {
+    err("submit %lld user_id mismatch", (long long) submit_id);
+    err_num = NEW_SRV_ERR_INV_SUBMIT_ID;
+    goto done;
+  }
+  if (se.protocol_id > 0) {
+    r = cs->storage_state->vt->get_by_serial_id(cs->storage_state, se.protocol_id, &prot_se);
+    if (r < 0) {
+      err_num = NEW_SRV_ERR_INV_SUBMIT_ID;
+      goto done;
+    }
+    if (prot_se.mime_type == MIME_TYPE_BSON) {
+      tr = testing_report_parse_bson_data(prot_se.content, prot_se.size);
+    } else if (!prot_se.mime_type) {
+      size_t len = strlen(prot_se.content);
+      if (len != prot_se.size) {
+        err("invalid length of testing XML report");
+        err_num = NEW_SRV_ERR_INV_SUBMIT_ID;
+        goto done;
+      }
+      tr = testing_report_parse_xml(prot_se.content);
+    } else {
+      err("invalid mime type of testing protocol");
+      err_num = NEW_SRV_ERR_INV_SUBMIT_ID;
+      goto done;
+    }
+    if (!tr) {
+      err("failed to parse testing report");
+      err_num = NEW_SRV_ERR_INV_SUBMIT_ID;
+      goto done;
+    }
+  }
+
+  cJSON *jrr = cJSON_CreateObject();
+  cJSON_AddNumberToObject(jrr, "serial_id", se.serial_id);
+  cJSON_AddNumberToObject(jrr, "status", se.status);
+  cJSON_AddStringToObject(jrr, "status_str",
+                          run_status_str(se.status, NULL, 0, 0, 0));
+  if (tr) {
+    if (tr->compiler_output && *tr->compiler_output) {
+      cJSON_AddStringToObject(jrr, "compiler_output", tr->compiler_output);
+    }
+    if (tr->run_tests > 0) {
+      if (tr->tests && tr->tests[0]) {
+        struct testing_report_test *ttr = tr->tests[0];
+        if (ttr) {
+          cJSON_AddNumberToObject(jrr, "time", ttr->time);
+          if (ttr->real_time > 0) {
+            cJSON_AddNumberToObject(jrr, "real_time", ttr->real_time);
+          }
+          if (ttr->exit_code >= 0) {
+            cJSON_AddNumberToObject(jrr, "exit_code", ttr->exit_code);
+          }
+          if (ttr->term_signal > 0) {
+            cJSON_AddNumberToObject(jrr, "term_signal", ttr->term_signal);
+          }
+          if (ttr->max_memory_used > 0) {
+            cJSON_AddNumberToObject(jrr, "max_memory_used", ttr->max_memory_used);
+          }
+          if (ttr->max_rss > 0) {
+            cJSON_AddNumberToObject(jrr, "max_rss", ttr->max_rss);
+          }
+          if (ttr->input.size > 0) {
+            cJSON_AddStringToObject(jrr, "input", ttr->input.data);
+          }
+          if (ttr->output.size > 0) {
+            cJSON_AddStringToObject(jrr, "output", ttr->output.data);
+          }
+          if (ttr->error.size > 0) {
+            cJSON_AddStringToObject(jrr, "error", ttr->error.data);
+          }
+        }
+      }
+    }
+  }
+
+  cJSON_AddItemToObject(jr, "result", jrr);
+  ok = 1;
+
+done:;
+  phr->json_reply = 1;
+  if (!ok) {
+    if (err_num < 0) err_num = -err_num;
+    if (!err_id) {
+      random_init();
+      err_id = random_u32();
+    }
+    if (!err_msg || !*err_msg) {
+      free(err_msg); err_msg = NULL;
+      if (err_num > 0) {
+        err_msg = xstrdup(ns_error_title_2(err_num));
+        if (err_msg && !*err_msg) {
+          free(err_msg); err_msg = NULL;
+        }
+      }
+    }
+    cJSON_AddFalseToObject(jr, "ok");
+    cJSON *jerr = cJSON_CreateObject();
+    if (err_num > 0) {
+      cJSON_AddNumberToObject(jerr, "num", err_num);
+      cJSON_AddStringToObject(jerr, "symbol", ns_error_symbol(err_num));
+    }
+    if (err_id) {
+      char xbuf[64];
+      sprintf(xbuf, "%08x", err_id);
+      cJSON_AddStringToObject(jerr, "log_id", xbuf);
+    }
+    if (err_msg) {
+      cJSON_AddStringToObject(jerr, "message", err_msg);
+    }
+    cJSON_AddItemToObject(jr, "error", jerr);
+    // FIXME: log event
+  } else {
+    cJSON_AddTrueToObject(jr, "ok");
+  }
+  cJSON_AddNumberToObject(jr, "server_time", (double) phr->current_time);
+  if (phr->request_id > 0) {
+    cJSON_AddNumberToObject(jr, "request_id", (double) phr->request_id);
+  }
+  if (phr->action > 0 && phr->action < NEW_SRV_ACTION_LAST && ns_symbolic_action_table[phr->action]) {
+    cJSON_AddStringToObject(jr, "action", ns_symbolic_action_table[phr->action]);
+  }
+  if (phr->client_state && phr->client_state->ops->get_reply_id) {
+    int reply_id = phr->client_state->ops->get_reply_id(phr->client_state);
+    cJSON_AddNumberToObject(jr, "reply_id", (double) reply_id);
+  }
+  jrstr = cJSON_PrintUnformatted(jr);
+  fprintf(fout, "%s\n", jrstr);
+
+  free(jrstr);
+  if (jr) cJSON_Delete(jr);
+  free(err_msg);
+  testing_report_free(tr);
+  free(prot_se.content);
 }
 
 static void
@@ -14689,6 +14887,7 @@ static action_handler_t user_actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_RUN_MESSAGES_JSON] = unpriv_run_messages_json,
   [NEW_SRV_ACTION_RUN_TEST_JSON] = unpriv_run_test_json,
   [NEW_SRV_ACTION_SUBMIT_RUN_INPUT] = unpriv_submit_run_input,
+  [NEW_SRV_ACTION_GET_SUBMIT] = unpriv_get_submit,
 };
 
 static const unsigned char * const external_unpriv_action_names[NEW_SRV_ACTION_LAST] =
