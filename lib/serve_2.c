@@ -2172,7 +2172,11 @@ serve_run_request(
   srgp->rejudge_flag = rejudge_flag;
   srgp->zip_mode = zip_mode;
   srgp->contest_server_id = xstrdup(config->contest_server_id);
-  srgp->bson_available = (store_flags == STORE_FLAGS_UUID_BSON);
+  if (submit_id > 0) {
+    srgp->bson_available = testing_report_bson_available();
+  } else {
+    srgp->bson_available = (store_flags == STORE_FLAGS_UUID_BSON);
+  }
   if (lang && lang->container_options) {
     srgp->lang_container_options = xstrdup(lang->container_options);
   }

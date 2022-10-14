@@ -223,6 +223,7 @@ generate_xml_report(
   }
 
   testing_report_xml_t tr = testing_report_alloc(srgp->contest_id, srgp->run_id, srgp->judge_id, &judge_uuid);
+  tr->submit_id = srgp->submit_id;
   tr->status = reply_pkt->status;
   tr->scoring_system = srgp->scoring_system_val;
   tr->archive_available = (srgp->enable_full_archive > 0);
@@ -3364,18 +3365,25 @@ run_one_test(
   if (cur_info->max_rss > 0) *p_has_max_rss = 1;
 
   // input file
-  file_size = -1;
-  if (srgp->enable_full_archive > 0) {
-    filehash_get(test_src, cur_info->input_digest);
-    cur_info->has_input_digest = 1;
+  if (user_input_mode) {
+    cur_info->input_size = inp_size;
+    cur_info->input = xmalloc(inp_size + 1);
+    memcpy(cur_info->input, inp_data, inp_size);
+    cur_info->input[inp_size] = 0;
   } else {
-    if (srpp->binary_input <= 0) {
-      file_size = generic_file_size(0, test_src, 0);
-    }
-    if (file_size >= 0) {
-      cur_info->input_size = file_size;
-      if (srgp->max_file_length > 0 && file_size <= srgp->max_file_length) {
-        generic_read_file(&cur_info->input, 0, 0, 0, 0, test_src, "");
+    file_size = -1;
+    if (srgp->enable_full_archive > 0) {
+      filehash_get(test_src, cur_info->input_digest);
+      cur_info->has_input_digest = 1;
+    } else {
+      if (srpp->binary_input <= 0) {
+        file_size = generic_file_size(0, test_src, 0);
+      }
+      if (file_size >= 0) {
+        cur_info->input_size = file_size;
+        if (srgp->max_file_length > 0 && file_size <= srgp->max_file_length) {
+          generic_read_file(&cur_info->input, 0, 0, 0, 0, test_src, "");
+        }
       }
     }
   }
