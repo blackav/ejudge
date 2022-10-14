@@ -268,6 +268,8 @@ handle_packet(
   unsigned char *short_name = NULL;
   const struct section_tester_data *tst = NULL;
   struct super_run_listener run_listener;
+  char *inp_data = NULL;
+  size_t inp_size = 0;
 
   memset(&reply_pkt, 0, sizeof(reply_pkt));
   memset(&run_listener, 0, sizeof(run_listener));
@@ -381,6 +383,23 @@ handle_packet(
       goto cleanup;
     }
 
+    if (srgp->submit_id > 0) {
+      if (!srpp->user_input_file || !*srpp->user_input_file) {
+        err("user_input_file is undefined");
+        goto cleanup;
+      }
+      if (agent) {
+        r = agent->ops->get_data(agent, srpp->user_input_file, NULL,
+                                 &inp_data, &inp_size);
+      } else {
+        r = generic_read_file(&inp_data, 0, &inp_size, REMOVE, super_run_exe_path, srpp->user_input_file, NULL);
+      }
+      if (r < 0 || !inp_size || !inp_data) {
+        err("user_input_file is nonexistant or empty");
+        goto cleanup;
+      }
+    }
+
     reply_pkt.judge_id = srgp->judge_id;
     reply_pkt.contest_id = srgp->contest_id;
     reply_pkt.run_id = srgp->run_id;
@@ -428,9 +447,9 @@ handle_packet(
               srpp->spelling, mirror_dir, utf8_mode,
               &run_listener.b, super_run_name,
               remap_specs,
-              0 /* user_input_mode */,
-              NULL /* inp_data */,
-              0 /* inp_size */);
+              srgp->submit_id > 0,
+              inp_data,
+              inp_size);
     //if (cr_serialize_unlock(state) < 0) return -1;
   }
 
@@ -556,6 +575,7 @@ cleanup:
   xfree(srp_b); srp_b = NULL; srp_z = 0;
   srp = super_run_in_packet_free(srp);
   xfree(reply_pkt_buf); reply_pkt_buf = NULL;
+  free(inp_data);
   clear_directory(global->run_work_dir);
   return retval;
 }

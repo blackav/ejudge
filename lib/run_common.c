@@ -2460,6 +2460,7 @@ run_one_test(
         long *p_report_real_time_limit_ms,
         const unsigned char *mirror_dir,
         const struct remap_spec *remaps,
+        int user_input_mode,
         const unsigned char *inp_data,
         size_t inp_size)
 {
@@ -2852,12 +2853,21 @@ run_one_test(
   if (tst && tst->is_dos > 0) is_dos = tst->is_dos;
   if (is_dos > 0 && srpp->binary_input <= 0) copy_flag = CONVERT;
 
-  /* copy the test */
-  mirror_file(test_src, sizeof(test_src), mirror_dir);
-  if (generic_copy_file(0, NULL, test_src, "", copy_flag, check_dir, srpp->input_file, "") < 0) {
-    append_msg_to_log(check_out_path, "failed to copy test file %s -> %s/%s",
-                      test_src, check_dir, srpp->input_file);
-    goto check_failed;
+  if (user_input_mode) {
+    /* write the provided data as input */
+    if (generic_write_file(inp_data, inp_size, 0, check_dir, srpp->input_file, "") < 0) {
+      append_msg_to_log(check_out_path, "failed to write test file to %s/%s",
+                        check_dir, srpp->input_file);
+      goto check_failed;
+    }
+  } else {
+    /* copy the test */
+    mirror_file(test_src, sizeof(test_src), mirror_dir);
+    if (generic_copy_file(0, NULL, test_src, "", copy_flag, check_dir, srpp->input_file, "") < 0) {
+      append_msg_to_log(check_out_path, "failed to copy test file %s -> %s/%s",
+                        test_src, check_dir, srpp->input_file);
+      goto check_failed;
+    }
   }
 
   if (tst && tst->error_file && tst->error_file[0]) {
@@ -3556,6 +3566,10 @@ run_one_test(
   }
 
 run_checker:;
+  if (user_input_mode) {
+    status = RUN_OK;
+    goto cleanup;
+  }
 
   if (disable_stderr > 0 && cur_info->error_size > 0) {
     append_msg_to_log(check_out_path, "non-empty output to stderr");
@@ -4346,7 +4360,8 @@ run_tests(
   expected_free_space = get_expected_free_space(check_dir);
 
 #ifndef __WIN32__
-  if (srpp->interactive_valuer > 0 && srpp->valuer_cmd && srpp->valuer_cmd[0]
+  if (!user_input_mode &&
+      srpp->interactive_valuer > 0 && srpp->valuer_cmd && srpp->valuer_cmd[0]
       && srgp->accepting_mode <= 0) {
     if (pipe(evfds) < 0
         || fcntl(evfds[0], F_SETFD, FD_CLOEXEC) < 0
@@ -4401,7 +4416,10 @@ run_tests(
                             &has_real_time, &has_max_memory_used,
                             &has_max_rss,
                             &report_time_limit_ms, &report_real_time_limit_ms,
-                            mirror_dir, remaps, NULL, 0);
+                            mirror_dir, remaps,
+                            user_input_mode,
+                            inp_data,
+                            inp_size);
       if (status != RUN_TIME_LIMIT_ERR && status != RUN_WALL_TIME_LIMIT_ERR)
         break;
       if (++tl_retry >= tl_retry_count) break;
@@ -4414,6 +4432,9 @@ run_tests(
       break;
     }
     if (status == RUN_OK) ++tests_passed;
+    if (user_input_mode) {
+      break;
+    }
     if (status > 0) {
       if (srgp->scoring_system_val == SCORE_ACM) break;
       if (srgp->scoring_system_val == SCORE_MOSCOW) break;
@@ -4548,6 +4569,14 @@ run_tests(
     goto check_failed;
   }
 
+  if (user_input_mode) {
+    has_user_score = 0;
+    user_status = status;
+    user_score = 0;
+    user_tests_passed = 0;
+    goto done;
+  }
+
   if (srgp->scoring_system_val == SCORE_OLYMPIAD && accept_testing) {
     status = RUN_ACCEPTED;
     failed_test = 0;
@@ -4649,7 +4678,7 @@ run_tests(
     }
   }
 
-  if (srpp->valuer_cmd && srpp->valuer_cmd[0] && srgp->accepting_mode <= 0) {
+  if (!user_input_mode && srpp->valuer_cmd && srpp->valuer_cmd[0] && srgp->accepting_mode <= 0) {
     if (srpp->interactive_valuer <= 0
         && reply_pkt->status != RUN_CHECK_FAILED) {
       if (invoke_valuer(global, srp, tests.size, tests.data,
