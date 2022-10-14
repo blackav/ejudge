@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2020 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -187,6 +187,7 @@ static const unsigned char * const ns_error_messages[NEW_SRV_ERR_LAST]=
   [NEW_SRV_ERR_OPERATION_FAILED] = __("Operation failed"),
   [NEW_SRV_ERR_INV_TOKEN] = __("Invalid token"),
   [NEW_SRV_ERR_INV_UUID] = __("Invalid UUID"),
+  [NEW_SRV_ERR_RATE_EXCEEDED] = __("Rate exceeded"),
 };
 
 static const unsigned char * const ns_error_titles[NEW_SRV_ERR_LAST]=
@@ -346,6 +347,7 @@ static const unsigned char * const ns_error_titles[NEW_SRV_ERR_LAST]=
   [NEW_SRV_ERR_OPERATION_FAILED] = __("Operation failed"),
   [NEW_SRV_ERR_INV_TOKEN] = __("Invalid token"),
   [NEW_SRV_ERR_INV_UUID] = __("Invalid UUID"),
+  [NEW_SRV_ERR_RATE_EXCEEDED] = __("Rate exceeded"),
 };
 
 static const unsigned char * const ns_error_symbols[NEW_SRV_ERR_LAST]=
@@ -504,6 +506,7 @@ static const unsigned char * const ns_error_symbols[NEW_SRV_ERR_LAST]=
   [NEW_SRV_ERR_OPERATION_FAILED] = "ERR_OPERATION_FAILED",
   [NEW_SRV_ERR_INV_TOKEN] = "ERR_INV_TOKEN",
   [NEW_SRV_ERR_INV_UUID] = "ERR_INV_UUID",
+  [NEW_SRV_ERR_RATE_EXCEEDED] = "ERR_RATE_EXCEEDED",
 };
 
 const unsigned char *
