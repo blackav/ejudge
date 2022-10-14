@@ -11615,6 +11615,11 @@ ns_submit_run_input(
   struct storage_entry inp_se = {};
   struct submit_entry se = {};
   const struct userlist_user *user = teamdb_get_userlist(cs->teamdb_state, phr->user_id);
+  struct submit_entry *ses = NULL;
+  size_t sez = 0;
+  struct submit_totals st = {};
+  unsigned char *run_fixed_text = NULL;
+  unsigned char *inp_fixed_text = NULL;
 
   // parse prob_id
   if (hr_cgi_param(phr, "prob_id", &s) <= 0 || !s) {
@@ -11694,6 +11699,8 @@ ns_submit_run_input(
       run_text += 3; run_size -= 3;
     }
   }
+  run_size = text_normalize_dup(run_text, run_size, TEXT_FIX_CR | TEXT_FIX_TR_SP | TEXT_FIX_FINAL_NL | TEXT_FIX_NP, &run_fixed_text, NULL, NULL);
+  run_text = run_fixed_text;
 
   r = hr_cgi_param_bin(phr, "file_input", &inp_text, &tmpsz); inp_size = tmpsz;
   if ((r <= 0 || !inp_text || inp_size <= 0) && prob->enable_text_form > 0) {
@@ -11716,6 +11723,9 @@ ns_submit_run_input(
       inp_text += 3; inp_size -= 3;
     }
   }
+  inp_size = text_normalize_dup(inp_text, inp_size, TEXT_FIX_CR | TEXT_FIX_TR_SP | TEXT_FIX_FINAL_NL | TEXT_FIX_NP, &inp_fixed_text, NULL, NULL);
+  inp_text = inp_fixed_text;
+
 
   time_t start_time = 0;
   time_t stop_time = 0;
@@ -11842,6 +11852,23 @@ ns_submit_run_input(
       }
     }
   }
+
+  if (cs->submit_state->vt->fetch_for_user(cs->submit_state, phr->user_id, 1, 0, &sez, &ses) < 0) {
+    err_num = NEW_SRV_ERR_DATABASE_FAILED;
+    goto done;
+  }
+  // rate limit check
+  if (sez > 0 && ses[sez].create_time_us + 5000000 > cs->current_time * 1000000LL) {
+    err_num = NEW_SRV_ERR_RATE_EXCEEDED;
+    goto done;
+  }
+  free(ses); ses = NULL; sez = 0;
+
+  if (cs->submit_state->vt->fetch_totals(cs->submit_state, phr->user_id, &st) < 0) {
+    err_num = NEW_SRV_ERR_DATABASE_FAILED;
+    goto done;
+  }
+  // FIXME: add quota check
 
   if (cs->storage_state->vt->insert(cs->storage_state, 0, 0, run_size, run_text, &src_se) < 0) {
     err_num = NEW_SRV_ERR_RUNLOG_UPDATE_FAILED;
@@ -11982,6 +12009,9 @@ done:;
   free(jrstr);
   if (jr) cJSON_Delete(jr);
   free(err_msg);
+  free(ses);
+  free(run_fixed_text);
+  free(inp_fixed_text);
 }
 
 static void
