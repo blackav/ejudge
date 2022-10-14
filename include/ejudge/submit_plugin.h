@@ -48,6 +48,13 @@ struct submit_entry
     signed char   eoln_type;
 };
 
+struct submit_totals
+{
+    int64_t count;
+    int64_t source_size;
+    int64_t input_size;
+};
+
 // the plugin state
 struct submit_plugin_data
 {
@@ -108,6 +115,10 @@ struct submit_plugin_iface
         int start,
         size_t *p_count,
         struct submit_entry **p_ses);
+    int (*fetch_totals)(
+        struct submit_cnts_plugin_data *data,
+        int user_id,
+        struct submit_totals *p_totals);
 };
 
 struct submit_cnts_plugin_data *

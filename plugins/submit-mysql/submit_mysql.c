@@ -570,6 +570,58 @@ fail:
     return -1;
 }
 
+struct submit_totals_internal
+{
+    int64_t count;
+    int64_t source_size;
+    int64_t input_size;
+};
+enum { SUBMIT_TOTALS_ROW_WIDTH = 3 };
+#define SUBMIT_TOTALS_OFFSET(f) XOFFSET(struct submit_totals_internal, f)
+static const struct common_mysql_parse_spec submit_totals_spec[SUBMIT_TOTALS_ROW_WIDTH] =
+{
+    { 1, 'l', "count", SUBMIT_TOTALS_OFFSET(count), 0 },
+    { 1, 'l', "source_size", SUBMIT_TOTALS_OFFSET(source_size), 0 },
+    { 1, 'l', "input_size", SUBMIT_TOTALS_OFFSET(input_size), 0 },
+};
+
+static int
+fetch_totals_func(
+        struct submit_cnts_plugin_data *data,
+        int user_id,
+        struct submit_totals *p_totals)
+{
+    struct submit_cnts_mysql_data *scmd = (struct submit_cnts_mysql_data *) data;
+    struct submit_mysql_data *smd = scmd->smd;
+    struct common_mysql_iface *mi = smd->mi;
+    struct common_mysql_state *md = smd->md;
+    char *cmd_s = NULL;
+    size_t cmd_z = 0;
+    FILE *cmd_f = NULL;
+    struct submit_totals_internal sti = {};
+
+    cmd_f = open_memstream(&cmd_s, &cmd_z);
+    fprintf(cmd_f, "SELECT COUNT(*), SUM(source_size), SUM(input_size) FROM `%ssubmits` WHERE user_id = %d AND contest_id = %d ;",
+            md->table_prefix, user_id, scmd->contest_id);
+    fclose(cmd_f); cmd_f = NULL;
+
+    if (md->row_count == 1) {
+        if (mi->next_row(md) < 0) db_error_fail(md);
+        if (mi->parse_spec(md, -1, md->row, md->lengths, SUBMIT_TOTALS_ROW_WIDTH, submit_totals_spec, &sti) < 0) goto fail;
+    }
+
+    p_totals->count = sti.count;
+    p_totals->source_size = sti.source_size;
+    p_totals->input_size = sti.input_size;
+
+    return 0;
+
+fail:
+    if (cmd_f) fclose(cmd_f);
+    free(cmd_s);
+    return -1;
+}
+
 struct submit_plugin_iface plugin_submit_mysql =
 {
     {
@@ -591,4 +643,5 @@ struct submit_plugin_iface plugin_submit_mysql =
     change_status_func,
     fetch_func,
     fetch_for_user_func,
+    fetch_totals_func,
 };
