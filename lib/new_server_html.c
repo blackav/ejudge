@@ -11762,12 +11762,6 @@ ns_submit_run_input(
     err_num = NEW_SRV_ERR_CONTEST_ALREADY_FINISHED;
     goto done;
   }
-  /*
-  if (!admin_mode && serve_check_user_quota(cs, user_id, run_size) < 0) {
-    FAIL(NEW_SRV_ERR_RUN_QUOTA_EXCEEDED);
-  }
-  */
-  // FIXME: check limit for input data file
   if (!serve_is_problem_started(cs, phr->user_id, prob)) {
     err_num = NEW_SRV_ERR_PROB_UNAVAILABLE;
     goto done;
@@ -11871,7 +11865,7 @@ ns_submit_run_input(
   }
   // rate limit check
   if (global->time_between_submits != 0) {
-    long long tbs_us = 5000000;
+    long long tbs_us = DFLT_G_TIME_BETWEEN_SUBMITS * 1000000LL;
     if (global->time_between_submits > 0) {
       tbs_us = global->time_between_submits * 1000000LL;
     }
@@ -11886,7 +11880,23 @@ ns_submit_run_input(
     err_num = NEW_SRV_ERR_DATABASE_FAILED;
     goto done;
   }
-  // FIXME: add quota check
+  {
+    int max_submit_num = DFLT_G_MAX_SUBMIT_NUM;
+    if (global->max_submit_num > 0) max_submit_num = global->max_submit_num;
+    if (st.count >= max_submit_num) {
+      err_num = NEW_SRV_ERR_RUN_QUOTA_EXCEEDED;
+      goto done;
+    }
+  }
+  {
+    long long max_submit_total = DFLT_G_MAX_SUBMIT_TOTAL;
+    if (global->max_submit_total > 0) max_submit_total = global->max_submit_total;
+    long long new_size = st.count + run_size + inp_size;
+    if (new_size > max_submit_total) {
+      err_num = NEW_SRV_ERR_RUN_QUOTA_EXCEEDED;
+      goto done;
+    }
+  }
 
   if (cs->storage_state->vt->insert(cs->storage_state, 0, 0, run_size, run_text, &src_se) < 0) {
     err_num = NEW_SRV_ERR_RUNLOG_UPDATE_FAILED;

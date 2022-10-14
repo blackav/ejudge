@@ -2,7 +2,7 @@
 #ifndef __PREPARE_DFLT_H__
 #define __PREPARE_DFLT_H__
 
-/* Copyright (C) 2005-2019 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -145,6 +145,10 @@
 #define DFLT_G_ENABLE_MEMORY_LIMIT_ERROR 0
 
 #define DFLT_G_REJUDGE_PRIORITY_ADJUSTMENT 3
+
+#define DFLT_G_TIME_BETWEEN_SUBMITS 5
+#define DFLT_G_MAX_SUBMIT_NUM 100
+#define DFLT_G_MAX_SUBMIT_TOTAL (1024 * 1024 * 1024)
 
 #define DFLT_P_INPUT_FILE         "input"
 #define DFLT_P_OUTPUT_FILE        "output"

@@ -353,6 +353,9 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(compile_max_file_size, "E"),
 
   GLOBAL_PARAM(time_between_submits, "d"),
+  GLOBAL_PARAM(max_input_size, "d"),
+  GLOBAL_PARAM(max_submit_num, "d"),
+  GLOBAL_PARAM(max_submit_total, "d"),
 
   { 0, 0, 0, 0 }
 };

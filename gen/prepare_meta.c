@@ -305,6 +305,8 @@ static struct meta_info_item meta_info_section_global_data_data[] =
   [CNTSGLOB_disable_passed_tests] = { CNTSGLOB_disable_passed_tests, 'B', XSIZE(struct section_global_data, disable_passed_tests), NULL, XOFFSET(struct section_global_data, disable_passed_tests) },
   [CNTSGLOB_time_between_submits] = { CNTSGLOB_time_between_submits, 'i', XSIZE(struct section_global_data, time_between_submits), "time_between_submits", XOFFSET(struct section_global_data, time_between_submits) },
   [CNTSGLOB_max_input_size] = { CNTSGLOB_max_input_size, 'z', XSIZE(struct section_global_data, max_input_size), "max_input_size", XOFFSET(struct section_global_data, max_input_size) },
+  [CNTSGLOB_max_submit_num] = { CNTSGLOB_max_submit_num, 'i', XSIZE(struct section_global_data, max_submit_num), "max_submit_num", XOFFSET(struct section_global_data, max_submit_num) },
+  [CNTSGLOB_max_submit_total] = { CNTSGLOB_max_submit_total, 'z', XSIZE(struct section_global_data, max_submit_total), "max_submit_total", XOFFSET(struct section_global_data, max_submit_total) },
 };
 
 int cntsglob_get_type(int tag)

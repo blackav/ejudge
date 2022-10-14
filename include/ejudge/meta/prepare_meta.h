@@ -300,6 +300,8 @@ enum
   CNTSGLOB_disable_passed_tests,
   CNTSGLOB_time_between_submits,
   CNTSGLOB_max_input_size,
+  CNTSGLOB_max_submit_num,
+  CNTSGLOB_max_submit_total,
 
   CNTSGLOB_LAST_FIELD,
 };

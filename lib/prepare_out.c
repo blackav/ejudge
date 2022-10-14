@@ -330,6 +330,11 @@ prepare_unparse_global(
   if (global->max_input_size > 0)
     fprintf(f, "max_input_size = %s\n",
             num_to_size_str(nbuf, sizeof(nbuf), global->max_input_size));
+  if (global->max_submit_num > 0)
+    fprintf(f, "max_submit_num = %d\n", global->max_submit_num);
+  if (global->max_submit_total > 0)
+    fprintf(f, "max_submit_total = %s\n",
+            num_to_size_str(nbuf, sizeof(nbuf), global->max_submit_total));
 
   if (global->compile_max_vm_size > 0) {
     fprintf(f, "compile_max_vm_size = %s\n", ll_to_size_str(size_buf, sizeof(size_buf), global->compile_max_vm_size));
