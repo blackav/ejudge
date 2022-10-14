@@ -11858,9 +11858,15 @@ ns_submit_run_input(
     goto done;
   }
   // rate limit check
-  if (sez > 0 && ses[0].create_time_us + 5000000 > cs->current_time * 1000000LL) {
-    err_num = NEW_SRV_ERR_RATE_EXCEEDED;
-    goto done;
+  if (global->time_between_submits != 0) {
+    long long tbs_us = 5000000;
+    if (global->time_between_submits > 0) {
+      tbs_us = global->time_between_submits * 1000000LL;
+    }
+    if (sez > 0 && ses[0].create_time_us + tbs_us > cs->current_time * 1000000LL) {
+      err_num = NEW_SRV_ERR_RATE_EXCEEDED;
+      goto done;
+    }
   }
   free(ses); ses = NULL; sez = 0;
 

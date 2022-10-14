@@ -303,6 +303,7 @@ static struct meta_info_item meta_info_section_global_data_data[] =
   [CNTSGLOB_unhandled_vars] = { CNTSGLOB_unhandled_vars, 's', XSIZE(struct section_global_data, unhandled_vars), "unhandled_vars", XOFFSET(struct section_global_data, unhandled_vars) },
   [CNTSGLOB_disable_prob_long_name] = { CNTSGLOB_disable_prob_long_name, 'B', XSIZE(struct section_global_data, disable_prob_long_name), NULL, XOFFSET(struct section_global_data, disable_prob_long_name) },
   [CNTSGLOB_disable_passed_tests] = { CNTSGLOB_disable_passed_tests, 'B', XSIZE(struct section_global_data, disable_passed_tests), NULL, XOFFSET(struct section_global_data, disable_passed_tests) },
+  [CNTSGLOB_time_between_submits] = { CNTSGLOB_time_between_submits, 'i', XSIZE(struct section_global_data, time_between_submits), "time_between_submits", XOFFSET(struct section_global_data, time_between_submits) },
 };
 
 int cntsglob_get_type(int tag)

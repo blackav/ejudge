@@ -352,6 +352,8 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(compile_max_stack_size, "E"),
   GLOBAL_PARAM(compile_max_file_size, "E"),
 
+  GLOBAL_PARAM(time_between_submits, "d"),
+
   { 0, 0, 0, 0 }
 };
 
@@ -921,6 +923,8 @@ global_init_func(struct generic_section_config *gp)
   p->compile_max_file_size = ~(ej_size64_t) 0;
 
   p->enable_tokens = -1;
+
+  p->time_between_submits = -1;
 }
 
 static void free_user_adjustment_info(struct user_adjustment_info*);

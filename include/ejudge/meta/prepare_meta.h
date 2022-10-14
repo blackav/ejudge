@@ -298,6 +298,7 @@ enum
   CNTSGLOB_unhandled_vars,
   CNTSGLOB_disable_prob_long_name,
   CNTSGLOB_disable_passed_tests,
+  CNTSGLOB_time_between_submits,
 
   CNTSGLOB_LAST_FIELD,
 };

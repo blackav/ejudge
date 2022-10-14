@@ -791,6 +791,9 @@ struct section_global_data
   ejintbool_t disable_prob_long_name META_ATTRIB((meta_private));
   /** INTERNAL: all problems are output-only */
   ejintbool_t disable_passed_tests META_ATTRIB((meta_private));
+
+  /** time between user submits */
+  int time_between_submits;
 };
 
 /* sizeof(struct section_problem_data) == 820/1280 */
