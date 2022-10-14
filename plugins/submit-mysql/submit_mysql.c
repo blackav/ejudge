@@ -528,7 +528,7 @@ fetch_for_user_func(
     struct submit_entry *v = NULL;
 
     cmd_f = open_memstream(&cmd_s, &cmd_z);
-    fprintf(cmd_f, "SELECT * FROM `%ssubmits` WHERE user_id = %d AND contest_id = %d",
+    fprintf(cmd_f, "SELECT * FROM `%ssubmits` WHERE user_id = %d AND contest_id = %d ORDER BY serial_id DESC",
             md->table_prefix, user_id, scmd->contest_id);
     if (limit > 0) {
         fprintf(cmd_f, " LIMIT %d", limit);
@@ -604,6 +604,10 @@ fetch_totals_func(
     fprintf(cmd_f, "SELECT COUNT(*), SUM(source_size), SUM(input_size) FROM `%ssubmits` WHERE user_id = %d AND contest_id = %d ;",
             md->table_prefix, user_id, scmd->contest_id);
     fclose(cmd_f); cmd_f = NULL;
+
+    if (mi->query(md, cmd_s, cmd_z, SUBMIT_TOTALS_ROW_WIDTH) < 0)
+        db_error_fail(md);
+    free(cmd_s); cmd_s = NULL; cmd_z = 0;
 
     if (md->row_count == 1) {
         if (mi->next_row(md) < 0) db_error_fail(md);
