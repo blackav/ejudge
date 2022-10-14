@@ -556,15 +556,128 @@
 </table>
 </s:form>
 
+<div id="ej-submit-status-div" style="display:none;" >
+<p>Status: <span id="ej-submit-status"></span></p>
+</div>
+
+<div id="ej-submit-compiler-div" style="display:none;" >
+<p>Compiler output:</p>
+<pre id="ej-submit-compiler">
+</pre>
+</div>
+
+<div id="ej-submit-output-div" style="display:none;" >
+<p>Program output:</p>
+<pre id="ej-submit-output">
+</pre>
+</div>
+
+<div id="ej-submit-error-div" style="display:none;" >
+<p>Program error:</p>
+<pre id="ej-submit-error">
+</pre>
+</div>
+
+<div id="ej-submit-stats-div" style="display:none;" >
+<p>Statistics:
+<span id="ej-submit-exit"></span>
+CPU time: <span id="ej-submit-time"></span>
+Real time: <span id="ej-submit-real-time"></span>
+Max Memory Used: <span id="ej-submit-max-rss"></span></p>
+</div>
+
+<div id="ej-submit-log-div" style="display:none;">
+<p>Submission log:</p>
+<pre id="ej-submit-log">
+</pre>
+</div>
+
 <script>
+  function process_result(data)
+  {
+    console.log(data);
+    if (data.ok) {
+      $("#ej-submit-status-div").show();
+      $("#ej-submit-status").text(data.result.status_str);
+      if (data.result.compiler_output) {
+        $("#ej-submit-compiler-div").show();
+        $("#ej-submit-compiler").text(data.result.compiler_output);
+      }
+      if (data.result.output) {
+        $("#ej-submit-output-div").show();
+        $("#ej-submit-output").text(data.result.output);
+      }
+      if (data.result.error) {
+        $("#ej-submit-error-div").show();
+        $("#ej-submit-error").text(data.result.error);
+      }
+      var enable_stat = false;
+      if (data.result.time > 0) {
+        $("#ej-submit-time").text(data.result.time);
+        enable_stat = true;
+      }
+      if (data.result.real_time > 0) {
+        $("#ej-submit-real-time").text(data.result.real_time);
+        enable_stat = true;
+      }
+      var has_code = false;
+      if (data.result.term_signal > 0) {
+        $("#ej-submit-exit").text("Termination signal: " + data.result.term_signal);
+        has_code = true;
+        enable_stat = true;
+      }
+      if (data.result.exit_code >= 0) {
+        $("#ej-submit-exit").text("Exit code: " + data.result.exit_code);
+        has_code = true;
+        enable_stat = true;
+      }
+      if (data.result.max_rss > 0) {
+        $("#ej-submit-max-rss").text(data.result.max_rss);
+        enable_stat = true;
+      } else if (data.result.max_memory_used > 0) {
+        $("#ej-submit-max-rss").text(data.result.max_memory_used);
+        enable_stat = true;
+      }
+      if (enable_stat) {
+        if (!has_code) {
+          $("#ej-submit-exit").text("Exit code: 0");
+        }
+        $("#ej-submit-stats-div").show();
+      }
+      if (data.result.status > 90) {
+        window.setTimeout(function() {
+          wait_for_result(data.result.serial_id);
+        }, 1000);
+      }
+    }
+  }
+  function wait_for_result(submit_id)
+  {
+    $.get(self_url + "?SID=" + SID + "&submit_id=" + submit_id + "&action=get-submit", process_result);
+  }
+
   $(function() {
     $("#ej-run-input-form").submit(function(e) {
       e.preventDefault();
       var data = new FormData(this);
       var action = $("#ej-run-input-form").attr("action");
 
-      console.log(data);
-      console.log(action);
+      $("#ej-submit-status-div").hide();
+      $("#ej-submit-compiler-div").hide();
+      $("#ej-submit-output-div").hide();
+      $("#ej-submit-error-div").hide();
+      $("#ej-submit-stats-div").hide();
+      $("#ej-submit-log-div").show();
+
+      $("#ej-submit-status").empty();
+      $("#ej-submit-compiler").empty();
+      $("#ej-submit-output").empty();
+      $("#ej-submit-error").empty();
+      $("#ej-submit-exit").empty();
+      $("#ej-submit-time").empty();
+      $("#ej-submit-real-time").empty();
+      $("#ej-submit-max-rss").empty();
+      $("#ej-submit-log").empty();
 
       $.ajax({
         method: "POST",
@@ -573,8 +686,15 @@
         data: data,
         processData: false,
         success: function(data) {
+          if (data.ok) {
+            $("#ej-submit-log").append("submit id: " + data.result.serial_id);
+            wait_for_result(data.result.serial_id);
+          } else {
+            $("#ej-submit-log").append("submit failed: " + data.error.message);
+          }
         },
         error: function(xhr, options, err) {
+          $("#ej-submit-log").append("submit failed");
         }
       });
     });
