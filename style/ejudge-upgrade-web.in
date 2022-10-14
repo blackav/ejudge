@@ -1,5 +1,5 @@
 #! /bin/bash
-# Copyright (c) 2008-2017 Alexander Chernov <cher@ejudge.ru>
+# Copyright (c) 2008-2022 Alexander Chernov <cher@ejudge.ru>
 
 # This script upgrades the web installation of the ejudge system
 
@@ -20,7 +20,7 @@ cgi_suffix="@ac_cv_cgi_suffix@"
 
 write_help() {
     echo "ejudge-upgrade-web: ejudge web upgrade utility"
-    echo "Copyright (c) 2008-2015 Alexander Chernov <cher@ejudge.ru>"
+    echo "Copyright (c) 2008-2022 Alexander Chernov <cher@ejudge.ru>"
     echo "usage: ejudge-upgrade-web [HTDOCROOT] [CGIBINDIR]"
     exit 0
 }
@@ -102,7 +102,7 @@ then
 fi
 
 # symlink the necessary style files
-for i in back_sh.png capabilities_sh.png ejudge3.css ejudge3_ss.css ejudge_mobile.css filter_expr.html g_bl_light1.jpg grad2.jpg grad_gr_darker.jpg grad_green_long.jpg grad_grey_d.jpg grad.jpg grad_green_tab.jpg grad_red.jpg group_sh.png icons logo3.png logo.gif logout_sh.png mapping_sh.png new_cont_sh.png priv.css priv.js refresh_sh.png settings_sh.png sprintf.js unpriv3.css unpriv.css unpriv.js user_sh.png jqgrid jquery-ui jquery.min.js jquery.timepicker.css jquery.timepicker.min.js grad_grey_d.jpg grad_green_long.jpg prism.js prism.css Roboto-Regular.ttf Roboto-Bold.ttf Roboto-Italic.ttf Roboto-BoldItalic.ttf croppie.js croppie.css
+for i in back_sh.png capabilities_sh.png ejudge3.css ejudge3_ss.css ejudge_mobile.css filter_expr.html g_bl_light1.jpg grad2.jpg grad_gr_darker.jpg grad_green_long.jpg grad_grey_d.jpg grad.jpg grad_green_tab.jpg grad_red.jpg group_sh.png icons logo3.png logo.gif logout_sh.png mapping_sh.png new_cont_sh.png priv.css priv.js refresh_sh.png settings_sh.png sprintf.js unpriv3.css unpriv.css unpriv.js user_sh.png jqgrid jquery-ui jquery.min.js jquery.timepicker.css jquery.timepicker.min.js jquery-3.6.0.js jquery-ui.css jquery-ui.js grad_grey_d.jpg grad_green_long.jpg prism.js prism.css Roboto-Regular.ttf Roboto-Bold.ttf Roboto-Italic.ttf Roboto-BoldItalic.ttf croppie.js croppie.css
 do
     if [ "${copy_mode}" = 1 ]
     then
