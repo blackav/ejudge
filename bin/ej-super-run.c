@@ -634,7 +634,7 @@ do_loop(
   if (agent_name && *agent_name) {
     if (!strncmp(agent_name, "ssh:", 4)) {
       agent = agent_client_ssh_create();
-      if (agent->ops->init(agent, instance_id,
+      if (agent->ops->init(agent, super_run_id,
                            agent_name + 4, run_server_id,
                            PREPARE_RUN, verbose_mode) < 0) {
         err("failed to initalize agent");
@@ -1464,8 +1464,8 @@ main(int argc, char *argv[])
       cur_arg += 2;
     } else if (!strcmp(argv[cur_arg], "--instance-id")) {
       if (cur_arg + 1 >= argc) fatal("argument expected for --instance-id");
-      xfree(instance_id);
-      instance_id = xstrdup(argv[cur_arg + 1]);
+      xfree(super_run_id);
+      super_run_id = xstrdup(argv[cur_arg + 1]);
       argv_restart[argc_restart++] = argv[cur_arg];
       argv_restart[argc_restart++] = argv[cur_arg + 1];
       cur_arg += 2;
