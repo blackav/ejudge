@@ -11891,7 +11891,7 @@ ns_submit_run_input(
   {
     long long max_submit_total = DFLT_G_MAX_SUBMIT_TOTAL;
     if (global->max_submit_total > 0) max_submit_total = global->max_submit_total;
-    long long new_size = st.count + run_size + inp_size;
+    long long new_size = st.source_size + st.input_size + run_size + inp_size;
     if (new_size > max_submit_total) {
       err_num = NEW_SRV_ERR_RUN_QUOTA_EXCEEDED;
       goto done;
