@@ -259,9 +259,9 @@ read_git_status(unsigned char *id_buf, int id_buf_size, int *p_has_changes)
         int len = strlen(buf);
         while (len > 0 && isspace(buf[len - 1])) --len;
         buf[len] = 0;
-        if (!strncmp(buf, "db/", 3)) continue;
-        if (!strncmp(buf, "libdwarf/", 9)) continue;
-        if (!strncmp(buf, "NEWS", 4)) continue;
+        if (strstr(buf, "db/")) continue;
+        if (strstr(buf, "libdwarf/")) continue;
+        if (strstr(buf, "NEWS")) continue;
         if (len > 0) has_changes = 1;
     }
     pclose(f); f = NULL;
