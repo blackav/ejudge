@@ -15484,6 +15484,23 @@ unpriv_session_info_json(FILE *fout, struct http_request_info *phr)
 }
 
 static void
+unpriv_gitlab_webhook(
+        FILE *fout,
+        struct http_request_info *phr)
+{
+  cJSON *jr = cJSON_CreateObject();
+  unsigned char *jrstr = NULL;
+
+  phr->json_reply = 1;
+  cJSON_AddTrueToObject(jr, "ok");
+  jrstr = cJSON_PrintUnformatted(jr);
+  fprintf(fout, "%s\n", jrstr);
+
+  free(jrstr);
+  cJSON_Delete(jr);
+}
+
+static void
 unprivileged_entry_point(
         FILE *fout,
         struct http_request_info *phr)
@@ -15499,6 +15516,11 @@ unprivileged_entry_point(
   serve_state_t cs = 0;
   const unsigned char *s = 0;
   int cookie_locale_id = -1;
+
+  if (phr->action == NEW_SRV_ACTION_GITLAB_WEBHOOK) {
+    unpriv_gitlab_webhook(fout, phr);
+    return;
+  }
 
   if (phr->action == NEW_SRV_ACTION_FORGOT_PASSWORD_1) {
     contests_get(phr->contest_id, &cnts);
