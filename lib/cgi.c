@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2000-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -134,6 +133,27 @@ add_to_param_list(char const *name, char const *value, int size)
   params[i].value = xmalloc(size + 1);
   memcpy(params[i].value, value, size);
   params[i].value[size] = 0;
+}
+
+static void
+add_to_param_list_2(char const *name, char *value, int size)
+{
+  int i;
+
+  for (i = 0; i < param_u; i++) {
+    if (!strcmp(name, params[i].name)) break;
+  }
+  if (i >= param_u) {
+    if (param_u >= param_a) {
+      param_a += 32;
+      params = (struct param*) xrealloc(params, param_a * sizeof(params[0]));
+    }
+    param_u++;
+  }
+
+  params[i].name  = xstrdup(name);
+  params[i].size  = size;
+  params[i].value = value;
 }
 
 static int
@@ -414,6 +434,45 @@ cgi_read(char const *charset)
   if (ct && !strncmp(ct, multipart, sizeof(multipart) - 1)) {
     /* got a multipart/form-data */
     return parse_multipart(charset);
+  }
+
+  if (ct && !strcmp(ct, "application/json")) {
+    const char *cl = getenv("CONTENT_LENGTH");
+    if (!cl) {
+      bad_request(charset);
+      exit(0);
+    }
+    errno = 0;
+    char *eptr = NULL;
+    long v = strtol(cl, &eptr, 10);
+    if (errno || *eptr || eptr == cl || v < 0 || (int) v != v) {
+      bad_request(charset);
+      exit(0);
+    }
+    if (v > MAX_CONTENT_LENGTH) {
+      request_too_large(charset);
+      exit(0);
+    }
+    content_length = v;
+
+    size_t ja = 32;
+    size_t ju = 0;
+    char *jt = xmalloc(ja);
+    for (int i = 0; i < content_length; ++i) {
+      int c = getchar_unlocked();
+      if (c == EOF) break;
+      if (ju == ja) {
+        jt = xrealloc(jt, ja *= 2);
+      }
+      jt[ju++] = c;
+    }
+    if (ju == ja) {
+      jt = xrealloc(jt, ja *= 2);
+      jt[ju] = 0;
+    }
+    add_to_param_list_2("JSON", jt, ju);
+
+    return 0;
   }
 
   const unsigned char *cl = getenv("CONTENT_LENGTH");
