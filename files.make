@@ -295,6 +295,7 @@ COMMON_CFILES=\
  lib/userlist_check.c\
  lib/userlist_proto.c\
  lib/userlist_xml.c\
+ lib/userprob_plugin.c\
  lib/variant_map.c\
  lib/variant_plugin.c\
  lib/variant_plugin_file.c\
@@ -673,6 +674,7 @@ HFILES=\
  ./include/ejudge/userlist.h\
  ./include/ejudge/userlist_bin.h\
  ./include/ejudge/userlist_clnt.h\
+ ./include/ejudge/userprob_plugin.h\
  ./include/ejudge/variant_map.h\
  ./include/ejudge/variant_plugin.h\
  ./include/ejudge/varsubst.h\
