@@ -445,6 +445,7 @@ static struct meta_info_item meta_info_section_problem_data_data[] =
   [CNTSPROB_use_lang_multi_header] = { CNTSPROB_use_lang_multi_header, 'f', XSIZE(struct section_problem_data, use_lang_multi_header), "use_lang_multi_header", XOFFSET(struct section_problem_data, use_lang_multi_header) },
   [CNTSPROB_notify_on_submit] = { CNTSPROB_notify_on_submit, 'f', XSIZE(struct section_problem_data, notify_on_submit), "notify_on_submit", XOFFSET(struct section_problem_data, notify_on_submit) },
   [CNTSPROB_enable_user_input] = { CNTSPROB_enable_user_input, 'f', XSIZE(struct section_problem_data, enable_user_input), "enable_user_input", XOFFSET(struct section_problem_data, enable_user_input) },
+  [CNTSPROB_enable_gitlab] = { CNTSPROB_enable_gitlab, 'f', XSIZE(struct section_problem_data, enable_gitlab), "enable_gitlab", XOFFSET(struct section_problem_data, enable_gitlab) },
   [CNTSPROB_examinator_num] = { CNTSPROB_examinator_num, 'i', XSIZE(struct section_problem_data, examinator_num), "examinator_num", XOFFSET(struct section_problem_data, examinator_num) },
   [CNTSPROB_real_time_limit] = { CNTSPROB_real_time_limit, 'i', XSIZE(struct section_problem_data, real_time_limit), "real_time_limit", XOFFSET(struct section_problem_data, real_time_limit) },
   [CNTSPROB_time_limit] = { CNTSPROB_time_limit, 'i', XSIZE(struct section_problem_data, time_limit), "time_limit", XOFFSET(struct section_problem_data, time_limit) },

@@ -989,6 +989,8 @@ struct section_problem_data
 
   ejbyteflag_t enable_user_input;
 
+  ejbyteflag_t enable_gitlab;
+
   // padding to 8-byte boundary
   //unsigned char _pad1[1];
 
