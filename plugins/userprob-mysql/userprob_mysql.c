@@ -78,7 +78,7 @@ static const char create_query[] =
 "    user_id INT UNSIGNED NOT NULL,\n"
 "    prob_id INT UNSIGNED NOT NULL DEFAULT 0,\n"
 "    hook_id CHAR(64) NOT NULL,\n"
-"    secret VARCHAR(64) DEFAULT NULL,\n"
+"    gitlab_token VARCHAR(64) DEFAULT NULL,\n"
 "    vcs_type VARCHAR(16) DEFAULT NULL,\n"
 "    vcs_url VARCHAR(1024) DEFAULT NULL,\n"
 "    vcs_subdir VARCHAR(1024) DEFAULT NULL,\n"
@@ -172,7 +172,7 @@ struct userprob_entry_internal
     int user_id;
     int prob_id;
     unsigned char *hook_id;
-    unsigned char *secret;
+    unsigned char *gitlab_token;
     unsigned char *vcs_type;
     unsigned char *vcs_url;
     unsigned char *vcs_subdir;
@@ -193,7 +193,7 @@ static const struct common_mysql_parse_spec userprob_entry_spec[USERPROB_ENTRY_R
     { 0, 'd', "user_id", USERPROB_ENTRY_OFFSET(user_id), 0 },
     { 0, 'd', "prob_id", USERPROB_ENTRY_OFFSET(prob_id), 0 },
     { 1, 's', "hook_id", USERPROB_ENTRY_OFFSET(hook_id), 0 },
-    { 1, 's', "secret", USERPROB_ENTRY_OFFSET(secret), 0 },
+    { 1, 's', "gitlab_token", USERPROB_ENTRY_OFFSET(gitlab_token), 0 },
     { 1, 's', "vcs_type", USERPROB_ENTRY_OFFSET(vcs_type), 0 },
     { 1, 's', "vcs_url", USERPROB_ENTRY_OFFSET(vcs_url), 0 },
     { 1, 's', "vcs_subdir", USERPROB_ENTRY_OFFSET(vcs_url), 0 },
@@ -252,7 +252,7 @@ fetch_by_hook_id_func(
         ue->user_id = uei.user_id;
         ue->prob_id = uei.prob_id;
         ue->hook_id = uei.hook_id; uei.hook_id = NULL;
-        ue->secret = uei.secret; uei.secret = NULL;
+        ue->gitlab_token = uei.gitlab_token; uei.gitlab_token = NULL;
         ue->vcs_type = uei.vcs_type; uei.vcs_type = NULL;
         ue->vcs_url = uei.vcs_url; uei.vcs_url = NULL;
         ue->vcs_subdir = uei.vcs_subdir; uei.vcs_subdir = NULL;

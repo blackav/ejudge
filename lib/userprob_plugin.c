@@ -25,7 +25,7 @@ userprob_entry_free(struct userprob_entry *ue)
 {
     if (ue) {
         free(ue->hook_id);
-        free(ue->secret);
+        free(ue->gitlab_token);
         free(ue->vcs_type);
         free(ue->vcs_url);
         free(ue->vcs_subdir);
