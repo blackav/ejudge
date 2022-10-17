@@ -68,10 +68,8 @@ struct contest_desc;
 struct serve_state;
 
 struct userprob_plugin_data *
-userprob_plugin_open(
+userprob_plugin_get(
         const struct ejudge_cfg *config,
-        const struct contest_desc *cnts,
-        const struct serve_state *state,
         const unsigned char *plugin_name,
         int flags);
 
