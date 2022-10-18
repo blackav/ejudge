@@ -8401,7 +8401,7 @@ ac_config_headers="$ac_config_headers config.h"
 subdirs="$subdirs libdwarf"
 
 
-ac_config_files="$ac_config_files Makefile extra/Makefile extra/captest/Makefile checkers/Makefile scripts/Makefile ejudge-config.v scripts/festival plugins/common-mysql/Makefile plugins/userlist-mysql/Makefile plugins/clardb-mysql/Makefile plugins/rundb-mysql/Makefile plugins/common-mongo/Makefile plugins/xuser-mongo/Makefile style/ejudge-upgrade-web cfront/Makefile reuse/Makefile csp/contests/Makefile csp/super-server/Makefile csp_header.make plugins/telegram/Makefile plugins/avatar-mongo/Makefile plugins/status-mongo/Makefile plugins/status-mysql/Makefile plugins/auth-google/Makefile plugins/auth-base/Makefile plugins/auth-vk/Makefile plugins/auth-fb/Makefile plugins/xuser-mysql/Makefile plugins/avatar-mysql/Makefile plugins/variant-mysql/Makefile plugins/storage-mysql/Makefile plugins/cache-mysql/Makefile plugins/submit-mysql/Makefile plugins/userprob-mysql/Makefile"
+ac_config_files="$ac_config_files Makefile extra/Makefile extra/captest/Makefile checkers/Makefile scripts/Makefile ejudge-config.v scripts/festival plugins/common-mysql/Makefile plugins/userlist-mysql/Makefile plugins/clardb-mysql/Makefile plugins/rundb-mysql/Makefile plugins/common-mongo/Makefile plugins/xuser-mongo/Makefile style/ejudge-upgrade-web cfront/Makefile reuse/Makefile csp/contests/Makefile csp/super-server/Makefile csp_header.make plugins/telegram/Makefile plugins/avatar-mongo/Makefile plugins/status-mongo/Makefile plugins/status-mysql/Makefile plugins/auth-google/Makefile plugins/auth-base/Makefile plugins/auth-vk/Makefile plugins/auth-fb/Makefile plugins/xuser-mysql/Makefile plugins/avatar-mysql/Makefile plugins/variant-mysql/Makefile plugins/storage-mysql/Makefile plugins/cache-mysql/Makefile plugins/submit-mysql/Makefile plugins/userprob-mysql/Makefile plugins/vcs->gitlab/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -9131,6 +9131,7 @@ do
     "plugins/cache-mysql/Makefile") CONFIG_FILES="$CONFIG_FILES plugins/cache-mysql/Makefile" ;;
     "plugins/submit-mysql/Makefile") CONFIG_FILES="$CONFIG_FILES plugins/submit-mysql/Makefile" ;;
     "plugins/userprob-mysql/Makefile") CONFIG_FILES="$CONFIG_FILES plugins/userprob-mysql/Makefile" ;;
+    "plugins/vcs->gitlab/Makefile") CONFIG_FILES="$CONFIG_FILES plugins/vcs->gitlab/Makefile" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
   esac
