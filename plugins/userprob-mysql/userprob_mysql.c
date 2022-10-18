@@ -185,7 +185,6 @@ struct userprob_entry_internal
 
 enum { USERPROB_ENTRY_ROW_WIDTH = 14 };
 #define USERPROB_ENTRY_OFFSET(f) XOFFSET(struct userprob_entry_internal, f)
-[[gnu::unused]]
 static const struct common_mysql_parse_spec userprob_entry_spec[USERPROB_ENTRY_ROW_WIDTH] =
 {
     { 0, 'l', "serial_id", USERPROB_ENTRY_OFFSET(serial_id), 0 },
@@ -217,7 +216,28 @@ open_func(
     return 0;
 }
 
-struct userprob_entry *
+static void
+move_to_userprob_entry(
+        struct userprob_entry *ue,
+        struct userprob_entry_internal *uei)
+{
+    ue->serial_id = uei->serial_id;
+    ue->contest_id = uei->contest_id;
+    ue->user_id = uei->user_id;
+    ue->prob_id = uei->prob_id;
+    ue->hook_id = uei->hook_id; uei->hook_id = NULL;
+    ue->gitlab_token = uei->gitlab_token; uei->gitlab_token = NULL;
+    ue->vcs_type = uei->vcs_type; uei->vcs_type = NULL;
+    ue->vcs_url = uei->vcs_url; uei->vcs_url = NULL;
+    ue->vcs_subdir = uei->vcs_subdir; uei->vcs_subdir = NULL;
+    ue->ssh_private_key = uei->ssh_private_key; uei->ssh_private_key = NULL;
+    ue->last_event = uei->last_event; uei->last_event = NULL;
+    ue->last_revision = uei->last_revision; uei->last_revision = NULL;
+    ue->create_time_us = uei->create_time.tv_sec * 1000000LL + uei->create_time.tv_usec;
+    ue->last_change_time_us = uei->last_change_time.tv_sec * 1000000LL + uei->last_change_time.tv_usec;
+}
+
+static struct userprob_entry *
 fetch_by_hook_id_func(
         struct userprob_plugin_data *data,
         const unsigned char *hook_id)
@@ -245,22 +265,47 @@ fetch_by_hook_id_func(
     if (md->row_count == 1) {
         XCALLOC(ue, 1);
         if (mi->next_row(md) < 0) db_error_fail(md);
-        if (mi->parse_spec(md, -1, md->row, md->lengths, USERPROB_ENTRY_ROW_WIDTH, userprob_entry_spec, &uei) < 0) goto fail;
+        if (mi->parse_spec(md, -1, md->row, md->lengths, USERPROB_ENTRY_ROW_WIDTH, userprob_entry_spec, &uei) < 0)
+            goto fail;
+        move_to_userprob_entry(ue, &uei);
+    }
+    return ue;
 
-        ue->serial_id = uei.serial_id;
-        ue->contest_id = uei.contest_id;
-        ue->user_id = uei.user_id;
-        ue->prob_id = uei.prob_id;
-        ue->hook_id = uei.hook_id; uei.hook_id = NULL;
-        ue->gitlab_token = uei.gitlab_token; uei.gitlab_token = NULL;
-        ue->vcs_type = uei.vcs_type; uei.vcs_type = NULL;
-        ue->vcs_url = uei.vcs_url; uei.vcs_url = NULL;
-        ue->vcs_subdir = uei.vcs_subdir; uei.vcs_subdir = NULL;
-        ue->ssh_private_key = uei.ssh_private_key; uei.ssh_private_key = NULL;
-        ue->last_event = uei.last_event; uei.last_event = NULL;
-        ue->last_revision = uei.last_revision; uei.last_revision = NULL;
-        ue->create_time_us = uei.create_time.tv_sec * 1000000LL + uei.create_time.tv_usec;
-        ue->last_change_time_us = uei.last_change_time.tv_sec * 1000000LL + uei.last_change_time.tv_usec;
+fail:
+    if (cmd_f) fclose(cmd_f);
+    free(cmd_s);
+    return NULL;
+}
+
+static struct userprob_entry *
+fetch_by_serial_id_func(
+        struct userprob_plugin_data *data,
+        int64_t serial_id)
+{
+    struct userprob_mysql_data *umd = (struct userprob_mysql_data *) data;
+    struct common_mysql_iface *mi = umd->mi;
+    struct common_mysql_state *md = umd->md;
+    char *cmd_s = NULL;
+    size_t cmd_z = 0;
+    FILE *cmd_f = NULL;
+    struct userprob_entry_internal uei = {};
+    struct userprob_entry *ue = NULL;
+
+    cmd_f = open_memstream(&cmd_s, &cmd_z);
+    fprintf(cmd_f, "SELECT * FROM `%suserprobs` WHERE serial_id = %lld;",
+            md->table_prefix, (long long) serial_id);
+    fclose(cmd_f); cmd_f = NULL;
+
+    if (mi->query(md, cmd_s, cmd_z, USERPROB_ENTRY_ROW_WIDTH) < 0)
+        db_error_fail(md);
+    free(cmd_s); cmd_s = NULL; cmd_z = 0;
+
+    if (md->row_count == 1) {
+        XCALLOC(ue, 1);
+        if (mi->next_row(md) < 0) db_error_fail(md);
+        if (mi->parse_spec(md, -1, md->row, md->lengths, USERPROB_ENTRY_ROW_WIDTH, userprob_entry_spec, &uei) < 0)
+            goto fail;
+        move_to_userprob_entry(ue, &uei);
     }
     return ue;
 
@@ -287,4 +332,5 @@ struct userprob_plugin_iface plugin_userprob_mysql =
     USERPROB_PLUGIN_IFACE_VERSION,
     open_func,
     fetch_by_hook_id_func,
+    fetch_by_serial_id_func,
 };

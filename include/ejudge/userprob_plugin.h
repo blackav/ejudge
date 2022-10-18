@@ -58,6 +58,9 @@ struct userprob_plugin_iface
     struct userprob_entry *(*fetch_by_hook_id)(
         struct userprob_plugin_data *data,
         const unsigned char *hook_id);
+    struct userprob_entry *(*fetch_by_serial_id)(
+        struct userprob_plugin_data *data,
+        int64_t serial_id);
 };
 
 struct userprob_entry *
