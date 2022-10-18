@@ -14,9 +14,9 @@
 
 PLUGINDIR = $(libexecdir)/ejudge/plugins
 
-SUBMIT_MYSQL_CFILES = submit_mysql.c
+VCS_GITLAB_CFILES = vcs_gitlab.c
 
-CFILES = $(SUBMIT_MYSQL_CFILES)
+CFILES = $(VCS_GITLAB_CFILES)
 HFILES =
 
 CC = gcc
@@ -26,7 +26,7 @@ CFLAGS = -I. -I../.. -I../../include $(MYSQL_INCL_OPT) $(EXPAT_INCL_OPT) $(CDEBU
 LDFLAGS = $(MYSQL_LIB_OPT) $(EXPAT_LIB_OPT) $(CDEBUGFLAGS) $(LDCOMPFLAGS) $(LDEXTRAFLAGS)
 LDLIBS = $(EXTRALIBS) $(MYSQL_LIBS) -lexpat -lm
 
-PLUGINS = submit_mysql.so
+PLUGINS = vcs_gitlab.so
 
 all : $(PLUGINS)
 
@@ -41,9 +41,9 @@ distclean : clean
 	-rm -f Makefile
 
 deps.make : $(CFILES) $(HFILES)
-	../../cdeps -v SUBMIT_MYSQL_OFILES -I ../.. -I ../../include -g -c '$$(CC) $$(CFLAGS) -DPIC -fPIC' $(SUBMIT_MYSQL_CFILES) > deps.make
+	../../cdeps -v VCS_GITLAB_OFILES -I ../.. -I ../../include -g -c '$$(CC) $$(CFLAGS) -DPIC -fPIC' $(VCS_GITLAB_CFILES) > deps.make
 
 include deps.make
 
-submit_mysql.so : $(SUBMIT_MYSQL_OFILES)
+vcs_gitlab.so : $(VCS_GITLAB_OFILES)
 	$(LD) -shared $(LDFLAGS) $^ -o $@ $(LDLIBS)
