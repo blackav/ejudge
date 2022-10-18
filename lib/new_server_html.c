@@ -15667,8 +15667,9 @@ unpriv_gitlab_webhook(
   jobs_args[4] = prob->problem_dir;
   jobs_args[5] = post_pull_cmd;
   jobs_args[6] = user_session;
-  jobs_args[7] = gitlab_json;
-  jobs_args[8] = NULL;
+  jobs_args[7] = phr->self_url;
+  jobs_args[8] = gitlab_json;
+  jobs_args[9] = NULL;
 
   send_job_packet(phr->config, (unsigned char**) jobs_args);
 
