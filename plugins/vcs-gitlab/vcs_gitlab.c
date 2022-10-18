@@ -25,6 +25,8 @@
 #include "ejudge/osdeps.h"
 #include "ejudge/exec.h"
 
+#include <curl/curl.h>
+
 #include <string.h>
 #include <errno.h>
 #include <stdlib.h>
@@ -150,8 +152,10 @@ struct vcs_plugin_iface plugin_vcs_gitlab =
   jobs_args[3] = serial_id_buf;
   jobs_args[4] = prob->problem_dir;
   jobs_args[5] = post_pull_cmd;
-  jobs_args[6] = gitlab_json;
-  jobs_args[7] = NULL;
+  jobs_args[6] = user_session;
+  jobs_args[7] = self_url;
+  jobs_args[8] = gitlab_json;
+  jobs_args[9] = NULL;
  */
 
 static void
@@ -179,13 +183,23 @@ gitlab_webhook_handler(
     unsigned char res_path[PATH_MAX];
     FILE *dst_f = NULL;
     FILE *src_f = NULL;
+    CURL *curl = NULL;
+    curl_mime *mime = NULL;
+    curl_mimepart *part = NULL;
+    unsigned long long session_id, client_key;
+    char *resp_s = NULL;
+    size_t resp_z = 0;
+    FILE *resp_f = NULL;
+    unsigned char ejsid_buf[64];
+    struct curl_slist *list = NULL;
 
     work_dir[0] = 0;
 
     const unsigned char *problem_dir = argv[4];
     const unsigned char *post_pull_cmd = argv[5];
+    const unsigned char *self_url = argv[7];
 
-    if (argc != 7) {
+    if (argc != 9) {
         err("gitlab_webhook_handler: wrong number of arguments");
         goto done;
     }
@@ -193,6 +207,11 @@ gitlab_webhook_handler(
     fprintf(stderr, "in gitlab_webhook\n");
     for (int i = 0; i < argc; ++i) {
         fprintf(stderr, "[%d]: '%s'\n", i, argv[i]);
+    }
+
+    if (sscanf(argv[6], "%llx-%llx", &session_id, &client_key) != 2) {
+        err("gitlab_webhook_handler: failed to parse user session");
+        goto done;
     }
 
     {
@@ -217,8 +236,6 @@ gitlab_webhook_handler(
         err("gitlab_webhook_handler: failed to create directory '%s'", work_dir);
         goto done;
     }
-
-    fprintf(stderr, ">>private: <%s>\n", ue->ssh_private_key);
 
     if (!ue->ssh_private_key || !*ue->ssh_private_key) {
         err("gitlab_webhook_handler: ssh private key is not set");
@@ -380,6 +397,63 @@ gitlab_webhook_handler(
     putc_unlocked('\n', dst_f);
     fclose(dst_f); dst_f = NULL;
 
+    curl = curl_easy_init();
+    if (!curl) {
+        err("gitlab_webhook_handler: cannot initialize curl");
+        goto done;
+    }
+    curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1L);
+
+    mime = curl_mime_init(curl);
+
+    part = curl_mime_addpart(mime);
+    curl_mime_data(part, "1", CURL_ZERO_TERMINATED);
+    curl_mime_name(part, "json");
+    part = curl_mime_addpart(mime);
+    curl_mime_data(part, "submit-run", CURL_ZERO_TERMINATED);
+    curl_mime_name(part, "action");
+    part = curl_mime_addpart(mime);
+    char prob_id_buf[64];
+    snprintf(prob_id_buf, sizeof(prob_id_buf), "%d", ue->prob_id);
+    curl_mime_data(part, prob_id_buf, CURL_ZERO_TERMINATED);
+    curl_mime_name(part, "prob_id");
+    part = curl_mime_addpart(mime);
+    curl_mime_data(part, "gcc-32", CURL_ZERO_TERMINATED);
+    curl_mime_name(part, "lang_id");
+    char sid_buf[64];
+    snprintf(sid_buf, sizeof(sid_buf), "%016llx", session_id);
+    part = curl_mime_addpart(mime);
+    curl_mime_data(part, sid_buf, CURL_ZERO_TERMINATED);
+    curl_mime_name(part, "SID");
+
+    part = curl_mime_addpart(mime);
+    curl_mime_filedata(part, res_path);
+    curl_mime_type(part, "text/plain");
+    curl_mime_name(part, "file");
+
+    snprintf(ejsid_buf, sizeof(ejsid_buf), "EJSID=%016llx", client_key);
+
+    resp_f = open_memstream(&resp_s, &resp_z);
+    curl_easy_setopt(curl, CURLOPT_COOKIE, ejsid_buf);
+    curl_easy_setopt(curl, CURLOPT_AUTOREFERER, 1);
+    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1);
+    curl_easy_setopt(curl, CURLOPT_URL, self_url);
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, NULL);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, resp_f);
+    curl_easy_setopt(curl, CURLOPT_MIMEPOST, mime);
+    //curl_easy_setopt(curl, CURLOPT_POSTFIELDS, "a=1");
+    //curl_easy_setopt(curl, CURLOPT_POST, 1);
+    curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
+    //list = curl_slist_append(list, "Expect:");
+    //curl_easy_setopt(curl, CURLOPT_HTTPHEADER, list);
+    CURLcode res = curl_easy_perform(curl);
+    fclose(resp_f);
+    if (res != CURLE_OK) {
+        err("curl request failed");
+    }
+
+    fprintf(stderr, "response: <%s>\n", resp_s);
+
     info("pull complete");
 
 done:;
@@ -388,4 +462,13 @@ done:;
         remove_directory_recursively(work_dir, 0);
     }
     userprob_entry_free(ue);
+    if (mime) {
+        curl_mime_free(mime);
+    }
+    if (curl) {
+        curl_easy_cleanup(curl);
+    }
+    if (list) {
+        curl_slist_free_all(list);
+    }
 }
