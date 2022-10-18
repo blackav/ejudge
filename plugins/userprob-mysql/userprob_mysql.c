@@ -77,6 +77,7 @@ static const char create_query[] =
 "    contest_id INT NOT NULL,\n"
 "    user_id INT UNSIGNED NOT NULL,\n"
 "    prob_id INT UNSIGNED NOT NULL DEFAULT 0,\n"
+"    lang_id VARCHAR(64) DEFAULT NULL,\n"
 "    hook_id CHAR(64) NOT NULL,\n"
 "    gitlab_token VARCHAR(64) DEFAULT NULL,\n"
 "    vcs_type VARCHAR(16) DEFAULT NULL,\n"
@@ -171,6 +172,7 @@ struct userprob_entry_internal
     int contest_id;
     int user_id;
     int prob_id;
+    unsigned char *lang_id;
     unsigned char *hook_id;
     unsigned char *gitlab_token;
     unsigned char *vcs_type;
@@ -183,7 +185,7 @@ struct userprob_entry_internal
     struct timeval last_change_time;
 };
 
-enum { USERPROB_ENTRY_ROW_WIDTH = 14 };
+enum { USERPROB_ENTRY_ROW_WIDTH = 15 };
 #define USERPROB_ENTRY_OFFSET(f) XOFFSET(struct userprob_entry_internal, f)
 static const struct common_mysql_parse_spec userprob_entry_spec[USERPROB_ENTRY_ROW_WIDTH] =
 {
@@ -191,6 +193,7 @@ static const struct common_mysql_parse_spec userprob_entry_spec[USERPROB_ENTRY_R
     { 0, 'd', "contest_id", USERPROB_ENTRY_OFFSET(contest_id), 0 },
     { 0, 'd', "user_id", USERPROB_ENTRY_OFFSET(user_id), 0 },
     { 0, 'd', "prob_id", USERPROB_ENTRY_OFFSET(prob_id), 0 },
+    { 1, 's', "lang_id", USERPROB_ENTRY_OFFSET(lang_id), 0 },
     { 1, 's', "hook_id", USERPROB_ENTRY_OFFSET(hook_id), 0 },
     { 1, 's', "gitlab_token", USERPROB_ENTRY_OFFSET(gitlab_token), 0 },
     { 1, 's', "vcs_type", USERPROB_ENTRY_OFFSET(vcs_type), 0 },
@@ -225,6 +228,7 @@ move_to_userprob_entry(
     ue->contest_id = uei->contest_id;
     ue->user_id = uei->user_id;
     ue->prob_id = uei->prob_id;
+    ue->lang_id = uei->lang_id; uei->lang_id = NULL;
     ue->hook_id = uei->hook_id; uei->hook_id = NULL;
     ue->gitlab_token = uei->gitlab_token; uei->gitlab_token = NULL;
     ue->vcs_type = uei->vcs_type; uei->vcs_type = NULL;

@@ -27,6 +27,7 @@ struct userprob_entry
     int64_t serial_id;
     int64_t create_time_us;
     int64_t last_change_time_us;
+    unsigned char *lang_id;
     unsigned char *hook_id;
     unsigned char *gitlab_token;
     unsigned char *vcs_type;

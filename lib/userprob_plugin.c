@@ -24,6 +24,7 @@ struct userprob_entry *
 userprob_entry_free(struct userprob_entry *ue)
 {
     if (ue) {
+        free(ue->lang_id);
         free(ue->hook_id);
         free(ue->gitlab_token);
         free(ue->vcs_type);
