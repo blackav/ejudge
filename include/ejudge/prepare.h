@@ -1194,6 +1194,8 @@ struct section_problem_data
   unsigned char *solution_src;
   /** solution command */
   unsigned char *solution_cmd;
+  /** post pull preparation script */
+  unsigned char *post_pull_cmd;
   /** time limit adjustments depending on language */
   char **lang_time_adj;
   /** time limit milliseconds adjustments depending on language (priority over lang_time_adj) */
