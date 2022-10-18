@@ -33,6 +33,9 @@
 #include "ejudge/auth_plugin.h"
 #include "ejudge/base64.h"
 #include "ejudge/ej_uuid.h"
+#include "ejudge/vcs_plugin.h"
+#include "ejudge/userprob_plugin.h"
+#include "ejudge/exec.h"
 
 #include <stdio.h>
 #include <errno.h>
@@ -184,6 +187,10 @@ struct AppState
     // VK Auth plugin
     const struct auth_plugin_iface *auth_vk_iface;
     void *auth_vk_data;
+
+    // Gitlab VCS plugin
+    const struct vcs_plugin_iface *vcs_gitlab_iface;
+    void *vcs_gitlab_data;
 
     int child_flag;
     int term_flag;
@@ -1662,11 +1669,61 @@ load_auth_vk_plugin(struct AppState *as)
 }
 
 static int
+load_vcs_gitlab_plugin(struct AppState *as)
+{
+    struct xml_tree *gitlab_cfg = ejudge_cfg_get_plugin_config(as->config, "vcs", "gitlab");
+    if (!gitlab_cfg) return 0;
+
+    const struct common_loaded_plugin *gitlab_plugin = plugin_load_external(NULL, "vcs", "gitlab", as->config);
+    if (!gitlab_plugin) {
+        err("failed to load vcs_gitlab plugin");
+        return -1;
+    }
+
+    if (gitlab_plugin->iface->b.size != sizeof(struct vcs_plugin_iface)) {
+        err("vcs_gitlab plugin interface size mismatch");
+        return -1;
+    }
+
+    const struct vcs_plugin_iface *vcs_iface = (const struct vcs_plugin_iface *) gitlab_plugin->iface;
+    if (vcs_iface->vcs_version != VCS_PLUGIN_IFACE_VERSION) {
+        err("vcs plugin interface version mismatch");
+        return -1;
+    }
+
+    as->vcs_gitlab_iface = vcs_iface;
+    as->vcs_gitlab_data = gitlab_plugin->data;
+
+    as->vcs_gitlab_iface->set_set_command_handler(as->vcs_gitlab_data, add_handler_wrapper, as);
+    as->vcs_gitlab_iface->set_work_dir(as->vcs_gitlab_data, as->job_server_work);
+
+    if (as->vcs_gitlab_iface->open(as->vcs_gitlab_data, as->config) < 0) {
+        err("vcs_gitlab plugin 'open' failed");
+        return -1;
+    }
+
+    /*
+    if (as->auth_vk_iface->check(as->auth_vk_data) < 0) {
+        err("auth_vk plugin 'check' failed");
+        return -1;
+    }
+
+    if (as->auth_vk_iface->start_thread(as->auth_vk_data) < 0) {
+        err("auth_vk plugin 'start_thread' failed");
+        return -1;
+    }
+    */
+
+    return 0;
+}
+
+static int
 load_plugins(struct AppState *as)
 {
     if (load_telegram_plugin(as) < 0) return -1;
     if (load_auth_google_plugin(as) < 0) return -1;
     if (load_auth_vk_plugin(as) < 0) return -1;
+    if (load_vcs_gitlab_plugin(as) < 0) return -1;
 
     return 0;
 }
@@ -1817,6 +1874,8 @@ job_server_force_link_2[] =
     xml_parse_full_cookie,
     xml_err_elem_undefined_s,
     ej_uuid_parse,
+    userprob_plugin_get,
+    task_New,
 };
 
 #if HAVE_LIBMONGOC - 0 > 0
