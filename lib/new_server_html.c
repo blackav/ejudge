@@ -15506,6 +15506,10 @@ unpriv_gitlab_webhook(
   unsigned char serial_id_buf[32];
   const unsigned char *post_pull_cmd = "";
   struct teamdb_db_callbacks callbacks = {};
+  struct userlist_cookie in_c = {};
+  struct userlist_cookie out_c = {};
+  unsigned char user_session[64];
+  int r;
 
   s = hr_getenv(phr, "REQUEST_METHOD");
   if (!s) {
@@ -15634,6 +15638,27 @@ unpriv_gitlab_webhook(
     post_pull_cmd = prob->post_pull_cmd;
   }
 
+  in_c.ip = phr->ip;
+  in_c.ssl = phr->ssl_flag;
+  in_c.user_id = ue->user_id;
+  in_c.contest_id = phr->contest_id;
+  in_c.locale_id = 0;
+  in_c.priv_level = 0;
+  in_c.role = USER_ROLE_CONTESTANT;
+  in_c.recovery = 0;
+  in_c.team_login = 1;
+
+  random_init();
+  in_c.cookie = random_u64();
+  in_c.client_key = random_u64();
+  r = userlist_clnt_create_cookie(ul_conn, ULS_CREATE_COOKIE, &in_c, &out_c);
+  if (r < 0) {
+    err("unpriv_gitlab_webhook: cannot create session");
+    goto done;
+  }
+  snprintf(user_session, sizeof(user_session), "%016llx-%016llx",
+           out_c.cookie, out_c.client_key);
+
   jobs_args[0] = "gitlab_webhook";
   jobs_args[1] = gitlab_event;
   jobs_args[2] = gitlab_event_uuid;
@@ -15641,8 +15666,9 @@ unpriv_gitlab_webhook(
   jobs_args[3] = serial_id_buf;
   jobs_args[4] = prob->problem_dir;
   jobs_args[5] = post_pull_cmd;
-  jobs_args[6] = gitlab_json;
-  jobs_args[7] = NULL;
+  jobs_args[6] = user_session;
+  jobs_args[7] = gitlab_json;
+  jobs_args[8] = NULL;
 
   send_job_packet(phr->config, (unsigned char**) jobs_args);
 
