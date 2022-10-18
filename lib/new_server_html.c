@@ -71,6 +71,8 @@
 #include "ejudge/filter_eval.h"
 #include "ejudge/storage_plugin.h"
 #include "ejudge/submit_plugin.h"
+#include "ejudge/userprob_plugin.h"
+#include "ejudge/job_packet.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -15490,12 +15492,167 @@ unpriv_gitlab_webhook(
 {
   cJSON *jr = cJSON_CreateObject();
   unsigned char *jrstr = NULL;
+  const unsigned char *s;
+  unsigned char hook_id[64];
+  struct userprob_plugin_data *up_data = NULL;
+  struct userprob_entry *ue = NULL;
+  const unsigned char *gitlab_token = NULL;
+  const unsigned char *gitlab_event = NULL;
+  const unsigned char *gitlab_event_uuid = NULL;
+  const unsigned char *gitlab_json = NULL;
+  struct serve_state *cs = NULL;
+  const struct section_problem_data *prob = NULL;
+  const unsigned char *jobs_args[16];
+  unsigned char serial_id_buf[32];
+  const unsigned char *post_pull_cmd = "";
+  struct teamdb_db_callbacks callbacks = {};
 
+  s = hr_getenv(phr, "REQUEST_METHOD");
+  if (!s) {
+    err("unpriv_gitlab_webhook: REQUEST_METHOD undefined");
+    goto done;
+  }
+  if (strcmp(s, "POST")) {
+    err("unpriv_gitlab_webhook: POST method expected");
+    goto done;
+  }
+
+  s = hr_getenv(phr, "CONTENT_TYPE");
+  if (!s) {
+    err("unpriv_gitlab_webhook: CONTENT_TYPE undefined");
+    goto done;
+  }
+  if (strcmp(s, "application/json")) {
+    err("unpriv_gitlab_webhook: json request expected");
+    goto done;
+  }
+
+  if (hr_cgi_param(phr, "JSON", &s) <= 0 && !s) {
+    err("unpriv_gitlab_webhook: JSON expected");
+    goto done;
+  }
+  gitlab_json = s;
+
+  if (!phr->session_id || !phr->client_key) {
+    err("unpriv_gitlab_webhook: hook_id is invalid");
+    goto done;
+  }
+  snprintf(hook_id, sizeof(hook_id), "%016llx-%016llx", phr->session_id, phr->client_key);
+
+  gitlab_token = hr_getenv(phr, "HTTP_X_GITLAB_TOKEN");
+  if (!gitlab_token || !*gitlab_token) {
+    err("unpriv_gitlab_webhook: GITLAB_TOKEN is not provided");
+    goto done;
+  }
+  gitlab_event = hr_getenv(phr, "HTTP_X_GITLAB_EVENT");
+  if (!gitlab_event || !*gitlab_event) {
+    err("unpriv_gitlab_webhook: GITLAB_EVENT is not provided");
+    goto done;
+  }
+  gitlab_event_uuid = hr_getenv(phr, "HTTP_X_GITLAB_EVENT_UUID");
+  if (!gitlab_event_uuid || !*gitlab_event_uuid) {
+    err("unpriv_gitlab_webhook: GITLAB_EVENT_UUID is not provided");
+    goto done;
+  }
+
+  up_data = userprob_plugin_get(phr->config, NULL, 0);
+  if (!up_data) {
+    err("unpriv_gitlab_webhook: userprob plugin not available");
+    goto done;
+  }
+  ue = up_data->vt->fetch_by_hook_id(up_data, hook_id);
+  if (!ue) {
+    err("unpriv_gitlab_webhook: no such hook configured");
+    goto done;
+  }
+  if (!ue->gitlab_token || !*ue->gitlab_token) {
+    err("unpriv_gitlab_webhook: empty gitlab token in DB");
+    goto done;
+  }
+  if (strcmp(gitlab_token, ue->gitlab_token) != 0) {
+    err("unpriv_gitlab_webhook: gitlab token mismatch");
+    goto done;
+  }
+
+  if (ue->contest_id <= 0) {
+    err("unpriv_gitlab_webhook: invalid contest_id");
+    goto done;
+  }
+  if (contests_get(ue->contest_id, &phr->cnts) < 0 || !phr->cnts) {
+    err("unpriv_gitlab_webhook: invalid contest_id");
+    goto done;
+  }
+  if (phr->cnts->closed) {
+    err("unpriv_gitlab_webhook: contest is closed");
+    goto done;
+  }
+  phr->contest_id = ue->contest_id;
+  phr->extra = ns_get_contest_extra(phr->cnts, phr->config);
+
+  if (ns_open_ul_connection(phr->fw_state) < 0) {
+    err("unpriv_gitlab_webhook: failed to open userlist connection");
+    goto done;
+  }
+
+  callbacks.user_data = (void*) phr->fw_state;
+  callbacks.list_all_users = ns_list_all_users_callback;
+
+  if (serve_state_load_contest(phr->extra, phr->config, phr->contest_id,
+                               ul_conn, &callbacks, 0, 0) < 0) {
+    err("unpriv_gitlab_webhook: failed to load contest");
+    goto done;
+  }
+  cs = phr->extra->serve_state;
+  if (!cs) {
+    err("unpriv_gitlab_webhook: invalid contest");
+    goto done;
+  }
+  cs->current_time = time(0);
+  ns_check_contest_events(phr->extra, cs, phr->cnts);
+
+  if (teamdb_lookup(cs->teamdb_state, ue->user_id) <= 0) {
+    err("unpriv_gitlab_webhook: invalid user_id");
+    goto done;
+  }
+
+  ///////////////////////////
+
+  if (ue->prob_id <= 0 || ue->prob_id > cs->max_prob) {
+    err("unpriv_gitlab_webhook: invalid prob_id");
+    goto done;
+  }
+  if (!(prob = cs->probs[ue->prob_id])) {
+    err("unpriv_gitlab_webhook: invalid prob_id");
+    goto done;
+  }
+  // FIXME: check limitations for submit
+  if (prob->enable_gitlab <= 0) {
+    err("unpriv_gitlab_webhook: prolem does not allow gitlab");
+    goto done;
+  }
+  if (prob->post_pull_cmd) {
+    post_pull_cmd = prob->post_pull_cmd;
+  }
+
+  jobs_args[0] = "gitlab_webhook";
+  jobs_args[1] = gitlab_event;
+  jobs_args[2] = gitlab_event_uuid;
+  snprintf(serial_id_buf, sizeof(serial_id_buf), "%lld", (long long) ue->serial_id);
+  jobs_args[3] = serial_id_buf;
+  jobs_args[4] = prob->problem_dir;
+  jobs_args[5] = post_pull_cmd;
+  jobs_args[6] = gitlab_json;
+  jobs_args[7] = NULL;
+
+  send_job_packet(phr->config, (unsigned char**) jobs_args);
+
+done:;
   phr->json_reply = 1;
   cJSON_AddTrueToObject(jr, "ok");
   jrstr = cJSON_PrintUnformatted(jr);
   fprintf(fout, "%s\n", jrstr);
 
+  userprob_entry_free(ue);
   free(jrstr);
   cJSON_Delete(jr);
 }
