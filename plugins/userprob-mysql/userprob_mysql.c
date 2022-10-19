@@ -125,6 +125,8 @@ check_database(
     struct common_mysql_iface *mi = smd->mi;
     struct common_mysql_state *md = smd->md;
 
+    mi->lock(md);
+
     if (mi->connect(md) < 0)
         goto fail;
 
@@ -155,14 +157,16 @@ check_database(
         if (userprob_version >= 0) {
             ++userprob_version;
             if (mi->simple_fquery(md, "UPDATE %sconfig SET config_val = '%d' WHERE config_key = 'userprob_version' ;", md->table_prefix, userprob_version) < 0)
-                return -1;
+                goto fail;
         }
     }
 
     smd->is_db_checked = 1;
+    mi->unlock(md);
     return 0;
 
 fail:
+    mi->unlock(md);
     return -1;
 }
 
@@ -255,6 +259,8 @@ fetch_by_hook_id_func(
     struct userprob_entry_internal uei = {};
     struct userprob_entry *ue = NULL;
 
+    mi->lock(md);
+
     cmd_f = open_memstream(&cmd_s, &cmd_z);
     fprintf(cmd_f, "SELECT * FROM `%suserprobs` WHERE hook_id = '",
             md->table_prefix);
@@ -273,11 +279,13 @@ fetch_by_hook_id_func(
             goto fail;
         move_to_userprob_entry(ue, &uei);
     }
+    mi->unlock(md);
     return ue;
 
 fail:
     if (cmd_f) fclose(cmd_f);
     free(cmd_s);
+    mi->unlock(md);
     return NULL;
 }
 
@@ -295,6 +303,8 @@ fetch_by_serial_id_func(
     struct userprob_entry_internal uei = {};
     struct userprob_entry *ue = NULL;
 
+    mi->lock(md);
+
     cmd_f = open_memstream(&cmd_s, &cmd_z);
     fprintf(cmd_f, "SELECT * FROM `%suserprobs` WHERE serial_id = %lld;",
             md->table_prefix, (long long) serial_id);
@@ -311,11 +321,13 @@ fetch_by_serial_id_func(
             goto fail;
         move_to_userprob_entry(ue, &uei);
     }
+    mi->unlock(md);
     return ue;
 
 fail:
     if (cmd_f) fclose(cmd_f);
     free(cmd_s);
+    mi->unlock(md);
     return NULL;
 }
 
