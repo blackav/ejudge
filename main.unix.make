@@ -337,7 +337,7 @@ ej-users-control: ${ULC_OBJECTS}
 	${LD} ${LDFLAGS} $^  libcommon.a -rdynamic -o $@ ${LDLIBS} ${EXPAT_LIB}
 
 ej-jobs: ${JS_OBJECTS}
-	${LD} ${LDFLAGS} $^ libcommon.a libplatform.a -rdynamic -o $@ ${LDLIBS} -ldl ${EXPAT_LIB} ${LIBCURL} ${LIBZIP} ${LIBUUID} $(MONGO_LIBS) $(MONGOC_LIBS)
+	${LD} ${LDFLAGS} $^ -pthread libcommon.a libplatform.a -rdynamic -o $@ ${LDLIBS} -ldl ${EXPAT_LIB} ${LIBCURL} ${LIBZIP} ${LIBUUID} $(MONGO_LIBS) $(MONGOC_LIBS)
 
 ej-jobs-control: ${JSC_OBJECTS}
 	${LD} ${LDFLAGS} $^ libcommon.a libplatform.a -o $@ ${LDLIBS} ${EXPAT_LIB}
@@ -444,7 +444,7 @@ cgi-bin/new-client${CGI_PROG_SUFFIX} : $(NC_OBJECTS)
 	$(LD) $(LDFLAGS) $^ -o $@ $(LDLIBS) ${EXPAT_LIB}
 
 ej-contests : $(NS_OBJECTS)
-	$(LD) $(LDFLAGS) -rdynamic $(NS_OBJECTS) -o $@ $(LDLIBS) -ldl ${EXPAT_LIB} ${LIBZIP} ${LIBUUID} $(MONGO_LIBS) $(MONGOC_LIBS)
+	$(LD) $(LDFLAGS) -pthread -rdynamic $(NS_OBJECTS) -o $@ $(LDLIBS) -ldl ${EXPAT_LIB} ${LIBZIP} ${LIBUUID} $(MONGO_LIBS) $(MONGOC_LIBS)
 
 ejudge-contests-cmd : $(NSM_OBJECTS)
 	$(LD) $(LDFLAGS) $(NSM_OBJECTS) -o $@ $(LDLIBS) ${EXPAT_LIB}
