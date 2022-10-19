@@ -452,6 +452,7 @@ insert_stage1_func(
     FILE *req_f = NULL;
     int retval = -1;
 
+    state->mi->lock(state->md);
     req_f = open_memstream(&req_s, &req_z);
     fprintf(req_f, "INSERT INTO %soauth_stage1 VALUES (", state->md->table_prefix);
     fprintf(req_f, "'%s'", state_id);
@@ -473,6 +474,7 @@ insert_stage1_func(
 fail:;
     if (req_f) fclose(req_f);
     free(req_f);
+    state->mi->unlock(state->md);
     return retval;
 }
 
@@ -489,6 +491,7 @@ extract_stage1_func(
     FILE *req_f = NULL;
     int retval = -1;
 
+    state->mi->lock(state->md);
     req_f = open_memstream(&req_s, &req_z);
     fprintf(req_f, "SELECT * FROM %soauth_stage1 WHERE state_id = ", state->md->table_prefix);
     state->mi->write_escaped_string(state->md, req_f, "", state_id);
@@ -526,6 +529,7 @@ fail:;
     state->mi->free_res(state->md);
     if (req_f) fclose(req_f);
     free(req_s);
+    state->mi->unlock(state->md);
     return retval;
 }
 
@@ -554,6 +558,7 @@ insert_stage2_func(
     FILE *req_f = NULL;
     int retval = -1;
 
+    state->mi->lock(state->md);
     req_f = open_memstream(&req_s, &req_z);
     fprintf(req_f, "INSERT INTO %soauth_stage2 VALUES ( ", state->md->table_prefix);
     state->mi->unparse_spec(state->md, req_f, OAUTH_STAGE2_ROW_WIDTH, oauth_stage2_spec, poas2);
@@ -566,6 +571,7 @@ insert_stage2_func(
 done:;
     if (req_f) fclose(req_f);
     free(req_s);
+    state->mi->unlock(state->md);
     return retval;
 }
 
@@ -601,6 +607,7 @@ extract_stage2_func(
     FILE *req_f = NULL;
     int retval = -1;
 
+    state->mi->lock(state->md);
     req_f = open_memstream(&req_s, &req_z);
     fprintf(req_f, "SELECT * FROM %soauth_stage2 WHERE request_id = ", state->md->table_prefix);
     state->mi->write_escaped_string(state->md, req_f, "", request_id);
@@ -634,6 +641,7 @@ done:;
     state->mi->free_res(state->md);
     if (req_f) fclose(req_f);
     free(req_s);
+    state->mi->unlock(state->md);
     return retval;
 }
 
@@ -654,6 +662,7 @@ update_stage2_func(
     FILE *req_f = NULL;
     int retval = -1;
 
+    state->mi->lock(state->md);
     req_f = open_memstream(&req_s, &req_z);
     fprintf(req_f, "UPDATE %soauth_stage2 SET request_state = %d",
             state->md->table_prefix, request_status);
@@ -683,5 +692,6 @@ update_stage2_func(
     fclose(req_f); req_f = NULL;
     retval = state->mi->simple_query(state->md, req_s, req_z);
     free(req_s); req_s = NULL;
+    state->mi->unlock(state->md);
     return retval;
 }
