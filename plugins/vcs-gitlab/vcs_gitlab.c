@@ -204,10 +204,12 @@ gitlab_webhook_handler(
         goto done;
     }
 
+    /*
     fprintf(stderr, "in gitlab_webhook\n");
     for (int i = 0; i < argc; ++i) {
         fprintf(stderr, "[%d]: '%s'\n", i, argv[i]);
     }
+    */
 
     if (sscanf(argv[6], "%llx-%llx", &session_id, &client_key) != 2) {
         err("gitlab_webhook_handler: failed to parse user session");
@@ -259,7 +261,10 @@ gitlab_webhook_handler(
     task_SetPathAsArg0(git_task);
     task_SetEnv(git_task, "GIT_SSH_COMMAND", "ssh -i ssh_id");
     task_SetWorkingDir(git_task, work_dir);
-    task_Start(git_task);
+    if (task_Start(git_task) < 0) {
+        err("gitlab_webhook_handler: failed to start git");
+        goto done;
+    }
     task_NewWait(git_task);
     if (task_IsAbnormal(git_task)) {
         err("gitlab_webhook_handler: git clone failed");
@@ -290,7 +295,10 @@ gitlab_webhook_handler(
     task_AddArg(git_task, "--stat");
     task_SetRedir(git_task, 1, TSR_FILE, git_info_path, TSK_REWRITE, 0600);
     task_SetWorkingDir(git_task, git_dir);
-    task_Start(git_task);
+    if (task_Start(git_task) < 0) {
+        err("gitlab_webhook_handler: failed to start git");
+        goto done;
+    }
     task_NewWait(git_task);
     if (task_IsAbnormal(git_task)) {
         err("gitlab_webhook_handler: git log failed");
@@ -323,6 +331,7 @@ gitlab_webhook_handler(
         task_AddArg(git_task, post_pull_path);
         task_SetPathAsArg0(git_task);
         task_AddArg(git_task, problem_dir);
+        task_AddArg(git_task, ue->lang_id);
         task_SetWorkingDir(git_task, source_path);
         if (task_Start(git_task) < 0) {
             err("gitlab_webhook_handler: post_pull_cmd failed to start: %s", post_pull_path);
@@ -343,7 +352,10 @@ gitlab_webhook_handler(
     task_AddArg(git_task, "source.tbz");
     task_AddArg(git_task, "source");
     task_SetWorkingDir(git_task, work_dir);
-    task_Start(git_task);
+    if (task_Start(git_task) < 0) {
+        err("gitlab_webhook_handler: failed to start tar");
+        goto done;
+    }
     task_NewWait(git_task);
     if (task_IsAbnormal(git_task)) {
         err("gitlab_webhook_handler: tar failed");
@@ -443,11 +455,7 @@ gitlab_webhook_handler(
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, NULL);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, resp_f);
     curl_easy_setopt(curl, CURLOPT_MIMEPOST, mime);
-    //curl_easy_setopt(curl, CURLOPT_POSTFIELDS, "a=1");
-    //curl_easy_setopt(curl, CURLOPT_POST, 1);
-    curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
-    //list = curl_slist_append(list, "Expect:");
-    //curl_easy_setopt(curl, CURLOPT_HTTPHEADER, list);
+    //curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
     CURLcode res = curl_easy_perform(curl);
     fclose(resp_f);
     if (res != CURLE_OK) {
