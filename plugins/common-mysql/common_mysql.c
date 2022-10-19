@@ -176,6 +176,12 @@ simple_query_bin_func(
         struct common_mysql_state *state,
         const unsigned char *cmd,
         int cmdlen);
+static void
+lock_func(
+        struct common_mysql_state *state);
+static void
+unlock_func(
+        struct common_mysql_state *state);
 
 /* plugin entry point */
 struct common_mysql_iface plugin_common_mysql =
@@ -226,6 +232,8 @@ struct common_mysql_iface plugin_common_mysql =
   write_escaped_bin_func,
 
   simple_query_bin_func,
+  lock_func,
+  unlock_func,
 };
 
 static struct common_plugin_data *
@@ -235,6 +243,7 @@ init_func(void)
   XCALLOC(state, 1);
   state->i = &plugin_common_mysql;
   state->show_queries = 1;
+  pthread_mutex_init(&state->m, NULL);
   return (struct common_plugin_data*) state;
 }
 
@@ -1596,4 +1605,18 @@ simple_query_bin_func(
   */
   free_res_func(state);
   return do_query(state, cmd, cmdlen);
+}
+
+static void
+lock_func(
+        struct common_mysql_state *state)
+{
+  pthread_mutex_lock(&state->m);
+}
+
+static void
+unlock_func(
+        struct common_mysql_state *state)
+{
+  pthread_mutex_unlock(&state->m);
 }
