@@ -62,6 +62,11 @@ struct userprob_plugin_iface
     struct userprob_entry *(*fetch_by_serial_id)(
         struct userprob_plugin_data *data,
         int64_t serial_id);
+    struct userprob_entry *(*fetch_by_cup)(
+        struct userprob_plugin_data *data,
+        int contest_id,
+        int user_id,
+        int prob_id);
 };
 
 struct userprob_entry *

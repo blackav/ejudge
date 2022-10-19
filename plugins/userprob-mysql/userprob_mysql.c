@@ -331,6 +331,51 @@ fail:
     return NULL;
 }
 
+static struct userprob_entry *
+fetch_by_cup_func(
+        struct userprob_plugin_data *data,
+        int contest_id,
+        int user_id,
+        int prob_id)
+{
+    struct userprob_mysql_data *umd = (struct userprob_mysql_data *) data;
+    struct common_mysql_iface *mi = umd->mi;
+    struct common_mysql_state *md = umd->md;
+    char *cmd_s = NULL;
+    size_t cmd_z = 0;
+    FILE *cmd_f = NULL;
+    struct userprob_entry_internal uei = {};
+    struct userprob_entry *ue = NULL;
+
+    mi->lock(md);
+
+    cmd_f = open_memstream(&cmd_s, &cmd_z);
+    fprintf(cmd_f, "SELECT * FROM `%suserprobs` WHERE contest_id = %d AND user_id = %d AND prob_id = %d;",
+            md->table_prefix,
+            contest_id, user_id, prob_id);
+    fclose(cmd_f); cmd_f = NULL;
+
+    if (mi->query(md, cmd_s, cmd_z, USERPROB_ENTRY_ROW_WIDTH) < 0)
+        db_error_fail(md);
+    free(cmd_s); cmd_s = NULL; cmd_z = 0;
+
+    if (md->row_count == 1) {
+        XCALLOC(ue, 1);
+        if (mi->next_row(md) < 0) db_error_fail(md);
+        if (mi->parse_spec(md, -1, md->row, md->lengths, USERPROB_ENTRY_ROW_WIDTH, userprob_entry_spec, &uei) < 0)
+            goto fail;
+        move_to_userprob_entry(ue, &uei);
+    }
+    mi->unlock(md);
+    return ue;
+
+fail:
+    if (cmd_f) fclose(cmd_f);
+    free(cmd_s);
+    mi->unlock(md);
+    return NULL;
+}
+
 struct userprob_plugin_iface plugin_userprob_mysql =
 {
     {
@@ -349,4 +394,5 @@ struct userprob_plugin_iface plugin_userprob_mysql =
     open_func,
     fetch_by_hook_id_func,
     fetch_by_serial_id_func,
+    fetch_by_cup_func,
 };
