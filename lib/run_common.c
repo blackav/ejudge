@@ -2000,6 +2000,10 @@ invoke_interactor(
     task_SetEnv(tsk_int, "EJUDGE_TEST_NUM", buf);
     task_SetEnv(tsk_int, "EJUDGE_USER_LOGIN", srgp->user_login);
     task_SetEnv(tsk_int, "EJUDGE_USER_NAME", srgp->user_name);
+    if (srpp->test_count > 0) {
+      snprintf(buf, sizeof(buf), "%d", srpp->test_count);
+      task_SetEnv(tsk_int, "EJUDGE_TEST_COUNT", buf);
+    }
   }
   if (control_fd >= 0) {
     unsigned char buf[64];
@@ -2206,6 +2210,10 @@ invoke_checker(
     task_SetEnv(tsk, "EJUDGE_TEST_NUM", buf);
     task_SetEnv(tsk, "EJUDGE_USER_LOGIN", srgp->user_login);
     task_SetEnv(tsk, "EJUDGE_USER_NAME", srgp->user_name);
+    if (srpp->test_count > 0) {
+      snprintf(buf, sizeof(buf), "%d", srpp->test_count);
+      task_SetEnv(tsk, "EJUDGE_TEST_COUNT", buf);
+    }
   }
   task_EnableAllSignals(tsk);
 
