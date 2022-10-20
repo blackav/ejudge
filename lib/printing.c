@@ -140,6 +140,9 @@ do_print_run(const serve_state_t state, int run_id,
   const struct userlist_user_info *ui = 0;
   unsigned char program_path[PATH_MAX];
 
+  // FIXME: make it global var
+  int print_by_copy = 1;
+
   program_path[0] = 0;
 
   if (run_id < 0 || run_id >= run_get_total(state->runlog_state)) {
@@ -177,7 +180,7 @@ do_print_run(const serve_state_t state, int run_id,
       printer_name = ui->printer_name;
   }
 
-  if (global->disable_banner_page <= 0) {
+  if (global->disable_banner_page <= 0 && print_by_copy <= 0) {
     banner_path = (unsigned char*) alloca(strlen(global->print_work_dir) + 64);
     sprintf(banner_path, "%s/%06d.txt", global->print_work_dir, run_id);
     if (print_banner_page(state, banner_path, run_id, user_id,
@@ -186,7 +189,26 @@ do_print_run(const serve_state_t state, int run_id,
     }
   }
 
-  if (global->disable_banner_page > 0) {
+  if (print_by_copy > 0) {
+    sfx = ".txt";
+    if (global->printout_uses_login > 0) {
+      user_name = teamdb_get_login(state->teamdb_state, info.user_id);
+    } else {
+      user_name = teamdb_get_name_2(state->teamdb_state, info.user_id);
+    }
+    if (!user_name) user_name = "";
+    location = "";
+    if (ui && ui->location)
+      location = ui->location;
+    printer_name = "";
+    if (ui && ui->printer_name)
+      printer_name = ui->printer_name;
+    snprintf(program_path, sizeof(program_path),
+             "%s/%lld_%s_%s_%06d_%s%s",
+             global->print_work_dir,
+             (long long) state->current_time,
+             printer_name, location, run_id, user_name, sfx);
+  } else if (global->disable_banner_page > 0) {
     if (state->langs[info.lang_id]) sfx = state->langs[info.lang_id]->src_sfx;
     if (global->printout_uses_login > 0) {
       user_name = teamdb_get_login(state->teamdb_state, info.user_id);
@@ -215,6 +237,35 @@ do_print_run(const serve_state_t state, int run_id,
   if (arch_flags < 0) {
     goto cleanup;
   }
+  if (print_by_copy > 0) {
+    char *src_s = NULL;
+    size_t src_z = 0;
+    if (generic_read_file(&src_s, 0, &src_z, arch_flags, 0, run_arch, "") < 0) {
+      goto cleanup;
+    }
+    char *dst_s = NULL;
+    size_t dst_z = 0;
+    FILE *dst_f = open_memstream(&dst_s, &dst_z);
+    fprintf(dst_f, "Run ID: %06d   Printer: %s   Location: %s   User: %s\n\n",
+            run_id, printer_name, location, user_name);
+    unsigned char *tmp_out = NULL;
+    size_t tmp_size = text_normalize_dup(src_s, src_z, TEXT_FIX_CR | TEXT_FIX_TR_SP | TEXT_FIX_FINAL_NL | TEXT_FIX_NP, &tmp_out, NULL, NULL);
+    free(src_s); src_s = tmp_out; tmp_out = NULL;
+    src_z = tmp_size; tmp_size = 0;
+    fwrite(src_s, src_z, 1, dst_f);
+    fclose(dst_f); dst_f = NULL;
+    free(src_s); src_s = NULL; src_z = 0;
+
+    generic_write_file(dst_s, dst_z, 0, NULL, program_path, NULL);
+    free(dst_s); dst_s = NULL; dst_z = 0;
+
+    if (!is_privileged) {
+      run_set_pages(state->runlog_state, run_id, 1);
+    }
+    program_path[0] = 0;
+    return 1;
+  }
+
   if (generic_copy_file(arch_flags, 0, run_arch, "", 0, 0, program_path, 0) < 0) {
     goto cleanup;
   }
