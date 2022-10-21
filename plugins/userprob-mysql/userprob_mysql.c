@@ -138,7 +138,11 @@ check_database(
         err("userprob_version key is not unique");
         goto fail;
     }
-    if (!md->row_count) return create_database(smd);
+    if (!md->row_count) {
+        int r = create_database(smd);
+        mi->unlock(md);
+        return r;
+    }
     if (mi->next_row(md) < 0) db_error_fail(md);
     if (!md->row[0] || mi->parse_int(md, md->row[0], &userprob_version) < 0)
         db_error_inv_value_fail(md, "config_val");
