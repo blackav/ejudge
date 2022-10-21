@@ -2111,21 +2111,25 @@ int ns_match_action(const unsigned char *str)
                       c = str[6];
                       if (c == '-') {
                         c = str[7];
-                        if (c == 'a') {
+                        if (c == 'u') {
                           c = str[8];
-                          if (c == 'p') {
+                          if (c == 's') {
                             c = str[9];
-                            if (c == 'i') {
+                            if (c == 'e') {
                               c = str[10];
-                              if (c == '-') {
+                              if (c == 'r') {
                                 c = str[11];
-                                if (c == 'k') {
+                                if (c == 'p') {
                                   c = str[12];
-                                  if (c == 'e') {
+                                  if (c == 'r') {
                                     c = str[13];
-                                    if (c == 'y') {
+                                    if (c == 'o') {
                                       c = str[14];
-                                      if (!c) return NEW_SRV_ACTION_CREATE_API_KEY;
+                                      if (c == 'b') {
+                                        c = str[15];
+                                        if (!c) return NEW_SRV_ACTION_CREATE_USERPROB;
+                                        return 0;
+                                      }
                                       return 0;
                                     }
                                     return 0;
@@ -2139,6 +2143,37 @@ int ns_match_action(const unsigned char *str)
                             return 0;
                           }
                           return 0;
+                        } else if (c < 'u') {
+                          if (c == 'a') {
+                            c = str[8];
+                            if (c == 'p') {
+                              c = str[9];
+                              if (c == 'i') {
+                                c = str[10];
+                                if (c == '-') {
+                                  c = str[11];
+                                  if (c == 'k') {
+                                    c = str[12];
+                                    if (c == 'e') {
+                                      c = str[13];
+                                      if (c == 'y') {
+                                        c = str[14];
+                                        if (!c) return NEW_SRV_ACTION_CREATE_API_KEY;
+                                        return 0;
+                                      }
+                                      return 0;
+                                    }
+                                    return 0;
+                                  }
+                                  return 0;
+                                }
+                                return 0;
+                              }
+                              return 0;
+                            }
+                            return 0;
+                          }
+                        } else {
                         }
                         return 0;
                       }
