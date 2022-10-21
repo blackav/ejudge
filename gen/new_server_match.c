@@ -4286,19 +4286,27 @@ int ns_match_action(const unsigned char *str)
                       } else {
                       }
                     } else {
-                      if (c == 's') {
+                      if (c == 'u') {
                         c = str[5];
-                        if (c == 'u') {
+                        if (c == 's') {
                           c = str[6];
-                          if (c == 'b') {
+                          if (c == 'e') {
                             c = str[7];
-                            if (c == 'm') {
+                            if (c == 'r') {
                               c = str[8];
-                              if (c == 'i') {
+                              if (c == 'p') {
                                 c = str[9];
-                                if (c == 't') {
+                                if (c == 'r') {
                                   c = str[10];
-                                  if (!c) return NEW_SRV_ACTION_GET_SUBMIT;
+                                  if (c == 'o') {
+                                    c = str[11];
+                                    if (c == 'b') {
+                                      c = str[12];
+                                      if (!c) return NEW_SRV_ACTION_GET_USERPROB;
+                                      return 0;
+                                    }
+                                    return 0;
+                                  }
                                   return 0;
                                 }
                                 return 0;
@@ -4310,6 +4318,33 @@ int ns_match_action(const unsigned char *str)
                           return 0;
                         }
                         return 0;
+                      } else if (c < 'u') {
+                        if (c == 's') {
+                          c = str[5];
+                          if (c == 'u') {
+                            c = str[6];
+                            if (c == 'b') {
+                              c = str[7];
+                              if (c == 'm') {
+                                c = str[8];
+                                if (c == 'i') {
+                                  c = str[9];
+                                  if (c == 't') {
+                                    c = str[10];
+                                    if (!c) return NEW_SRV_ACTION_GET_SUBMIT;
+                                    return 0;
+                                  }
+                                  return 0;
+                                }
+                                return 0;
+                              }
+                              return 0;
+                            }
+                            return 0;
+                          }
+                          return 0;
+                        }
+                      } else {
                       }
                     }
                     return 0;
