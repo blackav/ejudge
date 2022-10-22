@@ -95,6 +95,12 @@ get_global_state(void)
 static void
 scan_dir(struct test_count_cache_dir *dir, const unsigned char *pattern)
 {
+    if (!pattern || !*pattern) {
+        err("scan_dir: pattern is empty");
+        dir->test_count = -1;
+        return;
+    }
+
     int test_num = 0;
     while (1) {
         ++test_num;
