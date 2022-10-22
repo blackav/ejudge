@@ -11611,6 +11611,67 @@ fail:
 }
 
 static void
+emit_json_result(
+        FILE *fout,
+        struct http_request_info *phr,
+        int ok,
+        int err_num,
+        unsigned err_id,
+        const unsigned char *err_msg,
+        cJSON *jr)
+{
+  phr->json_reply = 1;
+  if (!ok) {
+    if (err_num < 0) err_num = -err_num;
+    if (!err_id) {
+      random_init();
+      err_id = random_u32();
+    }
+    if (!err_msg || !*err_msg) {
+      err_msg = NULL;
+      if (err_num > 0) {
+        err_msg = ns_error_title_2(err_num);
+        if (err_msg && !*err_msg) {
+          err_msg = NULL;
+        }
+      }
+    }
+    cJSON_AddFalseToObject(jr, "ok");
+    cJSON *jerr = cJSON_CreateObject();
+    if (err_num > 0) {
+      cJSON_AddNumberToObject(jerr, "num", err_num);
+      cJSON_AddStringToObject(jerr, "symbol", ns_error_symbol(err_num));
+    }
+    if (err_id) {
+      char xbuf[64];
+      sprintf(xbuf, "%08x", err_id);
+      cJSON_AddStringToObject(jerr, "log_id", xbuf);
+    }
+    if (err_msg) {
+      cJSON_AddStringToObject(jerr, "message", err_msg);
+    }
+    cJSON_AddItemToObject(jr, "error", jerr);
+    // FIXME: log event
+  } else {
+    cJSON_AddTrueToObject(jr, "ok");
+  }
+  cJSON_AddNumberToObject(jr, "server_time", (double) phr->current_time);
+  if (phr->request_id > 0) {
+    cJSON_AddNumberToObject(jr, "request_id", (double) phr->request_id);
+  }
+  if (phr->action > 0 && phr->action < NEW_SRV_ACTION_LAST && ns_symbolic_action_table[phr->action]) {
+    cJSON_AddStringToObject(jr, "action", ns_symbolic_action_table[phr->action]);
+  }
+  if (phr->client_state && phr->client_state->ops->get_reply_id) {
+    int reply_id = phr->client_state->ops->get_reply_id(phr->client_state);
+    cJSON_AddNumberToObject(jr, "reply_id", (double) reply_id);
+  }
+  char *jrstr = cJSON_PrintUnformatted(jr);
+  fprintf(fout, "%s\n", jrstr);
+  free(jrstr);
+}
+
+static void
 ns_submit_run_input(
         FILE *fout,
         struct http_request_info *phr,
@@ -11625,7 +11686,6 @@ ns_submit_run_input(
   unsigned char *err_msg = 0;
   unsigned err_id = 0;
   cJSON *jr = cJSON_CreateObject(); // reply object
-  unsigned char *jrstr = NULL;
   const unsigned char *s;
   int prob_id;
   const struct section_problem_data *prob = NULL;
@@ -12012,57 +12072,9 @@ ns_submit_run_input(
   ok = 1;
 
 done:;
-  phr->json_reply = 1;
-  if (!ok) {
-    if (err_num < 0) err_num = -err_num;
-    if (!err_id) {
-      random_init();
-      err_id = random_u32();
-    }
-    if (!err_msg || !*err_msg) {
-      free(err_msg); err_msg = NULL;
-      if (err_num > 0) {
-        err_msg = xstrdup(ns_error_title_2(err_num));
-        if (err_msg && !*err_msg) {
-          free(err_msg); err_msg = NULL;
-        }
-      }
-    }
-    cJSON_AddFalseToObject(jr, "ok");
-    cJSON *jerr = cJSON_CreateObject();
-    if (err_num > 0) {
-      cJSON_AddNumberToObject(jerr, "num", err_num);
-      cJSON_AddStringToObject(jerr, "symbol", ns_error_symbol(err_num));
-    }
-    if (err_id) {
-      char xbuf[64];
-      sprintf(xbuf, "%08x", err_id);
-      cJSON_AddStringToObject(jerr, "log_id", xbuf);
-    }
-    if (err_msg) {
-      cJSON_AddStringToObject(jerr, "message", err_msg);
-    }
-    cJSON_AddItemToObject(jr, "error", jerr);
-    // FIXME: log event
-  } else {
-    cJSON_AddTrueToObject(jr, "ok");
-  }
-  cJSON_AddNumberToObject(jr, "server_time", (double) phr->current_time);
-  if (phr->request_id > 0) {
-    cJSON_AddNumberToObject(jr, "request_id", (double) phr->request_id);
-  }
-  if (phr->action > 0 && phr->action < NEW_SRV_ACTION_LAST && ns_symbolic_action_table[phr->action]) {
-    cJSON_AddStringToObject(jr, "action", ns_symbolic_action_table[phr->action]);
-  }
-  if (phr->client_state && phr->client_state->ops->get_reply_id) {
-    int reply_id = phr->client_state->ops->get_reply_id(phr->client_state);
-    cJSON_AddNumberToObject(jr, "reply_id", (double) reply_id);
-  }
-  jrstr = cJSON_PrintUnformatted(jr);
-  fprintf(fout, "%s\n", jrstr);
+  emit_json_result(fout, phr, ok, err_num, err_id, err_msg, jr);
 
 //cleanup:;
-  free(jrstr);
   if (jr) cJSON_Delete(jr);
   free(err_msg);
   free(ses);
@@ -12093,7 +12105,6 @@ unpriv_get_submit(
   unsigned char *err_msg = NULL;
   unsigned err_id = 0;
   cJSON *jr = cJSON_CreateObject(); // reply object
-  unsigned char *jrstr = NULL;
   int64_t submit_id = 0;
   const unsigned char *s = NULL;
   struct submit_entry se = {};
@@ -12222,56 +12233,8 @@ unpriv_get_submit(
   ok = 1;
 
 done:;
-  phr->json_reply = 1;
-  if (!ok) {
-    if (err_num < 0) err_num = -err_num;
-    if (!err_id) {
-      random_init();
-      err_id = random_u32();
-    }
-    if (!err_msg || !*err_msg) {
-      free(err_msg); err_msg = NULL;
-      if (err_num > 0) {
-        err_msg = xstrdup(ns_error_title_2(err_num));
-        if (err_msg && !*err_msg) {
-          free(err_msg); err_msg = NULL;
-        }
-      }
-    }
-    cJSON_AddFalseToObject(jr, "ok");
-    cJSON *jerr = cJSON_CreateObject();
-    if (err_num > 0) {
-      cJSON_AddNumberToObject(jerr, "num", err_num);
-      cJSON_AddStringToObject(jerr, "symbol", ns_error_symbol(err_num));
-    }
-    if (err_id) {
-      char xbuf[64];
-      sprintf(xbuf, "%08x", err_id);
-      cJSON_AddStringToObject(jerr, "log_id", xbuf);
-    }
-    if (err_msg) {
-      cJSON_AddStringToObject(jerr, "message", err_msg);
-    }
-    cJSON_AddItemToObject(jr, "error", jerr);
-    // FIXME: log event
-  } else {
-    cJSON_AddTrueToObject(jr, "ok");
-  }
-  cJSON_AddNumberToObject(jr, "server_time", (double) phr->current_time);
-  if (phr->request_id > 0) {
-    cJSON_AddNumberToObject(jr, "request_id", (double) phr->request_id);
-  }
-  if (phr->action > 0 && phr->action < NEW_SRV_ACTION_LAST && ns_symbolic_action_table[phr->action]) {
-    cJSON_AddStringToObject(jr, "action", ns_symbolic_action_table[phr->action]);
-  }
-  if (phr->client_state && phr->client_state->ops->get_reply_id) {
-    int reply_id = phr->client_state->ops->get_reply_id(phr->client_state);
-    cJSON_AddNumberToObject(jr, "reply_id", (double) reply_id);
-  }
-  jrstr = cJSON_PrintUnformatted(jr);
-  fprintf(fout, "%s\n", jrstr);
+  emit_json_result(fout, phr, ok, err_num, err_id, err_msg, jr);
 
-  free(jrstr);
   if (jr) cJSON_Delete(jr);
   free(err_msg);
   testing_report_free(tr);
@@ -14911,6 +14874,167 @@ cleanup:
   free(rep_txt);
 }
 
+static cJSON *
+userprob_to_json(const struct userprob_entry *ue)
+{
+  cJSON *jrr = cJSON_CreateObject();
+  cJSON_AddNumberToObject(jrr, "serial_id", ue->serial_id);
+  cJSON_AddNumberToObject(jrr, "create_time_ms", ue->create_time_us / 1000);
+  cJSON_AddNumberToObject(jrr, "last_change_time_ms", ue->last_change_time_us / 1000);
+  cJSON_AddNumberToObject(jrr, "contest_id", ue->contest_id);
+  cJSON_AddNumberToObject(jrr, "user_id", ue->user_id);
+  cJSON_AddNumberToObject(jrr, "prob_id", ue->prob_id);
+  if (ue->lang_id && *ue->lang_id) {
+    cJSON_AddStringToObject(jrr, "lang_id", ue->lang_id);
+  }
+  if (ue->hook_id && *ue->hook_id) {
+    cJSON_AddStringToObject(jrr, "hook_id", ue->hook_id);
+  }
+  if (ue->gitlab_token && *ue->gitlab_token) {
+    cJSON_AddStringToObject(jrr, "gitlab_token", ue->gitlab_token);
+  }
+  if (ue->vcs_type && *ue->vcs_type) {
+    cJSON_AddStringToObject(jrr, "vcs_type", ue->vcs_type);
+  }
+  if (ue->vcs_url && *ue->vcs_url) {
+    cJSON_AddStringToObject(jrr, "vcs_url", ue->vcs_url);
+  }
+  if (ue->vcs_subdir && *ue->vcs_subdir) {
+    cJSON_AddStringToObject(jrr, "vcs_subdir", ue->vcs_subdir);
+  }
+  if (ue->ssh_private_key && *ue->ssh_private_key) {
+    cJSON_AddStringToObject(jrr, "ssh_private_key", ue->ssh_private_key);
+  }
+  return jrr;
+}
+
+static void
+unpriv_get_userprob(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  serve_state_t cs = extra->serve_state;
+  int ok = 0;
+  int err_num = 0;
+  unsigned char *err_msg = NULL;
+  cJSON *jr = cJSON_CreateObject(); // reply object
+  unsigned err_id = 0;
+  const unsigned char *s = NULL;
+  int prob_id;
+  const struct section_problem_data *prob = NULL;
+  struct userprob_plugin_data *up_plugin = NULL;
+  struct userprob_entry *ue = NULL;
+
+  if (hr_cgi_param(phr, "prob_id", &s) <= 0 || !s) {
+    err_num = NEW_SRV_ERR_INV_PROB_ID;
+    goto done;
+  }
+  {
+    char *eptr = NULL;
+    errno = 0;
+    long v = strtol(s, &eptr, 10);
+    if (errno || *eptr || (unsigned char *) eptr == s || (int) v != v) {
+      err_num = NEW_SRV_ERR_INV_PROB_ID;
+      goto done;
+    }
+    prob_id = v;
+  }
+  if (prob_id <= 0 || prob_id > cs->max_prob || !(prob = cs->probs[prob_id])) {
+    err_num = NEW_SRV_ERR_INV_PROB_ID;
+    goto done;
+  }
+  if (prob->enable_gitlab <= 0) {
+    err_num = NEW_SRV_ERR_INV_PROB_ID;
+    goto done;
+  }
+  up_plugin = userprob_plugin_get(phr->config, NULL, 0);
+  if (!up_plugin) {
+    err_num = NEW_SRV_ERR_PLUGIN_NOT_AVAIL;
+    goto done;
+  }
+  ue = up_plugin->vt->fetch_by_cup(up_plugin, phr->contest_id, phr->user_id, prob_id);
+
+  if (ue) {
+    cJSON *jrr = userprob_to_json(ue);
+    cJSON_AddItemToObject(jr, "result", jrr);
+  }
+
+  ok = 1;
+
+done:;
+  emit_json_result(fout, phr, ok, err_num, err_id, err_msg, jr);
+
+  userprob_entry_free(ue);
+  if (jr) cJSON_Delete(jr);
+  free(err_msg);
+}
+
+static void
+unpriv_create_userprob(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  serve_state_t cs = extra->serve_state;
+  int ok = 0;
+  int err_num = 0;
+  unsigned char *err_msg = NULL;
+  cJSON *jr = cJSON_CreateObject(); // reply object
+  unsigned err_id = 0;
+  const unsigned char *s = NULL;
+  int prob_id;
+  const struct section_problem_data *prob = NULL;
+  struct userprob_plugin_data *up_plugin = NULL;
+  struct userprob_entry *ue = NULL;
+
+  if (hr_cgi_param(phr, "prob_id", &s) <= 0 || !s) {
+    err_num = NEW_SRV_ERR_INV_PROB_ID;
+    goto done;
+  }
+  {
+    char *eptr = NULL;
+    errno = 0;
+    long v = strtol(s, &eptr, 10);
+    if (errno || *eptr || (unsigned char *) eptr == s || (int) v != v) {
+      err_num = NEW_SRV_ERR_INV_PROB_ID;
+      goto done;
+    }
+    prob_id = v;
+  }
+  if (prob_id <= 0 || prob_id > cs->max_prob || !(prob = cs->probs[prob_id])) {
+    err_num = NEW_SRV_ERR_INV_PROB_ID;
+    goto done;
+  }
+  if (prob->enable_gitlab <= 0) {
+    err_num = NEW_SRV_ERR_INV_PROB_ID;
+    goto done;
+  }
+  up_plugin = userprob_plugin_get(phr->config, NULL, 0);
+  if (!up_plugin) {
+    err_num = NEW_SRV_ERR_PLUGIN_NOT_AVAIL;
+    goto done;
+  }
+  ue = up_plugin->vt->create(up_plugin, phr->contest_id, phr->user_id, prob_id);
+  if (!ue) {
+    err_num = NEW_SRV_ERR_OPERATION_FAILED;
+    goto done;
+  }
+
+  cJSON *jrr = userprob_to_json(ue);
+  cJSON_AddItemToObject(jr, "result", jrr);
+  ok = 1;
+
+done:;
+  emit_json_result(fout, phr, ok, err_num, err_id, err_msg, jr);
+
+  userprob_entry_free(ue);
+  if (jr) cJSON_Delete(jr);
+  free(err_msg);
+}
+
 static action_handler_t user_actions_table[NEW_SRV_ACTION_LAST] =
 {
   [NEW_SRV_ACTION_CHANGE_LANGUAGE] = unpriv_change_language,
@@ -14944,6 +15068,8 @@ static action_handler_t user_actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_RUN_TEST_JSON] = unpriv_run_test_json,
   [NEW_SRV_ACTION_SUBMIT_RUN_INPUT] = unpriv_submit_run_input,
   [NEW_SRV_ACTION_GET_SUBMIT] = unpriv_get_submit,
+  [NEW_SRV_ACTION_GET_USERPROB] = unpriv_get_userprob,
+  [NEW_SRV_ACTION_CREATE_USERPROB] = unpriv_create_userprob,
 };
 
 static const unsigned char * const external_unpriv_action_names[NEW_SRV_ACTION_LAST] =
