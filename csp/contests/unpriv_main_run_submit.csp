@@ -708,7 +708,59 @@ Max Memory Used: <span id="ej-submit-max-rss"></span></p>
       }
 %></div>
 <% // ej-submit-tabs
-
+%>
+<%
+      if (prob->enable_gitlab > 0) {
+%>
+<div id="ej-gitlab-create-dialog" title="Create integration">
+<p><s:_>No integration is defined. Create a new one?</s:_></p>
+</div>
+<script>
+  function on_gitlab_button()
+  {
+    prob_id = '<s:v value="prob_id" />';
+    $.get(self_url + "?SID=" + SID + "&prob_id=" + prob_id + "&action=get-userprob", function(data) {
+      console.log(data);
+      if (data.result) {
+      } else {
+        $("#ej-gitlab-create-dialog").dialog("open");
+      }
+    });
+  }
+  $(function() {
+    $("#ej-gitlab-create-dialog").dialog({
+      autoOpen: false,
+      modal: true,
+      buttons: {
+        Ok: function() {
+          prob_id = '<s:v value="prob_id" />';
+          $.ajax({
+            method: "POST",
+            data: {
+              prob_id: prob_id,
+              SID: SID,
+              action: 'create-userprob'
+            },
+            success: function(data) {
+              console.log(data);
+            },
+            error: function(xhr, options, err) {
+            }
+          });
+          $(this).dialog("close");
+        },
+        Cancel: function() {
+          $(this).dialog("close");
+        }
+      }
+    });
+  });
+</script>
+<p><button id="ej-gitlab-button" onclick="on_gitlab_button()"><a><s:_>Setup Gitlab Integration</s:_></a></button></p>
+<%
+      }
+%>
+<%
       // ----(0) active problem code ends here
     }
 %>
