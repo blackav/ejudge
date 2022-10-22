@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-10-14 19:36+0300\n"
+"POT-Creation-Date: 2022-10-21 23:05+0300\n"
 "PO-Revision-Date: 2022-01-12 13:17+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -2609,6 +2609,9 @@ msgstr "Нет записи для %s/%s\n"
 msgid "No guests are allowed in this contest"
 msgstr "Категория \"гости\" не поддерживается для этого турнира"
 
+msgid "No integration is defined. Create a new one?"
+msgstr "Интеграция не настроена. Настроить?"
+
 msgid "No plugin is available for problem"
 msgstr "Для задачи нет модуля сдачи решений"
 
@@ -3673,6 +3676,9 @@ msgstr "Установить статус регистрации в REJECTED, т
 
 msgid "Settings"
 msgstr "Настройки"
+
+msgid "Setup Gitlab Integration"
+msgstr "Настроить интеграцию Gitlab"
 
 msgid "Shift parameter"
 msgstr "Параметр shift"

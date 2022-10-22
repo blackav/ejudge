@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-10-14 19:36+0300\n"
+"POT-Creation-Date: 2022-10-21 23:05+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Kazakh <uk@li.org>\n"
@@ -2474,6 +2474,9 @@ msgstr ""
 msgid "No guests are allowed in this contest"
 msgstr ""
 
+msgid "No integration is defined. Create a new one?"
+msgstr ""
+
 msgid "No plugin is available for problem"
 msgstr ""
 
@@ -3515,6 +3518,9 @@ msgid "Set the registration status of the selected users to REJECTED"
 msgstr ""
 
 msgid "Settings"
+msgstr ""
+
+msgid "Setup Gitlab Integration"
 msgstr ""
 
 msgid "Shift parameter"
