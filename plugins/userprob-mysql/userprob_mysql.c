@@ -18,6 +18,8 @@
 #include "ejudge/common_plugin.h"
 #include "ejudge/userprob_plugin.h"
 #include "../common-mysql/common_mysql.h"
+#include "ejudge/random.h"
+#include "ejudge/base64.h"
 #include "ejudge/xalloc.h"
 #include "ejudge/errlog.h"
 
@@ -380,6 +382,77 @@ fail:
     return NULL;
 }
 
+static struct userprob_entry *
+create_func(
+        struct userprob_plugin_data *data,
+        int contest_id,
+        int user_id,
+        int prob_id)
+{
+    struct userprob_mysql_data *umd = (struct userprob_mysql_data *) data;
+    struct common_mysql_iface *mi = umd->mi;
+    struct common_mysql_state *md = umd->md;
+    char *cmd_s = NULL;
+    size_t cmd_z = 0;
+    FILE *cmd_f = NULL;
+
+    unsigned long long hook_val[2];
+    unsigned char token_val[8];
+    unsigned char hook_str[64];
+    unsigned char token_str[sizeof(token_val) * 2];
+    struct userprob_entry_internal uei = {};
+    struct userprob_entry *ue = NULL;
+
+    random_init();
+    random_bytes((unsigned char *) hook_val, sizeof(hook_val));
+    snprintf(hook_str, sizeof(hook_str), "%016llx-%016llx",
+             hook_val[0], hook_val[1]);
+    random_bytes(token_val, sizeof(token_val));
+    int len = base64u_encode(token_val, sizeof(token_val), token_str);
+    token_str[len] = 0;
+
+    mi->lock(md);
+    cmd_f = open_memstream(&cmd_s, &cmd_z);
+    fprintf(cmd_f, "INSERT IGNORE INTO `%suserprobs` SET contest_id = %d, user_id = %d, prob_id = %d, hook_id = '%s', gitlab_token = '%s', create_time = NOW(6), last_change_time = NOW(6);",
+            md->table_prefix,
+            contest_id,
+            user_id,
+            prob_id,
+            hook_str,
+            token_str);
+    fclose(cmd_f); cmd_f = NULL;
+
+    if (mi->simple_query(md, cmd_s, cmd_z) < 0)
+        db_error_fail(md);
+    free(cmd_s); cmd_s = NULL; cmd_z = 0;
+
+    cmd_f = open_memstream(&cmd_s, &cmd_z);
+    fprintf(cmd_f, "SELECT * FROM `%suserprobs` WHERE contest_id = %d AND user_id = %d AND prob_id = %d;",
+            md->table_prefix,
+            contest_id, user_id, prob_id);
+    fclose(cmd_f); cmd_f = NULL;
+
+    if (mi->query(md, cmd_s, cmd_z, USERPROB_ENTRY_ROW_WIDTH) < 0)
+        db_error_fail(md);
+    free(cmd_s); cmd_s = NULL; cmd_z = 0;
+
+    if (md->row_count == 1) {
+        XCALLOC(ue, 1);
+        if (mi->next_row(md) < 0) db_error_fail(md);
+        if (mi->parse_spec(md, -1, md->row, md->lengths, USERPROB_ENTRY_ROW_WIDTH, userprob_entry_spec, &uei) < 0)
+            goto fail;
+        move_to_userprob_entry(ue, &uei);
+    }
+    mi->unlock(md);
+    return ue;
+
+fail:
+    if (cmd_f) fclose(cmd_f);
+    free(cmd_s);
+    mi->unlock(md);
+    return NULL;
+}
+
 struct userprob_plugin_iface plugin_userprob_mysql =
 {
     {
@@ -399,4 +472,5 @@ struct userprob_plugin_iface plugin_userprob_mysql =
     fetch_by_hook_id_func,
     fetch_by_serial_id_func,
     fetch_by_cup_func,
+    create_func,
 };

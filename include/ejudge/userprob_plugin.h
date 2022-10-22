@@ -67,6 +67,11 @@ struct userprob_plugin_iface
         int contest_id,
         int user_id,
         int prob_id);
+    struct userprob_entry *(*create)(
+        struct userprob_plugin_data *data,
+        int contest_id,
+        int user_id,
+        int prob_id);
 };
 
 struct userprob_entry *
