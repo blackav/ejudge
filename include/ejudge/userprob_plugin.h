@@ -72,6 +72,13 @@ struct userprob_plugin_iface
         int contest_id,
         int user_id,
         int prob_id);
+    int (*save)(
+        struct userprob_plugin_data *data,
+        int64_t serial_id,
+        const struct userprob_entry *ue);
+    int (*remove)(
+        struct userprob_plugin_data *data,
+        int64_t serial_id);
 };
 
 struct userprob_entry *

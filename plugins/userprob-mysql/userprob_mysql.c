@@ -453,6 +453,67 @@ fail:
     return NULL;
 }
 
+enum { USERPROB_ENTRY_SAVE_ROW_WIDTH = 4 };
+[[gnu::unused]]
+static const struct common_mysql_parse_spec userprob_entry_save_spec[USERPROB_ENTRY_SAVE_ROW_WIDTH] =
+{
+    { 1, 's', "lang_id", USERPROB_ENTRY_OFFSET(lang_id), 0 },
+    { 1, 's', "vcs_url", USERPROB_ENTRY_OFFSET(vcs_url), 0 },
+    { 1, 's', "vcs_subdir", USERPROB_ENTRY_OFFSET(vcs_subdir), 0 },
+    { 1, 's', "ssh_private_key", USERPROB_ENTRY_OFFSET(ssh_private_key), 0 },
+};
+
+static int
+save_func(
+        struct userprob_plugin_data *data,
+        int64_t serial_id,
+        const struct userprob_entry *ue)
+{
+    struct userprob_mysql_data *umd = (struct userprob_mysql_data *) data;
+    struct common_mysql_iface *mi = umd->mi;
+    struct common_mysql_state *md = umd->md;
+    char *cmd_s = NULL;
+    size_t cmd_z = 0;
+    FILE *cmd_f = NULL;
+    struct userprob_entry_internal uei = {};
+
+    cmd_f = open_memstream(&cmd_s, &cmd_z);
+    fprintf(cmd_f, "UPDATE `%suserprobs` SET ", md->table_prefix);
+    uei.lang_id = ue->lang_id;
+    uei.vcs_url = ue->vcs_url;
+    uei.vcs_subdir = ue->vcs_subdir;
+    uei.ssh_private_key = ue->ssh_private_key;
+    mi->unparse_spec_3(md, cmd_f, USERPROB_ENTRY_SAVE_ROW_WIDTH,
+                       userprob_entry_save_spec, 0, &uei);
+    fprintf(cmd_f, ", last_change_time = NOW(6) WHERE serial_id = %lld;",
+            (long long) serial_id);
+    fclose(cmd_f); cmd_f = NULL;
+
+    if (mi->simple_query(md, cmd_s, cmd_z) < 0)
+        db_error_fail(md);
+    free(cmd_s); cmd_s = NULL; cmd_z = 0;
+    return 0;
+
+fail:
+    if (cmd_f) fclose(cmd_f);
+    free(cmd_s);
+    return -1;
+}
+
+static int
+remove_func(
+        struct userprob_plugin_data *data,
+        int64_t serial_id)
+{
+    struct userprob_mysql_data *umd = (struct userprob_mysql_data *) data;
+    struct common_mysql_iface *mi = umd->mi;
+    struct common_mysql_state *md = umd->md;
+
+    mi->simple_fquery(md, "DELETE FROM `%suserprobs` WHERE serial_id = %lld;",
+                      md->table_prefix, (long long) serial_id);
+    return 0;
+}
+
 struct userprob_plugin_iface plugin_userprob_mysql =
 {
     {
@@ -473,4 +534,6 @@ struct userprob_plugin_iface plugin_userprob_mysql =
     fetch_by_serial_id_func,
     fetch_by_cup_func,
     create_func,
+    save_func,
+    remove_func,
 };
