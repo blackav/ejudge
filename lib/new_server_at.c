@@ -331,4 +331,6 @@ const unsigned char * const ns_symbolic_action_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_GET_SUBMIT] = "get-submit",
   [NEW_SRV_ACTION_GET_USERPROB] = "get-userprob",
   [NEW_SRV_ACTION_CREATE_USERPROB] = "create-userprob",
+  [NEW_SRV_ACTION_SAVE_USERPROB] = "save-userprob",
+  [NEW_SRV_ACTION_REMOVE_USERPROB] = "remove-userprob",
 };
