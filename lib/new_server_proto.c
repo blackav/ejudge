@@ -189,6 +189,7 @@ static const unsigned char * const ns_error_messages[NEW_SRV_ERR_LAST]=
   [NEW_SRV_ERR_INV_UUID] = __("Invalid UUID"),
   [NEW_SRV_ERR_RATE_EXCEEDED] = __("Rate exceeded"),
   [NEW_SRV_ERR_INV_SUBMIT_ID] = __("Invalid submit ID"),
+  [NEW_SRV_ERR_INV_USERPROB_ID] = __("Invalid ID"),
 };
 
 static const unsigned char * const ns_error_titles[NEW_SRV_ERR_LAST]=
@@ -350,6 +351,7 @@ static const unsigned char * const ns_error_titles[NEW_SRV_ERR_LAST]=
   [NEW_SRV_ERR_INV_UUID] = __("Invalid UUID"),
   [NEW_SRV_ERR_RATE_EXCEEDED] = __("Rate exceeded"),
   [NEW_SRV_ERR_INV_SUBMIT_ID] = __("Invalid submit ID"),
+  [NEW_SRV_ERR_INV_USERPROB_ID] = __("Invalid ID"),
 };
 
 static const unsigned char * const ns_error_symbols[NEW_SRV_ERR_LAST]=
@@ -510,6 +512,7 @@ static const unsigned char * const ns_error_symbols[NEW_SRV_ERR_LAST]=
   [NEW_SRV_ERR_INV_UUID] = "ERR_INV_UUID",
   [NEW_SRV_ERR_RATE_EXCEEDED] = "ERR_RATE_EXCEEDED",
   [NEW_SRV_ERR_INV_SUBMIT_ID] = "ERR_INV_SUBMIT_ID",
+  [NEW_SRV_ERR_INV_USERPROB_ID] = "ERR_INV_USERPROB_ID",
 };
 
 const unsigned char *
