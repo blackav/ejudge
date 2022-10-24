@@ -85,9 +85,11 @@ static const char create_query[] =
 "    vcs_type VARCHAR(16) DEFAULT NULL,\n"
 "    vcs_url VARCHAR(1024) DEFAULT NULL,\n"
 "    vcs_subdir VARCHAR(1024) DEFAULT NULL,\n"
+"    vcs_branch_spec VARCHAR(1024) DEFAULT NULL,\n"
 "    ssh_private_key VARCHAR(1024) DEFAULT NULL,\n"
 "    last_event VARCHAR(128) DEFAULT NULL,\n"
 "    last_revision VARCHAR(128) DEFAULT NULL,\n"
+"    message VARCHAR(1024) DEFAULT NULL,\n"
 "    create_time DATETIME(6) NOT NULL,\n"
 "    last_change_time DATETIME(6) DEFAULT NULL,\n"
 "    UNIQUE KEY up_unique_k(contest_id,user_id,prob_id),\n"
@@ -188,14 +190,16 @@ struct userprob_entry_internal
     unsigned char *vcs_type;
     unsigned char *vcs_url;
     unsigned char *vcs_subdir;
+    unsigned char *vcs_branch_spec;
     unsigned char *ssh_private_key;
     unsigned char *last_event;
     unsigned char *last_revision;
+    unsigned char *message;
     struct timeval create_time;
     struct timeval last_change_time;
 };
 
-enum { USERPROB_ENTRY_ROW_WIDTH = 15 };
+enum { USERPROB_ENTRY_ROW_WIDTH = 17 };
 #define USERPROB_ENTRY_OFFSET(f) XOFFSET(struct userprob_entry_internal, f)
 static const struct common_mysql_parse_spec userprob_entry_spec[USERPROB_ENTRY_ROW_WIDTH] =
 {
@@ -209,9 +213,11 @@ static const struct common_mysql_parse_spec userprob_entry_spec[USERPROB_ENTRY_R
     { 1, 's', "vcs_type", USERPROB_ENTRY_OFFSET(vcs_type), 0 },
     { 1, 's', "vcs_url", USERPROB_ENTRY_OFFSET(vcs_url), 0 },
     { 1, 's', "vcs_subdir", USERPROB_ENTRY_OFFSET(vcs_subdir), 0 },
+    { 1, 's', "vcs_branch_spec", USERPROB_ENTRY_OFFSET(vcs_branch_spec), 0 },
     { 1, 's', "ssh_private_key", USERPROB_ENTRY_OFFSET(ssh_private_key), 0 },
     { 1, 's', "last_event", USERPROB_ENTRY_OFFSET(last_event), 0 },
     { 1, 's', "last_revision", USERPROB_ENTRY_OFFSET(last_revision), 0 },
+    { 1, 's', "message", USERPROB_ENTRY_OFFSET(message), 0 },
     { 1, 'T', "create_time", USERPROB_ENTRY_OFFSET(create_time), 0 },
     { 1, 'T', "last_change_time", USERPROB_ENTRY_OFFSET(last_change_time), 0 },
 };
@@ -244,9 +250,11 @@ move_to_userprob_entry(
     ue->vcs_type = uei->vcs_type; uei->vcs_type = NULL;
     ue->vcs_url = uei->vcs_url; uei->vcs_url = NULL;
     ue->vcs_subdir = uei->vcs_subdir; uei->vcs_subdir = NULL;
+    ue->vcs_branch_spec = uei->vcs_branch_spec; uei->vcs_branch_spec = NULL;
     ue->ssh_private_key = uei->ssh_private_key; uei->ssh_private_key = NULL;
     ue->last_event = uei->last_event; uei->last_event = NULL;
     ue->last_revision = uei->last_revision; uei->last_revision = NULL;
+    ue->message = uei->message; uei->message = NULL;
     ue->create_time_us = uei->create_time.tv_sec * 1000000LL + uei->create_time.tv_usec;
     ue->last_change_time_us = uei->last_change_time.tv_sec * 1000000LL + uei->last_change_time.tv_usec;
 }
@@ -453,13 +461,13 @@ fail:
     return NULL;
 }
 
-enum { USERPROB_ENTRY_SAVE_ROW_WIDTH = 4 };
-[[gnu::unused]]
+enum { USERPROB_ENTRY_SAVE_ROW_WIDTH = 5 };
 static const struct common_mysql_parse_spec userprob_entry_save_spec[USERPROB_ENTRY_SAVE_ROW_WIDTH] =
 {
     { 1, 's', "lang_id", USERPROB_ENTRY_OFFSET(lang_id), 0 },
     { 1, 's', "vcs_url", USERPROB_ENTRY_OFFSET(vcs_url), 0 },
     { 1, 's', "vcs_subdir", USERPROB_ENTRY_OFFSET(vcs_subdir), 0 },
+    { 1, 's', "vcs_branch_spec", USERPROB_ENTRY_OFFSET(vcs_branch_spec), 0 },
     { 1, 's', "ssh_private_key", USERPROB_ENTRY_OFFSET(ssh_private_key), 0 },
 };
 

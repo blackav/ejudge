@@ -33,9 +33,11 @@ struct userprob_entry
     unsigned char *vcs_type;
     unsigned char *vcs_url;
     unsigned char *vcs_subdir;
+    unsigned char *vcs_branch_spec;
     unsigned char *ssh_private_key;
     unsigned char *last_event;
     unsigned char *last_revision;
+    unsigned char *message;
     int contest_id;
     int user_id;
     int prob_id;

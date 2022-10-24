@@ -30,9 +30,11 @@ userprob_entry_free(struct userprob_entry *ue)
         free(ue->vcs_type);
         free(ue->vcs_url);
         free(ue->vcs_subdir);
+        free(ue->vcs_branch_spec);
         free(ue->ssh_private_key);
         free(ue->last_event);
         free(ue->last_revision);
+        free(ue->message);
         memset(ue, 0xff, sizeof(*ue));
         free(ue);
     }
