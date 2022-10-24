@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-10-21 23:05+0300\n"
+"POT-Creation-Date: 2022-10-24 11:00+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Ukrainian <uk@li.org>\n"
@@ -1853,6 +1853,9 @@ msgid "Insufficient duration to continue the contest"
 msgstr ""
 
 msgid "Internal error"
+msgstr ""
+
+msgid "Invalid ID"
 msgstr ""
 
 #, c-format
