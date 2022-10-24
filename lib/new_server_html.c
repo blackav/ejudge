@@ -15035,6 +15035,183 @@ done:;
   free(err_msg);
 }
 
+static void
+unpriv_save_userprob(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  serve_state_t cs = extra->serve_state;
+  int ok = 0;
+  int err_num = 0;
+  unsigned char *err_msg = NULL;
+  cJSON *jr = cJSON_CreateObject(); // reply object
+  unsigned err_id = 0;
+  const unsigned char *s = NULL;
+  int64_t serial_id = 0;
+  struct userprob_plugin_data *up_plugin = NULL;
+  struct userprob_entry *ue = NULL;
+  const struct section_problem_data *prob = NULL;
+  int r;
+
+  if (hr_cgi_param(phr, "serial_id", &s) <= 0 || !s) {
+    err_num = NEW_SRV_ERR_INV_USERPROB_ID;
+    goto done;
+  }
+  {
+    char *eptr = NULL;
+    errno = 0;
+    long long v = strtoll(s, &eptr, 10);
+    if (errno || *eptr || (unsigned char *) eptr == s || v <= 0) {
+      err_num = NEW_SRV_ERR_INV_USERPROB_ID;
+      goto done;
+    }
+    serial_id = v;
+  }
+
+  up_plugin = userprob_plugin_get(phr->config, NULL, 0);
+  if (!up_plugin) {
+    err_num = NEW_SRV_ERR_PLUGIN_NOT_AVAIL;
+    goto done;
+  }
+  ue = up_plugin->vt->fetch_by_serial_id(up_plugin, serial_id);
+  if (!ue) {
+    err_num = NEW_SRV_ERR_INV_USERPROB_ID;
+    goto done;
+  }
+  if (ue->user_id != phr->user_id || ue->contest_id != cnts->id) {
+    err_num = NEW_SRV_ERR_INV_USERPROB_ID;
+    goto done;
+  }
+  if (ue->prob_id <= 0 || ue->prob_id > cs->max_prob || !(prob = cs->probs[ue->prob_id])) {
+    err_num = NEW_SRV_ERR_INV_USERPROB_ID;
+    goto done;
+  }
+  if (prob->enable_gitlab <= 0) {
+    err_num = NEW_SRV_ERR_INV_USERPROB_ID;
+    goto done;
+  }
+
+  XCALLOC(ue, 1);
+  if ((r = hr_cgi_param(phr, "lang_id", &s)) < 0) {
+    err_num = NEW_SRV_ERR_INV_PARAM;
+    goto done;
+  }
+  if (r > 0 && s) {
+    if (!*(ue->lang_id = text_input_process_string(s, 0, 0))) {
+      free(ue->lang_id); ue->lang_id = NULL;
+    }
+  }
+  if ((r = hr_cgi_param(phr, "vcs_url", &s)) < 0) {
+    err_num = NEW_SRV_ERR_INV_PARAM;
+    goto done;
+  }
+  if (r > 0 && s) {
+    if (!*(ue->vcs_url = text_input_process_string(s, 0, 0))) {
+      free(ue->vcs_url); ue->vcs_url = NULL;
+    }
+  }
+  if ((r = hr_cgi_param(phr, "vcs_subdir", &s)) < 0) {
+    err_num = NEW_SRV_ERR_INV_PARAM;
+    goto done;
+  }
+  if (r > 0 && s) {
+    if (!*(ue->vcs_subdir = text_input_process_string(s, 0, 0))) {
+      free(ue->vcs_subdir); ue->vcs_subdir = NULL;
+    }
+  }
+  if ((r = hr_cgi_param(phr, "ssh_private_key", &s)) < 0) {
+    err_num = NEW_SRV_ERR_INV_PARAM;
+    goto done;
+  }
+  if (r > 0 && s) {
+    if (!*(ue->ssh_private_key = text_area_process_string(s, 0, 0))) {
+      free(ue->ssh_private_key); ue->ssh_private_key = NULL;
+    }
+  }
+
+  up_plugin->vt->save(up_plugin, serial_id, ue);
+
+  ok = 1;
+
+done:;
+  emit_json_result(fout, phr, ok, err_num, err_id, err_msg, jr);
+
+  userprob_entry_free(ue);
+  if (jr) cJSON_Delete(jr);
+  free(err_msg);
+}
+
+static void
+unpriv_remove_userprob(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  serve_state_t cs = extra->serve_state;
+  int ok = 0;
+  int err_num = 0;
+  unsigned char *err_msg = NULL;
+  cJSON *jr = cJSON_CreateObject(); // reply object
+  unsigned err_id = 0;
+  const unsigned char *s = NULL;
+  int64_t serial_id = 0;
+  struct userprob_plugin_data *up_plugin = NULL;
+  struct userprob_entry *ue = NULL;
+  const struct section_problem_data *prob = NULL;
+
+  if (hr_cgi_param(phr, "serial_id", &s) <= 0 || !s) {
+    err_num = NEW_SRV_ERR_INV_USERPROB_ID;
+    goto done;
+  }
+  {
+    char *eptr = NULL;
+    errno = 0;
+    long long v = strtoll(s, &eptr, 10);
+    if (errno || *eptr || (unsigned char *) eptr == s || v <= 0) {
+      err_num = NEW_SRV_ERR_INV_USERPROB_ID;
+      goto done;
+    }
+    serial_id = v;
+  }
+
+  up_plugin = userprob_plugin_get(phr->config, NULL, 0);
+  if (!up_plugin) {
+    err_num = NEW_SRV_ERR_PLUGIN_NOT_AVAIL;
+    goto done;
+  }
+  ue = up_plugin->vt->fetch_by_serial_id(up_plugin, serial_id);
+  if (!ue) {
+    err_num = NEW_SRV_ERR_INV_USERPROB_ID;
+    goto done;
+  }
+  if (ue->user_id != phr->user_id || ue->contest_id != cnts->id) {
+    err_num = NEW_SRV_ERR_INV_USERPROB_ID;
+    goto done;
+  }
+  if (ue->prob_id <= 0 || ue->prob_id > cs->max_prob || !(prob = cs->probs[ue->prob_id])) {
+    err_num = NEW_SRV_ERR_INV_USERPROB_ID;
+    goto done;
+  }
+  if (prob->enable_gitlab <= 0) {
+    err_num = NEW_SRV_ERR_INV_USERPROB_ID;
+    goto done;
+  }
+
+  up_plugin->vt->remove(up_plugin, serial_id);
+
+  ok = 1;
+
+done:;
+  emit_json_result(fout, phr, ok, err_num, err_id, err_msg, jr);
+
+  userprob_entry_free(ue);
+  if (jr) cJSON_Delete(jr);
+  free(err_msg);
+}
+
 static action_handler_t user_actions_table[NEW_SRV_ACTION_LAST] =
 {
   [NEW_SRV_ACTION_CHANGE_LANGUAGE] = unpriv_change_language,
@@ -15070,6 +15247,8 @@ static action_handler_t user_actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_GET_SUBMIT] = unpriv_get_submit,
   [NEW_SRV_ACTION_GET_USERPROB] = unpriv_get_userprob,
   [NEW_SRV_ACTION_CREATE_USERPROB] = unpriv_create_userprob,
+  [NEW_SRV_ACTION_SAVE_USERPROB] = unpriv_save_userprob,
+  [NEW_SRV_ACTION_REMOVE_USERPROB] = unpriv_remove_userprob,
 };
 
 static const unsigned char * const external_unpriv_action_names[NEW_SRV_ACTION_LAST] =
