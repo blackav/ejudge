@@ -14902,6 +14902,9 @@ userprob_to_json(const struct userprob_entry *ue)
   if (ue->vcs_subdir && *ue->vcs_subdir) {
     cJSON_AddStringToObject(jrr, "vcs_subdir", ue->vcs_subdir);
   }
+  if (ue->vcs_branch_spec && *ue->vcs_branch_spec) {
+    cJSON_AddStringToObject(jrr, "vcs_branch_spec", ue->vcs_branch_spec);
+  }
   if (ue->ssh_private_key && *ue->ssh_private_key) {
     cJSON_AddStringToObject(jrr, "ssh_private_key", ue->ssh_private_key);
   }
