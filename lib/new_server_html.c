@@ -15121,6 +15121,15 @@ unpriv_save_userprob(
       free(ue->vcs_subdir); ue->vcs_subdir = NULL;
     }
   }
+  if ((r = hr_cgi_param(phr, "vcs_branch_spec", &s)) < 0) {
+    err_num = NEW_SRV_ERR_INV_PARAM;
+    goto done;
+  }
+  if (r > 0 && s) {
+    if (!*(ue->vcs_branch_spec = text_input_process_string(s, 0, 0))) {
+      free(ue->vcs_branch_spec); ue->vcs_branch_spec = NULL;
+    }
+  }
   if ((r = hr_cgi_param(phr, "ssh_private_key", &s)) < 0) {
     err_num = NEW_SRV_ERR_INV_PARAM;
     goto done;
