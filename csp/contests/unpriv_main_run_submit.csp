@@ -681,6 +681,7 @@ Max Memory Used: <span id="ej-submit-max-rss"></span></p>
 
       $.ajax({
         method: "POST",
+        url: self_url,
         contentType: false,
         cache: false,
         data: data,
@@ -720,15 +721,31 @@ Max Memory Used: <span id="ej-submit-max-rss"></span></p>
     <input id="ej-gitlab-serial-id" type="hidden" name="serial_id" />
     <div>
       <div>Gitlab webhook:</div>
-      <div><input size="80" id="ej-gitlab-webhook-url" type="text" name="webhook_url" readonly="readonly" /><span class="ui-icon ui-icon-clipboard"></span></div>
+      <div><input size="80" id="ej-gitlab-webhook-url" type="text" name="webhook_url" readonly="readonly" /><span id="ej-gitlab-copy-webhook-url" class="ui-icon ui-icon-clipboard"></span></div>
     </div>
     <div>
       <div>Gitlab webhook token:</div>
-      <div><input size="80" id="ej-gitlab-gitlab-token" type="text" name="github_token" readonly="readonly" /><span class="ui-icon ui-icon-clipboard"></span></div>
+      <div><input size="80" id="ej-gitlab-gitlab-token" type="text" name="github_token" readonly="readonly" /><span id="ej-gitlab-copy-gitlab-token" class="ui-icon ui-icon-clipboard"></span></div>
     </div>
     <div>
       <div>GIT SSH URL:</div>
       <div><input size="80" id="ej-gitlab-vcs-url" type="text" name="vcs_url" /></div>
+    </div>
+    <div>
+      <div>Language:</div>
+      <div>
+        <select id="ej-gitlab-lang-id" name="lang_id">
+          <option></option>
+<%
+      for (i = 1; i <= cs->max_lang; ++i) {
+        if (av_langs && !av_langs[i]) continue;
+%>
+          <option value='<s:v value="cs->langs[i]->short_name" escape="false" />'><s:v value="cs->langs[i]->short_name" escape="false" /> - <s:v value="cs->langs[i]->long_name" checkExpr="" /></option>
+<%
+      }
+%>
+        </select>
+      </div>
     </div>
     <div>
       <div>Repo subdirectory:</div>
@@ -744,6 +761,9 @@ Max Memory Used: <span id="ej-submit-max-rss"></span></p>
     </div>
   </form>
 </div>
+<div id="ej-gitlab-delete-dialog" title="Delete integration">
+<p><s:_>Delete this integration?</s:_></p>
+</div>
 <script>
   function activate_edit_dialog(data)
   {
@@ -752,6 +772,9 @@ Max Memory Used: <span id="ej-submit-max-rss"></span></p>
       $("#ej-gitlab-serial-id").val(data.result.serial_id);
       $("#ej-gitlab-webhook-url").val(self_url + "/gitlab-webhook/S" + data.result.hook_id);
       $("#ej-gitlab-gitlab-token").val(data.result.gitlab_token);
+      if (data.result.lang_id) {
+        $("#ej-gitlab-lang-id").val(data.result.lang_id);
+      }
       if (data.result.vcs_url) {
         $("#ej-gitlab-vcs-url").val(data.result.vcs_url);
       }
@@ -789,6 +812,7 @@ Max Memory Used: <span id="ej-submit-max-rss"></span></p>
           prob_id = '<s:v value="prob_id" />';
           $.ajax({
             method: "POST",
+            url: self_url,
             data: {
               prob_id: prob_id,
               SID: SID,
@@ -814,14 +838,75 @@ Max Memory Used: <span id="ej-submit-max-rss"></span></p>
       buttons: {
         Ok: function() {
           $(this).dialog("close");
+          serial_id = $("#ej-gitlab-serial-id").val();
+          lang_id = $("#ej-gitlab-lang-id").val();
+          vcs_url = $("#ej-gitlab-vcs-url").val();
+          vcs_subdir = $("#ej-gitlab-vcs-subdir").val();
+          vcs_branch_spec = $("#ej-gitlab-vcs-branch-spec").val();
+          ssh_private_key = $("#ej-gitlab-ssh-private-key").val();
+          $.ajax({
+            method: "POST",
+            url: self_url,
+            data: {
+              serial_id: serial_id,
+              lang_id: lang_id,
+              vcs_url: vcs_url,
+              vcs_subdir: vcs_subdir,
+              vcs_branch_spec: vcs_branch_spec,
+              ssh_private_key: ssh_private_key,
+              SID: SID,
+              action: 'save-userprob'
+            },
+            success: function(data) {
+            },
+            error: function(xhr, options, err) {
+            }
+          });
         },
         Cancel: function() {
           $(this).dialog("close");
         },
         "Delete": function() {
           $(this).dialog("close");
+          $("#ej-gitlab-delete-dialog").dialog("open");
         }
       }
+    });
+    $("#ej-gitlab-delete-dialog").dialog({
+      autoOpen: false,
+      modal: true,
+      buttons: {
+        Ok: function() {
+          $(this).dialog("close");
+          serial_id = $("#ej-gitlab-serial-id").val();
+          $.ajax({
+            method: "POST",
+            url: self_url,
+            data: {
+              serial_id: serial_id,
+              SID: SID,
+              action: 'remove-userprob'
+            },
+            success: function(data) {
+            },
+            error: function(xhr, options, err) {
+            }
+          });
+        },
+        Cancel: function() {
+          $(this).dialog("close");
+        }
+      }
+    });
+    $("#ej-gitlab-copy-webhook-url").click(function() {
+      $("#ej-gitlab-webhook-url").focus();
+      $("#ej-gitlab-webhook-url").select();
+      document.execCommand('copy');
+    });
+    $("#ej-gitlab-copy-gitlab-token").click(function() {
+      $("#ej-gitlab-gitlab-token").focus();
+      $("#ej-gitlab-gitlab-token").select();
+      document.execCommand('copy');
     });
   });
 </script>
