@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-10-24 11:00+0300\n"
+"POT-Creation-Date: 2022-10-25 17:35+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Ukrainian <uk@li.org>\n"
@@ -1083,6 +1083,9 @@ msgid "Delete all"
 msgstr ""
 
 msgid "Delete row"
+msgstr ""
+
+msgid "Delete this integration?"
 msgstr ""
 
 msgid "Delete!"

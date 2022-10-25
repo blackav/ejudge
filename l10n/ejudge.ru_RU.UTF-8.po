@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-10-24 11:00+0300\n"
+"POT-Creation-Date: 2022-10-25 17:35+0300\n"
 "PO-Revision-Date: 2022-01-12 13:17+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -1139,6 +1139,9 @@ msgstr "Удалить все"
 
 msgid "Delete row"
 msgstr "Удалить строку"
+
+msgid "Delete this integration?"
+msgstr "Удалить интеграцию?"
 
 msgid "Delete!"
 msgstr "Удалить!"
