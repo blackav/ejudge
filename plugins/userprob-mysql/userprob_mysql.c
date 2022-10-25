@@ -79,7 +79,7 @@ static const char create_query[] =
 "    contest_id INT NOT NULL,\n"
 "    user_id INT UNSIGNED NOT NULL,\n"
 "    prob_id INT UNSIGNED NOT NULL DEFAULT 0,\n"
-"    lang_id VARCHAR(64) DEFAULT NULL,\n"
+"    lang_name VARCHAR(64) DEFAULT NULL,\n"
 "    hook_id CHAR(64) NOT NULL,\n"
 "    gitlab_token VARCHAR(64) DEFAULT NULL,\n"
 "    vcs_type VARCHAR(16) DEFAULT NULL,\n"
@@ -184,7 +184,7 @@ struct userprob_entry_internal
     int contest_id;
     int user_id;
     int prob_id;
-    unsigned char *lang_id;
+    unsigned char *lang_name;
     unsigned char *hook_id;
     unsigned char *gitlab_token;
     unsigned char *vcs_type;
@@ -207,7 +207,7 @@ static const struct common_mysql_parse_spec userprob_entry_spec[USERPROB_ENTRY_R
     { 0, 'd', "contest_id", USERPROB_ENTRY_OFFSET(contest_id), 0 },
     { 0, 'd', "user_id", USERPROB_ENTRY_OFFSET(user_id), 0 },
     { 0, 'd', "prob_id", USERPROB_ENTRY_OFFSET(prob_id), 0 },
-    { 1, 's', "lang_id", USERPROB_ENTRY_OFFSET(lang_id), 0 },
+    { 1, 's', "lang_name", USERPROB_ENTRY_OFFSET(lang_name), 0 },
     { 1, 's', "hook_id", USERPROB_ENTRY_OFFSET(hook_id), 0 },
     { 1, 's', "gitlab_token", USERPROB_ENTRY_OFFSET(gitlab_token), 0 },
     { 1, 's', "vcs_type", USERPROB_ENTRY_OFFSET(vcs_type), 0 },
@@ -244,7 +244,7 @@ move_to_userprob_entry(
     ue->contest_id = uei->contest_id;
     ue->user_id = uei->user_id;
     ue->prob_id = uei->prob_id;
-    ue->lang_id = uei->lang_id; uei->lang_id = NULL;
+    ue->lang_name = uei->lang_name; uei->lang_name = NULL;
     ue->hook_id = uei->hook_id; uei->hook_id = NULL;
     ue->gitlab_token = uei->gitlab_token; uei->gitlab_token = NULL;
     ue->vcs_type = uei->vcs_type; uei->vcs_type = NULL;
@@ -464,7 +464,7 @@ fail:
 enum { USERPROB_ENTRY_SAVE_ROW_WIDTH = 5 };
 static const struct common_mysql_parse_spec userprob_entry_save_spec[USERPROB_ENTRY_SAVE_ROW_WIDTH] =
 {
-    { 1, 's', "lang_id", USERPROB_ENTRY_OFFSET(lang_id), 0 },
+    { 1, 's', "lang_name", USERPROB_ENTRY_OFFSET(lang_name), 0 },
     { 1, 's', "vcs_url", USERPROB_ENTRY_OFFSET(vcs_url), 0 },
     { 1, 's', "vcs_subdir", USERPROB_ENTRY_OFFSET(vcs_subdir), 0 },
     { 1, 's', "vcs_branch_spec", USERPROB_ENTRY_OFFSET(vcs_branch_spec), 0 },
@@ -487,7 +487,7 @@ save_func(
 
     cmd_f = open_memstream(&cmd_s, &cmd_z);
     fprintf(cmd_f, "UPDATE `%suserprobs` SET ", md->table_prefix);
-    uei.lang_id = ue->lang_id;
+    uei.lang_name = ue->lang_name;
     uei.vcs_url = ue->vcs_url;
     uei.vcs_subdir = ue->vcs_subdir;
     uei.ssh_private_key = ue->ssh_private_key;

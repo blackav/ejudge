@@ -14884,8 +14884,8 @@ userprob_to_json(const struct userprob_entry *ue)
   cJSON_AddNumberToObject(jrr, "contest_id", ue->contest_id);
   cJSON_AddNumberToObject(jrr, "user_id", ue->user_id);
   cJSON_AddNumberToObject(jrr, "prob_id", ue->prob_id);
-  if (ue->lang_id && *ue->lang_id) {
-    cJSON_AddStringToObject(jrr, "lang_id", ue->lang_id);
+  if (ue->lang_name && *ue->lang_name) {
+    cJSON_AddStringToObject(jrr, "lang_name", ue->lang_name);
   }
   if (ue->hook_id && *ue->hook_id) {
     cJSON_AddStringToObject(jrr, "hook_id", ue->hook_id);
@@ -15097,13 +15097,13 @@ unpriv_save_userprob(
   }
 
   XCALLOC(ue, 1);
-  if ((r = hr_cgi_param(phr, "lang_id", &s)) < 0) {
+  if ((r = hr_cgi_param(phr, "lang_name", &s)) < 0) {
     err_num = NEW_SRV_ERR_INV_PARAM;
     goto done;
   }
   if (r > 0 && s) {
-    if (!*(ue->lang_id = text_input_process_string(s, 0, 0))) {
-      free(ue->lang_id); ue->lang_id = NULL;
+    if (!*(ue->lang_name = text_input_process_string(s, 0, 0))) {
+      free(ue->lang_name); ue->lang_name = NULL;
     }
   }
   if ((r = hr_cgi_param(phr, "vcs_url", &s)) < 0) {

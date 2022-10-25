@@ -734,7 +734,7 @@ Max Memory Used: <span id="ej-submit-max-rss"></span></p>
     <div>
       <div>Language:</div>
       <div>
-        <select id="ej-gitlab-lang-id" name="lang_id">
+        <select id="ej-gitlab-lang-name" name="lang_name">
           <option></option>
 <%
       for (i = 1; i <= cs->max_lang; ++i) {
@@ -772,8 +772,8 @@ Max Memory Used: <span id="ej-submit-max-rss"></span></p>
       $("#ej-gitlab-serial-id").val(data.result.serial_id);
       $("#ej-gitlab-webhook-url").val(self_url + "/gitlab-webhook/S" + data.result.hook_id);
       $("#ej-gitlab-gitlab-token").val(data.result.gitlab_token);
-      if (data.result.lang_id) {
-        $("#ej-gitlab-lang-id").val(data.result.lang_id);
+      if (data.result.lang_name) {
+        $("#ej-gitlab-lang-name").val(data.result.lang_name);
       }
       if (data.result.vcs_url) {
         $("#ej-gitlab-vcs-url").val(data.result.vcs_url);
@@ -839,7 +839,7 @@ Max Memory Used: <span id="ej-submit-max-rss"></span></p>
         Ok: function() {
           $(this).dialog("close");
           serial_id = $("#ej-gitlab-serial-id").val();
-          lang_id = $("#ej-gitlab-lang-id").val();
+          lang_name = $("#ej-gitlab-lang-name").val();
           vcs_url = $("#ej-gitlab-vcs-url").val();
           vcs_subdir = $("#ej-gitlab-vcs-subdir").val();
           vcs_branch_spec = $("#ej-gitlab-vcs-branch-spec").val();
@@ -849,7 +849,7 @@ Max Memory Used: <span id="ej-submit-max-rss"></span></p>
             url: self_url,
             data: {
               serial_id: serial_id,
-              lang_id: lang_id,
+              lang_name: lang_name,
               vcs_url: vcs_url,
               vcs_subdir: vcs_subdir,
               vcs_branch_spec: vcs_branch_spec,

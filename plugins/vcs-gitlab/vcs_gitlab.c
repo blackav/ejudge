@@ -331,7 +331,7 @@ gitlab_webhook_handler(
         task_AddArg(git_task, post_pull_path);
         task_SetPathAsArg0(git_task);
         task_AddArg(git_task, problem_dir);
-        task_AddArg(git_task, ue->lang_id);
+        task_AddArg(git_task, ue->lang_name);
         task_SetWorkingDir(git_task, source_path);
         if (task_Start(git_task) < 0) {
             err("gitlab_webhook_handler: post_pull_cmd failed to start: %s", post_pull_path);
@@ -429,9 +429,9 @@ gitlab_webhook_handler(
     snprintf(prob_id_buf, sizeof(prob_id_buf), "%d", ue->prob_id);
     curl_mime_data(part, prob_id_buf, CURL_ZERO_TERMINATED);
     curl_mime_name(part, "prob_id");
-    if (ue->lang_id && *ue->lang_id) {
+    if (ue->lang_name && *ue->lang_name) {
         part = curl_mime_addpart(mime);
-        curl_mime_data(part, ue->lang_id, CURL_ZERO_TERMINATED);
+        curl_mime_data(part, ue->lang_name, CURL_ZERO_TERMINATED);
         curl_mime_name(part, "lang_id");
     }
     char sid_buf[64];
