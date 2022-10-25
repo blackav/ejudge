@@ -715,13 +715,65 @@ Max Memory Used: <span id="ej-submit-max-rss"></span></p>
 <div id="ej-gitlab-create-dialog" title="Create integration">
 <p><s:_>No integration is defined. Create a new one?</s:_></p>
 </div>
+<div id="ej-gitlab-edit-dialog" title="Integration properties">
+  <form id="ej-gitlab-edit-form">
+    <input id="ej-gitlab-serial-id" type="hidden" name="serial_id" />
+    <div>
+      <div>Gitlab webhook:</div>
+      <div><input size="80" id="ej-gitlab-webhook-url" type="text" name="webhook_url" readonly="readonly" /><span class="ui-icon ui-icon-clipboard"></span></div>
+    </div>
+    <div>
+      <div>Gitlab webhook token:</div>
+      <div><input size="80" id="ej-gitlab-gitlab-token" type="text" name="github_token" readonly="readonly" /><span class="ui-icon ui-icon-clipboard"></span></div>
+    </div>
+    <div>
+      <div>GIT SSH URL:</div>
+      <div><input size="80" id="ej-gitlab-vcs-url" type="text" name="vcs_url" /></div>
+    </div>
+    <div>
+      <div>Repo subdirectory:</div>
+      <div><input size="80" id="ej-gitlab-vcs-subdir" type="text" name="vcs_subdir" /></div>
+    </div>
+    <div>
+      <div>Branch specification:</div>
+      <div><input size="80" id="ej-gitlab-vcs-branch-spec" type="text" name="vcs_branch_spec" /></div>
+    </div>
+    <div>
+      <div>SSH private key (deploy key):</div>
+      <div><textarea id="ej-gitlab-ssh-private-key" name="ssh_private_key" rows="10" cols="80"></textarea></div>
+    </div>
+  </form>
+</div>
 <script>
+  function activate_edit_dialog(data)
+  {
+    console.log(data);
+    if (data.result) {
+      $("#ej-gitlab-serial-id").val(data.result.serial_id);
+      $("#ej-gitlab-webhook-url").val(self_url + "/gitlab-webhook/S" + data.result.hook_id);
+      $("#ej-gitlab-gitlab-token").val(data.result.gitlab_token);
+      if (data.result.vcs_url) {
+        $("#ej-gitlab-vcs-url").val(data.result.vcs_url);
+      }
+      if (data.result.vcs_subdir) {
+        $("#ej-gitlab-vcs-subdir").val(data.result.vcs_subdir);
+      }
+      if (data.result.vcs_branch_spec) {
+        $("#ej-gitlab-vcs-branch-spec").val(data.result.vcs_branch_spec);
+      }
+      if (data.result.ssh_private_key) {
+        $("#ej-gitlab-ssh-private-key").val(data.result.ssh_private_key);
+      }
+    }
+    $("#ej-gitlab-edit-dialog").dialog("open");
+  }
   function on_gitlab_button()
   {
     prob_id = '<s:v value="prob_id" />';
     $.get(self_url + "?SID=" + SID + "&prob_id=" + prob_id + "&action=get-userprob", function(data) {
       console.log(data);
       if (data.result) {
+        activate_edit_dialog(data);
       } else {
         $("#ej-gitlab-create-dialog").dialog("open");
       }
@@ -733,6 +785,7 @@ Max Memory Used: <span id="ej-submit-max-rss"></span></p>
       modal: true,
       buttons: {
         Ok: function() {
+          $(this).dialog("close");
           prob_id = '<s:v value="prob_id" />';
           $.ajax({
             method: "POST",
@@ -742,14 +795,30 @@ Max Memory Used: <span id="ej-submit-max-rss"></span></p>
               action: 'create-userprob'
             },
             success: function(data) {
-              console.log(data);
+              activate_edit_dialog(data);
             },
             error: function(xhr, options, err) {
             }
           });
+        },
+        Cancel: function() {
+          $(this).dialog("close");
+        }
+      }
+    });
+    $("#ej-gitlab-edit-dialog").dialog({
+      autoOpen: false,
+      modal: true,
+      width: 768,
+      height: 600,
+      buttons: {
+        Ok: function() {
           $(this).dialog("close");
         },
         Cancel: function() {
+          $(this).dialog("close");
+        },
+        "Delete": function() {
           $(this).dialog("close");
         }
       }
