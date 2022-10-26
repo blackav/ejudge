@@ -2452,6 +2452,7 @@ run_one_test(
         serve_state_t state,
         const struct super_run_in_packet *srp,
         const struct section_tester_data *tst,
+        struct AgentClient *agent,
         int cur_test,
         struct testinfo_vector *tests,
         full_archive_t far,
@@ -4427,7 +4428,9 @@ run_tests(
     }
 
     while (1) {
-      status = run_one_test(config, state, srp, tst, cur_test, &tests,
+      status = run_one_test(config, state, srp, tst,
+                            agent,
+                            cur_test, &tests,
                             far, exe_name, report_path, check_cmd,
                             interactor_cmd, start_env,
                             open_tests_count, open_tests_val,
