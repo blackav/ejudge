@@ -1327,7 +1327,11 @@ copy_mirrored_file(unsigned char *buf, int size, const unsigned char *mirror_pat
 }
 
 static void
-mirror_file(unsigned char *buf, int size, const unsigned char *mirror_dir)
+mirror_file(
+        struct AgentClient *agent,
+        unsigned char *buf,
+        int size,
+        const unsigned char *mirror_dir)
 {
   if (!mirror_dir || !*mirror_dir) return;
 
@@ -2875,7 +2879,7 @@ run_one_test(
     }
   } else {
     /* copy the test */
-    mirror_file(test_src, sizeof(test_src), mirror_dir);
+    mirror_file(agent, test_src, sizeof(test_src), mirror_dir);
     if (generic_copy_file(0, NULL, test_src, "", copy_flag, check_dir, srpp->input_file, "") < 0) {
       append_msg_to_log(check_out_path, "failed to copy test file %s -> %s/%s",
                         test_src, check_dir, srpp->input_file);
@@ -3604,7 +3608,7 @@ run_checker:;
   file_size = -1;
   if (srpp->use_corr > 0) {
     if (corr_src[0]) {
-      mirror_file(corr_src, sizeof(corr_src), mirror_dir);
+      mirror_file(agent, corr_src, sizeof(corr_src), mirror_dir);
     }
     if (srgp->enable_full_archive > 0) {
       filehash_get(corr_src, cur_info->correct_digest);
@@ -4292,7 +4296,7 @@ run_tests(
   } else {
     snprintf(check_cmd, sizeof(check_cmd), "%s", srpp->check_cmd);
   }
-  mirror_file(check_cmd, sizeof(check_cmd), mirror_dir);
+  mirror_file(agent, check_cmd, sizeof(check_cmd), mirror_dir);
 
   if ((!srpp->standard_checker || !srpp->standard_checker[0])
       && (!srpp->check_cmd || !srpp->check_cmd[0])) {
@@ -4304,7 +4308,7 @@ run_tests(
     snprintf(b_interactor_cmd, sizeof(b_interactor_cmd), "%s",
              srpp->interactor_cmd);
     interactor_cmd = b_interactor_cmd;
-    mirror_file(b_interactor_cmd, sizeof(b_interactor_cmd), mirror_dir);
+    mirror_file(agent, b_interactor_cmd, sizeof(b_interactor_cmd), mirror_dir);
   }
 
   if (srpp->type_val) {
