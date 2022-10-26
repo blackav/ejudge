@@ -1668,6 +1668,132 @@ done:
     return result;
 }
 
+static int
+mirror_func(
+        struct AppState *as,
+        const struct QueryCallback *cb,
+        cJSON *query,
+        cJSON *reply)
+{
+    int fd = -1;
+    int result = 0;
+    unsigned char *pkt_ptr = MAP_FAILED;
+    size_t pkt_size = 0;
+    unsigned char perm_buf[64];
+
+    /*
+      query: { "path" : PATH, "size" : SIZE, "mtime" : MTIME, "mode" : MODE }
+     */
+
+    cJSON *jpath = cJSON_GetObjectItem(query, "path");
+    if (!jpath || jpath->type != cJSON_String) {
+        cJSON_AddStringToObject(reply, "message", "invalid json");
+        err("%s: mirror: missing path", as->inst_id);
+        goto done;
+    }
+    const unsigned char *path = jpath->valuestring;
+
+    cJSON *jsize = cJSON_GetObjectItem(query, "size");
+    int64_t size = -1;
+    if (jsize) {
+        if (!jsize || jsize->type != cJSON_Number) {
+            cJSON_AddStringToObject(reply, "message", "invalid json");
+            err("%s: mirror: invalid size", as->inst_id);
+            goto done;
+        }
+        size = jpath->valuedouble;
+        if (size < 0) size = -1;
+    }
+
+    cJSON *jmtime = cJSON_GetObjectItem(query, "mtime");
+    time_t mtime = 0;
+    if (jmtime) {
+        if (jmtime->type != cJSON_Number) {
+            cJSON_AddStringToObject(reply, "message", "invalid json");
+            err("%s: mirror: invalid mtime", as->inst_id);
+            goto done;
+        }
+        if ((mtime = jmtime->valuedouble) < 0) mtime = 0;
+    }
+
+    int mode = -1;
+    cJSON *jmode = cJSON_GetObjectItem(query, "mode");
+    if (jmode) {
+        if (jmode->type != cJSON_String) {
+            cJSON_AddStringToObject(reply, "message", "invalid json");
+            err("%s: mirror: invalid mode", as->inst_id);
+            goto done;
+        }
+        // FIXME: check for errors
+        mode = strtol(jmode->valuestring, NULL, 8);
+        if (mode < 0 || mode > 07777) mode = -1;
+    }
+
+    fd = open(path, O_RDONLY | O_CLOEXEC | O_NOCTTY | O_NONBLOCK, 0);
+    if (fd < 0) {
+        cJSON_AddStringToObject(reply, "message", "cannot open file");
+        err("%s: mirror: open '%s' failed: %s ", as->inst_id, path,
+            strerror(errno));
+        goto done;
+    }
+    struct stat stb;
+    if (fstat(fd, &stb) < 0) {
+        cJSON_AddStringToObject(reply, "message", "filesystem error");
+        err("%s: mirror: fstat '%s' failed: %s ", as->inst_id, path,
+            strerror(errno));
+        goto done;
+    }
+    if (!S_ISREG(stb.st_mode)) {
+        cJSON_AddStringToObject(reply, "message", "not a regular file");
+        err("%s: mirror: '%s' not a regular file", as->inst_id, path);
+        goto done;
+    }
+    if (stb.st_size > 1073741824) {
+        cJSON_AddStringToObject(reply, "message", "file is too big");
+        err("%s: mirror: '%s' file is too big: %lld", as->inst_id, path,
+            (long long) stb.st_size);
+        goto done;
+    }
+    if (size >= 0 && size == stb.st_size
+        && mtime > 0 && mtime == stb.st_mtime
+        && mode >= 0 && mode == (stb.st_mode & 07777)) {
+        cJSON_AddStringToObject(reply, "q", "file-unchanged");
+        cJSON_AddTrueToObject(reply, "found");
+        result = 1;
+        goto done;
+    }
+    snprintf(perm_buf, sizeof(perm_buf), "%04o", stb.st_mode & 07777);
+    cJSON_AddStringToObject(reply, "mode", perm_buf);
+    cJSON_AddNumberToObject(reply, "mtime", stb.st_mtime);
+    cJSON_AddNumberToObject(reply, "uid", stb.st_uid);
+    cJSON_AddNumberToObject(reply, "gid", stb.st_gid);
+    if (stb.st_size <= 0) {
+        add_file_to_object(reply, NULL, 0);
+        cJSON_AddStringToObject(reply, "q", "file-result");
+        cJSON_AddTrueToObject(reply, "found");
+        result = 1;
+        goto done;
+    }
+    pkt_size = stb.st_size;
+    pkt_ptr = mmap(NULL, pkt_size, PROT_READ, MAP_PRIVATE, fd, 0);
+    if (pkt_ptr == MAP_FAILED) {
+        cJSON_AddStringToObject(reply, "message", "filesystem error");
+        err("%s: mirror: mmap '%s' failed: %s ", as->inst_id, path,
+            strerror(errno));
+        goto done;
+    }
+    close(fd); fd = -1;
+    cJSON_AddStringToObject(reply, "q", "file-result");
+    cJSON_AddTrueToObject(reply, "found");
+    add_file_to_object(reply, pkt_ptr, pkt_size);
+    result = 1;
+
+done:;
+    if (pkt_ptr != MAP_FAILED) munmap(pkt_ptr, pkt_size);
+    if (fd >= 0) close(fd);
+    return result;
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -1756,6 +1882,7 @@ main(int argc, char *argv[])
     app_state_add_query_callback(&app, "put-heartbeat", NULL, put_heartbeat_func);
     app_state_add_query_callback(&app, "delete-heartbeat", NULL, delete_heartbeat_func);
     app_state_add_query_callback(&app, "put-archive", NULL, put_archive_func);
+    app_state_add_query_callback(&app, "mirror", NULL, mirror_func);
 
     info("%s: started", app.inst_id);
     do_loop(&app);

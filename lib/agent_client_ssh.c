@@ -1528,6 +1528,101 @@ put_archive_2_func(
     return result;
 }
 
+static int
+mirror_file_func(
+        struct AgentClient *ac,
+        const unsigned char *path,
+        time_t current_mtime,
+        long long current_size,
+        int current_mode,
+        char **p_pkt_ptr,
+        size_t *p_pkt_len,
+        time_t *p_new_mtime,
+        int *p_new_mode,
+        int *p_uid,
+        int *p_gid)
+{
+    int result = -1;
+    struct AgentClientSsh *acs = (struct AgentClientSsh *) ac;
+    struct Future f;
+    long long time_ms;
+    char *pkt_ptr = NULL;
+    size_t pkt_len = 0;
+    cJSON *jq = create_request(acs, &f, &time_ms, "mirror");
+    cJSON_AddStringToObject(jq, "path", path);
+    if (current_mtime > 0) {
+        cJSON_AddNumberToObject(jq, "mtime", current_mtime);
+    }
+    if (current_size >= 0) {
+        cJSON_AddNumberToObject(jq, "size", current_size);
+    }
+    if (current_mode >= 0) {
+        unsigned char mb[64];
+        snprintf(mb, sizeof(mb), "%04o", current_mode);
+        cJSON_AddStringToObject(jq, "mode", mb);
+    }
+    add_wchunk_json(acs, jq);
+    cJSON_Delete(jq); jq = NULL;
+
+    future_wait(&f);
+
+    cJSON *jok = cJSON_GetObjectItem(f.value, "ok");
+    if (!jok || jok->type != cJSON_True) {
+        goto done;
+    }
+    jq = cJSON_GetObjectItem(f.value, "q");
+    if (!jq || jq->type != cJSON_String) {
+        err("mirror_file: invalid or missing 'q' in reply");
+        goto done;
+    }
+    if (!strcmp(jq->valuestring, "file-unchanged")) {
+        result = 0;
+        goto done;
+    }
+    if (process_file_result(acs, f.value, &pkt_ptr, &pkt_len) < 0) {
+        goto done;
+    }
+
+    time_t mtime = 0;
+    int mode = -1;
+    int uid = -1;
+    int gid = -1;
+
+    cJSON *jj = cJSON_GetObjectItem(f.value, "mtime");
+    if (jj && jj->type == cJSON_Number) {
+        mtime = jj->valuedouble;
+        if (mtime < 0) mtime = 0;
+    }
+    jj = cJSON_GetObjectItem(f.value, "mode");
+    if (jj && jj->type == cJSON_String) {
+        mode = strtol(jj->valuestring, NULL, 8);
+        mode &= 07777;
+    }
+    jj = cJSON_GetObjectItem(f.value, "uid");
+    if (jj && jj->type == cJSON_Number) {
+        uid = jj->valuedouble;
+        if (uid < 0) uid = -1;
+    }
+    jj = cJSON_GetObjectItem(f.value, "gid");
+    if (jj && jj->type == cJSON_Number) {
+        gid = jj->valuedouble;
+        if (gid < 0) gid = -1;
+    }
+
+    *p_pkt_ptr = pkt_ptr; pkt_ptr = NULL;
+    *p_pkt_len = pkt_len; pkt_len = 0;
+    if (p_new_mtime) *p_new_mtime = mtime;
+    if (p_new_mode) *p_new_mode = mode;
+    if (p_uid) *p_uid = uid;
+    if (p_gid) *p_gid = gid;
+    result = 1;
+
+done:;
+    if (pkt_ptr) free(pkt_ptr);
+    future_fini(&f);
+    return result;
+}
+
 static const struct AgentClientOps ops_ssh =
 {
     destroy_func,
@@ -1549,6 +1644,7 @@ static const struct AgentClientOps ops_ssh =
     put_heartbeat_func,
     delete_heartbeat_func,
     put_archive_2_func,
+    mirror_file_func,
 };
 
 struct AgentClient *

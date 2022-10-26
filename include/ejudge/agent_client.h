@@ -131,6 +131,19 @@ struct AgentClientOps
         const unsigned char *run_name,
         const unsigned char *suffix,
         const unsigned char *path);
+
+    int (*mirror_file)(
+        struct AgentClient *ac,
+        const unsigned char *path,
+        time_t current_mtime,
+        long long current_size,
+        int current_mode,
+        char **p_pkt_ptr,
+        size_t *p_pkt_len,
+        time_t *p_new_mtime,
+        int *p_new_mode,
+        int *p_uid,
+        int *p_gid);
 };
 
 struct AgentClient
