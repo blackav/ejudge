@@ -347,6 +347,7 @@ do_loop(void)
 
       //if (cr_serialize_lock(&serve_state) < 0) return -1;
       run_tests(ejudge_config, &serve_state, tst, srp, &reply_pkt,
+                NULL /* agent_client */,
                 srgp->accepting_mode,
                 srpp->accept_partial, srgp->variant,
                 exe_name, run_base,

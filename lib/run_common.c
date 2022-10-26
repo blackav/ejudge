@@ -39,6 +39,7 @@
 #include "ejudge/ej_uuid.h"
 #include "ejudge/base64.h"
 #include "ejudge/ej_libzip.h"
+#include "ejudge/agent_client.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/osdeps.h"
@@ -4139,6 +4140,7 @@ run_tests(
         const struct section_tester_data *tst,
         const struct super_run_in_packet *srp,
         struct run_reply_packet *reply_pkt,
+        struct AgentClient *agent,
         int accept_testing,
         int accept_partial,
         int cur_variant,

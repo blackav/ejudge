@@ -107,6 +107,7 @@ struct full_archive;
 struct serve_state;
 struct section_tester_data;
 struct ejudge_cfg;
+struct AgentClient;
 
 void
 run_tests(
@@ -115,6 +116,7 @@ run_tests(
         const struct section_tester_data *tst,
         const struct super_run_in_packet *srp,
         struct run_reply_packet *reply_pkt,
+        struct AgentClient *agent,
         int accept_testing,
         int accept_partial,
         int cur_variant,
