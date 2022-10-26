@@ -61,6 +61,7 @@
 #include <fcntl.h>
 #include <signal.h>
 #include <utime.h>
+#include <sys/mman.h>
 #ifndef __MINGW32__
 #include <sys/vfs.h>
 #endif
@@ -1283,6 +1284,133 @@ get_num_prefix(int num)
   return '6';
 }
 
+static void
+agent_mirror_file(
+        struct AgentClient *agent,
+        unsigned char *buf,
+        int size,
+        const unsigned char *mirror_dir)
+{
+  char *pkt_ptr = NULL;
+  size_t pkt_len = 0;
+  int fd = -1;
+  char *out_ptr = MAP_FAILED;
+
+  if (!strncmp(buf, EJUDGE_PREFIX_DIR, sizeof(EJUDGE_PREFIX_DIR) - 1)) {
+    // do not mirror these files
+    return;
+  }
+
+  const unsigned char *sep = "";
+  int md_len = strlen(mirror_dir);
+  if (md_len > 0 && mirror_dir[md_len - 1] != '/') {
+    sep = "/";
+  }
+  unsigned char mirror_path[PATH_MAX];
+  snprintf(mirror_path, sizeof(mirror_path), "%s%s%s", mirror_dir, sep, buf);
+
+  long long fsize = -1;
+  time_t mtime = 0;
+  int mode = -1;
+
+  struct stat stb;
+  if (stat(mirror_path, &stb) >= 0) {
+    if (!S_ISREG(stb.st_mode)) {
+      err("mirror file '%s' is not regular", mirror_path);
+      return;
+    }
+
+    fsize = stb.st_size;
+    mtime = stb.st_mtime;
+    mode = stb.st_mode & 07777;
+  }
+
+  time_t new_mtime = 0;
+  int new_mode = -1;
+  int new_uid = -1;
+  int new_gid = -1;
+  int r = agent->ops->mirror_file(agent, buf, mtime, fsize, mode,
+                                  &pkt_ptr, &pkt_len, &new_mtime,
+                                  &new_mode, &new_uid, &new_gid);
+  if (r < 0) {
+    err("mirror_file failed on '%s'", buf);
+    return;
+  }
+  if (!r) {
+    info("using mirrored file '%s'", mirror_path);
+    snprintf(buf, size, "%s", mirror_path);
+    return;
+  }
+
+  unsigned char dirname[PATH_MAX];
+  os_rDirName(mirror_path, dirname, sizeof(dirname));
+  if (stat(dirname, &stb) < 0) {
+    if (os_MakeDirPath(dirname, 0700) < 0) {
+      err("cannot create mirror directory '%s'", dirname);
+      goto done;
+    }
+  }
+  if (stat(dirname, &stb) < 0) {
+    err("mirror directory '%s' does not exist", dirname);
+    goto done;
+  }
+  if (!S_ISDIR(stb.st_mode)) {
+    err("mirror directory '%s' is not a directory", dirname);
+    goto done;
+  }
+  fd = open(mirror_path, O_RDWR | O_CLOEXEC | O_CREAT | O_TRUNC | O_NOCTTY | O_NONBLOCK | O_NOFOLLOW, 0600);
+  if (fd < 0) {
+    err("failed to create mirrored file '%s': %s", mirror_path, os_ErrorMsg());
+    goto done;
+  }
+  if (fstat(fd, &stb) < 0) {
+    err("fstat failed: %s", os_ErrorMsg());
+    goto done;
+  }
+  if (!S_ISREG(stb.st_mode)) {
+    err("mirrored file '%s' is not regular", mirror_path);
+    goto done;
+  }
+  if (pkt_len > 0) {
+    if (ftruncate(fd, pkt_len) < 0) {
+      err("ftruncate failed on mirrored '%s': %s", mirror_path, os_ErrorMsg());
+      goto done;
+    }
+    out_ptr = mmap(NULL, pkt_len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    if (out_ptr == MAP_FAILED) {
+      err("mmap failed on mirrored '%s': %s", mirror_path, os_ErrorMsg());
+      goto done;
+    }
+    memcpy(out_ptr, pkt_ptr, pkt_len);
+    munmap(out_ptr, pkt_len); out_ptr = MAP_FAILED;
+  }
+
+  if (new_mtime > 0) {
+    struct timespec ub[2] = {};
+    ub[0].tv_sec = new_mtime;
+    ub[1].tv_sec = new_mtime;
+    if (futimens(fd, ub) < 0) {
+      err("failed to change times of '%s': %s", mirror_path, os_ErrorMsg());
+      // ignore this error
+    }
+  }
+
+  if (new_mode >= 0) {
+    if (fchmod(fd, new_mode & 07777) < 0) {
+      err("failed to change perms of '%s': %s", mirror_path, os_ErrorMsg());
+      // ignore this error
+    }
+  }
+
+  info("using mirrored file '%s'", mirror_path);
+  snprintf(buf, size, "%s", mirror_path);
+
+done:;
+  if (out_ptr != MAP_FAILED) munmap(out_ptr, pkt_len);
+  if (fd >= 0) close(fd);
+  free(pkt_ptr);
+}
+
 static int
 copy_mirrored_file(unsigned char *buf, int size, const unsigned char *mirror_path, const struct stat *psrcstat)
 {
@@ -1334,6 +1462,11 @@ mirror_file(
         const unsigned char *mirror_dir)
 {
   if (!mirror_dir || !*mirror_dir) return;
+
+  if (agent) {
+    agent_mirror_file(agent, buf, size, mirror_dir);
+    return;
+  }
 
   // handle only existing regular files
   struct stat src_stbuf;
