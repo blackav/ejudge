@@ -1701,7 +1701,7 @@ mirror_func(
             err("%s: mirror: invalid size", as->inst_id);
             goto done;
         }
-        size = jpath->valuedouble;
+        size = jsize->valuedouble;
         if (size < 0) size = -1;
     }
 
