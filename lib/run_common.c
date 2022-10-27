@@ -1192,7 +1192,18 @@ start_interactive_valuer(
   task_AddArg(tsk, valuer_cmt_file);
   task_AddArg(tsk, valuer_jcmt_file);
   if (srpp->problem_dir && srpp->problem_dir[0]) {
-    task_AddArg(tsk, srpp->problem_dir);
+    if (agent && mirror_dir) {
+      // need to mirror 'valuer'cfg'
+      unsigned char valuer_cfg_path[PATH_MAX];
+      snprintf(valuer_cfg_path, sizeof(valuer_cfg_path),
+               "%s/valuer.cfg", srpp->problem_dir);
+      mirror_file(agent, valuer_cfg_path, sizeof(valuer_cfg_path), mirror_dir);
+      char *p = strrchr(valuer_cfg_path, '/');
+      if (p) *p = 0;
+      task_AddArg(tsk, valuer_cfg_path);
+    } else {
+      task_AddArg(tsk, srpp->problem_dir);
+    }
   }
   task_SetRedir(tsk, 0, TSR_DUP, stdin_fd);
   task_SetRedir(tsk, 1, TSR_DUP, stdout_fd);
