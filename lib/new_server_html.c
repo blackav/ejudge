@@ -12243,7 +12243,7 @@ ns_get_submit(
     err_num = NEW_SRV_ERR_INV_SUBMIT_ID;
     goto done;
   }
-  if (se.user_id != phr->user_id) {
+  if (!admin_mode && se.user_id != phr->user_id) {
     err("submit %lld user_id mismatch", (long long) submit_id);
     err_num = NEW_SRV_ERR_INV_SUBMIT_ID;
     goto done;
@@ -12278,6 +12278,9 @@ ns_get_submit(
 
   cJSON *jrr = cJSON_CreateObject();
   cJSON_AddNumberToObject(jrr, "serial_id", se.serial_id);
+  cJSON_AddNumberToObject(jrr, "user_id", se.user_id);
+  cJSON_AddNumberToObject(jrr, "prob_id", se.prob_id);
+  cJSON_AddNumberToObject(jrr, "lang_id", se.lang_id);
   cJSON_AddNumberToObject(jrr, "status", se.status);
   cJSON_AddStringToObject(jrr, "status_str",
                           run_status_str(se.status, NULL, 0, 0, 0));
