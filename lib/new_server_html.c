@@ -8868,6 +8868,24 @@ err_inv_param:
   goto cleanup;
 }
 
+static void
+ns_submit_run_input(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra,
+        int admin_mode);
+
+static void
+priv_submit_run_input(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  ns_submit_run_input(fout, phr, cnts, extra, 1);
+}
+
 typedef PageInterface *(*external_action_handler_t)(void);
 
 typedef int (*new_action_handler_t)(
@@ -9099,6 +9117,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_RAW_REPORT] = priv_raw_report,
   [NEW_SRV_ACTION_ENABLE_VIRTUAL_START] = priv_generic_operation,
   [NEW_SRV_ACTION_DISABLE_VIRTUAL_START] = priv_generic_operation,
+  [NEW_SRV_ACTION_SUBMIT_RUN_INPUT] = priv_submit_run_input,
 };
 
 static const unsigned char * const external_priv_action_names[NEW_SRV_ACTION_LAST] =
