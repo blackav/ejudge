@@ -988,6 +988,7 @@ static int
 invoke_valuer(
         const struct section_global_data *global,
         const struct super_run_in_packet *srp,
+        struct AgentClient *agent,
         int total_tests,
         const struct testinfo *tests,
         int cur_variant,
@@ -1158,6 +1159,7 @@ static tpTask
 start_interactive_valuer(
         const struct section_global_data *global,
         const struct super_run_in_packet *srp,
+        struct AgentClient *agent,
         const unsigned char *valuer_err_file,
         const unsigned char *valuer_cmt_file,
         const unsigned char *valuer_jcmt_file,
@@ -4532,7 +4534,7 @@ run_tests(
     }
     snprintf(valuer_cmt_file, sizeof(valuer_cmt_file), "%s/score_cmt", global->run_work_dir);
     snprintf(valuer_jcmt_file, sizeof(valuer_jcmt_file), "%s/score_jcmt", global->run_work_dir);
-    valuer_tsk = start_interactive_valuer(global, srp,
+    valuer_tsk = start_interactive_valuer(global, srp, agent,
                                           messages_path,
                                           valuer_cmt_file,
                                           valuer_jcmt_file,
@@ -4841,7 +4843,7 @@ run_tests(
   if (!user_input_mode && srpp->valuer_cmd && srpp->valuer_cmd[0] && srgp->accepting_mode <= 0) {
     if (srpp->interactive_valuer <= 0
         && reply_pkt->status != RUN_CHECK_FAILED) {
-      if (invoke_valuer(global, srp, tests.size, tests.data,
+      if (invoke_valuer(global, srp, agent, tests.size, tests.data,
                         cur_variant, srpp->full_score,
                         &total_score, &marked_flag,
                         &user_status, &user_score, &user_tests_passed,
