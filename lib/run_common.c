@@ -73,6 +73,13 @@
 #define SIZE_M (1024 * 1024)
 #define SIZE_K (1024)
 
+static void
+mirror_file(
+        struct AgentClient *agent,
+        unsigned char *buf,
+        int size,
+        const unsigned char *mirror_dir);
+
 static unsigned char*
 ej_size64_t_to_size(unsigned char *buf, size_t buf_size, ej_size64_t num)
 {
@@ -1052,6 +1059,7 @@ invoke_valuer(
   f = 0;
 
   snprintf(valuer_cmd, sizeof(valuer_cmd), "%s", srpp->valuer_cmd);
+  mirror_file(agent, valuer_cmd, sizeof(valuer_cmd), mirror_dir);
 
   info("starting valuer: %s %s %s", valuer_cmd, score_cmt, score_jcmt);
 
@@ -1174,6 +1182,7 @@ start_interactive_valuer(
   tpTask tsk = NULL;
 
   snprintf(valuer_cmd, sizeof(valuer_cmd), "%s", srpp->valuer_cmd);
+  mirror_file(agent, valuer_cmd, sizeof(valuer_cmd), mirror_dir);
 
   info("starting interactive valuer: %s %s %s",
        valuer_cmd, valuer_cmt_file, valuer_jcmt_file);
