@@ -1316,7 +1316,7 @@ agent_mirror_file(
 
   const unsigned char *sep = "";
   int md_len = strlen(mirror_dir);
-  if (md_len > 0 && mirror_dir[md_len - 1] != '/') {
+  if (md_len > 0 && mirror_dir[md_len - 1] != '/' && buf[0] != '/') {
     sep = "/";
   }
   unsigned char mirror_path[PATH_MAX];
