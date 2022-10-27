@@ -11727,6 +11727,55 @@ ns_submit_run_input(
   struct submit_totals st = {};
   unsigned char *run_fixed_text = NULL;
   unsigned char *inp_fixed_text = NULL;
+  int sender_user_id = 0;
+  ej_ip_t sender_ip = {};
+  int sender_ssl_flag = 0;
+
+  if (admin_mode) {
+    if (opcaps_check(phr->caps, OPCAP_SUBMIT_RUN) < 0) {
+      err_num = NEW_SRV_ERR_PERMISSION_DENIED;
+      goto done;
+    }
+
+    if (hr_cgi_param(phr, "sender_user_login", &s) > 0) {
+      if (opcaps_check(phr->caps, OPCAP_EDIT_RUN) < 0) {
+        err_num = NEW_SRV_ERR_PERMISSION_DENIED;
+        goto done;
+      }
+      if ((sender_user_id = teamdb_lookup_login(cs->teamdb_state, s)) <= 0) {
+        err_num = NEW_SRV_ERR_INV_USER_ID;
+        goto done;
+      }
+    } else if (hr_cgi_param_int_opt(phr, "sender_user_id", &sender_user_id, -1) >= 0 && sender_user_id > 0) {
+      if (opcaps_check(phr->caps, OPCAP_EDIT_RUN) < 0) {
+        err_num = NEW_SRV_ERR_PERMISSION_DENIED;
+        goto done;
+      }
+      if (teamdb_lookup(cs->teamdb_state, sender_user_id) <= 0) {
+        err_num = NEW_SRV_ERR_INV_USER_ID;
+        goto done;
+      }
+    }
+    if (sender_user_id <= 0) sender_user_id = phr->user_id;
+
+    if (hr_cgi_param(phr, "sender_ip", &s) > 0) {
+      if (!strcmp(s, "::1")) s = "127.0.0.1";
+      if (xml_parse_ipv6(NULL, 0, 0, 0, s, &sender_ip) < 0) {
+        //fprintf(phr->log_f, "cannot parse sender_ip");
+        err_num = NEW_SRV_ERR_INV_PARAM;
+        goto done;
+      }
+      hr_cgi_param_int_opt(phr, "sender_ssl_flag", &sender_ssl_flag, 0);
+    } else {
+      sender_ip = phr->ip;
+      sender_ssl_flag = phr->ssl_flag;
+    }
+  } else {
+    // unprivileged mode
+    sender_user_id = phr->user_id;
+    sender_ip = phr->ip;
+    sender_ssl_flag = phr->ssl_flag;
+  }
 
   // parse prob_id
   if (hr_cgi_param(phr, "prob_id", &s) <= 0 || !s) {
@@ -11808,7 +11857,7 @@ ns_submit_run_input(
   }
   run_size = text_normalize_dup(run_text, run_size, TEXT_FIX_CR | TEXT_FIX_TR_SP | TEXT_FIX_FINAL_NL | TEXT_FIX_NP, &run_fixed_text, NULL, NULL);
   run_text = run_fixed_text;
-  if (global->max_run_size > 0 && run_size > global->max_run_size) {
+  if (!admin_mode && global->max_run_size > 0 && run_size > global->max_run_size) {
     err_num = NEW_SRV_ERR_RUN_QUOTA_EXCEEDED;
     goto done;
   }
@@ -11839,7 +11888,7 @@ ns_submit_run_input(
   {
     int max_input_size = 1024;
     if (global->max_input_size > 0) max_input_size = global->max_input_size;
-    if (inp_size > max_input_size) {
+    if (!admin_mode && inp_size > max_input_size) {
       err_num = NEW_SRV_ERR_RUN_QUOTA_EXCEEDED;
       goto done;
     }
@@ -11849,34 +11898,36 @@ ns_submit_run_input(
   time_t start_time = 0;
   time_t stop_time = 0;
   if (global->is_virtual > 0) {
-    start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
-    stop_time = run_get_virtual_stop_time(cs->runlog_state, phr->user_id, cs->current_time);
+    start_time = run_get_virtual_start_time(cs->runlog_state, sender_user_id);
+    stop_time = run_get_virtual_stop_time(cs->runlog_state, sender_user_id, cs->current_time);
   } else {
     start_time = run_get_start_time(cs->runlog_state);
-    stop_time = run_get_stop_time(cs->runlog_state, phr->user_id, cs->current_time);
+    stop_time = run_get_stop_time(cs->runlog_state, sender_user_id, cs->current_time);
   }
 
-  // availability checks
-  if (cs->clients_suspended) {
-    err_num = NEW_SRV_ERR_CLIENTS_SUSPENDED;
-    goto done;
-  }
-  if (start_time <= 0) {
-    err_num = NEW_SRV_ERR_CONTEST_NOT_STARTED;
-    goto done;
-  }
-  if (stop_time > 0 && !cs->upsolving_mode) {
-    err_num = NEW_SRV_ERR_CONTEST_ALREADY_FINISHED;
-    goto done;
-  }
-  if (!serve_is_problem_started(cs, phr->user_id, prob)) {
-    err_num = NEW_SRV_ERR_PROB_UNAVAILABLE;
-    goto done;
-  }
-  time_t user_deadline = 0;
-  if (serve_is_problem_deadlined(cs, phr->user_id, phr->login, prob, &user_deadline)) {
-    err_num = NEW_SRV_ERR_PROB_DEADLINE_EXPIRED;
-    goto done;
+  if (!admin_mode) {
+    // availability checks
+    if (cs->clients_suspended) {
+      err_num = NEW_SRV_ERR_CLIENTS_SUSPENDED;
+      goto done;
+    }
+    if (start_time <= 0) {
+      err_num = NEW_SRV_ERR_CONTEST_NOT_STARTED;
+      goto done;
+    }
+    if (stop_time > 0 && !cs->upsolving_mode) {
+      err_num = NEW_SRV_ERR_CONTEST_ALREADY_FINISHED;
+      goto done;
+    }
+    if (!serve_is_problem_started(cs, sender_user_id, prob)) {
+      err_num = NEW_SRV_ERR_PROB_UNAVAILABLE;
+      goto done;
+    }
+    time_t user_deadline = 0;
+    if (serve_is_problem_deadlined(cs, sender_user_id, phr->login, prob, &user_deadline)) {
+      err_num = NEW_SRV_ERR_PROB_DEADLINE_EXPIRED;
+      goto done;
+    }
   }
 
   if (lang->disabled > 0) {
@@ -11911,7 +11962,7 @@ ns_submit_run_input(
 
   int variant = 0;
   if (prob->variant_num > 0) {
-    if ((variant = find_variant(cs, phr->user_id, prob_id, 0)) <= 0) {
+    if ((variant = find_variant(cs, sender_user_id, prob_id, 0)) <= 0) {
       err_num = NEW_SRV_ERR_VARIANT_UNASSIGNED;
       goto done;
     }
@@ -11935,7 +11986,7 @@ ns_submit_run_input(
 
   if (prob->require) {
     XALLOCAZ(acc_probs, cs->max_prob + 1);
-    run_get_accepted_set(cs->runlog_state, phr->user_id,
+    run_get_accepted_set(cs->runlog_state, sender_user_id,
                          cs->accepting_mode, cs->max_prob, acc_probs);
     if (prob->require_any > 0) {
       int i;
@@ -11966,7 +12017,7 @@ ns_submit_run_input(
     }
   }
 
-  if (cs->submit_state->vt->fetch_for_user(cs->submit_state, phr->user_id, 1, 0, &sez, &ses) < 0) {
+  if (cs->submit_state->vt->fetch_for_user(cs->submit_state, sender_user_id, 1, 0, &sez, &ses) < 0) {
     err_num = NEW_SRV_ERR_DATABASE_FAILED;
     goto done;
   }
@@ -11976,21 +12027,21 @@ ns_submit_run_input(
     if (global->time_between_submits > 0) {
       tbs_us = global->time_between_submits * 1000000LL;
     }
-    if (sez > 0 && ses[0].create_time_us + tbs_us > cs->current_time * 1000000LL) {
+    if (!admin_mode && sez > 0 && ses[0].create_time_us + tbs_us > cs->current_time * 1000000LL) {
       err_num = NEW_SRV_ERR_RATE_EXCEEDED;
       goto done;
     }
   }
   free(ses); ses = NULL; sez = 0;
 
-  if (cs->submit_state->vt->fetch_totals(cs->submit_state, phr->user_id, &st) < 0) {
+  if (cs->submit_state->vt->fetch_totals(cs->submit_state, sender_user_id, &st) < 0) {
     err_num = NEW_SRV_ERR_DATABASE_FAILED;
     goto done;
   }
   {
     int max_submit_num = DFLT_G_MAX_SUBMIT_NUM;
     if (global->max_submit_num > 0) max_submit_num = global->max_submit_num;
-    if (st.count >= max_submit_num) {
+    if (!admin_mode && st.count >= max_submit_num) {
       err_num = NEW_SRV_ERR_RUN_QUOTA_EXCEEDED;
       goto done;
     }
@@ -11999,7 +12050,7 @@ ns_submit_run_input(
     long long max_submit_total = DFLT_G_MAX_SUBMIT_TOTAL;
     if (global->max_submit_total > 0) max_submit_total = global->max_submit_total;
     long long new_size = st.source_size + st.input_size + run_size + inp_size;
-    if (new_size > max_submit_total) {
+    if (!admin_mode && new_size > max_submit_total) {
       err_num = NEW_SRV_ERR_RUN_QUOTA_EXCEEDED;
       goto done;
     }
@@ -12023,14 +12074,14 @@ ns_submit_run_input(
   }
   se.source_id = src_se.serial_id;
   se.input_id = inp_se.serial_id;
-  se.ip = phr->ip;
-  se.user_id = phr->user_id;
+  se.ip = sender_ip;
+  se.user_id = sender_user_id;
   se.prob_id = prob_id;
   se.variant = variant;
   se.lang_id = lang_id;
   se.status = RUN_AVAILABLE;
   se.locale_id = phr->locale_id;
-  se.ssl_flag = phr->ssl_flag;
+  se.ssl_flag = sender_ssl_flag;
   se.eoln_type = eoln_type;
   se.source_size = run_size;
   se.input_size = inp_size;
@@ -12048,7 +12099,7 @@ ns_submit_run_input(
                             cnts->id,
                             0  /* run_id */,
                             se.serial_id,
-                            phr->user_id,
+                            sender_user_id,
                             lang->compile_id,
                             variant,
                             phr->locale_id,
@@ -12112,11 +12163,12 @@ unpriv_submit_run_input(
 }
 
 static void
-unpriv_get_submit(
+ns_get_submit(
         FILE *fout,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
-        struct contest_extra *extra)
+        struct contest_extra *extra,
+        int admin_mode)
 {
   serve_state_t cs = extra->serve_state;
   int ok = 0;
@@ -12258,6 +12310,16 @@ done:;
   free(err_msg);
   testing_report_free(tr);
   free(prot_se.content);
+}
+
+static void
+unpriv_get_submit(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  ns_get_submit(fout, phr, cnts, extra, 0);
 }
 
 static void
