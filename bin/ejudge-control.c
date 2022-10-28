@@ -145,7 +145,8 @@ command_start(
         int skip_mask,
         const char *agent,
         const char *instance_id,
-        const char *queue)
+        const char *queue,
+        int verbose_mode)
 {
   tTask *tsk = 0;
   path_t path;
@@ -251,6 +252,9 @@ command_start(
       task_AddArg(tsk, "--queue");
       task_AddArg(tsk, queue);
     }
+    if (verbose_mode) {
+      task_AddArg(tsk, "-v");
+    }
     task_AddArg(tsk, "start");
     task_SetPathAsArg0(tsk);
     task_Start(tsk);
@@ -292,6 +296,9 @@ command_start(
       if (queue && *queue) {
         task_AddArg(tsk, "-p");
         task_AddArg(tsk, queue);
+      }
+      if (verbose_mode) {
+        task_AddArg(tsk, "-v");
       }
       if (i > 0) {
         char buf[64];
@@ -436,6 +443,7 @@ main(int argc, char *argv[])
   const char *agent = NULL;
   const char *instance_id = NULL;
   const char *queue = NULL;
+  int verbose_mode = 0;
 
   logger_set_level(-1, LOG_WARNING);
   program_name = os_GetBasename(argv[0]);
@@ -473,6 +481,9 @@ main(int argc, char *argv[])
       if (i + 1 >= argc) startup_error("argument expected for `--queue'");
       queue = argv[i + 1];
       i += 2;
+    } else if (!strcmp(argv[i], "-v")) {
+      verbose_mode = 1;
+      i++;
     } else if (!strcmp(argv[i], "-f")) {
       force_mode = 1;
       i++;
@@ -545,7 +556,7 @@ main(int argc, char *argv[])
     if (command_start(config, user, group, ejudge_xml_path, force_mode,
                       slave_mode, all_run_serve, master_mode, parallelism,
                       compile_parallelism, skip_mask,
-                      agent, instance_id, queue) < 0)
+                      agent, instance_id, queue, verbose_mode) < 0)
       r = 1;
   } else if (!strcmp(command, "stop")) {
     if (command_stop(config, ejudge_xml_path, slave_mode, master_mode) < 0)

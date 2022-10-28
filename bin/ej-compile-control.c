@@ -284,7 +284,8 @@ start_process(
         int serial,
         const char *agent,
         const char *instance_id,
-        const char *queue)
+        const char *queue,
+        int verbose_mode)
 {
     int pid = fork();
     if (pid < 0) {
@@ -348,6 +349,9 @@ start_process(
     if (queue && *queue) {
         args[argi++] = "-I";
         args[argi++] = (char*) queue;
+    }
+    if (verbose_mode) {
+        args[argi++] = "-v";
     }
     args[argi++] = "conf/compile.cfg";
     args[argi] = NULL;
@@ -841,6 +845,7 @@ int main(int argc, char *argv[])
     const char *agent = NULL;
     const char *instance_id = NULL;
     const char *queue = NULL;
+    int verbose_mode = 0;
 
     if (argc < 1) {
         system_error("no arguments");
@@ -881,6 +886,9 @@ int main(int argc, char *argv[])
                 }
                 queue = argv[aidx + 1];
                 aidx += 2;
+            } else if (!strcmp(argv[aidx], "-v")) {
+                verbose_mode = 1;
+                ++aidx;
             } else if (!strcmp(argv[aidx], "--")) {
                 ++aidx;
                 break;
@@ -1146,7 +1154,7 @@ int main(int argc, char *argv[])
             }
 
             for (int i = 0; i < compile_parallelism; ++i) {
-                int ret = start_process(config, EJ_COMPILE_PROGRAM, log_fd, workdir, &ev, ej_compile_path, compile_parallelism > 1, 1 /* FIXME */, ejudge_xml_fds, compile_parallelism, i, agent, instance_id, queue);
+                int ret = start_process(config, EJ_COMPILE_PROGRAM, log_fd, workdir, &ev, ej_compile_path, compile_parallelism > 1, 1 /* FIXME */, ejudge_xml_fds, compile_parallelism, i, agent, instance_id, queue, verbose_mode);
                 if (ret < 0) {
                     emergency_stop();
                     return EXIT_SYSTEM_ERROR;
