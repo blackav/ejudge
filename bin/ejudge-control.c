@@ -146,7 +146,8 @@ command_start(
         const char *agent,
         const char *instance_id,
         const char *queue,
-        int verbose_mode)
+        int verbose_mode,
+        const char *mirror)
 {
   tTask *tsk = 0;
   path_t path;
@@ -195,7 +196,7 @@ command_start(
   }
 
   // start ej-super-server
-  if (!(skip_mask & EJ_SUPER_SERVER_MASK)) {
+  if (!slave_mode && !(skip_mask & EJ_SUPER_SERVER_MASK)) {
     snprintf(path, sizeof(path), "%s/ej-super-server", EJUDGE_SERVER_BIN_PATH);
     tsk = task_New();
     task_AddArg(tsk, path);
@@ -266,6 +267,10 @@ command_start(
 
   // start ej-super-run
   if (!master_mode && !(skip_mask & EJ_SUPER_RUN_MASK)) {
+    if (mirror && *mirror) {
+      os_MakeDirPath(mirror, 0700);
+    }
+
     for (int i = 0; i < super_run_parallelism; ++i) {
       snprintf(path, sizeof(path), "%s/ej-super-run", EJUDGE_SERVER_BIN_PATH);
       tsk = task_New();
@@ -299,6 +304,10 @@ command_start(
       }
       if (verbose_mode) {
         task_AddArg(tsk, "-v");
+      }
+      if (mirror && *mirror) {
+        task_AddArg(tsk, "-m");
+        task_AddArg(tsk, mirror);
       }
       if (i > 0) {
         char buf[64];
@@ -444,6 +453,7 @@ main(int argc, char *argv[])
   const char *instance_id = NULL;
   const char *queue = NULL;
   int verbose_mode = 0;
+  const char *mirror = NULL;
 
   logger_set_level(-1, LOG_WARNING);
   program_name = os_GetBasename(argv[0]);
@@ -480,6 +490,10 @@ main(int argc, char *argv[])
     } else if (!strcmp(argv[i], "--queue")) {
       if (i + 1 >= argc) startup_error("argument expected for `--queue'");
       queue = argv[i + 1];
+      i += 2;
+    } else if (!strcmp(argv[i], "--mirror")) {
+      if (i + 1 >= argc) startup_error("argument expected for `--mirror'");
+      mirror = argv[i + 1];
       i += 2;
     } else if (!strcmp(argv[i], "-v")) {
       verbose_mode = 1;
@@ -556,7 +570,8 @@ main(int argc, char *argv[])
     if (command_start(config, user, group, ejudge_xml_path, force_mode,
                       slave_mode, all_run_serve, master_mode, parallelism,
                       compile_parallelism, skip_mask,
-                      agent, instance_id, queue, verbose_mode) < 0)
+                      agent, instance_id, queue, verbose_mode,
+                      mirror) < 0)
       r = 1;
   } else if (!strcmp(command, "stop")) {
     if (command_stop(config, ejudge_xml_path, slave_mode, master_mode) < 0)
