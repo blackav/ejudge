@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2006-2021 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -281,7 +281,8 @@ start_process(
         int replace_env,
         int *ej_xml_fds,
         int compile_parallelism,
-        int serial)
+        int serial,
+        const char *agent)
 {
     int pid = fork();
     if (pid < 0) {
@@ -333,6 +334,10 @@ start_process(
         args[argi++] = "-l";
         snprintf(lbuf, sizeof(lbuf), "%d", ej_xml_fds[serial]);
         args[argi++] = lbuf;
+    }
+    if (agent && *agent) {
+        args[argi++] = "--agent";
+        args[argi++] = (char*) agent;
     }
     args[argi++] = "conf/compile.cfg";
     args[argi] = NULL;
@@ -823,6 +828,7 @@ check_directories(int primary_uid, int compile_uid, int primary_gid, int compile
 int main(int argc, char *argv[])
 {
     int *ejudge_xml_fds = NULL;
+    const char *agent = NULL;
 
     if (argc < 1) {
         system_error("no arguments");
@@ -845,6 +851,12 @@ int main(int argc, char *argv[])
             if (!strcmp(argv[aidx], "--help")) {
                 write_help();
                 return 0;
+            } else if (!strcmp(argv[aidx], "--agent")) {
+                if (aidx + 1 >= argc) {
+                    system_error("argument expected for --agent");
+                }
+                agent = argv[aidx + 1];
+                aidx += 2;
             } else if (!strcmp(argv[aidx], "--")) {
                 ++aidx;
                 break;
@@ -1110,7 +1122,7 @@ int main(int argc, char *argv[])
             }
 
             for (int i = 0; i < compile_parallelism; ++i) {
-                int ret = start_process(config, EJ_COMPILE_PROGRAM, log_fd, workdir, &ev, ej_compile_path, compile_parallelism > 1, 1 /* FIXME */, ejudge_xml_fds, compile_parallelism, i);
+                int ret = start_process(config, EJ_COMPILE_PROGRAM, log_fd, workdir, &ev, ej_compile_path, compile_parallelism > 1, 1 /* FIXME */, ejudge_xml_fds, compile_parallelism, i, agent);
                 if (ret < 0) {
                     emergency_stop();
                     return EXIT_SYSTEM_ERROR;

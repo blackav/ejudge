@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2021 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -142,7 +142,8 @@ command_start(
         int master_mode,
         int super_run_parallelism,
         int compile_parallelism,
-        int skip_mask)
+        int skip_mask,
+        const char *agent)
 {
   tTask *tsk = 0;
   path_t path;
@@ -233,6 +234,10 @@ command_start(
     snprintf(path, sizeof(path), "%s/ej-compile-control", EJUDGE_SERVER_BIN_PATH);
     tsk = task_New();
     task_AddArg(tsk, path);
+    if (agent && *agent) {
+      task_AddArg(tsk, "--agent");
+      task_AddArg(tsk, agent);
+    }
     task_AddArg(tsk, "start");
     task_SetPathAsArg0(tsk);
     task_Start(tsk);
@@ -260,6 +265,10 @@ command_start(
       if (workdir) {
         task_AddArg(tsk, "-C");
         task_AddArg(tsk, workdir);
+      }
+      if (agent && *agent) {
+        task_AddArg(tsk, "--agent");
+        task_AddArg(tsk, agent);
       }
       if (i > 0) {
         char buf[64];
@@ -401,6 +410,7 @@ main(int argc, char *argv[])
   int compile_parallelism = 1;
   int skip_mask = 0;
   unsigned char **host_names = NULL;
+  const char *agent = NULL;
 
   logger_set_level(-1, LOG_WARNING);
   program_name = os_GetBasename(argv[0]);
@@ -425,6 +435,10 @@ main(int argc, char *argv[])
     } else if (!strcmp(argv[i], "-g")) {
       if (i + 1 >= argc) startup_error("argument expected for `-g'");
       group = argv[i + 1];
+      i += 2;
+    } else if (!strcmp(argv[i], "--agent")) {
+      if (i + 1 >= argc) startup_error("argument expected for `--agent'");
+      agent = argv[i + 1];
       i += 2;
     } else if (!strcmp(argv[i], "-f")) {
       force_mode = 1;
@@ -497,7 +511,8 @@ main(int argc, char *argv[])
   if (!strcmp(command, "start")) {
     if (command_start(config, user, group, ejudge_xml_path, force_mode,
                       slave_mode, all_run_serve, master_mode, parallelism,
-                      compile_parallelism, skip_mask) < 0)
+                      compile_parallelism, skip_mask,
+                      agent) < 0)
       r = 1;
   } else if (!strcmp(command, "stop")) {
     if (command_stop(config, ejudge_xml_path, slave_mode, master_mode) < 0)
