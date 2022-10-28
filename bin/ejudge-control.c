@@ -144,7 +144,8 @@ command_start(
         int compile_parallelism,
         int skip_mask,
         const char *agent,
-        const char *instance_id)
+        const char *instance_id,
+        const char *queue)
 {
   tTask *tsk = 0;
   path_t path;
@@ -246,6 +247,10 @@ command_start(
       task_AddArg(tsk, "--instance-id");
       task_AddArg(tsk, tool_instance_id);
     }
+    if (queue && *queue) {
+      task_AddArg(tsk, "--queue");
+      task_AddArg(tsk, queue);
+    }
     task_AddArg(tsk, "start");
     task_SetPathAsArg0(tsk);
     task_Start(tsk);
@@ -283,6 +288,10 @@ command_start(
                  "%s-run", instance_id);
         task_AddArg(tsk, "--instance-id");
         task_AddArg(tsk, tool_instance_id);
+      }
+      if (queue && *queue) {
+        task_AddArg(tsk, "-p");
+        task_AddArg(tsk, queue);
       }
       if (i > 0) {
         char buf[64];
@@ -426,6 +435,7 @@ main(int argc, char *argv[])
   unsigned char **host_names = NULL;
   const char *agent = NULL;
   const char *instance_id = NULL;
+  const char *queue = NULL;
 
   logger_set_level(-1, LOG_WARNING);
   program_name = os_GetBasename(argv[0]);
@@ -458,6 +468,10 @@ main(int argc, char *argv[])
     } else if (!strcmp(argv[i], "--instance-id")) {
       if (i + 1 >= argc) startup_error("argument expected for `--instance-id'");
       instance_id = argv[i + 1];
+      i += 2;
+    } else if (!strcmp(argv[i], "--queue")) {
+      if (i + 1 >= argc) startup_error("argument expected for `--queue'");
+      queue = argv[i + 1];
       i += 2;
     } else if (!strcmp(argv[i], "-f")) {
       force_mode = 1;
@@ -531,7 +545,7 @@ main(int argc, char *argv[])
     if (command_start(config, user, group, ejudge_xml_path, force_mode,
                       slave_mode, all_run_serve, master_mode, parallelism,
                       compile_parallelism, skip_mask,
-                      agent, instance_id) < 0)
+                      agent, instance_id, queue) < 0)
       r = 1;
   } else if (!strcmp(command, "stop")) {
     if (command_stop(config, ejudge_xml_path, slave_mode, master_mode) < 0)
