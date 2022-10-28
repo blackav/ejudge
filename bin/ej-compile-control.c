@@ -897,7 +897,6 @@ int main(int argc, char *argv[])
             } else {
                 break;
             }
-            ++aidx;
         }
         if (aidx != argc - 1) {
             // ignore remaining args -- for compatibility
