@@ -143,7 +143,8 @@ command_start(
         int super_run_parallelism,
         int compile_parallelism,
         int skip_mask,
-        const char *agent)
+        const char *agent,
+        const char *instance_id)
 {
   tTask *tsk = 0;
   path_t path;
@@ -154,6 +155,7 @@ command_start(
   int super_run_started = 0;
   int job_server_started = 0;
   int new_server_started = 0;
+  char tool_instance_id[128];
 
   if (config->contests_home_dir) workdir = config->contests_home_dir;
 #if defined EJUDGE_CONTESTS_HOME_DIR
@@ -238,6 +240,12 @@ command_start(
       task_AddArg(tsk, "--agent");
       task_AddArg(tsk, agent);
     }
+    if (instance_id && *instance_id) {
+      snprintf(tool_instance_id, sizeof(tool_instance_id),
+               "%s-compile", instance_id);
+      task_AddArg(tsk, "--instance-id");
+      task_AddArg(tsk, tool_instance_id);
+    }
     task_AddArg(tsk, "start");
     task_SetPathAsArg0(tsk);
     task_Start(tsk);
@@ -269,6 +277,12 @@ command_start(
       if (agent && *agent) {
         task_AddArg(tsk, "--agent");
         task_AddArg(tsk, agent);
+      }
+      if (instance_id && *instance_id) {
+        snprintf(tool_instance_id, sizeof(tool_instance_id),
+                 "%s-run", instance_id);
+        task_AddArg(tsk, "--instance-id");
+        task_AddArg(tsk, tool_instance_id);
       }
       if (i > 0) {
         char buf[64];
@@ -411,6 +425,7 @@ main(int argc, char *argv[])
   int skip_mask = 0;
   unsigned char **host_names = NULL;
   const char *agent = NULL;
+  const char *instance_id = NULL;
 
   logger_set_level(-1, LOG_WARNING);
   program_name = os_GetBasename(argv[0]);
@@ -439,6 +454,10 @@ main(int argc, char *argv[])
     } else if (!strcmp(argv[i], "--agent")) {
       if (i + 1 >= argc) startup_error("argument expected for `--agent'");
       agent = argv[i + 1];
+      i += 2;
+    } else if (!strcmp(argv[i], "--instance-id")) {
+      if (i + 1 >= argc) startup_error("argument expected for `--instance-id'");
+      instance_id = argv[i + 1];
       i += 2;
     } else if (!strcmp(argv[i], "-f")) {
       force_mode = 1;
@@ -512,7 +531,7 @@ main(int argc, char *argv[])
     if (command_start(config, user, group, ejudge_xml_path, force_mode,
                       slave_mode, all_run_serve, master_mode, parallelism,
                       compile_parallelism, skip_mask,
-                      agent) < 0)
+                      agent, instance_id) < 0)
       r = 1;
   } else if (!strcmp(command, "stop")) {
     if (command_stop(config, ejudge_xml_path, slave_mode, master_mode) < 0)
