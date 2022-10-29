@@ -150,7 +150,8 @@ command_start(
         const char *mirror,
         int enable_heartbeat,
         int disable_heartbeat,
-        const char *timeout_str)
+        const char *timeout_str,
+        const char *shutdown_script)
 {
   tTask *tsk = 0;
   path_t path;
@@ -322,6 +323,10 @@ command_start(
         task_AddArg(tsk, "-ht");
         task_AddArg(tsk, timeout_str);
       }
+      if (shutdown_script && *shutdown_script) {
+        task_AddArg(tsk, "-hc");
+        task_AddArg(tsk, shutdown_script);
+      }
       if (i > 0) {
         char buf[64];
         sprintf(buf, "%d", i);
@@ -470,6 +475,7 @@ main(int argc, char *argv[])
   int enable_heartbeat = 0;
   int disable_heartbeat = 0;
   const char *timeout_str = NULL;
+  const char *shutdown_script = NULL;
 
   logger_set_level(-1, LOG_WARNING);
   program_name = os_GetBasename(argv[0]);
@@ -514,6 +520,10 @@ main(int argc, char *argv[])
     } else if (!strcmp(argv[i], "-ht")) {
       if (i + 1 >= argc) startup_error("argument expected for `-ht'");
       timeout_str = argv[i + 1];
+      i += 2;
+    } else if (!strcmp(argv[i], "-hc")) {
+      if (i + 1 >= argc) startup_error("argument expected for `-hc'");
+      shutdown_script = argv[i + 1];
       i += 2;
     } else if (!strcmp(argv[i], "-v")) {
       verbose_mode = 1;
@@ -598,7 +608,7 @@ main(int argc, char *argv[])
                       compile_parallelism, skip_mask,
                       agent, instance_id, queue, verbose_mode,
                       mirror, enable_heartbeat, disable_heartbeat,
-                      timeout_str) < 0)
+                      timeout_str, shutdown_script) < 0)
       r = 1;
   } else if (!strcmp(command, "stop")) {
     if (command_stop(config, ejudge_xml_path, slave_mode, master_mode) < 0)
