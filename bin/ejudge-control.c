@@ -148,7 +148,8 @@ command_start(
         const char *queue,
         int verbose_mode,
         const char *mirror,
-        int disable_heartbeat)
+        int disable_heartbeat,
+        const char *timeout_str)
 {
   tTask *tsk = 0;
   path_t path;
@@ -313,6 +314,10 @@ command_start(
       if (disable_heartbeat > 0) {
         task_AddArg(tsk, "-nhb");
       }
+      if (timeout_str && *timeout_str) {
+        task_AddArg(tsk, "-ht");
+        task_AddArg(tsk, timeout_str);
+      }
       if (i > 0) {
         char buf[64];
         sprintf(buf, "%d", i);
@@ -459,6 +464,7 @@ main(int argc, char *argv[])
   int verbose_mode = 0;
   const char *mirror = NULL;
   int disable_heartbeat = 0;
+  const char *timeout_str = NULL;
 
   logger_set_level(-1, LOG_WARNING);
   program_name = os_GetBasename(argv[0]);
@@ -499,6 +505,10 @@ main(int argc, char *argv[])
     } else if (!strcmp(argv[i], "--mirror")) {
       if (i + 1 >= argc) startup_error("argument expected for `--mirror'");
       mirror = argv[i + 1];
+      i += 2;
+    } else if (!strcmp(argv[i], "-ht")) {
+      if (i + 1 >= argc) startup_error("argument expected for `-ht'");
+      timeout_str = argv[i + 1];
       i += 2;
     } else if (!strcmp(argv[i], "-v")) {
       verbose_mode = 1;
@@ -579,7 +589,7 @@ main(int argc, char *argv[])
                       slave_mode, all_run_serve, master_mode, parallelism,
                       compile_parallelism, skip_mask,
                       agent, instance_id, queue, verbose_mode,
-                      mirror, disable_heartbeat) < 0)
+                      mirror, disable_heartbeat, timeout_str) < 0)
       r = 1;
   } else if (!strcmp(command, "stop")) {
     if (command_stop(config, ejudge_xml_path, slave_mode, master_mode) < 0)
