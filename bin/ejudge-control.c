@@ -147,7 +147,8 @@ command_start(
         const char *instance_id,
         const char *queue,
         int verbose_mode,
-        const char *mirror)
+        const char *mirror,
+        int disable_heartbeat)
 {
   tTask *tsk = 0;
   path_t path;
@@ -309,6 +310,9 @@ command_start(
         task_AddArg(tsk, "-m");
         task_AddArg(tsk, mirror);
       }
+      if (disable_heartbeat > 0) {
+        task_AddArg(tsk, "-nhb");
+      }
       if (i > 0) {
         char buf[64];
         sprintf(buf, "%d", i);
@@ -454,6 +458,7 @@ main(int argc, char *argv[])
   const char *queue = NULL;
   int verbose_mode = 0;
   const char *mirror = NULL;
+  int disable_heartbeat = 0;
 
   logger_set_level(-1, LOG_WARNING);
   program_name = os_GetBasename(argv[0]);
@@ -528,6 +533,9 @@ main(int argc, char *argv[])
     } else if (!strcmp(argv[i], "-nc")) {
       skip_mask |= EJ_CONTESTS_MASK;
       i++;
+    } else if (!strcmp(argv[i], "-nhb")) {
+      disable_heartbeat = 1;
+      i++;
     } else if (!strcmp(argv[i], "--")) {
       i++;
       break;
@@ -571,7 +579,7 @@ main(int argc, char *argv[])
                       slave_mode, all_run_serve, master_mode, parallelism,
                       compile_parallelism, skip_mask,
                       agent, instance_id, queue, verbose_mode,
-                      mirror) < 0)
+                      mirror, disable_heartbeat) < 0)
       r = 1;
   } else if (!strcmp(command, "stop")) {
     if (command_stop(config, ejudge_xml_path, slave_mode, master_mode) < 0)
