@@ -11,7 +11,7 @@ then
     . ~/user-data.sh
     if [ "${EJ_SUPER_RUN}" = "1" -o "${EJ_COMPILE}" = "1" ]
     then
-       ./1start-testing.sh 
+       exec ./1start-testing.sh
     fi
 else
     rm -f ~/user-data.sh

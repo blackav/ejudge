@@ -32,4 +32,4 @@ else
 fi
 
 mkdir /tmp/ejudge
-exec /opt/ejudge/libexec/ejudge/bin/ej-super-run -m /tmp/ejudge/super-run -p ${EJ_QUEUE} ${EJ_FULL_TIMEOUT} -hc /home/ejudge/3shutdown.sh -hb -e /home/judges/compile/scripts/=/var/lib/ejudge/scripts/
+exec /opt/ejudge/libexec/ejudge/bin/ej-super-run -m /tmp/ejudge/super-run -p ${EJ_QUEUE} ${EJ_FULL_TIMEOUT} -hc /home/ejudge/3shutdown.sh -hb -e /home/judges/compile/scripts/=/var/lib/ejudge/scripts/ --instance-id ${EJ_SUPER_RUN_ID}-run --agent ssh:${EJ_MOUNT_HOST}

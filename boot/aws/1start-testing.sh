@@ -22,25 +22,37 @@ then
 	done
 fi
 
-sshfs ${EJ_MOUNT_HOST}:/home/ej-run-spool /home/ej-run-spool -o ServerAliveInterval=30,reconnect,allow_other
-sshfs ${EJ_MOUNT_HOST}:/home/ej-compile-spool /home/ej-compile-spool -o ServerAliveInterval=30,reconnect,allow_other
-
 mkdir -p /var/lib/ejudge/scripts
 cp -p /home/judges/compile/scripts/runmono /var/lib/ejudge/scripts
 cp -p /home/judges/compile/scripts/runjava /var/lib/ejudge/scripts
 cp -p /home/judges/compile/scripts/rundotnet /var/lib/ejudge/scripts
 cd /home/judges
 
-if [ "${EJ_COMPILE}" = 1 ]
+OPT_NO=""
+OPT_NR=""
+[ "${EJ_COMPILE}" != 1 ] && OPT_NO=-no
+[ "${EJ_SUPER_RUN}" != 1 ] && OPT_NR=-nr
+
+AWS_HOST="http://169.254.169.254/latest/"
+AWS_URL="${AWS_HOST}meta-data/"
+AWS_INSTANCE_ID=`curl ${AWS_URL}instance-id 2>/dev/null`
+AWS_LOCAL_HOSTNAME=`curl ${AWS_URL}local-hostname 2>/dev/null`
+AWS_LOCAL_IP=`curl ${AWS_URL}local-ipv4 2>/dev/null`
+AWS_PUBLIC_HOSTNAME=`curl ${AWS_URL}public-hostname 2>/dev/null`
+AWS_PUBLIC_IP=`curl ${AWS_URL}public-ipv4 2>/dev/null`
+
+export AWS_INSTANCE_ID AWS_LOCAL_HOSTNAME AWS_LOCAL_IP AWS_PUBLIC_HOSTNAME AWS_PUBLIC_IP
+export EJ_SUPER_RUN_ID
+
+[ "${EJ_QUEUE}" = "" ] && EJ_QUEUE=super-run-z
+[ "${EJ_TIMEOUT}" = "" ] && EJ_TIMEOUT=15
+if [ "${EJ_TIMEOUT}" = "off" ]
 then
-	export EJ_COMPILE_SERVER_ID="${EJ_QUEUE}"
-	/opt/ejudge/libexec/ejudge/bin/ej-compile-control start
+    EJ_FULL_TIMEOUT=""
+else
+    EJ_FULL_TIMEOUT=" -ht ${EJ_TIMEOUT}"
 fi
 
-if [ "${EJ_SUPER_RUN}" != "1" ]
-then
-	exit 0
-fi
+mkdir /tmp/ejudge
 
-
-exec screen -d -m /home/ejudge/2start-super-run.sh
+exec /opt/ejudge/bin/ejudge-control ${OPT_NO} ${OPT_NR} --mirror /tmp/ejudge/super-run --queue ${EJ_QUEUE} ${EJ_FULL_TIMEOUT} -hc /home/ejudge/3shutdown.sh -hb --instance-id ${EJ_SUPER_RUN_ID} --agent ssh:${EJ_MOUNT_HOST} -s start
