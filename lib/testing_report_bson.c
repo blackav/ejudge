@@ -64,10 +64,21 @@ parse_file(bson_iter_t *bi, struct testing_report_file_content *fc)
             if (ej_bson_parse_boolean_new(bi, key, &fc->is_bzip2) < 0)
                 return -1;
             break;
+        case Tag_size: {
+            long long sz = -1;
+            if (ej_bson_parse_int64_new(bi, key, &sz) < 0 || sz < 0)
+                return -1;
+            fc->size = sz;
+            break;
+        }
         case Tag_data:
-            {
-                if (bson_iter_type(bi) != BSON_TYPE_BINARY)
+            if (bson_iter_type(bi) == BSON_TYPE_UTF8) {
+                unsigned char *value = NULL;
+                if (ej_bson_parse_string_new(bi, key, &value) < 0)
                     return -1;
+                free(fc->data);
+                fc->data = value;
+            } else if (bson_iter_type(bi) == BSON_TYPE_BINARY) {
                 bson_subtype_t bt = 0;
                 uint32_t bz = 0;
                 const uint8_t *bd = NULL;
@@ -80,6 +91,8 @@ parse_file(bson_iter_t *bi, struct testing_report_file_content *fc)
                 memcpy(fc->data, bd, bz);
                 fc->data[bz] = 0;
                 fc->size = bz;
+            } else {
+                return -1;
             }
             break;
         }
@@ -809,7 +822,11 @@ unparse_file_content(
                 bson_append_bool(&b_fc, tag_table[Tag_bzip2], -1, 1);
             }
             if (fc->data) {
-                bson_append_binary(&b_fc, tag_table[Tag_data], -1, BSON_SUBTYPE_USER, fc->data, fc->size);
+                if (fc->is_base64 > 0) {
+                    bson_append_utf8(b, tag_table[Tag_data], -1, fc->data, -1);
+                } else {
+                    bson_append_binary(&b_fc, tag_table[Tag_data], -1, BSON_SUBTYPE_USER, fc->data, fc->size);
+                }
             }
         }
         bson_append_document_end(b, &b_fc);
