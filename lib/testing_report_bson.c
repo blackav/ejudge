@@ -823,7 +823,7 @@ unparse_file_content(
             }
             if (fc->data) {
                 if (fc->is_base64 > 0) {
-                    bson_append_utf8(b, tag_table[Tag_data], -1, fc->data, -1);
+                    bson_append_utf8(&b_fc, tag_table[Tag_data], -1, fc->data, -1);
                 } else {
                     bson_append_binary(&b_fc, tag_table[Tag_data], -1, BSON_SUBTYPE_USER, fc->data, fc->size);
                 }
