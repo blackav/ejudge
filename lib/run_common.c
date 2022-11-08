@@ -1958,6 +1958,75 @@ cleanup:
 }
 
 static int
+invoke_test_checker_cmd(
+        const struct super_run_in_packet *srp,
+        const unsigned char *work_dir,
+        const unsigned char *input_file,
+        const unsigned char *log_path)
+{
+  const struct super_run_in_problem_packet *srpp = srp->problem;
+  tpTask tsk = NULL;
+
+  tsk = task_New();
+  task_AddArg(tsk, srpp->test_checker_cmd);
+  task_AddArg(tsk, input_file);
+  task_SetPathAsArg0(tsk);
+  task_EnableAllSignals(tsk);
+  if (work_dir) task_SetWorkingDir(tsk, work_dir);
+  task_SetRedir(tsk, 0, TSR_FILE, input_file, TSK_READ, 0);
+  task_SetRedir(tsk, 1, TSR_FILE, log_path, TSK_APPEND, TSK_FULL_RW);
+  task_SetRedir(tsk, 2, TSR_FILE, log_path, TSK_APPEND, TSK_FULL_RW);
+  if (srpp->test_checker_env) {
+    for (int i = 0; srpp->test_checker_env[i]; ++i)
+      task_PutEnv(tsk, srpp->test_checker_env[i]);
+  }
+  if (srpp->checker_real_time_limit_ms > 0) {
+    task_SetMaxRealTimeMillis(tsk, srpp->checker_real_time_limit_ms);
+  }
+  if (srpp->checker_time_limit_ms > 0) {
+    task_SetMaxTimeMillis(tsk, srpp->checker_time_limit_ms);
+  }
+  if (srpp->checker_max_stack_size > 0) {
+    task_SetStackSize(tsk, srpp->checker_max_stack_size);
+  }
+  if (srpp->checker_max_vm_size > 0) {
+    task_SetVMSize(tsk, srpp->checker_max_vm_size);
+  }
+  if (srpp->checker_max_rss_size > 0) {
+    task_SetRSSSize(tsk, srpp->checker_max_rss_size);
+  }
+
+  if (task_Start(tsk) < 0) {
+    append_msg_to_log(log_path, "failed to start test checker %s", srpp->test_checker_cmd);
+    task_Delete(tsk);
+    return RUN_CHECK_FAILED;
+  }
+
+  task_Wait(tsk);
+  if (task_IsTimeout(tsk)) {
+    append_msg_to_log(log_path, "test checker %s time-out", srpp->test_checker_cmd);
+    task_Delete(tsk);
+    return RUN_CHECK_FAILED;
+  }
+
+  if (task_Status(tsk) == TSK_SIGNALED) {
+    append_msg_to_log(log_path, "test checker %s is terminated by signal %d", srpp->test_checker_cmd, task_TermSignal(tsk));
+    task_Delete(tsk);
+    return RUN_CHECK_FAILED;
+  }
+  int r = task_ExitCode(tsk);
+  if (r == 1 || r == 2 || r == RUN_WRONG_ANSWER_ERR || r == RUN_PRESENTATION_ERR) {
+    r = RUN_PRESENTATION_ERR;
+  } else if (r != 0) {
+    append_msg_to_log(log_path, "test checker %s exit code %d is invalid", srpp->test_checker_cmd, r);
+    task_Delete(tsk);
+    return RUN_CHECK_FAILED;
+  }
+  task_Delete(tsk);
+  return r;
+}
+
+static int
 invoke_init_cmd(
         const struct super_run_in_problem_packet *srpp,
         const unsigned char *subcommand,
@@ -3033,6 +3102,18 @@ run_one_test(
       append_msg_to_log(check_out_path, "failed to write test file to %s/%s",
                         check_dir, srpp->input_file);
       goto check_failed;
+    }
+
+    snprintf(input_path, sizeof(input_path), "%s/%s",
+             check_dir, srpp->input_file);
+    int r = invoke_test_checker_cmd(srp, check_dir, input_path, check_out_path);
+    if (r == RUN_CHECK_FAILED) {
+      status = RUN_CHECK_FAILED;
+      goto check_failed;
+    }
+    if (r != 0) {
+      status = r;
+      goto cleanup;
     }
   } else {
     /* copy the test */
