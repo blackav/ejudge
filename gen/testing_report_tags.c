@@ -90,7 +90,8 @@ enum
     Tag_separate_user_score,
     Tag_max_rss,
     Tag_submit_id,
-    Tag_judge_uuid
+    Tag_judge_uuid,
+    Tag_test_checker
 };
 static __attribute__((unused)) const char * const tag_table[] =
 {
@@ -185,6 +186,7 @@ static __attribute__((unused)) const char * const tag_table[] =
     "max_rss",
     "submit_id",
     "judge_uuid",
+    "test_checker",
 };
 static __attribute__((unused)) int
 match(const char *s)
@@ -468,6 +470,8 @@ match(const char *s)
             } else if (s[2] == 's'&& s[3] == 't') {
                 if (!s[4]) {
                     return Tag_test;
+                } else if (s[4] == '_' && s[5] == 'c' && s[6] == 'h' && s[7] == 'e' && s[8] == 'c' && s[9] == 'k' && s[10] == 'e' && s[11] == 'r' && !s[12]) {
+                    return Tag_test_checker;
                 } else if (s[4] == 's') {
                     if (!s[5]) {
                         return Tag_tests;
