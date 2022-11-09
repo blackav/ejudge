@@ -12317,6 +12317,9 @@ ns_get_submit(
           if (ttr->error.size > 0) {
             cJSON_AddStringToObject(jrr, "error", ttr->error.data);
           }
+          if (ttr->test_checker.size > 0) {
+            cJSON_AddStringToObject(jrr, "test_checker", ttr->test_checker.data);
+          }
         }
       }
     }

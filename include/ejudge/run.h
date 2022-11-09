@@ -66,6 +66,9 @@ struct testinfo
   int user_score;
   int user_tests_passed;
   int user_nominal_score;
+  /* test checker on user input */
+  char *test_checker;
+  long  test_checker_size;
 };
 
 struct testinfo_vector

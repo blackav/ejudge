@@ -433,6 +433,7 @@ generate_xml_report(
         make_file_content(&trt->correct, srgp, ti->correct, ti->correct_size, utf8_mode);
         make_file_content(&trt->error, srgp, ti->error, ti->error_size, utf8_mode);
         make_file_content(&trt->checker, srgp, ti->chk_out, ti->chk_out_size, utf8_mode);
+        make_file_content(&trt->test_checker, srgp, ti->test_checker, ti->test_checker_size, utf8_mode);
       }
     }
   }
@@ -2727,6 +2728,7 @@ run_one_test(
   unsigned char check_out_path[PATH_MAX];
   unsigned char score_out_path[PATH_MAX];
   const unsigned char *output_path_to_check = NULL;
+  unsigned char test_checker_out_path[PATH_MAX];
 
   unsigned char check_dir[PATH_MAX];
   unsigned char exe_path[PATH_MAX];
@@ -2774,6 +2776,7 @@ run_one_test(
   struct termios term_attrs;
 #endif
 
+  test_checker_out_path[0] = 0;
   memset(&tstinfo, 0, sizeof(tstinfo));
 
 #ifdef HAVE_TERMIOS_H
@@ -3106,10 +3109,19 @@ run_one_test(
 
     snprintf(input_path, sizeof(input_path), "%s/%s",
              check_dir, srpp->input_file);
-    int r = invoke_test_checker_cmd(srp, check_dir, input_path, check_out_path);
+    snprintf(test_checker_out_path, sizeof(test_checker_out_path),
+             "%s/testcheckout_%d.txt",
+             global->run_work_dir, cur_test);
+
+    int r = invoke_test_checker_cmd(srp, check_dir, input_path, test_checker_out_path);
     if (r == RUN_CHECK_FAILED) {
       status = RUN_CHECK_FAILED;
       goto check_failed;
+    }
+    file_size = generic_file_size(0, test_checker_out_path, 0);
+    if (file_size >= 0) {
+      cur_info->test_checker_size = file_size;
+      generic_read_file(&cur_info->test_checker, 0, 0, 0, 0, test_checker_out_path, "");
     }
     if (r != 0) {
       status = r;
@@ -3961,6 +3973,7 @@ free_testinfo_vector(struct testinfo_vector *tv)
     xfree(ti->interactor_stats_str);
     xfree(ti->checker_stats_str);
     xfree(ti->checker_token);
+    xfree(ti->test_checker);
   }
   memset(tv->data, 0, sizeof(tv->data[0]) * tv->size);
   xfree(tv->data);
