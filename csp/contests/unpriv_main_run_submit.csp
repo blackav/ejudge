@@ -566,6 +566,12 @@
 </pre>
 </div>
 
+<div id="ej-test-checker-div" style="display:none;" >
+<p>Test checker output:</p>
+<pre id="ej-test-checker">
+</pre>
+</div>
+
 <div id="ej-submit-output-div" style="display:none;" >
 <p>Program output:</p>
 <pre id="ej-submit-output">
@@ -602,6 +608,10 @@ Max Memory Used: <span id="ej-submit-max-rss"></span></p>
       if (data.result.compiler_output) {
         $("#ej-submit-compiler-div").show();
         $("#ej-submit-compiler").text(data.result.compiler_output);
+      }
+      if (data.result.test_checker) {
+        $("#ej-test-checker-div").show();
+        $("#ej-test-checker").text(data.result.test_checker);
       }
       if (data.result.output) {
         $("#ej-submit-output-div").show();
@@ -664,6 +674,7 @@ Max Memory Used: <span id="ej-submit-max-rss"></span></p>
 
       $("#ej-submit-status-div").hide();
       $("#ej-submit-compiler-div").hide();
+      $("#ej-test-checker-div").hide();
       $("#ej-submit-output-div").hide();
       $("#ej-submit-error-div").hide();
       $("#ej-submit-stats-div").hide();
