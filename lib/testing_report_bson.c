@@ -279,6 +279,9 @@ parse_test(int index, bson_iter_t *bi, testing_report_xml_t r)
         case Tag_checker:
             trfc = &p->checker;
             goto common_file_content;
+        case Tag_test_checker:
+            trfc = &p->test_checker;
+            goto common_file_content;
         common_file_content:
             if (bson_iter_type(bi) != BSON_TYPE_DOCUMENT)
                 goto cleanup;
@@ -1075,6 +1078,7 @@ do_unparse(
             unparse_file_content(b_testp, tag_table[Tag_correct], &t->correct);
             unparse_file_content(b_testp, tag_table[Tag_stderr], &t->error);
             unparse_file_content(b_testp, tag_table[Tag_checker], &t->checker);
+            unparse_file_content(b_testp, tag_table[Tag_test_checker], &t->test_checker);
             bson_append_document_end(b_testsp, b_testp);
         }
         bson_append_array_end(b, b_testsp);

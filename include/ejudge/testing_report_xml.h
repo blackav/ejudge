@@ -29,6 +29,7 @@ enum
   TESTING_REPORT_CORRECT,
   TESTING_REPORT_ERROR,
   TESTING_REPORT_CHECKER,
+  TESTING_REPORT_TEST_CHECKER,
 
   TESTING_REPORT_ARGS,
 
@@ -97,6 +98,8 @@ struct testing_report_test
   struct testing_report_file_content error;
   /* checker output */
   struct testing_report_file_content checker;
+  /* test checker output */
+  struct testing_report_file_content test_checker;
 };
 
 struct testing_report_row

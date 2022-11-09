@@ -88,3 +88,4 @@ separate_user_score
 max_rss
 submit_id
 judge_uuid
+test_checker

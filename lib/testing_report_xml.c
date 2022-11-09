@@ -93,6 +93,7 @@ enum
   TR_T_PROGRAM_STATS_STR,
   TR_T_INTERACTOR_STATS_STR,
   TR_T_CHECKER_STATS_STR,
+  TR_T_TEST_CHECKER,
 
   TR_T_LAST_TAG,
 };
@@ -194,6 +195,7 @@ static const char * const elem_map[] =
   [TR_T_PROGRAM_STATS_STR] = "program-stats-str",
   [TR_T_INTERACTOR_STATS_STR] = "interactor-stats-str",
   [TR_T_CHECKER_STATS_STR] = "checker-stats-str",
+  [TR_T_TEST_CHECKER] = "test-checker",
 
   [TR_T_LAST_TAG] = 0,
 };
@@ -633,6 +635,9 @@ parse_test(struct xml_tree *t, testing_report_xml_t r)
       break;
     case TR_T_CHECKER:
       if (parse_file(t2, &q->checker) < 0) goto failure;
+      break;
+    case TR_T_TEST_CHECKER:
+      if (parse_file(t2, &q->test_checker) < 0) goto failure;
       break;
 
     default:
@@ -1362,6 +1367,7 @@ testing_report_test_free(struct testing_report_test *p)
   xfree(p->correct.data); p->correct.data = 0;
   xfree(p->error.data); p->error.data = 0;
   xfree(p->checker.data); p->checker.data = 0;
+  xfree(p->test_checker.data); p->test_checker.data = 0;
 
   xfree(p);
   return 0;
@@ -1436,6 +1442,8 @@ testing_report_test_alloc(int num, int status)
   trt->error.orig_size = -1;
   trt->checker.size = -1;
   trt->checker.orig_size = -1;
+  trt->test_checker.size = -1;
+  trt->test_checker.orig_size = -1;
   return trt;
 }
 
@@ -1764,6 +1772,7 @@ testing_report_unparse_xml(
       unparse_file_content(out, &ab, TR_T_CORRECT, &t->correct);
       unparse_file_content(out, &ab, TR_T_STDERR, &t->error);
       unparse_file_content(out, &ab, TR_T_CHECKER, &t->checker);
+      unparse_file_content(out, &ab, TR_T_TEST_CHECKER, &t->test_checker);
       fprintf(out, "    </%s>\n", elem_map[TR_T_TEST]);
     }
     fprintf(out, "  </%s>\n", elem_map[TR_T_TESTS]);
