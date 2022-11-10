@@ -656,7 +656,7 @@ Max Memory Used: <span id="ej-submit-max-rss"></span></p>
       }
       if (data.result.status > 90) {
         window.setTimeout(function() {
-          wait_for_result(data.result.serial_id);
+          wait_for_result(data.result.submit_id);
         }, 1000);
       }
     }
@@ -699,8 +699,8 @@ Max Memory Used: <span id="ej-submit-max-rss"></span></p>
         processData: false,
         success: function(data) {
           if (data.ok) {
-            $("#ej-submit-log").append("submit id: " + data.result.serial_id);
-            wait_for_result(data.result.serial_id);
+            $("#ej-submit-log").append("submit id: " + data.result.submit_id);
+            wait_for_result(data.result.submit_id);
           } else {
             $("#ej-submit-log").append("submit failed: " + data.error.message);
           }

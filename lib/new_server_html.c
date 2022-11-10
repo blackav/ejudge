@@ -12156,7 +12156,7 @@ ns_submit_run_input(
   }
 
   cJSON *jrr = cJSON_CreateObject();
-  cJSON_AddNumberToObject(jrr, "serial_id", se.serial_id);
+  cJSON_AddNumberToObject(jrr, "submit_id", se.serial_id);
   cJSON_AddItemToObject(jr, "result", jrr);
   ok = 1;
 
@@ -12277,7 +12277,7 @@ ns_get_submit(
   }
 
   cJSON *jrr = cJSON_CreateObject();
-  cJSON_AddNumberToObject(jrr, "serial_id", se.serial_id);
+  cJSON_AddNumberToObject(jrr, "submit_id", se.serial_id);
   cJSON_AddNumberToObject(jrr, "user_id", se.user_id);
   cJSON_AddNumberToObject(jrr, "prob_id", se.prob_id);
   cJSON_AddNumberToObject(jrr, "lang_id", se.lang_id);
