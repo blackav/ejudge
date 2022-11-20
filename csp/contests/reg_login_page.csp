@@ -71,13 +71,15 @@
 <s:param name="contest_id" value="phr->contest_id" />
 <s:param name="locale_id" value="phr->locale_id" />
 </s:url><%
-    if (created_mode) {
+    if (cnts->disable_standalone_reg <= 0) {
+      if (created_mode) {
 %><s:a class="menu" url="CreateUrl"><s:_>Create another account</s:_></s:a><%
-    } else {
+      } else {
 %><s:a class="menu" url="CreateUrl"><s:_>Create account</s:_></s:a><%
-    }
+      }
 %></div></td><%
-    item_cnt++;
+      item_cnt++;
+    }
   }
 %>
 <%
@@ -112,6 +114,10 @@
     <s:param name="contest_id" value="phr->contest_id" />
     <s:param name="provider" value='"vk"' />
 </s:url>
+<s:url name="LoginWithYandexUrl" script="client" ac="'oauth-login-1'">
+    <s:param name="contest_id" value="phr->contest_id" />
+    <s:param name="provider" value='"yandex"' />
+</s:url>
 <p>
 <%
     if (oauth_is_available_num(phr->config, 1)) {
@@ -122,6 +128,11 @@
     if (oauth_is_available_num(phr->config, 2)) {
 %>
 <s:a url="LoginWithVKUrl"><img src="<s:config name="style-prefix" />icons/vk-logo.jpeg" alt="vk auth" width="46"></img></s:a>
+<%
+    }
+    if (oauth_is_available_num(phr->config, 3)) {
+%>
+<s:a url="LoginWithYandexUrl"><img src="<s:config name="style-prefix" />icons/yandex-logo.png" alt="yandex auth"></img></s:a>
 <%
     }
 %>

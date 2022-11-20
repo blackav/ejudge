@@ -197,7 +197,7 @@ create_account(
   unsigned char *new_password = 0;
   int regular_flag = 0;
 
-  if (ejudge_config->disable_new_users > 0) {
+  if (ejudge_config->disable_new_users > 0 || cnts->disable_standalone_reg > 0) {
     fprintf(phr->log_f, "registration is not available");
     return error_page(fout, phr, NEW_SRV_ERR_PERMISSION_DENIED);
   }

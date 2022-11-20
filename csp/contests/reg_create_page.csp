@@ -18,7 +18,7 @@
   int i, j;
   unsigned char title[1024];
 
-  if (phr->config->disable_new_users > 0) {
+  if (phr->config->disable_new_users > 0 || cnts->disable_standalone_reg > 0) {
     fprintf(phr->log_f, "registration is not available\n");
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
   }
