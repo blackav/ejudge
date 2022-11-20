@@ -36,6 +36,7 @@ enum
   CNTS_read_only_name,
   CNTS_enable_oauth,
   CNTS_enable_reminders,
+  CNTS_disable_standalone_reg,
   CNTS_reg_deadline,
   CNTS_sched_time,
   CNTS_open_time,
