@@ -3,7 +3,7 @@
 #ifndef __CONTESTS_H__
 #define __CONTESTS_H__
 
-/* Copyright (C) 2002-2021 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -192,6 +192,7 @@ enum
     CONTEST_A_STRIP_DOMAIN,
     CONTEST_A_DISABLE_EMAIL_CHECK,
     CONTEST_A_ENABLE_REMINDERS,
+    CONTEST_A_DISABLE_STANDALONE_REG,
 
     CONTEST_LAST_ATTR
   };
@@ -342,6 +343,7 @@ struct contest_desc
   ejbytebool_t read_only_name;
   ejbytebool_t enable_oauth;
   ejbytebool_t enable_reminders;
+  ejbytebool_t disable_standalone_reg;
 
   time_t         reg_deadline;
   time_t         sched_time;
