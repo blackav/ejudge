@@ -188,6 +188,10 @@ struct AppState
     const struct auth_plugin_iface *auth_vk_iface;
     void *auth_vk_data;
 
+    // Yandex Auth plugin
+    const struct auth_plugin_iface *auth_yandex_iface;
+    void *auth_yandex_data;
+
     // Gitlab VCS plugin
     const struct vcs_plugin_iface *vcs_gitlab_iface;
     void *vcs_gitlab_data;
@@ -1669,6 +1673,52 @@ load_auth_vk_plugin(struct AppState *as)
 }
 
 static int
+load_auth_yandex_plugin(struct AppState *as)
+{
+    struct xml_tree *yandex_cfg = ejudge_cfg_get_plugin_config(as->config, "auth", "yandex");
+    if (!yandex_cfg) return 0;
+
+    const struct common_loaded_plugin *yandex_plugin = plugin_load_external(NULL, "auth", "yandex", as->config);
+    if (!yandex_plugin) {
+        err("failed to load auth_yandex plugin");
+        return -1;
+    }
+
+    if (yandex_plugin->iface->b.size != sizeof(struct auth_plugin_iface)) {
+        err("auth_yandex plugin interface size mismatch");
+        return -1;
+    }
+
+    const struct auth_plugin_iface *auth_iface = (const struct auth_plugin_iface *) yandex_plugin->iface;
+    if (auth_iface->auth_version != AUTH_PLUGIN_IFACE_VERSION) {
+        err("auth plugin interface version mismatch");
+        return -1;
+    }
+
+    as->auth_yandex_iface = auth_iface;
+    as->auth_yandex_data = yandex_plugin->data;
+
+    as->auth_yandex_iface->set_set_command_handler(as->auth_yandex_data, add_handler_wrapper, as);
+
+    if (as->auth_yandex_iface->open(as->auth_yandex_data) < 0) {
+        err("auth_yandex plugin 'open' failed");
+        return -1;
+    }
+
+    if (as->auth_yandex_iface->check(as->auth_yandex_data) < 0) {
+        err("auth_yandex plugin 'check' failed");
+        return -1;
+    }
+
+    if (as->auth_yandex_iface->start_thread(as->auth_yandex_data) < 0) {
+        err("auth_yandex plugin 'start_thread' failed");
+        return -1;
+    }
+
+    return 0;
+}
+
+static int
 load_vcs_gitlab_plugin(struct AppState *as)
 {
     struct xml_tree *gitlab_cfg = ejudge_cfg_get_plugin_config(as->config, "vcs", "gitlab");
@@ -1723,6 +1773,7 @@ load_plugins(struct AppState *as)
     if (load_telegram_plugin(as) < 0) return -1;
     if (load_auth_google_plugin(as) < 0) return -1;
     if (load_auth_vk_plugin(as) < 0) return -1;
+    if (load_auth_yandex_plugin(as) < 0) return -1;
     if (load_vcs_gitlab_plugin(as) < 0) return -1;
 
     return 0;

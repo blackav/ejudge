@@ -16,8 +16,31 @@
   unsigned char *job_id = NULL;
   const unsigned char *provider = NULL;
   unsigned long long provider_id = 0;
+  const unsigned char *access_token = NULL;
+
 %><s:read var="state" ignoreerrors="yes" /><%
 %><s:read var="code" ignoreerrors="yes" /><%
+
+  if (phr->session_id == 3) {
+    // yandex is shit
+    if (!state || !*state) {
+%>
+<html>
+<body>
+<script>
+var hash_part = document.location.hash.slice(1);
+var url_part = document.location.href.replace(document.location.hash, '');
+var new_url = url_part + "?" + hash_part;
+document.location.href = new_url;
+</script>
+</body>
+</html>
+<%
+      goto cleanup;
+    }
+%><s:read var="access_token" ignoreerrors="access_token" /><%
+    code = access_token; access_token = NULL;
+  }
 
   if (!state || !*state) {
     FAIL(NEW_SRV_ERR_INV_PARAM);
