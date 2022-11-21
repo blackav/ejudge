@@ -630,7 +630,7 @@ parse_line(const unsigned char *str, size_t len, testinfo_t *pt, struct testinfo
   case Tag_ok_language:
   {
     struct testinfo_array *ta = XPDEREF(struct testinfo_array, pt, tag_offsets[tag]);
-    if (ta->u >= 0) FAIL(TINF_E_VAR_REDEFINED);
+    if (ta->u > 0 || (tag == Tag_params && !ta->u)) FAIL(TINF_E_VAR_REDEFINED);
     ta->u = cmd.u;
     ta->v = (char**) cmd.v;
     memset(&cmd, 0, sizeof(cmd));
