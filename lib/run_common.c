@@ -3125,23 +3125,26 @@ run_one_test(
 
     snprintf(input_path, sizeof(input_path), "%s/%s",
              check_dir, srpp->input_file);
-    snprintf(test_checker_out_path, sizeof(test_checker_out_path),
-             "%s/testcheckout_%d.txt",
-             global->run_work_dir, cur_test);
 
-    int r = invoke_test_checker_cmd(srp, check_dir, input_path, test_checker_out_path);
-    if (r == RUN_CHECK_FAILED) {
-      status = RUN_CHECK_FAILED;
-      goto check_failed;
-    }
-    file_size = generic_file_size(0, test_checker_out_path, 0);
-    if (file_size >= 0) {
-      cur_info->test_checker_size = file_size;
-      generic_read_file(&cur_info->test_checker, 0, 0, 0, 0, test_checker_out_path, "");
-    }
-    if (r != 0) {
-      status = r;
-      goto cleanup;
+    if (srpp->test_checker_cmd && *srpp->test_checker_cmd) {
+      snprintf(test_checker_out_path, sizeof(test_checker_out_path),
+               "%s/testcheckout_%d.txt",
+               global->run_work_dir, cur_test);
+
+      int r = invoke_test_checker_cmd(srp, check_dir, input_path, test_checker_out_path);
+      if (r == RUN_CHECK_FAILED) {
+        status = RUN_CHECK_FAILED;
+        goto check_failed;
+      }
+      file_size = generic_file_size(0, test_checker_out_path, 0);
+      if (file_size >= 0) {
+        cur_info->test_checker_size = file_size;
+        generic_read_file(&cur_info->test_checker, 0, 0, 0, 0, test_checker_out_path, "");
+      }
+      if (r != 0) {
+        status = r;
+        goto cleanup;
+      }
     }
   } else {
     /* copy the test */
