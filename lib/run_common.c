@@ -1113,6 +1113,22 @@ invoke_valuer(
   if (srpp->enable_checker_token > 0) {
     task_SetEnv(tsk, "EJUDGE_CHECKER_TOKEN", "1");
   }
+  if (srpp->enable_extended_info > 0) {
+    unsigned char buf[64];
+    snprintf(buf, sizeof(buf), "%d", srgp->user_id);
+    task_SetEnv(tsk, "EJUDGE_USER_ID", buf);
+    snprintf(buf, sizeof(buf), "%d", srgp->contest_id);
+    task_SetEnv(tsk, "EJUDGE_CONTEST_ID", buf);
+    snprintf(buf, sizeof(buf), "%d", srgp->run_id);
+    task_SetEnv(tsk, "EJUDGE_RUN_ID", buf);
+    task_SetEnv(tsk, "EJUDGE_USER_LOGIN", srgp->user_login);
+    task_SetEnv(tsk, "EJUDGE_USER_NAME", srgp->user_name);
+    if (srpp->test_count > 0) {
+      snprintf(buf, sizeof(buf), "%d", srpp->test_count);
+      task_SetEnv(tsk, "EJUDGE_TEST_COUNT", buf);
+    }
+  }
+
   task_EnableAllSignals(tsk);
 
   task_PrintArgs(tsk);
