@@ -388,7 +388,7 @@ packet_handler_auth_yandex(int uid, int argc, char **argv, void *user)
         goto done;
     }
 
-    fprintf(stderr, ">>%s<<\n", json_s);
+    //fprintf(stderr, ">>%s<<\n", json_s);
 
     if (!(root = cJSON_Parse(json_s))) {
         error_message = "yandex JSON parse failed";
