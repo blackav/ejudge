@@ -193,6 +193,7 @@ struct super_run_listener
   const unsigned char *lang_short_name;
   long long queue_ts;
   long long testing_start_ts;
+  int test_count;
 };
 
 static void
@@ -218,6 +219,7 @@ super_run_before_tests(struct run_listener *gself, int test_no)
   rs.run_id = self->run_id;
   rs.pkt_name_idx = super_run_status_add_str(&rs, self->packet_name);
   rs.test_num = test_no;
+  rs.test_count = self->test_count;
   if (self->user) rs.user_idx = super_run_status_add_str(&rs, self->user);
   if (self->prob_short_name) rs.prob_idx = super_run_status_add_str(&rs, self->prob_short_name);
   if (self->lang_short_name) rs.lang_idx = super_run_status_add_str(&rs, self->lang_short_name);
@@ -437,6 +439,7 @@ handle_packet(
     } else {
       run_listener.user = srgp->user_login;
     }
+    run_listener.test_count = srpp->test_count;
 
     //if (cr_serialize_lock(state) < 0) return -1;
     run_tests(ejudge_config, state, tst, srp, &reply_pkt,

@@ -62,8 +62,9 @@ struct super_run_status
     unsigned char  down_pending; // 93: pending shutdown
     unsigned char  pad5[2];
     int            super_run_pid;// 96: pid of ej-super-run
+    int            test_count;   // 100: total test count
 
-    unsigned char  pad6[92];
+    unsigned char  pad6[88];
 
     unsigned char  strings[320]; // string pool
 };

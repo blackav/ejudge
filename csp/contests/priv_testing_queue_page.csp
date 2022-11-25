@@ -302,7 +302,7 @@
         <td class="b1"><s:v value="user" /></td>
         <td class="b1"><s:v value="prob_short_name" /></td>
         <td class="b1"><s:v value="lang_short_name" /></td>
-        <td class="b1"><s:v value="srs->test_num" /></td>
+        <td class="b1"><s:v value="srs->test_num" /><% if (srs->test_count) { %> / <s:v value="srs->test_count" /><% } %></td>
         <td class="b1"><% if (run_queue_time <= 0) { %>&nbsp;<% } else { %><s:v value="run_queue_time" /><% } %></td>
         <td class="b1"><% if (judging_dur <= 0) { %>&nbsp;<% } else { %><s:v value="judging_dur" /><% } %></td>
         <td class="b1"><% if (testing_start_time <= 0) { %>&nbsp;<% } else { %><s:v value="testing_start_time" /><% } %></td>
