@@ -1076,15 +1076,16 @@ get_packet_func(
     size_t pkt_len = 0;
     int r = generic_read_file(&pkt_ptr, 0, &pkt_len, SAFE | REMOVE,
                               as->queue_dir, pkt_name, "");
+    if (!r) {
+        // just file not found
+        cJSON_AddStringToObject(reply, "q", "file-result");
+        return 1;
+    }
     if (r < 0 || !pkt_ptr) {
         cJSON_AddStringToObject(reply, "message", "failed to read file");
         return 0;
     }
     cJSON_AddStringToObject(reply, "q", "file-result");
-    if (!r) {
-        // just file not found
-        return 1;
-    }
     cJSON_AddTrueToObject(reply, "found");
     add_file_to_object(reply, pkt_ptr, pkt_len);
     free(pkt_ptr);
@@ -1114,15 +1115,16 @@ get_data_func(
     size_t pkt_len = 0;
     int r = generic_read_file(&pkt_ptr, 0, &pkt_len, REMOVE,
                               as->data_dir, pkt_name, suffix);
+    if (!r) {
+        // just file not found
+        cJSON_AddStringToObject(reply, "q", "file-result");
+        return 1;
+    }
     if (r < 0 || !pkt_ptr) {
         cJSON_AddStringToObject(reply, "message", "failed to read file");
         return 0;
     }
     cJSON_AddStringToObject(reply, "q", "file-result");
-    if (!r) {
-        // just file not found
-        return 1;
-    }
     cJSON_AddTrueToObject(reply, "found");
     add_file_to_object(reply, pkt_ptr, pkt_len);
     free(pkt_ptr);
