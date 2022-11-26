@@ -53,6 +53,7 @@ struct Future
 {
     int serial;
     int notify_signal;
+    pthread_t notify_thread;
     void (*callback)(struct Future *f, void *u);
     void *user;
 
@@ -440,13 +441,14 @@ handle_rchunks(struct AgentClientSsh *acs)
                         f->callback(f, f->user);
                     } else {
                         int notify_signal = f->notify_signal;
+                        pthread_t notify_thread = f->notify_thread;
                         f->value = j; j = NULL;
                         pthread_mutex_lock(&f->m);
                         f->ready = 1;
                         pthread_cond_signal(&f->c);
                         pthread_mutex_unlock(&f->m);
                         if (notify_signal > 0) {
-                            kill(getpid(), notify_signal);
+                            pthread_kill(notify_thread, notify_signal);
                         }
                     }
                 }
@@ -573,12 +575,13 @@ thread_func(void *ptr)
     for (int i = 0; i < acs->futureu; ++i) {
         struct Future *f = acs->futures[i];
         int notify_signal = f->notify_signal;
+        pthread_t notify_thread = f->notify_thread;
         pthread_mutex_lock(&f->m);
         f->ready = 1;
         pthread_cond_signal(&f->c);
         pthread_mutex_unlock(&f->m);
         if (notify_signal > 0) {
-            kill(getpid(), notify_signal);
+            pthread_kill(notify_thread, notify_signal);
         }
     }
     pthread_mutex_unlock(&acs->futurem);
@@ -1201,6 +1204,7 @@ async_wait_init_func(
                 *p_future = future;
                 future_init(future, channel);
                 future->notify_signal = notify_signal;
+                future->notify_thread = pthread_self();
                 add_future(acs, future);
                 result = 0;
             }
