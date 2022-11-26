@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2011-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2011-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -159,7 +159,7 @@ try_line_directive(const unsigned char *buf)
   char *eptr = NULL;
   errno = 0;
   num = strtol(p, &eptr, 10);
-  if (errno || num <= 0) return;
+  if (errno || num < 0) return;
   p = (const unsigned char *) eptr;
   if (*p && !isspace(*p)) return;
 
