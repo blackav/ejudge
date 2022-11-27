@@ -11894,11 +11894,11 @@ report_uptime(time_t t1, time_t t2)
   int up_days, up_hours, up_mins, up_secs;
 
   ptm = localtime(&t1);
-  snprintf(buf1, sizeof(buf1), "%04d/%02d/%02d %02d:%02d:%02d",
+  snprintf(buf1, sizeof(buf1), "%04d-%02d-%02d %02d:%02d:%02d",
            ptm->tm_year + 1900, ptm->tm_mon + 1, ptm->tm_mday,
            ptm->tm_hour, ptm->tm_min, ptm->tm_sec);
   ptm = localtime(&t2);
-  snprintf(buf2, sizeof(buf2), "%04d/%02d/%02d %02d:%02d:%02d",
+  snprintf(buf2, sizeof(buf2), "%04d-%02d-%02d %02d:%02d:%02d",
            ptm->tm_year + 1900, ptm->tm_mon + 1, ptm->tm_mday,
            ptm->tm_hour, ptm->tm_min, ptm->tm_sec);
   info("server started: %s, stopped: %s", buf1, buf2);

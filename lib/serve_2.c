@@ -1032,7 +1032,7 @@ generate_statistics_email(
 
   ptm = localtime(&from_time);
   snprintf(esubj, sizeof(esubj),
-           "Daily statistics for %04d/%02d/%02d, contest %d",
+           "Daily statistics for %04d-%02d-%02d, contest %d",
            ptm->tm_year + 1900, ptm->tm_mon + 1, ptm->tm_mday,
            cnts->id);
 
@@ -1051,7 +1051,7 @@ generate_statistics_email(
           "Hello,\n"
           "\n"
           "This is daily report for contest %d (%s)\n"
-          "Report day: %04d/%02d/%02d\n\n"
+          "Report day: %04d-%02d-%02d\n\n"
           "%s\n\n"
           "-\n"
           "Regards,\n"
@@ -1249,7 +1249,7 @@ serve_audit_log(
   }
 
   ltm = localtime(&state->current_time);
-  snprintf(tbuf, sizeof(tbuf), "%04d/%02d/%02d %02d:%02d:%02d",
+  snprintf(tbuf, sizeof(tbuf), "%04d-%02d-%02d %02d:%02d:%02d",
            ltm->tm_year + 1900, ltm->tm_mon + 1, ltm->tm_mday,
            ltm->tm_hour, ltm->tm_min, ltm->tm_sec);
 
@@ -3783,7 +3783,7 @@ time_to_str(unsigned char *buf, size_t size, int secs, int usecs)
     return buf;
   }
   ltm = localtime(&tt);
-  snprintf(buf, size, "%04d/%02d/%02d %02d:%02d:%02d.%06d",
+  snprintf(buf, size, "%04d-%02d-%02d %02d:%02d:%02d.%06d",
            ltm->tm_year + 1900, ltm->tm_mon + 1, ltm->tm_mday,
            ltm->tm_hour, ltm->tm_min, ltm->tm_sec, usecs);
   return buf;

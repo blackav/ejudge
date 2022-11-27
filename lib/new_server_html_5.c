@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2007-2021 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2007-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1890,7 +1890,7 @@ get_member_field(
       return buf;
     }
     ptm = localtime(&ttm);
-    snprintf(buf, size, "%04d/%02d/%02d", ptm->tm_year + 1900,
+    snprintf(buf, size, "%04d-%02d-%02d", ptm->tm_year + 1900,
              ptm->tm_mon + 1, ptm->tm_mday);
     //fprintf(stderr, ">>%s<<\n", buf);
     break;

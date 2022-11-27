@@ -1,6 +1,6 @@
 /* -*- mode:c -*- */
 
-/* Copyright (C) 2004-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1235,7 +1235,7 @@ do_choose_file(
     if ((files[i]->lstbuf.st_mode & 0001)) mode_str[8] = 'x';
 
     ptm = localtime(&files[i]->lstbuf.st_mtime);
-    snprintf(time_str, sizeof(time_str), "%04d/%02d/%02d %02d:%02d:%02d",
+    snprintf(time_str, sizeof(time_str), "%04d-%02d-%02d %02d:%02d:%02d",
              ptm->tm_year + 1900, ptm->tm_mon + 1, ptm->tm_mday,
              ptm->tm_hour, ptm->tm_min, ptm->tm_sec);
 

@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2004-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -23,7 +23,7 @@ xml_unparse_date(time_t d)
   struct tm *ptm;
 
   ptm = localtime(&d);
-  snprintf(buf, sizeof(buf), "%d/%02d/%02d %02d:%02d:%02d",
+  snprintf(buf, sizeof(buf), "%d-%02d-%02d %02d:%02d:%02d",
            ptm->tm_year + 1900, ptm->tm_mon + 1, ptm->tm_mday,
            ptm->tm_hour, ptm->tm_min, ptm->tm_sec);
   return buf;

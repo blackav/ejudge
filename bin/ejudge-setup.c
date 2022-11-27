@@ -2309,7 +2309,7 @@ generate_current_date(unsigned char *buf, size_t size)
 
   curtime = time(0);
   ptm = localtime(&curtime);
-  snprintf(buf, size, "%04d/%02d/%02d %02d:%02d:%02d",
+  snprintf(buf, size, "%04d-%02d-%02d %02d:%02d:%02d",
           ptm->tm_year + 1900, ptm->tm_mon + 1, ptm->tm_mday,
           ptm->tm_hour, ptm->tm_min, ptm->tm_sec);
 }

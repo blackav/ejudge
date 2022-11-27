@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2002-2020 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -139,7 +139,7 @@ userlist_unparse_date_2(unsigned char *buf, size_t size,
     return buf;
   }
   ptm = localtime(&d);
-  snprintf(buf, size, "%04d/%02d/%02d", ptm->tm_year + 1900,
+  snprintf(buf, size, "%04d-%02d-%02d", ptm->tm_year + 1900,
            ptm->tm_mon + 1, ptm->tm_mday);
   return buf;
 }
@@ -156,8 +156,11 @@ userlist_parse_date_2(const unsigned char *str, time_t *pd)
   //tt.tm_hour = 12;
 
   if (!str) return -1;
-  if (sscanf(str, "%d/%d/%d%n", &year, &month, &day, &n) != 3 || str[n])
-    return -1;
+  if (sscanf(str, "%d/%d/%d%n", &year, &month, &day, &n) != 3 || str[n]) {
+    if (sscanf(str, "%d-%d-%d%n", &year, &month, &day, &n) != 3 || str[n]) {
+      return -1;
+    }
+  }
   if (year < 1970) return -1;
   if (month < 1 || month > 12) return -1;
   if (day < 1 || day > 31) return -1;

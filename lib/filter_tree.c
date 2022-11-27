@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2002-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -636,7 +636,7 @@ filter_tree_time_str(unsigned char *buf, size_t size, time_t val)
   struct tm *ptm;
 
   ptm = localtime(&val);
-  return snprintf(buf, size, "%04d/%02d/%02d %02d:%02d:%02d",
+  return snprintf(buf, size, "%04d-%02d-%02d %02d:%02d:%02d",
                   ptm->tm_year + 1900, ptm->tm_mon + 1, ptm->tm_mday,
                   ptm->tm_hour, ptm->tm_min, ptm->tm_sec);
 }
