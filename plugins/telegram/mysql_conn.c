@@ -137,6 +137,7 @@ create_database(
     struct common_mysql_iface *mi = conn->mi;
     struct common_mysql_state *md = conn->md;
 
+    mi->lock(md);
     if (mi->simple_fquery(md, create_query_1,
                           md->table_prefix) < 0)
         db_error_fail(md);
@@ -161,9 +162,12 @@ create_database(
     if (mi->simple_fquery(md, "INSERT INTO %sconfig VALUES ('telegram_version', '%d') ;", md->table_prefix, 1) < 0)
         db_error_fail(md);
 
+    mi->unlock(md);
+
     return 0;
 
 fail:
+    mi->unlock(md);
     return -1;
 }
 
@@ -175,14 +179,20 @@ check_database(
     struct common_mysql_iface *mi = conn->mi;
     struct common_mysql_state *md = conn->md;
 
+    mi->lock(md);
+
     if (mi->connect(md) < 0)
-        return -1;
+        goto fail;
+
     if (mi->fquery(md, 1, "SELECT config_val FROM %sconfig WHERE config_key = 'telegram_version' ;", md->table_prefix) < 0) {
         err("probably the database is not created, please, create it");
-        return -1;
+        goto fail;
     }
     if (md->row_count > 1) abort();
-    if (!md->row_count) return create_database(conn);
+    if (!md->row_count) {
+        mi->unlock(md);
+        return create_database(conn);
+    }
     if (mi->next_row(md) < 0) db_error_fail(md);
     if (!md->row[0] || mi->parse_int(md, md->row[0], &telegram_version) < 0)
         db_error_inv_value_fail(md, "config_val");
@@ -202,13 +212,15 @@ check_database(
         if (telegram_version >= 0) {
             ++telegram_version;
             if (mi->simple_fquery(md, "UPDATE %sconfig SET config_val = '%d' WHERE config_key = 'telegram_version' ;", md->table_prefix, telegram_version) < 0)
-                return -1;
+                goto fail;
         }
     }
 
+    mi->unlock(md);
     return 0;
 
 fail:
+    mi->unlock(md);
     return -1;
 }
 
@@ -256,6 +268,7 @@ pbs_fetch_func(
     struct telegram_pbs_internal tpi = {};
     struct telegram_pbs *tp = NULL;
 
+    mi->lock(md);
     cmd_f = open_memstream(&cmd_s, &cmd_z);
     fprintf(cmd_f, "SELECT * FROM %stelegram_bots WHERE id = ",
             md->table_prefix);
@@ -271,11 +284,13 @@ pbs_fetch_func(
         XCALLOC(tp, 1);
         tp->_id = tpi.id; tpi.id = NULL;
         tp->update_id = tpi.update_id;
+        mi->unlock(md);
         return tp;
     }
 
     tp = telegram_pbs_create(bot_id);
     gc->vt->pbs_save(gc, tp);
+    mi->unlock(md);
 
     return tp;
 
@@ -284,6 +299,7 @@ fail:
     if (cmd_f) fclose(cmd_f);
     free(cmd_s);
     free(tpi.id);
+    mi->unlock(md);
     return NULL;
 }
 
@@ -302,6 +318,7 @@ pbs_save_func(
     FILE *cmd_f = NULL;
     struct telegram_pbs_internal tpi = {};
 
+    mi->lock(md);
     tpi.id = pbs->_id;
     tpi.update_id = pbs->update_id;
     cmd_f = open_memstream(&cmd_s, &cmd_z);
@@ -315,11 +332,13 @@ pbs_save_func(
     fclose(cmd_f); cmd_f = NULL;
     if (mi->simple_query(md, cmd_s, cmd_z) < 0) goto fail;
     free(cmd_s); cmd_s = NULL; cmd_z = 0;
+    mi->unlock(md);
     return 0;
 
 fail:
     if (cmd_f) fclose(cmd_f);
     free(cmd_s);
+    mi->unlock(md);
     return -1;
 }
 
@@ -369,6 +388,7 @@ token_fetch_func(
     struct telegram_token_internal tti = {};
     struct telegram_token *tt = NULL;
 
+    mi->lock(md);
     cmd_f = open_memstream(&cmd_s, &cmd_z);
     fprintf(cmd_f, "SELECT * FROM %stelegram_tokens WHERE token = ",
             md->table_prefix);
@@ -392,9 +412,11 @@ token_fetch_func(
         tt->locale_id = tti.locale_id;
         tt->expiry_time = tti.expiry_time;
         *p_token = tt;
+        mi->unlock(md);
         return 1;
     }
 
+    mi->unlock(md);
     return 0;
 
 fail:
@@ -406,6 +428,7 @@ fail:
     free(tti.contest_name);
     if (cmd_f) fclose(cmd_f);
     free(cmd_s);
+    mi->unlock(md);
     return -1;
 }
 
@@ -424,6 +447,7 @@ token_save_func(
     FILE *cmd_f = NULL;
     struct telegram_token_internal tti = {};
 
+    mi->lock(md);
     tti.bot_id = token->bot_id;
     tti.user_id = token->user_id;
     tti.user_login = token->user_login;
@@ -443,11 +467,13 @@ token_save_func(
     fclose(cmd_f); cmd_f = NULL;
     if (mi->simple_query(md, cmd_s, cmd_z) < 0) goto fail;
     free(cmd_s); cmd_s = NULL; cmd_z = 0;
+    mi->unlock(md);
     return 0;
 
 fail:
     if (cmd_f) fclose(cmd_f);
     free(cmd_s);
+    mi->unlock(md);
     return -1;
 }
 
@@ -465,6 +491,7 @@ token_remove_func(
     size_t cmd_z = 0;
     FILE *cmd_f = NULL;
 
+    mi->lock(md);
     cmd_f = open_memstream(&cmd_s, &cmd_z);
     fprintf(cmd_f, "DELETE FROM %stelegram_tokens WHERE token = ",
             md->table_prefix);
@@ -474,11 +501,13 @@ token_remove_func(
     if (mi->simple_query(md, cmd_s, cmd_z) < 0)
         db_error_fail(md);
     free(cmd_s); cmd_s = NULL; cmd_z = 0;
+    mi->unlock(md);
     return;
 
 fail:
     if (cmd_f) fclose(cmd_f);
     free(cmd_s);
+    mi->unlock(md);
 }
 
 static void
@@ -495,6 +524,7 @@ token_remove_expired_func(
     size_t cmd_z = 0;
     FILE *cmd_f = NULL;
 
+    mi->lock(md);
     cmd_f = open_memstream(&cmd_s, &cmd_z);
     fprintf(cmd_f, "DELETE FROM %stelegram_tokens WHERE expiry_time = '",
             md->table_prefix);
@@ -504,11 +534,13 @@ token_remove_expired_func(
     if (mi->simple_query(md, cmd_s, cmd_z) < 0)
         db_error_fail(md);
     free(cmd_s); cmd_s = NULL; cmd_z = 0;
+    mi->unlock(md);
     return;
 
 fail:
     if (cmd_f) fclose(cmd_f);
     free(cmd_s);
+    mi->unlock(md);
 }
 
 struct telegram_chat_internal
@@ -548,6 +580,7 @@ chat_fetch_func(
     struct telegram_chat_internal tci = {};
     struct telegram_chat *tc = NULL;
 
+    mi->lock(md);
     cmd_f = open_memstream(&cmd_s, &cmd_z);
     fprintf(cmd_f, "SELECT * FROM %stelegram_chats WHERE id = %lld;",
             md->table_prefix, _id);
@@ -565,12 +598,14 @@ chat_fetch_func(
         tc->username = tci.username; tci.username = NULL;
         tc->first_name = tci.first_name; tci.first_name = NULL;
         tc->last_name = tci.last_name; tci.last_name = NULL;
+        mi->unlock(md);
         return tc;
     }
 
     tc = telegram_chat_create();
     tc->_id = _id;
     gc->vt->chat_save(gc, tc);
+    mi->unlock(md);
     return tc;
 
 fail:
@@ -582,6 +617,7 @@ fail:
     telegram_chat_free(tc);
     if (cmd_f) fclose(cmd_f);
     free(cmd_s);
+    mi->unlock(md);
     return NULL;
 }
 
@@ -600,6 +636,7 @@ chat_save_func(
     FILE *cmd_f = NULL;
     struct telegram_chat_internal tci = {};
 
+    mi->lock(md);
     tci.id = tc->_id;
     tci.type = tc->type;
     tci.title = tc->title;
@@ -618,11 +655,13 @@ chat_save_func(
     fclose(cmd_f); cmd_f = NULL;
     if (mi->simple_query(md, cmd_s, cmd_z) < 0) goto fail;
     free(cmd_s); cmd_s = NULL; cmd_z = 0;
+    mi->unlock(md);
     return 0;
 
 fail:
     if (cmd_f) fclose(cmd_f);
     free(cmd_s);
+    mi->unlock(md);
     return -1;
 }
 
@@ -659,6 +698,7 @@ user_fetch_func(
     struct telegram_user_internal tui = {};
     struct telegram_user *tu = NULL;
 
+    mi->lock(md);
     cmd_f = open_memstream(&cmd_s, &cmd_z);
     fprintf(cmd_f, "SELECT * FROM %stelegram_users WHERE id = %lld;",
             md->table_prefix, _id);
@@ -674,12 +714,14 @@ user_fetch_func(
         tu->username = tui.username; tui.username = NULL;
         tu->first_name = tui.first_name; tui.first_name = NULL;
         tu->last_name = tui.last_name; tui.last_name = NULL;
+        mi->unlock(md);
         return tu;
     }
 
     tu = telegram_user_create();
     tu->_id = _id;
     gc->vt->user_save(gc, tu);
+    mi->unlock(md);
     return tu;
 
 fail:
@@ -689,6 +731,7 @@ fail:
     telegram_user_free(tu);
     if (cmd_f) fclose(cmd_f);
     free(cmd_s);
+    mi->unlock(md);
     return NULL;
 }
 
@@ -707,6 +750,7 @@ user_save_func(
     FILE *cmd_f = NULL;
     struct telegram_user_internal tui = {};
 
+    mi->lock(md);
     tui.id = tu->_id;
     tui.username = tu->username;
     tui.first_name = tu->first_name;
@@ -723,11 +767,13 @@ user_save_func(
     fclose(cmd_f); cmd_f = NULL;
     if (mi->simple_query(md, cmd_s, cmd_z) < 0) goto fail;
     free(cmd_s); cmd_s = NULL; cmd_z = 0;
+    mi->unlock(md);
     return 0;
 
 fail:
     if (cmd_f) fclose(cmd_f);
     free(cmd_s);
+    mi->unlock(md);
     return -1;
 }
 
@@ -768,6 +814,7 @@ chat_state_fetch_func(
     struct telegram_chat_state_internal tcsi = {};
     struct telegram_chat_state *tcs = NULL;
 
+    mi->lock(md);
     cmd_f = open_memstream(&cmd_s, &cmd_z);
     fprintf(cmd_f, "SELECT * FROM %stelegram_chat_states WHERE id = %lld;",
             md->table_prefix, _id);
@@ -785,12 +832,14 @@ chat_state_fetch_func(
         tcs->state = tcsi.state;
         tcs->review_flag = tcsi.review_flag;
         tcs->reply_flag = tcsi.reply_flag;
+        mi->unlock(md);
         return tcs;
     }
 
     tcs = telegram_chat_state_create();
     tcs->_id = _id;
     gc->vt->chat_state_save(gc, tcs);
+    mi->unlock(md);
     return tcs;
 
 fail:
@@ -799,6 +848,7 @@ fail:
     telegram_chat_state_free(tcs);
     if (cmd_f) fclose(cmd_f);
     free(cmd_s);
+    mi->unlock(md);
     return NULL;
 }
 
@@ -817,6 +867,7 @@ chat_state_save_func(
     FILE *cmd_f = NULL;
     struct telegram_chat_state_internal tcsi = {};
 
+    mi->lock(md);
     tcsi.id = tcs->_id;
     tcsi.command = tcs->command;
     tcsi.token = tcs->token;
@@ -835,11 +886,13 @@ chat_state_save_func(
     fclose(cmd_f); cmd_f = NULL;
     if (mi->simple_query(md, cmd_s, cmd_z) < 0) goto fail;
     free(cmd_s); cmd_s = NULL; cmd_z = 0;
+    mi->unlock(md);
     return 0;
 
 fail:
     if (cmd_f) fclose(cmd_f);
     free(cmd_s);
+    mi->unlock(md);
     return -1;
 }
 
@@ -884,6 +937,7 @@ subscription_fetch_func(
     struct telegram_subscription_internal tsi = {};
     struct telegram_subscription *ts = NULL;
 
+    mi->lock(md);
     cmd_f = open_memstream(&cmd_s, &cmd_z);
     fprintf(cmd_f, "SELECT * FROM %stelegram_subscriptions WHERE bot_id = ",
             md->table_prefix);
@@ -905,11 +959,13 @@ subscription_fetch_func(
         ts->review_flag = tsi.review_flag;
         ts->reply_flag = tsi.reply_flag;
         ts->chat_id = tsi.chat_id;
+        mi->unlock(md);
         return ts;
     }
 
     ts = telegram_subscription_create(bot_id, contest_id, user_id);
     gc->vt->subscription_save(gc, ts);
+    mi->unlock(md);
     return ts;
 
 fail:
@@ -917,6 +973,7 @@ fail:
     telegram_subscription_free(ts);
     if (cmd_f) fclose(cmd_f);
     free(cmd_s);
+    mi->unlock(md);
     return NULL;
 }
 
@@ -935,6 +992,7 @@ subscription_save_func(
     FILE *cmd_f = NULL;
     struct telegram_subscription_internal tsi = {};
 
+    mi->lock(md);
     tsi.bot_id = ts->bot_id;
     tsi.user_id = ts->user_id;
     tsi.contest_id = ts->contest_id;
@@ -953,11 +1011,13 @@ subscription_save_func(
     fclose(cmd_f); cmd_f = NULL;
     if (mi->simple_query(md, cmd_s, cmd_z) < 0) goto fail;
     free(cmd_s); cmd_s = NULL; cmd_z = 0;
+    mi->unlock(md);
     return 0;
 
 fail:
     if (cmd_f) fclose(cmd_f);
     free(cmd_s);
+    mi->unlock(md);
     return -1;
 }
 
@@ -991,4 +1051,3 @@ mysql_conn_create(void)
     conn->b.vt = &mysql_iface;
     return &conn->b;
 }
-
