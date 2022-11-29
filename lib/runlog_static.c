@@ -481,6 +481,13 @@ static const unsigned char * const status_short_str[] =
   [RUN_SUMMONED] = "SM",
   [RUN_REJECTED] = "RJ",
   [RUN_SKIPPED] = "SK",
+  [RUN_RUNNING ] = "RU",
+  [RUN_COMPILED] = "CD",
+  [RUN_COMPILING] = "CG",
+  [RUN_AVAILABLE] = "AV",
+  [RUN_EMPTY] = "EM",
+  [RUN_VIRTUAL_START] = "VS",
+  [RUN_VIRTUAL_STOP] = "VT",
 };
 
 const unsigned char *
