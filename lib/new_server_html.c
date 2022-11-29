@@ -8635,6 +8635,8 @@ priv_list_runs_json(
     }
   }
 
+  run_fields |= RUN_VIEW_RUN_ID;
+
   fprintf(fout, "{\n");
   fprintf(fout, "  \"ok\" : %s", to_json_bool(1));
   fprintf(fout, ",\n  \"server_time\": %lld", (long long) cs->current_time);
