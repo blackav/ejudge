@@ -83,6 +83,11 @@ struct testinfo_struct
 };
 typedef struct testinfo_struct testinfo_t;
 
+#if EJUDGE_COMPAT - 0 != 0
+#define cmd_argc cmd.u
+#define cmd_argv cmd.v
+#endif
+
 struct testinfo_subst_handler
 {
   unsigned char * (*substitute)(struct testinfo_subst_handler *, const unsigned char *);
