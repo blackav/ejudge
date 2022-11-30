@@ -15204,6 +15204,14 @@ unpriv_save_userprob(
   }
 
   XCALLOC(ue, 1);
+  if (hr_cgi_param(phr, "vcs_type", &s) > 0) {
+    if (strcmp(s, "github") != 0) {
+      s = "gitlab";
+    }
+  } else {
+    s = "gitlab";
+  }
+  ue->vcs_type = xstrdup(s);
   if ((r = hr_cgi_param(phr, "lang_name", &s)) < 0) {
     err_num = NEW_SRV_ERR_INV_PARAM;
     goto done;
@@ -15993,22 +16001,6 @@ unpriv_gitlab_webhook(
   }
   snprintf(hook_id, sizeof(hook_id), "%016llx-%016llx", phr->session_id, phr->client_key);
 
-  gitlab_token = hr_getenv(phr, "HTTP_X_GITLAB_TOKEN");
-  if (!gitlab_token || !*gitlab_token) {
-    err("unpriv_gitlab_webhook: GITLAB_TOKEN is not provided");
-    goto done;
-  }
-  gitlab_event = hr_getenv(phr, "HTTP_X_GITLAB_EVENT");
-  if (!gitlab_event || !*gitlab_event) {
-    err("unpriv_gitlab_webhook: GITLAB_EVENT is not provided");
-    goto done;
-  }
-  gitlab_event_uuid = hr_getenv(phr, "HTTP_X_GITLAB_EVENT_UUID");
-  if (!gitlab_event_uuid || !*gitlab_event_uuid) {
-    err("unpriv_gitlab_webhook: GITLAB_EVENT_UUID is not provided");
-    goto done;
-  }
-
   up_data = userprob_plugin_get(phr->config, NULL, 0);
   if (!up_data) {
     err("unpriv_gitlab_webhook: userprob plugin not available");
@@ -16019,13 +16011,54 @@ unpriv_gitlab_webhook(
     err("unpriv_gitlab_webhook: no such hook configured");
     goto done;
   }
-  if (!ue->gitlab_token || !*ue->gitlab_token) {
-    err("unpriv_gitlab_webhook: empty gitlab token in DB");
-    goto done;
-  }
-  if (strcmp(gitlab_token, ue->gitlab_token) != 0) {
-    err("unpriv_gitlab_webhook: gitlab token mismatch");
-    goto done;
+
+  if (ue->vcs_type && !strcmp(ue->vcs_type, "github")) {
+    gitlab_event = hr_getenv(phr, "HTTP_X_GITHUB_EVENT");
+    if (!gitlab_event || !*gitlab_event) {
+      err("unpriv_gitlab_webhook: GITHUB_EVENT is not provided");
+      goto done;
+    }
+    gitlab_event_uuid = hr_getenv(phr, "HTTP_X_GITHUB_DELIVERY");
+    if (!gitlab_event_uuid || !*gitlab_event_uuid) {
+      err("unpriv_gitlab_webhook: GITHUB_DELIVERY is not provided");
+      goto done;
+    }
+    // FIXME: check secret
+    if (!ue->gitlab_token || !*ue->gitlab_token) {
+      err("unpriv_gitlab_webhook: empty gitlab token in DB");
+      goto done;
+    }
+    /*
+> X-Hub-Signature-256: sha256=d57c68ca6f92289e6987922ff26938930f6e66a2d161ef06abdf1859230aa23c
+    */
+    /*
+This header is sent if the webhook is configured with a secret. This is the HMAC hex digest of the request body, and is generated using the SHA-256 hash function and the secret as the HMAC key.
+     */
+  } else {
+    gitlab_token = hr_getenv(phr, "HTTP_X_GITLAB_TOKEN");
+    if (!gitlab_token || !*gitlab_token) {
+      err("unpriv_gitlab_webhook: GITLAB_TOKEN is not provided");
+      goto done;
+    }
+    gitlab_event = hr_getenv(phr, "HTTP_X_GITLAB_EVENT");
+    if (!gitlab_event || !*gitlab_event) {
+      err("unpriv_gitlab_webhook: GITLAB_EVENT is not provided");
+      goto done;
+    }
+    gitlab_event_uuid = hr_getenv(phr, "HTTP_X_GITLAB_EVENT_UUID");
+    if (!gitlab_event_uuid || !*gitlab_event_uuid) {
+      err("unpriv_gitlab_webhook: GITLAB_EVENT_UUID is not provided");
+      goto done;
+    }
+
+    if (!ue->gitlab_token || !*ue->gitlab_token) {
+      err("unpriv_gitlab_webhook: empty gitlab token in DB");
+      goto done;
+    }
+    if (strcmp(gitlab_token, ue->gitlab_token) != 0) {
+      err("unpriv_gitlab_webhook: gitlab token mismatch");
+      goto done;
+    }
   }
 
   if (ue->contest_id <= 0) {
@@ -16069,8 +16102,6 @@ unpriv_gitlab_webhook(
     goto done;
   }
 
-  ///////////////////////////
-
   if (ue->prob_id <= 0 || ue->prob_id > cs->max_prob) {
     err("unpriv_gitlab_webhook: invalid prob_id");
     goto done;
@@ -16081,7 +16112,7 @@ unpriv_gitlab_webhook(
   }
   // FIXME: check limitations for submit
   if (prob->enable_gitlab <= 0) {
-    err("unpriv_gitlab_webhook: prolem does not allow gitlab");
+    err("unpriv_gitlab_webhook: problem does not allow gitlab");
     goto done;
   }
   if (prob->post_pull_cmd) {
