@@ -421,7 +421,7 @@ create_func(
 
     mi->lock(md);
     cmd_f = open_memstream(&cmd_s, &cmd_z);
-    fprintf(cmd_f, "INSERT IGNORE INTO `%suserprobs` SET contest_id = %d, user_id = %d, prob_id = %d, hook_id = '%s', gitlab_token = '%s', create_time = NOW(6), last_change_time = NOW(6);",
+    fprintf(cmd_f, "INSERT IGNORE INTO `%suserprobs` SET contest_id = %d, user_id = %d, prob_id = %d, hook_id = '%s', gitlab_token = '%s', vcs_type = 'gitlab', create_time = NOW(6), last_change_time = NOW(6);",
             md->table_prefix,
             contest_id,
             user_id,
@@ -461,10 +461,11 @@ fail:
     return NULL;
 }
 
-enum { USERPROB_ENTRY_SAVE_ROW_WIDTH = 5 };
+enum { USERPROB_ENTRY_SAVE_ROW_WIDTH = 6 };
 static const struct common_mysql_parse_spec userprob_entry_save_spec[USERPROB_ENTRY_SAVE_ROW_WIDTH] =
 {
     { 1, 's', "lang_name", USERPROB_ENTRY_OFFSET(lang_name), 0 },
+    { 1, 's', "vcs_type", USERPROB_ENTRY_OFFSET(vcs_type), 0 },
     { 1, 's', "vcs_url", USERPROB_ENTRY_OFFSET(vcs_url), 0 },
     { 1, 's', "vcs_subdir", USERPROB_ENTRY_OFFSET(vcs_subdir), 0 },
     { 1, 's', "vcs_branch_spec", USERPROB_ENTRY_OFFSET(vcs_branch_spec), 0 },
@@ -487,6 +488,7 @@ save_func(
 
     cmd_f = open_memstream(&cmd_s, &cmd_z);
     fprintf(cmd_f, "UPDATE `%suserprobs` SET ", md->table_prefix);
+    uei.vcs_type = ue->vcs_type;
     uei.lang_name = ue->lang_name;
     uei.vcs_url = ue->vcs_url;
     uei.vcs_subdir = ue->vcs_subdir;
