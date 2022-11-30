@@ -740,7 +740,7 @@ Max Memory Used: <span id="ej-submit-max-rss"></span></p>
     </div>
     <div>
       <div>Git type:</div>
-      <div><select id="ej-gitlab-vcs-type" name="vcs_type"><option>gitlab</option><option>github</option></div>
+      <div><select id="ej-gitlab-vcs-type" name="vcs_type"><option>gitlab</option><option>github</option></select></div>
     </div>
     <div>
       <div>GIT SSH URL:</div>
