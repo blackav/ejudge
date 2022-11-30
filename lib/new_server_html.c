@@ -16195,7 +16195,7 @@ unprivileged_entry_point(
   const unsigned char *s = 0;
   int cookie_locale_id = -1;
 
-  if (phr->action == NEW_SRV_ACTION_GITLAB_WEBHOOK) {
+  if (phr->action == NEW_SRV_ACTION_VCS_WEBHOOK) {
     unpriv_gitlab_webhook(fout, phr);
     return;
   }
