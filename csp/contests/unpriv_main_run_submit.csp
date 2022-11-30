@@ -731,12 +731,16 @@ Max Memory Used: <span id="ej-submit-max-rss"></span></p>
   <form id="ej-gitlab-edit-form">
     <input id="ej-gitlab-serial-id" type="hidden" name="serial_id" />
     <div>
-      <div>Gitlab webhook:</div>
+      <div>Git webhook:</div>
       <div><input size="80" id="ej-gitlab-webhook-url" type="text" name="webhook_url" readonly="readonly" /><span id="ej-gitlab-copy-webhook-url" class="ui-icon ui-icon-clipboard"></span></div>
     </div>
     <div>
-      <div>Gitlab webhook token:</div>
+      <div>Git webhook token:</div>
       <div><input size="80" id="ej-gitlab-gitlab-token" type="text" name="github_token" readonly="readonly" /><span id="ej-gitlab-copy-gitlab-token" class="ui-icon ui-icon-clipboard"></span></div>
+    </div>
+    <div>
+      <div>Git type:</div>
+      <div><select id="ej-gitlab-vcs-type" name="vcs_type"><option>gitlab</option><option>github</option></div>
     </div>
     <div>
       <div>GIT SSH URL:</div>
@@ -783,6 +787,9 @@ Max Memory Used: <span id="ej-submit-max-rss"></span></p>
       $("#ej-gitlab-serial-id").val(data.result.serial_id);
       $("#ej-gitlab-webhook-url").val(self_url + "/gitlab-webhook/S" + data.result.hook_id);
       $("#ej-gitlab-gitlab-token").val(data.result.gitlab_token);
+      if (data.result.vcs_type) {
+        $("#ej-gitlab-vcs-type").val(data.result.vcs_type);
+      }
       if (data.result.lang_name) {
         $("#ej-gitlab-lang-name").val(data.result.lang_name);
       }
@@ -850,6 +857,7 @@ Max Memory Used: <span id="ej-submit-max-rss"></span></p>
         Ok: function() {
           $(this).dialog("close");
           serial_id = $("#ej-gitlab-serial-id").val();
+          vcs_type = $("#ej-gitlab-vcs-type").val();
           lang_name = $("#ej-gitlab-lang-name").val();
           vcs_url = $("#ej-gitlab-vcs-url").val();
           vcs_subdir = $("#ej-gitlab-vcs-subdir").val();
@@ -865,6 +873,7 @@ Max Memory Used: <span id="ej-submit-max-rss"></span></p>
               vcs_subdir: vcs_subdir,
               vcs_branch_spec: vcs_branch_spec,
               ssh_private_key: ssh_private_key,
+              vcs_type: vcs_type,
               SID: SID,
               action: 'save-userprob'
             },
