@@ -174,6 +174,7 @@ COMMON_CFILES=\
  lib/filter_eval.c\
  lib/filter_tree.c\
  lib/fs_mirror.c\
+ lib/hmac_sha256.c\
  lib/html.c\
  lib/html_checkbox.c\
  lib/html_date_select.c\
