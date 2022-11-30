@@ -34,5 +34,12 @@ hmac_sha256(
         size_t data_len,
         const uint8_t *key,
         size_t key_len);
+void
+hmac_sha256_str(
+        uint8_t out[HMAC_SHA256_DIGEST_SIZE * 2 + 1],
+        const uint8_t *data,
+        size_t data_len,
+        const uint8_t *key,
+        size_t key_len);
 
 #endif

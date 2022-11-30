@@ -94,3 +94,28 @@ hmac_sha256 (uint8_t out[HMAC_SHA256_DIGEST_SIZE],
     sha256_update (&ss, out, SHA256_DIGEST_SIZE);
     sha256_final (&ss, out);
 }
+
+void
+hmac_sha256_str(
+        uint8_t out[HMAC_SHA256_DIGEST_SIZE * 2 + 1],
+        const uint8_t *data,
+        size_t data_len,
+        const uint8_t *key,
+        size_t key_len)
+{
+    uint8_t hmac_bin[HMAC_SHA256_DIGEST_SIZE];
+
+    hmac_sha256(hmac_bin, data, data_len, key, key_len);
+    char *p = out;
+    for (int i = 0; i < HMAC_SHA256_DIGEST_SIZE; ++i) {
+        uint8_t v = hmac_bin[i] >> 4;
+        if (v <= 9) v += '0';
+        else v += ('a' - 10);
+        *p++ = v;
+        v = hmac_bin[i] & 0xf;
+        if (v <= 9) v += '0';
+        else v += ('a' - 10);
+        *p++ = v;
+    }
+    *p = 0;
+}
