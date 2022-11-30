@@ -1602,9 +1602,9 @@ prepare_unparse_prob(
       || (!prob->abstract && prob->enable_user_input >= 0)) {
     unparse_bool(f, "enable_user_input", prob->enable_user_input);
   }
-  if ((prob->abstract > 0 && prob->enable_gitlab > 0)
-      || (!prob->abstract && prob->enable_gitlab >= 0)) {
-    unparse_bool(f, "enable_gitlab", prob->enable_gitlab);
+  if ((prob->abstract > 0 && prob->enable_vcs > 0)
+      || (!prob->abstract && prob->enable_vcs >= 0)) {
+    unparse_bool(f, "enable_vcs", prob->enable_vcs);
   }
   if (prob->stand_ignore_score >= 0
       && ((prob->abstract && prob->stand_ignore_score) || !prob->abstract))
@@ -2030,8 +2030,8 @@ prepare_unparse_actual_prob(
     unparse_bool(f, "enable_text_form", prob->enable_text_form);
   if (prob->enable_user_input > 0)
     unparse_bool(f, "enable_user_input", prob->enable_user_input);
-  if (prob->enable_gitlab > 0)
-    unparse_bool(f, "enable_gitlab", prob->enable_gitlab);
+  if (prob->enable_vcs > 0)
+    unparse_bool(f, "enable_vcs", prob->enable_vcs);
   if (prob->stand_ignore_score > 0)
     unparse_bool(f, "stand_ignore_score", prob->stand_ignore_score);
   if (prob->stand_last_column > 0)

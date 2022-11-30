@@ -462,7 +462,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(stand_ignore_score, "L"),
   PROBLEM_PARAM(stand_last_column, "L"),
   PROBLEM_PARAM(enable_user_input, "L"),
-  PROBLEM_PARAM(enable_gitlab, "L"),
+  PROBLEM_PARAM(enable_vcs, "L"),
   PROBLEM_PARAM(score_multiplier, "d"),
   PROBLEM_PARAM(prev_runs_to_show, "d"),
   PROBLEM_PARAM(max_user_run_count, "d"),
@@ -1354,7 +1354,7 @@ prepare_problem_init_func(struct generic_section_config *gp)
   p->stand_ignore_score = -1;
   p->stand_last_column = -1;
   p->enable_user_input = -1;
-  p->enable_gitlab = -1;
+  p->enable_vcs = -1;
   p->priority_adjustment = -1000;
   p->max_vm_size = -1LL;
   p->max_stack_size = -1LL;
@@ -3732,7 +3732,7 @@ set_defaults(
     prepare_set_prob_value(CNTSPROB_stop_on_first_fail, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_enable_control_socket, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_enable_user_input, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_enable_gitlab, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_enable_vcs, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_hide_variant, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_autoassign_variants, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_enable_text_form, prob, aprob, g);
@@ -6123,7 +6123,7 @@ prepare_copy_problem(const struct section_problem_data *in)
   out->stop_on_first_fail = in->stop_on_first_fail;
   out->enable_control_socket = in->enable_control_socket;
   out->enable_user_input = in->enable_user_input;
-  out->enable_gitlab = in->enable_gitlab;
+  out->enable_vcs = in->enable_vcs;
   xstrdup3(&out->test_pat, in->test_pat);
   xstrdup3(&out->corr_pat, in->corr_pat);
   xstrdup3(&out->info_pat, in->info_pat);
@@ -6423,7 +6423,7 @@ prepare_set_prob_value(
   INHERIT_BOOLEAN(stop_on_first_fail);
   INHERIT_BOOLEAN(enable_control_socket);
   INHERIT_BOOLEAN(enable_user_input);
-  INHERIT_BOOLEAN(enable_gitlab);
+  INHERIT_BOOLEAN(enable_vcs);
   INHERIT_BOOLEAN(hide_variant);
   INHERIT_BOOLEAN(autoassign_variants);
   INHERIT_BOOLEAN(enable_text_form);
@@ -7025,7 +7025,7 @@ prepare_set_all_prob_values(
     CNTSPROB_stop_on_first_fail,
     CNTSPROB_enable_control_socket,
     CNTSPROB_enable_user_input,
-    CNTSPROB_enable_gitlab,
+    CNTSPROB_enable_vcs,
     CNTSPROB_hide_variant,
     CNTSPROB_test_pat,
     CNTSPROB_corr_pat,

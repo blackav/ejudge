@@ -15056,7 +15056,7 @@ unpriv_get_userprob(
     err_num = NEW_SRV_ERR_INV_PROB_ID;
     goto done;
   }
-  if (prob->enable_gitlab <= 0) {
+  if (prob->enable_vcs <= 0) {
     err_num = NEW_SRV_ERR_INV_PROB_ID;
     goto done;
   }
@@ -15119,7 +15119,7 @@ unpriv_create_userprob(
     err_num = NEW_SRV_ERR_INV_PROB_ID;
     goto done;
   }
-  if (prob->enable_gitlab <= 0) {
+  if (prob->enable_vcs <= 0) {
     err_num = NEW_SRV_ERR_INV_PROB_ID;
     goto done;
   }
@@ -15199,7 +15199,7 @@ unpriv_save_userprob(
     err_num = NEW_SRV_ERR_INV_USERPROB_ID;
     goto done;
   }
-  if (prob->enable_gitlab <= 0) {
+  if (prob->enable_vcs <= 0) {
     err_num = NEW_SRV_ERR_INV_USERPROB_ID;
     goto done;
   }
@@ -15323,7 +15323,7 @@ unpriv_remove_userprob(
     err_num = NEW_SRV_ERR_INV_USERPROB_ID;
     goto done;
   }
-  if (prob->enable_gitlab <= 0) {
+  if (prob->enable_vcs <= 0) {
     err_num = NEW_SRV_ERR_INV_USERPROB_ID;
     goto done;
   }
@@ -16124,7 +16124,7 @@ unpriv_gitlab_webhook(
     goto done;
   }
   // FIXME: check limitations for submit
-  if (prob->enable_gitlab <= 0) {
+  if (prob->enable_vcs <= 0) {
     err("unpriv_gitlab_webhook: problem does not allow gitlab");
     goto done;
   }

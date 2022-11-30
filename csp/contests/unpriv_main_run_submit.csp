@@ -722,7 +722,7 @@ Max Memory Used: <span id="ej-submit-max-rss"></span></p>
 <% // ej-submit-tabs
 %>
 <%
-      if (prob->enable_gitlab > 0) {
+      if (prob->enable_vcs > 0) {
 %>
 <div id="ej-gitlab-create-dialog" title="Create integration">
 <p><s:_>No integration is defined. Create a new one?</s:_></p>
