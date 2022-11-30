@@ -73,6 +73,7 @@
 #include "ejudge/submit_plugin.h"
 #include "ejudge/userprob_plugin.h"
 #include "ejudge/job_packet.h"
+#include "ejudge/sha256utils.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -16028,12 +16029,24 @@ unpriv_gitlab_webhook(
       err("unpriv_gitlab_webhook: empty gitlab token in DB");
       goto done;
     }
-    /*
-> X-Hub-Signature-256: sha256=d57c68ca6f92289e6987922ff26938930f6e66a2d161ef06abdf1859230aa23c
-    */
-    /*
-This header is sent if the webhook is configured with a secret. This is the HMAC hex digest of the request body, and is generated using the SHA-256 hash function and the secret as the HMAC key.
-     */
+    s = hr_getenv(phr, "HTTP_X_HUB_SIGNATURE_256");
+    if (!s) {
+      err("unpriv_gitlab_webhook: missing github 'X-Hub-Signature-256'");
+      goto done;
+    }
+    s = strstr(s, "sha256=");
+    if (!s) {
+      err("unpriv_gitlab_webhook: invalid github 'X-Hub-Signature-256'");
+      goto done;
+    }
+    s += 7;
+    uint8_t hmac_str[HMAC_SHA256_DIGEST_SIZE * 2 + 1];
+    hmac_sha256_str(hmac_str, gitlab_json, strlen(gitlab_json),
+                ue->gitlab_token, strlen(ue->gitlab_token));
+    if (strcmp(hmac_str, s) != 0) {
+      err("unpriv_gitlab_webhook: HMAC mismatch: received: %s, computed: %s", s, hmac_str);
+      goto done;
+    }
   } else {
     gitlab_token = hr_getenv(phr, "HTTP_X_GITLAB_TOKEN");
     if (!gitlab_token || !*gitlab_token) {
