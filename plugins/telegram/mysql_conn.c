@@ -289,8 +289,8 @@ pbs_fetch_func(
     }
 
     tp = telegram_pbs_create(bot_id);
-    gc->vt->pbs_save(gc, tp);
     mi->unlock(md);
+    gc->vt->pbs_save(gc, tp);
 
     return tp;
 
@@ -604,8 +604,8 @@ chat_fetch_func(
 
     tc = telegram_chat_create();
     tc->_id = _id;
-    gc->vt->chat_save(gc, tc);
     mi->unlock(md);
+    gc->vt->chat_save(gc, tc);
     return tc;
 
 fail:
@@ -720,8 +720,8 @@ user_fetch_func(
 
     tu = telegram_user_create();
     tu->_id = _id;
-    gc->vt->user_save(gc, tu);
     mi->unlock(md);
+    gc->vt->user_save(gc, tu);
     return tu;
 
 fail:
@@ -838,8 +838,8 @@ chat_state_fetch_func(
 
     tcs = telegram_chat_state_create();
     tcs->_id = _id;
-    gc->vt->chat_state_save(gc, tcs);
     mi->unlock(md);
+    gc->vt->chat_state_save(gc, tcs);
     return tcs;
 
 fail:
@@ -964,8 +964,8 @@ subscription_fetch_func(
     }
 
     ts = telegram_subscription_create(bot_id, contest_id, user_id);
-    gc->vt->subscription_save(gc, ts);
     mi->unlock(md);
+    gc->vt->subscription_save(gc, ts);
     return ts;
 
 fail:
