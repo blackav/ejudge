@@ -6009,6 +6009,8 @@ priv_download_source(
     }
   }
 
+  phr->json_reply = 0;
+
   fprintf(fout, "Content-type: %s\n", content_type);
   if (!no_disp) {
     fprintf(fout, "Content-Disposition: attachment; filename=\"%06d%s\"\n",
