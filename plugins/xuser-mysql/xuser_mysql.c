@@ -567,7 +567,7 @@ get_clar_status_func(
     struct team_extra *te = find_user(xmcs, user_id, &index);
     if (!te) {
         te = fetch_user(xmcs, user_id);
-        if (te) {
+        if (!te) {
             insert_user(xmcs, index, te);
         }
     }
