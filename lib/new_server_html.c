@@ -3992,7 +3992,7 @@ priv_submit_run_comment(
   }
   if (!text) text = "";
   text_len = strlen(text);
-  if (text_len > 128 * 1024) {
+  if (text_len > 56 * 1024) {
     ns_error(log_f, NEW_SRV_ERR_MESSAGE_TOO_LONG, text_len);
     goto cleanup;
   }
