@@ -561,16 +561,7 @@ get_clar_status_func(
         int clar_id,
         const ej_uuid_t *p_clar_uuid)
 {
-    struct xuser_mysql_cnts_state *xmcs = (struct xuser_mysql_cnts_state *) data;
-    if (!p_clar_uuid) return 0;
-    int index = 0;
-    struct team_extra *te = find_user(xmcs, user_id, &index);
-    if (!te) {
-        te = fetch_user(xmcs, user_id);
-        if (!te) {
-            insert_user(xmcs, index, te);
-        }
-    }
+    const struct team_extra *te = get_entry_func(data, user_id);
     if (!te) return 0;
     return team_extra_find_clar_uuid(te, p_clar_uuid);
 }
