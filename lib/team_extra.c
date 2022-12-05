@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2004-2019 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -85,7 +85,7 @@ team_extra_extend_clar_map(struct team_extra *te, int clar_id)
 
 int
 team_extra_find_clar_uuid(
-        struct team_extra *te,
+        const struct team_extra *te,
         const ej_uuid_t *puuid)
 {
   int mid, low = 0, high = te->clar_uuids_size;

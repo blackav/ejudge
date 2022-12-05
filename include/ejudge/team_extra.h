@@ -73,7 +73,7 @@ void team_extra_extend_clar_map(struct team_extra *te, int clar_id);
 
 int
 team_extra_find_clar_uuid(
-        struct team_extra *te,
+        const struct team_extra *te,
         const ej_uuid_t *puuid);
 /* returns: -1 error, 0 - already exists, 1 - added */
 int
