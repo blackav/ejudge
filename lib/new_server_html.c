@@ -16351,7 +16351,7 @@ unprivileged_entry_point(
                                       &cookie_locale_id, 0, &phr->role, 0, 0, 0,
                                       &phr->passwd_method,
                                       NULL /* p_is_ws */,
-                                      NULL /* p_is_job */,
+                                      &phr->is_job,
                                       NULL /* p_expire */,
                                       &phr->login, &phr->name)) < 0) {
       if (phr->locale_id < 0 && cookie_locale_id >= 0) phr->locale_id = cookie_locale_id;

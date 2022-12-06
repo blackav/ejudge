@@ -2,7 +2,7 @@
 #ifndef __HTTP_REQUEST_H__
 #define __HTTP_REQUEST_H__
 
-/* Copyright (C) 2014-2021 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2014-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -69,6 +69,7 @@ struct http_request_info
   int request_id; // request serial number from the client (for websockets)
   char token[32];
   int token_mode;
+  int is_job;
 
   int priv_level;
   int user_id;
@@ -318,9 +319,3 @@ hr_cgi_param_i64_opt(
         long long default_value);
 
 #endif /* __HTTP_REQUEST_H__ */
-
-/*
- * Local variables:
- *  c-basic-offset: 4
- * End:
- */
