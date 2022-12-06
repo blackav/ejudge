@@ -591,6 +591,7 @@ process_submit(
                             NULL /* judge_uuid */,
                             0 /* store_flags */,
                             0 /* rejudge_flag */,
+                            0 /* vcs_mode */,
                             NULL /* user */);
   if (r < 0) {
     // FIXME: handle error

@@ -512,6 +512,7 @@ serve_compile_request(
         const ej_uuid_t *p_judge_uuid,
         int store_flags,
         int rejudge_flag,
+        int vcs_mode,
         const struct userlist_user *user)
 #if defined __GNUC__
   __attribute__((warn_unused_result))

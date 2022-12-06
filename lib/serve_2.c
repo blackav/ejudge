@@ -1359,6 +1359,7 @@ serve_compile_request(
         const ej_uuid_t *p_judge_uuid,
         int store_flags,
         int rejudge_flag,
+        int vcs_mode,
         const struct userlist_user *user)
 {
   struct compile_run_extra rx;
@@ -1578,6 +1579,8 @@ serve_compile_request(
       cp.exam_cypher = user->cnts0->exam_cypher;
     }
   }
+
+  cp.vcs_mode = vcs_mode;
 
   memset(&rx, 0, sizeof(rx));
   rx.accepting_mode = accepting_mode;
@@ -4700,6 +4703,7 @@ serve_rejudge_run(
                                 NULL /* judge_uuid */,
                                 re.store_flags,
                                 1 /* rejudge_flag */,
+                                0 /* vcs_mode */,
                                 user);
       if (r < 0) {
         serve_report_check_failed(config, cnts, state, run_id, serve_err_str(r));
@@ -4751,7 +4755,9 @@ serve_rejudge_run(
                             &re.run_uuid,
                             NULL /* judge_uuid */,
                             re.store_flags,
-                            1 /* rejudge_flag */, user);
+                            1 /* rejudge_flag */,
+                            0 /* vcs_mode */,
+                            user);
   if (r < 0) {
     serve_report_check_failed(config, cnts, state, run_id, serve_err_str(r));
     err("rejudge_run: serve_compile_request failed: %s", serve_err_str(r));
