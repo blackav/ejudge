@@ -784,6 +784,15 @@ Max Memory Used: <span id="ej-submit-max-rss"></span></p>
   {
     console.log(data);
     if (data.result) {
+      var target_url = self_url;
+      target_url = target_url.replace("/cgi-bin/master", "/ej/master");
+      target_url = target_url.replace("/cgi-bin/new-master", "/ej/master");
+      target_url = target_url.replace("/cgi-bin/judge", "/ej/judge");
+      target_url = target_url.replace("/cgi-bin/new-judge", "/ej/judge");
+      target_url = target_url.replace("/cgi-bin/client", "/ej/client");
+      target_url = target_url.replace("/cgi-bin/new-client", "/ej/client");
+      target_url = target_url.replace("/cgi-bin/team", "/ej/client");
+      target_url = target_url.replace("/cgi-bin/new-team", "/ej/client");
       $("#ej-gitlab-serial-id").val(data.result.serial_id);
       $("#ej-gitlab-webhook-url").val(self_url + "/gitlab-webhook/S" + data.result.hook_id);
       $("#ej-gitlab-gitlab-token").val(data.result.gitlab_token);
