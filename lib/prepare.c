@@ -324,6 +324,7 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(disable_banner_page, "d"),
   GLOBAL_PARAM(printout_uses_login, "d"),
   GLOBAL_PARAM(team_page_quota, "d"),
+  GLOBAL_PARAM(print_just_copy, "d"),
 
   GLOBAL_PARAM(priority_adjustment, "d"),
   GLOBAL_PARAM(user_priority_adjustments, "x"),
@@ -865,6 +866,7 @@ global_init_func(struct generic_section_config *gp)
   p->disable_failed_test_view = -1;
   p->enable_printing = -1;
   p->disable_banner_page = -1;
+  p->print_just_copy = -1;
   p->printout_uses_login = -1;
   p->prune_empty_users = -1;
   p->enable_full_archive = -1;
@@ -5752,6 +5754,7 @@ prepare_new_global_section(int contest_id, const unsigned char *root_dir,
   global->enable_full_archive = 0;
   global->enable_printing = DFLT_G_ENABLE_PRINTING;
   global->disable_banner_page = DFLT_G_DISABLE_BANNER_PAGE;
+  global->print_just_copy = 0;
   global->printout_uses_login = 0;
   global->team_page_quota = DFLT_G_TEAM_PAGE_QUOTA;
   global->enable_l10n = 1;

@@ -740,6 +740,8 @@ struct section_global_data
   ejintbool_t printout_uses_login;
   /** printing quota (in pages) */
   int team_page_quota;
+  /** simplified printing by copying to the printing spool directory */
+  ejintbool_t print_just_copy;
 
   /* common compilation virtual address space size limit */
   ej_size64_t compile_max_vm_size;

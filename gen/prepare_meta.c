@@ -281,6 +281,7 @@ static struct meta_info_item meta_info_section_global_data_data[] =
   [CNTSGLOB_disable_banner_page] = { CNTSGLOB_disable_banner_page, 'B', XSIZE(struct section_global_data, disable_banner_page), "disable_banner_page", XOFFSET(struct section_global_data, disable_banner_page) },
   [CNTSGLOB_printout_uses_login] = { CNTSGLOB_printout_uses_login, 'B', XSIZE(struct section_global_data, printout_uses_login), "printout_uses_login", XOFFSET(struct section_global_data, printout_uses_login) },
   [CNTSGLOB_team_page_quota] = { CNTSGLOB_team_page_quota, 'i', XSIZE(struct section_global_data, team_page_quota), "team_page_quota", XOFFSET(struct section_global_data, team_page_quota) },
+  [CNTSGLOB_print_just_copy] = { CNTSGLOB_print_just_copy, 'B', XSIZE(struct section_global_data, print_just_copy), "print_just_copy", XOFFSET(struct section_global_data, print_just_copy) },
   [CNTSGLOB_compile_max_vm_size] = { CNTSGLOB_compile_max_vm_size, 'E', XSIZE(struct section_global_data, compile_max_vm_size), "compile_max_vm_size", XOFFSET(struct section_global_data, compile_max_vm_size) },
   [CNTSGLOB_compile_max_stack_size] = { CNTSGLOB_compile_max_stack_size, 'E', XSIZE(struct section_global_data, compile_max_stack_size), "compile_max_stack_size", XOFFSET(struct section_global_data, compile_max_stack_size) },
   [CNTSGLOB_compile_max_file_size] = { CNTSGLOB_compile_max_file_size, 'E', XSIZE(struct section_global_data, compile_max_file_size), "compile_max_file_size", XOFFSET(struct section_global_data, compile_max_file_size) },

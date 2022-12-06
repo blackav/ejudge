@@ -276,6 +276,7 @@ enum
   CNTSGLOB_disable_banner_page,
   CNTSGLOB_printout_uses_login,
   CNTSGLOB_team_page_quota,
+  CNTSGLOB_print_just_copy,
   CNTSGLOB_compile_max_vm_size,
   CNTSGLOB_compile_max_stack_size,
   CNTSGLOB_compile_max_file_size,

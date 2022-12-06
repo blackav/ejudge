@@ -248,6 +248,8 @@ prepare_unparse_global(
     unparse_bool(f, "disable_banner_page", global->disable_banner_page);
   if (global->printout_uses_login > 0)
     unparse_bool(f, "printout_uses_login", global->printout_uses_login);
+  if (global->print_just_copy > 0)
+    unparse_bool(f, "print_just_copy", global->print_just_copy);
   if (global->prune_empty_users != DFLT_G_PRUNE_EMPTY_USERS)
     unparse_bool(f, "prune_empty_users", global->prune_empty_users);
   if (global->enable_full_archive != DFLT_G_ENABLE_FULL_ARCHIVE)

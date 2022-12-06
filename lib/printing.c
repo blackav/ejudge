@@ -140,9 +140,6 @@ do_print_run(const serve_state_t state, int run_id,
   const struct userlist_user_info *ui = 0;
   unsigned char program_path[PATH_MAX];
 
-  // FIXME: make it global var
-  int print_by_copy = 1;
-
   program_path[0] = 0;
 
   if (run_id < 0 || run_id >= run_get_total(state->runlog_state)) {
@@ -180,7 +177,7 @@ do_print_run(const serve_state_t state, int run_id,
       printer_name = ui->printer_name;
   }
 
-  if (global->disable_banner_page <= 0 && print_by_copy <= 0) {
+  if (global->disable_banner_page <= 0 && global->print_just_copy <= 0) {
     banner_path = (unsigned char*) alloca(strlen(global->print_work_dir) + 64);
     sprintf(banner_path, "%s/%06d.txt", global->print_work_dir, run_id);
     if (print_banner_page(state, banner_path, run_id, user_id,
@@ -189,7 +186,7 @@ do_print_run(const serve_state_t state, int run_id,
     }
   }
 
-  if (print_by_copy > 0) {
+  if (global->print_just_copy > 0) {
     sfx = ".txt";
     if (global->printout_uses_login > 0) {
       user_name = teamdb_get_login(state->teamdb_state, info.user_id);
@@ -237,7 +234,7 @@ do_print_run(const serve_state_t state, int run_id,
   if (arch_flags < 0) {
     goto cleanup;
   }
-  if (print_by_copy > 0) {
+  if (global->print_just_copy > 0) {
     char *src_s = NULL;
     size_t src_z = 0;
     if (generic_read_file(&src_s, 0, &src_z, arch_flags, 0, run_arch, "") < 0) {
