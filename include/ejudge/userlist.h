@@ -3,7 +3,7 @@
 #ifndef __USERLIST_H__
 #define __USERLIST_H__
 
-/* Copyright (C) 2002-2020 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -210,6 +210,7 @@ enum
     USERLIST_A_CLIENT_KEY,
     USERLIST_A_TOTAL,
     USERLIST_A_IS_WS,
+    USERLIST_A_IS_JOB,
 
     USERLIST_LAST_ATTN,
   };
@@ -422,6 +423,7 @@ struct userlist_cookie
   int recovery;
   int team_login;               /* used in case when team_passwd != reg_passwd*/
   int is_ws;                    /* for WebSocket use */
+  int is_job;
 };
 
 struct userlist_contest

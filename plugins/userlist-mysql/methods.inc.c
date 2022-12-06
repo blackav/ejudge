@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2008-2020 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -511,6 +511,7 @@ new_cookie_2_func(
         int recovery,
         int team_login,
         int is_ws,
+        int is_job,
         const struct userlist_cookie **);
 static int
 get_client_key_func(

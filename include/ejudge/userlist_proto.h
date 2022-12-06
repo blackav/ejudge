@@ -3,7 +3,7 @@
 #ifndef __USERLIST_PROTO_H__
 #define __USERLIST_PROTO_H__
 
-/* Copyright (C) 2002-2021 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -244,6 +244,7 @@ struct userlist_pk_do_login
   int           role;
   int           pwd_special;
   int           is_ws;
+  int           is_job;
   unsigned char login_length;
   unsigned char password_length;
   unsigned char data[2];
@@ -278,6 +279,7 @@ struct userlist_pk_cookie_login
   int recovery;
   int team_login;               /* used in case when team_passwd != reg_passwd*/
   int is_ws;                    /* for WebSocket use */
+  int is_job;
 };
 
 struct userlist_pk_do_logout
@@ -521,6 +523,7 @@ struct userlist_pk_login_ok
   int                reg_status;
   int                reg_flags;
   int                is_ws;
+  int                is_job;
   int                passwd_method;
   ej_time64_t        expire;        // cookie expiration
   unsigned char      login_len;

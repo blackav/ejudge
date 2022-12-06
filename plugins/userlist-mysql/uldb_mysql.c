@@ -1468,6 +1468,7 @@ new_cookie_2_func(
         int recovery,
         int team_login,
         int is_ws,
+        int is_job,
         const struct userlist_cookie **p_cookie)
 {
   struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;

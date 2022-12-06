@@ -9488,6 +9488,7 @@ privileged_entry_point(
                                       &phr->locale_id, 0, &phr->role, 0, 0, 0,
                                       NULL /* p_passwd_method */,
                                       NULL /* p_is_ws */,
+                                      NULL /* p_is_job */,
                                       NULL /* p_expire */,
                                       &phr->login, &phr->name)) < 0) {
       switch (-r) {
@@ -9877,6 +9878,7 @@ unprivileged_page_login(FILE *fout, struct http_request_info *phr)
                                phr->locale_id,
                                0, /* pwd_special */
                                0, /* is_ws */
+                               0, /* is_job */
                                login, password,
                                &phr->user_id,
                                &phr->session_id, &phr->client_key,
@@ -15592,6 +15594,7 @@ do_unpriv_login_json(FILE *fout, struct http_request_info *phr, struct UnprivLog
                               phr->locale_id,
                               0, /* pwd_special */
                               is_ws,
+                              0, /* is_job */
                               login, password,
                               &phr->user_id,
                               &phr->session_id, &phr->client_key,
@@ -15827,6 +15830,7 @@ ns_ws_check_session(
     &s_reg_flags,
     &s_passwd_method,
     &s_is_ws,
+    NULL, /* p_is_job */
     &s_expire,
     &s_login,
     &s_name);
@@ -16346,6 +16350,7 @@ unprivileged_entry_point(
                                       &cookie_locale_id, 0, &phr->role, 0, 0, 0,
                                       &phr->passwd_method,
                                       NULL /* p_is_ws */,
+                                      NULL /* p_is_job */,
                                       NULL /* p_expire */,
                                       &phr->login, &phr->name)) < 0) {
       if (phr->locale_id < 0 && cookie_locale_id >= 0) phr->locale_id = cookie_locale_id;
@@ -17177,6 +17182,7 @@ batch_login(
                                   locale_id,
                                   0x73629ae8, /* pwd_special */
                                   0, /* is_ws */
+                                  0, /* is_job */
                                   login_str, "xxx",
                                   &phr->user_id,
                                   &phr->session_id, &phr->client_key,
@@ -17223,6 +17229,7 @@ batch_login(
                               locale_id,
                               0x73629ae8, /* pwd_special */
                               0, /* is_ws */
+                              0, /* is_job */
                               login_str, "xxx",
                               &phr->user_id,
                               &phr->session_id, &phr->client_key,

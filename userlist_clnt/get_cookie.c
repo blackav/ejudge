@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -34,6 +34,7 @@ userlist_clnt_get_cookie(
         int *p_reg_flags,
         int *p_passwd_method,
         int *p_is_ws,
+        int *p_is_job,
         time_t *p_expire,
         unsigned char **p_login,
         unsigned char **p_name)

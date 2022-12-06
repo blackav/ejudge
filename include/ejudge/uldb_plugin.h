@@ -3,7 +3,7 @@
 #ifndef __ULDB_PLUGIN_H__
 #define __ULDB_PLUGIN_H__
 
-/* Copyright (C) 2006-2020 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -287,6 +287,7 @@ struct uldb_plugin_iface
         int recovery,
         int team_login,
         int is_ws,
+        int is_job,
         const struct userlist_cookie **);
   // find a client key, returns any cookie which matches the given client_key
   int (*get_client_key)(void *,

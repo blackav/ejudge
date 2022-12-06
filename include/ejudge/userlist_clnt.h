@@ -3,7 +3,7 @@
 #ifndef __USERLIST_CLNT_H__
 #define __USERLIST_CLNT_H__
 
-/* Copyright (C) 2002-2020 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -78,6 +78,7 @@ userlist_clnt_login(
         int locale_id,
         int pwd_special,
         int is_ws,
+        int is_job,
         unsigned char const *login,
         unsigned char const *passwd,
         int *p_user_id,
@@ -120,6 +121,7 @@ userlist_clnt_get_cookie(
         int *p_reg_flags,
         int *p_passwd_method,
         int *p_is_ws,
+        int *p_is_job,
         time_t *p_expire,
         unsigned char **p_login,
         unsigned char **p_name);

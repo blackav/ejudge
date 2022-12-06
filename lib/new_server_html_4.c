@@ -134,6 +134,7 @@ cmd_login(
                             phr->locale_id,
                             0, /* pwd_special */
                             0, /* is_ws */
+                            0, /* is_job */
                             login, password,
                             &phr->user_id,
                             &phr->session_id,
@@ -2118,6 +2119,7 @@ new_server_cmd_handler(FILE *fout, struct http_request_info *phr)
                                     &phr->locale_id, 0, &phr->role, 0, 0, 0,
                                     NULL /* p_passwd_method */,
                                     NULL /* p_is_ws */,
+                                    NULL /* p_is_job */,
                                     NULL /* p_expire */,
                                     &phr->login, &phr->name)) < 0) {
     switch (-r) {

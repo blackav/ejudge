@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2002-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -29,6 +29,7 @@ userlist_clnt_login(
         int locale_id,
         int pwd_special,
         int is_ws,
+        int is_job,
         unsigned char const *login,
         unsigned char const *passwd,
         int *p_user_id,
