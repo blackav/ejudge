@@ -214,6 +214,7 @@ compile_request_packet_write(
   out_data->max_file_size = cvt_host_to_bin_64(in_data->max_file_size);
   out_data->max_rss_size = cvt_host_to_bin_64(in_data->max_rss_size);
   out_data->use_container = cvt_host_to_bin_32(in_data->use_container);
+  out_data->vcs_mode = cvt_host_to_bin_32(in_data->vcs_mode);
   out_data->use_uuid = cvt_host_to_bin_32(in_data->use_uuid);
   out_data->uuid = in_data->uuid;
   out_data->judge_uuid = in_data->judge_uuid;

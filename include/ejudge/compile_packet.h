@@ -36,6 +36,7 @@ struct compile_request_packet
   int lang_header;                 // 1, if header/footer lang-specific
   int user_id;
   int use_container;
+  int vcs_mode;
   int64_t submit_id;
   ej_uuid_t uuid;
   ej_uuid_t judge_uuid;
