@@ -794,7 +794,7 @@ Max Memory Used: <span id="ej-submit-max-rss"></span></p>
       target_url = target_url.replace("/cgi-bin/team", "/ej/client");
       target_url = target_url.replace("/cgi-bin/new-team", "/ej/client");
       $("#ej-gitlab-serial-id").val(data.result.serial_id);
-      $("#ej-gitlab-webhook-url").val(self_url + "/gitlab-webhook/S" + data.result.hook_id);
+      $("#ej-gitlab-webhook-url").val(target_url + "/gitlab-webhook/S" + data.result.hook_id);
       $("#ej-gitlab-gitlab-token").val(data.result.gitlab_token);
       if (data.result.vcs_type) {
         $("#ej-gitlab-vcs-type").val(data.result.vcs_type);
