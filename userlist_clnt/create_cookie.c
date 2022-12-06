@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2018-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -43,6 +43,7 @@ userlist_clnt_create_cookie(
     out->recovery = in_c->recovery;
     out->team_login = in_c->team_login;
     out->is_ws = in_c->is_ws;
+    out->is_job = in_c->is_job;
 
     int r;
     if ((r = userlist_clnt_send_packet(clnt, out_size, out)) < 0) {
@@ -95,6 +96,7 @@ userlist_clnt_create_cookie(
     out_c->team_login = login_in->team_login;
     out_c->expire = login_in->expire;
     out_c->is_ws = login_in->is_ws;
+    out_c->is_job = login_in->is_job;
 
     r = login_in->reply_id;
     free(login_in);

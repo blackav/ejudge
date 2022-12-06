@@ -714,6 +714,11 @@ check_func(void *data)
         return -1;
       break;
 
+    case 15:
+      if (state->mi->simple_fquery(state->md, "ALTER TABLE %scookies ADD is_job TINYINT NOT NULL DEFAULT 0 AFTER is_ws ;", state->md->table_prefix) < 0)
+      return -1;
+      break;
+
     default:
       version = -1;
       break;
@@ -1507,6 +1512,7 @@ new_cookie_2_func(
   newc.recovery = recovery;
   newc.team_login = team_login;
   newc.is_ws = is_ws;
+  newc.is_job = is_job;
 
   cmd_f = open_memstream(&cmd_t, &cmd_z);
   fprintf(cmd_f, "INSERT INTO %scookies VALUES ( ", state->md->table_prefix);

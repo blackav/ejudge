@@ -77,6 +77,7 @@ userlist_clnt_login(
   out->locale_id = locale_id;
   out->pwd_special = pwd_special;
   out->is_ws = is_ws;
+  out->is_job = is_job;
   out->login_length = login_len;
   out->password_length = passwd_len;
   strcpy(login_ptr, login);

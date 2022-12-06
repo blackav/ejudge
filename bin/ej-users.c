@@ -8285,6 +8285,7 @@ cmd_get_cookie(
   int need_touch_login_time = 0;
   int passwd_method = 0;
   int cookie_is_ws = 0;
+  int cookie_is_job = 0;
   time_t cookie_expire = 0;
 
   if (pkt_len != sizeof(*data)) {
@@ -8328,6 +8329,7 @@ cmd_get_cookie(
   cookie_role = cookie->role;
   cookie_team_login = cookie->team_login;
   cookie_is_ws = cookie->is_ws;
+  cookie_is_job = cookie->is_job;
   cookie_expire = cookie->expire;
 
   if (default_get_user_info_3(cookie->user_id, new_contest_id, &u, &ui, &c) < 0
@@ -8411,6 +8413,7 @@ cmd_get_cookie(
   out->role = cookie_role;
   out->team_login = cookie_team_login;
   out->is_ws = cookie_is_ws;
+  out->is_job = cookie_is_job;
   out->reg_status = -1;
   out->passwd_method = passwd_method;
   out->expire = cookie_expire;
@@ -10732,7 +10735,7 @@ cmd_create_cookie(
     0 /* recovery */,   // ignore data->recovery
     data->team_login,
     0 /* is_ws */,
-    0 /* is_job */,
+    data->is_job,
     &cookie);
   if (r < 0) {
     err("%s -> cookie creation failed", logbuf);
@@ -10799,7 +10802,7 @@ cmd_priv_create_cookie(
     0 /* recovery */,   // ignore data->recovery
     data->team_login,
     0 /* is_ws */,
-    0 /* is_job */,
+    data->is_job,
     &cookie);
   if (r < 0) {
     err("%s -> cookie creation failed", logbuf);

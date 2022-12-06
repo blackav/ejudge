@@ -36,6 +36,7 @@ CREATE TABLE %scookies
        ssl_flag TINYINT NOT NULL DEFAULT 0,
        expire DATETIME NOT NULL,
        is_ws TINYINT NOT NULL DEFAULT 0,
+       is_job TINYINT NOT NULL DEFAULT 0,
        FOREIGN KEY (user_id) REFERENCES logins (user_id)
        ) ENGINE=InnoDB;
 
@@ -194,4 +195,4 @@ ALTER TABLE %smembers  ADD INDEX members_user_id_idx (user_id),
 ALTER TABLE %sgroupmembers ADD INDEX groupmembers_group_id_idx (group_id),
                            ADD INDEX groupmembers_user_id_idx (user_id);
 
-INSERT INTO %sconfig VALUES ('version', '15');
+INSERT INTO %sconfig VALUES ('version', '16');

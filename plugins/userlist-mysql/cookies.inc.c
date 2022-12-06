@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2008-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -158,6 +158,7 @@ allocate_cookie_on_pool(
     c->recovery = in_c->recovery;
     c->team_login = in_c->team_login;
     c->is_ws = in_c->is_ws;
+    c->is_job = in_c->is_job;
 
     MOVE_TO_FRONT(cntr, cache->first, cache->last, prev, next);
     return c;
@@ -183,6 +184,7 @@ allocate_cookie_on_pool(
   c->recovery = in_c->recovery;
   c->team_login = in_c->team_login;
   c->is_ws = in_c->is_ws;
+  c->is_job = in_c->is_job;
 
   cntr->cookie = c;
   cache->count++;

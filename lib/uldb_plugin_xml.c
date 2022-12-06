@@ -1046,6 +1046,7 @@ new_cookie_2_func(
   c->recovery = recovery;
   c->team_login = team_login;
   c->is_ws = is_ws;
+  c->is_job = is_job;
   xml_link_node_last(cs, &c->b);
   userlist_cookie_hash_add(ul, c);
 

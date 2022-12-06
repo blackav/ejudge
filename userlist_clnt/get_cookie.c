@@ -97,6 +97,7 @@ userlist_clnt_get_cookie(
   if (p_reg_flags) *p_reg_flags = in->reg_flags;
   if (p_passwd_method) *p_passwd_method = in->passwd_method;
   if (p_is_ws) *p_is_ws = in->is_ws;
+  if (p_is_job) *p_is_job = in->is_job;
   if (p_expire) *p_expire = in->expire;
   if (p_login) *p_login = xstrdup(login_ptr);
   if (p_name) *p_name = xstrdup(name_ptr);
@@ -105,6 +106,4 @@ userlist_clnt_get_cookie(
  cleanup:
   xfree(in);
   return r;
-
-
 }

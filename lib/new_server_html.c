@@ -16147,6 +16147,7 @@ unpriv_gitlab_webhook(
   in_c.role = USER_ROLE_CONTESTANT;
   in_c.recovery = 0;
   in_c.team_login = 1;
+  in_c.is_job = 1;
 
   random_init();
   in_c.cookie = random_u64();

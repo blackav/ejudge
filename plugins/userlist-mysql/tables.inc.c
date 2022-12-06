@@ -15,7 +15,7 @@
  */
 
 // the number of columns in `cookies' table
-enum { COOKIE_WIDTH = 13 };
+enum { COOKIE_WIDTH = 14 };
 
 #define COOKIE_OFFSET(f) XOFFSET(struct userlist_cookie, f)
 static struct common_mysql_parse_spec cookie_spec[COOKIE_WIDTH] =
@@ -46,6 +46,8 @@ static struct common_mysql_parse_spec cookie_spec[COOKIE_WIDTH] =
   { 0, 't', "expire", COOKIE_OFFSET(expire), 0 },
   //[12]      is_ws TINYINT NOT NULL DEFAULT 0,
   { 0, 'b', "is_ws", COOKIE_OFFSET(is_ws), 0 },
+  //[13]      is_job TINYINT NOT NULL DEFAULT 0,
+  { 0, 'b', "is_job", COOKIE_OFFSET(is_job), 0 },
 };
 
 // the number of columns in `cntsregs' table
