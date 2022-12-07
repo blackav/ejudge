@@ -1,0 +1,39 @@
+#!/usr/bin/python3
+import cgi
+import os
+import re
+import http.cookies
+
+import cgitb
+cgitb.enable()
+
+def main():
+    path_info = os.getenv('PATH_INFO', '')
+
+    m = re.match('/(\d+)/(\d+)', path_info)
+    if not m:
+        print('\nMalformed request')
+        return
+
+    contest_id = int(m.group(1))
+    run_id = int(m.group(2))
+
+    cookies = os.getenv('HTTP_COOKIE', '')
+    jar = http.cookies.SimpleCookie()
+    jar.load(cookies)
+
+    scheme = os.getenv('REQUEST_SCHEME', 'https')
+    host = os.getenv('HTTP_HOST')
+    location = f'{scheme}://{host}/cgi-bin'
+
+    for role, script in (('admin', 'master'), ('judge', 'judge'), ('contestant', 'user')):
+        key = f'SID_{role}_{contest_id}'
+        if key in jar:
+            sid = jar[key].value
+            print(f'Location: {location}/new-{script}?SID={sid}&action=36&run_id={run_id}\n')
+            return
+    print(f'Location: {location}/new-master?contest_id={contest_id}\n')
+
+
+if __name__ == '__main__':
+    main()

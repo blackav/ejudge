@@ -1209,7 +1209,7 @@ ns_refresh_page(
     fprintf(fout, "Set-Cookie: EJSID=%016llx; Path=/; SameSite=Lax\n", phr->client_key);
   }
   if (phr->session_id) {
-    fprintf(fout, "Set-Cookie: SID_%s_%d=%" PRI_COOKIE "; SameSite=Lax; Max-Age=864000; HttpOnly\n",
+    fprintf(fout, "Set-Cookie: SID_%s_%d=%" PRI_COOKIE "; Secure; SameSite=Lax; Max-Age=864000; HttpOnly\n",
             role_text(phr->role), phr->contest_id, phr->session_id);
   }
   fprintf(fout, "Location: %s\n\n", url);
