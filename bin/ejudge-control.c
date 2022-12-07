@@ -442,7 +442,9 @@ command_stop(
   if (!master_mode) {
     invoke_stopper("ej-super-run", ejudge_xml_path);
   }
-  invoke_stopper("ej-super-server", ejudge_xml_path);
+  if (!slave_mode) {
+    invoke_stopper("ej-super-server", ejudge_xml_path);
+  }
   if (!slave_mode) {
     invoke_stopper("ej-users", ejudge_xml_path);
     invoke_stopper("ej-jobs", ejudge_xml_path);
