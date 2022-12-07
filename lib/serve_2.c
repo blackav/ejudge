@@ -1581,6 +1581,9 @@ serve_compile_request(
   }
 
   cp.vcs_mode = vcs_mode;
+  if (vcs_mode > 0 && prob && prob->vcs_compile_cmd && prob->vcs_compile_cmd[0]) {
+    cp.vcs_compile_cmd = prob->vcs_compile_cmd;
+  }
 
   memset(&rx, 0, sizeof(rx));
   rx.accepting_mode = accepting_mode;

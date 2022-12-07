@@ -218,7 +218,9 @@ invoke_compiler(
     task_AddArg(tsk, input_file);
     task_AddArg(tsk, output_file);
     task_AddArg(tsk, lang->short_name);
-    task_AddArg(tsk, "");
+    if (req->vcs_compile_cmd && req->vcs_compile_cmd[0]) {
+      task_AddArg(tsk, req->vcs_compile_cmd);
+    }
   } else {
     task_AddArg(tsk, lang->cmd);
     task_AddArg(tsk, input_file);
