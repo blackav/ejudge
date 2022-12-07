@@ -542,6 +542,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(solution_src, "S"),
   PROBLEM_PARAM(solution_cmd, "S"),
   PROBLEM_PARAM(post_pull_cmd, "S"),
+  PROBLEM_PARAM(vcs_compile_cmd, "S"),
   PROBLEM_PARAM(test_pat, "S"),
   PROBLEM_PARAM(corr_pat, "S"),
   PROBLEM_PARAM(info_pat, "S"),
@@ -1403,6 +1404,7 @@ prepare_problem_free_func(struct generic_section_config *gp)
   xfree(p->solution_src);
   xfree(p->solution_cmd);
   xfree(p->post_pull_cmd);
+  xfree(p->vcs_compile_cmd);
   xfree(p->super_run_dir);
   xfree(p->test_score_list);
   xfree(p->tokens);
@@ -3789,6 +3791,7 @@ set_defaults(
     prepare_set_prob_value(CNTSPROB_solution_src, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_solution_cmd, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_post_pull_cmd, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_vcs_compile_cmd, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_super_run_dir, prob, aprob, g);
 
     prepare_set_prob_value(CNTSPROB_max_vm_size, prob, aprob, g);
@@ -6174,6 +6177,7 @@ prepare_copy_problem(const struct section_problem_data *in)
   xstrdup3(&out->solution_src, in->solution_src);
   xstrdup3(&out->solution_cmd, in->solution_cmd);
   xstrdup3(&out->post_pull_cmd, in->post_pull_cmd);
+  xstrdup3(&out->vcs_compile_cmd, in->vcs_compile_cmd);
   //out->lang_time_adj = NULL;
   //out->lang_time_adj_millis = NULL;
   xstrdup3(&out->super_run_dir, in->super_run_dir);
@@ -6799,6 +6803,13 @@ prepare_set_prob_value(
     */
     break;
 
+  case CNTSPROB_vcs_compile_cmd:
+    if (!out->vcs_compile_cmd && abstr && abstr->vcs_compile_cmd) {
+      sformat_message(tmp_buf, sizeof(tmp_buf), 0, abstr->vcs_compile_cmd, NULL, out, NULL, NULL, NULL, 0, 0, 0);
+      out->vcs_compile_cmd = xstrdup(tmp_buf);
+    }
+    break;
+
   case CNTSPROB_statement_file:
     if (!out->statement_file && abstr && abstr->statement_file) {
       sformat_message_2(&out->statement_file, 0, abstr->statement_file,
@@ -7067,6 +7078,7 @@ prepare_set_all_prob_values(
     CNTSPROB_solution_src,
     CNTSPROB_solution_cmd,
     CNTSPROB_post_pull_cmd,
+    CNTSPROB_vcs_compile_cmd,
     //CNTSPROB_lang_time_adj,
     //CNTSPROB_lang_time_adj_millis,
     CNTSPROB_super_run_dir,

@@ -549,6 +549,7 @@ static struct meta_info_item meta_info_section_problem_data_data[] =
   [CNTSPROB_solution_src] = { CNTSPROB_solution_src, 's', XSIZE(struct section_problem_data, solution_src), "solution_src", XOFFSET(struct section_problem_data, solution_src) },
   [CNTSPROB_solution_cmd] = { CNTSPROB_solution_cmd, 's', XSIZE(struct section_problem_data, solution_cmd), "solution_cmd", XOFFSET(struct section_problem_data, solution_cmd) },
   [CNTSPROB_post_pull_cmd] = { CNTSPROB_post_pull_cmd, 's', XSIZE(struct section_problem_data, post_pull_cmd), "post_pull_cmd", XOFFSET(struct section_problem_data, post_pull_cmd) },
+  [CNTSPROB_vcs_compile_cmd] = { CNTSPROB_vcs_compile_cmd, 's', XSIZE(struct section_problem_data, vcs_compile_cmd), "vcs_compile_cmd", XOFFSET(struct section_problem_data, vcs_compile_cmd) },
   [CNTSPROB_lang_time_adj] = { CNTSPROB_lang_time_adj, 'x', XSIZE(struct section_problem_data, lang_time_adj), "lang_time_adj", XOFFSET(struct section_problem_data, lang_time_adj) },
   [CNTSPROB_lang_time_adj_millis] = { CNTSPROB_lang_time_adj_millis, 'x', XSIZE(struct section_problem_data, lang_time_adj_millis), "lang_time_adj_millis", XOFFSET(struct section_problem_data, lang_time_adj_millis) },
   [CNTSPROB_super_run_dir] = { CNTSPROB_super_run_dir, 's', XSIZE(struct section_problem_data, super_run_dir), "super_run_dir", XOFFSET(struct section_problem_data, super_run_dir) },

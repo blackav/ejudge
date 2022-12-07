@@ -1455,6 +1455,9 @@ prepare_unparse_prob(
   if (prob->post_pull_cmd && prob->post_pull_cmd[0]) {
     fprintf(f,"post_pull_cmd = \"%s\"\n", CARMOR(prob->post_pull_cmd));
   }
+  if (prob->vcs_compile_cmd && prob->vcs_compile_cmd[0]) {
+    fprintf(f,"vcs_compile_cmd = \"%s\"\n", CARMOR(prob->vcs_compile_cmd));
+  }
   do_xstr(f, &ab, "test_checker_env", prob->test_checker_env);
   do_xstr(f, &ab, "init_env", prob->init_env);
   do_xstr(f, &ab, "start_env", prob->start_env);
@@ -1901,6 +1904,9 @@ prepare_unparse_actual_prob(
   }
   if ((show_paths || (global && global->advanced_layout > 0)) && prob->post_pull_cmd && prob->post_pull_cmd[0]) {
     fprintf(f,"post_pull_cmd = \"%s\"\n", CARMOR(prob->post_pull_cmd));
+  }
+  if ((show_paths || (global && global->advanced_layout > 0)) && prob->vcs_compile_cmd && prob->vcs_compile_cmd[0]) {
+    fprintf(f,"vcs_compile_cmd = \"%s\"\n", CARMOR(prob->vcs_compile_cmd));
   }
   do_xstr(f, &ab, "test_checker_env", prob->test_checker_env);
   do_xstr(f, &ab, "init_env", prob->init_env);

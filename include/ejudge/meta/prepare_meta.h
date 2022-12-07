@@ -509,6 +509,7 @@ enum
   CNTSPROB_solution_src,
   CNTSPROB_solution_cmd,
   CNTSPROB_post_pull_cmd,
+  CNTSPROB_vcs_compile_cmd,
   CNTSPROB_lang_time_adj,
   CNTSPROB_lang_time_adj_millis,
   CNTSPROB_super_run_dir,
