@@ -1181,6 +1181,15 @@ ns_submit_button_2(
   return buf;
 }
 
+static const char*
+role_text(int role) {
+  switch (role) {
+    case USER_ROLE_ADMIN: return "admin";
+    case USER_ROLE_JUDGE: return "judge";
+    default: return "contestant";
+  }
+}
+
 void
 ns_refresh_page(
         FILE *fout,
@@ -1198,6 +1207,10 @@ ns_refresh_page(
 
   if (phr->client_key) {
     fprintf(fout, "Set-Cookie: EJSID=%016llx; Path=/; SameSite=Lax\n", phr->client_key);
+  }
+  if (phr->session_id) {
+    fprintf(fout, "Set-Cookie: SID_%s_%d=%016llx; SameSite=Lax; Secure; Max-Age=864000; HttpOnly\n",
+            role_text(phr->role), phr->contest_id, phr->session_id);
   }
   fprintf(fout, "Location: %s\n\n", url);
 }
