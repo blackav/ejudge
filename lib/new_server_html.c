@@ -3496,7 +3496,8 @@ priv_submit_run(
                           prob_id, lang_id, eoln_type,
                           variant, is_hidden, mime_type,
                           prob->uuid,
-                          store_flags);
+                          store_flags,
+                          phr->is_job /* is_vcs */);
   if (run_id < 0) {
     FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
   }
@@ -5433,7 +5434,8 @@ priv_new_run(FILE *fout,
                           user_id, prob_id, lang_id, 0, variant,
                           is_hidden, mime_type,
                           prob->uuid,
-                          store_flags);
+                          store_flags,
+                          0 /* is_vcs */);
   if (run_id < 0) FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
   serve_move_files_to_insert_run(cs, run_id);
 
@@ -10772,7 +10774,8 @@ ns_submit_run(
                           prob_id, lang_id, eoln_type,
                           db_variant, is_hidden, mime_type,
                           prob->uuid,
-                          store_flags);
+                          store_flags,
+                          phr->is_job /* is_vcs */);
   if (run_id < 0) {
     FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
   }
@@ -11449,7 +11452,8 @@ unpriv_submit_run(
                           phr->locale_id, phr->user_id,
                           prob_id, lang_id, eoln_type, 0, 0, mime_type,
                           prob->uuid,
-                          store_flags);
+                          store_flags,
+                          phr->is_job /* is_vcs */);
   if (run_id < 0) {
     FAIL2(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
   }
@@ -13731,7 +13735,8 @@ unpriv_xml_update_answer(
                             phr->locale_id, phr->user_id,
                             prob_id, 0, 0, 0, 0, 0,
                             prob->uuid,
-                            store_flags);
+                            store_flags,
+                            0 /* is_vcs */);
     if (run_id < 0) FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
     serve_move_files_to_insert_run(cs, run_id);
     new_flag = 1;
