@@ -72,3 +72,4 @@ make-js-actions
 ejudge-change-contests
 .idea
 ej-suid-update-scripts
+ej-vcs-compile

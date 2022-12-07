@@ -210,9 +210,20 @@ invoke_compiler(
   tpTask tsk = 0;
 
   tsk = task_New();
-  task_AddArg(tsk, lang->cmd);
-  task_AddArg(tsk, input_file);
-  task_AddArg(tsk, output_file);
+  if (req->vcs_mode) {
+    unsigned char helper_path[PATH_MAX];
+    snprintf(helper_path, sizeof(helper_path),
+             "%s/ej-vcs-compile", EJUDGE_SERVER_BIN_PATH);
+    task_AddArg(tsk, helper_path);
+    task_AddArg(tsk, input_file);
+    task_AddArg(tsk, output_file);
+    task_AddArg(tsk, lang->short_name);
+    task_AddArg(tsk, "");
+  } else {
+    task_AddArg(tsk, lang->cmd);
+    task_AddArg(tsk, input_file);
+    task_AddArg(tsk, output_file);
+  }
   task_SetPathAsArg0(tsk);
   task_EnableProcessGroup(tsk);
   if (VALID_SIZE(req->max_vm_size)) {

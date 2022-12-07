@@ -169,9 +169,12 @@ G_OBJECTS = $(G_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a
 PB_CFILES = bin/ej-parblock.c
 PB_OBJECTS = $(PB_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a
 
+VC_CFILES = bin/ej-vcs-compile.c
+VC_OBJECTS = $(VC_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a
+
 INSTALLSCRIPT = ejudge-install.sh
 BINTARGETS = ejudge-jobs-cmd ejudge-edit-users ejudge-setup ejudge-configure-compilers ejudge-control ejudge-execute ejudge-contests-cmd ejudge-suid-setup ejudge-change-contests
-SERVERBINTARGETS = ej-compile ej-run ej-nwrun ej-ncheck ej-batch ej-serve ej-users ej-users-control ej-jobs ej-jobs-control ej-super-server ej-super-server-control ej-contests ej-contests-control uudecode ej-convert-clars ej-convert-runs ej-fix-db ej-super-run ej-super-run-control ej-normalize ej-polygon ej-import-contest ej-page-gen ej-parblock ej-convert-status ej-convert-xuser ej-agent ej-convert-variant
+SERVERBINTARGETS = ej-compile ej-run ej-nwrun ej-ncheck ej-batch ej-serve ej-users ej-users-control ej-jobs ej-jobs-control ej-super-server ej-super-server-control ej-contests ej-contests-control uudecode ej-convert-clars ej-convert-runs ej-fix-db ej-super-run ej-super-run-control ej-normalize ej-polygon ej-import-contest ej-page-gen ej-parblock ej-convert-status ej-convert-xuser ej-agent ej-convert-variant ej-vcs-compile
 SUIDBINTARGETS = ej-suid-chown ej-suid-exec ej-suid-ipcrm ej-suid-kill ej-suid-container ej-suid-update-scripts
 CGITARGETS = cgi-bin/users${CGI_PROG_SUFFIX} cgi-bin/serve-control${CGI_PROG_SUFFIX} cgi-bin/new-client${CGI_PROG_SUFFIX}
 TARGETS = ${SERVERBINTARGETS} ${BINTARGETS} ${CGITARGETS} tools/newrevinfo ${SUIDBINTARGETS} ej-compile-control
@@ -416,6 +419,9 @@ ej-suid-update-scripts : bin/ej-suid-update-scripts.c
 
 ej-collect-emails: ${CE_OBJECTS}
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB}
+
+ej-vcs-compile: ${VC_OBJECTS}
+	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB} -ldl ${LIBUUID}
 
 slice-userlist: ${SU_OBJECTS}
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB}
