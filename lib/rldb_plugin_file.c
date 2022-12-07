@@ -1417,6 +1417,9 @@ add_entry_func(
   if ((mask & RE_IS_READONLY)) {
     de->is_readonly = re->is_readonly;
   }
+  if ((mask & RE_IS_VCS)) {
+    de->is_vcs = re->is_vcs;
+  }
   if ((mask & RE_PAGES)) {
     de->pages = re->pages;
   }

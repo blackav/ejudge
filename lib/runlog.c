@@ -1372,6 +1372,10 @@ run_set_entry(
     te.is_readonly = in->is_readonly;
     f = 1;
   }
+  if ((mask & RE_IS_VCS) && te.is_vcs != in->is_vcs) {
+    te.is_vcs = in->is_vcs;
+    f = 1;
+  }
   if ((mask & RE_PAGES) && te.pages != in->pages) {
     te.pages = in->pages;
     f = 1;

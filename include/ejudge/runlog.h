@@ -250,9 +250,10 @@ enum
     RE_PASSED_MODE   = 0x10000000,
     RE_EOLN_TYPE     = 0x20000000,
     RE_STORE_FLAGS   = 0x40000000,
-    RE_PROB_UUID     = 0x80000000, // not a part of run_entry structure
-    RE_JUDGE_UUID   = 0x100000000ULL,
-    RE_ALL          = 0x1FFFFFFFFULL,
+    RE_PROB_UUID     = 0x80000000,
+    RE_JUDGE_UUID    = 0x100000000ULL,
+    RE_IS_VCS        = 0x200000000ULL,
+    RE_ALL           = 0x3FFFFFFFFULL,
   };
 
 struct run_entry
@@ -274,7 +275,8 @@ struct run_entry
   unsigned int   is_marked:1;
   unsigned int   is_saved:1;
   unsigned int   is_checked:1;
-  unsigned int   _pad2:22;
+  unsigned int   is_vcs:1;
+  unsigned int   _pad2:21;
   rint32_t       score;         /* 4 */
   unsigned char  status;        /* 1 */
   signed char    passed_mode;   /* 1 */

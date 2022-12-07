@@ -57,6 +57,7 @@ static const char create_runs_query[] =
 "        prob_uuid VARCHAR(40) DEFAULT NULL, "
 "        is_checked TINYINT NOT NULL DEFAULT 0, "
 "        judge_uuid VARCHAR(40) DEFAULT NULL, "
+"        is_vcs TINYINT NOT NULL DEFAULT 0, "
 "        UNIQUE KEY runs_run_contest_id_idx(run_id, contest_id), "
 "        KEY runs_contest_id_idx (contest_id) "
 "        ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;";
@@ -105,9 +106,10 @@ struct run_entry_internal
   unsigned char *prob_uuid;
   int is_checked;
   unsigned char *judge_uuid;    /* 40 */
+  int is_vcs;
 };
 
-enum { RUNS_ROW_WIDTH = 41 };
+enum { RUNS_ROW_WIDTH = 42 };
 
 #define RUNS_OFFSET(f) XOFFSET(struct run_entry_internal, f)
 static const struct common_mysql_parse_spec runs_spec[RUNS_ROW_WIDTH] =
@@ -153,6 +155,7 @@ static const struct common_mysql_parse_spec runs_spec[RUNS_ROW_WIDTH] =
   { 1, 's', "prob_uuid", RUNS_OFFSET(prob_uuid), 0 },
   { 0, 'b', "is_checked", RUNS_OFFSET(is_checked), 0 },
   { 1, 's', "judge_uuid", RUNS_OFFSET(judge_uuid), 0 },
+  { 0, 'b', "is_vcs", RUNS_OFFSET(is_vcs), 0 },
 };
 
 enum

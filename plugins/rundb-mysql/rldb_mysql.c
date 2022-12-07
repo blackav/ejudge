@@ -432,7 +432,14 @@ do_open(struct rldb_mysql_state *state)
       return -1;
     run_version = 20;
   }
-  if (run_version != 20) {
+  if (run_version == 20) {
+    if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD COLUMN is_vcs TINYINT NOT NULL DEFAULT 0 AFTER judge_uuid", md->table_prefix) < 0)
+      return -1;
+    if (mi->simple_fquery(md, "UPDATE %sconfig SET config_val = '21' WHERE config_key = 'run_version' ;", md->table_prefix) < 0)
+      return -1;
+    run_version = 21;
+  }
+  if (run_version != 21) {
     err("run_version == %d is not supported", run_version);
     return -1;
   }
@@ -835,6 +842,7 @@ load_runs(struct rldb_mysql_cnts *cs)
     re->token_flags = ri.token_flags;
     re->token_count = ri.token_count;
     re->is_checked = ri.is_checked;
+    re->is_vcs = ri.is_vcs;
   }
   return 1;
 
@@ -1386,6 +1394,10 @@ generate_update_entry_clause(
     fprintf(f, "%sis_checked = %d", sep, re->is_checked);
     sep = comma;
   }
+  if ((mask & RE_IS_VCS)) {
+    fprintf(f, "%sis_vcs = %d", sep, re->is_vcs);
+    sep = comma;
+  }
 
   gettimeofday(&curtime, 0);
   fprintf(f, "%slast_change_time = ", sep);
@@ -1498,6 +1510,9 @@ update_entry(
   }
   if ((mask & RE_IS_CHECKED)) {
     dst->is_checked = src->is_checked;
+  }
+  if ((mask & RE_IS_VCS)) {
+    dst->is_vcs = src->is_vcs;
   }
 }
 
@@ -1986,6 +2001,7 @@ put_entry_func(
   ri.token_flags = re->token_flags;
   ri.token_count = re->token_count;
   ri.is_checked = re->is_checked;
+  ri.is_vcs = re->is_vcs;
 
   cmd_f = open_memstream(&cmd_t, &cmd_z);
   fprintf(cmd_f, "INSERT INTO %sruns VALUES ( ", state->md->table_prefix);
@@ -2446,6 +2462,9 @@ append_run_func(
   if ((mask & RE_IS_CHECKED)) {
     fputs(",is_checked", cmd_f);
   }
+  if ((mask & RE_IS_VCS)) {
+    fputs(",is_vcs", cmd_f);
+  }
   fprintf(cmd_f, ") SELECT IFNULL(MAX(run_id),-1)+1, %d, NOW(6), MICROSECOND(NOW(6)) * 1000, '%s', NOW(), MICROSECOND(NOW(6)) * 1000",
           cs->contest_id,
           ej_uuid_unparse_r(uuid_buf, sizeof(uuid_buf), p_uuid, ""));
@@ -2562,6 +2581,9 @@ append_run_func(
   }
   if ((mask & RE_IS_CHECKED)) {
     fprintf(cmd_f, ",%d", !!in_re->is_checked);
+  }
+  if ((mask & RE_IS_VCS)) {
+    fprintf(cmd_f, ",%d", !!in_re->is_vcs);
   }
   fprintf(cmd_f, " FROM %sruns WHERE contest_id=%d ;",
           md->table_prefix,
@@ -2707,6 +2729,9 @@ append_run_func(
   }
   if ((mask & RE_IS_CHECKED)) {
     new_re->is_checked = in_re->is_checked;
+  }
+  if ((mask & RE_IS_VCS)) {
+    new_re->is_vcs = in_re->is_vcs;
   }
 
   if (p_tv) *p_tv = ri.create_time;
