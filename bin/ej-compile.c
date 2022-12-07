@@ -475,7 +475,7 @@ handle_packet(
       if (r != RUN_OK) goto cleanup;
     }
 
-    if (req->style_checker && req->style_checker[0]) {
+    if (req->vcs_mode <= 0 && req->style_checker && req->style_checker[0]) {
       int r = invoke_style_checker(log_f, cs, lang, req, src_work_name, working_dir, log_work_path, NULL);
       rpl->status = r;
       if (r == RUN_OK && req->style_check_only > 0) *p_override_exe = 1;
@@ -827,7 +827,7 @@ handle_packet(
       }
     }
 
-    if (status == RUN_OK && !style_already_checked && req->style_checker && req->style_checker[0]) {
+    if (status == RUN_OK && !style_already_checked && req->vcs_mode <= 0 && req->style_checker && req->style_checker[0]) {
       fprintf(log_f, "=== style checking ===\n");
       fflush(log_f);
 
