@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2005-2021 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -45,6 +45,7 @@ compile_request_packet_free(struct compile_request_packet *in_data)
   xfree(in_data->exam_cypher);
   xfree(in_data->contest_server_id);
   xfree(in_data->container_options);
+  xfree(in_data->vcs_compile_cmd);
   if (in_data->env_num > 0 && in_data->env_vars) {
     for (i = 0; i < in_data->env_num; i++) {
       xfree(in_data->env_vars[i]);

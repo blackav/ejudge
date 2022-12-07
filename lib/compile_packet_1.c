@@ -254,6 +254,17 @@ compile_request_packet_read(
     pin_ptr += pkt_bin_align(container_options_len);
   }
 
+  pout->vcs_compile_cmd = NULL;
+  int vcs_compile_cmd_len = cvt_bin_to_host_32(pin->vcs_compile_cmd_len);
+  FAIL_IF(vcs_compile_cmd_len < 0 || vcs_compile_cmd_len >= PATH_MAX);
+  FAIL_IF(pin_ptr + vcs_compile_cmd_len > end_ptr);
+  if (vcs_compile_cmd_len > 0) {
+    pout->vcs_compile_cmd = xmalloc(vcs_compile_cmd_len + 1);
+    memcpy(pout->vcs_compile_cmd, pin_ptr, vcs_compile_cmd_len);
+    pout->vcs_compile_cmd[vcs_compile_cmd_len] = 0;
+    pin_ptr += pkt_bin_align(vcs_compile_cmd_len);
+  }
+
   pout->env_num = cvt_bin_to_host_32(pin->env_num);
   FAIL_IF(pout->env_num < 0 || pout->env_num > EJ_MAX_COMPILE_ENV_NUM);
   FAIL_IF(pin_ptr + pout->env_num * sizeof(rint32_t) > end_ptr);
