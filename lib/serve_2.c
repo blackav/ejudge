@@ -4703,7 +4703,7 @@ serve_rejudge_run(
                                 NULL /* judge_uuid */,
                                 re.store_flags,
                                 1 /* rejudge_flag */,
-                                0 /* vcs_mode */,
+                                re.is_vcs /* vcs_mode */,
                                 user);
       if (r < 0) {
         serve_report_check_failed(config, cnts, state, run_id, serve_err_str(r));
@@ -4756,7 +4756,7 @@ serve_rejudge_run(
                             NULL /* judge_uuid */,
                             re.store_flags,
                             1 /* rejudge_flag */,
-                            0 /* vcs_mode */,
+                            re.is_vcs /* vcs_mode */,
                             user);
   if (r < 0) {
     serve_report_check_failed(config, cnts, state, run_id, serve_err_str(r));
