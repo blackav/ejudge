@@ -143,6 +143,9 @@ invoke_style_checker(
     for (int i = 0; i < tinf->style_checker_env.u; ++i)
       task_PutEnv(tsk, tinf->style_checker_env.v[i]);
   }
+  if (req->vcs_mode) {
+    task_PutEnv(tsk, "EJUDGE_VCS_MODE=1");
+  }
   if (lang && lang->compile_real_time_limit > 0) {
     task_SetMaxRealTime(tsk, lang->compile_real_time_limit);
   }
@@ -251,6 +254,9 @@ invoke_compiler(
   if (tinf && tinf->compiler_env.u > 0) {
     for (int i = 0; i < tinf->compiler_env.u; ++i)
       task_PutEnv(tsk, tinf->compiler_env.v[i]);
+  }
+  if (req->vcs_mode) {
+    task_PutEnv(tsk, "EJUDGE_VCS_MODE=1");
   }
   task_SetWorkingDir(tsk, working_dir);
   task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", TSK_READ);
