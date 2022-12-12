@@ -1,6 +1,6 @@
 # -*- Makefile -*-
 
-# Copyright (C) 2006-2018 Alexander Chernov <cher@ejudge.ru>
+# Copyright (C) 2006-2022 Alexander Chernov <cher@ejudge.ru>
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -87,6 +87,8 @@ CFILES=\
  skip_bom.c\
  kill.c\
  drain.c\
+ open_control_fd.c\
+ kill_2.c\
  stoi.c\
  stol.c\
  stoll.c\

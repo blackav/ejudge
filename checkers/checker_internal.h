@@ -409,6 +409,12 @@ checker_stoll(const char *str, int base, long long *p_value);
 int
 checker_stoull(const char *str, int base, unsigned long long *p_value);
 
+int
+checker_open_control_fd(void);
+
+int
+checker_kill_2(int socket_fd, int signal);
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
