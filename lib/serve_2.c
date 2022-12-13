@@ -1537,9 +1537,9 @@ serve_compile_request(
     } else if (global->compile_max_file_size > 0) {
       cp.max_file_size = global->compile_max_file_size;
     }
-    /*if (lang->max_rss_size > 0) {
+    if (lang->max_rss_size > 0) {
       cp.max_rss_size = lang->max_rss_size;
-      } else*/ if (global->compile_max_rss_size > 0) {
+    } else if (global->compile_max_rss_size > 0) {
       cp.max_rss_size = global->compile_max_rss_size;
     }
   }

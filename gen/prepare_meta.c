@@ -673,6 +673,7 @@ static struct meta_info_item meta_info_section_language_data_data[] =
   [CNTSLANG_max_vm_size] = { CNTSLANG_max_vm_size, 'E', XSIZE(struct section_language_data, max_vm_size), "max_vm_size", XOFFSET(struct section_language_data, max_vm_size) },
   [CNTSLANG_max_stack_size] = { CNTSLANG_max_stack_size, 'E', XSIZE(struct section_language_data, max_stack_size), "max_stack_size", XOFFSET(struct section_language_data, max_stack_size) },
   [CNTSLANG_max_file_size] = { CNTSLANG_max_file_size, 'E', XSIZE(struct section_language_data, max_file_size), "max_file_size", XOFFSET(struct section_language_data, max_file_size) },
+  [CNTSLANG_max_rss_size] = { CNTSLANG_max_rss_size, 'E', XSIZE(struct section_language_data, max_rss_size), "max_rss_size", XOFFSET(struct section_language_data, max_rss_size) },
   [CNTSLANG_run_max_stack_size] = { CNTSLANG_run_max_stack_size, 'E', XSIZE(struct section_language_data, run_max_stack_size), "run_max_stack_size", XOFFSET(struct section_language_data, run_max_stack_size) },
   [CNTSLANG_run_max_vm_size] = { CNTSLANG_run_max_vm_size, 'E', XSIZE(struct section_language_data, run_max_vm_size), "run_max_vm_size", XOFFSET(struct section_language_data, run_max_vm_size) },
   [CNTSLANG_run_max_rss_size] = { CNTSLANG_run_max_rss_size, 'E', XSIZE(struct section_language_data, run_max_rss_size), "run_max_rss_size", XOFFSET(struct section_language_data, run_max_rss_size) },

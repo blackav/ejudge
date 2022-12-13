@@ -251,11 +251,11 @@ invoke_compiler(
   }
   if (VALID_SIZE(req->max_rss_size)) {
     task_SetRSSSize(tsk, req->max_rss_size);
-  } /*else if (VALID_SIZE(lang->max_rss_size)) {
+  } else if (VALID_SIZE(lang->max_rss_size)) {
     task_SetRSSSize(tsk, lang->max_rss_size);
-    }*/ else if (VALID_SIZE(global->compile_max_rss_size)) {
+  } else if (VALID_SIZE(global->compile_max_rss_size)) {
     task_SetRSSSize(tsk, global->compile_max_rss_size);
-    }
+  }
 
   if (ejudge_config->enable_compile_container) {
     task_SetSuidHelperDir(tsk, EJUDGE_SERVER_BIN_PATH);

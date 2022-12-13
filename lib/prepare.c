@@ -608,6 +608,7 @@ static const struct config_parse_info section_language_params[] =
   LANGUAGE_PARAM(max_vm_size, "E"),
   LANGUAGE_PARAM(max_stack_size, "E"),
   LANGUAGE_PARAM(max_file_size, "E"),
+  LANGUAGE_PARAM(max_rss_size, "E"),
   LANGUAGE_PARAM(run_max_stack_size, "E"),
   LANGUAGE_PARAM(run_max_vm_size, "E"),
   LANGUAGE_PARAM(run_max_rss_size, "E"),
