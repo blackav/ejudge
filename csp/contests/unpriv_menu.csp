@@ -210,5 +210,9 @@
 </ul>
 </div>
 </div></div>
+<% if (cnts && cnts->logo_url && *cnts->logo_url) { %>
+<div id="l11"><img src="<s:v value="cnts->logo_url" />" alt="logo"/></div>
+<% } else { %>
 <div id="l11"><img src="<s:config name="style-prefix" />logo3.png" alt="logo"/></div>
+<% } %>
 <div id="l13">
