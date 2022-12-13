@@ -280,6 +280,7 @@ enum
   CNTSGLOB_compile_max_vm_size,
   CNTSGLOB_compile_max_stack_size,
   CNTSGLOB_compile_max_file_size,
+  CNTSGLOB_compile_max_rss_size,
   CNTSGLOB_user_priority_adjustments,
   CNTSGLOB_user_adjustment_info,
   CNTSGLOB_user_adjustment_map,
