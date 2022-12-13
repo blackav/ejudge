@@ -749,6 +749,8 @@ struct section_global_data
   ej_size64_t compile_max_stack_size;
   /* common file size limit */
   ej_size64_t compile_max_file_size;
+  /* common compilation RSS limit */
+  ej_size64_t compile_max_rss_size;
 
   /** per participant testing priority adjustment */
   char **user_priority_adjustments;
