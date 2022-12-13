@@ -347,6 +347,9 @@ prepare_unparse_global(
   if (global->compile_max_file_size > 0) {
     fprintf(f, "compile_max_file_size = %s\n", ll_to_size_str(size_buf, sizeof(size_buf), global->compile_max_file_size));
   }
+  if (global->compile_max_rss_size > 0) {
+    fprintf(f, "compile_max_rss_size = %s\n", ll_to_size_str(size_buf, sizeof(size_buf), global->compile_max_rss_size));
+  }
 
   fprintf(f, "\n");
 
