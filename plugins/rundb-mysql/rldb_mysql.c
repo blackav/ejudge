@@ -2360,6 +2360,30 @@ append_run_func(
   if (!p_uuid) p_uuid = &tmp_uuid;
   if (!ej_uuid_is_nonempty(*p_uuid)) ej_uuid_generate(p_uuid);
 
+  if (mi->simple_fquery(md, "START TRANSACTION;") < 0)
+    db_error_fail(md);
+
+  if (mi->fquery(md, 1, "SELECT IFNULL(MAX(run_id),-1)+1 FROM %sruns WHERE contest_id = %d;", md->table_prefix, cs->contest_id) < 0) {
+    mi->simple_fquery(md, "ROLLBACK;");
+    db_error_fail(md);
+  }
+  if (md->row_count != 1) {
+    err("invalid row_count: %d", md->row_count);
+    mi->simple_fquery(md, "ROLLBACK;");
+    db_error_fail(md);
+  }
+  if (mi->next_row(state->md) < 0) {
+    mi->simple_fquery(md, "ROLLBACK;");
+    db_error_fail(md);
+  }
+  int run_id = 0;
+  if (!md->row[0] || mi->parse_int(md, md->row[0], &run_id) < 0) {
+    err("invalid run_id");
+    mi->simple_fquery(md, "ROLLBACK;");
+    db_error_fail(md);
+  }
+  mi->free_res(md);
+
   cmd_f = open_memstream(&cmd_s, &cmd_z);
   fprintf(cmd_f, "INSERT INTO %sruns(run_id,contest_id,create_time,create_nsec,run_uuid,last_change_time,last_change_nsec",
           md->table_prefix);
@@ -2465,7 +2489,8 @@ append_run_func(
   if ((mask & RE_IS_VCS)) {
     fputs(",is_vcs", cmd_f);
   }
-  fprintf(cmd_f, ") SELECT IFNULL(MAX(run_id),-1)+1, %d, NOW(6), MICROSECOND(NOW(6)) * 1000, '%s', NOW(), MICROSECOND(NOW(6)) * 1000",
+  fprintf(cmd_f, ") VALUES (%d, %d, NOW(6), MICROSECOND(NOW(6)) * 1000, '%s', NOW(), MICROSECOND(NOW(6)) * 1000",
+          run_id,
           cs->contest_id,
           ej_uuid_unparse_r(uuid_buf, sizeof(uuid_buf), p_uuid, ""));
   if ((mask & RE_SIZE)) {
@@ -2585,12 +2610,14 @@ append_run_func(
   if ((mask & RE_IS_VCS)) {
     fprintf(cmd_f, ",%d", !!in_re->is_vcs);
   }
-  fprintf(cmd_f, " FROM %sruns WHERE contest_id=%d ;",
-          md->table_prefix,
-          cs->contest_id);
+  fprintf(cmd_f, ") ;");
   fclose(cmd_f); cmd_f = NULL;
-  if (mi->simple_query(md, cmd_s, cmd_z) < 0) goto fail;
+  if (mi->simple_query(md, cmd_s, cmd_z) < 0) {
+    mi->simple_fquery(md, "ROLLBACK;");
+    goto fail;
+  }
   free(cmd_s); cmd_s = NULL; cmd_z = 0;
+  mi->simple_fquery(md, "COMMIT;");
 
   if (mi->fquery(md, 1, "SELECT LAST_INSERT_ID();") < 0) {
     goto fail;
