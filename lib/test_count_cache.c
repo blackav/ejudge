@@ -152,7 +152,6 @@ test_count_cache_get(
         const unsigned char *path,
         const unsigned char *pattern)
 {
-    fprintf(stderr, "test_count_cache_get: '%s', '%s'\n", path, pattern);
     if (!state) {
         state = get_global_state();
     }
@@ -179,6 +178,5 @@ test_count_cache_get(
         update_dir_info(dir, pattern, us);
     }
 
-    fprintf(stderr, "test_count_cache_get: result %d\n", dir->test_count);
     return dir->test_count;
 }
