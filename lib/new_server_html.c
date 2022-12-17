@@ -8644,8 +8644,6 @@ priv_list_runs_json(
     }
   }
 
-  run_fields |= RUN_VIEW_RUN_ID;
-
   fprintf(fout, "{\n");
   fprintf(fout, "  \"ok\" : %s", to_json_bool(1));
   fprintf(fout, ",\n  \"server_time\": %lld", (long long) cs->current_time);
@@ -8672,11 +8670,9 @@ priv_list_runs_json(
     if (i > 0) {
       fprintf(fout, ",");
     }
-    fprintf(fout, "\n      {");
     const unsigned char * const indent = "        ";
-    if (run_fields & (1 << RUN_VIEW_RUN_ID)) {
-      fprintf(fout, "\n%s\"run_id\": %d", indent, pe->run_id);
-    }
+    fprintf(fout, "\n      {");
+    fprintf(fout, "\n%s\"run_id\": %d", indent, pe->run_id);
     if (run_fields & (1 << RUN_VIEW_STATUS)) {
       fprintf(fout, ",\n%s\"status\": %d", indent, pe->status);
       fprintf(fout, ",\n%s\"status_str\": \"%s\"", indent, run_status_short_str(pe->status));
