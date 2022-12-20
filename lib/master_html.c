@@ -569,7 +569,7 @@ write_runs_dump(const serve_state_t state, FILE *f, const unsigned char *url,
           ";User_Inv;User_Ban;User_Lock"
           ";Prob;Variant"
           ";Lang;Content_Type"
-          ";Stat_Short;Status;Score;Score_Adj;Test"
+          ";Stat_Short;Status;Score;Score_Adj;Test;Passed_Mode"
           ";Import_Flag;Hidden_Flag;RO_Flag;Locale_Id;Pages;Judge_Id"
           "\n");
 
@@ -660,7 +660,7 @@ write_runs_dump(const serve_state_t state, FILE *f, const unsigned char *url,
       fprintf(f, "%s;", statstr);
       run_status_str(re.status, statstr, sizeof(statstr), 0, 0);
       fprintf(f, "%s;", statstr);
-      fprintf(f, ";;;;;;;;\n");
+      fprintf(f, ";;;;;;;;;\n");
       continue;
     }
 
