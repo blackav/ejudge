@@ -197,6 +197,8 @@ fetch_google_endpoints(struct auth_google_state *state)
     CURLcode res = 0;
     cJSON *root = NULL;
 
+    curl_easy_reset(state->curl);
+    curl_easy_setopt(state->curl, CURLOPT_NOSIGNAL, 1L);
     curl_easy_setopt(state->curl, CURLOPT_FOLLOWLOCATION, 1);
     curl_easy_setopt(state->curl, CURLOPT_COOKIEFILE, "");
     curl_easy_setopt(state->curl, CURLOPT_URL, "https://accounts.google.com/.well-known/openid-configuration");
@@ -478,6 +480,8 @@ packet_handler_auth_google(int uid, int argc, char **argv, void *user)
     fclose(post_f); post_f = NULL;
 
     json_f = open_memstream(&json_s, &json_z);
+    curl_easy_reset(state->curl);
+    curl_easy_setopt(state->curl, CURLOPT_NOSIGNAL, 1L);
     curl_easy_setopt(state->curl, CURLOPT_FOLLOWLOCATION, 1);
     curl_easy_setopt(state->curl, CURLOPT_COOKIEFILE, "");
     curl_easy_setopt(state->curl, CURLOPT_URL, state->token_endpoint);

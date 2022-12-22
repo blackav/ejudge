@@ -391,6 +391,8 @@ packet_handler_auth_vk(int uid, int argc, char **argv, void *user)
     fclose(url_f); url_f = NULL;
 
     json_f = open_memstream(&json_s, &json_z);
+    curl_easy_reset(state->curl);
+    curl_easy_setopt(state->curl, CURLOPT_NOSIGNAL, 1L);
     curl_easy_setopt(state->curl, CURLOPT_FOLLOWLOCATION, 1);
     curl_easy_setopt(state->curl, CURLOPT_COOKIEFILE, "");
     curl_easy_setopt(state->curl, CURLOPT_URL, url_s);

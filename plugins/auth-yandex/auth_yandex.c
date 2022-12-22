@@ -373,6 +373,8 @@ packet_handler_auth_yandex(int uid, int argc, char **argv, void *user)
     asprintf(&header, "Authorization: OAuth %s", request_code);
     headers = curl_slist_append(headers, header);
     json_f = open_memstream(&json_s, &json_z);
+    curl_easy_reset(state->curl);
+    curl_easy_setopt(state->curl, CURLOPT_NOSIGNAL, 1L);
     curl_easy_setopt(state->curl, CURLOPT_FOLLOWLOCATION, 1);
     curl_easy_setopt(state->curl, CURLOPT_COOKIEFILE, "");
     curl_easy_setopt(state->curl, CURLOPT_URL, url_s);
