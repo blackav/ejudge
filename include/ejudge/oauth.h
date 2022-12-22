@@ -3,7 +3,7 @@
 #ifndef __OAUTH_H__
 #define __OAUTH_H__
 
-/* Copyright (C) 2021 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2021-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -58,6 +58,7 @@ struct OAuthLoginResult
     unsigned char *role;
     unsigned char *cookie;
     unsigned char *extra_data;
+    unsigned char *user_id;
     unsigned char *email;
     unsigned char *name;
     unsigned char *access_token;

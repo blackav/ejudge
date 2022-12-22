@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2021 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2021-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -94,6 +94,7 @@ update_stage2_func(
         int request_status,
         const unsigned char *error_message,
         const unsigned char *response_name,
+        const unsigned char *response_user_id,
         const unsigned char *response_email,
         const unsigned char *access_token,
         const unsigned char *id_token);
@@ -146,7 +147,7 @@ static const struct common_mysql_parse_spec oauth_stage1_spec[OAUTH_STAGE1_ROW_W
     { 0, 't', "expiry_time", OAUTH_STAGE1_OFFSET(expiry_time), 0 },
 };
 
-enum { OAUTH_STAGE2_ROW_WIDTH = 15 };
+enum { OAUTH_STAGE2_ROW_WIDTH = 16 };
 
 #define OAUTH_STAGE2_OFFSET(f) XOFFSET(struct oauth_stage2_internal, f)
 
@@ -162,6 +163,7 @@ static const struct common_mysql_parse_spec oauth_stage2_spec[OAUTH_STAGE2_ROW_W
     { 1, 's', "extra_data", OAUTH_STAGE2_OFFSET(extra_data), 0 },
     { 0, 't', "create_time", OAUTH_STAGE2_OFFSET(create_time), 0 },
     { 1, 't', "update_time", OAUTH_STAGE2_OFFSET(update_time), 0 },
+    { 1, 's', "response_user_id", OAUTH_STAGE2_OFFSET(response_user_id), 0 },
     { 1, 's', "response_email", OAUTH_STAGE2_OFFSET(response_email), 0 },
     { 1, 's', "response_name", OAUTH_STAGE2_OFFSET(response_name), 0 },
     { 1, 's', "access_token", OAUTH_STAGE2_OFFSET(access_token), 0 },
@@ -242,6 +244,8 @@ open_func(void *data)
     return 0;
 }
 
+enum { OAUTH_VERSION_LATEST = 2 };
+
 static const char oauth_stage1_create_str[] =
 "CREATE TABLE %soauth_stage1 ( \n"
 "    state_id VARCHAR(64) NOT NULL PRIMARY KEY,\n"
@@ -266,6 +270,7 @@ static const char oauth_stage2_create_str[] =
 "    extra_data VARCHAR(512) DEFAULT NULL,\n"
 "    create_time DATETIME NOT NULL,\n"
 "    update_time DATETIME DEFAULT NULL,\n"
+"    response_user_id VARCHAR(64) DEFAULT NULL,\n"
 "    response_email VARCHAR(64) DEFAULT NULL,\n"
 "    response_name VARCHAR(64) DEFAULT NULL,\n"
 "    access_token VARCHAR(256) DEFAULT NULL,\n"
@@ -289,7 +294,7 @@ do_check_database(struct auth_base_state *state)
 
     state->md->row_count = mysql_num_rows(state->md->res);
     if (!state->md->row_count) {
-        int version = 1;
+        int version = OAUTH_VERSION_LATEST;
         if (state->mi->simple_fquery(state->md, oauth_stage1_create_str,
                                      state->md->table_prefix) < 0)
             return -1;
@@ -308,9 +313,24 @@ do_check_database(struct auth_base_state *state)
         if (state->mi->int_val(state->md, &version, 0) < 0) {
             return -1;
         }
-        if (version != 1) {
+        if (version < 1 || version > OAUTH_VERSION_LATEST) {
             err("invalid version %d", version);
             return -1;
+        }
+        while (version != OAUTH_VERSION_LATEST) {
+            switch (version) {
+            case 1:
+                if (state->mi->simple_fquery(state->md, "ALTER TABLE %sruns ADD COLUMN response_user_id VARCHAR(64) DEFAULT NULL AFTER update_time",
+                                      state->md->table_prefix) < 0)
+                    return -1;
+                break;
+            default:
+                err("invalid version %d", version);
+                return -1;
+            }
+            ++version;
+            if (state->mi->simple_fquery(state->md, "UPDATE %sconfig SET config_val = '%d' WHERE config_key = 'oauth_version' ;", state->md->table_prefix, version) < 0)
+                return -1;
         }
     }
     state->mi->free_res(state->md);
@@ -586,6 +606,7 @@ free_stage2_func(
     free(poas2->request_code);
     free(poas2->cookie);
     free(poas2->extra_data);
+    free(poas2->response_user_id);
     free(poas2->response_email);
     free(poas2->response_name);
     free(poas2->access_token);
@@ -652,6 +673,7 @@ update_stage2_func(
         int request_status,
         const unsigned char *error_message,
         const unsigned char *response_name,
+        const unsigned char *response_user_id,
         const unsigned char *response_email,
         const unsigned char *access_token,
         const unsigned char *id_token)
@@ -673,6 +695,10 @@ update_stage2_func(
     if (response_name && *response_name) {
         fprintf(req_f, ", response_name = ");
         state->mi->write_escaped_string(state->md, req_f, "", response_name);
+    }
+    if (response_user_id && *response_user_id) {
+        fprintf(req_f, ", response_user_id = ");
+        state->mi->write_escaped_string(state->md, req_f, "", response_user_id);
     }
     if (response_email && *response_email) {
         fprintf(req_f, ", response_email = ");

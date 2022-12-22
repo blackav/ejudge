@@ -3,7 +3,7 @@
 #ifndef __AUTH_BASE_PLUGIN_H__
 #define __AUTH_BASE_PLUGIN_H__
 
-/* Copyright (C) 2021 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2021-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -70,6 +70,7 @@ struct auth_base_plugin_iface
         int request_status,
         const unsigned char *error_message,
         const unsigned char *response_name,
+        const unsigned char *response_user_id,
         const unsigned char *response_email,
         const unsigned char *access_token,
         const unsigned char *id_token);
@@ -102,6 +103,7 @@ struct oauth_stage2_internal
     unsigned char *extra_data;
     time_t create_time;
     time_t update_time;
+    unsigned char *response_user_id;
     unsigned char *response_email;
     unsigned char *response_name;
     unsigned char *access_token;

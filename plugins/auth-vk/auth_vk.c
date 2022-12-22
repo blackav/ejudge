@@ -381,6 +381,7 @@ packet_handler_auth_vk(int uid, int argc, char **argv, void *user)
     cJSON *root = NULL;
     int vk_user_id = 0;
     unsigned char email_buf[128];
+    unsigned char vk_user_id_str[64];
 
     url_f = open_memstream(&url_s, &url_z);
     fprintf(url_f, "%s", token_endpoint);
@@ -432,6 +433,7 @@ packet_handler_auth_vk(int uid, int argc, char **argv, void *user)
         goto done;
     }
     vk_user_id = j->valueint;
+    snprintf(vk_user_id_str, sizeof(vk_user_id_str), "%d", vk_user_id);
 
     j = cJSON_GetObjectItem(root, "email");
     if (j && j->type == cJSON_String) {
@@ -449,7 +451,9 @@ packet_handler_auth_vk(int uid, int argc, char **argv, void *user)
 done:;
     state->bi->update_stage2(state->bd, request_id,
                              request_status, error_message,
-                             NULL /*response_name*/, response_email,
+                             NULL /*response_name*/,
+                             vk_user_id_str,
+                             response_email,
                              access_token, NULL /*id_token*/);
 
     if (root) cJSON_Delete(root);
@@ -479,6 +483,7 @@ get_result_func(
     res.role = oas2.role; oas2.role = NULL;
     res.cookie = oas2.cookie; oas2.cookie = NULL;
     res.extra_data = oas2.extra_data; oas2.extra_data = NULL;
+    res.user_id = oas2.response_user_id; oas2.response_user_id = NULL;
     res.email = oas2.response_email; oas2.response_email = NULL;
     res.name = oas2.response_name; oas2.response_name = NULL;
     res.access_token = oas2.access_token; oas2.access_token = NULL;

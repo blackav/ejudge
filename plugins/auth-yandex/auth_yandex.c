@@ -298,6 +298,7 @@ get_result_func(
     res.role = oas2.role; oas2.role = NULL;
     res.cookie = oas2.cookie; oas2.cookie = NULL;
     res.extra_data = oas2.extra_data; oas2.extra_data = NULL;
+    res.user_id = oas2.response_user_id; oas2.response_user_id = NULL;
     res.email = oas2.response_email; oas2.response_email = NULL;
     res.name = oas2.response_name; oas2.response_name = NULL;
     res.access_token = oas2.access_token; oas2.access_token = NULL;
@@ -390,7 +391,7 @@ packet_handler_auth_yandex(int uid, int argc, char **argv, void *user)
         goto done;
     }
 
-    //fprintf(stderr, ">>%s<<\n", json_s);
+    fprintf(stderr, ">>%s<<\n", json_s);
 
     if (!(root = cJSON_Parse(json_s))) {
         error_message = "yandex JSON parse failed";
@@ -428,7 +429,9 @@ packet_handler_auth_yandex(int uid, int argc, char **argv, void *user)
 done:;
     state->bi->update_stage2(state->bd, request_id,
                              request_status, error_message,
-                             response_name, response_email,
+                             response_name,
+                             NULL /* response_user_id */,
+                             response_email,
                              access_token, NULL);
 
     if (root) cJSON_Delete(root);
