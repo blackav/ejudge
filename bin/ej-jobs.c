@@ -1282,7 +1282,7 @@ run_process(struct AppState *as, char * const *args, const char *stdin_buf)
         dup2(p1[1], 1);
         dup2(p2[1], 2);
         execv(args[0], args);
-        err("execv() failed: %s", os_ErrorMsg());
+        err("run_process: execv() failed for '%s': %s", args[0], os_ErrorMsg());
         _exit(1);
     }
 
