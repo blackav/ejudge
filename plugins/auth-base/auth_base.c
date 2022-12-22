@@ -320,7 +320,7 @@ do_check_database(struct auth_base_state *state)
         while (version != OAUTH_VERSION_LATEST) {
             switch (version) {
             case 1:
-                if (state->mi->simple_fquery(state->md, "ALTER TABLE %sruns ADD COLUMN response_user_id VARCHAR(64) DEFAULT NULL AFTER update_time",
+                if (state->mi->simple_fquery(state->md, "ALTER TABLE %soauth_stage2 ADD COLUMN response_user_id VARCHAR(64) DEFAULT NULL AFTER update_time",
                                       state->md->table_prefix) < 0)
                     return -1;
                 break;
