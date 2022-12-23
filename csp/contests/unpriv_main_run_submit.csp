@@ -939,7 +939,7 @@ Max Memory Used: <span id="ej-submit-max-rss"></span></p>
     });
   });
 </script>
-<p><button id="ej-gitlab-button" onclick="on_gitlab_button()"><a><s:_>Setup Gitlab Integration</s:_></a></button></p>
+<p><button id="ej-gitlab-button" onclick="on_gitlab_button()"><a><s:_>Setup Version Control System Integration</s:_></a></button></p>
 <%
       }
 %>
