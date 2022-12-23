@@ -352,6 +352,7 @@ packet_handler_auth_yandex(int uid, int argc, char **argv, void *user)
     const unsigned char *request_id = argv[1];
     const unsigned char *request_code = argv[2];
     const char *error_message = "unknown error";
+    const unsigned char *response_user_id = NULL;
     const unsigned char *response_email = NULL;
     const unsigned char *response_name = NULL;
     const unsigned char *access_token = NULL;
@@ -391,7 +392,7 @@ packet_handler_auth_yandex(int uid, int argc, char **argv, void *user)
         goto done;
     }
 
-    fprintf(stderr, ">>%s<<\n", json_s);
+    //fprintf(stderr, ">>%s<<\n", json_s);
 
     if (!(root = cJSON_Parse(json_s))) {
         error_message = "yandex JSON parse failed";
@@ -422,6 +423,11 @@ packet_handler_auth_yandex(int uid, int argc, char **argv, void *user)
         response_name = j->valuestring;
     }
 
+    j = cJSON_GetObjectItem(root, "id");
+    if (j && j->type == cJSON_String) {
+        response_user_id = j->valuestring;
+    }
+
     // success
     request_status = 3;
     error_message = NULL;
@@ -430,7 +436,7 @@ done:;
     state->bi->update_stage2(state->bd, request_id,
                              request_status, error_message,
                              response_name,
-                             NULL /* response_user_id */,
+                             response_user_id,
                              response_email,
                              access_token, NULL);
 
