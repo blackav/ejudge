@@ -1302,7 +1302,6 @@ serve_audit_log(
 
 static char **
 filter_lang_environ(
-        const struct ejudge_cfg *config,
         serve_state_t state,
         const struct section_problem_data *prob,
         const struct section_language_data *lang,
@@ -1475,10 +1474,10 @@ serve_compile_request(
   }
 
   if (prob && prob->lang_compiler_env && lang) {
-    comp_env_mem_2 = filter_lang_environ(config, state, prob, lang, NULL, prob->lang_compiler_env);
+    comp_env_mem_2 = filter_lang_environ(state, prob, lang, NULL, prob->lang_compiler_env);
   }
   if (prob && lang && prob->lang_compiler_container_options) {
-    compiler_container_options = filter_lang_environ(config, state, prob, lang, NULL, prob->lang_compiler_container_options);
+    compiler_container_options = filter_lang_environ(state, prob, lang, NULL, prob->lang_compiler_container_options);
   }
 
   if (compiler_env && compiler_env[0] && comp_env_mem_2 && comp_env_mem_2[0]) {
