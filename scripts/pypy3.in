@@ -26,6 +26,8 @@ then
   exit 1
 fi
 
+[ x"${EJUDGE_ADD_FLAGS}" != x ] && EJUDGE_FLAGS="${EJUDGE_FLAGS} ${EJUDGE_ADD_FLAGS}"
+
 echo "#! ${PYTHONPATH} -W ignore ${EJUDGE_FLAGS}" > $2
 echo "# coding: latin1" >> $2
 echo >> $2
