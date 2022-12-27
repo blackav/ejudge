@@ -40,7 +40,7 @@ CC=gcc
 LD=gcc
 EXPAT_LIB=-lexpat
 
-COMMON_UT_OBJECTS=$(COMMON_UT_CFILES:.c=.o) libcommon.a
+COMMON_UT_OBJECTS=$(COMMON_UT_CFILES:.c=.o) libcommon.a libuserlist_clnt.a libplatform.a libcommon.a
 
 C_CFILES=bin/ej-compile.c version.c
 C_OBJECTS=$(C_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a
@@ -313,7 +313,7 @@ suid_install : ${SUIDBINTARGETS} ejudge-suid-setup ej-compile-control
 suid_bins : ${SUIDBINTARGETS}
 
 lib_ut$(EXESFX) : $(COMMON_UT_OBJECTS)
-	$(LD) $(LDFLAGS) $(COMMON_UT_OBJECTS) -o $@ -lcheck -lm -lsubunit
+	$(LD) $(LDFLAGS) $(COMMON_UT_OBJECTS) -o $@ -lcheck -lsubunit $(LDLIBS) ${EXPAT_LIB} ${LIBUUID}
 
 ej-compile$(EXESFX) : $(C_OBJECTS)
 	$(LD) $(LDFLAGS) $(C_OBJECTS) -pthread -o $@ $(LDLIBS) ${EXPAT_LIB} ${LIBZIP} ${LIBUUID} ${LIBLZMA}

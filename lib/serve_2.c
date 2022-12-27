@@ -1310,7 +1310,7 @@ env_for_lang(char* env, const char* lang)
     return NULL;
 }
 
-static char **
+char **
 filter_lang_environ(
         serve_state_t state,
         const struct section_problem_data *prob,
@@ -1318,10 +1318,9 @@ filter_lang_environ(
         const struct section_tester_data *tester,
         char **environ)
 {
-  int count = 0, i, llen, j = 0;
+  int count = 0, i, j = 0;
   char **env = NULL;
-  const char *lang_env;
-  llen = strlen(lang->short_name);
+  char *lang_env;
   for (i = 0; environ[i]; ++i) {
     if (env_for_lang(environ[i], "*") || env_for_lang(environ[i], lang->short_name)) {
       ++count;

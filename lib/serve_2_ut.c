@@ -1,9 +1,29 @@
 #include <stdlib.h>
 #include <check.h>
 
+#include "ejudge/serve_state.h"
+#include "ejudge/prepare.h"
+
+char **
+filter_lang_environ(
+        serve_state_t state,
+        const struct section_problem_data *prob,
+        const struct section_language_data *lang,
+        const struct section_tester_data *tester,
+        char **environ);
+
 START_TEST(test_filter_env)
 {
-    ck_assert(0);
+    struct serve_state state = {0};
+    struct section_problem_data prob = {0};
+    struct section_language_data lang = {0};
+    struct section_tester_data tester = {0};
+    char *environ[] = {
+        "a=1",
+        "b=2",
+        NULL
+    };
+    char **newenv = filter_lang_environ(&state, &prob, &lang, &tester, environ);
 }
 END_TEST
 

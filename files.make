@@ -119,7 +119,8 @@ REUSE_CFILES=\
  reuse/reuse_xstrmerge3.c
 
 COMMON_UT_CFILES=\
- lib/serve_2_ut.c
+ lib/serve_2_ut.c\
+ version.c
 
 COMMON_CFILES=\
  lib/agent_client_ssh.c\
