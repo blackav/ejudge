@@ -16,14 +16,20 @@ START_TEST(test_filter_env)
 {
     struct serve_state state = {0};
     struct section_problem_data prob = {0};
-    struct section_language_data lang = {0};
+    struct section_language_data lang = {
+        .short_name = "gcc-32",
+    };
     struct section_tester_data tester = {0};
     char *environ[] = {
-        "a=1",
-        "b=2",
+        "gcc-32=a=1",
+        "gcc=b=2",
+        "*=c=3",
         NULL
     };
     char **newenv = filter_lang_environ(&state, &prob, &lang, &tester, environ);
+    ck_assert_str_eq(newenv[0], "a=1");
+    ck_assert_str_eq(newenv[1], "c=3");
+    ck_assert(newenv[2] == NULL);
 }
 END_TEST
 
