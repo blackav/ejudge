@@ -30,6 +30,9 @@ START_TEST(test_filter_env)
     ck_assert_str_eq(newenv[0], "a=1");
     ck_assert_str_eq(newenv[1], "c=3");
     ck_assert(newenv[2] == NULL);
+    free(newenv[0]);
+    free(newenv[1]);
+    free(newenv);
 }
 END_TEST
 
