@@ -31,6 +31,7 @@
 #endif
 
 #include <errno.h>
+#include <stdio.h>
 #include <string.h>
 
 #if HAVE_LIBMONGOC - 0 > 0

@@ -29,6 +29,7 @@
 #endif
 
 #include <stdio.h>
+#include <string.h>
 
 #define MONGO_RETRY_TIMEOUT 60
 

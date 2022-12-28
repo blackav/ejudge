@@ -40,10 +40,11 @@
 #include <curl/curl.h>
 #endif
 
-#include <pthread.h>
-#include <string.h>
 #include <ctype.h>
 #include <signal.h>
+#include <stdio.h>
+#include <string.h>
+#include <pthread.h>
 
 static struct common_plugin_data *
 init_func(void);

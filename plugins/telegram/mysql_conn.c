@@ -27,6 +27,8 @@
 #include "ejudge/xalloc.h"
 #include "ejudge/errlog.h"
 
+#include <stdio.h>
+
 static struct generic_conn *
 free_func(struct generic_conn *gc)
 {
