@@ -37,6 +37,7 @@ struct compile_request_packet
   int user_id;
   int use_container;
   int vcs_mode;
+  int not_ok_is_cf;
   int64_t submit_id;
   ej_uuid_t uuid;
   ej_uuid_t judge_uuid;

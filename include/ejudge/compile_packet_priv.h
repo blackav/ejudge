@@ -50,6 +50,7 @@ struct compile_request_bin_packet
   rint32_t use_uuid;            /* use UUID instead of run_id */
   rint32_t use_container;       /* use ej-suid-container for compilation */
   rint32_t vcs_mode;            /* github/gitlab integration */
+  rint32_t not_ok_is_cf;        /* Check failed in case of compilation error */
   ej_uuid_t uuid;               /* UUID */
   ej_uuid_t judge_uuid;         /* judging UUID */
   rint32_t multi_header;        /* multi-header mode */

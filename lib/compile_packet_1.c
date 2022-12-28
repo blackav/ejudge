@@ -107,6 +107,7 @@ compile_request_packet_read(
 
   pout->use_container = cvt_bin_to_host_32(pin->use_container);
   pout->vcs_mode = cvt_bin_to_host_32(pin->vcs_mode);
+  pout->not_ok_is_cf = cvt_bin_to_host_32(pin->not_ok_is_cf);
 
   pout->multi_header = cvt_bin_to_host_32(pin->multi_header);
   FAIL_IF(pout->multi_header < 0 || pout->multi_header > 1);
