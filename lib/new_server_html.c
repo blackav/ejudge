@@ -3547,6 +3547,7 @@ priv_submit_run(
                                      NULL /* judge_uuid */,
                                      store_flags, 0 /* rejudge_flag */,
                                      phr->is_job,
+                                     0 /* not_ok_is_cf */,
                                      user)) < 0) {
         serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
       }
@@ -3580,6 +3581,7 @@ priv_submit_run(
                                   store_flags,
                                   0 /* rejudge_flag*/,
                                   phr->is_job,
+                                  0 /* not_ok_is_cf */,
                                   user);
         if (r < 0) {
           serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
@@ -3630,6 +3632,7 @@ priv_submit_run(
                                   store_flags,
                                   0 /* rejudge_flag */,
                                   phr->is_job,
+                                  0 /* not_ok_is_cf */,
                                   user);
         if (r < 0) {
           serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
@@ -10847,6 +10850,7 @@ ns_submit_run(
                               store_flags,
                               0 /* rejudge_flag */,
                               phr->is_job,
+                              0 /* not_ok_is_cf */,
                               user);
     if (r < 0) {
       serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
@@ -10885,6 +10889,7 @@ ns_submit_run(
                                 store_flags,
                                 0 /* rejudge_flag */,
                                 phr->is_job,
+                                0 /* not_ok_is_cf */,
                                 user);
       if (r < 0) {
         serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
@@ -10951,6 +10956,7 @@ ns_submit_run(
                               store_flags,
                               0 /* rejudge_flag */,
                               phr->is_job,
+                              0 /* not_ok_is_cf */,
                               user);
     if (r < 0) {
       serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
@@ -11501,6 +11507,7 @@ unpriv_submit_run(
                                      store_flags,
                                      0 /* rejudge_flag */,
                                      phr->is_job,
+                                     0 /* not_ok_is_cf */,
                                      user)) < 0) {
         serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
       }
@@ -11533,6 +11540,7 @@ unpriv_submit_run(
                                   store_flags,
                                   0 /* rejudge_flag */,
                                   phr->is_job,
+                                  0 /* not_ok_is_cf */,
                                   user);
         if (r < 0) {
           serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
@@ -11603,6 +11611,7 @@ unpriv_submit_run(
                                   store_flags,
                                   0 /* rejudge_flag */,
                                   phr->is_job,
+                                  0 /* not_ok_is_cf */,
                                   user);
         if (r < 0) {
           serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
@@ -12161,6 +12170,7 @@ ns_submit_run_input(
                             0 /* store_flags */,
                             0 /* rejudge_flag */,
                             0 /* vcs_mode */,
+                            0 /* not_ok_is_cf */,
                             user);
   if (r < 0) {
     err_num = NEW_SRV_ERR_RUNLOG_UPDATE_FAILED;

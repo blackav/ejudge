@@ -1360,6 +1360,7 @@ serve_compile_request(
         int store_flags,
         int rejudge_flag,
         int vcs_mode,
+        int not_ok_is_cf,
         const struct userlist_user *user)
 {
   struct compile_run_extra rx;
@@ -4712,6 +4713,7 @@ serve_rejudge_run(
                                 re.store_flags,
                                 1 /* rejudge_flag */,
                                 re.is_vcs /* vcs_mode */,
+                                0 /* not_ok_is_cf */,
                                 user);
       if (r < 0) {
         serve_report_check_failed(config, cnts, state, run_id, serve_err_str(r));
@@ -4765,6 +4767,7 @@ serve_rejudge_run(
                             re.store_flags,
                             1 /* rejudge_flag */,
                             re.is_vcs /* vcs_mode */,
+                            0 /* not_ok_is_cf */,
                             user);
   if (r < 0) {
     serve_report_check_failed(config, cnts, state, run_id, serve_err_str(r));

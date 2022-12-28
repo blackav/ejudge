@@ -592,6 +592,7 @@ process_submit(
                             0 /* store_flags */,
                             0 /* rejudge_flag */,
                             0 /* vcs_mode */,
+                            0 /* not_ok_is_cf */,
                             NULL /* user */);
   if (r < 0) {
     // FIXME: handle error
