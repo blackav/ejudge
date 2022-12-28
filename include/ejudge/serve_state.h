@@ -364,6 +364,7 @@ struct compile_run_extra
   int notify_flag;
   int is_dos;
   int rejudge_flag;
+  unsigned char not_ok_is_cf;
 };
 
 serve_state_t serve_state_init(int contest_id);
