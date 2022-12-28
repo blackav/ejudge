@@ -70,6 +70,7 @@ static struct meta_info_item meta_info_super_run_in_global_packet_data[] =
   [META_SUPER_RUN_IN_GLOBAL_PACKET_separate_run_spool_mode] = { META_SUPER_RUN_IN_GLOBAL_PACKET_separate_run_spool_mode, 'B', XSIZE(struct super_run_in_global_packet, separate_run_spool_mode), "separate_run_spool_mode", XOFFSET(struct super_run_in_global_packet, separate_run_spool_mode) },
   [META_SUPER_RUN_IN_GLOBAL_PACKET_bson_available] = { META_SUPER_RUN_IN_GLOBAL_PACKET_bson_available, 'B', XSIZE(struct super_run_in_global_packet, bson_available), "bson_available", XOFFSET(struct super_run_in_global_packet, bson_available) },
   [META_SUPER_RUN_IN_GLOBAL_PACKET_lang_container_options] = { META_SUPER_RUN_IN_GLOBAL_PACKET_lang_container_options, 's', XSIZE(struct super_run_in_global_packet, lang_container_options), "lang_container_options", XOFFSET(struct super_run_in_global_packet, lang_container_options) },
+  [META_SUPER_RUN_IN_GLOBAL_PACKET_not_ok_is_cf] = { META_SUPER_RUN_IN_GLOBAL_PACKET_not_ok_is_cf, 'B', XSIZE(struct super_run_in_global_packet, not_ok_is_cf), "not_ok_is_cf", XOFFSET(struct super_run_in_global_packet, not_ok_is_cf) },
 };
 
 int meta_super_run_in_global_packet_get_type(int tag)

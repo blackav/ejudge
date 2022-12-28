@@ -90,6 +90,7 @@ struct super_run_in_global_packet
   ejintbool_t separate_run_spool_mode;
   ejintbool_t bson_available;
   unsigned char *lang_container_options;
+  ejintbool_t not_ok_is_cf;
 
   int scoring_system_val META_ATTRIB((meta_hidden));
 };
