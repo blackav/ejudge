@@ -1922,31 +1922,37 @@ void *__attribute__((unused))
 job_server_force_link_2[] =
 {
     base64u_decode,
-    xml_parse_full_cookie,
-    xml_err_elem_undefined_s,
+    cJSON_Delete,
+    cJSON_GetArrayItem,
+    cJSON_GetArraySize,
+    cJSON_GetObjectItem,
+    cJSON_Parse,
     ej_uuid_parse,
-    userprob_plugin_get,
     task_New,
+    userprob_plugin_get,
+    xml_err_elem_undefined_s,
+    xml_parse_full_cookie,
+    xml_parse_int,
+    xml_parse_ip,
+    xml_parse_ipv6_2,
+    xml_unparse_full_cookie,
+    xml_unparse_ip,
+    xml_unparse_ipv6,
 };
 
 #if HAVE_LIBMONGOC - 0 > 0
 void *
 job_server_force_link[] =
 {
-  cJSON_Delete,
   ej_bson_parse_string_new,
-  xml_parse_int,
 };
-#endif
 
-#if HAVE_LIBMONGO_CLIENT - 0 == 1
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
 
 void *
 job_server_force_link[] =
 {
-  cJSON_Delete,
   ej_bson_parse_string,
-  xml_parse_int,
 };
 
 #endif
