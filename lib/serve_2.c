@@ -2195,6 +2195,7 @@ serve_run_request(
   if (lang && lang->container_options) {
     srgp->lang_container_options = xstrdup(lang->container_options);
   }
+  srgp->not_ok_is_cf = not_ok_is_cf;
 
   struct super_run_in_problem_packet *srpp = srp->problem;
   srpp->type = xstrdup(problem_unparse_type(prob->type));
@@ -3622,7 +3623,7 @@ prepare_run_request:
                         comp_extra->notify_flag, re.mime_type, re.eoln_type,
                         re.locale_id, compile_report_dir, comp_pkt, 0, &re.run_uuid,
                         comp_extra->rejudge_flag, comp_pkt->zip_mode, re.store_flags,
-                        0 /* not_ok_is_cf */,
+                        comp_extra->not_ok_is_cf,
                         NULL, 0) < 0) {
     snprintf(errmsg, sizeof(errmsg), "failed to write run packet\n");
     goto report_check_failed;
