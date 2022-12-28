@@ -1590,6 +1590,7 @@ serve_compile_request(
   if (vcs_mode > 0 && prob && prob->vcs_compile_cmd && prob->vcs_compile_cmd[0]) {
     cp.vcs_compile_cmd = prob->vcs_compile_cmd;
   }
+  cp.not_ok_is_cf = not_ok_is_cf;
 
   memset(&rx, 0, sizeof(rx));
   rx.accepting_mode = accepting_mode;
@@ -1599,6 +1600,7 @@ serve_compile_request(
     rx.is_dos = lang->is_dos;
   }
   rx.rejudge_flag = rejudge_flag;
+  rx.not_ok_is_cf = not_ok_is_cf;
 
   if (compile_request_packet_write(&cp, &pkt_len, &pkt_buf) < 0) {
     // FIXME: need reasonable recovery?
