@@ -208,7 +208,7 @@ telegram_subscription_unparse_bson(const struct telegram_subscription *sub)
 }
 
 struct telegram_subscription *
-telegram_subscription_fetch(struct mongo_conn *conn, const unsigned char *bot_id, int contest_id, int user_id)
+telegram_subscription_fetch(struct mongo_conn *conn, const unsigned char *bot_id, int user_id, int contest_id)
 {
 #if HAVE_LIBMONGOC - 0 > 0
     if (!conn->b.vt->open(&conn->b)) return NULL;
