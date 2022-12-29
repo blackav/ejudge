@@ -519,6 +519,8 @@ token_remove_expired_func(
 {
     if (gc->vt->open(gc) < 0) return;
 
+    if (current_time <= 0) current_time = time(NULL);
+
     struct mysql_conn *conn = (struct mysql_conn *) gc;
     struct common_mysql_iface *mi = conn->mi;
     struct common_mysql_state *md = conn->md;
@@ -528,7 +530,7 @@ token_remove_expired_func(
 
     mi->lock(md);
     cmd_f = open_memstream(&cmd_s, &cmd_z);
-    fprintf(cmd_f, "DELETE FROM %stelegram_tokens WHERE expiry_time = ",
+    fprintf(cmd_f, "DELETE FROM %stelegram_tokens WHERE expiry_time < ",
             md->table_prefix);
     mi->write_timestamp(md, cmd_f, NULL, current_time);
     fclose(cmd_f); cmd_f = NULL;
