@@ -17,8 +17,6 @@
 /*
  * This program compiles incoming source files and puts the resulting
  * executables into the spool directory.
- *
- * Note: this program must compile and work on win32
  */
 
 #include "ejudge/config.h"
@@ -185,8 +183,14 @@ invoke_style_checker(
   if (!r) {
     retval = RUN_OK;
   } else {
-    retval = RUN_STYLE_ERR;
-    fprintf(log_f, "\nStyle checker detected errors\n");
+    if (req->not_ok_is_cf > 0) {
+      retval = RUN_CHECK_FAILED;
+      fprintf(log_f, "\nStyle checker detected errors\n");
+      fprintf(log_f, "Check failed on non-OK result mode enabled\n");
+    } else {
+      retval = RUN_STYLE_ERR;
+      fprintf(log_f, "\nStyle checker detected errors\n");
+    }
   }
 
 cleanup:
@@ -303,13 +307,25 @@ invoke_compiler(
 
   if (task_IsTimeout(tsk)) {
     err("Compilation process timed out");
-    fprintf(log_f, "\nCompilation process timed out\n");
     task_Delete(tsk);
-    return RUN_COMPILE_ERR;
+    if (req->not_ok_is_cf > 0) {
+      fprintf(log_f, "\nCompilation process timed out\n");
+      fprintf(log_f, "Check failed on non-OK result mode enabled\n");
+      return RUN_CHECK_FAILED;
+    } else {
+      fprintf(log_f, "\nCompilation process timed out\n");
+      return RUN_COMPILE_ERR;
+    }
   } else if (task_IsAbnormal(tsk)) {
     info("Compilation failed");
     task_Delete(tsk);
-    return RUN_COMPILE_ERR;
+    if (req->not_ok_is_cf > 0) {
+      fprintf(log_f, "\nCompilation failed\n");
+      fprintf(log_f, "Check failed on non-OK result mode enabled\n");
+      return RUN_CHECK_FAILED;
+    } else {
+      return RUN_COMPILE_ERR;
+    }
   } else {
     info("Compilation sucessful");
     task_Delete(tsk);
