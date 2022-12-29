@@ -2539,6 +2539,12 @@ invoke_checker(
   if (exitcode == RUN_PRESENTATION_ERR && srpp->disable_pe > 0) {
     exitcode = RUN_WRONG_ANSWER_ERR;
   }
+  if (exitcode != RUN_OK && srgp->not_ok_is_cf > 0) {
+    append_msg_to_log(check_out_path, "checker exited with code %d", exitcode);
+    append_msg_to_log(check_out_path, "Check failed on non-OK result mode enabled");
+    status = RUN_CHECK_FAILED;
+    goto cleanup;
+  }
   if (exitcode != RUN_OK && exitcode != RUN_PRESENTATION_ERR
       && exitcode != RUN_WRONG_ANSWER_ERR && exitcode != RUN_CHECK_FAILED) {
     append_msg_to_log(check_out_path, "checker exited with code %d", exitcode);
@@ -3947,6 +3953,11 @@ read_checker_output:;
   }
 
 cleanup:;
+  if (status != RUN_OK && status != RUN_CHECK_FAILED && srgp->not_ok_is_cf > 0) {
+    append_msg_to_log(check_out_path, "Check failed on non-OK result mode enabled");
+    status = RUN_CHECK_FAILED;
+  }
+
   if (init_cmd_started) {
     int new_status = invoke_init_cmd(srpp, "stop", test_src, corr_src,  info_src, working_dir, check_out_path,
                                      &tstinfo);
