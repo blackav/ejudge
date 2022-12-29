@@ -40,10 +40,11 @@
 #include <curl/curl.h>
 #endif
 
-#include <pthread.h>
-#include <string.h>
 #include <ctype.h>
 #include <signal.h>
+#include <stdio.h>
+#include <string.h>
+#include <pthread.h>
 
 static struct common_plugin_data *
 init_func(void);
@@ -780,7 +781,7 @@ packet_handler_telegram_reviewed(int uid, int argc, char **argv, void *user)
         goto cleanup;
     }
 
-    sub = state->conn->vt->subscription_fetch(state->conn, argv[1], contest_id, user_id);
+    sub = state->conn->vt->subscription_fetch(state->conn, argv[1], user_id, contest_id);
     if (!sub) goto cleanup;
     if (!sub->review_flag) goto cleanup;
     if (!sub->chat_id) {
@@ -860,7 +861,7 @@ packet_handler_telegram_replied(int uid, int argc, char **argv, void *user)
         goto cleanup;
     }
 
-    sub = state->conn->vt->subscription_fetch(state->conn, argv[1], contest_id, user_id);
+    sub = state->conn->vt->subscription_fetch(state->conn, argv[1], user_id, contest_id);
     if (!sub) goto cleanup;
     if (!sub->reply_flag) goto cleanup;
     if (!sub->chat_id) {
@@ -1444,11 +1445,11 @@ handle_incoming_message(
             } else if (!r) {
                 send_result = send_message(state, bs, mc, "Token expired. Operation failed.", NULL, NULL);
             } else {
-                sub = state->conn->vt->subscription_fetch(state->conn, bs->bot_id, token->contest_id, token->user_id);
+                sub = state->conn->vt->subscription_fetch(state->conn, bs->bot_id, token->user_id, token->contest_id);
                 if (!sub && !strcmp(tcs->command, "/unsubscribe")) {
                     send_result = send_message(state, bs, mc, "You have no subscriptions. Nothing to unsubscribe.", NULL, "{ \"hide_keyboard\": true}");
                 } else {
-                    if (!sub) sub = telegram_subscription_create(bs->bot_id, token->contest_id, token->user_id);
+                    if (!sub) sub = telegram_subscription_create(bs->bot_id, token->user_id, token->contest_id);
                     if (!strcmp(tcs->command, "/subscribe")) {
                         if (tcs->review_flag) sub->review_flag = 1;
                         if (tcs->reply_flag) sub->reply_flag = 1;

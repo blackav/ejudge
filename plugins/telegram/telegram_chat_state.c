@@ -14,12 +14,14 @@
  * GNU General Public License for more details.
  */
 
+#include "telegram_chat_state.h"
+
 #include "ejudge/bson_utils.h"
+
 #include "ejudge/xalloc.h"
 #include "ejudge/errlog.h"
 #include "ejudge/osdeps.h"
 
-#include "telegram_chat_state.h"
 #include "mongo_conn.h"
 
 #if HAVE_LIBMONGOC - 0 > 1
@@ -31,6 +33,7 @@
 #endif
 
 #include <errno.h>
+#include <string.h>
 
 #if HAVE_LIBMONGOC - 0 > 0
 struct _bson_t;
