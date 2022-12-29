@@ -528,10 +528,9 @@ token_remove_expired_func(
 
     mi->lock(md);
     cmd_f = open_memstream(&cmd_s, &cmd_z);
-    fprintf(cmd_f, "DELETE FROM %stelegram_tokens WHERE expiry_time = '",
+    fprintf(cmd_f, "DELETE FROM %stelegram_tokens WHERE expiry_time = ",
             md->table_prefix);
     mi->write_timestamp(md, cmd_f, NULL, current_time);
-    fprintf(cmd_f, "'");
     fclose(cmd_f); cmd_f = NULL;
     if (mi->simple_query(md, cmd_s, cmd_z) < 0)
         db_error_fail(md);
