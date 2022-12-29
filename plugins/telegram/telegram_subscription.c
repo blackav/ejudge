@@ -62,7 +62,7 @@ telegram_subscription_free(struct telegram_subscription *sub)
 }
 
 struct telegram_subscription *
-telegram_subscription_create(const unsigned char *bot_id, int contest_id, int user_id)
+telegram_subscription_create(const unsigned char *bot_id, int user_id, int contest_id)
 {
     struct telegram_subscription *sub = NULL;
     unsigned char buf[1024];
@@ -73,8 +73,8 @@ telegram_subscription_create(const unsigned char *bot_id, int contest_id, int us
     XCALLOC(sub, 1);
     sub->_id = xstrdup(buf);
     sub->bot_id = xstrdup(bot_id);
-    sub->contest_id = contest_id;
     sub->user_id = user_id;
+    sub->contest_id = contest_id;
     return sub;
 }
 

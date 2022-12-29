@@ -1449,7 +1449,7 @@ handle_incoming_message(
                 if (!sub && !strcmp(tcs->command, "/unsubscribe")) {
                     send_result = send_message(state, bs, mc, "You have no subscriptions. Nothing to unsubscribe.", NULL, "{ \"hide_keyboard\": true}");
                 } else {
-                    if (!sub) sub = telegram_subscription_create(bs->bot_id, token->contest_id, token->user_id);
+                    if (!sub) sub = telegram_subscription_create(bs->bot_id, token->user_id, token->contest_id);
                     if (!strcmp(tcs->command, "/subscribe")) {
                         if (tcs->review_flag) sub->review_flag = 1;
                         if (tcs->reply_flag) sub->reply_flag = 1;

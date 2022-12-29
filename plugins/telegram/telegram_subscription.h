@@ -36,6 +36,6 @@ struct telegram_subscription
 struct telegram_subscription *
 telegram_subscription_free(struct telegram_subscription *subscription);
 struct telegram_subscription *
-telegram_subscription_create(const unsigned char *bot_id, int contest_id, int user_id);
+telegram_subscription_create(const unsigned char *bot_id, int user_id, int contest_id);
 
 #endif

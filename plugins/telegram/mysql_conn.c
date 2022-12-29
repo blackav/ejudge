@@ -965,7 +965,7 @@ subscription_fetch_func(
         return ts;
     }
 
-    ts = telegram_subscription_create(bot_id, contest_id, user_id);
+    ts = telegram_subscription_create(bot_id, user_id, contest_id);
     mi->unlock(md);
     gc->vt->subscription_save(gc, ts);
     return ts;
