@@ -191,6 +191,7 @@ COMMON_CFILES=\
  lib/lang_config_vis.c\
  lib/master_html.c\
  lib/meta_generic.c\
+ lib/metrics_contest.c\
  lib/mime_type.c\
  lib/misctext.c\
  lib/ncheck_packet.c\
@@ -601,6 +602,7 @@ HFILES=\
  ./include/ejudge/lang_config_vis.h\
  ./include/ejudge/list_ops.h\
  ./include/ejudge/meta_generic.h\
+ ./include/ejudge/metrics_contest.h\
  ./include/ejudge/mime_type.h\
  ./include/ejudge/mischtml.h\
  ./include/ejudge/misctext.h\
