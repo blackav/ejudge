@@ -26,6 +26,7 @@ struct metrics_contest_data
     struct timeval start_time;
     struct timeval update_time;
     long long client_serial;
+    int loaded_contests;
 };
 
 struct metrics_desc

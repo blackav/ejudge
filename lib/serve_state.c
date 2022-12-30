@@ -41,6 +41,7 @@
 #include "ejudge/statusdb.h"
 #include "ejudge/variant_plugin.h"
 #include "ejudge/submit_plugin.h"
+#include "ejudge/metrics_contest.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -63,6 +64,9 @@ serve_state_init(int contest_id)
   state->clarlog_state = clar_init();
   state->teamdb_state = teamdb_init(contest_id);
   state->runlog_state = run_init(state->teamdb_state);
+
+  ++metrics.data->loaded_contests;
+
   return state;
 }
 
@@ -248,6 +252,8 @@ serve_state_destroy(
     }
     xfree(state->compiler_options);
   }
+
+  --metrics.data->loaded_contests;
 
   memset(state, 0, sizeof(*state));
   xfree(state);
