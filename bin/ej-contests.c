@@ -37,6 +37,7 @@
 #include "ejudge/userlist_clnt.h"
 #include "ejudge/oauth.h"
 #include "ejudge/sha256utils.h"
+#include "ejudge/metrics_contest.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/osdeps.h"
@@ -999,6 +1000,7 @@ main(int argc, char *argv[])
     ejudge_config->contests_home_dir = xstrdup(EJUDGE_CONTESTS_HOME_DIR);
 #endif
   setup_log_file();
+  setup_metrics_file(ejudge_config);
 
   info("ej-contests %s, compiled %s", compile_version, compile_date);
 

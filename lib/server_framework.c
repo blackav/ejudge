@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2021 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2022 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -28,6 +28,7 @@
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
 #include "ejudge/osdeps.h"
+#include "ejudge/metrics_contest.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -81,7 +82,7 @@ struct server_framework_state
 
   int socket_fd;
   sigset_t orig_mask, work_mask, block_mask;
-  int client_id;
+  //int client_id;
   int restart_requested;
 
   // websocket file descriptor
@@ -141,7 +142,8 @@ client_state_new(struct server_framework_state *state, int fd)
   }
 
   p->b.ops = &http_client_state_operations;
-  p->b.id = state->client_id++;
+  //p->b.id = state->client_id++;
+  p->b.id = metrics.data->client_serial++;
   p->b.fd = fd;
   p->client_fds[0] = -1;
   p->client_fds[1] = -1;
@@ -216,7 +218,8 @@ ws_client_state_new(
   }
 
   p->b.ops = &ws_client_state_operations;
-  p->b.id = state->client_id++;
+  //p->b.id = state->client_id++;
+  p->b.id = metrics.data->client_serial++;
   p->b.fd = fd;
   p->state = WS_STATE_INITIAL;
   if (remote_addr) p->remote_addr = xstrdup(remote_addr);
@@ -1560,6 +1563,7 @@ nsf_main_loop(struct server_framework_state *state)
     struct timeval tv;
     gettimeofday(&tv, NULL);
     current_time_us = tv.tv_sec * 1000000LL + tv.tv_usec;
+    metrics.data->update_time = tv;
 
     // new WebSocket connections
     if (state->ws_fd >= 0 && FD_ISSET(state->ws_fd, &rset)) {
@@ -1851,7 +1855,7 @@ nsf_init(
   XCALLOC(state, 1);
   state->params = params;
   state->user_data = data;
-  state->client_id = 1;
+  //state->client_id = 1;
   state->server_start_time = server_start_time;
   return state;
 }

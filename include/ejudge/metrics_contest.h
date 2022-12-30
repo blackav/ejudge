@@ -16,4 +16,27 @@
  * GNU General Public License for more details.
  */
 
+#include <stdint.h>
+#include <sys/time.h>
+
+struct metrics_contest_data
+{
+    uint32_t size; // this struct size
+    unsigned char pad0[12];
+    struct timeval start_time;
+    struct timeval update_time;
+    long long client_serial;
+};
+
+struct metrics_desc
+{
+    unsigned char *path;
+    struct metrics_contest_data *data;
+};
+
+extern struct metrics_desc metrics;
+
+struct ejudge_cfg;
+int setup_metrics_file(struct ejudge_cfg *config);
+
 #endif /* __METRICS_CONTEST_H__ */
