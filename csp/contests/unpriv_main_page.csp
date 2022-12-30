@@ -50,7 +50,7 @@ ns_unparse_answers(
   int first_prob_id, last_prob_id;
   int accepting_mode = 0;
   const unsigned char *cc = 0;
-  int last_answer = -1, last_lang_id, skip_start_form = 0;
+  int last_answer = -1, last_lang_id = 0, skip_start_form = 0;
   unsigned char *last_source = 0;
   int upper_tab_id = 0, next_prob_id;
   problem_xml_t px;
