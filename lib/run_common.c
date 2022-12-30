@@ -4182,10 +4182,12 @@ check_output_only(
         const struct super_run_in_global_packet *srgp,
         const struct super_run_in_problem_packet *srpp,
         struct run_reply_packet *reply_pkt,
+        struct AgentClient *agent,
         full_archive_t far,
         const unsigned char *exe_name,
         struct testinfo_vector *tests,
-        const unsigned char *check_cmd)
+        const unsigned char *check_cmd,
+        const unsigned char *mirror_dir)
 {
   int cur_test = 1;
   struct testinfo *cur_info = NULL;
@@ -4225,6 +4227,12 @@ check_output_only(
   if (srpp->corr_pat && srpp->corr_pat[0]) {
     snprintf(corr_base, sizeof(corr_base), srpp->corr_pat, cur_test);
     snprintf(corr_src, sizeof(corr_src), "%s/%s", srpp->corr_dir, corr_base);
+  }
+  if (test_src[0]) {
+    mirror_file(agent, test_src, sizeof(test_src), mirror_dir);
+  }
+  if (srpp->use_corr > 0 && corr_src[0]) {
+    mirror_file(agent, corr_src, sizeof(corr_src), mirror_dir);
   }
 
   snprintf(check_out_path, sizeof(check_out_path), "%s/checkout_%d.txt",
@@ -4612,7 +4620,10 @@ run_tests(
   }
 
   if (srpp->type_val) {
-    status = check_output_only(global, srgp, srpp, reply_pkt, far, exe_name, &tests, check_cmd);
+    status = check_output_only(global, srgp, srpp, reply_pkt,
+                               agent,
+                               far, exe_name, &tests, check_cmd,
+                               mirror_dir);
     has_user_score = reply_pkt->has_user_score;
     if (has_user_score) {
       user_status = reply_pkt->user_status;
