@@ -2846,6 +2846,9 @@ run_one_test(
     snprintf(corr_base, sizeof(corr_base), srpp->corr_pat, cur_test);
     snprintf(corr_src, sizeof(corr_src), "%s/%s", srpp->corr_dir, corr_base);
   }
+  if (srpp->use_corr > 0 && corr_src[0]) {
+    mirror_file(agent, corr_src, sizeof(corr_src), mirror_dir);
+  }
   info_base[0] = 0;
   info_src[0] = 0;
   if (srpp->use_info > 0) {
@@ -3901,9 +3904,6 @@ run_checker:;
 
   file_size = -1;
   if (srpp->use_corr > 0) {
-    if (corr_src[0]) {
-      mirror_file(agent, corr_src, sizeof(corr_src), mirror_dir);
-    }
     if (srgp->enable_full_archive > 0) {
       filehash_get(corr_src, cur_info->correct_digest);
       cur_info->has_correct_digest = 1;
