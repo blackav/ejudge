@@ -1806,6 +1806,15 @@ main(int argc, char *argv[])
     int argi = 1;
     int verbose_mode = 0;
 
+    {
+        char *s = strrchr(argv[0], '/');
+        if (s) {
+            program_name = s + 1;
+        } else {
+            program_name = argv[0];
+        }
+    }
+
     signal(SIGPIPE, SIG_IGN);
 
     while (argi < argc) {
