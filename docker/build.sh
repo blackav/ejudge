@@ -4,7 +4,11 @@ set -ex
 
 dnf -y update && dnf -y install mongo-c-driver-devel libbson-devel httpd httpd-devel httpd-tools net-tools wget tar bzip2 p7zip fuse-devel openvpn htop make gcc glibc-devel glibc-static bison flex gawk sed file zlib zlib-devel ncurses ncurses-devel expat expat-devel gettext gettext-devel libzip libzip-devel libcurl libcurl-devel libuuid libuuid-devel openssl openssl-devel git tmux bc vim screen wget ncftp mc fuse-sshfs patch kernel-tools kernel-devel gcc strace subversion gdb valgrind gcc-c++ libstdc++-static python python3 gcc-gfortran libgfortran-static gcc-go libgo-static nasm libstdc++-devel glibc-devel.i686 glibc-static.i686 libstdc++-devel.i686 libstdc++-static.i686 libtool autoconf automake clang clang-devel clang-libs php python2 pypy pypy3 ruby rust scala nodejs swift-lang golang mariadb-connector-c-devel mariadb-server-utils mariadb-common mariadb-errmsg glibc-locale-source
 
+set +e
+
 localedef -v -c -i ru_RU -f UTF-8 ru_RU.UTF-8
+
+set -e
 
 adduser -c 'ejudge user' -s /bin/bash ejudge
 adduser -c 'ejudge executor' -d / -M -s /sbin/nologin ejexec
