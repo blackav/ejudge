@@ -1,6 +1,3 @@
 #! /bin/bash
 
-while :
-do
-    sleep 1
-done
+/usr/sbin/httpd -DFOREGROUND
