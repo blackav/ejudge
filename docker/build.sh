@@ -14,23 +14,7 @@ adduser -c 'ejudge user' -s /bin/bash ejudge
 adduser -c 'ejudge executor' -d / -M -s /sbin/nologin ejexec
 adduser -c 'ejudge compiler' -d /home/judges/compile -M -s /sbin/nologin ejcompile
 
- # mkdir /opt/ejudge
- # chown user:user /opt/ejudge
- # mkdir /home/judges
- # chown ejudge:ejudge /home/judges
- # mkdir /home/ej-compile-spool
- # chown ejudge:ejcompile /home/ej-compile-spool
- # chmod 6775 /home/ej-compile-spool
- # mkdir /home/ej-run-spool
- # chown ejudge:ejudge /home/ej-run-spool
- # chmod 755 /home/ej-run-spool
- # mkdir /var/lib/ejudge
- # chown ejudge:ejudge /var/lib/ejudge
- # mkdir /var/log/ejudge
- # chown ejudge:ejudge /var/log/ejudge
- # cd /home/judges; ln -s /var/log/ejudge var
-
 ./configure --prefix=/opt/ejudge --enable-charset=utf-8 --with-httpd-cgi-bin-dir=/var/www/cgi-bin --with-httpd-htdocs-dir=/var/www/html --enable-ajax --enable-local-dir=/var/lib/ejudge --enable-hidden-server-bins --with-primary-user=ejudge --with-exec-user=ejexec --with-compile-user=ejcompile --enable-compile-spool-dir --enable-run-spool-dir --enable-contests-status-dir && ulimit -n 65536 && make RELEASE=1 && make RELEASE=1 install && /opt/ejudge/bin/ejudge-suid-setup && /opt/ejudge/bin/ejudge-upgrade-web
 
-./ejudge-setup -b
+./ejudge-setup -u ejudge -g ejudge -b
 cp -p ejudge-install.sh /opt/ejudge/bin
