@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2002-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -12040,6 +12040,16 @@ convert_database(const unsigned char *from_name, const unsigned char *to_name)
     err("plugin %s failed to open its connection", to_plugin->iface->b.name);
     return 1;
   }
+  int v = ((struct uldb_plugin_iface*)to_plugin->iface)->check(to_plugin->data);
+  if (v < 0) {
+    err("plugin %s database is invalid",to_plugin->iface->b.name);
+    return 1;
+  }
+  if (v > 0) {
+    info("plugin %s database already created",to_plugin->iface->b.name);
+    return 0;
+  }
+
   if (((struct uldb_plugin_iface*)to_plugin->iface)->create(to_plugin->data) < 0) {
     err("plugin %s failed to create a new database",to_plugin->iface->b.name);
     return 1;
