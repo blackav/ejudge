@@ -1,6 +1,6 @@
 /* -*- mode:c -*- */
 
-/* Copyright (C) 2004-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1447,13 +1447,39 @@ initialize_mysql_vars(
   return;
 #endif
 
+  const char *s = NULL;
+
   config_mysql_enable_for_users = 1;
   config_mysql_enable_for_contests = 1;
-  if (!mysql_database || !*mysql_database) mysql_database = "ejudge";
+
+  if (!mysql_database || !*mysql_database) {
+    if ((s = getenv("EJUDGE_MYSQL_DATABASE"))) {
+      mysql_database = s;
+    }
+  }
+  if (!mysql_database || !*mysql_database) {
+    mysql_database = "ejudge";
+  }
   snprintf(config_mysql_database, sizeof(config_mysql_database), "%s", mysql_database);
-  if (!mysql_user || !*mysql_user) mysql_user = "ejudge";
+
+  if (!mysql_user || !*mysql_user) {
+    if ((s = getenv("EJUDGE_MYSQL_USER"))) {
+      mysql_user = s;
+    }
+  }
+  if (!mysql_user || !*mysql_user) {
+    mysql_user = "ejudge";
+  }
   snprintf(config_mysql_user, sizeof(config_mysql_user), "%s", mysql_user);
-  if (!mysql_password || !*mysql_password) mysql_password = "ejudge";
+
+  if (!mysql_password || !*mysql_password) {
+    if ((s = getenv("EJUDGE_MYSQL_PASSWORD"))) {
+      mysql_password = s;
+    }
+  }
+  if (!mysql_password || !*mysql_password) {
+    mysql_password = "ejudge";
+  }
   snprintf(config_mysql_password, sizeof(config_mysql_password), "%s", mysql_password);
 }
 
