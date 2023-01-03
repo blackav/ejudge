@@ -4479,20 +4479,32 @@ save_install_script(int batch_mode, const unsigned char *output_name)
   }
 
   if ((fd = open(filepath, O_WRONLY | O_CREAT | O_TRUNC, 0770)) < 0) {
-    ncurses_errbox("\\begin{center}\nERROR!\n\nCannot create %s: %s!\n\\end{center}\n", filepath, os_ErrorString());
+    if (batch_mode) {
+      fprintf(stderr, "Cannot create %s: %s\n", filepath, os_ErrorString());
+    } else {
+      ncurses_errbox("\\begin{center}\nERROR!\n\nCannot create %s: %s!\n\\end{center}\n", filepath, os_ErrorString());
+    }
     goto cleanup;
   }
   r = txt_len; p = txt_ptr;
   while (r > 0) {
     if ((w = write(fd, p, r)) <= 0) {
-      ncurses_errbox("\\begin{center}\nERROR!\n\nWrite error on %s: %s!\n\\end{center}\n", filepath, os_ErrorString());
+      if (batch_mode) {
+        fprintf(stderr, "Write error on %s: %s!", filepath, os_ErrorString());
+      } else {
+        ncurses_errbox("\\begin{center}\nERROR!\n\nWrite error on %s: %s!\n\\end{center}\n", filepath, os_ErrorString());
+      }
       unlink(filepath);
       goto cleanup;
     }
     p += w, r -= w;
   }
   if (close(fd) < 0) {
-    ncurses_errbox("\\begin{center}\nERROR!\n\nWrite error on %s: %s!\n\\end{center}\n", filepath, os_ErrorString());
+    if (batch_mode) {
+      fprintf(stderr, "Write error on %s: %s!\n", filepath, os_ErrorString());
+    } else {
+      ncurses_errbox("\\begin{center}\nERROR!\n\nWrite error on %s: %s!\n\\end{center}\n", filepath, os_ErrorString());
+    }
     unlink(filepath);
     goto cleanup;
   }
