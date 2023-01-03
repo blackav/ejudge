@@ -35,4 +35,9 @@ then
     chown ejudge:ejudge /var/log/ejudge
 fi
 
+if [ ! -d /home/judges/data ]
+then
+    /opt/ejudge/bin/ejudge-install.sh
+fi
+
 /usr/sbin/httpd -DFOREGROUND
