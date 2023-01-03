@@ -138,6 +138,8 @@ static int config_mysql_enable_for_contests;
 static unsigned char config_mysql_database[256];
 static unsigned char config_mysql_user[256];
 static unsigned char config_mysql_password[256];
+static unsigned char config_mysql_host[256];
+static unsigned char config_mysql_port[256];
 
 static int system_uid;
 static int system_gid;
@@ -1441,7 +1443,9 @@ static void
 initialize_mysql_vars(
         const unsigned char *mysql_database,
         const unsigned char *mysql_user,
-        const unsigned char *mysql_password)
+        const unsigned char *mysql_password,
+        const unsigned char *mysql_host,
+        const unsigned char *mysql_port)
 {
 #if CONF_HAS_MYSQL - 0 == 0
   return;
@@ -1481,6 +1485,24 @@ initialize_mysql_vars(
     mysql_password = "ejudge";
   }
   snprintf(config_mysql_password, sizeof(config_mysql_password), "%s", mysql_password);
+
+  if (!mysql_host || !*mysql_host) {
+    if ((s = getenv("EJUDGE_MYSQL_HOST"))) {
+      mysql_password = s;
+    }
+  }
+  if (mysql_host && *mysql_host) {
+    snprintf(config_mysql_host, sizeof(config_mysql_host), "%s", mysql_host);
+  }
+
+  if (!mysql_port || !*mysql_port) {
+    if ((s = getenv("EJUDGE_MYSQL_PORT"))) {
+      mysql_password = s;
+    }
+  }
+  if (mysql_port && *mysql_port) {
+    snprintf(config_mysql_port, sizeof(config_mysql_port), "%s", mysql_port);
+  }
 }
 
 static int
@@ -3420,6 +3442,16 @@ generate_ejudge_xml(FILE *f)
             "mysql");
     fprintf(f, "  <default_rundb_plugin>%s</default_rundb_plugin>\n",
             "mysql");
+    fprintf(f, "  <default_xuser_plugin>%s</default_xuser_plugin>\n",
+            "mysql");
+    fprintf(f, "  <default_status_plugin>%s</default_status_plugin>\n",
+            "mysql");
+    fprintf(f, "  <default_variant_plugin>%s</default_variant_plugin>\n",
+            "mysql");
+    fprintf(f, "  <default_avatar_plugin>%s</default_avatar_plugin>\n",
+            "mysql");
+    fprintf(f, "  <default_variant_plugin>%s</default_variant_plugin>\n",
+            "mysql");
   }
 
   // plugin configurations
@@ -3443,11 +3475,18 @@ generate_ejudge_xml(FILE *f)
             "    <plugin type=\"common\" name=\"mysql\" load=\"yes\">\n"
             "      <config>\n"
             "        <password_file>%s</password_file>\n"
-            "        <database>%s</database>\n"
-            "      </config>\n"
-            "    </plugin>\n",
+            "        <database>%s</database>\n",
             MYSQL_PASSWORD_FILE_NAME,
             config_mysql_database);
+    if (config_mysql_host[0]) {
+      fprintf(f, "        <host>%s</host>\n", config_mysql_host);
+    }
+    if (config_mysql_port[0]) {
+      fprintf(f, "        <port>%s</port>\n", config_mysql_port);
+    }
+    fprintf(f,
+            "      </config>\n"
+            "    </plugin>\n");
   }
   if (config_mysql_enable_for_users > 0) {
     fprintf(f,
@@ -3462,6 +3501,67 @@ generate_ejudge_xml(FILE *f)
             "    </plugin>\n"
             "    <plugin type=\"rldb\" name=\"mysql\" load=\"yes\">\n"
             "      <config/>\n"
+            "    </plugin>\n");
+    fprintf(f,
+            "    <plugin type=\"status\" name=\"mysql\" load=\"yes\">\n"
+            "      <config/>\n"
+            "    </plugin>\n");
+    fprintf(f,
+            "    <plugin type=\"xuser\" name=\"mysql\" load=\"yes\">\n"
+            "      <config/>\n"
+            "    </plugin>\n");
+    fprintf(f,
+            "    <plugin type=\"avatar\" name=\"mysql\" load=\"yes\">\n"
+            "      <config/>\n"
+            "    </plugin>\n");
+    fprintf(f,
+            "    <plugin type=\"storage\" name=\"mysql\" load=\"yes\">\n"
+            "      <config/>\n"
+            "    </plugin>\n");
+    fprintf(f,
+            "    <plugin type=\"submit\" name=\"mysql\" load=\"yes\">\n"
+            "      <config/>\n"
+            "    </plugin>\n");
+    fprintf(f,
+            "    <plugin type=\"variant\" name=\"mysql\" load=\"yes\">\n"
+            "      <config/>\n"
+            "    </plugin>\n");
+    fprintf(f,
+            "    <plugin type=\"sn\" name=\"telegram\" load=\"yes\">\n"
+            "      <config>\n"
+            "        <bots>\n"
+            "          <bot>TELEGRAM-BOT-SECRET-HERE</bot>\n"
+            "        </bots>\n"
+            "      </config>\n"
+            "    </plugin>\n");
+    fprintf(f,
+            "    <plugin type=\"auth\" name=\"base\" load=\"yes\">\n"
+            "      <config>\n"
+            "      </config>\n"
+            "    </plugin>\n");
+    fprintf(f,
+            "    <plugin type=\"auth\" name=\"google\" load=\"yes\">\n"
+            "      <config>\n"
+            "        <client_id></client_id>\n"
+            "        <client_secret></client_secret>\n"
+            "        <redirect_url></redirect_url>\n"
+            "      </config>\n"
+            "    </plugin>\n");
+    fprintf(f,
+            "    <plugin type=\"auth\" name=\"yandex\" load=\"yes\">\n"
+            "      <config>\n"
+            "        <client_id></client_id>\n"
+            "        <client_secret></client_secret>\n"
+            "        <redirect_url></redirect_url>\n"
+            "      </config>\n"
+            "    </plugin>\n");
+    fprintf(f,
+            "    <plugin type=\"auth\" name=\"vk\" load=\"yes\">\n"
+            "      <config>\n"
+            "        <client_id></client_id>\n"
+            "        <client_secret></client_secret>\n"
+            "        <redirect_url></redirect_url>\n"
+            "      </config>\n"
             "    </plugin>\n");
   }
   fprintf(f, "  </plugins>\n\n");
@@ -4652,7 +4752,7 @@ main(int argc, char **argv)
            EJUDGE_SERVER_BIN_PATH);
   initialize_config_vars();
   initialize_setting_vars();
-  initialize_mysql_vars(NULL, NULL, NULL);
+  initialize_mysql_vars(NULL, NULL, NULL, NULL, NULL);
 
   if (batch_mode) {
     snprintf(config_user_id, sizeof(config_user_id), "%d", 1);
