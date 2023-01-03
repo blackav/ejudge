@@ -800,7 +800,8 @@ reconfigure_all_languages(
         unsigned char **keys,
         unsigned char **values,
         FILE *log_f,
-        WINDOW *win)
+        WINDOW *win,
+        int batch_mode)
 {
   path_t langbase;
   DIR *d = 0;
@@ -887,7 +888,7 @@ lang_configure_screen(
 
   reconfigure_all_languages(script_dir, script_in_dirs, config_dir,
                             working_dir, compile_home_dir, extra_lang_ids_file,
-                            keys, values, 0, in_win);
+                            keys, values, 0, in_win, batch_mode);
 
   if (!batch_mode) {
     ncurses_print_help("Press any key");
@@ -915,7 +916,7 @@ lang_configure_batch(
 {
   reconfigure_all_languages(script_dir, script_in_dirs, config_dir,
                             working_dir, compile_home_dir, extra_lang_ids_file,
-                            keys, values, log_f, 0);
+                            keys, values, log_f, 0, 0);
 }
 
 static int
