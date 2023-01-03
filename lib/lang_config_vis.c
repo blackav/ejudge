@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2008-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -861,27 +861,29 @@ lang_configure_screen(
   if (lang_configured) return;
   lang_configured = 1;
 
-  out_win = newwin(LINES - 2, COLS, 1, 0);
-  in_win = newwin(LINES - 4, COLS - 2, 2, 1);
-  scrollok(in_win, TRUE);
-  idlok(in_win, TRUE);
-  wattrset(out_win, COLOR_PAIR(1));
-  wbkgdset(out_win, COLOR_PAIR(1));
-  wattrset(in_win, COLOR_PAIR(1));
-  wbkgdset(in_win, COLOR_PAIR(1));
-  wclear(in_win);
-  wclear(out_win);
-  box(out_win, 0, 0);
-  out_pan = new_panel(out_win);
-  in_pan = new_panel(in_win);
+  if (!batch_mode) {
+    out_win = newwin(LINES - 2, COLS, 1, 0);
+    in_win = newwin(LINES - 4, COLS - 2, 2, 1);
+    scrollok(in_win, TRUE);
+    idlok(in_win, TRUE);
+    wattrset(out_win, COLOR_PAIR(1));
+    wbkgdset(out_win, COLOR_PAIR(1));
+    wattrset(in_win, COLOR_PAIR(1));
+    wbkgdset(in_win, COLOR_PAIR(1));
+    wclear(in_win);
+    wclear(out_win);
+    box(out_win, 0, 0);
+    out_pan = new_panel(out_win);
+    in_pan = new_panel(in_win);
 
-  mvwprintw(stdscr, 0, 0, "%s > Compiler auto-configuration", header);
-  wclrtoeol(stdscr);
-  ncurses_print_help("");
-  show_panel(out_pan);
-  show_panel(in_pan);
-  update_panels();
-  doupdate();
+    mvwprintw(stdscr, 0, 0, "%s > Compiler auto-configuration", header);
+    wclrtoeol(stdscr);
+    ncurses_print_help("");
+    show_panel(out_pan);
+    show_panel(in_pan);
+    update_panels();
+    doupdate();
+  }
 
   reconfigure_all_languages(script_dir, script_in_dirs, config_dir,
                             working_dir, compile_home_dir, extra_lang_ids_file,
