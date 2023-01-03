@@ -633,7 +633,8 @@ reconfigure_language(
         unsigned char **keys,
         unsigned char **values,
         FILE *log_f,
-        WINDOW *win)
+        WINDOW *win,
+        int batch_mode)
 {
   path_t fullpath, cfgpath;
   struct lang_config_info *p = 0;
@@ -741,6 +742,9 @@ reconfigure_language(
           update_panels();
           doupdate();
         }
+        if (batch_mode) {
+          printf("%.*s", r, buf);
+        }
         if (log_f) {
           fprintf(log_f, "%.*s", r, buf);
         }
@@ -820,7 +824,7 @@ reconfigure_all_languages(
     if (strcmp(dd->d_name + len - 8, "-version") != 0) continue;
     snprintf(langbase, sizeof(langbase), "%.*s", len - 8, dd->d_name);
     reconfigure_language(langbase, script_dir, config_dir, working_dir, keys,
-                         values, log_f, win);
+                         values, log_f, win, batch_mode);
   }
   closedir(d); d = 0;
 
@@ -1085,7 +1089,7 @@ lang_config_menu(
       xfree(langs[i]->config_arg); langs[i]->config_arg = 0;
       if (buf[0]) langs[i]->config_arg = xstrdup(buf);
       reconfigure_language(langs[i]->lang, script_dir, 0,
-                           working_dir, 0, 0, 0, 0);
+                           working_dir, 0, 0, 0, 0, 0);
       cur_item = i;
       ret_val = 1;
       break;
@@ -1101,7 +1105,7 @@ lang_config_menu(
       xfree(langs[i]->config_arg); langs[i]->config_arg = 0;
       if (buf[0]) langs[i]->config_arg = xstrdup(buf);
       reconfigure_language(langs[i]->lang, script_dir, 0,
-                           working_dir, 0, 0, 0, 0);
+                           working_dir, 0, 0, 0, 0, 0);
       cur_item = i;
       ret_val = 1;
       break;
