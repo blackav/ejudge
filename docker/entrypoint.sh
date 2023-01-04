@@ -1,8 +1,5 @@
 #! /bin/bash
 
- # mkdir /opt/ejudge
- # chown user:user /opt/ejudge
-
 if [ ! -d /home/judges ]
 then
     mkdir -p /home/judges
@@ -60,6 +57,7 @@ then
         chmod 600 "${SECRETFILE}"
     fi
     /opt/ejudge/bin/ejudge-install.sh
+    /opt/ejudge/bin/ejudge-configure-compilers --batch
 fi
 
 if [ "${EJUDGE_MYSQL_USER}" != "" ]
@@ -78,5 +76,8 @@ unset EJUDGE_MYSQL_PASSWORD
 unset EJUDGE_MYSQL_DATABASE
 unset EJUDGE_MYSQL_HOST
 unset EJUDGE_MYSQL_PORT
+
+PATH=/opt/ejudge/bin:$PATH
+/opt/ejudge/bin/ejudge-control -u ejudge -g ejudge start
 
 /usr/sbin/httpd -DFOREGROUND
