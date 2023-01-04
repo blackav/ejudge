@@ -10,7 +10,7 @@ if [ ! -d /home/ej-compile-spool ]
 then
     mkdir -p /home/ej-compile-spool
     chown ejudge:ejcompile /home/ej-compile-spool
-    chmod 755 /home/ej-compile-spool
+    chmod 775 /home/ej-compile-spool
 fi
 
 if [ ! -d /home/ej-run-spool ]
@@ -58,6 +58,10 @@ then
     fi
     /opt/ejudge/bin/ejudge-install.sh
     /opt/ejudge/bin/ejudge-configure-compilers --batch
+    chown ejudge:ejcompile /home/ej-compile-spool
+    chmod 775 /home/ej-compile-spool
+    chown ejudge:ejcompile /home/judges/var/ej-compile.log
+    chmod 660 /home/judges/var/ej-compile.log
 fi
 
 if [ "${EJUDGE_MYSQL_USER}" != "" ]

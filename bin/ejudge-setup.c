@@ -3525,6 +3525,7 @@ generate_ejudge_xml(FILE *f)
             "    <plugin type=\"variant\" name=\"mysql\" load=\"yes\">\n"
             "      <config/>\n"
             "    </plugin>\n");
+    /*
     fprintf(f,
             "    <plugin type=\"sn\" name=\"telegram\" load=\"yes\">\n"
             "      <config>\n"
@@ -3562,6 +3563,7 @@ generate_ejudge_xml(FILE *f)
             "        <redirect_url></redirect_url>\n"
             "      </config>\n"
             "    </plugin>\n");
+    */
   }
   fprintf(f, "  </plugins>\n\n");
 
