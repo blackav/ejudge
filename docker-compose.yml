@@ -1,0 +1,38 @@
+version: "3.8"
+
+services:
+  mariadb:
+    restart: always
+    image: "mariadb"
+    container_name: "mariadb"
+    ports:
+      - "127.0.0.1:3307:3306"
+    environment:
+      - MARIADB_ROOT_PASSWORD=blabla
+      - MARIADB_DATABASE=ejudge
+      - MARIADB_USER=ejudge
+      - MARIADB_PASSWORD=blabla
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  ejudge:
+    build:
+      context: .
+    restart: always
+    image: "ejudge:latest"
+    container_name: "ejudge"
+    ports:
+      - "127.0.0.1:90:80"
+    environment:
+      - EJUDGE_MYSQL_USER=ejudge
+      - EJUDGE_MYSQL_PASSWORD=blabla
+      - EJUDGE_MYSQL_DATABASE=ejudge
+      - EJUDGE_MYSQL_HOST=mariadb
+    volumes:
+      - ejudge_data:/home/judges
+    depends_on:
+      - mariadb
+
+volumes:
+  mysql_data:
+  ejudge_data:
