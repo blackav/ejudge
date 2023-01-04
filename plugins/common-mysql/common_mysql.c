@@ -327,14 +327,16 @@ parse_passwd_file(
           }
           while (len > 0 && isspace(bport[--len])) {}
           bport[++len] = 0;
-          errno = 0;
-          char *eptr = NULL;
-          long v = strtol(bport, &eptr, 10);
-          if (errno || *eptr || (char*) bport == eptr || v < 0 || v >= 65536) {
-            err("%s: invalid port value in %s", fname, path);
-            goto cleanup;
+          if (bport[0]) {
+            errno = 0;
+            char *eptr = NULL;
+            long v = strtol(bport, &eptr, 10);
+            if (errno || *eptr || (char*) bport == eptr || v < 0 || v >= 65536) {
+              err("%s: invalid port value in %s", fname, path);
+              goto cleanup;
+            }
+            vport = v;
           }
-          vport = v;
         }
       }
     }
