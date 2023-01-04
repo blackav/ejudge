@@ -4382,12 +4382,10 @@ generate_install_script(FILE *f, int batch_install_script)
                 EJUDGE_SERVER_BIN_PATH, config_system_uid, config_system_gid);
   }
 
-  /*
   fprintf(f, "# Do probe run of the compile server to create dirs\n");
   gen_cmd_run(f, "%s/ej-compile -u %s -g %s -C \"%s\" -i conf/compile.cfg",
               EJUDGE_SERVER_BIN_PATH, config_system_uid, config_system_gid,
               config_compile_home_dir);
-  */
   /*
   fprintf(f, "# Do probe run of the contest server to create dirs\n");
   gen_cmd_run(f, "%s -u %s -g %s -C \"%s\" -i conf/serve.cfg",

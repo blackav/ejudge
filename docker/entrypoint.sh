@@ -77,6 +77,8 @@ unset EJUDGE_MYSQL_DATABASE
 unset EJUDGE_MYSQL_HOST
 unset EJUDGE_MYSQL_PORT
 
+ulimit -n 1024
+
 PATH=/opt/ejudge/bin:$PATH
 /opt/ejudge/bin/ejudge-control -u ejudge -g ejudge start
 
