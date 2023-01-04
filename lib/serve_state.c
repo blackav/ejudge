@@ -65,7 +65,9 @@ serve_state_init(int contest_id)
   state->teamdb_state = teamdb_init(contest_id);
   state->runlog_state = run_init(state->teamdb_state);
 
-  ++metrics.data->loaded_contests;
+  if (metrics.data) {
+    ++metrics.data->loaded_contests;
+  }
 
   return state;
 }
@@ -253,7 +255,9 @@ serve_state_destroy(
     xfree(state->compiler_options);
   }
 
-  --metrics.data->loaded_contests;
+  if (members.data) {
+    --metrics.data->loaded_contests;
+  }
 
   memset(state, 0, sizeof(*state));
   xfree(state);
