@@ -255,7 +255,7 @@ serve_state_destroy(
     xfree(state->compiler_options);
   }
 
-  if (members.data) {
+  if (metrics.data) {
     --metrics.data->loaded_contests;
   }
 
