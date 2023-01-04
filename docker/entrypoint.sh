@@ -60,6 +60,7 @@ then
     /opt/ejudge/bin/ejudge-configure-compilers --batch
     chown ejudge:ejcompile /home/ej-compile-spool
     chmod 775 /home/ej-compile-spool
+    touch /home/judges/var/ej-compile.log
     chown ejudge:ejcompile /home/judges/var/ej-compile.log
     chmod 660 /home/judges/var/ej-compile.log
 fi
