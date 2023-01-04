@@ -3450,8 +3450,6 @@ generate_ejudge_xml(FILE *f)
             "mysql");
     fprintf(f, "  <default_avatar_plugin>%s</default_avatar_plugin>\n",
             "mysql");
-    fprintf(f, "  <default_variant_plugin>%s</default_variant_plugin>\n",
-            "mysql");
   }
 
   // plugin configurations
