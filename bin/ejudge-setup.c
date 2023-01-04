@@ -4392,12 +4392,10 @@ generate_install_script(FILE *f, int batch_install_script)
               config_ejudge_serve_path, config_system_uid,
               config_system_gid, config_contest1_home_dir);
   */
-  /*
   fprintf(f, "# Create necessary files for `ej-contests'\n");
   gen_cmd_run(f, "%s/ej-contests -u %s -g %s -C \"%s\" --create",
               EJUDGE_SERVER_BIN_PATH, config_system_uid,
               config_system_gid, config_ejudge_contests_home_dir);
-  */
 }
 
 static void

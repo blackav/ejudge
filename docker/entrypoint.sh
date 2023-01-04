@@ -9,7 +9,7 @@ fi
 if [ ! -d /home/ej-compile-spool ]
 then
     mkdir -p /home/ej-compile-spool
-    chown ejudge:ejudge /home/ej-compile-spool
+    chown ejudge:ejcompile /home/ej-compile-spool
     chmod 755 /home/ej-compile-spool
 fi
 
