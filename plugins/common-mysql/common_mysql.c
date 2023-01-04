@@ -292,8 +292,8 @@ parse_passwd_file(
     err("%s: user is too long in %s", fname, path);
     goto cleanup;
   }
-  while (len > 0 && isspace(buser[--len]));
-  buser[++len] = 0;
+  while (len > 0 && isspace(buser[len - 1])) { --len; }
+  buser[len] = 0;
 
   if (!fgets(bpwd, sizeof(bpwd), f)) {
     err("%s: cannot read the password line from %s", fname, path);
@@ -303,30 +303,30 @@ parse_passwd_file(
     err("%s: password is too long in %s", fname, path);
     goto cleanup;
   }
-  while (len > 0 && isspace(bpwd[--len]));
-  bpwd[++len] = 0;
+  while (len > 0 && isspace(bpwd[len - 1])) { --len; }
+  bpwd[len] = 0;
   if (state->password_file_mode == 1) {
     if (fgets(bdatabase, sizeof(bdatabase), f)) {
       if ((len = strlen(bdatabase)) > sizeof(bdatabase) - 24) {
         err("%s: database is too long in %s", fname, path);
         goto cleanup;
       }
-      while (len > 0 && isspace(bdatabase[--len])) {}
-      bdatabase[++len] = 0;
+      while (len > 0 && isspace(bdatabase[len - 1])) { --len; }
+      bdatabase[len] = 0;
       if (fgets(bhost, sizeof(bhost), f)) {
         if ((len = strlen(bhost)) > sizeof(bhost) - 24) {
           err("%s: host is too long in %s", fname, path);
           goto cleanup;
         }
-        while (len > 0 && isspace(bhost[--len])) {}
-        bhost[++len] = 0;
+        while (len > 0 && isspace(bhost[len - 1])) { --len; }
+        bhost[len] = 0;
         if (fgets(bport, sizeof(bport), f)) {
           if ((len = strlen(bport)) > sizeof(bport) - 24) {
             err("%s: port is too long in %s", fname, path);
             goto cleanup;
           }
-          while (len > 0 && isspace(bport[--len])) {}
-          bport[++len] = 0;
+          while (len > 0 && isspace(bport[len - 1])) { --len; }
+          bport[len] = 0;
           if (bport[0]) {
             errno = 0;
             char *eptr = NULL;
