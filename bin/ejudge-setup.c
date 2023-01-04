@@ -3474,6 +3474,7 @@ generate_ejudge_xml(FILE *f)
     fprintf(f,
             "    <plugin type=\"common\" name=\"mysql\" load=\"yes\">\n"
             "      <config>\n"
+            "        <password_file_mode>1</password_file_mode>\n"
             "        <password_file>%s</password_file>\n"
             "        <database>%s</database>\n",
             MYSQL_PASSWORD_FILE_NAME,

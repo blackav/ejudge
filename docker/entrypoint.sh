@@ -35,9 +35,33 @@ then
     chown ejudge:ejudge /var/log/ejudge
 fi
 
+# EJUDGE_MYSQL_USER
+# EJUDGE_MYSQL_PASSWORD
+# EJUDGE_MYSQL_DATABASE
+# EJUDGE_MYSQL_HOST
+# EJUDGE_MYSQL_PORT
+SECRETFILE=/home/judges/data/mysql_password
+if ["${EJUDGE_MYSQL_USER}" != "" ]
+then
+    echo "${EJUDGE_MYSQL_USER}" > "${SECRETFILE}"
+    echo "${EJUDGE_MYSQL_PASSWORD}" >> "${SECRETFILE}"
+    echo "${EJUDGE_MYSQL_DATABASE}" >> "${SECRETFILE}"
+    echo "${EJUDGE_MYSQL_HOST}" >> "${SECRETFILE}"
+    echo "${EJUDGE_MYSQL_PORT}" >> "${SECRETFILE}"
+    chown ejudge:ejudge "${SECRETFILE}"
+    chmod 600 "${SECRETFILE}"
+fi
+
+unset EJUDGE_MYSQL_USER
+unset EJUDGE_MYSQL_PASSWORD
+unset EJUDGE_MYSQL_DATABASE
+unset EJUDGE_MYSQL_HOST
+unset EJUDGE_MYSQL_PORT
+
 if [ ! -d /home/judges/data ]
 then
     /opt/ejudge/bin/ejudge-install.sh
 fi
+
 
 /usr/sbin/httpd -DFOREGROUND
