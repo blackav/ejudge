@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -122,22 +122,46 @@ start_set_args(char *argv[])
   self_argv[0] = self_exe;
 }
 
+static int
+get_process_name(unsigned char *buf, size_t size, int pid)
+{
+  unsigned char path[PATH_MAX];
+  if (snprintf(path, sizeof(path), "/proc/%d/cmdline", pid) >= (int) sizeof(path)) {
+    return -1;
+  }
+  int fd = open(path, O_RDONLY, 0);
+  if (fd < 0) {
+    return -1;
+  }
+  unsigned char cmdbuf[PATH_MAX];
+  int r = read(fd, cmdbuf, sizeof(cmdbuf));
+  if (r < 0 || r == sizeof(cmdbuf)) {
+    close(fd);
+    return -1;
+  }
+  cmdbuf[r] = 0;
+  unsigned char *p = strrchr(cmdbuf, '/');
+  if (p) {
+    ++p;
+  } else {
+    p = cmdbuf;
+  }
+  r = snprintf(buf, size, "%s", p);
+  close(fd);
+  return r;
+}
+
 int
 start_find_process(const unsigned char *name, int *p_uid)
 {
   DIR *d = 0;
   struct dirent *dd;
   char *eptr;
-  int pid, nlen, mypid, dlen;
-  path_t fpath, xpath, dpath;
-  long llen;
+  int pid, mypid;
   int retval = -1;
+  unsigned char cmdname[PATH_MAX];
 
-  nlen = strlen(name);
   mypid = getpid();
-
-  snprintf(dpath, sizeof(dpath), "%s (deleted)", name);
-  dlen = strlen(dpath);
 
   if (!(d = opendir("/proc"))) goto cleanup;
   retval = 0;
@@ -146,20 +170,9 @@ start_find_process(const unsigned char *name, int *p_uid)
     pid = strtol(dd->d_name, &eptr, 10);
     if (errno || *eptr || eptr == dd->d_name || pid <= 0 || pid == mypid)
       continue;
-    snprintf(fpath, sizeof(fpath), "/proc/%d/exe", pid);
-    xpath[0] = 0;
-    llen = readlink(fpath, xpath, sizeof(xpath));
-    if (llen <= 0 || llen >= sizeof(xpath)) continue;
-    xpath[llen] = 0;
-    if (llen < nlen + 1) continue;
-    if (xpath[llen - nlen - 1] == '/' && !strcmp(xpath + llen - nlen, name)) {
-      retval = pid;
-      // FIXME: get the actual uid
-      if (p_uid) *p_uid = getuid();
-      goto cleanup;
-    }
-    if (llen < dlen + 1) continue;
-    if (xpath[llen - dlen - 1] == '/' && !strcmp(xpath + llen - dlen, dpath)) {
+    if (get_process_name(cmdname, sizeof(cmdname), pid) <= 0)
+      continue;
+    if (!strcmp(name, cmdname)) {
       retval = pid;
       // FIXME: get the actual uid
       if (p_uid) *p_uid = getuid();
@@ -179,17 +192,12 @@ start_find_all_processes(const unsigned char *name, int **p_pids)
   DIR *d = 0;
   struct dirent *dd;
   char *eptr;
-  int pid, nlen, mypid, dlen;
-  path_t fpath, xpath, dpath;
-  long llen;
+  int pid, mypid;
   int a = 0, u = 0;
   int *pids = NULL;
+  unsigned char cmdname[PATH_MAX];
 
-  nlen = strlen(name);
   mypid = getpid();
-
-  snprintf(dpath, sizeof(dpath), "%s (deleted)", name);
-  dlen = strlen(dpath);
 
   if (!(d = opendir("/proc"))) return -1;
   while ((dd = readdir(d))) {
@@ -197,21 +205,9 @@ start_find_all_processes(const unsigned char *name, int **p_pids)
     pid = strtol(dd->d_name, &eptr, 10);
     if (errno || *eptr || eptr == dd->d_name || pid <= 0 || pid == mypid)
       continue;
-    snprintf(fpath, sizeof(fpath), "/proc/%d/exe", pid);
-    xpath[0] = 0;
-    llen = readlink(fpath, xpath, sizeof(xpath));
-    if (llen <= 0 || llen >= sizeof(xpath)) continue;
-    xpath[llen] = 0;
-    if (llen < nlen + 1) continue;
-    if (xpath[llen - nlen - 1] == '/' && !strcmp(xpath + llen - nlen, name)) {
-      if (u >= a) {
-        if (!a) a = 4;
-        XREALLOC(pids, a);
-      }
-      pids[u++] = pid;
-    }
-    if (llen < dlen + 1) continue;
-    if (xpath[llen - dlen - 1] == '/' && !strcmp(xpath + llen - dlen, dpath)) {
+    if (get_process_name(cmdname, sizeof(cmdname), pid) <= 0)
+      continue;
+    if (!strcmp(name, cmdname)) {
       if (u >= a) {
         if (!a) a = 4;
         XREALLOC(pids, a);
