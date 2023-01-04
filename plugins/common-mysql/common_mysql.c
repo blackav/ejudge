@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2008-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -270,7 +270,15 @@ parse_passwd_file(
   const unsigned char *fname = __FUNCTION__;
   unsigned char buser[1024];
   unsigned char bpwd[1024];
+  unsigned char bdatabase[1024];
+  unsigned char bhost[1024];
+  unsigned char bport[1024];
+  int vport = 0;
   int len, c;
+
+  bdatabase[0] = 0;
+  bhost[0] = 0;
+  bport[0] = 0;
 
   if (!(f = fopen(path, "r"))) {
     err("%s: cannot open password file %s", fname, path);
@@ -297,6 +305,40 @@ parse_passwd_file(
   }
   while (len > 0 && isspace(bpwd[--len]));
   bpwd[++len] = 0;
+  if (state->password_file_mode == 1) {
+    if (fgets(bdatabase, sizeof(bdatabase), f)) {
+      if ((len = strlen(bdatabase)) > sizeof(bdatabase) - 24) {
+        err("%s: database is too long in %s", fname, path);
+        goto cleanup;
+      }
+      while (len > 0 && isspace(bdatabase[--len])) {}
+      bdatabase[++len] = 0;
+      if (fgets(bhost, sizeof(bhost), f)) {
+        if ((len = strlen(bhost)) > sizeof(bhost) - 24) {
+          err("%s: host is too long in %s", fname, path);
+          goto cleanup;
+        }
+        while (len > 0 && isspace(bhost[--len])) {}
+        bhost[++len] = 0;
+        if (fgets(bport, sizeof(bport), f)) {
+          if ((len = strlen(bport)) > sizeof(bport) - 24) {
+            err("%s: port is too long in %s", fname, path);
+            goto cleanup;
+          }
+          while (len > 0 && isspace(bport[--len])) {}
+          bport[++len] = 0;
+          errno = 0;
+          char *eptr = NULL;
+          long v = strtol(bport, &eptr, 10);
+          if (errno || *eptr || (char*) bport == eptr || v < 0 || v >= 65536) {
+            err("%s: invalid port value in %s", fname, path);
+            goto cleanup;
+          }
+          vport = v;
+        }
+      }
+    }
+  }
   while ((c = getc(f)) && isspace(c));
   if (c != EOF) {
     err("%s: garbage in %s", fname, path);
@@ -305,6 +347,15 @@ parse_passwd_file(
   fclose(f); f = 0;
   state->user = xstrdup(buser);
   state->password = xstrdup(bpwd);
+  if (bdatabase[0]) {
+    state->database = xstrdup(bdatabase);
+  }
+  if (bhost[0]) {
+    state->host = xstrdup(bhost);
+  }
+  if (vport > 0) {
+    state->port = vport;
+  }
 
   // debug
   //fprintf(stderr, "login: %s\npassword: %s\n", state->user, state->password);
@@ -368,6 +419,12 @@ prepare_func(
       if (state->port > 0) return xml_err_elem_redefined(p);
       if (xml_parse_int(NULL, "", p->line, p->column, p->text,
                         &state->port) < 0) return -1;
+    } else if (!strcmp(p->name[0], "password_file_mode")) {
+      if (p->first) return xml_err_attrs(p);
+      if (p->first_down) return xml_err_nested_elems(p);
+      if (state->port > 0) return xml_err_elem_redefined(p);
+      if (xml_parse_int(NULL, "", p->line, p->column, p->text,
+                        &state->password_file_mode) < 0) return -1;
     } else if (!strcmp(p->name[0], "charset")) {
       if (xml_leaf_elem(p, &state->charset, 1, 0) < 0) return -1;
     } else if (!strcmp(p->name[0], "collation")) {

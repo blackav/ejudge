@@ -3,7 +3,7 @@
 #ifndef __COMMON_MYSQL_H__
 #define __COMMON_MYSQL_H__
 
-/* Copyright (C) 2008-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -64,6 +64,8 @@ struct common_mysql_state
   int field_count;
 
   pthread_mutex_t m;
+
+  int password_file_mode;
 };
 
 #endif /* EJUDGE_SKIP_MYSQL */
