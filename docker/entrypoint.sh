@@ -41,7 +41,7 @@ fi
 # EJUDGE_MYSQL_HOST
 # EJUDGE_MYSQL_PORT
 SECRETFILE=/home/judges/data/mysql_password
-if ["${EJUDGE_MYSQL_USER}" != "" ]
+if [ "${EJUDGE_MYSQL_USER}" != "" ]
 then
     echo "${EJUDGE_MYSQL_USER}" > "${SECRETFILE}"
     echo "${EJUDGE_MYSQL_PASSWORD}" >> "${SECRETFILE}"
