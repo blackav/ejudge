@@ -30,7 +30,7 @@ cp docker/httpd.conf /etc/httpd/conf
 
 wget https://ejudge.ru/download/ejudge-container-fedora-36.tbz
 mv ejudge-container-fedora-36.tbz /opt/ejudge/share/ejudge
-tar -C /opt/ejudge/share/ejudge xf /opt/ejudge/share/ejudge/ejudge-container-fedora-36.tbz
+( cd /opt/ejudge/share/ejudge ; tar xf ejudge-container-fedora-36.tbz )
 rm /opt/ejudge/share/ejudge/ejudge-container-fedora-36.tbz
 cp -p /etc/passwd /opt/ejudge/share/ejudge/container/etc
 cp -p /etc/group /opt/ejudge/share/ejudge/container/etc
