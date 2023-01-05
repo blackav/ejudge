@@ -76,12 +76,28 @@ then
     chmod 600 "${SECRETFILE}"
 fi
 
+mysqlopts=""
+[ "${EJUDGE_MYSQL_USER}" != "" ] && mysqlopts="${mysqlopts} --user ${EJUDGE_MYSQL_USER}"
+[ "${EJUDGE_MYSQL_PASSWORD}" != "" ] && mysqlopts="${mysqlopts} --password=${EJUDGE_MYSQL_PASSWORD}"
+[ "${EJUDGE_MYSQL_DATABASE}" != "" ] && mysqlopts="${mysqlopts} -D ${EJUDGE_MYSQL_DATABASE}"
+[ "${EJUDGE_MYSQL_HOST}" != "" ] && mysqlopts="${mysqlopts} --host ${EJUDGE_MYSQL_HOST}"
+[ "${EJUDGE_MYSQL_PORT}" != "" ] && mysqlopts="${mysqlopts} --port ${EJUDGE_MYSQL_PORT}"
+
+echo 'show tables;' > cmd.sql
+while :
+do
+    mysql ${mysqlopts} < cmd.sql && break
+    sleep 1
+done
+rm cmd.sql
+
 unset EJUDGE_MYSQL_USER
 unset EJUDGE_MYSQL_PASSWORD
 unset EJUDGE_MYSQL_DATABASE
 unset EJUDGE_MYSQL_HOST
 unset EJUDGE_MYSQL_PORT
 
+ulimit -Hn 8192
 ulimit -n 1024
 
 PATH=/opt/ejudge/bin:$PATH
