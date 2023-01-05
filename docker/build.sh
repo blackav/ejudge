@@ -24,7 +24,7 @@ RELEASE='RELEASE=1'
 > ejudge-install.sh
 chmod 755 ejudge-install.sh
 chown ejudge:ejudge ejudge-install.sh
-./ejudge-setup -u ejudge -g ejudge -b -B -s
+./ejudge-setup -u ejudge -g ejudge -b -B
 cp -p ejudge-install.sh /opt/ejudge/bin
 cp docker/httpd.conf /etc/httpd/conf
 
