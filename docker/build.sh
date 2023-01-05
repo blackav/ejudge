@@ -24,6 +24,13 @@ RELEASE='RELEASE=1'
 > ejudge-install.sh
 chmod 755 ejudge-install.sh
 chown ejudge:ejudge ejudge-install.sh
-./ejudge-setup -u ejudge -g ejudge -b -B
+./ejudge-setup -u ejudge -g ejudge -b -B -s
 cp -p ejudge-install.sh /opt/ejudge/bin
 cp docker/httpd.conf /etc/httpd/conf
+
+wget https://ejudge.ru/download/ejudge-container-fedora-36.tbz
+mv ejudge-container-fedora-36.tbz /opt/ejudge/share/ejudge
+tar -C /opt/ejudge/share/ejudge xf /opt/ejudge/share/ejudge/ejudge-container-fedora-36.tbz
+rm /opt/ejudge/share/ejudge/ejudge-container-fedora-36.tbz
+cp -p /etc/passwd /opt/ejudge/share/ejudge/container/etc
+cp -p /etc/group /opt/ejudge/share/ejudge/container/etc
