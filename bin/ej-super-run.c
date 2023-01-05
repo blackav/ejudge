@@ -597,10 +597,10 @@ do_super_run_status_init(struct super_run_status *prs)
   if (public_hostname) prs->public_host_idx = super_run_status_add_str(prs, public_hostname);
   if (queue_name) prs->queue_idx = super_run_status_add_str(prs, queue_name);
   prs->ej_ver_idx = super_run_status_add_str(prs, compile_version);
-  if (agent_instance_id) {
-    prs->super_run_idx = super_run_status_add_str(prs, agent_instance_id);
-  } else if (super_run_id) {
+  if (super_run_id) {
     prs->super_run_idx = super_run_status_add_str(prs, super_run_id);
+  } else if (agent_instance_id) {
+    prs->super_run_idx = super_run_status_add_str(prs, agent_instance_id);
   }
   prs->super_run_pid = getpid();
   prs->stop_pending = pending_stop_flag;
