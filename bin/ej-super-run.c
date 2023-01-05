@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2012-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -597,7 +597,11 @@ do_super_run_status_init(struct super_run_status *prs)
   if (public_hostname) prs->public_host_idx = super_run_status_add_str(prs, public_hostname);
   if (queue_name) prs->queue_idx = super_run_status_add_str(prs, queue_name);
   prs->ej_ver_idx = super_run_status_add_str(prs, compile_version);
-  if (super_run_id) prs->super_run_idx = super_run_status_add_str(prs, super_run_id);
+  if (agent_instance_id) {
+    prs->super_run_idx = super_run_status_add_str(prs, agent_instance_id);
+  } else if (super_run_id) {
+    prs->super_run_idx = super_run_status_add_str(prs, super_run_id);
+  }
   prs->super_run_pid = getpid();
   prs->stop_pending = pending_stop_flag;
   prs->down_pending = pending_down_flag;
