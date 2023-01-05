@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -301,6 +301,8 @@ command_start(
                  "%s-run", instance_id);
         task_AddArg(tsk, "--instance-id");
         task_AddArg(tsk, tool_instance_id);
+        task_AddArg(tsk, "-hi");
+        task_AddArg(tsk, instance_id);
       }
       if (queue && *queue) {
         task_AddArg(tsk, "-p");
