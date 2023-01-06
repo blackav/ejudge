@@ -2305,6 +2305,12 @@ main(int argc, char *argv[])
                 }
             }
 
+            if (enable_compile_mode) {
+                setenv("USER", COMPILE_USER, 1);
+                setenv("LOGNAME", COMPILE_USER, 1);
+                setenv("HOME", compile_dir, 1);
+            }
+
             if (bash_mode) {
                 printf("child: %d, %d, %d\n", getpid(), getppid(), tidptr);
                 printf("init success, starting /bin/bash\n");
