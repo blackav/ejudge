@@ -686,7 +686,7 @@ reconfigure_fs(void)
                 if (enable_compile_mode) {
                     static const unsigned char * const subdirs[] =
                     {
-                        ".cache", ".dotnet", ".local", ".nuget", ".template", NULL,
+                        ".cache", ".dotnet", ".local", ".nuget", ".template", ".templateengine", NULL,
                     };
                     for (int di = 0; subdirs[di]; ++di) {
                         mount_tmpfs(compile_dir, subdirs[di],
