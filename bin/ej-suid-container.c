@@ -407,6 +407,31 @@ change_ownership(int user_id, int group_id, int from_user_id)
     safe_chown_rec(dir, user_id, group_id, from_user_id);
 }
 
+static void
+mount_tmpfs(
+        const unsigned char *dir,
+        const unsigned char *subdir,
+        int user,
+        int group)
+{
+    unsigned char path[PATH_MAX];
+    if (snprintf(path, sizeof(path), "%s/%s", dir, subdir) >= (int) sizeof(path)) {
+        ffatal("path %s/%s is too long", dir, subdir);
+    }
+    if (mkdir(path, 0700) < 0 && errno != EEXIST) {
+        ffatal("mkdir '%s' failed: %s", path, strerror(errno));
+    }
+    if (chown(path, user, group) < 0) {
+        ffatal("chown '%s' failed: %s", path, strerror(errno));
+    }
+    if (chmod(path, 0700) < 0) {
+        ffatal("chmod '%s' failed: %s", path, strerror(errno));
+    }
+    if (mount("tmpfs", path, "tmpfs", MS_NOSUID | MS_NODEV, "size=1024m,nr_inodes=1024") < 0) {
+        ffatal("mount '%s' failed: %s", path, strerror(errno));
+    }
+}
+
 struct MountInfo
 {
     char *src_path;
@@ -657,6 +682,16 @@ reconfigure_fs(void)
             if (preserve_compile) {
                 if ((r = mount(alt_path, compile_dir, NULL, MS_BIND, NULL)) < 0) {
                     ffatal("failed to mount %s to %s: %s", compile_dir, alt_path, strerror(errno));
+                }
+                if (enable_compile_mode) {
+                    static const unsigned char * const subdirs[] =
+                    {
+                        ".cache", ".dotnet", ".local", ".nuget", ".template", NULL,
+                    };
+                    for (int di = 0; subdirs[di]; ++di) {
+                        mount_tmpfs(compile_dir, subdirs[di],
+                                    compile_uid, compile_gid);
+                    }
                 }
             }
         } else {
