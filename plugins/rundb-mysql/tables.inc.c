@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2008-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -16,7 +16,7 @@
 
 static const char create_runs_query[] =
 "CREATE TABLE %sruns( "
-"        serial_id INT(18) NOT NULL PRIMARY KEY AUTO_INCREMENT, "
+"        serial_id BIGINT NOT NULL PRIMARY KEY AUTO_INCREMENT, "
 "        run_id INT UNSIGNED NOT NULL, "
 "        contest_id INT UNSIGNED NOT NULL, "
 "        size INT UNSIGNED NOT NULL DEFAULT 0, "

@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2008-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -196,7 +196,7 @@ do_create(struct rldb_mysql_state *state)
   if (mi->simple_fquery(md, create_userrunheaders_query, md->table_prefix) < 0)
     db_error_fail(md);
   if (mi->simple_fquery(md,
-                        "INSERT INTO %sconfig VALUES ('run_version', '21') ;",
+                        "INSERT INTO %sconfig VALUES ('run_version', '22') ;",
                         md->table_prefix) < 0)
     db_error_fail(md);
   return 0;
@@ -439,7 +439,14 @@ do_open(struct rldb_mysql_state *state)
       return -1;
     run_version = 21;
   }
-  if (run_version != 21) {
+  if (run_version == 21) {
+    if (mi->simple_fquery(md, "ALTER TABLE %sruns MODIFY COLUMN serial_id BIGINT NOT NULL PRIMARY KEY AUTO_INCREMENT ;", md->table_prefix) < 0)
+      return -1;
+    if (mi->simple_fquery(md, "UPDATE %sconfig SET config_val = '22' WHERE config_key = 'run_version' ;", md->table_prefix) < 0)
+      return -1;
+    run_version = 22;
+  }
+  if (run_version != 22) {
     err("run_version == %d is not supported", run_version);
     return -1;
   }
