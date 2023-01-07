@@ -440,6 +440,10 @@ do_open(struct rldb_mysql_state *state)
     run_version = 21;
   }
   if (run_version == 21) {
+    if (mi->simple_fquery(md, "ALTER TABLE %sruns MODIFY COLUMN serial_id INT(18) NOT NULL ;", md->table_prefix) < 0)
+      return -1;
+    if (mi->simple_fquery(md, "ALTER TABLE %sruns DROP PRIMARY KEY ;", md->table_prefix) < 0)
+      return -1;
     if (mi->simple_fquery(md, "ALTER TABLE %sruns MODIFY COLUMN serial_id BIGINT NOT NULL PRIMARY KEY AUTO_INCREMENT ;", md->table_prefix) < 0)
       return -1;
     if (mi->simple_fquery(md, "UPDATE %sconfig SET config_val = '22' WHERE config_key = 'run_version' ;", md->table_prefix) < 0)
