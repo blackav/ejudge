@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2022-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -24,6 +24,8 @@
 #include "ejudge/xml_utils.h"
 
 #include <string.h>
+
+#define SUBMIT_DB_VERSION 1
 
 struct submit_mysql_data
 {
@@ -122,7 +124,7 @@ create_database(
                           md->table_prefix) < 0)
         db_error_fail(md);
 
-    if (mi->simple_fquery(md, "INSERT INTO %sconfig VALUES ('submit_version', '%d') ;", md->table_prefix, 1) < 0)
+    if (mi->simple_fquery(md, "INSERT INTO %sconfig VALUES ('submit_version', '%d') ;", md->table_prefix, SUBMIT_DB_VERSION) < 0)
         db_error_fail(md);
 
     smd->is_db_checked = 1;
@@ -156,14 +158,14 @@ check_database(
     if (!md->row[0] || mi->parse_int(md, md->row[0], &submit_version) < 0)
         db_error_inv_value_fail(md, "config_val");
     mi->free_res(md);
-    if (submit_version < 1) {
+    if (submit_version < 1 || submit_version > SUBMIT_DB_VERSION) {
         err("submit_version == %d is not supported", submit_version);
         goto fail;
     }
 
     while (submit_version >= 0) {
         switch (submit_version) {
-        default:
+        case SUBMIT_DB_VERSION:
             submit_version = -1;
             break;
         }
