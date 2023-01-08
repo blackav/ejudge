@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2022-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -22,6 +22,8 @@
 #include "ejudge/base64.h"
 #include "ejudge/xalloc.h"
 #include "ejudge/errlog.h"
+
+#define USERPROB_DB_VERSION 1
 
 struct userprob_mysql_data
 {
@@ -111,7 +113,7 @@ create_database(
                           md->table_prefix, md->table_prefix) < 0)
         db_error_fail(md);
 
-    if (mi->simple_fquery(md, "INSERT INTO %sconfig VALUES ('userprob_version', '%d') ;", md->table_prefix, 1) < 0)
+    if (mi->simple_fquery(md, "INSERT INTO %sconfig VALUES ('userprob_version', '%d') ;", md->table_prefix, USERPROB_DB_VERSION) < 0)
         db_error_fail(md);
 
     umd->is_db_checked = 1;
@@ -151,14 +153,14 @@ check_database(
     if (!md->row[0] || mi->parse_int(md, md->row[0], &userprob_version) < 0)
         db_error_inv_value_fail(md, "config_val");
     mi->free_res(md);
-    if (userprob_version < 1) {
+    if (userprob_version < 1 || userprob_version > USERPROB_DB_VERSION) {
         err("userprob_version == %d is not supported", userprob_version);
         goto fail;
     }
 
     while (userprob_version >= 0) {
         switch (userprob_version) {
-        default:
+        case USERPROB_DB_VERSION:
             userprob_version = -1;
             break;
         }
