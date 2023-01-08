@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2022-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -26,6 +26,8 @@
 #include <errno.h>
 #include <string.h>
 #include <ctype.h>
+
+#define STATUS_DB_VERSION 2
 
 struct status_mysql_state
 {
@@ -219,7 +221,7 @@ static const char create_query[] =
 "    disable_virtual_start TINYINT NOT NULL DEFAULT 0,"
 "    prob_prio_str VARCHAR(512) DEFAULT NULL,"
 "    last_update_time DATETIME(6) NOT NULL"
-") ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;";
+") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;";
 
 static int
 create_database(
@@ -231,7 +233,7 @@ create_database(
     if (mi->simple_fquery(md, create_query, md->table_prefix) < 0)
         db_error_fail(md);
 
-    if (mi->simple_fquery(md, "INSERT INTO %sconfig VALUES ('status_version', '%d') ;", md->table_prefix, 1) < 0)
+    if (mi->simple_fquery(md, "INSERT INTO %sconfig VALUES ('status_version', '%d') ;", md->table_prefix, STATUS_DB_VERSION) < 0)
         db_error_fail(md);
 
     state->is_db_checked = 1;
@@ -266,13 +268,22 @@ check_database(
         db_error_inv_value_fail(md, "config_val");
     mi->free_res(md);
 
-    if (status_version < 1) {
+    if (status_version < 1 || status_version > STATUS_DB_VERSION) {
         err("status_version == %d is not supported", status_version);
         goto fail;
     }
 
     while (status_version >= 0) {
         switch (status_version) {
+        case 1:
+            if (mi->simple_fquery(md, "ALTER TABLE %sstatuses ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin ;", md->table_prefix) < 0)
+                goto fail;
+            if (mi->simple_fquery(md, "ALTER TABLE %sstatuses MODIFY COLUMN prob_prio_str VARCHAR(512) DEFAULT NULL ;", md->table_prefix) < 0)
+                goto fail;
+            break;
+        case STATUS_DB_VERSION:
+            status_version = -1;
+            break;
         default:
             status_version = -1;
             break;
