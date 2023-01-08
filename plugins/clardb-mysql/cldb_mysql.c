@@ -206,7 +206,7 @@ struct clar_entry_internal
   unsigned char *subj;
 };
 
-#define CLAR_VERSION 10
+#define CLAR_VERSION 12
 
 enum { CLARS_ROW_WIDTH = 24 };
 
@@ -428,6 +428,14 @@ do_open(struct cldb_mysql_state *state)
       if (mi->simple_fquery(md, "ALTER TABLE %sclars ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;", md->table_prefix) < 0)
         return -1;
       if (mi->simple_fquery(md, "ALTER TABLE %sclartexts ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;", md->table_prefix) < 0)
+        return -1;
+      break;
+    case 10:
+      if (mi->simple_fquery(md, "ALTER TABLE %sclars MODIFY COLUMN uuid CHAR(40) NOT NULL, MODIFY COLUMN ip VARCHAR(64) NOT NULL, MODIFY COLUMN in_reply_uuid CHAR(40), MODIFY COLUMN run_uuid CHAR(40), MODIFY COLUMN clar_charset VARCHAR(32) ;", md->table_prefix) < 0)
+        return -1;
+      break;
+    case 11:
+      if (mi->simple_fquery(md, "ALTER TABLE %sclartexts MODIFY COLUMN uuid CHAR(40) NOT NULL ;", md->table_prefix) < 0)
         return -1;
       break;
     case CLAR_VERSION:
