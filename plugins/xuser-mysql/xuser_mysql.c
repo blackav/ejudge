@@ -27,7 +27,7 @@
 #include <stdint.h>
 #include <string.h>
 
-#define XUSER_DB_VERSION 2
+#define XUSER_DB_VERSION 5
 
 struct xuser_mysql_state
 {
@@ -96,7 +96,7 @@ static const char create_query_1[] =
 "    judge_text MEDIUMTEXT DEFAULT NULL,\n"
 "    last_update_time DATETIME(6) DEFAULT NULL,\n"
 "    FOREIGN KEY uw_user_id_2_fk(issuer_id) REFERENCES %slogins(user_id)\n"
-") ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;\n";
+") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;\n";
 
 static const char create_query_2[] =
 "CREATE TABLE %sviewedclars (\n"
@@ -106,7 +106,7 @@ static const char create_query_2[] =
 "    last_update_time DATETIME(6) DEFAULT NULL,\n"
 "    KEY vc_clar_uuid_k(clar_uuid),\n"
 "    UNIQUE KEY vc_clar_user_uuid_uk(user_extra_id, clar_uuid)\n"
-") ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;\n";
+") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;\n";
     
 static __attribute__((unused)) const char create_query_3[] =
 "ALTER TABLE %sviewedclars ADD FOREIGN KEY vc_clar_uuid_fk(clar_uuid) REFERENCES %sclars(uuid);\n";
@@ -124,7 +124,7 @@ static const char create_query_4[] =
 "    UNIQUE KEY (contest_id, user_id),\n"
 "    FOREIGN KEY ux_user_id_fk(user_id) REFERENCES %slogins(user_id),\n"
 "    KEY ux_contest_id_idx(contest_id)\n"
-") ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;\n";
+") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;\n";
 
 static const char create_query_5[] =
 "ALTER TABLE %sviewedclars ADD FOREIGN KEY vc_user_extra_id_fk(user_extra_id) REFERENCES %suserextras(serial_id);\n";
@@ -212,6 +212,18 @@ check_database(
             if (mi->simple_fquery(md, "ALTER TABLE %sviewedclars ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin ;", md->table_prefix) < 0)
                 goto fail;
             if (mi->simple_fquery(md, "ALTER TABLE %suserextras ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin ;", md->table_prefix) < 0)
+                goto fail;
+            break;
+        case 2:
+            if (mi->simple_fquery(md, "ALTER TABLE %suserwarnings MODIFY COLUMN issuer_ip VARCHAR(128) DEFAULT NULL, MODIFY COLUMN user_text MEDIUMTEXT DEFAULT NULL, MODIFY COLUMN judge_text MEDIUMTEXT DEFAULT NULL ;", md->table_prefix) < 0)
+                goto fail;
+            break;
+        case 3:
+            if (mi->simple_fquery(md, "ALTER TABLE %sviewedclars MODIFY COLUMN clar_uuid CHAR(40) NOT NULL ;", md->table_prefix) < 0)
+                goto fail;
+            break;
+        case 4:
+            if (mi->simple_fquery(md, "ALTER TABLE %suserextras MODIFY COLUMN disq_comment TEXT(4096) DEFAULT NULL, MODIFY COLUMN problem_dir_prefix VARCHAR(1024) DEFAULT NULL ;", md->table_prefix) < 0)
                 goto fail;
             break;
         case XUSER_DB_VERSION:
