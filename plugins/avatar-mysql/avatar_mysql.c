@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2022-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -20,6 +20,8 @@
 #include "../common-mysql/common_mysql.h"
 #include "ejudge/xalloc.h"
 #include "ejudge/errlog.h"
+
+#define AVATAR_DB_VERSION 1
 
 struct avatar_mysql_state
 {
@@ -99,7 +101,7 @@ create_database(struct avatar_mysql_state *ams)
                           md->table_prefix,
                           md->table_prefix) < 0)
         db_error_fail(md);
-    if (mi->simple_fquery(md, "INSERT INTO %sconfig VALUES ('avatar_version', '%d') ;", md->table_prefix, 1) < 0)
+    if (mi->simple_fquery(md, "INSERT INTO %sconfig VALUES ('avatar_version', '%d') ;", md->table_prefix, AVATAR_DB_VERSION) < 0)
         db_error_fail(md);
     return 0;
 
@@ -135,6 +137,9 @@ check_database(struct avatar_mysql_state *ams)
 
     while (avatar_version >= 0) {
         switch (avatar_version) {
+        case AVATAR_DB_VERSION:
+            avatar_version = -1;
+            break;
         default:
             avatar_version = -1;
             break;
