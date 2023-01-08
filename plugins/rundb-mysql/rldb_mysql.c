@@ -182,6 +182,8 @@ prepare_func(
 
 #include "tables.inc.c"
 
+#define RUN_DB_VERSION 23
+
 static int
 do_create(struct rldb_mysql_state *state)
 {
@@ -196,8 +198,8 @@ do_create(struct rldb_mysql_state *state)
   if (mi->simple_fquery(md, create_userrunheaders_query, md->table_prefix) < 0)
     db_error_fail(md);
   if (mi->simple_fquery(md,
-                        "INSERT INTO %sconfig VALUES ('run_version', '22') ;",
-                        md->table_prefix) < 0)
+                        "INSERT INTO %sconfig VALUES ('run_version', '%d') ;",
+                        md->table_prefix, RUN_DB_VERSION) < 0)
     db_error_fail(md);
   return 0;
 
@@ -389,7 +391,19 @@ do_open(struct rldb_mysql_state *state)
       if (mi->simple_fquery(md, "ALTER TABLE %sruns MODIFY COLUMN serial_id BIGINT NOT NULL PRIMARY KEY AUTO_INCREMENT ;", md->table_prefix) < 0)
         return -1;
       break;
+    case 22:
+      if (mi->simple_fquery(md, "ALTER TABLE %sruns DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin ;", md->table_prefix) < 0)
+        return -1;
+      if (mi->simple_fquery(md, "ALTER TABLE %srunheaders DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin ;", md->table_prefix) < 0)
+        return -1;
+      if (mi->simple_fquery(md, "ALTER TABLE %suserrunheaders ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin ;", md->table_prefix) < 0)
+        return -1;
+      break;
+    case RUN_DB_VERSION:
+      run_version = -1;
+      break;
     default:
+      // FIXME: report an error?
       run_version = -1;
       break;
     }
