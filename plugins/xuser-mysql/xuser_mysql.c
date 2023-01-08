@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2022-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -26,6 +26,8 @@
 
 #include <stdint.h>
 #include <string.h>
+
+#define XUSER_DB_VERSION 2
 
 struct xuser_mysql_state
 {
@@ -163,7 +165,7 @@ create_database(
                           md->table_prefix) < 0)
         db_error_fail(md);
 
-    if (mi->simple_fquery(md, "INSERT INTO %sconfig VALUES ('xuser_version', '%d') ;", md->table_prefix, 1) < 0)
+    if (mi->simple_fquery(md, "INSERT INTO %sconfig VALUES ('xuser_version', '%d') ;", md->table_prefix, XUSER_DB_VERSION) < 0)
         db_error_fail(md);
 
     return 0;
@@ -204,6 +206,17 @@ check_database(
 
     while (xuser_version >= 0) {
         switch (xuser_version) {
+        case 1:
+            if (mi->simple_fquery(md, "ALTER TABLE %suserwarnings ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin ;", md->table_prefix) < 0)
+                goto fail;
+            if (mi->simple_fquery(md, "ALTER TABLE %sviewedclars ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin ;", md->table_prefix) < 0)
+                goto fail;
+            if (mi->simple_fquery(md, "ALTER TABLE %suserextras ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin ;", md->table_prefix) < 0)
+                goto fail;
+            break;
+        case XUSER_DB_VERSION:
+            xuser_version = -1;
+            break;
         default:
             xuser_version = -1;
             break;
