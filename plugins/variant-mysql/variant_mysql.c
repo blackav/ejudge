@@ -26,7 +26,7 @@
 
 #include <string.h>
 
-#define VARIANT_DB_VERSION 1
+#define VARIANT_DB_VERSION 2
 
 struct variant_mysql_data
 {
@@ -118,7 +118,7 @@ static const char create_query_1[] =
 "    FOREIGN KEY v_user_id_fk(user_id) REFERENCES %slogins(user_id),\n"
 "    KEY v_contest_id_idx(contest_id),\n"
 "    UNIQUE KEY v_cu_id_idx(contest_id,user_id)\n"
-") ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;\n";
+") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;\n";
 
 static const char create_query_2[] =
 "CREATE TABLE %svariantentries (\n"
@@ -129,7 +129,7 @@ static const char create_query_2[] =
 "    last_update_time DATETIME(6) DEFAULT NULL,\n"
 "    FOREIGN KEY ve_entry_id_fk(entry_id) REFERENCES %svariants(serial_id),\n"
 "    UNIQUE KEY ve_ep_id_idx(entry_id, prob_id)\n"
-") ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;\n";
+") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;\n";
 
 static int
 create_database(
@@ -187,6 +187,12 @@ check_database(
 
     while (variant_version >= 0) {
         switch (variant_version) {
+        case 1:
+            if (mi->simple_fquery(md, "ALTER TABLE %svariants ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin ;", md->table_prefix) < 0)
+                goto fail;
+            if (mi->simple_fquery(md, "ALTER TABLE %svariantentries ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin ;", md->table_prefix) < 0)
+                goto fail;
+            break;
         case VARIANT_DB_VERSION:
             variant_version = -1;
             break;
