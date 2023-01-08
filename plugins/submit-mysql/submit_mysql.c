@@ -107,7 +107,7 @@ static const char create_query[] =
 "    FOREIGN KEY s_source_id_fk(source_id) REFERENCES `%sstorage`(serial_id),\n"
 "    FOREIGN KEY s_input_id_fk(input_id) REFERENCES `%sstorage`(serial_id),\n"
 "    FOREIGN KEY s_protocol_id_fk(protocol_id) REFERENCES `%sstorage`(serial_id)\n"
-") ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;\n";
+") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;\n";
 
 static int
 create_database(
@@ -165,6 +165,12 @@ check_database(
 
     while (submit_version >= 0) {
         switch (submit_version) {
+        case 1:
+            if (mi->simple_fquery(md, "ALTER TABLE %ssubmits ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin ;", md->table_prefix) < 0)
+                goto fail;
+            if (mi->simple_fquery(md, "ALTER TABLE %ssubmits MODIFY COLUMN uuid CHAR(40) NOT NULL, MODIFY COLUMN prob_uuid VARCHAR(40) DEFAULT NULL, MODIFY COLUMN ip VARCHAR(64) DEFAULT NULL, MODIFY COLUMN judge_uuid VARCHAR(40) DEFAULT NULL ;", md->table_prefix) < 0)
+                goto fail;
+            break;
         case SUBMIT_DB_VERSION:
             submit_version = -1;
             break;
