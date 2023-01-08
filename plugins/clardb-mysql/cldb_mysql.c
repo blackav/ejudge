@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2008-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -351,103 +351,89 @@ do_open(struct cldb_mysql_state *state)
     err("clar_version == %d is not supported", clar_version);
     goto fail;
   }
-  if (clar_version == 1) {
-    if (mi->simple_fquery(md, "ALTER TABLE %sclars ADD COLUMN run_id INT NOT NULL DEFAULT 0 AFTER in_reply_to", md->table_prefix) < 0)
-      return -1;
-    if (mi->simple_fquery(md, "UPDATE %sconfig SET config_val = '2' WHERE config_key = 'clar_version' ;", md->table_prefix) < 0)
-      return -1;
-    clar_version = 2;
-  }
-  if (clar_version == 2) {
-    if (mi->simple_fquery(md, "ALTER TABLE %sclars ADD COLUMN uuid CHAR(40) DEFAULT NULL AFTER clar_id, ADD COLUMN in_reply_uuid CHAR(40) DEFAULT NULL AFTER in_reply_to, ADD COLUMN run_uuid CHAR(40) DEFAULT NULL AFTER run_id ;", md->table_prefix) < 0)
-      return -1;
-    if (mi->simple_fquery(md, "UPDATE %sclars SET uuid = UUID() WHERE uuid IS NULL ;", md->table_prefix) < 0)
-      return -1;
-    // update uuid indices
-    if (mi->simple_fquery(md, "UPDATE %sclars AS t1, %sclars AS t2 SET t1.in_reply_uuid = t2.uuid WHERE t1.in_reply_to > 0 AND t1.contest_id = t2.contest_id AND t1.in_reply_to - 1 = t2.clar_id;", md->table_prefix, md->table_prefix) < 0)
-      return -1;
-    if (mi->simple_fquery(md, "UPDATE %sclars AS t1, %sruns AS t2 SET t1.run_uuid = t2.run_uuid WHERE t1.run_id > 0 AND t1.contest_id = t2.contest_id AND t1.run_id - 1 = t2.run_id;", md->table_prefix, md->table_prefix) < 0)
-      return -1;
-    if (mi->simple_fquery(md, "UPDATE %sconfig SET config_val = '3' WHERE config_key = 'clar_version' ;", md->table_prefix) < 0)
-      return -1;
-    clar_version = 3;
-  }
-  if (clar_version == 3) {
-    if (mi->simple_fquery(md,
-                          "ALTER TABLE %sclars "
-                          " ADD COLUMN old_run_status TINYINT NOT NULL DEFAULT 0 AFTER run_uuid, "
-                          " ADD COLUMN new_run_status TINYINT NOT NULL DEFAULT 0 AFTER old_run_status, "
-                          " ADD UNIQUE KEY clars_uuid_uk (uuid), "
-                          " ADD KEY clars_contest_id_k (contest_id), "
-                          " ADD KEY clars_run_uuid_k (run_uuid), "
-                          " ADD KEY clars_user_from_k (user_from), "
-                          " ADD KEY clars_user_key_k (user_to) ; ",
-                          md->table_prefix) < 0)
-      return -1;
-    if (mi->simple_fquery(md, "UPDATE %sconfig SET config_val = '4' WHERE config_key = 'clar_version' ;", md->table_prefix) < 0)
-      return -1;
-    clar_version = 4;
-  }
-  if (clar_version == 4) {
-    if (mi->simple_fquery(md,
-                          "ALTER TABLE %sclars "
-                          " MODIFY clar_charset VARCHAR(32),"
-                          " MODIFY subj VARCHAR(128); ",
-                          md->table_prefix) < 0)
-      return -1;
-    if (mi->simple_fquery(md, "UPDATE %sconfig SET config_val = '5' WHERE config_key = 'clar_version' ;", md->table_prefix) < 0)
-      return -1;
-    clar_version = 5;
-  }
-  if (clar_version == 5) {
-    if (mi->simple_fquery(md,
-                          "ALTER TABLE %sclars "
-                          " MODIFY uuid CHAR(40) NOT NULL ;",
-                          md->table_prefix) < 0)
-      return -1;
-    if (mi->simple_fquery(md,
-                          "ALTER TABLE %sclartexts "
-                          " ADD COLUMN uuid CHAR(40) DEFAULT NULL AFTER contest_id;",
-                          md->table_prefix) < 0)
-      return -1;
-    if (mi->simple_fquery(md, "UPDATE %sclartexts AS t1, %sclars AS t2 SET t1.uuid = t2.uuid WHERE t1.contest_id = t2.contest_id AND t1.clar_id = t2.clar_id;", md->table_prefix, md->table_prefix) < 0)
-      return -1;
-    if (mi->simple_fquery(md,
-                          "ALTER TABLE %sclartexts "
-                          " MODIFY uuid CHAR(40) NOT NULL,"
-                          " ADD UNIQUE KEY clartexts_uuid_uk (uuid) ;",
-                          md->table_prefix) < 0)
-      return -1;
-    if (mi->simple_fquery(md, "UPDATE %sconfig SET config_val = '6' WHERE config_key = 'clar_version' ;", md->table_prefix) < 0)
-      return -1;
-    clar_version = 6;
-  }
-  if (clar_version == 6) {
-    if (mi->simple_fquery(md, "ALTER TABLE %sclartexts ADD INDEX clartexts_contest_id_idx (contest_id);", md->table_prefix) < 0)
-      return -1;
-    if (mi->simple_fquery(md, "UPDATE %sconfig SET config_val = '7' WHERE config_key = 'clar_version' ;", md->table_prefix) < 0)
-      return -1;
-    clar_version = 7;
-  }
-  if (clar_version == 7) {
-    if (mi->simple_fquery(md, "ALTER TABLE %sclartexts ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;", md->table_prefix) < 0)
-      return -1;
-    if (mi->simple_fquery(md, "ALTER TABLE %sclars ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;", md->table_prefix) < 0)
-      return -1;
-    if (mi->simple_fquery(md, "UPDATE %sconfig SET config_val = '8' WHERE config_key = 'clar_version' ;", md->table_prefix) < 0)
-      return -1;
-    clar_version = 8;
-  }
-  if (clar_version == 8) {
-    if (mi->simple_fquery(md, "ALTER TABLE %sclars MODIFY uuid CHAR(40) CHARSET utf8 COLLATE utf8_bin NOT NULL;", md->table_prefix) < 0)
-      return -1;
-    if (mi->simple_fquery(md, "UPDATE %sconfig SET config_val = '9' WHERE config_key = 'clar_version' ;", md->table_prefix) < 0)
-      return -1;
-    clar_version = 9;
-  }
 
-  // just in case
-  ASSERT(clar_version == CLAR_VERSION);
+  while (clar_version > 0) {
+    switch (clar_version) {
+    case 1:
+      if (mi->simple_fquery(md, "ALTER TABLE %sclars ADD COLUMN run_id INT NOT NULL DEFAULT 0 AFTER in_reply_to", md->table_prefix) < 0)
+        return -1;
+      break;
+    case 2:
+      if (mi->simple_fquery(md, "ALTER TABLE %sclars ADD COLUMN uuid CHAR(40) DEFAULT NULL AFTER clar_id, ADD COLUMN in_reply_uuid CHAR(40) DEFAULT NULL AFTER in_reply_to, ADD COLUMN run_uuid CHAR(40) DEFAULT NULL AFTER run_id ;", md->table_prefix) < 0)
+        return -1;
+      if (mi->simple_fquery(md, "UPDATE %sclars SET uuid = UUID() WHERE uuid IS NULL ;", md->table_prefix) < 0)
+        return -1;
+      // update uuid indices
+      if (mi->simple_fquery(md, "UPDATE %sclars AS t1, %sclars AS t2 SET t1.in_reply_uuid = t2.uuid WHERE t1.in_reply_to > 0 AND t1.contest_id = t2.contest_id AND t1.in_reply_to - 1 = t2.clar_id;", md->table_prefix, md->table_prefix) < 0)
+        return -1;
+      if (mi->simple_fquery(md, "UPDATE %sclars AS t1, %sruns AS t2 SET t1.run_uuid = t2.run_uuid WHERE t1.run_id > 0 AND t1.contest_id = t2.contest_id AND t1.run_id - 1 = t2.run_id;", md->table_prefix, md->table_prefix) < 0)
+        return -1;
+      break;
+    case 3:
+      if (mi->simple_fquery(md,
+                            "ALTER TABLE %sclars "
+                            " ADD COLUMN old_run_status TINYINT NOT NULL DEFAULT 0 AFTER run_uuid, "
+                            " ADD COLUMN new_run_status TINYINT NOT NULL DEFAULT 0 AFTER old_run_status, "
+                            " ADD UNIQUE KEY clars_uuid_uk (uuid), "
+                            " ADD KEY clars_contest_id_k (contest_id), "
+                            " ADD KEY clars_run_uuid_k (run_uuid), "
+                            " ADD KEY clars_user_from_k (user_from), "
+                            " ADD KEY clars_user_key_k (user_to) ; ",
+                            md->table_prefix) < 0)
+        return -1;
+      break;
+    case 4:
+      if (mi->simple_fquery(md,
+                            "ALTER TABLE %sclars "
+                            " MODIFY clar_charset VARCHAR(32),"
+                            " MODIFY subj VARCHAR(128); ",
+                            md->table_prefix) < 0)
+        return -1;
+      break;
+    case 5:
+      if (mi->simple_fquery(md,
+                            "ALTER TABLE %sclars "
+                            " MODIFY uuid CHAR(40) NOT NULL ;",
+                            md->table_prefix) < 0)
+        return -1;
+      if (mi->simple_fquery(md,
+                            "ALTER TABLE %sclartexts "
+                            " ADD COLUMN uuid CHAR(40) DEFAULT NULL AFTER contest_id;",
+                            md->table_prefix) < 0)
+        return -1;
+      if (mi->simple_fquery(md, "UPDATE %sclartexts AS t1, %sclars AS t2 SET t1.uuid = t2.uuid WHERE t1.contest_id = t2.contest_id AND t1.clar_id = t2.clar_id;", md->table_prefix, md->table_prefix) < 0)
+        return -1;
+      if (mi->simple_fquery(md,
+                            "ALTER TABLE %sclartexts "
+                            " MODIFY uuid CHAR(40) NOT NULL,"
+                            " ADD UNIQUE KEY clartexts_uuid_uk (uuid) ;",
+                            md->table_prefix) < 0)
+        return -1;
+      break;
+    case 6:
+      if (mi->simple_fquery(md, "ALTER TABLE %sclartexts ADD INDEX clartexts_contest_id_idx (contest_id);", md->table_prefix) < 0)
+        return -1;
+      break;
+    case 7:
+      if (mi->simple_fquery(md, "ALTER TABLE %sclartexts ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;", md->table_prefix) < 0)
+        return -1;
+      if (mi->simple_fquery(md, "ALTER TABLE %sclars ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;", md->table_prefix) < 0)
+        return -1;
+      break;
+    case 8:
+      if (mi->simple_fquery(md, "ALTER TABLE %sclars MODIFY uuid CHAR(40) CHARSET utf8 COLLATE utf8_bin NOT NULL;", md->table_prefix) < 0)
+        return -1;
+      break;
+    case CLAR_VERSION:
+      clar_version = -1;
+      break;
+    }
+    if (clar_version > 0) {
+      ++clar_version;
+      if (mi->simple_fquery(md, "UPDATE %sconfig SET config_val = '%d' WHERE config_key = 'clar_version' ;", md->table_prefix, clar_version) < 0)
+        return -1;
+    }
+  }
 
   return 0;
 
