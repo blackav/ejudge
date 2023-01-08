@@ -490,16 +490,18 @@ connect_func(struct common_mysql_state *state)
                           state->host, state->user, state->password,
                           state->database, state->port, state->socket, 0))
     return state->i->error(state);
-  if (state->charset) {
-    snprintf(buf, sizeof(buf), "SET NAMES '%s' ;", state->charset);
-    buflen = strlen(buf);
-    if (mysql_real_query(state->conn, buf, buflen))
-      db_error_fail(state);
-    snprintf(buf, sizeof(buf), "SET character_set_connection = '%s' ;", state->charset);
-    buflen = strlen(buf);
-    if (mysql_real_query(state->conn, buf, buflen))
-      db_error_fail(state);
+  const char *charset = state->charset;
+  if (!charset || !*charset) {
+    charset = "utf8mb4";
   }
+  snprintf(buf, sizeof(buf), "SET NAMES '%s' ;", charset);
+  buflen = strlen(buf);
+  if (mysql_real_query(state->conn, buf, buflen))
+    db_error_fail(state);
+  snprintf(buf, sizeof(buf), "SET character_set_connection = '%s' ;", charset);
+  buflen = strlen(buf);
+  if (mysql_real_query(state->conn, buf, buflen))
+    db_error_fail(state);
   return 0;
 
  fail:
