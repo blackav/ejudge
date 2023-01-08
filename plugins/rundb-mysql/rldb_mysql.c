@@ -227,233 +227,179 @@ do_open(struct rldb_mysql_state *state)
   if (!md->row[0] || mi->parse_int(md, md->row[0], &run_version) < 0)
     db_error_inv_value_fail(md, "config_val");
   mi->free_res(md);
-  if (run_version == 1) {
-    if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD COLUMN is_marked TINYINT NOT NULL DEFAULT 0 AFTER last_change_nsec",
-                          md->table_prefix) < 0)
-      return -1;
-    if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD COLUMN is_saved TINYINT NOT NULL DEFAULT 0 AFTER is_marked",
-                          md->table_prefix) < 0)
-      return -1;
-    if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD COLUMN saved_status INT NOT NULL DEFAULT 0 AFTER is_saved",
-                          md->table_prefix) < 0)
-      return -1;
-    if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD COLUMN saved_score INT NOT NULL DEFAULT 0 AFTER saved_status",
-                          md->table_prefix) < 0)
-      return -1;
-    if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD COLUMN saved_test INT NOT NULL DEFAULT 0 AFTER saved_score",
-                          md->table_prefix) < 0)
-      return -1;
-    if (mi->simple_fquery(md, "UPDATE %sconfig SET config_val = '2' WHERE config_key = 'run_version' ;", md->table_prefix) < 0)
-      return -1;
-    run_version = 2;
-  }
-  if (run_version == 2) {
-    if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD COLUMN run_uuid CHAR(40) DEFAULT NULL AFTER hash", md->table_prefix) < 0)
-      return -1;
-    if (mi->simple_fquery(md, "UPDATE %sconfig SET config_val = '3' WHERE config_key = 'run_version' ;", md->table_prefix) < 0)
-      return -1;
-    run_version = 3;
-  }
-  if (run_version == 3) {
-    if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD COLUMN passed_mode TINYINT NOT NULL DEFAULT 0 AFTER saved_test", md->table_prefix) < 0)
-      return -1;
-    if (mi->simple_fquery(md, "UPDATE %sconfig SET config_val = '4' WHERE config_key = 'run_version' ;", md->table_prefix) < 0)
-      return -1;
-    run_version = 4;
-  }
-  if (run_version == 4) {
-    if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD COLUMN eoln_type TINYINT NOT NULL DEFAULT 0 AFTER passed_mode", md->table_prefix) < 0)
-      return -1;
-    if (mi->simple_fquery(md, "UPDATE %sconfig SET config_val = '5' WHERE config_key = 'run_version' ;", md->table_prefix) < 0)
-      return -1;
-    run_version = 5;
-  }
-  if (run_version == 5) {
-    if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD COLUMN store_flags TINYINT NOT NULL DEFAULT 0 AFTER eoln_type", md->table_prefix) < 0)
-      return -1;
-    if (mi->simple_fquery(md, "UPDATE %sconfig SET config_val = '6' WHERE config_key = 'run_version' ;", md->table_prefix) < 0)
-      return -1;
-    run_version = 6;
-  }
-  if (run_version == 6) {
-    if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD COLUMN token_flags TINYINT NOT NULL DEFAULT 0 AFTER store_flags", md->table_prefix) < 0)
-      return -1;
-    if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD COLUMN token_count TINYINT NOT NULL DEFAULT 0 AFTER token_flags", md->table_prefix) < 0)
-      return -1;
-    if (mi->simple_fquery(md, "UPDATE %sconfig SET config_val = '7' WHERE config_key = 'run_version' ;", md->table_prefix) < 0)
-      return -1;
-    run_version = 7;
-  }
-  if (run_version == 7) {
-    if (mi->simple_fquery(md, "ALTER TABLE %srunheaders ADD COLUMN next_run_id INT NOT NULL DEFAULT 0 AFTER last_change_nsec", md->table_prefix) < 0)
-      return -1;
-    if (mi->simple_fquery(md, "UPDATE %sconfig SET config_val = '8' WHERE config_key = 'run_version' ;", md->table_prefix) < 0)
-      return -1;
-    run_version = 8;
-  }
-  if (run_version == 8) {
-    if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD INDEX runs_contest_id_idx (contest_id);", md->table_prefix) < 0)
-      return -1;
-    if (mi->simple_fquery(md, "UPDATE %sconfig SET config_val = '9' WHERE config_key = 'run_version' ;", md->table_prefix) < 0)
-      return -1;
-    run_version = 9;
-  }
-  if (run_version == 9) {
-    if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD COLUMN prob_uuid VARCHAR(40) DEFAULT NULL AFTER token_count", md->table_prefix) < 0)
-      return -1;
-    if (mi->simple_fquery(md, "UPDATE %sconfig SET config_val = '10' WHERE config_key = 'run_version' ;", md->table_prefix) < 0)
-      return -1;
-    run_version = 10;
-  }
-  if (run_version == 10) {
-    if (mi->simple_fquery(md, create_userrunheaders_query, md->table_prefix) < 0)
-      return -1;
-    // ignore errors
-    mi->simple_fquery(md, "ALTER TABLE %suserrunheaders ADD INDEX userrunheaders_contest_id_idx (contest_id);", md->table_prefix);
-    mi->simple_fquery(md, "ALTER TABLE %suserrunheaders ADD INDEX userrunheaders_user_id_idx (user_id);", md->table_prefix);
-    // ignore error
-    mi->simple_fquery(md, "ALTER TABLE %sruns ADD INDEX runs_user_id_idx (user_id) ;", md->table_prefix);
-    if (mi->simple_fquery(md, "UPDATE %sconfig SET config_val = '11' WHERE config_key = 'run_version' ;", md->table_prefix) < 0)
-      return -1;
-    run_version = 11;
-  }
-  if (run_version == 11) {
-    if (mi->simple_fquery(md, "ALTER TABLE %sruns ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin ;", md->table_prefix) < 0)
-      return -1;
-    mi->simple_fquery(md, "ALTER TABLE %sruns DROP PRIMARY KEY ;", md->table_prefix);
-    if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD UNIQUE KEY runs_run_contest_id_idx(run_id, contest_id) ;", md->table_prefix) < 0)
-      return -1;
-    if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD COLUMN serial_id INT(18) NOT NULL PRIMARY KEY AUTO_INCREMENT FIRST ;", md->table_prefix) < 0)
-      return -1;
 
-    if (mi->simple_fquery(md, "UPDATE %sconfig SET config_val = '12' WHERE config_key = 'run_version' ;", md->table_prefix) < 0)
-      return -1;
-    run_version = 12;
-  }
-  if (run_version == 12) {
-    if (mi->simple_fquery(md, "ALTER TABLE %sruns MODIFY create_time DATETIME(6) NOT NULL ;", md->table_prefix) < 0)
-      return -1;
-
-    if (mi->simple_fquery(md, "UPDATE %sconfig SET config_val = '13' WHERE config_key = 'run_version' ;", md->table_prefix) < 0)
-      return -1;
-    run_version = 13;
-  }
-  if (run_version == 13) {
-    if (mi->simple_fquery(md,
-                          "ALTER TABLE %sruns"
-                          " MODIFY prob_id INT UNSIGNED NOT NULL DEFAULT 0,"
-                          " MODIFY lang_id INT UNSIGNED NOT NULL DEFAULT 0,"
-                          " MODIFY status INT NOT NULL DEFAULT 99,"
-                          " MODIFY ip VARCHAR(64) DEFAULT NULL,"
-                          " MODIFY hash VARCHAR (128) DEFAULT NULL,"
-                          " MODIFY run_uuid CHAR(40) DEFAULT NULL,"
-                          " MODIFY score INT NOT NULL DEFAULT -1,"
-                          " MODIFY test_num INT NOT NULL DEFAULT -1,"
-                          " MODIFY score_adj INT NOT NULL DEFAULT 0,"
-                          " MODIFY locale_id INT NOT NULL DEFAULT 0,"
-                          " MODIFY judge_id INT NOT NULL DEFAULT 0,"
-                          " MODIFY variant INT NOT NULL DEFAULT 0,"
-                          " MODIFY pages INT NOT NULL DEFAULT 0,"
-                          " MODIFY mime_type VARCHAR(64) DEFAULT NULL,"
-                          " MODIFY examiners0 INT NOT NULL DEFAULT 0,"
-                          " MODIFY examiners1 INT NOT NULL DEFAULT 0,"
-                          " MODIFY examiners2 INT NOT NULL DEFAULT 0,"
-                          " MODIFY exam_score0 INT NOT NULL DEFAULT 0,"
-                          " MODIFY exam_score1 INT NOT NULL DEFAULT 0,"
-                          " MODIFY exam_score2 INT NOT NULL DEFAULT 0,"
-                          " MODIFY last_change_time DATETIME DEFAULT NULL,"
-                          " MODIFY last_change_nsec INT UNSIGNED NOT NULL DEFAULT 0"
-                          ";", md->table_prefix) < 0)
-      return -1;
-
-    if (mi->simple_fquery(md, "UPDATE %sconfig SET config_val = '14' WHERE config_key = 'run_version' ;", md->table_prefix) < 0)
-      return -1;
-    run_version = 14;
-  }
-  if (run_version == 14) {
-    if (mi->simple_fquery(md, "ALTER TABLE %srunheaders DROP COLUMN next_run_id ;", md->table_prefix) < 0)
-      return -1;
-
-    if (mi->simple_fquery(md, "UPDATE %sconfig SET config_val = '15' WHERE config_key = 'run_version' ;", md->table_prefix) < 0)
-      return -1;
-    run_version = 15;
-  }
-  if (run_version == 15) {
-    if (mi->simple_fquery(md, "ALTER TABLE %srunheaders "
-                          " MODIFY start_time DATETIME DEFAULT NULL, "
-                          " MODIFY sched_time DATETIME DEFAULT NULL, "
-                          " MODIFY stop_time DATETIME DEFAULT NULL, "
-                          " MODIFY finish_time DATETIME DEFAULT NULL, "
-                          " MODIFY saved_stop_time DATETIME DEFAULT NULL, "
-                          " MODIFY saved_finish_time DATETIME DEFAULT NULL, "
-                          " MODIFY last_change_time DATETIME DEFAULT NULL "
-                          " ;", md->table_prefix) < 0)
-      return -1;
-
-    if (mi->simple_fquery(md, "UPDATE %sconfig SET config_val = '16' WHERE config_key = 'run_version' ;", md->table_prefix) < 0)
-      return -1;
-    run_version = 16;
-  }
-  if (run_version == 16) {
-    if (mi->simple_fquery(md,
-                          "ALTER TABLE %sruns"
-                          " DROP COLUMN is_examinable,"
-                          " DROP COLUMN examiners0,"
-                          " DROP COLUMN examiners1,"
-                          " DROP COLUMN examiners2,"
-                          " DROP COLUMN exam_score0,"
-                          " DROP COLUMN exam_score1,"
-                          " DROP COLUMN exam_score2"
-                          ";", md->table_prefix) < 0)
-      return -1;
-
-    if (mi->simple_fquery(md, "UPDATE %sconfig SET config_val = '17' WHERE config_key = 'run_version' ;", md->table_prefix) < 0)
-      return -1;
-    run_version = 17;
-  }
-  if (run_version == 17) {
-    if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD COLUMN is_checked TINYINT NOT NULL DEFAULT 0 AFTER prob_uuid", md->table_prefix) < 0)
-      return -1;
-    if (mi->simple_fquery(md, "UPDATE %sconfig SET config_val = '18' WHERE config_key = 'run_version' ;", md->table_prefix) < 0)
-      return -1;
-    run_version = 18;
-  }
-  if (run_version == 18) {
-    if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD COLUMN judge_uuid VARCHAR(40) DEFAULT NULL AFTER is_checked", md->table_prefix) < 0)
-      return -1;
-    if (mi->simple_fquery(md, "UPDATE %sconfig SET config_val = '19' WHERE config_key = 'run_version' ;", md->table_prefix) < 0)
-      return -1;
-    run_version = 19;
-  }
-  if (run_version == 19) {
-    if (mi->simple_fquery(md, "ALTER TABLE %srunheaders ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin ;", md->table_prefix) < 0)
-      return -1;
-    if (mi->simple_fquery(md, "UPDATE %sconfig SET config_val = '20' WHERE config_key = 'run_version' ;", md->table_prefix) < 0)
-      return -1;
-    run_version = 20;
-  }
-  if (run_version == 20) {
-    if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD COLUMN is_vcs TINYINT NOT NULL DEFAULT 0 AFTER judge_uuid", md->table_prefix) < 0)
-      return -1;
-    if (mi->simple_fquery(md, "UPDATE %sconfig SET config_val = '21' WHERE config_key = 'run_version' ;", md->table_prefix) < 0)
-      return -1;
-    run_version = 21;
-  }
-  if (run_version == 21) {
-    if (mi->simple_fquery(md, "ALTER TABLE %sruns MODIFY COLUMN serial_id INT(18) NOT NULL ;", md->table_prefix) < 0)
-      return -1;
-    if (mi->simple_fquery(md, "ALTER TABLE %sruns DROP PRIMARY KEY ;", md->table_prefix) < 0)
-      return -1;
-    if (mi->simple_fquery(md, "ALTER TABLE %sruns MODIFY COLUMN serial_id BIGINT NOT NULL PRIMARY KEY AUTO_INCREMENT ;", md->table_prefix) < 0)
-      return -1;
-    if (mi->simple_fquery(md, "UPDATE %sconfig SET config_val = '22' WHERE config_key = 'run_version' ;", md->table_prefix) < 0)
-      return -1;
-    run_version = 22;
-  }
-  if (run_version != 22) {
+  if (run_version < 1) {
     err("run_version == %d is not supported", run_version);
-    return -1;
+    goto fail;
   }
+
+  while (run_version >= 0) {
+    switch (run_version) {
+    case 1:
+      if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD COLUMN is_marked TINYINT NOT NULL DEFAULT 0 AFTER last_change_nsec",
+                            md->table_prefix) < 0)
+        return -1;
+      if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD COLUMN is_saved TINYINT NOT NULL DEFAULT 0 AFTER is_marked",
+                            md->table_prefix) < 0)
+        return -1;
+      if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD COLUMN saved_status INT NOT NULL DEFAULT 0 AFTER is_saved",
+                            md->table_prefix) < 0)
+        return -1;
+      if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD COLUMN saved_score INT NOT NULL DEFAULT 0 AFTER saved_status",
+                            md->table_prefix) < 0)
+        return -1;
+      if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD COLUMN saved_test INT NOT NULL DEFAULT 0 AFTER saved_score",
+                            md->table_prefix) < 0)
+        return -1;
+      break;
+    case 2:
+      if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD COLUMN run_uuid CHAR(40) DEFAULT NULL AFTER hash", md->table_prefix) < 0)
+        return -1;
+      break;
+    case 3:
+      if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD COLUMN passed_mode TINYINT NOT NULL DEFAULT 0 AFTER saved_test", md->table_prefix) < 0)
+        return -1;
+      break;
+    case 4:
+      if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD COLUMN eoln_type TINYINT NOT NULL DEFAULT 0 AFTER passed_mode", md->table_prefix) < 0)
+        return -1;
+      break;
+    case 5:
+      if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD COLUMN store_flags TINYINT NOT NULL DEFAULT 0 AFTER eoln_type", md->table_prefix) < 0)
+        return -1;
+      break;
+    case 6:
+      if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD COLUMN token_flags TINYINT NOT NULL DEFAULT 0 AFTER store_flags", md->table_prefix) < 0)
+        return -1;
+      if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD COLUMN token_count TINYINT NOT NULL DEFAULT 0 AFTER token_flags", md->table_prefix) < 0)
+        return -1;
+      break;
+    case 7:
+      if (mi->simple_fquery(md, "ALTER TABLE %srunheaders ADD COLUMN next_run_id INT NOT NULL DEFAULT 0 AFTER last_change_nsec", md->table_prefix) < 0)
+        return -1;
+      break;
+    case 8:
+      if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD INDEX runs_contest_id_idx (contest_id);", md->table_prefix) < 0)
+        return -1;
+      break;
+    case 9:
+      if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD COLUMN prob_uuid VARCHAR(40) DEFAULT NULL AFTER token_count", md->table_prefix) < 0)
+        return -1;
+      break;
+    case 10:
+      if (mi->simple_fquery(md, create_userrunheaders_query, md->table_prefix) < 0)
+        return -1;
+      // ignore errors
+      mi->simple_fquery(md, "ALTER TABLE %suserrunheaders ADD INDEX userrunheaders_contest_id_idx (contest_id);", md->table_prefix);
+      mi->simple_fquery(md, "ALTER TABLE %suserrunheaders ADD INDEX userrunheaders_user_id_idx (user_id);", md->table_prefix);
+      // ignore error
+      mi->simple_fquery(md, "ALTER TABLE %sruns ADD INDEX runs_user_id_idx (user_id) ;", md->table_prefix);
+      break;
+    case 11:
+      if (mi->simple_fquery(md, "ALTER TABLE %sruns ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin ;", md->table_prefix) < 0)
+        return -1;
+      mi->simple_fquery(md, "ALTER TABLE %sruns DROP PRIMARY KEY ;", md->table_prefix);
+      if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD UNIQUE KEY runs_run_contest_id_idx(run_id, contest_id) ;", md->table_prefix) < 0)
+        return -1;
+      if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD COLUMN serial_id INT(18) NOT NULL PRIMARY KEY AUTO_INCREMENT FIRST ;", md->table_prefix) < 0)
+        return -1;
+      break;
+    case 12:
+      if (mi->simple_fquery(md, "ALTER TABLE %sruns MODIFY create_time DATETIME(6) NOT NULL ;", md->table_prefix) < 0)
+        return -1;
+      break;
+    case 13:
+      if (mi->simple_fquery(md,
+                            "ALTER TABLE %sruns"
+                            " MODIFY prob_id INT UNSIGNED NOT NULL DEFAULT 0,"
+                            " MODIFY lang_id INT UNSIGNED NOT NULL DEFAULT 0,"
+                            " MODIFY status INT NOT NULL DEFAULT 99,"
+                            " MODIFY ip VARCHAR(64) DEFAULT NULL,"
+                            " MODIFY hash VARCHAR (128) DEFAULT NULL,"
+                            " MODIFY run_uuid CHAR(40) DEFAULT NULL,"
+                            " MODIFY score INT NOT NULL DEFAULT -1,"
+                            " MODIFY test_num INT NOT NULL DEFAULT -1,"
+                            " MODIFY score_adj INT NOT NULL DEFAULT 0,"
+                            " MODIFY locale_id INT NOT NULL DEFAULT 0,"
+                            " MODIFY judge_id INT NOT NULL DEFAULT 0,"
+                            " MODIFY variant INT NOT NULL DEFAULT 0,"
+                            " MODIFY pages INT NOT NULL DEFAULT 0,"
+                            " MODIFY mime_type VARCHAR(64) DEFAULT NULL,"
+                            " MODIFY examiners0 INT NOT NULL DEFAULT 0,"
+                            " MODIFY examiners1 INT NOT NULL DEFAULT 0,"
+                            " MODIFY examiners2 INT NOT NULL DEFAULT 0,"
+                            " MODIFY exam_score0 INT NOT NULL DEFAULT 0,"
+                            " MODIFY exam_score1 INT NOT NULL DEFAULT 0,"
+                            " MODIFY exam_score2 INT NOT NULL DEFAULT 0,"
+                            " MODIFY last_change_time DATETIME DEFAULT NULL,"
+                            " MODIFY last_change_nsec INT UNSIGNED NOT NULL DEFAULT 0"
+                            ";", md->table_prefix) < 0)
+        return -1;
+      break;
+    case 14:
+      if (mi->simple_fquery(md, "ALTER TABLE %srunheaders DROP COLUMN next_run_id ;", md->table_prefix) < 0)
+        return -1;
+      break;
+    case 15:
+      if (mi->simple_fquery(md, "ALTER TABLE %srunheaders "
+                            " MODIFY start_time DATETIME DEFAULT NULL, "
+                            " MODIFY sched_time DATETIME DEFAULT NULL, "
+                            " MODIFY stop_time DATETIME DEFAULT NULL, "
+                            " MODIFY finish_time DATETIME DEFAULT NULL, "
+                            " MODIFY saved_stop_time DATETIME DEFAULT NULL, "
+                            " MODIFY saved_finish_time DATETIME DEFAULT NULL, "
+                            " MODIFY last_change_time DATETIME DEFAULT NULL "
+                            " ;", md->table_prefix) < 0)
+        return -1;
+      break;
+    case 16:
+      if (mi->simple_fquery(md,
+                            "ALTER TABLE %sruns"
+                            " DROP COLUMN is_examinable,"
+                            " DROP COLUMN examiners0,"
+                            " DROP COLUMN examiners1,"
+                            " DROP COLUMN examiners2,"
+                            " DROP COLUMN exam_score0,"
+                            " DROP COLUMN exam_score1,"
+                            " DROP COLUMN exam_score2"
+                            ";", md->table_prefix) < 0)
+        return -1;
+      break;
+    case 17:
+      if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD COLUMN is_checked TINYINT NOT NULL DEFAULT 0 AFTER prob_uuid", md->table_prefix) < 0)
+        return -1;
+      break;
+    case 18:
+      if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD COLUMN judge_uuid VARCHAR(40) DEFAULT NULL AFTER is_checked", md->table_prefix) < 0)
+        return -1;
+      break;
+    case 19:
+      if (mi->simple_fquery(md, "ALTER TABLE %srunheaders ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin ;", md->table_prefix) < 0)
+        return -1;
+      break;
+    case 20:
+      if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD COLUMN is_vcs TINYINT NOT NULL DEFAULT 0 AFTER judge_uuid", md->table_prefix) < 0)
+        return -1;
+      break;
+    case 21:
+      if (mi->simple_fquery(md, "ALTER TABLE %sruns MODIFY COLUMN serial_id INT(18) NOT NULL ;", md->table_prefix) < 0)
+        return -1;
+      if (mi->simple_fquery(md, "ALTER TABLE %sruns DROP PRIMARY KEY ;", md->table_prefix) < 0)
+        return -1;
+      if (mi->simple_fquery(md, "ALTER TABLE %sruns MODIFY COLUMN serial_id BIGINT NOT NULL PRIMARY KEY AUTO_INCREMENT ;", md->table_prefix) < 0)
+        return -1;
+      break;
+    default:
+      run_version = -1;
+      break;
+    }
+  if (run_version >= 0) {
+    ++run_version;
+    if (mi->simple_fquery(md, "UPDATE %sconfig SET config_val = '%d' WHERE config_key = 'run_version' ;", md->table_prefix, run_version) < 0)
+      return -1;
+  }
+  }
+
   return 0;
 
  fail:
