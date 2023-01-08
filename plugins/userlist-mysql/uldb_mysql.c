@@ -767,7 +767,7 @@ check_func(void *data)
         return -1;
       break;
     case 24:
-      if (state->mi->simple_fquery(state->md, "ALTER TABLE %sapikeys MODIFY COLUMN token VARCHAR(64) NOT NULL PRIMARY KEY, MODIFY COLUMN secret VARCHAR(64) NOT NULL UNIQUE KEY, MODIFY COLUMN payload VARCHAR(1024) DEFAULT NULL, MODIFY COLUMN origin VARCHAR(128) DEFAULT NULL ;", state->md->table_prefix) < 0)
+      if (state->mi->simple_fquery(state->md, "ALTER TABLE %sapikeys MODIFY COLUMN token VARCHAR(64) NOT NULL, MODIFY COLUMN secret VARCHAR(64) NOT NULL UNIQUE KEY, MODIFY COLUMN payload VARCHAR(1024) DEFAULT NULL, MODIFY COLUMN origin VARCHAR(128) DEFAULT NULL ;", state->md->table_prefix) < 0)
         return -1;
       break;
     default:
