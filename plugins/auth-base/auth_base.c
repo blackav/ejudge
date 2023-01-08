@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2021-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2021-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -244,7 +244,7 @@ open_func(void *data)
     return 0;
 }
 
-enum { OAUTH_VERSION_LATEST = 2 };
+enum { OAUTH_VERSION_LATEST = 3 };
 
 static const char oauth_stage1_create_str[] =
 "CREATE TABLE %soauth_stage1 ( \n"
@@ -256,7 +256,7 @@ static const char oauth_stage1_create_str[] =
 "    extra_data VARCHAR(512) DEFAULT NULL,\n"
 "    create_time DATETIME NOT NULL,\n"
 "    expiry_time DATETIME NOT NULL\n"
-") DEFAULT CHARSET=utf8 COLLATE=utf8_bin;";
+") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;";
 
 static const char oauth_stage2_create_str[] =
 "CREATE TABLE %soauth_stage2 ( \n"
@@ -276,7 +276,7 @@ static const char oauth_stage2_create_str[] =
 "    access_token VARCHAR(256) DEFAULT NULL,\n"
 "    id_token VARCHAR(2048) DEFAULT NULL,\n"
 "    error_message VARCHAR(256) DEFAULT NULL\n"
-") DEFAULT CHARSET=utf8 COLLATE=utf8_bin;";
+") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;";
 
 static int
 do_check_database(struct auth_base_state *state)
@@ -322,6 +322,20 @@ do_check_database(struct auth_base_state *state)
             case 1:
                 if (state->mi->simple_fquery(state->md, "ALTER TABLE %soauth_stage2 ADD COLUMN response_user_id VARCHAR(64) DEFAULT NULL AFTER update_time",
                                       state->md->table_prefix) < 0)
+                    return -1;
+                break;
+            case 2:
+                if (state->mi->simple_fquery(state->md, "ALTER TABLE %soauth_stage1 ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin ;",
+                                             state->md->table_prefix) < 0)
+                    return -1;
+                if (state->mi->simple_fquery(state->md, "ALTER TABLE %soauth_stage2 ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin ;",
+                                             state->md->table_prefix) < 0)
+                    return -1;
+                if (state->mi->simple_fquery(state->md, "ALTER TABLE %soauth_stage1 MODIFY COLUMN state_id VARCHAR(64) NOT NULL, MODIFY COLUMN provider VARCHAR(64) NOT NULL, MODIFY COLUMN role VARCHAR(64) DEFAULT NULL, MODIFY COLUMN cookie VARCHAR(64) NOT NULL, MODIFY COLUMN extra_data VARCHAR(512) DEFAULT NULL ;",
+                                             state->md->table_prefix) < 0)
+                    return -1;
+                if (state->mi->simple_fquery(state->md, "ALTER TABLE %soauth_stage2 request_id VARCHAR(64) NOT NULL, provider VARCHAR(64) NOT NULL, role VARCHAR(64) DEFAULT NULL, request_code VARCHAR(256) NOT NULL, cookie VARCHAR(64) NOT NULL, extra_data VARCHAR(512) DEFAULT NULL, response_user_id VARCHAR(64) DEFAULT NULL, response_email VARCHAR(64) DEFAULT NULL, response_name VARCHAR(64) DEFAULT NULL, access_token VARCHAR(256) DEFAULT NULL, id_token VARCHAR(2048) DEFAULT NULL, error_message VARCHAR(256) DEFAULT NULL ;",
+                                             state->md->table_prefix) < 0)
                     return -1;
                 break;
             default:
