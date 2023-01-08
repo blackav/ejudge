@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS %sconfig 
        (config_key VARCHAR(64) NOT NULL PRIMARY KEY COLLATE utf8_bin,
        config_val VARCHAR(64)
-       ) ENGINE=InnoDB;
+       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 
 CREATE TABLE %slogins
        (user_id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -20,7 +20,7 @@ CREATE TABLE %slogins
        logintime DATETIME DEFAULT NULL,
        pwdtime DATETIME DEFAULT NULL,
        changetime DATETIME DEFAULT NULL
-       ) ENGINE=InnoDB;
+       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 
 CREATE TABLE %scookies
        (cookie VARCHAR(64) NOT NULL PRIMARY KEY,
@@ -38,7 +38,7 @@ CREATE TABLE %scookies
        is_ws TINYINT NOT NULL DEFAULT 0,
        is_job TINYINT NOT NULL DEFAULT 0,
        FOREIGN KEY (user_id) REFERENCES logins (user_id)
-       ) ENGINE=InnoDB;
+       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 
 CREATE TABLE %scntsregs
        (user_id INT UNSIGNED NOT NULL,
@@ -55,7 +55,7 @@ CREATE TABLE %scntsregs
        changetime DATETIME DEFAULT NULL,
        PRIMARY KEY (user_id, contest_id),
        FOREIGN KEY (user_id) REFERENCES logins (user_id)
-       ) ENGINE=InnoDB;
+       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 
 CREATE TABLE %susers
        (user_id INT UNSIGNED NOT NULL,
@@ -108,7 +108,7 @@ CREATE TABLE %susers
        avatar_suffix VARCHAR(32) DEFAULT NULL,
        PRIMARY KEY (user_id, contest_id),
        FOREIGN KEY (user_id) REFERENCES logins (user_id)
-       ) ENGINE=InnoDB;
+       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 
 CREATE TABLE %smembers
        (
@@ -147,7 +147,7 @@ CREATE TABLE %smembers
        entry_date DATE DEFAULT NULL,
        graduation_date DATE DEFAULT NULL,
        FOREIGN KEY (user_id) REFERENCES logins (user_id)
-       ) ENGINE=InnoDB;
+       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 
 CREATE TABLE %sejgroups
 (
@@ -158,7 +158,7 @@ CREATE TABLE %sejgroups
     create_time DATETIME NOT NULL,
     last_change_time DATETIME DEFAULT NULL,
     FOREIGN KEY (created_by) REFERENCES logins(user_id)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 
 CREATE TABLE %sgroupmembers
 (
@@ -168,7 +168,7 @@ CREATE TABLE %sgroupmembers
     PRIMARY KEY (group_id, user_id),
     FOREIGN KEY g(group_id) REFERENCES ejgroups(group_id),
     FOREIGN KEY u(user_id) REFERENCES logins(user_id)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 
 CREATE TABLE %sapikeys
 (
@@ -183,7 +183,7 @@ CREATE TABLE %sapikeys
     all_contests TINYINT NOT NULL DEFAULT 0,
     role_id TINYINT NOT NULL DEFAULT 0,
     FOREIGN KEY apikeys_user_id_fk(user_id) REFERENCES logins(user_id)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 
 ALTER TABLE %scntsregs ADD INDEX cntsregs_user_id_idx (user_id),
                        ADD INDEX cntsregs_contest_id_idx (contest_id);
@@ -195,4 +195,4 @@ ALTER TABLE %smembers  ADD INDEX members_user_id_idx (user_id),
 ALTER TABLE %sgroupmembers ADD INDEX groupmembers_group_id_idx (group_id),
                            ADD INDEX groupmembers_user_id_idx (user_id);
 
-INSERT INTO %sconfig VALUES ('version', '16');
+INSERT INTO %sconfig VALUES ('version', '17');

@@ -716,7 +716,27 @@ check_func(void *data)
 
     case 15:
       if (state->mi->simple_fquery(state->md, "ALTER TABLE %scookies ADD is_job TINYINT NOT NULL DEFAULT 0 AFTER is_ws ;", state->md->table_prefix) < 0)
-      return -1;
+        return -1;
+      break;
+    case 16:
+      if (state->mi->simple_fquery(state->md, "ALTER TABLE %sconfig DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin ;", state->md->table_prefix) < 0)
+        return -1;
+      if (state->mi->simple_fquery(state->md, "ALTER TABLE %slogins DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin ;", state->md->table_prefix) < 0)
+        return -1;
+      if (state->mi->simple_fquery(state->md, "ALTER TABLE %scookies DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin ;", state->md->table_prefix) < 0)
+        return -1;
+      if (state->mi->simple_fquery(state->md, "ALTER TABLE %scntsregs DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin ;", state->md->table_prefix) < 0)
+        return -1;
+      if (state->mi->simple_fquery(state->md, "ALTER TABLE %susers DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin ;", state->md->table_prefix) < 0)
+        return -1;
+      if (state->mi->simple_fquery(state->md, "ALTER TABLE %smembers DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin ;", state->md->table_prefix) < 0)
+        return -1;
+      if (state->mi->simple_fquery(state->md, "ALTER TABLE %sejgroups DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin ;", state->md->table_prefix) < 0)
+        return -1;
+      if (state->mi->simple_fquery(state->md, "ALTER TABLE %sgroupmembers DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin ;", state->md->table_prefix) < 0)
+        return -1;
+      if (state->mi->simple_fquery(state->md, "ALTER TABLE %sapikeys DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin ;", state->md->table_prefix) < 0)
+        return -1;
       break;
 
     default:
