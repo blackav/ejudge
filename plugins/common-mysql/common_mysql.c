@@ -255,7 +255,7 @@ finish_func(struct common_plugin_data *data)
 
 static const unsigned char *charset_mappings[][2] =
 {
-  { "utf-8", "utf8" },
+  { "utf-8", "utf8mb4" },
   { "koi8-r", "koi8r" },
 
   { 0, 0 },
@@ -492,6 +492,10 @@ connect_func(struct common_mysql_state *state)
     return state->i->error(state);
   if (state->charset) {
     snprintf(buf, sizeof(buf), "SET NAMES '%s' ;", state->charset);
+    buflen = strlen(buf);
+    if (mysql_real_query(state->conn, buf, buflen))
+      db_error_fail(state);
+    snprintf(buf, sizeof(buf), "SET character_set_connection = '%s' ;", state->charset);
     buflen = strlen(buf);
     if (mysql_real_query(state->conn, buf, buflen))
       db_error_fail(state);
