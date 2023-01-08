@@ -130,7 +130,7 @@ check_database(struct avatar_mysql_state *ams)
         db_error_inv_value_fail(md, "config_val");
     mi->free_res(md);
 
-    if (avatar_version < 1) {
+    if (avatar_version < 1 || avatar_version > AVATAR_DB_VERSION) {
         err("avatar_version == %d is not supported", avatar_version);
         goto fail;
     }
@@ -144,9 +144,6 @@ check_database(struct avatar_mysql_state *ams)
                 goto fail;
             break;
         case AVATAR_DB_VERSION:
-            avatar_version = -1;
-            break;
-        default:
             avatar_version = -1;
             break;
         }
