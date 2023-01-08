@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2022-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -25,6 +25,8 @@
 #include "ejudge/random.h"
 
 #include <string.h>
+
+#define VARIANT_DB_VERSION 1
 
 struct variant_mysql_data
 {
@@ -145,7 +147,7 @@ create_database(
                           md->table_prefix) < 0)
         db_error_fail(md);
 
-    if (mi->simple_fquery(md, "INSERT INTO %sconfig VALUES ('variant_version', '%d') ;", md->table_prefix, 1) < 0)
+    if (mi->simple_fquery(md, "INSERT INTO %sconfig VALUES ('variant_version', '%d') ;", md->table_prefix, VARIANT_DB_VERSION) < 0)
         db_error_fail(md);
 
     return 0;
@@ -185,6 +187,9 @@ check_database(
 
     while (variant_version >= 0) {
         switch (variant_version) {
+        case VARIANT_DB_VERSION:
+            variant_version = -1;
+            break;
         default:
             variant_version = -1;
             break;
