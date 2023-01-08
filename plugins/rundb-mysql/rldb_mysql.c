@@ -182,7 +182,7 @@ prepare_func(
 
 #include "tables.inc.c"
 
-#define RUN_DB_VERSION 23
+#define RUN_DB_VERSION 24
 
 static int
 do_create(struct rldb_mysql_state *state)
@@ -397,6 +397,10 @@ do_open(struct rldb_mysql_state *state)
       if (mi->simple_fquery(md, "ALTER TABLE %srunheaders DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin ;", md->table_prefix) < 0)
         return -1;
       if (mi->simple_fquery(md, "ALTER TABLE %suserrunheaders ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin ;", md->table_prefix) < 0)
+        return -1;
+      break;
+    case 23:
+      if (mi->simple_fquery(md, "ALTER TABLE %sruns MODIFY COLUMN ip VARCHAR(64) DEFAULT NULL, MODIFY COLUMN hash VARCHAR (128) DEFAULT NULL, MODIFY COLUMN run_uuid CHAR(40) DEFAULT NULL, MODIFY COLUMN mime_type VARCHAR(64) DEFAULT NULL, MODIFY COLUMN prob_uuid VARCHAR(40) DEFAULT NULL, MODIFY COLUMN judge_uuid VARCHAR(40) DEFAULT NULL ;", md->table_prefix) < 0)
         return -1;
       break;
     case RUN_DB_VERSION:
