@@ -206,7 +206,7 @@ struct clar_entry_internal
   unsigned char *subj;
 };
 
-#define CLAR_VERSION 12
+#define CLAR_VERSION 13
 
 enum { CLARS_ROW_WIDTH = 24 };
 
@@ -264,7 +264,7 @@ static const char create_clars_query[] =
 "        old_run_status TINYINT NOT NULL DEFAULT 0,"
 "        new_run_status TINYINT NOT NULL DEFAULT 0,"
 "        clar_charset VARCHAR(32),"
-"        subj VARBINARY(128),"
+"        subj VARCHAR(256) DEFAULT NULL,"
 "        PRIMARY KEY (clar_id, contest_id),"
 "        UNIQUE KEY clars_uuid_uk (uuid),"
 "        KEY clars_contest_id_k (contest_id),"
@@ -436,6 +436,10 @@ do_open(struct cldb_mysql_state *state)
       break;
     case 11:
       if (mi->simple_fquery(md, "ALTER TABLE %sclartexts MODIFY COLUMN uuid CHAR(40) NOT NULL ;", md->table_prefix) < 0)
+        return -1;
+      break;
+    case 12:
+      if (mi->simple_fquery(md, "ALTER TABLE %sclars MODIFY COLUMN subj VARCHAR(256) DEFAULT NULL ;", md->table_prefix) < 0)
         return -1;
       break;
     case CLAR_VERSION:
