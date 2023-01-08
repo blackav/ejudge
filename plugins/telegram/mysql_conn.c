@@ -161,7 +161,7 @@ create_database(
                           md->table_prefix) < 0)
         db_error_fail(md);
 
-    if (mi->simple_fquery(md, "INSERT INTO %sconfig VALUES ('telegram_version', '%d') ;", md->table_prefix, 3) < 0)
+    if (mi->simple_fquery(md, "INSERT INTO %sconfig VALUES ('telegram_version', '%d') ;", md->table_prefix, 4) < 0)
         db_error_fail(md);
 
     mi->unlock(md);
@@ -249,6 +249,20 @@ check_database(
             if (mi->simple_fquery(md, "ALTER TABLE %stelegram_chat_states DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;", md->table_prefix) < 0)
                 return -1;
             if (mi->simple_fquery(md, "ALTER TABLE %stelegram_subscriptions DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;", md->table_prefix) < 0)
+                return -1;
+            break;
+        case 3:
+            if (mi->simple_fquery(md, "ALTER TABLE %stelegram_bots MODIFY COLUMN  id CHAR(64) NOT NULL;", md->table_prefix) < 0)
+                return -1;
+            if (mi->simple_fquery(md, "ALTER TABLE %stelegram_tokens MODIFY COLUMN bot_id CHAR(64) NOT NULL, MODIFY COLUMN user_login VARCHAR(64) DEFAULT NULL, MODIFY COLUMN user_name VARCHAR(512) DEFAULT NULL, MODIFY COLUMN token CHAR(64) NOT NULL, MODIFY COLUMN contest_name VARCHAR(512) DEFAULT NULL ;", md->table_prefix) < 0)
+                return -1;
+            if (mi->simple_fquery(md, "ALTER TABLE %stelegram_users MODIFY COLUMN username VARCHAR(512) DEFAULT NULL, MODIFY COLUMN first_name VARCHAR(512) DEFAULT NULL, MODIFY COLUMN last_name VARCHAR(512) DEFAULT NULL ;", md->table_prefix) < 0)
+                return -1;
+            if (mi->simple_fquery(md, "ALTER TABLE %stelegram_chats MODIFY COLUMN chat_type VARCHAR(64) DEFAULT NULL, MODIFY COLUMN title VARCHAR(512) DEFAULT NULL, MODIFY COLUMN username VARCHAR(512) DEFAULT NULL, MODIFY COLUMN first_name VARCHAR(512) DEFAULT NULL, MODIFY COLUMN last_name VARCHAR(512) DEFAULT NULL ;", md->table_prefix) < 0)
+                return -1;
+            if (mi->simple_fquery(md, "ALTER TABLE %stelegram_chat_states MODIFY COLUMN  command VARCHAR(64) DEFAULT NULL, MODIFY COLUMN token VARCHAR(64) DEFAULT NULL;", md->table_prefix) < 0)
+                return -1;
+            if (mi->simple_fquery(md, "ALTER TABLE %stelegram_subscriptions MODIFY COLUMN bot_id CHAR(64) NOT NULL ;", md->table_prefix) < 0)
                 return -1;
             break;
         default:
