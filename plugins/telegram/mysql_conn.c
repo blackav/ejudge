@@ -29,6 +29,8 @@
 
 #include <stdio.h>
 
+#define TELEGRAM_DB_VERSION 4
+
 static struct generic_conn *
 free_func(struct generic_conn *gc)
 {
@@ -161,7 +163,7 @@ create_database(
                           md->table_prefix) < 0)
         db_error_fail(md);
 
-    if (mi->simple_fquery(md, "INSERT INTO %sconfig VALUES ('telegram_version', '%d') ;", md->table_prefix, 4) < 0)
+    if (mi->simple_fquery(md, "INSERT INTO %sconfig VALUES ('telegram_version', '%d') ;", md->table_prefix, TELEGRAM_DB_VERSION) < 0)
         db_error_fail(md);
 
     mi->unlock(md);
