@@ -25,7 +25,7 @@
 
 #include <string.h>
 
-#define SUBMIT_DB_VERSION 1
+#define SUBMIT_DB_VERSION 2
 
 struct submit_mysql_data
 {

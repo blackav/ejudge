@@ -23,7 +23,7 @@
 #include "ejudge/xalloc.h"
 #include "ejudge/errlog.h"
 
-#define USERPROB_DB_VERSION 1
+#define USERPROB_DB_VERSION 2
 
 struct userprob_mysql_data
 {
@@ -100,7 +100,7 @@ static const char create_query[] =
 "    KEY up_user_id_idx(user_id),\n"
 "    KEY up_cu_ids_idx(contest_id,user_id),\n"
 "    FOREIGN KEY up_user_id_fk(user_id) REFERENCES %slogins(user_id)\n"
-") ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;\n";
+") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;\n";
 
 static int
 create_database(
@@ -160,6 +160,12 @@ check_database(
 
     while (userprob_version >= 0) {
         switch (userprob_version) {
+        case 1:
+            if (mi->simple_fquery(md, "ALTER TABLE %suserprobs ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin ;", md->table_prefix) < 0)
+                goto fail;
+            if (mi->simple_fquery(md, "ALTER TABLE %suserprobs MODIFY COLUMN lang_name VARCHAR(64) DEFAULT NULL, MODIFY COLUMN hook_id CHAR(64) NOT NULL, MODIFY COLUMN gitlab_token VARCHAR(64) DEFAULT NULL, MODIFY COLUMN vcs_type VARCHAR(16) DEFAULT NULL, MODIFY COLUMN vcs_url VARCHAR(1024) DEFAULT NULL, MODIFY COLUMN vcs_subdir VARCHAR(1024) DEFAULT NULL, MODIFY COLUMN vcs_branch_spec VARCHAR(1024) DEFAULT NULL, MODIFY COLUMN ssh_private_key VARCHAR(1024) DEFAULT NULL, MODIFY COLUMN last_event VARCHAR(128) DEFAULT NULL, MODIFY COLUMN last_revision VARCHAR(128) DEFAULT NULL, MODIFY COLUMN message VARCHAR(1024) DEFAULT NULL ;", md->table_prefix) < 0)
+                goto fail;
+            break;
         case USERPROB_DB_VERSION:
             userprob_version = -1;
             break;
