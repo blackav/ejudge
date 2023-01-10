@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -6928,23 +6928,23 @@ get_compiler_option(
 
   if (!flags) {
     if (!strcmp(lang->short_name, "clang")) {
-      flags = "-Wall -O2 -std=gnu11";
+      flags = "-Wall -O2";
     } else if (!strcmp(lang->short_name, "clang-32")) {
-      flags = "-Wall -O2 -std=gnu11";
+      flags = "-Wall -O2";
     } else if (!strcmp(lang->short_name, "clang++")) {
       flags = "-Wall -O2";
     } else if (!strcmp(lang->short_name, "clang++-32")) {
       flags = "-Wall -O2";
     } else if (!strcmp(lang->short_name, "gcc")) {
-      flags = "-Wall -O2 -std=gnu11";
+      flags = "-Wall -O2";
     } else if (!strcmp(lang->short_name, "gcc-32")) {
-      flags = "-Wall -O2 -std=gnu11";
+      flags = "-Wall -O2";
     } else if (!strcmp(lang->short_name, "gcc-vg")) {
-      flags = "-g -O2 -std=gnu11";
+      flags = "-g -O2";
     } else if (!strcmp(lang->short_name, "g++")) {
-      flags = "-Wall -O2 -std=gnu++17";
+      flags = "-Wall -O2";
     } else if (!strcmp(lang->short_name, "g++-32")) {
-      flags = "-Wall -O2 -std=gnu++17";
+      flags = "-Wall -O2";
     } else if (!strcmp(lang->short_name, "g++-vg")) {
       flags = "-g -O2";
     } else if (!strcmp(lang->short_name, "g77")) {
