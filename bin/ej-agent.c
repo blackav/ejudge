@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2022-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -712,7 +712,7 @@ pipe_write_func(struct AppState *as, struct FDInfo *fdi)
             fdi->wr_size = c->size;
             fdi->wr_pos = 0;
             if (fdi->wchunku > 0) {
-                memcpy(&fdi->wchunks[0], &fdi->wchunks[1], fdi->wchunku - 1);
+                memcpy(&fdi->wchunks[0], &fdi->wchunks[1], (fdi->wchunku - 1) * sizeof(fdi->wchunks[0]));
             }
             --fdi->wchunku;
             continue;
