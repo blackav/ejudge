@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright (c) 2001-2016 Alexander Chernov <cher@ejudge.ru>
+# Copyright (c) 2001-2023 Alexander Chernov <cher@ejudge.ru>
 
 # using EJUDGE_FLAGS we may pass additional flags
 
@@ -26,7 +26,7 @@ then
     PATH="${GPPDIR}:${PATH}"
 fi
 
-[ x"${EJUDGE_FLAGS}" = x ] && EJUDGE_FLAGS="-Wall -O2 -std=gnu++11"
+[ x"${EJUDGE_FLAGS}" = x ] && EJUDGE_FLAGS="-Wall -O2"
 #[ x"${EJUDGE_LIBS}" = x ] && EJUDGE_LIBS="-lm"
 
 unset LANG
