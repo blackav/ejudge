@@ -1437,6 +1437,12 @@ wait_func(
     as->wait_serial = channel;
     as->wait_time_ms = as->current_time_ms;
     as->spool_wd = inotify_add_watch(as->ifd, as->queue_packet_dir, IN_CREATE | IN_MOVED_TO);
+    if (as->spool_wd < 0) {
+        // for debug purposes: fail immediately
+        err("%s: wait_func: inotify_add_watch failed: %s",
+            as->inst_id, os_ErrorMsg());
+        exit(1);
+    }
 
     cJSON_AddNumberToObject(reply, "channel", as->wait_serial);
     cJSON_AddStringToObject(reply, "q", "channel-result");
