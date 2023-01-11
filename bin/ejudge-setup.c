@@ -151,6 +151,7 @@ static unsigned char system_group[256];
 static unsigned char config_workdisk_flag[64];
 static unsigned char config_workdisk_size[64];
 static unsigned char config_install_flag[64];
+static unsigned char config_slave_flag[64];
 
 static unsigned char tmp_work_dir[PATH_MAX];
 
@@ -237,6 +238,7 @@ enum
   SET_LINE_WORKDISK_FLAG,
   SET_LINE_WORKDISK_SIZE,
   SET_LINE_INSTALL_FLAG,
+  SET_LINE_SLAVE_FLAG,
   SET_LINE_LAST,
 };
 
@@ -1789,6 +1791,10 @@ static const struct path_edit_item set_edit_items[] =
   {
     "Install to cgi-bin?", 0, config_install_flag, sizeof(config_install_flag),
   },
+  [SET_LINE_SLAVE_FLAG] =
+  {
+    "Install in slave mode?", 0, config_slave_flag, sizeof(config_slave_flag),
+  },
 };
 
 static void
@@ -1882,6 +1888,9 @@ initialize_setting_var(int idx)
     snprintf(config_workdisk_size, sizeof(config_workdisk_size),
              "%d", 64);
     break;
+  case SET_LINE_SLAVE_FLAG:
+    snprintf(config_slave_flag, sizeof(config_slave_flag), "%s", "no");
+    break;
   default:
     SWERR(("initialize_setting_var: unhandled idx == %d", idx));
   }
@@ -1904,6 +1913,7 @@ is_valid_setting_var(int idx)
   case SET_LINE_WORKDISK_FLAG:
   case SET_LINE_WORKDISK_SIZE:
   case SET_LINE_INSTALL_FLAG:
+  case SET_LINE_SLAVE_FLAG:
     return 1;
   case SET_LINE_REG_EMAIL:
     if (!is_valid_email_address(set_edit_items[idx].buf)) return 0;
@@ -1985,6 +1995,7 @@ do_settings_menu(int *p_cur_item)
     case SET_LINE_SYSTEM_GID:
     case SET_LINE_WORKDISK_FLAG:
     case SET_LINE_INSTALL_FLAG:
+    case SET_LINE_SLAVE_FLAG:
       asprintf(&descs[menu_nitem], "%-20.20s %s: %-53.53s",
                set_edit_items[i].descr,
                valid_setting_str(i), set_edit_items[i].buf);
@@ -2128,6 +2139,15 @@ do_settings_menu(int *p_cur_item)
         j = ncurses_yesno(0, "\\begin{center}\nInstall symlinks to CGI tools to the web server cgi-bin directory?\n\\end{center}\n");
         if (j < 0) continue;
         snprintf(config_install_flag, sizeof(config_install_flag),
+                 "%s", j?"yes":"no");
+        cur_item = i;
+        ret_val = 1;
+        break;
+      }
+      if (i == SET_LINE_SLAVE_FLAG) {
+        j = ncurses_yesno(0, "\\begin{center}\nInstall in slave mode (only compile and run)?\n\\end{center}\n");
+        if (j < 0) continue;
+        snprintf(config_slave_flag, sizeof(config_slave_flag),
                  "%s", j?"yes":"no");
         cur_item = i;
         ret_val = 1;
