@@ -4053,7 +4053,7 @@ generate_install_script(FILE *f, int batch_install_script, int container_mode)
     generate_dir_creation(f, &created_dirs, 0, workdir_path);
   }
 
-  if (!strcmp(config_install_flag, "yes")
+  if (!strcmp(config_install_flag, "yes") && strcmp(config_slave_flag, "yes")
       && config_ejudge_cgi_bin_dir[0] && config_cgi_bin_dir[0]) {
     if (stat(config_ejudge_cgi_bin_dir, &sb1) >= 0
         && stat(config_cgi_bin_dir, &sb2) >= 0
@@ -4092,34 +4092,36 @@ generate_install_script(FILE *f, int batch_install_script, int container_mode)
     }
   }
 
-  if (!strcmp(config_install_flag, "yes") && config_htdocs_dir[0]) {
-    if (CONF_STYLE_PREFIX[0] != '/') {
-      gen_cmd_run(f, "echo 'NOTE: HTML style files are not linked to the HTTP server'");
-      gen_cmd_run(f, "echo 'directories because --enable-style-prefix specifies'");
-      gen_cmd_run(f, "echo 'prefix not starting with /'. You should symlink or copy'");
-      gen_cmd_run(f, "echo 'the style files manually'");
-    } else {
-      snprintf(style_prefix, sizeof(style_prefix), "%s%s", config_htdocs_dir,
-               CONF_STYLE_PREFIX);
-      style_len = strlen(style_prefix);
-      if (style_len > 0 && style_prefix[style_len - 1] != '/') {
-        os_rDirName(style_prefix, style_dir, sizeof(style_dir));
+  if (strcmp(config_slave_flag, "yes")) {
+    if (!strcmp(config_install_flag, "yes") && config_htdocs_dir[0]) {
+      if (CONF_STYLE_PREFIX[0] != '/') {
+        gen_cmd_run(f, "echo 'NOTE: HTML style files are not linked to the HTTP server'");
+        gen_cmd_run(f, "echo 'directories because --enable-style-prefix specifies'");
+        gen_cmd_run(f, "echo 'prefix not starting with /'. You should symlink or copy'");
+        gen_cmd_run(f, "echo 'the style files manually'");
       } else {
-        snprintf(style_dir, sizeof(style_dir), "%s", style_prefix);
+        snprintf(style_prefix, sizeof(style_prefix), "%s%s", config_htdocs_dir,
+                 CONF_STYLE_PREFIX);
+        style_len = strlen(style_prefix);
+        if (style_len > 0 && style_prefix[style_len - 1] != '/') {
+          os_rDirName(style_prefix, style_dir, sizeof(style_dir));
+        } else {
+          snprintf(style_dir, sizeof(style_dir), "%s", style_prefix);
+        }
+        generate_dir_creation(f, &created_dirs, 0, style_dir);
+        snprintf(style_src_dir, sizeof(style_src_dir),
+                 "%s/share/ejudge/style", EJUDGE_PREFIX_DIR);
+        gen_cmd_run(f, "ln -sf \"%s/logo.gif\" \"%slogo.gif\"",
+                    style_src_dir, style_prefix);
+        gen_cmd_run(f, "ln -sf \"%s/priv.css\" \"%spriv.css\"",
+                    style_src_dir, style_prefix);
+        gen_cmd_run(f, "ln -sf \"%s/priv.js\" \"%spriv.js\"",
+                    style_src_dir, style_prefix);
+        gen_cmd_run(f, "ln -sf \"%s/unpriv.css\" \"%sunpriv.css\"",
+                    style_src_dir, style_prefix);
+        gen_cmd_run(f, "ln -sf \"%s/unpriv.js\" \"%sunpriv.js\"",
+                    style_src_dir, style_prefix);
       }
-      generate_dir_creation(f, &created_dirs, 0, style_dir);
-      snprintf(style_src_dir, sizeof(style_src_dir),
-               "%s/share/ejudge/style", EJUDGE_PREFIX_DIR);
-      gen_cmd_run(f, "ln -sf \"%s/logo.gif\" \"%slogo.gif\"",
-                  style_src_dir, style_prefix);
-      gen_cmd_run(f, "ln -sf \"%s/priv.css\" \"%spriv.css\"",
-                  style_src_dir, style_prefix);
-      gen_cmd_run(f, "ln -sf \"%s/priv.js\" \"%spriv.js\"",
-                  style_src_dir, style_prefix);
-      gen_cmd_run(f, "ln -sf \"%s/unpriv.css\" \"%sunpriv.css\"",
-                  style_src_dir, style_prefix);
-      gen_cmd_run(f, "ln -sf \"%s/unpriv.js\" \"%sunpriv.js\"",
-                  style_src_dir, style_prefix);
     }
   }
 
@@ -4168,7 +4170,8 @@ generate_install_script(FILE *f, int batch_install_script, int container_mode)
     free(txt_ptr); txt_ptr = 0; txt_len = 0;
   }
 
-  if (config_mysql_enable_for_users > 0 && config_mysql_enable_for_contests) {
+  if (config_mysql_enable_for_users > 0 && config_mysql_enable_for_contests
+      && strcmp(config_slave_flag, "yes")) {
     // mysql_password
     unsigned char tmp[PATH_MAX];
     os_rDirName(config_ejudge_xml_path, tmp, sizeof(tmp));
@@ -4403,7 +4406,7 @@ generate_install_script(FILE *f, int batch_install_script, int container_mode)
   gen_cmd_run(f, "chown -R %s:%s \"%s\"",
               config_system_uid, config_system_gid, config_contest1_home_dir);
 
-  if (config_mysql_enable_for_users > 0) {
+  if (config_mysql_enable_for_users > 0 && strcmp(config_slave_flag, "yes")) {
     fprintf(f, "# Import initial user database to MySQL\n");
     gen_cmd_run(f, "%s/ej-users -u %s -g %s --convert --from-plugin xml --to-plugin mysql",
                 EJUDGE_SERVER_BIN_PATH, config_system_uid, config_system_gid);
@@ -4419,10 +4422,12 @@ generate_install_script(FILE *f, int batch_install_script, int container_mode)
               config_ejudge_serve_path, config_system_uid,
               config_system_gid, config_contest1_home_dir);
   */
-  fprintf(f, "# Create necessary files for `ej-contests'\n");
-  gen_cmd_run(f, "%s/ej-contests -u %s -g %s -C \"%s\" --create",
-              EJUDGE_SERVER_BIN_PATH, config_system_uid,
-              config_system_gid, config_ejudge_contests_home_dir);
+  if (strcmp(config_slave_flag, "yes")) {
+    fprintf(f, "# Create necessary files for `ej-contests'\n");
+    gen_cmd_run(f, "%s/ej-contests -u %s -g %s -C \"%s\" --create",
+                EJUDGE_SERVER_BIN_PATH, config_system_uid,
+                config_system_gid, config_ejudge_contests_home_dir);
+  }
 }
 
 static void
