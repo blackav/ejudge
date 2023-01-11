@@ -649,7 +649,7 @@ done:
     if (as->verbose_mode) {
         info("%s: json: %s", as->inst_id, jstr);
     }
-    jstr = realloc(jstr, jlen + 2);
+    jstr = realloc(jstr, jlen + 3);
     jstr[jlen++] = '\n';
     jstr[jlen++] = '\n';
     jstr[jlen] = 0;
@@ -881,7 +881,7 @@ check_spool_state(struct AppState *as)
     if (as->verbose_mode) {
         info("%s: json: %s", as->inst_id, jstr);
     }
-    jstr = realloc(jstr, jlen + 2);
+    jstr = realloc(jstr, jlen + 3);
     jstr[jlen++] = '\n';
     jstr[jlen++] = '\n';
     jstr[jlen] = 0;
