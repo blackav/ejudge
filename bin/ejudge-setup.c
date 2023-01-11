@@ -155,6 +155,8 @@ static unsigned char config_slave_flag[64];
 
 static unsigned char tmp_work_dir[PATH_MAX];
 
+static int slave_mode_option = 0;
+
 static unsigned char const email_accept_chars[] =
 "@.%!+=_-0123456789?abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 static unsigned char const name_accept_chars[] =
@@ -1889,7 +1891,8 @@ initialize_setting_var(int idx)
              "%d", 64);
     break;
   case SET_LINE_SLAVE_FLAG:
-    snprintf(config_slave_flag, sizeof(config_slave_flag), "%s", "no");
+    snprintf(config_slave_flag, sizeof(config_slave_flag), "%s",
+             (slave_mode_option > 0)?"yes":"no");
     break;
   default:
     SWERR(("initialize_setting_var: unhandled idx == %d", idx));
@@ -4771,6 +4774,9 @@ main(int argc, char **argv)
       cur_arg += 1;
     } else if (!strcmp(argv[cur_arg], "-s")) {
       container_mode = 1;
+      cur_arg += 1;
+    } else if (!strcmp(argv[cur_arg], "-S")) {
+      slave_mode_option = 1;
       cur_arg += 1;
     } else if (!strcmp(argv[cur_arg], "-i")) {
       if (cur_arg + 1 >= argc) arg_expected(argv[0]);
