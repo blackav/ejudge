@@ -13289,7 +13289,7 @@ ns_unparse_statement(
 
   const unsigned char **vars = NULL;
   const unsigned char **vals = NULL;
-  int varcount = 7;
+  int varcount = 8;
   if (prob->statement_env) {
     for (int i = 0; prob->statement_env[i]; ++i)
       ++varcount;
