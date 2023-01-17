@@ -498,15 +498,7 @@ connect_func(struct common_mysql_state *state)
                           state->host, state->user, state->password,
                           state->database, state->port, state->socket, 0))
     return state->i->error(state);
-  /*
-  if (mysql_real_query(state->conn, names_buf, strlen(names_buf)))
-    db_error_fail(state);
-  */
   return 0;
-  /*
- fail:
-  return -1;
-  */
 }
 
 static void
