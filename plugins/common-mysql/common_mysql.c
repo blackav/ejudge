@@ -494,6 +494,11 @@ connect_func(struct common_mysql_state *state)
     err("mysql_options failed");
     return -1;
   }
+  my_bool flag = 1;
+  if (mysql_options(state->conn, MYSQL_OPT_RECONNECT, &flag) < 0) {
+    err("mysql_options failed");
+    return -1;
+  }
   if (!mysql_real_connect(state->conn,
                           state->host, state->user, state->password,
                           state->database, state->port, state->socket, 0))
