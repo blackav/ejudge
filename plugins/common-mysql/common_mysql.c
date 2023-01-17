@@ -477,11 +477,6 @@ prepare_func(
 static int
 connect_func(struct common_mysql_state *state)
 {
-  /*
-  unsigned char buf[1024];
-  int buflen;
-  */
-
   if (state->conn) return 0;
 
   const char *charset = state->charset;
@@ -501,12 +496,6 @@ connect_func(struct common_mysql_state *state)
     return state->i->error(state);
   if (mysql_real_query(state->conn, names_buf, strlen(names_buf)))
     db_error_fail(state);
-  /*
-  snprintf(buf, sizeof(buf), "SET character_set_connection = '%s' ;", charset);
-  buflen = strlen(buf);
-  if (mysql_real_query(state->conn, buf, buflen))
-    db_error_fail(state);
-  */
   return 0;
 
  fail:
