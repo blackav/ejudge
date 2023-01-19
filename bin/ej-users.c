@@ -10375,6 +10375,10 @@ cmd_create_user_2(
     reg_password_len = strlen(pwdnew.encoded);
   }
 
+  if (user_id > 0 && data->reset_existing_passwords_flag > 0) {
+    default_set_reg_passwd(user_id, reg_password_method, reg_password_str, cur_time);
+  }
+
   if (user_id < 0) {
     user_id = default_new_user(login_str,
                                email_str,

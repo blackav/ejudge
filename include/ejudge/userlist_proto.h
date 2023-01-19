@@ -3,7 +3,7 @@
 #ifndef __USERLIST_PROTO_H__
 #define __USERLIST_PROTO_H__
 
-/* Copyright (C) 2002-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -472,6 +472,7 @@ struct userlist_pk_create_user_2
   int cnts_name_len;
   int group_id;
   int register_existing_flag;
+  int reset_existing_passwords_flag;
   unsigned char data[5];
 };
 
