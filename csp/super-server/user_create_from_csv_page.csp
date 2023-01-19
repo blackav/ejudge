@@ -403,6 +403,11 @@ function updateCntsPasswdVisibility()
       <td class="b0">&nbsp;</td>
     </tr>
     <tr>
+      <td class="b0"><b>Reset existing passwords:</b></td>
+      <td class="b0"><input type="checkbox" name="reset_existing_passwords" value="1" /></td>
+      <td class="b0">&nbsp;</td>
+    </tr>
+    <tr>
       <td class="b0"><b>Field separator:</b></td>
       <td class="b0"><input type="text" name="separator" size="20" value=";"/></td>
       <td class="b0">&nbsp;</td>
