@@ -1592,16 +1592,18 @@ tune_seccomp()
         seccomp_filter_x86_64[8] = nop[0];
         seccomp_filter_x86_64[9] = nop[0];
         seccomp_filter_x86_64[10] = nop[0];
-        seccomp_filter_x86_64[11] = nop[0];
-        seccomp_filter_x86_64[12] = nop[0];
+        // clone3 is not enabled for now
+        //seccomp_filter_x86_64[11] = nop[0];
+        //seccomp_filter_x86_64[12] = nop[0];
         seccomp_filter_x86_64[25] = nop[0];
         seccomp_filter_x86_64[26] = nop[0];
         seccomp_filter_x86_64[27] = nop[0];
         seccomp_filter_x86_64[28] = nop[0];
         seccomp_filter_x86_64[29] = nop[0];
         seccomp_filter_x86_64[30] = nop[0];
-        seccomp_filter_x86_64[31] = nop[0];
-        seccomp_filter_x86_64[32] = nop[0];
+        // clone3 is not enabled for now
+        //seccomp_filter_x86_64[31] = nop[0];
+        //seccomp_filter_x86_64[32] = nop[0];
     }
     if (enable_sys_execve) {
         seccomp_filter_x86_64[13] = nop[0];
@@ -1643,8 +1645,9 @@ tune_seccomp()
         seccomp_filter_default[4] = nop[0];
         seccomp_filter_default[5] = nop[0];
         seccomp_filter_default[6] = nop[0];
-        seccomp_filter_default[7] = nop[0];
-        seccomp_filter_default[8] = nop[0];
+        // clone3 is not enabled for now
+        //seccomp_filter_default[7] = nop[0];
+        //seccomp_filter_default[8] = nop[0];
     }
     if (enable_sys_execve) {
         seccomp_filter_default[9] = nop[0];
