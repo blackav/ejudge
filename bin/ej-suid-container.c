@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2021-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2021-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -137,6 +137,8 @@ static int enable_compile_mode = 0;
 static int enable_seccomp = 1;
 static int enable_sys_execve = 0;
 static int enable_sys_fork = 0;
+static int enable_sys_memfd = 0;
+static int enable_sys_unshare = 0;
 
 static char *working_dir = NULL;
 static char *working_dir_parent = NULL;
@@ -1395,7 +1397,7 @@ static struct sock_filter seccomp_filter_default[] =
 #endif
 
     // blacklist exec-like syscalls
-#if defined __NR_clone3
+#if defined __NR_execveat
     /*  9 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_execveat, 0, 1),
     /* 10 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
 #else
@@ -1409,8 +1411,26 @@ static struct sock_filter seccomp_filter_default[] =
     /* 13 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, 0, 1, 0), // patched in tune_seccomp
     /* 14 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
 
+    // blacklist memfd_create
+#if defined __NR_memfd_create
+    /* 15 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_memfd_create, 0, 1),
+    /* 16 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
+#else
+    /* 15 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
+    /* 16 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
+#endif
+
+    // blacklist unshare
+#if defined __NR_unshare
+    /* 17 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_unshare, 0, 1),
+    /* 18 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
+#else
+    /* 17 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
+    /* 18 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
+#endif
+
     // allow remaining
-    /* 15 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_ALLOW),
+    /* 19 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_ALLOW),
 };
 
 static struct sock_filter seccomp_filter_x86_64[] =
@@ -1455,7 +1475,7 @@ static struct sock_filter seccomp_filter_x86_64[] =
 #endif
 
     // blacklist exec-like syscalls
-#if defined __NR_clone3
+#if defined __NR_execveat
     /* 13 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_execveat, 0, 1),
     /* 14 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
 #else
@@ -1469,31 +1489,67 @@ static struct sock_filter seccomp_filter_x86_64[] =
     /* 17 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, 0, 1, 0), // patched in tune_seccomp
     /* 18 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
 
+    // blacklist memfd_create
+#if defined __NR_memfd_create
+    /* 19 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_memfd_create, 0, 1),
+    /* 20 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
+#else
+    /* 19 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
+    /* 20 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
+#endif
+
+    // blacklist unshare
+#if defined __NR_unshare
+    /* 21 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_unshare, 0, 1),
+    /* 22 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
+#else
+    /* 21 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
+    /* 22 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
+#endif
+
     // allow remaining
-    /* 19 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_ALLOW),
+    /* 23 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_ALLOW),
 
     // i686 under x86_64 part
     // load syscall number
-    /* 20 */ BPF_STMT(BPF_LD+BPF_W+BPF_ABS, (offsetof(struct seccomp_data, nr))),
+    /* 24 */ BPF_STMT(BPF_LD+BPF_W+BPF_ABS, (offsetof(struct seccomp_data, nr))),
 
     // blacklist fork-like syscalls
-    /* 21 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_32_fork, 0, 1),
-    /* 22 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
-    /* 23 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_32_vfork, 0, 1),
-    /* 24 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
-    /* 25 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_32_clone, 0, 1),
+    /* 25 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_32_fork, 0, 1),
     /* 26 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
-    /* 27 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_32_clone3, 0, 1),
+    /* 27 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_32_vfork, 0, 1),
     /* 28 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
-
-    // blacklist exec-like syscalls
-    /* 29 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_32_execve, 0, 1),
+    /* 29 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_32_clone, 0, 1),
     /* 30 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
-    /* 31 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_32_execveat, 0, 1),
+    /* 31 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_32_clone3, 0, 1),
     /* 32 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
 
+    // blacklist exec-like syscalls
+    /* 33 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_32_execve, 0, 1),
+    /* 34 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
+    /* 35 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_32_execveat, 0, 1),
+    /* 36 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
+
+    // blacklist memfd_create
+#if defined __NR_32_memfd_create
+    /* 37 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_32_memfd_create, 0, 1),
+    /* 38 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
+#else
+    /* 37 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
+    /* 38 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
+#endif
+
+    // blacklist unshare
+#if defined __NR_32_unshare
+    /* 39 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_32_unshare, 0, 1),
+    /* 40 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
+#else
+    /* 39 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
+    /* 40 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
+#endif
+
     // allow remaining
-    /* 33 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_ALLOW),
+    /* 41 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_ALLOW),
 };
 
 static __attribute__((unused)) struct sock_fprog seccomp_prog_x86_64 =
@@ -1538,14 +1594,14 @@ tune_seccomp()
         seccomp_filter_x86_64[10] = nop[0];
         seccomp_filter_x86_64[11] = nop[0];
         seccomp_filter_x86_64[12] = nop[0];
-        seccomp_filter_x86_64[21] = nop[0];
-        seccomp_filter_x86_64[22] = nop[0];
-        seccomp_filter_x86_64[23] = nop[0];
-        seccomp_filter_x86_64[24] = nop[0];
         seccomp_filter_x86_64[25] = nop[0];
         seccomp_filter_x86_64[26] = nop[0];
         seccomp_filter_x86_64[27] = nop[0];
         seccomp_filter_x86_64[28] = nop[0];
+        seccomp_filter_x86_64[29] = nop[0];
+        seccomp_filter_x86_64[30] = nop[0];
+        seccomp_filter_x86_64[31] = nop[0];
+        seccomp_filter_x86_64[32] = nop[0];
     }
     if (enable_sys_execve) {
         seccomp_filter_x86_64[13] = nop[0];
@@ -1554,10 +1610,22 @@ tune_seccomp()
         seccomp_filter_x86_64[16] = nop[0];
         seccomp_filter_x86_64[17] = nop[0];
         seccomp_filter_x86_64[18] = nop[0];
-        seccomp_filter_x86_64[29] = nop[0];
-        seccomp_filter_x86_64[30] = nop[0];
-        seccomp_filter_x86_64[31] = nop[0];
-        seccomp_filter_x86_64[32] = nop[0];
+        seccomp_filter_x86_64[33] = nop[0];
+        seccomp_filter_x86_64[34] = nop[0];
+        seccomp_filter_x86_64[35] = nop[0];
+        seccomp_filter_x86_64[36] = nop[0];
+    }
+    if (enable_sys_memfd) {
+        seccomp_filter_x86_64[19] = nop[0];
+        seccomp_filter_x86_64[20] = nop[0];
+        seccomp_filter_x86_64[37] = nop[0];
+        seccomp_filter_x86_64[38] = nop[0];
+    }
+    if (enable_sys_unshare) {
+        seccomp_filter_x86_64[21] = nop[0];
+        seccomp_filter_x86_64[22] = nop[0];
+        seccomp_filter_x86_64[39] = nop[0];
+        seccomp_filter_x86_64[40] = nop[0];
     }
 #else
     seccomp_prog_active = &seccomp_prog_default;
@@ -1585,6 +1653,14 @@ tune_seccomp()
         seccomp_filter_default[12] = nop[0];
         seccomp_filter_default[13] = nop[0];
         seccomp_filter_default[14] = nop[0];
+    }
+    if (enable_sys_memfd) {
+        seccomp_filter_default[15] = nop[0];
+        seccomp_filter_default[16] = nop[0];
+    }
+    if (enable_sys_unshare) {
+        seccomp_filter_default[17] = nop[0];
+        seccomp_filter_default[18] = nop[0];
     }
 #endif
 }
@@ -1656,7 +1732,8 @@ apply_language_profiles(void)
         enable_proc = 1;
         limit_vm_size = -1;
     } else if (!strcmp(language_name, "dotnet-cs") || !strcmp(language_name, "dotnet-vb")) {
-        enable_seccomp = 0;
+        enable_sys_fork = 1;
+        enable_sys_execve = 1;
         enable_proc = 1;
         limit_processes = 40;
         limit_stack_size = 1024 * 1024; // 1M
@@ -1665,10 +1742,12 @@ apply_language_profiles(void)
             limit_vm_size = -1;
         }
     } else if (!strcmp(language_name, "make")) {
-        enable_seccomp = 0;
+        enable_sys_fork = 1;
+        enable_sys_execve = 1;
         enable_proc = 1;
     } else if (!strcmp(language_name, "make-vg")) {
-        enable_seccomp = 0;
+        enable_sys_fork = 1;
+        enable_sys_execve = 1;
         enable_proc = 1;
         limit_vm_size = -1;
     } else if (!strcmp(language_name, "gccgo")) {
@@ -2014,6 +2093,12 @@ main(int argc, char *argv[])
                 opt += 2;
             } else if (*opt == 's' && opt[1] == 'f') {
                 enable_sys_fork = 1;
+                opt += 2;
+            } else if (*opt == 's' && opt[1] == 'm') {
+                enable_sys_memfd = 1;
+                opt += 2;
+            } else if (*opt == 's' && opt[1] == 'u') {
+                enable_sys_unshare = 1;
                 opt += 2;
             } else if (*opt == 'o' && opt[1] == 'l') {
                 language_name = extract_string(&opt, 2, "ol");
