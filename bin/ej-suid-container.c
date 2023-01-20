@@ -1725,6 +1725,7 @@ apply_language_profiles(void)
         || !strcmp(language_name, "scala")) {
         enable_sys_fork = 1;
         enable_sys_execve = 1;
+        enable_sys_memfd = 1;
         enable_proc = 1;
         limit_vm_size = -1;     // VM limit set by environment var
         limit_stack_size = 1024 * 1024; // 1M
@@ -1733,6 +1734,7 @@ apply_language_profiles(void)
                || !strcmp(language_name, "pasabc-linux")) {
         enable_sys_fork = 1;
         enable_sys_execve = 1;
+        enable_sys_memfd = 1;
         enable_proc = 1;
         limit_stack_size = 1024 * 1024; // 1M
         if (limit_vm_size > 0 && limit_rss_size <= 0) {
@@ -1749,6 +1751,7 @@ apply_language_profiles(void)
     } else if (!strcmp(language_name, "dotnet-cs") || !strcmp(language_name, "dotnet-vb")) {
         enable_sys_fork = 1;
         enable_sys_execve = 1;
+        enable_sys_memfd = 1;
         enable_proc = 1;
         limit_processes = 40;
         limit_stack_size = 1024 * 1024; // 1M
