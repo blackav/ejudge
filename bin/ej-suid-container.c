@@ -1437,7 +1437,7 @@ static struct sock_filter seccomp_filter_x86_64[] =
 {
     /*  0 */ BPF_STMT(BPF_LD+BPF_W+BPF_ABS, (offsetof(struct seccomp_data, arch))),
     /*  1 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, AUDIT_ARCH_X86_64, 2, 0), // jeq (4)
-    /*  2 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, AUDIT_ARCH_I386, 17, 0),  // jeq (20)
+    /*  2 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, AUDIT_ARCH_I386, 21, 0),  // jeq (24)
     /*  3 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
 
     // x86_64 part
