@@ -1521,14 +1521,26 @@ static struct sock_filter seccomp_filter_x86_64[] =
     /* 28 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
     /* 29 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_32_clone, 0, 1),
     /* 30 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
+
+#if defined __NR_32_clone3
     /* 31 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_32_clone3, 0, 1),
     /* 32 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
+#else
+    /* 31 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
+    /* 32 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
+#endif
 
     // blacklist exec-like syscalls
     /* 33 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_32_execve, 0, 1),
     /* 34 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
+
+#if defined __NR_32_execveat
     /* 35 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_32_execveat, 0, 1),
     /* 36 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
+#else
+    /* 35 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
+    /* 36 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
+#endif
 
     // blacklist memfd_create
 #if defined __NR_32_memfd_create
