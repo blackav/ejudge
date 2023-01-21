@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -74,6 +74,7 @@
 #include "ejudge/userprob_plugin.h"
 #include "ejudge/job_packet.h"
 #include "ejudge/sha256utils.h"
+#include "ejudge/metrics_contest.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -3506,6 +3507,9 @@ priv_submit_run(
   if (run_id < 0) {
     FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
   }
+  if (metrics.data) {
+    ++metrics.data->runs_submitted;
+  }
   serve_move_files_to_insert_run(cs, run_id);
 
   if (store_flags == STORE_FLAGS_UUID || store_flags == STORE_FLAGS_UUID_BSON) {
@@ -5450,6 +5454,9 @@ priv_new_run(FILE *fout,
                           0 /* is_vcs */);
   if (run_id < 0) FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
   serve_move_files_to_insert_run(cs, run_id);
+  if (metrics.data) {
+    ++metrics.data->runs_submitted;
+  }
 
   if (store_flags == STORE_FLAGS_UUID || store_flags == STORE_FLAGS_UUID_BSON) {
     arch_flags = uuid_archive_prepare_write_path(cs, run_path, sizeof(run_path),
@@ -10788,6 +10795,9 @@ ns_submit_run(
     FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
   }
   serve_move_files_to_insert_run(cs, run_id);
+  if (metrics.data) {
+    ++metrics.data->runs_submitted;
+  }
 
   unsigned char run_path[PATH_MAX];
   run_path[0] = 0;
@@ -11471,6 +11481,9 @@ unpriv_submit_run(
     FAIL2(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
   }
   serve_move_files_to_insert_run(cs, run_id);
+  if (metrics.data) {
+    ++metrics.data->runs_submitted;
+  }
 
   if (store_flags == STORE_FLAGS_UUID || store_flags == STORE_FLAGS_UUID_BSON) {
     arch_flags = uuid_archive_prepare_write_path(cs, run_path, sizeof(run_path),
@@ -13760,6 +13773,9 @@ unpriv_xml_update_answer(
                             0 /* is_vcs */);
     if (run_id < 0) FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
     serve_move_files_to_insert_run(cs, run_id);
+    if (metrics.data) {
+      ++metrics.data->runs_submitted;
+    }
     new_flag = 1;
   }
 
