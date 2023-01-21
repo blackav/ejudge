@@ -53,6 +53,7 @@
 #include "ejudge/test_count_cache.h"
 #include "ejudge/submit_plugin.h"
 #include "ejudge/storage_plugin.h"
+#include "ejudge/metrics_contest.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -3035,6 +3036,15 @@ read_compile_packet_input(
     goto done;
   }
 
+  // account compile time
+  if (metrics.data) {
+    long long ts2 = comp_pkt->ts2 * 1000LL + comp_pkt->ts2_us / 1000;
+    long long ts3 = comp_pkt->ts3 * 1000LL + comp_pkt->ts3_us / 1000;
+    if (ts3 > ts2) {
+      metrics.data->total_compile_time_ms += (ts3 - ts2);
+    }
+  }
+
   if (comp_pkt->status == RUN_COMPILE_ERR
       || comp_pkt->status == RUN_STYLE_ERR
       || comp_pkt->status == RUN_CHECK_FAILED) {
@@ -3278,6 +3288,15 @@ serve_read_compile_packet(
   if (re.status != RUN_COMPILING) {
     err("read_compile_packet: run %d is not compiling", comp_pkt->run_id);
     goto non_fatal_error;
+  }
+
+  // account compile time
+  if (metrics.data) {
+    long long ts2 = comp_pkt->ts2 * 1000LL + comp_pkt->ts2_us / 1000;
+    long long ts3 = comp_pkt->ts3 * 1000LL + comp_pkt->ts3_us / 1000;
+    if (ts3 > ts2) {
+      metrics.data->total_compile_time_ms += (ts3 - ts2);
+    }
   }
 
   if (re.prob_id >= 1 && re.prob_id <= state->max_prob) {
