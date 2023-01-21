@@ -29,6 +29,7 @@ struct metrics_contest_data
     int loaded_contests;
     int runs_submitted;
     long long total_compile_time_ms;
+    long long total_testing_time_ms;
 };
 
 struct metrics_desc

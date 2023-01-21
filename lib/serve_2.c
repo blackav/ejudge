@@ -3905,6 +3905,16 @@ read_run_packet_input(
     err("read_run_packet_input: contest_id mismatch: read %d", se.contest_id);
     goto done;
   }
+
+  // account the testing time
+  if (metrics.data) {
+    long long ts5 = reply_pkt->ts5 * 1000LL + reply_pkt->ts5_us / 1000;
+    long long ts6 = reply_pkt->ts6 * 1000LL + reply_pkt->ts6_us / 1000;
+    if (ts6 > ts5) {
+      metrics.data->total_testing_time_ms += (ts6 - ts5);
+    }
+  }
+
   if (se.status != RUN_RUNNING) {
     err("read_compile_packet_input: submit_entry status not RUNNING");
     goto done;
@@ -4084,6 +4094,15 @@ serve_read_run_packet(
     if (memcmp(&re.run_uuid, &reply_pkt->uuid, sizeof(re.run_uuid)) != 0) {
       err("read_run_packet: UUID mismatch for run_id %d", reply_pkt->run_id);
       goto failed;
+    }
+  }
+
+  // account the testing time
+  if (metrics.data) {
+    long long ts5 = reply_pkt->ts5 * 1000LL + reply_pkt->ts5_us / 1000;
+    long long ts6 = reply_pkt->ts6 * 1000LL + reply_pkt->ts6_us / 1000;
+    if (ts6 > ts5) {
+      metrics.data->total_testing_time_ms += (ts6 - ts5);
     }
   }
 
