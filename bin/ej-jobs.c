@@ -201,6 +201,7 @@ struct AppState
     int restart_flag;
     int timer_flag;
     int reopen_log_flag;
+    int daemon_mode;
 
     int sfd;
     int tfd;
@@ -1535,7 +1536,9 @@ do_loop(struct AppState *as)
         }
 
         if (as->reopen_log_flag) {
-            start_open_log(as->job_server_log);
+            if (as->daemon_mode) {
+                start_open_log(as->job_server_log);
+            }
             as->reopen_log_flag = 0;
         }
 
@@ -1809,7 +1812,7 @@ int main(int argc, char *argv[])
     XCALLOC(argv_restart, argc + 2);
     argv_restart[j++] = argv[0];
 
-    int daemon_mode = 0, restart_mode = 0;
+    int restart_mode = 0;
     const unsigned char *user = NULL;
     const unsigned char *group = NULL;
     const unsigned char *workdir = NULL;
@@ -1817,7 +1820,7 @@ int main(int argc, char *argv[])
 
     while (cur_arg < argc) {
         if (!strcmp(argv[cur_arg], "-D")) {
-            daemon_mode = 1;
+            as.daemon_mode = 1;
             cur_arg++;
         } else if (!strcmp(argv[cur_arg], "-R")) {
             restart_mode = 1;
@@ -1892,7 +1895,7 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    if (daemon_mode) {
+    if (as.daemon_mode) {
         if (start_open_log(as.job_server_log) < 0)
             return 1;
 
