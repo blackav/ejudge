@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2003-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -351,6 +351,13 @@ static void
 handler_child(int signo)
 {
   sigchld_flag = 1;
+}
+
+static volatile int sigusr1_flag;
+static void
+handler_usr1(int signo)
+{
+  sigusr1_flag = 1;
 }
 
 /* for error reporting purposes */
@@ -2423,12 +2430,14 @@ do_loop(void)
   sigdelset(&work_mask, SIGINT);
   sigdelset(&work_mask, SIGHUP);
   sigdelset(&work_mask, SIGCHLD);
+  sigdelset(&work_mask, SIGUSR1);
   sigprocmask(SIG_SETMASK, &block_mask, 0);
 
   signal(SIGTERM, handler_term);
   signal(SIGINT, handler_term);
   signal(SIGHUP, handler_hup);
   signal(SIGCHLD, handler_child);
+  signal(SIGUSR1, handler_usr1);
 
   while (1) {
     acquire_resources();
@@ -2567,6 +2576,13 @@ do_loop(void)
       }
 
       if (hup_flag || term_flag) break;
+
+      if (sigusr1_flag) {
+        if (daemon_mode) {
+          start_open_log(config->super_serve_log);
+        }
+        sigusr1_flag = 0;
+      }
 
       /*
       if (n <= 0) {
