@@ -11649,11 +11649,18 @@ do_work(void)
     }
 
     if (usr1_signaled) {
+      start_open_log(config->userlist_log);
+      usr1_signaled = 0;
+    }
+    /*
+      FIXME: use another signal
+    if (usr1_signaled) {
       default_forced_sync();
       if (dflt_iface->disable_cache)
         (*dflt_iface->disable_cache)(uldb_default->data);
       usr1_signaled = 0;
     }
+    */
     if (usr2_signaled) {
       default_sync();
       if (dflt_iface->drop_cache)
