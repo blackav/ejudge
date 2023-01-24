@@ -52,6 +52,7 @@
 static volatile int sighup_flag = 0;
 static volatile int sigint_flag = 0;
 static volatile int sigchld_flag = 0;
+static volatile int sigusr1_flag = 0;
 
 static void
 sighup_handler(int signo)
@@ -67,6 +68,11 @@ static void
 sigchld_handler(int signo)
 {
   sigchld_flag = 1;
+}
+static void
+sigusr1_handler(int signo)
+{
+  sigusr1_flag = 1;
 }
 
 struct watchlist
@@ -1542,6 +1548,13 @@ nsf_main_loop(struct server_framework_state *state)
       state->restart_requested = 1;
       break;
     }
+    if (sigusr1_flag) {
+      if (state->params->daemon_mode_flag) {
+        start_open_log(state->params->log_path);
+      }
+      sigusr1_flag = 0;
+      continue;
+    }
 
     if (n <= 0) continue;
 
@@ -1779,6 +1792,7 @@ nsf_prepare(struct server_framework_state *state)
   sigdelset(&state->work_mask, SIGINT);
   sigdelset(&state->work_mask, SIGHUP);
   sigdelset(&state->work_mask, SIGCHLD);
+  sigdelset(&state->work_mask, SIGUSR1);
 
   memset(&act, 0, sizeof(act));
   act.sa_handler = sighup_handler;
@@ -1791,6 +1805,9 @@ nsf_prepare(struct server_framework_state *state)
 
   act.sa_handler = sigchld_handler;
   sigaction(SIGCHLD, &act, 0);
+
+  act.sa_handler = sigusr1_handler;
+  sigaction(SIGUSR1, &act, 0);
 
   if (state->params->daemon_mode_flag) {
     if (start_open_log(state->params->log_path) < 0)
