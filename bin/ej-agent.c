@@ -47,6 +47,7 @@
 #include <sys/mman.h>
 
 static const unsigned char *program_name;
+static const unsigned char *log_file;
 
 static void die(const char *format, ...)
   __attribute__((noreturn, format(printf, 1, 2)));
@@ -164,6 +165,7 @@ struct AppState
     int spool_wd;
     int wait_finished;
     int wait_random_mode;
+    int reopen_log_flag;
 
     int ifd;                    /* inotify file descriptor */
     int sfd;                    /* signal file descriptor */
@@ -458,6 +460,7 @@ signal_read_func(struct AppState *as, struct FDInfo *fdi)
         switch (sss.ssi_signo) {
         case SIGINT:  as->term_flag = 1; break;
         case SIGTERM: as->term_flag = 1; break;
+        case SIGHUP:  as->reopen_log_flag = 1; break;
         default:
             err("%s: signal_read_func: unexpected signal %d", as->inst_id, sss.ssi_signo);
             break;
@@ -757,6 +760,7 @@ app_state_prepare(struct AppState *as)
     sigemptyset(&ss);
     sigaddset(&ss, SIGINT);
     sigaddset(&ss, SIGTERM);
+    sigaddset(&ss, SIGHUP);
     sigprocmask(SIG_BLOCK, &ss, NULL);
     if ((as->sfd = signalfd(-1, &ss, SFD_CLOEXEC | SFD_NONBLOCK)) < 0) {
         err("%s: signalfd failed: %s", as->inst_id, os_ErrorMsg());
@@ -930,6 +934,19 @@ do_loop(struct AppState *as)
                 struct FDInfo *fdi = (struct FDInfo *) ev->data.ptr;
                 fdi->ops->op_write(as, fdi);
             }
+        }
+
+        if (as->reopen_log_flag) {
+            if (log_file && *log_file) {
+                int fd = open(log_file, O_WRONLY | O_CREAT | O_APPEND | O_NOCTTY, 0600);
+                if (fd < 0) {
+                    err("%s: cannot open log file '%s': %s", as->inst_id, log_file, strerror(errno));
+                } else {
+                    dup2(fd, STDERR_FILENO);
+                    close(fd);
+                }
+            }
+            as->reopen_log_flag = 0;
         }
 
         if (as->timer_flag) {
@@ -1832,6 +1849,10 @@ main(int argc, char *argv[])
             if (argi + 1 >= argc) die("argument expected for -i");
             inst_id = argv[argi + 1];
             argi += 2;
+        } else if (!strcmp(argv[argi], "-l")) {
+            if (argi + 1 >= argc) die("argument expected for -l");
+            log_file = argv[argi + 1];
+            argi += 2;
         } else if (!strcmp(argv[argi], "-m")) {
             if (argi + 1 >= argc) die("argument expected for -m");
             if (!strcmp(argv[argi + 1], "compile")) {
@@ -1900,6 +1921,15 @@ main(int argc, char *argv[])
     app_state_add_query_callback(&app, "delete-heartbeat", NULL, delete_heartbeat_func);
     app_state_add_query_callback(&app, "put-archive", NULL, put_archive_func);
     app_state_add_query_callback(&app, "mirror", NULL, mirror_func);
+
+    if (log_file && *log_file) {
+        int fd = open(log_file, O_WRONLY | O_CREAT | O_APPEND | O_NOCTTY, 0600);
+        if (fd < 0) {
+            die("cannot open log file '%s': %s", log_file, strerror(errno));
+        }
+        dup2(fd, STDERR_FILENO);
+        close(fd);
+    }
 
     info("%s: started", app.inst_id);
     do_loop(&app);
