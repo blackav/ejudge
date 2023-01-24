@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2022-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -628,7 +628,7 @@ connect_func(struct AgentClient *ac)
         if (acs->verbose_mode) {
             fprintf(cmd_f, " -v");
         }
-        fprintf(cmd_f, " 2>>%s/var/ej-agent.log", EJUDGE_CONTESTS_HOME_DIR);
+        fprintf(cmd_f, " -l %s/var/ej-agent.log", EJUDGE_CONTESTS_HOME_DIR);
         fclose(cmd_f); cmd_f = NULL;
 
         dup2(tossh[0], 0); close(tossh[0]); close(tossh[1]);
