@@ -881,7 +881,7 @@ cleanup:
 }
 
 static int
-new_loop(int parallel_mode)
+new_loop(int parallel_mode, const unsigned char *global_log_path)
 {
   int retval = 0;
   const struct section_global_data *global = serve_state.global;
@@ -935,12 +935,20 @@ new_loop(int parallel_mode)
 #endif
 
   interrupt_init();
+  interrupt_setup_usr1();
   interrupt_setup_usr2();
   interrupt_disable();
 
   while (1) {
     // terminate if signaled
     if (interrupt_get_status() || interrupt_restart_requested()) break;
+    if (interrupt_was_usr1()) {
+      if (daemon_mode && global_log_path && *global_log_path) {
+        start_open_log(global_log_path);
+      }
+      interrupt_reset_usr1();
+      continue;
+    }
 
     unsigned char pkt_name[PATH_MAX];
     pkt_name[0] = 0;
@@ -1809,7 +1817,7 @@ main(int argc, char *argv[])
   xfree(lang_log_t); lang_log_t = 0; lang_log_z = 0;
 #endif /* HAVE_OPEN_MEMSTREAM */
 
-  if (new_loop(parallel_mode) < 0) return 1;
+  if (new_loop(parallel_mode, log_path) < 0) return 1;
 
   if (interrupt_restart_requested()) start_restart();
 
