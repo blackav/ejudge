@@ -11649,7 +11649,9 @@ do_work(void)
     }
 
     if (usr1_signaled) {
-      start_open_log(config->userlist_log);
+      if (daemon_mode) {
+        start_open_log(config->userlist_log);
+      }
       usr1_signaled = 0;
     }
     /*
