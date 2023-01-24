@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2006-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -200,6 +200,7 @@ struct AppState
     int term_flag;
     int restart_flag;
     int timer_flag;
+    int reopen_log_flag;
 
     int sfd;
     int tfd;
@@ -466,6 +467,7 @@ signal_read_func(struct AppState *as, struct FDInfo *fdi)
         case SIGINT:  as->term_flag = 1; break;
         case SIGTERM: as->term_flag = 1; break;
         case SIGCHLD: as->child_flag = 1; break;
+        case SIGUSR1: as->reopen_log_flag = 1; break;
         default:
             err("signal_read_func: unexpected signal %d", sss.ssi_signo);
             break;
@@ -855,6 +857,7 @@ app_state_prepare(struct AppState *as)
     sigaction(SIGINT, &(struct sigaction) { .sa_handler = dummy_handler }, NULL);
     sigaction(SIGTERM, &(struct sigaction) { .sa_handler = dummy_handler }, NULL);
     sigaction(SIGHUP, &(struct sigaction) { .sa_handler = dummy_handler }, NULL);
+    sigaction(SIGUSR1, &(struct sigaction) { .sa_handler = dummy_handler }, NULL);
 
     sigset_t ss;
     sigemptyset(&ss);
@@ -862,6 +865,7 @@ app_state_prepare(struct AppState *as)
     sigaddset(&ss, SIGTERM);
     sigaddset(&ss, SIGHUP);
     sigaddset(&ss, SIGCHLD);
+    sigaddset(&ss, SIGUSR1);
     sigprocmask(SIG_BLOCK, &ss, NULL);
     if ((as->sfd = signalfd(-1, &ss, SFD_CLOEXEC | SFD_NONBLOCK)) < 0) {
         err("signalfd failed: %s", os_ErrorMsg());
@@ -1528,6 +1532,11 @@ do_loop(struct AppState *as)
         if (as->child_flag) {
             process_child_event(as);
             as->child_flag = 0;
+        }
+
+        if (as->reopen_log_flag) {
+            start_open_log(as->job_server_log);
+            as->reopen_log_flag = 0;
         }
 
         {
