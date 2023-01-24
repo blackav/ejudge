@@ -86,6 +86,7 @@ static unsigned char *agent_name = NULL;
 static unsigned char *agent_instance_id = NULL;
 static struct AgentClient *agent;
 static int verbose_mode;
+static int daemon_mode;
 
 static int ignored_archs_count = 0;
 static int ignored_problems_count = 0;
@@ -1340,7 +1341,7 @@ main(int argc, char *argv[])
   unsigned char ejudge_xml_path[PATH_MAX];
   serve_state_t state = &serve_state;
   int retval = 0;
-  int daemon_mode = 0, restart_mode = 0, alternate_log_mode = 0;
+  int restart_mode = 0, alternate_log_mode = 0;
   const unsigned char *user = NULL, *group = NULL, *workdir = NULL;
   int halt_timeout = 0, halt_requested = 0;
   unsigned char *halt_command = NULL;
