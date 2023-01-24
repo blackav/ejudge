@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2004-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -20,7 +20,7 @@
 
 static volatile int was_interrupt = 0;
 static volatile int was_sighup = 0;
-static volatile int was_usr1 = 0;
+static volatile int was_usr2 = 0;
 static sigset_t orig_mask;
 static sigset_t work_mask;
 
@@ -37,9 +37,9 @@ sighup_handler(int signo)
 }
 
 static void
-sigusr1_handler(int signo)
+sigusr2_handler(int signo)
 {
-  was_usr1 = 1;
+  was_usr2 = 1;
 }
 
 int
@@ -96,20 +96,20 @@ interrupt_disable(void)
 }
 
 void
-interrupt_setup_usr1(void)
+interrupt_setup_usr2(void)
 {
-  sigaddset(&work_mask, SIGUSR1);
-  signal(SIGUSR1, sigusr1_handler);
+  sigaddset(&work_mask, SIGUSR2);
+  signal(SIGUSR2, sigusr2_handler);
 }
 
 void
-interrupt_reset_usr1(void)
+interrupt_reset_usr2(void)
 {
-  was_usr1 = 0;
+  was_usr2 = 0;
 }
 
 int
-interrupt_was_usr1(void)
+interrupt_was_usr2(void)
 {
-  return was_usr1;
+  return was_usr2;
 }

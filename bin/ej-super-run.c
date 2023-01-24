@@ -677,7 +677,7 @@ do_loop(
   }
   */
   interrupt_init();
-  interrupt_setup_usr1();
+  interrupt_setup_usr2();
   interrupt_disable();
 
   while (1) {
@@ -704,8 +704,8 @@ do_loop(
     r = 0;
     pkt_name[0] = 0;
     if (agent) {
-      if (interrupt_was_usr1()) {
-        interrupt_reset_usr1();
+      if (interrupt_was_usr2()) {
+        interrupt_reset_usr2();
         if (future) {
           r = agent->ops->async_wait_complete(agent, &future, pkt_name, sizeof(pkt_name));
           if (r < 0) {
@@ -714,7 +714,7 @@ do_loop(
           }
         }
       } else if (!future) {
-        r = agent->ops->async_wait_init(agent, SIGUSR1, 1, pkt_name, sizeof(pkt_name), &future);
+        r = agent->ops->async_wait_init(agent, SIGUSR2, 1, pkt_name, sizeof(pkt_name), &future);
         if (r < 0) {
           err("async_wait_init failed");
           break;
