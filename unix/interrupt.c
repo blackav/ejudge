@@ -20,6 +20,7 @@
 
 static volatile int was_interrupt = 0;
 static volatile int was_sighup = 0;
+static volatile int was_usr1 = 0;
 static volatile int was_usr2 = 0;
 static sigset_t orig_mask;
 static sigset_t work_mask;
@@ -34,6 +35,12 @@ static void
 sighup_handler(int signo)
 {
   was_sighup = 1;
+}
+
+static void
+sigusr1_handler(int signo)
+{
+  was_usr1 = 1;
 }
 
 static void
@@ -93,6 +100,25 @@ void
 interrupt_disable(void)
 {
   sigprocmask(SIG_BLOCK, &work_mask, 0);
+}
+
+void
+interrupt_setup_usr1(void)
+{
+  sigaddset(&work_mask, SIGUSR1);
+  signal(SIGUSR1, sigusr1_handler);
+}
+
+void
+interrupt_reset_usr1(void)
+{
+  was_usr1 = 0;
+}
+
+int
+interrupt_was_usr1(void)
+{
+  return was_usr1;
 }
 
 void

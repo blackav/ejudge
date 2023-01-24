@@ -28,6 +28,10 @@ int interrupt_restart_requested(void);
 void interrupt_flag_interrupt(void);
 void interrupt_flag_sighup(void);
 
+void interrupt_setup_usr1(void);
+void interrupt_reset_usr1(void);
+int interrupt_was_usr1(void);
+
 void interrupt_setup_usr2(void);
 void interrupt_reset_usr2(void);
 int interrupt_was_usr2(void);
