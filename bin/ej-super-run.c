@@ -678,6 +678,7 @@ do_loop(
   }
   */
   interrupt_init();
+  interrupt_setup_usr1();
   interrupt_setup_usr2();
   interrupt_disable();
 
@@ -695,6 +696,12 @@ do_loop(
 
     if (pending_stop_flag) break;
     if (pending_down_flag) break;
+    if (interrupt_was_usr1()) {
+      if (daemon_mode) {
+        start_open_log(super_run_log_path);
+      }
+      interrupt_reset_usr1();
+    }
 
     time_t current_time = time(NULL);
     if (halt_timeout > 0 && last_handled + halt_timeout <= current_time) {
