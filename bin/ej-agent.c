@@ -460,7 +460,7 @@ signal_read_func(struct AppState *as, struct FDInfo *fdi)
         switch (sss.ssi_signo) {
         case SIGINT:  as->term_flag = 1; break;
         case SIGTERM: as->term_flag = 1; break;
-        case SIGHUP:  as->reopen_log_flag = 1; break;
+        case SIGUSR1:  as->reopen_log_flag = 1; break;
         default:
             err("%s: signal_read_func: unexpected signal %d", as->inst_id, sss.ssi_signo);
             break;
@@ -755,12 +755,13 @@ app_state_prepare(struct AppState *as)
     sigaction(SIGINT, &(struct sigaction) { .sa_handler = dummy_handler }, NULL);
     sigaction(SIGTERM, &(struct sigaction) { .sa_handler = dummy_handler }, NULL);
     sigaction(SIGHUP, &(struct sigaction) { .sa_handler = dummy_handler }, NULL);
+    sigaction(SIGUSR1, &(struct sigaction) { .sa_handler = dummy_handler }, NULL);
 
     sigset_t ss;
     sigemptyset(&ss);
     sigaddset(&ss, SIGINT);
     sigaddset(&ss, SIGTERM);
-    sigaddset(&ss, SIGHUP);
+    sigaddset(&ss, SIGUSR1);
     sigprocmask(SIG_BLOCK, &ss, NULL);
     if ((as->sfd = signalfd(-1, &ss, SFD_CLOEXEC | SFD_NONBLOCK)) < 0) {
         err("%s: signalfd failed: %s", as->inst_id, os_ErrorMsg());
