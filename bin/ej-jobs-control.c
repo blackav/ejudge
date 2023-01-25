@@ -142,44 +142,15 @@ main(int argc, char *argv[])
     signame = "HUP";
     signum = START_RESTART;
   } else if (!strcmp(command, "rotate")) {
-    unsigned char lp[PATH_MAX];
-    lp[0] = 0;
-
-    unsigned char *jslf = "ej-jobs.log";
-    if (config->job_server_log && config->job_server_log[0]) {
-      jslf = config->job_server_log;
-    }
-    if (!lp[0] && config->job_server_log && config->job_server_log[0]
-        && os_IsAbsolutePath(config->job_server_log)) {
-      if (snprintf(lp, sizeof(lp), "%s", config->job_server_log) >= (int) sizeof(lp)) {
-        abort();
-      }
-    }
-    if (!lp[0] && config->var_dir && config->var_dir[0]) {
-      if (snprintf(lp, sizeof(lp), "%s/%s", config->var_dir, jslf) >= (int) sizeof(lp)) {
-        abort();
-      }
-    }
-    if (!lp[0] && config->contests_home_dir && config->contests_home_dir[0]) {
-      if (snprintf(lp, sizeof(lp), "%s/var/%s", config->contests_home_dir, jslf) >= (int) sizeof(lp)) {
-        abort();
-      }
-    }
-#if defined EJUDGE_CONTESTS_HOME_DIR
-    if (!lp[0]) {
-      if (snprintf(lp, sizeof(lp), "%s/var/%s", EJUDGE_CONTESTS_HOME_DIR, jslf) >= (int) sizeof(lp)) {
-        abort();
-      }
-    }
-#endif
-    if (!lp[0]) {
-      startup_error("log file is not defined");
-    }
-
     unsigned char lpd[PATH_MAX];
     unsigned char lpf[PATH_MAX];
-    os_rDirName(lp, lpd, sizeof(lpd));
-    os_rGetLastname(lp, lpf, sizeof(lpf));
+    if (rotate_get_log_dir_and_file(lpd, sizeof(lpd),
+                                    lpf, sizeof(lpf),
+                                    config,
+                                    config->job_server_log,
+                                    "ej-jobs.log") < 0) {
+      startup_error("log file is not defined or invalid");
+    }
 
     unsigned char *log_group = NULL;
 #if defined EJUDGE_PRIMARY_USER
