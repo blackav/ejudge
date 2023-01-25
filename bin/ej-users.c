@@ -198,11 +198,11 @@ static time_t last_cookie_check;
 static time_t last_user_check;
 static time_t cookie_check_interval;
 static time_t user_check_interval;
-static int interrupt_signaled;
-static int restart_signaled;
-static int usr1_signaled;
-static int usr2_signaled;
-static int winch_signaled;
+static volatile int interrupt_signaled;
+static volatile int restart_signaled;
+static volatile int usr1_signaled;
+static volatile int usr2_signaled;
+static volatile int winch_signaled;
 static int daemon_mode = 0;
 static int forced_mode = 0;
 
