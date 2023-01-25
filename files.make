@@ -189,6 +189,7 @@ COMMON_CFILES=\
  lib/l10n.c\
  lib/lang_config.c\
  lib/lang_config_vis.c\
+ lib/logrotate.c\
  lib/master_html.c\
  lib/meta_generic.c\
  lib/metrics_contest.c\
@@ -601,6 +602,7 @@ HFILES=\
  ./include/ejudge/l10n.h\
  ./include/ejudge/lang_config_vis.h\
  ./include/ejudge/list_ops.h\
+ ./include/ejudge/logrotate.h\
  ./include/ejudge/meta_generic.h\
  ./include/ejudge/metrics_contest.h\
  ./include/ejudge/mime_type.h\
