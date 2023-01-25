@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2006-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -19,6 +19,7 @@
 #include "ejudge/ejudge_cfg.h"
 #include "ejudge/ej_process.h"
 #include "ejudge/osdeps.h"
+#include "ejudge/logrotate.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -59,7 +60,8 @@ enum
     OPERATION_KILL = 3,
     OPERATION_RESTART = 4,
     OPERATION_HARD_RESTART = 5,
-    OPERATION_STATUS = 6
+    OPERATION_STATUS = 6,
+    OPERATION_ROTATE = 7,
 };
 
 static void
@@ -73,7 +75,8 @@ write_help(void)
          "    start     start the ej-compile\n"
          "    stop      stop the ej-compile\n"
          "    restart   restart the ej-compile\n"
-         "    status    report the ej-compile status\n",
+         "    status    report the ej-compile status\n"
+         "    rotate    rotate log file\n",
          program_name, program_name);
 }
 
@@ -919,6 +922,8 @@ int main(int argc, char *argv[])
         op = OPERATION_HARD_RESTART;
     } else if (!strcmp(operation, "status")) {
         op = OPERATION_STATUS;
+    } else if (!strcmp(operation, "rotate")) {
+        op = OPERATION_ROTATE;
     } else {
         system_error("invalid operation '%s'", operation);
     }
@@ -1213,6 +1218,44 @@ int main(int argc, char *argv[])
             }
         }
         break;
+    case OPERATION_ROTATE: {
+        struct PidVector pv = {};
+
+        if (find_all(EJ_COMPILE_PROGRAM, EJ_COMPILE_PROGRAM_DELETED, &pv) < 0) {
+            system_error("cannot enumerate processes");
+        }
+
+        unsigned char log_dir[PATH_MAX];
+        log_dir[0] = 0;
+#if defined EJUDGE_CONTESTS_HOME_DIR
+        if (!log_dir[0]) {
+            snprintf(log_dir, sizeof(log_dir), "%s/var", EJUDGE_CONTESTS_HOME_DIR);
+        }
+#endif
+        if (!log_dir[0] && config->var_dir && config->var_dir[0]) {
+            snprintf(log_dir, sizeof(log_dir), "%s", config->var_dir);
+        }
+        if (!log_dir[0] && config->contests_home_dir && config->contests_home_dir[0]) {
+            snprintf(log_dir, sizeof(log_dir), "%s/var", config->contests_home_dir);
+        }
+        if (!log_dir[0]) {
+            system_error("ej-compile log dir is undefined");
+        }
+        const unsigned char *log_group = NULL;
+        if (config->enable_compile_container > 0) {
+#if defined EJUDGE_PRIMARY_USER
+            log_group = EJUDGE_PRIMARY_USER;
+#endif
+        } else {
+#if defined EJUDGE_COMPILE_USER
+            log_group = EJUDGE_COMPILE_USER;
+#endif
+        }
+        rotate_log_files(log_dir, "ej-compile.log", NULL, NULL, log_group, 0620);
+
+        kill_all(SIGUSR1, &pv);
+        break;
+    }
     default:
         system_error("unhandled operation %d", op);
     }
