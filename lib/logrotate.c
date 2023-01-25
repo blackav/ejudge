@@ -16,6 +16,8 @@
 
 #include "ejudge/config.h"
 #include "ejudge/logrotate.h"
+#include "ejudge/ejudge_cfg.h"
+#include "ejudge/osdeps.h"
 
 #include <stdio.h>
 #include <limits.h>
@@ -173,3 +175,50 @@ cleanup:;
     if (d) closedir(d);
 }
 
+int
+rotate_get_log_dir_and_file(
+        unsigned char *dir_buf,
+        size_t dir_size,
+        unsigned char *name_buf,
+        size_t name_size,
+        const struct ejudge_cfg *config,
+        const unsigned char *config_var,
+        const unsigned char *log_file)
+{
+    unsigned char lp[PATH_MAX];
+    lp[0] = 0;
+
+    if (config_var && config_var[0]) {
+        log_file = config_var;
+    }
+
+    if (config_var && config_var[0] && os_IsAbsolutePath(config_var)) {
+        if (snprintf(lp, sizeof(lp), "%s", config_var) >= (int) sizeof(lp)) {
+            return -1;
+        }
+    }
+    if (!lp[0] && config->var_dir && config->var_dir[0]) {
+        if (snprintf(lp, sizeof(lp), "%s/%s", config->var_dir, log_file) >= (int) sizeof(lp)) {
+            return -1;
+        }
+    }
+    if (!lp[0] && config->contests_home_dir && config->contests_home_dir[0]) {
+        if (snprintf(lp, sizeof(lp), "%s/var/%s", config->contests_home_dir, log_file) >= (int) sizeof(lp)) {
+            return -1;
+        }
+    }
+#if defined EJUDGE_CONTESTS_HOME_DIR
+    if (!lp[0]) {
+        if (snprintf(lp, sizeof(lp), "%s/var/%s", EJUDGE_CONTESTS_HOME_DIR, log_file) >= (int) sizeof(lp)) {
+            return -1;
+        }
+    }
+#endif
+    if (!lp[0]) {
+        return -1;
+    }
+
+    os_rDirName(lp, dir_buf, dir_size);
+    os_rGetLastname(lp, name_buf, name_size);
+    return 0;
+}

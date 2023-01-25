@@ -17,6 +17,8 @@
  * GNU General Public License for more details.
  */
 
+#include <stdlib.h>
+
 void
 rotate_log_files(
         const unsigned char *log_dir,
@@ -25,5 +27,16 @@ rotate_log_files(
         const unsigned char *log_user,
         const unsigned char *log_group,
         int log_perms);
+
+struct ejudge_cfg;
+int
+rotate_get_log_dir_and_file(
+        unsigned char *dir_buf,
+        size_t dir_size,
+        unsigned char *name_buf,
+        size_t name_size,
+        const struct ejudge_cfg *config,
+        const unsigned char *config_var,
+        const unsigned char *log_file);
 
 #endif /* __LOGROTATE_H__ */
