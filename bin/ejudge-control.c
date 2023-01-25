@@ -495,7 +495,7 @@ command_rotate(
   }
   if (!slave_mode) {
     //invoke_rotate("ej-users", ejudge_xml_path);
-    //invoke_rotate("ej-jobs", ejudge_xml_path);
+    invoke_rotate("ej-jobs", ejudge_xml_path);
   }
 
   return 0;
