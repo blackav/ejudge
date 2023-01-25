@@ -100,6 +100,7 @@ write_help(void)
          "    start     start the ejudge daemons\n"
          "    stop      stop the ejudge daemons\n"
          "    restart   restart the ejudge daemons\n"
+         "    rotate    rotate log files\n"
          /*"    status    report the ejudge daemon status\n"*/,
          program_name, program_name);
   exit(0);
@@ -122,6 +123,24 @@ invoke_stopper(const char *prog, const char *ejudge_xml_path)
   tsk = task_New();
   task_AddArg(tsk, path);
   task_AddArg(tsk, "stop");
+  if (strcmp(prog, "ej-compile") != 0) {
+    if (ejudge_xml_path) task_AddArg(tsk, ejudge_xml_path);
+  }
+  task_Start(tsk);
+  task_Wait(tsk);
+  task_Delete(tsk);
+}
+
+static void
+invoke_rotate(const char *prog, const char *ejudge_xml_path)
+{
+  path_t path;
+  tTask *tsk = 0;
+
+  snprintf(path, sizeof(path), "%s/%s-control", EJUDGE_SERVER_BIN_PATH, prog);
+  tsk = task_New();
+  task_AddArg(tsk, path);
+  task_AddArg(tsk, "rotate");
   if (strcmp(prog, "ej-compile") != 0) {
     if (ejudge_xml_path) task_AddArg(tsk, ejudge_xml_path);
   }
@@ -455,6 +474,33 @@ command_stop(
   return 0;
 }
 
+static int
+command_rotate(
+        const struct ejudge_cfg *config,
+        const char *ejudge_xml_path,
+        int slave_mode,
+        int master_mode)
+{
+  if (!slave_mode) {
+    //invoke_rotate("ej-contests", ejudge_xml_path);
+  }
+  if (!master_mode) {
+    invoke_rotate("ej-compile", ejudge_xml_path);
+  }
+  if (!master_mode) {
+    //invoke_rotate("ej-super-run", ejudge_xml_path);
+  }
+  if (!slave_mode) {
+    //invoke_rotate("ej-super-server", ejudge_xml_path);
+  }
+  if (!slave_mode) {
+    //invoke_rotate("ej-users", ejudge_xml_path);
+    //invoke_rotate("ej-jobs", ejudge_xml_path);
+  }
+
+  return 0;
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -616,6 +662,9 @@ main(int argc, char *argv[])
       r = 1;
   } else if (!strcmp(command, "stop")) {
     if (command_stop(config, ejudge_xml_path, slave_mode, master_mode) < 0)
+      r = 1;
+  } else if (!strcmp(command, "rotate")) {
+    if (command_rotate(config, ejudge_xml_path, slave_mode, master_mode) < 0)
       r = 1;
   } else if (!strcmp(command, "restart")) {
     startup_error("`restart' command is not yet implemented");
