@@ -70,6 +70,7 @@ static int initialize_mode = 0;
 
 static int daemon_mode;
 static int restart_mode;
+static int slave_mode;
 
 static unsigned char *compile_server_id;
 static __attribute__((unused)) unsigned char compile_server_spool_dir[PATH_MAX];
@@ -943,8 +944,9 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
     // terminate if signaled
     if (interrupt_get_status() || interrupt_restart_requested()) break;
     if (interrupt_was_usr1()) {
-      if (daemon_mode && global_log_path && *global_log_path) {
+      if ((daemon_mode || slave_mode) && global_log_path && *global_log_path) {
         start_open_log(global_log_path);
+        dup2(STDERR_FILENO, STDOUT_FILENO);
       }
       interrupt_reset_usr1();
       continue;
@@ -1442,6 +1444,9 @@ main(int argc, char *argv[])
       key = argv[i++];
     } else if (!strcmp(argv[i], "-D")) {
       daemon_mode = 1;
+      i++;
+    } else if (!strcmp(argv[i], "-S")) {
+      slave_mode = 1;
       i++;
     } else if (!strcmp(argv[i], "-R")) {
       restart_mode = 1;
