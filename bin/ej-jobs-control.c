@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2021 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -20,6 +20,7 @@
 #include "ejudge/ejudge_cfg.h"
 #include "ejudge/job_packet.h"
 #include "ejudge/startstop.h"
+#include "ejudge/logrotate.h"
 
 #include "ejudge/logger.h"
 #include "ejudge/osdeps.h"
@@ -30,6 +31,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <unistd.h>
+#include <limits.h>
 
 /*
  * usage: ej-jobs-control COMMAND CONFIG
@@ -139,6 +141,54 @@ main(int argc, char *argv[])
   } else if (!strcmp(command, "restart")) {
     signame = "HUP";
     signum = START_RESTART;
+  } else if (!strcmp(command, "rotate")) {
+    unsigned char lp[PATH_MAX];
+    lp[0] = 0;
+
+    unsigned char *jslf = "ej-jobs.log";
+    if (config->job_server_log && config->job_server_log[0]) {
+      jslf = config->job_server_log;
+    }
+    if (!lp[0] && config->job_server_log && config->job_server_log[0]
+        && os_IsAbsolutePath(config->job_server_log)) {
+      if (snprintf(lp, sizeof(lp), "%s", config->job_server_log) >= (int) sizeof(lp)) {
+        abort();
+      }
+    }
+    if (!lp[0] && config->var_dir && config->var_dir[0]) {
+      if (snprintf(lp, sizeof(lp), "%s/%s", config->var_dir, jslf) >= (int) sizeof(lp)) {
+        abort();
+      }
+    }
+    if (!lp[0] && config->contests_home_dir && config->contests_home_dir[0]) {
+      if (snprintf(lp, sizeof(lp), "%s/var/%s", config->contests_home_dir, jslf) >= (int) sizeof(lp)) {
+        abort();
+      }
+    }
+#if defined EJUDGE_CONTESTS_HOME_DIR
+    if (!lp[0]) {
+      if (snprintf(lp, sizeof(lp), "%s/var/%s", EJUDGE_CONTESTS_HOME_DIR, jslf) >= (int) sizeof(lp)) {
+        abort();
+      }
+    }
+#endif
+    if (!lp[0]) {
+      startup_error("log file is not defined");
+    }
+
+    unsigned char lpd[PATH_MAX];
+    unsigned char lpf[PATH_MAX];
+    os_rDirName(lp, lpd, sizeof(lpd));
+    os_rGetLastname(lp, lpf, sizeof(lpf));
+
+    unsigned char *log_group = NULL;
+#if defined EJUDGE_PRIMARY_USER
+    log_group = EJUDGE_PRIMARY_USER;
+#endif
+    rotate_log_files(lpd, lpf, NULL, NULL, log_group, 0620);
+
+    signame = "USR1";
+    signum = START_ROTATE;
   } else {
     startup_error("invalid command");
   }
