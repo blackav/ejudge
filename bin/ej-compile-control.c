@@ -356,6 +356,7 @@ start_process(
     if (verbose_mode) {
         args[argi++] = "-v";
     }
+    args[argi++] = "-S";
     args[argi++] = "conf/compile.cfg";
     args[argi] = NULL;
 
