@@ -228,6 +228,7 @@ start_kill(int pid, int op)
   switch (op) {
   case START_RESTART: signum = SIGHUP; break;
   case START_STOP: signum = SIGTERM; break;
+  case START_ROTATE: signum = SIGUSR1; break;
   }
   return kill(pid, signum);
 }
