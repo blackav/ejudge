@@ -1062,6 +1062,36 @@ int main(int argc, char *argv[])
         system_error("invalid ej-compile path");
     }
 
+    if (op == OPERATION_ROTATE) {
+        unsigned char log_dir[PATH_MAX];
+        log_dir[0] = 0;
+#if defined EJUDGE_CONTESTS_HOME_DIR
+        if (!log_dir[0]) {
+            snprintf(log_dir, sizeof(log_dir), "%s/var", EJUDGE_CONTESTS_HOME_DIR);
+        }
+#endif
+        if (!log_dir[0] && config->var_dir && config->var_dir[0]) {
+            snprintf(log_dir, sizeof(log_dir), "%s", config->var_dir);
+        }
+        if (!log_dir[0] && config->contests_home_dir && config->contests_home_dir[0]) {
+            snprintf(log_dir, sizeof(log_dir), "%s/var", config->contests_home_dir);
+        }
+        if (!log_dir[0]) {
+            system_error("ej-compile log dir is undefined");
+        }
+        const unsigned char *log_group = NULL;
+        if (config->enable_compile_container > 0) {
+#if defined EJUDGE_PRIMARY_USER
+            log_group = EJUDGE_PRIMARY_USER;
+#endif
+        } else {
+#if defined EJUDGE_COMPILE_USER
+            log_group = EJUDGE_COMPILE_USER;
+#endif
+        }
+        rotate_log_files(log_dir, "ej-compile.log", NULL, NULL, log_group, 0620);
+    }
+
     struct EnvVector ev = {};
     env_init(&ev);
     if (1 /*primary_uid != compile_uid*/) {
@@ -1224,34 +1254,6 @@ int main(int argc, char *argv[])
         if (find_all(EJ_COMPILE_PROGRAM, EJ_COMPILE_PROGRAM_DELETED, &pv) < 0) {
             system_error("cannot enumerate processes");
         }
-
-        unsigned char log_dir[PATH_MAX];
-        log_dir[0] = 0;
-#if defined EJUDGE_CONTESTS_HOME_DIR
-        if (!log_dir[0]) {
-            snprintf(log_dir, sizeof(log_dir), "%s/var", EJUDGE_CONTESTS_HOME_DIR);
-        }
-#endif
-        if (!log_dir[0] && config->var_dir && config->var_dir[0]) {
-            snprintf(log_dir, sizeof(log_dir), "%s", config->var_dir);
-        }
-        if (!log_dir[0] && config->contests_home_dir && config->contests_home_dir[0]) {
-            snprintf(log_dir, sizeof(log_dir), "%s/var", config->contests_home_dir);
-        }
-        if (!log_dir[0]) {
-            system_error("ej-compile log dir is undefined");
-        }
-        const unsigned char *log_group = NULL;
-        if (config->enable_compile_container > 0) {
-#if defined EJUDGE_PRIMARY_USER
-            log_group = EJUDGE_PRIMARY_USER;
-#endif
-        } else {
-#if defined EJUDGE_COMPILE_USER
-            log_group = EJUDGE_COMPILE_USER;
-#endif
-        }
-        rotate_log_files(log_dir, "ej-compile.log", NULL, NULL, log_group, 0620);
 
         kill_all(SIGUSR1, &pv);
         break;
