@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -21,6 +21,7 @@
 #include "ejudge/userlist_clnt.h"
 #include "ejudge/userlist_proto.h"
 #include "ejudge/startstop.h"
+#include "ejudge/logrotate.h"
 
 #include "ejudge/osdeps.h"
 
@@ -29,10 +30,11 @@
 #include <string.h>
 #include <stdarg.h>
 #include <ctype.h>
+#include <limits.h>
 
 /*
  * usage: ej-users-control COMMAND CONFIG
- *   COMMAND is one of `stop', `restart', `status'
+ *   COMMAND is one of `stop', `restart', `rotate'
  */
 
 static const unsigned char *program_name = "";
@@ -82,6 +84,7 @@ write_help(void)
          "  COMMAND:\n"
          "    stop      stop the ej-users\n"
          "    restart   restart the ej-users\n"
+         "    rotate    rotate the log file\n"
          /*"    status    report the ej-users status\n"*/,
          program_name, program_name);
   exit(0);
@@ -142,6 +145,60 @@ main(int argc, char *argv[])
     cmd = ULS_RESTART;
     signame = "HUP";
     signum = START_RESTART;
+  } else if (!strcmp(command, "rotate")) {
+    unsigned char lp[PATH_MAX];
+    lp[0] = 0;
+
+    unsigned char *lf = "ej-users.log";
+    if (config->userlist_log && config->userlist_log[0]) {
+      lf = config->userlist_log;
+    }
+
+    if (!lp[0] && config->userlist_log && config->userlist_log[0]
+        && os_IsAbsolutePath(config->userlist_log)) {
+      if (snprintf(lp, sizeof(lp), "%s", config->userlist_log) >= (int) sizeof(lp)) {
+        abort();
+      }
+    }
+    if (!lp[0] && config->var_dir && config->var_dir[0]) {
+      if (snprintf(lp, sizeof(lp), "%s/%s", config->var_dir, lf) >= (int) sizeof(lp)) {
+        abort();
+      }
+    }
+    if (!lp[0] && config->contests_home_dir && config->contests_home_dir[0]) {
+      if (snprintf(lp, sizeof(lp), "%s/var/%s", config->contests_home_dir, lf) >= (int) sizeof(lp)) {
+        abort();
+      }
+    }
+#if defined EJUDGE_CONTESTS_HOME_DIR
+    if (!lp[0]) {
+      if (snprintf(lp, sizeof(lp), "%s/var/%s", EJUDGE_CONTESTS_HOME_DIR, lf) >= (int) sizeof(lp)) {
+        abort();
+      }
+    }
+#endif
+    if (!lp[0]) {
+      startup_error("log file is not defined");
+    }
+
+    unsigned char lpd[PATH_MAX];
+    unsigned char lpf[PATH_MAX];
+    os_rDirName(lp, lpd, sizeof(lpd));
+    os_rGetLastname(lp, lpf, sizeof(lpf));
+
+    unsigned char *log_group = NULL;
+#if defined EJUDGE_PRIMARY_USER
+    log_group = EJUDGE_PRIMARY_USER;
+#endif
+
+    if ((pid = start_find_process("ej-users", NULL)) > 0) {
+      fprintf(stderr, "%s: ej-users is running as pid %d\n", program_name, pid);
+      fprintf(stderr, "%s: sending it the %s signal\n", program_name, "USR1");
+      rotate_log_files(lpd, lpf, NULL, NULL, log_group, 0620);
+      start_kill(pid, START_ROTATE);
+    }
+
+    return 0;
   } else {
     startup_error("invalid command");
   }
