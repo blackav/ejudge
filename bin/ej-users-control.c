@@ -161,10 +161,11 @@ main(int argc, char *argv[])
     log_group = EJUDGE_PRIMARY_USER;
 #endif
 
+    rotate_log_files(lpd, lpf, NULL, NULL, log_group, 0620);
+
     if ((pid = start_find_process("ej-users", NULL)) > 0) {
       fprintf(stderr, "%s: ej-users is running as pid %d\n", program_name, pid);
       fprintf(stderr, "%s: sending it the %s signal\n", program_name, "USR1");
-      rotate_log_files(lpd, lpf, NULL, NULL, log_group, 0620);
       start_kill(pid, START_ROTATE);
     }
 
