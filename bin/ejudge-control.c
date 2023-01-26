@@ -488,7 +488,7 @@ command_rotate(
     invoke_rotate("ej-compile", ejudge_xml_path);
   }
   if (!master_mode) {
-    //invoke_rotate("ej-super-run", ejudge_xml_path);
+    invoke_rotate("ej-super-run", ejudge_xml_path);
   }
   if (!slave_mode) {
     invoke_rotate("ej-super-server", ejudge_xml_path);
