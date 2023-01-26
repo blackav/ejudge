@@ -482,7 +482,7 @@ command_rotate(
         int master_mode)
 {
   if (!slave_mode) {
-    //invoke_rotate("ej-contests", ejudge_xml_path);
+    invoke_rotate("ej-contests", ejudge_xml_path);
   }
   if (!master_mode) {
     invoke_rotate("ej-compile", ejudge_xml_path);
