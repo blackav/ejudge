@@ -20,6 +20,8 @@
 #include "ejudge/ejudge_cfg.h"
 #include "ejudge/pathutl.h"
 #include "ejudge/ej_process.h"
+#include "ejudge/startstop.h"
+#include "ejudge/logrotate.h"
 
 #include "ejudge/logger.h"
 #include "ejudge/osdeps.h"
@@ -30,6 +32,7 @@
 #include <string.h>
 #include <stdarg.h>
 #include <ctype.h>
+#include <signal.h>
 
 #define EJ_USERS_MASK 1
 #define EJ_SUPER_SERVER_MASK 2
@@ -474,6 +477,35 @@ command_stop(
   return 0;
 }
 
+static void
+rotate_agent_log(
+        const struct ejudge_cfg *config,
+        const char *ejudge_xml_path)
+{
+  unsigned char lpd[PATH_MAX];
+  unsigned char lpf[PATH_MAX];
+  if (rotate_get_log_dir_and_file(lpd, sizeof(lpd),
+                                  lpf, sizeof(lpf),
+                                  config,
+                                  NULL,
+                                  "ej-agent.log") < 0) {
+    return;
+  }
+
+  unsigned char *log_group = NULL;
+#if defined EJUDGE_PRIMARY_USER
+  log_group = EJUDGE_PRIMARY_USER;
+#endif
+
+  rotate_log_files(lpd, lpf, NULL, NULL, log_group, 0620);
+
+  int *pids = NULL;
+  int pid_count = start_find_all_processes("ej-agent", &pids);
+  for (int i = 0; i < pid_count; ++i) {
+    start_kill(pids[i], SIGUSR1);
+  }
+}
+
 static int
 command_rotate(
         const struct ejudge_cfg *config,
@@ -496,6 +528,9 @@ command_rotate(
   if (!slave_mode) {
     invoke_rotate("ej-users", ejudge_xml_path);
     invoke_rotate("ej-jobs", ejudge_xml_path);
+  }
+  if (!slave_mode) {
+    rotate_agent_log(config, ejudge_xml_path);
   }
 
   return 0;
