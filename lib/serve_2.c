@@ -6109,7 +6109,9 @@ serve_clear_by_mask(serve_state_t state,
   for (r = total_runs - 1; r >= 0; r--) {
     if ((mask[r / BITS_PER_LONG] & (1L << (r % BITS_PER_LONG)))
         && !run_is_readonly(state->runlog_state, r)) {
-      if (run_get_entry(state->runlog_state, r, &re) >= 0 && run_clear_entry(state->runlog_state, r) >= 0) {
+      if (run_get_entry(state->runlog_state, r, &re) >= 0
+          && re.status != RUN_EMPTY
+          && run_clear_entry(state->runlog_state, r) >= 0) {
         if (re.store_flags == STORE_FLAGS_UUID || re.store_flags == STORE_FLAGS_UUID_BSON) {
           uuid_archive_remove(state, &re.run_uuid, 0);
         } else {
