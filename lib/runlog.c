@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2000-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1797,7 +1797,7 @@ run_clear_entry(runlog_state_t state, int run_id)
   if (state->runs[run_id - state->run_f].is_readonly) ERR_R("run %d is readonly", run_id);
   switch (state->runs[run_id - state->run_f].status) {
   case RUN_EMPTY:
-    break;
+    return 0;
   case RUN_VIRTUAL_STOP:
     /* VSTOP events can safely be cleared */
     urh = run_get_user_run_header(state, state->runs[run_id - state->run_f].user_id, NULL);
