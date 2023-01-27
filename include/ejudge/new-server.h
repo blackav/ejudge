@@ -3,7 +3,7 @@
 #ifndef __NEW_SERVER_H__
 #define __NEW_SERVER_H__
 
-/* Copyright (C) 2006-2020 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -946,5 +946,11 @@ ns_load_problem_uuid(
         const struct section_global_data *global,
         const struct section_problem_data *prob,
         int variant);
+
+void
+ns_get_accepted_set(
+        serve_state_t cs,
+        int user_id,
+        unsigned char *acc_set);
 
 #endif /* __NEW_SERVER_H__ */

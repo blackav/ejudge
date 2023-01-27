@@ -10301,6 +10301,15 @@ unpriv_generate_telegram_token(
   ns_refresh_page(fout, phr, NEW_SRV_ACTION_VIEW_SETTINGS, param_buf);
 }
 
+void
+ns_get_accepted_set(
+        serve_state_t cs,
+        int user_id,
+        unsigned char *acc_set)
+{
+  return run_get_accepted_set(cs->runlog_state, user_id, cs->accepting_mode, cs->max_prob, acc_set);
+}
+
 int
 ns_submit_run(
         FILE *log_f,
@@ -10711,8 +10720,7 @@ ns_submit_run(
       && global->score_system != SCORE_OLYMPIAD && !cs->accepting_mode) {
     if (!acc_probs) {
       XALLOCAZ(acc_probs, cs->max_prob + 1);
-      run_get_accepted_set(cs->runlog_state, user_id,
-                           cs->accepting_mode, cs->max_prob, acc_probs);
+      ns_get_accepted_set(cs, user_id, acc_probs);
     }
     if (acc_probs[prob_id]) {
       FAIL(NEW_SRV_ERR_PROB_ALREADY_SOLVED);
@@ -10722,8 +10730,7 @@ ns_submit_run(
   if (!admin_mode && prob->require) {
     if (!acc_probs) {
       XALLOCAZ(acc_probs, cs->max_prob + 1);
-      run_get_accepted_set(cs->runlog_state, user_id,
-                           cs->accepting_mode, cs->max_prob, acc_probs);
+      ns_get_accepted_set(cs, user_id, acc_probs);
     }
     if (prob->require_any > 0) {
       int i;
@@ -11402,8 +11409,7 @@ unpriv_submit_run(
   if (prob->disable_submit_after_ok
       && global->score_system != SCORE_OLYMPIAD && !cs->accepting_mode) {
     XALLOCAZ(acc_probs, cs->max_prob + 1);
-    run_get_accepted_set(cs->runlog_state, phr->user_id,
-                         cs->accepting_mode, cs->max_prob, acc_probs);
+    ns_get_accepted_set(cs, phr->user_id, acc_probs);
     if (acc_probs[prob_id]) {
       FAIL2(NEW_SRV_ERR_PROB_ALREADY_SOLVED);
     }
@@ -11412,8 +11418,7 @@ unpriv_submit_run(
   if (prob->require) {
     if (!acc_probs) {
       XALLOCAZ(acc_probs, cs->max_prob + 1);
-      run_get_accepted_set(cs->runlog_state, phr->user_id,
-                           cs->accepting_mode, cs->max_prob, acc_probs);
+      ns_get_accepted_set(cs, phr->user_id, acc_probs);
     }
     if (prob->require_any > 0) {
       for (i = 0; prob->require[i]; ++i) {
@@ -12064,8 +12069,7 @@ ns_submit_run_input(
 
   if (prob->require) {
     XALLOCAZ(acc_probs, cs->max_prob + 1);
-    run_get_accepted_set(cs->runlog_state, sender_user_id,
-                         cs->accepting_mode, cs->max_prob, acc_probs);
+    ns_get_accepted_set(cs, sender_user_id, acc_probs);
     if (prob->require_any > 0) {
       int i;
       for (i = 0; prob->require[i]; ++i) {
@@ -13729,8 +13733,7 @@ unpriv_xml_update_answer(
   if (prob->require) {
     if (!acc_probs) {
       XALLOCAZ(acc_probs, cs->max_prob + 1);
-      run_get_accepted_set(cs->runlog_state, phr->user_id,
-                           cs->accepting_mode, cs->max_prob, acc_probs);
+      ns_get_accepted_set(cs, phr->user_id, acc_probs);
     }
     if (prob->require_any > 0) {
       for (i = 0; prob->require[i]; ++i) {

@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -763,6 +763,7 @@ cmd_clar_operation(
   return retval;
 }
 
+
 static int
 cmd_submit_run(
         FILE *fout,
@@ -1054,8 +1055,7 @@ cmd_submit_run(
     if (prob->disable_submit_after_ok
         && global->score_system != SCORE_OLYMPIAD && !cs->accepting_mode) {
       XALLOCAZ(acc_probs, cs->max_prob + 1);
-      run_get_accepted_set(cs->runlog_state, phr->user_id,
-                           cs->accepting_mode, cs->max_prob, acc_probs);
+      ns_get_accepted_set(cs, phr->user_id, acc_probs);
       if (acc_probs[prob->id])
         FAIL(NEW_SRV_ERR_PROB_ALREADY_SOLVED);
     }
@@ -1063,8 +1063,7 @@ cmd_submit_run(
     if (prob->require) {
       if (!acc_probs) {
         XALLOCAZ(acc_probs, cs->max_prob + 1);
-        run_get_accepted_set(cs->runlog_state, phr->user_id,
-                             cs->accepting_mode, cs->max_prob, acc_probs);
+        ns_get_accepted_set(cs, phr->user_id, acc_probs);
       }
       if (prob->require_any > 0) {
         for (i = 0; prob->require[i]; i++) {
