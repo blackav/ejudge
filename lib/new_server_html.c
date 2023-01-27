@@ -10307,7 +10307,18 @@ ns_get_accepted_set(
         int user_id,
         unsigned char *acc_set)
 {
-  return run_get_accepted_set(cs->runlog_state, user_id, cs->accepting_mode, cs->max_prob, acc_set);
+  run_get_accepted_set(cs->runlog_state, user_id, cs->accepting_mode, cs->max_prob, acc_set);
+  if (!cs->accepting_mode) return;
+  for (int prob_id = 1; prob_id <= cs->max_prob; ++prob_id) {
+    if (acc_set[prob_id] == 2) {
+      const struct section_problem_data *p = cs->probs[prob_id];
+      if (p && p->type != PROB_TYPE_STANDARD) {
+        acc_set[prob_id] = 1;
+      } else {
+        acc_set[prob_id] = 0;
+      }
+    }
+  }
 }
 
 int

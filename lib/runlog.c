@@ -1196,13 +1196,16 @@ run_get_accepted_set(
     q = &state->runs[i - state->run_f];
     ASSERT(q->user_id == user_id);
 
-    if (accepting_mode) {
-      if ((q->status == RUN_OK || q->status == RUN_ACCEPTED || q->status == RUN_PARTIAL || q->status == RUN_PENDING_REVIEW || q->status == RUN_SUMMONED)
-          && q->prob_id > 0 && q->prob_id <= max_prob)
-        acc_set[q->prob_id] = 1;
-    } else {
-      if ((q->status == RUN_OK || q->status == RUN_PENDING_REVIEW || q->status == RUN_SUMMONED) && q->prob_id > 0 && q->prob_id <= max_prob)
-        acc_set[q->prob_id] = 1;
+    if (q->prob_id > 0 && q->prob_id <= max_prob) {
+      if (accepting_mode) {
+        if (q->status == RUN_OK || q->status == RUN_ACCEPTED || q->status == RUN_PARTIAL || q->status == RUN_PENDING_REVIEW || q->status == RUN_SUMMONED)
+          acc_set[q->prob_id] = 1;
+        if (q->status == RUN_WRONG_ANSWER_ERR && acc_set[q->prob_id] != 1)
+          acc_set[q->prob_id] = 2;
+      } else {
+        if (q->status == RUN_OK || q->status == RUN_PENDING_REVIEW || q->status == RUN_SUMMONED)
+          acc_set[q->prob_id] = 1;
+      }
     }
   }
   ASSERT(i == -1);
