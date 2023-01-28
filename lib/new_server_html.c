@@ -11318,7 +11318,7 @@ unpriv_submit_run(
   if (cs->clients_suspended) {
     FAIL2(NEW_SRV_ERR_CLIENTS_SUSPENDED);
   }
-  if (!start_time) {
+  if (!start_time && !cs->upsolving_mode) {
     FAIL2(NEW_SRV_ERR_CONTEST_NOT_STARTED);
   }
   if (stop_time && !cs->upsolving_mode) {
@@ -11486,12 +11486,23 @@ unpriv_submit_run(
     store_flags = STORE_FLAGS_UUID;
     if (testing_report_bson_available()) store_flags = STORE_FLAGS_UUID_BSON;
   }
+  int is_hidden = 0;
+  if (cs->upsolving_mode) {
+    if (start_time <= 0 || cs->current_time < start_time) {
+      is_hidden = 1;
+    } else if (stop_time >= 0 && cs->current_time >= stop_time) {
+      is_hidden = 1;
+    }
+  }
   run_id = run_add_record(cs->runlog_state,
                           &precise_time,
                           run_size, shaval, &run_uuid,
                           &phr->ip, phr->ssl_flag,
                           phr->locale_id, phr->user_id,
-                          prob_id, lang_id, eoln_type, 0, 0, mime_type,
+                          prob_id, lang_id, eoln_type,
+                          0 /* variant */,
+                          is_hidden,
+                          mime_type,
                           prob->uuid,
                           store_flags,
                           phr->is_job /* is_vcs */);
@@ -12007,7 +12018,7 @@ ns_submit_run_input(
       err_num = NEW_SRV_ERR_CLIENTS_SUSPENDED;
       goto done;
     }
-    if (start_time <= 0) {
+    if (start_time <= 0 && !cs->upsolving_mode) {
       err_num = NEW_SRV_ERR_CONTEST_NOT_STARTED;
       goto done;
     }
