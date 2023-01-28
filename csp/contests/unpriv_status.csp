@@ -47,7 +47,7 @@
 %><s:_>RUNNING</s:_><%
       }
     }
-  } else {
+  } else if (!cs->upsolving_mode) {
 %><s:_>NOT STARTED</s:_><%
   }
 %></b><%
@@ -65,8 +65,11 @@
     }
   }
 %><%
-  if (cs->upsolving_mode && !(cs->global->is_virtual && stop_time <= 0)) {
+  if (cs->upsolving_mode) {
+    if (global->is_virtual > 0 && start_time > 0 && stop_time <= 0) {
+    } else {
 %> / <b><s:_>UPSOLVING</s:_></b><%
+    }
   }
 %><%
   if (cs->clients_suspended) {

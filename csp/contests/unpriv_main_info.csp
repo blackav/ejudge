@@ -31,7 +31,7 @@
 %><s:_>The contest is in progress</s:_><%
         }
       }
-    } else {
+    } else if (!cs->upsolving_mode) {
       if (cnts->exam_mode) {
 %><s:_>The exam is not started</s:_><%
       } else {
@@ -40,11 +40,11 @@
     }
 %></b></p>
 
-<%    if (cs->upsolving_mode && !cs->global->is_virtual) {
+<%
+    if (cs->upsolving_mode) {
+      if (!cs->global->is_virtual || start_time <= 0 || stop_time > 0) {
 %><p><b><s:_>Upsolving mode</s:_></b></p>
-<%  }
-  if (cs->upsolving_mode && cs->global->is_virtual && stop_time > 0) {
-%><p><b><s:_>Upsolving mode</s:_></b></p><%
+<%      }
     }
 %>
 
@@ -168,6 +168,8 @@
     } else if (cnts->open_time > 0 && cs->current_time < cnts->open_time) {
       enable_virtual_start = 0;
     } else if (cnts->close_time > 0 && cs->current_time >= cnts->close_time) {
+      enable_virtual_start = 0;
+    } else if (cs->upsolving_mode) {
       enable_virtual_start = 0;
     }
     if (enable_virtual_start) {

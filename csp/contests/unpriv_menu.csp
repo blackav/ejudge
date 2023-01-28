@@ -41,9 +41,16 @@
 %></s:a><%
   }
 %></div></li><%
-  if (global && cnts && global->is_virtual > 0 && ((start_time <= 0 && (global->disable_virtual_start <= 0 && cs->disable_virtual_start <= 0)) || stop_time <= 0)) {
+  int enable_virtual_startstop = 0;
+  if (global && cnts && global->is_virtual > 0) {
+    if (start_time > 0 && stop_time <= 0) {
+      enable_virtual_startstop = 1;
+    } else if (start_time <= 0 && global->disable_virtual_start <= 0 && cs->disable_virtual_start <= 0 && cs->upsolving_mode <= 0) {
+      enable_virtual_startstop = 1;
+    }
+  }
+  if (enable_virtual_startstop) {
 %><%
-
     // start/stop virtual contest
     if (phr->action != NEW_SRV_ACTION_VIEW_STARTSTOP) {
 %><li><div class="contest_actions_item"><s:a class="menu" ac="view-startstop"><%
@@ -115,7 +122,17 @@
 %></div></li><%
   }
 %><%
-  if (cnts && start_time > 0 && (cnts->exam_mode <= 0 || stop_time > 0)) {
+  int enable_submissions = 0;
+  if (cnts) {
+    if (cs->upsolving_mode) {
+      enable_submissions = 1;
+    } else if (start_time > 0) {
+      if (cnts->exam_mode <= 0 || stop_time > 0) {
+        enable_submissions = 1;
+      }
+    }
+  }
+  if (enable_submissions) {
 %><%
     if (phr->action != NEW_SRV_ACTION_VIEW_SUBMISSIONS) {
 %><li><div class="contest_actions_item"><s:a class="menu" ac="view-submissions"><%
