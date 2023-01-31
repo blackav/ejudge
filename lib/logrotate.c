@@ -160,7 +160,7 @@ rotate_log_files(
     }
     if (group_id < 0) group_id = -1;
 
-    fd = open(log_path, O_WRONLY | O_CREAT | O_TRUNC | O_NONBLOCK | O_NOFOLLOW | O_NOCTTY);
+    fd = open(log_path, O_WRONLY | O_CREAT | O_TRUNC | O_NONBLOCK | O_NOFOLLOW | O_NOCTTY, 0600);
     if (fd < 0) goto cleanup;
     if (log_perms >= 0) {
         fchmod(fd, log_perms);
