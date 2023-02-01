@@ -123,7 +123,7 @@
   }
 %><%
   int enable_submissions = 0;
-  if (cnts) {
+  if (cnts && cs) {
     if (cs->upsolving_mode) {
       enable_submissions = 1;
     } else if (start_time > 0) {
