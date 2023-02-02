@@ -39,6 +39,21 @@ fi
 # EJUDGE_MYSQL_PORT
 SECRETFILE=/home/judges/data/mysql_password
 
+mysqlopts=""
+[ "${EJUDGE_MYSQL_USER}" != "" ] && mysqlopts="${mysqlopts} --user ${EJUDGE_MYSQL_USER}"
+[ "${EJUDGE_MYSQL_PASSWORD}" != "" ] && mysqlopts="${mysqlopts} --password=${EJUDGE_MYSQL_PASSWORD}"
+[ "${EJUDGE_MYSQL_DATABASE}" != "" ] && mysqlopts="${mysqlopts} -D ${EJUDGE_MYSQL_DATABASE}"
+[ "${EJUDGE_MYSQL_HOST}" != "" ] && mysqlopts="${mysqlopts} --host ${EJUDGE_MYSQL_HOST}"
+[ "${EJUDGE_MYSQL_PORT}" != "" ] && mysqlopts="${mysqlopts} --port ${EJUDGE_MYSQL_PORT}"
+
+echo 'show tables;' > cmd.sql
+while :
+do
+    mysql ${mysqlopts} < cmd.sql && break
+    sleep 1
+done
+rm cmd.sql
+
 if [ ! -d /home/judges/data ]
 then
     mkdir -p /home/judges/data
@@ -75,21 +90,6 @@ then
     chown ejudge:ejudge "${SECRETFILE}"
     chmod 600 "${SECRETFILE}"
 fi
-
-mysqlopts=""
-[ "${EJUDGE_MYSQL_USER}" != "" ] && mysqlopts="${mysqlopts} --user ${EJUDGE_MYSQL_USER}"
-[ "${EJUDGE_MYSQL_PASSWORD}" != "" ] && mysqlopts="${mysqlopts} --password=${EJUDGE_MYSQL_PASSWORD}"
-[ "${EJUDGE_MYSQL_DATABASE}" != "" ] && mysqlopts="${mysqlopts} -D ${EJUDGE_MYSQL_DATABASE}"
-[ "${EJUDGE_MYSQL_HOST}" != "" ] && mysqlopts="${mysqlopts} --host ${EJUDGE_MYSQL_HOST}"
-[ "${EJUDGE_MYSQL_PORT}" != "" ] && mysqlopts="${mysqlopts} --port ${EJUDGE_MYSQL_PORT}"
-
-echo 'show tables;' > cmd.sql
-while :
-do
-    mysql ${mysqlopts} < cmd.sql && break
-    sleep 1
-done
-rm cmd.sql
 
 unset EJUDGE_MYSQL_USER
 unset EJUDGE_MYSQL_PASSWORD
