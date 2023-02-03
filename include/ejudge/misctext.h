@@ -2,7 +2,7 @@
 #ifndef __MISCTEXT_H__
 #define __MISCTEXT_H__
 
-/* Copyright (C) 2000-2019 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -114,7 +114,18 @@ unsigned char *filename_armor_bytes(unsigned char *out, size_t outsize,
                                     const unsigned char *in, size_t insize);
 
 int utf8_fix_string(unsigned char *str, int *gl_ind);
+
 int utf8_cnt(const unsigned char *s, int width, int *p_w);
+
+/*
+a newer version of utf8_cnt, it supports double-width unicode points
+ */
+int
+utf8_screen_width(
+        const unsigned char *s,
+        int width,     // max screen width
+        int *rem_width);
+
 
 /*
  * checks that 'u16str' is an UCS2 string and if so converts it into

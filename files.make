@@ -293,6 +293,7 @@ COMMON_CFILES=\
  lib/tsc.c\
  lib/type_info.c\
  lib/uldb_plugin_xml.c\
+ lib/unicode_width.c\
  lib/userlist.c\
  lib/userlist_bin.c\
  lib/userlist_check.c\
