@@ -3832,16 +3832,37 @@ display_contests_menu(unsigned char *upper, int only_choose)
   return retval;
 }
 
+static unsigned char *
+make_user_menu_item(
+        unsigned char *prev_item,
+        const struct userlist_user *uu,
+        int sel_flag)
+{
+  unsigned char buf[512];
+  unsigned char *s = buf;
+
+  const unsigned char *name = NULL;
+  if (uu->cnts0) name = uu->cnts0->name;
+  if (!name) name = "";
+
+  *s++ = sel_flag?'!':' ';
+  s += sprintf(s, "%-6d ", uu->id);
+  s = append_padded_string(s, uu->login, 16);
+  *s++ = ' ';
+  append_padded_string(s, name, 50);
+  free(prev_item);
+  return strdup(buf);
+}
+
 static int
 do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
 {
-  int r, w, y;
+  int r;
   unsigned char *xml_text = 0;
   struct userlist_list *users = 0;
   int nusers, i, j, k;
   struct userlist_user **uu = 0;
   unsigned char **descs = 0;
-  unsigned char buf[1024];
   ITEM **items;
   MENU *menu;
   WINDOW *in_win, *out_win;
@@ -3851,7 +3872,6 @@ do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
   int retval = -1;
   int first_row;
   int loc_start_item;
-  const unsigned char *name;
 
   snprintf(current_level, sizeof(current_level),
            "%s->%s", upper, "User list");
@@ -3916,16 +3936,7 @@ do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
 
   XCALLOC(descs, nusers);
   for (i = 0; i < nusers; i++) {
-    name = 0;
-    if (uu[i]->cnts0) name = uu[i]->cnts0->name;
-    if (!name) name = "";
-
-    w = 50; y = 0;
-    if (utf8_mode) w = utf8_cnt(name, w, &y);
-    snprintf(buf, sizeof(buf), "%s%6d  %-16.16s  %-*.*s",
-             g_sel_users.mask[i]?"!":" ",
-             uu[i]->id, uu[i]->login, w + y, w, name);
-    descs[i] = xstrdup(buf);
+    descs[i] = make_user_menu_item(NULL, uu[i], g_sel_users.mask[i]);
   }
 
   XCALLOC(items, nusers + 1);
@@ -4201,15 +4212,7 @@ do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
         g_sel_users.mask[i] = 1;
         g_sel_users.total_selected++;
       }
-      name = 0;
-      if (uu[i]->cnts0) name = uu[i]->cnts0->name;
-      if (!name) name = "";
-      w = 50; y = 0;
-      if (utf8_mode) w = utf8_cnt(name, w, &y);
-      snprintf(buf, sizeof(buf), "%s%6d  %-16.16s  %-*.*s",
-               g_sel_users.mask[i]?"!":" ",
-               uu[i]->id, uu[i]->login, w + y, w, name);
-      strcpy(descs[i], buf);
+      descs[i] = make_user_menu_item(descs[i], uu[i], g_sel_users.mask[i]);
       menu_driver(menu, REQ_DOWN_ITEM);
       goto menu_continue;
     }
@@ -4257,15 +4260,7 @@ do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
             goto menu_continue;
           }
           g_sel_users.mask[j] = 0;
-          name = 0;
-          if (uu[i]->cnts0) name = uu[i]->cnts0->name;
-          if (!name) name = "";
-          w = 50; y = 0;
-          if (utf8_mode) w = utf8_cnt(name, w, &y);
-          snprintf(buf, sizeof(buf), "%s%6d  %-16.16s  %-*.*s",
-                   g_sel_users.mask[j]?"!":" ",
-                   uu[j]->id, uu[j]->login, w + y, w, name);
-          strcpy(descs[j], buf);
+          descs[j] = make_user_menu_item(descs[j], uu[j], g_sel_users.mask[j]);
         }
         memset(g_sel_users.mask, 0, g_sel_users.allocated);
         g_sel_users.total_selected = 0;
@@ -4302,15 +4297,7 @@ do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
             }
           }
           g_sel_users.mask[j] = 0;
-          name = 0;
-          if (uu[i]->cnts0) name = uu[i]->cnts0->name;
-          if (!name) name = "";
-          w = 50; y = 0;
-          if (utf8_mode) w = utf8_cnt(name, w, &y);
-          snprintf(buf, sizeof(buf), "%s%6d  %-16.16s  %-*.*s",
-                   g_sel_users.mask[j]?"!":" ",
-                   uu[j]->id, uu[j]->login, w + y, w, name);
-          strcpy(descs[j], buf);
+          descs[j] = make_user_menu_item(descs[j], uu[j], g_sel_users.mask[j]);
         }
         memset(g_sel_users.mask, 0, g_sel_users.allocated);
         g_sel_users.total_selected = 0;
