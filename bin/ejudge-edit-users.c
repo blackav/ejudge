@@ -1,6 +1,6 @@
 /* -*- mode:c -*- */
 
-/* Copyright (C) 2002-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1323,11 +1323,31 @@ set_user_field(struct userlist_user *u, int field, const unsigned char *value)
   }
 }
 
+static unsigned char *
+append_padded_string(unsigned char *buf, const unsigned char *str, int width)
+{
+  if (!utf8_mode) {
+    while (*str && width > 0) {
+      *buf++ = *str++;
+      --width;
+    }
+  } else {
+    int len = utf8_screen_width(str, width, &width);
+    memcpy(buf, str, len);
+    buf += len;
+  }
+  while (width > 0) {
+    *buf++ = ' ';
+    --width;
+  }
+  *buf = 0;
+  return buf;
+}
+
 static void
 user_menu_string(struct userlist_user *u, int f, unsigned char *out)
 {
-  unsigned char buf[128];
-  int w = 60, y = 0;
+  unsigned char buf[256];
 
   if (f >= USERLIST_PSEUDO_FIRST && f < USERLIST_PSEUDO_LAST) {
     snprintf(out, 78, "%s", user_descs[f].name);
@@ -1335,22 +1355,23 @@ user_menu_string(struct userlist_user *u, int f, unsigned char *out)
     snprintf(out, 78, "%s", user_descs[f].name);
   } else {
     get_user_field(buf, sizeof(buf), u, f, 1);
-    if (utf8_mode) w = utf8_cnt(buf, w, &y);
-    sprintf(out, "%-15.15s: %-*.*s", user_descs[f].name, w + y, w, buf);
+    out = append_padded_string(out, user_descs[f].name, 15);
+    *out++ = ':'; *out++ = ' ';
+    append_padded_string(out, buf, 60);
   }
 }
 static void
 member_menu_string(const struct userlist_member *m, int f, unsigned char *out)
 {
-  unsigned char buf[128];
-  int w = 60, y = 0;
+  unsigned char buf[256];
 
   if (!member_descs[f].has_value) {
     snprintf(out, 78, "%s", member_descs[f].name);
   } else {
     userlist_get_member_field_str(buf, sizeof(buf), m, f, 1, 0);
-    if (utf8_mode) w = utf8_cnt(buf, w, &y);
-    sprintf(out, "%-15.15s: %-*.*s", member_descs[f].name, w + y, w, buf);
+    out = append_padded_string(out, member_descs[f].name, 15);
+    *out++ = ':'; *out++ = ' ';
+    append_padded_string(out, buf, 60);
   }
 }
 
@@ -2603,26 +2624,29 @@ generate_reg_user_item(unsigned char *buf, size_t size, int i,
                        struct userlist_contest **uc,
                        unsigned char *mask)
 {
-  int buflen;
-  int w = 36, y = 0;
+  unsigned char *bufstart = buf;
   const unsigned char *name = 0;
 
   if (uu[i]->cnts0) name = uu[i]->cnts0->name;
   if (!name) name = "";
 
   // 77 - 6 - 16 - 10 - 6 = 77 - 38 = 39
-  if (utf8_mode) w = utf8_cnt(name, 36, &y);
-  buflen = snprintf(buf, size, "%c%6d  %-16.16s  %-*.*s %c%c%c%c%c%c %-6.6s",
-                    mask[i]?'!':' ',
-                    uu[i]->id, uu[i]->login, w + y, w, name,
-                    (uc[i]->flags & USERLIST_UC_BANNED)?'B':' ',
-                    (uc[i]->flags & USERLIST_UC_INVISIBLE)?'I':' ',
-                    (uc[i]->flags & USERLIST_UC_LOCKED)?'L':' ',
-                    (uc[i]->flags & USERLIST_UC_PRIVILEGED)?'P':((uc[i]->flags & USERLIST_UC_INCOMPLETE)?'N':' '),
-                    (uc[i]->flags & USERLIST_UC_DISQUALIFIED)?'D':' ',
-                    (uc[i]->flags & USERLIST_UC_REG_READONLY)?'R':' ',
-                    userlist_unparse_reg_status(uc[i]->status));
-  return buflen;
+  *buf++ = mask[i]?'!':' ';
+  buf += sprintf(buf, "%-6d", uu[i]->id);
+  *buf++ = ' ';
+  buf = append_padded_string(buf, uu[i]->login, 16);
+  *buf++ = ' ';
+  buf = append_padded_string(buf, name, 39);
+  *buf++ = ' ';
+  *buf++ = (uc[i]->flags & USERLIST_UC_BANNED)?'B':' ';
+  *buf++ = (uc[i]->flags & USERLIST_UC_INVISIBLE)?'I':' ';
+  *buf++ = (uc[i]->flags & USERLIST_UC_LOCKED)?'L':' ';
+  *buf++ = (uc[i]->flags & USERLIST_UC_PRIVILEGED)?'P':((uc[i]->flags & USERLIST_UC_INCOMPLETE)?'N':' ');
+  *buf++ = (uc[i]->flags & USERLIST_UC_DISQUALIFIED)?'D':' ';
+  *buf++ = (uc[i]->flags & USERLIST_UC_REG_READONLY)?'R':' ';
+  *buf++ = ' ';
+  buf = append_padded_string(buf, userlist_unparse_reg_status(uc[i]->status), 6);
+  return (int)(buf - bufstart);
 }
 
 static unsigned char csv_path[1024];
