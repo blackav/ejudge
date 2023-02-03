@@ -4380,11 +4380,11 @@ group_member_menu_entry(
         struct userlist_groupmember *gm,
         int sel_flag)
 {
-  int w1 = 50, y1 = 0;
-  if (utf8_mode) w1 = utf8_cnt(gm->user->login, w1, &y1);
   unsigned char buf[512];
-  snprintf(buf, sizeof(buf), "%c%6d %-*.*s", sel_flag?'!':' ',
-           gm->user->id, w1 + y1, w1, gm->user->login);
+  unsigned char *s = buf;
+  *s++ = sel_flag?'!':' ';
+  s += sprintf(s, "%-6d ", gm->user->id);
+  append_padded_string(s, gm->user->login, 50);
   xfree(prev_entry);
   return xstrdup(buf);
 }
@@ -4887,15 +4887,15 @@ group_menu_entry(
 {
   const unsigned char *description = grp->description;
   if (!description) description = "";
-  int w1 = 15, y1 = 0;
-  if (utf8_mode) w1 = utf8_cnt(grp->group_name, w1, &y1);
-  int w2 = 50, y2 = 0;
-  if (utf8_mode) w2 = utf8_cnt(description, w2, &y2);
+
+  // FIXME: use COLS
   unsigned char buf[512];
-  snprintf(buf, sizeof(buf), "%c%6d %-*.*s %-*.*s",
-           sel_flag?'!':' ',
-           grp->group_id, w1 + y1, w1, grp->group_name,
-           w2 + y2, w2, description);
+  unsigned char *s = buf;
+  *s++ = sel_flag?'!':' ';
+  s += sprintf(s, "%-6d ", grp->group_id);
+  s = append_padded_string(s, grp->group_name, 15);
+  *s++ = ' ';
+  s = append_padded_string(s, description, 50);
   xfree(prev_entry);
   return xstrdup(buf);
 }
