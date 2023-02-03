@@ -3654,10 +3654,10 @@ display_contests_menu(unsigned char *upper, int only_choose)
   for (i = 0; i < ncnts; i++) {
     j = cntsi[i];
     if (cnts_names[j]) {
-      w = 66; y = 0;
-      if (utf8_mode) w = utf8_cnt(cnts_names[j], w, &y);
-      snprintf(buf, sizeof(buf), "%c%-8d  %-*.*s",
-               sel_cnts.mask[j]?'!':' ', j, w + y, w, cnts_names[j]);
+      unsigned char *s = buf;
+      *s++ = sel_cnts.mask[j]?'!':' ';
+      s += sprintf(s, "%-8d ", j);
+      append_padded_string(s, cnts_names[j], 66);
     } else {
       snprintf(buf, sizeof(buf), "%c%-8d  (removed)", sel_cnts.mask[j]?'!':' ', j);
     }
