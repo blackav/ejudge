@@ -3577,7 +3577,7 @@ display_registered_users(
 static int
 display_contests_menu(unsigned char *upper, int only_choose)
 {
-  int ncnts = 0, i, j, w, y;
+  int ncnts = 0, i, j;
   const struct contest_desc *cc;
   unsigned char **descs;
   unsigned char buf[128];
@@ -3657,7 +3657,7 @@ display_contests_menu(unsigned char *upper, int only_choose)
       unsigned char *s = buf;
       *s++ = sel_cnts.mask[j]?'!':' ';
       s += sprintf(s, "%-8d ", j);
-      append_padded_string(s, cnts_names[j], 66);
+      append_padded_string(s, cnts_names[j], 67);
     } else {
       snprintf(buf, sizeof(buf), "%c%-8d  (removed)", sel_cnts.mask[j]?'!':' ', j);
     }
