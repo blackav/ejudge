@@ -513,13 +513,13 @@ unicode_width(int c, int is_cjk)
     if (c == 0) {
         return 0;
     } else if (c < 0x20) {
-        //return -1;
-        return 0;
+        return -1;
+        //return 0;
     } else if (c < 0x7f) {
         return 1;
     } else if (c < 0xa0) {
-        //return -1;
-        return 0;
+        return -1;
+        //return 0;
     } else {
         return unicode_lookup_width(c, is_cjk);
     }
@@ -634,4 +634,128 @@ utf8_screen_width(
     }
     if (rem_width) *rem_width = width;
     return cnt;
+}
+
+unsigned char *
+utf8_padded_append(
+        unsigned char *buf,
+        const unsigned char *s,
+        int width)
+{
+    while (1) {
+        // utf8 -> ucs4 next char
+        int w = 0;
+        if (!*s) {
+            break;
+        } else if (*s < 0x20) {
+            // control characters
+            w = '?';
+            ++s;
+        } else if (*s < 0x7f) {
+            w = *s++;
+        } else if (*s < 0x80) {
+            // control characters
+            w = '?';
+            ++s;
+        } else if (*s < 0xc0) {
+            // middle of multibyte sequence
+            w = '?';
+            ++s;
+        } else if (*s < 0xc2) {
+            // reserved
+            w = '?';
+            ++s;
+        } else if (*s < 0xe0) {
+            // two bytes: 0x80-0x7ff
+            if ((s[1] & 0xc0) != 0x80) {
+                // broken
+                w = '?';
+                ++s;
+            } else {
+                w = (*s++ & 0x1f) << 6;
+                w |= (*s++ & 0x3f);
+                if (w < 0x80) {
+                    // broken
+                    w = '?';
+                } else if (w < 0xa0) {
+                    // control
+                    w = '?';
+                } else {
+                }
+            }
+        } else if (*s < 0xf0) {
+            // three bytes: 0x800-0xffff
+            if ((s[1] & 0xc0) != 0x80 || (s[2] & 0xc0) != 0x80) {
+                // broken
+                w = '?';
+                ++s;
+            } else {
+                w = (*s++ & 0x0f) << 12;
+                w |= (*s++ & 0x3f) << 6;
+                w |= (*s++ & 0x3f);
+                if (w < 0x800) {
+                    // broken
+                    w = '?';
+                } else {
+                }
+            }
+        } else if (*s < 0xf8) {
+            // four bytes: 0x10000-0x10ffff
+            if ((s[1] & 0xc0) != 0x80 || (s[2] & 0xc0) != 0x80 || (s[3] & 0xc0) != 0x80) {
+                // broken
+                w = '?';
+                ++s;
+            } else {
+                w = (*s++ & 0x07) << 18;
+                w |= (*s++ & 0x3f) << 12;
+                w |= (*s++ & 0x3f) << 6;
+                w |= (*s++ & 0x3f);
+                if (w < 0x10000) {
+                    // broken
+                    w = '?';
+                } else {
+                }
+            }
+        } else {
+            // reserved: zero width
+            w = '?';
+            ++s;
+        }
+        int ww = unicode_width(w, 0 /* is_cjk */);
+        if (ww < 0) {
+            ww = 1;
+            w = '?';
+        }
+        if (width < ww) {
+            break;
+        }
+        if (w < 0x80) {
+            // one byte
+            *buf++ = w;
+        } else if (w < 0x800) {
+            // two bytes
+            *buf++ = (w >> 6) | 0xc0;
+            *buf++ = (w & 0x3f) | 0x80;
+        } else if (w < 0x10000) {
+            // three bytes
+            *buf++ = (w >> 12) | 0xe0;
+            *buf++ = ((w >> 6) & 0x3f) | 0x80;
+            *buf++ = (w & 0x3f) | 0x80;
+        } else if (w < 0x110000) {
+            // four bytes
+            *buf++ = ((w >> 18) & 0x07) | 0xf0;
+            *buf++ = ((w >> 12) & 0x3f) | 0x80;
+            *buf++ = ((w >> 6) & 0x3f) | 0x80;
+            *buf++ = (w & 0x3f) | 0x80;
+        } else {
+            // should not get here
+        }
+        width -= ww;
+    }
+    while (width > 0) {
+        *buf++ = ' ';
+        --width;
+    }
+    *buf = 0;
+    return buf;
 }

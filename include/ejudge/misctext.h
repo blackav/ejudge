@@ -126,6 +126,12 @@ utf8_screen_width(
         int width,     // max screen width
         int *rem_width);
 
+unsigned char *
+utf8_padded_append(
+        unsigned char *buf,
+        const unsigned char *s,
+        int width);
+
 
 /*
  * checks that 'u16str' is an UCS2 string and if so converts it into
