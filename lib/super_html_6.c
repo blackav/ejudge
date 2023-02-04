@@ -1138,7 +1138,7 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_ACTION(
       r = userlist_clnt_register_contest(phr->userlist_clnt, ULS_PRIV_REGISTER_CONTEST,
                                          user_id, other_contest_id, 0, 0);
       if (r >= 0) {
-        r = userlist_clnt_copy_user_info(phr->userlist_clnt, user_id, contest_id, other_contest_id);
+        r = userlist_clnt_copy_user_info(phr->userlist_clnt, ULS_COPY_USER_INFO, user_id, contest_id, other_contest_id);
       }
       break;
     case SSERV_CMD_USER_SEL_CREATE_GROUP_MEMBER_ACTION:

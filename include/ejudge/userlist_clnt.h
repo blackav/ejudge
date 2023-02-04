@@ -3,7 +3,7 @@
 #ifndef __USERLIST_CLNT_H__
 #define __USERLIST_CLNT_H__
 
-/* Copyright (C) 2002-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -302,8 +302,13 @@ userlist_clnt_create_user(
 
 int userlist_clnt_create_member(struct userlist_clnt *clnt, int user_id,
                                 int contest_id, int role);
-int userlist_clnt_copy_user_info(struct userlist_clnt *clnt, int user_id,
-                                 int cnts_from, int cnts_to);
+int
+userlist_clnt_copy_user_info(
+        struct userlist_clnt *clnt,
+        int cmd,
+        int user_id,
+        int cnts_from,
+        int cnts_to);
 
 int
 userlist_clnt_get_uid_by_pid(
