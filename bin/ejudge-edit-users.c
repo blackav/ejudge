@@ -1331,17 +1331,15 @@ append_padded_string(unsigned char *buf, const unsigned char *str, int width)
       *buf++ = *str++;
       --width;
     }
+    while (width > 0) {
+      *buf++ = ' ';
+      --width;
+    }
+    *buf = 0;
+    return buf;
   } else {
-    int len = utf8_screen_width(str, width, &width);
-    memcpy(buf, str, len);
-    buf += len;
+    return utf8_padded_append(buf, str, width);
   }
-  while (width > 0) {
-    *buf++ = ' ';
-    --width;
-  }
-  *buf = 0;
-  return buf;
 }
 
 static void
