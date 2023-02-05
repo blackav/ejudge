@@ -2644,13 +2644,12 @@ generate_reg_user_item(
   if (uu[i]->cnts0) name = uu[i]->cnts0->name;
   if (!name) name = "";
 
-  // 77 - 6 - 16 - 10 - 6 = 77 - 38 = 39
   *buf++ = mask[i]?'!':' ';
   buf += sprintf(buf, "%-6d", uu[i]->id);
   *buf++ = ' ';
   buf = append_padded_string(buf, uu[i]->login, 16);
   *buf++ = ' ';
-  buf = append_padded_string(buf, name, 39);
+  buf = append_padded_string(buf, name, COLS - 38);
   *buf++ = ' ';
   *buf++ = (uc[i]->flags & USERLIST_UC_BANNED)?'B':' ';
   *buf++ = (uc[i]->flags & USERLIST_UC_INVISIBLE)?'I':' ';
@@ -2659,7 +2658,7 @@ generate_reg_user_item(
   *buf++ = (uc[i]->flags & USERLIST_UC_DISQUALIFIED)?'D':' ';
   *buf++ = (uc[i]->flags & USERLIST_UC_REG_READONLY)?'R':' ';
   *buf++ = ' ';
-  buf = append_padded_string(buf, userlist_unparse_reg_status(uc[i]->status), 6);
+  buf = append_padded_string(buf, userlist_unparse_reg_status(uc[i]->status), 2);
 }
 
 static unsigned char csv_path[1024];
