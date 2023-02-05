@@ -1342,6 +1342,23 @@ append_padded_string(unsigned char *buf, const unsigned char *str, int width)
   }
 }
 
+static int
+user_menu_estimate(struct userlist_user *u, int f)
+{
+  unsigned char buf[4096];
+
+  if (f >= USERLIST_PSEUDO_FIRST && f < USERLIST_PSEUDO_LAST) {
+    return COLS - 2 + 1;
+  } else if (!user_descs[f].has_value) {
+    return COLS - 2 + 1;
+  } else {
+    int len = 3 + strlen(user_descs[f].name) + COLS * 4;
+    get_user_field(buf, sizeof(buf), u, f, 1);
+    len += strlen(buf);
+    return len;
+  }
+}
+
 static void
 user_menu_string(struct userlist_user *u, int f, unsigned char *out)
 {
@@ -1525,6 +1542,8 @@ do_display_user(unsigned char const *upper, int user_id, int contest_id,
     info[j].role = -1;
     info[j].pers = 0;
     info[j].field = field_order[i];
+    xfree(descs[j]);
+    descs[j] = xmalloc(user_menu_estimate(u, field_order[i]));
     user_menu_string(u, field_order[i], descs[j++]);
   }
   for (role = 0; role < CONTEST_LAST_MEMBER; role++) {
