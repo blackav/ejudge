@@ -1264,8 +1264,7 @@ get_cookie_str(unsigned char *buf, size_t len,
 }
 
 static int
-get_contest_str(unsigned char *buf, size_t len,
-                const struct userlist_contest *reg)
+estimate_contest_str(const struct userlist_contest *reg)
 {
   const struct contest_desc *d = 0;
   const unsigned char *s = 0;
@@ -1273,19 +1272,37 @@ get_contest_str(unsigned char *buf, size_t len,
   if (contests_get(reg->id, &d) >= 0 && d) {
     s = d->name;
   }
-
   if (!s) s = "???";
-  return snprintf(buf, len,
-                  "%6d %c%c%c%c%c%c %-7.7s  %s",
-                  reg->id,
-                  (reg->flags & USERLIST_UC_BANNED)?'B':' ',
-                  (reg->flags & USERLIST_UC_INVISIBLE)?'I':' ',
-                  (reg->flags & USERLIST_UC_LOCKED)?'L':' ',
-                  (reg->flags & USERLIST_UC_PRIVILEGED)?'P':((reg->flags & USERLIST_UC_INCOMPLETE)?'N':' '),
-                  (reg->flags & USERLIST_UC_DISQUALIFIED)?'D':' ',
-                  (reg->flags & USERLIST_UC_REG_READONLY)?'R':' ',
-                  userlist_unparse_reg_status(reg->status),
-                  s);
+
+  return 4 * COLS + 1 + strlen(s);
+}
+
+static unsigned char *
+append_padded_string(unsigned char *buf, const unsigned char *str, int width);
+
+static void
+get_contest_str(unsigned char *buf, const struct userlist_contest *reg)
+{
+  const struct contest_desc *d = 0;
+  const unsigned char *s = 0;
+
+  if (contests_get(reg->id, &d) >= 0 && d) {
+    s = d->name;
+  }
+  if (!s) s = "???";
+
+  unsigned char *p = buf;
+  p += sprintf(p, "%-6d ", reg->id);
+  *p++ = (reg->flags & USERLIST_UC_BANNED)?'B':' ';
+  *p++ = (reg->flags & USERLIST_UC_INVISIBLE)?'I':' ';
+  *p++ = (reg->flags & USERLIST_UC_LOCKED)?'L':' ';
+  *p++ = (reg->flags & USERLIST_UC_PRIVILEGED)?'P':((reg->flags & USERLIST_UC_INCOMPLETE)?'N':' ');
+  *p++ = (reg->flags & USERLIST_UC_DISQUALIFIED)?'D':' ';
+  *p++ = (reg->flags & USERLIST_UC_REG_READONLY)?'R':' ';
+  *p++ = ' ';
+  p = append_padded_string(p, userlist_unparse_reg_status(reg->status), 7);
+  *p++ = ' ';
+  append_padded_string(p, s, COLS - 25);
 }
 
 struct field_ref
@@ -1597,8 +1614,8 @@ do_display_user(unsigned char const *upper, int user_id, int contest_id,
       info[j].pers = 1;
       info[j].field = i;
       refs[j] = reg;
-      descs[j] = xmalloc(COLS - 2 + 1);
-      get_contest_str(descs[j], COLS - 2, reg);
+      descs[j] = xmalloc(estimate_contest_str(reg));
+      get_contest_str(descs[j], reg);
       j++;
     }
   }
@@ -1903,7 +1920,7 @@ do_display_user(unsigned char const *upper, int user_id, int contest_id,
         vis_err("Operation failed: %s", userlist_strerror(-r));
         goto menu_continue;
       }
-      get_contest_str(descs[cur_i], 78, reg);
+      get_contest_str(descs[cur_i], reg);
     }
 
     /* delete field */
