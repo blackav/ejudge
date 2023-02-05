@@ -3847,7 +3847,7 @@ make_user_menu_item(
   s += sprintf(s, "%-6d ", uu->id);
   s = append_padded_string(s, uu->login, 16);
   *s++ = ' ';
-  append_padded_string(s, name, 50);
+  append_padded_string(s, name, 52);
   free(prev_item);
   return strdup(buf);
 }
