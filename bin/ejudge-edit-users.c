@@ -1565,7 +1565,9 @@ do_display_user(unsigned char const *upper, int user_id, int contest_id,
     info[j].role = role;
     info[j].pers = -1;
     info[j].field = 0;
-    snprintf(descs[j++], 78, "*%s*", member_string_pl[role]);
+    xfree(descs[j]);
+    descs[j] = xmalloc(COLS - 2 + 1);
+    snprintf(descs[j++], COLS - 2, "*%s*", member_string_pl[role]);
 
     for (pers = 0; pers < role_cnt; pers++) {
       if (!(m = (struct userlist_member*) userlist_members_get_nth(ui->members, role, pers)))
@@ -1575,7 +1577,9 @@ do_display_user(unsigned char const *upper, int user_id, int contest_id,
       info[j].pers = pers;
       info[j].field = -1;
       refs[j] = m;
-      snprintf(descs[j++], 78, "*%s %d*", member_string[role], pers + 1);
+      xfree(descs[j]);
+      descs[j] = xmalloc(COLS - 2 + 1);
+      snprintf(descs[j++], COLS - 2, "*%s %d*", member_string[role], pers + 1);
 
       for (i = USERLIST_NM_FIRST; i < USERLIST_NM_LAST; i++) {
         info[j].role = role;
@@ -1592,7 +1596,9 @@ do_display_user(unsigned char const *upper, int user_id, int contest_id,
     info[j].role = -1;
     info[j].pers = 1;
     info[j].field = -1;
-    snprintf(descs[j++], 78, "*%s*", "Registrations");
+    xfree(descs[j]);
+    descs[j] = xmalloc(COLS - 2 + 1);
+    snprintf(descs[j++], COLS - 2, "*%s*", "Registrations");
 
     for (reg = FIRST_CONTEST(u), i = 0; reg; reg = NEXT_CONTEST(reg), i++) {
       info[j].role = -1;
@@ -1607,7 +1613,9 @@ do_display_user(unsigned char const *upper, int user_id, int contest_id,
     info[j].role = -1;
     info[j].pers = 2;
     info[j].field = -1;
-    snprintf(descs[j++], 78, "*%s*", "Cookies");
+    xfree(descs[j]);
+    descs[j] = xmalloc(COLS - 2 + 1);
+    snprintf(descs[j++], COLS - 2, "*%s*", "Cookies");
 
     for (cookie=FIRST_COOKIE(u),i=0;cookie;cookie=NEXT_COOKIE(cookie),i++) {
       info[j].role = -1;
