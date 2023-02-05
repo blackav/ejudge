@@ -1545,16 +1545,12 @@ do_display_user(unsigned char const *upper, int user_id, int contest_id,
   XCALLOC(descs, tot_items + 1);
   XCALLOC(refs, tot_items + 1);
   XCALLOC(info, tot_items + 1);
-  for (i = 0; i < tot_items; i++) {
-    XCALLOC(descs[i], 512);
-  }
 
   j = 0;
   for (i = 0; i < field_order_size; i++) {
     info[j].role = -1;
     info[j].pers = 0;
     info[j].field = field_order[i];
-    xfree(descs[j]);
     descs[j] = xmalloc(user_menu_estimate(u, field_order[i]));
     user_menu_string(u, field_order[i], descs[j++]);
   }
@@ -1565,7 +1561,6 @@ do_display_user(unsigned char const *upper, int user_id, int contest_id,
     info[j].role = role;
     info[j].pers = -1;
     info[j].field = 0;
-    xfree(descs[j]);
     descs[j] = xmalloc(COLS - 2 + 1);
     snprintf(descs[j++], COLS - 2, "*%s*", member_string_pl[role]);
 
@@ -1577,7 +1572,6 @@ do_display_user(unsigned char const *upper, int user_id, int contest_id,
       info[j].pers = pers;
       info[j].field = -1;
       refs[j] = m;
-      xfree(descs[j]);
       descs[j] = xmalloc(COLS - 2 + 1);
       snprintf(descs[j++], COLS - 2, "*%s %d*", member_string[role], pers + 1);
 
@@ -1586,7 +1580,6 @@ do_display_user(unsigned char const *upper, int user_id, int contest_id,
         info[j].pers = pers;
         info[j].field = i;
         refs[j] = m;
-        xfree(descs[j]);
         descs[j] = xmalloc(member_menu_estimate(m, i));
         member_menu_string(m, i, descs[j++]);
       }
@@ -1596,7 +1589,6 @@ do_display_user(unsigned char const *upper, int user_id, int contest_id,
     info[j].role = -1;
     info[j].pers = 1;
     info[j].field = -1;
-    xfree(descs[j]);
     descs[j] = xmalloc(COLS - 2 + 1);
     snprintf(descs[j++], COLS - 2, "*%s*", "Registrations");
 
@@ -1605,7 +1597,6 @@ do_display_user(unsigned char const *upper, int user_id, int contest_id,
       info[j].pers = 1;
       info[j].field = i;
       refs[j] = reg;
-      xfree(descs[j]);
       descs[j] = xmalloc(COLS - 2 + 1);
       get_contest_str(descs[j], COLS - 2, reg);
       j++;
@@ -1615,7 +1606,6 @@ do_display_user(unsigned char const *upper, int user_id, int contest_id,
     info[j].role = -1;
     info[j].pers = 2;
     info[j].field = -1;
-    xfree(descs[j]);
     descs[j] = xmalloc(COLS - 2 + 1);
     snprintf(descs[j++], COLS - 2, "*%s*", "Cookies");
 
@@ -1624,7 +1614,6 @@ do_display_user(unsigned char const *upper, int user_id, int contest_id,
       info[j].pers = 2;
       info[j].field = i;
       refs[j] = cookie;
-      xfree(descs[j]);
       descs[j] = xmalloc(COLS - 2 + 1);
       get_cookie_str(descs[j], COLS - 2, cookie);
       j++;
