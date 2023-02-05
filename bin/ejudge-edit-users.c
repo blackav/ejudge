@@ -1605,7 +1605,9 @@ do_display_user(unsigned char const *upper, int user_id, int contest_id,
       info[j].pers = 1;
       info[j].field = i;
       refs[j] = reg;
-      get_contest_str(descs[j], 78, reg);
+      xfree(descs[j]);
+      descs[j] = xmalloc(COLS - 2 + 1);
+      get_contest_str(descs[j], COLS - 2, reg);
       j++;
     }
   }
@@ -1622,7 +1624,9 @@ do_display_user(unsigned char const *upper, int user_id, int contest_id,
       info[j].pers = 2;
       info[j].field = i;
       refs[j] = cookie;
-      get_cookie_str(descs[j], 78, cookie);
+      xfree(descs[j]);
+      descs[j] = xmalloc(COLS - 2 + 1);
+      get_cookie_str(descs[j], COLS - 2, cookie);
       j++;
     }
   }
