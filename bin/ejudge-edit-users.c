@@ -3848,20 +3848,20 @@ make_user_menu_item(
         const struct userlist_user *uu,
         int sel_flag)
 {
-  unsigned char buf[512];
-  unsigned char *s = buf;
-
   const unsigned char *name = NULL;
   if (uu->cnts0) name = uu->cnts0->name;
   if (!name) name = "";
+
+  unsigned char *buf = xmalloc(strlen(name) + COLS * 4 + 1);
+  unsigned char *s = buf;
 
   *s++ = sel_flag?'!':' ';
   s += sprintf(s, "%-6d ", uu->id);
   s = append_padded_string(s, uu->login, 16);
   *s++ = ' ';
-  append_padded_string(s, name, 52);
+  append_padded_string(s, name, COLS - 28);
   free(prev_item);
-  return strdup(buf);
+  return buf;
 }
 
 static int
