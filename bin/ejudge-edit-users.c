@@ -1363,14 +1363,14 @@ user_menu_string(struct userlist_user *u, int f, unsigned char *out)
   unsigned char buf[256];
 
   if (f >= USERLIST_PSEUDO_FIRST && f < USERLIST_PSEUDO_LAST) {
-    snprintf(out, 78, "%s", user_descs[f].name);
+    snprintf(out, COLS - 2, "%s", user_descs[f].name);
   } else if (!user_descs[f].has_value) {
-    snprintf(out, 78, "%s", user_descs[f].name);
+    snprintf(out, COLS - 2, "%s", user_descs[f].name);
   } else {
     get_user_field(buf, sizeof(buf), u, f, 1);
     out = append_padded_string(out, user_descs[f].name, 15);
     *out++ = ':'; *out++ = ' ';
-    append_padded_string(out, buf, 60);
+    append_padded_string(out, buf, COLS - 20);
   }
 }
 
@@ -1393,12 +1393,12 @@ member_menu_string(const struct userlist_member *m, int f, unsigned char *out)
   unsigned char buf[256];
 
   if (!member_descs[f].has_value) {
-    snprintf(out, 78, "%s", member_descs[f].name);
+    snprintf(out, COLS - 2, "%s", member_descs[f].name);
   } else {
     userlist_get_member_field_str(buf, sizeof(buf), m, f, 1, 0);
     out = append_padded_string(out, member_descs[f].name, 15);
     *out++ = ':'; *out++ = ' ';
-    append_padded_string(out, buf, 60);
+    append_padded_string(out, buf, COLS - 20);
   }
 }
 
