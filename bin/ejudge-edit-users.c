@@ -2617,12 +2617,28 @@ selected_mask_clear(struct selected_users_info *info)
 }
 
 static int
-generate_reg_user_item(unsigned char *buf, size_t size, int i,
-                       struct userlist_user **uu,
-                       struct userlist_contest **uc,
-                       unsigned char *mask)
+estimate_reg_user_item(
+        int i,
+        struct userlist_user **uu)
 {
-  unsigned char *bufstart = buf;
+  int len = 4 * COLS + 1;
+  if (uu[i] && uu[i]->login) {
+    len += strlen(uu[i]->login);
+  }
+  if (uu[i] && uu[i]->cnts0 && uu[i]->cnts0->name) {
+    len += strlen(uu[i]->cnts0->name);
+  }
+  return len;
+}
+
+static void
+generate_reg_user_item(
+        unsigned char *buf,
+        int i,
+        struct userlist_user **uu,
+        struct userlist_contest **uc,
+        unsigned char *mask)
+{
   const unsigned char *name = 0;
 
   if (uu[i]->cnts0) name = uu[i]->cnts0->name;
@@ -2644,7 +2660,6 @@ generate_reg_user_item(unsigned char *buf, size_t size, int i,
   *buf++ = (uc[i]->flags & USERLIST_UC_REG_READONLY)?'R':' ';
   *buf++ = ' ';
   buf = append_padded_string(buf, userlist_unparse_reg_status(uc[i]->status), 6);
-  return (int)(buf - bufstart);
 }
 
 static unsigned char csv_path[1024];
@@ -2759,8 +2774,8 @@ do_display_registered_users(
   XCALLOC(descs, nuser);
   XCALLOC(items, nuser + 1);
   for (i = 0; i < nuser; i++) {
-    descs[i] = xmalloc(256);
-    generate_reg_user_item(descs[i], 256, i, uu, uc, sel_users.mask);
+    descs[i] = xmalloc(estimate_reg_user_item(i, uu));
+    generate_reg_user_item(descs[i], i, uu, uc, sel_users.mask);
     items[i] = new_item(descs[i], 0);
   }
 
@@ -2863,7 +2878,7 @@ do_display_registered_users(
         sel_users.mask[i] = 1;
         sel_users.total_selected++;
       }
-      generate_reg_user_item(descs[i], 256, i, uu, uc, sel_users.mask);
+      generate_reg_user_item(descs[i], i, uu, uc, sel_users.mask);
       menu_driver(menu, REQ_DOWN_ITEM);
     } else if (c == '0') {
       // clear all selection
@@ -2905,7 +2920,7 @@ do_display_registered_users(
             continue;
           }
           sel_users.mask[j] = 0;
-          generate_reg_user_item(descs[j], 256, j, uu, uc, sel_users.mask);
+          generate_reg_user_item(descs[j], j, uu, uc, sel_users.mask);
         }
         memset(sel_users.mask, 0, sel_users.allocated);
         sel_users.total_selected = 0;
@@ -2942,7 +2957,7 @@ do_display_registered_users(
             }
           }
           sel_users.mask[j] = 0;
-          generate_reg_user_item(descs[j], 256, j, uu, uc, sel_users.mask);
+          generate_reg_user_item(descs[j], j, uu, uc, sel_users.mask);
         }
         memset(sel_users.mask, 0, sel_users.allocated);
         sel_users.total_selected = 0;
@@ -2962,7 +2977,7 @@ do_display_registered_users(
           continue;
         }
         uc[i]->status = new_status;
-        generate_reg_user_item(descs[i], 256, i, uu, uc, sel_users.mask);
+        generate_reg_user_item(descs[i], i, uu, uc, sel_users.mask);
       } else {
         // operation on a group of users
         if (okcancel("Set registration status for the selected users to %s?",
@@ -2980,7 +2995,7 @@ do_display_registered_users(
           }
           uc[j]->status = new_status;
           sel_users.mask[j] = 0;
-          generate_reg_user_item(descs[j], 256, j, uu, uc, sel_users.mask);
+          generate_reg_user_item(descs[j], j, uu, uc, sel_users.mask);
         }
         memset(sel_users.mask, 0, sel_users.allocated);
         sel_users.total_selected = 0;
@@ -3029,7 +3044,7 @@ do_display_registered_users(
           continue;
         }
         uc[i]->flags ^= USERLIST_UC_BANNED;
-        generate_reg_user_item(descs[i], 256, i, uu, uc, sel_users.mask);
+        generate_reg_user_item(descs[i], i, uu, uc, sel_users.mask);
       } else {
         // operation on the selected users
         if (okcancel("Toggle BANNED status for selected users?") != 1)
@@ -3046,7 +3061,7 @@ do_display_registered_users(
           }
           uc[j]->flags ^= USERLIST_UC_BANNED;
           sel_users.mask[j] = 0;
-          generate_reg_user_item(descs[j], 256, j, uu, uc, sel_users.mask);
+          generate_reg_user_item(descs[j], j, uu, uc, sel_users.mask);
         }
         memset(sel_users.mask, 0, sel_users.allocated);
         sel_users.total_selected = 0;
@@ -3065,7 +3080,7 @@ do_display_registered_users(
           continue;
         }
         uc[i]->flags ^= USERLIST_UC_INVISIBLE;
-        generate_reg_user_item(descs[i], 256, i, uu, uc, sel_users.mask);
+        generate_reg_user_item(descs[i], i, uu, uc, sel_users.mask);
       } else {
         // operation on the selected users
         if (okcancel("Toggle INVISIBLE status for selected users?") != 1)
@@ -3082,7 +3097,7 @@ do_display_registered_users(
           }
           uc[j]->flags ^= USERLIST_UC_INVISIBLE;
           sel_users.mask[j] = 0;
-          generate_reg_user_item(descs[j], 256, j, uu, uc, sel_users.mask);
+          generate_reg_user_item(descs[j], j, uu, uc, sel_users.mask);
         }
         memset(sel_users.mask, 0, sel_users.allocated);
         sel_users.total_selected = 0;
@@ -3101,7 +3116,7 @@ do_display_registered_users(
           continue;
         }
         uc[i]->flags ^= USERLIST_UC_LOCKED;
-        generate_reg_user_item(descs[i], 256, i, uu, uc, sel_users.mask);
+        generate_reg_user_item(descs[i], i, uu, uc, sel_users.mask);
       } else {
         // operation on the selected users
         if (okcancel("Toggle LOCKED status for selected users?") != 1)
@@ -3118,7 +3133,7 @@ do_display_registered_users(
           }
           uc[j]->flags ^= USERLIST_UC_LOCKED;
           sel_users.mask[j] = 0;
-          generate_reg_user_item(descs[j], 256, j, uu, uc, sel_users.mask);
+          generate_reg_user_item(descs[j], j, uu, uc, sel_users.mask);
         }
         memset(sel_users.mask, 0, sel_users.allocated);
         sel_users.total_selected = 0;
@@ -3137,7 +3152,7 @@ do_display_registered_users(
           continue;
         }
         uc[i]->flags ^= USERLIST_UC_INCOMPLETE;
-        generate_reg_user_item(descs[i], 256, i, uu, uc, sel_users.mask);
+        generate_reg_user_item(descs[i], i, uu, uc, sel_users.mask);
       } else {
         // operation on the selected users
         if (okcancel("Toggle INCOMPLETE status for selected users?") != 1)
@@ -3154,7 +3169,7 @@ do_display_registered_users(
           }
           uc[j]->flags ^= USERLIST_UC_INCOMPLETE;
           sel_users.mask[j] = 0;
-          generate_reg_user_item(descs[j], 256, j, uu, uc, sel_users.mask);
+          generate_reg_user_item(descs[j], j, uu, uc, sel_users.mask);
         }
         memset(sel_users.mask, 0, sel_users.allocated);
         sel_users.total_selected = 0;
@@ -3173,7 +3188,7 @@ do_display_registered_users(
           continue;
         }
         uc[i]->flags ^= USERLIST_UC_DISQUALIFIED;
-        generate_reg_user_item(descs[i], 256, i, uu, uc, sel_users.mask);
+        generate_reg_user_item(descs[i], i, uu, uc, sel_users.mask);
       } else {
         // operation on the selected users
         if (okcancel("Toggle DISQUALIFIED status for selected users?") != 1)
@@ -3190,7 +3205,7 @@ do_display_registered_users(
           }
           uc[j]->flags ^= USERLIST_UC_DISQUALIFIED;
           sel_users.mask[j] = 0;
-          generate_reg_user_item(descs[j], 256, j, uu, uc, sel_users.mask);
+          generate_reg_user_item(descs[j], j, uu, uc, sel_users.mask);
         }
         memset(sel_users.mask, 0, sel_users.allocated);
         sel_users.total_selected = 0;
@@ -3209,7 +3224,7 @@ do_display_registered_users(
           continue;
         }
         uc[i]->flags ^= USERLIST_UC_PRIVILEGED;
-        generate_reg_user_item(descs[i], 256, i, uu, uc, sel_users.mask);
+        generate_reg_user_item(descs[i], i, uu, uc, sel_users.mask);
       } else {
         // operation on the selected users
         if (okcancel("Toggle PRIVILEGED status for selected users?") != 1)
@@ -3226,7 +3241,7 @@ do_display_registered_users(
           }
           uc[j]->flags ^= USERLIST_UC_PRIVILEGED;
           sel_users.mask[j] = 0;
-          generate_reg_user_item(descs[j], 256, j, uu, uc, sel_users.mask);
+          generate_reg_user_item(descs[j], j, uu, uc, sel_users.mask);
         }
         memset(sel_users.mask, 0, sel_users.allocated);
         sel_users.total_selected = 0;
@@ -3245,7 +3260,7 @@ do_display_registered_users(
           continue;
         }
         uc[i]->flags ^= USERLIST_UC_REG_READONLY;
-        generate_reg_user_item(descs[i], 256, i, uu, uc, sel_users.mask);
+        generate_reg_user_item(descs[i], i, uu, uc, sel_users.mask);
       } else {
         // operation on the selected users
         if (okcancel("Toggle REG_READONLY status for selected users?") != 1)
@@ -3262,7 +3277,7 @@ do_display_registered_users(
           }
           uc[j]->flags ^= USERLIST_UC_REG_READONLY;
           sel_users.mask[j] = 0;
-          generate_reg_user_item(descs[j], 256, j, uu, uc, sel_users.mask);
+          generate_reg_user_item(descs[j], j, uu, uc, sel_users.mask);
         }
         memset(sel_users.mask, 0, sel_users.allocated);
         sel_users.total_selected = 0;
@@ -3359,7 +3374,7 @@ do_display_registered_users(
             continue;
           }
           sel_users.mask[j] = 0;
-          generate_reg_user_item(descs[j], 256, j, uu, uc, sel_users.mask);
+          generate_reg_user_item(descs[j], j, uu, uc, sel_users.mask);
         }
         memset(sel_users.mask, 0, sel_users.allocated);
         sel_users.total_selected = 0;
@@ -3398,7 +3413,7 @@ do_display_registered_users(
             }
           }
           sel_users.mask[j] = 0;
-          generate_reg_user_item(descs[j], 256, j, uu, uc, sel_users.mask);
+          generate_reg_user_item(descs[j], j, uu, uc, sel_users.mask);
         }
         memset(sel_users.mask, 0, sel_users.allocated);
         sel_users.total_selected = 0;
