@@ -8122,7 +8122,76 @@ cmd_copy_all(
         int pkt_len,
         struct userlist_pk_edit_field *data)
 {
-  cmd_copy_user_info(p, pkt_len, data);
+  unsigned char logbuf[1024];
+
+  int user_id = data->user_id;
+  if (user_id <= 0) user_id = p->user_id;
+  int from_contest_id = data->contest_id;
+  int to_contest_id = data->serial;
+  const struct contest_desc *from_cnts = NULL;
+  const struct contest_desc *to_cnts = NULL;
+  const struct userlist_user *u = NULL;
+  const struct userlist_user_info *ui = NULL;
+  const struct userlist_contest *uc = NULL;
+  const struct userlist_contest *to_uc = NULL;
+
+  snprintf(logbuf, sizeof(logbuf), "COPY_ALL: %d, %d, %d, %d",
+           p->user_id, user_id, from_contest_id, to_contest_id);
+
+  if (is_judge(p, logbuf) < 0) return;
+  if (full_get_contest(p, logbuf, &from_contest_id, &from_cnts) < 0) return;
+  if (full_get_contest(p, logbuf, &to_contest_id, &to_cnts) < 0) return;
+  if (default_get_user_info_3(user_id,from_contest_id,&u,&ui,&uc) < 0 || !u) {
+    err("%s -> invalid user_id", logbuf);
+    send_reply(p, -ULS_ERR_BAD_UID);
+    return;
+  }
+  if (!uc) {
+    err("%s -> not registered", logbuf);
+    send_reply(p, -ULS_ERR_NOT_REGISTERED);
+    return;
+  }
+  int to_bits = OPCAP_CREATE_REG;
+  if (is_privileged_cnts_user(u, to_cnts) >= 0) to_bits = OPCAP_PRIV_CREATE_REG;
+  if (is_cnts_capable(p, to_cnts, to_bits, logbuf) < 0) return;
+
+  int copy_passwd_flag = 1;
+  if (is_dbcnts_capable(p, from_cnts, OPCAP_GET_USER, logbuf) < 0) return;
+  if (is_privileged_cnts_user(u, from_cnts) >= 0) {
+    if (check_dbcnts_capable(p, from_cnts, OPCAP_PRIV_EDIT_PASSWD) < 0)
+      copy_passwd_flag = 0;
+  } else {
+    if (check_dbcnts_capable(p, from_cnts, OPCAP_EDIT_PASSWD) < 0)
+      copy_passwd_flag = 0;
+  }
+  if (is_privileged_cnts_user(u, to_cnts) >= 0) {
+    if (is_dbcnts_capable(p, to_cnts, OPCAP_PRIV_EDIT_USER, logbuf) < 0) return;
+    if (check_dbcnts_capable(p, to_cnts, OPCAP_PRIV_EDIT_PASSWD) < 0)
+      copy_passwd_flag = 0;
+  } else {
+    if (is_dbcnts_capable(p, to_cnts, OPCAP_EDIT_USER, logbuf) < 0) return;
+    if (check_dbcnts_capable(p, to_cnts, OPCAP_EDIT_PASSWD) < 0)
+      copy_passwd_flag = 0;
+  }
+
+  int r = default_register_contest(user_id, to_contest_id, uc->status, uc->flags, cur_time, &to_uc);
+  if (r < 0) {
+    err("%s -> registration failed", logbuf);
+    send_reply(p, -ULS_ERR_DB_ERROR);
+    return;
+  }
+
+  default_copy_user_info(user_id, from_contest_id, to_contest_id,
+                         copy_passwd_flag, cur_time, to_cnts);
+
+  default_check_user_reg_data(user_id, to_contest_id);
+
+  if (to_uc && to_uc->status == USERLIST_REG_OK) {
+    update_userlist_table(to_contest_id);
+  }
+
+  info("%s -> OK", logbuf);
+  send_reply(p, ULS_OK);
 }
 
 static void
