@@ -3578,7 +3578,6 @@ display_contests_menu(unsigned char *upper, int only_choose)
   int ncnts = 0, i, j;
   const struct contest_desc *cc;
   unsigned char **descs;
-  unsigned char buf[128];
   ITEM **items;
   MENU *menu = 0;
   WINDOW *in_win = 0, *out_win = 0;
@@ -3651,16 +3650,15 @@ display_contests_menu(unsigned char *upper, int only_choose)
 
   for (i = 0; i < ncnts; i++) {
     j = cntsi[i];
-    if (cnts_names[j]) {
-      unsigned char *s = buf;
-      *s++ = sel_cnts.mask[j]?'!':' ';
-      s += sprintf(s, "%-8d ", j);
-      append_padded_string(s, cnts_names[j], 67);
-    } else {
-      snprintf(buf, sizeof(buf), "%c%-8d  (removed)", sel_cnts.mask[j]?'!':' ', j);
-    }
+    const unsigned char *cnts_name = cnts_names[j];
+    if (!cnts_name) cnts_name = "(removed)";
+    unsigned char *disp_str = xmalloc(strlen(cnts_name) + COLS * 4 + 1);
+    unsigned char *s = disp_str;
+    *s++ = sel_cnts.mask[j]?'!':' ';
+    s += sprintf(s, "%-8d ", j);
+    append_padded_string(s, cnts_name, COLS - 13);
     xfree(descs[i]);
-    descs[i] = xstrdup(buf);
+    descs[i] = disp_str;
   }
 
   // free menus from the previous iteration
