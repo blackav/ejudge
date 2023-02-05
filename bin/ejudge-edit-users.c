@@ -1352,10 +1352,8 @@ user_menu_estimate(struct userlist_user *u, int f)
   } else if (!user_descs[f].has_value) {
     return COLS - 2 + 1;
   } else {
-    int len = 3 + strlen(user_descs[f].name) + COLS * 4;
     get_user_field(buf, sizeof(buf), u, f, 1);
-    len += strlen(buf);
-    return len;
+    return 3 + strlen(user_descs[f].name) + COLS * 4 + strlen(buf);
   }
 }
 
@@ -1375,6 +1373,20 @@ user_menu_string(struct userlist_user *u, int f, unsigned char *out)
     append_padded_string(out, buf, 60);
   }
 }
+
+static int
+member_menu_estimate(const struct userlist_member *m, int f)
+{
+  unsigned char buf[4096];
+
+  if (!member_descs[f].has_value) {
+    return COLS - 2 + 1;
+  } else {
+    userlist_get_member_field_str(buf, sizeof(buf), m, f, 1, 0);
+    return 3 + strlen(member_descs[f].name) + COLS * 4 + strlen(buf);
+  }
+}
+
 static void
 member_menu_string(const struct userlist_member *m, int f, unsigned char *out)
 {
@@ -1570,6 +1582,8 @@ do_display_user(unsigned char const *upper, int user_id, int contest_id,
         info[j].pers = pers;
         info[j].field = i;
         refs[j] = m;
+        xfree(descs[j]);
+        descs[j] = xmalloc(member_menu_estimate(m, i));
         member_menu_string(m, i, descs[j++]);
       }
     }
