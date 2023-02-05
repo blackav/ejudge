@@ -3342,7 +3342,7 @@ do_display_registered_users(
         i = item_index(current_item(menu));
         if (okcancel("Copy user %d info to contest %d?", uu[i]->id, k) != 1)
           continue;
-        r = userlist_clnt_copy_user_info(server_conn, ULS_COPY_USER_INFO, uu[i]->id, cnts->id, k);
+        r = userlist_clnt_copy_user_info(server_conn, ULS_COPY_ALL, uu[i]->id, cnts->id, k);
         if (r < 0) {
           vis_err("Operation failed: %s", userlist_strerror(-r));
           continue;
@@ -3353,7 +3353,7 @@ do_display_registered_users(
           continue;
         for (j = 0; j < nuser; j++) {
           if (!sel_users.mask[j]) continue;
-          r = userlist_clnt_copy_user_info(server_conn, ULS_COPY_USER_INFO, uu[j]->id, cnts->id, k);
+          r = userlist_clnt_copy_user_info(server_conn, ULS_COPY_ALL, uu[j]->id, cnts->id, k);
           if (r < 0) {
             vis_err("Operation failed: %s", userlist_strerror(-r));
             continue;

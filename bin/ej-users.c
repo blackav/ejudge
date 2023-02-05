@@ -8117,6 +8117,15 @@ cmd_copy_user_info(
 }
 
 static void
+cmd_copy_all(
+        struct client_state *p,
+        int pkt_len,
+        struct userlist_pk_edit_field *data)
+{
+  cmd_copy_user_info(p, pkt_len, data);
+}
+
+static void
 cmd_lookup_user(struct client_state *p,
                 int pkt_len,
                 struct userlist_pk_do_login *data)
@@ -11387,6 +11396,7 @@ static void (*cmd_table[])() =
   [ULS_GET_API_KEYS_FOR_USER] = cmd_get_api_keys_for_user,
   [ULS_DELETE_API_KEY] =        cmd_delete_api_key,
   [ULS_PRIV_CREATE_COOKIE] =    cmd_priv_create_cookie,
+  [ULS_COPY_ALL] =              cmd_copy_all,
 
   [ULS_LAST_CMD] = 0
 };
@@ -11499,6 +11509,7 @@ static int (*check_table[])() =
   [ULS_GET_API_KEYS_FOR_USER] = check_pk_api_key_data,
   [ULS_DELETE_API_KEY] =        check_pk_api_key_data,
   [ULS_PRIV_CREATE_COOKIE] =    NULL,
+  [ULS_COPY_ALL] =              check_pk_edit_field,
 
   [ULS_LAST_CMD] = 0
 };
