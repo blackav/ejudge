@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2004-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -71,9 +71,17 @@ get_var_value(
     return 0;
   }
   if (!strcmp(actual_parse_info[i].type, "s")) {
+    if (!actual_data) {
+      err("configuration variable '%s' section is NULL", orig_varname);
+      return 0;
+    }
     valstr = XPDEREF(unsigned char, actual_data, actual_parse_info[i].offset);
     return valstr;
   } else if (!strcmp(actual_parse_info[i].type, "S")) {
+    if (!actual_data) {
+      err("configuration variable '%s' section is NULL", orig_varname);
+      return 0;
+    }
     valstr = *(XPDEREF(unsigned char *, actual_data, actual_parse_info[i].offset));
     return valstr;
   } else {
