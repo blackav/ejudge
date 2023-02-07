@@ -3604,7 +3604,6 @@ run_one_test(
                                 &tstinfo, pfd1[0], pfd2[1], cfd[1], task_GetPid(tsk), srgp, srpp, cur_test);
     if (!tsk_int) {
       append_msg_to_log(check_out_path, "interactor failed to start");
-      goto check_failed;
     }
   }
 #endif
@@ -3634,6 +3633,13 @@ run_one_test(
   if (tst && tst->no_redirect > 0 && isatty(0)) {
     if (tcsetattr(0, TCSADRAIN, &term_attrs) < 0)
       err("tcsetattr failed: %s", os_ErrorMsg());
+  }
+#endif
+
+  // postpone "Check failed" failure on interactor start up
+#ifndef __WIN32__
+  if (interactor_cmd && !tsk_int) {
+    goto check_failed;
   }
 #endif
 
