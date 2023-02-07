@@ -2,7 +2,7 @@
 #ifndef __SERVE_STATE_H__
 #define __SERVE_STATE_H__
 
-/* Copyright (C) 2006-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -501,8 +501,6 @@ serve_compile_request(
         unsigned char const *sfx,
         char **compiler_env,
         int style_check_only,
-        const unsigned char *style_checker_cmd,
-        char **style_checker_env,
         int accepting_mode,
         int priority_adjustment,
         int notify_flag,

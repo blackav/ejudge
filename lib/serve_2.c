@@ -1348,8 +1348,6 @@ serve_compile_request(
         unsigned char const *sfx,
         char **compiler_env,
         int style_check_only,
-        const unsigned char *style_checker_cmd,
-        char **style_checker_env,
         int accepting_mode,
         int priority_adjustment,
         int notify_flag,
@@ -1390,6 +1388,13 @@ serve_compile_request(
   __attribute__((unused)) unsigned char compile_src_buf[PATH_MAX];
   __attribute__((unused)) unsigned char compile_queue_buf[PATH_MAX];
   ej_uuid_t judge_uuid;
+  const unsigned char *style_checker_cmd = NULL;
+  char **style_checker_env = NULL;
+
+  if (prob) {
+    style_checker_cmd = prob->style_checker_cmd;
+    style_checker_env = prob->style_checker_env;
+  }
 
   memset(&sformat_extra, 0, sizeof(sformat_extra));
   if (!p_judge_uuid || ej_uuid_is_empty(*p_judge_uuid)) {
@@ -4746,8 +4751,6 @@ serve_rejudge_run(
                                 mime_type_get_suffix(re.mime_type),
                                 NULL /* compiler_env */,
                                 1 /* style_check_only */,
-                                prob->style_checker_cmd,
-                                prob->style_checker_env,
                                 0 /* accepting_mode */,
                                 priority_adjustment,
                                 1 /* notify flag */,
@@ -4804,8 +4807,7 @@ serve_rejudge_run(
                             (prob->type > 0),
                             lang->src_sfx,
                             lang->compiler_env,
-                            0, prob->style_checker_cmd,
-                            prob->style_checker_env,
+                            0,
                             accepting_mode, priority_adjustment, 1, prob, lang, 0,
                             &re.run_uuid,
                             NULL /* judge_uuid */,
