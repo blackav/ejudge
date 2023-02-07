@@ -1341,7 +1341,6 @@ serve_compile_request(
         int run_id,
         int64_t submit_id,
         int user_id,
-        int lang_id,
         int variant,
         int locale_id,
         int output_only,
@@ -1390,6 +1389,7 @@ serve_compile_request(
   const unsigned char *style_checker_cmd = NULL;
   char **style_checker_env = NULL;
   char **compiler_env = NULL;
+  int lang_id = 0;
 
   if (prob) {
     style_checker_cmd = prob->style_checker_cmd;
@@ -1397,6 +1397,7 @@ serve_compile_request(
   }
   if (lang) {
     compiler_env = lang->compiler_env;
+    lang_id = lang->compile_id;
   }
 
   memset(&sformat_extra, 0, sizeof(sformat_extra));
@@ -4749,7 +4750,8 @@ serve_rejudge_run(
 
     if (prob->style_checker_cmd && prob->style_checker_cmd[0]) {
       r = serve_compile_request(config, state, 0 /* str*/, -1 /* len*/, cnts->id,
-                                run_id, 0 /* submit_id */, re.user_id, 0 /* lang_id */, re.variant,
+                                run_id, 0 /* submit_id */, re.user_id,
+                                re.variant,
                                 0 /* locale_id */, 1 /* output_only*/,
                                 mime_type_get_suffix(re.mime_type),
                                 1 /* style_check_only */,
@@ -4805,7 +4807,7 @@ serve_rejudge_run(
   }
 
   r = serve_compile_request(config, state, 0, -1, cnts->id, run_id, 0 /* submit_id */, re.user_id,
-                            lang->compile_id, re.variant, re.locale_id,
+                            re.variant, re.locale_id,
                             (prob->type > 0),
                             lang->src_sfx,
                             0,

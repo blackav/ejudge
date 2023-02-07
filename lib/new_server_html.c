@@ -3546,7 +3546,7 @@ priv_submit_run(
                       "priv-submit", "ok", RUN_COMPILING, NULL);
       if ((r = serve_compile_request(phr->config, cs, run_text, run_size, cnts->id,
                                      run_id, 0 /* submit_id */, sender_user_id,
-                                     lang->compile_id, variant,
+                                     variant,
                                      phr->locale_id, 0,
                                      lang->src_sfx,
                                      0,
@@ -3571,7 +3571,8 @@ priv_submit_run(
                       "priv-submit", "ok", RUN_COMPILING, NULL);
       if (prob->style_checker_cmd && prob->style_checker_cmd[0]) {
         r = serve_compile_request(phr->config, cs, run_text, run_size, cnts->id,
-                                  run_id, 0 /* submit_id */, sender_user_id, 0 /* lang_id */, variant,
+                                  run_id, 0 /* submit_id */, sender_user_id,
+                                  variant,
                                   0 /* locale_id */, 1 /* output_only*/,
                                   mime_type_get_suffix(mime_type),
                                   1 /* style_check_only */,
@@ -3621,7 +3622,8 @@ priv_submit_run(
       /* FIXME: check for XML problem */
       if (prob->style_checker_cmd && prob->style_checker_cmd[0]) {
         r = serve_compile_request(phr->config, cs, run_text, run_size, cnts->id,
-                                  run_id, 0 /* submit_id */, sender_user_id, 0 /* lang_id */, variant,
+                                  run_id, 0 /* submit_id */, sender_user_id,
+                                  variant,
                                   0 /* locale_id */, 1 /* output_only*/,
                                   mime_type_get_suffix(mime_type),
                                   1 /* style_check_only */,
@@ -10867,7 +10869,7 @@ ns_submit_run(
                     "submit", "ok", RUN_COMPILING, NULL);
     r = serve_compile_request(phr->config, cs, run_text, run_size, cnts->id,
                               run_id, 0 /* submit_id */, user_id,
-                              lang->compile_id, variant,
+                              variant,
                               phr->locale_id, 0 /* output_only */,
                               lang->src_sfx,
                               0 /* style_check_only */,
@@ -10901,7 +10903,8 @@ ns_submit_run(
       serve_audit_log(cs, run_id, NULL, user_id, &phr->ip, phr->ssl_flag,
                       "submit", "ok", RUN_COMPILING, NULL);
       r = serve_compile_request(phr->config, cs, run_text, run_size, cnts->id,
-                                run_id, 0 /* submit_id */, user_id, 0 /* lang_id */, variant,
+                                run_id, 0 /* submit_id */, user_id,
+                                variant,
                                 0 /* locale_id */, 1 /* output_only */,
                                 mime_type_get_suffix(mime_type),
                                 1 /* style_check_only */,
@@ -10966,7 +10969,8 @@ ns_submit_run(
 
   if (prob->style_checker_cmd && prob->style_checker_cmd[0]) {
     r = serve_compile_request(phr->config, cs, run_text, run_size, cnts->id,
-                              run_id, 0 /* submit_id */, user_id, 0 /* lang_id */, variant,
+                              run_id, 0 /* submit_id */, user_id,
+                              variant,
                               0 /* locale_id */, 1 /* output_only */,
                               mime_type_get_suffix(mime_type),
                               1 /* style_check_only */,
@@ -11532,7 +11536,7 @@ unpriv_submit_run(
                       "submit", "ok", RUN_COMPILING, NULL);
       if ((r = serve_compile_request(phr->config, cs, run_text, run_size, cnts->id,
                                      run_id, 0 /* submit_id */, phr->user_id,
-                                     lang->compile_id, variant,
+                                     variant,
                                      phr->locale_id, 0,
                                      lang->src_sfx,
                                      0,
@@ -11558,7 +11562,8 @@ unpriv_submit_run(
                       "submit", "ok", RUN_COMPILING, NULL);
       if (prob->style_checker_cmd && prob->style_checker_cmd[0]) {
         r = serve_compile_request(phr->config, cs, run_text, run_size, cnts->id,
-                                  run_id, 0 /* submit_id */, phr->user_id, 0 /* lang_id */, variant,
+                                  run_id, 0 /* submit_id */, phr->user_id,
+                                  variant,
                                   0 /* locale_id */, 1 /* output_only*/,
                                   mime_type_get_suffix(mime_type),
                                   1 /* style_check_only */,
@@ -11628,7 +11633,8 @@ unpriv_submit_run(
                         "submit", "ok", RUN_COMPILING, NULL);
 
         r = serve_compile_request(phr->config, cs, run_text, run_size, cnts->id,
-                                  run_id, 0 /* submit_id */, phr->user_id, 0 /* lang_id */, variant,
+                                  run_id, 0 /* submit_id */, phr->user_id,
+                                  variant,
                                   0 /* locale_id */, 1 /* output_only*/,
                                   mime_type_get_suffix(mime_type),
                                   1 /* style_check_only */,
@@ -12181,7 +12187,6 @@ ns_submit_run_input(
                             0  /* run_id */,
                             se.serial_id,
                             sender_user_id,
-                            lang->compile_id,
                             variant,
                             phr->locale_id,
                             0 /* output_only */,
