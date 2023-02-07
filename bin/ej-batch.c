@@ -578,7 +578,6 @@ process_submit(
                             1 /* locale_id */,
                             0 /* output_only */,
                             lang->src_sfx /* sfx */,
-                            lang->compiler_env /* compiler_env */,
                             0 /* style_check_only */,
                             0 /* accepting_mode */,
                             0 /* priority_adjustment */,

@@ -1346,7 +1346,6 @@ serve_compile_request(
         int locale_id,
         int output_only,
         unsigned char const *sfx,
-        char **compiler_env,
         int style_check_only,
         int accepting_mode,
         int priority_adjustment,
@@ -1390,10 +1389,14 @@ serve_compile_request(
   ej_uuid_t judge_uuid;
   const unsigned char *style_checker_cmd = NULL;
   char **style_checker_env = NULL;
+  char **compiler_env = NULL;
 
   if (prob) {
     style_checker_cmd = prob->style_checker_cmd;
     style_checker_env = prob->style_checker_env;
+  }
+  if (lang) {
+    compiler_env = lang->compiler_env;
   }
 
   memset(&sformat_extra, 0, sizeof(sformat_extra));
@@ -4749,7 +4752,6 @@ serve_rejudge_run(
                                 run_id, 0 /* submit_id */, re.user_id, 0 /* lang_id */, re.variant,
                                 0 /* locale_id */, 1 /* output_only*/,
                                 mime_type_get_suffix(re.mime_type),
-                                NULL /* compiler_env */,
                                 1 /* style_check_only */,
                                 0 /* accepting_mode */,
                                 priority_adjustment,
@@ -4806,7 +4808,6 @@ serve_rejudge_run(
                             lang->compile_id, re.variant, re.locale_id,
                             (prob->type > 0),
                             lang->src_sfx,
-                            lang->compiler_env,
                             0,
                             accepting_mode, priority_adjustment, 1, prob, lang, 0,
                             &re.run_uuid,

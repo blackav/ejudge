@@ -499,7 +499,6 @@ serve_compile_request(
         int locale_id,
         int output_only,
         unsigned char const *sfx,
-        char **compiler_env,
         int style_check_only,
         int accepting_mode,
         int priority_adjustment,
