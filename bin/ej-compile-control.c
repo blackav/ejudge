@@ -35,6 +35,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <stdarg.h>
+#include <sys/time.h>
 
 #define EXIT_SYSTEM_ERROR 2
 #define EXIT_OPERATION_FAILED 1
@@ -48,6 +49,8 @@
 #define EXE_LINK "exe"
 
 #define START_WAIT_COUNT 10
+
+#define WAIT_TIMEOUT_US 30000000 // 30s
 
 extern char **environ;
 
@@ -377,21 +380,33 @@ start_process(
     _exit(1);
 }
 
-static void
-signal_and_wait(int signo)
+static int
+signal_and_wait(int signo, long long timeout_us)
 {
     struct PidVector pv = {};
     if (find_all(EJ_COMPILE_PROGRAM, EJ_COMPILE_PROGRAM_DELETED, &pv) < 0) {
         system_error("cannot enumerate processes");
     }
-    if (pv.u <= 0) return;
+    if (pv.u <= 0) return 0;
+
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    long long t1 = tv.tv_sec * 1000000LL + tv.tv_usec;
 
     kill_all(signo, &pv);
     do {
         usleep(100000);
         pv_free(&pv);
+
+        gettimeofday(&tv, NULL);
+        long long t2 = tv.tv_sec * 1000000LL + tv.tv_usec;
+        if (t1 + timeout_us <= t2) {
+            fprintf(stderr, "%s: wait timed out\n", program_name);
+            return -1;
+        }
     } while (find_all(EJ_COMPILE_PROGRAM, EJ_COMPILE_PROGRAM_DELETED, &pv) >= 0 && pv.u > 0);
     pv_free(&pv);
+    return 0;
 }
 
 static void
@@ -400,7 +415,7 @@ emergency_stop(void)
     // wait some reasonable time - 0.5s
     usleep(500000);
 
-    signal_and_wait(SIGTERM);
+    signal_and_wait(SIGTERM, WAIT_TIMEOUT_US);
 }
 
 static void
@@ -850,6 +865,7 @@ int main(int argc, char *argv[])
     const char *instance_id = NULL;
     const char *queue = NULL;
     int verbose_mode = 0;
+    int res;
 
     if (argc < 1) {
         system_error("no arguments");
@@ -1170,7 +1186,10 @@ int main(int argc, char *argv[])
 
     switch (op) {
     case OPERATION_HARD_RESTART:
-        signal_and_wait(SIGTERM);
+        res = signal_and_wait(SIGTERM, WAIT_TIMEOUT_US);
+        if (res < 0) {
+            return EXIT_OPERATION_FAILED;
+        }
         // FALLTHROUGH
     case OPERATION_START:
         {
@@ -1213,10 +1232,16 @@ int main(int argc, char *argv[])
         }
         break;
     case OPERATION_STOP:
-        signal_and_wait(SIGTERM);
+        res = signal_and_wait(SIGTERM, WAIT_TIMEOUT_US);
+        if (res < 0) {
+            return EXIT_OPERATION_FAILED;
+        }
         break;
     case OPERATION_KILL:
-        signal_and_wait(SIGKILL);
+        res = signal_and_wait(SIGKILL, WAIT_TIMEOUT_US);
+        if (res < 0) {
+            return EXIT_OPERATION_FAILED;
+        }
         break;
     case OPERATION_RESTART:
         {
