@@ -438,23 +438,23 @@ command_start(
  failed:
   task_Delete(tsk); tsk = 0;
 
-  if (userlist_server_started) {
-    invoke_stopper("ej-users", ejudge_xml_path);
-  }
-  if (super_serve_started) {
-    invoke_stopper("ej-super-server", ejudge_xml_path);
-  }
   if (compile_started) {
     invoke_stopper("ej-compile", ejudge_xml_path);
   }
   if (super_run_started) {
     invoke_stopper("ej-super-run", ejudge_xml_path);
   }
-  if (job_server_started) {
-    invoke_stopper("ej-jobs", ejudge_xml_path);
+  if (super_serve_started) {
+    invoke_stopper("ej-super-server", ejudge_xml_path);
   }
   if (new_server_started) {
     invoke_stopper("ej-contests", ejudge_xml_path);
+  }
+  if (job_server_started) {
+    invoke_stopper("ej-jobs", ejudge_xml_path);
+  }
+  if (userlist_server_started) {
+    invoke_stopper("ej-users", ejudge_xml_path);
   }
 
   return -1;
@@ -467,10 +467,6 @@ command_stop(
         int slave_mode,
         int master_mode)
 {
-  if (!slave_mode) {
-    if (invoke_stopper("ej-contests", ejudge_xml_path) < 0)
-      return -1;
-  }
   if (!master_mode) {
     if (invoke_stopper("ej-compile", ejudge_xml_path) < 0)
       return -1;
@@ -484,9 +480,13 @@ command_stop(
       return -1;
   }
   if (!slave_mode) {
-    if (invoke_stopper("ej-users", ejudge_xml_path) < 0)
+    if (invoke_stopper("ej-contests", ejudge_xml_path) < 0)
       return -1;
+  }
+  if (!slave_mode) {
     if (invoke_stopper("ej-jobs", ejudge_xml_path) < 0)
+      return -1;
+    if (invoke_stopper("ej-users", ejudge_xml_path) < 0)
       return -1;
   }
 
