@@ -29,6 +29,10 @@
 #include <string.h>
 #include <ctype.h>
 #include <limits.h>
+#include <sys/time.h>
+#include <unistd.h>
+
+#define WAIT_TIMEOUT_US 300000000LL // 300s
 
 /*
  * usage: ej-super-run-control COMMAND CONFIG
@@ -96,6 +100,49 @@ write_version(void)
 }
 
 int
+stop_and_wait(
+        const unsigned char *signame,
+        int signum,
+        long long timeout_us)
+{
+  struct timeval tv;
+  gettimeofday(&tv, NULL);
+  long long t1 = tv.tv_sec * 1000000LL + tv.tv_usec;
+  int signals_sent = 0;
+  while (1) {
+    int *pids = NULL;
+    int pid_count = start_find_all_processes("ej-super-run", &pids);
+    if (pid_count < 0) {
+      op_error("cannot get the list of processes from /proc");
+    }
+    if (!pid_count) {
+      break;
+    }
+    if (!signals_sent) {
+      fprintf(stderr, "%s: ej-super-run is running as pids", program_name);
+      for (int i = 0; i < pid_count; ++i) {
+        fprintf(stderr, " %d", pids[i]);
+      }
+      fprintf(stderr, "\n");
+      fprintf(stderr, "%s: sending them the %s signal\n", program_name, signame);
+      for (int i = 0; i < pid_count; ++i) {
+        start_kill(pids[i], signum);
+      }
+      signals_sent = 1;
+    }
+    free(pids); pids = NULL;
+    gettimeofday(&tv, NULL);
+    long long t2 = tv.tv_sec * 1000000LL + tv.tv_usec;
+    if (timeout_us > 0 && t1 + timeout_us <= t2) {
+      fprintf(stderr, "%s: wait timed out\n", program_name);
+      return -1;
+    }
+    usleep(100000);
+  }
+  return 0;
+}
+
+int
 main(int argc, char *argv[])
 {
   int i = 1;
@@ -137,6 +184,7 @@ main(int argc, char *argv[])
   if (!strcmp(command, "stop")) {
     signum = START_STOP;
     signame = "TERM";
+    return (stop_and_wait(signame, signum, WAIT_TIMEOUT_US) < 0);
   } else if (!strcmp(command, "restart")) {
     signum = START_RESTART;
     signame = "HUP";
