@@ -43,4 +43,12 @@ int start_open_log(const unsigned char *log_path);
 
 void start_shutdown(const unsigned char *cmd) __attribute__((noreturn));
 
+int
+start_stop_and_wait(
+        const unsigned char *program_name,
+        const unsigned char *process_name,
+        const unsigned char *signame,
+        int signum,
+        long long timeout_us);
+
 #endif /* __STARTSTOP_H__ */

@@ -34,6 +34,7 @@
 #include <errno.h>
 #include <string.h>
 #include <fcntl.h>
+#include <sys/time.h>
 
 static path_t self_exe;
 static char **self_argv;
@@ -273,3 +274,51 @@ start_shutdown(const unsigned char *command)
   err("cannot execute shutdown command '%s'", command);
   exit(1);
 }
+
+int
+start_stop_and_wait(
+        const unsigned char *program_name,
+        const unsigned char *process_name,
+        const unsigned char *signame,
+        int signum,
+        long long timeout_us)
+{
+  struct timeval tv;
+  gettimeofday(&tv, NULL);
+  long long t1 = tv.tv_sec * 1000000LL + tv.tv_usec;
+  int signals_sent = 0;
+  while (1) {
+    int *pids = NULL;
+    int pid_count = start_find_all_processes(process_name, &pids);
+    if (pid_count < 0) {
+      fprintf(stderr, "%s: cannot get the list of processes from /proc\n",
+              program_name);
+      return -1;
+    }
+    if (!pid_count) {
+      break;
+    }
+    if (!signals_sent) {
+      fprintf(stderr, "%s: %s is running as pids", program_name, process_name);
+      for (int i = 0; i < pid_count; ++i) {
+        fprintf(stderr, " %d", pids[i]);
+      }
+      fprintf(stderr, "\n");
+      fprintf(stderr, "%s: sending the %s signal\n", program_name, signame);
+      for (int i = 0; i < pid_count; ++i) {
+        start_kill(pids[i], signum);
+      }
+      signals_sent = 1;
+    }
+    free(pids); pids = NULL;
+    gettimeofday(&tv, NULL);
+    long long t2 = tv.tv_sec * 1000000LL + tv.tv_usec;
+    if (timeout_us > 0 && t1 + timeout_us <= t2) {
+      fprintf(stderr, "%s: wait timed out\n", program_name);
+      return -1;
+    }
+    usleep(100000);
+  }
+  return 0;
+}
+
