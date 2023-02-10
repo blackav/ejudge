@@ -143,7 +143,7 @@ main(int argc, char *argv[])
     cmd = ULS_STOP;
     signame = "TERM";
     signum = START_STOP;
-    return start_stop_and_wait(program_name, "ej-jobs", signame, signum, WAIT_TIMEOUT_US) < 0;
+    return start_stop_and_wait(program_name, "ej-users", signame, signum, WAIT_TIMEOUT_US) < 0;
   } else if (!strcmp(command, "restart")) {
     cmd = ULS_RESTART;
     signame = "HUP";
