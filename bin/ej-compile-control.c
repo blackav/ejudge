@@ -400,7 +400,7 @@ signal_and_wait(int signo, long long timeout_us)
 
         gettimeofday(&tv, NULL);
         long long t2 = tv.tv_sec * 1000000LL + tv.tv_usec;
-        if (t1 + timeout_us <= t2) {
+        if (timeout_us > 0 && t1 + timeout_us <= t2) {
             fprintf(stderr, "%s: wait timed out\n", program_name);
             return -1;
         }
