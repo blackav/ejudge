@@ -866,6 +866,7 @@ int main(int argc, char *argv[])
     const char *queue = NULL;
     int verbose_mode = 0;
     int res;
+    long long timeout_us = -1;
 
     if (argc < 1) {
         system_error("no arguments");
@@ -906,6 +907,19 @@ int main(int argc, char *argv[])
                 }
                 queue = argv[aidx + 1];
                 aidx += 2;
+            } else if (!strcmp(argv[aidx], "--timeout")) {
+                if (aidx + 1 >= argc) {
+                    system_error("argument expected for --timeout");
+                }
+                const char *v = argv[aidx + 1];
+                aidx += 2;
+                char *eptr = NULL;
+                errno = 0;
+                long vv = strtol(v, &eptr, 10);
+                if (errno || *eptr || eptr == v || vv < 0 || vv > 3600) {
+                    system_error("invalid argument for --timeout");
+                }
+                timeout_us = vv * 1000000LL;
             } else if (!strcmp(argv[aidx], "-v")) {
                 verbose_mode = 1;
                 ++aidx;
@@ -943,6 +957,10 @@ int main(int argc, char *argv[])
         op = OPERATION_ROTATE;
     } else {
         system_error("invalid operation '%s'", operation);
+    }
+
+    if (timeout_us < 0) {
+        timeout_us = WAIT_TIMEOUT_US;
     }
 
     uid_t ruid = -1, euid = -1, suid = -1;
@@ -1186,7 +1204,7 @@ int main(int argc, char *argv[])
 
     switch (op) {
     case OPERATION_HARD_RESTART:
-        res = signal_and_wait(SIGTERM, WAIT_TIMEOUT_US);
+        res = signal_and_wait(SIGTERM, timeout_us);
         if (res < 0) {
             return EXIT_OPERATION_FAILED;
         }
@@ -1232,13 +1250,13 @@ int main(int argc, char *argv[])
         }
         break;
     case OPERATION_STOP:
-        res = signal_and_wait(SIGTERM, WAIT_TIMEOUT_US);
+        res = signal_and_wait(SIGTERM, timeout_us);
         if (res < 0) {
             return EXIT_OPERATION_FAILED;
         }
         break;
     case OPERATION_KILL:
-        res = signal_and_wait(SIGKILL, WAIT_TIMEOUT_US);
+        res = signal_and_wait(SIGKILL, timeout_us);
         if (res < 0) {
             return EXIT_OPERATION_FAILED;
         }
