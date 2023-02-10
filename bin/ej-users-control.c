@@ -37,6 +37,8 @@
  *   COMMAND is one of `stop', `restart', `rotate'
  */
 
+#define WAIT_TIMEOUT_US 30000000LL // 30s
+
 static const unsigned char *program_name = "";
 
 static void startup_error(const char *format, ...)
@@ -141,6 +143,7 @@ main(int argc, char *argv[])
     cmd = ULS_STOP;
     signame = "TERM";
     signum = START_STOP;
+    return start_stop_and_wait(program_name, "ej-jobs", signame, signum, WAIT_TIMEOUT_US) < 0;
   } else if (!strcmp(command, "restart")) {
     cmd = ULS_RESTART;
     signame = "HUP";
