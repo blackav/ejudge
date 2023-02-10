@@ -116,7 +116,7 @@ write_version(void)
   exit(0);
 }
 
-static void
+static int
 invoke_stopper(const char *prog, const char *ejudge_xml_path)
 {
   path_t path;
@@ -129,9 +129,19 @@ invoke_stopper(const char *prog, const char *ejudge_xml_path)
   if (strcmp(prog, "ej-compile") != 0) {
     if (ejudge_xml_path) task_AddArg(tsk, ejudge_xml_path);
   }
-  task_Start(tsk);
+  if (task_Start(tsk) < 0) {
+    fprintf(stderr, "%s: failed to start %s\n", program_name, path);
+    task_Delete(tsk);
+    return -1;
+  }
   task_Wait(tsk);
+  if (task_IsAbnormal(tsk)) {
+    fprintf(stderr, "%s: subcommand %s failed\n", program_name, path);
+    task_Delete(tsk);
+    return -1;
+  }
   task_Delete(tsk);
+  return 0;
 }
 
 static void
@@ -458,20 +468,26 @@ command_stop(
         int master_mode)
 {
   if (!slave_mode) {
-    invoke_stopper("ej-contests", ejudge_xml_path);
+    if (invoke_stopper("ej-contests", ejudge_xml_path) < 0)
+      return -1;
   }
   if (!master_mode) {
-    invoke_stopper("ej-compile", ejudge_xml_path);
+    if (invoke_stopper("ej-compile", ejudge_xml_path) < 0)
+      return -1;
   }
   if (!master_mode) {
-    invoke_stopper("ej-super-run", ejudge_xml_path);
+    if (invoke_stopper("ej-super-run", ejudge_xml_path) < 0)
+      return -1;
   }
   if (!slave_mode) {
-    invoke_stopper("ej-super-server", ejudge_xml_path);
+    if (invoke_stopper("ej-super-server", ejudge_xml_path) < 0)
+      return -1;
   }
   if (!slave_mode) {
-    invoke_stopper("ej-users", ejudge_xml_path);
-    invoke_stopper("ej-jobs", ejudge_xml_path);
+    if (invoke_stopper("ej-users", ejudge_xml_path) < 0)
+      return -1;
+    if (invoke_stopper("ej-jobs", ejudge_xml_path) < 0)
+      return -1;
   }
 
   return 0;
