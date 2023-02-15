@@ -226,6 +226,23 @@ invoke_compiler(
     if (req->vcs_compile_cmd && req->vcs_compile_cmd[0]) {
       task_AddArg(tsk, req->vcs_compile_cmd);
     }
+  } else if (lang->enable_custom > 0 && req->compile_cmd && req->compile_cmd[0]) {
+    unsigned char cmd_name[PATH_MAX];
+    os_rGetLastname(req->compile_cmd, cmd_name, sizeof(cmd_name));
+    if (generic_copy_file(0, NULL, req->compile_cmd, NULL, 0, working_dir, cmd_name, NULL) < 0) {
+      err("failed to copy custom compiler '%s'", req->compile_cmd);
+      fprintf(log_f, "\nFailed to copy custom compiler '%s'\n", req->compile_cmd);
+      task_Delete(tsk);
+      return RUN_CHECK_FAILED;
+    }
+    unsigned char cmd_path[PATH_MAX];
+    if (snprintf(cmd_path, sizeof(cmd_path), "%s/%s", working_dir, cmd_name) >= (int) sizeof(cmd_path)) {
+      abort();
+    }
+    make_executable(cmd_path);
+    task_AddArg(tsk, cmd_path);
+    task_AddArg(tsk, input_file);
+    task_AddArg(tsk, output_file);
   } else {
     task_AddArg(tsk, lang->cmd);
     task_AddArg(tsk, input_file);
