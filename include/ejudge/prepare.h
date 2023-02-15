@@ -1111,6 +1111,10 @@ struct section_problem_data
   int interactor_time_limit;
   /** real time limit for the interactor */
   int interactor_real_time_limit;
+  /** custom compilation command (if enable_custom language enabled) */
+  unsigned char *custom_compile_cmd;
+  /** custom language name (if enable_custom language enabled) */
+  unsigned char *custom_lang_name;
 
   /** printf pattern for the test files */
   unsigned char *test_pat;

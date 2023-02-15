@@ -1641,6 +1641,10 @@ prepare_unparse_prob(
     fprintf(f, "source_header = \"%s\"\n", CARMOR(prob->source_header));
   if (prob->source_footer)
     fprintf(f, "source_footer = \"%s\"\n", CARMOR(prob->source_footer));
+  if (prob->custom_compile_cmd)
+    fprintf(f, "custom_compile_cmd = \"%s\"\n", CARMOR(prob->custom_compile_cmd));
+  if (prob->custom_lang_name)
+    fprintf(f, "custom_lang_name = \"%s\"\n", CARMOR(prob->custom_lang_name));
   if (prob->normalization)
     fprintf(f, "normalization = \"%s\"\n", CARMOR(prob->normalization));
   if (prob->super_run_dir && prob->super_run_dir[0]) {
@@ -2071,6 +2075,10 @@ prepare_unparse_actual_prob(
     fprintf(f, "source_header = \"%s\"\n", CARMOR(prob->source_header));
   if (prob->source_footer)
     fprintf(f, "source_footer = \"%s\"\n", CARMOR(prob->source_footer));
+  if (prob->custom_compile_cmd)
+    fprintf(f, "custom_compile_cmd = \"%s\"\n", CARMOR(prob->custom_compile_cmd));
+  if (prob->custom_lang_name)
+    fprintf(f, "custom_lang_name = \"%s\"\n", CARMOR(prob->custom_lang_name));
   if (prob->normalization)
     fprintf(f, "normalization = \"%s\"\n", CARMOR(prob->normalization));
   if (prob->extid && prob->extid[0])

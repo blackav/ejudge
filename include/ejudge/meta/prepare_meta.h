@@ -464,6 +464,8 @@ enum
   CNTSPROB_source_footer,
   CNTSPROB_interactor_time_limit,
   CNTSPROB_interactor_real_time_limit,
+  CNTSPROB_custom_compile_cmd,
+  CNTSPROB_custom_lang_name,
   CNTSPROB_test_pat,
   CNTSPROB_corr_pat,
   CNTSPROB_info_pat,
