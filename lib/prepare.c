@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2000-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -605,6 +605,7 @@ static const struct config_parse_info section_language_params[] =
 
   LANGUAGE_PARAM(disable_auto_testing, "d"),
   LANGUAGE_PARAM(disable_testing, "d"),
+  LANGUAGE_PARAM(enable_custom, "d"),
   LANGUAGE_PARAM(max_vm_size, "E"),
   LANGUAGE_PARAM(max_stack_size, "E"),
   LANGUAGE_PARAM(max_file_size, "E"),
