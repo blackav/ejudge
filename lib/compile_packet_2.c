@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2005-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -94,6 +94,10 @@ compile_request_packet_write(
   if (in_data->vcs_compile_cmd) {
     vcs_compile_cmd_len = strlen(in_data->vcs_compile_cmd);
   }
+  int compile_cmd_len = 0;
+  if (in_data->compile_cmd) {
+    compile_cmd_len = strlen(in_data->compile_cmd);
+  }
 
   FAIL_IF(in_data->judge_id < 0 || in_data->judge_id > EJ_MAX_JUDGE_ID);
   FAIL_IF(in_data->contest_id < 0 || in_data->contest_id > EJ_MAX_CONTEST_ID);
@@ -117,6 +121,7 @@ compile_request_packet_write(
   FAIL_IF(contest_server_id_len < 0 || contest_server_id_len > PATH_MAX);
   FAIL_IF(container_options_len < 0 || container_options_len > PATH_MAX);
   FAIL_IF(vcs_compile_cmd_len < 0 || vcs_compile_cmd_len > PATH_MAX);
+  FAIL_IF(compile_cmd_len < 0 || compile_cmd_len > PATH_MAX);
   FAIL_IF(in_data->run_block_len < 0 || in_data->run_block_len > EJ_MAX_COMPILE_RUN_BLOCK_LEN);
   env_num = in_data->env_num;
   if (env_num == -1) {
@@ -189,6 +194,9 @@ compile_request_packet_write(
   if (vcs_compile_cmd_len > 0) {
     out_size += pkt_bin_align(vcs_compile_cmd_len);
   }
+  if (compile_cmd_len > 0) {
+    out_size += pkt_bin_align(compile_cmd_len);
+  }
   out_size += pkt_bin_align(in_data->run_block_len);
   out_size += pkt_bin_align(env_num * sizeof(rint32_t));
   for (i = 0; i < env_num; i++) {
@@ -248,6 +256,7 @@ compile_request_packet_write(
   out_data->contest_server_id_len = cvt_host_to_bin_32(contest_server_id_len);
   out_data->container_options_len = cvt_host_to_bin_32(container_options_len);
   out_data->vcs_compile_cmd_len = cvt_host_to_bin_32(vcs_compile_cmd_len);
+  out_data->compile_cmd_len = cvt_host_to_bin_32(compile_cmd_len);
   out_data->env_num = cvt_host_to_bin_32(env_num);
   out_data->sc_env_num = cvt_host_to_bin_32(sc_env_num);
   out_data->user_id = cvt_host_to_bin_32(in_data->user_id);
@@ -314,6 +323,11 @@ compile_request_packet_write(
   if (vcs_compile_cmd_len > 0) {
     memcpy(out_ptr, in_data->vcs_compile_cmd, vcs_compile_cmd_len);
     out_ptr += vcs_compile_cmd_len;
+    pkt_bin_align_addr(out_ptr, out_data);
+  }
+  if (compile_cmd_len > 0) {
+    memcpy(out_ptr, in_data->compile_cmd, compile_cmd_len);
+    out_ptr += compile_cmd_len;
     pkt_bin_align_addr(out_ptr, out_data);
   }
   if (env_num) {

@@ -2,7 +2,7 @@
 #ifndef __COMPILE_PACKET_H__
 #define __COMPILE_PACKET_H__
 
-/* Copyright (C) 2005-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -57,6 +57,7 @@ struct compile_request_packet
   unsigned char *contest_server_id; // contest server to pass the compilation result to
   unsigned char *container_options;
   unsigned char *vcs_compile_cmd;
+  unsigned char *compile_cmd;     // custom compilation command for "custom" lang
   int run_block_len;
   void *run_block;
   int env_num;

@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2005-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -264,6 +264,17 @@ compile_request_packet_read(
     memcpy(pout->vcs_compile_cmd, pin_ptr, vcs_compile_cmd_len);
     pout->vcs_compile_cmd[vcs_compile_cmd_len] = 0;
     pin_ptr += pkt_bin_align(vcs_compile_cmd_len);
+  }
+
+  pout->compile_cmd = NULL;
+  int compile_cmd_len = cvt_bin_to_host_32(pin->compile_cmd_len);
+  FAIL_IF(compile_cmd_len < 0 || compile_cmd_len >= PATH_MAX);
+  FAIL_IF(pin_ptr + compile_cmd_len > end_ptr);
+  if (compile_cmd_len > 0) {
+    pout->compile_cmd = xmalloc(compile_cmd_len + 1);
+    memcpy(pout->compile_cmd, pin_ptr, compile_cmd_len);
+    pout->compile_cmd[compile_cmd_len] = 0;
+    pin_ptr += pkt_bin_align(compile_cmd_len);
   }
 
   pout->env_num = cvt_bin_to_host_32(pin->env_num);
