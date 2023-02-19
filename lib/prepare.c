@@ -3533,7 +3533,7 @@ set_defaults(
       path_prepend_dir(&lang->style_checker_cmd, g->ejudge_checkers_dir);
     }
 
-    if (!lang->src_sfx[0] && lang->enable_custom <= 0) {
+    if (!lang->src_sfx[0]) {
       err("language.%d.src_sfx must be set", i);
       return -1;
     }
