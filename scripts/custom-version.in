@@ -1,0 +1,73 @@
+#!/bin/sh
+# Copyright (c) 2023 Alexander Chernov <cher@ejudge.ru>
+
+# compiler script interface is as follows
+# <comp>-version [OPTION]
+# OPTION is:
+#  -r P fully check the availability of the compiler (like configure
+#       script does). P is a proposed path to the compiler (like in
+#       --with-<comp> configure option).
+#       returns failure (exit code 1), if the compiler is not available
+#       or is not functional.
+#       in case of success exit code is 0, and the necessary configuration
+#       variables are written to stdout.
+#  -v   verbose operation (configure mode)
+#  -l   output the compiler name to the stdout (list mode)
+#  -p   write to the stdout the command line of the compiler
+#  -f   write the compiler full name and the compiler version
+
+LANG_CONFIG_DIR="@lang_config_dir@"
+
+common_config() {
+  echo 'long_name="Custom"'
+  echo 'src_sfx=""'
+  echo 'enable_custom=1'
+}
+
+failure() {
+  rm -f conftest*
+  echo 'version='
+  echo 'arg="'"${arg}"'"'
+  common_config
+  [ "${verbose}" = 1 ] && echo "no" >&2
+  exit 1
+}
+
+if [ x"$1" = x-v ]
+then
+  verbose=1
+  shift
+fi
+
+# recheck the language
+if [ x"$1" = x-r ]
+then
+  [ "${verbose}" = 1 ] && echo -n "checking whether Custom is available... " >&2
+  version=1
+  common_config
+  echo 'version="'"${version}"'"'
+  [ "${verbose}" = 1 ] && echo "yes" >&2
+  exit 0
+fi
+
+if [ x"$1" = x-l ]
+then
+  echo "Custom language"
+  exit 0
+fi
+
+[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/custom.cfg"
+
+if [ -f "${EJUDGE_LANG_CONFIG}" ]
+then
+  . "${EJUDGE_LANG_CONFIG}"
+fi
+
+if [ x"$1" = x-p ]
+then
+    echo "/bin/true"
+    exit 0
+fi
+    
+[ x"$1" = x-f ] && echo -n "Custom"
+exit 0
