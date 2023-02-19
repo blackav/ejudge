@@ -511,10 +511,23 @@
 <%      if (!prob->type) { %>
 <tr><td><s:_>Language</s:_>:</td><td>
 <select name="lang_id"><option value="">
-<%        for (i = 1; i <= cs->max_lang; i++) {
+<%
+          if (!prob->custom_compile_cmd || !prob->custom_compile_cmd[0]) {
+          for (i = 1; i <= cs->max_lang; i++) {
           if (!cs->langs[i]) continue; %>
 <option value='<s:v value="i"/>'><s:v escape="0" value="cs->langs[i]->short_name" /> - <s:v value="cs->langs[i]->long_name" checkExpr="" /></option>
-<%        } %>
+<%        }
+          } else {
+            for (i = 1; i <= cs->max_lang; ++i) {
+              if (cs->langs[i] && cs->langs[i]->enable_custom > 0) {
+                break;
+              }
+            }
+            if (i <= cs->max_lang) {
+%><option value='<s:v value="i"/>'><s:v escape="0" value="cs->langs[i]->short_name" /> - <s:v value="prob->custom_lang_name" checkExpr="" /></option><%
+            }
+          }
+%>
 </select></td></tr>
 <%        if (global->enable_eoln_select > 0) { %>
 <tr><td>EOLN Type:</td><td><select name="eoln_type">
