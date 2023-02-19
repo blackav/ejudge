@@ -1390,6 +1390,7 @@ serve_compile_request(
   char **style_checker_env = NULL;
   char **compiler_env = NULL;
   int lang_id = 0;
+  unsigned char *custom_compile_cmd = NULL;
 
   if (prob) {
     style_checker_cmd = prob->style_checker_cmd;
@@ -1596,6 +1597,31 @@ serve_compile_request(
     }
   }
 
+  if (lang && lang->enable_custom > 0 && prob && prob->custom_compile_cmd
+      && prob->custom_compile_cmd[0]) {
+    custom_compile_cmd = prepare_varsubst(state, prob->custom_compile_cmd, 0, prob, lang, NULL);
+    /*
+    sformat_message(tmp_path, sizeof(tmp_path), 0, style_checker_cmd,
+                    global, prob, lang, 0, 0, 0, 0, 0);
+     */
+    custom_compile_cmd = config_var_substitute_heap(custom_compile_cmd);
+    if (os_IsAbsolutePath(custom_compile_cmd)) {
+      // nothing
+    } else if (global->advanced_layout > 0) {
+      unsigned char tmp[PATH_MAX];
+      get_advanced_layout_path(tmp, sizeof(tmp),
+                               global, prob, custom_compile_cmd, variant);
+      free(custom_compile_cmd);
+      custom_compile_cmd = xstrdup(tmp);
+    } else {
+      char *tmp = NULL;
+      asprintf(&tmp, "%s/%s", global->checker_dir, custom_compile_cmd);
+      free(custom_compile_cmd);
+      custom_compile_cmd = tmp;
+    }
+    cp.compile_cmd = custom_compile_cmd;
+  }
+
   cp.vcs_mode = vcs_mode;
   if (vcs_mode > 0 && prob && prob->vcs_compile_cmd && prob->vcs_compile_cmd[0]) {
     cp.vcs_compile_cmd = prob->vcs_compile_cmd;
@@ -1749,6 +1775,7 @@ serve_compile_request(
   xfree(src_footer_text);
   xfree(src_text);
   xfree(src_out_text);
+  xfree(custom_compile_cmd);
   return 0;
 
  failed:
@@ -1762,6 +1789,7 @@ serve_compile_request(
   xfree(src_footer_text);
   xfree(src_text);
   xfree(src_out_text);
+  xfree(custom_compile_cmd);
   return errcode;
 }
 
