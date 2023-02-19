@@ -3261,6 +3261,20 @@ priv_submit_run(
   hr_cgi_param_int_opt(phr, "is_visible", &is_visible, 0);
   if (is_visible > 0) is_hidden = 0;
 
+  if (prob->type == PROB_TYPE_STANDARD && prob->custom_compile_cmd && prob->custom_compile_cmd[0]) {
+    // only enable_custom language is allowed
+    if (!lang || lang->enable_custom <= 0) {
+      fprintf(phr->log_f, "custom language is expected\n");
+      FAIL(NEW_SRV_ERR_INV_LANG_ID);
+    }
+  } else if (prob->type == PROB_TYPE_STANDARD) {
+    // enable_custom language is disabled
+    if (lang && lang->enable_custom > 0) {
+      fprintf(phr->log_f, "custom language is not allowed\n");
+      FAIL(NEW_SRV_ERR_INV_LANG_ID);
+    }
+  }
+
   /* get the submission text */
   switch (prob->type) {
     /*
@@ -10396,6 +10410,20 @@ ns_submit_run(
     }
   }
 
+  if (prob->type == PROB_TYPE_STANDARD && prob->custom_compile_cmd && prob->custom_compile_cmd[0]) {
+    // only enable_custom language is allowed
+    if (!lang || lang->enable_custom <= 0) {
+      fprintf(phr->log_f, "custom language is expected\n");
+      FAIL(NEW_SRV_ERR_INV_LANG_ID);
+    }
+  } else if (prob->type == PROB_TYPE_STANDARD) {
+    // enable_custom language is disabled
+    if (lang && lang->enable_custom > 0) {
+      fprintf(phr->log_f, "custom language is not allowed\n");
+      FAIL(NEW_SRV_ERR_INV_LANG_ID);
+    }
+  }
+
   switch (prob->type) {
   case PROB_TYPE_STANDARD:
   case PROB_TYPE_OUTPUT_ONLY:
@@ -11120,6 +11148,20 @@ unpriv_submit_run(
     if (global->enable_eoln_select > 0) {
       hr_cgi_param_int_opt(phr, "eoln_type", &eoln_type, 0);
       if (eoln_type < 0 || eoln_type > EOLN_CRLF) eoln_type = 0;
+    }
+  }
+
+  if (prob->type == PROB_TYPE_STANDARD && prob->custom_compile_cmd && prob->custom_compile_cmd[0]) {
+    // only enable_custom language is allowed
+    if (!lang || lang->enable_custom <= 0) {
+      fprintf(phr->log_f, "custom language is expected\n");
+      FAIL(NEW_SRV_ERR_INV_LANG_ID);
+    }
+  } else if (prob->type == PROB_TYPE_STANDARD) {
+    // enable_custom language is disabled
+    if (lang && lang->enable_custom > 0) {
+      fprintf(phr->log_f, "custom language is not allowed\n");
+      FAIL(NEW_SRV_ERR_INV_LANG_ID);
     }
   }
 

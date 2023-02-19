@@ -893,6 +893,20 @@ cmd_submit_run(
     }
   }
 
+  if (prob->type == PROB_TYPE_STANDARD && prob->custom_compile_cmd && prob->custom_compile_cmd[0]) {
+    // only enable_custom language is allowed
+    if (!lang || lang->enable_custom <= 0) {
+      fprintf(phr->log_f, "custom language is expected\n");
+      FAIL(NEW_SRV_ERR_INV_LANG_ID);
+    }
+  } else if (prob->type == PROB_TYPE_STANDARD) {
+    // enable_custom language is disabled
+    if (lang && lang->enable_custom > 0) {
+      fprintf(phr->log_f, "custom language is not allowed\n");
+      FAIL(NEW_SRV_ERR_INV_LANG_ID);
+    }
+  }
+
   /* get the source */
   if (!hr_cgi_param_bin(phr, "file", &run_text, &run_size))
     FAIL(NEW_SRV_ERR_SOURCE_NONEXISTANT);
