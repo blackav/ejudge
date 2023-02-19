@@ -20,7 +20,7 @@ LANG_CONFIG_DIR="@lang_config_dir@"
 
 common_config() {
   echo 'long_name="Custom"'
-  echo 'src_sfx=""'
+  echo 'src_sfx=".txt"'
   echo 'enable_custom=1'
 }
 
