@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2005-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -249,6 +249,7 @@ super_html_lang_activate(
   strcpy(lang->exe_sfx, cs_lang->exe_sfx);
   lang->binary = cs_lang->binary;
   lang->insecure = cs_lang->insecure;
+  lang->enable_custom = cs_lang->enable_custom;
   xstrdup3(&lang->content_type, cs_lang->content_type);
   lang->compile_dir_index = cs_lang->compile_dir_index;
   lang->max_vm_size = cs_lang->max_vm_size;
