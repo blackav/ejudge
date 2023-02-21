@@ -64,7 +64,9 @@ rotate_log_files(
     int lfn = strlen(log_file);
     int fd = -1;
     int user_id = -1, group_id = -1;
+    unsigned char date_suffix_buf[128];
 
+    date_suffix_buf[0] = 0;
     if (snprintf(log_path, sizeof(log_path), "%s/%s", log_dir, log_file) >= (int) sizeof(log_path)) {
         // path is too long
         goto cleanup;
@@ -80,46 +82,48 @@ rotate_log_files(
         goto cleanup;
     }
 
-    d = opendir(log_dir);
-    if (!d) {
-        goto cleanup;
+    if (date_suffix_flag <= 0) {
+        d = opendir(log_dir);
+        if (!d) {
+            goto cleanup;
+        }
+        struct dirent *dd;
+        while ((dd = readdir(d))) {
+            if (strncmp(dd->d_name, log_file, lfn) != 0) {
+                continue;
+            }
+            if (!dd->d_name[lfn]) {
+                // "${log_file}"
+                continue;
+            }
+            if (dd->d_name[lfn] != '.') {
+                continue;
+            }
+            // "${log_file}."
+            errno = 0;
+            char *eptr = NULL;
+            long v = strtol(dd->d_name + lfn + 1, &eptr, 10);
+            if (errno || eptr == dd->d_name + lfn + 1) {
+                continue;
+            }
+            if (v <= 0 || v >= 100000) {
+                continue;
+            }
+            if (*eptr && *eptr != '.') {
+                continue;
+            }
+            if (deu == dea) {
+                if (!(dea *= 2)) dea = 16;
+                de = realloc(de, dea * sizeof(de[0]));
+            }
+            struct DirEntry *cur = &de[deu++];
+            cur->prefix = strdup(dd->d_name);
+            cur->prefix[lfn + 1] = 0;
+            cur->suffix = strdup(eptr);
+            cur->serial = v;
+        }
+        closedir(d); d = NULL;
     }
-    struct dirent *dd;
-    while ((dd = readdir(d))) {
-        if (strncmp(dd->d_name, log_file, lfn) != 0) {
-            continue;
-        }
-        if (!dd->d_name[lfn]) {
-            // "${log_file}"
-            continue;
-        }
-        if (dd->d_name[lfn] != '.') {
-            continue;
-        }
-        // "${log_file}."
-        errno = 0;
-        char *eptr = NULL;
-        long v = strtol(dd->d_name + lfn + 1, &eptr, 10);
-        if (errno || eptr == dd->d_name + lfn + 1) {
-            continue;
-        }
-        if (v <= 0 || v >= 100000) {
-            continue;
-        }
-        if (*eptr && *eptr != '.') {
-            continue;
-        }
-        if (deu == dea) {
-            if (!(dea *= 2)) dea = 16;
-            de = realloc(de, dea * sizeof(de[0]));
-        }
-        struct DirEntry *cur = &de[deu++];
-        cur->prefix = strdup(dd->d_name);
-        cur->prefix[lfn + 1] = 0;
-        cur->suffix = strdup(eptr);
-        cur->serial = v;
-    }
-    closedir(d); d = NULL;
     if (deu > 0) {
         qsort(de, deu, sizeof(de[0]), sort_func);
         for (int i = 0; i < deu; ++i) {
@@ -136,7 +140,15 @@ rotate_log_files(
         }
     }
     {
-        if (!back_suffix || !*back_suffix) {
+        if (date_suffix_flag > 0) {
+            time_t curtime = time(NULL);
+            struct tm ttm;
+            gmtime_r(&curtime, &ttm);
+            snprintf(date_suffix_buf, sizeof(date_suffix_buf),
+                     ".%04d%02d%02d",
+                     ttm.tm_year + 1900, ttm.tm_mon + 1, ttm.tm_mday);
+            back_suffix = date_suffix_buf;
+        } else if (!back_suffix || !*back_suffix) {
             back_suffix = ".1";
         }
         unsigned char p1[PATH_MAX];
