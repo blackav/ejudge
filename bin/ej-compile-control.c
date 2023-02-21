@@ -381,13 +381,21 @@ start_process(
 }
 
 static int
-signal_and_wait(int signo, long long timeout_us)
+signal_and_wait(int signo, const unsigned char *signame, long long timeout_us)
 {
     struct PidVector pv = {};
     if (find_all(EJ_COMPILE_PROGRAM, EJ_COMPILE_PROGRAM_DELETED, &pv) < 0) {
         system_error("cannot enumerate processes");
     }
     if (pv.u <= 0) return 0;
+
+    fprintf(stderr, "%s: %s is running as pids", program_name,
+            EJ_COMPILE_PROGRAM);
+    for (int i = 0; i < pv.u; ++i) {
+        fprintf(stderr, " %d", pv.v[i]);
+    }
+    fprintf(stderr, "\n");
+    fprintf(stderr, "%s: sending it the %s signal\n", program_name, signame);
 
     struct timeval tv;
     gettimeofday(&tv, NULL);
@@ -415,7 +423,7 @@ emergency_stop(void)
     // wait some reasonable time - 0.5s
     usleep(500000);
 
-    signal_and_wait(SIGTERM, WAIT_TIMEOUT_US);
+    signal_and_wait(SIGTERM, "TERM", WAIT_TIMEOUT_US);
 }
 
 static void
@@ -1204,7 +1212,7 @@ int main(int argc, char *argv[])
 
     switch (op) {
     case OPERATION_HARD_RESTART:
-        res = signal_and_wait(SIGTERM, timeout_us);
+        res = signal_and_wait(SIGTERM, "TERM", timeout_us);
         if (res < 0) {
             return EXIT_OPERATION_FAILED;
         }
@@ -1250,13 +1258,13 @@ int main(int argc, char *argv[])
         }
         break;
     case OPERATION_STOP:
-        res = signal_and_wait(SIGTERM, timeout_us);
+        res = signal_and_wait(SIGTERM, "TERM", timeout_us);
         if (res < 0) {
             return EXIT_OPERATION_FAILED;
         }
         break;
     case OPERATION_KILL:
-        res = signal_and_wait(SIGKILL, timeout_us);
+        res = signal_and_wait(SIGKILL, "KILL", timeout_us);
         if (res < 0) {
             return EXIT_OPERATION_FAILED;
         }
@@ -1299,7 +1307,18 @@ int main(int argc, char *argv[])
             system_error("cannot enumerate processes");
         }
 
-        kill_all(SIGUSR1, &pv);
+        if (pv.u > 0) {
+            fprintf(stderr, "%s: %s is running as pids", program_name,
+                    EJ_COMPILE_PROGRAM);
+            for (int i = 0; i < pv.u; ++i) {
+                fprintf(stderr, " %d", pv.v[i]);
+            }
+            fprintf(stderr, "\n");
+            fprintf(stderr, "%s: sending it the %s signal\n", program_name, "USR1");
+
+            kill_all(SIGUSR1, &pv);
+        }
+
         break;
     }
     default:
