@@ -520,7 +520,7 @@ rotate_agent_log(
   log_group = EJUDGE_PRIMARY_USER;
 #endif
 
-  rotate_log_files(lpd, lpf, NULL, NULL, log_group, 0620);
+  rotate_log_files(lpd, lpf, NULL, NULL, log_group, 0620, date_suffix_flag);
 
   int *pids = NULL;
   int pid_count = start_find_all_processes("ej-agent", &pids);

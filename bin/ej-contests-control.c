@@ -112,7 +112,6 @@ main(int argc, char *argv[])
   int pid;
   int signum = 0;
   const unsigned char *signame = "";
-  [[gnu::unused]]
   int date_suffix_flag = 0;
 
   program_name = os_GetBasename(argv[0]);
@@ -181,7 +180,7 @@ main(int argc, char *argv[])
     log_group = EJUDGE_PRIMARY_USER;
 #endif
 
-    rotate_log_files(lpd, lpf, NULL, NULL, log_group, 0620);
+    rotate_log_files(lpd, lpf, NULL, NULL, log_group, 0620, date_suffix_flag);
 
     if ((pid = start_find_process("ej-contests", NULL)) > 0) {
       fprintf(stderr, "%s: ej-contests is running as pid %d\n", program_name, pid);

@@ -54,7 +54,8 @@ rotate_log_files(
         const unsigned char *back_suffix,
         const unsigned char *log_user,
         const unsigned char *log_group,
-        int log_perms)
+        int log_perms,
+        int date_suffix_flag)
 {
     unsigned char log_path[PATH_MAX];
     DIR *d = NULL;

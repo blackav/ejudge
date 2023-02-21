@@ -875,7 +875,6 @@ int main(int argc, char *argv[])
     int verbose_mode = 0;
     int res;
     long long timeout_us = -1;
-    [[gnu::unused]]
     int date_suffix_flag = 0;
 
     if (argc < 1) {
@@ -1137,7 +1136,7 @@ int main(int argc, char *argv[])
             log_group = EJUDGE_COMPILE_USER;
 #endif
         }
-        rotate_log_files(log_dir, "ej-compile.log", NULL, NULL, log_group, 0620);
+        rotate_log_files(log_dir, "ej-compile.log", NULL, NULL, log_group, 0620, date_suffix_flag);
     }
 
     struct EnvVector ev = {};

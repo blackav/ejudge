@@ -108,7 +108,6 @@ main(int argc, char *argv[])
   const unsigned char *signame = "";
   int pid_count;
   int *pids = NULL;
-  [[gnu::unused]]
   int date_suffix_flag = 0;
 
   program_name = os_GetBasename(argv[0]);
@@ -168,7 +167,7 @@ main(int argc, char *argv[])
     log_group = EJUDGE_PRIMARY_USER;
 #endif
 
-    rotate_log_files(lpd, lpf, NULL, NULL, log_group, 0620);
+    rotate_log_files(lpd, lpf, NULL, NULL, log_group, 0620, date_suffix_flag);
 
     signum = START_ROTATE;
     signame = "USR1";

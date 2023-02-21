@@ -108,7 +108,6 @@ main(int argc, char *argv[])
   struct ejudge_cfg *config = 0;
   const unsigned char *signame = "";
   int signum = 0, pid;
-  [[gnu::unused]]
   int date_suffix_flag = 0;
 
   logger_set_level(-1, LOG_WARNING);
@@ -168,7 +167,7 @@ main(int argc, char *argv[])
 #if defined EJUDGE_PRIMARY_USER
     log_group = EJUDGE_PRIMARY_USER;
 #endif
-    rotate_log_files(lpd, lpf, NULL, NULL, log_group, 0620);
+    rotate_log_files(lpd, lpf, NULL, NULL, log_group, 0620, date_suffix_flag);
 
     signame = "USR1";
     signum = START_ROTATE;
