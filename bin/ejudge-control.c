@@ -145,7 +145,10 @@ invoke_stopper(const char *prog, const char *ejudge_xml_path)
 }
 
 static void
-invoke_rotate(const char *prog, const char *ejudge_xml_path)
+invoke_rotate(
+        const char *prog,
+        const char *ejudge_xml_path,
+        int date_suffix_flag)
 {
   path_t path;
   tTask *tsk = 0;
@@ -153,6 +156,9 @@ invoke_rotate(const char *prog, const char *ejudge_xml_path)
   snprintf(path, sizeof(path), "%s/%s-control", EJUDGE_SERVER_BIN_PATH, prog);
   tsk = task_New();
   task_AddArg(tsk, path);
+  if (date_suffix_flag > 0) {
+    task_AddArg(tsk, "--date-suffix");
+  }
   task_AddArg(tsk, "rotate");
   if (strcmp(prog, "ej-compile") != 0) {
     if (ejudge_xml_path) task_AddArg(tsk, ejudge_xml_path);
@@ -496,7 +502,8 @@ command_stop(
 static void
 rotate_agent_log(
         const struct ejudge_cfg *config,
-        const char *ejudge_xml_path)
+        const char *ejudge_xml_path,
+        int date_suffix_flag)
 {
   unsigned char lpd[PATH_MAX];
   unsigned char lpf[PATH_MAX];
@@ -527,26 +534,27 @@ command_rotate(
         const struct ejudge_cfg *config,
         const char *ejudge_xml_path,
         int slave_mode,
-        int master_mode)
+        int master_mode,
+        int date_suffix_flag)
 {
   if (!slave_mode) {
-    invoke_rotate("ej-contests", ejudge_xml_path);
+    invoke_rotate("ej-contests", ejudge_xml_path, date_suffix_flag);
   }
   if (!master_mode) {
-    invoke_rotate("ej-compile", ejudge_xml_path);
+    invoke_rotate("ej-compile", ejudge_xml_path, date_suffix_flag);
   }
   if (!master_mode) {
-    invoke_rotate("ej-super-run", ejudge_xml_path);
+    invoke_rotate("ej-super-run", ejudge_xml_path, date_suffix_flag);
   }
   if (!slave_mode) {
-    invoke_rotate("ej-super-server", ejudge_xml_path);
+    invoke_rotate("ej-super-server", ejudge_xml_path, date_suffix_flag);
   }
   if (!slave_mode) {
-    invoke_rotate("ej-users", ejudge_xml_path);
-    invoke_rotate("ej-jobs", ejudge_xml_path);
+    invoke_rotate("ej-users", ejudge_xml_path, date_suffix_flag);
+    invoke_rotate("ej-jobs", ejudge_xml_path, date_suffix_flag);
   }
   if (!slave_mode) {
-    rotate_agent_log(config, ejudge_xml_path);
+    rotate_agent_log(config, ejudge_xml_path, date_suffix_flag);
   }
 
   return 0;
@@ -577,7 +585,6 @@ main(int argc, char *argv[])
   int disable_heartbeat = 0;
   const char *timeout_str = NULL;
   const char *shutdown_script = NULL;
-  [[gnu::unused]]
   int date_suffix_flag = 0;
 
   logger_set_level(-1, LOG_WARNING);
@@ -720,7 +727,8 @@ main(int argc, char *argv[])
     if (command_stop(config, ejudge_xml_path, slave_mode, master_mode) < 0)
       r = 1;
   } else if (!strcmp(command, "rotate")) {
-    if (command_rotate(config, ejudge_xml_path, slave_mode, master_mode) < 0)
+    if (command_rotate(config, ejudge_xml_path, slave_mode, master_mode,
+                       date_suffix_flag) < 0)
       r = 1;
   } else if (!strcmp(command, "restart")) {
     startup_error("`restart' command is not yet implemented");
