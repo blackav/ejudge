@@ -577,6 +577,8 @@ main(int argc, char *argv[])
   int disable_heartbeat = 0;
   const char *timeout_str = NULL;
   const char *shutdown_script = NULL;
+  [[gnu::unused]]
+  int date_suffix_flag = 0;
 
   logger_set_level(-1, LOG_WARNING);
   program_name = os_GetBasename(argv[0]);
@@ -664,6 +666,9 @@ main(int argc, char *argv[])
       i++;
     } else if (!strcmp(argv[i], "-nhb")) {
       disable_heartbeat = 1;
+      i++;
+    } else if (!strcmp(argv[i], "--date-suffix")) {
+      date_suffix_flag = 1;
       i++;
     } else if (!strcmp(argv[i], "--")) {
       i++;

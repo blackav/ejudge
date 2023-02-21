@@ -875,6 +875,8 @@ int main(int argc, char *argv[])
     int verbose_mode = 0;
     int res;
     long long timeout_us = -1;
+    [[gnu::unused]]
+    int date_suffix_flag = 0;
 
     if (argc < 1) {
         system_error("no arguments");
@@ -931,6 +933,9 @@ int main(int argc, char *argv[])
             } else if (!strcmp(argv[aidx], "-v")) {
                 verbose_mode = 1;
                 ++aidx;
+            } else if (!strcmp(argv[aidx], "--date-suffix")) {
+                ++aidx;
+                date_suffix_flag = 1;
             } else if (!strcmp(argv[aidx], "--")) {
                 ++aidx;
                 break;

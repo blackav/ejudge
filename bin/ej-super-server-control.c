@@ -111,14 +111,23 @@ main(int argc, char *argv[])
   int signum = 0;
   const unsigned char *signame = "";
   int pid;
+  [[gnu::unused]]
+  int date_suffix_flag = 0;
 
   program_name = os_GetBasename(argv[0]);
   if (argc < 2) startup_error("not enough parameters");
 
-  if (!strcmp(argv[i], "--help")) {
-    write_help();
-  } else if (!strcmp(argv[i], "--version")) {
-    write_version();
+  while (1) {
+    if (!strcmp(argv[i], "--help")) {
+      write_help();
+    } else if (!strcmp(argv[i], "--version")) {
+      write_version();
+    } else if (!strcmp(argv[i], "--date-suffix")) {
+      ++i;
+      date_suffix_flag = 1;
+    } else {
+      break;
+    }
   }
 
   command = argv[i];
