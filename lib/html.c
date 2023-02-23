@@ -1102,56 +1102,6 @@ get_problem_map(
   *p_p_tot = p_tot;
 }
 
-static __attribute__((unused)) void
-write_moscow_page_table(const struct standings_style *pss,
-                        FILE *f, int total_pages, int current_page,
-                        unsigned char **pgrefs,
-                        int *pg_n1, int *pg_n2,
-                        int *pg_sc1, int *pg_sc2,
-                        int *pg_pen1, int *pg_pen2,
-                        unsigned char **pr_attrs, unsigned char **pc_attrs)
-{
-  int j;
-
-  fprintf(f, "<table%s>\n<tr%s><td%s>%s</td>",
-          pss->page_table_attr, pr_attrs[0], pc_attrs[0], _("Page"));
-  for (j = 1; j <= total_pages; j++)
-    if (current_page != j)
-      fprintf(f, "<td%s><b><a href=\"%s\">%d</a></b></td>",
-              pc_attrs[1], pgrefs[j - 1], j);
-    else
-      fprintf(f, "<td%s><b>%d</b></td>", pc_attrs[1], j);
-
-  fprintf(f, "</tr>\n<tr%s><td%s>%s</td>",
-          pr_attrs[1], pc_attrs[0], _("Place"));
-  for (j = 0; j < total_pages; j++)
-    if (current_page != j + 1)
-      fprintf(f, "<td%s><a href=\"%s\">[%d-%d]</a></td>",
-              pc_attrs[1], pgrefs[j], pg_n1[j], pg_n2[j]);
-    else
-      fprintf(f, "<td%s>[%d-%d]</td>", pc_attrs[1], pg_n1[j], pg_n2[j]);
-
-  fprintf(f, "</tr>\n<tr%s><td%s>%s</td>",
-          pr_attrs[2], pc_attrs[0], _("Score"));
-  for (j = 0; j < total_pages; j++)
-    if (current_page != j + 1)
-      fprintf(f, "<td%s><a href=\"%s\">[%d-%d]</a></td>",
-              pc_attrs[1], pgrefs[j], pg_sc1[j], pg_sc2[j]);
-    else
-      fprintf(f, "<td%s>[%d-%d]</td>", pc_attrs[1], pg_sc1[j], pg_sc2[j]);
-
-  fprintf(f, "</tr>\n<tr%s><td%s>%s</td>",
-          pr_attrs[3], pc_attrs[0], _("Penalty"));
-  for (j = 0; j < total_pages; j++)
-    if (current_page != j + 1)
-      fprintf(f, "<td%s><a href=\"%s\">[%d-%d]</a></td>",
-              pr_attrs[1], pgrefs[j], pg_pen1[j], pg_pen2[j]);
-    else
-      fprintf(f, "<td%s>[%d-%d]</td>", pr_attrs[1],
-              pg_pen1[j], pg_pen2[j]);
-  fprintf(f, "</tr></table>\n");
-}
-
 typedef void (*write_standings_func_t)(
         struct http_request_info *phr,
         struct contest_extra *extra,
