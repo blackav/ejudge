@@ -999,8 +999,6 @@ write_kirov_page_table(const struct standings_style *pss,
   fprintf(f, "</tr>\n</table>\n");
 }
 
-static int sec_to_min(int rounding_mode, int secs);
-
 unsigned char *
 score_view_display(
         unsigned char *buf,
@@ -1102,20 +1100,6 @@ get_problem_map(
 
   env.mem = filter_tree_delete(env.mem);
   *p_p_tot = p_tot;
-}
-
-static __attribute__((unused)) int
-sec_to_min(int rounding_mode, int secs)
-{
-  switch (rounding_mode) {
-  case SEC_CEIL:
-    return (secs + 59) / 60;
-  case SEC_FLOOR:
-    return secs / 60;
-  case SEC_ROUND:
-    return (secs + 30) / 60;
-  }
-  abort();
 }
 
 static __attribute__((unused)) void
