@@ -5120,10 +5120,6 @@ kirov_score_default(
 {
   int cur_score = 0;
 
-  if (pinfo->solved_flag && re->score_adj <= 0) {
-    // if the problem is already solved, no need to process this run
-    return;
-  }
   if (cur_prob->ignore_unmarked > 0 && !re->is_marked) {
     // ignore "unmarked" runs, if the option is set
     return;
