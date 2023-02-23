@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2021 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -38,9 +38,11 @@
 #include "ejudge/oauth.h"
 #include "ejudge/sha256utils.h"
 #include "ejudge/metrics_contest.h"
+#include "ejudge/teamdb.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/osdeps.h"
+#include "ejudge/html.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -900,6 +902,8 @@ static void *forced_symbols[] __attribute__((unused,used)) =
   &oauth_get_redirect_url,
   &userlist_clnt_edit_field,
   &sha256b64ubuf,
+  &teamdb_get_user_map,
+  &stand_setup_style,
 };
 
 int
