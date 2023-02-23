@@ -940,65 +940,6 @@ stand_write_footer(FILE *f, const unsigned char *footer_str)
   }
 }
 
-static __attribute__((unused)) void
-write_kirov_page_table(const struct standings_style *pss,
-                       FILE *f, int total_pages, int current_page,
-                       unsigned char **pgrefs,
-                       int *u_sort, int *u_full, int *u_score,
-                       int *pg_n1, int *pg_n2,
-                       unsigned char **row_attrs, unsigned char **col_attrs)
-{
-  int j;
-
-  fprintf(f, "<table%s>\n<tr%s><td%s>&nbsp;</td>",
-          pss->page_table_attr, row_attrs[0], col_attrs[0]);
-  for (j = 0; j < total_pages; j++)
-    if (current_page != j + 1)
-      fprintf(f, "<td%s><a href=\"%s\">%d</a></td>",
-              col_attrs[1], pgrefs[j], j + 1);
-    else
-      fprintf(f, "<td%s>%d</td>", col_attrs[1], j + 1);
-
-  fprintf(f, "</tr>\n<tr%s><td%s>%s</td>",
-          row_attrs[1], col_attrs[0], _("Place"));
-  for (j = 0; j < total_pages; j++)
-    if (current_page != j + 1)
-      fprintf(f, "<td%s><a href=\"%s\">[%d-%d]</a></td>",
-              col_attrs[1], pgrefs[j], pg_n1[j], pg_n2[j]);
-    else
-      fprintf(f, "<td%s>[%d-%d]</td>",
-              col_attrs[1], pg_n1[j], pg_n2[j]);
-
-  fprintf(f, "</tr>\n<tr%s><td%s>%s</td>",
-          row_attrs[2], col_attrs[0], _("Solved"));
-  for (j = 0; j < total_pages; j++)
-    if (current_page != j + 1)
-      fprintf(f, "<td%s><a href=\"%s\">[%d-%d]</a></td>",
-              col_attrs[1], pgrefs[j],
-              u_full[u_sort[pg_n1[j] - 1]],
-              u_full[u_sort[pg_n2[j] - 1]]);
-    else
-      fprintf(f, "<td%s>[%d-%d]</td>", col_attrs[1],
-              u_full[u_sort[pg_n1[j] - 1]],
-              u_full[u_sort[pg_n2[j] - 1]]);
-
-
-  fprintf(f, "</tr>\n<tr%s><td%s>%s</td>",
-          row_attrs[3], col_attrs[0], _("Score"));
-  for (j = 0; j < total_pages; j++)
-    if (current_page != j + 1)
-      fprintf(f, "<td%s><a href=\"%s\">[%d-%d]</a></td>",
-              col_attrs[1], pgrefs[j],
-              u_score[u_sort[pg_n1[j] - 1]],
-              u_score[u_sort[pg_n2[j] - 1]]);
-    else
-      fprintf(f, "<td%s>[%d-%d]</td>", col_attrs[1],
-              u_score[u_sort[pg_n1[j] - 1]],
-              u_score[u_sort[pg_n2[j] - 1]]);
-
-  fprintf(f, "</tr>\n</table>\n");
-}
-
 unsigned char *
 score_view_display(
         unsigned char *buf,
