@@ -1104,7 +1104,7 @@ get_problem_map(
   *p_p_tot = p_tot;
 }
 
-void
+static __attribute__((unused)) void
 do_write_kirov_standings(
         const serve_state_t state,
         const struct contest_desc *cnts,
@@ -2830,7 +2830,7 @@ write_moscow_page_table(const struct standings_style *pss,
   fprintf(f, "</tr></table>\n");
 }
 
-void
+static __attribute__((unused)) void
 do_write_moscow_standings(
         const serve_state_t state,
         const struct contest_desc *cnts,
@@ -3772,7 +3772,7 @@ do_write_moscow_standings(
 /*
  * ACM-style standings
  */
-void
+static __attribute__((unused)) void
 do_write_standings(
         const serve_state_t state,
         const struct contest_desc *cnts,
@@ -4533,7 +4533,7 @@ write_standings(
   }
 }
 
-static void
+static __attribute__((unused)) void
 do_write_public_log(
         const serve_state_t state,
         const struct contest_desc *cnts,
@@ -4768,7 +4768,6 @@ write_public_log(
                     footer_str,
                     user_mode);
   }
-  (void) do_write_public_log;
 
   fclose(f); f = 0;
   if (charset_id > 0) {

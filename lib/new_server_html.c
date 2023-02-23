@@ -16740,56 +16740,6 @@ ns_int_external_action(
 }
 
 void
-do_write_kirov_standings(
-        const serve_state_t,
-        const struct contest_desc *cnts,
-        FILE *f,
-        const unsigned char *stand_dir,
-        int users_on_page,
-        int client_flag,
-        int only_table_flag,
-        int user_id,
-        const unsigned char *header_str,
-        unsigned char const *footer_str,
-        int accepting_mode,
-        int force_fancy_style,
-        time_t cur_time,
-        int charset_id,
-        struct user_filter_info *u,
-        int user_mode);
-
-void
-do_write_standings(
-        const serve_state_t,
-        const struct contest_desc *cnts,
-        FILE *f,
-        int client_flag,
-        int only_table_flag,
-        int user_id,
-        const unsigned char *header_str,
-        unsigned char const *footer_str,
-        const unsigned char *user_name,
-        int force_fancy_style,
-        time_t cur_time,
-        struct user_filter_info *u);
-
-void
-do_write_moscow_standings(
-        const serve_state_t,
-        const struct contest_desc *cnts,
-        FILE *f,
-        const unsigned char *stand_dir,
-        int client_flag, int only_table_flag,
-        int user_id,
-        const unsigned char *header_str,
-        const unsigned char *footer_str,
-        const unsigned char *user_name,
-        int force_fancy_style,
-        time_t cur_time,
-        int charset_id,
-        struct user_filter_info *u);
-
-void
 ns_write_standings(
         struct http_request_info *phr,
         struct contest_extra *extra,
@@ -16821,8 +16771,6 @@ ns_write_standings(
   serve_state_t state = extra->serve_state;
   ASSERT(state);
 
-  int score_system = 0;
-  if (state->global) score_system = state->global->score_system;
   int hr_allocated = 0;
 
   StandingsExtraInfo extra_info =
@@ -16869,80 +16817,6 @@ ns_write_standings(
     xfree(phr->out_t);
   }
   return;
-
-  // backward mode: no charset conversion, no multi-page standings
-  charset_id = 0;
-  users_on_page = 0;
-  file_name2 = NULL;
-  unsigned char file_path[PATH_MAX];
-  int file_is_opened = 0;
-  if (!f) {
-    snprintf(file_path, sizeof(file_path), "%s/dir/%s", stand_dir, file_name);
-    f = fopen(file_path, "w");
-    if (!f) {
-      err("ns_write_standings: cannot open '%s': %s", file_path, os_ErrorMsg());
-      return;
-    }
-    file_is_opened = 1;
-  }
-
-  // default action
-  switch (score_system) {
-  case SCORE_KIROV:
-  case SCORE_OLYMPIAD:
-    do_write_kirov_standings(state,
-                             cnts,
-                             f,
-                             stand_dir,
-                             users_on_page,
-                             client_flag,
-                             only_table_flag,
-                             user_id,
-                             header_str,
-                             footer_str,
-                             accepting_mode,
-                             force_fancy_style,
-                             stand_time,
-                             charset_id,
-                             user_filter,
-                             user_mode);
-    break;
-  case SCORE_MOSCOW:
-    do_write_moscow_standings(state,
-                              cnts,
-                              f,
-                              stand_dir,
-                              client_flag,
-                              only_table_flag,
-                              user_id,
-                              header_str,
-                              footer_str,
-                              user_name,
-                              force_fancy_style,
-                              stand_time,
-                              charset_id,
-                              user_filter);
-    break;
-  case SCORE_ACM:
-  default:
-    do_write_standings(state,
-                       cnts,
-                       f,
-                       client_flag,
-                       only_table_flag,
-                       user_id,
-                       header_str,
-                       footer_str,
-                       user_name,
-                       force_fancy_style,
-                       stand_time,
-                       user_filter);
-    break;
-  }
-
-  if (file_is_opened) {
-    fclose(f);
-  }
 }
 
 void
