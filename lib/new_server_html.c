@@ -16857,18 +16857,18 @@ ns_write_standings(
   }
   phr->config = ejudge_config;
   phr->extra_info = &extra_info;
-  if (!compat_mode) {
-    int r = ns_int_external_action(phr, NEW_SRV_INT_STANDINGS);
-    if (r >= 0) {
-      if (hr_allocated) {
-        if (phr->log_f) fclose(phr->log_f);
-        xfree(phr->log_t);
-        if (phr->out_f) fclose(phr->out_f);
-        xfree(phr->out_t);
-      }
-      return;
-    }
+  int r = ns_int_external_action(phr, NEW_SRV_INT_STANDINGS);
+  if (r < 0) {
+    err("ns_write_standings: int_standings action failed");
+    return;
   }
+  if (hr_allocated) {
+    if (phr->log_f) fclose(phr->log_f);
+    xfree(phr->log_t);
+    if (phr->out_f) fclose(phr->out_f);
+    xfree(phr->out_t);
+  }
+  return;
 
   // backward mode: no charset conversion, no multi-page standings
   charset_id = 0;
