@@ -785,15 +785,6 @@ write_text_run_status(
   }
 }
 
-static __attribute__((unused)) const unsigned char *
-stand_get_name(serve_state_t state, int user_id)
-{
-  if (state->global->stand_use_login)
-    return teamdb_get_login(state->teamdb_state, user_id);
-  else
-    return teamdb_get_name_2(state->teamdb_state, user_id);
-}
-
 static void
 process_template(FILE *out,
                  unsigned char const *template,
