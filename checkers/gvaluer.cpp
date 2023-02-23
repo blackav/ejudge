@@ -140,6 +140,7 @@ class Group
     string comment;
 
     vector<set<int> > zero_sets;
+    vector<set<int> > zero_subsets;
     set<int> passed_set;
 
 public:
@@ -150,7 +151,7 @@ public:
 
     void set_range(int first, int last)
     {
-        this->first = first; 
+        this->first = first;
         this->last = last;
     }
     int get_first() const { return first; }
@@ -202,10 +203,21 @@ public:
         passed_set.insert(test_num);
     }
 
-    bool is_zero_set() const
+    bool is_zero_score() const
     {
-        for (int i = 0; i < int(zero_sets.size()); ++i) {
-            if (passed_set == zero_sets[i])
+        for (const auto& zero_set : zero_sets) {
+            if (passed_set == zero_set)
+                return true;
+        }
+        for (const auto& zero_subset : zero_subsets) {
+            bool is_subset = true;
+            for (int test : passed_set) {
+                if (zero_subset.find(test) == zero_subset.end()) {
+                    is_subset = false;
+                    break;
+                }
+            }
+            if (is_subset)
                 return true;
         }
         return false;
@@ -224,6 +236,11 @@ public:
     void add_zero_set(set<int> &&zs)
     {
         zero_sets.emplace_back(zs);
+    }
+
+    void add_zero_subset(set<int> &&zs)
+    {
+        zero_subsets.emplace_back(zs);
     }
 
     bool meet_requirements(const ConfigParser &cfg, const Group *& grp) const;
@@ -352,10 +369,6 @@ public:
             }
             return;
         }
-        /*
-        if (in_c == '\"') {
-        }
-        */
         if (in_c == ';' || in_c == '{' || in_c == '}' || in_c == '-' || in_c == ',') {
             t_line = c_line;
             t_pos = c_pos;
@@ -452,7 +465,8 @@ public:
                 }
                 if (t_type != ';') parse_error("';' expected");
                 next_token();
-            } else if (token == "0_if") {
+            } else if (token == "0_if" || token == "0_if_subset") {
+                string directive = token;
                 set<int> zs;
                 try {
                     next_token();
@@ -471,7 +485,11 @@ public:
                     parse_error("NUM expected");
                 }
                 if (t_type != ';') parse_error("';' expected");
-                g.add_zero_set(move(zs));
+                if (directive == "0_if") {
+                    g.add_zero_set(move(zs));
+                } else {
+                    g.add_zero_subset(move(zs));
+                }
                 next_token();
             } else if (token == "offline") {
                 next_token();
@@ -806,7 +824,7 @@ main(int argc, char *argv[])
         } else if (g->get_test_score() >= 0) {
             // by-test score, just go on
             if (test_num == g->get_last()) {
-                if (g->is_zero_set()) {
+                if (g->is_zero_score()) {
                     char buf[1024];
                     if (locale_id == 1) {
                         snprintf(buf, sizeof(buf), "Группа тестов %s (%d-%d) оценена в 0 баллов, "
