@@ -1,12 +1,12 @@
 # -*- mode: po; coding: UTF-8 -*-
 # ejudge messages catalog
-# Copyright (C) 2002-2022 Alexander Chernov <cher@ejudge.ru>
+# Copyright (C) 2002-2023 Alexander Chernov <cher@ejudge.ru>
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-12-23 14:00+0300\n"
+"POT-Creation-Date: 2023-02-24 00:21+0300\n"
 "PO-Revision-Date: 2022-01-12 13:17+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -200,10 +200,6 @@ msgstr ""
 "систему. "
 
 #, c-format
-msgid "<p%s>Page %d of %d.</p>\n"
-msgstr "<p%s>Страница %d из %d.</p>\n"
-
-#, c-format
 msgid ""
 "<p><font color=\"red\">At least %d examiners must be assigned.</font></p>"
 msgstr ""
@@ -229,10 +225,6 @@ msgstr ""
 #, c-format
 msgid "<p>You may define up to %d members.</p>"
 msgstr "<p>Вы можете добавить до %d членов команды.</p>"
-
-#, c-format
-msgid "<tr%s><td colspan=\"2\">Page %d of %d.</td></tr>\n"
-msgstr "<tr%s><td colspan=\"2\">Страница %d из %d.</td></tr>\n"
 
 #, c-format
 msgid "<u>--- Checker output: file is binary, size %lld ---</u>\n"
@@ -2789,9 +2781,6 @@ msgstr "Пакет имеет слишком маленький размер"
 msgid "Packet name"
 msgstr "Имя пакета"
 
-msgid "Page"
-msgstr "Страница"
-
 msgid "Page generation time"
 msgstr "Время генерации страницы"
 
@@ -3722,9 +3711,6 @@ msgstr "Пропущен"
 msgid "Solved"
 msgstr "Решено"
 
-msgid "Solved<br/>problems"
-msgstr "Решённые<br/>задачи"
-
 msgid "Source"
 msgstr "Исходный код"
 
@@ -3858,9 +3844,6 @@ msgstr "Поле \"Тема\" имеет слишком большую длин�
 #, c-format
 msgid "Subject length is too big (%zu)"
 msgstr "Поле \"Тема\" имеет слишком большую длину (%zu)"
-
-msgid "Submission log"
-msgstr "Журнал посылок"
 
 msgid "Submission time"
 msgstr "Время попытки"
@@ -5099,9 +5082,6 @@ msgstr "некоторые компоненты запроса имеют сли
 
 msgid "standings"
 msgstr "положение участников"
-
-msgid "submission log"
-msgstr "журнал посылок"
 
 msgid "system call failed"
 msgstr "системный вызов завершился неудачно"

@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-12-23 14:00+0300\n"
+"POT-Creation-Date: 2023-02-24 00:21+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Ukrainian <uk@li.org>\n"
@@ -166,10 +166,6 @@ msgid ""
 msgstr ""
 
 #, c-format
-msgid "<p%s>Page %d of %d.</p>\n"
-msgstr ""
-
-#, c-format
 msgid ""
 "<p><font color=\"red\">At least %d examiners must be assigned.</font></p>"
 msgstr ""
@@ -188,10 +184,6 @@ msgstr ""
 
 #, c-format
 msgid "<p>You may define up to %d members.</p>"
-msgstr ""
-
-#, c-format
-msgid "<tr%s><td colspan=\"2\">Page %d of %d.</td></tr>\n"
 msgstr ""
 
 #, c-format
@@ -2646,9 +2638,6 @@ msgstr ""
 msgid "Packet name"
 msgstr ""
 
-msgid "Page"
-msgstr ""
-
 msgid "Page generation time"
 msgstr ""
 
@@ -3565,9 +3554,6 @@ msgstr ""
 msgid "Solved"
 msgstr ""
 
-msgid "Solved<br/>problems"
-msgstr ""
-
 msgid "Source"
 msgstr ""
 
@@ -3700,9 +3686,6 @@ msgstr ""
 
 #, c-format
 msgid "Subject length is too big (%zu)"
-msgstr ""
-
-msgid "Submission log"
 msgstr ""
 
 msgid "Submission time"
@@ -4880,9 +4863,6 @@ msgid "some component of request is too large"
 msgstr ""
 
 msgid "standings"
-msgstr ""
-
-msgid "submission log"
 msgstr ""
 
 msgid "system call failed"
