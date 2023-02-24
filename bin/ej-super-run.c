@@ -1591,6 +1591,8 @@ main(int argc, char *argv[])
     fatal("%d processes are already running", pid_count);
   }
 
+  info("%s %s, compiled %s", program_name, compile_version, compile_date);
+
   if (!contests_home_dir && ejudge_config->contests_home_dir) {
     contests_home_dir = ejudge_config->contests_home_dir;
   }
@@ -1660,8 +1662,6 @@ main(int argc, char *argv[])
   }
 
   make_super_run_name();
-
-  fprintf(stderr, "%s %s, compiled %s\n", program_name, compile_version, compile_date);
 
   if (do_loop(state, halt_timeout, &halt_requested) < 0) {
     retval = 1;
