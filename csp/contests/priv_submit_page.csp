@@ -275,7 +275,7 @@ ns_unparse_answers(
 <%  if (!prob || !prob->type) { %>
 <tr>
 <td class="b0"><s:_>Language</s:_>:</td><td class="b0"><s:select name="lang_id"><option value=""></option><%
-    if (!prob->custom_compile_cmd || !prob->custom_compile_cmd[0]) {
+    if (!prob || !prob->custom_compile_cmd || !prob->custom_compile_cmd[0]) {
     for (i = 1; i <= cs->max_lang; i++) {
       const struct section_language_data *cl = cs->langs[i];
       if (!cl || cl->disabled > 0) continue;
