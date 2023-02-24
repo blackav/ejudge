@@ -315,6 +315,9 @@ start_process(
     setsid(); // new session
     setpgid(0, 0); // new process group
 
+    // save old stderr
+    int saved_stderr = dup(STDERR_FILENO);
+
     // redirect standard streams
     int fd0 = open("/dev/null", O_RDONLY, 0);
     if (fd0 < 0) _exit(1);
@@ -336,6 +339,7 @@ start_process(
 
     char *args[64];
     char lbuf[64];
+    char ebuf[64];
     int argi = 0;
     args[argi++] = (char*) exepath;
     if (is_parallel) args[argi++] = "-p";
@@ -343,6 +347,11 @@ start_process(
         args[argi++] = "-l";
         snprintf(lbuf, sizeof(lbuf), "%d", ej_xml_fds[serial]);
         args[argi++] = lbuf;
+    }
+    if (saved_stderr >= 0) {
+        args[argi++] = "-e";
+        snprintf(ebuf, sizeof(ebuf), "%d", saved_stderr);
+        args[argi++] = ebuf;
     }
     if (agent && *agent) {
         args[argi++] = "--agent";
