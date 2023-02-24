@@ -686,39 +686,37 @@ parse_checker_score(
         }
       }
     }
-  } else {
-    if (checker_token_mode) {
-      char *eptr = NULL;
-      errno = 0;
-      long xx = strtol(score_buf, &eptr, 10);
-      if (errno || (*eptr && !isspace((unsigned char) *eptr))) {
-        append_msg_to_log(log_path, "The %s score output (%s) is invalid", what, score_buf);
-        goto fail;
-      }
-      if (xx < 0 || xx > max_score) {
-        append_msg_to_log(log_path, "The %s score (%ld) is invalid", what, xx);
-        goto fail;
-      }
-      if (p_score) *p_score = xx;
-      if (*eptr) {
-        char *ptr = eptr;
-        while (isspace((unsigned char) *ptr)) ++ptr;
-        if (*ptr && p_checker_token) {
-          if (*p_checker_token) free(*p_checker_token);
-          *p_checker_token = xstrdup(ptr);
-        }
-      }
-    } else {
-      if (sscanf(score_buf, "%d%n", &x, &n) != 1 || score_buf[n]) {
-        append_msg_to_log(log_path, "The %s score output (%s) is invalid", what, score_buf);
-        goto fail;
-      }
-      if (x < 0 || x > max_score) {
-        append_msg_to_log(log_path, "The %s score (%d) is invalid", what, x);
-        goto fail;
-      }
-      if (p_score) *p_score = x;
+  } else if (checker_token_mode) {
+    char *eptr = NULL;
+    errno = 0;
+    long xx = strtol(score_buf, &eptr, 10);
+    if (errno || (*eptr && !isspace((unsigned char) *eptr))) {
+      append_msg_to_log(log_path, "The %s score output (%s) is invalid", what, score_buf);
+      goto fail;
     }
+    if (xx < 0 || xx > max_score) {
+      append_msg_to_log(log_path, "The %s score (%ld) is invalid", what, xx);
+      goto fail;
+    }
+    if (p_score) *p_score = xx;
+    if (*eptr) {
+      char *ptr = eptr;
+      while (isspace((unsigned char) *ptr)) ++ptr;
+      if (*ptr && p_checker_token) {
+        if (*p_checker_token) free(*p_checker_token);
+        *p_checker_token = xstrdup(ptr);
+      }
+    }
+  } else {
+    if (sscanf(score_buf, "%d%n", &x, &n) != 1 || score_buf[n]) {
+      append_msg_to_log(log_path, "The %s score output (%s) is invalid", what, score_buf);
+      goto fail;
+    }
+    if (x < 0 || x > max_score) {
+      append_msg_to_log(log_path, "The %s score (%d) is invalid", what, x);
+      goto fail;
+    }
+    if (p_score) *p_score = x;
   }
 
 done:
