@@ -853,7 +853,7 @@ load_plugins(void)
   }
 
   if (!nsdb_default) {
-    info("using files as the new-server database");
+    //info("using files as the new-server database");
     nsdb_default = &nsdb_plugins[0];
   }
 
