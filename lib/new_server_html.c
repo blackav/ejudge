@@ -16768,8 +16768,6 @@ ns_write_standings(
   if (phr && !cnts) cnts = phr->cnts;
 
   ASSERT(extra);
-  serve_state_t state = extra->serve_state;
-  ASSERT(state);
 
   int hr_allocated = 0;
 
