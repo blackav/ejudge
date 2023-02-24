@@ -543,7 +543,9 @@ check_func(void *data)
   if (!state->md->conn) return -1;
 
   // check, that database is created
-  if (state->mi->simple_fquery(state->md, "SELECT config_val FROM %sconfig WHERE config_key = 'version' ;", state->md->table_prefix) < 0) {
+  unsigned char qbuf[1024];
+  int qlen = snprintf(qbuf, sizeof(qbuf), "SELECT config_val FROM %sconfig WHERE config_key = 'version' ;", state->md->table_prefix);
+  if (state->mi->simple_query_bin(state->md, qbuf, qlen) < 0) {
     err("probably the database is not created. use --convert or --create");
     return 0;
   }
