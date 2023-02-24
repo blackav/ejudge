@@ -241,6 +241,9 @@ invoke_compiler(
       abort();
     }
     make_executable(cmd_path);
+    if (snprintf(cmd_path, sizeof(cmd_path), "./%s", cmd_name) >= (int) sizeof(cmd_path)) {
+      abort();
+    }
     task_AddArg(tsk, cmd_path);
     task_AddArg(tsk, input_file);
     task_AddArg(tsk, output_file);
