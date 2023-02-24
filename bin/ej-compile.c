@@ -40,6 +40,7 @@
 #include "ejudge/random.h"
 #include "ejudge/ej_process.h"
 #include "ejudge/agent_client.h"
+#include "ejudge/version.h"
 
 #include "ejudge/meta_generic.h"
 #include "ejudge/meta/compile_packet_meta.h"
@@ -1404,6 +1405,7 @@ main(int argc, char *argv[])
   unsigned char *user = 0, *group = 0, *workdir = 0;
   int     parallel_mode = 0;
   int     ejudge_xml_fd = -1;
+  int     stderr_fd = -1;
 
 #if HAVE_SETSID - 0
   path_t  log_path;
@@ -1512,6 +1514,15 @@ main(int argc, char *argv[])
       struct stat stb;
       if (fstat(lval, &stb) < 0 || !S_ISREG(stb.st_mode)) goto print_usage;
       ejudge_xml_fd = lval;
+    } else if (!strcmp(argv[i], "-e")) {
+      if (++i >= argc) goto print_usage;
+      char *eptr = NULL;
+      errno = 0;
+      long lval = strtol(argv[i++], &eptr, 10);
+      if (errno || *eptr || eptr == argv[i - 1] || (int) lval != lval || lval < 0) goto print_usage;
+      struct stat stb;
+      if (fstat(lval, &stb) < 0) goto print_usage;
+      stderr_fd = lval;
     } else if (!strcmp(argv[i], "--agent")) {
       if (++i >= argc) goto print_usage;
       xfree(agent_name);
@@ -1628,6 +1639,17 @@ main(int argc, char *argv[])
   }
   xfree(pids); pids = NULL;
 #endif
+
+  int tmp_fd = -1;
+  if (stderr_fd >= 0) {
+    tmp_fd = dup(STDERR_FILENO);
+    dup2(stderr_fd, STDERR_FILENO);
+  }
+  info("%s %s, compiled %s", "ej-compile", compile_version, compile_date);
+  if (stderr_fd >= 0) {
+    dup2(tmp_fd, STDERR_FILENO); close(tmp_fd); tmp_fd = -1;
+    close(stderr_fd); stderr_fd = -1;
+  }
 
 #ifdef __WIN32__
   if (!compile_home_dir[0] && contests_home_dir[0]) {
