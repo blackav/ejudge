@@ -3,17 +3,6 @@
 
 <%
   if (cnts && cs && cnts->exam_mode <= 0) {
-%><%
-    if (phr->action != NEW_SRV_ACTION_VIEW_SETTINGS) {
-%><li><div class="contest_actions_item"><s:a class="menu" ac="view-settings"><%
-    } else {
-%><li class="current"><div class="contest_actions_item"><%
-    }
-%><s:_>Settings</s:_><%
-    if (phr->action != NEW_SRV_ACTION_VIEW_SETTINGS) {
-%></s:a><%
-    }
-%></div></li><%
     // reg data edit
     if (cnts->allow_reg_data_edit > 0
         && contests_check_register_ip_2(cnts, &phr->ip, phr->ssl_flag) > 0
@@ -213,6 +202,24 @@
 %></div></li><%
   }
 %>
+
+<%
+  if (cnts && cs && cnts->exam_mode <= 0) {
+%><%
+    if (phr->action != NEW_SRV_ACTION_VIEW_SETTINGS) {
+%><li><div class="contest_actions_item"><s:a class="menu" ac="view-settings"><%
+    } else {
+%><li class="current"><div class="contest_actions_item"><%
+    }
+%><s:_>Settings</s:_><%
+    if (phr->action != NEW_SRV_ACTION_VIEW_SETTINGS) {
+%></s:a><%
+    }
+%></div></li>
+<%
+  }
+%>
+
 <%
   if (cnts && phr->login) {
 %><li><div class="contest_actions_item"><s:a class="menu" ac="logout"><%
