@@ -163,7 +163,9 @@
 <%
   if (!cnts->exam_mode && global->is_virtual && start_time <= 0) {
     enable_virtual_start = 1;
-    if (global->disable_virtual_start > 0 || cs->disable_virtual_start > 0) {
+    if (contest_start_time <= 0 || contest_stop_time > 0) {
+      enable_virtual_start = 0;
+    } else if (global->disable_virtual_start > 0 || cs->disable_virtual_start > 0) {
       enable_virtual_start = 0;
     } else if (cnts->open_time > 0 && cs->current_time < cnts->open_time) {
       enable_virtual_start = 0;
