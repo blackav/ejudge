@@ -12769,6 +12769,9 @@ unpriv_command(
   int run_id, i;
   unsigned char bb[1024];
   int retval = 0;
+  struct run_header hdr;
+
+  run_get_header(cs->runlog_state, &hdr);
 
   l10n_setlocale(phr->locale_id);
 
@@ -12778,6 +12781,9 @@ unpriv_command(
   case NEW_SRV_ACTION_VIRTUAL_RESTART:
     if (global->is_virtual <= 0) {
       FAIL2(NEW_SRV_ERR_NOT_VIRTUAL);
+    }
+    if (hdr.start_time <= 0) {
+      FAIL2(NEW_SRV_ERR_VIRTUAL_NOT_STARTED);
     }
     if (run_get_start_time(cs->runlog_state) <= 0) {
       FAIL2(NEW_SRV_ERR_VIRTUAL_NOT_STARTED);
@@ -12798,6 +12804,9 @@ unpriv_command(
     if (cnts->close_time > 0 && cs->current_time >= cnts->close_time) {
       FAIL2(NEW_SRV_ERR_PERMISSION_DENIED);
     }
+    if (hdr.stop_time >= 0) {
+      FAIL2(NEW_SRV_ERR_PERMISSION_DENIED);
+    }
     start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
     if (start_time <= 0) {
       FAIL2(NEW_SRV_ERR_CONTEST_NOT_STARTED);
@@ -12816,6 +12825,9 @@ unpriv_command(
       FAIL2(NEW_SRV_ERR_PERMISSION_DENIED);
     }
     if (cnts->close_time > 0 && cs->current_time >= cnts->close_time) {
+      FAIL2(NEW_SRV_ERR_PERMISSION_DENIED);
+    }
+    if (hdr.stop_time >= 0) {
       FAIL2(NEW_SRV_ERR_PERMISSION_DENIED);
     }
     start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
