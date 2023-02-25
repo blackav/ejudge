@@ -160,6 +160,39 @@
     }
   }
 %>
+<script>
+$(function() {
+  $("#virtual-stop-confirm").dialog({
+    resizable: true,
+    autoOpen: false,
+    height: "auto",
+    width: 600,
+    modal: true,
+    open: function() {
+      //$(this).parents('.ui-dialog-buttonpane button:eq(1)').focus();
+    },
+    buttons: {
+      "Stop the contest": function() {
+        $(this).dialog("close");
+        $("#virtual-stop-form").submit();
+      },
+      Cancel: function() {
+        $(this).dialog("close");
+      }
+    }
+  });
+  $("#virtual-stop-button").on("click", function(event) {
+    $("#virtual-stop-confirm").dialog("open");
+    event.preventDefault();
+    return false;
+  });
+});
+</script>
+
+<div id="virtual-stop-confirm" title="<s:_>Stop virtual contest?</s:_>">
+<p><span class="ui-icon ui-icon-alert" style="float:left; margin:12px 12px 20px 0;"></span>Are you sure you want to stop your virtual contest?</p>
+</div>
+
 <%
   if (!cnts->exam_mode && global->is_virtual && start_time <= 0) {
     enable_virtual_start = 1;
@@ -184,11 +217,12 @@
 %></s:form><%
     }
   } else if (!cnts->exam_mode && global->is_virtual && stop_time <= 0) {
-%><s:form><%
+%><s:form id="virtual-stop-form">
+<s:hidden name="action" ac="virtual-stop" /><%
     if (cnts->exam_mode) {
-%><p><s:submit ac="virtual-stop" label="Stop exam" /></p><%
+%><p><button class="ui-button ui-widget" id="virtual-stop-button"><s:_>Stop exam</s:_></button></p><%
     } else {
-%><p><s:submit ac="virtual-stop" /></p><%
+%><p><button class="ui-button ui-widget" id="virtual-stop-button"><s:_>Stop virtual contest</s:_></button></p><%
     }
 %></s:form><%
   } else if (!cnts->exam_mode && global->is_virtual && start_time > 0 && stop_time > 0 && global->enable_virtual_restart > 0 && !cs->upsolving_mode) {
