@@ -30,43 +30,6 @@
 %></s:a><%
   }
 %></div></li><%
-  int enable_virtual_startstop = 0;
-  if (global && cnts && global->is_virtual > 0) {
-    if (start_time > 0 && stop_time <= 0) {
-      enable_virtual_startstop = 1;
-    } else if (start_time <= 0 && global->disable_virtual_start <= 0 && cs->disable_virtual_start <= 0 && cs->upsolving_mode <= 0) {
-      enable_virtual_startstop = 1;
-    }
-  }
-  if (enable_virtual_startstop) {
-%><%
-    // start/stop virtual contest
-    if (phr->action != NEW_SRV_ACTION_VIEW_STARTSTOP) {
-%><li><div class="contest_actions_item"><s:a class="menu" ac="view-startstop"><%
-    } else {
-%><li class="current"><div class="contest_actions_item"><%
-    }
-%><%
-    if (start_time <= 0) {
-      if (cnts->exam_mode) {
-%><s:_>Start exam</s:_><%
-      } else {
-%><s:_>Start virtual contest</s:_><%
-      }
-    } else if (stop_time <= 0) {
-      if (cnts->exam_mode) {
-%><s:_>Stop exam</s:_><%
-      } else {
-%><s:_>Stop virtual contest</s:_><%
-      }
-    }
-%><%
-    if (phr->action != NEW_SRV_ACTION_VIEW_STARTSTOP) {
-%></s:a><%
-    }
-%></div></li><%
-  }
-%><%
   if (cnts && start_time > 0 && (cnts->exam_mode <= 0 || stop_time > 0)) {
 %><%
     if (phr->action != NEW_SRV_ACTION_VIEW_PROBLEM_SUMMARY) {
