@@ -130,6 +130,9 @@ class Group
     bool stat_to_judges = false;
     bool stat_to_users = false;
     bool test_all = false;
+
+    bool use_lowest_test_score = false; // treat lowest test score as group score
+
     int score = 0;
     int test_score = -1;
     int pass_if_count = -1;
@@ -190,6 +193,9 @@ public:
     void set_test_all(bool value) { test_all = value; }
     bool get_test_all() const { return test_all; }
 
+    void set_use_lowest_test_score(bool value) { use_lowest_test_score = value; }
+    bool get_use_lowest_test_score() { return use_lowest_test_score; }
+
     void inc_passed_count() { ++passed_count; }
     int get_passed_count() const { return passed_count; }
     bool is_passed() const
@@ -247,7 +253,17 @@ public:
 
     void add_total_score()
     {
-        if (test_score > 0) total_score += test_score;
+        if (test_score > 0 && !use_lowest_test_score) {
+            total_score += test_score;
+        }
+    }
+    void add_test_score(int score)
+    {
+        if (use_lowest_test_score) {
+            total_score = min(total_score, score);
+        } else {
+            total_score += score;
+        }
     }
     void set_total_score(int total_score)
     {
@@ -534,6 +550,11 @@ public:
                 if (t_type != ';') parse_error("';' expected");
                 next_token();
                 g.set_test_all(true);
+            } else if (token == "use_lowest_test_score") {
+                next_token();
+                if (t_type != ';') parse_error("';' expected");
+                next_token();
+                g.set_use_lowest_test_score(true);
             } else if (token == "score") {
                 next_token();
                 if (t_type != T_IDENT) parse_error("NUM expected");
@@ -639,6 +660,14 @@ public:
                 if (k > i) {
                     parse_error(string("no group ") + r[j] + " before group " + groups[i].get_group_id());
                 }
+            }
+        }
+        for (int i = 0; i < int(groups.size()); ++i) {
+            if (groups[i].get_use_lowest_test_score()) {
+                if (groups[i].get_test_score() == -1) {
+                    parse_error(string("use_lowest_test_score is defined, but test_score is not defined in group ") + groups[i].get_group_id());
+                }
+                groups[i].set_total_score(groups[i].get_test_score());
             }
         }
         int i;
@@ -821,7 +850,12 @@ main(int argc, char *argv[])
             g->add_total_score();
             g->add_passed_test(test_num);
             ++test_num;
-        } else if (g->get_test_score() >= 0) {
+        } else if (t_score > 0) {
+            g->inc_passed_count();
+            g->add_test_score(t_score);
+            g->add_passed_test(test_num);
+            ++test_num;
+        } else if (g->get_test_score() >= 0 && !g->get_use_lowest_test_score()) {
             // by-test score, just go on
             if (test_num == g->get_last()) {
                 if (g->is_zero_score()) {
@@ -844,6 +878,9 @@ main(int argc, char *argv[])
             // test everything even if fail
             ++test_num;
         } else {
+            if (g->get_use_lowest_test_score()) {
+                g->set_total_score(0);
+            }
             if (test_num < g->get_last() && !g->get_offline()) {
                 char buf[1024];
                 if (locale_id == 1) {
