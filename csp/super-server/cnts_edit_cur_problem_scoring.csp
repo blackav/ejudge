@@ -67,9 +67,9 @@ $(function() {
     $("#orig-ok_status-div").toggle(<s:v type="jsbool" value="tmp_prob->use_ac_not_ok <= 0" />);
     $("#orig-ignore_prev_ac-div").toggle(<s:v type="jsbool" value="tmp_prob->use_ac_not_ok > 0" />);
     $("#orig-olympiad_mode-div").toggle(global_score_kirov);
-    $("#orig-score_latest-div").toggle(global_score_kirov);
-    $("#orig-score_latest_or_unmarked-div").toggle(global_score_kirov);
-    $("#orig-score_latest_marked-div").toggle(global_score_kirov);
+    $("#orig-score_latest-div").toggle(global_score_kirov_olympiad);
+    $("#orig-score_latest_or_unmarked-div").toggle(global_score_kirov_olympiad);
+    $("#orig-score_latest_marked-div").toggle(global_score_kirov_olympiad);
     $("#orig-ignore_unmarked-div").toggle(global_score_kirov);
     $("#orig-score_tokenized-div").toggle(global_score_kirov);
     $("#orig-full_score-div").toggle(global_score_kirov_olympiad);
@@ -146,9 +146,9 @@ function scoringDialogOnChange(field)
     $("#edit-ok_status-div").toggle(!use_ac_not_ok);
     $("#edit-ignore_prev_ac-div").toggle(use_ac_not_ok);
     $("#edit-olympiad_mode-div").toggle(global_score_kirov);
-    $("#edit-score_latest-div").toggle(global_score_kirov);
-    $("#edit-score_latest_or_unmarked-div").toggle(global_score_kirov);
-    $("#edit-score_latest_marked-div").toggle(global_score_kirov);
+    $("#edit-score_latest-div").toggle(global_score_kirov_olympiad);
+    $("#edit-score_latest_or_unmarked-div").toggle(global_score_kirov_olympiad);
+    $("#edit-score_latest_marked-div").toggle(global_score_kirov_olympiad);
     $("#edit-ignore_unmarked-div").toggle(global_score_kirov);
     $("#edit-score_tokenized-div").toggle(global_score_kirov);
     $("#edit-full_score-div").toggle(global_score_kirov_olympiad);
