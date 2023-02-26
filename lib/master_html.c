@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2002-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -559,17 +559,17 @@ write_runs_dump(const serve_state_t state, FILE *f, const unsigned char *url,
   }
 
   fprintf(f,
-          "Run_Id"
+          "RunId"
           ";Time;Nsec;Time2;Date;Year;Mon;Day;Hour;Min;Sec"
           ";Dur;Dur_Day;Dur_Hour;Dur_Min;Dur_Sec"
           ";Size"
           ";IPV6_Flag;IP;SSL_Flag"
           ";Sha1"
-          ";User_Id;User_Login;User_Name"
+          ";UserId;Login;Name"
           ";User_Inv;User_Ban;User_Lock"
-          ";Prob;Variant"
-          ";Lang;Content_Type"
-          ";Stat_Short;Status;Score;Score_Adj;Test;Passed_Mode"
+          ";Problem;Variant"
+          ";Language;Content_Type"
+          ";Stat_Short;Status;Score;Score_Adj;Tests;Passed_Mode"
           ";Import_Flag;Hidden_Flag;RO_Flag;Locale_Id;Pages;Judge_Id"
           "\n");
 
