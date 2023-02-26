@@ -14,6 +14,7 @@
     unsigned char *name_en = NULL;
     unsigned char *main_url = NULL;
     unsigned char *keywords = NULL;
+    unsigned char *comment = NULL;
     int user_contest = 0;
     unsigned char *default_locale = NULL;
     ejintbool_t personal = 0;
@@ -26,6 +27,7 @@
 %><s:read var="name_en" normalize="yes" /><%
 %><s:read var="main_url" normalize="yes" /><%
 %><s:read var="keywords" normalize="yes" /><%
+%><s:read var="comment" normalize="yes" /><%
 %><s:read var="user_contest" default="0" /><%
 %><s:read var="default_locale" normalize="yes" /><%
 %><s:read var="personal" default="0" /><%
@@ -66,6 +68,8 @@
             edited_cnts->main_url = xstrdup2(main_url);
             xfree(edited_cnts->keywords);
             edited_cnts->keywords = xstrdup2(keywords);
+            xfree(edited_cnts->comment);
+            edited_cnts->comment = xstrdup2(comment);
             xfree(edited_cnts->user_contest); edited_cnts->user_contest = NULL;
             if (user_contest > 0) {
                 unsigned char cnts_buf[64];
@@ -89,6 +93,7 @@ cleanup:;
         "name_en" : "<s:v value="name_en" json="yes" checkExpr="" />",
         "main_url" : "<s:v value="main_url" json="yes" checkExpr="" />",
         "keywords" : "<s:v value="keywords" json="yes" checkExpr="" />",
+        "comment" : "<s:v value="comment" json="yes" checkExpr="" />",
         "user_contest" : "<s:v value="user_contest" checkExpr=" > 0" />",
         "default_locale" : "<s:v value="default_locale" json="yes" checkExpr="" />",
         "personal" : "<s:v value="personal" json="yes" />"
@@ -102,6 +107,7 @@ cleanup:;
     xfree(name_en);
     xfree(main_url);
     xfree(keywords);
+    xfree(comment);
     xfree(default_locale);
     xfree(msg_s);
 %>

@@ -7,6 +7,7 @@ static const unsigned char MSG_name[] = "Name";
 static const unsigned char MSG_name_en[] = "Name (English)";
 static const unsigned char MSG_main_url[] = "Main URL";
 static const unsigned char MSG_keywords[] = "Keywords";
+static const unsigned char MSG_comment[] = "Comment";
 static const unsigned char MSG_user_contest[] = "Contest to share users with";
 static const unsigned char MSG_default_locale[] = "Default Locale";
 static const unsigned char MSG_personal[] = "The contest is personal";
@@ -141,6 +142,7 @@ static const unsigned char * const form_row_attrs[]=
             <%@expand EDIT_TEXT_ROW "name_en" "Basic" "48" %>
             <%@expand EDIT_TEXT_ROW "main_url" "Basic" "48" %>
             <%@expand EDIT_TEXT_ROW "keywords" "Basic" "48" %>
+            <%@expand EDIT_TEXT_ROW "comment" "Basic" "48" %>
             <label for="BasicDialo_user_contest"><s:v value="MSG_user_contest" escape="no" />:</label>
             <select id="BasicDialo_user_contest" name="user_contest"></select><br/>
             <label for="BasicDialo_default_locale"><s:v value="MSG_default_locale" escape="no" />:</label>
@@ -602,6 +604,7 @@ function popupBasicDialog(e, skipField)
     document.getElementById("BasicDialo_name_en").value = document.getElementById("Ori_name_en").value;
     document.getElementById("BasicDialo_main_url").value = document.getElementById("Ori_main_url").value;
     document.getElementById("BasicDialo_keywords").value = document.getElementById("Ori_keywords").value;
+    document.getElementById("BasicDialo_comment").value = document.getElementById("Ori_comment").value;
     $("#BasicDialo_default_locale").val(document.getElementById("Ori_default_locale").value);
     document.getElementById("BasicDialo_personal").checked = false;
     copyCheckbox("BasicDialo_personal", "Ori_personal");
@@ -861,6 +864,7 @@ function np(e)
     <%@expand ORIG_TEXT_ROW "name_en" "Basic" "48" %>
     <%@expand ORIG_TEXT_ROW "main_url" "Basic" "48" %>
     <%@expand ORIG_TEXT_ROW "keywords" "Basic" "48" %>
+    <%@expand ORIG_TEXT_ROW "comment" "Basic" "48" %>
     <%@expand ORIG_TEXT_ROW "user_contest" "Basic" "48" %>
 <%
   if (cnts->default_locale && *cnts->default_locale) {
