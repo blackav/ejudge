@@ -2,7 +2,7 @@
 #ifndef __RUNLOG_H__
 #define __RUNLOG_H__
 
-/* Copyright (C) 2000-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -68,6 +68,22 @@ enum
   RUN_TRANSIENT_LAST   = 99,
 
   RUN_STATUS_SIZE      = 100
+};
+
+/* bits for verdict bitset */
+enum
+{
+  RUN_OK_BIT                  = 1,
+  RUN_RUN_TIME_ERR_BIT        = 2,
+  RUN_TIME_LIMIT_ERR_BIT      = 4,
+  RUN_PRESENTATION_ERR_BIT    = 8,
+  RUN_WRONG_ANSWER_ERR_BIT    = 0x10,
+  RUN_CHECK_FAILED_BIT        = 0x20,
+  RUN_MEM_LIMIT_ERR_BIT       = 0x40,
+  RUN_SECURITY_ERR_BIT        = 0x80,
+  RUN_WALL_TIME_LIMIT_ERR_BIT = 0x100,
+  RUN_SKIPPED_BIT             = 0x200,
+  RUN_SYNC_ERR_BIT            = 0x400,
 };
 
 enum { RUN_LOG_CREATE = 1, RUN_LOG_READONLY = 2, RUN_LOG_NOINDEX = 4, RUN_LOG_UUID_INDEX = 8 };
