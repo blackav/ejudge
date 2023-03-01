@@ -8850,6 +8850,11 @@ priv_list_runs_json(
             fprintf(fout, ",\n%s\"token_count\": %d", indent, pe->token_count);
           }
         }
+        if (run_fields & (1 << RUN_VIEW_VERDICT_BITS)) {
+          if (pe->verdict_bits) {
+            fprintf(fout, ",\n%s\"verdict_bits\": %u", indent, pe->verdict_bits);
+          }
+        }
 
         write_json_run_status(cs, fout, env.rhead.start_time, pe, 1, attempts, disq_attempts, ce_attempts, prev_successes,
                               0, run_fields, effective_time, indent);

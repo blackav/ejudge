@@ -2,7 +2,7 @@
 #ifndef __HTML_H__
 #define __HTML_H__
 
-/* Copyright (C) 2000-2020 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -220,6 +220,7 @@ enum
   RUN_VIEW_EOLN_TYPE,
   RUN_VIEW_STORE_FLAGS,
   RUN_VIEW_TOKENS,
+  RUN_VIEW_VERDICT_BITS,
 
   RUN_VIEW_LAST,
 

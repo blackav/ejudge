@@ -453,6 +453,9 @@ ns_write_priv_all_runs(
     if (run_fields & (1 << RUN_VIEW_SAVED_SCORE)) {
       fprintf(f, "<th%s>%s</th>", cl, "Saved score");
     }
+    if (run_fields & (1 << RUN_VIEW_VERDICT_BITS)) {
+      fprintf(f, "<th%s>%s</th>", cl, "Verdict bits");
+    }
     /*
     if (phr->role == USER_ROLE_ADMIN) {
       fprintf(f, "<th%s>%s</th>", cl, _("New result"));
@@ -587,6 +590,9 @@ ns_write_priv_all_runs(
         if (run_fields & (1 << RUN_VIEW_SAVED_SCORE)) {
           fprintf(f, "<td%s>&nbsp;</td>", cl);
         }
+        if (run_fields & (1 << RUN_VIEW_VERDICT_BITS)) {
+          fprintf(f, "<td%s>&nbsp;</td>", cl);
+        }
         fprintf(f, "<td%s>&nbsp;</td>", cl);
         fprintf(f, "<td%s>&nbsp;</td>", cl);
         /*
@@ -692,6 +698,9 @@ ns_write_priv_all_runs(
           fprintf(f, "<td%s>&nbsp;</td>", cl);
         }
         if (run_fields & (1 << RUN_VIEW_SAVED_SCORE)) {
+          fprintf(f, "<td%s>&nbsp;</td>", cl);
+        }
+        if (run_fields & (1 << RUN_VIEW_VERDICT_BITS)) {
           fprintf(f, "<td%s>&nbsp;</td>", cl);
         }
 
@@ -897,6 +906,13 @@ ns_write_priv_all_runs(
       if (run_fields & (1 << RUN_VIEW_SAVED_SCORE)) {
         if (pe->is_saved > 0) {
           fprintf(f, "<td%s>%d</td>", cl, pe->saved_score);
+        } else {
+          fprintf(f, "<td%s>&nbsp;</td>", cl);
+        }
+      }
+      if (run_fields & (1 << RUN_VIEW_VERDICT_BITS)) {
+        if (pe->verdict_bits) {
+          fprintf(f, "<td%s>%u</td>", cl, pe->verdict_bits);
         } else {
           fprintf(f, "<td%s>&nbsp;</td>", cl);
         }
