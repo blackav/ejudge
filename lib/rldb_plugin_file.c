@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2008-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -124,7 +124,8 @@ change_status_func(
         int new_passed_mode,
         int new_score,
         int judge_id,
-        const ej_uuid_t *judge_uuid);
+        const ej_uuid_t *judge_uuid,
+        unsigned int verdict_bits);
 static int
 start_func(
         struct rldb_plugin_cnts *cdata,
@@ -190,7 +191,8 @@ change_status_3_func(
         int has_user_score,
         int user_status,
         int user_tests_passed,
-        int user_score);
+        int user_score,
+        unsigned int verdict_bits);
 static int
 change_status_4_func(
         struct rldb_plugin_cnts *cdata,
@@ -1507,7 +1509,8 @@ change_status_func(
         int new_passed_mode,
         int new_score,
         int judge_id,
-        const ej_uuid_t *judge_uuid)
+        const ej_uuid_t *judge_uuid,
+        unsigned int verdict_bits)
 {
   struct rldb_file_cnts *cs = (struct rldb_file_cnts*) cdata;
   struct runlog_state *rls = cs->rl_state;
@@ -1520,6 +1523,7 @@ change_status_func(
   re->test = new_test;
   re->passed_mode = !!new_passed_mode;
   re->score = new_score;
+  re->verdict_bits = verdict_bits;
   if (judge_uuid && ej_uuid_is_nonempty(*judge_uuid)) {
     re->judge_uuid_flag = 1;
     re->j.judge_uuid = *judge_uuid;
@@ -1780,7 +1784,8 @@ change_status_3_func(
         int has_user_score,
         int user_status,
         int user_tests_passed,
-        int user_score)
+        int user_score,
+        unsigned int verdict_bits)
 {
   struct rldb_file_cnts *cs = (struct rldb_file_cnts*) cdata;
   struct runlog_state *rls = cs->rl_state;
@@ -1800,6 +1805,7 @@ change_status_3_func(
   re->saved_status = user_status;
   re->saved_test = user_tests_passed;
   re->saved_score = user_score;
+  re->verdict_bits = verdict_bits;
   return do_flush_entry(cs, run_id);
 }
 

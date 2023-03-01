@@ -3,7 +3,7 @@
 #ifndef __RLDB_PLUGIN_H__
 #define __RLDB_PLUGIN_H__
 
-/* Copyright (C) 2008-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -95,7 +95,8 @@ struct rldb_plugin_iface
                        int new_passed_mode,
                        int new_score,
                        int judge_id,
-                       const ej_uuid_t *judge_uuid);
+                       const ej_uuid_t *judge_uuid,
+                       unsigned int verdict_bits);
   // start the contest
   int (*start)(struct rldb_plugin_cnts *, time_t);
   // stop the contest
@@ -159,7 +160,8 @@ struct rldb_plugin_iface
                          int has_user_score,
                          int user_status,
                          int user_tests_passed,
-                         int user_score);
+                         int user_score,
+                         unsigned int verdict_bits);
   // change the status (brief version)
   int (*change_status_4)(struct rldb_plugin_cnts *,
                          int run_id,

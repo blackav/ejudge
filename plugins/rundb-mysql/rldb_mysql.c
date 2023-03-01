@@ -1593,11 +1593,12 @@ change_status_func(
         int new_passed_mode,
         int new_score,
         int new_judge_id,
-        const ej_uuid_t *judge_uuid)
+        const ej_uuid_t *judge_uuid,
+        unsigned int verdict_bits)
 {
   struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts *) cdata;
   struct run_entry te;
-  uint64_t mask = RE_STATUS | RE_TEST | RE_SCORE | RE_PASSED_MODE;
+  uint64_t mask = RE_STATUS | RE_TEST | RE_SCORE | RE_PASSED_MODE | RE_VERDICT_BITS;
 
   memset(&te, 0, sizeof(te));
   te.status = new_status;
@@ -1612,6 +1613,7 @@ change_status_func(
     te.j.judge_id = new_judge_id;
     mask |= RE_JUDGE_ID;
   }
+  te.verdict_bits = verdict_bits;
 
   return do_update_entry(cs, run_id, &te, mask);
 }
@@ -2047,7 +2049,8 @@ change_status_3_func(
         int has_user_score,
         int user_status,
         int user_tests_passed,
-        int user_score)
+        int user_score,
+        unsigned int verdict_bits)
 {
   struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts *) cdata;
   struct run_entry te;
@@ -2063,10 +2066,11 @@ change_status_3_func(
   te.saved_status = user_status;
   te.saved_test = user_tests_passed;
   te.saved_score = user_score;
+  te.verdict_bits = verdict_bits;
 
   return do_update_entry(cs, run_id, &te,
                          RE_STATUS | RE_TEST | RE_SCORE | RE_JUDGE_ID | RE_IS_MARKED
-                         | RE_IS_SAVED | RE_SAVED_STATUS | RE_SAVED_TEST | RE_SAVED_SCORE | RE_PASSED_MODE);
+                         | RE_IS_SAVED | RE_SAVED_STATUS | RE_SAVED_TEST | RE_SAVED_SCORE | RE_PASSED_MODE | RE_VERDICT_BITS);
 }
 
 static int

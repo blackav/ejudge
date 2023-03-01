@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2008-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -89,7 +89,8 @@ change_status_func(
         int new_passed_mode,
         int new_score,
         int judge_id,
-        const ej_uuid_t *judge_uuid);
+        const ej_uuid_t *judge_uuid,
+        unsigned int verdict_bits);
 
 static int
 start_func(
@@ -179,7 +180,8 @@ change_status_3_func(
         int has_user_score,
         int user_status,
         int user_tests_passed,
-        int user_score);
+        int user_score,
+        unsigned int verdict_bits);
 
 static int
 change_status_4_func(

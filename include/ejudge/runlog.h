@@ -147,7 +147,8 @@ run_change_status(
         int newpassedmode,
         int newscore,
         int judge_id,
-        const ej_uuid_t *judge_uuid);
+        const ej_uuid_t *judge_uuid,
+        unsigned int verdict_bits);
 int
 run_change_status_3(
         runlog_state_t state,
@@ -160,7 +161,8 @@ run_change_status_3(
         int has_user_score,
         int user_status,
         int user_tests_passed,
-        int user_score);
+        int user_score,
+        unsigned int verdict_bits);
 int
 run_change_status_4(
         runlog_state_t state,

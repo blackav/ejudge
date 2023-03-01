@@ -532,7 +532,8 @@ run_change_status(
         int newpassedmode,
         int newscore,
         int judge_id,
-        const ej_uuid_t *judge_uuid)
+        const ej_uuid_t *judge_uuid,
+        unsigned int verdict_bits)
 {
   if (runid < state->run_f || runid >= state->run_u) ERR_R("bad runid: %d", runid);
 
@@ -559,7 +560,7 @@ run_change_status(
 
   return state->iface->change_status(state->cnts, runid, newstatus, newtest,
                                      newpassedmode, newscore, judge_id,
-                                     judge_uuid);
+                                     judge_uuid, verdict_bits);
 }
 
 int
@@ -574,7 +575,8 @@ run_change_status_3(
         int has_user_score,
         int user_status,
         int user_tests_passed,
-        int user_score)
+        int user_score,
+        unsigned int verdict_bits)
 {
   if (runid < state->run_f || runid >= state->run_u) ERR_R("bad runid: %d", runid);
 
@@ -607,7 +609,8 @@ run_change_status_3(
                                        has_user_score, /* has_user_score */
                                        user_status,    /* user_status */
                                        user_tests_passed, /* user_tests_passed */
-                                       user_score);       /* user_score */
+                                       user_score,       /* user_score */
+                                       verdict_bits);
 }
 
 int
