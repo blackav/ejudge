@@ -1,6 +1,6 @@
 /* -*- mode: java; coding: utf-8 -*- */
 
-// Copyright (C) 2008-2015 Alexander Chernov <cher@ejudge.ru>
+// Copyright (C) 2008-2023 Alexander Chernov <cher@ejudge.ru>
 
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -134,7 +134,8 @@ var ej_valid_fields =
   24 : "UUID",
   25 : "EOLN Type",
   26 : "Storage Flags",
-  27 : "Tokens"
+  27 : "Tokens",
+  28 : "Verdict Bits"
 }
 
 function ej_field_popup(field_mask)
