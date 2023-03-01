@@ -1439,6 +1439,10 @@ run_set_entry(
     te.is_checked = in->is_checked;
     f = 1;
   }
+  if ((mask & RE_VERDICT_BITS) && te.verdict_bits != in->verdict_bits) {
+    te.verdict_bits = in->verdict_bits;
+    f = 1;
+  }
 
   /* check consistency of a new record */
   if (te.status == RUN_VIRTUAL_START || te.status == RUN_VIRTUAL_STOP
