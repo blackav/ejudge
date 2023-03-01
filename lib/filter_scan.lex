@@ -48,6 +48,8 @@ static void *filter_scan_user_data;
 #define TT(t,y) filter_expr_lval = filter_tree_new_node(filter_scan_tree_mem, t, y, 0, 0); return t
 #define T(t) filter_expr_lval = filter_tree_new_node(filter_scan_tree_mem, t, 0, 0, 0); return t
 #define TR(r) filter_expr_lval = filter_tree_new_result(filter_scan_tree_mem, r); return TOK_RESULT_L
+#define TRB(r) filter_expr_lval = filter_tree_new_int(filter_scan_tree_mem, r); return TOK_INT_L
+
 
 #define YY_INPUT(buf,result,max_size) do { if (filter_scan_read >= filter_scan_len) result = YY_NULL; else if (filter_scan_len - filter_scan_read > max_size) { memcpy(buf, filter_scan_buf + filter_scan_read, max_size); filter_scan_read += max_size; result = max_size; } else { memcpy(buf, filter_scan_buf + filter_scan_read, filter_scan_len - filter_scan_read); result = filter_scan_len - filter_scan_read; filter_scan_read = filter_scan_len; } } while (0)
 
@@ -240,6 +242,18 @@ lett    [A-Za-z_]
 [Vv][Ss] { TR(RUN_VIRTUAL_START); }
 [Vv][Tt] { TR(RUN_VIRTUAL_STOP); }
 [Ss][Mm] { TR(RUN_SUMMONED); }
+
+[Oo][Kk][_][Bb][Ii][Tt] { TRB(RUN_OK_BIT); }
+[Rr][Tt][_][Bb][Ii][Tt] { TRB(RUN_RUN_TIME_ERR_BIT); }
+[Tt][Ll][_][Bb][Ii][Tt] { TRB(RUN_TIME_LIMIT_ERR_BIT); }
+[Pp][Ee][_][Bb][Ii][Tt] { TRB(RUN_PRESENTATION_ERR_BIT); }
+[Ww][Aa][_][Bb][Ii][Tt] { TRB(RUN_WRONG_ANSWER_ERR_BIT); }
+[Cc][Ff][_][Bb][Ii][Tt] { TRB(RUN_CHECK_FAILED_BIT); }
+[Mm][Ll][_][Bb][Ii][Tt] { TRB(RUN_MEM_LIMIT_ERR_BIT); }
+[Ss][Ee][_][Bb][Ii][Tt] { TRB(RUN_SECURITY_ERR_BIT); }
+[Ww][Tt][_][Bb][Ii][Tt] { TRB(RUN_WALL_TIME_LIMIT_ERR_BIT); }
+[Ss][Kk][_][Bb][Ii][Tt] { TRB(RUN_SKIPPED_BIT); }
+[Ss][Yy][_][Bb][Ii][Tt] { TRB(RUN_SYNC_ERR_BIT); }
 
 0[xX]{hexd}+ { handle_int(); return TOK_INT_L; }
 0{octd}* { handle_int(); return TOK_INT_L; }
