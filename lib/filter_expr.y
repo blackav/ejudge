@@ -1,6 +1,6 @@
 /* -*- mode: fundamental -*- */
 
-/* Copyright (C) 2002-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -197,6 +197,8 @@ static void *filter_expr_user_data;
 %token TOK_CURHAS_TEST_RESULT "curhas_test_result"
 %token TOK_PROB_DIR "prob_dir"
 %token TOK_CURPROB_DIR "curprob_dir"
+%token TOK_VERDICT_BITS "verdict_bits"
+%token TOK_CURVERDICT_BITS "curverdict_bits"
 %token TOK_INUSERGROUPINT
 %token TOK_INT       "int"
 %token TOK_STRING    "string"
@@ -437,6 +439,9 @@ exprA :
 | "cypher" { $1->kind = TOK_CURCYPHER; $$ = $1; }
 | "cypher" '(' expr0 ')' { $1->v.t[0] = check_int($3); $$ = $1; }
 | "curcypher" { $$ = $1; }
+| "verdict_bits" '(' expr0 ')' { $1->v.t[0] = check_int($3); $$ = $1; }
+| "verdict_bits" { $1->kind = TOK_CURVERDICT_BITS; $$ = $1; }
+| "curverdict_bits" { $$ = $1; }
 | "inusergroup" '(' expr0 ')' { $1->v.t[0] = check_string($3); $$ = $1; }
 | "int" '(' expr0 ')' { $$ = do_int_cast($1, $3); }
 | "string" '(' expr0 ')' { $$ = do_string_cast($1, $3); }
