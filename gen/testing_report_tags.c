@@ -91,7 +91,8 @@ enum
     Tag_max_rss,
     Tag_submit_id,
     Tag_judge_uuid,
-    Tag_test_checker
+    Tag_test_checker,
+    Tag_verdict_bits
 };
 static __attribute__((unused)) const char * const tag_table[] =
 {
@@ -187,6 +188,7 @@ static __attribute__((unused)) const char * const tag_table[] =
     "submit_id",
     "judge_uuid",
     "test_checker",
+    "verdict_bits",
 };
 static __attribute__((unused)) int
 match(const char *s)
@@ -576,6 +578,8 @@ match(const char *s)
             } else {
                 return 0;
             }
+        } else if (s[1] == 'e' && s[2] == 'r' && s[3] == 'd' && s[4] == 'i' && s[5] == 'c' && s[6] == 't' && s[7] == '_' && s[8] == 'b' && s[9] == 'i' && s[10] == 't' && s[11] == 's' && !s[12]) {
+            return Tag_verdict_bits;
         } else if (s[1] == 'i' && s[2] == 's' && s[3] == 'i' && s[4] == 'b' && s[5] == 'i' && s[6] == 'l' && s[7] == 'i' && s[8] == 't' && s[9] == 'y' && !s[10]) {
             return Tag_visibility;
         } else {

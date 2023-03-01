@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2019-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2019-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -660,6 +660,10 @@ parse_testing_report_bson(bson_iter_t *bi, testing_report_xml_t r)
                 has_ttcells = 1;
             }
             break;
+        case Tag_verdict_bits:
+            if (ej_bson_parse_int_new(bi, key, &r->verdict_bits, 1, 0, 0, 0) < 0)
+                return -1;
+            break;
         }
     }
 
@@ -973,6 +977,9 @@ do_unparse(
     }
     if (r->compiler_output && r->compiler_output[0]) {
         bson_append_utf8(b, tag_table[Tag_compiler_output], -1, r->compiler_output, -1);
+    }
+    if (r->verdict_bits) {
+        bson_append_int32(b, tag_table[Tag_verdict_bits], -1, r->verdict_bits);
     }
     if (r->run_tests > 0 && r->tests) {
         bson_t b_tests, *b_testsp = &b_tests;

@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2005-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -163,6 +163,7 @@ enum
   TR_A_SEPARATE_USER_SCORE,
   TR_A_MAX_RSS,
   TR_A_SUBMIT_ID,
+  TR_A_VERDICT_BITS,
 
   TR_A_LAST_ATTR,
 };
@@ -265,6 +266,7 @@ static const char * const attr_map[] =
   [TR_A_SEPARATE_USER_SCORE] = "separate-user-score",
   [TR_A_MAX_RSS] = "max-rss",
   [TR_A_SUBMIT_ID] = "submit-id",
+  [TR_A_VERDICT_BITS] = "verdict-bits",
 
   [TR_A_LAST_ATTR] = 0,
 };
@@ -1121,6 +1123,11 @@ parse_testing_report(struct xml_tree *t, testing_report_xml_t r)
       }
       break;
 
+    case TR_A_VERDICT_BITS:
+      if (xml_attr_int(a, &x) < 0) return -1;
+      r->verdict_bits = x;
+      break;
+
     default:
       xml_err_attr_not_allowed(t, a);
       return -1;
@@ -1676,6 +1683,10 @@ testing_report_unparse_xml(
   if (r->user_run_tests >= 0) {
     fprintf(out, " %s=\"%d\"", attr_map[TR_A_USER_RUN_TESTS],
             r->user_run_tests);
+  }
+  if (r->verdict_bits) {
+    fprintf(out, " %s=\"%u\"", attr_map[TR_A_VERDICT_BITS],
+            r->verdict_bits);
   }
   fprintf(out, " >\n");
 

@@ -89,3 +89,4 @@ max_rss
 submit_id
 judge_uuid
 test_checker
+verdict_bits
