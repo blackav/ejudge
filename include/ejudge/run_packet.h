@@ -2,7 +2,7 @@
 #ifndef __RUN_PACKET_H__
 #define __RUN_PACKET_H__
 
-/* Copyright (C) 2005-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -38,6 +38,7 @@ struct run_reply_packet
   int user_tests_passed;
   int user_score;
   int bson_flag;
+  int verdict_bits;
   /* time when the compile request was queued by serve */
   int ts1;
   int ts1_us;

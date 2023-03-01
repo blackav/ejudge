@@ -2,7 +2,7 @@
 #ifndef __RUN_PACKET_PRIV_H__
 #define __RUN_PACKET_PRIV_H__
 
-/* Copyright (C) 2005-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -58,6 +58,7 @@ struct run_reply_bin_packet
   rint32_t  user_tests_passed;
   rint32_t  user_score;
   ruint32_t flags;
+  rint32_t  verdict_bits;
   rint32_t  ts1;
   rint32_t  ts1_us;
   rint32_t  ts2;
@@ -72,9 +73,9 @@ struct run_reply_bin_packet
   rint32_t  ts6_us;
   rint32_t  ts7;
   rint32_t  ts7_us;
+  unsigned char pad0[8];
   ej_uuid_t uuid;
   ej_uuid_t judge_uuid;
-  unsigned char pad[0];        /* padding to 128 bytes */
 };
 
 #endif /* __RUN_PACKET_PRIV_H__ */

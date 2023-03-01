@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2005-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -80,6 +80,7 @@ run_reply_packet_read(
   if ((flags & FLAGS_MARKED)) pout->marked_flag = 1;
   if ((flags & FLAGS_HAS_USER_SCORE)) pout->has_user_score = 1;
   if ((flags & FLAGS_BSON)) pout->bson_flag = 1;
+  pout->verdict_bits = cvt_bin_to_host_32(pin->verdict_bits);
 
   pout->ts1 = cvt_bin_to_host_32(pin->ts1);
   pout->ts1_us = cvt_bin_to_host_32(pin->ts1_us);
