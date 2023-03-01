@@ -270,7 +270,8 @@ enum
     RE_PROB_UUID     = 0x80000000,
     RE_JUDGE_UUID    = 0x100000000ULL,
     RE_IS_VCS        = 0x200000000ULL,
-    RE_ALL           = 0x3FFFFFFFFULL,
+    RE_VERDICT_BITS  = 0x400000000ULL,
+    RE_ALL           = 0x7FFFFFFFFULL,
   };
 
 struct run_entry
@@ -328,7 +329,9 @@ struct run_entry
   rint16_t       mime_type;     /* 2 */
   int64_t        serial_id;     /* 8 */
   unsigned char  pages;         /* 1 */
-  char _pad[87];
+  char _pad0[3];
+  ruint32_t      verdict_bits;  /* 4 */
+  char _pad[80];
   /* total is 256 bytes */
 };
 

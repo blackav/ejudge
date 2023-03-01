@@ -822,6 +822,7 @@ load_runs(struct rldb_mysql_cnts *cs)
     re->token_count = ri.token_count;
     re->is_checked = ri.is_checked;
     re->is_vcs = ri.is_vcs;
+    re->verdict_bits = ri.verdict_bits;
   }
   return 1;
 
@@ -1377,6 +1378,10 @@ generate_update_entry_clause(
     fprintf(f, "%sis_vcs = %d", sep, re->is_vcs);
     sep = comma;
   }
+  if ((mask & RE_VERDICT_BITS)) {
+    fprintf(f, "%sverdict_bits = %u", sep, re->verdict_bits);
+    sep = comma;
+  }
 
   gettimeofday(&curtime, 0);
   fprintf(f, "%slast_change_time = ", sep);
@@ -1492,6 +1497,9 @@ update_entry(
   }
   if ((mask & RE_IS_VCS)) {
     dst->is_vcs = src->is_vcs;
+  }
+  if ((mask & RE_VERDICT_BITS)) {
+    dst->verdict_bits = src->verdict_bits;
   }
 }
 
@@ -1981,6 +1989,7 @@ put_entry_func(
   ri.token_count = re->token_count;
   ri.is_checked = re->is_checked;
   ri.is_vcs = re->is_vcs;
+  ri.verdict_bits = re->verdict_bits;
 
   cmd_f = open_memstream(&cmd_t, &cmd_z);
   fprintf(cmd_f, "INSERT INTO %sruns VALUES ( ", state->md->table_prefix);
@@ -2468,6 +2477,9 @@ append_run_func(
   if ((mask & RE_IS_VCS)) {
     fputs(",is_vcs", cmd_f);
   }
+  if ((mask & RE_VERDICT_BITS)) {
+    fputs(",verdict_bits", cmd_f);
+  }
   fprintf(cmd_f, ") VALUES (%d, %d, NOW(6), MICROSECOND(NOW(6)) * 1000, '%s', NOW(), MICROSECOND(NOW(6)) * 1000",
           run_id,
           cs->contest_id,
@@ -2588,6 +2600,9 @@ append_run_func(
   }
   if ((mask & RE_IS_VCS)) {
     fprintf(cmd_f, ",%d", !!in_re->is_vcs);
+  }
+  if ((mask & RE_VERDICT_BITS)) {
+    fprintf(cmd_f, ",%u", in_re->verdict_bits);
   }
   fprintf(cmd_f, ") ;");
   fclose(cmd_f); cmd_f = NULL;
@@ -2738,6 +2753,9 @@ append_run_func(
   }
   if ((mask & RE_IS_VCS)) {
     new_re->is_vcs = in_re->is_vcs;
+  }
+  if ((mask & RE_VERDICT_BITS)) {
+    new_re->verdict_bits = in_re->verdict_bits;
   }
 
   if (p_tv) *p_tv = ri.create_time;
