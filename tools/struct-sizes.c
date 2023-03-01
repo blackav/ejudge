@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2007-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2007-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -22,6 +22,7 @@
 #include "ejudge/prepare.h"
 #include "ejudge/super-serve.h"
 #include "ejudge/compile_packet_priv.h"
+#include "ejudge/run_packet_priv.h"
 #include "ejudge/problem_config.h"
 #include "ejudge/userlist.h"
 #include "ejudge/super_run_status.h"
@@ -63,5 +64,6 @@ int main(void)
   printf("StandingsCell:         %zu\n", sizeof(StandingsCell));
   printf("xml_tree:              %zu\n", sizeof(struct xml_tree));
   printf("UserlistBinaryHeader:  %zu\n", sizeof(UserlistBinaryHeader));
+  printf("run_reply_bin_packet:  %zu\n", sizeof(struct run_reply_bin_packet));
   return 0;
 }
