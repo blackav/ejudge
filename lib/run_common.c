@@ -193,6 +193,21 @@ make_file_content(
   }
 }
 
+static const unsigned int status_to_bit_map[] =
+{
+  [RUN_OK]                  = RUN_OK_BIT,
+  [RUN_RUN_TIME_ERR]        = RUN_RUN_TIME_ERR_BIT,
+  [RUN_TIME_LIMIT_ERR]      = RUN_TIME_LIMIT_ERR_BIT,
+  [RUN_PRESENTATION_ERR]    = RUN_PRESENTATION_ERR_BIT,
+  [RUN_WRONG_ANSWER_ERR]    = RUN_WRONG_ANSWER_ERR_BIT,
+  [RUN_CHECK_FAILED]        = RUN_CHECK_FAILED_BIT,
+  [RUN_MEM_LIMIT_ERR]       = RUN_MEM_LIMIT_ERR_BIT,
+  [RUN_SECURITY_ERR]        = RUN_SECURITY_ERR_BIT,
+  [RUN_WALL_TIME_LIMIT_ERR] = RUN_WALL_TIME_LIMIT_ERR_BIT,
+  [RUN_SKIPPED]             = RUN_SKIPPED_BIT,
+  [RUN_SYNC_ERR]            = RUN_SYNC_ERR_BIT,
+};
+
 static int
 generate_xml_report(
         const struct super_run_in_packet *srp,
@@ -326,12 +341,16 @@ generate_xml_report(
     ej_uuid_parse(srgp->run_uuid, &tr->uuid);
   }
 
+  unsigned int verdict_bits = 0;
   if (total_tests > 1) {
     XCALLOC(tr->tests, total_tests - 1);
     for (i = 1; i < total_tests; ++i) {
       struct testing_report_test *trt = testing_report_test_alloc(i, tests[i].status);
       tr->tests[i - 1] = trt;
       const struct testinfo *ti = &tests[i];
+      if (ti->status >= 0 && ti->status < (int) (sizeof(status_to_bit_map) / sizeof(status_to_bit_map[0]))) {
+        verdict_bits |= status_to_bit_map[ti->status];
+      }
       if (ti->status == RUN_RUN_TIME_ERR) {
         if (ti->code == 256) {
           trt->term_signal = ti->termsig;
@@ -437,6 +456,8 @@ generate_xml_report(
       }
     }
   }
+  tr->verdict_bits = verdict_bits;
+  reply_pkt->verdict_bits = verdict_bits;
 
   if (srgp->bson_available && testing_report_bson_available()) {
     if (testing_report_to_file_bson(report_path, tr) < 0) {
