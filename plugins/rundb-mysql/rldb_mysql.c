@@ -182,7 +182,7 @@ prepare_func(
 
 #include "tables.inc.c"
 
-#define RUN_DB_VERSION 24
+#define RUN_DB_VERSION 25
 
 static int
 do_create(struct rldb_mysql_state *state)
@@ -401,6 +401,10 @@ do_open(struct rldb_mysql_state *state)
       break;
     case 23:
       if (mi->simple_fquery(md, "ALTER TABLE %sruns MODIFY COLUMN ip VARCHAR(64) DEFAULT NULL, MODIFY COLUMN hash VARCHAR (128) DEFAULT NULL, MODIFY COLUMN run_uuid CHAR(40) DEFAULT NULL, MODIFY COLUMN mime_type VARCHAR(64) DEFAULT NULL, MODIFY COLUMN prob_uuid VARCHAR(40) DEFAULT NULL, MODIFY COLUMN judge_uuid VARCHAR(40) DEFAULT NULL ;", md->table_prefix) < 0)
+        return -1;
+      break;
+    case 24:
+      if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD COLUMN verdict_bits INT NOT NULL DEFAULT 0 AFTER is_vcs", md->table_prefix) < 0)
         return -1;
       break;
     case RUN_DB_VERSION:
