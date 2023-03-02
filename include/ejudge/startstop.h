@@ -56,6 +56,7 @@ int
 start_stop_and_wait(
         const unsigned char *program_name,
         const unsigned char *process_name,
+        const unsigned char *ns,
         const unsigned char *signame,
         int signum,
         long long timeout_us);

@@ -306,6 +306,7 @@ int
 start_stop_and_wait(
         const unsigned char *program_name,
         const unsigned char *process_name,
+        const unsigned char *ns,
         const unsigned char *signame,
         int signum,
         long long timeout_us)
@@ -316,7 +317,7 @@ start_stop_and_wait(
   int signals_sent = 0;
   while (1) {
     int *pids = NULL;
-    int pid_count = start_find_all_processes(process_name, NULL, &pids);
+    int pid_count = start_find_all_processes(process_name, ns, &pids);
     if (pid_count < 0) {
       fprintf(stderr, "%s: cannot get the list of processes from /proc\n",
               program_name);

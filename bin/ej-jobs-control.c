@@ -148,7 +148,7 @@ main(int argc, char *argv[])
   if (!strcmp(command, "stop")) {
     signame = "TERM";
     signum = START_STOP;
-    return start_stop_and_wait(program_name, "ej-jobs", signame, signum, WAIT_TIMEOUT_US) < 0;
+    return start_stop_and_wait(program_name, "ej-jobs", NULL, signame, signum, WAIT_TIMEOUT_US) < 0;
   } else if (!strcmp(command, "restart")) {
     signame = "HUP";
     signum = START_RESTART;

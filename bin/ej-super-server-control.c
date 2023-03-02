@@ -151,7 +151,7 @@ main(int argc, char *argv[])
     cmd = SSERV_CMD_STOP;
     signum = START_STOP;
     signame = "TERM";
-    return start_stop_and_wait(program_name, "ej-super-server", signame, signum, WAIT_TIMEOUT_US) < 0;
+    return start_stop_and_wait(program_name, "ej-super-server", NULL, signame, signum, WAIT_TIMEOUT_US) < 0;
   } else if (!strcmp(command, "restart")) {
     cmd = SSERV_CMD_RESTART;
     signum = START_RESTART;
