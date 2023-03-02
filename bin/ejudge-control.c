@@ -523,7 +523,7 @@ rotate_agent_log(
   rotate_log_files(lpd, lpf, NULL, NULL, log_group, 0620, date_suffix_flag);
 
   int *pids = NULL;
-  int pid_count = start_find_all_processes("ej-agent", &pids);
+  int pid_count = start_find_all_processes("ej-agent", NULL, &pids);
   for (int i = 0; i < pid_count; ++i) {
     start_kill(pids[i], SIGUSR1);
   }

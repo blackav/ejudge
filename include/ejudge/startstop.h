@@ -41,7 +41,10 @@ start_find_process(
         int *p_uid);
 
 int
-start_find_all_processes(const unsigned char *name, int **p_pids);
+start_find_all_processes(
+        const unsigned char *name,
+        const unsigned char *ns,
+        int **p_pids);
 
 int start_kill(int pid, int op);
 int start_daemon(const unsigned char *log_path);

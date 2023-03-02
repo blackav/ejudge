@@ -1627,7 +1627,7 @@ main(int argc, char *argv[])
 
   int *pids = NULL;
   int pid_count;
-  if ((pid_count = start_find_all_processes("ej-compile", &pids)) < 0) {
+  if ((pid_count = start_find_all_processes("ej-compile", NULL, &pids)) < 0) {
     fprintf(stderr, "%s: cannot get the list of processes\n", argv[0]);
     return 1;
   }

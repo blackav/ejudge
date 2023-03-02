@@ -1579,7 +1579,7 @@ main(int argc, char *argv[])
     fatal("invalid value of parallelism host option");
   }
 
-  if ((pid_count = start_find_all_processes("ej-super-run", &pids)) < 0) {
+  if ((pid_count = start_find_all_processes("ej-super-run", NULL, &pids)) < 0) {
     fatal("cannot get the list of processes");
   }
   if (pid_count >= parallelism) {
