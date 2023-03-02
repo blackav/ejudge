@@ -147,7 +147,7 @@ main(int argc, char *argv[])
   if (!strcmp(command, "stop")) {
     signum = START_STOP;
     signame = "TERM";
-    return (start_stop_and_wait(program_name, "ej-super-run", signame, signum, WAIT_TIMEOUT_US) < 0);
+    return (start_stop_and_wait(program_name, "ej-super-run", NULL, signame, signum, WAIT_TIMEOUT_US) < 0);
   } else if (!strcmp(command, "restart")) {
     signum = START_RESTART;
     signame = "HUP";
@@ -175,7 +175,7 @@ main(int argc, char *argv[])
     startup_error("invalid command");
   }
 
-  if ((pid_count = start_find_all_processes("ej-super-run", &pids)) < 0) {
+  if ((pid_count = start_find_all_processes("ej-super-run", NULL, &pids)) < 0) {
     op_error("cannot get the list of processes from /proc");
   } else if (!pid_count) {
     op_error("ej-super-run is not running");
