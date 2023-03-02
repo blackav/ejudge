@@ -35,6 +35,7 @@
 #include <string.h>
 #include <fcntl.h>
 #include <sys/time.h>
+#include <sys/stat.h>
 
 static path_t self_exe;
 static char **self_argv;
@@ -322,3 +323,43 @@ start_stop_and_wait(
   return 0;
 }
 
+int
+start_get_pid_namespace(
+        unsigned char *buf,
+        size_t size,
+        int pid)
+{
+  unsigned char path[PATH_MAX];
+  int r;
+  unsigned char ns[PATH_MAX];
+
+  if (size > 0) {
+    buf[0] = 0;
+  }
+  if (pid > 0) {
+    r = snprintf(path, sizeof(path), "/proc/%d/ns/pid", pid);
+  } else {
+    r = snprintf(path, sizeof(path), "/proc/self/ns/pid");
+  }
+  if (r >= (int) sizeof(path)) {
+    return -1;
+  }
+
+  struct stat stb;
+  if (lstat(path, &stb) < 0) {
+    return -1;
+  }
+  if (!S_ISLNK(stb.st_mode)) {
+    return -1;
+  }
+  r = readlink(path, ns, sizeof(ns));
+  if (r <= 0 || r >= (int) sizeof(ns)) {
+    return -1;
+  }
+  ns[r] = 0;
+
+  if (snprintf(buf, size, "%s", ns) >= (int) size) {
+    return -1;
+  }
+  return 0;
+}

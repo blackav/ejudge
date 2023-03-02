@@ -51,4 +51,10 @@ start_stop_and_wait(
         int signum,
         long long timeout_us);
 
+int
+start_get_pid_namespace(
+        unsigned char *buf,
+        size_t size,
+        int pid);
+
 #endif /* __STARTSTOP_H__ */
