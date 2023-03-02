@@ -12257,7 +12257,7 @@ main(int argc, char *argv[])
   start_set_args(argv_restart);
 
   if (!convert_flag && !create_flag) {
-    if (!(pid = start_find_process("ej-users", 0))) {
+    if (!(pid = start_find_process("ej-users", NULL, 0))) {
       forced_mode = 1;
     } else if (pid > 0) {
       fprintf(stderr, "%s: is already running as pid %d\n", argv[0], pid);

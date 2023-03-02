@@ -175,7 +175,7 @@ main(int argc, char *argv[])
     startup_error("invalid command");
   }
 
-  if (!(pid = start_find_process("ej-jobs", 0))) {
+  if (!(pid = start_find_process("ej-jobs", NULL, 0))) {
     op_error("ej-jobs is not running");
   } else if (pid > 0) {
     // FIXME: also analyze the uid

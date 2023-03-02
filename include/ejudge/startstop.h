@@ -17,6 +17,8 @@
  * GNU General Public License for more details.
  */
 
+#include <stdlib.h>
+
 enum
 {
   START_RESTART = 1,
@@ -33,7 +35,11 @@ int start_prepare(const unsigned char *user, const unsigned char *group,
 void start_restart(void);
 
 int
-start_find_process(const unsigned char *name, int *p_uid);
+start_find_process(
+        const unsigned char *name,
+        const unsigned char *ns,
+        int *p_uid);
+
 int
 start_find_all_processes(const unsigned char *name, int **p_pids);
 

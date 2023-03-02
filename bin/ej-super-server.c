@@ -2844,7 +2844,7 @@ main(int argc, char **argv)
   argv_restart[j] = 0;
   start_set_args(argv_restart);
 
-  if (!(pid = start_find_process("ej-super-server", 0))) {
+  if (!(pid = start_find_process("ej-super-server", NULL, 0))) {
     forced_mode = 1;
   } else if (pid > 0) {
     fprintf(stderr, "%s: is already running as pid %d\n", argv[0], pid);

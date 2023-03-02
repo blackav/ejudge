@@ -966,7 +966,7 @@ main(int argc, char *argv[])
   argv_restart[j] = 0;
   start_set_args(argv_restart);
 
-  if (!(pid = start_find_process("ej-contests", 0))) {
+  if (!(pid = start_find_process("ej-contests", NULL, 0))) {
     params.force_socket_flag = 1;
   } else if (pid > 0) {
     fprintf(stderr, "%s: is already running as pid %d\n", argv[0], pid);

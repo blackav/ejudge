@@ -1863,7 +1863,7 @@ int main(int argc, char *argv[])
     start_set_args(argv_restart);
 
     int pid;
-    if ((pid = start_find_process("ej-jobs", 0)) > 0) {
+    if ((pid = start_find_process("ej-jobs", NULL, 0)) > 0) {
         err("already running as pid %d", pid);
         return 1;
     }

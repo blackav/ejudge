@@ -154,7 +154,10 @@ get_process_name(unsigned char *buf, size_t size, int pid)
 }
 
 int
-start_find_process(const unsigned char *name, int *p_uid)
+start_find_process(
+        const unsigned char *name,
+        const unsigned char *ns,
+        int *p_uid)
 {
   DIR *d = 0;
   struct dirent *dd;
@@ -162,6 +165,13 @@ start_find_process(const unsigned char *name, int *p_uid)
   int pid, mypid;
   int retval = -1;
   unsigned char cmdname[PATH_MAX];
+  unsigned char curns[PATH_MAX];
+  unsigned char pidns[PATH_MAX];
+
+  if (!ns) {
+    start_get_pid_namespace(curns, sizeof(curns), 0);
+    ns = curns;
+  }
 
   mypid = getpid();
 
@@ -173,6 +183,9 @@ start_find_process(const unsigned char *name, int *p_uid)
     if (errno || *eptr || eptr == dd->d_name || pid <= 0 || pid == mypid)
       continue;
     if (get_process_name(cmdname, sizeof(cmdname), pid) <= 0)
+      continue;
+    start_get_pid_namespace(pidns, sizeof(pidns), pid);
+    if (strcmp(ns, pidns) != 0)
       continue;
     if (!strcmp(name, cmdname)) {
       retval = pid;

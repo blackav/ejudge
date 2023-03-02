@@ -1507,7 +1507,7 @@ main(int argc, char *argv[])
     die("too many arguments");
   }
 
-  if ((pid = start_find_process("ej-batch", 0)) > 0) {
+  if ((pid = start_find_process("ej-batch", NULL, 0)) > 0) {
     fprintf(stderr, "%s: is already running as pid %d\n", argv[0], pid);
     return 1;
   }
