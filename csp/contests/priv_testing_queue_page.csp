@@ -204,6 +204,7 @@
     <tr>
         <th class="b1">NN</th>
         <th class="b1">InvokerID</th>
+        <th class="b1">IP address</th>
         <th class="b1">PID</th>
         <th class="b1">Run Queue</th>
         <th class="b1">Status<br/> Updated</th>
@@ -228,6 +229,7 @@
     const unsigned char *user = super_run_status_get_str(srs, user_idx);
     const unsigned char *prob_short_name = super_run_status_get_str(srs, prob_idx);
     const unsigned char *lang_short_name = super_run_status_get_str(srs, lang_idx);
+    const unsigned char *ip_address = super_run_status_get_str(srs, public_ip_idx);
     unsigned char status_update_buf[128];
     unsigned char status_buf[128];
     status_update_buf[0] = 0;
@@ -276,6 +278,7 @@
     <tr>
         <td class="b1"><s:v value="i + 1" /></td>
         <td class="b1"><s:v value="super_run_id" /></td>
+        <td class="b1"><s:v value="ip_address" /></td>
         <td class="b1"><s:v value="srs->super_run_pid" /></td>
         <td class="b1"><s:v value="queue_name" /></td>
         <td class="b1"><s:v value="status_update_buf" escape="no" /></td>
