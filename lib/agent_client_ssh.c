@@ -75,6 +75,7 @@ struct AgentClientSsh
     unsigned char *queue_id;
     int mode;
     int verbose_mode;
+    unsigned char *ip_address;
 
     // read buffer
     unsigned char *rd_data;
@@ -179,6 +180,7 @@ destroy_func(struct AgentClient *ac)
     if (acs->to_ssh >= 0) close(acs->to_ssh);
     if (acs->vfd >= 0) close(acs->vfd);
     if (acs->tfd >= 0) close(acs->tfd);
+    free(acs->ip_address);
     free(acs);
     return NULL;
 }
@@ -190,13 +192,17 @@ init_func(
         const unsigned char *endpoint,
         const unsigned char *queue_id,
         int mode,
-        int verbose_mode)
+        int verbose_mode,
+        const unsigned char *ip_address)
 {
     struct AgentClientSsh *acs = (struct AgentClientSsh *) ac;
     acs->inst_id = xstrdup(inst_id);
     acs->endpoint = xstrdup(endpoint);
     if (queue_id) {
         acs->queue_id = xstrdup(queue_id);
+    }
+    if (ip_address) {
+        acs->ip_address = xstrdup(ip_address);
     }
     acs->mode = mode;
     acs->verbose_mode = verbose_mode;
@@ -624,6 +630,9 @@ connect_func(struct AgentClient *ac)
             fprintf(cmd_f, " -m compile");
         } else if (acs->mode == PREPARE_RUN) {
             fprintf(cmd_f, " -m run");
+        }
+        if (acs->ip_address && *acs->ip_address) {
+            fprintf(cmd_f, " --ip '%s'", acs->ip_address);
         }
         if (acs->verbose_mode) {
             fprintf(cmd_f, " -v");

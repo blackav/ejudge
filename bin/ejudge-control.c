@@ -189,7 +189,8 @@ command_start(
         int enable_heartbeat,
         int disable_heartbeat,
         const char *timeout_str,
-        const char *shutdown_script)
+        const char *shutdown_script,
+        const char *ip_address)
 {
   tTask *tsk = 0;
   path_t path;
@@ -295,6 +296,10 @@ command_start(
       task_AddArg(tsk, "--queue");
       task_AddArg(tsk, queue);
     }
+    if (ip_address && *ip_address) {
+      task_AddArg(tsk, "--ip");
+      task_AddArg(tsk, ip_address);
+    }
     if (verbose_mode) {
       task_AddArg(tsk, "-v");
     }
@@ -333,6 +338,10 @@ command_start(
       if (agent && *agent) {
         task_AddArg(tsk, "--agent");
         task_AddArg(tsk, agent);
+      }
+      if (ip_address && *ip_address) {
+        task_AddArg(tsk, "--ip");
+        task_AddArg(tsk, ip_address);
       }
       if (instance_id && *instance_id) {
         snprintf(tool_instance_id, sizeof(tool_instance_id),
@@ -586,6 +595,7 @@ main(int argc, char *argv[])
   const char *timeout_str = NULL;
   const char *shutdown_script = NULL;
   int date_suffix_flag = 0;
+  const char *ip_address = NULL;
 
   logger_set_level(-1, LOG_WARNING);
   program_name = os_GetBasename(argv[0]);
@@ -626,6 +636,10 @@ main(int argc, char *argv[])
     } else if (!strcmp(argv[i], "--mirror")) {
       if (i + 1 >= argc) startup_error("argument expected for `--mirror'");
       mirror = argv[i + 1];
+      i += 2;
+    } else if (!strcmp(argv[i], "--ip")) {
+      if (i + 1 >= argc) startup_error("argument expected for --ip");
+      ip_address = argv[i + 1];
       i += 2;
     } else if (!strcmp(argv[i], "-ht")) {
       if (i + 1 >= argc) startup_error("argument expected for `-ht'");
@@ -721,7 +735,7 @@ main(int argc, char *argv[])
                       compile_parallelism, skip_mask,
                       agent, instance_id, queue, verbose_mode,
                       mirror, enable_heartbeat, disable_heartbeat,
-                      timeout_str, shutdown_script) < 0)
+                      timeout_str, shutdown_script, ip_address) < 0)
       r = 1;
   } else if (!strcmp(command, "stop")) {
     if (command_stop(config, ejudge_xml_path, slave_mode, master_mode) < 0)

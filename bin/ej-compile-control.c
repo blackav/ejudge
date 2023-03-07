@@ -305,7 +305,8 @@ start_process(
         const char *agent,
         const char *instance_id,
         const char *queue,
-        int verbose_mode)
+        int verbose_mode,
+        const char *ip_address)
 {
     int pid = fork();
     if (pid < 0) {
@@ -374,6 +375,10 @@ start_process(
     if (instance_id && *instance_id) {
         args[argi++] = "--instance-id";
         args[argi++] = (char*) instance_id;
+    }
+    if (ip_address && *ip_address) {
+        args[argi++] = "--ip";
+        args[argi++] = (char*) ip_address;
     }
     if (queue && *queue) {
         args[argi++] = "-I";
@@ -899,6 +904,7 @@ int main(int argc, char *argv[])
     int res;
     long long timeout_us = -1;
     int date_suffix_flag = 0;
+    const char *ip_address = NULL;
 
     if (argc < 1) {
         system_error("no arguments");
@@ -938,6 +944,12 @@ int main(int argc, char *argv[])
                     system_error("argument expected for --queue");
                 }
                 queue = argv[aidx + 1];
+                aidx += 2;
+            } else if (!strcmp(argv[aidx], "--ip")) {
+                if (aidx + 1 >= argc) {
+                    system_error("argument expected for --ip");
+                }
+                ip_address = argv[aidx + 1];
                 aidx += 2;
             } else if (!strcmp(argv[aidx], "--timeout")) {
                 if (aidx + 1 >= argc) {
@@ -1261,7 +1273,7 @@ int main(int argc, char *argv[])
             }
 
             for (int i = 0; i < compile_parallelism; ++i) {
-                int ret = start_process(config, EJ_COMPILE_PROGRAM, log_fd, workdir, &ev, ej_compile_path, compile_parallelism > 1, 1 /* FIXME */, ejudge_xml_fds, compile_parallelism, i, agent, instance_id, queue, verbose_mode);
+                int ret = start_process(config, EJ_COMPILE_PROGRAM, log_fd, workdir, &ev, ej_compile_path, compile_parallelism > 1, 1 /* FIXME */, ejudge_xml_fds, compile_parallelism, i, agent, instance_id, queue, verbose_mode, ip_address);
                 if (ret < 0) {
                     emergency_stop();
                     return EXIT_SYSTEM_ERROR;

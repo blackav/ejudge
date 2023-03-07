@@ -81,6 +81,7 @@ static unsigned char *agent_name;
 static struct AgentClient *agent;
 static unsigned char *instance_id;
 static int verbose_mode;
+static unsigned char *ip_address;
 
 struct testinfo_subst_handler_compile
 {
@@ -929,7 +930,7 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
       agent = agent_client_ssh_create();
       if (agent->ops->init(agent, instance_id,
                            agent_name + 4, compile_server_id,
-                           PREPARE_COMPILE, verbose_mode) < 0) {
+                           PREPARE_COMPILE, verbose_mode, ip_address) < 0) {
         err("failed to initalize agent");
         return -1;
       }
@@ -1537,6 +1538,12 @@ main(int argc, char *argv[])
       xfree(instance_id);
       instance_id = xstrdup(argv[i++]);
       argv_restart[j++] = "--instance-id";
+      argv_restart[j++] = argv[i - 1];
+    } else if (!strcmp(argv[i], "--ip")) {
+      if (++i >= argc) goto print_usage;
+      xfree(ip_address);
+      ip_address = xstrdup(argv[i++]);
+      argv_restart[j++] = "--ip";
       argv_restart[j++] = argv[i - 1];
     } else if (!strcmp(argv[i], "-p")) {
       parallel_mode = 1;

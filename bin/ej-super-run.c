@@ -87,6 +87,7 @@ static unsigned char *agent_instance_id = NULL;
 static struct AgentClient *agent;
 static int verbose_mode;
 static int daemon_mode;
+static unsigned char *ip_address = NULL;
 
 static int ignored_archs_count = 0;
 static int ignored_problems_count = 0;
@@ -649,7 +650,7 @@ do_loop(
       agent = agent_client_ssh_create();
       if (agent->ops->init(agent, agent_instance_id,
                            agent_name + 4, run_server_id,
-                           PREPARE_RUN, verbose_mode) < 0) {
+                           PREPARE_RUN, verbose_mode, ip_address) < 0) {
         err("failed to initalize agent");
         return -1;
       }
@@ -1486,6 +1487,13 @@ main(int argc, char *argv[])
       if (cur_arg + 1 >= argc) fatal("argument expected for --instance-id");
       xfree(agent_instance_id);
       agent_instance_id = xstrdup(argv[cur_arg + 1]);
+      argv_restart[argc_restart++] = argv[cur_arg];
+      argv_restart[argc_restart++] = argv[cur_arg + 1];
+      cur_arg += 2;
+    } else if (!strcmp(argv[cur_arg], "--ip")) {
+      if (cur_arg + 1 >= argc) fatal("argument expected for --ip");
+      xfree(ip_address);
+      ip_address = xstrdup(argv[cur_arg + 1]);
       argv_restart[argc_restart++] = argv[cur_arg];
       argv_restart[argc_restart++] = argv[cur_arg + 1];
       cur_arg += 2;

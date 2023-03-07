@@ -30,7 +30,8 @@ struct AgentClientOps
         const unsigned char *endpoint,
         const unsigned char *queue_id,
         int mode,
-        int verbose_mode);
+        int verbose_mode,
+        const unsigned char *ip_address);
     int (*connect)(struct AgentClient *ac);
     void (*close)(struct AgentClient *ac);
     int (*is_closed)(struct AgentClient *ac);

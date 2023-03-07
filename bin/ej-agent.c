@@ -1826,6 +1826,7 @@ main(int argc, char *argv[])
     int retval = 1;
     const unsigned char *inst_id = NULL;
     const unsigned char *queue_id = NULL;
+    __attribute__((unused)) const unsigned char *ip_address = NULL;
     int mode = 0;
     int argi = 1;
     int verbose_mode = 0;
@@ -1853,6 +1854,10 @@ main(int argc, char *argv[])
         } else if (!strcmp(argv[argi], "-l")) {
             if (argi + 1 >= argc) die("argument expected for -l");
             log_file = argv[argi + 1];
+            argi += 2;
+        } else if (!strcmp(argv[argi], "--ip")) {
+            if (argi + 1 >= argc) die("argument expected for --ip");
+            ip_address = argv[argi + 1];
             argi += 2;
         } else if (!strcmp(argv[argi], "-m")) {
             if (argi + 1 >= argc) die("argument expected for -m");
