@@ -595,7 +595,11 @@ do_super_run_status_init(struct super_run_status *prs)
   if (instance_id) prs->inst_id_idx = super_run_status_add_str(prs, instance_id);
   if (local_ip) prs->local_ip_idx = super_run_status_add_str(prs, local_ip);
   if (local_hostname) prs->local_host_idx = super_run_status_add_str(prs, local_hostname);
-  if (public_ip) prs->public_ip_idx = super_run_status_add_str(prs, public_ip);
+  if (ip_address && *ip_address) {
+    prs->public_ip_idx = super_run_status_add_str(prs, ip_address);
+  } else if (public_ip) {
+    prs->public_ip_idx = super_run_status_add_str(prs, public_ip);
+  }
   if (public_hostname) prs->public_host_idx = super_run_status_add_str(prs, public_hostname);
   if (queue_name) prs->queue_idx = super_run_status_add_str(prs, queue_name);
   prs->ej_ver_idx = super_run_status_add_str(prs, compile_version);
