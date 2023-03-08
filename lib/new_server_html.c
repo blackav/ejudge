@@ -11103,6 +11103,7 @@ unpriv_submit_run(
   int utf8_len = 0;
   int eoln_type = 0;
   int retval = 0;
+  int rejudge_flag = 0;
 
   l10n_setlocale(phr->locale_id);
 
@@ -11388,6 +11389,10 @@ unpriv_submit_run(
     }
   }
 
+  if (run_count_all_attempts_3(cs->runlog_state, phr->user_id, prob_id) > 0) {
+    rejudge_flag = 1;
+  }
+
   /* check for disabled languages */
   if (lang_id > 0) {
     if (lang->disabled || (prob->enable_container <= 0 && lang->insecure > 0 && global->secure_run)) {
@@ -11591,7 +11596,7 @@ unpriv_submit_run(
                                      -1, 0, 1, prob, lang, 0, &run_uuid,
                                      NULL /* judge_uuid */,
                                      store_flags,
-                                     0 /* rejudge_flag */,
+                                     rejudge_flag,
                                      phr->is_job,
                                      0 /* not_ok_is_cf */,
                                      user)) < 0) {
@@ -11622,7 +11627,7 @@ unpriv_submit_run(
                                   0 /* no_db_flag */, &run_uuid,
                                   NULL /* judge_uuid */,
                                   store_flags,
-                                  0 /* rejudge_flag */,
+                                  rejudge_flag,
                                   phr->is_job,
                                   0 /* not_ok_is_cf */,
                                   user);
@@ -11693,7 +11698,7 @@ unpriv_submit_run(
                                   0 /* no_db_flag */, &run_uuid,
                                   NULL /* judge_uuid */,
                                   store_flags,
-                                  0 /* rejudge_flag */,
+                                  rejudge_flag,
                                   phr->is_job,
                                   0 /* not_ok_is_cf */,
                                   user);

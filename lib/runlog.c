@@ -948,6 +948,30 @@ run_count_all_attempts_2(runlog_state_t state, int user_id, int prob_id, int ign
 }
 
 int
+run_count_all_attempts_3(runlog_state_t state, int user_id, int prob_id)
+{
+  int i, count = 0;
+
+  struct user_run_header_info *urh = run_get_user_run_header(state, user_id, NULL);
+  ASSERT(urh);
+  if (!urh->run_id_valid) {
+    run_rebuild_user_run_index(state, user_id);
+  }
+
+  for (i = urh->run_id_first; i >= state->run_f; i = state->run_extras[i - state->run_extra_f].next_user_id) {
+    ASSERT(i < state->run_u);
+    const struct run_entry *re = &state->runs[i - state->run_f];
+    ASSERT(re->user_id == user_id);
+    if (re->prob_id == prob_id
+        && re->status >= RUN_TRANSIENT_FIRST && re->status <= RUN_TRANSIENT_LAST)
+      ++count;
+  }
+  ASSERT(i == -1);
+
+  return count;
+}
+
+int
 run_count_tokens(runlog_state_t state, int user_id, int prob_id)
 {
   int i, count = 0;
