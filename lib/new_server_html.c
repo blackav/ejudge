@@ -3109,6 +3109,7 @@ priv_submit_run(
   ej_ip_t sender_ip;
   int not_ok_is_cf = 0;
   int rejudge_flag = 0;
+  int priority_adjustment = 0;
 
   if (opcaps_check(phr->caps, OPCAP_SUBMIT_RUN) < 0) {
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
@@ -3145,6 +3146,10 @@ priv_submit_run(
 
   hr_cgi_param_int_opt(phr, "not_ok_is_cf", &not_ok_is_cf, 0);
   hr_cgi_param_int_opt(phr, "rejudge_flag", &rejudge_flag, 0);
+
+  if (rejudge_flag > 0) {
+    priority_adjustment = 3;
+  }
 
   if (hr_cgi_param(phr, "problem_uuid", &s) > 0) {
     for (prob_id = 1; prob_id <= cs->max_prob; ++prob_id) {
@@ -3561,10 +3566,14 @@ priv_submit_run(
       if ((r = serve_compile_request(phr->config, cs, run_text, run_size, cnts->id,
                                      run_id, 0 /* submit_id */, sender_user_id,
                                      variant,
-                                     phr->locale_id, 0,
+                                     phr->locale_id,
+                                     0 /* output_only */,
                                      lang->src_sfx,
-                                     0,
-                                     -1, 0, 0, prob, lang, 0, &run_uuid,
+                                     0 /* style_check_only */,
+                                     -1 /* accepting_mode */,
+                                     priority_adjustment,
+                                     0 /* notify_flag */,
+                                     prob, lang, 0, &run_uuid,
                                      NULL /* judge_uuid */,
                                      store_flags, rejudge_flag,
                                      phr->is_job,
@@ -3591,7 +3600,7 @@ priv_submit_run(
                                   mime_type_get_suffix(mime_type),
                                   1 /* style_check_only */,
                                   0 /* accepting_mode */,
-                                  0 /* priority_adjustment */,
+                                  priority_adjustment,
                                   0 /* notify flag */,
                                   prob, NULL /* lang */,
                                   0 /* no_db_flag */,
@@ -3642,7 +3651,7 @@ priv_submit_run(
                                   mime_type_get_suffix(mime_type),
                                   1 /* style_check_only */,
                                   0 /* accepting_mode */,
-                                  0 /* priority_adjustment */,
+                                  priority_adjustment,
                                   0 /* notify flag */,
                                   prob, NULL /* lang */,
                                   0 /* no_db_flag */,
@@ -10907,7 +10916,8 @@ ns_submit_run(
                               phr->locale_id, 0 /* output_only */,
                               lang->src_sfx,
                               0 /* style_check_only */,
-                              -1 /* accepting_mode */, 0 /* priority_adjustment */,
+                              -1 /* accepting_mode */,
+                              0 /* priority_adjustment */,
                               1 /* notify_flag */, prob, lang,
                               0 /* no_db_flag */, &run_uuid,
                               NULL /* judge_uuid */,
