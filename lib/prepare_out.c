@@ -1547,6 +1547,8 @@ prepare_unparse_prob(
     unparse_bool(f, "enable_suid_run", prob->enable_suid_run);
   if (prob->enable_container >= 0)
     unparse_bool(f, "enable_container", prob->enable_container);
+  if (prob->enable_dynamic_priority >= 0)
+    unparse_bool(f, "enable_dynamic_priority", prob->enable_dynamic_priority);
   if (prob->enable_multi_header >= 0)
     unparse_bool(f, "enable_multi_header", prob->enable_multi_header);
   if (prob->use_lang_multi_header >= 0)
@@ -2000,6 +2002,8 @@ prepare_unparse_actual_prob(
     unparse_bool(f, "enable_suid_run", prob->enable_suid_run);
   if (prob->enable_container > 0)
     unparse_bool(f, "enable_container", prob->enable_container);
+  if (prob->enable_dynamic_priority > 0)
+    unparse_bool(f, "enable_dynamic_priority", prob->enable_dynamic_priority);
   if (prob->enable_multi_header > 0)
     unparse_bool(f, "enable_multi_header", prob->enable_multi_header);
   if (prob->use_lang_multi_header > 0)

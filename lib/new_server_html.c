@@ -11389,7 +11389,7 @@ unpriv_submit_run(
     }
   }
 
-  if (run_count_all_attempts_3(cs->runlog_state, phr->user_id, prob_id) > 0) {
+  if (prob->enable_dynamic_priority > 0 && run_count_all_attempts_3(cs->runlog_state, phr->user_id, prob_id) > 0) {
     rejudge_flag = 1;
   }
 
