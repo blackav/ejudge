@@ -63,7 +63,7 @@
         <tr><td class="b0"><b>Short name</b> *:</td><td class="b0"><s:textfield size="40" name="ejudge_short_name" value="prob_buf" check="no" /></td></tr>
 
         <tr>
-            <td class="b0"><b>Language priority</b>:</td>
+            <td class="b0">Language priority:</td>
             <td class="b0">
                 <select name="language_priority">
                     <option></option>
@@ -79,9 +79,12 @@
         <tr><td class="b0">Save auth info:</td><td class="b0"><input type="checkbox" name="save_auth" value="1" /></td></tr>
         <tr><td class="b0"><b>Problem id/name</b> *:</td><td class="b0"><input type="text" size="60" name="polygon_id" /></td></tr>
         <tr><td class="b0">Polygon URL:</td><td class="b0"><s:textfield size="60" name="polygon_url" value="saved_url" checkExpr="" /></td></tr>
+        <tr><td class="b0">Fetch latest available packet (do not generate):</td><td class="b0"><input type="checkbox" name="fetch_latest_available" value="1" checked="checked" /></td></tr>
+
+        <tr><td colspan="2" align="center" class="b0"><b>Problem properties</b></td></tr>
+
         <tr><td class="b0">Assume max_vm_size == max_stack_size:</td><td class="b0"><input type="checkbox" name="max_stack_size" value="1" checked="checked" /></td></tr>
         <tr><td class="b0">Ignore additional solutions:</td><td class="b0"><input type="checkbox" name="ignore_solutions" value="1" checked="checked" /></td></tr>
-        <tr><td class="b0">Fetch latest available packet (do not generate):</td><td class="b0"><input type="checkbox" name="fetch_latest_available" value="1" checked="checked" /></td></tr>
 
         <tr><td class="b0"><s:submit ac="import-from-polygon-action" label="Import" /></td></tr>
     </table>
