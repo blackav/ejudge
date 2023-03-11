@@ -11104,6 +11104,7 @@ unpriv_submit_run(
   int eoln_type = 0;
   int retval = 0;
   int rejudge_flag = 0;
+  int priority_adjustment = 0;
 
   l10n_setlocale(phr->locale_id);
 
@@ -11389,8 +11390,11 @@ unpriv_submit_run(
     }
   }
 
-  if (prob->enable_dynamic_priority > 0 && run_count_all_attempts_3(cs->runlog_state, phr->user_id, prob_id) > 0) {
-    rejudge_flag = 1;
+  int testing_count = run_count_all_attempts_3(cs->runlog_state, phr->user_id, prob_id);
+  if (prob->enable_dynamic_priority > 0 && testing_count > 0) {
+    //rejudge_flag = 1;
+    priority_adjustment = (testing_count - 1) / 2 + 3;
+    if (priority_adjustment > 12) priority_adjustment = 12;
   }
 
   /* check for disabled languages */
@@ -11592,8 +11596,13 @@ unpriv_submit_run(
                                      variant,
                                      phr->locale_id, 0,
                                      lang->src_sfx,
-                                     0,
-                                     -1, 0, 1, prob, lang, 0, &run_uuid,
+                                     0 /* style_check_only */,
+                                     -1 /* accepting_mode */,
+                                     priority_adjustment,
+                                     1 /* notify_flag */,
+                                     prob, lang,
+                                     0 /* no_db_flag*/ ,
+                                     &run_uuid,
                                      NULL /* judge_uuid */,
                                      store_flags,
                                      rejudge_flag,
@@ -11621,7 +11630,7 @@ unpriv_submit_run(
                                   mime_type_get_suffix(mime_type),
                                   1 /* style_check_only */,
                                   0 /* accepting_mode */,
-                                  0 /* priority_adjustment */,
+                                  priority_adjustment,
                                   0 /* notify flag */,
                                   prob, NULL /* lang */,
                                   0 /* no_db_flag */, &run_uuid,
@@ -11643,7 +11652,7 @@ unpriv_submit_run(
                               NULL, /* judge_uuid */
                               -1, 1,
                               mime_type, 0, phr->locale_id, 0, 0, 0, &run_uuid,
-                              0 /* rejudge_flag */, 0 /* zip_mode */,
+                              rejudge_flag, 0 /* zip_mode */,
                               store_flags,
                               0 /* not_ok_is_cf */,
                               NULL, 0) < 0) {
@@ -11692,7 +11701,7 @@ unpriv_submit_run(
                                   mime_type_get_suffix(mime_type),
                                   1 /* style_check_only */,
                                   0 /* accepting_mode */,
-                                  0 /* priority_adjustment */,
+                                  priority_adjustment,
                                   0 /* notify flag */,
                                   prob, NULL /* lang */,
                                   0 /* no_db_flag */, &run_uuid,
@@ -11717,7 +11726,7 @@ unpriv_submit_run(
                               NULL, /* judge_uuid */
                               -1, 1,
                               mime_type, 0, phr->locale_id, 0, 0, 0, &run_uuid,
-                              0 /* rejudge_flag */, 0 /* zip_mode */,
+                              rejudge_flag, 0 /* zip_mode */,
                               store_flags,
                               0 /* not_ok_is_cf */,
                               NULL, 0) < 0) {
