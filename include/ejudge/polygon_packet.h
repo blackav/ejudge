@@ -62,7 +62,7 @@ struct polygon_packet
     unsigned char *polygon_contest_id;
     unsigned char *key;
     unsigned char *secret;
-    unsigned char *packet_file;
+    unsigned char *package_file;
 
     char **id;
     char **ejudge_id;
