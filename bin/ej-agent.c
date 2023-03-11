@@ -45,6 +45,7 @@
 #include <sys/inotify.h>
 #include <ctype.h>
 #include <sys/mman.h>
+#include <zlib.h>
 
 static const unsigned char *program_name;
 static const unsigned char *log_file;
@@ -1044,6 +1045,47 @@ add_file_to_object(cJSON *j, const char *data, size_t size)
     if (!size) {
         return;
     }
+    // gzip mode
+    if (size < 32) {
+        cJSON_AddTrueToObject(j, "b64");
+        char *ptr = malloc(size * 2 + 16);
+        int n = base64u_encode(data, size, ptr);
+        ptr[n] = 0;
+        cJSON_AddStringToObject(j, "data", ptr);
+        free(ptr);
+    } else {
+        z_stream zs = {};
+        zs.next_in = (Bytef *) data;
+        zs.avail_in = size;
+        zs.total_in = size;
+
+        if (deflateInit(&zs, 9) != Z_OK) {
+            abort();
+        }
+        size_t bound = deflateBound(&zs, size);
+        char *gz_buf = malloc(bound);
+        zs.next_out = (Bytef*) gz_buf;
+        zs.avail_out = bound;
+        zs.total_out = 0;
+        int r = deflate(&zs, Z_FINISH);
+        if (r != Z_STREAM_END) {
+            abort();
+        }
+        size_t gz_size = zs.total_out;
+        if (deflateEnd(&zs) != Z_OK) {
+            abort();
+        }
+        cJSON_AddTrueToObject(j, "gz");
+        cJSON_AddNumberToObject(j, "gz_size", gz_size);
+        char *b64_buf = malloc(gz_size * 2 + 16);
+        int b64_size = base64u_encode(gz_buf, gz_size, b64_buf);
+        b64_buf[b64_size] = 0;
+        cJSON_AddTrueToObject(j, "b64");
+        cJSON_AddStringToObject(j, "data", b64_buf);
+        free(b64_buf);
+        free(gz_buf);
+    }
+    // lzma mode (unused)
     if (size < 160) {
         cJSON_AddTrueToObject(j, "b64");
         char *ptr = malloc(size * 2 + 16);
@@ -1184,8 +1226,55 @@ extract_file(
         return -1;
     }
     int len = strlen(jd->valuestring);
+    cJSON *jgz = cJSON_GetObjectItem(j, "gz");
     cJSON *jlzma = cJSON_GetObjectItem(j, "lzma");
-    if (jlzma && jlzma->type == cJSON_True) {
+    if (jgz && jgz->type == cJSON_True) {
+        cJSON *jgzz = cJSON_GetObjectItem(j, "gz_size");
+        if (!jgzz || jgzz->type != cJSON_Number) {
+            err("invalid json: no gz_size");
+            return -1;
+        }
+        size_t gz_size = (size_t) jgzz->valuedouble;
+        char *gz_buf = malloc(len + 1);
+        int b64err = 0;
+        int n = base64u_decode(jd->valuestring, len, gz_buf, &b64err);
+        if (n != gz_size) {
+            err("invalid json: size mismatch");
+            free(gz_buf);
+            return -1;
+        }
+
+        z_stream zs = {};
+        if (inflateInit(&zs) != Z_OK) {
+            err("invalid json: libz failed");
+            free(gz_buf);
+            return -1;
+        }
+        zs.next_in = (Bytef *) gz_buf;
+        zs.avail_in = gz_size;
+        zs.total_in = gz_size;
+        unsigned char *ptr = malloc(size + 1);
+        zs.next_out = (Bytef *) ptr;
+        zs.avail_out = size;
+        zs.total_out = 0;
+        if (inflate(&zs, Z_FINISH) != Z_STREAM_END) {
+            err("invalid json: libz inflate failed");
+            free(gz_buf);
+            free(ptr);
+            inflateEnd(&zs);
+            return -1;
+        }
+        if (inflateEnd(&zs) != Z_OK) {
+            err("invalid json: libz inflate failed");
+            free(gz_buf);
+            free(ptr);
+            return -1;
+        }
+        ptr[size] = 0;
+        free(gz_buf);
+        *p_pkt_ptr = ptr;
+        *p_pkt_len = size;
+    } else if (jlzma && jlzma->type == cJSON_True) {
         cJSON *jlzmaz = cJSON_GetObjectItem(j, "lzma_size");
         if (!jlzmaz || jlzmaz->type != cJSON_Number) {
             err("%s: invalid json: no lzma_size", as->inst_id);
