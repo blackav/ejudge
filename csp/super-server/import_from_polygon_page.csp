@@ -56,7 +56,7 @@
 
 <h2>Importing problem from polygon</h2>
 
-<s:form>
+<s:form enctype="multipart/form-data">
     <table class="b0">
         <tr><td colspan="2" align="center" class="b0"><b>Ejudge problem identification</b></td></tr>
         <tr><td class="b0">Id:</td><td class="b0"><s:textfield size="40" name="ejudge_id" value="" /></td></tr>
@@ -80,6 +80,10 @@
         <tr><td class="b0"><b>Problem id/name</b> *:</td><td class="b0"><input type="text" size="60" name="polygon_id" /></td></tr>
         <tr><td class="b0">Polygon URL:</td><td class="b0"><s:textfield size="60" name="polygon_url" value="saved_url" checkExpr="" /></td></tr>
         <tr><td class="b0">Fetch latest available packet (do not generate):</td><td class="b0"><input type="checkbox" name="fetch_latest_available" value="1" checked="checked" /></td></tr>
+
+        <tr><td colspan="2" align="center" class="b0"><b>Upload full linux package (alternative to download from Polygon)</b></td></tr>
+
+        <tr><td class="b0">Full linux package file:</td><td class="b0"><input type="file" name="package_file" /></td></tr>
 
         <tr><td colspan="2" align="center" class="b0"><b>Problem properties</b></td></tr>
 
