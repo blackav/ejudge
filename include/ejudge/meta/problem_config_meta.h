@@ -76,6 +76,7 @@ enum
   META_PROBLEM_CONFIG_SECTION_enable_extended_info,
   META_PROBLEM_CONFIG_SECTION_stop_on_first_fail,
   META_PROBLEM_CONFIG_SECTION_enable_control_socket,
+  META_PROBLEM_CONFIG_SECTION_enable_iframe_statement,
   META_PROBLEM_CONFIG_SECTION_id,
   META_PROBLEM_CONFIG_SECTION_real_time_limit,
   META_PROBLEM_CONFIG_SECTION_time_limit,
