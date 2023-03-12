@@ -92,6 +92,8 @@
 
         <tr><td class="b0">Tests are binary data:</td><td class="b0"><input type="checkbox" name="binary_input" value="1" /></td></tr>
 
+        <tr><td class="b0">Embed statement in IFRAME:</td><td class="b0"><input type="checkbox" name="enable_iframe_statement" value="1" checked="checked" /></td></tr>
+
         <tr><td class="b0"><s:submit ac="import-from-polygon-action" label="Import" /></td></tr>
     </table>
 </s:form>

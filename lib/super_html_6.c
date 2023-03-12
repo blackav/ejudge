@@ -4453,6 +4453,7 @@ super_serve_op_IMPORT_FROM_POLYGON_ACTION(
   const unsigned char *package_file_data = NULL;
   size_t package_file_size = 0;
   int binary_input_flag = 0;
+  int enable_iframe_statement_flag = 0;
 
   if (!ss->edited_cnts || !ss->global) {
     FAIL(SSERV_ERR_NO_EDITED_CNTS);
@@ -4579,6 +4580,7 @@ super_serve_op_IMPORT_FROM_POLYGON_ACTION(
   if (hr_cgi_param(phr, "ignore_solutions", &s) > 0) ignore_solutions_flag = 1;
   if (hr_cgi_param(phr, "fetch_latest_available", &s) > 0) fetch_latest_available_flag = 1;
   if (hr_cgi_param(phr, "binary_input", &s) > 0) binary_input_flag = 1;
+  if (hr_cgi_param(phr, "enable_iframe_statement", &s) > 0) enable_iframe_statement_flag = 1;
 
   if (hr_cgi_param(phr, "language_priority", &s) > 0 && *s) {
     if (!strcmp(s, "ru,en")
@@ -4668,6 +4670,7 @@ super_serve_op_IMPORT_FROM_POLYGON_ACTION(
   pp->enable_max_stack_size = max_stack_size_flag;
   pp->ignore_solutions = ignore_solutions_flag;
   pp->binary_input = binary_input_flag;
+  pp->enable_iframe_statement = enable_iframe_statement_flag;
   pp->create_mode = 1;
   if (upload_mode <= 0) {
     pp->fetch_latest_available = fetch_latest_available_flag;
