@@ -7594,7 +7594,9 @@ priv_get_file(
     FAIL(NEW_SRV_ERR_INV_FILE_NAME);
 
   fprintf(fout, "Content-type: %s\n", content_type);
-  fprintf(fout, "Content-Disposition: attachment; filename=\"%s\"\n", s);
+  if (mime_type != MIME_TYPE_TEXT_HTML) {
+    fprintf(fout, "Content-Disposition: attachment; filename=\"%s\"\n", s);
+  }
   fprintf(fout, "\n");
   fwrite(file_bytes, 1, file_size, fout);
 
@@ -14008,7 +14010,9 @@ unpriv_get_file(
     FAIL(NEW_SRV_ERR_INV_FILE_NAME);
 
   fprintf(fout, "Content-type: %s\n", content_type);
-  fprintf(fout, "Content-Disposition: attachment; filename=\"%s\"\n", s);
+  if (mime_type != MIME_TYPE_TEXT_HTML) {
+    fprintf(fout, "Content-Disposition: attachment; filename=\"%s\"\n", s);
+  }
   fprintf(fout, "\n");
 
   fwrite(file_bytes, 1, file_size, fout);
