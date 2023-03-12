@@ -2895,7 +2895,7 @@ process_polygon_zip(
             }
         }
     }
-    if (pi->html_statement_path) {
+    if (pi->html_statement_path && pkt->enable_iframe_statement > 0) {
         unsigned char attachments_path[PATH_MAX];
         snprintf(attachments_path, sizeof(attachments_path),
                  "%s/attachments", problem_path);
@@ -3002,7 +3002,7 @@ process_polygon_zip(
     if (pkt->binary_input > 0) {
         prob_cfg->binary_input = 1;
     }
-    if (pi->html_statement_path && pi->html_statement_path[0]) {
+    if (pi->html_statement_path && pi->html_statement_path[0] && pkt->enable_iframe_statement > 0) {
         prob_cfg->iframe_statement = xstrdup("statement.html");
     }
 
