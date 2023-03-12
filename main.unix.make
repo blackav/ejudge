@@ -1,6 +1,6 @@
 # -*- Makefile -*-
 
-# Copyright (C) 2014-2022 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2014-2023 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -158,7 +158,7 @@ NRM_CFILES=bin/ej-normalize.c version.c
 NRM_OBJECTS=$(NRM_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a
 
 P_CFILES = bin/ej-polygon.c version.c
-P_OBJECTS = $(P_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a
+P_OBJECTS = $(P_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a libplatform.a
 
 IC_CFILES = bin/ej-import-contest.c version.c
 IC_OBJECTS = $(IC_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a
@@ -368,7 +368,7 @@ ej-normalize: ${NRM_OBJECTS}
 	${LD} ${LDFLAGS} -rdynamic $^ libcommon.a -o $@ ${LDLIBS} ${EXPAT_LIB} -ldl
 
 ej-polygon: ${P_OBJECTS}
-	${LD} ${LDFLAGS} $^ libcommon.a -o $@ ${LDLIBS} ${EXPAT_LIB} ${LIBCURL} ${LIBZIP} -ldl
+	${LD} ${LDFLAGS} $^ libcommon.a libplatform.a -o $@ ${LDLIBS} ${EXPAT_LIB} ${LIBCURL} ${LIBZIP} -ldl
 
 ej-import-contest: ${IC_OBJECTS}
 	${LD} ${LDFLAGS} $^ libcommon.a -o $@ ${LDLIBS} ${EXPAT_LIB} ${LIBCURL} ${LIBZIP} -ldl
