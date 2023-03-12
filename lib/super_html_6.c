@@ -5072,6 +5072,9 @@ do_import_problem(
   if (cfg->binary_input > 0) {
     prob->binary_input = 1;
   }
+  if (cfg->enable_iframe_statement > 0) {
+    prob->enable_iframe_statement = 1;
+  }
   if (cfg->max_vm_size != (size_t) -1L && cfg->max_vm_size) {
     prob->max_vm_size = cfg->max_vm_size;
   }

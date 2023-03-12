@@ -13452,7 +13452,7 @@ ns_unparse_statement(
     fprintf(fout, "<h3>");
     problem_xml_unparse_node(fout, pp->title, vars, vals);
     fprintf(fout, "</h3>");
-  } else {
+  } else if (prob->enable_iframe_statement <= 0) {
     fprintf(fout, "<h3>");
     fprintf(fout, "%s %s", _("Problem"), ARMOR(prob->short_name));
     if (prob->long_name && prob->long_name[0]) {
