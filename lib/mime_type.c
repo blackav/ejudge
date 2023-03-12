@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -95,6 +95,8 @@ static const struct mime_type_info mime_types[MIME_TYPE_LAST] =
   { "image/x-icon", ".ico", "" },
   [MIME_TYPE_BSON] =
   { "application/bson", ".bson", "" },
+  [MIME_TYPE_TEXT_HTML] =
+  { "text/html", ".html", "" },
 };
 
 const unsigned char *
