@@ -1621,6 +1621,10 @@ prepare_unparse_prob(
       || (!prob->abstract && prob->enable_vcs >= 0)) {
     unparse_bool(f, "enable_vcs", prob->enable_vcs);
   }
+  if ((prob->abstract > 0 && prob->enable_iframe_statement > 0)
+      || (!prob->abstract && prob->enable_iframe_statement >= 0)) {
+    unparse_bool(f, "enable_iframe_statement", prob->enable_iframe_statement);
+  }
   if (prob->stand_ignore_score >= 0
       && ((prob->abstract && prob->stand_ignore_score) || !prob->abstract))
       unparse_bool(f, "stand_ignore_score", prob->stand_ignore_score);
@@ -2056,6 +2060,8 @@ prepare_unparse_actual_prob(
     unparse_bool(f, "enable_user_input", prob->enable_user_input);
   if (prob->enable_vcs > 0)
     unparse_bool(f, "enable_vcs", prob->enable_vcs);
+  if (prob->enable_iframe_statement > 0)
+    unparse_bool(f, "enable_iframe_statement", prob->enable_iframe_statement);
   if (prob->stand_ignore_score > 0)
     unparse_bool(f, "stand_ignore_score", prob->stand_ignore_score);
   if (prob->stand_last_column > 0)

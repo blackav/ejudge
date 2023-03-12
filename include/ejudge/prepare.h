@@ -997,6 +997,8 @@ struct section_problem_data
 
   ejbyteflag_t enable_vcs;
 
+  ejbyteflag_t enable_iframe_statement;
+
   // padding to 8-byte boundary
   //unsigned char _pad1[1];
 
