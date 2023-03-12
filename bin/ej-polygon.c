@@ -2907,6 +2907,31 @@ process_polygon_zip(
         snprintf(statement_path, sizeof(statement_path),
                  "%s/statement.html", attachments_path);
         if (copy_from_zip(log_f, pkt, zif, zid, zip_path, pi->html_statement_path, statement_path)) goto zip_error;
+
+        unsigned char html_statement_dir[PATH_MAX];
+        unsigned char css_src_path[PATH_MAX];
+        unsigned char css_dst_path[PATH_MAX];
+        const unsigned char *p = strrchr(pi->html_statement_path, '/');
+        if (p) {
+            snprintf(html_statement_dir, sizeof(html_statement_dir),
+                     "%.*s", (int) (p - pi->html_statement_path),
+                     pi->html_statement_path);
+            snprintf(css_src_path, sizeof(css_src_path),
+                     "%s/problem-statement.css", html_statement_dir);
+            snprintf(css_dst_path, sizeof(css_dst_path),
+                     "%s/problem-statement.css", attachments_path);
+            if (copy_from_zip(log_f, pkt, zif, zid, zip_path, css_src_path, css_dst_path)) goto zip_error;
+        }
+
+        unsigned char statement_xml_path[PATH_MAX];
+        snprintf(statement_xml_path, sizeof(statement_xml_path),
+                 "%s/statement.xml", problem_path);
+        FILE *f = fopen(statement_xml_path, "w");
+        if (f) {
+            fputs("<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n"
+                  "<problem><statement language=\"ru_RU\"><description><div id=\"polygon_iframe\"><iframe src=\"${getfile}=statement.html\" title=\"statement\" style=\"border:none;\" width=\"80%\" height=\"700px\" > </iframe></div></description></statement></problem>\n", f);
+            fclose(f);
+        }
     }
 
     fprintf(log_f, "    standard_checker: %s\n", pi->standard_checker);
