@@ -2,7 +2,7 @@
 #ifndef __SUPER_HTML_H__
 #define __SUPER_HTML_H__
 
-/* Copyright (C) 2004-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -327,6 +327,13 @@ ss_get_saved_auth(
 int
 ss_find_free_prob_id(
         const struct sid_state *ss);
+
+int
+ss_find_free_prob_id_and_name(
+        const struct sid_state *ss,
+        unsigned char *prob_buf,
+        size_t buf_size);
+
 int
 ss_get_global_caps(
         const struct http_request_info *phr,
