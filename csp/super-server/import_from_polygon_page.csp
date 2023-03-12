@@ -40,8 +40,8 @@
         goto cleanup;
     }
 
-    prob_id = ss_find_free_prob_id(ss);
-    problem_id_to_short_name(prob_id - 1, prob_buf);
+    prob_id = ss_find_free_prob_id_and_name(ss, prob_buf, sizeof(prob_buf));
+    (void) prob_id;
 
     ss_get_saved_auth(phr->login, &saved_login, &saved_password, &saved_url);
     if (!saved_login) saved_login = xstrdup("");
