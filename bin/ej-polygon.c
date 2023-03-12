@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2012-2020 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -26,6 +26,7 @@
 #include "ejudge/html_parse.h"
 #include "ejudge/sha512utils.h"
 #include "ejudge/cJSON.h"
+#include "ejudge/fileutl.h"
 
 #include "ejudge/osdeps.h"
 #include "ejudge/xalloc.h"
@@ -2407,7 +2408,8 @@ process_polygon_zip(
         const struct polygon_packet *pkt,
         const struct ZipInterface *zif,
         const unsigned char *zip_path,
-        struct ProblemInfo *pi)
+        struct ProblemInfo *pi,
+        int fill_info_mode)
 {
     struct ZipData *zid = NULL;
     unsigned char *data = NULL;
@@ -2418,6 +2420,7 @@ process_polygon_zip(
     char *cfg_text = NULL;
     size_t cfg_size = 0;
     FILE *cfg_file = NULL;
+    unsigned char *problem_url = NULL;
 
     if (!(zid = zif->open(log_f, zip_path))) {
         fprintf(log_f, "Failed to open zip file '%s'\n", zip_path);
@@ -2427,6 +2430,9 @@ process_polygon_zip(
     if (zif->read_file(zid, pkt->problem_xml_name, &data, &size) <= 0) {
         goto zip_error;
     }
+
+    fprintf(log_f, "Problem XML:\n");
+    fprintf(log_f, "%s\n", data);
 
     tree = xml_build_tree_str(log_f, data, &generic_xml_parse_spec);
     if (!tree) {
@@ -2439,7 +2445,11 @@ process_polygon_zip(
         goto zip_error;
     }
     for (a = tree->first; a; a = a->next) {
-        if (!strcmp(a->name[0], "name")) {
+        if (!strcmp(a->name[0], "short-name")) {
+            if (fill_info_mode > 0) {
+                pi->problem_name = xstrdup(a->text);
+            }
+        } else if (!strcmp(a->name[0], "name")) {
             if (strcmp(pi->problem_name, a->text)) {
                 fprintf(log_f, "problem name mismatch: db == '%s', xml attr == '%s'\n", pi->problem_name, a->text);
                 goto zip_error;
@@ -2450,9 +2460,22 @@ process_polygon_zip(
                 fprintf(log_f, "failed to parse revision attribute\n");
                 goto zip_error;
             }
-            if (pi->package_rev != revision && pkt->fetch_latest_available <= 0) {
+            if (fill_info_mode > 0) {
+                pi->package_rev = revision;
+            } else if (pi->package_rev != revision && pkt->fetch_latest_available <= 0) {
                 fprintf(log_f, "package revision mismatch: db == %d, xml attr == %d\n", pi->package_rev, revision);
                 goto zip_error;
+            }
+        } else if (!strcmp(a->name[0], "url")) {
+            const char *p = a->text;
+            if (!strncasecmp(p, "http://", 7)) {
+                p += 7;
+            } else if (!strncasecmp(p, "https://", 8)) {
+                p += 8;
+            }
+            const char *q = strchr(p, '/');
+            if (q) {
+                problem_url = xstrdup(q + 1);
             }
         }
     }
@@ -2860,8 +2883,13 @@ process_polygon_zip(
         prob_cfg->short_name = xstrdup(pi->ejudge_short_name);
     }
     prob_cfg->internal_name = xstrdup(pi->problem_name);
-    snprintf(buf, sizeof(buf), "polygon:%d", pi->problem_id);
-    prob_cfg->extid = xstrdup(buf);
+    if (problem_url && problem_url[0]) {
+        snprintf(buf, sizeof(buf), "polygon:%s", problem_url);
+        prob_cfg->extid = xstrdup(buf);
+    } else if (pi->problem_id > 0) {
+        snprintf(buf, sizeof(buf), "polygon:%d", pi->problem_id);
+        prob_cfg->extid = xstrdup(buf);
+    }
     snprintf(buf, sizeof(buf), "%d", pi->package_rev);
     prob_cfg->revision = xstrdup(buf);
     if (pi->time_limit_ms > 0 && pi->time_limit_ms % 1000 == 0) {
@@ -2936,6 +2964,9 @@ process_polygon_zip(
     if (save_file(log_f, cfg_path, cfg_text, cfg_size, pkt->file_mode, pkt->file_group, NULL)) goto zip_error;
     pi->state = STATE_UPDATED;
 
+    fprintf(log_f, "config file: \n");
+    fprintf(log_f, "%s\n", cfg_text);
+
 cleanup:
     zid = zif->close(zid);
     xfree(data);
@@ -2943,6 +2974,7 @@ cleanup:
     xfree(cfg_text);
     xml_tree_free(tree, &generic_xml_parse_spec);
     problem_config_section_free((struct generic_section_config *) prob_cfg);
+    free(problem_url);
     return;
 
 zip_error:
@@ -3148,7 +3180,7 @@ check_problem_status(
     //file_downloaded:
 
     pi->state = STATE_DOWNLOADED;
-    process_polygon_zip(log_f, pkt, zif, zip_path, pi);
+    process_polygon_zip(log_f, pkt, zif, zip_path, pi, 0);
 
 cleanup:
     free_revision_info(&rinfo);
@@ -3597,7 +3629,7 @@ check_problem_status_api(
     //file_downloaded:
 
     pi->state = STATE_DOWNLOADED;
-    process_polygon_zip(log_f, pkt, zif, zip_path, pi);
+    process_polygon_zip(log_f, pkt, zif, zip_path, pi, 0);
 
 cleanup:
     free_revision_info(&rinfo);
@@ -3845,6 +3877,54 @@ done:;
     return retval;
 }
 
+static int
+do_work_file(
+        FILE *log_f,
+        struct polygon_packet *pkt,
+        struct ProblemSet *probset)
+{
+    const struct ZipInterface *zif = NULL;
+    int retval = 1;
+
+#if CONF_HAS_LIBZIP - 0 == 0
+    fprintf(log_f, "libzip library was missing during the complation, functionality is not available\n");
+    retval = 1;
+    goto done;
+#else
+    zif = get_zip_interface(log_f, pkt);
+#endif
+
+    if (!zif) {
+        fprintf(log_f, "zip interface is not available\n");
+        retval = 1;
+        goto done;
+    }
+
+    probset->count = 1;
+    XCALLOC(probset->infos, probset->count);
+
+    if (pkt->ejudge_short_name && pkt->ejudge_short_name[0] && pkt->ejudge_short_name[0][0]) {
+        probset->infos[0].ejudge_short_name = xstrdup(pkt->ejudge_short_name[0]);
+    }
+
+    process_polygon_zip(log_f, pkt, zif, pkt->package_file, &probset->infos[0], 1);
+
+    // copy zip file to download directory
+    if (pkt->download_dir && pkt->download_dir[0]) {
+        unsigned char target_name[PATH_MAX];
+        snprintf(target_name, sizeof(target_name),
+                 "%s-%d", probset->infos[0].problem_name,
+                 probset->infos[0].package_rev);
+        generic_copy_file(0, NULL, pkt->package_file, NULL,
+                          0, pkt->download_dir, target_name, ".zip");
+    }
+
+    retval = 0;
+
+done:;
+    return retval;
+}
+
 int
 main(int argc, char **argv)
 {
@@ -3976,7 +4056,9 @@ main(int argc, char **argv)
     } else {
         log_f = stderr;
     }
-    if (pkt->secret && *pkt->secret) {
+    if (pkt->package_file) {
+        retval = do_work_file(log_f, pkt, &problem_set);
+    } else if (pkt->secret && *pkt->secret) {
         retval = do_work_api(log_f, pkt, rand, &problem_set);
     } else {
         retval = do_work(log_f, pkt, &problem_set);
