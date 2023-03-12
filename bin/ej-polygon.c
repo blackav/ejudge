@@ -2955,6 +2955,9 @@ process_polygon_zip(
         prob_cfg->solution_cmd = xstrdup(pi->solution_cmd);
     }
     prob_cfg->enable_testlib_mode = 1;
+    if (pkt->binary_input > 0) {
+        prob_cfg->binary_input = 1;
+    }
 
     cfg_file = open_memstream(&cfg_text, &cfg_size);
     problem_config_section_unparse_cfg(cfg_file, prob_cfg);

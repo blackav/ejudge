@@ -5066,6 +5066,9 @@ do_import_problem(
   if (cfg->enable_testlib_mode > 0) {
     prob->enable_testlib_mode = 1;
   }
+  if (cfg->binary_input > 0) {
+    prob->binary_input = 1;
+  }
   if (cfg->max_vm_size != (size_t) -1L && cfg->max_vm_size) {
     prob->max_vm_size = cfg->max_vm_size;
   }
