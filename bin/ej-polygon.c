@@ -115,6 +115,7 @@ struct ProblemInfo
     unsigned char *test_checker_cmd;
     unsigned char *solution_cmd;
     unsigned char *interactor_cmd;
+    unsigned char *html_statement_path;
 };
 
 struct RevisionInfo
@@ -1316,6 +1317,7 @@ free_problem_infos(struct ProblemSet *probset)
         xfree(pi->test_checker_cmd);
         xfree(pi->solution_cmd);
         xfree(pi->interactor_cmd);
+        xfree(pi->html_statement_path);
     }
     xfree(probset->infos);
     probset->count = 0;
@@ -2571,6 +2573,34 @@ process_polygon_zip(
             }
         } else if (!strcmp(t1->name[0], "files")) {
         } else if (!strcmp(t1->name[0], "assets")) {
+        } else if (!strcmp(t1->name[0], "statements")) {
+            for (struct xml_tree *t2 = t1->first_down; t2; t2 = t2->right) {
+                if (!strcmp(t2->name[0], "statement")) {
+                    const unsigned char *cur_charset = NULL;
+                    const unsigned char *cur_language = NULL;
+                    int cur_mathjax = 0;
+                    const unsigned char *cur_path = NULL;
+                    const unsigned char *cur_type = NULL;
+                    for (a = t2->first; a; a = a->next) {
+                        if (!strcmp(a->name[0], "charset")) {
+                            cur_charset = a->text;
+                        } else if (!strcmp(a->name[0], "language")) {
+                            cur_language = a->text;
+                        } else if (!strcmp(a->name[0], "mathjax")) {
+                            xml_attr_bool(a, &cur_mathjax);
+                        } else if (!strcmp(a->name[0], "path")) {
+                            cur_path = a->text;
+                        } else if (!strcmp(a->name[0], "type")) {
+                            cur_type = a->text;
+                        }
+                    }
+                    if (!strcasecmp(cur_type, "text/html")
+                        && !strcasecmp(cur_language, "russian")
+                        && !strcasecmp(cur_charset, "utf-8")) {
+                        pi->html_statement_path = xstrdup(cur_path);
+                    }
+                }
+            }
         }
     }
 
@@ -2865,6 +2895,19 @@ process_polygon_zip(
             }
         }
     }
+    if (pi->html_statement_path) {
+        unsigned char attachments_path[PATH_MAX];
+        snprintf(attachments_path, sizeof(attachments_path),
+                 "%s/attachments", problem_path);
+        if (os_MakeDirPath2(attachments_path, pkt->dir_mode, pkt->dir_group) < 0) {
+            fprintf(log_f, "failed to create directory '%s'\n", attachments_path);
+            goto zip_error;
+        }
+        unsigned char statement_path[PATH_MAX];
+        snprintf(statement_path, sizeof(statement_path),
+                 "%s/statement.html", attachments_path);
+        if (copy_from_zip(log_f, pkt, zif, zid, zip_path, pi->html_statement_path, statement_path)) goto zip_error;
+    }
 
     fprintf(log_f, "    standard_checker: %s\n", pi->standard_checker);
     fprintf(log_f, "    checker_env: %s\n", pi->checker_env);
@@ -2872,6 +2915,7 @@ process_polygon_zip(
     fprintf(log_f, "    test_checker_cmd: %s\n", pi->test_checker_cmd);
     fprintf(log_f, "    solution_cmd: %s\n", pi->solution_cmd);
     fprintf(log_f, "    interactor_cmd: %s\n", pi->interactor_cmd);
+    fprintf(log_f, "    html_statement: %s\n", pi->html_statement_path);
 
     unsigned char buf[1024];
 
@@ -2957,6 +3001,9 @@ process_polygon_zip(
     prob_cfg->enable_testlib_mode = 1;
     if (pkt->binary_input > 0) {
         prob_cfg->binary_input = 1;
+    }
+    if (pi->html_statement_path && pi->html_statement_path[0]) {
+        prob_cfg->iframe_statement = xstrdup("statement.html");
     }
 
     cfg_file = open_memstream(&cfg_text, &cfg_size);
