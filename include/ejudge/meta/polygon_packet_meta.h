@@ -14,6 +14,7 @@ enum
   META_POLYGON_PACKET_retry_count,
   META_POLYGON_PACKET_fetch_latest_available,
   META_POLYGON_PACKET_binary_input,
+  META_POLYGON_PACKET_enable_iframe_statement,
   META_POLYGON_PACKET_polygon_url,
   META_POLYGON_PACKET_login,
   META_POLYGON_PACKET_password,

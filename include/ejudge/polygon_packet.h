@@ -41,6 +41,7 @@ struct polygon_packet
     int retry_count;
     ejintbool_t fetch_latest_available;
     ejintbool_t binary_input;
+    ejintbool_t enable_iframe_statement;
 
     unsigned char *polygon_url;
     unsigned char *login;

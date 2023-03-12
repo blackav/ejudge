@@ -19,6 +19,7 @@ static struct meta_info_item meta_info_polygon_packet_data[] =
   [META_POLYGON_PACKET_retry_count] = { META_POLYGON_PACKET_retry_count, 'i', XSIZE(struct polygon_packet, retry_count), "retry_count", XOFFSET(struct polygon_packet, retry_count) },
   [META_POLYGON_PACKET_fetch_latest_available] = { META_POLYGON_PACKET_fetch_latest_available, 'B', XSIZE(struct polygon_packet, fetch_latest_available), "fetch_latest_available", XOFFSET(struct polygon_packet, fetch_latest_available) },
   [META_POLYGON_PACKET_binary_input] = { META_POLYGON_PACKET_binary_input, 'B', XSIZE(struct polygon_packet, binary_input), "binary_input", XOFFSET(struct polygon_packet, binary_input) },
+  [META_POLYGON_PACKET_enable_iframe_statement] = { META_POLYGON_PACKET_enable_iframe_statement, 'B', XSIZE(struct polygon_packet, enable_iframe_statement), "enable_iframe_statement", XOFFSET(struct polygon_packet, enable_iframe_statement) },
   [META_POLYGON_PACKET_polygon_url] = { META_POLYGON_PACKET_polygon_url, 's', XSIZE(struct polygon_packet, polygon_url), "polygon_url", XOFFSET(struct polygon_packet, polygon_url) },
   [META_POLYGON_PACKET_login] = { META_POLYGON_PACKET_login, 's', XSIZE(struct polygon_packet, login), "login", XOFFSET(struct polygon_packet, login) },
   [META_POLYGON_PACKET_password] = { META_POLYGON_PACKET_password, 's', XSIZE(struct polygon_packet, password), "password", XOFFSET(struct polygon_packet, password) },
