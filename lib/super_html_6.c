@@ -4318,37 +4318,49 @@ cleanup:
   return retval;
 }
 
+static char *
+trim_fgets(unsigned char *buf, size_t size, FILE *f)
+{
+  if (!fgets(buf, size, f)) return NULL;
+  size_t len = strlen(buf);
+  while (len > 0 && isspace((unsigned char) buf[len - 1])) --len;
+  buf[len] = 0;
+  return buf;
+}
+
 int
 ss_get_saved_auth(
         const unsigned char *ej_login,
         unsigned char **p_poly_login,
         unsigned char **p_poly_password,
-        unsigned char **p_poly_url)
+        unsigned char **p_poly_url,
+        unsigned char **p_poly_key,
+        unsigned char **p_poly_secret)
 {
   unsigned char path[PATH_MAX];
   FILE *f = NULL;
-  unsigned char lb[1024], pb[1024], ub[1024];
+  unsigned char lb[1024], pb[1024], ub[1024], kb[1024], sb[1024];
 
   lb[0] = 0;
   pb[0] = 0;
   ub[0] = 0;
+  kb[0] = 0;
+  sb[0] = 0;
   snprintf(path, sizeof(path), "%s/db/%s", EJUDGE_CONF_DIR, ej_login);
   if (!(f = fopen(path, "r"))) return -1;
-  (void) (fgets(lb, sizeof(lb), f) && fgets(pb, sizeof(pb), f) && fgets(ub, sizeof(ub), f));
-  fclose(f); f = NULL;
-  int ll = strlen(lb);
-  while (ll > 0 && isspace(lb[ll - 1])) --ll;
-  lb[ll] = 0;
-  ll = strlen(pb);
-  while (ll > 0 && isspace(pb[ll - 1])) --ll;
-  pb[ll] = 0;
-  ll = strlen(ub);
-  while (ll > 0 && isspace(ub[ll - 1])) --ll;
-  ub[ll] = 0;
+
+  (void) (trim_fgets(lb, sizeof(lb), f)
+          && trim_fgets(pb, sizeof(pb), f)
+          && trim_fgets(ub, sizeof(ub), f)
+          && trim_fgets(kb, sizeof(kb), f)
+          && trim_fgets(sb, sizeof(sb), f));
 
   *p_poly_login = xstrdup(lb);
   *p_poly_password = xstrdup(pb);
   *p_poly_url = xstrdup(ub);
+  if (p_poly_key) *p_poly_key = xstrdup(kb);
+  if (p_poly_secret) *p_poly_secret = xstrdup(sb);
+
   return 1;
 }
 

@@ -14,6 +14,8 @@
     unsigned char *saved_login = NULL;
     unsigned char *saved_password = NULL;
     unsigned char *saved_url = NULL;
+    unsigned char *saved_key = NULL;
+    unsigned char *saved_secret = NULL;
     unsigned char prob_buf[64];
     int cur_page = 4;
 
@@ -42,10 +44,12 @@
     prob_id = ss_find_free_prob_id(ss);
     problem_id_to_short_name(prob_id - 1, prob_buf);
 
-    ss_get_saved_auth(phr->login, &saved_login, &saved_password, &saved_url);
+    ss_get_saved_auth(phr->login, &saved_login, &saved_password, &saved_url, &saved_key, &saved_secret);
     if (!saved_login) saved_login = xstrdup("");
     if (!saved_password) saved_password = xstrdup("");
     if (!saved_url) saved_url = xstrdup("");
+    if (!saved_key) saved_key = xstrdup("");
+    if (!saved_secret) saved_secret = xstrdup("");
 
 %><%@include "header.csp"
 %>

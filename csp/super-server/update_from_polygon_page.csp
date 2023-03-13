@@ -13,6 +13,8 @@
     unsigned char *saved_login = NULL;
     unsigned char *saved_password = NULL;
     unsigned char *saved_url = NULL;
+    unsigned char *saved_key = NULL;
+    unsigned char *saved_secret = NULL;
     struct sid_state *ss = phr->ss;
     int cur_page = 4;
 
@@ -33,10 +35,12 @@
         goto cleanup;
     }
 
-    ss_get_saved_auth(phr->login, &saved_login, &saved_password, &saved_url);
+    ss_get_saved_auth(phr->login, &saved_login, &saved_password, &saved_url, &saved_key, &saved_secret);
     if (!saved_login) saved_login = xstrdup("");
     if (!saved_password) saved_password = xstrdup("");
     if (!saved_url) saved_url = xstrdup("");
+    if (!saved_key) saved_key = xstrdup("");
+    if (!saved_secret) saved_secret = xstrdup("");
 
 %><%@include "header.csp"
 %>

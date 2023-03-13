@@ -323,7 +323,9 @@ ss_get_saved_auth(
         const unsigned char *ej_login,
         unsigned char **p_poly_login,
         unsigned char **p_poly_password,
-        unsigned char **p_poly_url);
+        unsigned char **p_poly_url,
+        unsigned char **p_poly_key,
+        unsigned char **p_poly_secret);
 int
 ss_find_free_prob_id(
         const struct sid_state *ss);
