@@ -4357,7 +4357,9 @@ save_auth(
         const unsigned char *ej_login,
         const unsigned char *poly_login,
         const unsigned char *poly_password,
-        const unsigned char *poly_url)
+        const unsigned char *poly_url,
+        const unsigned char *poly_key,
+        const unsigned char *poly_secret)
 {
   unsigned char path[PATH_MAX];
   FILE *f = NULL;
@@ -4365,12 +4367,15 @@ save_auth(
   if (!poly_login) poly_login = "";
   if (!poly_password) poly_password = "";
   if (!poly_url) poly_url = "";
+  if (!poly_key) poly_key = "";
+  if (!poly_secret) poly_secret = "";
 
   snprintf(path, sizeof(path), "%s/db/%s", EJUDGE_CONF_DIR, ej_login);
   if (!(f = fopen(path, "w"))) {
     return;
   }
-  fprintf(f, "%s\n%s\n%s\n", poly_login, poly_password, poly_url);
+  fprintf(f, "%s\n%s\n%s\n%s\n%s\n", poly_login, poly_password, poly_url,
+          poly_key, poly_secret);
   fflush(f);
   if (ferror(f)) {
     fclose(f); unlink(path);
@@ -4623,7 +4628,7 @@ super_serve_op_IMPORT_FROM_POLYGON_ACTION(
 
   if (!upload_mode) {
     if (save_auth_flag) {
-      save_auth(phr->login, polygon_login, polygon_password, polygon_url);
+      save_auth(phr->login, polygon_login, polygon_password, polygon_url, polygon_key, polygon_secret);
     }
   }
 
@@ -5345,7 +5350,7 @@ super_serve_op_UPDATE_FROM_POLYGON_ACTION(
   }
 
   if (save_auth_flag) {
-    save_auth(phr->login, polygon_login, polygon_password, polygon_url);
+    save_auth(phr->login, polygon_login, polygon_password, polygon_url, NULL, NULL);
   }
 
   s = getenv("TMPDIR");
