@@ -4522,29 +4522,31 @@ super_serve_op_IMPORT_FROM_POLYGON_ACTION(
   }
 
   if (!upload_mode) {
-    if ((r = hr_cgi_param(phr, "polygon_login", &s)) < 0) {
-      fprintf(log_f, "polygon login is invalid\n");
-      FAIL(SSERV_ERR_INV_OPER);
-    }
-    if (!r || !s || !*s) {
-      fprintf(log_f, "polygon login is undefined\n");
-      FAIL(SSERV_ERR_INV_OPER);
-    }
-    polygon_login = xstrdup(s);
+    if (hr_cgi_param(phr, "enable_api", &s) > 0) enable_api_flag = 1;
 
-    if ((r = hr_cgi_param(phr, "polygon_password", &s)) < 0) {
-      fprintf(log_f, "polygon password is invalid\n");
-      FAIL(SSERV_ERR_INV_OPER);
+    if (!enable_api_flag) {
+      if ((r = hr_cgi_param(phr, "polygon_login", &s)) < 0) {
+        fprintf(log_f, "polygon login is invalid\n");
+        FAIL(SSERV_ERR_INV_OPER);
+      }
+      if (!r || !s || !*s) {
+        fprintf(log_f, "polygon login is undefined\n");
+        FAIL(SSERV_ERR_INV_OPER);
+      }
+      polygon_login = xstrdup(s);
+
+      if ((r = hr_cgi_param(phr, "polygon_password", &s)) < 0) {
+        fprintf(log_f, "polygon password is invalid\n");
+        FAIL(SSERV_ERR_INV_OPER);
+      }
+      if (!r || !s || !*s) {
+        fprintf(log_f, "polygon password is undefined\n");
+        FAIL(SSERV_ERR_INV_OPER);
+      }
+      polygon_password = xstrdup(s);
     }
-    if (!r || !s || !*s) {
-      fprintf(log_f, "polygon password is undefined\n");
-      FAIL(SSERV_ERR_INV_OPER);
-    }
-    polygon_password = xstrdup(s);
 
     if (hr_cgi_param(phr, "save_auth", &s) > 0) save_auth_flag = 1;
-
-    if (hr_cgi_param(phr, "enable_api", &s) > 0) enable_api_flag = 1;
 
     if (enable_api_flag) {
       if ((r = hr_cgi_param(phr, "polygon_key", &s)) < 0) {
