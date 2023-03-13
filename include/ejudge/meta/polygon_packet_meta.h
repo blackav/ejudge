@@ -16,6 +16,7 @@ enum
   META_POLYGON_PACKET_binary_input,
   META_POLYGON_PACKET_enable_iframe_statement,
   META_POLYGON_PACKET_enable_api,
+  META_POLYGON_PACKET_verbose,
   META_POLYGON_PACKET_polygon_url,
   META_POLYGON_PACKET_login,
   META_POLYGON_PACKET_password,
