@@ -75,6 +75,7 @@ enum UpdateState
     STATE_UNCOMMITTED,
     STATE_TIMEOUT,
     STATE_NOT_AVAILABLE,
+    STATE_PERMISSION_DENIED,
 
     STATE_LAST,
 };
@@ -1272,6 +1273,7 @@ const unsigned char * update_statuses[] =
     [STATE_UNCOMMITTED] = "UNCOMMITTED",
     [STATE_TIMEOUT] = "TIMEOUT",
     [STATE_NOT_AVAILABLE] = "NOT_AVAILABLE",
+    [STATE_PERMISSION_DENIED] = "PERMISSION_DENIED",
 
     [STATE_LAST] = NULL,
 };
@@ -3355,6 +3357,7 @@ done:
 static int
 process_problems_json(
         FILE *log_f,
+        const struct polygon_packet *pkt,
         struct PolygonState *ps,
         struct DownloadData *ddata,
         struct ProblemSet *probset)
@@ -3362,9 +3365,6 @@ process_problems_json(
     int retval = 0;
     cJSON *root = NULL;
     const unsigned char *text = ddata->iface->get_page_text(ddata);
-    //size_t size = ddata->iface->get_page_size(ddata);
-
-    //fprintf(log_f, "=== %zu ===\n%s\n===\n", size, text);
 
     root = cJSON_Parse(text);
     if (!root) {
@@ -3377,6 +3377,13 @@ process_problems_json(
         retval = 1;
         goto done;
     }
+
+    if (pkt->verbose) {
+        char *s = cJSON_Print(root);
+        fprintf(log_f, "=== problems.json ===\n%s\n===\n", s);
+        free(s);
+    }
+
     cJSON *jstatus = cJSON_GetObjectItem(root, "status");
     if (!jstatus || jstatus->type != cJSON_String || strcmp(jstatus->valuestring, "OK")) {
         fprintf(log_f, "invalid json: invalid or missing 'status'\n");
@@ -3419,6 +3426,24 @@ process_problems_json(
             }
         }
         if (!pi) continue;
+
+        cJSON *jaccessType = cJSON_GetObjectItem(jitem, "accessType");
+        if (!jaccessType || jaccessType->type != cJSON_String) {
+            fprintf(log_f, "invalid json: accessType must be string\n");
+            retval = 1;
+            goto done;
+        }
+        if (strcasecmp(jaccessType->valuestring, "WRITE") != 0) {
+            if (pi->key_id > 0) {
+                fprintf(log_f, "WRITE access is required for problem %d\n",
+                        pi->key_id);
+            } else if (pi->key_name) {
+                fprintf(log_f, "WRITE access is required for problem '%s'\n",
+                        pi->key_name);
+            }
+            pi->state = STATE_PERMISSION_DENIED;
+            continue;
+        }
 
         pi->problem_id = jid->valueint;
         pi->problem_name = xstrdup(jname->valuestring);
@@ -3467,35 +3492,14 @@ done:
 static int
 process_problem_info_json(
         FILE *log_f,
+        const struct polygon_packet *pkt,
         struct PolygonState *ps,
         struct DownloadData *ddata,
         struct ProblemInfo *pi)
 {
-    int retval = 0;
-    //cJSON *root = NULL;
-    const unsigned char *text = ddata->iface->get_page_text(ddata);
-    size_t size = ddata->iface->get_page_size(ddata);
-
-    fprintf(log_f, "=== %zu ===\n%s\n===\n", size, text);
-
-    return retval;
-}
-
-static int
-process_problem_packages_json(
-        FILE *log_f,
-        struct PolygonState *ps,
-        struct DownloadData *ddata,
-        struct ProblemInfo *pi,
-        int revision,
-        struct RevisionInfo *rinfo)
-{
-    int retval = 0;
+    int retval = 1;
     cJSON *root = NULL;
     const unsigned char *text = ddata->iface->get_page_text(ddata);
-    size_t size = ddata->iface->get_page_size(ddata);
-
-    fprintf(log_f, "=== %zu ===\n%s\n===\n", size, text);
 
     root = cJSON_Parse(text);
     if (!root) {
@@ -3510,6 +3514,53 @@ process_problem_packages_json(
         pi->state = STATE_FAILED;
         goto done;
     }
+
+    if (pkt->verbose) {
+        char *s = cJSON_Print(root);
+        fprintf(log_f, "=== problem_info.json ===\n%s\n===\n", s);
+        free(s);
+    }
+
+    retval = 0;
+
+done:;
+    if (root) cJSON_Delete(root);
+    return retval;
+}
+
+static int
+process_problem_packages_json(
+        FILE *log_f,
+        const struct polygon_packet *pkt,
+        struct PolygonState *ps,
+        struct DownloadData *ddata,
+        struct ProblemInfo *pi,
+        int revision,
+        struct RevisionInfo *rinfo)
+{
+    int retval = 0;
+    cJSON *root = NULL;
+    const unsigned char *text = ddata->iface->get_page_text(ddata);
+
+    root = cJSON_Parse(text);
+    if (!root) {
+        fprintf(log_f, "JSON parse failed\n");
+        retval = 1;
+        pi->state = STATE_FAILED;
+        goto done;
+    }
+    if (root->type != cJSON_Object) {
+        fprintf(log_f, "invalid contests json, root document expected\n");
+        retval = 1;
+        pi->state = STATE_FAILED;
+        goto done;
+    }
+    if (pkt->verbose) {
+        char *s = cJSON_Print(root);
+        fprintf(log_f, "=== problem_packages.json ===\n%s\n===\n", s);
+        free(s);
+    }
+
     cJSON *jstatus = cJSON_GetObjectItem(root, "status");
     if (!jstatus || jstatus->type != cJSON_String || strcmp(jstatus->valuestring, "OK")) {
         fprintf(log_f, "invalid json: invalid or missing 'status'\n");
@@ -3660,7 +3711,7 @@ check_problem_status_api(
         pi->state = STATE_FAILED;
         goto cleanup;
     }
-    if (process_problem_info_json(log_f, ps, ddata, pi)) {
+    if (process_problem_info_json(log_f, pkt, ps, ddata, pi)) {
         pi->state = STATE_FAILED;
         goto cleanup;
     }
@@ -3670,7 +3721,7 @@ check_problem_status_api(
         pi->state = STATE_FAILED;
         goto cleanup;
     }
-    if (process_problem_packages_json(log_f, ps, ddata, pi, package_rev, &rinfo)) {
+    if (process_problem_packages_json(log_f, pkt, ps, ddata, pi, package_rev, &rinfo)) {
         goto cleanup;
     }
 
@@ -3806,7 +3857,7 @@ do_work_api(
         retval = 1;
         goto done;
     }
-    if (process_problems_json(log_f, ps, ddata, probset)) {
+    if (process_problems_json(log_f, pkt, ps, ddata, probset)) {
         retval = 1;
         goto done;
     }
