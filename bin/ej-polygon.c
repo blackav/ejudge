@@ -2433,8 +2433,10 @@ process_polygon_zip(
         goto zip_error;
     }
 
-    fprintf(log_f, "Problem XML:\n");
-    fprintf(log_f, "%s\n", data);
+    if (pkt->verbose > 0) {
+        fprintf(log_f, "Problem XML:\n");
+        fprintf(log_f, "%s\n", data);
+    }
 
     tree = xml_build_tree_str(log_f, data, &generic_xml_parse_spec);
     if (!tree) {
@@ -3040,8 +3042,10 @@ process_polygon_zip(
     if (save_file(log_f, cfg_path, cfg_text, cfg_size, pkt->file_mode, pkt->file_group, NULL)) goto zip_error;
     pi->state = STATE_UPDATED;
 
-    fprintf(log_f, "config file: \n");
-    fprintf(log_f, "%s\n", cfg_text);
+    if (pkt->verbose) {
+        fprintf(log_f, "config file: \n");
+        fprintf(log_f, "%s\n", cfg_text);
+    }
 
 cleanup:
     zid = zif->close(zid);
