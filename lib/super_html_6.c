@@ -4457,6 +4457,7 @@ super_serve_op_IMPORT_FROM_POLYGON_ACTION(
   int binary_input_flag = 0;
   int enable_iframe_statement_flag = 0;
   int enable_api_flag = 0;
+  int verbose_flag = 0;
 
   if (!ss->edited_cnts || !ss->global) {
     FAIL(SSERV_ERR_NO_EDITED_CNTS);
@@ -4479,6 +4480,8 @@ super_serve_op_IMPORT_FROM_POLYGON_ACTION(
     fprintf(log_f, "advanced_layout must be set\n");
     FAIL(SSERV_ERR_INV_OPER);
   }
+
+  if (hr_cgi_param(phr, "verbose", &s) > 0) verbose_flag = 1;
 
   hr_cgi_param_int_opt(phr, "contest_mode", &contest_mode, 0);
   contest_mode = !!contest_mode;
@@ -4698,6 +4701,7 @@ super_serve_op_IMPORT_FROM_POLYGON_ACTION(
   pp->ignore_solutions = ignore_solutions_flag;
   pp->binary_input = binary_input_flag;
   pp->enable_iframe_statement = enable_iframe_statement_flag;
+  pp->verbose = verbose_flag;
   pp->create_mode = 1;
   if (upload_mode <= 0) {
     pp->fetch_latest_available = fetch_latest_available_flag;

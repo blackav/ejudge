@@ -12,6 +12,8 @@
     unsigned char *saved_login = NULL;
     unsigned char *saved_password = NULL;
     unsigned char *saved_url = NULL;
+    unsigned char *polygon_key = NULL;
+    unsigned char *polygon_secret = NULL;
     unsigned char prob_buf[64];
     int prob_id;
     int cur_page = 4;
@@ -96,6 +98,8 @@
         <tr><td class="b0">Tests are binary data:</td><td class="b0"><input type="checkbox" name="binary_input" value="1" /></td></tr>
 
         <tr><td class="b0">Embed statement in IFRAME:</td><td class="b0"><input type="checkbox" name="enable_iframe_statement" value="1" checked="checked" /></td></tr>
+
+        <tr><td class="b0">Verbose importer output:</td><td class="b0"><input type="checkbox" name="verbose" value="1" /></td></tr>
 
         <tr><td class="b0"><s:submit ac="import-from-polygon-action" label="Import" /></td></tr>
     </table>
