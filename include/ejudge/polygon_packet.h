@@ -42,6 +42,7 @@ struct polygon_packet
     ejintbool_t fetch_latest_available;
     ejintbool_t binary_input;
     ejintbool_t enable_iframe_statement;
+    ejintbool_t enable_api;
 
     unsigned char *polygon_url;
     unsigned char *login;
