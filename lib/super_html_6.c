@@ -4438,6 +4438,8 @@ super_serve_op_IMPORT_FROM_POLYGON_ACTION(
   unsigned char *polygon_password = NULL;
   unsigned char *polygon_id = NULL;
   unsigned char *polygon_url = NULL;
+  unsigned char *polygon_key = NULL;
+  unsigned char *polygon_secret = NULL;
   const unsigned char *language_priority = NULL;
   int save_auth_flag = 0;
   int max_stack_size_flag = 0;
@@ -4454,6 +4456,7 @@ super_serve_op_IMPORT_FROM_POLYGON_ACTION(
   size_t package_file_size = 0;
   int binary_input_flag = 0;
   int enable_iframe_statement_flag = 0;
+  int enable_api_flag = 0;
 
   if (!ss->edited_cnts || !ss->global) {
     FAIL(SSERV_ERR_NO_EDITED_CNTS);
@@ -4537,6 +4540,30 @@ super_serve_op_IMPORT_FROM_POLYGON_ACTION(
     polygon_password = xstrdup(s);
 
     if (hr_cgi_param(phr, "save_auth", &s) > 0) save_auth_flag = 1;
+
+    if (hr_cgi_param(phr, "enable_api", &s) > 0) enable_api_flag = 1;
+
+    if (enable_api_flag) {
+      if ((r = hr_cgi_param(phr, "polygon_key", &s)) < 0) {
+        fprintf(log_f, "polygon key is invalid\n");
+        FAIL(SSERV_ERR_INV_OPER);
+      }
+      if (!r || !s || !*s) {
+        fprintf(log_f, "polygon key is undefined\n");
+        FAIL(SSERV_ERR_INV_OPER);
+      }
+      polygon_key = xstrdup(s);
+
+      if ((r = hr_cgi_param(phr, "polygon_secret", &s)) < 0) {
+        fprintf(log_f, "polygon secret is invalid\n");
+        FAIL(SSERV_ERR_INV_OPER);
+      }
+      if (!r || !s || !*s) {
+        fprintf(log_f, "polygon secret is undefined\n");
+        FAIL(SSERV_ERR_INV_OPER);
+      }
+      polygon_secret = xstrdup(s);
+    }
 
     if (contest_mode) {
       if ((r = hr_cgi_param(phr, "polygon_contest_id", &s)) < 0) {
@@ -4677,6 +4704,11 @@ super_serve_op_IMPORT_FROM_POLYGON_ACTION(
     pp->polygon_url = polygon_url; polygon_url = NULL;
     pp->login = polygon_login; polygon_login = NULL;
     pp->password = polygon_password; polygon_password = NULL;
+    if (enable_api_flag) {
+      pp->enable_api = 1;
+      pp->key = polygon_key; polygon_key = NULL;
+      pp->secret = polygon_secret; polygon_secret = NULL;
+    }
   }
   pp->language_priority = xstrdup2(language_priority);
   pp->working_dir = xstrdup(working_dir);
