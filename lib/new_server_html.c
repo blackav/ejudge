@@ -13412,8 +13412,10 @@ rewrite_self_url(unsigned char *out, const unsigned char *in)
     role = "judge";
   } else if (!strcmp(p1, "register") || !strcmp(p1, "new-register")) {
     role = "register";
+  } else if (!strcmp(p1, "client") || !strcmp(p1, "new-client") || !strcmp(p1, "team") || !strcmp(p1, "new-team")) {
+    role = "client";
   } else {
-    // nothing
+    return;
   }
   *--p1 = 0;
   unsigned char *p2 = strrchr(out, '/');
@@ -13421,14 +13423,13 @@ rewrite_self_url(unsigned char *out, const unsigned char *in)
     strcpy(out, in);
     return;
   }
-  if (strcmp(p2 + 1, "cgi-bin") != 0) {
-    strcpy(out, in);
-    return;
+  if (!strcmp(p2 + 1, "cgi-bin")) {
+    p1 = p2;
   }
 
-  strcpy(p2, EJUDGE_REST_PREFIX);
-  p2 += EJUDGE_REST_PREFIX_LEN ;
-  strcpy(p2, role);
+  strcpy(p1, EJUDGE_REST_PREFIX);
+  p1 += EJUDGE_REST_PREFIX_LEN ;
+  strcpy(p1, role);
 }
 
 void
