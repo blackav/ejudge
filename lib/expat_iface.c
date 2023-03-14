@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2002-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -991,7 +991,8 @@ do_subst(
         struct html_armor_buffer *pb,
         const unsigned char *str,
         const unsigned char **vars,
-        const unsigned char **vals)
+        const unsigned char **vals,
+        unsigned int *flags)
 {
   const unsigned char *s, *q, *qq, *value;
   int len, newsz, i, l, subst_kind, value_len;
@@ -1088,7 +1089,8 @@ xml_unparse_raw_tree_subst(
         const struct xml_tree *tree,
         const struct xml_parse_spec *spec,
         const unsigned char **vars,
-        const unsigned char **vals)
+        const unsigned char **vals,
+        unsigned int *flags)
 {
   struct xml_tree *p;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
@@ -1099,7 +1101,7 @@ xml_unparse_raw_tree_subst(
 
   for (p = tree->first_down; p; p = p->right) {
     if (p->tag == spec->text_elem) {
-      if (p->text) fprintf(fout, "%s", do_subst(&sb, p->text, vars, vals));
+      if (p->text) fprintf(fout, "%s", do_subst(&sb, p->text, vars, vals, flags));
     } else {
       if (p->tag == spec->default_elem) {
         fprintf(fout, "<%s", p->name[0]);
@@ -1109,17 +1111,17 @@ xml_unparse_raw_tree_subst(
       for (a = p->first; a; a = a->next) {
         if (a->tag == spec->default_attr) {
           fprintf(fout, " %s=\"%s\"", a->name[0],
-                  html_armor_buf(&ab, do_subst(&sb, a->text, vars, vals)));
+                  html_armor_buf(&ab, do_subst(&sb, a->text, vars, vals, flags)));
         } else {
           fprintf(fout, " %s=\"%s\"", spec->attr_map[a->tag],
-                  html_armor_buf(&ab, do_subst(&sb, a->text, vars, vals)));
+                  html_armor_buf(&ab, do_subst(&sb, a->text, vars, vals, flags)));
         }
       }
       if (!p->first_down && (!p->text || !*p->text)) {
         fprintf(fout, "/>");
       } else {
         fprintf(fout, ">");
-        xml_unparse_raw_tree_subst(fout, p, spec, vars, vals);
+        xml_unparse_raw_tree_subst(fout, p, spec, vars, vals, flags);
         if (p->tag == spec->default_elem) {
           fprintf(fout, "</%s>", p->name[0]);
         } else {
@@ -1129,7 +1131,7 @@ xml_unparse_raw_tree_subst(
     }
   }
 
-  if (tree->text) fprintf(fout, "%s", do_subst(&sb, tree->text, vars, vals));
+  if (tree->text) fprintf(fout, "%s", do_subst(&sb, tree->text, vars, vals, flags));
 
   html_armor_free(&ab);
   html_armor_free(&sb);

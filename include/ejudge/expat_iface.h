@@ -1,10 +1,9 @@
 /* -*- c -*- */
-/* $Id$ */
 
 #ifndef __EXPAT_IFACE_H__
 #define __EXPAT_IFACE_H__ 1
 
-/* Copyright (C) 2002-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -104,7 +103,8 @@ xml_unparse_raw_tree_subst(
         const struct xml_tree *tree,
         const struct xml_parse_spec *spec,
         const unsigned char **vars,
-        const unsigned char **vals);
+        const unsigned char **vals,
+        unsigned int *flags);
 void
 xml_unparse_raw_tree(
         FILE *fout,

@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2007-2021 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2007-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -663,7 +663,7 @@ problem_xml_unparse_elem(
     return stmt;
   }
 
-  xml_unparse_raw_tree_subst(fout, t, &problem_parse_spec, vars, vals);
+  xml_unparse_raw_tree_subst(fout, t, &problem_parse_spec, vars, vals, NULL);
 
   return stmt;
 }
@@ -708,7 +708,7 @@ problem_xml_unparse_node(
         const unsigned char **vars, /* substitution variables  */
         const unsigned char **vals) /* substitution values */
 {
-  xml_unparse_raw_tree_subst(fout, p, &problem_parse_spec, vars, vals);
+  xml_unparse_raw_tree_subst(fout, p, &problem_parse_spec, vars, vals, NULL);
 }
 
 int
