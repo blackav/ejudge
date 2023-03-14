@@ -7559,21 +7559,55 @@ priv_get_file(
   if (opcaps_check(phr->caps, OPCAP_SUBMIT_RUN) < 0)
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
 
-  if (hr_cgi_param(phr, "prob_id", &s) <= 0
-      || sscanf(s, "%d%n", &prob_id, &n) != 1 || s[n]
-      || prob_id <= 0 || prob_id > cs->max_prob
-      || !(prob = cs->probs[prob_id]))
-    FAIL(NEW_SRV_ERR_INV_PROB_ID);
-  if (hr_cgi_param_int_opt(phr, "variant", &variant, 0) < 0)
-    FAIL(NEW_SRV_ERR_INV_VARIANT);
-  if (prob->variant_num <= 0) {
-    variant = 0;
+  // rest_mode: /PREFIX/ROLE/ACTION/SESSION/PROBLEM/FILE
+  //                    [0]  [1]    [2]     [3]     [4]
+
+  if (phr->rest_count > 3) {
+    errno = 0;
+    char *ep = NULL;
+    long v = strtol(phr->rest_args[3], &ep, 10);
+    if (errno || ep || ep == (char*) phr->rest_args[3] || v <= 0 || v > cs->max_prob) {
+      FAIL(NEW_SRV_ERR_INV_PROB_ID);
+    }
+    prob_id = v;
+    if (!(prob = cs->probs[prob_id])) {
+      FAIL(NEW_SRV_ERR_INV_PROB_ID);
+    }
   } else {
-    if (variant <= 0 || variant > prob->variant_num)
-      FAIL(NEW_SRV_ERR_INV_VARIANT);
+    if (hr_cgi_param(phr, "prob_id", &s) <= 0
+        || sscanf(s, "%d%n", &prob_id, &n) != 1 || s[n]
+        || prob_id <= 0 || prob_id > cs->max_prob
+        || !(prob = cs->probs[prob_id]))
+      FAIL(NEW_SRV_ERR_INV_PROB_ID);
   }
 
-  if (hr_cgi_param(phr, "file", &s) <= 0 || strchr(s, '/')) FAIL(NEW_SRV_ERR_INV_FILE_NAME);
+  if (prob->variant_num > 0) {
+    if (phr->rest_count > 5) {
+      errno = 0;
+      char *ep = NULL;
+      long v = strtol(phr->rest_args[4], &ep, 10);
+      if (errno || *ep || ep == (char*) phr->rest_args[4] || v <= 0 || v > prob->variant_num) {
+        FAIL(NEW_SRV_ERR_INV_VARIANT);
+      }
+      variant = v;
+      s = phr->rest_args[5];
+    } else {
+      if (hr_cgi_param_int_opt(phr, "variant", &variant, 0) < 0)
+        FAIL(NEW_SRV_ERR_INV_VARIANT);
+      if (variant <= 0 || variant > prob->variant_num)
+        FAIL(NEW_SRV_ERR_INV_VARIANT);
+      if (hr_cgi_param(phr, "file", &s) <= 0 || strchr(s, '/'))
+        FAIL(NEW_SRV_ERR_INV_FILE_NAME);
+    }
+  } else {
+    if (phr->rest_count > 4) {
+      s = phr->rest_args[4];
+    } else {
+      if (hr_cgi_param(phr, "file", &s) <= 0 || strchr(s, '/'))
+        FAIL(NEW_SRV_ERR_INV_FILE_NAME);
+    }
+  }
+
   if (strstr(s, "..")) FAIL(NEW_SRV_ERR_INV_FILE_NAME);
   snprintf(fname, sizeof(fname), "attachments/%s", s);
 
