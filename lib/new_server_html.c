@@ -13932,11 +13932,27 @@ unpriv_get_file(
   size_t file_size = 0;
   const unsigned char *content_type = 0;
 
-  if (hr_cgi_param(phr, "prob_id", &s) <= 0
-      || sscanf(s, "%d%n", &prob_id, &n) != 1 || s[n]
-      || prob_id <= 0 || prob_id > cs->max_prob
-      || !(prob = cs->probs[prob_id]))
-    FAIL(NEW_SRV_ERR_INV_PROB_ID);
+  // rest_mode: /PREFIX/ROLE/ACTION/SESSION/PROBLEM/FILE
+  //                    [0]  [1]    [2]     [3]     [4]
+
+  if (phr->rest_count > 4) {
+    errno = 0;
+    char *ep = NULL;
+    long v = strtol(phr->rest_args[3], &ep, 10);
+    if (errno || ep || ep == (char*) phr->rest_args[3] || v <= 0 || v > cs->max_prob) {
+      FAIL(NEW_SRV_ERR_INV_PROB_ID);
+    }
+    prob_id = v;
+    if (!(prob = cs->probs[prob_id])) {
+      FAIL(NEW_SRV_ERR_INV_PROB_ID);
+    }
+  } else {
+    if (hr_cgi_param(phr, "prob_id", &s) <= 0
+        || sscanf(s, "%d%n", &prob_id, &n) != 1 || s[n]
+        || prob_id <= 0 || prob_id > cs->max_prob
+        || !(prob = cs->probs[prob_id]))
+      FAIL(NEW_SRV_ERR_INV_PROB_ID);
+  }
 
   // check, that this problem may be viewed
   if (global->is_virtual) {
@@ -13989,7 +14005,12 @@ unpriv_get_file(
       && (variant = find_variant(cs, phr->user_id, prob_id, 0)) <= 0)
       FAIL(NEW_SRV_ERR_VARIANT_UNASSIGNED);
 
-  if (hr_cgi_param(phr, "file", &s) <= 0 || strchr(s, '/')) FAIL(NEW_SRV_ERR_INV_FILE_NAME);
+  if (phr->rest_count > 4) {
+    s = phr->rest_args[4];
+  } else {
+    if (hr_cgi_param(phr, "file", &s) <= 0 || strchr(s, '/'))
+      FAIL(NEW_SRV_ERR_INV_FILE_NAME);
+  }
   if (strstr(s, "..")) FAIL(NEW_SRV_ERR_INV_FILE_NAME);
   snprintf(fname, sizeof(fname), "attachments/%s", s);
 
