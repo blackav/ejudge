@@ -13460,6 +13460,7 @@ ns_unparse_statement(
 
   const unsigned char **vars = NULL;
   const unsigned char **vals = NULL;
+  unsigned int *flags = NULL;
   int varcount = 8;
   if (prob->statement_env) {
     for (int i = 0; prob->statement_env[i]; ++i)
@@ -13467,6 +13468,8 @@ ns_unparse_statement(
   }
   vars = alloca((varcount + 1) * sizeof(vars[0]));
   vals = alloca((varcount + 1) * sizeof(vals[0]));
+  flags = alloca((varcount + 1) * sizeof(flags[0]));
+  memset(flags, 0, (varcount + 1) * sizeof(flags[0]));
   int curvar = 0;
   vars[curvar] = "self"; vals[curvar] = b1; ++curvar;
   vars[curvar] = "prob"; vals[curvar] = b2; ++curvar;
@@ -13509,6 +13512,7 @@ ns_unparse_statement(
     } else {
       snprintf(b4, sizeof(b4), "%s/get-file/S%016llx/%d/", self_url, phr->session_id, prob->id);
     }
+    flags[3] = 1;
   } else {
     if (variant > 0) snprintf(b7, sizeof(b7), "&variant=%d", variant);
     snprintf(b4, sizeof(b4), "%s%s%s%s&file", b1, b2, b3, b7);
@@ -13529,7 +13533,7 @@ ns_unparse_statement(
   pp = problem_xml_find_statement(px, 0);
   if (pp->title) {
     fprintf(fout, "<h3>");
-    problem_xml_unparse_node(fout, pp->title, vars, vals, NULL);
+    problem_xml_unparse_node(fout, pp->title, vars, vals, flags);
     fprintf(fout, "</h3>");
   } else if (prob->enable_iframe_statement <= 0) {
     fprintf(fout, "<h3>");
@@ -13541,16 +13545,16 @@ ns_unparse_statement(
   }
 
   if (pp->desc) {
-    problem_xml_unparse_node(fout, pp->desc, vars, vals, NULL);
+    problem_xml_unparse_node(fout, pp->desc, vars, vals, flags);
   }
 
   if (pp->input_format) {
     fprintf(fout, "<h3>%s</h3>", _("Input format"));
-    problem_xml_unparse_node(fout, pp->input_format, vars, vals, NULL);
+    problem_xml_unparse_node(fout, pp->input_format, vars, vals, flags);
   }
   if (pp->output_format) {
     fprintf(fout, "<h3>%s</h3>", _("Output format"));
-    problem_xml_unparse_node(fout, pp->output_format, vars, vals, NULL);
+    problem_xml_unparse_node(fout, pp->output_format, vars, vals, flags);
   }
 
   if (px->examples) {
@@ -13608,7 +13612,7 @@ ns_unparse_statement(
 
   if (pp->notes) {
     fprintf(fout, "<h3>%s</h3>", _("Notes"));
-    problem_xml_unparse_node(fout, pp->notes, vars, vals, NULL);
+    problem_xml_unparse_node(fout, pp->notes, vars, vals, flags);
   }
 
   html_armor_free(&ab);
@@ -13644,6 +13648,7 @@ ns_unparse_answers(
   unsigned char b7[1024];
   const unsigned char *vars[8] = { "self", "prob", "get", "getfile", "input_file", "output_file", "variant", 0 };
   const unsigned char *vals[8] = { b1, b2, b3, b4, b5, b6, b7, 0 };
+  unsigned int flags[8] = { 0 };
 
   snprintf(b1, sizeof(b1), "%s?SID=%016llx", phr->self_url, phr->session_id);
   snprintf(b2, sizeof(b2), "&prob_id=%d", prob->id);
@@ -13659,6 +13664,7 @@ ns_unparse_answers(
     } else {
       snprintf(b4, sizeof(b4), "%s/get-file/S%016llx/%d/", self_url, phr->session_id, prob->id);
     }
+    flags[3] = 1;
   } else {
     if (variant > 0) snprintf(b7, sizeof(b7), "&variant=%d", variant);
     snprintf(b4, sizeof(b4), "%s%s%s%s&file", b1, b2, b3, b7);
@@ -13687,11 +13693,11 @@ ns_unparse_answers(
       s = "";
       if (last_answer == i + 1) s = " checked=\"1\"";
       fprintf(fout, "<tr><td%s>%d)</td><td%s><input type=\"radio\" name=\"file\" value=\"%d\"%s%s/></td><td%s>", cl, i + 1, cl, i + 1, s, jsbuf, cl);
-      problem_xml_unparse_node(fout, px->answers[i][l], vars, vals, NULL);
+      problem_xml_unparse_node(fout, px->answers[i][l], vars, vals, flags);
       fprintf(fout, "</td></tr>\n");
     } else {
       fprintf(fout, "<tr><td%s>%d)</td><td%s><input type=\"checkbox\" name=\"ans_%d\"/></td><td%s>", cl, i + 1, cl, i + 1, cl);
-      problem_xml_unparse_node(fout, px->answers[i][l], vars, vals, NULL);
+      problem_xml_unparse_node(fout, px->answers[i][l], vars, vals, flags);
       fprintf(fout, "</td></tr>\n");
     }
   }
