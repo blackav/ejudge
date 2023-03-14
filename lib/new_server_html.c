@@ -7566,7 +7566,7 @@ priv_get_file(
     errno = 0;
     char *ep = NULL;
     long v = strtol(phr->rest_args[3], &ep, 10);
-    if (errno || ep || ep == (char*) phr->rest_args[3] || v <= 0 || v > cs->max_prob) {
+    if (errno || *ep || ep == (char*) phr->rest_args[3] || v <= 0 || v > cs->max_prob) {
       FAIL(NEW_SRV_ERR_INV_PROB_ID);
     }
     prob_id = v;
@@ -13398,6 +13398,39 @@ is_judged_virtual_olympiad(serve_state_t cs, int user_id)
   return run_get_virtual_is_checked(cs->runlog_state, user_id);
 }
 
+static void
+rewrite_self_url(unsigned char *out, const unsigned char *in)
+{
+  const unsigned char *role = "client";
+  strcpy(out, in);
+  unsigned char *p1 = strrchr(out, '/');
+  if (!p1) return;
+  ++p1;
+  if (!strcmp(p1, "master") || !strcmp(p1, "new-master")) {
+    role = "master";
+  } else if (!strcmp(p1, "judge") || !strcmp(p1, "new-judge")) {
+    role = "judge";
+  } else if (!strcmp(p1, "register") || !strcmp(p1, "new-register")) {
+    role = "register";
+  } else {
+    // nothing
+  }
+  *--p1 = 0;
+  unsigned char *p2 = strrchr(out, '/');
+  if (!p2) {
+    strcpy(out, in);
+    return;
+  }
+  if (strcmp(p2 + 1, "cgi-bin") != 0) {
+    strcpy(out, in);
+    return;
+  }
+
+  strcpy(p2, EJUDGE_REST_PREFIX);
+  p2 += EJUDGE_REST_PREFIX_LEN ;
+  strcpy(p2, role);
+}
+
 void
 ns_unparse_statement(
         FILE *fout,
@@ -13466,8 +13499,20 @@ ns_unparse_statement(
   snprintf(b2, sizeof(b2), "&prob_id=%d", prob->id);
   snprintf(b3, sizeof(b3), "&action=%d", NEW_SRV_ACTION_GET_FILE);
   b7[0] = 0;
-  if (variant > 0) snprintf(b7, sizeof(b7), "&variant=%d", variant);
-  snprintf(b4, sizeof(b4), "%s%s%s%s&file", b1, b2, b3, b7);
+  if (prob->enable_iframe_statement > 0) {
+    int len = strlen(phr->self_url);
+    unsigned char *self_url = alloca(len + EJUDGE_REST_PREFIX_LEN + 1);
+    rewrite_self_url(self_url, phr->self_url);
+    if (variant > 0) {
+      snprintf(b7, sizeof(b7), "&variant=%d", variant);
+      snprintf(b4, sizeof(b4), "%s/get-file/S%016llx/%d/%d/", self_url, phr->session_id, prob->id, variant);
+    } else {
+      snprintf(b4, sizeof(b4), "%s/get-file/S%016llx/%d/", self_url, phr->session_id, prob->id);
+    }
+  } else {
+    if (variant > 0) snprintf(b7, sizeof(b7), "&variant=%d", variant);
+    snprintf(b4, sizeof(b4), "%s%s%s%s&file", b1, b2, b3, b7);
+  }
   b5[0] = 0;
   if (prob->input_file) {
     snprintf(b5, sizeof(b5), "%s", prob->input_file);
@@ -13604,8 +13649,20 @@ ns_unparse_answers(
   snprintf(b2, sizeof(b2), "&prob_id=%d", prob->id);
   snprintf(b3, sizeof(b3), "&action=%d", NEW_SRV_ACTION_GET_FILE);
   b7[0] = 0;
-  if (variant > 0) snprintf(b7, sizeof(b7), "&variant=%d", variant);
-  snprintf(b4, sizeof(b4), "%s%s%s%s&file", b1, b2, b3, b7);
+  if (prob->enable_iframe_statement > 0) {
+    int len = strlen(phr->self_url);
+    unsigned char *self_url = alloca(len + EJUDGE_REST_PREFIX_LEN + 1);
+    rewrite_self_url(self_url, phr->self_url);
+    if (variant > 0) {
+      snprintf(b7, sizeof(b7), "&variant=%d", variant);
+      snprintf(b4, sizeof(b4), "%s/get-file/S%016llx/%d/%d/", self_url, phr->session_id, prob->id, variant);
+    } else {
+      snprintf(b4, sizeof(b4), "%s/get-file/S%016llx/%d/", self_url, phr->session_id, prob->id);
+    }
+  } else {
+    if (variant > 0) snprintf(b7, sizeof(b7), "&variant=%d", variant);
+    snprintf(b4, sizeof(b4), "%s%s%s%s&file", b1, b2, b3, b7);
+  }
   b5[0] = 0;
   if (prob->input_file) {
     snprintf(b5, sizeof(b5), "%s", prob->input_file);
@@ -13973,7 +14030,7 @@ unpriv_get_file(
     errno = 0;
     char *ep = NULL;
     long v = strtol(phr->rest_args[3], &ep, 10);
-    if (errno || ep || ep == (char*) phr->rest_args[3] || v <= 0 || v > cs->max_prob) {
+    if (errno || *ep || ep == (char*) phr->rest_args[3] || v <= 0 || v > cs->max_prob) {
       FAIL(NEW_SRV_ERR_INV_PROB_ID);
     }
     prob_id = v;
