@@ -2,7 +2,7 @@
 #ifndef __HTTP_REQUEST_H__
 #define __HTTP_REQUEST_H__
 
-/* Copyright (C) 2014-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2014-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -92,6 +92,16 @@ struct http_request_info
   unsigned char *script_part;
   unsigned char *body_attr;
   int online_users;
+
+  // array of split components of URL:
+  // /ej/master/S234/get-file/25/index.html
+  // [0] - "master"
+  // [1] - "S234"
+  // [2] - "get-file"
+  // [3] - "25"
+  // [4] - "index.html"
+  unsigned char **rest_args;
+  int rest_count;
 
   int back_action; // action for "Back" link, used in error pages
 

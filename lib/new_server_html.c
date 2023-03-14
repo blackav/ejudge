@@ -17713,6 +17713,32 @@ ns_handle_http_request(
 #if defined EJUDGE_REST_PREFIX
   if (!strncmp(script_name, EJUDGE_REST_PREFIX, EJUDGE_REST_PREFIX_LEN)) {
     // extract second part
+
+    s = script_name + EJUDGE_REST_PREFIX_LEN;
+    int args_count = 1;
+    while (*s) {
+      args_count += (*s++ == '/');
+    }
+    phr->rest_count = args_count;
+    phr->rest_args = alloca(sizeof(phr->rest_args[0]) * (args_count + 1));
+    memset(phr->rest_args, 0, sizeof(phr->rest_args[0]) * (args_count + 1));
+
+    s = script_name + EJUDGE_REST_PREFIX_LEN;
+    int args_i = 0;
+    while (*s) {
+      const unsigned char *p = s;
+      while (*p && *p != '/') ++p;
+      int len = (int) (p - s);
+      unsigned char *q = alloca(len + 1);
+      phr->rest_args[args_i] = q;
+      memcpy(q, s, len);
+      q[len] = 0;
+      s = p;
+      if (*s == '/') ++s;
+    }
+
+    ////////////////////////
+
     s = script_name + EJUDGE_REST_PREFIX_LEN;
     while (*s && *s != '/') ++s;
     n = (int)(s - script_name - EJUDGE_REST_PREFIX_LEN);
