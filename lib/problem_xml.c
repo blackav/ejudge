@@ -621,7 +621,8 @@ problem_xml_unparse_elem(
         const unsigned char *lang, /* 0 - default language */
         struct problem_stmt *stmt, /* previously found element */
         const unsigned char **vars, /* substitution variables  */
-        const unsigned char **vals) /* substitution values */
+        const unsigned char **vals, /* substitution values */
+        unsigned int *flags)        /* substitution flags */
 {
   struct xml_tree *t = 0;
 
@@ -663,7 +664,7 @@ problem_xml_unparse_elem(
     return stmt;
   }
 
-  xml_unparse_raw_tree_subst(fout, t, &problem_parse_spec, vars, vals, NULL);
+  xml_unparse_raw_tree_subst(fout, t, &problem_parse_spec, vars, vals, flags);
 
   return stmt;
 }
@@ -706,9 +707,10 @@ problem_xml_unparse_node(
         FILE *fout,
         struct xml_tree *p,
         const unsigned char **vars, /* substitution variables  */
-        const unsigned char **vals) /* substitution values */
+        const unsigned char **vals, /* substitution values */
+        unsigned int *flags)        /* substitution flags */
 {
-  xml_unparse_raw_tree_subst(fout, p, &problem_parse_spec, vars, vals, NULL);
+  xml_unparse_raw_tree_subst(fout, p, &problem_parse_spec, vars, vals, flags);
 }
 
 int

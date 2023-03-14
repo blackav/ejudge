@@ -13529,7 +13529,7 @@ ns_unparse_statement(
   pp = problem_xml_find_statement(px, 0);
   if (pp->title) {
     fprintf(fout, "<h3>");
-    problem_xml_unparse_node(fout, pp->title, vars, vals);
+    problem_xml_unparse_node(fout, pp->title, vars, vals, NULL);
     fprintf(fout, "</h3>");
   } else if (prob->enable_iframe_statement <= 0) {
     fprintf(fout, "<h3>");
@@ -13541,16 +13541,16 @@ ns_unparse_statement(
   }
 
   if (pp->desc) {
-    problem_xml_unparse_node(fout, pp->desc, vars, vals);
+    problem_xml_unparse_node(fout, pp->desc, vars, vals, NULL);
   }
 
   if (pp->input_format) {
     fprintf(fout, "<h3>%s</h3>", _("Input format"));
-    problem_xml_unparse_node(fout, pp->input_format, vars, vals);
+    problem_xml_unparse_node(fout, pp->input_format, vars, vals, NULL);
   }
   if (pp->output_format) {
     fprintf(fout, "<h3>%s</h3>", _("Output format"));
-    problem_xml_unparse_node(fout, pp->output_format, vars, vals);
+    problem_xml_unparse_node(fout, pp->output_format, vars, vals, NULL);
   }
 
   if (px->examples) {
@@ -13583,7 +13583,7 @@ ns_unparse_statement(
           fprintf(fout, "%s <tt>%s</tt>", _("Input in"), prob->input_file);
         }
         fprintf(fout, "</h4>\n<pre>");
-        problem_xml_unparse_node(fout, q, 0, 0);
+        problem_xml_unparse_node(fout, q, 0, 0, NULL);
         fprintf(fout, "</pre>\n");
       }
       //fprintf(fout, "</pre></td><td class=\"b1\" valign=\"top\"><pre>");
@@ -13596,7 +13596,7 @@ ns_unparse_statement(
           fprintf(fout, "%s <tt>%s</tt>", _("Output in"), prob->output_file);
         }
         fprintf(fout, "</h4>\n<pre>");
-        problem_xml_unparse_node(fout, q, 0, 0);
+        problem_xml_unparse_node(fout, q, 0, 0, NULL);
         fprintf(fout, "</pre>\n");
       }
       //fprintf(fout, "</pre></td></tr>");
@@ -13608,7 +13608,7 @@ ns_unparse_statement(
 
   if (pp->notes) {
     fprintf(fout, "<h3>%s</h3>", _("Notes"));
-    problem_xml_unparse_node(fout, pp->notes, vars, vals);
+    problem_xml_unparse_node(fout, pp->notes, vars, vals, NULL);
   }
 
   html_armor_free(&ab);
@@ -13687,11 +13687,11 @@ ns_unparse_answers(
       s = "";
       if (last_answer == i + 1) s = " checked=\"1\"";
       fprintf(fout, "<tr><td%s>%d)</td><td%s><input type=\"radio\" name=\"file\" value=\"%d\"%s%s/></td><td%s>", cl, i + 1, cl, i + 1, s, jsbuf, cl);
-      problem_xml_unparse_node(fout, px->answers[i][l], vars, vals);
+      problem_xml_unparse_node(fout, px->answers[i][l], vars, vals, NULL);
       fprintf(fout, "</td></tr>\n");
     } else {
       fprintf(fout, "<tr><td%s>%d)</td><td%s><input type=\"checkbox\" name=\"ans_%d\"/></td><td%s>", cl, i + 1, cl, i + 1, cl);
-      problem_xml_unparse_node(fout, px->answers[i][l], vars, vals);
+      problem_xml_unparse_node(fout, px->answers[i][l], vars, vals, NULL);
       fprintf(fout, "</td></tr>\n");
     }
   }

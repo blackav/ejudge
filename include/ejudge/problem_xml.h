@@ -3,7 +3,7 @@
 #ifndef __PROBLEM_XML_H__
 #define __PROBLEM_XML_H__
 
-/* Copyright (C) 2007-2021 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2007-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -154,13 +154,15 @@ struct problem_stmt *problem_xml_unparse_elem(
         const unsigned char *lang, /* 0 - default language */
         struct problem_stmt *stmt, /* previously found element */
         const unsigned char **vars, /* attribute value substitutions */
-        const unsigned char **vals);
+        const unsigned char **vals,
+        unsigned int *flags);
 void
 problem_xml_unparse_node(
         FILE *fout,
         struct xml_tree *p,
         const unsigned char **vars, /* attribute value substitutions */
-        const unsigned char **vals);
+        const unsigned char **vals,
+        unsigned int *flags);
 struct problem_stmt *
 problem_xml_find_statement(
         problem_xml_t p,

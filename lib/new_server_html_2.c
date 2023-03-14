@@ -4217,7 +4217,7 @@ get_source(
       if (n <= 0 || n > px->ans_num) goto inv_answer_n;
       i = problem_xml_find_language(0, px->tr_num, px->tr_names);
       tmp_f = open_memstream(&tmp_txt, &tmp_len);
-      problem_xml_unparse_node(tmp_f, px->answers[n - 1][i], 0, 0);
+      problem_xml_unparse_node(tmp_f, px->answers[n - 1][i], 0, 0, NULL);
       close_memstream(tmp_f); tmp_f = 0;
       val = tmp_txt; tmp_txt = 0;
     } else if (prob->alternative) {

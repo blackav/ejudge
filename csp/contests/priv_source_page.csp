@@ -559,7 +559,7 @@ function addReviewMsg(serial)
     for (struct xml_tree *rcp = px->review_comments->first_down; rcp; rcp = rcp->right) {
       if (rcp->tag == PROB_T_COMMENT) {
 %><p><input type="button" value="(+)" onclick="addReviewMsg(<s:v value="rc_serial" />)" /><span id="ReviewMsg<s:v value="rc_serial" />"><%
-        problem_xml_unparse_node(out_f, rcp, NULL, NULL);
+        problem_xml_unparse_node(out_f, rcp, NULL, NULL, NULL);
         ++rc_serial;
 %></span></p>
 <%
@@ -570,7 +570,7 @@ function addReviewMsg(serial)
   if (px && px->review_notes) {
 %>
 <h2><s:_>Review notes</s:_></h2>
-<% problem_xml_unparse_node(out_f, px->review_notes, NULL, NULL); %>
+<% problem_xml_unparse_node(out_f, px->review_notes, NULL, NULL, NULL); %>
 <%
   }
 %>

@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2011-2021 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2011-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -4146,7 +4146,7 @@ super_serve_op_TESTS_STATEMENT_EDIT_PAGE(
 
     if (prob_stmt && prob_stmt->title) {
       file_f = open_memstream(&file_t, &file_z);
-      problem_xml_unparse_node(file_f, prob_stmt->title, NULL, NULL);
+      problem_xml_unparse_node(file_f, prob_stmt->title, NULL, NULL, NULL);
       fclose(file_f); file_f = NULL;
     }
     if (file_t == NULL) file_t = xstrdup("");
@@ -4156,7 +4156,7 @@ super_serve_op_TESTS_STATEMENT_EDIT_PAGE(
 
     if (prob_stmt && prob_stmt->desc) {
       file_f = open_memstream(&file_t, &file_z);
-      problem_xml_unparse_node(file_f, prob_stmt->desc, NULL, NULL);
+      problem_xml_unparse_node(file_f, prob_stmt->desc, NULL, NULL, NULL);
       fclose(file_f); file_f = NULL;
     }
     if (file_t == NULL) file_t = xstrdup("");
@@ -4167,7 +4167,7 @@ super_serve_op_TESTS_STATEMENT_EDIT_PAGE(
 
     if (prob_stmt && prob_stmt->input_format) {
       file_f = open_memstream(&file_t, &file_z);
-      problem_xml_unparse_node(file_f, prob_stmt->input_format, NULL, NULL);
+      problem_xml_unparse_node(file_f, prob_stmt->input_format, NULL, NULL, NULL);
       fclose(file_f); file_f = NULL;
     }
     if (file_t == NULL) file_t = xstrdup("");
@@ -4178,7 +4178,7 @@ super_serve_op_TESTS_STATEMENT_EDIT_PAGE(
 
     if (prob_stmt && prob_stmt->output_format) {
       file_f = open_memstream(&file_t, &file_z);
-      problem_xml_unparse_node(file_f, prob_stmt->output_format, NULL, NULL);
+      problem_xml_unparse_node(file_f, prob_stmt->output_format, NULL, NULL, NULL);
       fclose(file_f); file_f = NULL;
     }
     if (file_t == NULL) file_t = xstrdup("");
@@ -4189,7 +4189,7 @@ super_serve_op_TESTS_STATEMENT_EDIT_PAGE(
 
     if (prob_stmt && prob_stmt->notes) {
       file_f = open_memstream(&file_t, &file_z);
-      problem_xml_unparse_node(file_f, prob_stmt->notes, NULL, NULL);
+      problem_xml_unparse_node(file_f, prob_stmt->notes, NULL, NULL, NULL);
       fclose(file_f); file_f = NULL;
     }
     if (file_t == NULL) file_t = xstrdup("");
@@ -4206,7 +4206,7 @@ super_serve_op_TESTS_STATEMENT_EDIT_PAGE(
         for (q = p->first_down; q && q->tag != PROB_T_INPUT; q = q->right);
         if (q && q->tag == PROB_T_INPUT) {
           file_f = open_memstream(&file_t, &file_z);
-          problem_xml_unparse_node(file_f, q, NULL, NULL);
+          problem_xml_unparse_node(file_f, q, NULL, NULL, NULL);
           fclose(file_f); file_f = NULL;
         }
         if (file_t == NULL) file_t = xstrdup("");
@@ -4222,7 +4222,7 @@ super_serve_op_TESTS_STATEMENT_EDIT_PAGE(
         for (q = p->first_down; q && q->tag != PROB_T_OUTPUT; q = q->right);
         if (q && q->tag == PROB_T_OUTPUT) {
           file_f = open_memstream(&file_t, &file_z);
-          problem_xml_unparse_node(file_f, q, NULL, NULL);
+          problem_xml_unparse_node(file_f, q, NULL, NULL, NULL);
           fclose(file_f); file_f = NULL;
         }
         if (file_t == NULL) file_t = xstrdup("");
