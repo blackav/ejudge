@@ -996,6 +996,7 @@ do_subst(
 {
   const unsigned char *s, *q, *qq, *value;
   int len, newsz, i, l, subst_kind, value_len;
+  unsigned int subst_flag = 0;
 
   if (!vars || !vars[0] || !str) return str;
   for (s = str; *s && *s != '$'; s++);
@@ -1035,6 +1036,7 @@ do_subst(
       }
     }
     value = NULL;
+    subst_flag = 0;
     if (subst_kind == 1) {
       for (i = 0; vars[i]; ++i) {
         if ((l = strlen(vars[i])) == qq - s - 2
@@ -1048,6 +1050,7 @@ do_subst(
         value = qq + 2;
         value_len = q - qq - 2;
       }
+      if (flags) subst_flag = flags[i];
     } else {
       // ${abc}: [s + 2, q - 1]: q - s - 2
       for (i = 0; vars[i]; i++) {
@@ -1060,6 +1063,7 @@ do_subst(
       }
       value = vals[i];
       value_len = strlen(value);
+      if (flags) subst_flag = flags[i];
     }
     if (len + value_len > pb->size) {
       newsz = pb->size;
@@ -1070,6 +1074,10 @@ do_subst(
     memcpy(pb->buf + len, value, value_len);
     len += value_len;
     s = q + 1;
+    if ((subst_flag & 1) != 0) {
+      // swallow next '=' if present
+      if (*s == '=') ++s;
+    }
   }
 
   if (len >= pb->size) {
