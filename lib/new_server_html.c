@@ -17675,7 +17675,6 @@ ns_handle_http_request(
   path_t self_url;
   path_t context_url;
   int r, n;
-  unsigned char *rest_args = NULL;
   unsigned char *rest_action = NULL;
 
   (void) forced_linking;
@@ -17723,72 +17722,66 @@ ns_handle_http_request(
     phr->rest_args = alloca(sizeof(phr->rest_args[0]) * (args_count + 1));
     memset(phr->rest_args, 0, sizeof(phr->rest_args[0]) * (args_count + 1));
 
-    s = script_name + EJUDGE_REST_PREFIX_LEN;
-    int args_i = 0;
-    while (*s) {
-      const unsigned char *p = s;
-      while (*p && *p != '/') ++p;
-      int len = (int) (p - s);
-      unsigned char *q = alloca(len + 1);
-      phr->rest_args[args_i] = q;
-      memcpy(q, s, len);
-      q[len] = 0;
-      s = p;
-      if (*s == '/') ++s;
-    }
-
-    ////////////////////////
-
-    s = script_name + EJUDGE_REST_PREFIX_LEN;
-    while (*s && *s != '/') ++s;
-    n = (int)(s - script_name - EJUDGE_REST_PREFIX_LEN);
-    if (n > (int)sizeof(phr->role_name) - 1) n = (int)sizeof(phr->role_name) - 1;
-    *(char*) mempcpy(phr->role_name, script_name + EJUDGE_REST_PREFIX_LEN, n) = 0;
-
-    int nlen = strlen(script_name);
-    rest_args = alloca(nlen + 1);
-    rest_args[0] = 0;
-    if (*s == '/') {
-      memcpy(rest_args, s + 1, nlen - (n + EJUDGE_REST_PREFIX_LEN));
-    }
-    if (rest_args[0]) {
-      unsigned char *ss = strchr(rest_args, '/');
-      if (ss) {
-        rest_action = rest_args;
-        rest_args = alloca(nlen + 1);
-        strcpy(rest_args, ss + 1);
-        *ss = 0;
-      } else {
-        rest_action = rest_args;
-        rest_args = NULL;
+    {
+      s = script_name + EJUDGE_REST_PREFIX_LEN;
+      int args_i = 0;
+      while (*s) {
+        const unsigned char *p = s;
+        while (*p && *p != '/') ++p;
+        int len = (int) (p - s);
+        unsigned char *q = alloca(len + 1);
+        phr->rest_args[args_i++] = q;
+        memcpy(q, s, len);
+        q[len] = 0;
+        s = p;
+        if (*s == '/') {
+          // trim the new script_name
+          if (args_i == 1) {
+            int len = (int) (s - script_name);
+            unsigned char *tmp = alloca(len + 1);
+            memcpy(tmp, script_name, len);
+            tmp[len] = 0;
+            script_name = tmp;
+          }
+          ++s;
+        }
       }
     }
 
-    // update script_name
-    unsigned char *tmp = alloca(nlen + 1);
-    memcpy(tmp, script_name, nlen);
-    tmp[n + EJUDGE_REST_PREFIX_LEN] = 0;
-    script_name = tmp;
+    /*
+    fprintf(stderr, "Rest Args:");
+    for (int i = 0; i < phr->rest_count; ++i) {
+      fprintf(stderr, " %s", phr->rest_args[i]);
+    }
+    fprintf(stderr, "\n");
+    */
 
-    if (rest_args && rest_args[0] == 'S') {
+    if (phr->rest_count > 0) {
+      n = strlen(phr->rest_args[0]);
+      if (n >= (int) sizeof(phr->role_name)) {
+        phr->rest_args[0][sizeof(phr->role_name) - 1] = 0;
+      }
+      strcpy(phr->role_name, phr->rest_args[0]);
+    }
+
+    if (phr->rest_count > 1) {
+      rest_action = phr->rest_args[1];
+    }
+
+    if (phr->rest_count > 2 && phr->rest_args[2][0] == 'S') {
       // SID
-      unsigned char *ss = strchr(rest_args, '/');
-      if (ss) *ss = 0;
       unsigned long long v1 = 0, v2 = 0;
-      if (xml_parse_full_cookie(rest_args + 1, &v1, &v2) >= 0) {
+      if (xml_parse_full_cookie(phr->rest_args[2] + 1, &v1, &v2) >= 0) {
         phr->session_id = v1;
         phr->client_key = v2;
       }
-      if (ss) rest_args = ss + 1;
-      else rest_args = NULL;
     }
 
     phr->rest_mode = 1;
 
     /*
-    fprintf(stderr, "role_name: %s\n", role_name);
+    fprintf(stderr, "role_name: %s\n", phr->role_name);
     fprintf(stderr, "rest_action: %s\n", rest_action);
-    fprintf(stderr, "rest_args: %s\n", rest_args);
     fprintf(stderr, "script_name: %s\n", script_name);
     */
   }
