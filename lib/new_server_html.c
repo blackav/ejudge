@@ -11580,7 +11580,7 @@ unpriv_submit_run(
   if (cs->upsolving_mode) {
     if (start_time <= 0 || cs->current_time < start_time) {
       is_hidden = 1;
-    } else if (stop_time >= 0 && cs->current_time >= stop_time) {
+    } else if (stop_time > 0 && cs->current_time >= stop_time) {
       is_hidden = 1;
     }
   }
@@ -12870,7 +12870,7 @@ unpriv_command(
     if (cnts->close_time > 0 && cs->current_time >= cnts->close_time) {
       FAIL2(NEW_SRV_ERR_PERMISSION_DENIED);
     }
-    if (hdr.stop_time >= 0) {
+    if (hdr.stop_time > 0) {
       FAIL2(NEW_SRV_ERR_PERMISSION_DENIED);
     }
     start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
@@ -12893,7 +12893,7 @@ unpriv_command(
     if (cnts->close_time > 0 && cs->current_time >= cnts->close_time) {
       FAIL2(NEW_SRV_ERR_PERMISSION_DENIED);
     }
-    if (hdr.stop_time >= 0) {
+    if (hdr.stop_time > 0) {
       FAIL2(NEW_SRV_ERR_PERMISSION_DENIED);
     }
     start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
