@@ -77,12 +77,22 @@
         <tr><td colspan="2" align="center" class="b0"><b>Polygon information</b></td></tr>
         <tr><td class="b0"><b>Login</b> *:</td><td class="b0"><s:textfield size="40" name="polygon_login" value="saved_login" checkExpr="" /></td></tr>
         <tr><td class="b0"><b>Password</b> *:</td><td class="b0"><s:password size="40" name="polygon_password" value="saved_password" /></td></tr>
+        <tr><td class="b0">API key:</td><td class="b0"><s:textfield size="40" name="polygon_key" value="saved_key" checkExpr="" /></td></tr>
+        <tr><td class="b0">API secret:</td><td class="b0"><s:textfield size="40" name="polygon_secret" value="saved_secret" /></td></tr>
+        <tr><td class="b0">Use Polygon API:</td><td class="b0"><input type="checkbox" name="enable_api" value="1" /></td></tr>
         <tr><td class="b0">Save auth info:</td><td class="b0"><input type="checkbox" name="save_auth" value="1" /></td></tr>
         <tr><td class="b0"><b>Contest id/name</b> *:</td><td class="b0"><input type="text" size="60" name="polygon_contest_id" /></td></tr>
         <tr><td class="b0">Polygon URL:</td><td class="b0"><s:textfield size="60" name="polygon_url" value="saved_url" checkExpr="" /></td></tr>
+        <tr><td class="b0">Fetch latest available packet (do not generate):</td><td class="b0"><input type="checkbox" name="fetch_latest_available" value="1" checked="checked" /></td></tr>
+        <tr><td colspan="2" align="center" class="b0"><b>Contest properties</b></td></tr>
         <tr><td class="b0">Assume max_vm_size == max_stack_size:</td><td class="b0"><input type="checkbox" name="max_stack_size" value="1" checked="checked" /></td></tr>
         <tr><td class="b0">Ignore additional solutions:</td><td class="b0"><input type="checkbox" name="ignore_solutions" value="1" checked="checked" /></td></tr>
-        <tr><td class="b0">Fetch latest available packet (do not generate):</td><td class="b0"><input type="checkbox" name="fetch_latest_available" value="1" /></td></tr>
+
+        <tr><td class="b0">Tests are binary data:</td><td class="b0"><input type="checkbox" name="binary_input" value="1" /></td></tr>
+
+        <tr><td class="b0">Embed statement in IFRAME:</td><td class="b0"><input type="checkbox" name="enable_iframe_statement" value="1" checked="checked" /></td></tr>
+
+        <tr><td class="b0">Verbose importer output:</td><td class="b0"><input type="checkbox" name="verbose" value="1" /></td></tr>
 
         <tr><td class="b0"><s:submit ac="import-from-polygon-action" label="Import" /></td></tr>
     </table>
