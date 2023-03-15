@@ -5266,6 +5266,8 @@ super_serve_op_UPDATE_FROM_POLYGON_ACTION(
   unsigned char *polygon_login = NULL;
   unsigned char *polygon_password = NULL;
   unsigned char *polygon_url = NULL;
+  unsigned char *polygon_key = NULL;
+  unsigned char *polygon_secret = NULL;
   int save_auth_flag = 0;
   int ignore_solutions_flag = 0;
   int fetch_latest_available_flag = 0;
@@ -5275,6 +5277,12 @@ super_serve_op_UPDATE_FROM_POLYGON_ACTION(
   FILE *f = NULL;
   int contest_id = 0;
   int free_edited_cnts_flag = 0;
+  int enable_api_flag = 0;
+  int verbose_flag = 0;
+  int binary_input_flag = 0;
+  int enable_iframe_statement_flag = 0;
+
+  if (hr_cgi_param(phr, "verbose", &s) > 0) verbose_flag = 1;
 
   hr_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
   if (contest_id <= 0) FAIL(SSERV_ERR_INV_CONTEST);
@@ -5329,30 +5337,56 @@ super_serve_op_UPDATE_FROM_POLYGON_ACTION(
     FAIL(SSERV_ERR_INV_OPER);
   }
 
-  if ((r = hr_cgi_param(phr, "polygon_login", &s)) < 0) {
-    fprintf(log_f, "polygon login is invalid\n");
-    FAIL(SSERV_ERR_INV_OPER);
-  }
-  if (!r || !s || !*s) {
-    fprintf(log_f, "polygon login is undefined\n");
-    FAIL(SSERV_ERR_INV_OPER);
-  }
-  polygon_login = xstrdup(s);
+  if (hr_cgi_param(phr, "enable_api", &s) > 0) enable_api_flag = 1;
 
-  if ((r = hr_cgi_param(phr, "polygon_password", &s)) < 0) {
-    fprintf(log_f, "polygon password is invalid\n");
-    FAIL(SSERV_ERR_INV_OPER);
+  if (!enable_api_flag) {
+    if ((r = hr_cgi_param(phr, "polygon_login", &s)) < 0) {
+      fprintf(log_f, "polygon login is invalid\n");
+      FAIL(SSERV_ERR_INV_OPER);
+    }
+    if (!r || !s || !*s) {
+      fprintf(log_f, "polygon login is undefined\n");
+      FAIL(SSERV_ERR_INV_OPER);
+    }
+    polygon_login = xstrdup(s);
+
+    if ((r = hr_cgi_param(phr, "polygon_password", &s)) < 0) {
+      fprintf(log_f, "polygon password is invalid\n");
+      FAIL(SSERV_ERR_INV_OPER);
+    }
+    if (!r || !s || !*s) {
+      fprintf(log_f, "polygon password is undefined\n");
+      FAIL(SSERV_ERR_INV_OPER);
+    }
+    polygon_password = xstrdup(s);
+  } else {
+    if ((r = hr_cgi_param(phr, "polygon_key", &s)) < 0) {
+      fprintf(log_f, "polygon key is invalid\n");
+      FAIL(SSERV_ERR_INV_OPER);
+    }
+    if (!r || !s || !*s) {
+      fprintf(log_f, "polygon key is undefined\n");
+      FAIL(SSERV_ERR_INV_OPER);
+    }
+    polygon_key = xstrdup(s);
+
+    if ((r = hr_cgi_param(phr, "polygon_secret", &s)) < 0) {
+      fprintf(log_f, "polygon secret is invalid\n");
+      FAIL(SSERV_ERR_INV_OPER);
+    }
+    if (!r || !s || !*s) {
+      fprintf(log_f, "polygon secret is undefined\n");
+      FAIL(SSERV_ERR_INV_OPER);
+    }
+    polygon_secret = xstrdup(s);
   }
-  if (!r || !s || !*s) {
-    fprintf(log_f, "polygon password is undefined\n");
-    FAIL(SSERV_ERR_INV_OPER);
-  }
-  polygon_password = xstrdup(s);
 
   if (hr_cgi_param(phr, "save_auth", &s) > 0) save_auth_flag = 1;
 
   if (hr_cgi_param(phr, "ignore_solutions", &s) > 0) ignore_solutions_flag = 1;
   if (hr_cgi_param(phr, "fetch_latest_available", &s) > 0) fetch_latest_available_flag = 1;
+  if (hr_cgi_param(phr, "binary_input", &s) > 0) binary_input_flag = 1;
+  if (hr_cgi_param(phr, "enable_iframe_statement", &s) > 0) enable_iframe_statement_flag = 1;
 
   if ((r = hr_cgi_param(phr, "polygon_url", &s)) < 0) {
     fprintf(log_f, "polygon url is invalid\n");
@@ -5362,7 +5396,7 @@ super_serve_op_UPDATE_FROM_POLYGON_ACTION(
   }
 
   if (save_auth_flag) {
-    save_auth(phr->login, polygon_login, polygon_password, polygon_url, NULL, NULL);
+    save_auth(phr->login, polygon_login, polygon_password, polygon_url, polygon_key, polygon_secret);
   }
 
   s = getenv("TMPDIR");
@@ -5415,11 +5449,17 @@ super_serve_op_UPDATE_FROM_POLYGON_ACTION(
   snprintf(start_path, sizeof(start_path), "%s/ej-polygon", EJUDGE_SERVER_BIN_PATH);
 
   pp = polygon_packet_alloc();
+  pp->verbose = verbose_flag;
   pp->ignore_solutions = ignore_solutions_flag;
   pp->fetch_latest_available = fetch_latest_available_flag;
   pp->polygon_url = polygon_url; polygon_url = NULL;
   pp->login = polygon_login; polygon_login = NULL;
   pp->password = polygon_password; polygon_password = NULL;
+  if (enable_api_flag) {
+    pp->enable_api = 1;
+    pp->key = polygon_key; polygon_key = NULL;
+    pp->secret = polygon_secret; polygon_secret = NULL;
+  }
   pp->working_dir = xstrdup(working_dir);
   pp->log_file = xstrdup(log_path);
   pp->status_file = xstrdup(stat_path);
@@ -5430,6 +5470,8 @@ super_serve_op_UPDATE_FROM_POLYGON_ACTION(
   pp->dir_group = xstrdup2(cnts->dir_group);
   pp->file_mode = xstrdup2(cnts->file_mode);
   pp->file_group = xstrdup2(cnts->file_group);
+  pp->binary_input = binary_input_flag;
+  pp->enable_iframe_statement = enable_iframe_statement_flag;
   XCALLOC(pp->id, polygon_count + 1);
   for (int prob_id = 1, ind = 0; prob_id < ss->prob_a; ++prob_id) {
     const struct section_problem_data *prob = ss->probs[prob_id];
