@@ -1794,6 +1794,18 @@ nsf_prepare(struct server_framework_state *state)
   sigdelset(&state->work_mask, SIGCHLD);
   sigdelset(&state->work_mask, SIGUSR1);
 
+  // we want these signals handled by backtrace
+  sigdelset(&state->work_mask, SIGILL);
+  sigdelset(&state->work_mask, SIGBUS);
+  sigdelset(&state->work_mask, SIGFPE);
+  sigdelset(&state->work_mask, SIGSEGV);
+  sigdelset(&state->work_mask, SIGABRT);
+  sigdelset(&state->block_mask, SIGILL);
+  sigdelset(&state->block_mask, SIGBUS);
+  sigdelset(&state->block_mask, SIGFPE);
+  sigdelset(&state->block_mask, SIGSEGV);
+  sigdelset(&state->block_mask, SIGABRT);
+
   memset(&act, 0, sizeof(act));
   act.sa_handler = sighup_handler;
   sigfillset(&act.sa_mask);
