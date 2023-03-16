@@ -2942,7 +2942,9 @@ process_polygon_zip(
     fprintf(log_f, "    checker_env: %s\n", pi->checker_env);
     fprintf(log_f, "    check_cmd: %s\n", pi->check_cmd);
     fprintf(log_f, "    test_checker_cmd: %s\n", pi->test_checker_cmd);
-    fprintf(log_f, "    solution_cmd: %s\n", pi->solution_cmd);
+    if (pkt->ignore_main_solution <= 0) {
+        fprintf(log_f, "    solution_cmd: %s\n", pi->solution_cmd);
+    }
     fprintf(log_f, "    interactor_cmd: %s\n", pi->interactor_cmd);
     fprintf(log_f, "    html_statement: %s\n", pi->html_statement_path);
 
@@ -3024,7 +3026,7 @@ process_polygon_zip(
     if (pi->interactor_cmd) {
         prob_cfg->interactor_cmd = xstrdup(pi->interactor_cmd);
     }
-    if (pi->solution_cmd) {
+    if (pi->solution_cmd && pkt->ignore_main_solution) {
         prob_cfg->solution_cmd = xstrdup(pi->solution_cmd);
     }
     prob_cfg->enable_testlib_mode = 1;
