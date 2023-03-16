@@ -98,6 +98,7 @@
 
         <tr><td class="b0">Assume max_vm_size == max_stack_size:</td><td class="b0"><input type="checkbox" name="max_stack_size" value="1" checked="checked" /></td></tr>
         <tr><td class="b0">Ignore additional solutions:</td><td class="b0"><input type="checkbox" name="ignore_solutions" value="1" checked="checked" /></td></tr>
+        <tr><td class="b0">Ignore MAIN solutions as well:</td><td class="b0"><input type="checkbox" name="ignore_main_solution" value="1" /></td></tr>
 
         <tr><td class="b0">Tests are binary data:</td><td class="b0"><input type="checkbox" name="binary_input" value="1" /></td></tr>
 
