@@ -815,7 +815,8 @@ LDFLAGS
 LIBS
 CPPFLAGS
 CPP'
-ac_subdirs_all='libdwarf'
+ac_subdirs_all='libdwarf
+libbacktrace'
 
 # Initialize some variables set by options.
 ac_init_help=
@@ -8399,6 +8400,9 @@ ac_config_headers="$ac_config_headers config.h"
 
 
 subdirs="$subdirs libdwarf"
+
+
+subdirs="$subdirs libbacktrace"
 
 
 ac_config_files="$ac_config_files Makefile extra/Makefile extra/captest/Makefile checkers/Makefile scripts/Makefile ejudge-config.v scripts/festival plugins/common-mysql/Makefile plugins/userlist-mysql/Makefile plugins/clardb-mysql/Makefile plugins/rundb-mysql/Makefile plugins/common-mongo/Makefile plugins/xuser-mongo/Makefile style/ejudge-upgrade-web cfront/Makefile reuse/Makefile csp/contests/Makefile csp/super-server/Makefile csp_header.make plugins/telegram/Makefile plugins/avatar-mongo/Makefile plugins/status-mongo/Makefile plugins/status-mysql/Makefile plugins/auth-google/Makefile plugins/auth-base/Makefile plugins/auth-vk/Makefile plugins/auth-fb/Makefile plugins/xuser-mysql/Makefile plugins/avatar-mysql/Makefile plugins/variant-mysql/Makefile plugins/storage-mysql/Makefile plugins/cache-mysql/Makefile plugins/submit-mysql/Makefile plugins/userprob-mysql/Makefile plugins/vcs-gitlab/Makefile plugins/auth-yandex/Makefile"
