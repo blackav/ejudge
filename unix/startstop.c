@@ -37,9 +37,22 @@
 #include <sys/time.h>
 #include <sys/stat.h>
 
+#include "libbacktrace/backtrace.h"
+
 static path_t self_exe;
 static char **self_argv;
 static sigset_t init_sigmask;
+
+static struct backtrace_state *backtrace_state_var = NULL;
+
+static void
+fatal_signal_handler(int signo)
+{
+  fprintf(stderr, "Fatal signal %d received:\n", signo);
+  backtrace_print (backtrace_state_var, 0, stderr);
+  signal(signo, SIG_DFL);
+  raise(signo);
+}
 
 void
 start_set_self_args(int argc, char *argv[])
@@ -56,6 +69,13 @@ start_set_self_args(int argc, char *argv[])
   self_argv = argv;
   self_argv[0] = self_exe;
   sigprocmask(SIG_SETMASK, 0, &init_sigmask);
+
+  backtrace_state_var = backtrace_create_state(argv[0], 0, NULL, NULL);
+  sigaction(SIGSEGV, &(struct sigaction) { .sa_handler = fatal_signal_handler }, NULL);
+  sigaction(SIGILL, &(struct sigaction) { .sa_handler = fatal_signal_handler }, NULL);
+  sigaction(SIGBUS, &(struct sigaction) { .sa_handler = fatal_signal_handler }, NULL);
+  sigaction(SIGFPE, &(struct sigaction) { .sa_handler = fatal_signal_handler }, NULL);
+  sigaction(SIGABRT, &(struct sigaction) { .sa_handler = fatal_signal_handler }, NULL);
 }
 
 int
