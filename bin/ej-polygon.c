@@ -2956,11 +2956,11 @@ process_polygon_zip(
         prob_cfg->short_name = xstrdup(pi->ejudge_short_name);
     }
     prob_cfg->internal_name = xstrdup(pi->problem_name);
-    if (problem_url && problem_url[0]) {
-        snprintf(buf, sizeof(buf), "polygon:%s", problem_url);
-        prob_cfg->extid = xstrdup(buf);
-    } else if (pi->problem_id > 0) {
+    if (pi->problem_id > 0) {
         snprintf(buf, sizeof(buf), "polygon:%d", pi->problem_id);
+        prob_cfg->extid = xstrdup(buf);
+    } else if (problem_url && problem_url[0]) {
+        snprintf(buf, sizeof(buf), "polygon:%s", problem_url);
         prob_cfg->extid = xstrdup(buf);
     }
     snprintf(buf, sizeof(buf), "%d", pi->package_rev);
