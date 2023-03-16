@@ -3026,7 +3026,7 @@ process_polygon_zip(
     if (pi->interactor_cmd) {
         prob_cfg->interactor_cmd = xstrdup(pi->interactor_cmd);
     }
-    if (pi->solution_cmd && pkt->ignore_main_solution) {
+    if (pi->solution_cmd && pkt->ignore_main_solution <= 0) {
         prob_cfg->solution_cmd = xstrdup(pi->solution_cmd);
     }
     prob_cfg->enable_testlib_mode = 1;
