@@ -82,5 +82,7 @@ cleanup:
     xfree(saved_login);
     xfree(saved_password);
     xfree(saved_url);
+    xfree(saved_key);
+    xfree(saved_secret);
     html_armor_free(&ab);
 %>
