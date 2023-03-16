@@ -17,6 +17,8 @@
     unsigned char prob_buf[64];
     int prob_id;
     int cur_page = 4;
+    int enable_api = 0;
+    int save_auth = 0;
 
     prob_buf[0] = 0;
 
@@ -50,6 +52,8 @@
     if (!saved_password) saved_password = xstrdup("");
     if (!saved_url) saved_url = xstrdup("");
 
+    save_auth = strlen(saved_login) > 0 || strlen(saved_password) > 0 || strlen(saved_url) > 0 || strlen(saved_url) > 0 || strlen(saved_secret) > 0;
+    enable_api = (strlen(saved_key) > 0 && strlen(saved_secret) > 0);
 %><%@include "header.csp"
 %>
 
@@ -80,8 +84,8 @@
         <tr><td class="b0"><b>Password</b> *:</td><td class="b0"><s:password size="40" name="polygon_password" value="saved_password" /></td></tr>
         <tr><td class="b0">API key:</td><td class="b0"><s:textfield size="40" name="polygon_key" value="saved_key" checkExpr="" /></td></tr>
         <tr><td class="b0">API secret:</td><td class="b0"><s:textfield size="40" name="polygon_secret" value="saved_secret" /></td></tr>
-        <tr><td class="b0">Use Polygon API:</td><td class="b0"><input type="checkbox" name="enable_api" value="1" /></td></tr>
-        <tr><td class="b0">Save auth info:</td><td class="b0"><input type="checkbox" name="save_auth" value="1" /></td></tr>
+        <tr><td class="b0">Use Polygon API:</td><td class="b0"><s:checkbox name="enable_api" value="1" checkedExpr="enable_api" /></td></tr>
+        <tr><td class="b0">Save auth info:</td><td class="b0"><s:checkbox name="save_auth" value="1" checkedExpr="save_auth" /></td></tr>
         <tr><td class="b0"><b>Problem id/name</b> *:</td><td class="b0"><input type="text" size="60" name="polygon_id" /></td></tr>
         <tr><td class="b0">Polygon URL:</td><td class="b0"><s:textfield size="60" name="polygon_url" value="saved_url" checkExpr="" /></td></tr>
         <tr><td class="b0">Fetch latest available packet (do not generate):</td><td class="b0"><input type="checkbox" name="fetch_latest_available" value="1" checked="checked" /></td></tr>
