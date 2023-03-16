@@ -44,6 +44,7 @@ struct polygon_packet
     ejintbool_t enable_iframe_statement;
     ejintbool_t enable_api;
     ejintbool_t verbose;
+    ejintbool_t ignore_main_solution;
 
     unsigned char *polygon_url;
     unsigned char *login;

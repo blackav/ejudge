@@ -22,6 +22,7 @@ static struct meta_info_item meta_info_polygon_packet_data[] =
   [META_POLYGON_PACKET_enable_iframe_statement] = { META_POLYGON_PACKET_enable_iframe_statement, 'B', XSIZE(struct polygon_packet, enable_iframe_statement), "enable_iframe_statement", XOFFSET(struct polygon_packet, enable_iframe_statement) },
   [META_POLYGON_PACKET_enable_api] = { META_POLYGON_PACKET_enable_api, 'B', XSIZE(struct polygon_packet, enable_api), "enable_api", XOFFSET(struct polygon_packet, enable_api) },
   [META_POLYGON_PACKET_verbose] = { META_POLYGON_PACKET_verbose, 'B', XSIZE(struct polygon_packet, verbose), "verbose", XOFFSET(struct polygon_packet, verbose) },
+  [META_POLYGON_PACKET_ignore_main_solution] = { META_POLYGON_PACKET_ignore_main_solution, 'B', XSIZE(struct polygon_packet, ignore_main_solution), "ignore_main_solution", XOFFSET(struct polygon_packet, ignore_main_solution) },
   [META_POLYGON_PACKET_polygon_url] = { META_POLYGON_PACKET_polygon_url, 's', XSIZE(struct polygon_packet, polygon_url), "polygon_url", XOFFSET(struct polygon_packet, polygon_url) },
   [META_POLYGON_PACKET_login] = { META_POLYGON_PACKET_login, 's', XSIZE(struct polygon_packet, login), "login", XOFFSET(struct polygon_packet, login) },
   [META_POLYGON_PACKET_password] = { META_POLYGON_PACKET_password, 's', XSIZE(struct polygon_packet, password), "password", XOFFSET(struct polygon_packet, password) },
