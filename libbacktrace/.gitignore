@@ -3,3 +3,7 @@
 *.lo
 *.a
 *.la
+backtrace-supported.h
+install-debuginfo-for-buildid.sh
+libtool
+stamp-h1
