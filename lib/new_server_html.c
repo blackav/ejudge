@@ -3258,6 +3258,7 @@ priv_submit_run(
           }
           if (r <= cs->max_lang) {
             lang_id = r;
+            lang = cs->langs[r];
           } else {
             fprintf(phr->log_f, "'lang_id' is not set\n");
             FAIL(NEW_SRV_ERR_INV_LANG_ID);
@@ -10460,19 +10461,41 @@ ns_submit_run(
   if (prob->type == PROB_TYPE_STANDARD) {
     // "STANDARD" problems need programming language identifier
     if (!lang_param_name) lang_param_name = "lang_id";
-    if (hr_cgi_param(phr, lang_param_name, &s) <= 0 || !s) {
+    int r = hr_cgi_param(phr, lang_param_name, &s);
+    if (r < 0) {
       FAIL(NEW_SRV_ERR_INV_LANG_ID);
     }
-    for (lang_id = 1; lang_id <= cs->max_lang; ++lang_id) {
-      if ((lang = cs->langs[lang_id]) /*&& lang->short_name*/ && !strcmp(lang->short_name, s))
-        break;
-    }
-    if (lang_id > cs->max_lang) {
-      char *eptr = NULL;
-      errno = 0;
-      lang_id = strtol(s, &eptr, 10);
-      if (errno || *eptr || lang_id <= 0 || lang_id > cs->max_lang || !(lang = cs->langs[lang_id])) {
+    if (!r) {
+      if (prob->custom_compile_cmd && prob->custom_compile_cmd[0]) {
+        for (r = 1; r <= cs->max_lang; ++r) {
+          if (cs->langs[r] && cs->langs[r]->enable_custom > 0) {
+            break;
+          }
+        }
+        if (r <= cs->max_lang) {
+          lang_id = r;
+          lang = cs->langs[r];
+        } else {
+          FAIL(NEW_SRV_ERR_INV_LANG_ID);
+        }
+      } else {
         FAIL(NEW_SRV_ERR_INV_LANG_ID);
+      }
+    } else {
+      if (!s) {
+        FAIL(NEW_SRV_ERR_INV_LANG_ID);
+      }
+      for (lang_id = 1; lang_id <= cs->max_lang; ++lang_id) {
+        if ((lang = cs->langs[lang_id]) /*&& lang->short_name*/ && !strcmp(lang->short_name, s))
+          break;
+      }
+      if (lang_id > cs->max_lang) {
+        char *eptr = NULL;
+        errno = 0;
+        lang_id = strtol(s, &eptr, 10);
+        if (errno || *eptr || lang_id <= 0 || lang_id > cs->max_lang || !(lang = cs->langs[lang_id])) {
+          FAIL(NEW_SRV_ERR_INV_LANG_ID);
+        }
       }
     }
     if (cs->global->enable_eoln_select > 0) {
