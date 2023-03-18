@@ -2431,6 +2431,11 @@ do_loop(void)
   sigdelset(&work_mask, SIGHUP);
   sigdelset(&work_mask, SIGCHLD);
   sigdelset(&work_mask, SIGUSR1);
+  sigdelset(&work_mask, SIGILL);
+  sigdelset(&work_mask, SIGABRT);
+  sigdelset(&work_mask, SIGBUS);
+  sigdelset(&work_mask, SIGFPE);
+  sigdelset(&work_mask, SIGSEGV);
   sigprocmask(SIG_SETMASK, &block_mask, 0);
 
   signal(SIGTERM, handler_term);
