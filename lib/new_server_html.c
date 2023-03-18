@@ -10465,7 +10465,7 @@ ns_submit_run(
     if (r < 0) {
       FAIL(NEW_SRV_ERR_INV_LANG_ID);
     }
-    if (!r) {
+    if (!r || !s) {
       if (prob->custom_compile_cmd && prob->custom_compile_cmd[0]) {
         for (r = 1; r <= cs->max_lang; ++r) {
           if (cs->langs[r] && cs->langs[r]->enable_custom > 0) {
@@ -10482,9 +10482,6 @@ ns_submit_run(
         FAIL(NEW_SRV_ERR_INV_LANG_ID);
       }
     } else {
-      if (!s) {
-        FAIL(NEW_SRV_ERR_INV_LANG_ID);
-      }
       for (lang_id = 1; lang_id <= cs->max_lang; ++lang_id) {
         if ((lang = cs->langs[lang_id]) /*&& lang->short_name*/ && !strcmp(lang->short_name, s))
           break;
@@ -11210,28 +11207,47 @@ unpriv_submit_run(
 
   // "STANDARD" problems need programming language identifier
   if (prob->type == PROB_TYPE_STANDARD) {
-    if (hr_cgi_param(phr, "lang_id", &s) <= 0 || !s) {
+    int r = hr_cgi_param(phr, "lang_id", &s);
+    if (r < 0) {
       FAIL2(NEW_SRV_ERR_INV_LANG_ID);
     }
-    errno = 0;
-    char *eptr = NULL;
-    long v = strtol(s, &eptr, 10);
-    if (!errno && eptr != (char *)s && !*eptr && (int) v == v) {
-      lang_id = v;
-      if (lang_id <= 0 || lang_id > cs->max_lang || !(lang = cs->langs[lang_id])) {
+    if (!r || !s) {
+      if (prob->custom_compile_cmd && prob->custom_compile_cmd[0]) {
+        for (r = 1; r <= cs->max_lang; ++r) {
+          if (cs->langs[r] && cs->langs[r]->enable_custom > 0) {
+            break;
+          }
+        }
+        if (r <= cs->max_lang) {
+          lang_id = r;
+          lang = cs->langs[r];
+        } else {
+          FAIL2(NEW_SRV_ERR_INV_LANG_ID);
+        }
+      } else {
         FAIL2(NEW_SRV_ERR_INV_LANG_ID);
       }
     } else {
-      for (int i = 1; i <= cs->max_lang; ++i) {
-        lang = cs->langs[i];
-        if (lang /* && lang->short_name */ && !strcmp(lang->short_name, s)) {
-          lang_id = i;
-          break;
+      errno = 0;
+      char *eptr = NULL;
+      long v = strtol(s, &eptr, 10);
+      if (!errno && eptr != (char *)s && !*eptr && (int) v == v) {
+        lang_id = v;
+        if (lang_id <= 0 || lang_id > cs->max_lang || !(lang = cs->langs[lang_id])) {
+          FAIL2(NEW_SRV_ERR_INV_LANG_ID);
         }
-        lang = NULL;
-      }
-      if (!lang) {
-        FAIL2(NEW_SRV_ERR_INV_LANG_ID);
+      } else {
+        for (int i = 1; i <= cs->max_lang; ++i) {
+          lang = cs->langs[i];
+          if (lang /* && lang->short_name */ && !strcmp(lang->short_name, s)) {
+            lang_id = i;
+            break;
+          }
+          lang = NULL;
+        }
+        if (!lang) {
+          FAIL2(NEW_SRV_ERR_INV_LANG_ID);
+        }
       }
     }
     /*
