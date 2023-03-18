@@ -3244,17 +3244,37 @@ priv_submit_run(
         FAIL(NEW_SRV_ERR_INV_LANG_ID);
       }
     } else {
-      if (hr_cgi_param(phr, "lang_id", &s) <= 0) {
-        fprintf(phr->log_f, "'lang_id' is not set or binary\n");
+      int r = hr_cgi_param(phr, "lang_id", &s);
+      if (r < 0){
+        fprintf(phr->log_f, "'lang_id' is binary\n");
         FAIL(NEW_SRV_ERR_INV_LANG_ID);
       }
-      if (sscanf(s, "%d%n", &lang_id, &n) != 1 || s[n]) {
-        fprintf(phr->log_f, "'lang_id' is invalid\n");
-        FAIL(NEW_SRV_ERR_INV_LANG_ID);
-      }
-      if (lang_id <= 0 || lang_id > cs->max_lang || !(lang = cs->langs[lang_id])){
-        fprintf(phr->log_f, "'lang_id' is invalid\n");
-        FAIL(NEW_SRV_ERR_INV_LANG_ID);
+      if (!r) {
+        if (prob->custom_compile_cmd && prob->custom_compile_cmd[0]) {
+          for (r = 1; r <= cs->max_lang; ++r) {
+            if (cs->langs[r] && cs->langs[r]->enable_custom > 0) {
+              break;
+            }
+          }
+          if (r <= cs->max_lang) {
+            lang_id = r;
+          } else {
+            fprintf(phr->log_f, "'lang_id' is not set\n");
+            FAIL(NEW_SRV_ERR_INV_LANG_ID);
+          }
+        } else {
+          fprintf(phr->log_f, "'lang_id' is not set\n");
+          FAIL(NEW_SRV_ERR_INV_LANG_ID);
+        }
+      } else {
+        if (sscanf(s, "%d%n", &lang_id, &n) != 1 || s[n]) {
+          fprintf(phr->log_f, "'lang_id' is invalid\n");
+          FAIL(NEW_SRV_ERR_INV_LANG_ID);
+        }
+        if (lang_id <= 0 || lang_id > cs->max_lang || !(lang = cs->langs[lang_id])){
+          fprintf(phr->log_f, "'lang_id' is invalid\n");
+          FAIL(NEW_SRV_ERR_INV_LANG_ID);
+        }
       }
     }
     if (cs->global->enable_eoln_select > 0) {
