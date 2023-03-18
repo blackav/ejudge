@@ -12061,27 +12061,47 @@ ns_submit_run_input(
   }
 
   // parse lang_id
-  if (hr_cgi_param(phr, "lang_id", &s) <= 0 || !s) {
+  r = hr_cgi_param(phr, "lang_id", &s);
+  if (r < 0) {
     err_num = NEW_SRV_ERR_INV_LANG_ID;
     goto done;
-  }
-  for (lang_id = 1; lang_id <= cs->max_lang; ++lang_id) {
-    if ((lang = cs->langs[lang_id]) && !strcmp(s, lang->short_name))
-      break;
-  }
-  if (lang_id > cs->max_lang) {
-    char *eptr = NULL;
-    errno = 0;
-    long v = strtol(s, &eptr, 10);
-    if (errno || *eptr || (unsigned char *) eptr == s || (int) v != v) {
+  } else if (!r || !s) {
+    if (prob->custom_compile_cmd && prob->custom_compile_cmd[0]) {
+      for (r = 1; r <= cs->max_lang; ++r) {
+        if (cs->langs[r] && cs->langs[r]->enable_custom > 0) {
+          break;
+        }
+      }
+      if (r <= cs->max_lang) {
+        lang_id = r;
+        lang = cs->langs[r];
+      } else {
+        err_num = NEW_SRV_ERR_INV_LANG_ID;
+        goto done;
+      }
+    } else {
       err_num = NEW_SRV_ERR_INV_LANG_ID;
       goto done;
     }
-    lang_id = v;
-  }
-  if (lang_id <= 0 || lang_id > cs->max_lang || !(lang = cs->langs[lang_id])) {
-    err_num = NEW_SRV_ERR_INV_LANG_ID;
-    goto done;
+  } else {
+    for (lang_id = 1; lang_id <= cs->max_lang; ++lang_id) {
+      if ((lang = cs->langs[lang_id]) && !strcmp(s, lang->short_name))
+        break;
+    }
+    if (lang_id > cs->max_lang) {
+      char *eptr = NULL;
+      errno = 0;
+      long v = strtol(s, &eptr, 10);
+      if (errno || *eptr || (unsigned char *) eptr == s || (int) v != v) {
+        err_num = NEW_SRV_ERR_INV_LANG_ID;
+        goto done;
+      }
+      lang_id = v;
+    }
+    if (lang_id <= 0 || lang_id > cs->max_lang || !(lang = cs->langs[lang_id])) {
+      err_num = NEW_SRV_ERR_INV_LANG_ID;
+      goto done;
+    }
   }
 
   if (cs->global->enable_eoln_select > 0) {
