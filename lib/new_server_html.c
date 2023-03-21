@@ -16847,16 +16847,20 @@ unprivileged_entry_point(
     pp->time = cs->current_time;
   }
 
-  // count number of users online
-  online_users = 0;
-  for (i = 0; i < extra->user_access[USER_ROLE_CONTESTANT].u; i++) {
-    pp = &extra->user_access[USER_ROLE_CONTESTANT].v[i];
-    if (pp->time + 65 >= cs->current_time) online_users++;
-  }
-  if (online_users > cs->max_online_count) {
-    cs->max_online_count = online_users;
-    cs->max_online_time = cs->current_time;
-    serve_update_status_file(ejudge_config, cnts, cs, 1);
+  // don't count online users as it is quite expensive
+  online_users = -1;
+  if (0) {
+    // count number of users online
+    online_users = 0;
+    for (i = 0; i < extra->user_access[USER_ROLE_CONTESTANT].u; i++) {
+      pp = &extra->user_access[USER_ROLE_CONTESTANT].v[i];
+      if (pp->time + 65 >= cs->current_time) online_users++;
+    }
+    if (online_users > cs->max_online_count) {
+      cs->max_online_count = online_users;
+      cs->max_online_time = cs->current_time;
+      serve_update_status_file(ejudge_config, cnts, cs, 1);
+    }
   }
   phr->online_users = online_users;
 
