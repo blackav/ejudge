@@ -29,6 +29,7 @@
 #include "ejudge/internal_pages.h"
 #include "ejudge/userlist_bin.h"
 #include "ejudge/statusdb.h"
+#include "ejudge/session_cache.h"
 
 #include <stdio.h>
 
@@ -65,5 +66,6 @@ int main(void)
   printf("xml_tree:              %zu\n", sizeof(struct xml_tree));
   printf("UserlistBinaryHeader:  %zu\n", sizeof(UserlistBinaryHeader));
   printf("run_reply_bin_packet:  %zu\n", sizeof(struct run_reply_bin_packet));
+  printf("new_session_info:      %zu\n", sizeof(struct new_session_info));
   return 0;
 }
