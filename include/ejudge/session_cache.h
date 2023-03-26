@@ -16,5 +16,72 @@
  * GNU General Public License for more details.
  */
 
+#include "ejudge/config.h"
+#include "ejudge/ej_types.h"
+
+#include <time.h>
+
+/* session cache to reduce ej-users connections */
+struct new_session_info
+{
+    ej_cookie_t session_id;
+    ej_cookie_t client_key;
+    time_t expire_time;
+
+    int user_view_all_runs;
+    int user_view_all_clars;
+    int user_viewed_section;
+
+    struct userlist_user *user_info;
+};
+
+struct new_session_cache
+{
+    struct new_session_info *info;
+    int    reserved;
+    int    res_index;
+    int    rehash_threshold;
+    int    used;
+};
+
+struct cached_token_info
+{
+    unsigned char token[32];
+    unsigned char used;       // 1 if this entry is used
+    // whatever
+};
+
+struct token_cache
+{
+    struct cached_token_info *info;
+    int reserved;
+    int res_index;
+    int rehash_threshold;
+    int used;
+};
+
+struct id_cache
+{
+    struct new_session_cache s;
+    struct token_cache t;
+};
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void idc_init(struct id_cache *idc);
+
+struct new_session_info * nsc_insert(struct new_session_cache *nsc, ej_cookie_t session_id, ej_cookie_t client_key);
+struct new_session_info * nsc_find(struct new_session_cache *nsc, ej_cookie_t session_id, ej_cookie_t client_key);
+int nsc_remove(struct new_session_cache *nsc, ej_cookie_t session_id, ej_cookie_t client_key, struct new_session_info *out);
+
+struct cached_token_info *tc_insert(struct token_cache *tc, const unsigned char *token);
+struct cached_token_info *tc_find(struct token_cache *tc, const unsigned char *token);
+int tc_remove(struct token_cache *tc, const unsigned char *token, struct cached_token_info *out);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __SESSION_CACHE_H__ */
