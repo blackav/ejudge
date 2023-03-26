@@ -21,18 +21,41 @@
 
 #include <time.h>
 
-/* session cache to reduce ej-users connections */
+/* session cache to reduce ej-users request ratio */
 struct new_session_info
 {
     ej_cookie_t session_id;
     ej_cookie_t client_key;
-    time_t expire_time;
 
+    ej_ip_t origin_ip;          // access address
+    time_t access_time;         // time of the last access
+    time_t refresh_time;        // time to refresh the values
+    time_t expire_time;         // cookie expiration time
+
+    unsigned char *login;
+    unsigned char *name;
+    struct userlist_user *user_info;
+
+    int cmd;     // command (PRIV_GET_COOKIE or TEAM_GET_COOKIE)
+    int user_id;
+    int contest_id;
+    unsigned int reg_flags;
+
+    unsigned char ssl;          // ssl flag
+    unsigned char locale_id;
+    unsigned char priv_level;
+    unsigned char role;
+    unsigned char is_ws;
+    unsigned char is_job;
+    unsigned char team_login;
+    unsigned char reg_status;
+    unsigned char passwd_method;
+
+    // these fields are from 'session_info'
     int user_view_all_runs;
     int user_view_all_clars;
     int user_viewed_section;
 
-    struct userlist_user *user_info;
 };
 
 struct new_session_cache
