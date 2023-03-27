@@ -97,7 +97,7 @@ struct session_info *session_first, *session_last;
 //time_t server_start_time;
 
 // global session cache
-struct id_cache main_id_cache;
+extern struct id_cache main_id_cache;
 
 // plugin information
 struct nsdb_loaded_plugin
