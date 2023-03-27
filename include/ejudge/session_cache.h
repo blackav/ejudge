@@ -41,8 +41,8 @@ struct new_session_info
     int contest_id;
     unsigned int reg_flags;
 
-    unsigned char ssl;          // ssl flag
-    unsigned char locale_id;
+    unsigned char ssl_flag;
+    signed char   locale_id;
     unsigned char priv_level;
     unsigned char role;
     unsigned char is_ws;
@@ -55,7 +55,6 @@ struct new_session_info
     int user_view_all_runs;
     int user_view_all_clars;
     int user_viewed_section;
-
 };
 
 struct new_session_cache
