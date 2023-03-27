@@ -126,6 +126,24 @@ userlist_clnt_get_cookie(
         unsigned char **p_login,
         unsigned char **p_name);
 
+struct userlist_ok_login_ok;
+struct UserlistGetCookieResult
+{
+  struct userlist_pk_login_ok *data; // to be freed
+  unsigned char *login; // points somewhere in data
+  unsigned char *name;  // points somewhere in data
+};
+
+int
+userlist_clnt_get_cookie_2(
+        struct userlist_clnt *clnt,
+        int cmd,
+        const ej_ip_t *origin_ip,
+        int ssl,
+        ej_cookie_t cookie,
+        ej_cookie_t client_key,
+        struct UserlistGetCookieResult *p_res);
+
 int
 userlist_clnt_set_cookie(
         struct userlist_clnt *clnt,
