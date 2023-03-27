@@ -86,7 +86,7 @@ struct tTask
   char  *working_dir;           /* the working directory */
   int    max_time;              /* maximal allowed time */
   int    max_time_millis;       /* maximal allowed time in milliseconds */
-  int    max_real_time;         /* maximal allowed realtime */
+  int    max_real_time_millis;  /* maximal allowed realtime in milliseconds */
   int    was_timeout;           /* was the timeout happened? */
   int    was_real_timeout;      /* was the real time limit exceeded? */
   int    was_memory_limit;      /* was the memory limit happened? */
@@ -898,7 +898,8 @@ task_SetMaxRealTime(tTask *tsk, int time)
   bury_dead_prc();
   if (tsk->state != TSK_STOPPED) return 0;
 
-  tsk->max_real_time = time;
+  ASSERT(time <= INT_MAX / 1000);  // INT_MAX / 1000 is almost 25 days. Any reasonable timeout should fit
+  tsk->max_real_time_millis = time * 1000;
   return 0;
 }
 
@@ -910,7 +911,7 @@ task_SetMaxRealTimeMillis(tTask *tsk, int time_ms)
   bury_dead_prc();
   if (tsk->state != TSK_STOPPED) return 0;
 
-  tsk->max_real_time = (time_ms + 999) / 1000;
+  tsk->max_real_time_millis = time_ms;
   return 0;
 }
 
@@ -1740,8 +1741,8 @@ task_StartContainer(tTask *tsk)
   if (max_time_ms > 0) {
     fprintf(spec_f, "lt%lld", max_time_ms);
   }
-  if (tsk->max_real_time > 0) {
-    fprintf(spec_f, "lr%lld", tsk->max_real_time * 1000LL);
+  if (tsk->max_real_time_millis > 0) {
+    fprintf(spec_f, "lr%d", tsk->max_real_time_millis);
   }
 
   if (strcmp(tsk->path, tsk->args.v[0])) {
@@ -2755,13 +2756,16 @@ task_NewWait(tTask *tsk)
   sigemptyset(&bs);
   sigaddset(&bs, SIGCHLD);
 
-  struct timeval cur_time, rt_timeout;
+  struct timeval cur_time, rt_deadline;
   gettimeofday(&cur_time, NULL);
-  rt_timeout.tv_sec = 0;
-  rt_timeout.tv_usec = 0;
-  if (tsk->max_real_time > 0) {
-    rt_timeout = cur_time;
-    rt_timeout.tv_sec += tsk->max_real_time;
+  rt_deadline.tv_sec = 0;
+  rt_deadline.tv_usec = 0;
+
+  if (tsk->max_real_time_millis > 0) {
+    long long now_usec = cur_time.tv_sec * 1000000LL + cur_time.tv_usec;
+    long long rt_deadline_usec = now_usec + tsk->max_real_time_millis * 1000LL;
+    rt_deadline.tv_sec = rt_deadline_usec / 1000000;
+    rt_deadline.tv_usec = rt_deadline_usec % 1000000;
   }
 
   long long max_time_ms = 0;
@@ -2796,10 +2800,10 @@ task_NewWait(tTask *tsk)
       return tsk;
     }
 
-    if (tsk->max_real_time > 0) {
+    if (tsk->max_real_time_millis > 0) {
       gettimeofday(&cur_time, NULL);
-      if (cur_time.tv_sec > rt_timeout.tv_sec
-          || (cur_time.tv_sec == rt_timeout.tv_sec && cur_time.tv_usec >= rt_timeout.tv_usec)) {
+      if (cur_time.tv_sec > rt_deadline.tv_sec
+          || (cur_time.tv_sec == rt_deadline.tv_sec && cur_time.tv_usec >= rt_deadline.tv_usec)) {
         if (tsk->enable_suid_exec > 0 && tsk->enable_kill_all > 0) {
           do_kill(tsk, -1, tsk->termsig);
         } else if (tsk->enable_process_group > 0) {
