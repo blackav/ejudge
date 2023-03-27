@@ -16586,8 +16586,8 @@ copy_nsi_to_phr(
   phr->is_job = nsi->is_job;
   phr->login = xstrdup(nsi->login);
   phr->name = xstrdup(nsi->name);
+  phr->nsi = nsi;
   nsi->access_time = current_time;
-  // FIXME: save nsi to phr
 }
 
 static __attribute__((unused)) int

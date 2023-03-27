@@ -31,6 +31,7 @@ struct ejudge_cfg;
 struct sid_state;
 struct userlist_clnt;
 struct cJSON;
+struct new_session_info;
 
 struct http_request_info
 {
@@ -86,7 +87,8 @@ struct http_request_info
   // super-serve uses that
   unsigned char *html_name;  // used by super-serve
   const unsigned char *hidden_vars;
-  struct session_info *session_extra;
+  struct session_info *session_extra; // TODO: remove in favor of nsi
+  struct new_session_info *nsi;       // cached session data
   opcap_t caps;
   opcap_t dbcaps;
   unsigned char *script_part;
