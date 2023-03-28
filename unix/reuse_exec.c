@@ -2762,10 +2762,9 @@ task_NewWait(tTask *tsk)
   rt_deadline.tv_usec = 0;
 
   if (tsk->max_real_time_millis > 0) {
-    long long now_usec = cur_time.tv_sec * 1000000LL + cur_time.tv_usec;
-    long long rt_deadline_usec = now_usec + tsk->max_real_time_millis * 1000LL;
-    rt_deadline.tv_sec = rt_deadline_usec / 1000000;
-    rt_deadline.tv_usec = rt_deadline_usec % 1000000;
+    long long total_usec = cur_time.tv_usec + tsk->max_real_time_millis * 1000LL;
+    rt_deadline.tv_sec = cur_time.tv_sec + total_usec / 1000000;
+    rt_deadline.tv_usec = total_usec % 1000000;
   }
 
   long long max_time_ms = 0;
