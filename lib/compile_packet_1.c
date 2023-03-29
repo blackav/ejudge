@@ -277,6 +277,17 @@ compile_request_packet_read(
     pin_ptr += pkt_bin_align(compile_cmd_len);
   }
 
+  pout->extra_src_dir = NULL;
+  int extra_src_dir_len = cvt_bin_to_host_32(pin->extra_src_dir_len);
+  FAIL_IF(extra_src_dir_len < 0 || extra_src_dir_len >= PATH_MAX);
+  FAIL_IF(pin_ptr + extra_src_dir_len > end_ptr);
+  if (extra_src_dir_len > 0) {
+    pout->extra_src_dir = xmalloc(extra_src_dir_len + 1);
+    memcpy(pout->extra_src_dir, pin_ptr, extra_src_dir_len);
+    pout->extra_src_dir[extra_src_dir_len] = 0;
+    pin_ptr += pkt_bin_align(extra_src_dir_len);
+  }
+
   pout->env_num = cvt_bin_to_host_32(pin->env_num);
   FAIL_IF(pout->env_num < 0 || pout->env_num > EJ_MAX_COMPILE_ENV_NUM);
   FAIL_IF(pin_ptr + pout->env_num * sizeof(rint32_t) > end_ptr);

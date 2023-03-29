@@ -47,6 +47,7 @@ compile_request_packet_free(struct compile_request_packet *in_data)
   xfree(in_data->container_options);
   xfree(in_data->vcs_compile_cmd);
   xfree(in_data->compile_cmd);
+  xfree(in_data->extra_src_dir);
   if (in_data->env_num > 0 && in_data->env_vars) {
     for (i = 0; i < in_data->env_num; i++) {
       xfree(in_data->env_vars[i]);
