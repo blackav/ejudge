@@ -58,6 +58,7 @@ struct compile_request_packet
   unsigned char *container_options;
   unsigned char *vcs_compile_cmd;
   unsigned char *compile_cmd;     // custom compilation command for "custom" lang
+  unsigned char *extra_src_dir;   // directory with additional files to be copied to the compilation directory
   int run_block_len;
   void *run_block;
   int env_num;
