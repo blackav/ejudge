@@ -1,9 +1,7 @@
 #!/bin/bash
-# $Id$
-# Copyright (c) 2004-2008 Alexander Chernov <cher@ejudge.ru>
+# Copyright (c) 2004-2023 Alexander Chernov <cher@ejudge.ru>
 
 # Usage: javac in-file out-file
-# The working dir must not contain any .class files.
 
 # using EJUDGE_FLAGS we may pass additional flags
 
@@ -45,4 +43,57 @@ then
 fi
 
 rm -f *.class
-exec "${libexecdir}/ejudge/lang/ej-javac" "${infile}" "${outfile}" "${JAVACRUN}" "${JAVAVER}" "${MY_JAVA_HOME}"
+
+JAVA_CLASSNAME="${libexecdir}/ejudge/lang/java-classname.jar"
+
+# Extract the class name from the source file
+USER_CLASS=`"${JAVARUN}" -jar "${JAVA_CLASSNAME}" "${infile}"`
+if [ "${USER_CLASS}" = "" ]
+then
+	echo "failed to detect java class name" >&2
+	exit 1
+fi
+
+USER_SOURCE="${USER_CLASS}.java"
+
+if ! mv "${infile}" "${USER_SOURCE}"
+then
+	echo "failed to rename source file" >&2
+	exit 1
+fi
+
+if [ "${EJUDGE_MAIN_CLASS}" != "" ]
+then
+	MAIN_CLASS="${EJUDGE_MAIN_CLASS}"
+else
+	MAIN_CLASS="${USER_CLASS}"
+fi
+
+CPOPT=
+if [ "${EJUDGE_CLASSPATH}" != "" ]
+then
+	CPOPT=" -cp ${EJUDGE_CLASSPATH} "
+fi
+
+"${JAVACRUN}" --target "${JAVAVER}" ${CPOPT} *.java || exit 1
+
+D=`dirname "${JAVARUN}"`
+if [ "$D" = "." ]
+then
+	JARRUN=jar
+else
+	JARRUN="${D}/jar"
+fi
+
+MOPT=
+if [ "${EJUDGE_CLASSPATH}" != "" ]
+then
+	echo "Class-Path: ${EJUDGE_CLASSPATH}" > manifest.txt
+	MOPT=" -m manifest.txt "
+fi
+
+"${JARRUN}" -c -f "${outfile}" ${MOPT} -e "${MAIN_CLASS}" *.class || exit 1
+
+exit 0
+
+#exec "${libexecdir}/ejudge/lang/ej-javac" "${infile}" "${outfile}" "${JAVACRUN}" "${JAVAVER}" "${MY_JAVA_HOME}"
