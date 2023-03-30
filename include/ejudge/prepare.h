@@ -1119,6 +1119,8 @@ struct section_problem_data
   unsigned char *custom_compile_cmd;
   /** custom language name (if enable_custom language enabled) */
   unsigned char *custom_lang_name;
+  /** directory with files to be copied to the compilation directory */
+  unsigned char *extra_src_dir;
 
   /** printf pattern for the test files */
   unsigned char *test_pat;

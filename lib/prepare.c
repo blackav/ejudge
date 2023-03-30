@@ -578,6 +578,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(container_options, "S"),
   PROBLEM_PARAM(custom_compile_cmd, "S"),
   PROBLEM_PARAM(custom_lang_name, "S"),
+  PROBLEM_PARAM(extra_src_dir, "S"),
 
   { 0, 0, 0, 0 }
 };
@@ -1500,6 +1501,7 @@ prepare_problem_free_func(struct generic_section_config *gp)
   xfree(p->xml_file_path);
   xfree(p->custom_compile_cmd);
   xfree(p->custom_lang_name);
+  xfree(p->extra_src_dir);
 
   if (p->variant_num > 0 && p->xml.a) {
     for (i = 1; i <= p->variant_num; i++) {
@@ -6134,6 +6136,7 @@ prepare_copy_problem(const struct section_problem_data *in)
   xstrdup3(&out->source_footer, in->source_footer);
   xstrdup3(&out->custom_compile_cmd, in->custom_compile_cmd);
   xstrdup3(&out->custom_lang_name, in->custom_lang_name);
+  xstrdup3(&out->extra_src_dir, in->extra_src_dir);
   out->valuer_sets_marked = in->valuer_sets_marked;
   out->ignore_unmarked = in->ignore_unmarked;
   out->interactor_time_limit = in->interactor_time_limit;
