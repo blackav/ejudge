@@ -1391,6 +1391,7 @@ serve_compile_request(
   char **compiler_env = NULL;
   int lang_id = 0;
   unsigned char *custom_compile_cmd = NULL;
+  unsigned char *extra_src_dir = NULL;
 
   if (prob) {
     style_checker_cmd = prob->style_checker_cmd;
@@ -1622,6 +1623,26 @@ serve_compile_request(
     cp.compile_cmd = custom_compile_cmd;
   }
 
+  if (prob && prob->extra_src_dir && prob->extra_src_dir[0]) {
+    extra_src_dir = prepare_varsubst(state, prob->extra_src_dir, 0, prob, lang, NULL);
+    extra_src_dir = config_var_substitute_heap(extra_src_dir);
+    if (os_IsAbsolutePath(extra_src_dir)) {
+      // nothing
+    } else if (global->advanced_layout > 0) {
+      unsigned char tmp[PATH_MAX];
+      get_advanced_layout_path(tmp, sizeof(tmp),
+                               global, prob, extra_src_dir, variant);
+      free(extra_src_dir);
+      extra_src_dir = xstrdup(tmp);
+    } else {
+      char *tmp = NULL;
+      asprintf(&tmp, "%s/%s", global->checker_dir, extra_src_dir);
+      free(extra_src_dir);
+      extra_src_dir = tmp;
+    }
+    cp.extra_src_dir = extra_src_dir;
+  }
+
   cp.vcs_mode = vcs_mode;
   if (vcs_mode > 0 && prob && prob->vcs_compile_cmd && prob->vcs_compile_cmd[0]) {
     cp.vcs_compile_cmd = prob->vcs_compile_cmd;
@@ -1776,6 +1797,7 @@ serve_compile_request(
   xfree(src_text);
   xfree(src_out_text);
   xfree(custom_compile_cmd);
+  xfree(extra_src_dir);
   return 0;
 
  failed:
@@ -1790,6 +1812,7 @@ serve_compile_request(
   xfree(src_text);
   xfree(src_out_text);
   xfree(custom_compile_cmd);
+  xfree(extra_src_dir);
   return errcode;
 }
 
