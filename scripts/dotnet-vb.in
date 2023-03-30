@@ -1,5 +1,5 @@
 #! /bin/bash
-# Copyright (c) 2019-2020 Alexander Chernov <cher@ejudge.ru>
+# Copyright (c) 2019-2023 Alexander Chernov <cher@ejudge.ru>
 
 # A script for compilation of C# programs using the dotnet compiler.
 # Usage: dotnet-cs in-file out-file
@@ -35,6 +35,9 @@ unset LANG
 unset LC_ALL
 unset LC_MESSAGES
 unset LANGUAGE
+
+export DOTNET_NOLOGO=true
+export DOTNET_CLI_TELEMETRY_OPTOUT=true
 
 if ! "${DOTNETRUN}" new console -lang 'vb' -n solution
 then
