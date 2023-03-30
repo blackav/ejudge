@@ -198,6 +198,7 @@ struct problem_config_section
   unsigned char *uuid;
   unsigned char *container_options;
   unsigned char *iframe_statement;
+  unsigned char *extra_src_dir;
 
   char **test_sets;
   char **date_penalty;
