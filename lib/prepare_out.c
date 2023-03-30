@@ -1651,6 +1651,8 @@ prepare_unparse_prob(
     fprintf(f, "custom_compile_cmd = \"%s\"\n", CARMOR(prob->custom_compile_cmd));
   if (prob->custom_lang_name)
     fprintf(f, "custom_lang_name = \"%s\"\n", CARMOR(prob->custom_lang_name));
+  if (prob->extra_src_dir)
+    fprintf(f, "extra_src_dir = \"%s\"\n", CARMOR(prob->extra_src_dir));
   if (prob->normalization)
     fprintf(f, "normalization = \"%s\"\n", CARMOR(prob->normalization));
   if (prob->super_run_dir && prob->super_run_dir[0]) {
@@ -2089,6 +2091,8 @@ prepare_unparse_actual_prob(
     fprintf(f, "custom_compile_cmd = \"%s\"\n", CARMOR(prob->custom_compile_cmd));
   if (prob->custom_lang_name)
     fprintf(f, "custom_lang_name = \"%s\"\n", CARMOR(prob->custom_lang_name));
+  if (prob->extra_src_dir)
+    fprintf(f, "extra_src_dir = \"%s\"\n", CARMOR(prob->extra_src_dir));
   if (prob->normalization)
     fprintf(f, "normalization = \"%s\"\n", CARMOR(prob->normalization));
   if (prob->extid && prob->extid[0])

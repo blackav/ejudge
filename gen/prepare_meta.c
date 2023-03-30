@@ -508,6 +508,7 @@ static struct meta_info_item meta_info_section_problem_data_data[] =
   [CNTSPROB_interactor_real_time_limit] = { CNTSPROB_interactor_real_time_limit, 'i', XSIZE(struct section_problem_data, interactor_real_time_limit), "interactor_real_time_limit", XOFFSET(struct section_problem_data, interactor_real_time_limit) },
   [CNTSPROB_custom_compile_cmd] = { CNTSPROB_custom_compile_cmd, 's', XSIZE(struct section_problem_data, custom_compile_cmd), "custom_compile_cmd", XOFFSET(struct section_problem_data, custom_compile_cmd) },
   [CNTSPROB_custom_lang_name] = { CNTSPROB_custom_lang_name, 's', XSIZE(struct section_problem_data, custom_lang_name), "custom_lang_name", XOFFSET(struct section_problem_data, custom_lang_name) },
+  [CNTSPROB_extra_src_dir] = { CNTSPROB_extra_src_dir, 's', XSIZE(struct section_problem_data, extra_src_dir), "extra_src_dir", XOFFSET(struct section_problem_data, extra_src_dir) },
   [CNTSPROB_test_pat] = { CNTSPROB_test_pat, 's', XSIZE(struct section_problem_data, test_pat), "test_pat", XOFFSET(struct section_problem_data, test_pat) },
   [CNTSPROB_corr_pat] = { CNTSPROB_corr_pat, 's', XSIZE(struct section_problem_data, corr_pat), "corr_pat", XOFFSET(struct section_problem_data, corr_pat) },
   [CNTSPROB_info_pat] = { CNTSPROB_info_pat, 's', XSIZE(struct section_problem_data, info_pat), "info_pat", XOFFSET(struct section_problem_data, info_pat) },
