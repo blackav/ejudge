@@ -171,7 +171,8 @@ userlist_clnt_get_cookie_2(
   p_res->login = login_ptr;
   p_res->name = name_ptr;
 
-  r = in->reply_id;
+  return in->reply_id;
+
  cleanup:
   xfree(in);
   return r;
