@@ -15,6 +15,7 @@
  */
 
 #include "ejudge/session_cache.h"
+#include "ejudge/metrics_contest.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -190,6 +191,9 @@ nsc_insert(struct new_session_cache *nsc, ej_cookie_t session_id, ej_cookie_t cl
     cur->session_id = session_id;
     cur->client_key = client_key;
     ++nsc->used;
+    if (metrics.data) {
+        metrics.data->cookie_cache_size = nsc->used;
+    }
     return cur;
 }
 
@@ -209,6 +213,9 @@ nsc_remove(struct new_session_cache *nsc, ej_cookie_t session_id, ej_cookie_t cl
         cur = &nsc->info[index];
     }
     --nsc->used;
+    if (metrics.data) {
+        metrics.data->cookie_cache_size = nsc->used;
+    }
     if (out) {
         *out = *cur;
     }
@@ -323,6 +330,9 @@ tc_insert(struct token_cache *tc, const unsigned char *token)
     memcpy(cur->token, token, 32);
     cur->used = 1;
     ++tc->used;
+    if (metrics.data) {
+        metrics.data->key_cache_size = tc->used;
+    }
     return cur;
 }
 
@@ -342,6 +352,9 @@ tc_remove(struct token_cache *tc, const unsigned char *token, struct cached_toke
         cur = &tc->info[index];
     }
     --tc->used;
+    if (metrics.data) {
+        metrics.data->key_cache_size = tc->used;
+    }
     if (out) {
         *out = *cur;
     }
