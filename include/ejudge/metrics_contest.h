@@ -38,6 +38,8 @@ struct metrics_contest_data
     long long get_key_count;
     long long cache_key_tsc;
     long long cache_key_count;
+    long long cookie_cache_count;
+    long long key_cache_count;
 };
 
 struct metrics_desc
