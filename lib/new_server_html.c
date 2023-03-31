@@ -16568,7 +16568,6 @@ static void
 copy_nsi_to_phr(
         struct http_request_info *phr,
         struct new_session_info *nsi,
-        const struct contest_desc *cnts,
         time_t current_time)
 {
   // OK, reuse cached value
@@ -16576,9 +16575,6 @@ copy_nsi_to_phr(
   phr->contest_id = nsi->contest_id;
   if (phr->locale_id < 0 && nsi->locale_id >= 0) {
     phr->locale_id = nsi->locale_id;
-  }
-  if (phr->locale_id < 0 && cnts && cnts->default_locale_num >= 0) {
-    phr->locale_id = cnts->default_locale_num;
   }
   if (phr->locale_id < 0) phr->locale_id = 0;
   phr->role = nsi->role;
@@ -16590,11 +16586,10 @@ copy_nsi_to_phr(
   nsi->access_time = current_time;
 }
 
-static __attribute__((unused)) int
+static int
 check_cached_session(
         FILE *fout,
-        struct http_request_info *phr,
-        const struct contest_desc *cnts)
+        struct http_request_info *phr)
 {
   long long tsc_start;
   long long tsc_end;
@@ -16623,7 +16618,7 @@ check_cached_session(
 
     // cache hit
     nsi->access_time = current_time;
-    copy_nsi_to_phr(phr, nsi, cnts, current_time);
+    copy_nsi_to_phr(phr, nsi, current_time);
     rdtscll(tsc_end);
     if (metrics.data) {
       metrics.data->cache_cookie_tsc += (tsc_end - tsc_start);
@@ -16640,7 +16635,7 @@ check_cached_session(
         && !ej_ip_cmp(&phr->ip, &nsi->origin_ip)) {
       // still try to use cached session value
       nsi->access_time = current_time;
-      copy_nsi_to_phr(phr, nsi, cnts, current_time);
+      copy_nsi_to_phr(phr, nsi, current_time);
       rdtscll(tsc_end);
       if (metrics.data) {
         metrics.data->cache_cookie_tsc += (tsc_end - tsc_start);
@@ -16665,7 +16660,7 @@ check_cached_session(
         && !ej_ip_cmp(&phr->ip, &nsi->origin_ip)) {
       // still try to use cached session value
       nsi->access_time = current_time;
-      copy_nsi_to_phr(phr, nsi, cnts, current_time);
+      copy_nsi_to_phr(phr, nsi, current_time);
       rdtscll(tsc_end);
       if (metrics.data) {
         metrics.data->cache_cookie_tsc += (tsc_end - tsc_start);
@@ -16714,6 +16709,9 @@ check_cached_session(
     }
   }
 
+  nsi->cmd = ULS_TEAM_GET_COOKIE;
+  nsi->origin_ip = phr->ip;
+  nsi->ssl_flag = phr->ssl_flag;
   nsi->user_id = result.data->user_id;
   nsi->contest_id = result.data->contest_id;
   nsi->locale_id = result.data->locale_id;
@@ -16732,7 +16730,7 @@ check_cached_session(
   nsi->name = xstrdup(result.name);
 
   xfree(result.data);
-  copy_nsi_to_phr(phr, nsi, cnts, current_time);
+  copy_nsi_to_phr(phr, nsi, current_time);
   rdtscll(tsc_end);
   if (metrics.data) {
     metrics.data->get_cookie_tsc += (tsc_end - tsc_start);
@@ -16756,7 +16754,6 @@ unprivileged_entry_point(
   int online_users = 0;
   serve_state_t cs = 0;
   const unsigned char *s = 0;
-  int cookie_locale_id = -1;
 
   if (phr->action == NEW_SRV_ACTION_VCS_WEBHOOK) {
     unpriv_gitlab_webhook(fout, phr);
@@ -16836,7 +16833,6 @@ unprivileged_entry_point(
     }
     phr->user_id = auth->user_id;
     phr->contest_id = auth->contest_id;
-    cookie_locale_id = 0;
     phr->role = auth->role;
     //phr->passwd_method = 0;
     phr->login = xstrdup(auth->login);
@@ -16894,58 +16890,24 @@ unprivileged_entry_point(
       goto cleanup;
     }
   } else {
-    // validate cookie
-    if (ns_open_ul_connection(phr->fw_state) < 0) {
-      error_page(fout, phr, 0, -NEW_SRV_ERR_USERLIST_SERVER_DOWN);
+    r = check_cached_session(fout, phr);
+    if (r < 0) {
+      error_page(fout, phr, 0, r);
       goto cleanup;
     }
-    if ((r = userlist_clnt_get_cookie(ul_conn, ULS_TEAM_GET_COOKIE,
-                                      &phr->ip, phr->ssl_flag,
-                                      phr->session_id,
-                                      phr->client_key,
-                                      &phr->user_id, &phr->contest_id,
-                                      &cookie_locale_id, 0, &phr->role, 0, 0, 0,
-                                      &phr->passwd_method,
-                                      NULL /* p_is_ws */,
-                                      &phr->is_job,
-                                      NULL /* p_expire */,
-                                      &phr->login, &phr->name)) < 0) {
-      if (phr->locale_id < 0 && cookie_locale_id >= 0) phr->locale_id = cookie_locale_id;
-      if (phr->locale_id < 0 && cnts && cnts->default_locale_num >= 0) {
-        phr->locale_id = cnts->default_locale_num;
-      }
-      if (phr->locale_id < 0) phr->locale_id = 0;
-      switch (-r) {
-      case ULS_ERR_NO_COOKIE:
-      case ULS_ERR_CANNOT_PARTICIPATE:
-      case ULS_ERR_NOT_REGISTERED:
-        error_page(fout, phr, 0, -NEW_SRV_ERR_INV_SESSION);
-        goto cleanup;
-      case ULS_ERR_INCOMPLETE_REG:
-        error_page(fout, phr, 0, -NEW_SRV_ERR_REGISTRATION_INCOMPLETE);
-        goto cleanup;
-      case ULS_ERR_DISCONNECT:
-        error_page(fout, phr, 0, -NEW_SRV_ERR_USERLIST_SERVER_DOWN);
-        goto cleanup;
-      default:
-        fprintf(phr->log_f, "get_cookie failed: %s\n", userlist_strerror(-r));
-        error_page(fout, phr, 0, -NEW_SRV_ERR_INTERNAL);
-        goto cleanup;
-      }
-    }
   }
-
-  if (phr->locale_id < 0 && cookie_locale_id >= 0) phr->locale_id = cookie_locale_id;
-  if (phr->locale_id < 0 && cnts && cnts->default_locale_num >= 0) {
-    phr->locale_id = cnts->default_locale_num;
-  }
-  if (phr->locale_id < 0) phr->locale_id = 0;
 
   if (phr->contest_id < 0 || contests_get(phr->contest_id, &cnts) < 0 || !cnts){
     fprintf(phr->log_f, "invalid contest_id %d\n", phr->contest_id);
     error_page(fout, phr, 0, -NEW_SRV_ERR_INV_CONTEST_ID);
     goto cleanup;
   }
+
+  if (phr->locale_id < 0 && cnts && cnts->default_locale_num >= 0) {
+    phr->locale_id = cnts->default_locale_num;
+  }
+  if (phr->locale_id < 0) phr->locale_id = 0;
+
   extra = ns_get_contest_extra(cnts, phr->config);
   ASSERT(extra);
   phr->cnts = cnts;
