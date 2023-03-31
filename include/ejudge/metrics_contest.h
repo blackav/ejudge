@@ -34,6 +34,10 @@ struct metrics_contest_data
     long long get_cookie_count;
     long long cache_cookie_tsc;
     long long cache_cookie_count;
+    long long get_key_tsc;
+    long long get_key_count;
+    long long cache_key_tsc;
+    long long cache_key_count;
 };
 
 struct metrics_desc
