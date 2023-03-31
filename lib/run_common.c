@@ -261,30 +261,25 @@ generate_xml_report(
   if (srgp->scoring_system_val == SCORE_OLYMPIAD) {
     tr->accepting_mode = (srgp->accepting_mode > 0);
   }
+  tr->tests_passed = reply_pkt->tests_passed;
 
   if (srgp->scoring_system_val == SCORE_OLYMPIAD && srgp->accepting_mode > 0 && reply_pkt->status != RUN_ACCEPTED) {
-    tr->tests_passed = reply_pkt->tests_passed;
     tr->failed_test = total_tests - 1;
   } else if (srgp->scoring_system_val == SCORE_ACM && reply_pkt->status != RUN_OK) {
-    tr->tests_passed = reply_pkt->tests_passed;
     tr->failed_test = total_tests - 1;
   } else if (srgp->scoring_system_val == SCORE_OLYMPIAD && srgp->accepting_mode <= 0) {
-    tr->tests_passed = reply_pkt->tests_passed;
     tr->score = reply_pkt->score;
     tr->max_score = max_score;
   } else if (srgp->scoring_system_val == SCORE_KIROV) {
-    tr->tests_passed = reply_pkt->tests_passed;
     tr->score = reply_pkt->score;
     tr->max_score = max_score;
   } else if (srgp->scoring_system_val == SCORE_MOSCOW) {
     if (reply_pkt->status != RUN_OK) {
       tr->failed_test = total_tests - 1;
     }
-    tr->tests_passed = reply_pkt->tests_passed;
     tr->score = reply_pkt->score;
     tr->max_score = max_score;
   } else {
-    tr->tests_passed = reply_pkt->tests_passed;
   }
   if (report_time_limit_ms > 0) {
     tr->time_limit_ms = report_time_limit_ms;
