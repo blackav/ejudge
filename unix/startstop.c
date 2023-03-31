@@ -69,8 +69,12 @@ start_set_self_args(int argc, char *argv[])
   self_argv = argv;
   self_argv[0] = self_exe;
   sigprocmask(SIG_SETMASK, 0, &init_sigmask);
+}
 
-  backtrace_state_var = backtrace_create_state(argv[0], 0, NULL, NULL);
+void
+start_enable_stacktrace(const char *process_name)
+{
+  backtrace_state_var = backtrace_create_state(process_name, 0, NULL, NULL);
   sigaction(SIGSEGV, &(struct sigaction) { .sa_handler = fatal_signal_handler }, NULL);
   sigaction(SIGILL, &(struct sigaction) { .sa_handler = fatal_signal_handler }, NULL);
   sigaction(SIGBUS, &(struct sigaction) { .sa_handler = fatal_signal_handler }, NULL);

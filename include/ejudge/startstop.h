@@ -27,6 +27,7 @@ enum
 };
 
 void start_set_self_args(int argc, char *argv[]);
+void start_enable_stacktrace(const char *process_name);
 void start_set_args(char *argv[]);
 int start_switch_user(const unsigned char *user, const unsigned char *group);
 
