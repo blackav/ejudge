@@ -1632,13 +1632,11 @@ testing_report_unparse_xml(
       fprintf(out, " %s=\"%d\"", attr_map[TR_A_FAILED_TEST], r->failed_test);
     }
   } else if (r->scoring_system == SCORE_OLYMPIAD && r->accepting_mode <= 0) {
-    fprintf(out, " %s=\"%d\" %s=\"%d\" %s=\"%d\"",
-            attr_map[TR_A_TESTS_PASSED], r->tests_passed,
+    fprintf(out, " %s=\"%d\" %s=\"%d\"",
             attr_map[TR_A_SCORE], r->score,
             attr_map[TR_A_MAX_SCORE], r->max_score);
   } else if (r->scoring_system == SCORE_KIROV) {
-    fprintf(out, " %s=\"%d\" %s=\"%d\" %s=\"%d\"",
-            attr_map[TR_A_TESTS_PASSED], r->tests_passed,
+    fprintf(out, " %s=\"%d\" %s=\"%d\"",
             attr_map[TR_A_SCORE], r->score,
             attr_map[TR_A_MAX_SCORE], r->max_score);
   } else if (r->scoring_system == SCORE_MOSCOW) {
@@ -1650,6 +1648,9 @@ testing_report_unparse_xml(
     fprintf(out, " %s=\"%d\" %s=\"%d\"",
             attr_map[TR_A_SCORE], r->score,
             attr_map[TR_A_MAX_SCORE], r->max_score);
+  }
+  if (r->tests_passed >= 0) {
+    fprintf(out, " %s=\"%d\"", attr_map[TR_A_TESTS_PASSED], r->tests_passed);
   }
 
   if (r->time_limit_ms > 0) {

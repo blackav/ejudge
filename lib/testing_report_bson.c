@@ -888,6 +888,9 @@ do_unparse(
     if (r->accepting_mode > 0) {
         bson_append_bool(b, tag_table[Tag_accepting_mode], -1, 1);
     }
+    if (r->tests_passed >= 0) {
+        bson_append_int32(b, tag_table[Tag_tests_passed], -1, r->tests_passed);
+    }
     if (r->scoring_system == SCORE_OLYMPIAD && r->accepting_mode > 0 && r->status != RUN_ACCEPTED) {
         if (r->failed_test > 0) {
             bson_append_int32(b, tag_table[Tag_failed_test], -1, r->failed_test);
@@ -897,11 +900,9 @@ do_unparse(
             bson_append_int32(b, tag_table[Tag_failed_test], -1, r->failed_test);
         }
     } else if (r->scoring_system == SCORE_OLYMPIAD && r->accepting_mode <= 0) {
-        bson_append_int32(b, tag_table[Tag_tests_passed], -1, r->tests_passed);
         bson_append_int32(b, tag_table[Tag_score], -1, r->score);
         bson_append_int32(b, tag_table[Tag_max_score], -1, r->max_score);
     } else if (r->scoring_system == SCORE_KIROV) {
-        bson_append_int32(b, tag_table[Tag_tests_passed], -1, r->tests_passed);
         bson_append_int32(b, tag_table[Tag_score], -1, r->score);
         bson_append_int32(b, tag_table[Tag_max_score], -1, r->max_score);
     } else if (r->scoring_system == SCORE_MOSCOW) {
