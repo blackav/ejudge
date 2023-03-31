@@ -69,8 +69,24 @@ struct new_session_cache
 struct cached_token_info
 {
     unsigned char token[32];
+    ej_ip_t origin_ip;          // access address
+    time_t access_time;         // time of the last access
+    time_t expiry_time;
+    time_t refresh_time;
+
+    unsigned char *login;
+    unsigned char *name;
+
+    int cmd;
+    int user_id;
+    int contest_id;
+    unsigned int reg_flags;
+
+    unsigned char ssl_flag;
+    unsigned char role;
+    unsigned char reg_status;
+    unsigned char all_contests;
     unsigned char used;       // 1 if this entry is used
-    // whatever
 };
 
 struct token_cache

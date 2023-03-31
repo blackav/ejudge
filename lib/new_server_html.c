@@ -16570,7 +16570,6 @@ copy_nsi_to_phr(
         struct new_session_info *nsi,
         time_t current_time)
 {
-  // OK, reuse cached value
   phr->user_id = nsi->user_id;
   phr->contest_id = nsi->contest_id;
   if (phr->locale_id < 0 && nsi->locale_id >= 0) {
@@ -16586,10 +16585,178 @@ copy_nsi_to_phr(
   nsi->access_time = current_time;
 }
 
+static void
+copy_cti_to_phr(
+        struct http_request_info *phr,
+        struct cached_token_info *cti,
+        time_t current_time)
+{
+  phr->user_id = cti->user_id;
+  phr->contest_id = cti->contest_id;
+  phr->login = xstrdup(cti->login);
+  phr->name = xstrdup(cti->name);
+    /*
+    unsigned int reg_flags;
+    unsigned char role;
+    unsigned char reg_status;
+    */
+   cti->access_time = current_time;
+}
+
 static int
-check_cached_session(
-        FILE *fout,
-        struct http_request_info *phr)
+unpriv_check_cached_key(struct http_request_info *phr)
+{
+  long long tsc_start;
+  long long tsc_end;
+
+  rdtscll(tsc_start);
+
+  time_t current_time = time(NULL);
+  struct cached_token_info *cti = tc_find(&main_id_cache.t, phr->token);
+  while (1) {
+    if (!cti || !cti->used) break;
+    if (cti->cmd != ULS_GET_API_KEY) break;
+
+    if (ej_ip_cmp(&phr->ip, &cti->origin_ip) != 0) {
+      break;
+    }
+    if (phr->ssl_flag != cti->ssl_flag) {
+      break;
+    }
+    if (current_time >= cti->expiry_time) {
+      break;
+    }
+    if (current_time >= cti->refresh_time) {
+      break;
+    }
+    if (phr->role > cti->role) {
+      break;
+    }
+
+    copy_cti_to_phr(phr, cti, current_time);
+    rdtscll(tsc_end);
+    if (metrics.data) {
+      metrics.data->hit_key_tsc += (tsc_end - tsc_start);
+      ++metrics.data->hit_key_count;
+    }
+    return 0;
+  }
+
+  if (ns_open_ul_connection(phr->fw_state) < 0) {
+    if (cti && cti->used && cti->cmd == ULS_GET_API_KEY
+        && !ej_ip_cmp(&phr->ip, &cti->origin_ip)
+        && phr->ssl_flag == cti->ssl_flag
+        && current_time < cti->expiry_time
+        && phr->role <= cti->role) {
+      copy_cti_to_phr(phr, cti, current_time);
+      rdtscll(tsc_end);
+      if (metrics.data) {
+        metrics.data->hit_key_tsc += (tsc_end - tsc_start);
+        ++metrics.data->hit_key_count;
+      }
+      return 0;
+    }
+    return -NEW_SRV_ERR_USERLIST_SERVER_DOWN;
+  }
+
+  struct userlist_api_key in_api_key = {};
+  memcpy(in_api_key.token, phr->token, 32);
+  in_api_key.contest_id = phr->contest_id;
+  struct userlist_contest_info cnts_info = {};
+  struct userlist_api_key *out_keys = NULL;
+  int out_count = 0;
+  int r = userlist_clnt_api_key_request(ul_conn, ULS_GET_API_KEY, 1, &in_api_key, &out_count, &out_keys, &cnts_info);
+  if (r == -ULS_ERR_DISCONNECT) {
+    if (cti && cti->used && cti->cmd == ULS_GET_API_KEY
+        && !ej_ip_cmp(&phr->ip, &cti->origin_ip)
+        && phr->ssl_flag == cti->ssl_flag
+        && current_time < cti->expiry_time
+        && phr->role <= cti->role) {
+      copy_cti_to_phr(phr, cti, current_time);
+      rdtscll(tsc_end);
+      if (metrics.data) {
+        metrics.data->hit_key_tsc += (tsc_end - tsc_start);
+        ++metrics.data->hit_key_count;
+      }
+      return 0;
+    }
+    return -NEW_SRV_ERR_USERLIST_SERVER_DOWN;
+  }
+
+  if (r <= 0) {
+    r = -NEW_SRV_ERR_PERMISSION_DENIED;
+  } else if (out_count != 1) {
+    r = -NEW_SRV_ERR_INTERNAL;
+  } else if (cnts_info.user_id == 0 || cnts_info.contest_id == 0) {
+    r = -NEW_SRV_ERR_PERMISSION_DENIED;
+  } else if (phr->contest_id > 0 && cnts_info.contest_id != phr->contest_id) {
+    r = -NEW_SRV_ERR_PERMISSION_DENIED;
+  } else if (cnts_info.reg_status != USERLIST_REG_OK) {
+    r = -NEW_SRV_ERR_PERMISSION_DENIED;
+  } else if ((cnts_info.reg_flags & (USERLIST_UC_BANNED | USERLIST_UC_LOCKED | USERLIST_UC_INCOMPLETE | USERLIST_UC_DISQUALIFIED)) != 0) {
+    r = -NEW_SRV_ERR_PERMISSION_DENIED;
+  } else if (out_keys[0].expiry_time > 0 && current_time >= out_keys[0].expiry_time) {
+    r = -NEW_SRV_ERR_PERMISSION_DENIED;
+  }
+
+  if (r < 0) {
+    xfree(cnts_info.login);
+    xfree(cnts_info.name);
+    for (int i = 0; i < out_count; ++i) {
+      xfree(out_keys[i].origin);
+      xfree(out_keys[i].payload);
+    }
+    xfree(out_keys);
+
+    if (cti && cti->used) {
+      struct cached_token_info del_item;
+      if (tc_remove(&main_id_cache.t, phr->token, &del_item)) {
+        xfree(del_item.login);
+        xfree(del_item.name);
+      }
+    }
+
+    return r;
+  }
+
+  if (!cti) {
+    cti = tc_insert(&main_id_cache.t, phr->token);
+  } else {
+    xfree(cti->login);
+    xfree(cti->name);
+    memset(cti, 0, sizeof(*cti));
+    memcpy(cti->token, phr->token, 32);
+    cti->used = 1;
+  }
+
+  cti->origin_ip = phr->ip;
+  cti->ssl_flag = phr->ssl_flag;
+  cti->expiry_time = out_keys[0].expiry_time;
+  cti->refresh_time = current_time + 1200;
+  cti->login = cnts_info.login; cnts_info.login = NULL;
+  cti->name = cnts_info.name; cnts_info.name = NULL;
+  cti->cmd = ULS_GET_API_KEY;
+  cti->user_id = cnts_info.user_id;
+  cti->contest_id = cnts_info.contest_id;
+  cti->reg_flags = cnts_info.reg_flags;
+  cti->reg_status = cnts_info.reg_status;
+  cti->role = out_keys[0].role;
+  cti->all_contests = out_keys[0].all_contests;
+  xfree(out_keys[0].payload);
+  xfree(out_keys[0].origin);
+  xfree(out_keys);
+
+  copy_cti_to_phr(phr, cti, current_time);
+  rdtscll(tsc_end);
+  if (metrics.data) {
+    metrics.data->get_key_tsc += (tsc_end - tsc_start);
+    ++metrics.data->get_key_count;
+  }
+  return 0;
+}
+
+static int
+unpriv_check_cached_session(struct http_request_info *phr)
 {
   long long tsc_start;
   long long tsc_end;
@@ -16617,12 +16784,11 @@ check_cached_session(
     }
 
     // cache hit
-    nsi->access_time = current_time;
     copy_nsi_to_phr(phr, nsi, current_time);
     rdtscll(tsc_end);
     if (metrics.data) {
-      metrics.data->cache_cookie_tsc += (tsc_end - tsc_start);
-      ++metrics.data->cache_cookie_count;
+      metrics.data->hit_cookie_tsc += (tsc_end - tsc_start);
+      ++metrics.data->hit_cookie_count;
     }
     return 0;
   }
@@ -16634,12 +16800,11 @@ check_cached_session(
         && nsi->ssl_flag == phr->ssl_flag
         && !ej_ip_cmp(&phr->ip, &nsi->origin_ip)) {
       // still try to use cached session value
-      nsi->access_time = current_time;
       copy_nsi_to_phr(phr, nsi, current_time);
       rdtscll(tsc_end);
       if (metrics.data) {
-        metrics.data->cache_cookie_tsc += (tsc_end - tsc_start);
-        ++metrics.data->cache_cookie_count;
+        metrics.data->hit_cookie_tsc += (tsc_end - tsc_start);
+        ++metrics.data->hit_cookie_count;
       }
       return 0;
     }
@@ -16659,12 +16824,11 @@ check_cached_session(
         && nsi->ssl_flag == phr->ssl_flag
         && !ej_ip_cmp(&phr->ip, &nsi->origin_ip)) {
       // still try to use cached session value
-      nsi->access_time = current_time;
       copy_nsi_to_phr(phr, nsi, current_time);
       rdtscll(tsc_end);
       if (metrics.data) {
-        metrics.data->cache_cookie_tsc += (tsc_end - tsc_start);
-        ++metrics.data->cache_cookie_count;
+        metrics.data->hit_cookie_tsc += (tsc_end - tsc_start);
+        ++metrics.data->hit_cookie_count;
       }
       return 0;
     }
@@ -16845,52 +17009,13 @@ unprivileged_entry_point(
       goto cleanup;
     }
 
-    if (ns_open_ul_connection(phr->fw_state) < 0) {
-      error_page(fout, phr, 0, -NEW_SRV_ERR_USERLIST_SERVER_DOWN);
-      goto cleanup;
-    }
-    struct userlist_api_key in_api_key = {};
-    memcpy(in_api_key.token, phr->token, 32);
-    in_api_key.contest_id = phr->contest_id;
-    struct userlist_contest_info cnts_info = {};
-    struct userlist_api_key *out_keys = NULL;
-    int out_count = 0;
-    r = userlist_clnt_api_key_request(ul_conn, ULS_GET_API_KEY, 1, &in_api_key, &out_count, &out_keys, &cnts_info);
-    phr->login = cnts_info.login; cnts_info.login = NULL;
-    phr->name = cnts_info.name; cnts_info.name = NULL;
-    phr->contest_id = cnts_info.contest_id;
-    phr->user_id = cnts_info.user_id;
-
-    if (r <= 0) {
-      error_page(fout, phr, 0, -NEW_SRV_ERR_PERMISSION_DENIED);
-      goto cleanup;
-    }
-    if (out_count != 1) {
-      error_page(fout, phr, 0, -NEW_SRV_ERR_INTERNAL);
-      goto cleanup;
-    }
-    if (cnts_info.user_id == 0 || cnts_info.contest_id == 0) {
-      error_page(fout, phr, 0, -NEW_SRV_ERR_PERMISSION_DENIED);
-      goto cleanup;
-    }
-    if (phr->contest_id > 0 && cnts_info.contest_id != phr->contest_id) {
-      error_page(fout, phr, 0, -NEW_SRV_ERR_PERMISSION_DENIED);
-      goto cleanup;
-    }
-    if (cnts_info.reg_status != USERLIST_REG_OK) {
-      error_page(fout, phr, 0, -NEW_SRV_ERR_PERMISSION_DENIED);
-      goto cleanup;
-    }
-    if ((cnts_info.reg_flags & (USERLIST_UC_BANNED | USERLIST_UC_LOCKED | USERLIST_UC_INCOMPLETE | USERLIST_UC_DISQUALIFIED)) != 0) {
-      error_page(fout, phr, 0, -NEW_SRV_ERR_PERMISSION_DENIED);
-      goto cleanup;
-    }
-    if (out_keys[0].expiry_time > 0 && cur_time >= out_keys[0].expiry_time) {
-      error_page(fout, phr, 0, -NEW_SRV_ERR_PERMISSION_DENIED);
+    r = unpriv_check_cached_key(phr);
+    if (r < 0) {
+      error_page(fout, phr, 0, r);
       goto cleanup;
     }
   } else {
-    r = check_cached_session(fout, phr);
+    r = unpriv_check_cached_session(phr);
     if (r < 0) {
       error_page(fout, phr, 0, r);
       goto cleanup;
