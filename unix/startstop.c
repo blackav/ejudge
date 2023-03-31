@@ -74,6 +74,9 @@ start_set_self_args(int argc, char *argv[])
 void
 start_enable_stacktrace(const char *process_name)
 {
+  if (!process_name) {
+    process_name = self_argv[0];
+  }
   backtrace_state_var = backtrace_create_state(process_name, 0, NULL, NULL);
   sigaction(SIGSEGV, &(struct sigaction) { .sa_handler = fatal_signal_handler }, NULL);
   sigaction(SIGILL, &(struct sigaction) { .sa_handler = fatal_signal_handler }, NULL);
