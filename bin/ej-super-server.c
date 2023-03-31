@@ -2781,6 +2781,7 @@ main(int argc, char **argv)
   const unsigned char *user = 0, *group = 0, *workdir = 0;
   char **argv_restart = 0;
   int pid;
+  int disable_stack_trace = 0;
 
   hr_set_symbolic_action_table(SSERV_CMD_LAST, 0, 0, super_serve_help_urls);
 
@@ -2799,6 +2800,9 @@ main(int argc, char **argv)
       cur_arg++;
     } else if (!strcmp(argv[cur_arg], "-R")) {
       restart_mode = 1;
+      cur_arg++;
+    } else if (!strcmp(argv[cur_arg], "-nst")) {
+      disable_stack_trace = 1;
       cur_arg++;
     } else if (!strcmp(argv[cur_arg], "-a")) {
       autonomous_mode = 1;
@@ -2848,6 +2852,9 @@ main(int argc, char **argv)
   }
   argv_restart[j] = 0;
   start_set_args(argv_restart);
+  if (disable_stack_trace <= 0) {
+    start_enable_stacktrace(NULL);
+  }
 
   if (!(pid = start_find_process("ej-super-server", NULL, 0))) {
     forced_mode = 1;

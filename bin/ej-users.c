@@ -12193,6 +12193,7 @@ main(int argc, char *argv[])
   const unsigned char *user = 0, *group = 0, *workdir = 0, *plugin_dir = 0;
   char **argv_restart = 0;
   int restart_mode = 0;
+  int disable_stack_trace = 0;
 
   start_set_self_args(argc, argv);
   XCALLOC(argv_restart, argc + 2);
@@ -12204,6 +12205,9 @@ main(int argc, char *argv[])
       cur_arg++;
     } else if (!strcmp(argv[cur_arg], "-R")) {
       restart_mode = 1;
+      cur_arg++;
+    } else if (!strcmp(argv[cur_arg], "-nst")) {
+      disable_stack_trace = 1;
       cur_arg++;
     } else if (!strcmp(argv[cur_arg], "-f")) {
       forced_mode = 1;
@@ -12255,6 +12259,9 @@ main(int argc, char *argv[])
   }
   argv_restart[j] = 0;
   start_set_args(argv_restart);
+  if (disable_stack_trace <= 0) {
+    start_enable_stacktrace(NULL);
+  }
 
   if (!convert_flag && !create_flag) {
     if (!(pid = start_find_process("ej-users", NULL, 0))) {
