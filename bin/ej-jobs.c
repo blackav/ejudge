@@ -1817,10 +1817,14 @@ int main(int argc, char *argv[])
     const unsigned char *group = NULL;
     const unsigned char *workdir = NULL;
     unsigned char *ejudge_xml_path = NULL;
+    int disable_stack_trace = 0;
 
     while (cur_arg < argc) {
         if (!strcmp(argv[cur_arg], "-D")) {
             as.daemon_mode = 1;
+            cur_arg++;
+        } else if (!strcmp(argv[cur_arg], "-nst")) {
+            disable_stack_trace = 1;
             cur_arg++;
         } else if (!strcmp(argv[cur_arg], "-R")) {
             restart_mode = 1;
@@ -1861,6 +1865,9 @@ int main(int argc, char *argv[])
     }
     argv_restart[j] = NULL;
     start_set_args(argv_restart);
+    if (disable_stack_trace <= 0) {
+        start_enable_stacktrace(NULL);
+    }
 
     int pid;
     if ((pid = start_find_process("ej-jobs", NULL, 0)) > 0) {

@@ -1528,6 +1528,7 @@ main(int argc, char *argv[])
   int     parallel_mode = 0;
   int     ejudge_xml_fd = -1;
   int     stderr_fd = -1;
+  int     disable_stack_trace = 0;
 
 #if HAVE_SETSID - 0
   path_t  log_path;
@@ -1671,6 +1672,10 @@ main(int argc, char *argv[])
       verbose_mode = 1;
       ++i;
       argv_restart[j++] = "-v";
+    } else if (!strcmp(argv[i], "-nst")) {
+      disable_stack_trace = 1;
+      ++i;
+      argv_restart[j++] = argv[i];
     } else if (!strcmp(argv[i], "--help")) {
       code = 0;
       goto print_usage;
@@ -1684,6 +1689,9 @@ main(int argc, char *argv[])
   if (i < argc) goto print_usage;
   argv_restart[j] = 0;
   start_set_args(argv_restart);
+  if (disable_stack_trace <= 0) {
+    start_enable_stacktrace(NULL);
+  }
 
   if (!compile_server_id || !*compile_server_id) {
     xfree(compile_server_id); compile_server_id = NULL;

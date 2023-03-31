@@ -916,6 +916,7 @@ main(int argc, char *argv[])
   char **argv_restart = 0;
   int pid;
   time_t server_start_time = 0;
+  int disable_stack_trace = 0;
 
   hr_set_symbolic_action_table(NEW_SRV_ACTION_LAST, ns_symbolic_action_table, ns_submit_button_labels, 0);
   time(&server_start_time);
@@ -948,6 +949,9 @@ main(int argc, char *argv[])
     } else if (!strcmp(argv[i], "-R")) {
       params.restart_mode_flag = 1;
       ++i;
+    } else if (!strcmp(argv[i], "-nst")) {
+      disable_stack_trace = 1;
+      ++i;
     } else if (!strcmp(argv[i], "--")) {
       argv_restart[j++] = argv[i];
       i++;
@@ -965,6 +969,9 @@ main(int argc, char *argv[])
   if (i != argc) startup_error("invalid number of parameters");
   argv_restart[j] = 0;
   start_set_args(argv_restart);
+  if (disable_stack_trace <= 0) {
+    start_enable_stacktrace(NULL);
+  }
 
   if (!(pid = start_find_process("ej-contests", NULL, 0))) {
     params.force_socket_flag = 1;

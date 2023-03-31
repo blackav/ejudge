@@ -1357,6 +1357,7 @@ main(int argc, char *argv[])
   const unsigned char *user = NULL, *group = NULL, *workdir = NULL;
   int halt_timeout = 0, halt_requested = 0;
   unsigned char *halt_command = NULL;
+  int disable_stack_trace = 0;
 
   signal(SIGPIPE, SIG_IGN);
 
@@ -1391,6 +1392,9 @@ main(int argc, char *argv[])
       ++cur_arg;
     } else if (!strcmp(argv[cur_arg], "-R")) {
       restart_mode = 1;
+      ++cur_arg;
+    } else if (!strcmp(argv[cur_arg], "-nst")) {
+      disable_stack_trace = 1;
       ++cur_arg;
     } else if (!strcmp(argv[cur_arg], "-s")) {
       if (cur_arg + 1 >= argc) fatal("argument expected for -s");
@@ -1521,6 +1525,9 @@ main(int argc, char *argv[])
 
   argv_restart[argc_restart] = NULL;
   start_set_args(argv_restart);
+  if (disable_stack_trace <= 0) {
+    start_enable_stacktrace(NULL);
+  }
 
   if (halt_command) {
     master_down_enabled = 1;
