@@ -126,6 +126,8 @@ extern const unsigned char * const ns_symbolic_action_table[];
 
 static ContestExternalActionVector cnts_ext_actions;
 
+struct id_cache main_id_cache;
+
 static void
 error_page(
         FILE *out_f,
@@ -7532,6 +7534,15 @@ priv_logout(FILE *fout,
   //unsigned char locale_buf[64];
   unsigned char urlbuf[1024];
 
+  struct new_session_info del_item;
+  if (nsc_remove(&main_id_cache.s, phr->session_id, phr->client_key, &del_item)) {
+    xfree(del_item.login);
+    xfree(del_item.name);
+    if (del_item.user_info) {
+      userlist_free(&del_item.user_info->b);
+    }
+  }
+
   if (ns_open_ul_connection(phr->fw_state) < 0)
     return error_page(fout, phr, 0, NEW_SRV_ERR_USERLIST_SERVER_DOWN);
   userlist_clnt_delete_cookie(ul_conn, phr->user_id,
@@ -13805,6 +13816,15 @@ unpriv_logout(FILE *fout,
   //unsigned char locale_buf[64];
   unsigned char urlbuf[1024];
 
+  struct new_session_info del_item;
+  if (nsc_remove(&main_id_cache.s, phr->session_id, phr->client_key, &del_item)) {
+    xfree(del_item.login);
+    xfree(del_item.name);
+    if (del_item.user_info) {
+      userlist_free(&del_item.user_info->b);
+    }
+  }
+
   if (ns_open_ul_connection(phr->fw_state) < 0)
     return error_page(fout, phr, 0, NEW_SRV_ERR_USERLIST_SERVER_DOWN);
   userlist_clnt_delete_cookie(ul_conn, phr->user_id, phr->contest_id,
@@ -16547,8 +16567,6 @@ done:;
   cJSON_Delete(jr);
 }
 
-struct id_cache main_id_cache;
-
 static int
 ej_ip_cmp(const ej_ip_t *v1, const ej_ip_t *v2)
 {
@@ -16849,8 +16867,8 @@ unpriv_check_cached_session(struct http_request_info *phr)
       r = -NEW_SRV_ERR_INTERNAL;
       break;
     }
-    struct new_session_info del_item;
     if (nsi) {
+      struct new_session_info del_item;
       if (nsc_remove(&main_id_cache.s, phr->session_id, phr->client_key, &del_item)) {
         // del_item is moved item, the bucket is deleted
         xfree(del_item.login);
