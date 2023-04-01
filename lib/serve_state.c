@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -716,7 +716,7 @@ serve_state_load_contest_config(
   state->current_time = time(0);
   state->load_time = state->current_time;
 
-  if (prepare(cnts, state, state->config_path, 0, PREPARE_SERVE, "", 1, 0, 0) < 0)
+  if (prepare(config, cnts, state, state->config_path, 0, PREPARE_SERVE, "", 1, 0, 0) < 0)
     goto failure;
   if (prepare_serve_defaults(cnts, state, NULL) < 0) goto failure;
 
@@ -799,7 +799,7 @@ serve_state_load_contest(
   extra->serve_state = state;
 
   info("loading contest %d configuration file", contest_id);
-  if (prepare(cnts, state, state->config_path, 0, PREPARE_SERVE, "", 1, 0, 0) < 0)
+  if (prepare(config, cnts, state, state->config_path, 0, PREPARE_SERVE, "", 1, 0, 0) < 0)
     goto failure;
   if (prepare_serve_defaults(cnts, state, p_cnts) < 0) goto failure;
   if (create_dirs(cnts, state, PREPARE_SERVE) < 0) goto failure;

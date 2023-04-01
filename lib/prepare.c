@@ -2697,6 +2697,7 @@ prepare_insert_variant_num(
 
 static int
 set_defaults(
+        const struct ejudge_cfg *config,
         const struct contest_desc *cnts,
         const unsigned char *config_file,
         serve_state_t state,
@@ -2844,7 +2845,7 @@ set_defaults(
   if (g->stand_show_warn_number == -1)
     g->stand_show_warn_number = DFLT_G_STAND_SHOW_WARN_NUMBER;
   if (g->autoupdate_standings == -1) {
-    if (ejudge_config->disable_autoupdate_standings > 0)
+    if (config && config->disable_autoupdate_standings > 0)
       g->autoupdate_standings = 0;
     else
       g->autoupdate_standings = DFLT_G_AUTOUPDATE_STANDINGS;
@@ -2930,10 +2931,10 @@ set_defaults(
   if (!g->root_dir || !g->root_dir[0]) {
     usprintf(&g->root_dir, "%06d", contest_id);
   }
-  if (!os_IsAbsolutePath(g->root_dir) && ejudge_config
-      && ejudge_config->contests_home_dir
-      && os_IsAbsolutePath(ejudge_config->contests_home_dir)) {
-    usprintf(&g->root_dir, "%s/%s", ejudge_config->contests_home_dir, g->root_dir);
+  if (!os_IsAbsolutePath(g->root_dir) && config
+      && config->contests_home_dir
+      && os_IsAbsolutePath(config->contests_home_dir)) {
+    usprintf(&g->root_dir, "%s/%s", config->contests_home_dir, g->root_dir);
   }
 #if defined EJUDGE_CONTESTS_HOME_DIR
   if (!os_IsAbsolutePath(g->root_dir)) {
@@ -2947,27 +2948,27 @@ set_defaults(
 
   param_subst_2(&g->root_dir, subst_src, subst_dst);
 
-  if ((!g->clardb_plugin || !g->clardb_plugin[0]) && ejudge_config
-      && ejudge_config->default_clardb_plugin
-      && ejudge_config->default_clardb_plugin[0]) {
-    xstrdup3(&g->clardb_plugin, ejudge_config->default_clardb_plugin);
+  if ((!g->clardb_plugin || !g->clardb_plugin[0]) && config
+      && config->default_clardb_plugin
+      && config->default_clardb_plugin[0]) {
+    xstrdup3(&g->clardb_plugin, config->default_clardb_plugin);
   }
-  if ((!g->rundb_plugin || !g->rundb_plugin[0]) && ejudge_config
-      && ejudge_config->default_rundb_plugin
-      && ejudge_config->default_rundb_plugin[0]) {
-    xstrdup3(&g->rundb_plugin, ejudge_config->default_rundb_plugin);
+  if ((!g->rundb_plugin || !g->rundb_plugin[0]) && config
+      && config->default_rundb_plugin
+      && config->default_rundb_plugin[0]) {
+    xstrdup3(&g->rundb_plugin, config->default_rundb_plugin);
   }
-  if ((!g->xuser_plugin || !g->xuser_plugin[0]) && ejudge_config
-      && ejudge_config->default_xuser_plugin && ejudge_config->default_xuser_plugin[0]) {
-    xstrdup3(&g->xuser_plugin, ejudge_config->default_xuser_plugin);
+  if ((!g->xuser_plugin || !g->xuser_plugin[0]) && config
+      && config->default_xuser_plugin && config->default_xuser_plugin[0]) {
+    xstrdup3(&g->xuser_plugin, config->default_xuser_plugin);
   }
-  if ((!g->status_plugin || !g->status_plugin[0]) && ejudge_config
-      && ejudge_config->default_status_plugin && ejudge_config->default_status_plugin[0]) {
-    xstrdup3(&g->status_plugin, ejudge_config->default_status_plugin);
+  if ((!g->status_plugin || !g->status_plugin[0]) && config
+      && config->default_status_plugin && config->default_status_plugin[0]) {
+    xstrdup3(&g->status_plugin, config->default_status_plugin);
   }
-  if ((!g->variant_plugin || !g->variant_plugin[0]) && ejudge_config
-      && ejudge_config->default_variant_plugin && ejudge_config->default_variant_plugin[0]) {
-    xstrdup3(&g->variant_plugin, ejudge_config->default_variant_plugin);
+  if ((!g->variant_plugin || !g->variant_plugin[0]) && config
+      && config->default_variant_plugin && config->default_variant_plugin[0]) {
+    xstrdup3(&g->variant_plugin, config->default_variant_plugin);
   }
 
   if (!g->conf_dir || !g->conf_dir[0]) {
@@ -3506,8 +3507,8 @@ set_defaults(
         const unsigned char *ecd = g->extra_compile_dirs[lang->compile_dir_index - 1];
         if (os_IsAbsolutePath(ecd)) {
           usprintf(&lang->compile_dir, "%s/var/compile", ecd);
-        } else if (ejudge_config && ejudge_config->contests_home_dir) {
-          usprintf(&lang->compile_dir, "%s/%s/var/compile", ejudge_config->contests_home_dir, ecd);
+        } else if (config && config->contests_home_dir) {
+          usprintf(&lang->compile_dir, "%s/%s/var/compile", config->contests_home_dir, ecd);
         } else {
 #if defined EJUDGE_CONTESTS_HOME_DIR
           usprintf(&lang->compile_dir, "%s/%s/var/compile", EJUDGE_CONTESTS_HOME_DIR, ecd);
@@ -3553,11 +3554,11 @@ set_defaults(
         err("language.%d.cmd must be set", i);
         return -1;
       }
-      if (!os_IsAbsolutePath(lang->cmd) && ejudge_config && ejudge_config->compile_home_dir) {
-        usprintf(&lang->cmd, "%s/scripts/%s", ejudge_config->compile_home_dir, lang->cmd);
+      if (!os_IsAbsolutePath(lang->cmd) && config && config->compile_home_dir) {
+        usprintf(&lang->cmd, "%s/scripts/%s", config->compile_home_dir, lang->cmd);
       }
-      if (!os_IsAbsolutePath(lang->cmd) && ejudge_config && ejudge_config->contests_home_dir) {
-        usprintf(&lang->cmd, "%s/compile/scripts/%s", ejudge_config->contests_home_dir, lang->cmd);
+      if (!os_IsAbsolutePath(lang->cmd) && config && config->contests_home_dir) {
+        usprintf(&lang->cmd, "%s/compile/scripts/%s", config->contests_home_dir, lang->cmd);
       }
 #if defined EJUDGE_CONTESTS_HOME_DIR
       if (!os_IsAbsolutePath(lang->cmd)) {
@@ -4501,11 +4502,11 @@ set_defaults(
 
         if (tp->start_cmd && tp->start_cmd[0] && !os_IsAbsolutePath(tp->start_cmd)) {
           snprintf(start_path, sizeof(start_path), "%s", tp->start_cmd);
-          if (ejudge_config && ejudge_config->compile_home_dir) {
-            pathmake2(start_path, ejudge_config->compile_home_dir,
+          if (config && config->compile_home_dir) {
+            pathmake2(start_path, config->compile_home_dir,
                       "/", "scripts", "/", start_path, NULL);
-          } else if (ejudge_config && ejudge_config->contests_home_dir) {
-            pathmake2(start_path, ejudge_config->contests_home_dir,
+          } else if (config && config->contests_home_dir) {
+            pathmake2(start_path, config->contests_home_dir,
                       "/", "compile", "/", "scripts", "/", start_path, NULL);
           }
 #if defined EJUDGE_CONTESTS_HOME_DIR
@@ -4538,8 +4539,8 @@ set_defaults(
         }
         if (tp->nwrun_spool_dir && tp->nwrun_spool_dir[0]) {
           if (!os_IsAbsolutePath(tp->nwrun_spool_dir)) {
-            if (ejudge_config && ejudge_config->contests_home_dir) {
-              usprintf(&tp->nwrun_spool_dir, "%s/%s", ejudge_config->contests_home_dir, tp->nwrun_spool_dir);
+            if (config && config->contests_home_dir) {
+              usprintf(&tp->nwrun_spool_dir, "%s/%s", config->contests_home_dir, tp->nwrun_spool_dir);
             } else {
 #if defined EJUDGE_CONTESTS_HOME_DIR
               usprintf(&tp->nwrun_spool_dir, "%s/%s", EJUDGE_CONTESTS_HOME_DIR, tp->nwrun_spool_dir);
@@ -4993,6 +4994,7 @@ parse_version_string(int *pmajor, int *pminor, int *ppatch, int *pbuild)
 
 int
 prepare(
+        const struct ejudge_cfg *config,
         const struct contest_desc *cnts,
         serve_state_t state,
         char const *config_file,
@@ -5054,7 +5056,7 @@ prepare(
     return -1;
   }
   */
-  if (set_defaults(cnts, config_file, state, mode, subst_src, subst_dst) < 0) return -1;
+  if (set_defaults(config, cnts, config_file, state, mode, subst_src, subst_dst) < 0) return -1;
   return 0;
 }
 

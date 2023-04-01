@@ -1500,6 +1500,7 @@ struct section_tester_data
 
 int
 prepare(
+        const struct ejudge_cfg *config,
         const struct contest_desc *cnts,
         serve_state_t,
         char const *,
