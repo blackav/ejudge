@@ -9398,6 +9398,8 @@ error_page(
   const unsigned char * const * error_names = external_unpriv_error_names;
   ExternalActionState **error_states = external_unpriv_error_states;
 
+  if (error_code < 0) error_code = -error_code;
+
   if (phr->json_reply) {
     struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
     if (phr->log_f) {
@@ -9427,7 +9429,6 @@ error_page(
     xfree(phr->log_t); phr->log_t = NULL; phr->log_z = 0;
   }
 
-  if (error_code < 0) error_code = -error_code;
   if (error_code <= 0 || error_code >= NEW_SRV_ERR_LAST) error_code = NEW_SRV_ERR_UNKNOWN_ERROR;
   phr->error_code = error_code;
 
@@ -9566,7 +9567,7 @@ copy_cti_to_phr(
   cti->access_time = current_time;
 }
 
-static __attribute__((unused)) int
+static int
 priv_check_cached_key(struct http_request_info *phr)
 {
   long long tsc_start;
@@ -9721,7 +9722,7 @@ priv_check_cached_key(struct http_request_info *phr)
   return 0;
 }
 
-static __attribute__((unused)) int
+static int
 priv_check_cached_session(struct http_request_info *phr)
 {
   long long tsc_start;
@@ -9896,59 +9897,9 @@ privileged_entry_point(
       goto cleanup;
     }
 
-    if (ns_open_ul_connection(phr->fw_state) < 0) {
-      error_page(fout, phr, 0, -NEW_SRV_ERR_USERLIST_SERVER_DOWN);
-      goto cleanup;
-    }
-    struct userlist_api_key in_api_key = {};
-    memcpy(in_api_key.token, phr->token, 32);
-    in_api_key.contest_id = phr->contest_id;
-    struct userlist_contest_info cnts_info = {};
-    struct userlist_api_key *out_keys = NULL;
-    int out_count = 0;
-    r = userlist_clnt_api_key_request(ul_conn, ULS_GET_API_KEY, 1, &in_api_key, &out_count, &out_keys, &cnts_info);
-    phr->login = cnts_info.login; cnts_info.login = NULL;
-    phr->name = cnts_info.name; cnts_info.name = NULL;
-    phr->contest_id = cnts_info.contest_id;
-    phr->user_id = cnts_info.user_id;
-
-    if (r <= 0) {
-      fprintf(phr->log_f, "invalid token\n");
-      error_page(fout, phr, 0, -NEW_SRV_ERR_PERMISSION_DENIED);
-      goto cleanup;
-    }
-    if (out_count != 1) {
-      error_page(fout, phr, 0, -NEW_SRV_ERR_INTERNAL);
-      goto cleanup;
-    }
-    if (cnts_info.user_id == 0 || cnts_info.contest_id == 0) {
-      fprintf(phr->log_f, "invalid user_id or contest_id\n");
-      error_page(fout, phr, 0, -NEW_SRV_ERR_PERMISSION_DENIED);
-      goto cleanup;
-    }
-    if (phr->contest_id > 0 && cnts_info.contest_id != phr->contest_id) {
-      fprintf(phr->log_f, "invalid contest_id\n");
-      error_page(fout, phr, 0, -NEW_SRV_ERR_PERMISSION_DENIED);
-      goto cleanup;
-    }
-    if (cnts_info.reg_status != USERLIST_REG_OK) {
-      fprintf(phr->log_f, "user not registered\n");
-      error_page(fout, phr, 0, -NEW_SRV_ERR_PERMISSION_DENIED);
-      goto cleanup;
-    }
-    if ((cnts_info.reg_flags & (USERLIST_UC_BANNED | USERLIST_UC_LOCKED | USERLIST_UC_DISQUALIFIED)) != 0) {
-      fprintf(phr->log_f, "user banned\n");
-      error_page(fout, phr, 0, -NEW_SRV_ERR_PERMISSION_DENIED);
-      goto cleanup;
-    }
-    if (phr->role > out_keys[0].role ) {
-      fprintf(phr->log_f, "invalid role\n");
-      error_page(fout, phr, 0, -NEW_SRV_ERR_PERMISSION_DENIED);
-      goto cleanup;
-    }
-    if (out_keys[0].expiry_time > 0 && cur_time >= out_keys[0].expiry_time) {
-      fprintf(phr->log_f, "token expired\n");
-      error_page(fout, phr, 0, -NEW_SRV_ERR_PERMISSION_DENIED);
+    r = priv_check_cached_key(phr);
+    if (r < 0) {
+      error_page(fout, phr, 0, r);
       goto cleanup;
     }
   } else {
@@ -9958,35 +9909,10 @@ privileged_entry_point(
     if (!phr->session_id || phr->action == NEW_SRV_ACTION_LOGIN_PAGE)
       return privileged_page_login(fout, phr);
 
-    // validate cookie
-    if (ns_open_ul_connection(phr->fw_state) < 0) {
-      error_page(fout, phr, 1, NEW_SRV_ERR_USERLIST_SERVER_DOWN);
+    r = priv_check_cached_session(phr);
+    if (r < 0) {
+      error_page(fout, phr, 1, r);
       goto cleanup;
-    }
-    if ((r = userlist_clnt_get_cookie(ul_conn, ULS_PRIV_GET_COOKIE,
-                                      &phr->ip, phr->ssl_flag,
-                                      phr->session_id,
-                                      phr->client_key,
-                                      &phr->user_id, &phr->contest_id,
-                                      &phr->locale_id, 0, &phr->role, 0, 0, 0,
-                                      NULL /* p_passwd_method */,
-                                      NULL /* p_is_ws */,
-                                      NULL /* p_is_job */,
-                                      NULL /* p_expire */,
-                                      &phr->login, &phr->name)) < 0) {
-      switch (-r) {
-      case ULS_ERR_NO_COOKIE:
-        fprintf(phr->log_f, "priv_get_cookie failed: %s\n", userlist_strerror(-r));
-        error_page(fout, phr, 1, NEW_SRV_ERR_INV_SESSION);
-        goto cleanup;
-      case ULS_ERR_DISCONNECT:
-        error_page(fout, phr, 1, NEW_SRV_ERR_USERLIST_SERVER_DOWN);
-        goto cleanup;
-      default:
-        fprintf(phr->log_f, "priv_get_cookie failed: %s\n", userlist_strerror(-r));
-        error_page(fout, phr, 1, NEW_SRV_ERR_INTERNAL);
-        goto cleanup;
-      }
     }
   }
 
