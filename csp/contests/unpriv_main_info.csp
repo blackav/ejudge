@@ -152,7 +152,7 @@
   }
 %>
 <%
-  if (!cnts->exam_mode && cs->max_online_count > 0) {
+  if (!cnts->exam_mode && cs->max_online_count > 0 && phr->online_users >= 0) {
 %><p><b><s:_>On-line users in this contest</s:_>: <s:v value="phr->online_users" /></b></p><p><b><s:_>Max number of users was</s:_>: <s:v value="cs->max_online_count" />, <s:v value="cs->max_online_time" /></b></p>
 <%
   }
