@@ -94,6 +94,7 @@ serve_update_standings_file(
 
   //run_get_times(state->runlog_state, &start_time, 0, &duration, &stop_time, 0);
 
+  if (global->autoupdate_standings <= 0 && force_flag <= 0) return;
   /*
   while (1) {
     if (global->is_virtual) break;
