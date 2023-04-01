@@ -5437,7 +5437,9 @@ create_tester_dirs(struct section_tester_data *tst)
 }
 
 void
-prepare_set_global_defaults(struct section_global_data *g)
+prepare_set_global_defaults(
+        const struct ejudge_cfg *config,
+        struct section_global_data *g)
 {
   /*
   if (!g->sleep_time && !g->serve_sleep_time) {
@@ -5456,7 +5458,7 @@ prepare_set_global_defaults(struct section_global_data *g)
   if (g->board_fog_time < 0) g->board_fog_time = DFLT_G_BOARD_FOG_TIME;
   if (g->board_unfog_time < 0) g->board_unfog_time = DFLT_G_BOARD_UNFOG_TIME;
   if (g->autoupdate_standings < 0) {
-    if (ejudge_config->disable_autoupdate_standings > 0)
+    if (config && config->disable_autoupdate_standings > 0)
       g->autoupdate_standings = 0;
     else
       g->autoupdate_standings = DFLT_G_AUTOUPDATE_STANDINGS;
@@ -5727,7 +5729,7 @@ prepare_new_global_section(int contest_id, const unsigned char *root_dir,
   global->max_clar_num = DFLT_G_MAX_CLAR_NUM;
   global->board_fog_time = DFLT_G_BOARD_FOG_TIME;
   global->board_unfog_time = DFLT_G_BOARD_UNFOG_TIME;
-  if (ejudge_config && ejudge_config->disable_autoupdate_standings > 0)
+  if (config && config->disable_autoupdate_standings > 0)
     global->autoupdate_standings = 0;
   else
     global->autoupdate_standings = DFLT_G_AUTOUPDATE_STANDINGS;

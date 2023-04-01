@@ -1531,7 +1531,8 @@ struct ejudge_cfg;
 struct section_global_data *prepare_new_global_section(int contest_id, const unsigned char *root_dir, const struct ejudge_cfg *config);
 struct generic_section_config * prepare_parse_config_file(const unsigned char *path,
                                                           int *p_cond_count);
-void prepare_set_global_defaults(struct section_global_data *global);
+void prepare_set_global_defaults(const struct ejudge_cfg *config,
+                                 struct section_global_data *global);
 
 struct generic_section_config *prepare_free_config(struct generic_section_config *cfg);
 

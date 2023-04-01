@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2012-2021 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -201,7 +201,7 @@ super_html_read_serve(
   }
   */
 
-  prepare_set_global_defaults(global);
+  prepare_set_global_defaults(config, global);
   if (global->stand2_file_name && global->stand2_file_name[0]) sstate->enable_stand2 = 1;
   if (global->plog_file_name && global->plog_file_name[0]) sstate->enable_plog = 1;
   if (global->stand_extra_format && global->stand_extra_format[0]) sstate->enable_extra_col = 1;
