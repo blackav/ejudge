@@ -1,6 +1,6 @@
 # -*- Makefile -*-
 
-# Copyright (C) 2014-2022 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2014-2023 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -60,6 +60,7 @@ SOFILES = \
  csp_priv_reload_statement_action.so\
  csp_priv_report_page.so\
  csp_priv_save_cropped_avatar_ajax.so\
+ csp_priv_server_info_page.so\
  csp_priv_settings_page.so\
  csp_priv_source_page.so\
  csp_priv_standings_page.so\
@@ -170,6 +171,7 @@ csp_priv_exam_info_page.c: priv_exam_info_page.csp priv_includes.csp priv_stdvar
 csp_priv_ip_users_page.c : priv_ip_users_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 csp_priv_language_stats_page.c : priv_language_stats_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 csp_priv_problem_stats_page.c : priv_problem_stats_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
+csp_priv_server_info_page.c : priv_server_info_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 csp_priv_login_page.c : priv_login_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 csp_priv_main_page.c : priv_main_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 csp_priv_new_run_page.c : priv_new_run_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp

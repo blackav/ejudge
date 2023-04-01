@@ -1,0 +1,26 @@
+<%
+%><%@include "priv_includes.csp"
+%><%
+%><%@set getter_name = "csp_get_priv_server_info_page"
+%><%@set ac_prefix = "NEW_SRV_ACTION_"
+%><%@page csp_view_priv_server_info_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "priv_stdvars.csp"
+%><%
+// local vars
+    const unsigned char *title = NULL;
+    int enable_main_menu = 0;
+
+    l10n_setlocale(phr->locale_id);
+    title = _("Server information");
+%><%@include "priv_header.csp"
+%>
+</div>
+
+
+<%@include "priv_footer.csp"
+%><%
+cleanup:
+    (void) &&cleanup;
+    l10n_resetlocale();
+    html_armor_free(&ab);
+%>
