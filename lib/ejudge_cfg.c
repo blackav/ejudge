@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2002-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -144,6 +144,7 @@ enum
     AT_ENABLE_COMPILE_CONTAINER,
     AT_COMPILER,
     AT_OPTION,
+    AT_DISABLE_AUTOUPDATE_STANDINDGS,
 
     AT__BARRIER,
     AT__DEFAULT,
@@ -252,6 +253,7 @@ static char const * const attr_map[] =
   "enable_compile_container",
   "compiler",
   "option",
+  "disable_autoupdate_standings",
   0,
   "_default",
 
@@ -709,6 +711,9 @@ ejudge_cfg_do_parse(char const *path, FILE *in_file, int no_system_lookup)
       break;
     case AT_ENABLE_COMPILE_CONTAINER:
       if (xml_attr_bool(a, &cfg->enable_compile_container) < 0) goto failed;
+      break;
+    case AT_DISABLE_AUTOUPDATE_STANDINDGS:
+      if (xml_attr_bool(a, &cfg->disable_autoupdate_standings) < 0) goto failed;
       break;
     default:
       xml_err_attr_not_allowed(&cfg->b, a);
