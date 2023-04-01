@@ -2843,8 +2843,12 @@ set_defaults(
     g->stand_show_ok_time = DFLT_G_STAND_SHOW_OK_TIME;
   if (g->stand_show_warn_number == -1)
     g->stand_show_warn_number = DFLT_G_STAND_SHOW_WARN_NUMBER;
-  if (g->autoupdate_standings == -1)
-    g->autoupdate_standings = DFLT_G_AUTOUPDATE_STANDINGS;
+  if (g->autoupdate_standings == -1) {
+    if (ejudge_config->disable_autoupdate_standings > 0)
+      g->autoupdate_standings = 0;
+    else
+      g->autoupdate_standings = DFLT_G_AUTOUPDATE_STANDINGS;
+  }
   if (g->use_ac_not_ok == -1)
     g->use_ac_not_ok = DFLT_G_USE_AC_NOT_OK;
   if (g->disable_auto_testing == -1)
@@ -5451,7 +5455,12 @@ prepare_set_global_defaults(struct section_global_data *g)
   if (!g->max_clar_num) g->max_clar_num = DFLT_G_MAX_CLAR_NUM;
   if (g->board_fog_time < 0) g->board_fog_time = DFLT_G_BOARD_FOG_TIME;
   if (g->board_unfog_time < 0) g->board_unfog_time = DFLT_G_BOARD_UNFOG_TIME;
-  if (g->autoupdate_standings < 0) g->autoupdate_standings=DFLT_G_AUTOUPDATE_STANDINGS;
+  if (g->autoupdate_standings < 0) {
+    if (ejudge_config->disable_autoupdate_standings > 0)
+      g->autoupdate_standings = 0;
+    else
+      g->autoupdate_standings = DFLT_G_AUTOUPDATE_STANDINGS;
+  }
   if (g->use_ac_not_ok < 0) g->use_ac_not_ok = DFLT_G_USE_AC_NOT_OK;
   if (g->team_enable_src_view < 0) g->team_enable_src_view=DFLT_G_TEAM_ENABLE_SRC_VIEW;
   if (g->team_enable_rep_view < 0) g->team_enable_rep_view=DFLT_G_TEAM_ENABLE_REP_VIEW;
@@ -5718,8 +5727,10 @@ prepare_new_global_section(int contest_id, const unsigned char *root_dir,
   global->max_clar_num = DFLT_G_MAX_CLAR_NUM;
   global->board_fog_time = DFLT_G_BOARD_FOG_TIME;
   global->board_unfog_time = DFLT_G_BOARD_UNFOG_TIME;
-
-  global->autoupdate_standings = DFLT_G_AUTOUPDATE_STANDINGS;
+  if (ejudge_config && ejudge_config->disable_autoupdate_standings > 0)
+    global->autoupdate_standings = 0;
+  else
+    global->autoupdate_standings = DFLT_G_AUTOUPDATE_STANDINGS;
   global->use_ac_not_ok = DFLT_G_USE_AC_NOT_OK;
   global->team_enable_src_view = DFLT_G_TEAM_ENABLE_SRC_VIEW;
   global->team_enable_rep_view = DFLT_G_TEAM_ENABLE_REP_VIEW;

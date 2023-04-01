@@ -464,8 +464,13 @@ prepare_unparse_global(
     fprintf(f, "sleep_time = %d\n", global->sleep_time);
   if (global->serve_sleep_time != DFLT_G_SERVE_SLEEP_TIME)
     fprintf(f, "serve_sleep_time = %d\n", global->serve_sleep_time);
-  if (global->autoupdate_standings != DFLT_G_AUTOUPDATE_STANDINGS)
-    unparse_bool(f, "autoupdate_standings", global->autoupdate_standings);
+  if (ejudge_config && ejudge_config->disable_autoupdate_standings > 0) {
+    if (global->autoupdate_standings > 0)
+      unparse_bool(f, "autoupdate_standings", global->autoupdate_standings);
+  } else {
+    if (global->autoupdate_standings != DFLT_G_AUTOUPDATE_STANDINGS)
+      unparse_bool(f, "autoupdate_standings", global->autoupdate_standings);
+  }
   if (global->use_ac_not_ok != DFLT_G_USE_AC_NOT_OK)
     unparse_bool(f, "use_ac_not_ok", global->use_ac_not_ok);
   if (global->inactivity_timeout
