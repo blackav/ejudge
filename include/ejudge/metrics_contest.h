@@ -30,6 +30,16 @@ struct metrics_contest_data
     int runs_submitted;
     long long total_compile_time_ms;
     long long total_testing_time_ms;
+    long long get_cookie_tsc;
+    long long get_cookie_count;
+    long long hit_cookie_tsc;
+    long long hit_cookie_count;
+    long long get_key_tsc;
+    long long get_key_count;
+    long long hit_key_tsc;
+    long long hit_key_count;
+    long long cookie_cache_size;
+    long long key_cache_size;
 };
 
 struct metrics_desc

@@ -1,6 +1,6 @@
 # -*- Makefile -*-
 
-# Copyright (C) 2002-2022 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2002-2023 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -243,6 +243,7 @@ COMMON_CFILES=\
  lib/serve_2.c\
  lib/serve_state.c\
  lib/session.c\
+ lib/session_cache.c\
  lib/sformat.c\
  lib/shellcfg_parse.c\
  lib/standings.c\
@@ -639,6 +640,7 @@ HFILES=\
  ./include/ejudge/run_packet_priv.h\
  ./include/ejudge/server_framework.h\
  ./include/ejudge/serve_state.h\
+ ./include/ejudge/session_cache.h\
  ./include/ejudge/sformat.h\
  ./include/ejudge/shellcfg_parse.h\
  ./include/ejudge/sock_op.h\

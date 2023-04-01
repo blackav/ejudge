@@ -39,6 +39,7 @@
 #include "ejudge/sha256utils.h"
 #include "ejudge/metrics_contest.h"
 #include "ejudge/teamdb.h"
+#include "ejudge/session_cache.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/osdeps.h"
@@ -94,6 +95,9 @@ unsigned char *ul_login;
 
 struct session_info *session_first, *session_last;
 //time_t server_start_time;
+
+// global session cache
+extern struct id_cache main_id_cache;
 
 // plugin information
 struct nsdb_loaded_plugin
@@ -1046,6 +1050,7 @@ main(int argc, char *argv[])
     return 1;
   }
 
+  idc_init(&main_id_cache);
   if (!(state = nsf_init(&params, 0, server_start_time))) return 1;
   if (nsf_prepare(state) < 0) return 1;
   nsf_main_loop(state);
