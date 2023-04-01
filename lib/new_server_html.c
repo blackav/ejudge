@@ -9514,6 +9514,362 @@ cleanup:
   return 1;
 }
 
+static int
+ej_ip_cmp(const ej_ip_t *v1, const ej_ip_t *v2)
+{
+  int r = v1->ipv6_flag - v2->ipv6_flag;
+  if (r != 0) {
+    return r;
+  }
+  if (v1->ipv6_flag) {
+    return memcmp(v1->u.v6.addr, v2->u.v6.addr, 16);
+  }
+  if (v1->u.v4.addr < v1->u.v4.addr) return -1;
+  if (v1->u.v4.addr > v1->u.v4.addr) return 1;
+  return 0;
+}
+
+static void
+copy_nsi_to_phr(
+        struct http_request_info *phr,
+        struct new_session_info *nsi,
+        time_t current_time)
+{
+  phr->user_id = nsi->user_id;
+  phr->contest_id = nsi->contest_id;
+  if (phr->locale_id < 0 && nsi->locale_id >= 0) {
+    phr->locale_id = nsi->locale_id;
+  }
+  if (phr->locale_id < 0) phr->locale_id = 0;
+  phr->role = nsi->role;
+  phr->passwd_method = nsi->passwd_method;
+  phr->is_job = nsi->is_job;
+  phr->login = xstrdup(nsi->login);
+  phr->name = xstrdup(nsi->name);
+  phr->nsi = nsi;
+  nsi->access_time = current_time;
+}
+
+static void
+copy_cti_to_phr(
+        struct http_request_info *phr,
+        struct cached_token_info *cti,
+        time_t current_time)
+{
+  phr->user_id = cti->user_id;
+  phr->contest_id = cti->contest_id;
+  phr->login = xstrdup(cti->login);
+  phr->name = xstrdup(cti->name);
+  phr->role = cti->role;
+  phr->reg_flags = cti->reg_flags;
+  phr->reg_status = cti->reg_status;
+  cti->access_time = current_time;
+}
+
+static __attribute__((unused)) int
+priv_check_cached_key(struct http_request_info *phr)
+{
+  long long tsc_start;
+  long long tsc_end;
+
+  rdtscll(tsc_start);
+
+  time_t current_time = time(NULL);
+  struct cached_token_info *cti = tc_find(&main_id_cache.t, phr->token);
+
+  while (1) {
+    if (!cti || !cti->used) break;
+    if (cti->cmd != ULS_GET_API_KEY) break;
+
+    if (ej_ip_cmp(&phr->ip, &cti->origin_ip) != 0) {
+      break;
+    }
+    if (phr->ssl_flag != cti->ssl_flag) {
+      break;
+    }
+    if (current_time >= cti->expiry_time) {
+      break;
+    }
+    if (current_time >= cti->refresh_time) {
+      break;
+    }
+    if (phr->role > cti->role) {
+      break;
+    }
+
+    copy_cti_to_phr(phr, cti, current_time);
+    rdtscll(tsc_end);
+    if (metrics.data) {
+      metrics.data->hit_key_tsc += (tsc_end - tsc_start);
+      ++metrics.data->hit_key_count;
+    }
+    return 0;
+  }
+
+  if (ns_open_ul_connection(phr->fw_state) < 0) {
+    if (cti && cti->used && cti->cmd == ULS_GET_API_KEY
+        && !ej_ip_cmp(&phr->ip, &cti->origin_ip)
+        && phr->ssl_flag == cti->ssl_flag
+        && current_time < cti->expiry_time
+        && phr->role <= cti->role) {
+      copy_cti_to_phr(phr, cti, current_time);
+      rdtscll(tsc_end);
+      if (metrics.data) {
+        metrics.data->hit_key_tsc += (tsc_end - tsc_start);
+        ++metrics.data->hit_key_count;
+      }
+      return 0;
+    }
+    return -NEW_SRV_ERR_USERLIST_SERVER_DOWN;
+  }
+
+  struct userlist_api_key in_api_key = {};
+  memcpy(in_api_key.token, phr->token, 32);
+  in_api_key.contest_id = phr->contest_id;
+  struct userlist_contest_info cnts_info = {};
+  struct userlist_api_key *out_keys = NULL;
+  int out_count = 0;
+  int r = userlist_clnt_api_key_request(ul_conn, ULS_GET_API_KEY, 1, &in_api_key, &out_count, &out_keys, &cnts_info);
+  if (r == -ULS_ERR_DISCONNECT) {
+    if (cti && cti->used && cti->cmd == ULS_GET_API_KEY
+        && !ej_ip_cmp(&phr->ip, &cti->origin_ip)
+        && phr->ssl_flag == cti->ssl_flag
+        && current_time < cti->expiry_time
+        && phr->role <= cti->role) {
+      copy_cti_to_phr(phr, cti, current_time);
+      rdtscll(tsc_end);
+      if (metrics.data) {
+        metrics.data->hit_key_tsc += (tsc_end - tsc_start);
+        ++metrics.data->hit_key_count;
+      }
+      return 0;
+    }
+    return -NEW_SRV_ERR_USERLIST_SERVER_DOWN;
+  }
+
+  if (r <= 0) {
+    r = -NEW_SRV_ERR_PERMISSION_DENIED;
+  } else if (out_count != 1) {
+    r = -NEW_SRV_ERR_INTERNAL;
+  } else if (cnts_info.user_id == 0 || cnts_info.contest_id == 0) {
+    r = -NEW_SRV_ERR_PERMISSION_DENIED;
+  } else if (phr->contest_id > 0 && cnts_info.contest_id != phr->contest_id) {
+    r = -NEW_SRV_ERR_PERMISSION_DENIED;
+  } else if (cnts_info.reg_status != USERLIST_REG_OK) {
+    r = -NEW_SRV_ERR_PERMISSION_DENIED;
+  } else if ((cnts_info.reg_flags & (USERLIST_UC_BANNED | USERLIST_UC_LOCKED | USERLIST_UC_DISQUALIFIED)) != 0) {
+    r = -NEW_SRV_ERR_PERMISSION_DENIED;
+  } else if (phr->role > out_keys[0].role) {
+    r = -NEW_SRV_ERR_PERMISSION_DENIED;
+  } else if (out_keys[0].expiry_time > 0 && current_time >= out_keys[0].expiry_time) {
+    r = -NEW_SRV_ERR_PERMISSION_DENIED;
+  }
+
+  if (r < 0) {
+    xfree(cnts_info.login);
+    xfree(cnts_info.name);
+    for (int i = 0; i < out_count; ++i) {
+      xfree(out_keys[i].origin);
+      xfree(out_keys[i].payload);
+    }
+    xfree(out_keys);
+
+    if (cti && cti->used) {
+      struct cached_token_info del_item;
+      if (tc_remove(&main_id_cache.t, phr->token, &del_item)) {
+        xfree(del_item.login);
+        xfree(del_item.name);
+      }
+    }
+
+    return r;
+  }
+
+  if (!cti) {
+    cti = tc_insert(&main_id_cache.t, phr->token);
+  } else {
+    xfree(cti->login);
+    xfree(cti->name);
+    memset(cti, 0, sizeof(*cti));
+    memcpy(cti->token, phr->token, 32);
+    cti->used = 1;
+  }
+
+  cti->origin_ip = phr->ip;
+  cti->ssl_flag = phr->ssl_flag;
+  cti->expiry_time = out_keys[0].expiry_time;
+  cti->refresh_time = current_time + 1200;
+  cti->login = cnts_info.login; cnts_info.login = NULL;
+  cti->name = cnts_info.name; cnts_info.name = NULL;
+  cti->cmd = ULS_GET_API_KEY;
+  cti->user_id = cnts_info.user_id;
+  cti->contest_id = cnts_info.contest_id;
+  cti->reg_flags = cnts_info.reg_flags;
+  cti->reg_status = cnts_info.reg_status;
+  cti->role = out_keys[0].role;
+  cti->all_contests = out_keys[0].all_contests;
+  xfree(out_keys[0].payload);
+  xfree(out_keys[0].origin);
+  xfree(out_keys);
+
+  copy_cti_to_phr(phr, cti, current_time);
+  rdtscll(tsc_end);
+  if (metrics.data) {
+    metrics.data->get_key_tsc += (tsc_end - tsc_start);
+    ++metrics.data->get_key_count;
+  }
+  return 0;
+}
+
+static __attribute__((unused)) int
+priv_check_cached_session(struct http_request_info *phr)
+{
+  long long tsc_start;
+  long long tsc_end;
+
+  rdtscll(tsc_start);
+
+  time_t current_time = time(NULL);
+  struct new_session_info *nsi = nsc_find(&main_id_cache.s, phr->session_id, phr->client_key);
+  while (nsi) {
+    // check additional parameters
+    if (nsi->cmd != ULS_PRIV_GET_COOKIE) {
+      break;
+    }
+    if (ej_ip_cmp(&phr->ip, &nsi->origin_ip) != 0) {
+      break;
+    }
+    if (phr->ssl_flag != nsi->ssl_flag) {
+      break;
+    }
+    if (current_time >= nsi->expire_time) {
+      break;
+    }
+    if (current_time >= nsi->refresh_time) {
+      break;
+    }
+
+    // cache hit
+    copy_nsi_to_phr(phr, nsi, current_time);
+    rdtscll(tsc_end);
+    if (metrics.data) {
+      metrics.data->hit_cookie_tsc += (tsc_end - tsc_start);
+      ++metrics.data->hit_cookie_count;
+    }
+    return 0;
+  }
+
+  // cache entry is stale or nonexistant
+  if (ns_open_ul_connection(phr->fw_state) < 0) {
+    if (nsi && nsi->cmd == ULS_PRIV_GET_COOKIE
+        && current_time < nsi->expire_time
+        && nsi->ssl_flag == phr->ssl_flag
+        && !ej_ip_cmp(&phr->ip, &nsi->origin_ip)) {
+      // still try to use cached session value
+      copy_nsi_to_phr(phr, nsi, current_time);
+      rdtscll(tsc_end);
+      if (metrics.data) {
+        metrics.data->hit_cookie_tsc += (tsc_end - tsc_start);
+        ++metrics.data->hit_cookie_count;
+      }
+      return 0;
+    }
+    return -NEW_SRV_ERR_USERLIST_SERVER_DOWN;
+  }
+
+  struct UserlistGetCookieResult result;
+  int r = userlist_clnt_get_cookie_2(ul_conn, ULS_PRIV_GET_COOKIE,
+        &phr->ip, phr->ssl_flag,
+        phr->session_id,
+        phr->client_key,
+        &result);
+
+  if (r == -ULS_ERR_DISCONNECT) {
+    if (nsi && nsi->cmd == ULS_PRIV_GET_COOKIE
+        && current_time < nsi->expire_time
+        && nsi->ssl_flag == phr->ssl_flag
+        && !ej_ip_cmp(&phr->ip, &nsi->origin_ip)) {
+      // still try to use cached session value
+      copy_nsi_to_phr(phr, nsi, current_time);
+      rdtscll(tsc_end);
+      if (metrics.data) {
+        metrics.data->hit_cookie_tsc += (tsc_end - tsc_start);
+        ++metrics.data->hit_cookie_count;
+      }
+      return 0;
+    }
+    return -NEW_SRV_ERR_USERLIST_SERVER_DOWN;
+  }
+  if (r < 0) {
+    switch (-r) {
+    case ULS_ERR_NO_COOKIE:
+    case ULS_ERR_CANNOT_PARTICIPATE:
+    case ULS_ERR_NOT_REGISTERED:
+    case ULS_ERR_INCOMPLETE_REG:
+      r = -NEW_SRV_ERR_INV_SESSION;
+      break;
+    default:
+      fprintf(phr->log_f, "get_cookie failed: %s\n", userlist_strerror(-r));
+      r = -NEW_SRV_ERR_INTERNAL;
+      break;
+    }
+    if (nsi) {
+      struct new_session_info del_item;
+      if (nsc_remove(&main_id_cache.s, phr->session_id, phr->client_key, &del_item)) {
+        // del_item is moved item, the bucket is deleted
+        xfree(del_item.login);
+        xfree(del_item.name);
+        if (del_item.user_info) {
+          userlist_free(&del_item.user_info->b);
+        }
+      }
+    }
+    return r;
+  }
+
+  if (!nsi) {
+    nsi = nsc_insert(&main_id_cache.s, phr->session_id, phr->client_key);
+  } else {
+    xfree(nsi->login); nsi->login = NULL;
+    xfree(nsi->name); nsi->name = NULL;
+    if (nsi->user_info) {
+      userlist_free(&nsi->user_info->b);
+    }
+    memset(nsi, 0, sizeof(*nsi));
+    nsi->session_id = phr->session_id;
+    nsi->client_key = phr->client_key;
+  }
+
+  nsi->cmd = ULS_PRIV_GET_COOKIE;
+  nsi->origin_ip = phr->ip;
+  nsi->ssl_flag = phr->ssl_flag;
+  nsi->user_id = result.data->user_id;
+  nsi->contest_id = result.data->contest_id;
+  nsi->locale_id = result.data->locale_id;
+  nsi->priv_level = result.data->priv_level;
+  nsi->role = result.data->role;
+  nsi->team_login = result.data->team_login;
+  nsi->reg_status = result.data->reg_status;
+  nsi->reg_flags = result.data->reg_flags;
+  nsi->is_ws = result.data->is_ws;
+  nsi->is_job = result.data->is_job;
+  nsi->passwd_method = result.data->passwd_method;
+  nsi->expire_time = result.data->expire;
+  nsi->refresh_time = current_time + 1200;
+  nsi->access_time = current_time;
+  nsi->login = xstrdup(result.login);
+  nsi->name = xstrdup(result.name);
+
+  xfree(result.data);
+  copy_nsi_to_phr(phr, nsi, current_time);
+  rdtscll(tsc_end);
+  if (metrics.data) {
+    metrics.data->get_cookie_tsc += (tsc_end - tsc_start);
+    ++metrics.data->get_cookie_count;
+  }
+  return 0;
+}
+
 static void
 privileged_entry_point(
         FILE *fout,
@@ -16568,60 +16924,6 @@ done:;
 }
 
 static int
-ej_ip_cmp(const ej_ip_t *v1, const ej_ip_t *v2)
-{
-  int r = v1->ipv6_flag - v2->ipv6_flag;
-  if (r != 0) {
-    return r;
-  }
-  if (v1->ipv6_flag) {
-    return memcmp(v1->u.v6.addr, v2->u.v6.addr, 16);
-  }
-  if (v1->u.v4.addr < v1->u.v4.addr) return -1;
-  if (v1->u.v4.addr > v1->u.v4.addr) return 1;
-  return 0;
-}
-
-static void
-copy_nsi_to_phr(
-        struct http_request_info *phr,
-        struct new_session_info *nsi,
-        time_t current_time)
-{
-  phr->user_id = nsi->user_id;
-  phr->contest_id = nsi->contest_id;
-  if (phr->locale_id < 0 && nsi->locale_id >= 0) {
-    phr->locale_id = nsi->locale_id;
-  }
-  if (phr->locale_id < 0) phr->locale_id = 0;
-  phr->role = nsi->role;
-  phr->passwd_method = nsi->passwd_method;
-  phr->is_job = nsi->is_job;
-  phr->login = xstrdup(nsi->login);
-  phr->name = xstrdup(nsi->name);
-  phr->nsi = nsi;
-  nsi->access_time = current_time;
-}
-
-static void
-copy_cti_to_phr(
-        struct http_request_info *phr,
-        struct cached_token_info *cti,
-        time_t current_time)
-{
-  phr->user_id = cti->user_id;
-  phr->contest_id = cti->contest_id;
-  phr->login = xstrdup(cti->login);
-  phr->name = xstrdup(cti->name);
-    /*
-    unsigned int reg_flags;
-    unsigned char role;
-    unsigned char reg_status;
-    */
-   cti->access_time = current_time;
-}
-
-static int
 unpriv_check_cached_key(struct http_request_info *phr)
 {
   long long tsc_start;
@@ -16889,6 +17191,9 @@ unpriv_check_cached_session(struct http_request_info *phr)
     if (nsi->user_info) {
       userlist_free(&nsi->user_info->b);
     }
+    memset(nsi, 0, sizeof(*nsi));
+    nsi->session_id = phr->session_id;
+    nsi->client_key = phr->client_key;
   }
 
   nsi->cmd = ULS_TEAM_GET_COOKIE;
