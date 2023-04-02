@@ -2,7 +2,7 @@
 #ifndef __RUNLOG_STATE_H__
 #define __RUNLOG_STATE_H__
 
-/* Copyright (C) 2008-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -86,6 +86,9 @@ struct runlog_state
   RUNS_ACCESS int                run_u;
   RUNS_ACCESS int                run_a;
   teamdb_state_t     teamdb_state;
+
+  // timestamp of the last change with microsecond precision
+  long long last_update_time_us;
 
   struct user_flags_info_s user_flags; // banned/invisible/locked flags for users
 
