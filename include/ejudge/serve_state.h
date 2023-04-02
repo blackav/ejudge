@@ -310,6 +310,13 @@ struct serve_state
   time_t last_update_internal_xml_log;
   time_t last_update_status_file;
 
+  // runlog last update timestamp on the moment of public log update
+  long long last_update_public_log_us;
+  // runlog last update timestamp on the moment of external XML update
+  long long last_update_external_xml_log_us;
+  // runlog last update timestamp on the moment of internal XML update
+  long long last_update_internal_xml_log_us;
+
   time_t last_periodic_check;
   time_t last_daily_reminder;
 
