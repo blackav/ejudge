@@ -119,8 +119,10 @@ struct http_request_info
   unsigned char content_type[128];
 
   time_t current_time;
+  // this time is used in priv-main-page to estimate generation time
   struct timeval timestamp1;
-  struct timeval timestamp2;
+  // microsecond precision current time
+  long long current_time_us;
 
   const struct contest_desc *cnts;
   struct contest_extra *extra;

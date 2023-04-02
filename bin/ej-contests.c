@@ -349,6 +349,7 @@ cmd_http_request(
   hr.fw_state = state;
   gettimeofday(&hr.timestamp1, 0);
   hr.current_time = hr.timestamp1.tv_sec;
+  hr.current_time_us = hr.timestamp1.tv_sec * 1000000LL + hr.timestamp1.tv_usec;
   hr.locale_id = -1;
 
   if (pkt_size < sizeof(*pkt))
@@ -624,6 +625,7 @@ handle_ws_request(
   hr.fw_state = state;
   gettimeofday(&hr.timestamp1, 0);
   hr.current_time = hr.timestamp1.tv_sec;
+  hr.current_time_us = hr.timestamp1.tv_sec * 1000000LL + hr.timestamp1.tv_usec;
   hr.locale_id = -1;
   hr.config = ejudge_config;
   hr.json = root;

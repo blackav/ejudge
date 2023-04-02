@@ -642,11 +642,10 @@
 %>
 
 <%
-  gettimeofday(&phr->timestamp2, 0);
-  tdiff = ((long long) phr->timestamp2.tv_sec) * 1000000;
-  tdiff += phr->timestamp2.tv_usec;
-  tdiff -= ((long long) phr->timestamp1.tv_sec) * 1000000;
-  tdiff -= phr->timestamp1.tv_usec;
+  struct timeval timestamp2;
+  gettimeofday(&timestamp2, NULL);
+  long long ts2 = timestamp2.tv_sec * 1000000LL + timestamp2.tv_usec;
+  tdiff = ts2 - phr->current_time_us;
 %>
 
 <div class="dotted"><p<s:v escape="false" value="cnts->team_par_style" />><s:_>Page generation time</s:_>: <s:v value="tdiff / 1000" /> <s:_>msec</s:_></p></div>
