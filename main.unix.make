@@ -269,6 +269,7 @@ local_install: ${TARGETS} ejudge-config po mo
 	cp -rpd include "${DESTDIR}${prefix}"
 	install -d "${DESTDIR}${prefix}/lib/ejudge/make"
 	install -m 0644 csp_header.make "${DESTDIR}${prefix}/lib/ejudge/make"
+	install -d "${DESTDIR}${libexecdir}/ejudge/lang"
 	install -m 0644 extra/java-classname/java-classname.jar "${DESTDIR}${libexecdir}/ejudge/lang"
 
 install: local_install
