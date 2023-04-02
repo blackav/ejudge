@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-03-16 00:48+0300\n"
+"POT-Creation-Date: 2023-04-02 11:32+0300\n"
 "PO-Revision-Date: 2022-01-12 13:17+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -3589,6 +3589,9 @@ msgstr "NN"
 
 msgid "Server error"
 msgstr "Ошибка сервера"
+
+msgid "Server information"
+msgstr "Информация о сервере"
 
 msgid "Server is down"
 msgstr "Сервер не работает"
