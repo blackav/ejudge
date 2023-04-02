@@ -9588,6 +9588,9 @@ priv_check_cached_key(struct http_request_info *phr)
     if (phr->ssl_flag != cti->ssl_flag) {
       break;
     }
+    if (phr->contest_id > 0 && phr->contest_id != cti->contest_id) {
+      break;
+    }
     if (cti->expiry_time > 0 && current_time >= cti->expiry_time) {
       break;
     }
@@ -9611,6 +9614,7 @@ priv_check_cached_key(struct http_request_info *phr)
     if (cti && cti->used && cti->cmd == ULS_GET_API_KEY
         && !ej_ip_cmp(&phr->ip, &cti->origin_ip)
         && phr->ssl_flag == cti->ssl_flag
+        && (phr->contest_id <= 0 || phr->contest_id == cti->contest_id)
         && (cti->expiry_time <= 0 || current_time < cti->expiry_time)
         && phr->role <= cti->role) {
       copy_cti_to_phr(phr, cti, current_time);
@@ -9635,6 +9639,7 @@ priv_check_cached_key(struct http_request_info *phr)
     if (cti && cti->used && cti->cmd == ULS_GET_API_KEY
         && !ej_ip_cmp(&phr->ip, &cti->origin_ip)
         && phr->ssl_flag == cti->ssl_flag
+        && (phr->contest_id <= 0 || phr->contest_id == cti->contest_id)
         && (cti->expiry_time <= 0 || current_time < cti->expiry_time)
         && phr->role <= cti->role) {
       copy_cti_to_phr(phr, cti, current_time);
@@ -16869,6 +16874,9 @@ unpriv_check_cached_key(struct http_request_info *phr)
     if (phr->ssl_flag != cti->ssl_flag) {
       break;
     }
+    if (phr->contest_id > 0 && phr->contest_id != cti->contest_id) {
+      break;
+    }
     if (cti->expiry_time > 0 && current_time >= cti->expiry_time) {
       break;
     }
@@ -16892,6 +16900,7 @@ unpriv_check_cached_key(struct http_request_info *phr)
     if (cti && cti->used && cti->cmd == ULS_GET_API_KEY
         && !ej_ip_cmp(&phr->ip, &cti->origin_ip)
         && phr->ssl_flag == cti->ssl_flag
+        && (phr->contest_id <= 0 || phr->contest_id == cti->contest_id)
         && (cti->expiry_time <= 0 || current_time < cti->expiry_time)
         && phr->role <= cti->role) {
       copy_cti_to_phr(phr, cti, current_time);
@@ -16916,6 +16925,7 @@ unpriv_check_cached_key(struct http_request_info *phr)
     if (cti && cti->used && cti->cmd == ULS_GET_API_KEY
         && !ej_ip_cmp(&phr->ip, &cti->origin_ip)
         && phr->ssl_flag == cti->ssl_flag
+        && (phr->contest_id <= 0 || phr->contest_id == cti->contest_id)
         && (cti->expiry_time <= 0 || current_time < cti->expiry_time)
         && phr->role <= cti->role) {
       copy_cti_to_phr(phr, cti, current_time);
