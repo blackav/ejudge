@@ -530,6 +530,9 @@ run_get_user_run_header_id_range(
         int *p_low_user_id,
         int *p_high_user_id);
 
+long long
+run_get_last_update_time_us(runlog_state_t state);
+
 struct user_run_header_info;
 
 struct user_run_header_info *
