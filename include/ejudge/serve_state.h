@@ -24,6 +24,7 @@
 #include "ejudge/contest_plugin.h"
 
 #include <time.h>
+#include <sys/time.h>
 
 struct generic_section_config;
 struct section_global_data;
@@ -248,7 +249,6 @@ struct serve_state
   int *group_member_map;
 
   time_t load_time;
-  time_t current_time;
   int clients_suspended;
   int testing_suspended;
   int printing_suspended;
@@ -256,6 +256,13 @@ struct serve_state
   int testing_finished;
   int standings_updated;
   int has_olympiad_mode;
+
+  // legacy timestamp
+  time_t current_time;
+  // microsecond precision timestamp
+  long long current_time_us;
+  // raw structure
+  struct timeval current_time_tv;
 
   // upsolving mode
   int upsolving_mode;
