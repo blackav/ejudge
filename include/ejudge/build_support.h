@@ -1,9 +1,8 @@
 /* -*- c -*- */
-/* $Id$ */
 #ifndef __BUILD_SUPPORT_H__
 #define __BUILD_SUPPORT_H__
 
-/* Copyright (C) 2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -31,7 +30,8 @@ enum
   LANG_PL = 64,
   LANG_SH = 128,
   LANG_KUM = 256,
-  LANG_OTHER = 0x200,
+  LANG_GO = 0x200,
+  LANG_OTHER = 0x400,
 };
 
 struct ejudge_cfg;
