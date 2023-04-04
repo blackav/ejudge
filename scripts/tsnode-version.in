@@ -6,6 +6,7 @@ LANG_CONFIG_DIR="@lang_config_dir@"
 common_config() {
   echo 'long_name="Typescript"'
   echo 'src_sfx=".ts"'
+  echo 'exe_sfx=".ts"'
   echo 'arch="linux-shared"'
   echo 'insecure=1'
 }

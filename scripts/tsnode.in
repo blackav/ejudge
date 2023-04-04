@@ -25,7 +25,7 @@ then
   exit 1
 fi
 
-echo "#! ${NODEPATH} ${EJUDGE_FLAGS}" > $2
+echo "#! ${NODEPATH}" > $2
 echo >> $2
 cat $1 >> $2
 chmod +x $2
