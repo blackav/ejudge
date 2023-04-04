@@ -1,7 +1,7 @@
 #!/bin/sh
 # Copyright (c) 2023 Alexander Chernov <cher@ejudge.ru>
 
-# This is a `compilation' script for the JavaScript (NodeJS) language.
+# This is a `compilation' script for the TypeScript (TSNode) language.
 # The idea is to append "#!${NODEPATH}" string
 # to the beginning of the file.
 # Usage: tsnode <input> <output>

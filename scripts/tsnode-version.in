@@ -60,7 +60,7 @@ fi
 
 if [ x"$1" = x-l ]
 then
-  echo "NodeJS interpreter [https://nodejs.org]"
+  echo "TypeScript interpreter [https://nodejs.org]"
   exit 0
 fi
 
@@ -87,6 +87,6 @@ fi
 
 "${NODEPATH}" --version 2>/dev/null >/dev/null || exit 1
     
-[ x"$1" = x-f ] && echo -n "NodeJS "
+[ x"$1" = x-f ] && echo -n "TypeScript "
 
 "${NODEPATH}" --version 2>&1 | sed 's/v//g'
