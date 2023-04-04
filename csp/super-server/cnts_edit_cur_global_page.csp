@@ -44,6 +44,7 @@ static const unsigned char MSG_disable_user_standings[] = "Disable build-in stan
 static const unsigned char MSG_disable_language[] = "Disable language column in new-client";
 static const unsigned char MSG_problem_navigation[] = "Advanced problem navigation";
 static const unsigned char MSG_vertical_navigation[] = "Place problem navigation vertically";
+static const unsigned char MSG_vertical_navigation_sdate_sort[] = "Sort problem navigation vertically with problem start_date descending";
 static const unsigned char MSG_disable_virtual_start[] = "Disable user Virtual start button";
 static const unsigned char MSG_disable_virtual_auto_judge[] = "Disable auto-judging after virtual olympiad";
 static const unsigned char MSG_enable_auto_print_protocol[] = "Enable automatic protocol printing";
@@ -328,6 +329,7 @@ static const unsigned char * const form_row_attrs[]=
         <%@expand EDIT_BOOL_ROW "disable_language" "caps" "400px" %>
         <%@expand EDIT_BOOL_ROW "problem_navigation" "caps" "400px" %>
         <%@expand EDIT_BOOL_ROW "vertical_navigation" "caps" "400px" %>
+        <%@expand EDIT_BOOL_ROW "vertical_navigation_sdate_sort" "caps" "400px" %>
         <%@expand EDIT_BOOL_ROW "disable_virtual_start" "caps" "400px" %>
         <%@expand EDIT_BOOL_ROW "disable_virtual_auto_judge" "caps" "400px" %>
         <%@expand EDIT_BOOL_ROW "enable_auto_print_protocol" "caps" "400px" %>
@@ -896,6 +898,7 @@ function popupCapsDialog(e, skipField)
         "disable_language",
         "problem_navigation",
         "vertical_navigation",
+        "vertical_navigation_sdate_sort",
         "disable_virtual_start",
         "disable_virtual_auto_judge",
         "enable_auto_print_protocol",
@@ -926,6 +929,7 @@ function capsDialogOnChange()
     $("#caps-disable_banner_page-div").toggle($("#caps-enable_printing").is(':checked'));
     $("#caps-printout_uses_login-div").toggle($("#caps-enable_printing").is(':checked') && $("#caps-disable_banner_page").is(':checked'));
     $("#caps-vertical_navigation-div").toggle($("#caps-problem_navigation").is(':checked'));
+    $("#caps-vertical_navigation_sdate_sort-div").toggle($("#caps-problem_navigation").is(':checked'));
     $("#caps-disable_virtual_start-div").toggle(<s:v type="jsbool" value="global->is_virtual > 0" />);
     $("#caps-disable_virtual_auto_judge-div").toggle(<s:v type="jsbool" value="global->score_system == SCORE_OLYMPIAD" />);
     $("#caps-enable_auto_print_protocol-div").toggle(<s:v type="jsbool" value="global->score_system == SCORE_OLYMPIAD" />);
@@ -1438,6 +1442,7 @@ function advancedDialogOnChange()
             <%@expand ORIG_BOOL_ROW "disable_language" %>
             <%@expand ORIG_BOOL_ROW "problem_navigation" %>
             <%@expand ORIG_BOOL_ROW "vertical_navigation" %>
+            <%@expand ORIG_BOOL_ROW "vertical_navigation_sdate_sort" %>
             <%@expand ORIG_BOOL_ROW "disable_virtual_start" %>
             <%@expand ORIG_BOOL_ROW "disable_virtual_auto_judge" %>
             <%@expand ORIG_BOOL_ROW "enable_auto_print_protocol" %>

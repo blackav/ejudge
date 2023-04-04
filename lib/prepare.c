@@ -108,6 +108,7 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(problem_navigation, "d"),
   GLOBAL_PARAM(problem_tab_size, "d"),
   GLOBAL_PARAM(vertical_navigation, "d"),
+  GLOBAL_PARAM(vertical_navigation_sdate_sort, "d"),
   GLOBAL_PARAM(disable_virtual_start, "d"),
   GLOBAL_PARAM(disable_virtual_auto_judge, "d"),
   GLOBAL_PARAM(enable_auto_print_protocol, "d"),
@@ -884,6 +885,7 @@ global_init_func(struct generic_section_config *gp)
   p->disable_language = -1;
   p->problem_navigation = -1;
   p->vertical_navigation = -1;
+  p->vertical_navigation_sdate_sort = -1;
   p->disable_virtual_start = -1;
   p->disable_virtual_auto_judge = -1;
   p->enable_auto_print_protocol = -1;
@@ -2826,6 +2828,8 @@ set_defaults(
     g->problem_navigation = DFLT_G_PROBLEM_NAVIGATION;
   if (g->vertical_navigation == -1)
     g->vertical_navigation = DFLT_G_VERTICAL_NAVIGATION;
+  if (g->vertical_navigation_sdate_sort == -1)
+    g->vertical_navigation_sdate_sort = DFLT_G_VERTICAL_NAVIGATION_SDATE_SORT;
   if (g->disable_virtual_start == -1)
     g->disable_virtual_start = DFLT_G_DISABLE_VIRTUAL_START;
   if (g->disable_virtual_auto_judge == -1)
@@ -5474,6 +5478,7 @@ prepare_set_global_defaults(
   if (g->disable_language < 0) g->disable_language = DFLT_G_DISABLE_LANGUAGE;
   if (g->problem_navigation < 0) g->problem_navigation = DFLT_G_PROBLEM_NAVIGATION;
   if (g->vertical_navigation < 0) g->vertical_navigation = DFLT_G_VERTICAL_NAVIGATION;
+  if (g->vertical_navigation_sdate_sort < 0) g->vertical_navigation_sdate_sort = DFLT_G_VERTICAL_NAVIGATION_SDATE_SORT;
   if (g->disable_virtual_start < 0) g->disable_virtual_start = DFLT_G_DISABLE_VIRTUAL_START;
   if (g->disable_virtual_auto_judge < 0) g->disable_virtual_auto_judge = DFLT_G_DISABLE_VIRTUAL_AUTO_JUDGE;
   if (g->enable_auto_print_protocol < 0) g->enable_auto_print_protocol = DFLT_G_ENABLE_AUTO_PRINT_PROTOCOL;
@@ -5758,6 +5763,7 @@ prepare_new_global_section(int contest_id, const unsigned char *root_dir,
   global->disable_language = DFLT_G_DISABLE_LANGUAGE;
   global->problem_navigation = 1;
   global->vertical_navigation = DFLT_G_VERTICAL_NAVIGATION;
+  global->vertical_navigation_sdate_sort = DFLT_G_VERTICAL_NAVIGATION_SDATE_SORT;
   global->disable_virtual_start = DFLT_G_DISABLE_VIRTUAL_START;
   global->disable_virtual_auto_judge = DFLT_G_DISABLE_VIRTUAL_AUTO_JUDGE;
   global->enable_auto_print_protocol = DFLT_G_ENABLE_AUTO_PRINT_PROTOCOL;
