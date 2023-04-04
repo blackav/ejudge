@@ -17,19 +17,19 @@ outfile="$2"
 
 if [ -f "${EJUDGE_LANG_CONFIG}" ]
 then
-  . "${EJUDGE_LANG_CONFIG}"
+    . "${EJUDGE_LANG_CONFIG}"
 else
-  version="unknown"
-  JAVARUN="/usr/bin/java"
-  JAVACRUN="/usr/bin/javac"
-  JAVADIR="/usr"
-  JAVAVER="1.6"
+    version="unknown"
+    JAVARUN="/usr/bin/java"
+    JAVACRUN="/usr/bin/javac"
+    JAVADIR="/usr"
+    JAVAVER="1.6"
 fi
 
 if [ x"${version}" = x ]
 then
-  echo "This language is not supported." >&2
-  exit 1
+    echo "This language is not supported." >&2
+    exit 1
 fi
 
 # avoid setting JAVA_HOME if it is already set
@@ -50,29 +50,32 @@ JAVA_CLASSNAME="${libexecdir}/ejudge/lang/java-classname.jar"
 USER_CLASS=`"${JAVARUN}" -jar "${JAVA_CLASSNAME}" "${infile}"`
 if [ "${USER_CLASS}" = "" ]
 then
-	echo "failed to detect java class name" >&2
-	exit 1
+    echo "failed to detect java class name" >&2
+    exit 1
 fi
 
 USER_SOURCE="${USER_CLASS}.java"
 
-if ! mv "${infile}" "${USER_SOURCE}"
+if [ "${infile}" != "${USER_SOURCE}" ]
 then
-	echo "failed to rename source file" >&2
-	exit 1
+    if ! mv "${infile}" "${USER_SOURCE}"
+    then
+        echo "failed to rename source file" >&2
+        exit 1
+    fi
 fi
 
 if [ "${EJUDGE_MAIN_CLASS}" != "" ]
 then
-	MAIN_CLASS="${EJUDGE_MAIN_CLASS}"
+    MAIN_CLASS="${EJUDGE_MAIN_CLASS}"
 else
-	MAIN_CLASS="${USER_CLASS}"
+    MAIN_CLASS="${USER_CLASS}"
 fi
 
 CPOPT=
 if [ "${EJUDGE_CLASSPATH}" != "" ]
 then
-	CPOPT=" -cp ${EJUDGE_CLASSPATH} "
+    CPOPT=" -cp ${EJUDGE_CLASSPATH} "
 fi
 
 "${JAVACRUN}" --target "${JAVAVER}" ${CPOPT} *.java || exit 1
@@ -80,20 +83,18 @@ fi
 D=`dirname "${JAVARUN}"`
 if [ "$D" = "." ]
 then
-	JARRUN=jar
+    JARRUN=jar
 else
-	JARRUN="${D}/jar"
+    JARRUN="${D}/jar"
 fi
 
 MOPT=
 if [ "${EJUDGE_CLASSPATH}" != "" ]
 then
-	echo "Class-Path: ${EJUDGE_CLASSPATH}" > manifest.txt
-	MOPT=" -m manifest.txt "
+    echo "Class-Path: ${EJUDGE_CLASSPATH}" > manifest.txt
+    MOPT=" -m manifest.txt "
 fi
 
 "${JARRUN}" -c -f "${outfile}" ${MOPT} -e "${MAIN_CLASS}" *.class || exit 1
 
 exit 0
-
-#exec "${libexecdir}/ejudge/lang/ej-javac" "${infile}" "${outfile}" "${JAVACRUN}" "${JAVAVER}" "${MY_JAVA_HOME}"
