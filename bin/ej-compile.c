@@ -500,7 +500,7 @@ handle_packet(
   if (req->output_only) {
     if (req->style_checker && req->style_checker[0]) {
       unsigned char src_work_name[PATH_MAX];
-      snprintf(src_work_name, sizeof(src_work_name), "%06d%s", req->run_id, "" /*lang->src_sfx*/);
+      snprintf(src_work_name, sizeof(src_work_name), "%llx", random_u64());
       unsigned char src_work_path[PATH_MAX];
       snprintf(src_work_path, sizeof(src_work_path), "%s/%s", working_dir, src_work_name);
 
@@ -591,7 +591,7 @@ handle_packet(
   }
 
   unsigned char src_work_name[PATH_MAX];
-  snprintf(src_work_name, sizeof(src_work_name), "%06d%s", req->run_id, lang->src_sfx);
+  snprintf(src_work_name, sizeof(src_work_name), "%llx%s", random_u64(), lang->src_sfx);
   unsigned char src_work_path[PATH_MAX];
   snprintf(src_work_path, sizeof(src_work_path), "%s/%s", working_dir, src_work_name);
 
@@ -615,7 +615,7 @@ handle_packet(
   }
 
   if (!req->multi_header) {
-    snprintf(exe_work_name, PATH_MAX, "%06d%s", req->run_id, lang->exe_sfx);
+    snprintf(exe_work_name, PATH_MAX, "%llx%s", random_u64(), lang->exe_sfx);
     unsigned char exe_work_path[PATH_MAX];
     snprintf(exe_work_path, sizeof(exe_work_path), "%s/%s", working_dir, exe_work_name);
 
@@ -650,7 +650,7 @@ handle_packet(
   }
 
   // multi-header mode
-  snprintf(exe_work_name, PATH_MAX, "%06d%s", req->run_id, lang->exe_sfx);
+  snprintf(exe_work_name, PATH_MAX, "%llx%s", random_u64(), lang->exe_sfx);
   unsigned char exe_work_path[PATH_MAX];
   snprintf(exe_work_path, sizeof(exe_work_path), "%s/%s", working_dir, exe_work_name);
   zf = ej_libzip_open(log_f, exe_work_path, O_CREAT | O_TRUNC | O_WRONLY);
@@ -835,7 +835,7 @@ handle_packet(
     full_s[full_z] = 0;
 
     unsigned char test_src_name[PATH_MAX];
-    snprintf(test_src_name, sizeof(test_src_name), "%06d_%03d%s", req->run_id, serial, lang->src_sfx);
+    snprintf(test_src_name, sizeof(test_src_name), "%llx%s", random_u64(), lang->src_sfx);
     unsigned char test_src_path[PATH_MAX];
     snprintf(test_src_path, sizeof(test_src_path), "%s/%s", working_dir, test_src_name);
     if (generic_write_file(full_s, full_z, 0, NULL, test_src_path, NULL) < 0) {
@@ -850,6 +850,7 @@ handle_packet(
     xfree(full_s); full_s = NULL; full_z = 0;
 
     unsigned char test_exe_name[PATH_MAX];
+    // FIXME: random exe name?
     snprintf(test_exe_name, sizeof(test_exe_name), "%06d_%03d%s", req->run_id, serial, lang->exe_sfx);
     unsigned char test_exe_path[PATH_MAX];
     snprintf(test_exe_path, sizeof(test_exe_path), "%s/%s", working_dir, test_exe_name);
@@ -1031,8 +1032,9 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
   path_t full_working_dir = { 0 };
   struct Future *future = NULL;
 
+  random_init();
+
   if (parallel_mode) {
-    random_init();
     unsigned long long u64 = random_u64();
     snprintf(full_working_dir, sizeof(full_working_dir), "%s/%016llx", global->compile_work_dir, u64);
     if (make_dir(full_working_dir, 0) < 0) {
