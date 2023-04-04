@@ -402,13 +402,22 @@ build_generate_checker_compilation_rule(
       fprintf(out_f, "\t${DCC} -DEJUDGE ${DCCTESTLIBFLAGS} %s%s\n", cmd, source_suffix);
     } else if (languages == LANG_JAVA) {
       fprintf(out_f, "%s: %s%s\n", cmd, cmd, source_suffix);
-      fprintf(out_f, "\t${JAVAC} -cp testlib4j.jar %s%s\n", cmd, source_suffix);
-      fprintf(out_f, "\t${JAR} cf %s.jar *.class\n", cmd);
-      fprintf(out_f, "\trm -f *.class\n");
-      fprintf(out_f, "\techo '#! /bin/sh' > %s\n", cmd);
-      fprintf(out_f, "\techo 'd=\"`dirname $$0`\"' >> %s\n", cmd);
-      fprintf(out_f, "\techo 'exec ${JAVA} -DEJUDGE=1 -cp \"$$d/testlib4j.jar:$$d/%s.jar\" ru.ifmo.testlib.CheckerFramework %s \"$$@\"' >> %s\n", cmd, cmd, cmd);
-      fprintf(out_f, "\tchmod +x %s\n", cmd);
+      if (prob && prob->enable_testlib_mode > 0) {
+        fprintf(out_f, "\t${JAVAC} -cp testlib4j.jar %s%s\n", cmd, source_suffix);
+        fprintf(out_f, "\t${JAR} cf %s.jar *.class\n", cmd);
+        fprintf(out_f, "\trm -f *.class\n");
+        fprintf(out_f, "\techo '#! /bin/sh' > %s\n", cmd);
+        fprintf(out_f, "\techo 'd=\"`dirname $$0`\"' >> %s\n", cmd);
+        fprintf(out_f, "\techo 'exec ${JAVA} -DEJUDGE=1 -cp \"$$d/testlib4j.jar:$$d/%s.jar\" ru.ifmo.testlib.CheckerFramework %s \"$$@\"' >> %s\n", cmd, cmd, cmd);
+        fprintf(out_f, "\tchmod +x %s\n", cmd);
+      } else {
+        fprintf(out_f, "\t${JAVACHELPER} %s%s %s.jar\n", cmd, source_suffix, cmd);
+        fprintf(out_f, "\trm -f *.class\n");
+        fprintf(out_f, "\techo '#! /bin/sh' > %s\n", cmd);
+        fprintf(out_f, "\techo 'd=\"`dirname $$0`\"' >> %s\n", cmd);
+        fprintf(out_f, "\techo 'exec ${JAVA} -jar %s.jar \"$$@\"' >> %s\n", cmd, cmd);
+        fprintf(out_f, "\tchmod +x %s\n", cmd);
+      }
     } else if (languages == LANG_PY) {
       fprintf(out_f, "%s: %s%s\n", cmd, cmd, source_suffix);
       fprintf(out_f, "\t${PYCHELPER} %s%s %s\n", cmd, source_suffix, cmd);
