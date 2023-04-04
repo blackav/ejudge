@@ -338,8 +338,6 @@ run_add_record(
   uint64_t flags = 0;
   int run_to_ignore = -1;
 
-  touch_last_update_time_us(state);
-
   state->uuid_hash_last_added_index = -1;
   state->uuid_hash_last_added_run_id = -1;
   if (!is_hidden) {
@@ -420,6 +418,8 @@ run_add_record(
   }
   re.is_vcs = is_vcs;
   flags |= RE_SIZE | RE_LOCALE_ID | RE_USER_ID | RE_LANG_ID | RE_PROB_ID | RE_STATUS | RE_TEST | RE_SCORE | RE_IP | RE_SSL_FLAG | RE_VARIANT | RE_IS_HIDDEN | RE_MIME_TYPE | RE_EOLN_TYPE | RE_STORE_FLAGS | RE_IS_VCS;
+
+  touch_last_update_time_us(state);
 
   int64_t serial_id = 0;
   if (state->iface->append_run) {
@@ -684,9 +684,10 @@ run_is_imported(runlog_state_t state, int runid)
 int
 run_start_contest(runlog_state_t state, time_t start_time)
 {
+  if (state->head.start_time) ERR_R("Contest already started");
+
   touch_last_update_time_us(state);
 
-  if (state->head.start_time) ERR_R("Contest already started");
   return state->iface->start(state->cnts, start_time);
 }
 
@@ -1717,8 +1718,6 @@ run_virtual_start(
   int i;
   struct run_entry re;
 
-  touch_last_update_time_us(state);
-
   if (!state->head.start_time) {
     err("run_virtual_start: the contest is not started");
     return -1;
@@ -1732,6 +1731,9 @@ run_virtual_start(
     err("run_virtual_start: virtual contest for %d already started", user_id);
     return -1;
   }
+
+  touch_last_update_time_us(state);
+
   if (state->iface->user_run_header_set_start_time) {
     return state->iface->user_run_header_set_start_time(state->cnts, user_id, t, 1, user_id);
   }
@@ -1779,8 +1781,6 @@ run_virtual_stop(
   time_t exp_stop_time = 0;
   struct run_entry re;
 
-  touch_last_update_time_us(state);
-
   if (!state->head.start_time) {
     err("run_virtual_stop: the contest is not started");
     return -1;
@@ -1799,6 +1799,9 @@ run_virtual_stop(
     err("run_virtual_stop: virtual contest for %d already stopped", user_id);
     return -1;
   }
+
+  touch_last_update_time_us(state);
+
   if (state->iface->user_run_header_set_stop_time) {
     int duration = urh->duration;
     if (duration <= 0) {
@@ -3179,12 +3182,12 @@ run_rebuild_user_run_index(runlog_state_t state, int user_id)
 int
 run_set_run_is_checked(runlog_state_t state, int run_id, int is_checked)
 {
-  touch_last_update_time_us(state);
-
   if (run_id < 0 || run_id >= state->run_u) ERR_R("bad runid: %d", run_id);
   if (!state->iface->run_set_is_checked) {
     ERR_R("run_set_is_checked is not implemented");
   } else {
+    touch_last_update_time_us(state);
+
     return state->iface->run_set_is_checked(state->cnts, run_id, is_checked);
   }
 }

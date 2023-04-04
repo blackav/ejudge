@@ -1772,7 +1772,7 @@ apply_language_profiles(void)
             limit_rss_size = limit_vm_size;
             limit_vm_size = -1;
         }
-    } else if (!strcmp(language_name, "node")) {
+    } else if (!strcmp(language_name, "node") || !strcmp(language_name, "tsnode")) {
         enable_sys_fork = 1;
         limit_processes = 20;
         limit_stack_size = 1024 * 1024; // 1M

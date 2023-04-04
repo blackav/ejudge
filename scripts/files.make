@@ -66,6 +66,8 @@ SCRIPTS_IN = \
  nasm-x86-version.in\
  node.in\
  node-version.in\
+ tsnode.in\
+ tsnode-version.in\
  qb.in\
  qb-version.in\
  perl.in\
