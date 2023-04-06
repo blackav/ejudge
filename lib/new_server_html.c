@@ -3278,6 +3278,10 @@ priv_submit_run(
         if (!errno && !*eptr && eptr != (char *) s && v > 0 && v <= cs->max_lang) {
           lang_id = v;
           lang = cs->langs[lang_id];
+          if (!lang) {
+            fprintf(phr->log_f, "'lang_id' is invalid\n");
+            FAIL(NEW_SRV_ERR_INV_LANG_ID);
+          }
         } else {
           for (lang_id = 1; lang_id <= cs->max_lang; ++lang_id) {
             if (cs->langs[lang_id] && !strcmp(cs->langs[lang_id]->short_name, s)) {
