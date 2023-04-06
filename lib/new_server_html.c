@@ -9701,7 +9701,7 @@ priv_check_cached_key(struct http_request_info *phr)
   cti->origin_ip = phr->ip;
   cti->ssl_flag = phr->ssl_flag;
   cti->expiry_time = out_keys[0].expiry_time;
-  cti->refresh_time = current_time + 1200;
+  cti->refresh_time = current_time + 3600;
   cti->login = cnts_info.login; cnts_info.login = NULL;
   cti->name = cnts_info.name; cnts_info.name = NULL;
   cti->cmd = ULS_GET_API_KEY;
@@ -16982,7 +16982,7 @@ unpriv_check_cached_key(struct http_request_info *phr)
   cti->origin_ip = phr->ip;
   cti->ssl_flag = phr->ssl_flag;
   cti->expiry_time = out_keys[0].expiry_time;
-  cti->refresh_time = current_time + 1200;
+  cti->refresh_time = current_time + 3600;
   cti->login = cnts_info.login; cnts_info.login = NULL;
   cti->name = cnts_info.name; cnts_info.name = NULL;
   cti->cmd = ULS_GET_API_KEY;
