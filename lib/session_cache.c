@@ -78,11 +78,11 @@ nsc_initial_hash(uint64_t s, uint64_t k, int modulo)
 }
 
 static inline int
-tc_initial_hash(const unsigned char *p, int modulo)
+tc_initial_hash(const unsigned char *p, unsigned int key_contest_id, int modulo)
 {
     // 256-bit hash
     const uint64_t *p64 = (const uint64_t *) p;
-    uint64_t v = p64[0] + p64[1] + p64[2] + p64[3];
+    uint64_t v = p64[0] + p64[1] + p64[2] + p64[3] + (((unsigned long long) (key_contest_id)) << 32U);
     return (int) (v % modulo);
 }
 
@@ -234,7 +234,7 @@ tc_rehash(struct token_cache *tc)
     for (int i = 0; i < tc->reserved; ++i) {
         struct cached_token_info *oi = &tc->info[i];
         if (oi->used) {
-            int index = tc_initial_hash(oi->token, new_reserved);
+            int index = tc_initial_hash(oi->token, oi->key_contest_id, new_reserved);
             struct cached_token_info *ni = &new_info[index];
             while (ni->used) {
                 index += XREHASH_OFFSET;
@@ -283,7 +283,7 @@ tc_rehash_chain(struct token_cache *tc, int index)
             cur = &tc->info[cur_index];
         }
         for (i = 0; i < count; ++i) {
-            int ii = tc_initial_hash(saved[i].token, tc->reserved);
+            int ii = tc_initial_hash(saved[i].token, saved[i].key_contest_id, tc->reserved);
             struct cached_token_info *ni = &tc->info[ii];
             while (ni->used) {
                 ii += XREHASH_OFFSET;
@@ -299,13 +299,13 @@ tc_rehash_chain(struct token_cache *tc, int index)
 }
 
 struct cached_token_info *
-tc_find(struct token_cache *tc, const unsigned char *token)
+tc_find(struct token_cache *tc, const unsigned char *token, unsigned int key_contest_id)
 {
-    int index = tc_initial_hash(token, tc->reserved);
+    int index = tc_initial_hash(token, key_contest_id, tc->reserved);
     struct cached_token_info *cur = &tc->info[index];
     while (1) {
         if (!cur->used) return NULL;
-        if (!memcmp(token, cur->token, 32)) return cur;
+        if (!memcmp(token, cur->token, 32) && key_contest_id == cur->key_contest_id) return cur;
         index += XREHASH_OFFSET;
         if (index >= tc->reserved) index -= tc->reserved;
         cur = &tc->info[index];
@@ -313,21 +313,22 @@ tc_find(struct token_cache *tc, const unsigned char *token)
 }
 
 struct cached_token_info *
-tc_insert(struct token_cache *tc, const unsigned char *token)
+tc_insert(struct token_cache *tc, const unsigned char *token, unsigned int key_contest_id)
 {
     if (tc->used == tc->rehash_threshold) {
         tc_rehash(tc);
     }
-    int index = tc_initial_hash(token, tc->reserved);
+    int index = tc_initial_hash(token, key_contest_id, tc->reserved);
     struct cached_token_info *cur = &tc->info[index];
     while (1) {
         if (!cur->used) break;
-        if (!memcmp(token, cur->token, 32)) return cur;
+        if (!memcmp(token, cur->token, 32) && key_contest_id == cur->key_contest_id) return cur;
         index += XREHASH_OFFSET;
         if (index >= tc->reserved) index -= tc->reserved;
         cur = &tc->info[index];
     }
     memcpy(cur->token, token, 32);
+    cur->key_contest_id = key_contest_id;
     cur->used = 1;
     ++tc->used;
     if (metrics.data) {
@@ -337,16 +338,20 @@ tc_insert(struct token_cache *tc, const unsigned char *token)
 }
 
 int
-tc_remove(struct token_cache *tc, const unsigned char *token, struct cached_token_info *out)
+tc_remove(
+        struct token_cache *tc,
+        const unsigned char *token,
+        unsigned int key_contest_id,
+        struct cached_token_info *out)
 {
-    int index = tc_initial_hash(token, tc->reserved);
+    int index = tc_initial_hash(token, key_contest_id, tc->reserved);
     struct cached_token_info *cur = &tc->info[index];
     while (1) {
         if (!cur->used) {
             // item not found
             return 0;
         }
-        if (!memcmp(cur->token, token, 32)) break;
+        if (!memcmp(cur->token, token, 32) && cur->key_contest_id == key_contest_id) break;
         index += XREHASH_OFFSET;
         if (index >= tc->reserved) index -= tc->reserved;
         cur = &tc->info[index];

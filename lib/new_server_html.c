@@ -9572,11 +9572,12 @@ priv_check_cached_key(struct http_request_info *phr)
 {
   long long tsc_start;
   long long tsc_end;
+  unsigned key_contest_id = phr->contest_id;
 
   rdtscll(tsc_start);
 
   time_t current_time = time(NULL);
-  struct cached_token_info *cti = tc_find(&main_id_cache.t, phr->token);
+  struct cached_token_info *cti = tc_find(&main_id_cache.t, phr->token, key_contest_id);
 
   while (1) {
     if (!cti || !cti->used) break;
@@ -9586,9 +9587,6 @@ priv_check_cached_key(struct http_request_info *phr)
       break;
     }
     if (phr->ssl_flag != cti->ssl_flag) {
-      break;
-    }
-    if (phr->contest_id > 0 && phr->contest_id != cti->contest_id) {
       break;
     }
     if (cti->expiry_time > 0 && current_time >= cti->expiry_time) {
@@ -9614,7 +9612,6 @@ priv_check_cached_key(struct http_request_info *phr)
     if (cti && cti->used && cti->cmd == ULS_GET_API_KEY
         && !ej_ip_cmp(&phr->ip, &cti->origin_ip)
         && phr->ssl_flag == cti->ssl_flag
-        && (phr->contest_id <= 0 || phr->contest_id == cti->contest_id)
         && (cti->expiry_time <= 0 || current_time < cti->expiry_time)
         && phr->role <= cti->role) {
       copy_cti_to_phr(phr, cti, current_time);
@@ -9639,7 +9636,6 @@ priv_check_cached_key(struct http_request_info *phr)
     if (cti && cti->used && cti->cmd == ULS_GET_API_KEY
         && !ej_ip_cmp(&phr->ip, &cti->origin_ip)
         && phr->ssl_flag == cti->ssl_flag
-        && (phr->contest_id <= 0 || phr->contest_id == cti->contest_id)
         && (cti->expiry_time <= 0 || current_time < cti->expiry_time)
         && phr->role <= cti->role) {
       copy_cti_to_phr(phr, cti, current_time);
@@ -9682,7 +9678,7 @@ priv_check_cached_key(struct http_request_info *phr)
 
     if (cti && cti->used) {
       struct cached_token_info del_item;
-      if (tc_remove(&main_id_cache.t, phr->token, &del_item)) {
+      if (tc_remove(&main_id_cache.t, phr->token, key_contest_id, &del_item)) {
         xfree(del_item.login);
         xfree(del_item.name);
       }
@@ -9692,12 +9688,13 @@ priv_check_cached_key(struct http_request_info *phr)
   }
 
   if (!cti) {
-    cti = tc_insert(&main_id_cache.t, phr->token);
+    cti = tc_insert(&main_id_cache.t, phr->token, key_contest_id);
   } else {
     xfree(cti->login);
     xfree(cti->name);
     memset(cti, 0, sizeof(*cti));
     memcpy(cti->token, phr->token, 32);
+    cti->key_contest_id = key_contest_id;
     cti->used = 1;
   }
 
@@ -16859,11 +16856,12 @@ unpriv_check_cached_key(struct http_request_info *phr)
 {
   long long tsc_start;
   long long tsc_end;
+  unsigned int key_contest_id = phr->contest_id;
 
   rdtscll(tsc_start);
 
   time_t current_time = time(NULL);
-  struct cached_token_info *cti = tc_find(&main_id_cache.t, phr->token);
+  struct cached_token_info *cti = tc_find(&main_id_cache.t, phr->token, key_contest_id);
   while (1) {
     if (!cti || !cti->used) break;
     if (cti->cmd != ULS_GET_API_KEY) break;
@@ -16872,9 +16870,6 @@ unpriv_check_cached_key(struct http_request_info *phr)
       break;
     }
     if (phr->ssl_flag != cti->ssl_flag) {
-      break;
-    }
-    if (phr->contest_id > 0 && phr->contest_id != cti->contest_id) {
       break;
     }
     if (cti->expiry_time > 0 && current_time >= cti->expiry_time) {
@@ -16900,7 +16895,6 @@ unpriv_check_cached_key(struct http_request_info *phr)
     if (cti && cti->used && cti->cmd == ULS_GET_API_KEY
         && !ej_ip_cmp(&phr->ip, &cti->origin_ip)
         && phr->ssl_flag == cti->ssl_flag
-        && (phr->contest_id <= 0 || phr->contest_id == cti->contest_id)
         && (cti->expiry_time <= 0 || current_time < cti->expiry_time)
         && phr->role <= cti->role) {
       copy_cti_to_phr(phr, cti, current_time);
@@ -16925,7 +16919,6 @@ unpriv_check_cached_key(struct http_request_info *phr)
     if (cti && cti->used && cti->cmd == ULS_GET_API_KEY
         && !ej_ip_cmp(&phr->ip, &cti->origin_ip)
         && phr->ssl_flag == cti->ssl_flag
-        && (phr->contest_id <= 0 || phr->contest_id == cti->contest_id)
         && (cti->expiry_time <= 0 || current_time < cti->expiry_time)
         && phr->role <= cti->role) {
       copy_cti_to_phr(phr, cti, current_time);
@@ -16966,7 +16959,7 @@ unpriv_check_cached_key(struct http_request_info *phr)
 
     if (cti && cti->used) {
       struct cached_token_info del_item;
-      if (tc_remove(&main_id_cache.t, phr->token, &del_item)) {
+      if (tc_remove(&main_id_cache.t, phr->token, key_contest_id, &del_item)) {
         xfree(del_item.login);
         xfree(del_item.name);
       }
@@ -16976,12 +16969,13 @@ unpriv_check_cached_key(struct http_request_info *phr)
   }
 
   if (!cti) {
-    cti = tc_insert(&main_id_cache.t, phr->token);
+    cti = tc_insert(&main_id_cache.t, phr->token, key_contest_id);
   } else {
     xfree(cti->login);
     xfree(cti->name);
     memset(cti, 0, sizeof(*cti));
     memcpy(cti->token, phr->token, 32);
+    cti->key_contest_id = key_contest_id;
     cti->used = 1;
   }
 

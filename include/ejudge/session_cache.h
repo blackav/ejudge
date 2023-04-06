@@ -81,6 +81,7 @@ struct cached_token_info
     int user_id;
     int contest_id;
     unsigned int reg_flags;
+    unsigned int key_contest_id;
 
     unsigned char ssl_flag;
     unsigned char role;
@@ -114,9 +115,9 @@ struct new_session_info * nsc_insert(struct new_session_cache *nsc, ej_cookie_t 
 struct new_session_info * nsc_find(struct new_session_cache *nsc, ej_cookie_t session_id, ej_cookie_t client_key);
 int nsc_remove(struct new_session_cache *nsc, ej_cookie_t session_id, ej_cookie_t client_key, struct new_session_info *out);
 
-struct cached_token_info *tc_insert(struct token_cache *tc, const unsigned char *token);
-struct cached_token_info *tc_find(struct token_cache *tc, const unsigned char *token);
-int tc_remove(struct token_cache *tc, const unsigned char *token, struct cached_token_info *out);
+struct cached_token_info *tc_insert(struct token_cache *tc, const unsigned char *token, unsigned int key_contest_id);
+struct cached_token_info *tc_find(struct token_cache *tc, const unsigned char *token, unsigned int key_contest_id);
+int tc_remove(struct token_cache *tc, const unsigned char *token, unsigned int key_contest_id, struct cached_token_info *out);
 
 #ifdef __cplusplus
 }

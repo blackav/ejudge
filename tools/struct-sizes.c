@@ -67,5 +67,6 @@ int main(void)
   printf("UserlistBinaryHeader:  %zu\n", sizeof(UserlistBinaryHeader));
   printf("run_reply_bin_packet:  %zu\n", sizeof(struct run_reply_bin_packet));
   printf("new_session_info:      %zu\n", sizeof(struct new_session_info));
+  printf("cached_token_info:     %zu\n", sizeof(struct cached_token_info));
   return 0;
 }
