@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2003-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -60,7 +60,8 @@ enum
   Tag_compiler_must_fail,
   Tag_allow_compile_error,
   Tag_disable_valgrind,
-  Tag_ignore_exit_code
+  Tag_ignore_exit_code,
+  Tag_check_cmd,
 };
 
 /// TRIE_STRINGS_BEGIN
@@ -95,6 +96,7 @@ static __attribute__((unused)) const char * const tag_table[] =
   "allow_compile_error",
   "disable_valgrind",
   "ignore_exit_code",
+  "check_cmd",
 };
 /// TRIE_STRINGS_END
 
@@ -132,6 +134,7 @@ static unsigned int tag_offsets[] =
   [Tag_allow_compile_error] = TESTINFO_OFFSET(allow_compile_error),
   [Tag_disable_valgrind] = TESTINFO_OFFSET(disable_valgrind),
   [Tag_ignore_exit_code] = TESTINFO_OFFSET(ignore_exit_code),
+  [Tag_check_cmd] = TESTINFO_OFFSET(check_cmd),
 };
 
 struct trie_data;
@@ -641,6 +644,7 @@ parse_line(const unsigned char *str, size_t len, testinfo_t *pt, struct testinfo
   case Tag_source_stub:
   case Tag_working_dir:
   case Tag_program_name:
+  case Tag_check_cmd:
     ppval = XPDEREF(unsigned char *, pt, tag_offsets[tag]);
     if (*ppval) FAIL(TINF_E_VAR_REDEFINED);
     if (cmd.u < 1) FAIL(TINF_E_EMPTY_VALUE);
@@ -802,6 +806,7 @@ testinfo_free(testinfo_t *pt)
   if (pt->source_stub) free(pt->source_stub);
   free(pt->working_dir);
   free(pt->program_name);
+  free(pt->check_cmd);
   memset(pt, 0, sizeof(*pt));
 }
 

@@ -2,7 +2,7 @@
 #ifndef __TESTINFO_H__
 #define __TESTINFO_H__
 
-/* Copyright (C) 2003-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -64,6 +64,7 @@ struct testinfo_struct
   char *source_stub;
   char *working_dir;
   char *program_name;
+  char *check_cmd;
   long long max_vm_size;
   long long max_stack_size;
   long long max_file_size;

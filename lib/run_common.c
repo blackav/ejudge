@@ -2839,6 +2839,7 @@ run_one_test(
   unsigned char error_file[PATH_MAX];
   unsigned char error_code[PATH_MAX];
   unsigned char arch_entry_name[PATH_MAX];
+  unsigned char local_check_cmd[PATH_MAX];
 
   unsigned char mem_limit_buf[PATH_MAX];
 
@@ -3990,6 +3991,17 @@ run_checker:;
       output_path_to_check = output_path;
     }
   }
+
+  if (tstinfo.check_cmd && tstinfo.check_cmd[0]) {
+    if (os_IsAbsolutePath(tstinfo.check_cmd)) {
+      snprintf(local_check_cmd, sizeof(local_check_cmd), "%s", tstinfo.check_cmd);
+    } else {
+      snprintf(local_check_cmd, sizeof(local_check_cmd), "%s/%s", srpp->problem_dir, tstinfo.check_cmd);
+    }
+    mirror_file(agent, local_check_cmd, sizeof(local_check_cmd), mirror_dir);
+    check_cmd = local_check_cmd;
+  }
+
   status = invoke_checker(srgp, srpp, cur_test, cur_info,
                           check_cmd, test_src, output_path_to_check,
                           corr_src, info_src, tgzdir_src,
