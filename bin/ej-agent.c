@@ -1937,9 +1937,9 @@ cancel_func(
         return 0;
     }
 
-    cJSON_AddNumberToObject(reply, "wait_s", (double) as->wait_serial);
-    cJSON_AddNumberToObject(reply, "wait_t", (double) as->wait_time_ms);
-    cJSON_AddStringToObject(reply, "q", "result");
+    cJSON_ReplaceItemInObject(reply, "s", cJSON_CreateNumber(as->wait_serial));
+    cJSON_ReplaceItemInObject(reply, "t", cJSON_CreateNumber(as->wait_time_ms));
+    cJSON_AddStringToObject(reply, "q", "poll-result");
 
     as->wait_serial = 0;
     as->wait_time_ms = 0;
