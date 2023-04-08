@@ -9529,8 +9529,8 @@ ej_ip_cmp(const ej_ip_t *v1, const ej_ip_t *v2)
   if (v1->ipv6_flag) {
     return memcmp(v1->u.v6.addr, v2->u.v6.addr, 16);
   }
-  if (v1->u.v4.addr < v1->u.v4.addr) return -1;
-  if (v1->u.v4.addr > v1->u.v4.addr) return 1;
+  if (v1->u.v4.addr < v2->u.v4.addr) return -1;
+  if (v1->u.v4.addr > v2->u.v4.addr) return 1;
   return 0;
 }
 
