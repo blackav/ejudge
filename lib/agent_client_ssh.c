@@ -142,10 +142,10 @@ static void future_fini(struct Future *f)
     if (f->value) cJSON_Delete(f->value);
 }
 
-static void future_wait(struct Future *f)
+static void future_wait(struct AgentClientSsh *acs, struct Future *f)
 {
     pthread_mutex_lock(&f->m);
-    while (!f->ready) {
+    while (!f->ready && !acs->is_stopped) {
         pthread_cond_wait(&f->c, &f->m);
     }
     pthread_mutex_unlock(&f->m);
@@ -591,6 +591,8 @@ thread_func(void *ptr)
         acs->pid = -1;
     }
 
+    acs->is_stopped = 1;
+
     // wake up all futures
     pthread_mutex_lock(&acs->futurem);
     for (int i = 0; i < acs->futureu; ++i) {
@@ -608,7 +610,6 @@ thread_func(void *ptr)
     pthread_mutex_unlock(&acs->futurem);
 
     pthread_mutex_lock(&acs->stop_m);
-    acs->is_stopped = 1;
     pthread_cond_signal(&acs->stop_c);
     pthread_mutex_unlock(&acs->stop_m);
 
@@ -843,28 +844,31 @@ poll_queue_func(
     add_wchunk_json(acs, jq);
     cJSON_Delete(jq); jq = NULL;
 
-    future_wait(&f);
-
-    // { "q" : "poll-result", "pkt-name" : N }
-    if (f.value) {
-        cJSON *jj = cJSON_GetObjectItem(f.value, "q");
-        if (jj && jj->type == cJSON_String
-            && !strcmp("poll-result", jj->valuestring)) {
-            cJSON *jn = cJSON_GetObjectItem(f.value, "pkt-name");
-            if (!jn) {
-                pkt_name[0] = 0;
-                result = 1;
-            } else if (jn->type == cJSON_String) {
-                snprintf(pkt_name, pkt_len, "%s", jn->valuestring);
-                result = 1;
+    future_wait(acs, &f);
+    if (acs->is_stopped) {
+        result = -1;
+    } else {
+        // { "q" : "poll-result", "pkt-name" : N }
+        if (f.value) {
+            cJSON *jj = cJSON_GetObjectItem(f.value, "q");
+            if (jj && jj->type == cJSON_String
+                && !strcmp("poll-result", jj->valuestring)) {
+                cJSON *jn = cJSON_GetObjectItem(f.value, "pkt-name");
+                if (!jn) {
+                    pkt_name[0] = 0;
+                    result = 1;
+                } else if (jn->type == cJSON_String) {
+                    snprintf(pkt_name, pkt_len, "%s", jn->valuestring);
+                    result = 1;
+                }
             }
-        }
-        cJSON *jt = cJSON_GetObjectItem(f.value, "t");
-        if (jt && jt->type == cJSON_Number) {
-            long long dur_ms = jt->valuedouble;
-            dur_ms -= time_ms;
-            (void) dur_ms;
-            //fprintf(stderr, "poll: %lld ms\n", dur_ms);
+            cJSON *jt = cJSON_GetObjectItem(f.value, "t");
+            if (jt && jt->type == cJSON_Number) {
+                long long dur_ms = jt->valuedouble;
+                dur_ms -= time_ms;
+                (void) dur_ms;
+                //fprintf(stderr, "poll: %lld ms\n", dur_ms);
+            }
         }
     }
 
@@ -1026,9 +1030,13 @@ get_packet_func(
     add_wchunk_json(acs, jq);
     cJSON_Delete(jq); jq = NULL;
 
-    future_wait(&f);
+    future_wait(acs, &f);
+    if (acs->is_stopped) {
+        result = -1;
+    } else {
+        result = process_file_result(acs, f.value, p_pkt_ptr, p_pkt_len);
+    }
 
-    result = process_file_result(acs, f.value, p_pkt_ptr, p_pkt_len);
     future_fini(&f);
     return result;
 }
@@ -1053,9 +1061,13 @@ get_data_func(
     add_wchunk_json(acs, jq);
     cJSON_Delete(jq); jq = NULL;
 
-    future_wait(&f);
+    future_wait(acs, &f);
+    if (acs->is_stopped) {
+        result = -1;
+    } else {
+        result = process_file_result(acs, f.value, p_pkt_ptr, p_pkt_len);
+    }
 
-    result = process_file_result(acs, f.value, p_pkt_ptr, p_pkt_len);
     future_fini(&f);
     return result;
 }
@@ -1161,11 +1173,14 @@ put_reply_func(
     add_wchunk_json(acs, jq);
     cJSON_Delete(jq); jq = NULL;
 
-    future_wait(&f);
-
-    cJSON *jok = cJSON_GetObjectItem(f.value, "ok");
-    if (!jok || jok->type != cJSON_True) {
+    future_wait(acs, &f);
+    if (acs->is_stopped) {
         result = -1;
+    } else if (f.value) {
+        cJSON *jok = cJSON_GetObjectItem(f.value, "ok");
+        if (!jok || jok->type != cJSON_True) {
+            result = -1;
+        }
     }
 
     future_fini(&f);
@@ -1197,11 +1212,14 @@ put_output_func(
     add_wchunk_json(acs, jq);
     cJSON_Delete(jq); jq = NULL;
 
-    future_wait(&f);
-
-    cJSON *jok = cJSON_GetObjectItem(f.value, "ok");
-    if (!jok || jok->type != cJSON_True) {
+    future_wait(acs, &f);
+    if (acs->is_stopped) {
         result = -1;
+    } else if (f.value) {
+        cJSON *jok = cJSON_GetObjectItem(f.value, "ok");
+        if (!jok || jok->type != cJSON_True) {
+            result = -1;
+        }
     }
 
     future_fini(&f);
@@ -1269,11 +1287,14 @@ put_output_2_func(
         munmap(pkt_ptr, pkt_len);
     }
 
-    future_wait(&f);
-
-    cJSON *jok = cJSON_GetObjectItem(f.value, "ok");
-    if (!jok || jok->type != cJSON_True) {
+    future_wait(acs, &f);
+    if (acs->is_stopped) {
         result = -1;
+    } else if (f.value) {
+        cJSON *jok = cJSON_GetObjectItem(f.value, "ok");
+        if (!jok || jok->type != cJSON_True) {
+            result = -1;
+        }
     }
 
     future_fini(&f);
@@ -1302,39 +1323,42 @@ async_wait_init_func(
     add_wchunk_json(acs, jq);
     cJSON_Delete(jq); jq = NULL;
 
-    future_wait(&f);
-
-    // { "q" : "poll-result", "pkt-name" : N }
-    if (f.value) {
-        cJSON *jj = cJSON_GetObjectItem(f.value, "q");
-        if (jj && jj->type == cJSON_String
-            && !strcmp("poll-result", jj->valuestring)) {
-            cJSON *jn = cJSON_GetObjectItem(f.value, "pkt-name");
-            if (!jn) {
-                pkt_name[0] = 0;
-                result = 1;
-            } else if (jn->type == cJSON_String) {
-                snprintf(pkt_name, pkt_len, "%s", jn->valuestring);
-                result = 1;
-            }
-        }
-        if (jj && jj->type == cJSON_String && !strcmp("channel-result", jj->valuestring)) {
-            cJSON *jc = cJSON_GetObjectItem(f.value, "channel");
-            if (jc && jc->type == cJSON_Number) {
-                int channel = jc->valuedouble;
-                struct Future *future = malloc(sizeof(*future));
-                *p_future = future;
-                future_init(future, channel);
-                future->notify_signal = notify_signal;
-                future->notify_thread = pthread_self();
-                if (timeout_ms > 0) {
-                    struct timeval tv;
-                    gettimeofday(&tv, NULL);
-                    long long current_time_ms = tv.tv_sec * 1000LL + tv.tv_usec / 1000;
-                    future->expiration_time_ms = current_time_ms + timeout_ms;
+    future_wait(acs, &f);
+    if (acs->is_stopped) {
+        result = -1;
+    } else {
+        // { "q" : "poll-result", "pkt-name" : N }
+        if (f.value) {
+            cJSON *jj = cJSON_GetObjectItem(f.value, "q");
+            if (jj && jj->type == cJSON_String
+                && !strcmp("poll-result", jj->valuestring)) {
+                cJSON *jn = cJSON_GetObjectItem(f.value, "pkt-name");
+                if (!jn) {
+                    pkt_name[0] = 0;
+                    result = 1;
+                } else if (jn->type == cJSON_String) {
+                    snprintf(pkt_name, pkt_len, "%s", jn->valuestring);
+                    result = 1;
                 }
-                add_future(acs, future);
-                result = 0;
+            }
+            if (jj && jj->type == cJSON_String && !strcmp("channel-result", jj->valuestring)) {
+                cJSON *jc = cJSON_GetObjectItem(f.value, "channel");
+                if (jc && jc->type == cJSON_Number) {
+                    int channel = jc->valuedouble;
+                    struct Future *future = malloc(sizeof(*future));
+                    *p_future = future;
+                    future_init(future, channel);
+                    future->notify_signal = notify_signal;
+                    future->notify_thread = pthread_self();
+                    if (timeout_ms > 0) {
+                        struct timeval tv;
+                        gettimeofday(&tv, NULL);
+                        long long current_time_ms = tv.tv_sec * 1000LL + tv.tv_usec / 1000;
+                        future->expiration_time_ms = current_time_ms + timeout_ms;
+                    }
+                    add_future(acs, future);
+                    result = 0;
+                }
             }
         }
     }
@@ -1433,11 +1457,14 @@ add_ignored_func(
     add_wchunk_json(acs, jq);
     cJSON_Delete(jq); jq = NULL;
 
-    future_wait(&f);
-
-    cJSON *jok = cJSON_GetObjectItem(f.value, "ok");
-    if (!jok || jok->type != cJSON_True) {
+    future_wait(acs, &f);
+    if (acs->is_stopped) {
         result = -1;
+    } else if (f.value) {
+        cJSON *jok = cJSON_GetObjectItem(f.value, "ok");
+        if (!jok || jok->type != cJSON_True) {
+            result = -1;
+        }
     }
 
     future_fini(&f);
@@ -1461,11 +1488,14 @@ put_packet_func(
     add_wchunk_json(acs, jq);
     cJSON_Delete(jq); jq = NULL;
 
-    future_wait(&f);
-
-    cJSON *jok = cJSON_GetObjectItem(f.value, "ok");
-    if (!jok || jok->type != cJSON_True) {
+    future_wait(acs, &f);
+    if (acs->is_stopped) {
         result = -1;
+    } else if (f.value) {
+        cJSON *jok = cJSON_GetObjectItem(f.value, "ok");
+        if (!jok || jok->type != cJSON_True) {
+            result = -1;
+        }
     }
 
     future_fini(&f);
@@ -1548,25 +1578,30 @@ put_heartbeat_func(
     add_wchunk_json(acs, jq);
     cJSON_Delete(jq); jq = NULL;
 
-    future_wait(&f);
-
-    cJSON *jok = cJSON_GetObjectItem(f.value, "ok");
-    if (!jok || jok->type != cJSON_True) {
-        goto done;
+    future_wait(acs, &f);
+    if (acs->is_stopped) {
+        result = -1;
+    } else {
+        if (f.value) {
+            cJSON *jok = cJSON_GetObjectItem(f.value, "ok");
+            if (!jok || jok->type != cJSON_True) {
+                goto done;
+            }
+            cJSON *jtt = cJSON_GetObjectItem(f.value, "tt");
+            if (jtt && jtt->type == cJSON_Number && p_last_saved_time_ms) {
+                *p_last_saved_time_ms = (long long) jtt->valuedouble;
+            }
+            cJSON *jsf = cJSON_GetObjectItem(f.value, "stop_flag");
+            if (jsf && jsf->type == cJSON_True && p_stop_flag) {
+                *p_stop_flag = 1;
+            }
+            cJSON *jdf = cJSON_GetObjectItem(f.value, "down_flag");
+            if (jdf && jdf->type == cJSON_True && p_down_flag) {
+                *p_down_flag = 1;
+            }
+        }
+        result = 0;
     }
-    cJSON *jtt = cJSON_GetObjectItem(f.value, "tt");
-    if (jtt && jtt->type == cJSON_Number && p_last_saved_time_ms) {
-        *p_last_saved_time_ms = (long long) jtt->valuedouble;
-    }
-    cJSON *jsf = cJSON_GetObjectItem(f.value, "stop_flag");
-    if (jsf && jsf->type == cJSON_True && p_stop_flag) {
-        *p_stop_flag = 1;
-    }
-    cJSON *jdf = cJSON_GetObjectItem(f.value, "down_flag");
-    if (jdf && jdf->type == cJSON_True && p_down_flag) {
-        *p_down_flag = 1;
-    }
-    result = 0;
 
 done:;
     future_fini(&f);
@@ -1587,14 +1622,19 @@ delete_heartbeat_func(
     add_wchunk_json(acs, jq);
     cJSON_Delete(jq); jq = NULL;
 
-    future_wait(&f);
-
-    cJSON *jok = cJSON_GetObjectItem(f.value, "ok");
-    if (!jok || jok->type != cJSON_True) {
-        goto done;
+    future_wait(acs, &f);
+    if (acs->is_stopped) {
+        result = -1;
+    } else {
+        if (f.value) {
+            cJSON *jok = cJSON_GetObjectItem(f.value, "ok");
+            if (!jok || jok->type != cJSON_True) {
+                goto done;
+            }
+        }
+        result = 0;
     }
 
-    result = 0;
 done:;
     future_fini(&f);
     return result;
@@ -1660,11 +1700,14 @@ put_archive_2_func(
         munmap(pkt_ptr, pkt_len);
     }
 
-    future_wait(&f);
-
-    cJSON *jok = cJSON_GetObjectItem(f.value, "ok");
-    if (!jok || jok->type != cJSON_True) {
+    future_wait(acs, &f);
+    if (acs->is_stopped) {
         result = -1;
+    } else if (f.value) {
+        cJSON *jok = cJSON_GetObjectItem(f.value, "ok");
+        if (!jok || jok->type != cJSON_True) {
+            result = -1;
+        }
     }
 
     future_fini(&f);
@@ -1707,58 +1750,61 @@ mirror_file_func(
     add_wchunk_json(acs, jq);
     cJSON_Delete(jq); jq = NULL;
 
-    future_wait(&f);
+    future_wait(acs, &f);
+    if (acs->is_stopped) {
+        result = -1;
+    } else if (f.value) {
+        cJSON *jok = cJSON_GetObjectItem(f.value, "ok");
+        if (!jok || jok->type != cJSON_True) {
+            goto done;
+        }
+        jq = cJSON_GetObjectItem(f.value, "q");
+        if (!jq || jq->type != cJSON_String) {
+            err("mirror_file: invalid or missing 'q' in reply");
+            goto done;
+        }
+        if (!strcmp(jq->valuestring, "file-unchanged")) {
+            result = 0;
+            goto done;
+        }
+        if (process_file_result(acs, f.value, &pkt_ptr, &pkt_len) < 0) {
+            goto done;
+        }
 
-    cJSON *jok = cJSON_GetObjectItem(f.value, "ok");
-    if (!jok || jok->type != cJSON_True) {
-        goto done;
-    }
-    jq = cJSON_GetObjectItem(f.value, "q");
-    if (!jq || jq->type != cJSON_String) {
-        err("mirror_file: invalid or missing 'q' in reply");
-        goto done;
-    }
-    if (!strcmp(jq->valuestring, "file-unchanged")) {
-        result = 0;
-        goto done;
-    }
-    if (process_file_result(acs, f.value, &pkt_ptr, &pkt_len) < 0) {
-        goto done;
-    }
+        time_t mtime = 0;
+        int mode = -1;
+        int uid = -1;
+        int gid = -1;
 
-    time_t mtime = 0;
-    int mode = -1;
-    int uid = -1;
-    int gid = -1;
+        cJSON *jj = cJSON_GetObjectItem(f.value, "mtime");
+        if (jj && jj->type == cJSON_Number) {
+            mtime = jj->valuedouble;
+            if (mtime < 0) mtime = 0;
+        }
+        jj = cJSON_GetObjectItem(f.value, "mode");
+        if (jj && jj->type == cJSON_String) {
+            mode = strtol(jj->valuestring, NULL, 8);
+            mode &= 07777;
+        }
+        jj = cJSON_GetObjectItem(f.value, "uid");
+        if (jj && jj->type == cJSON_Number) {
+            uid = jj->valuedouble;
+            if (uid < 0) uid = -1;
+        }
+        jj = cJSON_GetObjectItem(f.value, "gid");
+        if (jj && jj->type == cJSON_Number) {
+            gid = jj->valuedouble;
+            if (gid < 0) gid = -1;
+        }
 
-    cJSON *jj = cJSON_GetObjectItem(f.value, "mtime");
-    if (jj && jj->type == cJSON_Number) {
-        mtime = jj->valuedouble;
-        if (mtime < 0) mtime = 0;
+        *p_pkt_ptr = pkt_ptr; pkt_ptr = NULL;
+        *p_pkt_len = pkt_len; pkt_len = 0;
+        if (p_new_mtime) *p_new_mtime = mtime;
+        if (p_new_mode) *p_new_mode = mode;
+        if (p_uid) *p_uid = uid;
+        if (p_gid) *p_gid = gid;
+        result = 1;
     }
-    jj = cJSON_GetObjectItem(f.value, "mode");
-    if (jj && jj->type == cJSON_String) {
-        mode = strtol(jj->valuestring, NULL, 8);
-        mode &= 07777;
-    }
-    jj = cJSON_GetObjectItem(f.value, "uid");
-    if (jj && jj->type == cJSON_Number) {
-        uid = jj->valuedouble;
-        if (uid < 0) uid = -1;
-    }
-    jj = cJSON_GetObjectItem(f.value, "gid");
-    if (jj && jj->type == cJSON_Number) {
-        gid = jj->valuedouble;
-        if (gid < 0) gid = -1;
-    }
-
-    *p_pkt_ptr = pkt_ptr; pkt_ptr = NULL;
-    *p_pkt_len = pkt_len; pkt_len = 0;
-    if (p_new_mtime) *p_new_mtime = mtime;
-    if (p_new_mode) *p_new_mode = mode;
-    if (p_uid) *p_uid = uid;
-    if (p_gid) *p_gid = gid;
-    result = 1;
 
 done:;
     if (pkt_ptr) free(pkt_ptr);
