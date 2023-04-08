@@ -9519,7 +9519,7 @@ cleanup:
   return 1;
 }
 
-static int
+static __attribute__((unused)) int
 ej_ip_cmp(const ej_ip_t *v1, const ej_ip_t *v2)
 {
   int r = v1->ipv6_flag - v2->ipv6_flag;
@@ -9587,12 +9587,14 @@ priv_check_cached_key(struct http_request_info *phr)
     if (!cti || !cti->used) break;
     if (cti->cmd != ULS_GET_API_KEY) break;
 
+    /*
     if (ej_ip_cmp(&phr->ip, &cti->origin_ip) != 0) {
       break;
     }
     if (phr->ssl_flag != cti->ssl_flag) {
       break;
     }
+    */
     if (cti->expiry_time > 0 && current_time >= cti->expiry_time) {
       break;
     }
@@ -9614,8 +9616,8 @@ priv_check_cached_key(struct http_request_info *phr)
 
   if (ns_open_ul_connection(phr->fw_state) < 0) {
     if (cti && cti->used && cti->cmd == ULS_GET_API_KEY
-        && !ej_ip_cmp(&phr->ip, &cti->origin_ip)
-        && phr->ssl_flag == cti->ssl_flag
+        //&& !ej_ip_cmp(&phr->ip, &cti->origin_ip)
+        //&& phr->ssl_flag == cti->ssl_flag
         && (cti->expiry_time <= 0 || current_time < cti->expiry_time)
         && phr->role <= cti->role) {
       copy_cti_to_phr(phr, cti, current_time);
@@ -9638,8 +9640,8 @@ priv_check_cached_key(struct http_request_info *phr)
   int r = userlist_clnt_api_key_request(ul_conn, ULS_GET_API_KEY, 1, &in_api_key, &out_count, &out_keys, &cnts_info);
   if (r == -ULS_ERR_DISCONNECT) {
     if (cti && cti->used && cti->cmd == ULS_GET_API_KEY
-        && !ej_ip_cmp(&phr->ip, &cti->origin_ip)
-        && phr->ssl_flag == cti->ssl_flag
+        //&& !ej_ip_cmp(&phr->ip, &cti->origin_ip)
+        //&& phr->ssl_flag == cti->ssl_flag
         && (cti->expiry_time <= 0 || current_time < cti->expiry_time)
         && phr->role <= cti->role) {
       copy_cti_to_phr(phr, cti, current_time);
@@ -9743,12 +9745,14 @@ priv_check_cached_session(struct http_request_info *phr)
     if (nsi->cmd != ULS_PRIV_GET_COOKIE) {
       break;
     }
+    /*
     if (ej_ip_cmp(&phr->ip, &nsi->origin_ip) != 0) {
       break;
     }
     if (phr->ssl_flag != nsi->ssl_flag) {
       break;
     }
+    */
     if (current_time >= nsi->expire_time) {
       break;
     }
@@ -9770,8 +9774,9 @@ priv_check_cached_session(struct http_request_info *phr)
   if (ns_open_ul_connection(phr->fw_state) < 0) {
     if (nsi && nsi->cmd == ULS_PRIV_GET_COOKIE
         && current_time < nsi->expire_time
-        && nsi->ssl_flag == phr->ssl_flag
-        && !ej_ip_cmp(&phr->ip, &nsi->origin_ip)) {
+        //&& nsi->ssl_flag == phr->ssl_flag
+        //&& !ej_ip_cmp(&phr->ip, &nsi->origin_ip)
+        ) {
       // still try to use cached session value
       copy_nsi_to_phr(phr, nsi, current_time);
       rdtscll(tsc_end);
@@ -9794,8 +9799,9 @@ priv_check_cached_session(struct http_request_info *phr)
   if (r == -ULS_ERR_DISCONNECT) {
     if (nsi && nsi->cmd == ULS_PRIV_GET_COOKIE
         && current_time < nsi->expire_time
-        && nsi->ssl_flag == phr->ssl_flag
-        && !ej_ip_cmp(&phr->ip, &nsi->origin_ip)) {
+        //&& nsi->ssl_flag == phr->ssl_flag
+        //&& !ej_ip_cmp(&phr->ip, &nsi->origin_ip)
+        ) {
       // still try to use cached session value
       copy_nsi_to_phr(phr, nsi, current_time);
       rdtscll(tsc_end);
@@ -16870,12 +16876,14 @@ unpriv_check_cached_key(struct http_request_info *phr)
     if (!cti || !cti->used) break;
     if (cti->cmd != ULS_GET_API_KEY) break;
 
+    /*
     if (ej_ip_cmp(&phr->ip, &cti->origin_ip) != 0) {
       break;
     }
     if (phr->ssl_flag != cti->ssl_flag) {
       break;
     }
+    */
     if (cti->expiry_time > 0 && current_time >= cti->expiry_time) {
       break;
     }
@@ -16897,8 +16905,8 @@ unpriv_check_cached_key(struct http_request_info *phr)
 
   if (ns_open_ul_connection(phr->fw_state) < 0) {
     if (cti && cti->used && cti->cmd == ULS_GET_API_KEY
-        && !ej_ip_cmp(&phr->ip, &cti->origin_ip)
-        && phr->ssl_flag == cti->ssl_flag
+        //&& !ej_ip_cmp(&phr->ip, &cti->origin_ip)
+        //&& phr->ssl_flag == cti->ssl_flag
         && (cti->expiry_time <= 0 || current_time < cti->expiry_time)
         && phr->role <= cti->role) {
       copy_cti_to_phr(phr, cti, current_time);
@@ -16921,8 +16929,8 @@ unpriv_check_cached_key(struct http_request_info *phr)
   int r = userlist_clnt_api_key_request(ul_conn, ULS_GET_API_KEY, 1, &in_api_key, &out_count, &out_keys, &cnts_info);
   if (r == -ULS_ERR_DISCONNECT) {
     if (cti && cti->used && cti->cmd == ULS_GET_API_KEY
-        && !ej_ip_cmp(&phr->ip, &cti->origin_ip)
-        && phr->ssl_flag == cti->ssl_flag
+        //&& !ej_ip_cmp(&phr->ip, &cti->origin_ip)
+        //&& phr->ssl_flag == cti->ssl_flag
         && (cti->expiry_time <= 0 || current_time < cti->expiry_time)
         && phr->role <= cti->role) {
       copy_cti_to_phr(phr, cti, current_time);
@@ -17024,12 +17032,14 @@ unpriv_check_cached_session(struct http_request_info *phr)
     if (nsi->cmd != ULS_TEAM_GET_COOKIE) {
       break;
     }
+    /*
     if (ej_ip_cmp(&phr->ip, &nsi->origin_ip) != 0) {
       break;
     }
     if (phr->ssl_flag != nsi->ssl_flag) {
       break;
     }
+    */
     if (current_time >= nsi->expire_time) {
       break;
     }
@@ -17051,8 +17061,9 @@ unpriv_check_cached_session(struct http_request_info *phr)
   if (ns_open_ul_connection(phr->fw_state) < 0) {
     if (nsi && nsi->cmd == ULS_TEAM_GET_COOKIE
         && current_time < nsi->expire_time
-        && nsi->ssl_flag == phr->ssl_flag
-        && !ej_ip_cmp(&phr->ip, &nsi->origin_ip)) {
+        //&& nsi->ssl_flag == phr->ssl_flag
+        //&& !ej_ip_cmp(&phr->ip, &nsi->origin_ip)
+        ) {
       // still try to use cached session value
       copy_nsi_to_phr(phr, nsi, current_time);
       rdtscll(tsc_end);
@@ -17075,8 +17086,9 @@ unpriv_check_cached_session(struct http_request_info *phr)
   if (r == -ULS_ERR_DISCONNECT) {
     if (nsi && nsi->cmd == ULS_TEAM_GET_COOKIE
         && current_time < nsi->expire_time
-        && nsi->ssl_flag == phr->ssl_flag
-        && !ej_ip_cmp(&phr->ip, &nsi->origin_ip)) {
+        //&& nsi->ssl_flag == phr->ssl_flag
+        //&& !ej_ip_cmp(&phr->ip, &nsi->origin_ip)
+        ) {
       // still try to use cached session value
       copy_nsi_to_phr(phr, nsi, current_time);
       rdtscll(tsc_end);
