@@ -63,6 +63,8 @@ struct Future
     pthread_cond_t c;
 
     cJSON *value;
+    long long expiration_time_ms;
+    int cancel_requested;
 };
 
 struct AgentClientSsh
@@ -472,6 +474,8 @@ done1:
 
 static struct Future *
 internal_ping(struct AgentClientSsh *acs);
+static void
+internal_cancel(struct AgentClientSsh *acs, int channel);
 
 static void *
 thread_func(void *ptr)
@@ -549,6 +553,16 @@ thread_func(void *ptr)
                     acs->need_cleanup = 1;
                 }
             }
+            pthread_mutex_lock(&acs->futurem);
+            int fut_index;
+            for (fut_index = 0; fut_index < acs->futureu; ++fut_index) {
+                struct Future *f = acs->futures[fut_index];
+                if (f->expiration_time_ms > 0 && acs->current_time_ms > f->expiration_time_ms && !f->cancel_requested) {
+                    f->cancel_requested = 1;
+                    internal_cancel(acs, f->serial);
+                }
+            }
+            pthread_mutex_unlock(&acs->futurem);
         }
         if (acs->stop_request) {
             if (acs->stop_initiated_ms <= 0) {
@@ -793,8 +807,11 @@ create_request(
 {
     cJSON *jq = cJSON_CreateObject();
     int serial = ++acs->serial;
-    future_init(f, serial);
-    add_future(acs, f);
+
+    if (f) {
+        future_init(f, serial);
+        add_future(acs, f);
+    }
 
     struct timeval tv;
     gettimeofday(&tv, NULL);
@@ -834,7 +851,10 @@ poll_queue_func(
         if (jj && jj->type == cJSON_String
             && !strcmp("poll-result", jj->valuestring)) {
             cJSON *jn = cJSON_GetObjectItem(f.value, "pkt-name");
-            if (jn && jn->type == cJSON_String) {
+            if (!jn) {
+                pkt_name[0] = 0;
+                result = 1;
+            } else if (jn->type == cJSON_String) {
                 snprintf(pkt_name, pkt_len, "%s", jn->valuestring);
                 result = 1;
             }
@@ -1267,7 +1287,8 @@ async_wait_init_func(
         int random_mode,
         unsigned char *pkt_name,
         size_t pkt_len,
-        struct Future **p_future)
+        struct Future **p_future,
+        long long timeout_ms)
 {
     int result = 0;
     struct AgentClientSsh *acs = (struct AgentClientSsh *) ac;
@@ -1289,7 +1310,10 @@ async_wait_init_func(
         if (jj && jj->type == cJSON_String
             && !strcmp("poll-result", jj->valuestring)) {
             cJSON *jn = cJSON_GetObjectItem(f.value, "pkt-name");
-            if (jn && jn->type == cJSON_String) {
+            if (!jn) {
+                pkt_name[0] = 0;
+                result = 1;
+            } else if (jn->type == cJSON_String) {
                 snprintf(pkt_name, pkt_len, "%s", jn->valuestring);
                 result = 1;
             }
@@ -1303,6 +1327,12 @@ async_wait_init_func(
                 future_init(future, channel);
                 future->notify_signal = notify_signal;
                 future->notify_thread = pthread_self();
+                if (timeout_ms > 0) {
+                    struct timeval tv;
+                    gettimeofday(&tv, NULL);
+                    long long current_time_ms = tv.tv_sec * 1000LL + tv.tv_usec / 1000;
+                    future->expiration_time_ms = current_time_ms + timeout_ms;
+                }
                 add_future(acs, future);
                 result = 0;
             }
@@ -1335,11 +1365,13 @@ async_wait_complete_func(
         goto done;
     }
     cJSON *jn = cJSON_GetObjectItem(j, "pkt-name");
-    if (!jn || jq->type != cJSON_String) {
+    if (!jn) {
+        pkt_name[0] = 0;
+    } else if (jq->type != cJSON_String) {
         goto done;
+    } else {
+        snprintf(pkt_name, pkt_len, "%s", jn->valuestring);
     }
-
-    snprintf(pkt_name, pkt_len, "%s", jn->valuestring);
     result = 1;
 
 done:
@@ -1376,6 +1408,15 @@ internal_ping(struct AgentClientSsh *acs)
     add_wchunk_json(acs, jq);
     cJSON_Delete(jq); jq = NULL;
     return f;
+}
+
+static void
+internal_cancel(struct AgentClientSsh *acs, int channel)
+{
+    cJSON *jq = create_request(acs, NULL, &acs->ping_time_ms, "cancel");
+    cJSON_AddNumberToObject(jq, "channel", (double) channel);
+    add_wchunk_json(acs, jq);
+    cJSON_Delete(jq); jq = NULL;
 }
 
 static int

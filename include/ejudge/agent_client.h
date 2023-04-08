@@ -2,7 +2,7 @@
 #ifndef __AGENT_CLIENT_H__
 #define __AGENT_CLIENT_H__
 
-/* Copyright (C) 2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2022-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -86,7 +86,8 @@ struct AgentClientOps
         int random_mode,
         unsigned char *pkt_name,
         size_t pkt_len,
-        struct Future **p_future);
+        struct Future **p_future,
+        long long timeout_ms);
 
     int (*async_wait_complete)(
         struct AgentClient *ac,
