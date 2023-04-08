@@ -1909,6 +1909,48 @@ done:;
     return result;
 }
 
+static int
+cancel_func(
+        struct AppState *as,
+        const struct QueryCallback *cb,
+        cJSON *query,
+        cJSON *reply)
+{
+    cJSON *jc = cJSON_GetObjectItem(query, "channel");
+    if (!jc || jc->type != cJSON_Number || jc->valuedouble <= 0) {
+        err("%s: invalid json: no channel", as->inst_id);
+        cJSON_AddStringToObject(reply, "message", "invalid json");
+        return 0;
+    }
+    int channel = (int) jc->valuedouble;
+
+    if (as->wait_serial <= 0) {
+        err("%s: cancel: requested %d but no wait channel registered",
+            as->inst_id, channel);
+        cJSON_AddStringToObject(reply, "message", "not in wait state");
+        return 0;
+    }
+    if (as->wait_serial != channel) {
+        err("%s: cancel: requested %d but registered %d",
+            as->inst_id, channel, as->wait_serial);
+        cJSON_AddStringToObject(reply, "message", "bad wait state");
+        return 0;
+    }
+
+    cJSON_AddNumberToObject(reply, "wait_s", (double) as->wait_serial);
+    cJSON_AddNumberToObject(reply, "wait_t", (double) as->wait_time_ms);
+    cJSON_AddStringToObject(reply, "q", "result");
+
+    as->wait_serial = 0;
+    as->wait_time_ms = 0;
+    as->wait_random_mode = 0;
+    if (as->spool_wd >= 0) {
+        inotify_rm_watch(as->ifd, as->spool_wd);
+        as->spool_wd = -1;
+    }
+    return 1;
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -2016,6 +2058,7 @@ main(int argc, char *argv[])
     app_state_add_query_callback(&app, "delete-heartbeat", NULL, delete_heartbeat_func);
     app_state_add_query_callback(&app, "put-archive", NULL, put_archive_func);
     app_state_add_query_callback(&app, "mirror", NULL, mirror_func);
+    app_state_add_query_callback(&app, "cancel", NULL, cancel_func);
 
     if (log_file && *log_file) {
         int fd = open(log_file, O_WRONLY | O_CREAT | O_APPEND | O_NOCTTY, 0600);
