@@ -67,6 +67,8 @@
 
 enum { MAX_LOG_SIZE = 1024 * 1024, MAX_EXE_SIZE = 128 * 1024 * 1024 };
 
+enum { DEFAULT_WAIT_TIMEOUT_MS = 300000 }; // 5m
+
 struct serve_state serve_state;
 static int initialize_mode = 0;
 
@@ -1106,9 +1108,12 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
             err("async_wait_complete failed");
             break;
           }
+          if (pkt_name[0]) {
+            continue;
+          }
         }
       } else if (!future) {
-        r = agent->ops->async_wait_init(agent, SIGUSR2, 0, pkt_name, sizeof(pkt_name), &future);
+        r = agent->ops->async_wait_init(agent, SIGUSR2, 0, pkt_name, sizeof(pkt_name), &future, DEFAULT_WAIT_TIMEOUT_MS);
         //r = agent->ops->poll_queue(agent, pkt_name, sizeof(pkt_name));
         if (r < 0) {
           err("async_wait_init failed");

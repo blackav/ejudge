@@ -49,6 +49,8 @@
 #include <errno.h>
 #include <sys/time.h>
 
+enum { DEFAULT_WAIT_TIMEOUT_MS = 300000 }; // 5m
+
 struct ignored_problem_info
 {
   int contest_id;
@@ -725,9 +727,12 @@ do_loop(
             err("async_wait_complete failed");
             break;
           }
+          if (!pkt_name[0]) {
+            continue;
+          }
         }
       } else if (!future) {
-        r = agent->ops->async_wait_init(agent, SIGUSR2, 1, pkt_name, sizeof(pkt_name), &future);
+        r = agent->ops->async_wait_init(agent, SIGUSR2, 1, pkt_name, sizeof(pkt_name), &future, DEFAULT_WAIT_TIMEOUT_MS);
         if (r < 0) {
           err("async_wait_init failed");
           break;
