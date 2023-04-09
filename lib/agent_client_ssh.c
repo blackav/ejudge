@@ -668,6 +668,8 @@ connect_func(struct AgentClient *ac)
         {
             "ssh",
             "-aTx",
+            "-o",
+            "StrictHostKeyChecking=no",
             acs->endpoint,
             cmd_s,
             NULL,
