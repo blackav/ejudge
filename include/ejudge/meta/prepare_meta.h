@@ -110,6 +110,7 @@ enum
   CNTSGLOB_virtual_end_options,
   CNTSGLOB_virtual_end_info,
   CNTSGLOB_super_run_dir,
+  CNTSGLOB_compile_server_id,
   CNTSGLOB_test_pat,
   CNTSGLOB_corr_pat,
   CNTSGLOB_info_pat,

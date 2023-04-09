@@ -1699,6 +1699,8 @@ serve_compile_request(
     const unsigned char *compile_server_id = NULL;
     if (lang && lang->compile_server_id && lang->compile_server_id[0]) {
       compile_server_id = lang->compile_server_id;
+    } else if (global->compile_server_id && global->compile_server_id[0]) {
+      compile_server_id = global->compile_server_id;
     } else {
       compile_server_id = config->contest_server_id;
     }

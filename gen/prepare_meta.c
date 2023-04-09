@@ -115,6 +115,7 @@ static struct meta_info_item meta_info_section_global_data_data[] =
   [CNTSGLOB_virtual_end_options] = { CNTSGLOB_virtual_end_options, 's', XSIZE(struct section_global_data, virtual_end_options), "virtual_end_options", XOFFSET(struct section_global_data, virtual_end_options) },
   [CNTSGLOB_virtual_end_info] = { CNTSGLOB_virtual_end_info, '?', XSIZE(struct section_global_data, virtual_end_info), NULL, XOFFSET(struct section_global_data, virtual_end_info) },
   [CNTSGLOB_super_run_dir] = { CNTSGLOB_super_run_dir, 's', XSIZE(struct section_global_data, super_run_dir), "super_run_dir", XOFFSET(struct section_global_data, super_run_dir) },
+  [CNTSGLOB_compile_server_id] = { CNTSGLOB_compile_server_id, 's', XSIZE(struct section_global_data, compile_server_id), "compile_server_id", XOFFSET(struct section_global_data, compile_server_id) },
   [CNTSGLOB_test_pat] = { CNTSGLOB_test_pat, 's', XSIZE(struct section_global_data, test_pat), "test_pat", XOFFSET(struct section_global_data, test_pat) },
   [CNTSGLOB_corr_pat] = { CNTSGLOB_corr_pat, 's', XSIZE(struct section_global_data, corr_pat), "corr_pat", XOFFSET(struct section_global_data, corr_pat) },
   [CNTSGLOB_info_pat] = { CNTSGLOB_info_pat, 's', XSIZE(struct section_global_data, info_pat), "info_pat", XOFFSET(struct section_global_data, info_pat) },

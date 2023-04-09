@@ -163,6 +163,7 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(description_file, "S"),
   GLOBAL_PARAM(contest_plugin_file, "S"),
   GLOBAL_PARAM(super_run_dir, "S"),
+  GLOBAL_PARAM(compile_server_id, "S"),
   GLOBAL_PARAM(virtual_end_options, "S"),
 
   GLOBAL_PARAM(clardb_plugin, "S"),
@@ -1093,6 +1094,7 @@ prepare_global_free_func(struct generic_section_config *gp)
   free_virtual_end_info(p->virtual_end_info);
   sarray_free(p->load_user_group);
   xfree(p->super_run_dir);
+  xfree(p->compile_server_id);
   xfree(p->tokens);
   xfree(p->token_info);
   xfree(p->dates_config_file);

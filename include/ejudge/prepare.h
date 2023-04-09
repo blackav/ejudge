@@ -369,6 +369,9 @@ struct section_global_data
   /** directory for non-default super-run directory */
   unsigned char *super_run_dir;
 
+  /** default compile server id */
+  unsigned char *compile_server_id;
+
   /** printf pattern for the files with tests */
   unsigned char *test_pat;
   /** printf pattern for the files with correct answers */
