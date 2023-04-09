@@ -1661,7 +1661,9 @@ put_heartbeat_func(
             cJSON_AddStringToObject(reply, "message", "filesystem error");
             goto done;
         }
+        close(fd); fd = -1;
         memmove(mem, data, size);
+        munmap(mem, size); mem = MAP_FAILED;
     }
 
     snprintf(dir_path, sizeof(dir_path), "%s/%s", as->heartbeat_packet_dir, file_name);
