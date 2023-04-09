@@ -577,11 +577,15 @@ serve_build_compile_dirs(
 #if defined EJUDGE_COMPILE_SPOOL_DIR
     const unsigned char *compile_spool_dir = EJUDGE_COMPILE_SPOOL_DIR;
     const unsigned char *compile_server_id = NULL;
+    /*
     if (lang && lang->compile_server_id && lang->compile_server_id[0]) {
       compile_server_id = lang->compile_server_id;
     } else {
       compile_server_id = config->contest_server_id;
     }
+    */
+    // result directories always use server contest_server_id
+    compile_server_id = config->contest_server_id;
 
     unsigned char compile_report_buf[PATH_MAX];
     unsigned char compile_status_buf[PATH_MAX];
