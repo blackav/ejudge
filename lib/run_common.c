@@ -2840,6 +2840,7 @@ run_one_test(
   unsigned char error_code[PATH_MAX];
   unsigned char arch_entry_name[PATH_MAX];
   unsigned char local_check_cmd[PATH_MAX];
+  unsigned char exe_dir[PATH_MAX];
 
   unsigned char mem_limit_buf[PATH_MAX];
 
@@ -2871,6 +2872,9 @@ run_one_test(
   int start_msg_need_env = 0;
 
   char *eff_inf_text = NULL;
+
+  // TODO: make a new problem config parameter
+  int future_config_var = 1;
 
 #ifdef HAVE_TERMIOS_H
   struct termios term_attrs;
@@ -3102,6 +3106,16 @@ run_one_test(
   clear_directory(check_dir);
   check_free_space(check_dir, expected_free_space);
 
+  if (srpp->use_tgz > 0 && future_config_var > 0) {
+    snprintf(exe_dir, sizeof(exe_dir), "%s/%s", check_dir, tgzdir_base);
+    if (mkdir(exe_dir, 0700) < 0 && errno != EEXIST) {
+      append_msg_to_log(check_out_path, "failed to create directory '%s': %s", exe_dir, os_ErrorMsg());
+      goto check_failed;
+    }
+  } else {
+    snprintf(exe_dir, sizeof(exe_dir), "%s", check_dir);
+  }
+
   if (srgp->zip_mode > 0) {
     unsigned char zip_path[PATH_MAX];
     snprintf(zip_path, sizeof(zip_path), "%s/%s", global->run_work_dir, exe_name);
@@ -3132,7 +3146,7 @@ run_one_test(
     }
     zf->ops->close(zf); zf = NULL;
     unsigned char target_path[PATH_MAX];
-    snprintf(target_path, sizeof(target_path), "%s/%s", check_dir, exe_name);
+    snprintf(target_path, sizeof(target_path), "%s/%s", exe_dir, exe_name);
     if (generic_write_file(bytes_s, bytes_z, 0, NULL, target_path, NULL) < 0) {
       if (log_f) {
         fprintf(log_f, "cannot save file '%s'\n", target_path);
@@ -3144,14 +3158,14 @@ run_one_test(
     xfree(bytes_s);
     if (log_f) fclose(log_f);
   } else {
-    if (generic_copy_file(0, global->run_work_dir, exe_name, "", 0, check_dir, exe_name, "") < 0) {
+    if (generic_copy_file(0, global->run_work_dir, exe_name, "", 0, exe_dir, exe_name, "") < 0) {
       append_msg_to_log(check_out_path, "failed to copy %s/%s -> %s/%s", global->run_work_dir, exe_name,
-                        check_dir, exe_name);
+                        exe_dir, exe_name);
       goto check_failed;
     }
   }
 
-  snprintf(exe_path, sizeof(exe_path), "%s/%s", check_dir, exe_name);
+  snprintf(exe_path, sizeof(exe_path), "%s/%s", exe_dir, exe_name);
   make_executable(exe_path);
 
   start_cmd_name[0] = 0;
@@ -3172,7 +3186,7 @@ run_one_test(
     make_executable(start_cmd_path);
   }
 
-  if (srpp->use_tgz > 0) {
+  if (srpp->use_tgz > 0 && future_config_var <= 0) {
 #ifdef __WIN32__
     snprintf(arg0_path, sizeof(arg0_path), "%s%s..%s%s", check_dir, CONF_DIRSEP, CONF_DIRSEP, exe_name);
 #else
