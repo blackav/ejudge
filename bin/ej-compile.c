@@ -1108,7 +1108,7 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
             err("async_wait_complete failed");
             break;
           }
-          if (pkt_name[0]) {
+          if (!pkt_name[0]) {
             continue;
           }
         }
@@ -1118,6 +1118,9 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
         if (r < 0) {
           err("async_wait_init failed");
           break;
+        }
+        if (!pkt_name[0]) {
+          continue;
         }
       }
     } else {
