@@ -405,6 +405,7 @@ enum
   CNTSPROB_enable_extended_info,
   CNTSPROB_stop_on_first_fail,
   CNTSPROB_enable_control_socket,
+  CNTSPROB_copy_exe_to_tgzdir,
   CNTSPROB_enable_multi_header,
   CNTSPROB_use_lang_multi_header,
   CNTSPROB_notify_on_submit,

@@ -987,6 +987,8 @@ struct section_problem_data
   ejbyteflag_t stop_on_first_fail;
   /** create a controlling socket pair for interactor */
   ejbyteflag_t enable_control_socket;
+  /** copy executable to the tgzdir for testing */
+  ejbyteflag_t copy_exe_to_tgzdir;
 
   /** enable headers/footers specific for each test */
   ejbyteflag_t enable_multi_header;

@@ -460,6 +460,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(enable_extended_info, "L"),
   PROBLEM_PARAM(stop_on_first_fail, "L"),
   PROBLEM_PARAM(enable_control_socket, "L"),
+  PROBLEM_PARAM(copy_exe_to_tgzdir, "L"),
   PROBLEM_PARAM(hide_variant, "L"),
   PROBLEM_PARAM(autoassign_variants, "L"),
   PROBLEM_PARAM(enable_text_form, "L"),
@@ -1363,6 +1364,7 @@ prepare_problem_init_func(struct generic_section_config *gp)
   p->enable_extended_info = -1;
   p->stop_on_first_fail = -1;
   p->enable_control_socket = -1;
+  p->copy_exe_to_tgzdir = -1;
   p->hide_variant = -1;
   p->autoassign_variants = -1;
   p->enable_text_form = -1;
@@ -3757,6 +3759,7 @@ set_defaults(
     prepare_set_prob_value(CNTSPROB_enable_extended_info, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_stop_on_first_fail, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_enable_control_socket, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_copy_exe_to_tgzdir, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_enable_user_input, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_enable_vcs, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_enable_iframe_statement, prob, aprob, g);
@@ -6166,6 +6169,7 @@ prepare_copy_problem(const struct section_problem_data *in)
   out->enable_extended_info = in->enable_extended_info;
   out->stop_on_first_fail = in->stop_on_first_fail;
   out->enable_control_socket = in->enable_control_socket;
+  out->copy_exe_to_tgzdir = in->copy_exe_to_tgzdir;
   out->enable_user_input = in->enable_user_input;
   out->enable_vcs = in->enable_vcs;
   out->enable_iframe_statement = in->enable_iframe_statement;
@@ -6469,6 +6473,7 @@ prepare_set_prob_value(
   INHERIT_BOOLEAN(enable_extended_info);
   INHERIT_BOOLEAN(stop_on_first_fail);
   INHERIT_BOOLEAN(enable_control_socket);
+  INHERIT_BOOLEAN(copy_exe_to_tgzdir);
   INHERIT_BOOLEAN(enable_user_input);
   INHERIT_BOOLEAN(enable_vcs);
   INHERIT_BOOLEAN(enable_iframe_statement);
@@ -7080,6 +7085,7 @@ prepare_set_all_prob_values(
     CNTSPROB_enable_extended_info,
     CNTSPROB_stop_on_first_fail,
     CNTSPROB_enable_control_socket,
+    CNTSPROB_copy_exe_to_tgzdir,
     CNTSPROB_enable_user_input,
     CNTSPROB_enable_vcs,
     CNTSPROB_enable_iframe_statement,

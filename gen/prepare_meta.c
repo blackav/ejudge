@@ -445,6 +445,7 @@ static struct meta_info_item meta_info_section_problem_data_data[] =
   [CNTSPROB_enable_extended_info] = { CNTSPROB_enable_extended_info, 'f', XSIZE(struct section_problem_data, enable_extended_info), "enable_extended_info", XOFFSET(struct section_problem_data, enable_extended_info) },
   [CNTSPROB_stop_on_first_fail] = { CNTSPROB_stop_on_first_fail, 'f', XSIZE(struct section_problem_data, stop_on_first_fail), "stop_on_first_fail", XOFFSET(struct section_problem_data, stop_on_first_fail) },
   [CNTSPROB_enable_control_socket] = { CNTSPROB_enable_control_socket, 'f', XSIZE(struct section_problem_data, enable_control_socket), "enable_control_socket", XOFFSET(struct section_problem_data, enable_control_socket) },
+  [CNTSPROB_copy_exe_to_tgzdir] = { CNTSPROB_copy_exe_to_tgzdir, 'f', XSIZE(struct section_problem_data, copy_exe_to_tgzdir), "copy_exe_to_tgzdir", XOFFSET(struct section_problem_data, copy_exe_to_tgzdir) },
   [CNTSPROB_enable_multi_header] = { CNTSPROB_enable_multi_header, 'f', XSIZE(struct section_problem_data, enable_multi_header), "enable_multi_header", XOFFSET(struct section_problem_data, enable_multi_header) },
   [CNTSPROB_use_lang_multi_header] = { CNTSPROB_use_lang_multi_header, 'f', XSIZE(struct section_problem_data, use_lang_multi_header), "use_lang_multi_header", XOFFSET(struct section_problem_data, use_lang_multi_header) },
   [CNTSPROB_notify_on_submit] = { CNTSPROB_notify_on_submit, 'f', XSIZE(struct section_problem_data, notify_on_submit), "notify_on_submit", XOFFSET(struct section_problem_data, notify_on_submit) },

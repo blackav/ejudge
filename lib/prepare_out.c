@@ -1614,6 +1614,10 @@ prepare_unparse_prob(
       || (!prob->abstract && prob->enable_control_socket >= 0)) {
     unparse_bool(f, "enable_control_socket", prob->enable_control_socket);
   }
+  if ((prob->abstract > 0 && prob->copy_exe_to_tgzdir > 0)
+      || (!prob->abstract && prob->copy_exe_to_tgzdir >= 0)) {
+    unparse_bool(f, "copy_exe_to_tgzdir", prob->copy_exe_to_tgzdir);
+  }
   if ((prob->abstract > 0 && prob->hide_variant > 0)
       || (!prob->abstract && prob->hide_variant >= 0)) {
     unparse_bool(f, "hide_variant", prob->hide_variant);
@@ -2062,6 +2066,8 @@ prepare_unparse_actual_prob(
     unparse_bool(f, "stop_on_first_fail", prob->stop_on_first_fail);
   if (prob->enable_control_socket > 0)
     unparse_bool(f, "enable_control_socket", prob->enable_control_socket);
+  if (prob->copy_exe_to_tgzdir > 0)
+    unparse_bool(f, "copy_exe_to_tgzdir", prob->copy_exe_to_tgzdir);
   if (prob->hide_variant > 0)
     unparse_bool(f, "hide_variant", prob->hide_variant);
   if (prob->enable_text_form > 0)
