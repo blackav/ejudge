@@ -216,6 +216,7 @@ static struct meta_info_item meta_info_super_run_in_problem_packet_data[] =
   [META_SUPER_RUN_IN_PROBLEM_PACKET_enable_user_input] = { META_SUPER_RUN_IN_PROBLEM_PACKET_enable_user_input, 'B', XSIZE(struct super_run_in_problem_packet, enable_user_input), "enable_user_input", XOFFSET(struct super_run_in_problem_packet, enable_user_input) },
   [META_SUPER_RUN_IN_PROBLEM_PACKET_user_input_file] = { META_SUPER_RUN_IN_PROBLEM_PACKET_user_input_file, 's', XSIZE(struct super_run_in_problem_packet, user_input_file), "user_input_file", XOFFSET(struct super_run_in_problem_packet, user_input_file) },
   [META_SUPER_RUN_IN_PROBLEM_PACKET_test_count] = { META_SUPER_RUN_IN_PROBLEM_PACKET_test_count, 'i', XSIZE(struct super_run_in_problem_packet, test_count), "test_count", XOFFSET(struct super_run_in_problem_packet, test_count) },
+  [META_SUPER_RUN_IN_PROBLEM_PACKET_copy_exe_to_tgzdir] = { META_SUPER_RUN_IN_PROBLEM_PACKET_copy_exe_to_tgzdir, 'B', XSIZE(struct super_run_in_problem_packet, copy_exe_to_tgzdir), "copy_exe_to_tgzdir", XOFFSET(struct super_run_in_problem_packet, copy_exe_to_tgzdir) },
 };
 
 int meta_super_run_in_problem_packet_get_type(int tag)

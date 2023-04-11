@@ -2,7 +2,7 @@
 #ifndef __SUPER_RUN_PACKET_H__
 #define __SUPER_RUN_PACKET_H__
 
-/* Copyright (C) 2012-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -190,6 +190,7 @@ struct super_run_in_problem_packet
   ejintbool_t enable_user_input;
   unsigned char *user_input_file;
   int test_count;
+  ejintbool_t copy_exe_to_tgzdir;
 
   int type_val META_ATTRIB((meta_hidden));
 };

@@ -2873,9 +2873,6 @@ run_one_test(
 
   char *eff_inf_text = NULL;
 
-  // TODO: make a new problem config parameter
-  int future_config_var = 1;
-
 #ifdef HAVE_TERMIOS_H
   struct termios term_attrs;
 #endif
@@ -3106,7 +3103,7 @@ run_one_test(
   clear_directory(check_dir);
   check_free_space(check_dir, expected_free_space);
 
-  if (srpp->use_tgz > 0 && future_config_var > 0) {
+  if (srpp->use_tgz > 0 && srpp->copy_exe_to_tgzdir > 0) {
     snprintf(exe_dir, sizeof(exe_dir), "%s/%s", check_dir, tgzdir_base);
     if (mkdir(exe_dir, 0700) < 0 && errno != EEXIST) {
       append_msg_to_log(check_out_path, "failed to create directory '%s': %s", exe_dir, os_ErrorMsg());
@@ -3186,7 +3183,7 @@ run_one_test(
     make_executable(start_cmd_path);
   }
 
-  if (srpp->use_tgz > 0 && future_config_var <= 0) {
+  if (srpp->use_tgz > 0 && srpp->copy_exe_to_tgzdir <= 0) {
 #ifdef __WIN32__
     snprintf(arg0_path, sizeof(arg0_path), "%s%s..%s%s", check_dir, CONF_DIRSEP, CONF_DIRSEP, exe_name);
 #else
