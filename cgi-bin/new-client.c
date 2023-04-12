@@ -74,8 +74,6 @@ static struct config_section_info params[] =
 static struct generic_section_config *config;
 static struct client_section_global_data    *global;
 static unsigned char *client_charset = 0;
-static int ssl_flag = 0;
-static ej_ip_t client_ip;
 
 static void
 global_init_func(struct generic_section_config *gp)
@@ -107,12 +105,6 @@ initialize(int argc, char *argv[])
   path_t cfg_path;
   unsigned char *s;
   struct generic_section_config *p;
-
-  if (getenv("SSL_PROTOCOL") || getenv("HTTPS")) {
-    ssl_flag = 1;
-  }
-
-  parse_client_ip(&client_ip);
 
   s = getenv("SCRIPT_FILENAME");
   if (!s) s = argv[0];
