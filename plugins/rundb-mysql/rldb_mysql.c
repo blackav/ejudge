@@ -32,6 +32,7 @@
 #include "ejudge/misctext.h"
 #include "ejudge/compat.h"
 #include "ejudge/ej_uuid.h"
+#include "ejudge/metrics_contest.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -55,6 +56,8 @@ struct rldb_mysql_state
   struct common_mysql_state *md;
 
   int window;
+
+  long long last_serial_id;
 };
 
 struct rldb_mysql_cnts
@@ -62,6 +65,9 @@ struct rldb_mysql_cnts
   struct rldb_mysql_state *plugin_state;
   struct runlog_state *rl_state;
   int contest_id;
+  struct metrics_contest_data *metrics;
+  int next_run_id_set;
+  int next_run_id;
 };
 
 #include "methods.inc.c"
@@ -122,6 +128,14 @@ struct rldb_plugin_iface plugin_rldb_mysql =
   append_run_func,
   run_set_is_checked_func,
 };
+
+static long long
+get_current_time_us(void)
+{
+  struct timeval tv;
+  gettimeofday(&tv, NULL);
+  return tv.tv_sec * 1000000LL + tv.tv_usec;
+}
 
 static struct common_plugin_data *
 init_func(void)
@@ -205,6 +219,60 @@ do_create(struct rldb_mysql_state *state)
 
  fail:
   return -1;
+}
+
+static long long
+next_serial_id(struct rldb_mysql_state *state)
+{
+  if (state->last_serial_id > 0) {
+    return ++state->last_serial_id;
+  }
+
+  struct common_mysql_iface *mi = state->mi;
+  struct common_mysql_state *md = state->md;
+
+  int r = mi->fquery(md, 1, "SELECT MAX(serial_id) FROM %sruns ;", md->table_prefix);
+  if (r < 0) {
+    err("request failed");
+    goto reset_counter;
+  }
+  if (md->row_count > 1) {
+    err("too many rows");
+    goto reset_counter;
+  }
+  if (md->row_count < 1) {
+    err("too few rows");
+    goto reset_counter;
+  }
+  if (mi->next_row(md) < 0) {
+    err("database error");
+    goto reset_counter;
+  }
+  if (!md->row[0]) {
+    goto reset_counter;
+  }
+  int len = strlen(md->row[0]);
+  if (len != md->lengths[0]) {
+    err("binary data");
+    mi->free_res(md);
+    goto reset_counter;
+  }
+  const char *s = md->row[0];
+  char *eptr = NULL;
+  errno = 0;
+  long long value = strtoll(s, &eptr, 10);
+  if (errno || *eptr || s == eptr || value < 0) {
+    err("invalid data");
+    mi->free_res(md);
+    goto reset_counter;
+  }
+
+  state->last_serial_id = value + 1;
+  return state->last_serial_id;
+
+reset_counter:;
+  state->last_serial_id = 1;
+  return state->last_serial_id;
 }
 
 static int
@@ -427,6 +495,64 @@ do_open(struct rldb_mysql_state *state)
  fail:
   mi->free_res(md);
   return -1;
+}
+
+static int
+next_run_id(struct rldb_mysql_cnts *cs)
+{
+  if (cs->next_run_id_set) {
+    return cs->next_run_id++;
+  }
+
+  struct rldb_mysql_state *state = cs->plugin_state;
+  struct common_mysql_iface *mi = state->mi;
+  struct common_mysql_state *md = state->md;
+
+  int r = mi->fquery(md, 1, "SELECT MAX(run_id) FROM %s runs WHERE contest_id = %d;", md->table_prefix, cs->contest_id);
+  if (r < 0) {
+    err("request failed");
+    goto reset_counter;
+  }
+  if (md->row_count > 1) {
+    err("too many rows");
+    goto reset_counter;
+  }
+  if (md->row_count < 1) {
+    err("too few rows");
+    goto reset_counter;
+  }
+  if (mi->next_row(md) < 0) {
+    err("database error");
+    goto reset_counter;
+  }
+  if (!md->row[0]) {
+    goto reset_counter;
+  }
+  int len = strlen(md->row[0]);
+  if (len != md->lengths[0]) {
+    err("binary data");
+    mi->free_res(md);
+    goto reset_counter;
+  }
+
+  const char *s = md->row[0];
+  char *eptr = NULL;
+  errno = 0;
+  long value = strtol(s, &eptr, 10);
+  if (errno || *eptr || s == eptr || value < 0 || (int) value != value) {
+    err("invalid data");
+    mi->free_res(md);
+    goto reset_counter;
+  }
+
+  cs->next_run_id = value + 1;
+  cs->next_run_id_set = 1;
+  return cs->next_run_id++;
+
+reset_counter:;
+  cs->next_run_id = 1;
+  cs->next_run_id_set = 1;
+  return 0;
 }
 
 static int
@@ -843,6 +969,7 @@ open_func(
         const struct ejudge_cfg *config,
         const struct contest_desc *cnts,
         const struct section_global_data *global,
+        struct metrics_contest_data *metrics,
         int flags,
         time_t init_duration,
         time_t init_sched_time,
@@ -857,6 +984,7 @@ open_func(
   cs->plugin_state = state;
   state->nref++;
   cs->rl_state = rl_state;
+  cs->metrics = metrics;
   if (cnts) cs->contest_id = cnts->id;
   if (!cs->contest_id) {
     err("undefined contest_id");
@@ -2319,7 +2447,7 @@ struct run_id_create_time_internal
 
 enum { RUNIDCREATETIME_WIDTH = 2 };
 #define RUNIDCREATETIME_OFFSET(f) XOFFSET(struct run_id_create_time_internal, f)
-static const struct common_mysql_parse_spec run_id_create_time_spec[RUNIDCREATETIME_WIDTH] =
+static __attribute__((unused)) const struct common_mysql_parse_spec run_id_create_time_spec[RUNIDCREATETIME_WIDTH] =
 {
   { 1, 'd', "run_id", RUNIDCREATETIME_OFFSET(run_id), 0 },
   { 1, 'T', "create_time", RUNIDCREATETIME_OFFSET(create_time), 0 },
@@ -2346,15 +2474,26 @@ append_run_func(
   ej_uuid_t tmp_uuid = {};
   unsigned char uuid_buf[64];
   long long serial_id = -1;
+  int run_id = 0;
+  struct timeval current_time_tv;
+
+  gettimeofday(&current_time_tv, NULL);
+  long long request_start_time = current_time_tv.tv_sec * 1000000LL + current_time_tv.tv_usec;
 
   mask &= ~((uint64_t) RE_RUN_UUID);
 
   if (!p_uuid) p_uuid = &tmp_uuid;
   if (!ej_uuid_is_nonempty(*p_uuid)) ej_uuid_generate(p_uuid);
 
+  serial_id = next_serial_id(state);
+  run_id = next_run_id(cs);
+
+  /*
   if (mi->simple_fquery(md, "START TRANSACTION;") < 0)
     db_error_fail(md);
+  */
 
+  /*
   if (mi->fquery(md, 1, "SELECT IFNULL(MAX(run_id),-1)+1 FROM %sruns WHERE contest_id = %d;", md->table_prefix, cs->contest_id) < 0) {
     mi->simple_fquery(md, "ROLLBACK;");
     db_error_fail(md);
@@ -2368,16 +2507,16 @@ append_run_func(
     mi->simple_fquery(md, "ROLLBACK;");
     db_error_fail(md);
   }
-  int run_id = 0;
   if (!md->row[0] || mi->parse_int(md, md->row[0], &run_id) < 0) {
     err("invalid run_id");
     mi->simple_fquery(md, "ROLLBACK;");
     db_error_fail(md);
   }
   mi->free_res(md);
+  */
 
   cmd_f = open_memstream(&cmd_s, &cmd_z);
-  fprintf(cmd_f, "INSERT INTO %sruns(run_id,contest_id,create_time,create_nsec,run_uuid,last_change_time,last_change_nsec",
+  fprintf(cmd_f, "INSERT INTO %sruns(serial_id,run_id,contest_id,create_time,create_nsec,run_uuid,last_change_time,last_change_nsec",
           md->table_prefix);
   if ((mask & RE_SIZE)) {
     fputs(",size", cmd_f);
@@ -2484,7 +2623,8 @@ append_run_func(
   if ((mask & RE_VERDICT_BITS)) {
     fputs(",verdict_bits", cmd_f);
   }
-  fprintf(cmd_f, ") VALUES (%d, %d, NOW(6), MICROSECOND(NOW(6)) * 1000, '%s', NOW(), MICROSECOND(NOW(6)) * 1000",
+  fprintf(cmd_f, ") VALUES (%lld, %d, %d, NOW(6), MICROSECOND(NOW(6)) * 1000, '%s', NOW(), MICROSECOND(NOW(6)) * 1000",
+          serial_id,
           run_id,
           cs->contest_id,
           ej_uuid_unparse_r(uuid_buf, sizeof(uuid_buf), p_uuid, ""));
@@ -2611,12 +2751,13 @@ append_run_func(
   fprintf(cmd_f, ") ;");
   fclose(cmd_f); cmd_f = NULL;
   if (mi->simple_query(md, cmd_s, cmd_z) < 0) {
-    mi->simple_fquery(md, "ROLLBACK;");
+    //mi->simple_fquery(md, "ROLLBACK;");
     goto fail;
   }
   free(cmd_s); cmd_s = NULL; cmd_z = 0;
-  mi->simple_fquery(md, "COMMIT;");
+  //mi->simple_fquery(md, "COMMIT;");
 
+  /*
   if (mi->fquery(md, 1, "SELECT LAST_INSERT_ID();") < 0) {
     goto fail;
   }
@@ -2630,7 +2771,9 @@ append_run_func(
     goto fail;
   }
   mi->free_res(md);
+  */
 
+  /*
   cmd_f = open_memstream(&cmd_s, &cmd_z);
   fprintf(cmd_f, "SELECT run_id, create_time FROM %sruns WHERE serial_id = %lld; ", md->table_prefix, serial_id);
   fclose(cmd_f); cmd_f = NULL;
@@ -2645,13 +2788,14 @@ append_run_func(
     goto fail;
   }
   mi->free_res(md);
+  */
 
-  expand_runs(rls, ri.run_id);
-  new_re = &rls->runs[ri.run_id - rls->run_f];
+  expand_runs(rls, run_id);
+  new_re = &rls->runs[run_id - rls->run_f];
   memset(new_re, 0, sizeof(*new_re));
-  new_re->run_id = ri.run_id;
-  new_re->time = ri.create_time.tv_sec;
-  new_re->nsec = ri.create_time.tv_usec * 1000;
+  new_re->run_id = run_id;
+  new_re->time = current_time_tv.tv_sec;
+  new_re->nsec = current_time_tv.tv_usec * 1000;
   new_re->run_uuid = *p_uuid;
   if ((mask & RE_SIZE)) {
     new_re->size = in_re->size;
@@ -2762,9 +2906,16 @@ append_run_func(
     new_re->verdict_bits = in_re->verdict_bits;
   }
 
-  if (p_tv) *p_tv = ri.create_time;
+  if (p_tv) *p_tv = current_time_tv;
   if (p_serial_id) *p_serial_id = serial_id;
-  return ri.run_id;
+
+  if (cs->metrics) {
+    long long request_end_time = get_current_time_us();
+    cs->metrics->append_run_us += (request_end_time - request_start_time);
+    ++cs->metrics->append_run_count;
+  }
+
+  return run_id;
 
 fail:
   if (cmd_f) fclose(cmd_f);
