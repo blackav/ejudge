@@ -43,10 +43,8 @@ struct client_section_global_data
   struct generic_section_config g;
 
   int enable_l10n;
-  int connect_attempts;
 
   path_t l10n_dir;
-  path_t charset;
   path_t new_server_socket;
   char **access;
 };
@@ -57,7 +55,6 @@ static void global_init_func(struct generic_section_config *gp);
 #define GLOBAL_PARAM(x, t) { #x, t, GLOBAL_OFFSET(x) }
 static struct config_parse_info section_global_params[] =
 {
-  GLOBAL_PARAM(charset, "s"),
   GLOBAL_PARAM(new_server_socket, "s"),
   GLOBAL_PARAM(access, "x"),
 
@@ -82,7 +79,6 @@ global_init_func(struct generic_section_config *gp)
   struct client_section_global_data *p = (struct client_section_global_data *) gp;
 
   p->enable_l10n = -1;
-  p->connect_attempts = -1;
 }
 
 static int
@@ -153,8 +149,6 @@ initialize(int argc, char *argv[])
 #if defined EJUDGE_CHARSET
   client_charset = EJUDGE_CHARSET;
 #endif
-  if (global->connect_attempts <= 0)
-    global->connect_attempts = MAX_ATTEMPT;
 
   cgi_read(client_charset);
 }
