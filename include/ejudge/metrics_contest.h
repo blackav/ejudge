@@ -40,6 +40,8 @@ struct metrics_contest_data
     long long hit_key_count;
     long long cookie_cache_size;
     long long key_cache_size;
+    long long append_run_us;
+    long long append_run_count;
 };
 
 struct metrics_desc
