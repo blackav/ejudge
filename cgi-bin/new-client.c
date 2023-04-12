@@ -133,7 +133,6 @@ initialize(int argc, char *argv[])
       break;
   }
   if (!p) client_not_configured(0, "no global section", 0, 0);
-  global = (struct client_section_global_data *) p;
 
 #if defined EJUDGE_NEW_SERVER_SOCKET
   new_server_socket = EJUDGE_NEW_SERVER_SOCKET;
