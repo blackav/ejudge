@@ -1780,7 +1780,7 @@ nsf_prepare(struct server_framework_state *state)
   if (bind(state->socket_fd, (struct sockaddr *) &addr, sizeof(addr)) < 0)
     state->params->startup_error("bind() failed: %s", os_ErrorMsg());
 
-  if (listen(state->socket_fd, 5) < 0)
+  if (listen(state->socket_fd, 128) < 0)
     state->params->startup_error("listen() failed: %s", os_ErrorMsg());
   if (chmod(state->params->socket_path, 0777) < 0)
     state->params->startup_error("chmod() failed: %s", os_ErrorMsg());
