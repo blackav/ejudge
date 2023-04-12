@@ -73,7 +73,7 @@ static struct config_section_info params[] =
 
 static struct generic_section_config *config;
 static struct client_section_global_data    *global;
-static unsigned char *client_charset = 0;
+static unsigned char *client_charset = "UTF-8";
 
 static void
 global_init_func(struct generic_section_config *gp)
@@ -150,12 +150,8 @@ initialize(int argc, char *argv[])
              "%s", EJUDGE_NEW_SERVER_SOCKET_DEFAULT);
   }
 #if defined EJUDGE_CHARSET
-  if (!global->charset[0]) {
-    snprintf(global->charset, sizeof(global->charset),
-             "%s", EJUDGE_CHARSET);
-  }
+  client_charset = EJUDGE_CHARSET;
 #endif
-  if (global->charset[0]) client_charset = global->charset;
   if (global->connect_attempts <= 0)
     global->connect_attempts = MAX_ATTEMPT;
 
