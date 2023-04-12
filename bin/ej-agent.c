@@ -1930,18 +1930,20 @@ cancel_func(
         err("%s: cancel: requested %d but no wait channel registered",
             as->inst_id, channel);
         cJSON_AddStringToObject(reply, "message", "not in wait state");
-        return 0;
-    }
-    if (as->wait_serial != channel) {
+        cJSON_AddTrueToObject(reply, "invalid-channel");
+    } else if (as->wait_serial != channel) {
         err("%s: cancel: requested %d but registered %d",
             as->inst_id, channel, as->wait_serial);
         cJSON_AddStringToObject(reply, "message", "bad wait state");
-        return 0;
+        cJSON_AddTrueToObject(reply, "invalid-channel");
     }
 
-    cJSON_ReplaceItemInObject(reply, "s", cJSON_CreateNumber(as->wait_serial));
-    cJSON_ReplaceItemInObject(reply, "t", cJSON_CreateNumber(as->wait_time_ms));
+    cJSON_ReplaceItemInObject(reply, "s", cJSON_CreateNumber(channel));
+    if (as->wait_time_ms > 0) {
+        cJSON_ReplaceItemInObject(reply, "t", cJSON_CreateNumber(as->wait_time_ms));
+    }
     cJSON_AddStringToObject(reply, "q", "poll-result");
+
 
     as->wait_serial = 0;
     as->wait_time_ms = 0;
