@@ -45,7 +45,6 @@ struct client_section_global_data
   int enable_l10n;
 
   path_t l10n_dir;
-  path_t new_server_socket;
   char **access;
 };
 
@@ -55,7 +54,6 @@ static void global_init_func(struct generic_section_config *gp);
 #define GLOBAL_PARAM(x, t) { #x, t, GLOBAL_OFFSET(x) }
 static struct config_parse_info section_global_params[] =
 {
-  GLOBAL_PARAM(new_server_socket, "s"),
   GLOBAL_PARAM(access, "x"),
 
   { 0, 0, 0, 0 }
@@ -72,6 +70,7 @@ static struct generic_section_config *config;
 static struct client_section_global_data    *global;
 static unsigned char *client_charset = "UTF-8";
 static int connect_attempts = MAX_ATTEMPT;
+static const unsigned char *new_server_socket;
 
 static void
 global_init_func(struct generic_section_config *gp)
@@ -137,15 +136,10 @@ initialize(int argc, char *argv[])
   global = (struct client_section_global_data *) p;
 
 #if defined EJUDGE_NEW_SERVER_SOCKET
-  if (!global->new_server_socket[0]) {
-    snprintf(global->new_server_socket, sizeof(global->new_server_socket),
-             "%s", EJUDGE_NEW_SERVER_SOCKET);
-  }
+  new_server_socket = EJUDGE_NEW_SERVER_SOCKET;
 #endif
-  if (!global->new_server_socket[0]) {
-    snprintf(global->new_server_socket, sizeof(global->new_server_socket),
-             "%s", EJUDGE_NEW_SERVER_SOCKET_DEFAULT);
-  }
+  new_server_socket = EJUDGE_NEW_SERVER_SOCKET_DEFAULT;
+
 #if defined EJUDGE_CHARSET
   client_charset = EJUDGE_CHARSET;
 #endif
@@ -202,7 +196,7 @@ main(int argc, char *argv[])
   }
 
   for (attempt = 0; attempt < connect_attempts; attempt++) {
-    r = new_server_clnt_open(global->new_server_socket, &conn);
+    r = new_server_clnt_open(new_server_socket, &conn);
     if (r >= 0 || r != -NEW_SRV_ERR_CONNECT_FAILED) break;
     sleep(1);
   }
