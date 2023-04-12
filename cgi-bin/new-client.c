@@ -57,6 +57,7 @@ initialize(int argc, char *argv[])
   cgi_read(client_charset);
 }
 
+/*
 static void
 json_error_reply(FILE *out_f, int http_status, int error_code)
 {
@@ -78,15 +79,27 @@ json_error_reply(FILE *out_f, int http_status, int error_code)
   fprintf(out_f, "\n}\n");
   html_armor_free(&ab);
 }
+*/
+
+static void
+text_error_reply(FILE *out_f, int http_status, int error_code)
+{
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  fprintf(out_f, "Content-Type: text/plain; charset=UTF-8\n"
+          "Cache-Control: no-cache\n"
+          "Status: %d\n"
+          "Pragma: no-cache\n\n", http_status);
+  fprintf(out_f, "Error %d\n", error_code);
+  html_armor_free(&ab);
+}
 
 int
 main(int argc, char *argv[])
 {
   new_server_conn_t conn = 0;
-  int r = 0, param_num, i, attempt;
+  int r = 0, param_num, attempt;
   unsigned char **param_names, **params;
   size_t *param_sizes;
-  int json_mode = 0;
 
   FILE *log_f = 0;
   char *log_t = 0;
@@ -99,12 +112,6 @@ main(int argc, char *argv[])
   XALLOCAZ(param_names, param_num);
   XALLOCAZ(param_sizes, param_num);
   XALLOCAZ(params, param_num);
-  for (i = 0; i < param_num; i++) {
-    cgi_get_nth_param_bin(i, &param_names[i], &param_sizes[i], &params[i]);
-    if (!strcmp(param_names[i], "json") && !strcmp(params[i], "1")) {
-      json_mode = 1;
-    }
-  }
 
   for (attempt = 0; attempt < connect_attempts; attempt++) {
     r = new_server_clnt_open(new_server_socket, &conn);
@@ -114,12 +121,7 @@ main(int argc, char *argv[])
 
   if (r < 0) {
     err("new-client: cannot connect to the server: %d", -r);
-    if (json_mode) {
-      json_error_reply(stdout, 503, -r);
-      return 0;
-    } else {
-      client_not_configured(client_charset, "cannot connect to the server", 0,0);
-    }
+    text_error_reply(stdout, 503, -r);
   }
 
   log_f = open_memstream(&log_t, &log_z);
@@ -134,11 +136,7 @@ main(int argc, char *argv[])
   }
   if (r < 0) {
     err("new-client: http_request failed: %d", -r);
-    if (json_mode) {
-      json_error_reply(stdout, 500, -r);
-    } else {
-      client_not_configured(client_charset, "request failed", 0, log_t);
-    }
+    text_error_reply(stdout, 500, -r);
   }
 
   return 0;
