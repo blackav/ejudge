@@ -182,6 +182,7 @@ run_open(
         const struct contest_desc *cnts,
         const struct section_global_data *global,
         const unsigned char *plugin_name,
+        struct metrics_contest_data *metrics,
         int flags,
         time_t init_duration,
         time_t init_sched_time,
@@ -222,7 +223,9 @@ run_open(
     state->data = (struct rldb_plugin_data*) loaded_plugin->data;
 
     if (!(state->cnts = state->iface->open(state->data, state, config, cnts,
-                                           global, flags,
+                                           global,
+                                           metrics,
+					   flags,
                                            init_duration,
                                            init_sched_time,
                                            init_finish_time)))
@@ -243,7 +246,9 @@ run_open(
     state->data = (struct rldb_plugin_data*) loaded_plugin->data;
 
     if (!(state->cnts = state->iface->open(state->data, state, config, cnts,
-                                           global, flags,
+                                           global,
+                                           metrics,
+                                           flags,
                                            init_duration,
                                            init_sched_time,
                                            init_finish_time)))
@@ -285,7 +290,9 @@ run_open(
   state->data = (struct rldb_plugin_data*) loaded_plugin->data;
 
   if (!(state->cnts = state->iface->open(state->data, state, config, cnts,
-                                         global, flags,
+                                         global,
+                                         metrics,
+                                         flags,
                                          init_duration,
                                          init_sched_time,
                                          init_finish_time)))

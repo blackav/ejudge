@@ -101,6 +101,7 @@ struct section_global_data;
 struct teamdb_state;
 struct runlog_state;
 typedef struct runlog_state *runlog_state_t;
+struct metrics_contest_data;
 
 runlog_state_t run_init(struct teamdb_state *);
 runlog_state_t run_destroy(runlog_state_t);
@@ -112,6 +113,7 @@ run_open(
         const struct contest_desc *cnts,
         const struct section_global_data *global,
         const unsigned char *plugin_name,
+        struct metrics_contest_data *metrics,
         int flags,
         time_t init_duration,
         time_t init_sched_time,

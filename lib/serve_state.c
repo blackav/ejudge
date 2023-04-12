@@ -894,7 +894,9 @@ serve_state_load_contest(
     if (contest_finish_time > 0 && contest_finish_time <= state->current_time){
       contest_finish_time = 0;
     }
-    if (run_open(state->runlog_state, config, cnts, global, 0, 0,
+    if (run_open(state->runlog_state, config, cnts, global, 0,
+                 metrics.data,
+                 0,
                  global->contest_time, cnts->sched_time,
                  contest_finish_time) < 0) goto failure;
     if (!serve_collect_virtual_stop_events(state)) break;

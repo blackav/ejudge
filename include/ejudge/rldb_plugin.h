@@ -31,6 +31,7 @@ struct section_global_data;
 struct runlog_state;
 struct run_header;
 struct run_entry;
+struct metrics_contest_data;
 
 /* version of the plugin interface structure */
 #define RLDB_PLUGIN_IFACE_VERSION 3
@@ -58,6 +59,7 @@ struct rldb_plugin_iface
                                    const struct ejudge_cfg *,
                                    const struct contest_desc *,
                                    const struct section_global_data *,
+				   struct metrics_contest_data *,
                                    int flags,
                                    time_t,
                                    time_t,

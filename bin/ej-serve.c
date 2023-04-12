@@ -171,7 +171,9 @@ main(int argc, char *argv[])
       && contest_finish_time <= serve_state.current_time) {
     contest_finish_time = 0;
   }
-  if (run_open(serve_state.runlog_state, config, cur_contest, global, 0, 0,
+  if (run_open(serve_state.runlog_state, config, cur_contest, global, 0,
+               NULL, /* metrics */
+               0,
                global->contest_time, cur_contest->sched_time,
                contest_finish_time) < 0) return 1;
   if (global->is_virtual
