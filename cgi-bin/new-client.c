@@ -38,102 +38,13 @@
 
 enum { MAX_ATTEMPT = 10 };
 
-struct client_section_global_data
-{
-  struct generic_section_config g;
-
-  int enable_l10n;
-
-  path_t l10n_dir;
-  char **access;
-};
-
-static void global_init_func(struct generic_section_config *gp);
-
-#define GLOBAL_OFFSET(x)   XOFFSET(struct client_section_global_data, x)
-#define GLOBAL_PARAM(x, t) { #x, t, GLOBAL_OFFSET(x) }
-static struct config_parse_info section_global_params[] =
-{
-  GLOBAL_PARAM(access, "x"),
-
-  { 0, 0, 0, 0 }
-};
-
-static struct config_section_info params[] =
-{
-  { "global" ,sizeof(struct client_section_global_data), section_global_params,
-    0, global_init_func },
-  { NULL, 0, NULL }
-};
-
-static struct generic_section_config *config;
-static struct client_section_global_data    *global;
 static unsigned char *client_charset = "UTF-8";
 static int connect_attempts = MAX_ATTEMPT;
 static const unsigned char *new_server_socket;
 
 static void
-global_init_func(struct generic_section_config *gp)
-{
-  struct client_section_global_data *p = (struct client_section_global_data *) gp;
-
-  p->enable_l10n = -1;
-}
-
-static int
-check_config_exist(unsigned char const *path)
-{
-  struct stat sb;
-
-  if (stat(path, &sb) >= 0 && S_ISREG(sb.st_mode) && access(path, R_OK) >= 0) {
-    return 1;
-  }
-  return 0;
-}
-
-static void
 initialize(int argc, char *argv[])
 {
-  path_t full_path;
-  path_t dir_path;
-  path_t base_name;
-  path_t cfg_dir;
-  path_t cfg_path;
-  unsigned char *s;
-  struct generic_section_config *p;
-
-  s = getenv("SCRIPT_FILENAME");
-  if (!s) s = argv[0];
-  if (!s) s = "";
-  snprintf(full_path, sizeof(full_path), "%s", s);
-  os_rDirName(full_path, dir_path, PATH_MAX);
-  os_rGetBasename(full_path, base_name, PATH_MAX);
-
-#if defined CGI_DATA_PATH
-  if (CGI_DATA_PATH[0] == '/') {
-    snprintf(cfg_dir, sizeof(cfg_dir), "%s/", CGI_DATA_PATH);
-  } else {
-    snprintf(cfg_dir, sizeof(cfg_dir), "%s/%s/", dir_path, CGI_DATA_PATH);
-  }
-#else
-  snprintf(cfg_dir, sizeof(cfg_dir), "%s/../cgi-data/", dir_path);
-#endif
-
-  snprintf(cfg_path, sizeof(cfg_path), "%s%s.cfg", cfg_dir, base_name);
-
-  if (!check_config_exist(cfg_path)) {
-    config = param_make_global_section(params);
-  } else {
-    config = parse_param(cfg_path, 0, params, 1, 0, 0, 0);
-  }
-  if (!config) client_not_configured(0, "config file not parsed", 0, 0);
-
-  for (p = config; p; p = p->next) {
-    if (!p->name[0] || !strcmp(p->name, "global"))
-      break;
-  }
-  if (!p) client_not_configured(0, "no global section", 0, 0);
-
 #if defined EJUDGE_NEW_SERVER_SOCKET
   new_server_socket = EJUDGE_NEW_SERVER_SOCKET;
 #endif
