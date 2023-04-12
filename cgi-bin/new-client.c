@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -97,50 +97,6 @@ check_config_exist(unsigned char const *path)
   return 0;
 }
 
-static int
-check_access_rules(char **rules, const ej_ip_t *ip, int ssl_flag)
-{
-  return 1;
-  /*
-  int i, r, n, mode, ssl_mode;
-  unsigned char *s;
-  unsigned char b1[1024];
-  unsigned char b2[1024];
-  unsigned char b3[1024];
-  ej_ip4_t cur_ip, cur_mask;
-
-  if (!rules) return 0;
-  for (i = 0; rules[i]; i++) {
-    s = (unsigned char*) rules[i];
-    r = sscanf(s, "%1000s%1000s%1000s%n", b1, b2, b3, &n);
-    while (isspace(s[n])) n++;
-    if (s[n] || r < 2) goto failed;
-    if (!strcasecmp(b1, "allow")) {
-      mode = 0;
-    } else if (!strcasecmp(b1, "deny")) {
-      mode = -1;
-    } else goto failed;
-    if (xml_parse_ip_mask(NULL, 0, -1, 0, b2, &cur_ip, &cur_mask) < 0) goto failed;
-    ssl_mode = -1;
-    if (r == 3) {
-      if (!strcasecmp(b3, "ssl")) {
-        ssl_mode = 1;
-      } else if (!strcasecmp(b3, "nossl")) {
-        ssl_mode = 0;
-      } else goto failed;
-    }
-
-    if ((ip & cur_mask) == cur_ip && (ssl_mode < 0 || ssl_flag == ssl_mode))
-      return mode;
-  }
-  return 0;
-
- failed:
-  client_not_configured(client_charset, "invalid access rules", 0, 0);
-  return -1;
-  */
-}
-
 static void
 initialize(int argc, char *argv[])
 {
@@ -210,11 +166,6 @@ initialize(int argc, char *argv[])
   if (global->charset[0]) client_charset = global->charset;
   if (global->connect_attempts <= 0)
     global->connect_attempts = MAX_ATTEMPT;
-
-  if (global->access) {
-    if (check_access_rules(global->access, &client_ip, ssl_flag) < 0)
-      client_access_denied(client_charset, 0);
-  }
 
   cgi_read(client_charset);
 }
