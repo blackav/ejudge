@@ -48,7 +48,9 @@ initialize(int argc, char *argv[])
 #if defined EJUDGE_NEW_SERVER_SOCKET
   new_server_socket = EJUDGE_NEW_SERVER_SOCKET;
 #endif
-  new_server_socket = EJUDGE_NEW_SERVER_SOCKET_DEFAULT;
+  if (!new_server_socket || !*new_server_socket) {
+    new_server_socket = EJUDGE_NEW_SERVER_SOCKET_DEFAULT;
+  }
 
 #if defined EJUDGE_CHARSET
   client_charset = EJUDGE_CHARSET;
@@ -113,6 +115,9 @@ main(int argc, char *argv[])
   XALLOCAZ(param_sizes, param_num);
   XALLOCAZ(params, param_num);
 
+  for (int i = 0; i < param_num; i++) {
+    cgi_get_nth_param_bin(i, &param_names[i], &param_sizes[i], &params[i]);
+  }
   for (attempt = 0; attempt < connect_attempts; attempt++) {
     r = new_server_clnt_open(new_server_socket, &conn);
     if (r >= 0 || r != -NEW_SRV_ERR_CONNECT_FAILED) break;
@@ -122,6 +127,7 @@ main(int argc, char *argv[])
   if (r < 0) {
     err("new-client: cannot connect to the server: %d", -r);
     text_error_reply(stdout, 503, -r);
+    return 0;
   }
 
   log_f = open_memstream(&log_t, &log_z);
@@ -137,6 +143,7 @@ main(int argc, char *argv[])
   if (r < 0) {
     err("new-client: http_request failed: %d", -r);
     text_error_reply(stdout, 500, -r);
+    return 0;
   }
 
   return 0;
