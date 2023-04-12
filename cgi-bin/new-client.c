@@ -74,6 +74,7 @@ static struct config_section_info params[] =
 static struct generic_section_config *config;
 static struct client_section_global_data    *global;
 static unsigned char *client_charset = "UTF-8";
+static int connect_attempts = MAX_ATTEMPT;
 
 static void
 global_init_func(struct generic_section_config *gp)
@@ -206,7 +207,7 @@ main(int argc, char *argv[])
     }
   }
 
-  for (attempt = 0; attempt < global->connect_attempts; attempt++) {
+  for (attempt = 0; attempt < connect_attempts; attempt++) {
     r = new_server_clnt_open(global->new_server_socket, &conn);
     if (r >= 0 || r != -NEW_SRV_ERR_CONNECT_FAILED) break;
     sleep(1);
