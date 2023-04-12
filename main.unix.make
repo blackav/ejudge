@@ -457,7 +457,7 @@ ejudge-execute : ${EX_OBJECTS}
 	${LD} ${LDFLAGS} $^ libcommon.a libplatform.a -o $@ ${LDLIBS} ${EXPAT_LIB}
 
 cgi-bin/new-client${CGI_PROG_SUFFIX} : $(NC_OBJECTS)
-	$(LD) $(LDFLAGS) $^ -o $@ $(LDLIBS) ${EXPAT_LIB}
+	$(LD) $(LDFLAGS) -static $^ -o $@
 
 ej-contests : $(NS_OBJECTS)
 	$(LD) $(LDFLAGS) -pthread -rdynamic $(NS_OBJECTS) -o $@ $(LDLIBS) -lbacktrace -ldl ${EXPAT_LIB} ${LIBZIP} ${LIBUUID} $(MONGO_LIBS) $(MONGOC_LIBS)
