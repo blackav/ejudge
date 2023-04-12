@@ -58,12 +58,13 @@ initialize(int argc, char *argv[])
 }
 
 static void
-json_error_reply(FILE *out_f, int error_code)
+json_error_reply(FILE *out_f, int http_status, int error_code)
 {
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   fprintf(out_f, "Content-Type: text/json; charset=UTF-8\n"
           "Cache-Control: no-cache\n"
-          "Pragma: no-cache\n\n");
+          "Status: %d\n"
+          "Pragma: no-cache\n\n", http_status);
   fprintf(out_f, "{\n");
   fprintf(out_f, "  \"ok\": false");
   fprintf(out_f, ",\n  \"error\": {\n");
@@ -114,7 +115,7 @@ main(int argc, char *argv[])
   if (r < 0) {
     err("new-client: cannot connect to the server: %d", -r);
     if (json_mode) {
-      json_error_reply(stdout, -r);
+      json_error_reply(stdout, 503, -r);
       return 0;
     } else {
       client_not_configured(client_charset, "cannot connect to the server", 0,0);
@@ -134,7 +135,7 @@ main(int argc, char *argv[])
   if (r < 0) {
     err("new-client: http_request failed: %d", -r);
     if (json_mode) {
-      json_error_reply(stdout, -r);
+      json_error_reply(stdout, 500, -r);
     } else {
       client_not_configured(client_charset, "request failed", 0, log_t);
     }
