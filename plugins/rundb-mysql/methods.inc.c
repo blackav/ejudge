@@ -33,6 +33,7 @@ open_func(
         const struct ejudge_cfg *config,
         const struct contest_desc *cnts,
         const struct section_global_data *global,
+        struct metrics_contest_data *metrics,
         int flags,
         time_t init_duration,
         time_t init_sched_time,
