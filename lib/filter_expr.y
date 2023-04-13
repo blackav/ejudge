@@ -202,6 +202,8 @@ static void *filter_expr_user_data;
 %token TOK_CURPROB_DIR "curprob_dir"
 %token TOK_VERDICT_BITS "verdict_bits"
 %token TOK_CURVERDICT_BITS "curverdict_bits"
+%token TOK_LAST_CHANGE_US "last_change_us"
+%token TOK_CURLAST_CHANGE_US "curlast_change_us"
 %token TOK_INUSERGROUPINT
 %token TOK_INT       "int"
 %token TOK_STRING    "string"
@@ -448,6 +450,9 @@ exprA :
 | "verdict_bits" '(' expr0 ')' { $1->v.t[0] = check_int($3); $$ = $1; }
 | "verdict_bits" { $1->kind = TOK_CURVERDICT_BITS; $$ = $1; }
 | "curverdict_bits" { $$ = $1; }
+| "last_change_us" '(' expr0 ')' { $1->v.t[0] = check_int($3); $$ = $1; }
+| "last_change_us" { $1->kind = TOK_CURLAST_CHANGE_US; $$ = $1; }
+| "curlast_change_us" { $$ = $1; }
 | "inusergroup" '(' expr0 ')' { $1->v.t[0] = check_string($3); $$ = $1; }
 | "int" '(' expr0 ')' { $$ = do_int_cast($1, $3); }
 | "string" '(' expr0 ')' { $$ = do_string_cast($1, $3); }

@@ -203,6 +203,8 @@ lett    [A-Za-z_]
 "curprob_id" { TT(TOK_CURPROB_DIR, FILTER_TYPE_STRING); }
 "verdict_bits" { TT(TOK_VERDICT_BITS, FILTER_TYPE_INT); }
 "curverdict_bits" { TT(TOK_CURVERDICT_BITS, FILTER_TYPE_INT); }
+"last_change_us" { TT(TOK_LAST_CHANGE_US, FILTER_TYPE_LONG); }
+"curlast_change_us" { TT(TOK_CURLAST_CHANGE_US, FILTER_TYPE_LONG); }
 
 "int" { TT(TOK_INT, FILTER_TYPE_INT); }
 "string" { TT(TOK_STRING, FILTER_TYPE_STRING); }

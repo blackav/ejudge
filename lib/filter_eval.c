@@ -328,6 +328,7 @@ do_eval(struct filter_env *env,
   case TOK_TOKEN_FLAGS:
   case TOK_TOKEN_COUNT:
   case TOK_VERDICT_BITS:
+  case TOK_LAST_CHANGE_US:
     if ((c = do_eval(env, t->v.t[0], &r1)) < 0) return c;
     ASSERT(r1.kind == TOK_INT_L);
     if (r1.v.i < 0) r1.v.i = env->rtotal + r1.v.i;
@@ -660,6 +661,11 @@ do_eval(struct filter_env *env,
       res->kind = TOK_INT_L;
       res->type = FILTER_TYPE_INT;
       res->v.i = env->rentries[r1.v.i].verdict_bits;
+      break;
+    case TOK_LAST_CHANGE_US:
+      res->kind = TOK_LONG_L;
+      res->type = FILTER_TYPE_LONG;
+      res->v.l = env->rentries[r1.v.i].last_change_us;
       break;
     default:
       abort();
@@ -1015,6 +1021,11 @@ do_eval(struct filter_env *env,
     res->kind = TOK_INT_L;
     res->type = FILTER_TYPE_INT;
     res->v.i = env->cur->verdict_bits;
+    break;
+  case TOK_CURLAST_CHANGE_US:
+    res->kind = TOK_LONG_L;
+    res->type = FILTER_TYPE_LONG;
+    res->v.l = env->cur->last_change_us;
     break;
   case TOK_CURTOTAL_SCORE:
     res->kind = TOK_INT_L;
