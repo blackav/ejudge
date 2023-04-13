@@ -459,6 +459,9 @@ ns_write_priv_all_runs(
     if (run_fields & (1 << RUN_VIEW_VERDICT_BITS)) {
       fprintf(f, "<th%s>%s</th>", cl, "Verdict bits");
     }
+    if (run_fields & (1 << RUN_VIEW_LAST_CHANGE_US)) {
+      fprintf(f, "<th%s>%s</th>", cl, "Last Change");
+    }
     /*
     if (phr->role == USER_ROLE_ADMIN) {
       fprintf(f, "<th%s>%s</th>", cl, _("New result"));
@@ -596,6 +599,9 @@ ns_write_priv_all_runs(
         if (run_fields & (1 << RUN_VIEW_VERDICT_BITS)) {
           fprintf(f, "<td%s>&nbsp;</td>", cl);
         }
+        if (run_fields & (1 << RUN_VIEW_LAST_CHANGE_US)) {
+          fprintf(f, "<td%s>&nbsp;</td>", cl);
+        }
         fprintf(f, "<td%s>&nbsp;</td>", cl);
         fprintf(f, "<td%s>&nbsp;</td>", cl);
         /*
@@ -704,6 +710,9 @@ ns_write_priv_all_runs(
           fprintf(f, "<td%s>&nbsp;</td>", cl);
         }
         if (run_fields & (1 << RUN_VIEW_VERDICT_BITS)) {
+          fprintf(f, "<td%s>&nbsp;</td>", cl);
+        }
+        if (run_fields & (1 << RUN_VIEW_LAST_CHANGE_US)) {
           fprintf(f, "<td%s>&nbsp;</td>", cl);
         }
 
@@ -919,6 +928,9 @@ ns_write_priv_all_runs(
         } else {
           fprintf(f, "<td%s>&nbsp;</td>", cl);
         }
+      }
+      if (run_fields & (1 << RUN_VIEW_LAST_CHANGE_US)) {
+        fprintf(f, "<td%s>%lld</td>", cl, (long long) pe->last_change_us);
       }
 
       /*
