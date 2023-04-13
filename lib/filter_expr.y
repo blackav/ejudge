@@ -135,6 +135,7 @@ static void *filter_expr_user_data;
 %token TOK_TEST      "test"
 %token TOK_CURTEST   "curtest"
 %token TOK_NOW       "now"
+%token TOK_UNOW      "unow"
 %token TOK_START     "start"
 %token TOK_FINISH    "finish"
 %token TOK_TOTAL     "total"

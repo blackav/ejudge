@@ -137,6 +137,7 @@ lett    [A-Za-z_]
 "test" { TT(TOK_TEST, FILTER_TYPE_INT); }
 "curtest" { TT(TOK_CURTEST, FILTER_TYPE_INT); }
 "now" { TT(TOK_NOW, FILTER_TYPE_TIME); }
+"unow" { TT(TOK_UNOW, FILTER_TYPE_LONG); }
 "start" { TT(TOK_START, FILTER_TYPE_TIME); }
 "finish" { TT(TOK_FINISH, FILTER_TYPE_TIME); }
 "total" { TT(TOK_TOTAL, FILTER_TYPE_INT); }
