@@ -8800,6 +8800,8 @@ priv_list_runs_json(
     const unsigned char * const indent = "        ";
     fprintf(fout, "\n      {");
     fprintf(fout, "\n%s\"run_id\": %d", indent, pe->run_id);
+    fprintf(fout, "\n%s\"serial_id\": %lld", indent, pe->serial_id);
+    fprintf(fout, "\n%s\"last_change_us\": %lld", indent, pe->last_change_us);
     if (run_fields & (1 << RUN_VIEW_STATUS)) {
       fprintf(fout, ",\n%s\"status\": %d", indent, pe->status);
       fprintf(fout, ",\n%s\"status_str\": \"%s\"", indent, run_status_short_str(pe->status));
