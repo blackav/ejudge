@@ -681,6 +681,7 @@ do_eval(struct filter_env *env,
   case TOK_RESULT_T:
   case TOK_HASH_T:
   case TOK_IP_T:
+  case TOK_LONG:
     if ((c = do_eval(env, t->v.t[0], &r1)) < 0) return c;
     return filter_tree_eval_node(env->mem, t->kind, res, &r1, 0);
 
@@ -1041,7 +1042,7 @@ do_eval(struct filter_env *env,
   case TOK_UNOW:
     res->kind = TOK_LONG_L;
     res->type = FILTER_TYPE_LONG;
-    res->v.a = env->cur_time_us;
+    res->v.l = env->cur_time_us;
     break;
   case TOK_START:
     res->kind = TOK_TIME_L;
@@ -1068,6 +1069,7 @@ do_eval(struct filter_env *env,
   case TOK_RESULT_L:
   case TOK_HASH_L:
   case TOK_IP_L:
+  case TOK_LONG_L:
     *res = *t;
     return 0;
 
