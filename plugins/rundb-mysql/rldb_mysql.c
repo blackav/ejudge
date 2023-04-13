@@ -872,6 +872,7 @@ load_runs(struct rldb_mysql_cnts *cs)
       re->nsec = ri.create_nsec;
       if (re->nsec <= 0) re->nsec = ri.create_tv.tv_usec * 1000;
       re->status = ri.status;
+      re->last_change_us = ri.last_change_time * 1000000LL + ri.last_change_nsec / 1000;
       continue;
     }
     if (ri.user_id <= 0) db_error_inv_value_fail(md, "user_id");
@@ -949,6 +950,7 @@ load_runs(struct rldb_mysql_cnts *cs)
     re->is_checked = ri.is_checked;
     re->is_vcs = ri.is_vcs;
     re->verdict_bits = ri.verdict_bits;
+    re->last_change_us = ri.last_change_time * 1000000LL + ri.last_change_nsec / 1000;
   }
   return 1;
 
@@ -1310,6 +1312,8 @@ get_insert_run_id_func(
   ri.last_change_time = curtime.tv_sec;
   ri.last_change_nsec = curtime.tv_usec * 1000;
 
+  re->last_change_us = curtime.tv_sec * 1000000LL + curtime.tv_usec;
+
   cmd_f = open_memstream(&cmd_t, &cmd_z);
   fprintf(cmd_f, "INSERT INTO %sruns VALUES ( ", md->table_prefix);
   mi->unparse_spec(md, cmd_f, RUNS_ROW_WIDTH, runs_spec, &ri);
@@ -1343,9 +1347,9 @@ generate_update_entry_clause(
         struct rldb_mysql_state *state,
         FILE *f,
         const struct run_entry *re,
-        uint64_t mask)
+        uint64_t mask,
+        const struct timeval *curtime)
 {
-  struct timeval curtime;
   const unsigned char *sep = "";
   const unsigned char *comma = ", ";
   unsigned char uuid_buf[128];
@@ -1511,11 +1515,10 @@ generate_update_entry_clause(
     sep = comma;
   }
 
-  gettimeofday(&curtime, 0);
   fprintf(f, "%slast_change_time = ", sep);
-  state->mi->write_timestamp(state->md, f, 0, curtime.tv_sec);
+  state->mi->write_timestamp(state->md, f, 0, curtime->tv_sec);
   sep = comma;
-  fprintf(f, "%slast_change_nsec = %ld", sep, curtime.tv_usec * 1000);
+  fprintf(f, "%slast_change_nsec = %ld", sep, curtime->tv_usec * 1000);
 }
 
 static void
@@ -1644,19 +1647,23 @@ do_update_entry(
   char *cmd_t = 0;
   size_t cmd_z = 0;
   FILE *cmd_f = 0;
+  struct timeval curtime;
 
   ASSERT(run_id >= rls->run_f && run_id < rls->run_u);
   de = &rls->runs[run_id - rls->run_f];
 
+  gettimeofday(&curtime, NULL);
+
   cmd_f = open_memstream(&cmd_t, &cmd_z);
   fprintf(cmd_f, "UPDATE %sruns SET ", state->md->table_prefix);
-  generate_update_entry_clause(state, cmd_f, re, mask);
+  generate_update_entry_clause(state, cmd_f, re, mask, &curtime);
   fprintf(cmd_f, " WHERE contest_id = %d AND run_id = %d ;",
           cs->contest_id, run_id);
   close_memstream(cmd_f); cmd_f = 0;
   if (state->mi->simple_query(state->md, cmd_t, cmd_z) < 0) goto fail;
   xfree(cmd_t); cmd_t = 0; cmd_z = 0;
   update_entry(de, re, mask);
+  de->last_change_us = curtime.tv_sec * 1000000LL + curtime.tv_usec;
   return run_id;
 
  fail:
@@ -2129,7 +2136,9 @@ put_entry_func(
   if (state->mi->simple_query(state->md, cmd_t, cmd_z) < 0) goto fail;
   xfree(cmd_t); cmd_t = 0;
 
-  memcpy(&rls->runs[re->run_id - rls->run_f], re, sizeof(rls->runs[0]));
+  struct run_entry *dst = &rls->runs[re->run_id - rls->run_f];
+  memcpy(dst, re, sizeof(*dst));
+  dst->last_change_us = curtime.tv_sec * 1000000LL + curtime.tv_usec;
 
   return 0;
 
@@ -2796,6 +2805,7 @@ append_run_func(
   new_re->run_id = run_id;
   new_re->time = current_time_tv.tv_sec;
   new_re->nsec = current_time_tv.tv_usec * 1000;
+  new_re->last_change_us = current_time_tv.tv_sec * 1000000LL + current_time_tv.tv_usec;
   new_re->run_uuid = *p_uuid;
   if ((mask & RE_SIZE)) {
     new_re->size = in_re->size;
