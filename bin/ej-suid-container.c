@@ -1789,6 +1789,9 @@ apply_language_profiles(void)
             limit_rss_size = limit_vm_size;
             limit_vm_size = -1;
         }
+    } else if (!strcmp(language_name, "ruby")) {
+        enable_sys_fork = 1;
+        enable_sys_execve = 1;
     }
 }
 
