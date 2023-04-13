@@ -1030,8 +1030,7 @@ do_eval(struct filter_env *env,
   case TOK_UNOW:
     res->kind = TOK_LONG_L;
     res->type = FILTER_TYPE_LONG;
-    // FIXME
-    res->v.a = env->cur_time * 1000000LL;
+    res->v.a = env->cur_time_us;
     break;
   case TOK_START:
     res->kind = TOK_TIME_L;

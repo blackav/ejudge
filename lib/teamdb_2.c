@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2010-2021 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2010-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -71,6 +71,7 @@ teamdb_get_user_map(
     env.probs = (const struct section_problem_data * const *) cs->probs;
     env.rtotal = 1;
     env.cur_time = cur_time;
+    env.cur_time_us = cur_time * 1000000LL; // FIXME
     env.rentries = fake_entries;
     env.rid = 0;
   }

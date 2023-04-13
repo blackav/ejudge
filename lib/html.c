@@ -1009,6 +1009,7 @@ get_problem_map(
     env.probs = (const struct section_problem_data * const *) state->probs;
     env.rtotal = 1;
     env.cur_time = cur_time;
+    env.cur_time_us = cur_time * 1000000LL; // FIXME
     env.rentries = fake_entries;
     env.rid = 0;
   }

@@ -206,7 +206,10 @@ ns_write_priv_all_runs(
     env.rbegin = run_get_first(cs->runlog_state);
     env.rtotal = run_get_total(cs->runlog_state);
     run_get_header(cs->runlog_state, &env.rhead);
-    env.cur_time = time(0);
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    env.cur_time = tv.tv_sec;
+    env.cur_time_us = tv.tv_sec * 1000000LL + tv.tv_usec;
     env.rentries = run_get_entries_ptr(cs->runlog_state);
 
     XCALLOC(match_idx, env.rtotal + 1 - env.rbegin);

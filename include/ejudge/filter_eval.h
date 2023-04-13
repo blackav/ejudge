@@ -3,7 +3,7 @@
 #ifndef __FILTER_EVAL_H__
 #define __FILTER_EVAL_H__
 
-/* Copyright (C) 2002-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -39,6 +39,7 @@ struct filter_env
   int rid;
   const struct run_entry *cur;
   time_t cur_time;
+  long long cur_time_us;
 };
 
 int filter_tree_bool_eval(struct filter_env *env, struct filter_tree *t);
