@@ -1024,6 +1024,7 @@ filter_tree_eval_node(struct filter_tree_mem *mem,
           return -FILTER_ERR_INT_OVF;
         }
         res->v.l = r;
+        break;
       }
       case 11: {                /* long - int */
         res->kind = TOK_LONG_L;
@@ -1035,6 +1036,7 @@ filter_tree_eval_node(struct filter_tree_mem *mem,
           return -FILTER_ERR_INT_OVF;
         }
         res->v.l = r;
+        break;
       }
       case 12: {                /* int - long */
         res->kind = TOK_LONG_L;
@@ -1046,6 +1048,7 @@ filter_tree_eval_node(struct filter_tree_mem *mem,
           return -FILTER_ERR_INT_OVF;
         }
         res->v.l = r;
+        break;
       }
       default:
         SWERR(("unhandled sub action %d", sub_table[p1->type][p2->type]));
