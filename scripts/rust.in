@@ -1,5 +1,5 @@
-#!/bin/sh
-# Copyright (c) 2017 Alexander Chernov <cher@ejudge.ru>
+#! /bin/bash
+# Copyright (c) 2017-2023 Alexander Chernov <cher@ejudge.ru>
 
 # using EJUDGE_FLAGS we may pass additional flags
 
@@ -33,4 +33,4 @@ unset LC_ALL
 unset LC_MESSAGES
 unset LANGUAGE
 
-exec "${RUSTRUN}" ${EJUDGE_FLAGS} "$1" ${EJUDGE_LIBS}
+exec "${RUSTRUN}" ${EJUDGE_FLAGS} "$1" ${EJUDGE_LIBS} -o "$2"
