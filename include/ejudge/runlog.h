@@ -337,7 +337,8 @@ struct run_entry
   unsigned char  pages;         /* 1 */
   char _pad0[3];
   ruint32_t      verdict_bits;  /* 4 */
-  char _pad[80];
+  rint64_t       last_change_us;/* 8 */
+  char _pad[72];
   /* total is 256 bytes */
 };
 
