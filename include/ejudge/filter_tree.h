@@ -1,10 +1,9 @@
 /* -*- c -*- */
-/* $Id$ */
 
 #ifndef __FILTER_TREE_H__
 #define __FILTER_TREE_H__
 
-/* Copyright (C) 2002-2013 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -36,6 +35,7 @@ enum
     FILTER_TYPE_RESULT,
     FILTER_TYPE_HASH,
     FILTER_TYPE_IP,
+    FILTER_TYPE_LONG,
 
     FILTER_TYPE_LAST
   };
@@ -78,6 +78,7 @@ struct filter_tree
     int r;
     ruint32_t h[5];
     ej_ip_t p;
+    long long l;
   } v;
 };
 struct filter_tree_mem;
@@ -117,6 +118,8 @@ struct filter_tree *filter_tree_new_ip(struct filter_tree_mem *,
                                        const ej_ip_t *);
 struct filter_tree *filter_tree_dup(struct filter_tree_mem *,
                                     struct filter_tree*);
+struct filter_tree *filter_tree_new_long(struct filter_tree_mem *,
+                                         long long);
 
 void filter_tree_print(struct filter_tree *p, FILE *out,
                        unsigned char const *ind);
@@ -143,6 +146,7 @@ int filter_tree_size_str(unsigned char *, size_t, size_t);
 int filter_tree_result_str(unsigned char *, size_t, int);
 int filter_tree_hash_str(unsigned char *, size_t, ruint32_t *);
 int filter_tree_ip_str(unsigned char *, size_t, const ej_ip_t *);
+int filter_tree_long_str(unsigned char *, size_t, long long);
 
 int filter_tree_is_value_node(struct filter_tree *p);
 

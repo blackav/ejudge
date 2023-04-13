@@ -54,6 +54,7 @@ static void *filter_scan_user_data;
 #define YY_INPUT(buf,result,max_size) do { if (filter_scan_read >= filter_scan_len) result = YY_NULL; else if (filter_scan_len - filter_scan_read > max_size) { memcpy(buf, filter_scan_buf + filter_scan_read, max_size); filter_scan_read += max_size; result = max_size; } else { memcpy(buf, filter_scan_buf + filter_scan_read, filter_scan_len - filter_scan_read); result = filter_scan_len - filter_scan_read; filter_scan_read = filter_scan_len; } } while (0)
 
 static void handle_int(void);
+static void handle_long(void);
 
 %}
 ws      [\000-\040]
@@ -211,6 +212,7 @@ lett    [A-Za-z_]
 "result_t" { TT(TOK_RESULT_T, FILTER_TYPE_RESULT); }
 "hash_t" { TT(TOK_HASH_T, FILTER_TYPE_HASH); }
 "ip_t" { TT(TOK_IP_T, FILTER_TYPE_IP); }
+"long" { TT(TOK_LONG, FILTER_TYPE_LONG); }
 
 "true" { filter_expr_lval = filter_tree_new_bool(filter_scan_tree_mem, 1); return TOK_BOOL_L; }
 "false" { filter_expr_lval = filter_tree_new_bool(filter_scan_tree_mem, 0); return TOK_BOOL_L; }
@@ -259,6 +261,10 @@ lett    [A-Za-z_]
 0{octd}* { handle_int(); return TOK_INT_L; }
 [1-9]{decd}* { handle_int(); return TOK_INT_L; }
 
+0[xX]{hexd}+[Ll] { handle_long(); return TOK_LONG_L; }
+0{octd}*[Ll] { handle_long(); return TOK_LONG_L; }
+[1-9]{decd}*[Ll] { handle_long(); return TOK_LONG_L; }
+
 {ws}+ {}
 
 \"[^\"]*\" |
@@ -268,6 +274,23 @@ lett    [A-Za-z_]
 [\040-\377] { (*filter_scan_err)(filter_scan_user_data, "invalid character `%c'", *yytext); }
 
 %%
+
+static void
+handle_long(void)
+{
+  char *buf = alloca(yyleng + 16);
+  memcpy(buf, yytext, yyleng);
+  buf[yyleng - 1] = 0;
+
+  errno = 0;
+  char *eptr = NULL;
+  long long val = strtoll(buf, &eptr, 0);
+  if (errno) {
+    (*filter_scan_err)(filter_scan_user_data, "value is out of range");
+    val = 0;
+  }
+  filter_expr_lval = filter_tree_new_long(filter_scan_tree_mem, val);
+}
 
 static void
 handle_int(void)

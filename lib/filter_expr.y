@@ -40,6 +40,7 @@ typedef struct filter_tree *tree_t;
 #define MKIP(p) filter_tree_new_ip(filter_expr_tree_mem, p)
 #define MKCOPY(c) filter_tree_dup(filter_expr_tree_mem, c)
 #define MKRESULT(r) filter_tree_new_result(filter_expr_tree_mem, r)
+#define MKLONG(l) filter_tree_new_long(filter_expr_tree_mem, l)
 
 static ej_ip_t empty_ipv6;
 
@@ -57,6 +58,7 @@ static tree_t do_size_cast(tree_t, tree_t);
 static tree_t do_result_cast(tree_t, tree_t);
 static tree_t do_hash_cast(tree_t, tree_t);
 static tree_t do_ip_cast(tree_t, tree_t);
+static tree_t do_long_cast(tree_t q, tree_t p);
 
 static tree_t do_un_bitnot(tree_t, tree_t);
 static tree_t do_un_lognot(tree_t, tree_t);
@@ -209,6 +211,7 @@ static void *filter_expr_user_data;
 %token TOK_RESULT_T  "result_t"
 %token TOK_HASH_T    "hash_t"
 %token TOK_IP_T      "ip_t"
+%token TOK_LONG      "long"
 %token TOK_INT_L
 %token TOK_STRING_L
 %token TOK_BOOL_L
@@ -219,6 +222,7 @@ static void *filter_expr_user_data;
 %token TOK_HASH_L
 %token TOK_IP_L
 %token TOK_UN_MINUS
+%token TOK_LONG_L
 %%
 
 filter_expr :
@@ -295,6 +299,7 @@ exprA :
 | TOK_INT_L { $$ = $1; }
 | TOK_BOOL_L { $$ = $1; }
 | TOK_RESULT_L { $$ = $1; }
+| TOK_LONG_L { $$ = $1; }
 | "id" { $$ = $1; }
 | "now" { $$ = $1; }
 | "start" { $$ = $1; }
@@ -452,6 +457,7 @@ exprA :
 | "result_t" '(' expr0 ')' { $$ = do_result_cast($1, $3); }
 | "hash_t" '(' expr0 ')' { $$ = do_hash_cast($1, $3); }
 | "ip_t" '(' expr0 ')' { $$ = do_ip_cast($1, $3); }
+| "long" '(' expr0 ')' { $$ = do_long_cast($1, $3); }
 ;
 
 %%
@@ -516,6 +522,9 @@ check_result(tree_t p)
 static tree_t
 do_un_plus(tree_t op, tree_t p)
 {
+  if (p->type == FILTER_TYPE_LONG) {
+    return p;
+  }
   p = check_int(p);
   return p;
 }
@@ -523,6 +532,20 @@ do_un_plus(tree_t op, tree_t p)
 static tree_t
 do_un_minus(tree_t op, tree_t p)
 {
+  if (p->kind == TOK_LONG_L) {
+    tree_t res = MKLONG(0);
+    int n;
+
+    n = filter_tree_eval_node(filter_expr_tree_mem, TOK_UN_MINUS, res, p, NULL);
+    if (n < 0) (*filter_expr_parse_err)(filter_expr_user_data, "%s", filter_strerror(-n));
+    return res;
+  }
+  if (p->type == FILTER_TYPE_LONG) {
+    op->kind = TOK_UN_MINUS;
+    op->type = FILTER_TYPE_LONG;
+    op->v.t[0] = p;
+    return op;
+  }
   p = check_int(p);
   if (p->kind == TOK_INT_L) {
     tree_t res = MKINT(0);
@@ -541,6 +564,21 @@ do_un_minus(tree_t op, tree_t p)
 static tree_t
 do_un_bitnot(tree_t op, tree_t p)
 {
+  if (p->type == FILTER_TYPE_LONG) {
+    if (p->kind == TOK_LONG_L) {
+      tree_t res = MKLONG(0);
+      int n;
+
+      n = filter_tree_eval_node(filter_expr_tree_mem, '~', res, p, NULL);
+      if (n < 0) (*filter_expr_parse_err)(filter_expr_user_data, "%s", filter_strerror(-n));
+      return res;
+    }
+
+    op->kind = '~';
+    op->type = FILTER_TYPE_LONG;
+    op->v.t[0] = p;
+    return op;
+  }
   p = check_int(p);
   if (p->kind == TOK_INT_L) {
     tree_t res = MKINT(0);
@@ -580,6 +618,20 @@ do_sub(tree_t op, tree_t p1, tree_t p2)
   ASSERT(op);
   ASSERT(p1);
   ASSERT(p2);
+
+  if (p1->type == FILTER_TYPE_LONG || p2->type == FILTER_TYPE_LONG) {
+    if (p1->type == FILTER_TYPE_LONG && p2->type == FILTER_TYPE_LONG) {
+      op->type = FILTER_TYPE_LONG;
+    } else if (p1->type == FILTER_TYPE_INT || p2->type == FILTER_TYPE_INT) {
+      op->type = FILTER_TYPE_LONG;
+    } else {
+      goto undefined_op;
+    }
+
+    op->v.t[0] = p1;
+    op->v.t[1] = p2;
+    return op;
+  }
 
   if (p1->type != FILTER_TYPE_INT && p1->type != FILTER_TYPE_TIME
       && p1->type != FILTER_TYPE_DUR && p1->type != FILTER_TYPE_SIZE) {
@@ -637,6 +689,19 @@ do_add(tree_t op, tree_t p1, tree_t p2)
   ASSERT(op);
   ASSERT(p1);
   ASSERT(p2);
+
+  if (p1->type == FILTER_TYPE_LONG || p2->type == FILTER_TYPE_LONG) {
+    if (p1->type == FILTER_TYPE_LONG && p2->type == FILTER_TYPE_LONG) {
+      op->type = FILTER_TYPE_LONG;
+    } else if (p1->type == FILTER_TYPE_INT && p2->type == FILTER_TYPE_INT) {
+      op->type = FILTER_TYPE_LONG;
+    } else {
+      goto undefined_op;
+    }
+    op->v.t[0] = p1;
+    op->v.t[1] = p2;
+    return op;
+  }
 
   if (p1->type == FILTER_TYPE_HASH || p2->type == FILTER_TYPE_HASH
       || p1->type == FILTER_TYPE_IP || p2->type == FILTER_TYPE_IP
@@ -1154,6 +1219,28 @@ do_ip_cast(tree_t q, tree_t p)
   q->v.t[0] = p;
   q->kind = TOK_IP_T;
   q->type = FILTER_TYPE_IP;
+  return q;
+}
+
+static tree_t
+do_long_cast(tree_t q, tree_t p)
+{
+  ASSERT(p);
+  if (p->kind == FILTER_TYPE_LONG)
+    return p;
+  if (filter_tree_is_value_node(p)) {
+    struct filter_tree res;
+    int r;
+
+    if ((r = filter_tree_eval_node(filter_expr_tree_mem, TOK_LONG, &res, p, NULL)) < 0) {
+      (*filter_expr_parse_err)(filter_expr_user_data, "%s", filter_strerror(-r));
+      return MKLONG(0);
+    }
+    return MKLONG(res.v.l);
+  }
+  q->v.t[0] = p;
+  q->kind = TOK_LONG;
+  q->type = FILTER_TYPE_LONG;
   return q;
 }
 

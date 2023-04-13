@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2002-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -302,6 +302,19 @@ filter_tree_new_ip(struct filter_tree_mem *mem, const ej_ip_t *val)
   return p;
 }
 
+struct filter_tree *
+filter_tree_new_long(struct filter_tree_mem *mem, long long val)
+{
+  struct filter_tree *p;
+
+  ASSERT(mem);
+  p = getnode(mem);
+  p->kind = TOK_LONG_L;
+  p->type = FILTER_TYPE_LONG;
+  p->v.l = val;
+  return p;
+}
+
 int
 filter_tree_regexp_match(
         struct filter_tree_mem *mem,
@@ -460,6 +473,7 @@ filter_tree_kind_to_str(int kind)
   case TOK_INT: return "int";
   case TOK_STRING: return "string";
   case TOK_BOOL: return "bool";
+  case TOK_LONG: return "long";
   case TOK_TIME_T: return "time_t";
   case TOK_DUR_T: return "dur_t";
   case TOK_SIZE_T: return "size_t";
@@ -475,6 +489,7 @@ filter_tree_kind_to_str(int kind)
   case TOK_RESULT_L: return "RESULT_L";
   case TOK_HASH_L: return "HASH_L";
   case TOK_IP_L: return "IP_L";
+  case TOK_LONG_L: return "LONG_L";
   case TOK_UN_MINUS: return "UN_MINUS";
 
   default:
@@ -611,6 +626,10 @@ filter_tree_print(struct filter_tree *p, FILE *out, unsigned char const *ind)
     filter_tree_ip_str(buf, sizeof(buf), &p->v.p);
     fprintf(out, " %s\n", buf);
     break;
+  case TOK_LONG_L:
+    filter_tree_long_str(buf, sizeof(buf), p->v.l);
+    fprintf(out, " %s\n", buf);
+    break;
 
   default:
     SWERR(("unhandled kind: %d", p->kind));
@@ -684,6 +703,12 @@ filter_tree_ip_str(unsigned char *buf, size_t size, const ej_ip_t *val)
   return snprintf(buf, size, "%s", xml_unparse_ipv6(val));
 }
 
+int
+filter_tree_long_str(unsigned char *buf, size_t size, long long val)
+{
+  return snprintf(buf, size, "%lld", val);
+}
+
 static int
 str_to_int(const unsigned char *str, int *p_int)
 {
@@ -714,34 +739,51 @@ str_to_uint(const unsigned char *str, unsigned int *p_int)
   return 0;
 }
 
+static __attribute__((unused)) int
+str_to_long(const unsigned char *str, long long *p_long)
+{
+  char *eptr;
+  long long val;
+
+  *p_long = 0;
+  errno = 0;
+  val = strtoll(str, &eptr, 0);
+  if (*eptr) return -FILTER_ERR_INT_CVT;
+  if (errno) return -FILTER_ERR_INT_OVF;
+  *p_long = val;
+  return 0;
+}
+
 static int const add_table[FILTER_TYPE_LAST][FILTER_TYPE_LAST] =
 {
-  /*          -  i  s  b  a  u  z  r  h  p */
-  /* - */  {  0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-  /* i */  {  0, 1, 0, 0, 5, 6, 7, 0, 0, 0 },
-  /* s */  {  0, 0, 2, 0, 0, 0, 0, 0, 0, 0 },
-  /* b */  {  0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-  /* a */  {  0, 8, 0, 0, 0, 9, 0, 0, 0, 0 },
-  /* u */  {  0,10, 0, 0,11, 3, 0, 0, 0, 0 },
-  /* z */  {  0,12, 0, 0, 0, 0, 4, 0, 0, 0 },
-  /* r */  {  0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-  /* h */  {  0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-  /* p */  {  0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+  /*          -  i  s  b  a  u  z  r  h  p  l */
+  /* - */  {  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+  /* i */  {  0, 1, 0, 0, 5, 6, 7, 0, 0, 0,15 },
+  /* s */  {  0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0 },
+  /* b */  {  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+  /* a */  {  0, 8, 0, 0, 0, 9, 0, 0, 0, 0, 0 },
+  /* u */  {  0,10, 0, 0,11, 3, 0, 0, 0, 0, 0 },
+  /* z */  {  0,12, 0, 0, 0, 0, 4, 0, 0, 0, 0 },
+  /* r */  {  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+  /* h */  {  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+  /* p */  {  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+  /* l */  {  0,14, 0, 0, 0, 0, 0, 0, 0, 0,13 },
 };
 
 static int const sub_table[FILTER_TYPE_LAST][FILTER_TYPE_LAST] =
 {
-  /*          -  i  s  b  a  u  z  r  h  p */
-  /* - */  {  0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-  /* i */  {  0, 1, 0, 0, 0, 2, 0, 0, 0, 0 },
-  /* s */  {  0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-  /* b */  {  0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-  /* a */  {  0, 3, 0, 0, 4, 5, 0, 0, 0, 0 },
-  /* u */  {  0, 6, 0, 0, 0, 7, 0, 0, 0, 0 },
-  /* z */  {  0, 8, 0, 0, 0, 0, 9, 0, 0, 0 },
-  /* r */  {  0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-  /* h */  {  0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-  /* p */  {  0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+  /*          -  i  s  b  a  u  z  r  h  p  l */
+  /* - */  {  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+  /* i */  {  0, 1, 0, 0, 0, 2, 0, 0, 0, 0,12 },
+  /* s */  {  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+  /* b */  {  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+  /* a */  {  0, 3, 0, 0, 4, 5, 0, 0, 0, 0, 0 },
+  /* u */  {  0, 6, 0, 0, 0, 7, 0, 0, 0, 0, 0 },
+  /* z */  {  0, 8, 0, 0, 0, 0, 9, 0, 0, 0, 0 },
+  /* r */  {  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+  /* h */  {  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+  /* p */  {  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+  /* l */  {  0,11, 0, 0, 0, 0, 0, 0, 0, 0,10 },
 };
 
 int
@@ -859,6 +901,38 @@ filter_tree_eval_node(struct filter_tree_mem *mem,
         if (t < 0 || t > UINT_MAX) return -FILTER_ERR_INT_OVF;
         res->v.z = t;
         break;
+      case 13: {                /* long + long */
+        res->kind = TOK_LONG_L;
+        res->type = FILTER_TYPE_LONG;
+        long long r;
+        if (__builtin_add_overflow(p1->v.l, p2->v.l, &r)) {
+          return -FILTER_ERR_INT_OVF;
+        }
+        res->v.l = r;
+        break;
+      }
+      case 14: {                /* long + int */
+        res->kind = TOK_LONG_L;
+        res->type = FILTER_TYPE_LONG;
+        long long v2 = p2->v.i;
+        long long r;
+        if (__builtin_add_overflow(p1->v.l, v2, &r)) {
+          return -FILTER_ERR_INT_OVF;
+        }
+        res->v.l = r;
+        break;
+      }
+      case 15: {                /* int + long */
+        res->kind = TOK_LONG_L;
+        res->type = FILTER_TYPE_LONG;
+        long long v1 = p1->v.i;
+        long long r;
+        if (__builtin_add_overflow(v1, p2->v.l, &r)) {
+          return -FILTER_ERR_INT_OVF;
+        }
+        res->v.l = r;
+        break;
+      }
       default:
         SWERR(("unhandled add action %d", add_table[p1->type][p2->type]));
       }
@@ -940,6 +1014,39 @@ filter_tree_eval_node(struct filter_tree_mem *mem,
         if (t < INT_MIN || t > INT_MAX) return -FILTER_ERR_INT_OVF;
         res->v.i = t;
         break;
+      case 10: {                /* long - long */
+        res->kind = TOK_LONG_L;
+        res->type = FILTER_TYPE_LONG;
+        long long v1 = p1->v.l;
+        long long v2 = p2->v.l;
+        long long r;
+        if (__builtin_sub_overflow(v1, v2, &r)) {
+          return -FILTER_ERR_INT_OVF;
+        }
+        res->v.l = r;
+      }
+      case 11: {                /* long - int */
+        res->kind = TOK_LONG_L;
+        res->type = FILTER_TYPE_LONG;
+        long long v1 = p1->v.l;
+        long long v2 = p2->v.i;
+        long long r;
+        if (__builtin_sub_overflow(v1, v2, &r)) {
+          return -FILTER_ERR_INT_OVF;
+        }
+        res->v.l = r;
+      }
+      case 12: {                /* int - long */
+        res->kind = TOK_LONG_L;
+        res->type = FILTER_TYPE_LONG;
+        long long v1 = p1->v.i;
+        long long v2 = p2->v.l;
+        long long r;
+        if (__builtin_sub_overflow(v1, v2, &r)) {
+          return -FILTER_ERR_INT_OVF;
+        }
+        res->v.l = r;
+      }
       default:
         SWERR(("unhandled sub action %d", sub_table[p1->type][p2->type]));
       }
@@ -1002,6 +1109,7 @@ filter_tree_eval_node(struct filter_tree_mem *mem,
     case TOK_RESULT_L: res->v.b = (p1->v.r == p2->v.r); break;
     case TOK_HASH_L:   res->v.b = !memcmp(p1->v.h, p2->v.h, 20); break;
     case TOK_IP_L:     res->v.b = ipv6cmp(&p1->v.p, &p2->v.p) == 0; break;
+    case TOK_LONG_L:   res->v.b = (p1->v.l == p2->v.l); break;
     default:
       SWERR(("unhandled node %d", p1->kind));
     }
@@ -1021,6 +1129,7 @@ filter_tree_eval_node(struct filter_tree_mem *mem,
     case TOK_RESULT_L: res->v.b = (p1->v.r != p2->v.r); break;
     case TOK_HASH_L:   res->v.b = (memcmp(p1->v.h, p2->v.h, 20) != 0); break;
     case TOK_IP_L:     res->v.b = ipv6cmp(&p1->v.p, &p2->v.p) != 0; break;
+    case TOK_LONG_L:   res->v.b = (p1->v.l != p2->v.l); break;
     default:
       SWERR(("unhandled node %d", p1->kind));
     }
@@ -1037,6 +1146,7 @@ filter_tree_eval_node(struct filter_tree_mem *mem,
     case TOK_TIME_L:   res->v.b = (p1->v.a < p2->v.a); break;
     case TOK_DUR_L:    res->v.b = (p1->v.u < p2->v.u); break;
     case TOK_SIZE_L:   res->v.b = (p1->v.z < p2->v.z); break;
+    case TOK_LONG_L:   res->v.b = (p1->v.l < p2->v.l); break;
     default:
       SWERR(("unhandled node %d", p1->kind));
     }
@@ -1053,6 +1163,7 @@ filter_tree_eval_node(struct filter_tree_mem *mem,
     case TOK_TIME_L:   res->v.b = (p1->v.a <= p2->v.a); break;
     case TOK_DUR_L:    res->v.b = (p1->v.u <= p2->v.u); break;
     case TOK_SIZE_L:   res->v.b = (p1->v.z <= p2->v.z); break;
+    case TOK_LONG_L:   res->v.b = (p1->v.l <= p2->v.l); break;
     default:
       SWERR(("unhandled node %d", p1->kind));
     }
@@ -1069,6 +1180,7 @@ filter_tree_eval_node(struct filter_tree_mem *mem,
     case TOK_TIME_L:   res->v.b = (p1->v.a > p2->v.a); break;
     case TOK_DUR_L:    res->v.b = (p1->v.u > p2->v.u); break;
     case TOK_SIZE_L:   res->v.b = (p1->v.z > p2->v.z); break;
+    case TOK_LONG_L:   res->v.b = (p1->v.l > p2->v.l); break;
     default:
       SWERR(("unhandled node %d", p1->kind));
     }
@@ -1085,6 +1197,7 @@ filter_tree_eval_node(struct filter_tree_mem *mem,
     case TOK_TIME_L:   res->v.b = (p1->v.a >= p2->v.a); break;
     case TOK_DUR_L:    res->v.b = (p1->v.u >= p2->v.u); break;
     case TOK_SIZE_L:   res->v.b = (p1->v.z >= p2->v.z); break;
+    case TOK_LONG_L:   res->v.b = (p1->v.l >= p2->v.l); break;
     default:
       SWERR(("unhandled node %d", p1->kind));
     }
@@ -1233,6 +1346,12 @@ filter_tree_eval_node(struct filter_tree_mem *mem,
     break;
 
   case '~':
+    if (p1->type == FILTER_TYPE_LONG) {
+      res->kind = TOK_LONG_L;
+      res->type = FILTER_TYPE_LONG;
+      res->v.l = ~p1->v.l;
+      break;
+    }
     ASSERT(p1->type == FILTER_TYPE_INT);
     res->kind = TOK_INT_L;
     res->type = FILTER_TYPE_INT;
@@ -1240,6 +1359,16 @@ filter_tree_eval_node(struct filter_tree_mem *mem,
     break;
 
   case TOK_UN_MINUS:
+    if (p1->type == FILTER_TYPE_LONG) {
+      long long r;
+      if (__builtin_sub_overflow(0LL, p1->v.l, &r)) {
+        return -FILTER_ERR_INT_OVF;
+      }
+      res->kind = TOK_LONG_L;
+      res->type = FILTER_TYPE_LONG;
+      res->v.l = r;
+      break;
+    }
     ASSERT(p1->type == FILTER_TYPE_INT);
     if (p1->v.i == INT_MIN) return -FILTER_ERR_INT_OVF;
     res->kind = TOK_INT_L;
@@ -1286,6 +1415,12 @@ filter_tree_eval_node(struct filter_tree_mem *mem,
       //res->v.i = p1->v.p;
       res->v.i = 0;
       break;
+    case TOK_LONG_L: {
+      int r = (int) p1->v.l;
+      if (r != p1->v.l) return -FILTER_ERR_INT_OVF;
+      res->v.i = r;
+      break;
+    }
     default:
       SWERR(("unhandled node %d", kind));
     }
@@ -1326,6 +1461,9 @@ filter_tree_eval_node(struct filter_tree_mem *mem,
         break;
       case TOK_IP_L:
         filter_tree_ip_str(val, sizeof(val), &p1->v.p);
+        break;
+      case TOK_LONG_L:
+        filter_tree_long_str(val, sizeof(val), p1->v.l);
         break;
       default:
         SWERR(("unhandled node %d", kind));
@@ -1375,6 +1513,9 @@ filter_tree_eval_node(struct filter_tree_mem *mem,
     case TOK_IP_L:
       //res->v.b = !!p1->v.p;
       res->v.b = 0;
+      break;
+    case TOK_LONG_L:
+      res->v.b = !!p1->v.l;
       break;
     default:
       SWERR(("unhandled node %d", kind));
@@ -1588,6 +1729,51 @@ filter_tree_eval_node(struct filter_tree_mem *mem,
     }
     break;
 
+  case TOK_LONG_L:
+    res->kind = TOK_LONG_L;
+    res->type = FILTER_TYPE_LONG;
+    switch (p1->kind) {
+    case TOK_INT_L:
+      res->v.l = p1->v.i;
+      break;
+    case TOK_STRING_L:
+      {
+        long long val;
+        int r;
+
+        if ((r = str_to_long(p1->v.s, &val)) < 0) return r;
+        res->v.l = val;
+      }
+    case TOK_BOOL_L:
+      res->v.l = p1->v.b;
+      break;
+      break;
+    case TOK_TIME_L:
+      res->v.l = p1->v.a;
+      break;
+    case TOK_DUR_L:
+      res->v.l = p1->v.u;
+      break;
+    case TOK_SIZE_L:
+      res->v.l = p1->v.z;
+      break;
+    case TOK_RESULT_L:
+      res->v.l = p1->v.r;
+      break;
+    case TOK_HASH_L:
+      res->v.l = 0;
+      break;
+    case TOK_IP_L:
+      res->v.l = 0;
+      break;
+    case TOK_LONG_L:
+      res->v.l = p1->v.l;
+      break;
+    default:
+      SWERR(("unhandled node %d", kind));
+    }
+    break;
+
   default:
     SWERR(("unhandled node %d", kind));
   }
@@ -1608,6 +1794,7 @@ filter_tree_is_value_node(struct filter_tree *p)
   case TOK_RESULT_L:
   case TOK_HASH_L:
   case TOK_IP_L:
+  case TOK_LONG_L:
     return 1;
   }
   return 0;
