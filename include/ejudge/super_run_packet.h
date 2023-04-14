@@ -191,6 +191,7 @@ struct super_run_in_problem_packet
   unsigned char *user_input_file;
   int test_count;
   ejintbool_t copy_exe_to_tgzdir;
+  char **checker_extra_files;
 
   int type_val META_ATTRIB((meta_hidden));
 };
