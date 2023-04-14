@@ -4691,6 +4691,20 @@ run_tests(
   } else {
     snprintf(check_cmd, sizeof(check_cmd), "%s", srpp->check_cmd);
   }
+  if (srpp->checker_extra_files) {
+    for (int i = 0; srpp->checker_extra_files[i]; ++i) {
+      const char *cef = srpp->checker_extra_files[i];
+      unsigned char extra_file[PATH_MAX];
+      if (os_IsAbsolutePath(cef)) {
+        snprintf(extra_file, sizeof(extra_file), "%s", cef);
+      } else {
+        unsigned char dirname[PATH_MAX];
+        os_rDirName(srpp->check_cmd, dirname, sizeof(dirname));
+        snprintf(extra_file, sizeof(extra_file), "%s/%s", dirname, cef);
+      }
+      mirror_file(agent, extra_file, sizeof(extra_file), mirror_dir);
+    }
+  }
   mirror_file(agent, check_cmd, sizeof(check_cmd), mirror_dir);
 
   if ((!srpp->standard_checker || !srpp->standard_checker[0])

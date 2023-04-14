@@ -2560,6 +2560,7 @@ serve_run_request(
   if (lang && lang->run_max_rss_size > 0) {
     srpp->max_rss_size = lang->run_max_rss_size;
   }
+  srpp->checker_extra_files = sarray_copy(prob->checker_extra_files);
 
   if (tester) {
     struct super_run_in_tester_packet *srtp = srp->tester;
