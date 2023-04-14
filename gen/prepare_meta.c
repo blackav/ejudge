@@ -564,6 +564,7 @@ static struct meta_info_item meta_info_section_problem_data_data[] =
   [CNTSPROB_lang_max_vm_size] = { CNTSPROB_lang_max_vm_size, 'x', XSIZE(struct section_problem_data, lang_max_vm_size), "lang_max_vm_size", XOFFSET(struct section_problem_data, lang_max_vm_size) },
   [CNTSPROB_lang_max_stack_size] = { CNTSPROB_lang_max_stack_size, 'x', XSIZE(struct section_problem_data, lang_max_stack_size), "lang_max_stack_size", XOFFSET(struct section_problem_data, lang_max_stack_size) },
   [CNTSPROB_lang_max_rss_size] = { CNTSPROB_lang_max_rss_size, 'x', XSIZE(struct section_problem_data, lang_max_rss_size), "lang_max_rss_size", XOFFSET(struct section_problem_data, lang_max_rss_size) },
+  [CNTSPROB_checker_extra_files] = { CNTSPROB_checker_extra_files, 'x', XSIZE(struct section_problem_data, checker_extra_files), "checker_extra_files", XOFFSET(struct section_problem_data, checker_extra_files) },
   [CNTSPROB_statement_env] = { CNTSPROB_statement_env, 'X', XSIZE(struct section_problem_data, statement_env), "statement_env", XOFFSET(struct section_problem_data, statement_env) },
   [CNTSPROB_alternative] = { CNTSPROB_alternative, 'x', XSIZE(struct section_problem_data, alternative), "alternative", XOFFSET(struct section_problem_data, alternative) },
   [CNTSPROB_personal_deadline] = { CNTSPROB_personal_deadline, 'x', XSIZE(struct section_problem_data, personal_deadline), "personal_deadline", XOFFSET(struct section_problem_data, personal_deadline) },

@@ -537,6 +537,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(lang_max_vm_size, "x"),
   PROBLEM_PARAM(lang_max_stack_size, "x"),
   PROBLEM_PARAM(lang_max_rss_size, "x"),
+  PROBLEM_PARAM(checker_extra_files, "x"),
   PROBLEM_PARAM(check_cmd, "S"),
   PROBLEM_PARAM(valuer_cmd, "S"),
   PROBLEM_PARAM(interactor_cmd, "S"),
@@ -1453,6 +1454,7 @@ prepare_problem_free_func(struct generic_section_config *gp)
   sarray_free(p->lang_max_vm_size);
   sarray_free(p->lang_max_stack_size);
   sarray_free(p->lang_max_rss_size);
+  sarray_free(p->checker_extra_files);
   sarray_free(p->personal_deadline);
   sarray_free(p->alternative);
   sarray_free(p->statement_env);
@@ -6227,6 +6229,7 @@ prepare_copy_problem(const struct section_problem_data *in)
   out->lang_max_vm_size = sarray_copy(in->lang_max_vm_size);
   out->lang_max_stack_size = sarray_copy(in->lang_max_stack_size);
   out->lang_max_rss_size = sarray_copy(in->lang_max_rss_size);
+  out->checker_extra_files = sarray_copy(in->checker_extra_files);
   out->statement_env = sarray_copy(in->statement_env);
   //out->alternative = NULL;
   //out->personal_deadline = NULL;

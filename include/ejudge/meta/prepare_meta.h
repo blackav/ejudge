@@ -524,6 +524,7 @@ enum
   CNTSPROB_lang_max_vm_size,
   CNTSPROB_lang_max_stack_size,
   CNTSPROB_lang_max_rss_size,
+  CNTSPROB_checker_extra_files,
   CNTSPROB_statement_env,
   CNTSPROB_alternative,
   CNTSPROB_personal_deadline,

@@ -1482,6 +1482,7 @@ prepare_unparse_prob(
   do_xstr(f, &ab, "lang_max_vm_size", prob->lang_max_vm_size);
   do_xstr(f, &ab, "lang_max_stack_size", prob->lang_max_stack_size);
   do_xstr(f, &ab, "lang_max_rss_size", prob->lang_max_rss_size);
+  do_xstr(f, &ab, "checker_extra_files", prob->checker_extra_files);
   do_xstr(f, &ab, "test_sets", prob->test_sets);
   do_xstr(f, &ab, "disable_language", prob->disable_language);
   do_xstr(f, &ab, "enable_language", prob->enable_language);
@@ -1948,6 +1949,7 @@ prepare_unparse_actual_prob(
   do_xstr(f, &ab, "lang_max_vm_size", prob->lang_max_vm_size);
   do_xstr(f, &ab, "lang_max_stack_size", prob->lang_max_stack_size);
   do_xstr(f, &ab, "lang_max_rss_size", prob->lang_max_rss_size);
+  do_xstr(f, &ab, "checker_extra_files", prob->checker_extra_files);
   do_xstr(f, &ab, "test_sets", prob->test_sets);
   do_xstr(f, &ab, "disable_language", prob->disable_language);
   do_xstr(f, &ab, "enable_language", prob->enable_language);

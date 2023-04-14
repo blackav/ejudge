@@ -1227,6 +1227,7 @@ struct section_problem_data
   char **lang_max_vm_size;
   char **lang_max_stack_size;
   char **lang_max_rss_size;
+  char **checker_extra_files;
 
   /** environment variables for the statement */
   ejenvlist_t statement_env;
