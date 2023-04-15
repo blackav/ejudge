@@ -456,12 +456,12 @@ handle_rchunks(struct AgentClientSsh *acs)
                         f->ready = 1;
                         f->callback(f, f->user);
                     } else {
-                        cJSON *jj = cJSON_GetObjectItem(f->value, "q");
+                        cJSON *jj = cJSON_GetObjectItem(j, "q");
                         if (jj && jj->type == cJSON_String && !strcmp("channel-result", jj->valuestring)
                             && f->enable_chained_future) {
                             // create the future for wake-up immediately here
                             // to avoid the race condition
-                            cJSON *jc = cJSON_GetObjectItem(f->value, "channel");
+                            cJSON *jc = cJSON_GetObjectItem(j, "channel");
                             if (jc && jc->type == cJSON_Number) {
                                 int channel = jc->valuedouble;
                                 struct Future *future = calloc(1, sizeof(*future));
