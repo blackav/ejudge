@@ -437,23 +437,12 @@ handle_rchunks(struct AgentClientSsh *acs)
         if (!j) {
             err("JSON parse error");
         } else {
-            cJSON *jwu = cJSON_GetObjectItem(j, "wake-up");
-            int wake_up_flag = (jwu && jwu->type == cJSON_True);
-            if (wake_up_flag) {
-                info("wake-up received: %s", c->data);
-            }
             cJSON *js = cJSON_GetObjectItem(j, "s");
             if (!js || js->type != cJSON_Number) {
                 err("invalid JSON");
             } else {
                 int serial = js->valuedouble;
-                if (wake_up_flag) {
-                    info("serial: %d", serial);
-                }
                 struct Future *f = get_future(acs, serial);
-                if (wake_up_flag) {
-                    info("future: %p, %p", f, f->callback);
-                }
                 if (f) {
                     if (f->callback) {
                         f->value = j; j = NULL;
@@ -462,9 +451,6 @@ handle_rchunks(struct AgentClientSsh *acs)
                     } else {
                         int notify_signal = f->notify_signal;
                         pthread_t notify_thread = f->notify_thread;
-                        if (wake_up_flag) {
-                            info("signal: %d, %llu", notify_signal, (unsigned long long) notify_thread);
-                        }
                         f->value = j; j = NULL;
                         pthread_mutex_lock(&f->m);
                         f->ready = 1;
