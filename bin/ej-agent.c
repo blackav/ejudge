@@ -883,6 +883,7 @@ check_spool_state(struct AppState *as)
     cJSON_AddNumberToObject(reply, "ss", (double) ++as->serial);
     cJSON_AddNumberToObject(reply, "s", (double) as->wait_serial);
     cJSON_AddNumberToObject(reply, "t", (double) as->wait_time_ms);
+    cJSON_AddTrueToObject(reply, "wake-up");
     cJSON_AddStringToObject(reply, "q", "poll-result");
     cJSON_AddStringToObject(reply, "pkt-name", pkt_name);
     cJSON_AddTrueToObject(reply, "ok");

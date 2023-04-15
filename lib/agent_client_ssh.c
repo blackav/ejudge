@@ -437,6 +437,10 @@ handle_rchunks(struct AgentClientSsh *acs)
         if (!j) {
             err("JSON parse error");
         } else {
+            cJSON *jwu = cJSON_GetObjectItem(j, "wake-up");
+            if (jwu && jwu->type == cJSON_True) {
+                info("wake-up received: %s", c->data);
+            }
             cJSON *js = cJSON_GetObjectItem(j, "s");
             if (!js || js->type != cJSON_Number) {
                 err("invalid JSON");
