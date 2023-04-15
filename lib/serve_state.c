@@ -118,7 +118,7 @@ serve_state_destroy(
     xfree(state->pending_xml_import);
   }
 
-  if (ul_conn && state->global && cnts->id > 0) {
+  if (ul_conn && state->global && cnts && cnts->id > 0) {
     // ignore error code
     userlist_clnt_notify(ul_conn, ULS_DEL_NOTIFY, cnts->id);
   }
