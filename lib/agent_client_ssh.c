@@ -65,6 +65,13 @@ struct Future
     cJSON *value;
     long long expiration_time_ms;
     int cancel_requested;
+
+    // information for the chained future
+    int enable_chained_future;
+    int chained_notify_signal;
+    pthread_t chained_notify_thread;
+    long long chained_timeout_ms;
+    struct Future *chained_future;
 };
 
 struct AgentClientSsh
@@ -449,6 +456,28 @@ handle_rchunks(struct AgentClientSsh *acs)
                         f->ready = 1;
                         f->callback(f, f->user);
                     } else {
+                        cJSON *jj = cJSON_GetObjectItem(f->value, "q");
+                        if (jj && jj->type == cJSON_String && !strcmp("channel-result", jj->valuestring)
+                            && f->enable_chained_future) {
+                            // create the future for wake-up immediately here
+                            // to avoid the race condition
+                            cJSON *jc = cJSON_GetObjectItem(f->value, "channel");
+                            if (jc && jc->type == cJSON_Number) {
+                                int channel = jc->valuedouble;
+                                struct Future *future = calloc(1, sizeof(*future));
+                                f->chained_future = future;
+                                future_init(future, channel);
+                                future->notify_signal = f->chained_notify_signal;
+                                future->notify_thread = f->chained_notify_thread;
+                                if (f->chained_timeout_ms > 0) {
+                                    struct timeval tv;
+                                    gettimeofday(&tv, NULL);
+                                    long long current_time_ms = tv.tv_sec * 1000LL + tv.tv_usec / 1000;
+                                    future->expiration_time_ms = current_time_ms + f->chained_timeout_ms;
+                                }
+                                add_future(acs, future);
+                            }
+                        }
                         int notify_signal = f->notify_signal;
                         pthread_t notify_thread = f->notify_thread;
                         f->value = j; j = NULL;
@@ -1322,6 +1351,16 @@ async_wait_init_func(
     if (random_mode > 0) {
         cJSON_AddTrueToObject(jq, "random_mode");
     }
+
+    // if a packet is not available immediately, 'channel-result' is returned
+    // a new future is returned in chained_future
+    // the future is created in I/O thread to avoid race condition
+    f.enable_chained_future = 1;
+    f.chained_notify_signal = notify_signal;
+    f.chained_notify_thread = pthread_self();
+    f.chained_timeout_ms = timeout_ms;
+    f.chained_future = NULL;
+
     add_wchunk_json(acs, jq);
     cJSON_Delete(jq); jq = NULL;
 
@@ -1344,23 +1383,10 @@ async_wait_init_func(
                 }
             }
             if (jj && jj->type == cJSON_String && !strcmp("channel-result", jj->valuestring)) {
-                cJSON *jc = cJSON_GetObjectItem(f.value, "channel");
-                if (jc && jc->type == cJSON_Number) {
-                    int channel = jc->valuedouble;
-                    struct Future *future = malloc(sizeof(*future));
-                    *p_future = future;
-                    future_init(future, channel);
-                    future->notify_signal = notify_signal;
-                    future->notify_thread = pthread_self();
-                    if (timeout_ms > 0) {
-                        struct timeval tv;
-                        gettimeofday(&tv, NULL);
-                        long long current_time_ms = tv.tv_sec * 1000LL + tv.tv_usec / 1000;
-                        future->expiration_time_ms = current_time_ms + timeout_ms;
-                    }
-                    add_future(acs, future);
-                    result = 0;
-                }
+                // the future to wait on is already create in the IO thread
+                *p_future = f.chained_future;
+                f.chained_future = NULL;
+                result = 0;
             }
         }
     }
