@@ -478,8 +478,9 @@ static void
 timer_read_func(struct AppState *as, struct FDInfo *fdi)
 {
     uint64_t value;
-    read(fdi->fd, &value, sizeof(value));
-    as->timer_flag = 1;
+    if (read(fdi->fd, &value, sizeof(value)) == (ssize_t) sizeof(value)) {
+        as->timer_flag = 1;
+    }
 }
 
 static const struct FDInfoOps timer_ops =
@@ -828,36 +829,39 @@ fail:
 static void
 app_state_configure_directories(struct AppState *as)
 {
+    // attribute ((unused)) also disables "set but not used" warning
+    int __attribute__((unused)) r;
+
     if (!as->mode || !as->queue_id) return;
 
     if (as->mode == PREPARE_COMPILE) {
 #if defined EJUDGE_COMPILE_SPOOL_DIR
         char *s = NULL;
-        asprintf(&s, "%s/%s", EJUDGE_COMPILE_SPOOL_DIR, as->queue_id);
+        r = asprintf(&s, "%s/%s", EJUDGE_COMPILE_SPOOL_DIR, as->queue_id);
         as->spool_dir = s; s = NULL;
-        asprintf(&s, "%s/queue", as->spool_dir);
+        r = asprintf(&s, "%s/queue", as->spool_dir);
         as->queue_dir = s; s = NULL;
-        asprintf(&s, "%s/dir", as->queue_dir);
+        r = asprintf(&s, "%s/dir", as->queue_dir);
         as->queue_packet_dir = s; s = NULL;
-        asprintf(&s, "%s/%s/src", EJUDGE_COMPILE_SPOOL_DIR, as->queue_id);
+        r = asprintf(&s, "%s/%s/src", EJUDGE_COMPILE_SPOOL_DIR, as->queue_id);
         as->data_dir = s; s = NULL;
 #endif
     } else if (as->mode == PREPARE_RUN) {
 #if defined EJUDGE_RUN_SPOOL_DIR
         char *s = NULL;
-        asprintf(&s, "%s/%s", EJUDGE_RUN_SPOOL_DIR, as->queue_id);
+        r = asprintf(&s, "%s/%s", EJUDGE_RUN_SPOOL_DIR, as->queue_id);
         as->spool_dir = s; s = NULL;
-        asprintf(&s, "%s/queue", as->spool_dir);
+        r = asprintf(&s, "%s/queue", as->spool_dir);
         as->queue_dir = s; s = NULL;
-        asprintf(&s, "%s/dir", as->queue_dir);
+        r = asprintf(&s, "%s/dir", as->queue_dir);
         as->queue_packet_dir = s; s = NULL;
-        asprintf(&s, "%s/%s/exe", EJUDGE_RUN_SPOOL_DIR, as->queue_id);
+        r = asprintf(&s, "%s/%s/exe", EJUDGE_RUN_SPOOL_DIR, as->queue_id);
         as->data_dir = s; s = NULL;
-        asprintf(&s, "%s/%s/heartbeat", EJUDGE_RUN_SPOOL_DIR, as->queue_id);
+        r = asprintf(&s, "%s/%s/heartbeat", EJUDGE_RUN_SPOOL_DIR, as->queue_id);
         as->heartbeat_dir = s; s = NULL;
-        asprintf(&s, "%s/dir", as->heartbeat_dir);
+        r = asprintf(&s, "%s/dir", as->heartbeat_dir);
         as->heartbeat_packet_dir = s; s = NULL;
-        asprintf(&s, "%s/in", as->heartbeat_dir);
+        r = asprintf(&s, "%s/in", as->heartbeat_dir);
         as->heartbeat_in_dir = s; s = NULL;
 #endif
     }
@@ -894,6 +898,8 @@ check_spool_state(struct AppState *as)
     fdinfo_add_write_data_2(as->stdout_fdi, jstr, jlen);
     jstr = NULL;
     app_state_arm_for_write(as, as->stdout_fdi);
+
+    info("%s: wake-up on directory: %d, %d, %s", as->inst_id, as->serial, as->wait_serial, pkt_name);
 
     cJSON_Delete(reply);
     as->wait_serial = 0;
