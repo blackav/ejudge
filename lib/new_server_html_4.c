@@ -211,7 +211,6 @@ cmd_logout(
   userlist_clnt_delete_cookie(ul_conn, phr->user_id, phr->contest_id,
                               phr->session_id,
                               phr->client_key);
-  ns_remove_session(phr->session_id);
   return 0;
 }
 

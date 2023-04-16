@@ -174,37 +174,6 @@ nsdb_get_examiner_count(int contest_id, int prob_id)
 }
 
 static void
-do_remove_session(struct session_info *p)
-{
-  if (!p) return;
-
-  if (!p->prev) {
-    session_first = p->next;
-  } else {
-    p->prev->next = p->next;
-  }
-  if (!p->next) {
-    session_last = p->prev;
-  } else {
-    p->next->prev = p->prev;
-  }
-  // cleanup p
-  userlist_free(&p->user_info->b);
-  xfree(p);
-}
-
-void
-ns_remove_session(ej_cookie_t session_id)
-{
-  struct session_info *p;
-
-  for (p = session_first; p; p = p->next) {
-    if (p->_session_id == session_id) break;
-  }
-  do_remove_session(p);
-}
-
-static void
 startup_error(const char *format, ...)
 {
   char buf[1024];

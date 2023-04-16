@@ -7561,7 +7561,6 @@ priv_logout(FILE *fout,
                               phr->contest_id,
                               phr->client_key,
                               phr->session_id);
-  ns_remove_session(phr->session_id);
   snprintf(urlbuf, sizeof(urlbuf),
            "%s?contest_id=%d&locale_id=%d&role=%d",
            phr->self_url, phr->contest_id, phr->locale_id, phr->role);
@@ -14120,7 +14119,6 @@ unpriv_logout(FILE *fout,
   userlist_clnt_delete_cookie(ul_conn, phr->user_id, phr->contest_id,
                               phr->session_id,
                               phr->client_key);
-  ns_remove_session(phr->session_id);
 
   if (phr->client_state->ops->set_client_auth) {
     phr->client_state->ops->set_client_auth(phr->client_state, NULL);

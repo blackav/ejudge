@@ -169,8 +169,6 @@ ns_html_error(
         int priv_mode,
         int error_code);
 
-void ns_remove_session(ej_cookie_t session_id);
-
 void
 ns_invalidate_session(
         unsigned long long session_id,
