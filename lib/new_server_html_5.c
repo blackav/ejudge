@@ -384,7 +384,6 @@ cmd_login(
     }
 
     curl(urlbuf, sizeof(urlbuf), cnts, phr, 1, "&", 0, NULL);
-    ns_get_session(phr->session_id, phr->client_key, 0);
     ns_refresh_page_2(fout, phr->client_key, urlbuf);
   } else if (cnts->force_registration) {
     // register for the contest anyway, but do not redirect to new-client

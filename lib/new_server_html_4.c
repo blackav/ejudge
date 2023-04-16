@@ -189,7 +189,6 @@ cmd_login(
       FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
   }
 
-  ns_get_session(phr->session_id, phr->client_key, 0);
   if (phr->client_key) {
     fprintf(fout, "%016llx-%016llx\n", phr->session_id, phr->client_key);
   } else {

@@ -173,46 +173,6 @@ nsdb_get_examiner_count(int contest_id, int prob_id)
   return nsdb_default->iface->get_examiner_count(nsdb_default->data, contest_id, prob_id);
 }
 
-struct session_info *
-ns_get_session(
-        ej_cookie_t session_id,
-        ej_cookie_t client_key,
-        time_t cur_time)
-{
-  struct session_info *p;
-
-  if (!cur_time) cur_time = time(0);
-  for (p = session_first; p; p = p->next) {
-    if (p->_session_id == session_id && p->_client_key == client_key) break;
-  }
-  if (!p) {
-    XCALLOC(p, 1);
-    p->_session_id = session_id;
-    p->_client_key = client_key;
-    p->expire_time = cur_time + 60*60*24;
-    if (session_first) {
-      session_first->prev = p;
-      p->next = session_first;
-      session_first = p;
-    } else {
-      session_first = session_last = p;
-    }
-  } else if (p != session_first) {
-    // move the session to the head of the list
-    p->prev->next = p->next;
-    if (!p->next) {
-      session_last = p->prev;
-    } else {
-      p->next->prev = p->prev;
-    }
-    p->prev = 0;
-    session_first->prev = p;
-    p->next = session_first;
-    session_first = p;
-  }
-  return p;
-}
-
 static void
 do_remove_session(struct session_info *p)
 {

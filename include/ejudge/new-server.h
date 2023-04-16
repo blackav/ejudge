@@ -169,12 +169,6 @@ ns_html_error(
         int priv_mode,
         int error_code);
 
-struct session_info *
-ns_get_session(
-        ej_cookie_t session_id,
-        ej_cookie_t client_key,
-        time_t cur_time);
-
 void ns_remove_session(ej_cookie_t session_id);
 
 void

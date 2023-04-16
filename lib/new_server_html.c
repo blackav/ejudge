@@ -1399,7 +1399,6 @@ privileged_page_cookie_login(FILE *fout,
     }
   }
 
-  ns_get_session(phr->session_id, phr->client_key, 0);
   ns_refresh_page(fout, phr, NEW_SRV_ACTION_MAIN_PAGE, 0);
 }
 
@@ -1512,7 +1511,6 @@ privileged_page_login(FILE *fout,
     }
   }
 
-  ns_get_session(phr->session_id, phr->client_key, 0);
   ns_refresh_page(fout, phr, NEW_SRV_ACTION_MAIN_PAGE, 0);
 }
 
@@ -10348,7 +10346,6 @@ unprivileged_page_login(FILE *fout, struct http_request_info *phr)
     snprintf(prob_name_3, sizeof(prob_name_3), "lt=1");
   }
 
-  ns_get_session(phr->session_id, phr->client_key, 0);
   ns_refresh_page(fout, phr, action, prob_name_3);
 }
 
@@ -18077,7 +18074,6 @@ batch_login(
     snprintf(prob_name_3, sizeof(prob_name_3), "lt=1");
   }
 
-  ns_get_session(phr->session_id, phr->client_key, 0);
   ns_refresh_page(fout, phr, action, prob_name_3);
   goto cleanup;
 
