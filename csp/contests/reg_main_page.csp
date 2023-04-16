@@ -155,7 +155,7 @@ ns_reg_main_page_view_info(
 %><b><s:a class="menu" ac="reg-register"><s:_>Confirm registration</s:_></s:a></b><%
   }
 %><%
-  u = phr->session_extra->user_info;
+  if (phr && phr->nsi) u = phr->nsi->user_info;
   if (u) ui = userlist_get_cnts0(u);
   if (u->read_only || (ui && ui->cnts_read_only)) {
 %>/ <b><s:_>READ-ONLY</s:_></b><%

@@ -204,8 +204,8 @@
         goto done;
     }
 
-    userlist_free(&phr->session_extra->user_info->b);
-    phr->session_extra->user_info = NULL;
+    ns_invalidate_session(phr->session_id, phr->client_key);
+    phr->nsi = NULL;
 
     avt->iface->delete_by_key(avt->data, av->random_key);
     result = 0;

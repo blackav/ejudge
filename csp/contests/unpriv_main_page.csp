@@ -73,10 +73,10 @@ ns_unparse_answers(
 %><s:read var="telegram_token" ignoreerrors="yes" /><%
 %><s:read var="all_runs" ignoreerrors="yes" default="0" /><%
   if (all_runs != 1) all_runs = 0;
-  phr->session_extra->user_view_all_runs = all_runs;
+  if (phr->nsi) phr->nsi->user_view_all_runs  = all_runs;
 %><s:read var="all_clars" ignoreerrors="yes" default="0" /><%
   if (all_clars != 1) all_clars = 0;
-  phr->session_extra->user_view_all_clars = all_clars;
+  if (phr->nsi) phr->nsi->user_view_all_clars = all_clars;
 %><s:read var="prob_id" ignoreerrors="yes" default="0" /><%
   if (prob_id < 0) prob_id = 0;
 %><s:read var="prob_name" ignoreerrors="yes" /><%

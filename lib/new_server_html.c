@@ -10037,7 +10037,6 @@ privileged_entry_point(
            "<input type=\"hidden\" name=\"SID\" value=\"%016llx\"/>",
            phr->session_id);
   phr->hidden_vars = hid_buf;
-  phr->session_extra = ns_get_session(phr->session_id, phr->client_key, cur_time);
   phr->caps = 0;
   if (opcaps_find(&cnts->capabilities, phr->login, &caps) >= 0) {
     phr->caps = caps;
@@ -17337,7 +17336,6 @@ unprivileged_entry_point(
            "<input type=\"hidden\" name=\"SID\" value=\"%016llx\"/>",
            phr->session_id);
   phr->hidden_vars = hid_buf;
-  phr->session_extra = ns_get_session(phr->session_id, phr->client_key, cur_time);
 
   memset(&callbacks, 0, sizeof(callbacks));
   callbacks.user_data = (void*) phr->fw_state;

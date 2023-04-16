@@ -37,7 +37,7 @@ ns_edit_general_form(
   unsigned char title[1024];
 
   // check that we are allowed to edit something
-  if (phr && phr->session_extra) u = phr->session_extra->user_info;
+  if (phr && phr->nsi) u = phr->nsi->user_info;
   if (!u || u->read_only) goto redirect_back;
   ui = userlist_get_cnts0(u);
   if (ui && ui->cnts_read_only) goto redirect_back;
