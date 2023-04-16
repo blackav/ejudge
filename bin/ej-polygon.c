@@ -435,7 +435,7 @@ curl_iface_get_func(struct DownloadData *data, const unsigned char *url)
 
     fprintf(data->log_f, "GET: %s\n", url);
 
-    curl_easy_setopt(data->curl, CURLOPT_ACCEPT_ENCODING, "gzip, deflate, br");
+    //curl_easy_setopt(data->curl, CURLOPT_ACCEPT_ENCODING, "gzip, deflate, br");
     //curl_easy_setopt(data->curl, CURLOPT_AUTOREFERER, 1);
     curl_easy_setopt(data->curl, CURLOPT_FOLLOWLOCATION, 1);
     curl_easy_setopt(data->curl, CURLOPT_COOKIEFILE, "");
@@ -504,7 +504,7 @@ curl_iface_login_action_func(struct DownloadData *data, struct PolygonState *ps)
     password_esc = curl_easy_escape(data->curl, data->pkt->password, 0);
     snprintf(param_buf, sizeof(param_buf), "submitted=true&login=%s&password=%s&submit=Login&fp=%s", login_esc, password_esc, ps->ccid_amp);
 
-    curl_easy_setopt(data->curl, CURLOPT_ACCEPT_ENCODING, "gzip, deflate, br");
+    //curl_easy_setopt(data->curl, CURLOPT_ACCEPT_ENCODING, "gzip, deflate, br");
     //curl_easy_setopt(data->curl, CURLOPT_AUTOREFERER, 1);
     curl_easy_setopt(data->curl, CURLOPT_FOLLOWLOCATION, 1);
     curl_easy_setopt(data->curl, CURLOPT_USERAGENT, data->pkt->user_agent);
