@@ -28,24 +28,7 @@
 #include <time.h>
 #include <sys/time.h>
 
-// a structure to store some persistent information
 struct userlist_user;
-
-struct session_info
-{
-  struct session_info *next;
-  struct session_info *prev;
-  ej_cookie_t _session_id;
-  ej_cookie_t _client_key;
-  time_t expire_time;
-
-  int user_view_all_runs;
-  int user_view_all_clars;
-  int user_viewed_section;
-
-  struct userlist_user *user_info;
-};
-
 struct server_framework_state;
 struct client_state;
 struct contest_desc;
