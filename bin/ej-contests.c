@@ -244,19 +244,6 @@ ns_remove_session(ej_cookie_t session_id)
   do_remove_session(p);
 }
 
-void
-new_server_remove_expired_sessions(time_t cur_time)
-{
-  struct session_info *p, *q;
-
-  if (!cur_time) cur_time = time(0);
-  for (p = session_first; p; p = q) {
-    q = p->next;
-    if (p->expire_time < cur_time)
-      do_remove_session(p);
-  }
-}
-
 static void
 startup_error(const char *format, ...)
 {
