@@ -163,9 +163,12 @@ int  ns_loop_callback(struct server_framework_state *state);
 void ns_post_select_callback(struct server_framework_state *state);
 
 unsigned char *
-ns_submit_button(unsigned char *buf, size_t size,
-                 const unsigned char *var_name, int action,
-                 const unsigned char *label);
+ns_submit_button(
+         unsigned char *buf,
+         size_t size,
+         const unsigned char *var_name,
+         int action,
+         const unsigned char *label);
 
 unsigned char *
 ns_submit_button_2(
@@ -177,9 +180,11 @@ ns_submit_button_2(
         const unsigned char *label);
 
 unsigned char *
-ns_url(unsigned char *buf, size_t size,
-       const struct http_request_info *phr,
-       int action, const char *format, ...)
+ns_url(unsigned char *buf,
+        size_t size,
+        const struct http_request_info *phr,
+        int action,
+        const char *format, ...)
   __attribute__((format(printf, 5, 6)));
 unsigned char *
 ns_url_unescaped(unsigned char *buf, size_t size,
@@ -209,12 +214,16 @@ ns_refresh_page_2(
         const unsigned char *url);
 
 void
-ns_write_priv_all_runs(FILE *f,
-                       struct http_request_info *phr,
-                       const struct contest_desc *cnts,
-                       struct contest_extra *extra,
-                       int first_run_set, int first_run, int last_run_set, int last_run,
-                       unsigned char const *filter_expr);
+ns_write_priv_all_runs(
+        FILE *f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra,
+        int first_run_set,
+        int first_run,
+        int last_run_set,
+        int last_run,
+        unsigned char const *filter_expr);
 
 // clar filter options
 enum
@@ -374,10 +383,12 @@ ns_write_judging_priorities(
         const struct contest_desc *cnts,
         struct contest_extra *extra);
 int
-ns_new_run_form(FILE *fout, FILE *log_f,
-                struct http_request_info *phr,
-                const struct contest_desc *cnts,
-                struct contest_extra *extra);
+ns_new_run_form(
+        FILE *fout,
+        FILE *log_f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra);
 
 void
 ns_write_priv_standings(
@@ -511,9 +522,17 @@ ns_get_user_problems_summary(
         const ej_ip_t *ip,
         struct UserProblemInfo *pinfo); /* user problem info */
 
-int ns_insert_variant_num(unsigned char *buf, size_t size,
-                          const unsigned char *file, int variant);
-void ns_register_pages(FILE *fout, struct http_request_info *phr);
+int
+ns_insert_variant_num(
+        unsigned char *buf,
+        size_t size,
+        const unsigned char *file,
+        int variant);
+
+void
+ns_register_pages(
+        FILE *fout,
+        struct http_request_info *phr);
 
 unsigned char *
 ns_get_checker_comment(
