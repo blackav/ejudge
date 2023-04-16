@@ -160,6 +160,23 @@ parse_user_list(
         intarray_t *uset,
         int skip_user_check);
 
+void
+ns_invalidate_session(
+        unsigned long long session_id,
+        unsigned long long client_key)
+{
+
+  struct new_session_info del_item;
+
+  if (nsc_remove(&main_id_cache.s, session_id, client_key, &del_item)) {
+    xfree(del_item.login);
+    xfree(del_item.name);
+    if (del_item.user_info) {
+      userlist_free(&del_item.user_info->b);
+    }
+  }
+}
+
 static void
 init_contest_external_action(ContestExternalActions *pact, int contest_id)
 {

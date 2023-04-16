@@ -177,6 +177,11 @@ ns_get_session(
 
 void ns_remove_session(ej_cookie_t session_id);
 
+void
+ns_invalidate_session(
+        unsigned long long session_id,
+        unsigned long long client_key);
+
 void ns_unload_contests(void);
 
 int  ns_loop_callback(struct server_framework_state *state);
