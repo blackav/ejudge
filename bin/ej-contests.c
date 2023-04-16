@@ -93,9 +93,6 @@ struct userlist_clnt *ul_conn;
 int ul_uid;
 unsigned char *ul_login;
 
-struct session_info *session_first, *session_last;
-//time_t server_start_time;
-
 // global session cache
 extern struct id_cache main_id_cache;
 
