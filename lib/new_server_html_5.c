@@ -939,7 +939,7 @@ ns_reg_main_page_view_info(
 
   if (phr->action == NEW_SRV_ACTION_REG_VIEW_GENERAL) {
     fprintf(fout, "<h2>%s", _("General information"));
-    if (!u->read_only && (!ui || !ui->cnts_read_only) && !(phr->reg_flags & USERLIST_UC_REG_READONLY)) {
+    if (u && !u->read_only && (!ui || !ui->cnts_read_only) && !(phr->reg_flags & USERLIST_UC_REG_READONLY)) {
       fprintf(fout, " [%s%s</a>]",
               ns_aref(ub, sizeof(ub), phr, NEW_SRV_ACTION_REG_EDIT_GENERAL_PAGE, 0), _("Edit"));
     }

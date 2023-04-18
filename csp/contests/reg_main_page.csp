@@ -157,7 +157,7 @@ ns_reg_main_page_view_info(
 %><%
   if (phr && phr->nsi) u = phr->nsi->user_info;
   if (u) ui = userlist_get_cnts0(u);
-  if (u->read_only || (ui && ui->cnts_read_only)) {
+  if ((u && u->read_only) || (ui && ui->cnts_read_only)) {
 %>/ <b><s:_>READ-ONLY</s:_></b><%
   }
 %></div>
