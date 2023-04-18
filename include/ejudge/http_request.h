@@ -32,6 +32,7 @@ struct sid_state;
 struct userlist_clnt;
 struct cJSON;
 struct new_session_info;
+struct userlist_user;
 
 struct http_request_info
 {
@@ -148,6 +149,8 @@ struct http_request_info
   size_t log_z;
 
   void *extra_info;
+
+  struct userlist_user *user_info;
 
   unsigned char data[0];
 };

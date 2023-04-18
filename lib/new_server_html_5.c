@@ -870,7 +870,7 @@ ns_reg_main_page_view_info(
   const struct userlist_user_info *ui = 0;
   const struct userlist_members *mmm = 0;
 
-  if (phr->nsi) u = phr->nsi->user_info;
+  u = phr->user_info;
   if (u) ui = userlist_get_cnts0(u);
   if (ui) mmm = ui->members;
 
@@ -1941,12 +1941,13 @@ submit_member_editing(
   int deleted_num = 0, edited_num = 0;
   const unsigned char *legend;
 
-  if (phr->nsi) u = phr->nsi->user_info;
   if (cnts->personal) {
     // they kidding us...
     ns_refresh_page(fout, phr, NEW_SRV_ACTION_REG_VIEW_GENERAL, 0);
     return;
   }
+
+  u = phr->user_info;
 
   // role, member, param_%d
   if (hr_cgi_param_int(phr, "role", &role) < 0
@@ -2182,12 +2183,13 @@ add_member(
   int r, role = 0;
   struct userlist_user *u = NULL;
 
-  if (phr->nsi) u = phr->nsi->user_info;
   if (cnts->personal) {
     // they kidding us...
     ns_refresh_page(fout, phr, NEW_SRV_ACTION_REG_VIEW_GENERAL, 0);
     return;
   }
+
+  u = phr->user_info;
 
   // role
   if (hr_cgi_param_int(phr, "role", &role) < 0
@@ -2249,12 +2251,13 @@ remove_member(
   const struct userlist_user *u = NULL;
   const struct userlist_member *m = 0;
 
-  if (phr->nsi) u = phr->nsi->user_info;
   if (cnts->personal) {
     // they kidding us...
     ns_refresh_page(fout, phr, NEW_SRV_ACTION_REG_VIEW_GENERAL, 0);
     return;
   }
+
+  u = phr->user_info;
 
   // role
   if (hr_cgi_param_int(phr, "role", &role) < 0
@@ -2319,12 +2322,13 @@ move_member(
   const struct userlist_user *u = NULL;
   const struct userlist_member *m = 0;
 
-  if (phr->nsi) u = phr->nsi->user_info;
   if (cnts->personal) {
     // they kidding us...
     ns_refresh_page(fout, phr, NEW_SRV_ACTION_REG_VIEW_GENERAL, 0);
     return;
   }
+
+  u = phr->user_info;
 
   // role
   if (hr_cgi_param_int(phr, "role", &role) < 0
@@ -3705,15 +3709,15 @@ ns_register_pages(FILE *fout, struct http_request_info *phr)
     return error_page(fout, phr, NEW_SRV_ERR_PERMISSION_DENIED);
   }
 
-  if (phr->nsi && !phr->nsi->user_info) {
+  if (!phr->user_info) {
     if (userlist_clnt_get_info(ul_conn, ULS_PRIV_GET_USER_INFO,
                                phr->user_id, phr->contest_id,
                                &user_info_xml) < 0) {
       // FIXME: need better error reporting
       return error_page(fout, phr, NEW_SRV_ERR_USERLIST_SERVER_DOWN);
     }
-    phr->nsi->user_info = userlist_parse_user_str(user_info_xml);
-    if (!phr->nsi->user_info) {
+    phr->user_info = userlist_parse_user_str(user_info_xml);
+    if (!phr->user_info) {
       // FIXME: need better error reporting
       return error_page(fout, phr, NEW_SRV_ERR_USERLIST_SERVER_DOWN);
     }

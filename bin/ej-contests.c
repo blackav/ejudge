@@ -480,6 +480,9 @@ cmd_http_request(
   xfree(hr.name_arm);
   xfree(hr.script_part);
   xfree(hr.body_attr);
+  if (hr.user_info) {
+    userlist_free(&hr.user_info->b);
+  }
 }
 
 void
