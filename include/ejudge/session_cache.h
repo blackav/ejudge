@@ -34,7 +34,6 @@ struct new_session_info
 
     unsigned char *login;
     unsigned char *name;
-    struct userlist_user *user_info;
 
     int cmd;     // command (PRIV_GET_COOKIE or TEAM_GET_COOKIE)
     int user_id;
@@ -55,6 +54,8 @@ struct new_session_info
     int user_view_all_runs;
     int user_view_all_clars;
     int user_viewed_section;
+
+    unsigned char pad[8];
 };
 
 struct new_session_cache

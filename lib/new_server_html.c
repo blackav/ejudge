@@ -171,9 +171,6 @@ ns_invalidate_session(
   if (nsc_remove(&main_id_cache.s, session_id, client_key, &del_item)) {
     xfree(del_item.login);
     xfree(del_item.name);
-    if (del_item.user_info) {
-      userlist_free(&del_item.user_info->b);
-    }
   }
 }
 
@@ -9849,9 +9846,6 @@ priv_check_cached_session(struct http_request_info *phr)
   } else {
     xfree(nsi->login); nsi->login = NULL;
     xfree(nsi->name); nsi->name = NULL;
-    if (nsi->user_info) {
-      userlist_free(&nsi->user_info->b);
-    }
     memset(nsi, 0, sizeof(*nsi));
     nsi->session_id = phr->session_id;
     nsi->client_key = phr->client_key;
@@ -17120,9 +17114,6 @@ unpriv_check_cached_session(struct http_request_info *phr)
   } else {
     xfree(nsi->login); nsi->login = NULL;
     xfree(nsi->name); nsi->name = NULL;
-    if (nsi->user_info) {
-      userlist_free(&nsi->user_info->b);
-    }
     memset(nsi, 0, sizeof(*nsi));
     nsi->session_id = phr->session_id;
     nsi->client_key = phr->client_key;
