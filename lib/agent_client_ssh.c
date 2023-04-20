@@ -1378,6 +1378,9 @@ async_wait_init_func(
     if (random_mode > 0) {
         cJSON_AddTrueToObject(jq, "random_mode");
     }
+    if (enable_file > 0) {
+        cJSON_AddTrueToObject(jq, "enable_file");
+    }
 
     // if a packet is not available immediately, 'channel-result' is returned
     // a new future is returned in chained_future
@@ -1408,6 +1411,18 @@ async_wait_init_func(
                     snprintf(pkt_name, pkt_len, "%s", jn->valuestring);
                     result = 1;
                 }
+            }
+            if (jj && jj->type == cJSON_String
+                && !strcmp("file-result", jj->valuestring)) {
+                cJSON *jn = cJSON_GetObjectItem(f.value, "pkt-name");
+                if (!jn) {
+                    pkt_name[0] = 0;
+                    result = 1;
+                } else if (jn->type == cJSON_String) {
+                    snprintf(pkt_name, pkt_len, "%s", jn->valuestring);
+                    result = 1;
+                }
+                result = process_file_result(acs, f.value, p_data, p_size);
             }
             if (jj && jj->type == cJSON_String && !strcmp("channel-result", jj->valuestring)) {
                 // the future to wait on is already create in the IO thread
