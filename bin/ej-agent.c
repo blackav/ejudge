@@ -168,6 +168,7 @@ struct AppState
     int wait_finished;
     int wait_random_mode;
     int reopen_log_flag;
+    int wait_enable_file;
 
     int ifd;                    /* inotify file descriptor */
     int sfd;                    /* signal file descriptor */
@@ -916,6 +917,7 @@ check_spool_state(struct AppState *as)
     as->wait_serial = 0;
     as->wait_time_ms = 0;
     as->wait_random_mode = 0;
+    as->wait_enable_file = 0;
     if (as->spool_wd >= 0) {
         inotify_rm_watch(as->ifd, as->spool_wd);
         as->spool_wd = -1;
@@ -1675,7 +1677,6 @@ wait_func(
             cJSON_AddStringToObject(reply, "q", "poll-result");
         }
 
-
         char *data = NULL;
         size_t size = 0;
         r = safe_read_packet(as, pkt_name, &data, &size);
@@ -1694,6 +1695,7 @@ wait_func(
     }
 
     as->wait_random_mode = random_mode;
+    as->wait_enable_file = enable_file;
     as->wait_serial = channel;
     as->wait_time_ms = as->current_time_ms;
     as->spool_wd = inotify_add_watch(as->ifd, as->queue_packet_dir, IN_CREATE | IN_MOVED_TO);
@@ -2104,6 +2106,7 @@ cancel_func(
     as->wait_serial = 0;
     as->wait_time_ms = 0;
     as->wait_random_mode = 0;
+    as->wait_enable_file = 0;
     if (as->spool_wd >= 0) {
         inotify_rm_watch(as->ifd, as->spool_wd);
         as->spool_wd = -1;
