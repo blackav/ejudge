@@ -245,11 +245,11 @@ static const struct run_listener_ops super_run_listener_ops =
 static int
 handle_packet(
         serve_state_t state,
-        const unsigned char *pkt_name)
+        const unsigned char *pkt_name,
+        char *srp_b,
+        size_t srp_z)
 {
   int r;
-  char *srp_b = 0;
-  size_t srp_z = 0;
   struct super_run_in_packet *srp = NULL;
   struct super_run_in_global_packet *srgp = NULL;
   struct super_run_in_problem_packet *srpp = NULL;
@@ -782,7 +782,7 @@ do_loop(
       continue;
     }
 
-    r = handle_packet(state, pkt_name);
+    r = handle_packet(state, pkt_name, NULL, 0);
     if (!r) {
       if (agent) {
         //agent->ops->add_ignored(agent, pkt_name);
