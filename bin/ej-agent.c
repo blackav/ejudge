@@ -23,6 +23,7 @@
 #include "ejudge/fileutl.h"
 #include "ejudge/base64.h"
 #include "ejudge/ej_lzma.h"
+#include "ejudge/random.h"
 
 #include <stdlib.h>
 #include "ejudge/cJSON.h"
@@ -178,9 +179,11 @@ struct AppState
     int mode;
     unsigned char *inst_id;
 
+    unsigned char *unique_prefix;
     unsigned char *spool_dir;
     unsigned char *queue_dir;
     unsigned char *queue_packet_dir;
+    unsigned char *queue_out_dir;
     unsigned char *data_dir;
     unsigned char *heartbeat_dir;
     unsigned char *heartbeat_packet_dir;
@@ -834,27 +837,34 @@ app_state_configure_directories(struct AppState *as)
 
     if (!as->mode || !as->queue_id) return;
 
+    char *s = NULL;
+    unsigned long long r64 = random_u64();
+    r = asprintf(&s, "%llx_", r64);
+    as->unique_prefix = s; s = NULL;
+
     if (as->mode == PREPARE_COMPILE) {
 #if defined EJUDGE_COMPILE_SPOOL_DIR
-        char *s = NULL;
         r = asprintf(&s, "%s/%s", EJUDGE_COMPILE_SPOOL_DIR, as->queue_id);
         as->spool_dir = s; s = NULL;
         r = asprintf(&s, "%s/queue", as->spool_dir);
         as->queue_dir = s; s = NULL;
         r = asprintf(&s, "%s/dir", as->queue_dir);
         as->queue_packet_dir = s; s = NULL;
+        r = asprintf(&s, "%s/out", as->queue_dir);
+        as->queue_out_dir = s; s = NULL;
         r = asprintf(&s, "%s/%s/src", EJUDGE_COMPILE_SPOOL_DIR, as->queue_id);
         as->data_dir = s; s = NULL;
 #endif
     } else if (as->mode == PREPARE_RUN) {
 #if defined EJUDGE_RUN_SPOOL_DIR
-        char *s = NULL;
         r = asprintf(&s, "%s/%s", EJUDGE_RUN_SPOOL_DIR, as->queue_id);
         as->spool_dir = s; s = NULL;
         r = asprintf(&s, "%s/queue", as->spool_dir);
         as->queue_dir = s; s = NULL;
         r = asprintf(&s, "%s/dir", as->queue_dir);
         as->queue_packet_dir = s; s = NULL;
+        r = asprintf(&s, "%s/out", as->queue_dir);
+        as->queue_out_dir = s; s = NULL;
         r = asprintf(&s, "%s/%s/exe", EJUDGE_RUN_SPOOL_DIR, as->queue_id);
         as->data_dir = s; s = NULL;
         r = asprintf(&s, "%s/%s/heartbeat", EJUDGE_RUN_SPOOL_DIR, as->queue_id);
@@ -1019,32 +1029,6 @@ set_query_func(
     return 1;
 }
 
-static int
-poll_func(
-        struct AppState *as,
-        const struct QueryCallback *cb,
-        cJSON *query,
-        cJSON *reply)
-{
-    unsigned char pkt_name[PATH_MAX];
-    int random_mode = 0;
-    cJSON *jrm = cJSON_GetObjectItem(query, "random_mode");
-    if (jrm && jrm->type == cJSON_True) {
-        random_mode = 1;
-    }
-    int r = scan_dir(as->queue_dir, pkt_name, sizeof(pkt_name), random_mode);
-    if (r < 0) {
-        cJSON_AddStringToObject(reply, "message", "scan_dir failed");
-        err("%s: scan_dir failed: %s", as->inst_id, strerror(-r));
-        return 0;
-    }
-    if (r > 0) {
-        cJSON_AddStringToObject(reply, "pkt-name", pkt_name);
-    }
-    cJSON_AddStringToObject(reply, "q", "poll-result");
-    return 1;
-}
-
 static void
 add_file_to_object(cJSON *j, const char *data, size_t size)
 {
@@ -1121,6 +1105,141 @@ add_file_to_object(cJSON *j, const char *data, size_t size)
             cJSON_AddStringToObject(j, "data", b64_buf);
             free(b64_buf);
             free(lzma_buf);
+        }
+    }
+}
+
+static int
+safe_read_packet(
+        struct AppState *as,
+        const unsigned char *pkt_name,
+        char **p_data,
+        size_t *p_size)
+{
+    unsigned char dir_path[PATH_MAX];
+    unsigned char out_path[PATH_MAX];
+    __attribute__((unused)) int r;
+    int fd = -1;
+    char *data = NULL;
+
+    r = snprintf(dir_path, sizeof(dir_path), "%s/%s", as->queue_packet_dir, pkt_name);
+    r = snprintf(out_path, sizeof(out_path), "%s/%s%s", as->queue_out_dir, as->unique_prefix, pkt_name);
+
+    r = rename(dir_path, out_path);
+    if (r < 0 && errno == ENOENT) {
+        return 0;
+    }
+    if (r < 0) {
+        err("%s: rename failed: %s", as->inst_id, os_ErrorMsg());
+        out_path[0] = 0;
+        goto fail;
+    }
+    struct stat stb;
+    if (lstat(out_path, &stb) < 0) {
+        err("%s: %d: lstat failed: %s", as->inst_id, __LINE__, os_ErrorMsg());
+        goto fail;
+    }
+    if (!S_ISREG(stb.st_mode)) {
+        err("%s: %d: not regular file", as->inst_id, __LINE__);
+        goto fail;
+    }
+    if (stb.st_nlink != 1) {
+        // two processes renamed the file simultaneously
+        rename(out_path, dir_path);
+        unlink(out_path);
+        return 0;
+    }
+    if (stb.st_size <= 0) {
+        char *data = malloc(1);
+        data[0] = 0;
+        *p_data = data;
+        *p_size = 0;
+        unlink(out_path);
+        return 1;
+    }
+
+    data = malloc(stb.st_size + 1);
+    data[stb.st_size] = 0;
+    fd = open(out_path, O_RDONLY, 0);
+    if (fd < 0) {
+        err("%s: %d: cannot open '%s': %s", as->inst_id, __LINE__, out_path, os_ErrorMsg());
+        goto fail;
+    }
+    char *ptr = data;
+    size_t remain = stb.st_size;
+    while (remain > 0) {
+        ssize_t rr = read(fd, ptr, remain);
+        if (rr < 0) {
+            err("%s: read error on '%s': %s", as->inst_id, out_path, os_ErrorMsg());
+            goto fail;
+        }
+        if (!rr) {
+            err("%s: unexpected EOF on '%s'", as->inst_id, out_path);
+            goto fail;
+        }
+        remain -= rr;
+    }
+
+    close(fd);
+    unlink(out_path);
+
+    return 1;
+
+fail:;
+    if (out_path[0]) unlink(out_path);
+    if (fd >= 0) close(fd);
+    free(data);
+    return -1;
+}
+
+static int
+poll_func(
+        struct AppState *as,
+        const struct QueryCallback *cb,
+        cJSON *query,
+        cJSON *reply)
+{
+    unsigned char pkt_name[PATH_MAX];
+    int random_mode = 0;
+    int enable_file = 0;
+    cJSON *jrm = cJSON_GetObjectItem(query, "random_mode");
+    if (jrm && jrm->type == cJSON_True) {
+        random_mode = 1;
+    }
+    cJSON *jef = cJSON_GetObjectItem(query, "enable_file");
+    if (jef && jef->type == cJSON_True) {
+        enable_file = 1;
+    }
+    while (1) {
+        int r = scan_dir(as->queue_dir, pkt_name, sizeof(pkt_name), random_mode);
+        if (r < 0) {
+            cJSON_AddStringToObject(reply, "message", "scan_dir failed");
+            err("%s: scan_dir failed: %s", as->inst_id, strerror(-r));
+            return 0;
+        }
+        if (!r) {
+            cJSON_AddStringToObject(reply, "q", "poll-result");
+            return 1;
+        }
+        cJSON_AddStringToObject(reply, "pkt-name", pkt_name);
+        if (!enable_file) {
+            cJSON_AddStringToObject(reply, "q", "poll-result");
+            return 1;
+        }
+
+        char *data = NULL;
+        size_t size = 0;
+        r = safe_read_packet(as, pkt_name, &data, &size);
+        if (r < 0) {
+            cJSON_AddStringToObject(reply, "message", "read_packet failed");
+            return 0;
+        }
+        if (r > 0) {
+            cJSON_AddStringToObject(reply, "q", "file-result");
+            cJSON_AddTrueToObject(reply, "found");
+            add_file_to_object(reply, data, size);
+            free(data);
+            return 1;
         }
     }
 }
@@ -2024,6 +2143,8 @@ main(int argc, char *argv[])
     if (argi != argc) {
         die("invalid arguments");
     }
+
+    random_init();
 
     struct AppState app;
     app_state_init(&app);
