@@ -879,12 +879,32 @@ app_state_configure_directories(struct AppState *as)
     }
 }
 
+static int
+safe_read_packet(
+        struct AppState *as,
+        const unsigned char *pkt_name,
+        char **p_data,
+        size_t *p_size);
+static void
+add_file_to_object(
+        cJSON *j,
+        const char *data,
+        size_t size);
+
 static void
 check_spool_state(struct AppState *as)
 {
     unsigned char pkt_name[PATH_MAX];
     int r = scan_dir(as->queue_dir, pkt_name, sizeof(pkt_name), as->wait_random_mode);
     if (r <= 0) return;
+
+    char *data = NULL;
+    size_t size = 0;
+
+    if (as->wait_enable_file) {
+        r = safe_read_packet(as, pkt_name, &data, &size);
+        if (r <= 0) return;
+    }
 
     cJSON *reply = cJSON_CreateObject();
     struct timeval tv;
@@ -896,7 +916,14 @@ check_spool_state(struct AppState *as)
     cJSON_AddNumberToObject(reply, "s", (double) as->wait_serial);
     cJSON_AddNumberToObject(reply, "t", (double) as->wait_time_ms);
     cJSON_AddTrueToObject(reply, "wake-up");
-    cJSON_AddStringToObject(reply, "q", "poll-result");
+    if (data != NULL) {
+        cJSON_AddStringToObject(reply, "q", "file-result");
+        cJSON_AddTrueToObject(reply, "found");
+        add_file_to_object(reply, data, size);
+        free(data); data = NULL;
+    } else {
+        cJSON_AddStringToObject(reply, "q", "poll-result");
+    }
     cJSON_AddStringToObject(reply, "pkt-name", pkt_name);
     cJSON_AddTrueToObject(reply, "ok");
     char *jstr = cJSON_PrintUnformatted(reply);
