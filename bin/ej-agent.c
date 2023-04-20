@@ -1728,8 +1728,17 @@ wait_func(
     }
 
     if (simple_count_files(as, as->queue_packet_dir) > 0) {
-        // FIXME: re-check directory in case of file moved there between
-        // the last poll and inotify_add_watch
+        // undo inotify watching and restart this function
+        as->wait_serial = 0;
+        as->wait_time_ms = 0;
+        as->wait_random_mode = 0;
+        as->wait_enable_file = 0;
+        if (as->spool_wd >= 0) {
+            inotify_rm_watch(as->ifd, as->spool_wd);
+            as->spool_wd = -1;
+        }
+
+        return wait_func(as, cb, query, reply);
     }
 
     cJSON_AddNumberToObject(reply, "channel", as->wait_serial);
