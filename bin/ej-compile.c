@@ -1099,14 +1099,17 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
     unsigned char pkt_name[PATH_MAX];
     pkt_name[0] = 0;
     int r = 0;
+    char *pkt_ptr = NULL;
+    size_t pkt_len = 0;
+
     if (agent) {
       if (interrupt_was_usr2()) {
         interrupt_reset_usr2();
         if (future) {
           r = agent->ops->async_wait_complete(agent, &future,
                                               pkt_name, sizeof(pkt_name),
-                                              NULL /* p_data */,
-                                              NULL /* p_size */);
+                                              &pkt_ptr,
+                                              &pkt_len);
           if (r < 0) {
             err("async_wait_complete failed");
             break;
@@ -1117,11 +1120,11 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
         }
       } else if (!future) {
         r = agent->ops->async_wait_init(agent, SIGUSR2, 0,
-                                        0 /* enable_file */,
+                                        1,
                                         pkt_name, sizeof(pkt_name), &future,
                                         DEFAULT_WAIT_TIMEOUT_MS,
-                                        NULL /* p_data */,
-                                        NULL /* p_size */);
+                                        &pkt_ptr,
+                                        &pkt_len);
         //r = agent->ops->poll_queue(agent, pkt_name, sizeof(pkt_name));
         if (r < 0) {
           err("async_wait_init failed");
@@ -1158,10 +1161,10 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
       continue;
     }
 
-    char *pkt_ptr = NULL;
-    size_t pkt_len = 0;
     if (agent) {
-      r = agent->ops->get_packet(agent, pkt_name, &pkt_ptr, &pkt_len);
+      if (!pkt_ptr) {
+        r = agent->ops->get_packet(agent, pkt_name, &pkt_ptr, &pkt_len);
+      }
     } else {
       r = generic_read_file(&pkt_ptr, 0, &pkt_len, SAFE | REMOVE, compile_server_queue_dir, pkt_name, "");
     }
