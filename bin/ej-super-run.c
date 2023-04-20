@@ -647,6 +647,8 @@ do_loop(
   long long last_handled_ms = 0;
   long long current_time_ms = 0;
   struct Future *future = NULL;
+  char *pkt_data = NULL;
+  size_t pkt_size = 0;
 
   if (agent_name && *agent_name) {
     if (!strncmp(agent_name, "ssh:", 4)) {
@@ -724,23 +726,25 @@ do_loop(
         if (future) {
           r = agent->ops->async_wait_complete(agent, &future,
                                               pkt_name, sizeof(pkt_name),
-                                              NULL /* p_data */,
-                                              0 /* p_size */);
+                                              &pkt_data,
+                                              &pkt_size);
           if (r < 0) {
             err("async_wait_complete failed");
             break;
           }
           if (!pkt_name[0]) {
+            free(pkt_data); pkt_data = NULL;
+            pkt_size = 0;
             continue;
           }
         }
       } else if (!future) {
         r = agent->ops->async_wait_init(agent, SIGUSR2, 1,
-                                        0 /* enable_file */,
+                                        1,
                                         pkt_name, sizeof(pkt_name), &future,
                                         DEFAULT_WAIT_TIMEOUT_MS,
-                                        NULL /* p_data */,
-                                        NULL /* p_size */);
+                                        &pkt_data,
+                                        &pkt_size);
         if (r < 0) {
           err("async_wait_init failed");
           break;
@@ -767,6 +771,8 @@ do_loop(
       interrupt_enable();
       os_Sleep(sleep_time);
       interrupt_disable();
+      free(pkt_data); pkt_data = NULL;
+      pkt_size = 0;
       continue;
     }
 
@@ -779,10 +785,14 @@ do_loop(
       interrupt_enable();
       os_Sleep(sleep_time);
       interrupt_disable();
+      free(pkt_data); pkt_data = NULL;
+      pkt_size = 0;
       continue;
     }
 
-    r = handle_packet(state, pkt_name, NULL, 0);
+    r = handle_packet(state, pkt_name, pkt_data, pkt_size);
+    pkt_data = NULL;
+    pkt_size = 0;
     if (!r) {
       if (agent) {
         //agent->ops->add_ignored(agent, pkt_name);
