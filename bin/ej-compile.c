@@ -1103,7 +1103,10 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
       if (interrupt_was_usr2()) {
         interrupt_reset_usr2();
         if (future) {
-          r = agent->ops->async_wait_complete(agent, &future, pkt_name, sizeof(pkt_name));
+          r = agent->ops->async_wait_complete(agent, &future,
+                                              pkt_name, sizeof(pkt_name),
+                                              NULL /* p_data */,
+                                              NULL /* p_size */);
           if (r < 0) {
             err("async_wait_complete failed");
             break;

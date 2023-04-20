@@ -1406,7 +1406,9 @@ async_wait_complete_func(
         struct AgentClient *ac,
         struct Future **p_future,
         unsigned char *pkt_name,
-        size_t pkt_len)
+        size_t pkt_len,
+        char **p_data,
+        size_t *p_size)
 {
     __attribute__((unused)) struct AgentClientSsh *acs = (struct AgentClientSsh *) ac;
     struct Future *future = *p_future;

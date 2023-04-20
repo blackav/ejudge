@@ -99,7 +99,9 @@ struct AgentClientOps
         struct AgentClient *ac,
         struct Future **p_future,
         unsigned char *pkt_name,
-        size_t pkt_len);
+        size_t pkt_len,
+        char **p_data,
+        size_t *p_size);
 
     int (*add_ignored)(
         struct AgentClient *ac,
