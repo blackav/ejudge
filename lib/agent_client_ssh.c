@@ -1456,19 +1456,31 @@ async_wait_complete_func(
 
     int result = -1;
     cJSON *j = future->value;
-    cJSON *jq = cJSON_GetObjectItem(j, "q");
-    if (!jq || jq->type != cJSON_String || strcmp("poll-result", jq->valuestring) != 0) {
-        goto done;
+    cJSON *jj = cJSON_GetObjectItem(j, "q");
+    if (jj && jj->type == cJSON_String
+        && !strcmp("poll-result", jj->valuestring)) {
+        cJSON *jn = cJSON_GetObjectItem(j, "pkt-name");
+        if (!jn) {
+            pkt_name[0] = 0;
+        } else if (jn->type != cJSON_String) {
+            goto done;
+        } else {
+            snprintf(pkt_name, pkt_len, "%s", jn->valuestring);
+        }
+        result = 1;
     }
-    cJSON *jn = cJSON_GetObjectItem(j, "pkt-name");
-    if (!jn) {
-        pkt_name[0] = 0;
-    } else if (jq->type != cJSON_String) {
-        goto done;
-    } else {
-        snprintf(pkt_name, pkt_len, "%s", jn->valuestring);
+    if (jj && jj->type == cJSON_String
+        && !strcmp("file-result", jj->valuestring)) {
+        cJSON *jn = cJSON_GetObjectItem(j, "pkt-name");
+        if (!jn) {
+            pkt_name[0] = 0;
+            result = 1;
+        } else if (jn->type == cJSON_String) {
+            snprintf(pkt_name, pkt_len, "%s", jn->valuestring);
+            result = 1;
+        }
+        result = process_file_result(acs, j, p_data, p_size);
     }
-    result = 1;
 
 done:
     future_fini(future);
