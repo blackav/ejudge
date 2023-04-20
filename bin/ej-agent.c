@@ -47,6 +47,7 @@
 #include <ctype.h>
 #include <sys/mman.h>
 #include <zlib.h>
+#include <dirent.h>
 
 static const unsigned char *program_name;
 static const unsigned char *log_file;
@@ -1638,6 +1639,26 @@ done:
 }
 
 static int
+simple_count_files(
+        struct AppState *as,
+        const unsigned char *path)
+{
+    int count = 0;
+    DIR *d = opendir(path);
+    if (!d) return 0;
+
+    struct dirent *dd;
+    while ((dd = readdir(d))) {
+        if (strcmp(dd->d_name, ".") != 0 && strcmp(dd->d_name, "..") != 0) {
+            ++count;
+        }
+    }
+
+    closedir(d);
+    return count;
+}
+
+static int
 wait_func(
         struct AppState *as,
         const struct QueryCallback *cb,
@@ -1706,8 +1727,10 @@ wait_func(
         exit(1);
     }
 
-    // FIXME: re-check directory in case of file moved there between
-    // the last poll and inotify_add_watch
+    if (simple_count_files(as, as->queue_packet_dir) > 0) {
+        // FIXME: re-check directory in case of file moved there between
+        // the last poll and inotify_add_watch
+    }
 
     cJSON_AddNumberToObject(reply, "channel", as->wait_serial);
     cJSON_AddStringToObject(reply, "q", "channel-result");
