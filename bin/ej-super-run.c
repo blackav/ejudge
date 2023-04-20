@@ -283,10 +283,14 @@ handle_packet(
   run_listener.b.ops = &super_run_listener_ops;
 
   if (agent) {
-    r = agent->ops->get_packet(agent, pkt_name, &srp_b, &srp_z);
-    if (r < 0) {
-      err("agent get_packet failed");
-      goto cleanup;
+    if (!srp_b) {
+      r = agent->ops->get_packet(agent, pkt_name, &srp_b, &srp_z);
+      if (r < 0) {
+        err("agent get_packet failed");
+        goto cleanup;
+      }
+    } else {
+      r = 1;
     }
   } else {
     r = generic_read_file(&srp_b, 0, &srp_z, SAFE | REMOVE, super_run_spool_path, pkt_name, "");

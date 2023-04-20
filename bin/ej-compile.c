@@ -1164,6 +1164,8 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
     if (agent) {
       if (!pkt_ptr) {
         r = agent->ops->get_packet(agent, pkt_name, &pkt_ptr, &pkt_len);
+      } else {
+        r = 1;
       }
     } else {
       r = generic_read_file(&pkt_ptr, 0, &pkt_len, SAFE | REMOVE, compile_server_queue_dir, pkt_name, "");

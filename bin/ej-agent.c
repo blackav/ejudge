@@ -1212,6 +1212,9 @@ safe_read_packet(
 
     close(fd);
     unlink(out_path);
+    *p_data = data;
+    *p_size = stb.st_size;
+
     info("%s: read file '%s', %lld", as->inst_id, pkt_name, (long long) stb.st_size);
 
     return 1;
