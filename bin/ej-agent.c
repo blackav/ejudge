@@ -1182,6 +1182,7 @@ safe_read_packet(
 
     close(fd);
     unlink(out_path);
+    info("%s: read file '%s', %lld", as->inst_id, pkt_name, (long long) stb.st_size);
 
     return 1;
 
@@ -1221,8 +1222,8 @@ poll_func(
             cJSON_AddStringToObject(reply, "q", "poll-result");
             return 1;
         }
-        cJSON_AddStringToObject(reply, "pkt-name", pkt_name);
         if (!enable_file) {
+            cJSON_AddStringToObject(reply, "pkt-name", pkt_name);
             cJSON_AddStringToObject(reply, "q", "poll-result");
             return 1;
         }
@@ -1235,6 +1236,7 @@ poll_func(
             return 0;
         }
         if (r > 0) {
+            cJSON_AddStringToObject(reply, "pkt-name", pkt_name);
             cJSON_AddStringToObject(reply, "q", "file-result");
             cJSON_AddTrueToObject(reply, "found");
             add_file_to_object(reply, data, size);
@@ -1652,18 +1654,43 @@ wait_func(
     if (jr && jr->type == cJSON_True) {
         random_mode = 1;
     }
-
-    unsigned char pkt_name[PATH_MAX];
-    int r = scan_dir(as->queue_dir, pkt_name, sizeof(pkt_name), random_mode);
-    if (r < 0) {
-        cJSON_AddStringToObject(reply, "message", "scan_dir failed");
-        err("%s: scan_dir failed: %s", as->inst_id, strerror(-r));
-        return 0;
+    int enable_file = 0;
+    cJSON *jef = cJSON_GetObjectItem(query, "enable_file");
+    if (jef && jef->type == cJSON_True) {
+        enable_file = 1;
     }
-    if (r > 0) {
-        cJSON_AddStringToObject(reply, "pkt-name", pkt_name);
-        cJSON_AddStringToObject(reply, "q", "poll-result");
-        return 1;
+
+    while (1) {
+        unsigned char pkt_name[PATH_MAX];
+        int r = scan_dir(as->queue_dir, pkt_name, sizeof(pkt_name), random_mode);
+        if (r < 0) {
+            cJSON_AddStringToObject(reply, "message", "scan_dir failed");
+            err("%s: scan_dir failed: %s", as->inst_id, strerror(-r));
+            return 0;
+        }
+        if (!r) break;
+
+        if (!enable_file) {
+            cJSON_AddStringToObject(reply, "pkt-name", pkt_name);
+            cJSON_AddStringToObject(reply, "q", "poll-result");
+        }
+
+
+        char *data = NULL;
+        size_t size = 0;
+        r = safe_read_packet(as, pkt_name, &data, &size);
+        if (r < 0) {
+            cJSON_AddStringToObject(reply, "message", "read_packet failed");
+            return 0;
+        }
+        if (r > 0) {
+            cJSON_AddStringToObject(reply, "q", "file-result");
+            cJSON_AddStringToObject(reply, "pkt-name", pkt_name);
+            cJSON_AddTrueToObject(reply, "found");
+            add_file_to_object(reply, data, size);
+            free(data);
+            return 1;
+        }
     }
 
     as->wait_random_mode = random_mode;
@@ -1676,6 +1703,9 @@ wait_func(
             as->inst_id, os_ErrorMsg());
         exit(1);
     }
+
+    // FIXME: re-check directory in case of file moved there between
+    // the last poll and inotify_add_watch
 
     cJSON_AddNumberToObject(reply, "channel", as->wait_serial);
     cJSON_AddStringToObject(reply, "q", "channel-result");
