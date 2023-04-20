@@ -40,7 +40,10 @@ struct AgentClientOps
         struct AgentClient *ac,
         unsigned char *pkt_name,
         size_t pkt_len,
-        int random_mode);
+        int random_mode,
+        int enable_file,
+        char **p_data,
+        size_t *p_size);
 
     int (*get_packet)(
         struct AgentClient *ac,
