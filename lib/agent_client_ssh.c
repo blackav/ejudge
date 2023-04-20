@@ -858,6 +858,13 @@ create_request(
 }
 
 static int
+process_file_result(
+        struct AgentClientSsh *acs,
+        cJSON *j,
+        char **p_pkt_ptr,
+        size_t *p_pkt_len);
+
+static int
 poll_queue_func(
         struct AgentClient *ac,
         unsigned char *pkt_name,
@@ -874,6 +881,9 @@ poll_queue_func(
     cJSON *jq = create_request(acs, &f, &time_ms, "poll");
     if (random_mode > 0) {
         cJSON_AddTrueToObject(jq, "random_mode");
+    }
+    if (enable_file > 0) {
+        cJSON_AddTrueToObject(jq, "enable_file");
     }
     add_wchunk_json(acs, jq);
     cJSON_Delete(jq); jq = NULL;
@@ -896,12 +906,23 @@ poll_queue_func(
                     result = 1;
                 }
             }
+            if (jj && jj->type == cJSON_String
+                && !strcmp("file-result", jj->valuestring)) {
+                cJSON *jn = cJSON_GetObjectItem(f.value, "pkt-name");
+                if (!jn) {
+                    pkt_name[0] = 0;
+                    result = 1;
+                } else if (jn->type == cJSON_String) {
+                    snprintf(pkt_name, pkt_len, "%s", jn->valuestring);
+                    result = 1;
+                }
+                result = process_file_result(acs, f.value, p_data, p_size);
+            }
             cJSON *jt = cJSON_GetObjectItem(f.value, "t");
             if (jt && jt->type == cJSON_Number) {
                 long long dur_ms = jt->valuedouble;
                 dur_ms -= time_ms;
                 (void) dur_ms;
-                //fprintf(stderr, "poll: %lld ms\n", dur_ms);
             }
         }
     }
