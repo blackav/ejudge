@@ -87,10 +87,13 @@ struct AgentClientOps
         struct AgentClient *ac,
         int notify_signal,
         int random_mode,
+        int enable_file,
         unsigned char *pkt_name,
         size_t pkt_len,
         struct Future **p_future,
-        long long timeout_ms);
+        long long timeout_ms,
+        char **p_data,
+        size_t *p_size);
 
     int (*async_wait_complete)(
         struct AgentClient *ac,

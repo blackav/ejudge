@@ -732,7 +732,12 @@ do_loop(
           }
         }
       } else if (!future) {
-        r = agent->ops->async_wait_init(agent, SIGUSR2, 1, pkt_name, sizeof(pkt_name), &future, DEFAULT_WAIT_TIMEOUT_MS);
+        r = agent->ops->async_wait_init(agent, SIGUSR2, 1,
+                                        0 /* enable_file */,
+                                        pkt_name, sizeof(pkt_name), &future,
+                                        DEFAULT_WAIT_TIMEOUT_MS,
+                                        NULL /* p_data */,
+                                        NULL /* p_size */);
         if (r < 0) {
           err("async_wait_init failed");
           break;

@@ -1340,10 +1340,13 @@ async_wait_init_func(
         struct AgentClient *ac,
         int notify_signal,
         int random_mode,
+        int enable_file,
         unsigned char *pkt_name,
         size_t pkt_len,
         struct Future **p_future,
-        long long timeout_ms)
+        long long timeout_ms,
+        char **p_data,
+        size_t *p_size)
 {
     int result = 0;
     struct AgentClientSsh *acs = (struct AgentClientSsh *) ac;

@@ -1113,7 +1113,12 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
           }
         }
       } else if (!future) {
-        r = agent->ops->async_wait_init(agent, SIGUSR2, 0, pkt_name, sizeof(pkt_name), &future, DEFAULT_WAIT_TIMEOUT_MS);
+        r = agent->ops->async_wait_init(agent, SIGUSR2, 0,
+                                        0 /* enable_file */,
+                                        pkt_name, sizeof(pkt_name), &future,
+                                        DEFAULT_WAIT_TIMEOUT_MS,
+                                        NULL /* p_data */,
+                                        NULL /* p_size */);
         //r = agent->ops->poll_queue(agent, pkt_name, sizeof(pkt_name));
         if (r < 0) {
           err("async_wait_init failed");
