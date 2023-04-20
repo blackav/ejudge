@@ -1491,8 +1491,8 @@ done:
 
 static void
 internal_ping_callback(
-    struct Future *f,
-    void *u)
+        struct Future *f,
+        void *u)
 {
     struct AgentClientSsh *acs = (struct AgentClientSsh *) u;
     if (acs->ping_future) {
