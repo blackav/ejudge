@@ -1177,6 +1177,7 @@ safe_read_packet(
         // two processes renamed the file simultaneously
         rename(out_path, dir_path);
         unlink(out_path);
+        info("%s: rename created two hardlinks, rollback", as->inst_id);
         return 0;
     }
     if (stb.st_size <= 0) {
