@@ -3,7 +3,7 @@
 #ifndef __SERVER_FRAMEWORK_H__
 #define __SERVER_FRAMEWORK_H__
 
-/* Copyright (C) 2006-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -244,6 +244,16 @@ void nsf_new_autoclose(struct server_framework_state *state,
 void nsf_close_client_fds(struct client_state *p);
 struct client_state * nsf_get_client_by_id(struct server_framework_state *,
                                            int id);
+
+int
+nsf_add_directory_watch(
+        struct server_framework_state *state,
+        const unsigned char *dir,
+        void (*callback)(
+                struct server_framework_state *state,
+                const unsigned char *dir,
+                void *user),
+        void *user);
 
 enum
 {

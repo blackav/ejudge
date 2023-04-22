@@ -82,6 +82,22 @@ struct watchlist
   struct server_framework_watch w;
 };
 
+struct directory_watch
+{
+  struct directory_watch *next, *prev;
+  unsigned char *dir;
+  unsigned char *dir_dir;
+  unsigned char *dir_out;
+  void *user;
+  void (*callback)(
+        struct server_framework_state *state,
+        const unsigned char *dir,
+        void *user);
+
+  int wd; // watch descriptor from inotify_add_watch
+  int ready;
+};
+
 struct server_framework_state
 {
   struct server_framework_params *params;
@@ -93,6 +109,9 @@ struct server_framework_state
 
   // websocket file descriptor
   int ws_fd;
+
+  // inotify file descriptor
+  int ifd;
 
   time_t server_start_time;
 
@@ -108,6 +127,9 @@ struct server_framework_state
 
   struct ws_client_state *ws_first;
   struct ws_client_state *ws_last;
+
+  struct directory_watch *dw_first;
+  struct directory_watch *dw_last;
 };
 
 static int
@@ -1441,6 +1463,41 @@ handle_control_command(
   p->read_len = 0;
 }
 
+int
+nsf_add_directory_watch(
+        struct server_framework_state *state,
+        const unsigned char *dir,
+        void (*callback)(
+                struct server_framework_state *state,
+                const unsigned char *dir,
+                void *user),
+        void *user)
+{
+  struct directory_watch *dw;
+  XCALLOC(dw, 1);
+
+  dw->prev = state->dw_last;
+  if (state->dw_last) {
+    state->dw_last->next = dw;
+  } else {
+    state->dw_first = dw;
+  }
+  state->dw_last = dw;
+
+  dw->dir = xstrdup(dir);
+  __attribute__((unused)) int r;
+  char *s = NULL;
+  r = asprintf(&s, "%s/dir", dw->dir);
+  dw->dir_dir = s; s = NULL;
+  r = asprintf(&s, "%s/out", dw->dir);
+  dw->dir_out = s; s = NULL;
+  dw->user = user;
+  dw->callback = callback;
+  dw->wd = -1;
+
+  return 0;
+}
+
 void
 nsf_main_loop(struct server_framework_state *state)
 {
@@ -1886,6 +1943,8 @@ nsf_init(
   state->user_data = data;
   //state->client_id = 1;
   state->server_start_time = server_start_time;
+  state->ifd = -1;
+
   return state;
 }
 
