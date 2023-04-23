@@ -3281,7 +3281,8 @@ serve_read_compile_packet(
         const struct contest_desc *cnts,
         const unsigned char *compile_status_dir,
         const unsigned char *compile_report_dir,
-        const unsigned char *pname)
+        const unsigned char *pname,
+        struct compile_reply_packet *comp_pkt /* ownership transferred */)
 {
   unsigned char rep_path[PATH_MAX];
   int  r, rep_flags = 0;
@@ -3289,7 +3290,6 @@ serve_read_compile_packet(
   const struct section_global_data *global = state->global;
   char *comp_pkt_buf = 0;       /* need char* for generic_read_file */
   size_t comp_pkt_size = 0;
-  struct compile_reply_packet *comp_pkt = 0;
   long report_size = 0;
   unsigned char errmsg[1024] = { 0 };
   //unsigned char *team_name = 0;
@@ -3306,15 +3306,18 @@ serve_read_compile_packet(
   size_t min_txt_size = 1;
   testing_report_xml_t testing_report = NULL;
 
-  if ((r = generic_read_file(&comp_pkt_buf, 0, &comp_pkt_size, SAFE | REMOVE,
-                             compile_status_dir, pname, "")) <= 0)
-    return r;
+  if (!comp_pkt) {
+    if ((r = generic_read_file(&comp_pkt_buf, 0, &comp_pkt_size, SAFE | REMOVE,
+                               compile_status_dir, pname, "")) <= 0)
+      return r;
 
-  if (compile_reply_packet_read(comp_pkt_size, comp_pkt_buf, &comp_pkt) < 0) {
-    /* failed to parse a compile packet */
-    /* we can't do any reasonable recovery, just drop the packet */
-    goto non_fatal_error;
+    if (compile_reply_packet_read(comp_pkt_size, comp_pkt_buf, &comp_pkt) < 0) {
+      /* failed to parse a compile packet */
+      /* we can't do any reasonable recovery, just drop the packet */
+      goto non_fatal_error;
+    }
   }
+
   if (comp_pkt->contest_id != cnts->id) {
     err("read_compile_packet: mismatched contest_id %d", comp_pkt->contest_id);
     goto non_fatal_error;

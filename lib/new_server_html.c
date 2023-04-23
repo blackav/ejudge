@@ -669,7 +669,7 @@ ns_loop_callback(struct server_framework_state *state)
         serve_read_compile_packet(e, ejudge_config, cs, cnts,
                                   cs->compile_dirs[i].status_dir,
                                   cs->compile_dirs[i].report_dir,
-                                  files.v[j]);
+                                  files.v[j], NULL);
       }
       e->last_access_time = cur_time;
       xstrarrayfree(&files);
@@ -18819,7 +18819,7 @@ ns_compile_dir_ready(
     serve_state_t cs = extra->serve_state;
     cs->current_time = time(NULL);
 
-    if (serve_read_compile_packet(extra, config, cs, cnts, dir, data_dir, files.v[i]) < 0) {
+    if (serve_read_compile_packet(extra, config, cs, cnts, dir, data_dir, files.v[i], NULL) < 0) {
       // what to do?
     }
   }

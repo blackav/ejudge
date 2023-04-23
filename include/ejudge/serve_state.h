@@ -727,7 +727,9 @@ serve_read_compile_packet(
         const struct contest_desc *cnts,
         const unsigned char *compile_status_dir,
         const unsigned char *compile_report_dir,
-        const unsigned char *pname);
+        const unsigned char *pname,
+        struct compile_reply_packet *comp_pkt /* ownership transferred */);
+
 int
 serve_read_run_packet(
         struct contest_extra *extra,
