@@ -18763,3 +18763,15 @@ ns_handle_http_request(
     unprivileged_entry_point(fout, phr);
   }
 }
+
+void
+ns_compile_dir_ready(
+        const struct ejudge_cfg *config,
+        struct server_framework_state *state,
+        const unsigned char *dir,
+        const unsigned char *dir_dir,
+        const unsigned char *dir_out,
+        const unsigned char *data_dir,
+        void *user)
+{
+}
