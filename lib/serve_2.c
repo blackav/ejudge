@@ -69,6 +69,7 @@
 #include <sys/stat.h>
 #include <dirent.h>
 #include <fcntl.h>
+#include <sys/mman.h>
 
 #if CONF_HAS_LIBINTL - 0 == 1
 #include <libintl.h>
@@ -7241,4 +7242,48 @@ serve_invoker_down(
   snprintf(path, sizeof(path), "%s/dir/%s@D", rqi->heartbeat_dir, file2);
   int fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0666);
   close(fd);
+}
+
+int
+serve_get_compile_reply_contest_id(const unsigned char *path)
+{
+  int fd = open(path, O_RDONLY | O_CLOEXEC | O_NOCTTY | O_NOFOLLOW | O_NONBLOCK, 0);
+  if (fd < 0 && errno == ENOENT) {
+    return 0;
+  }
+  if (fd < 0) {
+    err("serve_get_compile_reply_contest_id: failed to open '%s': %s", path, os_ErrorMsg());
+    return -1;
+  }
+  struct stat stb;
+  if (fstat(fd, &stb)) {
+    abort();
+  }
+  if (!S_ISREG(stb.st_mode)) {
+    err("serve_get_compile_reply_contest_id: not regular file '%s'", path);
+    close(fd);
+    return -1;
+  }
+  if (stb.st_size <= 0) {
+    err("serve_get_compile_reply_contest_id: empty file '%s'", path);
+    close(fd);
+    return -1;
+  }
+  if (stb.st_size > 1024 * 128) {
+    err("serve_get_compile_reply_contest_id: file '%s' too big: %lld", path, (long long) stb.st_size);
+    close(fd);
+    return -1;
+  }
+  void *pkt_ptr = mmap(NULL, stb.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+  if (pkt_ptr == MAP_FAILED) {
+    err("serve_get_compile_reply_contest_id: file '%s' map failed: %s", path, os_ErrorMsg());
+    close(fd);
+    return -1;
+  }
+  close(fd); fd = -1;
+
+  int r = compile_reply_packet_get_contest_id(stb.st_size, pkt_ptr);
+  munmap(pkt_ptr, stb.st_size);
+
+  return r;
 }

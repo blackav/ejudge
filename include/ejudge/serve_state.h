@@ -956,4 +956,7 @@ serve_check_telegram_reminder(
         serve_state_t state,
         const struct contest_desc *cnts);
 
+int
+serve_get_compile_reply_contest_id(const unsigned char *path);
+
 #endif /* __SERVE_STATE_H__ */
