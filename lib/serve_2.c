@@ -598,16 +598,21 @@ serve_build_compile_dirs(
       compile_status_dir = lang->compile_status_dir;
       compile_report_dir = lang->compile_report_dir;
     } else {
+      // do not add watch dirs, because the global compile result directories are used
+      /*
       snprintf(compile_status_buf, sizeof(compile_status_buf), "%s/%s/%06d/status", compile_spool_dir, compile_server_id, state->contest_id);
       compile_status_dir = compile_status_buf;
       snprintf(compile_report_buf, sizeof(compile_report_buf), "%s/%s/%06d/report", compile_spool_dir, compile_server_id, state->contest_id);
       compile_report_dir = compile_report_buf;
+      */
     }
 #else
     compile_status_dir = lang->compile_status_dir;
     compile_report_dir = lang->compile_report_dir;
 #endif
-    do_build_compile_dirs(state, compile_status_dir, compile_report_dir);
+    if (compile_status_dir) {
+      do_build_compile_dirs(state, compile_status_dir, compile_report_dir);
+    }
   }
 }
 
