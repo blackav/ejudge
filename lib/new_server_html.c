@@ -18774,4 +18774,56 @@ ns_compile_dir_ready(
         const unsigned char *data_dir,
         void *user)
 {
+  strarray_t files = {};
+  int r = get_file_list_unsorted(dir_dir, &files);
+  if (r < 0) goto done;
+  if (!files.u) goto done;
+
+  struct teamdb_db_callbacks callbacks = {};
+  callbacks.user_data = (void*) state;
+  callbacks.list_all_users = ns_list_all_users_callback;
+
+  for (int i = 0; i < files.u; ++i) {
+    unsigned char pkt_path[PATH_MAX];
+    snprintf(pkt_path, sizeof(pkt_path), "%s/%s", dir_dir, files.v[i]);
+
+    int contest_id = serve_get_compile_reply_contest_id(pkt_path);
+    if (!contest_id) {
+      // no such file
+      continue;
+    }
+    if (contest_id < 0) {
+      unlink(pkt_path);
+      continue;
+    }
+
+    const struct contest_desc *cnts = NULL;
+    if (contests_get(contest_id, &cnts) < 0 || !cnts) {
+      // FIXME: probably it is a transient error, and this contest will be
+      // available shortly?
+      err("ns_compile_dir_ready: removing packet '%s' because of invalid contest %d", files.v[i], contest_id);
+      unlink(pkt_path);
+      continue;
+    }
+
+    struct contest_extra *extra = ns_get_contest_extra(cnts, config);
+    ASSERT(extra);
+
+    if (serve_state_load_contest(extra, config, contest_id, ul_conn,
+                                 &callbacks, 0, 0) < 0) {
+      err("ns_compile_dir_ready: removing packet '%s' because of unavailable contest %d", files.v[i], contest_id);
+      unlink(pkt_path);
+      continue;
+    }
+
+    serve_state_t cs = extra->serve_state;
+    cs->current_time = time(NULL);
+
+    if (serve_read_compile_packet(extra, config, cs, cnts, dir, data_dir, files.v[i]) < 0) {
+      // what to do?
+    }
+  }
+
+done:
+  xstrarrayfree(&files);
 }
