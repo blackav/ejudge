@@ -576,8 +576,8 @@ serve_build_compile_dirs(
     const unsigned char *compile_report_dir = NULL;
 
 #if defined EJUDGE_COMPILE_SPOOL_DIR
-    const unsigned char *compile_spool_dir = EJUDGE_COMPILE_SPOOL_DIR;
-    const unsigned char *compile_server_id = NULL;
+    __attribute__((unused)) const unsigned char *compile_spool_dir = EJUDGE_COMPILE_SPOOL_DIR;
+    __attribute__((unused)) const unsigned char *compile_server_id = NULL;
     /*
     if (lang && lang->compile_server_id && lang->compile_server_id[0]) {
       compile_server_id = lang->compile_server_id;
@@ -588,8 +588,8 @@ serve_build_compile_dirs(
     // result directories always use server contest_server_id
     compile_server_id = config->contest_server_id;
 
-    unsigned char compile_report_buf[PATH_MAX];
-    unsigned char compile_status_buf[PATH_MAX];
+    __attribute__((unused)) unsigned char compile_report_buf[PATH_MAX];
+    __attribute__((unused)) unsigned char compile_status_buf[PATH_MAX];
 
     if (lang && lang->compile_dir_index > 0) {
       compile_status_dir = lang->compile_status_dir;
