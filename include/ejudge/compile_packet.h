@@ -121,4 +121,9 @@ compile_reply_packet_write(
 struct compile_reply_packet *
 compile_reply_packet_free(struct compile_reply_packet *in_data);
 
+int
+compile_reply_packet_get_contest_id(
+        size_t in_size,
+        const void *in_data);
+
 #endif /* __COMPILE_PACKET_H__ */
