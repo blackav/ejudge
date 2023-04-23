@@ -1503,7 +1503,11 @@ create_contest_dirs(
     unsigned char server_dir[PATH_MAX];
     snprintf(server_dir, sizeof(server_dir), "%s/%s", root_dir, server);
     unsigned char server_contest_dir[PATH_MAX];
-    snprintf(server_contest_dir, sizeof(server_contest_dir), "%s/%06d", server_dir, contest_id);
+    if (as->mode == PREPARE_COMPILE) {
+        strcpy(server_contest_dir, server_dir);
+    } else {
+        snprintf(server_contest_dir, sizeof(server_contest_dir), "%s/%06d", server_dir, contest_id);
+    }
     unsigned char status_dir[PATH_MAX];
     snprintf(status_dir, sizeof(status_dir), "%s/status", server_contest_dir);
     unsigned char report_dir[PATH_MAX];
@@ -1511,20 +1515,24 @@ create_contest_dirs(
     unsigned char output_dir[PATH_MAX];
     snprintf(output_dir, sizeof(output_dir), "%s/output", server_contest_dir);
 
-    if (make_dir(server_dir, 0777) < 0) {
-        return NULL;
-    }
-    if (make_dir(server_contest_dir, 0777) < 0) {
-        return NULL;
-    }
-    if (make_all_dir(status_dir, 0777) < 0) {
-        return NULL;
-    }
-    if (make_dir(report_dir, 0777) < 0) {
-        return NULL;
-    }
-    if (make_dir(output_dir, 0777) < 0) {
-        return NULL;
+    if (as->mode == PREPARE_COMPILE) {
+        // do not create any dirs
+    } else {
+        if (make_dir(server_dir, 0777) < 0) {
+            return NULL;
+        }
+        if (make_dir(server_contest_dir, 0777) < 0) {
+            return NULL;
+        }
+        if (make_all_dir(status_dir, 0777) < 0) {
+            return NULL;
+        }
+        if (make_dir(report_dir, 0777) < 0) {
+            return NULL;
+        }
+        if (make_dir(output_dir, 0777) < 0) {
+            return NULL;
+        }
     }
 
     if (as->cntsu == as->cntsa) {
