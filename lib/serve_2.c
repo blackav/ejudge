@@ -3050,7 +3050,6 @@ read_compile_packet_input(
         const struct ejudge_cfg *config,
         serve_state_t cs,
         const struct contest_desc *cnts,
-        const unsigned char *compile_status_dir,
         const unsigned char *compile_report_dir,
         const unsigned char *pname,
         const struct compile_reply_packet *comp_pkt)
@@ -3325,7 +3324,6 @@ serve_read_compile_packet(
                               config,
                               state,
                               cnts,
-                              compile_status_dir,
                               compile_report_dir,
                               pname,
                               comp_pkt);
