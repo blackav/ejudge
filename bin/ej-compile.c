@@ -1217,6 +1217,8 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
     unsigned char contest_server_reply_dir[PATH_MAX];
     contest_server_reply_dir[0] = 0;
     const unsigned char *contest_server_id = NULL;
+    unsigned char contest_reply_dir[PATH_MAX];
+
 #if defined EJUDGE_COMPILE_SPOOL_DIR
     {
       if (req->contest_server_id && *req->contest_server_id) {
@@ -1239,21 +1241,21 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
         continue;
       }
     }
+    strcpy(contest_reply_dir, contest_server_reply_dir);
 #else
     if (snprintf(contest_server_reply_dir, sizeof(contest_server_reply_dir), "%s", global->compile_dir) >= sizeof(contest_server_reply_dir)) {
       rpl.run_block = NULL;
       compile_request_packet_free(req);
       continue;
     }
-#endif
 
-    unsigned char contest_reply_dir[PATH_MAX];
     snprintf(contest_reply_dir, sizeof(contest_reply_dir), "%s/%06d", contest_server_reply_dir, rpl.contest_id);
     if (make_dir(contest_reply_dir, 0777) < 0) {
       rpl.run_block = NULL;
       compile_request_packet_free(req);
       continue;
     }
+#endif
 
     unsigned char status_dir[PATH_MAX];
     snprintf(status_dir, sizeof(status_dir), "%s/status", contest_reply_dir);
