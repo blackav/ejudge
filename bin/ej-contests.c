@@ -811,6 +811,48 @@ setup_log_file(void)
   ejudge_config->new_server_log = xstrdup("/tmp/ej-contests.log");
 }
 
+static void
+setup_spool_dirs(const struct ejudge_cfg *config, struct server_framework_state *state)
+{
+#if defined EJUDGE_COMPILE_SPOOL_DIR
+  const unsigned char *compile_spool_dir = EJUDGE_COMPILE_SPOOL_DIR;
+  const unsigned char *contest_server_id = config->contest_server_id;
+
+  unsigned char compile_report_buf[PATH_MAX];
+  unsigned char compile_status_buf[PATH_MAX];
+  unsigned char compile_status_dir_buf[PATH_MAX];
+  unsigned char compile_status_in_buf[PATH_MAX];
+  unsigned char compile_status_out_buf[PATH_MAX];
+
+  __attribute__((unused)) int r;
+  r = snprintf(compile_status_buf, sizeof(compile_status_buf), "%s/%s/status", compile_spool_dir, contest_server_id);
+  r = snprintf(compile_report_buf, sizeof(compile_report_buf), "%s/%s/report", compile_spool_dir, contest_server_id);
+  r = snprintf(compile_status_dir_buf, sizeof(compile_status_dir_buf), "%s/dir", compile_status_buf);
+  r = snprintf(compile_status_in_buf, sizeof(compile_status_in_buf), "%s/in", compile_status_buf);
+  r = snprintf(compile_status_out_buf, sizeof(compile_status_out_buf), "%s/out", compile_status_buf);
+
+  const unsigned char *compile_group = NULL;
+#if defined EJUDGE_COMPILE_USER
+  compile_group = EJUDGE_COMPILE_USER;
+#endif
+
+  if (os_MakeDirPath2(compile_report_buf, "0770", compile_group) < 0) {
+    startup_error("failed to create compile spool: %s", os_ErrorMsg());
+  }
+  if (os_MakeDirPath2(compile_status_dir_buf, "0770", compile_group) < 0) {
+    startup_error("failed to create compile spool: %s", os_ErrorMsg());
+  }
+  if (os_MakeDirPath2(compile_status_in_buf, "0770", compile_group) < 0) {
+    startup_error("failed to create compile spool: %s", os_ErrorMsg());
+  }
+  if (os_MakeDirPath2(compile_status_out_buf, "0700", NULL) < 0) {
+    startup_error("failed to create compile spool: %s", os_ErrorMsg());
+  }
+
+  nsf_add_directory_watch(config, state, compile_status_buf, compile_report_buf, ns_compile_dir_ready, NULL);
+#endif
+}
+
 extern int ej_bson_force_link_dummy;
 extern int ej_bson_new_force_link_dummy;
 
@@ -970,6 +1012,7 @@ main(int argc, char *argv[])
 
   idc_init(&main_id_cache);
   if (!(state = nsf_init(&params, 0, server_start_time))) return 1;
+  setup_spool_dirs(ejudge_config, state);
   if (nsf_prepare(state) < 0) return 1;
   nsf_main_loop(state);
   restart_flag = nsf_is_restart_requested(state);
