@@ -2,7 +2,7 @@
 #ifndef __FILEUTL_H__
 #define __FILEUTL_H__
 
-/* Copyright (C) 2000-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -92,5 +92,10 @@ write_tmp_file_2(
         size_t path_size,
         const unsigned char *data,
         size_t size);
+
+int
+get_file_list_unsorted(
+        const char *dir_path,
+        strarray_t *files);
 
 #endif /* __FILEUTL_H__ */
