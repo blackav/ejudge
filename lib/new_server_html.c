@@ -18877,7 +18877,7 @@ ns_compile_dir_ready(
   }
   struct dirent *dd;
   while ((dd = readdir(d))) {
-    if (!strcmp(dd->d_name, ".") && !strcmp(dd->d_name, "..")) {
+    if (strcmp(dd->d_name, ".") && strcmp(dd->d_name, "..")) {
       if (fileu == filea) {
         if (!filea) {
           filea = 16;
@@ -18888,6 +18888,7 @@ ns_compile_dir_ready(
       }
       memset(&files[fileu], 0, sizeof(files[0]));
       files[fileu].name = xstrdup(dd->d_name);
+      ++fileu;
     }
   }
   closedir(d); d = NULL;
