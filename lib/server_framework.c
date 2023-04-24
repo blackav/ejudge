@@ -91,6 +91,7 @@ struct directory_watch
   unsigned char *dir_dir;
   unsigned char *dir_out;
   unsigned char *data_dir;
+  unsigned char *data2_dir;
   void *user;
   void (*callback)(
         const struct ejudge_cfg *config,
@@ -99,6 +100,7 @@ struct directory_watch
         const unsigned char *dir_dir,
         const unsigned char *dir_out,
         const unsigned char *data_dir,
+        const unsigned char *data2_dir,
         void *user);
 
   int wd; // watch descriptor from inotify_add_watch
@@ -1476,6 +1478,7 @@ nsf_add_directory_watch(
         struct server_framework_state *state,
         const unsigned char *dir,
         const unsigned char *data_dir,
+        const unsigned char *data2_dir,
         void (*callback)(
                 const struct ejudge_cfg *config,
                 struct server_framework_state *state,
@@ -1483,6 +1486,7 @@ nsf_add_directory_watch(
                 const unsigned char *dir_dir,
                 const unsigned char *dir_out,
                 const unsigned char *data_dir,
+                const unsigned char *data2_dir,
                 void *user),
         void *user)
 {
@@ -1500,6 +1504,9 @@ nsf_add_directory_watch(
   dw->config = config;
   dw->dir = xstrdup(dir);
   dw->data_dir = xstrdup(data_dir);
+  if (data2_dir) {
+    dw->data2_dir = xstrdup(data2_dir);
+  }
   __attribute__((unused)) int r;
   char *s = NULL;
   r = asprintf(&s, "%s/dir", dw->dir);
@@ -1572,7 +1579,7 @@ nsf_main_loop(struct server_framework_state *state)
 
     for (struct directory_watch *dw = state->dw_first; dw; dw = dw->next) {
       if (dw->ready) {
-        dw->callback(dw->config, state, dw->dir, dw->dir_dir, dw->dir_out, dw->data_dir, dw->user);
+        dw->callback(dw->config, state, dw->dir, dw->dir_dir, dw->dir_out, dw->data_dir, dw->data2_dir, dw->user);
         dw->ready = 0;
       }
     }

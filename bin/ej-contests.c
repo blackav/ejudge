@@ -849,7 +849,7 @@ setup_spool_dirs(const struct ejudge_cfg *config, struct server_framework_state 
     startup_error("failed to create compile spool: %s", os_ErrorMsg());
   }
 
-  nsf_add_directory_watch(config, state, compile_status_buf, compile_report_buf, ns_compile_dir_ready, NULL);
+  nsf_add_directory_watch(config, state, compile_status_buf, compile_report_buf, NULL, ns_compile_dir_ready, NULL);
 #endif
 }
 

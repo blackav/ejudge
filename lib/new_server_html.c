@@ -18866,6 +18866,7 @@ ns_compile_dir_ready(
         const unsigned char *dir_dir,
         const unsigned char *dir_out,
         const unsigned char *data_dir,
+        const unsigned char *data2_dir,
         void *user)
 {
   struct compile_packet_file *files = NULL;
