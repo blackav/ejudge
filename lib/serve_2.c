@@ -616,7 +616,7 @@ serve_build_compile_dirs(
   }
 }
 
-static int
+static __attribute__((unused)) int
 do_build_run_dirs(
         serve_state_t state,
         const unsigned char *id,
@@ -707,6 +707,9 @@ build_run_dir(
   snprintf(heartbeat_dir, sizeof(heartbeat_dir), "%s/heartbeat", d1);
   do_build_queue_dirs(state, queue_name, queue_dir, exe_dir, heartbeat_dir);
 
+  // do not create contest specific dirs, using the globals instead
+  return;
+    /*
   unsigned char d2[PATH_MAX];
   snprintf(d2, sizeof(d2), "%s/%s/%06d", EJUDGE_RUN_SPOOL_DIR, contest_server_id, cnts->id);
 
@@ -719,6 +722,7 @@ build_run_dir(
   snprintf(full_report_dir, sizeof(full_report_dir), "%s/output", d2);
   snprintf(team_report_dir, sizeof(team_report_dir), "%s/teamreports", d2);
   do_build_run_dirs(state, "", status_dir, report_dir, team_report_dir, full_report_dir);
+    */
 }
 #endif
 
