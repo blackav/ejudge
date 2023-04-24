@@ -467,10 +467,10 @@ handle_packet(
   }
 
 #if defined EJUDGE_RUN_SPOOL_DIR
-  snprintf(full_report_dir, sizeof(full_report_dir), "%s/%s/%06d/report", EJUDGE_RUN_SPOOL_DIR, srgp->contest_server_id, srgp->contest_id);
-  snprintf(full_status_dir, sizeof(full_status_dir), "%s/%s/%06d/status", EJUDGE_RUN_SPOOL_DIR, srgp->contest_server_id, srgp->contest_id);
+  snprintf(full_report_dir, sizeof(full_report_dir), "%s/%s/report", EJUDGE_RUN_SPOOL_DIR, srgp->contest_server_id, srgp->contest_id);
+  snprintf(full_status_dir, sizeof(full_status_dir), "%s/%s/status", EJUDGE_RUN_SPOOL_DIR, srgp->contest_server_id, srgp->contest_id);
   if (srgp->enable_full_archive > 0) {
-    snprintf(full_full_dir, sizeof(full_full_dir), "%s/%s/%06d/output", EJUDGE_RUN_SPOOL_DIR, srgp->contest_server_id, srgp->contest_id);
+    snprintf(full_full_dir, sizeof(full_full_dir), "%s/%s/output", EJUDGE_RUN_SPOOL_DIR, srgp->contest_server_id, srgp->contest_id);
   }
 #else
   if (srgp->reply_report_dir && srgp->reply_report_dir[0]) {
