@@ -1524,6 +1524,7 @@ create_contest_dirs(
     ci->server_contest_dir = xstrdup(server_contest_dir);
     ci->status_dir = xstrdup(status_dir);
     ci->report_dir = xstrdup(report_dir);
+    ci->output_dir = xstrdup(output_dir);
 
     return ci;
 }
