@@ -64,6 +64,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <dirent.h>
+#include <sys/inotify.h>
+#include <sys/epoll.h>
 
 enum { MAX_LOG_SIZE = 1024 * 1024, MAX_EXE_SIZE = 128 * 1024 * 1024 };
 
@@ -79,6 +81,7 @@ static int slave_mode;
 static unsigned char *compile_server_id;
 static __attribute__((unused)) unsigned char compile_server_spool_dir[PATH_MAX];
 static unsigned char compile_server_queue_dir[PATH_MAX];
+static unsigned char compile_server_queue_dir_dir[PATH_MAX];
 static unsigned char compile_server_src_dir[PATH_MAX];
 static unsigned char *agent_name;
 static struct AgentClient *agent;
@@ -1033,8 +1036,13 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
   int exe_copied = 0;
   path_t full_working_dir = { 0 };
   struct Future *future = NULL;
+  int ifd = -1;
+  int ifd_wd = -1;
+  sigset_t emptymask;
+  int efd = -1;
 
   random_init();
+  sigemptyset(&emptymask);
 
   if (parallel_mode) {
     unsigned long long u64 = random_u64();
@@ -1064,6 +1072,12 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
       err("invalid agent");
       return -1;
     }
+  } else {
+    ifd = inotify_init1(IN_NONBLOCK | IN_CLOEXEC);
+    if (ifd < 0) {
+      err("inotify_init1 failed: %s", os_ErrorMsg());
+      return -1;
+    }
   }
 
 #if defined EJUDGE_COMPILE_SPOOL_DIR
@@ -1078,6 +1092,33 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
     return -1;
   }
 #endif
+
+  snprintf(compile_server_queue_dir_dir, sizeof(compile_server_queue_dir_dir),
+           "%s/dir", compile_server_queue_dir);
+
+  if (ifd >= 0) {
+    ifd_wd = inotify_add_watch(ifd, compile_server_queue_dir_dir, IN_CREATE | IN_MOVED_TO);
+    if (ifd_wd < 0) {
+      err("inotify_add_watch failed: %s", os_ErrorMsg());
+      return -1;
+    }
+
+    efd = epoll_create1(EPOLL_CLOEXEC);
+    if (efd < 0) {
+      err("epoll_create1 failed: %s", os_ErrorMsg());
+      return -1;
+    }
+
+    struct epoll_event ev =
+    {
+      .events = EPOLLIN,
+      .data.fd = ifd,
+    };
+    if (epoll_ctl(efd, EPOLL_CTL_ADD, ifd, &ev) < 0) {
+      err("epoll_ctl failed: %s", os_ErrorMsg());
+      return -1;
+    }
+  }
 
   interrupt_init();
   interrupt_setup_usr1();
@@ -1154,10 +1195,23 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
     }
 
     if (!r) {
-      int sleep_time = agent?30000:global->sleep_time;
-      interrupt_enable();
-      os_Sleep(sleep_time);
-      interrupt_disable();
+      if (agent) {
+        interrupt_enable();
+        os_Sleep(5000);
+        interrupt_disable();
+      } else {
+        struct epoll_event events[1];
+        int r = epoll_pwait(efd, events, 1, 30000, &emptymask);
+        if (r == 1) {
+          if (events[0].data.fd != ifd) abort();
+          // just read all the data in the ifd without any processing
+          unsigned char ibuf[4096];
+          while (1) {
+            int r = read(ifd, ibuf, sizeof(ibuf));
+            if (r <= 0) break;
+          }
+        }
+      }
       continue;
     }
 
