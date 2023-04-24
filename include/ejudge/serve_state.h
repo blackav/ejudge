@@ -730,6 +730,7 @@ serve_read_compile_packet(
         const unsigned char *pname,
         struct compile_reply_packet *comp_pkt /* ownership transferred */);
 
+struct run_reply_packet;
 int
 serve_read_run_packet(
         struct contest_extra *extra,
@@ -739,7 +740,8 @@ serve_read_run_packet(
         const unsigned char *run_status_dir,
         const unsigned char *run_report_dir,
         const unsigned char *run_full_archive_dir,
-        const unsigned char *pname);
+        const unsigned char *pname,
+        struct run_reply_packet *reply_pkt /* ownership transferred */);
 
 struct run_entry;
 struct problem_desc;

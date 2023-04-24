@@ -4109,7 +4109,8 @@ serve_read_run_packet(
         const unsigned char *run_status_dir,
         const unsigned char *run_report_dir,
         const unsigned char *run_full_archive_dir,
-        const unsigned char *pname)
+        const unsigned char *pname,
+        struct run_reply_packet *reply_pkt /* ownership transferred */)
 {
   const struct section_global_data *global = state->global;
   path_t rep_path, full_path, cur_rep_path;
@@ -4117,7 +4118,6 @@ serve_read_run_packet(
   struct run_entry re, pe;
   char *reply_buf = 0;          /* need char* for generic_read_file */
   size_t reply_buf_size = 0;
-  struct run_reply_packet *reply_pkt = 0;
   char *audit_text = 0;
   size_t audit_text_size = 0;
   FILE *f = 0;
@@ -4135,13 +4135,16 @@ serve_read_run_packet(
   testing_report_xml_t new_tr = NULL;
 
   get_current_time(&ts8, &ts8_us);
-  if ((r = generic_read_file(&reply_buf, 0, &reply_buf_size, SAFE | REMOVE,
-                             run_status_dir, pname, "")) <= 0)
-    return r;
 
-  if (run_reply_packet_read(reply_buf_size, reply_buf, &reply_pkt) < 0)
-    goto failed;
-  xfree(reply_buf), reply_buf = 0;
+  if (!reply_pkt) {
+    if ((r = generic_read_file(&reply_buf, 0, &reply_buf_size, SAFE | REMOVE,
+                               run_status_dir, pname, "")) <= 0)
+      return r;
+
+    if (run_reply_packet_read(reply_buf_size, reply_buf, &reply_pkt) < 0)
+      goto failed;
+    xfree(reply_buf), reply_buf = 0;
+  }
 
   if (reply_pkt->contest_id != cnts->id) {
     err("read_run_packet: contest_id mismatch: %d in packet",

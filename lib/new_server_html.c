@@ -663,6 +663,7 @@ ns_loop_callback(struct server_framework_state *state)
     serve_update_internal_xml_log(e->serve_state, cnts);
 
     for (i = 0; i < cs->compile_dirs_u; i++) {
+      fprintf(stderr, "compile_dir: %s\n", cs->compile_dirs[i].status_dir);
       if (get_file_list(cs->compile_dirs[i].status_dir, &files) < 0)
         continue;
       if (files.u <= 0) continue;
@@ -687,7 +688,7 @@ ns_loop_callback(struct server_framework_state *state)
                               cs->run_dirs[i].status_dir,
                               cs->run_dirs[i].report_dir,
                               cs->run_dirs[i].full_report_dir,
-                              files.v[j]);
+                              files.v[j], NULL);
       }
       e->last_access_time = cur_time;
       xstrarrayfree(&files);
