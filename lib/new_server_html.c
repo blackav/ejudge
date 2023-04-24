@@ -680,7 +680,7 @@ ns_loop_callback(struct server_framework_state *state)
     }
 
     for (i = 0; i < cs->run_dirs_u; i++) {
-      fprintf(stderr, "run_dir: %s\n", cs->compile_dirs[i].status_dir);
+      fprintf(stderr, "run_dir: %s\n", cs->run_dirs[i].status_dir);
       if (get_file_list(cs->run_dirs[i].status_dir, &files) < 0
           || files.u <= 0)
         continue;
