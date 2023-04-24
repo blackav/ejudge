@@ -814,9 +814,11 @@ setup_log_file(void)
 static void
 setup_spool_dirs(const struct ejudge_cfg *config, struct server_framework_state *state)
 {
+  __attribute__((unused)) int r;
+  const unsigned char *contest_server_id = config->contest_server_id;
+
 #if defined EJUDGE_COMPILE_SPOOL_DIR
   const unsigned char *compile_spool_dir = EJUDGE_COMPILE_SPOOL_DIR;
-  const unsigned char *contest_server_id = config->contest_server_id;
 
   unsigned char compile_report_buf[PATH_MAX];
   unsigned char compile_status_buf[PATH_MAX];
@@ -824,7 +826,6 @@ setup_spool_dirs(const struct ejudge_cfg *config, struct server_framework_state 
   unsigned char compile_status_in_buf[PATH_MAX];
   unsigned char compile_status_out_buf[PATH_MAX];
 
-  __attribute__((unused)) int r;
   r = snprintf(compile_status_buf, sizeof(compile_status_buf), "%s/%s/status", compile_spool_dir, contest_server_id);
   r = snprintf(compile_report_buf, sizeof(compile_report_buf), "%s/%s/report", compile_spool_dir, contest_server_id);
   r = snprintf(compile_status_dir_buf, sizeof(compile_status_dir_buf), "%s/dir", compile_status_buf);
@@ -851,6 +852,49 @@ setup_spool_dirs(const struct ejudge_cfg *config, struct server_framework_state 
 
   nsf_add_directory_watch(config, state, compile_status_buf, compile_report_buf, NULL, ns_compile_dir_ready, NULL);
 #endif
+
+#if defined EJUDGE_RUN_SPOOL_DIR
+  const unsigned char *run_spool_dir = EJUDGE_RUN_SPOOL_DIR;
+
+  unsigned char run_status_buf[PATH_MAX];
+  unsigned char run_status_dir_buf[PATH_MAX];
+  unsigned char run_status_in_buf[PATH_MAX];
+  unsigned char run_status_out_buf[PATH_MAX];
+  unsigned char run_report_buf[PATH_MAX];
+  unsigned char run_full_archive_buf[PATH_MAX];
+
+  r = snprintf(run_status_buf, sizeof(run_status_buf), "%s/%s/status", run_spool_dir, contest_server_id);
+  r = snprintf(run_report_buf, sizeof(run_report_buf), "%s/%s/report", run_spool_dir, contest_server_id);
+  r = snprintf(run_full_archive_buf, sizeof(run_full_archive_buf), "%s/%s/output", run_spool_dir, contest_server_id);
+  r = snprintf(run_status_dir_buf, sizeof(run_status_dir_buf), "%s/dir", run_status_buf);
+  r = snprintf(run_status_in_buf, sizeof(run_status_in_buf), "%s/in", run_status_buf);
+  r = snprintf(run_status_out_buf, sizeof(run_status_out_buf), "%s/out", run_status_buf);
+
+  if (os_MakeDirPath(run_report_buf, 0700) < 0) {
+    startup_error("failed to create run spool '%s': %s",
+                  run_report_buf, os_ErrorMsg());
+  }
+  if (os_MakeDirPath(run_full_archive_buf, 0700) < 0) {
+    startup_error("failed to create run spool '%s': %s",
+                  run_full_archive_buf, os_ErrorMsg());
+  }
+  if (os_MakeDirPath(run_status_dir_buf, 0700) < 0) {
+    startup_error("failed to create run spool '%s': %s",
+                  run_status_dir_buf, os_ErrorMsg());
+  }
+  if (os_MakeDirPath(run_status_in_buf, 0700) < 0) {
+    startup_error("failed to create run spool '%s': %s",
+                  run_status_in_buf, os_ErrorMsg());
+  }
+  if (os_MakeDirPath(run_status_out_buf, 0700) < 0) {
+    startup_error("failed to create run spool '%s': %s",
+                  run_status_out_buf, os_ErrorMsg());
+  }
+
+  nsf_add_directory_watch(config, state,
+                          run_status_buf, run_report_buf, run_full_archive_buf,
+                          ns_run_dir_ready, NULL);
+#endif /* EJUDGE_RUN_SPOOL_DIR */
 }
 
 extern int ej_bson_force_link_dummy;
