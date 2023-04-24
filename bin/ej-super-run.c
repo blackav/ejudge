@@ -48,6 +48,8 @@
 #include <signal.h>
 #include <errno.h>
 #include <sys/time.h>
+#include <sys/inotify.h>
+#include <sys/epoll.h>
 
 enum { DEFAULT_WAIT_TIMEOUT_MS = 300000 }; // 5m
 
@@ -653,6 +655,12 @@ do_loop(
   struct Future *future = NULL;
   char *pkt_data = NULL;
   size_t pkt_size = 0;
+  int ifd = -1;
+  int efd = -1;
+  int ifd_wd = -1;
+  sigset_t emptymask;
+
+  sigemptyset(&emptymask);
 
   if (agent_name && *agent_name) {
     if (!strncmp(agent_name, "ssh:", 4)) {
@@ -672,6 +680,36 @@ do_loop(
       }
     } else {
       err("invalid agent");
+      return -1;
+    }
+  } else {
+    ifd = inotify_init1(IN_NONBLOCK | IN_CLOEXEC);
+    if (ifd < 0) {
+      err("inotify_init1 failed: %s", os_ErrorMsg());
+      return -1;
+    }
+
+    unsigned char srspd[PATH_MAX];
+    snprintf(srspd, sizeof(srspd), "%s/dir", super_run_spool_path);
+    ifd_wd = inotify_add_watch(ifd, srspd, IN_CREATE | IN_MOVED_TO);
+    if (ifd_wd < 0) {
+      err("inotify_add_watch failed: %s", os_ErrorMsg());
+      return -1;
+    }
+
+    efd = epoll_create1(EPOLL_CLOEXEC);
+    if (efd < 0) {
+      err("epoll_create1 failed: %s", os_ErrorMsg());
+      return -1;
+    }
+
+    struct epoll_event ev =
+    {
+      .events = EPOLLIN,
+      .data.fd = ifd,
+    };
+    if (epoll_ctl(efd, EPOLL_CTL_ADD, ifd, &ev) < 0) {
+      err("epoll_ctl failed: %s", os_ErrorMsg());
       return -1;
     }
   }
@@ -781,16 +819,30 @@ do_loop(
     }
 
     if (!r) {
+      free(pkt_data); pkt_data = NULL;
+      pkt_size = 0;
+
       gettimeofday(&ctv, NULL);
       current_time_ms = ((long long) ctv.tv_sec) * 1000 + ctv.tv_usec / 1000;
       report_waiting_state(current_time_ms, last_handled_ms);
 
-      int sleep_time = agent?30000:global->sleep_time;
-      interrupt_enable();
-      os_Sleep(sleep_time);
-      interrupt_disable();
-      free(pkt_data); pkt_data = NULL;
-      pkt_size = 0;
+      if (efd >= 0) {
+        struct epoll_event events[1];
+        int r = epoll_pwait(efd, events, 1, 30000, &emptymask);
+        if (r == 1) {
+          if (events[0].data.fd != ifd) abort();
+          // just read all the data in the ifd without any processing
+          unsigned char ibuf[4096];
+          while (1) {
+            int r = read(ifd, ibuf, sizeof(ibuf));
+            if (r <= 0) break;
+          }
+        }
+      } else {
+        interrupt_enable();
+        os_Sleep(5000);
+        interrupt_disable();
+      }
       continue;
     }
 
