@@ -352,6 +352,14 @@ COMMON_CFILES=\
  xml_utils/xml_err_a.c\
  ${REUSE_CFILES}
 
+FLATCC_CFILES =\
+ flatcc/builder.c\
+ flatcc/emitter.c\
+ flatcc/json_parser.c\
+ flatcc/json_printer.c\
+ flatcc/refmap.c\
+ flatcc/verifier.c
+
 PLATFORM_CFILES =\
  $(ARCH)/fileutl.c\
  $(ARCH)/cr_serialize.c\
