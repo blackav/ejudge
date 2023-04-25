@@ -148,7 +148,7 @@ NC_CFILES = cgi-bin/new-client.c version.c
 NC_OBJECTS = $(NC_CFILES:.c=.o) libnew_server_clnt.a libcommon.a libplatform.a libcommon.a
 
 NS_CFILES= bin/ej-contests.c version.c
-NS_OBJECTS=$(NS_CFILES:.c=.o) libcommon.a libuserlist_clnt.a libplatform.a libcommon.a
+NS_OBJECTS=$(NS_CFILES:.c=.o) libcommon.a libuserlist_clnt.a libplatform.a libcommon.a libflatcc.a
 
 NSM_CFILES = bin/ejudge-contests-cmd.c version.c
 NSM_OBJECTS = $(NSM_CFILES:.c=.o) libcommon.a libnew_server_clnt.a libuserlist_clnt.a libplatform.a libcommon.a
@@ -659,6 +659,9 @@ libuserlist_clnt.a: $(USERLIST_CLNT_CFILES:.c=.o)
 	ar rcv $@ $^
 
 libnew_server_clnt.a: $(NEW_SERVER_CLNT_CFILES:.c=.o)
+	ar rcv $@ $^
+
+libflatcc.a : $(FLATCC_CFILES:.c=.o)
 	ar rcv $@ $^
 
 deps.make: cdeps ${CFILES} ${HFILES} gen/filter_expr.c gen/filter_expr.h gen/filter_scan.c $(META_C_FILES) $(META_H_FILES)
