@@ -479,30 +479,35 @@ static int
 command_stop(
         const struct ejudge_cfg *config,
         const char *ejudge_xml_path,
+        int skip_mask,
         int slave_mode,
         int master_mode)
 {
-  if (!master_mode) {
+  if (!master_mode && !(skip_mask & EJ_COMPILE_MASK)) {
     if (invoke_stopper("ej-compile", ejudge_xml_path) < 0)
       return -1;
   }
-  if (!master_mode) {
+  if (!master_mode && !(skip_mask & EJ_SUPER_RUN_MASK)) {
     if (invoke_stopper("ej-super-run", ejudge_xml_path) < 0)
       return -1;
   }
-  if (!slave_mode) {
+  if (!slave_mode && !(skip_mask & EJ_SUPER_SERVER_MASK)) {
     if (invoke_stopper("ej-super-server", ejudge_xml_path) < 0)
       return -1;
   }
-  if (!slave_mode) {
+  if (!slave_mode && !(skip_mask & EJ_CONTESTS_MASK)) {
     if (invoke_stopper("ej-contests", ejudge_xml_path) < 0)
       return -1;
   }
   if (!slave_mode) {
-    if (invoke_stopper("ej-jobs", ejudge_xml_path) < 0)
-      return -1;
-    if (invoke_stopper("ej-users", ejudge_xml_path) < 0)
-      return -1;
+    if (!(skip_mask & EJ_JOBS_MASK)) {
+      if (invoke_stopper("ej-jobs", ejudge_xml_path) < 0)
+        return -1;
+    }
+    if (!(skip_mask & EJ_USERS_MASK)) {
+      if (invoke_stopper("ej-users", ejudge_xml_path) < 0)
+        return -1;
+    }
   }
 
   return 0;
@@ -542,25 +547,30 @@ static int
 command_rotate(
         const struct ejudge_cfg *config,
         const char *ejudge_xml_path,
+        int skip_mask,
         int slave_mode,
         int master_mode,
         int date_suffix_flag)
 {
-  if (!slave_mode) {
+  if (!slave_mode && !(skip_mask & EJ_CONTESTS_MASK)) {
     invoke_rotate("ej-contests", ejudge_xml_path, date_suffix_flag);
   }
-  if (!master_mode) {
+  if (!master_mode && !(skip_mask & EJ_COMPILE_MASK)) {
     invoke_rotate("ej-compile", ejudge_xml_path, date_suffix_flag);
   }
-  if (!master_mode) {
+  if (!master_mode && !(skip_mask & EJ_SUPER_RUN_MASK)) {
     invoke_rotate("ej-super-run", ejudge_xml_path, date_suffix_flag);
   }
-  if (!slave_mode) {
+  if (!slave_mode && !(skip_mask & EJ_SUPER_SERVER_MASK)) {
     invoke_rotate("ej-super-server", ejudge_xml_path, date_suffix_flag);
   }
   if (!slave_mode) {
-    invoke_rotate("ej-users", ejudge_xml_path, date_suffix_flag);
-    invoke_rotate("ej-jobs", ejudge_xml_path, date_suffix_flag);
+    if (!(skip_mask & EJ_USERS_MASK)) {
+      invoke_rotate("ej-users", ejudge_xml_path, date_suffix_flag);
+    }
+    if (!(skip_mask & EJ_JOBS_MASK)) {
+      invoke_rotate("ej-jobs", ejudge_xml_path, date_suffix_flag);
+    }
   }
   if (!slave_mode) {
     rotate_agent_log(config, ejudge_xml_path, date_suffix_flag);
@@ -568,6 +578,23 @@ command_rotate(
 
   return 0;
 }
+
+struct tool_names_s
+{
+  int mask;
+  const char ** names;
+};
+
+static const struct tool_names_s tool_names[] =
+{
+  { EJ_USERS_MASK, (const char *[]) { "ej-users", "users", "user", NULL } },
+  { EJ_SUPER_SERVER_MASK, (const char *[]) { "ej-super-server", "super-server", "server", NULL } },
+  { EJ_COMPILE_MASK, (const char *[]) { "ej-compile", "compile", "comp", NULL } },
+  { EJ_SUPER_RUN_MASK, (const char *[]) { "ej-super-run", "super-run", "run", NULL } },
+  { EJ_JOBS_MASK, (const char *[]) { "ej-jobs", "jobs", "job", NULL } },
+  { EJ_CONTESTS_MASK, (const char *[]) { "ej-contests", "contests", "contest", "cont", NULL } },
+  { 0, NULL },
+};
 
 int
 main(int argc, char *argv[])
@@ -584,6 +611,7 @@ main(int argc, char *argv[])
   int parallelism = 1;
   int compile_parallelism = 1;
   int skip_mask = 0;
+  int tool_mask = 0;
   unsigned char **host_names = NULL;
   const char *agent = NULL;
   const char *instance_id = NULL;
@@ -704,12 +732,34 @@ main(int argc, char *argv[])
   command = argv[i];
   i++;
 
+  while (i < argc) {
+    int j;
+    for (j = 0; tool_names[j].mask; ++j) {
+      int k;
+      for (k = 0; tool_names[j].names[k]; ++k) {
+        if (!strcasecmp(tool_names[j].names[k], argv[i])) {
+          break;
+        }
+      }
+      if (tool_names[j].names[k]) {
+        tool_mask |= tool_names[j].mask;
+        break;
+      }
+    }
+    if (!tool_names[j].mask) {
+      break;
+    }
+    ++i;
+  }
+
   if (i < argc) {
     ejudge_xml_path = argv[i];
     i++;
   }
 
   if (i < argc) startup_error("too many parameters");
+
+  if (tool_mask != 0) skip_mask = EJ_ALL_MASK ^ tool_mask;
 
 #if defined EJUDGE_XML_PATH
   if (!ejudge_xml_path) ejudge_xml_path = EJUDGE_XML_PATH;
@@ -738,10 +788,12 @@ main(int argc, char *argv[])
                       timeout_str, shutdown_script, ip_address) < 0)
       r = 1;
   } else if (!strcmp(command, "stop")) {
-    if (command_stop(config, ejudge_xml_path, slave_mode, master_mode) < 0)
+    if (command_stop(config, ejudge_xml_path,
+                     skip_mask, slave_mode, master_mode) < 0)
       r = 1;
   } else if (!strcmp(command, "rotate")) {
-    if (command_rotate(config, ejudge_xml_path, slave_mode, master_mode,
+    if (command_rotate(config, ejudge_xml_path,
+                       skip_mask, slave_mode, master_mode,
                        date_suffix_flag) < 0)
       r = 1;
   } else if (!strcmp(command, "restart")) {
