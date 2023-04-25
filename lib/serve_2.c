@@ -69,6 +69,7 @@
 #include <sys/stat.h>
 #include <dirent.h>
 #include <fcntl.h>
+#include <sys/mman.h>
 
 #if CONF_HAS_LIBINTL - 0 == 1
 #include <libintl.h>
@@ -575,8 +576,8 @@ serve_build_compile_dirs(
     const unsigned char *compile_report_dir = NULL;
 
 #if defined EJUDGE_COMPILE_SPOOL_DIR
-    const unsigned char *compile_spool_dir = EJUDGE_COMPILE_SPOOL_DIR;
-    const unsigned char *compile_server_id = NULL;
+    __attribute__((unused)) const unsigned char *compile_spool_dir = EJUDGE_COMPILE_SPOOL_DIR;
+    __attribute__((unused)) const unsigned char *compile_server_id = NULL;
     /*
     if (lang && lang->compile_server_id && lang->compile_server_id[0]) {
       compile_server_id = lang->compile_server_id;
@@ -587,8 +588,8 @@ serve_build_compile_dirs(
     // result directories always use server contest_server_id
     compile_server_id = config->contest_server_id;
 
-    unsigned char compile_report_buf[PATH_MAX];
-    unsigned char compile_status_buf[PATH_MAX];
+    __attribute__((unused)) unsigned char compile_report_buf[PATH_MAX];
+    __attribute__((unused)) unsigned char compile_status_buf[PATH_MAX];
 
     if (lang && lang->compile_dir_index > 0) {
       compile_status_dir = lang->compile_status_dir;
@@ -597,20 +598,25 @@ serve_build_compile_dirs(
       compile_status_dir = lang->compile_status_dir;
       compile_report_dir = lang->compile_report_dir;
     } else {
+      // do not add watch dirs, because the global compile result directories are used
+      /*
       snprintf(compile_status_buf, sizeof(compile_status_buf), "%s/%s/%06d/status", compile_spool_dir, compile_server_id, state->contest_id);
       compile_status_dir = compile_status_buf;
       snprintf(compile_report_buf, sizeof(compile_report_buf), "%s/%s/%06d/report", compile_spool_dir, compile_server_id, state->contest_id);
       compile_report_dir = compile_report_buf;
+      */
     }
 #else
     compile_status_dir = lang->compile_status_dir;
     compile_report_dir = lang->compile_report_dir;
 #endif
-    do_build_compile_dirs(state, compile_status_dir, compile_report_dir);
+    if (compile_status_dir) {
+      do_build_compile_dirs(state, compile_status_dir, compile_report_dir);
+    }
   }
 }
 
-static int
+static __attribute__((unused)) int
 do_build_run_dirs(
         serve_state_t state,
         const unsigned char *id,
@@ -701,6 +707,9 @@ build_run_dir(
   snprintf(heartbeat_dir, sizeof(heartbeat_dir), "%s/heartbeat", d1);
   do_build_queue_dirs(state, queue_name, queue_dir, exe_dir, heartbeat_dir);
 
+  // do not create contest specific dirs, using the globals instead
+  return;
+    /*
   unsigned char d2[PATH_MAX];
   snprintf(d2, sizeof(d2), "%s/%s/%06d", EJUDGE_RUN_SPOOL_DIR, contest_server_id, cnts->id);
 
@@ -713,6 +722,7 @@ build_run_dir(
   snprintf(full_report_dir, sizeof(full_report_dir), "%s/output", d2);
   snprintf(team_report_dir, sizeof(team_report_dir), "%s/teamreports", d2);
   do_build_run_dirs(state, "", status_dir, report_dir, team_report_dir, full_report_dir);
+    */
 }
 #endif
 
@@ -3049,7 +3059,6 @@ read_compile_packet_input(
         const struct ejudge_cfg *config,
         serve_state_t cs,
         const struct contest_desc *cnts,
-        const unsigned char *compile_status_dir,
         const unsigned char *compile_report_dir,
         const unsigned char *pname,
         const struct compile_reply_packet *comp_pkt)
@@ -3281,7 +3290,8 @@ serve_read_compile_packet(
         const struct contest_desc *cnts,
         const unsigned char *compile_status_dir,
         const unsigned char *compile_report_dir,
-        const unsigned char *pname)
+        const unsigned char *pname,
+        struct compile_reply_packet *comp_pkt /* ownership transferred */)
 {
   unsigned char rep_path[PATH_MAX];
   int  r, rep_flags = 0;
@@ -3289,7 +3299,6 @@ serve_read_compile_packet(
   const struct section_global_data *global = state->global;
   char *comp_pkt_buf = 0;       /* need char* for generic_read_file */
   size_t comp_pkt_size = 0;
-  struct compile_reply_packet *comp_pkt = 0;
   long report_size = 0;
   unsigned char errmsg[1024] = { 0 };
   //unsigned char *team_name = 0;
@@ -3306,15 +3315,18 @@ serve_read_compile_packet(
   size_t min_txt_size = 1;
   testing_report_xml_t testing_report = NULL;
 
-  if ((r = generic_read_file(&comp_pkt_buf, 0, &comp_pkt_size, SAFE | REMOVE,
-                             compile_status_dir, pname, "")) <= 0)
-    return r;
+  if (!comp_pkt) {
+    if ((r = generic_read_file(&comp_pkt_buf, 0, &comp_pkt_size, SAFE | REMOVE,
+                               compile_status_dir, pname, "")) <= 0)
+      return r;
 
-  if (compile_reply_packet_read(comp_pkt_size, comp_pkt_buf, &comp_pkt) < 0) {
-    /* failed to parse a compile packet */
-    /* we can't do any reasonable recovery, just drop the packet */
-    goto non_fatal_error;
+    if (compile_reply_packet_read(comp_pkt_size, comp_pkt_buf, &comp_pkt) < 0) {
+      /* failed to parse a compile packet */
+      /* we can't do any reasonable recovery, just drop the packet */
+      goto non_fatal_error;
+    }
   }
+
   if (comp_pkt->contest_id != cnts->id) {
     err("read_compile_packet: mismatched contest_id %d", comp_pkt->contest_id);
     goto non_fatal_error;
@@ -3324,7 +3336,6 @@ serve_read_compile_packet(
                               config,
                               state,
                               cnts,
-                              compile_status_dir,
                               compile_report_dir,
                               pname,
                               comp_pkt);
@@ -4102,7 +4113,8 @@ serve_read_run_packet(
         const unsigned char *run_status_dir,
         const unsigned char *run_report_dir,
         const unsigned char *run_full_archive_dir,
-        const unsigned char *pname)
+        const unsigned char *pname,
+        struct run_reply_packet *reply_pkt /* ownership transferred */)
 {
   const struct section_global_data *global = state->global;
   path_t rep_path, full_path, cur_rep_path;
@@ -4110,7 +4122,6 @@ serve_read_run_packet(
   struct run_entry re, pe;
   char *reply_buf = 0;          /* need char* for generic_read_file */
   size_t reply_buf_size = 0;
-  struct run_reply_packet *reply_pkt = 0;
   char *audit_text = 0;
   size_t audit_text_size = 0;
   FILE *f = 0;
@@ -4128,13 +4139,16 @@ serve_read_run_packet(
   testing_report_xml_t new_tr = NULL;
 
   get_current_time(&ts8, &ts8_us);
-  if ((r = generic_read_file(&reply_buf, 0, &reply_buf_size, SAFE | REMOVE,
-                             run_status_dir, pname, "")) <= 0)
-    return r;
 
-  if (run_reply_packet_read(reply_buf_size, reply_buf, &reply_pkt) < 0)
-    goto failed;
-  xfree(reply_buf), reply_buf = 0;
+  if (!reply_pkt) {
+    if ((r = generic_read_file(&reply_buf, 0, &reply_buf_size, SAFE | REMOVE,
+                               run_status_dir, pname, "")) <= 0)
+      return r;
+
+    if (run_reply_packet_read(reply_buf_size, reply_buf, &reply_pkt) < 0)
+      goto failed;
+    xfree(reply_buf), reply_buf = 0;
+  }
 
   if (reply_pkt->contest_id != cnts->id) {
     err("read_run_packet: contest_id mismatch: %d in packet",
@@ -7241,4 +7255,48 @@ serve_invoker_down(
   snprintf(path, sizeof(path), "%s/dir/%s@D", rqi->heartbeat_dir, file2);
   int fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0666);
   close(fd);
+}
+
+int
+serve_get_compile_reply_contest_id(const unsigned char *path)
+{
+  int fd = open(path, O_RDONLY | O_CLOEXEC | O_NOCTTY | O_NOFOLLOW | O_NONBLOCK, 0);
+  if (fd < 0 && errno == ENOENT) {
+    return 0;
+  }
+  if (fd < 0) {
+    err("serve_get_compile_reply_contest_id: failed to open '%s': %s", path, os_ErrorMsg());
+    return -1;
+  }
+  struct stat stb;
+  if (fstat(fd, &stb)) {
+    abort();
+  }
+  if (!S_ISREG(stb.st_mode)) {
+    err("serve_get_compile_reply_contest_id: not regular file '%s'", path);
+    close(fd);
+    return -1;
+  }
+  if (stb.st_size <= 0) {
+    err("serve_get_compile_reply_contest_id: empty file '%s'", path);
+    close(fd);
+    return -1;
+  }
+  if (stb.st_size > 1024 * 128) {
+    err("serve_get_compile_reply_contest_id: file '%s' too big: %lld", path, (long long) stb.st_size);
+    close(fd);
+    return -1;
+  }
+  void *pkt_ptr = mmap(NULL, stb.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+  if (pkt_ptr == MAP_FAILED) {
+    err("serve_get_compile_reply_contest_id: file '%s' map failed: %s", path, os_ErrorMsg());
+    close(fd);
+    return -1;
+  }
+  close(fd); fd = -1;
+
+  int r = compile_reply_packet_get_contest_id(stb.st_size, pkt_ptr);
+  munmap(pkt_ptr, stb.st_size);
+
+  return r;
 }

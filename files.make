@@ -143,6 +143,7 @@ COMMON_CFILES=\
  lib/compile_packet_4.c\
  lib/compile_packet_5.c\
  lib/compile_packet_6.c\
+ lib/compile_packet_7.c\
  lib/content_plugin.c\
  lib/content_plugin_file.c\
  lib/content_plugin_none.c\

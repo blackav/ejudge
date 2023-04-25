@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2000-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -361,6 +361,26 @@ get_file_list(const char *partial_path, strarray_t *files)
   if (files->u > 0) {
     qsort(files->v, files->u, sizeof(files->v[0]), name_sort_func);
   }
+
+  return 0;
+}
+
+int
+get_file_list_unsorted(const char *dir_path, strarray_t *files)
+{
+  DIR           *d = NULL;
+  struct dirent *de;
+
+  files->u = 0;
+  if (!(d = opendir(dir_path))) {
+    return -1;
+  }
+  while ((de = readdir(d))) {
+    if (!strcmp(de->d_name, ".") || !strcmp(de->d_name, "..")) continue;
+    xexpand(files);
+    files->v[files->u++] = xstrdup(de->d_name);
+  }
+  closedir(d); d = NULL;
 
   return 0;
 }

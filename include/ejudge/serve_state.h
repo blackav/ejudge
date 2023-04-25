@@ -727,7 +727,10 @@ serve_read_compile_packet(
         const struct contest_desc *cnts,
         const unsigned char *compile_status_dir,
         const unsigned char *compile_report_dir,
-        const unsigned char *pname);
+        const unsigned char *pname,
+        struct compile_reply_packet *comp_pkt /* ownership transferred */);
+
+struct run_reply_packet;
 int
 serve_read_run_packet(
         struct contest_extra *extra,
@@ -737,7 +740,8 @@ serve_read_run_packet(
         const unsigned char *run_status_dir,
         const unsigned char *run_report_dir,
         const unsigned char *run_full_archive_dir,
-        const unsigned char *pname);
+        const unsigned char *pname,
+        struct run_reply_packet *reply_pkt /* ownership transferred */);
 
 struct run_entry;
 struct problem_desc;
@@ -955,5 +959,8 @@ serve_check_telegram_reminder(
         const struct ejudge_cfg *config,
         serve_state_t state,
         const struct contest_desc *cnts);
+
+int
+serve_get_compile_reply_contest_id(const unsigned char *path);
 
 #endif /* __SERVE_STATE_H__ */

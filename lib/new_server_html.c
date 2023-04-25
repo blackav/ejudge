@@ -77,6 +77,8 @@
 #include "ejudge/metrics_contest.h"
 #include "ejudge/session_cache.h"
 #include "ejudge/tsc.h"
+#include "ejudge/compile_packet.h"
+#include "ejudge/run_packet.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -91,6 +93,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <dirent.h>
 
 #if CONF_HAS_LIBINTL - 0 == 1
 #include <libintl.h>
@@ -661,6 +664,7 @@ ns_loop_callback(struct server_framework_state *state)
     serve_update_internal_xml_log(e->serve_state, cnts);
 
     for (i = 0; i < cs->compile_dirs_u; i++) {
+      fprintf(stderr, "compile_dir: %s\n", cs->compile_dirs[i].status_dir);
       if (get_file_list(cs->compile_dirs[i].status_dir, &files) < 0)
         continue;
       if (files.u <= 0) continue;
@@ -669,13 +673,14 @@ ns_loop_callback(struct server_framework_state *state)
         serve_read_compile_packet(e, ejudge_config, cs, cnts,
                                   cs->compile_dirs[i].status_dir,
                                   cs->compile_dirs[i].report_dir,
-                                  files.v[j]);
+                                  files.v[j], NULL);
       }
       e->last_access_time = cur_time;
       xstrarrayfree(&files);
     }
 
     for (i = 0; i < cs->run_dirs_u; i++) {
+      fprintf(stderr, "run_dir: %s\n", cs->run_dirs[i].status_dir);
       if (get_file_list(cs->run_dirs[i].status_dir, &files) < 0
           || files.u <= 0)
         continue;
@@ -685,7 +690,7 @@ ns_loop_callback(struct server_framework_state *state)
                               cs->run_dirs[i].status_dir,
                               cs->run_dirs[i].report_dir,
                               cs->run_dirs[i].full_report_dir,
-                              files.v[j]);
+                              files.v[j], NULL);
       }
       e->last_access_time = cur_time;
       xstrarrayfree(&files);
@@ -18762,4 +18767,394 @@ ns_handle_http_request(
     strcpy(phr->role_name, "user");
     unprivileged_entry_point(fout, phr);
   }
+}
+
+struct compile_packet_file
+{
+  unsigned char *name;
+  struct compile_reply_packet *pkt;
+  int contest_id;
+};
+
+static struct compile_reply_packet *
+read_compile_reply_packet_from_file(
+        const unsigned char *name,
+        const unsigned char *path)
+{
+  int unlink_on_fail = 1;
+  unsigned char *buf = NULL;
+  struct compile_reply_packet *comp_pkt = NULL;
+  int fd = -1;
+
+  fd = open(path, O_RDONLY | O_CLOEXEC | O_NOCTTY | O_NOFOLLOW | O_NONBLOCK, 0);
+  if (fd < 0) {
+    if (errno != ENOENT) {
+      err("%s: failed to open '%s': %s", __FUNCTION__, path, os_ErrorMsg());
+    } else {
+      unlink_on_fail = 0;
+    }
+    goto fail;
+  }
+
+  struct stat stb;
+  if (fstat(fd, &stb)) {
+    abort();
+  }
+  if (!S_ISREG(stb.st_mode)) {
+    err("%s: not regular file '%s'", __FUNCTION__, path);
+    goto fail;
+  }
+  if (stb.st_size <= 0) {
+    err("%s: empty file '%s'", __FUNCTION__, path);
+    goto fail;
+  }
+  size_t size = stb.st_size;
+  if (size > 1024 * 128) {
+    err("%s: file '%s' too big: %zu", __FUNCTION__, path, size);
+    goto fail;
+  }
+
+  buf = xmalloc(size + 1);
+  buf[size] = 0;
+  unsigned char *p = buf;
+  size_t rm = size;
+  while (rm > 0) {
+    ssize_t rr = read(fd, p, rm);
+    if (rr < 0) {
+      err("%s: read error on '%s': %s", __FUNCTION__, path, os_ErrorMsg());
+      goto fail;
+    }
+    if (!rr) {
+      err("%s: unexpected EOF on '%s'", __FUNCTION__, path);
+      goto fail;
+    }
+    p += rr;
+    rm -= rr;
+  }
+  close(fd); fd = -1;
+
+  if (compile_reply_packet_read(size, buf, &comp_pkt) < 0) {
+    err("%s: invalid packet '%s'", __FUNCTION__, path);
+    goto fail;
+  }
+
+  info("%s: compile packet '%s' read", __FUNCTION__, name);
+  free(buf);
+  unlink(path);
+  return comp_pkt;
+
+fail:;
+  if (fd >= 0) close(fd);
+  free(buf);
+  if (unlink_on_fail) unlink(path);
+  return NULL;
+}
+
+static int
+compile_packet_sort_func(const void *p1, const void *p2)
+{
+  const struct compile_packet_file *f1 = (const struct compile_packet_file *) p1;
+  const struct compile_packet_file *f2 = (const struct compile_packet_file *) p2;
+  return f1->contest_id - f2->contest_id;
+}
+
+void
+ns_compile_dir_ready(
+        const struct ejudge_cfg *config,
+        struct server_framework_state *state,
+        const unsigned char *dir,
+        const unsigned char *dir_dir,
+        const unsigned char *dir_out,
+        const unsigned char *data_dir,
+        const unsigned char *data2_dir,
+        void *user)
+{
+  struct compile_packet_file *files = NULL;
+  size_t fileu = 0, filea = 0;
+  DIR *d = NULL;
+  __attribute__((unused)) int ur;
+
+  d = opendir(dir_dir);
+  if (!d) {
+    err("ns_compile_dir_ready: cannot open '%s': %s", dir_dir, os_ErrorMsg());
+    goto done;
+  }
+  struct dirent *dd;
+  while ((dd = readdir(d))) {
+    if (strcmp(dd->d_name, ".") && strcmp(dd->d_name, "..")) {
+      if (fileu == filea) {
+        if (!filea) {
+          filea = 16;
+        } else {
+          filea *= 2;
+        }
+        XREALLOC(files, filea);
+      }
+      memset(&files[fileu], 0, sizeof(files[0]));
+      files[fileu].name = xstrdup(dd->d_name);
+      ++fileu;
+    }
+  }
+  closedir(d); d = NULL;
+  if (!fileu) goto done;
+
+  for (size_t i = 0; i < fileu; ++i) {
+    unsigned char pkt_path[PATH_MAX];
+    ur = snprintf(pkt_path, sizeof(pkt_path), "%s/%s", dir_dir, files[i].name);
+    files[i].pkt = read_compile_reply_packet_from_file(files[i].name, pkt_path);
+    if (files[i].pkt) {
+      files[i].contest_id = files[i].pkt->contest_id;
+    }
+  }
+
+  qsort(files, fileu, sizeof(files[0]), compile_packet_sort_func);
+
+  struct teamdb_db_callbacks callbacks = {};
+  callbacks.user_data = (void*) state;
+  callbacks.list_all_users = ns_list_all_users_callback;
+
+  int prev_contest_id = 0;
+  const struct contest_desc *cnts = NULL;
+  struct contest_extra *extra = NULL;
+  serve_state_t cs = NULL;
+  for (size_t i = 0; i < fileu; ++i) {
+    if (files[i].contest_id <= 0) continue;
+    if (files[i].contest_id != prev_contest_id) {
+      prev_contest_id = files[i].contest_id;
+
+      if (contests_get(prev_contest_id, &cnts) < 0 || !cnts) {
+        // FIXME: probably it is a transient error, and this contest will be
+        // available shortly?
+        err("%s: dropping packets because of invalid contest %d", __FUNCTION__, prev_contest_id);
+        cnts = NULL;
+        extra = NULL;
+        cs = NULL;
+        continue;
+      }
+
+      extra = ns_get_contest_extra(cnts, config);
+      ASSERT(extra);
+
+      if (serve_state_load_contest(extra, config, prev_contest_id, ul_conn,
+                                   &callbacks, 0, 0) < 0) {
+        err("%s: dropping packets because of unavailable contest %d", __FUNCTION__, prev_contest_id);
+        cnts = NULL;
+        extra = NULL;
+        cs = NULL;
+        continue;
+      }
+
+      cs = extra->serve_state;
+      cs->current_time = time(NULL);
+    }
+
+    if (serve_read_compile_packet(extra, config, cs, cnts, dir, data_dir, files[i].name, files[i].pkt) < 0) {
+      // what to do?
+    }
+    files[i].pkt = NULL; // ownership transferred to 'serve_read_compile_packet'
+  }
+
+done:
+  if (d) closedir(d);
+  for (size_t i = 0; i < fileu; ++i) {
+    free(files[i].name);
+    compile_reply_packet_free(files[i].pkt);
+  }
+  free(files);
+}
+
+static struct run_reply_packet *
+read_run_reply_packet_from_file(
+        const unsigned char *name,
+        const unsigned char *path)
+{
+  int unlink_on_fail = 1;
+  unsigned char *buf = NULL;
+  struct run_reply_packet *run_pkt = NULL;
+  int fd = -1;
+
+  fd = open(path, O_RDONLY | O_CLOEXEC | O_NOCTTY | O_NOFOLLOW | O_NONBLOCK, 0);
+  if (fd < 0) {
+    if (errno != ENOENT) {
+      err("%s: failed to open '%s': %s", __FUNCTION__, path, os_ErrorMsg());
+    } else {
+      unlink_on_fail = 0;
+    }
+    goto fail;
+  }
+
+  struct stat stb;
+  if (fstat(fd, &stb)) {
+    abort();
+  }
+  if (!S_ISREG(stb.st_mode)) {
+    err("%s: not regular file '%s'", __FUNCTION__, path);
+    goto fail;
+  }
+  if (stb.st_size <= 0) {
+    err("%s: empty file '%s'", __FUNCTION__, path);
+    goto fail;
+  }
+  size_t size = stb.st_size;
+  if (size > 1024 * 128) {
+    err("%s: file '%s' too big: %zu", __FUNCTION__, path, size);
+    goto fail;
+  }
+
+  buf = xmalloc(size + 1);
+  buf[size] = 0;
+  unsigned char *p = buf;
+  size_t rm = size;
+  while (rm > 0) {
+    ssize_t rr = read(fd, p, rm);
+    if (rr < 0) {
+      err("%s: read error on '%s': %s", __FUNCTION__, path, os_ErrorMsg());
+      goto fail;
+    }
+    if (!rr) {
+      err("%s: unexpected EOF on '%s'", __FUNCTION__, path);
+      goto fail;
+    }
+    p += rr;
+    rm -= rr;
+  }
+  close(fd); fd = -1;
+
+  if (run_reply_packet_read(size, buf, &run_pkt) < 0) {
+    err("%s: invalid packet '%s'", __FUNCTION__, path);
+    goto fail;
+  }
+
+  info("%s: run packet '%s' read", __FUNCTION__, name);
+  free(buf);
+  unlink(path);
+  return run_pkt;
+
+fail:;
+  if (fd >= 0) close(fd);
+  free(buf);
+  if (unlink_on_fail) unlink(path);
+  return NULL;
+}
+
+struct run_packet_file
+{
+  unsigned char *name;
+  struct run_reply_packet *pkt;
+  int contest_id;
+};
+
+static int
+run_packet_sort_func(const void *p1, const void *p2)
+{
+  const struct run_packet_file *f1 = (const struct run_packet_file *) p1;
+  const struct run_packet_file *f2 = (const struct run_packet_file *) p2;
+  return f1->contest_id - f2->contest_id;
+}
+
+void
+ns_run_dir_ready(
+        const struct ejudge_cfg *config,
+        struct server_framework_state *state,
+        const unsigned char *dir,
+        const unsigned char *dir_dir,
+        const unsigned char *dir_out,
+        const unsigned char *data_dir,
+        const unsigned char *data2_dir,
+        void *user)
+{
+  struct run_packet_file *files = NULL;
+  size_t fileu = 0, filea = 0;
+  DIR *d = NULL;
+  __attribute__((unused)) int ur;
+
+  d = opendir(dir_dir);
+  if (!d) {
+    err("%s: cannot open '%s': %s", __FUNCTION__, dir_dir, os_ErrorMsg());
+    goto done;
+  }
+  struct dirent *dd;
+  while ((dd = readdir(d))) {
+    if (strcmp(dd->d_name, ".") && strcmp(dd->d_name, "..")) {
+      if (fileu == filea) {
+        if (!filea) {
+          filea = 16;
+        } else {
+          filea *= 2;
+        }
+        XREALLOC(files, filea);
+      }
+      memset(&files[fileu], 0, sizeof(files[0]));
+      files[fileu].name = xstrdup(dd->d_name);
+      ++fileu;
+    }
+  }
+  closedir(d); d = NULL;
+  if (!fileu) goto done;
+
+  for (size_t i = 0; i < fileu; ++i) {
+    unsigned char pkt_path[PATH_MAX];
+    ur = snprintf(pkt_path, sizeof(pkt_path), "%s/%s", dir_dir, files[i].name);
+    files[i].pkt = read_run_reply_packet_from_file(files[i].name, pkt_path);
+    if (files[i].pkt) {
+      files[i].contest_id = files[i].pkt->contest_id;
+    }
+  }
+
+  qsort(files, fileu, sizeof(files[0]), run_packet_sort_func);
+
+  struct teamdb_db_callbacks callbacks = {};
+  callbacks.user_data = (void*) state;
+  callbacks.list_all_users = ns_list_all_users_callback;
+
+  int prev_contest_id = 0;
+  const struct contest_desc *cnts = NULL;
+  struct contest_extra *extra = NULL;
+  serve_state_t cs = NULL;
+  for (size_t i = 0; i < fileu; ++i) {
+    if (files[i].contest_id <= 0) continue;
+    if (files[i].contest_id != prev_contest_id) {
+      prev_contest_id = files[i].contest_id;
+
+      if (contests_get(prev_contest_id, &cnts) < 0 || !cnts) {
+        // FIXME: probably it is a transient error, and this contest will be
+        // available shortly?
+        err("%s: dropping packets because of invalid contest %d", __FUNCTION__, prev_contest_id);
+        cnts = NULL;
+        extra = NULL;
+        cs = NULL;
+        continue;
+      }
+
+      extra = ns_get_contest_extra(cnts, config);
+      ASSERT(extra);
+
+      if (serve_state_load_contest(extra, config, prev_contest_id, ul_conn,
+                                   &callbacks, 0, 0) < 0) {
+        err("%s: dropping packets because of unavailable contest %d", __FUNCTION__, prev_contest_id);
+        cnts = NULL;
+        extra = NULL;
+        cs = NULL;
+        continue;
+      }
+
+      cs = extra->serve_state;
+      cs->current_time = time(NULL);
+    }
+
+    if (serve_read_run_packet(extra, config, cs, cnts,
+                              dir, data_dir, data2_dir,
+                              files[i].name, files[i].pkt) < 0) {
+      // what to do?
+    }
+    files[i].pkt = NULL;
+  }
+
+done:
+  if (d) closedir(d);
+  for (size_t i = 0; i < fileu; ++i) {
+    free(files[i].name);
+    run_reply_packet_free(files[i].pkt);
+  }
+  free(files);
 }

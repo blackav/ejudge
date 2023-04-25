@@ -19,6 +19,7 @@
 #include "ejudge/integral.h"
 
 #define EJ_COMPILE_PACKET_VERSION 14
+#define EJ_COMPILE_REPLY_PACKET_VERSION 1
 
 /* various private data structures and constants for compile packets */
 

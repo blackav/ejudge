@@ -952,4 +952,25 @@ ns_get_accepted_set(
         int user_id,
         unsigned char *acc_set);
 
+void
+ns_compile_dir_ready(
+        const struct ejudge_cfg *config,
+        struct server_framework_state *state,
+        const unsigned char *dir,
+        const unsigned char *dir_dir,
+        const unsigned char *dir_out,
+        const unsigned char *data_dir,
+        const unsigned char *data2_dir,
+        void *user);
+void
+ns_run_dir_ready(
+        const struct ejudge_cfg *config,
+        struct server_framework_state *state,
+        const unsigned char *dir,
+        const unsigned char *dir_dir,
+        const unsigned char *dir_out,
+        const unsigned char *data_dir,
+        const unsigned char *data2_dir,
+        void *user);
+
 #endif /* __NEW_SERVER_H__ */

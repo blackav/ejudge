@@ -245,13 +245,22 @@ void nsf_close_client_fds(struct client_state *p);
 struct client_state * nsf_get_client_by_id(struct server_framework_state *,
                                            int id);
 
+struct ejudge_cfg;
 int
 nsf_add_directory_watch(
+        const struct ejudge_cfg *config,
         struct server_framework_state *state,
         const unsigned char *dir,
+        const unsigned char *data_dir,
+        const unsigned char *data2_dir,
         void (*callback)(
+                const struct ejudge_cfg *config,
                 struct server_framework_state *state,
                 const unsigned char *dir,
+                const unsigned char *dir_dir,
+                const unsigned char *dir_out,
+                const unsigned char *data_dir,
+                const unsigned char *data2_dir,
                 void *user),
         void *user);
 
