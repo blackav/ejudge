@@ -40,7 +40,8 @@
 #define EJ_SUPER_RUN_MASK 8
 #define EJ_JOBS_MASK 16
 #define EJ_CONTESTS_MASK 32
-#define EJ_LAST_MASK 64
+#define EJ_AGENT_MASK 64
+#define EJ_LAST_MASK 128
 #define EJ_ALL_MASK (EJ_LAST_MASK - 1)
 
 static const unsigned char *program_name = "";
@@ -572,7 +573,7 @@ command_rotate(
       invoke_rotate("ej-jobs", ejudge_xml_path, date_suffix_flag);
     }
   }
-  if (!slave_mode) {
+  if (!slave_mode && !(skip_mask & EJ_AGENT_MASK)) {
     rotate_agent_log(config, ejudge_xml_path, date_suffix_flag);
   }
 
@@ -593,6 +594,7 @@ static const struct tool_names_s tool_names[] =
   { EJ_SUPER_RUN_MASK, (const char *[]) { "ej-super-run", "super-run", "run", NULL } },
   { EJ_JOBS_MASK, (const char *[]) { "ej-jobs", "jobs", "job", NULL } },
   { EJ_CONTESTS_MASK, (const char *[]) { "ej-contests", "contests", "contest", "cont", NULL } },
+  { EJ_AGENT_MASK, (const char *[]) { "ej-agent", "agents", "agent", NULL } },
   { 0, NULL },
 };
 
@@ -788,6 +790,8 @@ main(int argc, char *argv[])
                       timeout_str, shutdown_script, ip_address) < 0)
       r = 1;
   } else if (!strcmp(command, "stop")) {
+    // ej-agents are not stopped if not asked explicitly
+    if (!(tool_mask & EJ_AGENT_MASK)) skip_mask |= EJ_AGENT_MASK;
     if (command_stop(config, ejudge_xml_path,
                      skip_mask, slave_mode, master_mode) < 0)
       r = 1;
