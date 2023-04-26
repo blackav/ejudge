@@ -43,7 +43,7 @@ LD=gcc
 EXPAT_LIB=-lexpat
 
 C_CFILES=bin/ej-compile.c version.c
-C_OBJECTS=$(C_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a
+C_OBJECTS=$(C_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a libflatcc.a
 
 CC_CFILES=bin/ej-compile-control.c
 CC_OBJECTS=$(CC_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a
@@ -702,7 +702,7 @@ lib/bson_utils_new.o : lib/bson_utils_new.c
 lib/testing_report_bson.o : lib/testing_report_bson.c gen/testing_report_tags.c
 	$(CC) $(CFLAGS) $(MONGOC_CFLAGS) -c $< -o $@
 
-gen/compile_heartbeat.fbc_builder.h gen/compile_heartbeat.fbc_reader.h gen/flatbuffers_common_builder.h gen/flatbuffers_common_reader.h : flatbuf/compile_heartbeat.fbc
-	../flatcc/bin/flatcc -cwrg -ogen flatbuf/compile_heartbeat.fbc
+gen/compile_heartbeat.fbc_builder.h gen/compile_heartbeat.fbc_reader.h gen/flatbuffers_common_builder.h gen/flatbuffers_common_reader.h : flatbuf/compile_heartbeat.fbs
+	../flatcc/bin/flatcc -cwvrg -ogen flatbuf/compile_heartbeat.fbs
 
 include deps.make
