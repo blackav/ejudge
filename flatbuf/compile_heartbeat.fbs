@@ -2,14 +2,14 @@ namespace ej.compile;
 
 table Heartbeat {
     timestamp_ms:int64;
-    last_compile_ms:int64;
+    last_handled_request_ms:int64;
+    start_time_ms:int64;
+    accumulated_ms:int64;
+    request_count:int64;
+
     instance_id:string;
-    local_ip:string;
-    local_host:string;
-    public_ip:string;
-    public_host:string;
     queue:string;
-    compile_id:string;
+    ip_address:string;
 }
 
 root_type Heartbeat;

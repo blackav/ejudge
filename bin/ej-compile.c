@@ -51,6 +51,12 @@
 #include "ejudge/osdeps.h"
 #include "ejudge/exec.h"
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmisleading-indentation"
+#include "gen/compile_heartbeat_builder.h"
+#include "flatcc/flatcc_builder.h"
+#pragma GCC diagnostic pop
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -66,10 +72,12 @@
 #include <dirent.h>
 #include <sys/inotify.h>
 #include <sys/epoll.h>
+#include <sys/mman.h>
 
 enum { MAX_LOG_SIZE = 1024 * 1024, MAX_EXE_SIZE = 128 * 1024 * 1024 };
 
 enum { DEFAULT_WAIT_TIMEOUT_MS = 300000 }; // 5m
+enum { HEARTBEAT_UPDATE_MS = 30000 }; // 30s
 
 struct serve_state serve_state;
 static int initialize_mode = 0;
@@ -83,11 +91,19 @@ static __attribute__((unused)) unsigned char compile_server_spool_dir[PATH_MAX];
 static unsigned char compile_server_queue_dir[PATH_MAX];
 static unsigned char compile_server_queue_dir_dir[PATH_MAX];
 static unsigned char compile_server_src_dir[PATH_MAX];
+static unsigned char heartbeat_dir[PATH_MAX];
 static unsigned char *agent_name;
 static struct AgentClient *agent;
 static unsigned char *instance_id;
 static int verbose_mode;
 static unsigned char *ip_address;
+static long long last_heartbeat_update_ms;
+static long long last_handled_request_ms;
+static long long accumulated_ms;
+static long long request_count;
+static int heartbeat_mode = 1;
+static unsigned char heartbeat_file_name[PATH_MAX];
+static long long start_time_ms;
 
 struct testinfo_subst_handler_compile
 {
@@ -477,6 +493,114 @@ invoke_compiler(
     task_Delete(tsk);
     return RUN_OK;
   }
+}
+
+static void
+save_heartbeat_file(const unsigned char *data, size_t size)
+{
+  unsigned char path[PATH_MAX];
+  unsigned char dpath[PATH_MAX];
+  __attribute__((unused)) int r;
+  r = snprintf(path, sizeof(path), "%s/in/%s", heartbeat_dir, heartbeat_file_name);
+  r = snprintf(dpath, sizeof(dpath), "%s/dir/%s", heartbeat_dir, heartbeat_file_name);
+  int fd = -1;
+  void *mem = MAP_FAILED;
+
+  fd = open(path, O_RDWR | O_CREAT | O_TRUNC | O_NOFOLLOW | O_NONBLOCK | O_NOCTTY, 0666);
+  if (fd < 0) {
+    err("open '%s' failed: %s", path, os_ErrorMsg());
+    goto done;
+  }
+  if (ftruncate(fd, size) < 0) {
+    err("ftruncate '%s', %lld failed: %s", path, (long long) size, os_ErrorMsg());
+    goto done;
+  }
+  mem = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+  if (mem == MAP_FAILED) {
+    err("mmap failed: %s", os_ErrorMsg());
+    goto done;
+  }
+  close(fd); fd = -1;
+
+  memcpy(mem, data, size);
+  munmap(mem, size); mem = MAP_FAILED;
+
+  if (rename(path, dpath) < 0) {
+    err("rename '%s'->'%s' failed: %s", path, dpath, os_ErrorMsg());
+    goto done;
+  }
+  path[0] = 0;
+
+done:;
+  if (path[0]) unlink(path);
+  if (fd >= 0) close(fd);
+  if (mem != MAP_FAILED) munmap(mem, size);
+}
+
+static void
+save_heartbeat(void)
+{
+  if (!heartbeat_mode) return;
+  if (!heartbeat_dir[0]) return;
+
+  struct timeval tv;
+  gettimeofday(&tv, NULL);
+  long long current_time_ms = tv.tv_sec * 1000LL + tv.tv_usec / 1000;
+  if (last_heartbeat_update_ms + HEARTBEAT_UPDATE_MS > current_time_ms) {
+    return;
+  }
+
+  flatcc_builder_t builder;
+  flatcc_builder_init(&builder);
+  unsigned char *buffer = NULL;
+  size_t size = 0;
+
+  ej_compile_Heartbeat_start_as_root(&builder);
+
+  ej_compile_Heartbeat_timestamp_ms_add(&builder, current_time_ms);
+  ej_compile_Heartbeat_last_handled_request_ms_add(&builder, last_handled_request_ms);
+  ej_compile_Heartbeat_start_time_ms_add(&builder, start_time_ms);
+  ej_compile_Heartbeat_accumulated_ms_add(&builder, accumulated_ms);
+  ej_compile_Heartbeat_request_count_add(&builder, request_count);
+  if (instance_id && *instance_id) {
+    ej_compile_Heartbeat_instance_id_create_str(&builder, instance_id);
+  }
+  if (compile_server_id && *compile_server_id) {
+    ej_compile_Heartbeat_queue_create_str(&builder, compile_server_id);
+  }
+  if (ip_address && *ip_address) {
+    ej_compile_Heartbeat_ip_address_create_str(&builder, ip_address);
+  }
+  ej_compile_Heartbeat_end_as_root(&builder);
+
+  buffer = flatcc_builder_get_direct_buffer(&builder, &size);
+
+  if (agent) {
+    __attribute__((unused)) long long last_saved_time_ms = 0;
+    __attribute__((unused)) unsigned char stop_flag = 0;
+    __attribute__((unused)) unsigned char down_flag = 0;
+
+    agent->ops->put_heartbeat(agent, heartbeat_file_name, buffer, size,
+                              &last_saved_time_ms,
+                              &stop_flag, &down_flag);
+  } else {
+    save_heartbeat_file(buffer, size);
+  }
+
+  flatcc_builder_clear(&builder);
+  last_heartbeat_update_ms = current_time_ms;
+}
+
+static void
+delete_heartbeat(void)
+{
+  if (!heartbeat_mode) return;
+  if (!heartbeat_dir[0]) return;
+
+  unsigned char path[PATH_MAX];
+  __attribute__((unused)) int r;
+  r = snprintf(path, sizeof(path), "%s/dir/%s", heartbeat_dir, heartbeat_file_name);
+  r = unlink(path);
 }
 
 static void
@@ -1137,6 +1261,8 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
       continue;
     }
 
+    save_heartbeat();
+
     unsigned char pkt_name[PATH_MAX];
     pkt_name[0] = 0;
     int r = 0;
@@ -1201,7 +1327,7 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
         interrupt_disable();
       } else {
         struct epoll_event events[1];
-        int r = epoll_pwait(efd, events, 1, 30000, &emptymask);
+        int r = epoll_pwait(efd, events, 1, HEARTBEAT_UPDATE_MS, &emptymask);
         if (r == 1) {
           if (events[0].data.fd != ifd) abort();
           // just read all the data in the ifd without any processing
@@ -1267,6 +1393,8 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
     get_current_time(&rpl.ts2, &rpl.ts2_us);
     rpl.run_block_len = req->run_block_len;
     rpl.run_block = req->run_block; /* !!! shares memory with req */
+
+    last_handled_request_ms = rpl.ts2 * 1000LL + rpl.ts2_us / 1000;
 
     unsigned char contest_server_reply_dir[PATH_MAX];
     contest_server_reply_dir[0] = 0;
@@ -1415,6 +1543,9 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
     free(src_buf); src_buf = NULL; src_len = 0;
 
     get_current_time(&rpl.ts3, &rpl.ts3_us);
+    long long current_time_ms = rpl.ts3 * 1000LL + rpl.ts3_us / 1000;
+    accumulated_ms += (current_time_ms - last_handled_request_ms);
+    ++request_count;
 
     if (rpl.status == RUN_OK && !override_exe && !exe_copied) {
       if (!exe_work_name[0]) {
@@ -1530,11 +1661,29 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
     clear_directory(full_working_dir);
   }
 
+  delete_heartbeat();
+
   if (agent) {
     agent->ops->close(agent);
   }
 
   return retval;
+}
+
+static void
+make_heartbeat_file_name(void)
+{
+  const unsigned char *basename = NULL;
+  if (compile_server_id && *compile_server_id) {
+    basename = compile_server_id;
+  } else if (ip_address && *ip_address) {
+    basename = ip_address;
+  } else {
+    basename = os_NodeName();
+  }
+
+  __attribute__((unused)) int r;
+  r = snprintf(heartbeat_file_name, sizeof(heartbeat_file_name), "%s.%d", basename, getpid());
 }
 
 static int
@@ -1652,6 +1801,10 @@ main(int argc, char *argv[])
   XCALLOC(argv_restart, argc + 2);
   argv_restart[j++] = argv[0];
 
+  struct timeval stv;
+  gettimeofday(&stv, NULL);
+  start_time_ms = stv.tv_sec * 1000LL + stv.tv_usec / 1000;
+
   //if (argc == 1) goto print_usage;
   code = 1;
 
@@ -1753,6 +1906,14 @@ main(int argc, char *argv[])
       argv_restart[j++] = "-v";
     } else if (!strcmp(argv[i], "-nst")) {
       disable_stack_trace = 1;
+      ++i;
+      argv_restart[j++] = argv[i];
+    } else if (!strcmp(argv[i], "-hb")) {
+      heartbeat_mode = 1;
+      ++i;
+      argv_restart[j++] = argv[i];
+    } else if (!strcmp(argv[i], "-nhb")) {
+      heartbeat_mode = 0;
       ++i;
       argv_restart[j++] = argv[i];
     } else if (!strcmp(argv[i], "--help")) {
@@ -1949,6 +2110,8 @@ main(int argc, char *argv[])
   }
 #endif
 
+  make_heartbeat_file_name();
+
   if (start_prepare(user, group, workdir) < 0) return 1;
 
   memset(subst_src, 0, sizeof(subst_src));
@@ -2036,8 +2199,12 @@ main(int argc, char *argv[])
       return 1;
     }
     if (make_dir(compile_server_src_dir, 0777) < 0) return 1;
+
+    snprintf(heartbeat_dir, sizeof(heartbeat_dir), "%s/heartbeat", compile_server_spool_dir);
+    if (make_all_dir(heartbeat_dir, 0777) < 0) return 1;
   }
 #endif
+
 
   if (create_dirs(NULL, &serve_state, PREPARE_COMPILE) < 0) return 1;
   if (check_config() < 0) return 1;
