@@ -353,12 +353,12 @@ COMMON_CFILES=\
  ${REUSE_CFILES}
 
 FLATCC_CFILES =\
- flatcc/builder.c\
- flatcc/emitter.c\
- flatcc/json_parser.c\
- flatcc/json_printer.c\
- flatcc/refmap.c\
- flatcc/verifier.c
+ lib/flatcc/builder.c\
+ lib/flatcc/emitter.c\
+ lib/flatcc/json_parser.c\
+ lib/flatcc/json_printer.c\
+ lib/flatcc/refmap.c\
+ lib/flatcc/verifier.c
 
 PLATFORM_CFILES =\
  $(ARCH)/fileutl.c\
