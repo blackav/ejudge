@@ -220,6 +220,15 @@ serve_state_destroy(
   }
   xfree(state->compile_dirs);
 
+  for (i = 0; i < state->compile_queues_u; ++i) {
+    struct compile_queue_item *item = &state->compile_queues[i];
+    xfree(item->id);
+    xfree(item->queue_dir);
+    xfree(item->src_dir);
+    xfree(item->heartbeat_dir);
+  }
+  xfree(state->compile_queues);
+
   for (i = 0; i < state->run_dirs_u; i++) {
     struct run_dir_item *rdi = &state->run_dirs[i];
     xfree(rdi->id);

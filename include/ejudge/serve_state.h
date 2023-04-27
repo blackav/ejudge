@@ -101,6 +101,15 @@ struct compile_dir_item
   unsigned char *status_dir;
   unsigned char *report_dir;
 };
+
+struct compile_queue_item
+{
+  unsigned char *id;
+  unsigned char *queue_dir;
+  unsigned char *src_dir;
+  unsigned char *heartbeat_dir;
+};
+
 struct run_dir_item
 {
   unsigned char *id;
@@ -329,6 +338,9 @@ struct serve_state
 
   struct compile_dir_item *compile_dirs;
   int compile_dirs_u, compile_dirs_a;
+
+  struct compile_queue_item *compile_queues;
+  int compile_queues_u, compile_queues_a;
 
   struct run_dir_item *run_dirs;
   int run_dirs_u, run_dirs_a;
