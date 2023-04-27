@@ -137,6 +137,7 @@ COMMON_CFILES=\
  lib/cldb_plugin_file.c\
  lib/clntutil.c\
  lib/common_plugin.c\
+ lib/compile_heartbeat.c\
  lib/compile_packet_1.c\
  lib/compile_packet_2.c\
  lib/compile_packet_3.c\
@@ -568,6 +569,7 @@ HFILES=\
  ./include/ejudge/clntutil.h\
  ./include/ejudge/common_plugin.h\
  ./include/ejudge/compat.h\
+ ./include/ejudge/compile_heartbeat.h\
  ./include/ejudge/compile_packet.h\
  ./include/ejudge/compile_packet_priv.h\
  ./include/ejudge/content_plugin.h\
