@@ -166,7 +166,7 @@ IC_CFILES = bin/ej-import-contest.c version.c
 IC_OBJECTS = $(IC_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a
 
 G_CFILES = bin/ej-page-gen.c 
-G_OBJECTS = $(G_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a
+G_OBJECTS = $(G_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a libflatcc.a
 
 PB_CFILES = bin/ej-parblock.c
 PB_OBJECTS = $(PB_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a
