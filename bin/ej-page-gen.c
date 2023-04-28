@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2014-2021 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2014-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -24,6 +24,8 @@
 #include "ejudge/new_server_pi.h"
 #include "ejudge/super_serve_pi.h"
 #include "ejudge/internal_pages.h"
+
+#include "ejudge/compile_heartbeat.h"
 
 #include "ejudge/osdeps.h"
 #include "ejudge/xalloc.h"
@@ -6764,6 +6766,7 @@ PrivViewUsersPage dummy_pvup;
 UserInfoPage dummy_uip;
 StandingsPage dummy_page;
 LanguageStat dummy_lang_stat;
+struct compile_heartbeat_vector chv;
 
 /*
  * Local variables:
