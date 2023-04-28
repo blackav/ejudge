@@ -2023,3 +2023,42 @@ cleanup:;
   }
   return retval;
 }
+
+int
+fast_read_file_with_size(
+        const unsigned char *path,
+        size_t size,
+        unsigned char **p_buf)
+{
+  unsigned char *buf = malloc(size + 1);
+  buf[size] = 0;
+
+  int fd = open(path, O_RDONLY | O_NOCTTY, 0);
+  if (fd < 0) {
+    int r = errno;
+    err("%s: open '%s' failed: %s", __FUNCTION__, path, os_ErrorMsg());
+    free(buf);
+    return -r;
+  }
+  unsigned char *p = buf;
+  size_t rem = size;
+  while (rem > 0) {
+    ssize_t rr = read(fd, p, rem);
+    if (rr < 0) {
+      int r = errno;
+      err("%s: read '%s' failed: %s", __FUNCTION__, path, os_ErrorMsg());
+      free(buf);
+      close(fd);
+      return -r;
+    }
+    if (!rr) {
+      err("%s: unexpected EOF in '%s'", __FUNCTION__, path);
+      free(buf);
+      close(fd);
+      return -EINVAL;
+    }
+  }
+  close(fd);
+  *p_buf = buf;
+  return 1;
+}

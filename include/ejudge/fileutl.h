@@ -98,4 +98,10 @@ get_file_list_unsorted(
         const char *dir_path,
         strarray_t *files);
 
+int
+fast_read_file_with_size(
+        const unsigned char *path,
+        size_t size,
+        unsigned char **p_buf);
+
 #endif /* __FILEUTL_H__ */
