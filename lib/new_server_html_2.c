@@ -51,6 +51,8 @@
 #include "ejudge/new_server_pi.h"
 #include "ejudge/xuser_plugin.h"
 #include "ejudge/super_run_status.h"
+#include "ejudge/compile_heartbeat.h"
+#include "gen/compile_heartbeat_reader.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -6095,6 +6097,36 @@ ns_examiners_page(
   xfree(exam_flag);
   html_armor_free(&ab);
   return 0;
+}
+
+static int
+compile_heartbeat_sort_func(const void *v1, const void *v2)
+{
+  const struct compile_heartbeat_vector_item *p1 = *((struct compile_heartbeat_vector_item**) v1);
+  const struct compile_heartbeat_vector_item *p2 = *((struct compile_heartbeat_vector_item**) v2);
+
+  ej_compile_Heartbeat_table_t h1 = ej_compile_Heartbeat_as_root(p1->data);
+  ej_compile_Heartbeat_table_t h2 = ej_compile_Heartbeat_as_root(p2->data);
+
+  const unsigned char *id1 = ej_compile_Heartbeat_instance_id_get(h1);
+  const unsigned char *id2 = ej_compile_Heartbeat_instance_id_get(h2);
+  return strcmp(id1, id2);
+}
+
+void
+ns_scan_compile_heartbeat_dirs(
+        serve_state_t cs,
+        struct compile_heartbeat_vector *vec)
+{
+  memset(vec, 0, sizeof(*vec));
+  for (int i = 0; i < cs->compile_queues_u; ++i) {
+    if (cs->compile_queues[i].heartbeat_dir) {
+      compile_heartbeat_scan(cs->compile_queues[i].id,
+                             cs->compile_queues[i].heartbeat_dir,
+                             vec);
+    }
+  }
+  qsort(vec->v, vec->u, sizeof(vec->v[0]), compile_heartbeat_sort_func);
 }
 
 TestingQueueArray *

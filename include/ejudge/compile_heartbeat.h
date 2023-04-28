@@ -37,4 +37,10 @@ compile_heartbeat_vector_free(
         struct compile_heartbeat_vector *v,
         int free_v_flag);
 
+void
+compile_heartbeat_scan(
+        const unsigned char *queue,
+        const unsigned char *heartbeat_dir,
+        struct compile_heartbeat_vector *v);
+
 #endif /* __SUPER_RUN_STATUS_H__ */
