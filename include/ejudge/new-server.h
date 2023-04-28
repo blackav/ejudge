@@ -752,6 +752,12 @@ ns_scan_heartbeat_dirs(
         serve_state_t cs,
         struct super_run_status_vector *vec);
 
+struct compile_heartbeat_vector;
+void
+ns_scan_compile_heartbeat_dirs(
+        serve_state_t cs,
+        struct compile_heartbeat_vector *vec);
+
 int
 ns_parse_run_id(
         FILE *fout,
