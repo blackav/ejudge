@@ -702,7 +702,7 @@ lib/bson_utils_new.o : lib/bson_utils_new.c
 lib/testing_report_bson.o : lib/testing_report_bson.c gen/testing_report_tags.c
 	$(CC) $(CFLAGS) $(MONGOC_CFLAGS) -c $< -o $@
 
-gen/compile_heartbeat_builder.h gen/compile_heartbeat_reader.h gen/flatbuffers_common_builder.h gen/flatbuffers_common_reader.h : flatbuf/compile_heartbeat.fbs
-	../flatcc/bin/flatcc -cwvrg -ogen flatbuf/compile_heartbeat.fbs
+include/flatbuf-gen/compile_heartbeat_builder.h include/flatbuf-gen/compile_heartbeat_reader.h include/flatbuf-gen/compile_heartbeat_verifier.h include/flatbuf-gen/flatbuffers_common_builder.h include/flatbuf-gen/flatbuffers_common_reader.h : flatbuf/compile_heartbeat.fbs
+	../flatcc/bin/flatcc -cwvrg -oinclude/flatbuf-gen flatbuf/compile_heartbeat.fbs
 
 include deps.make

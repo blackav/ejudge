@@ -21,7 +21,7 @@
 #include "ejudge/errlog.h"
 #include "ejudge/xalloc.h"
 
-#include "gen/compile_heartbeat_verifier.h"
+#include "flatbuf-gen/compile_heartbeat_verifier.h"
 
 #include <sys/types.h>
 #include <fcntl.h>

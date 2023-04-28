@@ -53,7 +53,7 @@
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmisleading-indentation"
-#include "gen/compile_heartbeat_builder.h"
+#include "flatbuf-gen/compile_heartbeat_builder.h"
 #include "flatcc/flatcc_builder.h"
 #pragma GCC diagnostic pop
 

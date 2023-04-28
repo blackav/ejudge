@@ -52,7 +52,8 @@
 #include "ejudge/xuser_plugin.h"
 #include "ejudge/super_run_status.h"
 #include "ejudge/compile_heartbeat.h"
-#include "gen/compile_heartbeat_reader.h"
+
+#include "flatbuf-gen/compile_heartbeat_reader.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
