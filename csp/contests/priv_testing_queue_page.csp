@@ -3,6 +3,9 @@
 %><%
 #include "ejudge/super_run_packet.h"
 #include "ejudge/super_run_status.h"
+#include "ejudge/compile_heartbeat.h"
+
+#include "flatbuf-gen/compile_heartbeat_reader.h"
 %><%@set getter_name = "csp_get_priv_testing_queue_page"
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
 %><%@page csp_view_priv_testing_queue_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
@@ -11,6 +14,7 @@
   const unsigned char *title = NULL;
   struct TestingQueueArray vec;
   struct super_run_status_vector srsv;
+  struct compile_heartbeat_vector chv;
   int i, prob_id, user_id;
   const unsigned char *lang_short_name;
   int enable_main_menu = 0;
@@ -24,6 +28,7 @@
 
   memset(&vec, 0, sizeof(vec));
   memset(&srsv, 0, sizeof(srsv));
+  memset(&chv, 0, sizeof(chv));
 
   if (phr->role != USER_ROLE_ADMIN) FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
 
@@ -33,6 +38,7 @@
 
   ns_scan_run_queue(cs, &vec);
   ns_scan_heartbeat_dirs(cs, &srsv);
+  ns_scan_compile_heartbeat_dirs(cs, &chv);
 
   long long earlier_judge_request_us = 0;
   long long earlier_run_queue_us = 0;
@@ -327,6 +333,46 @@
 %>
 </table>
 
+<h2>Compilers</h2>
+
+<table class="b1">
+    <tr>
+        <th class="b1">NN</th>
+        <th class="b1">InvokerID</th>
+        <th class="b1">IP address</th>
+        <th class="b1">Run Queue</th>
+        <th class="b1">Status<br/>Updated</th>
+        <th class="b1">Last<br/>Request</th>
+        <th class="b1">Request<br/>Count</th>
+        <th class="b1">Accumulated<br/>Time</th>
+        <th class="b1">Ops</th>
+    </tr>
+<%
+  for (i = 0; i < chv.u; ++i) {
+%>
+    <tr>
+        <td class="b1"><s:v value="i + 1" /></td>
+    </tr>
+<%
+  }
+%>
+</table>
+
+<%
+/*
+table Heartbeat {
+    timestamp_ms:int64;
+    last_handled_request_ms:int64;
+    start_time_ms:int64;
+    accumulated_ms:int64;
+    request_count:int64;
+
+    instance_id:string;
+    queue:string;
+    ip_address:string;
+}
+*/
+%>
 
 <%@include "priv_footer.csp"
 %><%
@@ -334,5 +380,6 @@ cleanup:
   l10n_resetlocale();
   testing_queue_array_free(&vec, 0);
   super_run_status_vector_free(&srsv, 0);
+  compile_heartbeat_vector_free(&chv, 0);
   html_armor_free(&ab);
 %>
