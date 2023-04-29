@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -274,6 +274,7 @@ const int ns_priv_next_state[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_VALUER_JUDGE_COMMENTS] = NEW_SRV_ACTION_ADMIN_CONTEST_SETTINGS,
   [NEW_SRV_ACTION_GENERATE_PASSWORDS_2] = NEW_SRV_ACTION_VIEW_CNTS_PWDS,
   [NEW_SRV_ACTION_GENERATE_REG_PASSWORDS_2] = NEW_SRV_ACTION_VIEW_REG_PWDS,
+  [NEW_SRV_ACTION_COMPILER_OP] = NEW_SRV_ACTION_VIEW_TESTING_QUEUE,
 };
 
 /* previous state (return in case of error) */
