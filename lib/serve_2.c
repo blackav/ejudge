@@ -536,6 +536,40 @@ serve_get_cnts_caps(serve_state_t state,
 }
 
 static int
+do_build_compile_queue_dirs(
+        serve_state_t cs,
+        const unsigned char *id,
+        const unsigned char *queue_dir,
+        const unsigned char *src_dir,
+        const unsigned char *heartbeat_dir)
+{
+  int i;
+
+  for (i = 0; i < cs->compile_queues_u; ++i) {
+    if (!strcmp(cs->compile_queues[i].queue_dir, queue_dir)) {
+      return i;
+    }
+  }
+
+  if (cs->compile_queues_u == cs->compile_queues_a) {
+    if (!(cs->compile_queues_a *= 2)) cs->compile_queues_a = 8;
+    XREALLOC(cs->compile_queues, cs->compile_queues_a);
+  }
+
+  struct compile_queue_item *item = &cs->compile_queues[cs->compile_queues_u++];
+  memset(item, 0, sizeof(*item));
+
+  item->id = xstrdup(id);
+  item->queue_dir = xstrdup(queue_dir);
+  item->src_dir = xstrdup(src_dir);
+  if (heartbeat_dir) {
+    item->heartbeat_dir = xstrdup(heartbeat_dir);
+  }
+
+  return i;
+}
+
+static int
 do_build_compile_dirs(serve_state_t state,
                       const unsigned char *status_dir,
                       const unsigned char *report_dir)
@@ -613,6 +647,63 @@ serve_build_compile_dirs(
     if (compile_status_dir) {
       do_build_compile_dirs(state, compile_status_dir, compile_report_dir);
     }
+  }
+
+  // build queue dirs
+  for (i = 1; i <= state->max_lang; i++) {
+    const struct section_language_data *lang = state->langs[i];
+    if (!lang) continue;
+
+    const unsigned char *id = "";
+    const unsigned char *src_dir = NULL;
+    const unsigned char *queue_dir = NULL;
+    const unsigned char *heartbeat_dir = NULL;
+
+    unsigned char src_buf[PATH_MAX];
+    unsigned char queue_buf[PATH_MAX];
+    unsigned char heartbeat_buf[PATH_MAX];
+    __attribute__((unused)) int r;
+
+#if defined EJUDGE_COMPILE_SPOOL_DIR
+    if (lang && lang->compile_server_id && lang->compile_server_id[0]) {
+      id = lang->compile_server_id;
+    } else if (global->compile_server_id && global->compile_server_id[0]) {
+      id = global->compile_server_id;
+    } else {
+      id = config->contest_server_id;
+    }
+
+    if (lang->compile_dir_index > 0) {
+      src_dir = lang->compile_src_dir;
+      queue_dir = lang->compile_queue_dir;
+      r = snprintf(heartbeat_buf, sizeof(heartbeat_buf), "%s/../heartbeat", queue_dir);
+      heartbeat_dir = heartbeat_buf;
+    } else if (lang->compile_dir && lang->compile_dir[0] && global && global->compile_dir && strcmp(lang->compile_dir, global->compile_dir) != 0) {
+      src_dir = lang->compile_src_dir;
+      queue_dir = lang->compile_queue_dir;
+      r = snprintf(heartbeat_buf, sizeof(heartbeat_buf), "%s/../heartbeat", queue_dir);
+      heartbeat_dir = heartbeat_buf;
+    } else {
+      const unsigned char *spool_dir = EJUDGE_COMPILE_SPOOL_DIR;
+      r = snprintf(src_buf, sizeof(src_buf), "%s/%s/src", spool_dir, id);
+      src_dir = src_buf;
+      r = snprintf(queue_buf, sizeof(queue_buf), "%s/%s/queue", spool_dir, id);
+      queue_dir = queue_buf;
+      r = snprintf(heartbeat_buf, sizeof(heartbeat_buf), "%s/%s/heartbeat", spool_dir, id);
+      heartbeat_dir = heartbeat_buf;
+    }
+#else
+    src_dir = global->compile_src_dir;
+    if (lang->compile_src_dir && lang->compile_src_dir[0]) {
+      src_dir = lang->compile_src_dir;
+    }
+    queue_dir = global->compile_queue_dir;
+    if (lang->compile_queue_dir && lang->compile_queue_dir[0]) {
+      queue_dir = lang->compile_queue_dir;
+    }
+    heartbeat_dir = NULL; // disabled
+#endif
+    do_build_compile_queue_dirs(state, id, queue_dir, src_dir, heartbeat_dir);
   }
 }
 
