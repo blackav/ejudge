@@ -1267,3 +1267,39 @@ html_print_testing_report_file_content(
     fprintf(out_f, "%s\n", html_armor_buf(pab, fc->data));
   }
 }
+
+unsigned char *
+html_timestamp_with_ago_ms(
+        unsigned char *buf,
+        size_t size,
+        long long timestamp_ms,
+        long long current_time_ms)
+{
+  char buf2[128];
+  __attribute__((unused)) int r;
+
+  buf2[0] = 0;
+  if (current_time_ms + 10000 < timestamp_ms) {
+    r = snprintf(buf2, sizeof(buf2), " (<i>future</i>)");
+  } else if (timestamp_ms + 10000 >= current_time_ms) {
+    r = snprintf(buf2, sizeof(buf2), " (<b>now</b>)");
+  } else {
+    long long diff = current_time_ms - timestamp_ms;
+    if (diff < 120000) {
+      r = snprintf(buf2, sizeof(buf2), " (%d sec ago)", (int)(diff / 1000));
+    } else if (diff < 7200000) {
+      r = snprintf(buf2, sizeof(buf2), " (%d mins ago)", (int)(diff / 60000));
+    } else if (diff < 172800000) {
+      r = snprintf(buf2, sizeof(buf2), " (%d hours ago)", (int)(diff / 3600000));
+    } else {
+      r = snprintf(buf2, sizeof(buf2), " (%d days ago)", (int)(diff / 86400000));
+    }
+  }
+  time_t tt = (int)(timestamp_ms / 1000);
+  struct tm *ptm = localtime(&tt);
+  snprintf(buf, size, "%04d-%02d-%02d %02d:%02d:%02d%s",
+           ptm->tm_year + 1900, ptm->tm_mon + 1, ptm->tm_mday,
+           ptm->tm_hour, ptm->tm_min, ptm->tm_sec,
+           buf2);
+  return buf;
+}
