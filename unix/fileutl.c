@@ -2057,6 +2057,8 @@ fast_read_file_with_size(
       close(fd);
       return -EINVAL;
     }
+    p += rr;
+    rem -= rr;
   }
   close(fd);
   *p_buf = buf;

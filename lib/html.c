@@ -1278,6 +1278,11 @@ html_timestamp_with_ago_ms(
   char buf2[128];
   __attribute__((unused)) int r;
 
+  if (timestamp_ms <= 0) {
+    buf[0] = 0;
+    return buf;
+  }
+
   buf2[0] = 0;
   if (current_time_ms + 10000 < timestamp_ms) {
     r = snprintf(buf2, sizeof(buf2), " (<i>future</i>)");

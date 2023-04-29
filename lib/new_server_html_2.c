@@ -6111,6 +6111,9 @@ compile_heartbeat_sort_func(const void *v1, const void *v2)
 
   const unsigned char *id1 = ej_compile_Heartbeat_instance_id_get(h1);
   const unsigned char *id2 = ej_compile_Heartbeat_instance_id_get(h2);
+  if (!id1 && !id2) return 0;
+  if (!id1) return -1;
+  if (!id2) return 1;
   return strcmp(id1, id2);
 }
 
