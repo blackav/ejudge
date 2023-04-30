@@ -104,6 +104,8 @@ static long long request_count;
 static int heartbeat_mode = 1;
 static unsigned char heartbeat_file_name[PATH_MAX];
 static long long start_time_ms;
+static unsigned char pending_stop_flag; // bool
+static unsigned char pending_down_flag; // bool
 
 struct testinfo_subst_handler_compile
 {
@@ -531,6 +533,17 @@ save_heartbeat_file(const unsigned char *data, size_t size)
   }
   path[0] = 0;
 
+  r = snprintf(path, sizeof(path), "%s/dir/%s@S", heartbeat_dir, heartbeat_file_name);
+  if (access(path, F_OK) >= 0) {
+    pending_stop_flag = 1;
+    r = unlink(path);
+  }
+  r = snprintf(path, sizeof(path), "%s/dir/%s@D", heartbeat_dir, heartbeat_file_name);
+  if (access(path, F_OK) >= 0) {
+    pending_down_flag = 1;
+    r = unlink(path);
+  }
+
 done:;
   if (path[0]) unlink(path);
   if (fd >= 0) close(fd);
@@ -577,12 +590,10 @@ save_heartbeat(void)
 
   if (agent) {
     __attribute__((unused)) long long last_saved_time_ms = 0;
-    __attribute__((unused)) unsigned char stop_flag = 0;
-    __attribute__((unused)) unsigned char down_flag = 0;
 
     agent->ops->put_heartbeat(agent, heartbeat_file_name, buffer, size,
                               &last_saved_time_ms,
-                              &stop_flag, &down_flag);
+                              &pending_stop_flag, &pending_down_flag);
   } else {
     save_heartbeat_file(buffer, size);
   }
@@ -1262,6 +1273,9 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
     }
 
     save_heartbeat();
+    if (pending_stop_flag || pending_down_flag) {
+      break;
+    }
 
     unsigned char pkt_name[PATH_MAX];
     pkt_name[0] = 0;
@@ -2251,6 +2265,16 @@ main(int argc, char *argv[])
 #endif /* HAVE_OPEN_MEMSTREAM */
 
   if (new_loop(parallel_mode, log_path) < 0) return 1;
+
+  if (pending_down_flag) {
+    info("DOWN request from the server");
+    if (halt_command) {
+      start_shutdown(halt_command);
+    }
+  }
+  if (pending_stop_flag) {
+    info("STOP request from the server");
+  }
 
   if (interrupt_restart_requested()) start_restart();
 
