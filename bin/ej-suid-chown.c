@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2015-2020 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2015-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -48,6 +48,7 @@ extern char **environ;
 static void
 safe_chown(const char *full, int to_user_id, int to_group_id, int from_user_id)
 {
+    __attribute__((unused)) int _;
     int fd = open(full, O_RDONLY | O_NOFOLLOW | O_NONBLOCK, 0);
     if (fd < 0) return;
     struct stat stb;
@@ -57,12 +58,12 @@ safe_chown(const char *full, int to_user_id, int to_group_id, int from_user_id)
     }
     if (S_ISDIR(stb.st_mode)) {
         if (stb.st_uid == from_user_id) {
-            fchown(fd, to_user_id, to_group_id);
-            fchmod(fd, (stb.st_mode & 0777) | 0700);
+            _ = fchown(fd, to_user_id, to_group_id);
+            _ = fchmod(fd, (stb.st_mode & 0777) | 0700);
         }
     } else {
         if (stb.st_uid == from_user_id) {
-            fchown(fd, to_user_id, to_group_id);
+            _ = fchown(fd, to_user_id, to_group_id);
         }
     }
     close(fd);

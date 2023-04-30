@@ -251,7 +251,8 @@ add_wchunk_move(struct AgentClientSsh *acs, unsigned char *data, int size)
     c->size = size;
     pthread_mutex_unlock(&acs->wchunkm);
     uint64_t v = 1;
-    write(acs->vfd, &v, sizeof(v));
+    __attribute__((unused)) int _;
+    _ = write(acs->vfd, &v, sizeof(v));
 }
 
 static void
@@ -651,8 +652,14 @@ connect_func(struct AgentClient *ac)
     struct AgentClientSsh *acs = (struct AgentClientSsh *) ac;
     int tossh[2] = { -1, -1 }, fromssh[2] = { -1, -1 };
 
-    pipe2(tossh, O_CLOEXEC);
-    pipe2(fromssh, O_CLOEXEC);
+    if (pipe2(tossh, O_CLOEXEC) < 0) {
+        err("pipe2 failed: %s", os_ErrorMsg());
+        goto fail;
+    }
+    if (pipe2(fromssh, O_CLOEXEC) < 0) {
+        err("pipe2 failed: %s", os_ErrorMsg());
+        goto fail;
+    }
 
     acs->pid = fork();
     if (acs->pid < 0) {
@@ -799,7 +806,8 @@ close_func(struct AgentClient *ac)
     pthread_mutex_lock(&acs->stop_m);
     acs->stop_request = 1;
     uint64_t value = 1;
-    write(acs->vfd, &value, sizeof(value));
+    __attribute__((unused)) int _;
+    _ = write(acs->vfd, &value, sizeof(value));
     while (!acs->is_stopped) {
         pthread_cond_wait(&acs->stop_c, &acs->stop_m);
     }

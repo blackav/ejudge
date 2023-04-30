@@ -307,6 +307,7 @@ int
 start_open_log(const unsigned char *log_path)
 {
   int log_fd = -1;
+  __attribute__((unused)) int _;
 
   if (!log_path) log_path = "/dev/null";
   if ((log_fd = open(log_path, O_WRONLY | O_CREAT | O_APPEND | O_LARGEFILE, 0600)) < 0) {
@@ -317,7 +318,7 @@ start_open_log(const unsigned char *log_path)
   if (open("/dev/null", O_RDONLY) < 0) return -1;
   close(1);
   if (open("/dev/null", O_WRONLY) < 0) return -1;
-  close(2); dup(log_fd); close(log_fd);
+  close(2); _ = dup(log_fd); close(log_fd);
   return 0;
 }
 

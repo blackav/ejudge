@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2009-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2009-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -58,19 +58,21 @@ file_perms_set(
         int old_group,
         int old_mode)
 {
+  __attribute__((unused)) int _;
+
   if (group > 0) {
     if (chown(path, -1, group) < 0) {
       fprintf(flog, "chown: %s: %s\n", path, os_ErrorMsg());
     }
   } else if (old_group > 0) {
-    chown(path, -1, old_group);
+    _ = chown(path, -1, old_group);
   }
   if (mode > 0) {
     if (chmod(path, mode) < 0) {
       fprintf(flog, "chmod: %s: %s\n", path, os_ErrorMsg());
     }
   } else if (old_mode > 0) {
-    chmod(path, old_mode);
+    _ = chmod(path, old_mode);
   }
   return 0;
 }

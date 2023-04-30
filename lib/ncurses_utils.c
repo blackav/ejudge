@@ -1,6 +1,6 @@
 /* -*- mode:c -*- */
 
-/* Copyright (C) 2004-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -88,9 +88,10 @@ ncurses_yesno(int init_val, unsigned char const *fmt, ...)
   tex_dom_result_t tex_dom_res = 0;
   tex_doc_t tex_doc = 0;
   tex_buffer_t tex_buf = 0;
+  __attribute__((unused)) int _;
 
   va_start(args, fmt);
-  vasprintf(&asbuf, fmt, args);
+  _ = vasprintf(&asbuf, fmt, args);
   va_end(args);
   tex_dom_res = tex_dom_parse(asbuf);
   if (tex_dom_res->errcnt > 0) {
@@ -227,9 +228,10 @@ ncurses_msgbox(unsigned char const *fmt, ...)
   tex_dom_result_t tex_dom_res = 0;
   tex_doc_t tex_doc = 0;
   tex_buffer_t tex_buf = 0;
+  __attribute__((unused)) int _;
 
   va_start(args, fmt);
-  vasprintf(&asbuf, fmt, args);
+  _ = vasprintf(&asbuf, fmt, args);
   va_end(args);
   tex_dom_res = tex_dom_parse(asbuf);
   if (tex_dom_res->errcnt > 0) {
@@ -325,9 +327,10 @@ ncurses_errbox(unsigned char const *fmt, ...)
   tex_dom_result_t tex_dom_res = 0;
   tex_doc_t tex_doc = 0;
   tex_buffer_t tex_buf = 0;
+  __attribute__((unused)) int _;
 
   va_start(args, fmt);
-  vasprintf(&asbuf, fmt, args);
+  _ = vasprintf(&asbuf, fmt, args);
   va_end(args);
   tex_dom_res = tex_dom_parse(asbuf);
   if (tex_dom_res->errcnt > 0) {
@@ -1256,10 +1259,11 @@ do_choose_file(
       snprintf(name_str, sizeof(name_str), "%s", files[i]->name);
     }
 
-    asprintf(&descs[i], "%s%s%-*.*s %10s %s %s",
-             lnk_str, type_str, (int) (sizeof(name_str) - 1),
-             (int) (sizeof(name_str) - 1),
-             name_str, size_str, time_str, mode_str);
+    __attribute__((unused)) int _;
+    _ = asprintf(&descs[i], "%s%s%-*.*s %10s %s %s",
+                 lnk_str, type_str, (int) (sizeof(name_str) - 1),
+                 (int) (sizeof(name_str) - 1),
+                 name_str, size_str, time_str, mode_str);
   }
 
   XCALLOC(items, files_u + 1);

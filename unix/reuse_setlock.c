@@ -1,6 +1,6 @@
 /* -*- mode:c -*- */
 
-/* Copyright (C) 2002-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This library is free software; you can redistribute it and/or
@@ -44,6 +44,7 @@ os_SetLock(char const *path, int perms, int left_open)
   int   code      = 0;
   int   file_flag = 0;
   struct stat buf;
+  __attribute__((unused)) int _;
 
   /* 1. Create the unique file on the same filesystem */
   uniq_name = xmalloc(strlen(dirname) + strlen(hostname) + 32);
@@ -56,7 +57,7 @@ os_SetLock(char const *path, int perms, int left_open)
 
   /* 2. Use link(2) to create a link to the lockfile */
   /*    do not use the return value of link call */
-  link(uniq_name, path);
+  _ = link(uniq_name, path);
 
   /* 3. Use stat(2) on the unique file to check that the link count
         is increased to 2 */

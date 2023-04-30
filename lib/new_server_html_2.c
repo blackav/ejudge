@@ -6660,10 +6660,11 @@ fill_user_run_info(
       ri->is_with_variants = 1;
       if (gen_strings_flag > 0) {
         char *p = NULL;
+        __attribute__((unused)) int _;
         if (variant > 0) {
-          asprintf(&p, "%s-%d", cur_prob->short_name, variant);
+          _ = asprintf(&p, "%s-%d", cur_prob->short_name, variant);
         } else {
-          asprintf(&p, "%s-?", cur_prob->short_name);
+          _ = asprintf(&p, "%s-?", cur_prob->short_name);
         }
         ri->prob_str = p;
       }

@@ -493,6 +493,7 @@ read_error_code(char const *path)
 {
   FILE *f;
   int   n;
+  __attribute__((unused)) int _;
 
   if (!(f = fopen(path, "r"))) {
     return 100;
@@ -501,7 +502,7 @@ read_error_code(char const *path)
     fclose(f);
     return 101;
   }
-  fscanf(f, " ");
+  _ = fscanf(f, " ");
   if (getc(f) != EOF) {
     fclose(f);
     return 102;

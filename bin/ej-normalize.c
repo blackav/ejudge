@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2012-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -230,6 +230,7 @@ save_file_1(
   unsigned char tmppath[PATH_MAX];
   FILE *f = NULL;
   int i;
+  __attribute__((unused)) int _;
 
   gettimeofday(&tv, NULL);
   rv = (tv.tv_sec & 0xffff) ^ ((tv.tv_sec >> 16) & 0xffff)
@@ -246,8 +247,8 @@ save_file_1(
 
   if (rename(tmppath, path) < 0) goto cleanup;
   tmppath[0] = 0;
-  if (mode > 0) chmod(path, mode);
-  if (group_id > 0) chown(path, -1, group_id);
+  if (mode > 0) _ = chmod(path, mode);
+  if (group_id > 0) _ = chown(path, -1, group_id);
   retval = 0;
 
 cleanup:
@@ -269,6 +270,7 @@ save_file_2(
   int retval = -1;
   FILE *f = NULL;
   int i;
+  __attribute__((unused)) int _;
 
   if (!(f = fopen(path, "wb"))) goto cleanup;
   for (i = 0; i < len; ++i) {
@@ -277,8 +279,8 @@ save_file_2(
   if (ferror(f)) goto cleanup;
   fclose(f); f = NULL;
 
-  if (mode > 0) chmod(path, mode);
-  if (group_id > 0) chown(path, -1, group_id);
+  if (mode > 0) _ = chmod(path, mode);
+  if (group_id > 0) _ = chown(path, -1, group_id);
   retval = 0;
 
 cleanup:

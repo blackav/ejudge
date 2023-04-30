@@ -678,7 +678,8 @@ process_contest(int contest_id)
   snprintf(cmd_buf, sizeof(cmd_buf), "diff -u %s %s",
            config_path, out_config_path);
   //fprintf(stderr, ">>%s\n", cmd_buf);
-  system(cmd_buf);
+  __attribute__((unused)) int _;
+  _ = system(cmd_buf);
 
   process_db(contest_id, state->max_lang + 1, lang_map);
 

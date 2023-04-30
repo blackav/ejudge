@@ -1750,7 +1750,8 @@ serve_compile_request(
       custom_compile_cmd = xstrdup(tmp);
     } else {
       char *tmp = NULL;
-      asprintf(&tmp, "%s/%s", global->checker_dir, custom_compile_cmd);
+      __attribute__((unused)) int _;
+      _ = asprintf(&tmp, "%s/%s", global->checker_dir, custom_compile_cmd);
       free(custom_compile_cmd);
       custom_compile_cmd = tmp;
     }
@@ -1770,7 +1771,8 @@ serve_compile_request(
       extra_src_dir = xstrdup(tmp);
     } else {
       char *tmp = NULL;
-      asprintf(&tmp, "%s/%s", global->checker_dir, extra_src_dir);
+      __attribute__((unused)) int _;
+      _ = asprintf(&tmp, "%s/%s", global->checker_dir, extra_src_dir);
       free(extra_src_dir);
       extra_src_dir = tmp;
     }
@@ -2441,7 +2443,8 @@ serve_run_request(
   srpp->container_options = xstrdup2(prob->container_options);
   if (submit_id > 0) {
     char *inp_name = NULL;
-    asprintf(&inp_name, "%s.input", pkt_base);
+    __attribute__((unused)) int _;
+    _ = asprintf(&inp_name, "%s.input", pkt_base);
     srpp->user_input_file = inp_name;
   }
 

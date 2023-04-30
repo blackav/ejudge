@@ -179,7 +179,8 @@ rotate_log_files(
         fchmod(fd, log_perms);
     }
     if (user_id >= 0 || group_id >= 0) {
-        fchown(fd, user_id, group_id);
+        __attribute__((unused)) int _;
+        _ = fchown(fd, user_id, group_id);
     }
     close(fd); fd = -1;
 

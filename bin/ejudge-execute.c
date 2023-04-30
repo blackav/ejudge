@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2006-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -298,6 +298,7 @@ copy_file(
   int fdw = -1;
   unsigned char buf[4096], *p;
   int unlink_dst_flag = 0, r, w;
+  __attribute__((unused)) int _;
 
   if (src_dir && src_dir[0]) {
     snprintf(src_path, sizeof(src_path), "%s/%s", src_dir, src_file);
@@ -344,8 +345,8 @@ copy_file(
     goto fail;
   }
 
-  if (group > 0) fchown(fdw, -1, group);
-  if (mode > 0) fchmod(fdw, mode);
+  if (group > 0) _ = fchown(fdw, -1, group);
+  if (mode > 0) _ = fchmod(fdw, mode);
 
   close(fdw); fdw = -1;
   close(fdr); fdr = -1;

@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2000-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -275,7 +275,11 @@ parse_multipart(char const *charset)
 
   name_u = 0;
   value_u = 0;
-  fgets(lbuf, sizeof(lbuf), stdin);
+  if (!fgets(lbuf, sizeof(lbuf), stdin)) {
+    err("parse_multipart: unexpected EOF");
+    bad_request(charset);
+    exit(0);
+  }
 
   llen = strlen(lbuf);
   if (llen == sizeof(lbuf) - 1 && lbuf[llen - 1] != '\n') {
@@ -293,7 +297,11 @@ parse_multipart(char const *charset)
   while (1) {
     /* read and parse header lines */
     while (1) {
-      fgets(lbuf, sizeof(lbuf), stdin);
+      if (!fgets(lbuf, sizeof(lbuf), stdin)) {
+        err("parse_multipart: unexpected EOF");
+        bad_request(charset);
+        exit(0);
+      }
       //fprintf(stderr, ">>%s<\n", lbuf);
       llen = strlen(lbuf);
       if (llen == sizeof(lbuf) - 1 && lbuf[llen - 1] != '\n') {

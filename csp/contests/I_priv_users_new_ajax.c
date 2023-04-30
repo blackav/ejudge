@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2017-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -119,20 +119,21 @@ csp_execute_priv_users_new_ajax(
     int show_invisible = 0;
     int show_banned = 0;
     int show_only_pending = 0;
+    __attribute__((unused)) int _;
 
     if (ns_open_ul_connection(phr->fw_state) < 0) {
-        asprintf(&pg->message, "Failed to open userlist server connection");
+        _ = asprintf(&pg->message, "Failed to open userlist server connection");
         goto cleanup;
     }
 
     int err = userlist_clnt_list_all_users(ul_conn, ULS_LIST_ALL_USERS, phr->contest_id, &xml_text);
     if (err < 0) {
-        asprintf(&pg->message, "Failed to get data from server");
+        _ = asprintf(&pg->message, "Failed to get data from server");
         goto cleanup;
     }
 
     if (!(users = userlist_parse_str(xml_text))) {
-        asprintf(&pg->message, "Failed to get data from server");
+        _ = asprintf(&pg->message, "Failed to get data from server");
         goto cleanup;
     }
 

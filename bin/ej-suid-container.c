@@ -350,6 +350,7 @@ get_user_ids(void)
 static void
 safe_chown(const char *full, int to_user_id, int to_group_id, int from_user_id)
 {
+    __attribute__((unused)) int _;
     int fd = open(full, O_RDONLY | O_NOFOLLOW | O_NONBLOCK, 0);
     if (fd < 0) return;
     struct stat stb;
@@ -359,11 +360,11 @@ safe_chown(const char *full, int to_user_id, int to_group_id, int from_user_id)
     }
     if (S_ISDIR(stb.st_mode)) {
         if (stb.st_uid == from_user_id) {
-            fchown(fd, to_user_id, to_group_id);
+            _ = fchown(fd, to_user_id, to_group_id);
         }
     } else {
         if (stb.st_uid == from_user_id) {
-            fchown(fd, to_user_id, to_group_id);
+            _ = fchown(fd, to_user_id, to_group_id);
         }
     }
     close(fd);

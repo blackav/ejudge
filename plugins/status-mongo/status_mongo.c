@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2019-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2019-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -168,7 +168,8 @@ prepare_func(
 
     state->common = (struct common_mongo_state *) common_plugin->data;
     char *tmp = NULL;
-    asprintf(&tmp, "%s.%status", state->common->database, state->common->table_prefix);
+    __attribute__((unused)) int _;
+    _ = asprintf(&tmp, "%s.%status", state->common->database, state->common->table_prefix);
     state->status_table = tmp;
 
     return 0;

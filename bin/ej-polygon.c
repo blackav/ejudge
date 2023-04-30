@@ -2273,6 +2273,8 @@ save_file(
         const unsigned char *file_group,
         int *p_changed)
 {
+    __attribute__((unused)) int _;
+
     if (is_file_unchanged(path, bytes, size)) {
         if (p_changed) *p_changed = 0;
         return 0;
@@ -2313,8 +2315,8 @@ save_file(
             group = 0;
         }
     }
-    if (mode > 0) chmod(path, mode);
-    if (group > 0) chown(path, -1, group);
+    if (mode > 0) _ = chmod(path, mode);
+    if (group > 0) _ = chown(path, -1, group);
     if (p_changed) *p_changed = 1;
     return 0;
 }

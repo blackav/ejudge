@@ -1,4 +1,4 @@
-/* Copyright (C) 1998-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 1998-2023 Alexander Chernov <cher@ejudge.ru> */
 /* Created: <1998-01-21 14:33:28 cher> */
 
 /*
@@ -1556,13 +1556,14 @@ set_limit(int fd, int resource, rlim_t value)
 {
   struct rlimit lim;
   int code;
+  __attribute__((unused)) int _;
 
   memset(&lim, 0, sizeof(lim));
   lim.rlim_cur = value;
   lim.rlim_max = value;
   if (setrlimit(resource, &lim) < 0) {
     code = MAKECODE(TASK_ERR_RLIMIT_FAILED, errno);
-    write(fd, &code, sizeof(code));
+    _ = write(fd, &code, sizeof(code));
     _exit(TASK_ERR_RLIMIT_FAILED);
   }
 }
@@ -1803,6 +1804,7 @@ task_Start(tTask *tsk)
   char    errbuf[512];
   sigset_t ss;
   struct rlimit lim;
+  __attribute__((unused)) int _;
 
   task_init_module();
   ASSERT(tsk);
@@ -2056,7 +2058,7 @@ task_Start(tTask *tsk)
                           os_GetErrorString(errno));
                 */
                 code = MAKECODE(TASK_ERR_REDIR_OPEN_FAILED, errno);
-                write(comm_fd + 1, &code, sizeof(code));
+                _ = write(comm_fd + 1, &code, sizeof(code));
                 _exit(TASK_ERR_REDIR_OPEN_FAILED);
               }
             errno = 0;
@@ -2069,7 +2071,7 @@ task_Start(tTask *tsk)
                           os_GetErrorString(errno));
                 */
                 code = MAKECODE(TASK_ERR_REDIR_DUP_FAILED, errno);
-                write(comm_fd + 1, &code, sizeof(code));
+                _ = write(comm_fd + 1, &code, sizeof(code));
                 _exit(TASK_ERR_REDIR_DUP_FAILED);
               }
             close(tfd);
@@ -2087,7 +2089,7 @@ task_Start(tTask *tsk)
                           os_GetErrorString(errno));
                 */
                 code = MAKECODE(TASK_ERR_REDIR_DUP_FAILED, errno);
-                write(comm_fd + 1, &code, sizeof(code));
+                _ = write(comm_fd + 1, &code, sizeof(code));
                 _exit(TASK_ERR_REDIR_DUP_FAILED);
               }
             break;
@@ -2115,7 +2117,7 @@ task_Start(tTask *tsk)
                           os_ErrorString());
                 */
                 code = MAKECODE(TASK_ERR_REDIR_DUP_FAILED, errno);
-                write(comm_fd + 1, &code, sizeof(code));
+                _ = write(comm_fd + 1, &code, sizeof(code));
                 _exit(TASK_ERR_REDIR_DUP_FAILED);
               }
               close(rdr->u.p.pfd[rdr->u.p.idx]);
@@ -2129,7 +2131,7 @@ task_Start(tTask *tsk)
                       tsk->redirs.v[i].tag);
             */
             code = MAKECODE(TASK_ERR_REDIR_INVALID, 0);
-            write(comm_fd + 1, &code, sizeof(code));
+            _ = write(comm_fd + 1, &code, sizeof(code));
             _exit(TASK_ERR_REDIR_INVALID);
           }
       }
@@ -2143,7 +2145,7 @@ task_Start(tTask *tsk)
     for (i = 0; i < tsk->env.u; i++) {
       if (putenv(tsk->env.v[i]) < 0) {
         code = MAKECODE(TASK_ERR_PUTENV_FAILED, errno);
-        write(comm_fd + 1, &code, sizeof(code));
+        _ = write(comm_fd + 1, &code, sizeof(code));
         _exit(TASK_ERR_PUTENV_FAILED);
       }
     }
@@ -2153,7 +2155,7 @@ task_Start(tTask *tsk)
     if (tsk->working_dir) {
       if (chdir(tsk->working_dir) < 0) {
         code = MAKECODE(TASK_ERR_CHDIR_FAILED, errno);
-        write(comm_fd + 1, &code, sizeof(code));
+        _ = write(comm_fd + 1, &code, sizeof(code));
         _exit(TASK_ERR_CHDIR_FAILED);
       }
     }
@@ -2209,7 +2211,7 @@ task_Start(tTask *tsk)
       lim.rlim_max = tsk->max_time_millis + 1000;
       if (setrlimit(linux_rlimit_code, &lim) < 0) {
         code = MAKECODE(TASK_ERR_LIMIT_CPU_FAILED, errno);
-        write(comm_fd + 1, &code, sizeof(code));
+        _ = write(comm_fd + 1, &code, sizeof(code));
         _exit(TASK_ERR_LIMIT_CPU_FAILED);
       }
       /* enable kernel-based time-limit detection */
@@ -2244,7 +2246,7 @@ task_Start(tTask *tsk)
 
       if (setrlimit(RLIMIT_CPU, &lim) < 0) {
         code = MAKECODE(TASK_ERR_LIMIT_CPU_FAILED, errno);
-        write(comm_fd + 1, &code, sizeof(code));
+        _ = write(comm_fd + 1, &code, sizeof(code));
         _exit(TASK_ERR_LIMIT_CPU_FAILED);
       }
 
@@ -2289,7 +2291,7 @@ task_Start(tTask *tsk)
               os_GetErrorString(errno));
     */
     code = MAKECODE(TASK_ERR_EXECV_FAILED, errno);
-    write(comm_fd + 1, &code, sizeof(code));
+    _ = write(comm_fd + 1, &code, sizeof(code));
     _exit(TASK_ERR_EXECV_FAILED);
   }
 }
@@ -2456,6 +2458,7 @@ fail:
 tTask *
 task_WaitContainer(tTask *tsk)
 {
+  __attribute__((unused)) int _;
   bury_dead_prc();
 
   if (tsk->state == TSK_ERROR || tsk->state == TSK_STOPPED)
@@ -2470,7 +2473,7 @@ task_WaitContainer(tTask *tsk)
     if (pid < 0) {
       write_log(LOG_REUSE, LOG_ERROR, "task_WaitContainer: wait4 failed: %s\n", os_ErrorMsg());
       xfree(tsk->last_error_msg); tsk->last_error_msg = NULL;
-      asprintf(&tsk->last_error_msg, "wait4 failed: %s", os_ErrorMsg());
+      _ = asprintf(&tsk->last_error_msg, "wait4 failed: %s", os_ErrorMsg());
       tsk->was_check_failed = 1;
       return NULL;
     }
@@ -2484,7 +2487,7 @@ task_WaitContainer(tTask *tsk)
   if (resp_z < 0) {
     write_log(LOG_REUSE, LOG_ERROR, "task_WaitContainer: response read: %s\n", os_ErrorMsg());
     xfree(tsk->last_error_msg); tsk->last_error_msg = NULL;
-    asprintf(&tsk->last_error_msg, "read failed: %s", os_ErrorMsg());
+    _ = asprintf(&tsk->last_error_msg, "read failed: %s", os_ErrorMsg());
     tsk->was_check_failed = 1;
     return NULL;
   }
@@ -2492,14 +2495,14 @@ task_WaitContainer(tTask *tsk)
   if (resp_z + 1 >= sizeof(resp_buf)) {
     write_log(LOG_REUSE, LOG_ERROR, "task_WaitContainer: response reply is too big\n");
     xfree(tsk->last_error_msg); tsk->last_error_msg = NULL;
-    asprintf(&tsk->last_error_msg, "response reply is too big");
+    _ = asprintf(&tsk->last_error_msg, "response reply is too big");
     tsk->was_check_failed = 1;
     return NULL;
   }
   if (!resp_z) {
     write_log(LOG_REUSE, LOG_ERROR, "task_WaitContainer: empty response\n");
     xfree(tsk->last_error_msg); tsk->last_error_msg = NULL;
-    asprintf(&tsk->last_error_msg, "empty response");
+    _ = asprintf(&tsk->last_error_msg, "empty response");
     tsk->was_check_failed = 1;
     return NULL;
   }
@@ -2516,7 +2519,7 @@ task_WaitContainer(tTask *tsk)
       if (errno || v < 0 || eptr + v > resp_buf + resp_z) {
         write_log(LOG_REUSE, LOG_ERROR, "task_WaitContainer: invalid reply from container: %s\n", resp_buf);
         xfree(tsk->last_error_msg); tsk->last_error_msg = NULL;
-        asprintf(&tsk->last_error_msg, "invalid reply from container: %s", resp_buf);
+        _ = asprintf(&tsk->last_error_msg, "invalid reply from container: %s", resp_buf);
         tsk->was_check_failed = 1;
         return NULL;
       }
@@ -2524,13 +2527,13 @@ task_WaitContainer(tTask *tsk)
       eptr[v] = 0;
       write_log(LOG_REUSE, LOG_ERROR, "task_WaitContainer: container failed: %s\n", eptr);
       xfree(tsk->last_error_msg); tsk->last_error_msg = NULL;
-      asprintf(&tsk->last_error_msg, "container failed: %s", eptr);
+      _ = asprintf(&tsk->last_error_msg, "container failed: %s", eptr);
       tsk->was_check_failed = 1;
       return NULL;
     } else if (*resp_p) {
       write_log(LOG_REUSE, LOG_ERROR, "task_WaitContainer: invalid reply from container: %s\n", resp_buf);
       xfree(tsk->last_error_msg); tsk->last_error_msg = NULL;
-      asprintf(&tsk->last_error_msg, "invalid reply from container: %s", resp_buf);
+      _ = asprintf(&tsk->last_error_msg, "invalid reply from container: %s", resp_buf);
       tsk->was_check_failed = 1;
       return NULL;
     }
@@ -2553,7 +2556,7 @@ task_WaitContainer(tTask *tsk)
     if (errno || v < 0 || v > 255) {
       write_log(LOG_REUSE, LOG_ERROR, "task_WaitContainer: invalid exit code from container: %s\n", resp_buf);
       xfree(tsk->last_error_msg); tsk->last_error_msg = NULL;
-      asprintf(&tsk->last_error_msg, "invalid exit code from container: %s", resp_buf);
+      _ = asprintf(&tsk->last_error_msg, "invalid exit code from container: %s", resp_buf);
       tsk->was_check_failed = 1;
       return NULL;
     }
@@ -2567,7 +2570,7 @@ task_WaitContainer(tTask *tsk)
     if (errno || v < 1 || v > 64) {
       write_log(LOG_REUSE, LOG_ERROR, "task_WaitContainer: invalid termination signal from container: %s\n", resp_buf);
       xfree(tsk->last_error_msg); tsk->last_error_msg = NULL;
-      asprintf(&tsk->last_error_msg, "invalid termination signal from container: %s", resp_buf);
+      _ = asprintf(&tsk->last_error_msg, "invalid termination signal from container: %s", resp_buf);
       tsk->was_check_failed = 1;
       return NULL;
     }
@@ -2576,7 +2579,7 @@ task_WaitContainer(tTask *tsk)
   } else {
     write_log(LOG_REUSE, LOG_ERROR, "task_WaitContainer: invalid reply from container: %s\n", resp_buf);
     xfree(tsk->last_error_msg); tsk->last_error_msg = NULL;
-    asprintf(&tsk->last_error_msg, "invalid reply from container: %s", resp_buf);
+    _ = asprintf(&tsk->last_error_msg, "invalid reply from container: %s", resp_buf);
     tsk->was_check_failed = 1;
     return NULL;
   }
@@ -2603,7 +2606,7 @@ task_WaitContainer(tTask *tsk)
       if (errno || eptr == resp_p + 1 || v < 0 || (int) v != v) {
         write_log(LOG_REUSE, LOG_ERROR, "task_WaitContainer: invalid reply from container: %s\n", resp_buf);
         xfree(tsk->last_error_msg); tsk->last_error_msg = NULL;
-        asprintf(&tsk->last_error_msg, "invalid reply from container: %s", resp_buf);
+        _ = asprintf(&tsk->last_error_msg, "invalid reply from container: %s", resp_buf);
         tsk->was_check_failed = 1;
         return NULL;
       }
@@ -2619,7 +2622,7 @@ task_WaitContainer(tTask *tsk)
       if (errno || eptr == resp_p + 1 || v < 0) {
         write_log(LOG_REUSE, LOG_ERROR, "task_WaitContainer: invalid reply from container: %s\n", resp_buf);
         xfree(tsk->last_error_msg); tsk->last_error_msg = NULL;
-        asprintf(&tsk->last_error_msg, "invalid reply from container: %s", resp_buf);
+        _ = asprintf(&tsk->last_error_msg, "invalid reply from container: %s", resp_buf);
         tsk->was_check_failed = 1;
         return NULL;
       }
@@ -2639,7 +2642,7 @@ task_WaitContainer(tTask *tsk)
         if (errno || eptr == resp_p + 1 || v < 0) {
           write_log(LOG_REUSE, LOG_ERROR, "task_WaitContainer: invalid reply from container: %s\n", resp_buf);
           xfree(tsk->last_error_msg); tsk->last_error_msg = NULL;
-          asprintf(&tsk->last_error_msg, "invalid reply from container: %s", resp_buf);
+          _ = asprintf(&tsk->last_error_msg, "invalid reply from container: %s", resp_buf);
           tsk->was_check_failed = 1;
           return NULL;
         }
@@ -2650,7 +2653,7 @@ task_WaitContainer(tTask *tsk)
       } else {
         write_log(LOG_REUSE, LOG_ERROR, "task_WaitContainer: invalid reply from container: %s\n", resp_buf);
         xfree(tsk->last_error_msg); tsk->last_error_msg = NULL;
-        asprintf(&tsk->last_error_msg, "invalid reply from container: %s", resp_buf);
+        _ = asprintf(&tsk->last_error_msg, "invalid reply from container: %s", resp_buf);
         tsk->was_check_failed = 1;
         return NULL;
       }
@@ -2663,7 +2666,7 @@ task_WaitContainer(tTask *tsk)
       if (errno || eptr == resp_p + 1 || v < 0 || (int) v != v || eptr + v > resp_buf + resp_z) {
         write_log(LOG_REUSE, LOG_ERROR, "task_WaitContainer: invalid reply from container: %s\n", resp_buf);
         xfree(tsk->last_error_msg); tsk->last_error_msg = NULL;
-        asprintf(&tsk->last_error_msg, "invalid reply from container: %s", resp_buf);
+        _ = asprintf(&tsk->last_error_msg, "invalid reply from container: %s", resp_buf);
         tsk->was_check_failed = 1;
         return NULL;
       }

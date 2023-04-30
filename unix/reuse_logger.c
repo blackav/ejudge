@@ -1,4 +1,4 @@
-/* Copyright (C) 1997-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 1997-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This library is free software; you can redistribute it and/or
@@ -146,6 +146,7 @@ vwrite_log(int facility, int level, char const *format, va_list args)
   char      *pfac, bfac[32];
   int        msglen = 1023;
   char       msg[1024];
+  __attribute__((unused)) int _;
 
   assert (format != NULL);
   if (!initialized) minimal_init();
@@ -211,8 +212,8 @@ vwrite_log(int facility, int level, char const *format, va_list args)
   }
   */
   // ignore errors that may happen on logger fd
-  write(log_fd, msg, r);
-  if (log2_fd >= 0) write(log2_fd, msg, r);
+  _ = write(log_fd, msg, r);
+  if (log2_fd >= 0) _ = write(log2_fd, msg, r);
 
   return r;
 }

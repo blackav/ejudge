@@ -1,4 +1,4 @@
-/* Copyright (C) 2020-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2020-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -34,6 +34,7 @@ sort_func(const void *p1, const void *p2)
 static void
 separate(int low, int high, char **strs, int pos, char **enums, int gen_else, const char *indent, const char *endstr, int after_else)
 {
+    __attribute__((unused)) int _;
     //fprintf(stderr, "separate(%d, %d, strs, %d, enums, %d, \"%s\", \"%s\")\n", low, high, pos, gen_else, indent, endstr);
     if (high - low <= 0) abort();
     if (high - low == 1) {
@@ -69,7 +70,7 @@ separate(int low, int high, char **strs, int pos, char **enums, int gen_else, co
         }
     } else {
         char *subindent = NULL;
-        asprintf(&subindent, "%s    ", indent);
+        _ = asprintf(&subindent, "%s    ", indent);
         int need_else = 0;
         while (low < high) {
             int cur = low + 1;
@@ -133,6 +134,7 @@ main(int argc, char *argv[])
     char *enum_prefix = NULL;
     char *function_name = NULL;
     char *table_name = NULL;
+    __attribute__((unused)) int _;
 
     if (argc > 0) {
         enum_prefix = argv[1];
@@ -192,7 +194,7 @@ main(int argc, char *argv[])
            "{\n");
     for (int i = 0; i < strsu; ++i) {
         char *fixstr = strdup(strs[i]);
-        asprintf(&enums[i], "%s%s", enum_prefix, fix_for_c_enum_str(fixstr));
+        _ = asprintf(&enums[i], "%s%s", enum_prefix, fix_for_c_enum_str(fixstr));
         free(fixstr);
         printf("    %s", enums[i]);
         if (!i) {

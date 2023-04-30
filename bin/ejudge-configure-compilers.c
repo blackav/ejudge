@@ -1,6 +1,6 @@
 /* -*- mode:c -*- */
 
-/* Copyright (C) 2008-2021 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -275,6 +275,7 @@ static void
 save_config_files(FILE *log_f, WINDOW *out_win)
 {
   struct lang_config_info *pcfg;
+  __attribute__((unused)) int _;
 
   for (pcfg = lang_config_get_first(); pcfg; pcfg = pcfg->next) {
     if (!pcfg->cfg || !pcfg->cfg_txt) continue;
@@ -292,7 +293,7 @@ save_config_files(FILE *log_f, WINDOW *out_win)
 #else
 #error invalid configuration
 #endif
-  system(upd_scripts_cmd);
+  _ = system(upd_scripts_cmd);
 }
 
 static void

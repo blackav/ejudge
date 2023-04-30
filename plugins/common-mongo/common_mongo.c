@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2015-2019 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2015-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -326,9 +326,10 @@ query_func(
     int a = 0, u = 0;
     char *full_table_name = NULL;
     const unsigned char *table_name_ptr = table;
+    __attribute__((unused)) int _;
 
     if (state->table_prefix && state->table_prefix[0]) {
-        asprintf(&full_table_name, "%s%s", state->table_prefix, table);
+        _ = asprintf(&full_table_name, "%s%s", state->table_prefix, table);
     }
     if (!(coll = mongoc_client_get_collection(state->conn, state->database, table_name_ptr))) {
         err("common_mongo::query: get_collection failed");
@@ -420,8 +421,9 @@ insert_func(
 
     char *full_table_name = NULL;
     const unsigned char *table_name_ptr = table;
+    __attribute__((unused)) int _;
     if (state->table_prefix && state->table_prefix[0]) {
-        asprintf(&full_table_name, "%s%s", state->table_prefix, table);
+        _ = asprintf(&full_table_name, "%s%s", state->table_prefix, table);
     }
 
     mongoc_collection_t *coll = mongoc_client_get_collection(state->conn, state->database, table_name_ptr);
@@ -472,8 +474,9 @@ insert_and_free_func(
 
     char *full_table_name = NULL;
     const unsigned char *table_name_ptr = table;
+    __attribute__((unused)) int _;
     if (state->table_prefix && state->table_prefix[0]) {
-        asprintf(&full_table_name, "%s%s", state->table_prefix, table);
+        _ = asprintf(&full_table_name, "%s%s", state->table_prefix, table);
     }
 
     mongoc_collection_t *coll = mongoc_client_get_collection(state->conn, state->database, table_name_ptr);
@@ -528,8 +531,9 @@ update_func(
 
     char *full_table_name = NULL;
     const unsigned char *table_name_ptr = table;
+    __attribute__((unused)) int _;
     if (state->table_prefix && state->table_prefix[0]) {
-        asprintf(&full_table_name, "%s%s", state->table_prefix, table);
+        _ = asprintf(&full_table_name, "%s%s", state->table_prefix, table);
     }
 
     mongoc_collection_t *coll = mongoc_client_get_collection(state->conn, state->database, table_name_ptr);
@@ -582,9 +586,10 @@ update_and_free_func(
     int retval = -1;
     char *full_table_name = NULL;
     const unsigned char *table_name_ptr = table;
+    __attribute__((unused)) int _;
 
     if (state->table_prefix && state->table_prefix[0]) {
-        asprintf(&full_table_name, "%s%s", state->table_prefix, table);
+        _ = asprintf(&full_table_name, "%s%s", state->table_prefix, table);
     }
 
     if (pselector) selector = *pselector;
@@ -645,8 +650,9 @@ index_create_func(
 #if HAVE_LIBMONGOC - 0 > 0
     char *full_table_name = NULL;
     const unsigned char *table_name_ptr = table;
+    __attribute__((unused)) int _;
     if (state->table_prefix && state->table_prefix[0]) {
-        asprintf(&full_table_name, "%s%s", state->table_prefix, table);
+        _ = asprintf(&full_table_name, "%s%s", state->table_prefix, table);
     }
     char *index_name = mongoc_collection_keys_to_index_string(b);
     bson_t *index_bson = BCON_NEW("createIndexes", BCON_UTF8(table_name_ptr),
@@ -691,8 +697,9 @@ remove_func(
 
     char *full_table_name = NULL;
     const unsigned char *table_name_ptr = table;
+    __attribute__((unused)) int _;
     if (state->table_prefix && state->table_prefix[0]) {
-        asprintf(&full_table_name, "%s%s", state->table_prefix, table);
+        _ = asprintf(&full_table_name, "%s%s", state->table_prefix, table);
     }
 
     mongoc_collection_t *coll = mongoc_client_get_collection(state->conn, state->database, table_name_ptr);
@@ -745,8 +752,9 @@ upsert_func(
 
     char *full_table_name = NULL;
     const unsigned char *table_name_ptr = table;
+    __attribute__((unused)) int _;
     if (state->table_prefix && state->table_prefix[0]) {
-        asprintf(&full_table_name, "%s%s", state->table_prefix, table);
+        _ = asprintf(&full_table_name, "%s%s", state->table_prefix, table);
     }
 
     mongoc_collection_t *coll = mongoc_client_get_collection(state->conn, state->database, table_name_ptr);
@@ -799,9 +807,10 @@ upsert_and_free_func(
     int retval = -1;
     char *full_table_name = NULL;
     const unsigned char *table_name_ptr = table;
+    __attribute__((unused)) int _;
 
     if (state->table_prefix && state->table_prefix[0]) {
-        asprintf(&full_table_name, "%s%s", state->table_prefix, table);
+        _ = asprintf(&full_table_name, "%s%s", state->table_prefix, table);
     }
 
     if (pselector) selector = *pselector;

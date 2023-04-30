@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2005-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -85,6 +85,7 @@ read_process_output(const unsigned char *cmd,
   int pfd[2] = { -1, -1 };
   int c, pid, status;
   sigset_t mask;
+  __attribute__((unused)) int _;
 
   if (!(fout = open_memstream(&out_txt, &out_len))) goto failed;
   if (pipe(pfd) < 0) goto failed;
@@ -95,7 +96,7 @@ read_process_output(const unsigned char *cmd,
     dup2(pfd[1], 1);
     if (redirect_stderr) dup2(pfd[1], 2);
     close(pfd[1]);
-    if (workdir) chdir(workdir);
+    if (workdir) _ = chdir(workdir);
     sigemptyset(&mask);
     sigprocmask(SIG_SETMASK, &mask, 0);
     execl("/bin/sh", "/bin/sh", "-c", cmd, NULL);

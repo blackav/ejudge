@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2008-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -437,7 +437,8 @@ contests_save_xml(
   }
 
   // try to change the owner, but ignore the error
-  chown(tmp_path, xml_stat.st_uid, -1);
+  __attribute__((unused)) int _;
+  _ = chown(tmp_path, xml_stat.st_uid, -1);
   // try to change the group and log errors
   if (chown(tmp_path, -1, xml_stat.st_gid) < 0) {
     err("contests_save_xml: chgrp failed: %s", os_ErrorMsg());
@@ -543,7 +544,8 @@ contests_unparse_and_save(
     }
 
     // try to change the owner, but ignore the error
-    chown(tmp_path, xml_stat.st_uid, -1);
+    __attribute__((unused)) int _;
+    _ = chown(tmp_path, xml_stat.st_uid, -1);
     // try to change the group and log errors
     if (chown(tmp_path, -1, xml_stat.st_gid) < 0) {
       err("contests_save_xml: chgrp failed: %s", os_ErrorMsg());

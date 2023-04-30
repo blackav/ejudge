@@ -1434,6 +1434,7 @@ main(int argc, char *argv[])
   unsigned char pathbuf[EJ_PATH_MAX];
   struct t3_spool_info *info = 0;
   struct dir_listener_state *dl_state = 0;
+  __attribute__((unused)) int _;
 
   start_set_self_args(argc, argv);
   XCALLOC(argv_restart, argc + 1);
@@ -1543,10 +1544,10 @@ main(int argc, char *argv[])
     die("cannot determine work directory");
   }
 
-  asprintf(&t3_var_dir, "%s/var", t3_mediator_dir);
-  asprintf(&spool_in_dir, "%s/incoming", t3_var_dir);
-  asprintf(&spool_out_dir, "%s/outcoming", t3_var_dir);
-  asprintf(&t3_conf_dir, "%s/conf", t3_mediator_dir);
+  _ = asprintf(&t3_var_dir, "%s/var", t3_mediator_dir);
+  _ = asprintf(&spool_in_dir, "%s/incoming", t3_var_dir);
+  _ = asprintf(&spool_out_dir, "%s/outcoming", t3_var_dir);
+  _ = asprintf(&t3_conf_dir, "%s/conf", t3_mediator_dir);
 
   if (parse_config(stderr) < 0) {
     die("failed to parse configuration file");

@@ -3946,11 +3946,12 @@ save_caps_file(FILE *log_f, const struct ejudge_cfg *cfg)
   fclose(f); f = NULL;
 
   struct stat stb;
+  __attribute__((unused)) int _;
   if (stat(cfg->caps_file_info->path, &stb) > 0 && S_ISREG(stb.st_mode)) {
-    chown(caps_xml_tmp_path, -1, stb.st_gid);
-    chmod(caps_xml_tmp_path, stb.st_mode & 07777);
+    _ = chown(caps_xml_tmp_path, -1, stb.st_gid);
+    _ = chmod(caps_xml_tmp_path, stb.st_mode & 07777);
   } else {
-    chmod(caps_xml_tmp_path, 0600);
+    _ = chmod(caps_xml_tmp_path, 0600);
   }
 
   errno = 0;

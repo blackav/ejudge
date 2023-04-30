@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2022-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -367,12 +367,13 @@ packet_handler_auth_yandex(int uid, int argc, char **argv, void *user)
     cJSON *root = NULL;
     struct curl_slist *headers = NULL;
     char *header = NULL;
+    __attribute__((unused)) int _;
 
     url_f = open_memstream(&url_s, &url_z);
     fprintf(url_f, "%s", info_endpoint);
     fprintf(url_f, "?format=json");
     fclose(url_f); url_f = NULL;
-    asprintf(&header, "Authorization: OAuth %s", request_code);
+    _ = asprintf(&header, "Authorization: OAuth %s", request_code);
     headers = curl_slist_append(headers, header);
     json_f = open_memstream(&json_s, &json_z);
     curl_easy_reset(state->curl);

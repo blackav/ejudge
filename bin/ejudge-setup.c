@@ -750,6 +750,7 @@ do_paths_menu(int *p_cur_item)
   const struct path_edit_item *cur_path_item;
   struct stat stbuf;
   int *inv_map = 0;
+  __attribute__((unused)) int _;
 
   nitem = PATH_LINE_LAST;
   XCALLOC(descs, nitem);
@@ -758,19 +759,19 @@ do_paths_menu(int *p_cur_item)
   for (i = 0; i < PATH_LINE_LAST; i++) {
     switch (i) {
     case PATH_LINE_RETURN:
-      asprintf(&descs[menu_nitem], "Return to upper-level menu");
+      _ = asprintf(&descs[menu_nitem], "Return to upper-level menu");
       inv_map[menu_nitem++] = i;
       break;
     case PATH_LINE_BUILTIN:
-      asprintf(&descs[menu_nitem], "*** Built-in configuration paths ***");
+      _ = asprintf(&descs[menu_nitem], "*** Built-in configuration paths ***");
       inv_map[menu_nitem++] = i;
       break;
     case PATH_LINE_OTHER:
-      asprintf(&descs[menu_nitem], "*** Other configuration paths ***");
+      _ = asprintf(&descs[menu_nitem], "*** Other configuration paths ***");
       inv_map[menu_nitem++] = i;
       break;
     case PATH_LINE_TOOLS:
-      asprintf(&descs[menu_nitem], "*** Built-in ejudge tool paths ***");
+      _ = asprintf(&descs[menu_nitem], "*** Built-in ejudge tool paths ***");
       inv_map[menu_nitem++] = i;
       break;
 
@@ -785,10 +786,10 @@ do_paths_menu(int *p_cur_item)
     case PATH_LINE_CGI_BIN_DIR:
     case PATH_LINE_HTDOCS_DIR:
     case PATH_LINE_EJUDGE_CGI_BIN_DIR:
-      asprintf(&descs[menu_nitem], "%-20.20s%s%s: %-53.53s",
-               path_edit_items[i].descr,
-               (*path_edit_items[i].updated_ptr)?"*":" ",
-               valid_var_str(i), path_edit_items[i].buf);
+      _ = asprintf(&descs[menu_nitem], "%-20.20s%s%s: %-53.53s",
+                   path_edit_items[i].descr,
+                   (*path_edit_items[i].updated_ptr)?"*":" ",
+                   valid_var_str(i), path_edit_items[i].buf);
       inv_map[menu_nitem++] = i;
       break;
 
@@ -802,17 +803,17 @@ do_paths_menu(int *p_cur_item)
     case PATH_LINE_VAR_DIR:
     case PATH_LINE_STAND_HTML_DIR:
     case PATH_LINE_FULL_STAND_HTML_PATH:
-      asprintf(&descs[menu_nitem], "%-20.20s %s: %-53.53s",
-               path_edit_items[i].descr,
-               valid_var_str(i), path_edit_items[i].buf);
+      _ = asprintf(&descs[menu_nitem], "%-20.20s %s: %-53.53s",
+                  path_edit_items[i].descr,
+                   valid_var_str(i), path_edit_items[i].buf);
       inv_map[menu_nitem++] = i;
       break;
 
     case PATH_LINE_TESTING_DIR:
       if (!strcmp(config_workdisk_flag, "no")) {
-        asprintf(&descs[menu_nitem], "%-20.20s %s: %-53.53s",
-                 path_edit_items[i].descr,
-                 valid_var_str(i), path_edit_items[i].buf);
+        _ = asprintf(&descs[menu_nitem], "%-20.20s %s: %-53.53s",
+                     path_edit_items[i].descr,
+                     valid_var_str(i), path_edit_items[i].buf);
         inv_map[menu_nitem++] = i;
       }
       break;
@@ -820,19 +821,19 @@ do_paths_menu(int *p_cur_item)
     case PATH_LINE_WORKDISK_IMAGE_PATH:
     case PATH_LINE_WORKDISK_MOUNT_DIR:
       if (!strcmp(config_workdisk_flag, "yes")) {
-        asprintf(&descs[menu_nitem], "%-20.20s %s: %-53.53s",
-                 path_edit_items[i].descr,
-                 valid_var_str(i), path_edit_items[i].buf);
+        _ = asprintf(&descs[menu_nitem], "%-20.20s %s: %-53.53s",
+                     path_edit_items[i].descr,
+                     valid_var_str(i), path_edit_items[i].buf);
         inv_map[menu_nitem++] = i;
       }
       break;
 
     case PATH_LINE_LOCALE_DIR:
 #if CONF_HAS_LIBINTL - 0 == 1
-      asprintf(&descs[menu_nitem], "%-20.20s%s%s: %-53.53s",
-               path_edit_items[i].descr,
-               (*path_edit_items[i].updated_ptr)?"*":" ",
-               valid_var_str(i), path_edit_items[i].buf);
+      _ = asprintf(&descs[menu_nitem], "%-20.20s%s%s: %-53.53s",
+                   path_edit_items[i].descr,
+                   (*path_edit_items[i].updated_ptr)?"*":" ",
+                   valid_var_str(i), path_edit_items[i].buf);
       inv_map[menu_nitem++] = i;
 #else
       /*
@@ -1165,11 +1166,12 @@ do_identity_menu(int *p_cur_item)
   PANEL *in_pan = 0, *out_pan = 0;
   const struct path_edit_item *cur_id_item;
   unsigned char buf1[PATH_MAX], buf2[PATH_MAX];
+  __attribute__((unused)) int _;
 
   nitem = ID_LINE_LAST;
   XCALLOC(descs, nitem);
-  asprintf(&descs[ID_LINE_RETURN], "Return to upper-level menu");
-  asprintf(&descs[ID_LINE_SETTINGS], "*** Ejudge administrator identity ***");
+  _ = asprintf(&descs[ID_LINE_RETURN], "Return to upper-level menu");
+  _ = asprintf(&descs[ID_LINE_SETTINGS], "*** Ejudge administrator identity ***");
 
   for (i = 0; i < ID_LINE_LAST; i++) {
     switch (i) {
@@ -1181,9 +1183,9 @@ do_identity_menu(int *p_cur_item)
     case ID_LINE_EMAIL:
     case ID_LINE_NAME:
     case ID_LINE_PASSWORD:
-      asprintf(&descs[i], "%-20.20s %s: %-53.53s",
-               id_edit_items[i].descr,
-               valid_id_str(i), id_edit_items[i].buf);
+      _ = asprintf(&descs[i], "%-20.20s %s: %-53.53s",
+                   id_edit_items[i].descr,
+                   valid_id_str(i), id_edit_items[i].buf);
       break;
     default:
       SWERR(("do_identity_menu: unhandled index i == %d", i));
@@ -1519,8 +1521,9 @@ do_mysql_menu(int *p_cur_item)
   int ret_val = 0;
   int item_count = MYSQL_LINE_LAST;
   char **descs = calloc(item_count, sizeof(*descs));
-  asprintf(&descs[MYSQL_LINE_RETURN], "Return to upper-level menu");
-  asprintf(&descs[MYSQL_LINE_SETTINGS], "*** MySQL settings ***");
+  __attribute__((unused)) int _;
+  _ = asprintf(&descs[MYSQL_LINE_RETURN], "Return to upper-level menu");
+  _ = asprintf(&descs[MYSQL_LINE_SETTINGS], "*** MySQL settings ***");
 
   for (int i = 0; i < item_count; ++i) {
     switch (i) {
@@ -1528,24 +1531,24 @@ do_mysql_menu(int *p_cur_item)
     case MYSQL_LINE_SETTINGS:
       break;
     case MYSQL_LINE_ENABLE_FOR_USERS:
-      asprintf(&descs[i], "%-20.20s %s: %-53.53s",
-               "Enable for user database", " ", unparse_bool(config_mysql_enable_for_users));
+      _ = asprintf(&descs[i], "%-20.20s %s: %-53.53s",
+                   "Enable for user database", " ", unparse_bool(config_mysql_enable_for_users));
       break;
     case MYSQL_LINE_ENABLE_FOR_CONTESTS:
-      asprintf(&descs[i], "%-20.20s %s: %-53.53s",
-               "Enable for contests", " ", unparse_bool(config_mysql_enable_for_contests));
+      _ = asprintf(&descs[i], "%-20.20s %s: %-53.53s",
+                   "Enable for contests", " ", unparse_bool(config_mysql_enable_for_contests));
       break;
     case MYSQL_LINE_DATABASE:
-      asprintf(&descs[i], "%-20.20s %s: %-53.53s",
-               "Database name", " ", config_mysql_database);
+      _ = asprintf(&descs[i], "%-20.20s %s: %-53.53s",
+                   "Database name", " ", config_mysql_database);
       break;
     case MYSQL_LINE_USER:
-      asprintf(&descs[i], "%-20.20s %s: %-53.53s",
-               "User name", " ", config_mysql_user);
+      _ = asprintf(&descs[i], "%-20.20s %s: %-53.53s",
+                   "User name", " ", config_mysql_user);
       break;
     case MYSQL_LINE_PASSWORD:
-      asprintf(&descs[i], "%-20.20s %s: %-53.53s",
-               "User password", " ", config_mysql_password);
+      _ = asprintf(&descs[i], "%-20.20s %s: %-53.53s",
+                   "User password", " ", config_mysql_password);
       break;
     default:
       SWERR(("do_mysql_menu: unhandled index i == %d", i));
@@ -1965,6 +1968,7 @@ do_settings_menu(int *p_cur_item)
   struct group *gg = 0;
   struct passwd *pp = 0;
   int *inv_map = 0;
+  __attribute__((unused)) int _;
 
   nitem = SET_LINE_LAST;
   XCALLOC(descs, nitem);
@@ -1973,18 +1977,18 @@ do_settings_menu(int *p_cur_item)
   for (i = 0; i < SET_LINE_LAST; i++) {
     switch (i) {
     case SET_LINE_RETURN:
-      asprintf(&descs[menu_nitem], "Return to upper-level menu");
+      _ = asprintf(&descs[menu_nitem], "Return to upper-level menu");
       inv_map[menu_nitem++] = SET_LINE_RETURN;
       break;
     case SET_LINE_SETTINGS:
-      asprintf(&descs[menu_nitem], "*** Ejudge settings ***");
+      _ = asprintf(&descs[menu_nitem], "*** Ejudge settings ***");
       inv_map[menu_nitem++] = SET_LINE_SETTINGS;
       break;
     case SET_LINE_CHARSET:
-      asprintf(&descs[menu_nitem], "%-20.20s%s%s: %-53.53s",
-               set_edit_items[i].descr,
-               (*set_edit_items[i].updated_ptr)?"*":" ",
-               valid_setting_str(i), set_edit_items[i].buf);
+      _ = asprintf(&descs[menu_nitem], "%-20.20s%s%s: %-53.53s",
+                   set_edit_items[i].descr,
+                   (*set_edit_items[i].updated_ptr)?"*":" ",
+                   valid_setting_str(i), set_edit_items[i].buf);
       inv_map[menu_nitem++] = i;
       break;
     case SET_LINE_REG_EMAIL:
@@ -1999,16 +2003,16 @@ do_settings_menu(int *p_cur_item)
     case SET_LINE_WORKDISK_FLAG:
     case SET_LINE_INSTALL_FLAG:
     case SET_LINE_SLAVE_FLAG:
-      asprintf(&descs[menu_nitem], "%-20.20s %s: %-53.53s",
-               set_edit_items[i].descr,
-               valid_setting_str(i), set_edit_items[i].buf);
+      _ = asprintf(&descs[menu_nitem], "%-20.20s %s: %-53.53s",
+                   set_edit_items[i].descr,
+                   valid_setting_str(i), set_edit_items[i].buf);
       inv_map[menu_nitem++] = i;
       break;
     case SET_LINE_WORKDISK_SIZE:
       if (!strcmp(config_workdisk_flag, "yes")) {
-        asprintf(&descs[menu_nitem], "%-20.20s %s: %-53.53s",
-                 set_edit_items[i].descr,
-                 valid_setting_str(i), set_edit_items[i].buf);
+        _ = asprintf(&descs[menu_nitem], "%-20.20s %s: %-53.53s",
+                     set_edit_items[i].descr,
+                     valid_setting_str(i), set_edit_items[i].buf);
         inv_map[menu_nitem++] = i;
       }
       break;
@@ -4639,6 +4643,7 @@ get_system_identity(void)
 {
   struct passwd *pp;
   struct group *gg;
+  __attribute__((unused)) int _;
 
   system_uid = getuid();
   if (system_uid < 0) {
@@ -4667,7 +4672,7 @@ get_system_identity(void)
     fprintf(stderr, "Cannot determine the host name!\n");
     exit(1);
   }
-  getdomainname(system_domainname, sizeof(system_domainname));
+  _ = getdomainname(system_domainname, sizeof(system_domainname));
   if (!strcmp(system_domainname, "(none)")) system_domainname[0] = 0;
 
   system_gid = getgid();

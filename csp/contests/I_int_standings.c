@@ -1065,6 +1065,7 @@ csp_execute_int_standings(
     struct content_loaded_plugin *cp = NULL;
     int content_enabled = 0;
     unsigned char avatar_url[1024];
+    __attribute__((unused)) int _;
 
     memset(&env, 0, sizeof(env));
 
@@ -1456,11 +1457,11 @@ csp_execute_int_standings(
         pg->total_pages = (pg->t_tot + sii->users_on_page - 1) / sii->users_on_page;
         XCALLOC(pg->pages, pg->total_pages);
         char *s = NULL;
-        asprintf(&s, global->standings_file_name, 1);
+        _ = asprintf(&s, global->standings_file_name, 1);
         pg->pages[0].pgref = s;
         for (int j = 1; j < pg->total_pages; ++j) {
             s = NULL;
-            asprintf(&s, global->stand_file_name_2, j + 1);
+            _ = asprintf(&s, global->stand_file_name_2, j + 1);
             pg->pages[j].pgref = s;
         }
         for (int j = 0; j < pg->total_pages; ++j) {

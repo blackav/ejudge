@@ -85,7 +85,10 @@ to heavy server load rather than to an invalid
 e-mail address. You should try to register later.
 </s:_><%
     } else {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-security"
       fprintf(log_f, gettext(userlist_strerror(-r)));
+#pragma GCC diagnostic pop
     }
 %></pre></font>
 <% } else { %>

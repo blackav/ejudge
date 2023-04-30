@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2003-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -222,7 +222,8 @@ main(int argc, char *argv[])
   if (!(f = fopen(buf, "r"))) myerr("fopen %s failed: %s",buf,strerror(errno));
   if (fscanf(f, "%d", &stat) != 1)
     myerr("cannot parse retcode.txt");
-  fscanf(f, " ");
+  __attribute__((unused)) int _;
+  _ = fscanf(f, " ");
   if (fgetc(f) != EOF) myerr("garbage in retcode.txt");
   fclose(f);
 
