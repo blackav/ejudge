@@ -6767,6 +6767,7 @@ UserInfoPage dummy_uip;
 StandingsPage dummy_page;
 LanguageStat dummy_lang_stat;
 struct compile_heartbeat_vector chv;
+struct compile_queues_info cqi;
 
 /*
  * Local variables:
