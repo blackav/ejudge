@@ -234,7 +234,8 @@ super_run_before_tests(struct run_listener *gself, int test_no)
 
   super_run_status_save(agent, super_run_heartbeat_path, status_file_name, &rs,
                         current_time_ms, &last_heartbear_save_time, HEARTBEAT_SAVE_INTERVAL_MS,
-                        &pending_stop_flag, &pending_down_flag);
+                        &pending_stop_flag, &pending_down_flag,
+                        NULL /* &pending_reboot_flag */);
   if (!master_stop_enabled) pending_stop_flag = 0;
   if (!master_down_enabled) pending_down_flag = 0;
 }
@@ -634,7 +635,8 @@ report_waiting_state(long long current_time_ms, long long last_check_time_ms)
   rs.status = SRS_WAITING;
   super_run_status_save(agent, super_run_heartbeat_path, status_file_name, &rs,
                         current_time_ms, &last_heartbear_save_time, HEARTBEAT_SAVE_INTERVAL_MS,
-                        &pending_stop_flag, &pending_down_flag);
+                        &pending_stop_flag, &pending_down_flag,
+                        NULL /* &pending_reboot_flag */);
   if (!master_stop_enabled) pending_stop_flag = 0;
   if (!master_down_enabled) pending_down_flag = 0;
 }

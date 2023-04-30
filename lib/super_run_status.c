@@ -99,7 +99,8 @@ super_run_status_save(
         long long *p_last_saved_time_ms,
         long long timeout_ms,
         unsigned char *p_stop_flag,
-        unsigned char *p_down_flag)
+        unsigned char *p_down_flag,
+        unsigned char *p_reboot_flag)
 {
     unsigned char in_path[PATH_MAX];
     unsigned char dir_path[PATH_MAX];
@@ -115,7 +116,7 @@ super_run_status_save(
         agent->ops->put_heartbeat(agent, file_name, psrs, sizeof(*psrs),
                                   p_last_saved_time_ms, p_stop_flag,
                                   p_down_flag,
-                                  NULL /* p_reboot_flag */);
+                                  p_reboot_flag);
         return;
     }
 
@@ -162,6 +163,14 @@ super_run_status_save(
         snprintf(dir_path, sizeof(dir_path), "%s/dir/%s@D", heartbeat_dir, file_name);
         if (access(dir_path, F_OK) >= 0) {
             *p_down_flag = 1;
+            unlink(dir_path);
+        }
+    }
+    if (p_reboot_flag) {
+        *p_reboot_flag = 0;
+        snprintf(dir_path, sizeof(dir_path), "%s/dir/%s@R", heartbeat_dir, file_name);
+        if (access(dir_path, F_OK) >= 0) {
+            *p_reboot_flag = 1;
             unlink(dir_path);
         }
     }
