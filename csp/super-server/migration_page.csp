@@ -34,6 +34,7 @@
     size_t new_full_z = 0;
     int c;
     const unsigned char * const default_caps_file = DEFAULT_CAPS_FILE;
+    __attribute__((unused)) int _;
 
     ejudge_xml_tmp_path[0] = 0;
     caps_xml_tmp_path[0] = 0;
@@ -184,8 +185,8 @@
         chmod(caps_xml_tmp_path, 0600);
         struct stat stb;
         if (stat(phr->config->ejudge_xml_path, &stb) > 0 && S_ISREG(stb.st_mode)) {
-            chown(ejudge_xml_tmp_path, -1, stb.st_gid);
-            chmod(ejudge_xml_tmp_path, stb.st_mode & 07777);
+            _ = chown(ejudge_xml_tmp_path, -1, stb.st_gid);
+            _ = chmod(ejudge_xml_tmp_path, stb.st_mode & 07777);
         }
         unsigned char caps_xml_path[PATH_MAX];
         snprintf(caps_xml_path, sizeof(caps_xml_path), "%s/%s", dirname, DEFAULT_CAPS_FILE);
