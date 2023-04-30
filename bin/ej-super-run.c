@@ -107,8 +107,10 @@ static long long last_heartbear_save_time = 0;
 
 static unsigned char master_stop_enabled = 0;
 static unsigned char master_down_enabled = 0;
+static unsigned char master_reboot_enabled = 0;
 static unsigned char pending_stop_flag = 0;
 static unsigned char pending_down_flag = 0;
+static unsigned char pending_reboot_flag = 0;
 
 static int remap_spec_a = 0;
 static int remap_spec_u = 0;
@@ -235,9 +237,10 @@ super_run_before_tests(struct run_listener *gself, int test_no)
   super_run_status_save(agent, super_run_heartbeat_path, status_file_name, &rs,
                         current_time_ms, &last_heartbear_save_time, HEARTBEAT_SAVE_INTERVAL_MS,
                         &pending_stop_flag, &pending_down_flag,
-                        NULL /* &pending_reboot_flag */);
+                        &pending_reboot_flag);
   if (!master_stop_enabled) pending_stop_flag = 0;
   if (!master_down_enabled) pending_down_flag = 0;
+  if (!master_reboot_enabled) pending_reboot_flag = 0;
 }
 
 static const struct run_listener_ops super_run_listener_ops =
@@ -636,9 +639,10 @@ report_waiting_state(long long current_time_ms, long long last_check_time_ms)
   super_run_status_save(agent, super_run_heartbeat_path, status_file_name, &rs,
                         current_time_ms, &last_heartbear_save_time, HEARTBEAT_SAVE_INTERVAL_MS,
                         &pending_stop_flag, &pending_down_flag,
-                        NULL /* &pending_reboot_flag */);
+                        &pending_reboot_flag);
   if (!master_stop_enabled) pending_stop_flag = 0;
   if (!master_down_enabled) pending_down_flag = 0;
+  if (!master_reboot_enabled) pending_reboot_flag = 0;
 }
 
 static int
@@ -749,6 +753,7 @@ do_loop(
 
     if (pending_stop_flag) break;
     if (pending_down_flag) break;
+    if (pending_reboot_flag) break;
     if (interrupt_was_usr1()) {
       if (daemon_mode) {
         start_open_log(super_run_log_path);
@@ -1438,6 +1443,7 @@ main(int argc, char *argv[])
   const unsigned char *user = NULL, *group = NULL, *workdir = NULL;
   int halt_timeout = 0, halt_requested = 0;
   unsigned char *halt_command = NULL;
+  unsigned char *reboot_command = NULL;
   int disable_stack_trace = 0;
 
   signal(SIGPIPE, SIG_IGN);
@@ -1552,6 +1558,13 @@ main(int argc, char *argv[])
       argv_restart[argc_restart++] = argv[cur_arg];
       argv_restart[argc_restart++] = argv[cur_arg + 1];
       cur_arg += 2;
+    } else if (!strcmp(argv[cur_arg], "-rc")) {
+      if (cur_arg + 1 >= argc) fatal("argument expected for -rc");
+      xfree(reboot_command); reboot_command = NULL;
+      reboot_command = xstrdup(argv[cur_arg + 1]);
+      argv_restart[argc_restart++] = argv[cur_arg];
+      argv_restart[argc_restart++] = argv[cur_arg + 1];
+      cur_arg += 2;
     } else if (!strcmp(argv[cur_arg], "-hi")) {
       if (cur_arg + 1 >= argc) fatal("argument expected for -hi");
       xfree(super_run_id); super_run_id = NULL;
@@ -1612,6 +1625,9 @@ main(int argc, char *argv[])
 
   if (halt_command) {
     master_down_enabled = 1;
+  }
+  if (reboot_command) {
+    master_reboot_enabled = 1;
   }
   master_stop_enabled = 1;
 
@@ -1767,9 +1783,17 @@ main(int argc, char *argv[])
     retval = 1;
   }
 
-  if (halt_requested || pending_down_flag) {
-    info("halt timeout");
+  if (halt_requested) {
+    info("DOWN due to timeout");
     start_shutdown(halt_command);
+  }
+  if (pending_down_flag) {
+    info("DOWN request from the server");
+    start_shutdown(halt_command);
+  }
+  if (pending_reboot_flag) {
+    info("REBOOT request from the server");
+    start_shutdown(reboot_command);
   }
 
   if (interrupt_restart_requested()) start_restart();
