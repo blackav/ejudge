@@ -7362,6 +7362,31 @@ serve_invoker_down(
 }
 
 void
+serve_invoker_reboot(
+        const serve_state_t state,
+        const unsigned char *queue,
+        const unsigned char *file)
+{
+  unsigned char file2[PATH_MAX];
+  unsigned char path[PATH_MAX];
+
+  const struct run_queue_item *rqi = lookup_run_queue_item(state, queue);
+  if (!rqi) return;
+  if (!rqi->heartbeat_dir || !*rqi->heartbeat_dir) return;
+
+  snprintf(file2, sizeof(file2), "%s", file);
+  for (int i = 0; file2[i]; ++i) {
+    if (file2[i] <= ' ' || file2[i] >= 0x7f || file2[i] == '/') {
+      file2[i] = '_';
+    }
+  }
+
+  snprintf(path, sizeof(path), "%s/dir/%s@R", rqi->heartbeat_dir, file2);
+  int fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0666);
+  close(fd);
+}
+
+void
 serve_compiler_op(
         const serve_state_t state,
         const unsigned char *queue,

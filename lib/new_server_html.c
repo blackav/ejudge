@@ -6932,7 +6932,7 @@ priv_invoker_operation(
     serve_invoker_down(cs, queue, file);
     break;
   case NEW_SRV_ACTION_INVOKER_REBOOT:
-    //serve_invoker_reboot(cs, queue, file);
+    serve_invoker_reboot(cs, queue, file);
     break;
   default:
     FAIL(NEW_SRV_ERR_INV_PARAM);

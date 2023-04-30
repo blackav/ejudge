@@ -965,6 +965,11 @@ serve_invoker_down(
         const serve_state_t state,
         const unsigned char *queue,
         const unsigned char *file);
+void
+serve_invoker_reboot(
+        const serve_state_t state,
+        const unsigned char *queue,
+        const unsigned char *file);
 
 void
 serve_compiler_op(
