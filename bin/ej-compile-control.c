@@ -307,7 +307,8 @@ start_process(
         const char *queue,
         int verbose_mode,
         const char *ip_address,
-        const char *halt_command)
+        const char *halt_command,
+        const char *reboot_command)
 {
     int pid = fork();
     if (pid < 0) {
@@ -388,6 +389,10 @@ start_process(
     if (halt_command && *halt_command) {
         args[argi++] = "-hc";
         args[argi++] = (char*) halt_command;
+    }
+    if (reboot_command && *reboot_command) {
+        args[argi++] = "-rc";
+        args[argi++] = (char*) reboot_command;
     }
     if (verbose_mode) {
         args[argi++] = "-v";
@@ -911,6 +916,7 @@ int main(int argc, char *argv[])
     int date_suffix_flag = 0;
     const char *ip_address = NULL;
     const char *halt_command = NULL;
+    const char *reboot_command = NULL;
 
     if (argc < 1) {
         system_error("no arguments");
@@ -962,6 +968,12 @@ int main(int argc, char *argv[])
                     system_error("argument expected for -hc");
                 }
                 halt_command = argv[aidx + 1];
+                aidx += 2;
+            } else if (!strcmp(argv[aidx], "-rc")) {
+                if (aidx + 1 >= argc) {
+                    system_error("argument expected for -rc");
+                }
+                reboot_command = argv[aidx + 1];
                 aidx += 2;
             } else if (!strcmp(argv[aidx], "--timeout")) {
                 if (aidx + 1 >= argc) {
@@ -1285,7 +1297,7 @@ int main(int argc, char *argv[])
             }
 
             for (int i = 0; i < compile_parallelism; ++i) {
-                int ret = start_process(config, EJ_COMPILE_PROGRAM, log_fd, workdir, &ev, ej_compile_path, compile_parallelism > 1, 1 /* FIXME */, ejudge_xml_fds, compile_parallelism, i, agent, instance_id, queue, verbose_mode, ip_address, halt_command);
+                int ret = start_process(config, EJ_COMPILE_PROGRAM, log_fd, workdir, &ev, ej_compile_path, compile_parallelism > 1, 1 /* FIXME */, ejudge_xml_fds, compile_parallelism, i, agent, instance_id, queue, verbose_mode, ip_address, halt_command, reboot_command);
                 if (ret < 0) {
                     emergency_stop();
                     return EXIT_SYSTEM_ERROR;

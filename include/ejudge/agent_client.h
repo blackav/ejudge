@@ -128,7 +128,8 @@ struct AgentClientOps
         size_t size,
         long long *p_last_saved_time_ms,
         unsigned char *p_stop_flag,
-        unsigned char *p_down_flag);
+        unsigned char *p_down_flag,
+        unsigned char *p_reboot_flag);
 
     int (*delete_heartbeat)(
         struct AgentClient *ac,

@@ -1650,7 +1650,8 @@ put_heartbeat_func(
         size_t size,
         long long *p_last_saved_time_ms,
         unsigned char *p_stop_flag,
-        unsigned char *p_down_flag)
+        unsigned char *p_down_flag,
+        unsigned char *p_reboot_flag)
 {
     int result = -1;
     struct AgentClientSsh *acs = (struct AgentClientSsh *) ac;
@@ -1682,6 +1683,10 @@ put_heartbeat_func(
             cJSON *jdf = cJSON_GetObjectItem(f.value, "down_flag");
             if (jdf && jdf->type == cJSON_True && p_down_flag) {
                 *p_down_flag = 1;
+            }
+            cJSON *jrf = cJSON_GetObjectItem(f.value, "reboot_flag");
+            if (jrf && jrf->type == cJSON_True && p_reboot_flag) {
+                *p_reboot_flag = 1;
             }
         }
         result = 0;

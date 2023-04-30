@@ -2,7 +2,7 @@
 #ifndef __SUPER_RUN_STATUS_H__
 #define __SUPER_RUN_STATUS_H__
 
-/* Copyright (C) 2015-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2015-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -95,7 +95,8 @@ super_run_status_save(
         long long *p_last_saved_time,
         long long timeout_ms,
         unsigned char *p_stop_flag,
-        unsigned char *p_down_flag);
+        unsigned char *p_down_flag,
+        unsigned char *p_reboot_flag);
 
 void
 super_run_status_remove(

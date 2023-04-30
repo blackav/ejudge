@@ -3836,15 +3836,23 @@ int ns_match_action(const unsigned char *str)
                     c = str[7];
                     if (c == '-') {
                       c = str[8];
-                      if (c == 's') {
+                      if (c == 'r') {
                         c = str[9];
-                        if (c == 't') {
+                        if (c == 'e') {
                           c = str[10];
-                          if (c == 'o') {
+                          if (c == 'b') {
                             c = str[11];
-                            if (c == 'p') {
+                            if (c == 'o') {
                               c = str[12];
-                              if (!c) return NEW_SRV_ACTION_INVOKER_STOP;
+                              if (c == 'o') {
+                                c = str[13];
+                                if (c == 't') {
+                                  c = str[14];
+                                  if (!c) return NEW_SRV_ACTION_INVOKER_REBOOT;
+                                  return 0;
+                                }
+                                return 0;
+                              }
                               return 0;
                             }
                             return 0;
@@ -3852,7 +3860,7 @@ int ns_match_action(const unsigned char *str)
                           return 0;
                         }
                         return 0;
-                      } else if (c < 's') {
+                      } else if (c < 'r') {
                         if (c == 'd') {
                           c = str[9];
                           if (c == 'o') {
@@ -3894,6 +3902,23 @@ int ns_match_action(const unsigned char *str)
                           return 0;
                         }
                       } else {
+                        if (c == 's') {
+                          c = str[9];
+                          if (c == 't') {
+                            c = str[10];
+                            if (c == 'o') {
+                              c = str[11];
+                              if (c == 'p') {
+                                c = str[12];
+                                if (!c) return NEW_SRV_ACTION_INVOKER_STOP;
+                                return 0;
+                              }
+                              return 0;
+                            }
+                            return 0;
+                          }
+                          return 0;
+                        }
                       }
                       return 0;
                     }

@@ -191,7 +191,8 @@ command_start(
         int disable_heartbeat,
         const char *timeout_str,
         const char *shutdown_script,
-        const char *ip_address)
+        const char *ip_address,
+        const char *reboot_script)
 {
   tTask *tsk = 0;
   path_t path;
@@ -305,6 +306,10 @@ command_start(
       task_AddArg(tsk, "-hc");
       task_AddArg(tsk, shutdown_script);
     }
+    if (reboot_script && *reboot_script) {
+      task_AddArg(tsk, "-rc");
+      task_AddArg(tsk, reboot_script);
+    }
     if (verbose_mode) {
       task_AddArg(tsk, "-v");
     }
@@ -380,6 +385,10 @@ command_start(
       if (shutdown_script && *shutdown_script) {
         task_AddArg(tsk, "-hc");
         task_AddArg(tsk, shutdown_script);
+      }
+      if (reboot_script && *reboot_script) {
+        task_AddArg(tsk, "-rc");
+        task_AddArg(tsk, reboot_script);
       }
       if (i > 0) {
         char buf[64];
@@ -628,6 +637,7 @@ main(int argc, char *argv[])
   int disable_heartbeat = 0;
   const char *timeout_str = NULL;
   const char *shutdown_script = NULL;
+  const char *reboot_script = NULL;
   int date_suffix_flag = 0;
   const char *ip_address = NULL;
 
@@ -682,6 +692,10 @@ main(int argc, char *argv[])
     } else if (!strcmp(argv[i], "-hc")) {
       if (i + 1 >= argc) startup_error("argument expected for `-hc'");
       shutdown_script = argv[i + 1];
+      i += 2;
+    } else if (!strcmp(argv[i], "-rc")) {
+      if (i + 1 >= argc) startup_error("argument expected for `-rc'");
+      reboot_script = argv[i + 1];
       i += 2;
     } else if (!strcmp(argv[i], "-v")) {
       verbose_mode = 1;
@@ -791,7 +805,8 @@ main(int argc, char *argv[])
                       compile_parallelism, skip_mask,
                       agent, instance_id, queue, verbose_mode,
                       mirror, enable_heartbeat, disable_heartbeat,
-                      timeout_str, shutdown_script, ip_address) < 0)
+                      timeout_str, shutdown_script, ip_address,
+                      reboot_script) < 0)
       r = 1;
   } else if (!strcmp(command, "stop")) {
     // ej-agents are not stopped if not asked explicitly
