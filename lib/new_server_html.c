@@ -6931,6 +6931,9 @@ priv_invoker_operation(
   case NEW_SRV_ACTION_INVOKER_DOWN:
     serve_invoker_down(cs, queue, file);
     break;
+  case NEW_SRV_ACTION_INVOKER_REBOOT:
+    //serve_invoker_reboot(cs, queue, file);
+    break;
   default:
     FAIL(NEW_SRV_ERR_INV_PARAM);
   }
@@ -7534,6 +7537,7 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_DISABLE_VIRTUAL_START] = priv_contest_operation,
   [NEW_SRV_ACTION_ENABLE_VIRTUAL_START] = priv_contest_operation,
   [NEW_SRV_ACTION_COMPILER_OP] = priv_compiler_operation,
+  [NEW_SRV_ACTION_INVOKER_REBOOT] = priv_invoker_operation,
 };
 
 static void
@@ -9324,6 +9328,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_SUBMIT_RUN_INPUT] = priv_submit_run_input,
   [NEW_SRV_ACTION_GET_SUBMIT] = priv_get_submit,
   [NEW_SRV_ACTION_COMPILER_OP] = priv_generic_operation,
+  [NEW_SRV_ACTION_INVOKER_REBOOT] = priv_generic_operation,
 };
 
 static const unsigned char * const external_priv_action_names[NEW_SRV_ACTION_LAST] =
