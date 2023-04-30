@@ -7426,6 +7426,11 @@ serve_compiler_op(
     snprintf(path, sizeof(path), "%s/dir/%s@D", cqi->heartbeat_dir, file2);
     int fd = open(path, O_WRONLY | O_CREAT | O_TRUNC | O_EXCL, 0666);
     close(fd);
+  } else if (!strcmp(op, "reboot")) {
+    info("REBOOT for queue %s and compiler %s", queue, file);
+    snprintf(path, sizeof(path), "%s/dir/%s@R", cqi->heartbeat_dir, file2);
+    int fd = open(path, O_WRONLY | O_CREAT | O_TRUNC | O_EXCL, 0666);
+    close(fd);
   }
 }
 
