@@ -809,7 +809,7 @@ build_run_dir(
   snprintf(queue_dir, sizeof(queue_dir), "%s/queue", d1);
   snprintf(exe_dir, sizeof(exe_dir), "%s/exe", d1);
   snprintf(heartbeat_dir, sizeof(heartbeat_dir), "%s/heartbeat", d1);
-  do_build_queue_dirs(state, queue_name, queue_dir, exe_dir, heartbeat_dir);
+  do_build_queue_dirs(state, run_server_id, queue_dir, exe_dir, heartbeat_dir);
 
   // do not create contest specific dirs, using the globals instead
   return;
