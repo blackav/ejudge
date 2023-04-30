@@ -1757,6 +1757,7 @@ main(int argc, char *argv[])
   int     ejudge_xml_fd = -1;
   int     stderr_fd = -1;
   int     disable_stack_trace = 0;
+  unsigned char *halt_command = NULL;
 
 #if HAVE_SETSID - 0
   path_t  log_path;
@@ -1895,6 +1896,12 @@ main(int argc, char *argv[])
       xfree(ip_address);
       ip_address = xstrdup(argv[i++]);
       argv_restart[j++] = "--ip";
+      argv_restart[j++] = argv[i - 1];
+    } else if (!strcmp(argv[i], "-hc")) {
+      if (++i >= argc) goto print_usage;
+      xfree(halt_command);
+      halt_command = xstrdup(argv[i++]);
+      argv_restart[j++] = argv[i];
       argv_restart[j++] = argv[i - 1];
     } else if (!strcmp(argv[i], "-p")) {
       parallel_mode = 1;
