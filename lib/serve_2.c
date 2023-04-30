@@ -535,6 +535,19 @@ serve_get_cnts_caps(serve_state_t state,
   return 0;
 }
 
+static struct compile_queue_item *
+lookup_compile_queue_item(
+        const serve_state_t state,
+        const unsigned char *queue_id)
+{
+  if (!queue_id) queue_id = "";
+  for (int i = 0; i < state->compile_queues_u; ++i) {
+    if (!strcmp(state->compile_queues[i].id, queue_id))
+      return &state->compile_queues[i];
+  }
+  return NULL;
+}
+
 static int
 do_build_compile_queue_dirs(
         serve_state_t cs,
@@ -7346,6 +7359,49 @@ serve_invoker_down(
   snprintf(path, sizeof(path), "%s/dir/%s@D", rqi->heartbeat_dir, file2);
   int fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0666);
   close(fd);
+}
+
+void
+serve_compiler_op(
+        const serve_state_t state,
+        const unsigned char *queue,
+        const unsigned char *file,
+        const unsigned char *op)
+{
+  unsigned char file2[PATH_MAX];
+  unsigned char path[PATH_MAX];
+
+  const struct compile_queue_item *cqi = lookup_compile_queue_item(state, queue);
+  if (!cqi) return;
+  if (!cqi->heartbeat_dir || !*cqi->heartbeat_dir) return;
+  if (!op || !*op) return;
+
+  snprintf(file2, sizeof(file2), "%s", file);
+  for (int i = 0; file2[i]; ++i) {
+    if (file2[i] <= ' ' || file2[i] >= 0x7f || file2[i] == '/') {
+      file2[i] = '_';
+    }
+  }
+
+  if (!strcmp(op, "delete")) {
+    info("DELETE for queue %s and compiler %s", queue, file);
+    snprintf(path, sizeof(path), "%s/dir/%s", cqi->heartbeat_dir, file2);
+    unlink(path);
+    snprintf(path, sizeof(path), "%s/dir/%s@D", cqi->heartbeat_dir, file2);
+    unlink(path);
+    snprintf(path, sizeof(path), "%s/dir/%s@S", cqi->heartbeat_dir, file2);
+    unlink(path);
+  } else if (!strcmp(op, "stop")) {
+    info("STOP for queue %s and compiler %s", queue, file);
+    snprintf(path, sizeof(path), "%s/dir/%s@S", cqi->heartbeat_dir, file2);
+    int fd = open(path, O_WRONLY | O_CREAT | O_TRUNC | O_EXCL, 0666);
+    close(fd);
+  } else if (!strcmp(op, "down")) {
+    info("DOWN for queue %s and compiler %s", queue, file);
+    snprintf(path, sizeof(path), "%s/dir/%s@D", cqi->heartbeat_dir, file2);
+    int fd = open(path, O_WRONLY | O_CREAT | O_TRUNC | O_EXCL, 0666);
+    close(fd);
+  }
 }
 
 int

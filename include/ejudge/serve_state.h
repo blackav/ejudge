@@ -967,6 +967,13 @@ serve_invoker_down(
         const unsigned char *file);
 
 void
+serve_compiler_op(
+        const serve_state_t state,
+        const unsigned char *queue,
+        const unsigned char *file,
+        const unsigned char *op);
+
+void
 serve_check_telegram_reminder(
         const struct ejudge_cfg *config,
         serve_state_t state,
