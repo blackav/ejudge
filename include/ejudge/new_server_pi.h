@@ -2,7 +2,7 @@
 #ifndef __NEW_SERVER_PI_H__
 #define __NEW_SERVER_PI_H__
 
-/* Copyright (C) 2014-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2014-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -108,6 +108,23 @@ typedef struct TestingQueueArray
 #define ej_fix_prio(x) (((x) < -16)?-16:(((x) > 15)?15:(x)))
 
 TestingQueueArray *testing_queue_array_free(TestingQueueArray *parr, int free_struct_flag);
+
+/* === Compile queue === */
+
+struct compile_queue_stat
+{
+    unsigned char *queue_id;
+    time_t oldest_timestamp;
+    int count;
+};
+
+struct compile_queues_info
+{
+    struct compile_queue_stat *s;
+    int sa, su;
+};
+
+struct compile_queues_info *compile_queues_info_free(struct compile_queues_info *info, int free_struct_flag);
 
 /* === For unprivileged main page === */
 

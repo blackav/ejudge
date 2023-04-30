@@ -758,6 +758,12 @@ ns_scan_compile_heartbeat_dirs(
         serve_state_t cs,
         struct compile_heartbeat_vector *vec);
 
+struct compile_queues_info;
+void
+ns_scan_compile_queue(
+        serve_state_t cs,
+        struct compile_queues_info *info);
+
 int
 ns_parse_run_id(
         FILE *fout,

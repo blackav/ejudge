@@ -6267,6 +6267,88 @@ ns_scan_run_queue(
   qsort(vec->v, vec->u, sizeof(vec->v[0]), scan_run_sort_func);
 }
 
+struct compile_queues_info *
+compile_queues_info_free(
+        struct compile_queues_info *info,
+        int free_struct_flag)
+{
+  for (int i = 0; i < info->su; ++i) {
+    free(info->s[i].queue_id);
+  }
+  free(info->s);
+  if (free_struct_flag) {
+    free(info);
+  }
+  return NULL;
+}
+
+static int
+compile_queue_stat_sort_func(const void *v1, const void *v2)
+{
+  const struct compile_queue_stat *s1 = (const struct compile_queue_stat *) v1;
+  const struct compile_queue_stat *s2 = (const struct compile_queue_stat *) v2;
+
+  if (!s1->queue_id && !s2->queue_id) return 0;
+  if (!s1->queue_id) return -1;
+  if (!s2->queue_id) return 1;
+  return strcmp(s1->queue_id, s2->queue_id);
+}
+
+static void
+ns_scan_one_compile_queue(
+        serve_state_t cs,
+        const unsigned char *queue_id,
+        const unsigned char *queue_dir,
+        struct compile_queues_info *info)
+{
+  unsigned char dirdir[PATH_MAX];
+  unsigned char path[PATH_MAX];
+  __attribute__((unused)) int r;
+  DIR *d;
+  int count = 0;
+  time_t mtime = 0;
+
+  r = snprintf(dirdir, sizeof(dirdir), "%s/dir", queue_dir);
+  d = opendir(dirdir);
+  if (!d) return;
+
+  struct dirent *dd;
+  while ((dd = readdir(d))) {
+    if (!strcmp(dd->d_name, ".") || !strcmp(dd->d_name, "..")) continue;
+    r = snprintf(path, sizeof(path), "%s/%s", dirdir, dd->d_name);
+    struct stat stb;
+    if (lstat(path, &stb) < 0) continue;
+    if (!S_ISREG(stb.st_mode)) continue;
+
+    ++count;
+    if (!mtime || stb.st_mtime < mtime) {
+      mtime = stb.st_mtime;
+    }
+  }
+
+  if (info->sa == info->su) {
+    if (!(info->sa *= 2)) info->sa = 16;
+    XREALLOC(info->s, info->sa);
+  }
+  struct compile_queue_stat *stat = &info->s[info->su++];
+  stat->queue_id = xstrdup(queue_id);
+  stat->count = count;
+  stat->oldest_timestamp = mtime;
+}
+
+void
+ns_scan_compile_queue(
+        serve_state_t cs,
+        struct compile_queues_info *info)
+{
+  memset(info, 0, sizeof(*info));
+  for (int i = 0; i < cs->compile_queues_u; ++i) {
+    ns_scan_one_compile_queue(cs, cs->compile_queues[i].id,
+                              cs->compile_queues[i].queue_dir, info);
+  }
+  qsort(info->s, info->su, sizeof(info->s[0]), compile_queue_stat_sort_func);
+}
+
 static int
 heartbeat_status_sort_func(const void *v1, const void *v2)
 {
