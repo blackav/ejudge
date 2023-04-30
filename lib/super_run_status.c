@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2015-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2015-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -114,7 +114,8 @@ super_run_status_save(
     if (agent) {
         agent->ops->put_heartbeat(agent, file_name, psrs, sizeof(*psrs),
                                   p_last_saved_time_ms, p_stop_flag,
-                                  p_down_flag);
+                                  p_down_flag,
+                                  NULL /* p_reboot_flag */);
         return;
     }
 

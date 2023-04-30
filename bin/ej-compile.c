@@ -593,7 +593,8 @@ save_heartbeat(void)
 
     agent->ops->put_heartbeat(agent, heartbeat_file_name, buffer, size,
                               &last_saved_time_ms,
-                              &pending_stop_flag, &pending_down_flag);
+                              &pending_stop_flag, &pending_down_flag,
+                              NULL /* &pending_reboot_flag */);
   } else {
     save_heartbeat_file(buffer, size);
   }
