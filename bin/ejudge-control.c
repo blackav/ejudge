@@ -301,6 +301,10 @@ command_start(
       task_AddArg(tsk, "--ip");
       task_AddArg(tsk, ip_address);
     }
+    if (shutdown_script && *shutdown_script) {
+      task_AddArg(tsk, "-hc");
+      task_AddArg(tsk, shutdown_script);
+    }
     if (verbose_mode) {
       task_AddArg(tsk, "-v");
     }

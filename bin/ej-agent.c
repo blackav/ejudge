@@ -856,6 +856,12 @@ app_state_configure_directories(struct AppState *as)
         as->queue_out_dir = s; s = NULL;
         r = asprintf(&s, "%s/%s/src", EJUDGE_COMPILE_SPOOL_DIR, as->queue_id);
         as->data_dir = s; s = NULL;
+        r = asprintf(&s, "%s/%s/heartbeat", EJUDGE_COMPILE_SPOOL_DIR, as->queue_id);
+        as->heartbeat_dir = s; s = NULL;
+        r = asprintf(&s, "%s/dir", as->heartbeat_dir);
+        as->heartbeat_packet_dir = s; s = NULL;
+        r = asprintf(&s, "%s/in", as->heartbeat_dir);
+        as->heartbeat_in_dir = s; s = NULL;
 #endif
     } else if (as->mode == PREPARE_RUN) {
 #if defined EJUDGE_RUN_SPOOL_DIR

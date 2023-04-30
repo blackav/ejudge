@@ -335,4 +335,5 @@ const unsigned char * const ns_symbolic_action_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_REMOVE_USERPROB] = "remove-userprob",
   [NEW_SRV_ACTION_SERVER_INFO_PAGE] = "server-info-page",
   [NEW_SRV_ACTION_CLEAR_SESSION_CACHE] = "clear-session-cache",
+  [NEW_SRV_ACTION_COMPILER_OP] = "compiler-op",
 };

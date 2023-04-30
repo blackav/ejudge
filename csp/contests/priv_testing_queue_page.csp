@@ -3,6 +3,9 @@
 %><%
 #include "ejudge/super_run_packet.h"
 #include "ejudge/super_run_status.h"
+#include "ejudge/compile_heartbeat.h"
+
+#include "flatbuf-gen/compile_heartbeat_reader.h"
 %><%@set getter_name = "csp_get_priv_testing_queue_page"
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
 %><%@page csp_view_priv_testing_queue_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
@@ -11,6 +14,8 @@
   const unsigned char *title = NULL;
   struct TestingQueueArray vec;
   struct super_run_status_vector srsv;
+  struct compile_heartbeat_vector chv;
+  struct compile_queues_info cqi;
   int i, prob_id, user_id;
   const unsigned char *lang_short_name;
   int enable_main_menu = 0;
@@ -24,6 +29,8 @@
 
   memset(&vec, 0, sizeof(vec));
   memset(&srsv, 0, sizeof(srsv));
+  memset(&chv, 0, sizeof(chv));
+  memset(&cqi, 0, sizeof(cqi));
 
   if (phr->role != USER_ROLE_ADMIN) FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
 
@@ -33,6 +40,8 @@
 
   ns_scan_run_queue(cs, &vec);
   ns_scan_heartbeat_dirs(cs, &srsv);
+  ns_scan_compile_heartbeat_dirs(cs, &chv);
+  ns_scan_compile_queue(cs, &cqi);
 
   long long earlier_judge_request_us = 0;
   long long earlier_run_queue_us = 0;
@@ -84,7 +93,7 @@
              longest_judge_request_us / 1000000,
              longest_judge_request_us % 1000000);
 %>
-<p><big>Longest judge request in queue: <s:v value="durbuf" /></big></p>
+<p><big>Oldest judge request in queue: <s:v value="durbuf" /></big></p>
 <%
   }
   if (longest_run_queue_us > 0) {
@@ -92,7 +101,7 @@
              longest_run_queue_us / 1000000,
              longest_run_queue_us % 1000000);
 %>
-<p><big>Longest run request in queue: <s:v value="durbuf" /></big></p>
+<p><big>Oldest run request in queue: <s:v value="durbuf" /></big></p>
 <%
   }
 %>
@@ -327,6 +336,92 @@
 %>
 </table>
 
+<h2>Compile Queues</h2>
+
+<table class="b1">
+    <tr>
+        <th class="b1">NN</th>
+        <th class="b1">Run Queue</th>
+        <th class="b1">Queue Length</th>
+        <th class="b1">Oldest Item</th>
+    </tr>
+<%
+  for (i = 0; i < cqi.su; ++i) {
+    const struct compile_queue_stat *cqs = &cqi.s[i];
+%>
+    <tr>
+        <td class="b1"><s:v value="i + 1" /></td>
+        <td class="b1"><s:v value="cqs->queue_id" /></td>
+        <td class="b1"><s:v value="cqs->count" /></td>
+<%
+    html_timestamp_with_ago_ms(durbuf, sizeof(durbuf), cqs->oldest_timestamp * 1000LL, current_time_ms);
+%>
+        <td class="b1"><s:v value="durbuf" escape="false" /></td>
+    </tr>
+<%
+  }
+%>
+<table>
+
+<h2>Compilers</h2>
+
+<table class="b1">
+    <tr>
+        <th class="b1">NN</th>
+        <th class="b1">InvokerID</th>
+        <th class="b1">IP address</th>
+        <th class="b1">Run Queue</th>
+        <th class="b1">Start Time</th>
+        <th class="b1">Status Updated</th>
+        <th class="b1">Last Request</th>
+        <th class="b1">Request Count</th>
+        <th class="b1">Accumulated Time</th>
+        <th class="b1">Ops</th>
+    </tr>
+<%
+  for (i = 0; i < chv.u; ++i) {
+    ej_compile_Heartbeat_table_t h = ej_compile_Heartbeat_as_root(chv.v[i]->data);
+    const unsigned char *chid = ej_compile_Heartbeat_instance_id_get(h);
+    const unsigned char *chip = ej_compile_Heartbeat_ip_address_get(h);
+    const unsigned char *chq = ej_compile_Heartbeat_queue_get(h);
+    long long chstms = ej_compile_Heartbeat_start_time_ms_get(h);
+    long long chtsms = ej_compile_Heartbeat_timestamp_ms_get(h);
+    long long chlrms = ej_compile_Heartbeat_last_handled_request_ms_get(h);
+    long long chacms = ej_compile_Heartbeat_accumulated_ms_get(h);
+    long long chrq = ej_compile_Heartbeat_request_count_get(h);
+    const unsigned char *queue_name = chv.v[i]->queue;
+    const unsigned char *file = chv.v[i]->file;
+%>
+    <tr>
+        <td class="b1"><s:v value="i + 1" /></td>
+        <td class="b1"><s:v value="chid" checkExpr="" /></td>
+        <td class="b1"><s:v value="chip" checkExpr="" /></td>
+        <td class="b1"><s:v value="chq" checkExpr="" /></td>
+<%
+    html_timestamp_with_ago_ms(durbuf, sizeof(durbuf), chstms, current_time_ms);
+%>
+        <td class="b1"><s:v value="durbuf" escape="false" /></td>
+<%
+    html_timestamp_with_ago_ms(durbuf, sizeof(durbuf), chtsms, current_time_ms);
+%>
+        <td class="b1"><s:v value="durbuf" escape="false" /></td>
+<%
+    html_timestamp_with_ago_ms(durbuf, sizeof(durbuf), chlrms, current_time_ms);
+%>
+        <td class="b1"><s:v value="durbuf" escape="false" /></td>
+        <td class="b1"><s:v value="chrq" /></td>
+        <td class="b1"><s:v value="chacms" /></td>
+
+<s:url name="DeleteCompiler" ac="compiler-op"><s:param name="queue" value="queue_name" /><s:param name="file" value="file" /><s:param name="op" value='"delete"' /></s:url><%
+%><s:url name="StopCompiler" ac="compiler-op"><s:param name="queue" value="queue_name" /><s:param name="file" value="file" /><s:param name="op" value='"stop"' /></s:url><%
+%><s:url name="DownCompiler" ac="compiler-op"><s:param name="queue" value="queue_name" /><s:param name="file" value="file" /><s:param name="op" value='"down"' /></s:url><%
+%>        <td class="b1"><s:a url="DeleteCompiler" title="Delete Status File">[X]</s:a> <s:a url="StopCompiler" title="Stop Compiler (if supported)">[S]</s:a> <s:a url="DownCompiler" title="Shutdown Compiler Host (if supported)">[D]</s:a></td>
+
+    </tr>
+<%
+  }
+%>
+</table>
 
 <%@include "priv_footer.csp"
 %><%
@@ -334,5 +429,7 @@ cleanup:
   l10n_resetlocale();
   testing_queue_array_free(&vec, 0);
   super_run_status_vector_free(&srsv, 0);
+  compile_heartbeat_vector_free(&chv, 0);
+  compile_queues_info_free(&cqi, 0);
   html_armor_free(&ab);
 %>

@@ -43,7 +43,7 @@ LD=gcc
 EXPAT_LIB=-lexpat
 
 C_CFILES=bin/ej-compile.c version.c
-C_OBJECTS=$(C_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a
+C_OBJECTS=$(C_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a libflatcc.a
 
 CC_CFILES=bin/ej-compile-control.c
 CC_OBJECTS=$(CC_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a
@@ -166,7 +166,7 @@ IC_CFILES = bin/ej-import-contest.c version.c
 IC_OBJECTS = $(IC_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a
 
 G_CFILES = bin/ej-page-gen.c 
-G_OBJECTS = $(G_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a
+G_OBJECTS = $(G_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a libflatcc.a
 
 PB_CFILES = bin/ej-parblock.c
 PB_OBJECTS = $(PB_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a
@@ -701,5 +701,8 @@ lib/bson_utils_new.o : lib/bson_utils_new.c
 	$(CC) $(CFLAGS) $(MONGOC_CFLAGS) -c $< -o $@
 lib/testing_report_bson.o : lib/testing_report_bson.c gen/testing_report_tags.c
 	$(CC) $(CFLAGS) $(MONGOC_CFLAGS) -c $< -o $@
+
+include/flatbuf-gen/compile_heartbeat_builder.h include/flatbuf-gen/compile_heartbeat_reader.h include/flatbuf-gen/compile_heartbeat_verifier.h include/flatbuf-gen/flatbuffers_common_builder.h include/flatbuf-gen/flatbuffers_common_reader.h : flatbuf/compile_heartbeat.fbs
+	../flatcc/bin/flatcc -cwvrg -oinclude/flatbuf-gen flatbuf/compile_heartbeat.fbs
 
 include deps.make

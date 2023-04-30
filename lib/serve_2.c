@@ -535,6 +535,53 @@ serve_get_cnts_caps(serve_state_t state,
   return 0;
 }
 
+static struct compile_queue_item *
+lookup_compile_queue_item(
+        const serve_state_t state,
+        const unsigned char *queue_id)
+{
+  if (!queue_id) queue_id = "";
+  for (int i = 0; i < state->compile_queues_u; ++i) {
+    if (!strcmp(state->compile_queues[i].id, queue_id))
+      return &state->compile_queues[i];
+  }
+  return NULL;
+}
+
+static int
+do_build_compile_queue_dirs(
+        serve_state_t cs,
+        const unsigned char *id,
+        const unsigned char *queue_dir,
+        const unsigned char *src_dir,
+        const unsigned char *heartbeat_dir)
+{
+  int i;
+
+  for (i = 0; i < cs->compile_queues_u; ++i) {
+    if (!strcmp(cs->compile_queues[i].queue_dir, queue_dir)) {
+      return i;
+    }
+  }
+
+  if (cs->compile_queues_u == cs->compile_queues_a) {
+    if (!(cs->compile_queues_a *= 2)) cs->compile_queues_a = 8;
+    XREALLOC(cs->compile_queues, cs->compile_queues_a);
+  }
+
+  struct compile_queue_item *item = &cs->compile_queues[cs->compile_queues_u++];
+  memset(item, 0, sizeof(*item));
+
+  item->id = xstrdup(id);
+  item->queue_dir = xstrdup(queue_dir);
+  item->src_dir = xstrdup(src_dir);
+  if (heartbeat_dir) {
+    item->heartbeat_dir = xstrdup(heartbeat_dir);
+  }
+
+  return i;
+}
+
 static int
 do_build_compile_dirs(serve_state_t state,
                       const unsigned char *status_dir,
@@ -613,6 +660,63 @@ serve_build_compile_dirs(
     if (compile_status_dir) {
       do_build_compile_dirs(state, compile_status_dir, compile_report_dir);
     }
+  }
+
+  // build queue dirs
+  for (i = 1; i <= state->max_lang; i++) {
+    const struct section_language_data *lang = state->langs[i];
+    if (!lang) continue;
+
+    const unsigned char *id = "";
+    const unsigned char *src_dir = NULL;
+    const unsigned char *queue_dir = NULL;
+    const unsigned char *heartbeat_dir = NULL;
+
+    unsigned char src_buf[PATH_MAX];
+    unsigned char queue_buf[PATH_MAX];
+    unsigned char heartbeat_buf[PATH_MAX];
+    __attribute__((unused)) int r;
+
+#if defined EJUDGE_COMPILE_SPOOL_DIR
+    if (lang && lang->compile_server_id && lang->compile_server_id[0]) {
+      id = lang->compile_server_id;
+    } else if (global->compile_server_id && global->compile_server_id[0]) {
+      id = global->compile_server_id;
+    } else {
+      id = config->contest_server_id;
+    }
+
+    if (lang->compile_dir_index > 0) {
+      src_dir = lang->compile_src_dir;
+      queue_dir = lang->compile_queue_dir;
+      r = snprintf(heartbeat_buf, sizeof(heartbeat_buf), "%s/../heartbeat", queue_dir);
+      heartbeat_dir = heartbeat_buf;
+    } else if (lang->compile_dir && lang->compile_dir[0] && global && global->compile_dir && strcmp(lang->compile_dir, global->compile_dir) != 0) {
+      src_dir = lang->compile_src_dir;
+      queue_dir = lang->compile_queue_dir;
+      r = snprintf(heartbeat_buf, sizeof(heartbeat_buf), "%s/../heartbeat", queue_dir);
+      heartbeat_dir = heartbeat_buf;
+    } else {
+      const unsigned char *spool_dir = EJUDGE_COMPILE_SPOOL_DIR;
+      r = snprintf(src_buf, sizeof(src_buf), "%s/%s/src", spool_dir, id);
+      src_dir = src_buf;
+      r = snprintf(queue_buf, sizeof(queue_buf), "%s/%s/queue", spool_dir, id);
+      queue_dir = queue_buf;
+      r = snprintf(heartbeat_buf, sizeof(heartbeat_buf), "%s/%s/heartbeat", spool_dir, id);
+      heartbeat_dir = heartbeat_buf;
+    }
+#else
+    src_dir = global->compile_src_dir;
+    if (lang->compile_src_dir && lang->compile_src_dir[0]) {
+      src_dir = lang->compile_src_dir;
+    }
+    queue_dir = global->compile_queue_dir;
+    if (lang->compile_queue_dir && lang->compile_queue_dir[0]) {
+      queue_dir = lang->compile_queue_dir;
+    }
+    heartbeat_dir = NULL; // disabled
+#endif
+    do_build_compile_queue_dirs(state, id, queue_dir, src_dir, heartbeat_dir);
   }
 }
 
@@ -705,7 +809,7 @@ build_run_dir(
   snprintf(queue_dir, sizeof(queue_dir), "%s/queue", d1);
   snprintf(exe_dir, sizeof(exe_dir), "%s/exe", d1);
   snprintf(heartbeat_dir, sizeof(heartbeat_dir), "%s/heartbeat", d1);
-  do_build_queue_dirs(state, queue_name, queue_dir, exe_dir, heartbeat_dir);
+  do_build_queue_dirs(state, run_server_id, queue_dir, exe_dir, heartbeat_dir);
 
   // do not create contest specific dirs, using the globals instead
   return;
@@ -7255,6 +7359,49 @@ serve_invoker_down(
   snprintf(path, sizeof(path), "%s/dir/%s@D", rqi->heartbeat_dir, file2);
   int fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0666);
   close(fd);
+}
+
+void
+serve_compiler_op(
+        const serve_state_t state,
+        const unsigned char *queue,
+        const unsigned char *file,
+        const unsigned char *op)
+{
+  unsigned char file2[PATH_MAX];
+  unsigned char path[PATH_MAX];
+
+  const struct compile_queue_item *cqi = lookup_compile_queue_item(state, queue);
+  if (!cqi) return;
+  if (!cqi->heartbeat_dir || !*cqi->heartbeat_dir) return;
+  if (!op || !*op) return;
+
+  snprintf(file2, sizeof(file2), "%s", file);
+  for (int i = 0; file2[i]; ++i) {
+    if (file2[i] <= ' ' || file2[i] >= 0x7f || file2[i] == '/') {
+      file2[i] = '_';
+    }
+  }
+
+  if (!strcmp(op, "delete")) {
+    info("DELETE for queue %s and compiler %s", queue, file);
+    snprintf(path, sizeof(path), "%s/dir/%s", cqi->heartbeat_dir, file2);
+    unlink(path);
+    snprintf(path, sizeof(path), "%s/dir/%s@D", cqi->heartbeat_dir, file2);
+    unlink(path);
+    snprintf(path, sizeof(path), "%s/dir/%s@S", cqi->heartbeat_dir, file2);
+    unlink(path);
+  } else if (!strcmp(op, "stop")) {
+    info("STOP for queue %s and compiler %s", queue, file);
+    snprintf(path, sizeof(path), "%s/dir/%s@S", cqi->heartbeat_dir, file2);
+    int fd = open(path, O_WRONLY | O_CREAT | O_TRUNC | O_EXCL, 0666);
+    close(fd);
+  } else if (!strcmp(op, "down")) {
+    info("DOWN for queue %s and compiler %s", queue, file);
+    snprintf(path, sizeof(path), "%s/dir/%s@D", cqi->heartbeat_dir, file2);
+    int fd = open(path, O_WRONLY | O_CREAT | O_TRUNC | O_EXCL, 0666);
+    close(fd);
+  }
 }
 
 int

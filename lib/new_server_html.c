@@ -6940,6 +6940,42 @@ priv_invoker_operation(
 }
 
 static int
+priv_compiler_operation(
+        FILE *fout,
+        FILE *log_f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  int retval = 0;
+  const serve_state_t cs = extra->serve_state;
+  const unsigned char *file = NULL, *s, *queue = NULL;
+  opcap_t caps = 0;
+  const unsigned char *op = NULL;
+
+  if (ejudge_cfg_opcaps_find(phr->config, phr->login, &caps) < 0) {
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+  }
+  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0)
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+
+  if (hr_cgi_param(phr, "file", &file) <= 0 || !file)
+    FAIL(NEW_SRV_ERR_INV_PARAM);
+  for (s = file; *s; ++s) {
+    if (*s <= ' ' || *s >= 0x7f || *s == '/') {
+      FAIL(NEW_SRV_ERR_INV_PARAM);
+    }
+  }
+  hr_cgi_param(phr, "queue", &queue);
+  hr_cgi_param(phr, "op", &op);
+
+  serve_compiler_op(cs, queue, file, op);
+
+cleanup:
+  return retval;
+}
+
+static int
 priv_stand_filter_operation(
         FILE *fout,
         FILE *log_f,
@@ -7497,6 +7533,7 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_LOCK_FILTER] = priv_reset_filter,
   [NEW_SRV_ACTION_DISABLE_VIRTUAL_START] = priv_contest_operation,
   [NEW_SRV_ACTION_ENABLE_VIRTUAL_START] = priv_contest_operation,
+  [NEW_SRV_ACTION_COMPILER_OP] = priv_compiler_operation,
 };
 
 static void
@@ -9286,6 +9323,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_DISABLE_VIRTUAL_START] = priv_generic_operation,
   [NEW_SRV_ACTION_SUBMIT_RUN_INPUT] = priv_submit_run_input,
   [NEW_SRV_ACTION_GET_SUBMIT] = priv_get_submit,
+  [NEW_SRV_ACTION_COMPILER_OP] = priv_generic_operation,
 };
 
 static const unsigned char * const external_priv_action_names[NEW_SRV_ACTION_LAST] =

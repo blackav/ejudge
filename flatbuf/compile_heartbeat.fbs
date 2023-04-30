@@ -1,0 +1,15 @@
+namespace ej.compile;
+
+table Heartbeat {
+    timestamp_ms:int64;
+    last_handled_request_ms:int64;
+    start_time_ms:int64;
+    accumulated_ms:int64;
+    request_count:int64;
+
+    instance_id:string;
+    queue:string;
+    ip_address:string;
+}
+
+root_type Heartbeat;

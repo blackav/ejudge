@@ -302,4 +302,11 @@ stand_write_footer(
         FILE *f,
         const unsigned char *footer_str);
 
+unsigned char *
+html_timestamp_with_ago_ms(
+        unsigned char *buf,
+        size_t size,
+        long long timestamp_ms,
+        long long current_time_ms);
+
 #endif /* __HTML_H__ */

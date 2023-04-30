@@ -832,23 +832,54 @@ int ns_match_action(const unsigned char *str)
               c = str[3];
               if (c == 'p') {
                 c = str[4];
-                if (c == 'a') {
+                if (c == 'i') {
                   c = str[5];
-                  if (c == 'r') {
+                  if (c == 'l') {
                     c = str[6];
                     if (c == 'e') {
                       c = str[7];
-                      if (c == '-') {
+                      if (c == 'r') {
                         c = str[8];
-                        if (c == 'r') {
+                        if (c == '-') {
                           c = str[9];
-                          if (c == 'u') {
+                          if (c == 'o') {
                             c = str[10];
-                            if (c == 'n') {
+                            if (c == 'p') {
                               c = str[11];
-                              if (c == 's') {
-                                c = str[12];
-                                if (!c) return NEW_SRV_ACTION_COMPARE_RUNS;
+                              if (!c) return NEW_SRV_ACTION_COMPILER_OP;
+                              return 0;
+                            }
+                            return 0;
+                          }
+                          return 0;
+                        }
+                        return 0;
+                      }
+                      return 0;
+                    }
+                    return 0;
+                  }
+                  return 0;
+                } else if (c < 'i') {
+                  if (c == 'a') {
+                    c = str[5];
+                    if (c == 'r') {
+                      c = str[6];
+                      if (c == 'e') {
+                        c = str[7];
+                        if (c == '-') {
+                          c = str[8];
+                          if (c == 'r') {
+                            c = str[9];
+                            if (c == 'u') {
+                              c = str[10];
+                              if (c == 'n') {
+                                c = str[11];
+                                if (c == 's') {
+                                  c = str[12];
+                                  if (!c) return NEW_SRV_ACTION_COMPARE_RUNS;
+                                  return 0;
+                                }
                                 return 0;
                               }
                               return 0;
@@ -863,7 +894,7 @@ int ns_match_action(const unsigned char *str)
                     }
                     return 0;
                   }
-                  return 0;
+                } else {
                 }
                 return 0;
               }
