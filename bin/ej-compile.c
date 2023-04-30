@@ -106,6 +106,7 @@ static unsigned char heartbeat_file_name[PATH_MAX];
 static long long start_time_ms;
 static unsigned char pending_stop_flag; // bool
 static unsigned char pending_down_flag; // bool
+static unsigned char pending_reboot_flag; // bool
 
 struct testinfo_subst_handler_compile
 {
@@ -543,6 +544,11 @@ save_heartbeat_file(const unsigned char *data, size_t size)
     pending_down_flag = 1;
     r = unlink(path);
   }
+  r = snprintf(path, sizeof(path), "%s/dir/%s@R", heartbeat_dir, heartbeat_file_name);
+  if (access(path, F_OK) >= 0) {
+    pending_reboot_flag = 1;
+    r = unlink(path);
+  }
 
 done:;
   if (path[0]) unlink(path);
@@ -594,7 +600,7 @@ save_heartbeat(void)
     agent->ops->put_heartbeat(agent, heartbeat_file_name, buffer, size,
                               &last_saved_time_ms,
                               &pending_stop_flag, &pending_down_flag,
-                              NULL /* &pending_reboot_flag */);
+                              &pending_reboot_flag);
   } else {
     save_heartbeat_file(buffer, size);
   }
@@ -1274,7 +1280,7 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
     }
 
     save_heartbeat();
-    if (pending_stop_flag || pending_down_flag) {
+    if (pending_stop_flag || pending_down_flag || pending_reboot_flag) {
       break;
     }
 
@@ -1773,6 +1779,7 @@ main(int argc, char *argv[])
   int     stderr_fd = -1;
   int     disable_stack_trace = 0;
   unsigned char *halt_command = NULL;
+  unsigned char *reboot_command = NULL;
 
 #if HAVE_SETSID - 0
   path_t  log_path;
@@ -1916,6 +1923,12 @@ main(int argc, char *argv[])
       if (++i >= argc) goto print_usage;
       xfree(halt_command);
       halt_command = xstrdup(argv[i++]);
+      argv_restart[j++] = argv[i];
+      argv_restart[j++] = argv[i - 1];
+    } else if (!strcmp(argv[i], "-rc")) {
+      if (++i >= argc) goto print_usage;
+      xfree(reboot_command);
+      reboot_command = xstrdup(argv[i++]);
       argv_restart[j++] = argv[i];
       argv_restart[j++] = argv[i - 1];
     } else if (!strcmp(argv[i], "-p")) {
@@ -2271,6 +2284,12 @@ main(int argc, char *argv[])
     info("DOWN request from the server");
     if (halt_command) {
       start_shutdown(halt_command);
+    }
+  }
+  if (pending_reboot_flag) {
+    info("REBOOT request from the server");
+    if (reboot_command) {
+      start_shutdown(reboot_command);
     }
   }
   if (pending_stop_flag) {
