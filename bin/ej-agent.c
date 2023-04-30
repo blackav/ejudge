@@ -1895,6 +1895,11 @@ put_heartbeat_func(
         cJSON_AddTrueToObject(reply, "down_flag");
         unlink(dir_path);
     }
+    snprintf(dir_path, sizeof(dir_path), "%s/%s@R", as->heartbeat_packet_dir, file_name);
+    if (access(dir_path, F_OK) >= 0) {
+        cJSON_AddTrueToObject(reply, "reboot_flag");
+        unlink(dir_path);
+    }
 
     result = 1;
 
