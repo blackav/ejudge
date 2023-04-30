@@ -329,7 +329,8 @@
 %><s:url name="DeleteInvoker" ac="invoker-delete"><s:param name="queue" value="queue_name" /><s:param name="file" value="srsv.v[i]->file" /></s:url><%
 %><s:url name="StopInvoker" ac="invoker-stop"><s:param name="queue" value="queue_name" /><s:param name="file" value="srsv.v[i]->file" /></s:url><%
 %><s:url name="DownInvoker" ac="invoker-down"><s:param name="queue" value="queue_name" /><s:param name="file" value="srsv.v[i]->file" /></s:url><%
-%>        <td class="b1"><s:a url="DeleteInvoker" title="Delete Status File">[X]</s:a> <s:a url="StopInvoker" title="Stop Invoker (if supported)">[S]</s:a> <s:a url="DownInvoker" title="Shutdown Invoker Host (if supported)">[D]</s:a></td>
+%><s:url name="RebootInvoker" ac="invoker-reboot"><s:param name="queue" value="queue_name" /><s:param name="file" value="srsv.v[i]->file" /></s:url><%
+%>        <td class="b1"><s:a url="DeleteInvoker" title="Delete Status File">[X]</s:a> <s:a url="StopInvoker" title="Stop Invoker (if supported)">[S]</s:a> <s:a url="DownInvoker" title="Shutdown Invoker Host (if supported)">[D]</s:a> <s:a url="RebootInvoker" title="Reboot Invoker Host (if supported)">[R]</s:a></td>
     </tr>
 <%
   }
@@ -415,7 +416,8 @@
 <s:url name="DeleteCompiler" ac="compiler-op"><s:param name="queue" value="queue_name" /><s:param name="file" value="file" /><s:param name="op" value='"delete"' /></s:url><%
 %><s:url name="StopCompiler" ac="compiler-op"><s:param name="queue" value="queue_name" /><s:param name="file" value="file" /><s:param name="op" value='"stop"' /></s:url><%
 %><s:url name="DownCompiler" ac="compiler-op"><s:param name="queue" value="queue_name" /><s:param name="file" value="file" /><s:param name="op" value='"down"' /></s:url><%
-%>        <td class="b1"><s:a url="DeleteCompiler" title="Delete Status File">[X]</s:a> <s:a url="StopCompiler" title="Stop Compiler (if supported)">[S]</s:a> <s:a url="DownCompiler" title="Shutdown Compiler Host (if supported)">[D]</s:a></td>
+%><s:url name="RebootCompiler" ac="compiler-op"><s:param name="queue" value="queue_name" /><s:param name="file" value="file" /><s:param name="op" value='"reboot"' /></s:url><%
+%>        <td class="b1"><s:a url="DeleteCompiler" title="Delete Status File">[X]</s:a> <s:a url="StopCompiler" title="Stop Compiler (if supported)">[S]</s:a> <s:a url="DownCompiler" title="Shutdown Compiler Host (if supported)">[D]</s:a> <s:a url="RebootCompiler" title="Reboot Compiler Host (if supported)">[R]</s:a></td>
 
     </tr>
 <%
