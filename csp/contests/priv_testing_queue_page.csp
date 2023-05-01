@@ -342,7 +342,7 @@
 <table class="b1">
     <tr>
         <th class="b1">NN</th>
-        <th class="b1">Run Queue</th>
+        <th class="b1">Compile Queue</th>
         <th class="b1">Queue Length</th>
         <th class="b1">Oldest Item</th>
     </tr>
@@ -372,7 +372,7 @@
         <th class="b1">InvokerID</th>
         <th class="b1">IP address</th>
         <th class="b1">PID</th>
-        <th class="b1">Run Queue</th>
+        <th class="b1">Compile Queue</th>
         <th class="b1">Start Time</th>
         <th class="b1">Status Updated</th>
         <th class="b1">Last Request</th>
