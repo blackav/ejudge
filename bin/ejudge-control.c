@@ -293,6 +293,8 @@ command_start(
                "%s-compile", instance_id);
       task_AddArg(tsk, "--instance-id");
       task_AddArg(tsk, tool_instance_id);
+      task_AddArg(tsk, "-hi");
+      task_AddArg(tsk, instance_id);
     }
     if (queue && *queue) {
       task_AddArg(tsk, "--queue");

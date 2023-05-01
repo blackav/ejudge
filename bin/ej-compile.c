@@ -107,6 +107,7 @@ static long long start_time_ms;
 static unsigned char pending_stop_flag; // bool
 static unsigned char pending_down_flag; // bool
 static unsigned char pending_reboot_flag; // bool
+static unsigned char *heartbeat_instance_id;
 
 struct testinfo_subst_handler_compile
 {
@@ -583,7 +584,9 @@ save_heartbeat(void)
   ej_compile_Heartbeat_start_time_ms_add(&builder, start_time_ms);
   ej_compile_Heartbeat_accumulated_ms_add(&builder, accumulated_ms);
   ej_compile_Heartbeat_request_count_add(&builder, request_count);
-  if (instance_id && *instance_id) {
+  if (heartbeat_instance_id && *heartbeat_instance_id) {
+    ej_compile_Heartbeat_instance_id_create_str(&builder, heartbeat_instance_id);
+  } else if (instance_id && *instance_id) {
     ej_compile_Heartbeat_instance_id_create_str(&builder, instance_id);
   }
   if (compile_server_id && *compile_server_id) {
@@ -1915,6 +1918,12 @@ main(int argc, char *argv[])
       xfree(instance_id);
       instance_id = xstrdup(argv[i++]);
       argv_restart[j++] = "--instance-id";
+      argv_restart[j++] = argv[i - 1];
+    } else if (!strcmp(argv[i], "-hi")) {
+      if (++i >= argc) goto print_usage;
+      xfree(heartbeat_instance_id);
+      heartbeat_instance_id = xstrdup(argv[i++]);
+      argv_restart[j++] = argv[i];
       argv_restart[j++] = argv[i - 1];
     } else if (!strcmp(argv[i], "--ip")) {
       if (++i >= argc) goto print_usage;
