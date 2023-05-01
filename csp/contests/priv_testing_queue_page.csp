@@ -371,12 +371,13 @@
         <th class="b1">NN</th>
         <th class="b1">InvokerID</th>
         <th class="b1">IP address</th>
+        <th class="b1">PID</th>
         <th class="b1">Run Queue</th>
         <th class="b1">Start Time</th>
         <th class="b1">Status Updated</th>
         <th class="b1">Last Request</th>
         <th class="b1">Request Count</th>
-        <th class="b1">Accumulated Time</th>
+        <th class="b1">Accumulated Time (ms)</th>
         <th class="b1">Ops</th>
     </tr>
 <%
@@ -392,11 +393,13 @@
     long long chrq = ej_compile_Heartbeat_request_count_get(h);
     const unsigned char *queue_name = chv.v[i]->queue;
     const unsigned char *file = chv.v[i]->file;
+    int pid = ej_compile_Heartbeat_pid_get(h);
 %>
     <tr>
         <td class="b1"><s:v value="i + 1" /></td>
         <td class="b1"><s:v value="chid" checkExpr="" /></td>
         <td class="b1"><s:v value="chip" checkExpr="" /></td>
+        <td class="b1"><s:v value="pid" /></td>
         <td class="b1"><s:v value="chq" checkExpr="" /></td>
 <%
     html_timestamp_with_ago_ms(durbuf, sizeof(durbuf), chstms, current_time_ms);
