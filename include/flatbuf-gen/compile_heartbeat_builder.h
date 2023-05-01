@@ -20,14 +20,14 @@
 static const flatbuffers_voffset_t __ej_compile_Heartbeat_required[] = { 0 };
 typedef flatbuffers_ref_t ej_compile_Heartbeat_ref_t;
 static ej_compile_Heartbeat_ref_t ej_compile_Heartbeat_clone(flatbuffers_builder_t *B, ej_compile_Heartbeat_table_t t);
-__flatbuffers_build_table(flatbuffers_, ej_compile_Heartbeat, 8)
+__flatbuffers_build_table(flatbuffers_, ej_compile_Heartbeat, 9)
 
 #define __ej_compile_Heartbeat_formal_args ,\
   int64_t v0, int64_t v1, int64_t v2, int64_t v3,\
-  int64_t v4, flatbuffers_string_ref_t v5, flatbuffers_string_ref_t v6, flatbuffers_string_ref_t v7
+  int64_t v4, flatbuffers_string_ref_t v5, flatbuffers_string_ref_t v6, flatbuffers_string_ref_t v7, int32_t v8
 #define __ej_compile_Heartbeat_call_args ,\
   v0, v1, v2, v3,\
-  v4, v5, v6, v7
+  v4, v5, v6, v7, v8
 static inline ej_compile_Heartbeat_ref_t ej_compile_Heartbeat_create(flatbuffers_builder_t *B __ej_compile_Heartbeat_formal_args);
 __flatbuffers_build_table_prolog(flatbuffers_, ej_compile_Heartbeat, ej_compile_Heartbeat_file_identifier, ej_compile_Heartbeat_type_identifier)
 
@@ -39,6 +39,7 @@ __flatbuffers_build_scalar_field(4, flatbuffers_, ej_compile_Heartbeat_request_c
 __flatbuffers_build_string_field(5, flatbuffers_, ej_compile_Heartbeat_instance_id, ej_compile_Heartbeat)
 __flatbuffers_build_string_field(6, flatbuffers_, ej_compile_Heartbeat_queue, ej_compile_Heartbeat)
 __flatbuffers_build_string_field(7, flatbuffers_, ej_compile_Heartbeat_ip_address, ej_compile_Heartbeat)
+__flatbuffers_build_scalar_field(8, flatbuffers_, ej_compile_Heartbeat_pid, flatbuffers_int32, int32_t, 4, 4, INT32_C(0), ej_compile_Heartbeat)
 
 static inline ej_compile_Heartbeat_ref_t ej_compile_Heartbeat_create(flatbuffers_builder_t *B __ej_compile_Heartbeat_formal_args)
 {
@@ -50,7 +51,8 @@ static inline ej_compile_Heartbeat_ref_t ej_compile_Heartbeat_create(flatbuffers
         || ej_compile_Heartbeat_request_count_add(B, v4)
         || ej_compile_Heartbeat_instance_id_add(B, v5)
         || ej_compile_Heartbeat_queue_add(B, v6)
-        || ej_compile_Heartbeat_ip_address_add(B, v7)) {
+        || ej_compile_Heartbeat_ip_address_add(B, v7)
+        || ej_compile_Heartbeat_pid_add(B, v8)) {
         return 0;
     }
     return ej_compile_Heartbeat_end(B);
@@ -67,7 +69,8 @@ static ej_compile_Heartbeat_ref_t ej_compile_Heartbeat_clone(flatbuffers_builder
         || ej_compile_Heartbeat_request_count_pick(B, t)
         || ej_compile_Heartbeat_instance_id_pick(B, t)
         || ej_compile_Heartbeat_queue_pick(B, t)
-        || ej_compile_Heartbeat_ip_address_pick(B, t)) {
+        || ej_compile_Heartbeat_ip_address_pick(B, t)
+        || ej_compile_Heartbeat_pid_pick(B, t)) {
         return 0;
     }
     __flatbuffers_memoize_end(B, t, ej_compile_Heartbeat_end(B));

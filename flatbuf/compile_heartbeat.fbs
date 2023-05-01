@@ -10,6 +10,8 @@ table Heartbeat {
     instance_id:string;
     queue:string;
     ip_address:string;
+
+    pid:int32;
 }
 
 root_type Heartbeat;

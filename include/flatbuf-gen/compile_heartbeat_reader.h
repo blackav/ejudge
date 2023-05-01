@@ -54,6 +54,7 @@ __flatbuffers_define_scalar_field(4, ej_compile_Heartbeat, request_count, flatbu
 __flatbuffers_define_string_field(5, ej_compile_Heartbeat, instance_id, 0)
 __flatbuffers_define_string_field(6, ej_compile_Heartbeat, queue, 0)
 __flatbuffers_define_string_field(7, ej_compile_Heartbeat, ip_address, 0)
+__flatbuffers_define_scalar_field(8, ej_compile_Heartbeat, pid, flatbuffers_int32, int32_t, INT32_C(0))
 
 
 #include "flatcc/flatcc_epilogue.h"

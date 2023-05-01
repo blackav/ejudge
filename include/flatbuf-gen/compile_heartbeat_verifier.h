@@ -22,6 +22,7 @@ static int ej_compile_Heartbeat_verify_table(flatcc_table_verifier_descriptor_t 
     if ((ret = flatcc_verify_string_field(td, 5, 0) /* instance_id */)) return ret;
     if ((ret = flatcc_verify_string_field(td, 6, 0) /* queue */)) return ret;
     if ((ret = flatcc_verify_string_field(td, 7, 0) /* ip_address */)) return ret;
+    if ((ret = flatcc_verify_field(td, 8, 4, 4) /* pid */)) return ret;
     return flatcc_verify_ok;
 }
 
