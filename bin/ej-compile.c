@@ -595,6 +595,7 @@ save_heartbeat(void)
   if (ip_address && *ip_address) {
     ej_compile_Heartbeat_ip_address_create_str(&builder, ip_address);
   }
+  ej_compile_Heartbeat_pid_add(&builder, getpid());
   ej_compile_Heartbeat_end_as_root(&builder);
 
   buffer = flatcc_builder_get_direct_buffer(&builder, &size);
