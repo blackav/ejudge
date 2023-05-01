@@ -190,6 +190,7 @@ struct AppState
     unsigned char *heartbeat_dir;
     unsigned char *heartbeat_packet_dir;
     unsigned char *heartbeat_in_dir;
+    int heartbeat_created;
 
     int verbose_mode;
 };
@@ -1839,6 +1840,14 @@ put_heartbeat_func(
     int fd = -1;
     unsigned char *mem = MAP_FAILED;
     unsigned char dir_path[PATH_MAX];
+
+    if (!as->heartbeat_created) {
+        if (make_all_dir(as->heartbeat_dir, 0700) < 0) {
+            err("%s: put_heartbeat: cannot create '%s'", as->inst_id, as->heartbeat_dir);
+            goto done;
+        }
+        as->heartbeat_created = 1;
+    }
 
     in_path[0] = 0;
     cJSON *jn = cJSON_GetObjectItem(query, "name");
