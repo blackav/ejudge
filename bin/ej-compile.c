@@ -556,6 +556,8 @@ done:;
   if (mem != MAP_FAILED) munmap(mem, size);
 }
 
+#pragma GCC push_options
+#pragma GCC optimize "no-inline"
 static void
 save_heartbeat(void)
 {
@@ -608,6 +610,7 @@ save_heartbeat(void)
   flatcc_builder_clear(&builder);
   last_heartbeat_update_ms = current_time_ms;
 }
+#pragma GCC pop_options
 
 static void
 delete_heartbeat(void)
@@ -2239,7 +2242,6 @@ main(int argc, char *argv[])
     if (make_all_dir(heartbeat_dir, 0777) < 0) return 1;
   }
 #endif
-
 
   if (create_dirs(NULL, &serve_state, PREPARE_COMPILE) < 0) return 1;
   if (check_config() < 0) return 1;
