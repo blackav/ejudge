@@ -621,10 +621,14 @@ delete_heartbeat(void)
   if (!heartbeat_mode) return;
   if (!heartbeat_dir[0]) return;
 
-  unsigned char path[PATH_MAX];
-  __attribute__((unused)) int r;
-  r = snprintf(path, sizeof(path), "%s/dir/%s", heartbeat_dir, heartbeat_file_name);
-  r = unlink(path);
+  if (agent) {
+    agent->ops->delete_heartbeat(agent, heartbeat_file_name);
+  } else {
+    unsigned char path[PATH_MAX];
+    __attribute__((unused)) int r;
+    r = snprintf(path, sizeof(path), "%s/dir/%s", heartbeat_dir, heartbeat_file_name);
+    r = unlink(path);
+  }
 }
 
 static void
