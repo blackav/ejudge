@@ -40,6 +40,7 @@
 #include "ejudge/metrics_contest.h"
 #include "ejudge/teamdb.h"
 #include "ejudge/session_cache.h"
+#include "ejudge/server_info.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/osdeps.h"
@@ -912,6 +913,7 @@ static void *forced_symbols[] __attribute__((unused,used)) =
   &sha256b64ubuf,
   &teamdb_get_user_map,
   &stand_setup_style,
+  &server_info_get_processes,
 };
 
 int

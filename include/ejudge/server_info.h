@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4 -*- */
-#ifndef __AGENT_CLIENT_H__
-#define __AGENT_CLIENT_H__
+#ifndef __SERVER_INFO_H__
+#define __SERVER_INFO_H__
 
 /* Copyright (C) 2023 Alexander Chernov <cher@ejudge.ru> */
 
@@ -31,4 +31,4 @@ server_info_get_processes(void);
 struct server_info_process *
 server_info_free_processes(struct server_info_process *p);
 
-#endif /* __AGENT_CLIENT_H__ */
+#endif /* __SERVER_INFO_H__ */
