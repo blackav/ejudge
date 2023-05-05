@@ -132,6 +132,9 @@
             <li><s:a ac="problem-stats-page"><s:_>Problem statistics</s:_></s:a></li><br/>
             <li><s:a ac="api-keys-page"><s:_>API Keys</s:_></s:a></li><br/>
         </ul>
+    <% if (phr->role >= USER_ROLE_ADMIN) { %>
+            <li><s:a ac="server-info-page"><s:_>Server Info</s:_></s:a></li><br/>
+    <% } %>
     </li>
 
     <li><a><s:_>Dump data</s:_></a>

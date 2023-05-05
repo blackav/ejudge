@@ -16,6 +16,11 @@
 %>
 </div>
 
+<table class="b0"><tr>
+<td class="b0"><s:a ac="main-page"><s:_>Main page</s:_></s:a></td>
+<td class="b0"><s:a ac="server-info-page"><s:_>Refresh</s:_></s:a></td>
+</tr></table>
+
 
 <%@include "priv_footer.csp"
 %><%

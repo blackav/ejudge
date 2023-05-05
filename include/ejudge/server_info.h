@@ -16,5 +16,19 @@
  * GNU General Public License for more details.
  */
 
+struct server_info_process
+{
+    unsigned char *name;
+    int count;
+    double cpu_time;
+    long long vm_size;
+    long long vm_rss;
+};
+
+struct server_info_process *
+server_info_get_processes(void);
+
+struct server_info_process *
+server_info_free_processes(struct server_info_process *p);
 
 #endif /* __AGENT_CLIENT_H__ */
