@@ -233,7 +233,7 @@ read_file(const char *path, char **p_buf, size_t *p_size)
             while (size + r + 1 >= newr) {
                 newr *= 2;
             }
-            char *newb = realloc(buf, reserved);
+            char *newb = realloc(buf, newr);
             if (!newb) {
                 goto fail;
             }
