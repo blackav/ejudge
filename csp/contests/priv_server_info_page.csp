@@ -1,6 +1,8 @@
 <%
 %><%@include "priv_includes.csp"
 %><%
+#include "ejudge/server_info.h"
+#include "ejudge/metrics_contest.h"
 %><%@set getter_name = "csp_get_priv_server_info_page"
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
 %><%@page csp_view_priv_server_info_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
@@ -9,6 +11,12 @@
 // local vars
     const unsigned char *title = NULL;
     int enable_main_menu = 0;
+    struct server_info_process *sip = NULL;
+    struct metrics_contest_data *mcd = NULL;
+    int i;
+
+    mcd = metrics.data;
+    sip = server_info_get_processes();
 
     l10n_setlocale(phr->locale_id);
     title = _("Server information");
@@ -21,6 +29,152 @@
 <td class="b0"><s:a ac="server-info-page"><s:_>Refresh</s:_></s:a></td>
 </tr></table>
 
+<h2>Services</h2>
+
+<table class="b1">
+    <tr>
+        <th class="b1">Name</th>
+        <th class="b1">Count</th>
+        <th class="b1">CPU time</th>
+        <th class="b1">VM size (KiB)</th>
+        <th class="b1">VM RSS (KiB)</th>
+    </tr>
+<%
+    for (i = 0; sip[i].name; ++i) {
+        long long cpu_time_ms = sip[i].cpu_time * 1000;
+%>
+    <tr>
+        <td class="b1"><tt><s:v value="sip[i].name" /></tt></td>
+        <td class="b1"><s:v value="sip[i].count" /></td>
+        <td class="b1"><s:v value="cpu_time_ms" /></td>
+        <td class="b1"><s:v value="sip[i].vm_size" /></td>
+        <td class="b1"><s:v value="sip[i].vm_rss" /></td>
+    </tr>
+<%
+    }
+%>
+</table>
+
+<%
+    if (mcd) {
+        time_t start_time = mcd->start_time.tv_sec;
+%>
+
+<h2>Contest server</h2>
+
+<table class="b1">
+    <tr>
+        <td class="b1">Start Time:</td>
+        <td class="b1"><s:v value="start_time" /></td>
+    </tr>
+    <tr>
+        <td class="b1">Requests served:</td>
+        <td class="b1"><s:v value="mcd->client_serial / 2" /></td>
+    </tr>
+    <tr>
+        <td class="b1">Contests in memory:</td>
+        <td class="b1"><s:v value="mcd->loaded_contests" /></td>
+    </tr>
+    <tr>
+        <td class="b1">Submitted runs:</td>
+        <td class="b1"><s:v value="mcd->runs_submitted" /></td>
+    </tr>
+    <tr>
+        <td class="b1">Time spent on compilation (ms):</td>
+        <td class="b1"><s:v value="mcd->total_compile_time_ms" /></td>
+    </tr>
+    <tr>
+        <td class="b1">Time spent on testing (ms):</td>
+        <td class="b1"><s:v value="mcd->total_testing_time_ms" /></td>
+    </tr>
+    <tr>
+        <td class="b1">Cookie cache misses:</td>
+        <td class="b1"><s:v value="mcd->get_cookie_count" /></td>
+    </tr>
+<%
+    if (mcd->get_cookie_count > 0) {
+%>
+    <tr>
+        <td class="b1">Average miss cost (cycles):</td>
+        <td class="b1"><s:v value="mcd->get_cookie_tsc / mcd->get_cookie_count" /></td>
+    </tr>
+<%
+    }
+%>
+    <tr>
+        <td class="b1">Cookie cache hits:</td>
+        <td class="b1"><s:v value="mcd->hit_cookie_count" /></td>
+    </tr>
+<%
+    if (mcd->hit_cookie_count > 0) {
+%>
+    <tr>
+        <td class="b1">Average hit cost (cycles):</td>
+        <td class="b1"><s:v value="mcd->hit_cookie_tsc / mcd->hit_cookie_count" /></td>
+    </tr>
+<%
+    }
+%>
+    <tr>
+        <td class="b1">API key cache misses:</td>
+        <td class="b1"><s:v value="mcd->get_key_count" /></td>
+    </tr>
+<%
+    if (mcd->get_key_count > 0) {
+%>
+    <tr>
+        <td class="b1">API key miss cost (cycles):</td>
+        <td class="b1"><s:v value="mcd->get_key_tsc / mcd->get_key_count" /></td>
+    </tr>
+<%
+    }
+%>
+    <tr>
+        <td class="b1">API key cache hits:</td>
+        <td class="b1"><s:v value="mcd->hit_key_count" /></td>
+    </tr>
+<%
+    if (mcd->hit_key_count > 0) {
+%>
+    <tr>
+        <td class="b1">API key hit cost (cycles):</td>
+        <td class="b1"><s:v value="mcd->hit_key_tsc / mcd->hit_key_count" /></td>
+    </tr>
+<%
+    }
+%>
+    <tr>
+        <td class="b1">Session cache size:</td>
+        <td class="b1"><s:v value="mcd->cookie_cache_size" /></td>
+    </tr>
+    <tr>
+        <td class="b1">API key cache size:</td>
+        <td class="b1"><s:v value="mcd->key_cache_size" /></td>
+    </tr>
+    <tr>
+        <td class="b1">'<tt>INSERT INTO runs</tt>' operations:</td>
+        <td class="b1"><s:v value="mcd->append_run_count" /></td>
+    </tr>
+<%
+    if (mcd->append_run_count > 0) {
+%>
+    <tr>
+        <td class="b1">Average INSERT time (μs):</td>
+        <td class="b1"><s:v value="mcd->append_run_us / mcd->append_run_count" /></td>
+    </tr>
+<%
+    }
+%>
+
+</table>
+
+<%
+    }
+%>
+
+<s:form>
+<s:submit ac="clear-session-cache" />
+</s:form>
 
 <%@include "priv_footer.csp"
 %><%
@@ -28,4 +182,5 @@ cleanup:
     (void) &&cleanup;
     l10n_resetlocale();
     html_armor_free(&ab);
+    server_info_free_processes(sip);
 %>
