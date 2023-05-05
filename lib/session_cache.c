@@ -226,6 +226,17 @@ nsc_remove(struct new_session_cache *nsc, ej_cookie_t session_id, ej_cookie_t cl
     return 1;
 }
 
+void
+nsc_clear(struct new_session_cache *nsc)
+{
+    for (int i = 0; i < nsc->reserved; ++i) {
+        free(nsc->info[i].login);
+        free(nsc->info[i].name);
+    }
+    memset(nsc->info, 0, nsc->reserved * sizeof(nsc->info[0]));
+    nsc->used = 0;
+}
+
 static void
 tc_rehash(struct token_cache *tc)
 {
@@ -368,4 +379,15 @@ tc_remove(
     if (index >= tc->reserved) index -= tc->reserved;
     tc_rehash_chain(tc, index);
     return 1;
+}
+
+void
+tc_clear(struct token_cache *tc)
+{
+    for (int i = 0; i < tc->reserved; ++i) {
+        free(tc->info[i].login);
+        free(tc->info[i].name);
+    }
+    memset(tc->info, 0, tc->reserved * sizeof(tc->info[0]));
+    tc->used = 0;
 }
