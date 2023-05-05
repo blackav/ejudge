@@ -2766,6 +2766,11 @@ priv_contest_operation(FILE *fout,
 
     serve_update_status_file(ejudge_config, cnts, cs, 1);
     break;
+
+  case NEW_SRV_ACTION_CLEAR_SESSION_CACHE:
+    nsc_clear(&main_id_cache.s);
+    tc_clear(&main_id_cache.t);
+    break;
   }
 
  cleanup:
@@ -7538,6 +7543,7 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_ENABLE_VIRTUAL_START] = priv_contest_operation,
   [NEW_SRV_ACTION_COMPILER_OP] = priv_compiler_operation,
   [NEW_SRV_ACTION_INVOKER_REBOOT] = priv_invoker_operation,
+  [NEW_SRV_ACTION_CLEAR_SESSION_CACHE] = priv_contest_operation,
 };
 
 static void
@@ -9329,6 +9335,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_GET_SUBMIT] = priv_get_submit,
   [NEW_SRV_ACTION_COMPILER_OP] = priv_generic_operation,
   [NEW_SRV_ACTION_INVOKER_REBOOT] = priv_generic_operation,
+  [NEW_SRV_ACTION_CLEAR_SESSION_CACHE] = priv_generic_operation,
 };
 
 static const unsigned char * const external_priv_action_names[NEW_SRV_ACTION_LAST] =
@@ -9375,6 +9382,7 @@ static const unsigned char * const external_priv_action_names[NEW_SRV_ACTION_LAS
   [NEW_SRV_ACTION_USER_RUN_HEADER_DELETE] = "priv_user_run_header_delete",
   [NEW_SRV_ACTION_USER_RUN_HEADER_CHANGE_DURATION] = "priv_user_run_header_change_duration",
   [NEW_SRV_ACTION_USER_RUN_HEADER_CLEAR_STOP_TIME] = "priv_user_run_header_clear_stop_time",
+  [NEW_SRV_ACTION_SERVER_INFO_PAGE] = "priv_server_info_page",
 };
 
 static const int external_priv_action_aliases[NEW_SRV_ACTION_LAST] =
