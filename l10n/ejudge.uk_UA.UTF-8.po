@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-04-02 11:32+0300\n"
+"POT-Creation-Date: 2023-05-05 09:28+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Ukrainian <uk@li.org>\n"
@@ -3430,6 +3430,9 @@ msgstr ""
 msgid "Serial No"
 msgstr ""
 
+msgid "Server Info"
+msgstr ""
+
 msgid "Server error"
 msgstr ""
 
@@ -4068,8 +4071,8 @@ msgid "Try again this operation later"
 msgstr ""
 
 msgid ""
-"Type the login and the password in to the form above and press the \"Log in"
-"\" button to activate the account."
+"Type the login and the password in to the form above and press the \"Log "
+"in\" button to activate the account."
 msgstr ""
 
 #, c-format

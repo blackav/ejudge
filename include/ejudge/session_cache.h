@@ -115,10 +115,12 @@ void idc_init(struct id_cache *idc);
 struct new_session_info * nsc_insert(struct new_session_cache *nsc, ej_cookie_t session_id, ej_cookie_t client_key);
 struct new_session_info * nsc_find(struct new_session_cache *nsc, ej_cookie_t session_id, ej_cookie_t client_key);
 int nsc_remove(struct new_session_cache *nsc, ej_cookie_t session_id, ej_cookie_t client_key, struct new_session_info *out);
+void nsc_clear(struct new_session_cache *nsc);
 
 struct cached_token_info *tc_insert(struct token_cache *tc, const unsigned char *token, unsigned int key_contest_id);
 struct cached_token_info *tc_find(struct token_cache *tc, const unsigned char *token, unsigned int key_contest_id);
 int tc_remove(struct token_cache *tc, const unsigned char *token, unsigned int key_contest_id, struct cached_token_info *out);
+void tc_clear(struct token_cache *tc);
 
 #ifdef __cplusplus
 }

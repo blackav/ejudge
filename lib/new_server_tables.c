@@ -210,6 +210,7 @@ const unsigned char * const ns_submit_button_labels[NEW_SRV_ACTION_LAST]=
   [NEW_SRV_ACTION_USER_RUN_HEADER_CLEAR_STOP_TIME] = __("Clear"),
   [NEW_SRV_ACTION_DISABLE_VIRTUAL_START] = __("Disable virtual start"),
   [NEW_SRV_ACTION_ENABLE_VIRTUAL_START] = __("Enable virtual start"),
+  [NEW_SRV_ACTION_CLEAR_SESSION_CACHE] = __("Clear session cache"),
 };
 
 const int ns_priv_next_state[NEW_SRV_ACTION_LAST] =
@@ -276,6 +277,7 @@ const int ns_priv_next_state[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_GENERATE_REG_PASSWORDS_2] = NEW_SRV_ACTION_VIEW_REG_PWDS,
   [NEW_SRV_ACTION_COMPILER_OP] = NEW_SRV_ACTION_VIEW_TESTING_QUEUE,
   [NEW_SRV_ACTION_INVOKER_REBOOT] = NEW_SRV_ACTION_VIEW_TESTING_QUEUE,
+  [NEW_SRV_ACTION_CLEAR_SESSION_CACHE] = NEW_SRV_ACTION_SERVER_INFO_PAGE,
 };
 
 /* previous state (return in case of error) */
