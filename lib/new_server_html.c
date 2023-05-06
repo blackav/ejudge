@@ -556,12 +556,20 @@ ns_unload_contests(void)
   extra_u = 0;
 }
 
+enum { EXPIRED_CONTEST_CHECK_INTERVAL = 60 };
+
 void
 ns_unload_expired_contests(time_t cur_time)
 {
   int i, j;
 
   if (cur_time <= 0) cur_time = time(0);
+
+  static time_t last_check_time = 0;
+  if (last_check_time + EXPIRED_CONTEST_CHECK_INTERVAL >= cur_time) {
+    return;
+  }
+  last_check_time = cur_time;
 
   for (i = 0, j = 0; i < extra_u; i++)
     if (extras[i]
@@ -630,7 +638,7 @@ ns_check_session_cache(time_t cur_time)
 {
   if (cur_time <= 0) cur_time = time(NULL);
 
-  if (main_id_cache.last_check_time + SESSION_CHECK_INTERVAL > cur_time) {
+  if (main_id_cache.last_check_time + SESSION_CHECK_INTERVAL >= cur_time) {
     return;
   }
   main_id_cache.last_check_time = cur_time;
