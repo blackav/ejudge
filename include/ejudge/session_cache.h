@@ -104,6 +104,8 @@ struct id_cache
 {
     struct new_session_cache s;
     struct token_cache t;
+
+    time_t last_check_time;
 };
 
 #ifdef __cplusplus
@@ -116,11 +118,13 @@ struct new_session_info * nsc_insert(struct new_session_cache *nsc, ej_cookie_t 
 struct new_session_info * nsc_find(struct new_session_cache *nsc, ej_cookie_t session_id, ej_cookie_t client_key);
 int nsc_remove(struct new_session_cache *nsc, ej_cookie_t session_id, ej_cookie_t client_key, struct new_session_info *out);
 void nsc_clear(struct new_session_cache *nsc);
+void nsc_remove_expired(struct new_session_cache *nsc, time_t cur_time);
 
 struct cached_token_info *tc_insert(struct token_cache *tc, const unsigned char *token, unsigned int key_contest_id);
 struct cached_token_info *tc_find(struct token_cache *tc, const unsigned char *token, unsigned int key_contest_id);
 int tc_remove(struct token_cache *tc, const unsigned char *token, unsigned int key_contest_id, struct cached_token_info *out);
 void tc_clear(struct token_cache *tc);
+void tc_remove_expired(struct token_cache *tc, time_t cur_time);
 
 #ifdef __cplusplus
 }

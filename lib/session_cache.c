@@ -237,6 +237,28 @@ nsc_clear(struct new_session_cache *nsc)
     nsc->used = 0;
 }
 
+enum { REMOVE_EXPIRED_TIMEOUT = 12 * 60 * 60 };
+
+void
+nsc_remove_expired(struct new_session_cache *nsc, time_t cur_time)
+{
+    if (cur_time <= 0) cur_time = time(NULL);
+
+    for (int i = 0; i < nsc->reserved; ) {
+        struct new_session_info *nsi = &nsc->info[i];
+        if ((nsi->expire_time > 0 && nsi->expire_time <= cur_time)
+            || nsi->access_time + REMOVE_EXPIRED_TIMEOUT <= cur_time) {
+            struct new_session_info rmitem;
+            if (nsc_remove(nsc, nsi->session_id, nsi->client_key, &rmitem)) {
+                free(rmitem.login);
+                free(rmitem.name);
+            }
+        } else {
+            ++i;
+        }
+    }
+}
+
 static void
 tc_rehash(struct token_cache *tc)
 {
@@ -390,4 +412,26 @@ tc_clear(struct token_cache *tc)
     }
     memset(tc->info, 0, tc->reserved * sizeof(tc->info[0]));
     tc->used = 0;
+}
+
+enum { TOKEN_REMOVE_EXPIRED_TIMEOUT = 48 * 60 * 60 };
+
+void
+tc_remove_expired(struct token_cache *tc, time_t cur_time)
+{
+    if (cur_time <= 0) cur_time = time(NULL);
+
+    for (int i = 0; i < tc->reserved; ) {
+        struct cached_token_info *cti = &tc->info[i];
+        if ((cti->expiry_time > 0 && cti->expiry_time <= cur_time)
+            || cti->access_time + TOKEN_REMOVE_EXPIRED_TIMEOUT <= cur_time) {
+            struct cached_token_info rmitem;
+            if (tc_remove(tc, cti->token, cti->key_contest_id, &rmitem)) {
+                free(rmitem.login);
+                free(rmitem.name);
+            }
+        } else {
+            ++i;
+        }
+    }
 }
