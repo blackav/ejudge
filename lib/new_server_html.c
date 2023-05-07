@@ -556,12 +556,20 @@ ns_unload_contests(void)
   extra_u = 0;
 }
 
+enum { EXPIRED_CONTEST_CHECK_INTERVAL = 60 };
+
 void
 ns_unload_expired_contests(time_t cur_time)
 {
   int i, j;
 
   if (cur_time <= 0) cur_time = time(0);
+
+  static time_t last_check_time = 0;
+  if (last_check_time + EXPIRED_CONTEST_CHECK_INTERVAL >= cur_time) {
+    return;
+  }
+  last_check_time = cur_time;
 
   for (i = 0, j = 0; i < extra_u; i++)
     if (extras[i]
@@ -623,6 +631,22 @@ handle_pending_xml_import(
   ns_client_state_clear_contest_id(cs->client_id);
 }
 
+enum { SESSION_CHECK_INTERVAL = 3600 };
+
+static void
+ns_check_session_cache(time_t cur_time)
+{
+  if (cur_time <= 0) cur_time = time(NULL);
+
+  if (main_id_cache.last_check_time + SESSION_CHECK_INTERVAL >= cur_time) {
+    return;
+  }
+  main_id_cache.last_check_time = cur_time;
+
+  nsc_remove_expired(&main_id_cache.s, cur_time);
+  tc_remove_expired(&main_id_cache.t, cur_time);
+}
+
 enum { MAX_WORK_BATCH = 10 };
 
 int
@@ -664,7 +688,6 @@ ns_loop_callback(struct server_framework_state *state)
     serve_update_internal_xml_log(e->serve_state, cnts);
 
     for (i = 0; i < cs->compile_dirs_u; i++) {
-      fprintf(stderr, "compile_dir: %s\n", cs->compile_dirs[i].status_dir);
       if (get_file_list(cs->compile_dirs[i].status_dir, &files) < 0)
         continue;
       if (files.u <= 0) continue;
@@ -680,7 +703,6 @@ ns_loop_callback(struct server_framework_state *state)
     }
 
     for (i = 0; i < cs->run_dirs_u; i++) {
-      fprintf(stderr, "run_dir: %s\n", cs->run_dirs[i].status_dir);
       if (get_file_list(cs->run_dirs[i].status_dir, &files) < 0
           || files.u <= 0)
         continue;
@@ -706,6 +728,7 @@ ns_loop_callback(struct server_framework_state *state)
   }
 
   ns_unload_expired_contests(cur_time);
+  ns_check_session_cache(cur_time);
   xstrarrayfree(&files);
   return count < MAX_WORK_BATCH;
 }
