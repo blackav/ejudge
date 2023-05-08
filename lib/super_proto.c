@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2004-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -584,4 +584,6 @@ const unsigned char * const super_proto_cmd_names[SSERV_CMD_LAST] =
   [SSERV_CMD_MAIN_PAGE_BUTTON] = "MAIN_PAGE_BUTTON",
 
   [SSERV_CMD_MIGRATION_PAGE] = "MIGRATION_PAGE",
+  [SSERV_CMD_EDIT_SESSIONS_PAGE] = "EDIT_SESSIONS_PAGE",
+  [SSERV_CMD_CLEAR_SESSION] = "CLEAR_SESSION",
 };

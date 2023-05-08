@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2008-2021 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -260,6 +260,42 @@ cmd_logout(
   return 0;
 }
 
+static int
+cmd_clear_session(
+        FILE *log_f,
+        FILE *out_f,
+        struct http_request_info *phr)
+{
+  const unsigned char *s = NULL;
+  if (hr_cgi_param(phr, "other_session_id", &s) <= 0 || !s) {
+    goto done;
+  }
+  char *eptr = NULL;
+  errno = 0;
+  unsigned long long other_session_id = strtoull(s, &eptr, 16);
+  if (errno || *eptr || eptr == (char*) s || !other_session_id) {
+    goto done;
+  }
+
+  if (phr->priv_level != PRIV_LEVEL_ADMIN) {
+    goto done;
+  }
+  opcap_t caps = 0;
+  if (ejudge_cfg_opcaps_find(phr->config, phr->login, &caps) < 0) {
+    goto done;
+  }
+  if (opcaps_check(caps, OPCAP_EDIT_CONTEST) < 0) {
+    goto done;
+  }
+
+  super_serve_sid_state_clear(other_session_id);
+  info("session %016llx cleared by %s", other_session_id, phr->login);
+
+done:;
+  refresh_page(out_f, phr, "action=%d", SSERV_CMD_MAIN_PAGE);
+  return 0;
+}
+
 static handler_func_t op_handlers[SSERV_CMD_LAST] =
 {
   [SSERV_CMD_LOGOUT] = cmd_logout,
@@ -268,6 +304,7 @@ static handler_func_t op_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_EDITED_CNTS_START_NEW] = cmd_edited_cnts_start_new,
   [SSERV_CMD_LOCKED_CNTS_FORGET] = cmd_locked_cnts_forget,
   [SSERV_CMD_LOCKED_CNTS_CONTINUE] = cmd_locked_cnts_continue,
+  [SSERV_CMD_CLEAR_SESSION] = cmd_clear_session,
 
   /* Note: operations SSERV_CMD_USER_*, SSERV_CMD_GROUP_* are loaded using dlsym */
 };
@@ -552,6 +589,7 @@ static const unsigned char * const external_action_names[SSERV_CMD_LAST] =
   [SSERV_CMD_USER_PASSWORD_PAGE] = "user_password_page",
   [SSERV_CMD_USER_DETAIL_PAGE] = "user_detail_page",
   [SSERV_CMD_USER_SEL_RANDOM_PASSWD_PAGE] = "user_sel_random_passwd_page",
+  [SSERV_CMD_EDIT_SESSIONS_PAGE] = "edit_sessions_page",
 };
 
 static const unsigned char * const external_error_names[SSERV_ERR_LAST] =

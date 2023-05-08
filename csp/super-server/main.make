@@ -1,6 +1,6 @@
 # -*- Makefile -*-
 
-# Copyright (C) 2014-2018 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2014-2023 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -122,6 +122,7 @@ CFILES = \
  csp_user_cnts_password_page.c\
  csp_user_detail_page.c\
  csp_user_sel_random_passwd_page.c\
+ csp_edit_sessions_page.c\
  csp_error_unknown_page.c
 
 SOFILES = $(CFILES:.c=.so)
@@ -238,6 +239,8 @@ csp_user_map_main_page.c : user_map_main_page.csp includes.csp stdvars.csp heade
 csp_migration_page.c : migration_page.csp includes.csp stdvars.csp header.csp footer.csp
 csp_ejudge_xml_must_restart.c : ejudge_xml_must_restart.csp includes.csp stdvars.csp header.csp footer.csp
 csp_ejudge_xml_update_action.c : ejudge_xml_update_action.csp includes.csp stdvars.csp header.csp footer.csp
+
+csp_edit_sessions_page.c : edit_sessions_page.csp includes.csp stdvars.csp header.csp footer.csp
 
 csp_error_unknown_page.c : error_unknown_page.csp includes.csp stdvars.csp header.csp footer.csp
 

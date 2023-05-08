@@ -78,6 +78,17 @@
 %>
             </s:form>
         </td>
+<%
+  if (opcaps_check(caps, OPCAP_EDIT_CONTEST) >= 0) {
+%>
+        <td>
+            <s:form>
+                <s:submit ac="edit-sessions_page" label="View Editing Sessions" />
+            </s:form>
+        </td>
+<%
+  }
+%>
     </tr>
 </table>
 
