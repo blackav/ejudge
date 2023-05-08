@@ -151,6 +151,7 @@ struct http_request_info
   void *extra_info;
 
   struct userlist_user *user_info;
+  unsigned char disable_log;
 
   unsigned char data[0];
 };

@@ -357,40 +357,42 @@ cmd_http_request(
   ns_handle_http_request(state, hr.out_f, &hr);
   close_memstream(hr.out_f); hr.out_f = NULL;
 
-  *pbuf = 0;
-  // report IP?
-  if (hr.ssl_flag) {
-    pbuf = stpcpy(pbuf, "HTTPS:");
-  } else {
-    pbuf = stpcpy(pbuf, "HTTPS:");
-  }
-  pbuf = stpcpy(pbuf, xml_unparse_ipv6(&hr.ip));
-  *pbuf++ = ':';
-  if (/*hr.role_name*/ 1) {
-    pbuf = stpcpy(pbuf, hr.role_name);
-  }
-  if (hr.action > 0 && hr.action < NEW_SRV_ACTION_LAST && ns_symbolic_action_table[hr.action]) {
-    *pbuf++ = '/';
-    pbuf = stpcpy(pbuf, ns_symbolic_action_table[hr.action]);
-  }
-  if (hr.session_id) {
-    *pbuf++ = '/';
-    *pbuf++ = 'S';
-    pbuf += sprintf(pbuf, "%016llx", hr.session_id);
-    if (hr.client_key) {
-      *pbuf++ = '-';
-      pbuf += sprintf(pbuf, "%016llx", hr.client_key);
+  if (!hr.disable_log) {
+    *pbuf = 0;
+    // report IP?
+    if (hr.ssl_flag) {
+      pbuf = stpcpy(pbuf, "HTTPS:");
+    } else {
+      pbuf = stpcpy(pbuf, "HTTPS:");
     }
-  }
-  if (hr.user_id > 0) {
-    *pbuf++ = '/';
-    *pbuf++ = 'U';
-    pbuf += sprintf(pbuf, "%d", hr.user_id);
-  }
-  if (hr.contest_id > 0) {
-    *pbuf++ = '/';
-    *pbuf++ = 'C';
-    pbuf += sprintf(pbuf, "%d", hr.contest_id);
+    pbuf = stpcpy(pbuf, xml_unparse_ipv6(&hr.ip));
+    *pbuf++ = ':';
+    if (/*hr.role_name*/ 1) {
+      pbuf = stpcpy(pbuf, hr.role_name);
+    }
+    if (hr.action > 0 && hr.action < NEW_SRV_ACTION_LAST && ns_symbolic_action_table[hr.action]) {
+      *pbuf++ = '/';
+      pbuf = stpcpy(pbuf, ns_symbolic_action_table[hr.action]);
+    }
+    if (hr.session_id) {
+      *pbuf++ = '/';
+      *pbuf++ = 'S';
+      pbuf += sprintf(pbuf, "%016llx", hr.session_id);
+      if (hr.client_key) {
+        *pbuf++ = '-';
+        pbuf += sprintf(pbuf, "%016llx", hr.client_key);
+      }
+    }
+    if (hr.user_id > 0) {
+      *pbuf++ = '/';
+      *pbuf++ = 'U';
+      pbuf += sprintf(pbuf, "%d", hr.user_id);
+    }
+    if (hr.contest_id > 0) {
+      *pbuf++ = '/';
+      *pbuf++ = 'C';
+      pbuf += sprintf(pbuf, "%d", hr.contest_id);
+    }
   }
 
   // no reply now
@@ -398,7 +400,9 @@ cmd_http_request(
 
   if (hr.protocol_reply) {
     xfree(hr.out_t); hr.out_t = NULL;
-    info("%d:%s -> %d", p->id, info_buf, hr.protocol_reply);
+    if (!hr.disable_log) {
+      info("%d:%s -> %d", p->id, info_buf, hr.protocol_reply);
+    }
     nsf_close_client_fds(p);
     nsf_send_reply(state, p, hr.protocol_reply);
     goto cleanup;
@@ -456,7 +460,9 @@ cmd_http_request(
   if (!hr.out_t || !*hr.out_t) {
     xfree(hr.out_t); hr.out_t = NULL;
     if (hr.allow_empty_output) {
-      info("%d:%s -> OK", p->id, info_buf);
+      if (!hr.disable_log) {
+        info("%d:%s -> OK", p->id, info_buf);
+      }
       nsf_close_client_fds(p);
       nsf_send_reply(state, p, NEW_SRV_RPL_OK);
       goto cleanup;
@@ -467,7 +473,9 @@ cmd_http_request(
   }
 
   nsf_new_autoclose(state, p, hr.out_t, hr.out_z);
-  info("%d:%s -> OK, %zu", p->id, info_buf, hr.out_z);
+  if (!hr.disable_log) {
+    info("%d:%s -> OK, %zu", p->id, info_buf, hr.out_z);
+  }
   nsf_send_reply(state, p, NEW_SRV_RPL_OK);
   hr.out_t = NULL; hr.out_z = 0;
 
