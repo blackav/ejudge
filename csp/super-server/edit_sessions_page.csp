@@ -7,8 +7,63 @@
 %><%
     const unsigned char *title = "View Active Editing Sessions";
     const unsigned char *subtitle = NULL;
+    struct sid_state *ss = NULL;
+    int serial = 0;
 %><%@include "header.csp"
 %>
+
+<p>[<s:a ac="edit-sessions-page">Refresh</s:a>]</p>
+
+<table class="b1">
+    <tr>
+        <th class="b1">NN</th>
+        <th class="b1">SID</th>
+        <th class="b1">IP</th>
+        <th class="b1">Login</th>
+        <th class="b1">Name</th>
+        <th class="b1">Settings Edited</th>
+        <th class="b1">Tests Edited</th>
+        <th class="b1">Action</th>
+    </tr>
+<%
+    for (ss = super_serve_sid_state_get_first(); ss; ss = ss->next) {
+        int ed_contest_id = 0;
+        if (ss->edited_cnts) {
+            ed_contest_id = ss->edited_cnts->id;
+        }
+        int ts_contest_id = 0;
+        if (ss->te_state) {
+            ts_contest_id = ss->te_state->contest_id;
+        }
+        if (ed_contest_id <= 0 && ts_contest_id <= 0) {
+            continue;
+        }
+%>
+    <tr>
+        <td class="b1"><s:v value="++serial" /></td>
+        <td class="b1"><tt><s:v value="ss->sid" /></tt></td>
+        <td class="b1"><tt><s:v value="ss->remote_addr" /></tt></td>
+        <td class="b1"><s:v value="ss->user_login" checkExpr="" /></td>
+        <td class="b1"><s:v value="ss->user_name" checkExpr="" /></td>
+        <td class="b1"><s:v value="ed_contest_id" checkExpr="> 0" /></td>
+        <td class="b1"><s:v value="ts_contest_id" checkExpr="> 0" /></td>
+        <td class="b1">
+<%
+        if (ed_contest_id > 0 || ts_contest_id > 0) {
+%>
+        <s:form>
+            <s:hidden name="other_session_id" value="ss->sid" />
+            <s:submit ac="clear-session" label="Clear session"/>
+        </s:form>
+<%
+        }
+%>
+        </td>
+    </tr>
+<%
+    }
+%>
+</table>
 
 <%@include "footer.csp"
 %><%
