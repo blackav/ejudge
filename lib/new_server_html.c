@@ -14296,9 +14296,12 @@ unpriv_json_user_state(
 
   hr_cgi_param_int_opt(phr, "x", &need_reload_check, 0);
 
-  fprintf(fout, "Content-type: text/plain; charset=%s\n"
-          "Cache-Control: no-cache\n\n", EJUDGE_CHARSET);
+  static const unsigned char reply_header[] =
+    "Content-type: text/plain; charset=" EJUDGE_CHARSET "\n"
+    "Cache-Control: no-cache\n\n";
+  fwrite_unlocked(reply_header, 1, sizeof(reply_header) - 1, fout);
   do_json_user_state(fout, cs, phr->user_id, need_reload_check);
+  phr->disable_log = 1;
 }
 
 static void
