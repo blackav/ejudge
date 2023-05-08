@@ -1,0 +1,19 @@
+<%
+%><%@set getter_name = "csp_get_edit_sessions_page"
+%><%@include "includes.csp"
+%><%@set ac_prefix = "SSERV_CMD_"
+%><%@page csp_view_edit_sessions_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "stdvars.csp"
+%><%
+    const unsigned char *title = "View Active Editing Sessions";
+    const unsigned char *subtitle = NULL;
+%><%@include "header.csp"
+%>
+
+<%@include "footer.csp"
+%><%
+cleanup:;
+  (void) &&cleanup;
+  l10n_resetlocale();
+  html_armor_free(&ab);
+%>
