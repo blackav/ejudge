@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-05-08 10:01+0300\n"
+"POT-Creation-Date: 2023-05-08 14:50+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Kazakh <uk@li.org>\n"
@@ -729,6 +729,9 @@ msgid "Clear finished flag"
 msgstr ""
 
 msgid "Clear runs"
+msgstr ""
+
+msgid "Clear session"
 msgstr ""
 
 msgid "Clear session cache"
