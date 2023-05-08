@@ -2,7 +2,7 @@
 #ifndef __SUPER_SERVE_H__
 #define __SUPER_SERVE_H__
 
-/* Copyright (C) 2004-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -238,6 +238,7 @@ const struct sid_state* super_serve_sid_state_get_cnts_editor(int contest_id);
 struct sid_state* super_serve_sid_state_get_cnts_editor_nc(int contest_id);
 const struct sid_state* super_serve_sid_state_get_test_editor(int contest_id);
 struct sid_state* super_serve_sid_state_get_test_editor_nc(int contest_id);
+struct sid_state *super_serve_sid_state_get_first(void);
 
 struct background_process;
 void super_serve_register_process(struct background_process *prc);

@@ -1242,6 +1242,12 @@ super_serve_sid_state_get_test_editor_nc(int contest_id)
   return 0;
 }
 
+struct sid_state *
+super_serve_sid_state_get_first(void)
+{
+  return sid_state_first;
+}
+
 struct section_problem_data *
 super_serve_find_problem(struct sid_state *ss, const unsigned char *name)
 {
