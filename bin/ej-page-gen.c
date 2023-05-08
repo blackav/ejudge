@@ -6648,6 +6648,10 @@ super_serve_sid_state_get_max_edited_cnts(void)
     return 0;
 }
 void
+super_serve_sid_state_clear(ej_cookie_t)
+{
+}
+void
 super_serve_move_edited_contest(void *dst, void * src /*struct sid_state *dst, struct sid_state *src*/)
 {
 }
