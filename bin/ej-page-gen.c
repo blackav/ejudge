@@ -3425,7 +3425,7 @@ handle_html_text(FILE *out_f, FILE *txt_f, FILE *log_f, const unsigned char *mem
             fprintf(txt_f, ";\n");
         }
 
-        fprintf(out_f, "fwrite(csp_str%d, 1, %d, out_f);\n", i, len);
+        fprintf(out_f, "fwrite_unlocked(csp_str%d, 1, %d, out_f);\n", i, len);
     }
     return 0;
 }
@@ -4505,7 +4505,7 @@ handle_config_open(
         value = CONF_STYLE_PREFIX;
     }
     if (value) {
-        fprintf(prg_f, "fwrite(\"%s\", 1, %zu, out_f);\n", value, strlen(value));
+        fprintf(prg_f, "fwrite_unlocked(\"%s\", 1, %zu, out_f);\n", value, strlen(value));
     }
 
     return 0;
