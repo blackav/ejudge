@@ -239,6 +239,7 @@ struct sid_state* super_serve_sid_state_get_cnts_editor_nc(int contest_id);
 const struct sid_state* super_serve_sid_state_get_test_editor(int contest_id);
 struct sid_state* super_serve_sid_state_get_test_editor_nc(int contest_id);
 struct sid_state *super_serve_sid_state_get_first(void);
+void super_serve_sid_state_clear(ej_cookie_t sid);
 
 struct background_process;
 void super_serve_register_process(struct background_process *prc);

@@ -1248,6 +1248,15 @@ super_serve_sid_state_get_first(void)
   return sid_state_first;
 }
 
+void
+super_serve_sid_state_clear(ej_cookie_t sid)
+{
+  struct sid_state *p = sid_state_find(sid);
+  if (p) {
+    sid_state_delete(p);
+  }
+}
+
 struct section_problem_data *
 super_serve_find_problem(struct sid_state *ss, const unsigned char *name)
 {
