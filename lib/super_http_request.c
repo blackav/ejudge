@@ -362,4 +362,5 @@ const unsigned char super_proto_is_http_request[] =
 
   [SSERV_CMD_MIGRATION_PAGE] = 1,
   [SSERV_CMD_EDIT_SESSIONS_PAGE] = 1,
+  [SSERV_CMD_CLEAR_SESSION] = 1,
 };
