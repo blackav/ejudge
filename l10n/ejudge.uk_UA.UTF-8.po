@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-05-06 07:49+0300\n"
+"POT-Creation-Date: 2023-05-08 10:01+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Ukrainian <uk@li.org>\n"
@@ -4327,6 +4327,9 @@ msgid "Variants (variant.map)"
 msgstr ""
 
 msgid "View"
+msgstr ""
+
+msgid "View Editing Sessions"
 msgstr ""
 
 msgid "View all"

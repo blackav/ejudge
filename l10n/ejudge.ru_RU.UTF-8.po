@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-05-06 07:49+0300\n"
+"POT-Creation-Date: 2023-05-08 10:01+0300\n"
 "PO-Revision-Date: 2022-01-12 13:17+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -4527,6 +4527,9 @@ msgstr "Варианты (variant.map)"
 
 msgid "View"
 msgstr "Просмотр"
+
+msgid "View Editing Sessions"
+msgstr "Просмотр сессий редактирования"
 
 msgid "View all"
 msgstr "Посмотреть всё"
