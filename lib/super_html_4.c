@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2008-2021 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -552,6 +552,7 @@ static const unsigned char * const external_action_names[SSERV_CMD_LAST] =
   [SSERV_CMD_USER_PASSWORD_PAGE] = "user_password_page",
   [SSERV_CMD_USER_DETAIL_PAGE] = "user_detail_page",
   [SSERV_CMD_USER_SEL_RANDOM_PASSWD_PAGE] = "user_sel_random_passwd_page",
+  [SSERV_CMD_EDIT_SESSIONS_PAGE] = "edit_sessions_page",
 };
 
 static const unsigned char * const external_error_names[SSERV_ERR_LAST] =
