@@ -1565,8 +1565,8 @@ void
 nsf_main_loop(struct server_framework_state *state)
 {
   struct ht_client_state *cur_clnt;
-  struct timeval timeout;
-  int fd_max, n, errcode;
+  struct timespec timeoutn;
+  int fd_max, n;
   fd_set rset, wset;
   struct watchlist *pw;
   int mode;
@@ -1653,21 +1653,16 @@ nsf_main_loop(struct server_framework_state *state)
       }
     }
 
-    timeout.tv_sec = state->params->select_timeout;
-    if (timeout.tv_sec <= 0) timeout.tv_sec = 10;
-    timeout.tv_usec = 0;
-    if (!work_done) timeout.tv_sec = 0;
+    if (work_done) {
+      if ((timeoutn.tv_sec = state->params->select_timeout) <= 0) {
+        timeoutn.tv_sec = 10;
+      }
+    } else {
+      timeoutn.tv_sec = 0;
+    }
+    timeoutn.tv_nsec = 0;
 
-    // here's a potential race condition :-(
-    // it cannot be handled properly until Linux
-    // has the proper pselect implementation
-    sigprocmask(SIG_SETMASK, &state->work_mask, 0);
-    errno = 0;
-    n = select(fd_max + 1, &rset, &wset, 0, &timeout);
-    errcode = errno;
-    sigprocmask(SIG_SETMASK, &state->block_mask, 0);
-    errno = errcode;
-    // end of race condition prone code
+    n = pselect(fd_max + 1, &rset, &wset, NULL, &timeoutn, &state->work_mask);
 
     if (n < 0 && errno != EINTR) {
       err("unexpected select error: %s", os_ErrorMsg());
