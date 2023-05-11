@@ -130,6 +130,7 @@ extern const unsigned char * const ns_symbolic_action_table[];
 static ContestExternalActionVector cnts_ext_actions;
 
 struct id_cache main_id_cache;
+static time_t expired_contest_last_check_time = 0;
 
 static void
 error_page(
@@ -362,6 +363,7 @@ ns_get_contest_extra(
       }
       if (loaded_count >= config->max_loaded_contests && oldest_idx >= 0) {
         extras[oldest_idx]->last_access_time = 0;
+        expired_contest_last_check_time = 0;
       }
     }
     return p;
@@ -396,6 +398,7 @@ ns_get_contest_extra(
     }
     if (loaded_count >= config->max_loaded_contests && oldest_idx >= 0) {
       extras[oldest_idx]->last_access_time = 0;
+      expired_contest_last_check_time = 0;
     }
   }
   return p;
@@ -565,11 +568,10 @@ ns_unload_expired_contests(time_t cur_time)
 
   if (cur_time <= 0) cur_time = time(0);
 
-  static time_t last_check_time = 0;
-  if (last_check_time + EXPIRED_CONTEST_CHECK_INTERVAL >= cur_time) {
+  if (expired_contest_last_check_time + EXPIRED_CONTEST_CHECK_INTERVAL >= cur_time) {
     return;
   }
-  last_check_time = cur_time;
+  expired_contest_last_check_time = cur_time;
 
   for (i = 0, j = 0; i < extra_u; i++)
     if (extras[i]
@@ -2517,6 +2519,7 @@ static void
 do_reload_server(struct contest_extra *extra, void *ptr)
 {
   extra->last_access_time = 0;
+  expired_contest_last_check_time = 0;
 }
 
 void
@@ -2715,6 +2718,7 @@ priv_contest_operation(FILE *fout,
 
   case NEW_SRV_ACTION_RELOAD_SERVER:
     extra->last_access_time = 0;
+    expired_contest_last_check_time = 0;
     break;
 
   case NEW_SRV_ACTION_RELOAD_SERVER_ALL:
@@ -2736,6 +2740,7 @@ priv_contest_operation(FILE *fout,
   case NEW_SRV_ACTION_RESET_2:
     serve_reset_contest(cnts, cs);
     extra->last_access_time = 0;
+    expired_contest_last_check_time = 0;
     break;
 
   case NEW_SRV_ACTION_SQUEEZE_RUNS:
@@ -6562,6 +6567,7 @@ priv_upsolving_operation(
     cs->upsolving_disable_clars = 0;
     serve_update_status_file(ejudge_config, cnts, cs, 1);
     extra->last_access_time = 0;          // force reload
+    expired_contest_last_check_time = 0;
     break;
   case NEW_SRV_ACTION_UPSOLVING_CONFIG_4: // start upsolving
     run_save_times(cs->runlog_state);
@@ -6581,6 +6587,7 @@ priv_upsolving_operation(
     if (disable_clars && *disable_clars) cs->upsolving_disable_clars = 1;
     serve_update_status_file(ejudge_config, cnts, cs, 1);
     extra->last_access_time = 0;          // force reload
+    expired_contest_last_check_time = 0;
     break;
   default:
     abort();
