@@ -438,6 +438,7 @@ run_add_record(
     run_to_ignore = i;
     re.run_id = i;
     re.run_uuid = *puuid;
+    re.serial_id = serial_id;
   } else {
     gettimeofday(p_tv, NULL);
     if (!ej_uuid_is_nonempty(*puuid)) {

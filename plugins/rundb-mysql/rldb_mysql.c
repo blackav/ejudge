@@ -904,6 +904,7 @@ load_runs(struct rldb_mysql_cnts *cs)
     re = &rls->runs[ri.run_id - rls->run_f];
 
     re->run_id = ri.run_id;
+    re->serial_id = ri.serial_id;
     re->size = ri.size;
     /*
     re->time = ri.create_time;
