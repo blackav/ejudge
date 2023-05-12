@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2000-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -654,6 +654,24 @@ unparse_sha1(const void *shabuf)
   static const unsigned char hexd[] = "0123456789abcdef";
 
   for (i = 0, p = buf; i < 20; i++, s++) {
+    *p++ = hexd[(*s >> 4) & 0xf];
+    *p++ = hexd[*s & 0xf];
+  }
+  *p = 0;
+
+  return buf;
+}
+
+unsigned char *
+unparse_sha256(const void *shabuf)
+{
+  const unsigned char *s = (const unsigned char *) shabuf;
+  int i;
+  static unsigned char buf[64];
+  unsigned char *p;
+  static const unsigned char hexd[] = "0123456789abcdef";
+
+  for (i = 0, p = buf; i < 32; i++, s++) {
     *p++ = hexd[(*s >> 4) & 0xf];
     *p++ = hexd[*s & 0xf];
   }

@@ -82,6 +82,7 @@ int get_content_type(const unsigned char *txt, const unsigned char **p_start_ptr
 unsigned char *dos2unix_str(const unsigned char *s);
 size_t dos2unix_buf(unsigned char *s, size_t size);
 unsigned char *unparse_sha1(const void *shabuf);
+unsigned char *unparse_sha256(const void *shabuf);
 unsigned char *unparse_abbrev_sha1(const void *shabuf);
 int parse_sha1(void *shabuf, const unsigned char *str);
 
