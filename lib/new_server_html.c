@@ -8092,17 +8092,17 @@ priv_run_status_json(
   }
 
   if (re.status == RUN_EMPTY) {
-    fprintf(fout, "{\n");
-    fprintf(fout, "  \"ok\" : true");
-    fprintf(fout, ",\n  \"server_time\": %lld", (long long) cs->current_time);
-    fprintf(fout, ",\n  \"result\": {");
-    fprintf(fout, "\n    \"run\": {");
-    fprintf(fout, "\n      \"run_id\": %d", re.run_id);
-    fprintf(fout, ",\n      \"status\": %d", re.status);
-    fprintf(fout, ",\n      \"status_str\": \"%s\"", run_status_short_str(re.status));
-    fprintf(fout, "\n    }");
-    fprintf(fout, "\n  }");
-    fprintf(fout, "\n}\n");
+    fprintf(fout, "{");
+    fprintf(fout, "\"ok\":true");
+    fprintf(fout, ",\"server_time\":%lld", (long long) cs->current_time);
+    fprintf(fout, ",\"result\":{");
+    fprintf(fout, "\"run\":{");
+    fprintf(fout, "\"run_id\":%d", re.run_id);
+    fprintf(fout, ",\"status\":%d", re.status);
+    fprintf(fout, ",\"status_str\":\"%s\"", run_status_short_str(re.status));
+    fprintf(fout, "}");
+    fprintf(fout, "}");
+    fprintf(fout, "}\n");
     goto cleanup;
   }
 
@@ -8123,163 +8123,163 @@ priv_run_status_json(
   }
 
   if (re.status == RUN_VIRTUAL_START || re.status == RUN_VIRTUAL_STOP) {
-    fprintf(fout, "{\n");
-    fprintf(fout, "  \"ok\" : true");
-    fprintf(fout, ",\n  \"server_time\": %lld", (long long) cs->current_time);
-    fprintf(fout, ",\n  \"result\": {");
-    fprintf(fout, "\n    \"run\": {");
-    fprintf(fout, "\n      \"run_id\": %d", re.run_id);
-    fprintf(fout, ",\n      \"status\": %d", re.status);
-    fprintf(fout, ",\n      \"status_str\": \"%s\"", run_status_short_str(re.status));
-    fprintf(fout, ",\n      \"run_time\": %lld", (long long) re.time);
-    fprintf(fout, ",\n      \"nsec\": %d", re.nsec);
-    fprintf(fout, ",\n      \"run_time_us\": %lld", run_time_us);
+    fprintf(fout, "{");
+    fprintf(fout, "\"ok\":true");
+    fprintf(fout, ",\"server_time\":%lld", (long long) cs->current_time);
+    fprintf(fout, ",\"result\":{");
+    fprintf(fout, "\"run\":{");
+    fprintf(fout, "\"run_id\":%d", re.run_id);
+    fprintf(fout, ",\"status\":%d", re.status);
+    fprintf(fout, ",\"status_str\":\"%s\"", run_status_short_str(re.status));
+    fprintf(fout, ",\"run_time\":%lld", (long long) re.time);
+    fprintf(fout, ",\"nsec\":%d", re.nsec);
+    fprintf(fout, ",\"run_time_us\":%lld", run_time_us);
     if (duration > 0) {
-      fprintf(fout, ",\n      \"duration\": %lld", duration);
+      fprintf(fout, ",\"duration\":%lld", duration);
     }
-    fprintf(fout, ",\n      \"user_id\": %d", re.user_id);
+    fprintf(fout, ",\"user_id\":%d", re.user_id);
     s = teamdb_get_login(cs->teamdb_state, re.user_id);
     if (s && *s) {
-      fprintf(fout, ",\n      \"user_login\": %s", JARMOR(s));
+      fprintf(fout, ",\"user_login\":%s", JARMOR(s));
     }
     s = teamdb_get_name(cs->teamdb_state, re.user_id);
     if (s && *s) {
-      fprintf(fout, ",\n      \"user_name\": %s", JARMOR(s));
+      fprintf(fout, ",\"user_name\":%s", JARMOR(s));
     }
-    fprintf(fout, "\n    }");
-    fprintf(fout, "\n  }");
-    fprintf(fout, "\n}\n");
+    fprintf(fout, "}");
+    fprintf(fout, "}");
+    fprintf(fout, "}\n");
     goto cleanup;
   }
 
-  fprintf(fout, "{\n");
-  fprintf(fout, "  \"ok\" : true");
-  fprintf(fout, ",\n  \"server_time\": %lld", (long long) cs->current_time);
-  fprintf(fout, ",\n  \"result\": {");
+  fprintf(fout, "{");
+  fprintf(fout, "\"ok\":true");
+  fprintf(fout, ",\"server_time\":%lld", (long long) cs->current_time);
+  fprintf(fout, ",\"result\":{");
   if (accepting_mode) {
-    fprintf(fout, ",\n    \"accepting_mode\": %s", to_json_bool(accepting_mode));
+    fprintf(fout, ",\"accepting_mode\":%s", to_json_bool(accepting_mode));
   }
-  fprintf(fout, "\n    \"run\": {");
-  fprintf(fout, "\n      \"run_id\": %d", re.run_id);
+  fprintf(fout, "\"run\":{");
+  fprintf(fout, "\"run_id\":%d", re.run_id);
   if (ej_uuid_is_nonempty(re.run_uuid)) {
-    fprintf(fout, ",\n      \"run_uuid\": \"%s\"", ej_uuid_unparse(&re.run_uuid, ""));
+    fprintf(fout, ",\"run_uuid\":\"%s\"", ej_uuid_unparse(&re.run_uuid, ""));
   }
-  fprintf(fout, ",\n      \"status\": %d", re.status);
-  fprintf(fout, ",\n      \"status_str\": \"%s\"", run_status_short_str(re.status));
-  fprintf(fout, ",\n      \"run_time\": %lld", (long long) re.time);
-  fprintf(fout, ",\n      \"nsec\": %d", re.nsec);
-  fprintf(fout, ",\n      \"run_time_us\": %lld", run_time_us);
+  fprintf(fout, ",\"status\":%d", re.status);
+  fprintf(fout, ",\"status_str\":\"%s\"", run_status_short_str(re.status));
+  fprintf(fout, ",\"run_time\":%lld", (long long) re.time);
+  fprintf(fout, ",\"nsec\":%d", re.nsec);
+  fprintf(fout, ",\"run_time_us\":%lld", run_time_us);
   if (duration > 0) {
-    fprintf(fout, ",\n      \"duration\": %lld", duration);
+    fprintf(fout, ",\"duration\":%lld", duration);
   }
-  fprintf(fout, ",\n      \"user_id\": %d", re.user_id);
+  fprintf(fout, ",\"user_id\":%d", re.user_id);
   s = teamdb_get_login(cs->teamdb_state, re.user_id);
   if (s && *s) {
-    fprintf(fout, ",\n      \"user_login\": \"%s\"", JARMOR(s));
+    fprintf(fout, ",\"user_login\":\"%s\"", JARMOR(s));
   }
   s = teamdb_get_name(cs->teamdb_state, re.user_id);
   if (s && *s) {
-    fprintf(fout, ",\n      \"user_name\": \"%s\"", JARMOR(s));
+    fprintf(fout, ",\"user_name\":\"%s\"", JARMOR(s));
   }
-  fprintf(fout, ",\n      \"prob_id\": %d", re.prob_id);
+  fprintf(fout, ",\"prob_id\":%d", re.prob_id);
   if (re.prob_id > 0 && re.prob_id <= cs->max_prob) prob = cs->probs[re.prob_id];
   if (prob && /*prob->short_name &&*/ prob->short_name[0]) {
-    fprintf(fout, ",\n      \"prob_name\": \"%s\"", JARMOR(prob->short_name));
+    fprintf(fout, ",\"prob_name\":\"%s\"", JARMOR(prob->short_name));
   }
   if (prob && prob->internal_name && prob->internal_name[0]) {
-    fprintf(fout, ",\n      \"prob_internal_name\": \"%s\"", JARMOR(prob->internal_name));
+    fprintf(fout, ",\"prob_internal_name\":\"%s\"", JARMOR(prob->internal_name));
   }
   if (prob && prob->uuid && prob->uuid[0]) {
-    fprintf(fout, ",\n      \"prob_uuid\": \"%s\"", JARMOR(prob->uuid));
+    fprintf(fout, ",\"prob_uuid\":\"%s\"", JARMOR(prob->uuid));
   }
   if (prob && prob->variant_num > 0) {
     if (re.variant > 0) {
-      fprintf(fout, ",\n      \"raw_variant\": %d", re.variant);
-      fprintf(fout, ",\n      \"variant\": %d", re.variant);
+      fprintf(fout, ",\"raw_variant\":%d", re.variant);
+      fprintf(fout, ",\"variant\":%d", re.variant);
     } else {
       int variant = find_variant(cs, re.user_id, re.prob_id, 0);
       if (variant > 0) {
-        fprintf(fout, ",\n      \"variant\": %d", re.variant);
+        fprintf(fout, ",\"variant\":%d", re.variant);
       }
     }
   }
-  fprintf(fout, ",\n      \"lang_id\": %d", re.lang_id);
+  fprintf(fout, ",\"lang_id\":%d", re.lang_id);
   if (re.lang_id > 0 && re.lang_id <= cs->max_lang) lang = cs->langs[re.lang_id];
   if (lang && /*lang->short_name &&*/ lang->short_name[0]) {
-    fprintf(fout, ",\n      \"lang_name\": \"%s\"", JARMOR(lang->short_name));
+    fprintf(fout, ",\"lang_name\":\"%s\"", JARMOR(lang->short_name));
   }
-  fprintf(fout, ",\n      \"ip\": \"%s\"", xml_unparse_ip(re.a.ip));
+  fprintf(fout, ",\"ip\":\"%s\"", xml_unparse_ip(re.a.ip));
   if (re.ssl_flag) {
-    fprintf(fout, ",\n      \"ssl_flag\": %s", to_json_bool(re.ssl_flag));
+    fprintf(fout, ",\"ssl_flag\":%s", to_json_bool(re.ssl_flag));
   }
   if (re.ipv6_flag) {
-    fprintf(fout, ",\n      \"ipv6_flag\": %s", to_json_bool(re.ipv6_flag));
+    fprintf(fout, ",\"ipv6_flag\":%s", to_json_bool(re.ipv6_flag));
   }
-  fprintf(fout, ",\n      \"sha1\": \"%s\"", unparse_sha1(re.h.sha1));
+  fprintf(fout, ",\"sha1\":\"%s\"", unparse_sha1(re.h.sha1));
   if (re.locale_id > 0) {
-    fprintf(fout, ",\n      \"locale_id\": %d", re.locale_id);
+    fprintf(fout, ",\"locale_id\":%d", re.locale_id);
   }
   if (re.eoln_type > 0) {
-    fprintf(fout, ",\n      \"eoln_type\": %d", re.eoln_type);
+    fprintf(fout, ",\"eoln_type\":%d", re.eoln_type);
   }
   if (re.mime_type) {
-    fprintf(fout, ",\n      \"mime_type\": \"%s\"", mime_type_get_type(re.mime_type));
+    fprintf(fout, ",\"mime_type\":\"%s\"", mime_type_get_type(re.mime_type));
   }
-  fprintf(fout, ",\n      \"size\": %lld", (long long) re.size);
+  fprintf(fout, ",\"size\":%lld", (long long) re.size);
   if (re.store_flags) {
-    fprintf(fout, ",\n      \"store_flags\": %d", re.store_flags);
+    fprintf(fout, ",\"store_flags\":%d", re.store_flags);
   }
   if (re.is_imported) {
-    fprintf(fout, ",\n      \"is_imported\": %s", to_json_bool(re.is_imported));
+    fprintf(fout, ",\"is_imported\":%s", to_json_bool(re.is_imported));
   }
   if (re.is_hidden) {
-    fprintf(fout, ",\n      \"is_hidden\": %s", to_json_bool(re.is_hidden));
+    fprintf(fout, ",\"is_hidden\":%s", to_json_bool(re.is_hidden));
   }
   if (re.is_readonly) {
-    fprintf(fout, ",\n      \"is_readonly\": %s", to_json_bool(re.is_readonly));
+    fprintf(fout, ",\"is_readonly\":%s", to_json_bool(re.is_readonly));
   }
   if (re.passed_mode) {
-    fprintf(fout, ",\n      \"passed_mode\": %d", re.passed_mode);
+    fprintf(fout, ",\"passed_mode\":%d", re.passed_mode);
   }
   if (re.score >= 0) {
-    fprintf(fout, ",\n      \"raw_score\": %d", re.score);
+    fprintf(fout, ",\"raw_score\":%d", re.score);
   }
   if (re.test >= 0) {
-    fprintf(fout, ",\n      \"raw_test\": %d", re.test);
+    fprintf(fout, ",\"raw_test\":%d", re.test);
   }
   if (re.is_marked) {
-    fprintf(fout, ",\n      \"is_marked\": %s", to_json_bool(re.is_marked));
+    fprintf(fout, ",\"is_marked\":%s", to_json_bool(re.is_marked));
   }
   if (re.score_adj != 0) {
-    fprintf(fout, ",\n      \"score_adj\": %d", re.score_adj);
+    fprintf(fout, ",\"score_adj\":%d", re.score_adj);
   }
   if (re.j.judge_id) {
-    fprintf(fout, ",\n      \"judge_id\": %d", re.j.judge_id);
+    fprintf(fout, ",\"judge_id\":%d", re.j.judge_id);
   }
   if (re.pages) {
-    fprintf(fout, ",\n      \"pages\": %d", re.pages);
+    fprintf(fout, ",\"pages\":%d", re.pages);
   }
   if (re.token_flags) {
-    fprintf(fout, ",\n      \"token_flags\": %d", re.token_flags);
+    fprintf(fout, ",\"token_flags\":%d", re.token_flags);
   }
   if (re.token_count) {
-    fprintf(fout, ",\n      \"token_count\": %d", re.token_count);
+    fprintf(fout, ",\"token_count\":%d", re.token_count);
   }
   if (re.is_saved) {
-    fprintf(fout, ",\n      \"is_saved\": %s", to_json_bool(re.is_saved));
-    fprintf(fout, ",\n      \"saved_status\": %d", re.saved_status);
-    fprintf(fout, ",\n      \"saved_status_str\": \"%s\"", run_status_short_str(re.saved_status));
+    fprintf(fout, ",\"is_saved\":%s", to_json_bool(re.is_saved));
+    fprintf(fout, ",\"saved_status\":%d", re.saved_status);
+    fprintf(fout, ",\"saved_status_str\":\"%s\"", run_status_short_str(re.saved_status));
     if (re.saved_score >= 0) {
-      fprintf(fout, ",\n      \"saved_score\": %d", re.saved_score);
+      fprintf(fout, ",\"saved_score\":%d", re.saved_score);
     }
     if (re.saved_test >= 0) {
-      fprintf(fout, ",\n      \"saved_test\": %d", re.saved_test);
+      fprintf(fout, ",\"saved_test\":%d", re.saved_test);
     }
   }
 
-  fprintf(fout, "\n    }");
-  fprintf(fout, "\n  }");
-  fprintf(fout, "\n}\n");
+  fprintf(fout, "}");
+  fprintf(fout, "}");
+  fprintf(fout, "}\n");
 
 cleanup:
   ;
