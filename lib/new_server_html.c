@@ -8192,7 +8192,9 @@ priv_run_status_json(
   if (prob && prob->internal_name && prob->internal_name[0]) {
     fprintf(fout, ",\"prob_internal_name\":\"%s\"", JARMOR(prob->internal_name));
   }
-  if (prob && prob->uuid && prob->uuid[0]) {
+  if (ej_uuid_is_nonempty(re.prob_uuid)) {
+    fprintf(fout, ",\"prob_uuid\":\"%s\"", ej_uuid_unparse(&re.prob_uuid, ""));
+  } else if (prob && prob->uuid && prob->uuid[0]) {
     fprintf(fout, ",\"prob_uuid\":\"%s\"", JARMOR(prob->uuid));
   }
   if (prob && prob->variant_num > 0) {
