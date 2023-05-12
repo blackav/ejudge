@@ -318,6 +318,21 @@ serve_update_internal_xml_log(serve_state_t state,
 {
   if (!state->global->internal_xml_update_time) return;
   if (state->current_time < state->last_update_internal_xml_log + state->global->internal_xml_update_time) return;
+
+  long long runlog_last_update_time_us = run_get_last_update_time_us(state->runlog_state);
+  if (!state->last_update_internal_xml_log_us && !runlog_last_update_time_us) {
+    // not updated yet
+
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    long long current_time_us = tv.tv_sec * 1000000LL + tv.tv_usec;
+    state->last_update_internal_xml_log_us = current_time_us;
+  } else if (state->last_update_internal_xml_log_us >= runlog_last_update_time_us) {
+    return;
+  } else {
+    state->last_update_internal_xml_log_us = runlog_last_update_time_us;
+  }
+
   state->last_update_internal_xml_log = state->current_time;
   do_update_xml_log(state, cnts, "internal.xml", 0);
 }
