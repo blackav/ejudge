@@ -667,7 +667,7 @@ unparse_sha256(const void *shabuf)
 {
   const unsigned char *s = (const unsigned char *) shabuf;
   int i;
-  static unsigned char buf[64];
+  static unsigned char buf[80];
   unsigned char *p;
   static const unsigned char hexd[] = "0123456789abcdef";
 
