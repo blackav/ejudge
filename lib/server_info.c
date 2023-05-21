@@ -248,7 +248,7 @@ read_file(const char *path, char **p_buf, size_t *p_size)
     *p_size = size;
     return 0;
 
-fail:
+fail:;
     int ret = -errno;
     free(buf);
     if (fd >= 0) close(fd);
