@@ -18564,10 +18564,21 @@ ns_handle_http_request(
   }
 
 #if defined EJUDGE_REST_PREFIX
+  int s_offset = 0;
   if (!strncmp(script_name, EJUDGE_REST_PREFIX, EJUDGE_REST_PREFIX_LEN)) {
     // extract second part
 
     s = script_name + EJUDGE_REST_PREFIX_LEN;
+    s_offset = EJUDGE_REST_PREFIX_LEN;
+
+    // EJUDGE_REST_PREFIX "/ej/"
+    // skip api/v1/ part
+    if (s[0] == 'a' && s[1] =='p' && s[2] == 'i' && s[3] == '/'
+        && s[4] == 'v' && s[5] == '1' && s[6] == '/') {
+      s += 7;
+      s_offset += 7;
+    }
+
     int args_count = 1;
     while (*s) {
       args_count += (*s++ == '/');
@@ -18577,7 +18588,7 @@ ns_handle_http_request(
     memset(phr->rest_args, 0, sizeof(phr->rest_args[0]) * (args_count + 1));
 
     {
-      s = script_name + EJUDGE_REST_PREFIX_LEN;
+      s = script_name + s_offset;
       int args_i = 0;
       while (*s) {
         const unsigned char *p = s;
