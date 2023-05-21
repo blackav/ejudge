@@ -4379,11 +4379,16 @@ check_output_only(
     reply_pkt->failed_test = 1;
     reply_pkt->tests_passed = 0;
   }
-  if (srgp->separate_user_score > 0) {
+  if (srgp->separate_user_score > 0 && cur_info->user_status >= 0) {
     reply_pkt->has_user_score = 1;
     reply_pkt->user_status = cur_info->user_status;
     reply_pkt->user_score = cur_info->user_score;
     reply_pkt->user_tests_passed = cur_info->user_tests_passed;
+  } else {
+    reply_pkt->has_user_score = 0;
+    reply_pkt->user_status = 0;
+    reply_pkt->user_score = 0;
+    reply_pkt->user_tests_passed = 0;
   }
 
   // output file
