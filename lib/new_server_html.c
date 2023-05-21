@@ -18577,6 +18577,7 @@ ns_handle_http_request(
         && s[4] == 'v' && s[5] == '1' && s[6] == '/') {
       s += 7;
       s_offset += 7;
+      phr->json_reply = 1;
     }
 
     int args_count = 1;
