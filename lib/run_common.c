@@ -3472,10 +3472,10 @@ run_one_test(
   long long max_rss_size = -1LL;
   long long max_file_size = -1LL;
   if (srpp->use_info > 0) {
-    if (tstinfo.max_vm_size > 0) max_vm_size = tstinfo.max_vm_size;
-    if (tstinfo.max_stack_size > 0) max_stack_size = tstinfo.max_stack_size;
-    if (tstinfo.max_rss_size > 0) max_rss_size = tstinfo.max_rss_size;
-    if (tstinfo.max_file_size > 0) max_file_size = tstinfo.max_file_size;
+    if (tstinfo.max_vm_size >= 0) max_vm_size = tstinfo.max_vm_size;
+    if (tstinfo.max_stack_size >= 0) max_stack_size = tstinfo.max_stack_size;
+    if (tstinfo.max_rss_size >= 0) max_rss_size = tstinfo.max_rss_size;
+    if (tstinfo.max_file_size >= 0) max_file_size = tstinfo.max_file_size;
   }
   if (max_vm_size < 0 && srpp->max_vm_size > 0) max_vm_size = srpp->max_vm_size;
   if (max_stack_size < 0 && srpp->max_stack_size > 0) max_stack_size = srpp->max_stack_size;
