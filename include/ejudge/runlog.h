@@ -277,8 +277,21 @@ enum
     RE_JUDGE_UUID    = 0x100000000ULL,
     RE_IS_VCS        = 0x200000000ULL,
     RE_VERDICT_BITS  = 0x400000000ULL,
-    RE_ALL           = 0x7FFFFFFFFULL,
+    RE_EXT_USER      = 0x800000000ULL,
+    RE_ALL           = 0xFFFFFFFFFULL,
   };
+
+/*
+  External user encoding types
+ */
+enum
+{
+  RUN_EU_NONE,     // empty
+  RUN_EU_STRING,   // 15-bytes string with terminating \0
+  RUN_EU_U64,      // uint64_t in decimal (low 8 bytes)
+  RUN_EU_UUID,     // UUID (base16)
+  RUN_EU_ULID,     // ULID (base32) https://github.com/ulid/spec
+};
 
 struct run_entry
 {
@@ -335,10 +348,12 @@ struct run_entry
   rint16_t       mime_type;     /* 2 */
   int64_t        serial_id;     /* 8 */
   unsigned char  pages;         /* 1 */
-  char _pad0[3];
+  unsigned char  ext_user_type; /* 1 */
+  char _pad0[2];
   ruint32_t      verdict_bits;  /* 4 */
   rint64_t       last_change_us;/* 8 */
-  char _pad[72];
+  unsigned char  ext_user[16];  /* 16 */
+  char _pad[56];
   /* total is 256 bytes */
 };
 
