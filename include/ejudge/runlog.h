@@ -352,8 +352,9 @@ struct run_entry
   char _pad0[2];
   ruint32_t      verdict_bits;  /* 4 */
   rint64_t       last_change_us;/* 8 */
+  char _pad1[8];
   unsigned char  ext_user[16];  /* 16 */
-  char _pad[56];
+  char _pad[48];
   /* total is 256 bytes */
 };
 
