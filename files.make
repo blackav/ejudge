@@ -297,6 +297,7 @@ COMMON_CFILES=\
  lib/tsc.c\
  lib/type_info.c\
  lib/uldb_plugin_xml.c\
+ lib/ulid.c\
  lib/unicode_width.c\
  lib/userlist.c\
  lib/userlist_bin.c\
@@ -692,6 +693,7 @@ HFILES=\
  ./include/ejudge/tsc.h\
  ./include/ejudge/type_info.h\
  ./include/ejudge/uldb_plugin.h\
+ ./include/ejudge/ulid.h\
  ./include/ejudge/userlist.h\
  ./include/ejudge/userlist_bin.h\
  ./include/ejudge/userlist_clnt.h\
