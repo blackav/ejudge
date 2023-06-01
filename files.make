@@ -197,6 +197,7 @@ COMMON_CFILES=\
  lib/metrics_contest.c\
  lib/mime_type.c\
  lib/misctext.c\
+ lib/mixed_id.c\
  lib/ncheck_packet.c\
  lib/new_server_html.c\
  lib/new_server_html_2.c\
@@ -623,6 +624,7 @@ HFILES=\
  ./include/ejudge/mime_type.h\
  ./include/ejudge/mischtml.h\
  ./include/ejudge/misctext.h\
+ ./include/ejudge/mixed_id.h\
  ./include/ejudge/ncheck_packet.h\
  ./include/ejudge/ncurses_utils.h\
  ./include/ejudge/new-server.h\
