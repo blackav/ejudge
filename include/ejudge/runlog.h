@@ -18,6 +18,7 @@
 
 #include "ejudge/ej_types.h"
 #include "ejudge/serve_state.h"
+#include "ejudge/mixed_id.h"
 
 #include <time.h>
 #include <string.h>
@@ -336,12 +337,12 @@ struct run_entry
   rint16_t       mime_type;     /* 2 */
   int64_t        serial_id;     /* 8 */
   unsigned char  pages;         /* 1 */
-  unsigned char  ext_user_type; /* 1 */
+  unsigned char  ext_user_kind; /* 1 */
   char _pad0[2];
   ruint32_t      verdict_bits;  /* 4 */
   rint64_t       last_change_us;/* 8 */
   char _pad1[8];
-  unsigned char  ext_user[16];  /* 16 */
+  ej_mixed_id_t  text_user;  /* 16 */
   char _pad[48];
   /* total is 256 bytes */
 };
