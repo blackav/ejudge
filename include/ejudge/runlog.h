@@ -281,18 +281,6 @@ enum
     RE_ALL           = 0xFFFFFFFFFULL,
   };
 
-/*
-  External user encoding types
- */
-enum
-{
-  RUN_EU_NONE,     // empty
-  RUN_EU_STRING,   // 15-bytes string with terminating \0
-  RUN_EU_U64,      // uint64_t in decimal (low 8 bytes)
-  RUN_EU_UUID,     // UUID (base16)
-  RUN_EU_ULID,     // ULID (base32) https://github.com/ulid/spec
-};
-
 struct run_entry
 {
   rint32_t       run_id;        /* 4 */
