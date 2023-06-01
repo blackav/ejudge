@@ -16,19 +16,24 @@
  * GNU General Public License for more details.
  */
 
+typedef __attribute__((aligned(16))) struct ej_mixed_id_t
+{
+  unsigned char data[16];
+} ej_mixed_id_t;
+
 // binary representation -> text representation
 // dst_dst must be large enough (64 bytes)
 void
 mixed_id_marshall(
         unsigned char dst_str[64],
         int mixed_id_kind,
-        const unsigned char src_bin[16]);
+        const ej_mixed_id_t *id);
 
 // text representation -> binary representation
 // returns 0 on success, -1 on failure
 int
 mixed_id_unmarshall(
-        unsigned char *dst_bin[16],
+        ej_mixed_id_t *id,
         int mixed_id_kind,
         const unsigned char *src_str);
 
