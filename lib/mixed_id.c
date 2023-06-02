@@ -14,3 +14,82 @@
  * GNU General Public License for more details.
  */
 
+#include "ejudge/config.h"
+#include "ejudge/ej_types.h"
+#include "ejudge/mixed_id.h"
+#include "ejudge/ulid.h"
+
+#include <uuid/uuid.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <errno.h>
+
+unsigned char *
+mixed_id_marshall(
+        unsigned char dst_str[64],
+        int mixed_id_kind,
+        const ej_mixed_id_t *id)
+{
+    switch (mixed_id_kind) {
+    case MIXED_ID_NONE:
+        dst_str[0] = 0;
+        break;
+    case MIXED_ID_STRING:
+        memcpy(dst_str, id->data, 16);
+        dst_str[16] = 0;
+        break;
+    case MIXED_ID_U64:
+        sprintf(dst_str, "%llu", *((const unsigned long long*) id->data));
+        break;
+    case MIXED_ID_UUID:
+        uuid_unparse(id->data, dst_str);
+        break;
+    case MIXED_ID_ULID:
+        ulid_marshall(dst_str, id->data);
+        break;
+    default:
+        abort();
+    }
+    return dst_str;
+}
+
+int
+mixed_id_unmarshall(
+        ej_mixed_id_t *id,
+        int mixed_id_kind,
+        const unsigned char *src_str)
+{
+    switch (mixed_id_kind) {
+    case MIXED_ID_NONE:
+        memset(id, 0, sizeof(*id));
+        break;
+    case MIXED_ID_STRING: {
+        int len = strlen(src_str);
+        if (len > (int) sizeof(*id)) {
+            // string is too long
+            return -1;
+        }
+        strncpy(id->data, src_str, sizeof(*id));
+        break;
+    }
+    case MIXED_ID_U64: {
+        errno = 0;
+        char *eptr = NULL;
+        unsigned long long value = strtoull(src_str, &eptr, 10);
+        if (errno || *eptr || (char *) src_str == eptr) {
+            return -1;
+        }
+        memcpy(id->data, &value, sizeof(value));
+        memset(id->data + sizeof(value), 0, sizeof(value));
+        break;
+    }
+    case MIXED_ID_UUID:
+        return uuid_parse(src_str, id->data);
+    case MIXED_ID_ULID:
+        return ulid_unmarshall(id->data, src_str);
+    default:
+        abort();
+    }
+    return 0;
+}

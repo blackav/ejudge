@@ -23,7 +23,7 @@ typedef __attribute__((aligned(16))) struct ej_mixed_id_t
 
 // binary representation -> text representation
 // dst_dst must be large enough (64 bytes)
-void
+unsigned char *
 mixed_id_marshall(
         unsigned char dst_str[64],
         int mixed_id_kind,
