@@ -217,6 +217,7 @@ enum
   MIXED_ID_U64,      // uint64_t in decimal (low 8 bytes)
   MIXED_ID_UUID,     // UUID (base16)
   MIXED_ID_ULID,     // ULID (base32) https://github.com/ulid/spec
+  MIXED_ID_LAST,
 };
 
 #endif /* __EJ_TYPES_H__ */
