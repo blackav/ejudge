@@ -342,7 +342,7 @@ struct run_entry
   ruint32_t      verdict_bits;  /* 4 */
   rint64_t       last_change_us;/* 8 */
   char _pad1[8];
-  ej_mixed_id_t  text_user;  /* 16 */
+  ej_mixed_id_t  ext_user;  /* 16 */
   char _pad[48];
   /* total is 256 bytes */
 };

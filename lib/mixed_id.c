@@ -65,6 +65,9 @@ mixed_id_unmarshall(
         memset(id, 0, sizeof(*id));
         break;
     case MIXED_ID_STRING: {
+        if (!src_str) {
+            return -1;
+        }
         int len = strlen(src_str);
         if (len > (int) sizeof(*id)) {
             // string is too long
@@ -74,6 +77,9 @@ mixed_id_unmarshall(
         break;
     }
     case MIXED_ID_U64: {
+        if (!src_str) {
+            return -1;
+        }
         errno = 0;
         char *eptr = NULL;
         unsigned long long value = strtoull(src_str, &eptr, 10);
@@ -85,8 +91,14 @@ mixed_id_unmarshall(
         break;
     }
     case MIXED_ID_UUID:
+        if (!src_str) {
+            return -1;
+        }
         return uuid_parse(src_str, id->data);
     case MIXED_ID_ULID:
+        if (!src_str) {
+            return -1;
+        }
         return ulid_unmarshall(id->data, src_str);
     default:
         abort();
