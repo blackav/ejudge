@@ -27,6 +27,7 @@
 #include "ejudge/testing_report_xml.h"
 #include "ejudge/fileutl.h"
 #include "ejudge/misctext.h"
+#include "ejudge/mixed_id.h"
 
 #include "ejudge/logger.h"
 #include "ejudge/mempage.h"
@@ -329,6 +330,7 @@ do_eval(struct filter_env *env,
   case TOK_TOKEN_COUNT:
   case TOK_VERDICT_BITS:
   case TOK_LAST_CHANGE_US:
+  case TOK_EXT_USER:
     if ((c = do_eval(env, t->v.t[0], &r1)) < 0) return c;
     ASSERT(r1.kind == TOK_INT_L);
     if (r1.v.i < 0) r1.v.i = env->rtotal + r1.v.i;
@@ -667,6 +669,18 @@ do_eval(struct filter_env *env,
       res->type = FILTER_TYPE_LONG;
       res->v.l = env->rentries[r1.v.i].last_change_us;
       break;
+    case TOK_EXT_USER: {
+      res->kind = TOK_STRING_L;
+      res->type = FILTER_TYPE_STRING;
+      int ext_user_kind = env->rentries[r1.v.i].ext_user_kind;
+      unsigned char buf[64];
+      buf[0] = 0;
+      if (ext_user_kind > 0 && ext_user_kind < MIXED_ID_LAST) {
+        mixed_id_marshall(buf, ext_user_kind, &env->rentries[r1.v.i].ext_user);
+      }
+      res->v.s = envdup(env, buf);
+      break;
+    }
     default:
       abort();
     }
@@ -1028,6 +1042,18 @@ do_eval(struct filter_env *env,
     res->type = FILTER_TYPE_LONG;
     res->v.l = env->cur->last_change_us;
     break;
+  case TOK_CUREXT_USER: {
+      res->kind = TOK_STRING_L;
+      res->type = FILTER_TYPE_STRING;
+      int ext_user_kind = env->cur->ext_user_kind;
+      unsigned char buf[64];
+      buf[0] = 0;
+      if (ext_user_kind > 0 && ext_user_kind < MIXED_ID_LAST) {
+        mixed_id_marshall(buf, ext_user_kind, &env->cur->ext_user);
+      }
+      res->v.s = envdup(env, buf);
+    break;
+  }
   case TOK_CURTOTAL_SCORE:
     res->kind = TOK_INT_L;
     res->type = FILTER_TYPE_INT;
