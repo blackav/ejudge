@@ -52,6 +52,7 @@
 #include "ejudge/xuser_plugin.h"
 #include "ejudge/super_run_status.h"
 #include "ejudge/compile_heartbeat.h"
+#include "ejudge/mixed_id.h"
 
 #include "flatbuf-gen/compile_heartbeat_reader.h"
 
@@ -465,6 +466,9 @@ ns_write_priv_all_runs(
     if (run_fields & (1 << RUN_VIEW_LAST_CHANGE_US)) {
       fprintf(f, "<th%s>%s</th>", cl, "Last Change");
     }
+    if (run_fields & (1 << RUN_VIEW_EXT_USER)) {
+      fprintf(f, "<th%s>%s</th>", cl, "External User");
+    }
     /*
     if (phr->role == USER_ROLE_ADMIN) {
       fprintf(f, "<th%s>%s</th>", cl, _("New result"));
@@ -605,6 +609,9 @@ ns_write_priv_all_runs(
         if (run_fields & (1 << RUN_VIEW_LAST_CHANGE_US)) {
           fprintf(f, "<td%s>&nbsp;</td>", cl);
         }
+        if (run_fields & (1 << RUN_VIEW_EXT_USER)) {
+          fprintf(f, "<td%s>&nbsp;</td>", cl);
+        }
         fprintf(f, "<td%s>&nbsp;</td>", cl);
         fprintf(f, "<td%s>&nbsp;</td>", cl);
         /*
@@ -716,6 +723,9 @@ ns_write_priv_all_runs(
           fprintf(f, "<td%s>&nbsp;</td>", cl);
         }
         if (run_fields & (1 << RUN_VIEW_LAST_CHANGE_US)) {
+          fprintf(f, "<td%s>&nbsp;</td>", cl);
+        }
+        if (run_fields & (1 << RUN_VIEW_EXT_USER)) {
           fprintf(f, "<td%s>&nbsp;</td>", cl);
         }
 
@@ -934,6 +944,15 @@ ns_write_priv_all_runs(
       }
       if (run_fields & (1 << RUN_VIEW_LAST_CHANGE_US)) {
         fprintf(f, "<td%s>%lld</td>", cl, (long long) pe->last_change_us);
+      }
+      if (run_fields & (1 << RUN_VIEW_EXT_USER)) {
+        if (pe->ext_user_kind > 0 && pe->ext_user_kind < MIXED_ID_LAST) {
+          fprintf(f, "<td%s>%s</td>", cl,
+                  ARMOR(mixed_id_marshall(durstr, pe->ext_user_kind,
+                                          &pe->ext_user)));
+        } else {
+          fprintf(f, "<td%s>&nbsp;</td>", cl);
+        }
       }
 
       /*
