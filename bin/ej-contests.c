@@ -41,6 +41,7 @@
 #include "ejudge/teamdb.h"
 #include "ejudge/session_cache.h"
 #include "ejudge/server_info.h"
+#include "ejudge/mixed_id.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/osdeps.h"
@@ -922,6 +923,7 @@ static void *forced_symbols[] __attribute__((unused,used)) =
   &teamdb_get_user_map,
   &stand_setup_style,
   &server_info_get_processes,
+  &mixed_id_marshall,
 };
 
 int
