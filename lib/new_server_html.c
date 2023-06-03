@@ -3612,7 +3612,9 @@ priv_submit_run(
                           variant, is_hidden, mime_type,
                           prob->uuid,
                           store_flags,
-                          phr->is_job /* is_vcs */);
+                          phr->is_job /* is_vcs */,
+                          0 /* ext_user_kind */,
+                          NULL /* ext_user */);
   if (run_id < 0) {
     FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
   }
@@ -5559,7 +5561,9 @@ priv_new_run(FILE *fout,
                           is_hidden, mime_type,
                           prob->uuid,
                           store_flags,
-                          0 /* is_vcs */);
+                          0 /* is_vcs */,
+                          0 /* ext_user_kind */,
+                          NULL /* ext_user */);
   if (run_id < 0) FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
   serve_move_files_to_insert_run(cs, run_id);
   if (metrics.data) {
@@ -11348,7 +11352,9 @@ ns_submit_run(
                           db_variant, is_hidden, mime_type,
                           prob->uuid,
                           store_flags,
-                          phr->is_job /* is_vcs */);
+                          phr->is_job /* is_vcs */,
+                          0 /* ext_user_kind */,
+                          NULL /* ext_user */);
   if (run_id < 0) {
     FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
   }
@@ -12079,7 +12085,9 @@ unpriv_submit_run(
                           mime_type,
                           prob->uuid,
                           store_flags,
-                          phr->is_job /* is_vcs */);
+                          phr->is_job /* is_vcs */,
+                          0 /* ext_user_kind */,
+                          NULL /* ext_user */);
   if (run_id < 0) {
     FAIL2(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
   }
@@ -14466,7 +14474,9 @@ unpriv_xml_update_answer(
                             prob_id, 0, 0, 0, 0, 0,
                             prob->uuid,
                             store_flags,
-                            0 /* is_vcs */);
+                            0 /* is_vcs */,
+                            0 /* ext_user_kind */,
+                            NULL /* ext_user */);
     if (run_id < 0) FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
     serve_move_files_to_insert_run(cs, run_id);
     if (metrics.data) {

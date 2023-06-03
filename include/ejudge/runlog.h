@@ -138,7 +138,9 @@ run_add_record(
         int            mime_type,
         const unsigned char *prob_uuid,
         int            store_flags,
-        int            is_vcs);
+        int            is_vcs,
+        int            ext_user_kind,
+        ej_mixed_id_t *ext_user);
 int run_start_contest(runlog_state_t, time_t);
 time_t run_get_start_time(runlog_state_t);
 int

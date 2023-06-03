@@ -3402,7 +3402,9 @@ do_add_row(
                           re->variant, re->is_hidden, re->mime_type,
                           prob_uuid,
                           store_flags,
-                          0 /* is_vcs */);
+                          0 /* is_vcs */,
+                          0 /* ext_user_kind */,
+                          NULL /* ext_user */);
   if (run_id < 0) {
     fprintf(log_f, _("Failed to add row %d to runlog\n"), row);
     return -1;
