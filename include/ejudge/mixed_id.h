@@ -37,4 +37,10 @@ mixed_id_unmarshall(
         int mixed_id_kind,
         const unsigned char *src_str);
 
+int
+mixed_id_parse_kind(const unsigned char *str);
+
+const unsigned char *
+mixed_id_unparse_kind(int kind);
+
 #endif /* __MIXED_ID_H__ */

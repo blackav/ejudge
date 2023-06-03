@@ -112,3 +112,42 @@ mixed_id_unmarshall(
     }
     return 0;
 }
+
+// "", "str", "u64", "uuid", "ulid"
+int
+mixed_id_parse_kind(const unsigned char *str)
+{
+    if (!str || !*str) return 0;
+    if (str[0] == 's') {
+        if (str[1] == 't' && str[2] == 'r' && str[3] == 0) {
+            return MIXED_ID_STRING;
+        } else {
+            return -1;
+        }
+    } else if (str[0] == 'u') {
+        if (str[1] == '6' && str[2] == '4' && str[3] == 0) {
+            return MIXED_ID_U64;
+        } else if (str[1] == 'u' && str[2] == 'i' && str[3] == 'd' && !str[4]){
+            return MIXED_ID_UUID;
+        } else if (str[1] == 'l' && str[2] == 'i' && str[3] == 'd' && !str[4]){
+            return MIXED_ID_ULID;
+        } else {
+            return -1;
+        }
+    } else {
+        return -1;
+    }
+}
+
+const unsigned char *
+mixed_id_unparse_kind(int kind)
+{
+    if (kind > 0 && kind < MIXED_ID_LAST) {
+        static const unsigned char ids[][8] =
+        {
+            "str", "u64", "uuid", "ulid",
+        };
+        return ids[kind];
+    }
+    return "";
+}
