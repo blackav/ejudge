@@ -8188,6 +8188,12 @@ priv_run_status_json(
   if (s && *s) {
     fprintf(fout, ",\"user_name\":\"%s\"", JARMOR(s));
   }
+  if (re.ext_user_kind > 0 && re.ext_user_kind < MIXED_ID_LAST) {
+    unsigned char mbuf[64];
+    fprintf(fout, ",\"ext_user_kind\":%d",re.ext_user_kind);
+    fprintf(fout, ",\"ext_user\":%s",
+            JARMOR(mixed_id_marshall(mbuf, re.ext_user_kind, &re.ext_user)));
+  }
   fprintf(fout, ",\"prob_id\":%d", re.prob_id);
   if (re.prob_id > 0 && re.prob_id <= cs->max_prob) prob = cs->probs[re.prob_id];
   if (prob && /*prob->short_name &&*/ prob->short_name[0]) {
@@ -8950,6 +8956,15 @@ priv_list_runs_json(
         const unsigned char *s = teamdb_get_name(cs->teamdb_state, pe->user_id);
         if (s && *s) {
           fprintf(fout, ",\n%s\"user_name\": \"%s\"", indent, JARMOR(s));
+        }
+      }
+      if ((run_fields & (1 << RUN_VIEW_EXT_USER))) {
+        if (pe->ext_user_kind > 0 && pe->ext_user_kind < MIXED_ID_LAST) {
+          unsigned char mbuf[64];
+          fprintf(fout, ",\n%s\"ext_user_kind\" : %d", indent,
+                  pe->ext_user_kind);
+          fprintf(fout, ",\n%s\"ext_user\" : %s", indent,
+                  JARMOR(mixed_id_marshall(mbuf, pe->ext_user_kind, &pe->ext_user)));
         }
       }
       if (pe->status == RUN_VIRTUAL_START || pe->status == RUN_VIRTUAL_STOP) {
