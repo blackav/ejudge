@@ -73,6 +73,13 @@ mixed_id_unmarshall(
             // string is too long
             return -1;
         }
+        for (int i = 0; i < len; ++i) {
+            if (!src_str[i]) break;
+            if (src_str[i] < ' ' || src_str[i] == '\\' || src_str[i] == '\''
+                || src_str[i] == '\"' || src_str[i] >= 0x7f) {
+                return -1;
+            }
+        }
         strncpy(id->data, src_str, sizeof(*id));
         break;
     }
