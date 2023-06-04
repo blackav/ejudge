@@ -7091,7 +7091,9 @@ priv_change_run_fields(
   if (!u) goto cleanup;
 
   if (hr_cgi_param(phr, "reset", &s) > 0 && s) {
+    // xxxrun_fields
     if (u->run_fields <= 0) goto cleanup;
+    // xxxrun_fields
     u->run_fields = 0;
     if (cs->xuser_state) {
       // xxxrun_fields
@@ -7109,7 +7111,9 @@ priv_change_run_fields(
       new_fields |= 1 << i;
     }
   }
+  // xxxrun_fields
   if (new_fields == u->run_fields) goto cleanup;
+  // xxxrun_fields
   u->run_fields = new_fields;
   if (cs->xuser_state) {
     // xxxrun_fields

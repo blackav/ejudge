@@ -147,6 +147,7 @@ ns_write_priv_all_runs(
 
   if (!u) u = user_filter_info_allocate(cs, phr->user_id, phr->session_id);
 
+  // xxxrun_fields
   run_fields = u->run_fields;
   if (run_fields <= 0 && cs->xuser_state) {
     // xxxrun_fields

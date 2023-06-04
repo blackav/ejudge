@@ -74,7 +74,7 @@ struct user_filter_info
   struct filter_tree_mem *tree_mem;
   unsigned char *error_msgs;
 
-  int run_fields;
+  long long run_fields;
 
   /* standings filter */
   unsigned char *stand_user_expr;
