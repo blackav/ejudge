@@ -149,6 +149,7 @@ ns_write_priv_all_runs(
 
   run_fields = u->run_fields;
   if (run_fields <= 0 && cs->xuser_state) {
+    // xxxrun_fields
     run_fields = cs->xuser_state->vt->get_run_fields(cs->xuser_state, phr->user_id);
   }
   if (run_fields <= 0) {

@@ -7094,6 +7094,7 @@ priv_change_run_fields(
     if (u->run_fields <= 0) goto cleanup;
     u->run_fields = 0;
     if (cs->xuser_state) {
+      // xxxrun_fields
       cs->xuser_state->vt->set_run_fields(cs->xuser_state, phr->user_id, 0);
       cs->xuser_state->vt->flush(cs->xuser_state);
     }
@@ -7111,6 +7112,7 @@ priv_change_run_fields(
   if (new_fields == u->run_fields) goto cleanup;
   u->run_fields = new_fields;
   if (cs->xuser_state) {
+    // xxxrun_fields
     cs->xuser_state->vt->set_run_fields(cs->xuser_state, phr->user_id, u->run_fields);
     cs->xuser_state->vt->flush(cs->xuser_state);
   }
