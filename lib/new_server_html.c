@@ -7091,32 +7091,26 @@ priv_change_run_fields(
   if (!u) goto cleanup;
 
   if (hr_cgi_param(phr, "reset", &s) > 0 && s) {
-    // xxxrun_fields
     if (u->run_fields <= 0) goto cleanup;
-    // xxxrun_fields
     u->run_fields = 0;
     if (cs->xuser_state) {
-      // xxxrun_fields
       cs->xuser_state->vt->set_run_fields(cs->xuser_state, phr->user_id, 0);
       cs->xuser_state->vt->flush(cs->xuser_state);
     }
     goto cleanup;
   }
 
-  int new_fields = 0;
+  long long new_fields = 0;
   for (int i = 0; i < RUN_VIEW_LAST; ++i) {
     unsigned char nbuf[64];
     snprintf(nbuf, sizeof(nbuf), "field_%d", i);
     if (hr_cgi_param(phr, nbuf, &s) > 0 && s) {
-      new_fields |= 1 << i;
+      new_fields |= 1LL << i;
     }
   }
-  // xxxrun_fields
   if (new_fields == u->run_fields) goto cleanup;
-  // xxxrun_fields
   u->run_fields = new_fields;
   if (cs->xuser_state) {
-    // xxxrun_fields
     cs->xuser_state->vt->set_run_fields(cs->xuser_state, phr->user_id, u->run_fields);
     cs->xuser_state->vt->flush(cs->xuser_state);
   }
