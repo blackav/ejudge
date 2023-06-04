@@ -8777,10 +8777,11 @@ priv_list_runs_json(
   const struct section_global_data *global = cs->global;
   const unsigned char *filter_expr = NULL;
   int first_run_set = 0, last_run_set = 0, field_mask_set = 0;
-  int first_run = 0, last_run = 0, field_mask = 0;
+  int first_run = 0, last_run = 0;
+  long long field_mask = 0;
   int intval, r;
   struct user_filter_info *u = NULL;
-  int run_fields = RUN_VIEW_DEFAULT;
+  long long run_fields = RUN_VIEW_DEFAULT;
   int *match_idx = NULL;
   int match_tot = 0;
   int transient_tot = 0;
@@ -8790,6 +8791,7 @@ priv_list_runs_json(
   int displayed_size = 0;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   struct filter_env env;
+  const unsigned char *s = NULL;
 
   phr->json_reply = 1;
   memset(&env, 0, sizeof(env));
@@ -8809,10 +8811,15 @@ priv_list_runs_json(
     last_run = intval;
     last_run_set = 1;
   }
-  if ((r = hr_cgi_param_int_2(phr, "field_mask", &intval)) < 0) {
+  if ((r = hr_cgi_param(phr, "field_mask", &s) < 0)) {
     goto err_inv_param;
-  } else if (r > 0) {
-    field_mask = intval;
+  } else if (r > 0 && s) {
+    char *eptr = NULL;
+    errno = 0;
+    field_mask = strtoll(s, &eptr, 10);
+    if (errno || *eptr || eptr == (char*) s || field_mask < 0) {
+      goto err_inv_param;
+    }
     field_mask_set = 1;
   }
   if (field_mask_set) {
@@ -9108,7 +9115,6 @@ priv_list_runs_json(
           }
         }
 
-        // xxxrun_fields
         write_json_run_status(cs, fout, env.rhead.start_time, pe, 1, attempts, disq_attempts, ce_attempts, prev_successes,
                               0, run_fields, effective_time, indent);
 
