@@ -118,7 +118,7 @@ write_json_run_status(
         int ce_attempts,
         int prev_successes,
         int disable_failed,
-        int run_fields,
+        long long run_fields,
         time_t effective_time,
         const unsigned char *indent);
 
