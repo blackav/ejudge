@@ -141,16 +141,14 @@ ns_write_priv_all_runs(
   unsigned char cl[128];
   int prob_type = 0;
   int enable_js_status_menu = 0;
-  int run_fields;
+  long long run_fields;
 
   time_t effective_time, *p_eff_time;
 
   if (!u) u = user_filter_info_allocate(cs, phr->user_id, phr->session_id);
 
-  // xxxrun_fields
   run_fields = u->run_fields;
   if (run_fields <= 0 && cs->xuser_state) {
-    // xxxrun_fields
     run_fields = cs->xuser_state->vt->get_run_fields(cs->xuser_state, phr->user_id);
   }
   if (run_fields <= 0) {
@@ -483,7 +481,7 @@ ns_write_priv_all_runs(
 
      */
 
-    fprintf(f, "<th%s>%s</th><th%s>%s&nbsp;<a href=\"javascript:ej_field_popup(%d)\">&gt;&gt;</a><div class=\"ej_dd\" id=\"ej_field_popup\"></div></th></tr>\n",
+    fprintf(f, "<th%s>%s</th><th%s>%s&nbsp;<a href=\"javascript:ej_field_popup(%lld)\">&gt;&gt;</a><div class=\"ej_dd\" id=\"ej_field_popup\"></div></th></tr>\n",
             cl, "Source", cl, "Report", run_fields);
     if (phr->role == USER_ROLE_ADMIN) {
       //snprintf(endrow, sizeof(endrow), "</tr></form>\n");

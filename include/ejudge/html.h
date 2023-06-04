@@ -104,7 +104,7 @@ write_html_run_status(
         const unsigned char *td_class,
         int disable_failed,
         int enable_js_status_menu,
-        int run_fields,
+        long long run_fields,
         time_t effective_time);
 void
 write_json_run_status(
