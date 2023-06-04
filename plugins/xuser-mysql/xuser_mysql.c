@@ -752,7 +752,7 @@ fail:
     return -1;
 }
 
-static int
+static long long
 get_run_fields_func(
         struct xuser_cnts_state *data,
         int user_id)
@@ -761,7 +761,6 @@ get_run_fields_func(
     int index = 0;
     struct team_extra *te = find_user(xmcs, user_id, &index);
     if (te) {
-        // xxxrun_fields
         return te->run_fields;
     }
     te = fetch_user(xmcs, user_id);
@@ -777,7 +776,7 @@ static int
 set_run_fields_func(
         struct xuser_cnts_state *data,
         int user_id,
-        int run_fields)
+        long long run_fields)
 {
     struct xuser_mysql_cnts_state *xmcs = (struct xuser_mysql_cnts_state *) data;
     struct common_mysql_iface *mi = xmcs->xms->mi;
@@ -789,14 +788,13 @@ set_run_fields_func(
     if (!te) goto fail;
 
     cmd_f = open_memstream(&cmd_s, &cmd_z);
-    fprintf(cmd_f, "UPDATE %suserextras SET run_fields = %d, last_update_time = NOW(6) WHERE serial_id = %d;",
+    fprintf(cmd_f, "UPDATE %suserextras SET run_fields = %lld, last_update_time = NOW(6) WHERE serial_id = %d;",
             md->table_prefix,
             run_fields, te->serial_id);
     fclose(cmd_f); cmd_f = NULL;
     if (mi->simple_query(md, cmd_s, cmd_z) < 0) goto fail;
     free(cmd_s); cmd_s = NULL; cmd_z = 0;
 
-    // xxxrun_fields
     te->run_fields = run_fields;
     return 0;
 
@@ -952,7 +950,6 @@ get_entries_func(
                 te->user_id = uxi.user_id;
                 te->disq_comment = uxi.disq_comment; uxi.disq_comment = NULL;
                 te->status = uxi.status;
-                // xxxrun_fields
                 te->run_fields = uxi.run_fields;
                 te->problem_dir_prefix = uxi.problem_dir_prefix; uxi.problem_dir_prefix = NULL;
             }

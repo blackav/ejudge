@@ -3,7 +3,7 @@
 #ifndef __XUSER_PLUGIN_H__
 #define __XUSER_PLUGIN_H__
 
-/* Copyright (C) 2015-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2015-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -82,13 +82,13 @@ struct xuser_plugin_iface
         struct xuser_cnts_state *data,
         int user_id,
         const unsigned char *disq_comment);
-    int (*get_run_fields)(
+    long long (*get_run_fields)(
         struct xuser_cnts_state *data,
         int user_id);
     int (*set_run_fields)(
         struct xuser_cnts_state *data,
         int user_id,
-        int run_fields);
+        long long run_fields);
     int (*count_read_clars)(
         struct xuser_cnts_state *data,
         int user_id);
