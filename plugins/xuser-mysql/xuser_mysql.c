@@ -417,7 +417,6 @@ fetch_user(
     te->user_id = uxi.user_id;
     te->disq_comment = uxi.disq_comment; uxi.disq_comment = NULL;
     te->status = uxi.status;
-    // xxxrun_fields
     te->run_fields = uxi.run_fields;
     te->problem_dir_prefix = uxi.problem_dir_prefix; uxi.problem_dir_prefix = NULL;
 
@@ -768,7 +767,6 @@ get_run_fields_func(
         return 0;
     }
     insert_user(xmcs, index, te);
-    // xxxrun_fields
     return te->run_fields;
 }
 
