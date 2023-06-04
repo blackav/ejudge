@@ -3164,6 +3164,9 @@ priv_submit_run(
   int not_ok_is_cf = 0;
   int rejudge_flag = 0;
   int priority_adjustment = 0;
+  int ext_user_kind = 0;
+  ej_mixed_id_t ext_user;
+  ej_mixed_id_t *ext_user_ptr = NULL;
 
   if (opcaps_check(phr->caps, OPCAP_SUBMIT_RUN) < 0) {
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
@@ -3200,6 +3203,25 @@ priv_submit_run(
 
   hr_cgi_param_int_opt(phr, "not_ok_is_cf", &not_ok_is_cf, 0);
   hr_cgi_param_int_opt(phr, "rejudge_flag", &rejudge_flag, 0);
+
+  if ((hr_cgi_param(phr, "ext_user_kind", &s)) > 0) {
+    ext_user_kind = mixed_id_parse_kind(s);
+    if (ext_user_kind < 0) {
+      fprintf(phr->log_f, "failed to parse ext_user_kind");
+      FAIL(NEW_SRV_ERR_INV_EXT_USER);
+    }
+    if (ext_user_kind > 0) {
+      if (hr_cgi_param(phr, "ext_user", &s) <= 0) {
+        fprintf(phr->log_f, "missing or binary ext_user");
+        FAIL(NEW_SRV_ERR_INV_EXT_USER);
+      }
+      if (mixed_id_unmarshall(&ext_user, ext_user_kind, s) < 0) {
+        fprintf(phr->log_f, "failed to parse ext_user");
+        FAIL(NEW_SRV_ERR_INV_EXT_USER);
+      }
+      ext_user_ptr = &ext_user;
+    }
+  }
 
   if (rejudge_flag > 0) {
     priority_adjustment = 3;
@@ -3253,6 +3275,7 @@ priv_submit_run(
     fprintf(phr->log_f, "variant is invalid\n");
     FAIL(NEW_SRV_ERR_INV_VARIANT);
   }
+
 
   /*
   if (hr_cgi_param(phr, "problem", &s) <= 0) {
@@ -3613,8 +3636,8 @@ priv_submit_run(
                           prob->uuid,
                           store_flags,
                           phr->is_job /* is_vcs */,
-                          0 /* ext_user_kind */,
-                          NULL /* ext_user */);
+                          ext_user_kind,
+                          ext_user_ptr);
   if (run_id < 0) {
     FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
   }
