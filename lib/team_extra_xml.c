@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2004-2019 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -292,10 +292,10 @@ parse_run_felds(struct xml_tree *t, struct team_extra *te)
   if (t->first) return xml_err_attrs(t);
   if (t->first_down) return xml_err_nested_elems(t);
   if (!t->text) return 0;
-  int flags = 0;
+  long long flags = 0;
   char *eptr = 0;
   errno = 0;
-  flags = strtol(t->text, &eptr, 16);
+  flags = strtoll(t->text, &eptr, 16);
   if (errno || *eptr || flags <= 0) return 0;
   te->run_fields = flags;
   return 0;
@@ -467,7 +467,7 @@ team_extra_unparse_xml(FILE *f, const struct team_extra *te)
     xml_unparse_text(f, elem_map[TE_T_PROBLEM_DIR_PREFIX], te->problem_dir_prefix, "  ");
   }
   if (te->run_fields > 0) {
-    fprintf(f, "  <%s>%08x</%s>\n", elem_map[TE_T_RUN_FIELDS], te->run_fields, elem_map[TE_T_RUN_FIELDS]);
+    fprintf(f, "  <%s>%llx</%s>\n", elem_map[TE_T_RUN_FIELDS], te->run_fields, elem_map[TE_T_RUN_FIELDS]);
   }
   fprintf(f, "</%s>\n", elem_map[TE_T_TEAM_EXTRA]);
   return 0;

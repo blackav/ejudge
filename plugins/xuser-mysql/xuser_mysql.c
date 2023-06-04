@@ -417,6 +417,7 @@ fetch_user(
     te->user_id = uxi.user_id;
     te->disq_comment = uxi.disq_comment; uxi.disq_comment = NULL;
     te->status = uxi.status;
+    // xxxrun_fields
     te->run_fields = uxi.run_fields;
     te->problem_dir_prefix = uxi.problem_dir_prefix; uxi.problem_dir_prefix = NULL;
 
@@ -760,6 +761,7 @@ get_run_fields_func(
     int index = 0;
     struct team_extra *te = find_user(xmcs, user_id, &index);
     if (te) {
+        // xxxrun_fields
         return te->run_fields;
     }
     te = fetch_user(xmcs, user_id);
@@ -767,6 +769,7 @@ get_run_fields_func(
         return 0;
     }
     insert_user(xmcs, index, te);
+    // xxxrun_fields
     return te->run_fields;
 }
 
@@ -793,6 +796,7 @@ set_run_fields_func(
     if (mi->simple_query(md, cmd_s, cmd_z) < 0) goto fail;
     free(cmd_s); cmd_s = NULL; cmd_z = 0;
 
+    // xxxrun_fields
     te->run_fields = run_fields;
     return 0;
 
@@ -948,6 +952,7 @@ get_entries_func(
                 te->user_id = uxi.user_id;
                 te->disq_comment = uxi.disq_comment; uxi.disq_comment = NULL;
                 te->status = uxi.status;
+                // xxxrun_fields
                 te->run_fields = uxi.run_fields;
                 te->problem_dir_prefix = uxi.problem_dir_prefix; uxi.problem_dir_prefix = NULL;
             }

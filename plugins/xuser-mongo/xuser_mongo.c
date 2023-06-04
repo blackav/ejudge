@@ -749,6 +749,7 @@ get_run_fields_func(
     struct xuser_mongo_cnts_state *state = (struct xuser_mongo_cnts_state *) data;
     struct team_extra *extra = do_get_entry(state, user_id);
     if (!extra) return 0;
+    // xxxrun_fields
     return extra->run_fields;
 }
 
@@ -762,7 +763,9 @@ set_run_fields_func(
     struct xuser_mongo_cnts_state *state = (struct xuser_mongo_cnts_state *) data;
     struct team_extra *extra = do_get_entry(state, user_id);
     if (!extra) return -1;
+    // xxxrun_fields
     if (extra->run_fields == run_fields) return 0;
+    // xxxrun_fields
     extra->run_fields = run_fields;
     if (ej_uuid_is_nonempty(extra->uuid)) {
         bson_t *doc = bson_new();
@@ -775,7 +778,9 @@ set_run_fields_func(
     struct xuser_mongo_cnts_state *state = (struct xuser_mongo_cnts_state *) data;
     struct team_extra *extra = do_get_entry(state, user_id);
     if (!extra) return -1;
+    // xxxrun_fields
     if (extra->run_fields == run_fields) return 0;
+    // xxxrun_fields
     extra->run_fields = run_fields;
     if (ej_uuid_is_nonempty(extra->uuid)) {
         bson *doc = bson_new();

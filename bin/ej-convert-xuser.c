@@ -207,8 +207,10 @@ process_contest(
                 continue;
             }
         }
+        // xxxrun_fields
         if (te->run_fields) {
-            if (new_xuser_state->vt->set_run_fields(new_xuser_state, user_id, te->status) < 0) {
+            // xxxrun_fields
+            if (new_xuser_state->vt->set_run_fields(new_xuser_state, user_id, te->run_fields) < 0) {
                 fprintf(stderr, "contest %d user %d set_run_fields failed\n",
                         contest_id, user_id);
                 continue;

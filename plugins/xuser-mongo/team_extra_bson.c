@@ -174,7 +174,10 @@ team_extra_bson_parse(ej_bson_t *b)
         } else if (!strcmp(key, "status")) {
             if (ej_bson_parse_int_new(bc, "status", &res->status, 1, 0, 0, 0) < 0) goto fail;
         } else if (!strcmp(key, "run_fields")) {
-            if (ej_bson_parse_int_new(bc, "run_fields", &res->run_fields, 1, 0, 0, 0) < 0) goto fail;
+            // xxxrun_fields
+            int tmpval;
+            if (ej_bson_parse_int_new(bc, "run_fields", &tmpval, 1, 0, 0, 0) < 0) goto fail;
+            res->run_fields = tmpval;
         }
     }
 
@@ -249,6 +252,7 @@ fail:;
         } else if (!strcmp(key, "status")) {
             if (ej_bson_parse_int(bc, "status", &res->status, 1, 0, 0, 0) < 0) goto fail;
         } else if (!strcmp(key, "run_fields")) {
+            // xxxrun_fields
             if (ej_bson_parse_int(bc, "run_fields", &res->run_fields, 1, 0, 0, 0) < 0) goto fail;
         }
     }
@@ -350,6 +354,7 @@ team_extra_bson_unparse(const struct team_extra *extra)
         bson_append_utf8(res, "problem_dir_prefix", -1, extra->problem_dir_prefix, -1);
     }
     bson_append_int32(res, "status", -1, extra->status);
+    // xxxrun_fields
     bson_append_int32(res, "run_fields", -1, extra->run_fields);
     if (extra->clar_map_size > 0) {
         bson_t *arr = bson_new();
@@ -386,6 +391,7 @@ team_extra_bson_unparse(const struct team_extra *extra)
         bson_append_string(res, "problem_dir_prefix", extra->problem_dir_prefix, strlen(extra->problem_dir_prefix));
     }
     bson_append_int32(res, "status", extra->status);
+    // xxxrun_fields
     bson_append_int32(res, "run_fields", extra->run_fields);
     if (extra->clar_map_size > 0) {
         bson *arr = bson_new();

@@ -602,6 +602,7 @@ get_run_fields_func(
     te = get_entry(state, user_id, 1);
     if (!te || te == (struct team_extra*) ~(size_t) 0) return 0;
     ASSERT(te->user_id == user_id);
+    // xxxrun_fields
     return te->run_fields;
 }
 
@@ -621,7 +622,9 @@ set_run_fields_func(
     if (te == (struct team_extra*) ~(size_t) 0) return -1;
     ASSERT(te->user_id == user_id);
 
+    // xxxrun_fields
     if (te->run_fields == run_fields) return 0;
+    // xxxrun_fields
     te->run_fields = run_fields;
     te->is_dirty = 1;
     return 1;
