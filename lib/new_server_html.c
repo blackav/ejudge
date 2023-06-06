@@ -8213,8 +8213,9 @@ priv_run_status_json(
   }
   if (re.ext_user_kind > 0 && re.ext_user_kind < MIXED_ID_LAST) {
     unsigned char mbuf[64];
-    fprintf(fout, ",\"ext_user_kind\":%d",re.ext_user_kind);
-    fprintf(fout, ",\"ext_user\":%s",
+    fprintf(fout, ",\"ext_user_kind\":\"%s\"",
+            mixed_id_unparse_kind(re.ext_user_kind));
+    fprintf(fout, ",\"ext_user\":\"%s\"",
             JARMOR(mixed_id_marshall(mbuf, re.ext_user_kind, &re.ext_user)));
   }
   fprintf(fout, ",\"prob_id\":%d", re.prob_id);
@@ -8991,9 +8992,9 @@ priv_list_runs_json(
       if ((run_fields & (1 << RUN_VIEW_EXT_USER))) {
         if (pe->ext_user_kind > 0 && pe->ext_user_kind < MIXED_ID_LAST) {
           unsigned char mbuf[64];
-          fprintf(fout, ",\n%s\"ext_user_kind\" : %d", indent,
-                  pe->ext_user_kind);
-          fprintf(fout, ",\n%s\"ext_user\" : %s", indent,
+          fprintf(fout, ",\n%s\"ext_user_kind\" : \"%s\"", indent,
+                  mixed_id_unparse_kind(pe->ext_user_kind));
+          fprintf(fout, ",\n%s\"ext_user\" : \"%s\"", indent,
                   JARMOR(mixed_id_marshall(mbuf, pe->ext_user_kind, &pe->ext_user)));
         }
       }
