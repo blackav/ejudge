@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -190,6 +190,7 @@ static const unsigned char * const ns_error_messages[NEW_SRV_ERR_LAST]=
   [NEW_SRV_ERR_RATE_EXCEEDED] = __("Rate exceeded"),
   [NEW_SRV_ERR_INV_SUBMIT_ID] = __("Invalid submit ID"),
   [NEW_SRV_ERR_INV_USERPROB_ID] = __("Invalid ID"),
+  [NEW_SRV_ERR_INV_EXT_USER] = __("Invalid external user"),
 };
 
 static const unsigned char * const ns_error_titles[NEW_SRV_ERR_LAST]=
@@ -352,6 +353,7 @@ static const unsigned char * const ns_error_titles[NEW_SRV_ERR_LAST]=
   [NEW_SRV_ERR_RATE_EXCEEDED] = __("Rate exceeded"),
   [NEW_SRV_ERR_INV_SUBMIT_ID] = __("Invalid submit ID"),
   [NEW_SRV_ERR_INV_USERPROB_ID] = __("Invalid ID"),
+  [NEW_SRV_ERR_INV_EXT_USER] = __("Invalid external user"),
 };
 
 static const unsigned char * const ns_error_symbols[NEW_SRV_ERR_LAST]=
@@ -513,6 +515,7 @@ static const unsigned char * const ns_error_symbols[NEW_SRV_ERR_LAST]=
   [NEW_SRV_ERR_RATE_EXCEEDED] = "ERR_RATE_EXCEEDED",
   [NEW_SRV_ERR_INV_SUBMIT_ID] = "ERR_INV_SUBMIT_ID",
   [NEW_SRV_ERR_INV_USERPROB_ID] = "ERR_INV_USERPROB_ID",
+  [NEW_SRV_ERR_INV_EXT_USER] = "ERR_INV_EXT_USER",
 };
 
 const unsigned char *

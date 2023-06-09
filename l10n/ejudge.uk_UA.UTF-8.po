@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-05-08 14:50+0300\n"
+"POT-Creation-Date: 2023-06-04 08:15+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Ukrainian <uk@li.org>\n"
@@ -1899,6 +1899,9 @@ msgid "Invalid duration specification"
 msgstr ""
 
 msgid "Invalid error code"
+msgstr ""
+
+msgid "Invalid external user"
 msgstr ""
 
 msgid "Invalid file name"

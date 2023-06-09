@@ -136,7 +136,8 @@ var ej_valid_fields =
   26 : "Storage Flags",
   27 : "Tokens",
   28 : "Verdict Bits",
-  29 : "Last Change Time"
+  29 : "Last Change Time",
+  30 : "External User"
 }
 
 function ej_field_popup(field_mask)

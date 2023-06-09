@@ -33,6 +33,7 @@
 #include "ejudge/compat.h"
 #include "ejudge/ej_uuid.h"
 #include "ejudge/metrics_contest.h"
+#include "ejudge/mixed_id.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -196,7 +197,7 @@ prepare_func(
 
 #include "tables.inc.c"
 
-#define RUN_DB_VERSION 25
+#define RUN_DB_VERSION 26
 
 static int
 do_create(struct rldb_mysql_state *state)
@@ -473,6 +474,10 @@ do_open(struct rldb_mysql_state *state)
       break;
     case 24:
       if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD COLUMN verdict_bits INT NOT NULL DEFAULT 0 AFTER is_vcs", md->table_prefix) < 0)
+        return -1;
+      break;
+    case 25:
+      if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD COLUMN ext_user_kind TINYINT NOT NULL DEFAULT 0 AFTER verdict_bits, ADD COLUMN ext_user VARCHAR(40) DEFAULT NULL AFTER ext_user_kind", md->table_prefix) < 0)
         return -1;
       break;
     case RUN_DB_VERSION:
@@ -808,6 +813,7 @@ load_runs(struct rldb_mysql_cnts *cs)
   ej_uuid_t run_uuid;
   ej_uuid_t prob_uuid;
   ej_uuid_t judge_uuid;
+  ej_mixed_id_t ext_user;
 
   memset(&ri, 0, sizeof(ri));
   if (state->window > 0) {
@@ -858,6 +864,7 @@ load_runs(struct rldb_mysql_cnts *cs)
       xfree(ri.run_uuid); ri.run_uuid = 0;
       xfree(ri.prob_uuid); ri.prob_uuid = NULL;
       xfree(ri.judge_uuid); ri.judge_uuid = NULL;
+      xfree(ri.ext_user); ri.ext_user = NULL;
 
       expand_runs(rls, ri.run_id);
       re = &rls->runs[ri.run_id - rls->run_f];
@@ -894,11 +901,22 @@ load_runs(struct rldb_mysql_cnts *cs)
     //if (ri.ip_version != 4) db_error_inv_value_fail(md, "ip_version");
     if (ri.mime_type && (mime_type = mime_type_parse(ri.mime_type)) < 0)
       db_error_inv_value_fail(md, "mime_type");
+    if (ri.ext_user_kind > 0 && ri.ext_user_kind < MIXED_ID_LAST) {
+      if (mixed_id_unmarshall(&ext_user, ri.ext_user_kind, ri.ext_user) < 0) {
+        // silently ignore parse error
+        ri.ext_user_kind = 0;
+        memset(&ext_user, 0, sizeof(ext_user));
+      }
+    } else {
+      ri.ext_user_kind = 0;
+      memset(&ext_user, 0, sizeof(ext_user));
+    }
     xfree(ri.hash); ri.hash = 0;
     xfree(ri.mime_type); ri.mime_type = 0;
     xfree(ri.run_uuid); ri.run_uuid = 0;
     xfree(ri.prob_uuid); ri.prob_uuid = NULL;
     xfree(ri.judge_uuid); ri.judge_uuid = NULL;
+    xfree(ri.ext_user); ri.ext_user = NULL;
 
     expand_runs(rls, ri.run_id);
     re = &rls->runs[ri.run_id - rls->run_f];
@@ -952,6 +970,8 @@ load_runs(struct rldb_mysql_cnts *cs)
     re->is_vcs = ri.is_vcs;
     re->verdict_bits = ri.verdict_bits;
     re->last_change_us = ri.last_change_time * 1000000LL + ri.last_change_nsec / 1000;
+    re->ext_user_kind = ri.ext_user_kind;
+    re->ext_user = ext_user;
   }
   return 1;
 
@@ -961,6 +981,7 @@ load_runs(struct rldb_mysql_cnts *cs)
   xfree(ri.run_uuid);
   xfree(ri.prob_uuid);
   xfree(ri.judge_uuid);
+  xfree(ri.ext_user);
   mi->free_res(md);
   return -1;
 }
@@ -1515,6 +1536,18 @@ generate_update_entry_clause(
     fprintf(f, "%sverdict_bits = %u", sep, re->verdict_bits);
     sep = comma;
   }
+  if ((mask & RE_EXT_USER)) {
+    if (!re->ext_user_kind) {
+      fprintf(f, "%sext_user_kind = 0%sext_user = NULL", sep, comma);
+      sep = comma;
+    } else if (re->ext_user_kind > 0 && re->ext_user_kind < MIXED_ID_LAST) {
+      fprintf(f, "%sext_user_kind = %d", sep, re->ext_user_kind);
+      sep = comma;
+      fprintf(f, "%sext_user = \"%s\"", sep,
+              mixed_id_marshall(uuid_buf, re->ext_user_kind, &re->ext_user));
+      sep = comma;
+    }
+  }
 
   fprintf(f, "%slast_change_time = ", sep);
   state->mi->write_timestamp(state->md, f, 0, curtime->tv_sec);
@@ -1632,6 +1665,10 @@ update_entry(
   }
   if ((mask & RE_VERDICT_BITS)) {
     dst->verdict_bits = src->verdict_bits;
+  }
+  if ((mask & RE_EXT_USER)) {
+    dst->ext_user_kind = src->ext_user_kind;
+    dst->ext_user = src->ext_user;
   }
 }
 
@@ -2057,6 +2094,8 @@ put_entry_func(
   char *cmd_t = 0;
   size_t cmd_z = 0;
   FILE *cmd_f = 0;
+  char uuid_buf[40];
+  char ext_user_buf[64];
 
   ASSERT(re);
   ASSERT(re->run_id >= 0);
@@ -2093,7 +2132,6 @@ put_entry_func(
   }
 #if CONF_HAS_LIBUUID
   {
-    char uuid_buf[40];
     if (re->run_uuid.v[0] || re->run_uuid.v[1] || re->run_uuid.v[2] || re->run_uuid.v[3]) {
       uuid_unparse((void*) &re->run_uuid, uuid_buf);
       ri.run_uuid = uuid_buf;
@@ -2128,6 +2166,13 @@ put_entry_func(
   ri.is_checked = re->is_checked;
   ri.is_vcs = re->is_vcs;
   ri.verdict_bits = re->verdict_bits;
+  if (re->ext_user_kind > 0 && re->ext_user_kind < MIXED_ID_LAST) {
+    ri.ext_user_kind = re->ext_user_kind;
+    ri.ext_user = mixed_id_marshall(ext_user_buf, re->ext_user_kind, &re->ext_user);
+  } else {
+    ri.ext_user_kind = 0;
+    ri.ext_user = NULL;
+  }
 
   cmd_f = open_memstream(&cmd_t, &cmd_z);
   fprintf(cmd_f, "INSERT INTO %sruns VALUES ( ", state->md->table_prefix);
@@ -2633,6 +2678,9 @@ append_run_func(
   if ((mask & RE_VERDICT_BITS)) {
     fputs(",verdict_bits", cmd_f);
   }
+  if ((mask & RE_EXT_USER)) {
+    fputs(",ext_user_kind,ext_user", cmd_f);
+  }
   fprintf(cmd_f, ") VALUES (%lld, %d, %d, NOW(6), MICROSECOND(NOW(6)) * 1000, '%s', NOW(), MICROSECOND(NOW(6)) * 1000",
           serial_id,
           run_id,
@@ -2757,6 +2805,19 @@ append_run_func(
   }
   if ((mask & RE_VERDICT_BITS)) {
     fprintf(cmd_f, ",%u", in_re->verdict_bits);
+  }
+  if ((mask & RE_EXT_USER)) {
+    int ext_user_kind = in_re->ext_user_kind;
+    if (ext_user_kind < 0 || ext_user_kind >= MIXED_ID_LAST) {
+      ext_user_kind = 0;
+    }
+    if (!ext_user_kind) {
+      fprintf(cmd_f, ",0,NULL");
+    } else {
+      fprintf(cmd_f, ",%d,\"%s\"", ext_user_kind,
+              mixed_id_marshall(uuid_buf, ext_user_kind,
+                                &in_re->ext_user));
+    }
   }
   fprintf(cmd_f, ") ;");
   fclose(cmd_f); cmd_f = NULL;
@@ -2915,6 +2976,10 @@ append_run_func(
   }
   if ((mask & RE_VERDICT_BITS)) {
     new_re->verdict_bits = in_re->verdict_bits;
+  }
+  if ((mask & RE_EXT_USER)) {
+    new_re->ext_user_kind = in_re->ext_user_kind;
+    new_re->ext_user = in_re->ext_user;
   }
 
   if (p_tv) *p_tv = current_time_tv;

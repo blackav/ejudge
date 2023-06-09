@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2015-2019 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2015-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -174,7 +174,7 @@ team_extra_bson_parse(ej_bson_t *b)
         } else if (!strcmp(key, "status")) {
             if (ej_bson_parse_int_new(bc, "status", &res->status, 1, 0, 0, 0) < 0) goto fail;
         } else if (!strcmp(key, "run_fields")) {
-            if (ej_bson_parse_int_new(bc, "run_fields", &res->run_fields, 1, 0, 0, 0) < 0) goto fail;
+            if (ej_bson_parse_int64_new(bc, "run_fields", &res->run_fields) < 0) goto fail;
         }
     }
 
@@ -249,7 +249,7 @@ fail:;
         } else if (!strcmp(key, "status")) {
             if (ej_bson_parse_int(bc, "status", &res->status, 1, 0, 0, 0) < 0) goto fail;
         } else if (!strcmp(key, "run_fields")) {
-            if (ej_bson_parse_int(bc, "run_fields", &res->run_fields, 1, 0, 0, 0) < 0) goto fail;
+            if (ej_bson_parse_int64(bc, "run_fields", &res->run_fields, 1, 0, 0, 0) < 0) goto fail;
         }
     }
     bson_cursor_free(bc);
@@ -350,7 +350,7 @@ team_extra_bson_unparse(const struct team_extra *extra)
         bson_append_utf8(res, "problem_dir_prefix", -1, extra->problem_dir_prefix, -1);
     }
     bson_append_int32(res, "status", -1, extra->status);
-    bson_append_int32(res, "run_fields", -1, extra->run_fields);
+    bson_append_int64(res, "run_fields", -1, extra->run_fields);
     if (extra->clar_map_size > 0) {
         bson_t *arr = bson_new();
         for (int i = 0, j = 0; i < extra->clar_map_size; ++i) {
@@ -386,7 +386,7 @@ team_extra_bson_unparse(const struct team_extra *extra)
         bson_append_string(res, "problem_dir_prefix", extra->problem_dir_prefix, strlen(extra->problem_dir_prefix));
     }
     bson_append_int32(res, "status", extra->status);
-    bson_append_int32(res, "run_fields", extra->run_fields);
+    bson_append_int64(res, "run_fields", extra->run_fields);
     if (extra->clar_map_size > 0) {
         bson *arr = bson_new();
         for (int i = 0, j = 0; i < extra->clar_map_size; ++i) {

@@ -751,7 +751,7 @@ fail:
     return -1;
 }
 
-static int
+static long long
 get_run_fields_func(
         struct xuser_cnts_state *data,
         int user_id)
@@ -774,7 +774,7 @@ static int
 set_run_fields_func(
         struct xuser_cnts_state *data,
         int user_id,
-        int run_fields)
+        long long run_fields)
 {
     struct xuser_mysql_cnts_state *xmcs = (struct xuser_mysql_cnts_state *) data;
     struct common_mysql_iface *mi = xmcs->xms->mi;
@@ -786,7 +786,7 @@ set_run_fields_func(
     if (!te) goto fail;
 
     cmd_f = open_memstream(&cmd_s, &cmd_z);
-    fprintf(cmd_f, "UPDATE %suserextras SET run_fields = %d, last_update_time = NOW(6) WHERE serial_id = %d;",
+    fprintf(cmd_f, "UPDATE %suserextras SET run_fields = %lld, last_update_time = NOW(6) WHERE serial_id = %d;",
             md->table_prefix,
             run_fields, te->serial_id);
     fclose(cmd_f); cmd_f = NULL;

@@ -197,6 +197,7 @@ COMMON_CFILES=\
  lib/metrics_contest.c\
  lib/mime_type.c\
  lib/misctext.c\
+ lib/mixed_id.c\
  lib/ncheck_packet.c\
  lib/new_server_html.c\
  lib/new_server_html_2.c\
@@ -297,6 +298,7 @@ COMMON_CFILES=\
  lib/tsc.c\
  lib/type_info.c\
  lib/uldb_plugin_xml.c\
+ lib/ulid.c\
  lib/unicode_width.c\
  lib/userlist.c\
  lib/userlist_bin.c\
@@ -622,6 +624,7 @@ HFILES=\
  ./include/ejudge/mime_type.h\
  ./include/ejudge/mischtml.h\
  ./include/ejudge/misctext.h\
+ ./include/ejudge/mixed_id.h\
  ./include/ejudge/ncheck_packet.h\
  ./include/ejudge/ncurses_utils.h\
  ./include/ejudge/new-server.h\
@@ -692,6 +695,7 @@ HFILES=\
  ./include/ejudge/tsc.h\
  ./include/ejudge/type_info.h\
  ./include/ejudge/uldb_plugin.h\
+ ./include/ejudge/ulid.h\
  ./include/ejudge/userlist.h\
  ./include/ejudge/userlist_bin.h\
  ./include/ejudge/userlist_clnt.h\

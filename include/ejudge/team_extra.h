@@ -3,7 +3,7 @@
 #ifndef __TEAM_EXTRA_H__
 #define __TEAM_EXTRA_H__
 
-/* Copyright (C) 2004-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -63,7 +63,7 @@ struct team_extra
   int status;
 
   // run table fields
-  int run_fields;
+  long long run_fields;
 
   unsigned char *problem_dir_prefix;
 };

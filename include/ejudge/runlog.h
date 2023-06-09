@@ -18,6 +18,7 @@
 
 #include "ejudge/ej_types.h"
 #include "ejudge/serve_state.h"
+#include "ejudge/mixed_id.h"
 
 #include <time.h>
 #include <string.h>
@@ -137,7 +138,9 @@ run_add_record(
         int            mime_type,
         const unsigned char *prob_uuid,
         int            store_flags,
-        int            is_vcs);
+        int            is_vcs,
+        int            ext_user_kind,
+        ej_mixed_id_t *ext_user);
 int run_start_contest(runlog_state_t, time_t);
 time_t run_get_start_time(runlog_state_t);
 int
@@ -277,7 +280,8 @@ enum
     RE_JUDGE_UUID    = 0x100000000ULL,
     RE_IS_VCS        = 0x200000000ULL,
     RE_VERDICT_BITS  = 0x400000000ULL,
-    RE_ALL           = 0x7FFFFFFFFULL,
+    RE_EXT_USER      = 0x800000000ULL,
+    RE_ALL           = 0xFFFFFFFFFULL,
   };
 
 struct run_entry
@@ -335,10 +339,13 @@ struct run_entry
   rint16_t       mime_type;     /* 2 */
   int64_t        serial_id;     /* 8 */
   unsigned char  pages;         /* 1 */
-  char _pad0[3];
+  unsigned char  ext_user_kind; /* 1 */
+  char _pad0[2];
   ruint32_t      verdict_bits;  /* 4 */
   rint64_t       last_change_us;/* 8 */
-  char _pad[72];
+  char _pad1[8];
+  ej_mixed_id_t  ext_user;      /* 16 */
+  char _pad[48];
   /* total is 256 bytes */
 };
 

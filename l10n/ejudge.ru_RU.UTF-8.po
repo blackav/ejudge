@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-05-08 14:50+0300\n"
+"POT-Creation-Date: 2023-06-04 08:15+0300\n"
 "PO-Revision-Date: 2022-01-12 13:17+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -2027,6 +2027,9 @@ msgstr "Неверная спецификация продолжительнос
 
 msgid "Invalid error code"
 msgstr "Неверный код ошибки"
+
+msgid "Invalid external user"
+msgstr "Недопустимый внешний пользователь"
 
 msgid "Invalid file name"
 msgstr "Неверное имя файла"

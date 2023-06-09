@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2015-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2015-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -107,7 +107,7 @@ set_disq_comment_func(
         struct xuser_cnts_state *data,
         int user_id,
         const unsigned char *disq_comment);
-static int
+static long long
 get_run_fields_func(
         struct xuser_cnts_state *data,
         int user_id);
@@ -115,7 +115,7 @@ static int
 set_run_fields_func(
         struct xuser_cnts_state *data,
         int user_id,
-        int run_fields);
+        long long run_fields);
 static int
 count_read_clars_func(
         struct xuser_cnts_state *data,
@@ -588,7 +588,7 @@ set_disq_comment_func(
     return 1;
 }
 
-static int
+static long long
 get_run_fields_func(
         struct xuser_cnts_state *data,
         int user_id)
@@ -609,7 +609,7 @@ static int
 set_run_fields_func(
         struct xuser_cnts_state *data,
         int user_id,
-        int run_fields)
+        long long run_fields)
 {
     struct xuser_file_cnts_state *state = (struct xuser_file_cnts_state *) data;
     struct team_extra *te;

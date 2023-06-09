@@ -27,6 +27,7 @@
 #include "ejudge/prepare.h"
 #include "ejudge/ej_uuid.h"
 #include "ejudge/win32_compat.h"
+#include "ejudge/mixed_id.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -338,7 +339,9 @@ run_add_record(
         int            mime_type,
         const unsigned char *prob_uuid,
         int            store_flags,
-        int            is_vcs)
+        int            is_vcs,
+        int            ext_user_kind,
+        ej_mixed_id_t *ext_user)
 {
   int i;
   struct run_entry re;
@@ -424,6 +427,11 @@ run_add_record(
     flags |= RE_SHA1;
   }
   re.is_vcs = is_vcs;
+  if (ext_user_kind > 0 && ext_user_kind < MIXED_ID_LAST) {
+    re.ext_user_kind = ext_user_kind;
+    re.ext_user = *ext_user;
+    flags |= RE_EXT_USER;
+  }
   flags |= RE_SIZE | RE_LOCALE_ID | RE_USER_ID | RE_LANG_ID | RE_PROB_ID | RE_STATUS | RE_TEST | RE_SCORE | RE_IP | RE_SSL_FLAG | RE_VARIANT | RE_IS_HIDDEN | RE_MIME_TYPE | RE_EOLN_TYPE | RE_STORE_FLAGS | RE_IS_VCS;
 
   touch_last_update_time_us(state);

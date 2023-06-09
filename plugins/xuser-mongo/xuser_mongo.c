@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2015-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2015-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -129,7 +129,7 @@ set_disq_comment_func(
         struct xuser_cnts_state *data,
         int user_id,
         const unsigned char *disq_comment);
-static int
+static long long
 get_run_fields_func(
         struct xuser_cnts_state *data,
         int user_id);
@@ -137,7 +137,7 @@ static int
 set_run_fields_func(
         struct xuser_cnts_state *data,
         int user_id,
-        int run_fields);
+        long long run_fields);
 static int
 count_read_clars_func(
         struct xuser_cnts_state *data,
@@ -741,7 +741,7 @@ set_disq_comment_func(
 #endif
 }
 
-static int
+static long long
 get_run_fields_func(
         struct xuser_cnts_state *data,
         int user_id)
@@ -756,7 +756,7 @@ static int
 set_run_fields_func(
         struct xuser_cnts_state *data,
         int user_id,
-        int run_fields)
+        long long run_fields)
 {
 #if HAVE_LIBMONGOC - 0 > 0
     struct xuser_mongo_cnts_state *state = (struct xuser_mongo_cnts_state *) data;
@@ -766,7 +766,7 @@ set_run_fields_func(
     extra->run_fields = run_fields;
     if (ej_uuid_is_nonempty(extra->uuid)) {
         bson_t *doc = bson_new();
-        bson_append_int32(doc, "run_fields", -1, run_fields);
+        bson_append_int64(doc, "run_fields", -1, run_fields);
         return do_update(state, extra, NULL, doc);
     } else {
         return do_insert(state, extra);
@@ -779,7 +779,7 @@ set_run_fields_func(
     extra->run_fields = run_fields;
     if (ej_uuid_is_nonempty(extra->uuid)) {
         bson *doc = bson_new();
-        bson_append_int32(doc, "run_fields", run_fields);
+        bson_append_int64(doc, "run_fields", run_fields);
         bson_finish(doc);
 
         return do_update(state, extra, NULL, doc);

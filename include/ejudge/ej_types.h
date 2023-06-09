@@ -2,7 +2,7 @@
 #ifndef __EJ_TYPES_H__
 #define __EJ_TYPES_H__
 
-/* Copyright (C) 2005-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -207,5 +207,17 @@ typedef struct ej_uuid_t
   ruint32_t v[4];
 } ej_uuid_t;
 
+/*
+  Mixed ID encoding types
+ */
+enum
+{
+  MIXED_ID_NONE,     // empty
+  MIXED_ID_STRING,   // 15-bytes string with terminating \0
+  MIXED_ID_U64,      // uint64_t in decimal (low 8 bytes)
+  MIXED_ID_UUID,     // UUID (base16)
+  MIXED_ID_ULID,     // ULID (base32) https://github.com/ulid/spec
+  MIXED_ID_LAST,
+};
 
 #endif /* __EJ_TYPES_H__ */

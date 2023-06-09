@@ -1119,7 +1119,9 @@ cmd_submit_run(
                           variant, hidden_flag, mime_type,
                           prob->uuid,
                           store_flags,
-                          0 /* is_vcs */);
+                          0 /* is_vcs */,
+                          0 /* ext_user_kind */,
+                          NULL /* ext_user */);
   if (run_id < 0)
     FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
   serve_move_files_to_insert_run(cs, run_id);
