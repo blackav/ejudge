@@ -337,12 +337,12 @@ write_json_run_status(
         ++test;
       }
       if (priv_level > 0) {
-        fprintf(f, ",\n%s\"raw_test\": %d", indent, pe->test);
-        fprintf(f, ",\n%s\"passed_mode\": %d", indent, pe->passed_mode);
-        fprintf(f, ",\n%s\"failed_test\": %d", indent, test);
+        fprintf(f, ",\"raw_test\":%d", pe->test);
+        fprintf(f, ",\"passed_mode\":%d", pe->passed_mode);
+        fprintf(f, ",\"failed_test\":%d", test);
       } else if (!disable_failed) {
         if (status != RUN_OK && status != RUN_ACCEPTED && status != RUN_PENDING_REVIEW && status != RUN_SUMMONED && test > 0 && global->disable_failed_test_view <= 0) {
-          fprintf(f, ",\n%s\"failed_test\": %d", indent, test);
+          fprintf(f, ",\"failed_test\":%d", test);
         }
       }
     }
@@ -354,20 +354,20 @@ write_json_run_status(
         ++test;
       }
       if (priv_level > 0) {
-        fprintf(f, ",\n%s\"raw_test\": %d", indent, pe->test);
-        fprintf(f, ",\n%s\"passed_mode\": %d", indent, pe->passed_mode);
-        fprintf(f, ",\n%s\"failed_test\": %d", indent, test);
+        fprintf(f, ",\"raw_test\":%d", pe->test);
+        fprintf(f, ",\"passed_mode\":%d", pe->passed_mode);
+        fprintf(f, ",\"failed_test\":%d", test);
       } else if (!disable_failed) {
         if (status != RUN_OK && status != RUN_ACCEPTED && status != RUN_PENDING_REVIEW && status != RUN_SUMMONED && test > 0 && global->disable_failed_test_view <= 0) {
-          fprintf(f, ",\n%s\"failed_test\": %d", indent, test);
+          fprintf(f, ",\"failed_test\":%d", test);
         }
       }
     }
     if (run_fields & (1 << RUN_VIEW_SCORE)) {
       if (priv_level > 0) {
-        fprintf(f, ",\n%s\"raw_score\": %d", indent, pe->score);
+        fprintf(f, ",\"raw_score\":%d", pe->score);
       }
-      fprintf(f, ",\n%s\"score\": %d", indent, score);
+      fprintf(f, ",\"score\":%d", score);
     }
     return;
   }
@@ -375,16 +375,16 @@ write_json_run_status(
     if (run_fields & (1 << RUN_VIEW_TEST)) {
       if (pe->passed_mode > 0) {
         if (priv_level > 0) {
-          fprintf(f, ",\n%s\"raw_test\": %d", indent, pe->test);
-          fprintf(f, ",\n%s\"passed_mode\": %d", indent, pe->passed_mode);
-          fprintf(f, ",\n%s\"tests_passed\": %d", indent, test);
+          fprintf(f, ",\"raw_test\":%d", pe->test);
+          fprintf(f, ",\"passed_mode\":%d", pe->passed_mode);
+          fprintf(f, ",\"tests_passed\":%d", test);
         } else {
-          fprintf(f, ",\n%s\"tests_passed\": %d", indent, test);
+          fprintf(f, ",\"tests_passed\":%d", test);
         }
       } else {
         if (priv_level > 0) {
-          fprintf(f, ",\n%s\"raw_test\": %d", indent, pe->test);
-          fprintf(f, ",\n%s\"passed_mode\": %d", indent, pe->passed_mode);
+          fprintf(f, ",\"raw_test\":%d", pe->test);
+          fprintf(f, ",\"passed_mode\":%d", pe->passed_mode);
         }
         if (status == RUN_RUN_TIME_ERR
             || status == RUN_TIME_LIMIT_ERR
@@ -395,18 +395,18 @@ write_json_run_status(
             || status == RUN_SYNC_ERR
             || status == RUN_WALL_TIME_LIMIT_ERR) {
           if (test > 0) {
-            fprintf(f, ",\n%s\"failed_test\": %d", indent, test);
+            fprintf(f, ",\"failed_test\":%d", test);
           }
         } else {
           if (test > 0) {
-            fprintf(f, ",\n%s\"tests_passed\": %d", indent, test - 1);
+            fprintf(f, ",\"tests_passed\":%d", test - 1);
           }
         }
       }
     }
     if (run_fields & (1 << RUN_VIEW_SCORE)) {
       if (priv_level > 0) {
-        fprintf(f, ",\n%s\"raw_score\": %d", indent, pe->score);
+        fprintf(f, ",\"raw_score\":%d", pe->score);
       }
       if (score >= 0 && prob) {
         unsigned char score_str[128];
@@ -414,8 +414,8 @@ write_json_run_status(
                                            start_time, separate_user_score, !priv_level, pe->token_flags,
                                            pe, prob, attempts, disq_attempts, ce_attempts, prev_successes,
                                            NULL, 1, effective_time);
-        fprintf(f, ",\n%s\"score\": %d", indent, final_score);
-        fprintf(f, ",\n%s\"score_str\": \"%s\"", indent, score_str);
+        fprintf(f, ",\"score\":%d", final_score);
+        fprintf(f, ",\"score_str\":\"%s\"", score_str);
       }
     }
     return;
@@ -423,23 +423,23 @@ write_json_run_status(
   if (global->score_system == SCORE_KIROV) {
     if (run_fields & (1 << RUN_VIEW_TEST)) {
       if (priv_level > 0) {
-        fprintf(f, ",\n%s\"raw_test\": %d", indent, pe->test);
-        fprintf(f, ",\n%s\"passed_mode\": %d", indent, pe->passed_mode);
+        fprintf(f, ",\"raw_test\":%d", pe->test);
+        fprintf(f, ",\"passed_mode\":%d", pe->passed_mode);
       }
       if (pe->passed_mode > 0) {
         if (test >= 0) {
-          fprintf(f, ",\n%s\"tests_passed\": %d", indent, test);
+          fprintf(f, ",\"tests_passed\":%d", test);
         }
       } else {
         if (test > 0) {
-          fprintf(f, ",\n%s\"tests_passed\": %d", indent, test - 1);
+          fprintf(f, ",\"tests_passed\":%d", test - 1);
         }
       }
     }
 
     if (run_fields & (1 << RUN_VIEW_SCORE)) {
       if (priv_level > 0) {
-        fprintf(f, ",\n%s\"raw_score\": %d", indent, pe->score);
+        fprintf(f, ",\"raw_score\":%d", pe->score);
       }
       if (score >= 0 && prob) {
         unsigned char score_str[128];
@@ -447,8 +447,8 @@ write_json_run_status(
                                            start_time, separate_user_score, !priv_level, pe->token_flags,
                                            pe, prob, attempts, disq_attempts, ce_attempts, prev_successes,
                                            NULL, 1, effective_time);
-        fprintf(f, ",\n%s\"score\": %d", indent, final_score);
-        fprintf(f, ",\n%s\"score_str\": \"%s\"", indent, score_str);
+        fprintf(f, ",\"score\":%d", final_score);
+        fprintf(f, ",\"score_str\":\"%s\"", score_str);
       }
     }
   }
