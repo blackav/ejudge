@@ -145,7 +145,7 @@ mixed_id_unparse_kind(int kind)
     if (kind > 0 && kind < MIXED_ID_LAST) {
         static const unsigned char ids[][8] =
         {
-            "str", "u64", "uuid", "ulid",
+            "", "str", "u64", "uuid", "ulid",
         };
         return ids[kind];
     }

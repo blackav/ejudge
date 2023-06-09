@@ -8812,7 +8812,7 @@ priv_list_runs_json(
     last_run = intval;
     last_run_set = 1;
   }
-  if ((r = hr_cgi_param(phr, "field_mask", &s) < 0)) {
+  if ((r = hr_cgi_param(phr, "field_mask", &s)) < 0) {
     goto err_inv_param;
   } else if (r > 0 && s) {
     char *eptr = NULL;
