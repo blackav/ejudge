@@ -13069,6 +13069,14 @@ ns_get_submit(
   cJSON_AddNumberToObject(jrr, "status", se.status);
   cJSON_AddStringToObject(jrr, "status_str",
                           run_status_str(se.status, NULL, 0, 0, 0));
+  if (se.ext_user_kind > 0 && se.ext_user_kind < MIXED_ID_LAST) {
+    unsigned char buf[64];
+    cJSON_AddStringToObject(jrr, "ext_user_kind",
+                            mixed_id_unparse_kind(se.ext_user_kind));
+    cJSON_AddStringToObject(jrr, "ext_user",
+                            mixed_id_marshall(buf, se.ext_user_kind,
+                                              &se.ext_user));
+  }
   if (tr) {
     if (tr->compiler_output && *tr->compiler_output) {
       cJSON_AddStringToObject(jrr, "compiler_output", tr->compiler_output);
