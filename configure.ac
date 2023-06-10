@@ -5,6 +5,7 @@ AC_PREREQ(2.59)
 AC_REVISION($Revision$)
 
 AC_PREFIX_DEFAULT([/opt/ejudge])
+AC_USE_SYSTEM_EXTENSIONS
 AC_PROG_INSTALL
 AC_PROG_AWK
 AC_PROG_GREP
@@ -12,7 +13,7 @@ AC_PROG_SED
 AC_PROG_LN_S
 AC_PROG_MKDIR_P
 AC_PROG_YACC
-AC_PROG_LEX
+AC_PROG_LEX(noyywrap)
 
 if ! which which > /dev/null 2>/dev/null
 then
@@ -30,7 +31,6 @@ do
   fi
 done
 
-AC_GNU_SOURCE
 AC_PROG_CC
 AC_PROG_CC_C_O
 AC_PROG_CPP
@@ -42,59 +42,59 @@ AC_C_RESTRICT
 AC_C_VOLATILE
 AC_C_INLINE
 AC_C_CHAR_UNSIGNED
-AC_C_LONG_DOUBLE
+AC_TYPE_LONG_DOUBLE
 AC_C_STRINGIZE
 AC_C_PROTOTYPES
 
-AC_ARG_WITH([lib32dir], AC_HELP_STRING([--with-lib32dir=DIR],[specify directory for 32-bit libraries]),[lib32dir=$withval])
+AC_ARG_WITH([lib32dir], AS_HELP_STRING([--with-lib32dir=DIR],[specify directory for 32-bit libraries]),[lib32dir=$withval])
 
-AC_ARG_WITH([libcap], AC_HELP_STRING([--with-libcap=LIBCAP-DIR],[use the linux capability library]),[ac_cv_libcap_root=$withval])
-AC_ARG_WITH([libcap-include-dir], AC_HELP_STRING([--with-libcap-include-dir],[specify non-standard location of <sys/capability.h> [[LIBCAP-DIR/include]]]),[ac_cv_libcap_include_dir=$withval])
-AC_ARG_WITH([libcap-lib-dir], AC_HELP_STRING([--with-libcap-lib-dir],[specify non-standard location for -lcap [[LIBCAP-DIR/lib]]]), [ac_cv_libcap_lib_dir=$withval])
+AC_ARG_WITH([libcap], AS_HELP_STRING([--with-libcap=LIBCAP-DIR],[use the linux capability library]),[ac_cv_libcap_root=$withval])
+AC_ARG_WITH([libcap-include-dir], AS_HELP_STRING([--with-libcap-include-dir],[specify non-standard location of <sys/capability.h> [[LIBCAP-DIR/include]]]),[ac_cv_libcap_include_dir=$withval])
+AC_ARG_WITH([libcap-lib-dir], AS_HELP_STRING([--with-libcap-lib-dir],[specify non-standard location for -lcap [[LIBCAP-DIR/lib]]]), [ac_cv_libcap_lib_dir=$withval])
 
-AC_ARG_WITH([expat], AC_HELP_STRING([--with-expat=EXPAT-DIR],[specify non-standard path to expat library]),[ac_cv_expat_root=$withval])
-AC_ARG_WITH([expat-include-dir],AC_HELP_STRING([--with-expat-include-dir],[specify non-standard location of <expat.h> [[EXPAT-DIR/include]]]),[ac_cv_expat_include_dir=$withval])
-AC_ARG_WITH([expat-lib-dir],AC_HELP_STRING([--with-expat-lib-dir],[specify non-standard location of -lexpat [[EXPAT-DIR/lib]]]),[ac_cv_expat_lib_dir=$withval])
+AC_ARG_WITH([expat], AS_HELP_STRING([--with-expat=EXPAT-DIR],[specify non-standard path to expat library]),[ac_cv_expat_root=$withval])
+AC_ARG_WITH([expat-include-dir],AS_HELP_STRING([--with-expat-include-dir],[specify non-standard location of <expat.h> [[EXPAT-DIR/include]]]),[ac_cv_expat_include_dir=$withval])
+AC_ARG_WITH([expat-lib-dir],AS_HELP_STRING([--with-expat-lib-dir],[specify non-standard location of -lexpat [[EXPAT-DIR/lib]]]),[ac_cv_expat_lib_dir=$withval])
 
-AC_ARG_WITH([mysql], AC_HELP_STRING([--with-mysql=MYSQL-DIR],[specify the path to the mysql installation directory]),[ac_cv_mysql_root="$withval"])
+AC_ARG_WITH([mysql], AS_HELP_STRING([--with-mysql=MYSQL-DIR],[specify the path to the mysql installation directory]),[ac_cv_mysql_root="$withval"])
 
-AC_ARG_ENABLE([cgi-suffix], AC_HELP_STRING([--enable-cgi-suffix],[append the given suffix to the CGI programs]),[ac_cv_cgi_suffix=$enableval],[ac_cv_cgi_suffix=""])
-AC_ARG_ENABLE([cgi-bin-dir], AC_HELP_STRING([--enable-cgi-bin-dir],[specify the destination CGI script directory [[\${prefix}/libexec/ejudge/cgi-bin]]]),[cgibindir=$enableval], [cgibindir='${libexecdir}/ejudge/cgi-bin'])
-AC_ARG_ENABLE([static], AC_HELP_STRING([--enable-static],[link programs statically]),[ac_cv_static=1],[ac_cv_static=""])
-AC_ARG_ENABLE([rpath], AC_HELP_STRING([--disable-rpath],[do not use -rpath feature]),[ac_cv_rpath="$enableval"])
-AC_ARG_ENABLE([nls], AC_HELP_STRING([--disable-nls],[disable localization]),[ac_cv_nls=$enableval],[ac_cv_nls=""])
-AC_ARG_ENABLE([charset],AC_HELP_STRING([--enable-charset],[specify the default charset]),[ac_cv_charset="$enableval"],[ac_cv_charset=""])
-AC_ARG_ENABLE([socket-path],AC_HELP_STRING([--enable-socket-path],[specify the default userlist-server socket path]),[ac_cv_socket_path="$enableval"],[ac_cv_socket_path=""])
-AC_ARG_ENABLE([super-serve-socket],AC_HELP_STRING([--enable-super-serve-socket],[specify the default super-serve socket path]),[ac_cv_super_serve_socket="$enableval"],[ac_cv_super_serve_socket=""])
-AC_ARG_ENABLE([new-server-socket],AC_HELP_STRING([--enable-new-server-socket],[specify the default new-server socket path]),[ac_cv_new_server_socket="$enableval"],[ac_cv_new_server_socket=""])
-AC_ARG_ENABLE([conf-dir], AC_HELP_STRING([--enable-conf-dir=CONF-DIR],[specify the ejudge configuration directory]),[ac_cv_conf_dir="$enableval"],[ac_cv_conf_dir=""])
-AC_ARG_ENABLE([cgi-conf-dir], AC_HELP_STRING([--enable-cgi-conf-dir],[specify path to CGI configuration files]),[ac_cv_cgi_conf_dir="$enableval"],[ac_cv_cgi_conf_dir=""])
-AC_ARG_ENABLE([ejudge-xml],AC_HELP_STRING([--enable-ejudge-xml],[specify the default location of ejudge.xml]),[ac_cv_ejudge_xml="$enableval"],[ac_cv_ejudge_xml=""])
-AC_ARG_ENABLE([contests-dir],AC_HELP_STRING([--enable-contests-dir],[specify the default path to the contest configuration directory]),[ac_cv_contests_dir="$enableval"],[ac_cv_contests_dir=""])
-AC_ARG_ENABLE([contests-home-dir],AC_HELP_STRING([--enable-contests-home-dir],[specify the default path to the contests home directory]),[ac_cv_contests_home_dir="$enableval"],[ac_cv_contests_home_dir=""])
-AC_ARG_ENABLE([compile-spool-dir],AC_HELP_STRING([--enable-compile-spool-dir],[specify the path to the compile spool directory]),[ac_cv_compile_spool_dir="$enableval"],[ac_cv_compile_spool_dir=""])
-AC_ARG_ENABLE([run-spool-dir],AC_HELP_STRING([--enable-run-spool-dir],[specify the path to the run spool directory]),[ac_cv_run_spool_dir="$enableval"],[ac_cv_run_spool_dir=""])
-AC_ARG_ENABLE([contests-status-dir],AC_HELP_STRING([--enable-contests-status-dir],[specify the path to the contest status directory]),[ac_cv_contests_status_dir="$enableval"],[ac_cv_contests_status_dir=""])
-AC_ARG_ENABLE([local-dir],AC_HELP_STRING([--enable-local-dir],[specify the default path to the local state directory]),[ac_cv_local_dir="$enableval"],[ac_cv_local_dir=""])
-AC_ARG_ENABLE([ajax],AC_HELP_STRING([--enable-ajax],[enable use of the ajax technology for the client web interface]),[ac_cv_ajax="$enableval"],[ac_cv_ajax=""])
-AC_ARG_ENABLE([style-prefix],AC_HELP_STRING([--enable-style-prefix],[specify the prefix for HTML style files]),[ac_cv_style_prefix="$enableval"],[ac_cv_style_prefix=""])
-AC_ARG_ENABLE([hidden-server-bins],AC_HELP_STRING([--enable-hidden-server-bins],[do not install the server binaries into bin directory]),[ac_cv_hidden_bins=1],[ac_cv_hidden_bins=])
-AC_ARG_ENABLE([werror],AC_HELP_STRING([--enable-werror],[enable -Werror compilation flag]),[ac_cv_werror_flag=-Werror],[ac_cv_werror_flag=])
-AC_ARG_ENABLE([preserve-scripts],AC_HELP_STRING([--enable-preserve-scripts],[do not overwrite the existing language scripts]), [ac_cv_preserve_scripts=1],[ac_cv_preserve_scripts=])
-AC_ARG_ENABLE([lang-config-dir],AC_HELP_STRING([--enable-lang-config-dir],[install language config scripts into specified directory]),[ac_cv_lang_config_dir="${enableval}"],[ac_cv_lang_config_dir=])
+AC_ARG_ENABLE([cgi-suffix], AS_HELP_STRING([--enable-cgi-suffix],[append the given suffix to the CGI programs]),[ac_cv_cgi_suffix=$enableval],[ac_cv_cgi_suffix=""])
+AC_ARG_ENABLE([cgi-bin-dir], AS_HELP_STRING([--enable-cgi-bin-dir],[specify the destination CGI script directory [[\${prefix}/libexec/ejudge/cgi-bin]]]),[cgibindir=$enableval], [cgibindir='${libexecdir}/ejudge/cgi-bin'])
+AC_ARG_ENABLE([static], AS_HELP_STRING([--enable-static],[link programs statically]),[ac_cv_static=1],[ac_cv_static=""])
+AC_ARG_ENABLE([rpath], AS_HELP_STRING([--disable-rpath],[do not use -rpath feature]),[ac_cv_rpath="$enableval"])
+AC_ARG_ENABLE([nls], AS_HELP_STRING([--disable-nls],[disable localization]),[ac_cv_nls=$enableval],[ac_cv_nls=""])
+AC_ARG_ENABLE([charset],AS_HELP_STRING([--enable-charset],[specify the default charset]),[ac_cv_charset="$enableval"],[ac_cv_charset=""])
+AC_ARG_ENABLE([socket-path],AS_HELP_STRING([--enable-socket-path],[specify the default userlist-server socket path]),[ac_cv_socket_path="$enableval"],[ac_cv_socket_path=""])
+AC_ARG_ENABLE([super-serve-socket],AS_HELP_STRING([--enable-super-serve-socket],[specify the default super-serve socket path]),[ac_cv_super_serve_socket="$enableval"],[ac_cv_super_serve_socket=""])
+AC_ARG_ENABLE([new-server-socket],AS_HELP_STRING([--enable-new-server-socket],[specify the default new-server socket path]),[ac_cv_new_server_socket="$enableval"],[ac_cv_new_server_socket=""])
+AC_ARG_ENABLE([conf-dir], AS_HELP_STRING([--enable-conf-dir=CONF-DIR],[specify the ejudge configuration directory]),[ac_cv_conf_dir="$enableval"],[ac_cv_conf_dir=""])
+AC_ARG_ENABLE([cgi-conf-dir], AS_HELP_STRING([--enable-cgi-conf-dir],[specify path to CGI configuration files]),[ac_cv_cgi_conf_dir="$enableval"],[ac_cv_cgi_conf_dir=""])
+AC_ARG_ENABLE([ejudge-xml],AS_HELP_STRING([--enable-ejudge-xml],[specify the default location of ejudge.xml]),[ac_cv_ejudge_xml="$enableval"],[ac_cv_ejudge_xml=""])
+AC_ARG_ENABLE([contests-dir],AS_HELP_STRING([--enable-contests-dir],[specify the default path to the contest configuration directory]),[ac_cv_contests_dir="$enableval"],[ac_cv_contests_dir=""])
+AC_ARG_ENABLE([contests-home-dir],AS_HELP_STRING([--enable-contests-home-dir],[specify the default path to the contests home directory]),[ac_cv_contests_home_dir="$enableval"],[ac_cv_contests_home_dir=""])
+AC_ARG_ENABLE([compile-spool-dir],AS_HELP_STRING([--enable-compile-spool-dir],[specify the path to the compile spool directory]),[ac_cv_compile_spool_dir="$enableval"],[ac_cv_compile_spool_dir=""])
+AC_ARG_ENABLE([run-spool-dir],AS_HELP_STRING([--enable-run-spool-dir],[specify the path to the run spool directory]),[ac_cv_run_spool_dir="$enableval"],[ac_cv_run_spool_dir=""])
+AC_ARG_ENABLE([contests-status-dir],AS_HELP_STRING([--enable-contests-status-dir],[specify the path to the contest status directory]),[ac_cv_contests_status_dir="$enableval"],[ac_cv_contests_status_dir=""])
+AC_ARG_ENABLE([local-dir],AS_HELP_STRING([--enable-local-dir],[specify the default path to the local state directory]),[ac_cv_local_dir="$enableval"],[ac_cv_local_dir=""])
+AC_ARG_ENABLE([ajax],AS_HELP_STRING([--enable-ajax],[enable use of the ajax technology for the client web interface]),[ac_cv_ajax="$enableval"],[ac_cv_ajax=""])
+AC_ARG_ENABLE([style-prefix],AS_HELP_STRING([--enable-style-prefix],[specify the prefix for HTML style files]),[ac_cv_style_prefix="$enableval"],[ac_cv_style_prefix=""])
+AC_ARG_ENABLE([hidden-server-bins],AS_HELP_STRING([--enable-hidden-server-bins],[do not install the server binaries into bin directory]),[ac_cv_hidden_bins=1],[ac_cv_hidden_bins=])
+AC_ARG_ENABLE([werror],AS_HELP_STRING([--enable-werror],[enable -Werror compilation flag]),[ac_cv_werror_flag=-Werror],[ac_cv_werror_flag=])
+AC_ARG_ENABLE([preserve-scripts],AS_HELP_STRING([--enable-preserve-scripts],[do not overwrite the existing language scripts]), [ac_cv_preserve_scripts=1],[ac_cv_preserve_scripts=])
+AC_ARG_ENABLE([lang-config-dir],AS_HELP_STRING([--enable-lang-config-dir],[install language config scripts into specified directory]),[ac_cv_lang_config_dir="${enableval}"],[ac_cv_lang_config_dir=])
 
-AC_ARG_ENABLE([libmongoc],AC_HELP_STRING([--enable-libmongoc],[enable libmongoc mongo client library]),[ac_cv_enable_libmongoc="${enableval}"],[ac_cv_enable_libmongoc=])
+AC_ARG_ENABLE([libmongoc],AS_HELP_STRING([--enable-libmongoc],[enable libmongoc mongo client library]),[ac_cv_enable_libmongoc="${enableval}"],[ac_cv_enable_libmongoc=])
 
-AC_ARG_WITH([rest],AC_HELP_STRING([--with-rest],[enable RESTful API]),[ac_cv_rest="$withval"])
+AC_ARG_WITH([rest],AS_HELP_STRING([--with-rest],[enable RESTful API]),[ac_cv_rest="$withval"])
 
-AC_ARG_WITH([primary-user],AC_HELP_STRING([--with-primary-user],[primary ejudge user]),[ac_cv_primary_user="$withval"])
-AC_ARG_WITH([exec-user],AC_HELP_STRING([--with-exec-user],[ejudge executer user]),[ac_cv_exec_user="$withval"])
-AC_ARG_WITH([compile-user],AC_HELP_STRING([--with-compile-user],[ejudge compiler user]),[ac_cv_compile_user="$withval"])
+AC_ARG_WITH([primary-user],AS_HELP_STRING([--with-primary-user],[primary ejudge user]),[ac_cv_primary_user="$withval"])
+AC_ARG_WITH([exec-user],AS_HELP_STRING([--with-exec-user],[ejudge executer user]),[ac_cv_exec_user="$withval"])
+AC_ARG_WITH([compile-user],AS_HELP_STRING([--with-compile-user],[ejudge compiler user]),[ac_cv_compile_user="$withval"])
 
-AC_ARG_WITH([httpd-cgi-bin-dir],AC_HELP_STRING([--with-httpd-cgi-bin-dir],[specify the path to the web serve CGI directory]),[ac_cv_httpd_cgi_bin_dir="${withval}"])
-AC_ARG_WITH([httpd-htdocs-dir],AC_HELP_STRING([--with-httpd-htdocs-dir],[specify the path to the web server HTML directory]),[ac_cv_httpd_htdocs_dir="${withval}"])
+AC_ARG_WITH([httpd-cgi-bin-dir],AS_HELP_STRING([--with-httpd-cgi-bin-dir],[specify the path to the web serve CGI directory]),[ac_cv_httpd_cgi_bin_dir="${withval}"])
+AC_ARG_WITH([httpd-htdocs-dir],AS_HELP_STRING([--with-httpd-htdocs-dir],[specify the path to the web server HTML directory]),[ac_cv_httpd_htdocs_dir="${withval}"])
 
-AC_ARG_WITH([festival],AC_HELP_STRING([--with-festival],[specify the home directory of the festival speech generator]),[ac_cv_festival_home="$withval"])
+AC_ARG_WITH([festival],AS_HELP_STRING([--with-festival],[specify the home directory of the festival speech generator]),[ac_cv_festival_home="$withval"])
 
 AC_ARG_WITH([gcc],AC_HELP_STRING([--with-gcc],[OBSOLETE: specify the GNU C compiler to use in contests]),[ac_cv_contest_gcc="$withval"])
 AC_ARG_WITH([gpp],AC_HELP_STRING([--with-gpp],[OBSOLETE: specify the GNU C++ compiler to use in contests]),[ac_cv_contest_gpp="$withval"])
