@@ -197,7 +197,7 @@ prepare_func(
 
 #include "tables.inc.c"
 
-#define RUN_DB_VERSION 26
+#define RUN_DB_VERSION 27
 
 static int
 do_create(struct rldb_mysql_state *state)
@@ -478,6 +478,10 @@ do_open(struct rldb_mysql_state *state)
       break;
     case 25:
       if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD COLUMN ext_user_kind TINYINT NOT NULL DEFAULT 0 AFTER verdict_bits, ADD COLUMN ext_user VARCHAR(40) DEFAULT NULL AFTER ext_user_kind", md->table_prefix) < 0)
+        return -1;
+      break;
+    case 26:
+      if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD COLUMN notify_driver TINYINT NOT NULL DEFAULT 0 AFTER ext_user, ADD COLUMN notify_kind TINYINT NOT NULL DEFAULT 0 AFTER notify_driver, ADD COLUMN notify_queue VARCHAR(40) DEFAULT NULL AFTER notify_kind", md->table_prefix) < 0)
         return -1;
       break;
     case RUN_DB_VERSION:
@@ -814,6 +818,7 @@ load_runs(struct rldb_mysql_cnts *cs)
   ej_uuid_t prob_uuid;
   ej_uuid_t judge_uuid;
   ej_mixed_id_t ext_user;
+  ej_mixed_id_t notify_queue;
 
   memset(&ri, 0, sizeof(ri));
   if (state->window > 0) {
@@ -865,6 +870,7 @@ load_runs(struct rldb_mysql_cnts *cs)
       xfree(ri.prob_uuid); ri.prob_uuid = NULL;
       xfree(ri.judge_uuid); ri.judge_uuid = NULL;
       xfree(ri.ext_user); ri.ext_user = NULL;
+      xfree(ri.notify_queue); ri.notify_queue = NULL;
 
       expand_runs(rls, ri.run_id);
       re = &rls->runs[ri.run_id - rls->run_f];
@@ -911,12 +917,25 @@ load_runs(struct rldb_mysql_cnts *cs)
       ri.ext_user_kind = 0;
       memset(&ext_user, 0, sizeof(ext_user));
     }
+    if (ri.notify_driver > 0
+        && ri.notify_kind > 0 && ri.notify_kind < MIXED_ID_LAST) {
+      if (mixed_id_unmarshall(&notify_queue, ri.notify_kind, ri.notify_queue) < 0) {
+        ri.notify_driver = 0;
+        ri.notify_kind = 0;
+        memset(&notify_queue, 0, sizeof(notify_queue));
+      }
+    } else {
+      ri.notify_driver = 0;
+      ri.notify_kind = 0;
+      memset(&notify_queue, 0, sizeof(notify_queue));
+    }
     xfree(ri.hash); ri.hash = 0;
     xfree(ri.mime_type); ri.mime_type = 0;
     xfree(ri.run_uuid); ri.run_uuid = 0;
     xfree(ri.prob_uuid); ri.prob_uuid = NULL;
     xfree(ri.judge_uuid); ri.judge_uuid = NULL;
     xfree(ri.ext_user); ri.ext_user = NULL;
+    xfree(ri.notify_queue); ri.notify_queue = NULL;
 
     expand_runs(rls, ri.run_id);
     re = &rls->runs[ri.run_id - rls->run_f];
@@ -972,6 +991,9 @@ load_runs(struct rldb_mysql_cnts *cs)
     re->last_change_us = ri.last_change_time * 1000000LL + ri.last_change_nsec / 1000;
     re->ext_user_kind = ri.ext_user_kind;
     re->ext_user = ext_user;
+    re->notify_driver = ri.notify_driver;
+    re->notify_kind = ri.notify_kind;
+    re->notify_queue = notify_queue;
   }
   return 1;
 
@@ -982,6 +1004,7 @@ load_runs(struct rldb_mysql_cnts *cs)
   xfree(ri.prob_uuid);
   xfree(ri.judge_uuid);
   xfree(ri.ext_user);
+  xfree(ri.notify_queue);
   mi->free_res(md);
   return -1;
 }
@@ -1548,6 +1571,19 @@ generate_update_entry_clause(
       sep = comma;
     }
   }
+  if ((mask & RE_NOTIFY)) {
+    if (re->notify_driver > 0
+        && re->notify_kind > 0 && re->notify_kind < MIXED_ID_LAST) {
+      fprintf(f, "%snotify_driver=%d,notify_kind=%d,notify_queue=\"%s\"",
+              sep, re->notify_driver, re->notify_kind,
+              mixed_id_marshall(uuid_buf, re->notify_kind, &re->notify_queue));
+      sep = comma;
+    } else {
+      fprintf(f, "%snotify_driver=0,notify_kind=0,notify_queue=NULL",
+              sep);
+      sep = comma;
+    }
+  }
 
   fprintf(f, "%slast_change_time = ", sep);
   state->mi->write_timestamp(state->md, f, 0, curtime->tv_sec);
@@ -1669,6 +1705,11 @@ update_entry(
   if ((mask & RE_EXT_USER)) {
     dst->ext_user_kind = src->ext_user_kind;
     dst->ext_user = src->ext_user;
+  }
+  if ((mask & RE_NOTIFY)) {
+    dst->notify_driver = src->notify_driver;
+    dst->notify_kind = src->notify_kind;
+    dst->notify_queue = src->notify_queue;
   }
 }
 
@@ -2096,6 +2137,7 @@ put_entry_func(
   FILE *cmd_f = 0;
   char uuid_buf[40];
   char ext_user_buf[64];
+  char notify_queue_buf[64];
 
   ASSERT(re);
   ASSERT(re->run_id >= 0);
@@ -2172,6 +2214,16 @@ put_entry_func(
   } else {
     ri.ext_user_kind = 0;
     ri.ext_user = NULL;
+  }
+  if (re->notify_driver > 0
+      && re->notify_kind > 0 && re->notify_kind < MIXED_ID_LAST) {
+    ri.notify_driver = re->notify_driver;
+    ri.notify_kind = re->notify_kind;
+    ri.notify_queue = mixed_id_marshall(notify_queue_buf, re->notify_kind, &re->notify_queue);
+  } else {
+    ri.notify_driver = 0;
+    ri.notify_kind = 0;
+    ri.notify_queue = NULL;
   }
 
   cmd_f = open_memstream(&cmd_t, &cmd_z);
@@ -2681,6 +2733,9 @@ append_run_func(
   if ((mask & RE_EXT_USER)) {
     fputs(",ext_user_kind,ext_user", cmd_f);
   }
+  if ((mask & RE_NOTIFY)) {
+    fputs(",notify_driver,notify_kind,notify_queue", cmd_f);
+  }
   fprintf(cmd_f, ") VALUES (%lld, %d, %d, NOW(6), MICROSECOND(NOW(6)) * 1000, '%s', NOW(), MICROSECOND(NOW(6)) * 1000",
           serial_id,
           run_id,
@@ -2817,6 +2872,17 @@ append_run_func(
       fprintf(cmd_f, ",%d,\"%s\"", ext_user_kind,
               mixed_id_marshall(uuid_buf, ext_user_kind,
                                 &in_re->ext_user));
+    }
+  }
+  if ((mask & RE_NOTIFY)) {
+    if (in_re->notify_driver > 0
+        && in_re->notify_kind > 0 && in_re->notify_kind < MIXED_ID_LAST) {
+      fprintf(cmd_f, ",%d,%d,\"%s\"",
+              in_re->notify_driver, in_re->notify_kind,
+              mixed_id_marshall(uuid_buf, in_re->notify_kind,
+                                &in_re->notify_queue));
+    } else {
+      fprintf(cmd_f, ",0,0,NULL");
     }
   }
   fprintf(cmd_f, ") ;");
@@ -2980,6 +3046,11 @@ append_run_func(
   if ((mask & RE_EXT_USER)) {
     new_re->ext_user_kind = in_re->ext_user_kind;
     new_re->ext_user = in_re->ext_user;
+  }
+  if ((mask & RE_NOTIFY)) {
+    new_re->notify_driver = in_re->notify_driver;
+    new_re->notify_kind = in_re->notify_kind;
+    new_re->notify_queue = in_re->notify_queue;
   }
 
   if (p_tv) *p_tv = current_time_tv;

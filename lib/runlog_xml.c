@@ -127,6 +127,9 @@ enum
   RUNLOG_A_IS_VIRTUAL,
   RUNLOG_A_EXT_USER_KIND,
   RUNLOG_A_EXT_USER,
+  RUNLOG_A_NOTIFY_DRIVER,
+  RUNLOG_A_NOTIFY_KIND,
+  RUNLOG_A_NOTIFY_QUEUE,
 
   RUNLOG_LAST_ATTR,
 };
@@ -202,6 +205,9 @@ static const char * const attr_map[] =
   [RUNLOG_A_IS_VIRTUAL]       = "is_virtual",
   [RUNLOG_A_EXT_USER_KIND]    = "ext_user_kind",
   [RUNLOG_A_EXT_USER]         = "ext_user",
+  [RUNLOG_A_NOTIFY_DRIVER]    = "notify_driver",
+  [RUNLOG_A_NOTIFY_KIND]      = "notify_kind",
+  [RUNLOG_A_NOTIFY_QUEUE]     = "notify_queue",
 
   [RUNLOG_LAST_ATTR] = 0,
 };
@@ -322,6 +328,9 @@ process_run_elements(struct xml_tree *xt, struct run_xml_helpers *helper)
   unsigned char bool_val;
   const unsigned char *ext_user_kind_str = NULL;
   const unsigned char *ext_user_str = NULL;
+  const unsigned char *notify_driver_str = NULL;
+  const unsigned char *notify_kind_str = NULL;
+  const unsigned char *notify_queue_str = NULL;
 
   while (xt) {
     if (xt->tag != RUNLOG_T_RUN) return xml_err_top_level(xt, RUNLOG_T_RUN);
@@ -562,6 +571,15 @@ process_run_elements(struct xml_tree *xt, struct run_xml_helpers *helper)
       case RUNLOG_A_EXT_USER:
         ext_user_str = xa->text;
         break;
+      case RUNLOG_A_NOTIFY_DRIVER:
+        notify_driver_str = xa->text;
+        break;
+      case RUNLOG_A_NOTIFY_KIND:
+        notify_kind_str = xa->text;
+        break;
+      case RUNLOG_A_NOTIFY_QUEUE:
+        notify_queue_str = xa->text;
+        break;
       default:
         return xml_err_attr_not_allowed(xt, xa);
       }
@@ -585,6 +603,23 @@ process_run_elements(struct xml_tree *xt, struct run_xml_helpers *helper)
         if (mixed_id_unmarshall(&ext_user, ext_user_kind, ext_user_str) >= 0) {
           xr->r.ext_user_kind = ext_user_kind;
           xr->r.ext_user = ext_user;
+        }
+      }
+    }
+    if (notify_driver_str) {
+      char *eptr = NULL;
+      errno = 0;
+      long v = strtol(notify_driver_str, &eptr, 10);
+      if (!errno && !*eptr && eptr != (char*) notify_driver_str
+          && v > 0 && v < 128) {
+        int notify_kind = mixed_id_parse_kind(notify_kind_str);
+        if (notify_kind > 0 && notify_kind < MIXED_ID_LAST) {
+          ej_mixed_id_t notify_queue;
+          if (mixed_id_unmarshall(&notify_queue, notify_kind, notify_queue_str) >= 0) {
+            xr->r.notify_driver = v;
+            xr->r.notify_kind = notify_kind;
+            xr->r.notify_queue = notify_queue;
+          }
         }
       }
     }
@@ -1107,6 +1142,22 @@ unparse_runlog_xml(
         val1 = astr1;
       }
       fprintf(f, " %s=\"%s\"", attr_map[RUNLOG_A_EXT_USER], val1);
+    }
+    if (pp->notify_driver > 0
+        && pp->notify_kind > 0 && pp->notify_kind < MIXED_ID_LAST) {
+      fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_NOTIFY_DRIVER],
+              pp->notify_driver);
+      fprintf(f, " %s=\"%s\"", attr_map[RUNLOG_A_NOTIFY_KIND],
+              mixed_id_unparse_kind(pp->notify_kind));
+      unsigned char mbuf[64];
+      val1 = mixed_id_marshall(mbuf, pp->notify_kind, &pp->notify_queue);
+      if (html_armor_needed(val1, &alen1)) {
+        while (alen1 >= asize1) asize1 *= 2;
+        astr1 = alloca(asize1);
+        html_armor_string(val1, astr1);
+        val1 = astr1;
+      }
+      fprintf(f, " %s=\"%s\"", attr_map[RUNLOG_A_NOTIFY_QUEUE], val1);
     }
     if (!source_mode || !run_is_normal_status(pp->status)) {
       fprintf(f, "/>\n");

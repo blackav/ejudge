@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-06-04 08:15+0300\n"
+"POT-Creation-Date: 2023-06-10 07:29+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Ukrainian <uk@li.org>\n"
@@ -1929,6 +1929,9 @@ msgstr ""
 
 #, c-format
 msgid "Invalid name `%s' in row %d\n"
+msgstr ""
+
+msgid "Invalid notification"
 msgstr ""
 
 msgid "Invalid pages count"

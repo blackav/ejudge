@@ -3167,6 +3167,10 @@ priv_submit_run(
   int ext_user_kind = 0;
   ej_mixed_id_t ext_user;
   ej_mixed_id_t *ext_user_ptr = NULL;
+  int notify_driver = 0;
+  int notify_kind = 0;
+  ej_mixed_id_t notify_queue;
+  ej_mixed_id_t *notify_queue_ptr = NULL;
 
   if (opcaps_check(phr->caps, OPCAP_SUBMIT_RUN) < 0) {
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
@@ -3220,6 +3224,24 @@ priv_submit_run(
         FAIL(NEW_SRV_ERR_INV_EXT_USER);
       }
       ext_user_ptr = &ext_user;
+    }
+  }
+
+  hr_cgi_param_int_opt(phr, "notify_driver", &notify_driver, 0);
+  if (notify_driver > 0 && notify_driver < 128
+      && hr_cgi_param(phr, "notify_kind", &s) > 0) {
+    notify_kind = mixed_id_parse_kind(s);
+    if (notify_kind < 0) {
+      FAIL(NEW_SRV_ERR_INV_NOTIFY);
+    }
+    if (notify_kind > 0) {
+      if (hr_cgi_param(phr, "notify_queue", &s) <= 0) {
+        FAIL(NEW_SRV_ERR_INV_NOTIFY);
+      }
+      if (mixed_id_unmarshall(&notify_queue, notify_kind, s) < 0) {
+        FAIL(NEW_SRV_ERR_INV_NOTIFY);
+      }
+      notify_queue_ptr = &notify_queue;
     }
   }
 
@@ -3637,7 +3659,10 @@ priv_submit_run(
                           store_flags,
                           phr->is_job /* is_vcs */,
                           ext_user_kind,
-                          ext_user_ptr);
+                          ext_user_ptr,
+                          notify_driver,
+                          notify_kind,
+                          notify_queue_ptr);
   if (run_id < 0) {
     FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
   }
@@ -5586,7 +5611,10 @@ priv_new_run(FILE *fout,
                           store_flags,
                           0 /* is_vcs */,
                           0 /* ext_user_kind */,
-                          NULL /* ext_user */);
+                          NULL /* ext_user */,
+                          0 /* notify_driver */,
+                          0 /* notify_kind */,
+                          NULL /* notify_queue */);
   if (run_id < 0) FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
   serve_move_files_to_insert_run(cs, run_id);
   if (metrics.data) {
@@ -8335,6 +8363,15 @@ priv_run_status_json(
   if (re.last_change_us > 0) {
     fprintf(fout, ",\"last_change_us\":%lld", re.last_change_us);
   }
+  if (re.notify_driver > 0
+      && re.notify_kind > 0 && re.notify_kind < MIXED_ID_LAST) {
+    unsigned char mbuf[64];
+    fprintf(fout, ",\"notify_driver\":%d", re.notify_driver);
+    fprintf(fout, ",\"notify_kind\":\"%s\"",
+            mixed_id_unparse_kind(re.notify_kind));
+    fprintf(fout, ",\"notify_queue\":\"%s\"",
+            JARMOR(mixed_id_marshall(mbuf, re.notify_kind, &re.notify_queue)));
+  }
 
   fprintf(fout, "}");
   fprintf(fout, "}");
@@ -8995,6 +9032,17 @@ priv_list_runs_json(
                   mixed_id_unparse_kind(pe->ext_user_kind));
           fprintf(fout, ",\"ext_user\":\"%s\"",
                   JARMOR(mixed_id_marshall(mbuf, pe->ext_user_kind, &pe->ext_user)));
+        }
+      }
+      if ((run_fields & (1 << RUN_VIEW_NOTIFY))) {
+        if (pe->notify_driver > 0
+            && pe->notify_kind > 0 && pe->notify_kind < MIXED_ID_LAST) {
+          unsigned char mbuf[64];
+          fprintf(fout, ",\"notify_driver\":%d", pe->notify_driver);
+          fprintf(fout, ",\"notify_kind\":\"%s\"",
+                  mixed_id_unparse_kind(pe->notify_kind));
+          fprintf(fout, ",\"notify_queue\":\"%s\"",
+                  JARMOR(mixed_id_marshall(mbuf, pe->notify_kind, &pe->notify_queue)));
         }
       }
       if (pe->status == RUN_VIRTUAL_START || pe->status == RUN_VIRTUAL_STOP) {
@@ -11399,7 +11447,10 @@ ns_submit_run(
                           store_flags,
                           phr->is_job /* is_vcs */,
                           0 /* ext_user_kind */,
-                          NULL /* ext_user */);
+                          NULL /* ext_user */,
+                          0 /* notify_driver */,
+                          0 /* notify_kind */,
+                          NULL /* notify_queue */);
   if (run_id < 0) {
     FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
   }
@@ -12132,7 +12183,10 @@ unpriv_submit_run(
                           store_flags,
                           phr->is_job /* is_vcs */,
                           0 /* ext_user_kind */,
-                          NULL /* ext_user */);
+                          NULL /* ext_user */,
+                          0 /* notify_driver */,
+                          0 /* notify_kind */,
+                          NULL /* notify_queue */);
   if (run_id < 0) {
     FAIL2(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
   }
@@ -14521,7 +14575,10 @@ unpriv_xml_update_answer(
                             store_flags,
                             0 /* is_vcs */,
                             0 /* ext_user_kind */,
-                            NULL /* ext_user */);
+                            NULL /* ext_user */,
+                            0 /* notify_driver */,
+                            0 /* notify_kind */,
+                            NULL /* notify_queue */);
     if (run_id < 0) FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
     serve_move_files_to_insert_run(cs, run_id);
     if (metrics.data) {

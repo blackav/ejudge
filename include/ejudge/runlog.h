@@ -140,7 +140,10 @@ run_add_record(
         int            store_flags,
         int            is_vcs,
         int            ext_user_kind,
-        ej_mixed_id_t *ext_user);
+        ej_mixed_id_t *ext_user,
+        int            notify_driver,
+        int            notify_kind,
+        ej_mixed_id_t *notify_queue);
 int run_start_contest(runlog_state_t, time_t);
 time_t run_get_start_time(runlog_state_t);
 int
@@ -281,7 +284,8 @@ enum
     RE_IS_VCS        = 0x200000000ULL,
     RE_VERDICT_BITS  = 0x400000000ULL,
     RE_EXT_USER      = 0x800000000ULL,
-    RE_ALL           = 0xFFFFFFFFFULL,
+    RE_NOTIFY        = 0x1000000000ULL,
+    RE_ALL           = 0x1FFFFFFFFFULL,
   };
 
 struct run_entry
@@ -340,12 +344,14 @@ struct run_entry
   int64_t        serial_id;     /* 8 */
   unsigned char  pages;         /* 1 */
   unsigned char  ext_user_kind; /* 1 */
-  char _pad0[2];
+  unsigned char  notify_driver; /* 1 */
+  unsigned char  notify_kind;   /* 1 */
   ruint32_t      verdict_bits;  /* 4 */
   rint64_t       last_change_us;/* 8 */
   char _pad1[8];
   ej_mixed_id_t  ext_user;      /* 16 */
-  char _pad[48];
+  ej_mixed_id_t  notify_queue;  /* 16 */
+  char _pad[32];
   /* total is 256 bytes */
 };
 
