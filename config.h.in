@@ -190,5 +190,8 @@
 /* liblzma available */
 #undef CONF_HAS_LIBLZMA
 
+/* hiredis available */
+#undef CONF_HAS_HIREDIS
+
 #endif /* __CONFIG_H__ */
 
