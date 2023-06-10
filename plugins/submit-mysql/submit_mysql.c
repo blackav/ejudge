@@ -25,7 +25,7 @@
 
 #include <string.h>
 
-#define SUBMIT_DB_VERSION 3
+#define SUBMIT_DB_VERSION 4
 
 struct submit_mysql_data
 {
@@ -100,6 +100,9 @@ static const char create_query[] =
 "    input_size BIGINT NOT NULL DEFAULT 0,\n"
 "    ext_user_kind TINYINT NOT NULL DEFAULT 0,\n"
 "    ext_user VARCHAR(40) DEFAULT NULL,\n"
+"    notify_driver TINYINT NOT NULL DEFAULT 0,\n"
+"    notify_kind TINYINT NOT NULL DEFAULT 0,\n"
+"    notify_queue VARCHAR(40) DEFAULT NULL,\n"
 "    UNIQUE KEY s_uuid_idx(uuid),\n"
 "    KEY s_contest_id_idx(contest_id),\n"
 "    KEY s_user_id_idx(user_id),\n"
@@ -175,6 +178,10 @@ check_database(
             break;
         case 2:
             if (mi->simple_fquery(md, "ALTER TABLE %ssubmits ADD COLUMN ext_user_kind TINYINT NOT NULL DEFAULT 0 AFTER input_size, ADD COLUMN ext_user VARCHAR(40) DEFAULT NULL AFTER ext_user_kind", md->table_prefix) < 0)
+                return -1;
+            break;
+        case 3:
+            if (mi->simple_fquery(md, "ALTER TABLE %ssubmits ADD COLUMN notify_driver TINYINT NOT NULL DEFAULT 0 AFTER ext_user, ADD COLUMN notify_kind TINYINT NOT NULL DEFAULT 0 AFTER notify_driver, ADD COLUMN notify_queue VARCHAR(40) DEFAULT NULL AFTER notify_kind", md->table_prefix) < 0)
                 return -1;
             break;
         case SUBMIT_DB_VERSION:
@@ -271,9 +278,12 @@ struct submit_entry_internal
     int64_t input_size;
     int ext_user_kind;
     unsigned char *ext_user;
+    int notify_driver;
+    int notify_kind;
+    unsigned char *notify_queue;
 };
 
-enum { SUBMIT_ROW_WIDTH = 24 };
+enum { SUBMIT_ROW_WIDTH = 27 };
 #define SUBMIT_OFFSET(f) XOFFSET(struct submit_entry_internal, f)
 static const struct common_mysql_parse_spec submit_spec[SUBMIT_ROW_WIDTH] =
 {
@@ -301,6 +311,9 @@ static const struct common_mysql_parse_spec submit_spec[SUBMIT_ROW_WIDTH] =
     { 1, 'l', "input_size", SUBMIT_OFFSET(input_size), 0 },
     { 0, 'd', "ext_user_kind", SUBMIT_OFFSET(ext_user_kind), 0 },
     { 1, 's', "ext_user", SUBMIT_OFFSET(ext_user), 0 },
+    { 0, 'd', "notify_driver", SUBMIT_OFFSET(notify_driver), 0 },
+    { 0, 'd', "notify_kind", SUBMIT_OFFSET(notify_kind), 0 },
+    { 1, 's', "notify_queue", SUBMIT_OFFSET(notify_queue), 0 },
 };
 
 static int
@@ -384,6 +397,15 @@ insert_func(
                                   &pse->ext_user));
     } else {
         fprintf(cmd_f, ",0,NULL");
+    }
+    if (pse->notify_driver > 0
+        && pse->notify_kind > 0 && pse->notify_kind < MIXED_ID_LAST) {
+        fprintf(cmd_f, ",%d,%d,\"%s\"",
+                pse->notify_driver, pse->notify_kind,
+                mixed_id_marshall(uuid_buf, pse->notify_kind,
+                                  &pse->notify_queue));
+    } else {
+        fprintf(cmd_f, ",0,0,NULL");
     }
     fprintf(cmd_f, ")");
     fclose(cmd_f); cmd_f = NULL;
@@ -504,7 +526,23 @@ copy_to_submit_entry(
         pse->ext_user_kind = 0;
         memset(&pse->ext_user, 0, sizeof(pse->ext_user));
     }
+    if (psei->notify_driver > 0
+        && pse->notify_kind > 0 && psei->notify_kind < MIXED_ID_LAST) {
+        pse->notify_driver = psei->notify_driver;
+        pse->notify_kind = psei->notify_kind;
+        if (mixed_id_unmarshall(&pse->notify_queue, psei->notify_kind,
+                                psei->notify_queue) < 0) {
+            pse->notify_driver = 0;
+            pse->notify_kind = 0;
+            memset(&pse->notify_queue, 0, sizeof(pse->notify_queue));
+        }
+    } else {
+        pse->notify_driver = 0;
+        pse->notify_kind = 0;
+        memset(&pse->notify_queue, 0, sizeof(pse->notify_queue));
+    }
     free(psei->ext_user); psei->ext_user = NULL;
+    free(psei->notify_queue); psei->notify_queue = NULL;
 }
 
 static int

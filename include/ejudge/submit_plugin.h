@@ -30,6 +30,7 @@ struct submit_entry
     ej_uuid_t     prob_uuid;    /* problem uuid */
     ej_uuid_t     judge_uuid;   /* judge uuid */
     ej_mixed_id_t ext_user;     /* external user ID */
+    ej_mixed_id_t notify_queue; /* notification queue ID */
     int64_t       serial_id;
     int64_t       source_id;
     int64_t       input_id;
@@ -49,6 +50,8 @@ struct submit_entry
     unsigned char ssl_flag;
     signed char   eoln_type;
     unsigned char ext_user_kind;
+    unsigned char notify_driver;
+    unsigned char notify_kind;
 };
 
 struct submit_totals
