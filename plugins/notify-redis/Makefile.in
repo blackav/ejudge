@@ -26,13 +26,10 @@ EXPAT_DIR=@ac_cv_expat_root@
 EXPAT_INCL_OPT=@ac_cv_expat_include_opt@
 EXPAT_LIB_OPT=@ac_cv_expat_lib_opt@
 
-MYSQL_DIR=@ac_cv_mysql_root@
-MYSQL_INCL_OPT=@ac_cv_mysql_include_opt@
-MYSQL_LIB_OPT=@ac_cv_mysql_lib_opt@
-MYSQL_LIBS=@ac_cv_mysql_libs@
-
 WPTRSIGN=@ac_cv_gcc_wno_pointer_sign@ @ac_cv_gcc_wno_format_truncation@
 WERROR=@ac_cv_werror_flag@
+
+HIREDIS_LIB=@ac_cv_has_lib_hiredis@
 
 ifdef RELEASE
 CDEBUGFLAGS=-O2 -Wall -DNDEBUG -DRELEASE ${WERROR}
@@ -48,7 +45,7 @@ EXTRALIBS=
 CCOMPFLAGS=-D_GNU_SOURCE
 LDCOMPFLAGS=
 
-ifeq ($(MYSQL_LIBS),)
+ifeq ($(HIREDIS_LIB),)
 include empty.make
 else
 include main.make
