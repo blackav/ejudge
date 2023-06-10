@@ -494,6 +494,7 @@ copy_to_submit_entry(
     pse->ssl_flag = psei->ssl_flag;
     pse->eoln_type = psei->eoln_type;
     if (psei->ext_user_kind > 0 && psei->ext_user_kind < MIXED_ID_LAST) {
+        pse->ext_user_kind = psei->ext_user_kind;
         if (mixed_id_unmarshall(&pse->ext_user, psei->ext_user_kind,
                                 psei->ext_user) < 0) {
             pse->ext_user_kind = 0;

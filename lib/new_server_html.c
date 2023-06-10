@@ -13085,6 +13085,7 @@ ns_get_submit(
 
   cJSON *jrr = cJSON_CreateObject();
   cJSON_AddNumberToObject(jrr, "submit_id", se.serial_id);
+  cJSON_AddNumberToObject(jrr, "contest_id", se.contest_id);
   cJSON_AddNumberToObject(jrr, "user_id", se.user_id);
   cJSON_AddNumberToObject(jrr, "prob_id", se.prob_id);
   cJSON_AddNumberToObject(jrr, "lang_id", se.lang_id);
