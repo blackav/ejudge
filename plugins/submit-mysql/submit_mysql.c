@@ -25,7 +25,7 @@
 
 #include <string.h>
 
-#define SUBMIT_DB_VERSION 2
+#define SUBMIT_DB_VERSION 3
 
 struct submit_mysql_data
 {
@@ -98,6 +98,8 @@ static const char create_query[] =
 "    protocol_id BIGINT DEFAULT NULL,\n"
 "    source_size BIGINT NOT NULL DEFAULT 0,\n"
 "    input_size BIGINT NOT NULL DEFAULT 0,\n"
+"    ext_user_kind TINYINT NOT NULL DEFAULT 0,\n"
+"    ext_user VARCHAR(40) DEFAULT NULL,\n"
 "    UNIQUE KEY s_uuid_idx(uuid),\n"
 "    KEY s_contest_id_idx(contest_id),\n"
 "    KEY s_user_id_idx(user_id),\n"
@@ -170,6 +172,10 @@ check_database(
                 goto fail;
             if (mi->simple_fquery(md, "ALTER TABLE %ssubmits MODIFY COLUMN uuid CHAR(40) NOT NULL, MODIFY COLUMN prob_uuid VARCHAR(40) DEFAULT NULL, MODIFY COLUMN ip VARCHAR(64) DEFAULT NULL, MODIFY COLUMN judge_uuid VARCHAR(40) DEFAULT NULL ;", md->table_prefix) < 0)
                 goto fail;
+            break;
+        case 2:
+            if (mi->simple_fquery(md, "ALTER TABLE %ssubmits ADD COLUMN ext_user_kind TINYINT NOT NULL DEFAULT 0 AFTER input_size, ADD COLUMN ext_user VARCHAR(40) DEFAULT NULL AFTER ext_user_kind", md->table_prefix) < 0)
+                return -1;
             break;
         case SUBMIT_DB_VERSION:
             submit_version = -1;
@@ -263,9 +269,11 @@ struct submit_entry_internal
     int64_t protocol_id;
     int64_t source_size;
     int64_t input_size;
+    int ext_user_kind;
+    unsigned char *ext_user;
 };
 
-enum { SUBMIT_ROW_WIDTH = 22 };
+enum { SUBMIT_ROW_WIDTH = 24 };
 #define SUBMIT_OFFSET(f) XOFFSET(struct submit_entry_internal, f)
 static const struct common_mysql_parse_spec submit_spec[SUBMIT_ROW_WIDTH] =
 {
@@ -291,6 +299,8 @@ static const struct common_mysql_parse_spec submit_spec[SUBMIT_ROW_WIDTH] =
     { 1, 'l', "protocol_id", SUBMIT_OFFSET(protocol_id), 0 },
     { 1, 'l', "source_size", SUBMIT_OFFSET(source_size), 0 },
     { 1, 'l', "input_size", SUBMIT_OFFSET(input_size), 0 },
+    { 0, 'd', "ext_user_kind", SUBMIT_OFFSET(ext_user_kind), 0 },
+    { 1, 's', "ext_user", SUBMIT_OFFSET(ext_user), 0 },
 };
 
 static int
@@ -367,6 +377,14 @@ insert_func(
     }
     fprintf(cmd_f, ",%lld", (long long) pse->source_size);
     fprintf(cmd_f, ",%lld", (long long) pse->input_size);
+    if (pse->ext_user_kind > 0 && pse->ext_user_kind < MIXED_ID_LAST) {
+        fprintf(cmd_f, ",%d,\"%s\"",
+                pse->ext_user_kind,
+                mixed_id_marshall(uuid_buf, pse->ext_user_kind,
+                                  &pse->ext_user));
+    } else {
+        fprintf(cmd_f, ",0,NULL");
+    }
     fprintf(cmd_f, ")");
     fclose(cmd_f); cmd_f = NULL;
 
@@ -475,6 +493,18 @@ copy_to_submit_entry(
     pse->locale_id = psei->locale_id;
     pse->ssl_flag = psei->ssl_flag;
     pse->eoln_type = psei->eoln_type;
+    if (psei->ext_user_kind > 0 && psei->ext_user_kind < MIXED_ID_LAST) {
+        pse->ext_user_kind = psei->ext_user_kind;
+        if (mixed_id_unmarshall(&pse->ext_user, psei->ext_user_kind,
+                                psei->ext_user) < 0) {
+            pse->ext_user_kind = 0;
+            memset(&pse->ext_user, 0, sizeof(pse->ext_user));
+        }
+    } else {
+        pse->ext_user_kind = 0;
+        memset(&pse->ext_user, 0, sizeof(pse->ext_user));
+    }
+    free(psei->ext_user); psei->ext_user = NULL;
 }
 
 static int

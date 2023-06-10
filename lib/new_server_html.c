@@ -12517,6 +12517,8 @@ ns_submit_run_input(
   int sender_user_id = 0;
   ej_ip_t sender_ip = {};
   int sender_ssl_flag = 0;
+  int ext_user_kind = 0;
+  ej_mixed_id_t ext_user = {};
 
   if (admin_mode) {
     if (opcaps_check(phr->caps, OPCAP_SUBMIT_RUN) < 0) {
@@ -12556,6 +12558,24 @@ ns_submit_run_input(
     } else {
       sender_ip = phr->ip;
       sender_ssl_flag = phr->ssl_flag;
+    }
+
+    if (hr_cgi_param(phr, "ext_user_kind", &s) > 0) {
+      ext_user_kind = mixed_id_parse_kind(s);
+      if (ext_user_kind < 0 || ext_user_kind >= MIXED_ID_LAST) {
+        err_num = NEW_SRV_ERR_INV_EXT_USER;
+        goto done;
+      }
+      if (ext_user_kind > 0) {
+        if (hr_cgi_param(phr, "ext_user", &s) <= 0) {
+          err_num = NEW_SRV_ERR_INV_EXT_USER;
+          goto done;
+        }
+        if (mixed_id_unmarshall(&ext_user, ext_user_kind, s) < 0) {
+          err_num = NEW_SRV_ERR_INV_EXT_USER;
+          goto done;
+        }
+      }
     }
   } else {
     // unprivileged mode
@@ -12891,6 +12911,8 @@ ns_submit_run_input(
   se.eoln_type = eoln_type;
   se.source_size = run_size;
   se.input_size = inp_size;
+  se.ext_user_kind = ext_user_kind;
+  se.ext_user = ext_user;
 
   if ((cs->submit_state->vt->insert(cs->submit_state, &se)) < 0) {
     err_num = NEW_SRV_ERR_RUNLOG_UPDATE_FAILED;
@@ -13063,12 +13085,21 @@ ns_get_submit(
 
   cJSON *jrr = cJSON_CreateObject();
   cJSON_AddNumberToObject(jrr, "submit_id", se.serial_id);
+  cJSON_AddNumberToObject(jrr, "contest_id", se.contest_id);
   cJSON_AddNumberToObject(jrr, "user_id", se.user_id);
   cJSON_AddNumberToObject(jrr, "prob_id", se.prob_id);
   cJSON_AddNumberToObject(jrr, "lang_id", se.lang_id);
   cJSON_AddNumberToObject(jrr, "status", se.status);
   cJSON_AddStringToObject(jrr, "status_str",
                           run_status_str(se.status, NULL, 0, 0, 0));
+  if (se.ext_user_kind > 0 && se.ext_user_kind < MIXED_ID_LAST) {
+    unsigned char buf[64];
+    cJSON_AddStringToObject(jrr, "ext_user_kind",
+                            mixed_id_unparse_kind(se.ext_user_kind));
+    cJSON_AddStringToObject(jrr, "ext_user",
+                            mixed_id_marshall(buf, se.ext_user_kind,
+                                              &se.ext_user));
+  }
   if (tr) {
     if (tr->compiler_output && *tr->compiler_output) {
       cJSON_AddStringToObject(jrr, "compiler_output", tr->compiler_output);
