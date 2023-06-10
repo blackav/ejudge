@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-06-04 08:15+0300\n"
+"POT-Creation-Date: 2023-06-10 07:29+0300\n"
 "PO-Revision-Date: 2022-01-12 13:17+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -2057,6 +2057,9 @@ msgstr "Недопустимое регистрационное имя `%s' в �
 #, c-format
 msgid "Invalid name `%s' in row %d\n"
 msgstr "Недопустимое имя `%s' в строке %d\n"
+
+msgid "Invalid notification"
+msgstr "Неверная спецификация нотификации"
 
 msgid "Invalid pages count"
 msgstr "Неверное количество страниц"

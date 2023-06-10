@@ -191,6 +191,7 @@ static const unsigned char * const ns_error_messages[NEW_SRV_ERR_LAST]=
   [NEW_SRV_ERR_INV_SUBMIT_ID] = __("Invalid submit ID"),
   [NEW_SRV_ERR_INV_USERPROB_ID] = __("Invalid ID"),
   [NEW_SRV_ERR_INV_EXT_USER] = __("Invalid external user"),
+  [NEW_SRV_ERR_INV_NOTIFY] = __("Invalid notification"),
 };
 
 static const unsigned char * const ns_error_titles[NEW_SRV_ERR_LAST]=
@@ -354,6 +355,7 @@ static const unsigned char * const ns_error_titles[NEW_SRV_ERR_LAST]=
   [NEW_SRV_ERR_INV_SUBMIT_ID] = __("Invalid submit ID"),
   [NEW_SRV_ERR_INV_USERPROB_ID] = __("Invalid ID"),
   [NEW_SRV_ERR_INV_EXT_USER] = __("Invalid external user"),
+  [NEW_SRV_ERR_INV_NOTIFY] = __("Invalid notification"),
 };
 
 static const unsigned char * const ns_error_symbols[NEW_SRV_ERR_LAST]=
@@ -516,6 +518,7 @@ static const unsigned char * const ns_error_symbols[NEW_SRV_ERR_LAST]=
   [NEW_SRV_ERR_INV_SUBMIT_ID] = "ERR_INV_SUBMIT_ID",
   [NEW_SRV_ERR_INV_USERPROB_ID] = "ERR_INV_USERPROB_ID",
   [NEW_SRV_ERR_INV_EXT_USER] = "ERR_INV_EXT_USER",
+  [NEW_SRV_ERR_INV_NOTIFY] = "ERR_INV_NOTIFY",
 };
 
 const unsigned char *
