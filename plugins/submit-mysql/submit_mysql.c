@@ -527,7 +527,7 @@ copy_to_submit_entry(
         memset(&pse->ext_user, 0, sizeof(pse->ext_user));
     }
     if (psei->notify_driver > 0
-        && pse->notify_kind > 0 && psei->notify_kind < MIXED_ID_LAST) {
+        && psei->notify_kind > 0 && psei->notify_kind < MIXED_ID_LAST) {
         pse->notify_driver = psei->notify_driver;
         pse->notify_kind = psei->notify_kind;
         if (mixed_id_unmarshall(&pse->notify_queue, psei->notify_kind,
