@@ -435,6 +435,13 @@ run_add_record(
     re.ext_user = *ext_user;
     flags |= RE_EXT_USER;
   }
+  if (notify_driver > 0
+      && notify_kind > 0 && notify_kind < MIXED_ID_LAST) {
+    re.notify_driver = notify_driver;
+    re.notify_kind = notify_kind;
+    re.notify_queue = *notify_queue;
+    flags |= RE_NOTIFY;
+  }
   flags |= RE_SIZE | RE_LOCALE_ID | RE_USER_ID | RE_LANG_ID | RE_PROB_ID | RE_STATUS | RE_TEST | RE_SCORE | RE_IP | RE_SSL_FLAG | RE_VARIANT | RE_IS_HIDDEN | RE_MIME_TYPE | RE_EOLN_TYPE | RE_STORE_FLAGS | RE_IS_VCS;
 
   touch_last_update_time_us(state);
