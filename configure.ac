@@ -96,36 +96,6 @@ AC_ARG_WITH([httpd-htdocs-dir],AS_HELP_STRING([--with-httpd-htdocs-dir],[specify
 
 AC_ARG_WITH([festival],AS_HELP_STRING([--with-festival],[specify the home directory of the festival speech generator]),[ac_cv_festival_home="$withval"])
 
-AC_ARG_WITH([gcc],AC_HELP_STRING([--with-gcc],[OBSOLETE: specify the GNU C compiler to use in contests]),[ac_cv_contest_gcc="$withval"])
-AC_ARG_WITH([gpp],AC_HELP_STRING([--with-gpp],[OBSOLETE: specify the GNU C++ compiler to use in contests]),[ac_cv_contest_gpp="$withval"])
-AC_ARG_WITH([fpc],AC_HELP_STRING([--with-fpc],[OBSOLETE: specify the Free Pascal compiler to use in contests]),[ac_cv_contest_fpc="$withval"])
-AC_ARG_WITH([gpc],AC_HELP_STRING([--with-gpc],[OBSOLETE: specify the GNU Pascal compiler to use in contests]),[ac_cv_contest_gpc="$withval"])
-AC_ARG_WITH([gcj],AC_HELP_STRING([--with-gcj],[OBSOLETE: specify the GNU Java (GCJ) compiler to use in contests]),[ac_cv_contest_gcj="$withval"])
-AC_ARG_WITH([g77],AC_HELP_STRING([--with-g77],[OBSOLETE: specify the GNU Fortran 77 compiler to use in contests]),[ac_cv_contest_g77="$withval"])
-AC_ARG_WITH([gfortran],AC_HELP_STRING([--with-gfortran],[OBSOLETE: specify the GNU Fortran 90 compiler to use in contests]),[ac_cv_contest_gfortran="$withval"])
-AC_ARG_WITH([dcc],AC_HELP_STRING([--with-dcc],[OBSOLETE: specify the Borland Delphi compiler to use in contests]),[ac_cv_contest_dcc="$withval"])
-AC_ARG_WITH([yabasic],AC_HELP_STRING([--with-yabasic],[OBSOLETE: specify the Yabasic interpreter to use in contests]),[ac_cv_contest_yabasic="$withval"])
-AC_ARG_WITH([scheme],AC_HELP_STRING([--with-scheme],[OBSOLETE: specify the MzScheme interpreter to use in contests]),[ac_cv_contest_mzscheme="$withval"])
-AC_ARG_WITH([python],AC_HELP_STRING([--with-python],[OBSOLETE: specify the Python interpreter to use in contests]),[ac_cv_contest_python="$withval"])
-AC_ARG_WITH([perl],AC_HELP_STRING([--with-perl],[OBSOLETE: specify the Perl interpreter to use in contests]),[ac_cv_contest_perl="$withval"])
-AC_ARG_WITH([prolog],AC_HELP_STRING([--with-prolog],[OBSOLETE: specify the GNU Prolog compiler to use in contests]),[ac_cv_contest_gprolog="$withval"])
-AC_ARG_WITH([javac],AC_HELP_STRING([--with-javac],[OBSOLETE: specify the Java2 SDK javac path to use in contests]),[ac_cv_contest_javac="$withval"])
-AC_ARG_WITH([mcs],AC_HELP_STRING([--with-mcs],[OBSOLETE: specify the C-sharp Mono mcs/gmcs path to use in contests]),[ac_cv_contest_mcs="$withval"])
-AC_ARG_WITH([vbnc],AC_HELP_STRING([--with-vbnc],[OBSOLETE: specify the Visual Basic Mono vbnc path to use in contests]),[ac_cv_contest_vbnc="$withval"])
-
-if [[ x"${ac_cv_contest_gcc}${ac_cv_contest_gpp}${ac_cv_contest_fpc}${ac_cv_contest_gpc}${ac_cv_contest_gcj}${ac_cv_contest_g77}${ac_cv_contest_gfortran}${ac_cv_contest_dcc}${ac_cv_contest_yabasic}${ac_cv_contest_mzscheme}${ac_cv_contest_python}${ac_cv_contest_perl}${ac_cv_contest_gprolog}${ac_cv_contest_javac}${ac_cv_contest_mcs}${ac_cv_contest_vbnc}" != x ]]
-then
-  cat <<EOF
-
-ERROR:
-The configure script now does not configure programming language
-compilers. Options like --with-gcc are no longer supported.
-To configure programming language compilers please use ejudge-setup
-or ejudge-configure-compilers programs.
-EOF
-  exit 1
-fi
-
 dnl setup default values
 [[ x"${ac_cv_contests_home_dir}" = x -o x"${ac_cv_contests_home_dir}" = xyes ]] && ac_cv_contests_home_dir="/home/judges"
 
