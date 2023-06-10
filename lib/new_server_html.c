@@ -12519,6 +12519,9 @@ ns_submit_run_input(
   int sender_ssl_flag = 0;
   int ext_user_kind = 0;
   ej_mixed_id_t ext_user = {};
+  int notify_driver = 0;
+  int notify_kind = 0;
+  ej_mixed_id_t notify_queue = {};
 
   if (admin_mode) {
     if (opcaps_check(phr->caps, OPCAP_SUBMIT_RUN) < 0) {
@@ -12573,6 +12576,33 @@ ns_submit_run_input(
         }
         if (mixed_id_unmarshall(&ext_user, ext_user_kind, s) < 0) {
           err_num = NEW_SRV_ERR_INV_EXT_USER;
+          goto done;
+        }
+      }
+    }
+
+    hr_cgi_param_int_opt(phr, "notify_driver", &notify_driver, 0);
+    if (notify_driver < 0 || notify_driver > 255) {
+      err_num = NEW_SRV_ERR_INV_NOTIFY;
+      goto done;
+    }
+    if (notify_driver > 0) {
+      if (hr_cgi_param(phr, "notify_kind", &s) <= 0) {
+        err_num = NEW_SRV_ERR_INV_NOTIFY;
+        goto done;
+      }
+      notify_kind = mixed_id_parse_kind(s);
+      if (notify_kind < 0 || notify_kind >= MIXED_ID_LAST) {
+        err_num = NEW_SRV_ERR_INV_NOTIFY;
+        goto done;
+      }
+      if (notify_kind > 0) {
+        if (hr_cgi_param(phr, "notify_queue", &s) <= 0) {
+          err_num = NEW_SRV_ERR_INV_NOTIFY;
+          goto done;
+        }
+        if (mixed_id_unmarshall(&notify_queue, notify_kind, s) < 0) {
+          err_num = NEW_SRV_ERR_INV_NOTIFY;
           goto done;
         }
       }
@@ -12913,6 +12943,9 @@ ns_submit_run_input(
   se.input_size = inp_size;
   se.ext_user_kind = ext_user_kind;
   se.ext_user = ext_user;
+  se.notify_driver = notify_driver;
+  se.notify_kind = notify_kind;
+  se.notify_queue = notify_queue;
 
   if ((cs->submit_state->vt->insert(cs->submit_state, &se)) < 0) {
     err_num = NEW_SRV_ERR_RUNLOG_UPDATE_FAILED;
@@ -13099,6 +13132,16 @@ ns_get_submit(
     cJSON_AddStringToObject(jrr, "ext_user",
                             mixed_id_marshall(buf, se.ext_user_kind,
                                               &se.ext_user));
+  }
+  if (se.notify_driver > 0
+      && se.notify_kind > 0 && se.notify_kind < MIXED_ID_LAST) {
+    unsigned char buf[64];
+    cJSON_AddNumberToObject(jrr, "notify_driver", se.notify_driver);
+    cJSON_AddStringToObject(jrr, "notify_kind",
+                            mixed_id_unparse_kind(se.notify_kind));
+    cJSON_AddStringToObject(jrr, "notify_queue",
+                            mixed_id_marshall(buf, se.notify_kind,
+                                              &se.notify_queue));
   }
   if (tr) {
     if (tr->compiler_output && *tr->compiler_output) {
