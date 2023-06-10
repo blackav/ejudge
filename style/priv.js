@@ -137,7 +137,8 @@ var ej_valid_fields =
   27 : "Tokens",
   28 : "Verdict Bits",
   29 : "Last Change Time",
-  30 : "External User"
+  30 : "External User",
+  31 : "Notification Info"
 }
 
 function ej_field_popup(field_mask)

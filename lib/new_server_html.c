@@ -9003,6 +9003,17 @@ priv_list_runs_json(
                   JARMOR(mixed_id_marshall(mbuf, pe->ext_user_kind, &pe->ext_user)));
         }
       }
+      if ((run_fields & (1 << RUN_VIEW_NOTIFY))) {
+        if (pe->notify_driver > 0
+            && pe->notify_kind > 0 && pe->notify_kind < MIXED_ID_LAST) {
+          unsigned char mbuf[64];
+          fprintf(fout, ",\"notify_driver\":%d", pe->notify_driver);
+          fprintf(fout, ",\"notify_kind\":\"%s\"",
+                  mixed_id_unparse_kind(pe->notify_kind));
+          fprintf(fout, ",\"notify_queue\":\"%s\"",
+                  JARMOR(mixed_id_marshall(mbuf, pe->notify_kind, &pe->notify_queue)));
+        }
+      }
       if (pe->status == RUN_VIRTUAL_START || pe->status == RUN_VIRTUAL_STOP) {
         if (pe->is_checked > 0) {
           fprintf(fout, ",\"is_examinable\":%s", to_json_bool(1));

@@ -469,6 +469,9 @@ ns_write_priv_all_runs(
     if (run_fields & (1 << RUN_VIEW_EXT_USER)) {
       fprintf(f, "<th%s>%s</th>", cl, "External User");
     }
+    if (run_fields & (1 << RUN_VIEW_NOTIFY)) {
+      fprintf(f, "<th%s>%s</th>", cl, "Notify Info");
+    }
     /*
     if (phr->role == USER_ROLE_ADMIN) {
       fprintf(f, "<th%s>%s</th>", cl, _("New result"));
@@ -612,6 +615,9 @@ ns_write_priv_all_runs(
         if (run_fields & (1 << RUN_VIEW_EXT_USER)) {
           fprintf(f, "<td%s>&nbsp;</td>", cl);
         }
+        if (run_fields & (1 << RUN_VIEW_NOTIFY)) {
+          fprintf(f, "<td%s>&nbsp;</td>", cl);
+        }
         fprintf(f, "<td%s>&nbsp;</td>", cl);
         fprintf(f, "<td%s>&nbsp;</td>", cl);
         /*
@@ -726,6 +732,9 @@ ns_write_priv_all_runs(
           fprintf(f, "<td%s>&nbsp;</td>", cl);
         }
         if (run_fields & (1 << RUN_VIEW_EXT_USER)) {
+          fprintf(f, "<td%s>&nbsp;</td>", cl);
+        }
+        if (run_fields & (1 << RUN_VIEW_NOTIFY)) {
           fprintf(f, "<td%s>&nbsp;</td>", cl);
         }
 
@@ -950,6 +959,17 @@ ns_write_priv_all_runs(
           fprintf(f, "<td%s>%s</td>", cl,
                   ARMOR(mixed_id_marshall(durstr, pe->ext_user_kind,
                                           &pe->ext_user)));
+        } else {
+          fprintf(f, "<td%s>&nbsp;</td>", cl);
+        }
+      }
+      if (run_fields & (1 << RUN_VIEW_NOTIFY)) {
+        if (pe->notify_driver > 0
+            && pe->notify_kind > 0 && pe->notify_kind < MIXED_ID_LAST) {
+          fprintf(f, "<td%s>%d:%s</td>", cl,
+                  pe->notify_driver,
+                  ARMOR(mixed_id_marshall(durstr, pe->notify_kind,
+                                          &pe->notify_queue)));
         } else {
           fprintf(f, "<td%s>&nbsp;</td>", cl);
         }
