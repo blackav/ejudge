@@ -8341,6 +8341,15 @@ priv_run_status_json(
   if (re.last_change_us > 0) {
     fprintf(fout, ",\"last_change_us\":%lld", re.last_change_us);
   }
+  if (re.notify_driver > 0
+      && re.notify_kind > 0 && re.notify_kind < MIXED_ID_LAST) {
+    unsigned char mbuf[64];
+    fprintf(fout, ",\"notify_driver\":%d", re.notify_driver);
+    fprintf(fout, ",\"notify_kind\":\"%s\"",
+            mixed_id_unparse_kind(re.notify_kind));
+    fprintf(fout, ",\"notify_queue\":\"%s\"",
+            JARMOR(mixed_id_marshall(mbuf, re.notify_kind, &re.notify_queue)));
+  }
 
   fprintf(fout, "}");
   fprintf(fout, "}");
