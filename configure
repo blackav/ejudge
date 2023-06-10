@@ -6680,8 +6680,8 @@ else $as_nop
 int main(void)
 {
   iconv_t cvt = iconv_open("iso8859-1", "utf-8");
-  const char str1 = "123";
-  char str216;
+  const char str1[] = "123";
+  char str2[16];
   size_t sz1 = 3, sz2 = 16, sz3;
   const char *p1 = str1;
   char *p2 = str2;
@@ -7631,7 +7631,7 @@ printf %s "checking for CAP_SYS_OPERATIONS bit... " >&6; }
 int main(void)
 {
   cap_t old_caps, new_caps;
-  int   setcaps = { CAP_SYS_OPERATIONS };
+  int   setcaps[] = { CAP_SYS_OPERATIONS };
 
   old_caps = cap_get_proc();
   new_caps = cap_dup(old_caps);
@@ -7685,7 +7685,7 @@ else $as_nop
 int main(void)
 {
   cap_t old_caps, new_caps;
-  int   setcaps = { CAP_SYS_OPERATIONS };
+  int   setcaps[] = { CAP_SYS_OPERATIONS };
   int   p;
 
   old_caps = cap_get_proc();
@@ -8031,8 +8031,8 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #include <stdio.h>
 int main(void)
 {
-  char buf132;
-  char buf232;
+  char buf1[32];
+  char buf2[32];
   if (fgets(buf1, sizeof(buf1), stdin))
     snprintf(buf2, sizeof(buf2), "prefix%s", buf1);
 }
@@ -8065,8 +8065,8 @@ printf %s "checking for -Wno-format-truncation... " >&6; }
 #include <stdio.h>
 int main(void)
 {
-  char buf132;
-  char buf232;
+  char buf1[32];
+  char buf2[32];
   if (fgets(buf1, sizeof(buf1), stdin))
     snprintf(buf2, sizeof(buf2), "prefix%s", buf1);
 }
