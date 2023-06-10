@@ -185,7 +185,7 @@ CFLAGS="${CFLAGS} -Werror -Wall"
 LIBS=" ${ac_cv_has_lib_libiconv} ${ac_cv_has_lib_iconv}"
 AC_MSG_CHECKING([that iconv requires const qualifier])
 AC_RUN_IFELSE(
-[AC_LANG_SOURCE([
+[AC_LANG_SOURCE([[
 #include <iconv.h>
 #include <stdio.h>
 int main(void)
@@ -199,7 +199,7 @@ int main(void)
   sz3 = iconv(cvt, &p1, &sz1, &p2, &sz2);
   return 0;
 }
-])],[
+]])],[
 AC_MSG_RESULT([yes])
 ac_cv_iconv_needs_const=1
 ],[
@@ -211,7 +211,7 @@ CFLAGS="${saved_CFLAGS}"
 
 ac_cv_have_so_passcred=
 AC_MSG_CHECKING([SO_PASSCRED flag])
-AC_RUN_IFELSE([AC_LANG_SOURCE([
+AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include <sys/types.h>
 #include <sys/socket.h>
 int main()
@@ -220,7 +220,7 @@ int main()
   setsockopt(0, SOL_SOCKET, SO_PASSCRED, &val, sizeof(val));
   return 0;
 }
-])],[
+]])],[
 AC_MSG_RESULT([yes])
 ac_cv_have_so_passcred=1
 ],[
@@ -229,7 +229,7 @@ AC_MSG_RESULT([no])
 
 ac_cv_have_siocing=
 AC_MSG_CHECKING([SIOCINQ flag])
-AC_RUN_IFELSE([AC_LANG_SOURCE([
+AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include <sys/ioctl.h>
 #include <linux/sockios.h>
 int main()
@@ -239,7 +239,7 @@ int main()
   ioctl(0, SIOCINQ, &sz);
   return 0;
 }
-])],[
+]])],[
 AC_MSG_RESULT([yes])
 ac_cv_have_siocing=1
 ],[
@@ -248,7 +248,7 @@ AC_MSG_RESULT([no])
 
 ac_cv_have_f_notify=
 AC_MSG_CHECKING([F_NOTIFY flag])
-AC_RUN_IFELSE([AC_LANG_SOURCE([
+AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #define _GNU_SOURCE
 #include <unistd.h>
 #include <sys/types.h>
@@ -262,7 +262,7 @@ int main()
   fcntl(0, F_NOTIFY, DN_CREATE | DN_DELETE | DN_RENAME | DN_MULTISHOT);
   return 0;
 }
-])],[
+]])],[
 AC_MSG_RESULT([yes])
 ac_cv_have_f_notify=1
 ],[
@@ -310,7 +310,7 @@ if [[ x"${ac_cv_has_expat}" = x1 ]]
 then
   AC_MSG_CHECKING([that version of the expat library >= 1.95])
   AC_RUN_IFELSE(
-[AC_LANG_SOURCE([
+[AC_LANG_SOURCE([[
 #include <expat.h>
 #include <stdio.h>
 int main(void)
@@ -321,7 +321,7 @@ int main(void)
   if (v.minor >= 95) return 0;
   return 1;
 }
-])],[
+]])],[
 AC_MSG_RESULT([yes])
 ac_cv_has_expat=1
 ],[
@@ -355,7 +355,7 @@ fi
 
 AC_MSG_CHECKING([that version of zlib >= 1.2])
 AC_RUN_IFELSE(
-[AC_LANG_SOURCE([
+[AC_LANG_SOURCE([[
 #include <zlib.h>
 #include <stdio.h>
 int main(void)
@@ -363,7 +363,7 @@ int main(void)
   if (ZLIB_VERNUM >= 0x1200) return 0;
   return 1;
 }
-])],[
+]])],[
 AC_MSG_RESULT([yes])
 ac_cv_has_zlib=1
 ],[
@@ -508,7 +508,7 @@ if [[ x"${ac_cv_has_libcap}" = x1 ]]
 then
   AC_MSG_CHECKING([for CAP_SYS_OPERATIONS bit])
   AC_LINK_IFELSE(
-[AC_LANG_SOURCE([
+[AC_LANG_SOURCE([[
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -529,7 +529,7 @@ int main(void)
   cap_set_proc(new_caps);
   return 0;
 }
-])],
+]])],
 [
 AC_MSG_RESULT([supported])
 ac_cv_has_libcap=1
@@ -544,7 +544,7 @@ if [[ x"${ac_cv_has_libcap}" = x1 ]]
 then
   AC_MSG_CHECKING([for support of CAP_SYS_OPERATIONS bit in the running kernel])
   AC_RUN_IFELSE(
-[AC_LANG_SOURCE([
+[AC_LANG_SOURCE([[
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -569,7 +569,7 @@ int main(void)
   if (!p) _exit(1);
   return 1;
 }
-])],
+]])],
 [
 AC_MSG_RESULT([supported])
 ac_cv_has_runtime_libcap=1
@@ -587,7 +587,7 @@ LIBS="${saved_LIBS}"
 
 AC_MSG_CHECKING([for new secure execution interface in the running kernel])
   AC_RUN_IFELSE(
-[AC_LANG_SOURCE([
+[AC_LANG_SOURCE([[
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -605,7 +605,7 @@ int main(void)
   if (!p) _exit(1);
   return 1;
 }
-])],
+]])],
 [
 AC_MSG_RESULT([supported])
 ac_cv_has_new_secure_exec=1
@@ -747,7 +747,7 @@ saved_CC="${CC}"
 saved_CFLAGS="${CFLAGS}"
 AC_MSG_CHECKING([for -Wno-pointer-sign necessity])
 CC="${CC} -Wall -Werror"
-AC_COMPILE_IFELSE([AC_LANG_SOURCE([
+AC_COMPILE_IFELSE([AC_LANG_SOURCE([[
 #include <string.h>
 #include <stdio.h>
 int main(void)
@@ -757,7 +757,7 @@ int main(void)
   printf("%d\n", v);
   return 0;
 }
-])],[
+]])],[
 AC_MSG_RESULT([no])
 ],[
 AC_MSG_RESULT([yes])
@@ -768,14 +768,14 @@ then
   AC_MSG_CHECKING([for -Wno-pointer-sign])
   CC="${saved_CC} -Wno-pointer-sign -Werror"
   CFLAGS=
-  AC_COMPILE_IFELSE([AC_LANG_SOURCE([
+  AC_COMPILE_IFELSE([AC_LANG_SOURCE([[
 int main(void)
 {
   unsigned char *str = "zzz";
   (void) str;
   return 0;
 }
-])],[
+]])],[
 AC_MSG_RESULT([yes])
 ac_cv_gcc_wno_pointer_sign=-Wno-pointer-sign
 ],[
@@ -789,7 +789,7 @@ saved_CC="${CC}"
 saved_CFLAGS="${CFLAGS}"
 AC_MSG_CHECKING([for -Wno-format-truncation necessity])
 CC="${CC} -Wall -Werror"
-AC_COMPILE_IFELSE([AC_LANG_SOURCE([
+AC_COMPILE_IFELSE([AC_LANG_SOURCE([[
 #include <string.h>
 #include <stdio.h>
 int main(void)
@@ -799,7 +799,7 @@ int main(void)
   if (fgets(buf1, sizeof(buf1), stdin))
     snprintf(buf2, sizeof(buf2), "prefix%s", buf1);
 }
-])],[
+]])],[
 AC_MSG_RESULT([no])
 ],[
 AC_MSG_RESULT([yes])
@@ -810,7 +810,7 @@ then
   AC_MSG_CHECKING([for -Wno-format-truncation])
   CC="${saved_CC} -Wall -Wno-format-truncation -Werror"
   CFLAGS=
-  AC_COMPILE_IFELSE([AC_LANG_SOURCE([
+  AC_COMPILE_IFELSE([AC_LANG_SOURCE([[
 #include <string.h>
 #include <stdio.h>
 int main(void)
@@ -820,7 +820,7 @@ int main(void)
   if (fgets(buf1, sizeof(buf1), stdin))
     snprintf(buf2, sizeof(buf2), "prefix%s", buf1);
 }
-])],[
+]])],[
 AC_MSG_RESULT([yes])
 ac_cv_gcc_wno_format_truncation=-Wno-format-truncation
 ],[
@@ -833,7 +833,7 @@ CFLAGS="${saved_CFLAGS}"
 dnl check whether long long is supported
 AC_MSG_CHECKING([for long long type])
 AC_RUN_IFELSE(
-[AC_LANG_SOURCE([
+[AC_LANG_SOURCE([[
 int main(void)
 {
   long long a = 0;
@@ -841,7 +841,7 @@ int main(void)
   signed long long c = 0;
   return 0;
 }
-])],[
+]])],[
 AC_MSG_RESULT([yes])
 ac_cv_has_long_long=1
 ],[
@@ -852,7 +852,7 @@ ac_cv_has_long_long=""
 dnl check whether __int64 is supported
 AC_MSG_CHECKING([for __int64 type])
 AC_RUN_IFELSE(
-[AC_LANG_SOURCE([
+[AC_LANG_SOURCE([[
 int main(void)
 {
   __int64 a = 0;
@@ -860,7 +860,7 @@ int main(void)
   signed __int64 c = 0;
   return 0;
 }
-])],[
+]])],[
 AC_MSG_RESULT([yes])
 ac_cv_has___int64=1
 ],[
@@ -873,7 +873,7 @@ saved_CC="${CC}"
 saved_CFLAGS="${CFLAGS}"
 CC="${CC} -m32 -fPIC -DPIC"
 CFLAGS=`echo "${CFLAGS}" | sed s/-m32//g | sed s/-m64//g`
-AC_RUN_IFELSE([AC_LANG_SOURCE([
+AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include <string.h>
 #include <stdio.h>
 int main(void)
@@ -881,7 +881,7 @@ int main(void)
   printf("");
   return 0;
 }
-])],[
+]])],[
 AC_MSG_RESULT([yes])
 ac_cv_need_32=1
 ],[
@@ -895,7 +895,7 @@ saved_CC="${CC}"
 saved_CFLAGS="${CFLAGS}"
 CC="${CC} -m64 -fPIC -DPIC"
 CFLAGS=`echo "${CFLAGS}" | sed s/-m32//g | sed s/-m64//g`
-AC_RUN_IFELSE([AC_LANG_SOURCE([
+AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include <string.h>
 #include <stdio.h>
 int main(void)
@@ -903,7 +903,7 @@ int main(void)
   printf("");
   return 0;
 }
-])],[
+]])],[
 AC_MSG_RESULT([yes])
 ac_cv_need_64=1
 ],[
