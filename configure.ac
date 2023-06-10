@@ -1,7 +1,7 @@
 dnl Copyright (C) 2004-2023 Alexander Chernov <cher@ejudge.ru>
 
-AC_INIT(ejudge,3)
-AC_PREREQ(2.59)
+AC_INIT([ejudge],[3])
+AC_PREREQ([2.71])
 AC_REVISION($Revision$)
 
 AC_PREFIX_DEFAULT([/opt/ejudge])
@@ -1454,7 +1454,7 @@ AC_CONFIG_SUBDIRS([libdwarf])
 AC_CONFIG_SUBDIRS([libbacktrace])
 
 AC_CONFIG_FILES([Makefile extra/Makefile extra/captest/Makefile checkers/Makefile scripts/Makefile ejudge-config.v scripts/festival plugins/common-mysql/Makefile plugins/userlist-mysql/Makefile plugins/clardb-mysql/Makefile plugins/rundb-mysql/Makefile plugins/common-mongo/Makefile plugins/xuser-mongo/Makefile style/ejudge-upgrade-web cfront/Makefile reuse/Makefile csp/contests/Makefile csp/super-server/Makefile csp_header.make plugins/telegram/Makefile plugins/avatar-mongo/Makefile plugins/status-mongo/Makefile plugins/status-mysql/Makefile plugins/auth-google/Makefile plugins/auth-base/Makefile plugins/auth-vk/Makefile plugins/auth-fb/Makefile plugins/xuser-mysql/Makefile plugins/avatar-mysql/Makefile plugins/variant-mysql/Makefile plugins/storage-mysql/Makefile plugins/cache-mysql/Makefile plugins/submit-mysql/Makefile plugins/userprob-mysql/Makefile plugins/vcs-gitlab/Makefile plugins/auth-yandex/Makefile])
-AC_OUTPUT()
+AC_OUTPUT
 
 #cp -p config.h include/reuse
 cp -p config.h include/ejudge
