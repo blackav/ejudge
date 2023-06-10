@@ -3167,6 +3167,10 @@ priv_submit_run(
   int ext_user_kind = 0;
   ej_mixed_id_t ext_user;
   ej_mixed_id_t *ext_user_ptr = NULL;
+  int notify_driver = 0;
+  int notify_kind = 0;
+  ej_mixed_id_t notify_queue;
+  ej_mixed_id_t *notify_queue_ptr = NULL;
 
   if (opcaps_check(phr->caps, OPCAP_SUBMIT_RUN) < 0) {
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
@@ -3220,6 +3224,24 @@ priv_submit_run(
         FAIL(NEW_SRV_ERR_INV_EXT_USER);
       }
       ext_user_ptr = &ext_user;
+    }
+  }
+
+  hr_cgi_param_int_opt(phr, "notify_driver", &notify_driver, 0);
+  if (notify_driver > 0 && notify_driver < 128
+      && hr_cgi_param(phr, "notify_kind", &s) > 0) {
+    notify_kind = mixed_id_parse_kind(s);
+    if (notify_kind < 0) {
+      FAIL(NEW_SRV_ERR_INV_NOTIFY);
+    }
+    if (notify_kind > 0) {
+      if (hr_cgi_param(phr, "notify_queue", &s) <= 0) {
+        FAIL(NEW_SRV_ERR_INV_NOTIFY);
+      }
+      if (mixed_id_unmarshall(&notify_queue, notify_kind, s) < 0) {
+        FAIL(NEW_SRV_ERR_INV_NOTIFY);
+      }
+      notify_queue_ptr = &notify_queue;
     }
   }
 
@@ -3638,9 +3660,9 @@ priv_submit_run(
                           phr->is_job /* is_vcs */,
                           ext_user_kind,
                           ext_user_ptr,
-                          0 /* notify_driver */,
-                          0 /* notify_kind */,
-                          NULL /* notify_queue */);
+                          notify_driver,
+                          notify_kind,
+                          notify_queue_ptr);
   if (run_id < 0) {
     FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
   }
