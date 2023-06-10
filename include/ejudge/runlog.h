@@ -140,7 +140,10 @@ run_add_record(
         int            store_flags,
         int            is_vcs,
         int            ext_user_kind,
-        ej_mixed_id_t *ext_user);
+        ej_mixed_id_t *ext_user,
+        int            notify_driver,
+        int            notify_kind,
+        ej_mixed_id_t *notify_queue);
 int run_start_contest(runlog_state_t, time_t);
 time_t run_get_start_time(runlog_state_t);
 int
@@ -347,7 +350,7 @@ struct run_entry
   rint64_t       last_change_us;/* 8 */
   char _pad1[8];
   ej_mixed_id_t  ext_user;      /* 16 */
-  ej_mixed_id_t  notify;        /* 16 */
+  ej_mixed_id_t  notify_queue;  /* 16 */
   char _pad[32];
   /* total is 256 bytes */
 };

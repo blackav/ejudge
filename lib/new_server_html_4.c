@@ -1121,7 +1121,10 @@ cmd_submit_run(
                           store_flags,
                           0 /* is_vcs */,
                           0 /* ext_user_kind */,
-                          NULL /* ext_user */);
+                          NULL /* ext_user */,
+                          0 /* notify_driver */,
+                          0 /* notify_kind */,
+                          NULL /* notify_queue */);
   if (run_id < 0)
     FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
   serve_move_files_to_insert_run(cs, run_id);

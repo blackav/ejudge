@@ -3423,7 +3423,10 @@ do_add_row(
                           store_flags,
                           0 /* is_vcs */,
                           0 /* ext_user_kind */,
-                          NULL /* ext_user */);
+                          NULL /* ext_user */,
+                          0 /* notify_driver */,
+                          0 /* notify_kind */,
+                          NULL /* notify_queue */);
   if (run_id < 0) {
     fprintf(log_f, _("Failed to add row %d to runlog\n"), row);
     return -1;

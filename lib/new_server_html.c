@@ -3637,7 +3637,10 @@ priv_submit_run(
                           store_flags,
                           phr->is_job /* is_vcs */,
                           ext_user_kind,
-                          ext_user_ptr);
+                          ext_user_ptr,
+                          0 /* notify_driver */,
+                          0 /* notify_kind */,
+                          NULL /* notify_queue */);
   if (run_id < 0) {
     FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
   }
@@ -5586,7 +5589,10 @@ priv_new_run(FILE *fout,
                           store_flags,
                           0 /* is_vcs */,
                           0 /* ext_user_kind */,
-                          NULL /* ext_user */);
+                          NULL /* ext_user */,
+                          0 /* notify_driver */,
+                          0 /* notify_kind */,
+                          NULL /* notify_queue */);
   if (run_id < 0) FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
   serve_move_files_to_insert_run(cs, run_id);
   if (metrics.data) {
@@ -11399,7 +11405,10 @@ ns_submit_run(
                           store_flags,
                           phr->is_job /* is_vcs */,
                           0 /* ext_user_kind */,
-                          NULL /* ext_user */);
+                          NULL /* ext_user */,
+                          0 /* notify_driver */,
+                          0 /* notify_kind */,
+                          NULL /* notify_queue */);
   if (run_id < 0) {
     FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
   }
@@ -12132,7 +12141,10 @@ unpriv_submit_run(
                           store_flags,
                           phr->is_job /* is_vcs */,
                           0 /* ext_user_kind */,
-                          NULL /* ext_user */);
+                          NULL /* ext_user */,
+                          0 /* notify_driver */,
+                          0 /* notify_kind */,
+                          NULL /* notify_queue */);
   if (run_id < 0) {
     FAIL2(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
   }
@@ -14521,7 +14533,10 @@ unpriv_xml_update_answer(
                             store_flags,
                             0 /* is_vcs */,
                             0 /* ext_user_kind */,
-                            NULL /* ext_user */);
+                            NULL /* ext_user */,
+                            0 /* notify_driver */,
+                            0 /* notify_kind */,
+                            NULL /* notify_queue */);
     if (run_id < 0) FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
     serve_move_files_to_insert_run(cs, run_id);
     if (metrics.data) {

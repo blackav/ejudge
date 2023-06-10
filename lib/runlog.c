@@ -341,7 +341,10 @@ run_add_record(
         int            store_flags,
         int            is_vcs,
         int            ext_user_kind,
-        ej_mixed_id_t *ext_user)
+        ej_mixed_id_t *ext_user,
+        int            notify_driver,
+        int            notify_kind,
+        ej_mixed_id_t *notify_queue)
 {
   int i;
   struct run_entry re;
