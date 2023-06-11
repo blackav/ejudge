@@ -19,10 +19,17 @@
 struct submit_entry;
 struct testing_report_xml;
 struct cJSON;
+struct run_entry;
+struct serve_state;
 
 struct cJSON *
 json_serialize_submit(
         const struct submit_entry *se,
         const struct testing_report_xml *tr);
+struct cJSON *
+json_serialize_run(
+        struct serve_state *cs,
+        long long start_time,
+        const struct run_entry *re);
 
 #endif /* __JSON_SERIALIZERS_H__ */
