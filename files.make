@@ -188,6 +188,7 @@ COMMON_CFILES=\
  lib/html_start_form.c\
  lib/http_request.c\
  lib/imagemagick.c\
+ lib/json_serializers.c\
  lib/l10n.c\
  lib/lang_config.c\
  lib/lang_config_vis.c\
@@ -616,6 +617,7 @@ HFILES=\
  ./include/ejudge/interrupt.h\
  ./include/ejudge/iterators.h\
  ./include/ejudge/job_packet.h\
+ ./include/ejudge/json_serializers.h\
  ./include/ejudge/l10n.h\
  ./include/ejudge/lang_config_vis.h\
  ./include/ejudge/list_ops.h\
