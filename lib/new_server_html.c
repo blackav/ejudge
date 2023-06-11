@@ -79,6 +79,7 @@
 #include "ejudge/tsc.h"
 #include "ejudge/compile_packet.h"
 #include "ejudge/run_packet.h"
+#include "ejudge/notify_plugin.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -3228,8 +3229,16 @@ priv_submit_run(
   }
 
   hr_cgi_param_int_opt(phr, "notify_driver", &notify_driver, 0);
-  if (notify_driver > 0 && notify_driver < 128
-      && hr_cgi_param(phr, "notify_kind", &s) > 0) {
+  if (notify_driver < 0 || notify_driver >= 128) {
+    FAIL(NEW_SRV_ERR_INV_NOTIFY);
+  }
+  if (notify_driver > 0) {
+    if (!notify_plugin_get(phr->config, notify_driver)) {
+      FAIL(NEW_SRV_ERR_INV_NOTIFY);
+    }
+    if (hr_cgi_param(phr, "notify_kind", &s) <= 0) {
+      FAIL(NEW_SRV_ERR_INV_NOTIFY);
+    }
     notify_kind = mixed_id_parse_kind(s);
     if (notify_kind < 0) {
       FAIL(NEW_SRV_ERR_INV_NOTIFY);
@@ -12582,11 +12591,15 @@ ns_submit_run_input(
     }
 
     hr_cgi_param_int_opt(phr, "notify_driver", &notify_driver, 0);
-    if (notify_driver < 0 || notify_driver > 255) {
+    if (notify_driver < 0 || notify_driver > 127) {
       err_num = NEW_SRV_ERR_INV_NOTIFY;
       goto done;
     }
     if (notify_driver > 0) {
+      if (!notify_plugin_get(phr->config, notify_driver)) {
+        err_num = NEW_SRV_ERR_INV_NOTIFY;
+        goto done;
+      }
       if (hr_cgi_param(phr, "notify_kind", &s) <= 0) {
         err_num = NEW_SRV_ERR_INV_NOTIFY;
         goto done;
