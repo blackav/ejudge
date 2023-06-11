@@ -33,19 +33,17 @@ struct notify_plugin_iface
     struct common_plugin_iface b;
     int notify_version;
 
+    int (*get_registered_number)(
+        struct notify_plugin_data *data);
     int (*open)(
         struct notify_plugin_data *data);
 };
 
-struct contest_extra;
-struct contest_desc;
 struct ejudge_cfg;
 
 struct notify_plugin_data *
 notify_plugin_get(
-        struct contest_extra *extra,
-        const struct contest_desc *cnts,
         const struct ejudge_cfg *config,
-        const unsigned char *plugin_name);
+        int serial);
 
 #endif /* __NOTIFY_PLUGIN_H__ */
