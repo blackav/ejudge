@@ -3219,6 +3219,48 @@ notify_submit_update(
   free(jrstr);
 }
 
+void
+serve_notify_run_update(
+        const struct ejudge_cfg *config,
+        serve_state_t cs,
+        long long start_time,
+        const struct run_entry *re)
+{
+  if (!re->notify_driver) return;
+
+  struct notify_plugin_data *np = notify_plugin_get(config, re->notify_driver);
+  if (!np) {
+    err("notify_run_update: failed to get notify_plugin %d",
+        re->notify_driver);
+    return;
+  }
+  if (re->notify_kind < 0 || re->notify_kind >= MIXED_ID_LAST) {
+    err("notify_run_update: invalid se.notify_kind %d", re->notify_kind);
+    return;
+  }
+  if (!re->notify_kind) return;
+
+  unsigned char buf[64];
+  mixed_id_marshall(buf, re->notify_kind, &re->notify_queue);
+
+  cJSON *jr = cJSON_CreateObject();
+
+  struct timeval tv;
+  gettimeofday(&tv, NULL);
+  long long server_time_us = tv.tv_sec * 1000000LL + tv.tv_usec;
+
+  cJSON_AddNumberToObject(jr, "server_time_us", (double) server_time_us);
+  cJSON_AddStringToObject(jr, "type", "run");
+  cJSON_AddItemToObject(jr, "run", json_serialize_run(cs, start_time, re));
+  char *jrstr = cJSON_PrintUnformatted(jr);
+  cJSON_Delete(jr);
+
+  if (np->vt->notify(np, buf, jrstr) < 0) {
+    err("notify_submit_update: notify failed");
+  }
+  free(jrstr);
+}
+
 static void
 read_compile_packet_input(
         struct contest_extra *extra,

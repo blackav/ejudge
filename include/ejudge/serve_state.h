@@ -987,4 +987,11 @@ serve_check_telegram_reminder(
 int
 serve_get_compile_reply_contest_id(const unsigned char *path);
 
+void
+serve_notify_run_update(
+        const struct ejudge_cfg *config,
+        serve_state_t cs,
+        long long start_time,
+        const struct run_entry *re);
+
 #endif /* __SERVE_STATE_H__ */
