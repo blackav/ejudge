@@ -35,8 +35,10 @@ struct notify_plugin_iface
 
     int (*get_registered_number)(
         struct notify_plugin_data *data);
-    int (*open)(
-        struct notify_plugin_data *data);
+    int (*notify)(
+        struct notify_plugin_data *data,
+        const unsigned char *queue,
+        const unsigned char *message);
 };
 
 struct ejudge_cfg;
