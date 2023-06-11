@@ -54,6 +54,9 @@
 #include "ejudge/submit_plugin.h"
 #include "ejudge/storage_plugin.h"
 #include "ejudge/metrics_contest.h"
+#include "ejudge/notify_plugin.h"
+#include "ejudge/cJSON.h"
+#include "ejudge/json_serializers.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -3176,6 +3179,47 @@ serve_notify_user_run_status_change(
 }
 
 static void
+notify_submit_update(
+        const struct ejudge_cfg *config,
+        struct submit_entry *se,
+        testing_report_xml_t tr)
+{
+  if (!se->notify_driver) return;
+
+  struct notify_plugin_data *np = notify_plugin_get(config, se->notify_driver);
+  if (!np) {
+    err("notify_submit_update: failed to get notify_plugin %d",
+        se->notify_driver);
+    return;
+  }
+  if (se->notify_kind < 0 || se->notify_kind >= MIXED_ID_LAST) {
+    err("notify_submit_update: invalid se.notify_kind %d", se->notify_kind);
+    return;
+  }
+  if (!se->notify_kind) return;
+
+  unsigned char buf[64];
+  mixed_id_marshall(buf, se->notify_kind, &se->notify_queue);
+
+  cJSON *jr = cJSON_CreateObject();
+
+  struct timeval tv;
+  gettimeofday(&tv, NULL);
+  long long server_time_us = tv.tv_sec * 1000000LL + tv.tv_usec;
+
+  cJSON_AddNumberToObject(jr, "server_time_us", (double) server_time_us);
+  cJSON_AddStringToObject(jr, "type", "submit");
+  cJSON_AddItemToObject(jr, "submit", json_serialize_submit(se, tr));
+  char *jrstr = cJSON_PrintUnformatted(jr);
+  cJSON_Delete(jr);
+
+  if (np->vt->notify(np, buf, jrstr) < 0) {
+    err("notify_submit_update: notify failed");
+  }
+  free(jrstr);
+}
+
+static void
 read_compile_packet_input(
         struct contest_extra *extra,
         const struct ejudge_cfg *config,
@@ -3294,6 +3338,7 @@ read_compile_packet_input(
       goto done;
     }
 
+    notify_submit_update(config, &se, tr);
     cs->submit_state->vt->change_status(cs->submit_state,
                                         se.serial_id,
                                         SUBMIT_FIELD_STATUS | SUBMIT_FIELD_PROTOCOL_ID | SUBMIT_FIELD_JUDGE_UUID,
@@ -3390,6 +3435,7 @@ read_compile_packet_input(
     goto done;
   }
 
+  notify_submit_update(config, &se, tr);
   r = cs->submit_state->vt->change_status(cs->submit_state,
                                           se.serial_id,
                                           SUBMIT_FIELD_STATUS,
@@ -4212,6 +4258,7 @@ read_run_packet_input(
     goto done;
   }
 
+  notify_submit_update(config, &se, tr);
   cs->submit_state->vt->change_status(cs->submit_state,
                                       se.serial_id,
                                       SUBMIT_FIELD_STATUS | SUBMIT_FIELD_PROTOCOL_ID | SUBMIT_FIELD_JUDGE_UUID,
