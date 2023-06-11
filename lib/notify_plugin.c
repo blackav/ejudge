@@ -79,10 +79,12 @@ notify_plugin_get(
     if (pi->failed) {
         return NULL;
     }
+    /*
     if (pi->data->vt->open(pi->data) < 0) {
         err("plugin %d open failed", serial);
         return NULL;
     }
+    */
 
     return pi->data;
 }
