@@ -207,6 +207,7 @@ COMMON_CFILES=\
  lib/new_server_proto.c\
  lib/new_server_tables.c\
  lib/ncurses_utils.c\
+ lib/notify_plugin.c\
  lib/nsdb_plugin_files.c\
  lib/nwrun_packet.c\
  lib/oauth.c\
@@ -628,6 +629,7 @@ HFILES=\
  ./include/ejudge/ncheck_packet.h\
  ./include/ejudge/ncurses_utils.h\
  ./include/ejudge/new-server.h\
+ ./include/ejudge/notify_plugin.h\
  ./include/ejudge/nsdb_plugin.h\
  ./include/ejudge/nwrun_packet.h\
  ./include/ejudge/oauth.h\
