@@ -16,5 +16,13 @@
  * GNU General Public License for more details.
  */
 
+struct submit_entry;
+struct testing_report_xml;
+struct cJSON;
+
+struct cJSON *
+json_serialize_submit(
+        const struct submit_entry *se,
+        const struct testing_report_xml *tr);
 
 #endif /* __JSON_SERIALIZERS_H__ */
