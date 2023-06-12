@@ -19,6 +19,7 @@ adduser -c 'ejudge compiler' -d /home/judges/compile -M -s /sbin/nologin ejcompi
 #RELEASE=
 RELEASE='RELEASE=1'
 
+rm -rf .git
 ./configure --prefix=/opt/ejudge --enable-charset=utf-8 --with-httpd-cgi-bin-dir=/var/www/cgi-bin --with-httpd-htdocs-dir=/var/www/html --enable-ajax --enable-local-dir=/var/lib/ejudge --enable-hidden-server-bins --with-primary-user=ejudge --with-exec-user=ejexec --with-compile-user=ejcompile --enable-compile-spool-dir --enable-run-spool-dir --enable-contests-status-dir && ulimit -n 65536 && make ${RELEASE} && make ${RELEASE} install && /opt/ejudge/bin/ejudge-suid-setup && /opt/ejudge/bin/ejudge-upgrade-web
 
 > ejudge-install.sh
