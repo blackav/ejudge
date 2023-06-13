@@ -3380,7 +3380,6 @@ read_compile_packet_input(
       goto done;
     }
 
-    notify_submit_update(config, &se, tr);
     cs->submit_state->vt->change_status(cs->submit_state,
                                         se.serial_id,
                                         SUBMIT_FIELD_STATUS | SUBMIT_FIELD_PROTOCOL_ID | SUBMIT_FIELD_JUDGE_UUID,
@@ -3388,6 +3387,7 @@ read_compile_packet_input(
                                         rep_se.serial_id,
                                         NULL,
                                         &se);
+    notify_submit_update(config, &se, tr);
     goto done;
   }
 
@@ -3478,13 +3478,13 @@ read_compile_packet_input(
     goto done;
   }
 
-  notify_submit_update(config, &se, tr);
   r = cs->submit_state->vt->change_status(cs->submit_state,
                                           se.serial_id,
                                           SUBMIT_FIELD_STATUS,
                                           RUN_RUNNING,
                                           0,
                                           NULL, &se);
+  notify_submit_update(config, &se, tr);
 
 done:;
   testing_report_free(tr);
@@ -4301,13 +4301,13 @@ read_run_packet_input(
     goto done;
   }
 
-  notify_submit_update(config, &se, tr);
   cs->submit_state->vt->change_status(cs->submit_state,
                                       se.serial_id,
                                       SUBMIT_FIELD_STATUS | SUBMIT_FIELD_PROTOCOL_ID | SUBMIT_FIELD_JUDGE_UUID,
                                       reply_pkt->status,
                                       tr_se.serial_id,
                                       NULL, &se);
+  notify_submit_update(config, &se, tr);
 
 done:;
   free(rep_data);
