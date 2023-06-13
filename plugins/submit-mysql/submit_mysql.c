@@ -443,7 +443,7 @@ change_status_func(
         unsigned mask,
         int status,
         int64_t protocol_id,
-        ej_uuid_t *p_judge_uuid)
+        const ej_uuid_t *p_judge_uuid)
 {
     struct submit_cnts_mysql_data *scmd = (struct submit_cnts_mysql_data *) data;
     struct submit_mysql_data *smd = scmd->smd;
