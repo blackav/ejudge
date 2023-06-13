@@ -109,7 +109,8 @@ struct submit_plugin_iface
         unsigned mask,
         int status,
         int64_t protocol_id,
-        const ej_uuid_t *p_judge_uuid);
+        const ej_uuid_t *p_judge_uuid,
+        struct submit_entry *p_se);
     int (*fetch)(
         struct submit_cnts_plugin_data *data,
         int64_t submit_id,

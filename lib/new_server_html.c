@@ -13004,7 +13004,7 @@ ns_submit_run_input(
                                            SUBMIT_FIELD_STATUS | SUBMIT_FIELD_JUDGE_UUID,
                                            RUN_COMPILING,
                                            0,
-                                           &se.judge_uuid)) < 0) {
+                                           &se.judge_uuid, NULL)) < 0) {
     err_num = NEW_SRV_ERR_RUNLOG_UPDATE_FAILED;
     goto done;
   }

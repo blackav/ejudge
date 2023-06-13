@@ -3386,7 +3386,8 @@ read_compile_packet_input(
                                         SUBMIT_FIELD_STATUS | SUBMIT_FIELD_PROTOCOL_ID | SUBMIT_FIELD_JUDGE_UUID,
                                         comp_pkt->status,
                                         rep_se.serial_id,
-                                        NULL);
+                                        NULL,
+                                        &se);
     goto done;
   }
 
@@ -3430,7 +3431,7 @@ read_compile_packet_input(
                                           flags,
                                           RUN_COMPILED,
                                           se.protocol_id,
-                                          NULL);
+                                          NULL, NULL);
   if (r < 0) {
     err("read_compile_packet_input: failed to change status");
     goto done;
@@ -3483,7 +3484,7 @@ read_compile_packet_input(
                                           SUBMIT_FIELD_STATUS,
                                           RUN_RUNNING,
                                           0,
-                                          NULL);
+                                          NULL, &se);
 
 done:;
   testing_report_free(tr);
@@ -4306,7 +4307,7 @@ read_run_packet_input(
                                       SUBMIT_FIELD_STATUS | SUBMIT_FIELD_PROTOCOL_ID | SUBMIT_FIELD_JUDGE_UUID,
                                       reply_pkt->status,
                                       tr_se.serial_id,
-                                      NULL);
+                                      NULL, &se);
 
 done:;
   free(rep_data);
