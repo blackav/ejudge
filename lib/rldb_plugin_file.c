@@ -198,7 +198,8 @@ static int
 change_status_4_func(
         struct rldb_plugin_cnts *cdata,
         int run_id,
-        int new_status);
+        int new_status,
+        struct run_entry *ure);
 static int
 run_set_is_checked_func(
         struct rldb_plugin_cnts *cdata,
@@ -1815,10 +1816,12 @@ static int
 change_status_4_func(
         struct rldb_plugin_cnts *cdata,
         int run_id,
-        int new_status)
+        int new_status,
+        struct run_entry *ure)
 {
   struct rldb_file_cnts *cs = (struct rldb_file_cnts*) cdata;
   struct runlog_state *rls = cs->rl_state;
+  struct timeval tv;
 
   ASSERT(rls->run_f == 0);
   ASSERT(run_id >= 0 && run_id < rls->run_u);
@@ -1834,6 +1837,11 @@ change_status_4_func(
   re->saved_status = 0;
   re->saved_test = 0;
   re->saved_score = 0;
+  gettimeofday(&tv, NULL);
+  re->last_change_us = tv.tv_sec * 1000000LL + tv.tv_usec;
+  if (ure) {
+    *ure = *re;
+  }
   return do_flush_entry(cs, run_id);
 }
 

@@ -188,7 +188,8 @@ static int
 change_status_4_func(
         struct rldb_plugin_cnts *cdata,
         int run_id,
-        int new_status);
+        int new_status,
+        struct run_entry *ure);
 
 static int
 user_run_header_set_start_time_func(

@@ -165,9 +165,11 @@ struct rldb_plugin_iface
                          int user_score,
                          unsigned int verdict_bits);
   // change the status (brief version)
-  int (*change_status_4)(struct rldb_plugin_cnts *,
-                         int run_id,
-                         int new_status);
+  int (*change_status_4)(
+        struct rldb_plugin_cnts *,
+        int run_id,
+        int new_status,
+        struct run_entry *ure);
   // fetch the list of runs for given user and problem
   int (*fetch_user_runs)(
         struct rldb_plugin_cnts *,

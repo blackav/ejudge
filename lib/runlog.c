@@ -691,7 +691,7 @@ run_change_status_4(
 
   touch_last_update_time_us(state);
 
-  return state->iface->change_status_4(state->cnts, runid, newstatus);
+  return state->iface->change_status_4(state->cnts, runid, newstatus, re);
 }
 
 int
