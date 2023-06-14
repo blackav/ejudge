@@ -669,7 +669,8 @@ int
 run_change_status_4(
         runlog_state_t state,
         int runid,
-        int newstatus)
+        int newstatus,
+        struct run_entry *re)
 {
   if (runid < state->run_f || runid >= state->run_u) ERR_R("bad runid: %d", runid);
   if (newstatus < 0 || newstatus > 255) ERR_R("bad newstatus: %d", newstatus);

@@ -175,7 +175,8 @@ int
 run_change_status_4(
         runlog_state_t state,
         int runid,
-        int newstatus);
+        int newstatus,
+        struct run_entry *re);
 int run_get_status(runlog_state_t state, int runid);
 int run_is_imported(runlog_state_t state, int runid);
 void run_get_times(runlog_state_t, int user_id, time_t *, time_t *, time_t *, time_t *,
