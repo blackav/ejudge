@@ -170,7 +170,8 @@ run_change_status_3(
         int user_status,
         int user_tests_passed,
         int user_score,
-        unsigned int verdict_bits);
+        unsigned int verdict_bits,
+        struct run_entry *ure);
 int
 run_change_status_4(
         runlog_state_t state,
