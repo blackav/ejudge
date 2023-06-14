@@ -663,7 +663,8 @@ run_change_status_3(
                                        user_status,    /* user_status */
                                        user_tests_passed, /* user_tests_passed */
                                        user_score,       /* user_score */
-                                       verdict_bits);
+                                       verdict_bits,
+                                       ure);
 }
 
 int

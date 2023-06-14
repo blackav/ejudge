@@ -182,7 +182,8 @@ change_status_3_func(
         int user_status,
         int user_tests_passed,
         int user_score,
-        unsigned int verdict_bits);
+        unsigned int verdict_bits,
+        struct run_entry *ure);
 
 static int
 change_status_4_func(

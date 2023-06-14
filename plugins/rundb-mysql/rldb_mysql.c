@@ -2289,7 +2289,8 @@ change_status_3_func(
         int user_status,
         int user_tests_passed,
         int user_score,
-        unsigned int verdict_bits)
+        unsigned int verdict_bits,
+        struct run_entry *ure)
 {
   struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts *) cdata;
   struct run_entry te;
@@ -2311,7 +2312,7 @@ change_status_3_func(
                          RE_STATUS | RE_TEST | RE_SCORE | RE_JUDGE_ID
                          | RE_IS_MARKED | RE_IS_SAVED | RE_SAVED_STATUS
                          | RE_SAVED_TEST | RE_SAVED_SCORE | RE_PASSED_MODE
-                         | RE_VERDICT_BITS, NULL);
+                         | RE_VERDICT_BITS, ure);
 }
 
 static int

@@ -152,18 +152,20 @@ struct rldb_plugin_iface
   // check the runlog (may fix broken items)
   int (*check)(struct rldb_plugin_cnts *, FILE *log_f);
   // change the status (includes user status)
-  int (*change_status_3)(struct rldb_plugin_cnts *,
-                         int run_id,
-                         int new_status,
-                         int new_test,
-                         int new_passed_mode,
-                         int new_score,
-                         int is_marked,
-                         int has_user_score,
-                         int user_status,
-                         int user_tests_passed,
-                         int user_score,
-                         unsigned int verdict_bits);
+  int (*change_status_3)(
+        struct rldb_plugin_cnts *,
+        int run_id,
+        int new_status,
+        int new_test,
+        int new_passed_mode,
+        int new_score,
+        int is_marked,
+        int has_user_score,
+        int user_status,
+        int user_tests_passed,
+        int user_score,
+        unsigned int verdict_bits,
+        struct run_entry *ure);
   // change the status (brief version)
   int (*change_status_4)(
         struct rldb_plugin_cnts *,

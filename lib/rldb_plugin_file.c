@@ -193,7 +193,8 @@ change_status_3_func(
         int user_status,
         int user_tests_passed,
         int user_score,
-        unsigned int verdict_bits);
+        unsigned int verdict_bits,
+        struct run_entry *ure);
 static int
 change_status_4_func(
         struct rldb_plugin_cnts *cdata,
@@ -1788,10 +1789,12 @@ change_status_3_func(
         int user_status,
         int user_tests_passed,
         int user_score,
-        unsigned int verdict_bits)
+        unsigned int verdict_bits,
+        struct run_entry *ure)
 {
   struct rldb_file_cnts *cs = (struct rldb_file_cnts*) cdata;
   struct runlog_state *rls = cs->rl_state;
+  struct timeval tv;
 
   ASSERT(rls->run_f == 0);
   ASSERT(run_id >= 0 && run_id < rls->run_u);
@@ -1809,6 +1812,11 @@ change_status_3_func(
   re->saved_test = user_tests_passed;
   re->saved_score = user_score;
   re->verdict_bits = verdict_bits;
+  gettimeofday(&tv, NULL);
+  re->last_change_us = tv.tv_sec * 1000000LL + tv.tv_usec;
+  if (ure) {
+    *ure = *re;
+  }
   return do_flush_entry(cs, run_id);
 }
 
