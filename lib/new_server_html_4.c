@@ -1222,7 +1222,8 @@ cmd_submit_run(
                               0 /* rejudge_flag */, 0 /* zip_mode */,
                               store_flags,
                               0 /* not_ok_is_cf */,
-                              NULL, 0) < 0)
+                              NULL, 0,
+                              NULL) < 0)
           FAIL(NEW_SRV_ERR_DISK_WRITE_ERROR);
       }
     }
@@ -1289,7 +1290,8 @@ cmd_submit_run(
                               0 /* rejudge_flag */, 0 /* zip_mode */,
                               store_flags,
                               0 /* not_ok_is_cf */,
-                              NULL, 0) < 0)
+                              NULL, 0,
+                              NULL) < 0)
           FAIL(NEW_SRV_ERR_DISK_WRITE_ERROR);
       }
     }

@@ -3780,7 +3780,8 @@ priv_submit_run(
                               rejudge_flag, 0 /* zip_mode */,
                               store_flags,
                               not_ok_is_cf,
-                              NULL, 0) < 0) {
+                              NULL, 0,
+                              NULL) < 0) {
           FAIL(NEW_SRV_ERR_DISK_WRITE_ERROR);
         }
       }
@@ -3833,7 +3834,8 @@ priv_submit_run(
                               rejudge_flag, 0 /* zip_mode */,
                               store_flags,
                               not_ok_is_cf,
-                              NULL, 0) < 0) {
+                              NULL, 0,
+                              NULL) < 0) {
           FAIL(NEW_SRV_ERR_DISK_WRITE_ERROR);
         }
       }
@@ -11617,7 +11619,8 @@ ns_submit_run(
                           mime_type, 0, phr->locale_id, 0, 0, 0, &run_uuid,
                           0 /* rejudge_flag */, 0 /* zip_mode */, store_flags,
                           0 /* not_ok_is_cf */,
-                          NULL, 0);
+                          NULL, 0,
+                          NULL);
     if (r < 0) {
       serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
       goto cleanup;
@@ -11682,7 +11685,8 @@ ns_submit_run(
                         mime_type, 0, phr->locale_id, 0, 0, 0, &run_uuid,
                         0 /* rejudge_flag */, 0 /* zip_mode */, store_flags,
                         0 /* not_ok_is_cf */,
-                        NULL, 0);
+                        NULL, 0,
+                        NULL);
   if (r < 0) {
     serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
     goto cleanup;
@@ -12329,7 +12333,8 @@ unpriv_submit_run(
                               rejudge_flag, 0 /* zip_mode */,
                               store_flags,
                               0 /* not_ok_is_cf */,
-                              NULL, 0) < 0) {
+                              NULL, 0,
+                              NULL) < 0) {
           FAIL2(NEW_SRV_ERR_DISK_WRITE_ERROR);
         }
       }
@@ -12406,7 +12411,8 @@ unpriv_submit_run(
                               rejudge_flag, 0 /* zip_mode */,
                               store_flags,
                               0 /* not_ok_is_cf */,
-                              NULL, 0) < 0) {
+                              NULL, 0,
+                              NULL) < 0) {
           FAIL2(NEW_SRV_ERR_DISK_WRITE_ERROR);
         }
       }
