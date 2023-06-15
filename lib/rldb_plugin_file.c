@@ -1349,18 +1349,33 @@ get_insert_run_id(
 }
 
 static int
-do_flush_entry(struct rldb_file_cnts *cs, int num)
+do_flush_entry(
+        struct rldb_file_cnts *cs,
+        int num,
+        struct run_entry *ure)
 {
   struct runlog_state *rls = cs->rl_state;
+  struct timeval tv;
+  struct run_entry *re;
 
   ASSERT(num >= 0);
 
   if (cs->run_fd < 0) ERR_R("invalid descriptor %d", cs->run_fd);
   if (num < 0 || num >= rls->run_u) ERR_R("invalid entry number %d", num);
-  if (sf_lseek(cs->run_fd, sizeof(rls->head) + sizeof(rls->runs[0]) * num,
+  re = &rls->runs[num];
+
+  gettimeofday(&tv, NULL);
+  re->last_change_us = tv.tv_sec * 1000000LL + tv.tv_usec;
+
+  if (sf_lseek(cs->run_fd, sizeof(rls->head) + sizeof(*re) * num,
                SEEK_SET, "run") == (off_t) -1) return -1;
-  if (do_write(cs->run_fd, &rls->runs[num], sizeof(rls->runs[0])) < 0)
+  if (do_write(cs->run_fd, re, sizeof(*re)) < 0)
     return -1;
+
+  if (ure) {
+    *ure = *re;
+  }
+
   return num;
 }
 
@@ -1478,7 +1493,7 @@ add_entry_func(
     de->token_count = re->token_count;
   }
 
-  return do_flush_entry(cs, run_id);
+  return do_flush_entry(cs, run_id, NULL);
 }
 
 static int
@@ -1537,7 +1552,7 @@ change_status_func(
     memset(&re->j, 0, sizeof(re->j));
     re->j.judge_id = judge_id;
   }
-  return do_flush_entry(cs, run_id);
+  return do_flush_entry(cs, run_id, NULL);
 }
 
 static int
@@ -1626,7 +1641,7 @@ set_status_func(
   ASSERT(run_id >= 0 && run_id < rls->run_u);
 
   rls->runs[run_id].status = new_status;
-  return do_flush_entry(cs, run_id);
+  return do_flush_entry(cs, run_id, NULL);
 }
 
 static int
@@ -1651,7 +1666,7 @@ clear_entry_func(
   memset(&rls->runs[run_id], 0, sizeof(rls->runs[run_id]));
   rls->runs[run_id].status = RUN_EMPTY;
   rls->runs[run_id].run_id = run_id;
-  return do_flush_entry(cs, run_id);
+  return do_flush_entry(cs, run_id, NULL);
 }
 
 static int
@@ -1667,7 +1682,7 @@ set_hidden_func(
   ASSERT(run_id >= 0 && run_id < rls->run_u);
 
   rls->runs[run_id].is_hidden = new_hidden;
-  return do_flush_entry(cs, run_id);
+  return do_flush_entry(cs, run_id, NULL);
 }
 
 static int
@@ -1679,7 +1694,6 @@ set_pages_func(
 {
   struct rldb_file_cnts *cs = (struct rldb_file_cnts*) cdata;
   struct runlog_state *rls = cs->rl_state;
-  struct timeval tv;
   struct run_entry *re;
 
   ASSERT(rls->run_f == 0);
@@ -1687,12 +1701,7 @@ set_pages_func(
 
   re = &rls->runs[run_id];
   re->pages = new_pages;
-  gettimeofday(&tv, NULL);
-  re->last_change_us = tv.tv_sec * 1000000LL + tv.tv_usec;
-  if (ure) {
-    *ure = *re;
-  }
-  return do_flush_entry(cs, run_id);
+  return do_flush_entry(cs, run_id, ure);
 }
 
 static int
@@ -1709,7 +1718,7 @@ set_entry_func(
   ASSERT(run_id >= 0 && run_id < rls->run_u);
 
   memcpy(&rls->runs[run_id], in, sizeof(*in));
-  return do_flush_entry(cs, run_id);
+  return do_flush_entry(cs, run_id, NULL);
 }
 
 static int
@@ -1804,7 +1813,6 @@ change_status_3_func(
 {
   struct rldb_file_cnts *cs = (struct rldb_file_cnts*) cdata;
   struct runlog_state *rls = cs->rl_state;
-  struct timeval tv;
 
   ASSERT(rls->run_f == 0);
   ASSERT(run_id >= 0 && run_id < rls->run_u);
@@ -1822,12 +1830,7 @@ change_status_3_func(
   re->saved_test = user_tests_passed;
   re->saved_score = user_score;
   re->verdict_bits = verdict_bits;
-  gettimeofday(&tv, NULL);
-  re->last_change_us = tv.tv_sec * 1000000LL + tv.tv_usec;
-  if (ure) {
-    *ure = *re;
-  }
-  return do_flush_entry(cs, run_id);
+  return do_flush_entry(cs, run_id, ure);
 }
 
 static int
@@ -1839,7 +1842,6 @@ change_status_4_func(
 {
   struct rldb_file_cnts *cs = (struct rldb_file_cnts*) cdata;
   struct runlog_state *rls = cs->rl_state;
-  struct timeval tv;
 
   ASSERT(rls->run_f == 0);
   ASSERT(run_id >= 0 && run_id < rls->run_u);
@@ -1855,12 +1857,7 @@ change_status_4_func(
   re->saved_status = 0;
   re->saved_test = 0;
   re->saved_score = 0;
-  gettimeofday(&tv, NULL);
-  re->last_change_us = tv.tv_sec * 1000000LL + tv.tv_usec;
-  if (ure) {
-    *ure = *re;
-  }
-  return do_flush_entry(cs, run_id);
+  return do_flush_entry(cs, run_id, ure);
 }
 
 static int
@@ -1876,5 +1873,5 @@ run_set_is_checked_func(
   ASSERT(run_id >= 0 && run_id < rls->run_u);
 
   rls->runs[run_id].is_checked = is_checked;
-  return do_flush_entry(cs, run_id);
+  return do_flush_entry(cs, run_id, NULL);
 }
