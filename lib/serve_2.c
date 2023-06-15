@@ -6496,7 +6496,7 @@ serve_ignore_by_mask(serve_state_t state,
     if (re.status == new_status) continue;
 
     re.status = new_status;
-    if (run_set_entry(state->runlog_state, r, RE_STATUS, &re) >= 0) {
+    if (run_set_entry(state->runlog_state, r, RE_STATUS, &re, &re) >= 0) {
       if (re.store_flags == STORE_FLAGS_UUID || re.store_flags == STORE_FLAGS_UUID_BSON) {
         uuid_archive_remove(state, &re.run_uuid, 1);
       } else {
@@ -6507,7 +6507,7 @@ serve_ignore_by_mask(serve_state_t state,
       }
       serve_audit_log(state, r, &re, user_id, ip, ssl_flag,
                       cmd, "ok", new_status, NULL);
-      //FIXME:notify
+      //FIXME:1notify
     }
   }
 }
@@ -6550,8 +6550,8 @@ serve_mark_by_mask(
     if (re.is_marked == mark_value) continue;
 
     re.is_marked = mark_value;
-    run_set_entry(state->runlog_state, r, RE_IS_MARKED, &re);
-    //FIXME:notify
+    run_set_entry(state->runlog_state, r, RE_IS_MARKED, &re, &re);
+    //FIXME:1notify
 
     serve_audit_log(state, r, &re, user_id, ip, ssl_flag,
                     audit_cmd, "ok", -1, NULL);
@@ -6590,8 +6590,9 @@ serve_tokenize_by_mask(
     if (re.token_count != token_count || re.token_flags != token_flags) {
       re.token_count = token_count;
       re.token_flags = token_flags;
-      run_set_entry(state->runlog_state, r, RE_TOKEN_COUNT | RE_TOKEN_FLAGS, &re);
-      //FIXME:notify
+      run_set_entry(state->runlog_state, r, RE_TOKEN_COUNT | RE_TOKEN_FLAGS,
+                    &re, &re);
+      //FIXME:1notify
     }
 
     serve_audit_log(state, r, &re, user_id, ip, ssl_flag,

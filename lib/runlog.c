@@ -1370,7 +1370,8 @@ run_set_entry(
         runlog_state_t state,
         int run_id,
         uint64_t mask,
-        const struct run_entry *in)
+        const struct run_entry *in,
+        struct run_entry *ure)
 {
   const struct run_entry *out;
   struct run_entry te;

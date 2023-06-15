@@ -551,8 +551,7 @@ runlog_import_xml(
       if (r) {
         update_flag++;
       }
-      run_set_entry(runlog_state, i, RE_ALL, pa);
-      //FIXME:notify
+      run_set_entry(runlog_state, i, RE_ALL, pa, NULL);
     }
     fprintf(flog, "%d entries updated\n", update_flag);
     goto done;

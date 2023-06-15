@@ -4911,9 +4911,9 @@ priv_edit_run(FILE *fout, FILE *log_f,
 
   if (!ne_mask) goto cleanup;
 
-  if (run_set_entry(cs->runlog_state, run_id, ne_mask, &ne) < 0)
+  if (run_set_entry(cs->runlog_state, run_id, ne_mask, &ne, &ne) < 0)
     FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
-  //FIXME:notify
+  //FIXME:1notify
 
   serve_audit_log(cs, run_id, &re, phr->user_id, &phr->ip, phr->ssl_flag,
                   audit_cmd, "ok", -1,
@@ -5002,11 +5002,11 @@ priv_change_status(
     }
   }
 
-  if (run_set_entry(cs->runlog_state, run_id, flags, &new_run) < 0) {
+  if (run_set_entry(cs->runlog_state, run_id, flags, &new_run, &new_run) < 0) {
     ns_error(log_f, NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
     goto cleanup;
   }
-  //FIXME:notify
+  //FIXME:1notify
 
   serve_audit_log(cs, run_id, &re, phr->user_id, &phr->ip, phr->ssl_flag,
                   "change-status", "ok", status, NULL);
@@ -5087,11 +5087,11 @@ priv_simple_change_status(
     new_run.score = prob->full_score;
     flags |= RE_SCORE;
   }
-  if (run_set_entry(cs->runlog_state, run_id, flags, &new_run) < 0) {
+  if (run_set_entry(cs->runlog_state, run_id, flags, &new_run, &new_run) < 0) {
     ns_error(log_f, NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
     goto cleanup;
   }
-  //FIXME:notify
+  //FIXME:1notify
 
   serve_audit_log(cs, run_id, &re, phr->user_id, &phr->ip, phr->ssl_flag,
                   audit_cmd, "ok", status, NULL);
@@ -5660,8 +5660,8 @@ priv_new_run(FILE *fout,
     ns_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
     goto cleanup;
   }
-  run_set_entry(cs->runlog_state, run_id, re_flags, &re);
-  //FIXME:notify
+  run_set_entry(cs->runlog_state, run_id, re_flags, &re, &re);
+  //FIXME:1notify
 
   serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                   "priv-new-run", "ok", RUN_PENDING, NULL);
@@ -10886,11 +10886,12 @@ unpriv_use_token(
 
   re.token_flags = prob->token_info->open_flags;
   re.token_count = prob->token_info->open_cost;
-  if (run_set_entry(cs->runlog_state, run_id, RE_TOKEN_FLAGS | RE_TOKEN_COUNT, &re) < 0) {
+  if (run_set_entry(cs->runlog_state, run_id, RE_TOKEN_FLAGS | RE_TOKEN_COUNT,
+                    &re, &re) < 0) {
     error_page(fout, phr, 0, NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
     goto cleanup;
   }
-  //FIXME:notify
+  //FIXME:1notify
 
   serve_audit_log(cs, run_id, &re, phr->user_id, &phr->ip, phr->ssl_flag,
                   "use_token", "ok", -1, "  %d tokens used\n  %d new token flags\n", prob->token_info->open_cost,
@@ -14652,8 +14653,8 @@ unpriv_xml_update_answer(
   nv.test = 0;
   nv.score = -1;
   run_set_entry(cs->runlog_state, run_id,
-                RE_SIZE | RE_SHA1 | RE_STATUS | RE_TEST | RE_SCORE, &nv);
-  //FIXME:notify
+                RE_SIZE | RE_SHA1 | RE_STATUS | RE_TEST | RE_SCORE, &nv, &nv);
+  //FIXME:1notify
 
   serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                   "update-answer", "ok", RUN_ACCEPTED, NULL);
