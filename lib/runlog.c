@@ -2545,12 +2545,16 @@ run_get_pages(runlog_state_t state, int run_id)
 }
 
 int
-run_set_pages(runlog_state_t state, int run_id, int pages)
+run_set_pages(
+        runlog_state_t state,
+        int run_id,
+        int pages,
+        struct run_entry *ure)
 {
   if (run_id < 0 || run_id >= state->run_u) ERR_R("bad runid: %d", run_id);
   if (pages < 0 || pages > 255) ERR_R("bad pages: %d", pages);
   touch_last_update_time_us(state);
-  return state->iface->set_pages(state->cnts, run_id, pages);
+  return state->iface->set_pages(state->cnts, run_id, pages, ure);
 }
 
 int

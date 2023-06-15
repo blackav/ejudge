@@ -142,7 +142,8 @@ static int
 set_pages_func(
         struct rldb_plugin_cnts *cdata,
         int run_id,
-        int new_pages);
+        int new_pages,
+        struct run_entry *ure);
 
 static int
 set_entry_func(

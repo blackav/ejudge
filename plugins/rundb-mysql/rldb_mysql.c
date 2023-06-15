@@ -2091,7 +2091,8 @@ static int
 set_pages_func(
         struct rldb_plugin_cnts *cdata,
         int run_id,
-        int new_pages)
+        int new_pages,
+        struct run_entry *ure)
 {
   struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts *) cdata;
   struct run_entry te;
@@ -2099,7 +2100,7 @@ set_pages_func(
   memset(&te, 0, sizeof(te));
   te.pages = new_pages;
 
-  return do_update_entry(cs, run_id, &te, RE_PAGES, NULL);
+  return do_update_entry(cs, run_id, &te, RE_PAGES, ure);
 }
 
 static int

@@ -257,8 +257,8 @@ do_print_run(const serve_state_t state, int run_id,
     free(dst_s); dst_s = NULL; dst_z = 0;
 
     if (!is_privileged) {
-      run_set_pages(state->runlog_state, run_id, 1);
-      //FIXME:notify
+      run_set_pages(state->runlog_state, run_id, 1, &info);
+      //FIXME:1notify
     }
     program_path[0] = 0;
     return 1;
@@ -321,8 +321,8 @@ do_print_run(const serve_state_t state, int run_id,
       errcode = -SRV_ERR_PAGES_QUOTA;
       goto cleanup;
     }
-    run_set_pages(state->runlog_state, run_id, pages_num);
-    //FIXME:notify
+    run_set_pages(state->runlog_state, run_id, pages_num, &info);
+    //FIXME:1notify
   }
 
   if (!(tsk = task_New())) goto cleanup;

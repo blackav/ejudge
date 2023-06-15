@@ -431,7 +431,11 @@ int run_set_runlog(
 int runlog_check(FILE *, const struct run_header *, size_t begin, size_t, const struct run_entry *);
 
 int run_get_pages(runlog_state_t, int run_id);
-int run_set_pages(runlog_state_t, int run_id, int pages);
+int run_set_pages(
+        runlog_state_t,
+        int run_id,
+        int pages,
+        struct run_entry *ure);
 int run_get_total_pages(runlog_state_t, int run_id);
 
 int run_find(

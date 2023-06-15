@@ -167,7 +167,8 @@ static int
 set_pages_func(
         struct rldb_plugin_cnts *cdata,
         int run_id,
-        int new_pages);
+        int new_pages,
+        struct run_entry *ure);
 static int
 set_entry_func(
         struct rldb_plugin_cnts *cdata,
@@ -1673,15 +1674,24 @@ static int
 set_pages_func(
         struct rldb_plugin_cnts *cdata,
         int run_id,
-        int new_pages)
+        int new_pages,
+        struct run_entry *ure)
 {
   struct rldb_file_cnts *cs = (struct rldb_file_cnts*) cdata;
   struct runlog_state *rls = cs->rl_state;
+  struct timeval tv;
+  struct run_entry *re;
 
   ASSERT(rls->run_f == 0);
   ASSERT(run_id >= 0 && run_id < rls->run_u);
 
-  rls->runs[run_id].pages = new_pages;
+  re = &rls->runs[run_id];
+  re->pages = new_pages;
+  gettimeofday(&tv, NULL);
+  re->last_change_us = tv.tv_sec * 1000000LL + tv.tv_usec;
+  if (ure) {
+    *ure = *re;
+  }
   return do_flush_entry(cs, run_id);
 }
 
