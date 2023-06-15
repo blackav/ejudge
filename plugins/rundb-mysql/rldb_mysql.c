@@ -1812,7 +1812,8 @@ change_status_func(
         int new_score,
         int new_judge_id,
         const ej_uuid_t *judge_uuid,
-        unsigned int verdict_bits)
+        unsigned int verdict_bits,
+        struct run_entry *ure)
 {
   struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts *) cdata;
   struct run_entry te;
@@ -1833,7 +1834,7 @@ change_status_func(
   }
   te.verdict_bits = verdict_bits;
 
-  return do_update_entry(cs, run_id, &te, mask, NULL);
+  return do_update_entry(cs, run_id, &te, mask, ure);
 }
 
 static void

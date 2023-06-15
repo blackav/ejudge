@@ -91,7 +91,8 @@ change_status_func(
         int new_score,
         int judge_id,
         const ej_uuid_t *judge_uuid,
-        unsigned int verdict_bits);
+        unsigned int verdict_bits,
+        struct run_entry *ure);
 
 static int
 start_func(

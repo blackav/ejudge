@@ -581,7 +581,8 @@ run_change_status(
         int newscore,
         int judge_id,
         const ej_uuid_t *judge_uuid,
-        unsigned int verdict_bits)
+        unsigned int verdict_bits,
+        struct run_entry *ure)
 {
   if (runid < state->run_f || runid >= state->run_u) ERR_R("bad runid: %d", runid);
 
@@ -610,7 +611,7 @@ run_change_status(
 
   return state->iface->change_status(state->cnts, runid, newstatus, newtest,
                                      newpassedmode, newscore, judge_id,
-                                     judge_uuid, verdict_bits);
+                                     judge_uuid, verdict_bits, ure);
 }
 
 int

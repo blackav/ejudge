@@ -90,15 +90,17 @@ struct rldb_plugin_iface
   // undo the last append
   int (*undo_add_entry)(struct rldb_plugin_cnts *, int run_id);
   // change the status
-  int (*change_status)(struct rldb_plugin_cnts *,
-                       int run_id,
-                       int new_status,
-                       int new_test,
-                       int new_passed_mode,
-                       int new_score,
-                       int judge_id,
-                       const ej_uuid_t *judge_uuid,
-                       unsigned int verdict_bits);
+  int (*change_status)(
+        struct rldb_plugin_cnts *,
+        int run_id,
+        int new_status,
+        int new_test,
+        int new_passed_mode,
+        int new_score,
+        int judge_id,
+        const ej_uuid_t *judge_uuid,
+        unsigned int verdict_bits,
+        struct run_entry *ure);
   // start the contest
   int (*start)(struct rldb_plugin_cnts *, time_t);
   // stop the contest

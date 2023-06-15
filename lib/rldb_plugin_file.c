@@ -126,7 +126,8 @@ change_status_func(
         int new_score,
         int judge_id,
         const ej_uuid_t *judge_uuid,
-        unsigned int verdict_bits);
+        unsigned int verdict_bits,
+        struct run_entry *ure);
 static int
 start_func(
         struct rldb_plugin_cnts *cdata,
@@ -1531,7 +1532,8 @@ change_status_func(
         int new_score,
         int judge_id,
         const ej_uuid_t *judge_uuid,
-        unsigned int verdict_bits)
+        unsigned int verdict_bits,
+        struct run_entry *ure)
 {
   struct rldb_file_cnts *cs = (struct rldb_file_cnts*) cdata;
   struct runlog_state *rls = cs->rl_state;
@@ -1553,7 +1555,7 @@ change_status_func(
     memset(&re->j, 0, sizeof(re->j));
     re->j.judge_id = judge_id;
   }
-  return do_flush_entry(cs, run_id, NULL);
+  return do_flush_entry(cs, run_id, ure);
 }
 
 static int
