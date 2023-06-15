@@ -4249,13 +4249,13 @@ priv_submit_run_comment(
 
   if (phr->action == NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_IGNORE) {
     run_change_status_4(cs->runlog_state, run_id, RUN_IGNORED, &re);
-    //FIXME:notify
+    //FIXME:1notify
   } else if (phr->action == NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_REJECT) {
     run_change_status_4(cs->runlog_state, run_id, RUN_REJECTED, &re);
-    //FIXME:notify
+    //FIXME:1notify
   } else if (phr->action == NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_SUMMON) {
     run_change_status_4(cs->runlog_state, run_id, RUN_SUMMONED, &re);
-    //FIXME:notify
+    //FIXME:1notify
   } else if (phr->action == NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_OK) {
     struct section_problem_data *prob = 0;
     int full_score = 0;
@@ -4281,7 +4281,7 @@ priv_submit_run_comment(
                         re.saved_test,    /* user_tests_passed -> saved_test */
                         user_score,       /* user_score -> saved_score */
                         re.verdict_bits, &re);
-    //FIXME:notify
+    //FIXME:1notify
   }
 
   const unsigned char *audit_cmd = NULL;
