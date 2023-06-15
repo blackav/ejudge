@@ -132,10 +132,12 @@ struct rldb_plugin_iface
         int new_pages,
         struct run_entry *ure);
   // set the entry
-  int (*set_entry)(struct rldb_plugin_cnts *,
-                   int run_id,
-                   const struct run_entry *in,
-                   uint64_t mask);
+  int (*set_entry)(
+        struct rldb_plugin_cnts *,
+        int run_id,
+        const struct run_entry *in,
+        uint64_t mask,
+        struct run_entry *ure);
   // remove the EMPTY records
   int (*squeeze)(struct rldb_plugin_cnts *);
   // insert the whole record

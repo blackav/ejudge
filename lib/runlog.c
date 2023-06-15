@@ -1645,7 +1645,7 @@ run_set_entry(
 
   if (!f) return 0;
 
-  if (state->iface->set_entry(state->cnts, run_id, &te, mask) < 0) return -1;
+  if (state->iface->set_entry(state->cnts, run_id, &te, mask, ure) < 0) return -1;
   int new_user_id = state->runs[run_id - state->run_f].user_id;
   if (new_user_id != old_user_id) {
     struct user_run_header_info *urh = NULL;

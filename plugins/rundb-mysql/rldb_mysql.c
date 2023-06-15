@@ -2108,7 +2108,8 @@ set_entry_func(
         struct rldb_plugin_cnts *cdata,
         int run_id,
         const struct run_entry *in,
-        uint64_t mask)
+        uint64_t mask,
+        struct run_entry *ure)
 {
   struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts *) cdata;
   struct runlog_state *rls = cs->rl_state;
@@ -2117,7 +2118,7 @@ set_entry_func(
   ASSERT(rls->runs[run_id - rls->run_f].status != RUN_EMPTY);
 
   (void) rls;
-  return do_update_entry(cs, run_id, in, mask, NULL);
+  return do_update_entry(cs, run_id, in, mask, ure);
 }
 
 static int

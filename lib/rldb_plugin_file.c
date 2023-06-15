@@ -174,7 +174,8 @@ set_entry_func(
         struct rldb_plugin_cnts *cdata,
         int run_id,
         const struct run_entry *in,
-        uint64_t mask);
+        uint64_t mask,
+        struct run_entry *ure);
 static int
 squeeze_func(struct rldb_plugin_cnts *cdata);
 static int
@@ -1709,7 +1710,8 @@ set_entry_func(
         struct rldb_plugin_cnts *cdata,
         int run_id,
         const struct run_entry *in,
-        uint64_t mask)
+        uint64_t mask,
+        struct run_entry *ure)
 {
   struct rldb_file_cnts *cs = (struct rldb_file_cnts*) cdata;
   struct runlog_state *rls = cs->rl_state;
@@ -1718,7 +1720,7 @@ set_entry_func(
   ASSERT(run_id >= 0 && run_id < rls->run_u);
 
   memcpy(&rls->runs[run_id], in, sizeof(*in));
-  return do_flush_entry(cs, run_id, NULL);
+  return do_flush_entry(cs, run_id, ure);
 }
 
 static int
