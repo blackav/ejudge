@@ -1510,7 +1510,8 @@ serve_compile_request(
         int rejudge_flag,
         int vcs_mode,
         int not_ok_is_cf,
-        const struct userlist_user *user)
+        const struct userlist_user *user,
+        struct run_entry *ure)
 {
   struct compile_run_extra rx;
   struct compile_request_packet cp;
@@ -1936,7 +1937,7 @@ serve_compile_request(
 
   if (!no_db_flag) {
     if (run_change_status(state->runlog_state, run_id, RUN_COMPILING, 0, 1, -1,
-                          cp.judge_id, &cp.judge_uuid, 0, NULL) < 0) {
+                          cp.judge_id, &cp.judge_uuid, 0, ure) < 0) {
       errcode = -SERVE_ERR_DB;
       goto failed;
     }
@@ -5085,7 +5086,8 @@ serve_rejudge_run(
                                 1 /* rejudge_flag */,
                                 re.is_vcs /* vcs_mode */,
                                 0 /* not_ok_is_cf */,
-                                user);
+                                user,
+                                NULL);
       if (r < 0) {
         serve_report_check_failed(config, cnts, state, run_id, serve_err_str(r));
         err("rejudge_run: serve_compile_request failed: %s", serve_err_str(r));
@@ -5138,7 +5140,8 @@ serve_rejudge_run(
                             1 /* rejudge_flag */,
                             re.is_vcs /* vcs_mode */,
                             0 /* not_ok_is_cf */,
-                            user);
+                            user,
+                            NULL);
   if (r < 0) {
     serve_report_check_failed(config, cnts, state, run_id, serve_err_str(r));
     err("rejudge_run: serve_compile_request failed: %s", serve_err_str(r));

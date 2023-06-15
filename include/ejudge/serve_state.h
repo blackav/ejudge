@@ -537,7 +537,8 @@ serve_compile_request(
         int rejudge_flag,
         int vcs_mode,
         int not_ok_is_cf,
-        const struct userlist_user *user)
+        const struct userlist_user *user,
+        struct run_entry *ure)
 #if defined __GNUC__
   __attribute__((warn_unused_result))
 #endif
