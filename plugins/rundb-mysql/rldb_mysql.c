@@ -2579,7 +2579,8 @@ append_run_func(
         uint64_t mask,
         struct timeval *p_tv,
         int64_t *p_serial_id,
-        ej_uuid_t *p_uuid)
+        ej_uuid_t *p_uuid,
+        struct run_entry *ure)
 {
   struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts *) cdata;
   struct rldb_mysql_state *state = cs->plugin_state;
@@ -3067,6 +3068,9 @@ append_run_func(
 
   if (p_tv) *p_tv = current_time_tv;
   if (p_serial_id) *p_serial_id = serial_id;
+  if (ure) {
+    *ure = *new_re;
+  }
 
   if (cs->metrics) {
     long long request_end_time = get_current_time_us();

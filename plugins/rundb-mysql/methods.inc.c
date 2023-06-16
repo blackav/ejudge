@@ -236,7 +236,8 @@ append_run_func(
         uint64_t mask,
         struct timeval *p_tv,
         int64_t *p_serial_id,
-        ej_uuid_t *p_uuid);
+        ej_uuid_t *p_uuid,
+        struct run_entry *ure);
 
 static int
 run_set_is_checked_func(

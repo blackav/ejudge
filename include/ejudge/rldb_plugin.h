@@ -236,7 +236,8 @@ struct rldb_plugin_iface
         uint64_t mask,
         struct timeval *p_tv,
         int64_t *p_serial_id,
-        ej_uuid_t *p_uuid);
+        ej_uuid_t *p_uuid,
+        struct run_entry *ure);
 
   // set is_checked flag of the run (legacy)
   int (*run_set_is_checked)(

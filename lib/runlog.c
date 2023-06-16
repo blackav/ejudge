@@ -449,7 +449,7 @@ run_add_record(
 
   int64_t serial_id = 0;
   if (state->iface->append_run) {
-    i = state->iface->append_run(state->cnts, &re, flags, p_tv, &serial_id, puuid);
+    i = state->iface->append_run(state->cnts, &re, flags, p_tv, &serial_id, puuid, ure);
     if (i < 0) {
       return -1;
     }
