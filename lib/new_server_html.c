@@ -3173,6 +3173,7 @@ priv_submit_run(
   int notify_kind = 0;
   ej_mixed_id_t notify_queue;
   ej_mixed_id_t *notify_queue_ptr = NULL;
+  struct run_entry new_run;
 
   if (opcaps_check(phr->caps, OPCAP_SUBMIT_RUN) < 0) {
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
@@ -3672,7 +3673,8 @@ priv_submit_run(
                           ext_user_ptr,
                           notify_driver,
                           notify_kind,
-                          notify_queue_ptr);
+                          notify_queue_ptr,
+                          &new_run);
   if (run_id < 0) {
     FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
   }
@@ -5639,7 +5641,8 @@ priv_new_run(FILE *fout,
                           NULL /* ext_user */,
                           0 /* notify_driver */,
                           0 /* notify_kind */,
-                          NULL /* notify_queue */);
+                          NULL /* notify_queue */,
+                          NULL /* ure */);
   if (run_id < 0) FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
   serve_move_files_to_insert_run(cs, run_id);
   if (metrics.data) {
@@ -10990,6 +10993,7 @@ ns_submit_run(
   ej_uuid_t run_uuid = { { 0, 0, 0, 0 } };
   ej_uuid_t *uuid_ptr = NULL;
   int eoln_type = 0;
+  struct run_entry new_run;
 
   if (!prob_param_name) prob_param_name = "prob_id";
   if (hr_cgi_param(phr, prob_param_name, &s) <= 0 || !s) {
@@ -11478,7 +11482,8 @@ ns_submit_run(
                           NULL /* ext_user */,
                           0 /* notify_driver */,
                           0 /* notify_kind */,
-                          NULL /* notify_queue */);
+                          NULL /* notify_queue */,
+                          &new_run);
   if (run_id < 0) {
     FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
   }
@@ -11755,6 +11760,7 @@ unpriv_submit_run(
   int retval = 0;
   int rejudge_flag = 0;
   int priority_adjustment = 0;
+  struct run_entry new_run;
 
   l10n_setlocale(phr->locale_id);
 
@@ -12223,7 +12229,8 @@ unpriv_submit_run(
                           NULL /* ext_user */,
                           0 /* notify_driver */,
                           0 /* notify_kind */,
-                          NULL /* notify_queue */);
+                          NULL /* notify_queue */,
+                          &new_run);
   if (run_id < 0) {
     FAIL2(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
   }
@@ -14525,6 +14532,7 @@ unpriv_xml_update_answer(
   int new_flag = 0, arch_flags = 0;
   path_t run_path;
   struct run_entry nv;
+  struct run_entry new_run;
 
   if (global->score_system != SCORE_OLYMPIAD
       || !cs->accepting_mode) FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
@@ -14635,7 +14643,8 @@ unpriv_xml_update_answer(
                             NULL /* ext_user */,
                             0 /* notify_driver */,
                             0 /* notify_kind */,
-                            NULL /* notify_queue */);
+                            NULL /* notify_queue */,
+                            &new_run);
     if (run_id < 0) FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
     serve_move_files_to_insert_run(cs, run_id);
     if (metrics.data) {

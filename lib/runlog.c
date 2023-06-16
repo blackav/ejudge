@@ -344,7 +344,8 @@ run_add_record(
         ej_mixed_id_t *ext_user,
         int            notify_driver,
         int            notify_kind,
-        ej_mixed_id_t *notify_queue)
+        ej_mixed_id_t *notify_queue,
+        struct run_entry *ure)
 {
   int i;
   struct run_entry re;

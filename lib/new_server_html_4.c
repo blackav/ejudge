@@ -797,6 +797,7 @@ cmd_submit_run(
   unsigned char *utf8_str = NULL;
   int utf8_len = 0;
   int eoln_type = 0;
+  struct run_entry new_run;
 
   // initial permission check
   switch (phr->role) {
@@ -1124,7 +1125,8 @@ cmd_submit_run(
                           NULL /* ext_user */,
                           0 /* notify_driver */,
                           0 /* notify_kind */,
-                          NULL /* notify_queue */);
+                          NULL /* notify_queue */,
+                          &new_run);
   if (run_id < 0)
     FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
   serve_move_files_to_insert_run(cs, run_id);
