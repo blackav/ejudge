@@ -2076,7 +2076,8 @@ static int
 set_hidden_func(
         struct rldb_plugin_cnts *cdata,
         int run_id,
-        int new_hidden)
+        int new_hidden,
+        struct run_entry *ure)
 {
   struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts *) cdata;
   struct run_entry te;
@@ -2086,7 +2087,7 @@ set_hidden_func(
   memset(&te, 0, sizeof(te));
   te.is_hidden = new_hidden;
 
-  return do_update_entry(cs, run_id, &te, RE_IS_HIDDEN, NULL);
+  return do_update_entry(cs, run_id, &te, RE_IS_HIDDEN, ure);
 }
 
 static int

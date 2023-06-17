@@ -1994,11 +1994,14 @@ run_forced_clear_entry(runlog_state_t state, int run_id)
 }
 
 int
-run_set_hidden(runlog_state_t state, int run_id)
+run_set_hidden(
+        runlog_state_t state,
+        int run_id,
+        struct run_entry *ure)
 {
   if (run_id < 0 || run_id >= state->run_u) ERR_R("bad runid: %d", run_id);
   touch_last_update_time_us(state);
-  return state->iface->set_hidden(state->cnts, run_id, 1);
+  return state->iface->set_hidden(state->cnts, run_id, 1, ure);
 }
 
 int

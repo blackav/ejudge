@@ -138,7 +138,8 @@ static int
 set_hidden_func(
         struct rldb_plugin_cnts *cdata,
         int run_id,
-        int new_hidden);
+        int new_hidden,
+        struct run_entry *ure);
 
 static int
 set_pages_func(

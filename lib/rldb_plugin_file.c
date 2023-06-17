@@ -164,7 +164,8 @@ static int
 set_hidden_func(
         struct rldb_plugin_cnts *cdata,
         int run_id,
-        int new_hidden);
+        int new_hidden,
+        struct run_entry *ure);
 static int
 set_pages_func(
         struct rldb_plugin_cnts *cdata,
@@ -1678,7 +1679,8 @@ static int
 set_hidden_func(
         struct rldb_plugin_cnts *cdata,
         int run_id,
-        int new_hidden)
+        int new_hidden,
+        struct run_entry *ure)
 {
   struct rldb_file_cnts *cs = (struct rldb_file_cnts*) cdata;
   struct runlog_state *rls = cs->rl_state;
@@ -1687,7 +1689,7 @@ set_hidden_func(
   ASSERT(run_id >= 0 && run_id < rls->run_u);
 
   rls->runs[run_id].is_hidden = new_hidden;
-  return do_flush_entry(cs, run_id, NULL);
+  return do_flush_entry(cs, run_id, ure);
 }
 
 static int

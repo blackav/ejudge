@@ -124,9 +124,11 @@ struct rldb_plugin_iface
   // clear the entry
   int (*clear_entry)(struct rldb_plugin_cnts *, int run_id);
   // set the hidden flag value
-  int (*set_hidden)(struct rldb_plugin_cnts *,
-                    int run_id,
-                    int new_hidden);
+  int (*set_hidden)(
+        struct rldb_plugin_cnts *,
+        int run_id,
+        int new_hidden,
+        struct run_entry *ure);
   // set the judge_id value
   __attribute__((deprecated)) int (*deprecated_set_judge_id)(struct rldb_plugin_cnts *,
                       int run_id,

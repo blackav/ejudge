@@ -1941,7 +1941,7 @@ serve_compile_request(
       errcode = -SERVE_ERR_DB;
       goto failed;
     }
-    //FIXME:notify
+    //FIXME:1notify
   }
 
   sarray_free(comp_env_mem_2);
@@ -2753,7 +2753,7 @@ serve_run_request(
                           judge_id, judge_uuid, 0, ure) < 0) {
       goto fail;
     }
-    //FIXME:notify
+    //FIXME:1notify
   }
 
   prepare_tester_free(refined_tester);
@@ -6124,6 +6124,7 @@ serve_collect_virtual_stop_events(serve_state_t cs)
   time_t *user_time = 0, *new_time, *pt;
   int user_time_size = 0, new_size;
   int need_reload = 0;
+  struct run_entry upd_re;
 
   if (!cs->global->is_virtual) return 0;
 
@@ -6215,8 +6216,8 @@ serve_collect_virtual_stop_events(serve_state_t cs)
         // run after virtual stop
         if (!pe->is_hidden) {
           err("run %d: run after virtual stop, made hidden!", i);
-          run_set_hidden(cs->runlog_state, i);
-          //FIXME:notify
+          run_set_hidden(cs->runlog_state, i, &upd_re);
+          //FIXME:1notify
           need_reload = 1;
         }
       } else if (!*pt) {
@@ -6226,8 +6227,8 @@ serve_collect_virtual_stop_events(serve_state_t cs)
         // virtual run overrun
         if (!pe->is_hidden) {
           err("run %d: virtual time run overrun, made hidden!", i);
-          run_set_hidden(cs->runlog_state, i);
-          //FIXME:notify
+          run_set_hidden(cs->runlog_state, i, &upd_re);
+          //FIXME:1notify
           need_reload = 1;
         }
       } else {
