@@ -1158,8 +1158,8 @@ cmd_submit_run(
       serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                         "submit", "ok", RUN_PENDING,
                         "  Testing disabled for this problem or language");
-      run_change_status_4(cs->runlog_state, run_id, RUN_PENDING, NULL);
-      //FIXME:notify
+      run_change_status_4(cs->runlog_state, run_id, RUN_PENDING, &new_run);
+      //FIXME:1notify
     } else {
       serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                         "submit", "ok", RUN_COMPILING, NULL);
@@ -1176,7 +1176,7 @@ cmd_submit_run(
                                      phr->is_job,
                                      0 /* not_ok_is_cf */,
                                      user,
-                                     NULL)) < 0) {
+                                     &new_run)) < 0) {
         serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
       }
     }
@@ -1186,8 +1186,8 @@ cmd_submit_run(
       serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                         "submit", "ok", RUN_ACCEPTED,
                         "  This problem is checked manually");
-      run_change_status_4(cs->runlog_state, run_id, RUN_ACCEPTED, NULL);
-      //FIXME:notify
+      run_change_status_4(cs->runlog_state, run_id, RUN_ACCEPTED, &new_run);
+      //FIXME:1notify
     } else {
       serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                         "submit", "ok", RUN_COMPILING, NULL);
@@ -1209,7 +1209,7 @@ cmd_submit_run(
                                        phr->is_job,
                                        0 /* not_ok_is_cf */,
                                        user,
-                                       NULL)) < 0) {
+                                       &new_run)) < 0) {
           serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
         }
       } else {
@@ -1225,7 +1225,7 @@ cmd_submit_run(
                               store_flags,
                               0 /* not_ok_is_cf */,
                               NULL, 0,
-                              NULL) < 0)
+                              &new_run) < 0)
           FAIL(NEW_SRV_ERR_DISK_WRITE_ERROR);
       }
     }
@@ -1235,8 +1235,8 @@ cmd_submit_run(
       serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                         "submit", "ok", RUN_PENDING,
                         "  Testing disabled for this problem");
-      run_change_status_4(cs->runlog_state, run_id, RUN_PENDING, NULL);
-      //FIXME:notify
+      run_change_status_4(cs->runlog_state, run_id, RUN_PENDING, &new_run);
+      //FIXME:1notify
     } else {
       problem_xml_t px = NULL;
       if (prob->variant_num > 0 && prob->xml.a && variant > 0) {
@@ -1275,7 +1275,7 @@ cmd_submit_run(
                                        phr->is_job,
                                        0 /* not_ok_is_cf */,
                                        user,
-                                       NULL)) < 0) {
+                                       &new_run)) < 0) {
           serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
         }
       } else {
@@ -1293,7 +1293,7 @@ cmd_submit_run(
                               store_flags,
                               0 /* not_ok_is_cf */,
                               NULL, 0,
-                              NULL) < 0)
+                              &new_run) < 0)
           FAIL(NEW_SRV_ERR_DISK_WRITE_ERROR);
       }
     }
