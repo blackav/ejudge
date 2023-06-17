@@ -499,7 +499,7 @@ run_add_record(
   state->user_count = -1;
 
   if (!state->iface->append_run) {
-    if (state->iface->add_entry(state->cnts, i, &re, flags) < 0) return -1;
+    if (state->iface->add_entry(state->cnts, i, &re, flags, ure) < 0) return -1;
   }
 
   // updating user_id index
@@ -1790,7 +1790,7 @@ run_virtual_start(
   }
   state->user_count = -1;
 
-  if ((i = state->iface->add_entry(state->cnts, i, &re, RE_USER_ID | RE_IP | RE_SSL_FLAG | RE_STATUS)) < 0) return -1;
+  if ((i = state->iface->add_entry(state->cnts, i, &re, RE_USER_ID | RE_IP | RE_SSL_FLAG | RE_STATUS, NULL)) < 0) return -1;
 
   urh = run_get_user_run_header(state, user_id, NULL);
   if (urh) {
@@ -1869,7 +1869,7 @@ run_virtual_stop(
   }
   state->user_count = -1;
 
-  if ((i = state->iface->add_entry(state->cnts, i, &re, RE_USER_ID | RE_IP | RE_SSL_FLAG | RE_STATUS)) < 0) return -1;
+  if ((i = state->iface->add_entry(state->cnts, i, &re, RE_USER_ID | RE_IP | RE_SSL_FLAG | RE_STATUS, NULL)) < 0) return -1;
 
   // updating user_id index
   extend_run_extras(state);

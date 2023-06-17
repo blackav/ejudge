@@ -1760,7 +1760,8 @@ add_entry_func(
         struct rldb_plugin_cnts *cdata,
         int run_id,
         const struct run_entry *re,
-        uint64_t mask)
+        uint64_t mask,
+        struct run_entry *ure)
 {
   struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts *) cdata;
   struct runlog_state *rls = cs->rl_state;
@@ -1774,7 +1775,7 @@ add_entry_func(
   ASSERT(de->time > 0);
   (void) de;
 
-  return do_update_entry(cs, run_id, re, mask, NULL);
+  return do_update_entry(cs, run_id, re, mask, ure);
 }
 
 static int

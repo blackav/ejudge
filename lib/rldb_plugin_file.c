@@ -111,7 +111,8 @@ add_entry_func(
         struct rldb_plugin_cnts *cdata,
         int i,
         const struct run_entry *re,
-        uint64_t mask);
+        uint64_t mask,
+        struct run_entry *ure);
 static int
 undo_add_entry_func(
         struct rldb_plugin_cnts *cdata,
@@ -1386,7 +1387,8 @@ add_entry_func(
         struct rldb_plugin_cnts *cdata,
         int run_id,
         const struct run_entry *re,
-        uint64_t mask)
+        uint64_t mask,
+        struct run_entry *ure)
 {
   struct rldb_file_cnts *cs = (struct rldb_file_cnts*) cdata;
   struct runlog_state *rls = cs->rl_state;
@@ -1495,7 +1497,7 @@ add_entry_func(
     de->token_count = re->token_count;
   }
 
-  return do_flush_entry(cs, run_id, NULL);
+  return do_flush_entry(cs, run_id, ure);
 }
 
 static int
