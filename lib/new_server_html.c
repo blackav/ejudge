@@ -556,8 +556,11 @@ ns_unload_contests(void)
 {
   int i;
 
-  for (i = 0; i < extra_u; i++)
+  // we must keep `extras` array valid at all times
+  for (i = extra_u - 1; i >= 0; --i) {
     do_unload_contest(i);
+    extra_u = i;
+  }
   extra_u = 0;
 }
 
@@ -566,7 +569,7 @@ enum { EXPIRED_CONTEST_CHECK_INTERVAL = 60 };
 void
 ns_unload_expired_contests(time_t cur_time)
 {
-  int i, j;
+  int i;
 
   if (cur_time <= 0) cur_time = time(0);
 
@@ -575,17 +578,21 @@ ns_unload_expired_contests(time_t cur_time)
   }
   expired_contest_last_check_time = cur_time;
 
-  for (i = 0, j = 0; i < extra_u; i++)
+  // we must keep `extras` array valid at all times
+  for (i = 0; i < extra_u; ) {
     if (extras[i]
         && extras[i]->last_access_time + CONTEST_EXPIRE_TIME < cur_time
         && (!extras[i]->serve_state
             || !extras[i]->serve_state->pending_xml_import)) {
       do_unload_contest(i);
+      if (i < extra_u - 1) {
+        memmove(&extras[i], &extras[i+1], (extra_u-i-1)*sizeof(extras[0]));
+      }
+      --extra_u;
     } else {
-      extras[j++] = extras[i];
-      //extras[i] = 0;
+      ++i;
     }
-  extra_u = j;
+  }
 }
 
 static void
