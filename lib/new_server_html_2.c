@@ -1781,7 +1781,7 @@ ns_priv_edit_run_action(
     mask |= RE_IS_READONLY;
     if (run_set_entry(cs->runlog_state, run_id, mask, &new_info, &new_info) < 0)
       FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
-    //FIXME:1notify
+    serve_notify_run_update(phr->config, cs, 0, &new_info);
     goto cleanup;
   }
   if (info.is_readonly != new_is_readonly) {
@@ -2354,7 +2354,7 @@ ns_priv_edit_run_action(
   if (!mask) goto cleanup;
   if (run_set_entry(cs->runlog_state, run_id, mask, &new_info, &new_info) < 0)
     FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
-  //FIXME:1notify
+  serve_notify_run_update(phr->config, cs, 0, &new_info);
 
   serve_audit_log(cs, run_id, &info, phr->user_id, &phr->ip, phr->ssl_flag,
                   "edit-run", "ok", -1,

@@ -1159,7 +1159,7 @@ cmd_submit_run(
                         "submit", "ok", RUN_PENDING,
                         "  Testing disabled for this problem or language");
       run_change_status_4(cs->runlog_state, run_id, RUN_PENDING, &new_run);
-      //FIXME:1notify
+      serve_notify_run_update(phr->config, cs, start_time, &new_run);
     } else {
       serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                         "submit", "ok", RUN_COMPILING, NULL);
@@ -1187,7 +1187,7 @@ cmd_submit_run(
                         "submit", "ok", RUN_ACCEPTED,
                         "  This problem is checked manually");
       run_change_status_4(cs->runlog_state, run_id, RUN_ACCEPTED, &new_run);
-      //FIXME:1notify
+      serve_notify_run_update(phr->config, cs, start_time, &new_run);
     } else {
       serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                         "submit", "ok", RUN_COMPILING, NULL);
@@ -1236,7 +1236,7 @@ cmd_submit_run(
                         "submit", "ok", RUN_PENDING,
                         "  Testing disabled for this problem");
       run_change_status_4(cs->runlog_state, run_id, RUN_PENDING, &new_run);
-      //FIXME:1notify
+      serve_notify_run_update(phr->config, cs, start_time, &new_run);
     } else {
       problem_xml_t px = NULL;
       if (prob->variant_num > 0 && prob->xml.a && variant > 0) {

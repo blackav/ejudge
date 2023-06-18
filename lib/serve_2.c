@@ -1941,7 +1941,7 @@ serve_compile_request(
       errcode = -SERVE_ERR_DB;
       goto failed;
     }
-    //FIXME:1notify
+    serve_notify_run_update(config, state, 0, ure);
   }
 
   sarray_free(comp_env_mem_2);
@@ -2753,7 +2753,7 @@ serve_run_request(
                           judge_id, judge_uuid, 0, ure) < 0) {
       goto fail;
     }
-    //FIXME:1notify
+    serve_notify_run_update(config, state, 0, ure);
   }
 
   prepare_tester_free(refined_tester);
@@ -3695,7 +3695,7 @@ serve_read_compile_packet(
       if (run_change_status_4(state->runlog_state, comp_pkt->run_id,
                               RUN_CHECK_FAILED, &re) < 0)
         goto non_fatal_error;
-      //FIXME:1notify
+      serve_notify_run_update(config, state, 0, &re);
       serve_send_check_failed_email(config, cnts, comp_pkt->run_id);
       serve_telegram_check_failed(config, cnts, state, comp_pkt->run_id, &re);
       goto success;
@@ -3705,7 +3705,7 @@ serve_read_compile_packet(
       if (run_change_status_4(state->runlog_state, comp_pkt->run_id,
                               comp_pkt->status, &re) < 0)
         goto non_fatal_error;
-      //FIXME:1notify
+      serve_notify_run_update(config, state, 0, &re);
 
       serve_update_standings_file(extra, state, cnts, 0);
       if (global->notify_status_change > 0 && !re.is_hidden && comp_extra->notify_flag) {
@@ -3836,7 +3836,7 @@ serve_read_compile_packet(
     if (run_change_status_4(state->runlog_state, comp_pkt->run_id,
                             RUN_CHECK_FAILED, &re) < 0)
       goto non_fatal_error;
-    //FIXME:1notify
+    serve_notify_run_update(config, state, 0, &re);
     if (re.store_flags == STORE_FLAGS_UUID) {
       if (uuid_archive_dir_prepare(state, &re.run_uuid, DFLT_R_UUID_XML_REPORT, 0) < 0)
         goto non_fatal_error;
@@ -3860,7 +3860,7 @@ serve_read_compile_packet(
     if (run_change_status_4(state->runlog_state, comp_pkt->run_id,
                             comp_pkt->status, &re) < 0)
       goto non_fatal_error;
-    //FIXME:1notify
+    serve_notify_run_update(config, state, 0, &re);
 
     if (re.store_flags == STORE_FLAGS_UUID) {
       if (uuid_archive_dir_prepare(state, &re.run_uuid, DFLT_R_UUID_XML_REPORT, 0) < 0) {
@@ -3921,7 +3921,7 @@ prepare_run_request:
     if (run_change_status_4(state->runlog_state, comp_pkt->run_id,
                             RUN_ACCEPTED, &re) < 0)
       goto non_fatal_error;
-    //FIXME:1notify
+    serve_notify_run_update(config, state, 0, &re);
     if (global->notify_status_change > 0 && !re.is_hidden
         && comp_extra->notify_flag) {
       serve_notify_user_run_status_change(config, cnts, state, re.user_id,
@@ -3992,7 +3992,7 @@ prepare_run_request:
   if (run_change_status_4(state->runlog_state, comp_pkt->run_id,
                           RUN_CHECK_FAILED, &re) < 0)
     goto non_fatal_error;
-  //FIXME:1notify
+  serve_notify_run_update(config, state, 0, &re);
   report_size = strlen(errmsg);
 
   if (re.store_flags == STORE_FLAGS_UUID_BSON) {
@@ -4514,7 +4514,7 @@ serve_read_run_packet(
     if (run_change_status_4(state->runlog_state, reply_pkt->run_id,
                             reply_pkt->status, &re) < 0)
       goto failed;
-    //FIXME:1notify
+    serve_notify_run_update(config, state, 0, &re);
   } else {
     int has_user_score = 0;
     int user_status = 0;
@@ -4532,7 +4532,7 @@ serve_read_run_packet(
                             has_user_score, user_status, user_tests_passed,
                             user_score, reply_pkt->verdict_bits, &re) < 0)
       goto failed;
-    //FIXME:1notify
+    serve_notify_run_update(config, state, 0, &re);
   }
   serve_update_standings_file(extra, state, cnts, 0);
   if (global->notify_status_change > 0 && !re.is_hidden
@@ -4695,11 +4695,11 @@ serve_read_run_packet(
       if ((pe.status == RUN_ACCEPTED || pe.status == RUN_PENDING_REVIEW)
           && pe.prob_id == re.prob_id && pe.user_id == re.user_id) {
         run_change_status_3(state->runlog_state, i, RUN_IGNORED, 0, 1, 0, 0, 0, 0, 0, 0, 0, &re);
-        //FIXME:1notify
+        serve_notify_run_update(config, state, 0, &re);
       } else if (pe.is_saved && (pe.saved_status == RUN_ACCEPTED || pe.saved_status == RUN_PENDING_REVIEW)
           && pe.prob_id == re.prob_id && pe.user_id == re.user_id) {
         run_change_status_3(state->runlog_state, i, RUN_IGNORED, 0, 1, 0, 0, 0, 0, 0, 0, 0, &re);
-        //FIXME:1notify
+        serve_notify_run_update(config, state, 0, &re);
       }
     }
   }
@@ -4898,7 +4898,7 @@ serve_judge_built_in_problem(
   (void) failed_test;
   run_change_status_3(state->runlog_state, run_id, glob_status, passed_tests, 1,
                       score, 0, 0, 0, 0, 0, 0, re);
-  //FIXME:1notify
+  serve_notify_run_update(config, state, 0, re);
   serve_update_standings_file(extra, state, cnts, 0);
   /*
   if (global->notify_status_change > 0 && !re.is_hidden
@@ -4998,7 +4998,7 @@ serve_report_check_failed(
                           RUN_CHECK_FAILED, &re) < 0) {
     err("run_change_status_4: %d, RUN_CHECK_FAILED failed\n", run_id);
   }
-  //FIXME:1notify
+  serve_notify_run_update(config, state, 0, &re);
 }
 
 void
@@ -6217,7 +6217,6 @@ serve_collect_virtual_stop_events(serve_state_t cs)
         if (!pe->is_hidden) {
           err("run %d: run after virtual stop, made hidden!", i);
           run_set_hidden(cs->runlog_state, i, &upd_re);
-          //FIXME:1notify
           need_reload = 1;
         }
       } else if (!*pt) {
@@ -6228,7 +6227,6 @@ serve_collect_virtual_stop_events(serve_state_t cs)
         if (!pe->is_hidden) {
           err("run %d: virtual time run overrun, made hidden!", i);
           run_set_hidden(cs->runlog_state, i, &upd_re);
-          //FIXME:1notify
           need_reload = 1;
         }
       } else {
@@ -6516,7 +6514,8 @@ serve_ignore_by_mask(serve_state_t state,
       }
       serve_audit_log(state, r, &re, user_id, ip, ssl_flag,
                       cmd, "ok", new_status, NULL);
-      //FIXME:1notify
+      //FIXME:2notify
+      //serve_notify_run_update(config, state, 0, &re);
     }
   }
 }
@@ -6560,7 +6559,8 @@ serve_mark_by_mask(
 
     re.is_marked = mark_value;
     run_set_entry(state->runlog_state, r, RE_IS_MARKED, &re, &re);
-    //FIXME:1notify
+    //FIXME:2notify
+    //serve_notify_run_update(config, state, 0, &re);
 
     serve_audit_log(state, r, &re, user_id, ip, ssl_flag,
                     audit_cmd, "ok", -1, NULL);
@@ -6601,7 +6601,8 @@ serve_tokenize_by_mask(
       re.token_flags = token_flags;
       run_set_entry(state->runlog_state, r, RE_TOKEN_COUNT | RE_TOKEN_FLAGS,
                     &re, &re);
-      //FIXME:1notify
+      //FIXME:2notify
+      //serve_notify_run_update(config, state, 0, &re);
     }
 
     serve_audit_log(state, r, &re, user_id, ip, ssl_flag,
@@ -6791,13 +6792,15 @@ serve_testing_queue_delete(
           && !memcmp(&re.j.judge_uuid, &judge_uuid, sizeof(re.j.judge_uuid))) {
         run_change_status_4(state->runlog_state, srp->global->run_id,
                             RUN_PENDING, &re);
-        //FIXME:1notify
+        //FIXME:2notify
+        //serve_notify_run_update(config, state, 0, &re);
       }
     } else {
       if (re.j.judge_id == srp->global->judge_id) {
         run_change_status_4(state->runlog_state, srp->global->run_id,
                             RUN_PENDING, &re);
-        //FIXME:1notify
+        //FIXME:2notify
+        //serve_notify_run_update(config, state, 0, &re);
       }
     }
   }
