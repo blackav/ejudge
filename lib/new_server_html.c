@@ -3712,7 +3712,7 @@ priv_submit_run(
                       "priv-submit", "ok", RUN_PENDING,
                       "  Testing disabled for this problem or language");
       run_change_status_4(cs->runlog_state, run_id, RUN_PENDING, &new_run);
-      serve_notify_run_update(phr->config, cs, 0, &new_run);
+      serve_notify_run_update(phr->config, cs, &new_run);
     } else {
       serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                       "priv-submit", "ok", RUN_COMPILING, NULL);
@@ -3743,7 +3743,7 @@ priv_submit_run(
                       "priv-submit", "ok", RUN_ACCEPTED,
                       "  This problem is checked manually");
       run_change_status_4(cs->runlog_state, run_id, RUN_ACCEPTED, &new_run);
-      serve_notify_run_update(phr->config, cs, 0, &new_run);
+      serve_notify_run_update(phr->config, cs, &new_run);
     } else {
       serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                       "priv-submit", "ok", RUN_COMPILING, NULL);
@@ -3796,7 +3796,7 @@ priv_submit_run(
                       "priv-submit", "ok", RUN_PENDING,
                       "  Testing disabled for this problem");
       run_change_status_4(cs->runlog_state, run_id, RUN_PENDING, &new_run);
-      serve_notify_run_update(phr->config, cs, 0, &new_run);
+      serve_notify_run_update(phr->config, cs, &new_run);
     } else {
       serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                       "priv-submit", "ok", RUN_COMPILING, NULL);
@@ -4256,13 +4256,13 @@ priv_submit_run_comment(
 
   if (phr->action == NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_IGNORE) {
     run_change_status_4(cs->runlog_state, run_id, RUN_IGNORED, &re);
-    serve_notify_run_update(phr->config, cs, 0, &re);
+    serve_notify_run_update(phr->config, cs, &re);
   } else if (phr->action == NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_REJECT) {
     run_change_status_4(cs->runlog_state, run_id, RUN_REJECTED, &re);
-    serve_notify_run_update(phr->config, cs, 0, &re);
+    serve_notify_run_update(phr->config, cs, &re);
   } else if (phr->action == NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_SUMMON) {
     run_change_status_4(cs->runlog_state, run_id, RUN_SUMMONED, &re);
-    serve_notify_run_update(phr->config, cs, 0, &re);
+    serve_notify_run_update(phr->config, cs, &re);
   } else if (phr->action == NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_OK) {
     struct section_problem_data *prob = 0;
     int full_score = 0;
@@ -4288,7 +4288,7 @@ priv_submit_run_comment(
                         re.saved_test,    /* user_tests_passed -> saved_test */
                         user_score,       /* user_score -> saved_score */
                         re.verdict_bits, &re);
-    serve_notify_run_update(phr->config, cs, 0, &re);
+    serve_notify_run_update(phr->config, cs, &re);
   }
 
   const unsigned char *audit_cmd = NULL;
@@ -4920,7 +4920,7 @@ priv_edit_run(FILE *fout, FILE *log_f,
 
   if (run_set_entry(cs->runlog_state, run_id, ne_mask, &ne, &ne) < 0)
     FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
-  serve_notify_run_update(phr->config, cs, 0, &ne);
+  serve_notify_run_update(phr->config, cs, &ne);
 
   serve_audit_log(cs, run_id, &re, phr->user_id, &phr->ip, phr->ssl_flag,
                   audit_cmd, "ok", -1,
@@ -5013,7 +5013,7 @@ priv_change_status(
     ns_error(log_f, NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
     goto cleanup;
   }
-  serve_notify_run_update(phr->config, cs, 0, &new_run);
+  serve_notify_run_update(phr->config, cs, &new_run);
 
   serve_audit_log(cs, run_id, &re, phr->user_id, &phr->ip, phr->ssl_flag,
                   "change-status", "ok", status, NULL);
@@ -5098,7 +5098,7 @@ priv_simple_change_status(
     ns_error(log_f, NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
     goto cleanup;
   }
-  serve_notify_run_update(phr->config, cs, 0, &new_run);
+  serve_notify_run_update(phr->config, cs, &new_run);
 
   serve_audit_log(cs, run_id, &re, phr->user_id, &phr->ip, phr->ssl_flag,
                   audit_cmd, "ok", status, NULL);
@@ -5669,7 +5669,7 @@ priv_new_run(FILE *fout,
     goto cleanup;
   }
   run_set_entry(cs->runlog_state, run_id, re_flags, &re, &re);
-  serve_notify_run_update(phr->config, cs, 0, &re);
+  serve_notify_run_update(phr->config, cs, &re);
 
   serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                   "priv-new-run", "ok", RUN_PENDING, NULL);
@@ -10899,7 +10899,7 @@ unpriv_use_token(
     error_page(fout, phr, 0, NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
     goto cleanup;
   }
-  serve_notify_run_update(phr->config, cs, 0, &re);
+  serve_notify_run_update(phr->config, cs, &re);
 
   serve_audit_log(cs, run_id, &re, phr->user_id, &phr->ip, phr->ssl_flag,
                   "use_token", "ok", -1, "  %d tokens used\n  %d new token flags\n", prob->token_info->open_cost,
@@ -11519,7 +11519,7 @@ ns_submit_run(
     serve_audit_log(cs, run_id, NULL, user_id, &phr->ip, phr->ssl_flag,
                     "submit", "ok", RUN_ACCEPTED, NULL);
     run_change_status_4(cs->runlog_state, run_id, RUN_ACCEPTED, &new_run);
-    serve_notify_run_update(phr->config, cs, 0, &new_run);
+    serve_notify_run_update(phr->config, cs, &new_run);
     goto done;
   }
 
@@ -11531,7 +11531,7 @@ ns_submit_run(
                     "submit", "ok", RUN_PENDING,
                     "  Testing disabled for this problem");
     run_change_status_4(cs->runlog_state, run_id, RUN_PENDING, &new_run);
-    serve_notify_run_update(phr->config, cs, 0, &new_run);
+    serve_notify_run_update(phr->config, cs, &new_run);
     goto done;
   }
 
@@ -11543,7 +11543,7 @@ ns_submit_run(
                       "submit", "ok", RUN_PENDING,
                       "  Testing disabled for this language");
       run_change_status_4(cs->runlog_state, run_id, RUN_PENDING, &new_run);
-      serve_notify_run_update(phr->config, cs, 0, &new_run);
+      serve_notify_run_update(phr->config, cs, &new_run);
       goto done;
     }
 
@@ -11580,7 +11580,7 @@ ns_submit_run(
                       "submit", "ok", RUN_ACCEPTED,
                       "  This problem is checked manually");
       run_change_status_4(cs->runlog_state, run_id, RUN_ACCEPTED, &new_run);
-      serve_notify_run_update(phr->config, cs, 0, &new_run);
+      serve_notify_run_update(phr->config, cs, &new_run);
       goto done;
     }
 
@@ -12269,7 +12269,7 @@ unpriv_submit_run(
                       "submit", "ok", RUN_PENDING,
                       "  Testing disabled for this problem or language");
       run_change_status_4(cs->runlog_state, run_id, RUN_PENDING, &new_run);
-      serve_notify_run_update(phr->config, cs, 0, &new_run);
+      serve_notify_run_update(phr->config, cs, &new_run);
     } else {
       serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                       "submit", "ok", RUN_COMPILING, NULL);
@@ -12302,7 +12302,7 @@ unpriv_submit_run(
                       "submit", "ok", RUN_ACCEPTED,
                       "  This problem is checked manually");
       run_change_status_4(cs->runlog_state, run_id, RUN_ACCEPTED, &new_run);
-      serve_notify_run_update(phr->config, cs, 0, &new_run);
+      serve_notify_run_update(phr->config, cs, &new_run);
     } else {
       serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                       "submit", "ok", RUN_COMPILING, NULL);
@@ -12351,14 +12351,14 @@ unpriv_submit_run(
       serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                       "submit", "ok", RUN_ACCEPTED, NULL);
       run_change_status_4(cs->runlog_state, run_id, RUN_ACCEPTED, &new_run);
-      serve_notify_run_update(phr->config, cs, 0, &new_run);
+      serve_notify_run_update(phr->config, cs, &new_run);
     } else if (prob->disable_auto_testing > 0
         || (prob->disable_testing > 0 && prob->enable_compilation <= 0)) {
       serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                       "submit", "ok", RUN_PENDING,
                       "  Testing disabled for this problem");
       run_change_status_4(cs->runlog_state, run_id, RUN_PENDING, &new_run);
-      serve_notify_run_update(phr->config, cs, 0, &new_run);
+      serve_notify_run_update(phr->config, cs, &new_run);
     } else {
       if (prob->variant_num > 0 && prob->xml.a) {
         px = prob->xml.a[variant -  1];
@@ -14679,7 +14679,7 @@ unpriv_xml_update_answer(
   nv.score = -1;
   run_set_entry(cs->runlog_state, run_id,
                 RE_SIZE | RE_SHA1 | RE_STATUS | RE_TEST | RE_SCORE, &nv, &nv);
-  serve_notify_run_update(phr->config, cs, 0, &nv);
+  serve_notify_run_update(phr->config, cs, &nv);
 
   serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                   "update-answer", "ok", RUN_ACCEPTED, NULL);

@@ -993,7 +993,6 @@ void
 serve_notify_run_update(
         const struct ejudge_cfg *config,
         serve_state_t cs,
-        long long start_time,
         const struct run_entry *re);
 
 #endif /* __SERVE_STATE_H__ */
