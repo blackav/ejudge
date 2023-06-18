@@ -5218,11 +5218,11 @@ priv_clear_displayed(FILE *fout,
                         mask_size, mask);
     break;
   case NEW_SRV_ACTION_IGNORE_DISPLAYED_2:
-    serve_ignore_by_mask(cs, phr->user_id, &phr->ip, phr->ssl_flag,
+    serve_ignore_by_mask(phr->config, cs, phr->user_id, &phr->ip, phr->ssl_flag,
                          mask_size, mask, RUN_IGNORED);
     break;
   case NEW_SRV_ACTION_DISQUALIFY_DISPLAYED_2:
-    serve_ignore_by_mask(cs, phr->user_id, &phr->ip, phr->ssl_flag,
+    serve_ignore_by_mask(phr->config, cs, phr->user_id, &phr->ip, phr->ssl_flag,
                          mask_size, mask, RUN_DISQUALIFIED);
     break;
   case NEW_SRV_ACTION_MARK_DISPLAYED_2:

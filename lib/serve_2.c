@@ -6463,10 +6463,15 @@ serve_clear_by_mask(serve_state_t state,
 }
 
 void
-serve_ignore_by_mask(serve_state_t state,
-                     int user_id, const ej_ip_t *ip, int ssl_flag,
-                     int mask_size, unsigned long *mask,
-                     int new_status)
+serve_ignore_by_mask(
+        const struct ejudge_cfg *config,
+        serve_state_t state,
+        int user_id,
+        const ej_ip_t *ip,
+        int ssl_flag,
+        int mask_size,
+        unsigned long *mask,
+        int new_status)
 {
   int total_runs, r;
   struct run_entry re;
@@ -6513,8 +6518,7 @@ serve_ignore_by_mask(serve_state_t state,
       }
       serve_audit_log(state, r, &re, user_id, ip, ssl_flag,
                       cmd, "ok", new_status, NULL);
-      //FIXME:2notify
-      //serve_notify_run_update(config, state, &re);
+      serve_notify_run_update(config, state, &re);
     }
   }
 }

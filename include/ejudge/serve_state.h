@@ -809,10 +809,16 @@ void serve_judge_virtual_olympiad(
 void serve_clear_by_mask(serve_state_t state,
                          int user_id, const ej_ip_t *ip, int ssl_flag,
                          int mask_size, unsigned long *mask);
-void serve_ignore_by_mask(serve_state_t state,
-                          int user_id, const ej_ip_t *ip, int ssl_flag,
-                          int mask_size, unsigned long *mask,
-                          int new_status);
+void
+serve_ignore_by_mask(
+        const struct ejudge_cfg *config,
+        serve_state_t state,
+        int user_id,
+        const ej_ip_t *ip,
+        int ssl_flag,
+        int mask_size,
+        unsigned long *mask,
+        int new_status);
 void
 serve_send_email_to_user(
         const struct ejudge_cfg *config,
