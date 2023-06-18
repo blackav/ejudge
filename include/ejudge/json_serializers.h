@@ -29,7 +29,6 @@ json_serialize_submit(
 struct cJSON *
 json_serialize_run(
         struct serve_state *cs,
-        long long start_time,
         const struct run_entry *re);
 
 #endif /* __JSON_SERIALIZERS_H__ */

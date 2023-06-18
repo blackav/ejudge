@@ -3256,7 +3256,7 @@ serve_notify_run_update(
 
   cJSON_AddNumberToObject(jr, "server_time_us", (double) server_time_us);
   cJSON_AddStringToObject(jr, "type", "run");
-  cJSON_AddItemToObject(jr, "run", json_serialize_run(cs, start_time, re));
+  cJSON_AddItemToObject(jr, "run", json_serialize_run(cs, re));
   char *jrstr = cJSON_PrintUnformatted(jr);
   cJSON_Delete(jr);
 

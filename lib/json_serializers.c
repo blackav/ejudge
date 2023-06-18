@@ -107,7 +107,6 @@ json_serialize_submit(
 cJSON *
 json_serialize_run(
         serve_state_t cs,
-        long long start_time,
         const struct run_entry *re)
 {
     cJSON *jr = cJSON_CreateObject();
@@ -132,9 +131,6 @@ json_serialize_run(
         cJSON_AddNumberToObject(jr, "nsec", (double) re->nsec);
         cJSON_AddNumberToObject(jr, "run_time_us",
                                 (double) (re->time * 1000000LL + re->nsec / 1000));
-        if (start_time > 0 && re->time >= start_time) {
-            cJSON_AddNumberToObject(jr, "duration", (double) (re->time - start_time));
-        }
         cJSON_AddNumberToObject(jr, "user_id", re->user_id);
         s = teamdb_get_login(cs->teamdb_state, re->user_id);
         if (s && *s) {
@@ -173,9 +169,6 @@ json_serialize_run(
     cJSON_AddNumberToObject(jr, "nsec", (double) re->nsec);
     cJSON_AddNumberToObject(jr, "run_time_us",
                             (double) (re->time * 1000000LL + re->nsec / 1000));
-    if (start_time > 0 && re->time >= start_time) {
-        cJSON_AddNumberToObject(jr, "duration", (double) (re->time - start_time));
-    }
     cJSON_AddNumberToObject(jr, "user_id", re->user_id);
     s = teamdb_get_login(cs->teamdb_state, re->user_id);
     if (s && *s) {
