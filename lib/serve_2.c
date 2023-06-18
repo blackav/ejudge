@@ -6525,6 +6525,7 @@ serve_ignore_by_mask(
 
 void
 serve_mark_by_mask(
+        const struct ejudge_cfg *config,
         serve_state_t state,
         int user_id,
         const ej_ip_t *ip,
@@ -6562,8 +6563,7 @@ serve_mark_by_mask(
 
     re.is_marked = mark_value;
     run_set_entry(state->runlog_state, r, RE_IS_MARKED, &re, &re);
-    //FIXME:2notify
-    //serve_notify_run_update(config, state, &re);
+    serve_notify_run_update(config, state, &re);
 
     serve_audit_log(state, r, &re, user_id, ip, ssl_flag,
                     audit_cmd, "ok", -1, NULL);

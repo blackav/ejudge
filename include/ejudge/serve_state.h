@@ -677,6 +677,7 @@ serve_rejudge_by_mask(
 
 void
 serve_mark_by_mask(
+        const struct ejudge_cfg *config,
         serve_state_t state,
         int user_id,
         const ej_ip_t *ip,

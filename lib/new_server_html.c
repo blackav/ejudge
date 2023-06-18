@@ -5226,11 +5226,11 @@ priv_clear_displayed(FILE *fout,
                          mask_size, mask, RUN_DISQUALIFIED);
     break;
   case NEW_SRV_ACTION_MARK_DISPLAYED_2:
-    serve_mark_by_mask(cs, phr->user_id, &phr->ip, phr->ssl_flag,
+    serve_mark_by_mask(phr->config, cs, phr->user_id, &phr->ip, phr->ssl_flag,
                        mask_size, mask, 1);
     break;
   case NEW_SRV_ACTION_UNMARK_DISPLAYED_2:
-    serve_mark_by_mask(cs, phr->user_id, &phr->ip, phr->ssl_flag,
+    serve_mark_by_mask(phr->config, cs, phr->user_id, &phr->ip, phr->ssl_flag,
                        mask_size, mask, 0);
     break;
   default:
