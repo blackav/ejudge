@@ -537,7 +537,8 @@ serve_compile_request(
         int rejudge_flag,
         int vcs_mode,
         int not_ok_is_cf,
-        const struct userlist_user *user)
+        const struct userlist_user *user,
+        struct run_entry *ure)
 #if defined __GNUC__
   __attribute__((warn_unused_result))
 #endif
@@ -576,7 +577,8 @@ serve_run_request(
         int store_flags,
         int not_ok_is_cf,
         const unsigned char *inp_text,
-        size_t inp_size);
+        size_t inp_size,
+        struct run_entry *ure);
 
 int serve_is_valid_status(serve_state_t state, int status, int mode);
 
@@ -675,6 +677,7 @@ serve_rejudge_by_mask(
 
 void
 serve_mark_by_mask(
+        const struct ejudge_cfg *config,
         serve_state_t state,
         int user_id,
         const ej_ip_t *ip,
@@ -807,10 +810,16 @@ void serve_judge_virtual_olympiad(
 void serve_clear_by_mask(serve_state_t state,
                          int user_id, const ej_ip_t *ip, int ssl_flag,
                          int mask_size, unsigned long *mask);
-void serve_ignore_by_mask(serve_state_t state,
-                          int user_id, const ej_ip_t *ip, int ssl_flag,
-                          int mask_size, unsigned long *mask,
-                          int new_status);
+void
+serve_ignore_by_mask(
+        const struct ejudge_cfg *config,
+        serve_state_t state,
+        int user_id,
+        const ej_ip_t *ip,
+        int ssl_flag,
+        int mask_size,
+        unsigned long *mask,
+        int new_status);
 void
 serve_send_email_to_user(
         const struct ejudge_cfg *config,
@@ -986,5 +995,11 @@ serve_check_telegram_reminder(
 
 int
 serve_get_compile_reply_contest_id(const unsigned char *path);
+
+void
+serve_notify_run_update(
+        const struct ejudge_cfg *config,
+        serve_state_t cs,
+        const struct run_entry *re);
 
 #endif /* __SERVE_STATE_H__ */

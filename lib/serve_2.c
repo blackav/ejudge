@@ -54,6 +54,9 @@
 #include "ejudge/submit_plugin.h"
 #include "ejudge/storage_plugin.h"
 #include "ejudge/metrics_contest.h"
+#include "ejudge/notify_plugin.h"
+#include "ejudge/cJSON.h"
+#include "ejudge/json_serializers.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -1507,7 +1510,8 @@ serve_compile_request(
         int rejudge_flag,
         int vcs_mode,
         int not_ok_is_cf,
-        const struct userlist_user *user)
+        const struct userlist_user *user,
+        struct run_entry *ure)
 {
   struct compile_run_extra rx;
   struct compile_request_packet cp;
@@ -1933,10 +1937,11 @@ serve_compile_request(
 
   if (!no_db_flag) {
     if (run_change_status(state->runlog_state, run_id, RUN_COMPILING, 0, 1, -1,
-                          cp.judge_id, &cp.judge_uuid, 0) < 0) {
+                          cp.judge_id, &cp.judge_uuid, 0, ure) < 0) {
       errcode = -SERVE_ERR_DB;
       goto failed;
     }
+    serve_notify_run_update(config, state, ure);
   }
 
   sarray_free(comp_env_mem_2);
@@ -2050,7 +2055,8 @@ serve_run_request(
         int store_flags,
         int not_ok_is_cf,
         const unsigned char *inp_text,
-        size_t inp_size)
+        size_t inp_size,
+        struct run_entry *ure)
 {
   int cn;
   struct section_global_data *global = state->global;
@@ -2743,9 +2749,11 @@ serve_run_request(
 
   /* update status */
   if (!no_db_flag) {
-    if (run_change_status(state->runlog_state, run_id, RUN_RUNNING, 0, 1, -1, judge_id, judge_uuid, 0) < 0) {
+    if (run_change_status(state->runlog_state, run_id, RUN_RUNNING, 0, 1, -1,
+                          judge_id, judge_uuid, 0, ure) < 0) {
       goto fail;
     }
+    serve_notify_run_update(config, state, ure);
   }
 
   prepare_tester_free(refined_tester);
@@ -3176,6 +3184,88 @@ serve_notify_user_run_status_change(
 }
 
 static void
+notify_submit_update(
+        const struct ejudge_cfg *config,
+        struct submit_entry *se,
+        testing_report_xml_t tr)
+{
+  if (!se->notify_driver) return;
+
+  struct notify_plugin_data *np = notify_plugin_get(config, se->notify_driver);
+  if (!np) {
+    err("notify_submit_update: failed to get notify_plugin %d",
+        se->notify_driver);
+    return;
+  }
+  if (se->notify_kind < 0 || se->notify_kind >= MIXED_ID_LAST) {
+    err("notify_submit_update: invalid se.notify_kind %d", se->notify_kind);
+    return;
+  }
+  if (!se->notify_kind) return;
+
+  unsigned char buf[64];
+  mixed_id_marshall(buf, se->notify_kind, &se->notify_queue);
+
+  cJSON *jr = cJSON_CreateObject();
+
+  struct timeval tv;
+  gettimeofday(&tv, NULL);
+  long long server_time_us = tv.tv_sec * 1000000LL + tv.tv_usec;
+
+  cJSON_AddNumberToObject(jr, "server_time_us", (double) server_time_us);
+  cJSON_AddStringToObject(jr, "type", "submit");
+  cJSON_AddItemToObject(jr, "submit", json_serialize_submit(se, tr));
+  char *jrstr = cJSON_PrintUnformatted(jr);
+  cJSON_Delete(jr);
+
+  if (np->vt->notify(np, buf, jrstr) < 0) {
+    err("notify_submit_update: notify failed");
+  }
+  free(jrstr);
+}
+
+void
+serve_notify_run_update(
+        const struct ejudge_cfg *config,
+        serve_state_t cs,
+        const struct run_entry *re)
+{
+  if (!re->notify_driver) return;
+
+  struct notify_plugin_data *np = notify_plugin_get(config, re->notify_driver);
+  if (!np) {
+    err("notify_run_update: failed to get notify_plugin %d",
+        re->notify_driver);
+    return;
+  }
+  if (re->notify_kind < 0 || re->notify_kind >= MIXED_ID_LAST) {
+    err("notify_run_update: invalid se.notify_kind %d", re->notify_kind);
+    return;
+  }
+  if (!re->notify_kind) return;
+
+  unsigned char buf[64];
+  mixed_id_marshall(buf, re->notify_kind, &re->notify_queue);
+
+  cJSON *jr = cJSON_CreateObject();
+
+  struct timeval tv;
+  gettimeofday(&tv, NULL);
+  long long server_time_us = tv.tv_sec * 1000000LL + tv.tv_usec;
+
+  cJSON_AddNumberToObject(jr, "server_time_us", (double) server_time_us);
+  cJSON_AddStringToObject(jr, "type", "run");
+  cJSON_AddItemToObject(jr, "run", json_serialize_run(cs, re));
+  char *jrstr = cJSON_PrintUnformatted(jr);
+  cJSON_Delete(jr);
+
+  if (np->vt->notify(np, buf, jrstr) < 0) {
+    err("notify_submit_update: notify failed");
+  }
+  free(jrstr);
+}
+
+static void
 read_compile_packet_input(
         struct contest_extra *extra,
         const struct ejudge_cfg *config,
@@ -3299,7 +3389,9 @@ read_compile_packet_input(
                                         SUBMIT_FIELD_STATUS | SUBMIT_FIELD_PROTOCOL_ID | SUBMIT_FIELD_JUDGE_UUID,
                                         comp_pkt->status,
                                         rep_se.serial_id,
-                                        NULL);
+                                        NULL,
+                                        &se);
+    notify_submit_update(config, &se, tr);
     goto done;
   }
 
@@ -3343,7 +3435,7 @@ read_compile_packet_input(
                                           flags,
                                           RUN_COMPILED,
                                           se.protocol_id,
-                                          NULL);
+                                          NULL, NULL);
   if (r < 0) {
     err("read_compile_packet_input: failed to change status");
     goto done;
@@ -3384,7 +3476,8 @@ read_compile_packet_input(
                         0 /* store_flags */,
                         0 /* not_ok_is_cf */,
                         inp_se.content,
-                        inp_se.size);
+                        inp_se.size,
+                        NULL);
   if (r < 0) {
     err("read_compile_packet_input: failed to send to testing");
     goto done;
@@ -3395,7 +3488,8 @@ read_compile_packet_input(
                                           SUBMIT_FIELD_STATUS,
                                           RUN_RUNNING,
                                           0,
-                                          NULL);
+                                          NULL, &se);
+  notify_submit_update(config, &se, tr);
 
 done:;
   testing_report_free(tr);
@@ -3597,16 +3691,20 @@ serve_read_compile_packet(
     }
 
     if (comp_pkt->status == RUN_CHECK_FAILED) {
-      if (run_change_status_4(state->runlog_state, comp_pkt->run_id, RUN_CHECK_FAILED) < 0)
+      if (run_change_status_4(state->runlog_state, comp_pkt->run_id,
+                              RUN_CHECK_FAILED, &re) < 0)
         goto non_fatal_error;
+      serve_notify_run_update(config, state, &re);
       serve_send_check_failed_email(config, cnts, comp_pkt->run_id);
       serve_telegram_check_failed(config, cnts, state, comp_pkt->run_id, &re);
       goto success;
     }
 
     if (comp_pkt->status == RUN_COMPILE_ERR || comp_pkt->status == RUN_STYLE_ERR) {
-      if (run_change_status_4(state->runlog_state, comp_pkt->run_id, comp_pkt->status) < 0)
+      if (run_change_status_4(state->runlog_state, comp_pkt->run_id,
+                              comp_pkt->status, &re) < 0)
         goto non_fatal_error;
+      serve_notify_run_update(config, state, &re);
 
       serve_update_standings_file(extra, state, cnts, 0);
       if (global->notify_status_change > 0 && !re.is_hidden && comp_extra->notify_flag) {
@@ -3735,8 +3833,9 @@ serve_read_compile_packet(
   if (comp_pkt->status == RUN_CHECK_FAILED) {
     /* if status change fails, we cannot do reasonable recovery */
     if (run_change_status_4(state->runlog_state, comp_pkt->run_id,
-                            RUN_CHECK_FAILED) < 0)
+                            RUN_CHECK_FAILED, &re) < 0)
       goto non_fatal_error;
+    serve_notify_run_update(config, state, &re);
     if (re.store_flags == STORE_FLAGS_UUID) {
       if (uuid_archive_dir_prepare(state, &re.run_uuid, DFLT_R_UUID_XML_REPORT, 0) < 0)
         goto non_fatal_error;
@@ -3758,8 +3857,9 @@ serve_read_compile_packet(
   if (comp_pkt->status == RUN_COMPILE_ERR || comp_pkt->status == RUN_STYLE_ERR) {
     /* if status change fails, we cannot do reasonable recovery */
     if (run_change_status_4(state->runlog_state, comp_pkt->run_id,
-                            comp_pkt->status) < 0)
+                            comp_pkt->status, &re) < 0)
       goto non_fatal_error;
+    serve_notify_run_update(config, state, &re);
 
     if (re.store_flags == STORE_FLAGS_UUID) {
       if (uuid_archive_dir_prepare(state, &re.run_uuid, DFLT_R_UUID_XML_REPORT, 0) < 0) {
@@ -3818,8 +3918,9 @@ prepare_run_request:
   */
   if (prob->disable_testing && prob->enable_compilation > 0) {
     if (run_change_status_4(state->runlog_state, comp_pkt->run_id,
-                            RUN_ACCEPTED) < 0)
+                            RUN_ACCEPTED, &re) < 0)
       goto non_fatal_error;
+    serve_notify_run_update(config, state, &re);
     if (global->notify_status_change > 0 && !re.is_hidden
         && comp_extra->notify_flag) {
       serve_notify_user_run_status_change(config, cnts, state, re.user_id,
@@ -3860,7 +3961,8 @@ prepare_run_request:
                         re.locale_id, compile_report_dir, comp_pkt, 0, &re.run_uuid,
                         comp_extra->rejudge_flag, comp_pkt->zip_mode, re.store_flags,
                         comp_extra->not_ok_is_cf,
-                        NULL, 0) < 0) {
+                        NULL, 0,
+                        NULL) < 0) {
     snprintf(errmsg, sizeof(errmsg), "failed to write run packet\n");
     goto report_check_failed;
   }
@@ -3886,8 +3988,10 @@ prepare_run_request:
   serve_telegram_check_failed(config, cnts, state, comp_pkt->run_id, &re);
 
   /* this is error recover, so if error happens again, we cannot do anything */
-  if (run_change_status_4(state->runlog_state, comp_pkt->run_id, RUN_CHECK_FAILED) < 0)
+  if (run_change_status_4(state->runlog_state, comp_pkt->run_id,
+                          RUN_CHECK_FAILED, &re) < 0)
     goto non_fatal_error;
+  serve_notify_run_update(config, state, &re);
   report_size = strlen(errmsg);
 
   if (re.store_flags == STORE_FLAGS_UUID_BSON) {
@@ -4217,7 +4321,8 @@ read_run_packet_input(
                                       SUBMIT_FIELD_STATUS | SUBMIT_FIELD_PROTOCOL_ID | SUBMIT_FIELD_JUDGE_UUID,
                                       reply_pkt->status,
                                       tr_se.serial_id,
-                                      NULL);
+                                      NULL, &se);
+  notify_submit_update(config, &se, tr);
 
 done:;
   free(rep_data);
@@ -4406,8 +4511,9 @@ serve_read_run_packet(
   if (reply_pkt->marked_flag < 0) reply_pkt->marked_flag = 0;
   if (reply_pkt->status == RUN_CHECK_FAILED) {
     if (run_change_status_4(state->runlog_state, reply_pkt->run_id,
-                            reply_pkt->status) < 0)
+                            reply_pkt->status, &re) < 0)
       goto failed;
+    serve_notify_run_update(config, state, &re);
   } else {
     int has_user_score = 0;
     int user_status = 0;
@@ -4423,8 +4529,9 @@ serve_read_run_packet(
                             reply_pkt->status, reply_pkt->tests_passed, 1,
                             reply_pkt->score, reply_pkt->marked_flag,
                             has_user_score, user_status, user_tests_passed,
-                            user_score, reply_pkt->verdict_bits) < 0)
+                            user_score, reply_pkt->verdict_bits, &re) < 0)
       goto failed;
+    serve_notify_run_update(config, state, &re);
   }
   serve_update_standings_file(extra, state, cnts, 0);
   if (global->notify_status_change > 0 && !re.is_hidden
@@ -4586,10 +4693,12 @@ serve_read_run_packet(
       if (run_get_entry(state->runlog_state, i, &pe) < 0) continue;
       if ((pe.status == RUN_ACCEPTED || pe.status == RUN_PENDING_REVIEW)
           && pe.prob_id == re.prob_id && pe.user_id == re.user_id) {
-        run_change_status_3(state->runlog_state, i, RUN_IGNORED, 0, 1, 0, 0, 0, 0, 0, 0, 0);
+        run_change_status_3(state->runlog_state, i, RUN_IGNORED, 0, 1, 0, 0, 0, 0, 0, 0, 0, &re);
+        serve_notify_run_update(config, state, &re);
       } else if (pe.is_saved && (pe.saved_status == RUN_ACCEPTED || pe.saved_status == RUN_PENDING_REVIEW)
           && pe.prob_id == re.prob_id && pe.user_id == re.user_id) {
-        run_change_status_3(state->runlog_state, i, RUN_IGNORED, 0, 1, 0, 0, 0, 0, 0, 0, 0);
+        run_change_status_3(state->runlog_state, i, RUN_IGNORED, 0, 1, 0, 0, 0, 0, 0, 0, 0, &re);
+        serve_notify_run_update(config, state, &re);
       }
     }
   }
@@ -4787,7 +4896,8 @@ serve_judge_built_in_problem(
   /* FIXME: handle database update error */
   (void) failed_test;
   run_change_status_3(state->runlog_state, run_id, glob_status, passed_tests, 1,
-                      score, 0, 0, 0, 0, 0, 0);
+                      score, 0, 0, 0, 0, 0, 0, re);
+  serve_notify_run_update(config, state, re);
   serve_update_standings_file(extra, state, cnts, 0);
   /*
   if (global->notify_status_change > 0 && !re.is_hidden
@@ -4883,9 +4993,11 @@ serve_report_check_failed(
   }
   xfree(tr_t); tr_t = NULL;
 
-  if (run_change_status_4(state->runlog_state, run_id, RUN_CHECK_FAILED) < 0) {
+  if (run_change_status_4(state->runlog_state, run_id,
+                          RUN_CHECK_FAILED, &re) < 0) {
     err("run_change_status_4: %d, RUN_CHECK_FAILED failed\n", run_id);
   }
+  serve_notify_run_update(config, state, &re);
 }
 
 void
@@ -4976,7 +5088,8 @@ serve_rejudge_run(
                                 1 /* rejudge_flag */,
                                 re.is_vcs /* vcs_mode */,
                                 0 /* not_ok_is_cf */,
-                                user);
+                                user,
+                                NULL);
       if (r < 0) {
         serve_report_check_failed(config, cnts, state, run_id, serve_err_str(r));
         err("rejudge_run: serve_compile_request failed: %s", serve_err_str(r));
@@ -5002,7 +5115,8 @@ serve_rejudge_run(
                       re.locale_id, 0, 0, 0, &re.run_uuid,
                       1 /* rejudge_flag */, 0 /* zip_mode */, re.store_flags,
                       0 /* not_ok_is_cf */,
-                      NULL, 0);
+                      NULL, 0,
+                      NULL);
     xfree(run_text);
     return;
   }
@@ -5029,7 +5143,8 @@ serve_rejudge_run(
                             1 /* rejudge_flag */,
                             re.is_vcs /* vcs_mode */,
                             0 /* not_ok_is_cf */,
-                            user);
+                            user,
+                            NULL);
   if (r < 0) {
     serve_report_check_failed(config, cnts, state, run_id, serve_err_str(r));
     err("rejudge_run: serve_compile_request failed: %s", serve_err_str(r));
@@ -6008,6 +6123,7 @@ serve_collect_virtual_stop_events(serve_state_t cs)
   time_t *user_time = 0, *new_time, *pt;
   int user_time_size = 0, new_size;
   int need_reload = 0;
+  struct run_entry upd_re;
 
   if (!cs->global->is_virtual) return 0;
 
@@ -6099,7 +6215,7 @@ serve_collect_virtual_stop_events(serve_state_t cs)
         // run after virtual stop
         if (!pe->is_hidden) {
           err("run %d: run after virtual stop, made hidden!", i);
-          run_set_hidden(cs->runlog_state, i);
+          run_set_hidden(cs->runlog_state, i, &upd_re);
           need_reload = 1;
         }
       } else if (!*pt) {
@@ -6109,7 +6225,7 @@ serve_collect_virtual_stop_events(serve_state_t cs)
         // virtual run overrun
         if (!pe->is_hidden) {
           err("run %d: virtual time run overrun, made hidden!", i);
-          run_set_hidden(cs->runlog_state, i);
+          run_set_hidden(cs->runlog_state, i, &upd_re);
           need_reload = 1;
         }
       } else {
@@ -6347,10 +6463,15 @@ serve_clear_by_mask(serve_state_t state,
 }
 
 void
-serve_ignore_by_mask(serve_state_t state,
-                     int user_id, const ej_ip_t *ip, int ssl_flag,
-                     int mask_size, unsigned long *mask,
-                     int new_status)
+serve_ignore_by_mask(
+        const struct ejudge_cfg *config,
+        serve_state_t state,
+        int user_id,
+        const ej_ip_t *ip,
+        int ssl_flag,
+        int mask_size,
+        unsigned long *mask,
+        int new_status)
 {
   int total_runs, r;
   struct run_entry re;
@@ -6386,7 +6507,7 @@ serve_ignore_by_mask(serve_state_t state,
     if (re.status == new_status) continue;
 
     re.status = new_status;
-    if (run_set_entry(state->runlog_state, r, RE_STATUS, &re) >= 0) {
+    if (run_set_entry(state->runlog_state, r, RE_STATUS, &re, &re) >= 0) {
       if (re.store_flags == STORE_FLAGS_UUID || re.store_flags == STORE_FLAGS_UUID_BSON) {
         uuid_archive_remove(state, &re.run_uuid, 1);
       } else {
@@ -6397,12 +6518,14 @@ serve_ignore_by_mask(serve_state_t state,
       }
       serve_audit_log(state, r, &re, user_id, ip, ssl_flag,
                       cmd, "ok", new_status, NULL);
+      serve_notify_run_update(config, state, &re);
     }
   }
 }
 
 void
 serve_mark_by_mask(
+        const struct ejudge_cfg *config,
         serve_state_t state,
         int user_id,
         const ej_ip_t *ip,
@@ -6439,7 +6562,8 @@ serve_mark_by_mask(
     if (re.is_marked == mark_value) continue;
 
     re.is_marked = mark_value;
-    run_set_entry(state->runlog_state, r, RE_IS_MARKED, &re);
+    run_set_entry(state->runlog_state, r, RE_IS_MARKED, &re, &re);
+    serve_notify_run_update(config, state, &re);
 
     serve_audit_log(state, r, &re, user_id, ip, ssl_flag,
                     audit_cmd, "ok", -1, NULL);
@@ -6478,7 +6602,10 @@ serve_tokenize_by_mask(
     if (re.token_count != token_count || re.token_flags != token_flags) {
       re.token_count = token_count;
       re.token_flags = token_flags;
-      run_set_entry(state->runlog_state, r, RE_TOKEN_COUNT | RE_TOKEN_FLAGS, &re);
+      run_set_entry(state->runlog_state, r, RE_TOKEN_COUNT | RE_TOKEN_FLAGS,
+                    &re, &re);
+      //FIXME:2notify
+      //serve_notify_run_update(config, state, &re);
     }
 
     serve_audit_log(state, r, &re, user_id, ip, ssl_flag,
@@ -6666,11 +6793,17 @@ serve_testing_queue_delete(
           && srp->global->judge_uuid[0]
           && ej_uuid_parse(srp->global->judge_uuid, &judge_uuid) >= 0
           && !memcmp(&re.j.judge_uuid, &judge_uuid, sizeof(re.j.judge_uuid))) {
-        run_change_status_4(state->runlog_state, srp->global->run_id, RUN_PENDING);
+        run_change_status_4(state->runlog_state, srp->global->run_id,
+                            RUN_PENDING, &re);
+        //FIXME:2notify
+        //serve_notify_run_update(config, state, &re);
       }
     } else {
       if (re.j.judge_id == srp->global->judge_id) {
-        run_change_status_4(state->runlog_state, srp->global->run_id, RUN_PENDING);
+        run_change_status_4(state->runlog_state, srp->global->run_id,
+                            RUN_PENDING, &re);
+        //FIXME:2notify
+        //serve_notify_run_update(config, state, &re);
       }
     }
   }

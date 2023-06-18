@@ -1718,7 +1718,8 @@ do_update_entry(
         struct rldb_mysql_cnts *cs,
         int run_id,
         const struct run_entry *re,
-        uint64_t mask)
+        uint64_t mask,
+        struct run_entry *ure)
 {
   struct rldb_mysql_state *state = cs->plugin_state;
   struct runlog_state *rls = cs->rl_state;
@@ -1743,6 +1744,9 @@ do_update_entry(
   xfree(cmd_t); cmd_t = 0; cmd_z = 0;
   update_entry(de, re, mask);
   de->last_change_us = curtime.tv_sec * 1000000LL + curtime.tv_usec;
+  if (ure) {
+    *ure = *de;
+  }
   return run_id;
 
  fail:
@@ -1756,7 +1760,8 @@ add_entry_func(
         struct rldb_plugin_cnts *cdata,
         int run_id,
         const struct run_entry *re,
-        uint64_t mask)
+        uint64_t mask,
+        struct run_entry *ure)
 {
   struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts *) cdata;
   struct runlog_state *rls = cs->rl_state;
@@ -1770,7 +1775,7 @@ add_entry_func(
   ASSERT(de->time > 0);
   (void) de;
 
-  return do_update_entry(cs, run_id, re, mask);
+  return do_update_entry(cs, run_id, re, mask, ure);
 }
 
 static int
@@ -1808,7 +1813,8 @@ change_status_func(
         int new_score,
         int new_judge_id,
         const ej_uuid_t *judge_uuid,
-        unsigned int verdict_bits)
+        unsigned int verdict_bits,
+        struct run_entry *ure)
 {
   struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts *) cdata;
   struct run_entry te;
@@ -1829,7 +1835,7 @@ change_status_func(
   }
   te.verdict_bits = verdict_bits;
 
-  return do_update_entry(cs, run_id, &te, mask);
+  return do_update_entry(cs, run_id, &te, mask, ure);
 }
 
 static void
@@ -2040,7 +2046,7 @@ set_status_func(
   memset(&te, 0, sizeof(te));
   te.status = new_status;
 
-  return do_update_entry(cs, run_id, &te, RE_STATUS);
+  return do_update_entry(cs, run_id, &te, RE_STATUS, NULL);
 }
 
 static int
@@ -2070,7 +2076,8 @@ static int
 set_hidden_func(
         struct rldb_plugin_cnts *cdata,
         int run_id,
-        int new_hidden)
+        int new_hidden,
+        struct run_entry *ure)
 {
   struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts *) cdata;
   struct run_entry te;
@@ -2080,14 +2087,15 @@ set_hidden_func(
   memset(&te, 0, sizeof(te));
   te.is_hidden = new_hidden;
 
-  return do_update_entry(cs, run_id, &te, RE_IS_HIDDEN);
+  return do_update_entry(cs, run_id, &te, RE_IS_HIDDEN, ure);
 }
 
 static int
 set_pages_func(
         struct rldb_plugin_cnts *cdata,
         int run_id,
-        int new_pages)
+        int new_pages,
+        struct run_entry *ure)
 {
   struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts *) cdata;
   struct run_entry te;
@@ -2095,7 +2103,7 @@ set_pages_func(
   memset(&te, 0, sizeof(te));
   te.pages = new_pages;
 
-  return do_update_entry(cs, run_id, &te, RE_PAGES);
+  return do_update_entry(cs, run_id, &te, RE_PAGES, ure);
 }
 
 static int
@@ -2103,7 +2111,8 @@ set_entry_func(
         struct rldb_plugin_cnts *cdata,
         int run_id,
         const struct run_entry *in,
-        uint64_t mask)
+        uint64_t mask,
+        struct run_entry *ure)
 {
   struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts *) cdata;
   struct runlog_state *rls = cs->rl_state;
@@ -2112,7 +2121,7 @@ set_entry_func(
   ASSERT(rls->runs[run_id - rls->run_f].status != RUN_EMPTY);
 
   (void) rls;
-  return do_update_entry(cs, run_id, in, mask);
+  return do_update_entry(cs, run_id, in, mask, ure);
 }
 
 static int
@@ -2285,7 +2294,8 @@ change_status_3_func(
         int user_status,
         int user_tests_passed,
         int user_score,
-        unsigned int verdict_bits)
+        unsigned int verdict_bits,
+        struct run_entry *ure)
 {
   struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts *) cdata;
   struct run_entry te;
@@ -2304,15 +2314,18 @@ change_status_3_func(
   te.verdict_bits = verdict_bits;
 
   return do_update_entry(cs, run_id, &te,
-                         RE_STATUS | RE_TEST | RE_SCORE | RE_JUDGE_ID | RE_IS_MARKED
-                         | RE_IS_SAVED | RE_SAVED_STATUS | RE_SAVED_TEST | RE_SAVED_SCORE | RE_PASSED_MODE | RE_VERDICT_BITS);
+                         RE_STATUS | RE_TEST | RE_SCORE | RE_JUDGE_ID
+                         | RE_IS_MARKED | RE_IS_SAVED | RE_SAVED_STATUS
+                         | RE_SAVED_TEST | RE_SAVED_SCORE | RE_PASSED_MODE
+                         | RE_VERDICT_BITS, ure);
 }
 
 static int
 change_status_4_func(
         struct rldb_plugin_cnts *cdata,
         int run_id,
-        int new_status)
+        int new_status,
+        struct run_entry *ure)
 {
   struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts *) cdata;
   struct run_entry te;
@@ -2332,7 +2345,8 @@ change_status_4_func(
   return do_update_entry(cs, run_id, &te,
                          RE_STATUS /* | RE_TEST */ | RE_SCORE | RE_JUDGE_ID
                          | RE_IS_MARKED | RE_IS_SAVED | RE_SAVED_STATUS
-                         /* | RE_SAVED_TEST */ | RE_SAVED_SCORE | RE_PASSED_MODE);
+                         /* | RE_SAVED_TEST */ | RE_SAVED_SCORE
+                         | RE_PASSED_MODE, ure);
 }
 
 static int
@@ -2567,7 +2581,8 @@ append_run_func(
         uint64_t mask,
         struct timeval *p_tv,
         int64_t *p_serial_id,
-        ej_uuid_t *p_uuid)
+        ej_uuid_t *p_uuid,
+        struct run_entry *ure)
 {
   struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts *) cdata;
   struct rldb_mysql_state *state = cs->plugin_state;
@@ -3055,6 +3070,9 @@ append_run_func(
 
   if (p_tv) *p_tv = current_time_tv;
   if (p_serial_id) *p_serial_id = serial_id;
+  if (ure) {
+    *ure = *new_re;
+  }
 
   if (cs->metrics) {
     long long request_end_time = get_current_time_us();
@@ -3082,5 +3100,5 @@ run_set_is_checked_func(
   memset(&te, 0, sizeof(te));
   te.is_checked = !!is_checked;
 
-  return do_update_entry(cs, run_id, &te, RE_IS_CHECKED);
+  return do_update_entry(cs, run_id, &te, RE_IS_CHECKED, NULL);
 }

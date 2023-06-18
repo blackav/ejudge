@@ -188,6 +188,7 @@ COMMON_CFILES=\
  lib/html_start_form.c\
  lib/http_request.c\
  lib/imagemagick.c\
+ lib/json_serializers.c\
  lib/l10n.c\
  lib/lang_config.c\
  lib/lang_config_vis.c\
@@ -207,6 +208,7 @@ COMMON_CFILES=\
  lib/new_server_proto.c\
  lib/new_server_tables.c\
  lib/ncurses_utils.c\
+ lib/notify_plugin.c\
  lib/nsdb_plugin_files.c\
  lib/nwrun_packet.c\
  lib/oauth.c\
@@ -615,6 +617,7 @@ HFILES=\
  ./include/ejudge/interrupt.h\
  ./include/ejudge/iterators.h\
  ./include/ejudge/job_packet.h\
+ ./include/ejudge/json_serializers.h\
  ./include/ejudge/l10n.h\
  ./include/ejudge/lang_config_vis.h\
  ./include/ejudge/list_ops.h\
@@ -628,6 +631,7 @@ HFILES=\
  ./include/ejudge/ncheck_packet.h\
  ./include/ejudge/ncurses_utils.h\
  ./include/ejudge/new-server.h\
+ ./include/ejudge/notify_plugin.h\
  ./include/ejudge/nsdb_plugin.h\
  ./include/ejudge/nwrun_packet.h\
  ./include/ejudge/oauth.h\

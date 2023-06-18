@@ -111,7 +111,8 @@ add_entry_func(
         struct rldb_plugin_cnts *cdata,
         int i,
         const struct run_entry *re,
-        uint64_t mask);
+        uint64_t mask,
+        struct run_entry *ure);
 static int
 undo_add_entry_func(
         struct rldb_plugin_cnts *cdata,
@@ -126,7 +127,8 @@ change_status_func(
         int new_score,
         int judge_id,
         const ej_uuid_t *judge_uuid,
-        unsigned int verdict_bits);
+        unsigned int verdict_bits,
+        struct run_entry *ure);
 static int
 start_func(
         struct rldb_plugin_cnts *cdata,
@@ -162,18 +164,21 @@ static int
 set_hidden_func(
         struct rldb_plugin_cnts *cdata,
         int run_id,
-        int new_hidden);
+        int new_hidden,
+        struct run_entry *ure);
 static int
 set_pages_func(
         struct rldb_plugin_cnts *cdata,
         int run_id,
-        int new_pages);
+        int new_pages,
+        struct run_entry *ure);
 static int
 set_entry_func(
         struct rldb_plugin_cnts *cdata,
         int run_id,
         const struct run_entry *in,
-        uint64_t mask);
+        uint64_t mask,
+        struct run_entry *ure);
 static int
 squeeze_func(struct rldb_plugin_cnts *cdata);
 static int
@@ -193,12 +198,14 @@ change_status_3_func(
         int user_status,
         int user_tests_passed,
         int user_score,
-        unsigned int verdict_bits);
+        unsigned int verdict_bits,
+        struct run_entry *ure);
 static int
 change_status_4_func(
         struct rldb_plugin_cnts *cdata,
         int run_id,
-        int new_status);
+        int new_status,
+        struct run_entry *ure);
 static int
 run_set_is_checked_func(
         struct rldb_plugin_cnts *cdata,
@@ -1346,18 +1353,33 @@ get_insert_run_id(
 }
 
 static int
-do_flush_entry(struct rldb_file_cnts *cs, int num)
+do_flush_entry(
+        struct rldb_file_cnts *cs,
+        int num,
+        struct run_entry *ure)
 {
   struct runlog_state *rls = cs->rl_state;
+  struct timeval tv;
+  struct run_entry *re;
 
   ASSERT(num >= 0);
 
   if (cs->run_fd < 0) ERR_R("invalid descriptor %d", cs->run_fd);
   if (num < 0 || num >= rls->run_u) ERR_R("invalid entry number %d", num);
-  if (sf_lseek(cs->run_fd, sizeof(rls->head) + sizeof(rls->runs[0]) * num,
+  re = &rls->runs[num];
+
+  gettimeofday(&tv, NULL);
+  re->last_change_us = tv.tv_sec * 1000000LL + tv.tv_usec;
+
+  if (sf_lseek(cs->run_fd, sizeof(rls->head) + sizeof(*re) * num,
                SEEK_SET, "run") == (off_t) -1) return -1;
-  if (do_write(cs->run_fd, &rls->runs[num], sizeof(rls->runs[0])) < 0)
+  if (do_write(cs->run_fd, re, sizeof(*re)) < 0)
     return -1;
+
+  if (ure) {
+    *ure = *re;
+  }
+
   return num;
 }
 
@@ -1366,7 +1388,8 @@ add_entry_func(
         struct rldb_plugin_cnts *cdata,
         int run_id,
         const struct run_entry *re,
-        uint64_t mask)
+        uint64_t mask,
+        struct run_entry *ure)
 {
   struct rldb_file_cnts *cs = (struct rldb_file_cnts*) cdata;
   struct runlog_state *rls = cs->rl_state;
@@ -1475,7 +1498,7 @@ add_entry_func(
     de->token_count = re->token_count;
   }
 
-  return do_flush_entry(cs, run_id);
+  return do_flush_entry(cs, run_id, ure);
 }
 
 static int
@@ -1512,7 +1535,8 @@ change_status_func(
         int new_score,
         int judge_id,
         const ej_uuid_t *judge_uuid,
-        unsigned int verdict_bits)
+        unsigned int verdict_bits,
+        struct run_entry *ure)
 {
   struct rldb_file_cnts *cs = (struct rldb_file_cnts*) cdata;
   struct runlog_state *rls = cs->rl_state;
@@ -1534,7 +1558,7 @@ change_status_func(
     memset(&re->j, 0, sizeof(re->j));
     re->j.judge_id = judge_id;
   }
-  return do_flush_entry(cs, run_id);
+  return do_flush_entry(cs, run_id, ure);
 }
 
 static int
@@ -1623,7 +1647,7 @@ set_status_func(
   ASSERT(run_id >= 0 && run_id < rls->run_u);
 
   rls->runs[run_id].status = new_status;
-  return do_flush_entry(cs, run_id);
+  return do_flush_entry(cs, run_id, NULL);
 }
 
 static int
@@ -1648,14 +1672,15 @@ clear_entry_func(
   memset(&rls->runs[run_id], 0, sizeof(rls->runs[run_id]));
   rls->runs[run_id].status = RUN_EMPTY;
   rls->runs[run_id].run_id = run_id;
-  return do_flush_entry(cs, run_id);
+  return do_flush_entry(cs, run_id, NULL);
 }
 
 static int
 set_hidden_func(
         struct rldb_plugin_cnts *cdata,
         int run_id,
-        int new_hidden)
+        int new_hidden,
+        struct run_entry *ure)
 {
   struct rldb_file_cnts *cs = (struct rldb_file_cnts*) cdata;
   struct runlog_state *rls = cs->rl_state;
@@ -1664,23 +1689,26 @@ set_hidden_func(
   ASSERT(run_id >= 0 && run_id < rls->run_u);
 
   rls->runs[run_id].is_hidden = new_hidden;
-  return do_flush_entry(cs, run_id);
+  return do_flush_entry(cs, run_id, ure);
 }
 
 static int
 set_pages_func(
         struct rldb_plugin_cnts *cdata,
         int run_id,
-        int new_pages)
+        int new_pages,
+        struct run_entry *ure)
 {
   struct rldb_file_cnts *cs = (struct rldb_file_cnts*) cdata;
   struct runlog_state *rls = cs->rl_state;
+  struct run_entry *re;
 
   ASSERT(rls->run_f == 0);
   ASSERT(run_id >= 0 && run_id < rls->run_u);
 
-  rls->runs[run_id].pages = new_pages;
-  return do_flush_entry(cs, run_id);
+  re = &rls->runs[run_id];
+  re->pages = new_pages;
+  return do_flush_entry(cs, run_id, ure);
 }
 
 static int
@@ -1688,7 +1716,8 @@ set_entry_func(
         struct rldb_plugin_cnts *cdata,
         int run_id,
         const struct run_entry *in,
-        uint64_t mask)
+        uint64_t mask,
+        struct run_entry *ure)
 {
   struct rldb_file_cnts *cs = (struct rldb_file_cnts*) cdata;
   struct runlog_state *rls = cs->rl_state;
@@ -1697,7 +1726,7 @@ set_entry_func(
   ASSERT(run_id >= 0 && run_id < rls->run_u);
 
   memcpy(&rls->runs[run_id], in, sizeof(*in));
-  return do_flush_entry(cs, run_id);
+  return do_flush_entry(cs, run_id, ure);
 }
 
 static int
@@ -1787,7 +1816,8 @@ change_status_3_func(
         int user_status,
         int user_tests_passed,
         int user_score,
-        unsigned int verdict_bits)
+        unsigned int verdict_bits,
+        struct run_entry *ure)
 {
   struct rldb_file_cnts *cs = (struct rldb_file_cnts*) cdata;
   struct runlog_state *rls = cs->rl_state;
@@ -1808,14 +1838,15 @@ change_status_3_func(
   re->saved_test = user_tests_passed;
   re->saved_score = user_score;
   re->verdict_bits = verdict_bits;
-  return do_flush_entry(cs, run_id);
+  return do_flush_entry(cs, run_id, ure);
 }
 
 static int
 change_status_4_func(
         struct rldb_plugin_cnts *cdata,
         int run_id,
-        int new_status)
+        int new_status,
+        struct run_entry *ure)
 {
   struct rldb_file_cnts *cs = (struct rldb_file_cnts*) cdata;
   struct runlog_state *rls = cs->rl_state;
@@ -1834,7 +1865,7 @@ change_status_4_func(
   re->saved_status = 0;
   re->saved_test = 0;
   re->saved_score = 0;
-  return do_flush_entry(cs, run_id);
+  return do_flush_entry(cs, run_id, ure);
 }
 
 static int
@@ -1850,5 +1881,5 @@ run_set_is_checked_func(
   ASSERT(run_id >= 0 && run_id < rls->run_u);
 
   rls->runs[run_id].is_checked = is_checked;
-  return do_flush_entry(cs, run_id);
+  return do_flush_entry(cs, run_id, NULL);
 }

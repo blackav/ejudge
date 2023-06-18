@@ -589,7 +589,8 @@ process_submit(
                             0 /* rejudge_flag */,
                             0 /* vcs_mode */,
                             0 /* not_ok_is_cf */,
-                            NULL /* user */);
+                            NULL /* user */,
+                            NULL /* ure */);
   if (r < 0) {
     // FIXME: handle error
     abort();
@@ -697,7 +698,8 @@ process_compile_packet(
                         0 /* store_flags */,
                         0 /* not_ok_is_cf */,
                         NULL /* inp_text */,
-                        0 /* inp_size*/);
+                        0 /* inp_size*/,
+                        NULL /* ure */);
   if (r < 0) abort();
 
   return 0;

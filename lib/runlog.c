@@ -344,7 +344,8 @@ run_add_record(
         ej_mixed_id_t *ext_user,
         int            notify_driver,
         int            notify_kind,
-        ej_mixed_id_t *notify_queue)
+        ej_mixed_id_t *notify_queue,
+        struct run_entry *ure)
 {
   int i;
   struct run_entry re;
@@ -448,7 +449,7 @@ run_add_record(
 
   int64_t serial_id = 0;
   if (state->iface->append_run) {
-    i = state->iface->append_run(state->cnts, &re, flags, p_tv, &serial_id, puuid);
+    i = state->iface->append_run(state->cnts, &re, flags, p_tv, &serial_id, puuid, ure);
     if (i < 0) {
       return -1;
     }
@@ -498,7 +499,7 @@ run_add_record(
   state->user_count = -1;
 
   if (!state->iface->append_run) {
-    if (state->iface->add_entry(state->cnts, i, &re, flags) < 0) return -1;
+    if (state->iface->add_entry(state->cnts, i, &re, flags, ure) < 0) return -1;
   }
 
   // updating user_id index
@@ -581,7 +582,8 @@ run_change_status(
         int newscore,
         int judge_id,
         const ej_uuid_t *judge_uuid,
-        unsigned int verdict_bits)
+        unsigned int verdict_bits,
+        struct run_entry *ure)
 {
   if (runid < state->run_f || runid >= state->run_u) ERR_R("bad runid: %d", runid);
 
@@ -610,7 +612,7 @@ run_change_status(
 
   return state->iface->change_status(state->cnts, runid, newstatus, newtest,
                                      newpassedmode, newscore, judge_id,
-                                     judge_uuid, verdict_bits);
+                                     judge_uuid, verdict_bits, ure);
 }
 
 int
@@ -626,7 +628,8 @@ run_change_status_3(
         int user_status,
         int user_tests_passed,
         int user_score,
-        unsigned int verdict_bits)
+        unsigned int verdict_bits,
+        struct run_entry *ure)
 {
   if (runid < state->run_f || runid >= state->run_u) ERR_R("bad runid: %d", runid);
 
@@ -662,14 +665,16 @@ run_change_status_3(
                                        user_status,    /* user_status */
                                        user_tests_passed, /* user_tests_passed */
                                        user_score,       /* user_score */
-                                       verdict_bits);
+                                       verdict_bits,
+                                       ure);
 }
 
 int
 run_change_status_4(
         runlog_state_t state,
         int runid,
-        int newstatus)
+        int newstatus,
+        struct run_entry *re)
 {
   if (runid < state->run_f || runid >= state->run_u) ERR_R("bad runid: %d", runid);
   if (newstatus < 0 || newstatus > 255) ERR_R("bad newstatus: %d", newstatus);
@@ -690,7 +695,7 @@ run_change_status_4(
 
   touch_last_update_time_us(state);
 
-  return state->iface->change_status_4(state->cnts, runid, newstatus);
+  return state->iface->change_status_4(state->cnts, runid, newstatus, re);
 }
 
 int
@@ -1367,7 +1372,8 @@ run_set_entry(
         runlog_state_t state,
         int run_id,
         uint64_t mask,
-        const struct run_entry *in)
+        const struct run_entry *in,
+        struct run_entry *ure)
 {
   const struct run_entry *out;
   struct run_entry te;
@@ -1641,7 +1647,7 @@ run_set_entry(
 
   if (!f) return 0;
 
-  if (state->iface->set_entry(state->cnts, run_id, &te, mask) < 0) return -1;
+  if (state->iface->set_entry(state->cnts, run_id, &te, mask, ure) < 0) return -1;
   int new_user_id = state->runs[run_id - state->run_f].user_id;
   if (new_user_id != old_user_id) {
     struct user_run_header_info *urh = NULL;
@@ -1784,7 +1790,7 @@ run_virtual_start(
   }
   state->user_count = -1;
 
-  if ((i = state->iface->add_entry(state->cnts, i, &re, RE_USER_ID | RE_IP | RE_SSL_FLAG | RE_STATUS)) < 0) return -1;
+  if ((i = state->iface->add_entry(state->cnts, i, &re, RE_USER_ID | RE_IP | RE_SSL_FLAG | RE_STATUS, NULL)) < 0) return -1;
 
   urh = run_get_user_run_header(state, user_id, NULL);
   if (urh) {
@@ -1863,7 +1869,7 @@ run_virtual_stop(
   }
   state->user_count = -1;
 
-  if ((i = state->iface->add_entry(state->cnts, i, &re, RE_USER_ID | RE_IP | RE_SSL_FLAG | RE_STATUS)) < 0) return -1;
+  if ((i = state->iface->add_entry(state->cnts, i, &re, RE_USER_ID | RE_IP | RE_SSL_FLAG | RE_STATUS, NULL)) < 0) return -1;
 
   // updating user_id index
   extend_run_extras(state);
@@ -1988,11 +1994,14 @@ run_forced_clear_entry(runlog_state_t state, int run_id)
 }
 
 int
-run_set_hidden(runlog_state_t state, int run_id)
+run_set_hidden(
+        runlog_state_t state,
+        int run_id,
+        struct run_entry *ure)
 {
   if (run_id < 0 || run_id >= state->run_u) ERR_R("bad runid: %d", run_id);
   touch_last_update_time_us(state);
-  return state->iface->set_hidden(state->cnts, run_id, 1);
+  return state->iface->set_hidden(state->cnts, run_id, 1, ure);
 }
 
 int
@@ -2542,12 +2551,16 @@ run_get_pages(runlog_state_t state, int run_id)
 }
 
 int
-run_set_pages(runlog_state_t state, int run_id, int pages)
+run_set_pages(
+        runlog_state_t state,
+        int run_id,
+        int pages,
+        struct run_entry *ure)
 {
   if (run_id < 0 || run_id >= state->run_u) ERR_R("bad runid: %d", run_id);
   if (pages < 0 || pages > 255) ERR_R("bad pages: %d", pages);
   touch_last_update_time_us(state);
-  return state->iface->set_pages(state->cnts, run_id, pages);
+  return state->iface->set_pages(state->cnts, run_id, pages, ure);
 }
 
 int

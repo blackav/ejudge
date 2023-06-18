@@ -797,6 +797,7 @@ cmd_submit_run(
   unsigned char *utf8_str = NULL;
   int utf8_len = 0;
   int eoln_type = 0;
+  struct run_entry new_run;
 
   // initial permission check
   switch (phr->role) {
@@ -1124,7 +1125,8 @@ cmd_submit_run(
                           NULL /* ext_user */,
                           0 /* notify_driver */,
                           0 /* notify_kind */,
-                          NULL /* notify_queue */);
+                          NULL /* notify_queue */,
+                          &new_run);
   if (run_id < 0)
     FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
   serve_move_files_to_insert_run(cs, run_id);
@@ -1156,7 +1158,8 @@ cmd_submit_run(
       serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                         "submit", "ok", RUN_PENDING,
                         "  Testing disabled for this problem or language");
-      run_change_status_4(cs->runlog_state, run_id, RUN_PENDING);
+      run_change_status_4(cs->runlog_state, run_id, RUN_PENDING, &new_run);
+      serve_notify_run_update(phr->config, cs, &new_run);
     } else {
       serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                         "submit", "ok", RUN_COMPILING, NULL);
@@ -1172,7 +1175,8 @@ cmd_submit_run(
                                      0 /* rejudge_flag */,
                                      phr->is_job,
                                      0 /* not_ok_is_cf */,
-                                     user)) < 0) {
+                                     user,
+                                     &new_run)) < 0) {
         serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
       }
     }
@@ -1182,7 +1186,8 @@ cmd_submit_run(
       serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                         "submit", "ok", RUN_ACCEPTED,
                         "  This problem is checked manually");
-      run_change_status_4(cs->runlog_state, run_id, RUN_ACCEPTED);
+      run_change_status_4(cs->runlog_state, run_id, RUN_ACCEPTED, &new_run);
+      serve_notify_run_update(phr->config, cs, &new_run);
     } else {
       serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                         "submit", "ok", RUN_COMPILING, NULL);
@@ -1203,7 +1208,8 @@ cmd_submit_run(
                                        0 /* rejudge_flag */,
                                        phr->is_job,
                                        0 /* not_ok_is_cf */,
-                                       user)) < 0) {
+                                       user,
+                                       &new_run)) < 0) {
           serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
         }
       } else {
@@ -1218,7 +1224,8 @@ cmd_submit_run(
                               0 /* rejudge_flag */, 0 /* zip_mode */,
                               store_flags,
                               0 /* not_ok_is_cf */,
-                              NULL, 0) < 0)
+                              NULL, 0,
+                              &new_run) < 0)
           FAIL(NEW_SRV_ERR_DISK_WRITE_ERROR);
       }
     }
@@ -1228,7 +1235,8 @@ cmd_submit_run(
       serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                         "submit", "ok", RUN_PENDING,
                         "  Testing disabled for this problem");
-      run_change_status_4(cs->runlog_state, run_id, RUN_PENDING);
+      run_change_status_4(cs->runlog_state, run_id, RUN_PENDING, &new_run);
+      serve_notify_run_update(phr->config, cs, &new_run);
     } else {
       problem_xml_t px = NULL;
       if (prob->variant_num > 0 && prob->xml.a && variant > 0) {
@@ -1266,7 +1274,8 @@ cmd_submit_run(
                                        0 /* rejudge_flag */,
                                        phr->is_job,
                                        0 /* not_ok_is_cf */,
-                                       user)) < 0) {
+                                       user,
+                                       &new_run)) < 0) {
           serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
         }
       } else {
@@ -1283,7 +1292,8 @@ cmd_submit_run(
                               0 /* rejudge_flag */, 0 /* zip_mode */,
                               store_flags,
                               0 /* not_ok_is_cf */,
-                              NULL, 0) < 0)
+                              NULL, 0,
+                              &new_run) < 0)
           FAIL(NEW_SRV_ERR_DISK_WRITE_ERROR);
       }
     }

@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2003-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -551,7 +551,7 @@ runlog_import_xml(
       if (r) {
         update_flag++;
       }
-      run_set_entry(runlog_state, i, RE_ALL, pa);
+      run_set_entry(runlog_state, i, RE_ALL, pa, NULL);
     }
     fprintf(flog, "%d entries updated\n", update_flag);
     goto done;

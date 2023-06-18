@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2004-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -257,7 +257,7 @@ do_print_run(const serve_state_t state, int run_id,
     free(dst_s); dst_s = NULL; dst_z = 0;
 
     if (!is_privileged) {
-      run_set_pages(state->runlog_state, run_id, 1);
+      run_set_pages(state->runlog_state, run_id, 1, &info);
     }
     program_path[0] = 0;
     return 1;
@@ -320,7 +320,7 @@ do_print_run(const serve_state_t state, int run_id,
       errcode = -SRV_ERR_PAGES_QUOTA;
       goto cleanup;
     }
-    run_set_pages(state->runlog_state, run_id, pages_num);
+    run_set_pages(state->runlog_state, run_id, pages_num, &info);
   }
 
   if (!(tsk = task_New())) goto cleanup;

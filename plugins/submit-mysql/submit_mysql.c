@@ -24,6 +24,7 @@
 #include "ejudge/xml_utils.h"
 
 #include <string.h>
+#include <sys/time.h>
 
 #define SUBMIT_DB_VERSION 4
 
@@ -443,7 +444,8 @@ change_status_func(
         unsigned mask,
         int status,
         int64_t protocol_id,
-        ej_uuid_t *p_judge_uuid)
+        const ej_uuid_t *p_judge_uuid,
+        struct submit_entry *p_se)
 {
     struct submit_cnts_mysql_data *scmd = (struct submit_cnts_mysql_data *) data;
     struct submit_mysql_data *smd = scmd->smd;
@@ -457,8 +459,16 @@ change_status_func(
     cmd_f = open_memstream(&cmd_s, &cmd_z);
     fprintf(cmd_f, "UPDATE %ssubmits SET last_status_change_time = NOW(6)",
             md->table_prefix);
+    if (p_se) {
+        struct timeval tv;
+        gettimeofday(&tv, NULL);
+        p_se->last_status_change_time_us = tv.tv_sec * 1000000LL + tv.tv_usec;
+    }
     if ((mask & SUBMIT_FIELD_STATUS)) {
         fprintf(cmd_f, ", status = %d", status);
+        if (p_se) {
+            p_se->status = status;
+        }
     }
     if ((mask & SUBMIT_FIELD_PROTOCOL_ID)) {
         if (protocol_id > 0) {
@@ -466,14 +476,23 @@ change_status_func(
         } else {
             fprintf(cmd_f, ", protocol_id = NULL");
         }
+        if (p_se) {
+            p_se->protocol_id = protocol_id;
+        }
     }
     if ((mask & SUBMIT_FIELD_JUDGE_UUID)) {
         if (p_judge_uuid && ej_uuid_is_nonempty(*p_judge_uuid)) {
             fprintf(cmd_f, ", judge_uuid = '%s'",
                     ej_uuid_unparse_r(uuid_buf, sizeof(uuid_buf),
                                       p_judge_uuid, NULL));
+            if (p_se) {
+                p_se->judge_uuid = *p_judge_uuid;
+            }
         } else {
             fprintf(cmd_f, ", judge_uuid = NULL");
+            if (p_se) {
+                memset(&p_se->judge_uuid, 0, sizeof(p_se->judge_uuid));
+            }
         }
     }
     fprintf(cmd_f, " WHERE serial_id = %lld;", (long long) submit_id);

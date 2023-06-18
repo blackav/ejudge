@@ -85,20 +85,26 @@ struct rldb_plugin_iface
         int uid,
         int nsec);
   // write a new run to the database
-  int (*add_entry)(struct rldb_plugin_cnts *, int i,
-                   const struct run_entry *, uint64_t mask);
+  int (*add_entry)(
+        struct rldb_plugin_cnts *,
+        int i,
+        const struct run_entry *,
+        uint64_t mask,
+        struct run_entry *ure);
   // undo the last append
   int (*undo_add_entry)(struct rldb_plugin_cnts *, int run_id);
   // change the status
-  int (*change_status)(struct rldb_plugin_cnts *,
-                       int run_id,
-                       int new_status,
-                       int new_test,
-                       int new_passed_mode,
-                       int new_score,
-                       int judge_id,
-                       const ej_uuid_t *judge_uuid,
-                       unsigned int verdict_bits);
+  int (*change_status)(
+        struct rldb_plugin_cnts *,
+        int run_id,
+        int new_status,
+        int new_test,
+        int new_passed_mode,
+        int new_score,
+        int judge_id,
+        const ej_uuid_t *judge_uuid,
+        unsigned int verdict_bits,
+        struct run_entry *ure);
   // start the contest
   int (*start)(struct rldb_plugin_cnts *, time_t);
   // stop the contest
@@ -118,22 +124,28 @@ struct rldb_plugin_iface
   // clear the entry
   int (*clear_entry)(struct rldb_plugin_cnts *, int run_id);
   // set the hidden flag value
-  int (*set_hidden)(struct rldb_plugin_cnts *,
-                    int run_id,
-                    int new_hidden);
+  int (*set_hidden)(
+        struct rldb_plugin_cnts *,
+        int run_id,
+        int new_hidden,
+        struct run_entry *ure);
   // set the judge_id value
   __attribute__((deprecated)) int (*deprecated_set_judge_id)(struct rldb_plugin_cnts *,
                       int run_id,
                       int new_judge_id);
   // set the pages value
-  int (*set_pages)(struct rldb_plugin_cnts *,
-                   int run_id,
-                   int new_pages);
+  int (*set_pages)(
+        struct rldb_plugin_cnts *,
+        int run_id,
+        int new_pages,
+        struct run_entry *ure);
   // set the entry
-  int (*set_entry)(struct rldb_plugin_cnts *,
-                   int run_id,
-                   const struct run_entry *in,
-                   uint64_t mask);
+  int (*set_entry)(
+        struct rldb_plugin_cnts *,
+        int run_id,
+        const struct run_entry *in,
+        uint64_t mask,
+        struct run_entry *ure);
   // remove the EMPTY records
   int (*squeeze)(struct rldb_plugin_cnts *);
   // insert the whole record
@@ -152,22 +164,26 @@ struct rldb_plugin_iface
   // check the runlog (may fix broken items)
   int (*check)(struct rldb_plugin_cnts *, FILE *log_f);
   // change the status (includes user status)
-  int (*change_status_3)(struct rldb_plugin_cnts *,
-                         int run_id,
-                         int new_status,
-                         int new_test,
-                         int new_passed_mode,
-                         int new_score,
-                         int is_marked,
-                         int has_user_score,
-                         int user_status,
-                         int user_tests_passed,
-                         int user_score,
-                         unsigned int verdict_bits);
+  int (*change_status_3)(
+        struct rldb_plugin_cnts *,
+        int run_id,
+        int new_status,
+        int new_test,
+        int new_passed_mode,
+        int new_score,
+        int is_marked,
+        int has_user_score,
+        int user_status,
+        int user_tests_passed,
+        int user_score,
+        unsigned int verdict_bits,
+        struct run_entry *ure);
   // change the status (brief version)
-  int (*change_status_4)(struct rldb_plugin_cnts *,
-                         int run_id,
-                         int new_status);
+  int (*change_status_4)(
+        struct rldb_plugin_cnts *,
+        int run_id,
+        int new_status,
+        struct run_entry *ure);
   // fetch the list of runs for given user and problem
   int (*fetch_user_runs)(
         struct rldb_plugin_cnts *,
@@ -226,7 +242,8 @@ struct rldb_plugin_iface
         uint64_t mask,
         struct timeval *p_tv,
         int64_t *p_serial_id,
-        ej_uuid_t *p_uuid);
+        ej_uuid_t *p_uuid,
+        struct run_entry *ure);
 
   // set is_checked flag of the run (legacy)
   int (*run_set_is_checked)(

@@ -74,7 +74,8 @@ add_entry_func(
         struct rldb_plugin_cnts *cdata,
         int run_id,
         const struct run_entry *re,
-        uint64_t mask);
+        uint64_t mask,
+        struct run_entry *ure);
 
 static int
 undo_add_entry_func(
@@ -91,7 +92,8 @@ change_status_func(
         int new_score,
         int judge_id,
         const ej_uuid_t *judge_uuid,
-        unsigned int verdict_bits);
+        unsigned int verdict_bits,
+        struct run_entry *ure);
 
 static int
 start_func(
@@ -136,20 +138,23 @@ static int
 set_hidden_func(
         struct rldb_plugin_cnts *cdata,
         int run_id,
-        int new_hidden);
+        int new_hidden,
+        struct run_entry *ure);
 
 static int
 set_pages_func(
         struct rldb_plugin_cnts *cdata,
         int run_id,
-        int new_pages);
+        int new_pages,
+        struct run_entry *ure);
 
 static int
 set_entry_func(
         struct rldb_plugin_cnts *cdata,
         int run_id,
         const struct run_entry *in,
-        uint64_t mask);
+        uint64_t mask,
+        struct run_entry *ure);
 
 static int
 squeeze_func(struct rldb_plugin_cnts *cdata);
@@ -182,13 +187,15 @@ change_status_3_func(
         int user_status,
         int user_tests_passed,
         int user_score,
-        unsigned int verdict_bits);
+        unsigned int verdict_bits,
+        struct run_entry *ure);
 
 static int
 change_status_4_func(
         struct rldb_plugin_cnts *cdata,
         int run_id,
-        int new_status);
+        int new_status,
+        struct run_entry *ure);
 
 static int
 user_run_header_set_start_time_func(
@@ -231,7 +238,8 @@ append_run_func(
         uint64_t mask,
         struct timeval *p_tv,
         int64_t *p_serial_id,
-        ej_uuid_t *p_uuid);
+        ej_uuid_t *p_uuid,
+        struct run_entry *ure);
 
 static int
 run_set_is_checked_func(

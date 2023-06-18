@@ -79,6 +79,8 @@
 #include "ejudge/tsc.h"
 #include "ejudge/compile_packet.h"
 #include "ejudge/run_packet.h"
+#include "ejudge/notify_plugin.h"
+#include "ejudge/json_serializers.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -3171,6 +3173,7 @@ priv_submit_run(
   int notify_kind = 0;
   ej_mixed_id_t notify_queue;
   ej_mixed_id_t *notify_queue_ptr = NULL;
+  struct run_entry new_run;
 
   if (opcaps_check(phr->caps, OPCAP_SUBMIT_RUN) < 0) {
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
@@ -3228,8 +3231,16 @@ priv_submit_run(
   }
 
   hr_cgi_param_int_opt(phr, "notify_driver", &notify_driver, 0);
-  if (notify_driver > 0 && notify_driver < 128
-      && hr_cgi_param(phr, "notify_kind", &s) > 0) {
+  if (notify_driver < 0 || notify_driver >= 128) {
+    FAIL(NEW_SRV_ERR_INV_NOTIFY);
+  }
+  if (notify_driver > 0) {
+    if (!notify_plugin_get(phr->config, notify_driver)) {
+      FAIL(NEW_SRV_ERR_INV_NOTIFY);
+    }
+    if (hr_cgi_param(phr, "notify_kind", &s) <= 0) {
+      FAIL(NEW_SRV_ERR_INV_NOTIFY);
+    }
     notify_kind = mixed_id_parse_kind(s);
     if (notify_kind < 0) {
       FAIL(NEW_SRV_ERR_INV_NOTIFY);
@@ -3662,7 +3673,8 @@ priv_submit_run(
                           ext_user_ptr,
                           notify_driver,
                           notify_kind,
-                          notify_queue_ptr);
+                          notify_queue_ptr,
+                          &new_run);
   if (run_id < 0) {
     FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
   }
@@ -3699,7 +3711,8 @@ priv_submit_run(
       serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                       "priv-submit", "ok", RUN_PENDING,
                       "  Testing disabled for this problem or language");
-      run_change_status_4(cs->runlog_state, run_id, RUN_PENDING);
+      run_change_status_4(cs->runlog_state, run_id, RUN_PENDING, &new_run);
+      serve_notify_run_update(phr->config, cs, &new_run);
     } else {
       serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                       "priv-submit", "ok", RUN_COMPILING, NULL);
@@ -3718,7 +3731,8 @@ priv_submit_run(
                                      store_flags, rejudge_flag,
                                      phr->is_job,
                                      not_ok_is_cf,
-                                     user)) < 0) {
+                                     user,
+                                     &new_run)) < 0) {
         serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
       }
     }
@@ -3728,7 +3742,8 @@ priv_submit_run(
       serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                       "priv-submit", "ok", RUN_ACCEPTED,
                       "  This problem is checked manually");
-      run_change_status_4(cs->runlog_state, run_id, RUN_ACCEPTED);
+      run_change_status_4(cs->runlog_state, run_id, RUN_ACCEPTED, &new_run);
+      serve_notify_run_update(phr->config, cs, &new_run);
     } else {
       serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                       "priv-submit", "ok", RUN_COMPILING, NULL);
@@ -3750,7 +3765,8 @@ priv_submit_run(
                                   rejudge_flag,
                                   phr->is_job,
                                   not_ok_is_cf,
-                                  user);
+                                  user,
+                                  &new_run);
         if (r < 0) {
           serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
         }
@@ -3766,7 +3782,8 @@ priv_submit_run(
                               rejudge_flag, 0 /* zip_mode */,
                               store_flags,
                               not_ok_is_cf,
-                              NULL, 0) < 0) {
+                              NULL, 0,
+                              &new_run) < 0) {
           FAIL(NEW_SRV_ERR_DISK_WRITE_ERROR);
         }
       }
@@ -3778,7 +3795,8 @@ priv_submit_run(
       serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                       "priv-submit", "ok", RUN_PENDING,
                       "  Testing disabled for this problem");
-      run_change_status_4(cs->runlog_state, run_id, RUN_PENDING);
+      run_change_status_4(cs->runlog_state, run_id, RUN_PENDING, &new_run);
+      serve_notify_run_update(phr->config, cs, &new_run);
     } else {
       serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                       "priv-submit", "ok", RUN_COMPILING, NULL);
@@ -3801,7 +3819,8 @@ priv_submit_run(
                                   rejudge_flag,
                                   phr->is_job,
                                   not_ok_is_cf,
-                                  user);
+                                  user,
+                                  &new_run);
         if (r < 0) {
           serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
         }
@@ -3817,7 +3836,8 @@ priv_submit_run(
                               rejudge_flag, 0 /* zip_mode */,
                               store_flags,
                               not_ok_is_cf,
-                              NULL, 0) < 0) {
+                              NULL, 0,
+                              &new_run) < 0) {
           FAIL(NEW_SRV_ERR_DISK_WRITE_ERROR);
         }
       }
@@ -4235,11 +4255,14 @@ priv_submit_run_comment(
   }
 
   if (phr->action == NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_IGNORE) {
-    run_change_status_4(cs->runlog_state, run_id, RUN_IGNORED);
+    run_change_status_4(cs->runlog_state, run_id, RUN_IGNORED, &re);
+    serve_notify_run_update(phr->config, cs, &re);
   } else if (phr->action == NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_REJECT) {
-    run_change_status_4(cs->runlog_state, run_id, RUN_REJECTED);
+    run_change_status_4(cs->runlog_state, run_id, RUN_REJECTED, &re);
+    serve_notify_run_update(phr->config, cs, &re);
   } else if (phr->action == NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_SUMMON) {
-    run_change_status_4(cs->runlog_state, run_id, RUN_SUMMONED);
+    run_change_status_4(cs->runlog_state, run_id, RUN_SUMMONED, &re);
+    serve_notify_run_update(phr->config, cs, &re);
   } else if (phr->action == NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_OK) {
     struct section_problem_data *prob = 0;
     int full_score = 0;
@@ -4264,7 +4287,8 @@ priv_submit_run_comment(
                         user_status,      /* user_status -> saved_status */
                         re.saved_test,    /* user_tests_passed -> saved_test */
                         user_score,       /* user_score -> saved_score */
-                        re.verdict_bits);
+                        re.verdict_bits, &re);
+    serve_notify_run_update(phr->config, cs, &re);
   }
 
   const unsigned char *audit_cmd = NULL;
@@ -4894,8 +4918,9 @@ priv_edit_run(FILE *fout, FILE *log_f,
 
   if (!ne_mask) goto cleanup;
 
-  if (run_set_entry(cs->runlog_state, run_id, ne_mask, &ne) < 0)
+  if (run_set_entry(cs->runlog_state, run_id, ne_mask, &ne, &ne) < 0)
     FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
+  serve_notify_run_update(phr->config, cs, &ne);
 
   serve_audit_log(cs, run_id, &re, phr->user_id, &phr->ip, phr->ssl_flag,
                   audit_cmd, "ok", -1,
@@ -4984,10 +5009,11 @@ priv_change_status(
     }
   }
 
-  if (run_set_entry(cs->runlog_state, run_id, flags, &new_run) < 0) {
+  if (run_set_entry(cs->runlog_state, run_id, flags, &new_run, &new_run) < 0) {
     ns_error(log_f, NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
     goto cleanup;
   }
+  serve_notify_run_update(phr->config, cs, &new_run);
 
   serve_audit_log(cs, run_id, &re, phr->user_id, &phr->ip, phr->ssl_flag,
                   "change-status", "ok", status, NULL);
@@ -5068,10 +5094,11 @@ priv_simple_change_status(
     new_run.score = prob->full_score;
     flags |= RE_SCORE;
   }
-  if (run_set_entry(cs->runlog_state, run_id, flags, &new_run) < 0) {
+  if (run_set_entry(cs->runlog_state, run_id, flags, &new_run, &new_run) < 0) {
     ns_error(log_f, NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
     goto cleanup;
   }
+  serve_notify_run_update(phr->config, cs, &new_run);
 
   serve_audit_log(cs, run_id, &re, phr->user_id, &phr->ip, phr->ssl_flag,
                   audit_cmd, "ok", status, NULL);
@@ -5191,19 +5218,19 @@ priv_clear_displayed(FILE *fout,
                         mask_size, mask);
     break;
   case NEW_SRV_ACTION_IGNORE_DISPLAYED_2:
-    serve_ignore_by_mask(cs, phr->user_id, &phr->ip, phr->ssl_flag,
+    serve_ignore_by_mask(phr->config, cs, phr->user_id, &phr->ip, phr->ssl_flag,
                          mask_size, mask, RUN_IGNORED);
     break;
   case NEW_SRV_ACTION_DISQUALIFY_DISPLAYED_2:
-    serve_ignore_by_mask(cs, phr->user_id, &phr->ip, phr->ssl_flag,
+    serve_ignore_by_mask(phr->config, cs, phr->user_id, &phr->ip, phr->ssl_flag,
                          mask_size, mask, RUN_DISQUALIFIED);
     break;
   case NEW_SRV_ACTION_MARK_DISPLAYED_2:
-    serve_mark_by_mask(cs, phr->user_id, &phr->ip, phr->ssl_flag,
+    serve_mark_by_mask(phr->config, cs, phr->user_id, &phr->ip, phr->ssl_flag,
                        mask_size, mask, 1);
     break;
   case NEW_SRV_ACTION_UNMARK_DISPLAYED_2:
-    serve_mark_by_mask(cs, phr->user_id, &phr->ip, phr->ssl_flag,
+    serve_mark_by_mask(phr->config, cs, phr->user_id, &phr->ip, phr->ssl_flag,
                        mask_size, mask, 0);
     break;
   default:
@@ -5614,7 +5641,8 @@ priv_new_run(FILE *fout,
                           NULL /* ext_user */,
                           0 /* notify_driver */,
                           0 /* notify_kind */,
-                          NULL /* notify_queue */);
+                          NULL /* notify_queue */,
+                          NULL /* ure */);
   if (run_id < 0) FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
   serve_move_files_to_insert_run(cs, run_id);
   if (metrics.data) {
@@ -5640,7 +5668,8 @@ priv_new_run(FILE *fout,
     ns_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
     goto cleanup;
   }
-  run_set_entry(cs->runlog_state, run_id, re_flags, &re);
+  run_set_entry(cs->runlog_state, run_id, re_flags, &re, &re);
+  serve_notify_run_update(phr->config, cs, &re);
 
   serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                   "priv-new-run", "ok", RUN_PENDING, NULL);
@@ -10865,10 +10894,12 @@ unpriv_use_token(
 
   re.token_flags = prob->token_info->open_flags;
   re.token_count = prob->token_info->open_cost;
-  if (run_set_entry(cs->runlog_state, run_id, RE_TOKEN_FLAGS | RE_TOKEN_COUNT, &re) < 0) {
+  if (run_set_entry(cs->runlog_state, run_id, RE_TOKEN_FLAGS | RE_TOKEN_COUNT,
+                    &re, &re) < 0) {
     error_page(fout, phr, 0, NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
     goto cleanup;
   }
+  serve_notify_run_update(phr->config, cs, &re);
 
   serve_audit_log(cs, run_id, &re, phr->user_id, &phr->ip, phr->ssl_flag,
                   "use_token", "ok", -1, "  %d tokens used\n  %d new token flags\n", prob->token_info->open_cost,
@@ -10962,6 +10993,7 @@ ns_submit_run(
   ej_uuid_t run_uuid = { { 0, 0, 0, 0 } };
   ej_uuid_t *uuid_ptr = NULL;
   int eoln_type = 0;
+  struct run_entry new_run;
 
   if (!prob_param_name) prob_param_name = "prob_id";
   if (hr_cgi_param(phr, prob_param_name, &s) <= 0 || !s) {
@@ -11450,7 +11482,8 @@ ns_submit_run(
                           NULL /* ext_user */,
                           0 /* notify_driver */,
                           0 /* notify_kind */,
-                          NULL /* notify_queue */);
+                          NULL /* notify_queue */,
+                          &new_run);
   if (run_id < 0) {
     FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
   }
@@ -11485,7 +11518,8 @@ ns_submit_run(
   if (accept_immediately) {
     serve_audit_log(cs, run_id, NULL, user_id, &phr->ip, phr->ssl_flag,
                     "submit", "ok", RUN_ACCEPTED, NULL);
-    run_change_status_4(cs->runlog_state, run_id, RUN_ACCEPTED);
+    run_change_status_4(cs->runlog_state, run_id, RUN_ACCEPTED, &new_run);
+    serve_notify_run_update(phr->config, cs, &new_run);
     goto done;
   }
 
@@ -11496,7 +11530,8 @@ ns_submit_run(
     serve_audit_log(cs, run_id, NULL, user_id, &phr->ip, phr->ssl_flag,
                     "submit", "ok", RUN_PENDING,
                     "  Testing disabled for this problem");
-    run_change_status_4(cs->runlog_state, run_id, RUN_PENDING);
+    run_change_status_4(cs->runlog_state, run_id, RUN_PENDING, &new_run);
+    serve_notify_run_update(phr->config, cs, &new_run);
     goto done;
   }
 
@@ -11507,7 +11542,8 @@ ns_submit_run(
       serve_audit_log(cs, run_id, NULL, user_id, &phr->ip, phr->ssl_flag,
                       "submit", "ok", RUN_PENDING,
                       "  Testing disabled for this language");
-      run_change_status_4(cs->runlog_state, run_id, RUN_PENDING);
+      run_change_status_4(cs->runlog_state, run_id, RUN_PENDING, &new_run);
+      serve_notify_run_update(phr->config, cs, &new_run);
       goto done;
     }
 
@@ -11528,7 +11564,8 @@ ns_submit_run(
                               0 /* rejudge_flag */,
                               phr->is_job,
                               0 /* not_ok_is_cf */,
-                              user);
+                              user,
+                              &new_run);
     if (r < 0) {
       serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
       goto cleanup;
@@ -11542,7 +11579,8 @@ ns_submit_run(
       serve_audit_log(cs, run_id, NULL, user_id, &phr->ip, phr->ssl_flag,
                       "submit", "ok", RUN_ACCEPTED,
                       "  This problem is checked manually");
-      run_change_status_4(cs->runlog_state, run_id, RUN_ACCEPTED);
+      run_change_status_4(cs->runlog_state, run_id, RUN_ACCEPTED, &new_run);
+      serve_notify_run_update(phr->config, cs, &new_run);
       goto done;
     }
 
@@ -11565,7 +11603,8 @@ ns_submit_run(
                                 0 /* rejudge_flag */,
                                 phr->is_job,
                                 0 /* not_ok_is_cf */,
-                                user);
+                                user,
+                                &new_run);
       if (r < 0) {
         serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
         goto cleanup;
@@ -11585,7 +11624,8 @@ ns_submit_run(
                           mime_type, 0, phr->locale_id, 0, 0, 0, &run_uuid,
                           0 /* rejudge_flag */, 0 /* zip_mode */, store_flags,
                           0 /* not_ok_is_cf */,
-                          NULL, 0);
+                          NULL, 0,
+                          &new_run);
     if (r < 0) {
       serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
       goto cleanup;
@@ -11631,7 +11671,8 @@ ns_submit_run(
                               0 /* rejudge_flag */,
                               phr->is_job,
                               0 /* not_ok_is_cf */,
-                              user);
+                              user,
+                              &new_run);
     if (r < 0) {
       serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
       goto cleanup;
@@ -11649,7 +11690,8 @@ ns_submit_run(
                         mime_type, 0, phr->locale_id, 0, 0, 0, &run_uuid,
                         0 /* rejudge_flag */, 0 /* zip_mode */, store_flags,
                         0 /* not_ok_is_cf */,
-                        NULL, 0);
+                        NULL, 0,
+                        &new_run);
   if (r < 0) {
     serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
     goto cleanup;
@@ -11718,6 +11760,7 @@ unpriv_submit_run(
   int retval = 0;
   int rejudge_flag = 0;
   int priority_adjustment = 0;
+  struct run_entry new_run;
 
   l10n_setlocale(phr->locale_id);
 
@@ -12186,7 +12229,8 @@ unpriv_submit_run(
                           NULL /* ext_user */,
                           0 /* notify_driver */,
                           0 /* notify_kind */,
-                          NULL /* notify_queue */);
+                          NULL /* notify_queue */,
+                          &new_run);
   if (run_id < 0) {
     FAIL2(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
   }
@@ -12224,7 +12268,8 @@ unpriv_submit_run(
       serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                       "submit", "ok", RUN_PENDING,
                       "  Testing disabled for this problem or language");
-      run_change_status_4(cs->runlog_state, run_id, RUN_PENDING);
+      run_change_status_4(cs->runlog_state, run_id, RUN_PENDING, &new_run);
+      serve_notify_run_update(phr->config, cs, &new_run);
     } else {
       serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                       "submit", "ok", RUN_COMPILING, NULL);
@@ -12245,7 +12290,8 @@ unpriv_submit_run(
                                      rejudge_flag,
                                      phr->is_job,
                                      0 /* not_ok_is_cf */,
-                                     user)) < 0) {
+                                     user,
+                                     &new_run)) < 0) {
         serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
       }
     }
@@ -12255,7 +12301,8 @@ unpriv_submit_run(
       serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                       "submit", "ok", RUN_ACCEPTED,
                       "  This problem is checked manually");
-      run_change_status_4(cs->runlog_state, run_id, RUN_ACCEPTED);
+      run_change_status_4(cs->runlog_state, run_id, RUN_ACCEPTED, &new_run);
+      serve_notify_run_update(phr->config, cs, &new_run);
     } else {
       serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                       "submit", "ok", RUN_COMPILING, NULL);
@@ -12276,7 +12323,8 @@ unpriv_submit_run(
                                   rejudge_flag,
                                   phr->is_job,
                                   0 /* not_ok_is_cf */,
-                                  user);
+                                  user,
+                                  &new_run);
         if (r < 0) {
           serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
         }
@@ -12292,7 +12340,8 @@ unpriv_submit_run(
                               rejudge_flag, 0 /* zip_mode */,
                               store_flags,
                               0 /* not_ok_is_cf */,
-                              NULL, 0) < 0) {
+                              NULL, 0,
+                              &new_run) < 0) {
           FAIL2(NEW_SRV_ERR_DISK_WRITE_ERROR);
         }
       }
@@ -12301,13 +12350,15 @@ unpriv_submit_run(
     if (accept_immediately) {
       serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                       "submit", "ok", RUN_ACCEPTED, NULL);
-      run_change_status_4(cs->runlog_state, run_id, RUN_ACCEPTED);
+      run_change_status_4(cs->runlog_state, run_id, RUN_ACCEPTED, &new_run);
+      serve_notify_run_update(phr->config, cs, &new_run);
     } else if (prob->disable_auto_testing > 0
         || (prob->disable_testing > 0 && prob->enable_compilation <= 0)) {
       serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                       "submit", "ok", RUN_PENDING,
                       "  Testing disabled for this problem");
-      run_change_status_4(cs->runlog_state, run_id, RUN_PENDING);
+      run_change_status_4(cs->runlog_state, run_id, RUN_PENDING, &new_run);
+      serve_notify_run_update(phr->config, cs, &new_run);
     } else {
       if (prob->variant_num > 0 && prob->xml.a) {
         px = prob->xml.a[variant -  1];
@@ -12347,7 +12398,8 @@ unpriv_submit_run(
                                   rejudge_flag,
                                   phr->is_job,
                                   0 /* not_ok_is_cf */,
-                                  user);
+                                  user,
+                                  &new_run);
         if (r < 0) {
           serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
         }
@@ -12366,7 +12418,8 @@ unpriv_submit_run(
                               rejudge_flag, 0 /* zip_mode */,
                               store_flags,
                               0 /* not_ok_is_cf */,
-                              NULL, 0) < 0) {
+                              NULL, 0,
+                              &new_run) < 0) {
           FAIL2(NEW_SRV_ERR_DISK_WRITE_ERROR);
         }
       }
@@ -12582,11 +12635,15 @@ ns_submit_run_input(
     }
 
     hr_cgi_param_int_opt(phr, "notify_driver", &notify_driver, 0);
-    if (notify_driver < 0 || notify_driver > 255) {
+    if (notify_driver < 0 || notify_driver > 127) {
       err_num = NEW_SRV_ERR_INV_NOTIFY;
       goto done;
     }
     if (notify_driver > 0) {
+      if (!notify_plugin_get(phr->config, notify_driver)) {
+        err_num = NEW_SRV_ERR_INV_NOTIFY;
+        goto done;
+      }
       if (hr_cgi_param(phr, "notify_kind", &s) <= 0) {
         err_num = NEW_SRV_ERR_INV_NOTIFY;
         goto done;
@@ -12978,7 +13035,8 @@ ns_submit_run_input(
                             0 /* rejudge_flag */,
                             0 /* vcs_mode */,
                             0 /* not_ok_is_cf */,
-                            user);
+                            user,
+                            NULL);
   if (r < 0) {
     err_num = NEW_SRV_ERR_RUNLOG_UPDATE_FAILED;
     goto done;
@@ -12990,7 +13048,7 @@ ns_submit_run_input(
                                            SUBMIT_FIELD_STATUS | SUBMIT_FIELD_JUDGE_UUID,
                                            RUN_COMPILING,
                                            0,
-                                           &se.judge_uuid)) < 0) {
+                                           &se.judge_uuid, NULL)) < 0) {
     err_num = NEW_SRV_ERR_RUNLOG_UPDATE_FAILED;
     goto done;
   }
@@ -13116,75 +13174,7 @@ ns_get_submit(
     }
   }
 
-  cJSON *jrr = cJSON_CreateObject();
-  cJSON_AddNumberToObject(jrr, "submit_id", se.serial_id);
-  cJSON_AddNumberToObject(jrr, "contest_id", se.contest_id);
-  cJSON_AddNumberToObject(jrr, "user_id", se.user_id);
-  cJSON_AddNumberToObject(jrr, "prob_id", se.prob_id);
-  cJSON_AddNumberToObject(jrr, "lang_id", se.lang_id);
-  cJSON_AddNumberToObject(jrr, "status", se.status);
-  cJSON_AddStringToObject(jrr, "status_str",
-                          run_status_str(se.status, NULL, 0, 0, 0));
-  if (se.ext_user_kind > 0 && se.ext_user_kind < MIXED_ID_LAST) {
-    unsigned char buf[64];
-    cJSON_AddStringToObject(jrr, "ext_user_kind",
-                            mixed_id_unparse_kind(se.ext_user_kind));
-    cJSON_AddStringToObject(jrr, "ext_user",
-                            mixed_id_marshall(buf, se.ext_user_kind,
-                                              &se.ext_user));
-  }
-  if (se.notify_driver > 0
-      && se.notify_kind > 0 && se.notify_kind < MIXED_ID_LAST) {
-    unsigned char buf[64];
-    cJSON_AddNumberToObject(jrr, "notify_driver", se.notify_driver);
-    cJSON_AddStringToObject(jrr, "notify_kind",
-                            mixed_id_unparse_kind(se.notify_kind));
-    cJSON_AddStringToObject(jrr, "notify_queue",
-                            mixed_id_marshall(buf, se.notify_kind,
-                                              &se.notify_queue));
-  }
-  if (tr) {
-    if (tr->compiler_output && *tr->compiler_output) {
-      cJSON_AddStringToObject(jrr, "compiler_output", tr->compiler_output);
-    }
-    if (tr->run_tests > 0) {
-      if (tr->tests && tr->tests[0]) {
-        struct testing_report_test *ttr = tr->tests[0];
-        if (ttr) {
-          cJSON_AddNumberToObject(jrr, "time", ttr->time);
-          if (ttr->real_time > 0) {
-            cJSON_AddNumberToObject(jrr, "real_time", ttr->real_time);
-          }
-          if (ttr->exit_code >= 0) {
-            cJSON_AddNumberToObject(jrr, "exit_code", ttr->exit_code);
-          }
-          if (ttr->term_signal > 0) {
-            cJSON_AddNumberToObject(jrr, "term_signal", ttr->term_signal);
-          }
-          if (ttr->max_memory_used > 0) {
-            cJSON_AddNumberToObject(jrr, "max_memory_used", ttr->max_memory_used);
-          }
-          if (ttr->max_rss > 0) {
-            cJSON_AddNumberToObject(jrr, "max_rss", ttr->max_rss);
-          }
-          if (ttr->input.size > 0) {
-            cJSON_AddStringToObject(jrr, "input", ttr->input.data);
-          }
-          if (ttr->output.size > 0) {
-            cJSON_AddStringToObject(jrr, "output", ttr->output.data);
-          }
-          if (ttr->error.size > 0) {
-            cJSON_AddStringToObject(jrr, "error", ttr->error.data);
-          }
-          if (ttr->test_checker.size > 0) {
-            cJSON_AddStringToObject(jrr, "test_checker", ttr->test_checker.data);
-          }
-        }
-      }
-    }
-  }
-
-  cJSON_AddItemToObject(jr, "result", jrr);
+  cJSON_AddItemToObject(jr, "result", json_serialize_submit(&se, tr));
   ok = 1;
 
 done:;
@@ -14542,6 +14532,7 @@ unpriv_xml_update_answer(
   int new_flag = 0, arch_flags = 0;
   path_t run_path;
   struct run_entry nv;
+  struct run_entry new_run;
 
   if (global->score_system != SCORE_OLYMPIAD
       || !cs->accepting_mode) FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
@@ -14652,7 +14643,8 @@ unpriv_xml_update_answer(
                             NULL /* ext_user */,
                             0 /* notify_driver */,
                             0 /* notify_kind */,
-                            NULL /* notify_queue */);
+                            NULL /* notify_queue */,
+                            &new_run);
     if (run_id < 0) FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
     serve_move_files_to_insert_run(cs, run_id);
     if (metrics.data) {
@@ -14686,7 +14678,8 @@ unpriv_xml_update_answer(
   nv.test = 0;
   nv.score = -1;
   run_set_entry(cs->runlog_state, run_id,
-                RE_SIZE | RE_SHA1 | RE_STATUS | RE_TEST | RE_SCORE, &nv);
+                RE_SIZE | RE_SHA1 | RE_STATUS | RE_TEST | RE_SCORE, &nv, &nv);
+  serve_notify_run_update(phr->config, cs, &nv);
 
   serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                   "update-answer", "ok", RUN_ACCEPTED, NULL);
