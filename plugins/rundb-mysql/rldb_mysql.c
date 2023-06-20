@@ -2950,6 +2950,7 @@ append_run_func(
   new_re->nsec = current_time_tv.tv_usec * 1000;
   new_re->last_change_us = current_time_tv.tv_sec * 1000000LL + current_time_tv.tv_usec;
   new_re->run_uuid = *p_uuid;
+  new_re->serial_id = serial_id;
   if ((mask & RE_SIZE)) {
     new_re->size = in_re->size;
   }
