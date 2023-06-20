@@ -35,8 +35,10 @@ load_registered_plugins(
 {
     for (const struct xml_tree *p = config->plugin_list; p; p = p->right) {
         const struct ejudge_plugin *plg = (const struct ejudge_plugin*) p;
-        if (plg->load_flag && !strcmp(plg->type, "notify")) {
+        if (!plg->load_flag || strcmp(plg->type, "notify") != 0) {
+            continue;
         }
+
         const struct common_loaded_plugin *lp = plugin_load_external(plg->path, plg->type, plg->name, config);
         if (!lp) {
             err("cannot load plugin %s, %s", plg->type, plg->name);
@@ -79,12 +81,6 @@ notify_plugin_get(
     if (pi->failed) {
         return NULL;
     }
-    /*
-    if (pi->data->vt->open(pi->data) < 0) {
-        err("plugin %d open failed", serial);
-        return NULL;
-    }
-    */
 
     return pi->data;
 }

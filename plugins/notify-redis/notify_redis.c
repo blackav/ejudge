@@ -47,11 +47,14 @@ struct notify_redis_plugin_data
     redisContext *cntx;
 };
 
+extern struct notify_plugin_iface plugin_notify_redis;
+
 static struct common_plugin_data *
 init_func(void)
 {
     struct notify_redis_plugin_data *state = NULL;
     XCALLOC(state, 1);
+    state->b.vt = &plugin_notify_redis;
     return &state->b.b;
 }
 
@@ -192,7 +195,7 @@ prepare_func(
             if (nrpd->port > 0) return xml_err_elem_redefined(p);
             if (xml_parse_int(NULL, "", p->line, p->column, p->text,
                               &nrpd->port) < 0) return -1;
-        } else if (!strcmp(p->name[0], "passwd_file")) {
+        } else if (!strcmp(p->name[0], "password_file")) {
             if (xml_leaf_elem(p, &nrpd->passwd_file, 1, 0) < 0) return -1;
         } else {
             return xml_err_elem_not_allowed(p);
@@ -256,14 +259,32 @@ notify_func(
                 auth_args[2] = nrpd->passwd;
                 auth_args[3] = NULL;
                 auth_count = 3;
+                if (nrpd->show_queries) {
+                    info("REDIS: (%s)(%s)(%s)", auth_args[0], auth_args[1], auth_args[2]);
+                }
             } else {
                 auth_args[1] = nrpd->passwd;
                 auth_args[2] = NULL;
                 auth_count = 2;
+                if (nrpd->show_queries) {
+                    info("REDIS: (%s)(%s)", auth_args[0], auth_args[1]);
+                }
             }
-            void *ar = redisCommandArgv(nrpd->cntx, auth_count, auth_args, NULL);
+            redisReply *ar = redisCommandArgv(nrpd->cntx, auth_count, auth_args, NULL);
             if (nrpd->cntx->err) {
                 err("%s: redis auth error: %s", fname, nrpd->cntx->errstr);
+                freeReplyObject(ar);
+                redisFree(nrpd->cntx); nrpd->cntx = NULL;
+                return -1;
+            }
+            if (ar == NULL) {
+                err("%s: redis auth returned NULL", fname);
+                freeReplyObject(ar);
+                redisFree(nrpd->cntx); nrpd->cntx = NULL;
+                return -1;
+            }
+            if (ar->type == REDIS_REPLY_ERROR) {
+                err("%s: redis auth error: %s", fname, ar->str);
                 freeReplyObject(ar);
                 redisFree(nrpd->cntx); nrpd->cntx = NULL;
                 return -1;
@@ -280,9 +301,22 @@ notify_func(
         message,
         NULL,
     };
-    void *r = redisCommandArgv(nrpd->cntx, pub_count, pub_args, NULL);
+    if (nrpd->show_queries) {
+        info("REDIS: (%s)(%s)(%s)", pub_args[0], pub_args[1], pub_args[2]);
+    }
+    redisReply *r = redisCommandArgv(nrpd->cntx, pub_count, pub_args, NULL);
     if (nrpd->cntx->err) {
         err("%s: redis publish error: %s", fname, nrpd->cntx->errstr);
+        freeReplyObject(r);
+        return -1;
+    }
+    if (r == NULL) {
+        err("%s: redis publish returned NULL", fname);
+        freeReplyObject(r);
+        return -1;
+    }
+    if (r->type == REDIS_REPLY_ERROR) {
+        err("%s: redis publish error: %s", fname, r->str);
         freeReplyObject(r);
         return -1;
     }
