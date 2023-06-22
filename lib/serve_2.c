@@ -3230,6 +3230,7 @@ serve_notify_run_update(
         serve_state_t cs,
         const struct run_entry *re)
 {
+  if (!re) return;
   if (!re->notify_driver) return;
 
   struct notify_plugin_data *np = notify_plugin_get(config, re->notify_driver);
@@ -3962,7 +3963,7 @@ prepare_run_request:
                         comp_extra->rejudge_flag, comp_pkt->zip_mode, re.store_flags,
                         comp_extra->not_ok_is_cf,
                         NULL, 0,
-                        NULL) < 0) {
+                        &re) < 0) {
     snprintf(errmsg, sizeof(errmsg), "failed to write run packet\n");
     goto report_check_failed;
   }
@@ -4304,9 +4305,25 @@ read_run_packet_input(
       testing_report_to_str(&rep_data, &rep_size, 1, tr);
     }
   } else {
-    // just write protocols to the storage
     if (reply_pkt->bson_flag) {
       mime_type = MIME_TYPE_BSON;
+    }
+    // parse protocol for notification
+    if (se.notify_driver > 0) {
+      if (reply_pkt->bson_flag) {
+        tr = testing_report_parse_bson_data(rep_data, rep_size);
+      } else {
+        size_t len = strlen(rep_data);
+        if (len != rep_size) {
+          err("read_run_packet_input: invalid length of testing report");
+          goto done;
+        }
+        tr = testing_report_parse_xml(rep_data);
+      }
+      if (!tr) {
+        err("read_run_packet_input: failed to parse testing report");
+        goto done;
+      }
     }
   }
 
@@ -5116,7 +5133,7 @@ serve_rejudge_run(
                       1 /* rejudge_flag */, 0 /* zip_mode */, re.store_flags,
                       0 /* not_ok_is_cf */,
                       NULL, 0,
-                      NULL);
+                      &re);
     xfree(run_text);
     return;
   }

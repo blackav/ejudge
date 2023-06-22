@@ -41,6 +41,8 @@ json_serialize_submit(
   cJSON_AddNumberToObject(jrr, "lang_id", se->lang_id);
   cJSON_AddNumberToObject(jrr, "status", se->status);
   cJSON_AddStringToObject(jrr, "status_str",
+                          run_status_short_str(se->status));
+  cJSON_AddStringToObject(jrr, "status_desc",
                           run_status_str(se->status, NULL, 0, 0, 0));
   if (se->ext_user_kind > 0 && se->ext_user_kind < MIXED_ID_LAST) {
     unsigned char buf[64];
@@ -118,6 +120,8 @@ json_serialize_run(
         cJSON_AddNumberToObject(jr, "status", re->status);
         cJSON_AddStringToObject(jr, "status_str",
                                 run_status_short_str(re->status));
+        cJSON_AddStringToObject(jr, "status_desc",
+                                run_status_str(re->status, NULL, 0, 0, 0));
         return jr;
     }
 
@@ -165,6 +169,8 @@ json_serialize_run(
     cJSON_AddNumberToObject(jr, "status", re->status);
     cJSON_AddStringToObject(jr, "status_str",
                             run_status_short_str(re->status));
+    cJSON_AddStringToObject(jr, "status_desc",
+                            run_status_str(re->status, NULL, 0, 0, 0));
     cJSON_AddNumberToObject(jr, "run_time", (double) re->time);
     cJSON_AddNumberToObject(jr, "nsec", (double) re->nsec);
     cJSON_AddNumberToObject(jr, "run_time_us",
