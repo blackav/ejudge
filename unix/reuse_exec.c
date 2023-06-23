@@ -86,7 +86,7 @@ struct tTask
   char  *working_dir;           /* the working directory */
   int    max_time;              /* maximal allowed time */
   int    max_time_millis;       /* maximal allowed time in milliseconds */
-  int    max_real_time;         /* maximal allowed realtime */
+  int    max_real_time_millis;  /* maximal allowed realtime */
   int    was_timeout;           /* was the timeout happened? */
   int    was_real_timeout;      /* was the real time limit exceeded? */
   int    was_memory_limit;      /* was the memory limit happened? */
@@ -898,7 +898,12 @@ task_SetMaxRealTime(tTask *tsk, int time)
   bury_dead_prc();
   if (tsk->state != TSK_STOPPED) return 0;
 
-  tsk->max_real_time = time;
+  int res;
+  if (__builtin_mul_overflow(time, 1000, &res)) {
+    tsk->max_real_time_millis = INT_MAX;
+  } else {
+    tsk->max_real_time_millis = res;
+  }
   return 0;
 }
 
@@ -910,7 +915,7 @@ task_SetMaxRealTimeMillis(tTask *tsk, int time_ms)
   bury_dead_prc();
   if (tsk->state != TSK_STOPPED) return 0;
 
-  tsk->max_real_time = (time_ms + 999) / 1000;
+  tsk->max_real_time_millis = time_ms;
   return 0;
 }
 
@@ -1741,8 +1746,8 @@ task_StartContainer(tTask *tsk)
   if (max_time_ms > 0) {
     fprintf(spec_f, "lt%lld", max_time_ms);
   }
-  if (tsk->max_real_time > 0) {
-    fprintf(spec_f, "lr%lld", tsk->max_real_time * 1000LL);
+  if (tsk->max_real_time_millis > 0) {
+    fprintf(spec_f, "lr%d", tsk->max_real_time_millis);
   }
 
   if (strcmp(tsk->path, tsk->args.v[0])) {
@@ -2762,9 +2767,10 @@ task_NewWait(tTask *tsk)
   gettimeofday(&cur_time, NULL);
   rt_timeout.tv_sec = 0;
   rt_timeout.tv_usec = 0;
-  if (tsk->max_real_time > 0) {
-    rt_timeout = cur_time;
-    rt_timeout.tv_sec += tsk->max_real_time;
+  if (tsk->max_real_time_millis > 0) {
+    long long timeout_us = 1000LL * tsk->max_real_time_millis + cur_time.tv_usec;
+    rt_timeout.tv_usec = timeout_us % 1000000;
+    rt_timeout.tv_sec = cur_time.tv_sec + (time_t) (timeout_us / 1000000);
   }
 
   long long max_time_ms = 0;
@@ -2799,7 +2805,7 @@ task_NewWait(tTask *tsk)
       return tsk;
     }
 
-    if (tsk->max_real_time > 0) {
+    if (tsk->max_real_time_millis > 0) {
       gettimeofday(&cur_time, NULL);
       if (cur_time.tv_sec > rt_timeout.tv_sec
           || (cur_time.tv_sec == rt_timeout.tv_sec && cur_time.tv_usec >= rt_timeout.tv_usec)) {
