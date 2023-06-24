@@ -3,8 +3,6 @@ name: Docker Image CI
 on:
   push:
     branches: [ "master" ]
-  pull_request:
-    branches: [ "master" ]
 
 jobs:
 
@@ -14,13 +12,13 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    - name: docker login
+    - name: Docker login
       env:
         DOCKER_LOGIN: ${{secrets.DOCKER_LOGIN}}
         DOCKER_PASSWORD: ${{secrets.DOCKER_PASSWORD}}
       run: docker login -u $DOCKER_LOGIN -p $DOCKER_PASSWORD
     - name: Build the Docker image
       run: docker build . --file Dockerfile --tag blackav/ejudge:master
-    - name: docker push
+    - name: Docker push
       run: docker push blackav/ejudge:master
 
