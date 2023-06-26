@@ -3442,7 +3442,16 @@ read_compile_packet_input(
     goto done;
   }
 
-  r = generic_read_file(&run_text, 0, &run_size, REMOVE, compile_report_dir, pname, NULL);
+  const unsigned char *exe_sfx = "";
+  const struct section_language_data *lang = NULL;
+  if (se.lang_id >= 0 && se.lang_id <= cs->max_lang) {
+    lang = cs->langs[se.lang_id];
+  }
+  if (lang) {
+    exe_sfx = lang->exe_sfx;
+  }
+
+  r = generic_read_file(&run_text, 0, &run_size, REMOVE, compile_report_dir, pname, exe_sfx);
   if (r < 0) {
     err("read_compile_packet_input: failed to read executable");
     goto done;
