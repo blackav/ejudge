@@ -169,7 +169,7 @@ prepare_func(
         struct xml_tree *tree)
 {
     struct notify_redis_plugin_data *nrpd = (struct notify_redis_plugin_data*) data;
-    const struct xml_parse_spec *spec = ejudge_cfg_get_spec();
+    __attribute__((unused)) const struct xml_parse_spec *spec = ejudge_cfg_get_spec();
     struct xml_tree *p = 0;
     const struct xml_attr *a = 0;
 
