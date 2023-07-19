@@ -310,7 +310,8 @@ start_process(
         const char *ip_address,
         const char *halt_command,
         const char *reboot_command,
-        const char *heartbeat_instance_id)
+        const char *heartbeat_instance_id,
+        const char *lang_id_map)
 {
     int pid = fork();
     if (pid < 0) {
@@ -399,6 +400,10 @@ start_process(
     if (reboot_command && *reboot_command) {
         args[argi++] = "-rc";
         args[argi++] = (char*) reboot_command;
+    }
+    if (lang_id_map && *lang_id_map) {
+        args[argi++] = "--lang-id-map";
+        args[argi++] = (char*) lang_id_map;
     }
     if (verbose_mode) {
         args[argi++] = "-v";
@@ -927,6 +932,7 @@ int main(int argc, char *argv[])
     const char *halt_command = NULL;
     const char *reboot_command = NULL;
     const char *heartbeat_instance_id = NULL;
+    const char *lang_id_map = NULL;
 
     if (argc < 1) {
         system_error("no arguments");
@@ -990,6 +996,12 @@ int main(int argc, char *argv[])
                     system_error("argument expected for -rc");
                 }
                 reboot_command = argv[aidx + 1];
+                aidx += 2;
+            } else if (!strcmp(argv[aidx], "--lang-id-map")) {
+                if (aidx + 1 >= argc) {
+                    system_error("argument expected for --lang-id-map");
+                }
+                lang_id_map = argv[aidx + 1];
                 aidx += 2;
             } else if (!strcmp(argv[aidx], "--timeout")) {
                 if (aidx + 1 >= argc) {
@@ -1313,7 +1325,7 @@ int main(int argc, char *argv[])
             }
 
             for (int i = 0; i < compile_parallelism; ++i) {
-                int ret = start_process(config, EJ_COMPILE_PROGRAM, log_fd, workdir, &ev, ej_compile_path, compile_parallelism > 1, 1 /* FIXME */, ejudge_xml_fds, compile_parallelism, i, agent, instance_id, queue, verbose_mode, ip_address, halt_command, reboot_command, heartbeat_instance_id);
+                int ret = start_process(config, EJ_COMPILE_PROGRAM, log_fd, workdir, &ev, ej_compile_path, compile_parallelism > 1, 1 /* FIXME */, ejudge_xml_fds, compile_parallelism, i, agent, instance_id, queue, verbose_mode, ip_address, halt_command, reboot_command, heartbeat_instance_id, lang_id_map);
                 if (ret < 0) {
                     emergency_stop();
                     return EXIT_SYSTEM_ERROR;

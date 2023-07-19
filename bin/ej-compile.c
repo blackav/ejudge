@@ -116,6 +116,9 @@ struct testinfo_subst_handler_compile
   const struct section_language_data *lang;
 };
 
+static int *lang_id_map = NULL;
+static int lang_id_map_size = 0;
+
 static unsigned char *
 subst_get_variable(
         const void *vp,
@@ -1396,6 +1399,13 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
       continue;
     }
 
+    if (lang_id_map
+        && req->lang_id > 0 && req->lang_id < lang_id_map_size
+        && lang_id_map[req->lang_id] > 0) {
+      info("language %d mapped to %d", req->lang_id, lang_id_map[req->lang_id]);
+      req->lang_id = lang_id_map[req->lang_id];
+    }
+
     if (!req->contest_id) {
       // special packets
       r = req->lang_id;
@@ -1776,6 +1786,59 @@ check_config(void)
   return 0;
 }
 
+static int
+parse_lang_id_map(const char *prog, const char *file)
+{
+  FILE *f = fopen(file, "r");
+  if (!f) {
+    fprintf(stderr, "%s: cannot open '%s': %s\n", prog, file, strerror(errno));
+    return -1;
+  }
+  char buf[1024];
+  while (fgets(buf, sizeof(buf), f)) {
+    int l = strlen(buf);
+    while (l > 0 && isspace((unsigned char) buf[l - 1])) --l;
+    buf[l] = 0;
+    if (!l) continue;
+    int n, from_id, to_id;
+    if (sscanf(buf, "%d%d%n", &from_id, &to_id, &n) != 2 || buf[n]) {
+      fprintf(stderr, "%s: failed to parse map line\n", prog);
+      fclose(f);
+      return -1;
+    }
+    if (from_id <= 0 || to_id <= 0 || from_id > 100000 || to_id > 100000) {
+      fprintf(stderr, "%s: failed to parse map line\n", prog);
+      fclose(f);
+      return -1;
+    }
+    if (from_id >= lang_id_map_size) {
+      int new_lang_id_map_size = lang_id_map_size * 2;
+      if (!lang_id_map_size) {
+        new_lang_id_map_size = 16;
+      }
+      while (from_id >= new_lang_id_map_size) {
+        new_lang_id_map_size *= 2;
+      }
+      int *new_lang_id_map = NULL;
+      XCALLOC(new_lang_id_map, new_lang_id_map_size);
+      if (lang_id_map_size > 0) {
+        memcpy(new_lang_id_map, lang_id_map, lang_id_map_size * new_lang_id_map[0]);
+      }
+      xfree(lang_id_map);
+      lang_id_map = new_lang_id_map;
+      lang_id_map_size = new_lang_id_map_size;
+    }
+    if (lang_id_map[from_id]) {
+      fprintf(stderr, "%s: duplicate entry in lang_id map\n", prog);
+      fclose(f);
+      return -1;
+    }
+    lang_id_map[from_id] = to_id;
+  }
+
+  return 0;
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -1791,6 +1854,7 @@ main(int argc, char *argv[])
   int     disable_stack_trace = 0;
   unsigned char *halt_command = NULL;
   unsigned char *reboot_command = NULL;
+  unsigned char *lang_id_map = NULL;
 
 #if HAVE_SETSID - 0
   path_t  log_path;
@@ -1948,6 +2012,12 @@ main(int argc, char *argv[])
       reboot_command = xstrdup(argv[i++]);
       argv_restart[j++] = argv[i];
       argv_restart[j++] = argv[i - 1];
+    } else if (!strcmp(argv[i], "--lang-id-map")) {
+      if (++i >= argc) goto print_usage;
+      xfree(lang_id_map);
+      lang_id_map = xstrdup(argv[i++]);
+      argv_restart[j++] = argv[i];
+      argv_restart[j++] = argv[i - 1];
     } else if (!strcmp(argv[i], "-p")) {
       parallel_mode = 1;
       ++i;
@@ -2027,6 +2097,12 @@ main(int argc, char *argv[])
   if (!ejudge_config) {
     fprintf(stderr, "%s: ejudge.xml is invalid\n", argv[0]);
     return 1;
+  }
+
+  if (lang_id_map && *lang_id_map) {
+    if (parse_lang_id_map(argv[0], lang_id_map) < 0) {
+      return 1;
+    }
   }
 
   unsigned char **host_names = NULL;
