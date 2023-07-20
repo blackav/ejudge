@@ -192,7 +192,8 @@ command_start(
         const char *timeout_str,
         const char *shutdown_script,
         const char *ip_address,
-        const char *reboot_script)
+        const char *reboot_script,
+        const char *lang_id_map)
 {
   tTask *tsk = 0;
   path_t path;
@@ -311,6 +312,10 @@ command_start(
     if (reboot_script && *reboot_script) {
       task_AddArg(tsk, "-rc");
       task_AddArg(tsk, reboot_script);
+    }
+    if (lang_id_map && *lang_id_map) {
+      task_AddArg(tsk, "--lang-id-map");
+      task_AddArg(tsk, lang_id_map);
     }
     if (verbose_mode) {
       task_AddArg(tsk, "-v");
@@ -642,6 +647,7 @@ main(int argc, char *argv[])
   const char *reboot_script = NULL;
   int date_suffix_flag = 0;
   const char *ip_address = NULL;
+  const char *lang_id_map = NULL;
 
   logger_set_level(-1, LOG_WARNING);
   program_name = os_GetBasename(argv[0]);
@@ -698,6 +704,10 @@ main(int argc, char *argv[])
     } else if (!strcmp(argv[i], "-rc")) {
       if (i + 1 >= argc) startup_error("argument expected for `-rc'");
       reboot_script = argv[i + 1];
+      i += 2;
+    } else if (!strcmp(argv[i], "--lang-id-map")) {
+      if (i + 1 >= argc) startup_error("argument expected for `--lang-id-map'");
+      lang_id_map = argv[i + 1];
       i += 2;
     } else if (!strcmp(argv[i], "-v")) {
       verbose_mode = 1;
@@ -808,7 +818,7 @@ main(int argc, char *argv[])
                       agent, instance_id, queue, verbose_mode,
                       mirror, enable_heartbeat, disable_heartbeat,
                       timeout_str, shutdown_script, ip_address,
-                      reboot_script) < 0)
+                      reboot_script, lang_id_map) < 0)
       r = 1;
   } else if (!strcmp(command, "stop")) {
     // ej-agents are not stopped if not asked explicitly
