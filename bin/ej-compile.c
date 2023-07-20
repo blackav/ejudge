@@ -1282,6 +1282,9 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
   interrupt_disable();
 
   while (1) {
+    interrupt_enable();
+    interrupt_disable();
+
     // terminate if signaled
     if (interrupt_get_status() || interrupt_restart_requested()) break;
     if (interrupt_was_usr1()) {
@@ -1385,7 +1388,9 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
     } else {
       r = generic_read_file(&pkt_ptr, 0, &pkt_len, SAFE | REMOVE, compile_server_queue_dir, pkt_name, "");
     }
-    if (r == 0) continue;
+    if (r == 0){
+      continue;
+    }
     if (r < 0 || !pkt_ptr) {
       // it looks like there's no reasonable recovery strategy
       // so, just ignore the error
