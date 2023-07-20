@@ -1789,10 +1789,11 @@ check_config(void)
 static int
 parse_lang_id_map(const char *prog, const char *file)
 {
-  FILE *f = fopen(file, "r");
-  if (!f) {
+  FILE *f = NULL;
+
+  if (!(f = fopen(file, "r"))) {
     fprintf(stderr, "%s: cannot open '%s': %s\n", prog, file, strerror(errno));
-    return -1;
+    goto fail;
   }
   char buf[1024];
   while (fgets(buf, sizeof(buf), f)) {
@@ -1803,13 +1804,11 @@ parse_lang_id_map(const char *prog, const char *file)
     int n, from_id, to_id;
     if (sscanf(buf, "%d%d%n", &from_id, &to_id, &n) != 2 || buf[n]) {
       fprintf(stderr, "%s: failed to parse map line\n", prog);
-      fclose(f);
-      return -1;
+      goto fail;
     }
     if (from_id <= 0 || to_id <= 0 || from_id > 100000 || to_id > 100000) {
       fprintf(stderr, "%s: failed to parse map line\n", prog);
-      fclose(f);
-      return -1;
+      goto fail;
     }
     if (from_id >= lang_id_map_size) {
       int new_lang_id_map_size = lang_id_map_size * 2;
@@ -1830,13 +1829,17 @@ parse_lang_id_map(const char *prog, const char *file)
     }
     if (lang_id_map[from_id]) {
       fprintf(stderr, "%s: duplicate entry in lang_id map\n", prog);
-      fclose(f);
-      return -1;
+      goto fail;
     }
     lang_id_map[from_id] = to_id;
   }
 
+  fclose(f);
   return 0;
+
+fail:;
+  if (f) fclose(f);
+  return -1;
 }
 
 int
