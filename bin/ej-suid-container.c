@@ -133,6 +133,7 @@ static int enable_prc_count = 0;
 static int enable_ipc_count = 0;
 static int enable_subdir_mode = 0;
 static int enable_compile_mode = 0;
+static int enable_run = 0;
 
 static int enable_seccomp = 1;
 static int enable_sys_execve = 0;
@@ -659,8 +660,10 @@ reconfigure_fs(void)
     if ((r = mount("mqueue", "/dev/mqueue", "mqueue", MS_NOSUID | MS_NODEV | MS_NOEXEC | MS_RELATIME, NULL)) < 0) {
         ffatal("failed to mount /dev/mqueue: %s", strerror(errno));
     }
-    if ((r = mount("/tmp", "/run", NULL, MS_BIND, NULL)) < 0){
-        ffatal("failed to mount /run: %s", strerror(errno));
+    if (!enable_run) {
+        if ((r = mount("/tmp", "/run", NULL, MS_BIND, NULL)) < 0){
+            ffatal("failed to mount /run: %s", strerror(errno));
+        }
     }
     if ((r = mount("/tmp", "/dev/shm", NULL, MS_BIND, NULL)) < 0){
         ffatal("failed to mount /dev/shm: %s", strerror(errno));
@@ -1880,6 +1883,7 @@ extract_size(const char **ppos, int init_offset, const char *opt_name)
  *   md     - enable /dev filesystem
  *   mD     - enable subdirectory mode
  *   mC     - switch to ejcompile user instead of ejexec
+ *   mr     - preserve original /run directory
  *   w<DIR> - working directory (cwd by default)
  *   rn     - redirect to/from /dev/null for standard streams
  *   rm     - merge stdout and stderr output
@@ -2011,6 +2015,9 @@ main(int argc, char *argv[])
                 opt += 2;
             } else if (*opt == 'm' && opt[1] == 'C') {
                 enable_compile_mode = 1;
+                opt += 2;
+            } else if (*opt == 'm' && opt[1] == 'r') {
+                enable_run = 1;
                 opt += 2;
             } else if (*opt == 'w') {
                 working_dir = extract_string(&opt, 1, "w");
