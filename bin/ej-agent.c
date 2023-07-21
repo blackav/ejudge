@@ -190,7 +190,6 @@ struct AppState
     unsigned char *heartbeat_dir;
     unsigned char *heartbeat_packet_dir;
     unsigned char *heartbeat_in_dir;
-    int heartbeat_created;
 
     int verbose_mode;
 };
@@ -832,13 +831,13 @@ fail:
     return -1;
 }
 
-static void
+static __attribute__((warn_unused_result)) int
 app_state_configure_directories(struct AppState *as)
 {
     // attribute ((unused)) also disables "set but not used" warning
     int __attribute__((unused)) r;
 
-    if (!as->mode || !as->queue_id) return;
+    if (!as->mode || !as->queue_id) return 0;
 
     char *s = NULL;
     unsigned long long r64 = random_u64();
@@ -884,6 +883,30 @@ app_state_configure_directories(struct AppState *as)
         as->heartbeat_in_dir = s; s = NULL;
 #endif
     }
+
+    // create directories
+    if (as->spool_dir && as->spool_dir[0]) {
+        if (make_dir(as->spool_dir, 0700) < 0) {
+            return -1;
+        }
+    }
+    if (as->queue_dir && as->queue_dir[0]) {
+        if (make_all_dir(as->queue_dir, 0700) < 0) {
+            return -1;
+        }
+    }
+    if (as->data_dir && as->data_dir[0]) {
+        if (make_dir(as->data_dir, 0700) < 0) {
+            return -1;
+        }
+    }
+    if (as->heartbeat_dir && as->heartbeat_dir[0]) {
+        if (make_all_dir(as->heartbeat_dir, 0700) < 0) {
+            return -1;
+        }
+    }
+
+    return 0;
 }
 
 static int
@@ -1841,14 +1864,6 @@ put_heartbeat_func(
     unsigned char *mem = MAP_FAILED;
     unsigned char dir_path[PATH_MAX];
 
-    if (!as->heartbeat_created) {
-        if (make_all_dir(as->heartbeat_dir, 0700) < 0) {
-            err("%s: put_heartbeat: cannot create '%s'", as->inst_id, as->heartbeat_dir);
-            goto done;
-        }
-        as->heartbeat_created = 1;
-    }
-
     in_path[0] = 0;
     cJSON *jn = cJSON_GetObjectItem(query, "name");
     if (!jn || jn->type != cJSON_String) {
@@ -2275,7 +2290,9 @@ main(int argc, char *argv[])
         app.queue_id = xstrdup(queue_id);
     }
     app.mode = mode;
-    app_state_configure_directories(&app);
+    if (app_state_configure_directories(&app) < 0) {
+        die("failed to create spool directories");
+    }
 
     app_state_add_query_callback(&app, "ping", NULL, ping_query_func);
     app_state_add_query_callback(&app, "set", NULL, set_query_func);
