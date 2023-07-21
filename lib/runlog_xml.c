@@ -893,7 +893,7 @@ unparse_runlog_xml(
     for (i = 1; i <= max_user_id; i++) {
       if (teamdb_lookup(state->teamdb_state, i) <= 0) continue;
       if ((flags = teamdb_get_flags(state->teamdb_state, i)) < 0) continue;
-      if ((flags & (TEAM_BANNED | TEAM_INVISIBLE))) continue;
+      if ((flags & (TEAM_BANNED | TEAM_INVISIBLE | TEAM_DISQUALIFIED))) continue;
       val1 = teamdb_get_name(state->teamdb_state, i);
       if (html_armor_needed(val1, &alen1)) {
         while (alen1 >= asize1) asize1 *= 2;
@@ -1010,7 +1010,7 @@ unparse_runlog_xml(
       continue;
     }
     flags = teamdb_get_flags(state->teamdb_state, pp->user_id);
-    if (external_mode && (flags & (TEAM_BANNED | TEAM_INVISIBLE)))
+    if (external_mode && (flags & (TEAM_BANNED | TEAM_INVISIBLE | TEAM_DISQUALIFIED)))
       continue;
     fprintf(f, "    <%s", elem_map[RUNLOG_T_RUN]);
     fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_RUN_ID], pp->run_id);
