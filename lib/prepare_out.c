@@ -284,6 +284,8 @@ prepare_unparse_global(
     unparse_bool(f, "start_on_first_login", global->start_on_first_login);
   if (global->enable_virtual_restart > 0)
     unparse_bool(f, "enable_virtual_restart", global->enable_virtual_restart);
+  if (global->preserve_line_numbers > 0)
+    unparse_bool(f, "preserve_line_numbers", global->preserve_line_numbers);
   if (global->virtual_end_options && global->virtual_end_options[0])
     fprintf(f, "virtual_end_options = \"%s\"\n", CARMOR(global->virtual_end_options));
   fprintf(f, "\n");
