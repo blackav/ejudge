@@ -1803,6 +1803,9 @@ serve_compile_request(
     cp.vcs_compile_cmd = prob->vcs_compile_cmd;
   }
   cp.not_ok_is_cf = not_ok_is_cf;
+  if (global->preserve_line_numbers > 0) {
+    cp.preserve_numbers = 1;
+  }
 
   memset(&rx, 0, sizeof(rx));
   rx.accepting_mode = accepting_mode;
