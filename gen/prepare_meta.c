@@ -76,6 +76,7 @@ static struct meta_info_item meta_info_section_global_data_data[] =
   [CNTSGLOB_enable_eoln_select] = { CNTSGLOB_enable_eoln_select, 'B', XSIZE(struct section_global_data, enable_eoln_select), "enable_eoln_select", XOFFSET(struct section_global_data, enable_eoln_select) },
   [CNTSGLOB_start_on_first_login] = { CNTSGLOB_start_on_first_login, 'B', XSIZE(struct section_global_data, start_on_first_login), "start_on_first_login", XOFFSET(struct section_global_data, start_on_first_login) },
   [CNTSGLOB_enable_virtual_restart] = { CNTSGLOB_enable_virtual_restart, 'B', XSIZE(struct section_global_data, enable_virtual_restart), "enable_virtual_restart", XOFFSET(struct section_global_data, enable_virtual_restart) },
+  [CNTSGLOB_preserve_line_numbers] = { CNTSGLOB_preserve_line_numbers, 'B', XSIZE(struct section_global_data, preserve_line_numbers), "preserve_line_numbers", XOFFSET(struct section_global_data, preserve_line_numbers) },
   [CNTSGLOB_name] = { CNTSGLOB_name, 's', XSIZE(struct section_global_data, name), "name", XOFFSET(struct section_global_data, name) },
   [CNTSGLOB_root_dir] = { CNTSGLOB_root_dir, 's', XSIZE(struct section_global_data, root_dir), "root_dir", XOFFSET(struct section_global_data, root_dir) },
   [CNTSGLOB_serve_socket] = { CNTSGLOB_serve_socket, 's', XSIZE(struct section_global_data, serve_socket), "serve_socket", XOFFSET(struct section_global_data, serve_socket) },
