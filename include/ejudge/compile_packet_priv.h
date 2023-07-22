@@ -70,7 +70,7 @@ struct compile_request_bin_packet
   rint32_t vcs_compile_cmd_len;  /* compile command for vcs_mode */
   rint32_t compile_cmd_len;      /* custom compile command */
   rint32_t extra_src_dir_len;    /* directory with additional source files */
-  unsigned char pad[12];         /* padding to 16-byte boundary */
+  unsigned char pad[8];         /* padding to 16-byte boundary */
   /* style checker command (aligned to 16 byte boundary) */
   /* run_block (aligned to 16 byte boundary) */
   /* env variable length array (aligned to 16-byte address boundary) */
@@ -105,7 +105,7 @@ struct compile_reply_bin_packet
   ej_uuid_t uuid;               /* UUID */
   ej_uuid_t judge_uuid;         /* judgind UUID */
   rint32_t zip_mode;
-  unsigned char pad[12];        /* padding to 64-byte boundary */
+  unsigned char pad[8];        /* padding to 64-byte boundary */
   /* run block (aligned to 16 byte boundary) */
 };
 
