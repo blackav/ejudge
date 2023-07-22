@@ -2778,6 +2778,170 @@ does_test_exist(
 }
 
 static int
+copy_exe_file_and_extract_args(
+        const unsigned char *src_dir,
+        const unsigned char *src_name,
+        const unsigned char *src_sfx,
+        const unsigned char *src_b,
+        ssize_t src_z,
+        ssize_t prepended_size,
+        unsigned char **p_interpreter_str,
+        const unsigned char *dst_dir,
+        const unsigned char *dst_name,
+        const unsigned char *dst_sfx,
+        unsigned char **interpreter_args,
+        int *p_interpreter_cnt)
+{
+  int retval = -1;
+  unsigned char src_path[PATH_MAX];
+  unsigned char dst_path[PATH_MAX];
+  int src_fd = -1;
+  int r;
+  unsigned char *src_mem = MAP_FAILED;
+  size_t src_mem_z = 0;
+  size_t start_offset = 0;
+  size_t dst_z = 0;
+  int dst_fd = -1;
+  unsigned char *dst_mem = MAP_FAILED;
+  unsigned char *interpreter_str = NULL;
+
+  if (!src_b) {
+    if (!src_sfx) src_sfx = "";
+    if (src_dir && *src_dir) {
+      r = snprintf(src_path, sizeof(src_path), "%s/%s%s", src_dir, src_name, src_sfx);
+    } else {
+      r = snprintf(src_path, sizeof(src_path), "%s%s", src_name, src_sfx);
+    }
+    if (r >= (int) sizeof(src_path)) {
+      err("%s: src_path is too long", __FUNCTION__);
+      goto cleanup;
+    }
+    src_fd = open(src_path, O_RDONLY | O_NOCTTY | O_NOFOLLOW | O_NONBLOCK, 0);
+    if (src_fd < 0) {
+      err("%s: failed to open '%s': %s", __FUNCTION__, src_path, os_ErrorMsg());
+      goto cleanup;
+    }
+    struct stat stb;
+    if (fstat(src_fd, &stb) < 0) {
+      err("%s: failed to fstat: %s", __FUNCTION__, os_ErrorMsg());
+      goto cleanup;
+    }
+    if (!S_ISREG(stb.st_mode)) {
+      err("%s: '%s' not regular", __FUNCTION__, src_path);
+      goto cleanup;
+    }
+    if (stb.st_size > 0) {
+      if (stb.st_size > 1024 * 1024 * 1024) {
+        err("%s: '%s' is too big", __FUNCTION__, src_path);
+        goto cleanup;
+      }
+      src_mem_z = stb.st_size;
+      src_mem = mmap(NULL, src_mem_z, PROT_READ, MAP_PRIVATE, src_fd, 0);
+      if (src_mem == MAP_FAILED) {
+        err("%s: mmap '%s' failed: %s", __FUNCTION__, src_path, os_ErrorMsg());
+        goto cleanup;
+      }
+    } else {
+      src_mem = NULL;
+      src_mem_z = 0;
+    }
+    close(src_fd); src_fd = -1;
+    src_b = src_mem;
+    src_z = src_mem_z;
+  }
+
+  while (1) {
+    if (prepended_size <= 0) {
+      break;
+    }
+    if (prepended_size >= src_z) {
+      break;
+    }
+    interpreter_str = malloc(prepended_size + 1);
+    memcpy(interpreter_str, src_b, prepended_size);
+    interpreter_str[prepended_size] = 0;
+    unsigned char *ep = strchr(interpreter_str, '\n');
+    if (!ep) {
+      break;
+    }
+    int ei = ep - interpreter_str;
+    while (ei > 0 && isspace(interpreter_str[ei - 1])) --ei;
+    interpreter_str[ei] = 0;
+    if (interpreter_str[0] != '#' || interpreter_str[1] != '!') {
+      break;
+    }
+    int bi = 2;
+    if (bi == ei) {
+      break;
+    }
+    while (isspace(interpreter_str[bi])) ++bi;
+    int cnt = 0;
+    // extract interpreter name
+    int eei = bi;
+    while (!isspace(interpreter_str[eei])) ++eei;
+    if (interpreter_str[eei]) {
+      interpreter_str[eei] = 0;
+      interpreter_args[cnt++] = &interpreter_str[bi];
+      bi = eei + 1;
+      while (isspace(interpreter_str[bi])) ++bi;
+      interpreter_args[cnt++] = &interpreter_str[bi];
+      interpreter_args[cnt] = NULL;
+    } else {
+      interpreter_args[cnt++] = &interpreter_str[bi];
+      interpreter_args[cnt] = NULL;
+    }
+    *p_interpreter_cnt = cnt;
+    start_offset = prepended_size;
+    break;
+  }
+
+  dst_z = src_z - start_offset;
+  if (!dst_sfx) dst_sfx = "";
+  if (dst_dir && *dst_dir) {
+    r = snprintf(dst_path, sizeof(dst_path), "%s/%s%s", dst_dir, dst_name, dst_sfx);
+  } else {
+    r = snprintf(dst_path, sizeof(dst_path), "%s%s", dst_name, dst_sfx);
+  }
+  if (r >= (int) sizeof(dst_path)) {
+    err("%s: dst_path is too long", __FUNCTION__);
+    goto cleanup;
+  }
+  dst_fd = open(dst_path, O_WRONLY | O_CREAT | O_TRUNC | O_NOCTTY | O_NOFOLLOW | O_NONBLOCK, 0666);
+  if (dst_fd < 0) {
+    err("%s: open '%s' failed: %s", __FUNCTION__, dst_path, os_ErrorMsg());
+    goto cleanup;
+  }
+  struct stat stb;
+  if (fstat(dst_fd, &stb) < 0) {
+    err("%s: fstat failed: %s", __FUNCTION__, os_ErrorMsg());
+    goto cleanup;
+  }
+  if (ftruncate(dst_fd, dst_z) < 0) {
+    err("%s: ftruncate failed: %s", __FUNCTION__, os_ErrorMsg());
+    goto cleanup;
+  }
+  if (dst_z > 0) {
+    dst_mem = mmap(NULL, dst_z, PROT_READ | PROT_WRITE, MAP_SHARED, dst_fd, 0);
+    if (dst_mem == MAP_FAILED) {
+      err("%s: mmap failed: %s", __FUNCTION__, os_ErrorMsg());
+      goto cleanup;
+    }
+    close(dst_fd); dst_fd = -1;
+    memcpy(dst_mem, src_b + start_offset, dst_z);
+  }
+
+  retval = 0;
+
+cleanup:;
+  if (dst_mem != MAP_FAILED) munmap(dst_mem, dst_z);
+  if (src_mem && src_mem != MAP_FAILED) munmap(src_mem, src_mem_z);
+  if (src_fd >= 0) close(src_fd);
+  if (dst_fd >= 0) close(dst_fd);
+  xfree(interpreter_str);
+  return retval;
+}
+
+static int
 run_one_test(
         const struct ejudge_cfg *config,
         serve_state_t state,
@@ -2877,6 +3041,10 @@ run_one_test(
 #ifdef HAVE_TERMIOS_H
   struct termios term_attrs;
 #endif
+
+  unsigned char *interpreter_args[4];
+  int interpreter_cnt = 0;
+  unsigned char *interpreter_str = NULL;
 
   test_checker_out_path[0] = 0;
   memset(&tstinfo, 0, sizeof(tstinfo));
@@ -3145,21 +3313,50 @@ run_one_test(
     zf->ops->close(zf); zf = NULL;
     unsigned char target_path[PATH_MAX];
     snprintf(target_path, sizeof(target_path), "%s/%s", exe_dir, exe_name);
-    if (generic_write_file(bytes_s, bytes_z, 0, NULL, target_path, NULL) < 0) {
-      if (log_f) {
-        fprintf(log_f, "cannot save file '%s'\n", target_path);
-        fclose(log_f);
+    if (srgp->prepended_size > 0) {
+      if (copy_exe_file_and_extract_args(NULL, NULL, NULL,
+                                         bytes_s, bytes_z, srgp->prepended_size,
+                                         &interpreter_str,
+                                         exe_dir, exe_name, NULL,
+                                         interpreter_args, &interpreter_cnt) < 0) {
+        if (log_f) {
+          fprintf(log_f, "cannot save file '%s'\n", target_path);
+          fclose(log_f);
+        }
+        xfree(bytes_s);
+        goto check_failed;
       }
-      xfree(bytes_s);
-      goto check_failed;
+    } else {
+      if (generic_write_file(bytes_s, bytes_z, 0, NULL, target_path, NULL) < 0) {
+        if (log_f) {
+          fprintf(log_f, "cannot save file '%s'\n", target_path);
+          fclose(log_f);
+        }
+        xfree(bytes_s);
+        goto check_failed;
+      }
     }
     xfree(bytes_s);
     if (log_f) fclose(log_f);
   } else {
-    if (generic_copy_file(0, global->run_work_dir, exe_name, "", 0, exe_dir, exe_name, "") < 0) {
-      append_msg_to_log(check_out_path, "failed to copy %s/%s -> %s/%s", global->run_work_dir, exe_name,
-                        exe_dir, exe_name);
-      goto check_failed;
+    if (srgp->prepended_size > 0) {
+      if (copy_exe_file_and_extract_args(global->run_work_dir,
+                                         exe_name, NULL,
+                                         NULL, 0,
+                                         srgp->prepended_size,
+                                         &interpreter_str,
+                                         exe_dir, exe_name, NULL,
+                                         interpreter_args, &interpreter_cnt) < 0) {
+        append_msg_to_log(check_out_path, "failed to copy %s/%s -> %s/%s", global->run_work_dir, exe_name,
+                          exe_dir, exe_name);
+        goto check_failed;
+      }
+    } else {
+      if (generic_copy_file(0, global->run_work_dir, exe_name, "", 0, exe_dir, exe_name, "") < 0) {
+        append_msg_to_log(check_out_path, "failed to copy %s/%s -> %s/%s", global->run_work_dir, exe_name,
+                          exe_dir, exe_name);
+        goto check_failed;
+      }
     }
   }
 
@@ -4071,6 +4268,7 @@ cleanup:;
   if (check_dir[0]) {
     clear_directory(check_dir);
   }
+  xfree(interpreter_str);
 
   return status;
 
