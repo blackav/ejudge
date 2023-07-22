@@ -2878,7 +2878,7 @@ copy_exe_file_and_extract_args(
     int cnt = 0;
     // extract interpreter name
     int eei = bi;
-    while (!isspace(interpreter_str[eei])) ++eei;
+    while (interpreter_str[eei] && !isspace(interpreter_str[eei])) ++eei;
     if (interpreter_str[eei]) {
       interpreter_str[eei] = 0;
       interpreter_args[cnt++] = &interpreter_str[bi];
@@ -2892,6 +2892,7 @@ copy_exe_file_and_extract_args(
     }
     *p_interpreter_cnt = cnt;
     start_offset = prepended_size;
+    *p_interpreter_str = interpreter_str; interpreter_str = NULL;
     break;
   }
 
@@ -2906,7 +2907,7 @@ copy_exe_file_and_extract_args(
     err("%s: dst_path is too long", __FUNCTION__);
     goto cleanup;
   }
-  dst_fd = open(dst_path, O_WRONLY | O_CREAT | O_TRUNC | O_NOCTTY | O_NOFOLLOW | O_NONBLOCK, 0666);
+  dst_fd = open(dst_path, O_RDWR | O_CREAT | O_TRUNC | O_NOCTTY | O_NOFOLLOW | O_NONBLOCK, 0666);
   if (dst_fd < 0) {
     err("%s: open '%s' failed: %s", __FUNCTION__, dst_path, os_ErrorMsg());
     goto cleanup;
