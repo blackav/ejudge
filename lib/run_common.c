@@ -3563,6 +3563,10 @@ run_one_test(
   }
   */
 
+  if (interpreter_cnt > 0) {
+    task_pnAddArgs(tsk, interpreter_cnt, (char**) interpreter_args);
+  }
+
   if (tstinfo.program_name && *tstinfo.program_name) {
     task_AddArg(tsk, tstinfo.program_name);
     task_SetPath(tsk, arg0_path);
