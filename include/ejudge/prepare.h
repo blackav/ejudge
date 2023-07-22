@@ -285,6 +285,9 @@ struct section_global_data
   /** enable restarting of virtual contest */
   ejintbool_t enable_virtual_restart;
 
+  /** try to preserve the original line numbers in scripts */
+  ejintbool_t preserve_line_numbers;
+
   /** @deprecated the name of the contest */
   unsigned char *name;
   /** @deprecated the contest root directory */

@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2005-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -73,6 +73,7 @@ compile_reply_packet_read(
   FAIL_IF(pout->ts3_us < 0 || pout->ts3_us > USEC_MAX);
 
   pout->use_uuid = cvt_bin_to_host_32(pin->use_uuid);
+  pout->prepended_size = cvt_bin_to_host_32(pin->prepended_size);
   pout->uuid = pin->uuid;
   pout->judge_uuid = pin->judge_uuid;
   /*

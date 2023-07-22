@@ -1224,6 +1224,7 @@ cmd_submit_run(
                               0 /* rejudge_flag */, 0 /* zip_mode */,
                               store_flags,
                               0 /* not_ok_is_cf */,
+                              0 /* prepended_size */,
                               NULL, 0,
                               &new_run) < 0)
           FAIL(NEW_SRV_ERR_DISK_WRITE_ERROR);
@@ -1292,6 +1293,7 @@ cmd_submit_run(
                               0 /* rejudge_flag */, 0 /* zip_mode */,
                               store_flags,
                               0 /* not_ok_is_cf */,
+                              0 /* prepended_size */,
                               NULL, 0,
                               &new_run) < 0)
           FAIL(NEW_SRV_ERR_DISK_WRITE_ERROR);

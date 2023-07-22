@@ -576,6 +576,7 @@ serve_run_request(
         int zip_mode,
         int store_flags,
         int not_ok_is_cf,
+        int prepended_size,
         const unsigned char *inp_text,
         size_t inp_size,
         struct run_entry *ure);

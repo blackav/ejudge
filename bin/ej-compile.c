@@ -337,6 +337,107 @@ cleanup:;
 }
 
 static int
+detect_prepended_size(
+        const unsigned char *working_dir,
+        const unsigned char *input_file,
+        const unsigned char *output_file)
+{
+  enum { MAX_FILE_SIZE = 64 * 1024 };
+  enum { MAX_SIZE_DIFF = 1024 };
+  unsigned char input_path[PATH_MAX];
+  unsigned char output_path[PATH_MAX];
+  int ifd = -1;
+  int ofd = -1;
+  struct stat istb, ostb;
+  size_t isize = 0, osize = 0;
+  unsigned char *ibuf = MAP_FAILED, *obuf = MAP_FAILED;
+  int prepended_size = 0;
+
+  if (snprintf(input_path, sizeof(input_path), "%s/%s", working_dir, input_file) >= (int)sizeof(input_path)) {
+    goto done;
+  }
+  if (snprintf(output_path, sizeof(output_path), "%s/%s", working_dir, output_file) >= (int)sizeof(output_path)) {
+    goto done;
+  }
+
+  ifd = open(input_path, O_RDONLY | O_CLOEXEC | O_NOCTTY | O_NOFOLLOW | O_NONBLOCK, 0);
+  if (ifd < 0) {
+    err("detect_prepended_size: open '%s' failed: %s", input_path, os_ErrorMsg());
+    goto done;
+  }
+  if (fstat(ifd, &istb) < 0) {
+    goto done;
+  }
+  if (!S_ISREG(istb.st_mode)) {
+    err("detect_prepended_size: '%s' not a regular file", input_path);
+    goto done;
+  }
+  if (istb.st_size > MAX_FILE_SIZE) {
+    goto done;
+  }
+  if (istb.st_size <= 0) {
+    goto done;
+  }
+
+  ofd = open(output_path, O_RDONLY | O_CLOEXEC | O_NOCTTY | O_NOFOLLOW | O_NONBLOCK, 0);
+  if (ofd < 0) {
+    err("detect_prepended_size: open '%s' failed: %s", output_path, os_ErrorMsg());
+    goto done;
+  }
+  if (fstat(ofd, &ostb) < 0) {
+    goto done;
+  }
+  if (!S_ISREG(ostb.st_mode)) {
+    err("detect_prepended_size: '%s' not a regular file", output_path);
+    goto done;
+  }
+  if (ostb.st_size <= 0) {
+    goto done;
+  }
+
+  if (ostb.st_size > MAX_FILE_SIZE) {
+    goto done;
+  }
+  if (ostb.st_size <= istb.st_size) {
+    goto done;
+  }
+  if (istb.st_size + MAX_SIZE_DIFF < ostb.st_size) {
+    goto done;
+  }
+
+  // both files are non-empty and less than 64KiB in size
+  // and the output file is no larger than 1KiB
+  isize = istb.st_size;
+  ibuf = mmap(NULL, isize, PROT_READ, MAP_PRIVATE, ifd, 0);
+  if (ibuf == MAP_FAILED) {
+    err("detect_prepended_size: mmap '%s' failed: %s", input_path, os_ErrorMsg());
+    goto done;
+  }
+
+  osize = ostb.st_size;
+  obuf = mmap(NULL, osize, PROT_READ, MAP_PRIVATE, ofd, 0);
+  if (obuf == MAP_FAILED) {
+    err("detect_prepended_size: mmap '%s' failed: %s", output_path, os_ErrorMsg());
+    goto done;
+  }
+
+  prepended_size = osize - isize;
+  if (memcmp(ibuf, obuf + prepended_size, isize) != 0) {
+    prepended_size = 0;
+    goto done;
+  }
+
+  info("detect_prepended_size: prepended_size == %d", prepended_size);
+
+done:
+  if (ibuf != MAP_FAILED) munmap(ibuf, isize);
+  if (obuf != MAP_FAILED) munmap(obuf, osize);
+  if (ifd >= 0) close(ifd);
+  if (ofd >= 0) close(ofd);
+  return prepended_size;
+}
+
+static int
 invoke_compiler(
         FILE *log_f,
         const struct serve_state *cs,
@@ -346,7 +447,8 @@ invoke_compiler(
         const unsigned char *output_file,
         const unsigned char *working_dir,
         const unsigned char *log_path,
-        const testinfo_t *tinf)
+        const testinfo_t *tinf,
+        int *p_prepended_size)
 {
   const struct section_global_data *global = serve_state.global;
   tpTask tsk = 0;
@@ -498,6 +600,9 @@ invoke_compiler(
   } else {
     info("Compilation sucessful");
     task_Delete(tsk);
+    if (req->preserve_numbers && p_prepended_size) {
+      *p_prepended_size = detect_prepended_size(working_dir, input_file, output_file);
+    }
     return RUN_OK;
   }
 }
@@ -657,6 +762,7 @@ handle_packet(
         int *p_exe_copied)
 {
   struct ZipData *zf = NULL;
+  int prepended_size = 0;
 
   if (req->output_only) {
     if (req->style_checker && req->style_checker[0]) {
@@ -796,9 +902,10 @@ handle_packet(
     */
 
     if (req->style_check_only <= 0) {
-      int r = invoke_compiler(log_f, cs, lang, req, src_work_name, exe_work_name, working_dir, log_work_path, NULL);
+      int r = invoke_compiler(log_f, cs, lang, req, src_work_name, exe_work_name, working_dir, log_work_path, NULL, &prepended_size);
       rpl->status = r;
       if (r != RUN_OK) goto cleanup;
+      rpl->prepended_size = prepended_size;
     }
 
     if (req->vcs_mode <= 0 && req->style_checker && req->style_checker[0]) {
@@ -1036,7 +1143,7 @@ handle_packet(
     if (cur_status == RUN_OK) {
       fprintf(log_f, "=== compilation for test %d ===\n", serial);
       fflush(log_f);
-      cur_status = invoke_compiler(log_f, cs, lang, req, test_src_name, test_exe_name, working_dir, log_work_path, tinf);
+      cur_status = invoke_compiler(log_f, cs, lang, req, test_src_name, test_exe_name, working_dir, log_work_path, tinf, &prepended_size);
       // valid statuses: RUN_OK, RUN_COMPILE_ERR, RUN_CHECK_FAILED
       if (cur_status == RUN_CHECK_FAILED) {
         status = RUN_CHECK_FAILED;
@@ -1085,7 +1192,7 @@ handle_packet(
                 fprintf(log_f, "failed to write full source file '%s'\n", test_src_path);
                 status = RUN_CHECK_FAILED;
               } else {
-                cur_status = invoke_compiler(log_f, cs, lang, req, test_src_name, test_exe_name, working_dir, log_work_path, tinf);
+                cur_status = invoke_compiler(log_f, cs, lang, req, test_src_name, test_exe_name, working_dir, log_work_path, tinf, &prepended_size);
 
                 if (cur_status == RUN_CHECK_FAILED) {
                   status = RUN_CHECK_FAILED;
@@ -1177,6 +1284,7 @@ handle_packet(
 
   rpl->status = status;
   rpl->zip_mode = 1;
+  rpl->prepended_size = prepended_size;
 
 cleanup:
   if (zf) zf->ops->close(zf);

@@ -1803,6 +1803,9 @@ serve_compile_request(
     cp.vcs_compile_cmd = prob->vcs_compile_cmd;
   }
   cp.not_ok_is_cf = not_ok_is_cf;
+  if (global->preserve_line_numbers > 0) {
+    cp.preserve_numbers = 1;
+  }
 
   memset(&rx, 0, sizeof(rx));
   rx.accepting_mode = accepting_mode;
@@ -2054,6 +2057,7 @@ serve_run_request(
         int zip_mode,
         int store_flags,
         int not_ok_is_cf,
+        int prepended_size,
         const unsigned char *inp_text,
         size_t inp_size,
         struct run_entry *ure)
@@ -2416,6 +2420,7 @@ serve_run_request(
     srgp->lang_container_options = xstrdup(lang->container_options);
   }
   srgp->not_ok_is_cf = not_ok_is_cf;
+  srgp->prepended_size = prepended_size;
 
   struct super_run_in_problem_packet *srpp = srp->problem;
   srpp->type = xstrdup(problem_unparse_type(prob->type));
@@ -3485,6 +3490,7 @@ read_compile_packet_input(
                         0 /* zip_mode */,
                         0 /* store_flags */,
                         0 /* not_ok_is_cf */,
+                        comp_pkt->prepended_size,
                         inp_se.content,
                         inp_se.size,
                         NULL);
@@ -3971,6 +3977,7 @@ prepare_run_request:
                         re.locale_id, compile_report_dir, comp_pkt, 0, &re.run_uuid,
                         comp_extra->rejudge_flag, comp_pkt->zip_mode, re.store_flags,
                         comp_extra->not_ok_is_cf,
+                        comp_pkt->prepended_size,
                         NULL, 0,
                         &re) < 0) {
     snprintf(errmsg, sizeof(errmsg), "failed to write run packet\n");
@@ -5141,6 +5148,7 @@ serve_rejudge_run(
                       re.locale_id, 0, 0, 0, &re.run_uuid,
                       1 /* rejudge_flag */, 0 /* zip_mode */, re.store_flags,
                       0 /* not_ok_is_cf */,
+                      0 /* prepended_size*/,
                       NULL, 0,
                       &re);
     xfree(run_text);

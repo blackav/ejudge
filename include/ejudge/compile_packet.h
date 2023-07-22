@@ -38,6 +38,7 @@ struct compile_request_packet
   int use_container;
   int vcs_mode;
   int not_ok_is_cf;
+  int preserve_numbers;
   int64_t submit_id;
   ej_uuid_t uuid;
   ej_uuid_t judge_uuid;
@@ -89,6 +90,7 @@ struct compile_reply_packet
   ej_uuid_t uuid;
   int zip_mode;       // reply file is an archive of executables
   ej_uuid_t judge_uuid;
+  int prepended_size;
 };
 
 int
