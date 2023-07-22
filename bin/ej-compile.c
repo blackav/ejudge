@@ -336,7 +336,7 @@ cleanup:;
   return retval;
 }
 
-static __attribute__((unused)) int
+static int
 detect_prepended_size(
         const unsigned char *working_dir,
         const unsigned char *input_file,
@@ -447,7 +447,8 @@ invoke_compiler(
         const unsigned char *output_file,
         const unsigned char *working_dir,
         const unsigned char *log_path,
-        const testinfo_t *tinf)
+        const testinfo_t *tinf,
+        int *p_prepended_size)
 {
   const struct section_global_data *global = serve_state.global;
   tpTask tsk = 0;
@@ -599,7 +600,8 @@ invoke_compiler(
   } else {
     info("Compilation sucessful");
     task_Delete(tsk);
-    if (req->preserve_numbers) {
+    if (req->preserve_numbers && p_prepended_size) {
+      *p_prepended_size = detect_prepended_size(working_dir, input_file, output_file);
     }
     return RUN_OK;
   }
@@ -899,7 +901,7 @@ handle_packet(
     */
 
     if (req->style_check_only <= 0) {
-      int r = invoke_compiler(log_f, cs, lang, req, src_work_name, exe_work_name, working_dir, log_work_path, NULL);
+      int r = invoke_compiler(log_f, cs, lang, req, src_work_name, exe_work_name, working_dir, log_work_path, NULL, NULL);
       rpl->status = r;
       if (r != RUN_OK) goto cleanup;
     }
@@ -1139,7 +1141,7 @@ handle_packet(
     if (cur_status == RUN_OK) {
       fprintf(log_f, "=== compilation for test %d ===\n", serial);
       fflush(log_f);
-      cur_status = invoke_compiler(log_f, cs, lang, req, test_src_name, test_exe_name, working_dir, log_work_path, tinf);
+      cur_status = invoke_compiler(log_f, cs, lang, req, test_src_name, test_exe_name, working_dir, log_work_path, tinf, NULL);
       // valid statuses: RUN_OK, RUN_COMPILE_ERR, RUN_CHECK_FAILED
       if (cur_status == RUN_CHECK_FAILED) {
         status = RUN_CHECK_FAILED;
@@ -1188,7 +1190,7 @@ handle_packet(
                 fprintf(log_f, "failed to write full source file '%s'\n", test_src_path);
                 status = RUN_CHECK_FAILED;
               } else {
-                cur_status = invoke_compiler(log_f, cs, lang, req, test_src_name, test_exe_name, working_dir, log_work_path, tinf);
+                cur_status = invoke_compiler(log_f, cs, lang, req, test_src_name, test_exe_name, working_dir, log_work_path, tinf, NULL);
 
                 if (cur_status == RUN_CHECK_FAILED) {
                   status = RUN_CHECK_FAILED;
