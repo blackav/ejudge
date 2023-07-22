@@ -762,6 +762,7 @@ handle_packet(
         int *p_exe_copied)
 {
   struct ZipData *zf = NULL;
+  int prepended_size = 0;
 
   if (req->output_only) {
     if (req->style_checker && req->style_checker[0]) {
@@ -901,9 +902,10 @@ handle_packet(
     */
 
     if (req->style_check_only <= 0) {
-      int r = invoke_compiler(log_f, cs, lang, req, src_work_name, exe_work_name, working_dir, log_work_path, NULL, NULL);
+      int r = invoke_compiler(log_f, cs, lang, req, src_work_name, exe_work_name, working_dir, log_work_path, NULL, &prepended_size);
       rpl->status = r;
       if (r != RUN_OK) goto cleanup;
+      rpl->prepended_size = prepended_size;
     }
 
     if (req->vcs_mode <= 0 && req->style_checker && req->style_checker[0]) {
@@ -1141,7 +1143,7 @@ handle_packet(
     if (cur_status == RUN_OK) {
       fprintf(log_f, "=== compilation for test %d ===\n", serial);
       fflush(log_f);
-      cur_status = invoke_compiler(log_f, cs, lang, req, test_src_name, test_exe_name, working_dir, log_work_path, tinf, NULL);
+      cur_status = invoke_compiler(log_f, cs, lang, req, test_src_name, test_exe_name, working_dir, log_work_path, tinf, &prepended_size);
       // valid statuses: RUN_OK, RUN_COMPILE_ERR, RUN_CHECK_FAILED
       if (cur_status == RUN_CHECK_FAILED) {
         status = RUN_CHECK_FAILED;
@@ -1190,7 +1192,7 @@ handle_packet(
                 fprintf(log_f, "failed to write full source file '%s'\n", test_src_path);
                 status = RUN_CHECK_FAILED;
               } else {
-                cur_status = invoke_compiler(log_f, cs, lang, req, test_src_name, test_exe_name, working_dir, log_work_path, tinf, NULL);
+                cur_status = invoke_compiler(log_f, cs, lang, req, test_src_name, test_exe_name, working_dir, log_work_path, tinf, &prepended_size);
 
                 if (cur_status == RUN_CHECK_FAILED) {
                   status = RUN_CHECK_FAILED;
@@ -1282,6 +1284,7 @@ handle_packet(
 
   rpl->status = status;
   rpl->zip_mode = 1;
+  rpl->prepended_size = prepended_size;
 
 cleanup:
   if (zf) zf->ops->close(zf);
