@@ -697,6 +697,7 @@ process_compile_packet(
                         0 /* zip_mode */,
                         0 /* store_flags */,
                         0 /* not_ok_is_cf */,
+                        0 /* prepended_size */,
                         NULL /* inp_text */,
                         0 /* inp_size*/,
                         NULL /* ure */);
