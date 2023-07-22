@@ -18,7 +18,7 @@
 
 #include "ejudge/integral.h"
 
-#define EJ_COMPILE_PACKET_VERSION 14
+#define EJ_COMPILE_PACKET_VERSION 15
 #define EJ_COMPILE_REPLY_PACKET_VERSION 1
 
 /* various private data structures and constants for compile packets */
@@ -52,6 +52,7 @@ struct compile_request_bin_packet
   rint32_t use_container;       /* use ej-suid-container for compilation */
   rint32_t vcs_mode;            /* github/gitlab integration */
   rint32_t not_ok_is_cf;        /* Check failed in case of compilation error */
+  rint32_t preserve_numbers;    /* Try to preserve line numbers in the source */
   ej_uuid_t uuid;               /* UUID */
   ej_uuid_t judge_uuid;         /* judging UUID */
   rint32_t multi_header;        /* multi-header mode */
