@@ -28,6 +28,7 @@ static struct meta_info_item meta_info_compile_request_packet_data[] =
   [META_COMPILE_REQUEST_PACKET_use_container] = { META_COMPILE_REQUEST_PACKET_use_container, 'i', XSIZE(struct compile_request_packet, use_container), "use_container", XOFFSET(struct compile_request_packet, use_container) },
   [META_COMPILE_REQUEST_PACKET_vcs_mode] = { META_COMPILE_REQUEST_PACKET_vcs_mode, 'i', XSIZE(struct compile_request_packet, vcs_mode), "vcs_mode", XOFFSET(struct compile_request_packet, vcs_mode) },
   [META_COMPILE_REQUEST_PACKET_not_ok_is_cf] = { META_COMPILE_REQUEST_PACKET_not_ok_is_cf, 'i', XSIZE(struct compile_request_packet, not_ok_is_cf), "not_ok_is_cf", XOFFSET(struct compile_request_packet, not_ok_is_cf) },
+  [META_COMPILE_REQUEST_PACKET_preserve_numbers] = { META_COMPILE_REQUEST_PACKET_preserve_numbers, 'i', XSIZE(struct compile_request_packet, preserve_numbers), "preserve_numbers", XOFFSET(struct compile_request_packet, preserve_numbers) },
   [META_COMPILE_REQUEST_PACKET_submit_id] = { META_COMPILE_REQUEST_PACKET_submit_id, '?', XSIZE(struct compile_request_packet, submit_id), "submit_id", XOFFSET(struct compile_request_packet, submit_id) },
   [META_COMPILE_REQUEST_PACKET_uuid] = { META_COMPILE_REQUEST_PACKET_uuid, '?', XSIZE(struct compile_request_packet, uuid), "uuid", XOFFSET(struct compile_request_packet, uuid) },
   [META_COMPILE_REQUEST_PACKET_judge_uuid] = { META_COMPILE_REQUEST_PACKET_judge_uuid, '?', XSIZE(struct compile_request_packet, judge_uuid), "judge_uuid", XOFFSET(struct compile_request_packet, judge_uuid) },
