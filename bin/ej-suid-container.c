@@ -46,6 +46,10 @@
 #include <linux/seccomp.h>
 #include <linux/filter.h>
 #include <stddef.h>
+#include <sys/socket.h>
+#include <netinet/ip.h>
+#include <net/if.h>
+#include <arpa/inet.h>
 
 #include "config.h"
 
@@ -134,6 +138,7 @@ static int enable_ipc_count = 0;
 static int enable_subdir_mode = 0;
 static int enable_compile_mode = 0;
 static int enable_run = 0;
+static int enable_loopback = 0;
 
 static int enable_seccomp = 1;
 static int enable_sys_execve = 0;
@@ -763,6 +768,44 @@ reconfigure_fs(void)
 
     free(mi);
     free(mnt_s);
+}
+
+static void
+net_interface_up(
+        const unsigned char *ifname,
+        const unsigned char *ip,
+        const unsigned char *netmask)
+{
+    int sfd = socket(PF_INET, SOCK_DGRAM, IPPROTO_IP);
+    if (sfd < 0) {
+        ffatal("socket() failed: %s", strerror(errno));
+    }
+
+    struct ifreq ifr = {};
+    strncpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
+
+    struct sockaddr_in sa = {};
+    sa.sin_family = AF_INET;
+    sa.sin_port = 0;
+    sa.sin_addr.s_addr = inet_addr(ip);
+    memcpy(&ifr.ifr_addr, &sa, sizeof(sa));
+
+    if (ioctl(sfd, SIOCSIFADDR, &ifr) < 0) {
+        ffatal("cannot set ip addr '%s' on '%s'", ip, ifname);
+    }
+
+    sa.sin_addr.s_addr = inet_addr(netmask);
+    memcpy(&ifr.ifr_addr, &sa, sizeof(sa));
+    if (ioctl(sfd, SIOCSIFNETMASK, &ifr) < 0) {
+        ffatal("cannot set netmask '%s' on '%s'", netmask, ifname);
+    }
+
+    ifr.ifr_flags |= IFF_UP | IFF_BROADCAST | IFF_RUNNING | IFF_MULTICAST;
+    if (ioctl(sfd, SIOCSIFFLAGS, &ifr) < 0) {
+        ffatal("cannot set flags on '%s'", ifname);
+    }
+
+    close(sfd);
 }
 
 static int
@@ -1884,6 +1927,7 @@ extract_size(const char **ppos, int init_offset, const char *opt_name)
  *   mD     - enable subdirectory mode
  *   mC     - switch to ejcompile user instead of ejexec
  *   mr     - preserve original /run directory
+ *   ml     - setup lo inteface inside the container
  *   w<DIR> - working directory (cwd by default)
  *   rn     - redirect to/from /dev/null for standard streams
  *   rm     - merge stdout and stderr output
@@ -2018,6 +2062,9 @@ main(int argc, char *argv[])
                 opt += 2;
             } else if (*opt == 'm' && opt[1] == 'r') {
                 enable_run = 1;
+                opt += 2;
+            } else if (*opt == 'm' && opt[1] == 'l') {
+                enable_loopback = 1;
                 opt += 2;
             } else if (*opt == 'w') {
                 working_dir = extract_string(&opt, 1, "w");
@@ -2290,6 +2337,10 @@ main(int argc, char *argv[])
         sigset_t bs;
         sigemptyset(&bs); sigaddset(&bs, SIGCHLD);
         sigprocmask(SIG_BLOCK, &bs, NULL);
+
+        if (enable_loopback) {
+            net_interface_up("lo", "127.0.0.1", "255.0.0.0");
+        }
 
         if (enable_seccomp) {
             tune_seccomp();
