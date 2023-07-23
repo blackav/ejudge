@@ -108,6 +108,7 @@ static unsigned char pending_stop_flag; // bool
 static unsigned char pending_down_flag; // bool
 static unsigned char pending_reboot_flag; // bool
 static unsigned char *heartbeat_instance_id;
+static unsigned char *local_cache = NULL;
 
 struct testinfo_subst_handler_compile
 {
@@ -1291,6 +1292,166 @@ cleanup:
   return;
 }
 
+static const unsigned char stub_program[] =
+"#! /bin/sh\n"
+"echo 'This is a stub program!'\n"
+"exit 1\n";
+
+static int
+do_write_string(
+        const unsigned char *path,
+        int perms,
+        const unsigned char *str)
+{
+  int fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, perms);
+  if (fd < 0) {
+    err("%s: failed to open '%s': %s", __FUNCTION__, path, os_ErrorMsg());
+    return -1;
+  }
+  ssize_t len = strlen(str);
+  const unsigned char *p = str;
+  while (len > 0) {
+    ssize_t w = write(fd, p, len);
+    if (w < 0) {
+      err("%s: write error: %s", __FUNCTION__, os_ErrorMsg());
+      close(fd);
+      unlink(path);
+      return -1;
+    }
+    if (!w) abort();
+    p += w;
+    len -= w;
+  }
+  if (close(fd) < 0) {
+    err("%s: close failed: %s", __FUNCTION__, os_ErrorMsg());
+    unlink(path);
+    return -1;
+  }
+  return 0;
+}
+
+static int
+do_copy_regular_file(
+        const unsigned char *dst_path,
+        const unsigned char *src_path)
+{
+  int src_fd = -1;
+  int retval = -1;
+  size_t src_size = 0;
+  unsigned char *src_ptr = MAP_FAILED;
+  int dst_fd = -1;
+  int need_unlink = 0;
+  unsigned char *dst_ptr = MAP_FAILED;
+
+  src_fd = open(src_path, O_RDONLY | O_CLOEXEC | O_NOCTTY | O_NONBLOCK, 0);
+  if (src_fd < 0) {
+    err("%s: open '%s' failed: %s", __FUNCTION__, src_path, os_ErrorMsg());
+    goto done;
+  }
+  struct stat stb;
+  if (fstat(src_fd, &stb) < 0) {
+    err("%s: fstat failed: %s", __FUNCTION__, os_ErrorMsg());
+    goto done;
+  }
+  if (!S_ISREG(stb.st_mode)) {
+    err("%s: '%s' is not regular", __FUNCTION__, src_path);
+    goto done;
+  }
+  if (stb.st_size < 0 || stb.st_size > 128 * 1024 * 1024) {
+    err("%s: '%s' is too big", __FUNCTION__, src_path);
+    goto done;
+  }
+  src_size = stb.st_size;
+
+  dst_fd = open(dst_path, O_RDWR | O_CREAT | O_TRUNC | O_CLOEXEC | O_NOCTTY | O_NONBLOCK, stb.st_mode & 0777);
+  if (dst_fd < 0) {
+    err("%s: open '%s' failed: %s", __FUNCTION__, dst_path, os_ErrorMsg());
+    goto done;
+  }
+  need_unlink = 1;
+  if (fstat(dst_fd, &stb) < 0) {
+    err("%s: fstat failed: %s", __FUNCTION__, os_ErrorMsg());
+    goto done;
+  }
+  if (!S_ISREG(stb.st_mode)) {
+    err("%s: '%s' is not regular", __FUNCTION__, dst_path);
+    goto done;
+  }
+
+  if (src_size > 0) {
+    src_ptr = mmap(NULL, src_size, PROT_READ, MAP_PRIVATE, src_fd, 0);
+    if (src_ptr == MAP_FAILED) {
+      err("%s: mmap of '%s' failed: %s", __FUNCTION__, src_path, os_ErrorMsg());
+      goto done;
+    }
+
+    if (posix_fallocate(dst_fd, 0, src_size) < 0) {
+      err("%s: fallocate failed: %s", __FUNCTION__, os_ErrorMsg());
+      goto done;
+    }
+    dst_ptr = mmap(NULL, src_size, PROT_READ | PROT_WRITE, MAP_SHARED, dst_fd, 0);
+    if (dst_ptr == MAP_FAILED) {
+      err("%s: mmap of '%s' failed: %s", __FUNCTION__, dst_path, os_ErrorMsg());
+      goto done;
+    }
+    memcpy(dst_ptr, src_ptr, src_size);
+  }
+
+  retval = 0;
+  need_unlink = 0;
+
+done:;
+  if (dst_ptr != MAP_FAILED) munmap(dst_ptr, src_size);
+  if (src_ptr != MAP_FAILED) munmap(src_ptr, src_size);
+  if (need_unlink) unlink(dst_path);
+  if (dst_fd >= 0) close(dst_fd);
+  if (src_fd >= 0) close(src_fd);
+  return retval;
+}
+
+static int
+copy_to_local_cache(
+        const struct compile_request_packet *req,
+        const unsigned char *exe_work_path,
+        const unsigned char *exe_sfx)
+{
+  unsigned char uuid_buf[64];
+  unsigned char cached_path[PATH_MAX];
+  int r;
+
+  r = snprintf(cached_path, sizeof(cached_path), "%s/%s%s",
+               local_cache,
+               ej_uuid_unparse_r(uuid_buf, sizeof(uuid_buf),
+                                 &req->judge_uuid, ""),
+               exe_sfx);
+  if (r >= (int)sizeof(cached_path)) {
+    err("%s: cached_path is too long", __FUNCTION__);
+    return -1;
+  }
+
+  if (rename(exe_work_path, cached_path) >= 0) {
+    if (do_write_string(exe_work_path, 777, stub_program) < 0) {
+      err("%s: writing of stub file failed", __FUNCTION__);
+      unlink(cached_path);
+      return -1;
+    }
+    return 0;
+  }
+  if (errno != EXDEV) {
+    err("%s: rename failed: %s", __FUNCTION__, os_ErrorMsg());
+    return -1;
+  }
+  if (do_copy_regular_file(cached_path, exe_work_path) < 0) {
+    return -1;
+  }
+  if (do_write_string(exe_work_path, 777, stub_program) < 0) {
+    err("%s: writing of stub file failed", __FUNCTION__);
+    unlink(cached_path);
+    return -1;
+  }
+  return 0;
+}
+
 static int
 new_loop(int parallel_mode, const unsigned char *global_log_path)
 {
@@ -1727,6 +1888,12 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
             rpl.status = RUN_COMPILE_ERR;
           } else {
             if (agent) {
+              if (req->enable_remote_cache > 0 && local_cache && *local_cache
+                  && ej_uuid_is_nonempty(req->judge_uuid)) {
+                if (copy_to_local_cache(req, exe_work_path, exe_sfx) >= 0) {
+                  rpl.cached_on_remote = 1;
+                }
+              }
               if (agent->ops->put_output_2(agent,
                                            contest_server_id,
                                            rpl.contest_id,
@@ -1971,7 +2138,6 @@ main(int argc, char *argv[])
   unsigned char *halt_command = NULL;
   unsigned char *reboot_command = NULL;
   unsigned char *lang_id_map = NULL;
-  unsigned char *local_cache = NULL;
 
 #if HAVE_SETSID - 0
   path_t  log_path;
@@ -2458,6 +2624,10 @@ main(int argc, char *argv[])
 
   if (create_dirs(NULL, &serve_state, PREPARE_COMPILE) < 0) return 1;
   if (check_config() < 0) return 1;
+  if (local_cache && *local_cache) {
+    if (make_dir(local_cache, 0770) < 0) return 1;
+  }
+
   if (initialize_mode) return 0;
 
 #if HAVE_SETSID - 0
