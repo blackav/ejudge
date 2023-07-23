@@ -19,7 +19,7 @@
 #include "ejudge/integral.h"
 
 #define EJ_COMPILE_PACKET_VERSION 16
-#define EJ_COMPILE_REPLY_PACKET_VERSION 2
+#define EJ_COMPILE_REPLY_PACKET_VERSION 3
 
 /* various private data structures and constants for compile packets */
 
@@ -71,7 +71,7 @@ struct compile_request_bin_packet
   rint32_t vcs_compile_cmd_len;  /* compile command for vcs_mode */
   rint32_t compile_cmd_len;      /* custom compile command */
   rint32_t extra_src_dir_len;    /* directory with additional source files */
-  unsigned char pad[4];         /* padding to 16-byte boundary */
+  unsigned char pad[4];          /* padding to 16-byte boundary */
   /* style checker command (aligned to 16 byte boundary) */
   /* run_block (aligned to 16 byte boundary) */
   /* env variable length array (aligned to 16-byte address boundary) */
@@ -103,10 +103,11 @@ struct compile_reply_bin_packet
   rint32_t run_block_len;       /* the length of the run block */
   rint32_t use_uuid;
   rint32_t prepended_size;      /* size of the header prepended by compile */
+  rint32_t cached_on_remote;    /* compilation result is cached on remote side */
   ej_uuid_t uuid;               /* UUID */
   ej_uuid_t judge_uuid;         /* judgind UUID */
   rint32_t zip_mode;
-  unsigned char pad[8];        /* padding to 64-byte boundary */
+  unsigned char pad[4];         /* padding to 64-byte boundary */
   /* run block (aligned to 16 byte boundary) */
 };
 

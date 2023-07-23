@@ -74,6 +74,7 @@ compile_reply_packet_read(
 
   pout->use_uuid = cvt_bin_to_host_32(pin->use_uuid);
   pout->prepended_size = cvt_bin_to_host_32(pin->prepended_size);
+  pout->cached_on_remote = cvt_bin_to_host_32(pin->cached_on_remote);
   pout->uuid = pin->uuid;
   pout->judge_uuid = pin->judge_uuid;
   /*

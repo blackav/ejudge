@@ -72,6 +72,7 @@ compile_reply_packet_write(const struct compile_reply_packet *in_data,
   out_data->ts3_us = cvt_host_to_bin_32(in_data->ts3_us);
   out_data->use_uuid = cvt_host_to_bin_32(in_data->use_uuid);
   out_data->prepended_size = cvt_host_to_bin_32(in_data->prepended_size);
+  out_data->cached_on_remote = cvt_host_to_bin_32(in_data->cached_on_remote);
   out_data->uuid = in_data->uuid;
   out_data->judge_uuid = in_data->judge_uuid;
   /*

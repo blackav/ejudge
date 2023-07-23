@@ -92,6 +92,7 @@ struct compile_reply_packet
   int zip_mode;       // reply file is an archive of executables
   ej_uuid_t judge_uuid;
   int prepended_size;
+  int cached_on_remote;
 };
 
 int
