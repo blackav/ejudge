@@ -1806,6 +1806,7 @@ serve_compile_request(
   if (global->preserve_line_numbers > 0) {
     cp.preserve_numbers = 1;
   }
+  cp.enable_remote_cache = (global->enable_remote_cache > 0);
 
   memset(&rx, 0, sizeof(rx));
   rx.accepting_mode = accepting_mode;
