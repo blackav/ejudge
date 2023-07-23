@@ -288,6 +288,9 @@ struct section_global_data
   /** try to preserve the original line numbers in scripts */
   ejintbool_t preserve_line_numbers;
 
+  /** enable executable file cacheing on the remote agent side */
+  ejintbool_t enable_remote_cache;
+
   /** @deprecated the name of the contest */
   unsigned char *name;
   /** @deprecated the contest root directory */

@@ -128,6 +128,7 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(enable_virtual_restart, "d"),
   GLOBAL_PARAM(require_problem_uuid, "d"),
   GLOBAL_PARAM(preserve_line_numbers, "d"),
+  GLOBAL_PARAM(enable_remote_cache, "d"),
 
   GLOBAL_PARAM(stand_ignore_after, "t"),
   GLOBAL_PARAM(appeal_deadline, "t"),
@@ -876,6 +877,7 @@ global_init_func(struct generic_section_config *gp)
   p->start_on_first_login = -1;
   p->enable_virtual_restart = -1;
   p->preserve_line_numbers = -1;
+  p->enable_remote_cache = -1;
   p->ignore_compile_errors = -1;
   p->disable_failed_test_view = -1;
   p->enable_printing = -1;
