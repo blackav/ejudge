@@ -1971,6 +1971,7 @@ main(int argc, char *argv[])
   unsigned char *halt_command = NULL;
   unsigned char *reboot_command = NULL;
   unsigned char *lang_id_map = NULL;
+  unsigned char *local_cache = NULL;
 
 #if HAVE_SETSID - 0
   path_t  log_path;
@@ -2132,6 +2133,12 @@ main(int argc, char *argv[])
       if (++i >= argc) goto print_usage;
       xfree(lang_id_map);
       lang_id_map = xstrdup(argv[i++]);
+      argv_restart[j++] = argv[i];
+      argv_restart[j++] = argv[i - 1];
+    } else if (!strcmp(argv[i], "--local-cache")) {
+      if (++i >= argc) goto print_usage;
+      xfree(local_cache);
+      local_cache = xstrdup(argv[i++]);
       argv_restart[j++] = argv[i];
       argv_restart[j++] = argv[i - 1];
     } else if (!strcmp(argv[i], "-p")) {
