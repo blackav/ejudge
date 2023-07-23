@@ -109,6 +109,7 @@ compile_request_packet_read(
   pout->vcs_mode = cvt_bin_to_host_32(pin->vcs_mode);
   pout->not_ok_is_cf = cvt_bin_to_host_32(pin->not_ok_is_cf);
   pout->preserve_numbers = cvt_bin_to_host_32(pin->preserve_numbers);
+  pout->enable_remote_cache = cvt_bin_to_host_32(pin->enable_remote_cache);
 
   pout->multi_header = cvt_bin_to_host_32(pin->multi_header);
   FAIL_IF(pout->multi_header < 0 || pout->multi_header > 1);

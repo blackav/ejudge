@@ -241,6 +241,7 @@ compile_request_packet_write(
   out_data->vcs_mode = cvt_host_to_bin_32(in_data->vcs_mode);
   out_data->not_ok_is_cf = cvt_host_to_bin_32(in_data->not_ok_is_cf);
   out_data->preserve_numbers = cvt_host_to_bin_32(in_data->preserve_numbers);
+  out_data->enable_remote_cache = cvt_host_to_bin_32(in_data->enable_remote_cache);
   out_data->use_uuid = cvt_host_to_bin_32(in_data->use_uuid);
   out_data->uuid = in_data->uuid;
   out_data->judge_uuid = in_data->judge_uuid;
