@@ -193,7 +193,8 @@ command_start(
         const char *shutdown_script,
         const char *ip_address,
         const char *reboot_script,
-        const char *lang_id_map)
+        const char *lang_id_map,
+        const char *local_cache)
 {
   tTask *tsk = 0;
   path_t path;
@@ -317,6 +318,10 @@ command_start(
       task_AddArg(tsk, "--lang-id-map");
       task_AddArg(tsk, lang_id_map);
     }
+    if (local_cache && *local_cache) {
+      task_AddArg(tsk, "--local-cache");
+      task_AddArg(tsk, local_cache);
+    }
     if (verbose_mode) {
       task_AddArg(tsk, "-v");
     }
@@ -378,6 +383,10 @@ command_start(
       if (mirror && *mirror) {
         task_AddArg(tsk, "-m");
         task_AddArg(tsk, mirror);
+      }
+      if (local_cache && *local_cache) {
+        task_AddArg(tsk, "--local-cache");
+        task_AddArg(tsk, local_cache);
       }
       if (enable_heartbeat > 0) {
         task_AddArg(tsk, "-hb");
@@ -648,6 +657,7 @@ main(int argc, char *argv[])
   int date_suffix_flag = 0;
   const char *ip_address = NULL;
   const char *lang_id_map = NULL;
+  const char *local_cache = NULL;
 
   logger_set_level(-1, LOG_WARNING);
   program_name = os_GetBasename(argv[0]);
@@ -708,6 +718,10 @@ main(int argc, char *argv[])
     } else if (!strcmp(argv[i], "--lang-id-map")) {
       if (i + 1 >= argc) startup_error("argument expected for `--lang-id-map'");
       lang_id_map = argv[i + 1];
+      i += 2;
+    } else if (!strcmp(argv[i], "--local-cache")) {
+      if (i + 1 >= argc) startup_error("argument expected for `--local-cache'");
+      local_cache = argv[i + 1];
       i += 2;
     } else if (!strcmp(argv[i], "-v")) {
       verbose_mode = 1;
@@ -818,7 +832,7 @@ main(int argc, char *argv[])
                       agent, instance_id, queue, verbose_mode,
                       mirror, enable_heartbeat, disable_heartbeat,
                       timeout_str, shutdown_script, ip_address,
-                      reboot_script, lang_id_map) < 0)
+                      reboot_script, lang_id_map, local_cache) < 0)
       r = 1;
   } else if (!strcmp(command, "stop")) {
     // ej-agents are not stopped if not asked explicitly
