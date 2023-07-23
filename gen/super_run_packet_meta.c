@@ -72,6 +72,7 @@ static struct meta_info_item meta_info_super_run_in_global_packet_data[] =
   [META_SUPER_RUN_IN_GLOBAL_PACKET_lang_container_options] = { META_SUPER_RUN_IN_GLOBAL_PACKET_lang_container_options, 's', XSIZE(struct super_run_in_global_packet, lang_container_options), "lang_container_options", XOFFSET(struct super_run_in_global_packet, lang_container_options) },
   [META_SUPER_RUN_IN_GLOBAL_PACKET_not_ok_is_cf] = { META_SUPER_RUN_IN_GLOBAL_PACKET_not_ok_is_cf, 'B', XSIZE(struct super_run_in_global_packet, not_ok_is_cf), "not_ok_is_cf", XOFFSET(struct super_run_in_global_packet, not_ok_is_cf) },
   [META_SUPER_RUN_IN_GLOBAL_PACKET_prepended_size] = { META_SUPER_RUN_IN_GLOBAL_PACKET_prepended_size, 'i', XSIZE(struct super_run_in_global_packet, prepended_size), "prepended_size", XOFFSET(struct super_run_in_global_packet, prepended_size) },
+  [META_SUPER_RUN_IN_GLOBAL_PACKET_cached_on_remote] = { META_SUPER_RUN_IN_GLOBAL_PACKET_cached_on_remote, 'i', XSIZE(struct super_run_in_global_packet, cached_on_remote), "cached_on_remote", XOFFSET(struct super_run_in_global_packet, cached_on_remote) },
 };
 
 int meta_super_run_in_global_packet_get_type(int tag)
