@@ -1429,6 +1429,16 @@ copy_to_local_cache(
     return -1;
   }
 
+  struct stat stb;
+  if (stat(exe_work_path, &stb) < 0) {
+    err("%s: stat failed for '%s': %s", __FUNCTION__, exe_work_path, os_ErrorMsg());
+    return -1;
+  }
+  if (!S_ISREG(stb.st_mode)) {
+    err("%s: '%s' not regular", __FUNCTION__, exe_work_path);
+    return -1;
+  }
+
   if (rename(exe_work_path, cached_path) >= 0) {
     if (do_write_string(exe_work_path, 777, stub_program) < 0) {
       err("%s: writing of stub file failed", __FUNCTION__);
