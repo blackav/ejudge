@@ -101,6 +101,7 @@ static int ignore_rejudge = 0;
 
 static unsigned char **host_names = NULL;
 static unsigned char *mirror_dir = NULL;
+static unsigned char *local_cache = NULL;
 
 #define HEARTBEAT_SAVE_INTERVAL_MS 5000
 static long long last_heartbear_save_time = 0;
@@ -1527,6 +1528,13 @@ main(int argc, char *argv[])
       if (cur_arg + 1 >= argc) fatal("argument expected for -m");
       xfree(mirror_dir); mirror_dir = NULL;
       mirror_dir = xstrdup(argv[cur_arg + 1]);
+      argv_restart[argc_restart++] = argv[cur_arg];
+      argv_restart[argc_restart++] = argv[cur_arg + 1];
+      cur_arg += 2;
+    } else if (!strcmp(argv[cur_arg], "--local-cache")) {
+      if (cur_arg + 1 >= argc) fatal("argument expected for --local-cache");
+      xfree(local_cache); local_cache = NULL;
+      local_cache = xstrdup(argv[cur_arg + 1]);
       argv_restart[argc_restart++] = argv[cur_arg];
       argv_restart[argc_restart++] = argv[cur_arg + 1];
       cur_arg += 2;
