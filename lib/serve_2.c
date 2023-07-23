@@ -2422,6 +2422,9 @@ serve_run_request(
   }
   srgp->not_ok_is_cf = not_ok_is_cf;
   srgp->prepended_size = prepended_size;
+  if (comp_pkt) {
+    srgp->cached_on_remote = comp_pkt->cached_on_remote;
+  }
 
   struct super_run_in_problem_packet *srpp = srp->problem;
   srpp->type = xstrdup(problem_unparse_type(prob->type));
