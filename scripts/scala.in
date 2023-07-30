@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright (c) 2017 Alexander Chernov <cher@ejudge.ru>
+# Copyright (c) 2017-2023 Alexander Chernov <cher@ejudge.ru>
 
 # Usage: scala in-file out-file
 # The working dir must not contain any .class files.
@@ -32,6 +32,42 @@ then
   exit 1
 fi
 
-rm -f *.class *.jar
-"${SCALACRUN}" "${infile}" -d output.jar || exit 1
-exec mv output.jar "${outfile}"
+if [ x"EJUDGE_ENABLE_SBT" == x1 ]
+then
+    # Add assembly plugin to generate all-on-one jar
+    mkdir project
+    cat << EOF > project/plugins.sbt
+addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "2.1.1")
+EOF
+
+    SCALA_BUILD_SBT_PATH="${prefix}/share/ejudge/template/build.sbt"
+    [ x"${SCALA_TARGET_VERSION}" != x ] || SCALA_TARGET_VERSION=2.13
+    [ x"${SCALA_BUILD_VERSION}" != x ] || SCALA_BUILD_VERSION=2.13
+
+    if [ -r "${SCALA_BUILD_SBT_PATH}" ]
+    then
+        cp -p "${SCALA_BUILD_SBT_PATH}" build.sbt || exit 1
+    else
+        cat > build.sbt <<EOF
+ThisBuild / version := "0.1.0-SNAPSHOT"
+
+ThisBuild / scalaVersion := "${SCALA_BUILD_VERSION}"
+
+libraryDependencies += "com.softwaremill.sttp.client3" %% "core" % "3.8.13"
+
+Compile / packageBin / packageOptions +=
+  Package.ManifestAttributes("Implementation-language" -> "Scala")
+
+lazy val root = (project in file("."))
+  .settings(
+    name := "Solution"
+  )
+EOF
+    fi
+    sbt assembly || exit 1
+    exec mv target/${SCALA_TARGET_VERSION}/*.jar "${outfile}"
+else
+    rm -f *.class *.jar
+    "${SCALACRUN}" "${infile}" -d output.jar || exit 1
+    exec mv output.jar "${outfile}"
+fi

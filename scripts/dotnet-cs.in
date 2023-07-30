@@ -6,6 +6,8 @@
 
 # using EJUDGE_FLAGS we may pass additional flags
 
+prefix="@prefix@"
+
 LANG_CONFIG_DIR="@lang_config_dir@"
 [ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/dotnet-cs.cfg"
 
@@ -39,10 +41,46 @@ unset LANGUAGE
 export DOTNET_NOLOGO=true
 export DOTNET_CLI_TELEMETRY_OPTOUT=true
 
-if ! "${DOTNETRUN}" new console -lang 'c#' -n solution
+TEMPLATE_DIR="${prefix}/share/ejudge/template"
+TEMPLATE_FILE="${TEMPLATE_DIR}/dotnet-cs.tbz"
+
+if [ -w "${TEMPLATE_DIR}" ]
 then
-    echo "Compilation failed." >&2
-    exit 1
+    if [ ! -f "${TEMPLATE_FILE}" ]
+    then
+        echo "No template file, creating." >&2
+
+        if ! "${DOTNETRUN}" new console -lang 'c#' -n solution
+        then
+            echo "Compilation failed." >&2
+            exit 1
+        fi
+
+        if ! tar cfz "${TEMPLATE_FILE}" solution
+        then
+            echo "Template file creation failed." >&2
+            exit 1
+        fi
+        rm -rf solution
+    fi
+
+    if [ ! -f "${TEMPLATE_FILE}" ]
+    then
+        echo "No template file, exiting." >&2
+        exit 1
+    fi
+
+    if ! tar xf "${TEMPLATE_FILE}"
+    then
+        echo "Failed to restore template file." >&2
+        exit 1
+    fi
+else
+    if ! "${DOTNETRUN}" new console -lang 'c#' -n solution
+    then
+        echo "Compilation failed." >&2
+        exit 1
+    fi
 fi
 
 cat "$1" > solution/Program.cs

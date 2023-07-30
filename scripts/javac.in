@@ -95,6 +95,4 @@ then
     MOPT=" -m manifest.txt "
 fi
 
-"${JARRUN}" -c -f "${outfile}" ${MOPT} -e "${MAIN_CLASS}" *.class || exit 1
-
-exit 0
+exec "${JARRUN}" -c -f "${outfile}" ${MOPT} -e "${MAIN_CLASS}" *.class
