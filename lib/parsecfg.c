@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2000-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1499,12 +1499,13 @@ param_free(struct generic_section_config *cfg,
     for (i = 0; params[i].name; i++)
       if (!strcmp(name, params[i].name))
         break;
-    ASSERT(params[i].name);
-
-    if (params[i].free_func) (*params[i].free_func)(p);
-    else {
-      memset(p, 0, params[i].size);
-      xfree(p);
+    if (params[i].name) {
+      if (params[i].free_func) {
+        (*params[i].free_func)(p);
+      } else {
+        memset(p, 0, params[i].size);
+        xfree(p);
+      }
     }
   }
 
