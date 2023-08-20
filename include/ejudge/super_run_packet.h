@@ -93,6 +93,8 @@ struct super_run_in_global_packet
   ejintbool_t not_ok_is_cf;
   int prepended_size;
   int cached_on_remote;
+  unsigned char *src_sfx;
+  unsigned char *src_file;
 
   int scoring_system_val META_ATTRIB((meta_hidden));
 };
