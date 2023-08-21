@@ -4750,7 +4750,6 @@ run_tests(
         const struct super_run_in_packet *srp,
         struct run_reply_packet *reply_pkt,
         struct AgentClient *agent,
-        int cur_variant,
         char const *exe_name,
         char const *new_base,
         char *report_path,                /* path to the report */
@@ -5327,7 +5326,7 @@ run_tests(
         && reply_pkt->status != RUN_CHECK_FAILED) {
       if (invoke_valuer(global, srp, agent, mirror_dir,
                         tests.size, tests.data,
-                        cur_variant, srpp->full_score,
+                        srgp->variant, srpp->full_score,
                         &total_score, &marked_flag,
                         &user_status, &user_score, &user_tests_passed,
                         &valuer_errors, &valuer_comment,
@@ -5455,7 +5454,8 @@ done:;
 
   generate_xml_report(srp, reply_pkt, report_path,
                       tests.size, tests.data, utf8_mode,
-                      cur_variant, total_score, srpp->full_score, srpp->full_user_score,
+                      srgp->variant, total_score,
+                      srpp->full_score, srpp->full_user_score,
                       srpp->use_corr, srpp->use_info,
                       report_time_limit_ms, report_real_time_limit_ms,
                       has_real_time, has_max_memory_used,
