@@ -4750,7 +4750,6 @@ run_tests(
         const struct super_run_in_packet *srp,
         struct run_reply_packet *reply_pkt,
         struct AgentClient *agent,
-        int accept_testing,
         int accept_partial,
         int cur_variant,
         char const *exe_name,
@@ -5039,7 +5038,7 @@ run_tests(
   while (1) {
     ++cur_test;
     if (srgp->scoring_system_val == SCORE_OLYMPIAD
-        && accept_testing
+        && srgp->accepting_mode
         && cur_test > srpp->tests_to_accept) break;
 
     int tl_retry = 0;
@@ -5085,7 +5084,7 @@ run_tests(
       if (srgp->scoring_system_val == SCORE_ACM) break;
       if (srgp->scoring_system_val == SCORE_MOSCOW) break;
       if (srgp->scoring_system_val == SCORE_OLYMPIAD
-          && accept_testing && !accept_partial) break;
+          && srgp->accepting_mode && !accept_partial) break;
       if (srgp->scoring_system_val == SCORE_KIROV && srpp->stop_on_first_fail > 0) {
         while (1) {
           ++cur_test;
@@ -5198,7 +5197,7 @@ run_tests(
 
   // no tests?
   if (srgp->scoring_system_val == SCORE_OLYMPIAD
-      && accept_testing > 0 && srpp->tests_to_accept <= 0) {
+      && srgp->accepting_mode > 0 && srpp->tests_to_accept <= 0) {
     // no tests is ok
   } else if (tests.size <= 1) {
     append_msg_to_log(messages_path, "No tests found");
@@ -5223,7 +5222,7 @@ run_tests(
     goto done;
   }
 
-  if (srgp->scoring_system_val == SCORE_OLYMPIAD && accept_testing) {
+  if (srgp->scoring_system_val == SCORE_OLYMPIAD && srgp->accepting_mode) {
     status = RUN_ACCEPTED;
     failed_test = 0;
     for (cur_test = 1; cur_test <= srpp->tests_to_accept; ++cur_test) {
