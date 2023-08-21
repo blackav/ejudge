@@ -2096,6 +2096,7 @@ serve_run_request(
   size_t srp_z = 0;
   ej_size64_t lang_specific_size = 0;
   ej_uuid_t local_judge_uuid;
+  unsigned char src_name[64];
 
   get_current_time(&current_time, &current_time_us);
 
@@ -2427,8 +2428,16 @@ serve_run_request(
     srgp->cached_on_remote = comp_pkt->cached_on_remote;
   }
 
-  if (prob->enable_src_for_testing > 0 && lang) {
+  if (prob && prob->enable_src_for_testing > 0 && lang && src_size > 0) {
     srgp->src_sfx = xstrdup(lang->src_sfx);
+    random_init();
+    snprintf(src_name, sizeof(src_name), "%llx", random_u64());
+    if (generic_write_file(src_text, src_size, 0,
+                           run_exe_dir, src_name, lang->src_sfx) < 0) {
+      fprintf(errf, "failed to save the source file");
+      goto fail;
+    }
+    srgp->src_file = xstrdup(src_name);
   }
 
   struct super_run_in_problem_packet *srpp = srp->problem;
