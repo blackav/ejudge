@@ -131,6 +131,7 @@ run_tests(
         const struct remap_spec *remaps,
         int user_input_mode,
         const unsigned char *inp_data,
-        size_t inp_size);
+        size_t inp_size,
+        const unsigned char *src_path);
 
 #endif /* __RUN_H__ */

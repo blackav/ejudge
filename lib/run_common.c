@@ -4761,7 +4761,8 @@ run_tests(
         const struct remap_spec *remaps,
         int user_input_mode,
         const unsigned char *inp_data,
-        size_t inp_size)
+        size_t inp_size,
+        const unsigned char *src_path)
 {
   const struct section_global_data *global = state->global;
   const struct super_run_in_global_packet *srgp = srp->global;

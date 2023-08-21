@@ -621,7 +621,8 @@ handle_packet(
               remap_specs,
               srgp->submit_id > 0,
               inp_data,
-              inp_size);
+              inp_size,
+              source_code_path);
     //if (cr_serialize_unlock(state) < 0) return -1;
   }
 
