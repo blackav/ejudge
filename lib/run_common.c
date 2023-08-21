@@ -1061,7 +1061,8 @@ invoke_valuer(
         int *p_user_tests_passed,
         char **p_err_txt,
         char **p_cmt_txt,
-        char **p_jcmt_txt)
+        char **p_jcmt_txt,
+        const unsigned char *src_path)
 {
   path_t score_list;
   path_t score_res;
@@ -1179,6 +1180,9 @@ invoke_valuer(
       snprintf(buf, sizeof(buf), "%d", srpp->test_count);
       task_SetEnv(tsk, "EJUDGE_TEST_COUNT", buf);
     }
+  }
+  if (src_path) {
+    task_SetEnv(tsk, "EJUDGE_SOURCE_PATH", src_path);
   }
 
   task_EnableAllSignals(tsk);
@@ -5348,7 +5352,7 @@ run_tests(
                         &total_score, &marked_flag,
                         &user_status, &user_score, &user_tests_passed,
                         &valuer_errors, &valuer_comment,
-                        &valuer_judge_comment) < 0) {
+                        &valuer_judge_comment, src_path) < 0) {
         goto check_failed;
       } else {
         reply_pkt->score = total_score;
