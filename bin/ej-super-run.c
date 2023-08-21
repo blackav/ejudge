@@ -411,6 +411,9 @@ handle_packet(
   char *inp_data = NULL;
   size_t inp_size = 0;
 
+  unsigned char source_code_buf[PATH_MAX];
+  const unsigned char *source_code_path = NULL;
+
   memset(&reply_pkt, 0, sizeof(reply_pkt));
   memset(&run_listener, 0, sizeof(run_listener));
   run_listener.b.ops = &super_run_listener_ops;
@@ -528,6 +531,29 @@ handle_packet(
         generic_write_file(srp_b, srp_z, SAFE, super_run_spool_path, pkt_name, "");
       }
       goto cleanup;
+    }
+
+    // copy the source code file
+    if (srgp->src_file && *srgp->src_file) {
+      const unsigned char *src_sfx = srgp->src_sfx;
+      if (!src_sfx) src_sfx = "";
+      snprintf(source_code_buf, sizeof(source_code_buf), "%s/%s%s",
+               global->run_work_dir, srgp->src_file, src_sfx);
+      if (agent) {
+        r = agent->ops->get_data_2(agent, pkt_name, src_sfx,
+                                   global->run_work_dir, srgp->src_file,
+                                   src_sfx);
+        // FIXME: support local cache
+      } else {
+        r = generic_copy_file(REMOVE, super_run_exe_path,srgp->src_file, src_sfx,
+                              0, global->run_work_dir, srgp->src_file, src_sfx);
+      }
+      if (r < 0) {
+        err("failed to copy source code file");
+        goto cleanup;
+      }
+      source_code_path = source_code_buf;
+      (void) source_code_path;
     }
 
     if (srgp->submit_id > 0) {
