@@ -2975,7 +2975,8 @@ run_one_test(
         const struct remap_spec *remaps,
         int user_input_mode,
         const unsigned char *inp_data,
-        size_t inp_size)
+        size_t inp_size,
+        const unsigned char *src_path)
 {
   const struct section_global_data *global = state->global;
 
@@ -5074,7 +5075,8 @@ run_tests(
                             mirror_dir, remaps,
                             user_input_mode,
                             inp_data,
-                            inp_size);
+                            inp_size,
+                            src_path);
       if (status != RUN_TIME_LIMIT_ERR && status != RUN_WALL_TIME_LIMIT_ERR)
         break;
       if (++tl_retry >= tl_retry_count) break;
