@@ -913,7 +913,6 @@ struct section_problem_data
   /** use a working directory from the tgz archive */
   ejbyteflag_t use_tgz;
 
-
   /** accept solutions that do not pass all accepting tests */
   ejbyteflag_t accept_partial;
   /** participants cannot submit this problem */
@@ -1009,6 +1008,8 @@ struct section_problem_data
   ejbyteflag_t enable_vcs;
 
   ejbyteflag_t enable_iframe_statement;
+
+  ejbyteflag_t enable_src_for_testing;
 
   // padding to 8-byte boundary
   //unsigned char _pad1[1];
