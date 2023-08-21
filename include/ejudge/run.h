@@ -2,7 +2,7 @@
 #ifndef __RUN_H__
 #define __RUN_H__
 
-/* Copyright (C) 2010-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2010-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -127,8 +127,6 @@ run_tests(
         char const *new_base,
         char *report_path,                /* path to the report */
         char *full_report_path,           /* path to the full output dir */
-        const unsigned char *user_spelling,
-        const unsigned char *problem_spelling,
         const unsigned char *mirror_dir,
         int utf8_mode,
         struct run_listener *listener,

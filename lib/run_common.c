@@ -4757,8 +4757,6 @@ run_tests(
         char const *new_base,
         char *report_path,                /* path to the report */
         char *full_report_path,           /* path to the full output dir */
-        const unsigned char *user_spelling,
-        const unsigned char *problem_spelling,
         const unsigned char *mirror_dir,
         int utf8_mode,
         struct run_listener *listener,
@@ -5303,7 +5301,7 @@ run_tests(
 
     play_sound(global, messages_path, srgp->disable_sound, status,
                tests.size - failed_test_count, total_score,
-               user_spelling, problem_spelling);
+               srgp->user_spelling, srpp->spelling);
   } else {
     reply_pkt->failed_test = tests.size - 1;
     reply_pkt->score = -1;
