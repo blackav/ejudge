@@ -1243,7 +1243,8 @@ start_interactive_valuer(
         const unsigned char *valuer_cmt_file,
         const unsigned char *valuer_jcmt_file,
         int stdin_fd,
-        int stdout_fd)
+        int stdout_fd,
+        const unsigned char *src_path)
 {
   const struct super_run_in_global_packet *srgp = srp->global;
   const struct super_run_in_problem_packet *srpp = srp->problem;
@@ -1327,6 +1328,9 @@ start_interactive_valuer(
       snprintf(buf, sizeof(buf), "%d", srpp->test_count);
       task_SetEnv(tsk, "EJUDGE_TEST_COUNT", buf);
     }
+  }
+  if (src_path) {
+    task_SetEnv(tsk, "EJUDGE_SOURCE_PATH", src_path);
   }
   //task_EnableAllSignals(tsk);
 
@@ -4342,7 +4346,7 @@ invoke_prepare_cmd(
   task_EnableAllSignals(tsk);
 
   if (src_path) {
-    task_SetEnv(tsk, "EJ_SOURCE_PATH", src_path);
+    task_SetEnv(tsk, "EJUDGE_SOURCE_PATH", src_path);
   }
 
   if (task_Start(tsk) < 0) {
@@ -5026,7 +5030,8 @@ run_tests(
                                           messages_path,
                                           valuer_cmt_file,
                                           valuer_jcmt_file,
-                                          evfds[0], vefds[1]);
+                                          evfds[0], vefds[1],
+                                          src_path);
     if (!valuer_tsk) {
       append_msg_to_log(messages_path, "failed to start interactive valuer");
       goto check_failed;
