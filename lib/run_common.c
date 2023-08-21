@@ -4325,7 +4325,8 @@ invoke_prepare_cmd(
         const unsigned char *prepare_cmd,
         const unsigned char *working_dir,
         const unsigned char *exe_name,
-        const unsigned char *messages_path)
+        const unsigned char *messages_path,
+        const unsigned char *src_path)
 {
   tpTask tsk = task_New();
   int retval = -1;
@@ -4339,6 +4340,10 @@ invoke_prepare_cmd(
   task_SetRedir(tsk, 1, TSR_FILE, messages_path, TSK_REWRITE, TSK_FULL_RW);
   task_SetRedir(tsk, 2, TSR_DUP, 1);
   task_EnableAllSignals(tsk);
+
+  if (src_path) {
+    task_SetEnv(tsk, "EJ_SOURCE_PATH", src_path);
+  }
 
   if (task_Start(tsk) < 0) {
     append_msg_to_log(messages_path, "failed to start prepare_cmd %s", prepare_cmd);
@@ -4993,7 +4998,8 @@ run_tests(
   }
 
   if (!srpp->type_val && tst && tst->prepare_cmd && tst->prepare_cmd[0]) {
-    if (invoke_prepare_cmd(tst->prepare_cmd, global->run_work_dir, exe_name, messages_path) < 0) {
+    if (invoke_prepare_cmd(tst->prepare_cmd, global->run_work_dir, exe_name,
+                           messages_path, src_path) < 0) {
       goto check_failed;
     }
   }
