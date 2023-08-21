@@ -4750,7 +4750,6 @@ run_tests(
         const struct super_run_in_packet *srp,
         struct run_reply_packet *reply_pkt,
         struct AgentClient *agent,
-        int accept_partial,
         int cur_variant,
         char const *exe_name,
         char const *new_base,
@@ -5084,7 +5083,7 @@ run_tests(
       if (srgp->scoring_system_val == SCORE_ACM) break;
       if (srgp->scoring_system_val == SCORE_MOSCOW) break;
       if (srgp->scoring_system_val == SCORE_OLYMPIAD
-          && srgp->accepting_mode && !accept_partial) break;
+          && srgp->accepting_mode && !srpp->accept_partial) break;
       if (srgp->scoring_system_val == SCORE_KIROV && srpp->stop_on_first_fail > 0) {
         while (1) {
           ++cur_test;
@@ -5232,7 +5231,7 @@ run_tests(
         break;
       }
     }
-    if (accept_partial) {
+    if (srpp->accept_partial) {
       status = RUN_ACCEPTED;
     } else if (srpp->min_tests_to_accept >= 0 && failed_test > srpp->min_tests_to_accept) {
       status = RUN_ACCEPTED;

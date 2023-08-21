@@ -614,7 +614,7 @@ handle_packet(
     //if (cr_serialize_lock(state) < 0) return -1;
     run_tests(ejudge_config, state, tst, srp, &reply_pkt,
               agent,
-              srpp->accept_partial, srgp->variant,
+              srgp->variant,
               exe_name, run_base,
               report_path, full_report_path,
               mirror_dir, utf8_mode,
