@@ -578,7 +578,9 @@ serve_run_request(
         int not_ok_is_cf,
         const unsigned char *inp_text,
         size_t inp_size,
-        struct run_entry *ure);
+        struct run_entry *ure,
+        const unsigned char *src_text,
+        size_t src_size);
 
 int serve_is_valid_status(serve_state_t state, int status, int mode);
 

@@ -699,7 +699,9 @@ process_compile_packet(
                         0 /* not_ok_is_cf */,
                         NULL /* inp_text */,
                         0 /* inp_size*/,
-                        NULL /* ure */);
+                        NULL /* ure */,
+                        NULL /* src_text*/,
+                        0 /* src_size */);
   if (r < 0) abort();
 
   return 0;

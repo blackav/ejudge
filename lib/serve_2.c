@@ -2060,7 +2060,9 @@ serve_run_request(
         int not_ok_is_cf,
         const unsigned char *inp_text,
         size_t inp_size,
-        struct run_entry *ure)
+        struct run_entry *ure,
+        const unsigned char *src_text,
+        size_t src_size)
 {
   int cn;
   struct section_global_data *global = state->global;
@@ -3298,6 +3300,7 @@ read_compile_packet_input(
   char *run_text = NULL;
   size_t run_size = 0;
   struct storage_entry inp_se = {};
+  struct storage_entry src_se = {};
 
   info("read_compile_packet_input: submit_id %lld", (long long) comp_pkt->submit_id);
 
@@ -3477,6 +3480,20 @@ read_compile_packet_input(
     goto done;
   }
 
+  const struct section_problem_data *prob = NULL;
+  if (se.prob_id > 0 && se.prob_id <= cs->max_prob) {
+    prob = cs->probs[se.prob_id];
+  }
+  if (prob && prob->enable_src_for_testing > 0) {
+    r = cs->storage_state->vt->get_by_serial_id(cs->storage_state,
+                                                se.source_id,
+                                                &src_se);
+    if (r < 0) {
+      err("read_compile_packet_input: failed to read source code");
+      goto done;
+    }
+  }
+
   r = serve_run_request(config, cs, cnts, stderr,
                         run_text, run_size, se.contest_id,
                         0 /* run_id */, se.serial_id,
@@ -3499,7 +3516,9 @@ read_compile_packet_input(
                         0 /* not_ok_is_cf */,
                         inp_se.content,
                         inp_se.size,
-                        NULL);
+                        NULL,
+                        src_se.content,
+                        src_se.size);
   if (r < 0) {
     err("read_compile_packet_input: failed to send to testing");
     goto done;
@@ -3518,6 +3537,7 @@ done:;
   free(txt_text);
   free(run_text);
   free(inp_se.content);
+  free(src_se.content);
 }
 
 int
@@ -3552,6 +3572,9 @@ serve_read_compile_packet(
   path_t txt_packet_path;
   size_t min_txt_size = 1;
   testing_report_xml_t testing_report = NULL;
+  char *src_text = NULL;
+  size_t src_size = 0;
+  unsigned char src_path[PATH_MAX];
 
   if (!comp_pkt) {
     if ((r = generic_read_file(&comp_pkt_buf, 0, &comp_pkt_size, SAFE | REMOVE,
@@ -3972,6 +3995,27 @@ prepare_run_request:
       goto report_check_failed;
   }
 
+  if (prob && prob->enable_src_for_testing > 0) {
+    int af = 0;
+    int sf = re.store_flags;
+    if (sf == STORE_FLAGS_UUID || sf == STORE_FLAGS_UUID_BSON) {
+      af = uuid_archive_make_read_path(state, src_path, sizeof(src_path),
+                                       &re.run_uuid, DFLT_R_UUID_SOURCE, 0);
+    } else {
+      af = archive_make_read_path(state, src_path, sizeof(src_path),
+                                  global->run_archive_dir, comp_pkt->run_id,
+                                  0, 0);
+    }
+    if (af < 0) {
+      snprintf(errmsg, sizeof(errmsg), "failed to read source code\n");
+      goto report_check_failed;
+    }
+    if (generic_read_file(&src_text, 0, &src_size, af, 0, src_path, "") < 0) {
+      snprintf(errmsg, sizeof(errmsg), "failed to read source code\n");
+      goto report_check_failed;
+    }
+  }
+
   if (serve_run_request(config, state, cnts, stderr, run_text, run_size,
                         cnts->id, comp_pkt->run_id,
                         0 /* submit_id */,
@@ -3984,7 +4028,9 @@ prepare_run_request:
                         comp_extra->rejudge_flag, comp_pkt->zip_mode, re.store_flags,
                         comp_extra->not_ok_is_cf,
                         NULL, 0,
-                        &re) < 0) {
+                        &re,
+                        src_text,
+                        src_size) < 0) {
     snprintf(errmsg, sizeof(errmsg), "failed to write run packet\n");
     goto report_check_failed;
   }
@@ -4054,6 +4100,7 @@ prepare_run_request:
  non_fatal_error:
   xfree(comp_pkt_buf);
   xfree(txt_text);
+  xfree(src_text);
   compile_reply_packet_free(comp_pkt);
   testing_report_free(testing_report);
   // remove stale reports
@@ -5154,7 +5201,9 @@ serve_rejudge_run(
                       1 /* rejudge_flag */, 0 /* zip_mode */, re.store_flags,
                       0 /* not_ok_is_cf */,
                       NULL, 0,
-                      &re);
+                      &re,
+                      NULL /* src_text */,
+                      0 /* src_size */);
     xfree(run_text);
     return;
   }
