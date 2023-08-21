@@ -2439,7 +2439,8 @@ invoke_checker(
         testinfo_t *ti,
         int test_score_count,
         const int *test_score_val,
-        int output_only)
+        int output_only,
+        const unsigned char *src_path)
 {
   tpTask tsk = NULL;
   int status = RUN_CHECK_FAILED;
@@ -2552,6 +2553,9 @@ invoke_checker(
       snprintf(buf, sizeof(buf), "%d", srpp->test_count);
       task_SetEnv(tsk, "EJUDGE_TEST_COUNT", buf);
     }
+  }
+  if (src_path) {
+    task_SetEnv(tsk, "EJUDGE_SOURCE_PATH", src_path);
   }
   task_EnableAllSignals(tsk);
 
@@ -4219,7 +4223,8 @@ run_checker:;
                           check_cmd, test_src, output_path_to_check,
                           corr_src, info_src, tgzdir_src,
                           working_dir, score_out_path, check_out_path,
-                          check_dir, &tstinfo, test_score_count, test_score_val, 0);
+                          check_dir, &tstinfo, test_score_count, test_score_val,
+                          0, src_path);
 
   // read the checker output
 read_checker_output:;
@@ -4554,7 +4559,7 @@ check_output_only(
                           check_cmd, test_src, output_path,
                           corr_src, NULL, NULL,
                           global->run_work_dir, score_out_path, check_out_path,
-                          global->run_work_dir, NULL, 0, NULL, 1);
+                          global->run_work_dir, NULL, 0, NULL, 1, NULL);
 
   cur_info->status = status;
   cur_info->max_score = srpp->full_score;
