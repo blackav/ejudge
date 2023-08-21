@@ -2237,7 +2237,7 @@ cleanup:
   return status;
 }
 
-static tpTask
+static __attribute__((unused)) tpTask
 invoke_interactor(
         const unsigned char *interactor_cmd,
         const unsigned char *test_src_path,
@@ -2253,25 +2253,8 @@ invoke_interactor(
         int program_pid,
         const struct super_run_in_global_packet *srgp,
         const struct super_run_in_problem_packet *srpp,
-        int cur_test)
-	__attribute__((unused)); // on Windows
-static tpTask
-invoke_interactor(
-        const unsigned char *interactor_cmd,
-        const unsigned char *test_src_path,
-        const unsigned char *output_path,
-        const unsigned char *corr_src_path,
-        const unsigned char *info_src_path,
-        const unsigned char *working_dir,
-        const unsigned char *check_out_path,
-        struct testinfo_struct *ti,
-        int stdin_fd,
-        int stdout_fd,
-        int control_fd,
-        int program_pid,
-        const struct super_run_in_global_packet *srgp,
-        const struct super_run_in_problem_packet *srpp,
-        int cur_test)
+        int cur_test,
+        const unsigned char *src_path)
 {
   tpTask tsk_int = NULL;
   int env_u = 0;
@@ -2331,6 +2314,9 @@ invoke_interactor(
       snprintf(buf, sizeof(buf), "%d", srpp->test_count);
       task_SetEnv(tsk_int, "EJUDGE_TEST_COUNT", buf);
     }
+  }
+  if (src_path) {
+    task_SetEnv(tsk_int, "EJUDGE_SOURCE_PATH", src_path);
   }
   if (control_fd >= 0) {
     unsigned char buf[64];
@@ -3887,7 +3873,7 @@ run_one_test(
   if (interactor_cmd) {
     tsk_int = invoke_interactor(interactor_cmd, test_src, output_path, corr_src, info_src,
                                 working_dir, check_out_path,
-                                &tstinfo, pfd1[0], pfd2[1], cfd[1], task_GetPid(tsk), srgp, srpp, cur_test);
+                                &tstinfo, pfd1[0], pfd2[1], cfd[1], task_GetPid(tsk), srgp, srpp, cur_test, src_path);
     if (!tsk_int) {
       append_msg_to_log(check_out_path, "interactor failed to start");
     }
