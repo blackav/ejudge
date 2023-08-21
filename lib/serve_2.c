@@ -2425,6 +2425,10 @@ serve_run_request(
     srgp->cached_on_remote = comp_pkt->cached_on_remote;
   }
 
+  if (prob->enable_src_for_testing > 0 && lang) {
+    srgp->src_sfx = xstrdup(lang->src_sfx);
+  }
+
   struct super_run_in_problem_packet *srpp = srp->problem;
   srpp->type = xstrdup(problem_unparse_type(prob->type));
   srpp->id = prob->tester_id;
