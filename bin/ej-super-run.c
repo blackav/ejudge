@@ -540,7 +540,7 @@ handle_packet(
       snprintf(source_code_buf, sizeof(source_code_buf), "%s/%s%s",
                global->run_work_dir, srgp->src_file, src_sfx);
       if (agent) {
-        r = agent->ops->get_data_2(agent, pkt_name, src_sfx,
+        r = agent->ops->get_data_2(agent, srgp->src_file, src_sfx,
                                    global->run_work_dir, srgp->src_file,
                                    src_sfx);
         // FIXME: support local cache
