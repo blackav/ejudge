@@ -3437,7 +3437,8 @@ process_problems_json(
             retval = 1;
             goto done;
         }
-        if (strcasecmp(jaccessType->valuestring, "WRITE") != 0) {
+        if (strcasecmp(jaccessType->valuestring, "WRITE") != 0
+	    && strcasecmp(jaccessType->valuestring, "OWNER") != 0) {
             if (pi->key_id > 0) {
                 fprintf(log_f, "WRITE access is required for problem %d\n",
                         pi->key_id);
