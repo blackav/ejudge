@@ -411,6 +411,9 @@ handle_packet(
   char *inp_data = NULL;
   size_t inp_size = 0;
 
+  unsigned char source_code_buf[PATH_MAX];
+  const unsigned char *source_code_path = NULL;
+
   memset(&reply_pkt, 0, sizeof(reply_pkt));
   memset(&run_listener, 0, sizeof(run_listener));
   run_listener.b.ops = &super_run_listener_ops;
@@ -530,6 +533,29 @@ handle_packet(
       goto cleanup;
     }
 
+    // copy the source code file
+    if (srgp->src_file && *srgp->src_file) {
+      const unsigned char *src_sfx = srgp->src_sfx;
+      if (!src_sfx) src_sfx = "";
+      snprintf(source_code_buf, sizeof(source_code_buf), "%s/%s%s",
+               global->run_work_dir, srgp->src_file, src_sfx);
+      if (agent) {
+        r = agent->ops->get_data_2(agent, srgp->src_file, src_sfx,
+                                   global->run_work_dir, srgp->src_file,
+                                   src_sfx);
+        // FIXME: support local cache
+      } else {
+        r = generic_copy_file(REMOVE, super_run_exe_path,srgp->src_file, src_sfx,
+                              0, global->run_work_dir, srgp->src_file, src_sfx);
+      }
+      if (r < 0) {
+        err("failed to copy source code file");
+        goto cleanup;
+      }
+      source_code_path = source_code_buf;
+      (void) source_code_path;
+    }
+
     if (srgp->submit_id > 0) {
       if (!srpp->user_input_file || !*srpp->user_input_file) {
         err("user_input_file is undefined");
@@ -588,17 +614,15 @@ handle_packet(
     //if (cr_serialize_lock(state) < 0) return -1;
     run_tests(ejudge_config, state, tst, srp, &reply_pkt,
               agent,
-              srgp->accepting_mode,
-              srpp->accept_partial, srgp->variant,
               exe_name, run_base,
               report_path, full_report_path,
-              srgp->user_spelling,
-              srpp->spelling, mirror_dir, utf8_mode,
+              mirror_dir, utf8_mode,
               &run_listener.b, super_run_name,
               remap_specs,
               srgp->submit_id > 0,
               inp_data,
-              inp_size);
+              inp_size,
+              source_code_path);
     //if (cr_serialize_unlock(state) < 0) return -1;
   }
 

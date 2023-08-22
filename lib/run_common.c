@@ -1061,7 +1061,8 @@ invoke_valuer(
         int *p_user_tests_passed,
         char **p_err_txt,
         char **p_cmt_txt,
-        char **p_jcmt_txt)
+        char **p_jcmt_txt,
+        const unsigned char *src_path)
 {
   path_t score_list;
   path_t score_res;
@@ -1180,6 +1181,9 @@ invoke_valuer(
       task_SetEnv(tsk, "EJUDGE_TEST_COUNT", buf);
     }
   }
+  if (src_path) {
+    task_SetEnv(tsk, "EJUDGE_SOURCE_PATH", src_path);
+  }
 
   task_EnableAllSignals(tsk);
 
@@ -1243,7 +1247,8 @@ start_interactive_valuer(
         const unsigned char *valuer_cmt_file,
         const unsigned char *valuer_jcmt_file,
         int stdin_fd,
-        int stdout_fd)
+        int stdout_fd,
+        const unsigned char *src_path)
 {
   const struct super_run_in_global_packet *srgp = srp->global;
   const struct super_run_in_problem_packet *srpp = srp->problem;
@@ -1327,6 +1332,9 @@ start_interactive_valuer(
       snprintf(buf, sizeof(buf), "%d", srpp->test_count);
       task_SetEnv(tsk, "EJUDGE_TEST_COUNT", buf);
     }
+  }
+  if (src_path) {
+    task_SetEnv(tsk, "EJUDGE_SOURCE_PATH", src_path);
   }
   //task_EnableAllSignals(tsk);
 
@@ -2119,7 +2127,8 @@ invoke_init_cmd(
         const unsigned char *info_src_path,
         const unsigned char *working_dir,
         const unsigned char *check_out_path,
-        testinfo_t *ti)
+        testinfo_t *ti,
+        const unsigned char *src_path)
 {
   tpTask tsk = NULL;
   int status = 0;
@@ -2168,6 +2177,9 @@ invoke_init_cmd(
   }
   if (srpp->checker_max_rss_size > 0) {
     task_SetRSSSize(tsk, srpp->checker_max_rss_size);
+  }
+  if (src_path) {
+    task_SetEnv(tsk, "EJUDGE_SOURCE_PATH", src_path);
   }
 
   if (task_Start(tsk) < 0) {
@@ -2225,7 +2237,7 @@ cleanup:
   return status;
 }
 
-static tpTask
+static __attribute__((unused)) tpTask
 invoke_interactor(
         const unsigned char *interactor_cmd,
         const unsigned char *test_src_path,
@@ -2241,25 +2253,8 @@ invoke_interactor(
         int program_pid,
         const struct super_run_in_global_packet *srgp,
         const struct super_run_in_problem_packet *srpp,
-        int cur_test)
-	__attribute__((unused)); // on Windows
-static tpTask
-invoke_interactor(
-        const unsigned char *interactor_cmd,
-        const unsigned char *test_src_path,
-        const unsigned char *output_path,
-        const unsigned char *corr_src_path,
-        const unsigned char *info_src_path,
-        const unsigned char *working_dir,
-        const unsigned char *check_out_path,
-        struct testinfo_struct *ti,
-        int stdin_fd,
-        int stdout_fd,
-        int control_fd,
-        int program_pid,
-        const struct super_run_in_global_packet *srgp,
-        const struct super_run_in_problem_packet *srpp,
-        int cur_test)
+        int cur_test,
+        const unsigned char *src_path)
 {
   tpTask tsk_int = NULL;
   int env_u = 0;
@@ -2319,6 +2314,9 @@ invoke_interactor(
       snprintf(buf, sizeof(buf), "%d", srpp->test_count);
       task_SetEnv(tsk_int, "EJUDGE_TEST_COUNT", buf);
     }
+  }
+  if (src_path) {
+    task_SetEnv(tsk_int, "EJUDGE_SOURCE_PATH", src_path);
   }
   if (control_fd >= 0) {
     unsigned char buf[64];
@@ -2441,7 +2439,8 @@ invoke_checker(
         testinfo_t *ti,
         int test_score_count,
         const int *test_score_val,
-        int output_only)
+        int output_only,
+        const unsigned char *src_path)
 {
   tpTask tsk = NULL;
   int status = RUN_CHECK_FAILED;
@@ -2554,6 +2553,9 @@ invoke_checker(
       snprintf(buf, sizeof(buf), "%d", srpp->test_count);
       task_SetEnv(tsk, "EJUDGE_TEST_COUNT", buf);
     }
+  }
+  if (src_path) {
+    task_SetEnv(tsk, "EJUDGE_SOURCE_PATH", src_path);
   }
   task_EnableAllSignals(tsk);
 
@@ -2971,7 +2973,8 @@ run_one_test(
         const struct remap_spec *remaps,
         int user_input_mode,
         const unsigned char *inp_data,
-        size_t inp_size)
+        size_t inp_size,
+        const unsigned char *src_path)
 {
   const struct section_global_data *global = state->global;
 
@@ -3466,7 +3469,7 @@ run_one_test(
   if (srpp->init_cmd && srpp->init_cmd[0]) {
     status = invoke_init_cmd(srpp, "start", test_src, corr_src,
                              info_src, working_dir, check_out_path,
-                             &tstinfo);
+                             &tstinfo, src_path);
     if (status != 0) {
       append_msg_to_log(check_out_path, "init_cmd failed to start with code 0");
       status = RUN_CHECK_FAILED;
@@ -3874,7 +3877,7 @@ run_one_test(
   if (interactor_cmd) {
     tsk_int = invoke_interactor(interactor_cmd, test_src, output_path, corr_src, info_src,
                                 working_dir, check_out_path,
-                                &tstinfo, pfd1[0], pfd2[1], cfd[1], task_GetPid(tsk), srgp, srpp, cur_test);
+                                &tstinfo, pfd1[0], pfd2[1], cfd[1], task_GetPid(tsk), srgp, srpp, cur_test, src_path);
     if (!tsk_int) {
       append_msg_to_log(check_out_path, "interactor failed to start");
     }
@@ -4220,14 +4223,15 @@ run_checker:;
                           check_cmd, test_src, output_path_to_check,
                           corr_src, info_src, tgzdir_src,
                           working_dir, score_out_path, check_out_path,
-                          check_dir, &tstinfo, test_score_count, test_score_val, 0);
+                          check_dir, &tstinfo, test_score_count, test_score_val,
+                          0, src_path);
 
   // read the checker output
 read_checker_output:;
   if (init_cmd_started) {
     int new_status = invoke_init_cmd(srpp, "stop", test_src,
                                      corr_src, info_src, working_dir, check_out_path,
-                                     &tstinfo);
+                                     &tstinfo, src_path);
     if (!status) status = new_status;
     init_cmd_started = 0;
   }
@@ -4250,7 +4254,7 @@ cleanup:;
 
   if (init_cmd_started) {
     int new_status = invoke_init_cmd(srpp, "stop", test_src, corr_src,  info_src, working_dir, check_out_path,
-                                     &tstinfo);
+                                     &tstinfo, src_path);
     if (!status) status = new_status;
     init_cmd_started = 0;
   }
@@ -4325,7 +4329,8 @@ invoke_prepare_cmd(
         const unsigned char *prepare_cmd,
         const unsigned char *working_dir,
         const unsigned char *exe_name,
-        const unsigned char *messages_path)
+        const unsigned char *messages_path,
+        const unsigned char *src_path)
 {
   tpTask tsk = task_New();
   int retval = -1;
@@ -4339,6 +4344,10 @@ invoke_prepare_cmd(
   task_SetRedir(tsk, 1, TSR_FILE, messages_path, TSK_REWRITE, TSK_FULL_RW);
   task_SetRedir(tsk, 2, TSR_DUP, 1);
   task_EnableAllSignals(tsk);
+
+  if (src_path) {
+    task_SetEnv(tsk, "EJUDGE_SOURCE_PATH", src_path);
+  }
 
   if (task_Start(tsk) < 0) {
     append_msg_to_log(messages_path, "failed to start prepare_cmd %s", prepare_cmd);
@@ -4550,7 +4559,7 @@ check_output_only(
                           check_cmd, test_src, output_path,
                           corr_src, NULL, NULL,
                           global->run_work_dir, score_out_path, check_out_path,
-                          global->run_work_dir, NULL, 0, NULL, 1);
+                          global->run_work_dir, NULL, 0, NULL, 1, NULL);
 
   cur_info->status = status;
   cur_info->max_score = srpp->full_score;
@@ -4750,15 +4759,10 @@ run_tests(
         const struct super_run_in_packet *srp,
         struct run_reply_packet *reply_pkt,
         struct AgentClient *agent,
-        int accept_testing,
-        int accept_partial,
-        int cur_variant,
         char const *exe_name,
         char const *new_base,
         char *report_path,                /* path to the report */
         char *full_report_path,           /* path to the full output dir */
-        const unsigned char *user_spelling,
-        const unsigned char *problem_spelling,
         const unsigned char *mirror_dir,
         int utf8_mode,
         struct run_listener *listener,
@@ -4766,7 +4770,8 @@ run_tests(
         const struct remap_spec *remaps,
         int user_input_mode,
         const unsigned char *inp_data,
-        size_t inp_size)
+        size_t inp_size,
+        const unsigned char *src_path)
 {
   const struct section_global_data *global = state->global;
   const struct super_run_in_global_packet *srgp = srp->global;
@@ -4997,7 +5002,8 @@ run_tests(
   }
 
   if (!srpp->type_val && tst && tst->prepare_cmd && tst->prepare_cmd[0]) {
-    if (invoke_prepare_cmd(tst->prepare_cmd, global->run_work_dir, exe_name, messages_path) < 0) {
+    if (invoke_prepare_cmd(tst->prepare_cmd, global->run_work_dir, exe_name,
+                           messages_path, src_path) < 0) {
       goto check_failed;
     }
   }
@@ -5024,7 +5030,8 @@ run_tests(
                                           messages_path,
                                           valuer_cmt_file,
                                           valuer_jcmt_file,
-                                          evfds[0], vefds[1]);
+                                          evfds[0], vefds[1],
+                                          src_path);
     if (!valuer_tsk) {
       append_msg_to_log(messages_path, "failed to start interactive valuer");
       goto check_failed;
@@ -5041,7 +5048,7 @@ run_tests(
   while (1) {
     ++cur_test;
     if (srgp->scoring_system_val == SCORE_OLYMPIAD
-        && accept_testing
+        && srgp->accepting_mode
         && cur_test > srpp->tests_to_accept) break;
 
     int tl_retry = 0;
@@ -5067,7 +5074,8 @@ run_tests(
                             mirror_dir, remaps,
                             user_input_mode,
                             inp_data,
-                            inp_size);
+                            inp_size,
+                            src_path);
       if (status != RUN_TIME_LIMIT_ERR && status != RUN_WALL_TIME_LIMIT_ERR)
         break;
       if (++tl_retry >= tl_retry_count) break;
@@ -5087,7 +5095,7 @@ run_tests(
       if (srgp->scoring_system_val == SCORE_ACM) break;
       if (srgp->scoring_system_val == SCORE_MOSCOW) break;
       if (srgp->scoring_system_val == SCORE_OLYMPIAD
-          && accept_testing && !accept_partial) break;
+          && srgp->accepting_mode && !srpp->accept_partial) break;
       if (srgp->scoring_system_val == SCORE_KIROV && srpp->stop_on_first_fail > 0) {
         while (1) {
           ++cur_test;
@@ -5200,7 +5208,7 @@ run_tests(
 
   // no tests?
   if (srgp->scoring_system_val == SCORE_OLYMPIAD
-      && accept_testing > 0 && srpp->tests_to_accept <= 0) {
+      && srgp->accepting_mode > 0 && srpp->tests_to_accept <= 0) {
     // no tests is ok
   } else if (tests.size <= 1) {
     append_msg_to_log(messages_path, "No tests found");
@@ -5225,7 +5233,7 @@ run_tests(
     goto done;
   }
 
-  if (srgp->scoring_system_val == SCORE_OLYMPIAD && accept_testing) {
+  if (srgp->scoring_system_val == SCORE_OLYMPIAD && srgp->accepting_mode) {
     status = RUN_ACCEPTED;
     failed_test = 0;
     for (cur_test = 1; cur_test <= srpp->tests_to_accept; ++cur_test) {
@@ -5235,7 +5243,7 @@ run_tests(
         break;
       }
     }
-    if (accept_partial) {
+    if (srpp->accept_partial) {
       status = RUN_ACCEPTED;
     } else if (srpp->min_tests_to_accept >= 0 && failed_test > srpp->min_tests_to_accept) {
       status = RUN_ACCEPTED;
@@ -5303,7 +5311,7 @@ run_tests(
 
     play_sound(global, messages_path, srgp->disable_sound, status,
                tests.size - failed_test_count, total_score,
-               user_spelling, problem_spelling);
+               srgp->user_spelling, srpp->spelling);
   } else {
     reply_pkt->failed_test = tests.size - 1;
     reply_pkt->score = -1;
@@ -5331,11 +5339,11 @@ run_tests(
         && reply_pkt->status != RUN_CHECK_FAILED) {
       if (invoke_valuer(global, srp, agent, mirror_dir,
                         tests.size, tests.data,
-                        cur_variant, srpp->full_score,
+                        srgp->variant, srpp->full_score,
                         &total_score, &marked_flag,
                         &user_status, &user_score, &user_tests_passed,
                         &valuer_errors, &valuer_comment,
-                        &valuer_judge_comment) < 0) {
+                        &valuer_judge_comment, src_path) < 0) {
         goto check_failed;
       } else {
         reply_pkt->score = total_score;
@@ -5459,7 +5467,8 @@ done:;
 
   generate_xml_report(srp, reply_pkt, report_path,
                       tests.size, tests.data, utf8_mode,
-                      cur_variant, total_score, srpp->full_score, srpp->full_user_score,
+                      srgp->variant, total_score,
+                      srpp->full_score, srpp->full_user_score,
                       srpp->use_corr, srpp->use_info,
                       report_time_limit_ms, report_real_time_limit_ms,
                       has_real_time, has_max_memory_used,

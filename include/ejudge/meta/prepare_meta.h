@@ -414,6 +414,7 @@ enum
   CNTSPROB_enable_user_input,
   CNTSPROB_enable_vcs,
   CNTSPROB_enable_iframe_statement,
+  CNTSPROB_enable_src_for_testing,
   CNTSPROB_examinator_num,
   CNTSPROB_real_time_limit,
   CNTSPROB_time_limit,

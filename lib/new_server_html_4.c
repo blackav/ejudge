@@ -1225,7 +1225,9 @@ cmd_submit_run(
                               store_flags,
                               0 /* not_ok_is_cf */,
                               NULL, 0,
-                              &new_run) < 0)
+                              &new_run,
+                              NULL /* src_text */,
+                              0 /* src_size */) < 0)
           FAIL(NEW_SRV_ERR_DISK_WRITE_ERROR);
       }
     }
@@ -1293,7 +1295,9 @@ cmd_submit_run(
                               store_flags,
                               0 /* not_ok_is_cf */,
                               NULL, 0,
-                              &new_run) < 0)
+                              &new_run,
+                              NULL /* src_text */,
+                              0 /* src_size */) < 0)
           FAIL(NEW_SRV_ERR_DISK_WRITE_ERROR);
       }
     }

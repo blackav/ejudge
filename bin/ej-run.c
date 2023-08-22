@@ -348,15 +348,13 @@ do_loop(void)
       //if (cr_serialize_lock(&serve_state) < 0) return -1;
       run_tests(ejudge_config, &serve_state, tst, srp, &reply_pkt,
                 NULL /* agent_client */,
-                srgp->accepting_mode,
-                srpp->accept_partial, srgp->variant,
                 exe_name, run_base,
                 report_path, full_report_path,
-                srgp->user_spelling,
-                srpp->spelling, NULL /* mirror_dir */, utf8_mode, NULL, NULL, NULL /* remaps */,
+                NULL /* mirror_dir */, utf8_mode, NULL, NULL, NULL /* remaps */,
                 0 /* user_input_mode*/,
                 NULL /* inp_data */,
-                0 /* inp_size*/);
+                0 /* inp_size*/,
+                NULL /* src_path */);
       //if (cr_serialize_unlock(&serve_state) < 0) return -1;
 
       if (tst == &tn) {

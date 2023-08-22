@@ -2,7 +2,7 @@
 #ifndef __RUN_H__
 #define __RUN_H__
 
-/* Copyright (C) 2010-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2010-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -120,15 +120,10 @@ run_tests(
         const struct super_run_in_packet *srp,
         struct run_reply_packet *reply_pkt,
         struct AgentClient *agent,
-        int accept_testing,
-        int accept_partial,
-        int cur_variant,
         char const *exe_name,
         char const *new_base,
         char *report_path,                /* path to the report */
         char *full_report_path,           /* path to the full output dir */
-        const unsigned char *user_spelling,
-        const unsigned char *problem_spelling,
         const unsigned char *mirror_dir,
         int utf8_mode,
         struct run_listener *listener,
@@ -136,6 +131,7 @@ run_tests(
         const struct remap_spec *remaps,
         int user_input_mode,
         const unsigned char *inp_data,
-        size_t inp_size);
+        size_t inp_size,
+        const unsigned char *src_path);
 
 #endif /* __RUN_H__ */

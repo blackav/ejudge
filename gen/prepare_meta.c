@@ -454,6 +454,7 @@ static struct meta_info_item meta_info_section_problem_data_data[] =
   [CNTSPROB_enable_user_input] = { CNTSPROB_enable_user_input, 'f', XSIZE(struct section_problem_data, enable_user_input), "enable_user_input", XOFFSET(struct section_problem_data, enable_user_input) },
   [CNTSPROB_enable_vcs] = { CNTSPROB_enable_vcs, 'f', XSIZE(struct section_problem_data, enable_vcs), "enable_vcs", XOFFSET(struct section_problem_data, enable_vcs) },
   [CNTSPROB_enable_iframe_statement] = { CNTSPROB_enable_iframe_statement, 'f', XSIZE(struct section_problem_data, enable_iframe_statement), "enable_iframe_statement", XOFFSET(struct section_problem_data, enable_iframe_statement) },
+  [CNTSPROB_enable_src_for_testing] = { CNTSPROB_enable_src_for_testing, 'f', XSIZE(struct section_problem_data, enable_src_for_testing), "enable_src_for_testing", XOFFSET(struct section_problem_data, enable_src_for_testing) },
   [CNTSPROB_examinator_num] = { CNTSPROB_examinator_num, 'i', XSIZE(struct section_problem_data, examinator_num), "examinator_num", XOFFSET(struct section_problem_data, examinator_num) },
   [CNTSPROB_real_time_limit] = { CNTSPROB_real_time_limit, 'i', XSIZE(struct section_problem_data, real_time_limit), "real_time_limit", XOFFSET(struct section_problem_data, real_time_limit) },
   [CNTSPROB_time_limit] = { CNTSPROB_time_limit, 'i', XSIZE(struct section_problem_data, time_limit), "time_limit", XOFFSET(struct section_problem_data, time_limit) },
