@@ -533,6 +533,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(interactor_env, "x"),
   PROBLEM_PARAM(style_checker_env, "x"),
   PROBLEM_PARAM(test_checker_env, "x"),
+  PROBLEM_PARAM(test_generator_env, "x"),
   PROBLEM_PARAM(init_env, "x"),
   PROBLEM_PARAM(start_env, "x"),
   PROBLEM_PARAM(lang_time_adj, "x"),
@@ -546,6 +547,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(interactor_cmd, "S"),
   PROBLEM_PARAM(style_checker_cmd, "S"),
   PROBLEM_PARAM(test_checker_cmd, "S"),
+  PROBLEM_PARAM(test_generator_cmd, "S"),
   PROBLEM_PARAM(init_cmd, "S"),
   PROBLEM_PARAM(start_cmd, "S"),
   PROBLEM_PARAM(solution_src, "S"),
@@ -1421,6 +1423,7 @@ prepare_problem_free_func(struct generic_section_config *gp)
   xfree(p->interactor_cmd);
   xfree(p->style_checker_cmd);
   xfree(p->test_checker_cmd);
+  xfree(p->test_generator_cmd);
   xfree(p->init_cmd);
   xfree(p->start_cmd);
   xfree(p->solution_src);
@@ -1453,6 +1456,7 @@ prepare_problem_free_func(struct generic_section_config *gp)
   sarray_free(p->interactor_env);
   sarray_free(p->style_checker_env);
   sarray_free(p->test_checker_env);
+  sarray_free(p->test_generator_env);
   sarray_free(p->init_env);
   sarray_free(p->start_env);
   sarray_free(p->lang_time_adj);
@@ -3821,6 +3825,7 @@ set_defaults(
     prepare_set_prob_value(CNTSPROB_interactor_cmd, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_style_checker_cmd, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_test_checker_cmd, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_test_generator_cmd, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_init_cmd, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_start_cmd, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_solution_src, prob, aprob, g);
@@ -4010,6 +4015,11 @@ set_defaults(
                                                     section_tester_params, prob, NULL, NULL);
           if (!prob->test_checker_env[j]) return -1;
         }
+      }
+
+      if (si != -1 && aprob->test_generator_env) {
+        prob->test_generator_env = sarray_merge_pf(aprob->test_generator_env,
+                                                   prob->test_generator_env);
       }
 
       if (si != -1 && aprob->init_env) {
@@ -6218,6 +6228,7 @@ prepare_copy_problem(const struct section_problem_data *in)
   out->interactor_env = sarray_copy(in->interactor_env);
   out->style_checker_env = sarray_copy(in->style_checker_env);
   out->test_checker_env = sarray_copy(in->test_checker_env);
+  out->test_generator_env = sarray_copy(in->test_generator_env);
   out->init_env = sarray_copy(in->init_env);
   out->start_env = sarray_copy(in->start_env);
   xstrdup3(&out->check_cmd, in->check_cmd);
@@ -6225,6 +6236,7 @@ prepare_copy_problem(const struct section_problem_data *in)
   xstrdup3(&out->interactor_cmd, in->interactor_cmd);
   xstrdup3(&out->style_checker_cmd, in->style_checker_cmd);
   xstrdup3(&out->test_checker_cmd, in->test_checker_cmd);
+  xstrdup3(&out->test_generator_cmd, in->test_generator_cmd);
   xstrdup3(&out->init_cmd, in->init_cmd);
   xstrdup3(&out->start_cmd, in->start_cmd);
   xstrdup3(&out->solution_src, in->solution_src);
@@ -6795,6 +6807,13 @@ prepare_set_prob_value(
     }
     break;
 
+  case CNTSPROB_test_generator_cmd:
+    if (!out->test_generator_cmd && abstr && abstr->test_generator_cmd) {
+      sformat_message(tmp_buf, sizeof(tmp_buf), 0, abstr->test_generator_cmd, NULL, out, NULL, NULL, NULL, 0, 0, 0);
+      out->test_generator_cmd = xstrdup(tmp_buf);
+    }
+    break;
+
   case CNTSPROB_init_cmd:
     if (!out->init_cmd && abstr && abstr->init_cmd) {
       sformat_message(tmp_buf, sizeof(tmp_buf), 0, abstr->init_cmd,
@@ -7135,6 +7154,7 @@ prepare_set_all_prob_values(
     CNTSPROB_interactor_cmd,
     CNTSPROB_style_checker_cmd,
     CNTSPROB_test_checker_cmd,
+    CNTSPROB_test_generator_cmd,
     CNTSPROB_init_cmd,
     CNTSPROB_start_cmd,
     CNTSPROB_solution_src,

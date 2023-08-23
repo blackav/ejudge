@@ -1460,6 +1460,9 @@ prepare_unparse_prob(
   if (prob->test_checker_cmd && prob->test_checker_cmd[0]) {
     fprintf(f,"test_checker_cmd = \"%s\"\n", CARMOR(prob->test_checker_cmd));
   }
+  if (prob->test_generator_cmd && prob->test_generator_cmd[0]) {
+    fprintf(f,"test_generator_cmd = \"%s\"\n", CARMOR(prob->test_generator_cmd));
+  }
   if (prob->init_cmd && prob->init_cmd[0]) {
     fprintf(f,"init_cmd = \"%s\"\n", CARMOR(prob->init_cmd));
   }
@@ -1479,6 +1482,7 @@ prepare_unparse_prob(
     fprintf(f,"vcs_compile_cmd = \"%s\"\n", CARMOR(prob->vcs_compile_cmd));
   }
   do_xstr(f, &ab, "test_checker_env", prob->test_checker_env);
+  do_xstr(f, &ab, "test_generator_env", prob->test_generator_env);
   do_xstr(f, &ab, "init_env", prob->init_env);
   do_xstr(f, &ab, "start_env", prob->start_env);
   do_xstr(f, &ab, "lang_time_adj", prob->lang_time_adj);
@@ -1931,6 +1935,9 @@ prepare_unparse_actual_prob(
   if ((show_paths || (global && global->advanced_layout > 0)) && prob->test_checker_cmd && prob->test_checker_cmd[0]) {
     fprintf(f,"test_checker_cmd = \"%s\"\n", CARMOR(prob->test_checker_cmd));
   }
+  if ((show_paths || (global && global->advanced_layout > 0)) && prob->test_generator_cmd && prob->test_generator_cmd[0]) {
+    fprintf(f,"test_generator_cmd = \"%s\"\n", CARMOR(prob->test_generator_cmd));
+  }
   if ((show_paths || (global && global->advanced_layout > 0)) && prob->init_cmd && prob->init_cmd[0]) {
     fprintf(f,"init_cmd = \"%s\"\n", CARMOR(prob->init_cmd));
   }
@@ -1950,6 +1957,7 @@ prepare_unparse_actual_prob(
     fprintf(f,"vcs_compile_cmd = \"%s\"\n", CARMOR(prob->vcs_compile_cmd));
   }
   do_xstr(f, &ab, "test_checker_env", prob->test_checker_env);
+  do_xstr(f, &ab, "test_generator_env", prob->test_generator_env);
   do_xstr(f, &ab, "init_env", prob->init_env);
   do_xstr(f, &ab, "start_env", prob->start_env);
   do_xstr(f, &ab, "lang_time_adj", prob->lang_time_adj);
@@ -3129,6 +3137,12 @@ prob_instr(
   if (tmp_prob->test_checker_cmd && tmp_prob->test_checker_cmd[0]) {
     fprintf(f, "<p><b>Tests checker:</b></p>\n");
     handle_file(f, global, tmp_prob, tmp_prob->test_checker_cmd, 1);
+  }
+
+  prepare_set_prob_value(CNTSPROB_test_generator_cmd, tmp_prob, abstr, global);
+  if (tmp_prob->test_generator_cmd && tmp_prob->test_generator_cmd[0]) {
+    fprintf(f, "<p><b>Tests generator:</b></p>\n");
+    handle_file(f, global, tmp_prob, tmp_prob->test_generator_cmd, 1);
   }
 
   prepare_set_prob_value(CNTSPROB_init_cmd, tmp_prob, abstr, global);
