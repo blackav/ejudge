@@ -3038,6 +3038,7 @@ process_polygon_zip(
     if (pi->html_statement_path && pi->html_statement_path[0] && pkt->enable_iframe_statement > 0) {
         prob_cfg->iframe_statement = xstrdup("statement.html");
         prob_cfg->enable_iframe_statement = 1;
+        prob_cfg->xml_file = xstrdup("statement.xml");
     }
 
     cfg_file = open_memstream(&cfg_text, &cfg_size);
