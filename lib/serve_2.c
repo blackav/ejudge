@@ -2599,6 +2599,7 @@ serve_run_request(
   srpp->valuer_env = sarray_copy(prob->valuer_env);
   srpp->interactor_env = sarray_copy(prob->interactor_env);
   srpp->test_checker_env = sarray_copy(prob->test_checker_env);
+  srpp->test_generator_env = sarray_copy(prob->test_generator_env);
   srpp->init_env = sarray_copy(prob->init_env);
   srpp->start_env = sarray_copy(prob->start_env);
   if (prob->check_cmd && prob->check_cmd[0]) {
@@ -2648,6 +2649,28 @@ serve_run_request(
       srpp->test_checker_cmd = xstrdup(pathbuf);
     } else {
       srpp->test_checker_cmd = xstrdup(prob->test_checker_cmd);
+    }
+  }
+  if (prob->test_generator_cmd && prob->test_generator_cmd[0]) {
+    if (global->advanced_layout > 0) {
+      get_advanced_layout_path(pathbuf, sizeof(pathbuf), global, prob, prob->test_generator_cmd, variant);
+      srpp->test_generator_cmd = xstrdup(pathbuf);
+    } else {
+      if (os_IsAbsolutePath(prob->test_generator_cmd) && variant > 0) {
+        snprintf(pathbuf, sizeof(pathbuf), "%s-%d",
+                 prob->test_generator_cmd, variant);
+        srpp->test_generator_cmd = xstrdup(pathbuf);
+      } else if (os_IsAbsolutePath(prob->test_generator_cmd)) {
+        srpp->test_generator_cmd = xstrdup(prob->test_generator_cmd);
+      } else if (variant > 0) {
+        snprintf(pathbuf, sizeof(pathbuf), "%s/%s-%d",
+                 global->checker_dir, prob->test_generator_cmd, variant);
+        srpp->test_generator_cmd = xstrdup(pathbuf);
+      } else {
+        snprintf(pathbuf, sizeof(pathbuf), "%s/%s",
+                 global->checker_dir, prob->test_generator_cmd);
+        srpp->test_generator_cmd = xstrdup(pathbuf);
+      }
     }
   }
   if (prob->init_cmd && prob->init_cmd[0]) {

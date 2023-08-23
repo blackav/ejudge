@@ -1198,6 +1198,8 @@ struct section_problem_data
   ejenvlist_t style_checker_env;
   /** environment variables for the test checker */
   ejenvlist_t test_checker_env;
+  /** environment variables for test generator */
+  ejenvlist_t test_generator_env;
   /** environment variables for the init-style interactor */
   ejenvlist_t init_env;
   /** environment variables for the program itself */
@@ -1212,6 +1214,8 @@ struct section_problem_data
   unsigned char *style_checker_cmd;
   /** test checker program */
   unsigned char *test_checker_cmd;
+  /** test generator program */
+  unsigned char *test_generator_cmd;
   /** start/stop init-style interactor */
   unsigned char *init_cmd;
   /** proxy to start the program being tested */
