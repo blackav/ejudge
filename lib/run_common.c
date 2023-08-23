@@ -3064,7 +3064,11 @@ run_one_test(
         int user_input_mode,
         const unsigned char *inp_data,
         size_t inp_size,
-        const unsigned char *src_path)
+        const unsigned char *src_path,
+        const unsigned char *test_dir,
+        const unsigned char *corr_dir,
+        const unsigned char *info_dir,
+        const unsigned char *tgz_dir)
 {
   const struct section_global_data *global = state->global;
 
@@ -3161,13 +3165,13 @@ run_one_test(
   test_src[0] = 0;
   if (srpp->test_pat && srpp->test_pat[0]) {
     snprintf(test_base, sizeof(test_base), srpp->test_pat, cur_test);
-    snprintf(test_src, sizeof(test_src), "%s/%s", srpp->test_dir, test_base);
+    snprintf(test_src, sizeof(test_src), "%s/%s", test_dir, test_base);
   }
   corr_base[0] = 0;
   corr_src[0] = 0;
   if (srpp->corr_pat && srpp->corr_pat[0]) {
     snprintf(corr_base, sizeof(corr_base), srpp->corr_pat, cur_test);
-    snprintf(corr_src, sizeof(corr_src), "%s/%s", srpp->corr_dir, corr_base);
+    snprintf(corr_src, sizeof(corr_src), "%s/%s", corr_dir, corr_base);
   }
   if (srpp->use_corr > 0 && corr_src[0]) {
     mirror_file(agent, corr_src, sizeof(corr_src), mirror_dir);
@@ -3176,7 +3180,7 @@ run_one_test(
   info_src[0] = 0;
   if (srpp->use_info > 0) {
     snprintf(info_base, sizeof(info_base), srpp->info_pat, cur_test);
-    snprintf(info_src, sizeof(info_src), "%s/%s", srpp->info_dir, info_base);
+    snprintf(info_src, sizeof(info_src), "%s/%s", info_dir, info_base);
   }
   tgz_base[0] = 0;
   tgzdir_base[0] = 0;
@@ -3184,9 +3188,9 @@ run_one_test(
   tgzdir_src[0] = 0;
   if (srpp->use_tgz > 0) {
     snprintf(tgz_base, sizeof(tgz_base), srpp->tgz_pat, cur_test);
-    snprintf(tgz_src, sizeof(tgz_src), "%s/%s", srpp->tgz_dir, tgz_base);
+    snprintf(tgz_src, sizeof(tgz_src), "%s/%s", tgz_dir, tgz_base);
     snprintf(tgzdir_base, sizeof(tgzdir_base), srpp->tgzdir_pat, cur_test);
-    snprintf(tgzdir_src, sizeof(tgzdir_src), "%s/%s", srpp->tgz_dir, tgzdir_base);
+    snprintf(tgzdir_src, sizeof(tgzdir_src), "%s/%s", tgz_dir, tgzdir_base);
   }
 
   // avoid check access operation if the test count is known
@@ -5165,7 +5169,11 @@ run_tests(
                             user_input_mode,
                             inp_data,
                             inp_size,
-                            src_path);
+                            src_path,
+                            srpp->test_dir,
+                            srpp->corr_dir,
+                            srpp->info_dir,
+                            srpp->tgz_dir);
       if (status != RUN_TIME_LIMIT_ERR && status != RUN_WALL_TIME_LIMIT_ERR)
         break;
       if (++tl_retry >= tl_retry_count) break;
