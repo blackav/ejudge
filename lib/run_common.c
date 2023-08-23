@@ -2854,6 +2854,7 @@ does_test_exist(
         const struct ejudge_cfg *config,
         serve_state_t state,
         const struct super_run_in_packet *srp,
+        const unsigned char *test_dir,
         int cur_test)
 {
   unsigned char test_base[PATH_MAX];
@@ -2863,7 +2864,7 @@ does_test_exist(
   test_src[0] = 0;
   if (srpp->test_pat && srpp->test_pat[0]) {
     snprintf(test_base, sizeof(test_base), srpp->test_pat, cur_test);
-    snprintf(test_src, sizeof(test_src), "%s/%s", srpp->test_dir, test_base);
+    snprintf(test_src, sizeof(test_src), "%s/%s", test_dir, test_base);
   }
   return os_CheckAccess(test_src, REUSE_R_OK) >= 0;
 }
@@ -5188,7 +5189,7 @@ run_tests(
       if (srgp->scoring_system_val == SCORE_KIROV && srpp->stop_on_first_fail > 0) {
         while (1) {
           ++cur_test;
-          if (!does_test_exist(config, state, srp, cur_test)) break;
+          if (!does_test_exist(config, state, srp, srpp->test_dir, cur_test)) break;
           append_skipped_test(srpp, cur_test, &tests,
                               open_tests_count, open_tests_val,
                               test_score_count, test_score_val);
