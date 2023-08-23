@@ -180,6 +180,7 @@ struct problem_config_section
   unsigned char *interactor_cmd;
   unsigned char *style_checker_cmd;
   unsigned char *test_checker_cmd;
+  unsigned char *test_generator_cmd;
   unsigned char *init_cmd;
   unsigned char *start_cmd;
   unsigned char *solution_src;
@@ -224,6 +225,7 @@ struct problem_config_section
   ejenvlist_t interactor_env;
   ejenvlist_t style_checker_env;
   ejenvlist_t test_checker_env;
+  ejenvlist_t test_generator_env;
   ejenvlist_t init_env;
   ejenvlist_t start_env;
   ejenvlist_t statement_env;
