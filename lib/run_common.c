@@ -2118,9 +2118,10 @@ invoke_test_checker_cmd(
   return r;
 }
 
-static __attribute__((unused)) int
+static int
 invoke_test_generator_cmd(
         const struct super_run_in_packet *srp,
+        const unsigned char *test_generator_cmd,
         const unsigned char *work_dir,
         const unsigned char *src_path,
         const unsigned char *log_path)
@@ -2130,7 +2131,7 @@ invoke_test_generator_cmd(
   tpTask tsk = NULL;
 
   tsk = task_New();
-  task_AddArg(tsk, srpp->test_generator_cmd);
+  task_AddArg(tsk, test_generator_cmd);
   task_SetPathAsArg0(tsk);
   task_EnableAllSignals(tsk);
   if (work_dir) task_SetWorkingDir(tsk, work_dir);
@@ -4897,6 +4898,8 @@ run_tests(
   unsigned char check_cmd[PATH_MAX];
   unsigned char b_interactor_cmd[PATH_MAX];
   const unsigned char *interactor_cmd = NULL;
+  unsigned char b_test_generator_cmd[PATH_MAX];
+  const unsigned char *test_generator_cmd = NULL;
 
   int *open_tests_val = NULL;
   int open_tests_count = 0;
@@ -4938,6 +4941,12 @@ run_tests(
   int valuer_user_status = -1;
   int valuer_user_score = -1;
   int valuer_user_tests_passed = -1;
+
+  const unsigned char *test_dir = srpp->test_dir;
+  const unsigned char *corr_dir = srpp->corr_dir;
+  const unsigned char *info_dir = srpp->info_dir;
+  const unsigned char *tgz_dir = srpp->tgz_dir;
+  unsigned char b_test_dir[PATH_MAX];
 
   valuer_cmt_file[0] = 0;
   valuer_jcmt_file[0] = 0;
@@ -5028,6 +5037,14 @@ run_tests(
     mirror_file(agent, b_interactor_cmd, sizeof(b_interactor_cmd), mirror_dir);
   }
 
+  if (srpp->test_generator_cmd && srpp->test_generator_cmd[0]) {
+    snprintf(b_test_generator_cmd, sizeof(b_test_generator_cmd), "%s",
+             srpp->test_generator_cmd);
+    test_generator_cmd = b_test_generator_cmd;
+    mirror_file(agent, b_test_generator_cmd, sizeof(b_test_generator_cmd),
+                mirror_dir);
+  }
+
   if (srpp->type_val) {
     status = check_output_only(global, srgp, srpp, reply_pkt,
                                agent,
@@ -5093,6 +5110,30 @@ run_tests(
     append_msg_to_log(messages_path, "max_file_size = %s is too big for this platform",
                       ej_size64_t_to_size(sz_buf, sizeof(sz_buf), srpp->max_file_size));
     goto check_failed;
+  }
+
+  if (test_generator_cmd && test_generator_cmd[0]) {
+    int r = snprintf(b_test_dir, sizeof(b_test_dir), "%s/tests",
+                     global->run_work_dir);
+    if (r >= (int) sizeof(b_test_dir)) {
+      append_msg_to_log(messages_path, "test_dir path too long");
+      goto check_failed;
+    }
+    if (mkdir(b_test_dir, 0700) < 0) {
+      append_msg_to_log(messages_path, "mkdir '%s' failed: %s",
+                        b_test_dir, strerror(errno));
+      goto check_failed;
+    }
+    r = invoke_test_generator_cmd(srp, test_generator_cmd,
+                                  b_test_dir, src_path, messages_path);
+    if (r != 0) {
+      append_msg_to_log(messages_path, "test generator failed");
+      goto check_failed;
+    }
+    test_dir = b_test_dir;
+    corr_dir = b_test_dir;
+    info_dir = b_test_dir;
+    tgz_dir = b_test_dir;
   }
 
   if (!srpp->type_val && tst && tst->prepare_cmd && tst->prepare_cmd[0]) {
@@ -5170,10 +5211,10 @@ run_tests(
                             inp_data,
                             inp_size,
                             src_path,
-                            srpp->test_dir,
-                            srpp->corr_dir,
-                            srpp->info_dir,
-                            srpp->tgz_dir);
+                            test_dir,
+                            corr_dir,
+                            info_dir,
+                            tgz_dir);
       if (status != RUN_TIME_LIMIT_ERR && status != RUN_WALL_TIME_LIMIT_ERR)
         break;
       if (++tl_retry >= tl_retry_count) break;
