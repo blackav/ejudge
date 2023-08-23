@@ -54,7 +54,8 @@
     if (!saved_secret) saved_secret = xstrdup("");
 
     save_auth = strlen(saved_login) > 0 || strlen(saved_password) > 0 || strlen(saved_url) > 0 || strlen(saved_url) > 0 || strlen(saved_secret) > 0;
-    enable_api = (strlen(saved_key) > 0 && strlen(saved_secret) > 0);
+    //enable_api = (strlen(saved_key) > 0 && strlen(saved_secret) > 0);
+    enable_api = 1;
 %><%@include "header.csp"
 %>
 
