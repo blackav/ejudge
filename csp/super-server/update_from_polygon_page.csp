@@ -68,6 +68,7 @@
         <tr><td class="b0">Polygon URL:</td><td class="b0"><s:textfield size="60" name="polygon_url" value="saved_url" checkExpr="" /></td></tr>
         <tr><td class="b0">Fetch latest available packet (do not generate):</td><td class="b0"><input type="checkbox" name="fetch_latest_available" value="1" checked="checked" /></td></tr>
         <tr><td class="b0">Ignore additional solutions:</td><td class="b0"><input type="checkbox" name="ignore_solutions" value="1" checked="checked" /></td></tr>
+        <tr><td class="b0">Ignore MAIN solutions as well:</td><td class="b0"><input type="checkbox" name="ignore_main_solution" value="1" checked="checked" /></td></tr>
         <tr><td class="b0">Tests are binary data:</td><td class="b0"><input type="checkbox" name="binary_input" value="1" /></td></tr>
         <tr><td class="b0">Embed statement in IFRAME:</td><td class="b0"><input type="checkbox" name="enable_iframe_statement" value="1" checked="checked" /></td></tr>
         <tr><td class="b0">Verbose importer output:</td><td class="b0"><input type="checkbox" name="verbose" value="1" /></td></tr>
