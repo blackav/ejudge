@@ -2118,6 +2118,95 @@ invoke_test_checker_cmd(
   return r;
 }
 
+static __attribute__((unused)) int
+invoke_test_generator_cmd(
+        const struct super_run_in_packet *srp,
+        const unsigned char *work_dir,
+        const unsigned char *src_path,
+        const unsigned char *log_path)
+{
+  const struct super_run_in_global_packet *srgp = srp->global;
+  const struct super_run_in_problem_packet *srpp = srp->problem;
+  tpTask tsk = NULL;
+
+  tsk = task_New();
+  task_AddArg(tsk, srpp->test_generator_cmd);
+  task_SetPathAsArg0(tsk);
+  task_EnableAllSignals(tsk);
+  if (work_dir) task_SetWorkingDir(tsk, work_dir);
+  task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", TSK_READ, 0);
+  task_SetRedir(tsk, 1, TSR_FILE, log_path, TSK_APPEND, TSK_FULL_RW);
+  task_SetRedir(tsk, 2, TSR_FILE, log_path, TSK_APPEND, TSK_FULL_RW);
+  if (srpp->test_generator_env) {
+    for (int i = 0; srpp->test_generator_env[i]; ++i)
+      task_PutEnv(tsk, srpp->test_generator_env[i]);
+  }
+  if (srpp->checker_real_time_limit_ms > 0) {
+    task_SetMaxRealTimeMillis(tsk, srpp->checker_real_time_limit_ms);
+  }
+  if (srpp->checker_time_limit_ms > 0) {
+    task_SetMaxTimeMillis(tsk, srpp->checker_time_limit_ms);
+  }
+  if (srpp->checker_max_stack_size > 0) {
+    task_SetStackSize(tsk, srpp->checker_max_stack_size);
+  }
+  if (srpp->checker_max_vm_size > 0) {
+    task_SetVMSize(tsk, srpp->checker_max_vm_size);
+  }
+  if (srpp->checker_max_rss_size > 0) {
+    task_SetRSSSize(tsk, srpp->checker_max_rss_size);
+  }
+  task_SetEnv(tsk, "EJUDGE", "1");
+  if (srgp->checker_locale && srgp->checker_locale[0]) {
+    task_SetEnv(tsk, "EJUDGE_LOCALE", srgp->checker_locale);
+  }
+  if (srgp->testlib_mode > 0) {
+    task_SetEnv(tsk, "EJUDGE_TESTLIB_MODE", "1");
+  }
+  if (srpp->enable_extended_info > 0) {
+    unsigned char buf[64];
+    snprintf(buf, sizeof(buf), "%d", srgp->user_id);
+    task_SetEnv(tsk, "EJUDGE_USER_ID", buf);
+    snprintf(buf, sizeof(buf), "%d", srgp->contest_id);
+    task_SetEnv(tsk, "EJUDGE_CONTEST_ID", buf);
+    snprintf(buf, sizeof(buf), "%d", srgp->run_id);
+    task_SetEnv(tsk, "EJUDGE_RUN_ID", buf);
+    task_SetEnv(tsk, "EJUDGE_USER_LOGIN", srgp->user_login);
+    task_SetEnv(tsk, "EJUDGE_USER_NAME", srgp->user_name);
+  }
+  if (src_path) {
+    task_SetEnv(tsk, "EJUDGE_SOURCE_PATH", src_path);
+  }
+
+  if (task_Start(tsk) < 0) {
+    append_msg_to_log(log_path, "failed to start test generator %s", srpp->test_generator_cmd);
+    task_Delete(tsk);
+    return RUN_CHECK_FAILED;
+  }
+
+  task_Wait(tsk);
+  if (task_IsTimeout(tsk)) {
+    append_msg_to_log(log_path, "test generator %s time-out", srpp->test_generator_cmd);
+    task_Delete(tsk);
+    return RUN_CHECK_FAILED;
+  }
+
+  if (task_Status(tsk) == TSK_SIGNALED) {
+    append_msg_to_log(log_path, "test generator %s is terminated by signal %d", srpp->test_generator_cmd, task_TermSignal(tsk));
+    task_Delete(tsk);
+    return RUN_CHECK_FAILED;
+  }
+
+  if (task_ExitCode(tsk) != 0) {
+    append_msg_to_log(log_path, "test generator %s failed with code %d", srpp->test_generator_cmd, task_ExitCode(tsk));
+    task_Delete(tsk);
+    return RUN_CHECK_FAILED;
+  }
+
+  task_Delete(tsk);
+  return 0;
+}
+
 static int
 invoke_init_cmd(
         const struct super_run_in_problem_packet *srpp,
