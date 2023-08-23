@@ -5171,6 +5171,9 @@ do_import_problem(
   if (cfg->interactor_cmd && cfg->interactor_cmd[0]) {
     xstrdup3(&prob->interactor_cmd, cfg->interactor_cmd);
   }
+  if (cfg->xml_file && cfg->xml_file[0]) {
+    xstrdup3(&prob->xml_file, cfg->xml_file);
+  }
 
 cleanup:
   if (f) fclose(f);
