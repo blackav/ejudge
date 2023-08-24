@@ -1,10 +1,8 @@
 /* -*- c -*- */
-/* $Id$ */
-
 #ifndef __PROBLEM_PLUGIN_H__
 #define __PROBLEM_PLUGIN_H__
 
-/* Copyright (C) 2007-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2007-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -28,11 +26,12 @@ struct ejudge_cfg;
 struct xml_tree;
 
 /* version of the plugin interface structure */
-#define PROBLEM_PLUGIN_IFACE_VERSION 2
+#define PROBLEM_PLUGIN_IFACE_VERSION 3
 
 struct http_request_info;
 struct contest_desc;
 struct contest_extra;
+struct section_problem_data;
 
 struct problem_plugin_iface
 {
@@ -54,6 +53,14 @@ struct problem_plugin_iface
                                   const struct contest_desc *cnts,
                                   struct contest_extra *extra,
                                   const unsigned char *text);
+  void (*write_statement)(
+        void *self,
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra,
+        const struct section_problem_data *prob,
+        int variant);
 };
 
 #endif /* __PROBLEM_PLUGIN_H__ */

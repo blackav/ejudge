@@ -482,7 +482,11 @@ int serve_state_load_contest(
         struct userlist_clnt *ul_conn,
         struct teamdb_db_callbacks *teamdb_callbacks,
         const struct contest_desc **p_cnts,
-        int no_users_flag);
+        int no_users_flag,
+        void (*load_plugin_func)(
+                serve_state_t cs,
+                struct problem_extra_info *extra,
+                const struct section_problem_data *prob));
 
 int serve_count_unread_clars(const serve_state_t state, int user_id,
                              time_t start_time);

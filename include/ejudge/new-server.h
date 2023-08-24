@@ -984,5 +984,10 @@ ns_run_dir_ready(
         const unsigned char *data_dir,
         const unsigned char *data2_dir,
         void *user);
+void
+ns_load_problem_plugin(
+        serve_state_t cs,
+        struct problem_extra_info *extra,
+        const struct section_problem_data *prob);
 
 #endif /* __NEW_SERVER_H__ */
