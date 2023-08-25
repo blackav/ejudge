@@ -185,7 +185,7 @@ enum { DEFAULT_LIMIT_CPU_TIME_MS = 1000 };
 static int limit_umask = -1;
 static int limit_open_files = -1;
 static long long limit_stack_size = -1;
-static long long limit_vm_size = DEFAULT_LIMIT_VM_SIZE;
+static long long limit_vm_size = -1;
 static long long limit_rss_size = -1;
 static long long limit_file_size = -1;
 static int limit_processes = 5;
@@ -2236,9 +2236,6 @@ main(int argc, char *argv[])
         }
         slave_uid = compile_uid;
         slave_gid = compile_gid;
-        if (limit_vm_size == DEFAULT_LIMIT_VM_SIZE) {
-            limit_vm_size = -1;
-        }
         if (limit_cpu_time_ms == DEFAULT_LIMIT_CPU_TIME_MS) {
             limit_cpu_time_ms = 60000;
         }
@@ -2318,6 +2315,10 @@ main(int argc, char *argv[])
     if (enable_net_ns) clone_flags |= CLONE_NEWNET;
     if (enable_mount_ns) clone_flags |= CLONE_NEWNS;
     if (enable_pid_ns) clone_flags |= CLONE_NEWPID;
+
+    if (limit_vm_size <= 0 && limit_rss_size <= 0) {
+        limit_vm_size = DEFAULT_LIMIT_VM_SIZE;
+    }
 
     pid_t tidptr = 0;
     int pid = syscall(__NR_clone, clone_flags, NULL, NULL, &tidptr);
