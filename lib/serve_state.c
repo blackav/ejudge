@@ -750,7 +750,11 @@ serve_state_load_contest(
         struct userlist_clnt *ul_conn,
         struct teamdb_db_callbacks *teamdb_callbacks,
         const struct contest_desc **p_cnts,
-        int no_users_flag)
+        int no_users_flag,
+        void (*load_plugin_func)(
+                serve_state_t cs,
+                struct problem_extra_info *extra,
+                const struct section_problem_data *prob))
 {
   serve_state_t state = 0;
   const struct contest_desc *cnts = 0;
@@ -923,10 +927,17 @@ serve_state_load_contest(
   int need_variant_plugin = 0;
   XCALLOC(state->prob_extras, state->max_prob + 1);
   for (i = 1; i <= state->max_prob; i++) {
-    if (!state->probs[i] || state->probs[i]->variant_num <= 0) continue;
-    need_variant_plugin = 1;
-    XCALLOC(state->prob_extras[i].v_stmts, state->probs[i]->variant_num + 1);
-    XCALLOC(state->prob_extras[i].v_alts, state->probs[i]->variant_num + 1);
+    const struct section_problem_data *prob = state->probs[i];
+    if (!prob) continue;
+    struct problem_extra_info *extra = &state->prob_extras[i];
+    if (prob->plugin_file && prob->plugin_file[0] && load_plugin_func) {
+      load_plugin_func(state, extra, prob);
+    }
+    if (prob->variant_num > 0) {
+      need_variant_plugin = 1;
+      XCALLOC(extra->v_stmts, prob->variant_num + 1);
+      XCALLOC(extra->v_alts, prob->variant_num + 1);
+    }
   }
   if (need_variant_plugin) {
     state->variant_state = variant_plugin_open(NULL, config, cnts, state, NULL, 0);

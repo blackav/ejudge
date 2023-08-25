@@ -872,6 +872,65 @@ ns_open_ul_connection(struct server_framework_state *state)
   return 0;
 }
 
+void
+ns_load_problem_plugin(
+        serve_state_t cs,
+        struct problem_extra_info *extra,
+        const struct section_problem_data *prob)
+{
+  const unsigned char *f = __FUNCTION__;
+  unsigned char plugin_path[PATH_MAX];
+  if (cs->global->advanced_layout > 0) {
+    get_advanced_layout_path(plugin_path, sizeof(plugin_path), cs->global,
+                             prob, prob->plugin_file, -1);
+  } else {
+    snprintf(plugin_path, sizeof(plugin_path), "%s", prob->plugin_file);
+  }
+
+  unsigned char plugin_name[1024];
+  snprintf(plugin_name, sizeof(plugin_name), "problem_%s", prob->short_name);
+  int len = strlen(plugin_name);
+  for (int i = 0; i < len; i++)
+    if (plugin_name[i] == '-')
+      plugin_name[i] = '_';
+
+  struct problem_plugin_iface *iface = NULL;
+  iface = (struct problem_plugin_iface*) plugin_load(plugin_path,
+                                                     "problem",
+                                                     plugin_name);
+  if (!iface) {
+    err("%s: failed to load plugin '%s'", f, plugin_name);
+    return;
+  }
+
+  if (iface->problem_version != PROBLEM_PLUGIN_IFACE_VERSION) {
+    err("%s: plugin version mismatch", f);
+    return;
+  }
+
+  const size_t *sza = NULL;
+  if (!(sza = iface->sizes_array)) {
+    err("%s: plugin sizes array is NULL", f);
+    return;
+  }
+  if (iface->sizes_array_size != serve_struct_sizes_array_size) {
+    err("%s: plugin sizes array size mismatch: %zu instead of %zu",
+        f, iface->sizes_array_size, serve_struct_sizes_array_size);
+    return;
+  }
+  for (int i = 0; i < serve_struct_sizes_array_num; ++i) {
+    if (sza[i] && sza[i] != serve_struct_sizes_array[i]) {
+      err("%s: plugin sizes array element %d mismatch: %zu instead of %zu",
+          f, i, sza[i], serve_struct_sizes_array[i]);
+      return;
+    }
+  }
+
+  extra->plugin = iface;
+  extra->plugin_data = (*extra->plugin->init)();
+  info("loaded plugin %s", plugin_name);
+}
+
 static void
 load_problem_plugin(serve_state_t cs, int prob_id)
 {
@@ -10293,7 +10352,8 @@ privileged_entry_point(
   if (serve_state_load_contest(extra, ejudge_config, phr->contest_id,
                                ul_conn,
                                &callbacks,
-                               0, 0) < 0) {
+                               0, 0,
+                               ns_load_problem_plugin) < 0) {
     if (log_file_pos_1 >= 0) {
       log_file_pos_2 = generic_file_size(NULL, ejudge_config->new_server_log, NULL);
     }
@@ -14149,6 +14209,19 @@ ns_unparse_statement(
   unsigned char b7[1024];
   unsigned char b8[1024];
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  serve_state_t cs = extra->serve_state;
+  struct problem_extra_info *prob_extra = &cs->prob_extras[prob->id];
+
+  if (prob_extra && prob_extra->plugin && prob_extra->plugin->write_statement){
+    prob_extra->plugin->write_statement(prob_extra->plugin_data,
+                                        fout,
+                                        phr,
+                                        cnts,
+                                        extra,
+                                        prob,
+                                        variant);
+    return;
+  }
 
   //const unsigned char *vars[8] = { "self", "prob", "get", "getfile", "input_file", "output_file", "variant", 0 };
   //const unsigned char *vals[8] = { b1, b2, b3, b4, b5, b6, b7, 0 };
@@ -17080,7 +17153,8 @@ unpriv_gitlab_webhook(
   callbacks.list_all_users = ns_list_all_users_callback;
 
   if (serve_state_load_contest(phr->extra, phr->config, phr->contest_id,
-                               ul_conn, &callbacks, 0, 0) < 0) {
+                               ul_conn, &callbacks, 0, 0,
+                               ns_load_problem_plugin) < 0) {
     err("unpriv_gitlab_webhook: failed to load contest");
     goto done;
   }
@@ -17643,7 +17717,8 @@ unprivileged_entry_point(
   if (serve_state_load_contest(extra, ejudge_config, phr->contest_id,
                                ul_conn,
                                &callbacks,
-                               0, 0) < 0) {
+                               0, 0,
+                               ns_load_problem_plugin) < 0) {
     error_page(fout, phr, 0, NEW_SRV_ERR_CNTS_UNAVAILABLE);
     goto cleanup;
   }
@@ -18129,7 +18204,8 @@ do_load_contest(struct http_request_info *phr, const struct contest_desc *cnts)
   if (serve_state_load_contest(extra, ejudge_config, phr->contest_id,
                                ul_conn,
                                &callbacks,
-                               0, 0) < 0) {
+                               0, 0,
+                               ns_load_problem_plugin) < 0) {
     return;
   }
 
@@ -19255,7 +19331,8 @@ ns_compile_dir_ready(
       ASSERT(extra);
 
       if (serve_state_load_contest(extra, config, prev_contest_id, ul_conn,
-                                   &callbacks, 0, 0) < 0) {
+                                   &callbacks, 0, 0,
+                                   ns_load_problem_plugin) < 0) {
         err("%s: dropping packets because of unavailable contest %d", __FUNCTION__, prev_contest_id);
         cnts = NULL;
         extra = NULL;
@@ -19449,7 +19526,8 @@ ns_run_dir_ready(
       ASSERT(extra);
 
       if (serve_state_load_contest(extra, config, prev_contest_id, ul_conn,
-                                   &callbacks, 0, 0) < 0) {
+                                   &callbacks, 0, 0,
+                                   ns_load_problem_plugin) < 0) {
         err("%s: dropping packets because of unavailable contest %d", __FUNCTION__, prev_contest_id);
         cnts = NULL;
         extra = NULL;
