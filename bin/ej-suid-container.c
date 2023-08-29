@@ -1962,6 +1962,7 @@ int
 main(int argc, char *argv[])
 {
     int argi = 1;
+    int limit_vm_set = 0;
 
     {
         char *p = strrchr(argv[0], '/');
@@ -2133,6 +2134,7 @@ main(int argc, char *argv[])
                 limit_stack_size = extract_size(&opt, 2, "ls");
             } else if (*opt == 'l' && opt[1] == 'v') {
                 limit_vm_size = extract_size(&opt, 2, "lv");
+                limit_vm_set = 1;
             } else if (*opt == 'l' && opt[1] == 'R') {
                 limit_rss_size = extract_size(&opt, 2, "lR");
             } else if (*opt == 'l' && opt[1] == 'f') {
@@ -2214,6 +2216,10 @@ main(int argc, char *argv[])
 
         char *p = argv[argi - 1];
         while (*p) *p++ = 0;
+    }
+
+    if (!limit_vm_set && limit_rss_size <= 0) {
+        limit_vm_size = DEFAULT_LIMIT_VM_SIZE;
     }
 
     get_user_ids();
@@ -2315,10 +2321,6 @@ main(int argc, char *argv[])
     if (enable_net_ns) clone_flags |= CLONE_NEWNET;
     if (enable_mount_ns) clone_flags |= CLONE_NEWNS;
     if (enable_pid_ns) clone_flags |= CLONE_NEWPID;
-
-    if (limit_vm_size <= 0 && limit_rss_size <= 0) {
-        limit_vm_size = DEFAULT_LIMIT_VM_SIZE;
-    }
 
     pid_t tidptr = 0;
     int pid = syscall(__NR_clone, clone_flags, NULL, NULL, &tidptr);
