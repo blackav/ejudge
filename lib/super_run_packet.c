@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2012-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -128,6 +128,7 @@ super_run_in_problem_packet_init(struct generic_section_config *gp)
   p->combined_stdin = -1;
   p->combined_stdout = -1;
   p->ignore_exit_code = -1;
+  p->ignore_term_signal = -1;
   p->binary_input = -1;
   p->binary_output = -1;
   p->real_time_limit_ms = -1;
@@ -179,6 +180,7 @@ super_run_in_problem_packet_set_default(struct generic_section_config *gp)
   if (p->combined_stdin < 0) p->combined_stdin = 0;
   if (p->combined_stdout < 0) p->combined_stdout = 0;
   if (p->ignore_exit_code < 0) p->ignore_exit_code = 0;
+  if (p->ignore_term_signal < 0) p->ignore_term_signal = 0;
   if (p->binary_input < 0) p->binary_input = 0;
   if (p->binary_output < 0) p->binary_output = 0;
   if (p->real_time_limit_ms < 0) p->real_time_limit_ms = 0;

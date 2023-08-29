@@ -103,6 +103,7 @@ enum
   META_SUPER_RUN_IN_PROBLEM_PACKET_combined_stdin,
   META_SUPER_RUN_IN_PROBLEM_PACKET_combined_stdout,
   META_SUPER_RUN_IN_PROBLEM_PACKET_ignore_exit_code,
+  META_SUPER_RUN_IN_PROBLEM_PACKET_ignore_term_signal,
   META_SUPER_RUN_IN_PROBLEM_PACKET_binary_input,
   META_SUPER_RUN_IN_PROBLEM_PACKET_binary_output,
   META_SUPER_RUN_IN_PROBLEM_PACKET_real_time_limit_ms,

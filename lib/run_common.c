@@ -4208,6 +4208,8 @@ run_one_test(
     int ignore_term_signal = 0;
     if (srpp->use_info > 0 && tstinfo.ignore_term_signal > 0) {
       ignore_term_signal = 1;
+    } else {
+      ignore_term_signal = srpp->ignore_term_signal;
     }
     if (ignore_term_signal <= 0) {
       cur_info->code = 256; /* FIXME: magic */
