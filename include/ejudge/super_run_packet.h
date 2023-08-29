@@ -117,6 +117,7 @@ struct super_run_in_problem_packet
   ejintbool_t combined_stdin;
   ejintbool_t combined_stdout;
   ejintbool_t ignore_exit_code;
+  ejintbool_t ignore_term_signal;
   ejintbool_t binary_input;
   ejintbool_t binary_output;
   int real_time_limit_ms;

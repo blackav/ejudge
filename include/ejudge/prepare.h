@@ -876,6 +876,8 @@ struct section_problem_data
   ejbyteflag_t binary;
   /** do not treat non-zero exit code as run-time error */
   ejbyteflag_t ignore_exit_code;
+  /** do not report "runtime error" if program is terminated by a signal */
+  ejbyteflag_t ignore_term_signal;
   /** for KIROV contests: handle problem in the olympiad mode*/
   ejbyteflag_t olympiad_mode;
 

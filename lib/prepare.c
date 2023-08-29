@@ -391,6 +391,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(binary_input, "L"),
   PROBLEM_PARAM(binary, "L"),
   PROBLEM_PARAM(ignore_exit_code, "L"),
+  PROBLEM_PARAM(ignore_term_signal, "L"),
   PROBLEM_PARAM(olympiad_mode, "L"),
   PROBLEM_PARAM(score_latest, "L"),
   PROBLEM_PARAM(score_latest_or_unmarked, "L"),
@@ -1304,6 +1305,7 @@ prepare_problem_init_func(struct generic_section_config *gp)
   p->binary_input = -1;
   p->binary = -1;
   p->ignore_exit_code = -1;
+  p->ignore_term_signal = -1;
   p->olympiad_mode = -1;
   p->score_latest = -1;
   p->score_latest_or_unmarked = -1;
@@ -3797,6 +3799,7 @@ set_defaults(
     prepare_set_prob_value(CNTSPROB_binary_input, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_binary, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_ignore_exit_code, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_ignore_term_signal, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_olympiad_mode, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_score_latest, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_score_latest_or_unmarked, prob, aprob, g);
@@ -5635,6 +5638,7 @@ prepare_set_abstr_problem_defaults(struct section_problem_data *prob,
   if (prob->binary_input < 0) prob->binary_input = DFLT_P_BINARY_INPUT;
   if (prob->binary < 0) prob->binary = 0;
   if (prob->ignore_exit_code < 0) prob->ignore_exit_code = 0;
+  if (prob->ignore_term_signal < 0) prob->ignore_term_signal = 0;
   if (prob->olympiad_mode < 0) prob->olympiad_mode = 0;
   if (prob->score_latest < 0) prob->score_latest = 0;
   if (prob->score_latest_or_unmarked < 0) prob->score_latest_or_unmarked = 0;
@@ -6067,6 +6071,7 @@ prepare_copy_problem(const struct section_problem_data *in)
   out->binary_input = in->binary_input;
   out->binary = in->binary;
   out->ignore_exit_code = in->ignore_exit_code;
+  out->ignore_term_signal = in->ignore_term_signal;
   out->olympiad_mode = in->olympiad_mode;
   out->score_latest = in->score_latest;
   out->score_latest_or_unmarked = in->score_latest_or_unmarked;
@@ -6334,6 +6339,7 @@ prepare_set_prob_value(
   INHERIT_BOOLEAN(binary_input);
   INHERIT_BOOLEAN(binary);
   INHERIT_BOOLEAN(ignore_exit_code);
+  INHERIT_BOOLEAN(ignore_term_signal);
   INHERIT_BOOLEAN(olympiad_mode);
   INHERIT_BOOLEAN(score_latest);
   INHERIT_BOOLEAN(score_latest_or_unmarked);
@@ -7005,6 +7011,7 @@ prepare_set_all_prob_values(
     CNTSPROB_binary_input,
     CNTSPROB_binary,
     CNTSPROB_ignore_exit_code,
+    CNTSPROB_ignore_term_signal,
     CNTSPROB_olympiad_mode,
     CNTSPROB_score_latest,
     CNTSPROB_score_latest_or_unmarked,

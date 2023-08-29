@@ -466,6 +466,9 @@ is_runtime_error(tTask *tsk, struct testinfo_struct *ptinfo)
   if (ptinfo->exit_code > 0) {
     return task_Status(tsk) != TSK_EXITED || task_ExitCode(tsk) != ptinfo->exit_code;
   }
+  if (task_Status(tsk) == TSK_SIGNALED && ptinfo->ignore_term_signal > 0) {
+    return 0;
+  }
   return ptinfo->ignore_exit_code <= 0;
 }
 

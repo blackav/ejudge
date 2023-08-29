@@ -81,6 +81,7 @@ struct testinfo_struct
   int time_limit_ms;
   int real_time_limit_ms;
   int allow_compile_error;
+  int ignore_term_signal;
 };
 typedef struct testinfo_struct testinfo_t;
 

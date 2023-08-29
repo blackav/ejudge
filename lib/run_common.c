@@ -4205,11 +4205,23 @@ run_one_test(
 
   // terminated with a signal
   if (task_Status(tsk) == TSK_SIGNALED) {
-    cur_info->code = 256; /* FIXME: magic */
-    cur_info->termsig = task_TermSignal(tsk);
-    status = RUN_RUN_TIME_ERR;
-    if (tsk_int) goto read_checker_output;
-    goto cleanup;
+    int ignore_term_signal = 0;
+    if (srpp->use_info > 0 && tstinfo.ignore_term_signal > 0) {
+      ignore_term_signal = 1;
+    } else {
+      ignore_term_signal = srpp->ignore_term_signal;
+    }
+    if (ignore_term_signal <= 0) {
+      cur_info->code = 256; /* FIXME: magic */
+      cur_info->termsig = task_TermSignal(tsk);
+      status = RUN_RUN_TIME_ERR;
+      if (tsk_int) goto read_checker_output;
+      goto cleanup;
+    } else {
+      // save info, but proceed with testing
+      cur_info->code = 256;
+      cur_info->termsig = task_TermSignal(tsk);
+    }
   }
 
   if (error_code[0]) {

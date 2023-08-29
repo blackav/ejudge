@@ -2455,6 +2455,7 @@ serve_run_request(
   srpp->combined_stdin = prob->combined_stdin;
   srpp->combined_stdout = prob->combined_stdout;
   srpp->ignore_exit_code = prob->ignore_exit_code;
+  srpp->ignore_term_signal = prob->ignore_term_signal;
   srpp->binary_input = prob->binary_input;
   srpp->binary_output = prob->binary_input;
   srpp->real_time_limit_ms = prob->real_time_limit * 1000;
