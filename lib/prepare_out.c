@@ -1127,6 +1127,9 @@ prepare_unparse_prob(
   if ((prob->abstract && prob->ignore_exit_code == 1)
       || (!prob->abstract && prob->ignore_exit_code >= 0))
     unparse_bool(f, "ignore_exit_code", prob->ignore_exit_code);
+  if ((prob->abstract && prob->ignore_term_signal == 1)
+      || (!prob->abstract && prob->ignore_term_signal >= 0))
+    unparse_bool(f, "ignore_term_signal", prob->ignore_term_signal);
   if ((prob->abstract && prob->olympiad_mode == 1)
       || (!prob->abstract && prob->olympiad_mode >= 0))
     unparse_bool(f, "olympiad_mode", prob->olympiad_mode);
@@ -1749,6 +1752,8 @@ prepare_unparse_actual_prob(
     unparse_bool(f, "binary", prob->binary);
   if (prob->ignore_exit_code > 0)
     unparse_bool(f, "ignore_exit_code", prob->ignore_exit_code);
+  if (prob->ignore_term_signal > 0)
+    unparse_bool(f, "ignore_term_signal", prob->ignore_term_signal);
   if (prob->olympiad_mode > 0)
     unparse_bool(f, "olympiad_mode", prob->olympiad_mode);
   if (prob->score_latest > 0)
@@ -2789,6 +2794,7 @@ prepare_unparse_testers(
     prepare_set_prob_value(CNTSPROB_binary_input, tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_binary, tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_ignore_exit_code, tmp_prob, abstr, global);
+    prepare_set_prob_value(CNTSPROB_ignore_term_signal, tmp_prob, abstr, global);
     /*
     prepare_set_prob_value(CNTSPROB_MAX_VM_SIZE, tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_MAX_STACK_SIZE, tmp_prob, abstr, global);

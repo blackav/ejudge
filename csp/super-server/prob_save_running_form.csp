@@ -30,6 +30,7 @@
     ejintbool_t output_file_dflt = 0;
     int disable_stderr = -1;
     int ignore_exit_code = -1;
+    int ignore_term_signal = -1;
     unsigned char *start_cmd = NULL;
     ejintbool_t start_cmd_dflt = 0;
     char **start_env = NULL;
@@ -57,6 +58,7 @@
 %><s:read var="output_file_dflt" default="0" /><%
 %><s:read var="disable_stderr" default="-1" /><%
 %><s:read var="ignore_exit_code" default="-1" /><%
+%><s:read var="ignore_term_signal" default="-1" /><%
 %><s:read var="start_cmd" normalize="yes" nonnull="yes" /><%
 %><s:read var="start_cmd_dflt" default="0" /><%
 %><s:read var="start_env" /><%
@@ -82,6 +84,7 @@
     }
     if (disable_stderr > 0) disable_stderr = 1;
     if (ignore_exit_code > 0) ignore_exit_code = 1;
+    if (ignore_term_signal > 0) ignore_term_signal = 1;
     if (start_cmd_dflt) {
         xfree(start_cmd);
         start_cmd = NULL;
@@ -103,6 +106,7 @@
         if (combined_stdout < 0) combined_stdout = 0;
         if (disable_stderr < 0) disable_stderr = 0;
         if (ignore_exit_code < 0) ignore_exit_code = 0;
+        if (ignore_term_signal < 0) ignore_term_signal = 0;
     } else {
         i = prob_id;
         if (i >= phr->ss->prob_a) FAIL(SSERV_ERR_INVALID_PARAMETER);
@@ -119,6 +123,7 @@
         if (combined_stdout < 0) combined_stdout = -1;
         if (disable_stderr < 0) disable_stderr = -1;
         if (ignore_exit_code < 0) ignore_exit_code = -1;
+        if (ignore_term_signal < 0) ignore_term_signal = -1;
     }
 
     if (!retval && phr->ss) {
@@ -135,6 +140,7 @@
         MOVESTR(output_file);
         prob->disable_stderr = disable_stderr;
         prob->ignore_exit_code = ignore_exit_code;
+        prob->ignore_term_signal = ignore_term_signal;
         MOVESTR(start_cmd);
         MOVEENV(start_env);
     }

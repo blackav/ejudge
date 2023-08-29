@@ -352,6 +352,7 @@ enum
   CNTSPROB_binary_input,
   CNTSPROB_binary,
   CNTSPROB_ignore_exit_code,
+  CNTSPROB_ignore_term_signal,
   CNTSPROB_olympiad_mode,
   CNTSPROB_score_latest,
   CNTSPROB_score_latest_or_unmarked,

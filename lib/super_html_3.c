@@ -488,6 +488,7 @@ super_html_add_abstract_problem(
   prob->binary_input = DFLT_P_BINARY_INPUT;
   prob->binary = 0;
   prob->ignore_exit_code = 0;
+  prob->ignore_term_signal = 0;
   prob->olympiad_mode = 0;
   prob->score_latest = 0;
   prob->score_latest_or_unmarked = 0;
@@ -1385,6 +1386,7 @@ super_html_new_check_tests(
     prepare_set_prob_value(CNTSPROB_binary_input, tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_binary, tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_ignore_exit_code, tmp_prob, abstr, global);
+    prepare_set_prob_value(CNTSPROB_ignore_term_signal, tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_valuer_cmd, tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_interactor_cmd, tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_style_checker_cmd, tmp_prob, abstr, global);

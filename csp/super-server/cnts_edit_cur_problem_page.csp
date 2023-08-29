@@ -1332,6 +1332,7 @@ function viewDialogOnChange(field)
 
             <%@expand ORIG_INHERITABLE_BOOLEAN "disable_stderr" "Running" "Consider output to stderr as PE" %>
             <%@expand ORIG_INHERITABLE_BOOLEAN "ignore_exit_code" "Running" "Ignore exit code" %>
+            <%@expand ORIG_INHERITABLE_BOOLEAN "ignore_term_signal" "Running" "Ignore termination signal" %>
 
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-start_cmd-div">
                 <td>Start proxy program:</td>

@@ -392,6 +392,7 @@ static struct meta_info_item meta_info_section_problem_data_data[] =
   [CNTSPROB_binary_input] = { CNTSPROB_binary_input, 'f', XSIZE(struct section_problem_data, binary_input), "binary_input", XOFFSET(struct section_problem_data, binary_input) },
   [CNTSPROB_binary] = { CNTSPROB_binary, 'f', XSIZE(struct section_problem_data, binary), "binary", XOFFSET(struct section_problem_data, binary) },
   [CNTSPROB_ignore_exit_code] = { CNTSPROB_ignore_exit_code, 'f', XSIZE(struct section_problem_data, ignore_exit_code), "ignore_exit_code", XOFFSET(struct section_problem_data, ignore_exit_code) },
+  [CNTSPROB_ignore_term_signal] = { CNTSPROB_ignore_term_signal, 'f', XSIZE(struct section_problem_data, ignore_term_signal), "ignore_term_signal", XOFFSET(struct section_problem_data, ignore_term_signal) },
   [CNTSPROB_olympiad_mode] = { CNTSPROB_olympiad_mode, 'f', XSIZE(struct section_problem_data, olympiad_mode), "olympiad_mode", XOFFSET(struct section_problem_data, olympiad_mode) },
   [CNTSPROB_score_latest] = { CNTSPROB_score_latest, 'f', XSIZE(struct section_problem_data, score_latest), "score_latest", XOFFSET(struct section_problem_data, score_latest) },
   [CNTSPROB_score_latest_or_unmarked] = { CNTSPROB_score_latest_or_unmarked, 'f', XSIZE(struct section_problem_data, score_latest_or_unmarked), "score_latest_or_unmarked", XOFFSET(struct section_problem_data, score_latest_or_unmarked) },
