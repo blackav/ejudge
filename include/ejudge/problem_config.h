@@ -106,6 +106,7 @@ struct problem_config_section
   ejintbool_t enable_control_socket;
   ejintbool_t enable_iframe_statement;
   ejintbool_t copy_exe_to_tgzdir;
+  ejintbool_t ignore_term_signal;
 
   int id;
   int real_time_limit;
