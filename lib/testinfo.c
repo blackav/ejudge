@@ -62,6 +62,7 @@ enum
   Tag_disable_valgrind,
   Tag_ignore_exit_code,
   Tag_check_cmd,
+  Tag_ignore_term_signal,
 };
 
 /// TRIE_STRINGS_BEGIN
@@ -97,6 +98,7 @@ static __attribute__((unused)) const char * const tag_table[] =
   "disable_valgrind",
   "ignore_exit_code",
   "check_cmd",
+  "ignore_term_signal",
 };
 /// TRIE_STRINGS_END
 
@@ -135,6 +137,7 @@ static unsigned int tag_offsets[] =
   [Tag_disable_valgrind] = TESTINFO_OFFSET(disable_valgrind),
   [Tag_ignore_exit_code] = TESTINFO_OFFSET(ignore_exit_code),
   [Tag_check_cmd] = TESTINFO_OFFSET(check_cmd),
+  [Tag_ignore_term_signal] = TESTINFO_OFFSET(ignore_term_signal),
 };
 
 struct trie_data;
@@ -697,6 +700,7 @@ parse_line(const unsigned char *str, size_t len, testinfo_t *pt, struct testinfo
   case Tag_allow_compile_error:
   case Tag_disable_valgrind:
   case Tag_ignore_exit_code:
+  case Tag_ignore_term_signal:
   {
     int *pint = XPDEREF(int, pt, tag_offsets[tag]);
     if (cmd.u < 1) {
@@ -767,6 +771,7 @@ testinfo_parse(const char *path, testinfo_t *pt, struct testinfo_subst_handler *
   pt->max_file_size = -1LL;
   pt->max_rss_size = -1LL;
   pt->ignore_exit_code = -1;
+  pt->ignore_term_signal = -1;
   if (!(fin = fopen(path, "r"))) {
     memset(pt, 0, sizeof(*pt));
     return -TINF_E_CANNOT_OPEN;
