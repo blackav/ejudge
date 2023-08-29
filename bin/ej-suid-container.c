@@ -2218,7 +2218,7 @@ main(int argc, char *argv[])
         while (*p) *p++ = 0;
     }
 
-    if (!limit_vm_set && limit_rss_size <= 0) {
+    if (!limit_vm_set && limit_rss_size <= 0 && !enable_compile_mode) {
         limit_vm_size = DEFAULT_LIMIT_VM_SIZE;
     }
 
