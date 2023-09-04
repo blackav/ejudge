@@ -214,7 +214,7 @@ generate_xml_report(
         struct run_reply_packet *reply_pkt,
         const unsigned char *report_path,
         int total_tests,
-        const struct testinfo *tests,
+        const struct run_test_info *tests,
         int utf8_mode,
         int variant,
         int scores,
@@ -342,7 +342,7 @@ generate_xml_report(
     for (i = 1; i < total_tests; ++i) {
       struct testing_report_test *trt = testing_report_test_alloc(i, tests[i].status);
       tr->tests[i - 1] = trt;
-      const struct testinfo *ti = &tests[i];
+      const struct run_test_info *ti = &tests[i];
       if (ti->status >= 0 && ti->status < (int) (sizeof(status_to_bit_map) / sizeof(status_to_bit_map[0]))) {
         verdict_bits |= status_to_bit_map[ti->status];
       }
@@ -539,7 +539,7 @@ append_msg_to_log(const unsigned char *path, const char *format, ...)
 }
 
 static void
-chk_printf(struct testinfo *result, const char *format, ...)
+chk_printf(struct run_test_info *result, const char *format, ...)
 {
   va_list args;
   unsigned char buf[1024];
@@ -1051,7 +1051,7 @@ invoke_valuer(
         struct AgentClient *agent,
         const unsigned char *mirror_dir,
         int total_tests,
-        const struct testinfo *tests,
+        const struct run_test_info *tests,
         int cur_variant,
         int max_score,
         int *p_score,
@@ -1621,7 +1621,7 @@ invoke_nwrun(
         const unsigned char *test_src_path,
         const unsigned char *test_basename,
         long time_limit_millis,
-        struct testinfo *result,
+        struct run_test_info *result,
         const unsigned char *check_dir)
 {
   path_t full_spool_dir;
@@ -2515,7 +2515,7 @@ invoke_checker(
         const struct super_run_in_global_packet *srgp,
         const struct super_run_in_problem_packet *srpp,
         int cur_test,
-        struct testinfo *cur_info,
+        struct run_test_info *cur_info,
         const unsigned char *check_cmd,
         const unsigned char *test_src,
         const unsigned char *output_path,
@@ -3108,7 +3108,7 @@ run_one_test(
 
   unsigned char mem_limit_buf[PATH_MAX];
 
-  struct testinfo *cur_info = NULL;
+  struct run_test_info *cur_info = NULL;
   int time_limit_value_ms = 0;
   int status = RUN_CHECK_FAILED;
   int errcode = 0;
@@ -4410,7 +4410,7 @@ free_testinfo_vector(struct testinfo_vector *tv)
   if (tv == NULL || tv->size <= 0 || tv->data == NULL) return;
 
   for (int i = 0; i < tv->size; ++i) {
-    struct testinfo *ti = &tv->data[i];
+    struct run_test_info *ti = &tv->data[i];
     xfree(ti->input);
     xfree(ti->output);
     xfree(ti->error);
@@ -4597,7 +4597,7 @@ check_output_only(
         const unsigned char *mirror_dir)
 {
   int cur_test = 1;
-  struct testinfo *cur_info = NULL;
+  struct run_test_info *cur_info = NULL;
   int status = RUN_CHECK_FAILED;
   long long file_size = 0;
 
@@ -4835,7 +4835,7 @@ append_skipped_test(
     if (!tests->reserved) tests->reserved = 32;
     tests->data = (typeof(tests->data)) xrealloc(tests->data, tests->reserved * sizeof(tests->data[0]));
   }
-  struct testinfo *cur_info = &tests->data[cur_test];
+  struct run_test_info *cur_info = &tests->data[cur_test];
   memset(cur_info, 0, sizeof(*cur_info));
   ++tests->size;
 

@@ -25,7 +25,7 @@ struct section_global_data;
 struct section_problem_data;
 struct super_run_in_packet;
 
-struct testinfo
+struct run_test_info
 {
   int            status;        /* the execution status */
   int            code;          /* the process exit code */
@@ -74,7 +74,7 @@ struct testinfo
 struct testinfo_vector
 {
   int reserved, size;
-  struct testinfo *data;
+  struct run_test_info *data;
 };
 
 struct run_listener;
