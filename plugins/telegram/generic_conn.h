@@ -2,7 +2,7 @@
 #ifndef __GENERIC_CONN_H__
 #define __GENERIC_CONN_H__
 
-/* Copyright (C) 2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2022-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -91,6 +91,13 @@ struct generic_conn_iface
     int (*subscription_save)(
         struct generic_conn *gc,
         const struct telegram_subscription *subscription);
+
+    int (*password_get)(
+        struct generic_conn *gc,
+        const unsigned char *group_id,
+        const unsigned char *student_id,
+        unsigned char **login,
+        unsigned char **password);
 };
 
 struct generic_conn
