@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2016-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2016-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -128,6 +128,7 @@ static struct generic_conn_iface mongo_iface =
     chat_state_save_func,
     subscription_fetch_func,
     subscription_save_func,
+    NULL,                       /* password_get */
 };
 
 struct generic_conn *

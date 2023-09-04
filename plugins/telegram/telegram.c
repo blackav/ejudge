@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2016-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2016-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1234,6 +1234,73 @@ need_update_chat(const struct telegram_chat *mc, const TeChat *tc)
         || safe_strcmp(mc->last_name, tc->last_name) != 0;
 }
 
+static unsigned char *
+handle_get_password(
+        struct telegram_plugin_data *state,
+        TeMessage *tem)
+{
+    unsigned char *sgrp = NULL;
+    unsigned char *sid = NULL;
+    unsigned char *login = NULL;
+    unsigned char *password = NULL;
+    const unsigned char *errmsg = "Invalid input.";
+    const unsigned char *te_user = "unknown";
+    unsigned char te_user_buf[64];
+
+    int len = strlen(tem->text);
+
+    if (tem->from) {
+        TeUser *teu = tem->from;
+        te_user = teu->username;
+        if (!te_user || !*te_user) {
+            snprintf(te_user_buf, sizeof(te_user_buf), "[%lld]", teu->id);
+            te_user = te_user_buf;
+        }
+    }
+
+    sgrp = malloc(len + 1);
+    sid = malloc(len + 1);
+    if (sscanf(tem->text, "%s%s", sgrp, sid) != 2) {
+        goto fail;
+    }
+    if (!*sgrp) goto fail;
+    if (!*sid) goto fail;
+    for (unsigned char *s = sgrp; *s; ++s) {
+        if (!isdigit(*s)) goto fail;
+    }
+    for (unsigned char *s = sid; *s; ++s) {
+        if (!isdigit(*s)) goto fail;
+    }
+    if (!state->conn->vt->password_get) {
+        errmsg = "Operation not supported.";
+        goto fail;
+    }
+    info("get_password: telegram user %s requested group %s and user %s", te_user, sgrp, sid);
+    int res = state->conn->vt->password_get(state->conn, sgrp, sid, &login, &password);
+    free(sgrp); sgrp = NULL;
+    free(sid); sid = NULL;
+    if (res < 0) {
+        errmsg = "Database error.";
+        goto fail;
+    }
+    if (!res) {
+        errmsg = "Information not available.";
+        goto fail;
+    }
+    char *s = NULL;
+    asprintf(&s, "Login: %s\nPassword: %s\n", login, password);
+    free(login); login = NULL;
+    free(password); password = NULL;
+    return s;
+
+fail:;
+    free(sgrp);
+    free(sid);
+    free(login);
+    free(password);
+    return strdup(errmsg);
+}
+
 static int
 handle_incoming_message(
         struct telegram_plugin_data *state,
@@ -1353,6 +1420,11 @@ handle_incoming_message(
             send_result = send_message(state, bs, mc, "Hi there! This is Eddie, your shipboard computer, and I'm feeling just great, guys, and I know I'm just going to get a bundle of kicks out of any program you care to run through me.", NULL, NULL);
             telegram_chat_state_reset(tcs);
             update_state = 1;
+        } else if (!strcmp(tem->text, "/password")) {
+            tcs->command = xstrdup(tem->text);
+            tcs->state = 1;
+            update_state = 1;
+            send_result = send_message(state, bs, mc, "Enter the group number (for example, 201) and the student ID number (for example, 02220001), separated by spaces.", NULL, NULL);
         } else if (!strcmp(tem->text, "/chatid")) {
             char *reply_s = NULL;
             size_t reply_z = 0;
@@ -1380,55 +1452,65 @@ handle_incoming_message(
             telegram_chat_state_reset(tcs);
             update_state = 1;
         } else {
-            int token_val, n;
-            if (sscanf(tem->text, "%d%n", &token_val, &n) != 1 || tem->text[n] || token_val < 0 || token_val >= 1000000) {
-                send_result = send_message(state, bs, mc, "Token is invalid. Try again, or /cancel.", NULL, NULL);
+            if (!strcmp(tcs->command, "/password")) {
+                unsigned char *reply = handle_get_password(state, tem);
+                send_result =  send_message(state, bs, mc, reply, NULL, NULL);
+                tcs->state = 0;
+                xfree(tcs->command); tcs->command = NULL;
+                xfree(tcs->token); tcs->token = NULL;
+                xfree(reply);
+                update_state = 1;
             } else {
-                unsigned char buf[64];
-                snprintf(buf, sizeof(buf), "%d", token_val);
-                state->conn->vt->token_remove_expired(state->conn, 0);
-
-                int r = state->conn->vt->token_fetch(state->conn, buf, &token);
-                if (r < 0) {
-                    send_result = send_message(state, bs, mc, "Internal error. Operation canceled.", NULL, NULL);
-                    telegram_chat_state_reset(tcs);
-                    update_state = 1;
-                } else if (!r || !token) {
-                    send_result = send_message(state, bs, mc, "No such token. Try again, or /cancel.", NULL, NULL);
+                int token_val, n;
+                if (sscanf(tem->text, "%d%n", &token_val, &n) != 1 || tem->text[n] || token_val < 0 || token_val >= 1000000) {
+                    send_result = send_message(state, bs, mc, "Token is invalid. Try again, or /cancel.", NULL, NULL);
                 } else {
-                    {
-                        char *msg_s = NULL;
-                        size_t msg_z = 0;
-                        FILE *msg_f = open_memstream(&msg_s, &msg_z);
-                        fprintf(msg_f, "Contest ID: %d", token->contest_id);
-                        if (token->contest_name && *token->contest_name) {
-                            fprintf(msg_f, " (%s)", token->contest_name);
-                        }
-                        fprintf(msg_f, "\n");
-                        fprintf(msg_f, "User:");
-                        if (token->user_login && *token->user_login) {
-                            fprintf(msg_f, "%s", token->user_login);
-                        } else {
-                            fprintf(msg_f, "%d", token->user_id);
-                        }
-                        if (token->user_name && *token->user_name) {
-                            fprintf(msg_f, " (%s)", token->user_name);
-                        }
-                        fprintf(msg_f, "\n");
-                        fprintf(msg_f, "Please, select options. Press /done when done.\n");
-                        fclose(msg_f);
-                        send_result = send_message(state, bs, mc, msg_s, NULL, "{ \"keyboard\": [[{\"text\": \"review\"}, {\"text\": \"reply\"},{\"text\": \"/done\"}, {\"text\":\"/cancel\"}]]}");
-                        free(msg_s);
-                    }
-                    if (send_result && send_result->ok) {
-                        tcs->token = xstrdup(buf);
-                        tcs->state = 2;
+                    unsigned char buf[64];
+                    snprintf(buf, sizeof(buf), "%d", token_val);
+                    state->conn->vt->token_remove_expired(state->conn, 0);
+
+                    int r = state->conn->vt->token_fetch(state->conn, buf, &token);
+                    if (r < 0) {
+                        send_result = send_message(state, bs, mc, "Internal error. Operation canceled.", NULL, NULL);
+                        telegram_chat_state_reset(tcs);
                         update_state = 1;
+                    } else if (!r || !token) {
+                        send_result = send_message(state, bs, mc, "No such token. Try again, or /cancel.", NULL, NULL);
                     } else {
-                        tcs->state = 0;
-                        xfree(tcs->command); tcs->command = NULL;
-                        xfree(tcs->token); tcs->token = NULL;
-                        update_state = 1;
+                        {
+                            char *msg_s = NULL;
+                            size_t msg_z = 0;
+                            FILE *msg_f = open_memstream(&msg_s, &msg_z);
+                            fprintf(msg_f, "Contest ID: %d", token->contest_id);
+                            if (token->contest_name && *token->contest_name) {
+                                fprintf(msg_f, " (%s)", token->contest_name);
+                            }
+                            fprintf(msg_f, "\n");
+                            fprintf(msg_f, "User:");
+                            if (token->user_login && *token->user_login) {
+                                fprintf(msg_f, "%s", token->user_login);
+                            } else {
+                                fprintf(msg_f, "%d", token->user_id);
+                            }
+                            if (token->user_name && *token->user_name) {
+                                fprintf(msg_f, " (%s)", token->user_name);
+                            }
+                            fprintf(msg_f, "\n");
+                            fprintf(msg_f, "Please, select options. Press /done when done.\n");
+                            fclose(msg_f);
+                            send_result = send_message(state, bs, mc, msg_s, NULL, "{ \"keyboard\": [[{\"text\": \"review\"}, {\"text\": \"reply\"},{\"text\": \"/done\"}, {\"text\":\"/cancel\"}]]}");
+                            free(msg_s);
+                        }
+                        if (send_result && send_result->ok) {
+                            tcs->token = xstrdup(buf);
+                            tcs->state = 2;
+                            update_state = 1;
+                        } else {
+                            tcs->state = 0;
+                            xfree(tcs->command); tcs->command = NULL;
+                            xfree(tcs->token); tcs->token = NULL;
+                            update_state = 1;
+                        }
                     }
                 }
             }
