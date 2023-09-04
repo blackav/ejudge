@@ -71,7 +71,7 @@ struct run_test_info
   long  test_checker_size;
 };
 
-struct testinfo_vector
+struct run_test_info_vector
 {
   int reserved, size;
   struct run_test_info *data;

@@ -3043,7 +3043,7 @@ run_one_test(
         const struct section_tester_data *tst,
         struct AgentClient *agent,
         int cur_test,
-        struct testinfo_vector *tests,
+        struct run_test_info_vector *tests,
         full_archive_t far,
         const unsigned char *exe_name,
         const unsigned char *report_path,
@@ -4394,7 +4394,7 @@ check_failed:
 }
 
 static void
-init_testinfo_vector(struct testinfo_vector *tv)
+init_testinfo_vector(struct run_test_info_vector *tv)
 {
   if (!tv) return;
 
@@ -4405,7 +4405,7 @@ init_testinfo_vector(struct testinfo_vector *tv)
 }
 
 static void
-free_testinfo_vector(struct testinfo_vector *tv)
+free_testinfo_vector(struct run_test_info_vector *tv)
 {
   if (tv == NULL || tv->size <= 0 || tv->data == NULL) return;
 
@@ -4478,7 +4478,7 @@ cleanup:
 static int
 handle_test_sets(
         const unsigned char *messages_path,
-        struct testinfo_vector *tv,
+        struct run_test_info_vector *tv,
         int score,
         int test_sets_count,
         struct testset_info *test_sets_val)
@@ -4592,7 +4592,7 @@ check_output_only(
         struct AgentClient *agent,
         full_archive_t far,
         const unsigned char *exe_name,
-        struct testinfo_vector *tests,
+        struct run_test_info_vector *tests,
         const unsigned char *check_cmd,
         const unsigned char *mirror_dir)
 {
@@ -4824,7 +4824,7 @@ static void
 append_skipped_test(
         const struct super_run_in_problem_packet *srpp,
         int cur_test,
-        struct testinfo_vector *tests,
+        struct run_test_info_vector *tests,
         int open_tests_count,
         const int *open_tests_val,
         int test_score_count,
@@ -4887,7 +4887,7 @@ run_tests(
 
   full_archive_t far = NULL;
 
-  struct testinfo_vector tests;
+  struct run_test_info_vector tests;
   int cur_test = 0;
   int has_real_time = 0;
   int has_max_memory_used = 0;
