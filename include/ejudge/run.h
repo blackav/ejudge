@@ -25,6 +25,17 @@ struct section_global_data;
 struct section_problem_data;
 struct super_run_in_packet;
 
+struct run_test_file
+{
+  unsigned char *data;          /* the file content */
+  ssize_t orig_size;            /* the original file size */
+  ssize_t stored_size;          /* the stored (maybe truncated) size */
+  unsigned char is_binary;      /* if this file is binary */
+  unsigned char is_too_long;    /* file size exceeded the maximum allowed */
+  unsigned char is_too_wide;    /* file contained long lines */
+  unsigned char is_here;        /* the file content is here */
+};
+
 struct run_test_info
 {
   int            status;        /* the execution status */
