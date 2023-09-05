@@ -30,10 +30,12 @@ struct run_test_file
   unsigned char *data;          /* the file content */
   ssize_t orig_size;            /* the original file size */
   ssize_t stored_size;          /* the stored (maybe truncated) size */
-  unsigned char is_binary;      /* if this file is binary */
-  unsigned char is_too_long;    /* file size exceeded the maximum allowed */
-  unsigned char is_too_wide;    /* file contained long lines */
   unsigned char is_here;        /* the file content is here */
+  unsigned char is_binary;      /* if this file is binary */
+  unsigned char is_too_long;    /* the content is too long */
+  unsigned char is_too_wide;    /* the content contains too long lines */
+  unsigned char is_fixed;       /* the content is changed in some way */
+  unsigned char is_base64;      /* content is base-64 encoded */
 };
 
 struct run_test_info
@@ -78,8 +80,7 @@ struct run_test_info
   int user_tests_passed;
   int user_nominal_score;
   /* test checker on user input */
-  char *test_checker;
-  long  test_checker_size;
+  struct run_test_file test_checker;
 };
 
 struct run_test_info_vector

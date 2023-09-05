@@ -154,6 +154,41 @@ need_base64(unsigned char *data, long long size)
 }
 
 static void
+make_file_content_2(
+        struct testing_report_file_content *fc,
+        const struct super_run_in_global_packet *srgp,
+        const struct run_test_file *rtf)
+{
+  if (!rtf->is_here) {
+    fc->size = -1;
+    fc->orig_size = -1;
+    fc->data = NULL;
+    fc->is_too_big = 0;
+    fc->is_base64 = 0;
+  } else if (rtf->is_too_long || rtf->is_too_wide) {
+    fc->size = rtf->stored_size;
+    fc->orig_size = rtf->orig_size;
+    fc->is_too_big = 1;
+    fc->is_base64 = rtf->is_base64;
+    if (rtf->data) {
+      fc->data = xmalloc(rtf->stored_size + 1);
+      memcpy(fc->data, rtf->data, rtf->stored_size);
+      fc->data[fc->size] = 0;
+    }
+  } else {
+    fc->size = rtf->stored_size;
+    fc->orig_size = rtf->orig_size;
+    fc->is_too_big = 0;
+    fc->is_base64 = rtf->is_base64;
+    if (rtf->data) {
+      fc->data = xmalloc(rtf->stored_size + 1);
+      memcpy(fc->data, rtf->data, rtf->stored_size);
+      fc->data[fc->size] = 0;
+    }
+  }
+}
+
+static void
 make_file_content(
         struct testing_report_file_content *fc,
         const struct super_run_in_global_packet *srgp,
@@ -447,7 +482,7 @@ generate_xml_report(
         make_file_content(&trt->correct, srgp, ti->correct, ti->correct_size, utf8_mode);
         make_file_content(&trt->error, srgp, ti->error, ti->error_size, utf8_mode);
         make_file_content(&trt->checker, srgp, ti->chk_out, ti->chk_out_size, utf8_mode);
-        make_file_content(&trt->test_checker, srgp, ti->test_checker, ti->test_checker_size, utf8_mode);
+        make_file_content_2(&trt->test_checker, srgp, &ti->test_checker);
       }
     }
   }
@@ -3035,6 +3070,189 @@ cleanup:;
   return retval;
 }
 
+static ssize_t
+get_max_line_length(const unsigned char *data, ssize_t size)
+{
+  ssize_t max_len = 0;
+  ssize_t prev_ind = -1;
+  for (ssize_t i = 0; i < size; ++i) {
+    if (data[i] == '\n') {
+      if (i - prev_ind > max_len) {
+        max_len = i - prev_ind;
+      }
+      prev_ind = i;
+    }
+  }
+  if (size - prev_ind > max_len) {
+    max_len = size - prev_ind;
+  }
+  return max_len;
+}
+
+static void
+trim_long_lines(
+        const unsigned char *data,
+        ssize_t size,
+        int utf8_mode,
+        int max_line_length,
+        unsigned char **p_out_data,
+        ssize_t *p_out_size)
+{
+  char *out_s = NULL;
+  size_t out_z = 0;
+  FILE *out_f = open_memstream(&out_s, &out_z);
+  ssize_t beg_ind = 0;
+  ssize_t ind;
+
+  for (ind = 0; ind < size; ++ind) {
+    if (data[ind] == '\n') {
+      if (ind - beg_ind > max_line_length) {
+        if (utf8_mode) {
+          ssize_t trimmed = utf8_trim_last_codepoint(&data[beg_ind], max_line_length);
+          fwrite_unlocked(&data[beg_ind], 1, trimmed, out_f);
+          fputs_unlocked("…\n", out_f);
+        } else {
+          fwrite_unlocked(&data[beg_ind], 1, max_line_length, out_f);
+          fputs_unlocked("...\n", out_f);
+        }
+      } else {
+        fwrite_unlocked(&data[beg_ind], 1, ind - beg_ind + 1, out_f);
+      }
+      beg_ind = ind + 1;
+    } else if (ind == size - 1) {
+      if (ind - beg_ind + 1 > max_line_length) {
+        if (utf8_mode) {
+          ssize_t trimmed = utf8_trim_last_codepoint(&data[beg_ind], max_line_length);
+          fwrite_unlocked(&data[beg_ind], 1, trimmed, out_f);
+          fputs_unlocked("…", out_f);
+        } else {
+          fwrite_unlocked(&data[beg_ind], 1, max_line_length, out_f);
+          fputs_unlocked("...", out_f);
+        }
+      } else {
+        fwrite_unlocked(&data[beg_ind], 1, ind - beg_ind + 1, out_f);
+      }
+    }
+  }
+
+  fclose(out_f);
+  *p_out_data = out_s;
+  *p_out_size = out_z;
+}
+
+static void
+read_run_test_file(
+        const struct super_run_in_global_packet *srgp,
+        struct run_test_file *rtf,
+        const unsigned char *path,
+        int utf8_mode)
+{
+  int fd = -1;
+  unsigned char *proc_data = NULL;
+  long long proc_size = 0;
+
+  memset(rtf, 0, sizeof(*rtf));
+
+  fd = open(path, O_RDONLY | O_CLOEXEC | O_NOCTTY | O_NONBLOCK, 0);
+  if (fd < 0) {
+    err("%s: cannot open on '%s': %s", __FUNCTION__, path, os_ErrorMsg());
+    return;
+  }
+
+  struct stat stb;
+  if (fstat(fd, &stb) < 0) {
+    err("%s: stat failed on '%s': %s", __FUNCTION__, path, os_ErrorMsg());
+    goto done;
+  }
+  if (stb.st_size < 0) {
+    err("%s: invalid size of '%s': %lld", __FUNCTION__, path,
+        (long long) stb.st_size);
+    goto done;
+  }
+  if (!S_ISREG(stb.st_mode)) {
+    err("%s: not a regular file: '%s'", __FUNCTION__, path);
+    goto done;
+  }
+  if (!stb.st_size) {
+    // empty file
+    rtf->data = xmalloc(1);
+    rtf->data[0] = 0;
+    rtf->is_here = 1;
+    goto done;
+  }
+
+  proc_size = stb.st_size;
+  if (stb.st_size > srgp->max_file_length) {
+    proc_size = srgp->max_file_length;
+  }
+  proc_data = xmalloc(proc_size + 1024);
+
+  {
+    long long rem_size = proc_size;
+    unsigned char *p = proc_data;
+    while (rem_size > 0) {
+      ssize_t r = read(fd, p, rem_size);
+      if (r < 0) {
+        err("%s: read error from '%s': %s", __FUNCTION__, path, os_ErrorMsg());
+        goto done;
+      }
+      if (!r) {
+        err("%s: file truncated '%s'", __FUNCTION__, path);
+        proc_size -= rem_size;
+        break;
+      }
+      rem_size -= r;
+      p += r;
+    }
+    proc_data[proc_size] = 0;
+  }
+  close(fd); fd = -1;
+
+  if (need_base64(proc_data, proc_size)) {
+    // binary file
+    rtf->orig_size = stb.st_size;
+    rtf->is_here = 1;
+    rtf->is_binary = 1;
+    rtf->is_too_long = (stb.st_size > proc_size);
+    rtf->is_base64 = 1;
+    rtf->data = xmalloc(proc_size * 4 / 3 + 64);
+    int len = base64_encode(proc_data, proc_size, rtf->data);
+    rtf->data[len] = 0;
+    rtf->stored_size = len;
+    goto done;
+  }
+
+  if (proc_size != stb.st_size && utf8_mode) {
+    proc_size = utf8_trim_last_codepoint(proc_data, proc_size);
+  }
+
+  ssize_t max_len = get_max_line_length(proc_data, proc_size);
+  if (max_len > srgp->max_line_length) {
+    unsigned char *out_data = NULL;
+    ssize_t out_size = 0;
+    rtf->is_too_long = proc_size != stb.st_size;
+    trim_long_lines(proc_data, proc_size, utf8_mode, srgp->max_line_length,
+                    &out_data, &out_size);
+    xfree(proc_data); proc_data = out_data; out_data = NULL;
+    proc_size = out_size; out_size = 0;
+    rtf->is_too_wide = 1;
+  } else {
+    if (utf8_mode) {
+      utf8_fix_string(proc_data, NULL);
+    }
+    rtf->is_too_long = proc_size != stb.st_size;
+    // FIXME: set is_fixed depending on the number of utf8 fixes
+  }
+  rtf->data = proc_data; proc_data = NULL;
+  rtf->orig_size = stb.st_size;
+  rtf->stored_size = proc_size;
+  rtf->is_here = 1;
+
+done:;
+  xfree(proc_data);
+  if (fd >= 0) close(fd);
+}
+
 static int
 run_one_test(
         const struct ejudge_cfg *config,
@@ -3060,6 +3278,7 @@ run_one_test(
         int *p_has_max_rss,
         long *p_report_time_limit_ms,
         long *p_report_real_time_limit_ms,
+        int utf8_mode,
         const unsigned char *mirror_dir,
         const struct remap_spec *remaps,
         int user_input_mode,
@@ -3531,11 +3750,7 @@ run_one_test(
         status = RUN_CHECK_FAILED;
         goto check_failed;
       }
-      file_size = generic_file_size(0, test_checker_out_path, 0);
-      if (file_size >= 0) {
-        cur_info->test_checker_size = file_size;
-        generic_read_file(&cur_info->test_checker, 0, 0, 0, 0, test_checker_out_path, "");
-      }
+      read_run_test_file(srgp, &cur_info->test_checker, test_checker_out_path, utf8_mode);
       if (r != 0) {
         status = r;
         goto cleanup;
@@ -4424,7 +4639,7 @@ free_testinfo_vector(struct run_test_info_vector *tv)
     xfree(ti->interactor_stats_str);
     xfree(ti->checker_stats_str);
     xfree(ti->checker_token);
-    xfree(ti->test_checker);
+    xfree(ti->test_checker.data);
   }
   memset(tv->data, 0, sizeof(tv->data[0]) * tv->size);
   xfree(tv->data);
@@ -5218,6 +5433,7 @@ run_tests(
                             &has_real_time, &has_max_memory_used,
                             &has_max_rss,
                             &report_time_limit_ms, &report_real_time_limit_ms,
+                            utf8_mode,
                             mirror_dir, remaps,
                             user_input_mode,
                             inp_data,
