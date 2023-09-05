@@ -3237,11 +3237,11 @@ read_run_test_file(
     proc_size = out_size; out_size = 0;
     rtf->is_too_wide = 1;
   } else {
-    if (utf8_mode) {
-      utf8_fix_string(proc_data, NULL);
-    }
     rtf->is_too_long = proc_size != stb.st_size;
     // FIXME: set is_fixed depending on the number of utf8 fixes
+  }
+  if (utf8_mode) {
+    utf8_fix_string(proc_data, NULL);
   }
   rtf->data = proc_data; proc_data = NULL;
   rtf->orig_size = stb.st_size;
