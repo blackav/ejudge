@@ -429,8 +429,8 @@ generate_xml_report(
         trt->checker_token = xstrdup(ti->checker_token);
       }
       if ((ti->status == RUN_WRONG_ANSWER_ERR || ti->status == RUN_PRESENTATION_ERR || ti->status == RUN_OK)
-          && ti->chk_out_size > 0 && ti->chk_out && ti->chk_out[0]) {
-        trt->checker_comment = prepare_checker_comment(utf8_mode, ti->chk_out);
+          && ti->chk_out.data && ti->chk_out.data[0]) {
+        trt->checker_comment = prepare_checker_comment(utf8_mode, ti->chk_out.data);
       }
       if (srgp->enable_full_archive > 0) {
         if (ti->has_input_digest) {
@@ -453,7 +453,7 @@ generate_xml_report(
         if (ti->error_size >= 0) {
           trt->stderr_available = 1;
         }
-        if (ti->chk_out_size >= 0) {
+        if (ti->chk_out.is_here && ti->chk_out.data) {
           trt->checker_output_available = 1;
         }
       }
@@ -481,7 +481,7 @@ generate_xml_report(
         make_file_content(&trt->output, srgp, ti->output, ti->output_size, utf8_mode);
         make_file_content(&trt->correct, srgp, ti->correct, ti->correct_size, utf8_mode);
         make_file_content(&trt->error, srgp, ti->error, ti->error_size, utf8_mode);
-        make_file_content(&trt->checker, srgp, ti->chk_out, ti->chk_out_size, utf8_mode);
+        make_file_content_2(&trt->checker, srgp, &ti->chk_out);
         make_file_content_2(&trt->test_checker, srgp, &ti->test_checker);
       }
     }
@@ -573,31 +573,33 @@ append_msg_to_log(const unsigned char *path, const char *format, ...)
   }
 }
 
-static void
-chk_printf(struct run_test_info *result, const char *format, ...)
+static __attribute__((format(printf, 2, 3))) void
+rtf_printf(struct run_test_file *rtf, const char *format, ...)
 {
   va_list args;
-  unsigned char buf[1024];
+  char *text_s = NULL;
+  size_t text_z = 0;
+  FILE *text_f = NULL;
 
-  va_start(args, format);
-  vsnprintf(buf, sizeof(buf), format, args);
-  va_end(args);
-
-  if (!result->chk_out) {
-    result->chk_out = xstrdup(buf);
-    result->chk_out_size = strlen(result->chk_out);
-  } else {
-    int len1 = strlen(result->chk_out);
-    int len2 = strlen(buf);
-    int len3 = len1 + len2;
-    unsigned char *str = (unsigned char*) xmalloc(len3 + 1);
-    memcpy(str, result->chk_out, len1);
-    memcpy(str + len1, buf, len2);
-    str[len3] = 0;
-    xfree(result->chk_out);
-    result->chk_out = str;
-    result->chk_out_size = len3;
+  text_f = open_memstream(&text_s, &text_z);
+  if (rtf->stored_size > 0 && rtf->data) {
+    fwrite_unlocked(rtf->data, 1, rtf->stored_size, text_f);
   }
+  va_start(args, format);
+  vfprintf(text_f, format, args);
+  va_end(args);
+  fclose(text_f); text_f = NULL;
+
+  free(rtf->data);
+  rtf->data = text_s; text_s = NULL;
+  rtf->stored_size = text_z;
+  rtf->orig_size = text_z;
+  rtf->is_here = 1;
+  rtf->is_binary = 0;
+  rtf->is_too_long = 0;
+  rtf->is_too_wide = 0;
+  rtf->is_fixed = 0;
+  rtf->is_base64 = 0;
 }
 
 static int
@@ -1704,7 +1706,7 @@ invoke_nwrun(
       snprintf(full_spool_dir, sizeof(full_spool_dir), "%s/%s", EJUDGE_CONTESTS_HOME_DIR, tst->nwrun_spool_dir);
 #else
       err("cannot initialize full_spool_dir");
-      chk_printf(result, "full_spool_dir is invalid\n");
+      rtf_printf(&result->chk_out, "full_spool_dir is invalid\n");
       goto fail;
 #endif
     }
@@ -1713,7 +1715,7 @@ invoke_nwrun(
   snprintf(queue_path, sizeof(queue_path), "%s/queue",
            full_spool_dir);
   if (make_all_dir(queue_path, 0777) < 0) {
-    chk_printf(result, "make_all_dir(%s) failed\n", queue_path);
+    rtf_printf(&result->chk_out, "make_all_dir(%s) failed\n", queue_path);
     goto fail;
   }
 
@@ -1727,7 +1729,7 @@ invoke_nwrun(
   snprintf(full_in_path, sizeof(full_in_path),
            "%s/in/%s_%s", queue_path, os_NodeName(), pkt_name);
   if (make_dir(full_in_path, 0777) < 0) {
-    chk_printf(result, "make_dir(%s) failed\n", full_in_path);
+    rtf_printf(&result->chk_out, "make_dir(%s) failed\n", full_in_path);
     goto fail;
   }
 
@@ -1737,7 +1739,7 @@ invoke_nwrun(
   snprintf(tmp_in_path, sizeof(tmp_in_path), "%s/%s",
            full_in_path, exe_basename);
   if (make_hardlink(exe_src_path, tmp_in_path) < 0) {
-    chk_printf(result, "copy(%s, %s) failed\n", exe_src_path, tmp_in_path);
+    rtf_printf(&result->chk_out, "copy(%s, %s) failed\n", exe_src_path, tmp_in_path);
     goto fail;
   }
 
@@ -1745,7 +1747,7 @@ invoke_nwrun(
   snprintf(tmp_in_path, sizeof(tmp_in_path), "%s/%s",
            full_in_path, test_basename);
   if (make_hardlink(test_src_path, tmp_in_path) < 0) {
-    chk_printf(result, "copy(%s, %s) failed\n", test_src_path, tmp_in_path);
+    rtf_printf(&result->chk_out, "copy(%s, %s) failed\n", test_src_path, tmp_in_path);
     goto fail;
   }
 
@@ -1763,7 +1765,7 @@ invoke_nwrun(
   snprintf(tmp_in_path, sizeof(tmp_in_path), "%s/packet.cfg", full_in_path);
   f = fopen(tmp_in_path, "w");
   if (!f) {
-    chk_printf(result, "fopen(%s) failed\n", tmp_in_path);
+    rtf_printf(&result->chk_out, "fopen(%s) failed\n", tmp_in_path);
     goto fail;
   }
 
@@ -1827,7 +1829,7 @@ invoke_nwrun(
 
   fflush(f);
   if (ferror(f)) {
-    chk_printf(result, "output error to %s\n", tmp_in_path);
+    rtf_printf(&result->chk_out, "output error to %s\n", tmp_in_path);
     goto fail;
   }
   fclose(f); f = 0;
@@ -1840,7 +1842,7 @@ invoke_nwrun(
   snprintf(full_dir_path, sizeof(full_dir_path),
            "%s/dir/%s", queue_path, pkt_name);
   if (rename(full_in_path, full_dir_path) < 0) {
-    chk_printf(result, "rename(%s, %s) failed\n", full_in_path, full_dir_path);
+    rtf_printf(&result->chk_out, "rename(%s, %s) failed\n", full_in_path, full_dir_path);
     goto fail;
   }
 
@@ -1859,7 +1861,7 @@ invoke_nwrun(
   while (1) {
     r = scan_dir(result_path, result_pkt_name, sizeof(result_pkt_name), 0);
     if (r < 0) {
-      chk_printf(result, "scan_dir(%s) failed\n", result_path);
+      rtf_printf(&result->chk_out, "scan_dir(%s) failed\n", result_path);
       goto fail;
     }
 
@@ -1869,7 +1871,7 @@ invoke_nwrun(
     //fprintf(stderr, "time: %lld\n", cur_time_ms);
 
     if (cur_time_ms >= wait_end_time) {
-      chk_printf(result, "invoke_nwrun: timeout!\n");
+      rtf_printf(&result->chk_out, "invoke_nwrun: timeout!\n");
       goto fail;
     }
 
@@ -1887,7 +1889,7 @@ invoke_nwrun(
   if (rename(dir_entry_packet, out_entry_packet) < 0) {
     err("rename(%s, %s) failed: %s", dir_entry_packet, out_entry_packet,
         os_ErrorMsg());
-    chk_printf(result, "rename(%s, %s) failed", dir_entry_packet,
+    rtf_printf(&result->chk_out, "rename(%s, %s) failed", dir_entry_packet,
                out_entry_packet);
     goto fail;
   }
@@ -1897,33 +1899,33 @@ invoke_nwrun(
            out_entry_packet);
   generic_out_packet = nwrun_out_packet_parse(tmp_in_path, &out_packet);
   if (!generic_out_packet) {
-    chk_printf(result, "out_packet parse failed for %s\n", tmp_in_path);
+    rtf_printf(&result->chk_out, "out_packet parse failed for %s\n", tmp_in_path);
     goto fail;
   }
 
   // match output and input data
   if (out_packet->contest_id != srgp->contest_id) {
-    chk_printf(result, "contest_id mismatch: %d, %d\n",
+    rtf_printf(&result->chk_out, "contest_id mismatch: %d, %d\n",
                out_packet->contest_id, srgp->contest_id);
     goto restart_waiting;
   }
   if (out_packet->run_id - 1 != srgp->run_id) {
-    chk_printf(result, "run_id mismatch: %d, %d\n",
+    rtf_printf(&result->chk_out, "run_id mismatch: %d, %d\n",
                out_packet->run_id, srgp->run_id);
     goto restart_waiting;
   }
   if (out_packet->prob_id != srpp->id) {
-    chk_printf(result, "prob_id mismatch: %d, %d\n",
+    rtf_printf(&result->chk_out, "prob_id mismatch: %d, %d\n",
                out_packet->prob_id, srpp->id);
     goto restart_waiting;
   }
   if (out_packet->test_num != test_num) {
-    chk_printf(result, "test_num mismatch: %d, %d\n",
+    rtf_printf(&result->chk_out, "test_num mismatch: %d, %d\n",
                out_packet->test_num, test_num);
     goto restart_waiting;
   }
   if (out_packet->judge_id != srgp->judge_id) {
-    chk_printf(result, "judge_id mismatch: %d, %d\n",
+    rtf_printf(&result->chk_out, "judge_id mismatch: %d, %d\n",
                out_packet->judge_id, srgp->judge_id);
     goto restart_waiting;
   }
@@ -1938,12 +1940,12 @@ invoke_nwrun(
       && result->status != RUN_MEM_LIMIT_ERR
       && result->status != RUN_SECURITY_ERR
       && result->status != RUN_SYNC_ERR) {
-    chk_printf(result, "invalid status %d\n", result->status);
+    rtf_printf(&result->chk_out, "invalid status %d\n", result->status);
     goto fail;
   }
 
   if (result->status != RUN_OK && out_packet->comment[0]) {
-    chk_printf(result, "nwrun: %s\n", out_packet->comment);
+    rtf_printf(&result->chk_out, "nwrun: %s\n", out_packet->comment);
   }
 
   if (out_packet->is_signaled) {
@@ -1975,7 +1977,7 @@ invoke_nwrun(
       result->input_size = file_size;
       if (srgp->max_file_length > 0 && file_size <= srgp->max_file_length) {
         if (generic_read_file(&result->input, 0, 0, 0, 0, test_src_path, "")<0){
-          chk_printf(result, "generic_read_file(%s) failed\n", test_src_path);
+          rtf_printf(&result->chk_out, "generic_read_file(%s) failed\n", test_src_path);
           goto fail;
         }
       }
@@ -1992,7 +1994,7 @@ invoke_nwrun(
       snprintf(check_output_path, sizeof(check_output_path),
                "%s/%s", check_dir, srpp->output_file);
       if (fast_copy_file(packet_output_path, check_output_path) < 0) {
-        chk_printf(result, "copy_file(%s, %s) failed\n",
+        rtf_printf(&result->chk_out, "copy_file(%s, %s) failed\n",
                    packet_output_path, check_output_path);
         goto fail;
       }
@@ -2004,7 +2006,7 @@ invoke_nwrun(
         && srgp->max_file_length > 0
         && result->output_size <= srgp->max_file_length) {
       if (generic_read_file(&result->output,0,0,0,0,packet_output_path,"")<0) {
-        chk_printf(result, "generic_read_file(%s) failed\n",
+        rtf_printf(&result->chk_out, "generic_read_file(%s) failed\n",
                    packet_output_path);
         goto fail;
       }
@@ -2015,7 +2017,7 @@ invoke_nwrun(
       full_archive_append_file(far, arch_entry_name, 0, packet_output_path);
     }
   } else if (out_packet->output_file_existed > 0) {
-    chk_printf(result, "output file is too big\n");
+    rtf_printf(&result->chk_out, "output file is too big\n");
   }
 
   /* handle the program error file */
@@ -2027,7 +2029,7 @@ invoke_nwrun(
         && srgp->max_file_length > 0
         && result->error_size <= srgp->max_file_length) {
       if (generic_read_file(&result->error,0,0,0,0,packet_error_path,"") < 0) {
-        chk_printf(result, "generic_read_file(%s) failed\n",
+        rtf_printf(&result->chk_out, "generic_read_file(%s) failed\n",
                    packet_error_path);
         goto fail;
       }
@@ -3439,7 +3441,6 @@ run_one_test(
   cur_info->output_size = -1;
   cur_info->error_size = -1;
   cur_info->correct_size = -1;
-  cur_info->chk_out_size = -1;
   cur_info->visibility = TV_NORMAL;
   if (open_tests_val && cur_test > 0 && cur_test < open_tests_count) {
     cur_info->visibility = open_tests_val[cur_test];
@@ -3534,7 +3535,7 @@ run_one_test(
         cur_info->error_size = 0;
         cur_info->correct = xstrdup("");
         cur_info->correct_size = 0;
-        cur_info->chk_out_size = asprintf(&cur_info->chk_out, "auto-OK for language %s", srgp->lang_short_name);
+        rtf_printf(&cur_info->chk_out, "auto-OK for language %s", srgp->lang_short_name);
         //cur_info->comment = xstrdup(cur_info->chk_out);
         // FIXME: set comment or team_comment
         goto cleanup;
@@ -4558,14 +4559,14 @@ read_checker_output:;
     init_cmd_started = 0;
   }
 
-  file_size = generic_file_size(0, check_out_path, 0);
-  if (file_size >= 0) {
-    cur_info->chk_out_size = file_size;
-    generic_read_file(&cur_info->chk_out, 0, 0, 0, 0, check_out_path, "");
-    if (far) {
+  if (far) {
+    file_size = generic_file_size(0, check_out_path, 0);
+    if (file_size >= 0) {
       snprintf(arch_entry_name, sizeof(arch_entry_name), "%06d.c", cur_test);
       full_archive_append_file(far, arch_entry_name, 0, check_out_path);
     }
+  } else {
+    read_run_test_file(srgp, &cur_info->chk_out, check_out_path, utf8_mode);
   }
 
 cleanup:;
@@ -4630,7 +4631,6 @@ free_testinfo_vector(struct run_test_info_vector *tv)
     xfree(ti->output);
     xfree(ti->error);
     xfree(ti->correct);
-    xfree(ti->chk_out);
     xfree(ti->args);
     xfree(ti->comment);
     xfree(ti->team_comment);
@@ -4640,6 +4640,7 @@ free_testinfo_vector(struct run_test_info_vector *tv)
     xfree(ti->checker_stats_str);
     xfree(ti->checker_token);
     xfree(ti->test_checker.data);
+    xfree(ti->chk_out.data);
   }
   memset(tv->data, 0, sizeof(tv->data[0]) * tv->size);
   xfree(tv->data);
@@ -4809,7 +4810,8 @@ check_output_only(
         const unsigned char *exe_name,
         struct run_test_info_vector *tests,
         const unsigned char *check_cmd,
-        const unsigned char *mirror_dir)
+        const unsigned char *mirror_dir,
+        int utf8_mode)
 {
   int cur_test = 1;
   struct run_test_info *cur_info = NULL;
@@ -4870,7 +4872,6 @@ check_output_only(
   cur_info->output_size = -1;
   cur_info->error_size = -1;
   cur_info->correct_size = -1;
-  cur_info->chk_out_size = -1;
   cur_info->visibility = TV_NORMAL;
   cur_info->user_status = -1;
   cur_info->user_nominal_score = -1;
@@ -4959,14 +4960,14 @@ check_output_only(
     }
   }
 
-  file_size = generic_file_size(0, check_out_path, 0);
-  if (file_size >= 0) {
-    cur_info->chk_out_size = file_size;
-    generic_read_file(&cur_info->chk_out, 0, 0, 0, 0, check_out_path, "");
-    if (far) {
+  if (far) {
+    file_size = generic_file_size(0, check_out_path, 0);
+    if (file_size >= 0) {
       snprintf(arch_entry_name, sizeof(arch_entry_name), "%06d.c", cur_test);
       full_archive_append_file(far, arch_entry_name, 0, check_out_path);
     }
+  } else {
+    read_run_test_file(srgp, &cur_info->chk_out, check_out_path, utf8_mode);
   }
 
   return status;
@@ -5276,7 +5277,8 @@ run_tests(
     status = check_output_only(global, srgp, srpp, reply_pkt,
                                agent,
                                far, exe_name, &tests, check_cmd,
-                               mirror_dir);
+                               mirror_dir,
+                               utf8_mode);
     has_user_score = reply_pkt->has_user_score;
     if (has_user_score) {
       user_status = reply_pkt->user_status;

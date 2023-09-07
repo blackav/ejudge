@@ -63,8 +63,6 @@ struct run_test_info
   unsigned char  correct_digest[32];
   int            has_info_digest;
   unsigned char  info_digest[32];
-  char          *chk_out;       /* checker's output */
-  long           chk_out_size;
   unsigned char *args;          /* command-line arguments */
   unsigned char *comment;       /* judge's comment */
   unsigned char *team_comment;  /* team's comment */
@@ -81,6 +79,7 @@ struct run_test_info
   int user_nominal_score;
   /* test checker on user input */
   struct run_test_file test_checker;
+  struct run_test_file chk_out;
 };
 
 struct run_test_info_vector
