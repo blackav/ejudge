@@ -36,6 +36,7 @@ struct run_test_file
   unsigned char is_too_wide;    /* the content contains too long lines */
   unsigned char is_fixed;       /* the content is changed in some way */
   unsigned char is_base64;      /* content is base-64 encoded */
+  unsigned char is_archived;    /* content is in a separate archive */
 };
 
 struct run_test_info
@@ -55,8 +56,6 @@ struct run_test_info
   unsigned char  input_digest[32];
   char          *output;        /* the output */
   long           output_size;
-  char          *error;         /* the error */
-  long           error_size;
   char          *correct;       /* the correct result */
   long           correct_size;
   int            has_correct_digest;
@@ -80,6 +79,7 @@ struct run_test_info
   /* test checker on user input */
   struct run_test_file test_checker;
   struct run_test_file chk_out;
+  struct run_test_file error;
 };
 
 struct run_test_info_vector

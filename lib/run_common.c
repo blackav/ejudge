@@ -79,6 +79,12 @@ mirror_file(
         unsigned char *buf,
         int size,
         const unsigned char *mirror_dir);
+static void
+read_run_test_file(
+        const struct super_run_in_global_packet *srgp,
+        struct run_test_file *rtf,
+        const unsigned char *path,
+        int utf8_mode);
 
 static unsigned char*
 ej_size64_t_to_size(unsigned char *buf, size_t buf_size, ej_size64_t num)
@@ -450,12 +456,8 @@ generate_xml_report(
         if (ti->output_size >= 0) {
           trt->output_available = 1;
         }
-        if (ti->error_size >= 0) {
-          trt->stderr_available = 1;
-        }
-        if (ti->chk_out.is_here && ti->chk_out.data) {
-          trt->checker_output_available = 1;
-        }
+        trt->stderr_available = ti->error.is_archived;
+        trt->checker_output_available = ti->chk_out.is_archived;
       }
       if (ti->args && strlen(ti->args) >= srgp->max_cmd_length) {
         trt->args_too_long = 1;
@@ -480,7 +482,7 @@ generate_xml_report(
         make_file_content(&trt->input, srgp, ti->input, ti->input_size, utf8_mode);
         make_file_content(&trt->output, srgp, ti->output, ti->output_size, utf8_mode);
         make_file_content(&trt->correct, srgp, ti->correct, ti->correct_size, utf8_mode);
-        make_file_content(&trt->error, srgp, ti->error, ti->error_size, utf8_mode);
+        make_file_content_2(&trt->error, srgp, &ti->error);
         make_file_content_2(&trt->checker, srgp, &ti->chk_out);
         make_file_content_2(&trt->test_checker, srgp, &ti->test_checker);
       }
@@ -2024,19 +2026,15 @@ invoke_nwrun(
   if (out_packet->error_file_existed > 0) {
     snprintf(packet_error_path, sizeof(packet_error_path),
              "%s/%s", out_entry_packet, error_file_name);
-    result->error_size = out_packet->error_file_size;
-    if (srgp->enable_full_archive <= 0
-        && srgp->max_file_length > 0
-        && result->error_size <= srgp->max_file_length) {
-      if (generic_read_file(&result->error,0,0,0,0,packet_error_path,"") < 0) {
-        rtf_printf(&result->chk_out, "generic_read_file(%s) failed\n",
-                   packet_error_path);
-        goto fail;
-      }
-    }
     if (far) {
-      snprintf(arch_entry_name, sizeof(arch_entry_name), "%06d.e", test_num);
-      full_archive_append_file(far, arch_entry_name, 0, packet_error_path);
+      file_size = generic_file_size(0, packet_error_path, 0);
+      if (file_size >= 0) {
+        result->error.is_archived = 1;
+        snprintf(arch_entry_name, sizeof(arch_entry_name), "%06d.e", test_num);
+        full_archive_append_file(far, arch_entry_name, 0, packet_error_path);
+      }
+    } else {
+      read_run_test_file(srgp, &result->error, packet_error_path, 0);
     }
   }
 
@@ -3439,7 +3437,6 @@ run_one_test(
 
   cur_info->input_size = -1;
   cur_info->output_size = -1;
-  cur_info->error_size = -1;
   cur_info->correct_size = -1;
   cur_info->visibility = TV_NORMAL;
   if (open_tests_val && cur_test > 0 && cur_test < open_tests_count) {
@@ -3531,8 +3528,6 @@ run_one_test(
         cur_info->input_size = 0;
         cur_info->output = xstrdup("");
         cur_info->output_size = 0;
-        cur_info->error = xstrdup("");
-        cur_info->error_size = 0;
         cur_info->correct = xstrdup("");
         cur_info->correct_size = 0;
         rtf_printf(&cur_info->chk_out, "auto-OK for language %s", srgp->lang_short_name);
@@ -4311,18 +4306,16 @@ run_one_test(
   }
 
   // error file
-  file_size = -1;
   if (error_path[0]) {
-    file_size = generic_file_size(0, error_path, 0);
-  }
-  if (file_size >= 0) {
-    cur_info->error_size = file_size;
-    if (srgp->max_file_length > 0 && srgp->enable_full_archive <= 0 && file_size <= srgp->max_file_length) {
-      generic_read_file(&cur_info->error, 0, 0, 0, 0, error_path, "");
-    }
     if (far) {
-      snprintf(arch_entry_name, sizeof(arch_entry_name), "%06d.e", cur_test);
-      full_archive_append_file(far, arch_entry_name, 0, error_path);
+      file_size = generic_file_size(0, error_path, 0);
+      if (file_size >= 0) {
+        cur_info->error.is_archived = 1;
+        snprintf(arch_entry_name, sizeof(arch_entry_name), "%06d.e", cur_test);
+        full_archive_append_file(far, arch_entry_name, 0, error_path);
+      }
+    } else {
+      read_run_test_file(srgp, &cur_info->error, error_path, utf8_mode);
     }
   }
 
@@ -4400,7 +4393,7 @@ run_one_test(
   }
 
   if (tst && tst->memory_limit_type_val == MEMLIMIT_TYPE_JAVA && srgp->enable_memory_limit_error > 0
-      && task_IsAbnormal(tsk) && is_java_memory_limit(cur_info->error, cur_info->error_size)) {
+      && task_IsAbnormal(tsk) && is_java_memory_limit(cur_info->error.data, cur_info->error.orig_size)) {
     status = RUN_MEM_LIMIT_ERR;
     if (tsk_int) goto read_checker_output;
     goto cleanup;
@@ -4497,7 +4490,7 @@ run_checker:;
     goto cleanup;
   }
 
-  if (disable_stderr > 0 && cur_info->error_size > 0) {
+  if (disable_stderr > 0 && cur_info->error.orig_size > 0) {
     append_msg_to_log(check_out_path, "non-empty output to stderr");
     if (srpp->disable_pe > 0) {
       status = RUN_WRONG_ANSWER_ERR;
@@ -4562,6 +4555,7 @@ read_checker_output:;
   if (far) {
     file_size = generic_file_size(0, check_out_path, 0);
     if (file_size >= 0) {
+      cur_info->chk_out.is_archived = 1;
       snprintf(arch_entry_name, sizeof(arch_entry_name), "%06d.c", cur_test);
       full_archive_append_file(far, arch_entry_name, 0, check_out_path);
     }
@@ -4629,7 +4623,6 @@ free_testinfo_vector(struct run_test_info_vector *tv)
     struct run_test_info *ti = &tv->data[i];
     xfree(ti->input);
     xfree(ti->output);
-    xfree(ti->error);
     xfree(ti->correct);
     xfree(ti->args);
     xfree(ti->comment);
@@ -4639,8 +4632,9 @@ free_testinfo_vector(struct run_test_info_vector *tv)
     xfree(ti->interactor_stats_str);
     xfree(ti->checker_stats_str);
     xfree(ti->checker_token);
-    xfree(ti->test_checker.data);
+    xfree(ti->error.data);
     xfree(ti->chk_out.data);
+    xfree(ti->test_checker.data);
   }
   memset(tv->data, 0, sizeof(tv->data[0]) * tv->size);
   xfree(tv->data);
@@ -4870,7 +4864,6 @@ check_output_only(
 
   cur_info->input_size = -1;
   cur_info->output_size = -1;
-  cur_info->error_size = -1;
   cur_info->correct_size = -1;
   cur_info->visibility = TV_NORMAL;
   cur_info->user_status = -1;
@@ -4963,6 +4956,7 @@ check_output_only(
   if (far) {
     file_size = generic_file_size(0, check_out_path, 0);
     if (file_size >= 0) {
+      cur_info->chk_out.is_archived = 1;
       snprintf(arch_entry_name, sizeof(arch_entry_name), "%06d.c", cur_test);
       full_archive_append_file(far, arch_entry_name, 0, check_out_path);
     }
