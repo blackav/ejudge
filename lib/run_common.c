@@ -194,7 +194,7 @@ make_file_content_2(
   }
 }
 
-static void
+static __attribute__((unused))  void
 make_file_content(
         struct testing_report_file_content *fc,
         const struct super_run_in_global_packet *srgp,
@@ -500,7 +500,7 @@ generate_xml_report(
         trt->args = xstrdup(ti->args);
       }
       if (srgp->enable_full_archive <= 0) {
-        make_file_content(&trt->input, srgp, ti->input, ti->input_size, utf8_mode);
+        make_file_content_2(&trt->input, srgp, &ti->input);
         make_file_content_2(&trt->output, srgp, &ti->output);
         make_file_content_2(&trt->correct, srgp, &ti->correct);
         make_file_content_2(&trt->error, srgp, &ti->error);
@@ -2000,17 +2000,8 @@ invoke_nwrun(
   if (srgp->enable_full_archive > 0) {
     filehash_get(test_src_path, result->input_digest);
     result->has_input_digest = 1;
-  } else if (srpp->binary_input <= 0) {
-    file_size = generic_file_size(0, test_src_path, 0);
-    if (file_size >= 0) {
-      result->input_size = file_size;
-      if (srgp->max_file_length > 0 && file_size <= srgp->max_file_length) {
-        if (generic_read_file(&result->input, 0, 0, 0, 0, test_src_path, "")<0){
-          rtf_printf(&result->chk_out, "generic_read_file(%s) failed\n", test_src_path);
-          goto fail;
-        }
-      }
-    }
+  } else {
+    read_run_test_file(srgp, &result->input, test_src_path, 0);
   }
 
   /* handle the program output */
@@ -3464,7 +3455,6 @@ run_one_test(
   cur_info = &tests->data[cur_test];
   ++tests->size;
 
-  cur_info->input_size = -1;
   cur_info->visibility = TV_NORMAL;
   if (open_tests_val && cur_test > 0 && cur_test < open_tests_count) {
     cur_info->visibility = open_tests_val[cur_test];
@@ -3551,8 +3541,6 @@ run_one_test(
       if (i < tstinfo.ok_language.u) {
         // mark this test as successfully passed
         status = RUN_OK; // FIXME: RUN_SKIPPED?
-        cur_info->input = xstrdup("");
-        cur_info->input_size = 0;
         rtf_printf(&cur_info->chk_out, "auto-OK for language %s", srgp->lang_short_name);
         //cur_info->comment = xstrdup(cur_info->chk_out);
         // FIXME: set comment or team_comment
@@ -4290,25 +4278,19 @@ run_one_test(
 
   // input file
   if (user_input_mode) {
-    cur_info->input_size = inp_size;
-    cur_info->input = xmalloc(inp_size + 1);
-    memcpy(cur_info->input, inp_data, inp_size);
-    cur_info->input[inp_size] = 0;
+    struct run_test_file *rtf = &cur_info->input;
+    rtf->data = xmalloc(inp_size + 1);
+    memcpy(rtf->data, inp_data, inp_size);
+    rtf->data[inp_size] = 0;
+    rtf->orig_size = inp_size;
+    rtf->stored_size = inp_size;
+    rtf->is_here = 1;
   } else {
-    file_size = -1;
     if (srgp->enable_full_archive > 0) {
       filehash_get(test_src, cur_info->input_digest);
       cur_info->has_input_digest = 1;
     } else {
-      if (srpp->binary_input <= 0) {
-        file_size = generic_file_size(0, test_src, 0);
-      }
-      if (file_size >= 0) {
-        cur_info->input_size = file_size;
-        if (srgp->max_file_length > 0 && file_size <= srgp->max_file_length) {
-          generic_read_file(&cur_info->input, 0, 0, 0, 0, test_src, "");
-        }
-      }
+      read_run_test_file(srgp, &cur_info->input, test_src, utf8_mode);
     }
   }
 
@@ -4632,7 +4614,6 @@ free_testinfo_vector(struct run_test_info_vector *tv)
 
   for (int i = 0; i < tv->size; ++i) {
     struct run_test_info *ti = &tv->data[i];
-    xfree(ti->input);
     xfree(ti->args);
     xfree(ti->comment);
     xfree(ti->team_comment);
@@ -4641,6 +4622,7 @@ free_testinfo_vector(struct run_test_info_vector *tv)
     xfree(ti->interactor_stats_str);
     xfree(ti->checker_stats_str);
     xfree(ti->checker_token);
+    xfree(ti->input.data);
     xfree(ti->output.data);
     xfree(ti->correct.data);
     xfree(ti->error.data);
@@ -4873,7 +4855,6 @@ check_output_only(
   unlink(check_out_path);
   unlink(score_out_path);
 
-  cur_info->input_size = -1;
   cur_info->visibility = TV_NORMAL;
   cur_info->user_status = -1;
   cur_info->user_nominal_score = -1;

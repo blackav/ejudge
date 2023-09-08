@@ -50,8 +50,6 @@ struct run_test_info
   long           real_time;     /* execution real time */
   unsigned long  max_memory_used;
   long long      max_rss;
-  char          *input;         /* the input */
-  long           input_size;
   int            has_input_digest;
   unsigned char  input_digest[32];
   int            has_correct_digest;
@@ -73,6 +71,7 @@ struct run_test_info
   int user_tests_passed;
   int user_nominal_score;
   /* test checker on user input */
+  struct run_test_file input;
   struct run_test_file output;
   struct run_test_file correct;
   struct run_test_file error;
