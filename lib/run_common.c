@@ -502,7 +502,7 @@ generate_xml_report(
       if (srgp->enable_full_archive <= 0) {
         make_file_content(&trt->input, srgp, ti->input, ti->input_size, utf8_mode);
         make_file_content_2(&trt->output, srgp, &ti->output);
-        make_file_content(&trt->correct, srgp, ti->correct, ti->correct_size, utf8_mode);
+        make_file_content_2(&trt->correct, srgp, &ti->correct);
         make_file_content_2(&trt->error, srgp, &ti->error);
         make_file_content_2(&trt->checker, srgp, &ti->chk_out);
         make_file_content_2(&trt->test_checker, srgp, &ti->test_checker);
@@ -3465,7 +3465,6 @@ run_one_test(
   ++tests->size;
 
   cur_info->input_size = -1;
-  cur_info->correct_size = -1;
   cur_info->visibility = TV_NORMAL;
   if (open_tests_val && cur_test > 0 && cur_test < open_tests_count) {
     cur_info->visibility = open_tests_val[cur_test];
@@ -3554,8 +3553,6 @@ run_one_test(
         status = RUN_OK; // FIXME: RUN_SKIPPED?
         cur_info->input = xstrdup("");
         cur_info->input_size = 0;
-        cur_info->correct = xstrdup("");
-        cur_info->correct_size = 0;
         rtf_printf(&cur_info->chk_out, "auto-OK for language %s", srgp->lang_short_name);
         //cur_info->comment = xstrdup(cur_info->chk_out);
         // FIXME: set comment or team_comment
@@ -4528,15 +4525,7 @@ run_checker:;
       filehash_get(corr_src, cur_info->correct_digest);
       cur_info->has_correct_digest = 1;
     } else {
-      if (srpp->binary_input <= 0) {
-        file_size = generic_file_size(0, corr_src, 0);
-      }
-      if (file_size >= 0) {
-        cur_info->correct_size = file_size;
-        if (srgp->max_file_length > 0 && file_size <= srgp->max_file_length) {
-          generic_read_file(&cur_info->correct, 0, 0, 0, 0, corr_src, "");
-        }
-      }
+      read_run_test_file(srgp, &cur_info->correct, corr_src, utf8_mode);
     }
   }
 
@@ -4644,7 +4633,6 @@ free_testinfo_vector(struct run_test_info_vector *tv)
   for (int i = 0; i < tv->size; ++i) {
     struct run_test_info *ti = &tv->data[i];
     xfree(ti->input);
-    xfree(ti->correct);
     xfree(ti->args);
     xfree(ti->comment);
     xfree(ti->team_comment);
@@ -4654,6 +4642,7 @@ free_testinfo_vector(struct run_test_info_vector *tv)
     xfree(ti->checker_stats_str);
     xfree(ti->checker_token);
     xfree(ti->output.data);
+    xfree(ti->correct.data);
     xfree(ti->error.data);
     xfree(ti->chk_out.data);
     xfree(ti->test_checker.data);
@@ -4885,7 +4874,6 @@ check_output_only(
   unlink(score_out_path);
 
   cur_info->input_size = -1;
-  cur_info->correct_size = -1;
   cur_info->visibility = TV_NORMAL;
   cur_info->user_status = -1;
   cur_info->user_nominal_score = -1;
@@ -4958,15 +4946,7 @@ check_output_only(
       filehash_get(corr_src, cur_info->correct_digest);
       cur_info->has_correct_digest = 1;
     } else {
-      if (srpp->binary_input <= 0) {
-        file_size = generic_file_size(0, corr_src, 0);
-      }
-      if (file_size >= 0) {
-        cur_info->correct_size = file_size;
-        if (srgp->max_file_length > 0 && file_size <= srgp->max_file_length) {
-          generic_read_file(&cur_info->correct, 0, 0, 0, 0, corr_src, "");
-        }
-      }
+      read_run_test_file(srgp, &cur_info->correct, corr_src, utf8_mode);
     }
   }
 

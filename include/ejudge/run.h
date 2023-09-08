@@ -54,8 +54,6 @@ struct run_test_info
   long           input_size;
   int            has_input_digest;
   unsigned char  input_digest[32];
-  char          *correct;       /* the correct result */
-  long           correct_size;
   int            has_correct_digest;
   unsigned char  correct_digest[32];
   int            has_info_digest;
@@ -76,6 +74,7 @@ struct run_test_info
   int user_nominal_score;
   /* test checker on user input */
   struct run_test_file output;
+  struct run_test_file correct;
   struct run_test_file error;
   struct run_test_file chk_out;
   struct run_test_file test_checker;
