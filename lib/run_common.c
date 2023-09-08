@@ -249,6 +249,29 @@ static const unsigned int status_to_bit_map[] =
   [RUN_SYNC_ERR]            = RUN_SYNC_ERR_BIT,
 };
 
+static __attribute__((unused)) void
+print_run_test_file(
+        FILE *fout,
+        const unsigned char *title,
+        const struct run_test_file *rtf)
+{
+  fprintf(fout, "%s: { "
+          "\"orig_size\": %zd,"
+          "\"stored_size\": %zd,"
+          "\"is_here\":%d,"
+          "\"is_binary\":%d,"
+          "\"is_too_long\":%d,"
+          "\"is_too_wide\":%d,"
+          "\"is_fixed\":%d,"
+          "\"is_base64\":%d,"
+          "\"is_archived\":%d,"
+          "}\n",
+          title, rtf->orig_size, rtf->stored_size,
+          rtf->is_here, rtf->is_binary, rtf->is_too_long,
+          rtf->is_too_wide, rtf->is_fixed,
+          rtf->is_base64, rtf->is_archived);
+}
+
 static int
 generate_xml_report(
         const struct super_run_in_packet *srp,
@@ -453,9 +476,7 @@ generate_xml_report(
         }
       }
       if (srgp->enable_full_archive > 0) {
-        if (ti->output_size >= 0) {
-          trt->output_available = 1;
-        }
+        trt->output_available = ti->output.is_archived;
         trt->stderr_available = ti->error.is_archived;
         trt->checker_output_available = ti->chk_out.is_archived;
       }
@@ -480,11 +501,17 @@ generate_xml_report(
       }
       if (srgp->enable_full_archive <= 0) {
         make_file_content(&trt->input, srgp, ti->input, ti->input_size, utf8_mode);
-        make_file_content(&trt->output, srgp, ti->output, ti->output_size, utf8_mode);
+        make_file_content_2(&trt->output, srgp, &ti->output);
         make_file_content(&trt->correct, srgp, ti->correct, ti->correct_size, utf8_mode);
         make_file_content_2(&trt->error, srgp, &ti->error);
         make_file_content_2(&trt->checker, srgp, &ti->chk_out);
         make_file_content_2(&trt->test_checker, srgp, &ti->test_checker);
+
+        /*
+        char buf[64];
+        snprintf(buf, sizeof(buf), "RTF %d: ", i);
+        print_run_test_file(stderr, buf, &ti->output);
+        */
       }
     }
   }
@@ -2002,18 +2029,7 @@ invoke_nwrun(
       }
     }
 
-    result->output_size = out_packet->output_file_orig_size;
-    if (srgp->enable_full_archive <= 0
-        && srpp->binary_input <= 0
-        && srgp->max_file_length > 0
-        && result->output_size <= srgp->max_file_length) {
-      if (generic_read_file(&result->output,0,0,0,0,packet_output_path,"")<0) {
-        rtf_printf(&result->chk_out, "generic_read_file(%s) failed\n",
-                   packet_output_path);
-        goto fail;
-      }
-    }
-
+    read_run_test_file(srgp, &result->output, packet_output_path, 0);
     if (far) {
       snprintf(arch_entry_name, sizeof(arch_entry_name), "%06d.o", test_num);
       full_archive_append_file(far, arch_entry_name, 0, packet_output_path);
@@ -3436,7 +3452,6 @@ run_one_test(
   ++tests->size;
 
   cur_info->input_size = -1;
-  cur_info->output_size = -1;
   cur_info->correct_size = -1;
   cur_info->visibility = TV_NORMAL;
   if (open_tests_val && cur_test > 0 && cur_test < open_tests_count) {
@@ -3526,8 +3541,6 @@ run_one_test(
         status = RUN_OK; // FIXME: RUN_SKIPPED?
         cur_info->input = xstrdup("");
         cur_info->input_size = 0;
-        cur_info->output = xstrdup("");
-        cur_info->output_size = 0;
         cur_info->correct = xstrdup("");
         cur_info->correct_size = 0;
         rtf_printf(&cur_info->chk_out, "auto-OK for language %s", srgp->lang_short_name);
@@ -4290,19 +4303,15 @@ run_one_test(
   }
 
   // output file
-  file_size = -1;
-  if (srpp->binary_input <= 0) {
+  if (far) {
     file_size = generic_file_size(0, output_path, 0);
-  }
-  if (file_size >= 0) {
-    cur_info->output_size = file_size;
-    if (srgp->max_file_length > 0 && srgp->enable_full_archive <= 0 && file_size <= srgp->max_file_length) {
-      generic_read_file(&cur_info->output, 0, 0, 0, 0, output_path, "");
-    }
-    if (far) {
+    if (file_size >= 0) {
+      cur_info->output.is_archived = 1;
       snprintf(arch_entry_name, sizeof(arch_entry_name), "%06d.o", cur_test);
       full_archive_append_file(far, arch_entry_name, 0, output_path);
     }
+  } else {
+    read_run_test_file(srgp, &cur_info->output, output_path, utf8_mode);
   }
 
   // error file
@@ -4622,7 +4631,6 @@ free_testinfo_vector(struct run_test_info_vector *tv)
   for (int i = 0; i < tv->size; ++i) {
     struct run_test_info *ti = &tv->data[i];
     xfree(ti->input);
-    xfree(ti->output);
     xfree(ti->correct);
     xfree(ti->args);
     xfree(ti->comment);
@@ -4632,6 +4640,7 @@ free_testinfo_vector(struct run_test_info_vector *tv)
     xfree(ti->interactor_stats_str);
     xfree(ti->checker_stats_str);
     xfree(ti->checker_token);
+    xfree(ti->output.data);
     xfree(ti->error.data);
     xfree(ti->chk_out.data);
     xfree(ti->test_checker.data);
@@ -4863,7 +4872,6 @@ check_output_only(
   unlink(score_out_path);
 
   cur_info->input_size = -1;
-  cur_info->output_size = -1;
   cur_info->correct_size = -1;
   cur_info->visibility = TV_NORMAL;
   cur_info->user_status = -1;
@@ -4920,19 +4928,15 @@ check_output_only(
   }
 
   // output file
-  file_size = -1;
-  if (srpp->binary_input <= 0) {
+  if (far) {
     file_size = generic_file_size(0, output_path, 0);
-  }
-  if (file_size >= 0) {
-    cur_info->output_size = file_size;
-    if (srgp->max_file_length > 0 && srgp->enable_full_archive <= 0 && file_size <= srgp->max_file_length) {
-      generic_read_file(&cur_info->output, 0, 0, 0, 0, output_path, "");
-    }
-    if (far) {
+    if (file_size >= 0) {
+      cur_info->output.is_archived = 1;
       snprintf(arch_entry_name, sizeof(arch_entry_name), "%06d.o", cur_test);
       full_archive_append_file(far, arch_entry_name, 0, output_path);
     }
+  } else {
+    read_run_test_file(srgp, &cur_info->output, output_path, utf8_mode);
   }
 
   file_size = -1;
