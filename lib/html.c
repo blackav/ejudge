@@ -1225,8 +1225,11 @@ html_print_testing_report_file_content(
     abort();
   }
 
-  if (fc->is_too_big) {
-  } else if (fc->is_base64) {
+  if (fc->is_too_big && !fc->data) {
+    return;
+  }
+
+  if (fc->is_base64) {
     const unsigned char * const *at = html_get_armor_table();
     int b64len = strlen(fc->data);
     unsigned char *data = xmalloc(b64len + 1);
