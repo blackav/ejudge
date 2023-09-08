@@ -51,7 +51,7 @@ parse_file(bson_iter_t *bi, struct testing_report_file_content *fc)
         case Tag_original_size:
             {
                 long long original_size = -1;
-                if (ej_bson_parse_int64_new(bi, key, &original_size) < 0 || original_size < 0)
+                if (ej_bson_parse_int64_new(bi, key, &original_size) < 0)
                     return -1;
                 fc->orig_size = original_size;
             }
@@ -819,22 +819,21 @@ unparse_file_content(
         bson_append_document_begin(b, tag, -1, &b_fc);
         if (fc->is_too_big) {
             bson_append_bool(&b_fc, tag_table[Tag_too_big], -1, 1);
-            bson_append_int64(&b_fc, tag_table[Tag_original_size], -1, fc->orig_size);
-        } else {
-            bson_append_int64(&b_fc, tag_table[Tag_size], -1, fc->size);
-            if (fc->is_base64 > 0) {
-                bson_append_bool(&b_fc, tag_table[Tag_base64], -1, 1);
-            }
-            if (fc->is_bzip2 > 0) {
-                bson_append_bool(&b_fc, tag_table[Tag_bzip2], -1, 1);
-            }
-            if (fc->data) {
-                if (fc->is_base64 > 0) {
-                    bson_append_utf8(&b_fc, tag_table[Tag_data], -1, fc->data, -1);
-                } else {
-                    bson_append_binary(&b_fc, tag_table[Tag_data], -1, BSON_SUBTYPE_USER, fc->data, fc->size);
-                }
-            }
+        }
+        bson_append_int64(&b_fc, tag_table[Tag_original_size], -1, fc->orig_size);
+        bson_append_int64(&b_fc, tag_table[Tag_size], -1, fc->size);
+        if (fc->is_base64 > 0) {
+          bson_append_bool(&b_fc, tag_table[Tag_base64], -1, 1);
+        }
+        if (fc->is_bzip2 > 0) {
+          bson_append_bool(&b_fc, tag_table[Tag_bzip2], -1, 1);
+        }
+        if (fc->data) {
+          if (fc->is_base64 > 0) {
+            bson_append_utf8(&b_fc, tag_table[Tag_data], -1, fc->data, -1);
+          } else {
+            bson_append_binary(&b_fc, tag_table[Tag_data], -1, BSON_SUBTYPE_USER, fc->data, fc->size);
+          }
         }
         bson_append_document_end(b, &b_fc);
     }
