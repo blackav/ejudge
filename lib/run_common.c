@@ -3254,10 +3254,23 @@ read_run_test_file(
     rtf->is_too_wide = 1;
   } else {
     rtf->is_too_long = proc_size != stb.st_size;
-    // FIXME: set is_fixed depending on the number of utf8 fixes
+  }
+  if (rtf->is_too_long) {
+    if (utf8_mode) {
+      static const char append_str[] = "\n…\n";
+      proc_data = xrealloc(proc_data, proc_size + 64);
+      strcpy(proc_data + proc_size, append_str);
+      proc_size += sizeof(append_str) - 1;
+    } else {
+      static const char append_str[] = "\n...\n";
+      proc_data = xrealloc(proc_data, proc_size + 64);
+      strcpy(proc_data + proc_size, append_str);
+      proc_size += sizeof(append_str) - 1;
+    }
   }
   if (utf8_mode) {
     utf8_fix_string(proc_data, NULL);
+    // FIXME: set is_fixed depending on the number of utf8 fixes
   }
   rtf->data = proc_data; proc_data = NULL;
   rtf->orig_size = stb.st_size;
