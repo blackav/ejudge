@@ -361,23 +361,13 @@ parse_file(
     xml_err_nested_elems(t);
     goto failure;
   }
-  if (oversized) {
-    if (orig_size < 0) {
-      orig_size = 0;
-    }
-    fc->data = NULL;
-    fc->size = 0;
-    fc->is_too_big = oversized;
-    fc->orig_size = orig_size;
-    fc->is_base64 = 0;
-  } else {
-    if (size < 0) size = strlen(t->text);
-    fc->data = t->text; t->text = 0;
-    fc->size = size;
-    fc->is_too_big = 0;
-    fc->orig_size = -1;
-    fc->is_base64 = base64;
-  }
+
+  if (size < 0) size = strlen(t->text);
+  fc->data = t->text; t->text = NULL;
+  fc->size = size;
+  fc->is_too_big = oversized;
+  fc->orig_size = orig_size;
+  fc->is_base64 = base64;
 
   return 0;
 
@@ -1557,9 +1547,9 @@ unparse_file_content(
     fprintf(out, "      <%s", elem_map[elem_index]);
     if (fc->is_too_big) {
       unparse_bool_attr(out, TR_A_TOO_BIG, 1);
+    }
+    if (fc->orig_size >= 0) {
       fprintf(out, " %s=\"%lld\"", attr_map[TR_A_ORIGINAL_SIZE], fc->orig_size);
-      fprintf(out, " />\n");
-      return;
     }
 
     fprintf(out, " %s=\"%lld\"", attr_map[TR_A_SIZE], fc->size);
