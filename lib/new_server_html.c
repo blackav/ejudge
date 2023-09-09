@@ -18886,6 +18886,11 @@ ns_handle_http_request(
           ++s;
         }
       }
+      for (; args_i < phr->rest_count; ++args_i) {
+        unsigned char *q = alloca(1);
+        q[0] = 0;
+        phr->rest_args[args_i] = q;
+      }
     }
 
     /*
