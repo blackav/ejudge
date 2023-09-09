@@ -79,6 +79,12 @@ mirror_file(
         unsigned char *buf,
         int size,
         const unsigned char *mirror_dir);
+static void
+read_run_test_file(
+        const struct super_run_in_global_packet *srgp,
+        struct run_test_file *rtf,
+        const unsigned char *path,
+        int utf8_mode);
 
 static unsigned char*
 ej_size64_t_to_size(unsigned char *buf, size_t buf_size, ej_size64_t num)
@@ -154,6 +160,41 @@ need_base64(unsigned char *data, long long size)
 }
 
 static void
+make_file_content_2(
+        struct testing_report_file_content *fc,
+        const struct super_run_in_global_packet *srgp,
+        const struct run_test_file *rtf)
+{
+  if (!rtf->is_here) {
+    fc->size = -1;
+    fc->orig_size = -1;
+    fc->data = NULL;
+    fc->is_too_big = 0;
+    fc->is_base64 = 0;
+  } else if (rtf->is_too_long || rtf->is_too_wide) {
+    fc->size = rtf->stored_size;
+    fc->orig_size = rtf->orig_size;
+    fc->is_too_big = 1;
+    fc->is_base64 = rtf->is_base64;
+    if (rtf->data) {
+      fc->data = xmalloc(rtf->stored_size + 1);
+      memcpy(fc->data, rtf->data, rtf->stored_size);
+      fc->data[fc->size] = 0;
+    }
+  } else {
+    fc->size = rtf->stored_size;
+    fc->orig_size = rtf->orig_size;
+    fc->is_too_big = 0;
+    fc->is_base64 = rtf->is_base64;
+    if (rtf->data) {
+      fc->data = xmalloc(rtf->stored_size + 1);
+      memcpy(fc->data, rtf->data, rtf->stored_size);
+      fc->data[fc->size] = 0;
+    }
+  }
+}
+
+static __attribute__((unused))  void
 make_file_content(
         struct testing_report_file_content *fc,
         const struct super_run_in_global_packet *srgp,
@@ -208,13 +249,36 @@ static const unsigned int status_to_bit_map[] =
   [RUN_SYNC_ERR]            = RUN_SYNC_ERR_BIT,
 };
 
+static __attribute__((unused)) void
+print_run_test_file(
+        FILE *fout,
+        const unsigned char *title,
+        const struct run_test_file *rtf)
+{
+  fprintf(fout, "%s: { "
+          "\"orig_size\": %zd,"
+          "\"stored_size\": %zd,"
+          "\"is_here\":%d,"
+          "\"is_binary\":%d,"
+          "\"is_too_long\":%d,"
+          "\"is_too_wide\":%d,"
+          "\"is_fixed\":%d,"
+          "\"is_base64\":%d,"
+          "\"is_archived\":%d,"
+          "}\n",
+          title, rtf->orig_size, rtf->stored_size,
+          rtf->is_here, rtf->is_binary, rtf->is_too_long,
+          rtf->is_too_wide, rtf->is_fixed,
+          rtf->is_base64, rtf->is_archived);
+}
+
 static int
 generate_xml_report(
         const struct super_run_in_packet *srp,
         struct run_reply_packet *reply_pkt,
         const unsigned char *report_path,
         int total_tests,
-        const struct testinfo *tests,
+        const struct run_test_info *tests,
         int utf8_mode,
         int variant,
         int scores,
@@ -342,7 +406,7 @@ generate_xml_report(
     for (i = 1; i < total_tests; ++i) {
       struct testing_report_test *trt = testing_report_test_alloc(i, tests[i].status);
       tr->tests[i - 1] = trt;
-      const struct testinfo *ti = &tests[i];
+      const struct run_test_info *ti = &tests[i];
       if (ti->status >= 0 && ti->status < (int) (sizeof(status_to_bit_map) / sizeof(status_to_bit_map[0]))) {
         verdict_bits |= status_to_bit_map[ti->status];
       }
@@ -394,8 +458,8 @@ generate_xml_report(
         trt->checker_token = xstrdup(ti->checker_token);
       }
       if ((ti->status == RUN_WRONG_ANSWER_ERR || ti->status == RUN_PRESENTATION_ERR || ti->status == RUN_OK)
-          && ti->chk_out_size > 0 && ti->chk_out && ti->chk_out[0]) {
-        trt->checker_comment = prepare_checker_comment(utf8_mode, ti->chk_out);
+          && ti->chk_out.data && ti->chk_out.data[0]) {
+        trt->checker_comment = prepare_checker_comment(utf8_mode, ti->chk_out.data);
       }
       if (srgp->enable_full_archive > 0) {
         if (ti->has_input_digest) {
@@ -412,15 +476,9 @@ generate_xml_report(
         }
       }
       if (srgp->enable_full_archive > 0) {
-        if (ti->output_size >= 0) {
-          trt->output_available = 1;
-        }
-        if (ti->error_size >= 0) {
-          trt->stderr_available = 1;
-        }
-        if (ti->chk_out_size >= 0) {
-          trt->checker_output_available = 1;
-        }
+        trt->output_available = ti->output.is_archived;
+        trt->stderr_available = ti->error.is_archived;
+        trt->checker_output_available = ti->chk_out.is_archived;
       }
       if (ti->args && strlen(ti->args) >= srgp->max_cmd_length) {
         trt->args_too_long = 1;
@@ -442,12 +500,18 @@ generate_xml_report(
         trt->args = xstrdup(ti->args);
       }
       if (srgp->enable_full_archive <= 0) {
-        make_file_content(&trt->input, srgp, ti->input, ti->input_size, utf8_mode);
-        make_file_content(&trt->output, srgp, ti->output, ti->output_size, utf8_mode);
-        make_file_content(&trt->correct, srgp, ti->correct, ti->correct_size, utf8_mode);
-        make_file_content(&trt->error, srgp, ti->error, ti->error_size, utf8_mode);
-        make_file_content(&trt->checker, srgp, ti->chk_out, ti->chk_out_size, utf8_mode);
-        make_file_content(&trt->test_checker, srgp, ti->test_checker, ti->test_checker_size, utf8_mode);
+        make_file_content_2(&trt->input, srgp, &ti->input);
+        make_file_content_2(&trt->output, srgp, &ti->output);
+        make_file_content_2(&trt->correct, srgp, &ti->correct);
+        make_file_content_2(&trt->error, srgp, &ti->error);
+        make_file_content_2(&trt->checker, srgp, &ti->chk_out);
+        make_file_content_2(&trt->test_checker, srgp, &ti->test_checker);
+
+        /*
+        char buf[64];
+        snprintf(buf, sizeof(buf), "RTF %d: ", i);
+        print_run_test_file(stderr, buf, &ti->output);
+        */
       }
     }
   }
@@ -538,31 +602,33 @@ append_msg_to_log(const unsigned char *path, const char *format, ...)
   }
 }
 
-static void
-chk_printf(struct testinfo *result, const char *format, ...)
+static __attribute__((format(printf, 2, 3))) void
+rtf_printf(struct run_test_file *rtf, const char *format, ...)
 {
   va_list args;
-  unsigned char buf[1024];
+  char *text_s = NULL;
+  size_t text_z = 0;
+  FILE *text_f = NULL;
 
-  va_start(args, format);
-  vsnprintf(buf, sizeof(buf), format, args);
-  va_end(args);
-
-  if (!result->chk_out) {
-    result->chk_out = xstrdup(buf);
-    result->chk_out_size = strlen(result->chk_out);
-  } else {
-    int len1 = strlen(result->chk_out);
-    int len2 = strlen(buf);
-    int len3 = len1 + len2;
-    unsigned char *str = (unsigned char*) xmalloc(len3 + 1);
-    memcpy(str, result->chk_out, len1);
-    memcpy(str + len1, buf, len2);
-    str[len3] = 0;
-    xfree(result->chk_out);
-    result->chk_out = str;
-    result->chk_out_size = len3;
+  text_f = open_memstream(&text_s, &text_z);
+  if (rtf->stored_size > 0 && rtf->data) {
+    fwrite_unlocked(rtf->data, 1, rtf->stored_size, text_f);
   }
+  va_start(args, format);
+  vfprintf(text_f, format, args);
+  va_end(args);
+  fclose(text_f); text_f = NULL;
+
+  free(rtf->data);
+  rtf->data = text_s; text_s = NULL;
+  rtf->stored_size = text_z;
+  rtf->orig_size = text_z;
+  rtf->is_here = 1;
+  rtf->is_binary = 0;
+  rtf->is_too_long = 0;
+  rtf->is_too_wide = 0;
+  rtf->is_fixed = 0;
+  rtf->is_base64 = 0;
 }
 
 static int
@@ -1051,7 +1117,7 @@ invoke_valuer(
         struct AgentClient *agent,
         const unsigned char *mirror_dir,
         int total_tests,
-        const struct testinfo *tests,
+        const struct run_test_info *tests,
         int cur_variant,
         int max_score,
         int *p_score,
@@ -1621,7 +1687,7 @@ invoke_nwrun(
         const unsigned char *test_src_path,
         const unsigned char *test_basename,
         long time_limit_millis,
-        struct testinfo *result,
+        struct run_test_info *result,
         const unsigned char *check_dir)
 {
   path_t full_spool_dir;
@@ -1669,7 +1735,7 @@ invoke_nwrun(
       snprintf(full_spool_dir, sizeof(full_spool_dir), "%s/%s", EJUDGE_CONTESTS_HOME_DIR, tst->nwrun_spool_dir);
 #else
       err("cannot initialize full_spool_dir");
-      chk_printf(result, "full_spool_dir is invalid\n");
+      rtf_printf(&result->chk_out, "full_spool_dir is invalid\n");
       goto fail;
 #endif
     }
@@ -1678,7 +1744,7 @@ invoke_nwrun(
   snprintf(queue_path, sizeof(queue_path), "%s/queue",
            full_spool_dir);
   if (make_all_dir(queue_path, 0777) < 0) {
-    chk_printf(result, "make_all_dir(%s) failed\n", queue_path);
+    rtf_printf(&result->chk_out, "make_all_dir(%s) failed\n", queue_path);
     goto fail;
   }
 
@@ -1692,7 +1758,7 @@ invoke_nwrun(
   snprintf(full_in_path, sizeof(full_in_path),
            "%s/in/%s_%s", queue_path, os_NodeName(), pkt_name);
   if (make_dir(full_in_path, 0777) < 0) {
-    chk_printf(result, "make_dir(%s) failed\n", full_in_path);
+    rtf_printf(&result->chk_out, "make_dir(%s) failed\n", full_in_path);
     goto fail;
   }
 
@@ -1702,7 +1768,7 @@ invoke_nwrun(
   snprintf(tmp_in_path, sizeof(tmp_in_path), "%s/%s",
            full_in_path, exe_basename);
   if (make_hardlink(exe_src_path, tmp_in_path) < 0) {
-    chk_printf(result, "copy(%s, %s) failed\n", exe_src_path, tmp_in_path);
+    rtf_printf(&result->chk_out, "copy(%s, %s) failed\n", exe_src_path, tmp_in_path);
     goto fail;
   }
 
@@ -1710,7 +1776,7 @@ invoke_nwrun(
   snprintf(tmp_in_path, sizeof(tmp_in_path), "%s/%s",
            full_in_path, test_basename);
   if (make_hardlink(test_src_path, tmp_in_path) < 0) {
-    chk_printf(result, "copy(%s, %s) failed\n", test_src_path, tmp_in_path);
+    rtf_printf(&result->chk_out, "copy(%s, %s) failed\n", test_src_path, tmp_in_path);
     goto fail;
   }
 
@@ -1728,7 +1794,7 @@ invoke_nwrun(
   snprintf(tmp_in_path, sizeof(tmp_in_path), "%s/packet.cfg", full_in_path);
   f = fopen(tmp_in_path, "w");
   if (!f) {
-    chk_printf(result, "fopen(%s) failed\n", tmp_in_path);
+    rtf_printf(&result->chk_out, "fopen(%s) failed\n", tmp_in_path);
     goto fail;
   }
 
@@ -1792,7 +1858,7 @@ invoke_nwrun(
 
   fflush(f);
   if (ferror(f)) {
-    chk_printf(result, "output error to %s\n", tmp_in_path);
+    rtf_printf(&result->chk_out, "output error to %s\n", tmp_in_path);
     goto fail;
   }
   fclose(f); f = 0;
@@ -1805,7 +1871,7 @@ invoke_nwrun(
   snprintf(full_dir_path, sizeof(full_dir_path),
            "%s/dir/%s", queue_path, pkt_name);
   if (rename(full_in_path, full_dir_path) < 0) {
-    chk_printf(result, "rename(%s, %s) failed\n", full_in_path, full_dir_path);
+    rtf_printf(&result->chk_out, "rename(%s, %s) failed\n", full_in_path, full_dir_path);
     goto fail;
   }
 
@@ -1824,7 +1890,7 @@ invoke_nwrun(
   while (1) {
     r = scan_dir(result_path, result_pkt_name, sizeof(result_pkt_name), 0);
     if (r < 0) {
-      chk_printf(result, "scan_dir(%s) failed\n", result_path);
+      rtf_printf(&result->chk_out, "scan_dir(%s) failed\n", result_path);
       goto fail;
     }
 
@@ -1834,7 +1900,7 @@ invoke_nwrun(
     //fprintf(stderr, "time: %lld\n", cur_time_ms);
 
     if (cur_time_ms >= wait_end_time) {
-      chk_printf(result, "invoke_nwrun: timeout!\n");
+      rtf_printf(&result->chk_out, "invoke_nwrun: timeout!\n");
       goto fail;
     }
 
@@ -1852,7 +1918,7 @@ invoke_nwrun(
   if (rename(dir_entry_packet, out_entry_packet) < 0) {
     err("rename(%s, %s) failed: %s", dir_entry_packet, out_entry_packet,
         os_ErrorMsg());
-    chk_printf(result, "rename(%s, %s) failed", dir_entry_packet,
+    rtf_printf(&result->chk_out, "rename(%s, %s) failed", dir_entry_packet,
                out_entry_packet);
     goto fail;
   }
@@ -1862,33 +1928,33 @@ invoke_nwrun(
            out_entry_packet);
   generic_out_packet = nwrun_out_packet_parse(tmp_in_path, &out_packet);
   if (!generic_out_packet) {
-    chk_printf(result, "out_packet parse failed for %s\n", tmp_in_path);
+    rtf_printf(&result->chk_out, "out_packet parse failed for %s\n", tmp_in_path);
     goto fail;
   }
 
   // match output and input data
   if (out_packet->contest_id != srgp->contest_id) {
-    chk_printf(result, "contest_id mismatch: %d, %d\n",
+    rtf_printf(&result->chk_out, "contest_id mismatch: %d, %d\n",
                out_packet->contest_id, srgp->contest_id);
     goto restart_waiting;
   }
   if (out_packet->run_id - 1 != srgp->run_id) {
-    chk_printf(result, "run_id mismatch: %d, %d\n",
+    rtf_printf(&result->chk_out, "run_id mismatch: %d, %d\n",
                out_packet->run_id, srgp->run_id);
     goto restart_waiting;
   }
   if (out_packet->prob_id != srpp->id) {
-    chk_printf(result, "prob_id mismatch: %d, %d\n",
+    rtf_printf(&result->chk_out, "prob_id mismatch: %d, %d\n",
                out_packet->prob_id, srpp->id);
     goto restart_waiting;
   }
   if (out_packet->test_num != test_num) {
-    chk_printf(result, "test_num mismatch: %d, %d\n",
+    rtf_printf(&result->chk_out, "test_num mismatch: %d, %d\n",
                out_packet->test_num, test_num);
     goto restart_waiting;
   }
   if (out_packet->judge_id != srgp->judge_id) {
-    chk_printf(result, "judge_id mismatch: %d, %d\n",
+    rtf_printf(&result->chk_out, "judge_id mismatch: %d, %d\n",
                out_packet->judge_id, srgp->judge_id);
     goto restart_waiting;
   }
@@ -1903,12 +1969,12 @@ invoke_nwrun(
       && result->status != RUN_MEM_LIMIT_ERR
       && result->status != RUN_SECURITY_ERR
       && result->status != RUN_SYNC_ERR) {
-    chk_printf(result, "invalid status %d\n", result->status);
+    rtf_printf(&result->chk_out, "invalid status %d\n", result->status);
     goto fail;
   }
 
   if (result->status != RUN_OK && out_packet->comment[0]) {
-    chk_printf(result, "nwrun: %s\n", out_packet->comment);
+    rtf_printf(&result->chk_out, "nwrun: %s\n", out_packet->comment);
   }
 
   if (out_packet->is_signaled) {
@@ -1934,17 +2000,8 @@ invoke_nwrun(
   if (srgp->enable_full_archive > 0) {
     filehash_get(test_src_path, result->input_digest);
     result->has_input_digest = 1;
-  } else if (srpp->binary_input <= 0) {
-    file_size = generic_file_size(0, test_src_path, 0);
-    if (file_size >= 0) {
-      result->input_size = file_size;
-      if (srgp->max_file_length > 0 && file_size <= srgp->max_file_length) {
-        if (generic_read_file(&result->input, 0, 0, 0, 0, test_src_path, "")<0){
-          chk_printf(result, "generic_read_file(%s) failed\n", test_src_path);
-          goto fail;
-        }
-      }
-    }
+  } else {
+    read_run_test_file(srgp, &result->input, test_src_path, 0);
   }
 
   /* handle the program output */
@@ -1957,49 +2014,34 @@ invoke_nwrun(
       snprintf(check_output_path, sizeof(check_output_path),
                "%s/%s", check_dir, srpp->output_file);
       if (fast_copy_file(packet_output_path, check_output_path) < 0) {
-        chk_printf(result, "copy_file(%s, %s) failed\n",
+        rtf_printf(&result->chk_out, "copy_file(%s, %s) failed\n",
                    packet_output_path, check_output_path);
         goto fail;
       }
     }
 
-    result->output_size = out_packet->output_file_orig_size;
-    if (srgp->enable_full_archive <= 0
-        && srpp->binary_input <= 0
-        && srgp->max_file_length > 0
-        && result->output_size <= srgp->max_file_length) {
-      if (generic_read_file(&result->output,0,0,0,0,packet_output_path,"")<0) {
-        chk_printf(result, "generic_read_file(%s) failed\n",
-                   packet_output_path);
-        goto fail;
-      }
-    }
-
+    read_run_test_file(srgp, &result->output, packet_output_path, 0);
     if (far) {
       snprintf(arch_entry_name, sizeof(arch_entry_name), "%06d.o", test_num);
       full_archive_append_file(far, arch_entry_name, 0, packet_output_path);
     }
   } else if (out_packet->output_file_existed > 0) {
-    chk_printf(result, "output file is too big\n");
+    rtf_printf(&result->chk_out, "output file is too big\n");
   }
 
   /* handle the program error file */
   if (out_packet->error_file_existed > 0) {
     snprintf(packet_error_path, sizeof(packet_error_path),
              "%s/%s", out_entry_packet, error_file_name);
-    result->error_size = out_packet->error_file_size;
-    if (srgp->enable_full_archive <= 0
-        && srgp->max_file_length > 0
-        && result->error_size <= srgp->max_file_length) {
-      if (generic_read_file(&result->error,0,0,0,0,packet_error_path,"") < 0) {
-        chk_printf(result, "generic_read_file(%s) failed\n",
-                   packet_error_path);
-        goto fail;
-      }
-    }
     if (far) {
-      snprintf(arch_entry_name, sizeof(arch_entry_name), "%06d.e", test_num);
-      full_archive_append_file(far, arch_entry_name, 0, packet_error_path);
+      file_size = generic_file_size(0, packet_error_path, 0);
+      if (file_size >= 0) {
+        result->error.is_archived = 1;
+        snprintf(arch_entry_name, sizeof(arch_entry_name), "%06d.e", test_num);
+        full_archive_append_file(far, arch_entry_name, 0, packet_error_path);
+      }
+    } else {
+      read_run_test_file(srgp, &result->error, packet_error_path, 0);
     }
   }
 
@@ -2515,7 +2557,7 @@ invoke_checker(
         const struct super_run_in_global_packet *srgp,
         const struct super_run_in_problem_packet *srpp,
         int cur_test,
-        struct testinfo *cur_info,
+        struct run_test_info *cur_info,
         const unsigned char *check_cmd,
         const unsigned char *test_src,
         const unsigned char *output_path,
@@ -3035,6 +3077,202 @@ cleanup:;
   return retval;
 }
 
+static ssize_t
+get_max_line_length(const unsigned char *data, ssize_t size)
+{
+  ssize_t max_len = 0;
+  ssize_t prev_ind = -1;
+  for (ssize_t i = 0; i < size; ++i) {
+    if (data[i] == '\n') {
+      if (i - prev_ind > max_len) {
+        max_len = i - prev_ind;
+      }
+      prev_ind = i;
+    }
+  }
+  if (size - prev_ind > max_len) {
+    max_len = size - prev_ind;
+  }
+  return max_len;
+}
+
+static void
+trim_long_lines(
+        const unsigned char *data,
+        ssize_t size,
+        int utf8_mode,
+        int max_line_length,
+        unsigned char **p_out_data,
+        ssize_t *p_out_size)
+{
+  char *out_s = NULL;
+  size_t out_z = 0;
+  FILE *out_f = open_memstream(&out_s, &out_z);
+  ssize_t beg_ind = 0;
+  ssize_t ind;
+
+  for (ind = 0; ind < size; ++ind) {
+    if (data[ind] == '\n') {
+      if (ind - beg_ind > max_line_length) {
+        if (utf8_mode) {
+          ssize_t trimmed = utf8_trim_last_codepoint(&data[beg_ind], max_line_length);
+          fwrite_unlocked(&data[beg_ind], 1, trimmed, out_f);
+          fputs_unlocked("…\n", out_f);
+        } else {
+          fwrite_unlocked(&data[beg_ind], 1, max_line_length, out_f);
+          fputs_unlocked("...\n", out_f);
+        }
+      } else {
+        fwrite_unlocked(&data[beg_ind], 1, ind - beg_ind + 1, out_f);
+      }
+      beg_ind = ind + 1;
+    } else if (ind == size - 1) {
+      if (ind - beg_ind + 1 > max_line_length) {
+        if (utf8_mode) {
+          ssize_t trimmed = utf8_trim_last_codepoint(&data[beg_ind], max_line_length);
+          fwrite_unlocked(&data[beg_ind], 1, trimmed, out_f);
+          fputs_unlocked("…", out_f);
+        } else {
+          fwrite_unlocked(&data[beg_ind], 1, max_line_length, out_f);
+          fputs_unlocked("...", out_f);
+        }
+      } else {
+        fwrite_unlocked(&data[beg_ind], 1, ind - beg_ind + 1, out_f);
+      }
+    }
+  }
+
+  fclose(out_f);
+  *p_out_data = out_s;
+  *p_out_size = out_z;
+}
+
+static void
+read_run_test_file(
+        const struct super_run_in_global_packet *srgp,
+        struct run_test_file *rtf,
+        const unsigned char *path,
+        int utf8_mode)
+{
+  int fd = -1;
+  unsigned char *proc_data = NULL;
+  long long proc_size = 0;
+
+  memset(rtf, 0, sizeof(*rtf));
+
+  fd = open(path, O_RDONLY | O_CLOEXEC | O_NOCTTY | O_NONBLOCK, 0);
+  if (fd < 0) {
+    err("%s: cannot open on '%s': %s", __FUNCTION__, path, os_ErrorMsg());
+    return;
+  }
+
+  struct stat stb;
+  if (fstat(fd, &stb) < 0) {
+    err("%s: stat failed on '%s': %s", __FUNCTION__, path, os_ErrorMsg());
+    goto done;
+  }
+  if (stb.st_size < 0) {
+    err("%s: invalid size of '%s': %lld", __FUNCTION__, path,
+        (long long) stb.st_size);
+    goto done;
+  }
+  if (!S_ISREG(stb.st_mode)) {
+    err("%s: not a regular file: '%s'", __FUNCTION__, path);
+    goto done;
+  }
+  if (!stb.st_size) {
+    // empty file
+    rtf->data = xmalloc(1);
+    rtf->data[0] = 0;
+    rtf->is_here = 1;
+    goto done;
+  }
+
+  proc_size = stb.st_size;
+  if (stb.st_size > srgp->max_file_length) {
+    proc_size = srgp->max_file_length;
+  }
+  proc_data = xmalloc(proc_size + 1024);
+
+  {
+    long long rem_size = proc_size;
+    unsigned char *p = proc_data;
+    while (rem_size > 0) {
+      ssize_t r = read(fd, p, rem_size);
+      if (r < 0) {
+        err("%s: read error from '%s': %s", __FUNCTION__, path, os_ErrorMsg());
+        goto done;
+      }
+      if (!r) {
+        err("%s: file truncated '%s'", __FUNCTION__, path);
+        proc_size -= rem_size;
+        break;
+      }
+      rem_size -= r;
+      p += r;
+    }
+    proc_data[proc_size] = 0;
+  }
+  close(fd); fd = -1;
+
+  if (need_base64(proc_data, proc_size)) {
+    // binary file
+    rtf->orig_size = stb.st_size;
+    rtf->is_here = 1;
+    rtf->is_binary = 1;
+    rtf->is_too_long = (stb.st_size > proc_size);
+    rtf->is_base64 = 1;
+    rtf->data = xmalloc(proc_size * 4 / 3 + 64);
+    int len = base64_encode(proc_data, proc_size, rtf->data);
+    rtf->data[len] = 0;
+    rtf->stored_size = len;
+    goto done;
+  }
+
+  if (proc_size != stb.st_size && utf8_mode) {
+    proc_size = utf8_trim_last_codepoint(proc_data, proc_size);
+  }
+
+  ssize_t max_len = get_max_line_length(proc_data, proc_size);
+  if (max_len > srgp->max_line_length) {
+    unsigned char *out_data = NULL;
+    ssize_t out_size = 0;
+    rtf->is_too_long = proc_size != stb.st_size;
+    trim_long_lines(proc_data, proc_size, utf8_mode, srgp->max_line_length,
+                    &out_data, &out_size);
+    xfree(proc_data); proc_data = out_data; out_data = NULL;
+    proc_size = out_size; out_size = 0;
+    rtf->is_too_wide = 1;
+  } else {
+    rtf->is_too_long = proc_size != stb.st_size;
+  }
+  if (rtf->is_too_long) {
+    if (utf8_mode) {
+      static const char append_str[] = "\n…\n";
+      proc_data = xrealloc(proc_data, proc_size + 64);
+      strcpy(proc_data + proc_size, append_str);
+      proc_size += sizeof(append_str) - 1;
+    } else {
+      static const char append_str[] = "\n...\n";
+      proc_data = xrealloc(proc_data, proc_size + 64);
+      strcpy(proc_data + proc_size, append_str);
+      proc_size += sizeof(append_str) - 1;
+    }
+  }
+  if (utf8_mode) {
+    utf8_fix_string(proc_data, NULL);
+    // FIXME: set is_fixed depending on the number of utf8 fixes
+  }
+  rtf->data = proc_data; proc_data = NULL;
+  rtf->orig_size = stb.st_size;
+  rtf->stored_size = proc_size;
+  rtf->is_here = 1;
+
+done:;
+  xfree(proc_data);
+  if (fd >= 0) close(fd);
+}
+
 static int
 run_one_test(
         const struct ejudge_cfg *config,
@@ -3043,7 +3281,7 @@ run_one_test(
         const struct section_tester_data *tst,
         struct AgentClient *agent,
         int cur_test,
-        struct testinfo_vector *tests,
+        struct run_test_info_vector *tests,
         full_archive_t far,
         const unsigned char *exe_name,
         const unsigned char *report_path,
@@ -3060,6 +3298,7 @@ run_one_test(
         int *p_has_max_rss,
         long *p_report_time_limit_ms,
         long *p_report_real_time_limit_ms,
+        int utf8_mode,
         const unsigned char *mirror_dir,
         const struct remap_spec *remaps,
         int user_input_mode,
@@ -3108,7 +3347,7 @@ run_one_test(
 
   unsigned char mem_limit_buf[PATH_MAX];
 
-  struct testinfo *cur_info = NULL;
+  struct run_test_info *cur_info = NULL;
   int time_limit_value_ms = 0;
   int status = RUN_CHECK_FAILED;
   int errcode = 0;
@@ -3216,11 +3455,6 @@ run_one_test(
   cur_info = &tests->data[cur_test];
   ++tests->size;
 
-  cur_info->input_size = -1;
-  cur_info->output_size = -1;
-  cur_info->error_size = -1;
-  cur_info->correct_size = -1;
-  cur_info->chk_out_size = -1;
   cur_info->visibility = TV_NORMAL;
   if (open_tests_val && cur_test > 0 && cur_test < open_tests_count) {
     cur_info->visibility = open_tests_val[cur_test];
@@ -3307,15 +3541,7 @@ run_one_test(
       if (i < tstinfo.ok_language.u) {
         // mark this test as successfully passed
         status = RUN_OK; // FIXME: RUN_SKIPPED?
-        cur_info->input = xstrdup("");
-        cur_info->input_size = 0;
-        cur_info->output = xstrdup("");
-        cur_info->output_size = 0;
-        cur_info->error = xstrdup("");
-        cur_info->error_size = 0;
-        cur_info->correct = xstrdup("");
-        cur_info->correct_size = 0;
-        cur_info->chk_out_size = asprintf(&cur_info->chk_out, "auto-OK for language %s", srgp->lang_short_name);
+        rtf_printf(&cur_info->chk_out, "auto-OK for language %s", srgp->lang_short_name);
         //cur_info->comment = xstrdup(cur_info->chk_out);
         // FIXME: set comment or team_comment
         goto cleanup;
@@ -3531,11 +3757,7 @@ run_one_test(
         status = RUN_CHECK_FAILED;
         goto check_failed;
       }
-      file_size = generic_file_size(0, test_checker_out_path, 0);
-      if (file_size >= 0) {
-        cur_info->test_checker_size = file_size;
-        generic_read_file(&cur_info->test_checker, 0, 0, 0, 0, test_checker_out_path, "");
-      }
+      read_run_test_file(srgp, &cur_info->test_checker, test_checker_out_path, utf8_mode);
       if (r != 0) {
         status = r;
         goto cleanup;
@@ -4056,57 +4278,45 @@ run_one_test(
 
   // input file
   if (user_input_mode) {
-    cur_info->input_size = inp_size;
-    cur_info->input = xmalloc(inp_size + 1);
-    memcpy(cur_info->input, inp_data, inp_size);
-    cur_info->input[inp_size] = 0;
+    struct run_test_file *rtf = &cur_info->input;
+    rtf->data = xmalloc(inp_size + 1);
+    memcpy(rtf->data, inp_data, inp_size);
+    rtf->data[inp_size] = 0;
+    rtf->orig_size = inp_size;
+    rtf->stored_size = inp_size;
+    rtf->is_here = 1;
   } else {
-    file_size = -1;
     if (srgp->enable_full_archive > 0) {
       filehash_get(test_src, cur_info->input_digest);
       cur_info->has_input_digest = 1;
     } else {
-      if (srpp->binary_input <= 0) {
-        file_size = generic_file_size(0, test_src, 0);
-      }
-      if (file_size >= 0) {
-        cur_info->input_size = file_size;
-        if (srgp->max_file_length > 0 && file_size <= srgp->max_file_length) {
-          generic_read_file(&cur_info->input, 0, 0, 0, 0, test_src, "");
-        }
-      }
+      read_run_test_file(srgp, &cur_info->input, test_src, utf8_mode);
     }
   }
 
   // output file
-  file_size = -1;
-  if (srpp->binary_input <= 0) {
+  if (far) {
     file_size = generic_file_size(0, output_path, 0);
-  }
-  if (file_size >= 0) {
-    cur_info->output_size = file_size;
-    if (srgp->max_file_length > 0 && srgp->enable_full_archive <= 0 && file_size <= srgp->max_file_length) {
-      generic_read_file(&cur_info->output, 0, 0, 0, 0, output_path, "");
-    }
-    if (far) {
+    if (file_size >= 0) {
+      cur_info->output.is_archived = 1;
       snprintf(arch_entry_name, sizeof(arch_entry_name), "%06d.o", cur_test);
       full_archive_append_file(far, arch_entry_name, 0, output_path);
     }
+  } else {
+    read_run_test_file(srgp, &cur_info->output, output_path, utf8_mode);
   }
 
   // error file
-  file_size = -1;
   if (error_path[0]) {
-    file_size = generic_file_size(0, error_path, 0);
-  }
-  if (file_size >= 0) {
-    cur_info->error_size = file_size;
-    if (srgp->max_file_length > 0 && srgp->enable_full_archive <= 0 && file_size <= srgp->max_file_length) {
-      generic_read_file(&cur_info->error, 0, 0, 0, 0, error_path, "");
-    }
     if (far) {
-      snprintf(arch_entry_name, sizeof(arch_entry_name), "%06d.e", cur_test);
-      full_archive_append_file(far, arch_entry_name, 0, error_path);
+      file_size = generic_file_size(0, error_path, 0);
+      if (file_size >= 0) {
+        cur_info->error.is_archived = 1;
+        snprintf(arch_entry_name, sizeof(arch_entry_name), "%06d.e", cur_test);
+        full_archive_append_file(far, arch_entry_name, 0, error_path);
+      }
+    } else {
+      read_run_test_file(srgp, &cur_info->error, error_path, utf8_mode);
     }
   }
 
@@ -4184,7 +4394,7 @@ run_one_test(
   }
 
   if (tst && tst->memory_limit_type_val == MEMLIMIT_TYPE_JAVA && srgp->enable_memory_limit_error > 0
-      && task_IsAbnormal(tsk) && is_java_memory_limit(cur_info->error, cur_info->error_size)) {
+      && task_IsAbnormal(tsk) && is_java_memory_limit(cur_info->error.data, cur_info->error.orig_size)) {
     status = RUN_MEM_LIMIT_ERR;
     if (tsk_int) goto read_checker_output;
     goto cleanup;
@@ -4281,7 +4491,7 @@ run_checker:;
     goto cleanup;
   }
 
-  if (disable_stderr > 0 && cur_info->error_size > 0) {
+  if (disable_stderr > 0 && cur_info->error.orig_size > 0) {
     append_msg_to_log(check_out_path, "non-empty output to stderr");
     if (srpp->disable_pe > 0) {
       status = RUN_WRONG_ANSWER_ERR;
@@ -4297,15 +4507,7 @@ run_checker:;
       filehash_get(corr_src, cur_info->correct_digest);
       cur_info->has_correct_digest = 1;
     } else {
-      if (srpp->binary_input <= 0) {
-        file_size = generic_file_size(0, corr_src, 0);
-      }
-      if (file_size >= 0) {
-        cur_info->correct_size = file_size;
-        if (srgp->max_file_length > 0 && file_size <= srgp->max_file_length) {
-          generic_read_file(&cur_info->correct, 0, 0, 0, 0, corr_src, "");
-        }
-      }
+      read_run_test_file(srgp, &cur_info->correct, corr_src, utf8_mode);
     }
   }
 
@@ -4343,14 +4545,15 @@ read_checker_output:;
     init_cmd_started = 0;
   }
 
-  file_size = generic_file_size(0, check_out_path, 0);
-  if (file_size >= 0) {
-    cur_info->chk_out_size = file_size;
-    generic_read_file(&cur_info->chk_out, 0, 0, 0, 0, check_out_path, "");
-    if (far) {
+  if (far) {
+    file_size = generic_file_size(0, check_out_path, 0);
+    if (file_size >= 0) {
+      cur_info->chk_out.is_archived = 1;
       snprintf(arch_entry_name, sizeof(arch_entry_name), "%06d.c", cur_test);
       full_archive_append_file(far, arch_entry_name, 0, check_out_path);
     }
+  } else {
+    read_run_test_file(srgp, &cur_info->chk_out, check_out_path, utf8_mode);
   }
 
 cleanup:;
@@ -4394,7 +4597,7 @@ check_failed:
 }
 
 static void
-init_testinfo_vector(struct testinfo_vector *tv)
+init_testinfo_vector(struct run_test_info_vector *tv)
 {
   if (!tv) return;
 
@@ -4405,17 +4608,12 @@ init_testinfo_vector(struct testinfo_vector *tv)
 }
 
 static void
-free_testinfo_vector(struct testinfo_vector *tv)
+free_testinfo_vector(struct run_test_info_vector *tv)
 {
   if (tv == NULL || tv->size <= 0 || tv->data == NULL) return;
 
   for (int i = 0; i < tv->size; ++i) {
-    struct testinfo *ti = &tv->data[i];
-    xfree(ti->input);
-    xfree(ti->output);
-    xfree(ti->error);
-    xfree(ti->correct);
-    xfree(ti->chk_out);
+    struct run_test_info *ti = &tv->data[i];
     xfree(ti->args);
     xfree(ti->comment);
     xfree(ti->team_comment);
@@ -4424,7 +4622,12 @@ free_testinfo_vector(struct testinfo_vector *tv)
     xfree(ti->interactor_stats_str);
     xfree(ti->checker_stats_str);
     xfree(ti->checker_token);
-    xfree(ti->test_checker);
+    xfree(ti->input.data);
+    xfree(ti->output.data);
+    xfree(ti->correct.data);
+    xfree(ti->error.data);
+    xfree(ti->chk_out.data);
+    xfree(ti->test_checker.data);
   }
   memset(tv->data, 0, sizeof(tv->data[0]) * tv->size);
   xfree(tv->data);
@@ -4478,7 +4681,7 @@ cleanup:
 static int
 handle_test_sets(
         const unsigned char *messages_path,
-        struct testinfo_vector *tv,
+        struct run_test_info_vector *tv,
         int score,
         int test_sets_count,
         struct testset_info *test_sets_val)
@@ -4592,12 +4795,13 @@ check_output_only(
         struct AgentClient *agent,
         full_archive_t far,
         const unsigned char *exe_name,
-        struct testinfo_vector *tests,
+        struct run_test_info_vector *tests,
         const unsigned char *check_cmd,
-        const unsigned char *mirror_dir)
+        const unsigned char *mirror_dir,
+        int utf8_mode)
 {
   int cur_test = 1;
-  struct testinfo *cur_info = NULL;
+  struct run_test_info *cur_info = NULL;
   int status = RUN_CHECK_FAILED;
   long long file_size = 0;
 
@@ -4651,11 +4855,6 @@ check_output_only(
   unlink(check_out_path);
   unlink(score_out_path);
 
-  cur_info->input_size = -1;
-  cur_info->output_size = -1;
-  cur_info->error_size = -1;
-  cur_info->correct_size = -1;
-  cur_info->chk_out_size = -1;
   cur_info->visibility = TV_NORMAL;
   cur_info->user_status = -1;
   cur_info->user_nominal_score = -1;
@@ -4711,19 +4910,15 @@ check_output_only(
   }
 
   // output file
-  file_size = -1;
-  if (srpp->binary_input <= 0) {
+  if (far) {
     file_size = generic_file_size(0, output_path, 0);
-  }
-  if (file_size >= 0) {
-    cur_info->output_size = file_size;
-    if (srgp->max_file_length > 0 && srgp->enable_full_archive <= 0 && file_size <= srgp->max_file_length) {
-      generic_read_file(&cur_info->output, 0, 0, 0, 0, output_path, "");
-    }
-    if (far) {
+    if (file_size >= 0) {
+      cur_info->output.is_archived = 1;
       snprintf(arch_entry_name, sizeof(arch_entry_name), "%06d.o", cur_test);
       full_archive_append_file(far, arch_entry_name, 0, output_path);
     }
+  } else {
+    read_run_test_file(srgp, &cur_info->output, output_path, utf8_mode);
   }
 
   file_size = -1;
@@ -4732,26 +4927,19 @@ check_output_only(
       filehash_get(corr_src, cur_info->correct_digest);
       cur_info->has_correct_digest = 1;
     } else {
-      if (srpp->binary_input <= 0) {
-        file_size = generic_file_size(0, corr_src, 0);
-      }
-      if (file_size >= 0) {
-        cur_info->correct_size = file_size;
-        if (srgp->max_file_length > 0 && file_size <= srgp->max_file_length) {
-          generic_read_file(&cur_info->correct, 0, 0, 0, 0, corr_src, "");
-        }
-      }
+      read_run_test_file(srgp, &cur_info->correct, corr_src, utf8_mode);
     }
   }
 
-  file_size = generic_file_size(0, check_out_path, 0);
-  if (file_size >= 0) {
-    cur_info->chk_out_size = file_size;
-    generic_read_file(&cur_info->chk_out, 0, 0, 0, 0, check_out_path, "");
-    if (far) {
+  if (far) {
+    file_size = generic_file_size(0, check_out_path, 0);
+    if (file_size >= 0) {
+      cur_info->chk_out.is_archived = 1;
       snprintf(arch_entry_name, sizeof(arch_entry_name), "%06d.c", cur_test);
       full_archive_append_file(far, arch_entry_name, 0, check_out_path);
     }
+  } else {
+    read_run_test_file(srgp, &cur_info->chk_out, check_out_path, utf8_mode);
   }
 
   return status;
@@ -4824,7 +5012,7 @@ static void
 append_skipped_test(
         const struct super_run_in_problem_packet *srpp,
         int cur_test,
-        struct testinfo_vector *tests,
+        struct run_test_info_vector *tests,
         int open_tests_count,
         const int *open_tests_val,
         int test_score_count,
@@ -4835,7 +5023,7 @@ append_skipped_test(
     if (!tests->reserved) tests->reserved = 32;
     tests->data = (typeof(tests->data)) xrealloc(tests->data, tests->reserved * sizeof(tests->data[0]));
   }
-  struct testinfo *cur_info = &tests->data[cur_test];
+  struct run_test_info *cur_info = &tests->data[cur_test];
   memset(cur_info, 0, sizeof(*cur_info));
   ++tests->size;
 
@@ -4887,7 +5075,7 @@ run_tests(
 
   full_archive_t far = NULL;
 
-  struct testinfo_vector tests;
+  struct run_test_info_vector tests;
   int cur_test = 0;
   int has_real_time = 0;
   int has_max_memory_used = 0;
@@ -5061,7 +5249,8 @@ run_tests(
     status = check_output_only(global, srgp, srpp, reply_pkt,
                                agent,
                                far, exe_name, &tests, check_cmd,
-                               mirror_dir);
+                               mirror_dir,
+                               utf8_mode);
     has_user_score = reply_pkt->has_user_score;
     if (has_user_score) {
       user_status = reply_pkt->user_status;
@@ -5218,6 +5407,7 @@ run_tests(
                             &has_real_time, &has_max_memory_used,
                             &has_max_rss,
                             &report_time_limit_ms, &report_real_time_limit_ms,
+                            utf8_mode,
                             mirror_dir, remaps,
                             user_input_mode,
                             inp_data,

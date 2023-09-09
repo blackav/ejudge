@@ -108,17 +108,25 @@
 
   rep_flag = serve_make_xml_report_read_path(cs, rep_path, sizeof(rep_path), &info);
   if (rep_flag >= 0) {
-    if (generic_read_file(&rep_text, 0, &rep_len, rep_flag, 0, rep_path, 0) >= 0) {
-      const unsigned char *start_ptr = NULL;
-      int content_type = get_content_type(rep_text, &start_ptr);
-      if (content_type == CONTENT_TYPE_XML && start_ptr) {
-        tr = testing_report_parse_xml(start_ptr);
-        if (tr && tr->compiler_output) {
-          compiler_output = tr->compiler_output; tr->compiler_output = NULL;
-        }
+    if (info.store_flags == STORE_FLAGS_UUID_BSON) {
+      tr = testing_report_parse_bson_file(rep_path);
+      if (tr && tr->compiler_output && tr->compiler_output[0]) {
+        compiler_output = tr->compiler_output; tr->compiler_output = NULL;
         testing_report_free(tr); tr = NULL;
       }
-      xfree(rep_text); rep_text = NULL; rep_len = 0;
+    } else {
+      if (generic_read_file(&rep_text, 0, &rep_len, rep_flag, 0, rep_path, 0) >= 0) {
+        const unsigned char *start_ptr = NULL;
+        int content_type = get_content_type(rep_text, &start_ptr);
+        if (content_type == CONTENT_TYPE_XML && start_ptr) {
+          tr = testing_report_parse_xml(start_ptr);
+          if (tr && tr->compiler_output) {
+            compiler_output = tr->compiler_output; tr->compiler_output = NULL;
+          }
+          testing_report_free(tr); tr = NULL;
+        }
+        xfree(rep_text); rep_text = NULL; rep_len = 0;
+      }
     }
   }
 

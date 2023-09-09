@@ -1229,6 +1229,58 @@ utf8_fix_string(unsigned char *str, int *gl_ind)
   return j;
 }
 
+ssize_t
+utf8_trim_last_codepoint(
+        const unsigned char *str,
+        ssize_t size)
+{
+  if (size <= 0) return 0;
+  ssize_t i = size - 1;
+  if (str[i] < 0x80) {
+    return i + 1;
+  }
+  if (str[i] >= 0xc0) {
+    return i;
+  }
+  if (--i < 0) return 0;
+  if (str[i] < 0x80) {
+    return i + 1;
+  }
+  if (str[i] >= 0xc2 && str[i] <= 0xdf) {
+    return i + 2;
+  }
+  if (str[i] >= 0xc0) {
+    return i;
+  }
+  if (--i < 0) return 0;
+  if (str[i] < 0x80) {
+    return i + 1;
+  }
+  if (str[i] >= 0xc2 && str[i] <= 0xdf) {
+    return i + 2;
+  }
+  if (str[i] >= 0xe0 && str[i] <= 0xef) {
+    return i + 3;
+  }
+  if (str[i] >= 0xc0) {
+    return i;
+  }
+  if (--i < 0) return 0;
+  if (str[i] < 0x80) {
+    return i + 1;
+  }
+  if (str[i] >= 0xc2 && str[i] <= 0xdf) {
+    return i + 2;
+  }
+  if (str[i] >= 0xe0 && str[i] <= 0xef) {
+    return i + 3;
+  }
+  if (str[i] >= 0xf0 && str[i] <= 0xf7) {
+    return i + 4;
+  }
+  return i;
+}
+
 int
 utf8_cnt(const unsigned char *s, int width, int *p_rem)
 {

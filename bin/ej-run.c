@@ -81,7 +81,7 @@ static unsigned char **skip_archs;
 static int skip_arch_count;
 
 static int tests_a = 0;
-static struct testinfo *tests = 0;
+static struct run_test_info *tests = 0;
 
 static int
 filter_testers(char *key)

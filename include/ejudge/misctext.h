@@ -336,4 +336,9 @@ int json_armor_needed(const unsigned char *str, size_t *psz);
 int json_armor_string(const unsigned char *str, char *out);
 const unsigned char *json_armor_buf(struct html_armor_buffer *pb, const unsigned char *s);
 
+ssize_t
+utf8_trim_last_codepoint(
+        const unsigned char *str,
+        ssize_t size);
+
 #endif /* __MISCTEXT_H__ */
