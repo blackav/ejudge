@@ -4902,6 +4902,13 @@ check_output_only(
     reply_pkt->user_status = cur_info->user_status;
     reply_pkt->user_score = cur_info->user_score;
     reply_pkt->user_tests_passed = cur_info->user_tests_passed;
+    if (reply_pkt->user_status == RUN_OK && srpp->variable_full_score <= 0) {
+      if (srpp->full_user_score >= 0) {
+        reply_pkt->user_score = srpp->full_user_score;
+      } else if (srpp->full_score >= 0) {
+        reply_pkt->user_score = srpp->full_score;
+      }
+    }
   } else {
     reply_pkt->has_user_score = 0;
     reply_pkt->user_status = 0;
@@ -5717,6 +5724,14 @@ run_tests(
       if (tests.data[cur_test].visibility != TV_HIDDEN)
         ++user_run_tests;
     }
+    if (user_tests_passed < 0) {
+      user_tests_passed = 0;
+      for (cur_test = 1; cur_test < tests.size; ++cur_test) {
+        if (tests.data[cur_test].visibility != TV_HIDDEN
+            && tests.data[cur_test].status == RUN_OK)
+          ++user_tests_passed;
+      }
+    }
     if (user_status < 0) {
       user_status = RUN_OK;
       for (cur_test = 1; cur_test < tests.size; ++cur_test) {
@@ -5731,60 +5746,21 @@ run_tests(
       user_score = 0;
       for (cur_test = 1; cur_test < tests.size; ++cur_test) {
         if (tests.data[cur_test].visibility != TV_HIDDEN) {
-          if (tests.data[cur_test].user_score > 0) {
+          if (tests.data[cur_test].user_score >= 0) {
             user_score += tests.data[cur_test].user_score;
-          } else if (tests.data[cur_test].score > 0) {
+          } else if (tests.data[cur_test].score >= 0) {
             user_score += tests.data[cur_test].score;
           }
         }
       }
     }
-    /*
-    if (user_max_score < 0) {
-      user_max_score = 0;
-      for (cur_test = 1; cur_test < tests.size; ++cur_test) {
-        if (tests.data[cur_test].visibility != TV_HIDDEN) {
-          if (tests.data[cur_test].user_nominal_score > 0) {
-            user_max_score += tests.data[cur_test].user_nominal_score;
-          } else if (tests.data[cur_test].score > 0) {
-            user_max_score += tests.data[cur_test].nominal_score;
-          }
-        }
-      }
-    }
-    */
-    if (srgp->scoring_system_val == SCORE_KIROV
-        || (srgp->scoring_system_val == SCORE_OLYMPIAD && srgp->accepting_mode <= 0)) {
-      if (user_score < 0) {
-        if (srpp->variable_full_score <= 0 && user_status == RUN_OK) {
-          if (srpp->full_user_score >= 0) {
-            user_score = srpp->full_user_score;
-          } else {
-            user_score = srpp->full_score;
-          }
+    // user_run_tests, user_status, user_score computed
+    if (srgp->scoring_system_val == SCORE_KIROV || (srgp->scoring_system_val == SCORE_OLYMPIAD && srgp->accepting_mode <= 0)) {
+      if (srpp->variable_full_score <= 0 && user_status == RUN_OK) {
+        if (srpp->full_user_score >= 0) {
+          user_score = srpp->full_user_score;
         } else {
-          user_score = 0;
-          for (cur_test = 1; cur_test < tests.size; ++cur_test) {
-            if (tests.data[cur_test].visibility != TV_HIDDEN
-                && tests.data[cur_test].score >= 0) {
-              user_score += tests.data[cur_test].score;
-            }
-          }
-          if (srpp->variable_full_score <= 0) {
-            if (srpp->full_user_score >= 0 && user_score > srpp->full_user_score) {
-              user_score = srpp->full_user_score;
-            } else if (user_score > srpp->full_score) {
-              user_score = srpp->full_score;
-            }
-          }
-        }
-      }
-      if (user_tests_passed < 0) {
-        user_tests_passed = 0;
-        for (cur_test = 1; cur_test < tests.size; ++cur_test) {
-          if (tests.data[cur_test].visibility != TV_HIDDEN
-              && tests.data[cur_test].status == RUN_OK)
-            ++user_tests_passed;
+          user_score = srpp->full_score;
         }
       }
     }
