@@ -2108,7 +2108,8 @@ invoke_test_checker_cmd(
         const struct super_run_in_packet *srp,
         const unsigned char *work_dir,
         const unsigned char *input_file,
-        const unsigned char *log_path)
+        const unsigned char *log_path,
+        int exec_user_serial)
 {
   const struct super_run_in_problem_packet *srpp = srp->problem;
   tpTask tsk = NULL;
@@ -2140,6 +2141,11 @@ invoke_test_checker_cmd(
   }
   if (srpp->checker_max_rss_size > 0) {
     task_SetRSSSize(tsk, srpp->checker_max_rss_size);
+  }
+  if (exec_user_serial > 0) {
+    char buf[32];
+    sprintf(buf, "%d", exec_user_serial);
+    task_SetEnv(tsk, "EJUDGE_SUPER_RUN_SERIAL", buf);
   }
 
   if (task_Start(tsk) < 0) {
@@ -3782,7 +3788,7 @@ run_one_test(
                "%s/testcheckout_%d.txt",
                global->run_work_dir, cur_test);
 
-      int r = invoke_test_checker_cmd(srp, check_dir, input_path, test_checker_out_path);
+      int r = invoke_test_checker_cmd(srp, check_dir, input_path, test_checker_out_path, state->exec_user_serial);
       if (r == RUN_CHECK_FAILED) {
         status = RUN_CHECK_FAILED;
         goto check_failed;
