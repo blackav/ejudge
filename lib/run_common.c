@@ -2622,7 +2622,8 @@ invoke_checker(
         const int *test_score_val,
         int output_only,
         const unsigned char *src_path,
-        int exec_user_serial)
+        int exec_user_serial,
+        uint64_t test_random_value)
 {
   tpTask tsk = NULL;
   int status = RUN_CHECK_FAILED;
@@ -2723,6 +2724,11 @@ invoke_checker(
     char buf[32];
     sprintf(buf, "%d", exec_user_serial);
     task_SetEnv(tsk, "EJUDGE_SUPER_RUN_SERIAL", buf);
+  }
+  if (test_random_value > 0) {
+    char buf[32];
+    sprintf(buf, "%llx", (unsigned long long) test_random_value);
+    task_SetEnv(tsk, "EJUDGE_TEST_RANDOM_VALUE", buf);
   }
   if (srpp->enable_extended_info > 0) {
     unsigned char buf[64];
@@ -4598,7 +4604,8 @@ run_checker:;
                           working_dir, score_out_path, check_out_path,
                           check_dir, &tstinfo, test_score_count, test_score_val,
                           0, src_path,
-                          state->exec_user_serial);
+                          state->exec_user_serial,
+                          test_random_value);
 
   // read the checker output
 read_checker_output:;
@@ -4942,7 +4949,7 @@ check_output_only(
                           corr_src, NULL, NULL,
                           global->run_work_dir, score_out_path, check_out_path,
                           global->run_work_dir, NULL, 0, NULL, 1, NULL,
-                          exec_user_serial);
+                          exec_user_serial, 0);
 
   cur_info->status = status;
   cur_info->max_score = srpp->full_score;
