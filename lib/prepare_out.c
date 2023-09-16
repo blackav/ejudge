@@ -2569,6 +2569,9 @@ generate_abstract_tester(
     if (atst->clear_env > 0) {
       unparse_bool(f, "clear_env", atst->clear_env);
     }
+    if (atst->enable_ejudge_env > 0) {
+      unparse_bool(f, "enable_ejudge_env", atst->enable_ejudge_env);
+    }
     do_xstr(f, &ab, "start_env", atst->start_env);
   }
 

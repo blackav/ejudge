@@ -676,6 +676,7 @@ enum
   CNTSTESTER_clear_env,
   CNTSTESTER_time_limit_adjustment,
   CNTSTESTER_time_limit_adj_millis,
+  CNTSTESTER_enable_ejudge_env,
   CNTSTESTER_run_dir,
   CNTSTESTER_run_queue_dir,
   CNTSTESTER_run_exe_dir,

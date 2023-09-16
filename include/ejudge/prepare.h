@@ -1481,6 +1481,8 @@ struct section_tester_data
   int time_limit_adjustment;
   /** have priority over `time_limit_adjustment' */
   int time_limit_adj_millis;
+  /** export all ejudge-specific environment to the tested program */
+  ejintbool_t enable_ejudge_env;
 
   unsigned char *run_dir;
   unsigned char *run_queue_dir;

@@ -786,6 +786,7 @@ static struct meta_info_item meta_info_section_tester_data_data[] =
   [CNTSTESTER_clear_env] = { CNTSTESTER_clear_env, 'B', XSIZE(struct section_tester_data, clear_env), "clear_env", XOFFSET(struct section_tester_data, clear_env) },
   [CNTSTESTER_time_limit_adjustment] = { CNTSTESTER_time_limit_adjustment, 'i', XSIZE(struct section_tester_data, time_limit_adjustment), "time_limit_adjustment", XOFFSET(struct section_tester_data, time_limit_adjustment) },
   [CNTSTESTER_time_limit_adj_millis] = { CNTSTESTER_time_limit_adj_millis, 'i', XSIZE(struct section_tester_data, time_limit_adj_millis), "time_limit_adj_millis", XOFFSET(struct section_tester_data, time_limit_adj_millis) },
+  [CNTSTESTER_enable_ejudge_env] = { CNTSTESTER_enable_ejudge_env, 'B', XSIZE(struct section_tester_data, enable_ejudge_env), "enable_ejudge_env", XOFFSET(struct section_tester_data, enable_ejudge_env) },
   [CNTSTESTER_run_dir] = { CNTSTESTER_run_dir, 's', XSIZE(struct section_tester_data, run_dir), "run_dir", XOFFSET(struct section_tester_data, run_dir) },
   [CNTSTESTER_run_queue_dir] = { CNTSTESTER_run_queue_dir, 's', XSIZE(struct section_tester_data, run_queue_dir), "run_queue_dir", XOFFSET(struct section_tester_data, run_queue_dir) },
   [CNTSTESTER_run_exe_dir] = { CNTSTESTER_run_exe_dir, 's', XSIZE(struct section_tester_data, run_exe_dir), "run_exe_dir", XOFFSET(struct section_tester_data, run_exe_dir) },

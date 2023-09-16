@@ -674,6 +674,7 @@ static const struct config_parse_info section_tester_params[] =
   TESTER_PARAM(clear_env, "d"),
   TESTER_PARAM(time_limit_adjustment, "d"),
   TESTER_PARAM(time_limit_adj_millis, "d"),
+  TESTER_PARAM(enable_ejudge_env, "d"),
 
   TESTER_PARAM(run_dir, "S"),
   TESTER_PARAM(check_dir, "S"),
@@ -1563,6 +1564,7 @@ tester_init_func(struct generic_section_config *gp)
   p->clear_env = -1;
   p->time_limit_adjustment = -1;
   p->time_limit_adj_millis = -1;
+  p->enable_ejudge_env = -1;
   p->priority_adjustment = -1000;
   p->max_vm_size = -1L;
   p->max_stack_size = -1L;
@@ -1717,6 +1719,7 @@ static const struct inheritance_info tester_inheritance_info[] =
   TESTER_INH(clear_env, int, int),
   TESTER_INH(time_limit_adjustment, int, int),
   TESTER_INH(time_limit_adj_millis, int, int),
+  TESTER_INH(enable_ejudge_env, int, int),
   TESTER_INH(kill_signal, string, string),
   TESTER_INH(max_stack_size, size, size),
   TESTER_INH(max_data_size, size, size),
@@ -4418,6 +4421,12 @@ set_defaults(
       if (tp->time_limit_adj_millis == -1) {
         tp->time_limit_adj_millis = 0;
       }
+      if (tp->enable_ejudge_env < 0 && atp && atp->enable_ejudge_env >= 0) {
+        tp->enable_ejudge_env = atp->enable_ejudge_env;
+      }
+      if (tp->enable_ejudge_env < 0) {
+        tp->enable_ejudge_env = 0;
+      }
       if ((!tp->kill_signal || !tp->kill_signal[0]) && atp && atp->kill_signal && atp->kill_signal[0]) {
         xstrdup3(&tp->kill_signal, atp->kill_signal);
         vinfo("tester.%d.kill_signal inherited from tester.%s ('%s')", i, sish, tp->kill_signal);
@@ -5211,6 +5220,15 @@ prepare_tester_refinement(serve_state_t state, struct section_tester_data *out,
   }
   if (out->time_limit_adj_millis == -1) {
     out->time_limit_adj_millis = 0;
+  }
+
+  /* copy enable_ejudge_env */
+  out->enable_ejudge_env = tp->enable_ejudge_env;
+  if (out->enable_ejudge_env < 0 && atp) {
+    out->enable_ejudge_env = atp->enable_ejudge_env;
+  }
+  if (out->enable_ejudge_env < 0) {
+    out->enable_ejudge_env = 0;
   }
 
   /* copy max_stack_size */
