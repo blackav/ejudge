@@ -1363,7 +1363,6 @@ start_interactive_valuer(
         const unsigned char *src_path,
         int exec_user_serial)
 {
-  const struct super_run_in_global_packet *srgp = srp->global;
   const struct super_run_in_problem_packet *srpp = srp->problem;
   path_t valuer_cmd;
   tpTask tsk = NULL;
@@ -1415,45 +1414,13 @@ start_interactive_valuer(
     task_SetRSSSize(tsk, srpp->checker_max_rss_size);
   }
   setup_environment(tsk, srpp->valuer_env, 0, NULL, 1);
-  if (srgp->separate_user_score > 0) {
-    task_SetEnv(tsk, "EJUDGE_USER_SCORE", "1");
-  }
-  if (srpp->valuer_sets_marked > 0) {
-    task_SetEnv(tsk, "EJUDGE_MARKED", "1");
-  }
-  if (srpp->interactive_valuer > 0) {
-    task_SetEnv(tsk, "EJUDGE_INTERACTIVE", "1");
-  }
-  task_SetEnv(tsk, "EJUDGE", "1");
-  if (srgp->checker_locale && srgp->checker_locale[0]) {
-    task_SetEnv(tsk, "EJUDGE_LOCALE", srgp->checker_locale);
-  }
-  if (srgp->rejudge_flag > 0) {
-    task_SetEnv(tsk, "EJUDGE_REJUDGE", "1");
-  }
-  if (exec_user_serial > 0) {
-    char buf[32];
-    sprintf(buf, "%d", exec_user_serial);
-    task_SetEnv(tsk, "EJUDGE_SUPER_RUN_SERIAL", buf);
-  }
-  if (srpp->enable_extended_info > 0) {
-    unsigned char buf[64];
-    snprintf(buf, sizeof(buf), "%d", srgp->user_id);
-    task_SetEnv(tsk, "EJUDGE_USER_ID", buf);
-    snprintf(buf, sizeof(buf), "%d", srgp->contest_id);
-    task_SetEnv(tsk, "EJUDGE_CONTEST_ID", buf);
-    snprintf(buf, sizeof(buf), "%d", srgp->run_id);
-    task_SetEnv(tsk, "EJUDGE_RUN_ID", buf);
-    task_SetEnv(tsk, "EJUDGE_USER_LOGIN", srgp->user_login);
-    task_SetEnv(tsk, "EJUDGE_USER_NAME", srgp->user_name);
-    if (srpp->test_count > 0) {
-      snprintf(buf, sizeof(buf), "%d", srpp->test_count);
-      task_SetEnv(tsk, "EJUDGE_TEST_COUNT", buf);
-    }
-  }
-  if (src_path) {
-    task_SetEnv(tsk, "EJUDGE_SOURCE_PATH", src_path);
-  }
+  setup_ejudge_environment(tsk, srp,
+                           0 /* cur_test */,
+                           -1 /* test_max_score */,
+                           0 /* output_only */,
+                           src_path,
+                           exec_user_serial,
+                           0 /* test_random_value */);
   //task_EnableAllSignals(tsk);
 
   task_PrintArgs(tsk);
