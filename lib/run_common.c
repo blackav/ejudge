@@ -2424,7 +2424,8 @@ invoke_interactor(
         const struct super_run_in_problem_packet *srpp,
         int cur_test,
         const unsigned char *src_path,
-        int exec_user_serial)
+        int exec_user_serial,
+        uint64_t test_random_value)
 {
   tpTask tsk_int = NULL;
   int env_u = 0;
@@ -2472,6 +2473,11 @@ invoke_interactor(
     char buf[32];
     sprintf(buf, "%d", exec_user_serial);
     task_SetEnv(tsk_int, "EJUDGE_SUPER_RUN_SERIAL", buf);
+  }
+  if (test_random_value > 0) {
+    char buf[32];
+    sprintf(buf, "%llx", (unsigned long long) test_random_value);
+    task_SetEnv(tsk_int, "EJUDGE_TEST_RANDOM_VALUE", buf);
   }
   if (srpp->enable_extended_info > 0) {
     unsigned char buf[64];
@@ -4251,7 +4257,8 @@ run_one_test(
     tsk_int = invoke_interactor(interactor_cmd, test_src, output_path, corr_src, info_src,
                                 working_dir, check_out_path,
                                 &tstinfo, pfd1[0], pfd2[1], cfd[1], task_GetPid(tsk), srgp, srpp, cur_test, src_path,
-                                state->exec_user_serial);
+                                state->exec_user_serial,
+                                test_random_value);
     if (!tsk_int) {
       append_msg_to_log(check_out_path, "interactor failed to start");
     }
