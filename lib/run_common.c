@@ -2608,7 +2608,8 @@ invoke_checker(
         int test_score_count,
         const int *test_score_val,
         int output_only,
-        const unsigned char *src_path)
+        const unsigned char *src_path,
+        int exec_user_serial)
 {
   tpTask tsk = NULL;
   int status = RUN_CHECK_FAILED;
@@ -2704,6 +2705,11 @@ invoke_checker(
   if (srgp->separate_user_score > 0 && output_only > 0) {
     task_SetEnv(tsk, "EJUDGE_USER_SCORE", "1");
     user_score_mode = 1;
+  }
+  if (exec_user_serial > 0) {
+    char buf[32];
+    sprintf(buf, "%d", exec_user_serial);
+    task_SetEnv(tsk, "EJUDGE_SUPER_RUN_SERIAL", buf);
   }
   if (srpp->enable_extended_info > 0) {
     unsigned char buf[64];
@@ -4571,7 +4577,8 @@ run_checker:;
                           corr_src, info_src, tgzdir_src,
                           working_dir, score_out_path, check_out_path,
                           check_dir, &tstinfo, test_score_count, test_score_val,
-                          0, src_path);
+                          0, src_path,
+                          state->exec_user_serial);
 
   // read the checker output
 read_checker_output:;
@@ -4838,7 +4845,8 @@ check_output_only(
         struct run_test_info_vector *tests,
         const unsigned char *check_cmd,
         const unsigned char *mirror_dir,
-        int utf8_mode)
+        int utf8_mode,
+        int exec_user_serial)
 {
   int cur_test = 1;
   struct run_test_info *cur_info = NULL;
@@ -4905,7 +4913,8 @@ check_output_only(
                           check_cmd, test_src, output_path,
                           corr_src, NULL, NULL,
                           global->run_work_dir, score_out_path, check_out_path,
-                          global->run_work_dir, NULL, 0, NULL, 1, NULL);
+                          global->run_work_dir, NULL, 0, NULL, 1, NULL,
+                          exec_user_serial);
 
   cur_info->status = status;
   cur_info->max_score = srpp->full_score;
@@ -5297,7 +5306,8 @@ run_tests(
                                agent,
                                far, exe_name, &tests, check_cmd,
                                mirror_dir,
-                               utf8_mode);
+                               utf8_mode,
+                               state->exec_user_serial);
     has_user_score = reply_pkt->has_user_score;
     if (has_user_score) {
       user_status = reply_pkt->user_status;
