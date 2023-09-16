@@ -2278,7 +2278,8 @@ invoke_init_cmd(
         const unsigned char *working_dir,
         const unsigned char *check_out_path,
         testinfo_t *ti,
-        const unsigned char *src_path)
+        const unsigned char *src_path,
+        int exec_user_serial)
 {
   tpTask tsk = NULL;
   int status = 0;
@@ -2330,6 +2331,11 @@ invoke_init_cmd(
   }
   if (src_path) {
     task_SetEnv(tsk, "EJUDGE_SOURCE_PATH", src_path);
+  }
+  if (exec_user_serial > 0) {
+    char buf[32];
+    sprintf(buf, "%d", exec_user_serial);
+    task_SetEnv(tsk, "EJUDGE_SUPER_RUN_SERIAL", buf);
   }
 
   if (task_Start(tsk) < 0) {
@@ -3804,7 +3810,8 @@ run_one_test(
   if (srpp->init_cmd && srpp->init_cmd[0]) {
     status = invoke_init_cmd(srpp, "start", test_src, corr_src,
                              info_src, working_dir, check_out_path,
-                             &tstinfo, src_path);
+                             &tstinfo, src_path,
+                             state->exec_user_serial);
     if (status != 0) {
       append_msg_to_log(check_out_path, "init_cmd failed to start with code 0");
       status = RUN_CHECK_FAILED;
@@ -4558,7 +4565,8 @@ read_checker_output:;
   if (init_cmd_started) {
     int new_status = invoke_init_cmd(srpp, "stop", test_src,
                                      corr_src, info_src, working_dir, check_out_path,
-                                     &tstinfo, src_path);
+                                     &tstinfo, src_path,
+                                     state->exec_user_serial);
     if (!status) status = new_status;
     init_cmd_started = 0;
   }
@@ -4582,7 +4590,8 @@ cleanup:;
 
   if (init_cmd_started) {
     int new_status = invoke_init_cmd(srpp, "stop", test_src, corr_src,  info_src, working_dir, check_out_path,
-                                     &tstinfo, src_path);
+                                     &tstinfo, src_path,
+                                     state->exec_user_serial);
     if (!status) status = new_status;
     init_cmd_started = 0;
   }
