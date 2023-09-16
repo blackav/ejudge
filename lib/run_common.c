@@ -2178,7 +2178,8 @@ invoke_test_generator_cmd(
         const unsigned char *test_generator_cmd,
         const unsigned char *work_dir,
         const unsigned char *src_path,
-        const unsigned char *log_path)
+        const unsigned char *log_path,
+        int exec_user_serial)
 {
   const struct super_run_in_global_packet *srgp = srp->global;
   const struct super_run_in_problem_packet *srpp = srp->problem;
@@ -2217,6 +2218,11 @@ invoke_test_generator_cmd(
   }
   if (srgp->testlib_mode > 0) {
     task_SetEnv(tsk, "EJUDGE_TESTLIB_MODE", "1");
+  }
+  if (exec_user_serial > 0) {
+    char buf[32];
+    sprintf(buf, "%d", exec_user_serial);
+    task_SetEnv(tsk, "EJUDGE_SUPER_RUN_SERIAL", buf);
   }
   if (srpp->enable_extended_info > 0) {
     unsigned char buf[64];
@@ -5345,7 +5351,8 @@ run_tests(
       goto check_failed;
     }
     r = invoke_test_generator_cmd(srp, test_generator_cmd,
-                                  b_test_dir, src_path, messages_path);
+                                  b_test_dir, src_path, messages_path,
+                                  state->exec_user_serial);
     if (r != 0) {
       append_msg_to_log(messages_path, "test generator failed");
       goto check_failed;
