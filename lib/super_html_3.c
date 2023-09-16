@@ -250,6 +250,7 @@ super_html_lang_activate(
   lang->binary = cs_lang->binary;
   lang->insecure = cs_lang->insecure;
   lang->enable_custom = cs_lang->enable_custom;
+  lang->enable_ejudge_env = cs_lang->enable_ejudge_env;
   xstrdup3(&lang->content_type, cs_lang->content_type);
   lang->compile_dir_index = cs_lang->compile_dir_index;
   lang->max_vm_size = cs_lang->max_vm_size;

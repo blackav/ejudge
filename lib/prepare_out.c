@@ -921,6 +921,8 @@ prepare_unparse_lang(
     unparse_bool(f, "disable_testing", lang->disable_testing);
   if (lang->enable_custom > 0)
     unparse_bool(f, "enable_custom", lang->enable_custom);
+  if (lang->enable_ejudge_env > 0)
+    unparse_bool(f, "enable_ejudge_env", lang->enable_ejudge_env);
   if (lang->content_type && lang->content_type[0]) {
     fprintf(f, "content_type = \"%s\"\n", CARMOR(lang->content_type));
   }

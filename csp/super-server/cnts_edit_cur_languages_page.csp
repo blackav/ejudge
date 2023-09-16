@@ -168,6 +168,10 @@ static const unsigned char * const form_row_attrs[]=
             <div style="width: 300px; display: inline-block;"><label for="main-is_dos">Perform UNIX-&gt;DOS conversion:</label></div>
             <input type="checkbox" name="is_dos" id="main-is_dos" value="1" />
         </div>
+        <div id="main-enable_ejudge_env-div">
+            <div style="width: 300px; display: inline-block;"><label for="main-enable_ejudge_env">Pass ejudge-specific env at runtime:</label></div>
+            <input type="checkbox" name="enable_ejudge_env" id="main-enable_ejudge_env" value="1" />
+        </div>
         <div id="main-max_vm_size-div">
             <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="main-max_vm_size">Maximum VM size:</label></div>
             <input type="text" size="20" name="max_vm_size" id="main-max_vm_size" value="" class="text ui-widget-content ui-corner-all" />
@@ -311,6 +315,7 @@ function popupMainDialog(compile_id, e, skipField)
     $("#main-extid").val($("#orig-extid-" + compile_id).val());
     copyCheckbox("main-disabled", "orig-disabled-" + compile_id);
     copyCheckbox("main-insecure", "orig-insecure-" + compile_id);
+    copyCheckbox("main-enable_ejudge_env", "orig-enable_ejudge_env-" + compile_id);
     copyCheckbox("main-disable_security", "orig-disable_security-" + compile_id);
     copyCheckbox("main-enable_suid_run", "orig-enable_suid_run-" + compile_id);
     copyCheckbox("main-disable_testing", "orig-disable_testing-" + compile_id);
@@ -581,6 +586,14 @@ function mainDialogOnChange()
         <td><s:yesno id="orig-is_dos" idSuffix="idsuffix" disabled="disabled" name="param" value="lang->is_dos" /></td>
         <td>&nbsp;</td>
         <td onclick="np(event);"><s:help topic="Serve.cfg:language:is_dos" /></td>
+    </s:tr>
+
+    <s:tr id="orig-enable_ejudge_env-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" onclickExpr="onclickstr_buf">
+        <td width="50">&nbsp;</td>
+        <td>Enable ejudge env vars:</td>
+        <td><s:yesno id="orig-enable_ejudge_env" idSuffix="idsuffix" disabled="disabled"  name="param" value="lang->enable_ejudge_env" /></td>
+        <td>&nbsp;</td>
+        <td onclick="np(event);"><s:help topic="Serve.cfg:language:enable_ejudge_env" /></td>
     </s:tr>
 
 <%

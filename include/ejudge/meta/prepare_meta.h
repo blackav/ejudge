@@ -610,6 +610,7 @@ enum
   CNTSLANG_disable_auto_testing,
   CNTSLANG_disable_testing,
   CNTSLANG_enable_custom,
+  CNTSLANG_enable_ejudge_env,
   CNTSLANG_max_vm_size,
   CNTSLANG_max_stack_size,
   CNTSLANG_max_file_size,

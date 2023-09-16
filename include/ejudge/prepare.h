@@ -1377,6 +1377,8 @@ struct section_language_data
   ejintbool_t disable_testing;
   /** enable custom compilation script */
   ejintbool_t enable_custom;
+  /** pass ejudge-specific environment to the running program */
+  ejintbool_t enable_ejudge_env;
 
   /** max virtual size limit  */
   ej_size64_t max_vm_size;
