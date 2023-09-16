@@ -1125,6 +1125,14 @@ setup_ejudge_environment(
     sprintf(buf, "%llx", (unsigned long long) test_random_value);
     task_SetEnv(tsk, "EJUDGE_TEST_RANDOM_VALUE", buf);
   }
+  if (srgp->testlib_mode > 0) {
+    task_SetEnv(tsk, "EJUDGE_TESTLIB_MODE", "1");
+  }
+  if (srgp->enable_container > 0) {
+    task_SetEnv(tsk, "EJUDGE_CONTAINER", "1");
+  } else if (srgp->suid_run > 0) {
+    task_SetEnv(tsk, "EJUDGE_SUID_RUN", "1");
+  }
   if (srpp->enable_extended_info > 0) {
     snprintf(buf, sizeof(buf), "%d", srgp->user_id);
     task_SetEnv(tsk, "EJUDGE_USER_ID", buf);
@@ -2423,8 +2431,7 @@ invoke_interactor(
         int stdout_fd,
         int control_fd,
         int program_pid,
-        const struct super_run_in_global_packet *srgp,
-        const struct super_run_in_problem_packet *srpp,
+        const struct super_run_in_packet *srp,
         int cur_test,
         const unsigned char *src_path,
         int exec_user_serial,
@@ -2433,6 +2440,9 @@ invoke_interactor(
   tpTask tsk_int = NULL;
   int env_u = 0;
   char **env_v = NULL;
+
+  const struct super_run_in_global_packet *srgp = srp->global;
+  const struct super_run_in_problem_packet *srpp = srp->problem;
 
   if (ti) {
     env_u = ti->interactor_env.u;
@@ -2457,56 +2467,22 @@ invoke_interactor(
   task_SetPathAsArg0(tsk_int);
   task_SetWorkingDir(tsk_int, working_dir);
   setup_environment(tsk_int, srpp->interactor_env, env_u, env_v, 1);
-  task_SetEnv(tsk_int, "EJUDGE", "1");
-  task_SetRedir(tsk_int, 0, TSR_DUP, stdin_fd);
-  task_SetRedir(tsk_int, 1, TSR_DUP, stdout_fd);
-  task_SetRedir(tsk_int, 2, TSR_FILE, check_out_path, TSK_APPEND, TSK_FULL_RW);
-  if (srgp->checker_locale && srgp->checker_locale[0]) {
-    task_SetEnv(tsk_int, "EJUDGE_LOCALE", srgp->checker_locale);
-  }
-  if (srgp->enable_container > 0) {
-    task_SetEnv(tsk_int, "EJUDGE_CONTAINER", "1");
-  } else if (srgp->suid_run > 0) {
-    task_SetEnv(tsk_int, "EJUDGE_SUID_RUN", "1");
-  }
-  if (srgp->testlib_mode > 0) {
-    task_SetEnv(tsk_int, "EJUDGE_TESTLIB_MODE", "1");
-  }
-  if (exec_user_serial > 0) {
-    char buf[32];
-    sprintf(buf, "%d", exec_user_serial);
-    task_SetEnv(tsk_int, "EJUDGE_SUPER_RUN_SERIAL", buf);
-  }
-  if (test_random_value > 0) {
-    char buf[32];
-    sprintf(buf, "%llx", (unsigned long long) test_random_value);
-    task_SetEnv(tsk_int, "EJUDGE_TEST_RANDOM_VALUE", buf);
-  }
-  if (srpp->enable_extended_info > 0) {
-    unsigned char buf[64];
-    snprintf(buf, sizeof(buf), "%d", srgp->user_id);
-    task_SetEnv(tsk_int, "EJUDGE_USER_ID", buf);
-    snprintf(buf, sizeof(buf), "%d", srgp->contest_id);
-    task_SetEnv(tsk_int, "EJUDGE_CONTEST_ID", buf);
-    snprintf(buf, sizeof(buf), "%d", srgp->run_id);
-    task_SetEnv(tsk_int, "EJUDGE_RUN_ID", buf);
-    snprintf(buf, sizeof(buf), "%d", cur_test);
-    task_SetEnv(tsk_int, "EJUDGE_TEST_NUM", buf);
-    task_SetEnv(tsk_int, "EJUDGE_USER_LOGIN", srgp->user_login);
-    task_SetEnv(tsk_int, "EJUDGE_USER_NAME", srgp->user_name);
-    if (srpp->test_count > 0) {
-      snprintf(buf, sizeof(buf), "%d", srpp->test_count);
-      task_SetEnv(tsk_int, "EJUDGE_TEST_COUNT", buf);
-    }
-  }
-  if (src_path) {
-    task_SetEnv(tsk_int, "EJUDGE_SOURCE_PATH", src_path);
-  }
+  setup_ejudge_environment(tsk_int,
+                           srp,
+                           cur_test,
+                           -1, /* test_max_score */
+                           0, /* output_only */
+                           src_path,
+                           exec_user_serial,
+                           test_random_value);
   if (control_fd >= 0) {
     unsigned char buf[64];
     snprintf(buf, sizeof(buf), "%d", control_fd);
     task_SetEnv(tsk_int, "EJUDGE_CONTROL_FD", buf);
   }
+  task_SetRedir(tsk_int, 0, TSR_DUP, stdin_fd);
+  task_SetRedir(tsk_int, 1, TSR_DUP, stdout_fd);
+  task_SetRedir(tsk_int, 2, TSR_FILE, check_out_path, TSK_APPEND, TSK_FULL_RW);
   task_EnableAllSignals(tsk_int);
   task_IgnoreSIGPIPE(tsk_int);
   if (srpp->interactor_time_limit_ms > 0) {
@@ -4269,7 +4245,7 @@ run_one_test(
   if (interactor_cmd) {
     tsk_int = invoke_interactor(interactor_cmd, test_src, output_path, corr_src, info_src,
                                 working_dir, check_out_path,
-                                &tstinfo, pfd1[0], pfd2[1], cfd[1], task_GetPid(tsk), srgp, srpp, cur_test, src_path,
+                                &tstinfo, pfd1[0], pfd2[1], cfd[1], task_GetPid(tsk), srp, cur_test, src_path,
                                 state->exec_user_serial,
                                 test_random_value);
     if (!tsk_int) {
