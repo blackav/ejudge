@@ -2746,6 +2746,9 @@ serve_run_request(
     srpp->max_rss_size = lang->run_max_rss_size;
   }
   srpp->checker_extra_files = sarray_copy(prob->checker_extra_files);
+  if (lang && lang->enable_ejudge_env > 0) {
+    srgp->enable_ejudge_env = lang->enable_ejudge_env;
+  }
 
   if (tester) {
     struct super_run_in_tester_packet *srtp = srp->tester;

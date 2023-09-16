@@ -75,6 +75,7 @@ static struct meta_info_item meta_info_super_run_in_global_packet_data[] =
   [META_SUPER_RUN_IN_GLOBAL_PACKET_cached_on_remote] = { META_SUPER_RUN_IN_GLOBAL_PACKET_cached_on_remote, 'i', XSIZE(struct super_run_in_global_packet, cached_on_remote), "cached_on_remote", XOFFSET(struct super_run_in_global_packet, cached_on_remote) },
   [META_SUPER_RUN_IN_GLOBAL_PACKET_src_sfx] = { META_SUPER_RUN_IN_GLOBAL_PACKET_src_sfx, 's', XSIZE(struct super_run_in_global_packet, src_sfx), "src_sfx", XOFFSET(struct super_run_in_global_packet, src_sfx) },
   [META_SUPER_RUN_IN_GLOBAL_PACKET_src_file] = { META_SUPER_RUN_IN_GLOBAL_PACKET_src_file, 's', XSIZE(struct super_run_in_global_packet, src_file), "src_file", XOFFSET(struct super_run_in_global_packet, src_file) },
+  [META_SUPER_RUN_IN_GLOBAL_PACKET_enable_ejudge_env] = { META_SUPER_RUN_IN_GLOBAL_PACKET_enable_ejudge_env, 'B', XSIZE(struct super_run_in_global_packet, enable_ejudge_env), "enable_ejudge_env", XOFFSET(struct super_run_in_global_packet, enable_ejudge_env) },
 };
 
 int meta_super_run_in_global_packet_get_type(int tag)

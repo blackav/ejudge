@@ -95,6 +95,7 @@ struct super_run_in_global_packet
   int cached_on_remote;
   unsigned char *src_sfx;
   unsigned char *src_file;
+  ejintbool_t enable_ejudge_env;
 
   int scoring_system_val META_ATTRIB((meta_hidden));
 };

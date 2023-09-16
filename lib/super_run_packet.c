@@ -55,6 +55,7 @@ super_run_in_global_packet_init(struct generic_section_config *gp)
   p->testlib_mode = -1;
 
   p->scoring_system_val = -1;
+  p->enable_ejudge_env = -1;
 }
 
 void
