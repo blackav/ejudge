@@ -4031,8 +4031,12 @@ run_one_test(
     }
   }
 
+  int ejudge_env_flag = (tst && tst->enable_ejudge_env > 0) || (srgp->enable_ejudge_env > 0);
+
   if (tst && tst->clear_env > 0) task_ClearEnv(tsk);
-  setup_environment(tsk, start_env, tstinfo.env.u, tstinfo.env.v, 0);
+  setup_environment(tsk, start_env, tstinfo.env.u, tstinfo.env.v, ejudge_env_flag);
+  if (ejudge_env_flag) {
+  }
 
   if (tstinfo.time_limit_ms > 0) {
     task_SetMaxTimeMillis(tsk, tstinfo.time_limit_ms);
