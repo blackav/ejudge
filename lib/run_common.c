@@ -4687,7 +4687,8 @@ invoke_prepare_cmd(
         const unsigned char *working_dir,
         const unsigned char *exe_name,
         const unsigned char *messages_path,
-        const unsigned char *src_path)
+        const unsigned char *src_path,
+        int exec_user_serial)
 {
   tpTask tsk = task_New();
   int retval = -1;
@@ -4704,6 +4705,11 @@ invoke_prepare_cmd(
 
   if (src_path) {
     task_SetEnv(tsk, "EJUDGE_SOURCE_PATH", src_path);
+  }
+  if (exec_user_serial > 0) {
+    char buf[32];
+    sprintf(buf, "%d", exec_user_serial);
+    task_SetEnv(tsk, "EJUDGE_SUPER_RUN_SERIAL", buf);
   }
 
   if (task_Start(tsk) < 0) {
@@ -5397,7 +5403,8 @@ run_tests(
 
   if (!srpp->type_val && tst && tst->prepare_cmd && tst->prepare_cmd[0]) {
     if (invoke_prepare_cmd(tst->prepare_cmd, global->run_work_dir, exe_name,
-                           messages_path, src_path) < 0) {
+                           messages_path, src_path,
+                           state->exec_user_serial) < 0) {
       goto check_failed;
     }
   }
