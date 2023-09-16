@@ -3980,6 +3980,12 @@ run_one_test(
   if (tst && tst->clear_env > 0) task_ClearEnv(tsk);
   setup_environment(tsk, start_env, tstinfo.env.u, tstinfo.env.v, ejudge_env_flag);
   if (ejudge_env_flag) {
+    setup_ejudge_environment(tsk, srp, cur_test,
+                             -1 /* test_max_score */,
+                             0 /* output_only */,
+                             src_path,
+                             state->exec_user_serial,
+                             test_random_value);
   }
 
   if (tstinfo.time_limit_ms > 0) {
