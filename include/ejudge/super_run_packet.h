@@ -220,6 +220,7 @@ struct super_run_in_tester_packet
   ejintbool_t enable_memory_limit_error;
   unsigned char *kill_signal;
   ejintbool_t clear_env;
+  ejintbool_t enable_ejudge_env;
   int time_limit_adjustment_ms;
   unsigned char *errorcode_file;
   unsigned char *error_file;

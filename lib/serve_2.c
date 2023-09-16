@@ -2768,6 +2768,7 @@ serve_run_request(
     srtp->enable_memory_limit_error = tester->enable_memory_limit_error;
     srtp->kill_signal = xstrdup2(tester->kill_signal);
     srtp->clear_env = tester->clear_env;
+    srtp->enable_ejudge_env = tester->enable_ejudge_env;
     if (tester->time_limit_adj_millis > 0) {
       srtp->time_limit_adjustment_ms = tester->time_limit_adj_millis;
     } else if (tester->time_limit_adjustment > 0) {

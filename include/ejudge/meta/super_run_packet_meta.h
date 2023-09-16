@@ -217,6 +217,7 @@ enum
   META_SUPER_RUN_IN_TESTER_PACKET_enable_memory_limit_error,
   META_SUPER_RUN_IN_TESTER_PACKET_kill_signal,
   META_SUPER_RUN_IN_TESTER_PACKET_clear_env,
+  META_SUPER_RUN_IN_TESTER_PACKET_enable_ejudge_env,
   META_SUPER_RUN_IN_TESTER_PACKET_time_limit_adjustment_ms,
   META_SUPER_RUN_IN_TESTER_PACKET_errorcode_file,
   META_SUPER_RUN_IN_TESTER_PACKET_error_file,
