@@ -40,6 +40,7 @@
 #include "ejudge/base64.h"
 #include "ejudge/ej_libzip.h"
 #include "ejudge/agent_client.h"
+#include "ejudge/random.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/osdeps.h"
@@ -2285,7 +2286,8 @@ invoke_init_cmd(
         const unsigned char *check_out_path,
         testinfo_t *ti,
         const unsigned char *src_path,
-        int exec_user_serial)
+        int exec_user_serial,
+        uint64_t test_random_value)
 {
   tpTask tsk = NULL;
   int status = 0;
@@ -2342,6 +2344,11 @@ invoke_init_cmd(
     char buf[32];
     sprintf(buf, "%d", exec_user_serial);
     task_SetEnv(tsk, "EJUDGE_SUPER_RUN_SERIAL", buf);
+  }
+  if (test_random_value > 0) {
+    char buf[32];
+    sprintf(buf, "%llx", (unsigned long long) test_random_value);
+    task_SetEnv(tsk, "EJUDGE_TEST_RANDOM_VALUE", buf);
   }
 
   if (task_Start(tsk) < 0) {
@@ -3426,6 +3433,8 @@ run_one_test(
   int interpreter_cnt = 0;
   unsigned char *interpreter_str = NULL;
 
+  uint64_t test_random_value;
+
   test_checker_out_path[0] = 0;
   memset(&tstinfo, 0, sizeof(tstinfo));
 
@@ -3442,6 +3451,9 @@ run_one_test(
   if (srpp->test_count > 0 && cur_test > srpp->test_count) {
     return -1;
   }
+
+  random_init();
+  test_random_value = random_u64();
 
   test_base[0] = 0;
   test_src[0] = 0;
@@ -3829,7 +3841,8 @@ run_one_test(
     status = invoke_init_cmd(srpp, "start", test_src, corr_src,
                              info_src, working_dir, check_out_path,
                              &tstinfo, src_path,
-                             state->exec_user_serial);
+                             state->exec_user_serial,
+                             test_random_value);
     if (status != 0) {
       append_msg_to_log(check_out_path, "init_cmd failed to start with code 0");
       status = RUN_CHECK_FAILED;
@@ -4586,7 +4599,8 @@ read_checker_output:;
     int new_status = invoke_init_cmd(srpp, "stop", test_src,
                                      corr_src, info_src, working_dir, check_out_path,
                                      &tstinfo, src_path,
-                                     state->exec_user_serial);
+                                     state->exec_user_serial,
+                                     test_random_value);
     if (!status) status = new_status;
     init_cmd_started = 0;
   }
@@ -4611,7 +4625,8 @@ cleanup:;
   if (init_cmd_started) {
     int new_status = invoke_init_cmd(srpp, "stop", test_src, corr_src,  info_src, working_dir, check_out_path,
                                      &tstinfo, src_path,
-                                     state->exec_user_serial);
+                                     state->exec_user_serial,
+                                     test_random_value);
     if (!status) status = new_status;
     init_cmd_started = 0;
   }
