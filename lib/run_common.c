@@ -1120,6 +1120,7 @@ invoke_valuer(
         const struct run_test_info *tests,
         int cur_variant,
         int max_score,
+        int exec_user_serial,
         int *p_score,
         int *p_marked,
         int *p_user_status,
@@ -1231,6 +1232,11 @@ invoke_valuer(
   }
   if (srpp->enable_checker_token > 0) {
     task_SetEnv(tsk, "EJUDGE_CHECKER_TOKEN", "1");
+  }
+  if (exec_user_serial > 0) {
+    char buf[32];
+    sprintf(buf, "%d", exec_user_serial);
+    task_SetEnv(tsk, "EJUDGE_SUPER_RUN_SERIAL", buf);
   }
   if (srpp->enable_extended_info > 0) {
     unsigned char buf[64];
@@ -5688,6 +5694,7 @@ run_tests(
       if (invoke_valuer(global, srp, agent, mirror_dir,
                         tests.size, tests.data,
                         srgp->variant, srpp->full_score,
+                        state->exec_user_serial,
                         &total_score, &marked_flag,
                         &user_status, &user_score, &user_tests_passed,
                         &valuer_errors, &valuer_comment,
