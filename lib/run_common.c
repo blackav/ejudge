@@ -1320,7 +1320,8 @@ start_interactive_valuer(
         const unsigned char *valuer_jcmt_file,
         int stdin_fd,
         int stdout_fd,
-        const unsigned char *src_path)
+        const unsigned char *src_path,
+        int exec_user_serial)
 {
   const struct super_run_in_global_packet *srgp = srp->global;
   const struct super_run_in_problem_packet *srpp = srp->problem;
@@ -1389,6 +1390,11 @@ start_interactive_valuer(
   }
   if (srgp->rejudge_flag > 0) {
     task_SetEnv(tsk, "EJUDGE_REJUDGE", "1");
+  }
+  if (exec_user_serial > 0) {
+    char buf[32];
+    sprintf(buf, "%d", exec_user_serial);
+    task_SetEnv(tsk, "EJUDGE_SUPER_RUN_SERIAL", buf);
   }
   if (srpp->enable_extended_info > 0) {
     unsigned char buf[64];
@@ -5380,7 +5386,8 @@ run_tests(
                                           valuer_cmt_file,
                                           valuer_jcmt_file,
                                           evfds[0], vefds[1],
-                                          src_path);
+                                          src_path,
+                                          state->exec_user_serial);
     if (!valuer_tsk) {
       append_msg_to_log(messages_path, "failed to start interactive valuer");
       goto check_failed;
