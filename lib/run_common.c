@@ -2582,8 +2582,7 @@ report_args_and_env(testinfo_t *ti)
 
 static int
 invoke_checker(
-        const struct super_run_in_global_packet *srgp,
-        const struct super_run_in_problem_packet *srpp,
+        const struct super_run_in_packet *srp,
         int cur_test,
         struct run_test_info *cur_info,
         const unsigned char *check_cmd,
@@ -2611,6 +2610,8 @@ invoke_checker(
   int env_u = 0;
   char **env_v = 0;
   int user_score_mode = 0;
+  const struct super_run_in_global_packet *srgp = srp->global;
+  const struct super_run_in_problem_packet *srpp = srp->problem;
 
   if (ti) {
     env_u = ti->checker_env.u;
@@ -2682,52 +2683,16 @@ invoke_checker(
     abort();
   }
   setup_environment(tsk, srpp->checker_env, env_u, env_v, 1);
-  if (srpp->scoring_checker > 0) {
-    task_SetEnv(tsk, "EJUDGE_SCORING_CHECKER", "1");
-    if (srpp->enable_checker_token > 0) {
-      task_SetEnv(tsk, "EJUDGE_CHECKER_TOKEN", "1");
-    }
-    unsigned char buf[64];
-    snprintf(buf, sizeof(buf), "%d", test_max_score);
-    task_SetEnv(tsk, "EJUDGE_MAX_SCORE", buf);
-  }
-  task_SetEnv(tsk, "EJUDGE", "1");
-  if (srgp->checker_locale && srgp->checker_locale[0]) {
-    task_SetEnv(tsk, "EJUDGE_LOCALE", srgp->checker_locale);
-  }
+  setup_ejudge_environment(tsk,
+                           srp,
+                           cur_test,
+                           test_max_score,
+                           output_only,
+                           src_path,
+                           exec_user_serial,
+                           test_random_value);
   if (srgp->separate_user_score > 0 && output_only > 0) {
-    task_SetEnv(tsk, "EJUDGE_USER_SCORE", "1");
     user_score_mode = 1;
-  }
-  if (exec_user_serial > 0) {
-    char buf[32];
-    sprintf(buf, "%d", exec_user_serial);
-    task_SetEnv(tsk, "EJUDGE_SUPER_RUN_SERIAL", buf);
-  }
-  if (test_random_value > 0) {
-    char buf[32];
-    sprintf(buf, "%llx", (unsigned long long) test_random_value);
-    task_SetEnv(tsk, "EJUDGE_TEST_RANDOM_VALUE", buf);
-  }
-  if (srpp->enable_extended_info > 0) {
-    unsigned char buf[64];
-    snprintf(buf, sizeof(buf), "%d", srgp->user_id);
-    task_SetEnv(tsk, "EJUDGE_USER_ID", buf);
-    snprintf(buf, sizeof(buf), "%d", srgp->contest_id);
-    task_SetEnv(tsk, "EJUDGE_CONTEST_ID", buf);
-    snprintf(buf, sizeof(buf), "%d", srgp->run_id);
-    task_SetEnv(tsk, "EJUDGE_RUN_ID", buf);
-    snprintf(buf, sizeof(buf), "%d", cur_test);
-    task_SetEnv(tsk, "EJUDGE_TEST_NUM", buf);
-    task_SetEnv(tsk, "EJUDGE_USER_LOGIN", srgp->user_login);
-    task_SetEnv(tsk, "EJUDGE_USER_NAME", srgp->user_name);
-    if (srpp->test_count > 0) {
-      snprintf(buf, sizeof(buf), "%d", srpp->test_count);
-      task_SetEnv(tsk, "EJUDGE_TEST_COUNT", buf);
-    }
-  }
-  if (src_path) {
-    task_SetEnv(tsk, "EJUDGE_SOURCE_PATH", src_path);
   }
   task_EnableAllSignals(tsk);
 
@@ -4581,7 +4546,7 @@ run_checker:;
     check_cmd = local_check_cmd;
   }
 
-  status = invoke_checker(srgp, srpp, cur_test, cur_info,
+  status = invoke_checker(srp, cur_test, cur_info,
                           check_cmd, test_src, output_path_to_check,
                           corr_src, info_src, tgzdir_src,
                           working_dir, score_out_path, check_out_path,
@@ -4854,8 +4819,7 @@ cleanup:
 static int
 check_output_only(
         const struct section_global_data *global,
-        const struct super_run_in_global_packet *srgp,
-        const struct super_run_in_problem_packet *srpp,
+        const struct super_run_in_packet *srp,
         struct run_reply_packet *reply_pkt,
         struct AgentClient *agent,
         full_archive_t far,
@@ -4880,6 +4844,9 @@ check_output_only(
   unsigned char corr_base[PATH_MAX];
   unsigned char test_src[PATH_MAX];
   unsigned char corr_src[PATH_MAX];
+
+  const struct super_run_in_global_packet *srgp = srp->global;
+  const struct super_run_in_problem_packet *srpp = srp->problem;
 
   // check_cmd, check_dir, global->run_work_dir
   ASSERT(cur_test == tests->size);
@@ -4927,7 +4894,7 @@ check_output_only(
   cur_info->user_score = -1;
 
   snprintf(output_path, sizeof(output_path), "%s/%s", global->run_work_dir, exe_name);
-  status = invoke_checker(srgp, srpp, cur_test, cur_info,
+  status = invoke_checker(srp, cur_test, cur_info,
                           check_cmd, test_src, output_path,
                           corr_src, NULL, NULL,
                           global->run_work_dir, score_out_path, check_out_path,
@@ -5320,7 +5287,7 @@ run_tests(
   }
 
   if (srpp->type_val) {
-    status = check_output_only(global, srgp, srpp, reply_pkt,
+    status = check_output_only(global, srp, reply_pkt,
                                agent,
                                far, exe_name, &tests, check_cmd,
                                mirror_dir,
