@@ -2283,7 +2283,7 @@ invoke_test_generator_cmd(
 
 static int
 invoke_init_cmd(
-        const struct super_run_in_problem_packet *srpp,
+        const struct super_run_in_packet *srp,
         const unsigned char *subcommand,
         const unsigned char *test_src_path,
         const unsigned char *corr_src_path,
@@ -2292,6 +2292,7 @@ invoke_init_cmd(
         const unsigned char *check_out_path,
         testinfo_t *ti,
         const unsigned char *src_path,
+        int cur_test,
         int exec_user_serial,
         uint64_t test_random_value)
 {
@@ -2299,6 +2300,7 @@ invoke_init_cmd(
   int status = 0;
   int env_u = 0;
   char **env_v = NULL;
+  const struct super_run_in_problem_packet *srpp = srp->problem;
 
   if (ti) {
     env_u = ti->init_env.u;
@@ -2324,6 +2326,14 @@ invoke_init_cmd(
     task_SetWorkingDir(tsk, working_dir);
   }
   setup_environment(tsk, srpp->init_env, env_u, env_v, 1);
+  setup_ejudge_environment(tsk,
+                           srp,
+                           cur_test,
+                           -1, /* test_max_score */
+                           0, /* output_only */
+                           src_path,
+                           exec_user_serial,
+                           test_random_value);
   task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", TSK_READ);
   task_SetRedir(tsk, 1, TSR_FILE, check_out_path, TSK_APPEND, TSK_FULL_RW);
   task_SetRedir(tsk, 2, TSR_DUP, 1);
@@ -2342,19 +2352,6 @@ invoke_init_cmd(
   }
   if (srpp->checker_max_rss_size > 0) {
     task_SetRSSSize(tsk, srpp->checker_max_rss_size);
-  }
-  if (src_path) {
-    task_SetEnv(tsk, "EJUDGE_SOURCE_PATH", src_path);
-  }
-  if (exec_user_serial > 0) {
-    char buf[32];
-    sprintf(buf, "%d", exec_user_serial);
-    task_SetEnv(tsk, "EJUDGE_SUPER_RUN_SERIAL", buf);
-  }
-  if (test_random_value > 0) {
-    char buf[32];
-    sprintf(buf, "%llx", (unsigned long long) test_random_value);
-    task_SetEnv(tsk, "EJUDGE_TEST_RANDOM_VALUE", buf);
   }
 
   if (task_Start(tsk) < 0) {
@@ -3856,9 +3853,9 @@ run_one_test(
   snprintf(error_path, sizeof(error_path), "%s/%s", check_dir, error_file);
 
   if (srpp->init_cmd && srpp->init_cmd[0]) {
-    status = invoke_init_cmd(srpp, "start", test_src, corr_src,
+    status = invoke_init_cmd(srp, "start", test_src, corr_src,
                              info_src, working_dir, check_out_path,
-                             &tstinfo, src_path,
+                             &tstinfo, src_path, cur_test,
                              state->exec_user_serial,
                              test_random_value);
     if (status != 0) {
@@ -4620,9 +4617,9 @@ run_checker:;
   // read the checker output
 read_checker_output:;
   if (init_cmd_started) {
-    int new_status = invoke_init_cmd(srpp, "stop", test_src,
+    int new_status = invoke_init_cmd(srp, "stop", test_src,
                                      corr_src, info_src, working_dir, check_out_path,
-                                     &tstinfo, src_path,
+                                     &tstinfo, src_path, cur_test,
                                      state->exec_user_serial,
                                      test_random_value);
     if (!status) status = new_status;
@@ -4647,8 +4644,8 @@ cleanup:;
   }
 
   if (init_cmd_started) {
-    int new_status = invoke_init_cmd(srpp, "stop", test_src, corr_src,  info_src, working_dir, check_out_path,
-                                     &tstinfo, src_path,
+    int new_status = invoke_init_cmd(srp, "stop", test_src, corr_src,  info_src, working_dir, check_out_path,
+                                     &tstinfo, src_path, cur_test,
                                      state->exec_user_serial,
                                      test_random_value);
     if (!status) status = new_status;
