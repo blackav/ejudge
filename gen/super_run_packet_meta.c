@@ -76,6 +76,8 @@ static struct meta_info_item meta_info_super_run_in_global_packet_data[] =
   [META_SUPER_RUN_IN_GLOBAL_PACKET_src_sfx] = { META_SUPER_RUN_IN_GLOBAL_PACKET_src_sfx, 's', XSIZE(struct super_run_in_global_packet, src_sfx), "src_sfx", XOFFSET(struct super_run_in_global_packet, src_sfx) },
   [META_SUPER_RUN_IN_GLOBAL_PACKET_src_file] = { META_SUPER_RUN_IN_GLOBAL_PACKET_src_file, 's', XSIZE(struct super_run_in_global_packet, src_file), "src_file", XOFFSET(struct super_run_in_global_packet, src_file) },
   [META_SUPER_RUN_IN_GLOBAL_PACKET_enable_ejudge_env] = { META_SUPER_RUN_IN_GLOBAL_PACKET_enable_ejudge_env, 'B', XSIZE(struct super_run_in_global_packet, enable_ejudge_env), "enable_ejudge_env", XOFFSET(struct super_run_in_global_packet, enable_ejudge_env) },
+  [META_SUPER_RUN_IN_GLOBAL_PACKET_clean_up_cmd] = { META_SUPER_RUN_IN_GLOBAL_PACKET_clean_up_cmd, 's', XSIZE(struct super_run_in_global_packet, clean_up_cmd), "clean_up_cmd", XOFFSET(struct super_run_in_global_packet, clean_up_cmd) },
+  [META_SUPER_RUN_IN_GLOBAL_PACKET_run_env_file] = { META_SUPER_RUN_IN_GLOBAL_PACKET_run_env_file, 's', XSIZE(struct super_run_in_global_packet, run_env_file), "run_env_file", XOFFSET(struct super_run_in_global_packet, run_env_file) },
 };
 
 int meta_super_run_in_global_packet_get_type(int tag)
