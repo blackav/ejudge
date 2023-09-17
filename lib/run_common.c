@@ -2843,6 +2843,107 @@ cleanup:
   return status;
 }
 
+static int
+invoke_clean_up_cmd(
+        const struct super_run_in_packet *srp,
+        const unsigned char *working_dir,
+        const unsigned char *check_out_path,
+        const unsigned char *src_path,
+        int cur_test,
+        int exec_user_serial,
+        uint64_t test_random_value)
+{
+  const struct super_run_in_global_packet *srgp = srp->global;
+  const struct super_run_in_problem_packet *srpp = srp->problem;
+  tpTask tsk = NULL;
+  unsigned char start_path[PATH_MAX];
+  __attribute__((unused)) int _;
+  unsigned char *start_ptr = NULL;
+  int status = 0;
+
+  if (!srgp->clean_up_cmd || !srgp->clean_up_cmd[0]) {
+    return 0;
+  }
+
+  if (os_IsAbsolutePath(srgp->clean_up_cmd)) {
+    start_ptr = srgp->clean_up_cmd;
+  } else {
+    _ = snprintf(start_path, sizeof(start_path), "%s/lang/%s",
+                 EJUDGE_SCRIPT_DIR, srgp->clean_up_cmd);
+    start_ptr = start_path;
+  }
+
+  tsk = task_New();
+  task_AddArg(tsk, start_ptr);
+  task_SetPathAsArg0(tsk);
+  if (working_dir && *working_dir) {
+    task_SetWorkingDir(tsk, working_dir);
+  }
+  setup_environment(tsk, srpp->init_env, 0, NULL, 1);
+  setup_ejudge_environment(tsk,
+                           srp,
+                           cur_test,
+                           -1,
+                           0,
+                           src_path,
+                           exec_user_serial,
+                           test_random_value);
+  task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", TSK_READ);
+  task_SetRedir(tsk, 1, TSR_FILE, check_out_path, TSK_APPEND, TSK_FULL_RW);
+  task_SetRedir(tsk, 2, TSR_DUP, 1);
+  task_EnableAllSignals(tsk);
+  if (srpp->checker_real_time_limit_ms > 0) {
+    task_SetMaxRealTimeMillis(tsk, srpp->checker_real_time_limit_ms);
+  }
+  if (srpp->checker_time_limit_ms > 0) {
+    task_SetMaxTimeMillis(tsk, srpp->checker_time_limit_ms);
+  }
+  if (srpp->checker_max_stack_size > 0) {
+    task_SetStackSize(tsk, srpp->checker_max_stack_size);
+  }
+  if (srpp->checker_max_vm_size > 0) {
+    task_SetVMSize(tsk, srpp->checker_max_vm_size);
+  }
+  if (srpp->checker_max_rss_size > 0) {
+    task_SetRSSSize(tsk, srpp->checker_max_rss_size);
+  }
+
+  if (task_Start(tsk) < 0) {
+    append_msg_to_log(check_out_path, "failed to start clean_up_cmd %s",
+                      start_ptr);
+    status = RUN_CHECK_FAILED;
+    goto cleanup;
+  }
+  task_Wait(tsk);
+  if (task_IsTimeout(tsk)) {
+    append_msg_to_log(check_out_path, "clean_up_cmd timeout (%ld ms)",
+                      task_GetRunningTime(tsk));
+    err("clean_up_cmd timeout (%ld ms)",
+        task_GetRunningTime(tsk));
+    status = RUN_CHECK_FAILED;
+    goto cleanup;
+  }
+  if (task_Status(tsk) == TSK_SIGNALED) {
+    int signo = task_TermSignal(tsk);
+    append_msg_to_log(check_out_path,
+                      "clean_up_cmd terminated with signal %d (%s)",
+                      signo, os_GetSignalString(signo));
+    status = RUN_CHECK_FAILED;
+    goto cleanup;
+  }
+  int exitcode = task_ExitCode(tsk);
+  if (exitcode != 0) {
+    append_msg_to_log(check_out_path, "clean_up_cmd exited with code %d",
+                      exitcode);
+    status = RUN_CHECK_FAILED;
+    goto cleanup;
+  }
+
+cleanup:
+  task_Delete(tsk);
+  return status;
+}
+
 static const char *
 remap_start_cmd_for_container(const char *start_cmd)
 {
@@ -3423,6 +3524,7 @@ run_one_test(
   unsigned char *interpreter_str = NULL;
 
   uint64_t test_random_value;
+  int clean_up_executed = 0;
 
   test_checker_out_path[0] = 0;
   memset(&tstinfo, 0, sizeof(tstinfo));
@@ -4608,6 +4710,12 @@ read_checker_output:;
     if (!status) status = new_status;
     init_cmd_started = 0;
   }
+  if (srgp->clean_up_cmd && srgp->clean_up_cmd[0] && !clean_up_executed) {
+    invoke_clean_up_cmd(srp, working_dir, check_out_path,
+                        src_path, cur_test, state->exec_user_serial,
+                        test_random_value);
+    clean_up_executed = 1;
+  }
 
   if (far) {
     file_size = generic_file_size(0, check_out_path, 0);
@@ -4633,6 +4741,12 @@ cleanup:;
                                      test_random_value);
     if (!status) status = new_status;
     init_cmd_started = 0;
+  }
+  if (srgp->clean_up_cmd && srgp->clean_up_cmd[0] && !clean_up_executed) {
+    invoke_clean_up_cmd(srp, working_dir, check_out_path,
+                        src_path, cur_test, state->exec_user_serial,
+                        test_random_value);
+    clean_up_executed = 1;
   }
 
   cur_info->status = status;
