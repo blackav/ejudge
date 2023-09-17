@@ -1000,6 +1000,39 @@ read_valuer_score(
   return r;
 }
 
+static int
+read_env_file(tpTask tsk, const unsigned char *env_file)
+{
+  char *str = NULL;
+  size_t size = 0;
+  ssize_t r;
+  FILE *f = fopen(env_file, "r");
+  if (!f) {
+    err("read_env_file: open '%s' failed: %s", env_file, os_ErrorMsg());
+    return -1;
+  }
+  while ((r = getline(&str, &size, f)) >= 0) {
+    int len = strlen(str);
+    if (len != r) {
+      err("read_env_file: binary file '%s'", env_file);
+      continue;
+    }
+    while (len > 0 && isspace((unsigned char) str[len - 1])) --len;
+    str[len] = 0;
+    if (!len) continue;
+    char *eq = strchr(str, '=');
+    if (!eq) {
+      err("read_env_file: missing '=' in '%s'", env_file);
+      continue;
+    }
+    *eq = 0;
+    task_SetEnv(tsk, str, eq + 1);
+  }
+  free(str);
+  fclose(f);
+  return 0;
+}
+
 static void
 setup_environment(
         tpTask tsk,
@@ -3986,6 +4019,9 @@ run_one_test(
                              src_path,
                              state->exec_user_serial,
                              test_random_value);
+  }
+  if (srgp->run_env_file) {
+    read_env_file(tsk, srgp->run_env_file);
   }
 
   if (tstinfo.time_limit_ms > 0) {
