@@ -1282,6 +1282,8 @@ prepare_language_free_func(struct generic_section_config *gp)
   xfree(p->compile_server_id);
   xfree(p->multi_header_suffix);
   xfree(p->container_options);
+  xfree(p->clean_up_cmd);
+  xfree(p->run_env_file);
   memset(p, 0xab, sizeof(*p));
   xfree(p);
 }

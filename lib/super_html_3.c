@@ -256,6 +256,7 @@ super_html_lang_activate(
   lang->max_vm_size = cs_lang->max_vm_size;
   lang->max_stack_size = cs_lang->max_stack_size;
   lang->max_file_size = cs_lang->max_file_size;
+  xstrdup3(&lang->clean_up_cmd, cs_lang->clean_up_cmd);
 }
 
 void

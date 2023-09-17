@@ -976,6 +976,12 @@ prepare_unparse_lang(
   if (lang->container_options && *lang->container_options) {
     fprintf(f, "container_options = \"%s\"\n", CARMOR(lang->container_options));
   }
+  if (lang->clean_up_cmd && *lang->clean_up_cmd) {
+    fprintf(f, "clean_up_cmd = \"%s\"\n", CARMOR(lang->clean_up_cmd));
+  }
+  if (lang->run_env_file && *lang->run_env_file) {
+    fprintf(f, "run_env_file = \"%s\"\n", CARMOR(lang->run_env_file));
+  }
   fprintf(f, "\n");
 
   if (lang->unhandled_vars) fprintf(f, "%s\n", lang->unhandled_vars);

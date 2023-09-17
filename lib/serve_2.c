@@ -2427,6 +2427,8 @@ serve_run_request(
     srgp->prepended_size = comp_pkt->prepended_size;
     srgp->cached_on_remote = comp_pkt->cached_on_remote;
   }
+  // FIXME: handle clean_up_cmd
+  // FIXME: handle run_env_file
 
   if (prob && prob->enable_src_for_testing > 0 && lang && src_size > 0) {
     srgp->src_sfx = xstrdup(lang->src_sfx);

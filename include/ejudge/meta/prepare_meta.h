@@ -629,6 +629,8 @@ enum
   CNTSLANG_compile_server_id,
   CNTSLANG_multi_header_suffix,
   CNTSLANG_container_options,
+  CNTSLANG_clean_up_cmd,
+  CNTSLANG_run_env_file,
   CNTSLANG_unhandled_vars,
   CNTSLANG_disabled_by_config,
 

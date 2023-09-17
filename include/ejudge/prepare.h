@@ -1417,6 +1417,10 @@ struct section_language_data
   unsigned char *multi_header_suffix;
   /** additional container options -- appended to the problem container_options */
   unsigned char *container_options;
+  /** language-specific clean-up command */
+  unsigned char *clean_up_cmd;
+  /** additional run environment in file */
+  unsigned char *run_env_file;
 
   unsigned char *unhandled_vars;
   /** disabled by configuration script */

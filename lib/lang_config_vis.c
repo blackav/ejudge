@@ -1223,6 +1223,9 @@ lang_config_generate_compile_cfg(
     if ((s = shellconfig_get(p->cfg, "arch"))) {
       fprintf(f, "arch = \"%s\"\n", s);
     }
+    if ((s = shellconfig_get(p->cfg, "clean_up_cmd"))) {
+      fprintf(f, "clean_up_cmd = \"%s\"\n", s);
+    }
     fprintf(f, "\n");
   }
 
