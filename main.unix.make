@@ -178,7 +178,7 @@ PGE_CFILES = bin/ej-postgres-exec.c
 PGE_OBJECTS = $(PGE_CFILES:.c=.o)
 
 PGC_CFILES = bin/ej-postgres-cleanup.c
-PGC_OBJECTS = $(PGE_CFILES:.c=.o)
+PGC_OBJECTS = $(PGC_CFILES:.c=.o)
 
 INSTALLSCRIPT = ejudge-install.sh
 BINTARGETS = ejudge-jobs-cmd ejudge-edit-users ejudge-setup ejudge-configure-compilers ejudge-control ejudge-execute ejudge-contests-cmd ejudge-suid-setup ejudge-change-contests
@@ -440,7 +440,7 @@ ej-vcs-compile: ${VC_OBJECTS}
 ej-postgres-exec: ${PGE_OBJECTS}
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB} -ldl ${LIBUUID}
 
-ej-postgres-cleanup: ${PGE_OBJECTS}
+ej-postgres-cleanup: ${PGC_OBJECTS}
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB} -ldl ${LIBUUID}
 
 slice-userlist: ${SU_OBJECTS}
