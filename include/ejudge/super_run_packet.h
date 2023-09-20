@@ -98,6 +98,7 @@ struct super_run_in_global_packet
   ejintbool_t enable_ejudge_env;
   unsigned char *clean_up_cmd;
   unsigned char *run_env_file;
+  unsigned char *clean_up_env_file;
 
   int scoring_system_val META_ATTRIB((meta_hidden));
 };

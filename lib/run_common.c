@@ -2888,6 +2888,9 @@ invoke_clean_up_cmd(
                            src_path,
                            exec_user_serial,
                            test_random_value);
+  if (srgp->clean_up_env_file && *srgp->clean_up_env_file) {
+    read_env_file(tsk, srgp->clean_up_env_file);
+  }
   task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", TSK_READ);
   task_SetRedir(tsk, 1, TSR_FILE, check_out_path, TSK_APPEND, TSK_FULL_RW);
   task_SetRedir(tsk, 2, TSR_DUP, 1);
