@@ -706,6 +706,7 @@ static struct meta_info_item meta_info_section_language_data_data[] =
   [CNTSLANG_container_options] = { CNTSLANG_container_options, 's', XSIZE(struct section_language_data, container_options), "container_options", XOFFSET(struct section_language_data, container_options) },
   [CNTSLANG_clean_up_cmd] = { CNTSLANG_clean_up_cmd, 's', XSIZE(struct section_language_data, clean_up_cmd), "clean_up_cmd", XOFFSET(struct section_language_data, clean_up_cmd) },
   [CNTSLANG_run_env_file] = { CNTSLANG_run_env_file, 's', XSIZE(struct section_language_data, run_env_file), "run_env_file", XOFFSET(struct section_language_data, run_env_file) },
+  [CNTSLANG_clean_up_env_file] = { CNTSLANG_clean_up_env_file, 's', XSIZE(struct section_language_data, clean_up_env_file), "clean_up_env_file", XOFFSET(struct section_language_data, clean_up_env_file) },
   [CNTSLANG_unhandled_vars] = { CNTSLANG_unhandled_vars, 's', XSIZE(struct section_language_data, unhandled_vars), "unhandled_vars", XOFFSET(struct section_language_data, unhandled_vars) },
   [CNTSLANG_disabled_by_config] = { CNTSLANG_disabled_by_config, 'i', XSIZE(struct section_language_data, disabled_by_config), NULL, XOFFSET(struct section_language_data, disabled_by_config) },
 };

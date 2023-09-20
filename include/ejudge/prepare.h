@@ -1421,6 +1421,8 @@ struct section_language_data
   unsigned char *clean_up_cmd;
   /** additional run environment in file */
   unsigned char *run_env_file;
+  /** additional clean_up environment in file */
+  unsigned char *clean_up_env_file;
 
   unsigned char *unhandled_vars;
   /** disabled by configuration script */

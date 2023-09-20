@@ -2433,6 +2433,9 @@ serve_run_request(
   if (lang && lang->run_env_file) {
     srgp->run_env_file = xstrdup(lang->run_env_file);
   }
+  if (lang && lang->clean_up_env_file) {
+    // TODO: clean_up_env_file
+  }
 
   if (prob && prob->enable_src_for_testing > 0 && lang && src_size > 0) {
     srgp->src_sfx = xstrdup(lang->src_sfx);

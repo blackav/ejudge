@@ -631,6 +631,7 @@ enum
   CNTSLANG_container_options,
   CNTSLANG_clean_up_cmd,
   CNTSLANG_run_env_file,
+  CNTSLANG_clean_up_env_file,
   CNTSLANG_unhandled_vars,
   CNTSLANG_disabled_by_config,
 
