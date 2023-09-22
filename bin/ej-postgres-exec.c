@@ -59,6 +59,7 @@ run_psql(
         const char *user,
         const char *password,
         const char *database,
+        int ignore_stdout,
         ...)
 {
     int pid = fork();
@@ -86,15 +87,24 @@ run_psql(
         args[i++] = "-X";
         args[i++] = "-w";
         args[i++] = "--csv";
+        args[i++] = "-q";
 
         va_list lst;
-        va_start(lst, database);
+        va_start(lst, ignore_stdout);
         const char *ptr = NULL;
         while ((ptr = va_arg(lst, const char *))) {
             args[i++] = ptr;
         }
         va_end(lst);
         args[i] = NULL;
+
+        if (ignore_stdout) {
+            int fd = open("/dev/null", O_WRONLY | O_CLOEXEC, 0);
+            if (fd < 0) {
+                _exit(1);
+            }
+            dup2(fd, 1);
+        }
 
         execvp(args[0], (char**) args);
         fprintf(stderr, "%s: exec failed: %s\n", program_name,
@@ -139,7 +149,7 @@ create_database(
     fprintf(cmd_f, ";");
     fclose(cmd_f); cmd_f = NULL;
 
-    int r = run_psql(host, port, root_user, root_password, NULL,
+    int r = run_psql(host, port, root_user, root_password, NULL, 1,
                      "-c", cmd_s, NULL);
     free(cmd_s); cmd_s = NULL;
 
@@ -294,7 +304,7 @@ main(int argc, char *argv[])
         exec_password = user_password;
     }
 
-    r = run_psql(host, port, exec_user, exec_password, database,
+    r = run_psql(host, port, exec_user, exec_password, database, 0,
                  "-f", input_file, "-f", exec_file, NULL);
     if (r != 0) {
         die("postgres execution failed");
