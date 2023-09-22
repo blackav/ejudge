@@ -74,6 +74,8 @@ SCRIPTS_IN = \
  perl-version.in\
  php.in\
  php-version.in\
+ postgres.in\
+ postgres-version.in\
  python.in\
  python-version.in\
  python3.in\
