@@ -923,6 +923,8 @@ prepare_unparse_lang(
     unparse_bool(f, "enable_custom", lang->enable_custom);
   if (lang->enable_ejudge_env > 0)
     unparse_bool(f, "enable_ejudge_env", lang->enable_ejudge_env);
+  if (lang->preserve_line_numbers > 0)
+    unparse_bool(f, "preserve_line_numbers", lang->preserve_line_numbers);
   if (lang->content_type && lang->content_type[0]) {
     fprintf(f, "content_type = \"%s\"\n", CARMOR(lang->content_type));
   }

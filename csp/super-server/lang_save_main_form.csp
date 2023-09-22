@@ -23,6 +23,7 @@
     ejintbool_t binary = 0;
     ejintbool_t is_dos = 0;
     ejintbool_t enable_ejudge_env = 0;
+    ejintbool_t preserve_line_numbers = 0;
     ej_size64_t max_vm_size = -1LL;
     ej_size64_t max_stack_size = -1LL;
     ej_size64_t max_file_size = -1LL;
@@ -51,6 +52,7 @@
 %><s:read var="binary" default="0" /><%
 %><s:read var="is_dos" default="0" /><%
 %><s:read var="enable_ejudge_env" default="0" /><%
+%><s:read var="preserve_line_numbers" default="0" /><%
 %><s:read var="max_vm_size" default="-1LL" /><%
 %><s:read var="max_stack_size" default="-1LL" /><%
 %><s:read var="max_file_size" default="-1LL" /><%
@@ -91,6 +93,7 @@
         lang->binary = binary;
         lang->is_dos = is_dos;
         lang->enable_ejudge_env = enable_ejudge_env;
+        lang->preserve_line_numbers = preserve_line_numbers;
         if (max_vm_size >= 0) lang->max_vm_size = max_vm_size;
         if (max_stack_size >= 0) lang->max_stack_size = max_stack_size;
         if (max_file_size >= 0) lang->max_file_size = max_file_size;

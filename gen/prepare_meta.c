@@ -686,6 +686,7 @@ static struct meta_info_item meta_info_section_language_data_data[] =
   [CNTSLANG_disable_testing] = { CNTSLANG_disable_testing, 'B', XSIZE(struct section_language_data, disable_testing), "disable_testing", XOFFSET(struct section_language_data, disable_testing) },
   [CNTSLANG_enable_custom] = { CNTSLANG_enable_custom, 'B', XSIZE(struct section_language_data, enable_custom), "enable_custom", XOFFSET(struct section_language_data, enable_custom) },
   [CNTSLANG_enable_ejudge_env] = { CNTSLANG_enable_ejudge_env, 'B', XSIZE(struct section_language_data, enable_ejudge_env), "enable_ejudge_env", XOFFSET(struct section_language_data, enable_ejudge_env) },
+  [CNTSLANG_preserve_line_numbers] = { CNTSLANG_preserve_line_numbers, 'B', XSIZE(struct section_language_data, preserve_line_numbers), "preserve_line_numbers", XOFFSET(struct section_language_data, preserve_line_numbers) },
   [CNTSLANG_max_vm_size] = { CNTSLANG_max_vm_size, 'E', XSIZE(struct section_language_data, max_vm_size), "max_vm_size", XOFFSET(struct section_language_data, max_vm_size) },
   [CNTSLANG_max_stack_size] = { CNTSLANG_max_stack_size, 'E', XSIZE(struct section_language_data, max_stack_size), "max_stack_size", XOFFSET(struct section_language_data, max_stack_size) },
   [CNTSLANG_max_file_size] = { CNTSLANG_max_file_size, 'E', XSIZE(struct section_language_data, max_file_size), "max_file_size", XOFFSET(struct section_language_data, max_file_size) },

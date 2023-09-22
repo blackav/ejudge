@@ -621,6 +621,7 @@ static const struct config_parse_info section_language_params[] =
   LANGUAGE_PARAM(disable_testing, "d"),
   LANGUAGE_PARAM(enable_custom, "d"),
   LANGUAGE_PARAM(enable_ejudge_env, "d"),
+  LANGUAGE_PARAM(preserve_line_numbers, "d"),
   LANGUAGE_PARAM(max_vm_size, "E"),
   LANGUAGE_PARAM(max_stack_size, "E"),
   LANGUAGE_PARAM(max_file_size, "E"),

@@ -1379,6 +1379,8 @@ struct section_language_data
   ejintbool_t enable_custom;
   /** pass ejudge-specific environment to the running program */
   ejintbool_t enable_ejudge_env;
+  /** to preserve the original line numbers in scripts */
+  ejintbool_t preserve_line_numbers;
 
   /** max virtual size limit  */
   ej_size64_t max_vm_size;
