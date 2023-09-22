@@ -1215,6 +1215,9 @@ lang_config_generate_compile_cfg(
     if ((s = shellconfig_get(p->cfg, "is_dos"))) {
       fprintf(f, "is_dos\n");
     }
+    if ((s = shellconfig_get(p->cfg, "preserve_line_numbers"))) {
+      fprintf(f, "preserve_line_numbers\n");
+    }
     if ((s = shellconfig_get(p->cfg, "enable_ejudge_env"))) {
       fprintf(f, "enable_ejudge_env\n");
     }
