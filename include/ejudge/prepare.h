@@ -1377,6 +1377,10 @@ struct section_language_data
   ejintbool_t disable_testing;
   /** enable custom compilation script */
   ejintbool_t enable_custom;
+  /** pass ejudge-specific environment to the running program */
+  ejintbool_t enable_ejudge_env;
+  /** to preserve the original line numbers in scripts */
+  ejintbool_t preserve_line_numbers;
 
   /** max virtual size limit  */
   ej_size64_t max_vm_size;
@@ -1415,6 +1419,12 @@ struct section_language_data
   unsigned char *multi_header_suffix;
   /** additional container options -- appended to the problem container_options */
   unsigned char *container_options;
+  /** language-specific clean-up command */
+  unsigned char *clean_up_cmd;
+  /** additional run environment in file */
+  unsigned char *run_env_file;
+  /** additional clean_up environment in file */
+  unsigned char *clean_up_env_file;
 
   unsigned char *unhandled_vars;
   /** disabled by configuration script */
@@ -1481,6 +1491,8 @@ struct section_tester_data
   int time_limit_adjustment;
   /** have priority over `time_limit_adjustment' */
   int time_limit_adj_millis;
+  /** export all ejudge-specific environment to the tested program */
+  ejintbool_t enable_ejudge_env;
 
   unsigned char *run_dir;
   unsigned char *run_queue_dir;

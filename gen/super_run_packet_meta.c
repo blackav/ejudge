@@ -75,6 +75,10 @@ static struct meta_info_item meta_info_super_run_in_global_packet_data[] =
   [META_SUPER_RUN_IN_GLOBAL_PACKET_cached_on_remote] = { META_SUPER_RUN_IN_GLOBAL_PACKET_cached_on_remote, 'i', XSIZE(struct super_run_in_global_packet, cached_on_remote), "cached_on_remote", XOFFSET(struct super_run_in_global_packet, cached_on_remote) },
   [META_SUPER_RUN_IN_GLOBAL_PACKET_src_sfx] = { META_SUPER_RUN_IN_GLOBAL_PACKET_src_sfx, 's', XSIZE(struct super_run_in_global_packet, src_sfx), "src_sfx", XOFFSET(struct super_run_in_global_packet, src_sfx) },
   [META_SUPER_RUN_IN_GLOBAL_PACKET_src_file] = { META_SUPER_RUN_IN_GLOBAL_PACKET_src_file, 's', XSIZE(struct super_run_in_global_packet, src_file), "src_file", XOFFSET(struct super_run_in_global_packet, src_file) },
+  [META_SUPER_RUN_IN_GLOBAL_PACKET_enable_ejudge_env] = { META_SUPER_RUN_IN_GLOBAL_PACKET_enable_ejudge_env, 'B', XSIZE(struct super_run_in_global_packet, enable_ejudge_env), "enable_ejudge_env", XOFFSET(struct super_run_in_global_packet, enable_ejudge_env) },
+  [META_SUPER_RUN_IN_GLOBAL_PACKET_clean_up_cmd] = { META_SUPER_RUN_IN_GLOBAL_PACKET_clean_up_cmd, 's', XSIZE(struct super_run_in_global_packet, clean_up_cmd), "clean_up_cmd", XOFFSET(struct super_run_in_global_packet, clean_up_cmd) },
+  [META_SUPER_RUN_IN_GLOBAL_PACKET_run_env_file] = { META_SUPER_RUN_IN_GLOBAL_PACKET_run_env_file, 's', XSIZE(struct super_run_in_global_packet, run_env_file), "run_env_file", XOFFSET(struct super_run_in_global_packet, run_env_file) },
+  [META_SUPER_RUN_IN_GLOBAL_PACKET_clean_up_env_file] = { META_SUPER_RUN_IN_GLOBAL_PACKET_clean_up_env_file, 's', XSIZE(struct super_run_in_global_packet, clean_up_env_file), "clean_up_env_file", XOFFSET(struct super_run_in_global_packet, clean_up_env_file) },
 };
 
 int meta_super_run_in_global_packet_get_type(int tag)
@@ -292,6 +296,7 @@ static struct meta_info_item meta_info_super_run_in_tester_packet_data[] =
   [META_SUPER_RUN_IN_TESTER_PACKET_enable_memory_limit_error] = { META_SUPER_RUN_IN_TESTER_PACKET_enable_memory_limit_error, 'B', XSIZE(struct super_run_in_tester_packet, enable_memory_limit_error), "enable_memory_limit_error", XOFFSET(struct super_run_in_tester_packet, enable_memory_limit_error) },
   [META_SUPER_RUN_IN_TESTER_PACKET_kill_signal] = { META_SUPER_RUN_IN_TESTER_PACKET_kill_signal, 's', XSIZE(struct super_run_in_tester_packet, kill_signal), "kill_signal", XOFFSET(struct super_run_in_tester_packet, kill_signal) },
   [META_SUPER_RUN_IN_TESTER_PACKET_clear_env] = { META_SUPER_RUN_IN_TESTER_PACKET_clear_env, 'B', XSIZE(struct super_run_in_tester_packet, clear_env), "clear_env", XOFFSET(struct super_run_in_tester_packet, clear_env) },
+  [META_SUPER_RUN_IN_TESTER_PACKET_enable_ejudge_env] = { META_SUPER_RUN_IN_TESTER_PACKET_enable_ejudge_env, 'B', XSIZE(struct super_run_in_tester_packet, enable_ejudge_env), "enable_ejudge_env", XOFFSET(struct super_run_in_tester_packet, enable_ejudge_env) },
   [META_SUPER_RUN_IN_TESTER_PACKET_time_limit_adjustment_ms] = { META_SUPER_RUN_IN_TESTER_PACKET_time_limit_adjustment_ms, 'i', XSIZE(struct super_run_in_tester_packet, time_limit_adjustment_ms), "time_limit_adjustment_ms", XOFFSET(struct super_run_in_tester_packet, time_limit_adjustment_ms) },
   [META_SUPER_RUN_IN_TESTER_PACKET_errorcode_file] = { META_SUPER_RUN_IN_TESTER_PACKET_errorcode_file, 's', XSIZE(struct super_run_in_tester_packet, errorcode_file), "errorcode_file", XOFFSET(struct super_run_in_tester_packet, errorcode_file) },
   [META_SUPER_RUN_IN_TESTER_PACKET_error_file] = { META_SUPER_RUN_IN_TESTER_PACKET_error_file, 's', XSIZE(struct super_run_in_tester_packet, error_file), "error_file", XOFFSET(struct super_run_in_tester_packet, error_file) },

@@ -1,0 +1,85 @@
+#! /bin/bash
+# Copyright (c) 2023 Alexander Chernov <cher@ejudge.ru>
+
+prefix="@prefix@"
+exec_prefix="@exec_prefix@"
+libexecdir="@libexecdir@"
+
+EJLANG=postgres
+LANG_CONFIG_DIR="@lang_config_dir@"
+[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/${EJLANG}.cfg"
+
+common_config() {
+  echo 'long_name="PostgreSQL"'
+  echo 'src_sfx=".sql"'
+  echo 'arch="linux-shared"'
+}
+
+failure() {
+  rm -f conftest*
+  echo 'version='
+  echo 'arg="'"${arg}"'"'
+  common_config
+  [ "${verbose}" = 1 ] && echo "no" >&2
+  exit 1
+}
+
+if [ x"$1" = x-v ]
+then
+  verbose=1
+  shift
+fi
+
+# recheck the language
+if [ x"$1" = x-r ]
+then
+  arg="$2"
+  [ x"$2" != x ] && psql="$2"
+  [ "${psql}" = "" ] && psql="psql"
+
+  [ "${verbose}" = 1 ] && echo -n "checking whether PostgreSQL is available..." >&2
+  "${psql}" --version >/dev/null 2>&1 || failure
+  version=`"${psql}" --version 2>&1 | gawk '{ print $3; }'` || failure
+  [ "${version}" != "" ] || failure
+  PSQLPATH=`which "${psql}"` || failure
+  echo 'version="'"${version}"'"'
+  echo 'arg="'"${arg}"'"'
+  echo 'PSQLPATH="'"${PSQLPATH}"'"'
+  echo 'clean_up_cmd="'${libexecdir}/ejudge/bin/ej-postgres-cleanup'"'
+  echo 'enable_ejudge_env=1'
+  echo 'preserve_line_numbers=1'
+  common_config
+  [ "${verbose}" = 1 ] && echo "yes, ${version}" >&2
+  exit 0
+fi
+
+if [ x"$1" = x-l ]
+then
+  echo "PostgreSQL [https://www.postgresql.org/]"
+  exit 0
+fi
+
+if [ -f "${EJUDGE_LANG_CONFIG}" ]
+then
+  . "${EJUDGE_LANG_CONFIG}"
+else
+  PSQLPATH="/usr/bin/psql"
+fi
+
+if [ x"${PSQLPATH}" = x -o x"${PSQLPATH}" = x/bin/false ]
+then
+  echo "This language is not supported." >&2
+  exit 1
+fi
+
+if [ x"$1" = x-p ]
+then
+    echo "${PSQLPATH}"
+    exit 0
+fi
+
+"${PSQLPATH}" --version 2>/dev/null >/dev/null || exit 1
+    
+[ x"$1" = x-f ] && echo -n "PostgreSQL "
+
+"${PSQLPATH}" --version 2>&1 | gawk '{ print $3; }'

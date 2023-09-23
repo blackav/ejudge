@@ -40,6 +40,7 @@
 #include "ejudge/base64.h"
 #include "ejudge/ej_libzip.h"
 #include "ejudge/agent_client.h"
+#include "ejudge/random.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/osdeps.h"
@@ -999,6 +1000,39 @@ read_valuer_score(
   return r;
 }
 
+static int
+read_env_file(tpTask tsk, const unsigned char *env_file)
+{
+  char *str = NULL;
+  size_t size = 0;
+  ssize_t r;
+  FILE *f = fopen(env_file, "r");
+  if (!f) {
+    err("read_env_file: open '%s' failed: %s", env_file, os_ErrorMsg());
+    return -1;
+  }
+  while ((r = getline(&str, &size, f)) >= 0) {
+    int len = strlen(str);
+    if (len != r) {
+      err("read_env_file: binary file '%s'", env_file);
+      continue;
+    }
+    while (len > 0 && isspace((unsigned char) str[len - 1])) --len;
+    str[len] = 0;
+    if (!len) continue;
+    char *eq = strchr(str, '=');
+    if (!eq) {
+      err("read_env_file: missing '=' in '%s'", env_file);
+      continue;
+    }
+    *eq = 0;
+    task_SetEnv(tsk, str, eq + 1);
+  }
+  free(str);
+  fclose(f);
+  return 0;
+}
+
 static void
 setup_environment(
         tpTask tsk,
@@ -1076,6 +1110,90 @@ setup_environment(
 }
 
 static void
+setup_ejudge_environment(
+        tpTask tsk,
+        const struct super_run_in_packet *srp,
+        int cur_test,
+        int test_max_score,
+        int output_only,
+        const unsigned char *src_path,
+        int exec_user_serial,
+        uint64_t test_random_value)
+{
+  const struct super_run_in_global_packet *srgp = srp->global;
+  const struct super_run_in_problem_packet *srpp = srp->problem;
+  unsigned char buf[64];
+
+  task_SetEnv(tsk, "EJUDGE", "1");
+  if (srpp->scoring_checker > 0) {
+    task_SetEnv(tsk, "EJUDGE_SCORING_CHECKER", "1");
+    if (srpp->enable_checker_token > 0) {
+      task_SetEnv(tsk, "EJUDGE_CHECKER_TOKEN", "1");
+    }
+    if (test_max_score >= 0) {
+      snprintf(buf, sizeof(buf), "%d", test_max_score);
+      task_SetEnv(tsk, "EJUDGE_MAX_SCORE", buf);
+    }
+  }
+  if (srgp->checker_locale && srgp->checker_locale[0]) {
+    task_SetEnv(tsk, "EJUDGE_LOCALE", srgp->checker_locale);
+  }
+  if (srgp->separate_user_score > 0 && output_only > 0) {
+    task_SetEnv(tsk, "EJUDGE_USER_SCORE", "1");
+  }
+  if (srpp->valuer_sets_marked > 0) {
+    task_SetEnv(tsk, "EJUDGE_MARKED", "1");
+  }
+  if (srpp->interactive_valuer > 0) {
+    task_SetEnv(tsk, "EJUDGE_INTERACTIVE", "1");
+  }
+  if (srgp->rejudge_flag > 0) {
+    task_SetEnv(tsk, "EJUDGE_REJUDGE", "1");
+  }
+  if (exec_user_serial > 0) {
+    sprintf(buf, "%d", exec_user_serial);
+    task_SetEnv(tsk, "EJUDGE_SUPER_RUN_SERIAL", buf);
+  }
+  if (test_random_value > 0) {
+    sprintf(buf, "%llx", (unsigned long long) test_random_value);
+    task_SetEnv(tsk, "EJUDGE_TEST_RANDOM_VALUE", buf);
+  }
+  if (srgp->testlib_mode > 0) {
+    task_SetEnv(tsk, "EJUDGE_TESTLIB_MODE", "1");
+  }
+  if (srgp->enable_container > 0) {
+    task_SetEnv(tsk, "EJUDGE_CONTAINER", "1");
+  } else if (srgp->suid_run > 0) {
+    task_SetEnv(tsk, "EJUDGE_SUID_RUN", "1");
+  }
+  if (srpp->enable_extended_info > 0) {
+    snprintf(buf, sizeof(buf), "%d", srgp->user_id);
+    task_SetEnv(tsk, "EJUDGE_USER_ID", buf);
+    snprintf(buf, sizeof(buf), "%d", srgp->contest_id);
+    task_SetEnv(tsk, "EJUDGE_CONTEST_ID", buf);
+    snprintf(buf, sizeof(buf), "%d", srgp->run_id);
+    task_SetEnv(tsk, "EJUDGE_RUN_ID", buf);
+    if (cur_test > 0) {
+      snprintf(buf, sizeof(buf), "%d", cur_test);
+      task_SetEnv(tsk, "EJUDGE_TEST_NUM", buf);
+    }
+    if (srgp->user_login) {
+      task_SetEnv(tsk, "EJUDGE_USER_LOGIN", srgp->user_login);
+    }
+    if (srgp->user_name) {
+      task_SetEnv(tsk, "EJUDGE_USER_NAME", srgp->user_name);
+    }
+    if (srpp->test_count > 0) {
+      snprintf(buf, sizeof(buf), "%d", srpp->test_count);
+      task_SetEnv(tsk, "EJUDGE_TEST_COUNT", buf);
+    }
+  }
+  if (src_path) {
+    task_SetEnv(tsk, "EJUDGE_SOURCE_PATH", src_path);
+  }
+}
+
+static void
 read_log_file(const unsigned char *path, char **p_text)
 {
   char *stext = NULL;
@@ -1120,6 +1238,7 @@ invoke_valuer(
         const struct run_test_info *tests,
         int cur_variant,
         int max_score,
+        int exec_user_serial,
         int *p_score,
         int *p_marked,
         int *p_user_status,
@@ -1213,44 +1332,12 @@ invoke_valuer(
     task_SetRSSSize(tsk, srpp->checker_max_rss_size);
   }
   setup_environment(tsk, srpp->valuer_env, 0, NULL, 1);
-  if (srgp->separate_user_score > 0) {
-    task_SetEnv(tsk, "EJUDGE_USER_SCORE", "1");
-  }
-  if (srpp->valuer_sets_marked > 0) {
-    task_SetEnv(tsk, "EJUDGE_MARKED", "1");
-  }
-  if (srpp->interactive_valuer > 0) {
-    task_SetEnv(tsk, "EJUDGE_INTERACTIVE", "1");
-  }
-  task_SetEnv(tsk, "EJUDGE", "1");
-  if (srgp->checker_locale && srgp->checker_locale[0]) {
-    task_SetEnv(tsk, "EJUDGE_LOCALE", srgp->checker_locale);
-  }
-  if (srgp->rejudge_flag > 0) {
-    task_SetEnv(tsk, "EJUDGE_REJUDGE", "1");
-  }
-  if (srpp->enable_checker_token > 0) {
-    task_SetEnv(tsk, "EJUDGE_CHECKER_TOKEN", "1");
-  }
-  if (srpp->enable_extended_info > 0) {
-    unsigned char buf[64];
-    snprintf(buf, sizeof(buf), "%d", srgp->user_id);
-    task_SetEnv(tsk, "EJUDGE_USER_ID", buf);
-    snprintf(buf, sizeof(buf), "%d", srgp->contest_id);
-    task_SetEnv(tsk, "EJUDGE_CONTEST_ID", buf);
-    snprintf(buf, sizeof(buf), "%d", srgp->run_id);
-    task_SetEnv(tsk, "EJUDGE_RUN_ID", buf);
-    task_SetEnv(tsk, "EJUDGE_USER_LOGIN", srgp->user_login);
-    task_SetEnv(tsk, "EJUDGE_USER_NAME", srgp->user_name);
-    if (srpp->test_count > 0) {
-      snprintf(buf, sizeof(buf), "%d", srpp->test_count);
-      task_SetEnv(tsk, "EJUDGE_TEST_COUNT", buf);
-    }
-  }
-  if (src_path) {
-    task_SetEnv(tsk, "EJUDGE_SOURCE_PATH", src_path);
-  }
-
+  setup_ejudge_environment(tsk, srp,
+                           0 /* cur_test*/,
+                           -1 /* test_max_score */,
+                           0 /* output_only */,
+                           src_path, exec_user_serial,
+                           0 /* test_random_value */);
   task_EnableAllSignals(tsk);
 
   task_PrintArgs(tsk);
@@ -1314,9 +1401,9 @@ start_interactive_valuer(
         const unsigned char *valuer_jcmt_file,
         int stdin_fd,
         int stdout_fd,
-        const unsigned char *src_path)
+        const unsigned char *src_path,
+        int exec_user_serial)
 {
-  const struct super_run_in_global_packet *srgp = srp->global;
   const struct super_run_in_problem_packet *srpp = srp->problem;
   path_t valuer_cmd;
   tpTask tsk = NULL;
@@ -1368,40 +1455,13 @@ start_interactive_valuer(
     task_SetRSSSize(tsk, srpp->checker_max_rss_size);
   }
   setup_environment(tsk, srpp->valuer_env, 0, NULL, 1);
-  if (srgp->separate_user_score > 0) {
-    task_SetEnv(tsk, "EJUDGE_USER_SCORE", "1");
-  }
-  if (srpp->valuer_sets_marked > 0) {
-    task_SetEnv(tsk, "EJUDGE_MARKED", "1");
-  }
-  if (srpp->interactive_valuer > 0) {
-    task_SetEnv(tsk, "EJUDGE_INTERACTIVE", "1");
-  }
-  task_SetEnv(tsk, "EJUDGE", "1");
-  if (srgp->checker_locale && srgp->checker_locale[0]) {
-    task_SetEnv(tsk, "EJUDGE_LOCALE", srgp->checker_locale);
-  }
-  if (srgp->rejudge_flag > 0) {
-    task_SetEnv(tsk, "EJUDGE_REJUDGE", "1");
-  }
-  if (srpp->enable_extended_info > 0) {
-    unsigned char buf[64];
-    snprintf(buf, sizeof(buf), "%d", srgp->user_id);
-    task_SetEnv(tsk, "EJUDGE_USER_ID", buf);
-    snprintf(buf, sizeof(buf), "%d", srgp->contest_id);
-    task_SetEnv(tsk, "EJUDGE_CONTEST_ID", buf);
-    snprintf(buf, sizeof(buf), "%d", srgp->run_id);
-    task_SetEnv(tsk, "EJUDGE_RUN_ID", buf);
-    task_SetEnv(tsk, "EJUDGE_USER_LOGIN", srgp->user_login);
-    task_SetEnv(tsk, "EJUDGE_USER_NAME", srgp->user_name);
-    if (srpp->test_count > 0) {
-      snprintf(buf, sizeof(buf), "%d", srpp->test_count);
-      task_SetEnv(tsk, "EJUDGE_TEST_COUNT", buf);
-    }
-  }
-  if (src_path) {
-    task_SetEnv(tsk, "EJUDGE_SOURCE_PATH", src_path);
-  }
+  setup_ejudge_environment(tsk, srp,
+                           0 /* cur_test */,
+                           -1 /* test_max_score */,
+                           0 /* output_only */,
+                           src_path,
+                           exec_user_serial,
+                           0 /* test_random_value */);
   //task_EnableAllSignals(tsk);
 
   task_PrintArgs(tsk);
@@ -2096,7 +2156,8 @@ invoke_test_checker_cmd(
         const struct super_run_in_packet *srp,
         const unsigned char *work_dir,
         const unsigned char *input_file,
-        const unsigned char *log_path)
+        const unsigned char *log_path,
+        int exec_user_serial)
 {
   const struct super_run_in_problem_packet *srpp = srp->problem;
   tpTask tsk = NULL;
@@ -2128,6 +2189,11 @@ invoke_test_checker_cmd(
   }
   if (srpp->checker_max_rss_size > 0) {
     task_SetRSSSize(tsk, srpp->checker_max_rss_size);
+  }
+  if (exec_user_serial > 0) {
+    char buf[32];
+    sprintf(buf, "%d", exec_user_serial);
+    task_SetEnv(tsk, "EJUDGE_SUPER_RUN_SERIAL", buf);
   }
 
   if (task_Start(tsk) < 0) {
@@ -2166,7 +2232,8 @@ invoke_test_generator_cmd(
         const unsigned char *test_generator_cmd,
         const unsigned char *work_dir,
         const unsigned char *src_path,
-        const unsigned char *log_path)
+        const unsigned char *log_path,
+        int exec_user_serial)
 {
   const struct super_run_in_global_packet *srgp = srp->global;
   const struct super_run_in_problem_packet *srpp = srp->problem;
@@ -2205,6 +2272,11 @@ invoke_test_generator_cmd(
   }
   if (srgp->testlib_mode > 0) {
     task_SetEnv(tsk, "EJUDGE_TESTLIB_MODE", "1");
+  }
+  if (exec_user_serial > 0) {
+    char buf[32];
+    sprintf(buf, "%d", exec_user_serial);
+    task_SetEnv(tsk, "EJUDGE_SUPER_RUN_SERIAL", buf);
   }
   if (srpp->enable_extended_info > 0) {
     unsigned char buf[64];
@@ -2252,7 +2324,7 @@ invoke_test_generator_cmd(
 
 static int
 invoke_init_cmd(
-        const struct super_run_in_problem_packet *srpp,
+        const struct super_run_in_packet *srp,
         const unsigned char *subcommand,
         const unsigned char *test_src_path,
         const unsigned char *corr_src_path,
@@ -2260,12 +2332,16 @@ invoke_init_cmd(
         const unsigned char *working_dir,
         const unsigned char *check_out_path,
         testinfo_t *ti,
-        const unsigned char *src_path)
+        const unsigned char *src_path,
+        int cur_test,
+        int exec_user_serial,
+        uint64_t test_random_value)
 {
   tpTask tsk = NULL;
   int status = 0;
   int env_u = 0;
   char **env_v = NULL;
+  const struct super_run_in_problem_packet *srpp = srp->problem;
 
   if (ti) {
     env_u = ti->init_env.u;
@@ -2291,6 +2367,14 @@ invoke_init_cmd(
     task_SetWorkingDir(tsk, working_dir);
   }
   setup_environment(tsk, srpp->init_env, env_u, env_v, 1);
+  setup_ejudge_environment(tsk,
+                           srp,
+                           cur_test,
+                           -1, /* test_max_score */
+                           0, /* output_only */
+                           src_path,
+                           exec_user_serial,
+                           test_random_value);
   task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", TSK_READ);
   task_SetRedir(tsk, 1, TSR_FILE, check_out_path, TSK_APPEND, TSK_FULL_RW);
   task_SetRedir(tsk, 2, TSR_DUP, 1);
@@ -2309,9 +2393,6 @@ invoke_init_cmd(
   }
   if (srpp->checker_max_rss_size > 0) {
     task_SetRSSSize(tsk, srpp->checker_max_rss_size);
-  }
-  if (src_path) {
-    task_SetEnv(tsk, "EJUDGE_SOURCE_PATH", src_path);
   }
 
   if (task_Start(tsk) < 0) {
@@ -2383,14 +2464,18 @@ invoke_interactor(
         int stdout_fd,
         int control_fd,
         int program_pid,
-        const struct super_run_in_global_packet *srgp,
-        const struct super_run_in_problem_packet *srpp,
+        const struct super_run_in_packet *srp,
         int cur_test,
-        const unsigned char *src_path)
+        const unsigned char *src_path,
+        int exec_user_serial,
+        uint64_t test_random_value)
 {
   tpTask tsk_int = NULL;
   int env_u = 0;
   char **env_v = NULL;
+
+  const struct super_run_in_global_packet *srgp = srp->global;
+  const struct super_run_in_problem_packet *srpp = srp->problem;
 
   if (ti) {
     env_u = ti->interactor_env.u;
@@ -2415,46 +2500,22 @@ invoke_interactor(
   task_SetPathAsArg0(tsk_int);
   task_SetWorkingDir(tsk_int, working_dir);
   setup_environment(tsk_int, srpp->interactor_env, env_u, env_v, 1);
-  task_SetEnv(tsk_int, "EJUDGE", "1");
-  task_SetRedir(tsk_int, 0, TSR_DUP, stdin_fd);
-  task_SetRedir(tsk_int, 1, TSR_DUP, stdout_fd);
-  task_SetRedir(tsk_int, 2, TSR_FILE, check_out_path, TSK_APPEND, TSK_FULL_RW);
-  if (srgp->checker_locale && srgp->checker_locale[0]) {
-    task_SetEnv(tsk_int, "EJUDGE_LOCALE", srgp->checker_locale);
-  }
-  if (srgp->enable_container > 0) {
-    task_SetEnv(tsk_int, "EJUDGE_CONTAINER", "1");
-  } else if (srgp->suid_run > 0) {
-    task_SetEnv(tsk_int, "EJUDGE_SUID_RUN", "1");
-  }
-  if (srgp->testlib_mode > 0) {
-    task_SetEnv(tsk_int, "EJUDGE_TESTLIB_MODE", "1");
-  }
-  if (srpp->enable_extended_info > 0) {
-    unsigned char buf[64];
-    snprintf(buf, sizeof(buf), "%d", srgp->user_id);
-    task_SetEnv(tsk_int, "EJUDGE_USER_ID", buf);
-    snprintf(buf, sizeof(buf), "%d", srgp->contest_id);
-    task_SetEnv(tsk_int, "EJUDGE_CONTEST_ID", buf);
-    snprintf(buf, sizeof(buf), "%d", srgp->run_id);
-    task_SetEnv(tsk_int, "EJUDGE_RUN_ID", buf);
-    snprintf(buf, sizeof(buf), "%d", cur_test);
-    task_SetEnv(tsk_int, "EJUDGE_TEST_NUM", buf);
-    task_SetEnv(tsk_int, "EJUDGE_USER_LOGIN", srgp->user_login);
-    task_SetEnv(tsk_int, "EJUDGE_USER_NAME", srgp->user_name);
-    if (srpp->test_count > 0) {
-      snprintf(buf, sizeof(buf), "%d", srpp->test_count);
-      task_SetEnv(tsk_int, "EJUDGE_TEST_COUNT", buf);
-    }
-  }
-  if (src_path) {
-    task_SetEnv(tsk_int, "EJUDGE_SOURCE_PATH", src_path);
-  }
+  setup_ejudge_environment(tsk_int,
+                           srp,
+                           cur_test,
+                           -1, /* test_max_score */
+                           0, /* output_only */
+                           src_path,
+                           exec_user_serial,
+                           test_random_value);
   if (control_fd >= 0) {
     unsigned char buf[64];
     snprintf(buf, sizeof(buf), "%d", control_fd);
     task_SetEnv(tsk_int, "EJUDGE_CONTROL_FD", buf);
   }
+  task_SetRedir(tsk_int, 0, TSR_DUP, stdin_fd);
+  task_SetRedir(tsk_int, 1, TSR_DUP, stdout_fd);
+  task_SetRedir(tsk_int, 2, TSR_FILE, check_out_path, TSK_APPEND, TSK_FULL_RW);
   task_EnableAllSignals(tsk_int);
   task_IgnoreSIGPIPE(tsk_int);
   if (srpp->interactor_time_limit_ms > 0) {
@@ -2554,8 +2615,7 @@ report_args_and_env(testinfo_t *ti)
 
 static int
 invoke_checker(
-        const struct super_run_in_global_packet *srgp,
-        const struct super_run_in_problem_packet *srpp,
+        const struct super_run_in_packet *srp,
         int cur_test,
         struct run_test_info *cur_info,
         const unsigned char *check_cmd,
@@ -2572,7 +2632,9 @@ invoke_checker(
         int test_score_count,
         const int *test_score_val,
         int output_only,
-        const unsigned char *src_path)
+        const unsigned char *src_path,
+        int exec_user_serial,
+        uint64_t test_random_value)
 {
   tpTask tsk = NULL;
   int status = RUN_CHECK_FAILED;
@@ -2581,6 +2643,8 @@ invoke_checker(
   int env_u = 0;
   char **env_v = 0;
   int user_score_mode = 0;
+  const struct super_run_in_global_packet *srgp = srp->global;
+  const struct super_run_in_problem_packet *srpp = srp->problem;
 
   if (ti) {
     env_u = ti->checker_env.u;
@@ -2652,42 +2716,16 @@ invoke_checker(
     abort();
   }
   setup_environment(tsk, srpp->checker_env, env_u, env_v, 1);
-  if (srpp->scoring_checker > 0) {
-    task_SetEnv(tsk, "EJUDGE_SCORING_CHECKER", "1");
-    if (srpp->enable_checker_token > 0) {
-      task_SetEnv(tsk, "EJUDGE_CHECKER_TOKEN", "1");
-    }
-    unsigned char buf[64];
-    snprintf(buf, sizeof(buf), "%d", test_max_score);
-    task_SetEnv(tsk, "EJUDGE_MAX_SCORE", buf);
-  }
-  task_SetEnv(tsk, "EJUDGE", "1");
-  if (srgp->checker_locale && srgp->checker_locale[0]) {
-    task_SetEnv(tsk, "EJUDGE_LOCALE", srgp->checker_locale);
-  }
+  setup_ejudge_environment(tsk,
+                           srp,
+                           cur_test,
+                           test_max_score,
+                           output_only,
+                           src_path,
+                           exec_user_serial,
+                           test_random_value);
   if (srgp->separate_user_score > 0 && output_only > 0) {
-    task_SetEnv(tsk, "EJUDGE_USER_SCORE", "1");
     user_score_mode = 1;
-  }
-  if (srpp->enable_extended_info > 0) {
-    unsigned char buf[64];
-    snprintf(buf, sizeof(buf), "%d", srgp->user_id);
-    task_SetEnv(tsk, "EJUDGE_USER_ID", buf);
-    snprintf(buf, sizeof(buf), "%d", srgp->contest_id);
-    task_SetEnv(tsk, "EJUDGE_CONTEST_ID", buf);
-    snprintf(buf, sizeof(buf), "%d", srgp->run_id);
-    task_SetEnv(tsk, "EJUDGE_RUN_ID", buf);
-    snprintf(buf, sizeof(buf), "%d", cur_test);
-    task_SetEnv(tsk, "EJUDGE_TEST_NUM", buf);
-    task_SetEnv(tsk, "EJUDGE_USER_LOGIN", srgp->user_login);
-    task_SetEnv(tsk, "EJUDGE_USER_NAME", srgp->user_name);
-    if (srpp->test_count > 0) {
-      snprintf(buf, sizeof(buf), "%d", srpp->test_count);
-      task_SetEnv(tsk, "EJUDGE_TEST_COUNT", buf);
-    }
-  }
-  if (src_path) {
-    task_SetEnv(tsk, "EJUDGE_SOURCE_PATH", src_path);
   }
   task_EnableAllSignals(tsk);
 
@@ -2802,6 +2840,110 @@ invoke_checker(
 
 cleanup:
   task_Delete(tsk); tsk = NULL;
+  return status;
+}
+
+static int
+invoke_clean_up_cmd(
+        const struct super_run_in_packet *srp,
+        const unsigned char *working_dir,
+        const unsigned char *check_out_path,
+        const unsigned char *src_path,
+        int cur_test,
+        int exec_user_serial,
+        uint64_t test_random_value)
+{
+  const struct super_run_in_global_packet *srgp = srp->global;
+  const struct super_run_in_problem_packet *srpp = srp->problem;
+  tpTask tsk = NULL;
+  unsigned char start_path[PATH_MAX];
+  __attribute__((unused)) int _;
+  unsigned char *start_ptr = NULL;
+  int status = 0;
+
+  if (!srgp->clean_up_cmd || !srgp->clean_up_cmd[0]) {
+    return 0;
+  }
+
+  if (os_IsAbsolutePath(srgp->clean_up_cmd)) {
+    start_ptr = srgp->clean_up_cmd;
+  } else {
+    _ = snprintf(start_path, sizeof(start_path), "%s/lang/%s",
+                 EJUDGE_SCRIPT_DIR, srgp->clean_up_cmd);
+    start_ptr = start_path;
+  }
+
+  tsk = task_New();
+  task_AddArg(tsk, start_ptr);
+  task_SetPathAsArg0(tsk);
+  if (working_dir && *working_dir) {
+    task_SetWorkingDir(tsk, working_dir);
+  }
+  setup_environment(tsk, srpp->init_env, 0, NULL, 1);
+  setup_ejudge_environment(tsk,
+                           srp,
+                           cur_test,
+                           -1,
+                           0,
+                           src_path,
+                           exec_user_serial,
+                           test_random_value);
+  if (srgp->clean_up_env_file && *srgp->clean_up_env_file) {
+    read_env_file(tsk, srgp->clean_up_env_file);
+  }
+  task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", TSK_READ);
+  task_SetRedir(tsk, 1, TSR_FILE, check_out_path, TSK_APPEND, TSK_FULL_RW);
+  task_SetRedir(tsk, 2, TSR_DUP, 1);
+  task_EnableAllSignals(tsk);
+  if (srpp->checker_real_time_limit_ms > 0) {
+    task_SetMaxRealTimeMillis(tsk, srpp->checker_real_time_limit_ms);
+  }
+  if (srpp->checker_time_limit_ms > 0) {
+    task_SetMaxTimeMillis(tsk, srpp->checker_time_limit_ms);
+  }
+  if (srpp->checker_max_stack_size > 0) {
+    task_SetStackSize(tsk, srpp->checker_max_stack_size);
+  }
+  if (srpp->checker_max_vm_size > 0) {
+    task_SetVMSize(tsk, srpp->checker_max_vm_size);
+  }
+  if (srpp->checker_max_rss_size > 0) {
+    task_SetRSSSize(tsk, srpp->checker_max_rss_size);
+  }
+
+  if (task_Start(tsk) < 0) {
+    append_msg_to_log(check_out_path, "failed to start clean_up_cmd %s",
+                      start_ptr);
+    status = RUN_CHECK_FAILED;
+    goto cleanup;
+  }
+  task_Wait(tsk);
+  if (task_IsTimeout(tsk)) {
+    append_msg_to_log(check_out_path, "clean_up_cmd timeout (%ld ms)",
+                      task_GetRunningTime(tsk));
+    err("clean_up_cmd timeout (%ld ms)",
+        task_GetRunningTime(tsk));
+    status = RUN_CHECK_FAILED;
+    goto cleanup;
+  }
+  if (task_Status(tsk) == TSK_SIGNALED) {
+    int signo = task_TermSignal(tsk);
+    append_msg_to_log(check_out_path,
+                      "clean_up_cmd terminated with signal %d (%s)",
+                      signo, os_GetSignalString(signo));
+    status = RUN_CHECK_FAILED;
+    goto cleanup;
+  }
+  int exitcode = task_ExitCode(tsk);
+  if (exitcode != 0) {
+    append_msg_to_log(check_out_path, "clean_up_cmd exited with code %d",
+                      exitcode);
+    status = RUN_CHECK_FAILED;
+    goto cleanup;
+  }
+
+cleanup:
+  task_Delete(tsk);
   return status;
 }
 
@@ -3384,6 +3526,9 @@ run_one_test(
   int interpreter_cnt = 0;
   unsigned char *interpreter_str = NULL;
 
+  uint64_t test_random_value;
+  int clean_up_executed = 0;
+
   test_checker_out_path[0] = 0;
   memset(&tstinfo, 0, sizeof(tstinfo));
 
@@ -3400,6 +3545,9 @@ run_one_test(
   if (srpp->test_count > 0 && cur_test > srpp->test_count) {
     return -1;
   }
+
+  random_init();
+  test_random_value = random_u64();
 
   test_base[0] = 0;
   test_src[0] = 0;
@@ -3752,7 +3900,7 @@ run_one_test(
                "%s/testcheckout_%d.txt",
                global->run_work_dir, cur_test);
 
-      int r = invoke_test_checker_cmd(srp, check_dir, input_path, test_checker_out_path);
+      int r = invoke_test_checker_cmd(srp, check_dir, input_path, test_checker_out_path, state->exec_user_serial);
       if (r == RUN_CHECK_FAILED) {
         status = RUN_CHECK_FAILED;
         goto check_failed;
@@ -3784,9 +3932,11 @@ run_one_test(
   snprintf(error_path, sizeof(error_path), "%s/%s", check_dir, error_file);
 
   if (srpp->init_cmd && srpp->init_cmd[0]) {
-    status = invoke_init_cmd(srpp, "start", test_src, corr_src,
+    status = invoke_init_cmd(srp, "start", test_src, corr_src,
                              info_src, working_dir, check_out_path,
-                             &tstinfo, src_path);
+                             &tstinfo, src_path, cur_test,
+                             state->exec_user_serial,
+                             test_random_value);
     if (status != 0) {
       append_msg_to_log(check_out_path, "init_cmd failed to start with code 0");
       status = RUN_CHECK_FAILED;
@@ -3963,8 +4113,21 @@ run_one_test(
     }
   }
 
+  int ejudge_env_flag = (tst && tst->enable_ejudge_env > 0) || (srgp->enable_ejudge_env > 0);
+
   if (tst && tst->clear_env > 0) task_ClearEnv(tsk);
-  setup_environment(tsk, start_env, tstinfo.env.u, tstinfo.env.v, 0);
+  setup_environment(tsk, start_env, tstinfo.env.u, tstinfo.env.v, ejudge_env_flag);
+  if (ejudge_env_flag) {
+    setup_ejudge_environment(tsk, srp, cur_test,
+                             -1 /* test_max_score */,
+                             0 /* output_only */,
+                             src_path,
+                             state->exec_user_serial,
+                             test_random_value);
+  }
+  if (srgp->run_env_file) {
+    read_env_file(tsk, srgp->run_env_file);
+  }
 
   if (tstinfo.time_limit_ms > 0) {
     task_SetMaxTimeMillis(tsk, tstinfo.time_limit_ms);
@@ -4194,7 +4357,9 @@ run_one_test(
   if (interactor_cmd) {
     tsk_int = invoke_interactor(interactor_cmd, test_src, output_path, corr_src, info_src,
                                 working_dir, check_out_path,
-                                &tstinfo, pfd1[0], pfd2[1], cfd[1], task_GetPid(tsk), srgp, srpp, cur_test, src_path);
+                                &tstinfo, pfd1[0], pfd2[1], cfd[1], task_GetPid(tsk), srp, cur_test, src_path,
+                                state->exec_user_serial,
+                                test_random_value);
     if (!tsk_int) {
       append_msg_to_log(check_out_path, "interactor failed to start");
     }
@@ -4528,21 +4693,31 @@ run_checker:;
     check_cmd = local_check_cmd;
   }
 
-  status = invoke_checker(srgp, srpp, cur_test, cur_info,
+  status = invoke_checker(srp, cur_test, cur_info,
                           check_cmd, test_src, output_path_to_check,
                           corr_src, info_src, tgzdir_src,
                           working_dir, score_out_path, check_out_path,
                           check_dir, &tstinfo, test_score_count, test_score_val,
-                          0, src_path);
+                          0, src_path,
+                          state->exec_user_serial,
+                          test_random_value);
 
   // read the checker output
 read_checker_output:;
   if (init_cmd_started) {
-    int new_status = invoke_init_cmd(srpp, "stop", test_src,
+    int new_status = invoke_init_cmd(srp, "stop", test_src,
                                      corr_src, info_src, working_dir, check_out_path,
-                                     &tstinfo, src_path);
+                                     &tstinfo, src_path, cur_test,
+                                     state->exec_user_serial,
+                                     test_random_value);
     if (!status) status = new_status;
     init_cmd_started = 0;
+  }
+  if (srgp->clean_up_cmd && srgp->clean_up_cmd[0] && !clean_up_executed) {
+    invoke_clean_up_cmd(srp, working_dir, check_out_path,
+                        src_path, cur_test, state->exec_user_serial,
+                        test_random_value);
+    clean_up_executed = 1;
   }
 
   if (far) {
@@ -4563,10 +4738,18 @@ cleanup:;
   }
 
   if (init_cmd_started) {
-    int new_status = invoke_init_cmd(srpp, "stop", test_src, corr_src,  info_src, working_dir, check_out_path,
-                                     &tstinfo, src_path);
+    int new_status = invoke_init_cmd(srp, "stop", test_src, corr_src,  info_src, working_dir, check_out_path,
+                                     &tstinfo, src_path, cur_test,
+                                     state->exec_user_serial,
+                                     test_random_value);
     if (!status) status = new_status;
     init_cmd_started = 0;
+  }
+  if (srgp->clean_up_cmd && srgp->clean_up_cmd[0] && !clean_up_executed) {
+    invoke_clean_up_cmd(srp, working_dir, check_out_path,
+                        src_path, cur_test, state->exec_user_serial,
+                        test_random_value);
+    clean_up_executed = 1;
   }
 
   cur_info->status = status;
@@ -4640,7 +4823,8 @@ invoke_prepare_cmd(
         const unsigned char *working_dir,
         const unsigned char *exe_name,
         const unsigned char *messages_path,
-        const unsigned char *src_path)
+        const unsigned char *src_path,
+        int exec_user_serial)
 {
   tpTask tsk = task_New();
   int retval = -1;
@@ -4657,6 +4841,11 @@ invoke_prepare_cmd(
 
   if (src_path) {
     task_SetEnv(tsk, "EJUDGE_SOURCE_PATH", src_path);
+  }
+  if (exec_user_serial > 0) {
+    char buf[32];
+    sprintf(buf, "%d", exec_user_serial);
+    task_SetEnv(tsk, "EJUDGE_SUPER_RUN_SERIAL", buf);
   }
 
   if (task_Start(tsk) < 0) {
@@ -4789,8 +4978,7 @@ cleanup:
 static int
 check_output_only(
         const struct section_global_data *global,
-        const struct super_run_in_global_packet *srgp,
-        const struct super_run_in_problem_packet *srpp,
+        const struct super_run_in_packet *srp,
         struct run_reply_packet *reply_pkt,
         struct AgentClient *agent,
         full_archive_t far,
@@ -4798,7 +4986,8 @@ check_output_only(
         struct run_test_info_vector *tests,
         const unsigned char *check_cmd,
         const unsigned char *mirror_dir,
-        int utf8_mode)
+        int utf8_mode,
+        int exec_user_serial)
 {
   int cur_test = 1;
   struct run_test_info *cur_info = NULL;
@@ -4814,6 +5003,9 @@ check_output_only(
   unsigned char corr_base[PATH_MAX];
   unsigned char test_src[PATH_MAX];
   unsigned char corr_src[PATH_MAX];
+
+  const struct super_run_in_global_packet *srgp = srp->global;
+  const struct super_run_in_problem_packet *srpp = srp->problem;
 
   // check_cmd, check_dir, global->run_work_dir
   ASSERT(cur_test == tests->size);
@@ -4861,11 +5053,12 @@ check_output_only(
   cur_info->user_score = -1;
 
   snprintf(output_path, sizeof(output_path), "%s/%s", global->run_work_dir, exe_name);
-  status = invoke_checker(srgp, srpp, cur_test, cur_info,
+  status = invoke_checker(srp, cur_test, cur_info,
                           check_cmd, test_src, output_path,
                           corr_src, NULL, NULL,
                           global->run_work_dir, score_out_path, check_out_path,
-                          global->run_work_dir, NULL, 0, NULL, 1, NULL);
+                          global->run_work_dir, NULL, 0, NULL, 1, NULL,
+                          exec_user_serial, 0);
 
   cur_info->status = status;
   cur_info->max_score = srpp->full_score;
@@ -5253,11 +5446,12 @@ run_tests(
   }
 
   if (srpp->type_val) {
-    status = check_output_only(global, srgp, srpp, reply_pkt,
+    status = check_output_only(global, srp, reply_pkt,
                                agent,
                                far, exe_name, &tests, check_cmd,
                                mirror_dir,
-                               utf8_mode);
+                               utf8_mode,
+                               state->exec_user_serial);
     has_user_score = reply_pkt->has_user_score;
     if (has_user_score) {
       user_status = reply_pkt->user_status;
@@ -5333,7 +5527,8 @@ run_tests(
       goto check_failed;
     }
     r = invoke_test_generator_cmd(srp, test_generator_cmd,
-                                  b_test_dir, src_path, messages_path);
+                                  b_test_dir, src_path, messages_path,
+                                  state->exec_user_serial);
     if (r != 0) {
       append_msg_to_log(messages_path, "test generator failed");
       goto check_failed;
@@ -5346,7 +5541,8 @@ run_tests(
 
   if (!srpp->type_val && tst && tst->prepare_cmd && tst->prepare_cmd[0]) {
     if (invoke_prepare_cmd(tst->prepare_cmd, global->run_work_dir, exe_name,
-                           messages_path, src_path) < 0) {
+                           messages_path, src_path,
+                           state->exec_user_serial) < 0) {
       goto check_failed;
     }
   }
@@ -5374,7 +5570,8 @@ run_tests(
                                           valuer_cmt_file,
                                           valuer_jcmt_file,
                                           evfds[0], vefds[1],
-                                          src_path);
+                                          src_path,
+                                          state->exec_user_serial);
     if (!valuer_tsk) {
       append_msg_to_log(messages_path, "failed to start interactive valuer");
       goto check_failed;
@@ -5688,6 +5885,7 @@ run_tests(
       if (invoke_valuer(global, srp, agent, mirror_dir,
                         tests.size, tests.data,
                         srgp->variant, srpp->full_score,
+                        state->exec_user_serial,
                         &total_score, &marked_flag,
                         &user_status, &user_score, &user_tests_passed,
                         &valuer_errors, &valuer_comment,

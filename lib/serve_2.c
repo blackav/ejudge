@@ -1803,7 +1803,7 @@ serve_compile_request(
     cp.vcs_compile_cmd = prob->vcs_compile_cmd;
   }
   cp.not_ok_is_cf = not_ok_is_cf;
-  if (global->preserve_line_numbers > 0) {
+  if (global->preserve_line_numbers > 0 || (lang && lang->preserve_line_numbers > 0)) {
     cp.preserve_numbers = 1;
   }
   cp.enable_remote_cache = (global->enable_remote_cache > 0);
@@ -2427,6 +2427,15 @@ serve_run_request(
     srgp->prepended_size = comp_pkt->prepended_size;
     srgp->cached_on_remote = comp_pkt->cached_on_remote;
   }
+  if (lang && lang->clean_up_cmd) {
+    srgp->clean_up_cmd = xstrdup(lang->clean_up_cmd);
+  }
+  if (lang && lang->run_env_file) {
+    srgp->run_env_file = xstrdup(lang->run_env_file);
+  }
+  if (lang && lang->clean_up_env_file) {
+    srgp->clean_up_env_file = xstrdup(lang->clean_up_env_file);
+  }
 
   if (prob && prob->enable_src_for_testing > 0 && lang && src_size > 0) {
     srgp->src_sfx = xstrdup(lang->src_sfx);
@@ -2746,6 +2755,9 @@ serve_run_request(
     srpp->max_rss_size = lang->run_max_rss_size;
   }
   srpp->checker_extra_files = sarray_copy(prob->checker_extra_files);
+  if (lang && lang->enable_ejudge_env > 0) {
+    srgp->enable_ejudge_env = lang->enable_ejudge_env;
+  }
 
   if (tester) {
     struct super_run_in_tester_packet *srtp = srp->tester;
@@ -2768,6 +2780,7 @@ serve_run_request(
     srtp->enable_memory_limit_error = tester->enable_memory_limit_error;
     srtp->kill_signal = xstrdup2(tester->kill_signal);
     srtp->clear_env = tester->clear_env;
+    srtp->enable_ejudge_env = tester->enable_ejudge_env;
     if (tester->time_limit_adj_millis > 0) {
       srtp->time_limit_adjustment_ms = tester->time_limit_adj_millis;
     } else if (tester->time_limit_adjustment > 0) {

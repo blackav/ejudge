@@ -95,6 +95,10 @@ struct super_run_in_global_packet
   int cached_on_remote;
   unsigned char *src_sfx;
   unsigned char *src_file;
+  ejintbool_t enable_ejudge_env;
+  unsigned char *clean_up_cmd;
+  unsigned char *run_env_file;
+  unsigned char *clean_up_env_file;
 
   int scoring_system_val META_ATTRIB((meta_hidden));
 };
@@ -220,6 +224,7 @@ struct super_run_in_tester_packet
   ejintbool_t enable_memory_limit_error;
   unsigned char *kill_signal;
   ejintbool_t clear_env;
+  ejintbool_t enable_ejudge_env;
   int time_limit_adjustment_ms;
   unsigned char *errorcode_file;
   unsigned char *error_file;

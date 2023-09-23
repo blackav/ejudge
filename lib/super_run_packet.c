@@ -55,6 +55,7 @@ super_run_in_global_packet_init(struct generic_section_config *gp)
   p->testlib_mode = -1;
 
   p->scoring_system_val = -1;
+  p->enable_ejudge_env = -1;
 }
 
 void
@@ -244,6 +245,7 @@ super_run_in_tester_packet_init(struct generic_section_config *gp)
   p->no_core_dump = -1;
   p->enable_memory_limit_error = -1;
   p->clear_env = -1;
+  p->enable_ejudge_env = -1;
 }
 
 void
@@ -258,6 +260,7 @@ super_run_in_tester_packet_set_default(struct generic_section_config *gp)
   if (p->no_core_dump < 0) p->no_core_dump = 0;
   if (p->enable_memory_limit_error < 0) p->enable_memory_limit_error = 0;
   if (p->clear_env < 0) p->clear_env = 0;
+  if (p->enable_ejudge_env < 0) p->enable_ejudge_env = 0;
 }
 
 struct super_run_in_tester_packet *

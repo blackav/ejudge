@@ -1839,6 +1839,14 @@ apply_language_profiles(void)
     } else if (!strcmp(language_name, "ruby")) {
         enable_sys_fork = 1;
         enable_sys_execve = 1;
+    } else if (!strcmp(language_name, "postgres")) {
+        enable_sys_fork = 1;
+        enable_sys_execve = 1;
+        enable_proc = 1;
+        enable_sys = 1;
+        enable_etc = 1;
+        enable_net_ns = 0;
+        limit_processes = 20;
     }
 }
 

@@ -921,6 +921,10 @@ prepare_unparse_lang(
     unparse_bool(f, "disable_testing", lang->disable_testing);
   if (lang->enable_custom > 0)
     unparse_bool(f, "enable_custom", lang->enable_custom);
+  if (lang->enable_ejudge_env > 0)
+    unparse_bool(f, "enable_ejudge_env", lang->enable_ejudge_env);
+  if (lang->preserve_line_numbers > 0)
+    unparse_bool(f, "preserve_line_numbers", lang->preserve_line_numbers);
   if (lang->content_type && lang->content_type[0]) {
     fprintf(f, "content_type = \"%s\"\n", CARMOR(lang->content_type));
   }
@@ -973,6 +977,15 @@ prepare_unparse_lang(
   do_xstr(f, &ab, "style_checker_env", lang->style_checker_env);
   if (lang->container_options && *lang->container_options) {
     fprintf(f, "container_options = \"%s\"\n", CARMOR(lang->container_options));
+  }
+  if (lang->clean_up_cmd && *lang->clean_up_cmd) {
+    fprintf(f, "clean_up_cmd = \"%s\"\n", CARMOR(lang->clean_up_cmd));
+  }
+  if (lang->run_env_file && *lang->run_env_file) {
+    fprintf(f, "run_env_file = \"%s\"\n", CARMOR(lang->run_env_file));
+  }
+  if (lang->clean_up_env_file && *lang->clean_up_env_file) {
+    fprintf(f, "clean_up_env_file = \"%s\"\n", CARMOR(lang->clean_up_env_file));
   }
   fprintf(f, "\n");
 
@@ -2568,6 +2581,9 @@ generate_abstract_tester(
   if (atst) {
     if (atst->clear_env > 0) {
       unparse_bool(f, "clear_env", atst->clear_env);
+    }
+    if (atst->enable_ejudge_env > 0) {
+      unparse_bool(f, "enable_ejudge_env", atst->enable_ejudge_env);
     }
     do_xstr(f, &ab, "start_env", atst->start_env);
   }

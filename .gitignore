@@ -74,3 +74,5 @@ ejudge-change-contests
 ej-suid-update-scripts
 ej-vcs-compile
 .vscode
+/ej-postgres-cleanup
+/ej-postgres-exec
