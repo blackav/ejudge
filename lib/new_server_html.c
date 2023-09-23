@@ -14844,6 +14844,7 @@ unpriv_get_file(
     stop_time = run_get_stop_time(cs->runlog_state, phr->user_id, cs->current_time);
   }
 
+  // TODO: check IP restrictions
   if (cs->clients_suspended) FAIL(NEW_SRV_ERR_CLIENTS_SUSPENDED);
   if (start_time <= 0) FAIL(NEW_SRV_ERR_CONTEST_NOT_STARTED);
   if (stop_time > 0 && cs->current_time >= stop_time

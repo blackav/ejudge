@@ -1562,6 +1562,8 @@ prepare_unparse_prob(
     unparse_bool(f, "disable_tab", prob->disable_tab);
   if (prob->unrestricted_statement >= 0)
     unparse_bool(f, "unrestricted_statement", prob->unrestricted_statement);
+  if (prob->statement_ignore_ip >= 0)
+    unparse_bool(f, "statement_ignore_ip", prob->statement_ignore_ip);
   if (prob->enable_submit_after_reject >= 0)
     unparse_bool(f, "enable_submit_after_reject", prob->enable_submit_after_reject);
   if (prob->hide_file_names >= 0)
@@ -2038,6 +2040,8 @@ prepare_unparse_actual_prob(
     unparse_bool(f, "disable_tab", prob->disable_tab);
   if (prob->unrestricted_statement > 0)
     unparse_bool(f, "unrestricted_statement", prob->unrestricted_statement);
+  if (prob->statement_ignore_ip > 0)
+    unparse_bool(f, "statement_ignore_ip", prob->statement_ignore_ip);
   if (prob->enable_submit_after_reject > 0)
     unparse_bool(f, "enable_submit_after_reject", prob->enable_submit_after_reject);
   if (prob->hide_file_names > 0)

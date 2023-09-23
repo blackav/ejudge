@@ -414,6 +414,7 @@ static struct meta_info_item meta_info_section_problem_data_data[] =
   [CNTSPROB_disable_user_submit] = { CNTSPROB_disable_user_submit, 'f', XSIZE(struct section_problem_data, disable_user_submit), "disable_user_submit", XOFFSET(struct section_problem_data, disable_user_submit) },
   [CNTSPROB_disable_tab] = { CNTSPROB_disable_tab, 'f', XSIZE(struct section_problem_data, disable_tab), "disable_tab", XOFFSET(struct section_problem_data, disable_tab) },
   [CNTSPROB_unrestricted_statement] = { CNTSPROB_unrestricted_statement, 'f', XSIZE(struct section_problem_data, unrestricted_statement), "unrestricted_statement", XOFFSET(struct section_problem_data, unrestricted_statement) },
+  [CNTSPROB_statement_ignore_ip] = { CNTSPROB_statement_ignore_ip, 'f', XSIZE(struct section_problem_data, statement_ignore_ip), "statement_ignore_ip", XOFFSET(struct section_problem_data, statement_ignore_ip) },
   [CNTSPROB_restricted_statement] = { CNTSPROB_restricted_statement, 'f', XSIZE(struct section_problem_data, restricted_statement), "restricted_statement", XOFFSET(struct section_problem_data, restricted_statement) },
   [CNTSPROB_enable_submit_after_reject] = { CNTSPROB_enable_submit_after_reject, 'f', XSIZE(struct section_problem_data, enable_submit_after_reject), "enable_submit_after_reject", XOFFSET(struct section_problem_data, enable_submit_after_reject) },
   [CNTSPROB_hide_file_names] = { CNTSPROB_hide_file_names, 'f', XSIZE(struct section_problem_data, hide_file_names), "hide_file_names", XOFFSET(struct section_problem_data, hide_file_names) },

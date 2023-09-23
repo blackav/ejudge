@@ -923,6 +923,8 @@ struct section_problem_data
   ejbyteflag_t disable_tab;
   /** do show problem statement after problem expiration */
   ejbyteflag_t unrestricted_statement;
+  /** ignore IP restrictions for statements */
+  ejbyteflag_t statement_ignore_ip;
   /** for compatibility with old configs */
   ejbyteflag_t restricted_statement;
   /** enable submit for rejected problems even after deadline */
