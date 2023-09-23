@@ -374,6 +374,7 @@ enum
   CNTSPROB_disable_user_submit,
   CNTSPROB_disable_tab,
   CNTSPROB_unrestricted_statement,
+  CNTSPROB_statement_ignore_ip,
   CNTSPROB_restricted_statement,
   CNTSPROB_enable_submit_after_reject,
   CNTSPROB_hide_file_names,

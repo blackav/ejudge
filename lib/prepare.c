@@ -430,6 +430,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(disable_user_submit, "L"),
   PROBLEM_PARAM(disable_tab, "L"),
   PROBLEM_PARAM(unrestricted_statement, "L"),
+  PROBLEM_PARAM(statement_ignore_ip, "L"),
   PROBLEM_PARAM(enable_submit_after_reject, "L"),
   PROBLEM_PARAM(restricted_statement, "L"),
   PROBLEM_PARAM(hide_file_names, "L"),
@@ -1349,6 +1350,7 @@ prepare_problem_init_func(struct generic_section_config *gp)
   p->notify_on_submit = -1;
   p->disable_tab = -1;
   p->unrestricted_statement = -1;
+  p->statement_ignore_ip = -1;
   p->enable_submit_after_reject = -1;
   p->hide_file_names = -1;
   p->hide_real_time_limit = -1;
@@ -3742,6 +3744,7 @@ set_defaults(
     prepare_set_prob_value(CNTSPROB_notify_on_submit, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_disable_tab, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_unrestricted_statement, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_statement_ignore_ip, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_enable_submit_after_reject, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_hide_file_names, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_hide_real_time_limit, prob, aprob, g);
@@ -6136,6 +6139,7 @@ prepare_copy_problem(const struct section_problem_data *in)
   out->notify_on_submit = in->notify_on_submit;
   out->disable_tab = in->disable_tab;
   out->unrestricted_statement = in->unrestricted_statement;
+  out->statement_ignore_ip = in->statement_ignore_ip;
   out->restricted_statement = in->restricted_statement;
   out->enable_submit_after_reject = in->enable_submit_after_reject;
   out->hide_file_names = in->hide_file_names;
@@ -6437,6 +6441,7 @@ prepare_set_prob_value(
   INHERIT_BOOLEAN(notify_on_submit);
   INHERIT_BOOLEAN(disable_tab);
   INHERIT_BOOLEAN(unrestricted_statement);
+  INHERIT_BOOLEAN(statement_ignore_ip);
   INHERIT_BOOLEAN(enable_submit_after_reject);
   INHERIT_BOOLEAN(hide_file_names);
   INHERIT_BOOLEAN(hide_real_time_limit);
@@ -7076,6 +7081,7 @@ prepare_set_all_prob_values(
     CNTSPROB_notify_on_submit,
     CNTSPROB_disable_tab,
     CNTSPROB_unrestricted_statement,
+    CNTSPROB_statement_ignore_ip,
     CNTSPROB_enable_submit_after_reject,
     CNTSPROB_hide_file_names,
     CNTSPROB_hide_real_time_limit,

@@ -760,6 +760,7 @@ merge_problem_section(
         { CNTSPROB_disable_user_submit, META_PROBLEM_CONFIG_SECTION_disable_user_submit },
         { CNTSPROB_disable_tab, META_PROBLEM_CONFIG_SECTION_disable_tab },
         { CNTSPROB_unrestricted_statement, META_PROBLEM_CONFIG_SECTION_unrestricted_statement },
+        { CNTSPROB_statement_ignore_ip, META_PROBLEM_CONFIG_SECTION_statement_ignore_ip },
         { CNTSPROB_enable_submit_after_reject, META_PROBLEM_CONFIG_SECTION_enable_submit_after_reject },
         { CNTSPROB_hide_file_names, META_PROBLEM_CONFIG_SECTION_hide_file_names },
         { CNTSPROB_hide_real_time_limit, META_PROBLEM_CONFIG_SECTION_hide_real_time_limit },

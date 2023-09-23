@@ -71,6 +71,7 @@ struct problem_config_section
   ejintbool_t disable_user_submit;
   ejintbool_t disable_tab;
   ejintbool_t unrestricted_statement;
+  ejintbool_t statement_ignore_ip;
   ejintbool_t enable_submit_after_reject;
   ejintbool_t hide_file_names;
   ejintbool_t hide_real_time_limit;

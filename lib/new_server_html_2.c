@@ -5840,6 +5840,7 @@ ns_get_user_problems_summary(
     }
 
     if (start_time > 0 && cs->current_time >= start_time
+        && (ip_allowed || cur_prob->statement_ignore_ip > 0)
         && (cur_prob->unrestricted_statement > 0 || !is_deadlined))
       pinfo[prob_id].status |= PROB_STATUS_VIEWABLE;
 
