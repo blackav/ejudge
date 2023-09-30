@@ -37,6 +37,7 @@ enum
   CNTS_enable_oauth,
   CNTS_enable_reminders,
   CNTS_disable_standalone_reg,
+  CNTS_enable_telegram_registration,
   CNTS_reg_deadline,
   CNTS_sched_time,
   CNTS_open_time,

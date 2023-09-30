@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2002-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -181,6 +181,7 @@ const int contests_attr_to_meta_map[CONTEST_LAST_ATTR] =
   */
   [CONTEST_A_ENABLE_REMINDERS] = CNTS_enable_reminders,
   [CONTEST_A_DISABLE_STANDALONE_REG] = CNTS_disable_standalone_reg,
+  [CONTEST_A_ENABLE_TELEGRAM_REGISTRATION] = CNTS_enable_telegram_registration,
 };
 
 char const * const contests_elem_map[] =
@@ -339,6 +340,7 @@ char const * const contests_attr_map[] =
   "disable_email_check",
   "enable_reminders",
   "disable_standalone_reg",
+  "enable_telegram_registration",
 
   0
 };
@@ -880,6 +882,7 @@ static const unsigned char contest_bool_attr_set[CONTEST_LAST_ATTR] =
   [CONTEST_A_ENABLE_OAUTH] = 1,
   [CONTEST_A_ENABLE_REMINDERS] = 1,
   [CONTEST_A_DISABLE_STANDALONE_REG] = 1,
+  [CONTEST_A_ENABLE_TELEGRAM_REGISTRATION] = 1,
 };
 
 static void
