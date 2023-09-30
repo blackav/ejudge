@@ -78,6 +78,7 @@ struct ejudge_cfg
   int enable_compile_container;
   int enable_oauth;
   int disable_autoupdate_standings;
+  int enable_telegram_registration;
 
   // WebSocket port number
   int contests_ws_port;
