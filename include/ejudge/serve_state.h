@@ -651,6 +651,15 @@ serve_telegram_check_failed(
         const serve_state_t cs,
         int run_id,
         const struct run_entry *re);
+void
+serve_telegram_registered(
+        const struct ejudge_cfg *config,
+        const struct contest_desc *cnts,
+        const serve_state_t cs,
+        long long chat_id,
+        const char *login_str,
+        const char *password_str,
+        const char *error_message);
 
 void
 serve_rejudge_run(

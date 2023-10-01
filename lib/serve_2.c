@@ -3204,6 +3204,42 @@ serve_telegram_user_clar_replied(
 }
 
 void
+serve_telegram_registered(
+        const struct ejudge_cfg *config,
+        const struct contest_desc *cnts,
+        const serve_state_t cs,
+        long long chat_id,
+        const char *login_str,
+        const char *password_str,
+        const char *error_message)
+{
+  const unsigned char *telegram_bot_id = cnts->telegram_bot_id;
+  if (telegram_bot_id && !*telegram_bot_id) telegram_bot_id = NULL;
+  if (!telegram_bot_id) telegram_bot_id = ejudge_cfg_get_telegram_bot_id(config, NULL);
+  if (!telegram_bot_id) return;
+
+  const unsigned char *args[10];
+  unsigned char buf1[64];
+  unsigned char buf2[64];
+
+  args[0] = "telegram_registered";
+  args[1] = telegram_bot_id;
+  snprintf(buf2, sizeof(buf2), "%lld", chat_id);
+  args[2] = buf2;
+  snprintf(buf1, sizeof(buf1), "%d", cnts->id);
+  args[3] = buf1;
+  args[4] = cnts->name;
+  if (!login_str) login_str = "";
+  args[5] = login_str;
+  if (!password_str) password_str = "";
+  args[6] = password_str;
+  if (!error_message) error_message = "";
+  args[7] = error_message;
+  args[8] = NULL;
+  send_job_packet(config, (unsigned char **) args);
+}
+
+void
 serve_notify_user_run_status_change(
         const struct ejudge_cfg *config,
         const struct contest_desc *cnts,
