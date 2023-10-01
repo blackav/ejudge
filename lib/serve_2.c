@@ -3207,7 +3207,6 @@ void
 serve_telegram_registered(
         const struct ejudge_cfg *config,
         const struct contest_desc *cnts,
-        const serve_state_t cs,
         long long chat_id,
         const char *login_str,
         const char *password_str,
