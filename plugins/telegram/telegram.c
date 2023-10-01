@@ -1429,9 +1429,23 @@ handle_register_1(
     int b64len = base64u_encode(key_raw, sizeof(key_raw), key_str);
     key_str[b64len] = 0;
 
+    if (!state->conn->vt->registration_save) {
+        send_result = send_message(state, bs, mc,
+                                   "Operation not supported.", NULL, NULL);
+        goto done;
+    }
+
+    int res = state->conn->vt->registration_save(state->conn, key_str,
+                                                 mc->_id, contest_id);
+    if (res < 0) {
+        send_result = send_message(state, bs, mc,
+                                   "Operation failed.", NULL, NULL);
+        goto done;
+    }
+
     rpl_f = open_memstream(&rpl_s, &rpl_z);
-    fprintf(rpl_f, "Open the following link: %s?action=tl-register&key=%s",
-            cnts->register_url, key_str);
+    fprintf(rpl_f, "Open the following link: %s?action=tl-register&key=%s&contest_id=%d",
+            cnts->register_url, key_str, contest_id);
     fclose(rpl_f); rpl_f = NULL;
 
     send_result = send_message(state, bs, mc, rpl_s, NULL, NULL);

@@ -98,6 +98,12 @@ struct generic_conn_iface
         const unsigned char *student_id,
         unsigned char **login,
         unsigned char **password);
+
+    int (*registration_save)(
+        struct generic_conn *gc,
+        const unsigned char *reg_key,
+        long long chat_id,
+        int contest_id);
 };
 
 struct generic_conn

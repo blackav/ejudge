@@ -29,7 +29,7 @@
 
 #include <stdio.h>
 
-#define TELEGRAM_DB_VERSION 4
+#define TELEGRAM_DB_VERSION 5
 
 static struct generic_conn *
 free_func(struct generic_conn *gc)
@@ -134,6 +134,14 @@ static const char create_query_6[] =
 "    FOREIGN KEY ts_user_id_fk(user_id) REFERENCES %slogins(user_id)\n"
 ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;\n";
 
+static const char create_query_7[] =
+"CREATE TABLE %stelegram_registrations (\n"
+"    reg_key CHAR(32) NOT NULL PRIMARY KEY,\n"
+"    chat_id BIGINT NOT NULL,\n"
+"    contest_id INT NOT NULL DEFAULT 0,\n"
+"    create_time DATETIME(6) NOT NULL\n"
+") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;\n";
+
 static int
 create_database(
         struct mysql_conn *conn)
@@ -160,6 +168,9 @@ create_database(
         db_error_fail(md);
     if (mi->simple_fquery(md, create_query_6,
                           md->table_prefix,
+                          md->table_prefix) < 0)
+        db_error_fail(md);
+    if (mi->simple_fquery(md, create_query_7,
                           md->table_prefix) < 0)
         db_error_fail(md);
 
@@ -266,6 +277,12 @@ check_database(
                 return -1;
             if (mi->simple_fquery(md, "ALTER TABLE %stelegram_subscriptions MODIFY COLUMN bot_id CHAR(64) NOT NULL ;", md->table_prefix) < 0)
                 return -1;
+            break;
+        case 4:
+            if (mi->simple_fquery(md, create_query_7,
+                                  md->table_prefix) < 0) {
+                return -1;
+            }
             break;
         default:
             telegram_version = -1;
@@ -1218,6 +1235,77 @@ fail:;
     return -1;
 }
 
+static int
+registration_save_func(
+        struct generic_conn *gc,
+        const unsigned char *reg_key,
+        long long chat_id,
+        int contest_id)
+{
+    if (gc->vt->open(gc) < 0) return -1;
+
+    struct mysql_conn *conn = (struct mysql_conn *) gc;
+    struct common_mysql_iface *mi = conn->mi;
+    struct common_mysql_state *md = conn->md;
+    char *cmd_s = NULL;
+    size_t cmd_z = 0;
+    FILE *cmd_f = NULL;
+
+    mi->lock(md);
+    cmd_f = open_memstream(&cmd_s, &cmd_z);
+    fprintf(cmd_f, "INSERT INTO %stelegram_registrations VALUES ( ",
+            md->table_prefix);
+    fprintf(cmd_f, "'%s', %lld, %d, NOW(6)", reg_key, chat_id, contest_id);
+    fprintf(cmd_f, "); ");
+    fclose(cmd_f); cmd_f = NULL;
+
+    if (mi->simple_query(md, cmd_s, cmd_z) < 0) goto fail;
+    free(cmd_s); cmd_s = NULL; cmd_z = 0;
+
+    cmd_f = open_memstream(&cmd_s, &cmd_z);
+    fprintf(cmd_f, "DELETE FROM %stelegram_registrations WHERE ADDDATE(create_time, INTERVAL 5 MINUTE) <= NOW(6);", md->table_prefix);
+    fclose(cmd_f); cmd_f = NULL;
+
+    if (mi->simple_query(md, cmd_s, cmd_z) < 0) goto fail;
+    free(cmd_s); cmd_s = NULL; cmd_z = 0;
+
+    mi->unlock(md);
+    return 0;
+
+fail:;
+    if (cmd_f) fclose(cmd_f);
+    free(cmd_s);
+    mi->unlock(md);
+    return -1;
+}
+
+/*
+static int
+subscription_save_func(
+        struct generic_conn *gc,
+        const struct telegram_subscription *ts)
+{
+    struct telegram_subscription_internal tsi = {};
+
+    tsi.bot_id = ts->bot_id;
+    tsi.user_id = ts->user_id;
+    tsi.contest_id = ts->contest_id;
+    tsi.review_flag = ts->review_flag;
+    tsi.reply_flag = ts->reply_flag;
+    tsi.chat_id = ts->chat_id;
+
+    mi->unparse_spec_3(md, cmd_f, TELEGRAM_SUBSCRIPTION_ROW_WIDTH,
+                       telegram_subscription_spec, 1ULL, &tsi);
+    fprintf(cmd_f, " ON DUPLICATE KEY UPDATE ");
+    mi->unparse_spec_3(md, cmd_f, TELEGRAM_SUBSCRIPTION_ROW_WIDTH,
+                       telegram_subscription_spec, 15ULL, &tsi);
+    fprintf(cmd_f, ";");
+    fclose(cmd_f); cmd_f = NULL;
+
+fail:
+}
+ */
+
 static struct generic_conn_iface mysql_iface =
 {
     free_func,
@@ -1239,6 +1327,7 @@ static struct generic_conn_iface mysql_iface =
     subscription_fetch_func,
     subscription_save_func,
     password_get_func,
+    registration_save_func,
 };
 
 struct generic_conn *
