@@ -87,6 +87,8 @@ static void
 queue_packet_handler_telegram_notify(int uid, int argc, char **argv, void *user);
 static void
 queue_packet_handler_telegram_reminder(int uid, int argc, char **argv, void *user);
+static void
+queue_packet_handler_telegram_registered(int uid, int argc, char **argv, void *user);
 
 static void
 queue_periodic_handler(void *user);
@@ -464,6 +466,9 @@ start_func(void *data)
     state->set_command_handler(state->set_command_handler_self,
                                "telegram_reminder",
                                queue_packet_handler_telegram_reminder, state);
+    state->set_command_handler(state->set_command_handler_self,
+                               "telegram_registered",
+                               queue_packet_handler_telegram_registered, state);
     state->set_timer_handler(state->set_timer_handler_self,
                              queue_periodic_handler, state);
 
@@ -1157,6 +1162,92 @@ queue_packet_handler_telegram_reminder(int uid, int argc, char **argv, void *use
 {
     struct telegram_plugin_data *state = (struct telegram_plugin_data*) user;
     put_to_queue(state, packet_handler_telegram_reminder, uid, argc, argv);
+}
+
+/*
+  args[0] = "telegram_registered"
+  args[1] = telegram_bot_id
+  args[2] = telegram_chat_id
+  args[3] = contest_id
+  args[4] = contest_name
+  args[5] = login_str
+  args[6] = password_str
+  args[7] = error_message
+  args[8] = NULL;
+ */
+static void
+packet_handler_telegram_registered(int uid, int argc, char **argv, void *user)
+{
+    struct telegram_plugin_data *state = (struct telegram_plugin_data*) user;
+    struct TeSendMessageResult *send_result = NULL;
+    struct bot_state *bs = NULL;
+    long long chat_id = 0;
+    int contest_id = 0;
+    struct telegram_chat *tc = NULL;
+    char *msg_s = NULL;
+    size_t msg_z = 0;
+    FILE *msg_f = NULL;
+
+    if (argc != 8) {
+        err("wrong number of arguments for telegram_reviewed: %d", argc);
+        goto cleanup;
+    }
+
+    bs = add_bot_id(state, argv[1]);
+
+    {
+        char *eptr = NULL;
+        errno = 0;
+        chat_id = strtoll(argv[2], &eptr, 10);
+        if (errno || *eptr || eptr == argv[2]) {
+            err("invalid chat id '%s'", argv[2]);
+            goto cleanup;
+        }
+    }
+    {
+        char *eptr = NULL;
+        errno = 0;
+        long v = strtol(argv[3], &eptr, 10);
+        if (errno || *eptr || eptr == argv[3] || v <= 0 || (int) v != v) {
+            err("invalid contest_id '%s'", argv[3]);
+            goto cleanup;
+        }
+        contest_id = v;
+    }
+
+    tc = state->conn->vt->chat_fetch(state->conn, chat_id);
+    if (!tc) {
+        err("chat_id %lld is not registered", chat_id);
+        goto cleanup;
+    }
+
+    msg_f = open_memstream(&msg_s, &msg_z);
+
+    if (argv[7][0]) {
+        fprintf(msg_f, "%s", argv[7]);
+    } else {
+        fprintf(msg_f, "Registration successful.\n");
+        fprintf(msg_f, "    Contest: %d (%s)\n", contest_id, argv[4]);
+        fprintf(msg_f, "    Login: %s\n", argv[5]);
+        fprintf(msg_f, "    Password: %s\n", argv[6]);
+    }
+
+    fclose(msg_f); msg_f = NULL;
+    send_result = send_message(state, bs, tc, msg_s, NULL, NULL);
+    free(msg_s); msg_s = NULL; msg_z = 0;
+
+cleanup:;
+    if (msg_f) fclose(msg_f);
+    free(msg_s);
+    telegram_chat_free(tc);
+    if (send_result) send_result->b.destroy(&send_result->b);
+}
+
+static void
+queue_packet_handler_telegram_registered(int uid, int argc, char **argv, void *user)
+{
+    struct telegram_plugin_data *state = (struct telegram_plugin_data*) user;
+    put_to_queue(state, packet_handler_telegram_registered, uid, argc, argv);
 }
 
 static unsigned char *
