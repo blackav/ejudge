@@ -1279,33 +1279,6 @@ fail:;
     return -1;
 }
 
-/*
-static int
-subscription_save_func(
-        struct generic_conn *gc,
-        const struct telegram_subscription *ts)
-{
-    struct telegram_subscription_internal tsi = {};
-
-    tsi.bot_id = ts->bot_id;
-    tsi.user_id = ts->user_id;
-    tsi.contest_id = ts->contest_id;
-    tsi.review_flag = ts->review_flag;
-    tsi.reply_flag = ts->reply_flag;
-    tsi.chat_id = ts->chat_id;
-
-    mi->unparse_spec_3(md, cmd_f, TELEGRAM_SUBSCRIPTION_ROW_WIDTH,
-                       telegram_subscription_spec, 1ULL, &tsi);
-    fprintf(cmd_f, " ON DUPLICATE KEY UPDATE ");
-    mi->unparse_spec_3(md, cmd_f, TELEGRAM_SUBSCRIPTION_ROW_WIDTH,
-                       telegram_subscription_spec, 15ULL, &tsi);
-    fprintf(cmd_f, ";");
-    fclose(cmd_f); cmd_f = NULL;
-
-fail:
-}
- */
-
 static struct generic_conn_iface mysql_iface =
 {
     free_func,
