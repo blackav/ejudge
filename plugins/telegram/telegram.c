@@ -1444,7 +1444,7 @@ handle_register_1(
     }
 
     rpl_f = open_memstream(&rpl_s, &rpl_z);
-    fprintf(rpl_f, "Open the following link: %s?action=telegram-register&key=%s&contest_id=%d",
+    fprintf(rpl_f, "Open the following link: %s?action=telegram-register&key=%s&contest_id=%d\nThis link expires in 5 minutes.",
             cnts->register_url, key_str, contest_id);
     fclose(rpl_f); rpl_f = NULL;
 
