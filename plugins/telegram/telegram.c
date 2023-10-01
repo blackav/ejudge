@@ -17,11 +17,14 @@
 #include "ejudge/telegram.h"
 #include "ejudge/xml_utils.h"
 #include "ejudge/random.h"
+#include "ejudge/osdeps.h"
+#include "ejudge/contests.h"
+#include "ejudge/misctext.h"
+#include "ejudge/base64.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/errlog.h"
 #include "ejudge/logger.h"
-#include "ejudge/osdeps.h"
 
 #include "telegram_data.h"
 #include "telegram_pbs.h"
@@ -45,6 +48,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
+#include <errno.h>
 
 static struct common_plugin_data *
 init_func(void);
@@ -156,6 +160,8 @@ struct telegram_plugin_data
     int q_first;
     int q_len;
     struct queue_item queue[QUEUE_SIZE];
+
+    int enable_telegram_registration;
 };
 
 static void
@@ -332,6 +338,8 @@ prepare_func(
             state->curl_verbose_flag = 1;
         }
     }
+
+    state->enable_telegram_registration = config->enable_telegram_registration;
 
     struct generic_conn *conn = NULL;
     if (!storage || !*storage) storage = "mysql";
@@ -1301,6 +1309,143 @@ fail:;
     return strdup(errmsg);
 }
 
+static void
+handle_register_0(
+        struct telegram_plugin_data *state,
+        struct bot_state *bs,
+        struct telegram_pbs *pbs,
+        TeMessage *tem,
+        struct telegram_chat_state *tcs,
+        struct telegram_chat *mc)
+{
+    struct TeSendMessageResult *send_result = NULL;
+    const int *contest_ids = NULL;
+    int contest_size = 0;
+    char *rpl_s = NULL;
+    size_t rpl_z = 0;
+    FILE *rpl_f = NULL;
+    struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+
+    if (state->enable_telegram_registration <= 0) {
+        send_result = send_message(state, bs, mc,
+                                   "This option is not supported.", NULL, NULL);
+        goto done;
+    }
+
+    rpl_f = open_memstream(&rpl_s, &rpl_z);
+    fprintf(rpl_f, "{ \"one_time_keyboard\": true, \"keyboard\": [");
+
+    contest_size = contests_get_list(&contest_ids);
+    int reply_count = 0;
+    for (int i = 0; i < contest_size; ++i) {
+        const struct contest_desc *cnts = NULL;
+        if (contests_get(contest_ids[i], &cnts) < 0 || !cnts) {
+            continue;
+        }
+        if (cnts->enable_telegram_registration <= 0) {
+            continue;
+        }
+        if (cnts->closed > 0) {
+            continue;
+        }
+
+        if (reply_count > 0) {
+            fprintf(rpl_f, ",");
+        }
+        ++reply_count;
+        fprintf(rpl_f, "[\"%d - %s\"]", contest_ids[i],
+                json_armor_buf(&ab, cnts->name));
+    }
+    fprintf(rpl_f, "]}");
+    fclose(rpl_f); rpl_f = NULL;
+    if (!reply_count) {
+        send_result = send_message(state, bs, mc,
+                                   "No contests available.", NULL, NULL);
+        goto done;
+    }
+    send_result = send_message(state, bs, mc, "Select contest", NULL, rpl_s);
+    tcs->command = xstrdup("/register");
+    tcs->state = 1;
+
+done:;
+    html_armor_free(&ab);
+    if (rpl_f) fclose(rpl_f);
+    free(rpl_s);
+    if (send_result) send_result->b.destroy(&send_result->b);
+}
+
+static void
+handle_register_1(
+        struct telegram_plugin_data *state,
+        struct bot_state *bs,
+        struct telegram_pbs *pbs,
+        TeMessage *tem,
+        struct telegram_chat_state *tcs,
+        struct telegram_chat *mc)
+{
+    struct TeSendMessageResult *send_result = NULL;
+    char *rpl_s = NULL;
+    size_t rpl_z = 0;
+    FILE *rpl_f = NULL;
+
+    if (state->enable_telegram_registration <= 0) {
+        send_result = send_message(state, bs, mc,
+                                   "This option is not supported.", NULL, NULL);
+        goto done;
+    }
+
+    int contest_id = 0;
+    {
+        char *eptr = NULL;
+        errno = 0;
+        long v = strtol(tem->text, &eptr, 10);
+        if (errno || *eptr != ' ' || eptr == (char*) tem->text
+            || v <= 0 || (int) v != v) {
+            send_result = send_message(state, bs, mc,
+                                       "Invalid value.", NULL, NULL);
+            goto done;
+        }
+        contest_id = v;
+    }
+
+    const struct contest_desc *cnts = NULL;
+    if (contests_get(contest_id, &cnts) < 0 || !cnts
+        || cnts->enable_telegram_registration <= 0
+        || cnts->closed > 0) {
+        send_result = send_message(state, bs, mc,
+                                   "Invalid contest.", NULL, NULL);
+        goto done;
+    }
+
+    if (!cnts->register_url) {
+        send_result = send_message(state, bs, mc,
+                                   "Contest is not configured.", NULL, NULL);
+        goto done;
+    }
+
+    unsigned char key_raw[16];
+    random_bytes(key_raw, sizeof(key_raw));
+    unsigned char key_str[32];
+    int b64len = base64u_encode(key_raw, sizeof(key_raw), key_str);
+    key_str[b64len] = 0;
+
+    rpl_f = open_memstream(&rpl_s, &rpl_z);
+    fprintf(rpl_f, "Open the following link: %s?action=tl-register&key=%s",
+            cnts->register_url, key_str);
+    fclose(rpl_f); rpl_f = NULL;
+
+    send_result = send_message(state, bs, mc, rpl_s, NULL, NULL);
+
+done:;
+    if (rpl_f) fclose(rpl_f);
+    free(rpl_s);
+    if (send_result) send_result->b.destroy(&send_result->b);
+
+    tcs->state = 0;
+    xfree(tcs->command); tcs->command = NULL;
+    xfree(tcs->token); tcs->token = NULL;
+}
+
 static int
 handle_incoming_message(
         struct telegram_plugin_data *state,
@@ -1435,6 +1580,9 @@ handle_incoming_message(
             free(reply_s);
             telegram_chat_state_reset(tcs);
             update_state = 1;
+        } else if (!strcmp(tem->text, "/register")) {
+            handle_register_0(state, bs, pbs, tem, tcs, mc);
+            update_state = 1;
         } else if (!strcmp(tem->text, "/help")) {
             send_result = send_message(state, bs, mc,
                                        "List of commands:\n"
@@ -1459,6 +1607,9 @@ handle_incoming_message(
                 xfree(tcs->command); tcs->command = NULL;
                 xfree(tcs->token); tcs->token = NULL;
                 xfree(reply);
+                update_state = 1;
+            } else if (!strcmp(tcs->command, "/register")) {
+                handle_register_1(state, bs, pbs, tem, tcs, mc);
                 update_state = 1;
             } else {
                 int token_val, n;
