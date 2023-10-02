@@ -343,7 +343,7 @@ detect_prepended_size(
         const unsigned char *input_file,
         const unsigned char *output_file)
 {
-  enum { MAX_FILE_SIZE = 64 * 1024 };
+  enum { MAX_FILE_SIZE = 1024 * 1024 };
   enum { MAX_SIZE_DIFF = 1024 };
   unsigned char input_path[PATH_MAX];
   unsigned char output_path[PATH_MAX];
