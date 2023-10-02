@@ -1416,6 +1416,7 @@ handle_register_0(
     size_t rpl_z = 0;
     FILE *rpl_f = NULL;
     struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+    time_t current_time = time(NULL);
 
     if (state->enable_telegram_registration <= 0) {
         send_result = send_message(state, bs, mc,
@@ -1437,6 +1438,9 @@ handle_register_0(
             continue;
         }
         if (cnts->closed > 0) {
+            continue;
+        }
+        if (cnts->reg_deadline > 0 && current_time >= cnts->reg_deadline) {
             continue;
         }
 
