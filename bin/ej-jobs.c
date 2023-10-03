@@ -36,6 +36,8 @@
 #include "ejudge/vcs_plugin.h"
 #include "ejudge/userprob_plugin.h"
 #include "ejudge/exec.h"
+#include "ejudge/contests.h"
+#include "ejudge/random.h"
 
 #include <stdio.h>
 #include <errno.h>
@@ -1894,6 +1896,12 @@ int main(int argc, char *argv[])
         return 1;
     }
 
+    if (contests_set_directory(as.config->contests_dir) < 0) {
+        return 1;
+    }
+
+    random_init();
+
     if (prepare_config_vars(&as) < 0) {
         return 1;
     }
@@ -1958,6 +1966,7 @@ job_server_force_link_2[] =
     xml_unparse_full_cookie,
     xml_unparse_ip,
     xml_unparse_ipv6,
+    contests_get_list,
 };
 
 #if HAVE_LIBMONGOC - 0 > 0

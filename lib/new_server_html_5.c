@@ -38,6 +38,7 @@
 #include "ejudge/content_plugin.h"
 #include "ejudge/errlog.h"
 #include "ejudge/session_cache.h"
+#include "ejudge/base64.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -3615,6 +3616,314 @@ reg_ping_json(FILE *fout, struct http_request_info *phr)
   html_armor_free(&ab);
 }
 
+#define FIRST_CONTEST(u) ((struct userlist_contest*)(u)->contests->first_down)
+#define NEXT_CONTEST(c)  ((struct userlist_contest*)(c)->b.right)
+
+static void
+reg_telegram_register(FILE *fout, struct http_request_info *phr)
+{
+  const unsigned char *reg_key = NULL;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  struct av_telegram_registration treg = {};
+  struct av_telegram_chat tchat = {};
+  unsigned char login_str[64];
+  unsigned char password_str[64];
+  unsigned char *xml_text = NULL;
+  struct userlist_user *u = NULL;
+  unsigned char error_message[1024];
+
+  error_message[0] = 0;
+  if (phr->config->enable_telegram_registration <= 0) {
+    err("%s: not enabled globally", __FUNCTION__);
+    goto fail;
+  }
+
+  int r = hr_cgi_param(phr, "key", &reg_key);
+  if (r < 0) {
+    err("%s: key param is binary", __FUNCTION__);
+    goto fail;
+  }
+  if (!r) {
+    err("%s: key param is undefined", __FUNCTION__);
+    goto fail;
+  }
+
+  const struct contest_desc *cnts = NULL;
+  if (contests_get(phr->contest_id, &cnts) < 0 || !cnts) {
+    err("%s: contest %d is invalid", __FUNCTION__, phr->contest_id);
+    goto fail;
+  }
+  if (cnts->enable_telegram_registration <= 0) {
+    err("%s: not enabled for contest %d", __FUNCTION__, phr->contest_id);
+    goto fail;
+  }
+  if (cnts->closed > 0) {
+    err("%s: contest %d closed", __FUNCTION__, phr->contest_id);
+    goto fail;
+  }
+
+  struct contest_extra *extra = ns_get_contest_extra(cnts, phr->config);
+
+  // TODO: we need a separate plugin here, obviously
+  struct avatar_loaded_plugin *avt = avatar_plugin_get(extra, cnts, phr->config, NULL);
+  if (!avt) {
+    err("%s: failed to load avatar plugin", __FUNCTION__);
+    goto fail;
+  }
+
+  if (!avt->iface->get_telegram_registration
+      || !avt->iface->get_telegram_chat) {
+    err("%s: telegram registration not supported by plugin", __FUNCTION__);
+    goto fail;
+  }
+
+  r = avt->iface->get_telegram_registration(avt->data, reg_key, &treg);
+  if (r < 0) {
+    err("%s: failed to get telegram registration", __FUNCTION__);
+    goto fail;
+  }
+  if (!r) {
+    err("%s: telegram registration '%s' does not exist", __FUNCTION__, reg_key);
+    goto fail;
+  }
+  if (treg.contest_id != phr->contest_id) {
+    err("%s: contest_id mismatch: %d, %d", __FUNCTION__,
+        phr->contest_id, treg.contest_id);
+    goto fail;
+  }
+
+  long long current_time_us;
+  long long current_time;
+  {
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    current_time_us = tv.tv_sec * 1000000LL + tv.tv_usec;
+    current_time = tv.tv_sec;
+  }
+  long long create_time_us = treg.create_time.tv_sec * 1000000LL + treg.create_time.tv_usec;
+  if (create_time_us + 5 * 60 * 1000000LL < current_time_us) {
+    err("%s: key '%s' is expired", __FUNCTION__, reg_key);
+    goto fail;
+  }
+  if (cnts->reg_deadline > 0 && current_time >= cnts->reg_deadline) {
+    err("%s: registration deadline exceeded", __FUNCTION__);
+    goto fail;
+  }
+
+  r = avt->iface->get_telegram_chat(avt->data, treg.chat_id, &tchat);
+  if (r < 0) {
+    err("%s: failed to get telegram chat", __FUNCTION__);
+    goto fail;
+  }
+  if (!r) {
+    err("%s: telegram chat %lld does not exist", __FUNCTION__, treg.chat_id);
+    goto fail;
+  }
+  if (!tchat.type || strcmp(tchat.type, "private") != 0) {
+    err("%s: invalid type for telegram chat %lld", __FUNCTION__, treg.chat_id);
+    goto fail;
+  }
+
+  r = snprintf(login_str, sizeof(login_str), "u%lld@tl", treg.chat_id);
+  if (r >= (int) sizeof(login_str)) {
+    err("%s: login u%lld@tl is too long", __FUNCTION__, treg.chat_id);
+    goto fail;
+  }
+
+  if (ns_open_ul_connection(phr->fw_state) < 0) {
+    err("%s: failed to open userlist connection", __FUNCTION__);
+    goto fail;
+  }
+
+  int user_id = 0;
+  password_str[0] = 0;
+  r = userlist_clnt_lookup_user(ul_conn, login_str, 0, &user_id, NULL);
+  if (r < 0) {
+    if (r != -ULS_ERR_INVALID_LOGIN) {
+      err("%s: lookup user '%s' failed %d", __FUNCTION__, login_str, r);
+      goto fail;
+    }
+
+    unsigned char rbuf[16];
+    random_init();
+    random_bytes(rbuf, sizeof(rbuf));
+    int len = base64u_encode(rbuf, sizeof(rbuf), password_str);
+    password_str[len] = 0;
+
+    struct userlist_pk_create_user_2 up = {};
+    up.confirm_email_flag = 1;
+    up.use_sha1_flag = 1;
+
+    r = userlist_clnt_create_user_2(ul_conn, ULS_CREATE_USER_2, &up,
+                                    login_str, login_str,
+                                    password_str, password_str, "",
+                                    &user_id);
+    if (r < 0) {
+      err("%s: create_user failed: %d", __FUNCTION__, r);
+      goto fail;
+    }
+  }
+  if (user_id <= 0) {
+    err("%s: user_id is invalid: %d", __FUNCTION__, user_id);
+    goto fail;
+  }
+  r = userlist_clnt_get_info(ul_conn, ULS_PRIV_GET_USER_INFO,
+                             user_id, 0, &xml_text);
+  if (r < 0) {
+    err("%s: get_info failed: %d", __FUNCTION__, r);
+    goto fail;
+  }
+  u = userlist_parse_user_str(xml_text);
+  if (!u) {
+    err("%s: failed to parse get_info XML", __FUNCTION__);
+    goto fail;
+  }
+  free(xml_text); xml_text = NULL;
+
+  if (!u->login || !u->email
+      || u->is_privileged > 0 || u->is_invisible > 0
+      || u->is_banned > 0 || u->is_locked > 0
+      || u->read_only > 0 || u->simple_registration > 0) {
+    err("%s: operation is not available for user '%s' and contest %d",
+        __FUNCTION__, login_str, phr->contest_id);
+    snprintf(error_message, sizeof(error_message),
+             "Operation is not available for this user '%s'.",
+             login_str);
+    goto done;
+  }
+  userlist_free(&u->b); u = NULL;
+
+  r = userlist_clnt_register_contest(ul_conn,
+                                     ULS_PRIV_REGISTER_CONTEST,
+                                     user_id,
+                                     phr->contest_id,
+                                     &phr->ip,
+                                     phr->ssl_flag);
+  if (r < 0) {
+    err("%s: registration failed for user '%s' and contest %d: %d",
+        __FUNCTION__, login_str, phr->contest_id, r);
+    snprintf(error_message, sizeof(error_message),
+             "Registration failed for this user '%s' and contest %d.",
+             login_str, phr->contest_id);
+    goto done;
+  }
+
+  r = userlist_clnt_get_info(ul_conn, ULS_PRIV_GET_USER_INFO,
+                             user_id, phr->contest_id, &xml_text);
+  if (r < 0) {
+    err("%s: get_info failed: %d", __FUNCTION__, r);
+    goto fail;
+  }
+  u = userlist_parse_user_str(xml_text);
+  if (!u) {
+    err("%s: failed to parse get_info XML", __FUNCTION__);
+    goto fail;
+  }
+  free(xml_text); xml_text = NULL;
+
+  __attribute__((unused)) const struct userlist_user_info *ui = u->cnts0;
+  const struct userlist_contest *reg = NULL;
+  for (struct userlist_contest *rr = FIRST_CONTEST(u); rr; reg = NEXT_CONTEST(reg)) {
+    if (rr->id == phr->contest_id) {
+      reg = rr;
+      break;
+    }
+  }
+  if (!reg) {
+    err("%s: registration failed for user '%s' and contest %d: reg == NULL",
+        __FUNCTION__, login_str, phr->contest_id);
+    snprintf(error_message, sizeof(error_message),
+             "Registration failed for this user '%s' and contest %d.",
+             login_str, phr->contest_id);
+    goto done;
+  }
+  if (reg->status == USERLIST_REG_REJECTED) {
+    snprintf(error_message, sizeof(error_message),
+             "Registration for this user '%s' and contest %d rejected.",
+             login_str, phr->contest_id);
+    goto done;
+  }
+  if ((reg->flags & USERLIST_UC_LOCKED)) {
+    snprintf(error_message, sizeof(error_message),
+             "This user '%s' is locked in contest %d.",
+             login_str, phr->contest_id);
+    goto done;
+  }
+  if ((reg->flags & USERLIST_UC_BANNED)) {
+    snprintf(error_message, sizeof(error_message),
+             "This user '%s' is banned in contest %d.",
+             login_str, phr->contest_id);
+    goto done;
+  }
+  if ((reg->flags & USERLIST_UC_DISQUALIFIED)) {
+    snprintf(error_message, sizeof(error_message),
+             "This user '%s' is disqualified in contest %d.",
+             login_str, phr->contest_id);
+    goto done;
+  }
+
+  if (!ui || !ui->name) {
+    if (tchat.username || tchat.first_name || tchat.last_name) {
+      char *name_s = NULL;
+      size_t name_z = 0;
+      FILE *name_f = open_memstream(&name_s, &name_z);
+      if (tchat.username) {
+        fprintf(name_f, "%s", tchat.username);
+      }
+      if (tchat.first_name || tchat.last_name) {
+        fprintf(name_f, " (");
+        if (tchat.first_name) {
+          fprintf(name_f, "%s", tchat.first_name);
+        }
+        if (tchat.last_name) {
+          fprintf(name_f, " %s", tchat.last_name);
+        }
+        fprintf(name_f, ")");
+      }
+      fclose(name_f); name_f = NULL;
+      userlist_clnt_edit_field(ul_conn, ULS_EDIT_FIELD,
+                               user_id, phr->contest_id, 0,
+                               USERLIST_NC_NAME, name_s);
+      free(name_s);
+    }
+  }
+
+  if (!password_str[0]) {
+    snprintf(error_message, sizeof(error_message),
+             "This user '%s' already exists and registered to contest %d.",
+             login_str, phr->contest_id);
+    goto done;
+  }
+
+done:;
+  if (error_message[0]) {
+    login_str[0] = 0;
+    password_str[0] = 0;
+  }
+  serve_telegram_registered(phr->config, cnts, treg.chat_id,
+                            login_str, password_str, error_message);
+
+  phr->json_reply = 1;
+  fprintf(fout, "{ \"ok\": true }");
+  goto cleanup;
+
+fail:;
+  ns_refresh_page(fout, phr, NEW_SRV_ACTION_MAIN_PAGE, 0);
+
+cleanup:;
+  html_armor_free(&ab);
+  free(treg.key);
+  free(tchat.type);
+  free(tchat.title);
+  free(tchat.username);
+  free(tchat.first_name);
+  free(tchat.last_name);
+  free(xml_text);
+  if (u) {
+    userlist_free(&u->b);
+  }
+}
+
 void
 ns_register_pages(FILE *fout, struct http_request_info *phr)
 {
@@ -3645,6 +3954,9 @@ ns_register_pages(FILE *fout, struct http_request_info *phr)
   }
   if (phr->action == NEW_SRV_ACTION_PING) {
     return reg_ping_json(fout, phr);
+  }
+  if (phr->action == NEW_SRV_ACTION_TELEGRAM_REGISTER) {
+    return reg_telegram_register(fout, phr);
   }
 
   if (!phr->session_id) return anon_register_pages(fout, phr);

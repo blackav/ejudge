@@ -3,7 +3,7 @@
 #ifndef __AVATAR_PLUGIN_H__
 #define __AVATAR_PLUGIN_H__
 
-/* Copyright (C) 2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2017-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -50,8 +50,26 @@ void avatar_vector_reserve(struct avatar_info_vector *vec, size_t new_a);
 void avatar_vector_expand(struct avatar_info_vector *vec);
 void avatar_vector_clear(struct avatar_info_vector *vec);
 
+struct av_telegram_registration
+{
+    unsigned char *key;
+    long long chat_id;
+    int contest_id;
+    struct timeval create_time;
+};
+
+struct av_telegram_chat
+{
+    long long id;
+    unsigned char *type;
+    unsigned char *title;
+    unsigned char *username;
+    unsigned char *first_name;
+    unsigned char *last_name;
+};
+
 /* version of the plugin interface structure */
-#define AVATAR_PLUGIN_IFACE_VERSION 1
+#define AVATAR_PLUGIN_IFACE_VERSION 2
 
 struct avatar_plugin_data
 {
@@ -86,6 +104,16 @@ struct avatar_plugin_iface
     int (*delete_by_key)(
         struct avatar_plugin_data *data,
         const unsigned char *random_key);
+
+    int (*get_telegram_registration)(
+        struct avatar_plugin_data *data,
+        const unsigned char *key,
+        struct av_telegram_registration *p_reg);
+    int (*get_telegram_chat)(
+        struct avatar_plugin_data *data,
+        long long chat_id,
+        struct av_telegram_chat *p_chat);
+
 };
 
 struct avatar_loaded_plugin

@@ -145,6 +145,7 @@ enum
     AT_COMPILER,
     AT_OPTION,
     AT_DISABLE_AUTOUPDATE_STANDINDGS,
+    AT_ENABLE_TELEGRAM_REGISTRATION,
 
     AT__BARRIER,
     AT__DEFAULT,
@@ -254,6 +255,7 @@ static char const * const attr_map[] =
   "compiler",
   "option",
   "disable_autoupdate_standings",
+  "enable_telegram_registration",
   0,
   "_default",
 
@@ -714,6 +716,9 @@ ejudge_cfg_do_parse(char const *path, FILE *in_file, int no_system_lookup)
       break;
     case AT_DISABLE_AUTOUPDATE_STANDINDGS:
       if (xml_attr_bool(a, &cfg->disable_autoupdate_standings) < 0) goto failed;
+      break;
+    case AT_ENABLE_TELEGRAM_REGISTRATION:
+      if (xml_attr_bool(a, &cfg->enable_telegram_registration) < 0) goto failed;
       break;
     default:
       xml_err_attr_not_allowed(&cfg->b, a);

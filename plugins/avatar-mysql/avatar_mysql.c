@@ -370,6 +370,152 @@ fail:
     return -1;
 }
 
+struct av_telegram_registration_internal
+{
+    unsigned char *key;
+    long long chat_id;
+    int contest_id;
+    struct timeval create_time;
+};
+
+enum { TELEGRAM_REGISTRATION_ROW_WIDTH = 4 };
+#define TELEGRAM_REGISTRATION_OFFSET(f) XOFFSET(struct av_telegram_registration_internal, f)
+static const struct common_mysql_parse_spec telegram_registration_spec[TELEGRAM_REGISTRATION_ROW_WIDTH] =
+{
+    { 1, 's', "reg_key", TELEGRAM_REGISTRATION_OFFSET(key), 0 },
+    { 0, 'l', "chat_id", TELEGRAM_REGISTRATION_OFFSET(chat_id), 0 },
+    { 0, 'd', "contest_id", TELEGRAM_REGISTRATION_OFFSET(contest_id), 0 },
+    { 1, 'T', "create_time", TELEGRAM_REGISTRATION_OFFSET(create_time), 0 },
+};
+
+static int
+get_telegram_registration_func(
+        struct avatar_plugin_data *data,
+        const unsigned char *key,
+        struct av_telegram_registration *p_reg)
+{
+    struct avatar_mysql_state *ams = (struct avatar_mysql_state *) data;
+    struct common_mysql_iface *mi = ams->mi;
+    struct common_mysql_state *md = ams->md;
+    char *cmd_s = NULL;
+    size_t cmd_z = 0;
+    FILE *cmd_f = NULL;
+    struct av_telegram_registration_internal tri = {};
+
+    cmd_f = open_memstream(&cmd_s, &cmd_z);
+    fprintf(cmd_f, "SELECT * FROM %stelegram_registrations WHERE reg_key = '",
+            md->table_prefix);
+    mi->escape_string(md, cmd_f, key);
+    fprintf(cmd_f, "'");
+    fclose(cmd_f); cmd_f = NULL;
+
+    if (mi->query(md, cmd_s, cmd_z, TELEGRAM_REGISTRATION_ROW_WIDTH) < 0)
+        db_error_fail(md);
+    free(cmd_s); cmd_s = NULL; cmd_z = 0;
+
+    if (md->row_count <= 0) {
+        return 0;
+    }
+
+    if (mi->next_row(md) < 0) db_error_fail(md);
+    if (mi->parse_spec(md, -1, md->row, md->lengths, TELEGRAM_REGISTRATION_ROW_WIDTH, telegram_registration_spec, &tri) < 0) goto fail;
+
+    p_reg->key = tri.key; tri.key = NULL;
+    p_reg->chat_id = tri.chat_id;
+    p_reg->contest_id = tri.contest_id;
+    p_reg->create_time = tri.create_time;
+
+    cmd_f = open_memstream(&cmd_s, &cmd_z);
+    fprintf(cmd_f, "DELETE FROM %stelegram_registrations WHERE ADDDATE(create_time, INTERVAL 5 MINUTE) <= NOW(6) OR reg_key = '", md->table_prefix);
+    mi->escape_string(md, cmd_f, key);
+    fprintf(cmd_f, "'");
+    fclose(cmd_f); cmd_f = NULL;
+
+    __attribute__((unused)) int _;
+    _ = mi->simple_query(md, cmd_s, cmd_z);
+    free(cmd_s); cmd_s = NULL; cmd_z = 0;
+
+    return 1;
+
+fail:;
+    if (cmd_f) fclose(cmd_f);
+    free(cmd_s);
+    free(tri.key);
+    return -1;
+}
+
+struct av_telegram_chat_internal
+{
+    long long id;
+    unsigned char *type;
+    unsigned char *title;
+    unsigned char *username;
+    unsigned char *first_name;
+    unsigned char *last_name;
+};
+
+enum { TELEGRAM_CHAT_ROW_WIDTH = 6 };
+#define TELEGRAM_CHAT_OFFSET(f) XOFFSET(struct av_telegram_chat_internal, f)
+static const struct common_mysql_parse_spec telegram_chat_spec[TELEGRAM_CHAT_ROW_WIDTH] =
+{
+    { 0, 'l', "id", TELEGRAM_CHAT_OFFSET(id), 0 },
+    { 1, 's', "type", TELEGRAM_CHAT_OFFSET(type), 0 },
+    { 1, 's', "title", TELEGRAM_CHAT_OFFSET(title), 0 },
+    { 1, 's', "username", TELEGRAM_CHAT_OFFSET(username), 0 },
+    { 1, 's', "first_name", TELEGRAM_CHAT_OFFSET(first_name), 0 },
+    { 1, 's', "last_name", TELEGRAM_CHAT_OFFSET(last_name), 0 },
+};
+
+static int
+get_telegram_chat_func(
+        struct avatar_plugin_data *data,
+        long long chat_id,
+        struct av_telegram_chat *p_chat)
+{
+    struct avatar_mysql_state *ams = (struct avatar_mysql_state *) data;
+    struct common_mysql_iface *mi = ams->mi;
+    struct common_mysql_state *md = ams->md;
+    char *cmd_s = NULL;
+    size_t cmd_z = 0;
+    FILE *cmd_f = NULL;
+    struct av_telegram_chat_internal tci = {};
+
+    cmd_f = open_memstream(&cmd_s, &cmd_z);
+    fprintf(cmd_f, "SELECT * FROM %stelegram_chats WHERE id = %lld ;",
+            md->table_prefix, chat_id);
+    fclose(cmd_f); cmd_f = NULL;
+
+    if (mi->query(md, cmd_s, cmd_z, TELEGRAM_CHAT_ROW_WIDTH) < 0)
+        db_error_fail(md);
+    free(cmd_s); cmd_s = NULL; cmd_z = 0;
+
+    if (md->row_count <= 0) {
+        return 0;
+    }
+
+    if (mi->next_row(md) < 0) db_error_fail(md);
+    if (mi->parse_spec(md, -1, md->row, md->lengths, TELEGRAM_CHAT_ROW_WIDTH, telegram_chat_spec, &tci) < 0) goto fail;
+
+    p_chat->id = tci.id;
+    p_chat->type = tci.type; tci.type = NULL;
+    p_chat->title = tci.title; tci.title = NULL;
+    p_chat->username = tci.username; tci.username = NULL;
+    p_chat->first_name = tci.first_name; tci.first_name = NULL;
+    p_chat->last_name = tci.last_name; tci.last_name = NULL;
+
+    return 1;
+
+fail:;
+    if (cmd_f) fclose(cmd_f);
+    free(cmd_s);
+    free(tci.type);
+    free(tci.title);
+    free(tci.username);
+    free(tci.first_name);
+    free(tci.last_name);
+    return -1;
+}
+
 struct avatar_plugin_iface plugin_avatar_mysql =
 {
     {
@@ -388,4 +534,6 @@ struct avatar_plugin_iface plugin_avatar_mysql =
     insert_func,
     fetch_by_key_func,
     delete_by_key_func,
+    get_telegram_registration_func,
+    get_telegram_chat_func,
 };
