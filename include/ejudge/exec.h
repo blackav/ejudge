@@ -1,7 +1,7 @@
 #ifndef __REUSE_EXEC_H__
 #define __REUSE_EXEC_H__
 
-/* Copyright (C) 1998-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 1998-2023 Alexander Chernov <cher@ejudge.ru> */
 /* Created: <1998-01-21 14:26:50 cher> */
 
 /*
@@ -91,6 +91,7 @@ int      task_SetKillSignal(tpTask, char const *);
 int      task_SetStackSize(tpTask, size_t);
 int      task_SetDataSize(tpTask, size_t);
 int      task_SetVMSize(tpTask, size_t);
+int      task_DisableVMSizeLimit(tpTask);
 int      task_SetRSSSize(tpTask, size_t);
 int      task_DisableCoreDump(tpTask);
 int      task_EnableMemoryLimitError(tpTask);
