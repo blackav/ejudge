@@ -139,6 +139,7 @@ static int enable_subdir_mode = 0;
 static int enable_compile_mode = 0;
 static int enable_run = 0;
 static int enable_loopback = 0;
+static int enable_vm_limit = 1;
 
 static int enable_seccomp = 1;
 static int enable_sys_execve = 0;
@@ -1936,6 +1937,7 @@ extract_size(const char **ppos, int init_offset, const char *opt_name)
  *   mC     - switch to ejcompile user instead of ejexec
  *   mr     - preserve original /run directory
  *   ml     - setup lo inteface inside the container
+ *   mV     - explicitly disable setting of VM size limit
  *   w<DIR> - working directory (cwd by default)
  *   rn     - redirect to/from /dev/null for standard streams
  *   rm     - merge stdout and stderr output
@@ -2074,6 +2076,9 @@ main(int argc, char *argv[])
                 opt += 2;
             } else if (*opt == 'm' && opt[1] == 'l') {
                 enable_loopback = 1;
+                opt += 2;
+            } else if (*opt == 'm' && opt[1] == 'V') {
+                enable_vm_limit = 0;
                 opt += 2;
             } else if (*opt == 'w') {
                 working_dir = extract_string(&opt, 1, "w");
@@ -2431,7 +2436,7 @@ main(int argc, char *argv[])
 
             /* not yet supported: RLIMIT_MEMLOCK, RLIMIT_MSGQUEUE, RLIMIT_NICE, RLIMIT_RTPRIO, RLIMIT_SIGPENDING */
 
-            if (limit_vm_size > 0) {
+            if (enable_vm_limit > 0 && limit_vm_size > 0) {
                 struct rlimit lim = { .rlim_cur = limit_vm_size, .rlim_max = limit_vm_size };
                 if (setrlimit(RLIMIT_AS, &lim) < 0) {
                     fprintf(stderr, "rlimit for RLIMIT_AS %lld failed: %s", limit_vm_size, strerror(errno));
