@@ -1015,6 +1015,8 @@ struct section_problem_data
 
   ejbyteflag_t enable_src_for_testing;
 
+  ejbyteflag_t disable_vm_size_limit;
+
   // padding to 8-byte boundary
   //unsigned char _pad1[1];
 

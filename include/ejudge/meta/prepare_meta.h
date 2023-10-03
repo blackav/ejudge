@@ -417,6 +417,7 @@ enum
   CNTSPROB_enable_vcs,
   CNTSPROB_enable_iframe_statement,
   CNTSPROB_enable_src_for_testing,
+  CNTSPROB_disable_vm_size_limit,
   CNTSPROB_examinator_num,
   CNTSPROB_real_time_limit,
   CNTSPROB_time_limit,

@@ -474,6 +474,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(enable_vcs, "L"),
   PROBLEM_PARAM(enable_iframe_statement, "L"),
   PROBLEM_PARAM(enable_src_for_testing, "L"),
+  PROBLEM_PARAM(disable_vm_size_limit, "L"),
   PROBLEM_PARAM(score_multiplier, "d"),
   PROBLEM_PARAM(prev_runs_to_show, "d"),
   PROBLEM_PARAM(max_user_run_count, "d"),
@@ -1395,6 +1396,7 @@ prepare_problem_init_func(struct generic_section_config *gp)
   p->enable_vcs = -1;
   p->enable_iframe_statement = -1;
   p->enable_src_for_testing = -1;
+  p->disable_vm_size_limit = -1;
   p->priority_adjustment = -1000;
   p->max_vm_size = -1LL;
   p->max_stack_size = -1LL;
@@ -3792,6 +3794,7 @@ set_defaults(
     prepare_set_prob_value(CNTSPROB_enable_vcs, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_enable_iframe_statement, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_enable_src_for_testing, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_disable_vm_size_limit, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_hide_variant, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_autoassign_variants, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_enable_text_form, prob, aprob, g);
@@ -6228,6 +6231,7 @@ prepare_copy_problem(const struct section_problem_data *in)
   out->enable_vcs = in->enable_vcs;
   out->enable_iframe_statement = in->enable_iframe_statement;
   out->enable_src_for_testing = in->enable_src_for_testing;
+  out->disable_vm_size_limit = in->disable_vm_size_limit;
   xstrdup3(&out->test_pat, in->test_pat);
   xstrdup3(&out->corr_pat, in->corr_pat);
   xstrdup3(&out->info_pat, in->info_pat);
@@ -6538,6 +6542,7 @@ prepare_set_prob_value(
   INHERIT_BOOLEAN(enable_vcs);
   INHERIT_BOOLEAN(enable_iframe_statement);
   INHERIT_BOOLEAN(enable_src_for_testing);
+  INHERIT_BOOLEAN(disable_vm_size_limit);
   INHERIT_BOOLEAN(hide_variant);
   INHERIT_BOOLEAN(autoassign_variants);
   INHERIT_BOOLEAN(enable_text_form);
@@ -7160,6 +7165,7 @@ prepare_set_all_prob_values(
     CNTSPROB_enable_vcs,
     CNTSPROB_enable_iframe_statement,
     CNTSPROB_enable_src_for_testing,
+    CNTSPROB_disable_vm_size_limit,
     CNTSPROB_hide_variant,
     CNTSPROB_test_pat,
     CNTSPROB_corr_pat,
