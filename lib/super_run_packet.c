@@ -159,6 +159,7 @@ super_run_in_problem_packet_init(struct generic_section_config *gp)
   p->stop_on_first_fail = -1;
   p->enable_control_socket = -1;
   p->test_count = -1;
+  p->disable_vm_size_limit = -1;
 
   p->type_val = -1;
 }
