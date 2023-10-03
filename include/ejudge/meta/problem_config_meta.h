@@ -105,6 +105,7 @@ enum
   META_PROBLEM_CONFIG_SECTION_max_open_file_count,
   META_PROBLEM_CONFIG_SECTION_max_process_count,
   META_PROBLEM_CONFIG_SECTION_tests_to_accept,
+  META_PROBLEM_CONFIG_SECTION_disable_vm_size_limit,
   META_PROBLEM_CONFIG_SECTION_deadline,
   META_PROBLEM_CONFIG_SECTION_start_date,
   META_PROBLEM_CONFIG_SECTION_max_vm_size,
