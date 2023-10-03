@@ -2758,6 +2758,9 @@ serve_run_request(
   if (lang && lang->enable_ejudge_env > 0) {
     srgp->enable_ejudge_env = lang->enable_ejudge_env;
   }
+  if (prob->disable_vm_size_limit > 0) {
+    srpp->disable_vm_size_limit = 1;
+  }
 
   if (tester) {
     struct super_run_in_tester_packet *srtp = srp->tester;

@@ -109,6 +109,7 @@ struct tTask
   int    enable_process_group;  /* create a new process group */
   int    enable_kill_all;       /* kill all processes (using -1 for kill) */
   int    enable_subdir;         /* process is started in a subdirectory of the working directory */
+  int    disable_vm_size_limit; /* disable vm_size limit */
   ssize_t max_core_size;        /* maximum size of core files */
   ssize_t max_file_size;        /* maximum size of created files */
   ssize_t max_locked_mem_size;  /* maximum size of locked memory */
@@ -1298,6 +1299,15 @@ task_SetVMSize(tTask *tsk, size_t size)
 }
 
 int
+task_DisableVMSizeLimit(tTask *tsk)
+{
+  task_init_module();
+  ASSERT(tsk);
+  tsk->disable_vm_size_limit = 1;
+  return 0;
+}
+
+int
 task_SetRSSSize(tTask *tsk, size_t size)
 {
   task_init_module();
@@ -1713,6 +1723,9 @@ task_StartContainer(tTask *tsk)
   }
   if (tsk->enable_subdir) {
     fprintf(spec_f, "mD");
+  }
+  if (tsk->disable_vm_size_limit) {
+    fprintf(spec_f, "mV");
   }
 
   if (tsk->max_stack_size > 0) {
@@ -2171,7 +2184,7 @@ task_Start(tTask *tsk)
     if (tsk->max_data_size > 0) {
       set_limit(comm_fd + 1, RLIMIT_DATA, tsk->max_data_size);
     }
-    if (tsk->max_vm_size > 0) {
+    if (tsk->disable_vm_size_limit <= 0 && tsk->max_vm_size > 0) {
       set_limit(comm_fd + 1, RLIMIT_AS, tsk->max_vm_size);
     }
     if (tsk->max_core_size >= 0) {

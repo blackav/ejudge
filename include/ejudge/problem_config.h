@@ -134,6 +134,7 @@ struct problem_config_section
   int max_open_file_count;
   int max_process_count;
   int tests_to_accept;
+  int disable_vm_size_limit;
 
   time_t deadline;
   time_t start_date;

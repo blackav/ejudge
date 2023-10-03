@@ -4179,6 +4179,8 @@ run_one_test(
       task_SetVMSize(tsk, max_vm_size);
     if (max_rss_size > 0)
       task_SetRSSSize(tsk, max_rss_size);
+    if (srpp->disable_vm_size_limit > 0)
+      task_DisableVMSizeLimit(tsk);
   } else {
     switch (tst->memory_limit_type_val) {
     case MEMLIMIT_TYPE_DEFAULT:
@@ -4198,6 +4200,8 @@ run_one_test(
       if (tst->enable_memory_limit_error > 0 && srgp->enable_memory_limit_error > 0 && srgp->secure_run > 0) {
         task_EnableMemoryLimitError(tsk);
       }
+      if (srpp->disable_vm_size_limit > 0)
+        task_DisableVMSizeLimit(tsk);
       break;
     case MEMLIMIT_TYPE_JAVA:
       make_java_limits(mem_limit_buf, sizeof(mem_limit_buf), max_vm_size, max_stack_size);
