@@ -60,6 +60,7 @@ run_psql(
         const char *password,
         const char *database,
         int ignore_stdout,
+        int html_output_flag,
         ...)
 {
     int pid = fork();
@@ -86,11 +87,15 @@ run_psql(
         }
         args[i++] = "-X";
         args[i++] = "-w";
-        args[i++] = "--csv";
+        if (html_output_flag) {
+            args[i++] = "--html";
+        } else {
+            args[i++] = "--csv";
+        }
         args[i++] = "-q";
 
         va_list lst;
-        va_start(lst, ignore_stdout);
+        va_start(lst, html_output_flag);
         const char *ptr = NULL;
         while ((ptr = va_arg(lst, const char *))) {
             args[i++] = ptr;
@@ -149,7 +154,9 @@ create_database(
     fprintf(cmd_f, ";");
     fclose(cmd_f); cmd_f = NULL;
 
-    int r = run_psql(host, port, root_user, root_password, NULL, 1,
+    int r = run_psql(host, port, root_user, root_password, NULL,
+                     1 /* ignore_stdout */,
+                     0 /* html_output_flag */,
                      "-c", cmd_s, NULL);
     free(cmd_s); cmd_s = NULL;
 
@@ -167,6 +174,7 @@ create_database(
  *   PG_PASSWORDS
  *   EJUDGE_SUPER_RUN_SERIAL
  *   EJUDGE_TEST_RANDOM_VALUE
+ *   EJUDGE_HTML_OUTPUT
  */
 int
 main(int argc, char *argv[])
@@ -297,6 +305,17 @@ main(int argc, char *argv[])
         die("database creation failed");
     }
 
+    int html_output_flag = -1;
+    if ((s = getenv("EJUDGE_HTML_OUTPUT")) && *s) {
+        errno = 0;
+        char *eptr = NULL;
+        long v = strtol(s, &eptr, 10);
+        if (errno || !eptr || eptr == s || (int) v != v || v < 0) {
+            die("invalid EJUDGE_HTML_OUTPUT value: %s", s);
+        }
+        html_output_flag = v;
+    }
+
     const char *exec_user = root_user;
     const char *exec_password = root_password;
     if (user_name) {
@@ -304,7 +323,9 @@ main(int argc, char *argv[])
         exec_password = user_password;
     }
 
-    r = run_psql(host, port, exec_user, exec_password, database, 0,
+    r = run_psql(host, port, exec_user, exec_password, database,
+                 0 /* ignore_stdout */,
+                 html_output_flag,
                  "-f", input_file, "-f", exec_file, NULL);
     if (r != 0) {
         die("postgres execution failed");
