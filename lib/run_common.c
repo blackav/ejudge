@@ -4124,6 +4124,12 @@ run_one_test(
                              src_path,
                              state->exec_user_serial,
                              test_random_value);
+    if (srpp->input_file && srpp->input_file[0]) {
+      task_SetEnv(tsk, "INPUT_FILE", srpp->input_file);
+    }
+    if (srpp->output_file && srpp->output_file[0]) {
+      task_SetEnv(tsk, "OUTPUT_FILE", srpp->output_file);
+    }
   }
   if (srgp->run_env_file) {
     read_env_file(tsk, srgp->run_env_file);
