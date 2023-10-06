@@ -61,6 +61,7 @@ run_psql(
         const char *database,
         int ignore_stdout,
         int html_output_flag,
+        int tuples_only_flag,
         ...)
 {
     int pid = fork();
@@ -87,15 +88,18 @@ run_psql(
         }
         args[i++] = "-X";
         args[i++] = "-w";
-        if (html_output_flag) {
+        if (html_output_flag > 0) {
             args[i++] = "--html";
         } else {
             args[i++] = "--csv";
         }
+        if (tuples_only_flag > 0) {
+            args[i++] = "-t";
+        }
         args[i++] = "-q";
 
         va_list lst;
-        va_start(lst, html_output_flag);
+        va_start(lst, tuples_only_flag);
         const char *ptr = NULL;
         while ((ptr = va_arg(lst, const char *))) {
             args[i++] = ptr;
@@ -157,6 +161,7 @@ create_database(
     int r = run_psql(host, port, root_user, root_password, NULL,
                      1 /* ignore_stdout */,
                      0 /* html_output_flag */,
+                     0 /* tuples_only_flag */,
                      "-c", cmd_s, NULL);
     free(cmd_s); cmd_s = NULL;
 
@@ -175,6 +180,7 @@ create_database(
  *   EJUDGE_SUPER_RUN_SERIAL
  *   EJUDGE_TEST_RANDOM_VALUE
  *   EJUDGE_HTML_OUTPUT
+ *   EJUDGE_TUPLES_ONLY
  */
 int
 main(int argc, char *argv[])
@@ -316,6 +322,17 @@ main(int argc, char *argv[])
         html_output_flag = v;
     }
 
+    int tuples_only_flag = -1;
+    if ((s = getenv("EJUDGE_TUPLES_ONLY")) && *s) {
+        errno = 0;
+        char *eptr = NULL;
+        long v = strtol(s, &eptr, 10);
+        if (errno || !eptr || eptr == s || (int) v != v || v < 0) {
+            die("invalid EJUDGE_TUPLES_ONLY value: %s", s);
+        }
+        tuples_only_flag = v;
+    }
+
     const char *exec_user = root_user;
     const char *exec_password = root_password;
     if (user_name) {
@@ -326,6 +343,7 @@ main(int argc, char *argv[])
     r = run_psql(host, port, exec_user, exec_password, database,
                  0 /* ignore_stdout */,
                  html_output_flag,
+                 tuples_only_flag,
                  "-f", input_file, "-f", exec_file, NULL);
     if (r != 0) {
         die("postgres execution failed");
