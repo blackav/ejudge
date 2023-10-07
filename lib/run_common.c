@@ -1138,7 +1138,7 @@ setup_ejudge_environment(
   if (srgp->checker_locale && srgp->checker_locale[0]) {
     task_SetEnv(tsk, "EJUDGE_LOCALE", srgp->checker_locale);
   }
-  if (srgp->separate_user_score > 0 && output_only > 0) {
+  if (srgp->separate_user_score > 0 || output_only > 0) {
     task_SetEnv(tsk, "EJUDGE_USER_SCORE", "1");
   }
   if (srpp->valuer_sets_marked > 0) {
