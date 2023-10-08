@@ -14,7 +14,7 @@
 %><%@include "priv_stdvars.csp"
 %><%
   path_t src_path;
-  struct run_entry ri;
+  struct run_entry re;
   char *src_text = 0; //, *html_text;
   //unsigned char *numb_txt;
   size_t src_len; //, html_len, numb_len;
@@ -69,24 +69,24 @@
   if (run_id < 0 || run_id >= run_get_total(cs->runlog_state)) {
     FAIL(NEW_SRV_ERR_INV_RUN_ID);
   }
-  run_get_entry(cs->runlog_state, run_id, &ri);
-  if (!run_is_normal_or_transient_status(ri.status)) {
+  run_get_entry(cs->runlog_state, run_id, &re);
+  if (!run_is_normal_or_transient_status(re.status)) {
     FAIL(NEW_SRV_ERR_SOURCE_UNAVAILABLE);
   }
 
-  src_flags = serve_make_source_read_path(cs, src_path, sizeof(src_path), &ri);
+  src_flags = serve_make_source_read_path(cs, src_path, sizeof(src_path), &re);
   if (src_flags < 0) {
     FAIL(NEW_SRV_ERR_SOURCE_NONEXISTANT);
   }
 
   info("audit:view_source:%d:%d:%d", phr->user_id, phr->contest_id, run_id);
 
-  if (ri.prob_id > 0 && ri.prob_id <= cs->max_prob)
-    prob = cs->probs[ri.prob_id];
-  if (ri.lang_id > 0 && ri.lang_id <= cs->max_lang)
-    lang = cs->langs[ri.lang_id];
+  if (re.prob_id > 0 && re.prob_id <= cs->max_prob)
+    prob = cs->probs[re.prob_id];
+  if (re.lang_id > 0 && re.lang_id <= cs->max_lang)
+    lang = cs->langs[re.lang_id];
 
-  run_fetch_user_runs(cs->runlog_state, 0, run_id, ri.user_id, ri.prob_id, &other_runs_count, &other_runs);
+  run_fetch_user_runs(cs->runlog_state, 0, run_id, re.user_id, re.prob_id, &other_runs_count, &other_runs);
   for (int i = 0; i < other_runs_count; ++i) {
     if (ej_uuid_is_nonempty(other_runs[i].run_uuid)) {
       ++uuid_count;
@@ -102,15 +102,15 @@
     }
   }
 
-  run_time = ri.time;
+  run_time = re.time;
   if (run_time < 0) run_time = 0;
   start_time = run_get_start_time(cs->runlog_state);
   if (start_time < 0) start_time = 0;
   if (run_time < start_time) run_time = start_time;
 
-  rep_flag = serve_make_xml_report_read_path(cs, rep_path, sizeof(rep_path), &ri);
+  rep_flag = serve_make_xml_report_read_path(cs, rep_path, sizeof(rep_path), &re);
   if (rep_flag >= 0) {
-    if (ri.store_flags == STORE_FLAGS_UUID_BSON) {
+    if (re.store_flags == STORE_FLAGS_UUID_BSON) {
       tr = testing_report_parse_bson_file(rep_path);
       if (tr && tr->compiler_output && tr->compiler_output[0]) {
         compiler_output = tr->compiler_output; tr->compiler_output = NULL;
@@ -133,7 +133,7 @@
   }
 
   if (!compiler_output) {
-    txt_flags = serve_make_report_read_path(cs, txt_path, sizeof(txt_path), &ri);
+    txt_flags = serve_make_report_read_path(cs, txt_path, sizeof(txt_path), &re);
     if (txt_flags >= 0) {
       if (generic_read_file(&txt_text, 0, &txt_size, txt_flags, 0, txt_path, 0) >= 0) {
         compiler_output = txt_text; txt_text = 0; txt_size = 0;
@@ -141,8 +141,8 @@
     }
   }
 
-  if (ej_uuid_is_nonempty(ri.run_uuid)) {
-    clar_fetch_run_messages(cs->clarlog_state, &ri.run_uuid, &fcev);
+  if (ej_uuid_is_nonempty(re.run_uuid)) {
+    clar_fetch_run_messages(cs->clarlog_state, &re.run_uuid, &fcev);
   }
   if (uuid_count > 0) {
     clar_fetch_run_messages_2(cs->clarlog_state, uuid_count, other_uuids, &fcev2);
@@ -165,7 +165,7 @@
     }
   }
 
-  u = teamdb_get_userlist(cs->teamdb_state, ri.user_id);
+  u = teamdb_get_userlist(cs->teamdb_state, re.user_id);
   if (u) ui = u->cnts0;
   if (ui && ui->avatar_id && ui->avatar_id[0]) {
     struct content_loaded_plugin *cp = content_plugin_get(phr->extra, phr->cnts, phr->config, NULL);
@@ -238,7 +238,7 @@
     <th><s:_>EOLN Type</s:_></th>
     <th><s:_>Status</s:_></th>
 <%
-  if (ri.passed_mode > 0) {
+  if (re.passed_mode > 0) {
 %>
     <th><s:_>Tests passed</s:_></th>
 <%
@@ -246,7 +246,7 @@
 %>
 <%
   if (global->score_system == SCORE_KIROV || global->score_system == SCORE_OLYMPIAD) {
-    if (ri.passed_mode <= 0) {
+    if (re.passed_mode <= 0) {
 %>
     <th><s:_>Tests passed</s:_></th>
 <%
@@ -255,7 +255,7 @@
     <th><s:_>Score gained</s:_></th>
 <%
   } else if (global->score_system == SCORE_MOSCOW) {
-    if (ri.passed_mode <= 0) {
+    if (re.passed_mode <= 0) {
 %>
     <th><s:_>Failed test</s:_></th>
 <%
@@ -264,7 +264,7 @@
     <th><s:_>Score gained</s:_></th>
 <%
   } else {
-    if (ri.passed_mode <= 0) {
+    if (re.passed_mode <= 0) {
 %>
     <th><s:_>Failed test</s:_></th>
 <%
@@ -277,22 +277,22 @@
 <% if (avatar_url[0]) { %>
     <td class="userpic"><img src="<s:v value="avatar_url" escape="no" />" alt="avatar" /></td>
 <% } %>
-    <td><s:v value="ri.run_id" /></td>
-    <td><s:v value="ri.time" /></td>
+    <td><s:v value="re.run_id" /></td>
+    <td><s:v value="re.time" /></td>
 <% snprintf(filtbuf1, sizeof(filtbuf1), "ip == ip(%d)", run_id); %>
 <s:url name="FilteredMainUrl" ac="main-page">
     <s:param name="filter_expr" value="filtbuf1" />
 </s:url>
-    <td><s:a url="FilteredMainUrl"><s:v value="ri.a.ip" /></s:a></td>
-<% snprintf(filtbuf1, sizeof(filtbuf1), "uid == %d", ri.user_id); %>
+    <td><s:a url="FilteredMainUrl"><s:v value="re.a.ip" /></s:a></td>
+<% snprintf(filtbuf1, sizeof(filtbuf1), "uid == %d", re.user_id); %>
 <s:url name="FilteredMainUrl" ac="main-page">
     <s:param name="filter_expr" value="filtbuf1" />
 </s:url>
-    <td><s:a url="FilteredMainUrl"><s:v value="ri.user_id" /></s:a></td>
-    <td><s:v value="teamdb_get_login_2(cs->teamdb_state, ri.user_id)" /></td>
-    <td><s:v value="teamdb_get_name_2(cs->teamdb_state, ri.user_id)" /></td>
+    <td><s:a url="FilteredMainUrl"><s:v value="re.user_id" /></s:a></td>
+    <td><s:v value="teamdb_get_login_2(cs->teamdb_state, re.user_id)" /></td>
+    <td><s:v value="teamdb_get_name_2(cs->teamdb_state, re.user_id)" /></td>
 <% if (prob) { %>
-<% snprintf(filtbuf1, sizeof(filtbuf1), "uid == %d && prob == \"%s\"",  ri.user_id, prob->short_name); %>
+<% snprintf(filtbuf1, sizeof(filtbuf1), "uid == %d && prob == \"%s\"",  re.user_id, prob->short_name); %>
 <s:url name="FilteredMainUrl" ac="main-page">
     <s:param name="filter_expr" value="filtbuf1" />
 </s:url>
@@ -302,12 +302,12 @@
     }
 %></td>
 <% } else { %>
-    <td>#<s:v value="ri.prob_id" /></td>
+    <td>#<s:v value="re.prob_id" /></td>
 <% } %>
 
 <% if (prob && prob->variant_num > 0) {
-    variant = ri.variant;
-    if (!variant) variant = find_variant(cs, ri.user_id, ri.prob_id, 0);
+    variant = re.variant;
+    if (!variant) variant = find_variant(cs, re.user_id, re.prob_id, 0);
     if (variant > 0) {
 %>
 <% snprintf(filtbuf1, sizeof(filtbuf1), "prob == \"%s\" && variant == %d", prob->short_name, variant); %>
@@ -315,8 +315,8 @@
     <s:param name="filter_expr" value="filtbuf1" />
 </s:url>
      <td><s:a url="FilteredMainUrl"><%
-      if (ri.variant > 0) {
-%><s:v value="(int) ri.variant" /><%
+      if (re.variant > 0) {
+%><s:v value="(int) re.variant" /><%
       } else {
 %><s:v value="variant" /> (implicit)<%
       }
@@ -332,56 +332,56 @@
     <s:param name="filter_expr" value="filtbuf1" />
 </s:url>
 <td><s:a url="FilteredMainUrl" ><s:v escape="false" value="lang->short_name" /> - <s:v value="lang->long_name" checkExpr="" /></s:a></td>
-<%  } else if (!ri.lang_id) { %>
+<%  } else if (!re.lang_id) { %>
 <td>N/A</td>
 <%  } else { %>
-<td>#<s:v value="ri.lang_id" /></td>
+<td>#<s:v value="re.lang_id" /></td>
 <%  } %>
 
-<td><s:v type="eoln_type" value="ri.eoln_type" /></td>
+<td><s:v type="eoln_type" value="re.eoln_type" /></td>
 
 <%
-  run_status_to_str_short(bb, sizeof(bb), ri.status);
+  run_status_to_str_short(bb, sizeof(bb), re.status);
   snprintf(filtbuf1, sizeof(filtbuf1), "status == %s", bb);
 %>
-<td><s:a url="FilteredMainUrl"><s:v type="run_status" value="ri.status" /></s:a></td>
+<td><s:a url="FilteredMainUrl"><s:v type="run_status" value="re.status" /></s:a></td>
 
 <%
-  if (ri.passed_mode > 0) {
+  if (re.passed_mode > 0) {
 %>
-    <td><s:v value="ri.test" checkExpr=">= 0" defstr="N/A" /></td>
+    <td><s:v value="re.test" checkExpr=">= 0" defstr="N/A" /></td>
 <%
   }
 %>
 <%
   if (global->score_system == SCORE_KIROV || global->score_system == SCORE_OLYMPIAD) {
-    if (ri.passed_mode <= 0) {
+    if (re.passed_mode <= 0) {
 %>
-    <td><s:v value="ri.test - 1" checkExpr=">= 0" defstr="N/A" /></td>
+    <td><s:v value="re.test - 1" checkExpr=">= 0" defstr="N/A" /></td>
 <%
     }
 %>
-    <td><s:v value="ri.score" checkExpr=">= 0" defstr="N/A" /></td>
+    <td><s:v value="re.score" checkExpr=">= 0" defstr="N/A" /></td>
 <%
   } else if (global->score_system == SCORE_MOSCOW) {
-    if (ri.passed_mode <= 0) {
+    if (re.passed_mode <= 0) {
 %>
-    <td><s:v value="ri.test" checkExpr="> 0" defstr="N/A" /></td>
+    <td><s:v value="re.test" checkExpr="> 0" defstr="N/A" /></td>
 <%
     }
 %>
-    <td><s:v value="ri.score" checkExpr=">= 0" defstr="N/A" /></td>
+    <td><s:v value="re.score" checkExpr=">= 0" defstr="N/A" /></td>
 <%
   } else {
-    if (ri.passed_mode <= 0) {
+    if (re.passed_mode <= 0) {
 %>
-    <td><s:v value="ri.test" checkExpr="> 0" defstr="N/A" /></td>
+    <td><s:v value="re.test" checkExpr="> 0" defstr="N/A" /></td>
 <%
     }
   }
 %>
 
-    <td><s:vb value="ri.is_marked" /></td></tr>
+    <td><s:vb value="re.is_marked" /></td></tr>
 </table></div>
 
 <script language="javascript">
@@ -411,7 +411,7 @@ function setDivVisibility(oper, value)
 <tr>
 <th>Full time</th>
 <th>Duration from start</th>
-<% if (!ri.lang_id) { %>
+<% if (!re.lang_id) { %>
 <th><s:_>Content type</s:_></th>
 <% } %>
 <% #if CONF_HAS_LIBUUID - 0 != 0 %>
@@ -430,27 +430,27 @@ function setDivVisibility(oper, value)
 <th><s:_>Pages printed</s:_>:</th>
 </tr>
 <tr>
-<td><s:v value="ri.time" />:<s:v value="ri.nsec" /></td>
-<td><s:v type="duration" value="run_time - start_time, ri.nsec" /></td>
-<% if (!ri.lang_id) { %>
-<td><s:v type="mime_type" value="ri.mime_type" /></td>
+<td><s:v value="re.time" />:<s:v value="re.nsec" /></td>
+<td><s:v type="duration" value="run_time - start_time, re.nsec" /></td>
+<% if (!re.lang_id) { %>
+<td><s:v type="mime_type" value="re.mime_type" /></td>
 <% } %>
 <% #if CONF_HAS_LIBUUID - 0 != 0 %>
-    <td><s:v type="uuid" value="ri.run_uuid" /></td>
+    <td><s:v type="uuid" value="re.run_uuid" /></td>
 <% #endif %>
-<td><s:vb value="ri.is_imported" /></td>
-<td><s:vb value="ri.is_hidden" /></td>
-<td><s:vb value="ri.is_saved" /></td>
-<td><s:vb value="ri.is_readonly" /></td>
-<td><s:v value="ri.locale_id" /></td>
+<td><s:vb value="re.is_imported" /></td>
+<td><s:vb value="re.is_hidden" /></td>
+<td><s:vb value="re.is_saved" /></td>
+<td><s:vb value="re.is_readonly" /></td>
+<td><s:v value="re.locale_id" /></td>
 <%  if (global->score_system != SCORE_ACM) { %>
-<td><s:v value="ri.score_adj" /></td>
+<td><s:v value="re.score_adj" /></td>
 <%  } %>
 <% snprintf(filtbuf1, sizeof(filtbuf1), "size == size(%d)", run_id); %>
-<td><s:a url="FilteredMainUrl"><s:v value="ri.size" /></s:a></td>
+<td><s:a url="FilteredMainUrl"><s:v value="re.size" /></s:a></td>
 <% snprintf(filtbuf1, sizeof(filtbuf1), "hash == hash(%d)", run_id); %>
-<td><s:a url="FilteredMainUrl"><s:v type="sha1" value="ri.h.sha1" /></s:a></td>
-<td><s:v value="(int) ri.pages" /></td>
+<td><s:a url="FilteredMainUrl"><s:v type="sha1" value="re.h.sha1" /></s:a></td>
+<td><s:v value="(int) re.pages" /></td>
 </tr>
 
 </table>
@@ -462,12 +462,12 @@ function setDivVisibility(oper, value)
     <s:param name="run_id" value="run_id" />
 </s:url>
 <s:url name="ResubmitUrl" ac="priv-submit-page">
-    <s:param name="problem" value="ri.prob_id" />
-    <s:param name="lang_id" value="ri.lang_id" />
+    <s:param name="problem" value="re.prob_id" />
+    <s:param name="lang_id" value="re.lang_id" />
 </s:url>
 <p style="display: inline-block;"><s:a url="ResubmitUrl">Resubmit</s:a>&nbsp;&nbsp;<s:a url="DownloadRunUrl"><s:_>Download run</s:_></s:a></p>
 
-<% if (phr->role == USER_ROLE_ADMIN && opcaps_check(phr->caps, OPCAP_EDIT_RUN) >= 0 && ri.is_readonly <= 0) { %>
+<% if (phr->role == USER_ROLE_ADMIN && opcaps_check(phr->caps, OPCAP_EDIT_RUN) >= 0 && re.is_readonly <= 0) { %>
 <s:form>
 <s:hidden name="run_id" checkExpr=">=0" />
 <p><s:submit ac="clear-run" /></p>
@@ -483,8 +483,8 @@ function setDivVisibility(oper, value)
 
 <%
   if (run_id > 0) {
-    run_id2 = run_find(cs->runlog_state, run_id - 1, 0, ri.user_id,
-                       ri.prob_id, ri.lang_id, NULL, NULL);
+    run_id2 = run_find(cs->runlog_state, run_id - 1, 0, re.user_id,
+                       re.prob_id, re.lang_id, NULL, NULL);
   }
 %>
 
@@ -514,9 +514,9 @@ function setDivVisibility(oper, value)
 <hr />
 
 <div id="prog">
-<%  if (prob && prob->type > 0 && ri.mime_type > 0) {
-    if(ri.mime_type >= MIME_TYPE_IMAGE_FIRST
-       && ri.mime_type <= MIME_TYPE_IMAGE_LAST) {
+<%  if (prob && prob->type > 0 && re.mime_type > 0) {
+    if(re.mime_type >= MIME_TYPE_IMAGE_FIRST
+       && re.mime_type <= MIME_TYPE_IMAGE_LAST) {
 %>
 <s:url name="PrivDownloadRunUrl" ac="download-run">
     <s:param name="run_id" value="run_id" />
@@ -528,7 +528,7 @@ function setDivVisibility(oper, value)
 <%    }
   } else if (lang && lang->binary) {
 %><p><s:_>The submission is binary and thus is not shown.</s:_></p>
-<%  } else if (!ri.is_imported) {
+<%  } else if (!re.is_imported) {
     if (src_flags < 0 || generic_read_file(&src_text, 0, &src_len, src_flags, 0, src_path, "") < 0) {
 %>
 <big><font color="red"><s:_>Cannot read source text!</s:_></font></big>
