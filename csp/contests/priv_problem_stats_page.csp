@@ -10,6 +10,8 @@
     const unsigned char *title = NULL;
     int enable_main_menu = 0;
 
+    info("audit:view_problem_stats:%d:%d", phr->user_id, phr->contest_id);
+
     l10n_setlocale(phr->locale_id);
     title = _("Problem statistics");
 %><%@include "priv_header.csp"

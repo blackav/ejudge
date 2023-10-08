@@ -32,6 +32,8 @@
         FAIL(NEW_SRV_ERR_DATABASE_FAILED);
     }
 
+    info("audit:view_api_keys:%d:%d", phr->user_id, phr->contest_id);
+
     l10n_setlocale(phr->locale_id);
     title = _("API Keys");
 %><%@include "priv_header.csp"

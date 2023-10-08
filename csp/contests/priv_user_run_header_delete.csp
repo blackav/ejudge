@@ -14,6 +14,8 @@
 
 %><s:read var="view_user_id" required="yes" name="view_user_id" error="inv-user-id" /><%
 
+  info("audit:delete_user_run_header:%d:%d:%d", phr->user_id, phr->contest_id, view_user_id);
+
   if (view_user_id > 0) {
     run_delete_user_run_header(cs->runlog_state, view_user_id);
   }

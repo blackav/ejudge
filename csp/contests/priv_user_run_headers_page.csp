@@ -19,6 +19,8 @@
 
   if (phr->role < USER_ROLE_JUDGE) FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
 
+  info("audit:view_user_run_headers:%d:%d", phr->user_id, phr->contest_id);
+
   l10n_setlocale(phr->locale_id);
   title = _("User run headers");
 %><%@include "priv_header.csp"

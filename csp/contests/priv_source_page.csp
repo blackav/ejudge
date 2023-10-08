@@ -7,7 +7,6 @@
 #include "ejudge/fileutl.h"
 #include "ejudge/testing_report_xml.h"
 #include "ejudge/content_plugin.h"
-#include "ejudge/errlog.h"
 %><%@set getter_name = "csp_get_priv_source_page"
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
 %><%@set err_prefix = "NEW_SRV_ERR_"

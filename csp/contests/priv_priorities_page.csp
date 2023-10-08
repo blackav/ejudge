@@ -18,6 +18,8 @@
 
     if (phr->role != USER_ROLE_ADMIN) FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
 
+    info("audit:view_priorities:%d:%d", phr->user_id, phr->contest_id);
+
     l10n_setlocale(phr->locale_id);
     title = _("Judging priorities");
 %><%@include "priv_header.csp"

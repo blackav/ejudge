@@ -45,6 +45,8 @@
     FAIL(NEW_SRV_ERR_DISK_READ_ERROR);
   }
 
+  info("audit:view_audit:%d:%d:%d", phr->user_id, phr->contest_id, run_id);
+
   l10n_setlocale(phr->locale_id);
   snprintf(title, sizeof(title), "%s %d", _("Viewing audit log for"), run_id);
 %><%@include "priv_header.csp"

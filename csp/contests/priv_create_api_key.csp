@@ -58,6 +58,8 @@
         FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
     }
 
+    info("audit:create_api_key:%d:%d", phr->user_id, phr->contest_id);
+
     origin_f = open_memstream(&origin_s, &origin_z);
     fprintf(origin_f, "{\"ip\":\"%s\",\"ssl\":%s,\"user_id\":%d,\"role\":%d,\"contest_id\":%d,\"session\":\"%016llx-%016llx\"}",
             xml_unparse_ipv6(&phr->ip),

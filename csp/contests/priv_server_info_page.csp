@@ -18,6 +18,8 @@
     mcd = metrics.data;
     sip = server_info_get_processes();
 
+    info("audit:view_server_info:%d:%d", phr->user_id, phr->contest_id);
+
     l10n_setlocale(phr->locale_id);
     title = _("Server information");
 %><%@include "priv_header.csp"

@@ -29,6 +29,8 @@
         FAIL(NEW_SRV_ERR_INV_TOKEN);
     }
 
+    info("audit:delete_api_key:%d:%d", phr->user_id, phr->contest_id);
+
     if (ns_open_ul_connection(phr->fw_state) < 0) {
         FAIL(NEW_SRV_ERR_USERLIST_SERVER_DOWN);
     }

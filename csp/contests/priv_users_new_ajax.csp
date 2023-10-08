@@ -17,6 +17,8 @@
     if (cnts->user_contest_num > 0) new_contest_id = cnts->user_contest_num;
     (void) new_contest_id;
 
+    info("audit:view_users_ajax:%d:%d", phr->user_id, phr->contest_id);
+
 %>{
     "result" : <s:v value="pu->result" />,<%
     if (pu->result > 0 && pu->users) {

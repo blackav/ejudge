@@ -13,6 +13,8 @@
 
     if (phr->role < USER_ROLE_JUDGE) FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
 
+    info("audit:view_ip_users:%d:%d", phr->user_id, phr->contest_id);
+
     l10n_setlocale(phr->locale_id);
     title = _("Users for IP addresses");
 %><%@include "priv_header.csp"

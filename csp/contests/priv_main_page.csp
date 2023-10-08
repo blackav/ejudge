@@ -45,6 +45,8 @@
 %><s:read var="filter_first_run" flagvar="filter_first_run_set" ignoreerrors="yes" /><%
 %><s:read var="filter_last_run" flagvar="filter_last_run_set" ignoreerrors="yes" /><%
 
+  info("audit:view_main:%d:%d", phr->user_id, phr->contest_id);
+
   if (hr_cgi_param(phr, "filter_first_clar", &s) > 0 && s)
     filter_first_clar_str = s;
   if (hr_cgi_param(phr, "filter_last_clar", &s) > 0 && s)

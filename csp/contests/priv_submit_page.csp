@@ -69,6 +69,8 @@ ns_unparse_answers(
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
   }
 
+  info("audit:view_problem_submit:%d:%d:%d", phr->user_id, phr->contest_id, prob_id);
+
   l10n_setlocale(phr->locale_id);
   if (prob && variant > 0) {
     snprintf(title, sizeof(title), "%s %s-%d", _("Submit a solution for"), prob->short_name, variant);

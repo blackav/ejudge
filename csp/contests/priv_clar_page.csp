@@ -3,6 +3,7 @@
 %><%
 #include "ejudge/ej_uuid.h"
 #include "ejudge/content_plugin.h"
+
 #include <ctype.h>
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
 %><%@set err_prefix = "NEW_SRV_ERR_"
@@ -44,6 +45,8 @@
   if (opcaps_check(phr->caps, OPCAP_VIEW_CLAR) < 0) {
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
   }
+
+  info("audit:view_clar:%d:%d:%d", phr->user_id, phr->contest_id, clar_id);
 
   start_time = run_get_start_time(cs->runlog_state);
   clar_subj = clar_get_subject(cs->clarlog_state, clar_id);
