@@ -2355,7 +2355,7 @@ ns_priv_edit_run_action(
 
   if (!mask) goto cleanup;
 
-  //info("audit:%s:%d:%d:%d", phr->action_str, phr->user_id, phr->contest_id, run_id);
+  info("audit:%s:%d:%d:%d", phr->action_str, phr->user_id, phr->contest_id, run_id);
 
   if (run_set_entry(cs->runlog_state, run_id, mask, &new_info, &new_info) < 0)
     FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
