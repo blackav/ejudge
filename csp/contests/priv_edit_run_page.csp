@@ -35,7 +35,7 @@
     FAIL(NEW_SRV_ERR_INV_RUN_ID);
   }
 
-  info("audit:view_edit_run:%d:%d:%d", phr->user_id, phr->contest_id, run_id);
+  info("audit:%s:%d:%d:%d", phr->action_str, phr->user_id, phr->contest_id, run_id);
 
   l10n_setlocale(phr->locale_id);
 

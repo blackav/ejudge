@@ -54,7 +54,7 @@
         goto done;
     }
 
-    info("audit:save_cropped_avatar:%d:%d:%d", phr->user_id, phr->contest_id, other_user_id);
+    info("audit:%s:%d:%d:%d", phr->action_str, phr->user_id, phr->contest_id, other_user_id);
 
 %><s:read var="key" ignoreerrors="yes" /><%
     if (!key) key = "";

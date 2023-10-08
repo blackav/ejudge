@@ -21,7 +21,7 @@
         content_enabled = cp->iface->is_enabled(cp->data, cnts);
     }
 
-    info("audit:view_users:%d:%d", phr->user_id, phr->contest_id);
+    info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
 
     l10n_setlocale(phr->locale_id);
 %><%@include "priv_header_jq.csp"

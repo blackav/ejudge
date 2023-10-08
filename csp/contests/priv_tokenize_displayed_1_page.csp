@@ -25,7 +25,7 @@
         FAIL(NEW_SRV_ERR_INV_RUN_SELECTION);
     }
 
-    info("audit:view_tokenize_displayed:%d:%d", phr->user_id, phr->contest_id);
+    info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
 
     l10n_setlocale(phr->locale_id);
     title = _("Change tokens for displayed runs");

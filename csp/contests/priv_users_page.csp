@@ -53,7 +53,7 @@ static const unsigned char * const form_row_attrs[]=
 
   if (opcaps_check(phr->caps, OPCAP_GET_USER) >= 0) details_allowed = 1;
 
-  info("audit:view_users:%d:%d", phr->user_id, phr->contest_id);
+  info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
 
   l10n_setlocale(phr->locale_id);
 %><%@include "priv_header.csp"

@@ -32,7 +32,7 @@
   if (phr->action == NEW_SRV_ACTION_RELOAD_STATEMENT_ALL)
      reload_all = 1;
 
-  info("audit:reload_statement:%d:%d:%d:%d:%d", phr->user_id, phr->contest_id, reload_all, prob_id, variant);
+  info("audit:%s:%d:%d:%d:%d:%d", phr->action_str, phr->user_id, phr->contest_id, reload_all, prob_id, variant);
 
   ns_reload_statement(phr->contest_id, prob_id, variant, reload_all);
 

@@ -14,7 +14,7 @@
   const unsigned char *title = _("Privileged users page");
   int enable_main_menu = 0;
 
-  info("audit:view_priv_users:%d:%d", phr->user_id, phr->contest_id);
+  info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
 
 static const unsigned char * const form_row_attrs[]=
 {

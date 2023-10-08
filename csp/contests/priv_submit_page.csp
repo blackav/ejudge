@@ -69,7 +69,7 @@ ns_unparse_answers(
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
   }
 
-  info("audit:view_problem_submit:%d:%d:%d", phr->user_id, phr->contest_id, prob_id);
+  info("audit:%s:%d:%d:%d", phr->action_str, phr->user_id, phr->contest_id, prob_id);
 
   l10n_setlocale(phr->locale_id);
   if (prob && variant > 0) {

@@ -19,7 +19,7 @@
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
   }
 
-  info("audit:view_standings:%d:%d", phr->user_id, phr->contest_id);
+  info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
 
   u = user_filter_info_allocate(cs, phr->user_id, phr->session_id);
   %><s:read name="compat_mode" default="0" /><%

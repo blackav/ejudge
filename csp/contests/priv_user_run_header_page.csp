@@ -35,7 +35,7 @@
     last_change_login = teamdb_get_login(cs->teamdb_state, urhi->last_change_user_id);
   }
 
-  info("audit:view_user_run_header:%d:%d:%d", phr->user_id, phr->contest_id, view_user_id);
+  info("audit:%s:%d:%d:%d", phr->action_str, phr->user_id, phr->contest_id, view_user_id);
 
 %><%@include "priv_header.csp"
 %>

@@ -46,7 +46,7 @@
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
   }
 
-  info("audit:view_clar:%d:%d:%d", phr->user_id, phr->contest_id, clar_id);
+  info("audit:%s:%d:%d:%d", phr->action_str, phr->user_id, phr->contest_id, clar_id);
 
   start_time = run_get_start_time(cs->runlog_state);
   clar_subj = clar_get_subject(cs->clarlog_state, clar_id);

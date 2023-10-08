@@ -79,7 +79,7 @@
     FAIL(NEW_SRV_ERR_SOURCE_NONEXISTANT);
   }
 
-  info("audit:view_source:%d:%d:%d", phr->user_id, phr->contest_id, run_id);
+  info("audit:%s:%d:%d:%d", phr->action_str, phr->user_id, phr->contest_id, run_id);
 
   if (re.prob_id > 0 && re.prob_id <= cs->max_prob)
     prob = cs->probs[re.prob_id];
