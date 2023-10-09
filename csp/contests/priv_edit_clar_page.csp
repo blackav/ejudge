@@ -26,6 +26,8 @@
     FAIL(NEW_SRV_ERR_INV_CLAR_ID);
   }
 
+  info("audit:%s:%d:%d:%d", phr->action_str, phr->user_id, phr->contest_id, clar_id);
+
   l10n_setlocale(phr->locale_id);
   snprintf(title, sizeof(title), "%s %d", _("Editing clar"), clar_id);
 %><%@include "priv_header.csp"

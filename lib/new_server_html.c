@@ -1692,6 +1692,8 @@ priv_registration_operation(FILE *fout,
     goto cleanup;
   }
 
+  info("audit:%s:%d:%d:%d", phr->action_str, phr->user_id, phr->contest_id, (int) uset.u);
+
   for (i = 0; i < uset.u; i++) {
     switch (phr->action) {
     case NEW_SRV_ACTION_USERS_REMOVE_REGISTRATIONS:
@@ -1854,6 +1856,8 @@ priv_add_user_by_user_id(FILE *fout,
     goto cleanup;
   }
 
+  info("audit:%s:%d:%d:%d", phr->action_str, phr->user_id, phr->contest_id, x);
+
   r = userlist_clnt_register_contest(ul_conn, ULS_PRIV_REGISTER_CONTEST,
                                      x, phr->contest_id, &phr->ip,
                                      phr->ssl_flag);
@@ -1891,6 +1895,9 @@ priv_add_user_by_login(FILE *fout,
     ns_error(log_f, NEW_SRV_ERR_USER_LOGIN_NONEXISTANT, ARMOR(s));
     goto cleanup;
   }
+
+  info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
+
   if ((r = userlist_clnt_register_contest(ul_conn, ULS_PRIV_REGISTER_CONTEST,
                                           user_id, phr->contest_id,
                                           &phr->ip, phr->ssl_flag)) < 0) {
@@ -1961,6 +1968,8 @@ priv_priv_user_operation(FILE *fout,
     break;
   }
 
+  info("audit:%s:%d:%d:%d", phr->action_str, phr->user_id, phr->contest_id, (int) uset.u);
+
   for (i = 0; i < uset.u; i++) {
     switch (phr->action) {
     case NEW_SRV_ACTION_PRIV_USERS_REMOVE:
@@ -2026,6 +2035,8 @@ priv_add_priv_user_by_user_id(FILE *fout,
     goto cleanup;
   }
 
+  info("audit:%s:%d:%d:%d:%d", phr->action_str, phr->user_id, phr->contest_id, add_role, user_id);
+
   if (nsdb_add_role(user_id, phr->contest_id, add_role) < 0) {
     ns_error(log_f, NEW_SRV_ERR_PRIV_USER_ROLE_ADD_FAILED,
              add_role, user_id, phr->contest_id);
@@ -2067,6 +2078,9 @@ priv_add_priv_user_by_login(FILE *fout,
     ns_error(log_f, NEW_SRV_ERR_USER_LOGIN_NONEXISTANT, ARMOR(s));
     goto cleanup;
   }
+
+  info("audit:%s:%d:%d:%d:%d", phr->action_str, phr->user_id, phr->contest_id, add_role, user_id);
+
   if (nsdb_add_role(user_id, phr->contest_id, add_role) < 0) {
     ns_error(log_f, NEW_SRV_ERR_PRIV_USER_ROLE_ADD_FAILED,
                     add_role, user_id, phr->contest_id);
@@ -2108,6 +2122,9 @@ priv_user_operation(FILE *fout,
     }
     if (!t_extra)
       FAIL(NEW_SRV_ERR_DISK_READ_ERROR);
+
+    info("audit:%s:%d:%d:%d:%d", phr->action_str, phr->user_id, phr->contest_id, user_id, new_status);
+
     if (t_extra->status == new_status) goto cleanup;
     if (cs->xuser_state) {
       cs->xuser_state->vt->set_status(cs->xuser_state, user_id, new_status);
@@ -2160,6 +2177,8 @@ priv_user_issue_warning(
     cmt_txt[cmt_len] = 0;
   }
 
+  info("audit:%s:%d:%d:%d", phr->action_str, phr->user_id, phr->contest_id, user_id);
+
   if (cs->xuser_state) {
     cs->xuser_state->vt->append_warning(cs->xuser_state, user_id, phr->user_id,
                                         &phr->ip, cs->current_time, warn_txt, cmt_txt);
@@ -2192,6 +2211,8 @@ priv_user_change_status_2(
     FAIL(NEW_SRV_ERR_INV_STATUS);
   if (status < 0 || status >= USERLIST_REG_LAST)
     FAIL(NEW_SRV_ERR_INV_STATUS);
+
+  info("audit:%s:%d:%d:%d", phr->action_str, phr->user_id, phr->contest_id, status);
 
   if (ns_open_ul_connection(phr->fw_state) < 0) {
     error_page(fout, phr, 1, NEW_SRV_ERR_USERLIST_SERVER_DOWN);
@@ -2252,6 +2273,8 @@ priv_user_toggle_flags(
   default:
     abort();
   }
+
+  info("audit:%s:%d:%d:%d", phr->action_str, phr->user_id, phr->contest_id, user_id);
 
   if (ns_open_ul_connection(phr->fw_state) < 0) {
     error_page(fout, phr, 1, NEW_SRV_ERR_USERLIST_SERVER_DOWN);
@@ -2397,6 +2420,8 @@ priv_force_start_virtual(
     goto cleanup;
   }
 
+  info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
+
   gettimeofday(&tt, 0);
   nsec = tt.tv_usec * 1000;
   // FIXME: it's a bit risky, need to check the database...
@@ -2441,6 +2466,8 @@ priv_user_disqualify(
   if ((n = hr_cgi_param(phr, "disq_comment", &s)) < 0)
     FAIL(NEW_SRV_ERR_INV_WARN_TEXT);
   warn_txt = text_area_process_string(s, 0, 0);
+
+  info("audit:%s:%d:%d:%d", phr->action_str, phr->user_id, phr->contest_id, user_id);
 
   if (ns_open_ul_connection(phr->fw_state) < 0) {
     error_page(fout, phr, 1, NEW_SRV_ERR_USERLIST_SERVER_DOWN);
@@ -2497,6 +2524,7 @@ do_schedule(FILE *log_f,
       return;
     }
   }
+  info("audit:%s:%d:%d:%lld", phr->action_str, phr->user_id, phr->contest_id, (long long) sloc);
   run_sched_contest(cs->runlog_state, sloc);
   serve_update_standings_file(phr->extra, cs, cnts, 0);
   serve_update_status_file(ejudge_config, cnts, cs, 1);
@@ -2541,6 +2569,7 @@ do_change_duration(FILE *log_f,
     return;
   }
 
+  info("audit:%s:%d:%d:%lld", phr->action_str, phr->user_id, phr->contest_id, (long long) d);
   run_set_duration(cs->runlog_state, d);
   serve_update_standings_file(phr->extra, cs, cnts, 0);
   serve_update_status_file(ejudge_config, cnts, cs, 1);
@@ -2578,6 +2607,7 @@ do_change_finish_time(
     return;
   }
 
+  info("audit:%s:%d:%d:%lld", phr->action_str, phr->user_id, phr->contest_id, (long long) ft);
   run_set_finish_time(cs->runlog_state, ft);
   serve_update_standings_file(phr->extra, cs, cnts, 0);
   serve_update_status_file(ejudge_config, cnts, cs, 1);
@@ -2670,6 +2700,7 @@ priv_contest_operation(FILE *fout,
       ns_error(log_f, NEW_SRV_ERR_CONTEST_ALREADY_STARTED);
       goto cleanup;
     }
+    info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
     run_start_contest(cs->runlog_state, cs->current_time);
     serve_update_status_file(ejudge_config, cnts, cs, 1);
     serve_invoke_start_script(cs);
@@ -2685,6 +2716,7 @@ priv_contest_operation(FILE *fout,
       ns_error(log_f, NEW_SRV_ERR_CONTEST_NOT_STARTED);
       goto cleanup;
     }
+    info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
     run_stop_contest(cs->runlog_state, cs->current_time);
     serve_invoke_stop_script(cs);
     serve_update_status_file(ejudge_config, cnts, cs, 1);
@@ -2707,6 +2739,7 @@ priv_contest_operation(FILE *fout,
       ns_error(log_f, NEW_SRV_ERR_INSUFFICIENT_DURATION);
       goto cleanup;
     }
+    info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
     run_set_finish_time(cs->runlog_state, 0);
     run_stop_contest(cs->runlog_state, 0);
     serve_invoke_stop_script(cs);
@@ -2726,45 +2759,53 @@ priv_contest_operation(FILE *fout,
     break;
 
   case NEW_SRV_ACTION_SUSPEND:
+    info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
     cs->clients_suspended = 1;
     serve_update_status_file(ejudge_config, cnts, cs, 1);
     break;
 
   case NEW_SRV_ACTION_RESUME:
+    info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
     cs->clients_suspended = 0;
     serve_update_status_file(ejudge_config, cnts, cs, 1);
     break;
 
   case NEW_SRV_ACTION_TEST_SUSPEND:
+    info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
     cs->testing_suspended = 1;
     serve_update_status_file(ejudge_config, cnts, cs, 1);
     break;
 
   case NEW_SRV_ACTION_TEST_RESUME:
+    info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
     cs->testing_suspended = 0;
     serve_update_status_file(ejudge_config, cnts, cs, 1);
     break;
 
   case NEW_SRV_ACTION_PRINT_SUSPEND:
     if (!global->enable_printing) break;
+    info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
     cs->printing_suspended = 1;
     serve_update_status_file(ejudge_config, cnts, cs, 1);
     break;
 
   case NEW_SRV_ACTION_PRINT_RESUME:
     if (!global->enable_printing) break;
+    info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
     cs->printing_suspended = 0;
     serve_update_status_file(ejudge_config, cnts, cs, 1);
     break;
 
   case NEW_SRV_ACTION_SET_JUDGING_MODE:
     if (global->score_system != SCORE_OLYMPIAD) break;
+    info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
     cs->accepting_mode = 0;
     serve_update_status_file(ejudge_config, cnts, cs, 1);
     break;
 
   case NEW_SRV_ACTION_SET_ACCEPTING_MODE:
     if (global->score_system != SCORE_OLYMPIAD) break;
+    info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
     cs->accepting_mode = 1;
     serve_update_status_file(ejudge_config, cnts, cs, 1);
     break;
@@ -2774,53 +2815,64 @@ priv_contest_operation(FILE *fout,
     if ((!global->is_virtual && cs->accepting_mode)
         ||(global->is_virtual && global->disable_virtual_auto_judge <= 0))
       break;
+    info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
     cs->testing_finished = 1;
     serve_update_status_file(ejudge_config, cnts, cs, 1);
     break;
 
   case NEW_SRV_ACTION_CLEAR_TESTING_FINISHED_FLAG:
     if (global->score_system != SCORE_OLYMPIAD) break;
+    info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
     cs->testing_finished = 0;
     serve_update_status_file(ejudge_config, cnts, cs, 1);
     break;
 
   case NEW_SRV_ACTION_RELOAD_SERVER:
+    info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
     extra->last_access_time = 0;
     expired_contest_last_check_time = 0;
     break;
 
   case NEW_SRV_ACTION_RELOAD_SERVER_ALL:
+    info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
     ns_reload_server_all();
     break;
 
   case NEW_SRV_ACTION_RELOAD_CONTEST_PAGES:
+    info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
     ns_reload_contest_pages(cs->contest_id);
     break;
 
   case NEW_SRV_ACTION_RELOAD_ALL_CONTEST_PAGES:
+    info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
     ns_reload_all_contest_pages();
     break;
 
   case NEW_SRV_ACTION_UPDATE_STANDINGS_2:
+    info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
     serve_update_standings_file(phr->extra, cs, cnts, 1);
     break;
 
   case NEW_SRV_ACTION_RESET_2:
+    info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
     serve_reset_contest(cnts, cs);
     extra->last_access_time = 0;
     expired_contest_last_check_time = 0;
     break;
 
   case NEW_SRV_ACTION_SQUEEZE_RUNS:
+    info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
     serve_squeeze_runs(cs);
     break;
 
   case NEW_SRV_ACTION_DISABLE_VIRTUAL_START:
+    info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
     cs->disable_virtual_start = 1;
     serve_update_status_file(ejudge_config, cnts, cs, 1);
     break;
 
   case NEW_SRV_ACTION_ENABLE_VIRTUAL_START:
+    info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
     cs->disable_virtual_start = 0;
     serve_update_status_file(ejudge_config, cnts, cs, 1);
     break;
@@ -2834,6 +2886,8 @@ priv_contest_operation(FILE *fout,
       ns_error(log_f, NEW_SRV_ERR_INV_PARAM);
       goto cleanup;
     }
+
+    info("audit:%s:%d:%d:%d", phr->action_str, phr->user_id, phr->contest_id, param);
 
     switch (phr->action) {
     case NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_VIEW_SOURCE:
@@ -2864,6 +2918,7 @@ priv_contest_operation(FILE *fout,
     break;
 
   case NEW_SRV_ACTION_CLEAR_SESSION_CACHE:
+    info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
     nsc_clear(&main_id_cache.s);
     tc_clear(&main_id_cache.t);
     break;
@@ -2895,6 +2950,8 @@ priv_regenerate_content(
       || opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) {
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
   }
+
+  info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
 
   if (cnts->enable_avatar <= 0) goto cleanup;
   avt = avatar_plugin_get(phr->extra, phr->cnts, phr->config, NULL);
@@ -2964,6 +3021,7 @@ priv_password_operation(FILE *fout,
         && opcaps_check(phr->dbcaps, OPCAP_EDIT_USER) < 0)
       FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
     if (cnts->disable_team_password) FAIL(NEW_SRV_ERR_TEAM_PWD_DISABLED);
+    info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
     r = userlist_clnt_cnts_passwd_op(ul_conn,
                                      ULS_GENERATE_TEAM_PASSWORDS_2,
                                      cnts->id);
@@ -2971,6 +3029,7 @@ priv_password_operation(FILE *fout,
   case NEW_SRV_ACTION_GENERATE_REG_PASSWORDS_2:
     if (opcaps_check(phr->dbcaps, OPCAP_EDIT_USER) < 0)
       FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+    info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
     r = userlist_clnt_cnts_passwd_op(ul_conn,
                                      ULS_GENERATE_PASSWORDS_2,
                                      cnts->id);
@@ -2980,6 +3039,7 @@ priv_password_operation(FILE *fout,
         && opcaps_check(phr->dbcaps, OPCAP_EDIT_USER) < 0)
       FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
     if (cnts->disable_team_password) FAIL(NEW_SRV_ERR_TEAM_PWD_DISABLED);
+    info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
     r = userlist_clnt_cnts_passwd_op(ul_conn,
                                      ULS_CLEAR_TEAM_PASSWORDS,
                                      cnts->id);
@@ -4027,6 +4087,8 @@ priv_submit_clar(
     }
   }
 
+  info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
+
   subj_len = strlen(subject);
   if (subj_len > 1024) {
     ns_error(log_f, NEW_SRV_ERR_SUBJECT_TOO_LONG, subj_len);
@@ -4272,6 +4334,8 @@ priv_submit_run_comment(
     goto cleanup;
   }
 
+  info("audit:%s:%d:%d:%d", phr->action_str, phr->user_id, phr->contest_id, run_id);
+
   snprintf(subj2, sizeof(subj2), "%d %s", run_id, _("is commented"));
   subj_len = strlen(subj2);
 
@@ -4490,6 +4554,8 @@ priv_clar_reply(
     goto cleanup;
   }
 
+  info("audit:%s:%d:%d:%d", phr->action_str, phr->user_id, phr->contest_id, clar.id);
+
   l10n_setlocale(clar.locale_id);
   switch (phr->action) {
   case NEW_SRV_ACTION_CLAR_REPLY_READ_PROBLEM:
@@ -4695,6 +4761,9 @@ priv_print_run_cmd(FILE *fout, FILE *log_f,
   }
   if (opcaps_check(phr->caps, OPCAP_PRINT_RUN) < 0)
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+
+  info("audit:%s:%d:%d:%d", phr->action_str, phr->user_id, phr->contest_id, run_id);
+
   if (priv_print_run(cs, run_id, phr->user_id) < 0)
     FAIL(NEW_SRV_ERR_PRINTING_FAILED);
 
@@ -4725,6 +4794,8 @@ priv_clear_run(FILE *fout, FILE *log_f,
     FAIL(NEW_SRV_ERR_INV_RUN_ID);
   if (run_clear_entry(cs->runlog_state, run_id) < 0)
     FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
+
+  info("audit:%s:%d:%d:%d", phr->action_str, phr->user_id, phr->contest_id, run_id);
 
   if (re.store_flags == STORE_FLAGS_UUID) {
     uuid_archive_remove(cs, &re.run_uuid, 0);
@@ -4988,6 +5059,8 @@ priv_edit_run(FILE *fout, FILE *log_f,
 
   if (!ne_mask) goto cleanup;
 
+  info("audit:%s:%d:%d:%d", phr->action_str, phr->user_id, phr->contest_id, run_id);
+
   if (run_set_entry(cs->runlog_state, run_id, ne_mask, &ne, &ne) < 0)
     FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
   serve_notify_run_update(phr->config, cs, &ne);
@@ -5054,6 +5127,8 @@ priv_change_status(
     ns_error(log_f, NEW_SRV_ERR_INV_RUN_ID);
     goto cleanup;
   }
+
+  info("audit:%s:%d:%d:%d:%d", phr->action_str, phr->user_id, phr->contest_id, run_id, status);
 
   memset(&new_run, 0, sizeof(new_run));
   new_run.status = status;
@@ -5156,6 +5231,8 @@ priv_simple_change_status(
     ns_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
     goto cleanup;
   }
+
+  info("audit:%s:%d:%d:%d", phr->action_str, phr->user_id, phr->contest_id, run_id);
 
   memset(&new_run, 0, sizeof(new_run));
   new_run.status = status;
@@ -5282,6 +5359,8 @@ priv_clear_displayed(FILE *fout,
   if (opcaps_check(phr->caps, OPCAP_EDIT_RUN) < 0)
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
 
+  info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
+
   switch (phr->action) {
   case NEW_SRV_ACTION_CLEAR_DISPLAYED_2:
     serve_clear_by_mask(cs, phr->user_id, &phr->ip, phr->ssl_flag,
@@ -5359,6 +5438,8 @@ priv_tokenize_displayed(
     }
   }
 
+  info("audit:%s:%d:%d:%lld:%d:%d", phr->action_str, phr->user_id, phr->contest_id, (long long) mask_size, token_count, token_flags);
+
   serve_tokenize_by_mask(cs, phr->user_id, &phr->ip, phr->ssl_flag, mask_size, mask, token_count, token_flags);
 
  cleanup:
@@ -5394,6 +5475,8 @@ priv_rejudge_displayed(FILE *fout,
 
   if (opcaps_check(phr->caps, OPCAP_REJUDGE_RUN) < 0)
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+
+  info("audit:%s:%d:%d:%lld", phr->action_str, phr->user_id, phr->contest_id, (long long) mask_size);
 
   if (global->score_system == SCORE_OLYMPIAD
       && cs->accepting_mode
@@ -5444,6 +5527,8 @@ priv_rejudge_problem(FILE *fout,
     goto cleanup;
   }
 
+  info("audit:%s:%d:%d:%d", phr->action_str, phr->user_id, phr->contest_id, prob_id);
+
   nsf_add_job(phr->fw_state, serve_rejudge_problem(extra, ejudge_config, cnts, cs, phr->user_id,
                                                    &phr->ip, phr->ssl_flag, prob_id,
                                                    DFLT_G_REJUDGE_PRIORITY_ADJUSTMENT,
@@ -5474,6 +5559,8 @@ priv_rejudge_all(FILE *fout,
     ns_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
     goto cleanup;
   }
+
+  info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
 
   switch (phr->action) {
   case NEW_SRV_ACTION_REJUDGE_SUSPENDED_2:
@@ -5691,6 +5778,8 @@ priv_new_run(FILE *fout,
   }
 
   if (!lang) lang_id = 0;
+
+  info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
 
   ej_uuid_t run_uuid = {};
   int store_flags = 0;
@@ -6000,6 +6089,8 @@ priv_view_runs_dump(FILE *fout,
       || opcaps_check(phr->caps, OPCAP_DUMP_RUNS) < 0)
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
 
+  info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
+
   switch (phr->action) {
   case NEW_SRV_ACTION_VIEW_RUNS_DUMP:
     write_runs_dump(cs, fout, phr->self_url, global->charset);
@@ -6056,6 +6147,8 @@ priv_diff_page(FILE *fout,
   if (opcaps_check(phr->caps, OPCAP_VIEW_SOURCE) < 0)
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
 
+  info("audit:%s:%d:%d:%d:%d", phr->action_str, phr->user_id, phr->contest_id, run_id1, run_id2);
+
   if (compare_runs(cs, fout, run_id1, run_id2) < 0)
     FAIL(NEW_SRV_ERR_RUN_COMPARE_FAILED);
 
@@ -6081,6 +6174,8 @@ priv_examiners_page(
       || opcaps_check(phr->caps, OPCAP_EDIT_RUN))
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
   */
+
+  info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
 
   l10n_setlocale(phr->locale_id);
   ns_header(fout, extra->priv_header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
@@ -6128,6 +6223,9 @@ priv_assign_chief_examiner(
   }
   if (nsdb_check_role(user_id, phr->contest_id, USER_ROLE_CHIEF_EXAMINER) < 0)
     FAIL(NEW_SRV_ERR_INV_USER_ID);
+
+  info("audit:%s:%d:%d:%d:%d", phr->action_str, phr->user_id, phr->contest_id, user_id, prob_id);
+
   nsdb_assign_chief_examiner(user_id, phr->contest_id, prob_id);
   retval = NEW_SRV_ACTION_EXAMINERS_PAGE;
 
@@ -6164,6 +6262,9 @@ priv_assign_examiner(
   }
   if (nsdb_check_role(user_id, phr->contest_id, USER_ROLE_EXAMINER) < 0)
     FAIL(NEW_SRV_ERR_INV_USER_ID);
+
+  info("audit:%s:%d:%d:%d:%d", phr->action_str, phr->user_id, phr->contest_id, user_id, prob_id);
+
   nsdb_assign_examiner(user_id, phr->contest_id, prob_id);
   retval = NEW_SRV_ACTION_EXAMINERS_PAGE;
 
@@ -6202,6 +6303,9 @@ priv_unassign_examiner(
   if (nsdb_check_role(user_id, phr->contest_id, USER_ROLE_EXAMINER) < 0)
     FAIL(NEW_SRV_ERR_INV_USER_ID);
   */
+
+  info("audit:%s:%d:%d:%d:%d", phr->action_str, phr->user_id, phr->contest_id, user_id, prob_id);
+
   nsdb_remove_examiner(user_id, phr->contest_id, prob_id);
   retval = NEW_SRV_ACTION_EXAMINERS_PAGE;
 
@@ -6431,6 +6535,8 @@ priv_upload_runlog_csv_2(
       || import_mode < 0 || import_mode > 2)
     FAIL(NEW_SRV_ERR_INV_PARAM);
 
+  info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
+
   ff = open_memstream(&log_text, &log_size);
   switch (import_mode) {
   case 0:
@@ -6540,6 +6646,8 @@ priv_upload_runlog_xml_2(
     FAIL(NEW_SRV_ERR_FILE_UNSPECIFIED);
   else if (r < 0)
     FAIL(NEW_SRV_ERR_BINARY_FILE);
+
+  info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
 
   for (p = s; *p && isspace(*p); p++);
   if (!*p) FAIL(NEW_SRV_ERR_FILE_EMPTY);
@@ -6657,6 +6765,8 @@ priv_download_runs(
   if (ns_parse_run_mask(phr, 0, 0, &mask_size, &mask) < 0)
     goto invalid_param;
 
+  info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
+
   ns_download_runs(cnts, cs, fout, log_f, run_selection, dir_struct, file_name_mask, use_problem_extid, use_problem_dir,
                    problem_dir_prefix, mask_size, mask);
 
@@ -6703,6 +6813,8 @@ priv_upsolving_operation(
   hr_cgi_param(phr, "view_protocol", &view_protocol);
   hr_cgi_param(phr, "full_protocol", &full_proto);
   hr_cgi_param(phr, "disable_clars", &disable_clars);
+
+  info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
 
   switch (phr->action) {
   case NEW_SRV_ACTION_UPSOLVING_CONFIG_2: // back to main page
@@ -6796,6 +6908,8 @@ priv_assign_cyphers_2(
     FAIL(NEW_SRV_ERR_INV_PARAM);
   if (min_num < 0 || max_num < 0 || min_num > max_num || seed < 0)
     FAIL(NEW_SRV_ERR_INV_PARAM);
+
+  info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
 
   total_users = teamdb_get_total_teams(cs->teamdb_state);
   if (total_users >= max_num - min_num)
@@ -6907,6 +7021,8 @@ priv_set_priorities(
   if (opcaps_check(phr->caps, OPCAP_REJUDGE_RUN) < 0)
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
 
+  info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
+
   for (prob_id = 1;
        prob_id <= cs->max_prob && prob_id < EJ_SERVE_STATE_TOTAL_PROBS;
        ++prob_id) {
@@ -6953,6 +7069,8 @@ priv_delete_avatar(
     USERLIST_NC_AVATAR_SUFFIX,
   };
 
+  info("audit:%s:%d:%d:%d", phr->action_str, phr->user_id, phr->contest_id, other_user_id);
+
   int r = userlist_clnt_edit_field_seq(ul_conn, ULS_EDIT_FIELD_SEQ,
                                        other_user_id, phr->contest_id, 0,
                                        DELETED_FIELD_COUNT, 0, deleted_ids,
@@ -6988,6 +7106,9 @@ priv_confirm_avatar(
   if (!teamdb_lookup(cs->teamdb_state, other_user_id)) FAIL(NEW_SRV_ERR_INV_USER_ID);
 
   if (ns_open_ul_connection(phr->fw_state) < 0) FAIL(NEW_SRV_ERR_USERLIST_SERVER_DOWN);
+
+  info("audit:%s:%d:%d:%d", phr->action_str, phr->user_id, phr->contest_id, other_user_id);
+
   if (userlist_clnt_change_registration(ul_conn, other_user_id, phr->contest_id,
                                         USERLIST_REG_OK, 1, USERLIST_UC_REG_READONLY) < 0) {
     FAIL(NEW_SRV_ERR_USER_FLAGS_CHANGE_FAILED);
@@ -7032,6 +7153,8 @@ priv_testing_queue_operation(
     */
   }
 
+  info("audit:%s:%d:%d:%s", phr->action_str, phr->user_id, phr->contest_id, queue_id);
+
   switch (phr->action) {
   case NEW_SRV_ACTION_TESTING_DELETE:
     serve_testing_queue_delete(cnts, cs, queue_id, packet_name, phr->login);
@@ -7063,6 +7186,8 @@ priv_whole_testing_queue_operation(
 
   if (opcaps_check(phr->caps, OPCAP_CONTROL_CONTEST) < 0)
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+
+  info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
 
   switch (phr->action) {
   case NEW_SRV_ACTION_TESTING_DELETE_ALL:
@@ -7109,6 +7234,8 @@ priv_invoker_operation(
     }
   }
   hr_cgi_param(phr, "queue", &queue);
+
+  info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
 
   switch (phr->action) {
   case NEW_SRV_ACTION_INVOKER_DELETE:
@@ -7161,6 +7288,7 @@ priv_compiler_operation(
   hr_cgi_param(phr, "queue", &queue);
   hr_cgi_param(phr, "op", &op);
 
+  info("audit:%s:%d:%d:%s:%s", phr->action_str, phr->user_id, phr->contest_id, queue, op);
   serve_compiler_op(cs, queue, file, op);
 
 cleanup:
@@ -7273,6 +7401,8 @@ priv_print_user_exam_protocol(
   if (!teamdb_lookup(cs->teamdb_state, user_id))
     FAIL(NEW_SRV_ERR_INV_USER_ID);
 
+  info("audit:%s:%d:%d:%d", phr->action_str, phr->user_id, phr->contest_id, user_id);
+
   if (phr->action == NEW_SRV_ACTION_PRINT_UFC_PROTOCOL) {
     full_report = 1;
     use_cypher = 1;
@@ -7363,6 +7493,8 @@ priv_print_users_exam_protocol(
   if (!run_latex) print_pdfs = 0;
   if (!print_pdfs) clear_working_directory = 0;
 
+  info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
+
   if (phr->action == NEW_SRV_ACTION_PRINT_SELECTED_UFC_PROTOCOL) {
     full_report = 1;
     use_cypher = 1;
@@ -7448,6 +7580,8 @@ priv_print_problem_exam_protocol(
     FAIL(NEW_SRV_ERR_INV_PROB_ID);
   if (prob_id <= 0 || prob_id > cs->max_prob || !cs->probs[prob_id])
     FAIL(NEW_SRV_ERR_INV_PROB_ID);
+
+  info("audit:%s:%d:%d:%d", phr->action_str, phr->user_id, phr->contest_id, prob_id);
 
   if (cnts->default_locale_num > 0) locale_id = cnts->default_locale_num;
   if (locale_id > 0) l10n_setlocale(locale_id);
@@ -8144,6 +8278,8 @@ priv_enter_contest(
     errcode = NEW_SRV_ERR_INV_USER_ID;
     goto cleanup;
   }
+
+  info("audit:%s:%d:%d:%d", phr->action_str, phr->user_id, phr->contest_id, other_user_id);
 
   struct userlist_cookie in_c;
   struct userlist_cookie out_c;
@@ -19143,6 +19279,10 @@ ns_handle_http_request(
     }
   }
 #endif /* CGI_PROG_SUFFIX */
+
+  if (phr->action >= 0 && phr->action < NEW_SRV_ACTION_LAST) {
+    phr->action_str = ns_symbolic_action_table[phr->action];
+  }
 
   if (phr->action == NEW_SRV_ACTION_CONTEST_BATCH) {
     batch_entry_point(fout, phr);

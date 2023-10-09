@@ -1710,6 +1710,8 @@ ns_priv_edit_clar_action(
   }
   if (mask <= 0) goto cleanup;
 
+  info("audit:%s:%d:%d:%d", phr->action_str, phr->user_id, phr->contest_id, clar_id);
+
   if (clar_modify_record(cs->clarlog_state, clar_id, mask, &new_clar) < 0) {
     FAIL(NEW_SRV_ERR_DATABASE_FAILED);
   }
@@ -1734,7 +1736,7 @@ ns_priv_edit_run_action(
   const struct section_global_data *global = cs->global;
   int retval = 0, r;
   int run_id = -1;
-  struct run_entry info, new_info;
+  struct run_entry old_info, new_info;
   const unsigned char *s = NULL;
   int mask = 0;
   int new_is_readonly = 0, value = 0;
@@ -1753,10 +1755,10 @@ ns_priv_edit_run_action(
       || run_id < 0 || run_id >= run_get_total(cs->runlog_state)) {
     FAIL(NEW_SRV_ERR_INV_RUN_ID);
   }
-  if (run_get_entry(cs->runlog_state, run_id, &info) < 0) {
+  if (run_get_entry(cs->runlog_state, run_id, &old_info) < 0) {
     FAIL(NEW_SRV_ERR_INV_RUN_ID);
   }
-  if (!run_is_normal_status(info.status)) {
+  if (!run_is_normal_status(old_info.status)) {
     FAIL(NEW_SRV_ERR_INV_RUN_ID);
   }
 
@@ -1766,7 +1768,7 @@ ns_priv_edit_run_action(
   s = NULL;
 
   if (global->is_virtual) {
-    start_time = run_get_virtual_start_time(cs->runlog_state, info.user_id);
+    start_time = run_get_virtual_start_time(cs->runlog_state, old_info.user_id);
   } else {
     start_time = run_get_start_time(cs->runlog_state);
   }
@@ -1775,8 +1777,8 @@ ns_priv_edit_run_action(
   // FIXME: handle special "recheck file attributes" option
 
   if (hr_cgi_param(phr, "is_readonly", &s) > 0) new_is_readonly = 1;
-  if (info.is_readonly > 0 && new_is_readonly) goto cleanup;
-  if (info.is_readonly > 0 && !new_is_readonly) {
+  if (old_info.is_readonly > 0 && new_is_readonly) goto cleanup;
+  if (old_info.is_readonly > 0 && !new_is_readonly) {
     new_info.is_readonly = 0;
     mask |= RE_IS_READONLY;
     if (run_set_entry(cs->runlog_state, run_id, mask, &new_info, &new_info) < 0)
@@ -1784,7 +1786,7 @@ ns_priv_edit_run_action(
     serve_notify_run_update(phr->config, cs, &new_info);
     goto cleanup;
   }
-  if (info.is_readonly != new_is_readonly) {
+  if (old_info.is_readonly != new_is_readonly) {
     new_info.is_readonly = new_is_readonly;
     mask |= RE_IS_READONLY;
   }
@@ -1793,7 +1795,7 @@ ns_priv_edit_run_action(
     fprintf(log_f, "invalid 'user' field value\n");
     FAIL(NEW_SRV_ERR_INV_PARAM);
   }
-  if (info.user_id != value) {
+  if (old_info.user_id != value) {
     new_info.user_id = value;
     mask |= RE_USER_ID;
   }
@@ -1803,7 +1805,7 @@ ns_priv_edit_run_action(
     fprintf(log_f, "invalid 'prob' field value\n");
     FAIL(NEW_SRV_ERR_INV_PARAM);
   }
-  if (info.prob_id != value) {
+  if (old_info.prob_id != value) {
     if (value > cs->max_prob || !cs->probs[value]) {
       fprintf(log_f, "invalid 'prob' field value\n");
       FAIL(NEW_SRV_ERR_INV_PARAM);
@@ -1811,7 +1813,7 @@ ns_priv_edit_run_action(
     new_info.prob_id = value;
     mask |= RE_PROB_ID;
   } else {
-    new_info.prob_id = info.prob_id;
+    new_info.prob_id = old_info.prob_id;
   }
 
   const struct section_problem_data *prob = NULL;
@@ -1825,12 +1827,12 @@ ns_priv_edit_run_action(
       fprintf(log_f, "invalid 'variant' field value\n");
       FAIL(NEW_SRV_ERR_INV_PARAM);
       */
-      if (info.variant > 0) {
+      if (old_info.variant > 0) {
         new_info.variant = 0;
         mask |= RE_VARIANT;
       }
     } else {
-      if (info.variant != value) {
+      if (old_info.variant != value) {
         if (value > prob->variant_num) {
           fprintf(log_f, "invalid 'variant' field value\n");
           FAIL(NEW_SRV_ERR_INV_PARAM);
@@ -1846,7 +1848,7 @@ ns_priv_edit_run_action(
     fprintf(log_f, "invalid 'lang' field value\n");
     FAIL(NEW_SRV_ERR_INV_PARAM);
   }
-  if (info.lang_id != value) {
+  if (old_info.lang_id != value) {
     if (prob && prob->type == PROB_TYPE_STANDARD) {
       if (value <= 0 || value > cs->max_lang || !cs->langs[value]) {
         fprintf(log_f, "invalid 'lang' field value\n");
@@ -1861,7 +1863,7 @@ ns_priv_edit_run_action(
     new_info.lang_id = value;
     mask |= RE_LANG_ID;
   } else {
-    new_info.lang_id = info.lang_id;
+    new_info.lang_id = old_info.lang_id;
   }
 
   value = -1;
@@ -1870,11 +1872,11 @@ ns_priv_edit_run_action(
     fprintf(log_f, "invalid 'eoln_type' field value\n");
     FAIL(NEW_SRV_ERR_INV_PARAM);
   }
-  if (info.eoln_type != value) {
+  if (old_info.eoln_type != value) {
     new_info.eoln_type = value;
     mask |= RE_EOLN_TYPE;
   } else {
-    new_info.eoln_type = info.eoln_type;
+    new_info.eoln_type = old_info.eoln_type;
   }
 
   const struct section_language_data *lang = NULL;
@@ -1890,9 +1892,9 @@ ns_priv_edit_run_action(
   }
   if (value == RUN_REJUDGE || value == RUN_FULL_REJUDGE) {
     need_rejudge = value;
-    value = info.status;
+    value = old_info.status;
   }
-  if (info.status != value) {
+  if (old_info.status != value) {
     // FIXME: handle rejudge request
     if (!run_is_normal_status(value)) {
       fprintf(log_f, "invalid 'status' field value\n");
@@ -1901,7 +1903,7 @@ ns_priv_edit_run_action(
     new_info.status = value;
     mask |= RE_STATUS;
   } else {
-    new_info.status = info.status;
+    new_info.status = old_info.status;
   }
 
   value = -1;
@@ -1909,7 +1911,7 @@ ns_priv_edit_run_action(
     fprintf(log_f, "invalid 'test' field value\n");
     FAIL(NEW_SRV_ERR_INV_PARAM);
   }
-  if (info.test != value || info.passed_mode <= 0) {
+  if (old_info.test != value || old_info.passed_mode <= 0) {
     new_info.test = value;
     new_info.passed_mode = 1;
     mask |= RE_TEST | RE_PASSED_MODE;
@@ -1918,7 +1920,7 @@ ns_priv_edit_run_action(
   if (global->score_system == SCORE_KIROV || global->score_system == SCORE_OLYMPIAD) {
     ++value;
   }
-  if (info._test != value) {
+  if (old_info._test != value) {
     if (value < 0 || value > 100000) {
       fprintf(log_f, "invalid 'test' field value\n");
       FAIL(NEW_SRV_ERR_INV_PARAM);
@@ -1970,7 +1972,7 @@ ns_priv_edit_run_action(
       fprintf(log_f, "invalid 'score' field value\n");
       FAIL(NEW_SRV_ERR_INV_PARAM);
     }
-    if (info.score != value) {
+    if (old_info.score != value) {
       if (!prob) {
         fprintf(log_f, "invalid 'prob' field value\n");
         FAIL(NEW_SRV_ERR_INV_PARAM);
@@ -2028,7 +2030,7 @@ ns_priv_edit_run_action(
       fprintf(log_f, "invalid 'score_adj' field value\n");
       FAIL(NEW_SRV_ERR_INV_PARAM);
     }
-    if (value > -100000 && info.score_adj != value) {
+    if (value > -100000 && old_info.score_adj != value) {
       if (value <= -100000 || value >= 100000) {
         fprintf(log_f, "invalid 'score_adj' field value\n");
         FAIL(NEW_SRV_ERR_INV_PARAM);
@@ -2040,7 +2042,7 @@ ns_priv_edit_run_action(
 
   value = 0;
   if (hr_cgi_param(phr, "is_marked", &s) > 0) value = 1;
-  if (info.is_marked != value) {
+  if (old_info.is_marked != value) {
     new_info.is_marked = value;
     mask |= RE_IS_MARKED;
   }
@@ -2066,7 +2068,7 @@ ns_priv_edit_run_action(
   if (global->separate_user_score > 0) {
     value = 0;
     if (hr_cgi_param(phr, "is_saved", &s) > 0) value = 1;
-    if (info.is_saved != value) {
+    if (old_info.is_saved != value) {
       new_info.is_saved = value;
       mask |= RE_IS_SAVED;
       if (!value) {
@@ -2076,7 +2078,7 @@ ns_priv_edit_run_action(
         mask |= RE_SAVED_STATUS | RE_SAVED_TEST | RE_SAVED_SCORE;
       }
     } else {
-      new_info.is_saved = info.is_saved;
+      new_info.is_saved = old_info.is_saved;
     }
     if (new_info.is_saved) {
       value = -1;
@@ -2084,7 +2086,7 @@ ns_priv_edit_run_action(
         fprintf(log_f, "invalid 'saved_status' field value\n");
         FAIL(NEW_SRV_ERR_INV_PARAM);
       }
-      if (info.saved_status != value || !info.is_saved) {
+      if (old_info.saved_status != value || !old_info.is_saved) {
         if (!run_is_normal_status(value)) {
           fprintf(log_f, "invalid 'saved_status' field value\n");
           FAIL(NEW_SRV_ERR_INV_PARAM);
@@ -2092,7 +2094,7 @@ ns_priv_edit_run_action(
         new_info.saved_status = value;
         mask |= RE_SAVED_STATUS;
       } else {
-        new_info.saved_status = info.saved_status;
+        new_info.saved_status = old_info.saved_status;
       }
 
       value = -1;
@@ -2100,7 +2102,7 @@ ns_priv_edit_run_action(
         fprintf(log_f, "invalid 'saved_test' field value\n");
         FAIL(NEW_SRV_ERR_INV_PARAM);
       }
-      if (info.saved_test != value || !info.is_saved) {
+      if (old_info.saved_test != value || !old_info.is_saved) {
         if (global->score_system == SCORE_KIROV || global->score_system == SCORE_OLYMPIAD) {
           ++value;
         }
@@ -2149,7 +2151,7 @@ ns_priv_edit_run_action(
           fprintf(log_f, "invalid 'saved_score' field value\n");
           FAIL(NEW_SRV_ERR_INV_PARAM);
         }
-        if (info.saved_score != value || !info.is_saved) {
+        if (old_info.saved_score != value || !old_info.is_saved) {
           if (!prob) {
             fprintf(log_f, "invalid 'prob' field value\n");
             FAIL(NEW_SRV_ERR_INV_PARAM);
@@ -2216,14 +2218,14 @@ ns_priv_edit_run_action(
     FAIL(NEW_SRV_ERR_INV_PARAM);
   }
   ej_ip_t ipv6;
-  run_entry_to_ipv6(&info, &ipv6);
+  run_entry_to_ipv6(&old_info, &ipv6);
   if (ipv6cmp(&new_ip, &ipv6) != 0) {
     ipv6_to_run_entry(&new_ip, &new_info);
     mask |= RE_IP;
   }
   value = 0;
   if (hr_cgi_param(phr, "ssl_flag", &s) > 0) value = 1;
-  if (info.ssl_flag != value) {
+  if (old_info.ssl_flag != value) {
     new_info.ssl_flag = value;
     mask |= RE_SSL_FLAG;
   }
@@ -2233,7 +2235,7 @@ ns_priv_edit_run_action(
     fprintf(log_f, "invalid 'size' field value\n");
     FAIL(NEW_SRV_ERR_INV_PARAM);
   }
-  if (info.size != value) {
+  if (old_info.size != value) {
     if (value >= (1 * 1024 * 1024 * 1024)) {
       fprintf(log_f, "invalid 'size' field value\n");
       FAIL(NEW_SRV_ERR_INV_PARAM);
@@ -2253,7 +2255,7 @@ ns_priv_edit_run_action(
       fprintf(log_f, "invalid 'sha1' field value\n");
       FAIL(NEW_SRV_ERR_INV_PARAM);
     }
-    if (r > 0 && memcmp(info.h.sha1, new_sha1, sizeof(info.h.sha1)) != 0) {
+    if (r > 0 && memcmp(old_info.h.sha1, new_sha1, sizeof(old_info.h.sha1)) != 0) {
       memcpy(new_info.h.sha1, new_sha1, sizeof(new_info.h.sha1));
       mask |= RE_SHA1;
     }
@@ -2271,12 +2273,12 @@ ns_priv_edit_run_action(
       fprintf(log_f, "invalid 'uuid' field value\n");
       FAIL(NEW_SRV_ERR_INV_PARAM);
     }
-    if (memcmp(&info.run_uuid, &new_uuid, sizeof(info.run_uuid)) != 0) {
+    if (memcmp(&old_info.run_uuid, &new_uuid, sizeof(old_info.run_uuid)) != 0) {
       memcpy(&new_info.run_uuid, &new_uuid, sizeof(new_info.run_uuid));
       mask |= RE_RUN_UUID;
     }
   } else if (r > 0) {
-    if (info.run_uuid.v[0] || info.run_uuid.v[1] || info.run_uuid.v[2] || info.run_uuid.v[3]) {
+    if (old_info.run_uuid.v[0] || old_info.run_uuid.v[1] || old_info.run_uuid.v[2] || old_info.run_uuid.v[3]) {
       new_info.run_uuid.v[0] = 0;
       new_info.run_uuid.v[1] = 0;
       new_info.run_uuid.v[2] = 0;
@@ -2297,7 +2299,7 @@ ns_priv_edit_run_action(
         fprintf(log_f, "invalid 'mime_type' field value\n");
         FAIL(NEW_SRV_ERR_INV_PARAM);
       }
-      if (info.mime_type != value) {
+      if (old_info.mime_type != value) {
         new_info.mime_type = value;
         mask |= RE_MIME_TYPE;
       }
@@ -2306,8 +2308,8 @@ ns_priv_edit_run_action(
 
   value = 0;
   if (hr_cgi_param(phr, "is_hidden", &s) > 0) value = 1;
-  if (info.is_hidden != value) {
-    if (!value && info.time < start_time) {
+  if (old_info.is_hidden != value) {
+    if (!value && old_info.time < start_time) {
       fprintf(log_f, "is_hidden flag cannot be cleared because time < start_time");
       FAIL(NEW_SRV_ERR_INV_PARAM);
     }
@@ -2317,7 +2319,7 @@ ns_priv_edit_run_action(
 
   value = 0;
   if (hr_cgi_param(phr, "is_imported", &s) > 0) value = 1;
-  if (info.is_imported != value) {
+  if (old_info.is_imported != value) {
     // check availability of operation
     new_info.is_imported = value;
     mask |= RE_IS_IMPORTED;
@@ -2328,7 +2330,7 @@ ns_priv_edit_run_action(
     fprintf(log_f, "invalid 'locale_id' field value\n");
     FAIL(NEW_SRV_ERR_INV_PARAM);
   }
-  if (value >= 0 && info.locale_id != value) {
+  if (value >= 0 && old_info.locale_id != value) {
     if (value != 0 && value != 1) {
       fprintf(log_f, "invalid 'locale_id' field value\n");
       FAIL(NEW_SRV_ERR_INV_PARAM);
@@ -2342,7 +2344,7 @@ ns_priv_edit_run_action(
     fprintf(log_f, "invalid 'pages' field value\n");
     FAIL(NEW_SRV_ERR_INV_PARAM);
   }
-  if (value >= 0 && info.pages != value) {
+  if (value >= 0 && old_info.pages != value) {
     if (value > 100000) {
       fprintf(log_f, "invalid 'pages' field value\n");
       FAIL(NEW_SRV_ERR_INV_PARAM);
@@ -2352,11 +2354,14 @@ ns_priv_edit_run_action(
   }
 
   if (!mask) goto cleanup;
+
+  info("audit:%s:%d:%d:%d", phr->action_str, phr->user_id, phr->contest_id, run_id);
+
   if (run_set_entry(cs->runlog_state, run_id, mask, &new_info, &new_info) < 0)
     FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
   serve_notify_run_update(phr->config, cs, &new_info);
 
-  serve_audit_log(cs, run_id, &info, phr->user_id, &phr->ip, phr->ssl_flag,
+  serve_audit_log(cs, run_id, &old_info, phr->user_id, &phr->ip, phr->ssl_flag,
                   "edit-run", "ok", -1,
                   "  mask: 0x%08x", mask);
 

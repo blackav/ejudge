@@ -37,6 +37,8 @@
     if (opcaps_check(phr->caps, OPCAP_GET_USER) < 0)
         FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
 
+    info("audit:%s:%d:%d:%d", phr->action_str, phr->user_id, phr->contest_id, view_user_id);
+
     // initialization
     teamdb_export_team(cs->teamdb_state, view_user_id, &u_info);
     if (cs->xuser_state) {

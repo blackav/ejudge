@@ -18,6 +18,8 @@
   if (opcaps_check(phr->caps, OPCAP_CONTROL_CONTEST) < 0)
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
 
+  info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
+
   if (cs->upsolving_mode) {
 %><s:read var="freeze_standings" ignoreerrors="yes" /><%
 %><s:read var="view_source" ignoreerrors="yes" /><%

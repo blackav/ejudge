@@ -28,6 +28,8 @@
         FAIL(NEW_SRV_ERR_INV_USER_ID);
     }
 
+    info("audit:%s:%d:%d:%d", phr->action_str, phr->user_id, phr->contest_id, other_user_id);
+
     %><s:read var="key" ignoreerrors="yes" /><%
     if (!key) key = "";
 

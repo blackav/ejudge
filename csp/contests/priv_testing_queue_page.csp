@@ -34,6 +34,8 @@
 
   if (phr->role != USER_ROLE_ADMIN) FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
 
+  info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
+
   gettimeofday(&td, NULL);
   current_time_ms = ((long long) td.tv_sec) * 1000 + td.tv_usec / 1000;
   current_time_us = td.tv_sec * 1000000LL + td.tv_usec;

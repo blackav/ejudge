@@ -15,6 +15,8 @@
 %><s:read var="run_id" name="run_id" default="0" error="inv-run-id" /><%
 %><s:read var="review_comment" normalize="yes" /><%
 
+  info("audit:%s:%d:%d:%d", phr->action_str, phr->user_id, phr->contest_id, run_id);
+
   ns_add_review_comment(phr->contest_id, cs, run_id, review_comment);
 
 %><s:url name="ViewSourceUrl" ac="view-source"><s:param name="run_id" value="run_id"/></s:url><s:redirect url="ViewSourceUrl" /><%

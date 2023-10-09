@@ -153,6 +153,8 @@ struct http_request_info
   struct userlist_user *user_info;
   unsigned char disable_log;
 
+  const unsigned char *action_str;
+
   unsigned char data[0];
 };
 

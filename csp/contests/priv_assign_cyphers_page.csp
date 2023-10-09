@@ -12,6 +12,8 @@
   if (opcaps_check(phr->caps, OPCAP_CONTROL_CONTEST) < 0)
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
 
+  info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
+
   l10n_setlocale(phr->locale_id);
   title = _("Assign cyphers");
 %><%@include "priv_header.csp"

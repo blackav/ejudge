@@ -50,6 +50,8 @@
   }
   if (s <= 0) FAIL(NEW_SRV_ERR_INV_PARAM);
 
+  info("audit:%s:%d:%d:%d", phr->action_str, phr->user_id, phr->contest_id, view_user_id);
+
   if (run_set_user_duration(cs->runlog_state, view_user_id, s, phr->user_id) < 0) {
     FAIL(NEW_SRV_ERR_OPERATION_FAILED);
   }

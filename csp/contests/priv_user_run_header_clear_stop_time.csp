@@ -14,6 +14,8 @@
 
 %><s:read var="view_user_id" required="yes" name="view_user_id" error="inv-user-id" /><%
 
+  info("audit:%s:%d:%d:%d", phr->action_str, phr->user_id, phr->contest_id, view_user_id);
+
   if (view_user_id > 0) {
     run_set_user_stop_time(cs->runlog_state, view_user_id, 0, phr->user_id);
   }

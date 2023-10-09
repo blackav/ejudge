@@ -13,7 +13,7 @@
   const struct section_problem_data *prob = NULL;
   const struct section_language_data *lang = NULL;
   time_t start_time = 0, run_time = 0;
-  struct run_entry info;
+  struct run_entry re;
   unsigned char buf[1024];
   const unsigned char *str = NULL;
   const unsigned char *s;
@@ -28,12 +28,14 @@
   if (run_id < 0 || run_id >= run_get_total(cs->runlog_state)) {
     FAIL(NEW_SRV_ERR_INV_RUN_ID);
   }
-  if (run_get_entry(cs->runlog_state, run_id, &info) < 0) {
+  if (run_get_entry(cs->runlog_state, run_id, &re) < 0) {
     FAIL(NEW_SRV_ERR_INV_RUN_ID);
   }
-  if (!run_is_normal_status(info.status)) {
+  if (!run_is_normal_status(re.status)) {
     FAIL(NEW_SRV_ERR_INV_RUN_ID);
   }
+
+  info("audit:%s:%d:%d:%d", phr->action_str, phr->user_id, phr->contest_id, run_id);
 
   l10n_setlocale(phr->locale_id);
 
@@ -66,12 +68,12 @@
 
 <%
   if (global->is_virtual) {
-    start_time = run_get_virtual_start_time(cs->runlog_state, info.user_id);
+    start_time = run_get_virtual_start_time(cs->runlog_state, re.user_id);
   } else {
     start_time = run_get_start_time(cs->runlog_state);
   }
   if (start_time < 0) start_time = 0;
-  run_time = info.time;
+  run_time = re.time;
   if (run_time < 0) run_time = 0;
   if (run_time < start_time) run_time = start_time;
 %>
@@ -84,38 +86,38 @@
 <s:hidden name="run_id" check="0" />
 <table class="b0">
 <tr><td class="b0"><s:_>Run ID</s:_>:</td><td class="b0"><s:v value="run_id" /></td></tr>
-<%  if (run_time != info.time) {
-    if (info.time <= 0) { %>
-<tr><td class="b0"><s:_>DB timestamp</s:_>:</td><td class="b0"><s:v value="(long) info.time" />.<s:v format="06" value="info.nsec / 1000" /></td></tr>
+<%  if (run_time != re.time) {
+    if (re.time <= 0) { %>
+<tr><td class="b0"><s:_>DB timestamp</s:_>:</td><td class="b0"><s:v value="(long) re.time" />.<s:v format="06" value="re.nsec / 1000" /></td></tr>
 <%    } else { %>
-<tr><td class="b0"><s:_>DB time</s:_></td><td class="b0"><s:v value="info.time" />.<s:v format="06" value="info.nsec / 1000" /></td></tr>
+<tr><td class="b0"><s:_>DB time</s:_></td><td class="b0"><s:v value="re.time" />.<s:v format="06" value="re.nsec / 1000" /></td></tr>
 <%    }
   } %>
 <%  if (run_time <= 0) {%>
-<tr><td class="b0"><s:_>Timestamp</s:_>:</td><td class="b0"><s:v value="(long) run_time" />.<s:v format="06" value="info.nsec / 1000" /></td></tr>
+<tr><td class="b0"><s:_>Timestamp</s:_>:</td><td class="b0"><s:v value="(long) run_time" />.<s:v format="06" value="re.nsec / 1000" /></td></tr>
 <%  } else { %>
-<tr><td class="b0"><s:_>Time</s:_></td><td class="b0"><s:v value="run_time" />.<s:v format="06" value="info.nsec / 1000" /></td></tr>
+<tr><td class="b0"><s:_>Time</s:_></td><td class="b0"><s:v value="run_time" />.<s:v format="06" value="re.nsec / 1000" /></td></tr>
 <%  } %>
-<tr><td class="b0"><s:_>Contest time</s:_></td><td class="b0"><s:v value="duration_str_2(hbuf, sizeof(hbuf), run_time - start_time, info.nsec)" /></td></tr>
-<%  if (info.user_id <= 0 || !(str = teamdb_get_login(cs->teamdb_state, info.user_id))) {
-    snprintf(buf, sizeof(buf), "#%d", info.user_id);
+<tr><td class="b0"><s:_>Contest time</s:_></td><td class="b0"><s:v value="duration_str_2(hbuf, sizeof(hbuf), run_time - start_time, re.nsec)" /></td></tr>
+<%  if (re.user_id <= 0 || !(str = teamdb_get_login(cs->teamdb_state, re.user_id))) {
+    snprintf(buf, sizeof(buf), "#%d", re.user_id);
     str = buf;
   } %>
-<tr><td class="b0"><s:_>User login/ID</s:_></td><td class="b0"><s:textfield name="user" size="20" value="str" disabledExpr="info.is_readonly" /></td></tr>
-<%  if ((str = teamdb_get_name(cs->teamdb_state, info.user_id))) { %>
+<tr><td class="b0"><s:_>User login/ID</s:_></td><td class="b0"><s:textfield name="user" size="20" value="str" disabledExpr="re.is_readonly" /></td></tr>
+<%  if ((str = teamdb_get_name(cs->teamdb_state, re.user_id))) { %>
 <tr><td class="b0"><s:_>User name</s:_></td><td class="b0"><s:v value="str" /></td></tr>
 <%  } %>
-<tr><td class="b0">Prob name/ID</td><td class="b0"><s:select name="prob" disabledExpr="info.is_readonly">
+<tr><td class="b0">Prob name/ID</td><td class="b0"><s:select name="prob" disabledExpr="re.is_readonly">
 <%
-  if (info.prob_id <= 0 || info.prob_id > cs->max_prob || !(prob = cs->probs[info.prob_id])) {
+  if (re.prob_id <= 0 || re.prob_id > cs->max_prob || !(prob = cs->probs[re.prob_id])) {
 %>
-<s:option value="info.prob_id" selectedExpr="1">#<s:v value="info.prob_id" /></s:option>
+<s:option value="re.prob_id" selectedExpr="1">#<s:v value="re.prob_id" /></s:option>
 <%
   }
   for (prob_id = 1; prob_id <= cs->max_prob; ++prob_id) {
     if (cs->probs[prob_id]) {
 %>
-<s:option value="prob_id" selectedExpr="info.prob_id == prob_id"><s:v value="cs->probs[prob_id]->short_name" escape="0" /> - <s:v value="cs->probs[prob_id]->long_name" checkExpr="" /></s:option>
+<s:option value="prob_id" selectedExpr="re.prob_id == prob_id"><s:v value="cs->probs[prob_id]->short_name" escape="0" /> - <s:v value="cs->probs[prob_id]->long_name" checkExpr="" /></s:option>
 <%
     }
   }
@@ -124,53 +126,53 @@
 <%
   if (prob && prob->variant_num > 0) {
 %>
-<tr><td class="b0">Variant:</td><td class="b0"><s:textfield name="variant" size="20" disabledExpr="info.is_readonly" checkExpr="&gt; 0" value="(int) info.variant" /></td></tr>
+<tr><td class="b0">Variant:</td><td class="b0"><s:textfield name="variant" size="20" disabledExpr="re.is_readonly" checkExpr="&gt; 0" value="(int) re.variant" /></td></tr>
 <%
   }
 %>
-<tr><td class="b0">Lang name/ID</td><td class="b0"><s:select name="lang" disabledExpr="info.is_readonly">
+<tr><td class="b0">Lang name/ID</td><td class="b0"><s:select name="lang" disabledExpr="re.is_readonly">
 <%
-  if (info.lang_id == 0) {
+  if (re.lang_id == 0) {
 %>
 <option value="0" selected="selected"></option>
 <%
     str = "";
-  } else if (info.lang_id < 0 || info.lang_id > cs->max_lang || !(lang = cs->langs[info.lang_id])) {
+  } else if (re.lang_id < 0 || re.lang_id > cs->max_lang || !(lang = cs->langs[re.lang_id])) {
 %>
-<s:option value="info.lang_id" selectedExpr="1">#<s:v value="info.lang_id" /></s:option>
+<s:option value="re.lang_id" selectedExpr="1">#<s:v value="re.lang_id" /></s:option>
 <%
   }
   for (lang_id = 1; lang_id <= cs->max_lang; ++lang_id) {
     if (cs->langs[lang_id]) {
 %>
-<s:option value="lang_id" selectedExpr="info.lang_id == lang_id"><s:v escape="0" value="cs->langs[lang_id]->short_name" /> - <s:v value="cs->langs[lang_id]->long_name" /></s:option>
+<s:option value="lang_id" selectedExpr="re.lang_id == lang_id"><s:v escape="0" value="cs->langs[lang_id]->short_name" /> - <s:v value="cs->langs[lang_id]->long_name" /></s:option>
 <%
     }
   }
 %>
 </s:select></td></tr>
-<tr><td class="b0">EOLN Type</td><td class="b0"><s:select name="eoln_type" disabledExpr="info.is_readonly">
+<tr><td class="b0">EOLN Type</td><td class="b0"><s:select name="eoln_type" disabledExpr="re.is_readonly">
 <option value="0"></option>
-<s:option value="1" selectedExpr="info.eoln_type == 1">LF (Unix/MacOS)</s:option>
-<s:option value="2" selectedExpr="info.eoln_type == 2">CRLF (Windows/DOS)</s:option>
+<s:option value="1" selectedExpr="re.eoln_type == 1">LF (Unix/MacOS)</s:option>
+<s:option value="2" selectedExpr="re.eoln_type == 2">CRLF (Windows/DOS)</s:option>
 </s:select></td></tr>
-<tr><td class="b0"><s:_>Status</s:_></td><% write_change_status_dialog(cs, out_f, NULL, info.is_imported, "b0", info.status, info.is_readonly); %></tr>
+<tr><td class="b0"><s:_>Status</s:_></td><% write_change_status_dialog(cs, out_f, NULL, re.is_imported, "b0", re.status, re.is_readonly); %></tr>
 <%
   buf[0] = 0;
-  if (info.passed_mode > 0) {
-    if (info.test >= 0) {
-      snprintf(buf, sizeof(buf), "%d", info.test);
+  if (re.passed_mode > 0) {
+    if (re.test >= 0) {
+      snprintf(buf, sizeof(buf), "%d", re.test);
     }
     s = "Tests passed";
   } else {
     if (global->score_system == SCORE_KIROV || global->score_system == SCORE_OLYMPIAD) {
-      if (info.test > 0) {
-        snprintf(buf, sizeof(buf), "%d", info.test - 1);
+      if (re.test > 0) {
+        snprintf(buf, sizeof(buf), "%d", re.test - 1);
       }
       s = "Tests passed";
     } else if (global->score_system == SCORE_MOSCOW || global->score_system == SCORE_ACM) {
-      if (info.test > 0) {
-        snprintf(buf, sizeof(buf), "%d", info.test);
+      if (re.test > 0) {
+        snprintf(buf, sizeof(buf), "%d", re.test);
       }
       s = "Failed test";
     } else {
@@ -178,42 +180,42 @@
     }
   }
 %>
-<tr><td class="b0"><s:v escape="0" value="s" />:</td><td class="b0"><s:textfield name="test" size="20" disabledExpr="info.is_readonly" check="0" value="buf" escape="0" /></td></tr>
+<tr><td class="b0"><s:v escape="0" value="s" />:</td><td class="b0"><s:textfield name="test" size="20" disabledExpr="re.is_readonly" check="0" value="buf" escape="0" /></td></tr>
 <%
   if (global->score_system == SCORE_KIROV || global->score_system == SCORE_OLYMPIAD
       || global->score_system == SCORE_MOSCOW) {
 %>
-<tr><td class="b0">Score:</td><td class="b0"><s:textfield name="score" size="20" checkExpr=">= 0" disabledExpr="info.is_readonly" value="info.score" /></td></tr>
-<tr><td class="b0">Score adjustment:</td><td class="b0"><s:textfield name="score_adj" size="20" check="0" disabledExpr="info.is_readonly" value="info.score_adj" /></td></tr>
+<tr><td class="b0">Score:</td><td class="b0"><s:textfield name="score" size="20" checkExpr=">= 0" disabledExpr="re.is_readonly" value="re.score" /></td></tr>
+<tr><td class="b0">Score adjustment:</td><td class="b0"><s:textfield name="score_adj" size="20" check="0" disabledExpr="re.is_readonly" value="re.score_adj" /></td></tr>
 <%
   }
 %>
-<tr><td class="b0">Marked:</td><td class="b0"><s:checkbox name="is_marked" checkedExpr="info.is_marked" disabledExpr="info.is_readonly" /></td></tr>
+<tr><td class="b0">Marked:</td><td class="b0"><s:checkbox name="is_marked" checkedExpr="re.is_marked" disabledExpr="re.is_readonly" /></td></tr>
 <%
   if (global->separate_user_score > 0) {
 %>
-<tr><td class="b0">Has saved score:</td><td class="b0"><s:checkbox name="is_saved" checkedExpr="info.is_saved" disabledExpr="info.is_readonly" /></td></tr>
-<tr><td class="b0">Saved status:</td><% write_change_status_dialog(cs, out_f, "saved_status", info.is_imported, "b0", info.saved_status, info.is_readonly); %></tr>
+<tr><td class="b0">Has saved score:</td><td class="b0"><s:checkbox name="is_saved" checkedExpr="re.is_saved" disabledExpr="re.is_readonly" /></td></tr>
+<tr><td class="b0">Saved status:</td><% write_change_status_dialog(cs, out_f, "saved_status", re.is_imported, "b0", re.saved_status, re.is_readonly); %></tr>
 <%
     buf[0] = 0;
     if (global->score_system == SCORE_KIROV || global->score_system == SCORE_OLYMPIAD) {
-      snprintf(buf, sizeof(buf), "%d", info.saved_test);
+      snprintf(buf, sizeof(buf), "%d", re.saved_test);
       s = "Saved tests passed";
     } else if (global->score_system == SCORE_MOSCOW || global->score_system == SCORE_ACM) {
-      if (info.saved_test > 0) {
-        snprintf(buf, sizeof(buf), "%d", info.saved_test);
+      if (re.saved_test > 0) {
+        snprintf(buf, sizeof(buf), "%d", re.saved_test);
       }
       s = "Saved failed test";
     } else {
       abort();
     }
 %>
-<tr><td class="b0"><s:v escape="0" value="s" /></td><td class="b0"><s:textfield name="saved_test" size="20" check="0" escape="0" disabledExpr="info.is_readonly" value="buf" /></td></tr>
+<tr><td class="b0"><s:v escape="0" value="s" /></td><td class="b0"><s:textfield name="saved_test" size="20" check="0" escape="0" disabledExpr="re.is_readonly" value="buf" /></td></tr>
 <%
     if (global->score_system == SCORE_KIROV || global->score_system == SCORE_OLYMPIAD
         || global->score_system == SCORE_MOSCOW) {
 %>
-<tr><td class="b0">Saved score:</td><td class="b0"><s:textfield name="saved_score" size="20" disabledExpr="info.is_readonly" checkExpr=">= 0" value="info.saved_score" /></td></tr>
+<tr><td class="b0">Saved score:</td><td class="b0"><s:textfield name="saved_score" size="20" disabledExpr="re.is_readonly" checkExpr=">= 0" value="re.saved_score" /></td></tr>
 <%
     }
   }
@@ -221,28 +223,28 @@
 <%
   if (prob && prob->enable_tokens > 0) {
 %>
-<tr><td class="b0">Token flags:</td><td class="b0"><s:textfield name="token_flags" size="20" disabledExpr="info.is_readonly" value="(int) info.token_flags" /></td></tr>
-<tr><td class="b0">Token count:</td><td class="b0"><s:textfield name="token_count" size="20" disabledExpr="info.is_readonly" value="(int) info.token_count" /></td></tr>
+<tr><td class="b0">Token flags:</td><td class="b0"><s:textfield name="token_flags" size="20" disabledExpr="re.is_readonly" value="(int) re.token_flags" /></td></tr>
+<tr><td class="b0">Token count:</td><td class="b0"><s:textfield name="token_count" size="20" disabledExpr="re.is_readonly" value="(int) re.token_count" /></td></tr>
 <%
   }
 %>
-<tr><td class="b0">IP:</td><td class="b0"><s:textfield name="ip" size="20" disabledExpr="info.is_readonly" value="info.a.ip" /></td></tr>
-<tr><td class="b0">SSL:</td><td class="b0"><s:checkbox name="ssl_flag" checkedExpr="info.ssl_flag" disabledExpr="info.is_readonly" /></td></tr>
-<tr><td class="b0">Size:</td><td class="b0"><s:textfield name="size" size="20" disabledExpr="info.is_readonly" value="info.size" /></td></tr>
-<tr><td class="b0">SHA1:</td><td class="b0"><s:textfield name="sha1" size="60" disabledExpr="info.is_readonly" escape="false" value="unparse_sha1(info.h.sha1)" /></td></tr>
+<tr><td class="b0">IP:</td><td class="b0"><s:textfield name="ip" size="20" disabledExpr="re.is_readonly" value="re.a.ip" /></td></tr>
+<tr><td class="b0">SSL:</td><td class="b0"><s:checkbox name="ssl_flag" checkedExpr="re.ssl_flag" disabledExpr="re.is_readonly" /></td></tr>
+<tr><td class="b0">Size:</td><td class="b0"><s:textfield name="size" size="20" disabledExpr="re.is_readonly" value="re.size" /></td></tr>
+<tr><td class="b0">SHA1:</td><td class="b0"><s:textfield name="sha1" size="60" disabledExpr="re.is_readonly" escape="false" value="unparse_sha1(re.h.sha1)" /></td></tr>
 <% #if CONF_HAS_LIBUUID - 0 != 0 %>
-<tr><td class="b0">UUID:</td><td class="b0"><s:textfield name="uuid" size="60" disabledExpr="info.is_readonly" escape="false" value='ej_uuid_unparse(&info.run_uuid, "")' /></td></tr>
+<tr><td class="b0">UUID:</td><td class="b0"><s:textfield name="uuid" size="60" disabledExpr="re.is_readonly" escape="false" value='ej_uuid_unparse(&re.run_uuid, "")' /></td></tr>
 <% #endif %>
-<%  if (!info.lang_id) { %>
-<tr><td class="b0">Content type:</td><td class="b0"><s:textfield name="mime_type" size="60" disabledExpr="info.is_readonly" value="mime_type_get_type(info.mime_type)" /></td></tr>
+<%  if (!re.lang_id) { %>
+<tr><td class="b0">Content type:</td><td class="b0"><s:textfield name="mime_type" size="60" disabledExpr="re.is_readonly" value="mime_type_get_type(re.mime_type)" /></td></tr>
 <%  } %>
-<tr><td class="b0">Hidden:</td><td class="b0"><s:checkbox name="is_hidden" checkedExpr="info.is_hidden" disabledExpr="info.is_readonly" /></td></tr>
-<tr><td class="b0">Imported:</td><td class="b0"><s:checkbox name="is_imported" checkedExpr="info.is_imported" disabledExpr="info.is_readonly" /></td></tr>
-<tr><td class="b0">Read-only:</td><td class="b0"><s:checkbox name="is_readonly" checkedExpr="info.is_readonly" /></td></tr>
+<tr><td class="b0">Hidden:</td><td class="b0"><s:checkbox name="is_hidden" checkedExpr="re.is_hidden" disabledExpr="re.is_readonly" /></td></tr>
+<tr><td class="b0">Imported:</td><td class="b0"><s:checkbox name="is_imported" checkedExpr="re.is_imported" disabledExpr="re.is_readonly" /></td></tr>
+<tr><td class="b0">Read-only:</td><td class="b0"><s:checkbox name="is_readonly" checkedExpr="re.is_readonly" /></td></tr>
 
-<tr><td class="b0">Locale ID:</td><td class="b0"><s:textfield name="locale_id" size="20" disabledExpr="info.is_readonly" value="info.locale_id" checkExpr=">= 0" /></td></tr>
+<tr><td class="b0">Locale ID:</td><td class="b0"><s:textfield name="locale_id" size="20" disabledExpr="re.is_readonly" value="re.locale_id" checkExpr=">= 0" /></td></tr>
 <%  if (global->enable_printing > 0) { %>
-<tr><td class="b0">Pages printed:</td><td class="b0"><s:textfield name="pages" size="20" disabledExpr="info.is_readonly" value="(int) info.pages" /></td></tr>
+<tr><td class="b0">Pages printed:</td><td class="b0"><s:textfield name="pages" size="20" disabledExpr="re.is_readonly" value="(int) re.pages" /></td></tr>
 <%  } %>
 </table>
 

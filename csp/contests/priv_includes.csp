@@ -14,6 +14,7 @@
 #include "ejudge/mischtml.h"
 #include "ejudge/html.h"
 #include "ejudge/userlist.h"
+#include "ejudge/errlog.h"
 
 #include "ejudge/xalloc.h"
 

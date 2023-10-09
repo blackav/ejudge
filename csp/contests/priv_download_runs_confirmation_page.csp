@@ -25,6 +25,8 @@
   if (ns_parse_run_mask(phr, &mask_size_str, &mask_str, &mask_size, &mask) < 0)
     FAIL(NEW_SRV_ERR_INV_RUN_SELECTION);
 
+  info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
+
   if (cs->xuser_state) {
     t_extra = cs->xuser_state->vt->get_entry(cs->xuser_state, phr->user_id);
     if (t_extra) problem_dir_prefix = t_extra->problem_dir_prefix;

@@ -11,6 +11,8 @@
     int enable_main_menu = 0;
     unsigned char filtbuf[1024];
 
+    info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
+
     LanguageStat *stats = xcalloc(cs->max_lang + 1, sizeof(*stats));
     int material_run_count = 0;
     int non_lang_run_count = 0;

@@ -98,6 +98,8 @@
     }
   }
 
+  info("audit:%s:%d:%d:%d", phr->action_str, phr->user_id, phr->contest_id, run_id);
+
   if (user_mode && global->score_system == SCORE_OLYMPIAD) {
     accepting_mode = cs->accepting_mode;
   }

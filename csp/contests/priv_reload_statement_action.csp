@@ -32,6 +32,8 @@
   if (phr->action == NEW_SRV_ACTION_RELOAD_STATEMENT_ALL)
      reload_all = 1;
 
+  info("audit:%s:%d:%d:%d:%d:%d", phr->action_str, phr->user_id, phr->contest_id, reload_all, prob_id, variant);
+
   ns_reload_statement(phr->contest_id, prob_id, variant, reload_all);
 
 %><s:url name="SubmitUrl" ac="priv-submit-page"><s:param name="problem" value="prob_id"/><s:param name="variant" value="variant" fullcheckexpr="variant > 0" /></s:url><s:redirect url="SubmitUrl" /><%
