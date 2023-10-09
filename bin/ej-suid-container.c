@@ -605,10 +605,18 @@ reconfigure_fs(void)
     if ((r = mount(empty_bind_path, "/boot", NULL, MS_BIND, NULL)) < 0) {
         ffatal("failed to mount /boot: %s", strerror(errno));
     }
+    if ((r = mount(empty_bind_path, "/srv", NULL, MS_BIND, NULL)) < 0) {
+        ffatal("failed to mount /srv: %s", strerror(errno));
+    }
+    struct stat stb;
+    if (lstat("/data", &stb) >= 0 && S_ISDIR(stb.st_mode)) {
+        if ((r = mount(empty_bind_path, "/data", NULL, MS_BIND, NULL)) < 0) {
+            ffatal("failed to mount /data: %s", strerror(errno));
+        }
+    }
 
     char bind_path[PATH_MAX];
     if (snprintf(bind_path, sizeof(bind_path), "%s/root", safe_dir_path) >= sizeof(bind_path)) abort();
-    struct stat stb;
     if (lstat(bind_path, &stb) >= 0 && S_ISDIR(stb.st_mode)) {
         if ((r = mount(bind_path, "/root", NULL, MS_BIND, NULL)) < 0) {
             ffatal("failed to mount %s as /root: %s", bind_path, strerror(errno));
