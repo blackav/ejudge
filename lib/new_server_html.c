@@ -15319,6 +15319,7 @@ unpriv_problem_status_json(
     pinfo[i].best_run = -1;
   }
   ns_get_user_problems_summary(cs, phr->user_id, phr->login, accepting_mode, start_time, stop_time, &phr->ip, pinfo);
+  serve_is_problem_deadlined(cs, phr->user_id, phr->login, prob, &pinfo[prob_id].deadline);
 
   fprintf(fout, "{\n");
   fprintf(fout, "  \"ok\" : %s", ok?"true":"false");
@@ -15617,6 +15618,50 @@ unpriv_problem_status_json(
   }
   if (upi->deadline > 0) {
     fprintf(fout, ",\n      \"deadline\" : %lld", (long long) upi->deadline);
+  }
+  if ((upi->deadline <= 0 || cs->current_time < upi->deadline)
+      && (upi->status & PROB_STATUS_SUBMITTABLE) && prob->date_penalty) {
+    int dpi;
+    time_t base_time = start_time;
+    if (prob->start_date > 0 && prob->start_date > base_time) {
+      base_time = prob->start_date;
+    }
+    for (dpi = 0; dpi < prob->dp_total; ++dpi) {
+      if (cs->current_time < prob->dp_infos[dpi].date)
+        break;
+    }
+    const struct penalty_info *dp = NULL;
+    if (dpi < prob->dp_total) {
+      if (dpi > 0) {
+        base_time = prob->dp_infos[dpi - 1].date;
+      }
+      dp = &prob->dp_infos[dpi];
+    }
+    if (dp) {
+      const unsigned char *formula = prob->date_penalty[dpi];
+      int penalty = dp->penalty;
+      time_t next_deadline = 0;
+      if (dp->scale > 0) {
+        time_t offset = cs->current_time - base_time;
+        if (offset < 0) offset = 0;
+        penalty += dp->decay * (offset / dp->scale);
+        next_deadline = base_time + (offset / dp->scale + 1) * dp->scale;
+        if (next_deadline >= dp->date) {
+          next_deadline = dp->date;
+        }
+        if (upi->deadline > 0 && next_deadline >= upi->deadline) {
+          next_deadline = 0;
+        }
+      }
+      penalty = -penalty; // penalty is negative
+      fprintf(fout, ",\n      \"penalty_formula\" : \"%s\"", json_armor_buf(&ab, formula));
+      if (penalty > 0) {
+        fprintf(fout, ",\n      \"date_penalty\" : %d", penalty);
+      }
+      if (next_deadline > 0) {
+        fprintf(fout, ",\n      \"next_soft_deadline\" : %lld", (long long) next_deadline);
+      }
+    }
   }
   if (upi->effective_time > 0) {
     fprintf(fout, ",\n      \"effective_time\" : %lld", (long long) upi->effective_time);
