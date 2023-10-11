@@ -606,7 +606,13 @@ function addReviewMsg(serial)
 <div class="buttons">
 <s:form id="just_change">
 <s:hidden name="run_id" checkExpr=">=0" />
+<%
+  if (phr->role == USER_ROLE_ADMIN) {
+%>
 <s:submit ac="priv-submit-run-just-ignore" />
+<%
+  }
+%>
 <s:submit ac="priv-submit-run-just-ok" />
 <br/>
 <s:submit ac="priv-submit-run-just-summon" />
@@ -757,7 +763,13 @@ Run Id: <s:a url="ViewOtherSourceUrl"><s:v value="fcev2.v[i].e.run_id" /></s:a>
 <s:hidden name="run_id" checkExpr=">=0" />
 <s:button onclick="formatViolation()" label="Formatting rules violation" /></br/>
 <s:submit ac="priv-submit-run-comment" />
+<%
+  if (phr->role == USER_ROLE_ADMIN) {
+%>
 <s:submit ac="priv-submit-run-comment-and-ignore" />
+<%
+  }
+%>
 <s:submit ac="priv-submit-run-comment-and-ok" />
 <s:submit ac="priv-submit-run-comment-and-reject" />
 <br/>
