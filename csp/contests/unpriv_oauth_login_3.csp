@@ -34,6 +34,8 @@
     FAIL(NEW_SRV_ERR_INV_PARAM);
   }
 
+  time_t current_time = time(NULL);
+
   oauth_res = oauth_get_result(phr->config, provider, job_id);
   if (oauth_res.status == 0 || oauth_res.status == 1) {
     %><html><head><meta http-equiv="Refresh" content="1" /></head><body><p>waiting...</p></body></html><%
@@ -156,6 +158,9 @@
     if (!contests_check_register_ip_2(cnts, &phr->ip, phr->ssl_flag)) {
       FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
     }
+    if (cnts->reg_deadline > 0 && current_time >= cnts->reg_deadline) {
+      FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+    }
 
     unsigned char rbuf[16];
     unsigned char ebuf[32];
@@ -208,6 +213,9 @@
   }
   if (!uc) {
     if (!contests_check_register_ip_2(cnts, &phr->ip, phr->ssl_flag)) {
+      FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+    }
+    if (cnts->reg_deadline > 0 && current_time >= cnts->reg_deadline) {
       FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
     }
     if (userlist_clnt_register_contest(ul_conn, ULS_PRIV_REGISTER_CONTEST,
