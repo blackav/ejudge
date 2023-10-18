@@ -26,6 +26,39 @@ then
     PATH="${RUSTDIR}:${PATH}"
 fi
 
+if [ "${EJUDGE_ENABLE_CARGO}" = "1" ]
+then
+    [ "${EJUDGE_PROJECT_ARCHIVE}" != "" ] || EJUDGE_PROJECT_ARCHIVE="project.tbz"
+    if ! tar xf "${EJUDGE_PROJECT_ARCHIVE}"
+    then
+        echo "Failed to extract project archive." >&2
+        exit 1
+    fi
+    [ "${EJUDGE_PROJECT_DIR}" != "" ] || EJUDGE_PROJECT_DIR="project"
+    if [ ! -d "${EJUDGE_PROJECT_DIR}" ]
+    then
+        echo "Project directory ${EJUDGE_PROJECT_DIR} does not exist" >&2
+        exit 1
+    fi
+    [ "${EJUDGE_MODULE}" != "" ] || EJUDGE_MODULE="solution"
+    cp -p "$1" "${EJUDGE_PROJECT_DIR}/src/${EJUDGE_MODULE}.rs"
+    cd "${EJUDGE_PROJECT_DIR}"
+    cargo build --release || exit 1
+    cd ..
+    #[ "${EJUDGE_TARGET}" != "" ] || EJUDGE_TARGET="solution"
+    if [ "${EJUDGE_TARGET}" = "" ]
+    then
+        tmp_name=`grep 'name = ' "${EJUDGE_PROJECT_DIR}/Cargo.toml" | tail -c +8`
+        eval EJUDGE_TARGET=$tmp_name
+    fi
+    if ! cp -p "${EJUDGE_PROJECT_DIR}/target/release/${EJUDGE_TARGET}" "$2"
+    then
+        echo "Failed to copy executable file" >&2
+        exit 1
+    fi
+    exit 0
+fi
+
 [ x"${EJUDGE_FLAGS}" = x ] && EJUDGE_FLAGS="-O"
 
 unset LANG
