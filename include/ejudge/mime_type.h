@@ -51,6 +51,9 @@ enum
   MIME_TYPE_IMAGE_LAST = MIME_TYPE_IMAGE_ICON,
   MIME_TYPE_BSON,               // application/bson
   MIME_TYPE_TEXT_HTML,          // text/html
+  MIME_TYPE_OFFICE_PPTX,        // application/vnd.openxmlformats-officedocument.presentationml.presentation
+  MIME_TYPE_OFFICE_XLSX,        // application/vnd.openxmlformats-officedocument.presentationml.presentation
+  MIME_TYPE_OFFICE_DOCX,        // application/vnd.openxmlformats-officedocument.wordprocessingml.document
 
   MIME_TYPE_LAST,
 };
