@@ -97,6 +97,60 @@ static const struct mime_type_info mime_types[MIME_TYPE_LAST] =
   { "application/bson", ".bson", "" },
   [MIME_TYPE_TEXT_HTML] =
   { "text/html", ".html", "" },
+  [MIME_TYPE_OFFICE_PPTX] =
+  {
+    "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    ".pptx",
+    "Microsoft PowerPoint 2007+",
+  },
+  [MIME_TYPE_OFFICE_XLSX] =
+  {
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    ".xlsx",
+    "Microsoft Excel 2007+",
+  },
+  [MIME_TYPE_OFFICE_DOCX] =
+  {
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ".docx",
+    "Microsoft Word 2007+",
+  },
+};
+
+static const int mime_check_order[] =
+{
+  MIME_TYPE_OFFICE_PPTX,
+  MIME_TYPE_OFFICE_XLSX,
+  MIME_TYPE_OFFICE_DOCX,
+  MIME_TYPE_APPL_MSWORD,
+  MIME_TYPE_APPL_RTF,
+  MIME_TYPE_APPL_PDF,
+  MIME_TYPE_APPL_MSEXCEL,
+  MIME_TYPE_APPL_MSPOWERPOINT,
+  MIME_TYPE_APPL_MSPROJECT,
+  MIME_TYPE_APPL_MSEQ,
+  MIME_TYPE_APPL_VISIO,
+  MIME_TYPE_APPL_COMPRESS,
+  MIME_TYPE_APPL_CPIO,
+  MIME_TYPE_APPL_DVI,
+  MIME_TYPE_APPL_GZIP,
+  MIME_TYPE_APPL_FLASH,
+  MIME_TYPE_APPL_TAR,
+  MIME_TYPE_APPL_ZIP,
+  MIME_TYPE_APPL_BZIP2,
+  MIME_TYPE_APPL_7ZIP,
+  MIME_TYPE_IMAGE_BMP,
+  MIME_TYPE_IMAGE_GIF,
+  MIME_TYPE_IMAGE_JPEG,
+  MIME_TYPE_IMAGE_PNG,
+  MIME_TYPE_IMAGE_TIFF,
+  MIME_TYPE_IMAGE_DJVU,
+  MIME_TYPE_IMAGE_ICON,
+  MIME_TYPE_BSON,
+  MIME_TYPE_TEXT_HTML,
+  MIME_TYPE_TEXT,
+  MIME_TYPE_BINARY,
+  -1,
 };
 
 const unsigned char *
@@ -133,7 +187,7 @@ mime_type_guess_file(const unsigned char *path, int check_text)
   FILE *ff = 0;
   unsigned char fbuf[1024];
   size_t flen;
-  int i, c;
+  int c;
   int binary_flag = 1;
 
   snprintf(cmdline, sizeof(cmdline), "/usr/bin/file -b \"%s\"", path);
@@ -157,10 +211,12 @@ mime_type_guess_file(const unsigned char *path, int check_text)
   }
   while (flen > 0 && isspace(fbuf[flen - 1])) fbuf[--flen] = 0;
   if (flen > 0) {
-    for (i = 0; i < MIME_TYPE_LAST; i++)
+    for (int j = 0; mime_check_order[j] >= 0; ++j) {
+      int i = mime_check_order[j];
       if (mime_types[i].file_output[0]
           && strstr(fbuf, mime_types[i].file_output))
         return i;
+    }
   }
 
   if (check_text > 0) {
@@ -221,10 +277,12 @@ mime_type_guess(const unsigned char *tmpdir,
   unlink(tmppath);
   while (flen > 0 && isspace(fbuf[flen - 1])) fbuf[--flen] = 0;
   if (flen > 0) {
-    for (i = 0; i < MIME_TYPE_LAST; i++)
+    for (int j = 0; mime_check_order[j] >= 0; ++j) {
+      int i = mime_check_order[j];
       if (mime_types[i].file_output[0]
           && strstr(fbuf, mime_types[i].file_output))
         return i;
+    }
   }
   for (i = 0; i < size; i++)
     if (!bytes[i])
