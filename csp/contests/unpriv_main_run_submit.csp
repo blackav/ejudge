@@ -311,6 +311,8 @@
         // ----(1) submit form begins here
         if (prob->type == PROB_TYPE_SELECT_ONE) {
 %><h3><s:_>Choose an answer</s:_></h3><%
+        } else if (prob->enable_vcs > 0) {
+%><h3><s:_>Set up github/gitlab integration and push solution</s:_></h3><%
         } else {
 %><h3><s:_>Submit a solution</s:_></h3><%
         }
@@ -357,21 +359,25 @@
 
           if (lang_count == 1) {
             lang_id = last_av_lang;
-%><s:hidden name="lang_id" value="lang_id" />
-<tr><td class="b0"><s:_>Language</s:_>:</td><td class="b0"><s:v value="cs->langs[lang_id]->short_name" escape="false" /> - <% if (prob && prob->custom_compile_cmd && prob->custom_compile_cmd[0] && cs->langs[lang_id]->enable_custom > 0) { %><s:v value="prob->custom_lang_name" checkExpr="" /><% } else { %><s:v value="cs->langs[lang_id]->long_name" checkExpr="" /><% } %></td></tr>
-<%
+            if (prob && prob->enable_vcs <= 0) {
+%><s:hidden name="lang_id" value="lang_id" /><%
+%><tr><td class="b0"><s:_>Language</s:_>:</td><td class="b0"><s:v value="cs->langs[lang_id]->short_name" escape="false" /> - <% if (prob && prob->custom_compile_cmd && prob->custom_compile_cmd[0] && cs->langs[lang_id]->enable_custom > 0) { %><s:v value="prob->custom_lang_name" checkExpr="" /><% } else { %><s:v value="cs->langs[lang_id]->long_name" checkExpr="" /><% } %></td></tr><%
+            }
+%><%
           } else {
             last_lang_id = get_last_language(cs, phr->user_id, &last_eoln_type);
+            if (prob && prob->enable_vcs <= 0) {
 %><tr><td class="b0"><s:_>Language</s:_>:</td><td class="b0"><s:select name="lang_id"><option value=""></option><%
-            for (i = 1; i <= cs->max_lang; i++) {
-              if (!av_langs[i]) continue;
+              for (i = 1; i <= cs->max_lang; i++) {
+                if (!av_langs[i]) continue;
 %><s:option value="i" selectedExpr="last_lang_id == i"><s:v value="cs->langs[i]->short_name" escape="false" /> - <s:v value="cs->langs[i]->long_name" checkExpr="" /></s:option><%
-            }
+              }
 %></s:select></td></tr>
 <%
+            }
           }
 %><%
-          if (cs->global->enable_eoln_select > 0) {
+          if (cs->global->enable_eoln_select > 0 && (!prob || prob->enable_vcs <= 0)) {
 %><tr><td class="b0"><s:_>Desired EOLN Type</s:_>:</td><td class="b0"><s:select name="eoln_type">
 <option value="0"></option>
 <s:option value="1" selectedExpr="last_eoln_type == 1">LF (Unix/MacOS)</s:option>
@@ -390,12 +396,14 @@
         case PROB_TYPE_STANDARD:
         case PROB_TYPE_OUTPUT_ONLY:
         case PROB_TYPE_TESTS:
-          if (prob->enable_text_form > 0) {
+          if (prob->enable_vcs <= 0) {
+            if (prob->enable_text_form > 0) {
 %><tr><td colspan="2" class="b0"><textarea name="text_form" rows="20" cols="60"></textarea></td></tr>
 <%
-          }
+            }
 %><tr><td class="b0"><s:_>File</s:_></td><td class="b0"><input type="file" name="file"/></td></tr>
 <%
+          }
           break;
         case PROB_TYPE_SHORT_ANSWER:
           last_source = 0;
@@ -475,8 +483,10 @@
             fprintf(out_f, "</tr></table></form>");
           }
         } else {
+          if (!prob || prob->enable_vcs <= 0) {
 %><tr><td class="b0"><s:_>Send!</s:_></td><td class="b0"><s:submit ac="submit-run" /></td></tr></table></form>
 <%
+          }
         }
         // ----(1) submit form ends here
       } /* (pinfo[prob_id].status & PROB_STATUS_SUBMITTABLE) */
@@ -813,8 +823,9 @@ Max Memory Used: <span id="ej-submit-max-rss"></span></p>
       target_url = target_url.replace("/cgi-bin/new-client", "/ej/client");
       target_url = target_url.replace("/cgi-bin/team", "/ej/client");
       target_url = target_url.replace("/cgi-bin/new-team", "/ej/client");
+      target_url = target_url.replace("/new-client", "/ej/client");
       $("#ej-gitlab-serial-id").val(data.result.serial_id);
-      $("#ej-gitlab-webhook-url").val(target_url + "/gitlab-webhook/S" + data.result.hook_id);
+      $("#ej-gitlab-webhook-url").val(target_url + "/vcs-webhook/S" + data.result.hook_id);
       $("#ej-gitlab-gitlab-token").val(data.result.gitlab_token);
       if (data.result.vcs_type) {
         $("#ej-gitlab-vcs-type").val(data.result.vcs_type);
@@ -848,6 +859,7 @@ Max Memory Used: <span id="ej-submit-max-rss"></span></p>
         $("#ej-gitlab-create-dialog").dialog("open");
       }
     });
+    return false;
   }
   $(function() {
     $("#ej-gitlab-create-dialog").dialog({
@@ -959,7 +971,7 @@ Max Memory Used: <span id="ej-submit-max-rss"></span></p>
     });
   });
 </script>
-<p><button id="ej-gitlab-button" onclick="on_gitlab_button()"><a><s:_>Setup Version Control System Integration</s:_></a></button></p>
+<p><button id="ej-gitlab-button" onclick="return on_gitlab_button()"><s:_>Setup Version Control System Integration</s:_></button></p>
 <%
       }
 %>
