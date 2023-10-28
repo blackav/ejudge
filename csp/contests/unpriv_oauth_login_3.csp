@@ -24,6 +24,8 @@
   struct userlist_cookie out_c = {};
   unsigned char *user_login_dup = NULL;
   int force_reg_redirect = 0;
+  const struct contest_desc *user_cnts = NULL;
+  int user_contest_id = 0;
 %><s:read var="provider" ignoreerrors="yes" /><%
 %><s:read var="job_id" ignoreerrors="yes" /><%
 
@@ -120,6 +122,19 @@
     FAIL(NEW_SRV_ERR_USERLIST_SERVER_DOWN);
   }
 
+  user_contest_id = phr->contest_id;
+  user_cnts = cnts;
+  if (cnts->user_contest_num > 0) {
+    user_contest_id = cnts->user_contest_num;
+    if (contests_get(user_contest_id, &user_cnts) < 0) {
+      FAIL(NEW_SRV_ERR_INV_CONTEST_ID);
+    }
+    if (user_cnts->user_contest_num > 0) {
+      FAIL(NEW_SRV_ERR_INV_CONTEST_ID);
+    }
+  }
+
+
   // get login
   if (!oauth_res.email || !*oauth_res.email) {
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
@@ -184,7 +199,7 @@
   }
   // user_id is known
   // get registration status
-  r = userlist_clnt_get_info(ul_conn, ULS_PRIV_GET_USER_INFO, user_id, phr->contest_id, &xml_text);
+  r = userlist_clnt_get_info(ul_conn, ULS_PRIV_GET_USER_INFO, user_id, user_contest_id, &xml_text);
   if (r < 0 || !xml_text) {
     FAIL(NEW_SRV_ERR_DATABASE_FAILED);
   }
@@ -206,7 +221,7 @@
   if (u->contests) {
     for (const struct xml_tree *p = u->contests->first_down; p; p = p->right) {
       const struct userlist_contest *tmp = (const struct userlist_contest *) p;
-      if (tmp->id == phr->contest_id) {
+      if (tmp->id == user_contest_id) {
         uc = tmp;
       }
     }
@@ -219,7 +234,7 @@
       FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
     }
     if (userlist_clnt_register_contest(ul_conn, ULS_PRIV_REGISTER_CONTEST,
-                                       user_id, phr->contest_id,
+                                       user_id, user_contest_id,
                                        &phr->ip, phr->ssl_flag) < 0) {
       FAIL(NEW_SRV_ERR_DATABASE_FAILED);
     }
@@ -227,7 +242,7 @@
     userlist_free(&u->b); u = NULL;
     xfree(xml_text); xml_text = NULL;
 
-    r = userlist_clnt_get_info(ul_conn, ULS_PRIV_GET_USER_INFO, user_id, phr->contest_id, &xml_text);
+    r = userlist_clnt_get_info(ul_conn, ULS_PRIV_GET_USER_INFO, user_id, user_contest_id, &xml_text);
     if (r < 0 || !xml_text) {
       FAIL(NEW_SRV_ERR_DATABASE_FAILED);
     }
@@ -237,7 +252,7 @@
     if (u->contests) {
       for (const struct xml_tree *p = u->contests->first_down; p; p = p->right) {
         const struct userlist_contest *tmp = (const struct userlist_contest *) p;
-        if (tmp->id == phr->contest_id) {
+        if (tmp->id == user_contest_id) {
           uc = tmp;
         }
       }
@@ -248,7 +263,7 @@
 
     // copy user name
     if (oauth_res.name && *oauth_res.name) {
-      if (userlist_clnt_edit_field(ul_conn, ULS_EDIT_FIELD, user_id, phr->contest_id, 0,
+      if (userlist_clnt_edit_field(ul_conn, ULS_EDIT_FIELD, user_id, user_contest_id, 0,
                                    USERLIST_NC_NAME, oauth_res.name) < 0) {
         FAIL(NEW_SRV_ERR_DATABASE_FAILED);
       }
