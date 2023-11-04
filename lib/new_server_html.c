@@ -895,9 +895,9 @@ ns_load_problem_plugin(
       plugin_name[i] = '_';
 
   struct problem_plugin_iface *iface = NULL;
-  iface = (struct problem_plugin_iface*) plugin_load(plugin_path,
-                                                     "problem",
-                                                     plugin_name);
+  iface = (struct problem_plugin_iface*) plugin_load_2(plugin_path,
+                                                       "problem",
+                                                       plugin_name);
   if (!iface) {
     err("%s: failed to load plugin '%s'", f, plugin_name);
     return;

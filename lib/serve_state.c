@@ -160,11 +160,14 @@ serve_state_destroy(
         xfree(state->prob_extras[i].v_alts);
       }
 
-      if (state->prob_extras[i].plugin && state->prob_extras[i].plugin_data) {
-        (*state->prob_extras[i].plugin->finalize)(state->prob_extras[i].plugin_data);
-      }
-      if (state->prob_extras[i].plugin) {
-        plugin_unload((struct ejudge_plugin_iface*) state->prob_extras[i].plugin);
+      struct ejudge_plugin_iface *iface = (struct ejudge_plugin_iface*) state->prob_extras[i].plugin;
+      if (plugin_get_refcount(iface) == 1) {
+        if (state->prob_extras[i].plugin && state->prob_extras[i].plugin_data) {
+          (*state->prob_extras[i].plugin->finalize)(state->prob_extras[i].plugin_data);
+        }
+        if (state->prob_extras[i].plugin) {
+          plugin_unload_2(iface);
+        }
       }
     }
   }
