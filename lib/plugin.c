@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2006-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2023 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -39,6 +38,7 @@ struct plugin_info
   unsigned char *name;
   void *handle;
   struct ejudge_plugin_iface *iface;
+  int refcount;
 };
 
 struct plugin_arr
@@ -161,6 +161,114 @@ plugin_unload(struct ejudge_plugin_iface *plugin)
     if (plugins.v[i]->iface == plugin)
       break;
   if (i == plugins.u) return;
+
+  xfree(plugins.v[i]->type);
+  xfree(plugins.v[i]->name);
+  dlclose(plugins.v[i]->handle);
+  xfree(plugins.v[i]);
+  for (i++; i < plugins.u; i++)
+    plugins.v[i - 1] = plugins.v[i];
+  plugins.v[i - 1] = 0;
+  plugins.u--;
+}
+
+struct ejudge_plugin_iface *
+plugin_load_2(
+        const unsigned char *path,
+        const unsigned char *type,
+        const unsigned char *name)
+{
+  int i;
+  path_t plugin_path;
+  path_t plugin_desc;
+  void *hnd;
+  struct ejudge_plugin_iface *plg;
+  unsigned char *errmsg;
+  struct plugin_info *pinfo;
+
+  if (!plugin_dir) {
+    err("plugin directory is not set");
+    return NULL;
+  }
+
+  for (i = 0; i < plugins.u; i++) {
+    if (!strcmp(plugins.v[i]->type, type)
+        && !strcmp(plugins.v[i]->name, name))
+      break;
+  }
+
+  if (i < plugins.u) {
+    ++plugins.v[i]->refcount;
+    return plugins.v[i]->iface;
+  }
+
+  if (path) {
+    snprintf(plugin_path, sizeof(plugin_path), "%s", path);
+  } else {
+    snprintf(plugin_path, sizeof(plugin_path), "%s/%s_%s.so",
+             plugin_dir, type, name);
+  }
+
+  if (!(hnd = dlopen(plugin_path, RTLD_NOW | RTLD_GLOBAL))) {
+    err("cannot load `%s': %s", plugin_path, dlerror());
+    return NULL;
+  }
+
+  snprintf(plugin_desc, sizeof(plugin_desc), "plugin_%s_%s", type, name);
+  if (!(plg = (struct ejudge_plugin_iface*) dlsym(hnd, plugin_desc))) {
+    errmsg = dlerror();
+    if (!errmsg) errmsg = "unknown error";
+    err("no plugin entry point: %s", errmsg);
+    dlclose(hnd);
+    return NULL;
+  }
+
+  if (plg->size < sizeof(*plg)) {
+    err("incompatible plugin: descriptor size too small");
+    dlclose(hnd);
+    return NULL;
+  }
+  if (plg->version != EJUDGE_PLUGIN_IFACE_VERSION) {
+    err("incompatible plugin: version mismatch");
+    dlclose(hnd);
+    return NULL;
+  }
+  if (strcmp(type, plg->type) != 0) {
+    err("incompatible plugin: type mismatch");
+    dlclose(hnd);
+    return NULL;
+  }
+  if (strcmp(name, plg->name) != 0) {
+    err("incompatible plugin: name mismatch");
+    dlclose(hnd);
+    return NULL;
+  }
+
+  XCALLOC(pinfo, 1);
+  XEXPAND2(plugins);
+
+  plugins.v[plugins.u++] = pinfo;
+  pinfo->type = xstrdup(type);
+  pinfo->name = xstrdup(name);
+  pinfo->handle = hnd;
+  pinfo->iface = plg;
+  ++pinfo->refcount;
+  return plg;
+}
+
+void
+plugin_unload_2(struct ejudge_plugin_iface *plugin)
+{
+  int i;
+
+  for (i = 0; i < plugins.u; i++)
+    if (plugins.v[i]->iface == plugin)
+      break;
+  if (i == plugins.u) return;
+
+  if (--plugins.v[i]->refcount > 0) {
+    return;
+  }
 
   xfree(plugins.v[i]->type);
   xfree(plugins.v[i]->name);
