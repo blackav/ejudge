@@ -46,4 +46,7 @@ plugin_load_2(
 void
 plugin_unload_2(struct ejudge_plugin_iface *plugin);
 
+int
+plugin_get_refcount(struct ejudge_plugin_iface *plugin);
+
 #endif /* __EJUDGE_PLUGIN_H__ */

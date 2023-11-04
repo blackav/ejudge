@@ -279,3 +279,15 @@ plugin_unload_2(struct ejudge_plugin_iface *plugin)
   plugins.v[i - 1] = 0;
   plugins.u--;
 }
+
+int
+plugin_get_refcount(struct ejudge_plugin_iface *plugin)
+{
+  for (int i = 0; i < plugins.u; i++) {
+    if (plugins.v[i]->iface == plugin) {
+      return plugins.v[i]->refcount;
+    }
+  }
+
+  return -1;
+}
