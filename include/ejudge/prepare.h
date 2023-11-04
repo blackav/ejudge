@@ -1064,6 +1064,8 @@ struct section_problem_data
   unsigned char *group_name;
   /** internal problem name */
   unsigned char *internal_name;
+  /** plugin entry point */
+  unsigned char *plugin_entry_name;
   /** problem UUID */
   unsigned char *uuid;
   /** problem directory (relative to problems or absolute) */
