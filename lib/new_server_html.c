@@ -888,11 +888,15 @@ ns_load_problem_plugin(
   }
 
   unsigned char plugin_name[1024];
-  snprintf(plugin_name, sizeof(plugin_name), "problem_%s", prob->short_name);
-  int len = strlen(plugin_name);
-  for (int i = 0; i < len; i++)
-    if (plugin_name[i] == '-')
-      plugin_name[i] = '_';
+  if (prob->plugin_entry_name && prob->plugin_entry_name[0]) {
+    snprintf(plugin_name, sizeof(plugin_name), "%s", prob->plugin_entry_name);
+  } else {
+    snprintf(plugin_name, sizeof(plugin_name), "problem_%s", prob->short_name);
+    int len = strlen(plugin_name);
+    for (int i = 0; i < len; i++)
+      if (plugin_name[i] == '-')
+        plugin_name[i] = '_';
+  }
 
   struct problem_plugin_iface *iface = NULL;
   iface = (struct problem_plugin_iface*) plugin_load_2(plugin_path,
