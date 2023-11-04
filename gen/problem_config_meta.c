@@ -128,6 +128,7 @@ static struct meta_info_item meta_info_problem_config_section_data[] =
   [META_PROBLEM_CONFIG_SECTION_long_name_en] = { META_PROBLEM_CONFIG_SECTION_long_name_en, 's', XSIZE(struct problem_config_section, long_name_en), "long_name_en", XOFFSET(struct problem_config_section, long_name_en) },
   [META_PROBLEM_CONFIG_SECTION_stand_name] = { META_PROBLEM_CONFIG_SECTION_stand_name, 's', XSIZE(struct problem_config_section, stand_name), "stand_name", XOFFSET(struct problem_config_section, stand_name) },
   [META_PROBLEM_CONFIG_SECTION_internal_name] = { META_PROBLEM_CONFIG_SECTION_internal_name, 's', XSIZE(struct problem_config_section, internal_name), "internal_name", XOFFSET(struct problem_config_section, internal_name) },
+  [META_PROBLEM_CONFIG_SECTION_plugin_entry_name] = { META_PROBLEM_CONFIG_SECTION_plugin_entry_name, 's', XSIZE(struct problem_config_section, plugin_entry_name), "plugin_entry_name", XOFFSET(struct problem_config_section, plugin_entry_name) },
   [META_PROBLEM_CONFIG_SECTION_test_dir] = { META_PROBLEM_CONFIG_SECTION_test_dir, 's', XSIZE(struct problem_config_section, test_dir), "test_dir", XOFFSET(struct problem_config_section, test_dir) },
   [META_PROBLEM_CONFIG_SECTION_test_sfx] = { META_PROBLEM_CONFIG_SECTION_test_sfx, 's', XSIZE(struct problem_config_section, test_sfx), "test_sfx", XOFFSET(struct problem_config_section, test_sfx) },
   [META_PROBLEM_CONFIG_SECTION_corr_sfx] = { META_PROBLEM_CONFIG_SECTION_corr_sfx, 's', XSIZE(struct problem_config_section, corr_sfx), "corr_sfx", XOFFSET(struct problem_config_section, corr_sfx) },

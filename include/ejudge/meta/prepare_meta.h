@@ -440,6 +440,7 @@ enum
   CNTSPROB_stand_column,
   CNTSPROB_group_name,
   CNTSPROB_internal_name,
+  CNTSPROB_plugin_entry_name,
   CNTSPROB_uuid,
   CNTSPROB_problem_dir,
   CNTSPROB_test_dir,
