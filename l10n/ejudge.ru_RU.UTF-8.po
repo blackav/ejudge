@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-06-10 07:29+0300\n"
+"POT-Creation-Date: 2023-11-04 11:43+0300\n"
 "PO-Revision-Date: 2022-01-12 13:17+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -3686,6 +3686,9 @@ msgstr "Установить статус регистрации в PENDING, т�
 
 msgid "Set the registration status of the selected users to REJECTED"
 msgstr "Установить статус регистрации в REJECTED, то есть отказать в участии"
+
+msgid "Set up github/gitlab integration and push solution"
+msgstr "Настройте интеграцию с github/gitlab и засылайте решение"
 
 msgid "Settings"
 msgstr "Настройки"
