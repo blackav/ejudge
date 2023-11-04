@@ -155,6 +155,7 @@ struct problem_config_section
   unsigned char *long_name_en;
   unsigned char *stand_name;
   unsigned char *internal_name;
+  unsigned char *plugin_entry_name;
   unsigned char *test_dir;
   unsigned char *test_sfx;
   unsigned char *corr_sfx;
