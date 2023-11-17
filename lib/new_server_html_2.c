@@ -6379,6 +6379,7 @@ ns_scan_one_compile_queue(
       mtime = stb.st_mtime;
     }
   }
+  closedir(d); d = NULL;
 
   if (info->sa == info->su) {
     if (!(info->sa *= 2)) info->sa = 16;
