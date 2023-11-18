@@ -1,6 +1,6 @@
 # -*- Makefile -*-
 
-# Copyright (C) 2006-2022 Alexander Chernov <cher@ejudge.ru>
+# Copyright (C) 2006-2023 Alexander Chernov <cher@ejudge.ru>
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -136,6 +136,7 @@ CHKCFILES =\
  cmp_file.c\
  cmp_file_nospace.c\
  cmp_sexpr.c\
+ cmp_binary.c\
  cmp_yesno.c
 
 STYLECFILES =\
