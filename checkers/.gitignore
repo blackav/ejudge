@@ -29,3 +29,4 @@ testinfo.c
 testinfo.h
 testinfo_lookup.c
 gvaluer
+cmp_binary
