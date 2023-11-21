@@ -94,6 +94,7 @@
 static char const sandbox_dir[] = "/sandbox";
 static char const alternatives_dir[] = "/etc/alternatives";
 static char const compile_dir[] = "/home/judges/compile";
+static char const etc_java_dir[] = "/etc/java";
 
 static char safe_dir_path[PATH_MAX];
 static char proc_path[PATH_MAX] = "/proc";
@@ -636,12 +637,27 @@ reconfigure_fs(void)
                     ffatal("failed to mount %s to %s: %s", alternatives_dir, alt_path, strerror(errno));
                 }
             }
+            char java_path[PATH_MAX];
+            int need_etc_java = 0;
+            if (lstat(etc_java_dir, &stb) >= 0 && S_ISDIR(stb.st_mode)) {
+                // need to preserve /etc/java
+                need_etc_java = 1;
+                if (snprintf(java_path, sizeof(java_path), "%s/java", bind_path) >= (int) sizeof(java_path)) abort();
+                if ((r = mount(etc_java_dir, java_path, NULL, MS_BIND, NULL)) < 0) {
+                    ffatal("failed to mount %s to %s: %s", etc_java_dir, java_path, strerror(errno));
+                }
+            }
             if ((r = mount(bind_path, "/etc", NULL, MS_BIND, NULL)) < 0) {
                 ffatal("failed to mount %s as /etc: %s", bind_path, strerror(errno));
             }
             if (need_alternatives) {
                 if ((r = mount(alt_path, alternatives_dir, NULL, MS_BIND, NULL)) < 0) {
                     ffatal("failed to mount %s to %s: %s", alt_path, alternatives_dir, strerror(errno));
+                }
+            }
+            if (need_etc_java) {
+                if ((r = mount(java_path, etc_java_dir, NULL, MS_BIND, NULL)) < 0) {
+                    ffatal("failed to mount %s to %s: %s", java_path, etc_java_dir, strerror(errno));
                 }
             }
         } else {

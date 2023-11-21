@@ -540,6 +540,7 @@ invoke_compiler(
     if (req->container_options && req->container_options[0]) {
       task_AppendContainerOptions(tsk, req->container_options);
     }
+    task_SetLanguageName(tsk, lang->short_name);
   }
 
   if (req->env_num > 0) {
