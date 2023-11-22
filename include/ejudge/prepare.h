@@ -1423,8 +1423,10 @@ struct section_language_data
   unsigned char *compile_server_id;
   /** suffix to use for multi-header setup */
   unsigned char *multi_header_suffix;
-  /** additional container options -- appended to the problem container_options */
+  /** additional container options for testing -- appended to the problem container_options */
   unsigned char *container_options;
+  /** additional container options for compilation */
+  unsigned char *compiler_container_options;
   /** language-specific clean-up command */
   unsigned char *clean_up_cmd;
   /** additional run environment in file */

@@ -708,6 +708,7 @@ static struct meta_info_item meta_info_section_language_data_data[] =
   [CNTSLANG_compile_server_id] = { CNTSLANG_compile_server_id, 's', XSIZE(struct section_language_data, compile_server_id), "compile_server_id", XOFFSET(struct section_language_data, compile_server_id) },
   [CNTSLANG_multi_header_suffix] = { CNTSLANG_multi_header_suffix, 's', XSIZE(struct section_language_data, multi_header_suffix), "multi_header_suffix", XOFFSET(struct section_language_data, multi_header_suffix) },
   [CNTSLANG_container_options] = { CNTSLANG_container_options, 's', XSIZE(struct section_language_data, container_options), "container_options", XOFFSET(struct section_language_data, container_options) },
+  [CNTSLANG_compiler_container_options] = { CNTSLANG_compiler_container_options, 's', XSIZE(struct section_language_data, compiler_container_options), "compiler_container_options", XOFFSET(struct section_language_data, compiler_container_options) },
   [CNTSLANG_clean_up_cmd] = { CNTSLANG_clean_up_cmd, 's', XSIZE(struct section_language_data, clean_up_cmd), "clean_up_cmd", XOFFSET(struct section_language_data, clean_up_cmd) },
   [CNTSLANG_run_env_file] = { CNTSLANG_run_env_file, 's', XSIZE(struct section_language_data, run_env_file), "run_env_file", XOFFSET(struct section_language_data, run_env_file) },
   [CNTSLANG_clean_up_env_file] = { CNTSLANG_clean_up_env_file, 's', XSIZE(struct section_language_data, clean_up_env_file), "clean_up_env_file", XOFFSET(struct section_language_data, clean_up_env_file) },

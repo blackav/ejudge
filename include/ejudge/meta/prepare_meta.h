@@ -633,6 +633,7 @@ enum
   CNTSLANG_compile_server_id,
   CNTSLANG_multi_header_suffix,
   CNTSLANG_container_options,
+  CNTSLANG_compiler_container_options,
   CNTSLANG_clean_up_cmd,
   CNTSLANG_run_env_file,
   CNTSLANG_clean_up_env_file,
