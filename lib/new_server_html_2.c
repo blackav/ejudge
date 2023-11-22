@@ -3073,6 +3073,65 @@ ns_reset_stand_filter(
   serve_state_destroy_stand_expr(u);
 }
 
+static const unsigned char safe_filename_chars[] =
+{
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, '!', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ',', '-', '.', 0,
+  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ':', 0, 0, '=', 0, 0,
+  '@', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O',
+  'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '[', 0, ']', '^', '_',
+  0, 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o',
+  'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 0, 0, 0, '~', 0,
+  '\x80', '\x81', '\x82', '\x83', '\x84', '\x85', '\x86', '\x87', '\x88', '\x89', '\x8a', '\x8b', '\x8c', '\x8d', '\x8e', '\x8f',
+  '\x90', '\x91', '\x92', '\x93', '\x94', '\x95', '\x96', '\x97', '\x98', '\x99', '\x9a', '\x9b', '\x9c', '\x9d', '\x9e', '\x9f',
+  '\xa0', '\xa1', '\xa2', '\xa3', '\xa4', '\xa5', '\xa6', '\xa7', '\xa8', '\xa9', '\xaa', '\xab', '\xac', '\xad', '\xae', '\xaf',
+  '\xb0', '\xb1', '\xb2', '\xb3', '\xb4', '\xb5', '\xb6', '\xb7', '\xb8', '\xb9', '\xba', '\xbb', '\xbc', '\xbd', '\xbe', '\xbf',
+  '\xc0', '\xc1', '\xc2', '\xc3', '\xc4', '\xc5', '\xc6', '\xc7', '\xc8', '\xc9', '\xca', '\xcb', '\xcc', '\xcd', '\xce', '\xcf',
+  '\xd0', '\xd1', '\xd2', '\xd3', '\xd4', '\xd5', '\xd6', '\xd7', '\xd8', '\xd9', '\xda', '\xdb', '\xdc', '\xdd', '\xde', '\xdf',
+  '\xe0', '\xe1', '\xe2', '\xe3', '\xe4', '\xe5', '\xe6', '\xe7', '\xe8', '\xe9', '\xea', '\xeb', '\xec', '\xed', '\xee', '\xef',
+  '\xf0', '\xf1', '\xf2', '\xf3', '\xf4', '\xf5', '\xf6', '\xf7', '\xf8', '\xf9', '\xfa', '\xfb', '\xfc', '\xfd', '\xfe', '\xff',
+};
+
+static const unsigned char *
+filename_escape_string(
+        const unsigned char *filename,
+        unsigned char **p_alloc_str)
+{
+  size_t esc_count = 0;
+  size_t char_count = 0;
+
+  const unsigned char *p = filename;
+  for (; *p; ++p) {
+    if (safe_filename_chars[*p]) {
+      ++char_count;
+    } else {
+      ++esc_count;
+    }
+  }
+
+  if (!esc_count) {
+    // no escaping required
+    return filename;
+  }
+
+  unsigned char *out = xmalloc(char_count + esc_count * 3 + 1);
+  p = filename;
+  unsigned char *q = out;
+  for (; *p; ++p) {
+    if (safe_filename_chars[*p]) {
+      *q++ = *p;
+    } else {
+      sprintf(q, "%%%02x", *p);
+      q += 3;
+    }
+  }
+  *q = 0;
+  xfree(*p_alloc_str);
+  *p_alloc_str = out;
+  return out;
+}
+
 void
 ns_download_runs(
         const struct contest_desc *cnts,
@@ -3105,13 +3164,20 @@ ns_download_runs(
   int total_runs, run_id;
   struct run_entry info;
   path_t dir4, dir4a, dir5;
-  unsigned char prob_buf[1024], *prob_ptr;
-  unsigned char login_buf[1024], *login_ptr;
+  unsigned char prob_buf[1024];
+  unsigned char login_buf[1024];
   unsigned char name_buf[1024];
-  unsigned char lang_buf[1024], *lang_ptr;
+  unsigned char lang_buf[1024];
   unsigned char prob_dir_buf[1024];
+  const unsigned char *prob_ptr;
+  const unsigned char *login_ptr;
+  const unsigned char *lang_ptr;
   const unsigned char *name_ptr;
   const unsigned char *suff_ptr;
+  unsigned char *prob_alloc = NULL;
+  unsigned char *login_alloc = NULL;
+  unsigned char *lang_alloc = NULL;
+  unsigned char *name_alloc = NULL;
   unsigned char *file_name_str = 0;
   size_t file_name_size = 0, file_name_exp_len;
   unsigned char *sep, *ptr;
@@ -3189,13 +3255,14 @@ ns_download_runs(
     if (!(login_ptr = teamdb_get_login(cs->teamdb_state, info.user_id))) {
       snprintf(login_buf, sizeof(login_buf), "!user_%d", info.user_id);
       login_ptr = login_buf;
+    } else {
+      login_ptr = filename_escape_string(login_ptr, &login_alloc);
     }
     if (!(name_ptr = teamdb_get_name_2(cs->teamdb_state, info.user_id))) {
       snprintf(name_buf, sizeof(name_buf), "!user_%d", info.user_id);
       name_ptr = name_buf;
     } else {
-      //filename_armor_bytes(name_buf, sizeof(name_buf), name_ptr, strlen(name_ptr));
-      //name_ptr = name_buf;
+      name_ptr = filename_escape_string(name_ptr, &name_alloc);
     }
     if (info.prob_id > 0 && info.prob_id <= cs->max_prob
         && cs->probs[info.prob_id]) {
@@ -3213,9 +3280,9 @@ ns_download_runs(
         prob_ptr = prob_dir_buf;
         while (*prob_ptr == '.') ++prob_ptr;
       } else if (use_problem_extid && cs->probs[info.prob_id]->extid && cs->probs[info.prob_id]->extid[0]) {
-        prob_ptr = cs->probs[info.prob_id]->extid;
+        prob_ptr = filename_escape_string(cs->probs[info.prob_id]->extid, &prob_alloc);
       } else {
-        prob_ptr = cs->probs[info.prob_id]->short_name;
+        prob_ptr = filename_escape_string(cs->probs[info.prob_id]->short_name, &prob_alloc);
       }
     } else {
       snprintf(prob_buf, sizeof(prob_buf), "!prob_%d", info.prob_id);
@@ -3223,7 +3290,7 @@ ns_download_runs(
     }
     if (info.lang_id > 0 && info.lang_id <= cs->max_lang
         && cs->langs[info.lang_id]) {
-      lang_ptr = cs->langs[info.lang_id]->short_name;
+      lang_ptr = filename_escape_string(cs->langs[info.lang_id]->short_name, &lang_alloc);
       suff_ptr = cs->langs[info.lang_id]->src_sfx;
     } else if (info.lang_id) {
       snprintf(lang_buf, sizeof(lang_buf), "!lang_%d", info.lang_id);
@@ -3406,6 +3473,10 @@ ns_download_runs(
   }
   xfree(file_bytes);
   xfree(file_name_str);
+  xfree(prob_alloc);
+  xfree(login_alloc);
+  xfree(lang_alloc);
+  xfree(name_alloc);
 }
 
 static int
