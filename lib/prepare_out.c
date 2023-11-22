@@ -978,6 +978,9 @@ prepare_unparse_lang(
   if (lang->container_options && *lang->container_options) {
     fprintf(f, "container_options = \"%s\"\n", CARMOR(lang->container_options));
   }
+  if (lang->compiler_container_options && *lang->compiler_container_options) {
+    fprintf(f, "compiler_container_options = \"%s\"\n", CARMOR(lang->compiler_container_options));
+  }
   if (lang->clean_up_cmd && *lang->clean_up_cmd) {
     fprintf(f, "clean_up_cmd = \"%s\"\n", CARMOR(lang->clean_up_cmd));
   }

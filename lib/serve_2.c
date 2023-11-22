@@ -1676,8 +1676,10 @@ serve_compile_request(
   cp.run_block = &rx;
   cp.env_num = -1;
   cp.env_vars = (unsigned char**) compiler_env;
-  if (compiler_container_options) {
+  if (compiler_container_options && compiler_container_options[0] && compiler_container_options[0][0]) {
     cp.container_options = compiler_container_options[0];
+  } else if (lang && lang->compiler_container_options && lang->compiler_container_options[0]) {
+    cp.container_options = lang->compiler_container_options;
   }
   cp.style_check_only = !!style_check_only;
   cp.max_vm_size = ~(ej_size64_t) 0;
