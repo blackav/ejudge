@@ -6708,6 +6708,7 @@ priv_download_runs(
   int file_name_mask = 0;
   int use_problem_extid = 0;
   int use_problem_dir = 0;
+  int enable_hidden = 0;
   const unsigned char *s;
   char *ss = 0;
   const unsigned char *problem_dir_prefix = NULL;
@@ -6743,6 +6744,8 @@ priv_download_runs(
     use_problem_extid = 1;
   if (hr_cgi_param(phr, "use_problem_dir", &s) > 0)
     use_problem_dir = 1;
+  if (hr_cgi_param(phr, "enable_hidden", &s) > 0)
+    enable_hidden = 1;
 
   hr_cgi_param(phr, "problem_dir_prefix", &problem_dir_prefix);
 
@@ -6772,7 +6775,7 @@ priv_download_runs(
   info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
 
   ns_download_runs(cnts, cs, fout, log_f, run_selection, dir_struct, file_name_mask, use_problem_extid, use_problem_dir,
-                   problem_dir_prefix, mask_size, mask);
+                   problem_dir_prefix, enable_hidden, mask_size, mask);
 
   if (cs->xuser_state) {
     cs->xuser_state->vt->set_problem_dir_prefix(cs->xuser_state, phr->user_id, problem_dir_prefix);

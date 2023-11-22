@@ -3085,6 +3085,7 @@ ns_download_runs(
         int use_problem_extid,
         int use_problem_dir,
         const unsigned char *problem_dir_prefix,
+        int enable_hidden,
         size_t run_mask_size,
         unsigned long *run_mask)
 {
@@ -3183,7 +3184,7 @@ ns_download_runs(
         && info.status != RUN_PENDING && info.status != RUN_DISQUALIFIED)
       continue;
     if (!run_is_normal_or_transient_status(info.status)) continue;
-    if (info.is_hidden) continue;
+    if (enable_hidden <= 0 && info.is_hidden) continue;
 
     if (!(login_ptr = teamdb_get_login(cs->teamdb_state, info.user_id))) {
       snprintf(login_buf, sizeof(login_buf), "!user_%d", info.user_id);

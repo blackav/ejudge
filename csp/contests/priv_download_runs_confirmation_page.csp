@@ -55,6 +55,10 @@
 <tr><td><input type="radio" name="run_selection" value="4" checked="checked"/></td><td><s:_>Download OK, PR, RJ, IG, PD, DQ runs</s:_></td></tr>
 </table>
 
+<table>
+<tr><td><input type="checkbox" name="enable_hidden" checked="checked"/></td><td><s:_>Include hidden (#) runs</s:_></td></tr>
+</table>
+
 <h2><s:_>File name pattern</s:_></h2>
 <table>
 <tr><td><input type="checkbox" name="file_pattern_contest" checked="checked"/></td><td><s:_>Use Contest Id</s:_></td></tr>

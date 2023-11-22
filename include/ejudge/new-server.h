@@ -448,6 +448,7 @@ ns_download_runs(
         int use_problem_extid,
         int use_problem_dir,
         const unsigned char *problem_dir_prefix,
+        int enable_hidden,
         size_t run_mask_size,
         unsigned long *run_mask);
 
