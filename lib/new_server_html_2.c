@@ -3163,11 +3163,14 @@ ns_download_runs(
   int total_runs, run_id;
   struct run_entry info;
   path_t dir4, dir4a, dir5;
-  unsigned char prob_buf[1024], *prob_ptr;
-  unsigned char login_buf[1024], *login_ptr;
+  unsigned char prob_buf[1024];
+  unsigned char login_buf[1024];
   unsigned char name_buf[1024];
-  unsigned char lang_buf[1024], *lang_ptr;
+  unsigned char lang_buf[1024];
   unsigned char prob_dir_buf[1024];
+  const unsigned char *prob_ptr;
+  const unsigned char *login_ptr;
+  const unsigned char *lang_ptr;
   const unsigned char *name_ptr;
   const unsigned char *suff_ptr;
   unsigned char *file_name_str = 0;
