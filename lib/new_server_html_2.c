@@ -3093,7 +3093,7 @@ static const unsigned char safe_filename_chars[] =
   '\xf0', '\xf1', '\xf2', '\xf3', '\xf4', '\xf5', '\xf6', '\xf7', '\xf8', '\xf9', '\xfa', '\xfb', '\xfc', '\xfd', '\xfe', '\xff',
 };
 
-static __attribute__((unused)) const unsigned char *
+static const unsigned char *
 filename_escape_string(
         const unsigned char *filename,
         unsigned char **p_alloc_str)
@@ -3255,13 +3255,14 @@ ns_download_runs(
     if (!(login_ptr = teamdb_get_login(cs->teamdb_state, info.user_id))) {
       snprintf(login_buf, sizeof(login_buf), "!user_%d", info.user_id);
       login_ptr = login_buf;
+    } else {
+      login_ptr = filename_escape_string(login_ptr, &login_alloc);
     }
     if (!(name_ptr = teamdb_get_name_2(cs->teamdb_state, info.user_id))) {
       snprintf(name_buf, sizeof(name_buf), "!user_%d", info.user_id);
       name_ptr = name_buf;
     } else {
-      //filename_armor_bytes(name_buf, sizeof(name_buf), name_ptr, strlen(name_ptr));
-      //name_ptr = name_buf;
+      name_ptr = filename_escape_string(name_ptr, &name_alloc);
     }
     if (info.prob_id > 0 && info.prob_id <= cs->max_prob
         && cs->probs[info.prob_id]) {
@@ -3279,9 +3280,9 @@ ns_download_runs(
         prob_ptr = prob_dir_buf;
         while (*prob_ptr == '.') ++prob_ptr;
       } else if (use_problem_extid && cs->probs[info.prob_id]->extid && cs->probs[info.prob_id]->extid[0]) {
-        prob_ptr = cs->probs[info.prob_id]->extid;
+        prob_ptr = filename_escape_string(cs->probs[info.prob_id]->extid, &prob_alloc);
       } else {
-        prob_ptr = cs->probs[info.prob_id]->short_name;
+        prob_ptr = filename_escape_string(cs->probs[info.prob_id]->short_name, &prob_alloc);
       }
     } else {
       snprintf(prob_buf, sizeof(prob_buf), "!prob_%d", info.prob_id);
@@ -3289,7 +3290,7 @@ ns_download_runs(
     }
     if (info.lang_id > 0 && info.lang_id <= cs->max_lang
         && cs->langs[info.lang_id]) {
-      lang_ptr = cs->langs[info.lang_id]->short_name;
+      lang_ptr = filename_escape_string(cs->langs[info.lang_id]->short_name, &lang_alloc);
       suff_ptr = cs->langs[info.lang_id]->src_sfx;
     } else if (info.lang_id) {
       snprintf(lang_buf, sizeof(lang_buf), "!lang_%d", info.lang_id);
