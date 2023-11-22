@@ -3127,6 +3127,7 @@ filename_escape_string(
     }
   }
   *q = 0;
+  xfree(*p_alloc_str);
   *p_alloc_str = out;
   return out;
 }
@@ -3173,6 +3174,10 @@ ns_download_runs(
   const unsigned char *lang_ptr;
   const unsigned char *name_ptr;
   const unsigned char *suff_ptr;
+  unsigned char *prob_alloc = NULL;
+  unsigned char *login_alloc = NULL;
+  unsigned char *lang_alloc = NULL;
+  unsigned char *name_alloc = NULL;
   unsigned char *file_name_str = 0;
   size_t file_name_size = 0, file_name_exp_len;
   unsigned char *sep, *ptr;
@@ -3467,6 +3472,10 @@ ns_download_runs(
   }
   xfree(file_bytes);
   xfree(file_name_str);
+  xfree(prob_alloc);
+  xfree(login_alloc);
+  xfree(lang_alloc);
+  xfree(name_alloc);
 }
 
 static int
