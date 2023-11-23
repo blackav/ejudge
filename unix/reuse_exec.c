@@ -2560,7 +2560,13 @@ task_WaitContainer(tTask *tsk)
   int prc_exit_status = *resp_p;
   int prc_exit_code = 0;
   int prc_term_signal = 0;
-  if (*resp_p == 't') {
+  if (*resp_p == 'v') {
+    // security violation
+    ++resp_p;
+  } else if (*resp_p == 'm') {
+    // memory limit exceeded
+    ++resp_p;
+  } else if (*resp_p == 't') {
     // time-limit exceeded
     ++resp_p;
   } else if (*resp_p == 'r') {
@@ -2698,7 +2704,13 @@ task_WaitContainer(tTask *tsk)
 
   tsk->was_memory_limit = 0;
   tsk->was_security_violation = 0;
-  if (prc_exit_status == 't') {
+  if (prc_exit_status == 'v') {
+    tsk->state = TSK_SIGNALED;
+    tsk->was_security_violation = 1;
+  } else if (prc_exit_status == 'm') {
+    tsk->state = TSK_SIGNALED;
+    tsk->was_memory_limit = 1;
+  } else if (prc_exit_status == 't') {
     tsk->state = TSK_SIGNALED;
     tsk->was_timeout = 1;
     tsk->was_real_timeout = 0;
