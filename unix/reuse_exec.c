@@ -1029,11 +1029,13 @@ task_EnableMemoryLimitError(tTask *tsk)
   ASSERT(tsk);
 
 #ifdef __linux__
+  /*
   if (linux_fix_time_flag < 0) linux_set_fix_flag();
   ASSERT(linux_ms_time_limit >= 0);
   ASSERT(linux_fix_time_flag >= 0);
 
   if (linux_ptrace_code <= 0) return -1;
+  */
 
   tsk->enable_memory_limit_error = 1;
   return 0;
@@ -1049,11 +1051,13 @@ task_EnableSecurityViolationError(tTask *tsk)
   ASSERT(tsk);
 
 #ifdef __linux__
+  /*
   if (linux_fix_time_flag < 0) linux_set_fix_flag();
   ASSERT(linux_ms_time_limit >= 0);
   ASSERT(linux_fix_time_flag >= 0);
 
   if (linux_ptrace_code <= 0) return -1;
+  */
 
   tsk->enable_security_violation_error = 1;
   return 0;
@@ -1726,6 +1730,12 @@ task_StartContainer(tTask *tsk)
   }
   if (tsk->disable_vm_size_limit) {
     fprintf(spec_f, "mV");
+  }
+  if (tsk->enable_memory_limit_error) {
+    fprintf(spec_f, "mM");
+  }
+  if (tsk->enable_security_violation_error) {
+    fprintf(spec_f, "mE");
   }
 
   if (tsk->max_stack_size > 0) {
