@@ -141,6 +141,8 @@ static int enable_compile_mode = 0;
 static int enable_run = 0;
 static int enable_loopback = 0;
 static int enable_vm_limit = 1;
+static int enable_mem_limit_detect = 0;
+static int enable_security_detect = 0;
 
 static int enable_seccomp = 1;
 static int enable_sys_execve = 0;
@@ -1962,6 +1964,8 @@ extract_size(const char **ppos, int init_offset, const char *opt_name)
  *   mr     - preserve original /run directory
  *   ml     - setup lo inteface inside the container
  *   mV     - explicitly disable setting of VM size limit
+ *   mM     - enable memory limit error detection
+ *   mE     - enable security violation detection
  *   w<DIR> - working directory (cwd by default)
  *   rn     - redirect to/from /dev/null for standard streams
  *   rm     - merge stdout and stderr output
@@ -2103,6 +2107,12 @@ main(int argc, char *argv[])
                 opt += 2;
             } else if (*opt == 'm' && opt[1] == 'V') {
                 enable_vm_limit = 0;
+                opt += 2;
+            } else if (*opt == 'm' && opt[1] == 'M') {
+                enable_mem_limit_detect = 1;
+                opt += 2;
+            } else if (*opt == 'm' && opt[1] == 'E') {
+                enable_security_detect = 1;
                 opt += 2;
             } else if (*opt == 'w') {
                 working_dir = extract_string(&opt, 1, "w");
@@ -2644,6 +2654,8 @@ main(int argc, char *argv[])
         long long prc_stop_time_us = 0;
         long long prc_vm_size = -1;
         int prc_time_exceeded = 0;
+        int prc_out_of_memory = 0;
+        int prc_security_violation = 0;
 
         int flag = 1;
         while (flag) {
@@ -2802,7 +2814,26 @@ main(int argc, char *argv[])
             real_time_us = limit_real_time_ms * 1000LL;
         }
 
-        if (prc_time_exceeded) {
+        // heuristics to detect OOM condition
+        if (!prc_time_exceeded && !prc_real_time_exceeded
+            && enable_mem_limit_detect
+            && enable_cgroup && limit_rss_size > 0
+            /* && WIFSIGNALED(prc_status) && WTERMSIG(prc_status) == SIGKILL */
+            && (long long) prc_usage.ru_maxrss * 1024 > limit_rss_size) {
+            prc_out_of_memory = 1;
+        }
+
+        // treat termination by SIGSYS as security violation
+        if (enable_security_detect
+            && WIFSIGNALED(prc_status) && WTERMSIG(prc_status) == SIGSYS) {
+            prc_security_violation = 1;
+        }
+
+        if (prc_security_violation) {
+            dprintf(response_fd, "v");
+        } else if (prc_out_of_memory) {
+            dprintf(response_fd, "m");
+        } else if (prc_time_exceeded) {
             dprintf(response_fd, "t");
         } else if (prc_real_time_exceeded) {
             dprintf(response_fd, "r");
