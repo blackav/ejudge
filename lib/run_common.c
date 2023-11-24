@@ -4203,7 +4203,12 @@ run_one_test(
         task_SetVMSize(tsk, max_vm_size);
       if (max_rss_size > 0)
         task_SetRSSSize(tsk, max_rss_size);
+      /*
       if (tst->enable_memory_limit_error > 0 && srgp->enable_memory_limit_error > 0 && srgp->secure_run > 0) {
+        task_EnableMemoryLimitError(tsk);
+      }
+      */
+      if (srgp->enable_memory_limit_error > 0) {
         task_EnableMemoryLimitError(tsk);
       }
       if (srpp->disable_vm_size_limit > 0)
@@ -4297,6 +4302,7 @@ run_one_test(
     task_FormatEnv(tsk, "EJUDGE_JAVA_COMPILER", "%s", srgp->lang_short_name);
   }
 
+  /*
   if (tst && tst->enable_memory_limit_error > 0 && srgp->secure_run > 0 && srgp->detect_violations > 0 && srgp->enable_container <= 0) {
     switch (tst->secure_exec_type_val) {
     case SEXEC_TYPE_STATIC:
@@ -4305,6 +4311,10 @@ run_one_test(
       task_EnableSecurityViolationError(tsk);
       break;
     }
+  }
+  */
+  if (srgp->detect_violations > 0) {
+    task_EnableSecurityViolationError(tsk);
   }
 
 #ifdef HAVE_TERMIOS_H
