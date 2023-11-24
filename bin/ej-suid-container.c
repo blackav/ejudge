@@ -2818,7 +2818,7 @@ main(int argc, char *argv[])
         if (!prc_time_exceeded && !prc_real_time_exceeded
             && enable_mem_limit_detect
             && enable_cgroup && limit_rss_size > 0
-            && WIFSIGNALED(prc_status) && WTERMSIG(prc_status) == SIGKILL
+            /* && WIFSIGNALED(prc_status) && WTERMSIG(prc_status) == SIGKILL */
             && (long long) prc_usage.ru_maxrss * 1024 > limit_rss_size) {
             prc_out_of_memory = 1;
         }
