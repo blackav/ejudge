@@ -16501,7 +16501,10 @@ unpriv_save_userprob(
     }
   }
 
-  up_plugin->vt->save(up_plugin, serial_id, ue);
+  if (up_plugin->vt->save(up_plugin, serial_id, ue) < 0) {
+    err_num = NEW_SRV_ERR_DATABASE_FAILED;
+    goto done;
+  }
 
   ok = 1;
 
