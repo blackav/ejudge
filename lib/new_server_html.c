@@ -19465,7 +19465,7 @@ ns_compile_dir_ready(
   struct compile_packet_file *files = NULL;
   size_t fileu = 0, filea = 0;
   DIR *d = NULL;
-  __attribute__((unused)) int ur;
+  __attribute__((unused)) int _;
 
   d = opendir(dir_dir);
   if (!d) {
@@ -19493,7 +19493,7 @@ ns_compile_dir_ready(
 
   for (size_t i = 0; i < fileu; ++i) {
     unsigned char pkt_path[PATH_MAX];
-    ur = snprintf(pkt_path, sizeof(pkt_path), "%s/%s", dir_dir, files[i].name);
+    _ = snprintf(pkt_path, sizeof(pkt_path), "%s/%s", dir_dir, files[i].name);
     files[i].pkt = read_compile_reply_packet_from_file(files[i].name, pkt_path);
     if (files[i].pkt) {
       files[i].contest_id = files[i].pkt->contest_id;
@@ -19660,7 +19660,7 @@ ns_run_dir_ready(
   struct run_packet_file *files = NULL;
   size_t fileu = 0, filea = 0;
   DIR *d = NULL;
-  __attribute__((unused)) int ur;
+  __attribute__((unused)) int _;
 
   d = opendir(dir_dir);
   if (!d) {
@@ -19688,7 +19688,7 @@ ns_run_dir_ready(
 
   for (size_t i = 0; i < fileu; ++i) {
     unsigned char pkt_path[PATH_MAX];
-    ur = snprintf(pkt_path, sizeof(pkt_path), "%s/%s", dir_dir, files[i].name);
+    _ = snprintf(pkt_path, sizeof(pkt_path), "%s/%s", dir_dir, files[i].name);
     files[i].pkt = read_run_reply_packet_from_file(files[i].name, pkt_path);
     if (files[i].pkt) {
       files[i].contest_id = files[i].pkt->contest_id;
