@@ -19362,7 +19362,7 @@ ns_handle_http_request(
   }
 }
 
-static __attribute__((unused)) int
+static int
 read_from_file(
         const unsigned char *path,
         unsigned char **p_buf,
@@ -19475,7 +19475,7 @@ struct compile_packet_file
   int contest_id;
 };
 
-static struct compile_reply_packet *
+static __attribute__((unused)) struct compile_reply_packet *
 read_compile_reply_packet_from_file(
         const unsigned char *name,
         const unsigned char *path)
@@ -19603,19 +19603,13 @@ ns_compile_dir_ready(
     if (read_from_file(pkt_path, &files[i].buf, &files[i].size) < 0) {
       continue;
     }
-    /*
-static __attribute__((unused)) int
-read_from_file(
-        const unsigned char *path,
-        unsigned char **p_buf,
-        size_t *p_size)
-     */
-    /*
-    files[i].pkt = read_compile_reply_packet_from_file(files[i].name, pkt_path);
+    if (compile_reply_packet_read(files[i].size, files[i].buf, &files[i].pkt) < 0) {
+      err("%s: invalid packet '%s'", __FUNCTION__, pkt_path);
+      continue;
+    }
     if (files[i].pkt) {
       files[i].contest_id = files[i].pkt->contest_id;
     }
-    */
   }
 
   qsort(files, fileu, sizeof(files[0]), compile_packet_sort_func);
@@ -19670,6 +19664,7 @@ done:
   if (d) closedir(d);
   for (size_t i = 0; i < fileu; ++i) {
     free(files[i].name);
+    free(files[i].buf);
     compile_reply_packet_free(files[i].pkt);
   }
   free(files);
