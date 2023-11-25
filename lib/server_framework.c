@@ -107,6 +107,24 @@ struct directory_watch
   int ready;
 };
 
+struct post_select
+{
+  struct post_select *prev, *next;
+  const struct ejudge_cfg *config;
+  unsigned char *dir1;
+  unsigned char *dir2;
+  void *user;
+  void (*callback)(
+        const struct ejudge_cfg *config,
+        struct server_framework_state *state,
+        const unsigned char *dir1,
+        const unsigned char *dir2,
+        long long cur_time_us,
+        long long *p_update_time_us,
+        void *user);
+  long long update_time_us;
+};
+
 struct server_framework_state
 {
   struct server_framework_params *params;
@@ -139,6 +157,8 @@ struct server_framework_state
 
   struct directory_watch *dw_first;
   struct directory_watch *dw_last;
+
+  struct post_select *ps_first, *ps_last;
 };
 
 static int
@@ -1688,6 +1708,16 @@ nsf_main_loop(struct server_framework_state *state)
     // call post-select callback
     if (state->params->post_select) state->params->post_select(state);
 
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    current_time_us = tv.tv_sec * 1000000LL + tv.tv_usec;
+    metrics.data->update_time = tv;
+
+    for (struct post_select *ps = state->ps_first; ps; ps = ps->next) {
+      ps->callback(ps->config, state, ps->dir1, ps->dir2, current_time_us,
+                   &ps->update_time_us, ps->user);
+    }
+
     // process watches
     for (pw = state->w_first; pw; pw = pw->next) {
       if (pw->pending_removal || pw->w.fd < 0) continue;
@@ -1699,11 +1729,6 @@ nsf_main_loop(struct server_framework_state *state)
       if (mode) pw->w.callback(state, &pw->w, mode);
     }
     remove_pending_watches(state);
-
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    current_time_us = tv.tv_sec * 1000000LL + tv.tv_usec;
-    metrics.data->update_time = tv;
 
     // new WebSocket connections
     if (state->ws_fd >= 0 && FD_ISSET(state->ws_fd, &rset)) {
@@ -2156,4 +2181,37 @@ ws_client_set_client_auth(struct client_state *p, struct client_auth *auth)
     nsf_client_auth_free(pp->auth);
   }
   pp->auth = auth;
+}
+
+void
+nsf_add_post_select(
+        const struct ejudge_cfg *config,
+        struct server_framework_state *state,
+        const unsigned char *dir1,
+        const unsigned char *dir2,
+        void (*callback)(
+                const struct ejudge_cfg *config,
+                struct server_framework_state *state,
+                const unsigned char *dir1,
+                const unsigned char *dir2,
+                long long cur_time_us,
+                long long *p_update_time_us,
+                void *user),
+        void *user)
+{
+  struct post_select *ps = NULL;
+
+  XCALLOC(ps, 1);
+  ps->prev = state->ps_last;
+  if (ps->prev) {
+    ps->prev->next = ps;
+  } else {
+    state->ps_first = ps;
+  }
+  state->ps_last = ps;
+  ps->config = config;
+  if (dir1) ps->dir1 = xstrdup(dir1);
+  if (dir2) ps->dir2 = xstrdup(dir2);
+  ps->user = user;
+  ps->callback = callback;
 }

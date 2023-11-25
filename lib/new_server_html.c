@@ -19362,22 +19362,15 @@ ns_handle_http_request(
   }
 }
 
-struct compile_packet_file
+static int
+read_from_file(
+        const unsigned char *path,
+        unsigned char **p_buf,
+        size_t *p_size)
 {
-  unsigned char *name;
-  struct compile_reply_packet *pkt;
-  int contest_id;
-};
-
-static struct compile_reply_packet *
-read_compile_reply_packet_from_file(
-        const unsigned char *name,
-        const unsigned char *path)
-{
+  int fd = -1;
   int unlink_on_fail = 1;
   unsigned char *buf = NULL;
-  struct compile_reply_packet *comp_pkt = NULL;
-  int fd = -1;
 
   fd = open(path, O_RDONLY | O_CLOEXEC | O_NOCTTY | O_NOFOLLOW | O_NONBLOCK, 0);
   if (fd < 0) {
@@ -19391,7 +19384,8 @@ read_compile_reply_packet_from_file(
 
   struct stat stb;
   if (fstat(fd, &stb)) {
-    abort();
+    err("%s: fstat failed: %s", __FUNCTION__, os_ErrorMsg());
+    goto fail;
   }
   if (!S_ISREG(stb.st_mode)) {
     err("%s: not regular file '%s'", __FUNCTION__, path);
@@ -19424,24 +19418,62 @@ read_compile_reply_packet_from_file(
     p += rr;
     rm -= rr;
   }
-  close(fd); fd = -1;
 
-  if (compile_reply_packet_read(size, buf, &comp_pkt) < 0) {
-    err("%s: invalid packet '%s'", __FUNCTION__, path);
-    goto fail;
-  }
-
-  info("%s: compile packet '%s' read", __FUNCTION__, name);
-  free(buf);
+  close(fd);
   unlink(path);
-  return comp_pkt;
+  *p_buf = buf;
+  *p_size = size;
+  return 0;
 
 fail:;
   if (fd >= 0) close(fd);
-  free(buf);
   if (unlink_on_fail) unlink(path);
-  return NULL;
+  xfree(buf);
+  return -1;
 }
+
+static int
+write_to_file(const unsigned char *path, const unsigned char *buf, size_t size)
+{
+  int fd = -1;
+
+  fd = open(path, O_WRONLY | O_CREAT | O_EXCL | O_TRUNC | O_CLOEXEC | O_NOCTTY | O_NOFOLLOW | O_NONBLOCK, 0600);
+  if (fd < 0) {
+    err("%s: failed to open '%s': %s", __FUNCTION__, path, os_ErrorMsg());
+    return -1;
+  }
+
+  const unsigned char *p = buf;
+  while (size > 0) {
+    ssize_t ww = write(fd, p, size);
+    if (ww < 0) {
+      err("%s: write failed '%s': %s", __FUNCTION__, path, os_ErrorMsg());
+      close(fd);
+      unlink(path);
+      return -1;
+    }
+    if (!ww) abort();
+    p += ww;
+    size -= ww;
+  }
+
+  if (close(fd) < 0) {
+    err("%s: close failed '%s': %s", __FUNCTION__, path, os_ErrorMsg());
+    unlink(path);
+    return -1;
+  }
+
+  return 0;
+}
+
+struct compile_packet_file
+{
+  unsigned char *name;
+  unsigned char *buf;
+  size_t size;
+  struct compile_reply_packet *pkt;
+  int contest_id;
+};
 
 static int
 compile_packet_sort_func(const void *p1, const void *p2)
@@ -19465,7 +19497,7 @@ ns_compile_dir_ready(
   struct compile_packet_file *files = NULL;
   size_t fileu = 0, filea = 0;
   DIR *d = NULL;
-  __attribute__((unused)) int ur;
+  __attribute__((unused)) int _;
 
   d = opendir(dir_dir);
   if (!d) {
@@ -19493,8 +19525,14 @@ ns_compile_dir_ready(
 
   for (size_t i = 0; i < fileu; ++i) {
     unsigned char pkt_path[PATH_MAX];
-    ur = snprintf(pkt_path, sizeof(pkt_path), "%s/%s", dir_dir, files[i].name);
-    files[i].pkt = read_compile_reply_packet_from_file(files[i].name, pkt_path);
+    _ = snprintf(pkt_path, sizeof(pkt_path), "%s/%s", dir_dir, files[i].name);
+    if (read_from_file(pkt_path, &files[i].buf, &files[i].size) < 0) {
+      continue;
+    }
+    if (compile_reply_packet_read(files[i].size, files[i].buf, &files[i].pkt) < 0) {
+      err("%s: invalid packet '%s'", __FUNCTION__, pkt_path);
+      continue;
+    }
     if (files[i].pkt) {
       files[i].contest_id = files[i].pkt->contest_id;
     }
@@ -19516,9 +19554,13 @@ ns_compile_dir_ready(
       prev_contest_id = files[i].contest_id;
 
       if (contests_get(prev_contest_id, &cnts) < 0 || !cnts) {
-        // FIXME: probably it is a transient error, and this contest will be
-        // available shortly?
-        err("%s: dropping packets because of invalid contest %d", __FUNCTION__, prev_contest_id);
+        unsigned char pp_path[PATH_MAX];
+        _ = snprintf(pp_path, sizeof(pp_path), "%s/postponed/%s", dir, files[i].name);
+        if (write_to_file(pp_path, files[i].buf, files[i].size) >= 0) {
+          info("%s: packet '%s' postponed because of unavailable contest %d", __FUNCTION__, files[i].name, files[i].contest_id);
+        }
+
+        prev_contest_id = 0;
         cnts = NULL;
         extra = NULL;
         cs = NULL;
@@ -19531,7 +19573,13 @@ ns_compile_dir_ready(
       if (serve_state_load_contest(extra, config, prev_contest_id, ul_conn,
                                    &callbacks, 0, 0,
                                    ns_load_problem_plugin) < 0) {
-        err("%s: dropping packets because of unavailable contest %d", __FUNCTION__, prev_contest_id);
+        unsigned char pp_path[PATH_MAX];
+        _ = snprintf(pp_path, sizeof(pp_path), "%s/postponed/%s", dir, files[i].name);
+        if (write_to_file(pp_path, files[i].buf, files[i].size) >= 0) {
+          info("%s: packet '%s' postponed because of unavailable contest %d", __FUNCTION__, files[i].name, files[i].contest_id);
+        }
+
+        prev_contest_id = 0;
         cnts = NULL;
         extra = NULL;
         cs = NULL;
@@ -19552,89 +19600,18 @@ done:
   if (d) closedir(d);
   for (size_t i = 0; i < fileu; ++i) {
     free(files[i].name);
+    free(files[i].buf);
     compile_reply_packet_free(files[i].pkt);
   }
   free(files);
-}
-
-static struct run_reply_packet *
-read_run_reply_packet_from_file(
-        const unsigned char *name,
-        const unsigned char *path)
-{
-  int unlink_on_fail = 1;
-  unsigned char *buf = NULL;
-  struct run_reply_packet *run_pkt = NULL;
-  int fd = -1;
-
-  fd = open(path, O_RDONLY | O_CLOEXEC | O_NOCTTY | O_NOFOLLOW | O_NONBLOCK, 0);
-  if (fd < 0) {
-    if (errno != ENOENT) {
-      err("%s: failed to open '%s': %s", __FUNCTION__, path, os_ErrorMsg());
-    } else {
-      unlink_on_fail = 0;
-    }
-    goto fail;
-  }
-
-  struct stat stb;
-  if (fstat(fd, &stb)) {
-    abort();
-  }
-  if (!S_ISREG(stb.st_mode)) {
-    err("%s: not regular file '%s'", __FUNCTION__, path);
-    goto fail;
-  }
-  if (stb.st_size <= 0) {
-    err("%s: empty file '%s'", __FUNCTION__, path);
-    goto fail;
-  }
-  size_t size = stb.st_size;
-  if (size > 1024 * 128) {
-    err("%s: file '%s' too big: %zu", __FUNCTION__, path, size);
-    goto fail;
-  }
-
-  buf = xmalloc(size + 1);
-  buf[size] = 0;
-  unsigned char *p = buf;
-  size_t rm = size;
-  while (rm > 0) {
-    ssize_t rr = read(fd, p, rm);
-    if (rr < 0) {
-      err("%s: read error on '%s': %s", __FUNCTION__, path, os_ErrorMsg());
-      goto fail;
-    }
-    if (!rr) {
-      err("%s: unexpected EOF on '%s'", __FUNCTION__, path);
-      goto fail;
-    }
-    p += rr;
-    rm -= rr;
-  }
-  close(fd); fd = -1;
-
-  if (run_reply_packet_read(size, buf, &run_pkt) < 0) {
-    err("%s: invalid packet '%s'", __FUNCTION__, path);
-    goto fail;
-  }
-
-  info("%s: run packet '%s' read", __FUNCTION__, name);
-  free(buf);
-  unlink(path);
-  return run_pkt;
-
-fail:;
-  if (fd >= 0) close(fd);
-  free(buf);
-  if (unlink_on_fail) unlink(path);
-  return NULL;
 }
 
 struct run_packet_file
 {
   unsigned char *name;
   struct run_reply_packet *pkt;
+  unsigned char *buf;
+  size_t size;
   int contest_id;
 };
 
@@ -19660,7 +19637,7 @@ ns_run_dir_ready(
   struct run_packet_file *files = NULL;
   size_t fileu = 0, filea = 0;
   DIR *d = NULL;
-  __attribute__((unused)) int ur;
+  __attribute__((unused)) int _;
 
   d = opendir(dir_dir);
   if (!d) {
@@ -19688,8 +19665,14 @@ ns_run_dir_ready(
 
   for (size_t i = 0; i < fileu; ++i) {
     unsigned char pkt_path[PATH_MAX];
-    ur = snprintf(pkt_path, sizeof(pkt_path), "%s/%s", dir_dir, files[i].name);
-    files[i].pkt = read_run_reply_packet_from_file(files[i].name, pkt_path);
+    _ = snprintf(pkt_path, sizeof(pkt_path), "%s/%s", dir_dir, files[i].name);
+    if (read_from_file(pkt_path, &files[i].buf, &files[i].size) < 0) {
+      continue;
+    }
+    if (run_reply_packet_read(files[i].size, files[i].buf, &files[i].pkt) < 0) {
+      err("%s: invalid packet '%s'", __FUNCTION__, pkt_path);
+      continue;
+    }
     if (files[i].pkt) {
       files[i].contest_id = files[i].pkt->contest_id;
     }
@@ -19711,9 +19694,13 @@ ns_run_dir_ready(
       prev_contest_id = files[i].contest_id;
 
       if (contests_get(prev_contest_id, &cnts) < 0 || !cnts) {
-        // FIXME: probably it is a transient error, and this contest will be
-        // available shortly?
-        err("%s: dropping packets because of invalid contest %d", __FUNCTION__, prev_contest_id);
+        unsigned char pp_path[PATH_MAX];
+        _ = snprintf(pp_path, sizeof(pp_path), "%s/postponed/%s", dir, files[i].name);
+        if (write_to_file(pp_path, files[i].buf, files[i].size) >= 0) {
+          info("%s: packet '%s' postponed because of unavailable contest %d", __FUNCTION__, files[i].name, files[i].contest_id);
+        }
+
+        prev_contest_id = 0;
         cnts = NULL;
         extra = NULL;
         cs = NULL;
@@ -19726,7 +19713,13 @@ ns_run_dir_ready(
       if (serve_state_load_contest(extra, config, prev_contest_id, ul_conn,
                                    &callbacks, 0, 0,
                                    ns_load_problem_plugin) < 0) {
-        err("%s: dropping packets because of unavailable contest %d", __FUNCTION__, prev_contest_id);
+        unsigned char pp_path[PATH_MAX];
+        _ = snprintf(pp_path, sizeof(pp_path), "%s/postponed/%s", dir, files[i].name);
+        if (write_to_file(pp_path, files[i].buf, files[i].size) >= 0) {
+          info("%s: packet '%s' postponed because of unavailable contest %d", __FUNCTION__, files[i].name, files[i].contest_id);
+        }
+
+        prev_contest_id = 0;
         cnts = NULL;
         extra = NULL;
         cs = NULL;
@@ -19749,7 +19742,78 @@ done:
   if (d) closedir(d);
   for (size_t i = 0; i < fileu; ++i) {
     free(files[i].name);
+    free(files[i].buf);
     run_reply_packet_free(files[i].pkt);
   }
   free(files);
+}
+
+void
+ns_postponed_callback(
+        const struct ejudge_cfg *config,
+        struct server_framework_state *state,
+        const unsigned char *dir1,
+        const unsigned char *dir2,
+        long long cur_time_us,
+        long long *p_update_time_us,
+        void *user)
+{
+  if (*p_update_time_us + 60000000 > cur_time_us) {
+    // perform the check once per 60s, now do nothing
+    return;
+  }
+
+  *p_update_time_us = cur_time_us;
+
+  if (!dir1 || !dir2) return;
+
+  // dir1 - output directory (dir)
+  // dir2 - postponed directory (postponed)
+
+  unsigned char **ns = NULL;
+  size_t ns_u = 0;
+  size_t ns_a = 0;
+
+  DIR *d = opendir(dir2);
+  if (!d) {
+    err("%s: failed to open directory '%s': %s", __FUNCTION__, dir2, os_ErrorMsg());
+    return;
+  }
+  struct dirent *dd;
+  while ((dd = readdir(d))) {
+    if (!strcmp(dd->d_name, ".") || !strcmp(dd->d_name, "..")) continue;
+
+    if (ns_u == ns_a) {
+      if (!ns_a) {
+        ns_a = 32;
+      } else {
+        ns_a *= 2;
+      }
+      XREALLOC(ns, ns_a);
+    }
+    ns[ns_u++] = xstrdup(dd->d_name);
+  }
+  closedir(d); d = NULL;
+
+  for (size_t i = 0; i < ns_u; ++i) {
+    int __attribute__((unused)) _;
+    unsigned char p1[PATH_MAX];
+    unsigned char p2[PATH_MAX];
+
+    _ = snprintf(p2, sizeof(p2), "%s/%s", dir2, ns[i]);
+    _ = snprintf(p1, sizeof(p1), "%s/%s", dir1, ns[i]);
+    struct stat stbuf;
+    if (stat(p2, &stbuf) >= 0 && S_ISREG(stbuf.st_mode)) {
+      if (rename(p2, p1) < 0) {
+        err("%s: rename '%s'->'%s' failed: %s", __FUNCTION__, p2, p1, os_ErrorMsg());
+      } else {
+        info("%s: retry packet '%s' in dir '%s'", __FUNCTION__, ns[i], dir2);
+      }
+    }
+  }
+
+  for (size_t i = 0; i < ns_u; ++i) {
+    xfree(ns[i]);
+  }
+  xfree(ns);
 }
