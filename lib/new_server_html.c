@@ -19758,4 +19758,62 @@ ns_postponed_callback(
         long long *p_update_time_us,
         void *user)
 {
+  if (*p_update_time_us + 60000000 > cur_time_us) {
+    // perform the check once per 60s, now do nothing
+    return;
+  }
+
+  *p_update_time_us = cur_time_us;
+
+  if (!dir1 || !dir2) return;
+
+  // dir1 - output directory (dir)
+  // dir2 - postponed directory (postponed)
+
+  unsigned char **ns = NULL;
+  size_t ns_u = 0;
+  size_t ns_a = 0;
+
+  DIR *d = opendir(dir2);
+  if (!d) {
+    err("%s: failed to open directory '%s': %s", __FUNCTION__, dir2, os_ErrorMsg());
+    return;
+  }
+  struct dirent *dd;
+  while ((dd = readdir(d))) {
+    if (!strcmp(dd->d_name, ".") || !strcmp(dd->d_name, "..")) continue;
+
+    if (ns_u == ns_a) {
+      if (!ns_a) {
+        ns_a = 32;
+      } else {
+        ns_a *= 2;
+      }
+      XREALLOC(ns, ns_a);
+    }
+    ns[ns_u++] = xstrdup(dd->d_name);
+  }
+  closedir(d); d = NULL;
+
+  for (size_t i = 0; i < ns_u; ++i) {
+    int __attribute__((unused)) _;
+    unsigned char p1[PATH_MAX];
+    unsigned char p2[PATH_MAX];
+
+    _ = snprintf(p2, sizeof(p2), "%s/%s", dir2, ns[i]);
+    _ = snprintf(p1, sizeof(p1), "%s/%s", dir1, ns[i]);
+    struct stat stbuf;
+    if (stat(p2, &stbuf) >= 0 && S_ISREG(stbuf.st_mode)) {
+      if (rename(p2, p1) < 0) {
+        err("%s: rename '%s'->'%s' failed: %s", __FUNCTION__, p2, p1, os_ErrorMsg());
+      } else {
+        info("%s: retry packet '%s' in dir '%s'", __FUNCTION__, ns[i], dir2);
+      }
+    }
+  }
+
+  for (size_t i = 0; i < ns_u; ++i) {
+    xfree(ns[i]);
+  }
+  xfree(ns);
 }
