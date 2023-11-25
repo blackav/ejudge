@@ -19437,7 +19437,7 @@ write_to_file(const unsigned char *path, const unsigned char *buf, size_t size)
 {
   int fd = -1;
 
-  fd = open(path, O_WRONLY | O_CREAT | O_EXCL | O_TRUNC | O_CLOEXEC | O_NOCTTY | O_NOFOLLOW | O_NONBLOCK, 0);
+  fd = open(path, O_WRONLY | O_CREAT | O_EXCL | O_TRUNC | O_CLOEXEC | O_NOCTTY | O_NOFOLLOW | O_NONBLOCK, 0600);
   if (fd < 0) {
     err("%s: failed to open '%s': %s", __FUNCTION__, path, os_ErrorMsg());
     return -1;
