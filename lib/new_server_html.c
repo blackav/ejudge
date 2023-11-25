@@ -19469,6 +19469,8 @@ write_to_file(const unsigned char *path, const unsigned char *buf, size_t size)
 struct compile_packet_file
 {
   unsigned char *name;
+  unsigned char *buf;
+  size_t size;
   struct compile_reply_packet *pkt;
   int contest_id;
 };
@@ -19598,10 +19600,22 @@ ns_compile_dir_ready(
   for (size_t i = 0; i < fileu; ++i) {
     unsigned char pkt_path[PATH_MAX];
     _ = snprintf(pkt_path, sizeof(pkt_path), "%s/%s", dir_dir, files[i].name);
+    if (read_from_file(pkt_path, &files[i].buf, &files[i].size) < 0) {
+      continue;
+    }
+    /*
+static __attribute__((unused)) int
+read_from_file(
+        const unsigned char *path,
+        unsigned char **p_buf,
+        size_t *p_size)
+     */
+    /*
     files[i].pkt = read_compile_reply_packet_from_file(files[i].name, pkt_path);
     if (files[i].pkt) {
       files[i].contest_id = files[i].pkt->contest_id;
     }
+    */
   }
 
   qsort(files, fileu, sizeof(files[0]), compile_packet_sort_func);
