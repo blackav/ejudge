@@ -866,6 +866,7 @@ setup_spool_dirs(const struct ejudge_cfg *config, struct server_framework_state 
   }
 
   nsf_add_directory_watch(config, state, compile_status_buf, compile_report_buf, NULL, ns_compile_dir_ready, NULL);
+  nsf_add_post_select(config, state, compile_status_dir_buf, compile_status_pp_buf, ns_postponed_callback, NULL);
 #endif
 
 #if defined EJUDGE_RUN_SPOOL_DIR
@@ -915,6 +916,7 @@ setup_spool_dirs(const struct ejudge_cfg *config, struct server_framework_state 
   nsf_add_directory_watch(config, state,
                           run_status_buf, run_report_buf, run_full_archive_buf,
                           ns_run_dir_ready, NULL);
+  nsf_add_post_select(config, state, run_status_dir_buf, run_status_pp_buf, ns_postponed_callback, NULL);
 #endif /* EJUDGE_RUN_SPOOL_DIR */
 }
 

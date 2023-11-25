@@ -991,4 +991,14 @@ ns_load_problem_plugin(
         struct problem_extra_info *extra,
         const struct section_problem_data *prob);
 
+void
+ns_postponed_callback(
+        const struct ejudge_cfg *config,
+        struct server_framework_state *state,
+        const unsigned char *dir1,
+        const unsigned char *dir2,
+        long long cur_time_us,
+        long long *p_update_time_us,
+        void *user);
+
 #endif /* __NEW_SERVER_H__ */
