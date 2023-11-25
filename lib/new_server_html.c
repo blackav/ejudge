@@ -19680,7 +19680,7 @@ done:
   free(files);
 }
 
-static struct run_reply_packet *
+static __attribute__((unused)) struct run_reply_packet *
 read_run_reply_packet_from_file(
         const unsigned char *name,
         const unsigned char *path)
@@ -19758,6 +19758,8 @@ struct run_packet_file
 {
   unsigned char *name;
   struct run_reply_packet *pkt;
+  unsigned char *buf;
+  size_t size;
   int contest_id;
 };
 
@@ -19812,7 +19814,13 @@ ns_run_dir_ready(
   for (size_t i = 0; i < fileu; ++i) {
     unsigned char pkt_path[PATH_MAX];
     _ = snprintf(pkt_path, sizeof(pkt_path), "%s/%s", dir_dir, files[i].name);
-    files[i].pkt = read_run_reply_packet_from_file(files[i].name, pkt_path);
+    if (read_from_file(pkt_path, &files[i].buf, &files[i].size) < 0) {
+      continue;
+    }
+    if (run_reply_packet_read(files[i].size, files[i].buf, &files[i].pkt) < 0) {
+      err("%s: invalid packet '%s'", __FUNCTION__, pkt_path);
+      continue;
+    }
     if (files[i].pkt) {
       files[i].contest_id = files[i].pkt->contest_id;
     }
@@ -19872,6 +19880,7 @@ done:
   if (d) closedir(d);
   for (size_t i = 0; i < fileu; ++i) {
     free(files[i].name);
+    free(files[i].buf);
     run_reply_packet_free(files[i].pkt);
   }
   free(files);
