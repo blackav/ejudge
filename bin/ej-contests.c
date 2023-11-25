@@ -835,12 +835,14 @@ setup_spool_dirs(const struct ejudge_cfg *config, struct server_framework_state 
   unsigned char compile_status_dir_buf[PATH_MAX];
   unsigned char compile_status_in_buf[PATH_MAX];
   unsigned char compile_status_out_buf[PATH_MAX];
+  unsigned char compile_status_pp_buf[PATH_MAX];
 
   r = snprintf(compile_status_buf, sizeof(compile_status_buf), "%s/%s/status", compile_spool_dir, contest_server_id);
   r = snprintf(compile_report_buf, sizeof(compile_report_buf), "%s/%s/report", compile_spool_dir, contest_server_id);
   r = snprintf(compile_status_dir_buf, sizeof(compile_status_dir_buf), "%s/dir", compile_status_buf);
   r = snprintf(compile_status_in_buf, sizeof(compile_status_in_buf), "%s/in", compile_status_buf);
   r = snprintf(compile_status_out_buf, sizeof(compile_status_out_buf), "%s/out", compile_status_buf);
+  r = snprintf(compile_status_pp_buf, sizeof(compile_status_pp_buf), "%s/postponed", compile_status_buf);
 
   const unsigned char *compile_group = NULL;
 #if defined EJUDGE_COMPILE_USER
@@ -859,6 +861,9 @@ setup_spool_dirs(const struct ejudge_cfg *config, struct server_framework_state 
   if (os_MakeDirPath2(compile_status_out_buf, "0700", NULL) < 0) {
     startup_error("failed to create compile spool: %s", os_ErrorMsg());
   }
+  if (os_MakeDirPath2(compile_status_pp_buf, "0700", NULL) < 0) {
+    startup_error("failed to create compile spool: %s", os_ErrorMsg());
+  }
 
   nsf_add_directory_watch(config, state, compile_status_buf, compile_report_buf, NULL, ns_compile_dir_ready, NULL);
 #endif
@@ -870,6 +875,7 @@ setup_spool_dirs(const struct ejudge_cfg *config, struct server_framework_state 
   unsigned char run_status_dir_buf[PATH_MAX];
   unsigned char run_status_in_buf[PATH_MAX];
   unsigned char run_status_out_buf[PATH_MAX];
+  unsigned char run_status_pp_buf[PATH_MAX];
   unsigned char run_report_buf[PATH_MAX];
   unsigned char run_full_archive_buf[PATH_MAX];
 
@@ -879,6 +885,7 @@ setup_spool_dirs(const struct ejudge_cfg *config, struct server_framework_state 
   r = snprintf(run_status_dir_buf, sizeof(run_status_dir_buf), "%s/dir", run_status_buf);
   r = snprintf(run_status_in_buf, sizeof(run_status_in_buf), "%s/in", run_status_buf);
   r = snprintf(run_status_out_buf, sizeof(run_status_out_buf), "%s/out", run_status_buf);
+  r = snprintf(run_status_pp_buf, sizeof(run_status_pp_buf), "%s/postponed", run_status_buf);
 
   if (os_MakeDirPath(run_report_buf, 0700) < 0) {
     startup_error("failed to create run spool '%s': %s",
@@ -899,6 +906,10 @@ setup_spool_dirs(const struct ejudge_cfg *config, struct server_framework_state 
   if (os_MakeDirPath(run_status_out_buf, 0700) < 0) {
     startup_error("failed to create run spool '%s': %s",
                   run_status_out_buf, os_ErrorMsg());
+  }
+  if (os_MakeDirPath(run_status_pp_buf, 0700) < 0) {
+    startup_error("failed to create run spool '%s': %s",
+                  run_status_pp_buf, os_ErrorMsg());
   }
 
   nsf_add_directory_watch(config, state,
