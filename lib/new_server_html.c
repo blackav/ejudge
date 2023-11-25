@@ -19362,6 +19362,76 @@ ns_handle_http_request(
   }
 }
 
+static __attribute__((unused)) int
+read_from_file(
+        const unsigned char *path,
+        unsigned char **p_buf,
+        size_t *p_size)
+{
+  int fd = -1;
+  int unlink_on_fail = 1;
+  unsigned char *buf = NULL;
+
+  fd = open(path, O_RDONLY | O_CLOEXEC | O_NOCTTY | O_NOFOLLOW | O_NONBLOCK, 0);
+  if (fd < 0) {
+    if (errno != ENOENT) {
+      err("%s: failed to open '%s': %s", __FUNCTION__, path, os_ErrorMsg());
+    } else {
+      unlink_on_fail = 0;
+    }
+    goto fail;
+  }
+
+  struct stat stb;
+  if (fstat(fd, &stb)) {
+    err("%s: fstat failed: %s", __FUNCTION__, os_ErrorMsg());
+    goto fail;
+  }
+  if (!S_ISREG(stb.st_mode)) {
+    err("%s: not regular file '%s'", __FUNCTION__, path);
+    goto fail;
+  }
+  if (stb.st_size <= 0) {
+    err("%s: empty file '%s'", __FUNCTION__, path);
+    goto fail;
+  }
+  size_t size = stb.st_size;
+  if (size > 1024 * 128) {
+    err("%s: file '%s' too big: %zu", __FUNCTION__, path, size);
+    goto fail;
+  }
+
+  buf = xmalloc(size + 1);
+  buf[size] = 0;
+  unsigned char *p = buf;
+  size_t rm = size;
+  while (rm > 0) {
+    ssize_t rr = read(fd, p, rm);
+    if (rr < 0) {
+      err("%s: read error on '%s': %s", __FUNCTION__, path, os_ErrorMsg());
+      goto fail;
+    }
+    if (!rr) {
+      err("%s: unexpected EOF on '%s'", __FUNCTION__, path);
+      goto fail;
+    }
+    p += rr;
+    rm -= rr;
+  }
+
+  close(fd);
+  unlink(path);
+  *p_buf = buf;
+  *p_size = size;
+  return 0;
+
+fail:;
+  if (fd >= 0) close(fd);
+  if (unlink_on_fail) unlink(path);
+  xfree(buf);
+  return -1;
+}
+
 struct compile_packet_file
 {
   unsigned char *name;
