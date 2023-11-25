@@ -19628,9 +19628,13 @@ ns_compile_dir_ready(
       prev_contest_id = files[i].contest_id;
 
       if (contests_get(prev_contest_id, &cnts) < 0 || !cnts) {
-        // FIXME: probably it is a transient error, and this contest will be
-        // available shortly?
-        err("%s: dropping packets because of invalid contest %d", __FUNCTION__, prev_contest_id);
+        unsigned char pp_path[PATH_MAX];
+        _ = snprintf(pp_path, sizeof(pp_path), "%s/postponed/%s", dir, files[i].name);
+        if (write_to_file(pp_path, files[i].buf, files[i].size) >= 0) {
+          info("%s: packet '%s' postponed because of unavailable contest %d", __FUNCTION__, files[i].name, files[i].contest_id);
+        }
+
+        prev_contest_id = 0;
         cnts = NULL;
         extra = NULL;
         cs = NULL;
@@ -19643,7 +19647,13 @@ ns_compile_dir_ready(
       if (serve_state_load_contest(extra, config, prev_contest_id, ul_conn,
                                    &callbacks, 0, 0,
                                    ns_load_problem_plugin) < 0) {
-        err("%s: dropping packets because of unavailable contest %d", __FUNCTION__, prev_contest_id);
+        unsigned char pp_path[PATH_MAX];
+        _ = snprintf(pp_path, sizeof(pp_path), "%s/postponed/%s", dir, files[i].name);
+        if (write_to_file(pp_path, files[i].buf, files[i].size) >= 0) {
+          info("%s: packet '%s' postponed because of unavailable contest %d", __FUNCTION__, files[i].name, files[i].contest_id);
+        }
+
+        prev_contest_id = 0;
         cnts = NULL;
         extra = NULL;
         cs = NULL;
