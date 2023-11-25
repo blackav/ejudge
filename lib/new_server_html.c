@@ -19432,6 +19432,40 @@ fail:;
   return -1;
 }
 
+static __attribute__((unused)) int
+write_to_file(const unsigned char *path, const unsigned char *buf, size_t size)
+{
+  int fd = -1;
+
+  fd = open(path, O_WRONLY | O_CREAT | O_EXCL | O_TRUNC | O_CLOEXEC | O_NOCTTY | O_NOFOLLOW | O_NONBLOCK, 0);
+  if (fd < 0) {
+    err("%s: failed to open '%s': %s", __FUNCTION__, path, os_ErrorMsg());
+    return -1;
+  }
+
+  const unsigned char *p = buf;
+  while (size > 0) {
+    ssize_t ww = write(fd, p, size);
+    if (ww < 0) {
+      err("%s: write failed '%s': %s", __FUNCTION__, path, os_ErrorMsg());
+      close(fd);
+      unlink(path);
+      return -1;
+    }
+    if (!ww) abort();
+    p += ww;
+    size -= ww;
+  }
+
+  if (close(fd) < 0) {
+    err("%s: close failed '%s': %s", __FUNCTION__, path, os_ErrorMsg());
+    unlink(path);
+    return -1;
+  }
+
+  return 0;
+}
+
 struct compile_packet_file
 {
   unsigned char *name;
