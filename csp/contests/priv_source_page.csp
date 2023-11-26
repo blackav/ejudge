@@ -53,6 +53,8 @@
   const struct userlist_user *u = NULL;
   const struct userlist_user_info *ui = NULL;
   unsigned char avatar_url[1024];
+  unsigned char *vcs_url = NULL;
+  int src_res = -1;
 
   avatar_url[0] = 0;
 
@@ -180,6 +182,25 @@
       snprintf(avatar_url, sizeof(avatar_url), "%s?SID=%llx&key=%s&action=%d",
                phr->self_url, phr->session_id, ui->avatar_id, NEW_SRV_ACTION_GET_AVATAR);
     }
+  }
+
+  int need_src = 1;
+  if (prob && prob->type > 0 && re.mime_type > 0) {
+    need_src = 0;
+  } else if (lang && lang->binary) {
+    need_src = 0;
+  } else if (re.is_imported) {
+    need_src = 0;
+  } else if (src_flags < 0) {
+    need_src = 0;
+  }
+  if (need_src) {
+    src_res = generic_read_file(&src_text, 0, &src_len, src_flags, 0, src_path, "");
+  }
+
+  if (prob && prob->enable_vcs > 0 && re.is_vcs > 0 && src_text) {
+    vcs_url = ns_get_vcs_snapshot_url(cs, phr, phr->contest_id,
+      re.user_id, re.prob_id, src_text);
   }
 
   snprintf(title, sizeof(title), "%s %d", _("Viewing run"), run_id);
@@ -510,6 +531,15 @@ function setDivVisibility(oper, value)
 <% } %>
 
 </div>
+<%
+  if (vcs_url && *vcs_url) {
+%>
+<div>
+<p>[<a target="_blank" href="<s:v value="vcs_url" escape="false" />">Browse files</a>]</p>
+</div>
+<%
+  }
+%>
 </div>
 <hr />
 
@@ -529,7 +559,7 @@ function setDivVisibility(oper, value)
   } else if (lang && lang->binary) {
 %><p><s:_>The submission is binary and thus is not shown.</s:_></p>
 <%  } else if (!re.is_imported) {
-    if (src_flags < 0 || generic_read_file(&src_text, 0, &src_len, src_flags, 0, src_path, "") < 0) {
+    if (src_flags < 0 || src_res < 0) {
 %>
 <big><font color="red"><s:_>Cannot read source text!</s:_></font></big>
 <%    } else {
@@ -809,4 +839,5 @@ cleanup:
   xfree(txt_text);
   xfree(other_runs);
   xfree(other_uuids);
+  xfree(vcs_url);
 %>
