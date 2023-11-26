@@ -254,6 +254,8 @@ gitlab_webhook_handler(
         goto done;
     }
 
+    info("cloning repository %s", ue->vcs_url);
+
     git_task = task_New();
     task_AddArg(git_task, "/usr/bin/git");
     task_AddArg(git_task, "clone");

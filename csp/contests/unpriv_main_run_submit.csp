@@ -878,9 +878,14 @@ Max Memory Used: <span id="ej-submit-max-rss"></span></p>
               action: 'create-userprob'
             },
             success: function(data) {
-              activate_edit_dialog(data);
+              if (data.ok) {
+                activate_edit_dialog(data);
+              } else {
+                alert(data.error.message + ": " + data.error.log_id);
+              }
             },
             error: function(xhr, options, err) {
+              alert(err);
             }
           });
         },
@@ -919,8 +924,12 @@ Max Memory Used: <span id="ej-submit-max-rss"></span></p>
               action: 'save-userprob'
             },
             success: function(data) {
+              if (!data.ok) {
+                alert(data.error.message + ": " + data.error.log_id);
+              }
             },
             error: function(xhr, options, err) {
+              alert(err);
             }
           });
         },

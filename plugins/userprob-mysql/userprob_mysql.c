@@ -23,7 +23,7 @@
 #include "ejudge/xalloc.h"
 #include "ejudge/errlog.h"
 
-#define USERPROB_DB_VERSION 2
+#define USERPROB_DB_VERSION 3
 
 struct userprob_mysql_data
 {
@@ -88,7 +88,7 @@ static const char create_query[] =
 "    vcs_url VARCHAR(1024) DEFAULT NULL,\n"
 "    vcs_subdir VARCHAR(1024) DEFAULT NULL,\n"
 "    vcs_branch_spec VARCHAR(1024) DEFAULT NULL,\n"
-"    ssh_private_key VARCHAR(1024) DEFAULT NULL,\n"
+"    ssh_private_key VARCHAR(4096) DEFAULT NULL,\n"
 "    last_event VARCHAR(128) DEFAULT NULL,\n"
 "    last_revision VARCHAR(128) DEFAULT NULL,\n"
 "    message VARCHAR(1024) DEFAULT NULL,\n"
@@ -164,6 +164,10 @@ check_database(
             if (mi->simple_fquery(md, "ALTER TABLE %suserprobs ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin ;", md->table_prefix) < 0)
                 goto fail;
             if (mi->simple_fquery(md, "ALTER TABLE %suserprobs MODIFY COLUMN lang_name VARCHAR(64) DEFAULT NULL, MODIFY COLUMN hook_id CHAR(64) NOT NULL, MODIFY COLUMN gitlab_token VARCHAR(64) DEFAULT NULL, MODIFY COLUMN vcs_type VARCHAR(16) DEFAULT NULL, MODIFY COLUMN vcs_url VARCHAR(1024) DEFAULT NULL, MODIFY COLUMN vcs_subdir VARCHAR(1024) DEFAULT NULL, MODIFY COLUMN vcs_branch_spec VARCHAR(1024) DEFAULT NULL, MODIFY COLUMN ssh_private_key VARCHAR(1024) DEFAULT NULL, MODIFY COLUMN last_event VARCHAR(128) DEFAULT NULL, MODIFY COLUMN last_revision VARCHAR(128) DEFAULT NULL, MODIFY COLUMN message VARCHAR(1024) DEFAULT NULL ;", md->table_prefix) < 0)
+                goto fail;
+            break;
+        case 2:
+            if (mi->simple_fquery(md, "ALTER TABLE %suserprobs MODIFY COLUMN ssh_private_key VARCHAR(4096) DEFAULT NULL ;", md->table_prefix) < 0)
                 goto fail;
             break;
         case USERPROB_DB_VERSION:

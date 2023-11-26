@@ -39,6 +39,7 @@ ns_unpriv_parse_run_id(
   int page_enabled = 0;
   struct virtual_end_info_s *vend_info = NULL;
   int summoned_count = 0;
+  unsigned char *vcs_url = NULL;
 
   start_time = run_get_start_time(cs->runlog_state);
   stop_time = run_get_stop_time(cs->runlog_state, phr->user_id, cs->current_time);
@@ -133,6 +134,15 @@ ns_unpriv_parse_run_id(
     }
   }
 
+  if (prob && prob->enable_vcs > 0 && re.is_vcs > 0 && run_text) {
+    vcs_url = ns_get_vcs_snapshot_url(cs, phr, phr->contest_id,
+      re.user_id, re.prob_id, run_text);
+  }
+  if (vcs_url && *vcs_url) {
+    char *p = strstr(run_text, "-----BEGIN CONTENT-----");
+    if (p) *p = 0;
+  }
+
   unpriv_load_html_style(phr, cnts, 0, 0);
   l10n_setlocale(phr->locale_id);
   snprintf(title, sizeof(title), "%s %d", _("Source for run"), run_id);
@@ -147,6 +157,15 @@ ns_unpriv_parse_run_id(
 <div class="l14">
     <div class="h2-long" style="margin-top: 13px; margin-bottom: 10px;">
     <h2><s:_>Source code</s:_></h2>
+<%
+  if (vcs_url && *vcs_url) {
+%>
+<div>
+<p>[<a target="_blank" href="<s:v value="vcs_url" escape="false" />">Browse files</a>]</p>
+</div>
+<%
+  }
+%>
     </div>
 <%
   if (view_enabled) {
@@ -220,4 +239,5 @@ cleanup:;
   html_armor_free(&ab);
   xfree(rep_text);
   xfree(run_text);
+  xfree(vcs_url);
 %>

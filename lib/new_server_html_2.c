@@ -53,6 +53,7 @@
 #include "ejudge/super_run_status.h"
 #include "ejudge/compile_heartbeat.h"
 #include "ejudge/mixed_id.h"
+#include "ejudge/userprob_plugin.h"
 
 #include "flatbuf-gen/compile_heartbeat_reader.h"
 
@@ -9773,4 +9774,95 @@ run_display_info_free(struct RunDisplayInfo *rdi)
     free(rdi->abbrev_sha1);
     free(rdi->score_str);
   }
+}
+
+unsigned char *
+ns_get_vcs_snapshot_url(
+        const serve_state_t cs,
+        struct http_request_info *phr,
+        int contest_id,
+        int user_id,
+        int prob_id,
+        const unsigned char *src)
+{
+  struct userprob_plugin_data *up_plugin = NULL;
+  struct userprob_entry *ue = NULL;
+  unsigned char *vcs_url = NULL;
+  unsigned char *vcs_ptr = NULL;
+  unsigned char *commit_id = NULL;
+
+  up_plugin = userprob_plugin_get(phr->config, NULL, 0);
+  if (!up_plugin) {
+    err("%s: failed to load userprob plugin", __FUNCTION__);
+    goto fail;
+  }
+  ue = up_plugin->vt->fetch_by_cup(up_plugin, contest_id, user_id, prob_id);
+  if (!ue) {
+    goto fail;
+  }
+
+  if (!ue->vcs_type) {
+    goto fail;
+  }
+  if (!src) {
+    goto fail;
+  }
+
+  if (!ue->vcs_url || !*ue->vcs_url) {
+    goto fail;
+  }
+  vcs_url = xstrdup(ue->vcs_url);
+  vcs_ptr = vcs_url;
+  size_t len = strlen(vcs_url);
+  if (len > 0 && vcs_url[len - 1] == '/') {
+    vcs_url[len - 1] = 0;
+    --len;
+  }
+  if (len > 4
+      && vcs_url[len - 1] == 't'
+      && vcs_url[len - 2] == 'i'
+      && vcs_url[len - 3] == 'g'
+      && vcs_url[len - 4] == '.') {
+    vcs_url[len - 4] = 0;
+    len -= 4;
+  }
+  if (len > 4
+      && vcs_url[0] == 'g'
+      && vcs_url[1] == 'i'
+      && vcs_url[2] == 't'
+      && vcs_url[3] == '@') {
+    vcs_ptr = vcs_url + 4;
+  }
+  char *ss = strchr(vcs_ptr, ':');
+  if (ss) {
+    *ss = '/';
+  }
+  if (!strncmp(src, "commit ", 7)) {
+    const unsigned char *p = src + 7;
+    const unsigned char *q = p;
+    while (*q && !isspace(*q)) {
+      ++q;
+    }
+    commit_id = xmemdup(p, q - p);
+  }
+  if (!commit_id) {
+    goto fail;
+  }
+
+  char *out = NULL;
+  if (!strcmp(ue->vcs_type, "github")) {
+    asprintf(&out, "https://%s/tree/%s", vcs_ptr, commit_id);
+  } else if (!strcmp(ue->vcs_type, "gitlab")) {
+    asprintf(&out, "https://%s/-/tree/%s", vcs_ptr, commit_id);
+  }
+
+  xfree(commit_id);
+  xfree(vcs_url);
+
+  return out;
+
+fail:;
+  xfree(vcs_url);
+  xfree(commit_id);
+  return NULL;
 }
