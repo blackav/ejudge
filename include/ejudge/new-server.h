@@ -1001,4 +1001,13 @@ ns_postponed_callback(
         long long *p_update_time_us,
         void *user);
 
+unsigned char *
+ns_get_vcs_snapshot_url(
+        const serve_state_t cs,
+        struct http_request_info *phr,
+        int contest_id,
+        int user_id,
+        int prob_id,
+        const unsigned char *src);
+
 #endif /* __NEW_SERVER_H__ */
