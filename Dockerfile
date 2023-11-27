@@ -1,4 +1,4 @@
-FROM fedora:36 AS builder
+FROM fedora:38 AS builder
 
 WORKDIR /app
 COPY . /app
