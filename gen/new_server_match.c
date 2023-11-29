@@ -13134,8 +13134,11 @@ int ns_match_action(const unsigned char *str)
           }
           return 0;
         }
+        return 0;
       }
+      return 0;
     }
+    return 0;
   }
   return 0;
 }
