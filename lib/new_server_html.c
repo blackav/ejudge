@@ -18420,22 +18420,22 @@ batch_login(
 
   const unsigned char *login_str = NULL;
   if (hr_cgi_param(phr, "l", &login_str) <= 0) {
-    err("batch_login: login is undefined");
+    err("%s: login is undefined", __FUNCTION__);
     goto invalid_parameter;
   }
 
   int contest_id = 0;
   if (hr_cgi_param_int(phr, "c", &contest_id) < 0) {
-    err("batch_login: contest_id is undefined");
+    err("%s: contest_id is undefined", __FUNCTION__);
     goto invalid_parameter;
   }
   if (contest_id <= 0) {
-    err("batch_login: contest_id %d is invalid", contest_id);
+    err("%s: contest_id %d is invalid", __FUNCTION__, contest_id);
     goto invalid_parameter;
   }
   const struct contest_desc *cnts = NULL;
   if (contests_get(contest_id, &cnts) < 0 || !cnts) {
-    err("batch_login: contest_id %d is invalid", contest_id);
+    err("%s: contest_id %d is invalid", __FUNCTION__, contest_id);
     goto invalid_parameter;
   }
   phr->contest_id = contest_id;
@@ -18449,7 +18449,7 @@ batch_login(
   int ssl_flag = -1;
   hr_cgi_param_int_opt(phr, "s", &ssl_flag, -1);
   if (ssl_flag >= 0 && ssl_flag != phr->ssl_flag) {
-    err("batch_login: ssl flag mismatch");
+    err("%s: ssl flag mismatch", __FUNCTION__);
     goto invalid_parameter;
   }
 
@@ -18466,7 +18466,7 @@ batch_login(
   }
 
   if (ns_open_ul_connection(phr->fw_state) < 0) {
-    err("batch_login: failed to open userlist connection");
+    err("%s: failed to open userlist connection", __FUNCTION__);
     goto database_error;
   }
 
@@ -18483,11 +18483,12 @@ batch_login(
         long v = strtol(p, &ep, 10);
         if (p == ep) break;
         if (errno || (*ep && !isspace(*ep)) || v <= 0 || (int) v != v) {
-          err("batch_login: contest %d: contests list '%s' is invalid", contest_id, cnts->comment);
+          err("%s: contest %d: contests list '%s' is invalid",
+              __FUNCTION__, contest_id, cnts->comment);
           goto invalid_parameter;
         }
         if (check_contests_count == 10) {
-          err("batch_login: contest %d: too many contests", contest_id);
+          err("%s: contest %d: too many contests", __FUNCTION__, contest_id);
           goto invalid_parameter;
         }
         check_contests_id[check_contests_count++] = (int) v;
@@ -18501,11 +18502,11 @@ batch_login(
     int user_id = 0;
     int r = userlist_clnt_lookup_user(ul_conn, login_str, 0, &user_id, 0);
     if (r < 0 && r != -ULS_ERR_INVALID_LOGIN) {
-      err("batch_register: userlist error %d", r);
+      err("%s: userlist error %d", __FUNCTION__, r);
       goto database_error;
     }
     if (r < 0 || user_id <= 0) {
-      err("batch_register: user '%s' is not registered", login_str);
+      err("%s: user '%s' is not registered", __FUNCTION__, login_str);
       goto invalid_parameter;
     }
 
@@ -18515,7 +18516,7 @@ batch_login(
       int cur_contest_id = check_contests_id[i];
       const struct contest_desc *cur_cnts = NULL;
       if (contests_get(cur_contest_id, &cur_cnts) < 0 || !cur_cnts) {
-        err("batch_register: invalid contest %d", cur_contest_id);
+        err("%s: invalid contest %d", __FUNCTION__, cur_contest_id);
         goto invalid_parameter;
       }
       int r = userlist_clnt_login(ul_conn, ULS_TEAM_CHECK_USER,
@@ -18543,7 +18544,7 @@ batch_login(
       }
     }
     if (best_contest_id <= 0) {
-      err("batch_login: user not registered");
+      err("%s: user '%s' not registered", __FUNCTION__, login_str);
       goto invalid_parameter;
     }
     phr->contest_id = best_contest_id;
@@ -18559,7 +18560,7 @@ batch_login(
   if (expire_time > 0) {
     time_t current_time = time(NULL);
     if (current_time >= expire_time) {
-      err("batch_login: operation expired");
+      err("%s: operation expired", __FUNCTION__);
       goto invalid_parameter;
     }
   }
@@ -18584,7 +18585,7 @@ batch_login(
                               &phr->reg_status,
                               &phr->reg_flags);
   if (r < 0) {
-    err("batch_login: login failed: %d", r);
+    err("%s: login failed: %d", __FUNCTION__, r);
     goto database_error;
   }
 
@@ -18593,15 +18594,15 @@ batch_login(
     serve_state_t cs = phr->extra->serve_state;
     const struct section_global_data *global = cs->global;
     if (global->disable_virtual_start > 0 || cs->disable_virtual_start > 0) {
-      err("batch_login: virtual start disabled");
+      err("%s: virtual start disabled", __FUNCTION__);
       goto database_error;
     }
     if (cnts->open_time > 0 && cs->current_time < cnts->open_time) {
-      err("batch_login: contest is not opened yet");
+      err("%s: contest is not opened yet", __FUNCTION__);
       goto database_error;
     }
     if (cnts->close_time > 0 && cs->current_time >= cnts->close_time) {
-      err("batch_login: contest already closed");
+      err("%s: contest already closed", __FUNCTION__);
       goto database_error;
     }
     time_t start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
