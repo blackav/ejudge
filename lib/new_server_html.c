@@ -17863,7 +17863,7 @@ unprivileged_entry_point(
   phr->extra = extra;
 
   if (!contests_check_team_ip(phr->contest_id, &phr->ip, phr->ssl_flag)) {
-    fprintf(phr->log_f, "%s://%s is not allowed for USER for contest %d\n",
+    fprintf(phr->log_f, "%s://%s is not allowed for USER for contest %d",
             ns_ssl_flag_str[phr->ssl_flag], xml_unparse_ipv6(&phr->ip), phr->contest_id);
     error_page(fout, phr, 0, -NEW_SRV_ERR_PERMISSION_DENIED);
     goto cleanup;
