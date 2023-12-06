@@ -18550,7 +18550,8 @@ batch_login(
     }
     phr->contest_id = best_contest_id;
     contest_id = best_contest_id;
-    contests_get(phr->contest_id, &phr->cnts);
+    contests_get(phr->contest_id, &cnts);
+    phr->cnts = cnts;
   }
 
   const unsigned char *prob_name = NULL;
