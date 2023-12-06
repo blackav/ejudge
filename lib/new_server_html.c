@@ -18519,6 +18519,7 @@ batch_login(
         err("%s: invalid contest %d", __FUNCTION__, cur_contest_id);
         goto invalid_parameter;
       }
+      xfree(phr->name); phr->name = NULL;
       int r = userlist_clnt_login(ul_conn, ULS_TEAM_CHECK_USER,
                                   &phr->ip,
                                   0 /* cookie */,
