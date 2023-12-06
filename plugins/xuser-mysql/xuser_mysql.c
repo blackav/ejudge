@@ -407,7 +407,7 @@ fetch_user(
                    "SELECT * FROM %suserextras WHERE contest_id=%d AND user_id=%d;", md->table_prefix, xmcs->contest_id, user_id) < 0)
         db_error_fail(md);
     if (!md->row_count) {
-        return NULL;
+        goto fail;
     }
     if (mi->next_row(md) < 0) db_error_fail(md);
     if (mi->parse_spec(md, -1, md->row, md->lengths, USER_EXTRA_ROW_WIDTH, user_extra_spec, &uxi) < 0) goto fail;
