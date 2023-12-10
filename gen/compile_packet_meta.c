@@ -6,6 +6,8 @@
 
 #include "ejudge/xalloc.h"
 
+#include "ejudge/parsecfg.h"
+
 #include "ejudge/logger.h"
 #include <string.h>
 #include <stdlib.h>
@@ -97,6 +99,107 @@ int meta_compile_request_packet_lookup_field(const char *name)
   return meta_lookup_string(atm, name);
 }
 
+void meta_compile_request_packet_copy(struct compile_request_packet *dst, const struct compile_request_packet *src)
+{
+  dst->judge_id = src->judge_id;
+  dst->contest_id = src->contest_id;
+  dst->run_id = src->run_id;
+  dst->lang_id = src->lang_id;
+  dst->locale_id = src->locale_id;
+  dst->output_only = src->output_only;
+  dst->style_check_only = src->style_check_only;
+  dst->ts1 = src->ts1;
+  dst->ts1_us = src->ts1_us;
+  dst->use_uuid = src->use_uuid;
+  dst->multi_header = src->multi_header;
+  dst->lang_header = src->lang_header;
+  dst->user_id = src->user_id;
+  dst->use_container = src->use_container;
+  dst->vcs_mode = src->vcs_mode;
+  dst->not_ok_is_cf = src->not_ok_is_cf;
+  dst->preserve_numbers = src->preserve_numbers;
+  dst->enable_remote_cache = src->enable_remote_cache;
+  // submit_id
+  // uuid
+  // judge_uuid
+  dst->max_vm_size = src->max_vm_size;
+  dst->max_stack_size = src->max_stack_size;
+  dst->max_file_size = src->max_file_size;
+  dst->max_rss_size = src->max_rss_size;
+  if (src->style_checker) {
+    dst->style_checker = strdup(src->style_checker);
+  }
+  if (src->src_sfx) {
+    dst->src_sfx = strdup(src->src_sfx);
+  }
+  if (src->lang_short_name) {
+    dst->lang_short_name = strdup(src->lang_short_name);
+  }
+  if (src->header_pat) {
+    dst->header_pat = strdup(src->header_pat);
+  }
+  if (src->footer_pat) {
+    dst->footer_pat = strdup(src->footer_pat);
+  }
+  if (src->header_dir) {
+    dst->header_dir = strdup(src->header_dir);
+  }
+  if (src->compiler_env_pat) {
+    dst->compiler_env_pat = strdup(src->compiler_env_pat);
+  }
+  if (src->user_login) {
+    dst->user_login = strdup(src->user_login);
+  }
+  if (src->exam_cypher) {
+    dst->exam_cypher = strdup(src->exam_cypher);
+  }
+  if (src->contest_server_id) {
+    dst->contest_server_id = strdup(src->contest_server_id);
+  }
+  if (src->container_options) {
+    dst->container_options = strdup(src->container_options);
+  }
+  if (src->vcs_compile_cmd) {
+    dst->vcs_compile_cmd = strdup(src->vcs_compile_cmd);
+  }
+  if (src->compile_cmd) {
+    dst->compile_cmd = strdup(src->compile_cmd);
+  }
+  if (src->extra_src_dir) {
+    dst->extra_src_dir = strdup(src->extra_src_dir);
+  }
+  dst->run_block_len = src->run_block_len;
+  // run_block
+  dst->env_num = src->env_num;
+  dst->sc_env_num = src->sc_env_num;
+  dst->env_vars = (typeof(dst->env_vars)) sarray_copy((char**) src->env_vars);
+  dst->sc_env_vars = (typeof(dst->sc_env_vars)) sarray_copy((char**) src->sc_env_vars);
+}
+
+void meta_compile_request_packet_free(struct compile_request_packet *ptr)
+{
+  // submit_id
+  // uuid
+  // judge_uuid
+  free(ptr->style_checker);
+  free(ptr->src_sfx);
+  free(ptr->lang_short_name);
+  free(ptr->header_pat);
+  free(ptr->footer_pat);
+  free(ptr->header_dir);
+  free(ptr->compiler_env_pat);
+  free(ptr->user_login);
+  free(ptr->exam_cypher);
+  free(ptr->contest_server_id);
+  free(ptr->container_options);
+  free(ptr->vcs_compile_cmd);
+  free(ptr->compile_cmd);
+  free(ptr->extra_src_dir);
+  // run_block
+  sarray_free((char**) ptr->env_vars);
+  sarray_free((char**) ptr->sc_env_vars);
+}
+
 const struct meta_methods meta_compile_request_packet_methods =
 {
   META_COMPILE_REQUEST_PACKET_LAST_FIELD,
@@ -107,5 +210,7 @@ const struct meta_methods meta_compile_request_packet_methods =
   (const void *(*)(const void *ptr, int tag))meta_compile_request_packet_get_ptr,
   (void *(*)(void *ptr, int tag))meta_compile_request_packet_get_ptr_nc,
   meta_compile_request_packet_lookup_field,
+  (void (*)(void *, const void *))meta_compile_request_packet_copy,
+  (void (*)(void *))meta_compile_request_packet_free,
 };
 

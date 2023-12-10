@@ -6,6 +6,8 @@
 
 #include "ejudge/xalloc.h"
 
+#include "ejudge/parsecfg.h"
+
 #include "ejudge/logger.h"
 #include <string.h>
 #include <stdlib.h>
@@ -66,6 +68,58 @@ int meta_ej_import_packet_lookup_field(const char *name)
   return meta_lookup_string(atm, name);
 }
 
+void meta_ej_import_packet_copy(struct ej_import_packet *dst, const struct ej_import_packet *src)
+{
+  // hidden g
+  dst->contest_id = src->contest_id;
+  dst->user_id = src->user_id;
+  dst->require_master_solution = src->require_master_solution;
+  dst->require_test_checker = src->require_test_checker;
+  if (src->archive_file) {
+    dst->archive_file = strdup(src->archive_file);
+  }
+  if (src->content_type) {
+    dst->content_type = strdup(src->content_type);
+  }
+  if (src->log_file) {
+    dst->log_file = strdup(src->log_file);
+  }
+  if (src->status_file) {
+    dst->status_file = strdup(src->status_file);
+  }
+  if (src->pid_file) {
+    dst->pid_file = strdup(src->pid_file);
+  }
+  if (src->working_dir) {
+    dst->working_dir = strdup(src->working_dir);
+  }
+  if (src->remote_addr) {
+    dst->remote_addr = strdup(src->remote_addr);
+  }
+  if (src->user_login) {
+    dst->user_login = strdup(src->user_login);
+  }
+  if (src->user_name) {
+    dst->user_name = strdup(src->user_name);
+  }
+  dst->required_solutions = (typeof(dst->required_solutions)) sarray_copy((char**) src->required_solutions);
+}
+
+void meta_ej_import_packet_free(struct ej_import_packet *ptr)
+{
+  // hidden g
+  free(ptr->archive_file);
+  free(ptr->content_type);
+  free(ptr->log_file);
+  free(ptr->status_file);
+  free(ptr->pid_file);
+  free(ptr->working_dir);
+  free(ptr->remote_addr);
+  free(ptr->user_login);
+  free(ptr->user_name);
+  sarray_free((char**) ptr->required_solutions);
+}
+
 const struct meta_methods meta_ej_import_packet_methods =
 {
   META_EJ_IMPORT_PACKET_LAST_FIELD,
@@ -76,5 +130,7 @@ const struct meta_methods meta_ej_import_packet_methods =
   (const void *(*)(const void *ptr, int tag))meta_ej_import_packet_get_ptr,
   (void *(*)(void *ptr, int tag))meta_ej_import_packet_get_ptr_nc,
   meta_ej_import_packet_lookup_field,
+  (void (*)(void *, const void *))meta_ej_import_packet_copy,
+  (void (*)(void *))meta_ej_import_packet_free,
 };
 

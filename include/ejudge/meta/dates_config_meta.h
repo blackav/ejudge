@@ -25,6 +25,8 @@ const char *meta_dates_global_data_get_name(int tag);
 const void *meta_dates_global_data_get_ptr(const struct dates_global_data *ptr, int tag);
 void *meta_dates_global_data_get_ptr_nc(struct dates_global_data *ptr, int tag);
 int meta_dates_global_data_lookup_field(const char *name);
+void meta_dates_global_data_copy(struct dates_global_data *dst, const struct dates_global_data *src);
+void meta_dates_global_data_free(struct dates_global_data *ptr);
 
 struct meta_methods;
 extern const struct meta_methods meta_dates_global_data_methods;
@@ -55,6 +57,8 @@ const char *meta_dates_problem_data_get_name(int tag);
 const void *meta_dates_problem_data_get_ptr(const struct dates_problem_data *ptr, int tag);
 void *meta_dates_problem_data_get_ptr_nc(struct dates_problem_data *ptr, int tag);
 int meta_dates_problem_data_lookup_field(const char *name);
+void meta_dates_problem_data_copy(struct dates_problem_data *dst, const struct dates_problem_data *src);
+void meta_dates_problem_data_free(struct dates_problem_data *ptr);
 
 struct meta_methods;
 extern const struct meta_methods meta_dates_problem_data_methods;

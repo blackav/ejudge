@@ -55,6 +55,8 @@ const char *meta_ss_op_param_USER_CREATE_ONE_ACTION_get_name(int tag);
 const void *meta_ss_op_param_USER_CREATE_ONE_ACTION_get_ptr(const struct ss_op_param_USER_CREATE_ONE_ACTION *ptr, int tag);
 void *meta_ss_op_param_USER_CREATE_ONE_ACTION_get_ptr_nc(struct ss_op_param_USER_CREATE_ONE_ACTION *ptr, int tag);
 int meta_ss_op_param_USER_CREATE_ONE_ACTION_lookup_field(const char *name);
+void meta_ss_op_param_USER_CREATE_ONE_ACTION_copy(struct ss_op_param_USER_CREATE_ONE_ACTION *dst, const struct ss_op_param_USER_CREATE_ONE_ACTION *src);
+void meta_ss_op_param_USER_CREATE_ONE_ACTION_free(struct ss_op_param_USER_CREATE_ONE_ACTION *ptr);
 
 struct meta_methods;
 extern const struct meta_methods meta_ss_op_param_USER_CREATE_ONE_ACTION_methods;
@@ -109,6 +111,8 @@ const char *meta_ss_op_param_USER_CREATE_MANY_ACTION_get_name(int tag);
 const void *meta_ss_op_param_USER_CREATE_MANY_ACTION_get_ptr(const struct ss_op_param_USER_CREATE_MANY_ACTION *ptr, int tag);
 void *meta_ss_op_param_USER_CREATE_MANY_ACTION_get_ptr_nc(struct ss_op_param_USER_CREATE_MANY_ACTION *ptr, int tag);
 int meta_ss_op_param_USER_CREATE_MANY_ACTION_lookup_field(const char *name);
+void meta_ss_op_param_USER_CREATE_MANY_ACTION_copy(struct ss_op_param_USER_CREATE_MANY_ACTION *dst, const struct ss_op_param_USER_CREATE_MANY_ACTION *src);
+void meta_ss_op_param_USER_CREATE_MANY_ACTION_free(struct ss_op_param_USER_CREATE_MANY_ACTION *ptr);
 
 struct meta_methods;
 extern const struct meta_methods meta_ss_op_param_USER_CREATE_MANY_ACTION_methods;
@@ -164,6 +168,8 @@ const char *meta_ss_op_param_USER_CREATE_FROM_CSV_ACTION_get_name(int tag);
 const void *meta_ss_op_param_USER_CREATE_FROM_CSV_ACTION_get_ptr(const struct ss_op_param_USER_CREATE_FROM_CSV_ACTION *ptr, int tag);
 void *meta_ss_op_param_USER_CREATE_FROM_CSV_ACTION_get_ptr_nc(struct ss_op_param_USER_CREATE_FROM_CSV_ACTION *ptr, int tag);
 int meta_ss_op_param_USER_CREATE_FROM_CSV_ACTION_lookup_field(const char *name);
+void meta_ss_op_param_USER_CREATE_FROM_CSV_ACTION_copy(struct ss_op_param_USER_CREATE_FROM_CSV_ACTION *dst, const struct ss_op_param_USER_CREATE_FROM_CSV_ACTION *src);
+void meta_ss_op_param_USER_CREATE_FROM_CSV_ACTION_free(struct ss_op_param_USER_CREATE_FROM_CSV_ACTION *ptr);
 
 struct meta_methods;
 extern const struct meta_methods meta_ss_op_param_USER_CREATE_FROM_CSV_ACTION_methods;
@@ -195,6 +201,8 @@ const char *meta_ss_op_param_USER_CREATE_REG_ACTION_get_name(int tag);
 const void *meta_ss_op_param_USER_CREATE_REG_ACTION_get_ptr(const struct ss_op_param_USER_CREATE_REG_ACTION *ptr, int tag);
 void *meta_ss_op_param_USER_CREATE_REG_ACTION_get_ptr_nc(struct ss_op_param_USER_CREATE_REG_ACTION *ptr, int tag);
 int meta_ss_op_param_USER_CREATE_REG_ACTION_lookup_field(const char *name);
+void meta_ss_op_param_USER_CREATE_REG_ACTION_copy(struct ss_op_param_USER_CREATE_REG_ACTION *dst, const struct ss_op_param_USER_CREATE_REG_ACTION *src);
+void meta_ss_op_param_USER_CREATE_REG_ACTION_free(struct ss_op_param_USER_CREATE_REG_ACTION *ptr);
 
 struct meta_methods;
 extern const struct meta_methods meta_ss_op_param_USER_CREATE_REG_ACTION_methods;
@@ -227,6 +235,8 @@ const char *meta_ss_op_param_USER_EDIT_REG_ACTION_get_name(int tag);
 const void *meta_ss_op_param_USER_EDIT_REG_ACTION_get_ptr(const struct ss_op_param_USER_EDIT_REG_ACTION *ptr, int tag);
 void *meta_ss_op_param_USER_EDIT_REG_ACTION_get_ptr_nc(struct ss_op_param_USER_EDIT_REG_ACTION *ptr, int tag);
 int meta_ss_op_param_USER_EDIT_REG_ACTION_lookup_field(const char *name);
+void meta_ss_op_param_USER_EDIT_REG_ACTION_copy(struct ss_op_param_USER_EDIT_REG_ACTION *dst, const struct ss_op_param_USER_EDIT_REG_ACTION *src);
+void meta_ss_op_param_USER_EDIT_REG_ACTION_free(struct ss_op_param_USER_EDIT_REG_ACTION *ptr);
 
 struct meta_methods;
 extern const struct meta_methods meta_ss_op_param_USER_EDIT_REG_ACTION_methods;

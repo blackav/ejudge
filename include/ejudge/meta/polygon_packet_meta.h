@@ -55,6 +55,8 @@ const char *meta_polygon_packet_get_name(int tag);
 const void *meta_polygon_packet_get_ptr(const struct polygon_packet *ptr, int tag);
 void *meta_polygon_packet_get_ptr_nc(struct polygon_packet *ptr, int tag);
 int meta_polygon_packet_lookup_field(const char *name);
+void meta_polygon_packet_copy(struct polygon_packet *dst, const struct polygon_packet *src);
+void meta_polygon_packet_free(struct polygon_packet *ptr);
 
 struct meta_methods;
 extern const struct meta_methods meta_polygon_packet_methods;

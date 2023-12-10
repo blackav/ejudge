@@ -6,6 +6,8 @@
 
 #include "ejudge/xalloc.h"
 
+#include "ejudge/parsecfg.h"
+
 #include "ejudge/logger.h"
 #include <string.h>
 #include <stdlib.h>
@@ -173,6 +175,366 @@ int contest_desc_lookup_field(const char *name)
   return meta_lookup_string(atm, name);
 }
 
+void contest_desc_copy(struct contest_desc *dst, const struct contest_desc *src)
+{
+  // hidden b
+  dst->id = src->id;
+  dst->autoregister = src->autoregister;
+  dst->disable_team_password = src->disable_team_password;
+  dst->managed = src->managed;
+  dst->run_managed = src->run_managed;
+  dst->clean_users = src->clean_users;
+  dst->closed = src->closed;
+  dst->invisible = src->invisible;
+  dst->simple_registration = src->simple_registration;
+  dst->send_passwd_email = src->send_passwd_email;
+  dst->assign_logins = src->assign_logins;
+  dst->force_registration = src->force_registration;
+  dst->disable_name = src->disable_name;
+  dst->enable_password_recovery = src->enable_password_recovery;
+  dst->exam_mode = src->exam_mode;
+  dst->disable_password_change = src->disable_password_change;
+  dst->disable_locale_change = src->disable_locale_change;
+  dst->personal = src->personal;
+  dst->allow_reg_data_edit = src->allow_reg_data_edit;
+  dst->disable_member_delete = src->disable_member_delete;
+  dst->old_run_managed = src->old_run_managed;
+  dst->ready = src->ready;
+  dst->force_password_change = src->force_password_change;
+  dst->enable_user_telegram = src->enable_user_telegram;
+  dst->enable_avatar = src->enable_avatar;
+  dst->enable_local_pages = src->enable_local_pages;
+  dst->read_only_name = src->read_only_name;
+  dst->enable_oauth = src->enable_oauth;
+  dst->enable_reminders = src->enable_reminders;
+  dst->disable_standalone_reg = src->disable_standalone_reg;
+  dst->enable_telegram_registration = src->enable_telegram_registration;
+  dst->reg_deadline = src->reg_deadline;
+  dst->sched_time = src->sched_time;
+  dst->open_time = src->open_time;
+  dst->close_time = src->close_time;
+  dst->update_time = src->update_time;
+  if (src->name) {
+    dst->name = strdup(src->name);
+  }
+  if (src->name_en) {
+    dst->name_en = strdup(src->name_en);
+  }
+  if (src->main_url) {
+    dst->main_url = strdup(src->main_url);
+  }
+  if (src->keywords) {
+    dst->keywords = strdup(src->keywords);
+  }
+  if (src->comment) {
+    dst->comment = strdup(src->comment);
+  }
+  if (src->users_header_file) {
+    dst->users_header_file = strdup(src->users_header_file);
+  }
+  if (src->users_footer_file) {
+    dst->users_footer_file = strdup(src->users_footer_file);
+  }
+  if (src->register_header_file) {
+    dst->register_header_file = strdup(src->register_header_file);
+  }
+  if (src->register_footer_file) {
+    dst->register_footer_file = strdup(src->register_footer_file);
+  }
+  if (src->team_header_file) {
+    dst->team_header_file = strdup(src->team_header_file);
+  }
+  if (src->team_menu_1_file) {
+    dst->team_menu_1_file = strdup(src->team_menu_1_file);
+  }
+  if (src->team_menu_2_file) {
+    dst->team_menu_2_file = strdup(src->team_menu_2_file);
+  }
+  if (src->team_menu_3_file) {
+    dst->team_menu_3_file = strdup(src->team_menu_3_file);
+  }
+  if (src->team_separator_file) {
+    dst->team_separator_file = strdup(src->team_separator_file);
+  }
+  if (src->team_footer_file) {
+    dst->team_footer_file = strdup(src->team_footer_file);
+  }
+  if (src->priv_header_file) {
+    dst->priv_header_file = strdup(src->priv_header_file);
+  }
+  if (src->priv_footer_file) {
+    dst->priv_footer_file = strdup(src->priv_footer_file);
+  }
+  if (src->copyright_file) {
+    dst->copyright_file = strdup(src->copyright_file);
+  }
+  if (src->register_email) {
+    dst->register_email = strdup(src->register_email);
+  }
+  if (src->register_url) {
+    dst->register_url = strdup(src->register_url);
+  }
+  if (src->team_url) {
+    dst->team_url = strdup(src->team_url);
+  }
+  if (src->login_template) {
+    dst->login_template = strdup(src->login_template);
+  }
+  if (src->login_template_options) {
+    dst->login_template_options = strdup(src->login_template_options);
+  }
+  if (src->root_dir) {
+    dst->root_dir = strdup(src->root_dir);
+  }
+  if (src->conf_dir) {
+    dst->conf_dir = strdup(src->conf_dir);
+  }
+  if (src->standings_url) {
+    dst->standings_url = strdup(src->standings_url);
+  }
+  if (src->problems_url) {
+    dst->problems_url = strdup(src->problems_url);
+  }
+  if (src->serve_user) {
+    dst->serve_user = strdup(src->serve_user);
+  }
+  if (src->serve_group) {
+    dst->serve_group = strdup(src->serve_group);
+  }
+  if (src->run_user) {
+    dst->run_user = strdup(src->run_user);
+  }
+  if (src->run_group) {
+    dst->run_group = strdup(src->run_group);
+  }
+  if (src->register_email_file) {
+    dst->register_email_file = strdup(src->register_email_file);
+  }
+  if (src->register_subject) {
+    dst->register_subject = strdup(src->register_subject);
+  }
+  if (src->register_subject_en) {
+    dst->register_subject_en = strdup(src->register_subject_en);
+  }
+  // register_access
+  // users_access
+  // master_access
+  // judge_access
+  // team_access
+  // serve_control_access
+  // fields
+  // members
+  // caps_node
+  // capabilities
+  if (src->users_head_style) {
+    dst->users_head_style = strdup(src->users_head_style);
+  }
+  if (src->users_par_style) {
+    dst->users_par_style = strdup(src->users_par_style);
+  }
+  if (src->users_table_style) {
+    dst->users_table_style = strdup(src->users_table_style);
+  }
+  if (src->users_verb_style) {
+    dst->users_verb_style = strdup(src->users_verb_style);
+  }
+  if (src->users_table_format) {
+    dst->users_table_format = strdup(src->users_table_format);
+  }
+  if (src->users_table_format_en) {
+    dst->users_table_format_en = strdup(src->users_table_format_en);
+  }
+  if (src->users_table_legend) {
+    dst->users_table_legend = strdup(src->users_table_legend);
+  }
+  if (src->users_table_legend_en) {
+    dst->users_table_legend_en = strdup(src->users_table_legend_en);
+  }
+  if (src->register_head_style) {
+    dst->register_head_style = strdup(src->register_head_style);
+  }
+  if (src->register_par_style) {
+    dst->register_par_style = strdup(src->register_par_style);
+  }
+  if (src->register_table_style) {
+    dst->register_table_style = strdup(src->register_table_style);
+  }
+  if (src->team_head_style) {
+    dst->team_head_style = strdup(src->team_head_style);
+  }
+  if (src->team_par_style) {
+    dst->team_par_style = strdup(src->team_par_style);
+  }
+  if (src->cf_notify_email) {
+    dst->cf_notify_email = strdup(src->cf_notify_email);
+  }
+  if (src->clar_notify_email) {
+    dst->clar_notify_email = strdup(src->clar_notify_email);
+  }
+  if (src->daily_stat_email) {
+    dst->daily_stat_email = strdup(src->daily_stat_email);
+  }
+  if (src->user_name_comment) {
+    dst->user_name_comment = strdup(src->user_name_comment);
+  }
+  if (src->allowed_languages) {
+    dst->allowed_languages = strdup(src->allowed_languages);
+  }
+  if (src->allowed_regions) {
+    dst->allowed_regions = strdup(src->allowed_regions);
+  }
+  if (src->user_contest) {
+    dst->user_contest = strdup(src->user_contest);
+  }
+  if (src->dir_mode) {
+    dst->dir_mode = strdup(src->dir_mode);
+  }
+  if (src->dir_group) {
+    dst->dir_group = strdup(src->dir_group);
+  }
+  if (src->file_mode) {
+    dst->file_mode = strdup(src->file_mode);
+  }
+  if (src->file_group) {
+    dst->file_group = strdup(src->file_group);
+  }
+  if (src->default_locale) {
+    dst->default_locale = strdup(src->default_locale);
+  }
+  if (src->welcome_file) {
+    dst->welcome_file = strdup(src->welcome_file);
+  }
+  if (src->reg_welcome_file) {
+    dst->reg_welcome_file = strdup(src->reg_welcome_file);
+  }
+  if (src->logo_url) {
+    dst->logo_url = strdup(src->logo_url);
+  }
+  if (src->css_url) {
+    dst->css_url = strdup(src->css_url);
+  }
+  if (src->ext_id) {
+    dst->ext_id = strdup(src->ext_id);
+  }
+  if (src->problem_count) {
+    dst->problem_count = strdup(src->problem_count);
+  }
+  if (src->telegram_bot_id) {
+    dst->telegram_bot_id = strdup(src->telegram_bot_id);
+  }
+  if (src->telegram_admin_chat_id) {
+    dst->telegram_admin_chat_id = strdup(src->telegram_admin_chat_id);
+  }
+  if (src->telegram_user_chat_id) {
+    dst->telegram_user_chat_id = strdup(src->telegram_user_chat_id);
+  }
+  if (src->avatar_plugin) {
+    dst->avatar_plugin = strdup(src->avatar_plugin);
+  }
+  if (src->content_plugin) {
+    dst->content_plugin = strdup(src->content_plugin);
+  }
+  if (src->content_url_prefix) {
+    dst->content_url_prefix = strdup(src->content_url_prefix);
+  }
+  // slave_rules
+  // oauth_rules
+  dst->user_contest_num = src->user_contest_num;
+  dst->default_locale_num = src->default_locale_num;
+  // hidden last_check_time
+  // hidden last_file_time
+}
+
+void contest_desc_free(struct contest_desc *ptr)
+{
+  // hidden b
+  free(ptr->name);
+  free(ptr->name_en);
+  free(ptr->main_url);
+  free(ptr->keywords);
+  free(ptr->comment);
+  free(ptr->users_header_file);
+  free(ptr->users_footer_file);
+  free(ptr->register_header_file);
+  free(ptr->register_footer_file);
+  free(ptr->team_header_file);
+  free(ptr->team_menu_1_file);
+  free(ptr->team_menu_2_file);
+  free(ptr->team_menu_3_file);
+  free(ptr->team_separator_file);
+  free(ptr->team_footer_file);
+  free(ptr->priv_header_file);
+  free(ptr->priv_footer_file);
+  free(ptr->copyright_file);
+  free(ptr->register_email);
+  free(ptr->register_url);
+  free(ptr->team_url);
+  free(ptr->login_template);
+  free(ptr->login_template_options);
+  free(ptr->root_dir);
+  free(ptr->conf_dir);
+  free(ptr->standings_url);
+  free(ptr->problems_url);
+  free(ptr->serve_user);
+  free(ptr->serve_group);
+  free(ptr->run_user);
+  free(ptr->run_group);
+  free(ptr->register_email_file);
+  free(ptr->register_subject);
+  free(ptr->register_subject_en);
+  // register_access
+  // users_access
+  // master_access
+  // judge_access
+  // team_access
+  // serve_control_access
+  // fields
+  // members
+  // caps_node
+  // capabilities
+  free(ptr->users_head_style);
+  free(ptr->users_par_style);
+  free(ptr->users_table_style);
+  free(ptr->users_verb_style);
+  free(ptr->users_table_format);
+  free(ptr->users_table_format_en);
+  free(ptr->users_table_legend);
+  free(ptr->users_table_legend_en);
+  free(ptr->register_head_style);
+  free(ptr->register_par_style);
+  free(ptr->register_table_style);
+  free(ptr->team_head_style);
+  free(ptr->team_par_style);
+  free(ptr->cf_notify_email);
+  free(ptr->clar_notify_email);
+  free(ptr->daily_stat_email);
+  free(ptr->user_name_comment);
+  free(ptr->allowed_languages);
+  free(ptr->allowed_regions);
+  free(ptr->user_contest);
+  free(ptr->dir_mode);
+  free(ptr->dir_group);
+  free(ptr->file_mode);
+  free(ptr->file_group);
+  free(ptr->default_locale);
+  free(ptr->welcome_file);
+  free(ptr->reg_welcome_file);
+  free(ptr->logo_url);
+  free(ptr->css_url);
+  free(ptr->ext_id);
+  free(ptr->problem_count);
+  free(ptr->telegram_bot_id);
+  free(ptr->telegram_admin_chat_id);
+  free(ptr->telegram_user_chat_id);
+  free(ptr->avatar_plugin);
+  free(ptr->content_plugin);
+  free(ptr->content_url_prefix);
+  // slave_rules
+  // oauth_rules
+  // hidden last_check_time
+  // hidden last_file_time
+}
+
 const struct meta_methods contest_desc_methods =
 {
   CNTS_LAST_FIELD,
@@ -183,5 +545,7 @@ const struct meta_methods contest_desc_methods =
   (const void *(*)(const void *ptr, int tag))contest_desc_get_ptr,
   (void *(*)(void *ptr, int tag))contest_desc_get_ptr_nc,
   contest_desc_lookup_field,
+  (void (*)(void *, const void *))contest_desc_copy,
+  (void (*)(void *))contest_desc_free,
 };
 

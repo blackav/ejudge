@@ -6,6 +6,8 @@
 
 #include "ejudge/xalloc.h"
 
+#include "ejudge/parsecfg.h"
+
 #include "ejudge/logger.h"
 #include <string.h>
 #include <stdlib.h>
@@ -352,6 +354,770 @@ int cntsglob_lookup_field(const char *name)
   return meta_lookup_string(atm, name);
 }
 
+void cntsglob_copy(struct section_global_data *dst, const struct section_global_data *src)
+{
+  // hidden g
+  dst->sleep_time = src->sleep_time;
+  dst->serve_sleep_time = src->serve_sleep_time;
+  dst->contest_time = src->contest_time;
+  dst->max_run_size = src->max_run_size;
+  dst->max_run_total = src->max_run_total;
+  dst->max_run_num = src->max_run_num;
+  dst->max_clar_size = src->max_clar_size;
+  dst->max_clar_total = src->max_clar_total;
+  dst->max_clar_num = src->max_clar_num;
+  dst->board_fog_time = src->board_fog_time;
+  dst->board_unfog_time = src->board_unfog_time;
+  dst->autoupdate_standings = src->autoupdate_standings;
+  dst->use_ac_not_ok = src->use_ac_not_ok;
+  dst->inactivity_timeout = src->inactivity_timeout;
+  dst->disable_auto_testing = src->disable_auto_testing;
+  dst->disable_testing = src->disable_testing;
+  dst->enable_runlog_merge = src->enable_runlog_merge;
+  dst->secure_run = src->secure_run;
+  dst->detect_violations = src->detect_violations;
+  dst->enable_memory_limit_error = src->enable_memory_limit_error;
+  dst->advanced_layout = src->advanced_layout;
+  dst->uuid_run_store = src->uuid_run_store;
+  dst->enable_32bit_checkers = src->enable_32bit_checkers;
+  dst->ignore_bom = src->ignore_bom;
+  dst->disable_user_database = src->disable_user_database;
+  dst->enable_max_stack_size = src->enable_max_stack_size;
+  dst->time_limit_retry_count = src->time_limit_retry_count;
+  dst->score_n_best_problems = src->score_n_best_problems;
+  dst->require_problem_uuid = src->require_problem_uuid;
+  dst->stand_ignore_after = src->stand_ignore_after;
+  dst->contest_finish_time = src->contest_finish_time;
+  dst->appeal_deadline = src->appeal_deadline;
+  // private fog_standings_updated
+  // private start_standings_updated
+  // private unfog_standings_updated
+  dst->team_enable_src_view = src->team_enable_src_view;
+  dst->team_enable_rep_view = src->team_enable_rep_view;
+  dst->team_enable_ce_view = src->team_enable_ce_view;
+  dst->team_show_judge_report = src->team_show_judge_report;
+  dst->disable_clars = src->disable_clars;
+  dst->disable_team_clars = src->disable_team_clars;
+  dst->disable_submit_after_ok = src->disable_submit_after_ok;
+  dst->ignore_compile_errors = src->ignore_compile_errors;
+  dst->enable_continue = src->enable_continue;
+  dst->enable_report_upload = src->enable_report_upload;
+  dst->priority_adjustment = src->priority_adjustment;
+  dst->ignore_success_time = src->ignore_success_time;
+  dst->disable_failed_test_view = src->disable_failed_test_view;
+  dst->always_show_problems = src->always_show_problems;
+  dst->disable_user_standings = src->disable_user_standings;
+  dst->disable_language = src->disable_language;
+  dst->problem_navigation = src->problem_navigation;
+  dst->problem_tab_size = src->problem_tab_size;
+  dst->vertical_navigation = src->vertical_navigation;
+  dst->disable_virtual_start = src->disable_virtual_start;
+  dst->disable_virtual_auto_judge = src->disable_virtual_auto_judge;
+  dst->enable_auto_print_protocol = src->enable_auto_print_protocol;
+  dst->notify_clar_reply = src->notify_clar_reply;
+  dst->notify_status_change = src->notify_status_change;
+  dst->memoize_user_results = src->memoize_user_results;
+  dst->disable_auto_refresh = src->disable_auto_refresh;
+  dst->enable_eoln_select = src->enable_eoln_select;
+  dst->start_on_first_login = src->start_on_first_login;
+  dst->enable_virtual_restart = src->enable_virtual_restart;
+  dst->preserve_line_numbers = src->preserve_line_numbers;
+  dst->enable_remote_cache = src->enable_remote_cache;
+  if (src->name) {
+    dst->name = strdup(src->name);
+  }
+  if (src->root_dir) {
+    dst->root_dir = strdup(src->root_dir);
+  }
+  if (src->serve_socket) {
+    dst->serve_socket = strdup(src->serve_socket);
+  }
+  dst->enable_l10n = src->enable_l10n;
+  if (src->l10n_dir) {
+    dst->l10n_dir = strdup(src->l10n_dir);
+  }
+  if (src->standings_locale) {
+    dst->standings_locale = strdup(src->standings_locale);
+  }
+  // private standings_locale_id
+  if (src->checker_locale) {
+    dst->checker_locale = strdup(src->checker_locale);
+  }
+  dst->contest_id = src->contest_id;
+  if (src->socket_path) {
+    dst->socket_path = strdup(src->socket_path);
+  }
+  if (src->contests_dir) {
+    dst->contests_dir = strdup(src->contests_dir);
+  }
+  if (src->lang_config_dir) {
+    dst->lang_config_dir = strdup(src->lang_config_dir);
+  }
+  if (src->charset) {
+    dst->charset = strdup(src->charset);
+  }
+  if (src->standings_charset) {
+    dst->standings_charset = strdup(src->standings_charset);
+  }
+  if (src->stand2_charset) {
+    dst->stand2_charset = strdup(src->stand2_charset);
+  }
+  if (src->plog_charset) {
+    dst->plog_charset = strdup(src->plog_charset);
+  }
+  if (src->conf_dir) {
+    dst->conf_dir = strdup(src->conf_dir);
+  }
+  if (src->problems_dir) {
+    dst->problems_dir = strdup(src->problems_dir);
+  }
+  if (src->script_dir) {
+    dst->script_dir = strdup(src->script_dir);
+  }
+  if (src->test_dir) {
+    dst->test_dir = strdup(src->test_dir);
+  }
+  if (src->corr_dir) {
+    dst->corr_dir = strdup(src->corr_dir);
+  }
+  if (src->info_dir) {
+    dst->info_dir = strdup(src->info_dir);
+  }
+  if (src->tgz_dir) {
+    dst->tgz_dir = strdup(src->tgz_dir);
+  }
+  if (src->checker_dir) {
+    dst->checker_dir = strdup(src->checker_dir);
+  }
+  if (src->statement_dir) {
+    dst->statement_dir = strdup(src->statement_dir);
+  }
+  if (src->plugin_dir) {
+    dst->plugin_dir = strdup(src->plugin_dir);
+  }
+  if (src->test_sfx) {
+    dst->test_sfx = strdup(src->test_sfx);
+  }
+  if (src->corr_sfx) {
+    dst->corr_sfx = strdup(src->corr_sfx);
+  }
+  if (src->info_sfx) {
+    dst->info_sfx = strdup(src->info_sfx);
+  }
+  if (src->tgz_sfx) {
+    dst->tgz_sfx = strdup(src->tgz_sfx);
+  }
+  if (src->tgzdir_sfx) {
+    dst->tgzdir_sfx = strdup(src->tgzdir_sfx);
+  }
+  if (src->ejudge_checkers_dir) {
+    dst->ejudge_checkers_dir = strdup(src->ejudge_checkers_dir);
+  }
+  if (src->contest_start_cmd) {
+    dst->contest_start_cmd = strdup(src->contest_start_cmd);
+  }
+  if (src->contest_stop_cmd) {
+    dst->contest_stop_cmd = strdup(src->contest_stop_cmd);
+  }
+  if (src->description_file) {
+    dst->description_file = strdup(src->description_file);
+  }
+  if (src->contest_plugin_file) {
+    dst->contest_plugin_file = strdup(src->contest_plugin_file);
+  }
+  if (src->virtual_end_options) {
+    dst->virtual_end_options = strdup(src->virtual_end_options);
+  }
+  // private virtual_end_info
+  if (src->super_run_dir) {
+    dst->super_run_dir = strdup(src->super_run_dir);
+  }
+  if (src->compile_server_id) {
+    dst->compile_server_id = strdup(src->compile_server_id);
+  }
+  if (src->test_pat) {
+    dst->test_pat = strdup(src->test_pat);
+  }
+  if (src->corr_pat) {
+    dst->corr_pat = strdup(src->corr_pat);
+  }
+  if (src->info_pat) {
+    dst->info_pat = strdup(src->info_pat);
+  }
+  if (src->tgz_pat) {
+    dst->tgz_pat = strdup(src->tgz_pat);
+  }
+  if (src->tgzdir_pat) {
+    dst->tgzdir_pat = strdup(src->tgzdir_pat);
+  }
+  if (src->clardb_plugin) {
+    dst->clardb_plugin = strdup(src->clardb_plugin);
+  }
+  if (src->rundb_plugin) {
+    dst->rundb_plugin = strdup(src->rundb_plugin);
+  }
+  if (src->xuser_plugin) {
+    dst->xuser_plugin = strdup(src->xuser_plugin);
+  }
+  if (src->status_plugin) {
+    dst->status_plugin = strdup(src->status_plugin);
+  }
+  if (src->variant_plugin) {
+    dst->variant_plugin = strdup(src->variant_plugin);
+  }
+  if (src->var_dir) {
+    dst->var_dir = strdup(src->var_dir);
+  }
+  if (src->run_log_file) {
+    dst->run_log_file = strdup(src->run_log_file);
+  }
+  if (src->clar_log_file) {
+    dst->clar_log_file = strdup(src->clar_log_file);
+  }
+  if (src->archive_dir) {
+    dst->archive_dir = strdup(src->archive_dir);
+  }
+  if (src->clar_archive_dir) {
+    dst->clar_archive_dir = strdup(src->clar_archive_dir);
+  }
+  if (src->run_archive_dir) {
+    dst->run_archive_dir = strdup(src->run_archive_dir);
+  }
+  if (src->report_archive_dir) {
+    dst->report_archive_dir = strdup(src->report_archive_dir);
+  }
+  if (src->team_report_archive_dir) {
+    dst->team_report_archive_dir = strdup(src->team_report_archive_dir);
+  }
+  if (src->xml_report_archive_dir) {
+    dst->xml_report_archive_dir = strdup(src->xml_report_archive_dir);
+  }
+  if (src->full_archive_dir) {
+    dst->full_archive_dir = strdup(src->full_archive_dir);
+  }
+  if (src->audit_log_dir) {
+    dst->audit_log_dir = strdup(src->audit_log_dir);
+  }
+  if (src->uuid_archive_dir) {
+    dst->uuid_archive_dir = strdup(src->uuid_archive_dir);
+  }
+  if (src->team_extra_dir) {
+    dst->team_extra_dir = strdup(src->team_extra_dir);
+  }
+  if (src->legacy_status_dir) {
+    dst->legacy_status_dir = strdup(src->legacy_status_dir);
+  }
+  if (src->work_dir) {
+    dst->work_dir = strdup(src->work_dir);
+  }
+  if (src->print_work_dir) {
+    dst->print_work_dir = strdup(src->print_work_dir);
+  }
+  if (src->diff_work_dir) {
+    dst->diff_work_dir = strdup(src->diff_work_dir);
+  }
+  if (src->a2ps_path) {
+    dst->a2ps_path = strdup(src->a2ps_path);
+  }
+  dst->a2ps_args = (typeof(dst->a2ps_args)) sarray_copy((char**) src->a2ps_args);
+  if (src->lpr_path) {
+    dst->lpr_path = strdup(src->lpr_path);
+  }
+  dst->lpr_args = (typeof(dst->lpr_args)) sarray_copy((char**) src->lpr_args);
+  if (src->diff_path) {
+    dst->diff_path = strdup(src->diff_path);
+  }
+  if (src->compile_dir) {
+    dst->compile_dir = strdup(src->compile_dir);
+  }
+  if (src->compile_queue_dir) {
+    dst->compile_queue_dir = strdup(src->compile_queue_dir);
+  }
+  if (src->compile_src_dir) {
+    dst->compile_src_dir = strdup(src->compile_src_dir);
+  }
+  dst->extra_compile_dirs = (typeof(dst->extra_compile_dirs)) sarray_copy((char**) src->extra_compile_dirs);
+  if (src->compile_out_dir) {
+    dst->compile_out_dir = strdup(src->compile_out_dir);
+  }
+  if (src->compile_status_dir) {
+    dst->compile_status_dir = strdup(src->compile_status_dir);
+  }
+  if (src->compile_report_dir) {
+    dst->compile_report_dir = strdup(src->compile_report_dir);
+  }
+  if (src->compile_work_dir) {
+    dst->compile_work_dir = strdup(src->compile_work_dir);
+  }
+  if (src->run_dir) {
+    dst->run_dir = strdup(src->run_dir);
+  }
+  if (src->run_queue_dir) {
+    dst->run_queue_dir = strdup(src->run_queue_dir);
+  }
+  if (src->run_exe_dir) {
+    dst->run_exe_dir = strdup(src->run_exe_dir);
+  }
+  if (src->run_out_dir) {
+    dst->run_out_dir = strdup(src->run_out_dir);
+  }
+  if (src->run_status_dir) {
+    dst->run_status_dir = strdup(src->run_status_dir);
+  }
+  if (src->run_report_dir) {
+    dst->run_report_dir = strdup(src->run_report_dir);
+  }
+  if (src->run_team_report_dir) {
+    dst->run_team_report_dir = strdup(src->run_team_report_dir);
+  }
+  if (src->run_full_archive_dir) {
+    dst->run_full_archive_dir = strdup(src->run_full_archive_dir);
+  }
+  if (src->run_work_dir) {
+    dst->run_work_dir = strdup(src->run_work_dir);
+  }
+  if (src->run_check_dir) {
+    dst->run_check_dir = strdup(src->run_check_dir);
+  }
+  if (src->htdocs_dir) {
+    dst->htdocs_dir = strdup(src->htdocs_dir);
+  }
+  dst->score_system = src->score_system;
+  dst->tests_to_accept = src->tests_to_accept;
+  dst->is_virtual = src->is_virtual;
+  dst->prune_empty_users = src->prune_empty_users;
+  dst->rounding_mode = src->rounding_mode;
+  dst->max_file_length = src->max_file_length;
+  dst->max_line_length = src->max_line_length;
+  dst->max_cmd_length = src->max_cmd_length;
+  if (src->team_info_url) {
+    dst->team_info_url = strdup(src->team_info_url);
+  }
+  if (src->prob_info_url) {
+    dst->prob_info_url = strdup(src->prob_info_url);
+  }
+  if (src->standings_file_name) {
+    dst->standings_file_name = strdup(src->standings_file_name);
+  }
+  if (src->stand_header_file) {
+    dst->stand_header_file = strdup(src->stand_header_file);
+  }
+  if (src->stand_footer_file) {
+    dst->stand_footer_file = strdup(src->stand_footer_file);
+  }
+  if (src->stand_symlink_dir) {
+    dst->stand_symlink_dir = strdup(src->stand_symlink_dir);
+  }
+  dst->users_on_page = src->users_on_page;
+  if (src->stand_file_name_2) {
+    dst->stand_file_name_2 = strdup(src->stand_file_name_2);
+  }
+  dst->stand_fancy_style = src->stand_fancy_style;
+  if (src->stand_extra_format) {
+    dst->stand_extra_format = strdup(src->stand_extra_format);
+  }
+  if (src->stand_extra_legend) {
+    dst->stand_extra_legend = strdup(src->stand_extra_legend);
+  }
+  if (src->stand_extra_attr) {
+    dst->stand_extra_attr = strdup(src->stand_extra_attr);
+  }
+  if (src->stand_table_attr) {
+    dst->stand_table_attr = strdup(src->stand_table_attr);
+  }
+  if (src->stand_place_attr) {
+    dst->stand_place_attr = strdup(src->stand_place_attr);
+  }
+  if (src->stand_team_attr) {
+    dst->stand_team_attr = strdup(src->stand_team_attr);
+  }
+  if (src->stand_prob_attr) {
+    dst->stand_prob_attr = strdup(src->stand_prob_attr);
+  }
+  if (src->stand_solved_attr) {
+    dst->stand_solved_attr = strdup(src->stand_solved_attr);
+  }
+  if (src->stand_score_attr) {
+    dst->stand_score_attr = strdup(src->stand_score_attr);
+  }
+  if (src->stand_penalty_attr) {
+    dst->stand_penalty_attr = strdup(src->stand_penalty_attr);
+  }
+  if (src->stand_time_attr) {
+    dst->stand_time_attr = strdup(src->stand_time_attr);
+  }
+  if (src->stand_self_row_attr) {
+    dst->stand_self_row_attr = strdup(src->stand_self_row_attr);
+  }
+  if (src->stand_r_row_attr) {
+    dst->stand_r_row_attr = strdup(src->stand_r_row_attr);
+  }
+  if (src->stand_v_row_attr) {
+    dst->stand_v_row_attr = strdup(src->stand_v_row_attr);
+  }
+  if (src->stand_u_row_attr) {
+    dst->stand_u_row_attr = strdup(src->stand_u_row_attr);
+  }
+  if (src->stand_success_attr) {
+    dst->stand_success_attr = strdup(src->stand_success_attr);
+  }
+  if (src->stand_fail_attr) {
+    dst->stand_fail_attr = strdup(src->stand_fail_attr);
+  }
+  if (src->stand_trans_attr) {
+    dst->stand_trans_attr = strdup(src->stand_trans_attr);
+  }
+  if (src->stand_disq_attr) {
+    dst->stand_disq_attr = strdup(src->stand_disq_attr);
+  }
+  dst->stand_use_login = src->stand_use_login;
+  dst->stand_show_avatar = src->stand_show_avatar;
+  dst->stand_show_first_solver = src->stand_show_first_solver;
+  dst->stand_show_ok_time = src->stand_show_ok_time;
+  dst->stand_show_att_num = src->stand_show_att_num;
+  dst->stand_sort_by_solved = src->stand_sort_by_solved;
+  dst->stand_row_attr = (typeof(dst->stand_row_attr)) sarray_copy((char**) src->stand_row_attr);
+  if (src->stand_page_table_attr) {
+    dst->stand_page_table_attr = strdup(src->stand_page_table_attr);
+  }
+  dst->stand_page_row_attr = (typeof(dst->stand_page_row_attr)) sarray_copy((char**) src->stand_page_row_attr);
+  dst->stand_page_col_attr = (typeof(dst->stand_page_col_attr)) sarray_copy((char**) src->stand_page_col_attr);
+  if (src->stand_page_cur_attr) {
+    dst->stand_page_cur_attr = strdup(src->stand_page_cur_attr);
+  }
+  dst->stand_collate_name = src->stand_collate_name;
+  dst->stand_enable_penalty = src->stand_enable_penalty;
+  // private stand_header_txt
+  // private stand_footer_txt
+  if (src->stand2_file_name) {
+    dst->stand2_file_name = strdup(src->stand2_file_name);
+  }
+  if (src->stand2_header_file) {
+    dst->stand2_header_file = strdup(src->stand2_header_file);
+  }
+  if (src->stand2_footer_file) {
+    dst->stand2_footer_file = strdup(src->stand2_footer_file);
+  }
+  // private stand2_header_txt
+  // private stand2_footer_txt
+  if (src->stand2_symlink_dir) {
+    dst->stand2_symlink_dir = strdup(src->stand2_symlink_dir);
+  }
+  if (src->plog_file_name) {
+    dst->plog_file_name = strdup(src->plog_file_name);
+  }
+  if (src->plog_header_file) {
+    dst->plog_header_file = strdup(src->plog_header_file);
+  }
+  if (src->plog_footer_file) {
+    dst->plog_footer_file = strdup(src->plog_footer_file);
+  }
+  // private plog_header_txt
+  // private plog_footer_txt
+  dst->plog_update_time = src->plog_update_time;
+  if (src->plog_symlink_dir) {
+    dst->plog_symlink_dir = strdup(src->plog_symlink_dir);
+  }
+  dst->internal_xml_update_time = src->internal_xml_update_time;
+  dst->external_xml_update_time = src->external_xml_update_time;
+  if (src->user_exam_protocol_header_file) {
+    dst->user_exam_protocol_header_file = strdup(src->user_exam_protocol_header_file);
+  }
+  if (src->user_exam_protocol_footer_file) {
+    dst->user_exam_protocol_footer_file = strdup(src->user_exam_protocol_footer_file);
+  }
+  // private user_exam_protocol_header_txt
+  // private user_exam_protocol_footer_txt
+  if (src->prob_exam_protocol_header_file) {
+    dst->prob_exam_protocol_header_file = strdup(src->prob_exam_protocol_header_file);
+  }
+  if (src->prob_exam_protocol_footer_file) {
+    dst->prob_exam_protocol_footer_file = strdup(src->prob_exam_protocol_footer_file);
+  }
+  // private prob_exam_protocol_header_txt
+  // private prob_exam_protocol_footer_txt
+  if (src->full_exam_protocol_header_file) {
+    dst->full_exam_protocol_header_file = strdup(src->full_exam_protocol_header_file);
+  }
+  if (src->full_exam_protocol_footer_file) {
+    dst->full_exam_protocol_footer_file = strdup(src->full_exam_protocol_footer_file);
+  }
+  // private full_exam_protocol_header_txt
+  // private full_exam_protocol_footer_txt
+  dst->extended_sound = src->extended_sound;
+  dst->disable_sound = src->disable_sound;
+  if (src->sound_player) {
+    dst->sound_player = strdup(src->sound_player);
+  }
+  if (src->accept_sound) {
+    dst->accept_sound = strdup(src->accept_sound);
+  }
+  if (src->runtime_sound) {
+    dst->runtime_sound = strdup(src->runtime_sound);
+  }
+  if (src->timelimit_sound) {
+    dst->timelimit_sound = strdup(src->timelimit_sound);
+  }
+  if (src->presentation_sound) {
+    dst->presentation_sound = strdup(src->presentation_sound);
+  }
+  if (src->wrong_sound) {
+    dst->wrong_sound = strdup(src->wrong_sound);
+  }
+  if (src->internal_sound) {
+    dst->internal_sound = strdup(src->internal_sound);
+  }
+  if (src->start_sound) {
+    dst->start_sound = strdup(src->start_sound);
+  }
+  dst->team_download_time = src->team_download_time;
+  dst->cr_serialization_key = src->cr_serialization_key;
+  dst->show_astr_time = src->show_astr_time;
+  dst->ignore_duplicated_runs = src->ignore_duplicated_runs;
+  dst->report_error_code = src->report_error_code;
+  dst->auto_short_problem_name = src->auto_short_problem_name;
+  dst->compile_real_time_limit = src->compile_real_time_limit;
+  dst->checker_real_time_limit = src->checker_real_time_limit;
+  dst->show_deadline = src->show_deadline;
+  dst->separate_user_score = src->separate_user_score;
+  dst->show_sha1 = src->show_sha1;
+  dst->show_judge_identity = src->show_judge_identity;
+  dst->use_gzip = src->use_gzip;
+  dst->min_gzip_size = src->min_gzip_size;
+  dst->use_dir_hierarchy = src->use_dir_hierarchy;
+  dst->html_report = src->html_report;
+  dst->xml_report = src->xml_report;
+  dst->enable_full_archive = src->enable_full_archive;
+  dst->cpu_bogomips = src->cpu_bogomips;
+  dst->skip_full_testing = src->skip_full_testing;
+  dst->skip_accept_testing = src->skip_accept_testing;
+  dst->enable_problem_history = src->enable_problem_history;
+  if (src->variant_map_file) {
+    dst->variant_map_file = strdup(src->variant_map_file);
+  }
+  dst->enable_printing = src->enable_printing;
+  dst->disable_banner_page = src->disable_banner_page;
+  dst->printout_uses_login = src->printout_uses_login;
+  dst->team_page_quota = src->team_page_quota;
+  dst->print_just_copy = src->print_just_copy;
+  dst->compile_max_vm_size = src->compile_max_vm_size;
+  dst->compile_max_stack_size = src->compile_max_stack_size;
+  dst->compile_max_file_size = src->compile_max_file_size;
+  dst->compile_max_rss_size = src->compile_max_rss_size;
+  dst->user_priority_adjustments = (typeof(dst->user_priority_adjustments)) sarray_copy((char**) src->user_priority_adjustments);
+  // private user_adjustment_info
+  // private user_adjustment_map
+  dst->contestant_status_num = src->contestant_status_num;
+  dst->contestant_status_legend = (typeof(dst->contestant_status_legend)) sarray_copy((char**) src->contestant_status_legend);
+  dst->contestant_status_row_attr = (typeof(dst->contestant_status_row_attr)) sarray_copy((char**) src->contestant_status_row_attr);
+  dst->stand_show_contestant_status = src->stand_show_contestant_status;
+  dst->stand_show_warn_number = src->stand_show_warn_number;
+  if (src->stand_contestant_status_attr) {
+    dst->stand_contestant_status_attr = strdup(src->stand_contestant_status_attr);
+  }
+  if (src->stand_warn_number_attr) {
+    dst->stand_warn_number_attr = strdup(src->stand_warn_number_attr);
+  }
+  dst->load_user_group = (typeof(dst->load_user_group)) sarray_copy((char**) src->load_user_group);
+  if (src->tokens) {
+    dst->tokens = strdup(src->tokens);
+  }
+  // private token_info
+  // private enable_tokens
+  if (src->dates_config_file) {
+    dst->dates_config_file = strdup(src->dates_config_file);
+  }
+  // private dates_config
+  if (src->unhandled_vars) {
+    dst->unhandled_vars = strdup(src->unhandled_vars);
+  }
+  // private disable_prob_long_name
+  // private disable_passed_tests
+  dst->time_between_submits = src->time_between_submits;
+  dst->max_input_size = src->max_input_size;
+  dst->max_submit_num = src->max_submit_num;
+  dst->max_submit_total = src->max_submit_total;
+}
+
+void cntsglob_free(struct section_global_data *ptr)
+{
+  // hidden g
+  // private fog_standings_updated
+  // private start_standings_updated
+  // private unfog_standings_updated
+  free(ptr->name);
+  free(ptr->root_dir);
+  free(ptr->serve_socket);
+  free(ptr->l10n_dir);
+  free(ptr->standings_locale);
+  // private standings_locale_id
+  free(ptr->checker_locale);
+  free(ptr->socket_path);
+  free(ptr->contests_dir);
+  free(ptr->lang_config_dir);
+  free(ptr->charset);
+  free(ptr->standings_charset);
+  free(ptr->stand2_charset);
+  free(ptr->plog_charset);
+  free(ptr->conf_dir);
+  free(ptr->problems_dir);
+  free(ptr->script_dir);
+  free(ptr->test_dir);
+  free(ptr->corr_dir);
+  free(ptr->info_dir);
+  free(ptr->tgz_dir);
+  free(ptr->checker_dir);
+  free(ptr->statement_dir);
+  free(ptr->plugin_dir);
+  free(ptr->test_sfx);
+  free(ptr->corr_sfx);
+  free(ptr->info_sfx);
+  free(ptr->tgz_sfx);
+  free(ptr->tgzdir_sfx);
+  free(ptr->ejudge_checkers_dir);
+  free(ptr->contest_start_cmd);
+  free(ptr->contest_stop_cmd);
+  free(ptr->description_file);
+  free(ptr->contest_plugin_file);
+  free(ptr->virtual_end_options);
+  // private virtual_end_info
+  free(ptr->super_run_dir);
+  free(ptr->compile_server_id);
+  free(ptr->test_pat);
+  free(ptr->corr_pat);
+  free(ptr->info_pat);
+  free(ptr->tgz_pat);
+  free(ptr->tgzdir_pat);
+  free(ptr->clardb_plugin);
+  free(ptr->rundb_plugin);
+  free(ptr->xuser_plugin);
+  free(ptr->status_plugin);
+  free(ptr->variant_plugin);
+  free(ptr->var_dir);
+  free(ptr->run_log_file);
+  free(ptr->clar_log_file);
+  free(ptr->archive_dir);
+  free(ptr->clar_archive_dir);
+  free(ptr->run_archive_dir);
+  free(ptr->report_archive_dir);
+  free(ptr->team_report_archive_dir);
+  free(ptr->xml_report_archive_dir);
+  free(ptr->full_archive_dir);
+  free(ptr->audit_log_dir);
+  free(ptr->uuid_archive_dir);
+  free(ptr->team_extra_dir);
+  free(ptr->legacy_status_dir);
+  free(ptr->work_dir);
+  free(ptr->print_work_dir);
+  free(ptr->diff_work_dir);
+  free(ptr->a2ps_path);
+  sarray_free((char**) ptr->a2ps_args);
+  free(ptr->lpr_path);
+  sarray_free((char**) ptr->lpr_args);
+  free(ptr->diff_path);
+  free(ptr->compile_dir);
+  free(ptr->compile_queue_dir);
+  free(ptr->compile_src_dir);
+  sarray_free((char**) ptr->extra_compile_dirs);
+  free(ptr->compile_out_dir);
+  free(ptr->compile_status_dir);
+  free(ptr->compile_report_dir);
+  free(ptr->compile_work_dir);
+  free(ptr->run_dir);
+  free(ptr->run_queue_dir);
+  free(ptr->run_exe_dir);
+  free(ptr->run_out_dir);
+  free(ptr->run_status_dir);
+  free(ptr->run_report_dir);
+  free(ptr->run_team_report_dir);
+  free(ptr->run_full_archive_dir);
+  free(ptr->run_work_dir);
+  free(ptr->run_check_dir);
+  free(ptr->htdocs_dir);
+  free(ptr->team_info_url);
+  free(ptr->prob_info_url);
+  free(ptr->standings_file_name);
+  free(ptr->stand_header_file);
+  free(ptr->stand_footer_file);
+  free(ptr->stand_symlink_dir);
+  free(ptr->stand_file_name_2);
+  free(ptr->stand_extra_format);
+  free(ptr->stand_extra_legend);
+  free(ptr->stand_extra_attr);
+  free(ptr->stand_table_attr);
+  free(ptr->stand_place_attr);
+  free(ptr->stand_team_attr);
+  free(ptr->stand_prob_attr);
+  free(ptr->stand_solved_attr);
+  free(ptr->stand_score_attr);
+  free(ptr->stand_penalty_attr);
+  free(ptr->stand_time_attr);
+  free(ptr->stand_self_row_attr);
+  free(ptr->stand_r_row_attr);
+  free(ptr->stand_v_row_attr);
+  free(ptr->stand_u_row_attr);
+  free(ptr->stand_success_attr);
+  free(ptr->stand_fail_attr);
+  free(ptr->stand_trans_attr);
+  free(ptr->stand_disq_attr);
+  sarray_free((char**) ptr->stand_row_attr);
+  free(ptr->stand_page_table_attr);
+  sarray_free((char**) ptr->stand_page_row_attr);
+  sarray_free((char**) ptr->stand_page_col_attr);
+  free(ptr->stand_page_cur_attr);
+  // private stand_header_txt
+  // private stand_footer_txt
+  free(ptr->stand2_file_name);
+  free(ptr->stand2_header_file);
+  free(ptr->stand2_footer_file);
+  // private stand2_header_txt
+  // private stand2_footer_txt
+  free(ptr->stand2_symlink_dir);
+  free(ptr->plog_file_name);
+  free(ptr->plog_header_file);
+  free(ptr->plog_footer_file);
+  // private plog_header_txt
+  // private plog_footer_txt
+  free(ptr->plog_symlink_dir);
+  free(ptr->user_exam_protocol_header_file);
+  free(ptr->user_exam_protocol_footer_file);
+  // private user_exam_protocol_header_txt
+  // private user_exam_protocol_footer_txt
+  free(ptr->prob_exam_protocol_header_file);
+  free(ptr->prob_exam_protocol_footer_file);
+  // private prob_exam_protocol_header_txt
+  // private prob_exam_protocol_footer_txt
+  free(ptr->full_exam_protocol_header_file);
+  free(ptr->full_exam_protocol_footer_file);
+  // private full_exam_protocol_header_txt
+  // private full_exam_protocol_footer_txt
+  free(ptr->sound_player);
+  free(ptr->accept_sound);
+  free(ptr->runtime_sound);
+  free(ptr->timelimit_sound);
+  free(ptr->presentation_sound);
+  free(ptr->wrong_sound);
+  free(ptr->internal_sound);
+  free(ptr->start_sound);
+  free(ptr->variant_map_file);
+  sarray_free((char**) ptr->user_priority_adjustments);
+  // private user_adjustment_info
+  // private user_adjustment_map
+  sarray_free((char**) ptr->contestant_status_legend);
+  sarray_free((char**) ptr->contestant_status_row_attr);
+  free(ptr->stand_contestant_status_attr);
+  free(ptr->stand_warn_number_attr);
+  sarray_free((char**) ptr->load_user_group);
+  free(ptr->tokens);
+  // private token_info
+  // private enable_tokens
+  free(ptr->dates_config_file);
+  // private dates_config
+  free(ptr->unhandled_vars);
+  // private disable_prob_long_name
+  // private disable_passed_tests
+}
+
 const struct meta_methods cntsglob_methods =
 {
   CNTSGLOB_LAST_FIELD,
@@ -362,6 +1128,8 @@ const struct meta_methods cntsglob_methods =
   (const void *(*)(const void *ptr, int tag))cntsglob_get_ptr,
   (void *(*)(void *ptr, int tag))cntsglob_get_ptr_nc,
   cntsglob_lookup_field,
+  (void (*)(void *, const void *))cntsglob_copy,
+  (void (*)(void *))cntsglob_free,
 };
 
 static struct meta_info_item meta_info_section_problem_data_data[] =
@@ -649,6 +1417,510 @@ int cntsprob_lookup_field(const char *name)
   return meta_lookup_string(atm, name);
 }
 
+void cntsprob_copy(struct section_problem_data *dst, const struct section_problem_data *src)
+{
+  // hidden g
+  dst->id = src->id;
+  dst->tester_id = src->tester_id;
+  dst->type = src->type;
+  dst->variant_num = src->variant_num;
+  dst->full_score = src->full_score;
+  dst->full_user_score = src->full_user_score;
+  dst->min_score_1 = src->min_score_1;
+  dst->min_score_2 = src->min_score_2;
+  strcpy(dst->super, src->super);
+  strcpy(dst->short_name, src->short_name);
+  dst->abstract = src->abstract;
+  dst->manual_checking = src->manual_checking;
+  dst->check_presentation = src->check_presentation;
+  dst->scoring_checker = src->scoring_checker;
+  dst->enable_checker_token = src->enable_checker_token;
+  dst->interactive_valuer = src->interactive_valuer;
+  dst->disable_pe = src->disable_pe;
+  dst->disable_wtl = src->disable_wtl;
+  dst->wtl_is_cf = src->wtl_is_cf;
+  dst->use_stdin = src->use_stdin;
+  dst->use_stdout = src->use_stdout;
+  dst->combined_stdin = src->combined_stdin;
+  dst->combined_stdout = src->combined_stdout;
+  dst->binary_input = src->binary_input;
+  dst->binary = src->binary;
+  dst->ignore_exit_code = src->ignore_exit_code;
+  dst->ignore_term_signal = src->ignore_term_signal;
+  dst->olympiad_mode = src->olympiad_mode;
+  dst->score_latest = src->score_latest;
+  dst->score_latest_or_unmarked = src->score_latest_or_unmarked;
+  dst->score_latest_marked = src->score_latest_marked;
+  dst->score_tokenized = src->score_tokenized;
+  dst->use_ac_not_ok = src->use_ac_not_ok;
+  dst->ignore_prev_ac = src->ignore_prev_ac;
+  dst->team_enable_rep_view = src->team_enable_rep_view;
+  dst->team_enable_ce_view = src->team_enable_ce_view;
+  dst->team_show_judge_report = src->team_show_judge_report;
+  dst->show_checker_comment = src->show_checker_comment;
+  dst->ignore_compile_errors = src->ignore_compile_errors;
+  dst->variable_full_score = src->variable_full_score;
+  dst->ignore_penalty = src->ignore_penalty;
+  dst->use_corr = src->use_corr;
+  dst->use_info = src->use_info;
+  dst->use_tgz = src->use_tgz;
+  dst->accept_partial = src->accept_partial;
+  dst->disable_user_submit = src->disable_user_submit;
+  dst->disable_tab = src->disable_tab;
+  dst->unrestricted_statement = src->unrestricted_statement;
+  dst->statement_ignore_ip = src->statement_ignore_ip;
+  dst->restricted_statement = src->restricted_statement;
+  dst->enable_submit_after_reject = src->enable_submit_after_reject;
+  dst->hide_file_names = src->hide_file_names;
+  dst->hide_real_time_limit = src->hide_real_time_limit;
+  dst->enable_tokens = src->enable_tokens;
+  dst->tokens_for_user_ac = src->tokens_for_user_ac;
+  dst->disable_submit_after_ok = src->disable_submit_after_ok;
+  dst->disable_auto_testing = src->disable_auto_testing;
+  dst->disable_testing = src->disable_testing;
+  dst->enable_compilation = src->enable_compilation;
+  dst->skip_testing = src->skip_testing;
+  dst->hidden = src->hidden;
+  dst->stand_hide_time = src->stand_hide_time;
+  dst->advance_to_next = src->advance_to_next;
+  dst->disable_ctrl_chars = src->disable_ctrl_chars;
+  dst->enable_text_form = src->enable_text_form;
+  dst->stand_ignore_score = src->stand_ignore_score;
+  dst->stand_last_column = src->stand_last_column;
+  dst->disable_security = src->disable_security;
+  dst->enable_suid_run = src->enable_suid_run;
+  dst->enable_container = src->enable_container;
+  dst->enable_dynamic_priority = src->enable_dynamic_priority;
+  dst->valuer_sets_marked = src->valuer_sets_marked;
+  dst->ignore_unmarked = src->ignore_unmarked;
+  dst->disable_stderr = src->disable_stderr;
+  dst->enable_process_group = src->enable_process_group;
+  dst->enable_kill_all = src->enable_kill_all;
+  dst->hide_variant = src->hide_variant;
+  dst->enable_testlib_mode = src->enable_testlib_mode;
+  dst->autoassign_variants = src->autoassign_variants;
+  dst->require_any = src->require_any;
+  dst->enable_extended_info = src->enable_extended_info;
+  dst->stop_on_first_fail = src->stop_on_first_fail;
+  dst->enable_control_socket = src->enable_control_socket;
+  dst->copy_exe_to_tgzdir = src->copy_exe_to_tgzdir;
+  dst->enable_multi_header = src->enable_multi_header;
+  dst->use_lang_multi_header = src->use_lang_multi_header;
+  dst->notify_on_submit = src->notify_on_submit;
+  dst->enable_user_input = src->enable_user_input;
+  dst->enable_vcs = src->enable_vcs;
+  dst->enable_iframe_statement = src->enable_iframe_statement;
+  dst->enable_src_for_testing = src->enable_src_for_testing;
+  dst->disable_vm_size_limit = src->disable_vm_size_limit;
+  dst->examinator_num = src->examinator_num;
+  dst->real_time_limit = src->real_time_limit;
+  dst->time_limit = src->time_limit;
+  dst->time_limit_millis = src->time_limit_millis;
+  dst->test_score = src->test_score;
+  dst->run_penalty = src->run_penalty;
+  dst->acm_run_penalty = src->acm_run_penalty;
+  dst->disqualified_penalty = src->disqualified_penalty;
+  dst->compile_error_penalty = src->compile_error_penalty;
+  dst->tests_to_accept = src->tests_to_accept;
+  dst->min_tests_to_accept = src->min_tests_to_accept;
+  dst->checker_real_time_limit = src->checker_real_time_limit;
+  dst->checker_time_limit_ms = src->checker_time_limit_ms;
+  dst->priority_adjustment = src->priority_adjustment;
+  dst->score_multiplier = src->score_multiplier;
+  dst->prev_runs_to_show = src->prev_runs_to_show;
+  dst->max_user_run_count = src->max_user_run_count;
+  if (src->long_name) {
+    dst->long_name = strdup(src->long_name);
+  }
+  if (src->stand_name) {
+    dst->stand_name = strdup(src->stand_name);
+  }
+  if (src->stand_column) {
+    dst->stand_column = strdup(src->stand_column);
+  }
+  if (src->group_name) {
+    dst->group_name = strdup(src->group_name);
+  }
+  if (src->internal_name) {
+    dst->internal_name = strdup(src->internal_name);
+  }
+  if (src->plugin_entry_name) {
+    dst->plugin_entry_name = strdup(src->plugin_entry_name);
+  }
+  if (src->uuid) {
+    dst->uuid = strdup(src->uuid);
+  }
+  if (src->problem_dir) {
+    dst->problem_dir = strdup(src->problem_dir);
+  }
+  if (src->test_dir) {
+    dst->test_dir = strdup(src->test_dir);
+  }
+  if (src->test_sfx) {
+    dst->test_sfx = strdup(src->test_sfx);
+  }
+  if (src->corr_dir) {
+    dst->corr_dir = strdup(src->corr_dir);
+  }
+  if (src->corr_sfx) {
+    dst->corr_sfx = strdup(src->corr_sfx);
+  }
+  if (src->info_dir) {
+    dst->info_dir = strdup(src->info_dir);
+  }
+  if (src->info_sfx) {
+    dst->info_sfx = strdup(src->info_sfx);
+  }
+  if (src->tgz_dir) {
+    dst->tgz_dir = strdup(src->tgz_dir);
+  }
+  if (src->tgz_sfx) {
+    dst->tgz_sfx = strdup(src->tgz_sfx);
+  }
+  if (src->tgzdir_sfx) {
+    dst->tgzdir_sfx = strdup(src->tgzdir_sfx);
+  }
+  if (src->input_file) {
+    dst->input_file = strdup(src->input_file);
+  }
+  if (src->output_file) {
+    dst->output_file = strdup(src->output_file);
+  }
+  if (src->test_score_list) {
+    dst->test_score_list = strdup(src->test_score_list);
+  }
+  if (src->tokens) {
+    dst->tokens = strdup(src->tokens);
+  }
+  if (src->umask) {
+    dst->umask = strdup(src->umask);
+  }
+  if (src->ok_status) {
+    dst->ok_status = strdup(src->ok_status);
+  }
+  if (src->header_pat) {
+    dst->header_pat = strdup(src->header_pat);
+  }
+  if (src->footer_pat) {
+    dst->footer_pat = strdup(src->footer_pat);
+  }
+  if (src->compiler_env_pat) {
+    dst->compiler_env_pat = strdup(src->compiler_env_pat);
+  }
+  if (src->container_options) {
+    dst->container_options = strdup(src->container_options);
+  }
+  // private token_info
+  if (src->score_tests) {
+    dst->score_tests = strdup(src->score_tests);
+  }
+  if (src->standard_checker) {
+    dst->standard_checker = strdup(src->standard_checker);
+  }
+  if (src->spelling) {
+    dst->spelling = strdup(src->spelling);
+  }
+  if (src->statement_file) {
+    dst->statement_file = strdup(src->statement_file);
+  }
+  if (src->alternatives_file) {
+    dst->alternatives_file = strdup(src->alternatives_file);
+  }
+  if (src->plugin_file) {
+    dst->plugin_file = strdup(src->plugin_file);
+  }
+  if (src->xml_file) {
+    dst->xml_file = strdup(src->xml_file);
+  }
+  if (src->stand_attr) {
+    dst->stand_attr = strdup(src->stand_attr);
+  }
+  if (src->source_header) {
+    dst->source_header = strdup(src->source_header);
+  }
+  if (src->source_footer) {
+    dst->source_footer = strdup(src->source_footer);
+  }
+  dst->interactor_time_limit = src->interactor_time_limit;
+  dst->interactor_real_time_limit = src->interactor_real_time_limit;
+  if (src->custom_compile_cmd) {
+    dst->custom_compile_cmd = strdup(src->custom_compile_cmd);
+  }
+  if (src->custom_lang_name) {
+    dst->custom_lang_name = strdup(src->custom_lang_name);
+  }
+  if (src->extra_src_dir) {
+    dst->extra_src_dir = strdup(src->extra_src_dir);
+  }
+  if (src->test_pat) {
+    dst->test_pat = strdup(src->test_pat);
+  }
+  if (src->corr_pat) {
+    dst->corr_pat = strdup(src->corr_pat);
+  }
+  if (src->info_pat) {
+    dst->info_pat = strdup(src->info_pat);
+  }
+  if (src->tgz_pat) {
+    dst->tgz_pat = strdup(src->tgz_pat);
+  }
+  if (src->tgzdir_pat) {
+    dst->tgzdir_pat = strdup(src->tgzdir_pat);
+  }
+  // private ntests
+  // private tscores
+  // private x_score_tests
+  dst->test_sets = (typeof(dst->test_sets)) sarray_copy((char**) src->test_sets);
+  // private ts_total
+  // private ts_infos
+  if (src->normalization) {
+    dst->normalization = strdup(src->normalization);
+  }
+  // private normalization_val
+  dst->deadline = src->deadline;
+  dst->start_date = src->start_date;
+  dst->date_penalty = (typeof(dst->date_penalty)) sarray_copy((char**) src->date_penalty);
+  // private dp_total
+  // private dp_infos
+  dst->group_start_date = (typeof(dst->group_start_date)) sarray_copy((char**) src->group_start_date);
+  dst->group_deadline = (typeof(dst->group_deadline)) sarray_copy((char**) src->group_deadline);
+  // private gsd
+  // private gdl
+  dst->disable_language = (typeof(dst->disable_language)) sarray_copy((char**) src->disable_language);
+  dst->enable_language = (typeof(dst->enable_language)) sarray_copy((char**) src->enable_language);
+  dst->require = (typeof(dst->require)) sarray_copy((char**) src->require);
+  dst->provide_ok = (typeof(dst->provide_ok)) sarray_copy((char**) src->provide_ok);
+  dst->allow_ip = (typeof(dst->allow_ip)) sarray_copy((char**) src->allow_ip);
+  dst->lang_compiler_env = (typeof(dst->lang_compiler_env)) sarray_copy((char**) src->lang_compiler_env);
+  dst->lang_compiler_container_options = (typeof(dst->lang_compiler_container_options)) sarray_copy((char**) src->lang_compiler_container_options);
+  dst->checker_env = (typeof(dst->checker_env)) sarray_copy((char**) src->checker_env);
+  dst->valuer_env = (typeof(dst->valuer_env)) sarray_copy((char**) src->valuer_env);
+  dst->interactor_env = (typeof(dst->interactor_env)) sarray_copy((char**) src->interactor_env);
+  dst->style_checker_env = (typeof(dst->style_checker_env)) sarray_copy((char**) src->style_checker_env);
+  dst->test_checker_env = (typeof(dst->test_checker_env)) sarray_copy((char**) src->test_checker_env);
+  dst->test_generator_env = (typeof(dst->test_generator_env)) sarray_copy((char**) src->test_generator_env);
+  dst->init_env = (typeof(dst->init_env)) sarray_copy((char**) src->init_env);
+  dst->start_env = (typeof(dst->start_env)) sarray_copy((char**) src->start_env);
+  if (src->check_cmd) {
+    dst->check_cmd = strdup(src->check_cmd);
+  }
+  if (src->valuer_cmd) {
+    dst->valuer_cmd = strdup(src->valuer_cmd);
+  }
+  if (src->interactor_cmd) {
+    dst->interactor_cmd = strdup(src->interactor_cmd);
+  }
+  if (src->style_checker_cmd) {
+    dst->style_checker_cmd = strdup(src->style_checker_cmd);
+  }
+  if (src->test_checker_cmd) {
+    dst->test_checker_cmd = strdup(src->test_checker_cmd);
+  }
+  if (src->test_generator_cmd) {
+    dst->test_generator_cmd = strdup(src->test_generator_cmd);
+  }
+  if (src->init_cmd) {
+    dst->init_cmd = strdup(src->init_cmd);
+  }
+  if (src->start_cmd) {
+    dst->start_cmd = strdup(src->start_cmd);
+  }
+  if (src->solution_src) {
+    dst->solution_src = strdup(src->solution_src);
+  }
+  if (src->solution_cmd) {
+    dst->solution_cmd = strdup(src->solution_cmd);
+  }
+  if (src->post_pull_cmd) {
+    dst->post_pull_cmd = strdup(src->post_pull_cmd);
+  }
+  if (src->vcs_compile_cmd) {
+    dst->vcs_compile_cmd = strdup(src->vcs_compile_cmd);
+  }
+  dst->lang_time_adj = (typeof(dst->lang_time_adj)) sarray_copy((char**) src->lang_time_adj);
+  dst->lang_time_adj_millis = (typeof(dst->lang_time_adj_millis)) sarray_copy((char**) src->lang_time_adj_millis);
+  if (src->super_run_dir) {
+    dst->super_run_dir = strdup(src->super_run_dir);
+  }
+  dst->lang_max_vm_size = (typeof(dst->lang_max_vm_size)) sarray_copy((char**) src->lang_max_vm_size);
+  dst->lang_max_stack_size = (typeof(dst->lang_max_stack_size)) sarray_copy((char**) src->lang_max_stack_size);
+  dst->lang_max_rss_size = (typeof(dst->lang_max_rss_size)) sarray_copy((char**) src->lang_max_rss_size);
+  dst->checker_extra_files = (typeof(dst->checker_extra_files)) sarray_copy((char**) src->checker_extra_files);
+  dst->statement_env = (typeof(dst->statement_env)) sarray_copy((char**) src->statement_env);
+  dst->alternative = (typeof(dst->alternative)) sarray_copy((char**) src->alternative);
+  dst->personal_deadline = (typeof(dst->personal_deadline)) sarray_copy((char**) src->personal_deadline);
+  // private pd_total
+  // private pd_infos
+  if (src->score_bonus) {
+    dst->score_bonus = strdup(src->score_bonus);
+  }
+  // private score_bonus_total
+  // private score_bonus_val
+  if (src->open_tests) {
+    dst->open_tests = strdup(src->open_tests);
+  }
+  // private open_tests_count
+  // private open_tests_val
+  if (src->final_open_tests) {
+    dst->final_open_tests = strdup(src->final_open_tests);
+  }
+  // private final_open_tests_count
+  // private final_open_tests_val
+  if (src->token_open_tests) {
+    dst->token_open_tests = strdup(src->token_open_tests);
+  }
+  // private token_open_tests_count
+  // private token_open_tests_val
+  dst->max_vm_size = src->max_vm_size;
+  dst->max_data_size = src->max_data_size;
+  dst->max_stack_size = src->max_stack_size;
+  dst->max_rss_size = src->max_rss_size;
+  dst->max_core_size = src->max_core_size;
+  dst->max_file_size = src->max_file_size;
+  dst->checker_max_vm_size = src->checker_max_vm_size;
+  dst->checker_max_stack_size = src->checker_max_stack_size;
+  dst->checker_max_rss_size = src->checker_max_rss_size;
+  dst->max_open_file_count = src->max_open_file_count;
+  dst->max_process_count = src->max_process_count;
+  if (src->extid) {
+    dst->extid = strdup(src->extid);
+  }
+  if (src->unhandled_vars) {
+    dst->unhandled_vars = strdup(src->unhandled_vars);
+  }
+  dst->score_view = (typeof(dst->score_view)) sarray_copy((char**) src->score_view);
+  // private score_view_score
+  dst->score_view_text = (typeof(dst->score_view_text)) sarray_copy((char**) src->score_view_text);
+  // private xml_file_path
+  // private var_xml_file_paths
+  // hidden xml
+}
+
+void cntsprob_free(struct section_problem_data *ptr)
+{
+  // hidden g
+  free(ptr->long_name);
+  free(ptr->stand_name);
+  free(ptr->stand_column);
+  free(ptr->group_name);
+  free(ptr->internal_name);
+  free(ptr->plugin_entry_name);
+  free(ptr->uuid);
+  free(ptr->problem_dir);
+  free(ptr->test_dir);
+  free(ptr->test_sfx);
+  free(ptr->corr_dir);
+  free(ptr->corr_sfx);
+  free(ptr->info_dir);
+  free(ptr->info_sfx);
+  free(ptr->tgz_dir);
+  free(ptr->tgz_sfx);
+  free(ptr->tgzdir_sfx);
+  free(ptr->input_file);
+  free(ptr->output_file);
+  free(ptr->test_score_list);
+  free(ptr->tokens);
+  free(ptr->umask);
+  free(ptr->ok_status);
+  free(ptr->header_pat);
+  free(ptr->footer_pat);
+  free(ptr->compiler_env_pat);
+  free(ptr->container_options);
+  // private token_info
+  free(ptr->score_tests);
+  free(ptr->standard_checker);
+  free(ptr->spelling);
+  free(ptr->statement_file);
+  free(ptr->alternatives_file);
+  free(ptr->plugin_file);
+  free(ptr->xml_file);
+  free(ptr->stand_attr);
+  free(ptr->source_header);
+  free(ptr->source_footer);
+  free(ptr->custom_compile_cmd);
+  free(ptr->custom_lang_name);
+  free(ptr->extra_src_dir);
+  free(ptr->test_pat);
+  free(ptr->corr_pat);
+  free(ptr->info_pat);
+  free(ptr->tgz_pat);
+  free(ptr->tgzdir_pat);
+  // private ntests
+  // private tscores
+  // private x_score_tests
+  sarray_free((char**) ptr->test_sets);
+  // private ts_total
+  // private ts_infos
+  free(ptr->normalization);
+  // private normalization_val
+  sarray_free((char**) ptr->date_penalty);
+  // private dp_total
+  // private dp_infos
+  sarray_free((char**) ptr->group_start_date);
+  sarray_free((char**) ptr->group_deadline);
+  // private gsd
+  // private gdl
+  sarray_free((char**) ptr->disable_language);
+  sarray_free((char**) ptr->enable_language);
+  sarray_free((char**) ptr->require);
+  sarray_free((char**) ptr->provide_ok);
+  sarray_free((char**) ptr->allow_ip);
+  sarray_free((char**) ptr->lang_compiler_env);
+  sarray_free((char**) ptr->lang_compiler_container_options);
+  sarray_free((char**) ptr->checker_env);
+  sarray_free((char**) ptr->valuer_env);
+  sarray_free((char**) ptr->interactor_env);
+  sarray_free((char**) ptr->style_checker_env);
+  sarray_free((char**) ptr->test_checker_env);
+  sarray_free((char**) ptr->test_generator_env);
+  sarray_free((char**) ptr->init_env);
+  sarray_free((char**) ptr->start_env);
+  free(ptr->check_cmd);
+  free(ptr->valuer_cmd);
+  free(ptr->interactor_cmd);
+  free(ptr->style_checker_cmd);
+  free(ptr->test_checker_cmd);
+  free(ptr->test_generator_cmd);
+  free(ptr->init_cmd);
+  free(ptr->start_cmd);
+  free(ptr->solution_src);
+  free(ptr->solution_cmd);
+  free(ptr->post_pull_cmd);
+  free(ptr->vcs_compile_cmd);
+  sarray_free((char**) ptr->lang_time_adj);
+  sarray_free((char**) ptr->lang_time_adj_millis);
+  free(ptr->super_run_dir);
+  sarray_free((char**) ptr->lang_max_vm_size);
+  sarray_free((char**) ptr->lang_max_stack_size);
+  sarray_free((char**) ptr->lang_max_rss_size);
+  sarray_free((char**) ptr->checker_extra_files);
+  sarray_free((char**) ptr->statement_env);
+  sarray_free((char**) ptr->alternative);
+  sarray_free((char**) ptr->personal_deadline);
+  // private pd_total
+  // private pd_infos
+  free(ptr->score_bonus);
+  // private score_bonus_total
+  // private score_bonus_val
+  free(ptr->open_tests);
+  // private open_tests_count
+  // private open_tests_val
+  free(ptr->final_open_tests);
+  // private final_open_tests_count
+  // private final_open_tests_val
+  free(ptr->token_open_tests);
+  // private token_open_tests_count
+  // private token_open_tests_val
+  free(ptr->extid);
+  free(ptr->unhandled_vars);
+  sarray_free((char**) ptr->score_view);
+  // private score_view_score
+  sarray_free((char**) ptr->score_view_text);
+  // private xml_file_path
+  // private var_xml_file_paths
+  // hidden xml
+}
+
 const struct meta_methods cntsprob_methods =
 {
   CNTSPROB_LAST_FIELD,
@@ -659,6 +1931,8 @@ const struct meta_methods cntsprob_methods =
   (const void *(*)(const void *ptr, int tag))cntsprob_get_ptr,
   (void *(*)(void *ptr, int tag))cntsprob_get_ptr_nc,
   cntsprob_lookup_field,
+  (void (*)(void *, const void *))cntsprob_copy,
+  (void (*)(void *))cntsprob_free,
 };
 
 static struct meta_info_item meta_info_section_language_data_data[] =
@@ -754,6 +2028,136 @@ int cntslang_lookup_field(const char *name)
   return meta_lookup_string(atm, name);
 }
 
+void cntslang_copy(struct section_language_data *dst, const struct section_language_data *src)
+{
+  // hidden g
+  dst->id = src->id;
+  dst->compile_id = src->compile_id;
+  dst->disabled = src->disabled;
+  dst->compile_real_time_limit = src->compile_real_time_limit;
+  dst->binary = src->binary;
+  dst->priority_adjustment = src->priority_adjustment;
+  dst->insecure = src->insecure;
+  dst->disable_security = src->disable_security;
+  dst->enable_suid_run = src->enable_suid_run;
+  dst->is_dos = src->is_dos;
+  strcpy(dst->short_name, src->short_name);
+  if (src->long_name) {
+    dst->long_name = strdup(src->long_name);
+  }
+  if (src->key) {
+    dst->key = strdup(src->key);
+  }
+  if (src->arch) {
+    dst->arch = strdup(src->arch);
+  }
+  strcpy(dst->src_sfx, src->src_sfx);
+  strcpy(dst->exe_sfx, src->exe_sfx);
+  if (src->content_type) {
+    dst->content_type = strdup(src->content_type);
+  }
+  if (src->cmd) {
+    dst->cmd = strdup(src->cmd);
+  }
+  if (src->style_checker_cmd) {
+    dst->style_checker_cmd = strdup(src->style_checker_cmd);
+  }
+  dst->style_checker_env = (typeof(dst->style_checker_env)) sarray_copy((char**) src->style_checker_env);
+  if (src->extid) {
+    dst->extid = strdup(src->extid);
+  }
+  if (src->super_run_dir) {
+    dst->super_run_dir = strdup(src->super_run_dir);
+  }
+  dst->disable_auto_testing = src->disable_auto_testing;
+  dst->disable_testing = src->disable_testing;
+  dst->enable_custom = src->enable_custom;
+  dst->enable_ejudge_env = src->enable_ejudge_env;
+  dst->preserve_line_numbers = src->preserve_line_numbers;
+  dst->max_vm_size = src->max_vm_size;
+  dst->max_stack_size = src->max_stack_size;
+  dst->max_file_size = src->max_file_size;
+  dst->max_rss_size = src->max_rss_size;
+  dst->run_max_stack_size = src->run_max_stack_size;
+  dst->run_max_vm_size = src->run_max_vm_size;
+  dst->run_max_rss_size = src->run_max_rss_size;
+  dst->compile_dir_index = src->compile_dir_index;
+  if (src->compile_dir) {
+    dst->compile_dir = strdup(src->compile_dir);
+  }
+  if (src->compile_queue_dir) {
+    dst->compile_queue_dir = strdup(src->compile_queue_dir);
+  }
+  if (src->compile_src_dir) {
+    dst->compile_src_dir = strdup(src->compile_src_dir);
+  }
+  if (src->compile_out_dir) {
+    dst->compile_out_dir = strdup(src->compile_out_dir);
+  }
+  if (src->compile_status_dir) {
+    dst->compile_status_dir = strdup(src->compile_status_dir);
+  }
+  if (src->compile_report_dir) {
+    dst->compile_report_dir = strdup(src->compile_report_dir);
+  }
+  dst->compiler_env = (typeof(dst->compiler_env)) sarray_copy((char**) src->compiler_env);
+  if (src->compile_server_id) {
+    dst->compile_server_id = strdup(src->compile_server_id);
+  }
+  if (src->multi_header_suffix) {
+    dst->multi_header_suffix = strdup(src->multi_header_suffix);
+  }
+  if (src->container_options) {
+    dst->container_options = strdup(src->container_options);
+  }
+  if (src->compiler_container_options) {
+    dst->compiler_container_options = strdup(src->compiler_container_options);
+  }
+  if (src->clean_up_cmd) {
+    dst->clean_up_cmd = strdup(src->clean_up_cmd);
+  }
+  if (src->run_env_file) {
+    dst->run_env_file = strdup(src->run_env_file);
+  }
+  if (src->clean_up_env_file) {
+    dst->clean_up_env_file = strdup(src->clean_up_env_file);
+  }
+  if (src->unhandled_vars) {
+    dst->unhandled_vars = strdup(src->unhandled_vars);
+  }
+  // private disabled_by_config
+}
+
+void cntslang_free(struct section_language_data *ptr)
+{
+  // hidden g
+  free(ptr->long_name);
+  free(ptr->key);
+  free(ptr->arch);
+  free(ptr->content_type);
+  free(ptr->cmd);
+  free(ptr->style_checker_cmd);
+  sarray_free((char**) ptr->style_checker_env);
+  free(ptr->extid);
+  free(ptr->super_run_dir);
+  free(ptr->compile_dir);
+  free(ptr->compile_queue_dir);
+  free(ptr->compile_src_dir);
+  free(ptr->compile_out_dir);
+  free(ptr->compile_status_dir);
+  free(ptr->compile_report_dir);
+  sarray_free((char**) ptr->compiler_env);
+  free(ptr->compile_server_id);
+  free(ptr->multi_header_suffix);
+  free(ptr->container_options);
+  free(ptr->compiler_container_options);
+  free(ptr->clean_up_cmd);
+  free(ptr->run_env_file);
+  free(ptr->clean_up_env_file);
+  free(ptr->unhandled_vars);
+  // private disabled_by_config
+}
+
 const struct meta_methods cntslang_methods =
 {
   CNTSLANG_LAST_FIELD,
@@ -764,6 +2168,8 @@ const struct meta_methods cntslang_methods =
   (const void *(*)(const void *ptr, int tag))cntslang_get_ptr,
   (void *(*)(void *ptr, int tag))cntslang_get_ptr_nc,
   cntslang_lookup_field,
+  (void (*)(void *, const void *))cntslang_copy,
+  (void (*)(void *))cntslang_free,
 };
 
 static struct meta_info_item meta_info_section_tester_data_data[] =
@@ -853,6 +2259,120 @@ int cntstester_lookup_field(const char *name)
   return meta_lookup_string(atm, name);
 }
 
+void cntstester_copy(struct section_tester_data *dst, const struct section_tester_data *src)
+{
+  // hidden g
+  dst->id = src->id;
+  strcpy(dst->name, src->name);
+  dst->problem = src->problem;
+  strcpy(dst->problem_name, src->problem_name);
+  dst->any = src->any;
+  dst->is_dos = src->is_dos;
+  dst->no_redirect = src->no_redirect;
+  dst->priority_adjustment = src->priority_adjustment;
+  dst->ignore_stderr = src->ignore_stderr;
+  strcpy(dst->arch, src->arch);
+  if (src->key) {
+    dst->key = strdup(src->key);
+  }
+  if (src->memory_limit_type) {
+    dst->memory_limit_type = strdup(src->memory_limit_type);
+  }
+  if (src->secure_exec_type) {
+    dst->secure_exec_type = strdup(src->secure_exec_type);
+  }
+  dst->abstract = src->abstract;
+  dst->super = (typeof(dst->super)) sarray_copy((char**) src->super);
+  // private is_processed
+  dst->skip_testing = src->skip_testing;
+  dst->no_core_dump = src->no_core_dump;
+  dst->enable_memory_limit_error = src->enable_memory_limit_error;
+  if (src->kill_signal) {
+    dst->kill_signal = strdup(src->kill_signal);
+  }
+  dst->max_stack_size = src->max_stack_size;
+  dst->max_data_size = src->max_data_size;
+  dst->max_vm_size = src->max_vm_size;
+  dst->max_rss_size = src->max_rss_size;
+  dst->clear_env = src->clear_env;
+  dst->time_limit_adjustment = src->time_limit_adjustment;
+  dst->time_limit_adj_millis = src->time_limit_adj_millis;
+  dst->enable_ejudge_env = src->enable_ejudge_env;
+  if (src->run_dir) {
+    dst->run_dir = strdup(src->run_dir);
+  }
+  if (src->run_queue_dir) {
+    dst->run_queue_dir = strdup(src->run_queue_dir);
+  }
+  if (src->run_exe_dir) {
+    dst->run_exe_dir = strdup(src->run_exe_dir);
+  }
+  if (src->run_out_dir) {
+    dst->run_out_dir = strdup(src->run_out_dir);
+  }
+  if (src->run_status_dir) {
+    dst->run_status_dir = strdup(src->run_status_dir);
+  }
+  if (src->run_report_dir) {
+    dst->run_report_dir = strdup(src->run_report_dir);
+  }
+  if (src->run_team_report_dir) {
+    dst->run_team_report_dir = strdup(src->run_team_report_dir);
+  }
+  if (src->run_full_archive_dir) {
+    dst->run_full_archive_dir = strdup(src->run_full_archive_dir);
+  }
+  if (src->check_dir) {
+    dst->check_dir = strdup(src->check_dir);
+  }
+  if (src->errorcode_file) {
+    dst->errorcode_file = strdup(src->errorcode_file);
+  }
+  if (src->error_file) {
+    dst->error_file = strdup(src->error_file);
+  }
+  if (src->prepare_cmd) {
+    dst->prepare_cmd = strdup(src->prepare_cmd);
+  }
+  if (src->start_cmd) {
+    dst->start_cmd = strdup(src->start_cmd);
+  }
+  if (src->nwrun_spool_dir) {
+    dst->nwrun_spool_dir = strdup(src->nwrun_spool_dir);
+  }
+  dst->start_env = (typeof(dst->start_env)) sarray_copy((char**) src->start_env);
+  // private memory_limit_type_val
+  // private secure_exec_type_val
+}
+
+void cntstester_free(struct section_tester_data *ptr)
+{
+  // hidden g
+  free(ptr->key);
+  free(ptr->memory_limit_type);
+  free(ptr->secure_exec_type);
+  sarray_free((char**) ptr->super);
+  // private is_processed
+  free(ptr->kill_signal);
+  free(ptr->run_dir);
+  free(ptr->run_queue_dir);
+  free(ptr->run_exe_dir);
+  free(ptr->run_out_dir);
+  free(ptr->run_status_dir);
+  free(ptr->run_report_dir);
+  free(ptr->run_team_report_dir);
+  free(ptr->run_full_archive_dir);
+  free(ptr->check_dir);
+  free(ptr->errorcode_file);
+  free(ptr->error_file);
+  free(ptr->prepare_cmd);
+  free(ptr->start_cmd);
+  free(ptr->nwrun_spool_dir);
+  sarray_free((char**) ptr->start_env);
+  // private memory_limit_type_val
+  // private secure_exec_type_val
+}
+
 const struct meta_methods cntstester_methods =
 {
   CNTSTESTER_LAST_FIELD,
@@ -863,5 +2383,7 @@ const struct meta_methods cntstester_methods =
   (const void *(*)(const void *ptr, int tag))cntstester_get_ptr,
   (void *(*)(void *ptr, int tag))cntstester_get_ptr_nc,
   cntstester_lookup_field,
+  (void (*)(void *, const void *))cntstester_copy,
+  (void (*)(void *))cntstester_free,
 };
 

@@ -126,6 +126,8 @@ const char *ss_sid_state_get_name(int tag);
 const void *ss_sid_state_get_ptr(const struct sid_state *ptr, int tag);
 void *ss_sid_state_get_ptr_nc(struct sid_state *ptr, int tag);
 int ss_sid_state_lookup_field(const char *name);
+void ss_sid_state_copy(struct sid_state *dst, const struct sid_state *src);
+void ss_sid_state_free(struct sid_state *ptr);
 
 struct meta_methods;
 extern const struct meta_methods ss_sid_state_methods;

@@ -33,6 +33,8 @@ const char *meta_ej_import_packet_get_name(int tag);
 const void *meta_ej_import_packet_get_ptr(const struct ej_import_packet *ptr, int tag);
 void *meta_ej_import_packet_get_ptr_nc(struct ej_import_packet *ptr, int tag);
 int meta_ej_import_packet_lookup_field(const char *name);
+void meta_ej_import_packet_copy(struct ej_import_packet *dst, const struct ej_import_packet *src);
+void meta_ej_import_packet_free(struct ej_import_packet *ptr);
 
 struct meta_methods;
 extern const struct meta_methods meta_ej_import_packet_methods;
