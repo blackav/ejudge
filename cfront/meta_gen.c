@@ -474,6 +474,65 @@ generate_copy_fields(
   }
 }
 
+static void
+generate_free_fields(
+        FILE *out_c,
+        tree_t tree)
+{
+  tree_t decl, ideclr, idnode;
+
+  for (decl = tree->node.refs[6]; decl; decl = decl->node.refs[0]) {
+    ASSERT(decl->kind == NODE_DECL);
+    if (!(ideclr = decl->node.refs[4])) continue;
+    ASSERT(ideclr->kind == NODE_STRUCTDECLR);
+    if (is_meta_hidden(ideclr->node.refs[3])) {
+      if (!(idnode = tree_get_ident_node(ideclr))) continue;
+      fprintf(out_c, "  // hidden %s\n", ident_get(idnode->id.id));
+      continue;
+    }
+    if (is_meta_private(ideclr->node.refs[3])) {
+      if (!(idnode = tree_get_ident_node(ideclr))) continue;
+      fprintf(out_c, "  // private %s\n", ident_get(idnode->id.id));
+      continue;
+    }
+    ASSERT(!ideclr->node.refs[5]);
+    ASSERT(!ideclr->node.refs[0]);
+    if (!(idnode = tree_get_ident_node(ideclr))) continue;
+    int type_val = get_type_letter(decl->node.refs[3], ideclr);
+    switch (type_val) {
+    case 't': // time_t
+    case 'b': // ejbytebool_t
+    case 'B': // ejintbool_t
+    case 'f': // ejbyteflag_t
+    case 'z': // ejintsize_t
+    case 'Z': // size_t
+    case 'E': // ej_size64_t
+    case '0': // ej_int_opt_0_t
+    case '3': // ej_checkbox_t
+    case '4': // ej_int_opt_1_t
+    case '5': // ej_int_opt_m1_t
+    case 'i': // is_int_type
+      break;
+    case 'S': // path_t
+      break;
+    case '1': // ej_textbox_t
+    case '2': // ej_textbox_opt_t
+    case 's': // char*
+      fprintf(out_c, "  free(ptr->%s);\n", ident_get(idnode->id.id));
+      break;
+    case 'x': // ejstrlist_t
+    case 'X': // ejenvlist_t
+      fprintf(out_c, "  sarray_free((char**) ptr->%s);\n", ident_get(idnode->id.id));
+      break;
+    case '?':
+      fprintf(out_c, "  // %s\n", ident_get(idnode->id.id));
+      break;
+    default:
+      //abort();
+    }
+  }
+}
+
 static int
 generate_field_description(
         FILE *out_c,
@@ -580,6 +639,12 @@ generate_field_description(
   generate_copy_fields(out_c, tree);
   fprintf(out_c, "}\n\n");
   fprintf(out_c,
+          "void %s_free(struct %s *ptr)\n"
+          "{\n",
+          func_pfx, ident_get(id));
+  generate_free_fields(out_c, tree);
+  fprintf(out_c, "}\n\n");
+  fprintf(out_c,
           "const struct meta_methods %s_methods =\n"
           "{\n"
           "  %s_LAST_FIELD,\n"
@@ -591,9 +656,10 @@ generate_field_description(
           "  (void *(*)(void *ptr, int tag))%s_get_ptr_nc,\n"
           "  %s_lookup_field,\n"
           "  (void (*)(void *, const void *))%s_copy,\n"
+          "  (void (*)(void *))%s_free,\n"
           "};\n\n",
           func_pfx, enum_pfx, ident_get(id), func_pfx, func_pfx, func_pfx, func_pfx, func_pfx,
-          func_pfx, func_pfx);
+          func_pfx, func_pfx, func_pfx);
   return 0;
 }
 
