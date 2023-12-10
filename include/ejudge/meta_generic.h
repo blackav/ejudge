@@ -59,6 +59,7 @@ struct meta_methods
   void *(*get_ptr_nc)(void *ptr, int tag);
   int (*lookup_field)(const char *name);
   void (*copy)(void *dst, const void *src);
+  void (*free)(void *ptr);
 };
 
 void
