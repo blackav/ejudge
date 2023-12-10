@@ -192,6 +192,10 @@ generate_field_enum(
   fprintf(out_h, "void *%s_get_ptr_nc(struct %s *ptr, int tag);\n",
           func_pfx, ident_get(id));
   fprintf(out_h, "int %s_lookup_field(const char *name);\n", func_pfx);
+  fprintf(out_h, "void %s_copy(struct %s *dst, const struct %s *src);\n",
+          func_pfx, ident_get(id), ident_get(id));
+  fprintf(out_h, "void %s_free(struct %s *ptr);\n",
+          func_pfx, ident_get(id));
   fprintf(out_h, "\n");
   fprintf(out_h, "struct meta_methods;\n");
   fprintf(out_h, "extern const struct meta_methods %s_methods;\n\n", func_pfx);
