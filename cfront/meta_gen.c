@@ -117,6 +117,7 @@ generate_c_header(
   fprintf(out_c, "#include \"ejudge/%s.h\"\n", b_name);
   fprintf(out_c, "#include \"ejudge/meta_generic.h\"\n\n");
   fprintf(out_c, "#include \"ejudge/xalloc.h\"\n\n");
+  fprintf(out_c, "#include \"ejudge/parsecfg.h\"\n\n");
   fprintf(out_c, "#include \"ejudge/logger.h\"\n");
   fprintf(out_c, "#include <string.h>\n");
   fprintf(out_c, "#include <stdlib.h>\n\n");
@@ -459,8 +460,10 @@ generate_copy_fields(
       break;
     case 'x': // ejstrlist_t
     case 'X': // ejenvlist_t
-      fprintf(out_c, "  dst->%s = sarray_copy(src->%s);\n",
-              ident_get(idnode->id.id), ident_get(idnode->id.id));
+      fprintf(out_c, "  dst->%s = (typeof(dst->%s)) sarray_copy((char**) src->%s);\n",
+              ident_get(idnode->id.id),
+              ident_get(idnode->id.id),
+              ident_get(idnode->id.id));
       break;
     case '?':
       fprintf(out_c, "  // %s\n", ident_get(idnode->id.id));
