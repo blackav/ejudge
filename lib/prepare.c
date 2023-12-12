@@ -1122,7 +1122,6 @@ prepare_language_free_func(struct generic_section_config *gp)
   struct section_language_data *p = (struct section_language_data*) gp;
 
   cntslang_free(p);
-
   memset(p, 0xab, sizeof(*p));
   xfree(p);
 }
@@ -1259,7 +1258,6 @@ prepare_problem_free_func(struct generic_section_config *gp)
 
   cntsprob_free(p);
 
-  // hidden and private fields
   prepare_free_group_dates(&p->gsd);
   prepare_free_group_dates(&p->gdl);
   xfree(p->tscores);
@@ -1332,26 +1330,7 @@ prepare_tester_free_func(struct generic_section_config *gp)
 {
   struct section_tester_data *p = (struct section_tester_data*) gp;
 
-  sarray_free(p->super);
-  sarray_free(p->start_env);
-  xfree(p->nwrun_spool_dir);
-  xfree(p->start_cmd);
-  xfree(p->prepare_cmd);
-  xfree(p->error_file);
-  xfree(p->errorcode_file);
-  xfree(p->check_dir);
-  xfree(p->run_full_archive_dir);
-  xfree(p->run_team_report_dir);
-  xfree(p->run_report_dir);
-  xfree(p->run_status_dir);
-  xfree(p->run_out_dir);
-  xfree(p->run_exe_dir);
-  xfree(p->run_queue_dir);
-  xfree(p->run_dir);
-  xfree(p->kill_signal);
-  xfree(p->secure_exec_type);
-  xfree(p->memory_limit_type);
-  xfree(p->key);
+  cntstester_free(p);
   memset(p, 0xab, sizeof(*p));
   xfree(p);
 }
