@@ -1121,30 +1121,8 @@ prepare_language_free_func(struct generic_section_config *gp)
 {
   struct section_language_data *p = (struct section_language_data*) gp;
 
-  p->compiler_env = sarray_free(p->compiler_env);
-  p->style_checker_env = sarray_free(p->style_checker_env);
-  xfree(p->unhandled_vars);
-  xfree(p->extid);
-  xfree(p->super_run_dir);
-  xfree(p->cmd);
-  xfree(p->style_checker_cmd);
-  xfree(p->compile_dir);
-  xfree(p->compile_queue_dir);
-  xfree(p->compile_src_dir);
-  xfree(p->compile_out_dir);
-  xfree(p->compile_status_dir);
-  xfree(p->compile_report_dir);
-  xfree(p->content_type);
-  xfree(p->long_name);
-  xfree(p->key);
-  xfree(p->arch);
-  xfree(p->compile_server_id);
-  xfree(p->multi_header_suffix);
-  xfree(p->container_options);
-  xfree(p->compiler_container_options);
-  xfree(p->clean_up_cmd);
-  xfree(p->run_env_file);
-  xfree(p->clean_up_env_file);
+  cntslang_free(p);
+
   memset(p, 0xab, sizeof(*p));
   xfree(p);
 }
