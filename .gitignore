@@ -12,6 +12,7 @@ uudecode
 serve-control
 new-client
 newrevinfo
+lib_ut
 ej-batch
 ej-compile
 ej-compile-control

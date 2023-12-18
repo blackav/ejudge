@@ -1453,31 +1453,37 @@ serve_audit_log(
   fclose(f);
 }
 
-static char **
+static char*
+env_for_lang(char* env, const char* lang)
+{
+    size_t llen = strlen(lang);
+    if (!strncmp(env, lang, llen) && env[llen] == '=') {
+        return env + llen + 1;
+    }
+    return NULL;
+}
+
+char **
 filter_lang_environ(
-        const struct ejudge_cfg *config,
         serve_state_t state,
         const struct section_problem_data *prob,
         const struct section_language_data *lang,
         const struct section_tester_data *tester,
         char **environ)
 {
-  int count = 0, i, llen, j = 0;
+  int count = 0, i, j = 0;
   char **env = NULL;
-  llen = strlen(lang->short_name);
+  char *lang_env;
   for (i = 0; environ[i]; ++i) {
-    if (environ[i][0] == '*' && environ[i][1] == '=') {
-      ++count;
-    } else if (strlen(environ[i]) > llen && !strncmp(lang->short_name, environ[i], llen) && environ[i][llen] == '=') {
+    if (env_for_lang(environ[i], "*") || env_for_lang(environ[i], lang->short_name)) {
       ++count;
     }
   }
   XCALLOC(env, count + 1);
   for (i = 0; environ[i]; ++i) {
-    if (environ[i][0] == '*' && environ[i][1] == '=') {
-      env[j++] = prepare_varsubst(state, environ[i] + 2, 0, prob, lang, tester);
-    } else if (strlen(environ[i]) > llen && !strncmp(lang->short_name, environ[i], llen) && environ[i][llen] == '=') {
-      env[j++] = prepare_varsubst(state, environ[i] + llen + 1, 0, prob, lang, tester);
+    if ((lang_env = env_for_lang(environ[i], "*")) ||
+        (lang_env = env_for_lang(environ[i], lang->short_name))) {
+      env[j++] = prepare_varsubst(state, lang_env, 0, prob, lang, tester);
     }
   }
   return env;
@@ -1641,10 +1647,10 @@ serve_compile_request(
   }
 
   if (prob && prob->lang_compiler_env && lang) {
-    comp_env_mem_2 = filter_lang_environ(config, state, prob, lang, NULL, prob->lang_compiler_env);
+    comp_env_mem_2 = filter_lang_environ(state, prob, lang, NULL, prob->lang_compiler_env);
   }
   if (prob && lang && prob->lang_compiler_container_options) {
-    compiler_container_options = filter_lang_environ(config, state, prob, lang, NULL, prob->lang_compiler_container_options);
+    compiler_container_options = filter_lang_environ(state, prob, lang, NULL, prob->lang_compiler_container_options);
   }
 
   if (compiler_env && compiler_env[0] && comp_env_mem_2 && comp_env_mem_2[0]) {
