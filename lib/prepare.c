@@ -6913,7 +6913,7 @@ prepare_varsubst(
 
 char **
 prepare_sarray_varsubst(
-        serve_state_t state,
+        const struct section_global_data *global,
         const struct section_problem_data *prob,
         const struct section_language_data *lang,
         const struct section_tester_data *tester,
@@ -6933,8 +6933,7 @@ prepare_sarray_varsubst(
                               section_problem_params,
                               section_language_params,
                               section_tester_params,
-                              state->global,
-                              prob, lang, tester);
+                              global, prob, lang, tester);
   }
   return aa;
 }

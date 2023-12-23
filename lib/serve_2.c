@@ -1562,7 +1562,7 @@ serve_compile_request(
   }
 
   // perform substitutions
-  compiler_env_copy = prepare_sarray_varsubst(state, prob, lang, NULL, compiler_env);
+  compiler_env_copy = prepare_sarray_varsubst(state->global, prob, lang, NULL, compiler_env);
   compiler_env = compiler_env_copy;
 
   if (prob->variant_num <= 0 && variant > 0) {

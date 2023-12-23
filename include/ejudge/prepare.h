@@ -1752,7 +1752,7 @@ prepare_varsubst(
 
 char **
 prepare_sarray_varsubst(
-        serve_state_t state,
+        const struct section_global_data *global,
         const struct section_problem_data *prob,
         const struct section_language_data *lang,
         const struct section_tester_data *tester,
