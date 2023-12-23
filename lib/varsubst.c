@@ -26,7 +26,6 @@
 
 static const unsigned char *
 get_var_value(
-        const serve_state_t state,
         const unsigned char *varname,
         const struct config_parse_info *global_vars,
         const struct config_parse_info *problem_vars,
@@ -135,7 +134,7 @@ varsubst_heap(
     }
     memcpy(var_name, p1 + 2, p2 - p1 - 2);
     var_name[p2 - p1 - 2] = 0;
-    var_value = get_var_value(state, var_name, global_vars, problem_vars,
+    var_value = get_var_value(var_name, global_vars, problem_vars,
                               language_vars, tester_vars,
                               state->global,
                               prob, lang, tester);
