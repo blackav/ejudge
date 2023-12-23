@@ -1758,4 +1758,12 @@ prepare_sarray_varsubst(
         const struct section_tester_data *tester,
         char **a1);
 
+int
+prepare_problem(
+        const struct ejudge_cfg *config,
+        const struct contest_desc *cnts,
+        serve_state_t state,
+        struct section_global_data *g,
+        struct section_problem_data *prob);
+
 #endif /* __PREPARE_H__ */
