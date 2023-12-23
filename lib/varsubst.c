@@ -32,6 +32,7 @@ get_var_value(
         const struct config_parse_info *problem_vars,
         const struct config_parse_info *language_vars,
         const struct config_parse_info *tester_vars,
+        const struct section_global_data *global,
         const struct section_problem_data *prob,
         const struct section_language_data *lang,
         const struct section_tester_data *tester)
@@ -56,11 +57,11 @@ get_var_value(
     varname += 7;
   } else if (!strncmp(varname, "global.", 7)) {
     actual_parse_info = global_vars;
-    actual_data = state->global;
+    actual_data = global;
     varname += 7;
   } else {
     actual_parse_info = global_vars;
-    actual_data = state->global;
+    actual_data = global;
   }
   // search in global variables
   for (i = 0; actual_parse_info[i].name; i++) {
@@ -135,7 +136,9 @@ varsubst_heap(
     memcpy(var_name, p1 + 2, p2 - p1 - 2);
     var_name[p2 - p1 - 2] = 0;
     var_value = get_var_value(state, var_name, global_vars, problem_vars,
-                              language_vars, tester_vars, prob, lang, tester);
+                              language_vars, tester_vars,
+                              state->global,
+                              prob, lang, tester);
     if (!var_value) {
       if (free_flag) xfree(in_str);
       xfree(var_name);
