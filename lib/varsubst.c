@@ -92,13 +92,13 @@ get_var_value(
 
 unsigned char *
 varsubst_heap(
-        const serve_state_t state,
         unsigned char *in_str,
         int free_flag,
         const struct config_parse_info *global_vars,
         const struct config_parse_info *problem_vars,
         const struct config_parse_info *language_vars,
         const struct config_parse_info *tester_vars,
+        const struct section_global_data *global,
         const struct section_problem_data *prob,
         const struct section_language_data *lang,
         const struct section_tester_data *tester)
@@ -136,7 +136,7 @@ varsubst_heap(
     var_name[p2 - p1 - 2] = 0;
     var_value = get_var_value(var_name, global_vars, problem_vars,
                               language_vars, tester_vars,
-                              state->global,
+                              global,
                               prob, lang, tester);
     if (!var_value) {
       if (free_flag) xfree(in_str);

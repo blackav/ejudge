@@ -2724,11 +2724,11 @@ prepare_problem(
   }
   if (prob->checker_env) {
     for (int j = 0; prob->checker_env[j]; ++j) {
-      prob->checker_env[j] = varsubst_heap(state, prob->checker_env[j], 1,
+      prob->checker_env[j] = varsubst_heap(prob->checker_env[j], 1,
                                            section_global_params,
                                            section_problem_params,
                                            section_language_params,
-                                           section_tester_params, prob,
+                                           section_tester_params, g, prob,
                                            NULL, NULL);
       if (!prob->checker_env[j]) return -1;
     }
@@ -2739,11 +2739,11 @@ prepare_problem(
   }
   if (prob->valuer_env) {
     for (int j = 0; prob->valuer_env[j]; ++j) {
-      prob->valuer_env[j] = varsubst_heap(state, prob->valuer_env[j], 1,
+      prob->valuer_env[j] = varsubst_heap(prob->valuer_env[j], 1,
                                           section_global_params,
                                           section_problem_params,
                                           section_language_params,
-                                          section_tester_params, prob,
+                                          section_tester_params, g, prob,
                                           NULL, NULL);
       if (!prob->valuer_env[j]) return -1;
     }
@@ -2755,12 +2755,11 @@ prepare_problem(
   }
   if (prob->interactor_env) {
     for (int j = 0; prob->interactor_env[j]; ++j) {
-      prob->interactor_env[j] = varsubst_heap(state,
-                                              prob->interactor_env[j], 1,
+      prob->interactor_env[j] = varsubst_heap(prob->interactor_env[j], 1,
                                               section_global_params,
                                               section_problem_params,
                                               section_language_params,
-                                              section_tester_params, prob,
+                                              section_tester_params, g, prob,
                                               NULL, NULL);
       if (!prob->interactor_env[j]) return -1;
     }
@@ -2772,12 +2771,11 @@ prepare_problem(
   }
   if (prob->statement_env) {
     for (int j = 0; prob->statement_env[j]; ++j) {
-      prob->statement_env[j] = varsubst_heap(state,
-                                             prob->statement_env[j], 1,
+      prob->statement_env[j] = varsubst_heap(prob->statement_env[j], 1,
                                              section_global_params,
                                              section_problem_params,
                                              section_language_params,
-                                             section_tester_params, prob,
+                                             section_tester_params, g, prob,
                                              NULL, NULL);
       if (!prob->statement_env[j]) return -1;
     }
@@ -2790,12 +2788,11 @@ prepare_problem(
   /*
       if (prob->lang_compiler_env) {
         for (j = 0; prob->lang_compiler_env[j]; j++) {
-          prob->lang_compiler_env[j] = varsubst_heap(state,
-                                                     prob->lang_compiler_env[j],
+          prob->lang_compiler_env[j] = varsubst_heap(prob->lang_compiler_env[j],
                                                      1, section_global_params,
                                                      section_problem_params,
                                                      section_language_params,
-                                                     section_tester_params, prob, NULL, NULL);
+                                                     section_tester_params, g, prob, NULL, NULL);
           if (!prob->lang_compiler_env[j]) return -1;
         }
       }
@@ -2812,12 +2809,11 @@ prepare_problem(
   }
   if (prob->style_checker_env) {
     for (int j = 0; prob->style_checker_env[j]; ++j) {
-      prob->style_checker_env[j] = varsubst_heap(state,
-                                                 prob->style_checker_env[j],
+      prob->style_checker_env[j] = varsubst_heap(prob->style_checker_env[j],
                                                  1, section_global_params,
                                                  section_problem_params,
                                                  section_language_params,
-                                                 section_tester_params, prob,
+                                                 section_tester_params, g, prob,
                                                  NULL, NULL);
       if (!prob->style_checker_env[j]) return -1;
     }
@@ -2829,12 +2825,11 @@ prepare_problem(
   }
   if (prob->test_checker_env) {
     for (int j = 0; prob->test_checker_env[j]; ++j) {
-      prob->test_checker_env[j] = varsubst_heap(state,
-                                                prob->test_checker_env[j],
+      prob->test_checker_env[j] = varsubst_heap(prob->test_checker_env[j],
                                                 1, section_global_params,
                                                 section_problem_params,
                                                 section_language_params,
-                                                section_tester_params, prob,
+                                                section_tester_params, g, prob,
                                                 NULL, NULL);
       if (!prob->test_checker_env[j]) return -1;
     }
@@ -2850,12 +2845,11 @@ prepare_problem(
   }
   if (prob->init_env) {
     for (int j = 0; prob->init_env[j]; ++j) {
-      prob->init_env[j] = varsubst_heap(state,
-                                        prob->init_env[j],
+      prob->init_env[j] = varsubst_heap(prob->init_env[j],
                                         1, section_global_params,
                                         section_problem_params,
                                         section_language_params,
-                                        section_tester_params, prob,
+                                        section_tester_params, g, prob,
                                         NULL, NULL);
       if (!prob->init_env[j]) return -1;
     }
@@ -2866,12 +2860,11 @@ prepare_problem(
   }
   if (prob->start_env) {
     for (int j = 0; prob->start_env[j]; ++j) {
-      prob->start_env[j] = varsubst_heap(state,
-                                         prob->start_env[j],
+      prob->start_env[j] = varsubst_heap(prob->start_env[j],
                                          1, section_global_params,
                                          section_problem_params,
                                          section_language_params,
-                                         section_tester_params, prob,
+                                         section_tester_params, g, prob,
                                          NULL, NULL);
       if (!prob->start_env[j]) return -1;
     }
@@ -3751,9 +3744,9 @@ set_defaults(
     if (g->sound_player) {
       char *tmps;
 
-      tmps = varsubst_heap(state, g->sound_player, 0,
+      tmps = varsubst_heap(g->sound_player, 0,
                            section_global_params, section_problem_params,
-                           section_language_params, section_tester_params, NULL, NULL, NULL);
+                           section_language_params, section_tester_params, g, NULL, NULL, NULL);
       xfree(g->sound_player);
       g->sound_player = tmps;
     }
@@ -3892,24 +3885,23 @@ set_defaults(
     /*
     if (lang->compiler_env) {
       for (j = 0; lang->compiler_env[j]; j++) {
-        lang->compiler_env[j] = varsubst_heap(state, lang->compiler_env[j], 1,
+        lang->compiler_env[j] = varsubst_heap(lang->compiler_env[j], 1,
                                               section_global_params,
                                               section_problem_params,
                                               section_language_params,
-                                              section_tester_params, NULL, lang, NULL);
+                                              section_tester_params, g, NULL, lang, NULL);
         if (!lang->compiler_env[j]) return -1;
       }
     }
     */
     if (lang->style_checker_env) {
       for (j = 0; lang->style_checker_env[j]; ++j) {
-        lang->style_checker_env[j] = varsubst_heap(state,
-                                                   lang->style_checker_env[j],
+        lang->style_checker_env[j] = varsubst_heap(lang->style_checker_env[j],
                                                    1,
                                                    section_global_params,
                                                    section_problem_params,
                                                    section_language_params,
-                                                   section_tester_params, NULL, lang, NULL);
+                                                   section_tester_params, g, NULL, lang, NULL);
         if (!lang->style_checker_env[j]) return -1;
       }
     }
@@ -4218,11 +4210,11 @@ set_defaults(
       }
       if (tp->start_env) {
         for (j = 0; tp->start_env[j]; j++) {
-          tp->start_env[j] = varsubst_heap(state, tp->start_env[j], 1,
+          tp->start_env[j] = varsubst_heap(tp->start_env[j], 1,
                                            section_global_params,
                                            section_problem_params,
                                            section_language_params,
-                                           section_tester_params, NULL, NULL, tp);
+                                           section_tester_params, g, NULL, NULL, tp);
           if (!tp->start_env[j]) return -1;
         }
       }
@@ -5058,11 +5050,12 @@ prepare_tester_refinement(serve_state_t state, struct section_tester_data *out,
   }
   if (out->start_env) {
     for (j = 0; out->start_env[j]; j++) {
-      out->start_env[j] = varsubst_heap(state, out->start_env[j], 1,
+      out->start_env[j] = varsubst_heap(out->start_env[j], 1,
                                         section_global_params,
                                         section_problem_params,
                                         section_language_params,
-                                        section_tester_params, NULL, NULL, out);
+                                        section_tester_params,
+                                        state->global, NULL, NULL, out);
       if (!out->start_env[j]) return -1;
     }
   }
@@ -5075,7 +5068,7 @@ prepare_tester_refinement(serve_state_t state, struct section_tester_data *out,
   }
   if (out->checker_env) {
     for (j = 0; out->checker_env[j]; j++) {
-      out->checker_env[j] = varsubst_heap(state, out->checker_env[j], 1,
+      out->checker_env[j] = varsubst_heap(out->checker_env[j], 1,
                                           section_global_params,
                                           section_problem_params,
                                           section_language_params,
@@ -6909,11 +6902,12 @@ prepare_varsubst(
         const struct section_language_data *lang,
         const struct section_tester_data *tester)
 {
-  return varsubst_heap(state, in_str, free_flag,
+  return varsubst_heap(in_str, free_flag,
                        section_global_params,
                        section_problem_params,
                        section_language_params,
                        section_tester_params,
+                       state->global,
                        prob, lang, tester);
 }
 
@@ -6934,11 +6928,12 @@ prepare_sarray_varsubst(
   XCALLOC(aa, newlen + 1);
   if (a1) {
     for (j = 0; a1[j]; ++j)
-      aa[i++] = varsubst_heap(state, a1[j], 0,
+      aa[i++] = varsubst_heap(a1[j], 0,
                               section_global_params,
                               section_problem_params,
                               section_language_params,
                               section_tester_params,
+                              state->global,
                               prob, lang, tester);
   }
   return aa;
