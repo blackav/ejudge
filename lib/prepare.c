@@ -2448,6 +2448,569 @@ prepare_insert_variant_num(
   return snprintf(buf, size, "%.*s-%d%s", pos, file, variant, file + pos);
 }
 
+int
+prepare_problem(
+        const struct ejudge_cfg *config,
+        const struct contest_desc *cnts,
+        serve_state_t state,
+        struct section_global_data *g,
+        struct section_problem_data *prob)
+{
+  const struct section_problem_data *aprob = NULL;
+  int si = -1;
+  unsigned char xml_path[PATH_MAX];
+
+  if (prob->super[0]) {
+    for (si = 0; si < state->max_abstr_prob; si++)
+      if (!strcmp(state->abstr_probs[si]->short_name, prob->super))
+        break;
+    if (si >= state->max_abstr_prob) {
+      err("abstract problem '%s' is not defined", prob->super);
+      return -1;
+    }
+    aprob = state->abstr_probs[si];
+  }
+
+  if (!prob->short_name[0] && g->auto_short_problem_name > 0) {
+    snprintf(prob->short_name, sizeof(prob->short_name), "%06d", prob->id);
+  }
+  if (!prob->short_name[0]) {
+    err("problem %d short name must be set", prob->id);
+    return -1;
+  }
+
+  if (g->dates_config) {
+    prepare_copy_dates(prob, g->dates_config);
+  }
+
+  prepare_set_prob_value(CNTSPROB_problem_dir, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_type, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_use_ac_not_ok, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_ok_status, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_header_pat, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_footer_pat, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_compiler_env_pat, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_ignore_prev_ac, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_team_enable_rep_view, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_team_enable_ce_view, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_team_show_judge_report, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_show_checker_comment, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_ignore_compile_errors, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_container_options, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_tests_to_accept, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_accept_partial, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_min_tests_to_accept, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_disable_user_submit, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_notify_on_submit, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_disable_tab, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_unrestricted_statement, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_statement_ignore_ip, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_enable_submit_after_reject, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_hide_file_names, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_hide_real_time_limit, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_enable_tokens, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_tokens_for_user_ac, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_disable_submit_after_ok, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_disable_auto_testing, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_disable_testing, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_enable_compilation, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_skip_testing, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_disable_security, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_enable_suid_run, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_enable_container, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_enable_dynamic_priority, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_enable_multi_header, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_use_lang_multi_header, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_require_any, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_full_score, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_full_user_score, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_min_score_1, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_min_score_2, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_variable_full_score, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_test_score, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_run_penalty, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_acm_run_penalty, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_disqualified_penalty, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_compile_error_penalty, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_hidden, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_advance_to_next, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_stand_hide_time, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_disable_ctrl_chars, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_valuer_sets_marked, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_ignore_unmarked, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_disable_stderr, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_enable_process_group, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_enable_kill_all, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_enable_testlib_mode, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_enable_extended_info, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_stop_on_first_fail, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_enable_control_socket, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_copy_exe_to_tgzdir, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_enable_user_input, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_enable_vcs, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_enable_iframe_statement, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_enable_src_for_testing, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_disable_vm_size_limit, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_hide_variant, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_autoassign_variants, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_enable_text_form, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_stand_ignore_score, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_stand_last_column, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_scoring_checker, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_enable_checker_token, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_interactive_valuer, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_disable_pe, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_disable_wtl, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_wtl_is_cf, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_manual_checking, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_examinator_num, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_check_presentation, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_use_stdin, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_use_stdout, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_combined_stdin, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_combined_stdout, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_binary_input, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_binary, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_ignore_exit_code, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_ignore_term_signal, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_olympiad_mode, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_score_latest, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_score_latest_or_unmarked, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_score_latest_marked, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_score_tokenized, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_time_limit, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_time_limit_millis, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_real_time_limit, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_interactor_time_limit, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_interactor_real_time_limit, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_test_sfx, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_corr_sfx, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_info_sfx, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_tgz_sfx, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_tgzdir_sfx, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_test_pat, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_corr_pat, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_info_pat, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_tgz_pat, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_tgzdir_pat, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_check_cmd, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_valuer_cmd, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_interactor_cmd, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_style_checker_cmd, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_test_checker_cmd, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_test_generator_cmd, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_init_cmd, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_start_cmd, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_solution_src, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_solution_cmd, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_post_pull_cmd, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_vcs_compile_cmd, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_super_run_dir, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_max_vm_size, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_max_stack_size, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_max_rss_size, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_max_data_size, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_max_core_size, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_max_file_size, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_max_open_file_count, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_max_process_count, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_checker_max_vm_size, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_checker_max_stack_size, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_checker_max_rss_size, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_checker_real_time_limit, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_checker_time_limit_ms, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_source_header, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_source_footer, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_normalization, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_max_user_run_count, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_score_bonus, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_stand_attr, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_use_corr, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_use_info, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_use_tgz, prob, aprob, g);
+
+  // parse XML statement
+  if (!prob->xml_file && aprob && aprob->xml_file) {
+    sformat_message_2(&prob->xml_file, 0, aprob->xml_file, 0, prob, 0, 0, 0, 0, 0, 0);
+  }
+
+  if (prob->xml_file && prob->xml_file[0]) {
+    if (g->advanced_layout > 0) {
+      if (prob->variant_num > 0) {
+        XCALLOC(prob->xml.a, prob->variant_num);
+        XCALLOC(prob->var_xml_file_paths, prob->variant_num);
+        for (int j = 1; j <= prob->variant_num; ++j) {
+          get_advanced_layout_path(xml_path, sizeof(xml_path), g,
+                                   prob, prob->xml_file, j);
+          if (!(prob->xml.a[j - 1] = problem_xml_parse_safe(NULL, xml_path))) return -1;
+          prob->var_xml_file_paths[j - 1] = xstrdup(xml_path);
+        }
+      } else /* variant_num <= 0 */ {
+        get_advanced_layout_path(xml_path, sizeof(xml_path), g,
+                                 prob, prob->xml_file, -1);
+        if (!(prob->xml.p = problem_xml_parse_safe(NULL, xml_path))) return -1;
+        prob->xml_file_path = xstrdup(xml_path);
+      }
+    } else /* advanced_layout <= 0 */ {
+      if (!os_IsAbsolutePath(prob->xml_file)) {
+        usprintf(&prob->xml_file, "%s/%s", g->statement_dir, prob->xml_file);
+      }
+      if (prob->variant_num > 0) {
+        XCALLOC(prob->xml.a, prob->variant_num);
+        XCALLOC(prob->var_xml_file_paths, prob->variant_num);
+        for (int j = 1; j <= prob->variant_num; ++j) {
+          prepare_insert_variant_num(xml_path, sizeof(xml_path), prob->xml_file, j);
+          if (!(prob->xml.a[j - 1] = problem_xml_parse_safe(NULL, xml_path))) return -1;
+          prob->var_xml_file_paths[j - 1] = xstrdup(xml_path);
+        }
+      } else /* variant_num <= 0 */ {
+        if (!(prob->xml.p = problem_xml_parse_safe(NULL, prob->xml_file))) return -1;
+        prob->xml_file_path = xstrdup(prob->xml_file);
+      }
+    }
+  }
+
+  if (prob->enable_tokens > 0) {
+    g->enable_tokens = 1;
+  }
+
+  if (prob->priority_adjustment <= -1000 && aprob && aprob->priority_adjustment > -1000) {
+    prob->priority_adjustment = aprob->priority_adjustment;
+  }
+  if (prob->priority_adjustment <= -1000) {
+    prob->priority_adjustment = 0;
+  }
+
+  if (prob->score_multiplier <= 0 && aprob && aprob->score_multiplier >= 1) {
+    prob->score_multiplier = aprob->score_multiplier;
+  }
+
+  if (prob->prev_runs_to_show <= 0 && aprob && aprob->prev_runs_to_show >= 1) {
+    prob->prev_runs_to_show = aprob->prev_runs_to_show;
+  }
+
+  if (prob->personal_deadline) {
+    if (parse_personal_deadlines(prob->personal_deadline,
+                                 &prob->pd_total, &prob->pd_infos) < 0) {
+      return -1;
+    }
+  }
+
+  if (prob->score_view) {
+    if (parse_score_view(prob) < 0) return -1;
+  }
+
+  if (parse_deadline_penalties(prob->date_penalty, &prob->dp_total,
+                               &prob->dp_infos) < 0) return -1;
+
+  if (aprob && aprob->disable_language) {
+    prob->disable_language = sarray_merge_pf(aprob->disable_language, prob->disable_language);
+  }
+  if (aprob && aprob->enable_language) {
+    prob->enable_language = sarray_merge_pf(aprob->enable_language, prob->enable_language);
+  }
+  if (aprob && aprob->require) {
+    prob->require = sarray_merge_pf(aprob->require, prob->require);
+  }
+  if (aprob && aprob->provide_ok) {
+    prob->provide_ok = sarray_merge_pf(aprob->provide_ok, prob->provide_ok);
+  }
+  if (aprob && aprob->allow_ip) {
+    prob->allow_ip = sarray_merge_pf(aprob->allow_ip, prob->allow_ip);
+  }
+
+  if (aprob && aprob->checker_env) {
+    prob->checker_env = sarray_merge_pf(aprob->checker_env, prob->checker_env);
+  }
+  if (prob->checker_env) {
+    for (int j = 0; prob->checker_env[j]; ++j) {
+      prob->checker_env[j] = varsubst_heap(state, prob->checker_env[j], 1,
+                                           section_global_params,
+                                           section_problem_params,
+                                           section_language_params,
+                                           section_tester_params, prob,
+                                           NULL, NULL);
+      if (!prob->checker_env[j]) return -1;
+    }
+  }
+
+  if (aprob && aprob->valuer_env) {
+    prob->valuer_env = sarray_merge_pf(aprob->valuer_env, prob->valuer_env);
+  }
+  if (prob->valuer_env) {
+    for (int j = 0; prob->valuer_env[j]; ++j) {
+      prob->valuer_env[j] = varsubst_heap(state, prob->valuer_env[j], 1,
+                                          section_global_params,
+                                          section_problem_params,
+                                          section_language_params,
+                                          section_tester_params, prob,
+                                          NULL, NULL);
+      if (!prob->valuer_env[j]) return -1;
+    }
+  }
+
+  if (aprob && aprob->interactor_env) {
+    prob->interactor_env = sarray_merge_pf(aprob->interactor_env,
+                                           prob->interactor_env);
+  }
+  if (prob->interactor_env) {
+    for (int j = 0; prob->interactor_env[j]; ++j) {
+      prob->interactor_env[j] = varsubst_heap(state,
+                                              prob->interactor_env[j], 1,
+                                              section_global_params,
+                                              section_problem_params,
+                                              section_language_params,
+                                              section_tester_params, prob,
+                                              NULL, NULL);
+      if (!prob->interactor_env[j]) return -1;
+    }
+  }
+
+  if (aprob && aprob->statement_env) {
+    prob->statement_env = sarray_merge_pf(aprob->statement_env,
+                                          prob->statement_env);
+  }
+  if (prob->statement_env) {
+    for (int j = 0; prob->statement_env[j]; ++j) {
+      prob->statement_env[j] = varsubst_heap(state,
+                                             prob->statement_env[j], 1,
+                                             section_global_params,
+                                             section_problem_params,
+                                             section_language_params,
+                                             section_tester_params, prob,
+                                             NULL, NULL);
+      if (!prob->statement_env[j]) return -1;
+    }
+  }
+
+  if (aprob && aprob->lang_compiler_env) {
+    prob->lang_compiler_env = sarray_merge_pf(aprob->lang_compiler_env,
+                                              prob->lang_compiler_env);
+  }
+  /*
+      if (prob->lang_compiler_env) {
+        for (j = 0; prob->lang_compiler_env[j]; j++) {
+          prob->lang_compiler_env[j] = varsubst_heap(state,
+                                                     prob->lang_compiler_env[j],
+                                                     1, section_global_params,
+                                                     section_problem_params,
+                                                     section_language_params,
+                                                     section_tester_params, prob, NULL, NULL);
+          if (!prob->lang_compiler_env[j]) return -1;
+        }
+      }
+   */
+
+  if (aprob && aprob->lang_compiler_container_options) {
+    prob->lang_compiler_container_options = sarray_merge_pf(aprob->lang_compiler_container_options,
+                                                            prob->lang_compiler_container_options);
+  }
+
+  if (aprob && aprob->style_checker_env) {
+    prob->style_checker_env = sarray_merge_pf(aprob->style_checker_env,
+                                              prob->style_checker_env);
+  }
+  if (prob->style_checker_env) {
+    for (int j = 0; prob->style_checker_env[j]; ++j) {
+      prob->style_checker_env[j] = varsubst_heap(state,
+                                                 prob->style_checker_env[j],
+                                                 1, section_global_params,
+                                                 section_problem_params,
+                                                 section_language_params,
+                                                 section_tester_params, prob,
+                                                 NULL, NULL);
+      if (!prob->style_checker_env[j]) return -1;
+    }
+  }
+
+  if (aprob && aprob->test_checker_env) {
+    prob->test_checker_env = sarray_merge_pf(aprob->test_checker_env,
+                                             prob->test_checker_env);
+  }
+  if (prob->test_checker_env) {
+    for (int j = 0; prob->test_checker_env[j]; ++j) {
+      prob->test_checker_env[j] = varsubst_heap(state,
+                                                prob->test_checker_env[j],
+                                                1, section_global_params,
+                                                section_problem_params,
+                                                section_language_params,
+                                                section_tester_params, prob,
+                                                NULL, NULL);
+      if (!prob->test_checker_env[j]) return -1;
+    }
+  }
+
+  if (aprob && aprob->test_generator_env) {
+    prob->test_generator_env = sarray_merge_pf(aprob->test_generator_env,
+                                               prob->test_generator_env);
+  }
+
+  if (aprob && aprob->init_env) {
+    prob->init_env = sarray_merge_pf(aprob->init_env, prob->init_env);
+  }
+  if (prob->init_env) {
+    for (int j = 0; prob->init_env[j]; ++j) {
+      prob->init_env[j] = varsubst_heap(state,
+                                        prob->init_env[j],
+                                        1, section_global_params,
+                                        section_problem_params,
+                                        section_language_params,
+                                        section_tester_params, prob,
+                                        NULL, NULL);
+      if (!prob->init_env[j]) return -1;
+    }
+  }
+
+  if (aprob && aprob->start_env) {
+    prob->start_env = sarray_merge_pf(aprob->start_env, prob->start_env);
+  }
+  if (prob->start_env) {
+    for (int j = 0; prob->start_env[j]; ++j) {
+      prob->start_env[j] = varsubst_heap(state,
+                                         prob->start_env[j],
+                                         1, section_global_params,
+                                         section_problem_params,
+                                         section_language_params,
+                                         section_tester_params, prob,
+                                         NULL, NULL);
+      if (!prob->start_env[j]) return -1;
+    }
+  }
+
+  if (prob->score_bonus && prob->score_bonus[0]) {
+    if (parse_score_bonus(prob->score_bonus, &prob->score_bonus_total,
+                          &prob->score_bonus_val) < 0) return -1;
+  }
+
+  if (!prob->statement_file && aprob && aprob->statement_file) {
+    sformat_message_2(&prob->statement_file, 0, aprob->statement_file,
+                      NULL, prob, NULL, NULL, NULL, 0, 0, 0);
+  }
+  if (prob->statement_file && prob->statement_file[0] && !os_IsAbsolutePath(prob->statement_file)) {
+    usprintf(&prob->statement_file, "%s/%s", g->statement_dir, prob->statement_file);
+  }
+
+  if (!prob->alternatives_file && aprob && aprob->alternatives_file) {
+    sformat_message_2(&prob->alternatives_file, 0, aprob->alternatives_file,
+                      NULL, prob, NULL, NULL, NULL, 0, 0, 0);
+  }
+  if (prob->alternatives_file && prob->alternatives_file[0] && !os_IsAbsolutePath(prob->alternatives_file)) {
+    usprintf(&prob->alternatives_file, "%s/%s", g->statement_dir, prob->alternatives_file);
+  }
+
+  if (!prob->plugin_file && aprob && aprob->plugin_file) {
+    sformat_message_2(&prob->plugin_file, 0, aprob->plugin_file,
+                      NULL, prob, NULL, NULL, NULL, 0, 0, 0);
+  }
+  if (prob->plugin_file && prob->plugin_file[0] && g->advanced_layout <= 0) {
+    if (!os_IsAbsolutePath(prob->plugin_file)) {
+      usprintf(&prob->plugin_file, "%s/%s", g->plugin_dir, prob->plugin_file);
+    }
+  }
+
+  if (!prob->test_dir && aprob && aprob->test_dir) {
+    sformat_message_2(&prob->test_dir, 0, aprob->test_dir,
+                      NULL, prob, NULL, NULL, NULL, 0, 0, 0);
+  }
+  if (!prob->test_dir) {
+    xstrdup3(&prob->test_dir, prob->short_name);
+  }
+  if (!os_IsAbsolutePath(prob->test_dir)) {
+    usprintf(&prob->test_dir, "%s/%s", g->test_dir, prob->test_dir);
+  }
+
+  if (!prob->corr_dir && aprob && aprob->corr_dir) {
+    sformat_message_2(&prob->corr_dir, 0, aprob->corr_dir,
+                      NULL, prob, NULL, NULL, NULL, 0, 0, 0);
+  }
+  if (prob->corr_dir && !os_IsAbsolutePath(prob->corr_dir)) {
+    usprintf(&prob->corr_dir, "%s/%s", g->corr_dir, prob->corr_dir);
+  }
+
+  if (prob->use_info > 0) {
+    if (!prob->info_dir && aprob && aprob->info_dir) {
+      sformat_message_2(&prob->info_dir, 0, aprob->info_dir,
+                        NULL, prob, NULL, NULL, NULL, 0, 0, 0);
+    }
+    if (!prob->info_dir) {
+      xstrdup3(&prob->info_dir, prob->short_name);
+    }
+    if (prob->info_dir && !os_IsAbsolutePath(prob->info_dir)) {
+      usprintf(&prob->info_dir, "%s/%s", g->info_dir, prob->info_dir);
+    }
+  }
+
+  if (prob->use_tgz > 0) {
+    if (!prob->tgz_dir && aprob && aprob->tgz_dir) {
+      sformat_message_2(&prob->tgz_dir, 0, aprob->tgz_dir,
+                        NULL, prob, NULL, NULL, NULL, 0, 0, 0);
+    }
+    if (!prob->tgz_dir) {
+      xstrdup3(&prob->tgz_dir, prob->short_name);
+    }
+    if (!os_IsAbsolutePath(prob->tgz_dir)) {
+      usprintf(&prob->tgz_dir, "%s/%s", g->tgz_dir, prob->tgz_dir);
+    }
+  }
+
+  if (prob->open_tests && prob->open_tests[0]) {
+    if (prepare_parse_open_tests(stderr, prob->open_tests,
+                                 &prob->open_tests_val, &prob->open_tests_count) < 0)
+      return -1;
+  }
+
+  if (prob->final_open_tests && prob->final_open_tests[0]) {
+    if (prepare_parse_open_tests(stderr, prob->final_open_tests,
+                                 &prob->final_open_tests_val,
+                                 &prob->final_open_tests_count) < 0)
+      return -1;
+  }
+
+  if (prob->token_open_tests && prob->token_open_tests[0]) {
+    if (prepare_parse_open_tests(stderr, prob->token_open_tests,
+                                 &prob->token_open_tests_val,
+                                 &prob->token_open_tests_count) < 0)
+      return -1;
+  }
+
+  if (prob->tokens && prob->tokens[0]) {
+    if (!(prob->token_info = prepare_parse_tokens(stderr, prob->tokens)))
+      return -1;
+  }
+
+  if (!prob->input_file && aprob && aprob->input_file) {
+    sformat_message_2(&prob->input_file, 0, aprob->input_file,
+                      NULL, prob, NULL, NULL, NULL, 0, 0, 0);
+  }
+  if (!prob->input_file || !prob->input_file[0]) {
+    xstrdup3(&prob->input_file, DFLT_P_INPUT_FILE);
+  }
+
+  if (!prob->output_file && aprob && aprob->output_file) {
+    sformat_message_2(&prob->output_file, 0, aprob->output_file,
+                      NULL, prob, NULL, NULL, NULL, 0, 0, 0);
+  }
+  if (!prob->output_file || !prob->output_file[0]) {
+    xstrdup3(&prob->output_file, DFLT_P_OUTPUT_FILE);
+  }
+
+  if (prob->variant_num < 0 && aprob && aprob->variant_num >= 0) {
+    prob->variant_num = aprob->variant_num;
+  }
+  if (prob->variant_num < 0) {
+    prob->variant_num = 0;
+  }
+
+  if (prob->test_sets) {
+    if (prepare_parse_testsets(prob->test_sets,
+                               &prob->ts_total,
+                               &prob->ts_infos) < 0)
+      return -1;
+  }
+
+  return 0;
+}
+
 static int
 set_defaults(
         const struct ejudge_cfg *config,
@@ -2471,9 +3034,7 @@ set_defaults(
 
   size_t tmp_len = 0;
   int r;
-  path_t fpath;
   path_t start_path;
-  path_t xml_path;
 
   int contest_id = 0;
   /* find global section */
@@ -3377,596 +3938,7 @@ set_defaults(
 
   for (i = 1; i <= state->max_prob && mode != PREPARE_COMPILE; i++) {
     if (!(prob = state->probs[i])) continue;
-    si = -1;
-    sish = 0;
-    aprob = 0;
-    if (prob->super[0]) {
-      for (si = 0; si < state->max_abstr_prob; si++)
-        if (!strcmp(state->abstr_probs[si]->short_name, prob->super))
-          break;
-      if (si >= state->max_abstr_prob) {
-        err("abstract problem `%s' is not defined", prob->super);
-        return -1;
-      }
-      aprob = state->abstr_probs[si];
-      sish = aprob->short_name;
-    }
-
-    if (!prob->short_name[0] && g->auto_short_problem_name) {
-      snprintf(prob->short_name, sizeof(prob->short_name), "%06d", prob->id);
-      vinfo("problem %d short name is set to %s", i, prob->short_name);
-    }
-    if (!prob->short_name[0]) {
-      err("problem %d short name must be set", i);
-      return -1;
-    }
-    ish = prob->short_name;
-
-    if (g->dates_config) {
-      prepare_copy_dates(prob, g->dates_config);
-    }
-
-    prepare_set_prob_value(CNTSPROB_problem_dir, prob, aprob, g);
-
-    /* parse XML here */
-    if (!prob->xml_file && aprob && aprob->xml_file) {
-      sformat_message_2(&prob->xml_file, 0, aprob->xml_file, 0, prob, 0, 0, 0, 0, 0, 0);
-    }
-    if (prob->xml_file && prob->xml_file[0] && g->advanced_layout <= 0) {
-      if (!os_IsAbsolutePath(prob->xml_file)) {
-        usprintf(&prob->xml_file, "%s/%s", g->statement_dir, prob->xml_file);
-      }
-    }
-    if (prob->xml_file && prob->xml_file[0] && prob->variant_num > 0) {
-      XCALLOC(prob->xml.a, prob->variant_num);
-      XCALLOC(prob->var_xml_file_paths, prob->variant_num);
-      for (j = 1; j <= prob->variant_num; j++) {
-        if (g->advanced_layout > 0) {
-          get_advanced_layout_path(xml_path, sizeof(xml_path), g,
-                                   prob, prob->xml_file, j);
-          if (!(prob->xml.a[j - 1] = problem_xml_parse_safe(NULL, xml_path))) return -1;
-          prob->var_xml_file_paths[j - 1] = xstrdup(xml_path);
-        } else {
-          prepare_insert_variant_num(fpath, sizeof(fpath), prob->xml_file, j);
-          if (!(prob->xml.a[j - 1] = problem_xml_parse_safe(NULL, fpath))) return -1;
-          prob->var_xml_file_paths[j - 1] = xstrdup(fpath);
-        }
-      }
-    } else if (prob->xml_file && prob->xml_file[0]) {
-      if (g->advanced_layout > 0) {
-        get_advanced_layout_path(xml_path, sizeof(xml_path), g,
-                                 prob, prob->xml_file, -1);
-        if (!(prob->xml.p = problem_xml_parse_safe(NULL, xml_path))) return -1;
-        prob->xml_file_path = xstrdup(xml_path);
-      } else {
-        if (!(prob->xml.p = problem_xml_parse_safe(NULL, prob->xml_file))) return -1;
-        prob->xml_file_path = xstrdup(prob->xml_file);
-      }
-    }
-
-    prepare_set_prob_value(CNTSPROB_type, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_use_ac_not_ok, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_ok_status, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_header_pat, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_footer_pat, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_compiler_env_pat, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_ignore_prev_ac, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_team_enable_rep_view, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_team_enable_ce_view, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_team_show_judge_report, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_show_checker_comment, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_ignore_compile_errors, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_container_options, prob, aprob, g);
-
-    prepare_set_prob_value(CNTSPROB_tests_to_accept, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_accept_partial, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_min_tests_to_accept, prob, aprob, g);
-
-    prepare_set_prob_value(CNTSPROB_disable_user_submit, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_notify_on_submit, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_disable_tab, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_unrestricted_statement, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_statement_ignore_ip, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_enable_submit_after_reject, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_hide_file_names, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_hide_real_time_limit, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_enable_tokens, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_tokens_for_user_ac, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_disable_submit_after_ok, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_disable_auto_testing, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_disable_testing, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_enable_compilation, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_skip_testing, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_disable_security, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_enable_suid_run, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_enable_container, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_enable_dynamic_priority, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_enable_multi_header, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_use_lang_multi_header, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_require_any, prob, aprob, g);
-
-    prepare_set_prob_value(CNTSPROB_full_score, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_full_user_score, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_min_score_1, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_min_score_2, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_variable_full_score, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_test_score, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_run_penalty, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_acm_run_penalty, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_disqualified_penalty, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_compile_error_penalty, prob, aprob, g);
-
-    prepare_set_prob_value(CNTSPROB_hidden, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_advance_to_next, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_stand_hide_time, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_disable_ctrl_chars, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_valuer_sets_marked, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_ignore_unmarked, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_disable_stderr, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_enable_process_group, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_enable_kill_all, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_enable_testlib_mode, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_enable_extended_info, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_stop_on_first_fail, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_enable_control_socket, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_copy_exe_to_tgzdir, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_enable_user_input, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_enable_vcs, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_enable_iframe_statement, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_enable_src_for_testing, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_disable_vm_size_limit, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_hide_variant, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_autoassign_variants, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_enable_text_form, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_stand_ignore_score, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_stand_last_column, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_scoring_checker, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_enable_checker_token, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_interactive_valuer, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_disable_pe, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_disable_wtl, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_wtl_is_cf, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_manual_checking, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_examinator_num, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_check_presentation, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_use_stdin, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_use_stdout, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_combined_stdin, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_combined_stdout, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_binary_input, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_binary, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_ignore_exit_code, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_ignore_term_signal, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_olympiad_mode, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_score_latest, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_score_latest_or_unmarked, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_score_latest_marked, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_score_tokenized, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_time_limit, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_time_limit_millis, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_real_time_limit, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_interactor_time_limit, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_interactor_real_time_limit, prob, aprob, g);
-
-    prepare_set_prob_value(CNTSPROB_test_sfx, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_corr_sfx, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_info_sfx, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_tgz_sfx, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_tgzdir_sfx, prob, aprob, g);
-
-    prepare_set_prob_value(CNTSPROB_test_pat, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_corr_pat, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_info_pat, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_tgz_pat, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_tgzdir_pat, prob, aprob, g);
-
-    prepare_set_prob_value(CNTSPROB_check_cmd, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_valuer_cmd, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_interactor_cmd, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_style_checker_cmd, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_test_checker_cmd, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_test_generator_cmd, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_init_cmd, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_start_cmd, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_solution_src, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_solution_cmd, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_post_pull_cmd, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_vcs_compile_cmd, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_super_run_dir, prob, aprob, g);
-
-    prepare_set_prob_value(CNTSPROB_max_vm_size, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_max_stack_size, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_max_rss_size, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_max_data_size, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_max_core_size, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_max_file_size, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_max_open_file_count, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_max_process_count, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_checker_max_vm_size, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_checker_max_stack_size, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_checker_max_rss_size, prob, aprob, g);
-
-    prepare_set_prob_value(CNTSPROB_source_header, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_source_footer, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_normalization, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_max_user_run_count, prob, aprob, g);
-
-    if (prob->enable_tokens > 0) {
-      g->enable_tokens = 1;
-    }
-
-    if (prob->priority_adjustment == -1000 && si != -1 &&
-        aprob->priority_adjustment != -1000) {
-      prob->priority_adjustment = aprob->priority_adjustment;
-    }
-    if (prob->priority_adjustment == -1000) {
-      prob->priority_adjustment = 0;
-    }
-
-    if (!prob->score_multiplier && si != -1 &&
-        aprob->score_multiplier >= 1) {
-      prob->score_multiplier = aprob->score_multiplier;
-    }
-
-    if (prob->prev_runs_to_show <= 0 && si != -1
-        && aprob->prev_runs_to_show >= 1) {
-      prob->prev_runs_to_show = aprob->prev_runs_to_show;
-    }
-
-    if (mode == PREPARE_SERVE) {
-      if (prob->personal_deadline) {
-        if (parse_personal_deadlines(prob->personal_deadline,
-                                     &prob->pd_total, &prob->pd_infos) < 0) {
-          return -1;
-        }
-      }
-      if (prob->score_view) {
-        if (parse_score_view(prob) < 0) return -1;
-      }
-
-      if (parse_deadline_penalties(prob->date_penalty, &prob->dp_total,
-                                   &prob->dp_infos) < 0) return -1;
-
-      if (si != -1 && aprob->disable_language) {
-        prob->disable_language = sarray_merge_pf(aprob->disable_language, prob->disable_language);
-      }
-      if (si != -1 && aprob->enable_language) {
-        prob->enable_language = sarray_merge_pf(aprob->enable_language, prob->enable_language);
-      }
-      if (si != -1 && aprob->require) {
-        prob->require = sarray_merge_pf(aprob->require, prob->require);
-      }
-      if (si != -1 && aprob->provide_ok) {
-        prob->provide_ok = sarray_merge_pf(aprob->provide_ok, prob->provide_ok);
-      }
-      if (si != -1 && aprob->allow_ip) {
-        prob->allow_ip = sarray_merge_pf(aprob->allow_ip, prob->allow_ip);
-      }
-      if (si != -1 && aprob->checker_env) {
-        prob->checker_env = sarray_merge_pf(aprob->checker_env,
-                                            prob->checker_env);
-      }
-      if (prob->checker_env) {
-        for (j = 0; prob->checker_env[j]; j++) {
-          prob->checker_env[j] = varsubst_heap(state, prob->checker_env[j], 1,
-                                               section_global_params,
-                                               section_problem_params,
-                                               section_language_params,
-                                               section_tester_params, prob, NULL, NULL);
-          if (!prob->checker_env[j]) return -1;
-        }
-      }
-
-      if (si != -1 && aprob->valuer_env) {
-        prob->valuer_env = sarray_merge_pf(aprob->valuer_env, prob->valuer_env);
-      }
-      if (prob->valuer_env) {
-        for (j = 0; prob->valuer_env[j]; j++) {
-          prob->valuer_env[j] = varsubst_heap(state, prob->valuer_env[j], 1,
-                                              section_global_params,
-                                              section_problem_params,
-                                              section_language_params,
-                                              section_tester_params, prob, NULL, NULL);
-          if (!prob->valuer_env[j]) return -1;
-        }
-      }
-
-      if (si != -1 && aprob->interactor_env) {
-        prob->interactor_env = sarray_merge_pf(aprob->interactor_env,
-                                               prob->interactor_env);
-      }
-      if (prob->interactor_env) {
-        for (j = 0; prob->interactor_env[j]; j++) {
-          prob->interactor_env[j] = varsubst_heap(state,
-                                                  prob->interactor_env[j], 1,
-                                                  section_global_params,
-                                                  section_problem_params,
-                                                  section_language_params,
-                                                  section_tester_params, prob, NULL, NULL);
-          if (!prob->interactor_env[j]) return -1;
-        }
-      }
-
-      if (si != -1 && aprob->statement_env) {
-        prob->statement_env = sarray_merge_pf(aprob->statement_env,
-                                              prob->statement_env);
-      }
-      if (prob->statement_env) {
-        for (j = 0; prob->statement_env[j]; j++) {
-          prob->statement_env[j] = varsubst_heap(state,
-                                                 prob->statement_env[j], 1,
-                                                 section_global_params,
-                                                 section_problem_params,
-                                                 section_language_params,
-                                                 section_tester_params, prob, NULL, NULL);
-          if (!prob->statement_env[j]) return -1;
-        }
-      }
-
-      if (si != -1 && aprob->lang_compiler_env) {
-        prob->lang_compiler_env = sarray_merge_pf(aprob->lang_compiler_env,
-                                                  prob->lang_compiler_env);
-      }
-      if (si != -1 && aprob->lang_compiler_container_options) {
-        prob->lang_compiler_container_options = sarray_merge_pf(aprob->lang_compiler_container_options,
-                                                  prob->lang_compiler_container_options);
-      }
-      /*
-      if (prob->lang_compiler_env) {
-        for (j = 0; prob->lang_compiler_env[j]; j++) {
-          prob->lang_compiler_env[j] = varsubst_heap(state,
-                                                     prob->lang_compiler_env[j],
-                                                     1, section_global_params,
-                                                     section_problem_params,
-                                                     section_language_params,
-                                                     section_tester_params, prob, NULL, NULL);
-          if (!prob->lang_compiler_env[j]) return -1;
-        }
-      }
-      */
-
-      if (si != -1 && aprob->style_checker_env) {
-        prob->style_checker_env = sarray_merge_pf(aprob->style_checker_env,
-                                                  prob->style_checker_env);
-      }
-      if (prob->style_checker_env) {
-        for (j = 0; prob->style_checker_env[j]; j++) {
-          prob->style_checker_env[j] = varsubst_heap(state,
-                                                     prob->style_checker_env[j],
-                                                     1, section_global_params,
-                                                     section_problem_params,
-                                                     section_language_params,
-                                                     section_tester_params, prob, NULL, NULL);
-          if (!prob->style_checker_env[j]) return -1;
-        }
-      }
-
-      if (si != -1 && aprob->test_checker_env) {
-        prob->test_checker_env = sarray_merge_pf(aprob->test_checker_env,
-                                                 prob->test_checker_env);
-      }
-      if (prob->test_checker_env) {
-        for (j = 0; prob->test_checker_env[j]; j++) {
-          prob->test_checker_env[j] = varsubst_heap(state,
-                                                    prob->test_checker_env[j],
-                                                    1, section_global_params,
-                                                    section_problem_params,
-                                                    section_language_params,
-                                                    section_tester_params, prob, NULL, NULL);
-          if (!prob->test_checker_env[j]) return -1;
-        }
-      }
-
-      if (si != -1 && aprob->test_generator_env) {
-        prob->test_generator_env = sarray_merge_pf(aprob->test_generator_env,
-                                                   prob->test_generator_env);
-      }
-
-      if (si != -1 && aprob->init_env) {
-        prob->init_env = sarray_merge_pf(aprob->init_env,
-                                         prob->init_env);
-      }
-      if (prob->init_env) {
-        for (j = 0; prob->init_env[j]; j++) {
-          prob->init_env[j] = varsubst_heap(state,
-                                            prob->init_env[j],
-                                            1, section_global_params,
-                                            section_problem_params,
-                                            section_language_params,
-                                            section_tester_params, prob, NULL, NULL);
-          if (!prob->init_env[j]) return -1;
-        }
-      }
-
-      if (si != -1 && aprob->start_env) {
-        prob->start_env = sarray_merge_pf(aprob->start_env,
-                                          prob->start_env);
-      }
-      if (prob->start_env) {
-        for (j = 0; prob->start_env[j]; j++) {
-          prob->start_env[j] = varsubst_heap(state,
-                                             prob->start_env[j],
-                                             1, section_global_params,
-                                             section_problem_params,
-                                             section_language_params,
-                                             section_tester_params, prob, NULL, NULL);
-          if (!prob->start_env[j]) return -1;
-        }
-      }
-
-      /* score bonus */
-      prepare_set_prob_value(CNTSPROB_score_bonus, prob, aprob, g);
-      if (prob->score_bonus && prob->score_bonus[0]) {
-        if (parse_score_bonus(prob->score_bonus, &prob->score_bonus_total,
-                              &prob->score_bonus_val) < 0) return -1;
-      }
-    }
-
-    if (mode == PREPARE_SERVE) {
-      if (!prob->statement_file && aprob && aprob->statement_file) {
-        sformat_message_2(&prob->statement_file, 0, aprob->statement_file,
-                          NULL, prob, NULL, NULL, NULL, 0, 0, 0);
-      }
-      if (prob->statement_file && prob->statement_file[0] && !os_IsAbsolutePath(prob->statement_file)) {
-        usprintf(&prob->statement_file, "%s/%s", g->statement_dir, prob->statement_file);
-      }
-
-      if (!prob->alternatives_file && aprob && aprob->alternatives_file) {
-        sformat_message_2(&prob->alternatives_file, 0, aprob->alternatives_file,
-                          NULL, prob, NULL, NULL, NULL, 0, 0, 0);
-      }
-      if (prob->alternatives_file && prob->alternatives_file[0] && !os_IsAbsolutePath(prob->alternatives_file)) {
-        usprintf(&prob->alternatives_file, "%s/%s", g->statement_dir, prob->alternatives_file);
-      }
-
-      if (!prob->plugin_file && aprob && aprob->plugin_file) {
-        sformat_message_2(&prob->plugin_file, 0, aprob->plugin_file,
-                        NULL, prob, NULL, NULL, NULL, 0, 0, 0);
-      }
-      if (prob->plugin_file && prob->plugin_file[0] && g->advanced_layout <= 0) {
-        if (!os_IsAbsolutePath(prob->plugin_file)) {
-          usprintf(&prob->plugin_file, "%s/%s", g->plugin_dir, prob->plugin_file);
-        }
-      }
-
-      prepare_set_prob_value(CNTSPROB_stand_attr, prob, aprob, g);
-    }
-
-    if (mode == PREPARE_RUN || mode == PREPARE_SERVE) {
-      if (!prob->test_dir && aprob && aprob->test_dir) {
-        sformat_message_2(&prob->test_dir, 0, aprob->test_dir,
-                          NULL, prob, NULL, NULL, NULL, 0, 0, 0);
-        vinfo("problem.%s.test_dir taken from problem.%s ('%s')",
-             ish, sish, prob->test_dir);
-      }
-      if (!prob->test_dir) {
-        vinfo("problem.%s.test_dir set to %s", ish, prob->short_name);
-        xstrdup3(&prob->test_dir, prob->short_name);
-      }
-      if (!os_IsAbsolutePath(prob->test_dir)) {
-        usprintf(&prob->test_dir, "%s/%s", g->test_dir, prob->test_dir);
-      }
-      vinfo("problem.%s.test_dir is '%s'", ish, prob->test_dir);
-
-      if (!prob->corr_dir && aprob && aprob->corr_dir) {
-        sformat_message_2(&prob->corr_dir, 0, aprob->corr_dir,
-                          NULL, prob, NULL, NULL, NULL, 0, 0, 0);
-        vinfo("problem.%s.corr_dir taken from problem.%s ('%s')",
-             ish, sish, prob->corr_dir);
-      }
-      if (prob->corr_dir && !os_IsAbsolutePath(prob->corr_dir)) {
-        usprintf(&prob->corr_dir, "%s/%s", g->corr_dir, prob->corr_dir);
-        vinfo("problem.%s.corr_dir is '%s'", ish, prob->corr_dir);
-      }
-
-      prepare_set_prob_value(CNTSPROB_use_info, prob, aprob, g);
-
-      if (prob->use_info > 0) {
-        if (!prob->info_dir && aprob && aprob->info_dir) {
-          sformat_message_2(&prob->info_dir, 0, aprob->info_dir,
-                            NULL, prob, NULL, NULL, NULL, 0, 0, 0);
-          vinfo("problem.%s.info_dir taken from problem.%s ('%s')",
-                ish, sish, prob->info_dir);
-        }
-        if (!prob->info_dir) {
-          xstrdup3(&prob->info_dir, prob->short_name);
-          vinfo("problem.%s.info_dir is set to '%s'", ish, prob->info_dir);
-        }
-        if (prob->info_dir && !os_IsAbsolutePath(prob->info_dir)) {
-          usprintf(&prob->info_dir, "%s/%s", g->info_dir, prob->info_dir);
-        }
-      }
-
-      if (prob->use_tgz == -1 && si != -1 && aprob->use_tgz != -1) {
-        prob->use_tgz = aprob->use_tgz;
-        vinfo("problem.%s.use_tgz taken from problem.%s (%d)",
-             ish, sish, prob->use_tgz);
-      }
-      if (prob->use_tgz == -1) {
-        prob->use_tgz = 0;
-      }
-
-      if (prob->use_tgz > 0) {
-        if (!prob->tgz_dir && aprob && aprob->tgz_dir) {
-          sformat_message_2(&prob->tgz_dir, 0, aprob->tgz_dir,
-                            NULL, prob, NULL, NULL, NULL, 0, 0, 0);
-          vinfo("problem.%s.tgz_dir taken from problem.%s ('%s')",
-                ish, sish, prob->tgz_dir);
-        }
-        if (!prob->tgz_dir) {
-          xstrdup3(&prob->tgz_dir, prob->short_name);
-          vinfo("problem.%s.tgz_dir is set to '%s'", ish, prob->tgz_dir);
-        }
-        if (!os_IsAbsolutePath(prob->tgz_dir)) {
-          usprintf(&prob->tgz_dir, "%s/%s", g->tgz_dir, prob->tgz_dir);
-          vinfo("problem.%s.tgz_dir is '%s'", ish, prob->tgz_dir);
-        }
-      }
-
-      if (prob->open_tests && prob->open_tests[0]) {
-        if (prepare_parse_open_tests(stderr, prob->open_tests,
-                                     &prob->open_tests_val, &prob->open_tests_count) < 0)
-          return -1;
-      }
-      if (prob->final_open_tests && prob->final_open_tests[0]) {
-        if (prepare_parse_open_tests(stderr, prob->final_open_tests,
-                                     &prob->final_open_tests_val,
-                                     &prob->final_open_tests_count) < 0)
-          return -1;
-      }
-      if (prob->token_open_tests && prob->token_open_tests[0]) {
-        if (prepare_parse_open_tests(stderr, prob->token_open_tests,
-                                     &prob->token_open_tests_val,
-                                     &prob->token_open_tests_count) < 0)
-          return -1;
-      }
-      if (prob->tokens && prob->tokens[0]) {
-        if (!(prob->token_info = prepare_parse_tokens(stderr, prob->tokens)))
-          return -1;
-      }
-    }
-
-    if (!prob->input_file && aprob && aprob->input_file) {
-      sformat_message_2(&prob->input_file, 0, aprob->input_file,
-                        NULL, prob, NULL, NULL, NULL, 0, 0, 0);
-      vinfo("problem.%s.input_file inherited from problem.%s ('%s')",
-            ish, sish, prob->input_file);
-    }
-    if (!prob->input_file || !prob->input_file[0]) {
-      vinfo("problem.%s.input_file set to %s", ish, DFLT_P_INPUT_FILE);
-      xstrdup3(&prob->input_file, DFLT_P_INPUT_FILE);
-    }
-    if (!prob->output_file && aprob && aprob->output_file) {
-      sformat_message_2(&prob->output_file, 0, aprob->output_file,
-                      NULL, prob, NULL, NULL, NULL, 0, 0, 0);
-      vinfo("problem.%s.output_file inherited from problem.%s ('%s')",
-            ish, sish, prob->output_file);
-    }
-    if (!prob->output_file || !prob->output_file[0]) {
-      vinfo("problem.%s.output_file set to %s", ish, DFLT_P_OUTPUT_FILE);
-      xstrdup3(&prob->output_file, DFLT_P_OUTPUT_FILE);
-    }
-
-    if (prob->variant_num == -1 && si != -1 && aprob->variant_num != -1) {
-      prob->variant_num = aprob->variant_num;
-      vinfo("problem.%s.variant_num inherited from problem.%s (%d)",
-            ish, sish, prob->variant_num);
-    }
-    if (prob->variant_num == -1) {
-      prob->variant_num = 0;
-    }
-
-    prepare_set_prob_value(CNTSPROB_use_corr, prob, aprob, g);
-
-    prepare_set_prob_value(CNTSPROB_checker_real_time_limit, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_checker_time_limit_ms, prob, aprob, g);
-
-    if (prob->test_sets) {
-      if (prepare_parse_testsets(prob->test_sets,
-                                 &prob->ts_total,
-                                 &prob->ts_infos) < 0)
-        return -1;
-    }
+    if (prepare_problem(config, cnts, state, g, prob) < 0) return -1;
   }
 
   if (mode == PREPARE_SERVE || mode == PREPARE_RUN) {
