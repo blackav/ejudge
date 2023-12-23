@@ -2452,8 +2452,9 @@ int
 prepare_problem(
         const struct ejudge_cfg *config,
         const struct contest_desc *cnts,
-        serve_state_t state,
         struct section_global_data *g,
+        int abstr_count,
+        struct section_problem_data **abstr_probs,
         struct section_problem_data *prob)
 {
   const struct section_problem_data *aprob = NULL;
@@ -2461,14 +2462,14 @@ prepare_problem(
   unsigned char xml_path[PATH_MAX];
 
   if (prob->super[0]) {
-    for (si = 0; si < state->max_abstr_prob; si++)
-      if (!strcmp(state->abstr_probs[si]->short_name, prob->super))
+    for (si = 0; si < abstr_count; si++)
+      if (!strcmp(abstr_probs[si]->short_name, prob->super))
         break;
-    if (si >= state->max_abstr_prob) {
+    if (si >= abstr_count) {
       err("abstract problem '%s' is not defined", prob->super);
       return -1;
     }
-    aprob = state->abstr_probs[si];
+    aprob = abstr_probs[si];
   }
 
   if (!prob->short_name[0] && g->auto_short_problem_name > 0) {
@@ -3930,7 +3931,9 @@ set_defaults(
 
   for (i = 1; i <= state->max_prob && mode != PREPARE_COMPILE; i++) {
     if (!(prob = state->probs[i])) continue;
-    if (prepare_problem(config, cnts, state, g, prob) < 0) return -1;
+    if (prepare_problem(config, cnts, g,
+                        state->max_abstr_prob, state->abstr_probs,
+                        prob) < 0) return -1;
   }
 
   if (mode == PREPARE_SERVE || mode == PREPARE_RUN) {
