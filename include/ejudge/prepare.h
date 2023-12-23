@@ -1743,9 +1743,9 @@ prepare_copy_dates(
 
 unsigned char *
 prepare_varsubst(
-        serve_state_t state,
         unsigned char *in_str,
         int free_flag,
+        const struct section_global_data *global,
         const struct section_problem_data *prob,
         const struct section_language_data *lang,
         const struct section_tester_data *tester);

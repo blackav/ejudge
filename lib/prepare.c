@@ -6895,9 +6895,9 @@ fail:
 
 unsigned char *
 prepare_varsubst(
-        serve_state_t state,
         unsigned char *in_str,
         int free_flag,
+        const struct section_global_data *global,
         const struct section_problem_data *prob,
         const struct section_language_data *lang,
         const struct section_tester_data *tester)
@@ -6907,8 +6907,7 @@ prepare_varsubst(
                        section_problem_params,
                        section_language_params,
                        section_tester_params,
-                       state->global,
-                       prob, lang, tester);
+                       global, prob, lang, tester);
 }
 
 char **
