@@ -1084,174 +1084,25 @@ prepare_global_free_func(struct generic_section_config *gp)
 {
   struct section_global_data *p = (struct section_global_data *) gp;
 
-  sarray_free(p->a2ps_args);
-  sarray_free(p->lpr_args);
-  sarray_free(p->extra_compile_dirs);
+  cntsglob_free(p);
+
   xfree(p->stand_header_txt);
   xfree(p->stand_footer_txt);
   xfree(p->stand2_header_txt);
   xfree(p->stand2_footer_txt);
   xfree(p->plog_header_txt);
   xfree(p->plog_footer_txt);
-  sarray_free(p->user_priority_adjustments);
-  sarray_free(p->contestant_status_legend);
-  sarray_free(p->contestant_status_row_attr);
-  sarray_free(p->stand_row_attr);
-  sarray_free(p->stand_page_row_attr);
-  sarray_free(p->stand_page_col_attr);
-  //variant_map_free(p->variant_map);
   free_user_adjustment_info(p->user_adjustment_info);
   free_user_adjustment_map(p->user_adjustment_map);
-  xfree(p->unhandled_vars);
   xfree(p->user_exam_protocol_header_txt);
   xfree(p->user_exam_protocol_footer_txt);
   xfree(p->prob_exam_protocol_header_txt);
   xfree(p->prob_exam_protocol_footer_txt);
   xfree(p->full_exam_protocol_header_txt);
   xfree(p->full_exam_protocol_footer_txt);
-  xfree(p->contest_stop_cmd);
-  xfree(p->virtual_end_options);
   free_virtual_end_info(p->virtual_end_info);
-  sarray_free(p->load_user_group);
-  xfree(p->super_run_dir);
-  xfree(p->compile_server_id);
-  xfree(p->tokens);
   xfree(p->token_info);
-  xfree(p->dates_config_file);
   dates_config_free(p->dates_config);
-  xfree(p->checker_locale);
-  xfree(p->test_dir);
-  xfree(p->test_sfx);
-  xfree(p->test_pat);
-  xfree(p->corr_dir);
-  xfree(p->corr_sfx);
-  xfree(p->corr_pat);
-  xfree(p->info_dir);
-  xfree(p->info_sfx);
-  xfree(p->info_pat);
-  xfree(p->tgz_dir);
-  xfree(p->tgz_sfx);
-  xfree(p->tgz_pat);
-  xfree(p->tgzdir_sfx);
-  xfree(p->tgzdir_pat);
-  xfree(p->sound_player);
-  xfree(p->accept_sound);
-  xfree(p->runtime_sound);
-  xfree(p->timelimit_sound);
-  xfree(p->presentation_sound);
-  xfree(p->wrong_sound);
-  xfree(p->internal_sound);
-  xfree(p->start_sound);
-  xfree(p->variant_map_file);
-  xfree(p->user_exam_protocol_header_file);
-  xfree(p->user_exam_protocol_footer_file);
-  xfree(p->prob_exam_protocol_header_file);
-  xfree(p->prob_exam_protocol_footer_file);
-  xfree(p->full_exam_protocol_header_file);
-  xfree(p->full_exam_protocol_footer_file);
-  xfree(p->stand2_file_name);
-  xfree(p->stand2_header_file);
-  xfree(p->stand2_footer_file);
-  xfree(p->stand2_symlink_dir);
-  xfree(p->plog_file_name);
-  xfree(p->plog_header_file);
-  xfree(p->plog_footer_file);
-  xfree(p->plog_symlink_dir);
-  xfree(p->team_info_url);
-  xfree(p->prob_info_url);
-  xfree(p->standings_file_name);
-  xfree(p->stand_header_file);
-  xfree(p->stand_footer_file);
-  xfree(p->stand_symlink_dir);
-  xfree(p->stand_file_name_2);
-  xfree(p->htdocs_dir);
-  xfree(p->stand_extra_format);
-  xfree(p->stand_extra_legend);
-  xfree(p->stand_extra_attr);
-  xfree(p->stand_table_attr);
-  xfree(p->stand_place_attr);
-  xfree(p->stand_team_attr);
-  xfree(p->stand_prob_attr);
-  xfree(p->stand_solved_attr);
-  xfree(p->stand_score_attr);
-  xfree(p->stand_penalty_attr);
-  xfree(p->stand_time_attr);
-  xfree(p->stand_self_row_attr);
-  xfree(p->stand_r_row_attr);
-  xfree(p->stand_v_row_attr);
-  xfree(p->stand_u_row_attr);
-  xfree(p->stand_success_attr);
-  xfree(p->stand_fail_attr);
-  xfree(p->stand_trans_attr);
-  xfree(p->stand_disq_attr);
-  xfree(p->stand_page_table_attr);
-  xfree(p->stand_page_cur_attr);
-  xfree(p->stand_contestant_status_attr);
-  xfree(p->stand_warn_number_attr);
-  xfree(p->run_dir);
-  xfree(p->run_queue_dir);
-  xfree(p->run_exe_dir);
-  xfree(p->run_out_dir);
-  xfree(p->run_status_dir);
-  xfree(p->run_report_dir);
-  xfree(p->run_team_report_dir);
-  xfree(p->run_full_archive_dir);
-  xfree(p->run_work_dir);
-  xfree(p->run_check_dir);
-  xfree(p->compile_dir);
-  xfree(p->compile_queue_dir);
-  xfree(p->compile_src_dir);
-  xfree(p->compile_out_dir);
-  xfree(p->compile_status_dir);
-  xfree(p->compile_report_dir);
-  xfree(p->compile_work_dir);
-  xfree(p->legacy_status_dir);
-  xfree(p->work_dir);
-  xfree(p->print_work_dir);
-  xfree(p->diff_work_dir);
-  xfree(p->a2ps_path);
-  xfree(p->lpr_path);
-  xfree(p->diff_path);
-  xfree(p->run_log_file);
-  xfree(p->clar_log_file);
-  xfree(p->archive_dir);
-  xfree(p->clar_archive_dir);
-  xfree(p->run_archive_dir);
-  xfree(p->report_archive_dir);
-  xfree(p->team_report_archive_dir);
-  xfree(p->xml_report_archive_dir);
-  xfree(p->full_archive_dir);
-  xfree(p->audit_log_dir);
-  xfree(p->uuid_archive_dir);
-  xfree(p->team_extra_dir);
-  xfree(p->var_dir);
-  xfree(p->serve_socket);
-  xfree(p->l10n_dir);
-  xfree(p->socket_path);
-  xfree(p->lang_config_dir);
-  xfree(p->problems_dir);
-  xfree(p->script_dir);
-  xfree(p->checker_dir);
-  xfree(p->statement_dir);
-  xfree(p->plugin_dir);
-  xfree(p->ejudge_checkers_dir);
-  xfree(p->contest_start_cmd);
-  xfree(p->description_file);
-  xfree(p->contest_plugin_file);
-  xfree(p->conf_dir);
-  xfree(p->contests_dir);
-  xfree(p->root_dir);
-  xfree(p->name);
-  xfree(p->standings_locale);
-  xfree(p->charset);
-  xfree(p->standings_charset);
-  xfree(p->stand2_charset);
-  xfree(p->plog_charset);
-  xfree(p->clardb_plugin);
-  xfree(p->rundb_plugin);
-  xfree(p->xuser_plugin);
-  xfree(p->status_plugin);
-  xfree(p->variant_plugin);
 
   memset(p, 0xab, sizeof(*p));
   xfree(p);
@@ -1270,30 +1121,7 @@ prepare_language_free_func(struct generic_section_config *gp)
 {
   struct section_language_data *p = (struct section_language_data*) gp;
 
-  p->compiler_env = sarray_free(p->compiler_env);
-  p->style_checker_env = sarray_free(p->style_checker_env);
-  xfree(p->unhandled_vars);
-  xfree(p->extid);
-  xfree(p->super_run_dir);
-  xfree(p->cmd);
-  xfree(p->style_checker_cmd);
-  xfree(p->compile_dir);
-  xfree(p->compile_queue_dir);
-  xfree(p->compile_src_dir);
-  xfree(p->compile_out_dir);
-  xfree(p->compile_status_dir);
-  xfree(p->compile_report_dir);
-  xfree(p->content_type);
-  xfree(p->long_name);
-  xfree(p->key);
-  xfree(p->arch);
-  xfree(p->compile_server_id);
-  xfree(p->multi_header_suffix);
-  xfree(p->container_options);
-  xfree(p->compiler_container_options);
-  xfree(p->clean_up_cmd);
-  xfree(p->run_env_file);
-  xfree(p->clean_up_env_file);
+  cntslang_free(p);
   memset(p, 0xab, sizeof(*p));
   xfree(p);
 }
@@ -1428,115 +1256,22 @@ prepare_problem_free_func(struct generic_section_config *gp)
   struct section_problem_data *p = (struct section_problem_data*) gp;
   int i;
 
+  cntsprob_free(p);
+
   prepare_free_group_dates(&p->gsd);
   prepare_free_group_dates(&p->gdl);
-  xfree(p->problem_dir);
-  xfree(p->normalization);
-  xfree(p->score_bonus);
   xfree(p->tscores);
   xfree(p->x_score_tests);
-  xfree(p->standard_checker);
-  xfree(p->check_cmd);
-  xfree(p->valuer_cmd);
-  xfree(p->interactor_cmd);
-  xfree(p->style_checker_cmd);
-  xfree(p->test_checker_cmd);
-  xfree(p->test_generator_cmd);
-  xfree(p->init_cmd);
-  xfree(p->start_cmd);
-  xfree(p->solution_src);
-  xfree(p->solution_cmd);
-  xfree(p->post_pull_cmd);
-  xfree(p->vcs_compile_cmd);
-  xfree(p->super_run_dir);
-  xfree(p->test_score_list);
-  xfree(p->tokens);
   xfree(p->token_info);
-  xfree(p->umask);
-  xfree(p->ok_status);
-  xfree(p->header_pat);
-  xfree(p->footer_pat);
-  xfree(p->compiler_env_pat);
-  xfree(p->container_options);
-  sarray_free(p->test_sets);
-  sarray_free(p->date_penalty);
-  sarray_free(p->group_start_date);
-  sarray_free(p->group_deadline);
-  sarray_free(p->disable_language);
-  sarray_free(p->enable_language);
-  sarray_free(p->require);
-  sarray_free(p->provide_ok);
-  sarray_free(p->allow_ip);
-  sarray_free(p->lang_compiler_env);
-  sarray_free(p->lang_compiler_container_options);
-  sarray_free(p->checker_env);
-  sarray_free(p->valuer_env);
-  sarray_free(p->interactor_env);
-  sarray_free(p->style_checker_env);
-  sarray_free(p->test_checker_env);
-  sarray_free(p->test_generator_env);
-  sarray_free(p->init_env);
-  sarray_free(p->start_env);
-  sarray_free(p->lang_time_adj);
-  sarray_free(p->lang_time_adj_millis);
-  sarray_free(p->lang_max_vm_size);
-  sarray_free(p->lang_max_stack_size);
-  sarray_free(p->lang_max_rss_size);
-  sarray_free(p->checker_extra_files);
-  sarray_free(p->personal_deadline);
-  sarray_free(p->alternative);
-  sarray_free(p->statement_env);
   xfree(p->score_bonus_val);
-  xfree(p->open_tests);
   xfree(p->open_tests_val);
-  xfree(p->final_open_tests);
   xfree(p->final_open_tests_val);
-  xfree(p->token_open_tests);
   xfree(p->token_open_tests_val);
   prepare_free_testsets(p->ts_total, p->ts_infos);
   free_deadline_penalties(p->dp_total, p->dp_infos);
   free_personal_deadlines(p->pd_total, p->pd_infos);
-  xfree(p->unhandled_vars);
-  sarray_free(p->score_view);
   xfree(p->score_view_score);
-  xfree(p->score_view_text);
-  xfree(p->extid);
-  xfree(p->test_dir);
-  xfree(p->test_sfx);
-  xfree(p->test_pat);
-  xfree(p->corr_dir);
-  xfree(p->corr_sfx);
-  xfree(p->corr_pat);
-  xfree(p->info_dir);
-  xfree(p->info_sfx);
-  xfree(p->info_pat);
-  xfree(p->tgz_dir);
-  xfree(p->tgz_sfx);
-  xfree(p->tgz_pat);
-  xfree(p->tgzdir_sfx);
-  xfree(p->tgzdir_pat);
-  xfree(p->source_header);
-  xfree(p->source_footer);
-  xfree(p->statement_file);
-  xfree(p->alternatives_file);
-  xfree(p->plugin_file);
-  xfree(p->xml_file);
-  xfree(p->stand_attr);
-  xfree(p->spelling);
-  xfree(p->score_tests);
-  xfree(p->input_file);
-  xfree(p->output_file);
-  xfree(p->stand_name);
-  xfree(p->stand_column);
-  xfree(p->group_name);
-  xfree(p->internal_name);
-  xfree(p->plugin_entry_name);
-  xfree(p->uuid);
-  xfree(p->long_name);
   xfree(p->xml_file_path);
-  xfree(p->custom_compile_cmd);
-  xfree(p->custom_lang_name);
-  xfree(p->extra_src_dir);
 
   if (p->variant_num > 0 && p->xml.a) {
     for (i = 1; i <= p->variant_num; i++) {
@@ -1595,26 +1330,7 @@ prepare_tester_free_func(struct generic_section_config *gp)
 {
   struct section_tester_data *p = (struct section_tester_data*) gp;
 
-  sarray_free(p->super);
-  sarray_free(p->start_env);
-  xfree(p->nwrun_spool_dir);
-  xfree(p->start_cmd);
-  xfree(p->prepare_cmd);
-  xfree(p->error_file);
-  xfree(p->errorcode_file);
-  xfree(p->check_dir);
-  xfree(p->run_full_archive_dir);
-  xfree(p->run_team_report_dir);
-  xfree(p->run_report_dir);
-  xfree(p->run_status_dir);
-  xfree(p->run_out_dir);
-  xfree(p->run_exe_dir);
-  xfree(p->run_queue_dir);
-  xfree(p->run_dir);
-  xfree(p->kill_signal);
-  xfree(p->secure_exec_type);
-  xfree(p->memory_limit_type);
-  xfree(p->key);
+  cntstester_free(p);
   memset(p, 0xab, sizeof(*p));
   xfree(p);
 }
@@ -2732,6 +2448,563 @@ prepare_insert_variant_num(
   return snprintf(buf, size, "%.*s-%d%s", pos, file, variant, file + pos);
 }
 
+int
+prepare_problem(
+        const struct ejudge_cfg *config,
+        const struct contest_desc *cnts,
+        struct section_global_data *g,
+        int abstr_count,
+        struct section_problem_data **abstr_probs,
+        struct section_problem_data *prob)
+{
+  const struct section_problem_data *aprob = NULL;
+  int si = -1;
+  unsigned char xml_path[PATH_MAX];
+
+  if (prob->super[0]) {
+    for (si = 0; si < abstr_count; si++)
+      if (!strcmp(abstr_probs[si]->short_name, prob->super))
+        break;
+    if (si >= abstr_count) {
+      err("abstract problem '%s' is not defined", prob->super);
+      return -1;
+    }
+    aprob = abstr_probs[si];
+  }
+
+  if (!prob->short_name[0] && g->auto_short_problem_name > 0) {
+    snprintf(prob->short_name, sizeof(prob->short_name), "%06d", prob->id);
+  }
+  if (!prob->short_name[0]) {
+    err("problem %d short name must be set", prob->id);
+    return -1;
+  }
+
+  if (g->dates_config) {
+    prepare_copy_dates(prob, g->dates_config);
+  }
+
+  prepare_set_prob_value(CNTSPROB_problem_dir, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_type, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_use_ac_not_ok, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_ok_status, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_header_pat, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_footer_pat, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_compiler_env_pat, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_ignore_prev_ac, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_team_enable_rep_view, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_team_enable_ce_view, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_team_show_judge_report, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_show_checker_comment, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_ignore_compile_errors, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_container_options, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_tests_to_accept, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_accept_partial, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_min_tests_to_accept, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_disable_user_submit, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_notify_on_submit, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_disable_tab, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_unrestricted_statement, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_statement_ignore_ip, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_enable_submit_after_reject, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_hide_file_names, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_hide_real_time_limit, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_enable_tokens, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_tokens_for_user_ac, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_disable_submit_after_ok, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_disable_auto_testing, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_disable_testing, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_enable_compilation, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_skip_testing, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_disable_security, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_enable_suid_run, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_enable_container, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_enable_dynamic_priority, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_enable_multi_header, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_use_lang_multi_header, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_require_any, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_full_score, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_full_user_score, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_min_score_1, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_min_score_2, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_variable_full_score, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_test_score, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_run_penalty, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_acm_run_penalty, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_disqualified_penalty, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_compile_error_penalty, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_hidden, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_advance_to_next, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_stand_hide_time, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_disable_ctrl_chars, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_valuer_sets_marked, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_ignore_unmarked, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_disable_stderr, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_enable_process_group, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_enable_kill_all, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_enable_testlib_mode, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_enable_extended_info, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_stop_on_first_fail, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_enable_control_socket, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_copy_exe_to_tgzdir, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_enable_user_input, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_enable_vcs, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_enable_iframe_statement, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_enable_src_for_testing, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_disable_vm_size_limit, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_hide_variant, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_autoassign_variants, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_enable_text_form, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_stand_ignore_score, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_stand_last_column, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_scoring_checker, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_enable_checker_token, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_interactive_valuer, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_disable_pe, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_disable_wtl, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_wtl_is_cf, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_manual_checking, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_examinator_num, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_check_presentation, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_use_stdin, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_use_stdout, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_combined_stdin, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_combined_stdout, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_binary_input, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_binary, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_ignore_exit_code, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_ignore_term_signal, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_olympiad_mode, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_score_latest, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_score_latest_or_unmarked, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_score_latest_marked, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_score_tokenized, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_time_limit, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_time_limit_millis, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_real_time_limit, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_interactor_time_limit, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_interactor_real_time_limit, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_test_sfx, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_corr_sfx, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_info_sfx, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_tgz_sfx, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_tgzdir_sfx, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_test_pat, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_corr_pat, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_info_pat, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_tgz_pat, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_tgzdir_pat, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_check_cmd, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_valuer_cmd, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_interactor_cmd, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_style_checker_cmd, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_test_checker_cmd, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_test_generator_cmd, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_init_cmd, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_start_cmd, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_solution_src, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_solution_cmd, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_post_pull_cmd, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_vcs_compile_cmd, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_super_run_dir, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_max_vm_size, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_max_stack_size, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_max_rss_size, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_max_data_size, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_max_core_size, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_max_file_size, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_max_open_file_count, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_max_process_count, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_checker_max_vm_size, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_checker_max_stack_size, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_checker_max_rss_size, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_checker_real_time_limit, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_checker_time_limit_ms, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_source_header, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_source_footer, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_normalization, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_max_user_run_count, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_score_bonus, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_stand_attr, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_use_corr, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_use_info, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_use_tgz, prob, aprob, g);
+
+  // parse XML statement
+  if (!prob->xml_file && aprob && aprob->xml_file) {
+    sformat_message_2(&prob->xml_file, 0, aprob->xml_file, 0, prob, 0, 0, 0, 0, 0, 0);
+  }
+
+  if (prob->xml_file && prob->xml_file[0]) {
+    if (g->advanced_layout > 0) {
+      if (prob->variant_num > 0) {
+        XCALLOC(prob->xml.a, prob->variant_num);
+        XCALLOC(prob->var_xml_file_paths, prob->variant_num);
+        for (int j = 1; j <= prob->variant_num; ++j) {
+          get_advanced_layout_path(xml_path, sizeof(xml_path), g,
+                                   prob, prob->xml_file, j);
+          if (!(prob->xml.a[j - 1] = problem_xml_parse_safe(NULL, xml_path))) return -1;
+          prob->var_xml_file_paths[j - 1] = xstrdup(xml_path);
+        }
+      } else /* variant_num <= 0 */ {
+        get_advanced_layout_path(xml_path, sizeof(xml_path), g,
+                                 prob, prob->xml_file, -1);
+        if (!(prob->xml.p = problem_xml_parse_safe(NULL, xml_path))) return -1;
+        prob->xml_file_path = xstrdup(xml_path);
+      }
+    } else /* advanced_layout <= 0 */ {
+      if (!os_IsAbsolutePath(prob->xml_file)) {
+        usprintf(&prob->xml_file, "%s/%s", g->statement_dir, prob->xml_file);
+      }
+      if (prob->variant_num > 0) {
+        XCALLOC(prob->xml.a, prob->variant_num);
+        XCALLOC(prob->var_xml_file_paths, prob->variant_num);
+        for (int j = 1; j <= prob->variant_num; ++j) {
+          prepare_insert_variant_num(xml_path, sizeof(xml_path), prob->xml_file, j);
+          if (!(prob->xml.a[j - 1] = problem_xml_parse_safe(NULL, xml_path))) return -1;
+          prob->var_xml_file_paths[j - 1] = xstrdup(xml_path);
+        }
+      } else /* variant_num <= 0 */ {
+        if (!(prob->xml.p = problem_xml_parse_safe(NULL, prob->xml_file))) return -1;
+        prob->xml_file_path = xstrdup(prob->xml_file);
+      }
+    }
+  }
+
+  if (prob->enable_tokens > 0) {
+    g->enable_tokens = 1;
+  }
+
+  if (prob->priority_adjustment <= -1000 && aprob && aprob->priority_adjustment > -1000) {
+    prob->priority_adjustment = aprob->priority_adjustment;
+  }
+  if (prob->priority_adjustment <= -1000) {
+    prob->priority_adjustment = 0;
+  }
+
+  if (prob->score_multiplier <= 0 && aprob && aprob->score_multiplier >= 1) {
+    prob->score_multiplier = aprob->score_multiplier;
+  }
+
+  if (prob->prev_runs_to_show <= 0 && aprob && aprob->prev_runs_to_show >= 1) {
+    prob->prev_runs_to_show = aprob->prev_runs_to_show;
+  }
+
+  if (prob->personal_deadline) {
+    if (parse_personal_deadlines(prob->personal_deadline,
+                                 &prob->pd_total, &prob->pd_infos) < 0) {
+      return -1;
+    }
+  }
+
+  if (prob->score_view) {
+    if (parse_score_view(prob) < 0) return -1;
+  }
+
+  if (parse_deadline_penalties(prob->date_penalty, &prob->dp_total,
+                               &prob->dp_infos) < 0) return -1;
+
+  if (aprob && aprob->disable_language) {
+    prob->disable_language = sarray_merge_pf(aprob->disable_language, prob->disable_language);
+  }
+  if (aprob && aprob->enable_language) {
+    prob->enable_language = sarray_merge_pf(aprob->enable_language, prob->enable_language);
+  }
+  if (aprob && aprob->require) {
+    prob->require = sarray_merge_pf(aprob->require, prob->require);
+  }
+  if (aprob && aprob->provide_ok) {
+    prob->provide_ok = sarray_merge_pf(aprob->provide_ok, prob->provide_ok);
+  }
+  if (aprob && aprob->allow_ip) {
+    prob->allow_ip = sarray_merge_pf(aprob->allow_ip, prob->allow_ip);
+  }
+
+  if (aprob && aprob->checker_env) {
+    prob->checker_env = sarray_merge_pf(aprob->checker_env, prob->checker_env);
+  }
+  if (prob->checker_env) {
+    for (int j = 0; prob->checker_env[j]; ++j) {
+      prob->checker_env[j] = varsubst_heap(prob->checker_env[j], 1,
+                                           section_global_params,
+                                           section_problem_params,
+                                           section_language_params,
+                                           section_tester_params, g, prob,
+                                           NULL, NULL);
+      if (!prob->checker_env[j]) return -1;
+    }
+  }
+
+  if (aprob && aprob->valuer_env) {
+    prob->valuer_env = sarray_merge_pf(aprob->valuer_env, prob->valuer_env);
+  }
+  if (prob->valuer_env) {
+    for (int j = 0; prob->valuer_env[j]; ++j) {
+      prob->valuer_env[j] = varsubst_heap(prob->valuer_env[j], 1,
+                                          section_global_params,
+                                          section_problem_params,
+                                          section_language_params,
+                                          section_tester_params, g, prob,
+                                          NULL, NULL);
+      if (!prob->valuer_env[j]) return -1;
+    }
+  }
+
+  if (aprob && aprob->interactor_env) {
+    prob->interactor_env = sarray_merge_pf(aprob->interactor_env,
+                                           prob->interactor_env);
+  }
+  if (prob->interactor_env) {
+    for (int j = 0; prob->interactor_env[j]; ++j) {
+      prob->interactor_env[j] = varsubst_heap(prob->interactor_env[j], 1,
+                                              section_global_params,
+                                              section_problem_params,
+                                              section_language_params,
+                                              section_tester_params, g, prob,
+                                              NULL, NULL);
+      if (!prob->interactor_env[j]) return -1;
+    }
+  }
+
+  if (aprob && aprob->statement_env) {
+    prob->statement_env = sarray_merge_pf(aprob->statement_env,
+                                          prob->statement_env);
+  }
+  if (prob->statement_env) {
+    for (int j = 0; prob->statement_env[j]; ++j) {
+      prob->statement_env[j] = varsubst_heap(prob->statement_env[j], 1,
+                                             section_global_params,
+                                             section_problem_params,
+                                             section_language_params,
+                                             section_tester_params, g, prob,
+                                             NULL, NULL);
+      if (!prob->statement_env[j]) return -1;
+    }
+  }
+
+  if (aprob && aprob->lang_compiler_env) {
+    prob->lang_compiler_env = sarray_merge_pf(aprob->lang_compiler_env,
+                                              prob->lang_compiler_env);
+  }
+  /*
+      if (prob->lang_compiler_env) {
+        for (j = 0; prob->lang_compiler_env[j]; j++) {
+          prob->lang_compiler_env[j] = varsubst_heap(prob->lang_compiler_env[j],
+                                                     1, section_global_params,
+                                                     section_problem_params,
+                                                     section_language_params,
+                                                     section_tester_params, g, prob, NULL, NULL);
+          if (!prob->lang_compiler_env[j]) return -1;
+        }
+      }
+   */
+
+  if (aprob && aprob->lang_compiler_container_options) {
+    prob->lang_compiler_container_options = sarray_merge_pf(aprob->lang_compiler_container_options,
+                                                            prob->lang_compiler_container_options);
+  }
+
+  if (aprob && aprob->style_checker_env) {
+    prob->style_checker_env = sarray_merge_pf(aprob->style_checker_env,
+                                              prob->style_checker_env);
+  }
+  if (prob->style_checker_env) {
+    for (int j = 0; prob->style_checker_env[j]; ++j) {
+      prob->style_checker_env[j] = varsubst_heap(prob->style_checker_env[j],
+                                                 1, section_global_params,
+                                                 section_problem_params,
+                                                 section_language_params,
+                                                 section_tester_params, g, prob,
+                                                 NULL, NULL);
+      if (!prob->style_checker_env[j]) return -1;
+    }
+  }
+
+  if (aprob && aprob->test_checker_env) {
+    prob->test_checker_env = sarray_merge_pf(aprob->test_checker_env,
+                                             prob->test_checker_env);
+  }
+  if (prob->test_checker_env) {
+    for (int j = 0; prob->test_checker_env[j]; ++j) {
+      prob->test_checker_env[j] = varsubst_heap(prob->test_checker_env[j],
+                                                1, section_global_params,
+                                                section_problem_params,
+                                                section_language_params,
+                                                section_tester_params, g, prob,
+                                                NULL, NULL);
+      if (!prob->test_checker_env[j]) return -1;
+    }
+  }
+
+  if (aprob && aprob->test_generator_env) {
+    prob->test_generator_env = sarray_merge_pf(aprob->test_generator_env,
+                                               prob->test_generator_env);
+  }
+
+  if (aprob && aprob->init_env) {
+    prob->init_env = sarray_merge_pf(aprob->init_env, prob->init_env);
+  }
+  if (prob->init_env) {
+    for (int j = 0; prob->init_env[j]; ++j) {
+      prob->init_env[j] = varsubst_heap(prob->init_env[j],
+                                        1, section_global_params,
+                                        section_problem_params,
+                                        section_language_params,
+                                        section_tester_params, g, prob,
+                                        NULL, NULL);
+      if (!prob->init_env[j]) return -1;
+    }
+  }
+
+  if (aprob && aprob->start_env) {
+    prob->start_env = sarray_merge_pf(aprob->start_env, prob->start_env);
+  }
+  if (prob->start_env) {
+    for (int j = 0; prob->start_env[j]; ++j) {
+      prob->start_env[j] = varsubst_heap(prob->start_env[j],
+                                         1, section_global_params,
+                                         section_problem_params,
+                                         section_language_params,
+                                         section_tester_params, g, prob,
+                                         NULL, NULL);
+      if (!prob->start_env[j]) return -1;
+    }
+  }
+
+  if (prob->score_bonus && prob->score_bonus[0]) {
+    if (parse_score_bonus(prob->score_bonus, &prob->score_bonus_total,
+                          &prob->score_bonus_val) < 0) return -1;
+  }
+
+  if (!prob->statement_file && aprob && aprob->statement_file) {
+    sformat_message_2(&prob->statement_file, 0, aprob->statement_file,
+                      NULL, prob, NULL, NULL, NULL, 0, 0, 0);
+  }
+  if (prob->statement_file && prob->statement_file[0] && !os_IsAbsolutePath(prob->statement_file)) {
+    usprintf(&prob->statement_file, "%s/%s", g->statement_dir, prob->statement_file);
+  }
+
+  if (!prob->alternatives_file && aprob && aprob->alternatives_file) {
+    sformat_message_2(&prob->alternatives_file, 0, aprob->alternatives_file,
+                      NULL, prob, NULL, NULL, NULL, 0, 0, 0);
+  }
+  if (prob->alternatives_file && prob->alternatives_file[0] && !os_IsAbsolutePath(prob->alternatives_file)) {
+    usprintf(&prob->alternatives_file, "%s/%s", g->statement_dir, prob->alternatives_file);
+  }
+
+  if (!prob->plugin_file && aprob && aprob->plugin_file) {
+    sformat_message_2(&prob->plugin_file, 0, aprob->plugin_file,
+                      NULL, prob, NULL, NULL, NULL, 0, 0, 0);
+  }
+  if (prob->plugin_file && prob->plugin_file[0] && g->advanced_layout <= 0) {
+    if (!os_IsAbsolutePath(prob->plugin_file)) {
+      usprintf(&prob->plugin_file, "%s/%s", g->plugin_dir, prob->plugin_file);
+    }
+  }
+
+  if (!prob->test_dir && aprob && aprob->test_dir) {
+    sformat_message_2(&prob->test_dir, 0, aprob->test_dir,
+                      NULL, prob, NULL, NULL, NULL, 0, 0, 0);
+  }
+  if (!prob->test_dir) {
+    xstrdup3(&prob->test_dir, prob->short_name);
+  }
+  if (!os_IsAbsolutePath(prob->test_dir)) {
+    usprintf(&prob->test_dir, "%s/%s", g->test_dir, prob->test_dir);
+  }
+
+  if (!prob->corr_dir && aprob && aprob->corr_dir) {
+    sformat_message_2(&prob->corr_dir, 0, aprob->corr_dir,
+                      NULL, prob, NULL, NULL, NULL, 0, 0, 0);
+  }
+  if (prob->corr_dir && !os_IsAbsolutePath(prob->corr_dir)) {
+    usprintf(&prob->corr_dir, "%s/%s", g->corr_dir, prob->corr_dir);
+  }
+
+  if (prob->use_info > 0) {
+    if (!prob->info_dir && aprob && aprob->info_dir) {
+      sformat_message_2(&prob->info_dir, 0, aprob->info_dir,
+                        NULL, prob, NULL, NULL, NULL, 0, 0, 0);
+    }
+    if (!prob->info_dir) {
+      xstrdup3(&prob->info_dir, prob->short_name);
+    }
+    if (prob->info_dir && !os_IsAbsolutePath(prob->info_dir)) {
+      usprintf(&prob->info_dir, "%s/%s", g->info_dir, prob->info_dir);
+    }
+  }
+
+  if (prob->use_tgz > 0) {
+    if (!prob->tgz_dir && aprob && aprob->tgz_dir) {
+      sformat_message_2(&prob->tgz_dir, 0, aprob->tgz_dir,
+                        NULL, prob, NULL, NULL, NULL, 0, 0, 0);
+    }
+    if (!prob->tgz_dir) {
+      xstrdup3(&prob->tgz_dir, prob->short_name);
+    }
+    if (!os_IsAbsolutePath(prob->tgz_dir)) {
+      usprintf(&prob->tgz_dir, "%s/%s", g->tgz_dir, prob->tgz_dir);
+    }
+  }
+
+  if (prob->open_tests && prob->open_tests[0]) {
+    if (prepare_parse_open_tests(stderr, prob->open_tests,
+                                 &prob->open_tests_val, &prob->open_tests_count) < 0)
+      return -1;
+  }
+
+  if (prob->final_open_tests && prob->final_open_tests[0]) {
+    if (prepare_parse_open_tests(stderr, prob->final_open_tests,
+                                 &prob->final_open_tests_val,
+                                 &prob->final_open_tests_count) < 0)
+      return -1;
+  }
+
+  if (prob->token_open_tests && prob->token_open_tests[0]) {
+    if (prepare_parse_open_tests(stderr, prob->token_open_tests,
+                                 &prob->token_open_tests_val,
+                                 &prob->token_open_tests_count) < 0)
+      return -1;
+  }
+
+  if (prob->tokens && prob->tokens[0]) {
+    if (!(prob->token_info = prepare_parse_tokens(stderr, prob->tokens)))
+      return -1;
+  }
+
+  if (!prob->input_file && aprob && aprob->input_file) {
+    sformat_message_2(&prob->input_file, 0, aprob->input_file,
+                      NULL, prob, NULL, NULL, NULL, 0, 0, 0);
+  }
+  if (!prob->input_file || !prob->input_file[0]) {
+    xstrdup3(&prob->input_file, DFLT_P_INPUT_FILE);
+  }
+
+  if (!prob->output_file && aprob && aprob->output_file) {
+    sformat_message_2(&prob->output_file, 0, aprob->output_file,
+                      NULL, prob, NULL, NULL, NULL, 0, 0, 0);
+  }
+  if (!prob->output_file || !prob->output_file[0]) {
+    xstrdup3(&prob->output_file, DFLT_P_OUTPUT_FILE);
+  }
+
+  if (prob->variant_num < 0 && aprob && aprob->variant_num >= 0) {
+    prob->variant_num = aprob->variant_num;
+  }
+  if (prob->variant_num < 0) {
+    prob->variant_num = 0;
+  }
+
+  if (prob->test_sets) {
+    if (prepare_parse_testsets(prob->test_sets,
+                               &prob->ts_total,
+                               &prob->ts_infos) < 0)
+      return -1;
+  }
+
+  return 0;
+}
+
 static int
 set_defaults(
         const struct ejudge_cfg *config,
@@ -2755,9 +3028,7 @@ set_defaults(
 
   size_t tmp_len = 0;
   int r;
-  path_t fpath;
   path_t start_path;
-  path_t xml_path;
 
   int contest_id = 0;
   /* find global section */
@@ -3474,9 +3745,9 @@ set_defaults(
     if (g->sound_player) {
       char *tmps;
 
-      tmps = varsubst_heap(state, g->sound_player, 0,
+      tmps = varsubst_heap(g->sound_player, 0,
                            section_global_params, section_problem_params,
-                           section_language_params, section_tester_params, NULL, NULL, NULL);
+                           section_language_params, section_tester_params, g, NULL, NULL, NULL);
       xfree(g->sound_player);
       g->sound_player = tmps;
     }
@@ -3615,24 +3886,23 @@ set_defaults(
     /*
     if (lang->compiler_env) {
       for (j = 0; lang->compiler_env[j]; j++) {
-        lang->compiler_env[j] = varsubst_heap(state, lang->compiler_env[j], 1,
+        lang->compiler_env[j] = varsubst_heap(lang->compiler_env[j], 1,
                                               section_global_params,
                                               section_problem_params,
                                               section_language_params,
-                                              section_tester_params, NULL, lang, NULL);
+                                              section_tester_params, g, NULL, lang, NULL);
         if (!lang->compiler_env[j]) return -1;
       }
     }
     */
     if (lang->style_checker_env) {
       for (j = 0; lang->style_checker_env[j]; ++j) {
-        lang->style_checker_env[j] = varsubst_heap(state,
-                                                   lang->style_checker_env[j],
+        lang->style_checker_env[j] = varsubst_heap(lang->style_checker_env[j],
                                                    1,
                                                    section_global_params,
                                                    section_problem_params,
                                                    section_language_params,
-                                                   section_tester_params, NULL, lang, NULL);
+                                                   section_tester_params, g, NULL, lang, NULL);
         if (!lang->style_checker_env[j]) return -1;
       }
     }
@@ -3661,596 +3931,9 @@ set_defaults(
 
   for (i = 1; i <= state->max_prob && mode != PREPARE_COMPILE; i++) {
     if (!(prob = state->probs[i])) continue;
-    si = -1;
-    sish = 0;
-    aprob = 0;
-    if (prob->super[0]) {
-      for (si = 0; si < state->max_abstr_prob; si++)
-        if (!strcmp(state->abstr_probs[si]->short_name, prob->super))
-          break;
-      if (si >= state->max_abstr_prob) {
-        err("abstract problem `%s' is not defined", prob->super);
-        return -1;
-      }
-      aprob = state->abstr_probs[si];
-      sish = aprob->short_name;
-    }
-
-    if (!prob->short_name[0] && g->auto_short_problem_name) {
-      snprintf(prob->short_name, sizeof(prob->short_name), "%06d", prob->id);
-      vinfo("problem %d short name is set to %s", i, prob->short_name);
-    }
-    if (!prob->short_name[0]) {
-      err("problem %d short name must be set", i);
-      return -1;
-    }
-    ish = prob->short_name;
-
-    if (g->dates_config) {
-      prepare_copy_dates(prob, g->dates_config);
-    }
-
-    prepare_set_prob_value(CNTSPROB_problem_dir, prob, aprob, g);
-
-    /* parse XML here */
-    if (!prob->xml_file && aprob && aprob->xml_file) {
-      sformat_message_2(&prob->xml_file, 0, aprob->xml_file, 0, prob, 0, 0, 0, 0, 0, 0);
-    }
-    if (prob->xml_file && prob->xml_file[0] && g->advanced_layout <= 0) {
-      if (!os_IsAbsolutePath(prob->xml_file)) {
-        usprintf(&prob->xml_file, "%s/%s", g->statement_dir, prob->xml_file);
-      }
-    }
-    if (prob->xml_file && prob->xml_file[0] && prob->variant_num > 0) {
-      XCALLOC(prob->xml.a, prob->variant_num);
-      XCALLOC(prob->var_xml_file_paths, prob->variant_num);
-      for (j = 1; j <= prob->variant_num; j++) {
-        if (g->advanced_layout > 0) {
-          get_advanced_layout_path(xml_path, sizeof(xml_path), g,
-                                   prob, prob->xml_file, j);
-          if (!(prob->xml.a[j - 1] = problem_xml_parse_safe(NULL, xml_path))) return -1;
-          prob->var_xml_file_paths[j - 1] = xstrdup(xml_path);
-        } else {
-          prepare_insert_variant_num(fpath, sizeof(fpath), prob->xml_file, j);
-          if (!(prob->xml.a[j - 1] = problem_xml_parse_safe(NULL, fpath))) return -1;
-          prob->var_xml_file_paths[j - 1] = xstrdup(fpath);
-        }
-      }
-    } else if (prob->xml_file && prob->xml_file[0]) {
-      if (g->advanced_layout > 0) {
-        get_advanced_layout_path(xml_path, sizeof(xml_path), g,
-                                 prob, prob->xml_file, -1);
-        if (!(prob->xml.p = problem_xml_parse_safe(NULL, xml_path))) return -1;
-        prob->xml_file_path = xstrdup(xml_path);
-      } else {
-        if (!(prob->xml.p = problem_xml_parse_safe(NULL, prob->xml_file))) return -1;
-        prob->xml_file_path = xstrdup(prob->xml_file);
-      }
-    }
-
-    prepare_set_prob_value(CNTSPROB_type, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_use_ac_not_ok, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_ok_status, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_header_pat, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_footer_pat, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_compiler_env_pat, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_ignore_prev_ac, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_team_enable_rep_view, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_team_enable_ce_view, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_team_show_judge_report, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_show_checker_comment, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_ignore_compile_errors, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_container_options, prob, aprob, g);
-
-    prepare_set_prob_value(CNTSPROB_tests_to_accept, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_accept_partial, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_min_tests_to_accept, prob, aprob, g);
-
-    prepare_set_prob_value(CNTSPROB_disable_user_submit, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_notify_on_submit, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_disable_tab, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_unrestricted_statement, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_statement_ignore_ip, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_enable_submit_after_reject, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_hide_file_names, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_hide_real_time_limit, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_enable_tokens, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_tokens_for_user_ac, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_disable_submit_after_ok, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_disable_auto_testing, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_disable_testing, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_enable_compilation, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_skip_testing, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_disable_security, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_enable_suid_run, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_enable_container, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_enable_dynamic_priority, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_enable_multi_header, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_use_lang_multi_header, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_require_any, prob, aprob, g);
-
-    prepare_set_prob_value(CNTSPROB_full_score, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_full_user_score, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_min_score_1, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_min_score_2, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_variable_full_score, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_test_score, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_run_penalty, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_acm_run_penalty, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_disqualified_penalty, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_compile_error_penalty, prob, aprob, g);
-
-    prepare_set_prob_value(CNTSPROB_hidden, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_advance_to_next, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_stand_hide_time, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_disable_ctrl_chars, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_valuer_sets_marked, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_ignore_unmarked, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_disable_stderr, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_enable_process_group, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_enable_kill_all, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_enable_testlib_mode, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_enable_extended_info, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_stop_on_first_fail, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_enable_control_socket, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_copy_exe_to_tgzdir, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_enable_user_input, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_enable_vcs, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_enable_iframe_statement, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_enable_src_for_testing, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_disable_vm_size_limit, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_hide_variant, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_autoassign_variants, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_enable_text_form, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_stand_ignore_score, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_stand_last_column, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_scoring_checker, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_enable_checker_token, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_interactive_valuer, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_disable_pe, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_disable_wtl, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_wtl_is_cf, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_manual_checking, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_examinator_num, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_check_presentation, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_use_stdin, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_use_stdout, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_combined_stdin, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_combined_stdout, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_binary_input, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_binary, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_ignore_exit_code, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_ignore_term_signal, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_olympiad_mode, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_score_latest, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_score_latest_or_unmarked, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_score_latest_marked, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_score_tokenized, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_time_limit, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_time_limit_millis, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_real_time_limit, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_interactor_time_limit, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_interactor_real_time_limit, prob, aprob, g);
-
-    prepare_set_prob_value(CNTSPROB_test_sfx, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_corr_sfx, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_info_sfx, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_tgz_sfx, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_tgzdir_sfx, prob, aprob, g);
-
-    prepare_set_prob_value(CNTSPROB_test_pat, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_corr_pat, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_info_pat, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_tgz_pat, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_tgzdir_pat, prob, aprob, g);
-
-    prepare_set_prob_value(CNTSPROB_check_cmd, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_valuer_cmd, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_interactor_cmd, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_style_checker_cmd, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_test_checker_cmd, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_test_generator_cmd, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_init_cmd, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_start_cmd, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_solution_src, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_solution_cmd, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_post_pull_cmd, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_vcs_compile_cmd, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_super_run_dir, prob, aprob, g);
-
-    prepare_set_prob_value(CNTSPROB_max_vm_size, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_max_stack_size, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_max_rss_size, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_max_data_size, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_max_core_size, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_max_file_size, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_max_open_file_count, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_max_process_count, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_checker_max_vm_size, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_checker_max_stack_size, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_checker_max_rss_size, prob, aprob, g);
-
-    prepare_set_prob_value(CNTSPROB_source_header, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_source_footer, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_normalization, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_max_user_run_count, prob, aprob, g);
-
-    if (prob->enable_tokens > 0) {
-      g->enable_tokens = 1;
-    }
-
-    if (prob->priority_adjustment == -1000 && si != -1 &&
-        aprob->priority_adjustment != -1000) {
-      prob->priority_adjustment = aprob->priority_adjustment;
-    }
-    if (prob->priority_adjustment == -1000) {
-      prob->priority_adjustment = 0;
-    }
-
-    if (!prob->score_multiplier && si != -1 &&
-        aprob->score_multiplier >= 1) {
-      prob->score_multiplier = aprob->score_multiplier;
-    }
-
-    if (prob->prev_runs_to_show <= 0 && si != -1
-        && aprob->prev_runs_to_show >= 1) {
-      prob->prev_runs_to_show = aprob->prev_runs_to_show;
-    }
-
-    if (mode == PREPARE_SERVE) {
-      if (prob->personal_deadline) {
-        if (parse_personal_deadlines(prob->personal_deadline,
-                                     &prob->pd_total, &prob->pd_infos) < 0) {
-          return -1;
-        }
-      }
-      if (prob->score_view) {
-        if (parse_score_view(prob) < 0) return -1;
-      }
-
-      if (parse_deadline_penalties(prob->date_penalty, &prob->dp_total,
-                                   &prob->dp_infos) < 0) return -1;
-
-      if (si != -1 && aprob->disable_language) {
-        prob->disable_language = sarray_merge_pf(aprob->disable_language, prob->disable_language);
-      }
-      if (si != -1 && aprob->enable_language) {
-        prob->enable_language = sarray_merge_pf(aprob->enable_language, prob->enable_language);
-      }
-      if (si != -1 && aprob->require) {
-        prob->require = sarray_merge_pf(aprob->require, prob->require);
-      }
-      if (si != -1 && aprob->provide_ok) {
-        prob->provide_ok = sarray_merge_pf(aprob->provide_ok, prob->provide_ok);
-      }
-      if (si != -1 && aprob->allow_ip) {
-        prob->allow_ip = sarray_merge_pf(aprob->allow_ip, prob->allow_ip);
-      }
-      if (si != -1 && aprob->checker_env) {
-        prob->checker_env = sarray_merge_pf(aprob->checker_env,
-                                            prob->checker_env);
-      }
-      if (prob->checker_env) {
-        for (j = 0; prob->checker_env[j]; j++) {
-          prob->checker_env[j] = varsubst_heap(state, prob->checker_env[j], 1,
-                                               section_global_params,
-                                               section_problem_params,
-                                               section_language_params,
-                                               section_tester_params, prob, NULL, NULL);
-          if (!prob->checker_env[j]) return -1;
-        }
-      }
-
-      if (si != -1 && aprob->valuer_env) {
-        prob->valuer_env = sarray_merge_pf(aprob->valuer_env, prob->valuer_env);
-      }
-      if (prob->valuer_env) {
-        for (j = 0; prob->valuer_env[j]; j++) {
-          prob->valuer_env[j] = varsubst_heap(state, prob->valuer_env[j], 1,
-                                              section_global_params,
-                                              section_problem_params,
-                                              section_language_params,
-                                              section_tester_params, prob, NULL, NULL);
-          if (!prob->valuer_env[j]) return -1;
-        }
-      }
-
-      if (si != -1 && aprob->interactor_env) {
-        prob->interactor_env = sarray_merge_pf(aprob->interactor_env,
-                                               prob->interactor_env);
-      }
-      if (prob->interactor_env) {
-        for (j = 0; prob->interactor_env[j]; j++) {
-          prob->interactor_env[j] = varsubst_heap(state,
-                                                  prob->interactor_env[j], 1,
-                                                  section_global_params,
-                                                  section_problem_params,
-                                                  section_language_params,
-                                                  section_tester_params, prob, NULL, NULL);
-          if (!prob->interactor_env[j]) return -1;
-        }
-      }
-
-      if (si != -1 && aprob->statement_env) {
-        prob->statement_env = sarray_merge_pf(aprob->statement_env,
-                                              prob->statement_env);
-      }
-      if (prob->statement_env) {
-        for (j = 0; prob->statement_env[j]; j++) {
-          prob->statement_env[j] = varsubst_heap(state,
-                                                 prob->statement_env[j], 1,
-                                                 section_global_params,
-                                                 section_problem_params,
-                                                 section_language_params,
-                                                 section_tester_params, prob, NULL, NULL);
-          if (!prob->statement_env[j]) return -1;
-        }
-      }
-
-      if (si != -1 && aprob->lang_compiler_env) {
-        prob->lang_compiler_env = sarray_merge_pf(aprob->lang_compiler_env,
-                                                  prob->lang_compiler_env);
-      }
-      if (si != -1 && aprob->lang_compiler_container_options) {
-        prob->lang_compiler_container_options = sarray_merge_pf(aprob->lang_compiler_container_options,
-                                                  prob->lang_compiler_container_options);
-      }
-      /*
-      if (prob->lang_compiler_env) {
-        for (j = 0; prob->lang_compiler_env[j]; j++) {
-          prob->lang_compiler_env[j] = varsubst_heap(state,
-                                                     prob->lang_compiler_env[j],
-                                                     1, section_global_params,
-                                                     section_problem_params,
-                                                     section_language_params,
-                                                     section_tester_params, prob, NULL, NULL);
-          if (!prob->lang_compiler_env[j]) return -1;
-        }
-      }
-      */
-
-      if (si != -1 && aprob->style_checker_env) {
-        prob->style_checker_env = sarray_merge_pf(aprob->style_checker_env,
-                                                  prob->style_checker_env);
-      }
-      if (prob->style_checker_env) {
-        for (j = 0; prob->style_checker_env[j]; j++) {
-          prob->style_checker_env[j] = varsubst_heap(state,
-                                                     prob->style_checker_env[j],
-                                                     1, section_global_params,
-                                                     section_problem_params,
-                                                     section_language_params,
-                                                     section_tester_params, prob, NULL, NULL);
-          if (!prob->style_checker_env[j]) return -1;
-        }
-      }
-
-      if (si != -1 && aprob->test_checker_env) {
-        prob->test_checker_env = sarray_merge_pf(aprob->test_checker_env,
-                                                 prob->test_checker_env);
-      }
-      if (prob->test_checker_env) {
-        for (j = 0; prob->test_checker_env[j]; j++) {
-          prob->test_checker_env[j] = varsubst_heap(state,
-                                                    prob->test_checker_env[j],
-                                                    1, section_global_params,
-                                                    section_problem_params,
-                                                    section_language_params,
-                                                    section_tester_params, prob, NULL, NULL);
-          if (!prob->test_checker_env[j]) return -1;
-        }
-      }
-
-      if (si != -1 && aprob->test_generator_env) {
-        prob->test_generator_env = sarray_merge_pf(aprob->test_generator_env,
-                                                   prob->test_generator_env);
-      }
-
-      if (si != -1 && aprob->init_env) {
-        prob->init_env = sarray_merge_pf(aprob->init_env,
-                                         prob->init_env);
-      }
-      if (prob->init_env) {
-        for (j = 0; prob->init_env[j]; j++) {
-          prob->init_env[j] = varsubst_heap(state,
-                                            prob->init_env[j],
-                                            1, section_global_params,
-                                            section_problem_params,
-                                            section_language_params,
-                                            section_tester_params, prob, NULL, NULL);
-          if (!prob->init_env[j]) return -1;
-        }
-      }
-
-      if (si != -1 && aprob->start_env) {
-        prob->start_env = sarray_merge_pf(aprob->start_env,
-                                          prob->start_env);
-      }
-      if (prob->start_env) {
-        for (j = 0; prob->start_env[j]; j++) {
-          prob->start_env[j] = varsubst_heap(state,
-                                             prob->start_env[j],
-                                             1, section_global_params,
-                                             section_problem_params,
-                                             section_language_params,
-                                             section_tester_params, prob, NULL, NULL);
-          if (!prob->start_env[j]) return -1;
-        }
-      }
-
-      /* score bonus */
-      prepare_set_prob_value(CNTSPROB_score_bonus, prob, aprob, g);
-      if (prob->score_bonus && prob->score_bonus[0]) {
-        if (parse_score_bonus(prob->score_bonus, &prob->score_bonus_total,
-                              &prob->score_bonus_val) < 0) return -1;
-      }
-    }
-
-    if (mode == PREPARE_SERVE) {
-      if (!prob->statement_file && aprob && aprob->statement_file) {
-        sformat_message_2(&prob->statement_file, 0, aprob->statement_file,
-                          NULL, prob, NULL, NULL, NULL, 0, 0, 0);
-      }
-      if (prob->statement_file && prob->statement_file[0] && !os_IsAbsolutePath(prob->statement_file)) {
-        usprintf(&prob->statement_file, "%s/%s", g->statement_dir, prob->statement_file);
-      }
-
-      if (!prob->alternatives_file && aprob && aprob->alternatives_file) {
-        sformat_message_2(&prob->alternatives_file, 0, aprob->alternatives_file,
-                          NULL, prob, NULL, NULL, NULL, 0, 0, 0);
-      }
-      if (prob->alternatives_file && prob->alternatives_file[0] && !os_IsAbsolutePath(prob->alternatives_file)) {
-        usprintf(&prob->alternatives_file, "%s/%s", g->statement_dir, prob->alternatives_file);
-      }
-
-      if (!prob->plugin_file && aprob && aprob->plugin_file) {
-        sformat_message_2(&prob->plugin_file, 0, aprob->plugin_file,
-                        NULL, prob, NULL, NULL, NULL, 0, 0, 0);
-      }
-      if (prob->plugin_file && prob->plugin_file[0] && g->advanced_layout <= 0) {
-        if (!os_IsAbsolutePath(prob->plugin_file)) {
-          usprintf(&prob->plugin_file, "%s/%s", g->plugin_dir, prob->plugin_file);
-        }
-      }
-
-      prepare_set_prob_value(CNTSPROB_stand_attr, prob, aprob, g);
-    }
-
-    if (mode == PREPARE_RUN || mode == PREPARE_SERVE) {
-      if (!prob->test_dir && aprob && aprob->test_dir) {
-        sformat_message_2(&prob->test_dir, 0, aprob->test_dir,
-                          NULL, prob, NULL, NULL, NULL, 0, 0, 0);
-        vinfo("problem.%s.test_dir taken from problem.%s ('%s')",
-             ish, sish, prob->test_dir);
-      }
-      if (!prob->test_dir) {
-        vinfo("problem.%s.test_dir set to %s", ish, prob->short_name);
-        xstrdup3(&prob->test_dir, prob->short_name);
-      }
-      if (!os_IsAbsolutePath(prob->test_dir)) {
-        usprintf(&prob->test_dir, "%s/%s", g->test_dir, prob->test_dir);
-      }
-      vinfo("problem.%s.test_dir is '%s'", ish, prob->test_dir);
-
-      if (!prob->corr_dir && aprob && aprob->corr_dir) {
-        sformat_message_2(&prob->corr_dir, 0, aprob->corr_dir,
-                          NULL, prob, NULL, NULL, NULL, 0, 0, 0);
-        vinfo("problem.%s.corr_dir taken from problem.%s ('%s')",
-             ish, sish, prob->corr_dir);
-      }
-      if (prob->corr_dir && !os_IsAbsolutePath(prob->corr_dir)) {
-        usprintf(&prob->corr_dir, "%s/%s", g->corr_dir, prob->corr_dir);
-        vinfo("problem.%s.corr_dir is '%s'", ish, prob->corr_dir);
-      }
-
-      prepare_set_prob_value(CNTSPROB_use_info, prob, aprob, g);
-
-      if (prob->use_info > 0) {
-        if (!prob->info_dir && aprob && aprob->info_dir) {
-          sformat_message_2(&prob->info_dir, 0, aprob->info_dir,
-                            NULL, prob, NULL, NULL, NULL, 0, 0, 0);
-          vinfo("problem.%s.info_dir taken from problem.%s ('%s')",
-                ish, sish, prob->info_dir);
-        }
-        if (!prob->info_dir) {
-          xstrdup3(&prob->info_dir, prob->short_name);
-          vinfo("problem.%s.info_dir is set to '%s'", ish, prob->info_dir);
-        }
-        if (prob->info_dir && !os_IsAbsolutePath(prob->info_dir)) {
-          usprintf(&prob->info_dir, "%s/%s", g->info_dir, prob->info_dir);
-        }
-      }
-
-      if (prob->use_tgz == -1 && si != -1 && aprob->use_tgz != -1) {
-        prob->use_tgz = aprob->use_tgz;
-        vinfo("problem.%s.use_tgz taken from problem.%s (%d)",
-             ish, sish, prob->use_tgz);
-      }
-      if (prob->use_tgz == -1) {
-        prob->use_tgz = 0;
-      }
-
-      if (prob->use_tgz > 0) {
-        if (!prob->tgz_dir && aprob && aprob->tgz_dir) {
-          sformat_message_2(&prob->tgz_dir, 0, aprob->tgz_dir,
-                            NULL, prob, NULL, NULL, NULL, 0, 0, 0);
-          vinfo("problem.%s.tgz_dir taken from problem.%s ('%s')",
-                ish, sish, prob->tgz_dir);
-        }
-        if (!prob->tgz_dir) {
-          xstrdup3(&prob->tgz_dir, prob->short_name);
-          vinfo("problem.%s.tgz_dir is set to '%s'", ish, prob->tgz_dir);
-        }
-        if (!os_IsAbsolutePath(prob->tgz_dir)) {
-          usprintf(&prob->tgz_dir, "%s/%s", g->tgz_dir, prob->tgz_dir);
-          vinfo("problem.%s.tgz_dir is '%s'", ish, prob->tgz_dir);
-        }
-      }
-
-      if (prob->open_tests && prob->open_tests[0]) {
-        if (prepare_parse_open_tests(stderr, prob->open_tests,
-                                     &prob->open_tests_val, &prob->open_tests_count) < 0)
-          return -1;
-      }
-      if (prob->final_open_tests && prob->final_open_tests[0]) {
-        if (prepare_parse_open_tests(stderr, prob->final_open_tests,
-                                     &prob->final_open_tests_val,
-                                     &prob->final_open_tests_count) < 0)
-          return -1;
-      }
-      if (prob->token_open_tests && prob->token_open_tests[0]) {
-        if (prepare_parse_open_tests(stderr, prob->token_open_tests,
-                                     &prob->token_open_tests_val,
-                                     &prob->token_open_tests_count) < 0)
-          return -1;
-      }
-      if (prob->tokens && prob->tokens[0]) {
-        if (!(prob->token_info = prepare_parse_tokens(stderr, prob->tokens)))
-          return -1;
-      }
-    }
-
-    if (!prob->input_file && aprob && aprob->input_file) {
-      sformat_message_2(&prob->input_file, 0, aprob->input_file,
-                        NULL, prob, NULL, NULL, NULL, 0, 0, 0);
-      vinfo("problem.%s.input_file inherited from problem.%s ('%s')",
-            ish, sish, prob->input_file);
-    }
-    if (!prob->input_file || !prob->input_file[0]) {
-      vinfo("problem.%s.input_file set to %s", ish, DFLT_P_INPUT_FILE);
-      xstrdup3(&prob->input_file, DFLT_P_INPUT_FILE);
-    }
-    if (!prob->output_file && aprob && aprob->output_file) {
-      sformat_message_2(&prob->output_file, 0, aprob->output_file,
-                      NULL, prob, NULL, NULL, NULL, 0, 0, 0);
-      vinfo("problem.%s.output_file inherited from problem.%s ('%s')",
-            ish, sish, prob->output_file);
-    }
-    if (!prob->output_file || !prob->output_file[0]) {
-      vinfo("problem.%s.output_file set to %s", ish, DFLT_P_OUTPUT_FILE);
-      xstrdup3(&prob->output_file, DFLT_P_OUTPUT_FILE);
-    }
-
-    if (prob->variant_num == -1 && si != -1 && aprob->variant_num != -1) {
-      prob->variant_num = aprob->variant_num;
-      vinfo("problem.%s.variant_num inherited from problem.%s (%d)",
-            ish, sish, prob->variant_num);
-    }
-    if (prob->variant_num == -1) {
-      prob->variant_num = 0;
-    }
-
-    prepare_set_prob_value(CNTSPROB_use_corr, prob, aprob, g);
-
-    prepare_set_prob_value(CNTSPROB_checker_real_time_limit, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_checker_time_limit_ms, prob, aprob, g);
-
-    if (prob->test_sets) {
-      if (prepare_parse_testsets(prob->test_sets,
-                                 &prob->ts_total,
-                                 &prob->ts_infos) < 0)
-        return -1;
-    }
+    if (prepare_problem(config, cnts, g,
+                        state->max_abstr_prob, state->abstr_probs,
+                        prob) < 0) return -1;
   }
 
   if (mode == PREPARE_SERVE || mode == PREPARE_RUN) {
@@ -4530,11 +4213,11 @@ set_defaults(
       }
       if (tp->start_env) {
         for (j = 0; tp->start_env[j]; j++) {
-          tp->start_env[j] = varsubst_heap(state, tp->start_env[j], 1,
+          tp->start_env[j] = varsubst_heap(tp->start_env[j], 1,
                                            section_global_params,
                                            section_problem_params,
                                            section_language_params,
-                                           section_tester_params, NULL, NULL, tp);
+                                           section_tester_params, g, NULL, NULL, tp);
           if (!tp->start_env[j]) return -1;
         }
       }
@@ -5370,11 +5053,12 @@ prepare_tester_refinement(serve_state_t state, struct section_tester_data *out,
   }
   if (out->start_env) {
     for (j = 0; out->start_env[j]; j++) {
-      out->start_env[j] = varsubst_heap(state, out->start_env[j], 1,
+      out->start_env[j] = varsubst_heap(out->start_env[j], 1,
                                         section_global_params,
                                         section_problem_params,
                                         section_language_params,
-                                        section_tester_params, NULL, NULL, out);
+                                        section_tester_params,
+                                        state->global, NULL, NULL, out);
       if (!out->start_env[j]) return -1;
     }
   }
@@ -5387,7 +5071,7 @@ prepare_tester_refinement(serve_state_t state, struct section_tester_data *out,
   }
   if (out->checker_env) {
     for (j = 0; out->checker_env[j]; j++) {
-      out->checker_env[j] = varsubst_heap(state, out->checker_env[j], 1,
+      out->checker_env[j] = varsubst_heap(out->checker_env[j], 1,
                                           section_global_params,
                                           section_problem_params,
                                           section_language_params,
@@ -6086,248 +5770,9 @@ prepare_copy_problem(const struct section_problem_data *in)
 {
   struct section_problem_data *out = prepare_alloc_problem();
 
-  // copy field-by-field
-  out->id = in->id;
-  out->tester_id = in->tester_id;
-  out->abstract = in->abstract;
-  out->type = in->type;
-  out->manual_checking = in->manual_checking;
-  out->examinator_num = in->examinator_num;
-  out->check_presentation = in->check_presentation;
-  out->scoring_checker = in->scoring_checker;
-  out->enable_checker_token = in->enable_checker_token;
-  out->interactive_valuer = in->interactive_valuer;
-  out->disable_pe = in->disable_pe;
-  out->disable_wtl = in->disable_wtl;
-  out->wtl_is_cf = in->wtl_is_cf;
-  out->use_stdin = in->use_stdin;
-  out->use_stdout = in->use_stdout;
-  out->combined_stdin = in->combined_stdin;
-  out->combined_stdout = in->combined_stdout;
-  out->binary_input = in->binary_input;
-  out->binary = in->binary;
-  out->ignore_exit_code = in->ignore_exit_code;
-  out->ignore_term_signal = in->ignore_term_signal;
-  out->olympiad_mode = in->olympiad_mode;
-  out->score_latest = in->score_latest;
-  out->score_latest_or_unmarked = in->score_latest_or_unmarked;
-  out->score_latest_marked = in->score_latest_marked;
-  out->score_tokenized = in->score_tokenized;
-  out->real_time_limit = in->real_time_limit;
-  out->time_limit = in->time_limit;
-  out->time_limit_millis = in->time_limit_millis;
-  out->use_ac_not_ok = in->use_ac_not_ok;
-  out->ignore_prev_ac = in->ignore_prev_ac;
-  out->team_enable_rep_view = in->team_enable_rep_view;
-  out->team_enable_ce_view = in->team_enable_ce_view;
-  out->team_show_judge_report = in->team_show_judge_report;
-  out->show_checker_comment = in->show_checker_comment;
-  out->ignore_compile_errors = in->ignore_compile_errors;
-  out->full_score = in->full_score;
-  out->full_user_score = in->full_user_score;
-  out->min_score_1 = in->min_score_1;
-  out->min_score_2 = in->min_score_2;
-  out->variable_full_score = in->variable_full_score;
-  out->test_score = in->test_score;
-  out->run_penalty = in->run_penalty;
-  out->acm_run_penalty = in->acm_run_penalty;
-  out->disqualified_penalty = in->disqualified_penalty;
-  out->compile_error_penalty = in->compile_error_penalty;
-  out->ignore_penalty = in->ignore_penalty;
-  out->use_corr = in->use_corr;
-  out->use_info = in->use_info;
-  out->use_tgz = in->use_tgz;
-  out->tests_to_accept = in->tests_to_accept;
-  out->accept_partial = in->accept_partial;
-  out->min_tests_to_accept = in->min_tests_to_accept;
-  out->checker_real_time_limit = in->checker_real_time_limit;
-  out->checker_time_limit_ms = in->checker_time_limit_ms;
-  out->disable_user_submit = in->disable_user_submit;
-  out->notify_on_submit = in->notify_on_submit;
-  out->disable_tab = in->disable_tab;
-  out->unrestricted_statement = in->unrestricted_statement;
-  out->statement_ignore_ip = in->statement_ignore_ip;
-  out->restricted_statement = in->restricted_statement;
-  out->enable_submit_after_reject = in->enable_submit_after_reject;
-  out->hide_file_names = in->hide_file_names;
-  out->hide_real_time_limit = in->hide_real_time_limit;
-  out->enable_tokens = in->enable_tokens;
-  out->tokens_for_user_ac = in->tokens_for_user_ac;
-  out->disable_submit_after_ok = in->disable_submit_after_ok;
-  out->disable_auto_testing = in->disable_auto_testing;
-  out->disable_testing = in->disable_testing;
-  out->enable_compilation = in->enable_compilation;
-  out->skip_testing = in->skip_testing;
-  out->hidden = in->hidden;
-  out->priority_adjustment = in->priority_adjustment;
-  out->stand_hide_time = in->stand_hide_time;
-  out->score_multiplier = in->score_multiplier;
-  out->prev_runs_to_show = in->prev_runs_to_show;
-  out->max_user_run_count = in->max_user_run_count;
-  out->advance_to_next = in->advance_to_next;
-  out->disable_ctrl_chars = in->disable_ctrl_chars;
-  out->enable_text_form = in->enable_text_form;
-  out->stand_ignore_score = in->stand_ignore_score;
-  out->stand_last_column = in->stand_last_column;
-  out->disable_security = in->disable_security;
-  out->enable_suid_run = in->enable_suid_run;
-  out->enable_container = in->enable_container;
-  out->enable_dynamic_priority = in->enable_dynamic_priority;
-  out->enable_multi_header = in->enable_multi_header;
-  out->use_lang_multi_header = in->use_lang_multi_header;
-  out->require_any = in->require_any;
-  memmove(out->super, in->super, sizeof(out->super));
-  memmove(out->short_name, in->short_name, sizeof(out->short_name));
-  xstrdup3(&out->long_name, in->long_name);
-  xstrdup3(&out->stand_name, in->stand_name);
-  xstrdup3(&out->stand_column, in->stand_column);
-  xstrdup3(&out->group_name, in->group_name);
-  xstrdup3(&out->internal_name, in->internal_name);
-  xstrdup3(&out->plugin_entry_name, in->plugin_entry_name);
-  xstrdup3(&out->uuid, in->uuid);
-  xstrdup3(&out->problem_dir, in->problem_dir);
-  xstrdup3(&out->test_dir, in->test_dir);
-  xstrdup3(&out->test_sfx, in->test_sfx);
-  xstrdup3(&out->corr_dir, in->corr_dir);
-  xstrdup3(&out->corr_sfx, in->corr_sfx);
-  xstrdup3(&out->info_dir, in->info_dir);
-  xstrdup3(&out->info_sfx, in->info_sfx);
-  xstrdup3(&out->tgz_dir, in->tgz_dir);
-  xstrdup3(&out->tgz_sfx, in->tgz_sfx);
-  xstrdup3(&out->tgzdir_sfx, in->tgzdir_sfx);
-  xstrdup3(&out->input_file, in->input_file);
-  xstrdup3(&out->output_file, in->output_file);
-  xstrdup3(&out->test_score_list, in->test_score_list);
-  xstrdup3(&out->tokens, in->tokens);
-  xstrdup3(&out->umask, in->umask);
-  xstrdup3(&out->ok_status, in->ok_status);
-  xstrdup3(&out->header_pat, in->header_pat);
-  xstrdup3(&out->footer_pat, in->footer_pat);
-  xstrdup3(&out->compiler_env_pat, in->compiler_env_pat);
-  xstrdup3(&out->container_options, in->container_options);
-  //out->token_info = NULL;
-  xstrdup3(&out->score_tests, in->score_tests);
-  xstrdup3(&out->standard_checker, in->standard_checker);
-  xstrdup3(&out->spelling, in->spelling);
-  xstrdup3(&out->statement_file, in->statement_file);
-  xstrdup3(&out->alternatives_file, in->alternatives_file);
-  xstrdup3(&out->plugin_file, in->plugin_file);
-  xstrdup3(&out->xml_file, in->xml_file);
-  xstrdup3(&out->stand_attr, in->stand_attr);
-  xstrdup3(&out->source_header, in->source_header);
-  xstrdup3(&out->source_footer, in->source_footer);
-  xstrdup3(&out->custom_compile_cmd, in->custom_compile_cmd);
-  xstrdup3(&out->custom_lang_name, in->custom_lang_name);
-  xstrdup3(&out->extra_src_dir, in->extra_src_dir);
-  out->valuer_sets_marked = in->valuer_sets_marked;
-  out->ignore_unmarked = in->ignore_unmarked;
-  out->interactor_time_limit = in->interactor_time_limit;
-  out->interactor_real_time_limit = in->interactor_real_time_limit;
-  out->disable_stderr = in->disable_stderr;
-  out->enable_process_group = in->enable_process_group;
-  out->enable_kill_all = in->enable_kill_all;
-  out->hide_variant = in->hide_variant;
-  out->enable_testlib_mode = in->enable_testlib_mode;
-  out->enable_extended_info = in->enable_extended_info;
-  out->stop_on_first_fail = in->stop_on_first_fail;
-  out->enable_control_socket = in->enable_control_socket;
-  out->copy_exe_to_tgzdir = in->copy_exe_to_tgzdir;
-  out->enable_user_input = in->enable_user_input;
-  out->enable_vcs = in->enable_vcs;
-  out->enable_iframe_statement = in->enable_iframe_statement;
-  out->enable_src_for_testing = in->enable_src_for_testing;
-  out->disable_vm_size_limit = in->disable_vm_size_limit;
-  xstrdup3(&out->test_pat, in->test_pat);
-  xstrdup3(&out->corr_pat, in->corr_pat);
-  xstrdup3(&out->info_pat, in->info_pat);
-  xstrdup3(&out->tgz_pat, in->tgz_pat);
-  xstrdup3(&out->tgzdir_pat, in->tgzdir_pat);
-  //out->ntests = 0;
-  //out->tscores = NULL;
-  //out->x_score_tests = NULL;
-  //out->test_sets = NULL;
-  //out->ts_total = 0;
-  //out->ts_infos = NULL;
-  xstrdup3(&out->normalization, in->normalization);
+  cntsprob_copy(out, in);
+
   out->normalization_val = in->normalization_val;
-  out->deadline = in->deadline;
-  out->start_date = in->start_date;
-  out->autoassign_variants = in->autoassign_variants;
-  out->variant_num = in->variant_num;
-  //out->date_penalty = NULL;
-  //out->dp_total = 0;
-  //out->dp_infos = NULL;
-  //out->group_start_date = NULL;
-  //out->group_deadline = NULL;
-  //memset(&out->gsd, 0, sizeof(out->gsd));
-  //memset(&out->gdl, 0, sizeof(out->gdl));
-  //out->disable_language = NULL;
-  //out->enable_language = NULL;
-  //out->require = NULL;
-  //out->provide_ok = NULL;
-  out->lang_compiler_env = sarray_copy(in->lang_compiler_env);
-  out->lang_compiler_container_options = sarray_copy(in->lang_compiler_container_options);
-  out->checker_env = sarray_copy(in->checker_env);
-  out->valuer_env = sarray_copy(in->valuer_env);
-  out->interactor_env = sarray_copy(in->interactor_env);
-  out->style_checker_env = sarray_copy(in->style_checker_env);
-  out->test_checker_env = sarray_copy(in->test_checker_env);
-  out->test_generator_env = sarray_copy(in->test_generator_env);
-  out->init_env = sarray_copy(in->init_env);
-  out->start_env = sarray_copy(in->start_env);
-  xstrdup3(&out->check_cmd, in->check_cmd);
-  xstrdup3(&out->valuer_cmd, in->valuer_cmd);
-  xstrdup3(&out->interactor_cmd, in->interactor_cmd);
-  xstrdup3(&out->style_checker_cmd, in->style_checker_cmd);
-  xstrdup3(&out->test_checker_cmd, in->test_checker_cmd);
-  xstrdup3(&out->test_generator_cmd, in->test_generator_cmd);
-  xstrdup3(&out->init_cmd, in->init_cmd);
-  xstrdup3(&out->start_cmd, in->start_cmd);
-  xstrdup3(&out->solution_src, in->solution_src);
-  xstrdup3(&out->solution_cmd, in->solution_cmd);
-  xstrdup3(&out->post_pull_cmd, in->post_pull_cmd);
-  xstrdup3(&out->vcs_compile_cmd, in->vcs_compile_cmd);
-  //out->lang_time_adj = NULL;
-  //out->lang_time_adj_millis = NULL;
-  xstrdup3(&out->super_run_dir, in->super_run_dir);
-  out->lang_max_vm_size = sarray_copy(in->lang_max_vm_size);
-  out->lang_max_stack_size = sarray_copy(in->lang_max_stack_size);
-  out->lang_max_rss_size = sarray_copy(in->lang_max_rss_size);
-  out->checker_extra_files = sarray_copy(in->checker_extra_files);
-  out->statement_env = sarray_copy(in->statement_env);
-  //out->alternative = NULL;
-  //out->personal_deadline = NULL;
-  //out->pd_total = 0;
-  //out->pd_infos = NULL;
-  xstrdup3(&out->score_bonus, in->score_bonus);
-  //out->score_bonus_total = 0;
-  //out->score_bonus_val = NULL;
-  xstrdup3(&out->open_tests, in->open_tests);
-  //out->open_tests_count = 0;
-  //out->open_tests_val = 0;
-  xstrdup3(&out->final_open_tests, in->final_open_tests);
-  //out->final_open_tests_count = 0;
-  //out->final_open_tests_val = 0;
-  xstrdup3(&out->token_open_tests, in->token_open_tests);
-  //out->token_open_tests_count = 0;
-  //out->token_open_tests_val = 0;
-  out->max_vm_size = in->max_vm_size;
-  out->max_data_size = in->max_data_size;
-  out->max_stack_size = in->max_stack_size;
-  out->max_rss_size = in->max_rss_size;
-  out->max_core_size = in->max_core_size;
-  out->max_file_size = in->max_file_size;
-  out->max_open_file_count = in->max_open_file_count;
-  out->max_process_count = in->max_process_count;
-  out->checker_max_vm_size = in->checker_max_vm_size;
-  out->checker_max_stack_size = in->checker_max_stack_size;
-  out->checker_max_rss_size = in->checker_max_rss_size;
-  xstrdup3(&out->extid, in->extid);
-  //out->unhandled_vars = NULL;
-  //out->score_view = NULL;
-  //out->score_view_score = NULL;
-  //out->score_view_text = NULL;
-  //out->xml.p = NULL;
 
   return out;
 }
@@ -7453,24 +6898,24 @@ fail:
 
 unsigned char *
 prepare_varsubst(
-        serve_state_t state,
         unsigned char *in_str,
         int free_flag,
+        const struct section_global_data *global,
         const struct section_problem_data *prob,
         const struct section_language_data *lang,
         const struct section_tester_data *tester)
 {
-  return varsubst_heap(state, in_str, free_flag,
+  return varsubst_heap(in_str, free_flag,
                        section_global_params,
                        section_problem_params,
                        section_language_params,
                        section_tester_params,
-                       prob, lang, tester);
+                       global, prob, lang, tester);
 }
 
 char **
 prepare_sarray_varsubst(
-        serve_state_t state,
+        const struct section_global_data *global,
         const struct section_problem_data *prob,
         const struct section_language_data *lang,
         const struct section_tester_data *tester,
@@ -7485,12 +6930,12 @@ prepare_sarray_varsubst(
   XCALLOC(aa, newlen + 1);
   if (a1) {
     for (j = 0; a1[j]; ++j)
-      aa[i++] = varsubst_heap(state, a1[j], 0,
+      aa[i++] = varsubst_heap(a1[j], 0,
                               section_global_params,
                               section_problem_params,
                               section_language_params,
                               section_tester_params,
-                              prob, lang, tester);
+                              global, prob, lang, tester);
   }
   return aa;
 }

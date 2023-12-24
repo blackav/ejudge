@@ -6,6 +6,8 @@
 
 #include "ejudge/xalloc.h"
 
+#include "ejudge/parsecfg.h"
+
 #include "ejudge/logger.h"
 #include <string.h>
 #include <stdlib.h>
@@ -245,6 +247,404 @@ int meta_problem_config_section_lookup_field(const char *name)
   return meta_lookup_string(atm, name);
 }
 
+void meta_problem_config_section_copy(struct problem_config_section *dst, const struct problem_config_section *src)
+{
+  // hidden g
+  dst->manual_checking = src->manual_checking;
+  dst->check_presentation = src->check_presentation;
+  dst->scoring_checker = src->scoring_checker;
+  dst->enable_checker_token = src->enable_checker_token;
+  dst->interactive_valuer = src->interactive_valuer;
+  dst->disable_pe = src->disable_pe;
+  dst->disable_wtl = src->disable_wtl;
+  dst->wtl_is_cf = src->wtl_is_cf;
+  dst->use_stdin = src->use_stdin;
+  dst->use_stdout = src->use_stdout;
+  dst->combined_stdin = src->combined_stdin;
+  dst->combined_stdout = src->combined_stdout;
+  dst->binary_input = src->binary_input;
+  dst->binary = src->binary;
+  dst->ignore_exit_code = src->ignore_exit_code;
+  dst->olympiad_mode = src->olympiad_mode;
+  dst->score_latest = src->score_latest;
+  dst->score_latest_or_unmarked = src->score_latest_or_unmarked;
+  dst->score_latest_marked = src->score_latest_marked;
+  dst->score_tokenized = src->score_tokenized;
+  dst->use_ac_not_ok = src->use_ac_not_ok;
+  dst->ignore_prev_ac = src->ignore_prev_ac;
+  dst->team_enable_rep_view = src->team_enable_rep_view;
+  dst->team_enable_ce_view = src->team_enable_ce_view;
+  dst->team_show_judge_report = src->team_show_judge_report;
+  dst->show_checker_comment = src->show_checker_comment;
+  dst->ignore_compile_errors = src->ignore_compile_errors;
+  dst->variable_full_score = src->variable_full_score;
+  dst->ignore_penalty = src->ignore_penalty;
+  dst->use_corr = src->use_corr;
+  dst->use_info = src->use_info;
+  dst->use_tgz = src->use_tgz;
+  dst->accept_partial = src->accept_partial;
+  dst->disable_user_submit = src->disable_user_submit;
+  dst->disable_tab = src->disable_tab;
+  dst->unrestricted_statement = src->unrestricted_statement;
+  dst->statement_ignore_ip = src->statement_ignore_ip;
+  dst->enable_submit_after_reject = src->enable_submit_after_reject;
+  dst->hide_file_names = src->hide_file_names;
+  dst->hide_real_time_limit = src->hide_real_time_limit;
+  dst->enable_tokens = src->enable_tokens;
+  dst->tokens_for_user_ac = src->tokens_for_user_ac;
+  dst->disable_submit_after_ok = src->disable_submit_after_ok;
+  dst->disable_auto_testing = src->disable_auto_testing;
+  dst->disable_testing = src->disable_testing;
+  dst->enable_compilation = src->enable_compilation;
+  dst->skip_testing = src->skip_testing;
+  dst->hidden = src->hidden;
+  dst->stand_hide_time = src->stand_hide_time;
+  dst->advance_to_next = src->advance_to_next;
+  dst->disable_ctrl_chars = src->disable_ctrl_chars;
+  dst->enable_text_form = src->enable_text_form;
+  dst->stand_ignore_score = src->stand_ignore_score;
+  dst->stand_last_column = src->stand_last_column;
+  dst->disable_security = src->disable_security;
+  dst->enable_suid_run = src->enable_suid_run;
+  dst->enable_container = src->enable_container;
+  dst->enable_multi_header = src->enable_multi_header;
+  dst->use_lang_multi_header = src->use_lang_multi_header;
+  dst->require_any = src->require_any;
+  dst->valuer_sets_marked = src->valuer_sets_marked;
+  dst->ignore_unmarked = src->ignore_unmarked;
+  dst->disable_stderr = src->disable_stderr;
+  dst->enable_process_group = src->enable_process_group;
+  dst->enable_kill_all = src->enable_kill_all;
+  dst->enable_testlib_mode = src->enable_testlib_mode;
+  dst->hide_variant = src->hide_variant;
+  dst->enable_extended_info = src->enable_extended_info;
+  dst->stop_on_first_fail = src->stop_on_first_fail;
+  dst->enable_control_socket = src->enable_control_socket;
+  dst->enable_iframe_statement = src->enable_iframe_statement;
+  dst->copy_exe_to_tgzdir = src->copy_exe_to_tgzdir;
+  dst->ignore_term_signal = src->ignore_term_signal;
+  dst->id = src->id;
+  dst->real_time_limit = src->real_time_limit;
+  dst->time_limit = src->time_limit;
+  dst->time_limit_millis = src->time_limit_millis;
+  dst->full_score = src->full_score;
+  dst->full_user_score = src->full_user_score;
+  dst->min_score_1 = src->min_score_1;
+  dst->min_score_2 = src->min_score_2;
+  dst->test_score = src->test_score;
+  dst->run_penalty = src->run_penalty;
+  dst->acm_run_penalty = src->acm_run_penalty;
+  dst->disqualified_penalty = src->disqualified_penalty;
+  dst->compile_error_penalty = src->compile_error_penalty;
+  dst->min_tests_to_accept = src->min_tests_to_accept;
+  dst->checker_real_time_limit = src->checker_real_time_limit;
+  dst->checker_time_limit_ms = src->checker_time_limit_ms;
+  dst->priority_adjustment = src->priority_adjustment;
+  dst->score_multiplier = src->score_multiplier;
+  dst->prev_runs_to_show = src->prev_runs_to_show;
+  dst->max_user_run_count = src->max_user_run_count;
+  dst->interactor_time_limit = src->interactor_time_limit;
+  dst->interactor_real_time_limit = src->interactor_real_time_limit;
+  dst->max_open_file_count = src->max_open_file_count;
+  dst->max_process_count = src->max_process_count;
+  dst->tests_to_accept = src->tests_to_accept;
+  dst->disable_vm_size_limit = src->disable_vm_size_limit;
+  dst->deadline = src->deadline;
+  dst->start_date = src->start_date;
+  dst->max_vm_size = src->max_vm_size;
+  dst->max_data_size = src->max_data_size;
+  dst->max_stack_size = src->max_stack_size;
+  dst->max_rss_size = src->max_rss_size;
+  dst->max_core_size = src->max_core_size;
+  dst->max_file_size = src->max_file_size;
+  dst->checker_max_vm_size = src->checker_max_vm_size;
+  dst->checker_max_stack_size = src->checker_max_stack_size;
+  dst->checker_max_rss_size = src->checker_max_rss_size;
+  if (src->type) {
+    dst->type = strdup(src->type);
+  }
+  if (src->short_name) {
+    dst->short_name = strdup(src->short_name);
+  }
+  if (src->long_name) {
+    dst->long_name = strdup(src->long_name);
+  }
+  if (src->long_name_en) {
+    dst->long_name_en = strdup(src->long_name_en);
+  }
+  if (src->stand_name) {
+    dst->stand_name = strdup(src->stand_name);
+  }
+  if (src->internal_name) {
+    dst->internal_name = strdup(src->internal_name);
+  }
+  if (src->plugin_entry_name) {
+    dst->plugin_entry_name = strdup(src->plugin_entry_name);
+  }
+  if (src->test_dir) {
+    dst->test_dir = strdup(src->test_dir);
+  }
+  if (src->test_sfx) {
+    dst->test_sfx = strdup(src->test_sfx);
+  }
+  if (src->corr_sfx) {
+    dst->corr_sfx = strdup(src->corr_sfx);
+  }
+  if (src->info_sfx) {
+    dst->info_sfx = strdup(src->info_sfx);
+  }
+  if (src->tgz_sfx) {
+    dst->tgz_sfx = strdup(src->tgz_sfx);
+  }
+  if (src->tgzdir_sfx) {
+    dst->tgzdir_sfx = strdup(src->tgzdir_sfx);
+  }
+  if (src->input_file) {
+    dst->input_file = strdup(src->input_file);
+  }
+  if (src->output_file) {
+    dst->output_file = strdup(src->output_file);
+  }
+  if (src->test_score_list) {
+    dst->test_score_list = strdup(src->test_score_list);
+  }
+  if (src->score_tests) {
+    dst->score_tests = strdup(src->score_tests);
+  }
+  if (src->standard_checker) {
+    dst->standard_checker = strdup(src->standard_checker);
+  }
+  if (src->spelling) {
+    dst->spelling = strdup(src->spelling);
+  }
+  if (src->plugin_file) {
+    dst->plugin_file = strdup(src->plugin_file);
+  }
+  if (src->xml_file) {
+    dst->xml_file = strdup(src->xml_file);
+  }
+  if (src->stand_attr) {
+    dst->stand_attr = strdup(src->stand_attr);
+  }
+  if (src->source_header) {
+    dst->source_header = strdup(src->source_header);
+  }
+  if (src->source_footer) {
+    dst->source_footer = strdup(src->source_footer);
+  }
+  if (src->test_pat) {
+    dst->test_pat = strdup(src->test_pat);
+  }
+  if (src->corr_pat) {
+    dst->corr_pat = strdup(src->corr_pat);
+  }
+  if (src->info_pat) {
+    dst->info_pat = strdup(src->info_pat);
+  }
+  if (src->tgz_pat) {
+    dst->tgz_pat = strdup(src->tgz_pat);
+  }
+  if (src->tgzdir_pat) {
+    dst->tgzdir_pat = strdup(src->tgzdir_pat);
+  }
+  if (src->normalization) {
+    dst->normalization = strdup(src->normalization);
+  }
+  if (src->check_cmd) {
+    dst->check_cmd = strdup(src->check_cmd);
+  }
+  if (src->valuer_cmd) {
+    dst->valuer_cmd = strdup(src->valuer_cmd);
+  }
+  if (src->interactor_cmd) {
+    dst->interactor_cmd = strdup(src->interactor_cmd);
+  }
+  if (src->style_checker_cmd) {
+    dst->style_checker_cmd = strdup(src->style_checker_cmd);
+  }
+  if (src->test_checker_cmd) {
+    dst->test_checker_cmd = strdup(src->test_checker_cmd);
+  }
+  if (src->test_generator_cmd) {
+    dst->test_generator_cmd = strdup(src->test_generator_cmd);
+  }
+  if (src->init_cmd) {
+    dst->init_cmd = strdup(src->init_cmd);
+  }
+  if (src->start_cmd) {
+    dst->start_cmd = strdup(src->start_cmd);
+  }
+  if (src->solution_src) {
+    dst->solution_src = strdup(src->solution_src);
+  }
+  if (src->solution_cmd) {
+    dst->solution_cmd = strdup(src->solution_cmd);
+  }
+  if (src->score_bonus) {
+    dst->score_bonus = strdup(src->score_bonus);
+  }
+  if (src->open_tests) {
+    dst->open_tests = strdup(src->open_tests);
+  }
+  if (src->final_open_tests) {
+    dst->final_open_tests = strdup(src->final_open_tests);
+  }
+  if (src->token_open_tests) {
+    dst->token_open_tests = strdup(src->token_open_tests);
+  }
+  if (src->extid) {
+    dst->extid = strdup(src->extid);
+  }
+  if (src->revision) {
+    dst->revision = strdup(src->revision);
+  }
+  if (src->tokens) {
+    dst->tokens = strdup(src->tokens);
+  }
+  if (src->umask) {
+    dst->umask = strdup(src->umask);
+  }
+  if (src->ok_status) {
+    dst->ok_status = strdup(src->ok_status);
+  }
+  if (src->header_pat) {
+    dst->header_pat = strdup(src->header_pat);
+  }
+  if (src->footer_pat) {
+    dst->footer_pat = strdup(src->footer_pat);
+  }
+  if (src->compiler_env_pat) {
+    dst->compiler_env_pat = strdup(src->compiler_env_pat);
+  }
+  if (src->uuid) {
+    dst->uuid = strdup(src->uuid);
+  }
+  if (src->container_options) {
+    dst->container_options = strdup(src->container_options);
+  }
+  if (src->iframe_statement) {
+    dst->iframe_statement = strdup(src->iframe_statement);
+  }
+  if (src->extra_src_dir) {
+    dst->extra_src_dir = strdup(src->extra_src_dir);
+  }
+  dst->test_sets = (typeof(dst->test_sets)) sarray_copy((char**) src->test_sets);
+  dst->date_penalty = (typeof(dst->date_penalty)) sarray_copy((char**) src->date_penalty);
+  dst->group_start_date = (typeof(dst->group_start_date)) sarray_copy((char**) src->group_start_date);
+  dst->group_deadline = (typeof(dst->group_deadline)) sarray_copy((char**) src->group_deadline);
+  dst->disable_language = (typeof(dst->disable_language)) sarray_copy((char**) src->disable_language);
+  dst->enable_language = (typeof(dst->enable_language)) sarray_copy((char**) src->enable_language);
+  dst->require = (typeof(dst->require)) sarray_copy((char**) src->require);
+  dst->provide_ok = (typeof(dst->provide_ok)) sarray_copy((char**) src->provide_ok);
+  dst->lang_time_adj = (typeof(dst->lang_time_adj)) sarray_copy((char**) src->lang_time_adj);
+  dst->lang_time_adj_millis = (typeof(dst->lang_time_adj_millis)) sarray_copy((char**) src->lang_time_adj_millis);
+  dst->lang_max_vm_size = (typeof(dst->lang_max_vm_size)) sarray_copy((char**) src->lang_max_vm_size);
+  dst->lang_max_stack_size = (typeof(dst->lang_max_stack_size)) sarray_copy((char**) src->lang_max_stack_size);
+  dst->lang_max_rss_size = (typeof(dst->lang_max_rss_size)) sarray_copy((char**) src->lang_max_rss_size);
+  dst->personal_deadline = (typeof(dst->personal_deadline)) sarray_copy((char**) src->personal_deadline);
+  dst->score_view = (typeof(dst->score_view)) sarray_copy((char**) src->score_view);
+  dst->score_view_text = (typeof(dst->score_view_text)) sarray_copy((char**) src->score_view_text);
+  dst->lang_compiler_env = (typeof(dst->lang_compiler_env)) sarray_copy((char**) src->lang_compiler_env);
+  dst->checker_env = (typeof(dst->checker_env)) sarray_copy((char**) src->checker_env);
+  dst->valuer_env = (typeof(dst->valuer_env)) sarray_copy((char**) src->valuer_env);
+  dst->interactor_env = (typeof(dst->interactor_env)) sarray_copy((char**) src->interactor_env);
+  dst->style_checker_env = (typeof(dst->style_checker_env)) sarray_copy((char**) src->style_checker_env);
+  dst->test_checker_env = (typeof(dst->test_checker_env)) sarray_copy((char**) src->test_checker_env);
+  dst->test_generator_env = (typeof(dst->test_generator_env)) sarray_copy((char**) src->test_generator_env);
+  dst->init_env = (typeof(dst->init_env)) sarray_copy((char**) src->init_env);
+  dst->start_env = (typeof(dst->start_env)) sarray_copy((char**) src->start_env);
+  dst->statement_env = (typeof(dst->statement_env)) sarray_copy((char**) src->statement_env);
+  dst->lang_compiler_container_options = (typeof(dst->lang_compiler_container_options)) sarray_copy((char**) src->lang_compiler_container_options);
+}
+
+void meta_problem_config_section_free(struct problem_config_section *ptr)
+{
+  // hidden g
+  free(ptr->type);
+  free(ptr->short_name);
+  free(ptr->long_name);
+  free(ptr->long_name_en);
+  free(ptr->stand_name);
+  free(ptr->internal_name);
+  free(ptr->plugin_entry_name);
+  free(ptr->test_dir);
+  free(ptr->test_sfx);
+  free(ptr->corr_sfx);
+  free(ptr->info_sfx);
+  free(ptr->tgz_sfx);
+  free(ptr->tgzdir_sfx);
+  free(ptr->input_file);
+  free(ptr->output_file);
+  free(ptr->test_score_list);
+  free(ptr->score_tests);
+  free(ptr->standard_checker);
+  free(ptr->spelling);
+  free(ptr->plugin_file);
+  free(ptr->xml_file);
+  free(ptr->stand_attr);
+  free(ptr->source_header);
+  free(ptr->source_footer);
+  free(ptr->test_pat);
+  free(ptr->corr_pat);
+  free(ptr->info_pat);
+  free(ptr->tgz_pat);
+  free(ptr->tgzdir_pat);
+  free(ptr->normalization);
+  free(ptr->check_cmd);
+  free(ptr->valuer_cmd);
+  free(ptr->interactor_cmd);
+  free(ptr->style_checker_cmd);
+  free(ptr->test_checker_cmd);
+  free(ptr->test_generator_cmd);
+  free(ptr->init_cmd);
+  free(ptr->start_cmd);
+  free(ptr->solution_src);
+  free(ptr->solution_cmd);
+  free(ptr->score_bonus);
+  free(ptr->open_tests);
+  free(ptr->final_open_tests);
+  free(ptr->token_open_tests);
+  free(ptr->extid);
+  free(ptr->revision);
+  free(ptr->tokens);
+  free(ptr->umask);
+  free(ptr->ok_status);
+  free(ptr->header_pat);
+  free(ptr->footer_pat);
+  free(ptr->compiler_env_pat);
+  free(ptr->uuid);
+  free(ptr->container_options);
+  free(ptr->iframe_statement);
+  free(ptr->extra_src_dir);
+  sarray_free((char**) ptr->test_sets);
+  sarray_free((char**) ptr->date_penalty);
+  sarray_free((char**) ptr->group_start_date);
+  sarray_free((char**) ptr->group_deadline);
+  sarray_free((char**) ptr->disable_language);
+  sarray_free((char**) ptr->enable_language);
+  sarray_free((char**) ptr->require);
+  sarray_free((char**) ptr->provide_ok);
+  sarray_free((char**) ptr->lang_time_adj);
+  sarray_free((char**) ptr->lang_time_adj_millis);
+  sarray_free((char**) ptr->lang_max_vm_size);
+  sarray_free((char**) ptr->lang_max_stack_size);
+  sarray_free((char**) ptr->lang_max_rss_size);
+  sarray_free((char**) ptr->personal_deadline);
+  sarray_free((char**) ptr->score_view);
+  sarray_free((char**) ptr->score_view_text);
+  sarray_free((char**) ptr->lang_compiler_env);
+  sarray_free((char**) ptr->checker_env);
+  sarray_free((char**) ptr->valuer_env);
+  sarray_free((char**) ptr->interactor_env);
+  sarray_free((char**) ptr->style_checker_env);
+  sarray_free((char**) ptr->test_checker_env);
+  sarray_free((char**) ptr->test_generator_env);
+  sarray_free((char**) ptr->init_env);
+  sarray_free((char**) ptr->start_env);
+  sarray_free((char**) ptr->statement_env);
+  sarray_free((char**) ptr->lang_compiler_container_options);
+}
+
 const struct meta_methods meta_problem_config_section_methods =
 {
   META_PROBLEM_CONFIG_SECTION_LAST_FIELD,
@@ -255,5 +655,7 @@ const struct meta_methods meta_problem_config_section_methods =
   (const void *(*)(const void *ptr, int tag))meta_problem_config_section_get_ptr,
   (void *(*)(void *ptr, int tag))meta_problem_config_section_get_ptr_nc,
   meta_problem_config_section_lookup_field,
+  (void (*)(void *, const void *))meta_problem_config_section_copy,
+  (void (*)(void *))meta_problem_config_section_free,
 };
 

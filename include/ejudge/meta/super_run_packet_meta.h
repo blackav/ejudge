@@ -86,6 +86,8 @@ const char *meta_super_run_in_global_packet_get_name(int tag);
 const void *meta_super_run_in_global_packet_get_ptr(const struct super_run_in_global_packet *ptr, int tag);
 void *meta_super_run_in_global_packet_get_ptr_nc(struct super_run_in_global_packet *ptr, int tag);
 int meta_super_run_in_global_packet_lookup_field(const char *name);
+void meta_super_run_in_global_packet_copy(struct super_run_in_global_packet *dst, const struct super_run_in_global_packet *src);
+void meta_super_run_in_global_packet_free(struct super_run_in_global_packet *ptr);
 
 struct meta_methods;
 extern const struct meta_methods meta_super_run_in_global_packet_methods;
@@ -202,6 +204,8 @@ const char *meta_super_run_in_problem_packet_get_name(int tag);
 const void *meta_super_run_in_problem_packet_get_ptr(const struct super_run_in_problem_packet *ptr, int tag);
 void *meta_super_run_in_problem_packet_get_ptr_nc(struct super_run_in_problem_packet *ptr, int tag);
 int meta_super_run_in_problem_packet_lookup_field(const char *name);
+void meta_super_run_in_problem_packet_copy(struct super_run_in_problem_packet *dst, const struct super_run_in_problem_packet *src);
+void meta_super_run_in_problem_packet_free(struct super_run_in_problem_packet *ptr);
 
 struct meta_methods;
 extern const struct meta_methods meta_super_run_in_problem_packet_methods;
@@ -241,6 +245,8 @@ const char *meta_super_run_in_tester_packet_get_name(int tag);
 const void *meta_super_run_in_tester_packet_get_ptr(const struct super_run_in_tester_packet *ptr, int tag);
 void *meta_super_run_in_tester_packet_get_ptr_nc(struct super_run_in_tester_packet *ptr, int tag);
 int meta_super_run_in_tester_packet_lookup_field(const char *name);
+void meta_super_run_in_tester_packet_copy(struct super_run_in_tester_packet *dst, const struct super_run_in_tester_packet *src);
+void meta_super_run_in_tester_packet_free(struct super_run_in_tester_packet *ptr);
 
 struct meta_methods;
 extern const struct meta_methods meta_super_run_in_tester_packet_methods;

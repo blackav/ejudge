@@ -212,6 +212,8 @@ const char *meta_problem_config_section_get_name(int tag);
 const void *meta_problem_config_section_get_ptr(const struct problem_config_section *ptr, int tag);
 void *meta_problem_config_section_get_ptr_nc(struct problem_config_section *ptr, int tag);
 int meta_problem_config_section_lookup_field(const char *name);
+void meta_problem_config_section_copy(struct problem_config_section *dst, const struct problem_config_section *src);
+void meta_problem_config_section_free(struct problem_config_section *ptr);
 
 struct meta_methods;
 extern const struct meta_methods meta_problem_config_section_methods;

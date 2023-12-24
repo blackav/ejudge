@@ -1302,7 +1302,7 @@ super_html_new_check_tests(
   path_t v_test_path, v_corr_path, v_info_path, v_checker_path;
   struct contest_desc *cnts;
   struct section_global_data *global;
-  struct section_problem_data *prob, *abstr;
+  struct section_problem_data *prob;
   struct section_problem_data *tmp_prob = 0;
   int i, j, k, variant;
   struct stat stbuf;
@@ -1348,88 +1348,28 @@ super_html_new_check_tests(
       continue;
     }
 
-    abstr = 0;
-    if (prob->super[0]) {
-      for (j = 0; j < sstate->aprob_u; j++)
-        if (!strcmp(prob->super, sstate->aprobs[j]->short_name))
-          break;
-      if (j < sstate->aprob_u)
-        abstr = sstate->aprobs[j];
-      if (!abstr) {
-        fprintf(flog, "Error: no abstract checker for problem `%s'\n",
-                prob->short_name);
-        goto cleanup;
-      }
-    }
-
     tmp_prob = prepare_problem_free(tmp_prob);
     tmp_prob = prepare_copy_problem(prob);
-    prepare_set_prob_value(CNTSPROB_type, tmp_prob, abstr, global);
-    prepare_set_prob_value(CNTSPROB_xml_file, tmp_prob, abstr, global);
+    int r = prepare_problem(config, cnts, global,
+                            sstate->aprob_u, sstate->aprobs,
+                            tmp_prob);
+    if (r < 0) {
+      fprintf(flog, "Configuration is invalid, skipping\n");
+      continue;
+    }
+
+    if (global->advanced_layout <= 0) {
+      fprintf(flog, "Contest must have 'advanced_layout' property set, skipping\n");
+      continue;
+    }
 
     if (tmp_prob->type == PROB_TYPE_SELECT_ONE && tmp_prob->xml_file && tmp_prob->xml_file[0]) {
       fprintf(flog, "Select-one XML-specified problem, skipping\n");
       continue;
     }
 
-    prepare_set_prob_value(CNTSPROB_normalization, tmp_prob, abstr, global);
-    prepare_set_prob_value(CNTSPROB_use_stdin, tmp_prob, abstr, global);
-    prepare_set_prob_value(CNTSPROB_use_stdout, tmp_prob, abstr, global);
-    prepare_set_prob_value(CNTSPROB_combined_stdin, tmp_prob, abstr, global);
-    prepare_set_prob_value(CNTSPROB_combined_stdout, tmp_prob, abstr, global);
-    prepare_set_prob_value(CNTSPROB_input_file, tmp_prob, abstr, global);
-    prepare_set_prob_value(CNTSPROB_output_file, tmp_prob, abstr, global);
-    prepare_set_prob_value(CNTSPROB_scoring_checker, tmp_prob, abstr, global);
-    prepare_set_prob_value(CNTSPROB_enable_checker_token, tmp_prob, abstr, global);
-    prepare_set_prob_value(CNTSPROB_interactive_valuer, tmp_prob, abstr, global);
-    prepare_set_prob_value(CNTSPROB_manual_checking, tmp_prob, abstr, global);
-    prepare_set_prob_value(CNTSPROB_enable_testlib_mode, tmp_prob, abstr, global);
-    prepare_set_prob_value(CNTSPROB_examinator_num, tmp_prob, abstr, global);
-    prepare_set_prob_value(CNTSPROB_check_presentation, tmp_prob, abstr, global);
-    prepare_set_prob_value(CNTSPROB_binary_input, tmp_prob, abstr, global);
-    prepare_set_prob_value(CNTSPROB_binary, tmp_prob, abstr, global);
-    prepare_set_prob_value(CNTSPROB_ignore_exit_code, tmp_prob, abstr, global);
-    prepare_set_prob_value(CNTSPROB_ignore_term_signal, tmp_prob, abstr, global);
-    prepare_set_prob_value(CNTSPROB_valuer_cmd, tmp_prob, abstr, global);
-    prepare_set_prob_value(CNTSPROB_interactor_cmd, tmp_prob, abstr, global);
-    prepare_set_prob_value(CNTSPROB_style_checker_cmd, tmp_prob, abstr, global);
-    prepare_set_prob_value(CNTSPROB_test_checker_cmd, tmp_prob, abstr, global);
-    //prepare_set_prob_value(CNTSPROB_test_checker_env, tmp_prob, abstr, global);
-    prepare_set_prob_value(CNTSPROB_test_dir, tmp_prob, abstr, 0);
-    prepare_set_prob_value(CNTSPROB_use_corr, tmp_prob, abstr, global);
-    prepare_set_prob_value(CNTSPROB_test_sfx, tmp_prob, abstr, global);
-    prepare_set_prob_value(CNTSPROB_test_pat, tmp_prob, abstr, global);
-    prepare_set_prob_value(CNTSPROB_test_score, tmp_prob, abstr, global);
-    prepare_set_prob_value(CNTSPROB_full_score, tmp_prob, abstr, global);
-    prepare_set_prob_value(CNTSPROB_full_user_score, tmp_prob, abstr, global);
-    prepare_set_prob_value(CNTSPROB_solution_cmd, tmp_prob, abstr, global);
-    prepare_set_prob_value(CNTSPROB_solution_src, tmp_prob, abstr, global);
-    prepare_set_prob_value(CNTSPROB_source_header, tmp_prob, abstr, global);
-    prepare_set_prob_value(CNTSPROB_source_footer, tmp_prob, abstr, global);
-    mkpath(test_path, g_test_path, tmp_prob->test_dir, "");
-    if (tmp_prob->use_corr) {
-      prepare_set_prob_value(CNTSPROB_corr_dir, tmp_prob, abstr, 0);
-      prepare_set_prob_value(CNTSPROB_corr_sfx, tmp_prob, abstr, global);
-      prepare_set_prob_value(CNTSPROB_corr_pat, tmp_prob, abstr, global);
-      mkpath(corr_path, g_corr_path, tmp_prob->corr_dir, "");
-    }
-    prepare_set_prob_value(CNTSPROB_use_info, tmp_prob, abstr, global);
-    prepare_set_prob_value(CNTSPROB_use_tgz, tmp_prob, abstr, global);
-    if (tmp_prob->use_info) {
-      prepare_set_prob_value(CNTSPROB_info_dir, tmp_prob, abstr, 0);
-      prepare_set_prob_value(CNTSPROB_info_sfx, tmp_prob, abstr, global);
-      prepare_set_prob_value(CNTSPROB_info_pat, tmp_prob, abstr, global);
-      mkpath(info_path, g_info_path, tmp_prob->info_dir, "");
-    }
-    checker_path[0] = 0;
-    if (!tmp_prob->standard_checker) {
-      prepare_set_prob_value(CNTSPROB_check_cmd, tmp_prob, abstr, 0);
-      if (global->advanced_layout > 0) {
-        get_advanced_layout_path(checker_path, sizeof(checker_path),
-                                 global, tmp_prob, tmp_prob->check_cmd, -1);
-      } else {
-        mkpath(checker_path, g_checker_path, tmp_prob->check_cmd, "");
-      }
+    if (tmp_prob->problem_dir && tmp_prob->problem_dir[0]) {
+      fprintf(flog, "problem_dir = %s\n", tmp_prob->problem_dir);
     }
 
     if (global->advanced_layout > 0) {
@@ -1447,6 +1387,17 @@ super_html_new_check_tests(
         }
       }
       continue;
+    }
+
+    // legacy, to remove
+    checker_path[0] = 0;
+    if (!tmp_prob->standard_checker) {
+      if (global->advanced_layout > 0) {
+        get_advanced_layout_path(checker_path, sizeof(checker_path),
+                                 global, tmp_prob, tmp_prob->check_cmd, -1);
+      } else {
+        mkpath(checker_path, g_checker_path, tmp_prob->check_cmd, "");
+      }
     }
 
     if (!tmp_prob->standard_checker && !already_compiled) {

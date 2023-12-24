@@ -1475,9 +1475,9 @@ filter_lang_environ(
   XCALLOC(env, count + 1);
   for (i = 0; environ[i]; ++i) {
     if (environ[i][0] == '*' && environ[i][1] == '=') {
-      env[j++] = prepare_varsubst(state, environ[i] + 2, 0, prob, lang, tester);
+      env[j++] = prepare_varsubst(environ[i] + 2, 0, state->global, prob, lang, tester);
     } else if (strlen(environ[i]) > llen && !strncmp(lang->short_name, environ[i], llen) && environ[i][llen] == '=') {
-      env[j++] = prepare_varsubst(state, environ[i] + llen + 1, 0, prob, lang, tester);
+      env[j++] = prepare_varsubst(environ[i] + llen + 1, 0, state->global, prob, lang, tester);
     }
   }
   return env;
@@ -1562,7 +1562,7 @@ serve_compile_request(
   }
 
   // perform substitutions
-  compiler_env_copy = prepare_sarray_varsubst(state, prob, lang, NULL, compiler_env);
+  compiler_env_copy = prepare_sarray_varsubst(state->global, prob, lang, NULL, compiler_env);
   compiler_env = compiler_env_copy;
 
   if (prob->variant_num <= 0 && variant > 0) {
@@ -1755,7 +1755,7 @@ serve_compile_request(
 
   if (lang && lang->enable_custom > 0 && prob && prob->custom_compile_cmd
       && prob->custom_compile_cmd[0]) {
-    custom_compile_cmd = prepare_varsubst(state, prob->custom_compile_cmd, 0, prob, lang, NULL);
+    custom_compile_cmd = prepare_varsubst(prob->custom_compile_cmd, 0, state->global, prob, lang, NULL);
     /*
     sformat_message(tmp_path, sizeof(tmp_path), 0, style_checker_cmd,
                     global, prob, lang, 0, 0, 0, 0, 0);
@@ -1780,7 +1780,7 @@ serve_compile_request(
   }
 
   if (prob && prob->extra_src_dir && prob->extra_src_dir[0]) {
-    extra_src_dir = prepare_varsubst(state, prob->extra_src_dir, 0, prob, lang, NULL);
+    extra_src_dir = prepare_varsubst(prob->extra_src_dir, 0, state->global, prob, lang, NULL);
     extra_src_dir = config_var_substitute_heap(extra_src_dir);
     if (os_IsAbsolutePath(extra_src_dir)) {
       // nothing

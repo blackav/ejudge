@@ -6,6 +6,8 @@
 
 #include "ejudge/xalloc.h"
 
+#include "ejudge/parsecfg.h"
+
 #include "ejudge/logger.h"
 #include <string.h>
 #include <stdlib.h>
@@ -88,6 +90,121 @@ int meta_polygon_packet_lookup_field(const char *name)
   return meta_lookup_string(atm, name);
 }
 
+void meta_polygon_packet_copy(struct polygon_packet *dst, const struct polygon_packet *src)
+{
+  // hidden g
+  dst->sleep_interval = src->sleep_interval;
+  dst->enable_max_stack_size = src->enable_max_stack_size;
+  dst->create_mode = src->create_mode;
+  dst->ignore_solutions = src->ignore_solutions;
+  dst->retry_count = src->retry_count;
+  dst->fetch_latest_available = src->fetch_latest_available;
+  dst->binary_input = src->binary_input;
+  dst->enable_iframe_statement = src->enable_iframe_statement;
+  dst->enable_api = src->enable_api;
+  dst->verbose = src->verbose;
+  dst->ignore_main_solution = src->ignore_main_solution;
+  if (src->polygon_url) {
+    dst->polygon_url = strdup(src->polygon_url);
+  }
+  if (src->login) {
+    dst->login = strdup(src->login);
+  }
+  if (src->password) {
+    dst->password = strdup(src->password);
+  }
+  if (src->user_agent) {
+    dst->user_agent = strdup(src->user_agent);
+  }
+  if (src->log_file) {
+    dst->log_file = strdup(src->log_file);
+  }
+  if (src->status_file) {
+    dst->status_file = strdup(src->status_file);
+  }
+  if (src->pid_file) {
+    dst->pid_file = strdup(src->pid_file);
+  }
+  if (src->download_dir) {
+    dst->download_dir = strdup(src->download_dir);
+  }
+  if (src->problem_dir) {
+    dst->problem_dir = strdup(src->problem_dir);
+  }
+  if (src->dir_mode) {
+    dst->dir_mode = strdup(src->dir_mode);
+  }
+  if (src->dir_group) {
+    dst->dir_group = strdup(src->dir_group);
+  }
+  if (src->file_mode) {
+    dst->file_mode = strdup(src->file_mode);
+  }
+  if (src->file_group) {
+    dst->file_group = strdup(src->file_group);
+  }
+  if (src->arch) {
+    dst->arch = strdup(src->arch);
+  }
+  if (src->working_dir) {
+    dst->working_dir = strdup(src->working_dir);
+  }
+  if (src->problem_xml_name) {
+    dst->problem_xml_name = strdup(src->problem_xml_name);
+  }
+  if (src->testset) {
+    dst->testset = strdup(src->testset);
+  }
+  if (src->language_priority) {
+    dst->language_priority = strdup(src->language_priority);
+  }
+  if (src->polygon_contest_id) {
+    dst->polygon_contest_id = strdup(src->polygon_contest_id);
+  }
+  if (src->key) {
+    dst->key = strdup(src->key);
+  }
+  if (src->secret) {
+    dst->secret = strdup(src->secret);
+  }
+  if (src->package_file) {
+    dst->package_file = strdup(src->package_file);
+  }
+  dst->id = (typeof(dst->id)) sarray_copy((char**) src->id);
+  dst->ejudge_id = (typeof(dst->ejudge_id)) sarray_copy((char**) src->ejudge_id);
+  dst->ejudge_short_name = (typeof(dst->ejudge_short_name)) sarray_copy((char**) src->ejudge_short_name);
+}
+
+void meta_polygon_packet_free(struct polygon_packet *ptr)
+{
+  // hidden g
+  free(ptr->polygon_url);
+  free(ptr->login);
+  free(ptr->password);
+  free(ptr->user_agent);
+  free(ptr->log_file);
+  free(ptr->status_file);
+  free(ptr->pid_file);
+  free(ptr->download_dir);
+  free(ptr->problem_dir);
+  free(ptr->dir_mode);
+  free(ptr->dir_group);
+  free(ptr->file_mode);
+  free(ptr->file_group);
+  free(ptr->arch);
+  free(ptr->working_dir);
+  free(ptr->problem_xml_name);
+  free(ptr->testset);
+  free(ptr->language_priority);
+  free(ptr->polygon_contest_id);
+  free(ptr->key);
+  free(ptr->secret);
+  free(ptr->package_file);
+  sarray_free((char**) ptr->id);
+  sarray_free((char**) ptr->ejudge_id);
+  sarray_free((char**) ptr->ejudge_short_name);
+}
+
 const struct meta_methods meta_polygon_packet_methods =
 {
   META_POLYGON_PACKET_LAST_FIELD,
@@ -98,5 +215,7 @@ const struct meta_methods meta_polygon_packet_methods =
   (const void *(*)(const void *ptr, int tag))meta_polygon_packet_get_ptr,
   (void *(*)(void *ptr, int tag))meta_polygon_packet_get_ptr_nc,
   meta_polygon_packet_lookup_field,
+  (void (*)(void *, const void *))meta_polygon_packet_copy,
+  (void (*)(void *))meta_polygon_packet_free,
 };
 
