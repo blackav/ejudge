@@ -18,9 +18,26 @@
   int i;
   char token_buf[64];
   int token_len;
+  __attribute__((unused)) int accepting_mode = 0;
 
   if (ns_open_ul_connection(phr->fw_state) < 0) {
     FAIL(NEW_SRV_ERR_USERLIST_SERVER_DOWN);
+  }
+
+  if (global->is_virtual) {
+    start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
+    stop_time = run_get_virtual_stop_time(cs->runlog_state, phr->user_id,
+                                            cs->current_time);
+    if (stop_time <= 0 || cs->upsolving_mode) accepting_mode = 1;
+
+    struct run_header hdr;
+    run_get_header(cs->runlog_state, &hdr);
+    contest_start_time = hdr.start_time;
+    contest_stop_time = hdr.stop_time;
+  } else {
+    start_time = run_get_start_time(cs->runlog_state);
+    stop_time = run_get_stop_time(cs->runlog_state, phr->user_id, cs->current_time);
+    accepting_mode = cs->accepting_mode;
   }
 
   api_key_params.user_id = phr->user_id;
