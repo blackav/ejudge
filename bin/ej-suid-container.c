@@ -1789,6 +1789,7 @@ static void
 apply_language_profiles(void)
 {
     if (!language_name || !*language_name) return;
+    if (enable_compile_mode) return;
 
     if (!strcmp(language_name, "javac7")
         || !strcmp(language_name, "javac")
