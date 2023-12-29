@@ -18567,6 +18567,7 @@ batch_login(
     }
   }
 
+  xfree(phr->name); phr->name = NULL;
   int action = NEW_SRV_ACTION_MAIN_PAGE;
   int r = userlist_clnt_login(ul_conn, ULS_TEAM_CHECK_USER,
                               &phr->ip,
