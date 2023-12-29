@@ -3935,7 +3935,9 @@ ns_register_pages(FILE *fout, struct http_request_info *phr)
   unsigned char hid_buf[1024];
   int cookie_locale_id = -1;
 
-  phr->log_f = open_memstream(&phr->log_t, &phr->log_z);
+  if (!phr->log_f) {
+    phr->log_f = open_memstream(&phr->log_t, &phr->log_z);
+  }
 
   if (phr->action == NEW_SRV_ACTION_CHANGE_LANGUAGE)
     return change_locale(fout, phr);
