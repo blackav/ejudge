@@ -1482,7 +1482,7 @@ build_generate_makefile(
 
   if (global->advanced_layout <= 0) FAIL(SSERV_ERR_INV_CONTEST);
 
-  if (!prob->problem_dir && !prob->problem_dir[0]) {
+  if (!prob->problem_dir || !prob->problem_dir[0]) {
     get_advanced_layout_path(cnts_prob_path, sizeof(cnts_prob_path), global, NULL, NULL, 0);
     if (stat(cnts_prob_path, &stbuf) < 0) {
       fprintf(log_f, "contest problem directory '%s' does not exist", cnts_prob_path);
