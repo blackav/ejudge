@@ -41,7 +41,7 @@ static const char create_runs_query[] =
 "        is_imported TINYINT NOT NULL DEFAULT 0, "
 "        is_hidden TINYINT NOT NULL DEFAULT 0, "
 "        is_readonly TINYINT NOT NULL DEFAULT 0, "
-"        mime_type VARCHAR(64) DEFAULT NULL, "
+"        mime_type VARCHAR(128) DEFAULT NULL, "
 "        last_change_time DATETIME DEFAULT NULL, "
 "        last_change_nsec INT UNSIGNED NOT NULL DEFAULT 0, "
 "        is_marked TINYINT NOT NULL DEFAULT 0, "

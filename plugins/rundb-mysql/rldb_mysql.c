@@ -197,7 +197,7 @@ prepare_func(
 
 #include "tables.inc.c"
 
-#define RUN_DB_VERSION 27
+#define RUN_DB_VERSION 28
 
 static int
 do_create(struct rldb_mysql_state *state)
@@ -482,6 +482,10 @@ do_open(struct rldb_mysql_state *state)
       break;
     case 26:
       if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD COLUMN notify_driver TINYINT NOT NULL DEFAULT 0 AFTER ext_user, ADD COLUMN notify_kind TINYINT NOT NULL DEFAULT 0 AFTER notify_driver, ADD COLUMN notify_queue VARCHAR(40) DEFAULT NULL AFTER notify_kind", md->table_prefix) < 0)
+        return -1;
+      break;
+    case 27:
+      if (mi->simple_fquery(md, "ALTER TABLE %sruns MODIFY COLUMN mime_type VARCHAR(128) DEFAULT NULL ;", md->table_prefix) < 0)
         return -1;
       break;
     case RUN_DB_VERSION:
