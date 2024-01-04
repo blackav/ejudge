@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2006-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -361,6 +361,7 @@ start_process(
     char *args[64];
     char lbuf[64];
     char ebuf[64];
+    char ybuf[64];
     int argi = 0;
     args[argi++] = (char*) exepath;
     if (is_parallel) args[argi++] = "-p";
@@ -412,6 +413,11 @@ start_process(
     }
     if (verbose_mode) {
         args[argi++] = "-v";
+    }
+    if (serial > 0) {
+        args[argi++] = "-y";
+        snprintf(ybuf, sizeof(ybuf), "%d", serial);
+        args[argi++] = ybuf;
     }
     args[argi++] = "-S";
     args[argi++] = "conf/compile.cfg";
