@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2000-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -109,6 +109,7 @@ static unsigned char pending_down_flag; // bool
 static unsigned char pending_reboot_flag; // bool
 static unsigned char *heartbeat_instance_id;
 static unsigned char *local_cache = NULL;
+static int compile_user_serial = 0;
 
 struct testinfo_subst_handler_compile
 {
@@ -181,6 +182,9 @@ invoke_style_checker(
     task_SetMaxRealTime(tsk, lang->compile_real_time_limit);
   }
   task_EnableAllSignals(tsk);
+  if (compile_user_serial > 0) {
+    task_SetUserSerial(tsk, compile_user_serial);
+  }
 
   task_PrintArgs(tsk);
   if (task_Start(tsk) < 0) {
@@ -566,6 +570,9 @@ invoke_compiler(
     task_SetMaxRealTime(tsk, lang->compile_real_time_limit);
   }
   task_EnableAllSignals(tsk);
+  if (compile_user_serial > 0) {
+    task_SetUserSerial(tsk, compile_user_serial);
+  }
 
   task_PrintArgs(tsk);
 
@@ -2338,6 +2345,16 @@ main(int argc, char *argv[])
       heartbeat_mode = 0;
       ++i;
       argv_restart[j++] = argv[i];
+    } else if (!strcmp(argv[i], "-y")) {
+      if (++i >= argc) goto print_usage;
+      argv_restart[j++] = argv[i - 1];
+      argv_restart[j++] = argv[i];
+
+      char *eptr = NULL;
+      errno = 0;
+      long lval = strtol(argv[i++], &eptr, 10);
+      if (errno || *eptr || eptr == argv[i - 1] || (int) lval != lval || lval < 0) goto print_usage;
+      compile_user_serial = lval;
     } else if (!strcmp(argv[i], "--help")) {
       code = 0;
       goto print_usage;
@@ -2713,5 +2730,6 @@ main(int argc, char *argv[])
   printf("  -c C   - substitute ${COMPILE_HOME_DIR} for C in the config\n");
   printf("  -a A   - use agent A to access to compile queue\n");
   printf("  -s I   - set instance Id to I\n");
+  printf("  -y S   - set instance serial number to S\n");
   return code;
 }

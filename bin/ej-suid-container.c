@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2021-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2021-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -268,20 +268,30 @@ get_user_ids(void)
 {
     // don't use getpwnam because it depends on PAM, etc
     char exec_user_str[64];
+    char compile_user_str[64];
     if (exec_user_serial > 0) {
         if (snprintf(exec_user_str, sizeof(exec_user_str), "%s%d", EXEC_USER, exec_user_serial) >= sizeof(exec_user_str))
             ffatal("invalid user %s%d", EXEC_USER, exec_user_serial);
+        if (snprintf(compile_user_str, sizeof(compile_user_str), "%s%d", COMPILE_USER, exec_user_serial) >= sizeof(compile_user_str))
+            ffatal("invalid user %s%d", COMPILE_USER, exec_user_serial);
     } else {
         if (snprintf(exec_user_str, sizeof(exec_user_str), "%s", EXEC_USER) >= sizeof(exec_user_str))
             ffatal("invalid user %s", EXEC_USER);
+        if (snprintf(compile_user_str, sizeof(compile_user_str), "%s", COMPILE_USER) >= sizeof(compile_user_str))
+            ffatal("invalid user %s", COMPILE_USER);
     }
     char exec_group_str[64];
+    char compile_group_str[64];
     if (exec_user_serial > 0) {
         if (snprintf(exec_group_str, sizeof(exec_group_str), "%s%d", EXEC_GROUP, exec_user_serial) >= sizeof(exec_group_str))
             ffatal("invalid group %s%d", EXEC_GROUP, exec_user_serial);
+        if (snprintf(compile_group_str, sizeof(compile_group_str), "%s%d", COMPILE_GROUP, exec_user_serial) >= sizeof(compile_group_str))
+            ffatal("invalid group %s%d", COMPILE_GROUP, exec_user_serial);
     } else {
         if (snprintf(exec_group_str, sizeof(exec_group_str), "%s", EXEC_GROUP) >= sizeof(exec_group_str))
             ffatal("invalid group %s", EXEC_GROUP);
+        if (snprintf(compile_group_str, sizeof(compile_group_str), "%s", COMPILE_GROUP) >= sizeof(compile_group_str))
+            ffatal("invalid group %s", COMPILE_GROUP);
     }
 
     FILE *f = fopen("/etc/passwd", "r");
@@ -304,7 +314,7 @@ get_user_ids(void)
         int *dest_uid = NULL;
         if (!strcmp(user_name, exec_user_str)) dest_uid = &exec_uid;
         else if (!strcmp(user_name, PRIMARY_USER)) dest_uid = &primary_uid;
-        else if (!strcmp(user_name, COMPILE_USER)) dest_uid = &compile_uid;
+        else if (!strcmp(user_name, compile_user_str)) dest_uid = &compile_uid;
         if (dest_uid) {
             char *eptr = NULL;
             errno = 0;
@@ -339,7 +349,7 @@ get_user_ids(void)
         int *dest_gid = NULL;
         if (!strcmp(group_name, exec_group_str)) dest_gid = &exec_gid;
         else if (!strcmp(group_name, PRIMARY_GROUP)) dest_gid = &primary_gid;
-        else if (!strcmp(group_name, COMPILE_GROUP)) dest_gid = &compile_gid;
+        else if (!strcmp(group_name, compile_group_str)) dest_gid = &compile_gid;
         if (dest_gid) {
             char *eptr = NULL;
             errno = 0;
