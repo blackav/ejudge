@@ -2482,13 +2482,19 @@ parse_score_from_double(const unsigned char *str, int *p_score)
     return 0;
 }
 
-static [[maybe_unused]] int
+[[maybe_unused]]
+static int
 save_valuer_cfg(
         FILE *log_f,
         const struct ProblemInfo *pi,
         const unsigned char *problem_dir)
 {
     unsigned char cfg_path[PATH_MAX];
+    if (snprintf(cfg_path, sizeof(cfg_path), "%s/valuer.cfg", problem_dir) >= (int) sizeof(cfg_path)) {
+        return -1;
+    }
+
+    return 0;
 }
 
 static void
