@@ -143,6 +143,7 @@ struct ProblemInfo
     unsigned char *open_tests;
     unsigned char *final_open_tests;
     unsigned char *test_score_list;
+    unsigned char *valuer_cmd;
 
     int test_a, test_u;
     struct TestInfo *tests;
@@ -1355,6 +1356,7 @@ free_problem_infos(struct ProblemSet *probset)
         xfree(pi->open_tests);
         xfree(pi->final_open_tests);
         xfree(pi->test_score_list);
+        xfree(pi->valuer_cmd);
 
         for (int i = 0; i < pi->test_u; ++i) {
             struct TestInfo *ti = &pi->tests[i];
@@ -3059,6 +3061,7 @@ process_polygon_zip(
         }
         fclose(ot_f);
         pi->open_tests = ot_s;
+        pi->valuer_cmd = "../gvaluer";
     }
 
     const unsigned char *s;
@@ -3388,6 +3391,9 @@ process_polygon_zip(
     if (pi->final_open_tests) {
         fprintf(log_f, "    final_open_tests: %s\n", pi->final_open_tests);
     }
+    if (pi->valuer_cmd) {
+        fprintf(log_f, "    valuer_cmd: %s\n", pi->valuer_cmd);
+    }
 
     unsigned char buf[1024];
 
@@ -3487,6 +3493,9 @@ process_polygon_zip(
     }
     if (pi->final_open_tests) {
         prob_cfg->final_open_tests = xstrdup(pi->final_open_tests);
+    }
+    if (pi->valuer_cmd && pi->valuer_cmd[0]) {
+        prob_cfg->valuer_cmd = xstrdup(pi->valuer_cmd);
     }
 
     cfg_file = open_memstream(&cfg_text, &cfg_size);
