@@ -2482,6 +2482,14 @@ parse_score_from_double(const unsigned char *str, int *p_score)
     return 0;
 }
 
+/*
+static int
+save_valuer_cfg(FILE *log_f, struct ProblemInfo *pi, const unsigned char *problem_dir)
+{
+    unsigned char cfg_path[PATH_MAX];
+}
+*/
+
 static void
 process_polygon_zip(
         FILE *log_f,
@@ -2873,10 +2881,34 @@ process_polygon_zip(
             }
         }
     }
+    if (pi->group_u > 0) {
+        if (pi->test_u <= 0) {
+            fprintf(log_f, "no tests for test groups\n");
+            goto zip_error;
+        }
+        if (pi->groups[0].first_test > 1) {
+            fprintf(log_f, "tests 1...%d are not covered by any group\n", pi->groups[0].first_test - 1);
+            goto zip_error;
+        }
+        for (int i = 1; i < pi->group_u; ++i) {
+            if (pi->groups[i].first_test <= pi->groups[i - 1].last_test) {
+                fprintf(log_f, "test groups '%s' and '%s' overlap\n", pi->groups[i - 1].name, pi->groups[i].name);
+                goto zip_error;
+            }
+            if (pi->groups[i].first_test > pi->groups[i - 1].last_test + 1) {
+                fprintf(log_f, "tests %d...%d are not covered by any group\n", pi->groups[i - 1].last_test + 1, pi->groups[i].first_test - 1);
+                goto zip_error;
+            }
+        }
+        if (pi->groups[pi->group_u - 1].last_test != pi->test_u) {
+            fprintf(log_f, "tests %d...%d are not covered by any group\n", pi->groups[pi->group_u - 1].last_test + 1, pi->test_u);
+            goto zip_error;
+        }
+    }
 
     // generate test_score_list, if required
     int test_score_list_required = 0;
-    [[maybe_unused]] int test_group_required = 0;
+    int test_group_required = 0;
     for (int i = 0; i < pi->test_u; ++i) {
         struct TestInfo *ti = &pi->tests[i];
         if (ti->score > 0) {
@@ -2910,6 +2942,23 @@ process_polygon_zip(
         }
         fclose(tsl_f);
         pi->test_score_list = tsl_s;
+    }
+    if (test_group_required) {
+        char *s = NULL;
+        asprintf(&s, "1-%d:full", pi->test_u);
+        pi->final_open_tests = s;
+
+        char *ot_s = NULL;
+        size_t ot_z = 0;
+        FILE *ot_f = open_memstream(&ot_s, &ot_z);
+        const unsigned char *sep = "";
+        for (int i = 0; i < pi->group_u; ++i) {
+            struct GroupInfo *gi = &pi->groups[i];
+            fprintf(ot_f, "%s%d-%d:%s", sep, gi->first_test, gi->last_test, gi->visibility);
+            sep = ",";
+        }
+        fclose(ot_f);
+        pi->open_tests = ot_s;
     }
 
     const unsigned char *s;
