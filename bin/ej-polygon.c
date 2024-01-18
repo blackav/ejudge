@@ -81,11 +81,13 @@ enum UpdateState
     STATE_LAST,
 };
 
+struct GroupInfo;
 struct TestInfo
 {
     int serial;
     int score;
     unsigned char *group;
+    struct GroupInfo *gi;
 };
 
 struct GroupInfo
@@ -2827,6 +2829,87 @@ process_polygon_zip(
     if (check_format(pi->answer_path_pattern)) {
         fprintf(log_f, "answer-path-pattern value '%s' is invalid\n", pi->answer_path_pattern);
         goto zip_error;
+    }
+
+    for (int i = 0; i < pi->group_u; ++i) {
+        struct GroupInfo *gi1 = &pi->groups[i];
+        if (!gi1->name || !*gi1->name) {
+            fprintf(log_f, "test group %d has empty name\n", i + 1);
+            goto zip_error;
+        }
+    }
+    for (int i = 0; i < pi->group_u; ++i) {
+        struct GroupInfo *gi1 = &pi->groups[i];
+        for (int j = i + 1; j < pi->group_u; ++j) {
+            struct GroupInfo *gi2 = &pi->groups[j];
+            if (!strcmp(gi1->name, gi2->name)) {
+                fprintf(log_f, "test group name '%s' is not unique\n", gi1->name);
+                goto zip_error;
+            }
+        }
+    }
+    for (int i = 0; i < pi->group_u; ++i) {
+        struct GroupInfo *gi1 = &pi->groups[i];
+        for (int j = 0; j < gi1->dep_u; ++j) {
+            int gi2_ind = -1;
+            for (int k = 0; k < pi->group_u; ++k) {
+                struct GroupInfo *gi3 = &pi->groups[k];
+                if (!strcmp(gi1->deps[j], gi3->name)) {
+                    gi2_ind = k;
+                    break;
+                }
+            }
+            if (gi2_ind < 0) {
+                fprintf(log_f, "test group '%s' dependency in test group '%s' does not exist\n", gi1->deps[j], gi1->name);
+                goto zip_error;
+            }
+            if (gi2_ind == i) {
+                fprintf(log_f, "test group '%s' depends on itself\n", gi1->name);
+                goto zip_error;
+            }
+            if (gi2_ind > i) {
+                fprintf(log_f, "test group '%s' depends on forward group '%s'\n", gi1->name, pi->groups[gi2_ind].name);
+                goto zip_error;
+            }
+        }
+    }
+
+    // generate test_score_list, if required
+    int test_score_list_required = 0;
+    [[maybe_unused]] int test_group_required = 0;
+    for (int i = 0; i < pi->test_u; ++i) {
+        struct TestInfo *ti = &pi->tests[i];
+        if (ti->score > 0) {
+            test_score_list_required = 1;
+        }
+        if (ti->group && *ti->group) {
+            test_group_required = 1;
+            struct GroupInfo *gi = NULL;
+            for (int j = 0; j < pi->group_u; ++j) {
+                if (!strcmp(pi->groups[j].name, ti->group)) {
+                    gi = &pi->groups[j];
+                }
+            }
+            if (!gi) {
+                fprintf(log_f, "group '%s' referred in test %d does not exist\n", ti->group, ti->serial);
+                goto zip_error;
+            }
+            ti->gi = gi;
+            if (ti->serial < gi->first_test) gi->first_test = ti->serial;
+            if (ti->serial > gi->last_test) gi->last_test = ti->serial;
+        }
+    }
+    if (test_score_list_required) {
+        const unsigned char *sep = "";
+        char *tsl_s = NULL;
+        size_t tsl_z = 0;
+        FILE *tsl_f = open_memstream(&tsl_s, &tsl_z);
+        for (int i = 0; i < pi->test_u; ++i) {
+            fprintf(tsl_f, "%s%d", sep, pi->tests[i].score);
+            sep = " ";
+        }
+        fclose(tsl_f);
+        pi->test_score_list = tsl_s;
     }
 
     const unsigned char *s;
