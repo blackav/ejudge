@@ -138,6 +138,9 @@ struct ProblemInfo
     unsigned char *solution_cmd;
     unsigned char *interactor_cmd;
     unsigned char *html_statement_path;
+    unsigned char *open_tests;
+    unsigned char *final_open_tests;
+    unsigned char *test_score_list;
 
     int test_a, test_u;
     struct TestInfo *tests;
@@ -1347,6 +1350,9 @@ free_problem_infos(struct ProblemSet *probset)
         xfree(pi->solution_cmd);
         xfree(pi->interactor_cmd);
         xfree(pi->html_statement_path);
+        xfree(pi->open_tests);
+        xfree(pi->final_open_tests);
+        xfree(pi->test_score_list);
 
         for (int i = 0; i < pi->test_u; ++i) {
             struct TestInfo *ti = &pi->tests[i];
@@ -3141,6 +3147,15 @@ process_polygon_zip(
     }
     fprintf(log_f, "    interactor_cmd: %s\n", pi->interactor_cmd);
     fprintf(log_f, "    html_statement: %s\n", pi->html_statement_path);
+    if (pi->test_score_list) {
+        fprintf(log_f, "    test_score_list: %s\n", pi->test_score_list);
+    }
+    if (pi->open_tests) {
+        fprintf(log_f, "    open_tests: %s\n", pi->open_tests);
+    }
+    if (pi->final_open_tests) {
+        fprintf(log_f, "    final_open_tests: %s\n", pi->final_open_tests);
+    }
 
     unsigned char buf[1024];
 
@@ -3231,6 +3246,15 @@ process_polygon_zip(
         prob_cfg->iframe_statement = xstrdup("statement.html");
         prob_cfg->enable_iframe_statement = 1;
         prob_cfg->xml_file = xstrdup("statement.xml");
+    }
+    if (pi->test_score_list) {
+        prob_cfg->test_score_list = xstrdup(pi->test_score_list);
+    }
+    if (pi->open_tests) {
+        prob_cfg->open_tests = xstrdup(pi->open_tests);
+    }
+    if (pi->final_open_tests) {
+        prob_cfg->final_open_tests = xstrdup(pi->final_open_tests);
     }
 
     cfg_file = open_memstream(&cfg_text, &cfg_size);
