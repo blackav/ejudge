@@ -2482,10 +2482,10 @@ parse_score_from_double(const unsigned char *str, int *p_score)
     return 0;
 }
 
-[[maybe_unused]]
 static int
 save_valuer_cfg(
         FILE *log_f,
+        const struct polygon_packet *pkt,
         const struct ProblemInfo *pi,
         const unsigned char *problem_dir)
 {
@@ -2493,7 +2493,49 @@ save_valuer_cfg(
     if (snprintf(cfg_path, sizeof(cfg_path), "%s/valuer.cfg", problem_dir) >= (int) sizeof(cfg_path)) {
         return -1;
     }
+    char *vs = NULL;
+    size_t vz = 0;
+    FILE *vf = open_memstream(&vs, &vz);
+    const char *gsep = "";
 
+    for (int i = 0; i < pi->group_u; ++i) {
+        const struct GroupInfo *gi = &pi->groups[i];
+        fprintf(vf, "%sgroup %s {\n", gsep, gi->name);
+        if (gi->first_test == gi->last_test) {
+            fprintf(vf, "    tests %d;\n", gi->first_test);
+        } else {
+            fprintf(vf, "    tests %d-%d;\n", gi->first_test, gi->last_test);
+        }
+        if (gi->test_score >= 0) {
+            fprintf(vf, "    test_score %d;\n", gi->test_score);
+            fprintf(vf, "    test_all;\n");
+        } else if (gi->group_score >= 0) {
+            fprintf(vf, "    score %d;\n", gi->group_score);
+        }
+        if (!strcmp(gi->visibility, "brief")) {
+            fprintf(vf, "    stat_to_users;\n");
+        }
+        if (gi->dep_u > 0) {
+            fprintf(vf, "    requires ");
+            const char *rsep = "";
+            for (int j = 0; j < gi->dep_u; ++j) {
+                fprintf(vf, "%s%s", rsep, gi->deps[j]);
+                rsep = ", ";
+            }
+            fprintf(vf, ";\n");
+        }
+        fprintf(vf, "}\n");
+        gsep = "\n";
+    }
+
+    fclose(vf); vf = NULL;
+
+    if (save_file(log_f, cfg_path, vs, vz, pkt->file_mode, pkt->file_group, NULL)) {
+        free(vs);
+        return -1;
+    }
+
+    free(vs);
     return 0;
 }
 
@@ -3402,6 +3444,14 @@ process_polygon_zip(
     unsigned char cfg_path[PATH_MAX];
     snprintf(cfg_path, sizeof(cfg_path), "%s/problem.cfg", problem_path);
     if (save_file(log_f, cfg_path, cfg_text, cfg_size, pkt->file_mode, pkt->file_group, NULL)) goto zip_error;
+
+    if (pi->group_u > 0) {
+        if (save_valuer_cfg(log_f, pkt, pi, problem_path) < 0) {
+            fprintf(log_f, "saving of valuer.cfg failed\n");
+            goto zip_error;
+        }
+    }
+
     pi->state = STATE_UPDATED;
 
     if (pkt->verbose) {
