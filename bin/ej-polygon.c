@@ -2482,13 +2482,14 @@ parse_score_from_double(const unsigned char *str, int *p_score)
     return 0;
 }
 
-/*
-static int
-save_valuer_cfg(FILE *log_f, struct ProblemInfo *pi, const unsigned char *problem_dir)
+static [[maybe_unused]] int
+save_valuer_cfg(
+        FILE *log_f,
+        const struct ProblemInfo *pi,
+        const unsigned char *problem_dir)
 {
     unsigned char cfg_path[PATH_MAX];
 }
-*/
 
 static void
 process_polygon_zip(
