@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2012-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -45,6 +45,7 @@
 #include <signal.h>
 #include <grp.h>
 #include <fcntl.h>
+#include <math.h>
 
 #if CONF_HAS_LIBCURL - 0 == 1
 #include <curl/curl.h>
@@ -78,6 +79,26 @@ enum UpdateState
     STATE_PERMISSION_DENIED,
 
     STATE_LAST,
+};
+
+struct TestInfo
+{
+    int serial;
+    int score;
+    unsigned char *group;
+};
+
+struct GroupInfo
+{
+    unsigned char *name;
+    unsigned char *visibility;
+    int first_test;
+    int last_test;
+    int group_score;
+    int test_score;
+
+    int dep_u, dep_a;
+    unsigned char **deps;
 };
 
 struct ProblemInfo
@@ -117,6 +138,12 @@ struct ProblemInfo
     unsigned char *solution_cmd;
     unsigned char *interactor_cmd;
     unsigned char *html_statement_path;
+
+    int test_a, test_u;
+    struct TestInfo *tests;
+
+    int group_a, group_u;
+    struct GroupInfo *groups;
 };
 
 struct RevisionInfo
@@ -1320,6 +1347,23 @@ free_problem_infos(struct ProblemSet *probset)
         xfree(pi->solution_cmd);
         xfree(pi->interactor_cmd);
         xfree(pi->html_statement_path);
+
+        for (int i = 0; i < pi->test_u; ++i) {
+            struct TestInfo *ti = &pi->tests[i];
+            xfree(ti->group);
+        }
+        xfree(pi->tests);
+
+        for (int i = 0; i < pi->group_u; ++i) {
+            struct GroupInfo *gi = &pi->groups[i];
+            xfree(gi->name);
+            xfree(gi->visibility);
+            for (int i = 0; i < gi->dep_u; ++i) {
+                xfree(gi->deps[i]);
+            }
+            xfree(gi->deps);
+        }
+        xfree(pi->groups);
     }
     xfree(probset->infos);
     probset->count = 0;
@@ -2408,6 +2452,28 @@ get_next_elem_by_name(struct xml_tree *t, const unsigned char *name)
     return NULL;
 }
 
+static int
+parse_score_from_double(const unsigned char *str, int *p_score)
+{
+    char *eptr = NULL;
+    errno = 0;
+    double dval = strtod(str, &eptr);
+    if (errno || *eptr || eptr == (char*) str) {
+        return -1;
+    }
+    if (fpclassify(dval) != FP_ZERO && fpclassify(dval) != FP_NORMAL) {
+        return -1;
+    }
+    if (dval < 0 || dval > 1000000.0) {
+        return -1;
+    }
+    if (dval != (int) dval) {
+        return -1;
+    }
+    *p_score = (int) dval;
+    return 0;
+}
+
 static void
 process_polygon_zip(
         FILE *log_f,
@@ -2573,6 +2639,132 @@ process_polygon_zip(
                             pi->input_path_pattern = xstrdup(t3->text);
                         } else if (!strcmp(t3->name[0], "answer-path-pattern")) {
                             pi->answer_path_pattern = xstrdup(t3->text);
+                        } else if (!strcmp(t3->name[0], "tests")) {
+                            int serial = 0;
+                            for (struct xml_tree *t4 = t3->first_down; t4; t4 = t4->right) {
+                                if (!strcmp(t4->name[0], "test")) {
+                                    if (pi->test_a == pi->test_u) {
+                                        if (!pi->test_a) {
+                                            pi->test_a = 16;
+                                            XCALLOC(pi->tests, pi->test_a);
+                                        } else {
+                                            int new_a = pi->test_a * 2;
+                                            struct TestInfo *new_t;
+                                            XCALLOC(new_t, new_a);
+                                            XMEMMOVE(new_t, pi->tests, pi->test_a);
+                                            xfree(pi->tests);
+                                            pi->tests = new_t;
+                                            pi->test_a = new_a;
+                                        }
+                                    }
+                                    struct TestInfo *ti = &pi->tests[pi->test_u++];
+                                    ti->serial = ++serial;
+                                    for (a = t4->first; a; a = a->next) {
+                                        if (!strcmp(a->name[0], "group")) {
+                                            xfree(ti->group); ti->group = xstrdup(a->text);
+                                        } else if (!strcmp(a->name[0], "points")) {
+                                            if (parse_score_from_double(a->text, &ti->score) < 0) {
+                                                fprintf(log_f, "invalid points value '%s'\n", a->text);
+                                                goto zip_error;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        } else if (!strcmp(t3->name[0], "groups")) {
+                            for (struct xml_tree *t4 = t3->first_down; t4; t4 = t4->right) {
+                                if (!strcmp(t4->name[0], "group")) {
+                                    if (pi->group_a == pi->group_u) {
+                                        if (!pi->group_a) {
+                                            pi->group_a = 16;
+                                            XCALLOC(pi->groups, pi->group_a);
+                                        } else {
+                                            int na = pi->group_a * 2;
+                                            struct GroupInfo *ng;
+                                            XCALLOC(ng, na);
+                                            XMEMMOVE(ng, pi->groups, pi->group_a);
+                                            xfree(pi->groups);
+                                            pi->groups = ng;
+                                            pi->group_a = na;
+                                        }
+                                    }
+                                    struct GroupInfo *gi = &pi->groups[pi->group_u++];
+                                    gi->first_test = INT_MAX;
+                                    gi->last_test = INT_MIN;
+                                    int points = 0;
+                                    int is_group_score = 0;
+                                    int is_test_score = 0;
+                                    for (a = t4->first; a; a = a->next) {
+                                        if (!strcmp(a->name[0], "feedback-policy")) {
+                                            if (!strcmp(a->text, "complete")) {
+                                                gi->visibility = "full";
+                                            } else if (!strcmp(a->text, "icpc")) {
+                                                gi->visibility = "brief";
+                                            } else {
+                                                fprintf(log_f, "feedback-policy '%s' is invalid\n", a->text);
+                                                goto zip_error;
+                                            }
+                                        } else if (!strcmp(a->name[0], "name")) {
+                                            xfree(gi->name); gi->name = xstrdup(a->text);
+                                        } else if (!strcmp(a->name[0], "points")) {
+                                            if (parse_score_from_double(a->text, &points) < 0) {
+                                                fprintf(log_f, "invalid points value '%s'\n", a->text);
+                                                goto zip_error;
+                                            }
+                                        } else if (!strcmp(a->name[0], "points-policy")) {
+                                            if (!strcmp(a->text, "complete-group")) {
+                                                is_group_score = 1;
+                                            } else if (!strcmp(a->text, "each-test")) {
+                                                is_test_score = 1;
+                                            } else {
+                                                fprintf(log_f, "invalid value of points-policy attribute '%s'\n", a->text);
+                                                goto zip_error;
+                                            }
+                                        }
+                                    }
+                                    if (is_group_score + is_test_score != 1) {
+                                        fprintf(log_f, "invalid points policy\n");
+                                    }
+                                    if (is_group_score) {
+                                        gi->group_score = points;
+                                    } else if (is_test_score) {
+                                        gi->test_score = points;
+                                    }
+                                    for (struct xml_tree *t5 = t4->first_down; t5; t5 = t5->right) {
+                                        if (!strcmp(t5->name[0], "dependencies")) {
+                                            for (struct xml_tree *t6 = t5->first_down; t6; t6 = t6->right) {
+                                                if (!strcmp(t6->name[0], "dependency")) {
+                                                    if (gi->dep_a == gi->dep_u) {
+                                                        if (!gi->dep_a) {
+                                                            gi->dep_a = 16;
+                                                            XCALLOC(gi->deps, gi->dep_a);
+                                                        } else {
+                                                            int na = gi->dep_a * 2;
+                                                            unsigned char **np;
+                                                            XCALLOC(np, na);
+                                                            XMEMMOVE(np, gi->deps, na);
+                                                            xfree(gi->deps);
+                                                            gi->dep_a = na;
+                                                            gi->deps = np;
+                                                        }
+                                                    }
+                                                    const unsigned char *target_group = NULL;
+                                                    for (a = t6->first; a; a = a->next) {
+                                                        if (!strcmp(a->name[0], "group")) {
+                                                            target_group = a->text;
+                                                        }
+                                                    }
+                                                    if (!target_group) {
+                                                        fprintf(log_f, "'group' attribute expected\n");
+                                                        goto zip_error;
+                                                    }
+                                                    gi->deps[gi->dep_u++] = xstrdup(target_group);
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
