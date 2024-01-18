@@ -2756,6 +2756,8 @@ process_polygon_zip(
                                     struct GroupInfo *gi = &pi->groups[pi->group_u++];
                                     gi->first_test = INT_MAX;
                                     gi->last_test = INT_MIN;
+                                    gi->test_score = -1;
+                                    gi->group_score = -1;
                                     int points = 0;
                                     int is_group_score = 0;
                                     int is_test_score = 0;
@@ -2888,6 +2890,33 @@ process_polygon_zip(
         goto zip_error;
     }
 
+    if (pkt->verbose) {
+        if (pi->test_u > 0) {
+            fprintf(log_f, "Tests (%d):\n", pi->test_u);
+            for (int i = 0; i < pi->test_u; ++i) {
+                const struct TestInfo *ti = &pi->tests[i];
+                fprintf(log_f, "    %d, %d, %s\n", ti->serial, ti->score, ti->group);
+            }
+        }
+        if (pi->group_u > 0) {
+            fprintf(log_f, "Groups (%d):\n", pi->group_u);
+            for (int i = 0; i < pi->group_u; ++i) {
+                const struct GroupInfo *gi = &pi->groups[i];
+                fprintf(log_f, "    %s, %s, %d, %d, %d, %d", gi->name, gi->visibility, gi->first_test, gi->last_test, gi->group_score, gi->test_score);
+                if (gi->dep_u > 0) {
+                    fprintf(log_f, ", [");
+                    const char *sep = "";
+                    for (int j = 0; j < gi->dep_u; ++j) {
+                        fprintf(log_f, "%s%s", sep, gi->deps[j]);
+                        sep = ", ";
+                    }
+                    fprintf(log_f, "]");
+                }
+                fprintf(log_f, "\n");
+            }
+        }
+    }
+
     for (int i = 0; i < pi->group_u; ++i) {
         struct GroupInfo *gi1 = &pi->groups[i];
         if (!gi1->name || !*gi1->name) {
@@ -2930,30 +2959,6 @@ process_polygon_zip(
             }
         }
     }
-    if (pi->group_u > 0) {
-        if (pi->test_u <= 0) {
-            fprintf(log_f, "no tests for test groups\n");
-            goto zip_error;
-        }
-        if (pi->groups[0].first_test > 1) {
-            fprintf(log_f, "tests 1...%d are not covered by any group\n", pi->groups[0].first_test - 1);
-            goto zip_error;
-        }
-        for (int i = 1; i < pi->group_u; ++i) {
-            if (pi->groups[i].first_test <= pi->groups[i - 1].last_test) {
-                fprintf(log_f, "test groups '%s' and '%s' overlap\n", pi->groups[i - 1].name, pi->groups[i].name);
-                goto zip_error;
-            }
-            if (pi->groups[i].first_test > pi->groups[i - 1].last_test + 1) {
-                fprintf(log_f, "tests %d...%d are not covered by any group\n", pi->groups[i - 1].last_test + 1, pi->groups[i].first_test - 1);
-                goto zip_error;
-            }
-        }
-        if (pi->groups[pi->group_u - 1].last_test != pi->test_u) {
-            fprintf(log_f, "tests %d...%d are not covered by any group\n", pi->groups[pi->group_u - 1].last_test + 1, pi->test_u);
-            goto zip_error;
-        }
-    }
 
     // generate test_score_list, if required
     int test_score_list_required = 0;
@@ -2980,6 +2985,52 @@ process_polygon_zip(
             if (ti->serial > gi->last_test) gi->last_test = ti->serial;
         }
     }
+
+    if (pkt->verbose) {
+        if (pi->group_u > 0) {
+            fprintf(log_f, "Groups processed (%d):\n", pi->group_u);
+            for (int i = 0; i < pi->group_u; ++i) {
+                const struct GroupInfo *gi = &pi->groups[i];
+                fprintf(log_f, "    %s, %s, %d, %d, %d, %d", gi->name, gi->visibility, gi->first_test, gi->last_test, gi->group_score, gi->test_score);
+                if (gi->dep_u > 0) {
+                    fprintf(log_f, ", [");
+                    const char *sep = "";
+                    for (int j = 0; j < gi->dep_u; ++j) {
+                        fprintf(log_f, "%s%s", sep, gi->deps[j]);
+                        sep = ", ";
+                    }
+                    fprintf(log_f, "]");
+                }
+                fprintf(log_f, "\n");
+            }
+        }
+    }
+
+    if (pi->group_u > 0) {
+        if (pi->test_u <= 0) {
+            fprintf(log_f, "no tests for test groups\n");
+            goto zip_error;
+        }
+        if (pi->groups[0].first_test > 1) {
+            fprintf(log_f, "tests 1...%d are not covered by any group\n", pi->groups[0].first_test - 1);
+            goto zip_error;
+        }
+        for (int i = 1; i < pi->group_u; ++i) {
+            if (pi->groups[i].first_test <= pi->groups[i - 1].last_test) {
+                fprintf(log_f, "test groups '%s' and '%s' overlap\n", pi->groups[i - 1].name, pi->groups[i].name);
+                goto zip_error;
+            }
+            if (pi->groups[i].first_test > pi->groups[i - 1].last_test + 1) {
+                fprintf(log_f, "tests %d...%d are not covered by any group\n", pi->groups[i - 1].last_test + 1, pi->groups[i].first_test - 1);
+                goto zip_error;
+            }
+        }
+        if (pi->groups[pi->group_u - 1].last_test != pi->test_u) {
+            fprintf(log_f, "tests %d...%d are not covered by any group\n", pi->groups[pi->group_u - 1].last_test + 1, pi->test_u);
+            goto zip_error;
+        }
+    }
+
     if (test_score_list_required) {
         const unsigned char *sep = "";
         char *tsl_s = NULL;
