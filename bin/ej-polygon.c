@@ -2560,6 +2560,9 @@ process_polygon_zip(
     size_t cfg_size = 0;
     FILE *cfg_file = NULL;
     unsigned char *problem_url = NULL;
+    int full_score = -1;
+    int full_user_score = -1;
+    int has_hidden_groups = 0;
 
     if (!(zid = zif->open(log_f, zip_path))) {
         fprintf(log_f, "Failed to open zip file '%s'\n", zip_path);
@@ -2769,6 +2772,11 @@ process_polygon_zip(
                                                 gi->visibility = "full";
                                             } else if (!strcmp(a->text, "icpc")) {
                                                 gi->visibility = "brief";
+                                            } else if (!strcmp(a->text, "points")) {
+                                                gi->visibility = "exists";
+                                            } else if (!strcmp(a->text, "none")) {
+                                                gi->visibility = "hidden";
+                                                has_hidden_groups = 1;
                                             } else {
                                                 fprintf(log_f, "feedback-policy '%s' is invalid\n", a->text);
                                                 goto zip_error;
@@ -3063,6 +3071,35 @@ process_polygon_zip(
         pi->open_tests = ot_s;
         pi->valuer_cmd = "../gvaluer";
     }
+    if (pi->test_u > 0) {
+        int sum = 0;
+        for (int i = 0; i < pi->test_u; ++i) {
+            if (pi->tests[i].score > 0) {
+                sum += pi->tests[i].score;
+            }
+        }
+        if (sum > 0) {
+            full_score = sum;
+        }
+    }
+    if (has_hidden_groups) {
+        full_user_score = 0;
+        for (int i = 0; i < pi->group_u; ++i) {
+            const struct GroupInfo *gi = &pi->groups[i];
+            if (strcmp(gi->visibility, "hidden") != 0) {
+                if (gi->group_score > 0) {
+                    full_user_score += gi->group_score;
+                } else if (gi->test_score > 0) {
+                    for (int j = 0; i < pi->test_u; ++j) {
+                        const struct TestInfo *ti = &pi->tests[j];
+                        if (ti->group && !strcmp(ti->group, gi->name) && ti->score > 0) {
+                            full_user_score += ti->score;
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     const unsigned char *s;
     if (!(s = strrchr(pi->input_path_pattern, '/'))) {
@@ -3090,6 +3127,12 @@ process_polygon_zip(
     fprintf(log_f, "    memory_limit: %lld\n", (long long) pi->memory_limit);
     fprintf(log_f, "    test_pat: %s\n", pi->test_pat);
     fprintf(log_f, "    corr_pat: %s\n", pi->corr_pat);
+    if (full_score > 0) {
+        fprintf(log_f, "    full_score: %d\n", full_score);
+    }
+    if (full_user_score > 0) {
+        fprintf(log_f, "    full_user_score: %d\n", full_user_score);
+    }
 
     unsigned char problem_path[PATH_MAX];
     snprintf(problem_path, sizeof(problem_path), "%s/%s", pkt->problem_dir, pi->problem_name);
@@ -3496,6 +3539,12 @@ process_polygon_zip(
     }
     if (pi->valuer_cmd && pi->valuer_cmd[0]) {
         prob_cfg->valuer_cmd = xstrdup(pi->valuer_cmd);
+    }
+    if (full_score > 0) {
+        prob_cfg->full_score = full_score;
+    }
+    if (full_user_score > 0) {
+        prob_cfg->full_user_score = full_user_score;
     }
 
     cfg_file = open_memstream(&cfg_text, &cfg_size);
