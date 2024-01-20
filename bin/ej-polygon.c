@@ -2517,6 +2517,9 @@ save_valuer_cfg(
         if (!strcmp(gi->visibility, "brief")) {
             fprintf(vf, "    stat_to_users;\n");
         }
+        if (!strcmp(gi->visibility, "hidden")) {
+            fprintf(vf, "    offline;\n");
+        }
         if (gi->dep_u > 0) {
             fprintf(vf, "    requires ");
             const char *rsep = "";
