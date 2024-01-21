@@ -1270,9 +1270,6 @@ prepare_problem_free_func(struct generic_section_config *gp)
   xfree(p->open_tests_group);
   xfree(p->final_open_tests_group);
   xfree(p->token_open_tests_group);
-  xfree(p->open_tests_group);
-  xfree(p->final_open_tests_group);
-  xfree(p->token_open_tests_group);
   prepare_free_testsets(p->ts_total, p->ts_infos);
   free_deadline_penalties(p->dp_total, p->dp_infos);
   free_personal_deadlines(p->pd_total, p->pd_infos);
