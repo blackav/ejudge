@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2012-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -5482,7 +5482,7 @@ run_tests(
   }
 
   if (srpp->open_tests && srpp->open_tests[0]) {
-    if (prepare_parse_open_tests(stderr, srpp->open_tests, &open_tests_val, &open_tests_count) < 0) {
+    if (prepare_parse_open_tests(stderr, srpp->open_tests, &open_tests_val, NULL, &open_tests_count) < 0) {
       append_msg_to_log(messages_path, "failed to parse open_tests = '%s'", srpp->open_tests);
       goto check_failed;
     }

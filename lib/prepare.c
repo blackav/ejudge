@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2000-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -2062,14 +2062,17 @@ prepare_parse_open_tests(
         FILE *flog,
         const unsigned char *str,
         int **p_vals,
+        int **p_groups,
         int *p_count)
 {
   int *x = 0;
+  int *g = NULL;
   int x_a = 0;
   const unsigned char *p = str, *q;
   int n;
   int v1, v2;
   int visibility;
+  int serial = -1;
 
   if (*p_vals) *p_vals = 0;
   if (!str || !*str) return 0;
@@ -2143,19 +2146,27 @@ prepare_parse_open_tests(
     if (v2 >= x_a) {
       int new_a = x_a;
       int *new_x = 0;
+      int *new_g = NULL;
       if (!new_a) new_a = 8;
       while (v2 >= new_a) new_a *= 2;
       XCALLOC(new_x, new_a);
+      XCALLOC(new_g, new_a);
       if (x_a > 0) {
         memcpy(new_x, x, x_a * sizeof(new_x[0]));
+        memcpy(new_g, g, x_a * sizeof(new_g[0]));
       }
       xfree(x);
+      xfree(g);
       x = new_x;
+      g = new_g;
       x_a = new_a;
     }
 
-    for (; v1 <= v2; ++v1)
+    ++serial;
+    for (; v1 <= v2; ++v1) {
       x[v1] = visibility;
+      g[v1] = serial;
+    }
   }
 
   if (p_vals) {
@@ -2164,10 +2175,18 @@ prepare_parse_open_tests(
   } else {
     xfree(x); x = 0;
   }
+  if (p_groups) {
+    *p_groups = g;
+    *p_count = x_a;
+  } else {
+    xfree(g);
+    g = NULL;
+  }
   return 0;
 
 fail:
   xfree(x);
+  xfree(g);
   return -1;
 }
 
@@ -2949,13 +2968,16 @@ prepare_problem(
 
   if (prob->open_tests && prob->open_tests[0]) {
     if (prepare_parse_open_tests(stderr, prob->open_tests,
-                                 &prob->open_tests_val, &prob->open_tests_count) < 0)
+                                 &prob->open_tests_val,
+                                 NULL,
+                                 &prob->open_tests_count) < 0)
       return -1;
   }
 
   if (prob->final_open_tests && prob->final_open_tests[0]) {
     if (prepare_parse_open_tests(stderr, prob->final_open_tests,
                                  &prob->final_open_tests_val,
+                                 NULL,
                                  &prob->final_open_tests_count) < 0)
       return -1;
   }
@@ -2963,6 +2985,7 @@ prepare_problem(
   if (prob->token_open_tests && prob->token_open_tests[0]) {
     if (prepare_parse_open_tests(stderr, prob->token_open_tests,
                                  &prob->token_open_tests_val,
+                                 NULL,
                                  &prob->token_open_tests_count) < 0)
       return -1;
   }

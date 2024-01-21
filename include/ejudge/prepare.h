@@ -2,7 +2,7 @@
 #ifndef __PREPARE_H__
 #define __PREPARE_H__
 
-/* Copyright (C) 2000-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1712,6 +1712,7 @@ prepare_parse_open_tests(
         FILE *flog,
         const unsigned char *str,
         int **p_vals,
+        int **p_groups,
         int *p_count);
 
 int
