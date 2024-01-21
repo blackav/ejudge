@@ -1,12 +1,12 @@
 # -*- mode: po; coding: UTF-8 -*-
 # ejudge messages catalog
-# Copyright (C) 2002-2023 Alexander Chernov <cher@ejudge.ru>
+# Copyright (C) 2002-2024 Alexander Chernov <cher@ejudge.ru>
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-11-22 20:05+0300\n"
+"POT-Creation-Date: 2024-01-21 16:25+0300\n"
 "PO-Revision-Date: 2022-01-12 13:17+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -120,6 +120,10 @@ msgstr "<big>Ошибка на тесте %d.<br/><br/></big>\n"
 #, c-format
 msgid "<big>Failed test: %d.<br><br></big>\n"
 msgstr "<big>Ошибка на тесте %d.<br><br></big>\n"
+
+#, c-format
+msgid "<big>Score gained: %d (out of %d).<br/><br/></big>\n"
+msgstr "<big>Получено баллов: %d (из %d).<br/><br/></big>\n"
 
 msgid "<font color=\"green\">OK</font>"
 msgstr "<font color=\"green\">OK</font>"
@@ -1652,6 +1656,9 @@ msgstr "Группа (класс)"
 msgid "Group (En)"
 msgstr "Группа (класс) (Англ.)"
 
+msgid "Group Info"
+msgstr "Информация о группах тестов"
+
 msgid "Guest"
 msgstr "Гость"
 
@@ -2744,6 +2751,9 @@ msgstr "Дата открытия"
 
 msgid "Open for participation"
 msgstr "Открыт для участия"
+
+msgid "Open tests"
+msgstr "Информация об открытых тестах"
 
 msgid "Operation completed"
 msgstr "Операция завершена"
