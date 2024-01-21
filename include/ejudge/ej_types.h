@@ -2,7 +2,7 @@
 #ifndef __EJ_TYPES_H__
 #define __EJ_TYPES_H__
 
-/* Copyright (C) 2005-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -124,8 +124,9 @@ enum test_visibility
   TV_BRIEF  = 3, // brief: only testing result
   TV_EXISTS = 4, // only existance of the test, score is counted
   TV_HIDDEN = 5, // completely hidden
+  TV_ICPC   = 6, // show only group total with relative counts
 
-  TV_LAST = 6
+  TV_LAST   = 7
 };
 
 int test_visibility_parse(const unsigned char*);
