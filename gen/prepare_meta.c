@@ -1353,12 +1353,15 @@ static struct meta_info_item meta_info_section_problem_data_data[] =
   [CNTSPROB_open_tests] = { CNTSPROB_open_tests, 's', XSIZE(struct section_problem_data, open_tests), "open_tests", XOFFSET(struct section_problem_data, open_tests) },
   [CNTSPROB_open_tests_count] = { CNTSPROB_open_tests_count, 'i', XSIZE(struct section_problem_data, open_tests_count), NULL, XOFFSET(struct section_problem_data, open_tests_count) },
   [CNTSPROB_open_tests_val] = { CNTSPROB_open_tests_val, '?', XSIZE(struct section_problem_data, open_tests_val), NULL, XOFFSET(struct section_problem_data, open_tests_val) },
+  [CNTSPROB_open_tests_group] = { CNTSPROB_open_tests_group, '?', XSIZE(struct section_problem_data, open_tests_group), NULL, XOFFSET(struct section_problem_data, open_tests_group) },
   [CNTSPROB_final_open_tests] = { CNTSPROB_final_open_tests, 's', XSIZE(struct section_problem_data, final_open_tests), "final_open_tests", XOFFSET(struct section_problem_data, final_open_tests) },
   [CNTSPROB_final_open_tests_count] = { CNTSPROB_final_open_tests_count, 'i', XSIZE(struct section_problem_data, final_open_tests_count), NULL, XOFFSET(struct section_problem_data, final_open_tests_count) },
   [CNTSPROB_final_open_tests_val] = { CNTSPROB_final_open_tests_val, '?', XSIZE(struct section_problem_data, final_open_tests_val), NULL, XOFFSET(struct section_problem_data, final_open_tests_val) },
+  [CNTSPROB_final_open_tests_group] = { CNTSPROB_final_open_tests_group, '?', XSIZE(struct section_problem_data, final_open_tests_group), NULL, XOFFSET(struct section_problem_data, final_open_tests_group) },
   [CNTSPROB_token_open_tests] = { CNTSPROB_token_open_tests, 's', XSIZE(struct section_problem_data, token_open_tests), "token_open_tests", XOFFSET(struct section_problem_data, token_open_tests) },
   [CNTSPROB_token_open_tests_count] = { CNTSPROB_token_open_tests_count, 'i', XSIZE(struct section_problem_data, token_open_tests_count), NULL, XOFFSET(struct section_problem_data, token_open_tests_count) },
   [CNTSPROB_token_open_tests_val] = { CNTSPROB_token_open_tests_val, '?', XSIZE(struct section_problem_data, token_open_tests_val), NULL, XOFFSET(struct section_problem_data, token_open_tests_val) },
+  [CNTSPROB_token_open_tests_group] = { CNTSPROB_token_open_tests_group, '?', XSIZE(struct section_problem_data, token_open_tests_group), NULL, XOFFSET(struct section_problem_data, token_open_tests_group) },
   [CNTSPROB_max_vm_size] = { CNTSPROB_max_vm_size, 'E', XSIZE(struct section_problem_data, max_vm_size), "max_vm_size", XOFFSET(struct section_problem_data, max_vm_size) },
   [CNTSPROB_max_data_size] = { CNTSPROB_max_data_size, 'E', XSIZE(struct section_problem_data, max_data_size), "max_data_size", XOFFSET(struct section_problem_data, max_data_size) },
   [CNTSPROB_max_stack_size] = { CNTSPROB_max_stack_size, 'E', XSIZE(struct section_problem_data, max_stack_size), "max_stack_size", XOFFSET(struct section_problem_data, max_stack_size) },
@@ -1761,16 +1764,19 @@ void cntsprob_copy(struct section_problem_data *dst, const struct section_proble
   }
   // private open_tests_count
   // private open_tests_val
+  // private open_tests_group
   if (src->final_open_tests) {
     dst->final_open_tests = strdup(src->final_open_tests);
   }
   // private final_open_tests_count
   // private final_open_tests_val
+  // private final_open_tests_group
   if (src->token_open_tests) {
     dst->token_open_tests = strdup(src->token_open_tests);
   }
   // private token_open_tests_count
   // private token_open_tests_val
+  // private token_open_tests_group
   dst->max_vm_size = src->max_vm_size;
   dst->max_data_size = src->max_data_size;
   dst->max_stack_size = src->max_stack_size;
@@ -1905,12 +1911,15 @@ void cntsprob_free(struct section_problem_data *ptr)
   free(ptr->open_tests);
   // private open_tests_count
   // private open_tests_val
+  // private open_tests_group
   free(ptr->final_open_tests);
   // private final_open_tests_count
   // private final_open_tests_val
+  // private final_open_tests_group
   free(ptr->token_open_tests);
   // private token_open_tests_count
   // private token_open_tests_val
+  // private token_open_tests_group
   free(ptr->extid);
   free(ptr->unhandled_vars);
   sarray_free((char**) ptr->score_view);

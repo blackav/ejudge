@@ -1267,6 +1267,12 @@ prepare_problem_free_func(struct generic_section_config *gp)
   xfree(p->open_tests_val);
   xfree(p->final_open_tests_val);
   xfree(p->token_open_tests_val);
+  xfree(p->open_tests_group);
+  xfree(p->final_open_tests_group);
+  xfree(p->token_open_tests_group);
+  xfree(p->open_tests_group);
+  xfree(p->final_open_tests_group);
+  xfree(p->token_open_tests_group);
   prepare_free_testsets(p->ts_total, p->ts_infos);
   free_deadline_penalties(p->dp_total, p->dp_infos);
   free_personal_deadlines(p->pd_total, p->pd_infos);
@@ -2969,7 +2975,7 @@ prepare_problem(
   if (prob->open_tests && prob->open_tests[0]) {
     if (prepare_parse_open_tests(stderr, prob->open_tests,
                                  &prob->open_tests_val,
-                                 NULL,
+                                 &prob->open_tests_group,
                                  &prob->open_tests_count) < 0)
       return -1;
   }
@@ -2977,7 +2983,7 @@ prepare_problem(
   if (prob->final_open_tests && prob->final_open_tests[0]) {
     if (prepare_parse_open_tests(stderr, prob->final_open_tests,
                                  &prob->final_open_tests_val,
-                                 NULL,
+                                 &prob->final_open_tests_group,
                                  &prob->final_open_tests_count) < 0)
       return -1;
   }
@@ -2985,7 +2991,7 @@ prepare_problem(
   if (prob->token_open_tests && prob->token_open_tests[0]) {
     if (prepare_parse_open_tests(stderr, prob->token_open_tests,
                                  &prob->token_open_tests_val,
-                                 NULL,
+                                 &prob->token_open_tests_group,
                                  &prob->token_open_tests_count) < 0)
       return -1;
   }
