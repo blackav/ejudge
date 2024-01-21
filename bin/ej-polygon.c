@@ -2514,9 +2514,6 @@ save_valuer_cfg(
         } else if (gi->group_score >= 0) {
             fprintf(vf, "    score %d;\n", gi->group_score);
         }
-        if (!strcmp(gi->visibility, "brief")) {
-            fprintf(vf, "    stat_to_users;\n");
-        }
         if (!strcmp(gi->visibility, "hidden")) {
             fprintf(vf, "    offline;\n");
         }
@@ -2774,7 +2771,7 @@ process_polygon_zip(
                                             if (!strcmp(a->text, "complete")) {
                                                 gi->visibility = "full";
                                             } else if (!strcmp(a->text, "icpc")) {
-                                                gi->visibility = "brief";
+                                                gi->visibility = "icpc";
                                             } else if (!strcmp(a->text, "points")) {
                                                 gi->visibility = "exists";
                                             } else if (!strcmp(a->text, "none")) {
