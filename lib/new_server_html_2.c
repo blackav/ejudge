@@ -7466,6 +7466,8 @@ write_xml_team_testing_report(
   int hide_score = 0;
   int user_status_mode = 0;
   int show_checker_comment_mode = 0;
+  int has_icpc_group = 0;
+  unsigned char *visibilities = NULL;
 
   if (table_class && *table_class) {
     snprintf(cl, sizeof(cl), " class=\"%s\"", table_class);
@@ -7600,12 +7602,26 @@ write_xml_team_testing_report(
     return 0;
   }
 
+  // regular problem
+  XALLOCAZ(visibilities, r->run_tests + 1);
+  for (i = 0; i < r->run_tests; ++i) {
+    if (r->tests[i]) {
+      visibilities[i] = cntsprob_get_test_visibility(prob, i + 1, state->online_final_visibility, token_flags);
+      if (visibilities[i] == TV_ICPC) {
+        has_icpc_group = 1;
+      }
+    }
+  }
+
   if (r->scoring_system == SCORE_KIROV ||
       (r->scoring_system == SCORE_OLYMPIAD && !r->accepting_mode)) {
     is_kirov = 1;
   }
 
-  if (is_kirov) {
+  if (has_icpc_group && is_kirov) {
+    fprintf(f, _("<big>Score gained: %d (out of %d).<br/><br/></big>\n"),
+            score, max_score);
+  } else if (is_kirov) {
     fprintf(f, _("<big>%d total tests runs, %d passed, %d failed.<br/>\n"),
             run_tests, tests_passed, run_tests - tests_passed);
     fprintf(f, _("Score gained: %d (out of %d).<br/><br/></big>\n"),
@@ -7638,8 +7654,11 @@ write_xml_team_testing_report(
 
   for (i = 0; i < r->run_tests; ++i) {
     if (!(t = r->tests[i])) continue;
-    // TV_NORMAL, TV_FULL, TV_FULLIFMARKED, TV_BRIEF, TV_EXISTS, TV_HIDDEN
-    visibility = cntsprob_get_test_visibility(prob, i + 1, state->online_final_visibility, token_flags);
+    // TV_NORMAL, TV_FULL, TV_FULLIFMARKED, TV_BRIEF, TV_EXISTS, TV_HIDDEN, TV_ICPC
+    visibility = visibilities[i];
+    if (visibility == TV_ICPC) {
+      continue;
+    }
     if (visibility == TV_FULLIFMARKED) {
       visibility = TV_HIDDEN;
       if (is_marked) visibility = TV_FULL;
@@ -7681,8 +7700,11 @@ write_xml_team_testing_report(
 
   for (i = 0; i < r->run_tests; i++) {
     if (!(t = r->tests[i])) continue;
-    // TV_NORMAL, TV_FULL, TV_FULLIFMARKED, TV_BRIEF, TV_EXISTS, TV_HIDDEN
-    visibility = cntsprob_get_test_visibility(prob, i + 1, state->online_final_visibility, token_flags);
+    // TV_NORMAL, TV_FULL, TV_FULLIFMARKED, TV_BRIEF, TV_EXISTS, TV_HIDDEN, TV_ICPC
+    visibility = visibilities[i];
+    if (visibility == TV_ICPC) {
+      continue;
+    }
     if (visibility == TV_FULLIFMARKED) {
       visibility = TV_HIDDEN;
       if (is_marked) visibility = TV_FULL;
@@ -7830,7 +7852,10 @@ write_xml_team_testing_report(
     for (i = 0; i < r->run_tests; i++) {
       if (!(t = r->tests[i])) continue;
       if (t->status == RUN_SKIPPED) continue;
-      visibility = cntsprob_get_test_visibility(prob, i + 1, state->online_final_visibility, token_flags);
+      visibility = visibilities[i];
+      if (visibility == TV_ICPC) {
+        continue;
+      }
       if (visibility == TV_FULLIFMARKED) {
         visibility = TV_HIDDEN;
         if (is_marked) visibility = TV_FULL;
