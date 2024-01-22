@@ -7915,6 +7915,7 @@ write_xml_team_testing_report(
           if (gi[g].first_fail < 0) {
             gi[g].first_fail = i;
             gi[g].fail_status = t->status;
+            gi[g].score = 0;
           }
           break;
         case RUN_CHECK_FAILED:
