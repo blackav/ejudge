@@ -3806,6 +3806,14 @@ check_problem_statuses(
 }
 
 static int
+json_sort_func(const void *p1, const void *p2)
+{
+    const cJSON *j1 = *(const cJSON **) p1;
+    const cJSON *j2 = *(const cJSON **) p2;
+    return strcmp(j1->string, j2->string);
+}
+
+static int
 process_contest_json(
         FILE *log_f,
         struct PolygonState *ps,
@@ -3857,9 +3865,17 @@ process_contest_json(
     probset->count = count;
     XCALLOC(probset->infos, probset->count);
 
+    // sort childrens in the order of the key
+    cJSON **jca = NULL;
+    XALLOCAZ(jca, count);
     int pos = 0;
     for (cJSON *jitem = jresult->child; jitem; jitem = jitem->next, ++pos) {
-        cJSON *jid = cJSON_GetObjectItem(jitem, "id");
+        jca[pos] = jitem;
+    }
+    qsort(jca, count, sizeof(jca[0]), json_sort_func);
+
+    for (pos = 0; pos < count; ++pos) {
+        cJSON *jid = cJSON_GetObjectItem(jca[pos], "id");
         if (!jid || jid->type != cJSON_Number || jid->valueint <= 0) {
             fprintf(log_f, "invalid json: integer id expected for problem\n");
             retval = 1;
