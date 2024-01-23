@@ -3882,6 +3882,7 @@ process_contest_json(
             goto done;
         }
         probset->infos[pos].key_id = jid->valueint;
+        probset->infos[pos].ejudge_short_name = xstrdup(jca[pos]->string);
     }
 
 done:
