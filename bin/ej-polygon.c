@@ -3069,7 +3069,7 @@ process_polygon_zip(
         }
         fclose(ot_f);
         pi->open_tests = ot_s;
-        pi->valuer_cmd = "../gvaluer";
+        pi->valuer_cmd = "gvaluer";
     }
     if (pi->test_u > 0) {
         int sum = 0;
