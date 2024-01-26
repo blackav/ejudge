@@ -5320,6 +5320,7 @@ run_tests(
   const unsigned char *interactor_cmd = NULL;
   unsigned char b_test_generator_cmd[PATH_MAX];
   const unsigned char *test_generator_cmd = NULL;
+  unsigned char valuer_cmd[PATH_MAX];
 
   int *open_tests_val = NULL;
   int open_tests_count = 0;
@@ -5368,6 +5369,7 @@ run_tests(
   const unsigned char *tgz_dir = srpp->tgz_dir;
   unsigned char b_test_dir[PATH_MAX];
 
+  valuer_cmd[0] = 0;
   valuer_cmt_file[0] = 0;
   valuer_jcmt_file[0] = 0;
 
@@ -5420,6 +5422,13 @@ run_tests(
     snprintf(check_dir, sizeof(check_dir), "%s", tst->check_dir);
   } else {
     snprintf(check_dir, sizeof(check_dir), "%s", global->run_check_dir);
+  }
+
+  if (srpp->standard_valuer && srpp->standard_valuer[0]) {
+    snprintf(valuer_cmd, sizeof(valuer_cmd), "%s/%s",
+             global->ejudge_checkers_dir, srpp->standard_valuer);
+  } else if (srpp->valuer_cmd && srpp->valuer_cmd[0]) {
+    snprintf(valuer_cmd, sizeof(valuer_cmd), "%s", srpp->valuer_cmd);
   }
 
   if (srpp->standard_checker && srpp->standard_checker[0]) {
@@ -5572,7 +5581,7 @@ run_tests(
 
 #ifndef __WIN32__
   if (!user_input_mode &&
-      srpp->interactive_valuer > 0 && srpp->valuer_cmd && srpp->valuer_cmd[0]
+      srpp->interactive_valuer > 0 && valuer_cmd[0]
       && srgp->accepting_mode <= 0) {
     if (pipe(evfds) < 0
         || fcntl(evfds[0], F_SETFD, FD_CLOEXEC) < 0
@@ -5846,7 +5855,7 @@ run_tests(
       }
     }
 
-    if (total_max_score > srpp->full_score && (!srpp->valuer_cmd || !srpp->valuer_cmd[0])) {
+    if (total_max_score > srpp->full_score && !valuer_cmd[0]) {
       append_msg_to_log(messages_path, "Max total score (%d) is greater than full_score",
                         total_max_score, srpp->full_score);
       goto check_failed;
@@ -5885,7 +5894,7 @@ run_tests(
       if (status != RUN_OK) {
         if (srpp->scoring_checker > 0) {
           reply_pkt->score = tests.data[tests.size - 1].score;
-        } else if (!srpp->valuer_cmd || !srpp->valuer_cmd[0]) {
+        } else if (!valuer_cmd[0]) {
           if (!score_tests_val) {
             append_msg_to_log(messages_path, "score_tests parameter is undefined");
             goto check_failed;
@@ -5899,7 +5908,7 @@ run_tests(
     }
   }
 
-  if (!user_input_mode && srpp->valuer_cmd && srpp->valuer_cmd[0] && srgp->accepting_mode <= 0) {
+  if (!user_input_mode && valuer_cmd[0] && srgp->accepting_mode <= 0) {
     if (srpp->interactive_valuer <= 0
         && reply_pkt->status != RUN_CHECK_FAILED) {
       if (invoke_valuer(global, srp, agent, mirror_dir,
