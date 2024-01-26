@@ -330,6 +330,7 @@ static struct meta_info_item meta_info_super_run_in_problem_packet_data[] =
   [META_SUPER_RUN_IN_PROBLEM_PACKET_test_score_list] = { META_SUPER_RUN_IN_PROBLEM_PACKET_test_score_list, 's', XSIZE(struct super_run_in_problem_packet, test_score_list), "test_score_list", XOFFSET(struct super_run_in_problem_packet, test_score_list) },
   [META_SUPER_RUN_IN_PROBLEM_PACKET_score_tests] = { META_SUPER_RUN_IN_PROBLEM_PACKET_score_tests, 's', XSIZE(struct super_run_in_problem_packet, score_tests), "score_tests", XOFFSET(struct super_run_in_problem_packet, score_tests) },
   [META_SUPER_RUN_IN_PROBLEM_PACKET_standard_checker] = { META_SUPER_RUN_IN_PROBLEM_PACKET_standard_checker, 's', XSIZE(struct super_run_in_problem_packet, standard_checker), "standard_checker", XOFFSET(struct super_run_in_problem_packet, standard_checker) },
+  [META_SUPER_RUN_IN_PROBLEM_PACKET_standard_valuer] = { META_SUPER_RUN_IN_PROBLEM_PACKET_standard_valuer, 's', XSIZE(struct super_run_in_problem_packet, standard_valuer), "standard_valuer", XOFFSET(struct super_run_in_problem_packet, standard_valuer) },
   [META_SUPER_RUN_IN_PROBLEM_PACKET_valuer_sets_marked] = { META_SUPER_RUN_IN_PROBLEM_PACKET_valuer_sets_marked, 'B', XSIZE(struct super_run_in_problem_packet, valuer_sets_marked), "valuer_sets_marked", XOFFSET(struct super_run_in_problem_packet, valuer_sets_marked) },
   [META_SUPER_RUN_IN_PROBLEM_PACKET_interactor_time_limit_ms] = { META_SUPER_RUN_IN_PROBLEM_PACKET_interactor_time_limit_ms, 'i', XSIZE(struct super_run_in_problem_packet, interactor_time_limit_ms), "interactor_time_limit_ms", XOFFSET(struct super_run_in_problem_packet, interactor_time_limit_ms) },
   [META_SUPER_RUN_IN_PROBLEM_PACKET_interactor_real_time_limit_ms] = { META_SUPER_RUN_IN_PROBLEM_PACKET_interactor_real_time_limit_ms, 'i', XSIZE(struct super_run_in_problem_packet, interactor_real_time_limit_ms), "interactor_real_time_limit_ms", XOFFSET(struct super_run_in_problem_packet, interactor_real_time_limit_ms) },
@@ -498,6 +499,9 @@ void meta_super_run_in_problem_packet_copy(struct super_run_in_problem_packet *d
   if (src->standard_checker) {
     dst->standard_checker = strdup(src->standard_checker);
   }
+  if (src->standard_valuer) {
+    dst->standard_valuer = strdup(src->standard_valuer);
+  }
   dst->valuer_sets_marked = src->valuer_sets_marked;
   dst->interactor_time_limit_ms = src->interactor_time_limit_ms;
   dst->interactor_real_time_limit_ms = src->interactor_real_time_limit_ms;
@@ -605,6 +609,7 @@ void meta_super_run_in_problem_packet_free(struct super_run_in_problem_packet *p
   free(ptr->test_score_list);
   free(ptr->score_tests);
   free(ptr->standard_checker);
+  free(ptr->standard_valuer);
   free(ptr->test_pat);
   free(ptr->corr_pat);
   free(ptr->info_pat);
