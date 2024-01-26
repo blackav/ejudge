@@ -5171,7 +5171,9 @@ do_import_problem(
   if (cfg->interactor_cmd && cfg->interactor_cmd[0]) {
     xstrdup3(&prob->interactor_cmd, cfg->interactor_cmd);
   }
-  if (cfg->valuer_cmd && cfg->valuer_cmd[0]) {
+  if (cfg->standard_valuer && cfg->standard_valuer[0]) {
+    xstrdup3(&prob->standard_valuer, cfg->standard_valuer);
+  } else if (cfg->valuer_cmd && cfg->valuer_cmd[0]) {
     xstrdup3(&prob->valuer_cmd, cfg->valuer_cmd);
   }
   if (cfg->xml_file && cfg->xml_file[0]) {
