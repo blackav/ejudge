@@ -1234,7 +1234,7 @@ invoke_valuer(
         const struct super_run_in_packet *srp,
         struct AgentClient *agent,
         const unsigned char *mirror_dir,
-        const unsigned char *in_valuer_cmd,
+        const unsigned char *valuer_cmd,
         int total_tests,
         const struct run_test_info *tests,
         int cur_variant,
@@ -1255,7 +1255,6 @@ invoke_valuer(
   path_t score_err;
   path_t score_cmt;
   path_t score_jcmt;
-  path_t valuer_cmd;
   FILE *f = 0;
   int i, retval = -1;
   tpTask tsk = 0;
@@ -1297,9 +1296,6 @@ invoke_valuer(
     goto cleanup;
   }
   f = 0;
-
-  snprintf(valuer_cmd, sizeof(valuer_cmd), "%s", in_valuer_cmd);
-  mirror_file(agent, valuer_cmd, sizeof(valuer_cmd), mirror_dir);
 
   info("starting valuer: %s %s %s", valuer_cmd, score_cmt, score_jcmt);
 
@@ -1397,7 +1393,7 @@ start_interactive_valuer(
         const struct super_run_in_packet *srp,
         struct AgentClient *agent,
         const unsigned char *mirror_dir,
-        const unsigned char *in_valuer_cmd,
+        const unsigned char *valuer_cmd,
         const unsigned char *valuer_err_file,
         const unsigned char *valuer_cmt_file,
         const unsigned char *valuer_jcmt_file,
@@ -1407,11 +1403,7 @@ start_interactive_valuer(
         int exec_user_serial)
 {
   const struct super_run_in_problem_packet *srpp = srp->problem;
-  path_t valuer_cmd;
   tpTask tsk = NULL;
-
-  snprintf(valuer_cmd, sizeof(valuer_cmd), "%s", in_valuer_cmd);
-  mirror_file(agent, valuer_cmd, sizeof(valuer_cmd), mirror_dir);
 
   info("starting interactive valuer: %s %s %s",
        valuer_cmd, valuer_cmt_file, valuer_jcmt_file);
@@ -5429,8 +5421,10 @@ run_tests(
   if (srpp->standard_valuer && srpp->standard_valuer[0]) {
     snprintf(valuer_cmd, sizeof(valuer_cmd), "%s/%s",
              global->ejudge_checkers_dir, srpp->standard_valuer);
+    mirror_file(agent, valuer_cmd, sizeof(valuer_cmd), mirror_dir);
   } else if (srpp->valuer_cmd && srpp->valuer_cmd[0]) {
     snprintf(valuer_cmd, sizeof(valuer_cmd), "%s", srpp->valuer_cmd);
+    mirror_file(agent, valuer_cmd, sizeof(valuer_cmd), mirror_dir);
   }
 
   if (srpp->standard_checker && srpp->standard_checker[0]) {
