@@ -2,7 +2,7 @@
 #ifndef __PROBLEM_CONFIG_H__
 #define __PROBLEM_CONFIG_H__
 
-/* Copyright (C) 2012-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -205,6 +205,7 @@ struct problem_config_section
   unsigned char *container_options;
   unsigned char *iframe_statement;
   unsigned char *extra_src_dir;
+  unsigned char *standard_valuer;
 
   char **test_sets;
   char **date_penalty;
