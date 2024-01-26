@@ -143,7 +143,7 @@ struct ProblemInfo
     unsigned char *open_tests;
     unsigned char *final_open_tests;
     unsigned char *test_score_list;
-    unsigned char *valuer_cmd;
+    unsigned char *standard_valuer;
 
     int test_a, test_u;
     struct TestInfo *tests;
@@ -1356,7 +1356,7 @@ free_problem_infos(struct ProblemSet *probset)
         xfree(pi->open_tests);
         xfree(pi->final_open_tests);
         xfree(pi->test_score_list);
-        xfree(pi->valuer_cmd);
+        xfree(pi->standard_valuer);
 
         for (int i = 0; i < pi->test_u; ++i) {
             struct TestInfo *ti = &pi->tests[i];
@@ -3069,7 +3069,7 @@ process_polygon_zip(
         }
         fclose(ot_f);
         pi->open_tests = ot_s;
-        pi->valuer_cmd = "gvaluer";
+        pi->standard_valuer = "gvaluer";
     }
     if (pi->test_u > 0) {
         int sum = 0;
@@ -3434,8 +3434,8 @@ process_polygon_zip(
     if (pi->final_open_tests) {
         fprintf(log_f, "    final_open_tests: %s\n", pi->final_open_tests);
     }
-    if (pi->valuer_cmd) {
-        fprintf(log_f, "    valuer_cmd: %s\n", pi->valuer_cmd);
+    if (pi->standard_valuer) {
+        fprintf(log_f, "    standard_valuer: %s\n", pi->standard_valuer);
     }
 
     unsigned char buf[1024];
@@ -3537,8 +3537,8 @@ process_polygon_zip(
     if (pi->final_open_tests) {
         prob_cfg->final_open_tests = xstrdup(pi->final_open_tests);
     }
-    if (pi->valuer_cmd && pi->valuer_cmd[0]) {
-        prob_cfg->valuer_cmd = xstrdup(pi->valuer_cmd);
+    if (pi->standard_valuer && pi->standard_valuer[0]) {
+        prob_cfg->standard_valuer = xstrdup(pi->standard_valuer);
     }
     if (full_score > 0) {
         prob_cfg->full_score = full_score;
