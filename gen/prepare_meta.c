@@ -1286,6 +1286,7 @@ static struct meta_info_item meta_info_section_problem_data_data[] =
   [CNTSPROB_custom_compile_cmd] = { CNTSPROB_custom_compile_cmd, 's', XSIZE(struct section_problem_data, custom_compile_cmd), "custom_compile_cmd", XOFFSET(struct section_problem_data, custom_compile_cmd) },
   [CNTSPROB_custom_lang_name] = { CNTSPROB_custom_lang_name, 's', XSIZE(struct section_problem_data, custom_lang_name), "custom_lang_name", XOFFSET(struct section_problem_data, custom_lang_name) },
   [CNTSPROB_extra_src_dir] = { CNTSPROB_extra_src_dir, 's', XSIZE(struct section_problem_data, extra_src_dir), "extra_src_dir", XOFFSET(struct section_problem_data, extra_src_dir) },
+  [CNTSPROB_standard_valuer] = { CNTSPROB_standard_valuer, 's', XSIZE(struct section_problem_data, standard_valuer), "standard_valuer", XOFFSET(struct section_problem_data, standard_valuer) },
   [CNTSPROB_test_pat] = { CNTSPROB_test_pat, 's', XSIZE(struct section_problem_data, test_pat), "test_pat", XOFFSET(struct section_problem_data, test_pat) },
   [CNTSPROB_corr_pat] = { CNTSPROB_corr_pat, 's', XSIZE(struct section_problem_data, corr_pat), "corr_pat", XOFFSET(struct section_problem_data, corr_pat) },
   [CNTSPROB_info_pat] = { CNTSPROB_info_pat, 's', XSIZE(struct section_problem_data, info_pat), "info_pat", XOFFSET(struct section_problem_data, info_pat) },
@@ -1655,6 +1656,9 @@ void cntsprob_copy(struct section_problem_data *dst, const struct section_proble
   if (src->extra_src_dir) {
     dst->extra_src_dir = strdup(src->extra_src_dir);
   }
+  if (src->standard_valuer) {
+    dst->standard_valuer = strdup(src->standard_valuer);
+  }
   if (src->test_pat) {
     dst->test_pat = strdup(src->test_pat);
   }
@@ -1846,6 +1850,7 @@ void cntsprob_free(struct section_problem_data *ptr)
   free(ptr->custom_compile_cmd);
   free(ptr->custom_lang_name);
   free(ptr->extra_src_dir);
+  free(ptr->standard_valuer);
   free(ptr->test_pat);
   free(ptr->corr_pat);
   free(ptr->info_pat);

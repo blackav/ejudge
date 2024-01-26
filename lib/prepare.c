@@ -591,6 +591,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(custom_compile_cmd, "S"),
   PROBLEM_PARAM(custom_lang_name, "S"),
   PROBLEM_PARAM(extra_src_dir, "S"),
+  PROBLEM_PARAM(standard_valuer, "S"),
 
   { 0, 0, 0, 0 }
 };

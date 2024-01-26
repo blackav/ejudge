@@ -480,6 +480,7 @@ enum
   CNTSPROB_custom_compile_cmd,
   CNTSPROB_custom_lang_name,
   CNTSPROB_extra_src_dir,
+  CNTSPROB_standard_valuer,
   CNTSPROB_test_pat,
   CNTSPROB_corr_pat,
   CNTSPROB_info_pat,

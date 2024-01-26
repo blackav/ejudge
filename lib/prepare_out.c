@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2005-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1462,6 +1462,8 @@ prepare_unparse_prob(
   if (prob->check_cmd && prob->check_cmd[0])
     fprintf(f, "check_cmd = \"%s\"\n", CARMOR(prob->check_cmd));
   do_xstr(f, &ab, "checker_env", prob->checker_env);
+  if (prob->standard_valuer)
+    fprintf(f, "standard_valuer = \"%s\"\n", CARMOR(prob->standard_valuer));
   if (prob->valuer_cmd)
     fprintf(f, "valuer_cmd = \"%s\"\n", CARMOR(prob->valuer_cmd));
   do_xstr(f, &ab, "valuer_env", prob->valuer_env);
@@ -1951,6 +1953,8 @@ prepare_unparse_actual_prob(
   if (!prob->standard_checker && (show_paths || (global && global->advanced_layout > 0)) && prob->check_cmd)
     fprintf(f, "check_cmd = \"%s\"\n", CARMOR(prob->check_cmd));
   do_xstr(f, &ab, "checker_env", prob->checker_env);
+  if (prob->standard_valuer)
+    fprintf(f, "standard_valuer = \"%s\"\n", CARMOR(prob->standard_valuer));
   if ((show_paths || (global && global->advanced_layout > 0)) && prob->valuer_cmd)
     fprintf(f, "valuer_cmd = \"%s\"\n", CARMOR(prob->valuer_cmd));
   do_xstr(f, &ab, "valuer_env", prob->valuer_env);

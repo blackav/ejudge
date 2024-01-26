@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -2557,6 +2557,7 @@ serve_run_request(
   srpp->test_score_list = xstrdup2(prob->test_score_list);
   srpp->score_tests = xstrdup2(prob->score_tests);
   srpp->standard_checker = xstrdup2(prob->standard_checker);
+  srpp->standard_valuer = xstrdup2(prob->standard_valuer);
   srpp->valuer_sets_marked = prob->valuer_sets_marked;
   if (prob->interactor_time_limit > 0) {
     srpp->interactor_time_limit_ms = prob->interactor_time_limit * 1000;
