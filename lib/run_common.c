@@ -1234,6 +1234,7 @@ invoke_valuer(
         const struct super_run_in_packet *srp,
         struct AgentClient *agent,
         const unsigned char *mirror_dir,
+        const unsigned char *in_valuer_cmd,
         int total_tests,
         const struct run_test_info *tests,
         int cur_variant,
@@ -1396,6 +1397,7 @@ start_interactive_valuer(
         const struct super_run_in_packet *srp,
         struct AgentClient *agent,
         const unsigned char *mirror_dir,
+        const unsigned char *in_valuer_cmd,
         const unsigned char *valuer_err_file,
         const unsigned char *valuer_cmt_file,
         const unsigned char *valuer_jcmt_file,
@@ -5595,6 +5597,7 @@ run_tests(
     snprintf(valuer_cmt_file, sizeof(valuer_cmt_file), "%s/score_cmt", global->run_work_dir);
     snprintf(valuer_jcmt_file, sizeof(valuer_jcmt_file), "%s/score_jcmt", global->run_work_dir);
     valuer_tsk = start_interactive_valuer(global, srp, agent, mirror_dir,
+                                          valuer_cmd,
                                           messages_path,
                                           valuer_cmt_file,
                                           valuer_jcmt_file,
@@ -5912,6 +5915,7 @@ run_tests(
     if (srpp->interactive_valuer <= 0
         && reply_pkt->status != RUN_CHECK_FAILED) {
       if (invoke_valuer(global, srp, agent, mirror_dir,
+                        valuer_cmd,
                         tests.size, tests.data,
                         srgp->variant, srpp->full_score,
                         state->exec_user_serial,
