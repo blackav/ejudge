@@ -143,6 +143,7 @@ enum
   META_SUPER_RUN_IN_PROBLEM_PACKET_test_score_list,
   META_SUPER_RUN_IN_PROBLEM_PACKET_score_tests,
   META_SUPER_RUN_IN_PROBLEM_PACKET_standard_checker,
+  META_SUPER_RUN_IN_PROBLEM_PACKET_standard_valuer,
   META_SUPER_RUN_IN_PROBLEM_PACKET_valuer_sets_marked,
   META_SUPER_RUN_IN_PROBLEM_PACKET_interactor_time_limit_ms,
   META_SUPER_RUN_IN_PROBLEM_PACKET_interactor_real_time_limit_ms,

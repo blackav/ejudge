@@ -1,6 +1,6 @@
 # -*- Makefile -*-
 
-# Copyright (C) 2015-2022 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2015-2024 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -66,10 +66,12 @@ endif
 endif
 TARGETLIBS = libchecker.a libchecker2.a
 
+TARGETS += gvaluer
+
 all : ${TARGETS} mo
 
 clean :
-	-rm -fr *.o *.a *.so *~ *.bak testinfo.h trie.h trie_private.h trie_4.c testinfo.c testinfo_lookup.c pic pic32 m32 ${CHKXFILES} ${STYLEXFILES}
+	-rm -fr *.o *.a *.so *~ *.bak testinfo.h trie.h trie_private.h trie_4.c testinfo.c testinfo_lookup.c pic pic32 m32 ${CHKXFILES} ${STYLEXFILES} gvaluer
 pic :
 	mkdir pic
 
@@ -100,6 +102,7 @@ install : all
 	install -m 644 delphi/testlib.pas "${DESTDIR}${datadir}/ejudge/testlib/delphi"
 	mkdir -p "${DESTDIR}${libexecdir}/ejudge/checkers"
 	for i in ${CHKXFILES} ${STYLEXFILES}; do install -m 755 $$i "${DESTDIR}${libexecdir}/ejudge/checkers"; done
+	for i in gvaluer; do install -m 755 $$i "${DESTDIR}${libexecdir}/ejudge/checkers"; done
 	-cd "${DESTDIR}${datadir}/ejudge/testlib/fpc"; FPC=`"${DESTDIR}${libexecdir}/ejudge"/fpc-version -p`; [ x"$$FPC" != x ] && "$$FPC" testlib.pas
 	-cd "${DESTDIR}${datadir}/ejudge/testlib/delphi"; DCC=`"${DESTDIR}${libexecdir}/ejudge"/dcc-version -p`; [ x"$$DCC" != x ] && "$$DCC" testlib.pas
 	if [ x"${ENABLE_NLS}" = x1 ]; then for locale in "ru_RU.UTF-8" "uk_UA.UTF-8" "kk_KZ.UTF-8"; do install -d "${DESTDIR}${datadir}/locale/$${locale}/LC_MESSAGES"; install -m 0644 "locale/$${locale}/LC_MESSAGES/ejudgecheckers.mo" "${DESTDIR}${datadir}/locale/$${locale}/LC_MESSAGES"; done; fi
@@ -226,6 +229,9 @@ else
 cmp_% : cmp_%.c checker.h checker_internal.h libchecker.so
 	${CC} ${CFLAGS} ${LDFLAGS} ${RPATHOPT} -L. $< -o $@ -lchecker -lm
 endif
+
+gvaluer : gvaluer.cpp
+	g++ -Wall -Werror -O2 $^ -o$@ || ( echo 'echo "gvaluer not compiled"' > gvaluer; chmod 755 gvaluer)
 
 style_% : style_%.c
 	${CC} ${CFLAGS} ${LDFLAGS} -L.. $< -o $@ -lcommon -lplatform -lcommon -lplatform -lz -lm

@@ -173,6 +173,7 @@ enum
   META_PROBLEM_CONFIG_SECTION_container_options,
   META_PROBLEM_CONFIG_SECTION_iframe_statement,
   META_PROBLEM_CONFIG_SECTION_extra_src_dir,
+  META_PROBLEM_CONFIG_SECTION_standard_valuer,
   META_PROBLEM_CONFIG_SECTION_test_sets,
   META_PROBLEM_CONFIG_SECTION_date_penalty,
   META_PROBLEM_CONFIG_SECTION_group_start_date,

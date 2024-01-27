@@ -62,6 +62,7 @@ const unsigned char * const test_visibility_str[] =
   [TV_BRIEF] = "brief",
   [TV_EXISTS] = "exists",
   [TV_HIDDEN] = "hidden",
+  [TV_ICPC] = "icpc",
 
   [TV_LAST] = 0
 };

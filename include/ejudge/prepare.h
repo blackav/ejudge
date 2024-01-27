@@ -2,7 +2,7 @@
 #ifndef __PREPARE_H__
 #define __PREPARE_H__
 
-/* Copyright (C) 2000-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1141,6 +1141,8 @@ struct section_problem_data
   unsigned char *custom_lang_name;
   /** directory with files to be copied to the compilation directory */
   unsigned char *extra_src_dir;
+  /** standard valuer program */
+  unsigned char *standard_valuer;
 
   /** printf pattern for the test files */
   unsigned char *test_pat;
@@ -1269,16 +1271,19 @@ struct section_problem_data
   unsigned char *open_tests;
   int open_tests_count META_ATTRIB((meta_private));
   int *open_tests_val META_ATTRIB((meta_private));
+  int *open_tests_group META_ATTRIB((meta_private));
 
   /** test visibility in the final final mode */
   unsigned char *final_open_tests;
   int final_open_tests_count META_ATTRIB((meta_private));
   int *final_open_tests_val META_ATTRIB((meta_private));
+  int *final_open_tests_group META_ATTRIB((meta_private));
 
   /** test visibility purchasable by tokens */
   unsigned char *token_open_tests;
   int token_open_tests_count META_ATTRIB((meta_private));
   int *token_open_tests_val META_ATTRIB((meta_private));
+  int *token_open_tests_group META_ATTRIB((meta_private));
 
   /** max virtual size limit  */
   ej_size64_t max_vm_size;
@@ -1712,6 +1717,7 @@ prepare_parse_open_tests(
         FILE *flog,
         const unsigned char *str,
         int **p_vals,
+        int **p_groups,
         int *p_count);
 
 int

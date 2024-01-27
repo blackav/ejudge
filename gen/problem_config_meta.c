@@ -180,6 +180,7 @@ static struct meta_info_item meta_info_problem_config_section_data[] =
   [META_PROBLEM_CONFIG_SECTION_container_options] = { META_PROBLEM_CONFIG_SECTION_container_options, 's', XSIZE(struct problem_config_section, container_options), "container_options", XOFFSET(struct problem_config_section, container_options) },
   [META_PROBLEM_CONFIG_SECTION_iframe_statement] = { META_PROBLEM_CONFIG_SECTION_iframe_statement, 's', XSIZE(struct problem_config_section, iframe_statement), "iframe_statement", XOFFSET(struct problem_config_section, iframe_statement) },
   [META_PROBLEM_CONFIG_SECTION_extra_src_dir] = { META_PROBLEM_CONFIG_SECTION_extra_src_dir, 's', XSIZE(struct problem_config_section, extra_src_dir), "extra_src_dir", XOFFSET(struct problem_config_section, extra_src_dir) },
+  [META_PROBLEM_CONFIG_SECTION_standard_valuer] = { META_PROBLEM_CONFIG_SECTION_standard_valuer, 's', XSIZE(struct problem_config_section, standard_valuer), "standard_valuer", XOFFSET(struct problem_config_section, standard_valuer) },
   [META_PROBLEM_CONFIG_SECTION_test_sets] = { META_PROBLEM_CONFIG_SECTION_test_sets, 'x', XSIZE(struct problem_config_section, test_sets), "test_sets", XOFFSET(struct problem_config_section, test_sets) },
   [META_PROBLEM_CONFIG_SECTION_date_penalty] = { META_PROBLEM_CONFIG_SECTION_date_penalty, 'x', XSIZE(struct problem_config_section, date_penalty), "date_penalty", XOFFSET(struct problem_config_section, date_penalty) },
   [META_PROBLEM_CONFIG_SECTION_group_start_date] = { META_PROBLEM_CONFIG_SECTION_group_start_date, 'x', XSIZE(struct problem_config_section, group_start_date), "group_start_date", XOFFSET(struct problem_config_section, group_start_date) },
@@ -528,6 +529,9 @@ void meta_problem_config_section_copy(struct problem_config_section *dst, const 
   if (src->extra_src_dir) {
     dst->extra_src_dir = strdup(src->extra_src_dir);
   }
+  if (src->standard_valuer) {
+    dst->standard_valuer = strdup(src->standard_valuer);
+  }
   dst->test_sets = (typeof(dst->test_sets)) sarray_copy((char**) src->test_sets);
   dst->date_penalty = (typeof(dst->date_penalty)) sarray_copy((char**) src->date_penalty);
   dst->group_start_date = (typeof(dst->group_start_date)) sarray_copy((char**) src->group_start_date);
@@ -616,6 +620,7 @@ void meta_problem_config_section_free(struct problem_config_section *ptr)
   free(ptr->container_options);
   free(ptr->iframe_statement);
   free(ptr->extra_src_dir);
+  free(ptr->standard_valuer);
   sarray_free((char**) ptr->test_sets);
   sarray_free((char**) ptr->date_penalty);
   sarray_free((char**) ptr->group_start_date);

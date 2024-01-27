@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2011-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2011-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -5171,8 +5171,22 @@ do_import_problem(
   if (cfg->interactor_cmd && cfg->interactor_cmd[0]) {
     xstrdup3(&prob->interactor_cmd, cfg->interactor_cmd);
   }
+  if (cfg->standard_valuer && cfg->standard_valuer[0]) {
+    xstrdup3(&prob->standard_valuer, cfg->standard_valuer);
+  } else if (cfg->valuer_cmd && cfg->valuer_cmd[0]) {
+    xstrdup3(&prob->valuer_cmd, cfg->valuer_cmd);
+  }
   if (cfg->xml_file && cfg->xml_file[0]) {
     xstrdup3(&prob->xml_file, cfg->xml_file);
+  }
+  if (cfg->test_score_list && cfg->test_score_list[0]) {
+    xstrdup3(&prob->test_score_list, cfg->test_score_list);
+  }
+  if (cfg->open_tests && cfg->open_tests[0]) {
+    xstrdup3(&prob->open_tests, cfg->open_tests);
+  }
+  if (cfg->final_open_tests && cfg->final_open_tests[0]) {
+    xstrdup3(&prob->final_open_tests, cfg->final_open_tests);
   }
 
 cleanup:

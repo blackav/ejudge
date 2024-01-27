@@ -1815,6 +1815,35 @@ function viewDialogOnChange(field)
   }
 %>
 
+<%
+  {
+%>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-standard_valuer-div">
+                <td>Standard valuer:</td>
+                <td><%
+    const unsigned char *value = prob->standard_valuer;
+%><s:textfield id="orig-standard_valuer" readonly="readonly" name="param" value="value" size="48" maxlength="1024" checkExpr="" /><%
+    if (prob_id <= 0) {
+      if (!value) {
+%>(<i>Not set</i>)<%
+      }
+    } else {
+      if (!value) {
+        if (!tmp_prob->standard_valuer) {
+%>(<i>Not set</i>)<%
+        } else {
+%>(<i>Default: <s:v value="tmp_prob->standard_valuer" /></i>)<%
+        }
+      }
+    }
+%></td>
+                <td><input type="button" onclick="popupCheckingDialog(event, 'standard_valuer')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:standard_valuer" /></td>
+            </s:tr>
+<%
+  }
+%>
+
             <%@expand ORIG_INHERITABLE_BOOLEAN "valuer_sets_marked" "Checking" "Valuer sets <i>marked</i> flag" %>
             <%@expand ORIG_INHERITABLE_BOOLEAN "interactive_valuer" "Checking" "Valuer works interactively" %>
             <%@expand ORIG_ENV "valuer_env" "Checking" "Valuer environment" %>

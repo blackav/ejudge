@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2012-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1234,6 +1234,7 @@ invoke_valuer(
         const struct super_run_in_packet *srp,
         struct AgentClient *agent,
         const unsigned char *mirror_dir,
+        const unsigned char *valuer_cmd,
         int total_tests,
         const struct run_test_info *tests,
         int cur_variant,
@@ -1254,7 +1255,6 @@ invoke_valuer(
   path_t score_err;
   path_t score_cmt;
   path_t score_jcmt;
-  path_t valuer_cmd;
   FILE *f = 0;
   int i, retval = -1;
   tpTask tsk = 0;
@@ -1296,9 +1296,6 @@ invoke_valuer(
     goto cleanup;
   }
   f = 0;
-
-  snprintf(valuer_cmd, sizeof(valuer_cmd), "%s", srpp->valuer_cmd);
-  mirror_file(agent, valuer_cmd, sizeof(valuer_cmd), mirror_dir);
 
   info("starting valuer: %s %s %s", valuer_cmd, score_cmt, score_jcmt);
 
@@ -1396,6 +1393,7 @@ start_interactive_valuer(
         const struct super_run_in_packet *srp,
         struct AgentClient *agent,
         const unsigned char *mirror_dir,
+        const unsigned char *valuer_cmd,
         const unsigned char *valuer_err_file,
         const unsigned char *valuer_cmt_file,
         const unsigned char *valuer_jcmt_file,
@@ -1405,11 +1403,7 @@ start_interactive_valuer(
         int exec_user_serial)
 {
   const struct super_run_in_problem_packet *srpp = srp->problem;
-  path_t valuer_cmd;
   tpTask tsk = NULL;
-
-  snprintf(valuer_cmd, sizeof(valuer_cmd), "%s", srpp->valuer_cmd);
-  mirror_file(agent, valuer_cmd, sizeof(valuer_cmd), mirror_dir);
 
   info("starting interactive valuer: %s %s %s",
        valuer_cmd, valuer_cmt_file, valuer_jcmt_file);
@@ -5320,6 +5314,7 @@ run_tests(
   const unsigned char *interactor_cmd = NULL;
   unsigned char b_test_generator_cmd[PATH_MAX];
   const unsigned char *test_generator_cmd = NULL;
+  unsigned char valuer_cmd[PATH_MAX];
 
   int *open_tests_val = NULL;
   int open_tests_count = 0;
@@ -5368,6 +5363,7 @@ run_tests(
   const unsigned char *tgz_dir = srpp->tgz_dir;
   unsigned char b_test_dir[PATH_MAX];
 
+  valuer_cmd[0] = 0;
   valuer_cmt_file[0] = 0;
   valuer_jcmt_file[0] = 0;
 
@@ -5420,6 +5416,15 @@ run_tests(
     snprintf(check_dir, sizeof(check_dir), "%s", tst->check_dir);
   } else {
     snprintf(check_dir, sizeof(check_dir), "%s", global->run_check_dir);
+  }
+
+  if (srpp->standard_valuer && srpp->standard_valuer[0]) {
+    snprintf(valuer_cmd, sizeof(valuer_cmd), "%s/%s",
+             global->ejudge_checkers_dir, srpp->standard_valuer);
+    mirror_file(agent, valuer_cmd, sizeof(valuer_cmd), mirror_dir);
+  } else if (srpp->valuer_cmd && srpp->valuer_cmd[0]) {
+    snprintf(valuer_cmd, sizeof(valuer_cmd), "%s", srpp->valuer_cmd);
+    mirror_file(agent, valuer_cmd, sizeof(valuer_cmd), mirror_dir);
   }
 
   if (srpp->standard_checker && srpp->standard_checker[0]) {
@@ -5482,7 +5487,7 @@ run_tests(
   }
 
   if (srpp->open_tests && srpp->open_tests[0]) {
-    if (prepare_parse_open_tests(stderr, srpp->open_tests, &open_tests_val, &open_tests_count) < 0) {
+    if (prepare_parse_open_tests(stderr, srpp->open_tests, &open_tests_val, NULL, &open_tests_count) < 0) {
       append_msg_to_log(messages_path, "failed to parse open_tests = '%s'", srpp->open_tests);
       goto check_failed;
     }
@@ -5572,7 +5577,7 @@ run_tests(
 
 #ifndef __WIN32__
   if (!user_input_mode &&
-      srpp->interactive_valuer > 0 && srpp->valuer_cmd && srpp->valuer_cmd[0]
+      srpp->interactive_valuer > 0 && valuer_cmd[0]
       && srgp->accepting_mode <= 0) {
     if (pipe(evfds) < 0
         || fcntl(evfds[0], F_SETFD, FD_CLOEXEC) < 0
@@ -5586,6 +5591,7 @@ run_tests(
     snprintf(valuer_cmt_file, sizeof(valuer_cmt_file), "%s/score_cmt", global->run_work_dir);
     snprintf(valuer_jcmt_file, sizeof(valuer_jcmt_file), "%s/score_jcmt", global->run_work_dir);
     valuer_tsk = start_interactive_valuer(global, srp, agent, mirror_dir,
+                                          valuer_cmd,
                                           messages_path,
                                           valuer_cmt_file,
                                           valuer_jcmt_file,
@@ -5846,7 +5852,7 @@ run_tests(
       }
     }
 
-    if (total_max_score > srpp->full_score && (!srpp->valuer_cmd || !srpp->valuer_cmd[0])) {
+    if (total_max_score > srpp->full_score && !valuer_cmd[0]) {
       append_msg_to_log(messages_path, "Max total score (%d) is greater than full_score",
                         total_max_score, srpp->full_score);
       goto check_failed;
@@ -5885,7 +5891,7 @@ run_tests(
       if (status != RUN_OK) {
         if (srpp->scoring_checker > 0) {
           reply_pkt->score = tests.data[tests.size - 1].score;
-        } else if (!srpp->valuer_cmd || !srpp->valuer_cmd[0]) {
+        } else if (!valuer_cmd[0]) {
           if (!score_tests_val) {
             append_msg_to_log(messages_path, "score_tests parameter is undefined");
             goto check_failed;
@@ -5899,10 +5905,11 @@ run_tests(
     }
   }
 
-  if (!user_input_mode && srpp->valuer_cmd && srpp->valuer_cmd[0] && srgp->accepting_mode <= 0) {
+  if (!user_input_mode && valuer_cmd[0] && srgp->accepting_mode <= 0) {
     if (srpp->interactive_valuer <= 0
         && reply_pkt->status != RUN_CHECK_FAILED) {
       if (invoke_valuer(global, srp, agent, mirror_dir,
+                        valuer_cmd,
                         tests.size, tests.data,
                         srgp->variant, srpp->full_score,
                         state->exec_user_serial,

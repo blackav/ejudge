@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -7440,6 +7440,19 @@ html_make_title(unsigned char *buf, size_t size, const unsigned char *title)
   return buf;
 }
 
+struct GroupInfo
+{
+  int serial;
+  int first_test; // first test in the group (zero-based)
+  int first_fail;
+  int fail_status;
+  int count;      // total count of tests
+  int ok_count;
+  int skipped_count;
+  int cf_count;
+  int score;
+};
+
 int
 write_xml_team_testing_report(
         const serve_state_t state,
@@ -7466,6 +7479,8 @@ write_xml_team_testing_report(
   int hide_score = 0;
   int user_status_mode = 0;
   int show_checker_comment_mode = 0;
+  int has_icpc_group = 0;
+  unsigned char *visibilities = NULL;
 
   if (table_class && *table_class) {
     snprintf(cl, sizeof(cl), " class=\"%s\"", table_class);
@@ -7600,12 +7615,26 @@ write_xml_team_testing_report(
     return 0;
   }
 
+  // regular problem
+  XALLOCAZ(visibilities, r->run_tests + 1);
+  for (i = 0; i < r->run_tests; ++i) {
+    if (r->tests[i]) {
+      visibilities[i] = cntsprob_get_test_visibility(prob, i + 1, state->online_final_visibility, token_flags);
+      if (visibilities[i] == TV_ICPC) {
+        has_icpc_group = 1;
+      }
+    }
+  }
+
   if (r->scoring_system == SCORE_KIROV ||
       (r->scoring_system == SCORE_OLYMPIAD && !r->accepting_mode)) {
     is_kirov = 1;
   }
 
-  if (is_kirov) {
+  if (has_icpc_group && is_kirov) {
+    fprintf(f, _("<big>Score gained: %d (out of %d).<br/><br/></big>\n"),
+            score, max_score);
+  } else if (is_kirov) {
     fprintf(f, _("<big>%d total tests runs, %d passed, %d failed.<br/>\n"),
             run_tests, tests_passed, run_tests - tests_passed);
     fprintf(f, _("Score gained: %d (out of %d).<br/><br/></big>\n"),
@@ -7624,7 +7653,7 @@ write_xml_team_testing_report(
   }
   */
 
-  if (r->valuer_comment) {
+  if (r->valuer_comment && !has_icpc_group) {
     fprintf(f, "<p><b>%s</b>:<br/></p><pre>%s</pre>\n", _("Valuer comments"),
             ARMOR(r->valuer_comment));
     hide_score = 1;
@@ -7638,8 +7667,11 @@ write_xml_team_testing_report(
 
   for (i = 0; i < r->run_tests; ++i) {
     if (!(t = r->tests[i])) continue;
-    // TV_NORMAL, TV_FULL, TV_FULLIFMARKED, TV_BRIEF, TV_EXISTS, TV_HIDDEN
-    visibility = cntsprob_get_test_visibility(prob, i + 1, state->online_final_visibility, token_flags);
+    // TV_NORMAL, TV_FULL, TV_FULLIFMARKED, TV_BRIEF, TV_EXISTS, TV_HIDDEN, TV_ICPC
+    visibility = visibilities[i];
+    if (visibility == TV_ICPC) {
+      continue;
+    }
     if (visibility == TV_FULLIFMARKED) {
       visibility = TV_HIDDEN;
       if (is_marked) visibility = TV_FULL;
@@ -7657,6 +7689,10 @@ write_xml_team_testing_report(
       has_full = 1;
       if (r->archive_available) need_links = 1;
     }
+  }
+
+  if (has_icpc_group) {
+    fprintf(f, "<h3>%s</h3>\n", _("Open tests"));
   }
 
   fprintf(f,
@@ -7681,8 +7717,11 @@ write_xml_team_testing_report(
 
   for (i = 0; i < r->run_tests; i++) {
     if (!(t = r->tests[i])) continue;
-    // TV_NORMAL, TV_FULL, TV_FULLIFMARKED, TV_BRIEF, TV_EXISTS, TV_HIDDEN
-    visibility = cntsprob_get_test_visibility(prob, i + 1, state->online_final_visibility, token_flags);
+    // TV_NORMAL, TV_FULL, TV_FULLIFMARKED, TV_BRIEF, TV_EXISTS, TV_HIDDEN, TV_ICPC
+    visibility = visibilities[i];
+    if (visibility == TV_ICPC) {
+      continue;
+    }
     if (visibility == TV_FULLIFMARKED) {
       visibility = TV_HIDDEN;
       if (is_marked) visibility = TV_FULL;
@@ -7825,12 +7864,105 @@ write_xml_team_testing_report(
   }
   fprintf(f, "</table>\n");
 
+  if (has_icpc_group) {
+    // FIXME: use actual group numbers
+    int *tests_group = prob->open_tests_group;
+
+    int max_group_serial = -1;
+    struct GroupInfo *gi = NULL;
+    for (i = 0; i < r->run_tests; i++) {
+      if (!(t = r->tests[i])) continue;
+      visibility = visibilities[i];
+      if (visibility != TV_ICPC) {
+        continue;
+      }
+      if (max_group_serial < tests_group[i + 1]) {
+        max_group_serial = tests_group[i + 1];
+      }
+    }
+
+    if (max_group_serial > 0) {
+      XALLOCAZ(gi, max_group_serial + 1);
+      for (int g = 0; g <= max_group_serial; ++g) {
+        gi[g].serial = -1;
+        gi[g].first_test = -1;
+        gi[g].first_fail = -1;
+      }
+      // collect statistics on tests
+      for (i = 0; i < r->run_tests; ++i) {
+        if (!(t = r->tests[i])) continue;
+        visibility = visibilities[i];
+        if (visibility != TV_ICPC) {
+          continue;
+        }
+        int g = tests_group[i + 1];
+        gi[g].serial = g;
+        if (gi[g].first_test < 0) gi[g].first_test = i;
+        ++gi[g].count;
+        gi[g].score += t->score;
+        switch (t->status) {
+        case RUN_OK:
+          ++gi[g].ok_count;
+          break;
+        case RUN_RUN_TIME_ERR:
+        case RUN_TIME_LIMIT_ERR:
+        case RUN_PRESENTATION_ERR:
+        case RUN_WRONG_ANSWER_ERR:
+        case RUN_MEM_LIMIT_ERR:
+        case RUN_SECURITY_ERR:
+        case RUN_WALL_TIME_LIMIT_ERR:
+        case RUN_SYNC_ERR:
+          if (gi[g].first_fail < 0) {
+            gi[g].first_fail = i;
+            gi[g].fail_status = t->status;
+            gi[g].score = 0;
+          }
+          break;
+        case RUN_CHECK_FAILED:
+          ++gi[g].cf_count;
+          break;
+        case RUN_SKIPPED:
+          ++gi[g].skipped_count;
+          break;
+        }
+      }
+    }
+
+    if (gi) {
+      fprintf(f, "<h3>%s</h3>\n", _("Group Info"));
+      fprintf(f, "<table class=\"table\">");
+      fprintf(f, "<tr><th%s>N</th><th%s>%s</th><th%s>%s</th><th%s>%s</th></tr>\n", cl, cl, _("Result"), cl, _("Failed test"), cl, _("Score"));
+      for (int g = 0; g <= max_group_serial; ++g) {
+        if (gi[g].serial < 0) continue;
+        fprintf(f, "<tr><td%s>%d</td>", cl, gi[g].serial);
+        if (gi[g].ok_count == gi[g].count) {
+          fprintf(f, "<td%s><font color=\"%s\">%s</font></td><td%s>N/A</td><td%s>%d</td>\n",
+                  cl, "green", run_status_str(RUN_OK, 0, 0, 0, 0), cl, cl, gi[g].score);
+        } else if (gi[g].cf_count > 0) {
+          fprintf(f, "<td%s><font color=\"%s\">%s</font></td><td%s>N/A</td><td%s>N/A</td>\n",
+                  cl, "red", run_status_str(RUN_CHECK_FAILED, 0, 0, 0, 0), cl, cl);
+        } else if (gi[g].skipped_count == gi[g].count) {
+          fprintf(f, "<td%s><font color=\"%s\">%s</font></td><td%s>N/A</td><td%s>N/A</td>\n",
+                  cl, "magenta", run_status_str(RUN_SKIPPED, 0, 0, 0, 0), cl, cl);
+        } else {
+          fprintf(f, "<td%s><font color=\"%s\">%s</font></td><td%s>%d</td><td%s>%d</td>\n",
+                  cl, "red", run_status_str(gi[g].fail_status, 0, 0, 0, 0), cl, gi[g].first_fail - gi[g].first_test + 1, cl, gi[g].score);
+        }
+        fprintf(f, "</tr>\n");
+      }
+      fprintf(f, "</table>\n");
+    }
+  }
+
   if (has_full) {
     fprintf(f, "<pre>");
     for (i = 0; i < r->run_tests; i++) {
       if (!(t = r->tests[i])) continue;
       if (t->status == RUN_SKIPPED) continue;
-      visibility = cntsprob_get_test_visibility(prob, i + 1, state->online_final_visibility, token_flags);
+      visibility = visibilities[i];
+      if (visibility == TV_ICPC) {
+        continue;
+      }
       if (visibility == TV_FULLIFMARKED) {
         visibility = TV_HIDDEN;
         if (is_marked) visibility = TV_FULL;

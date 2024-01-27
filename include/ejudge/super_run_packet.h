@@ -2,7 +2,7 @@
 #ifndef __SUPER_RUN_PACKET_H__
 #define __SUPER_RUN_PACKET_H__
 
-/* Copyright (C) 2012-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -155,6 +155,7 @@ struct super_run_in_problem_packet
   unsigned char *test_score_list;
   unsigned char *score_tests;
   unsigned char *standard_checker;
+  unsigned char *standard_valuer;
   ejintbool_t valuer_sets_marked;
   int interactor_time_limit_ms;
   int interactor_real_time_limit_ms;

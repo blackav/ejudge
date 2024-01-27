@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2000-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -591,6 +591,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(custom_compile_cmd, "S"),
   PROBLEM_PARAM(custom_lang_name, "S"),
   PROBLEM_PARAM(extra_src_dir, "S"),
+  PROBLEM_PARAM(standard_valuer, "S"),
 
   { 0, 0, 0, 0 }
 };
@@ -1267,6 +1268,9 @@ prepare_problem_free_func(struct generic_section_config *gp)
   xfree(p->open_tests_val);
   xfree(p->final_open_tests_val);
   xfree(p->token_open_tests_val);
+  xfree(p->open_tests_group);
+  xfree(p->final_open_tests_group);
+  xfree(p->token_open_tests_group);
   prepare_free_testsets(p->ts_total, p->ts_infos);
   free_deadline_penalties(p->dp_total, p->dp_infos);
   free_personal_deadlines(p->pd_total, p->pd_infos);
@@ -2062,14 +2066,17 @@ prepare_parse_open_tests(
         FILE *flog,
         const unsigned char *str,
         int **p_vals,
+        int **p_groups,
         int *p_count)
 {
   int *x = 0;
+  int *g = NULL;
   int x_a = 0;
   const unsigned char *p = str, *q;
   int n;
   int v1, v2;
   int visibility;
+  int serial = -1;
 
   if (*p_vals) *p_vals = 0;
   if (!str || !*str) return 0;
@@ -2143,19 +2150,27 @@ prepare_parse_open_tests(
     if (v2 >= x_a) {
       int new_a = x_a;
       int *new_x = 0;
+      int *new_g = NULL;
       if (!new_a) new_a = 8;
       while (v2 >= new_a) new_a *= 2;
       XCALLOC(new_x, new_a);
+      XCALLOC(new_g, new_a);
       if (x_a > 0) {
         memcpy(new_x, x, x_a * sizeof(new_x[0]));
+        memcpy(new_g, g, x_a * sizeof(new_g[0]));
       }
       xfree(x);
+      xfree(g);
       x = new_x;
+      g = new_g;
       x_a = new_a;
     }
 
-    for (; v1 <= v2; ++v1)
+    ++serial;
+    for (; v1 <= v2; ++v1) {
       x[v1] = visibility;
+      g[v1] = serial;
+    }
   }
 
   if (p_vals) {
@@ -2164,10 +2179,18 @@ prepare_parse_open_tests(
   } else {
     xfree(x); x = 0;
   }
+  if (p_groups) {
+    *p_groups = g;
+    *p_count = x_a;
+  } else {
+    xfree(g);
+    g = NULL;
+  }
   return 0;
 
 fail:
   xfree(x);
+  xfree(g);
   return -1;
 }
 
@@ -2596,6 +2619,7 @@ prepare_problem(
   prepare_set_prob_value(CNTSPROB_tgzdir_pat, prob, aprob, g);
   prepare_set_prob_value(CNTSPROB_check_cmd, prob, aprob, g);
   prepare_set_prob_value(CNTSPROB_valuer_cmd, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_standard_valuer, prob, aprob, g);
   prepare_set_prob_value(CNTSPROB_interactor_cmd, prob, aprob, g);
   prepare_set_prob_value(CNTSPROB_style_checker_cmd, prob, aprob, g);
   prepare_set_prob_value(CNTSPROB_test_checker_cmd, prob, aprob, g);
@@ -2949,13 +2973,16 @@ prepare_problem(
 
   if (prob->open_tests && prob->open_tests[0]) {
     if (prepare_parse_open_tests(stderr, prob->open_tests,
-                                 &prob->open_tests_val, &prob->open_tests_count) < 0)
+                                 &prob->open_tests_val,
+                                 &prob->open_tests_group,
+                                 &prob->open_tests_count) < 0)
       return -1;
   }
 
   if (prob->final_open_tests && prob->final_open_tests[0]) {
     if (prepare_parse_open_tests(stderr, prob->final_open_tests,
                                  &prob->final_open_tests_val,
+                                 &prob->final_open_tests_group,
                                  &prob->final_open_tests_count) < 0)
       return -1;
   }
@@ -2963,6 +2990,7 @@ prepare_problem(
   if (prob->token_open_tests && prob->token_open_tests[0]) {
     if (prepare_parse_open_tests(stderr, prob->token_open_tests,
                                  &prob->token_open_tests_val,
+                                 &prob->token_open_tests_group,
                                  &prob->token_open_tests_count) < 0)
       return -1;
   }
@@ -6265,6 +6293,12 @@ prepare_set_prob_value(
     }
     break;
 
+  case CNTSPROB_standard_valuer:
+    if (!out->standard_valuer && abstr && abstr->standard_valuer) {
+      sformat_message_2(&out->standard_valuer, 0, abstr->standard_valuer, NULL, out, NULL, NULL, NULL, 0, 0, 0);
+    }
+    break;
+
   case CNTSPROB_interactor_cmd:
     if ((!out->interactor_cmd || !out->interactor_cmd[0]) && abstr && abstr->interactor_cmd && abstr->interactor_cmd[0]) {
       sformat_message_2(&out->interactor_cmd, 0, abstr->interactor_cmd, NULL, out, NULL, NULL, NULL, 0, 0, 0);
@@ -6646,6 +6680,7 @@ prepare_set_all_prob_values(
     CNTSPROB_problem_dir,
     CNTSPROB_check_cmd,
     CNTSPROB_valuer_cmd,
+    CNTSPROB_standard_valuer,
     CNTSPROB_interactor_cmd,
     CNTSPROB_style_checker_cmd,
     CNTSPROB_test_checker_cmd,

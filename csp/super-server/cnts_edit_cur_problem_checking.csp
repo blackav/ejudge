@@ -34,6 +34,7 @@
         <%@expand MENU_YESNO3 "enable_extended_info" "checking" "Pass extended info to checkers" "250" %>
         <%@expand MENU_YESNO3 "stop_on_first_fail" "checking" "Stop after the first failed test (like ACM)" "250" %>
         <%@expand MENU_TEXTFIELD_WITH_DEFAULT "valuer_cmd" "checking" "Score valuer name" "250" %>
+        <%@expand MENU_TEXTFIELD_WITH_DEFAULT "standard_valuer" "checking" "Standard valuer" "250" %>
         <%@expand MENU_YESNO3 "valuer_sets_marked" "checking" "Valuer sets <i>marked</i> flag" "250" %>
         <%@expand MENU_YESNO3 "interactive_valuer" "checking" "Valuer works interactively" "250" %>
         <%@expand MENU_TEXTFIELD "valuer_env" "checking" "Valuer environment" "250" %>
@@ -83,7 +84,7 @@ $(function() {
     $("#orig-check_cmd-div").toggle(!has_standard_checker);
     $("#orig-checker_env-div").toggle(<s:v type="jsbool" value="prob_id > 0" />);
 
-    var has_valuer = <s:v type="jsbool" value="tmp_prob->valuer_cmd" />;
+    var has_valuer = <s:v type="jsbool" value="tmp_prob->valuer_cmd" /> || <s:v type="jsbool" value="tmp_prob->standard_valuer" />;
     $("#orig-valuer_sets_marked-div").toggle(has_valuer);
     $("#orig-interactive_valuer-div").toggle(has_valuer);
     $("#orig-valuer_env-div").toggle(has_valuer && <s:v type="jsbool" value="prob_id > 0" />);
@@ -115,6 +116,7 @@ function popupCheckingDialog(e, skipField)
     <%@expand COPY_YESNO3 "enable_extended_info" %>
     <%@expand COPY_YESNO3 "stop_on_first_fail" %>
     <%@expand COPY_TEXTFIELD_WITH_DEFAULT "valuer_cmd" "!prob->valuer_cmd" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "standard_valuer" "!prob->standard_valuer" %>
     <%@expand COPY_YESNO3 "valuer_sets_marked" %>
     <%@expand COPY_YESNO3 "interactive_valuer" %>
     <%@expand COPY_TEXTFIELD "valuer_env" %>
@@ -133,6 +135,7 @@ function popupCheckingDialog(e, skipField)
     <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "checker_max_rss_size" %>
     <%@expand CLEAR_TEXTFIELD "checker_env" %>
     <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "valuer_cmd" %>
+    <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "standard_valuer" %>
     <%@expand CLEAR_TEXTFIELD "valuer_env" %>
     <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "interactor_cmd" %>
     <%@expand CLEAR_TEXTFIELD "interactor_env" %>
@@ -155,6 +158,7 @@ function checkingDialogOnChange(field)
     <%@expand ONCHANGE_WITH_DEFAULT "checker_max_stack_size" %>
     <%@expand ONCHANGE_WITH_DEFAULT "checker_max_rss_size" %>
     <%@expand ONCHANGE_WITH_DEFAULT "valuer_cmd" %>
+    <%@expand ONCHANGE_WITH_DEFAULT "standard_valuer" %>
     <%@expand ONCHANGE_WITH_DEFAULT "interactor_cmd" %>
     <%@expand ONCHANGE_WITH_DEFAULT "interactor_time_limit" %>
     <%@expand ONCHANGE_WITH_DEFAULT "interactor_real_time_limit" %>
@@ -166,6 +170,10 @@ function checkingDialogOnChange(field)
 
     var valuer_cmd = $("#edit-valuer_cmd").val();
     if ($("#edit-valuer_cmd_dflt").is(':checked') && <s:v type="jsbool" value="sup_prob && sup_prob->valuer_cmd" />) valuer_cmd = "X";
+    if (!valuer_cmd) {
+        valuer_cmd = $("#edit-standard_valuer").val();
+        if ($("#edit-standard_valuer_dflt").is(':checked') && <s:v type="jsbool" value="sup_prob && sup_prob->standard_valuer" />) valuer_cmd = "X";
+    }
     $("#edit-valuer_sets_marked-div").toggle(valuer_cmd != "");
     $("#edit-interactive_valuer-div").toggle(valuer_cmd != "");
     $("#edit-valuer_env-div").toggle(valuer_cmd != "" && <s:v type="jsbool" value="prob_id > 0" />);

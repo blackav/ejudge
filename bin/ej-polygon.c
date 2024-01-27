@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2012-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -45,6 +45,7 @@
 #include <signal.h>
 #include <grp.h>
 #include <fcntl.h>
+#include <math.h>
 
 #if CONF_HAS_LIBCURL - 0 == 1
 #include <curl/curl.h>
@@ -78,6 +79,28 @@ enum UpdateState
     STATE_PERMISSION_DENIED,
 
     STATE_LAST,
+};
+
+struct GroupInfo;
+struct TestInfo
+{
+    int serial;
+    int score;
+    unsigned char *group;
+    struct GroupInfo *gi;
+};
+
+struct GroupInfo
+{
+    unsigned char *name;
+    unsigned char *visibility;
+    int first_test;
+    int last_test;
+    int group_score;
+    int test_score;
+
+    int dep_u, dep_a;
+    unsigned char **deps;
 };
 
 struct ProblemInfo
@@ -117,6 +140,16 @@ struct ProblemInfo
     unsigned char *solution_cmd;
     unsigned char *interactor_cmd;
     unsigned char *html_statement_path;
+    unsigned char *open_tests;
+    unsigned char *final_open_tests;
+    unsigned char *test_score_list;
+    unsigned char *standard_valuer;
+
+    int test_a, test_u;
+    struct TestInfo *tests;
+
+    int group_a, group_u;
+    struct GroupInfo *groups;
 };
 
 struct RevisionInfo
@@ -1320,6 +1353,27 @@ free_problem_infos(struct ProblemSet *probset)
         xfree(pi->solution_cmd);
         xfree(pi->interactor_cmd);
         xfree(pi->html_statement_path);
+        xfree(pi->open_tests);
+        xfree(pi->final_open_tests);
+        xfree(pi->test_score_list);
+        xfree(pi->standard_valuer);
+
+        for (int i = 0; i < pi->test_u; ++i) {
+            struct TestInfo *ti = &pi->tests[i];
+            xfree(ti->group);
+        }
+        xfree(pi->tests);
+
+        for (int i = 0; i < pi->group_u; ++i) {
+            struct GroupInfo *gi = &pi->groups[i];
+            xfree(gi->name);
+            xfree(gi->visibility);
+            for (int i = 0; i < gi->dep_u; ++i) {
+                xfree(gi->deps[i]);
+            }
+            xfree(gi->deps);
+        }
+        xfree(pi->groups);
     }
     xfree(probset->infos);
     probset->count = 0;
@@ -2408,6 +2462,85 @@ get_next_elem_by_name(struct xml_tree *t, const unsigned char *name)
     return NULL;
 }
 
+static int
+parse_score_from_double(const unsigned char *str, int *p_score)
+{
+    char *eptr = NULL;
+    errno = 0;
+    double dval = strtod(str, &eptr);
+    if (errno || *eptr || eptr == (char*) str) {
+        return -1;
+    }
+    if (fpclassify(dval) != FP_ZERO && fpclassify(dval) != FP_NORMAL) {
+        return -1;
+    }
+    if (dval < 0 || dval > 1000000.0) {
+        return -1;
+    }
+    if (dval != (int) dval) {
+        return -1;
+    }
+    *p_score = (int) dval;
+    return 0;
+}
+
+static int
+save_valuer_cfg(
+        FILE *log_f,
+        const struct polygon_packet *pkt,
+        const struct ProblemInfo *pi,
+        const unsigned char *problem_dir)
+{
+    unsigned char cfg_path[PATH_MAX];
+    if (snprintf(cfg_path, sizeof(cfg_path), "%s/valuer.cfg", problem_dir) >= (int) sizeof(cfg_path)) {
+        return -1;
+    }
+    char *vs = NULL;
+    size_t vz = 0;
+    FILE *vf = open_memstream(&vs, &vz);
+    const char *gsep = "";
+
+    for (int i = 0; i < pi->group_u; ++i) {
+        const struct GroupInfo *gi = &pi->groups[i];
+        fprintf(vf, "%sgroup %s {\n", gsep, gi->name);
+        if (gi->first_test == gi->last_test) {
+            fprintf(vf, "    tests %d;\n", gi->first_test);
+        } else {
+            fprintf(vf, "    tests %d-%d;\n", gi->first_test, gi->last_test);
+        }
+        if (gi->test_score >= 0) {
+            fprintf(vf, "    test_score %d;\n", gi->test_score);
+            fprintf(vf, "    test_all;\n");
+        } else if (gi->group_score >= 0) {
+            fprintf(vf, "    score %d;\n", gi->group_score);
+        }
+        if (!strcmp(gi->visibility, "hidden")) {
+            fprintf(vf, "    offline;\n");
+        }
+        if (gi->dep_u > 0) {
+            fprintf(vf, "    requires ");
+            const char *rsep = "";
+            for (int j = 0; j < gi->dep_u; ++j) {
+                fprintf(vf, "%s%s", rsep, gi->deps[j]);
+                rsep = ", ";
+            }
+            fprintf(vf, ";\n");
+        }
+        fprintf(vf, "}\n");
+        gsep = "\n";
+    }
+
+    fclose(vf); vf = NULL;
+
+    if (save_file(log_f, cfg_path, vs, vz, pkt->file_mode, pkt->file_group, NULL)) {
+        free(vs);
+        return -1;
+    }
+
+    free(vs);
+    return 0;
+}
+
 static void
 process_polygon_zip(
         FILE *log_f,
@@ -2427,6 +2560,9 @@ process_polygon_zip(
     size_t cfg_size = 0;
     FILE *cfg_file = NULL;
     unsigned char *problem_url = NULL;
+    int full_score = -1;
+    int full_user_score = -1;
+    int has_hidden_groups = 0;
 
     if (!(zid = zif->open(log_f, zip_path))) {
         fprintf(log_f, "Failed to open zip file '%s'\n", zip_path);
@@ -2573,6 +2709,139 @@ process_polygon_zip(
                             pi->input_path_pattern = xstrdup(t3->text);
                         } else if (!strcmp(t3->name[0], "answer-path-pattern")) {
                             pi->answer_path_pattern = xstrdup(t3->text);
+                        } else if (!strcmp(t3->name[0], "tests")) {
+                            int serial = 0;
+                            for (struct xml_tree *t4 = t3->first_down; t4; t4 = t4->right) {
+                                if (!strcmp(t4->name[0], "test")) {
+                                    if (pi->test_a == pi->test_u) {
+                                        if (!pi->test_a) {
+                                            pi->test_a = 16;
+                                            XCALLOC(pi->tests, pi->test_a);
+                                        } else {
+                                            int new_a = pi->test_a * 2;
+                                            struct TestInfo *new_t;
+                                            XCALLOC(new_t, new_a);
+                                            XMEMMOVE(new_t, pi->tests, pi->test_a);
+                                            xfree(pi->tests);
+                                            pi->tests = new_t;
+                                            pi->test_a = new_a;
+                                        }
+                                    }
+                                    struct TestInfo *ti = &pi->tests[pi->test_u++];
+                                    ti->serial = ++serial;
+                                    for (a = t4->first; a; a = a->next) {
+                                        if (!strcmp(a->name[0], "group")) {
+                                            xfree(ti->group); ti->group = xstrdup(a->text);
+                                        } else if (!strcmp(a->name[0], "points")) {
+                                            if (parse_score_from_double(a->text, &ti->score) < 0) {
+                                                fprintf(log_f, "invalid points value '%s'\n", a->text);
+                                                goto zip_error;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        } else if (!strcmp(t3->name[0], "groups")) {
+                            for (struct xml_tree *t4 = t3->first_down; t4; t4 = t4->right) {
+                                if (!strcmp(t4->name[0], "group")) {
+                                    if (pi->group_a == pi->group_u) {
+                                        if (!pi->group_a) {
+                                            pi->group_a = 16;
+                                            XCALLOC(pi->groups, pi->group_a);
+                                        } else {
+                                            int na = pi->group_a * 2;
+                                            struct GroupInfo *ng;
+                                            XCALLOC(ng, na);
+                                            XMEMMOVE(ng, pi->groups, pi->group_a);
+                                            xfree(pi->groups);
+                                            pi->groups = ng;
+                                            pi->group_a = na;
+                                        }
+                                    }
+                                    struct GroupInfo *gi = &pi->groups[pi->group_u++];
+                                    gi->first_test = INT_MAX;
+                                    gi->last_test = INT_MIN;
+                                    gi->test_score = -1;
+                                    gi->group_score = -1;
+                                    int points = 0;
+                                    int is_group_score = 0;
+                                    int is_test_score = 0;
+                                    for (a = t4->first; a; a = a->next) {
+                                        if (!strcmp(a->name[0], "feedback-policy")) {
+                                            if (!strcmp(a->text, "complete")) {
+                                                gi->visibility = "full";
+                                            } else if (!strcmp(a->text, "icpc")) {
+                                                gi->visibility = "icpc";
+                                            } else if (!strcmp(a->text, "points")) {
+                                                gi->visibility = "exists";
+                                            } else if (!strcmp(a->text, "none")) {
+                                                gi->visibility = "hidden";
+                                                has_hidden_groups = 1;
+                                            } else {
+                                                fprintf(log_f, "feedback-policy '%s' is invalid\n", a->text);
+                                                goto zip_error;
+                                            }
+                                        } else if (!strcmp(a->name[0], "name")) {
+                                            xfree(gi->name); gi->name = xstrdup(a->text);
+                                        } else if (!strcmp(a->name[0], "points")) {
+                                            if (parse_score_from_double(a->text, &points) < 0) {
+                                                fprintf(log_f, "invalid points value '%s'\n", a->text);
+                                                goto zip_error;
+                                            }
+                                        } else if (!strcmp(a->name[0], "points-policy")) {
+                                            if (!strcmp(a->text, "complete-group")) {
+                                                is_group_score = 1;
+                                            } else if (!strcmp(a->text, "each-test")) {
+                                                is_test_score = 1;
+                                            } else {
+                                                fprintf(log_f, "invalid value of points-policy attribute '%s'\n", a->text);
+                                                goto zip_error;
+                                            }
+                                        }
+                                    }
+                                    if (is_group_score + is_test_score != 1) {
+                                        fprintf(log_f, "invalid points policy\n");
+                                    }
+                                    if (is_group_score) {
+                                        gi->group_score = points;
+                                    } else if (is_test_score) {
+                                        gi->test_score = points;
+                                    }
+                                    for (struct xml_tree *t5 = t4->first_down; t5; t5 = t5->right) {
+                                        if (!strcmp(t5->name[0], "dependencies")) {
+                                            for (struct xml_tree *t6 = t5->first_down; t6; t6 = t6->right) {
+                                                if (!strcmp(t6->name[0], "dependency")) {
+                                                    if (gi->dep_a == gi->dep_u) {
+                                                        if (!gi->dep_a) {
+                                                            gi->dep_a = 16;
+                                                            XCALLOC(gi->deps, gi->dep_a);
+                                                        } else {
+                                                            int na = gi->dep_a * 2;
+                                                            unsigned char **np;
+                                                            XCALLOC(np, na);
+                                                            XMEMMOVE(np, gi->deps, na);
+                                                            xfree(gi->deps);
+                                                            gi->dep_a = na;
+                                                            gi->deps = np;
+                                                        }
+                                                    }
+                                                    const unsigned char *target_group = NULL;
+                                                    for (a = t6->first; a; a = a->next) {
+                                                        if (!strcmp(a->name[0], "group")) {
+                                                            target_group = a->text;
+                                                        }
+                                                    }
+                                                    if (!target_group) {
+                                                        fprintf(log_f, "'group' attribute expected\n");
+                                                        goto zip_error;
+                                                    }
+                                                    gi->deps[gi->dep_u++] = xstrdup(target_group);
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -2631,6 +2900,207 @@ process_polygon_zip(
         goto zip_error;
     }
 
+    if (pkt->verbose) {
+        if (pi->test_u > 0) {
+            fprintf(log_f, "Tests (%d):\n", pi->test_u);
+            for (int i = 0; i < pi->test_u; ++i) {
+                const struct TestInfo *ti = &pi->tests[i];
+                fprintf(log_f, "    %d, %d, %s\n", ti->serial, ti->score, ti->group);
+            }
+        }
+        if (pi->group_u > 0) {
+            fprintf(log_f, "Groups (%d):\n", pi->group_u);
+            for (int i = 0; i < pi->group_u; ++i) {
+                const struct GroupInfo *gi = &pi->groups[i];
+                fprintf(log_f, "    %s, %s, %d, %d, %d, %d", gi->name, gi->visibility, gi->first_test, gi->last_test, gi->group_score, gi->test_score);
+                if (gi->dep_u > 0) {
+                    fprintf(log_f, ", [");
+                    const char *sep = "";
+                    for (int j = 0; j < gi->dep_u; ++j) {
+                        fprintf(log_f, "%s%s", sep, gi->deps[j]);
+                        sep = ", ";
+                    }
+                    fprintf(log_f, "]");
+                }
+                fprintf(log_f, "\n");
+            }
+        }
+    }
+
+    for (int i = 0; i < pi->group_u; ++i) {
+        struct GroupInfo *gi1 = &pi->groups[i];
+        if (!gi1->name || !*gi1->name) {
+            fprintf(log_f, "test group %d has empty name\n", i + 1);
+            goto zip_error;
+        }
+    }
+    for (int i = 0; i < pi->group_u; ++i) {
+        struct GroupInfo *gi1 = &pi->groups[i];
+        for (int j = i + 1; j < pi->group_u; ++j) {
+            struct GroupInfo *gi2 = &pi->groups[j];
+            if (!strcmp(gi1->name, gi2->name)) {
+                fprintf(log_f, "test group name '%s' is not unique\n", gi1->name);
+                goto zip_error;
+            }
+        }
+    }
+    for (int i = 0; i < pi->group_u; ++i) {
+        struct GroupInfo *gi1 = &pi->groups[i];
+        for (int j = 0; j < gi1->dep_u; ++j) {
+            int gi2_ind = -1;
+            for (int k = 0; k < pi->group_u; ++k) {
+                struct GroupInfo *gi3 = &pi->groups[k];
+                if (!strcmp(gi1->deps[j], gi3->name)) {
+                    gi2_ind = k;
+                    break;
+                }
+            }
+            if (gi2_ind < 0) {
+                fprintf(log_f, "test group '%s' dependency in test group '%s' does not exist\n", gi1->deps[j], gi1->name);
+                goto zip_error;
+            }
+            if (gi2_ind == i) {
+                fprintf(log_f, "test group '%s' depends on itself\n", gi1->name);
+                goto zip_error;
+            }
+            if (gi2_ind > i) {
+                fprintf(log_f, "test group '%s' depends on forward group '%s'\n", gi1->name, pi->groups[gi2_ind].name);
+                goto zip_error;
+            }
+        }
+    }
+
+    // generate test_score_list, if required
+    int test_score_list_required = 0;
+    int test_group_required = 0;
+    for (int i = 0; i < pi->test_u; ++i) {
+        struct TestInfo *ti = &pi->tests[i];
+        if (ti->score > 0) {
+            test_score_list_required = 1;
+        }
+        if (ti->group && *ti->group) {
+            test_group_required = 1;
+            struct GroupInfo *gi = NULL;
+            for (int j = 0; j < pi->group_u; ++j) {
+                if (!strcmp(pi->groups[j].name, ti->group)) {
+                    gi = &pi->groups[j];
+                }
+            }
+            if (!gi) {
+                fprintf(log_f, "group '%s' referred in test %d does not exist\n", ti->group, ti->serial);
+                goto zip_error;
+            }
+            ti->gi = gi;
+            if (ti->serial < gi->first_test) gi->first_test = ti->serial;
+            if (ti->serial > gi->last_test) gi->last_test = ti->serial;
+        }
+    }
+
+    if (pkt->verbose) {
+        if (pi->group_u > 0) {
+            fprintf(log_f, "Groups processed (%d):\n", pi->group_u);
+            for (int i = 0; i < pi->group_u; ++i) {
+                const struct GroupInfo *gi = &pi->groups[i];
+                fprintf(log_f, "    %s, %s, %d, %d, %d, %d", gi->name, gi->visibility, gi->first_test, gi->last_test, gi->group_score, gi->test_score);
+                if (gi->dep_u > 0) {
+                    fprintf(log_f, ", [");
+                    const char *sep = "";
+                    for (int j = 0; j < gi->dep_u; ++j) {
+                        fprintf(log_f, "%s%s", sep, gi->deps[j]);
+                        sep = ", ";
+                    }
+                    fprintf(log_f, "]");
+                }
+                fprintf(log_f, "\n");
+            }
+        }
+    }
+
+    if (pi->group_u > 0) {
+        if (pi->test_u <= 0) {
+            fprintf(log_f, "no tests for test groups\n");
+            goto zip_error;
+        }
+        if (pi->groups[0].first_test > 1) {
+            fprintf(log_f, "tests 1...%d are not covered by any group\n", pi->groups[0].first_test - 1);
+            goto zip_error;
+        }
+        for (int i = 1; i < pi->group_u; ++i) {
+            if (pi->groups[i].first_test <= pi->groups[i - 1].last_test) {
+                fprintf(log_f, "test groups '%s' and '%s' overlap\n", pi->groups[i - 1].name, pi->groups[i].name);
+                goto zip_error;
+            }
+            if (pi->groups[i].first_test > pi->groups[i - 1].last_test + 1) {
+                fprintf(log_f, "tests %d...%d are not covered by any group\n", pi->groups[i - 1].last_test + 1, pi->groups[i].first_test - 1);
+                goto zip_error;
+            }
+        }
+        if (pi->groups[pi->group_u - 1].last_test != pi->test_u) {
+            fprintf(log_f, "tests %d...%d are not covered by any group\n", pi->groups[pi->group_u - 1].last_test + 1, pi->test_u);
+            goto zip_error;
+        }
+    }
+
+    if (test_score_list_required) {
+        const unsigned char *sep = "";
+        char *tsl_s = NULL;
+        size_t tsl_z = 0;
+        FILE *tsl_f = open_memstream(&tsl_s, &tsl_z);
+        for (int i = 0; i < pi->test_u; ++i) {
+            fprintf(tsl_f, "%s%d", sep, pi->tests[i].score);
+            sep = " ";
+        }
+        fclose(tsl_f);
+        pi->test_score_list = tsl_s;
+    }
+    if (test_group_required) {
+        char *s = NULL;
+        asprintf(&s, "1-%d:full", pi->test_u);
+        pi->final_open_tests = s;
+
+        char *ot_s = NULL;
+        size_t ot_z = 0;
+        FILE *ot_f = open_memstream(&ot_s, &ot_z);
+        const unsigned char *sep = "";
+        for (int i = 0; i < pi->group_u; ++i) {
+            struct GroupInfo *gi = &pi->groups[i];
+            fprintf(ot_f, "%s%d-%d:%s", sep, gi->first_test, gi->last_test, gi->visibility);
+            sep = ",";
+        }
+        fclose(ot_f);
+        pi->open_tests = ot_s;
+        pi->standard_valuer = "gvaluer";
+    }
+    if (pi->test_u > 0) {
+        int sum = 0;
+        for (int i = 0; i < pi->test_u; ++i) {
+            if (pi->tests[i].score > 0) {
+                sum += pi->tests[i].score;
+            }
+        }
+        if (sum > 0) {
+            full_score = sum;
+        }
+    }
+    if (has_hidden_groups) {
+        full_user_score = 0;
+        for (int i = 0; i < pi->group_u; ++i) {
+            const struct GroupInfo *gi = &pi->groups[i];
+            if (strcmp(gi->visibility, "hidden") != 0) {
+                if (gi->group_score > 0) {
+                    full_user_score += gi->group_score;
+                } else if (gi->test_score > 0) {
+                    for (int j = 0; i < pi->test_u; ++j) {
+                        const struct TestInfo *ti = &pi->tests[j];
+                        if (ti->group && !strcmp(ti->group, gi->name) && ti->score > 0) {
+                            full_user_score += ti->score;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     const unsigned char *s;
     if (!(s = strrchr(pi->input_path_pattern, '/'))) {
         s = pi->input_path_pattern;
@@ -2657,6 +3127,12 @@ process_polygon_zip(
     fprintf(log_f, "    memory_limit: %lld\n", (long long) pi->memory_limit);
     fprintf(log_f, "    test_pat: %s\n", pi->test_pat);
     fprintf(log_f, "    corr_pat: %s\n", pi->corr_pat);
+    if (full_score > 0) {
+        fprintf(log_f, "    full_score: %d\n", full_score);
+    }
+    if (full_user_score > 0) {
+        fprintf(log_f, "    full_user_score: %d\n", full_user_score);
+    }
 
     unsigned char problem_path[PATH_MAX];
     snprintf(problem_path, sizeof(problem_path), "%s/%s", pkt->problem_dir, pi->problem_name);
@@ -2949,6 +3425,18 @@ process_polygon_zip(
     }
     fprintf(log_f, "    interactor_cmd: %s\n", pi->interactor_cmd);
     fprintf(log_f, "    html_statement: %s\n", pi->html_statement_path);
+    if (pi->test_score_list) {
+        fprintf(log_f, "    test_score_list: %s\n", pi->test_score_list);
+    }
+    if (pi->open_tests) {
+        fprintf(log_f, "    open_tests: %s\n", pi->open_tests);
+    }
+    if (pi->final_open_tests) {
+        fprintf(log_f, "    final_open_tests: %s\n", pi->final_open_tests);
+    }
+    if (pi->standard_valuer) {
+        fprintf(log_f, "    standard_valuer: %s\n", pi->standard_valuer);
+    }
 
     unsigned char buf[1024];
 
@@ -3040,6 +3528,24 @@ process_polygon_zip(
         prob_cfg->enable_iframe_statement = 1;
         prob_cfg->xml_file = xstrdup("statement.xml");
     }
+    if (pi->test_score_list) {
+        prob_cfg->test_score_list = xstrdup(pi->test_score_list);
+    }
+    if (pi->open_tests) {
+        prob_cfg->open_tests = xstrdup(pi->open_tests);
+    }
+    if (pi->final_open_tests) {
+        prob_cfg->final_open_tests = xstrdup(pi->final_open_tests);
+    }
+    if (pi->standard_valuer && pi->standard_valuer[0]) {
+        prob_cfg->standard_valuer = xstrdup(pi->standard_valuer);
+    }
+    if (full_score > 0) {
+        prob_cfg->full_score = full_score;
+    }
+    if (full_user_score > 0) {
+        prob_cfg->full_user_score = full_user_score;
+    }
 
     cfg_file = open_memstream(&cfg_text, &cfg_size);
     problem_config_section_unparse_cfg(cfg_file, prob_cfg);
@@ -3047,6 +3553,14 @@ process_polygon_zip(
     unsigned char cfg_path[PATH_MAX];
     snprintf(cfg_path, sizeof(cfg_path), "%s/problem.cfg", problem_path);
     if (save_file(log_f, cfg_path, cfg_text, cfg_size, pkt->file_mode, pkt->file_group, NULL)) goto zip_error;
+
+    if (pi->group_u > 0) {
+        if (save_valuer_cfg(log_f, pkt, pi, problem_path) < 0) {
+            fprintf(log_f, "saving of valuer.cfg failed\n");
+            goto zip_error;
+        }
+    }
+
     pi->state = STATE_UPDATED;
 
     if (pkt->verbose) {
@@ -3292,6 +3806,14 @@ check_problem_statuses(
 }
 
 static int
+json_sort_func(const void *p1, const void *p2)
+{
+    const cJSON *j1 = *(const cJSON **) p1;
+    const cJSON *j2 = *(const cJSON **) p2;
+    return strcmp(j1->string, j2->string);
+}
+
+static int
 process_contest_json(
         FILE *log_f,
         struct PolygonState *ps,
@@ -3343,15 +3865,24 @@ process_contest_json(
     probset->count = count;
     XCALLOC(probset->infos, probset->count);
 
+    // sort childrens in the order of the key
+    cJSON **jca = NULL;
+    XALLOCAZ(jca, count);
     int pos = 0;
     for (cJSON *jitem = jresult->child; jitem; jitem = jitem->next, ++pos) {
-        cJSON *jid = cJSON_GetObjectItem(jitem, "id");
+        jca[pos] = jitem;
+    }
+    qsort(jca, count, sizeof(jca[0]), json_sort_func);
+
+    for (pos = 0; pos < count; ++pos) {
+        cJSON *jid = cJSON_GetObjectItem(jca[pos], "id");
         if (!jid || jid->type != cJSON_Number || jid->valueint <= 0) {
             fprintf(log_f, "invalid json: integer id expected for problem\n");
             retval = 1;
             goto done;
         }
         probset->infos[pos].key_id = jid->valueint;
+        probset->infos[pos].ejudge_short_name = xstrdup(jca[pos]->string);
     }
 
 done:
