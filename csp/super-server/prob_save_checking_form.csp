@@ -163,6 +163,7 @@
     }
 
     if (prob_id <= 0) {
+        // abstract problem
         i = -prob_id;
         if (i >= phr->ss->aprob_u) FAIL(SSERV_ERR_INVALID_PARAMETER);
         prob = phr->ss->aprobs[i];
@@ -174,6 +175,15 @@
         if (stop_on_first_fail < 0) stop_on_first_fail = 0;
         if (valuer_sets_marked < 0) valuer_sets_marked = 0;
         if (interactive_valuer < 0) interactive_valuer = 0;
+        if (standard_checker && !standard_checker[0]) {
+            standard_checker = NULL;
+        }
+        if (valuer_cmd && !valuer_cmd[0]) {
+            xfree(valuer_cmd); valuer_cmd = NULL;
+        }
+        if (standard_valuer && !standard_valuer[0]) {
+            xfree(standard_valuer); standard_valuer = NULL;
+        }
     } else {
         i = prob_id;
         if (i >= phr->ss->prob_a) FAIL(SSERV_ERR_INVALID_PARAMETER);
