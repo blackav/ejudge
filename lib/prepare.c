@@ -2619,6 +2619,7 @@ prepare_problem(
   prepare_set_prob_value(CNTSPROB_tgzdir_pat, prob, aprob, g);
   prepare_set_prob_value(CNTSPROB_check_cmd, prob, aprob, g);
   prepare_set_prob_value(CNTSPROB_valuer_cmd, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_standard_valuer, prob, aprob, g);
   prepare_set_prob_value(CNTSPROB_interactor_cmd, prob, aprob, g);
   prepare_set_prob_value(CNTSPROB_style_checker_cmd, prob, aprob, g);
   prepare_set_prob_value(CNTSPROB_test_checker_cmd, prob, aprob, g);
@@ -6292,6 +6293,12 @@ prepare_set_prob_value(
     }
     break;
 
+  case CNTSPROB_standard_valuer:
+    if (!out->standard_valuer && abstr && abstr->standard_valuer) {
+      sformat_message_2(&out->standard_valuer, 0, abstr->standard_valuer, NULL, out, NULL, NULL, NULL, 0, 0, 0);
+    }
+    break;
+
   case CNTSPROB_interactor_cmd:
     if ((!out->interactor_cmd || !out->interactor_cmd[0]) && abstr && abstr->interactor_cmd && abstr->interactor_cmd[0]) {
       sformat_message_2(&out->interactor_cmd, 0, abstr->interactor_cmd, NULL, out, NULL, NULL, NULL, 0, 0, 0);
@@ -6673,6 +6680,7 @@ prepare_set_all_prob_values(
     CNTSPROB_problem_dir,
     CNTSPROB_check_cmd,
     CNTSPROB_valuer_cmd,
+    CNTSPROB_standard_valuer,
     CNTSPROB_interactor_cmd,
     CNTSPROB_style_checker_cmd,
     CNTSPROB_test_checker_cmd,
