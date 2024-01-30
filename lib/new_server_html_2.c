@@ -3133,6 +3133,65 @@ filename_escape_string(
   return out;
 }
 
+
+struct archive_download_job
+{
+  struct server_framework_job b;
+
+  unsigned char *job_id;
+
+  // the list of run_ids
+  int run_a, run_u;
+  int *runs;
+};
+
+static void
+adj_destroy_func(struct server_framework_job *sfj)
+{
+}
+
+static int
+adj_run_func(struct server_framework_job *sfj, int *p_tick_value, int max_value)
+{
+  return 0;
+}
+
+static unsigned char *
+adj_get_status_func(struct server_framework_job *sfj)
+{
+  return NULL;
+}
+
+static __attribute__((unused)) const struct server_framework_job_funcs adj_funcs =
+{
+  adj_destroy_func,
+  adj_run_func,
+  adj_get_status_func,
+};
+
+/*
+struct server_framework_job;
+struct server_framework_job_funcs
+{
+  void (*destroy)(struct server_framework_job *);
+  int  (*run)(struct server_framework_job *, int *p_tick_value, int max_value);
+  unsigned char * (*get_status)(struct server_framework_job *);
+};
+
+struct server_framework_job
+{
+  const struct server_framework_job_funcs *vt;
+  struct server_framework_job *prev, *next;
+  int id;
+  int prio;
+  int contest_id;
+  time_t start_time;
+  unsigned char *title;
+};
+ */
+
+
+
 void
 ns_download_runs(
         const struct contest_desc *cnts,
