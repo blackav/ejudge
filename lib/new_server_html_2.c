@@ -3490,6 +3490,7 @@ struct server_framework_job
 
 void
 ns_download_runs(
+        struct http_request_info *phr,
         const struct contest_desc *cnts,
         const serve_state_t cs,
         FILE *fout,

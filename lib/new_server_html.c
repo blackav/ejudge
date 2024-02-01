@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -6774,7 +6774,7 @@ priv_download_runs(
 
   info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
 
-  ns_download_runs(cnts, cs, fout, log_f, run_selection, dir_struct, file_name_mask, use_problem_extid, use_problem_dir,
+  ns_download_runs(phr, cnts, cs, fout, log_f, run_selection, dir_struct, file_name_mask, use_problem_extid, use_problem_dir,
                    problem_dir_prefix, enable_hidden, mask_size, mask);
 
   if (cs->xuser_state) {
