@@ -70,6 +70,7 @@
 #include <sys/wait.h>
 #include <ctype.h>
 #include <dirent.h>
+#include <fcntl.h>
 
 #if CONF_HAS_LIBINTL - 0 == 1
 #include <libintl.h>
@@ -3135,6 +3136,13 @@ filename_escape_string(
   return out;
 }
 
+enum
+{
+  ADJ_COPYING = 0,
+  ADJ_STARTING_TAR,
+  ADJ_WAITING_FOR_TAR,
+  ADJ_FINISHED,
+};
 
 struct archive_download_job
 {
@@ -3168,6 +3176,8 @@ struct archive_download_job
 
   unsigned char *problem_dir_prefix;
   int problem_dir_prefix_len;
+  int pid;
+  int is_success;
 };
 
 static void
@@ -3189,7 +3199,7 @@ adj_destroy_func(struct server_framework_job *sfj)
   xfree(adj);
 }
 
-static __attribute__((unused)) int
+static int
 adj_process_run(struct archive_download_job *adj)
 {
   int retval = -1;
@@ -3437,6 +3447,90 @@ cleanup:;
 static int
 adj_run_func(struct server_framework_job *sfj, int *p_tick_value, int max_value)
 {
+  struct archive_download_job *adj = (struct archive_download_job *) sfj;
+
+  if (adj->stage == ADJ_COPYING) {
+    if (adj_process_run(adj) < 0) {
+      adj->state = ADJ_FINISHED;
+      return 0;
+    }
+    if (adj->cur_ind >= adj->run_u) {
+      adj->stage = ADJ_STARTING_TAR;
+      return 0;
+    }
+  }
+  if (adj->stage == ADJ_STARTING_TAR) {
+    adj->pid = fork();
+    if (adj->pid < 0) {
+      err("adj_run_func: fork failed: %s", os_ErrorMsg());
+      fprintf(adj->log_f, "fork failed(): %s\n", os_ErrorMsg());
+      adj->state = ADJ_FINISHED;
+      return 0;
+    }
+    if (!adj->pid) {
+      int fd0 = open("/dev/null", O_RDONLY, 0);
+      if (fd0 < 0) {
+        err("adj_run_func: open /dev/null failed: %s", os_ErrorMsg());
+        _exit(1);
+      }
+      if (dup2(fd0, 0) < 0) {
+        err("adj_run_func: dup2 to 0 failed: %s", os_ErrorMsg());
+        _exit(1);
+      }
+      if (dup2(2, 1) < 0) {
+        err("adj_run_func: dup2 to 1 failed: %s", os_ErrorMsg());
+        _exit(1);
+      }
+      if (chdir(adj->tgzdir) < 0) {
+        err("chdir to %s failed: %s", adj->tgzdir, os_ErrorMsg());
+        _exit(1);
+      }
+      // get the max fd num
+      int max_opened_fd = -1;
+      DIR *d = opendir("/proc/self/fd");
+      if (!d) {
+        err("adj_run_func: failed to open /proc/self/fd: %s", os_ErrorMsg());
+        _exit(1);
+      }
+      struct dirent *dd;
+      while ((dd = readdir(d))) {
+        char *eptr = NULL;
+        errno = 0;
+        long v = strtol(dd->d_name, &eptr, 10);
+        if (!errno && !*eptr && eptr != dd->d_name && v >= 0
+            && (int) v == v && (int) v > max_opened_fd) {
+          max_opened_fd = (int) v;
+        }
+      }
+      closedir(d);
+      for (int ff = 3; ff <= max_opened_fd; ++ff) {
+        close(ff);
+      }
+      execl("/bin/tar", "/bin/tar", "cfz", adj->tgzname, adj->dirname, NULL);
+      err("adj_run_func: execl /bin/tar failed: %s", os_ErrorMsg());
+      _exit(1);
+    }
+    adj->stage = ADJ_WAITING_FOR_TAR;
+    return 0;
+  }
+  if (adj->stage == ADJ_WAITING_FOR_TAR) {
+    int status = 0;
+    if (waitpid(adj->pid, &status, WNOHANG) != adj->pid) {
+      return 0;
+    }
+    if (WIFEXITED(status)) {
+      if (!WEXITSTATUS(status)) {
+        adj->is_success = 1;
+      } else {
+        fprintf(adj->log_f, "/bin/tar exited with code %d\n", WEXITSTATUS(status));
+      }
+    } else if (WIFSIGNALED(status)) {
+      fprintf(adj->log_f, "/bin/tar terminated with signal %d\n", WTERMSIG(status));
+    }
+    adj->stage = ADJ_FINISHED;
+    return 0;
+  }
+
   return 0;
 }
 
@@ -3610,6 +3704,7 @@ ns_download_runs(
     adj->problem_dir_prefix = xstrdup(problem_dir_prefix);
     adj->problem_dir_prefix_len = strlen(problem_dir_prefix);
   }
+  adj->stage = ADJ_COPYING;
 
   total_runs = run_get_total(cs->runlog_state);
   for (run_id = 0; run_id < total_runs; run_id++) {
