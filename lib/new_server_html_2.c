@@ -54,6 +54,8 @@
 #include "ejudge/compile_heartbeat.h"
 #include "ejudge/mixed_id.h"
 #include "ejudge/userprob_plugin.h"
+#include "ejudge/random.h"
+#include "ejudge/ulid.h"
 
 #include "flatbuf-gen/compile_heartbeat_reader.h"
 
@@ -3223,10 +3225,6 @@ adj_process_run(struct archive_download_job *adj)
   int srcflags;
   unsigned char srcpath[PATH_MAX];
 
-  if (!adj->log_f) {
-    adj->log_f = open_memstream(&adj->log_s, &adj->log_z);
-  }
-
   if (adj->b.contest_id <= 0 || contests_get(adj->b.contest_id, &cnts) || !cnts) {
     fprintf(adj->log_f, "invalid contest id %d\n", adj->b.contest_id);
     goto cleanup;
@@ -3542,6 +3540,8 @@ ns_download_runs(
   int srcflags;
   int problem_dir_prefix_len = 0;
   struct archive_download_job *adj = adj_create();
+  unsigned char job_id_bytes[16];
+  unsigned char job_id_str[32];
 
   file_name_size = 1024;
   file_name_str = (unsigned char*) xmalloc(file_name_size);
@@ -3590,11 +3590,26 @@ ns_download_runs(
   snprintf(tgzname, sizeof(tgzname), "%s.tgz", name3);
   snprintf(tgzpath, sizeof(tgzpath), "%s/%s", dir2, tgzname);
 
+  random_init();
+  random_bytes(job_id_bytes, sizeof(job_id_bytes));
+  ulid_marshall(job_id_str, job_id_bytes);
+
+  adj->job_id = xstrdup(job_id_str);
+  adj->config = phr->config;
   adj->tgzdir = xstrdup(dir2);
   adj->tgzname = xstrdup(tgzname);
   adj->tgzpath = xstrdup(tgzpath);
   adj->dirname = xstrdup(name3);
   adj->dirpath = xstrdup(dir3);
+  adj->log_f = open_memstream(&adj->log_s, &adj->log_z);
+  adj->use_problem_dir = use_problem_dir;
+  adj->use_problem_extid = use_problem_extid;
+  adj->dir_struct = dir_struct;
+  adj->file_name_mask = file_name_mask;
+  if (problem_dir_prefix) {
+    adj->problem_dir_prefix = xstrdup(problem_dir_prefix);
+    adj->problem_dir_prefix_len = strlen(problem_dir_prefix);
+  }
 
   total_runs = run_get_total(cs->runlog_state);
   for (run_id = 0; run_id < total_runs; run_id++) {
