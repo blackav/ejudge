@@ -3451,7 +3451,7 @@ adj_run_func(struct server_framework_job *sfj, int *p_tick_value, int max_value)
 
   if (adj->stage == ADJ_COPYING) {
     if (adj_process_run(adj) < 0) {
-      adj->state = ADJ_FINISHED;
+      adj->stage = ADJ_FINISHED;
       return 0;
     }
     if (adj->cur_ind >= adj->run_u) {
@@ -3464,7 +3464,7 @@ adj_run_func(struct server_framework_job *sfj, int *p_tick_value, int max_value)
     if (adj->pid < 0) {
       err("adj_run_func: fork failed: %s", os_ErrorMsg());
       fprintf(adj->log_f, "fork failed(): %s\n", os_ErrorMsg());
-      adj->state = ADJ_FINISHED;
+      adj->stage = ADJ_FINISHED;
       return 0;
     }
     if (!adj->pid) {
@@ -3556,29 +3556,6 @@ adj_create(void)
   adj->b.vt = &adj_funcs;
   return adj;
 }
-
-/*
-struct server_framework_job;
-struct server_framework_job_funcs
-{
-  void (*destroy)(struct server_framework_job *);
-  int  (*run)(struct server_framework_job *, int *p_tick_value, int max_value);
-  unsigned char * (*get_status)(struct server_framework_job *);
-};
-
-struct server_framework_job
-{
-  const struct server_framework_job_funcs *vt;
-  struct server_framework_job *prev, *next;
-  int id;
-  int prio;
-  int contest_id;
-  time_t start_time;
-  unsigned char *title;
-};
- */
-
-
 
 void
 ns_download_runs(
@@ -3705,6 +3682,9 @@ ns_download_runs(
     adj->problem_dir_prefix_len = strlen(problem_dir_prefix);
   }
   adj->stage = ADJ_COPYING;
+  adj->b.contest_id = cnts->id;
+  adj->b.title = xstrdup("Create tar archive of runs");
+  adj->b.prio = 0;
 
   total_runs = run_get_total(cs->runlog_state);
   for (run_id = 0; run_id < total_runs; run_id++) {
@@ -3909,6 +3889,8 @@ ns_download_runs(
       goto cleanup;
     }
   }
+
+  nsf_add_job(phr->fw_state, &adj->b);
 
   if ((pid = fork()) < 0) {
     err("fork failed: %s", os_ErrorMsg());
