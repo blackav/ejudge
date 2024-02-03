@@ -675,12 +675,22 @@ ns_loop_callback(struct server_framework_state *state)
   memset(&files, 0, sizeof(files));
 
   if (job) {
-    if (job->contest_id > 0) {
-      e = ns_try_contest_extra(job->contest_id);
-      e->last_access_time = cur_time;
-    }
-    if (job->vt->run(job, NULL, NULL, &count, MAX_WORK_BATCH)) {
-      nsf_remove_job(state, job);
+    while (job && count < MAX_WORK_BATCH) {
+      cnts = NULL;
+      e = NULL;
+      if (job->contest_id > 0) {
+        if (contests_get(job->contest_id, &cnts) < 0 || !cnts) {
+          job = job->next;
+          continue;
+        }
+        e = ns_get_contest_extra(cnts, NULL);
+        ASSERT(e);
+        e->last_access_time = cur_time;
+      }
+      if (job->vt->run(job, cnts, e, &count, MAX_WORK_BATCH)) {
+        nsf_remove_job(state, job);
+      }
+      job = job->next;
     }
   }
 
