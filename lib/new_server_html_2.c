@@ -3588,6 +3588,7 @@ ns_download_runs(
   struct archive_download_job *adj = adj_create();
   unsigned char job_id_bytes[16];
   unsigned char job_id_str[32];
+  unsigned char url_extra[64];
 
   if ((s = getenv("TMPDIR"))) {
     snprintf(tmpdir, sizeof(tmpdir), "%s", s);
@@ -3700,6 +3701,9 @@ ns_download_runs(
     }
   }
   */
+
+  snprintf(url_extra, sizeof(url_extra), "job_id=%s", job_id_str);
+  ns_refresh_page(fout, phr, NEW_SRV_ACTION_JOB_STATUS_PAGE, url_extra);
 
 cleanup:;
 }
