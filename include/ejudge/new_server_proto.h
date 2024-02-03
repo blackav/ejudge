@@ -3,7 +3,7 @@
 #ifndef __NEW_SERVER_PROTO_H__
 #define __NEW_SERVER_PROTO_H__
 
-/* Copyright (C) 2006-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -382,6 +382,7 @@ enum
   NEW_SRV_ACTION_COMPILER_OP,
   NEW_SRV_ACTION_INVOKER_REBOOT,
   NEW_SRV_ACTION_TELEGRAM_REGISTER,
+  NEW_SRV_ACTION_JOB_STATUS_PAGE,
 
   NEW_SRV_ACTION_LAST,
 };

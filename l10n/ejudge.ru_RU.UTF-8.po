@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-01-21 16:25+0300\n"
+"POT-Creation-Date: 2024-02-03 10:39+0300\n"
 "PO-Revision-Date: 2022-01-12 13:17+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -2166,6 +2166,10 @@ msgstr "Нельзя отвечать на сообщения судей"
 
 msgid "Jan"
 msgstr "Янв"
+
+#, fuzzy
+msgid "Job status"
+msgstr "Установить статус"
 
 msgid "Judge"
 msgstr "Судья"

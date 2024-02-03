@@ -1,6 +1,6 @@
 # -*- Makefile -*-
 
-# Copyright (C) 2014-2023 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2014-2024 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -48,6 +48,7 @@ SOFILES = \
  csp_priv_edit_run_page.so\
  csp_priv_exam_info_page.so\
  csp_priv_ip_users_page.so\
+ csp_priv_job_status_page.so\
  csp_priv_language_stats_page.so\
  csp_priv_problem_stats_page.so\
  csp_priv_login_page.so\
@@ -200,6 +201,7 @@ csp_priv_user_run_header_page.c : priv_user_run_header_page.csp priv_includes.cs
 csp_priv_user_run_header_delete.c : priv_user_run_header_delete.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 csp_priv_user_run_header_change_duration.c : priv_user_run_header_change_duration.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 csp_priv_user_run_header_clear_stop_time.c : priv_user_run_header_clear_stop_time.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
+csp_priv_job_status_page.c : priv_job_status_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 
 csp_priv_error_internal.c : priv_error_internal.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 csp_priv_error_inv_param.c : priv_error_inv_param.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
