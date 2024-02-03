@@ -172,6 +172,7 @@ struct ws_client_state
 
 struct server_framework_state;
 struct new_server_prot_packet;
+struct ejudge_cfg;
 
 struct server_framework_params
 {
@@ -226,6 +227,8 @@ struct server_framework_params
   int (*ws_create_session)(
         struct server_framework_state *,
         struct ws_client_state *);
+
+  struct ejudge_cfg *config;
 };
 
 struct server_framework_state *nsf_init(struct server_framework_params *params, void *data, time_t server_start_time);
