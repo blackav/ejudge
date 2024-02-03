@@ -195,7 +195,7 @@ struct server_framework_params
   void (*cleanup_client)(struct server_framework_state *,
                          struct client_state *);
   void (*free_memory)(struct server_framework_state *, void *);
-  int  (*loop_start)(struct server_framework_state *);
+  int  (*loop_start)(struct server_framework_state *, const struct ejudge_cfg *);
   void (*post_select)(struct server_framework_state *);
 
   // WebSocket port, if > 0, then the server listens for websocket incoming connections

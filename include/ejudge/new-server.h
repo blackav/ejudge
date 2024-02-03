@@ -159,7 +159,7 @@ ns_invalidate_session(
 
 void ns_unload_contests(void);
 
-int  ns_loop_callback(struct server_framework_state *state);
+int  ns_loop_callback(struct server_framework_state *state, const struct ejudge_cfg *);
 void ns_post_select_callback(struct server_framework_state *state);
 
 unsigned char *

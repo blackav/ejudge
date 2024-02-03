@@ -661,7 +661,7 @@ ns_check_session_cache(time_t cur_time)
 enum { MAX_WORK_BATCH = 10 };
 
 int
-ns_loop_callback(struct server_framework_state *state)
+ns_loop_callback(struct server_framework_state *state, const struct ejudge_cfg *config)
 {
   time_t cur_time = time(0);
   struct contest_extra *e;
