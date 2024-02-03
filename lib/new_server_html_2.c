@@ -3581,41 +3581,13 @@ ns_download_runs(
   int serial = 0;
   struct tm *ptm;
   path_t dir2 = { 0 };
-  int need_remove = 0;
   path_t name3, dir3;
-  int pid, p, status;
   path_t tgzname, tgzpath;
-  char *file_bytes = 0;
-  size_t file_size = 0;
   int total_runs, run_id;
   struct run_entry info;
-  path_t dir4, dir4a, dir5;
-  unsigned char prob_buf[1024];
-  unsigned char login_buf[1024];
-  unsigned char name_buf[1024];
-  unsigned char lang_buf[1024];
-  unsigned char prob_dir_buf[1024];
-  const unsigned char *prob_ptr;
-  const unsigned char *login_ptr;
-  const unsigned char *lang_ptr;
-  const unsigned char *name_ptr;
-  const unsigned char *suff_ptr;
-  unsigned char *prob_alloc = NULL;
-  unsigned char *login_alloc = NULL;
-  unsigned char *lang_alloc = NULL;
-  unsigned char *name_alloc = NULL;
-  unsigned char *file_name_str = 0;
-  size_t file_name_size = 0, file_name_exp_len;
-  unsigned char *sep, *ptr;
-  path_t dstpath, srcpath;
-  int srcflags;
-  int problem_dir_prefix_len = 0;
   struct archive_download_job *adj = adj_create();
   unsigned char job_id_bytes[16];
   unsigned char job_id_str[32];
-
-  file_name_size = 1024;
-  file_name_str = (unsigned char*) xmalloc(file_name_size);
 
   if ((s = getenv("TMPDIR"))) {
     snprintf(tmpdir, sizeof(tmpdir), "%s", s);
@@ -3627,10 +3599,6 @@ ns_download_runs(
 #endif
   if (!tmpdir[0]) {
     snprintf(tmpdir, sizeof(tmpdir), "%s", "/tmp");
-  }
-
-  if (problem_dir_prefix) {
-    problem_dir_prefix_len = strlen(problem_dir_prefix);
   }
 
   ptm = localtime(&cur_time);
@@ -3647,7 +3615,6 @@ ns_download_runs(
     }
     serial++;
   }
-  need_remove = 1;
 
   snprintf(name3, sizeof(name3), "contest_%d_%04d%02d%02d%02d%02d%02d",
            cnts->id,
@@ -3711,207 +3678,11 @@ ns_download_runs(
       XREALLOC(adj->runs, adj->run_a);
     }
     adj->runs[adj->run_u++] = run_id;
-
-    if (!(login_ptr = teamdb_get_login(cs->teamdb_state, info.user_id))) {
-      snprintf(login_buf, sizeof(login_buf), "!user_%d", info.user_id);
-      login_ptr = login_buf;
-    } else {
-      login_ptr = filename_escape_string(login_ptr, &login_alloc);
-    }
-    if (!(name_ptr = teamdb_get_name_2(cs->teamdb_state, info.user_id))) {
-      snprintf(name_buf, sizeof(name_buf), "!user_%d", info.user_id);
-      name_ptr = name_buf;
-    } else {
-      name_ptr = filename_escape_string(name_ptr, &name_alloc);
-    }
-    if (info.prob_id > 0 && info.prob_id <= cs->max_prob
-        && cs->probs[info.prob_id]) {
-      if (use_problem_dir && cs->probs[info.prob_id]->problem_dir && cs->probs[info.prob_id]->problem_dir[0]) {
-        prob_ptr = cs->probs[info.prob_id]->problem_dir;
-        if (problem_dir_prefix_len > 0 && !strncmp(prob_ptr, problem_dir_prefix, problem_dir_prefix_len)) {
-          prob_ptr += problem_dir_prefix_len;
-        }
-        snprintf(prob_dir_buf, sizeof(prob_dir_buf), "%s", prob_ptr);
-        for (int i = 0; prob_dir_buf[i]; ++i) {
-          if (prob_dir_buf[i] == '/') {
-            prob_dir_buf[i] = '.';
-          }
-        }
-        prob_ptr = prob_dir_buf;
-        while (*prob_ptr == '.') ++prob_ptr;
-      } else if (use_problem_extid && cs->probs[info.prob_id]->extid && cs->probs[info.prob_id]->extid[0]) {
-        prob_ptr = filename_escape_string(cs->probs[info.prob_id]->extid, &prob_alloc);
-      } else {
-        prob_ptr = filename_escape_string(cs->probs[info.prob_id]->short_name, &prob_alloc);
-      }
-    } else {
-      snprintf(prob_buf, sizeof(prob_buf), "!prob_%d", info.prob_id);
-      prob_ptr = prob_buf;
-    }
-    if (info.lang_id > 0 && info.lang_id <= cs->max_lang
-        && cs->langs[info.lang_id]) {
-      lang_ptr = filename_escape_string(cs->langs[info.lang_id]->short_name, &lang_alloc);
-      suff_ptr = cs->langs[info.lang_id]->src_sfx;
-    } else if (info.lang_id) {
-      snprintf(lang_buf, sizeof(lang_buf), "!lang_%d", info.lang_id);
-      lang_ptr = lang_buf;
-      suff_ptr = "";
-    } else {
-      lang_buf[0] = 0;
-      lang_ptr = lang_buf;
-      suff_ptr = mime_type_get_suffix(info.mime_type);
-    }
-
-    // create necessary directories
-    dir4[0] = 0;
-    dir4a[0] = 0;
-    switch (dir_struct) {
-    case 0:// /<File> (no directory structure)
-      break;
-    case 1:// /<Problem>/<File>
-      snprintf(dir4, sizeof(dir4), "%s", prob_ptr);
-      break;
-    case 2:// /<User_Id>/<File>
-      snprintf(dir4, sizeof(dir4), "%d", info.user_id);
-      break;
-    case 3:// /<User_Login>/<File>
-      snprintf(dir4, sizeof(dir4), "%s", login_ptr);
-      break;
-    case 4:// /<Problem>/<User_Id>/<File>
-      snprintf(dir4, sizeof(dir4), "%s", prob_ptr);
-      snprintf(dir4a, sizeof(dir4a), "%d", info.user_id);
-      break;
-    case 5:// /<Problem>/<User_Login>/<File>
-      snprintf(dir4, sizeof(dir4), "%s", prob_ptr);
-      snprintf(dir4a, sizeof(dir4a), "%s", login_ptr);
-      break;
-    case 6:// /<User_Id>/<Problem>/<File>
-      snprintf(dir4, sizeof(dir4), "%d", info.user_id);
-      snprintf(dir4a, sizeof(dir4a), "%s", prob_ptr);
-      break;
-    case 7:// /<User_Login>/<Problem>/<File>
-      snprintf(dir4, sizeof(dir4), "%s", login_ptr);
-      snprintf(dir4a, sizeof(dir4a), "%s", prob_ptr);
-      break;
-    case 8:// /<User_Name>/<File>
-      snprintf(dir4, sizeof(dir4), "%s", name_ptr);
-      break;
-    case 9:// /<Problem>/<User_Name>/<File>
-      snprintf(dir4, sizeof(dir4), "%s", prob_ptr);
-      snprintf(dir4a, sizeof(dir4a), "%s", name_ptr);
-      break;
-    case 10:// /<User_Name>/<Problem>/<File>
-      snprintf(dir4, sizeof(dir4), "%s", name_ptr);
-      snprintf(dir4a, sizeof(dir4a), "%s", prob_ptr);
-      break;
-    default:
-      abort();
-    }
-    if (dir4[0]) {
-      snprintf(dir5, sizeof(dir5), "%s/%s", dir3, dir4);
-      errno = 0;
-      if (mkdir(dir5, 0775) < 0 && errno != EEXIST) {
-        ns_error(log_f, NEW_SRV_ERR_MKDIR_FAILED, dir5, os_ErrorMsg());
-        goto cleanup;
-      }
-      if (dir4a[0]) {
-        snprintf(dir5, sizeof(dir5), "%s/%s/%s", dir3, dir4, dir4a);
-        errno = 0;
-        if (mkdir(dir5, 0775) < 0 && errno != EEXIST) {
-          ns_error(log_f, NEW_SRV_ERR_MKDIR_FAILED, dir5, os_ErrorMsg());
-          goto cleanup;
-        }
-      }
-    } else {
-      snprintf(dir5, sizeof(dir5), "%s", dir3);
-    }
-
-    file_name_exp_len = 128 + strlen(login_ptr) + strlen(name_ptr)
-      + strlen(prob_ptr) + strlen(lang_ptr) + strlen(suff_ptr);
-    if (file_name_exp_len > file_name_size) {
-      while (file_name_exp_len > file_name_size) file_name_size *= 2;
-      xfree(file_name_str);
-      file_name_str = (unsigned char*) xmalloc(file_name_size);
-    }
-
-    sep = "";
-    ptr = file_name_str;
-    if ((file_name_mask & NS_FILE_PATTERN_CONTEST)) {
-      ptr += sprintf(ptr, "%s%d", sep, cnts->id);
-      sep = "-";
-    }
-    if ((file_name_mask & NS_FILE_PATTERN_RUN)) {
-      ptr += sprintf(ptr, "%s%06d", sep, run_id);
-      sep = "-";
-    }
-    if ((file_name_mask & NS_FILE_PATTERN_UID)) {
-      ptr += sprintf(ptr, "%s%d", sep, info.user_id);
-      sep = "-";
-    }
-    if ((file_name_mask & NS_FILE_PATTERN_LOGIN)) {
-      ptr += sprintf(ptr, "%s%s", sep, login_ptr);
-      sep = "-";
-    }
-    if ((file_name_mask & NS_FILE_PATTERN_NAME)) {
-      ptr += sprintf(ptr, "%s%s", sep, name_ptr);
-      sep = "-";
-    }
-    if ((file_name_mask & NS_FILE_PATTERN_PROB)) {
-      ptr += sprintf(ptr, "%s%s", sep, prob_ptr);
-      sep = "-";
-    }
-    if ((file_name_mask & NS_FILE_PATTERN_LANG)) {
-      ptr += sprintf(ptr, "%s%s", sep, lang_ptr);
-      sep = "-";
-    }
-    if ((file_name_mask & NS_FILE_PATTERN_TIME)) {
-      time_t ttm = info.time;
-      struct tm *rtm = localtime(&ttm);
-      ptr += sprintf(ptr, "%s%04d%02d%02d%02d%02d%02d", sep, rtm->tm_year + 1900, rtm->tm_mon + 1, rtm->tm_mday, rtm->tm_hour, rtm->tm_min, rtm->tm_sec);
-      sep = "-";
-    }
-    if ((file_name_mask & NS_FILE_PATTERN_SUFFIX)) {
-      ptr += sprintf(ptr, "%s", suff_ptr);
-    }
-    for (ptr = file_name_str; *ptr; ++ptr) {
-      if (*ptr <= ' ') *ptr = '_';
-    }
-    snprintf(dstpath, sizeof(dstpath), "%s/%s", dir5, file_name_str);
-
-    srcflags = serve_make_source_read_path(cs, srcpath, sizeof(srcpath), &info);
-    if (srcflags < 0) {
-      ns_error(log_f, NEW_SRV_ERR_SOURCE_NONEXISTANT);
-      goto cleanup;
-    }
-
-    if (generic_copy_file(srcflags, 0, srcpath, "", 0, 0, dstpath, "") < 0) {
-      ns_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
-      goto cleanup;
-    }
   }
 
   nsf_add_job(phr->fw_state, &adj->b);
 
-  if ((pid = fork()) < 0) {
-    err("fork failed: %s", os_ErrorMsg());
-    ns_error(log_f, NEW_SRV_ERR_TAR_FAILED);
-    goto cleanup;
-  } else if (!pid) {
-    if (chdir(dir2) < 0) {
-      err("chdir to %s failed: %s", dir2, os_ErrorMsg());
-      _exit(1);
-    }
-    execl("/bin/tar", "/bin/tar", "cfz", tgzname, name3, NULL);
-    err("execl failed: %s", os_ErrorMsg());
-    _exit(1);
-  }
-
-  while ((p = waitpid(pid, &status, 0)) != pid);
-  if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
-    ns_error(log_f, NEW_SRV_ERR_TAR_FAILED);
-    goto cleanup;
-  }
-
+  /*
   if (generic_read_file(&file_bytes, 0, &file_size, 0, 0, tgzpath, 0) < 0) {
     ns_error(log_f, NEW_SRV_ERR_DISK_READ_ERROR);
     goto cleanup;
@@ -3928,17 +3699,9 @@ ns_download_runs(
       goto cleanup;
     }
   }
+  */
 
- cleanup:;
-  if (need_remove) {
-    remove_directory_recursively(dir2, 0);
-  }
-  xfree(file_bytes);
-  xfree(file_name_str);
-  xfree(prob_alloc);
-  xfree(login_alloc);
-  xfree(lang_alloc);
-  xfree(name_alloc);
+cleanup:;
 }
 
 static int
