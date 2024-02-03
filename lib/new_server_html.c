@@ -679,7 +679,7 @@ ns_loop_callback(struct server_framework_state *state)
       e = ns_try_contest_extra(job->contest_id);
       e->last_access_time = cur_time;
     }
-    if (job->vt->run(job, &count, MAX_WORK_BATCH)) {
+    if (job->vt->run(job, NULL, NULL, &count, MAX_WORK_BATCH)) {
       nsf_remove_job(state, job);
     }
   }

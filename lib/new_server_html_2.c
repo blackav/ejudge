@@ -3445,7 +3445,11 @@ cleanup:;
 }
 
 static int
-adj_run_func(struct server_framework_job *sfj, int *p_tick_value, int max_value)
+adj_run_func(
+        struct server_framework_job *sfj,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra,
+        int *p_tick_value, int max_value)
 {
   struct archive_download_job *adj = (struct archive_download_job *) sfj;
 

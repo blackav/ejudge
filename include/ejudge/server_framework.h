@@ -3,7 +3,7 @@
 #ifndef __SERVER_FRAMEWORK_H__
 #define __SERVER_FRAMEWORK_H__
 
-/* Copyright (C) 2006-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -308,11 +308,19 @@ void nsf_err_packet_too_small(struct server_framework_state *,
 void nsf_err_protocol_error(struct server_framework_state *,
                             struct client_state *);
 
+struct contest_desc;
+struct contest_extra;
+
 struct server_framework_job;
 struct server_framework_job_funcs
 {
   void (*destroy)(struct server_framework_job *);
-  int  (*run)(struct server_framework_job *, int *p_tick_value, int max_value);
+  int  (*run)(
+        struct server_framework_job *,
+        const struct contest_desc *,
+        struct contest_extra *,
+        int *p_tick_value,
+        int max_value);
   unsigned char * (*get_status)(struct server_framework_job *);
 };
 
