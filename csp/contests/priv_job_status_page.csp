@@ -1,0 +1,32 @@
+<%
+%><%@include "priv_includes.csp"
+%><%
+// includes
+%><%@set getter_name = "csp_get_priv_job_status_page"
+%><%@set ac_prefix = "NEW_SRV_ACTION_"
+%><%@page csp_view_priv_job_status_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "priv_stdvars.csp"
+%><%
+// local vars
+    const unsigned char *title = NULL;
+    int enable_main_menu = 0;
+
+title = _("Job status");
+%><%@include "priv_header.csp"
+%>
+</div>
+
+<table class="b0"><tr>
+<td class="b0"><s:a ac="main-page"><s:_>Main page</s:_></s:a></td>
+<td class="b0"><s:a ac="job-status-page"><s:_>Refresh</s:_></s:a></td>
+</tr></table>
+
+<h2>Job status</h2>
+
+<%@include "priv_footer.csp"
+%><%
+cleanup:
+    (void) &&cleanup;
+    l10n_resetlocale();
+    html_armor_free(&ab);
+%>
