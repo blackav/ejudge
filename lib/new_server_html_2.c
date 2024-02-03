@@ -3449,13 +3449,19 @@ adj_run_func(
   struct archive_download_job *adj = (struct archive_download_job *) sfj;
 
   if (adj->stage == ADJ_COPYING) {
-    if (adj_process_run(adj, cnts, extra) < 0) {
-      adj->stage = ADJ_FINISHED;
-      return 0;
-    }
-    if (adj->cur_ind >= adj->run_u) {
-      adj->stage = ADJ_STARTING_TAR;
-      return 0;
+    while (1) {
+      if (adj_process_run(adj, cnts, extra) < 0) {
+        adj->stage = ADJ_FINISHED;
+        return 0;
+      }
+      if (adj->cur_ind >= adj->run_u) {
+        adj->stage = ADJ_STARTING_TAR;
+        *p_tick_value = max_value;
+        return 0;
+      }
+      if (++(*p_tick_value) == max_value) {
+        return 0;
+      }
     }
   }
   if (adj->stage == ADJ_STARTING_TAR) {
