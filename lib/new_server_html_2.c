@@ -3200,11 +3200,12 @@ adj_destroy_func(struct server_framework_job *sfj)
 }
 
 static int
-adj_process_run(struct archive_download_job *adj)
+adj_process_run(
+        struct archive_download_job *adj,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
 {
   int retval = -1;
-  const struct contest_desc *cnts = NULL;
-  struct contest_extra *extra = NULL;
   serve_state_t cs = NULL;
   int run_id;
   struct run_entry info = {};
@@ -3235,12 +3236,6 @@ adj_process_run(struct archive_download_job *adj)
   int srcflags;
   unsigned char srcpath[PATH_MAX];
 
-  if (adj->b.contest_id <= 0 || contests_get(adj->b.contest_id, &cnts) || !cnts) {
-    fprintf(adj->log_f, "invalid contest id %d\n", adj->b.contest_id);
-    goto cleanup;
-  }
-  extra = ns_get_contest_extra(cnts, adj->config);
-  ASSERT(extra);
   cs = extra->serve_state;
 
   if (adj->cur_ind >= adj->run_u) {
@@ -3454,7 +3449,7 @@ adj_run_func(
   struct archive_download_job *adj = (struct archive_download_job *) sfj;
 
   if (adj->stage == ADJ_COPYING) {
-    if (adj_process_run(adj) < 0) {
+    if (adj_process_run(adj, cnts, extra) < 0) {
       adj->stage = ADJ_FINISHED;
       return 0;
     }
