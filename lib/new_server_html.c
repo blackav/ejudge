@@ -683,7 +683,7 @@ ns_loop_callback(struct server_framework_state *state, const struct ejudge_cfg *
           job = job->next;
           continue;
         }
-        e = ns_get_contest_extra(cnts, NULL);
+        e = ns_get_contest_extra(cnts, config);
         ASSERT(e);
         e->last_access_time = cur_time;
       }
