@@ -3545,7 +3545,7 @@ adj_get_status_func(struct server_framework_job *sfj)
   return NULL;
 }
 
-static const struct server_framework_job_funcs adj_funcs =
+const struct server_framework_job_funcs NS_ARCHIVE_DOWNLOAD_JOB_VT =
 {
   adj_destroy_func,
   adj_run_func,
@@ -3558,7 +3558,7 @@ adj_create(void)
   struct archive_download_job *adj = NULL;
 
   XCALLOC(adj, 1);
-  adj->b.vt = &adj_funcs;
+  adj->b.vt = &NS_ARCHIVE_DOWNLOAD_JOB_VT;
   return adj;
 }
 
@@ -3703,6 +3703,8 @@ ns_download_job_result(
         int priv_mode)
 {
   const unsigned char *s = NULL;
+  char *file_bytes = NULL;
+  size_t file_size = 0;
 
   if (hr_cgi_param(phr, "job_id", &s) <= 0 || !s) {
     ns_error(phr->log_f, NEW_SRV_ERR_INV_PARAM);
@@ -3712,16 +3714,26 @@ ns_download_job_result(
   struct server_framework_job *job = nsf_get_first_job(phr->fw_state);
   struct archive_download_job *adj = NULL;
   while (job) {
+    if (job->vt == &NS_ARCHIVE_DOWNLOAD_JOB_VT) {
+      struct archive_download_job *a = (struct archive_download_job *) job;
+      if (!strcmp(a->job_id, s)) {
+        adj = a;
+        break;
+      }
+    }
     job = job->next;
   }
   if (!adj) {
     ns_error(phr->log_f, NEW_SRV_ERR_INV_PARAM);
     goto cleanup;
   }
+  if (adj->stage != ADJ_FINISHED || !adj->is_success) {
+    ns_error(phr->log_f, NEW_SRV_ERR_INV_PARAM);
+    goto cleanup;
+  }
 
-  /*
-  if (generic_read_file(&file_bytes, 0, &file_size, 0, 0, tgzpath, 0) < 0) {
-    ns_error(log_f, NEW_SRV_ERR_DISK_READ_ERROR);
+  if (generic_read_file(&file_bytes, 0, &file_size, 0, 0, adj->tgzpath, 0) < 0) {
+    ns_error(phr->log_f, NEW_SRV_ERR_DISK_READ_ERROR);
     goto cleanup;
   }
 
@@ -3729,15 +3741,19 @@ ns_download_job_result(
           "Content-type: application/x-tar\n"
           "Content-Disposition: attachment; filename=\"%s\"\n"
           "\n",
-          tgzname);
+          adj->tgzname);
   if (file_size > 0) {
     if (fwrite(file_bytes, 1, file_size, fout) != file_size) {
-      ns_error(log_f, NEW_SRV_ERR_OUTPUT_ERROR);
+      ns_error(phr->log_f, NEW_SRV_ERR_OUTPUT_ERROR);
       goto cleanup;
     }
   }
-  */
+
+  remove_directory_recursively(adj->tgzdir, 0);
+  nsf_remove_job(phr->fw_state, &adj->b);
+
 cleanup:;
+  xfree(file_bytes);
 }
 
 static int
