@@ -3249,19 +3249,47 @@ int ns_match_action(const unsigned char *str)
                           c = str[8];
                           if (c == '-') {
                             c = str[9];
-                            if (c == 'r') {
+                            if (c == 'j') {
                               c = str[10];
-                              if (c == 'u') {
+                              if (c == 'o') {
                                 c = str[11];
-                                if (c == 'n') {
+                                if (c == 'b') {
                                   c = str[12];
-                                  if (!c) return NEW_SRV_ACTION_DOWNLOAD_RUN;
+                                  if (c == '-') {
+                                    c = str[13];
+                                    if (c == 'r') {
+                                      c = str[14];
+                                      if (c == 'e') {
+                                        c = str[15];
+                                        if (c == 's') {
+                                          c = str[16];
+                                          if (c == 'u') {
+                                            c = str[17];
+                                            if (c == 'l') {
+                                              c = str[18];
+                                              if (c == 't') {
+                                                c = str[19];
+                                                if (!c) return NEW_SRV_ACTION_DOWNLOAD_JOB_RESULT;
+                                                return 0;
+                                              }
+                                              return 0;
+                                            }
+                                            return 0;
+                                          }
+                                          return 0;
+                                        }
+                                        return 0;
+                                      }
+                                      return 0;
+                                    }
+                                    return 0;
+                                  }
                                   return 0;
                                 }
                                 return 0;
                               }
                               return 0;
-                            } else if (c < 'r') {
+                            } else if (c < 'j') {
                               if (c == 'a') {
                                 c = str[10];
                                 if (c == 'r') {
@@ -3307,6 +3335,19 @@ int ns_match_action(const unsigned char *str)
                                 return 0;
                               }
                             } else {
+                              if (c == 'r') {
+                                c = str[10];
+                                if (c == 'u') {
+                                  c = str[11];
+                                  if (c == 'n') {
+                                    c = str[12];
+                                    if (!c) return NEW_SRV_ACTION_DOWNLOAD_RUN;
+                                    return 0;
+                                  }
+                                  return 0;
+                                }
+                                return 0;
+                              }
                             }
                             return 0;
                           }
@@ -4718,6 +4759,65 @@ int ns_match_action(const unsigned char *str)
               return 0;
             }
             return 0;
+          } else if (c < 's') {
+            if (c == 'o') {
+              c = str[2];
+              if (c == 'b') {
+                c = str[3];
+                if (c == '-') {
+                  c = str[4];
+                  if (c == 's') {
+                    c = str[5];
+                    if (c == 't') {
+                      c = str[6];
+                      if (c == 'a') {
+                        c = str[7];
+                        if (c == 't') {
+                          c = str[8];
+                          if (c == 'u') {
+                            c = str[9];
+                            if (c == 's') {
+                              c = str[10];
+                              if (c == '-') {
+                                c = str[11];
+                                if (c == 'p') {
+                                  c = str[12];
+                                  if (c == 'a') {
+                                    c = str[13];
+                                    if (c == 'g') {
+                                      c = str[14];
+                                      if (c == 'e') {
+                                        c = str[15];
+                                        if (!c) return NEW_SRV_ACTION_JOB_STATUS_PAGE;
+                                        return 0;
+                                      }
+                                      return 0;
+                                    }
+                                    return 0;
+                                  }
+                                  return 0;
+                                }
+                                return 0;
+                              }
+                              return 0;
+                            }
+                            return 0;
+                          }
+                          return 0;
+                        }
+                        return 0;
+                      }
+                      return 0;
+                    }
+                    return 0;
+                  }
+                  return 0;
+                }
+                return 0;
+              }
+              return 0;
+            }
+          } else {
           }
           return 0;
         }

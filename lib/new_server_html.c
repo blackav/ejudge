@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -661,7 +661,7 @@ ns_check_session_cache(time_t cur_time)
 enum { MAX_WORK_BATCH = 10 };
 
 int
-ns_loop_callback(struct server_framework_state *state)
+ns_loop_callback(struct server_framework_state *state, const struct ejudge_cfg *config)
 {
   time_t cur_time = time(0);
   struct contest_extra *e;
@@ -675,12 +675,22 @@ ns_loop_callback(struct server_framework_state *state)
   memset(&files, 0, sizeof(files));
 
   if (job) {
-    if (job->contest_id > 0) {
-      e = ns_try_contest_extra(job->contest_id);
-      e->last_access_time = cur_time;
-    }
-    if (job->vt->run(job, &count, MAX_WORK_BATCH)) {
-      nsf_remove_job(state, job);
+    while (job && count < MAX_WORK_BATCH) {
+      cnts = NULL;
+      e = NULL;
+      if (job->contest_id > 0) {
+        if (contests_get(job->contest_id, &cnts) < 0 || !cnts) {
+          job = job->next;
+          continue;
+        }
+        e = ns_get_contest_extra(cnts, config);
+        ASSERT(e);
+        e->last_access_time = cur_time;
+      }
+      if (job->vt->run(job, cnts, e, &count, MAX_WORK_BATCH)) {
+        nsf_remove_job(state, job);
+      }
+      job = job->next;
     }
   }
 
@@ -6774,7 +6784,7 @@ priv_download_runs(
 
   info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
 
-  ns_download_runs(cnts, cs, fout, log_f, run_selection, dir_struct, file_name_mask, use_problem_extid, use_problem_dir,
+  ns_download_runs(phr, cnts, cs, fout, log_f, run_selection, dir_struct, file_name_mask, use_problem_extid, use_problem_dir,
                    problem_dir_prefix, enable_hidden, mask_size, mask);
 
   if (cs->xuser_state) {
@@ -9494,6 +9504,24 @@ priv_get_submit(
   ns_get_submit(fout, phr, cnts, extra, 1);
 }
 
+void
+ns_download_job_result(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra,
+        int priv_mode);
+
+static void
+priv_download_job_result(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  ns_download_job_result(fout, phr, cnts, extra, 1);
+}
+
 typedef PageInterface *(*external_action_handler_t)(void);
 
 typedef int (*new_action_handler_t)(
@@ -9730,6 +9758,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_COMPILER_OP] = priv_generic_operation,
   [NEW_SRV_ACTION_INVOKER_REBOOT] = priv_generic_operation,
   [NEW_SRV_ACTION_CLEAR_SESSION_CACHE] = priv_generic_operation,
+  [NEW_SRV_ACTION_DOWNLOAD_JOB_RESULT] = priv_download_job_result,
 };
 
 static const unsigned char * const external_priv_action_names[NEW_SRV_ACTION_LAST] =
@@ -9777,6 +9806,7 @@ static const unsigned char * const external_priv_action_names[NEW_SRV_ACTION_LAS
   [NEW_SRV_ACTION_USER_RUN_HEADER_CHANGE_DURATION] = "priv_user_run_header_change_duration",
   [NEW_SRV_ACTION_USER_RUN_HEADER_CLEAR_STOP_TIME] = "priv_user_run_header_clear_stop_time",
   [NEW_SRV_ACTION_SERVER_INFO_PAGE] = "priv_server_info_page",
+  [NEW_SRV_ACTION_JOB_STATUS_PAGE] = "priv_job_status_page",
 };
 
 static const int external_priv_action_aliases[NEW_SRV_ACTION_LAST] =

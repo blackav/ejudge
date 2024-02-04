@@ -1595,7 +1595,7 @@ nsf_main_loop(struct server_framework_state *state)
 
   while (1) {
     int work_done = 1;
-    if (state->params->loop_start) work_done = state->params->loop_start(state);
+    if (state->params->loop_start) work_done = state->params->loop_start(state, state->params->config);
 
     for (struct directory_watch *dw = state->dw_first; dw; dw = dw->next) {
       if (dw->ready) {

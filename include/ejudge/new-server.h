@@ -3,7 +3,7 @@
 #ifndef __NEW_SERVER_H__
 #define __NEW_SERVER_H__
 
-/* Copyright (C) 2006-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -159,7 +159,7 @@ ns_invalidate_session(
 
 void ns_unload_contests(void);
 
-int  ns_loop_callback(struct server_framework_state *state);
+int  ns_loop_callback(struct server_framework_state *state, const struct ejudge_cfg *);
 void ns_post_select_callback(struct server_framework_state *state);
 
 unsigned char *
@@ -438,6 +438,7 @@ enum
 
 void
 ns_download_runs(
+        struct http_request_info *phr,
         const struct contest_desc *cnts,
         const serve_state_t cs,
         FILE *fout,
@@ -1009,5 +1010,10 @@ ns_get_vcs_snapshot_url(
         int user_id,
         int prob_id,
         const unsigned char *src);
+
+struct archive_download_job *
+ns_get_archive_download_job(
+        struct server_framework_state *state,
+        const unsigned char *job_id);
 
 #endif /* __NEW_SERVER_H__ */

@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1053,6 +1053,7 @@ main(int argc, char *argv[])
   if (ejudge_config->contests_ws_port > 0) {
     params.ws_port = ejudge_config->contests_ws_port;
   }
+  params.config = ejudge_config;
 
   if (load_plugins() < 0) return 1;
 

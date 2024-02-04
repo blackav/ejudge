@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-01-21 16:25+0300\n"
+"POT-Creation-Date: 2024-02-04 16:05+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Ukrainian <uk@li.org>\n"
@@ -1190,6 +1190,9 @@ msgstr ""
 msgid "Down all"
 msgstr ""
 
+msgid "Download"
+msgstr ""
+
 msgid "Download OK and PR runs"
 msgstr ""
 
@@ -2036,6 +2039,9 @@ msgid "It's not allowed to answer to judge's messages"
 msgstr ""
 
 msgid "Jan"
+msgstr ""
+
+msgid "Job status"
 msgstr ""
 
 msgid "Judge"

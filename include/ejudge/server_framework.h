@@ -3,7 +3,7 @@
 #ifndef __SERVER_FRAMEWORK_H__
 #define __SERVER_FRAMEWORK_H__
 
-/* Copyright (C) 2006-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -172,6 +172,7 @@ struct ws_client_state
 
 struct server_framework_state;
 struct new_server_prot_packet;
+struct ejudge_cfg;
 
 struct server_framework_params
 {
@@ -194,7 +195,7 @@ struct server_framework_params
   void (*cleanup_client)(struct server_framework_state *,
                          struct client_state *);
   void (*free_memory)(struct server_framework_state *, void *);
-  int  (*loop_start)(struct server_framework_state *);
+  int  (*loop_start)(struct server_framework_state *, const struct ejudge_cfg *);
   void (*post_select)(struct server_framework_state *);
 
   // WebSocket port, if > 0, then the server listens for websocket incoming connections
@@ -226,6 +227,8 @@ struct server_framework_params
   int (*ws_create_session)(
         struct server_framework_state *,
         struct ws_client_state *);
+
+  struct ejudge_cfg *config;
 };
 
 struct server_framework_state *nsf_init(struct server_framework_params *params, void *data, time_t server_start_time);
@@ -308,11 +311,19 @@ void nsf_err_packet_too_small(struct server_framework_state *,
 void nsf_err_protocol_error(struct server_framework_state *,
                             struct client_state *);
 
+struct contest_desc;
+struct contest_extra;
+
 struct server_framework_job;
 struct server_framework_job_funcs
 {
   void (*destroy)(struct server_framework_job *);
-  int  (*run)(struct server_framework_job *, int *p_tick_value, int max_value);
+  int  (*run)(
+        struct server_framework_job *,
+        const struct contest_desc *,
+        struct contest_extra *,
+        int *p_tick_value,
+        int max_value);
   unsigned char * (*get_status)(struct server_framework_job *);
 };
 
@@ -325,6 +336,50 @@ struct server_framework_job
   int contest_id;
   time_t start_time;
   unsigned char *title;
+};
+
+enum
+{
+  ADJ_COPYING = 0,
+  ADJ_STARTING_TAR,
+  ADJ_WAITING_FOR_TAR,
+  ADJ_FINISHED,
+};
+
+struct archive_download_job
+{
+  struct server_framework_job b;
+
+  const struct ejudge_cfg *config;
+
+  unsigned char *job_id;
+
+  unsigned char *tgzname;
+  unsigned char *tgzdir;
+  unsigned char *tgzpath;
+
+  unsigned char *dirname;  // the target directory name
+  unsigned char *dirpath;  // the target directory path
+
+  char *log_s;
+  size_t log_z;
+  FILE *log_f;
+
+  // the list of run_ids
+  int run_a, run_u;
+  int *runs;
+  int cur_ind;
+
+  int stage;               // 0 - copying, 1 - archiving, 2 - waiting for DL
+  int use_problem_dir;
+  int use_problem_extid;
+  int dir_struct;
+  int file_name_mask;
+
+  unsigned char *problem_dir_prefix;
+  int problem_dir_prefix_len;
+  int pid;
+  int is_success;
 };
 
 void

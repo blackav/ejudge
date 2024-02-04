@@ -5514,6 +5514,8 @@ rejudge_by_mask_destroy_func(struct server_framework_job *j)
 static int
 rejudge_by_mask_run_func(
         struct server_framework_job *j,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra,
         int *p_count,
         int max_count)
 {
@@ -5712,6 +5714,8 @@ rejudge_problem_destroy_func(
 static int
 rejudge_problem_run_func(
         struct server_framework_job *j,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra,
         int *p_count,
         int max_count)
 {
@@ -5886,6 +5890,8 @@ judge_suspended_destroy_func(
 static int
 judge_suspended_run_func(
         struct server_framework_job *job,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra,
         int *p_count,
         int max_count)
 {
@@ -6026,6 +6032,8 @@ rejudge_all_destroy_func(
 static int
 rejudge_all_run_func(
         struct server_framework_job *job,
+        const struct contest_desc *desc,
+        struct contest_extra *extra,
         int *p_count,
         int max_count)
 {
