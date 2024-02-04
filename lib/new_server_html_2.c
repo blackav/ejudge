@@ -3688,6 +3688,37 @@ ns_download_runs(
 
   nsf_add_job(phr->fw_state, &adj->b);
 
+  snprintf(url_extra, sizeof(url_extra), "job_id=%s", job_id_str);
+  ns_refresh_page(fout, phr, NEW_SRV_ACTION_JOB_STATUS_PAGE, url_extra);
+
+cleanup:;
+}
+
+void
+ns_download_job_result(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra,
+        int priv_mode)
+{
+  const unsigned char *s = NULL;
+
+  if (hr_cgi_param(phr, "job_id", &s) <= 0 || !s) {
+    ns_error(phr->log_f, NEW_SRV_ERR_INV_PARAM);
+    goto cleanup;
+  }
+
+  struct server_framework_job *job = nsf_get_first_job(phr->fw_state);
+  struct archive_download_job *adj = NULL;
+  while (job) {
+    job = job->next;
+  }
+  if (!adj) {
+    ns_error(phr->log_f, NEW_SRV_ERR_INV_PARAM);
+    goto cleanup;
+  }
+
   /*
   if (generic_read_file(&file_bytes, 0, &file_size, 0, 0, tgzpath, 0) < 0) {
     ns_error(log_f, NEW_SRV_ERR_DISK_READ_ERROR);
@@ -3706,10 +3737,6 @@ ns_download_runs(
     }
   }
   */
-
-  snprintf(url_extra, sizeof(url_extra), "job_id=%s", job_id_str);
-  ns_refresh_page(fout, phr, NEW_SRV_ACTION_JOB_STATUS_PAGE, url_extra);
-
 cleanup:;
 }
 

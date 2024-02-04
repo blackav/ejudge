@@ -9504,6 +9504,14 @@ priv_get_submit(
   ns_get_submit(fout, phr, cnts, extra, 1);
 }
 
+void
+ns_download_job_result(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra,
+        int priv_mode);
+
 static void
 priv_download_job_result(
         FILE *fout,
@@ -9511,6 +9519,7 @@ priv_download_job_result(
         const struct contest_desc *cnts,
         struct contest_extra *extra)
 {
+  ns_download_job_result(fout, phr, cnts, extra, 1);
 }
 
 typedef PageInterface *(*external_action_handler_t)(void);
