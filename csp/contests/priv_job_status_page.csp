@@ -56,12 +56,12 @@
 %>Copying <s:v value="adj->cur_ind" /> / <s:v value="adj->run_u" /><%
         }
 %></td>
-    </tr>
-    <tr><%
+        <td class="b1"><%
         if (adj->stage == ADJ_FINISHED && adj->is_success) {
 %><s:url name="DownloadUrl" ac="download-job-result"><s:param name="job_id" /></s:url><s:a url="DownloadUrl"><s:_>Download</s:_></s:a><%
         }
-%></tr>
+%></td>
+    </tr>
 <%
     }
 %>
