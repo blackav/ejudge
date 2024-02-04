@@ -3694,6 +3694,24 @@ ns_download_runs(
 cleanup:;
 }
 
+struct archive_download_job *
+ns_get_archive_download_job(
+        struct server_framework_state *state,
+        const unsigned char *job_id)
+{
+  struct server_framework_job *job = nsf_get_first_job(state);
+  while (job) {
+    if (job->vt == &NS_ARCHIVE_DOWNLOAD_JOB_VT) {
+      struct archive_download_job *a = (struct archive_download_job *) job;
+      if (!strcmp(a->job_id, job_id)) {
+        return a;
+      }
+    }
+    job = job->next;
+  }
+  return NULL;
+}
+
 void
 ns_download_job_result(
         FILE *fout,
@@ -3711,18 +3729,7 @@ ns_download_job_result(
     goto cleanup;
   }
 
-  struct server_framework_job *job = nsf_get_first_job(phr->fw_state);
-  struct archive_download_job *adj = NULL;
-  while (job) {
-    if (job->vt == &NS_ARCHIVE_DOWNLOAD_JOB_VT) {
-      struct archive_download_job *a = (struct archive_download_job *) job;
-      if (!strcmp(a->job_id, s)) {
-        adj = a;
-        break;
-      }
-    }
-    job = job->next;
-  }
+  struct archive_download_job *adj = ns_get_archive_download_job(phr->fw_state, s);
   if (!adj) {
     ns_error(phr->log_f, NEW_SRV_ERR_INV_PARAM);
     goto cleanup;
