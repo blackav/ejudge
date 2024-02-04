@@ -3136,50 +3136,6 @@ filename_escape_string(
   return out;
 }
 
-enum
-{
-  ADJ_COPYING = 0,
-  ADJ_STARTING_TAR,
-  ADJ_WAITING_FOR_TAR,
-  ADJ_FINISHED,
-};
-
-struct archive_download_job
-{
-  struct server_framework_job b;
-
-  const struct ejudge_cfg *config;
-
-  unsigned char *job_id;
-
-  unsigned char *tgzname;
-  unsigned char *tgzdir;
-  unsigned char *tgzpath;
-
-  unsigned char *dirname;  // the target directory name
-  unsigned char *dirpath;  // the target directory path
-
-  char *log_s;
-  size_t log_z;
-  FILE *log_f;
-
-  // the list of run_ids
-  int run_a, run_u;
-  int *runs;
-  int cur_ind;
-
-  int stage;               // 0 - copying, 1 - archiving, 2 - waiting for DL
-  int use_problem_dir;
-  int use_problem_extid;
-  int dir_struct;
-  int file_name_mask;
-
-  unsigned char *problem_dir_prefix;
-  int problem_dir_prefix_len;
-  int pid;
-  int is_success;
-};
-
 static void
 adj_destroy_func(struct server_framework_job *sfj)
 {
