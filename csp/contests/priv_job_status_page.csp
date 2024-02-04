@@ -2,6 +2,7 @@
 %><%@include "priv_includes.csp"
 %><%
 // includes
+
 %><%@set getter_name = "csp_get_priv_job_status_page"
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
 %><%@page csp_view_priv_job_status_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
@@ -15,6 +16,8 @@
     if (!job_id) job_id = "";
 
     title = _("Job status");
+
+    struct archive_download_job *adj = ns_get_archive_download_job(phr->fw_state, job_id);
 %><%@include "priv_header.csp"
 %>
 </div>
@@ -26,6 +29,57 @@
 </tr></table>
 
 <h2>Job status</h2>
+
+<table class="b1">
+    <tr>
+        <th class="b1">ID</th>
+        <th class="b1">Contest ID</th>
+        <th class="b1">Start Time</th>
+        <th class="b1">Status</th>
+        <th class="b1">Action</th>
+    </tr>
+<%
+    if (adj) {
+%>
+    <tr>
+        <td class="b1"><s:v value="adj->job_id" /></td>
+        <td class="b1"><s:v value="adj->b.contest_id" /></td>
+        <td class="b1"><s:v value="adj->b.start_time" /></td>
+        <td class="b1"><%
+        if (adj->stage == ADJ_FINISHED && adj->is_success) {
+%>Success<%
+        } else if (adj->stage == ADJ_FINISHED) {
+%>Failed<%
+        } else if (adj->stage == ADJ_WAITING_FOR_TAR || adj->stage == ADJ_STARTING_TAR) {
+%>Archiving<%
+        } else if (adj->stage == ADJ_COPYING) {
+%>Copying <s:v value="adj->cur_ind" /> / <s:v value="adj->run_u" /><%
+        }
+%></td>
+    </tr>
+    <tr><%
+        if (adj->stage == ADJ_FINISHED && adj->is_success) {
+%><s:url name="DownloadUrl" ac="download-job-result"><s:param name="job_id" /></s:url><s:a url="DownloadUrl"><s:_>Download</s:_></s:a><%
+        }
+%></tr>
+<%
+    }
+%>
+</table>
+
+<%
+    if (adj && adj->stage == ADJ_FINISHED) {
+        if (adj->log_f) {
+            fclose(adj->log_f); adj->log_f = NULL;
+        }
+        if (adj->log_s && adj->log_s[0]) {
+%>
+<h3>Messages</h3>
+<pre><s:v value="adj->log_s" /></pre>
+<%
+        }
+    }
+%>
 
 <%@include "priv_footer.csp"
 %><%

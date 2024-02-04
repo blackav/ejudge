@@ -1011,4 +1011,9 @@ ns_get_vcs_snapshot_url(
         int prob_id,
         const unsigned char *src);
 
+struct archive_download_job *
+ns_get_archive_download_job(
+        struct server_framework_state *state,
+        const unsigned char *job_id);
+
 #endif /* __NEW_SERVER_H__ */
