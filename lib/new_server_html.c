@@ -9504,6 +9504,15 @@ priv_get_submit(
   ns_get_submit(fout, phr, cnts, extra, 1);
 }
 
+static void
+priv_download_job_result(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+}
+
 typedef PageInterface *(*external_action_handler_t)(void);
 
 typedef int (*new_action_handler_t)(
@@ -9740,6 +9749,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_COMPILER_OP] = priv_generic_operation,
   [NEW_SRV_ACTION_INVOKER_REBOOT] = priv_generic_operation,
   [NEW_SRV_ACTION_CLEAR_SESSION_CACHE] = priv_generic_operation,
+  [NEW_SRV_ACTION_DOWNLOAD_JOB_RESULT] = priv_download_job_result,
 };
 
 static const unsigned char * const external_priv_action_names[NEW_SRV_ACTION_LAST] =
