@@ -4428,6 +4428,7 @@ int ns_match_action(const unsigned char *str)
                           c = str[7];
                           if (c == 'r') {
                             c = str[8];
+                            if (!c) return NEW_SRV_ACTION_GET_USER;
                             if (c == 'p') {
                               c = str[9];
                               if (c == 'r') {
