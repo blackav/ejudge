@@ -427,7 +427,7 @@ cmd_http_request(
     FILE *hdr_f = open_memstream(&hdr_t, &hdr_z);
 
     fprintf(hdr_f, "Status: %d\n", hr.status_code);
-    fprintf(hdr_f, "Content-Type: %s\n", "text/json");
+    fprintf(hdr_f, "Content-Type: %s\n", "application/json");
     fprintf(hdr_f, "Cache-Control: no-cache\n");
     fprintf(hdr_f, "Pragma: no-cache\n");
     putc('\n', hdr_f);
