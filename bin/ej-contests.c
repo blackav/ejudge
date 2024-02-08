@@ -357,6 +357,7 @@ cmd_http_request(
   hr.out_f = open_memstream(&hr.out_t, &hr.out_z);
   ns_handle_http_request(state, hr.out_f, &hr);
   close_memstream(hr.out_f); hr.out_f = NULL;
+  if (hr.status_code == 0) hr.status_code = 200;
 
   if (!hr.disable_log) {
     *pbuf = 0;
@@ -425,6 +426,7 @@ cmd_http_request(
     size_t hdr_z = 0;
     FILE *hdr_f = open_memstream(&hdr_t, &hdr_z);
 
+    fprintf(hdr_f, "Status: %d\n", hr.status_code);
     fprintf(hdr_f, "Content-Type: %s\n", "text/json");
     fprintf(hdr_f, "Cache-Control: no-cache\n");
     fprintf(hdr_f, "Pragma: no-cache\n");
@@ -442,6 +444,7 @@ cmd_http_request(
     size_t hdr_z = 0;
     FILE *hdr_f = open_memstream(&hdr_t, &hdr_z);
 
+    fprintf(hdr_f, "Status: %d\n", hr.status_code);
     fprintf(hdr_f, "Content-Type: %s\n", hr.content_type);
     fprintf(hdr_f, "Cache-Control: no-cache\n");
     fprintf(hdr_f, "Pragma: no-cache\n");
@@ -469,6 +472,7 @@ cmd_http_request(
       goto cleanup;
     }
     hr.out_f = open_memstream(&hr.out_t, &hr.out_z);
+    fprintf(hr.out_f, "Status: %d\n", hr.status_code);
     fprintf(hr.out_f, "Content-type: text/plain\n\n");
     close_memstream(hr.out_f); hr.out_f = NULL;
   }

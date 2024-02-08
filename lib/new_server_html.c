@@ -9666,6 +9666,7 @@ priv_get_user(
   http_status = 200;
 
 done:;
+  phr->json_reply = 1;
   phr->status_code = http_status;
   emit_json_result(fout, phr, ok, err_num, 0, err_msg, jr);
   free(xml_text);
