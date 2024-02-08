@@ -9543,7 +9543,7 @@ priv_get_user(
   int err_num = NEW_SRV_ERR_INV_PARAM;
   const unsigned char *err_msg = NULL;
   cJSON *jr = cJSON_CreateObject();
-  __attribute__((unused)) int http_status = 400;
+  int http_status = 400;
   int global_mode = 0;
   int other_user_id = 0;
   const unsigned char *other_user_login = NULL;
@@ -9666,6 +9666,7 @@ priv_get_user(
   http_status = 200;
 
 done:;
+  phr->status_code = http_status;
   emit_json_result(fout, phr, ok, err_num, 0, err_msg, jr);
   free(xml_text);
   if (u) {
