@@ -395,9 +395,14 @@ json_serialize_userlist_user_info(int user_id, const struct userlist_user_info *
 
     if (user_id > 0) cJSON_AddNumberToObject(jr, "user_id", user_id);
     if (ui->contest_id > 0) cJSON_AddNumberToObject(jr, "contest_id", ui->contest_id);
+    if (ui->name && ui->name[0]) {
+        cJSON_AddStringToObject(jr, "user_name", ui->name);
+    }
     if (ui->cnts_read_only > 0) cJSON_AddTrueToObject(jr, "cnts_read_only");
     if (ui->instnum > 0) cJSON_AddNumberToObject(jr, "instnum", ui->instnum);
-    cJSON_AddNumberToObject(jr, "team_passwd_method", ui->team_passwd_method);
+    if (ui->team_passwd && ui->team_passwd[0]) {
+        cJSON_AddNumberToObject(jr, "team_passwd_method", ui->team_passwd_method);
+    }
     if (ui->inst) cJSON_AddStringToObject(jr, "inst", ui->inst);
     if (ui->inst_en) cJSON_AddStringToObject(jr, "inst_en", ui->inst_en);
     if (ui->instshort) cJSON_AddStringToObject(jr, "instshort", ui->instshort);
@@ -505,25 +510,39 @@ json_serialize_userlist_user(
     if (u->last_access_time > 0) cJSON_AddNumberToObject(jr, "last_access_time", u->last_access_time);
     if (u->last_pwdchange_time > 0) cJSON_AddNumberToObject(jr, "last_pwdchange_time", u->last_pwdchange_time);
 
-    if (u->contests && u->contests->first_down) {
+    if (uc) {
         cJSON *jcs = cJSON_CreateArray();
-        for (const struct xml_tree *p = u->contests->first_down; p; p = p->right) {
-            const struct userlist_contest *uc = (const struct userlist_contest*) p;
-            cJSON *jc = json_serialize_userlist_contest(u->id, uc);
-            cJSON_AddItemToArray(jcs, jc);
-        }
+        cJSON *jc = json_serialize_userlist_contest(u->id, uc);
+        cJSON_AddItemToArray(jcs, jc);
         cJSON_AddItemToObject(jr, "contests", jcs);
+    } else {
+        if (u->contests && u->contests->first_down) {
+            cJSON *jcs = cJSON_CreateArray();
+            for (const struct xml_tree *p = u->contests->first_down; p; p = p->right) {
+                const struct userlist_contest *uc = (const struct userlist_contest*) p;
+                cJSON *jc = json_serialize_userlist_contest(u->id, uc);
+                cJSON_AddItemToArray(jcs, jc);
+            }
+            cJSON_AddItemToObject(jr, "contests", jcs);
+        }
     }
 
     //struct xml_tree *cookies;
 
-    if (u->cis_a > 0) {
+    if (ui) {
         cJSON *juis = cJSON_CreateArray();
-        for (int i = 0; i < u->cis_a; ++i) {
-            cJSON *jui = json_serialize_userlist_user_info(u->id, u->cis[i]);
-            cJSON_AddItemToArray(juis, jui);
-        }
+        cJSON *jui = json_serialize_userlist_user_info(u->id, ui);
+        cJSON_AddItemToArray(juis, jui);
         cJSON_AddItemToObject(jr, "infos", juis);
+    } else {
+        if (u->cis_a > 0) {
+            cJSON *juis = cJSON_CreateArray();
+            for (int i = 0; i < u->cis_a; ++i) {
+                cJSON *jui = json_serialize_userlist_user_info(u->id, u->cis[i]);
+                cJSON_AddItemToArray(juis, jui);
+            }
+            cJSON_AddItemToObject(jr, "infos", juis);
+        }
     }
 
     return jr;

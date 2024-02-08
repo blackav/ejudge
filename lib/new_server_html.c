@@ -9655,7 +9655,7 @@ priv_get_user(
       err_num = NEW_SRV_ERR_INTERNAL;
       goto done;
     }
-    ui = userlist_get_user_info(u, phr->contest_id);
+    ui = u->cnts0;
     uc = userlist_get_user_contest(u, phr->contest_id);
   }
 
