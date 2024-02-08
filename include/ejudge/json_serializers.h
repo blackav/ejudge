@@ -2,7 +2,7 @@
 #ifndef __JSON_SERIALIZERS_H__
 #define __JSON_SERIALIZERS_H__
 
-/* Copyright (C) 2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2023-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -30,5 +30,14 @@ struct cJSON *
 json_serialize_run(
         struct serve_state *cs,
         const struct run_entry *re);
+
+struct userlist_user;
+struct userlist_user_info;
+struct userlist_contest;
+struct cJSON *
+json_serialize_userlist_user(
+        const struct userlist_user *u,
+        const struct userlist_user_info *ui,
+        const struct userlist_contest *uc);
 
 #endif /* __JSON_SERIALIZERS_H__ */
