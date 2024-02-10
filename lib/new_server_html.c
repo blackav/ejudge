@@ -166,6 +166,16 @@ parse_user_list(
         intarray_t *uset,
         int skip_user_check);
 
+static void
+emit_json_result(
+        FILE *fout,
+        struct http_request_info *phr,
+        int ok,
+        int err_num,
+        unsigned err_id,
+        const unsigned char *err_msg,
+        cJSON *jr);
+
 void
 ns_invalidate_session(
         unsigned long long session_id,
@@ -9522,6 +9532,152 @@ priv_download_job_result(
   ns_download_job_result(fout, phr, cnts, extra, 1);
 }
 
+static void
+priv_get_user(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  int ok = 0;
+  int err_num = NEW_SRV_ERR_INV_PARAM;
+  const unsigned char *err_msg = NULL;
+  cJSON *jr = cJSON_CreateObject();
+  int http_status = 400;
+  int global_mode = 0;
+  int other_user_id = 0;
+  const unsigned char *other_user_login = NULL;
+  opcap_t caps = 0;
+  int r;
+  unsigned char *xml_text = NULL;
+  struct userlist_user *u = NULL;
+  const struct userlist_user_info *ui = NULL;
+  const struct userlist_contest *uc = NULL;
+
+  if (hr_cgi_param_bool_opt(phr, "global", &global_mode, 0) < 0)
+    goto done;
+  if (phr->contest_id <= 0) {
+    global_mode = 1;
+  }
+  if (hr_cgi_param_int_opt(phr, "other_user_id", &other_user_id, 0) < 0)
+    goto done;
+  if (hr_cgi_param(phr, "other_user_login", &other_user_login) < 0)
+    goto done;
+  if (other_user_id <= 0 && (!other_user_login || !other_user_login[0]))
+    goto done;
+  if (other_user_id > 0 && other_user_login && other_user_login[0])
+    goto done;
+
+  if (ns_open_ul_connection(phr->fw_state) < 0) {
+    err("priv_get_user: failed to open userlist connection");
+    goto done;
+  }
+  if (global_mode) {
+    if (ejudge_cfg_opcaps_find(phr->config, phr->login, &caps) < 0
+        || opcaps_check(caps, OPCAP_GET_USER) < 0) {
+      err("priv_get_user: no global GET_USER permission for user '%s'", phr->login);
+      http_status = 403;
+      err_num = NEW_SRV_ERR_PERMISSION_DENIED;
+      goto done;
+    }
+    if (other_user_login && other_user_login[0]) {
+      r = userlist_clnt_lookup_user(ul_conn, other_user_login, 0, &other_user_id, NULL);
+      if (r < 0 && r != -ULS_ERR_INVALID_LOGIN) {
+        err("priv_get_user: userlist server error %d", r);
+        http_status = 500;
+        err_num = NEW_SRV_ERR_INTERNAL;
+        goto done;
+      }
+      if (r < 0) {
+        err_num = NEW_SRV_ERR_INV_USER_ID;
+        http_status = 404;
+        goto done;
+      }
+    }
+    r = userlist_clnt_get_info(ul_conn, ULS_PRIV_GET_USER_INFO, other_user_id, 0, &xml_text);
+    if (r < 0 && r != -ULS_ERR_BAD_UID) {
+      err("priv_get_user: userlist server error %d", r);
+      http_status = 500;
+      err_num = NEW_SRV_ERR_INTERNAL;
+      goto done;
+    }
+    if (r < 0) {
+      err_num = NEW_SRV_ERR_INV_USER_ID;
+      http_status = 404;
+      goto done;
+    }
+    u = userlist_parse_user_str(xml_text);
+    if (!u) {
+      err("priv_get_user: XML parse error");
+      http_status = 500;
+      err_num = NEW_SRV_ERR_INTERNAL;
+      goto done;
+    }
+    ui = userlist_get_cnts0(u);
+  } else {
+    if (opcaps_find(&phr->cnts->capabilities, phr->login, &caps) < 0
+        || opcaps_check(caps, OPCAP_GET_USER) < 0) {
+      err("priv_get_user: no GET_USER permission for user '%s' and contest %d", phr->login, phr->contest_id);
+      http_status = 403;
+      err_num = NEW_SRV_ERR_PERMISSION_DENIED;
+      goto done;
+    }
+    if (other_user_login && other_user_login[0]) {
+      r = userlist_clnt_lookup_user(ul_conn, other_user_login, phr->contest_id, &other_user_id, NULL);
+      if (r < 0 && r != -ULS_ERR_INVALID_LOGIN) {
+        err("priv_get_user: userlist server error %d", r);
+        http_status = 500;
+        err_num = NEW_SRV_ERR_INTERNAL;
+        goto done;
+      }
+      if (r < 0) {
+        err_num = NEW_SRV_ERR_INV_USER_ID;
+        http_status = 404;
+        goto done;
+      }
+    }
+    r = userlist_clnt_get_info(ul_conn, ULS_PRIV_GET_USER_INFO, other_user_id, phr->contest_id, &xml_text);
+    if (r < 0 && r != -ULS_ERR_BAD_UID) {
+      err("priv_get_user: userlist server error %d", r);
+      http_status = 500;
+      err_num = NEW_SRV_ERR_INTERNAL;
+      goto done;
+    }
+    if (r < 0) {
+      err_num = NEW_SRV_ERR_INV_USER_ID;
+      http_status = 404;
+      goto done;
+    }
+    u = userlist_parse_user_str(xml_text);
+    if (!u) {
+      err("priv_get_user: XML parse error");
+      http_status = 500;
+      err_num = NEW_SRV_ERR_INTERNAL;
+      goto done;
+    }
+    ui = u->cnts0;
+    uc = userlist_get_user_contest(u, phr->contest_id);
+  }
+
+  cJSON *jrr = json_serialize_userlist_user(u, ui, uc);
+  cJSON_AddItemToObject(jr, "result", jrr);
+  ok = 1;
+  err_num = 0;
+  http_status = 200;
+
+done:;
+  phr->json_reply = 1;
+  phr->status_code = http_status;
+  emit_json_result(fout, phr, ok, err_num, 0, err_msg, jr);
+  free(xml_text);
+  if (u) {
+    userlist_free(&u->b);
+  }
+  if (jr) {
+    cJSON_Delete(jr);
+  }
+}
+
 typedef PageInterface *(*external_action_handler_t)(void);
 
 typedef int (*new_action_handler_t)(
@@ -9759,6 +9915,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_INVOKER_REBOOT] = priv_generic_operation,
   [NEW_SRV_ACTION_CLEAR_SESSION_CACHE] = priv_generic_operation,
   [NEW_SRV_ACTION_DOWNLOAD_JOB_RESULT] = priv_download_job_result,
+  [NEW_SRV_ACTION_GET_USER] = priv_get_user,
 };
 
 static const unsigned char * const external_priv_action_names[NEW_SRV_ACTION_LAST] =
