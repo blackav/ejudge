@@ -6802,6 +6802,7 @@ priv_download_runs(
   }
 
  cleanup:
+  xfree(mask);
   return retval;
 
  invalid_param:
