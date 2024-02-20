@@ -342,4 +342,5 @@ const unsigned char * const ns_symbolic_action_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_DOWNLOAD_JOB_RESULT] = "download-job-result",
   [NEW_SRV_ACTION_GET_USER] = "get-user",
   [NEW_SRV_ACTION_COPY_USER_INFO] = "copy-user-info",
+  [NEW_SRV_ACTION_CHANGE_REGISTRATION] = "change-registration",
 };
