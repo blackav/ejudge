@@ -1275,6 +1275,7 @@ prepare_problem_free_func(struct generic_section_config *gp)
   free_deadline_penalties(p->dp_total, p->dp_infos);
   free_personal_deadlines(p->pd_total, p->pd_infos);
   xfree(p->score_view_score);
+  xfree(p->score_view_text);
   xfree(p->xml_file_path);
 
   if (p->variant_num > 0 && p->xml.a) {
