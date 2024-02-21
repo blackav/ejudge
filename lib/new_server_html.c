@@ -10060,6 +10060,18 @@ priv_change_registration(
     goto userlist_error;
   }
 
+  if (clear_name > 0) {
+    if ((r = userlist_clnt_delete_field(ul_conn, ULS_DELETE_FIELD, other_user_id, phr->contest_id, 0, USERLIST_NC_NAME)) < 0) {
+      goto userlist_error;
+    }
+  } else if (name) {
+    if ((r = userlist_clnt_edit_field(ul_conn, ULS_EDIT_FIELD,
+                                      other_user_id, phr->contest_id, 0,
+                                      USERLIST_NC_NAME, name)) < 0) {
+      goto userlist_error;
+    }
+  }
+
   free(xml_text); xml_text = NULL;
   if (u) {
     userlist_free(&u->b);
