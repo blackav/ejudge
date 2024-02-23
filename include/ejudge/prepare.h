@@ -1317,7 +1317,7 @@ struct section_problem_data
   /** external score view */
   char **score_view;
   int *score_view_score META_ATTRIB((meta_private));
-  char **score_view_text;
+  char **score_view_text META_ATTRIB((meta_private));
 
   /** full path to xml_file */
   unsigned char *xml_file_path META_ATTRIB((meta_private));

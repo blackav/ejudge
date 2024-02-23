@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-02-04 16:05+0300\n"
+"POT-Creation-Date: 2024-02-21 22:06+0300\n"
 "PO-Revision-Date: 2022-01-12 13:17+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -472,6 +472,9 @@ msgstr "Разрешить просмотр итогового балла"
 msgid "Allow viewing the judge comment of the valuer"
 msgstr ""
 "Разрешить просмотр комментария для судей, полученного от программы оценивания"
+
+msgid "Already exists"
+msgstr "Уже существует"
 
 #, c-format
 msgid "An e-mail messages is sent to the address <tt>%s</tt>."

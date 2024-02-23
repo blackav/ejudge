@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2014-2021 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2014-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -312,6 +312,14 @@ hr_cgi_param_jsbool_opt(
             return 1;
         }
         if (!strcasecmp(s, "true")) {
+            if (p_val) *p_val = 1;
+            return 1;
+        }
+        if (!strcasecmp(s, "no")) {
+            if (p_val) *p_val = 0;
+            return 1;
+        }
+        if (!strcasecmp(s, "yes")) {
             if (p_val) *p_val = 1;
             return 1;
         }

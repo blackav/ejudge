@@ -6802,6 +6802,7 @@ priv_download_runs(
   }
 
  cleanup:
+  xfree(mask);
   return retval;
 
  invalid_param:
@@ -9678,6 +9679,451 @@ done:;
   }
 }
 
+static void
+priv_copy_user_info(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  int ok = 0;
+  int err_num = NEW_SRV_ERR_INV_PARAM;
+  const unsigned char *err_msg = NULL;
+  cJSON *jr = cJSON_CreateObject();
+  int http_status = 400;
+  int other_user_id = 0;
+  const unsigned char *other_user_login = NULL;
+  int r;
+  unsigned char *login_str = NULL;
+  const struct contest_desc *from_cnts = NULL;
+  const struct contest_desc *to_cnts = NULL;
+  int from_contest_id = 0;
+  int to_contest_id = 0;
+  opcap_t caps, req_caps;
+
+  if (hr_cgi_param_int_opt(phr, "other_user_id", &other_user_id, 0) < 0)
+    goto done;
+  if (hr_cgi_param(phr, "other_user_login", &other_user_login) < 0)
+    goto done;
+  if (other_user_id <= 0 && (!other_user_login || !other_user_login[0]))
+    goto done;
+  if (other_user_id > 0 && other_user_login && other_user_login[0])
+    goto done;
+
+  if (ns_open_ul_connection(phr->fw_state) < 0) {
+    err("priv_copy_user_info: failed to open userlist connection");
+    goto done;
+  }
+
+  if (other_user_login && other_user_login[0]) {
+    r = userlist_clnt_lookup_user(ul_conn, other_user_login, 0, &other_user_id, NULL);
+    if (r < 0 && r != -ULS_ERR_INVALID_LOGIN) {
+      err("priv_copy_user_info: userlist server error %d", r);
+      http_status = 500;
+      err_num = NEW_SRV_ERR_INTERNAL;
+      goto done;
+    }
+    if (r < 0) {
+      err_num = NEW_SRV_ERR_INV_USER_ID;
+      http_status = 404;
+      goto done;
+    }
+  } else {
+    r = userlist_clnt_lookup_user_id(ul_conn, other_user_id, 0, &login_str, NULL);
+    if (r < 0 && r != -ULS_ERR_BAD_UID) {
+      err("priv_copy_user_info: userlist server error %d", r);
+      http_status = 500;
+      err_num = NEW_SRV_ERR_INTERNAL;
+      goto done;
+    }
+    if (r < 0) {
+      err_num = NEW_SRV_ERR_INV_USER_ID;
+      http_status = 404;
+      goto done;
+    }
+    other_user_login = login_str;
+  }
+
+  // other_user_id/other_user_login - valid
+
+  if (hr_cgi_param_int_opt(phr, "from_contest_id", &from_contest_id, 0) < 0 || from_contest_id < 0)
+    goto done;
+  if (!from_contest_id) from_contest_id = phr->contest_id;
+  if (hr_cgi_param_int_opt(phr, "to_contest_id", &to_contest_id, 0) < 0 || to_contest_id < 0)
+    goto done;
+  if (!to_contest_id) to_contest_id = phr->contest_id;
+  if (from_contest_id == to_contest_id)
+    goto done;
+  if (contests_get(from_contest_id, &from_cnts) < 0 || !from_cnts)
+    goto done;
+  if (contests_get(to_contest_id, &to_cnts) < 0 || !to_cnts)
+    goto done;
+
+  req_caps = (1ULL << OPCAP_LIST_USERS) | (1ULL << OPCAP_GET_USER);
+  if (opcaps_find(&from_cnts->capabilities, phr->login, &caps) < 0
+      || (caps & req_caps) != req_caps) {
+    err("priv_copy_user_info: insufficient permissions for user '%s' and contest %d", phr->login, from_contest_id);
+    http_status = 403;
+    err_num = NEW_SRV_ERR_PERMISSION_DENIED;
+    goto done;
+  }
+  req_caps = (1ULL << OPCAP_LIST_USERS) | (1ULL << OPCAP_GET_USER);
+  if (opcaps_find(&to_cnts->capabilities, other_user_login, &caps) >= 0) {
+    // the target user is a privileged user
+    req_caps |= (1ULL << OPCAP_PRIV_EDIT_USER) | (1ULL << OPCAP_PRIV_CREATE_REG) | (1ULL << OPCAP_PRIV_EDIT_REG);
+    if (to_cnts->disable_team_password <= 0) {
+      req_caps |= (1ULL << OPCAP_PRIV_EDIT_PASSWD);
+    }
+  } else {
+    // the target user is an unprivileged user
+    req_caps |= (1ULL << OPCAP_EDIT_USER) | (1ULL << OPCAP_CREATE_REG) | (1ULL << OPCAP_EDIT_REG);
+    if (to_cnts->disable_team_password <= 0) {
+      req_caps |= (1ULL << OPCAP_EDIT_PASSWD);
+    }
+  }
+  if (opcaps_find(&to_cnts->capabilities, phr->login, &caps) < 0
+      || (caps & req_caps) != req_caps) {
+    err("priv_copy_user_info: insufficient permissions for user '%s' and contest %d", phr->login, to_contest_id);
+    http_status = 403;
+    err_num = NEW_SRV_ERR_PERMISSION_DENIED;
+    goto done;
+  }
+
+  r = userlist_clnt_copy_user_info(ul_conn, ULS_COPY_ALL, other_user_id, from_contest_id, to_contest_id);
+  if (r < 0) {
+    err("priv_copy_user_info: userlist server error %d", r);
+    http_status = 500;
+    err_num = NEW_SRV_ERR_INTERNAL;
+    goto done;
+  }
+
+  cJSON_AddTrueToObject(jr, "result");
+  ok = 1;
+  err_num = 0;
+  http_status = 200;
+
+done:;
+  phr->json_reply = 1;
+  phr->status_code = http_status;
+  emit_json_result(fout, phr, ok, err_num, 0, err_msg, jr);
+  if (jr) {
+    cJSON_Delete(jr);
+  }
+  xfree(login_str);
+}
+
+static void
+priv_change_registration(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  int ok = 0;
+  int err_num = NEW_SRV_ERR_INV_PARAM;
+  const unsigned char *err_msg = NULL;
+  cJSON *jr = cJSON_CreateObject();
+  int http_status = 400;
+  int other_user_id = 0;
+  const unsigned char *other_user_login = NULL;
+  int r;
+  unsigned char *login_str = NULL;
+  const unsigned char *op = NULL;
+  opcap_t caps = 0, req_caps = 0;
+  unsigned char *xml_text = NULL;
+  struct userlist_user *u = NULL;
+  const struct userlist_contest *uc = NULL;
+
+  if (hr_cgi_param_int_opt(phr, "other_user_id", &other_user_id, 0) < 0)
+    goto done;
+  if (hr_cgi_param(phr, "other_user_login", &other_user_login) < 0)
+    goto done;
+  if (other_user_id <= 0 && (!other_user_login || !other_user_login[0]))
+    goto done;
+  if (other_user_id > 0 && other_user_login && other_user_login[0])
+    goto done;
+
+  if (ns_open_ul_connection(phr->fw_state) < 0) {
+    err("%s: failed to open userlist connection", __PRETTY_FUNCTION__);
+    goto done;
+  }
+
+  if (other_user_login && other_user_login[0]) {
+    r = userlist_clnt_lookup_user(ul_conn, other_user_login, 0, &other_user_id, NULL);
+    if (r < 0 && r != -ULS_ERR_INVALID_LOGIN) {
+      goto userlist_error;
+    }
+    if (r < 0) {
+      err_num = NEW_SRV_ERR_INV_USER_ID;
+      http_status = 404;
+      goto done;
+    }
+  } else {
+    r = userlist_clnt_lookup_user_id(ul_conn, other_user_id, 0, &login_str, NULL);
+    if (r < 0 && r != -ULS_ERR_BAD_UID) {
+      goto userlist_error;
+    }
+    if (r < 0) {
+      err_num = NEW_SRV_ERR_INV_USER_ID;
+      http_status = 404;
+      goto done;
+    }
+    other_user_login = login_str;
+  }
+  // other_user_id/other_user_login - valid
+
+  if (phr->contest_id <= 0 || contests_get(phr->contest_id, &cnts) < 0 || !cnts) {
+    goto done;
+  }
+  // contest_id - valid
+
+  if (hr_cgi_param(phr, "op", &op) <= 0 || !op) {
+    goto done;
+  }
+  // delete, upsert, update, insert
+  if (strcmp(op, "delete") && strcmp(op, "insert") && strcmp(op, "upsert") && strcmp(op, "update")) {
+    err("%s: invalid operation", __PRETTY_FUNCTION__);
+    goto done;
+  }
+
+  if (!strcmp(op, "delete")) {
+    if (opcaps_find(&cnts->capabilities, other_user_login, &caps) >= 0) {
+      req_caps = (1ULL << OPCAP_PRIV_DELETE_REG);
+    } else {
+      req_caps = (1ULL << OPCAP_DELETE_REG);
+    }
+    if (opcaps_find(&cnts->capabilities, phr->login, &caps) < 0
+        || (caps & req_caps) != req_caps) {
+      err("%s: insufficient '%s' for user '%s' and contest %d", __PRETTY_FUNCTION__, op, phr->login, phr->contest_id);
+      http_status = 403;
+      err_num = NEW_SRV_ERR_PERMISSION_DENIED;
+      goto done;
+    }
+    r = userlist_clnt_change_registration(ul_conn, other_user_id, phr->contest_id, -2, 0, 0);
+    if (r < 0) {
+      goto userlist_error;
+    }
+
+    cJSON_AddNullToObject(jr, "result");
+    ok = 1;
+    err_num = 0;
+    http_status = 200;
+    goto done;
+  }
+
+  // common parse registration data
+  const unsigned char *s = NULL;
+  int status = -1;
+  if (hr_cgi_param(phr, "status", &s) > 0 && s) {
+    if (!strcasecmp(s, "ok")) {
+      status = USERLIST_REG_OK;
+    } else if (!strcasecmp(s, "pending")) {
+      status = USERLIST_REG_PENDING;
+    } else if (!strcasecmp(s, "rejected")) {
+      status = USERLIST_REG_REJECTED;
+    } else {
+      char *eptr = NULL;
+      errno = 0;
+      long val = strtol(s, &eptr, 10);
+      if (errno || *eptr || s == (const unsigned char*) eptr || val < 0 || val > 2) {
+        goto done;
+      }
+      status = (int) val;
+    }
+  }
+  int is_invisible = -1;
+  if (hr_cgi_param_jsbool_opt(phr, "is_invisible", &is_invisible, -1) < 0) {
+    goto done;
+  }
+  int is_banned = -1;
+  if (hr_cgi_param_jsbool_opt(phr, "is_banned", &is_banned, -1) < 0) {
+    goto done;
+  }
+  int is_locked = -1;
+  if (hr_cgi_param_jsbool_opt(phr, "is_locked", &is_locked, -1) < 0) {
+    goto done;
+  }
+  int is_incomplete = -1;
+  if (hr_cgi_param_jsbool_opt(phr, "is_incomplete", &is_incomplete, -1) < 0) {
+    goto done;
+  }
+  int is_disqualified = -1;
+  if (hr_cgi_param_jsbool_opt(phr, "is_disqualified", &is_disqualified, -1) < 0) {
+    goto done;
+  }
+  int is_privileged = -1;
+  if (hr_cgi_param_jsbool_opt(phr, "is_privileged", &is_privileged, -1) < 0) {
+    goto done;
+  }
+  int is_reg_readonly = -1;
+  if (hr_cgi_param_jsbool_opt(phr, "is_reg_readonly", &is_reg_readonly, -1) < 0) {
+    goto done;
+  }
+  int ignore = 0;
+  if (hr_cgi_param_jsbool_opt(phr, "ignore", &ignore, 0) < 0) {
+    goto done;
+  }
+  int clear_name = 0;
+  if (hr_cgi_param_jsbool_opt(phr, "clear_name", &clear_name, 0) < 0) {
+    goto done;
+  }
+  const unsigned char *name = NULL;
+  if (hr_cgi_param(phr, "name", &name) < 0) {
+    goto done;
+  }
+  int flags_to_set = 0;
+  if (is_invisible > 0) flags_to_set |= USERLIST_UC_INVISIBLE;
+  if (is_banned > 0) flags_to_set |= USERLIST_UC_BANNED;
+  if (is_locked > 0) flags_to_set |= USERLIST_UC_LOCKED;
+  if (is_incomplete > 0) flags_to_set |= USERLIST_UC_INCOMPLETE;
+  if (is_disqualified > 0) flags_to_set |= USERLIST_UC_DISQUALIFIED;
+  if (is_privileged > 0) flags_to_set |= USERLIST_UC_PRIVILEGED;
+  if (is_reg_readonly > 0) flags_to_set |= USERLIST_UC_REG_READONLY;
+  int flags_to_clear = 0;
+  if (!is_invisible) flags_to_clear |= USERLIST_UC_INVISIBLE;
+  if (!is_banned) flags_to_clear |= USERLIST_UC_BANNED;
+  if (!is_locked) flags_to_clear |= USERLIST_UC_LOCKED;
+  if (!is_incomplete) flags_to_clear |= USERLIST_UC_INCOMPLETE;
+  if (!is_disqualified) flags_to_clear |= USERLIST_UC_DISQUALIFIED;
+  if (!is_privileged) flags_to_clear |= USERLIST_UC_PRIVILEGED;
+  if (!is_reg_readonly) flags_to_clear |= USERLIST_UC_REG_READONLY;
+
+  r = userlist_clnt_get_info(ul_conn, ULS_PRIV_GET_USER_INFO, other_user_id, phr->contest_id, &xml_text);
+  if (r < 0 && r != -ULS_ERR_BAD_UID) {
+    goto userlist_error;
+  }
+  if (r < 0) {
+    err_num = NEW_SRV_ERR_INV_USER_ID;
+    http_status = 404;
+    goto done;
+  }
+  u = userlist_parse_user_str(xml_text);
+  if (!u) {
+    err("%s: XML parse error", __PRETTY_FUNCTION__);
+    http_status = 500;
+    err_num = NEW_SRV_ERR_INTERNAL;
+    goto done;
+  }
+  uc = userlist_get_user_contest(u, phr->contest_id);
+
+  if (!strcmp(op, "insert")) {
+    if (uc && ignore > 0) {
+      cJSON *jrc = json_serialize_userlist_contest(other_user_id, uc);
+      cJSON_AddItemToObject(jr, "result", jrc);
+      ok = 1;
+      err_num = 0;
+      http_status = 200;
+      goto done;
+    }
+    if (uc) {
+      err("%s: user %d already registered to contest %d", __PRETTY_FUNCTION__, other_user_id, phr->contest_id);
+      http_status = 409;
+      err_num = NEW_SRV_ERR_ALREADY_PRINTED;
+      goto done;
+    }
+  }
+  if (!strcmp(op, "insert") || !strcmp(op, "upsert")) {
+    if (!uc) {
+      r = userlist_clnt_register_contest(ul_conn,
+                                         ULS_PRIV_REGISTER_CONTEST,
+                                         other_user_id, phr->contest_id, 0, 0);
+      if (r < 0) {
+        goto userlist_error;
+      }
+    }
+  }
+  if (!strcmp(op, "update")) {
+    if (!uc && ignore > 0) {
+      cJSON_AddNullToObject(jr, "result");
+      ok = 1;
+      err_num = 0;
+      http_status = 200;
+      goto done;
+    }
+    if (!uc) {
+      err("%s: user %d is not registered to contest %d", __PRETTY_FUNCTION__, other_user_id, phr->contest_id);
+      http_status = 404;
+      err_num = NEW_SRV_ERR_INV_CONTEST_ID;
+      goto done;
+    }
+  }
+
+  // status: -1 - no change
+  // flags_cmd: 1 - set, 2 - clear
+  if (status >= 0 && (r = userlist_clnt_change_registration(ul_conn, other_user_id, phr->contest_id, status, 0, 0)) < 0) {
+    goto userlist_error;
+  }
+  if (flags_to_set > 0 && (r = userlist_clnt_change_registration(ul_conn, other_user_id, phr->contest_id, -1, 1, flags_to_set)) < 0) {
+    goto userlist_error;
+  }
+  if (flags_to_set > 0 && (r = userlist_clnt_change_registration(ul_conn, other_user_id, phr->contest_id, -1, 2, flags_to_clear)) < 0) {
+    goto userlist_error;
+  }
+
+  if (clear_name > 0) {
+    if ((r = userlist_clnt_delete_field(ul_conn, ULS_DELETE_FIELD, other_user_id, phr->contest_id, 0, USERLIST_NC_NAME)) < 0) {
+      goto userlist_error;
+    }
+  } else if (name) {
+    if ((r = userlist_clnt_edit_field(ul_conn, ULS_EDIT_FIELD,
+                                      other_user_id, phr->contest_id, 0,
+                                      USERLIST_NC_NAME, name)) < 0) {
+      goto userlist_error;
+    }
+  }
+
+  free(xml_text); xml_text = NULL;
+  if (u) {
+    userlist_free(&u->b);
+  }
+  u = NULL;
+
+  r = userlist_clnt_get_info(ul_conn, ULS_PRIV_GET_USER_INFO, other_user_id, phr->contest_id, &xml_text);
+  if (r < 0) {
+    goto userlist_error;
+  }
+  u = userlist_parse_user_str(xml_text);
+  if (!u) {
+    err("%s: XML parse error", __PRETTY_FUNCTION__);
+    http_status = 500;
+    err_num = NEW_SRV_ERR_INTERNAL;
+    goto done;
+  }
+  uc = userlist_get_user_contest(u, phr->contest_id);
+  if (!uc) {
+    err("%s: registration not found", __PRETTY_FUNCTION__);
+    http_status = 500;
+    err_num = NEW_SRV_ERR_INTERNAL;
+    goto done;
+  }
+
+  cJSON *jrc = json_serialize_userlist_contest(other_user_id, uc);
+  cJSON_AddItemToObject(jr, "result", jrc);
+  ok = 1;
+  err_num = 0;
+  http_status = 200;
+
+done:;
+  phr->json_reply = 1;
+  phr->status_code = http_status;
+  emit_json_result(fout, phr, ok, err_num, 0, err_msg, jr);
+  if (jr) {
+    cJSON_Delete(jr);
+  }
+  xfree(login_str);
+  free(xml_text);
+  if (u) {
+    userlist_free(&u->b);
+  }
+  return;
+
+userlist_error:;
+  err("%s: userlist server error %d", __PRETTY_FUNCTION__, r);
+  http_status = 500;
+  err_num = NEW_SRV_ERR_INTERNAL;
+  goto done;
+}
+
 typedef PageInterface *(*external_action_handler_t)(void);
 
 typedef int (*new_action_handler_t)(
@@ -9916,6 +10362,8 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_CLEAR_SESSION_CACHE] = priv_generic_operation,
   [NEW_SRV_ACTION_DOWNLOAD_JOB_RESULT] = priv_download_job_result,
   [NEW_SRV_ACTION_GET_USER] = priv_get_user,
+  [NEW_SRV_ACTION_COPY_USER_INFO] = priv_copy_user_info,
+  [NEW_SRV_ACTION_CHANGE_REGISTRATION] = priv_change_registration,
 };
 
 static const unsigned char * const external_priv_action_names[NEW_SRV_ACTION_LAST] =

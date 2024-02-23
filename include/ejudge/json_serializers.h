@@ -34,6 +34,12 @@ json_serialize_run(
 struct userlist_user;
 struct userlist_user_info;
 struct userlist_contest;
+
+struct cJSON *
+json_serialize_userlist_contest(
+        int user_id,
+        const struct userlist_contest *uc);
+
 struct cJSON *
 json_serialize_userlist_user(
         const struct userlist_user *u,

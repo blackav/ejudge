@@ -3148,6 +3148,7 @@ adj_destroy_func(struct server_framework_job *sfj)
   xfree(adj->dirname);
   xfree(adj->dirpath);
   xfree(adj->b.title);
+  xfree(adj->problem_dir_prefix);
   if (adj->log_f) fclose(adj->log_f);
   free(adj->log_s);
   xfree(adj->runs);
