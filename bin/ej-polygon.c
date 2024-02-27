@@ -3488,7 +3488,7 @@ process_polygon_zip(
         prob_cfg->output_file = xstrdup(pi->output_file);
     }
     if (pi->memory_limit > 0) {
-        prob_cfg->max_vm_size = pi->memory_limit;
+        prob_cfg->max_rss_size = pi->memory_limit;
         if (pkt->enable_max_stack_size > 0) {
             prob_cfg->max_stack_size = pi->memory_limit;
         }
