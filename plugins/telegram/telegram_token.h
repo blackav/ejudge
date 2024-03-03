@@ -16,8 +16,6 @@
  * GNU General Public License for more details.
  */
 
-#include "ejudge/config.h"
-
 #include <time.h>
 
 /* tokens for bot interaction */
