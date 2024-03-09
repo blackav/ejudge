@@ -6096,7 +6096,7 @@ ns_get_user_problems_summary(
 
     // check the allowed IP list
     int ip_allowed = 1;
-    if (cur_prob->allow_ip) {
+    if (cur_prob->allow_ip && ip) {
       ip_allowed = 0;
       int j;
       for (j = 0; cur_prob->allow_ip[j]; ++j) {
