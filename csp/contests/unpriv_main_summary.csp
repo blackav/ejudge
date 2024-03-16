@@ -104,7 +104,7 @@
 <%
         for (prob_id = 1; prob_id <= cs->max_prob; prob_id++) {
           if (!(prob = cs->probs[prob_id])) continue;
-          if (!serve_is_problem_started(cs, phr->user_id, prob)) continue;
+          if (!serve_is_problem_started(cs, phr->user_id, prob, 0)) continue;
           if (prob->hidden > 0) continue;
 
           const unsigned char *s = "";

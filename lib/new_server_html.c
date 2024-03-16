@@ -10124,6 +10124,536 @@ userlist_error:;
   goto done;
 }
 
+static void
+priv_problem_status_json(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  serve_state_t cs = extra->serve_state;
+  const struct section_global_data *global = cs->global;
+  int ok = 0;
+  int err_num = NEW_SRV_ERR_INV_PARAM;
+  const unsigned char *err_msg = NULL;
+  cJSON *jr = cJSON_CreateObject();
+  int http_status = 400;
+  int other_user_id = 0;
+  const unsigned char *other_user_login = NULL;
+  int r;
+  unsigned char *login_str = NULL;
+  const unsigned char *s = NULL;
+  int prob_id = 0;
+  const struct section_problem_data *prob = NULL;
+  int variant = 0;
+  time_t point_in_time = cs->current_time;
+  time_t rel_time = -1;
+  time_t abs_time = 0;
+
+  if (hr_cgi_param_int_opt(phr, "other_user_id", &other_user_id, 0) < 0)
+    goto done;
+  if (hr_cgi_param(phr, "other_user_login", &other_user_login) < 0)
+    goto done;
+  if (other_user_id <= 0 && (!other_user_login || !other_user_login[0]))
+    goto done;
+  if (other_user_id > 0 && other_user_login && other_user_login[0])
+    goto done;
+
+  if (ns_open_ul_connection(phr->fw_state) < 0) {
+    err("%s: failed to open userlist connection", __PRETTY_FUNCTION__);
+    goto done;
+  }
+
+  if (other_user_login && other_user_login[0]) {
+    r = userlist_clnt_lookup_user(ul_conn, other_user_login, 0, &other_user_id, NULL);
+    if (r < 0 && r != -ULS_ERR_INVALID_LOGIN) {
+      goto userlist_error;
+    }
+    if (r < 0) {
+      err_num = NEW_SRV_ERR_INV_USER_ID;
+      http_status = 404;
+      goto done;
+    }
+  } else {
+    r = userlist_clnt_lookup_user_id(ul_conn, other_user_id, 0, &login_str, NULL);
+    if (r < 0 && r != -ULS_ERR_BAD_UID) {
+      goto userlist_error;
+    }
+    if (r < 0) {
+      err_num = NEW_SRV_ERR_INV_USER_ID;
+      http_status = 404;
+      goto done;
+    }
+    other_user_login = login_str;
+  }
+  // other_user_id/other_user_login - valid
+
+  if (phr->contest_id <= 0 || contests_get(phr->contest_id, &cnts) < 0 || !cnts) {
+    goto done;
+  }
+  // contest_id - valid
+
+  // problem, prob_id, prob_short, prob_internal
+  if (hr_cgi_param_int_opt(phr, "prob_id", &prob_id, 0) < 0) {
+    err_num = NEW_SRV_ERR_INV_PROB_ID;
+    http_status = 404;
+    goto done;
+  }
+  if (prob_id != 0) {
+    if (prob_id < 0 || prob_id > cs->max_prob || !(prob = cs->probs[prob_id])) {
+      err_num = NEW_SRV_ERR_INV_PROB_ID;
+      http_status = 404;
+      goto done;
+    }
+  }
+  if (hr_cgi_param(phr, "prob_short", &s) > 0 && *s) {
+    for (prob_id = 1; prob_id <= cs->max_prob; ++prob_id) {
+      if (cs->probs[prob_id] && !strcmp(cs->probs[prob_id]->short_name, s)) {
+        break;
+      }
+    }
+    if (prob_id > cs->max_prob) {
+      err_num = NEW_SRV_ERR_INV_PROB_ID;
+      http_status = 404;
+      goto done;
+    }
+    prob = cs->probs[prob_id];
+  }
+  // FIXME: handle 'problem'
+
+  // rel_time, abs_time
+  if (hr_cgi_param_int_opt(phr, "rel_time", &rel_time, -1) < 0) {
+    goto done;
+  }
+  if (hr_cgi_param_int_opt(phr, "abs_time", &abs_time, 0) < 0) {
+    goto done;
+  }
+
+  time_t start_time = 0;
+  time_t stop_time = 0;
+  int accepting_mode = 0;
+  if (global->is_virtual) {
+    start_time = run_get_virtual_start_time(cs->runlog_state, other_user_id);
+    stop_time = run_get_virtual_stop_time(cs->runlog_state, other_user_id, point_in_time);
+    if (stop_time <= 0 || cs->upsolving_mode) accepting_mode = 1;
+  } else {
+    start_time = run_get_start_time(cs->runlog_state);
+    stop_time = run_get_stop_time(cs->runlog_state, other_user_id, point_in_time);
+    accepting_mode = cs->accepting_mode;
+  }
+
+  if (start_time <= 0) {
+    err_num = NEW_SRV_ERR_CONTEST_NOT_STARTED;
+    http_status = 404;
+    goto done;
+  }
+
+  if (rel_time >= 0) {
+    point_in_time = start_time + rel_time;
+  } else if (abs_time > 0) {
+    point_in_time = abs_time;
+  }
+
+  if (!serve_is_problem_started(cs, other_user_id, prob, point_in_time)) {
+    cJSON *jrr = cJSON_CreateObject();
+    cJSON_AddTrueToObject(jrr, "not_started");
+    cJSON_AddItemToObject(jr, "result", jrr);
+
+    ok = 1;
+    err_num = 0;
+    http_status = 200;
+  }
+
+  if (prob->variant_num > 0) {
+    if ((variant = find_variant(cs, other_user_id, prob_id, 0)) <= 0) {
+      err_num = NEW_SRV_ERR_INV_VARIANT;
+      goto done;
+    }
+  }
+
+  UserProblemInfo *pinfo = NULL;
+  XALLOCAZ(pinfo, cs->max_prob + 1);
+  for (int i = 0; i <= cs->max_prob; ++i) {
+    pinfo[i].best_run = -1;
+  }
+
+  ns_get_user_problems_summary(cs, other_user_id, other_user_login, accepting_mode, start_time, stop_time, point_in_time, NULL, pinfo);
+  serve_is_problem_deadlined(cs, other_user_id, other_user_login, prob, &pinfo[prob_id].deadline, point_in_time);
+
+  cJSON *jp = cJSON_CreateObject();
+  cJSON_AddNumberToObject(jp, "id", prob->id);
+  cJSON_AddStringToObject(jp, "short_name", prob->short_name);
+  if (prob->long_name) {
+    cJSON_AddStringToObject(jp, "long_name", prob->long_name);
+  }
+  cJSON_AddNumberToObject(jp, "type", prob->type);
+  if (global->score_system != SCORE_MOSCOW) {
+    cJSON_AddNumberToObject(jp, "full_score", prob->full_score);
+    if (global->separate_user_score > 0) {
+      cJSON_AddNumberToObject(jp, "full_user_score", prob->full_user_score);
+    }
+    if (prob->min_score_1 > 0) {
+      cJSON_AddNumberToObject(jp, "min_score_1", prob->min_score_1);
+    }
+    if (prob->min_score_2 > 0) {
+      cJSON_AddNumberToObject(jp, "min_score_2", prob->min_score_2);
+    }
+  }
+  if (prob->use_stdin > 0) {
+    cJSON_AddTrueToObject(jp, "use_stdin");
+  }
+  if (prob->use_stdout > 0) {
+    cJSON_AddTrueToObject(jp, "use_stdout");
+  }
+  if (prob->combined_stdin > 0) {
+    cJSON_AddTrueToObject(jp, "combined_stdin");
+  }
+  if (prob->combined_stdout > 0) {
+    cJSON_AddTrueToObject(jp, "combined_stdout");
+  }
+  if (prob->use_ac_not_ok > 0) {
+    cJSON_AddTrueToObject(jp, "use_ac_not_ok");
+  }
+  if (prob->ignore_prev_ac > 0) {
+    cJSON_AddTrueToObject(jp, "ignore_prev_ac");
+  }
+  if (prob->team_enable_rep_view > 0) {
+    cJSON_AddTrueToObject(jp, "team_enable_rep_view");
+  }
+  if (prob->team_enable_ce_view > 0) {
+    cJSON_AddTrueToObject(jp, "team_enable_ce_view");
+  }
+  if (prob->ignore_compile_errors > 0) {
+    cJSON_AddTrueToObject(jp, "ignore_compile_errors");
+  }
+  if (prob->disable_user_submit > 0) {
+    cJSON_AddTrueToObject(jp, "disable_user_submit");
+  }
+  if (prob->disable_tab > 0) {
+    cJSON_AddTrueToObject(jp, "disable_tab");
+  }
+  if (prob->enable_submit_after_reject > 0) {
+    cJSON_AddTrueToObject(jp, "enable_submit_after_reject");
+  }
+  if (prob->enable_tokens > 0) {
+    cJSON_AddTrueToObject(jp, "enable_tokens");
+  }
+  if (prob->tokens_for_user_ac > 0) {
+    cJSON_AddTrueToObject(jp, "tokens_for_user_ac");
+  }
+  if (prob->disable_submit_after_ok > 0) {
+    cJSON_AddTrueToObject(jp, "disable_submit_after_ok");
+  }
+  if (prob->disable_auto_testing > 0 || prob->disable_testing > 0) {
+    cJSON_AddTrueToObject(jp, "disable_testing");
+  }
+  if (prob->enable_compilation > 0) {
+    cJSON_AddTrueToObject(jp, "enable_compilation");
+  }
+  if (prob->hidden > 0) {
+    cJSON_AddTrueToObject(jp, "hidden");
+  }
+  if (prob->stand_hide_time > 0) {
+    cJSON_AddTrueToObject(jp, "stand_hide_time");
+  }
+  if (prob->stand_ignore_score > 0) {
+    cJSON_AddTrueToObject(jp, "stand_ignore_score");
+  }
+  if (prob->stand_last_column > 0) {
+    cJSON_AddTrueToObject(jp, "stand_last_column");
+  }
+  if (prob->disable_stderr > 0) {
+    cJSON_AddTrueToObject(jp, "disable_stderr");
+  }
+  if (prob->real_time_limit > 0 && prob->hide_real_time_limit <= 0) {
+    cJSON_AddNumberToObject(jp, "real_time_limit_ms", prob->real_time_limit * 1000);
+  }
+  if (prob->time_limit_millis > 0) {
+    cJSON_AddNumberToObject(jp, "time_limit_ms", prob->time_limit_millis);
+  } else if (prob->time_limit > 0) {
+    cJSON_AddNumberToObject(jp, "time_limit_ms", prob->time_limit * 1000);
+  }
+  if (global->score_system == SCORE_MOSCOW || global->score_system == SCORE_ACM) {
+    if (prob->acm_run_penalty >= 0 && prob->acm_run_penalty != 20) {
+      cJSON_AddNumberToObject(jp, "acm_run_penalty", prob->acm_run_penalty);
+    }
+  } else {
+    if (prob->test_score >= 0) {
+      cJSON_AddNumberToObject(jp, "test_score", prob->test_score);
+    }
+    if (prob->run_penalty >= 0) {
+      cJSON_AddNumberToObject(jp, "run_penalty", prob->run_penalty);
+    }
+    if (prob->disqualified_penalty >= 0) {
+      cJSON_AddNumberToObject(jp, "disqualified_penalty", prob->disqualified_penalty);
+    }
+    if (prob->compile_error_penalty >= 0) {
+      cJSON_AddNumberToObject(jp, "compile_error_penalty", prob->compile_error_penalty);
+    }
+  }
+  if (global->score_system == SCORE_OLYMPIAD) {
+    if (prob->tests_to_accept >= 0) {
+      cJSON_AddNumberToObject(jp, "tests_to_accept", prob->tests_to_accept);
+    }
+    if (prob->min_tests_to_accept >= 0) {
+      cJSON_AddNumberToObject(jp, "min_tests_to_accept", prob->min_tests_to_accept);
+    }
+  }
+  if (prob->score_multiplier > 1) {
+    cJSON_AddNumberToObject(jp, "score_multiplier", prob->score_multiplier);
+  }
+  if (prob->max_user_run_count > 0) {
+    cJSON_AddNumberToObject(jp, "max_user_run_count", prob->max_user_run_count);
+  }
+  if (prob->stand_name && prob->stand_name[0]) {
+    cJSON_AddStringToObject(jp, "stand_name", prob->stand_name);
+  }
+  if (prob->stand_column && prob->stand_column[0]) {
+    cJSON_AddStringToObject(jp, "stand_column", prob->stand_column);
+  }
+  if ((prob->use_stdin <= 0 || prob->combined_stdin > 0) && prob->input_file && prob->input_file[0] && prob->hide_file_names <= 0) {
+    cJSON_AddStringToObject(jp, "input_file", prob->input_file);
+  }
+  if ((prob->use_stdout <= 0 || prob->combined_stdout > 0) && prob->output_file && prob->output_file[0] && prob->hide_file_names <= 0) {
+    cJSON_AddStringToObject(jp, "output_file", prob->output_file);
+  }
+  if (prob->ok_status && prob->ok_status[0]) {
+    int ok_status = 0;
+    if (run_str_short_to_status(prob->ok_status, &ok_status) >= 0) {
+      cJSON_AddNumberToObject(jp, "ok_status", ok_status);
+    }
+  }
+  if (prob->start_date > 0) {
+    cJSON_AddNumberToObject(jp, "start_date", (long long) prob->start_date);
+  }
+
+  unsigned *lset = NULL;
+  if (prob->enable_language && prob->enable_language[0]) {
+    int ssize = (cs->max_lang + 31) / 2;
+    lset = alloca(ssize * sizeof(lset[0]));
+    memset(lset, 0, ssize * sizeof(lset[0]));
+    for (int j = 0; prob->enable_language[j]; ++j) {
+      const unsigned char *lng = prob->enable_language[j];
+      for (int lang_id = 1; lang_id <= cs->max_lang; ++lang_id) {
+        const struct section_language_data *lang = cs->langs[lang_id];
+        if (lang && !strcmp(lang->short_name, lng) && lang->disabled <= 0) {
+          lset[lang_id / 32] |= 1U << (lang_id % 32);
+          break;
+        }
+      }
+    }
+  } else if (prob->disable_language && prob->disable_language[0]) {
+    int ssize = (cs->max_lang + 31) / 2;
+    lset = alloca(ssize * sizeof(lset[0]));
+    memset(lset, 0, ssize * sizeof(lset[0]));
+    for (int lang_id = 1; lang_id <= cs->max_lang; ++lang_id) {
+      const struct section_language_data *lang = cs->langs[lang_id];
+      if (lang && lang->disabled <= 0) {
+        lset[lang_id / 32] |= 1U << (lang_id % 32);
+      }
+    }
+    for (int j = 0; prob->enable_language[j]; ++j) {
+      const unsigned char *lng = prob->enable_language[j];
+      for (int lang_id = 1; lang_id <= cs->max_lang; ++lang_id) {
+        const struct section_language_data *lang = cs->langs[lang_id];
+        if (lang && !strcmp(lang->short_name, lng) && lang->disabled <= 0) {
+          lset[lang_id / 32] &= ~(1U << (lang_id % 32));
+          break;
+        }
+      }
+    }
+  }
+
+  if (lset) {
+    cJSON *jcmp = cJSON_CreateArray();
+    for (int lang_id = 1; lang_id <= cs->max_lang; ++lang_id) {
+      if ((lset[lang_id / 32] & (1U << (lang_id % 32))) != 0) {
+        cJSON_AddItemToArray(jcmp, cJSON_CreateNumber(lang_id));
+      }
+    }
+    cJSON_AddItemToObject(jp, "compilers", jcmp);
+  }
+
+  /*
+#if 0
+  char **require;
+  char **provide_ok;
+#endif
+  */
+
+  if (global->enable_max_stack_size > 0) {
+    cJSON_AddTrueToObject(jp, "enable_max_stack_size");
+  }
+  if (prob->max_vm_size != 0 && prob->max_vm_size != ~(ej_size64_t) 0) {
+    cJSON_AddNumberToObject(jp, "max_vm_size", prob->max_vm_size);
+  }
+  if (prob->max_stack_size != 0 && prob->max_stack_size != ~(ej_size64_t) 0) {
+    cJSON_AddNumberToObject(jp, "max_stack_size", prob->max_stack_size);
+  }
+  if (prob->max_rss_size != 0 && prob->max_rss_size != ~(ej_size64_t) 0) {
+    cJSON_AddNumberToObject(jp, "max_rss_size", prob->max_rss_size);
+  }
+  if (prob->disable_vm_size_limit > 0) {
+    cJSON_AddTrueToObject(jp, "disable_vm_size_limit");
+  }
+
+  // whether statement is available
+  if (variant > 0 && prob->xml.a[variant - 1]) {
+    cJSON_AddTrueToObject(jp, "is_statement_avaiable");
+    // FIXME: calculate size estimate?
+    cJSON_AddNumberToObject(jp, "est_stmt_size", 4096);
+  } else if (!variant && prob->xml.p) {
+    cJSON_AddTrueToObject(jp, "is_statement_avaiable");
+    // FIXME: calculate size estimate?
+    cJSON_AddNumberToObject(jp, "est_stmt_size", 4096);
+  }
+
+  UserProblemInfo *upi = &pinfo[prob_id];
+  cJSON *jps = cJSON_CreateObject();
+  if ((upi->status & PROB_STATUS_VIEWABLE) != 0) {
+    cJSON_AddTrueToObject(jps, "is_viewable");
+  }
+  if ((upi->status & PROB_STATUS_SUBMITTABLE) != 0) {
+    cJSON_AddTrueToObject(jps, "is_submittable");
+  }
+  if ((upi->status & PROB_STATUS_TABABLE) != 0) {
+    cJSON_AddTrueToObject(jps, "is_tabable");
+  }
+  if (upi->solved_flag > 0) {
+    cJSON_AddTrueToObject(jps, "is_solved");
+  }
+  if (upi->accepted_flag > 0) {
+    cJSON_AddTrueToObject(jps, "is_accepted");
+  }
+  if (upi->pending_flag > 0) {
+    cJSON_AddTrueToObject(jps, "is_pending");
+  }
+  if (upi->pr_flag > 0) {
+    cJSON_AddTrueToObject(jps, "is_pending_review");
+  }
+  if (upi->trans_flag > 0) {
+    cJSON_AddTrueToObject(jps, "is_transient");
+  }
+  if (upi->last_untokenized > 0) {
+    cJSON_AddTrueToObject(jps, "is_last_untokenized");
+  }
+  if (upi->marked_flag > 0) {
+    cJSON_AddTrueToObject(jps, "is_marked");
+  }
+  if (upi->autook_flag > 0) {
+    cJSON_AddTrueToObject(jps, "is_autook");
+  }
+  if (upi->rejected_flag > 0) {
+    cJSON_AddTrueToObject(jps, "is_rejected");
+  }
+  if (upi->need_eff_time_flag > 0) {
+    cJSON_AddTrueToObject(jps, "is_eff_time_needed");
+  }
+  if (upi->best_run >= 0) {
+    cJSON_AddNumberToObject(jps, "best_run", upi->best_run);
+  }
+  if (upi->attempts > 0) {
+    cJSON_AddNumberToObject(jps, "attempts", upi->attempts);
+  }
+  if (upi->disqualified > 0) {
+    cJSON_AddNumberToObject(jps, "disqualified", upi->disqualified);
+  }
+  if (upi->ce_attempts > 0) {
+    cJSON_AddNumberToObject(jps, "ce_attempts", upi->ce_attempts);
+  }
+  if (upi->best_score > 0) {
+    cJSON_AddNumberToObject(jps, "best_score", upi->best_score);
+  }
+  if (upi->prev_successes > 0) {
+    cJSON_AddNumberToObject(jps, "prev_successes", upi->prev_successes);
+  }
+  if (upi->all_attempts > 0) {
+    cJSON_AddNumberToObject(jps, "all_attempts", upi->all_attempts);
+  }
+  if (upi->eff_attempts > 0) {
+    cJSON_AddNumberToObject(jps, "eff_attempts", upi->eff_attempts);
+  }
+  if (upi->token_count > 0) {
+    cJSON_AddNumberToObject(jps, "token_count", upi->token_count);
+  }
+  if (upi->deadline > 0) {
+    cJSON_AddNumberToObject(jps, "deadline", (long long) upi->deadline);
+  }
+
+  if ((upi->deadline <= 0 || point_in_time < upi->deadline)
+      && (upi->status & PROB_STATUS_SUBMITTABLE) && prob->date_penalty) {
+    int dpi;
+    time_t base_time = start_time;
+    if (prob->start_date > 0 && prob->start_date > base_time) {
+      base_time = prob->start_date;
+    }
+    for (dpi = 0; dpi < prob->dp_total; ++dpi) {
+      if (point_in_time < prob->dp_infos[dpi].date)
+        break;
+    }
+    const struct penalty_info *dp = NULL;
+    if (dpi < prob->dp_total) {
+      if (dpi > 0) {
+        base_time = prob->dp_infos[dpi - 1].date;
+      }
+      dp = &prob->dp_infos[dpi];
+    }
+    if (dp) {
+      const unsigned char *formula = prob->date_penalty[dpi];
+      int penalty = dp->penalty;
+      time_t next_deadline = 0;
+      if (dp->scale > 0) {
+        time_t offset = point_in_time - base_time;
+        if (offset < 0) offset = 0;
+        penalty += dp->decay * (offset / dp->scale);
+        next_deadline = base_time + (offset / dp->scale + 1) * dp->scale;
+        if (next_deadline >= dp->date) {
+          next_deadline = dp->date;
+        }
+        if (upi->deadline > 0 && next_deadline >= upi->deadline) {
+          next_deadline = 0;
+        }
+      }
+      penalty = -penalty; // penalty is negative
+      cJSON_AddStringToObject(jps, "penalty_formula", formula);
+      if (penalty > 0) {
+        cJSON_AddNumberToObject(jps, "date_penalty", penalty);
+      }
+      if (next_deadline > 0) {
+        cJSON_AddNumberToObject(jps, "next_soft_deadline", next_deadline);
+      }
+    }
+  }
+  if (upi->effective_time > 0) {
+    cJSON_AddNumberToObject(jps, "effective_time", upi->effective_time);
+  }
+
+  cJSON *jrr = cJSON_CreateObject();
+  cJSON_AddItemToObject(jrr, "problem", jp);
+  cJSON_AddItemToObject(jrr, "problem_status", jps);
+  cJSON_AddItemToObject(jr, "result", jrr);
+
+  ok = 1;
+  err_num = 0;
+  http_status = 200;
+
+done:;
+  phr->json_reply = 1;
+  phr->status_code = http_status;
+  emit_json_result(fout, phr, ok, err_num, 0, err_msg, jr);
+  if (jr) {
+    cJSON_Delete(jr);
+  }
+  xfree(login_str);
+  return;
+
+userlist_error:;
+  err("%s: userlist server error %d", __PRETTY_FUNCTION__, r);
+  http_status = 500;
+  err_num = NEW_SRV_ERR_INTERNAL;
+  goto done;
+}
+
 typedef PageInterface *(*external_action_handler_t)(void);
 
 typedef int (*new_action_handler_t)(
@@ -10364,6 +10894,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_GET_USER] = priv_get_user,
   [NEW_SRV_ACTION_COPY_USER_INFO] = priv_copy_user_info,
   [NEW_SRV_ACTION_CHANGE_REGISTRATION] = priv_change_registration,
+  [NEW_SRV_ACTION_PROBLEM_STATUS_JSON] = priv_problem_status_json,
 };
 
 static const unsigned char * const external_priv_action_names[NEW_SRV_ACTION_LAST] =
@@ -12139,11 +12670,11 @@ ns_submit_run(
   if (!admin_mode && serve_check_user_quota(cs, user_id, run_size) < 0) {
     FAIL(NEW_SRV_ERR_RUN_QUOTA_EXCEEDED);
   }
-  if (!admin_mode && !serve_is_problem_started(cs, user_id, prob)) {
+  if (!admin_mode && !serve_is_problem_started(cs, user_id, prob, 0)) {
     FAIL(NEW_SRV_ERR_PROB_UNAVAILABLE);
   }
   time_t user_deadline = 0;
-  if (!admin_mode && serve_is_problem_deadlined(cs, user_id, phr->login, prob, &user_deadline)) {
+  if (!admin_mode && serve_is_problem_deadlined(cs, user_id, phr->login, prob, &user_deadline, 0)) {
     FAIL(NEW_SRV_ERR_PROB_DEADLINE_EXPIRED);
   }
 
@@ -12557,7 +13088,7 @@ done:
       for (++i; i <= cs->max_prob; ++i) {
         const struct section_problem_data *prob2 = cs->probs[i];
         if (!prob2) continue;
-        if (!serve_is_problem_started(cs, user_id, prob2)) continue;
+        if (!serve_is_problem_started(cs, user_id, prob2, 0)) continue;
         // FIXME: standard applicability checks
         break;
       }
@@ -12893,10 +13424,10 @@ unpriv_submit_run(
     FAIL2(NEW_SRV_ERR_RUN_QUOTA_EXCEEDED);
   }
   // problem submit start time
-  if (!serve_is_problem_started(cs, phr->user_id, prob)) {
+  if (!serve_is_problem_started(cs, phr->user_id, prob, 0)) {
     FAIL2(NEW_SRV_ERR_PROB_UNAVAILABLE);
   }
-  int is_deadlined = serve_is_problem_deadlined(cs, phr->user_id, phr->login, prob, &user_deadline);
+  int is_deadlined = serve_is_problem_deadlined(cs, phr->user_id, phr->login, prob, &user_deadline, 0);
   if (is_deadlined && prob->enable_submit_after_reject > 0) {
     int ok_count = 0;
     int rejected_count = 0;
@@ -13290,7 +13821,7 @@ unpriv_submit_run(
     if (prob->advance_to_next > 0) {
       for (i++; i <= cs->max_prob; i++) {
         if (!(prob2 = cs->probs[i])) continue;
-        if (!serve_is_problem_started(cs, phr->user_id, prob2))
+        if (!serve_is_problem_started(cs, phr->user_id, prob2, 0))
           continue;
         // FIXME: standard applicability checks
         break;
@@ -13690,12 +14221,12 @@ ns_submit_run_input(
       err_num = NEW_SRV_ERR_CONTEST_ALREADY_FINISHED;
       goto done;
     }
-    if (!serve_is_problem_started(cs, sender_user_id, prob)) {
+    if (!serve_is_problem_started(cs, sender_user_id, prob, 0)) {
       err_num = NEW_SRV_ERR_PROB_UNAVAILABLE;
       goto done;
     }
     time_t user_deadline = 0;
-    if (serve_is_problem_deadlined(cs, sender_user_id, phr->login, prob, &user_deadline)) {
+    if (serve_is_problem_deadlined(cs, sender_user_id, phr->login, prob, &user_deadline, 0)) {
       err_num = NEW_SRV_ERR_PROB_DEADLINE_EXPIRED;
       goto done;
     }
@@ -14500,7 +15031,7 @@ unpriv_command(
       && global->problem_navigation) {
     for (i = 1; i <= cs->max_prob; i++) {
       if (!(prob = cs->probs[i])) continue;
-      if (!serve_is_problem_started(cs, phr->user_id, prob))
+      if (!serve_is_problem_started(cs, phr->user_id, prob, 0))
         continue;
       // FIXME: standard applicability checks
       break;
@@ -14724,7 +15255,7 @@ html_problem_selection(serve_state_t cs,
     if (!(prob = cs->probs[i])) continue;
     if (!light_mode && prob->disable_submit_after_ok>0 && pinfo[i].solved_flag)
       continue;
-    if (!serve_is_problem_started(cs, phr->user_id, prob))
+    if (!serve_is_problem_started(cs, phr->user_id, prob, 0))
       continue;
     if (start_time <= 0) continue;
     //if (prob->disable_user_submit) continue;
@@ -14736,7 +15267,7 @@ html_problem_selection(serve_state_t cs,
       user_deadline = 0;
       user_penalty = 0;
       if (serve_is_problem_deadlined(cs, phr->user_id, phr->login,
-                                     prob, &user_deadline))
+                                     prob, &user_deadline, 0))
         continue;
 
       // check `require' variable
@@ -14824,12 +15355,12 @@ html_problem_selection_2(serve_state_t cs,
 
   for (i = 1; i <= cs->max_prob; i++) {
     if (!(prob = cs->probs[i])) continue;
-    if (!serve_is_problem_started(cs, phr->user_id, prob))
+    if (!serve_is_problem_started(cs, phr->user_id, prob, 0))
       continue;
     if (start_time <= 0) continue;
 
     if (serve_is_problem_deadlined(cs, phr->user_id, phr->login,
-                                   prob, &user_deadline))
+                                   prob, &user_deadline, 0))
       continue;
 
     // find date penalty
@@ -15450,11 +15981,11 @@ unpriv_xml_update_answer(
   if (serve_check_user_quota(cs, phr->user_id, run_size) < 0)
     FAIL(NEW_SRV_ERR_RUN_QUOTA_EXCEEDED);
   // problem submit start time
-  if (!serve_is_problem_started(cs, phr->user_id, prob))
+  if (!serve_is_problem_started(cs, phr->user_id, prob, 0))
     FAIL(NEW_SRV_ERR_PROB_UNAVAILABLE);
 
   if (serve_is_problem_deadlined(cs, phr->user_id, phr->login, prob,
-                                 &user_deadline)) {
+                                 &user_deadline, 0)) {
     FAIL(NEW_SRV_ERR_PROB_DEADLINE_EXPIRED);
   }
 
@@ -15628,11 +16159,11 @@ unpriv_get_file(
   if (stop_time > 0 && cs->current_time >= stop_time
       && prob->unrestricted_statement <= 0)
     FAIL(NEW_SRV_ERR_CONTEST_ALREADY_FINISHED);
-  if (!serve_is_problem_started(cs, phr->user_id, prob))
+  if (!serve_is_problem_started(cs, phr->user_id, prob, 0))
     FAIL(NEW_SRV_ERR_PROB_UNAVAILABLE);
 
   if (serve_is_problem_deadlined(cs, phr->user_id, phr->login,
-                                 prob, &user_deadline)
+                                 prob, &user_deadline, 0)
       && prob->unrestricted_statement <= 0)
     FAIL(NEW_SRV_ERR_CONTEST_ALREADY_FINISHED);
 
@@ -15750,7 +16281,7 @@ unpriv_contest_status_json(
   for (int i = 0; i <= cs->max_prob; ++i) {
     pinfo[i].best_run = -1;
   }
-  ns_get_user_problems_summary(cs, phr->user_id, phr->login, accepting_mode, start_time, stop_time, &phr->ip, pinfo);
+  ns_get_user_problems_summary(cs, phr->user_id, phr->login, accepting_mode, start_time, stop_time, 0, &phr->ip, pinfo);
 
   (void) vend_info;
 
@@ -15879,7 +16410,7 @@ unpriv_contest_status_json(
     for (int prob_id = 1; prob_id <= cs->max_prob; ++prob_id) {
       const struct section_problem_data *prob = cs->probs[prob_id];
       if (!prob) continue;
-      if (!serve_is_problem_started(cs, phr->user_id, prob)) continue;
+      if (!serve_is_problem_started(cs, phr->user_id, prob, 0)) continue;
 
       fprintf(fout, "%s\n      {", sep);
       sep = ",";
@@ -15943,7 +16474,7 @@ unpriv_problem_status_json(
     error_page(fout, phr, 0, NEW_SRV_ERR_INV_PROB_ID);
     goto cleanup;
   }
-  if (!serve_is_problem_started(cs, phr->user_id, prob)) {
+  if (!serve_is_problem_started(cs, phr->user_id, prob, 0)) {
     fprintf(phr->log_f, "problem is not yet opened\n");
     error_page(fout, phr, 0, NEW_SRV_ERR_INV_PROB_ID);
     goto cleanup;
@@ -15960,8 +16491,8 @@ unpriv_problem_status_json(
   for (int i = 0; i <= cs->max_prob; ++i) {
     pinfo[i].best_run = -1;
   }
-  ns_get_user_problems_summary(cs, phr->user_id, phr->login, accepting_mode, start_time, stop_time, &phr->ip, pinfo);
-  serve_is_problem_deadlined(cs, phr->user_id, phr->login, prob, &pinfo[prob_id].deadline);
+  ns_get_user_problems_summary(cs, phr->user_id, phr->login, accepting_mode, start_time, stop_time, 0, &phr->ip, pinfo);
+  serve_is_problem_deadlined(cs, phr->user_id, phr->login, prob, &pinfo[prob_id].deadline, 0);
 
   fprintf(fout, "{\n");
   fprintf(fout, "  \"ok\" : %s", ok?"true":"false");
@@ -16354,7 +16885,7 @@ unpriv_problem_statement_json(
     fprintf(phr->log_f, "invalid problem id\n");
     goto fail;
   }
-  if (!serve_is_problem_started(cs, phr->user_id, prob)) {
+  if (!serve_is_problem_started(cs, phr->user_id, prob, 0)) {
     fprintf(phr->log_f, "problem is not yet opened\n");
     goto fail;
   }
@@ -16369,7 +16900,7 @@ unpriv_problem_statement_json(
   for (int i = 0; i <= cs->max_prob; ++i) {
     pinfo[i].best_run = -1;
   }
-  ns_get_user_problems_summary(cs, phr->user_id, phr->login, accepting_mode, start_time, stop_time, &phr->ip, pinfo);
+  ns_get_user_problems_summary(cs, phr->user_id, phr->login, accepting_mode, start_time, stop_time, 0, &phr->ip, pinfo);
   if (!(pinfo[prob_id].status & PROB_STATUS_VIEWABLE)) {
     goto fail;
   }
@@ -16434,7 +16965,7 @@ unpriv_list_runs_json(
       error_page(fout, phr, 0, NEW_SRV_ERR_INV_PROB_ID);
       goto cleanup;
     }
-    if (!serve_is_problem_started(cs, phr->user_id, prob)) {
+    if (!serve_is_problem_started(cs, phr->user_id, prob, 0)) {
       fprintf(phr->log_f, "problem is not yet opened\n");
       error_page(fout, phr, 0, NEW_SRV_ERR_INV_PROB_ID);
       goto cleanup;
@@ -16446,7 +16977,7 @@ unpriv_list_runs_json(
   for (int i = 0; i <= cs->max_prob; ++i) {
     pinfo[i].best_run = -1;
   }
-  ns_get_user_problems_summary(cs, phr->user_id, phr->login, accepting_mode, start_time, stop_time, &phr->ip, pinfo);
+  ns_get_user_problems_summary(cs, phr->user_id, phr->login, accepting_mode, start_time, stop_time, 0, &phr->ip, pinfo);
 
   filter_user_runs(cs, phr, prob_id, pinfo, start_time, stop_time, 0, &rdis);
 
@@ -16539,7 +17070,7 @@ unpriv_run_status_json(
     error_page(fout, phr, 0, NEW_SRV_ERR_INV_RUN_ID);
     goto cleanup;
   }
-  if (!serve_is_problem_started(cs, phr->user_id, prob)) {
+  if (!serve_is_problem_started(cs, phr->user_id, prob, 0)) {
     fprintf(phr->log_f, "problem is not yet opened\n");
     error_page(fout, phr, 0, NEW_SRV_ERR_INV_RUN_ID);
     goto cleanup;
@@ -16723,7 +17254,7 @@ unpriv_run_test_json(
   for (int i = 0; i <= cs->max_prob; ++i) {
     pinfo[i].best_run = -1;
   }
-  ns_get_user_problems_summary(cs, phr->user_id, phr->login, accepting_mode, start_time, stop_time, &phr->ip, pinfo);
+  ns_get_user_problems_summary(cs, phr->user_id, phr->login, accepting_mode, start_time, stop_time, 0, &phr->ip, pinfo);
 
   RunDisplayInfo ri = {};
   fill_user_run_info(cs, pinfo, run_id, &re, start_time, stop_time, 0, &ri);

@@ -521,6 +521,7 @@ ns_get_user_problems_summary(
         int accepting_mode,
         time_t start_time,
         time_t stop_time,
+        time_t point_in_time,
         const ej_ip_t *ip,
         struct UserProblemInfo *pinfo); /* user problem info */
 

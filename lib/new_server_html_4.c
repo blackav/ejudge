@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1006,9 +1006,9 @@ cmd_submit_run(
       FAIL(NEW_SRV_ERR_CONTEST_ALREADY_FINISHED);
     if (serve_check_user_quota(cs, phr->user_id, run_size) < 0)
       FAIL(NEW_SRV_ERR_RUN_QUOTA_EXCEEDED);
-    if (!serve_is_problem_started(cs, phr->user_id, prob))
+    if (!serve_is_problem_started(cs, phr->user_id, prob, 0))
       FAIL(NEW_SRV_ERR_PROB_UNAVAILABLE);
-    if (serve_is_problem_deadlined(cs, phr->user_id, phr->login, prob, 0)) {
+    if (serve_is_problem_deadlined(cs, phr->user_id, phr->login, prob, 0, 0)) {
       FAIL(NEW_SRV_ERR_PROB_DEADLINE_EXPIRED);
     }
   }
