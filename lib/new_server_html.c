@@ -10147,8 +10147,8 @@ priv_problem_status_json(
   const struct section_problem_data *prob = NULL;
   int variant = 0;
   time_t point_in_time = cs->current_time;
-  time_t rel_time = -1;
-  time_t abs_time = 0;
+  long long rel_time = -1;
+  long long abs_time = 0;
 
   if (hr_cgi_param_int_opt(phr, "other_user_id", &other_user_id, 0) < 0)
     goto done;
@@ -10222,10 +10222,10 @@ priv_problem_status_json(
   // FIXME: handle 'problem'
 
   // rel_time, abs_time
-  if (hr_cgi_param_int_opt(phr, "rel_time", &rel_time, -1) < 0) {
+  if (hr_cgi_param_i64_opt(phr, "rel_time", &rel_time, -1) < 0) {
     goto done;
   }
-  if (hr_cgi_param_int_opt(phr, "abs_time", &abs_time, 0) < 0) {
+  if (hr_cgi_param_i64_opt(phr, "abs_time", &abs_time, 0) < 0) {
     goto done;
   }
 
