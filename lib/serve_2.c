@@ -7217,12 +7217,14 @@ serve_is_problem_deadlined(
         int user_id,
         const unsigned char *user_login,
         const struct section_problem_data *prob,
-        time_t *p_deadline)
+        time_t *p_deadline,
+        time_t point_in_time)
 {
   int i, user_ind, group_ind;
   const unsigned int *bm;
   struct pers_dead_info *pdinfo;
 
+  if (point_in_time <= 0) point_in_time = state->current_time;
   if (p_deadline) *p_deadline = 0;
 
   /* personal deadlines */
@@ -7230,7 +7232,7 @@ serve_is_problem_deadlined(
     for (i = 0, pdinfo = prob->pd_infos; i < prob->pd_total; i++, pdinfo++) {
       if (!strcmp(user_login, pdinfo->login) && pdinfo->p.date > 0) {
         if (p_deadline) *p_deadline = pdinfo->p.date;
-        return (state->current_time >= pdinfo->p.date);
+        return (point_in_time >= pdinfo->p.date);
       }
     }
   }
@@ -7255,13 +7257,13 @@ serve_is_problem_deadlined(
     }
     if (i < prob->gdl.count) {
       if (p_deadline) *p_deadline = prob->gdl.info[i].p.date;
-      return (state->current_time >= prob->gdl.info[i].p.date);
+      return (point_in_time >= prob->gdl.info[i].p.date);
     }
   }
 
   if (prob->deadline > 0) {
       if (p_deadline) *p_deadline = prob->deadline;
-      return (state->current_time >= prob->deadline);
+      return (point_in_time >= prob->deadline);
   }
 
   return 0;
@@ -7281,7 +7283,7 @@ serve_is_problem_deadlined_2(
   if (!(prob = state->probs[prob_id])) return 0;
 
   return serve_is_problem_deadlined(state, user_id, user_login, prob,
-                                    p_deadline);
+                                    p_deadline, 0);
 }
 
 static const unsigned char * const

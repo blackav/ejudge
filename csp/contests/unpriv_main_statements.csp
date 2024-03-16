@@ -16,7 +16,7 @@
       if (!(prob = cs->probs[prob_id])) continue;
       if (!serve_is_problem_started(cs, phr->user_id, prob, 0)) continue;
       if (serve_is_problem_deadlined(cs, phr->user_id, phr->login,
-                                     prob, &pinfo[prob_id].deadline))
+                                     prob, &pinfo[prob_id].deadline, 0))
         continue;
       if (prob->variant_num > 0
           && (variant = find_variant(cs, phr->user_id, prob_id, 0)) <= 0)

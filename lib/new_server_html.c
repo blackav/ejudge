@@ -10264,7 +10264,7 @@ priv_problem_status_json(
   }
 
   ns_get_user_problems_summary(cs, other_user_id, other_user_login, accepting_mode, start_time, stop_time, NULL, pinfo);
-  serve_is_problem_deadlined(cs, other_user_id, other_user_login, prob, &pinfo[prob_id].deadline);
+  serve_is_problem_deadlined(cs, other_user_id, other_user_login, prob, &pinfo[prob_id].deadline, point_in_time);
 
   cJSON *jp = cJSON_CreateObject();
   cJSON_AddNumberToObject(jp, "id", prob->id);
@@ -12660,7 +12660,7 @@ ns_submit_run(
     FAIL(NEW_SRV_ERR_PROB_UNAVAILABLE);
   }
   time_t user_deadline = 0;
-  if (!admin_mode && serve_is_problem_deadlined(cs, user_id, phr->login, prob, &user_deadline)) {
+  if (!admin_mode && serve_is_problem_deadlined(cs, user_id, phr->login, prob, &user_deadline, 0)) {
     FAIL(NEW_SRV_ERR_PROB_DEADLINE_EXPIRED);
   }
 
@@ -13413,7 +13413,7 @@ unpriv_submit_run(
   if (!serve_is_problem_started(cs, phr->user_id, prob, 0)) {
     FAIL2(NEW_SRV_ERR_PROB_UNAVAILABLE);
   }
-  int is_deadlined = serve_is_problem_deadlined(cs, phr->user_id, phr->login, prob, &user_deadline);
+  int is_deadlined = serve_is_problem_deadlined(cs, phr->user_id, phr->login, prob, &user_deadline, 0);
   if (is_deadlined && prob->enable_submit_after_reject > 0) {
     int ok_count = 0;
     int rejected_count = 0;
@@ -14212,7 +14212,7 @@ ns_submit_run_input(
       goto done;
     }
     time_t user_deadline = 0;
-    if (serve_is_problem_deadlined(cs, sender_user_id, phr->login, prob, &user_deadline)) {
+    if (serve_is_problem_deadlined(cs, sender_user_id, phr->login, prob, &user_deadline, 0)) {
       err_num = NEW_SRV_ERR_PROB_DEADLINE_EXPIRED;
       goto done;
     }
@@ -15253,7 +15253,7 @@ html_problem_selection(serve_state_t cs,
       user_deadline = 0;
       user_penalty = 0;
       if (serve_is_problem_deadlined(cs, phr->user_id, phr->login,
-                                     prob, &user_deadline))
+                                     prob, &user_deadline, 0))
         continue;
 
       // check `require' variable
@@ -15346,7 +15346,7 @@ html_problem_selection_2(serve_state_t cs,
     if (start_time <= 0) continue;
 
     if (serve_is_problem_deadlined(cs, phr->user_id, phr->login,
-                                   prob, &user_deadline))
+                                   prob, &user_deadline, 0))
       continue;
 
     // find date penalty
@@ -15971,7 +15971,7 @@ unpriv_xml_update_answer(
     FAIL(NEW_SRV_ERR_PROB_UNAVAILABLE);
 
   if (serve_is_problem_deadlined(cs, phr->user_id, phr->login, prob,
-                                 &user_deadline)) {
+                                 &user_deadline, 0)) {
     FAIL(NEW_SRV_ERR_PROB_DEADLINE_EXPIRED);
   }
 
@@ -16149,7 +16149,7 @@ unpriv_get_file(
     FAIL(NEW_SRV_ERR_PROB_UNAVAILABLE);
 
   if (serve_is_problem_deadlined(cs, phr->user_id, phr->login,
-                                 prob, &user_deadline)
+                                 prob, &user_deadline, 0)
       && prob->unrestricted_statement <= 0)
     FAIL(NEW_SRV_ERR_CONTEST_ALREADY_FINISHED);
 
@@ -16478,7 +16478,7 @@ unpriv_problem_status_json(
     pinfo[i].best_run = -1;
   }
   ns_get_user_problems_summary(cs, phr->user_id, phr->login, accepting_mode, start_time, stop_time, &phr->ip, pinfo);
-  serve_is_problem_deadlined(cs, phr->user_id, phr->login, prob, &pinfo[prob_id].deadline);
+  serve_is_problem_deadlined(cs, phr->user_id, phr->login, prob, &pinfo[prob_id].deadline, 0);
 
   fprintf(fout, "{\n");
   fprintf(fout, "  \"ok\" : %s", ok?"true":"false");

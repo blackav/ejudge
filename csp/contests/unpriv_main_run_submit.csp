@@ -4,12 +4,12 @@
     if (prob_id > 0 && !serve_is_problem_started(cs, phr->user_id, prob, 0))
       prob_id = 0;
     if (prob_id > 0 && prob) {
-      serve_is_problem_deadlined(cs, phr->user_id, phr->login, prob, &pinfo[prob_id].deadline);
+      serve_is_problem_deadlined(cs, phr->user_id, phr->login, prob, &pinfo[prob_id].deadline, 0);
     }
 /*
     if (prob_id > 0 && serve_is_problem_deadlined(cs, phr->user_id, phr->login,
                                                   prob,
-                                                  &pinfo[prob_id].deadline))
+                                                  &pinfo[prob_id].deadline, 0))
       prob_id = 0;
 */
     //if (prob_id > 0 && prob->disable_user_submit > 0) prob_id = 0;

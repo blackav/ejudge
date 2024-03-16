@@ -6151,7 +6151,7 @@ ns_get_user_problems_summary(
 
     // check problem deadline
     time_t user_deadline = 0;
-    int is_deadlined = serve_is_problem_deadlined(cs, user_id, user_login, cur_prob, &user_deadline);
+    int is_deadlined = serve_is_problem_deadlined(cs, user_id, user_login, cur_prob, &user_deadline, 0);
     if (is_deadlined && cur_prob->enable_submit_after_reject > 0 && pinfo[prob_id].rejected_flag && !pinfo[prob_id].solved_flag) {
       is_deadlined = 0;
       user_deadline = 0;

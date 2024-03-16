@@ -1008,7 +1008,7 @@ cmd_submit_run(
       FAIL(NEW_SRV_ERR_RUN_QUOTA_EXCEEDED);
     if (!serve_is_problem_started(cs, phr->user_id, prob, 0))
       FAIL(NEW_SRV_ERR_PROB_UNAVAILABLE);
-    if (serve_is_problem_deadlined(cs, phr->user_id, phr->login, prob, 0)) {
+    if (serve_is_problem_deadlined(cs, phr->user_id, phr->login, prob, 0, 0)) {
       FAIL(NEW_SRV_ERR_PROB_DEADLINE_EXPIRED);
     }
   }

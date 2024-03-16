@@ -907,7 +907,8 @@ serve_is_problem_deadlined(
         int user_id,
         const unsigned char *user_login,
         const struct section_problem_data *prob,
-        time_t *p_deadline);
+        time_t *p_deadline,
+        time_t point_in_time);
 int
 serve_is_problem_started_2(
         const serve_state_t state,
