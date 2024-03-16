@@ -5632,6 +5632,7 @@ ns_get_user_problems_summary(
         int accepting_mode,
         time_t start_time,
         time_t stop_time,
+        time_t point_in_time,
         const ej_ip_t *ip,
         UserProblemInfo *pinfo)       /* user problem status */
 {
@@ -5646,7 +5647,9 @@ ns_get_user_problems_summary(
   UserProblemInfo *cur_pinfo;
   const struct virtual_end_info_s *vend_info = NULL;
 
-  if (global->is_virtual > 0 && stop_time > 0 && cs->current_time >= stop_time) {
+  if (point_in_time <= 0) point_in_time = cs->current_time;
+
+  if (global->is_virtual > 0 && stop_time > 0 && point_in_time >= stop_time) {
     vend_info = global->virtual_end_info;
   }
 
@@ -5693,6 +5696,7 @@ ns_get_user_problems_summary(
        run_id >= 0 && run_id < total_runs;
        run_id = need_prev_succ?(run_id + 1):run_get_user_next_run_id(cs->runlog_state, run_id)) {
     if (run_get_entry(cs->runlog_state, run_id, &re) < 0) continue;
+    if (re.time > point_in_time) continue;
     if (!run_is_valid_status(re.status)) continue;
     if (re.status >= RUN_PSEUDO_FIRST && re.status <= RUN_PSEUDO_LAST) continue;
     if (re.prob_id <= 0 || re.prob_id > cs->max_prob) continue;
@@ -6157,19 +6161,19 @@ ns_get_user_problems_summary(
       user_deadline = 0;
     }
 
-    if (start_time > 0 && cs->current_time >= start_time
+    if (start_time > 0 && point_in_time >= start_time
         && (ip_allowed || cur_prob->statement_ignore_ip > 0)
         && (cur_prob->unrestricted_statement > 0 || !is_deadlined))
       pinfo[prob_id].status |= PROB_STATUS_VIEWABLE;
 
-    if (start_time > 0 && cs->current_time >= start_time
-        && (stop_time <= 0 || cs->current_time < stop_time)
+    if (start_time > 0 && point_in_time >= start_time
+        && (stop_time <= 0 || point_in_time < stop_time)
         && ip_allowed
         && !is_deadlined && cur_prob->disable_user_submit <= 0
         && (cur_prob->disable_submit_after_ok <= 0 || !pinfo[prob_id].solved_flag))
       pinfo[prob_id].status |= PROB_STATUS_SUBMITTABLE;
 
-    if (start_time > 0 && cs->current_time >= start_time && cur_prob->disable_tab <= 0)
+    if (start_time > 0 && point_in_time >= start_time && cur_prob->disable_tab <= 0)
       pinfo[prob_id].status |= PROB_STATUS_TABABLE;
 
     if (cs->upsolving_mode) {
@@ -9601,7 +9605,7 @@ write_json_run_info(
   for (int i = 0; i <= cs->max_prob; ++i) {
     pinfo[i].best_run = -1;
   }
-  ns_get_user_problems_summary(cs, phr->user_id, phr->login, accepting_mode, start_time, stop_time, &phr->ip, pinfo);
+  ns_get_user_problems_summary(cs, phr->user_id, phr->login, accepting_mode, start_time, stop_time, 0, &phr->ip, pinfo);
 
   int message_count = 0;
   if (pre->run_uuid.v[0] || pre->run_uuid.v[1] || pre->run_uuid.v[2] || pre->run_uuid.v[3]) {
