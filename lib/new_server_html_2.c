@@ -6091,7 +6091,7 @@ ns_get_user_problems_summary(
     if (!(cur_prob = cs->probs[prob_id])) continue;
 
     // the problem is completely disabled before its start_date
-    if (!serve_is_problem_started(cs, user_id, cur_prob))
+    if (!serve_is_problem_started(cs, user_id, cur_prob, 0))
       continue;
 
     // check the allowed IP list

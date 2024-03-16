@@ -2,7 +2,7 @@
 #ifndef __SERVE_STATE_H__
 #define __SERVE_STATE_H__
 
-/* Copyright (C) 2006-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -899,7 +899,8 @@ int
 serve_is_problem_started(
         const serve_state_t state,
         int user_id,
-        const struct section_problem_data *prob);
+        const struct section_problem_data *prob,
+        time_t point_in_time);
 int
 serve_is_problem_deadlined(
         const serve_state_t state,

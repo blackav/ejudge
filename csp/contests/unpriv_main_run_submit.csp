@@ -1,7 +1,7 @@
 <%
     if (prob_id > cs->max_prob) prob_id = 0;
     if (prob_id > 0 && !(prob = cs->probs[prob_id])) prob_id = 0;
-    if (prob_id > 0 && !serve_is_problem_started(cs, phr->user_id, prob))
+    if (prob_id > 0 && !serve_is_problem_started(cs, phr->user_id, prob, 0))
       prob_id = 0;
     if (prob_id > 0 && prob) {
       serve_is_problem_deadlined(cs, phr->user_id, phr->login, prob, &pinfo[prob_id].deadline);
@@ -437,7 +437,7 @@
                 next_prob_id++;
                 for (; next_prob_id <= cs->max_prob; next_prob_id++) {
                   if (!(prob2 = cs->probs[next_prob_id])) continue;
-                  if (!serve_is_problem_started(cs, phr->user_id, prob2))
+                  if (!serve_is_problem_started(cs, phr->user_id, prob2, 0))
                     continue;
                   break;
                 }

@@ -14,7 +14,7 @@
       variant = 0;
       if (prob_id <= 0 || prob_id > cs->max_prob) continue;
       if (!(prob = cs->probs[prob_id])) continue;
-      if (!serve_is_problem_started(cs, phr->user_id, prob)) continue;
+      if (!serve_is_problem_started(cs, phr->user_id, prob, 0)) continue;
       if (serve_is_problem_deadlined(cs, phr->user_id, phr->login,
                                      prob, &pinfo[prob_id].deadline))
         continue;

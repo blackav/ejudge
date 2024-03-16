@@ -10240,7 +10240,7 @@ priv_problem_status_json(
     goto done;
   }
 
-  if (!serve_is_problem_started(cs, other_user_id, prob)) {
+  if (!serve_is_problem_started(cs, other_user_id, prob, point_in_time)) {
     cJSON *jrr = cJSON_CreateObject();
     cJSON_AddTrueToObject(jrr, "not_started");
     cJSON_AddItemToObject(jr, "result", jrr);
@@ -12656,7 +12656,7 @@ ns_submit_run(
   if (!admin_mode && serve_check_user_quota(cs, user_id, run_size) < 0) {
     FAIL(NEW_SRV_ERR_RUN_QUOTA_EXCEEDED);
   }
-  if (!admin_mode && !serve_is_problem_started(cs, user_id, prob)) {
+  if (!admin_mode && !serve_is_problem_started(cs, user_id, prob, 0)) {
     FAIL(NEW_SRV_ERR_PROB_UNAVAILABLE);
   }
   time_t user_deadline = 0;
@@ -13074,7 +13074,7 @@ done:
       for (++i; i <= cs->max_prob; ++i) {
         const struct section_problem_data *prob2 = cs->probs[i];
         if (!prob2) continue;
-        if (!serve_is_problem_started(cs, user_id, prob2)) continue;
+        if (!serve_is_problem_started(cs, user_id, prob2, 0)) continue;
         // FIXME: standard applicability checks
         break;
       }
@@ -13410,7 +13410,7 @@ unpriv_submit_run(
     FAIL2(NEW_SRV_ERR_RUN_QUOTA_EXCEEDED);
   }
   // problem submit start time
-  if (!serve_is_problem_started(cs, phr->user_id, prob)) {
+  if (!serve_is_problem_started(cs, phr->user_id, prob, 0)) {
     FAIL2(NEW_SRV_ERR_PROB_UNAVAILABLE);
   }
   int is_deadlined = serve_is_problem_deadlined(cs, phr->user_id, phr->login, prob, &user_deadline);
@@ -13807,7 +13807,7 @@ unpriv_submit_run(
     if (prob->advance_to_next > 0) {
       for (i++; i <= cs->max_prob; i++) {
         if (!(prob2 = cs->probs[i])) continue;
-        if (!serve_is_problem_started(cs, phr->user_id, prob2))
+        if (!serve_is_problem_started(cs, phr->user_id, prob2, 0))
           continue;
         // FIXME: standard applicability checks
         break;
@@ -14207,7 +14207,7 @@ ns_submit_run_input(
       err_num = NEW_SRV_ERR_CONTEST_ALREADY_FINISHED;
       goto done;
     }
-    if (!serve_is_problem_started(cs, sender_user_id, prob)) {
+    if (!serve_is_problem_started(cs, sender_user_id, prob, 0)) {
       err_num = NEW_SRV_ERR_PROB_UNAVAILABLE;
       goto done;
     }
@@ -15017,7 +15017,7 @@ unpriv_command(
       && global->problem_navigation) {
     for (i = 1; i <= cs->max_prob; i++) {
       if (!(prob = cs->probs[i])) continue;
-      if (!serve_is_problem_started(cs, phr->user_id, prob))
+      if (!serve_is_problem_started(cs, phr->user_id, prob, 0))
         continue;
       // FIXME: standard applicability checks
       break;
@@ -15241,7 +15241,7 @@ html_problem_selection(serve_state_t cs,
     if (!(prob = cs->probs[i])) continue;
     if (!light_mode && prob->disable_submit_after_ok>0 && pinfo[i].solved_flag)
       continue;
-    if (!serve_is_problem_started(cs, phr->user_id, prob))
+    if (!serve_is_problem_started(cs, phr->user_id, prob, 0))
       continue;
     if (start_time <= 0) continue;
     //if (prob->disable_user_submit) continue;
@@ -15341,7 +15341,7 @@ html_problem_selection_2(serve_state_t cs,
 
   for (i = 1; i <= cs->max_prob; i++) {
     if (!(prob = cs->probs[i])) continue;
-    if (!serve_is_problem_started(cs, phr->user_id, prob))
+    if (!serve_is_problem_started(cs, phr->user_id, prob, 0))
       continue;
     if (start_time <= 0) continue;
 
@@ -15967,7 +15967,7 @@ unpriv_xml_update_answer(
   if (serve_check_user_quota(cs, phr->user_id, run_size) < 0)
     FAIL(NEW_SRV_ERR_RUN_QUOTA_EXCEEDED);
   // problem submit start time
-  if (!serve_is_problem_started(cs, phr->user_id, prob))
+  if (!serve_is_problem_started(cs, phr->user_id, prob, 0))
     FAIL(NEW_SRV_ERR_PROB_UNAVAILABLE);
 
   if (serve_is_problem_deadlined(cs, phr->user_id, phr->login, prob,
@@ -16145,7 +16145,7 @@ unpriv_get_file(
   if (stop_time > 0 && cs->current_time >= stop_time
       && prob->unrestricted_statement <= 0)
     FAIL(NEW_SRV_ERR_CONTEST_ALREADY_FINISHED);
-  if (!serve_is_problem_started(cs, phr->user_id, prob))
+  if (!serve_is_problem_started(cs, phr->user_id, prob, 0))
     FAIL(NEW_SRV_ERR_PROB_UNAVAILABLE);
 
   if (serve_is_problem_deadlined(cs, phr->user_id, phr->login,
@@ -16396,7 +16396,7 @@ unpriv_contest_status_json(
     for (int prob_id = 1; prob_id <= cs->max_prob; ++prob_id) {
       const struct section_problem_data *prob = cs->probs[prob_id];
       if (!prob) continue;
-      if (!serve_is_problem_started(cs, phr->user_id, prob)) continue;
+      if (!serve_is_problem_started(cs, phr->user_id, prob, 0)) continue;
 
       fprintf(fout, "%s\n      {", sep);
       sep = ",";
@@ -16460,7 +16460,7 @@ unpriv_problem_status_json(
     error_page(fout, phr, 0, NEW_SRV_ERR_INV_PROB_ID);
     goto cleanup;
   }
-  if (!serve_is_problem_started(cs, phr->user_id, prob)) {
+  if (!serve_is_problem_started(cs, phr->user_id, prob, 0)) {
     fprintf(phr->log_f, "problem is not yet opened\n");
     error_page(fout, phr, 0, NEW_SRV_ERR_INV_PROB_ID);
     goto cleanup;
@@ -16871,7 +16871,7 @@ unpriv_problem_statement_json(
     fprintf(phr->log_f, "invalid problem id\n");
     goto fail;
   }
-  if (!serve_is_problem_started(cs, phr->user_id, prob)) {
+  if (!serve_is_problem_started(cs, phr->user_id, prob, 0)) {
     fprintf(phr->log_f, "problem is not yet opened\n");
     goto fail;
   }
@@ -16951,7 +16951,7 @@ unpriv_list_runs_json(
       error_page(fout, phr, 0, NEW_SRV_ERR_INV_PROB_ID);
       goto cleanup;
     }
-    if (!serve_is_problem_started(cs, phr->user_id, prob)) {
+    if (!serve_is_problem_started(cs, phr->user_id, prob, 0)) {
       fprintf(phr->log_f, "problem is not yet opened\n");
       error_page(fout, phr, 0, NEW_SRV_ERR_INV_PROB_ID);
       goto cleanup;
@@ -17056,7 +17056,7 @@ unpriv_run_status_json(
     error_page(fout, phr, 0, NEW_SRV_ERR_INV_RUN_ID);
     goto cleanup;
   }
-  if (!serve_is_problem_started(cs, phr->user_id, prob)) {
+  if (!serve_is_problem_started(cs, phr->user_id, prob, 0)) {
     fprintf(phr->log_f, "problem is not yet opened\n");
     error_page(fout, phr, 0, NEW_SRV_ERR_INV_RUN_ID);
     goto cleanup;
