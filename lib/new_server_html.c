@@ -10147,6 +10147,8 @@ priv_problem_status_json(
   const struct section_problem_data *prob = NULL;
   int variant = 0;
   time_t point_in_time = cs->current_time;
+  time_t rel_time = -1;
+  time_t abs_time = 0;
 
   if (hr_cgi_param_int_opt(phr, "other_user_id", &other_user_id, 0) < 0)
     goto done;
@@ -10220,6 +10222,12 @@ priv_problem_status_json(
   // FIXME: handle 'problem'
 
   // rel_time, abs_time
+  if (hr_cgi_param_int_opt(phr, "rel_time", &rel_time, -1) < 0) {
+    goto done;
+  }
+  if (hr_cgi_param_int_opt(phr, "abs_time", &abs_time, 0) < 0) {
+    goto done;
+  }
 
   time_t start_time = 0;
   time_t stop_time = 0;
@@ -10238,6 +10246,12 @@ priv_problem_status_json(
     err_num = NEW_SRV_ERR_CONTEST_NOT_STARTED;
     http_status = 404;
     goto done;
+  }
+
+  if (rel_time >= 0) {
+    point_in_time = start_time + rel_time;
+  } else if (abs_time > 0) {
+    point_in_time = abs_time;
   }
 
   if (!serve_is_problem_started(cs, other_user_id, prob, point_in_time)) {
