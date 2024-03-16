@@ -10146,6 +10146,7 @@ priv_problem_status_json(
   int prob_id = 0;
   const struct section_problem_data *prob = NULL;
   int variant = 0;
+  time_t point_in_time = cs->current_time;
 
   if (hr_cgi_param_int_opt(phr, "other_user_id", &other_user_id, 0) < 0)
     goto done;
@@ -10225,11 +10226,11 @@ priv_problem_status_json(
   int accepting_mode = 0;
   if (global->is_virtual) {
     start_time = run_get_virtual_start_time(cs->runlog_state, other_user_id);
-    stop_time = run_get_virtual_stop_time(cs->runlog_state, other_user_id, cs->current_time);
+    stop_time = run_get_virtual_stop_time(cs->runlog_state, other_user_id, point_in_time);
     if (stop_time <= 0 || cs->upsolving_mode) accepting_mode = 1;
   } else {
     start_time = run_get_start_time(cs->runlog_state);
-    stop_time = run_get_stop_time(cs->runlog_state, other_user_id, cs->current_time);
+    stop_time = run_get_stop_time(cs->runlog_state, other_user_id, point_in_time);
     accepting_mode = cs->accepting_mode;
   }
 
@@ -10565,7 +10566,7 @@ priv_problem_status_json(
     cJSON_AddNumberToObject(jps, "deadline", (long long) upi->deadline);
   }
 
-  if ((upi->deadline <= 0 || cs->current_time < upi->deadline)
+  if ((upi->deadline <= 0 || point_in_time < upi->deadline)
       && (upi->status & PROB_STATUS_SUBMITTABLE) && prob->date_penalty) {
     int dpi;
     time_t base_time = start_time;
@@ -10573,7 +10574,7 @@ priv_problem_status_json(
       base_time = prob->start_date;
     }
     for (dpi = 0; dpi < prob->dp_total; ++dpi) {
-      if (cs->current_time < prob->dp_infos[dpi].date)
+      if (point_in_time < prob->dp_infos[dpi].date)
         break;
     }
     const struct penalty_info *dp = NULL;
@@ -10588,7 +10589,7 @@ priv_problem_status_json(
       int penalty = dp->penalty;
       time_t next_deadline = 0;
       if (dp->scale > 0) {
-        time_t offset = cs->current_time - base_time;
+        time_t offset = point_in_time - base_time;
         if (offset < 0) offset = 0;
         penalty += dp->decay * (offset / dp->scale);
         next_deadline = base_time + (offset / dp->scale + 1) * dp->scale;
