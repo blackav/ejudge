@@ -264,6 +264,8 @@ struct section_global_data
   int problem_tab_size;
   /** display problem tabs vertically */
   ejintbool_t vertical_navigation;
+  /** use start_date sort order instead of problem id  */
+  ejintbool_t vertical_navigation_sdate_sort;
   /** disable "virtual start" command for contestants */
   ejintbool_t disable_virtual_start;
   /** disable auto-judging after virtual olympiad is finished for a user */
