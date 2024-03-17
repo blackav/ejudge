@@ -7727,6 +7727,8 @@ write_xml_team_testing_report(
   unsigned char *visibilities = NULL;
   int has_max_rss = 0;
   long long max_rss = 0;
+  int has_tl_or_wtl = 0;
+  int max_time_ms = 0;
 
   if (table_class && *table_class) {
     snprintf(cl, sizeof(cl), " class=\"%s\"", table_class);
@@ -7909,6 +7911,13 @@ write_xml_team_testing_report(
         if (t->max_rss > max_rss) {
           max_rss = t->max_rss;
         }
+      }
+    }
+    if (t->status == RUN_TIME_LIMIT_ERR || t->status == RUN_WALL_TIME_LIMIT_ERR) {
+      has_tl_or_wtl = 1;
+    } else {
+      if (t->time > max_time_ms) {
+        max_time_ms = t->time;
       }
     }
   }
