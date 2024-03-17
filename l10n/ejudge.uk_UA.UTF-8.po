@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-02-21 22:06+0300\n"
+"POT-Creation-Date: 2024-03-17 13:46+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Ukrainian <uk@li.org>\n"
@@ -104,6 +104,10 @@ msgid "<big>%d total tests runs, %d passed, %d failed.<br>\n"
 msgstr ""
 
 #, c-format
+msgid "<big>Failed test: %d.</big>\n"
+msgstr ""
+
+#, c-format
 msgid "<big>Failed test: %d.<br/><br/></big>\n"
 msgstr ""
 
@@ -112,7 +116,7 @@ msgid "<big>Failed test: %d.<br><br></big>\n"
 msgstr ""
 
 #, c-format
-msgid "<big>Score gained: %d (out of %d).<br/><br/></big>\n"
+msgid "<big>Score gained: %d (out of %d).</big>\n"
 msgstr ""
 
 msgid "<font color=\"green\">OK</font>"
@@ -3389,7 +3393,7 @@ msgid ""
 msgstr ""
 
 #, c-format
-msgid "Score gained: %d (out of %d).<br/><br/></big>\n"
+msgid "Score gained: %d (out of %d).</big>\n"
 msgstr ""
 
 #, c-format

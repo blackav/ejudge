@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-02-21 22:06+0300\n"
+"POT-Creation-Date: 2024-03-17 13:46+0300\n"
 "PO-Revision-Date: 2022-01-12 13:17+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -114,6 +114,10 @@ msgid "<big>%d total tests runs, %d passed, %d failed.<br>\n"
 msgstr "<big>Всего тестов: %d, пройдено: %d, не пройдено: %d.<br>\n"
 
 #, c-format
+msgid "<big>Failed test: %d.</big>\n"
+msgstr "<big>Ошибка на тесте %d.</big>\n"
+
+#, c-format
 msgid "<big>Failed test: %d.<br/><br/></big>\n"
 msgstr "<big>Ошибка на тесте %d.<br/><br/></big>\n"
 
@@ -122,8 +126,8 @@ msgid "<big>Failed test: %d.<br><br></big>\n"
 msgstr "<big>Ошибка на тесте %d.<br><br></big>\n"
 
 #, c-format
-msgid "<big>Score gained: %d (out of %d).<br/><br/></big>\n"
-msgstr "<big>Получено баллов: %d (из %d).<br/><br/></big>\n"
+msgid "<big>Score gained: %d (out of %d).</big>\n"
+msgstr "<big>Получено баллов: %d (из %d).</big>\n"
 
 msgid "<font color=\"green\">OK</font>"
 msgstr "<font color=\"green\">OK</font>"
@@ -2173,9 +2177,8 @@ msgstr "Нельзя отвечать на сообщения судей"
 msgid "Jan"
 msgstr "Янв"
 
-#, fuzzy
 msgid "Job status"
-msgstr "Установить статус"
+msgstr "Статус задачи"
 
 msgid "Judge"
 msgstr "Судья"
@@ -3547,8 +3550,8 @@ msgstr ""
 "\n"
 
 #, c-format
-msgid "Score gained: %d (out of %d).<br/><br/></big>\n"
-msgstr "Получено баллов: %d (из %d).<br/><br/></big>\n"
+msgid "Score gained: %d (out of %d).</big>\n"
+msgstr "Получено баллов: %d (из %d).</big>\n"
 
 #, c-format
 msgid "Score gained: %d (out of %d).<br><br></big>\n"

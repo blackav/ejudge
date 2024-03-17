@@ -7923,18 +7923,22 @@ write_xml_team_testing_report(
   }
 
   if (has_icpc_group && is_kirov) {
-    fprintf(f, _("<big>Score gained: %d (out of %d).<br/><br/></big>\n"),
+    fprintf(f, _("<big>Score gained: %d (out of %d).</big>\n"),
             score, max_score);
   } else if (is_kirov) {
     fprintf(f, _("<big>%d total tests runs, %d passed, %d failed.<br/>\n"),
             run_tests, tests_passed, run_tests - tests_passed);
-    fprintf(f, _("Score gained: %d (out of %d).<br/><br/></big>\n"),
+    fprintf(f, _("Score gained: %d (out of %d).</big>\n"),
             score, max_score);
   } else {
     if (status != RUN_OK && status != RUN_ACCEPTED && status != RUN_PENDING_REVIEW && status != RUN_SUMMONED) {
-      fprintf(f, _("<big>Failed test: %d.<br/><br/></big>\n"), r->failed_test);
+      fprintf(f, _("<big>Failed test: %d.</big>\n"), r->failed_test);
     }
   }
+
+  (void) has_tl_or_wtl;
+
+  fprintf(f, "<br/><br/>\n");
 
   /*
   if (r->comment) {
