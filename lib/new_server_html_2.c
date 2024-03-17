@@ -7943,7 +7943,7 @@ write_xml_team_testing_report(
   fprintf(f, "<br/><big>");
   fprintf(f, _("Max running time:"));
   if (has_tl_or_wtl) {
-    fprintf(f, " &gt;= %d.%03d (", max_time_ms / 1000, max_time_ms % 1000);
+    fprintf(f, " &gt;= %d.%03d (", r->time_limit_ms / 1000, r->time_limit_ms % 1000);
     fprintf(f, _("time-limit exceeded"));
     fprintf(f, ")");
   } else {
