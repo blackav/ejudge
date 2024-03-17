@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-03-17 13:46+0300\n"
-"PO-Revision-Date: 2022-01-12 13:17+0300\n"
+"POT-Creation-Date: 2024-03-17 14:06+0300\n"
+"PO-Revision-Date: 2024-03-17 14:09+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "Language: ru\n"
@@ -42,6 +42,10 @@ msgstr " / <b>%d посылок вызвано на защиту</b>"
 #, c-format
 msgid " / <b>%d unread message(s)</b>"
 msgstr " / <b>%d непрочитанных сообщений</b>"
+
+#, c-format
+msgid " memory-limit exceeded"
+msgstr "превышен лимит по памяти"
 
 msgid " or standard input"
 msgstr " или стандартный поток ввода"
@@ -84,6 +88,10 @@ msgstr "/&lt;Имя_Польз.&gt;/&lt;Файл&gt;"
 
 msgid "/&lt;User_Name&gt;/&lt;Problem&gt;/&lt;File&gt;"
 msgstr "/&lt;Имя_Польз.&gt;/&lt;Задача&gt;/&lt;Файл&gt;"
+
+#, c-format
+msgid "; max used memory:"
+msgstr "; максимальная память:"
 
 #, c-format
 msgid "<b>====== Test #%d =======</b>\n"
@@ -2426,6 +2434,10 @@ msgid "Max problem submit count is exceeded"
 msgstr "Превышено максимальное число посылок по задаче"
 
 #, c-format
+msgid "Max running time:"
+msgstr "Макс. время работы:"
+
+#, c-format
 msgid ""
 "Max. CPU time: %d.%03d\n"
 "\n"
@@ -4434,6 +4446,9 @@ msgstr "Использовать регистрационное имя поль�
 msgid "Use user Name"
 msgstr "Использовать имя участника"
 
+msgid "Used memory RSS (KiB)"
+msgstr "Использовано памяти (RSS) (KiB)"
+
 msgid "User"
 msgstr "Участник"
 
@@ -5195,6 +5210,10 @@ msgstr "этот пользователь не может участвовать
 
 msgid "this user is not registered for this contest"
 msgstr "этот пользователь не зарегистрирован на данный турнир"
+
+#, c-format
+msgid "time-limit exceeded"
+msgstr "превышено максимальное время работы"
 
 msgid "transitive user contest sharing"
 msgstr "транзитивное разделение пользователей турнира"
