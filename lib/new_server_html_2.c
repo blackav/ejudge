@@ -7725,6 +7725,11 @@ write_xml_team_testing_report(
   int show_checker_comment_mode = 0;
   int has_icpc_group = 0;
   unsigned char *visibilities = NULL;
+  int has_max_rss = 0;
+  long long max_rss = 0;
+  int has_tl_or_wtl = 0;
+  int max_time_ms = 0;
+  int has_mle = 0;
 
   if (table_class && *table_class) {
     snprintf(cl, sizeof(cl), " class=\"%s\"", table_class);
@@ -7875,40 +7880,6 @@ write_xml_team_testing_report(
     is_kirov = 1;
   }
 
-  if (has_icpc_group && is_kirov) {
-    fprintf(f, _("<big>Score gained: %d (out of %d).<br/><br/></big>\n"),
-            score, max_score);
-  } else if (is_kirov) {
-    fprintf(f, _("<big>%d total tests runs, %d passed, %d failed.<br/>\n"),
-            run_tests, tests_passed, run_tests - tests_passed);
-    fprintf(f, _("Score gained: %d (out of %d).<br/><br/></big>\n"),
-            score, max_score);
-  } else {
-    if (status != RUN_OK && status != RUN_ACCEPTED && status != RUN_PENDING_REVIEW && status != RUN_SUMMONED) {
-      fprintf(f, _("<big>Failed test: %d.<br/><br/></big>\n"), r->failed_test);
-    }
-  }
-
-  /*
-  if (r->comment) {
-    s = html_armor_string_dup(r->comment);
-    fprintf(f, "<big>Note: %s.<br/><br/></big>\n", s);
-    xfree(s);
-  }
-  */
-
-  if (r->valuer_comment && !has_icpc_group) {
-    fprintf(f, "<p><b>%s</b>:<br/></p><pre>%s</pre>\n", _("Valuer comments"),
-            ARMOR(r->valuer_comment));
-    hide_score = 1;
-  }
-  if (((token_flags & TOKEN_VALUER_JUDGE_COMMENT_BIT) || state->online_valuer_judge_comments)
-       && r->valuer_judge_comment) {
-    fprintf(f, "<p><b>%s</b>:<br/></p><pre>%s</pre>\n", _("Valuer comments"),
-            ARMOR(r->valuer_judge_comment));
-    hide_score = 1;
-  }
-
   for (i = 0; i < r->run_tests; ++i) {
     if (!(t = r->tests[i])) continue;
     // TV_NORMAL, TV_FULL, TV_FULLIFMARKED, TV_BRIEF, TV_EXISTS, TV_HIDDEN, TV_ICPC
@@ -7933,6 +7904,86 @@ write_xml_team_testing_report(
       has_full = 1;
       if (r->archive_available) need_links = 1;
     }
+    if (t->max_rss > 0) {
+      if (!has_max_rss) {
+        has_max_rss = 1;
+        max_rss = t->max_rss;
+      } else {
+        if (t->max_rss > max_rss) {
+          max_rss = t->max_rss;
+        }
+      }
+    }
+    if (t->status == RUN_TIME_LIMIT_ERR || t->status == RUN_WALL_TIME_LIMIT_ERR) {
+      has_tl_or_wtl = 1;
+    } else {
+      if (t->time > max_time_ms) {
+        max_time_ms = t->time;
+      }
+    }
+    if (t->status == RUN_MEM_LIMIT_ERR) {
+      has_mle = 1;
+    }
+  }
+
+  if (has_icpc_group && is_kirov) {
+    fprintf(f, _("<big>Score gained: %d (out of %d).</big>\n"),
+            score, max_score);
+  } else if (is_kirov) {
+    fprintf(f, _("<big>%d total tests runs, %d passed, %d failed.<br/>\n"),
+            run_tests, tests_passed, run_tests - tests_passed);
+    fprintf(f, _("Score gained: %d (out of %d).</big>\n"),
+            score, max_score);
+  } else {
+    if (status != RUN_OK && status != RUN_ACCEPTED && status != RUN_PENDING_REVIEW && status != RUN_SUMMONED) {
+      fprintf(f, _("<big>Failed test: %d.</big>\n"), r->failed_test);
+    }
+  }
+
+  fprintf(f, "<br/><big>");
+  fprintf(f, _("Max running time:"));
+  if (has_tl_or_wtl) {
+    fprintf(f, " &gt;= %d.%03d (", r->time_limit_ms / 1000, r->time_limit_ms % 1000);
+    fprintf(f, _("time-limit exceeded"));
+    fprintf(f, ")");
+  } else {
+    fprintf(f, " %d.%03d", max_time_ms / 1000, max_time_ms % 1000);
+  }
+  if (has_max_rss) {
+    fprintf(f, _("; max used memory:"));
+    if (has_mle) {
+      fprintf(f, _(" memory-limit exceeded"));
+    } else {
+      max_rss /= 1024;
+      if (max_rss > 1024) {
+        fprintf(f, " %lld MiB, %lld KiB", max_rss / 1024, max_rss % 1024);
+      } else {
+        fprintf(f, " %lld KiB", max_rss);
+      }
+    }
+  }
+  fprintf(f, "</big>");
+
+  fprintf(f, "<br/><br/>\n");
+
+  /*
+  if (r->comment) {
+    s = html_armor_string_dup(r->comment);
+    fprintf(f, "<big>Note: %s.<br/><br/></big>\n", s);
+    xfree(s);
+  }
+  */
+
+  if (r->valuer_comment && !has_icpc_group) {
+    fprintf(f, "<p><b>%s</b>:<br/></p><pre>%s</pre>\n", _("Valuer comments"),
+            ARMOR(r->valuer_comment));
+    hide_score = 1;
+  }
+  if (((token_flags & TOKEN_VALUER_JUDGE_COMMENT_BIT) || state->online_valuer_judge_comments)
+       && r->valuer_judge_comment) {
+    fprintf(f, "<p><b>%s</b>:<br/></p><pre>%s</pre>\n", _("Valuer comments"),
+            ARMOR(r->valuer_judge_comment));
+    hide_score = 1;
   }
 
   if (has_icpc_group) {
@@ -7944,6 +7995,9 @@ write_xml_team_testing_report(
           "<tr><th%s>N</th><th%s>%s</th><th%s>%s</th>",
           cl, cl, _("Result"), cl, _("Time (sec)")/*,
           cl, _("Real time (sec)")*/);
+  if (has_max_rss) {
+    fprintf(f, "<th%s>%s</th>", cl, _("Used memory RSS (KiB)"));
+  }
   if (need_info) {
     fprintf(f, "<th%s>%s</th>", cl, _("Extra info"));
   }
@@ -7977,6 +8031,9 @@ write_xml_team_testing_report(
       fprintf(f, "<td%s>%d</td>", cl, serial);
       fprintf(f, "<td%s>&nbsp;</td>", cl); // status
       fprintf(f, "<td%s>&nbsp;</td>", cl); // time
+      if (has_max_rss) {
+        fprintf(f, "<td%s>&nbsp;</td>", cl); // memory
+      }
       if (need_info) {
         fprintf(f, "<td%s>&nbsp;</td>", cl); // info
       }
@@ -8023,6 +8080,13 @@ write_xml_team_testing_report(
       fprintf(f, "<td%s>N/A</td>", cl);
     }
     */
+    if (has_max_rss) {
+      if (status == RUN_MEM_LIMIT_ERR) {
+        fprintf(f, "<td%s>&nbsp;</td>", cl);
+      } else {
+        fprintf(f, "<td%s>%lld</td>", cl, t->max_rss / 1024);
+      }
+    }
     if (need_info) {
       fprintf(f, "<td%s>", cl);
       if (status == RUN_RUN_TIME_ERR
