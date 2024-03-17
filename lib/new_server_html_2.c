@@ -7725,6 +7725,8 @@ write_xml_team_testing_report(
   int show_checker_comment_mode = 0;
   int has_icpc_group = 0;
   unsigned char *visibilities = NULL;
+  int has_max_rss = 0;
+  long long max_rss = 0;
 
   if (table_class && *table_class) {
     snprintf(cl, sizeof(cl), " class=\"%s\"", table_class);
@@ -7875,6 +7877,42 @@ write_xml_team_testing_report(
     is_kirov = 1;
   }
 
+  for (i = 0; i < r->run_tests; ++i) {
+    if (!(t = r->tests[i])) continue;
+    // TV_NORMAL, TV_FULL, TV_FULLIFMARKED, TV_BRIEF, TV_EXISTS, TV_HIDDEN, TV_ICPC
+    visibility = visibilities[i];
+    if (visibility == TV_ICPC) {
+      continue;
+    }
+    if (visibility == TV_FULLIFMARKED) {
+      visibility = TV_HIDDEN;
+      if (is_marked) visibility = TV_FULL;
+    }
+    if (visibility == TV_EXISTS || visibility == TV_HIDDEN) continue;
+    if (t->team_comment) {
+      need_comment = 1;
+    }
+    // for any visibility of TV_NORMAL, TV_FULL, TV_BRIEF
+    if (global->report_error_code && t->status == RUN_RUN_TIME_ERR) {
+      need_info = 1;
+    }
+    if (visibility == TV_FULL) {
+      if (t->status == RUN_RUN_TIME_ERR) need_info = 1;
+      has_full = 1;
+      if (r->archive_available) need_links = 1;
+    }
+    if (t->max_rss > 0) {
+      if (!has_max_rss) {
+        has_max_rss = 1;
+        max_rss = t->max_rss;
+      } else {
+        if (t->max_rss > max_rss) {
+          max_rss = t->max_rss;
+        }
+      }
+    }
+  }
+
   if (has_icpc_group && is_kirov) {
     fprintf(f, _("<big>Score gained: %d (out of %d).<br/><br/></big>\n"),
             score, max_score);
@@ -7907,32 +7945,6 @@ write_xml_team_testing_report(
     fprintf(f, "<p><b>%s</b>:<br/></p><pre>%s</pre>\n", _("Valuer comments"),
             ARMOR(r->valuer_judge_comment));
     hide_score = 1;
-  }
-
-  for (i = 0; i < r->run_tests; ++i) {
-    if (!(t = r->tests[i])) continue;
-    // TV_NORMAL, TV_FULL, TV_FULLIFMARKED, TV_BRIEF, TV_EXISTS, TV_HIDDEN, TV_ICPC
-    visibility = visibilities[i];
-    if (visibility == TV_ICPC) {
-      continue;
-    }
-    if (visibility == TV_FULLIFMARKED) {
-      visibility = TV_HIDDEN;
-      if (is_marked) visibility = TV_FULL;
-    }
-    if (visibility == TV_EXISTS || visibility == TV_HIDDEN) continue;
-    if (t->team_comment) {
-      need_comment = 1;
-    }
-    // for any visibility of TV_NORMAL, TV_FULL, TV_BRIEF
-    if (global->report_error_code && t->status == RUN_RUN_TIME_ERR) {
-      need_info = 1;
-    }
-    if (visibility == TV_FULL) {
-      if (t->status == RUN_RUN_TIME_ERR) need_info = 1;
-      has_full = 1;
-      if (r->archive_available) need_links = 1;
-    }
   }
 
   if (has_icpc_group) {
