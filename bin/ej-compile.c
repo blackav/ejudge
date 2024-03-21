@@ -453,7 +453,8 @@ invoke_compiler(
         const unsigned char *working_dir,
         const unsigned char *log_path,
         const testinfo_t *tinf,
-        int *p_prepended_size)
+        int *p_prepended_size,
+        const unsigned char *status_file)
 {
   const struct section_global_data *global = serve_state.global;
   tpTask tsk = 0;
@@ -506,6 +507,9 @@ invoke_compiler(
     task_AddArg(tsk, input_file);
     task_AddArg(tsk, output_file);
   }
+  if (status_file && req->enable_extended_status) {
+    task_AddArg(tsk, status_file);
+  }
   task_SetPathAsArg0(tsk);
   task_EnableProcessGroup(tsk);
   if (VALID_SIZE(req->max_vm_size)) {
@@ -557,6 +561,9 @@ invoke_compiler(
   }
   if (req->vcs_mode) {
     task_PutEnv(tsk, "EJUDGE_VCS_MODE=1");
+  }
+  if (req->enable_extended_status) {
+    task_PutEnv(tsk, "EJUDGE_EXTENDED_STATUS=1");
   }
   task_SetWorkingDir(tsk, working_dir);
   task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", TSK_READ);
@@ -911,7 +918,7 @@ handle_packet(
     */
 
     if (req->style_check_only <= 0) {
-      int r = invoke_compiler(log_f, cs, lang, req, src_work_name, exe_work_name, working_dir, log_work_path, NULL, &prepended_size);
+      int r = invoke_compiler(log_f, cs, lang, req, src_work_name, exe_work_name, working_dir, log_work_path, NULL, &prepended_size, NULL /* status_file */);
       rpl->status = r;
       if (r != RUN_OK) goto cleanup;
       rpl->prepended_size = prepended_size;
@@ -1152,7 +1159,7 @@ handle_packet(
     if (cur_status == RUN_OK) {
       fprintf(log_f, "=== compilation for test %d ===\n", serial);
       fflush(log_f);
-      cur_status = invoke_compiler(log_f, cs, lang, req, test_src_name, test_exe_name, working_dir, log_work_path, tinf, &prepended_size);
+      cur_status = invoke_compiler(log_f, cs, lang, req, test_src_name, test_exe_name, working_dir, log_work_path, tinf, &prepended_size, NULL /* status_file */);
       // valid statuses: RUN_OK, RUN_COMPILE_ERR, RUN_CHECK_FAILED
       if (cur_status == RUN_CHECK_FAILED) {
         status = RUN_CHECK_FAILED;
@@ -1201,7 +1208,7 @@ handle_packet(
                 fprintf(log_f, "failed to write full source file '%s'\n", test_src_path);
                 status = RUN_CHECK_FAILED;
               } else {
-                cur_status = invoke_compiler(log_f, cs, lang, req, test_src_name, test_exe_name, working_dir, log_work_path, tinf, &prepended_size);
+                cur_status = invoke_compiler(log_f, cs, lang, req, test_src_name, test_exe_name, working_dir, log_work_path, tinf, &prepended_size, NULL /* status_file */);
 
                 if (cur_status == RUN_CHECK_FAILED) {
                   status = RUN_CHECK_FAILED;
