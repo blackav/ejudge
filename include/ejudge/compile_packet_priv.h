@@ -2,7 +2,7 @@
 #ifndef __COMPILE_PACKET_PRIV_H__
 #define __COMPILE_PACKET_PRIV_H__
 
-/* Copyright (C) 2005-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -18,7 +18,7 @@
 
 #include "ejudge/integral.h"
 
-#define EJ_COMPILE_PACKET_VERSION 16
+#define EJ_COMPILE_PACKET_VERSION 17
 #define EJ_COMPILE_REPLY_PACKET_VERSION 3
 
 /* various private data structures and constants for compile packets */
@@ -54,6 +54,7 @@ struct compile_request_bin_packet
   rint32_t not_ok_is_cf;        /* Check failed in case of compilation error */
   rint32_t preserve_numbers;    /* Try to preserve line numbers in the source */
   rint32_t enable_remote_cache; /* Enable cacheing on the remote side */
+  rint32_t enable_extended_status; /* Enable extended status reporting from compiler */
   ej_uuid_t uuid;               /* UUID */
   ej_uuid_t judge_uuid;         /* judging UUID */
   rint32_t multi_header;        /* multi-header mode */

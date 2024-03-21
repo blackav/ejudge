@@ -2,7 +2,7 @@
 #ifndef __COMPILE_PACKET_H__
 #define __COMPILE_PACKET_H__
 
-/* Copyright (C) 2005-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -40,6 +40,7 @@ struct compile_request_packet
   int not_ok_is_cf;
   int preserve_numbers;
   int enable_remote_cache;
+  int enable_extended_status;      // 1, if an extended compilation result (JSON) is supported
   int64_t submit_id;
   ej_uuid_t uuid;
   ej_uuid_t judge_uuid;
