@@ -1811,6 +1811,21 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
     snprintf(log_path, sizeof(log_path), "%s/%s.txt", report_dir, run_name);
     unlink(log_path);
 
+    unsigned char json_path[PATH_MAX];
+    unsigned char json_work_name[PATH_MAX];
+    unsigned char json_work_path[PATH_MAX];
+    json_path[0] = 0;
+    json_work_name[0] = 0;
+    json_work_path[0] = 0;
+    if (req->enable_extended_status > 0) {
+      __attribute__((unused)) int _;
+      _ = snprintf(json_path, sizeof(json_path), "%s/%s.json", report_dir, run_name);
+      unlink(json_path);
+      _ = snprintf(json_work_name, sizeof(json_work_name), "%s.json", run_name);
+      _ = snprintf(json_work_path, sizeof(json_work_path), "%s/%s", full_working_dir, json_work_name);
+      unlink(json_work_path);
+    }
+
     unsigned char exe_work_name[PATH_MAX];
     exe_work_name[0] = 0;
 
@@ -1948,6 +1963,23 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
     }
 
     fclose(log_f); log_f = NULL;
+
+    if (req->enable_extended_status > 0) {
+      struct stat stb;
+      if (lstat(json_work_path, &stb) >= 0 && S_ISREG(stb.st_mode) && stb.st_size > 0) {
+        rpl.has_extended_status = 1;
+        if (agent) {
+          r = agent->ops->put_output_2(agent,
+                                       contest_server_id,
+                                       rpl.contest_id,
+                                       run_name,
+                                       ".json",
+                                       json_work_path);
+        } else {
+          r = generic_copy_file(0, NULL, json_work_path, "", 0, NULL, json_path, "");
+        }
+      }
+    }
 
     if (agent) {
       r = agent->ops->put_output_2(agent,
