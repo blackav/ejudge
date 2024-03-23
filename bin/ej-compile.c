@@ -775,7 +775,8 @@ handle_packet(
         const unsigned char *log_work_path,       // the path to the log file (open in APPEND mode)
         unsigned char *exe_work_name,             // OUTPUT: the name of the executable
         int *p_override_exe,
-        int *p_exe_copied)
+        int *p_exe_copied,
+        const unsigned char *json_work_path)      // extended status working path
 {
   struct ZipData *zf = NULL;
   int prepended_size = 0;
@@ -1894,7 +1895,8 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
                   log_work_path,
                   exe_work_name,
                   &override_exe,
-                  &exe_copied);
+                  &exe_copied,
+                  json_work_path);
 
     free(src_buf); src_buf = NULL; src_len = 0;
 
