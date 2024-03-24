@@ -919,7 +919,7 @@ handle_packet(
     */
 
     if (req->style_check_only <= 0) {
-      int r = invoke_compiler(log_f, cs, lang, req, src_work_name, exe_work_name, working_dir, log_work_path, NULL, &prepended_size, NULL /* status_file */);
+      int r = invoke_compiler(log_f, cs, lang, req, src_work_name, exe_work_name, working_dir, log_work_path, NULL, &prepended_size, json_work_path);
       rpl->status = r;
       if (r != RUN_OK) goto cleanup;
       rpl->prepended_size = prepended_size;
@@ -1139,6 +1139,15 @@ handle_packet(
     snprintf(test_exe_name, sizeof(test_exe_name), "%06d_%03d%s", req->run_id, serial, lang->exe_sfx);
     unsigned char test_exe_path[PATH_MAX];
     snprintf(test_exe_path, sizeof(test_exe_path), "%s/%s", working_dir, test_exe_name);
+    unsigned char test_json_name[PATH_MAX];
+    unsigned char test_json_path[PATH_MAX];
+    test_json_name[0] = 0;
+    test_json_path[0] = 0;
+    if (req->enable_extended_status > 0) {
+      __attribute__((unused)) int _;
+      _ = snprintf(test_json_name, sizeof(test_json_name), "%06d_%03d.json", req->run_id, serial);
+      _ = snprintf(test_json_path, sizeof(test_json_path), "%s/%s", working_dir, test_json_name);
+    }
 
     int cur_status = RUN_OK;
     /*
@@ -1160,7 +1169,7 @@ handle_packet(
     if (cur_status == RUN_OK) {
       fprintf(log_f, "=== compilation for test %d ===\n", serial);
       fflush(log_f);
-      cur_status = invoke_compiler(log_f, cs, lang, req, test_src_name, test_exe_name, working_dir, log_work_path, tinf, &prepended_size, NULL /* status_file */);
+      cur_status = invoke_compiler(log_f, cs, lang, req, test_src_name, test_exe_name, working_dir, log_work_path, tinf, &prepended_size, test_json_path);
       // valid statuses: RUN_OK, RUN_COMPILE_ERR, RUN_CHECK_FAILED
       if (cur_status == RUN_CHECK_FAILED) {
         status = RUN_CHECK_FAILED;
@@ -1209,7 +1218,7 @@ handle_packet(
                 fprintf(log_f, "failed to write full source file '%s'\n", test_src_path);
                 status = RUN_CHECK_FAILED;
               } else {
-                cur_status = invoke_compiler(log_f, cs, lang, req, test_src_name, test_exe_name, working_dir, log_work_path, tinf, &prepended_size, NULL /* status_file */);
+                cur_status = invoke_compiler(log_f, cs, lang, req, test_src_name, test_exe_name, working_dir, log_work_path, tinf, &prepended_size, test_json_path);
 
                 if (cur_status == RUN_CHECK_FAILED) {
                   status = RUN_CHECK_FAILED;
@@ -1231,6 +1240,15 @@ handle_packet(
                     fprintf(log_f, "output file '%s' is not executable: %s\n", test_exe_path, strerror(errno));
                     status = RUN_CHECK_FAILED;
                   } else {
+                    struct stat stb;
+                    if (req->enable_extended_status > 0 && lstat(test_json_path, &stb) >= 0
+                        && S_ISREG(stb.st_mode) && stb.st_size > 0) {
+                      if (zf->ops->add_file(zf, test_json_name, test_json_path) < 0) {
+                        fprintf(log_f, "cannot add file '%s' to zip archive\n", test_json_path);
+                        status = RUN_CHECK_FAILED;
+                      }
+                    }
+
                     if (zf->ops->add_file(zf, test_exe_name, test_exe_path) < 0) {
                       fprintf(log_f, "cannot add file '%s' to zip archive\n", test_exe_path);
                       status = RUN_CHECK_FAILED;
@@ -1270,6 +1288,15 @@ handle_packet(
             fprintf(log_f, "%s\n", tinf->comment);
           }
         } else {
+          struct stat stb;
+          if (req->enable_extended_status > 0 && lstat(test_json_path, &stb) >= 0
+              && S_ISREG(stb.st_mode) && stb.st_size > 0) {
+            if (zf->ops->add_file(zf, test_json_name, test_json_path) < 0) {
+              fprintf(log_f, "cannot add file '%s' to zip archive\n", test_json_path);
+              status = RUN_CHECK_FAILED;
+            }
+          }
+
           if (zf->ops->add_file(zf, test_exe_name, test_exe_path) < 0) {
             fprintf(log_f, "cannot add file '%s' to zip archive\n", test_exe_path);
             status = RUN_CHECK_FAILED;
