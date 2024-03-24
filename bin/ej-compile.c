@@ -1247,6 +1247,7 @@ handle_packet(
                         fprintf(log_f, "cannot add file '%s' to zip archive\n", test_json_path);
                         status = RUN_CHECK_FAILED;
                       }
+                      rpl->has_extended_status = 1;
                     }
 
                     if (zf->ops->add_file(zf, test_exe_name, test_exe_path) < 0) {
@@ -1295,6 +1296,7 @@ handle_packet(
               fprintf(log_f, "cannot add file '%s' to zip archive\n", test_json_path);
               status = RUN_CHECK_FAILED;
             }
+            rpl->has_extended_status = 1;
           }
 
           if (zf->ops->add_file(zf, test_exe_name, test_exe_path) < 0) {
