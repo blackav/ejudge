@@ -3389,6 +3389,8 @@ read_compile_packet_input(
   size_t run_size = 0;
   struct storage_entry inp_se = {};
   struct storage_entry src_se = {};
+  char *json_text = NULL;
+  size_t json_size = 0;
 
   info("read_compile_packet_input: submit_id %lld", (long long) comp_pkt->submit_id);
 
@@ -3506,6 +3508,14 @@ read_compile_packet_input(
   if (txt_text && !*txt_text) {
     free(txt_text); txt_text = NULL;
     txt_size = 0;
+  }
+
+  if (cs->global->enable_exe_properties > 0 && comp_pkt->has_exe_properties) {
+    r = generic_read_file(&json_text, 0, &json_size, REMOVE, compile_report_dir, pname, ".json");
+    if (r < 0) {
+      err("%s: failed to read properties file", __FUNCTION__);
+      goto done;
+    }
   }
 
   // do not store empty compiler output
@@ -3626,6 +3636,7 @@ done:;
   free(run_text);
   free(inp_se.content);
   free(src_se.content);
+  free(json_text);
 }
 
 int
@@ -3663,6 +3674,8 @@ serve_read_compile_packet(
   char *src_text = NULL;
   size_t src_size = 0;
   unsigned char src_path[PATH_MAX];
+  char *json_text = NULL;
+  size_t json_size = 0;
 
   if (!comp_pkt) {
     if ((r = generic_read_file(&comp_pkt_buf, 0, &comp_pkt_size, SAFE | REMOVE,
@@ -3856,6 +3869,13 @@ serve_read_compile_packet(
   if (1 /*re.store_flags == STORE_FLAGS_UUID || re.store_flags == STORE_FLAGS_UUID_BSON */) {
     snprintf(txt_packet_path, sizeof(txt_packet_path), "%s/%s.txt", compile_report_dir, pname);
     generic_read_file(&txt_text, 0, &txt_size, REMOVE, NULL, txt_packet_path, NULL);
+
+    if (global->enable_exe_properties > 0 && (comp_pkt->has_exe_properties > 0 && !comp_pkt->zip_mode)) {
+      if (generic_read_file(&json_text, 0, &json_size, REMOVE, compile_report_dir, pname, ".json") < 0) {
+        snprintf(errmsg, sizeof(errmsg), "%s: exe properties file does not exist\n", __FUNCTION__);
+        goto report_check_failed;
+      }
+    }
 
     if (re.judge_uuid_flag) {
       testing_report = testing_report_alloc(comp_pkt->contest_id, comp_pkt->run_id, 0, &re.j.judge_uuid);
@@ -4125,6 +4145,7 @@ prepare_run_request:
   xfree(run_text); run_text = 0; run_size = 0;
 
  success:
+  xfree(json_text);
   xfree(comp_pkt_buf);
   xfree(txt_text);
   compile_reply_packet_free(comp_pkt);
@@ -4186,6 +4207,7 @@ prepare_run_request:
   /* goto non_fatal_error; */
 
  non_fatal_error:
+  xfree(json_text);
   xfree(comp_pkt_buf);
   xfree(txt_text);
   xfree(src_text);
