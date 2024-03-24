@@ -2102,6 +2102,7 @@ serve_run_request(
   ej_size64_t lang_specific_size = 0;
   ej_uuid_t local_judge_uuid;
   unsigned char src_name[64];
+  unsigned char prop_out_name[256];
 
   get_current_time(&current_time, &current_time_us);
 
@@ -2452,6 +2453,16 @@ serve_run_request(
       goto fail;
     }
     srgp->src_file = xstrdup(src_name);
+  }
+
+  if (prop_size > 0) {
+    if (generic_write_file(prop_text, prop_size, 0, run_exe_dir, pkt_base, ".json") < 0) {
+      fprintf(errf, "failed to save properties file");
+      goto fail;
+    }
+    snprintf(prop_out_name, sizeof(prop_out_name), "%s.json", pkt_base);
+    srgp->prop_file = xstrdup(prop_out_name);
+    srgp->has_exe_properties = 1;
   }
 
   struct super_run_in_problem_packet *srpp = srp->problem;
