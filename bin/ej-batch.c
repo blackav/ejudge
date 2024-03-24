@@ -702,8 +702,8 @@ process_compile_packet(
                         NULL /* ure */,
                         NULL /* src_text*/,
                         0 /* src_size */,
-                        NULL /* json_text */,
-                        0 /* json_size */);
+                        NULL /* prop_text */,
+                        0 /* prop_size */);
   if (r < 0) abort();
 
   return 0;

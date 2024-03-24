@@ -585,8 +585,8 @@ serve_run_request(
         struct run_entry *ure,
         const unsigned char *src_text,
         size_t src_size,
-        const unsigned char *json_text,
-        size_t json_size);
+        const unsigned char *prop_text,
+        size_t prop_size);
 
 int serve_is_valid_status(serve_state_t state, int status, int mode);
 

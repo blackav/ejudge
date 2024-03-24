@@ -2066,8 +2066,8 @@ serve_run_request(
         struct run_entry *ure,
         const unsigned char *src_text,
         size_t src_size,
-        const unsigned char *json_text,
-        size_t json_size)
+        const unsigned char *prop_text,
+        size_t prop_size)
 {
   int cn;
   struct section_global_data *global = state->global;
@@ -3391,8 +3391,8 @@ read_compile_packet_input(
   size_t run_size = 0;
   struct storage_entry inp_se = {};
   struct storage_entry src_se = {};
-  char *json_text = NULL;
-  size_t json_size = 0;
+  char *prop_text = NULL;
+  size_t prop_size = 0;
 
   info("read_compile_packet_input: submit_id %lld", (long long) comp_pkt->submit_id);
 
@@ -3513,7 +3513,7 @@ read_compile_packet_input(
   }
 
   if (cs->global->enable_exe_properties > 0 && comp_pkt->has_exe_properties) {
-    r = generic_read_file(&json_text, 0, &json_size, REMOVE, compile_report_dir, pname, ".json");
+    r = generic_read_file(&prop_text, 0, &prop_size, REMOVE, compile_report_dir, pname, ".json");
     if (r < 0) {
       err("%s: failed to read properties file", __FUNCTION__);
       goto done;
@@ -3619,8 +3619,8 @@ read_compile_packet_input(
                         NULL,
                         src_se.content,
                         src_se.size,
-                        json_text,
-                        json_size);
+                        prop_text,
+                        prop_size);
   if (r < 0) {
     err("read_compile_packet_input: failed to send to testing");
     goto done;
@@ -3640,7 +3640,7 @@ done:;
   free(run_text);
   free(inp_se.content);
   free(src_se.content);
-  free(json_text);
+  free(prop_text);
 }
 
 int
@@ -3678,8 +3678,8 @@ serve_read_compile_packet(
   char *src_text = NULL;
   size_t src_size = 0;
   unsigned char src_path[PATH_MAX];
-  char *json_text = NULL;
-  size_t json_size = 0;
+  char *prop_text = NULL;
+  size_t prop_size = 0;
 
   if (!comp_pkt) {
     if ((r = generic_read_file(&comp_pkt_buf, 0, &comp_pkt_size, SAFE | REMOVE,
@@ -3875,7 +3875,7 @@ serve_read_compile_packet(
     generic_read_file(&txt_text, 0, &txt_size, REMOVE, NULL, txt_packet_path, NULL);
 
     if (global->enable_exe_properties > 0 && (comp_pkt->has_exe_properties > 0 && !comp_pkt->zip_mode)) {
-      if (generic_read_file(&json_text, 0, &json_size, REMOVE, compile_report_dir, pname, ".json") < 0) {
+      if (generic_read_file(&prop_text, 0, &prop_size, REMOVE, compile_report_dir, pname, ".json") < 0) {
         snprintf(errmsg, sizeof(errmsg), "%s: exe properties file does not exist\n", __FUNCTION__);
         goto report_check_failed;
       }
@@ -4143,15 +4143,15 @@ prepare_run_request:
                         &re,
                         src_text,
                         src_size,
-                        json_text,
-                        json_size) < 0) {
+                        prop_text,
+                        prop_size) < 0) {
     snprintf(errmsg, sizeof(errmsg), "failed to write run packet\n");
     goto report_check_failed;
   }
   xfree(run_text); run_text = 0; run_size = 0;
 
  success:
-  xfree(json_text);
+  xfree(prop_text);
   xfree(comp_pkt_buf);
   xfree(txt_text);
   compile_reply_packet_free(comp_pkt);
@@ -4213,7 +4213,7 @@ prepare_run_request:
   /* goto non_fatal_error; */
 
  non_fatal_error:
-  xfree(json_text);
+  xfree(prop_text);
   xfree(comp_pkt_buf);
   xfree(txt_text);
   xfree(src_text);
@@ -5320,8 +5320,8 @@ serve_rejudge_run(
                       &re,
                       NULL /* src_text */,
                       0 /* src_size */,
-                      NULL /* json_text */,
-                      0 /* json_size */);
+                      NULL /* prop_text */,
+                      0 /* prop_size */);
     xfree(run_text);
     return;
   }

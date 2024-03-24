@@ -1228,8 +1228,8 @@ cmd_submit_run(
                               &new_run,
                               NULL /* src_text */,
                               0 /* src_size */,
-                              NULL /* json_text */,
-                              0 /* json_size */) < 0)
+                              NULL /* prop_text */,
+                              0 /* prop_size */) < 0)
           FAIL(NEW_SRV_ERR_DISK_WRITE_ERROR);
       }
     }
@@ -1300,8 +1300,8 @@ cmd_submit_run(
                               &new_run,
                               NULL /* src_text */,
                               0 /* src_size */,
-                              NULL /* json_text */,
-                              0 /* json_size */) < 0)
+                              NULL /* prop_text */,
+                              0 /* prop_size */) < 0)
           FAIL(NEW_SRV_ERR_DISK_WRITE_ERROR);
       }
     }
