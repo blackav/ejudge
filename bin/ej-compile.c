@@ -507,7 +507,7 @@ invoke_compiler(
     task_AddArg(tsk, input_file);
     task_AddArg(tsk, output_file);
   }
-  if (status_file && req->enable_extended_status) {
+  if (status_file && req->enable_exe_properties > 0) {
     task_AddArg(tsk, status_file);
   }
   task_SetPathAsArg0(tsk);
@@ -562,8 +562,8 @@ invoke_compiler(
   if (req->vcs_mode) {
     task_PutEnv(tsk, "EJUDGE_VCS_MODE=1");
   }
-  if (req->enable_extended_status) {
-    task_PutEnv(tsk, "EJUDGE_EXTENDED_STATUS=1");
+  if (req->enable_exe_properties > 0) {
+    task_PutEnv(tsk, "EJUDGE_EXE_PROPERTIES=1");
   }
   task_SetWorkingDir(tsk, working_dir);
   task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", TSK_READ);
@@ -1143,7 +1143,7 @@ handle_packet(
     unsigned char test_json_path[PATH_MAX];
     test_json_name[0] = 0;
     test_json_path[0] = 0;
-    if (req->enable_extended_status > 0) {
+    if (req->enable_exe_properties > 0) {
       __attribute__((unused)) int _;
       _ = snprintf(test_json_name, sizeof(test_json_name), "%06d_%03d.json", req->run_id, serial);
       _ = snprintf(test_json_path, sizeof(test_json_path), "%s/%s", working_dir, test_json_name);
@@ -1241,7 +1241,7 @@ handle_packet(
                     status = RUN_CHECK_FAILED;
                   } else {
                     struct stat stb;
-                    if (req->enable_extended_status > 0 && lstat(test_json_path, &stb) >= 0
+                    if (req->enable_exe_properties > 0 && lstat(test_json_path, &stb) >= 0
                         && S_ISREG(stb.st_mode) && stb.st_size > 0) {
                       if (zf->ops->add_file(zf, test_json_name, test_json_path) < 0) {
                         fprintf(log_f, "cannot add file '%s' to zip archive\n", test_json_path);
@@ -1290,7 +1290,7 @@ handle_packet(
           }
         } else {
           struct stat stb;
-          if (req->enable_extended_status > 0 && lstat(test_json_path, &stb) >= 0
+          if (req->enable_exe_properties > 0 && lstat(test_json_path, &stb) >= 0
               && S_ISREG(stb.st_mode) && stb.st_size > 0) {
             if (zf->ops->add_file(zf, test_json_name, test_json_path) < 0) {
               fprintf(log_f, "cannot add file '%s' to zip archive\n", test_json_path);
@@ -1847,7 +1847,7 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
     json_path[0] = 0;
     json_work_name[0] = 0;
     json_work_path[0] = 0;
-    if (req->enable_extended_status > 0) {
+    if (req->enable_exe_properties > 0) {
       __attribute__((unused)) int _;
       _ = snprintf(json_path, sizeof(json_path), "%s/%s.json", report_dir, run_name);
       unlink(json_path);
@@ -1995,7 +1995,7 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
 
     fclose(log_f); log_f = NULL;
 
-    if (req->enable_extended_status > 0) {
+    if (req->enable_exe_properties > 0) {
       struct stat stb;
       if (lstat(json_work_path, &stb) >= 0 && S_ISREG(stb.st_mode) && stb.st_size > 0) {
         rpl.has_extended_status = 1;

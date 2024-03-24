@@ -54,7 +54,7 @@ struct compile_request_bin_packet
   rint32_t not_ok_is_cf;        /* Check failed in case of compilation error */
   rint32_t preserve_numbers;    /* Try to preserve line numbers in the source */
   rint32_t enable_remote_cache; /* Enable cacheing on the remote side */
-  rint32_t enable_extended_status; /* Enable extended status reporting from compiler */
+  rint32_t enable_exe_properties; /* Enable extended status reporting from compiler */
   ej_uuid_t uuid;               /* UUID */
   ej_uuid_t judge_uuid;         /* judging UUID */
   rint32_t multi_header;        /* multi-header mode */

@@ -40,7 +40,7 @@ struct compile_request_packet
   int not_ok_is_cf;
   int preserve_numbers;
   int enable_remote_cache;
-  int enable_extended_status;      // 1, if an extended compilation result (JSON) is supported
+  int enable_exe_properties;       // 1, if an extended executable properties (JSON) is supported
   int64_t submit_id;
   ej_uuid_t uuid;
   ej_uuid_t judge_uuid;
