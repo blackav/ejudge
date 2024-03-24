@@ -42,6 +42,9 @@ then
     export PATH
 fi
 
+# EJUDGE_FLAGS is used by ej-javac
+[ x"${EJUDGE_ADD_FLAGS}" != x ] && EJUDGE_FLAGS="${EJUDGE_FLAGS} ${EJUDGE_ADD_FLAGS}"
+
 rm -f *.class
 
 JAVA_CLASSNAME="${libexecdir}/ejudge/lang/java-classname.jar"

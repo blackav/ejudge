@@ -36,6 +36,8 @@ fi
 
 [ x"${EJUDGE_FLAGS}" = x ] && EJUDGE_FLAGS="-Werror"
 
+[ x"${EJUDGE_ADD_FLAGS}" != x ] && EJUDGE_FLAGS="${EJUDGE_FLAGS} ${EJUDGE_ADD_FLAGS}"
+
 unset LANG
 unset LC_ALL
 unset LC_MESSAGES
@@ -44,4 +46,4 @@ unset LANGUAGE
 cp -p "${LANG_CONFIG_DIR}/nasm/io.inc" .
 
 "${NASMRUN}" ${EJUDGE_FLAGS} -DUNIX -f elf "$1" -o "$2.o" || exit $?
-exec "${GCCRUN}" -m32 -o "$2" "$2.o" 
+exec "${GCCRUN}" -m32 -o "$2" "$2.o"

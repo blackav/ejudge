@@ -33,6 +33,8 @@ fi
 
 #[[ "${EJUDGE_FLAGS}" = "" ]] && EJUDGE_FLAGS="-optimize+"
 
+[ x"${EJUDGE_ADD_FLAGS}" != x ] && EJUDGE_FLAGS="${EJUDGE_FLAGS} ${EJUDGE_ADD_FLAGS}"
+
 unset LANG
 unset LC_ALL
 unset LC_MESSAGES

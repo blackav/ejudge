@@ -29,6 +29,9 @@ fi
 [ x"${EJUDGE_FLAGS}" = x ] && EJUDGE_FLAGS="-Wall -O2"
 [ x"${EJUDGE_LIBS}" = x ] && EJUDGE_LIBS="-lm"
 
+[ x"${EJUDGE_ADD_FLAGS}" != x ] && EJUDGE_FLAGS="${EJUDGE_FLAGS} ${EJUDGE_ADD_FLAGS}"
+[ x"${EJUDGE_ADD_LIBS}" != x ] && EJUDGE_LIBS="${EJUDGE_LIBS} ${EJUDGE_ADD_LIBS}"
+
 unset LANG
 unset LC_ALL
 unset LC_MESSAGES
