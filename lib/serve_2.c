@@ -2065,7 +2065,9 @@ serve_run_request(
         size_t inp_size,
         struct run_entry *ure,
         const unsigned char *src_text,
-        size_t src_size)
+        size_t src_size,
+        const unsigned char *json_text,
+        size_t json_size)
 {
   int cn;
   struct section_global_data *global = state->global;
@@ -3616,7 +3618,9 @@ read_compile_packet_input(
                         inp_se.size,
                         NULL,
                         src_se.content,
-                        src_se.size);
+                        src_se.size,
+                        json_text,
+                        json_size);
   if (r < 0) {
     err("read_compile_packet_input: failed to send to testing");
     goto done;
@@ -4138,7 +4142,9 @@ prepare_run_request:
                         NULL, 0,
                         &re,
                         src_text,
-                        src_size) < 0) {
+                        src_size,
+                        json_text,
+                        json_size) < 0) {
     snprintf(errmsg, sizeof(errmsg), "failed to write run packet\n");
     goto report_check_failed;
   }
@@ -5313,7 +5319,9 @@ serve_rejudge_run(
                       NULL, 0,
                       &re,
                       NULL /* src_text */,
-                      0 /* src_size */);
+                      0 /* src_size */,
+                      NULL /* json_text */,
+                      0 /* json_size */);
     xfree(run_text);
     return;
   }
