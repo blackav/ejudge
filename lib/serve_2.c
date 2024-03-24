@@ -2457,11 +2457,11 @@ serve_run_request(
 
   if (comp_pkt->has_exe_properties > 0) {
     if (prop_size > 0) {
-      if (generic_write_file(prop_text, prop_size, 0, run_exe_dir, pkt_base, ".json") < 0) {
+      if (generic_write_file(prop_text, prop_size, 0, run_exe_dir, pkt_base, comp_pkt->prop_sfx) < 0) {
         fprintf(errf, "failed to save properties file");
         goto fail;
       }
-      snprintf(prop_out_name, sizeof(prop_out_name), "%s.json", pkt_base);
+      snprintf(prop_out_name, sizeof(prop_out_name), "%s%s", pkt_base, comp_pkt->prop_sfx);
       srgp->prop_file = xstrdup(prop_out_name);
     }
     srgp->has_exe_properties = 1;
@@ -3526,7 +3526,7 @@ read_compile_packet_input(
   }
 
   if (cs->global->enable_exe_properties > 0 && comp_pkt->has_exe_properties) {
-    r = generic_read_file(&prop_text, 0, &prop_size, REMOVE, compile_report_dir, pname, ".json");
+    r = generic_read_file(&prop_text, 0, &prop_size, REMOVE, compile_report_dir, pname, comp_pkt->prop_sfx);
     if (r < 0) {
       err("%s: failed to read properties file", __FUNCTION__);
       goto done;
@@ -3888,7 +3888,7 @@ serve_read_compile_packet(
     generic_read_file(&txt_text, 0, &txt_size, REMOVE, NULL, txt_packet_path, NULL);
 
     if (global->enable_exe_properties > 0 && (comp_pkt->has_exe_properties > 0 && !comp_pkt->zip_mode)) {
-      if (generic_read_file(&prop_text, 0, &prop_size, REMOVE, compile_report_dir, pname, ".json") < 0) {
+      if (generic_read_file(&prop_text, 0, &prop_size, REMOVE, compile_report_dir, pname, comp_pkt->prop_sfx) < 0) {
         snprintf(errmsg, sizeof(errmsg), "%s: exe properties file does not exist\n", __FUNCTION__);
         goto report_check_failed;
       }
