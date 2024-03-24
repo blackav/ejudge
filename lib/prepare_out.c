@@ -288,6 +288,8 @@ prepare_unparse_global(
     unparse_bool(f, "preserve_line_numbers", global->preserve_line_numbers);
   if (global->enable_remote_cache > 0)
     unparse_bool(f, "enable_remote_cache", global->enable_remote_cache);
+  if (global->enable_exe_properties > 0)
+    unparse_bool(f, "enable_exe_properties", global->enable_exe_properties);
   if (global->virtual_end_options && global->virtual_end_options[0])
     fprintf(f, "virtual_end_options = \"%s\"\n", CARMOR(global->virtual_end_options));
   fprintf(f, "\n");

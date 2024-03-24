@@ -73,6 +73,7 @@ enum
   CNTSGLOB_enable_virtual_restart,
   CNTSGLOB_preserve_line_numbers,
   CNTSGLOB_enable_remote_cache,
+  CNTSGLOB_enable_exe_properties,
   CNTSGLOB_name,
   CNTSGLOB_root_dir,
   CNTSGLOB_serve_socket,
