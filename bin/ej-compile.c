@@ -1247,7 +1247,7 @@ handle_packet(
                         fprintf(log_f, "cannot add file '%s' to zip archive\n", test_json_path);
                         status = RUN_CHECK_FAILED;
                       }
-                      rpl->has_extended_status = 1;
+                      rpl->has_exe_properties = 1;
                     }
 
                     if (zf->ops->add_file(zf, test_exe_name, test_exe_path) < 0) {
@@ -1296,7 +1296,7 @@ handle_packet(
               fprintf(log_f, "cannot add file '%s' to zip archive\n", test_json_path);
               status = RUN_CHECK_FAILED;
             }
-            rpl->has_extended_status = 1;
+            rpl->has_exe_properties = 1;
           }
 
           if (zf->ops->add_file(zf, test_exe_name, test_exe_path) < 0) {
@@ -1998,7 +1998,7 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
     if (req->enable_exe_properties > 0) {
       struct stat stb;
       if (lstat(json_work_path, &stb) >= 0 && S_ISREG(stb.st_mode) && stb.st_size > 0) {
-        rpl.has_extended_status = 1;
+        rpl.has_exe_properties = 1;
         if (agent) {
           r = agent->ops->put_output_2(agent,
                                        contest_server_id,

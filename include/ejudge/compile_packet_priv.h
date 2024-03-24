@@ -104,7 +104,7 @@ struct compile_reply_bin_packet
   rint32_t use_uuid;
   rint32_t prepended_size;      /* size of the header prepended by compile */
   rint32_t cached_on_remote;    /* compilation result is cached on remote side */
-  rint32_t has_extended_status; /* compiler provided extended status */
+  rint32_t has_exe_properties;  /* compiler provided extended status */
   ej_uuid_t uuid;               /* UUID */
   ej_uuid_t judge_uuid;         /* judgind UUID */
   rint32_t zip_mode;

@@ -94,7 +94,7 @@ struct compile_reply_packet
   ej_uuid_t judge_uuid;
   int prepended_size;
   int cached_on_remote;
-  int has_extended_status;
+  int has_exe_properties;
 };
 
 int

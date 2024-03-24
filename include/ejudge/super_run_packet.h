@@ -99,7 +99,7 @@ struct super_run_in_global_packet
   unsigned char *clean_up_cmd;
   unsigned char *run_env_file;
   unsigned char *clean_up_env_file;
-  ejintbool_t has_extended_status;
+  ejintbool_t has_exe_properties;
 
   int scoring_system_val META_ATTRIB((meta_hidden));
 };
