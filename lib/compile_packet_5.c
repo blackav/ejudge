@@ -83,6 +83,7 @@ compile_reply_packet_write(const struct compile_reply_packet *in_data,
   out_data->uuid.v[3] = cvt_host_to_bin_32(in_data->uuid.v[3]);
   */
   out_data->zip_mode = cvt_host_to_bin_32(in_data->zip_mode);
+  memcpy(out_data->prop_sfx, in_data->prop_sfx, sizeof(out_data->prop_sfx));
   out_data->run_block_len = cvt_host_to_bin_32(in_data->run_block_len);
   if (in_data->run_block_len) {
     memcpy(out_ptr, in_data->run_block, in_data->run_block_len);

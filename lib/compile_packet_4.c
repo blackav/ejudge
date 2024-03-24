@@ -86,6 +86,7 @@ compile_reply_packet_read(
   */
 
   pout->zip_mode = cvt_bin_to_host_32(pin->zip_mode);
+  memcpy(pout->prop_sfx, pin->prop_sfx, sizeof(pout->prop_sfx));
 
   in_ptr = (const unsigned char*) pin + sizeof(*pin);
   end_ptr = (const unsigned char*) pin + pkt_size;

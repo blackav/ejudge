@@ -105,9 +105,10 @@ struct compile_reply_bin_packet
   rint32_t prepended_size;      /* size of the header prepended by compile */
   rint32_t cached_on_remote;    /* compilation result is cached on remote side */
   rint32_t has_exe_properties;  /* compiler provided extended status */
+  rint32_t zip_mode;
   ej_uuid_t uuid;               /* UUID */
   ej_uuid_t judge_uuid;         /* judgind UUID */
-  rint32_t zip_mode;
+  unsigned char prop_sfx[16];   /* prop file suffix */
   /* run block (aligned to 16 byte boundary) */
 };
 

@@ -95,6 +95,7 @@ struct compile_reply_packet
   int prepended_size;
   int cached_on_remote;
   int has_exe_properties;
+  unsigned char prop_sfx[16];
 };
 
 int

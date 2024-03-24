@@ -121,6 +121,8 @@ struct testinfo_subst_handler_compile
 static int *lang_id_map = NULL;
 static int lang_id_map_size = 0;
 
+static const unsigned char PROP_SUFFIX[] = ".json";
+
 static unsigned char *
 subst_get_variable(
         const void *vp,
@@ -1145,7 +1147,7 @@ handle_packet(
     test_json_path[0] = 0;
     if (req->enable_exe_properties > 0) {
       __attribute__((unused)) int _;
-      _ = snprintf(test_json_name, sizeof(test_json_name), "%06d_%03d.json", req->run_id, serial);
+      _ = snprintf(test_json_name, sizeof(test_json_name), "%06d_%03d%s", req->run_id, serial, PROP_SUFFIX);
       _ = snprintf(test_json_path, sizeof(test_json_path), "%s/%s", working_dir, test_json_name);
     }
 
@@ -1248,6 +1250,7 @@ handle_packet(
                         status = RUN_CHECK_FAILED;
                       }
                       rpl->has_exe_properties = 1;
+                      strcpy(rpl->prop_sfx, PROP_SUFFIX);
                     }
 
                     if (zf->ops->add_file(zf, test_exe_name, test_exe_path) < 0) {
@@ -1296,6 +1299,7 @@ handle_packet(
               fprintf(log_f, "cannot add file '%s' to zip archive\n", test_json_path);
               status = RUN_CHECK_FAILED;
             }
+            strcpy(rpl->prop_sfx, PROP_SUFFIX);
             rpl->has_exe_properties = 1;
           }
 
@@ -1849,9 +1853,9 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
     json_work_path[0] = 0;
     if (req->enable_exe_properties > 0) {
       __attribute__((unused)) int _;
-      _ = snprintf(json_path, sizeof(json_path), "%s/%s.json", report_dir, run_name);
+      _ = snprintf(json_path, sizeof(json_path), "%s/%s%s", report_dir, run_name, PROP_SUFFIX);
       unlink(json_path);
-      _ = snprintf(json_work_name, sizeof(json_work_name), "%s.json", run_name);
+      _ = snprintf(json_work_name, sizeof(json_work_name), "%s%s", run_name, PROP_SUFFIX);
       _ = snprintf(json_work_path, sizeof(json_work_path), "%s/%s", full_working_dir, json_work_name);
       unlink(json_work_path);
     }
@@ -2004,7 +2008,7 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
                                        contest_server_id,
                                        rpl.contest_id,
                                        run_name,
-                                       ".json",
+                                       PROP_SUFFIX,
                                        json_work_path);
         } else {
           r = generic_copy_file(0, NULL, json_work_path, "", 0, NULL, json_path, "");
