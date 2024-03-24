@@ -1809,6 +1809,7 @@ serve_compile_request(
     cp.preserve_numbers = 1;
   }
   cp.enable_remote_cache = (global->enable_remote_cache > 0);
+  cp.enable_exe_properties = (global->enable_exe_properties > 0);
 
   memset(&rx, 0, sizeof(rx));
   rx.accepting_mode = accepting_mode;
