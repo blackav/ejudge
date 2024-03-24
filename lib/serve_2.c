@@ -2455,13 +2455,15 @@ serve_run_request(
     srgp->src_file = xstrdup(src_name);
   }
 
-  if (prop_size > 0) {
-    if (generic_write_file(prop_text, prop_size, 0, run_exe_dir, pkt_base, ".json") < 0) {
-      fprintf(errf, "failed to save properties file");
-      goto fail;
+  if (comp_pkt->has_exe_properties > 0) {
+    if (prop_size > 0) {
+      if (generic_write_file(prop_text, prop_size, 0, run_exe_dir, pkt_base, ".json") < 0) {
+        fprintf(errf, "failed to save properties file");
+        goto fail;
+      }
+      snprintf(prop_out_name, sizeof(prop_out_name), "%s.json", pkt_base);
+      srgp->prop_file = xstrdup(prop_out_name);
     }
-    snprintf(prop_out_name, sizeof(prop_out_name), "%s.json", pkt_base);
-    srgp->prop_file = xstrdup(prop_out_name);
     srgp->has_exe_properties = 1;
   }
 
