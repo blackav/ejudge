@@ -2464,6 +2464,7 @@ serve_run_request(
       snprintf(prop_out_name, sizeof(prop_out_name), "%s%s", pkt_base, comp_pkt->prop_sfx);
       srgp->prop_file = xstrdup(prop_out_name);
     }
+    srgp->prop_sfx = xstrdup(comp_pkt->prop_sfx);
     srgp->has_exe_properties = 1;
   }
 
