@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2012-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -32,6 +32,7 @@
 #include "ejudge/ej_uuid.h"
 #include "ejudge/super_run_status.h"
 #include "ejudge/agent_client.h"
+#include "ejudge/run_props.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/osdeps.h"
@@ -410,9 +411,13 @@ handle_packet(
   struct super_run_listener run_listener;
   char *inp_data = NULL;
   size_t inp_size = 0;
+  char *prop_data = NULL;
+  size_t prop_size = 0;
 
   unsigned char source_code_buf[PATH_MAX];
   const unsigned char *source_code_path = NULL;
+
+  struct run_properties *run_props = NULL;
 
   memset(&reply_pkt, 0, sizeof(reply_pkt));
   memset(&run_listener, 0, sizeof(run_listener));
@@ -554,6 +559,26 @@ handle_packet(
       }
       source_code_path = source_code_buf;
       (void) source_code_path;
+    }
+
+    if (srgp->has_exe_properties > 0 && srgp->zip_mode && srgp->prop_file) {
+      const unsigned char *prop_sfx = srgp->prop_sfx;
+      if (!prop_sfx) prop_sfx = "";
+      if (agent) {
+        r = agent->ops->get_data(agent, srgp->prop_file, prop_sfx, &prop_data, &prop_size);
+      } else {
+        r = generic_read_file(&prop_data, 0, &prop_size, REMOVE, super_run_exe_path, srgp->prop_file, prop_sfx);
+      }
+      if (r < 0 || !prop_size || !prop_data) {
+        err("prop_file is nonexistant or empty");
+        goto cleanup;
+      }
+      unsigned char *msg = NULL;
+      if (run_properties_parse_json_str(prop_data, &run_props, &msg) < 0) {
+        err("prop_file parse failed: %s", msg);
+        xfree(msg);
+        goto cleanup;
+      }
     }
 
     if (srgp->submit_id > 0) {
@@ -749,6 +774,8 @@ cleanup:
   srp = super_run_in_packet_free(srp);
   xfree(reply_pkt_buf); reply_pkt_buf = NULL;
   free(inp_data);
+  free(prop_data);
+  run_properties_free(run_props);
   clear_directory(global->run_work_dir);
   return retval;
 }
