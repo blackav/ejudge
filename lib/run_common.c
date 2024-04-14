@@ -3779,6 +3779,7 @@ run_one_test(
       zf->ops->close(zf);
       goto check_failed;
     }
+    // TODO: support run_props in zip file
     zf->ops->close(zf); zf = NULL;
     unsigned char target_path[PATH_MAX];
     snprintf(target_path, sizeof(target_path), "%s/%s", exe_dir, exe_name);
@@ -3872,6 +3873,16 @@ run_one_test(
 
   if (srpp->use_tgz > 0) {
     if (invoke_tar("/bin/tar", tgz_src, check_dir, report_path) < 0) {
+      goto check_failed;
+    }
+  }
+
+  if (run_props && run_props->is_archive > 0) {
+    if (!run_props->start_cmd || !run_props->start_cmd[0]) {
+      append_msg_to_log(check_out_path, "start_cmd must be specified if is_archive set to true in run properties");
+      goto check_failed;
+    }
+    if (invoke_tar("/bin/tar", exe_path, working_dir, report_path) < 0) {
       goto check_failed;
     }
   }
@@ -4006,6 +4017,12 @@ run_one_test(
     }
   }
 
+  if (run_props && run_props->start_env) {
+    for (int i = 0; run_props->start_env[i]; ++i) {
+      task_SetEnv(tsk, run_props->start_env[i][0], run_props->start_env[i][1]);
+    }
+  }
+
   /*
   if (tst && tst->start_cmd && tst->start_cmd[0]) {
     info("starting: %s %s", tst->start_cmd, arg0_path);
@@ -4030,16 +4047,28 @@ run_one_test(
   }
   */
 
-  if (interpreter_cnt > 0) {
-    task_pnAddArgs(tsk, interpreter_cnt, (char**) interpreter_args);
-  }
-
-  if (tstinfo.program_name && *tstinfo.program_name) {
-    task_AddArg(tsk, tstinfo.program_name);
-    task_SetPath(tsk, arg0_path);
+  if (run_props && run_props->start_cmd) {
+    if (!run_props->start_args || !run_props->start_args[0]) {
+      task_AddArg(tsk, run_props->start_cmd);
+      task_SetPathAsArg0(tsk);
+    } else {
+      task_SetPath(tsk, run_props->start_cmd);
+      for (int i = 0; run_props->start_args[i]; ++i) {
+        task_AddArg(tsk, run_props->start_args[i]);
+      }
+    }
   } else {
-    task_AddArg(tsk, arg0_path);
-    task_SetPathAsArg0(tsk);
+    if (interpreter_cnt > 0) {
+      task_pnAddArgs(tsk, interpreter_cnt, (char**) interpreter_args);
+    }
+
+    if (tstinfo.program_name && *tstinfo.program_name) {
+      task_AddArg(tsk, tstinfo.program_name);
+      task_SetPath(tsk, arg0_path);
+    } else {
+      task_AddArg(tsk, arg0_path);
+      task_SetPathAsArg0(tsk);
+    }
   }
 
   if (srpp->use_info > 0 && tstinfo.cmd.u >= 1) {
