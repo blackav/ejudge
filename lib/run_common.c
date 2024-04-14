@@ -3445,7 +3445,8 @@ run_one_test(
         const unsigned char *test_dir,
         const unsigned char *corr_dir,
         const unsigned char *info_dir,
-        const unsigned char *tgz_dir)
+        const unsigned char *tgz_dir,
+        const struct run_properties *run_props)
 {
   const struct section_global_data *global = state->global;
 
@@ -5648,7 +5649,8 @@ run_tests(
                             test_dir,
                             corr_dir,
                             info_dir,
-                            tgz_dir);
+                            tgz_dir,
+                            run_props);
       if (status != RUN_TIME_LIMIT_ERR && status != RUN_WALL_TIME_LIMIT_ERR)
         break;
       if (++tl_retry >= tl_retry_count) break;
