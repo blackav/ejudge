@@ -2,7 +2,7 @@
 #ifndef __RUN_H__
 #define __RUN_H__
 
-/* Copyright (C) 2010-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2010-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -119,6 +119,7 @@ struct serve_state;
 struct section_tester_data;
 struct ejudge_cfg;
 struct AgentClient;
+struct run_properties;
 
 void
 run_tests(
@@ -140,6 +141,7 @@ run_tests(
         int user_input_mode,
         const unsigned char *inp_data,
         size_t inp_size,
-        const unsigned char *src_path);
+        const unsigned char *src_path,
+        const struct run_properties *run_props);
 
 #endif /* __RUN_H__ */

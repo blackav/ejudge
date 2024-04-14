@@ -41,6 +41,7 @@
 #include "ejudge/ej_libzip.h"
 #include "ejudge/agent_client.h"
 #include "ejudge/random.h"
+#include "ejudge/run_props.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/osdeps.h"
@@ -5280,7 +5281,8 @@ run_tests(
         int user_input_mode,
         const unsigned char *inp_data,
         size_t inp_size,
-        const unsigned char *src_path)
+        const unsigned char *src_path,
+        const struct run_properties *run_props)
 {
   const struct section_global_data *global = state->global;
   const struct super_run_in_global_packet *srgp = srp->global;
