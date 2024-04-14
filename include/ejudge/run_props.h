@@ -16,6 +16,29 @@
  * GNU General Public License for more details.
  */
 
+struct run_properties
+{
+    unsigned char *start_cmd;   // the command (interpreter) for program
+    unsigned char **start_args; // additional arguments, incl. the main file
+    unsigned char is_archive;   // the executable file is actually an archive
+};
+
+struct cJSON;
+
+struct run_properties *
+run_properties_free(struct run_properties *p);
+
+int
+run_properties_parse_json_str(
+        const unsigned char *str,
+        struct run_properties **p_props,
+        unsigned char **p_message);
+
+int
+run_properties_parse_json_file(
+        const unsigned char *path,
+        struct run_properties **p_props,
+        unsigned char **p_message);
 
 #endif /* __RUN_PROPS_H__ */
 
