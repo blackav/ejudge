@@ -30,6 +30,12 @@ run_properties_free(struct run_properties *p)
             xfree(p->start_args[i]);
         }
         xfree(p->start_args);
+        for (int i = 0; p->start_env[i]; ++i) {
+            xfree(p->start_env[i][0]);
+            xfree(p->start_env[i][1]);
+            xfree(p->start_env[i]);
+        }
+        xfree(p->start_env);
         xfree(p);
     }
     return NULL;
@@ -98,6 +104,30 @@ run_properties_parse_json_str(
                 goto fail;
             }
             props->start_args[i] = xstrdup(jjj->valuestring);
+        }
+    }
+
+    jj = cJSON_GetObjectItem(j, "start_env");
+    if (jj) {
+        if (jj->type != cJSON_Object) {
+            asprintf(&emsg, "%s: start_env must be object", __FUNCTION__);
+            goto fail;
+        }
+        int size = cJSON_GetArraySize(jj);
+        if (size < 0 || size > 1000) {
+            asprintf(&emsg, "%s: start_env has invalid size %d", __FUNCTION__, size);
+            goto fail;
+        }
+        XCALLOC(props->start_env, size + 1);
+        int i = 0;
+        for (cJSON *jjj = jj->child; jjj; jjj = jjj->next, ++i) {
+            if (jjj->type != cJSON_String) {
+                asprintf(&emsg, "%s: start_env must be object of strings", __FUNCTION__);
+                goto fail;
+            }
+            XCALLOC(props->start_env[i], 2);
+            props->start_env[i][0] = xstrdup(jjj->string);
+            props->start_env[i][1] = xstrdup(jjj->valuestring);
         }
     }
 

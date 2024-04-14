@@ -21,6 +21,7 @@ struct run_properties
     unsigned char *start_cmd;   // the command (interpreter) for program
     unsigned char **start_args; // additional arguments, incl. the main file
     unsigned char is_archive;   // the executable file is actually an archive
+    unsigned char ***start_env; // array of arrays for environment
 };
 
 struct cJSON;
