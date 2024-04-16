@@ -1930,7 +1930,7 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
                   exe_work_name,
                   &override_exe,
                   &exe_copied,
-                  json_work_path);
+                  json_work_name);
 
     free(src_buf); src_buf = NULL; src_len = 0;
 
@@ -2004,6 +2004,7 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
       struct stat stb;
       if (lstat(json_work_path, &stb) >= 0 && S_ISREG(stb.st_mode) && stb.st_size > 0) {
         rpl.has_exe_properties = 1;
+        strcpy(rpl.prop_sfx, PROP_SUFFIX);
         if (agent) {
           r = agent->ops->put_output_2(agent,
                                        contest_server_id,

@@ -26,16 +26,20 @@ run_properties_free(struct run_properties *p)
 {
     if (p) {
         xfree(p->start_cmd);
-        for (int i = 0; p->start_args[i]; ++i) {
-            xfree(p->start_args[i]);
+        if (p->start_args) {
+            for (int i = 0; p->start_args[i]; ++i) {
+                xfree(p->start_args[i]);
+            }
         }
         xfree(p->start_args);
-        for (int i = 0; p->start_env[i]; ++i) {
-            xfree(p->start_env[i][0]);
-            xfree(p->start_env[i][1]);
-            xfree(p->start_env[i]);
+        if (p->start_env) {
+            for (int i = 0; p->start_env[i]; ++i) {
+                xfree(p->start_env[i][0]);
+                xfree(p->start_env[i][1]);
+                xfree(p->start_env[i]);
+            }
+            xfree(p->start_env);
         }
-        xfree(p->start_env);
         xfree(p);
     }
     return NULL;

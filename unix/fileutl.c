@@ -2098,6 +2098,9 @@ collect_files(
   }
   struct dirent *dd;
   while ((dd = readdir(dsrc))) {
+    if (!strcmp(dd->d_name, ".") || !strcmp(dd->d_name, "..")) {
+      continue;
+    }
     char *fullpath = NULL;
     _ = asprintf(&fullpath, "%s/%s", src_dir, dd->d_name);
     struct stat stb;
@@ -2122,7 +2125,7 @@ collect_files(
     memset(fff, 0, sizeof(*fff));
     fff->full_src_path = fullpath;
     fullpath = NULL;
-    _ = asprintf(&fullpath, "%s/%s", src_dir, dd->d_name);
+    _ = asprintf(&fullpath, "%s/%s", dst_dir, dd->d_name);
     fff->full_dst_path = fullpath;
     fff->st_ino = stb.st_ino;
     fff->st_dev = stb.st_dev;

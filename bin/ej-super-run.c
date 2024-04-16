@@ -561,13 +561,11 @@ handle_packet(
       (void) source_code_path;
     }
 
-    if (srgp->has_exe_properties > 0 && srgp->zip_mode && srgp->prop_file) {
-      const unsigned char *prop_sfx = srgp->prop_sfx;
-      if (!prop_sfx) prop_sfx = "";
+    if (srgp->has_exe_properties > 0 && srgp->zip_mode <= 0 && srgp->prop_file) {
       if (agent) {
-        r = agent->ops->get_data(agent, srgp->prop_file, prop_sfx, &prop_data, &prop_size);
+        r = agent->ops->get_data(agent, srgp->prop_file, NULL, &prop_data, &prop_size);
       } else {
-        r = generic_read_file(&prop_data, 0, &prop_size, REMOVE, super_run_exe_path, srgp->prop_file, prop_sfx);
+        r = generic_read_file(&prop_data, 0, &prop_size, REMOVE, super_run_exe_path, srgp->prop_file, NULL);
       }
       if (r < 0 || !prop_size || !prop_data) {
         err("prop_file is nonexistant or empty");

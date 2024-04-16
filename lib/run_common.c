@@ -4057,6 +4057,9 @@ run_one_test(
         task_AddArg(tsk, run_props->start_args[i]);
       }
     }
+    if (run_props->is_archive <= 0) {
+      task_AddArg(tsk, arg0_path);
+    }
   } else {
     if (interpreter_cnt > 0) {
       task_pnAddArgs(tsk, interpreter_cnt, (char**) interpreter_args);
