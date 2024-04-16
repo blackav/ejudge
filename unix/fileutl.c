@@ -2238,6 +2238,7 @@ done:;
 // other file types are ignored
 int
 copy_directory_recursively(
+        FILE *log_f,
         const unsigned char *src_dir,
         const unsigned char *dst_dir)
 {

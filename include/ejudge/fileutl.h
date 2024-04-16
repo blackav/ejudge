@@ -106,6 +106,7 @@ fast_read_file_with_size(
 
 int
 copy_directory_recursively(
+        FILE *log_f,
         const unsigned char *src_dir,
         const unsigned char *dst_dir);
 
