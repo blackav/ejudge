@@ -2,7 +2,7 @@
 #ifndef __FILEUTL_H__
 #define __FILEUTL_H__
 
-/* Copyright (C) 2000-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -103,5 +103,11 @@ fast_read_file_with_size(
         const unsigned char *path,
         size_t size,
         unsigned char **p_buf);
+
+int
+copy_directory_recursively(
+        const unsigned char *src_dir,
+        const unsigned char *dst_dir);
+
 
 #endif /* __FILEUTL_H__ */
