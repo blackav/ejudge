@@ -238,7 +238,7 @@ cleanup:
 }
 
 // non-recursive
-static int
+static __attribute__((unused)) int
 copy_all_files(
         FILE *log_f,
         const unsigned char *src_dir,
@@ -462,7 +462,8 @@ invoke_compiler(
   tpTask tsk = 0;
 
   if (req->extra_src_dir && req->extra_src_dir[0]) {
-    int r = copy_all_files(log_f, req->extra_src_dir, working_dir);
+    int r = copy_directory_recursively(log_f, req->extra_src_dir, working_dir);
+    //int r = copy_all_files(log_f, req->extra_src_dir, working_dir);
     if (r < 0) {
       err("failed to copy extra_src_dir from %s to %s",
           req->extra_src_dir, working_dir);
