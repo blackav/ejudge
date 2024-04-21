@@ -789,6 +789,7 @@ handle_packet(
   unsigned char build_dir[PATH_MAX];
   __attribute__((unused)) int _;
   const unsigned char *build_dir_ptr = working_dir;
+  unsigned char exe_rel_path[PATH_MAX];
 
   if (req->enable_run_props > 0) {
     _ = snprintf(build_dir, sizeof(build_dir), "%s/build", working_dir);
@@ -921,6 +922,11 @@ handle_packet(
     snprintf(exe_work_name, PATH_MAX, "%llx%s", random_u64(), lang->exe_sfx);
     unsigned char exe_work_path[PATH_MAX];
     snprintf(exe_work_path, sizeof(exe_work_path), "%s/%s", build_dir_ptr, exe_work_name);
+    if (req->enable_run_props > 0) {
+      snprintf(exe_rel_path, sizeof(exe_rel_path), "../%s", exe_work_name);
+    } else {
+      snprintf(exe_rel_path, sizeof(exe_rel_path), "%s", exe_work_name);
+    }
 
     /*
     if (req->style_checker && req->style_checker[0]) {
@@ -938,7 +944,7 @@ handle_packet(
     */
 
     if (req->style_check_only <= 0) {
-      int r = invoke_compiler(log_f, cs, lang, req, src_work_name, exe_work_name, build_dir_ptr, log_work_path, NULL, &prepended_size, json_work_path);
+      int r = invoke_compiler(log_f, cs, lang, req, src_work_name, exe_rel_path, build_dir_ptr, log_work_path, NULL, &prepended_size, json_work_path);
       rpl->status = r;
       if (r != RUN_OK) goto cleanup;
       rpl->prepended_size = prepended_size;
@@ -1965,11 +1971,7 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
         rpl.status = RUN_CHECK_FAILED;
       } else {
         unsigned char exe_work_path[PATH_MAX];
-        if (req->enable_run_props > 0) {
-          snprintf(exe_work_path, sizeof(exe_work_path), "%s/build/%s", full_working_dir, exe_work_name);
-        } else {
-          snprintf(exe_work_path, sizeof(exe_work_path), "%s/%s", full_working_dir, exe_work_name);
-        }
+        snprintf(exe_work_path, sizeof(exe_work_path), "%s/%s", full_working_dir, exe_work_name);
         struct stat stb;
 
         if (lstat(exe_work_path, &stb) < 0) {
