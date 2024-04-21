@@ -553,6 +553,9 @@ invoke_compiler(
     }
     task_SetLanguageName(tsk, lang->short_name);
   }
+  if (req->enable_exe_properties > 0) {
+    task_EnableSubdirMode(tsk);
+  }
 
   if (req->env_num > 0) {
     for (int i = 0; i < req->env_num; i++)
@@ -783,13 +786,26 @@ handle_packet(
 {
   struct ZipData *zf = NULL;
   int prepended_size = 0;
+  unsigned char build_dir[PATH_MAX];
+  __attribute__((unused)) int _;
+  const unsigned char *build_dir_ptr = working_dir;
+
+  if (req->enable_exe_properties > 0) {
+    _ = snprintf(build_dir, sizeof(build_dir), "%s/build", working_dir);
+    if (mkdir(build_dir, 0700) < 0 && errno != EEXIST) {
+      fprintf(log_f, "cannot create build directory: %s\n", os_ErrorMsg());
+      rpl->status = RUN_CHECK_FAILED;
+      goto cleanup;
+    }
+    build_dir_ptr = build_dir;
+  }
 
   if (req->output_only) {
     if (req->style_checker && req->style_checker[0]) {
       unsigned char src_work_name[PATH_MAX];
       snprintf(src_work_name, sizeof(src_work_name), "%llx", random_u64());
       unsigned char src_work_path[PATH_MAX];
-      snprintf(src_work_path, sizeof(src_work_path), "%s/%s", working_dir, src_work_name);
+      snprintf(src_work_path, sizeof(src_work_path), "%s/%s", build_dir_ptr, src_work_name);
 
       if (src_buf) {
         if (generic_write_file(src_buf, src_len, 0, NULL, src_work_path, "") < 0) {
@@ -805,7 +821,7 @@ handle_packet(
         }
       }
 
-      int r = invoke_style_checker(log_f, cs, lang, req, src_work_name, working_dir, log_work_path, NULL);
+      int r = invoke_style_checker(log_f, cs, lang, req, src_work_name, build_dir_ptr, log_work_path, NULL);
       if (r != RUN_OK) {
         rpl->status = r;
         goto cleanup;
@@ -880,7 +896,7 @@ handle_packet(
   unsigned char src_work_name[PATH_MAX];
   snprintf(src_work_name, sizeof(src_work_name), "%llx%s", random_u64(), lang->src_sfx);
   unsigned char src_work_path[PATH_MAX];
-  snprintf(src_work_path, sizeof(src_work_path), "%s/%s", working_dir, src_work_name);
+  snprintf(src_work_path, sizeof(src_work_path), "%s/%s", build_dir_ptr, src_work_name);
 
   if (src_buf) {
     if (generic_write_file(src_buf, src_len, 0, NULL, src_work_path, "") < 0) {
@@ -904,7 +920,7 @@ handle_packet(
   if (!req->multi_header) {
     snprintf(exe_work_name, PATH_MAX, "%llx%s", random_u64(), lang->exe_sfx);
     unsigned char exe_work_path[PATH_MAX];
-    snprintf(exe_work_path, sizeof(exe_work_path), "%s/%s", working_dir, exe_work_name);
+    snprintf(exe_work_path, sizeof(exe_work_path), "%s/%s", build_dir_ptr, exe_work_name);
 
     /*
     if (req->style_checker && req->style_checker[0]) {
@@ -922,14 +938,14 @@ handle_packet(
     */
 
     if (req->style_check_only <= 0) {
-      int r = invoke_compiler(log_f, cs, lang, req, src_work_name, exe_work_name, working_dir, log_work_path, NULL, &prepended_size, json_work_path);
+      int r = invoke_compiler(log_f, cs, lang, req, src_work_name, exe_work_name, build_dir_ptr, log_work_path, NULL, &prepended_size, json_work_path);
       rpl->status = r;
       if (r != RUN_OK) goto cleanup;
       rpl->prepended_size = prepended_size;
     }
 
     if (req->vcs_mode <= 0 && req->style_checker && req->style_checker[0]) {
-      int r = invoke_style_checker(log_f, cs, lang, req, src_work_name, working_dir, log_work_path, NULL);
+      int r = invoke_style_checker(log_f, cs, lang, req, src_work_name, build_dir_ptr, log_work_path, NULL);
       rpl->status = r;
       if (r == RUN_OK && req->style_check_only > 0) *p_override_exe = 1;
     }
@@ -940,7 +956,7 @@ handle_packet(
   // multi-header mode
   snprintf(exe_work_name, PATH_MAX, "%llx%s", random_u64(), lang->exe_sfx);
   unsigned char exe_work_path[PATH_MAX];
-  snprintf(exe_work_path, sizeof(exe_work_path), "%s/%s", working_dir, exe_work_name);
+  snprintf(exe_work_path, sizeof(exe_work_path), "%s/%s", build_dir_ptr, exe_work_name);
   zf = ej_libzip_open(log_f, exe_work_path, O_CREAT | O_TRUNC | O_WRONLY);
   if (!zf) {
     fprintf(log_f, "cannot create zip archive '%s'\n", exe_work_path);
@@ -1125,7 +1141,7 @@ handle_packet(
     unsigned char test_src_name[PATH_MAX];
     snprintf(test_src_name, sizeof(test_src_name), "%llx%s", random_u64(), lang->src_sfx);
     unsigned char test_src_path[PATH_MAX];
-    snprintf(test_src_path, sizeof(test_src_path), "%s/%s", working_dir, test_src_name);
+    snprintf(test_src_path, sizeof(test_src_path), "%s/%s", build_dir_ptr, test_src_name);
     if (generic_write_file(full_s, full_z, 0, NULL, test_src_path, NULL) < 0) {
       fprintf(log_f, "failed to write full source file '%s'\n", test_src_path);
       testinfo_free(tinf);
@@ -1141,7 +1157,7 @@ handle_packet(
     // FIXME: random exe name?
     snprintf(test_exe_name, sizeof(test_exe_name), "%06d_%03d%s", req->run_id, serial, lang->exe_sfx);
     unsigned char test_exe_path[PATH_MAX];
-    snprintf(test_exe_path, sizeof(test_exe_path), "%s/%s", working_dir, test_exe_name);
+    snprintf(test_exe_path, sizeof(test_exe_path), "%s/%s", build_dir_ptr, test_exe_name);
     unsigned char test_json_name[PATH_MAX];
     unsigned char test_json_path[PATH_MAX];
     test_json_name[0] = 0;
@@ -1172,7 +1188,7 @@ handle_packet(
     if (cur_status == RUN_OK) {
       fprintf(log_f, "=== compilation for test %d ===\n", serial);
       fflush(log_f);
-      cur_status = invoke_compiler(log_f, cs, lang, req, test_src_name, test_exe_name, working_dir, log_work_path, tinf, &prepended_size, test_json_path);
+      cur_status = invoke_compiler(log_f, cs, lang, req, test_src_name, test_exe_name, build_dir_ptr, log_work_path, tinf, &prepended_size, test_json_path);
       // valid statuses: RUN_OK, RUN_COMPILE_ERR, RUN_CHECK_FAILED
       if (cur_status == RUN_CHECK_FAILED) {
         status = RUN_CHECK_FAILED;
@@ -1221,7 +1237,7 @@ handle_packet(
                 fprintf(log_f, "failed to write full source file '%s'\n", test_src_path);
                 status = RUN_CHECK_FAILED;
               } else {
-                cur_status = invoke_compiler(log_f, cs, lang, req, test_src_name, test_exe_name, working_dir, log_work_path, tinf, &prepended_size, test_json_path);
+                cur_status = invoke_compiler(log_f, cs, lang, req, test_src_name, test_exe_name, build_dir_ptr, log_work_path, tinf, &prepended_size, test_json_path);
 
                 if (cur_status == RUN_CHECK_FAILED) {
                   status = RUN_CHECK_FAILED;
@@ -1317,7 +1333,7 @@ handle_packet(
       fflush(log_f);
 
       style_already_checked = 1;
-      cur_status = invoke_style_checker(log_f, cs, lang, req, test_src_name, working_dir, log_work_path, tinf);
+      cur_status = invoke_style_checker(log_f, cs, lang, req, test_src_name, build_dir_ptr, log_work_path, tinf);
       // valid statuses: RUN_OK, RUN_STYLE_ERR, RUN_CHECK_FAILED
       if (cur_status == RUN_CHECK_FAILED) {
         status = RUN_CHECK_FAILED;
@@ -1849,9 +1865,11 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
     unsigned char json_path[PATH_MAX];
     unsigned char json_work_name[PATH_MAX];
     unsigned char json_work_path[PATH_MAX];
+    unsigned char json_rel_path[PATH_MAX];
     json_path[0] = 0;
     json_work_name[0] = 0;
     json_work_path[0] = 0;
+    json_rel_path[0] = 0;
     if (req->enable_exe_properties > 0) {
       __attribute__((unused)) int _;
       _ = snprintf(json_path, sizeof(json_path), "%s/%s%s", report_dir, run_name, PROP_SUFFIX);
@@ -1859,6 +1877,7 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
       _ = snprintf(json_work_name, sizeof(json_work_name), "%s%s", run_name, PROP_SUFFIX);
       _ = snprintf(json_work_path, sizeof(json_work_path), "%s/%s", full_working_dir, json_work_name);
       unlink(json_work_path);
+      _ = snprintf(json_rel_path, sizeof(json_rel_path), "../%s", json_work_name);
     }
 
     unsigned char exe_work_name[PATH_MAX];
@@ -1930,7 +1949,7 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
                   exe_work_name,
                   &override_exe,
                   &exe_copied,
-                  json_work_name);
+                  json_rel_path);
 
     free(src_buf); src_buf = NULL; src_len = 0;
 
@@ -1946,7 +1965,11 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
         rpl.status = RUN_CHECK_FAILED;
       } else {
         unsigned char exe_work_path[PATH_MAX];
-        snprintf(exe_work_path, sizeof(exe_work_path), "%s/%s", full_working_dir, exe_work_name);
+        if (req->enable_exe_properties > 0) {
+          snprintf(exe_work_path, sizeof(exe_work_path), "%s/build/%s", full_working_dir, exe_work_name);
+        } else {
+          snprintf(exe_work_path, sizeof(exe_work_path), "%s/%s", full_working_dir, exe_work_name);
+        }
         struct stat stb;
 
         if (lstat(exe_work_path, &stb) < 0) {
