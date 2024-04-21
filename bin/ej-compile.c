@@ -510,7 +510,7 @@ invoke_compiler(
     task_AddArg(tsk, input_file);
     task_AddArg(tsk, output_file);
   }
-  if (status_file && req->enable_exe_properties > 0) {
+  if (status_file && req->enable_run_props > 0) {
     task_AddArg(tsk, status_file);
   }
   task_SetPathAsArg0(tsk);
@@ -553,7 +553,7 @@ invoke_compiler(
     }
     task_SetLanguageName(tsk, lang->short_name);
   }
-  if (req->enable_exe_properties > 0) {
+  if (req->enable_run_props > 0) {
     task_EnableSubdirMode(tsk);
   }
 
@@ -568,7 +568,7 @@ invoke_compiler(
   if (req->vcs_mode) {
     task_PutEnv(tsk, "EJUDGE_VCS_MODE=1");
   }
-  if (req->enable_exe_properties > 0) {
+  if (req->enable_run_props > 0) {
     task_PutEnv(tsk, "EJUDGE_EXE_PROPERTIES=1");
   }
   task_SetWorkingDir(tsk, working_dir);
@@ -790,7 +790,7 @@ handle_packet(
   __attribute__((unused)) int _;
   const unsigned char *build_dir_ptr = working_dir;
 
-  if (req->enable_exe_properties > 0) {
+  if (req->enable_run_props > 0) {
     _ = snprintf(build_dir, sizeof(build_dir), "%s/build", working_dir);
     if (mkdir(build_dir, 0700) < 0 && errno != EEXIST) {
       fprintf(log_f, "cannot create build directory: %s\n", os_ErrorMsg());
@@ -1162,7 +1162,7 @@ handle_packet(
     unsigned char test_json_path[PATH_MAX];
     test_json_name[0] = 0;
     test_json_path[0] = 0;
-    if (req->enable_exe_properties > 0) {
+    if (req->enable_run_props > 0) {
       __attribute__((unused)) int _;
       _ = snprintf(test_json_name, sizeof(test_json_name), "%06d_%03d%s", req->run_id, serial, PROP_SUFFIX);
       _ = snprintf(test_json_path, sizeof(test_json_path), "%s/%s", working_dir, test_json_name);
@@ -1260,13 +1260,13 @@ handle_packet(
                     status = RUN_CHECK_FAILED;
                   } else {
                     struct stat stb;
-                    if (req->enable_exe_properties > 0 && lstat(test_json_path, &stb) >= 0
+                    if (req->enable_run_props > 0 && lstat(test_json_path, &stb) >= 0
                         && S_ISREG(stb.st_mode) && stb.st_size > 0) {
                       if (zf->ops->add_file(zf, test_json_name, test_json_path) < 0) {
                         fprintf(log_f, "cannot add file '%s' to zip archive\n", test_json_path);
                         status = RUN_CHECK_FAILED;
                       }
-                      rpl->has_exe_properties = 1;
+                      rpl->has_run_props = 1;
                       strcpy(rpl->prop_sfx, PROP_SUFFIX);
                     }
 
@@ -1310,14 +1310,14 @@ handle_packet(
           }
         } else {
           struct stat stb;
-          if (req->enable_exe_properties > 0 && lstat(test_json_path, &stb) >= 0
+          if (req->enable_run_props > 0 && lstat(test_json_path, &stb) >= 0
               && S_ISREG(stb.st_mode) && stb.st_size > 0) {
             if (zf->ops->add_file(zf, test_json_name, test_json_path) < 0) {
               fprintf(log_f, "cannot add file '%s' to zip archive\n", test_json_path);
               status = RUN_CHECK_FAILED;
             }
             strcpy(rpl->prop_sfx, PROP_SUFFIX);
-            rpl->has_exe_properties = 1;
+            rpl->has_run_props = 1;
           }
 
           if (zf->ops->add_file(zf, test_exe_name, test_exe_path) < 0) {
@@ -1870,7 +1870,7 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
     json_work_name[0] = 0;
     json_work_path[0] = 0;
     json_rel_path[0] = 0;
-    if (req->enable_exe_properties > 0) {
+    if (req->enable_run_props > 0) {
       __attribute__((unused)) int _;
       _ = snprintf(json_path, sizeof(json_path), "%s/%s%s", report_dir, run_name, PROP_SUFFIX);
       unlink(json_path);
@@ -1965,7 +1965,7 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
         rpl.status = RUN_CHECK_FAILED;
       } else {
         unsigned char exe_work_path[PATH_MAX];
-        if (req->enable_exe_properties > 0) {
+        if (req->enable_run_props > 0) {
           snprintf(exe_work_path, sizeof(exe_work_path), "%s/build/%s", full_working_dir, exe_work_name);
         } else {
           snprintf(exe_work_path, sizeof(exe_work_path), "%s/%s", full_working_dir, exe_work_name);
@@ -2023,10 +2023,10 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
 
     fclose(log_f); log_f = NULL;
 
-    if (req->enable_exe_properties > 0) {
+    if (req->enable_run_props > 0) {
       struct stat stb;
       if (lstat(json_work_path, &stb) >= 0 && S_ISREG(stb.st_mode) && stb.st_size > 0) {
-        rpl.has_exe_properties = 1;
+        rpl.has_run_props = 1;
         strcpy(rpl.prop_sfx, PROP_SUFFIX);
         if (agent) {
           r = agent->ops->put_output_2(agent,

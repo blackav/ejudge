@@ -40,7 +40,7 @@ struct compile_request_packet
   int not_ok_is_cf;
   int preserve_numbers;
   int enable_remote_cache;
-  int enable_exe_properties;       // 1, if an extended executable properties (JSON) is supported
+  int enable_run_props;            // 1, if an extended running properties (JSON) is supported
   int64_t submit_id;
   ej_uuid_t uuid;
   ej_uuid_t judge_uuid;
@@ -94,7 +94,7 @@ struct compile_reply_packet
   ej_uuid_t judge_uuid;
   int prepended_size;
   int cached_on_remote;
-  int has_exe_properties;
+  int has_run_props;
   unsigned char prop_sfx[16];
 };
 

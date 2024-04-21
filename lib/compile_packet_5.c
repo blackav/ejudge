@@ -73,7 +73,7 @@ compile_reply_packet_write(const struct compile_reply_packet *in_data,
   out_data->use_uuid = cvt_host_to_bin_32(in_data->use_uuid);
   out_data->prepended_size = cvt_host_to_bin_32(in_data->prepended_size);
   out_data->cached_on_remote = cvt_host_to_bin_32(in_data->cached_on_remote);
-  out_data->has_exe_properties = cvt_host_to_bin_32(in_data->has_exe_properties);
+  out_data->has_run_props = cvt_host_to_bin_32(in_data->has_run_props);
   out_data->uuid = in_data->uuid;
   out_data->judge_uuid = in_data->judge_uuid;
   /*

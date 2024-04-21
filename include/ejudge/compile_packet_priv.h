@@ -54,7 +54,7 @@ struct compile_request_bin_packet
   rint32_t not_ok_is_cf;        /* Check failed in case of compilation error */
   rint32_t preserve_numbers;    /* Try to preserve line numbers in the source */
   rint32_t enable_remote_cache; /* Enable cacheing on the remote side */
-  rint32_t enable_exe_properties; /* Enable extended status reporting from compiler */
+  rint32_t enable_run_props;    /* Enable extended running properties from compiler */
   ej_uuid_t uuid;               /* UUID */
   ej_uuid_t judge_uuid;         /* judging UUID */
   rint32_t multi_header;        /* multi-header mode */
@@ -104,7 +104,7 @@ struct compile_reply_bin_packet
   rint32_t use_uuid;
   rint32_t prepended_size;      /* size of the header prepended by compile */
   rint32_t cached_on_remote;    /* compilation result is cached on remote side */
-  rint32_t has_exe_properties;  /* compiler provided extended status */
+  rint32_t has_run_props;       /* compiler provided extended run properties */
   rint32_t zip_mode;
   ej_uuid_t uuid;               /* UUID */
   ej_uuid_t judge_uuid;         /* judgind UUID */

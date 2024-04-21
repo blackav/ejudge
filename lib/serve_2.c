@@ -1809,7 +1809,7 @@ serve_compile_request(
     cp.preserve_numbers = 1;
   }
   cp.enable_remote_cache = (global->enable_remote_cache > 0);
-  cp.enable_exe_properties = (global->enable_exe_properties > 0);
+  cp.enable_run_props = (global->enable_exe_properties > 0);
 
   memset(&rx, 0, sizeof(rx));
   rx.accepting_mode = accepting_mode;
@@ -2455,7 +2455,7 @@ serve_run_request(
     srgp->src_file = xstrdup(src_name);
   }
 
-  if (comp_pkt->has_exe_properties > 0) {
+  if (comp_pkt->has_run_props > 0) {
     if (prop_size > 0) {
       if (generic_write_file(prop_text, prop_size, 0, run_exe_dir, pkt_base, comp_pkt->prop_sfx) < 0) {
         fprintf(errf, "failed to save properties file");
@@ -3526,7 +3526,7 @@ read_compile_packet_input(
     txt_size = 0;
   }
 
-  if (cs->global->enable_exe_properties > 0 && comp_pkt->has_exe_properties) {
+  if (cs->global->enable_exe_properties > 0 && comp_pkt->has_run_props) {
     r = generic_read_file(&prop_text, 0, &prop_size, REMOVE, compile_report_dir, pname, comp_pkt->prop_sfx);
     if (r < 0) {
       err("%s: failed to read properties file", __FUNCTION__);
@@ -3888,7 +3888,7 @@ serve_read_compile_packet(
     snprintf(txt_packet_path, sizeof(txt_packet_path), "%s/%s.txt", compile_report_dir, pname);
     generic_read_file(&txt_text, 0, &txt_size, REMOVE, NULL, txt_packet_path, NULL);
 
-    if (global->enable_exe_properties > 0 && (comp_pkt->has_exe_properties > 0 && !comp_pkt->zip_mode)) {
+    if (global->enable_exe_properties > 0 && (comp_pkt->has_run_props > 0 && !comp_pkt->zip_mode)) {
       if (generic_read_file(&prop_text, 0, &prop_size, REMOVE, compile_report_dir, pname, comp_pkt->prop_sfx) < 0) {
         snprintf(errmsg, sizeof(errmsg), "%s: exe properties file does not exist\n", __FUNCTION__);
         goto report_check_failed;
