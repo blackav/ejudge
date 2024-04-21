@@ -80,7 +80,7 @@ static struct meta_info_item meta_info_section_global_data_data[] =
   [CNTSGLOB_enable_virtual_restart] = { CNTSGLOB_enable_virtual_restart, 'B', XSIZE(struct section_global_data, enable_virtual_restart), "enable_virtual_restart", XOFFSET(struct section_global_data, enable_virtual_restart) },
   [CNTSGLOB_preserve_line_numbers] = { CNTSGLOB_preserve_line_numbers, 'B', XSIZE(struct section_global_data, preserve_line_numbers), "preserve_line_numbers", XOFFSET(struct section_global_data, preserve_line_numbers) },
   [CNTSGLOB_enable_remote_cache] = { CNTSGLOB_enable_remote_cache, 'B', XSIZE(struct section_global_data, enable_remote_cache), "enable_remote_cache", XOFFSET(struct section_global_data, enable_remote_cache) },
-  [CNTSGLOB_enable_exe_properties] = { CNTSGLOB_enable_exe_properties, 'B', XSIZE(struct section_global_data, enable_exe_properties), "enable_exe_properties", XOFFSET(struct section_global_data, enable_exe_properties) },
+  [CNTSGLOB_enable_run_props] = { CNTSGLOB_enable_run_props, 'B', XSIZE(struct section_global_data, enable_run_props), "enable_run_props", XOFFSET(struct section_global_data, enable_run_props) },
   [CNTSGLOB_name] = { CNTSGLOB_name, 's', XSIZE(struct section_global_data, name), "name", XOFFSET(struct section_global_data, name) },
   [CNTSGLOB_root_dir] = { CNTSGLOB_root_dir, 's', XSIZE(struct section_global_data, root_dir), "root_dir", XOFFSET(struct section_global_data, root_dir) },
   [CNTSGLOB_serve_socket] = { CNTSGLOB_serve_socket, 's', XSIZE(struct section_global_data, serve_socket), "serve_socket", XOFFSET(struct section_global_data, serve_socket) },
@@ -424,7 +424,7 @@ void cntsglob_copy(struct section_global_data *dst, const struct section_global_
   dst->enable_virtual_restart = src->enable_virtual_restart;
   dst->preserve_line_numbers = src->preserve_line_numbers;
   dst->enable_remote_cache = src->enable_remote_cache;
-  dst->enable_exe_properties = src->enable_exe_properties;
+  dst->enable_run_props = src->enable_run_props;
   if (src->name) {
     dst->name = strdup(src->name);
   }
