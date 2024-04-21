@@ -561,7 +561,7 @@ handle_packet(
       (void) source_code_path;
     }
 
-    if (srgp->has_exe_properties > 0 && srgp->zip_mode <= 0 && srgp->prop_file) {
+    if (srgp->has_run_props > 0 && srgp->zip_mode <= 0 && srgp->prop_file) {
       if (agent) {
         r = agent->ops->get_data(agent, srgp->prop_file, NULL, &prop_data, &prop_size);
       } else {

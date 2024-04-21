@@ -2465,7 +2465,7 @@ serve_run_request(
       srgp->prop_file = xstrdup(prop_out_name);
     }
     srgp->prop_sfx = xstrdup(comp_pkt->prop_sfx);
-    srgp->has_exe_properties = 1;
+    srgp->has_run_props = 1;
   }
 
   struct super_run_in_problem_packet *srpp = srp->problem;
