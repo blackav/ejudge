@@ -1809,6 +1809,7 @@ serve_compile_request(
     cp.preserve_numbers = 1;
   }
   cp.enable_remote_cache = (global->enable_remote_cache > 0);
+  cp.enable_run_props = (global->enable_run_props > 0);
 
   memset(&rx, 0, sizeof(rx));
   rx.accepting_mode = accepting_mode;
@@ -2064,7 +2065,9 @@ serve_run_request(
         size_t inp_size,
         struct run_entry *ure,
         const unsigned char *src_text,
-        size_t src_size)
+        size_t src_size,
+        const unsigned char *prop_text,
+        size_t prop_size)
 {
   int cn;
   struct section_global_data *global = state->global;
@@ -2099,6 +2102,7 @@ serve_run_request(
   ej_size64_t lang_specific_size = 0;
   ej_uuid_t local_judge_uuid;
   unsigned char src_name[64];
+  unsigned char prop_out_name[256];
 
   get_current_time(&current_time, &current_time_us);
 
@@ -2449,6 +2453,19 @@ serve_run_request(
       goto fail;
     }
     srgp->src_file = xstrdup(src_name);
+  }
+
+  if (comp_pkt->has_run_props > 0) {
+    if (prop_size > 0) {
+      if (generic_write_file(prop_text, prop_size, 0, run_exe_dir, pkt_base, comp_pkt->prop_sfx) < 0) {
+        fprintf(errf, "failed to save properties file");
+        goto fail;
+      }
+      snprintf(prop_out_name, sizeof(prop_out_name), "%s%s", pkt_base, comp_pkt->prop_sfx);
+      srgp->prop_file = xstrdup(prop_out_name);
+    }
+    srgp->prop_sfx = xstrdup(comp_pkt->prop_sfx);
+    srgp->has_run_props = 1;
   }
 
   struct super_run_in_problem_packet *srpp = srp->problem;
@@ -3388,6 +3405,8 @@ read_compile_packet_input(
   size_t run_size = 0;
   struct storage_entry inp_se = {};
   struct storage_entry src_se = {};
+  char *prop_text = NULL;
+  size_t prop_size = 0;
 
   info("read_compile_packet_input: submit_id %lld", (long long) comp_pkt->submit_id);
 
@@ -3507,6 +3526,14 @@ read_compile_packet_input(
     txt_size = 0;
   }
 
+  if (cs->global->enable_run_props > 0 && comp_pkt->has_run_props) {
+    r = generic_read_file(&prop_text, 0, &prop_size, REMOVE, compile_report_dir, pname, comp_pkt->prop_sfx);
+    if (r < 0) {
+      err("%s: failed to read properties file", __FUNCTION__);
+      goto done;
+    }
+  }
+
   // do not store empty compiler output
   unsigned flags = SUBMIT_FIELD_STATUS;
   if (txt_size > 0) {
@@ -3605,7 +3632,9 @@ read_compile_packet_input(
                         inp_se.size,
                         NULL,
                         src_se.content,
-                        src_se.size);
+                        src_se.size,
+                        prop_text,
+                        prop_size);
   if (r < 0) {
     err("read_compile_packet_input: failed to send to testing");
     goto done;
@@ -3625,6 +3654,7 @@ done:;
   free(run_text);
   free(inp_se.content);
   free(src_se.content);
+  free(prop_text);
 }
 
 int
@@ -3662,6 +3692,8 @@ serve_read_compile_packet(
   char *src_text = NULL;
   size_t src_size = 0;
   unsigned char src_path[PATH_MAX];
+  char *prop_text = NULL;
+  size_t prop_size = 0;
 
   if (!comp_pkt) {
     if ((r = generic_read_file(&comp_pkt_buf, 0, &comp_pkt_size, SAFE | REMOVE,
@@ -3855,6 +3887,13 @@ serve_read_compile_packet(
   if (1 /*re.store_flags == STORE_FLAGS_UUID || re.store_flags == STORE_FLAGS_UUID_BSON */) {
     snprintf(txt_packet_path, sizeof(txt_packet_path), "%s/%s.txt", compile_report_dir, pname);
     generic_read_file(&txt_text, 0, &txt_size, REMOVE, NULL, txt_packet_path, NULL);
+
+    if (global->enable_run_props > 0 && (comp_pkt->has_run_props > 0 && !comp_pkt->zip_mode)) {
+      if (generic_read_file(&prop_text, 0, &prop_size, REMOVE, compile_report_dir, pname, comp_pkt->prop_sfx) < 0) {
+        snprintf(errmsg, sizeof(errmsg), "%s: exe properties file does not exist\n", __FUNCTION__);
+        goto report_check_failed;
+      }
+    }
 
     if (re.judge_uuid_flag) {
       testing_report = testing_report_alloc(comp_pkt->contest_id, comp_pkt->run_id, 0, &re.j.judge_uuid);
@@ -4117,13 +4156,16 @@ prepare_run_request:
                         NULL, 0,
                         &re,
                         src_text,
-                        src_size) < 0) {
+                        src_size,
+                        prop_text,
+                        prop_size) < 0) {
     snprintf(errmsg, sizeof(errmsg), "failed to write run packet\n");
     goto report_check_failed;
   }
   xfree(run_text); run_text = 0; run_size = 0;
 
  success:
+  xfree(prop_text);
   xfree(comp_pkt_buf);
   xfree(txt_text);
   compile_reply_packet_free(comp_pkt);
@@ -4185,6 +4227,7 @@ prepare_run_request:
   /* goto non_fatal_error; */
 
  non_fatal_error:
+  xfree(prop_text);
   xfree(comp_pkt_buf);
   xfree(txt_text);
   xfree(src_text);
@@ -5290,7 +5333,9 @@ serve_rejudge_run(
                       NULL, 0,
                       &re,
                       NULL /* src_text */,
-                      0 /* src_size */);
+                      0 /* src_size */,
+                      NULL /* prop_text */,
+                      0 /* prop_size */);
     xfree(run_text);
     return;
   }

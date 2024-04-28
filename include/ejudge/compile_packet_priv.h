@@ -2,7 +2,7 @@
 #ifndef __COMPILE_PACKET_PRIV_H__
 #define __COMPILE_PACKET_PRIV_H__
 
-/* Copyright (C) 2005-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -18,8 +18,8 @@
 
 #include "ejudge/integral.h"
 
-#define EJ_COMPILE_PACKET_VERSION 16
-#define EJ_COMPILE_REPLY_PACKET_VERSION 3
+#define EJ_COMPILE_PACKET_VERSION 17
+#define EJ_COMPILE_REPLY_PACKET_VERSION 4
 
 /* various private data structures and constants for compile packets */
 
@@ -54,6 +54,7 @@ struct compile_request_bin_packet
   rint32_t not_ok_is_cf;        /* Check failed in case of compilation error */
   rint32_t preserve_numbers;    /* Try to preserve line numbers in the source */
   rint32_t enable_remote_cache; /* Enable cacheing on the remote side */
+  rint32_t enable_run_props;    /* Enable extended running properties from compiler */
   ej_uuid_t uuid;               /* UUID */
   ej_uuid_t judge_uuid;         /* judging UUID */
   rint32_t multi_header;        /* multi-header mode */
@@ -71,7 +72,6 @@ struct compile_request_bin_packet
   rint32_t vcs_compile_cmd_len;  /* compile command for vcs_mode */
   rint32_t compile_cmd_len;      /* custom compile command */
   rint32_t extra_src_dir_len;    /* directory with additional source files */
-  unsigned char pad[4];          /* padding to 16-byte boundary */
   /* style checker command (aligned to 16 byte boundary) */
   /* run_block (aligned to 16 byte boundary) */
   /* env variable length array (aligned to 16-byte address boundary) */
@@ -104,10 +104,11 @@ struct compile_reply_bin_packet
   rint32_t use_uuid;
   rint32_t prepended_size;      /* size of the header prepended by compile */
   rint32_t cached_on_remote;    /* compilation result is cached on remote side */
+  rint32_t has_run_props;       /* compiler provided extended run properties */
+  rint32_t zip_mode;
   ej_uuid_t uuid;               /* UUID */
   ej_uuid_t judge_uuid;         /* judgind UUID */
-  rint32_t zip_mode;
-  unsigned char pad[4];         /* padding to 64-byte boundary */
+  unsigned char prop_sfx[16];   /* prop file suffix */
   /* run block (aligned to 16 byte boundary) */
 };
 

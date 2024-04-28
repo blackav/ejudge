@@ -81,6 +81,9 @@ static struct meta_info_item meta_info_super_run_in_global_packet_data[] =
   [META_SUPER_RUN_IN_GLOBAL_PACKET_clean_up_cmd] = { META_SUPER_RUN_IN_GLOBAL_PACKET_clean_up_cmd, 's', XSIZE(struct super_run_in_global_packet, clean_up_cmd), "clean_up_cmd", XOFFSET(struct super_run_in_global_packet, clean_up_cmd) },
   [META_SUPER_RUN_IN_GLOBAL_PACKET_run_env_file] = { META_SUPER_RUN_IN_GLOBAL_PACKET_run_env_file, 's', XSIZE(struct super_run_in_global_packet, run_env_file), "run_env_file", XOFFSET(struct super_run_in_global_packet, run_env_file) },
   [META_SUPER_RUN_IN_GLOBAL_PACKET_clean_up_env_file] = { META_SUPER_RUN_IN_GLOBAL_PACKET_clean_up_env_file, 's', XSIZE(struct super_run_in_global_packet, clean_up_env_file), "clean_up_env_file", XOFFSET(struct super_run_in_global_packet, clean_up_env_file) },
+  [META_SUPER_RUN_IN_GLOBAL_PACKET_has_run_props] = { META_SUPER_RUN_IN_GLOBAL_PACKET_has_run_props, 'B', XSIZE(struct super_run_in_global_packet, has_run_props), "has_run_props", XOFFSET(struct super_run_in_global_packet, has_run_props) },
+  [META_SUPER_RUN_IN_GLOBAL_PACKET_prop_file] = { META_SUPER_RUN_IN_GLOBAL_PACKET_prop_file, 's', XSIZE(struct super_run_in_global_packet, prop_file), "prop_file", XOFFSET(struct super_run_in_global_packet, prop_file) },
+  [META_SUPER_RUN_IN_GLOBAL_PACKET_prop_sfx] = { META_SUPER_RUN_IN_GLOBAL_PACKET_prop_sfx, 's', XSIZE(struct super_run_in_global_packet, prop_sfx), "prop_sfx", XOFFSET(struct super_run_in_global_packet, prop_sfx) },
 };
 
 int meta_super_run_in_global_packet_get_type(int tag)
@@ -235,6 +238,13 @@ void meta_super_run_in_global_packet_copy(struct super_run_in_global_packet *dst
   if (src->clean_up_env_file) {
     dst->clean_up_env_file = strdup(src->clean_up_env_file);
   }
+  dst->has_run_props = src->has_run_props;
+  if (src->prop_file) {
+    dst->prop_file = strdup(src->prop_file);
+  }
+  if (src->prop_sfx) {
+    dst->prop_sfx = strdup(src->prop_sfx);
+  }
   // hidden scoring_system_val
 }
 
@@ -263,6 +273,8 @@ void meta_super_run_in_global_packet_free(struct super_run_in_global_packet *ptr
   free(ptr->clean_up_cmd);
   free(ptr->run_env_file);
   free(ptr->clean_up_env_file);
+  free(ptr->prop_file);
+  free(ptr->prop_sfx);
   // hidden scoring_system_val
 }
 

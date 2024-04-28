@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2000-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -2063,4 +2063,270 @@ fast_read_file_with_size(
   close(fd);
   *p_buf = buf;
   return 1;
+}
+
+struct file_to_copy
+{
+  unsigned char *full_src_path;
+  unsigned char *full_dst_path;
+  long long st_ino;
+  long long st_dev;
+  int st_mode;
+  gid_t st_gid;
+  struct timespec st_atim;
+  struct timespec st_mtim;
+};
+
+struct file_to_copy_vec
+{
+  struct file_to_copy *v;
+  int a, u;
+};
+
+static int
+collect_files(
+        struct file_to_copy_vec *ff,
+        const unsigned char *src_dir,
+        const unsigned char *dst_dir)
+{
+  int start_idx = ff->u;
+  __attribute__((unused)) int _;
+  DIR *dsrc = opendir(src_dir);
+  if (!dsrc) {
+    err("%s: open directory '%s' failed: %s", __FUNCTION__, src_dir, os_ErrorMsg());
+    goto fail;
+  }
+  struct dirent *dd;
+  while ((dd = readdir(dsrc))) {
+    if (!strcmp(dd->d_name, ".") || !strcmp(dd->d_name, "..")) {
+      continue;
+    }
+    char *fullpath = NULL;
+    _ = asprintf(&fullpath, "%s/%s", src_dir, dd->d_name);
+    struct stat stb;
+    if (lstat(fullpath, &stb) < 0) {
+      info("%s: lstat failed for '%s': %s", __FUNCTION__, fullpath, os_ErrorMsg());
+      free(fullpath);
+      continue;
+    }
+    if (!S_ISDIR(stb.st_mode) && !S_ISLNK(stb.st_mode) && !S_ISREG(stb.st_mode)) {
+      free(fullpath);
+      continue;
+    }
+    if (ff->u == ff->a) {
+      if (!ff->a) {
+        ff->a = 32;
+      } else {
+        ff->a *= 2;
+      }
+      XREALLOC(ff->v, ff->a);
+    }
+    struct file_to_copy *fff = &ff->v[ff->u++];
+    memset(fff, 0, sizeof(*fff));
+    fff->full_src_path = fullpath;
+    fullpath = NULL;
+    _ = asprintf(&fullpath, "%s/%s", dst_dir, dd->d_name);
+    fff->full_dst_path = fullpath;
+    fff->st_ino = stb.st_ino;
+    fff->st_dev = stb.st_dev;
+    fff->st_mode = stb.st_mode;
+    fff->st_gid = stb.st_gid;
+    fff->st_atim = stb.st_atim;
+    fff->st_mtim = stb.st_mtim;
+  }
+  closedir(dsrc); dsrc = NULL;
+
+  int end_idx = ff->u;
+  for (; start_idx < end_idx; ++start_idx) {
+    struct file_to_copy *fff = &ff->v[start_idx];
+    if (S_ISDIR(fff->st_mode)) {
+      int r = collect_files(ff, fff->full_src_path, fff->full_dst_path);
+      if (r < 0) {
+        goto fail;
+      }
+    }
+  }
+
+  return 0;
+
+fail:;
+  return -1;
+}
+
+static ssize_t
+copy_file_with_perms(
+        const unsigned char *src_path,
+        const unsigned char *dst_path)
+{
+  ssize_t retval = -1;
+  int rfd = -1;
+  int wfd = -1;
+  int __attribute__((unused)) _;
+
+  if ((rfd = open(src_path, O_RDONLY | O_CLOEXEC | O_NOCTTY | O_NOFOLLOW | O_NONBLOCK, 0)) < 0) {
+    err("%s: open '%s' failed: %s", __FUNCTION__, src_path, os_ErrorMsg());
+    goto done;
+  }
+  struct stat stb;
+  if (fstat(rfd, &stb) < 0) {
+    err("%s: fstat failed: %s", __FUNCTION__, os_ErrorMsg());
+    goto done;
+  }
+  if (!S_ISREG(stb.st_mode)) {
+    err("%s: file '%s' is not regular", __FUNCTION__, src_path);
+    goto done;
+  }
+
+  if ((wfd = open(dst_path, O_WRONLY | O_CREAT | O_TRUNC | O_EXCL | O_CLOEXEC
+                  | O_NOCTTY | O_NOFOLLOW | O_NONBLOCK, stb.st_mode & 0777)) < 0) {
+    err("%s: open for write '%s' failed: %s", __FUNCTION__, dst_path, os_ErrorMsg());
+    goto done;
+  }
+  struct stat stb2;
+  if (fstat(wfd, &stb2) < 0) {
+    err("%s: fstat failed: %s", __FUNCTION__, os_ErrorMsg());
+    goto done;
+  }
+  if (!S_ISREG(stb2.st_mode)) {
+    err("%s: file '%s' is not regular", __FUNCTION__, dst_path);
+    goto done;
+  }
+
+  unsigned char buf[65536];
+  ssize_t cnt = 0;
+  while (1) {
+    int r = read(rfd, buf, sizeof(buf));
+    if (r < 0) {
+      err("%s: read error: %s", __FUNCTION__, os_ErrorMsg());
+      goto done;
+    }
+    if (!r) break;
+    cnt += r;
+
+    unsigned char *p = buf;
+    while (r > 0) {
+      int w = write(wfd, p, r);
+      if (w < 0) {
+        err("%s: write error: %s", __FUNCTION__, os_ErrorMsg());
+        goto done;
+      }
+      if (!w) abort();
+      r -= w;
+      p += w;
+    }
+  }
+  close(rfd); rfd = -1;
+
+  struct timespec tss[2] =
+  {
+    stb.st_atim,
+    stb.st_mtim,
+  };
+  _ = futimens(wfd, tss);               // error is ignored
+  _ = fchown(wfd, -1, stb.st_gid);      // error is ignored
+  _ = fchmod(wfd, stb.st_mode & 07777); // error is ignored
+  close(wfd); wfd = -1;
+  retval = cnt;
+
+done:;
+  if (rfd >= 0) close(rfd);
+  if (wfd >= 0) close(wfd);
+  return retval;
+}
+
+// content of `src_dir` is copied to `dst_dir`
+// copying is recursive
+// regular files, symlinks and hardlinks are supported
+// file mode and group are preserved, but error is ok
+// other file types are ignored
+int
+copy_directory_recursively(
+        FILE *log_f,
+        const unsigned char *src_dir,
+        const unsigned char *dst_dir)
+{
+  __attribute__((unused)) int _;
+  int retval = -1;
+  struct file_to_copy_vec ff = {};
+  if (collect_files(&ff, src_dir, dst_dir) < 0) {
+    goto done;
+  }
+
+  int old_umask = umask(0);
+  for (int i = 0; i < ff.u; ++i) {
+    struct file_to_copy *fff = &ff.v[i];
+    if (S_ISDIR(fff->st_mode)) {
+      if (mkdir(fff->full_dst_path, 0700) < 0) {
+        err("%s: mkdir %s failed: %s", __FUNCTION__, fff->full_dst_path, os_ErrorMsg());
+        goto done;
+      }
+    } else if (S_ISREG(fff->st_mode)) {
+      // TODO: use map?
+      int j;
+      for (j = 0; j < i; ++j) {
+        if (ff.v[j].st_dev == fff->st_dev && ff.v[j].st_ino == fff->st_ino) {
+          break;
+        }
+      }
+      if (j < i) {
+        // hardlink
+        if (link(ff.v[j].full_dst_path, fff->full_dst_path) < 0) {
+          err("%s: link %s -> %s failed: %s", __FUNCTION__, fff->full_dst_path, ff.v[j].full_dst_path, os_ErrorMsg());
+          goto done;
+        }
+      } else {
+        if (copy_file_with_perms(fff->full_src_path, fff->full_dst_path) < 0) {
+          goto done;
+        }
+      }
+    } else if (S_ISLNK(fff->st_mode)) {
+      unsigned char lnkbuf[PATH_MAX];
+      int r;
+      if ((r = readlink(fff->full_src_path, lnkbuf, sizeof(lnkbuf))) < 0) {
+        err("%s: readlink %s failed: %s", __FUNCTION__, fff->full_src_path, os_ErrorMsg());
+        goto done;
+      }
+      if (r == sizeof(lnkbuf)) {
+        err("%s: symlink %s is too long", __FUNCTION__, fff->full_src_path);
+        goto done;
+      }
+      lnkbuf[r] = 0;
+      if (symlink(fff->full_dst_path, lnkbuf) < 0) {
+        err("%s: symlink %s -> %s failed: %s", __FUNCTION__, fff->full_src_path, fff->full_src_path, os_ErrorMsg());
+        goto done;
+      }
+      struct timespec tss[2] =
+      {
+        fff->st_atim,
+        fff->st_mtim,
+      };
+      _ = utimensat(AT_FDCWD, fff->full_dst_path, tss, 0); // error is ignored
+      _ = chown(fff->full_dst_path, -1, fff->st_gid);      // error is ignored
+      _ = chmod(fff->full_dst_path, fff->st_mode & 07777); // error is ignored
+    }
+  }
+  for (int i = ff.u - 1; i >= 0; --i) {
+    struct file_to_copy *fff = &ff.v[i];
+    if (S_ISDIR(fff->st_mode)) {
+      struct timespec tss[2] =
+      {
+        fff->st_atim,
+        fff->st_mtim,
+      };
+      _ = utimensat(AT_FDCWD, fff->full_dst_path, tss, 0); // error is ignored
+      _ = chown(fff->full_dst_path, -1, fff->st_gid);      // error is ignored
+      _ = chmod(fff->full_dst_path, fff->st_mode & 07777); // error is ignored
+    }
+  }
+  umask(old_umask);
+  retval = 0;
+
+done:;
+  for (int i = 0; i < ff.u; ++i) {
+    struct file_to_copy *fff = &ff.v[i];
+    xfree(fff->full_src_path);
+    xfree(fff->full_dst_path);
+  }
+  xfree(ff.v);
+  return retval;
 }

@@ -1,6 +1,6 @@
 # -*- Makefile -*-
 
-# Copyright (C) 2002-2023 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2002-2024 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -243,6 +243,7 @@ COMMON_CFILES=\
  lib/run_packet_4.c\
  lib/run_packet_5.c\
  lib/run_packet_6.c\
+ lib/run_props.c\
  lib/send_job_packet.c\
  lib/server_info.c\
  lib/server_framework.c\
@@ -657,6 +658,7 @@ HFILES=\
  ./include/ejudge/runlog_state.h\
  ./include/ejudge/run_packet.h\
  ./include/ejudge/run_packet_priv.h\
+ ./include/ejudge/run_props.h\
  ./include/ejudge/server_info.h\
  ./include/ejudge/server_framework.h\
  ./include/ejudge/serve_state.h\

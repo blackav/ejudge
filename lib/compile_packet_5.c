@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2005-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -73,6 +73,7 @@ compile_reply_packet_write(const struct compile_reply_packet *in_data,
   out_data->use_uuid = cvt_host_to_bin_32(in_data->use_uuid);
   out_data->prepended_size = cvt_host_to_bin_32(in_data->prepended_size);
   out_data->cached_on_remote = cvt_host_to_bin_32(in_data->cached_on_remote);
+  out_data->has_run_props = cvt_host_to_bin_32(in_data->has_run_props);
   out_data->uuid = in_data->uuid;
   out_data->judge_uuid = in_data->judge_uuid;
   /*
@@ -82,6 +83,7 @@ compile_reply_packet_write(const struct compile_reply_packet *in_data,
   out_data->uuid.v[3] = cvt_host_to_bin_32(in_data->uuid.v[3]);
   */
   out_data->zip_mode = cvt_host_to_bin_32(in_data->zip_mode);
+  memcpy(out_data->prop_sfx, in_data->prop_sfx, sizeof(out_data->prop_sfx));
   out_data->run_block_len = cvt_host_to_bin_32(in_data->run_block_len);
   if (in_data->run_block_len) {
     memcpy(out_ptr, in_data->run_block, in_data->run_block_len);

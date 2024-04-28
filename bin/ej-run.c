@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2000-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -354,7 +354,8 @@ do_loop(void)
                 0 /* user_input_mode*/,
                 NULL /* inp_data */,
                 0 /* inp_size*/,
-                NULL /* src_path */);
+                NULL /* src_path */,
+                NULL /* run_props */);
       //if (cr_serialize_unlock(&serve_state) < 0) return -1;
 
       if (tst == &tn) {

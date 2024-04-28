@@ -1,12 +1,7 @@
-#!/bin/sh
-# Copyright (c) 2003-2018 Alexander Chernov <cher@ejudge.ru>
+#! /bin/bash
+# Copyright (c) 2003-2024 Alexander Chernov <cher@ejudge.ru>
 
-# This is a `compilation' script for the Python language.
-# The idea is to append "#!${PYTHONPATH}" string
-# to the beginning of the file.
-# Usage: python3 <input> <output>
-
-# using EJUDGE_FLAGS we may pass additional flags
+# Usage: python3 <input> <output> <property-file>
 
 LANG_CONFIG_DIR="@lang_config_dir@"
 [ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/python3.cfg"
@@ -23,6 +18,41 @@ if [ x"${version}" = x ]
 then
   echo "This language is not supported." >&2
   exit 1
+fi
+
+if [ x"${EJUDGE_EXE_PROPERTIES}" = x1 ]
+then
+    extra_args=""
+    if [ "${EJUDGE_RUN_FLAGS}" != "" ]
+    then
+        for x in ${EJUDGE_RUN_FLAGS}
+        do
+            extra_args="$extra_args",'"'$x'"'
+        done
+    fi
+    if [ x"${EJUDGE_ARCHIVE}" = x1 ]
+    then
+        if [ x"${EJUDGE_SOLUTION_FILE}" = x ]
+        then
+            echo "EJUDGE_SOLUTION_FILE must be specified" >&2
+            exit 1
+        fi
+        if [ x"${EJUDGE_START_FILE}" = x ]
+        then
+            echo "EJUDGE_START_FILE must be specified" >&2
+            exit 1
+        fi
+        mv "$1" "${EJUDGE_SOLUTION_FILE}.py"
+        tar cfz "$2" .
+        echo '{ "is_archive": true, "start_cmd": "'${PYTHONPATH}'", "start_args": ["'${PYTHONPATH}'"'${extra_args}',"'${EJUDGE_START_FILE}'.py"] }' > "$3"
+        exit 0
+    fi
+
+    prop_file="$3"
+    echo '{ "start_cmd": "'${PYTHONPATH}'", "start_args": ["'${PYTHONPATH}'"'${extra_args}']}' > "$prop_file"
+    cp -p "$1" "$2"
+    chmod +x "$2"
+    exit 0
 fi
 
 echo "#! ${PYTHONPATH}" > $2

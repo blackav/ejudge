@@ -1227,7 +1227,9 @@ cmd_submit_run(
                               NULL, 0,
                               &new_run,
                               NULL /* src_text */,
-                              0 /* src_size */) < 0)
+                              0 /* src_size */,
+                              NULL /* prop_text */,
+                              0 /* prop_size */) < 0)
           FAIL(NEW_SRV_ERR_DISK_WRITE_ERROR);
       }
     }
@@ -1297,7 +1299,9 @@ cmd_submit_run(
                               NULL, 0,
                               &new_run,
                               NULL /* src_text */,
-                              0 /* src_size */) < 0)
+                              0 /* src_size */,
+                              NULL /* prop_text */,
+                              0 /* prop_size */) < 0)
           FAIL(NEW_SRV_ERR_DISK_WRITE_ERROR);
       }
     }

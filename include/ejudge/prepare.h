@@ -291,6 +291,9 @@ struct section_global_data
   /** enable executable file cacheing on the remote agent side */
   ejintbool_t enable_remote_cache;
 
+  /** enable extended running properties produced by compilation */
+  ejintbool_t enable_run_props;
+
   /** @deprecated the name of the contest */
   unsigned char *name;
   /** @deprecated the contest root directory */
