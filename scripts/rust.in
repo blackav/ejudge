@@ -1,5 +1,5 @@
 #! /bin/bash
-# Copyright (c) 2017-2023 Alexander Chernov <cher@ejudge.ru>
+# Copyright (c) 2017-2024 Alexander Chernov <cher@ejudge.ru>
 
 # using EJUDGE_FLAGS we may pass additional flags
 
@@ -65,5 +65,16 @@ unset LANG
 unset LC_ALL
 unset LC_MESSAGES
 unset LANGUAGE
+
+if [ "${EJUDGE_START_FILE}" != "" ]
+then
+    if [ x"${EJUDGE_SOLUTION_FILE}" = x ]
+    then
+        echo "EJUDGE_SOLUTION_FILE must be specified" >&2
+        exit 1
+    fi
+    mv "$1" "${EJUDGE_SOLUTION_FILE}.rs"
+    exec "${RUSTRUN}" ${EJUDGE_FLAGS} "${EJUDGE_START_FILE}.rs" ${EJUDGE_LIBS} -o "$2"
+fi
 
 exec "${RUSTRUN}" ${EJUDGE_FLAGS} "$1" ${EJUDGE_LIBS} -o "$2"

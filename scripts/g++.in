@@ -1,5 +1,5 @@
-#!/bin/sh
-# Copyright (c) 2001-2023 Alexander Chernov <cher@ejudge.ru>
+#! /bin/bash
+# Copyright (c) 2001-2024 Alexander Chernov <cher@ejudge.ru>
 
 # using EJUDGE_FLAGS we may pass additional flags
 
@@ -33,5 +33,18 @@ unset LANG
 unset LC_ALL
 unset LC_MESSAGES
 unset LANGUAGE
+
+if [ "${EJUDGE_COMPILE_MASK}" != "" ]
+then
+    if [ "${EJUDGE_SOLUTION_FILE}" != "" ]
+    then
+        if ! mv "$1" "${EJUDGE_SOLUTION_FILE}.cpp"
+        then
+            echo "failed to rename $1 to $EJUDGE_SOLUTION_FILE" >&2
+            exit 1
+        fi
+        exec "${GPPRUN}" ${EJUDGE_FLAGS} ${EJUDGE_COMPILE_MASK} -o "$2" -lm ${EJUDGE_LIBS}
+    fi
+fi
 
 exec "${GPPRUN}" ${EJUDGE_FLAGS} "$1" -o "$2" -lm ${EJUDGE_LIBS}

@@ -1,14 +1,9 @@
-#!/bin/sh
-# Copyright (c) 2017 Alexander Chernov <cher@ejudge.ru>
+#! /bin/bash
+# Copyright (c) 2017-2024 Alexander Chernov <cher@ejudge.ru>
 
-# This is a `compilation' script for the JavaScript (NodeJS) language.
-# The idea is to append "#!${NODEPATH}" string
-# to the beginning of the file.
-# Usage: node <input> <output>
+# Usage: node <input> <output> [<property-file>]
 
-# using EJUDGE_FLAGS we may pass additional flags
-
-LANG_CONFIG_DIR="@lang_config_dir@"
+LANG_CONFIG_DIR="/home/judges/compile/conf/lang.d"
 [ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/node.cfg"
 
 if [ -f "${EJUDGE_LANG_CONFIG}" ]
@@ -25,7 +20,44 @@ then
   exit 1
 fi
 
-echo "#! ${NODEPATH} ${EJUDGE_FLAGS}" > $2
+if [ x"${EJUDGE_EXE_PROPERTIES}" = x1 ]
+then
+    extra_args=""
+    if [ "${EJUDGE_RUN_FLAGS}" != "" ]
+    then
+        for x in ${EJUDGE_RUN_FLAGS}
+        do
+            extra_args="$extra_args",'"'$x'"'
+        done
+    fi
+    if [ x"${EJUDGE_ARCHIVE}" = x1 ]
+    then
+        if [ x"${EJUDGE_SOLUTION_FILE}" = x ]
+        then
+            echo "EJUDGE_SOLUTION_FILE must be specified" >&2
+            exit 1
+        fi
+        if [ x"${EJUDGE_START_FILE}" = x ]
+        then
+            echo "EJUDGE_START_FILE must be specified" >&2
+            exit 1
+        fi
+        mv "$1" "${EJUDGE_SOLUTION_FILE}.js"
+        tar cfz "$2" .
+        echo '{ "is_archive": true, "start_cmd": "'${NODEPATH}'", "start_args": ["'${NODEPATH}'"'${extra_args}',"'${EJUDGE_START_FILE}'.js"] }' > "$3"
+        ls -l .
+        cat $3
+        exit 0
+    fi
+
+    prop_file="$3"
+    echo '{ "start_cmd": "'${NODEPATH}'", "start_args": ["'${NODEPATH}'"'${extra_args}']}' > "$prop_file"
+    cp -p "$1" "$2"
+    chmod +x "$2"
+    exit 0
+fi
+
+echo "#! ${NODEPATH}" > $2
 echo >> $2
 cat $1 >> $2
 chmod +x $2

@@ -1,10 +1,8 @@
 #! /bin/bash
-# Copyright (c) 2019-2023 Alexander Chernov <cher@ejudge.ru>
+# Copyright (c) 2019-2024 Alexander Chernov <cher@ejudge.ru>
 
 # A script for compilation of C# programs using the dotnet compiler.
 # Usage: dotnet-cs in-file out-file
-
-# using EJUDGE_FLAGS we may pass additional flags
 
 prefix="@prefix@"
 
@@ -40,6 +38,28 @@ unset LANGUAGE
 
 export DOTNET_NOLOGO=true
 export DOTNET_CLI_TELEMETRY_OPTOUT=true
+
+if [ "$EJUDGE_HAS_PROJECT" = 1 ]
+then
+    if [ x"${EJUDGE_SOLUTION_FILE}" = x ]
+    then
+        echo "EJUDGE_SOLUTION_FILE must be specified" >&2
+        exit 1
+    fi
+    mv "$1" "${EJUDGE_SOLUTION_FILE}.cs"
+
+    if ! "${DOTNETRUN}" build -c Release
+    then
+        echo "Compilation failed." >&2
+        exit 1
+    fi
+    if ! mv bin/Release/${DOTNETTARGET}/solution.dll "$2"
+    then
+        echo "Compilation output is missing" >&2
+        exit 1
+    fi
+    exit 0
+fi
 
 TEMPLATE_DIR="${prefix}/share/ejudge/template"
 TEMPLATE_FILE="${TEMPLATE_DIR}/dotnet-cs.tbz"
