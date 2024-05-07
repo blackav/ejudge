@@ -2455,7 +2455,7 @@ serve_run_request(
     srgp->src_file = xstrdup(src_name);
   }
 
-  if (comp_pkt->has_run_props > 0) {
+  if (comp_pkt && comp_pkt->has_run_props > 0) {
     if (prop_size > 0) {
       if (generic_write_file(prop_text, prop_size, 0, run_exe_dir, pkt_base, comp_pkt->prop_sfx) < 0) {
         fprintf(errf, "failed to save properties file");
