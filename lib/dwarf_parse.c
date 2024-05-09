@@ -777,6 +777,9 @@ parse_base_type_die(
     } else if (bs == 16 && enc == DW_ATE_unsigned) {
         // FIXME: create 128-bit type
         ti = tc_get_u64_type(cntx);
+    } else if (bs == 2 && enc == DW_ATE_float) {
+        // FIXME: _Float16
+        ti = tc_get_f32_type(cntx);
     } else if (bs == 4 && enc == DW_ATE_float) {
         ti = tc_get_f32_type(cntx);
     } else if (bs == 8 && enc == DW_ATE_float) {
