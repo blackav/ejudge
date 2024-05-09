@@ -497,6 +497,8 @@ update_language_script(
   FILE *f = 0;
   char buf[1024];
   char old_path[PATH_MAX];
+  char lock_path[PATH_MAX];
+  char new_script_out[PATH_MAX];
   __attribute__((unused)) int _;
 
   // read the source file
@@ -532,11 +534,18 @@ update_language_script(
     xfree(out_t); out_t = 0;
   }
 
-  // preserve the old output file
-  _ = snprintf(old_path, sizeof(old_path), "%s.old", script_out);
-  if (rename(script_out, old_path) < 0) {
-    log_printf(err_f, win, "error: cannot rename `%s'\n", script_out);
-    goto cleanup;
+  // check the lock file
+  _ = snprintf(lock_path, sizeof(lock_path), "%s.lock", script_out);
+  if (access(lock_path, F_OK) >= 0) {
+    _ = snprintf(new_script_out, sizeof(new_script_out), "%s.new", script_out);
+    script_out = new_script_out;
+  } else {
+    // preserve the old output file
+    _ = snprintf(old_path, sizeof(old_path), "%s.old", script_out);
+    if (rename(script_out, old_path) < 0) {
+      log_printf(err_f, win, "error: cannot rename `%s'\n", script_out);
+      goto cleanup;
+    }
   }
 
   // write the output file
