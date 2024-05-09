@@ -45,8 +45,6 @@ then
         mv "$1" "${EJUDGE_SOLUTION_FILE}.js"
         tar cfz "$2" .
         echo '{ "is_archive": true, "start_cmd": "'${NODEPATH}'", "start_args": ["'${NODEPATH}'"'${extra_args}',"'${EJUDGE_START_FILE}'.js"] }' > "$3"
-        ls -l .
-        cat $3
         exit 0
     fi
 
