@@ -1334,7 +1334,7 @@ struct section_problem_data
   } xml META_ATTRIB((meta_hidden));
 };
 
-/* sizeof(struct section_language_data) == 312/400 */
+/* sizeof(struct section_language_data) == ?/472 */
 struct section_language_data
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));
@@ -1445,6 +1445,9 @@ struct section_language_data
   unsigned char *run_env_file;
   /** additional clean_up environment in file */
   unsigned char *clean_up_env_file;
+
+  /** compiler version */
+  unsigned char *version;
 
   unsigned char *unhandled_vars;
   /** disabled by configuration script */

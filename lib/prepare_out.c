@@ -996,6 +996,9 @@ prepare_unparse_lang(
   if (lang->clean_up_env_file && *lang->clean_up_env_file) {
     fprintf(f, "clean_up_env_file = \"%s\"\n", CARMOR(lang->clean_up_env_file));
   }
+  if (lang->version && *lang->version) {
+    fprintf(f, "version = \"%s\"\n", CARMOR(lang->version));
+  }
   fprintf(f, "\n");
 
   if (lang->unhandled_vars) fprintf(f, "%s\n", lang->unhandled_vars);
