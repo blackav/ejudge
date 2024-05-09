@@ -1980,6 +1980,8 @@ static struct meta_info_item meta_info_section_language_data_data[] =
   [CNTSLANG_enable_custom] = { CNTSLANG_enable_custom, 'B', XSIZE(struct section_language_data, enable_custom), "enable_custom", XOFFSET(struct section_language_data, enable_custom) },
   [CNTSLANG_enable_ejudge_env] = { CNTSLANG_enable_ejudge_env, 'B', XSIZE(struct section_language_data, enable_ejudge_env), "enable_ejudge_env", XOFFSET(struct section_language_data, enable_ejudge_env) },
   [CNTSLANG_preserve_line_numbers] = { CNTSLANG_preserve_line_numbers, 'B', XSIZE(struct section_language_data, preserve_line_numbers), "preserve_line_numbers", XOFFSET(struct section_language_data, preserve_line_numbers) },
+  [CNTSLANG_default_disabled] = { CNTSLANG_default_disabled, 'B', XSIZE(struct section_language_data, default_disabled), "default_disabled", XOFFSET(struct section_language_data, default_disabled) },
+  [CNTSLANG_enabled] = { CNTSLANG_enabled, 'B', XSIZE(struct section_language_data, enabled), "enabled", XOFFSET(struct section_language_data, enabled) },
   [CNTSLANG_max_vm_size] = { CNTSLANG_max_vm_size, 'E', XSIZE(struct section_language_data, max_vm_size), "max_vm_size", XOFFSET(struct section_language_data, max_vm_size) },
   [CNTSLANG_max_stack_size] = { CNTSLANG_max_stack_size, 'E', XSIZE(struct section_language_data, max_stack_size), "max_stack_size", XOFFSET(struct section_language_data, max_stack_size) },
   [CNTSLANG_max_file_size] = { CNTSLANG_max_file_size, 'E', XSIZE(struct section_language_data, max_file_size), "max_file_size", XOFFSET(struct section_language_data, max_file_size) },
@@ -2090,6 +2092,8 @@ void cntslang_copy(struct section_language_data *dst, const struct section_langu
   dst->enable_custom = src->enable_custom;
   dst->enable_ejudge_env = src->enable_ejudge_env;
   dst->preserve_line_numbers = src->preserve_line_numbers;
+  dst->default_disabled = src->default_disabled;
+  dst->enabled = src->enabled;
   dst->max_vm_size = src->max_vm_size;
   dst->max_stack_size = src->max_stack_size;
   dst->max_file_size = src->max_file_size;
