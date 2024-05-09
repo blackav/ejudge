@@ -1,5 +1,5 @@
 #! /bin/bash
-# Copyright (c) 2023 Alexander Chernov <cher@ejudge.ru>
+# Copyright (c) 2023-2024 Alexander Chernov <cher@ejudge.ru>
 
 prefix="@prefix@"
 exec_prefix="@exec_prefix@"
@@ -13,6 +13,7 @@ common_config() {
   echo 'long_name="PostgreSQL"'
   echo 'src_sfx=".sql"'
   echo 'arch="linux-shared"'
+  echo 'default_disabled=1'
 }
 
 failure() {
