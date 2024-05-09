@@ -2004,6 +2004,7 @@ static struct meta_info_item meta_info_section_language_data_data[] =
   [CNTSLANG_clean_up_cmd] = { CNTSLANG_clean_up_cmd, 's', XSIZE(struct section_language_data, clean_up_cmd), "clean_up_cmd", XOFFSET(struct section_language_data, clean_up_cmd) },
   [CNTSLANG_run_env_file] = { CNTSLANG_run_env_file, 's', XSIZE(struct section_language_data, run_env_file), "run_env_file", XOFFSET(struct section_language_data, run_env_file) },
   [CNTSLANG_clean_up_env_file] = { CNTSLANG_clean_up_env_file, 's', XSIZE(struct section_language_data, clean_up_env_file), "clean_up_env_file", XOFFSET(struct section_language_data, clean_up_env_file) },
+  [CNTSLANG_version] = { CNTSLANG_version, 's', XSIZE(struct section_language_data, version), "version", XOFFSET(struct section_language_data, version) },
   [CNTSLANG_unhandled_vars] = { CNTSLANG_unhandled_vars, 's', XSIZE(struct section_language_data, unhandled_vars), "unhandled_vars", XOFFSET(struct section_language_data, unhandled_vars) },
   [CNTSLANG_disabled_by_config] = { CNTSLANG_disabled_by_config, 'i', XSIZE(struct section_language_data, disabled_by_config), NULL, XOFFSET(struct section_language_data, disabled_by_config) },
 };
@@ -2142,6 +2143,9 @@ void cntslang_copy(struct section_language_data *dst, const struct section_langu
   if (src->clean_up_env_file) {
     dst->clean_up_env_file = strdup(src->clean_up_env_file);
   }
+  if (src->version) {
+    dst->version = strdup(src->version);
+  }
   if (src->unhandled_vars) {
     dst->unhandled_vars = strdup(src->unhandled_vars);
   }
@@ -2174,6 +2178,7 @@ void cntslang_free(struct section_language_data *ptr)
   free(ptr->clean_up_cmd);
   free(ptr->run_env_file);
   free(ptr->clean_up_env_file);
+  free(ptr->version);
   free(ptr->unhandled_vars);
   // private disabled_by_config
 }
