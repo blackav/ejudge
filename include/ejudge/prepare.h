@@ -1395,6 +1395,10 @@ struct section_language_data
   ejintbool_t enable_ejudge_env;
   /** to preserve the original line numbers in scripts */
   ejintbool_t preserve_line_numbers;
+  /** disable this language by the default import */
+  ejintbool_t default_disabled;
+  /** enable this language (overrides default_disabled) */
+  ejintbool_t enabled;
 
   /** max virtual size limit  */
   ej_size64_t max_vm_size;
