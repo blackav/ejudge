@@ -927,6 +927,10 @@ prepare_unparse_lang(
     unparse_bool(f, "enable_ejudge_env", lang->enable_ejudge_env);
   if (lang->preserve_line_numbers > 0)
     unparse_bool(f, "preserve_line_numbers", lang->preserve_line_numbers);
+  if (lang->default_disabled > 0)
+    unparse_bool(f, "default_disabled", lang->default_disabled);
+  if (lang->enabled > 0)
+    unparse_bool(f, "enabled", lang->enabled);
   if (lang->content_type && lang->content_type[0]) {
     fprintf(f, "content_type = \"%s\"\n", CARMOR(lang->content_type));
   }
@@ -991,6 +995,9 @@ prepare_unparse_lang(
   }
   if (lang->clean_up_env_file && *lang->clean_up_env_file) {
     fprintf(f, "clean_up_env_file = \"%s\"\n", CARMOR(lang->clean_up_env_file));
+  }
+  if (lang->version && *lang->version) {
+    fprintf(f, "version = \"%s\"\n", CARMOR(lang->version));
   }
   fprintf(f, "\n");
 

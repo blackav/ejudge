@@ -624,6 +624,8 @@ enum
   CNTSLANG_enable_custom,
   CNTSLANG_enable_ejudge_env,
   CNTSLANG_preserve_line_numbers,
+  CNTSLANG_default_disabled,
+  CNTSLANG_enabled,
   CNTSLANG_max_vm_size,
   CNTSLANG_max_stack_size,
   CNTSLANG_max_file_size,
@@ -646,6 +648,7 @@ enum
   CNTSLANG_clean_up_cmd,
   CNTSLANG_run_env_file,
   CNTSLANG_clean_up_env_file,
+  CNTSLANG_version,
   CNTSLANG_unhandled_vars,
   CNTSLANG_disabled_by_config,
 

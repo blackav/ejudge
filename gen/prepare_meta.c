@@ -1980,6 +1980,8 @@ static struct meta_info_item meta_info_section_language_data_data[] =
   [CNTSLANG_enable_custom] = { CNTSLANG_enable_custom, 'B', XSIZE(struct section_language_data, enable_custom), "enable_custom", XOFFSET(struct section_language_data, enable_custom) },
   [CNTSLANG_enable_ejudge_env] = { CNTSLANG_enable_ejudge_env, 'B', XSIZE(struct section_language_data, enable_ejudge_env), "enable_ejudge_env", XOFFSET(struct section_language_data, enable_ejudge_env) },
   [CNTSLANG_preserve_line_numbers] = { CNTSLANG_preserve_line_numbers, 'B', XSIZE(struct section_language_data, preserve_line_numbers), "preserve_line_numbers", XOFFSET(struct section_language_data, preserve_line_numbers) },
+  [CNTSLANG_default_disabled] = { CNTSLANG_default_disabled, 'B', XSIZE(struct section_language_data, default_disabled), "default_disabled", XOFFSET(struct section_language_data, default_disabled) },
+  [CNTSLANG_enabled] = { CNTSLANG_enabled, 'B', XSIZE(struct section_language_data, enabled), "enabled", XOFFSET(struct section_language_data, enabled) },
   [CNTSLANG_max_vm_size] = { CNTSLANG_max_vm_size, 'E', XSIZE(struct section_language_data, max_vm_size), "max_vm_size", XOFFSET(struct section_language_data, max_vm_size) },
   [CNTSLANG_max_stack_size] = { CNTSLANG_max_stack_size, 'E', XSIZE(struct section_language_data, max_stack_size), "max_stack_size", XOFFSET(struct section_language_data, max_stack_size) },
   [CNTSLANG_max_file_size] = { CNTSLANG_max_file_size, 'E', XSIZE(struct section_language_data, max_file_size), "max_file_size", XOFFSET(struct section_language_data, max_file_size) },
@@ -2002,6 +2004,7 @@ static struct meta_info_item meta_info_section_language_data_data[] =
   [CNTSLANG_clean_up_cmd] = { CNTSLANG_clean_up_cmd, 's', XSIZE(struct section_language_data, clean_up_cmd), "clean_up_cmd", XOFFSET(struct section_language_data, clean_up_cmd) },
   [CNTSLANG_run_env_file] = { CNTSLANG_run_env_file, 's', XSIZE(struct section_language_data, run_env_file), "run_env_file", XOFFSET(struct section_language_data, run_env_file) },
   [CNTSLANG_clean_up_env_file] = { CNTSLANG_clean_up_env_file, 's', XSIZE(struct section_language_data, clean_up_env_file), "clean_up_env_file", XOFFSET(struct section_language_data, clean_up_env_file) },
+  [CNTSLANG_version] = { CNTSLANG_version, 's', XSIZE(struct section_language_data, version), "version", XOFFSET(struct section_language_data, version) },
   [CNTSLANG_unhandled_vars] = { CNTSLANG_unhandled_vars, 's', XSIZE(struct section_language_data, unhandled_vars), "unhandled_vars", XOFFSET(struct section_language_data, unhandled_vars) },
   [CNTSLANG_disabled_by_config] = { CNTSLANG_disabled_by_config, 'i', XSIZE(struct section_language_data, disabled_by_config), NULL, XOFFSET(struct section_language_data, disabled_by_config) },
 };
@@ -2090,6 +2093,8 @@ void cntslang_copy(struct section_language_data *dst, const struct section_langu
   dst->enable_custom = src->enable_custom;
   dst->enable_ejudge_env = src->enable_ejudge_env;
   dst->preserve_line_numbers = src->preserve_line_numbers;
+  dst->default_disabled = src->default_disabled;
+  dst->enabled = src->enabled;
   dst->max_vm_size = src->max_vm_size;
   dst->max_stack_size = src->max_stack_size;
   dst->max_file_size = src->max_file_size;
@@ -2138,6 +2143,9 @@ void cntslang_copy(struct section_language_data *dst, const struct section_langu
   if (src->clean_up_env_file) {
     dst->clean_up_env_file = strdup(src->clean_up_env_file);
   }
+  if (src->version) {
+    dst->version = strdup(src->version);
+  }
   if (src->unhandled_vars) {
     dst->unhandled_vars = strdup(src->unhandled_vars);
   }
@@ -2170,6 +2178,7 @@ void cntslang_free(struct section_language_data *ptr)
   free(ptr->clean_up_cmd);
   free(ptr->run_env_file);
   free(ptr->clean_up_env_file);
+  free(ptr->version);
   free(ptr->unhandled_vars);
   // private disabled_by_config
 }

@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2008-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -496,6 +496,10 @@ update_language_script(
   size_t in_z = 0, out_z = 0;
   FILE *f = 0;
   char buf[1024];
+  char old_path[PATH_MAX];
+  char lock_path[PATH_MAX];
+  char new_script_out[PATH_MAX];
+  __attribute__((unused)) int _;
 
   // read the source file
   if (!(f = fopen(script_in, "r"))) {
@@ -520,14 +524,28 @@ update_language_script(
     fclose(f); f = 0;
     if (!strcmp(out_t, in_t)) {
       // no difference, but update the modtime
-      if (utime(script_out, 0) < 0) {
-        log_printf(err_f, win, "error: cannot change mod time for `%s'\n",
-                   script_out);
-        // error
-      }
+      //if (utime(script_out, 0) < 0) {
+      //  log_printf(err_f, win, "error: cannot change mod time for `%s'\n",
+      //             script_out);
+      //  // error
+      //}
       goto cleanup;
     }
     xfree(out_t); out_t = 0;
+  }
+
+  // check the lock file
+  _ = snprintf(lock_path, sizeof(lock_path), "%s.lock", script_out);
+  if (access(lock_path, F_OK) >= 0) {
+    _ = snprintf(new_script_out, sizeof(new_script_out), "%s.new", script_out);
+    script_out = new_script_out;
+  } else {
+    // preserve the old output file
+    _ = snprintf(old_path, sizeof(old_path), "%s.old", script_out);
+    if (rename(script_out, old_path) < 0) {
+      log_printf(err_f, win, "error: cannot rename `%s'\n", script_out);
+      goto cleanup;
+    }
   }
 
   // write the output file
@@ -1189,11 +1207,10 @@ lang_config_generate_compile_cfg(
     s = shellconfig_get(p->cfg, "long_name");
     if (!s) s = "";
     fprintf(f, "long_name = \"%s\"\n", s);
-    /*
     s = shellconfig_get(p->cfg, "version");
-    if (!s) s = "";
-    fprintf(f, "%s\"\n", s);
-    */
+    if (s && *s) {
+      fprintf(f, "version = \"%s\"\n", s);
+    }
     if ((s = shellconfig_get(p->cfg, "src_sfx"))) {
       fprintf(f, "src_sfx = \"%s\"\n", s);
     }
@@ -1220,6 +1237,9 @@ lang_config_generate_compile_cfg(
     }
     if ((s = shellconfig_get(p->cfg, "enable_ejudge_env"))) {
       fprintf(f, "enable_ejudge_env\n");
+    }
+    if ((s = shellconfig_get(p->cfg, "default_disabled"))) {
+      fprintf(f, "default_disabled\n");
     }
     if (!(s = shellconfig_get(p->cfg, "cmd"))) s = p->lang;
     fprintf(f, "cmd = \"%s\"\n", s);

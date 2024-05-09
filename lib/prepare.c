@@ -627,6 +627,8 @@ static const struct config_parse_info section_language_params[] =
   LANGUAGE_PARAM(enable_custom, "d"),
   LANGUAGE_PARAM(enable_ejudge_env, "d"),
   LANGUAGE_PARAM(preserve_line_numbers, "d"),
+  LANGUAGE_PARAM(default_disabled, "d"),
+  LANGUAGE_PARAM(enabled, "d"),
   LANGUAGE_PARAM(max_vm_size, "E"),
   LANGUAGE_PARAM(max_stack_size, "E"),
   LANGUAGE_PARAM(max_file_size, "E"),
@@ -648,6 +650,7 @@ static const struct config_parse_info section_language_params[] =
   LANGUAGE_PARAM(clean_up_cmd, "S"),
   LANGUAGE_PARAM(run_env_file, "S"),
   LANGUAGE_PARAM(clean_up_env_file, "S"),
+  LANGUAGE_PARAM(version, "S"),
 
   { 0, 0, 0, 0 }
 };

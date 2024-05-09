@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright (c) 2023 Alexander Chernov <cher@ejudge.ru>
+# Copyright (c) 2023-2024 Alexander Chernov <cher@ejudge.ru>
 
 # compiler script interface is as follows
 # <comp>-version [OPTION]
@@ -22,6 +22,7 @@ common_config() {
   echo 'long_name="Custom"'
   echo 'src_sfx=".txt"'
   echo 'enable_custom=1'
+  echo 'default_disabled=1'
 }
 
 failure() {
