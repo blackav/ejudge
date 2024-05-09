@@ -1198,11 +1198,10 @@ lang_config_generate_compile_cfg(
     s = shellconfig_get(p->cfg, "long_name");
     if (!s) s = "";
     fprintf(f, "long_name = \"%s\"\n", s);
-    /*
     s = shellconfig_get(p->cfg, "version");
-    if (!s) s = "";
-    fprintf(f, "%s\"\n", s);
-    */
+    if (s && *s) {
+      fprintf(f, "version = \"%s\"\n", s);
+    }
     if ((s = shellconfig_get(p->cfg, "src_sfx"))) {
       fprintf(f, "src_sfx = \"%s\"\n", s);
     }
