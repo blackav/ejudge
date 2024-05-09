@@ -524,11 +524,11 @@ update_language_script(
     fclose(f); f = 0;
     if (!strcmp(out_t, in_t)) {
       // no difference, but update the modtime
-      if (utime(script_out, 0) < 0) {
-        log_printf(err_f, win, "error: cannot change mod time for `%s'\n",
-                   script_out);
-        // error
-      }
+      //if (utime(script_out, 0) < 0) {
+      //  log_printf(err_f, win, "error: cannot change mod time for `%s'\n",
+      //             script_out);
+      //  // error
+      //}
       goto cleanup;
     }
     xfree(out_t); out_t = 0;
