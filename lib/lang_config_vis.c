@@ -496,6 +496,8 @@ update_language_script(
   size_t in_z = 0, out_z = 0;
   FILE *f = 0;
   char buf[1024];
+  char old_path[PATH_MAX];
+  __attribute__((unused)) int _;
 
   // read the source file
   if (!(f = fopen(script_in, "r"))) {
@@ -528,6 +530,13 @@ update_language_script(
       goto cleanup;
     }
     xfree(out_t); out_t = 0;
+  }
+
+  // preserve the old output file
+  _ = snprintf(old_path, sizeof(old_path), "%s.old", script_out);
+  if (rename(script_out, old_path) < 0) {
+    log_printf(err_f, win, "error: cannot rename `%s'\n", script_out);
+    goto cleanup;
   }
 
   // write the output file
