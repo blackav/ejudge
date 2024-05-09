@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2008-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1220,6 +1220,9 @@ lang_config_generate_compile_cfg(
     }
     if ((s = shellconfig_get(p->cfg, "enable_ejudge_env"))) {
       fprintf(f, "enable_ejudge_env\n");
+    }
+    if ((s = shellconfig_get(p->cfg, "default_disabled"))) {
+      fprintf(f, "default_disabled\n");
     }
     if (!(s = shellconfig_get(p->cfg, "cmd"))) s = p->lang;
     fprintf(f, "cmd = \"%s\"\n", s);
