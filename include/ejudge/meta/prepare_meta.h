@@ -626,6 +626,7 @@ enum
   CNTSLANG_preserve_line_numbers,
   CNTSLANG_default_disabled,
   CNTSLANG_enabled,
+  CNTSLANG_disable_auto_update,
   CNTSLANG_max_vm_size,
   CNTSLANG_max_stack_size,
   CNTSLANG_max_file_size,
