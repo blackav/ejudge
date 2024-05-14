@@ -22,6 +22,7 @@
 #include "ejudge/pathutl.h"
 #include "ejudge/compat.h"
 #include "ejudge/varsubst.h"
+#include "ejudge/random.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -1305,4 +1306,521 @@ lang_config_generate_compile_cfg(
   */
 
   xfree(langs);
+}
+
+static int
+lang_config_split_file(
+        const unsigned char *path,
+        unsigned char **p_header,
+        unsigned char **p_body,
+        unsigned char **p_footer)
+{
+  char *text = 0;
+  size_t size = 0;
+  int at_beg = 1;
+  unsigned char *s, *after_start = 0, *before_end = 0, *tstart, *p = 0;
+  unsigned char *header = 0, *footer = 0;
+  unsigned char *body = NULL;
+  FILE *fin = NULL;
+  FILE *fmem = NULL;
+
+  fin = fopen(path, "r");
+  if (!fin) {
+    return -1;
+  }
+  fmem = open_memstream(&text, &size);
+  int c;
+  while ((c = getc_unlocked(fin)) != EOF) {
+    putc_unlocked(c, fmem);
+  }
+  fclose(fmem); fmem = NULL;
+  fclose(fin); fin = NULL;
+
+  tstart = (unsigned char *) text;
+  if (!strncmp(tstart, "# -*- ", 6)) {
+    while (*tstart && *tstart != '\n') tstart++;
+    if (*tstart == '\n') tstart++;
+    size -= (tstart - (unsigned char*) text);
+  }
+
+  s = tstart;
+  while (s - tstart < size) {
+    if (at_beg) {
+      if (*s == '#' || *s == ';') {
+        // comment line
+        if (after_start && !before_end) before_end = s;
+      } else {
+        // regular line
+        if (!after_start) after_start = s;
+        else before_end = 0;
+      }
+    }
+    at_beg = 0;
+    if (*s == '\r' && s[1] == '\n') {
+      s += 2;
+      at_beg = 1;
+    } else if (*s == '\n') {
+      s++;
+      at_beg = 1;
+    } else if (*s == '\r') {
+      s++;
+      at_beg = 1;
+    } else {
+      s++;
+    }
+  }
+
+  if (!before_end) {
+    footer = xstrdup("");
+  } else {
+    footer = p = xmalloc(size + 1 - (before_end - tstart));
+    at_beg = 1;
+    s = before_end;
+    while (s - tstart < size) {
+      if (at_beg && (*s == '#' || *s == ';')) *s = '#';
+      at_beg = 0;
+      if (*s == '\r' && s[1] == '\n') {
+        *p++ = '\n';
+        s += 2;
+        at_beg = 1;
+      } else if (*s == '\n') {
+        *p++ = *s++;
+        at_beg = 1;
+      } else if (*s == '\r') {
+        *p++ = '\n';
+        s++;
+        at_beg = 1;
+      } else {
+        *p++ = *s++;
+      }
+    }
+    *p = 0;
+  }
+
+  if (!after_start) after_start = tstart + size;
+  header = p = xmalloc(after_start - tstart + 1);
+  at_beg = 1;
+  s = tstart;
+  while (s != after_start) {
+    if (at_beg && (*s == '#' || *s == ';')) *s = '#';
+    at_beg = 0;
+    if (*s == '\r' && s[1] == '\n') {
+      *p++ = '\n';
+      s += 2;
+      at_beg = 1;
+    } else if (*s == '\n') {
+      *p++ = *s++;
+      at_beg = 1;
+    } else if (*s == '\r') {
+      *p++ = '\n';
+      s++;
+      at_beg = 1;
+    } else {
+      *p++ = *s++;
+    }
+  }
+  *p = 0;
+
+  if (!before_end) before_end = text + size;
+  body = p = xmalloc((before_end - after_start + 1));
+  at_beg = 1;
+  s = after_start;
+  while (s < before_end) {
+    if (at_beg && (*s == '#' || *s == ';')) *s = '#';
+    at_beg = 0;
+    if (*s == '\r' && s[1] == '\n') {
+      *p++ = '\n';
+      s += 2;
+      at_beg = 1;
+    } else if (*s == '\n') {
+      *p++ = *s++;
+      at_beg = 1;
+    } else if (*s == '\r') {
+      *p++ = '\n';
+      s++;
+      at_beg = 1;
+    } else {
+      *p++ = *s++;
+    }
+  }
+  *p = 0;
+
+  if (p_header) *p_header = header;
+  if (p_footer) *p_footer = footer;
+  if (p_body) *p_body = body;
+
+  xfree(text);
+  return 0;
+}
+
+int
+lang_config_update_compile_cfg(
+        FILE *log_f,
+        const unsigned char *prog,
+        const unsigned char *compile_home_dir)
+{
+  ASSERT(compile_home_dir);
+  __attribute__((unused)) int _;
+  struct generic_section_config *cfg = NULL;
+  int retval = -1;
+  struct generic_section_config *pg;
+  struct section_global_data *global = NULL;
+  struct section_language_data **langs = NULL;
+  struct lang_config_info *lci = NULL;
+  unsigned long long *lang_ids = NULL;
+  struct lang_config_info **lcis = NULL;
+  const unsigned char *s;
+  FILE *cfg_f = NULL;
+  char *cfg_s = NULL;
+  size_t cfg_z = 0;
+  unsigned char *old_header = NULL;
+  unsigned char *old_body = NULL;
+  unsigned char *old_footer = NULL;
+  FILE *fnew = NULL;
+
+  unsigned char compile_new_path[PATH_MAX];
+  compile_new_path[0] = 0;
+
+  unsigned char compile_cfg_path[PATH_MAX];
+  _ = snprintf(compile_cfg_path, sizeof(compile_cfg_path), "%s/conf/compile.cfg", compile_home_dir);
+  if (access(compile_cfg_path, R_OK) < 0) {
+    // TODO: create new compile.cfg?
+    fprintf(log_f, "%s: file '%s' is not accessible: %s\n", __FUNCTION__, compile_cfg_path, strerror(errno));
+    goto cleanup;
+  }
+
+  struct stat stb;
+  if (lstat(compile_cfg_path, &stb) < 0) {
+    fprintf(log_f, "%s: file '%s' does not exist %s\n", __FUNCTION__, compile_cfg_path, strerror(errno));
+    goto cleanup;
+  }
+  if (!S_ISREG(stb.st_mode)) {
+    fprintf(log_f, "%s: file '%s' is not regular\n", __FUNCTION__, compile_cfg_path);
+    goto cleanup;
+  }
+  struct tm ltm = {};
+  localtime_r(&stb.st_mtime, &ltm);
+  unsigned char compile_backup_path[PATH_MAX];
+  _ = snprintf(compile_backup_path, sizeof(compile_backup_path), "%s.%04d%02d%02d%02d%02d%02d",
+               compile_cfg_path, ltm.tm_year+1900, ltm.tm_mon+1, ltm.tm_mday,
+               ltm.tm_hour, ltm.tm_min, ltm.tm_sec);
+
+  int cond_count = 0;
+  cfg = prepare_parse_config_file(compile_cfg_path, &cond_count);
+  if (!cfg) {
+    fprintf(log_f, "failed to parse '%s'\n", compile_cfg_path);
+    goto cleanup;
+  }
+  if (cond_count > 0) {
+    fprintf(log_f, "file '%s' contains conditional directives\n", compile_cfg_path);
+    goto cleanup;
+  }
+
+  // find global section
+  for (pg = cfg; pg; pg = pg->next)
+    if (!pg->name[0] || !strcmp(pg->name, "global"))
+      break;
+  if (!pg) {
+    fprintf(log_f, "%s: global section is not found\n", __FUNCTION__);
+    goto cleanup;
+  }
+  global = (struct section_global_data*) pg;
+  (void) global;
+
+  XCALLOC(lang_ids, (EJ_MAX_LANG_ID + 8) / 8);
+
+  int max_lang_id = 0;
+  int cur_id = 0;
+  for (pg = cfg; pg; pg = pg->next) {
+    if (strcmp(pg->name, "language") != 0) continue;
+    struct section_language_data *lang = (struct section_language_data*) pg;
+    if (lang->id < 0) {
+      fprintf(log_f, "%s: lang_id is invalid: %d", __FUNCTION__, lang->id);
+      goto cleanup;
+    }
+    if (lang->id == 0) lang->id = cur_id + 1;
+    cur_id = lang->id;
+    if (cur_id > max_lang_id) max_lang_id = cur_id;
+  }
+  if (max_lang_id > EJ_MAX_LANG_ID) {
+    fprintf(log_f, "%s: max lang_id is too big: %d", __FUNCTION__, max_lang_id);
+    goto cleanup;
+  }
+  XCALLOC(langs, max_lang_id + 1);
+  for (pg = cfg; pg; pg = pg->next) {
+    if (strcmp(pg->name, "language") != 0) continue;
+    struct section_language_data *lang = (struct section_language_data*) pg;
+    if (langs[lang->id]) {
+      fprintf(log_f, "%s: duplicated lang_id: %d", __FUNCTION__, lang->id);
+      goto cleanup;
+    }
+    langs[lang->id] = lang;
+    unsigned int id = lang->id;
+    lang_ids[id >> 6] |= 1ULL << (id & 63);
+  }
+
+  for (lci = lang_first; lci; lci = lci->next) {
+    lci->id = 0;
+  }
+  for (lci = lang_first; lci; lci = lci->next) {
+    if (lci->id <= 0) {
+      int i = 0;
+      for (i = 0; i <= max_lang_id; ++i) {
+        if (langs[i]) {
+          if (!strcmp(lci->short_name, langs[i]->short_name)) {
+            break;
+          }
+        }
+      }
+      if (i <= max_lang_id) {
+        lci->id = langs[i]->id;
+      }
+    }
+    if (lci->id <= 0) {
+      int i = 0;
+      for (i = 0; i < lang_id_total; ++i) {
+        if (!strcmp(lang_id_infos[i].lang, lci->short_name)
+            && lang_id_infos[i].fixed)
+          break;
+      }
+      if (i < lang_id_total) {
+        unsigned int id = lang_id_infos[i].id;
+        if (!(lang_ids[id >> 6] & (1ULL << (id & 63)))) {
+          lci->id = id;
+          lang_ids[id >> 6] |= 1ULL << (id & 63);
+        }
+      }
+    }
+  }
+  for (lci = lang_first; lci; lci = lci->next) {
+    if (lci->id <= 0) {
+      int i = 0;
+      for (i = 0; i < lang_id_total; ++i) {
+        if (!strcmp(lang_id_infos[i].lang, lci->short_name)) {
+          unsigned int id = lang_id_infos[i].id;
+          if (!(lang_ids[id >> 6] & (1ULL << (id & 63)))) {
+            break;
+          }
+        }
+      }
+      if (i < lang_id_total) {
+        unsigned int id = lang_id_infos[i].id;
+        lci->id = id;
+        lang_ids[id >> 6] |= 1ULL << (id & 63);
+      }
+    }
+  }
+
+  /*
+  // process conflicting languages
+  for (p = lang_first; p; p = p->next) {
+    if (p->enabled <= 0 || p->id > 0) continue;
+    for (i = 0; i < lang_id_total; ++i) {
+      if (!strcmp(lang_id_infos[i].lang, p->short_name))
+        break;
+    }
+    if (i >= lang_id_total) continue;
+    for (i = 89; i > 0; --i) {
+      if (i >= lang_id_set_size || !lang_id_set[i]) {
+        break;
+      }
+    }
+    if (i <= 0) break;
+
+    p->id = i;
+    add_to_lang_id_set(p->id);
+  }
+  */
+
+  // assign unassigned languages
+  for (lci = lang_first; lci; lci = lci->next) {
+    if (lci->enabled <= 0 || lci->id > 0) continue;
+
+    int i;
+    for (i = 90; i <= EJ_MAX_LANG_ID; ++i) {
+      unsigned int id = i;
+      if ((lang_ids[id >> 6] & (1ULL << (id & 63))) != 0) continue;
+      int j;
+      for (j = 0; j < lang_id_total; ++j) {
+        if (lang_id_infos[j].id == i)
+          break;
+      }
+      if (j < lang_id_total) continue;
+    }
+    if (i <= EJ_MAX_LANG_ID) {
+      unsigned int id = i;
+      lci->id = id;
+      lang_ids[id >> 6] |= 1ULL << (id & 63);
+    }
+  }
+
+  xfree(langs); langs = NULL;
+  for (lci = lang_first; lci; lci = lci->next) {
+    if (lci->id > max_lang_id) max_lang_id = lci->id;
+  }
+  XCALLOC(langs, max_lang_id + 1);
+  XCALLOC(lcis, max_lang_id + 1);
+
+  for (lci = lang_first; lci; lci = lci->next) {
+    if (lci->id <= 0) continue;
+    lcis[lci->id] = lci;
+  }
+  for (pg = cfg; pg; pg = pg->next) {
+    if (strcmp(pg->name, "language") != 0) continue;
+    struct section_language_data *lang = (struct section_language_data*) pg;
+    if (lang->id > 0) {
+      langs[lang->id] = lang;
+    }
+  }
+
+  for (int lang_id = 1; lang_id <= max_lang_id; ++lang_id) {
+    struct section_language_data *lang = langs[lang_id];
+    lci = lcis[lang_id];
+    if (!lang && lci) {
+      lang = prepare_alloc_language();
+      cfg = param_merge(cfg, &lang->g);
+      lang->id = lci->id;
+      _ = snprintf(lang->short_name, sizeof(lang->short_name), "%s", lci->short_name);
+    }
+    if (!lang) continue;
+    if (!lci) {
+      lang->disabled = 1;
+      continue;
+    }
+    if (lci->enabled <= 0) {
+      lang->disabled = 1;
+      continue;
+    }
+
+    lang->disabled = 0;
+    s = shellconfig_get(lci->cfg, "long_name");
+    if (!s) s = "";
+    xfree(lang->long_name); lang->long_name = xstrdup(s);
+    s = shellconfig_get(lci->cfg, "version");
+    xfree(lang->version); lang->version = NULL;
+    if (s && *s) {
+      lang->version = xstrdup(s);
+    }
+    lang->src_sfx[0] = 0;
+    if ((s = shellconfig_get(lci->cfg, "src_sfx")) && *s) {
+      _ = snprintf(lang->src_sfx, sizeof(lang->src_sfx), "%s", s);
+    }
+    lang->exe_sfx[0] = 0;
+    if ((s = shellconfig_get(lci->cfg, "exe_sfx"))) {
+      _ = snprintf(lang->exe_sfx, sizeof(lang->exe_sfx), "%s", s);
+    }
+    lang->insecure = 0;
+    if ((s = shellconfig_get(lci->cfg, "insecure"))) {
+      lang->insecure = 1;
+    }
+    lang->enable_custom = 0;
+    if ((s = shellconfig_get(lci->cfg, "enable_custom"))) {
+      lang->enable_custom = 1;
+    }
+    /*
+    if ((s = shellconfig_get(p->cfg, "secure"))) {
+      fprintf(f, "disable_security\n");
+    }
+    */
+    lang->binary = 0;
+    if ((s = shellconfig_get(lci->cfg, "binary"))) {
+      lang->binary = 1;
+    }
+    lang->is_dos = 0;
+    if ((s = shellconfig_get(lci->cfg, "is_dos"))) {
+      lang->is_dos = 1;
+    }
+    lang->preserve_line_numbers = 0;
+    if ((s = shellconfig_get(lci->cfg, "preserve_line_numbers"))) {
+      lang->preserve_line_numbers = 1;
+    }
+    lang->enable_ejudge_env = 0;
+    if ((s = shellconfig_get(lci->cfg, "enable_ejudge_env"))) {
+      lang->enable_ejudge_env = 1;
+    }
+    lang->default_disabled = 0;
+    if ((s = shellconfig_get(lci->cfg, "default_disabled"))) {
+      lang->default_disabled = 1;
+    }
+    xfree(lang->cmd); lang->cmd = NULL;
+    if (!(s = shellconfig_get(lci->cfg, "cmd")) || !*s) {
+      s = lang->short_name;
+    }
+    lang->cmd = xstrdup(s);
+    xfree(lang->arch); lang->arch = NULL;
+    if ((s = shellconfig_get(lci->cfg, "arch")) && lci) {
+      lang->arch = xstrdup(s);
+    }
+    xfree(lang->clean_up_cmd); lang->clean_up_cmd = NULL;
+    if ((s = shellconfig_get(lci->cfg, "clean_up_cmd")) && *s) {
+      lang->clean_up_cmd = xstrdup(s);
+    }
+  }
+
+  cfg_f = open_memstream(&cfg_s, &cfg_z);
+  prepare_unparse_global(cfg_f, NULL, global, NULL, 0);
+  fprintf(cfg_f, "\n");
+  for (int lang_id = 1; lang_id <= max_lang_id; ++lang_id) {
+    struct section_language_data *lang = langs[lang_id];
+    if (!lang) continue;
+    prepare_unparse_lang(cfg_f, lang, NULL, NULL, NULL);
+    fprintf(cfg_f, "\n");
+  }
+  fclose(cfg_f); cfg_f = NULL;
+
+  if (lang_config_split_file(compile_cfg_path, &old_header, &old_body, &old_footer) < 0) {
+    fprintf(log_f, "%s: failed to split '%s': %s\n", __FUNCTION__, compile_cfg_path, strerror(errno));
+    goto cleanup;
+  }
+  if (!strcmp(cfg_s, old_body)) {
+    // file did not change
+    retval = 0;
+    goto cleanup;
+  }
+
+  random_init();
+  unsigned long long ru64 = random_u64();
+  _ = snprintf(compile_new_path, sizeof(compile_new_path), "%s.%llx", compile_cfg_path, ru64);
+
+  fnew = fopen(compile_new_path, "w");
+  if (!fnew) {
+    fprintf(log_f, "%s: failed to open output file '%s': %s\n", __FUNCTION__, compile_new_path, strerror(errno));
+    goto cleanup;
+  }
+
+  unsigned char date_buf[64];
+  generate_current_date(date_buf, sizeof(date_buf));
+  fprintf(fnew, "# Generated by %s, version %s\n", prog, compile_version);
+  fprintf(fnew, "# Generation date: %s\n\n", date_buf);
+  fprintf(fnew, "%s", cfg_s);
+  fprintf(fnew, "%s", old_footer);
+  fclose(fnew); fnew = NULL;
+
+  // backup old file
+  if (link(compile_cfg_path, compile_backup_path) < 0) {
+    fprintf(log_f, "%s: backup '%s'->'%s' failed: %s\n", __FUNCTION__, compile_cfg_path, compile_backup_path, strerror(errno));
+    goto cleanup;
+  }
+
+  // replace config file
+  if (rename(compile_new_path, compile_cfg_path) < 0) {
+    fprintf(log_f, "%s: rename '%s'->'%s' failed: %s\n", __FUNCTION__, compile_new_path, compile_cfg_path, strerror(errno));
+    goto cleanup;
+  }
+  compile_new_path[0] = 0;
+  retval = 0;
+
+cleanup:;
+  if (fnew) fclose(fnew);
+  if (compile_new_path[0]) unlink(compile_new_path);
+  xfree(old_footer);
+  xfree(old_body);
+  xfree(old_header);
+  if (cfg_f) fclose(cfg_f);
+  xfree(cfg_s);
+  xfree(langs);
+  xfree(lang_ids);
+  xfree(lcis);
+  cfg = prepare_free_config(cfg);
+  return retval;
 }
