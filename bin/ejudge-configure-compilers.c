@@ -1,6 +1,6 @@
 /* -*- mode:c -*- */
 
-/* Copyright (C) 2008-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -89,10 +89,13 @@ static void log_printf(FILE *out_f, WINDOW *out_win, const char *format, ...)
 static void
 generate_compile_cfg(FILE *f)
 {
+  /*
   lang_config_generate_compile_cfg(f, "ejudge-configure-compilers",
                                    config->compile_home_dir,
                                    config->serialization_key,
                                    config_dir);
+  */
+  lang_config_update_compile_cfg(f, "ejudge-configure-compilers", config_dir);
 }
 
 static int
