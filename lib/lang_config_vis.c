@@ -1758,7 +1758,7 @@ lang_config_update_compile_cfg(
   }
 
   cfg_f = open_memstream(&cfg_s, &cfg_z);
-  prepare_unparse_global(cfg_f, NULL, global, NULL, 0);
+  prepare_unparse_global(cfg_f, NULL, global, NULL, 0, 1);
   fprintf(cfg_f, "\n");
   for (int lang_id = 1; lang_id <= max_lang_id; ++lang_id) {
     struct section_language_data *lang = langs[lang_id];

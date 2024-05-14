@@ -1627,7 +1627,8 @@ prepare_unparse_global(
         const struct contest_desc *cnts,
         struct section_global_data *global,
         const unsigned char *compile_dir,
-        int need_variant_map);
+        int need_variant_map,
+        int compile_mode);
 void prepare_unparse_unhandled_global(FILE *f,
                                       const struct section_global_data *global);
 int prepare_check_forbidden_global(FILE *f, const struct section_global_data *global);

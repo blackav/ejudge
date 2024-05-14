@@ -1127,7 +1127,7 @@ super_html_serve_unparse_serve_cfg(
     if (sstate->probs[i] && sstate->probs[i]->variant_num > 0)
       need_variant_map = 1;
 
-  prepare_unparse_global(f, cnts, global, sstate->compile_home_dir, need_variant_map);
+  prepare_unparse_global(f, cnts, global, sstate->compile_home_dir, need_variant_map, 0);
 
   if (sstate->lang_a > 0) {
     for (i = 1, active_langs = 0; i < sstate->lang_a; i++) {

@@ -102,7 +102,8 @@ prepare_unparse_global(
         const struct contest_desc *cnts,
         struct section_global_data *global,
         const unsigned char *compile_dir,
-        int need_variant_map)
+        int need_variant_map,
+        int compile_mode)
 {
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   path_t compile_spool_dir, tmp1, tmp2, contests_home_dir;
@@ -124,6 +125,12 @@ prepare_unparse_global(
   };
   unsigned char nbuf[64];
   unsigned char size_buf[256];
+
+  if (compile_mode) {
+    // TODO: add compile-related global vars
+    html_armor_free(&ab);
+    return;
+  }
 
   /*
   fprintf(f, "contest_id = %d\n", global->contest_id);
