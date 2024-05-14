@@ -931,6 +931,8 @@ prepare_unparse_lang(
     unparse_bool(f, "default_disabled", lang->default_disabled);
   if (lang->enabled > 0)
     unparse_bool(f, "enabled", lang->enabled);
+  if (lang->disable_auto_update > 0)
+    unparse_bool(f, "disable_auto_update", lang->disable_auto_update);
   if (lang->content_type && lang->content_type[0]) {
     fprintf(f, "content_type = \"%s\"\n", CARMOR(lang->content_type));
   }

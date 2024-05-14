@@ -1399,6 +1399,8 @@ struct section_language_data
   ejintbool_t default_disabled;
   /** enable this language (overrides default_disabled) */
   ejintbool_t enabled;
+  /** disable automatic update of this language (by ejudge-configure-compilers) */
+  ejintbool_t disable_auto_update;
 
   /** max virtual size limit  */
   ej_size64_t max_vm_size;
