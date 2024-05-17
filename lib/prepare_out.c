@@ -128,6 +128,13 @@ prepare_unparse_global(
 
   if (compile_mode) {
     // TODO: add compile-related global vars
+    do_str(f, &ab, "root_dir", global->root_dir);
+    do_str(f, &ab, "lang_config_dir", global->lang_config_dir);
+    if (global->sleep_time > 0)
+      fprintf(f, "sleep_time = %d\n", global->sleep_time);
+    if (global->cr_serialization_key > 0)
+      fprintf(f, "cr_serialization_key = %d\n", global->cr_serialization_key);
+
     html_armor_free(&ab);
     return;
   }
@@ -909,9 +916,9 @@ prepare_unparse_lang(
   /*
   if (lang->key[0])
     fprintf(f, "key = \"%s\"\n", CARMOR(lang->key));
-  if (lang->cmd[0])
-    fprintf(f, "cmd = \"%s\"\n", CARMOR(lang->cmd));
   */
+  if (lang->cmd && lang->cmd[0])
+    fprintf(f, "cmd = \"%s\"\n", CARMOR(lang->cmd));
   if (lang->disabled)
     unparse_bool(f, "disabled", lang->disabled);
   if (lang->insecure)
