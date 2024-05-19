@@ -922,8 +922,10 @@ prepare_unparse_lang(
   if (lang->key[0])
     fprintf(f, "key = \"%s\"\n", CARMOR(lang->key));
   */
-  if (lang->cmd && lang->cmd[0])
-    fprintf(f, "cmd = \"%s\"\n", CARMOR(lang->cmd));
+  if (lang_id <= 0) {
+    if (lang->cmd && lang->cmd[0])
+      fprintf(f, "cmd = \"%s\"\n", CARMOR(lang->cmd));
+  }
   if (lang->disabled)
     unparse_bool(f, "disabled", lang->disabled);
   if (lang->insecure)
