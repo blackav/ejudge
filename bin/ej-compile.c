@@ -92,6 +92,7 @@ static unsigned char compile_server_queue_dir[PATH_MAX];
 static unsigned char compile_server_queue_dir_dir[PATH_MAX];
 static unsigned char compile_server_src_dir[PATH_MAX];
 static unsigned char heartbeat_dir[PATH_MAX];
+static unsigned char export_config_dir[PATH_MAX];
 static unsigned char *agent_name;
 static struct AgentClient *agent;
 static unsigned char *instance_id;
@@ -1535,6 +1536,53 @@ copy_to_local_cache(
 }
 
 static int
+save_config(void)
+{
+  char *cfg_s = NULL;
+  size_t cfg_z = 0;
+  FILE *cfg_f = open_memstream(&cfg_s, &cfg_z);
+  int max_lang = serve_state.max_lang;
+  struct section_language_data **langs = serve_state.langs;
+  if (lang_id_map) {
+    int new_max_lang = max_lang;
+    if (lang_id_map_size > new_max_lang) new_max_lang = lang_id_map_size;
+    struct section_language_data **new_langs = NULL;
+    XALLOCAZ(new_langs, new_max_lang + 1);
+
+    for (int i = 1; i <= max_lang; ++i) {
+      if (langs[i]) {
+        new_langs[i] = langs[i];
+      }
+    }
+    for (int i = 1; i < lang_id_map_size; ++i) {
+      int j = lang_id_map[i];
+      if (j > 0 && j <= max_lang && langs[j]) {
+        langs[i] = langs[j];
+      }
+    }
+
+    langs = new_langs;
+    max_lang = new_max_lang;
+  }
+
+  for (int i = 1; i <= max_lang; ++i) {
+    if (langs[i]) {
+      prepare_unparse_lang(cfg_f, langs[i], i, NULL, NULL, NULL);
+    }
+  }
+  fclose(cfg_f); cfg_f = NULL;
+
+  if (agent) {
+    agent->ops->put_config(agent, "compile.cfg", cfg_s, cfg_z);
+  } else {
+    generic_write_file(cfg_s, cfg_z, SAFE, export_config_dir, "compile.cfg", NULL);
+  }
+  free(cfg_s); cfg_s = NULL; cfg_z = 0;
+
+  return 0;
+}
+
+static int
 new_loop(int parallel_mode, const unsigned char *global_log_path)
 {
   int retval = 0;
@@ -1588,7 +1636,9 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
   }
 
 #if defined EJUDGE_COMPILE_SPOOL_DIR
-  // nothing to do
+  if (save_config() < 0) {
+    return -1;
+  }
 #else
   if (snprintf(compile_server_queue_dir, sizeof(compile_server_queue_dir), "%s", global->compile_queue_dir) >= sizeof(compile_server_queue_dir)) {
     err("path '%s' is too long", global->compile_queue_dir);
@@ -2748,6 +2798,9 @@ main(int argc, char *argv[])
 
     snprintf(heartbeat_dir, sizeof(heartbeat_dir), "%s/heartbeat", compile_server_spool_dir);
     if (make_all_dir(heartbeat_dir, 0777) < 0) return 1;
+
+    snprintf(export_config_dir, sizeof(export_config_dir), "%s/config", compile_server_spool_dir);
+    if (make_all_dir(export_config_dir, 0777) < 0) return 1;
   }
 #endif
 
