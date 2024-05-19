@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2012-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1132,7 +1132,7 @@ super_html_serve_unparse_serve_cfg(
   if (sstate->lang_a > 0) {
     for (i = 1, active_langs = 0; i < sstate->lang_a; i++) {
       if (!sstate->langs[i]) continue;
-      prepare_unparse_lang(f, sstate->langs[i], 0, sstate->lang_opts[i], sstate->lang_libs[i]);
+      prepare_unparse_lang(f, sstate->langs[i], 0, 0, sstate->lang_opts[i], sstate->lang_libs[i]);
       active_langs++;
     }
   }

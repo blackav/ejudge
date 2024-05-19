@@ -879,6 +879,7 @@ void
 prepare_unparse_lang(
         FILE *f,
         const struct section_language_data *lang,
+        int lang_id,
         const unsigned char *long_name,
         const unsigned char *options,
         const unsigned char *libs)
@@ -888,9 +889,13 @@ prepare_unparse_lang(
   unsigned char size_buf[256];
 
   fprintf(f, "[language]\n");
-  fprintf(f, "id = %d\n", lang->id);
-  if (lang->compile_id && lang->compile_id != lang->id)
-    fprintf(f, "compile_id = %d\n", lang->compile_id);
+  if (lang_id > 0) {
+    fprintf(f, "id = %d\n", lang_id);
+  } else {
+    fprintf(f, "id = %d\n", lang->id);
+    if (lang->compile_id && lang->compile_id != lang->id)
+      fprintf(f, "compile_id = %d\n", lang->compile_id);
+  }
   if (lang->compile_dir_index > 0) {
     fprintf(f, "compile_dir_index = %d\n", lang->compile_dir_index);
   }

@@ -1637,6 +1637,7 @@ void
 prepare_unparse_lang(
         FILE *f,
         const struct section_language_data *lang,
+        int lang_id,
         const unsigned char *long_name,
         const unsigned char *options,
         const unsigned char *libs);
