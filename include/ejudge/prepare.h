@@ -145,7 +145,7 @@ struct virtual_end_info_s
   int checker_comment_mode;
 };
 
-/* sizeof(struct section_global_data) == 1208/1920 */
+/* sizeof(struct section_global_data) == 1208/1984 */
 struct section_global_data
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));
@@ -816,6 +816,11 @@ struct section_global_data
   int max_submit_num;
   /** max size of submits and data */
   ejintsize_t max_submit_total;
+
+  /** import language specifications from the corresponding compile.cfg */
+  ejintbool_t enable_language_import;
+  /** additional specifications for language imports */
+  char **language_import;
 };
 
 /* sizeof(struct section_problem_data) == 820/1280 */

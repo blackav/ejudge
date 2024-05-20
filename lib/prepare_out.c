@@ -582,6 +582,11 @@ prepare_unparse_global(
     fprintf(f, "\n");
   }
 
+  if (global->enable_language_import > 0) {
+    unparse_bool(f, "enable_language_import", global->enable_language_import);
+  }
+  do_xstr(f, &ab, "language_import", global->language_import);
+
   if (global->unhandled_vars) fprintf(f, "%s\n", global->unhandled_vars);
 
   html_armor_free(&ab);
