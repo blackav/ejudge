@@ -315,6 +315,8 @@ static struct meta_info_item meta_info_section_global_data_data[] =
   [CNTSGLOB_max_input_size] = { CNTSGLOB_max_input_size, 'z', XSIZE(struct section_global_data, max_input_size), "max_input_size", XOFFSET(struct section_global_data, max_input_size) },
   [CNTSGLOB_max_submit_num] = { CNTSGLOB_max_submit_num, 'i', XSIZE(struct section_global_data, max_submit_num), "max_submit_num", XOFFSET(struct section_global_data, max_submit_num) },
   [CNTSGLOB_max_submit_total] = { CNTSGLOB_max_submit_total, 'z', XSIZE(struct section_global_data, max_submit_total), "max_submit_total", XOFFSET(struct section_global_data, max_submit_total) },
+  [CNTSGLOB_enable_language_import] = { CNTSGLOB_enable_language_import, 'B', XSIZE(struct section_global_data, enable_language_import), "enable_language_import", XOFFSET(struct section_global_data, enable_language_import) },
+  [CNTSGLOB_language_import] = { CNTSGLOB_language_import, 'x', XSIZE(struct section_global_data, language_import), "language_import", XOFFSET(struct section_global_data, language_import) },
 };
 
 int cntsglob_get_type(int tag)
@@ -939,6 +941,8 @@ void cntsglob_copy(struct section_global_data *dst, const struct section_global_
   dst->max_input_size = src->max_input_size;
   dst->max_submit_num = src->max_submit_num;
   dst->max_submit_total = src->max_submit_total;
+  dst->enable_language_import = src->enable_language_import;
+  dst->language_import = (typeof(dst->language_import)) sarray_copy((char**) src->language_import);
 }
 
 void cntsglob_free(struct section_global_data *ptr)
@@ -1118,6 +1122,7 @@ void cntsglob_free(struct section_global_data *ptr)
   free(ptr->unhandled_vars);
   // private disable_prob_long_name
   // private disable_passed_tests
+  sarray_free((char**) ptr->language_import);
 }
 
 const struct meta_methods cntsglob_methods =
