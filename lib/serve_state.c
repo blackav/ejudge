@@ -334,15 +334,15 @@ serve_load_user_groups(
   if (!global) return 0;
   if (!global->load_user_group) return 0;
   if (!ul_conn) {
-    info("load_contest: contest %d groups are not loaded", contest_id);
+    info("%s: contest %d groups are not loaded", __FUNCTION__, contest_id);
     return 0;
   }
   for (i = 0; global->load_user_group[i]; ++i) {
     total_len += strlen(global->load_user_group[i]) + 1;
   }
   if (total_len >= 65536) {
-    err("load_contest: contest %d: total group length too high (%d)",
-        contest_id, total_len);
+    err("%s: contest %d: total group length too high (%d)",
+        __FUNCTION__, contest_id, total_len);
     return -1;
   }
   grp_list = (unsigned char *) alloca(total_len + 10);
@@ -360,23 +360,23 @@ serve_load_user_groups(
   r = userlist_clnt_get_xml_by_text(ul_conn, ULS_GET_GROUPS, grp_list,
                                     &xml_text);
   if (r < 0) {
-    err("load_contest: contest %d: failed to load groups: %s",
-        contest_id, userlist_strerror(-r));
+    err("%s: contest %d: failed to load groups: %s",
+        __FUNCTION__, contest_id, userlist_strerror(-r));
     goto failed;
   }
   if (!xml_text) {
-    err("load_contest: contest %d: group XML is NULL", contest_id);
+    err("%s: contest %d: group XML is NULL", __FUNCTION__, contest_id);
     goto failed;
   }
   grp_info = userlist_parse_str(xml_text);
   if (!grp_info) {
-    err("load_contest: contest %d: XML parse error", contest_id);
+    err("%s: contest %d: XML parse error", __FUNCTION__, contest_id);
     goto failed;
   }
   xfree(xml_text); xml_text = 0;
 
   if (grp_info->group_map_size <= 0 || !grp_info->group_map) {
-    err("load_contest: contest %d: no groups loaded", contest_id);
+    err("%s: contest %d: no groups loaded", __FUNCTION__, contest_id);
     goto failed;
   }
 
@@ -394,7 +394,7 @@ serve_load_user_groups(
   }
 
   if (user_group_count <= 0) {
-    err("load_contest: contest %d: no groups loaded", contest_id);
+    err("%s: contest %d: no groups loaded", __FUNCTION__, contest_id);
     goto failed;
   }
 
@@ -695,11 +695,11 @@ serve_state_load_contest_config(
     snprintf(config_path, sizeof(config_path), "%s/serve.cfg", cnts->conf_dir);
   } else {
     if (!cnts->root_dir) {
-      err("load_contest: contest %d root_dir is not set", contest_id);
+      err("%s: contest %d root_dir is not set", __FUNCTION__, contest_id);
       goto failure;
     } else if (!os_IsAbsolutePath(cnts->root_dir)) {
-      err("load_contest: contest %d root_dir %s is not absolute",
-          contest_id, cnts->root_dir);
+      err("%s: contest %d root_dir %s is not absolute",
+          __FUNCTION__, contest_id, cnts->root_dir);
       goto failure;
     }
     if (!(conf_dir = cnts->conf_dir)) conf_dir = "conf";
@@ -708,18 +708,18 @@ serve_state_load_contest_config(
   }
 
   if (stat(config_path, &stbuf) < 0) {
-    err("load_contest: contest %d config file %s does not exist",
-        contest_id, config_path);
+    err("%s: contest %d config file %s does not exist",
+        __FUNCTION__, contest_id, config_path);
     goto failure;
   }
   if (!S_ISREG(stbuf.st_mode)) {
-    err("load_contest: contest %d config file %s is not a regular file",
-        contest_id, config_path);
+    err("%s: contest %d config file %s is not a regular file",
+        __FUNCTION__, contest_id, config_path);
     goto failure;
   }
   if (access(config_path, R_OK) < 0) {
-    err("load_contest: contest %d config file %s is not readable",
-        contest_id, config_path);
+    err("%s: contest %d config file %s is not readable",
+        __FUNCTION__, contest_id, config_path);
     goto failure;
   }
 
@@ -780,11 +780,11 @@ serve_state_load_contest(
     snprintf(config_path, sizeof(config_path), "%s/serve.cfg", cnts->conf_dir);
   } else {
     if (!cnts->root_dir) {
-      err("load_contest: contest %d root_dir is not set", contest_id);
+      err("%s: contest %d root_dir is not set", __FUNCTION__, contest_id);
       goto failure;
     } else if (!os_IsAbsolutePath(cnts->root_dir)) {
-      err("load_contest: contest %d root_dir %s is not absolute",
-          contest_id, cnts->root_dir);
+      err("%s: contest %d root_dir %s is not absolute",
+          __FUNCTION__, contest_id, cnts->root_dir);
       goto failure;
     }
     if (!(conf_dir = cnts->conf_dir)) conf_dir = "conf";
@@ -793,18 +793,18 @@ serve_state_load_contest(
   }
 
   if (stat(config_path, &stbuf) < 0) {
-    err("load_contest: contest %d config file %s does not exist",
-        contest_id, config_path);
+    err("%s: contest %d config file %s does not exist",
+        __FUNCTION__, contest_id, config_path);
     goto failure;
   }
   if (!S_ISREG(stbuf.st_mode)) {
-    err("load_contest: contest %d config file %s is not a regular file",
-        contest_id, config_path);
+    err("%s: contest %d config file %s is not a regular file",
+        __FUNCTION__, contest_id, config_path);
     goto failure;
   }
   if (access(config_path, R_OK) < 0) {
-    err("load_contest: contest %d config file %s is not readable",
-        contest_id, config_path);
+    err("%s: contest %d config file %s is not readable",
+        __FUNCTION__, contest_id, config_path);
     goto failure;
   }
 
@@ -833,7 +833,7 @@ serve_state_load_contest(
 
   state->statusdb_state = statusdb_open(config, cnts, global, NULL, 0, 1);
   if (!state->statusdb_state) {
-    err("load_contest: contest %d statusdb plugin failed to load", contest_id);
+    err("%s: contest %d statusdb plugin failed to load", __FUNCTION__, contest_id);
     goto failure;
   }
 
@@ -843,7 +843,7 @@ serve_state_load_contest(
 
   state->xuser_state = team_extra_open(config, cnts, global, NULL, 0);
   if (!state->xuser_state) {
-    err("load_contest: contest %d xuser plugin failed to load", contest_id);
+    err("%s: contest %d xuser plugin failed to load", __FUNCTION__, contest_id);
     goto failure;
   }
 
@@ -945,7 +945,7 @@ serve_state_load_contest(
   if (need_variant_plugin) {
     state->variant_state = variant_plugin_open(NULL, config, cnts, state, NULL, 0);
     if (!state->variant_state) {
-      err("load_contest: contest %d variant plugin failed to load", contest_id);
+      err("%s: contest %d variant plugin failed to load", __FUNCTION__, contest_id);
       goto failure;
     }
   }
