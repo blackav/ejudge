@@ -6983,3 +6983,110 @@ prepare_sarray_varsubst(
   }
   return aa;
 }
+
+void
+prepare_copy_language(
+        struct section_language_data *out,
+        const struct section_language_data *in)
+{
+  cntslang_copy(out, in);
+}
+
+#define LANG_MERGE_BOOL(field) do { \
+  if (lang->field > 1) {            \
+    out->field = 0;                 \
+  } else if (lang->field > 0) {     \
+    out->field = lang->field;       \
+  } else {                          \
+    out->field = imp->field;        \
+  }                                 \
+} while (0)
+
+#define LANG_MERGE_STRING(field) do {  \
+  if (lang->field) {                   \
+    out->field = xstrdup(lang->field); \
+  } else if (imp->long_name) {         \
+    out->field = xstrdup(lang->field); \
+  }                                    \
+} while (0)
+
+#define LANG_MERGE_SIZE(field) do {      \
+  if ((int64_t) lang->field > 0) {       \
+    out->field = lang->field;            \
+  } else if ((int64_t) imp->field > 0) { \
+    out->field = imp->field;             \
+  }                                      \
+} while (0)
+
+void
+prepare_merge_language(
+        struct section_language_data *out,
+        const struct section_language_data *imp,  // imported from the compilation server config
+        const struct section_language_data *lang) // the current contest config
+{
+  if (!lang) {
+    prepare_copy_language(out, imp);
+    return;
+  }
+
+  // use the current contest language id
+  out->id = lang->id;
+  out->compile_id = lang->compile_id;
+  strcpy(out->short_name, lang->short_name);
+
+  /* special handling:
+  ejintbool_t disabled;
+  ejintbool_t default_disabled;
+  ejintbool_t enabled;
+  ejintbool_t disable_auto_update;
+   */
+
+  if (lang->compile_real_time_limit > 0) {
+    out->compile_real_time_limit = lang->compile_real_time_limit;
+  } else if (imp->compile_real_time_limit > 0) {
+    out->compile_real_time_limit = imp->compile_real_time_limit;
+  }
+
+  LANG_MERGE_BOOL(binary);
+  if (lang->priority_adjustment > 0) {
+    out->priority_adjustment = lang->priority_adjustment;
+  } else {
+    out->priority_adjustment = imp->priority_adjustment;
+  }
+  LANG_MERGE_BOOL(insecure);
+  LANG_MERGE_BOOL(disable_security);
+  LANG_MERGE_BOOL(enable_suid_run);
+  LANG_MERGE_BOOL(is_dos);
+  LANG_MERGE_STRING(long_name);
+  LANG_MERGE_STRING(key);
+  LANG_MERGE_STRING(arch);
+  strcpy(out->src_sfx, imp->src_sfx);
+  strcpy(out->exe_sfx, imp->exe_sfx);
+  LANG_MERGE_STRING(content_type);
+  LANG_MERGE_STRING(cmd);
+  LANG_MERGE_STRING(style_checker_cmd);
+  out->style_checker_env = sarray_merge_pp(imp->style_checker_env, lang->style_checker_env);
+  LANG_MERGE_STRING(extid);
+  LANG_MERGE_STRING(super_run_dir);
+  LANG_MERGE_BOOL(disable_auto_testing);
+  LANG_MERGE_BOOL(disable_testing);
+  LANG_MERGE_BOOL(enable_custom);
+  LANG_MERGE_BOOL(enable_ejudge_env);
+  LANG_MERGE_BOOL(preserve_line_numbers);
+  LANG_MERGE_SIZE(max_vm_size);
+  LANG_MERGE_SIZE(max_stack_size);
+  LANG_MERGE_SIZE(max_file_size);
+  LANG_MERGE_SIZE(max_rss_size);
+  LANG_MERGE_SIZE(run_max_stack_size);
+  LANG_MERGE_SIZE(run_max_vm_size);
+  LANG_MERGE_SIZE(run_max_rss_size);
+  out->compiler_env = sarray_merge_pp(imp->compiler_env, lang->compiler_env);
+  LANG_MERGE_STRING(compile_server_id);
+  LANG_MERGE_STRING(multi_header_suffix);
+  LANG_MERGE_STRING(container_options);
+  LANG_MERGE_STRING(compiler_container_options);
+  LANG_MERGE_STRING(clean_up_cmd);
+  LANG_MERGE_STRING(run_env_file);
+  LANG_MERGE_STRING(clean_up_env_file);
+  LANG_MERGE_STRING(version);
+}

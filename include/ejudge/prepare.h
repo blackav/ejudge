@@ -1792,4 +1792,15 @@ prepare_problem(
         struct section_problem_data **abstr_probs,
         struct section_problem_data *prob);
 
+void
+prepare_copy_language(
+        struct section_language_data *out,
+        const struct section_language_data *in);
+
+void
+prepare_merge_language(
+        struct section_language_data *out,
+        const struct section_language_data *imp,
+        const struct section_language_data *lang);
+
 #endif /* __PREPARE_H__ */
