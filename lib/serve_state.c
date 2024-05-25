@@ -742,6 +742,7 @@ serve_state_import_languages(
         }
         memset(&entries[entries_u], 0, sizeof(entries[entries_u]));
         entries[entries_u].id = lang->compile_server_id;
+        ++entries_u;
       }
     }
   }
@@ -810,8 +811,10 @@ serve_state_import_languages(
               break;
             }
           }
-          err("%s: invalid compile server id '%s' for language '%s'", __FUNCTION__, lang->compile_server_id, lang->short_name);
-          goto cleanup;
+          if (!e) {
+            err("%s: invalid compile server id '%s' for language '%s'", __FUNCTION__, lang->compile_server_id, lang->short_name);
+            goto cleanup;
+          }
         }
         if (!e) e = &entries[0];
         const struct section_language_data *imp_lang = NULL;
