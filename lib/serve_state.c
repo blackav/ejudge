@@ -1098,14 +1098,14 @@ serve_state_import_languages(
   cs->langs = new_langs; new_langs = NULL;
   cs->max_lang = max_lang;
 
-  printf("======== languages dump ========\n");
+  fprintf(stderr, "======== languages dump ========\n");
   for (int lang_id = 1; lang_id <= cs->max_lang; ++lang_id) {
     const struct section_language_data *lang = cs->langs[lang_id];
-    if (lang) {
-      prepare_unparse_lang(stdout, lang, 0, NULL, NULL, NULL);
+    if (lang && lang->disabled <= 0) {
+      prepare_unparse_lang(stderr, lang, 0, NULL, NULL, NULL);
     }
   }
-  printf("======== end languages dump ========\n");
+  fprintf(stderr, "======== end languages dump ========\n");
 
 
   retval = 0;
