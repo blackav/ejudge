@@ -3837,9 +3837,11 @@ set_defaults(
       vinfo("language.%d.short_name set to \"lang%d\"", i, i);
       sprintf(lang->short_name, "lang%d", i);
     }
-    if (!lang->long_name || !lang->long_name[0]) {
-      vinfo("language.%d.long_name set to \"Language %d\"", i, i);
-      usprintf(&lang->long_name, "Language %d", i);
+    if (g->enable_language_import <= 0) {
+      if (!lang->long_name || !lang->long_name[0]) {
+        vinfo("language.%d.long_name set to \"Language %d\"", i, i);
+        usprintf(&lang->long_name, "Language %d", i);
+      }
     }
 
     if (mode == PREPARE_SERVE) {
@@ -3889,7 +3891,7 @@ set_defaults(
       path_prepend_dir(&lang->style_checker_cmd, g->ejudge_checkers_dir);
     }
 
-    if (!lang->src_sfx[0]) {
+    if (g->enable_language_import <= 0 && !lang->src_sfx[0]) {
       err("language.%d.src_sfx must be set", i);
       return -1;
     }
@@ -4372,10 +4374,21 @@ collect_sections(serve_state_t state, int mode)
   struct section_language_data  *l;
   struct section_problem_data   *q;
   struct section_tester_data    *t;
+  struct section_global_data    *g = NULL;
   int last_lang = 0, last_prob = 0, last_tester = 0;
   int abstr_prob_count = 0, abstr_tester_count = 0;
+  int enable_language_import = 0;
+  int lang_count = 0;
 
   state->max_lang = state->max_prob = state->max_tester = 0;
+
+  for (p = state->config; p; p = p->next) {
+    if (!p->name[0] || !strcmp(p->name, "global")) {
+      g = state->global = (struct section_global_data*) p;
+      break;
+    }
+  }
+  if (g && g->enable_language_import > 0) enable_language_import = 1;
 
   // process abstract problems and testers
   for (p = state->config; p; p = p->next) {
@@ -4398,14 +4411,19 @@ collect_sections(serve_state_t state, int mode)
   for (p = state->config; p; p = p->next) {
     if (!strcmp(p->name, "language") && mode != PREPARE_RUN) {
       l = (struct section_language_data*) p;
-      if (!l->id) vinfo("assigned language id = %d", (l->id = last_lang + 1));
-      if (l->id <= 0 || l->id > EJ_MAX_LANG_ID) {
-        err("language id %d is out of range", l->id);
-        return -1;
+      if (enable_language_import) {
+        // do not assign language id, it happens later, at the import phase
+        lang_count += 1;
+      } else {
+        if (!l->id) vinfo("assigned language id = %d", (l->id = last_lang + 1));
+        if (l->id <= 0 || l->id > EJ_MAX_LANG_ID) {
+          err("language id %d is out of range", l->id);
+          return -1;
+        }
+        if (l->id > state->max_lang) state->max_lang = l->id;
+        last_lang = l->id;
+        if (!l->compile_id) l->compile_id = l->id;
       }
-      if (l->id > state->max_lang) state->max_lang = l->id;
-      last_lang = l->id;
-      if (!l->compile_id) l->compile_id = l->id;
     } else if (!strcmp(p->name, "problem") && mode != PREPARE_COMPILE) {
       q = (struct section_problem_data*) p;
       if (q->abstract) continue;
@@ -4430,7 +4448,10 @@ collect_sections(serve_state_t state, int mode)
     }
   }
 
-  if (state->max_lang > 0) {
+  if (enable_language_import && lang_count > 0) {
+    state->max_lang = lang_count;
+    XCALLOC(state->langs, lang_count + 1);
+  } else if (state->max_lang > 0) {
     XCALLOC(state->langs, state->max_lang + 1);
   }
   if (state->max_prob > 0) {
@@ -4440,14 +4461,19 @@ collect_sections(serve_state_t state, int mode)
     XCALLOC(state->testers, state->max_tester + 1);
   }
 
+  int cur_lang_id = 0;
   for (p = state->config; p; p = p->next) {
     if (!strcmp(p->name, "language") && mode != PREPARE_RUN) {
       l = (struct section_language_data*) p;
-      if (state->langs[l->id]) {
-        err("duplicated language id %d", l->id);
-        return -1;
+      if (enable_language_import) {
+        state->langs[++cur_lang_id] = l;
+      } else {
+        if (state->langs[l->id]) {
+          err("duplicated language id %d", l->id);
+          return -1;
+        }
+        state->langs[l->id] = l;
       }
-      state->langs[l->id] = l;
     } else if (!strcmp(p->name, "problem") && mode != PREPARE_COMPILE) {
       q = (struct section_problem_data*) p;
       if (q->abstract) {
@@ -7006,7 +7032,7 @@ prepare_copy_language(
   if (lang->field) {                   \
     out->field = xstrdup(lang->field); \
   } else if (imp->long_name) {         \
-    out->field = xstrdup(lang->field); \
+    out->field = xstrdup(imp->field);  \
   }                                    \
 } while (0)
 
@@ -7034,6 +7060,28 @@ prepare_merge_language(
   out->compile_id = lang->compile_id;
   strcpy(out->short_name, lang->short_name);
 
+  if (lang->long_name && lang->long_name[0]) {
+    out->long_name = xstrdup(lang->long_name);
+  } else if (imp->long_name && imp->long_name[0]) {
+    const unsigned char *v = NULL;
+    if (lang->version && lang->version[0]) {
+      v = lang->version;
+    } else if (imp->version && imp->version[0]) {
+      v = imp->version;
+    }
+    if (v) {
+    char *s = NULL;
+    asprintf(&s, "%s %s", imp->long_name, v);
+    out->long_name = s;
+    } else {
+      out->long_name = xstrdup(imp->long_name);
+    }
+  } else {
+    char *s = NULL;
+    asprintf(&s, "Language %d", out->id);
+    out->long_name = s;
+  }
+
   /* special handling:
   ejintbool_t disabled;
   ejintbool_t default_disabled;
@@ -7057,7 +7105,6 @@ prepare_merge_language(
   LANG_MERGE_BOOL(disable_security);
   LANG_MERGE_BOOL(enable_suid_run);
   LANG_MERGE_BOOL(is_dos);
-  LANG_MERGE_STRING(long_name);
   LANG_MERGE_STRING(key);
   LANG_MERGE_STRING(arch);
   strcpy(out->src_sfx, imp->src_sfx);
