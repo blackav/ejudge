@@ -1,5 +1,5 @@
-#!/bin/sh
-# Copyright (c) 2005-2023 Alexander Chernov <cher@ejudge.ru>
+#! /bin/bash
+# Copyright (c) 2005-2024 Alexander Chernov <cher@ejudge.ru>
 
 LANG_CONFIG_DIR="@lang_config_dir@"
 
@@ -61,11 +61,6 @@ then
   version=`${JAVARUN} -version 2>&1 | grep " version" | sed 's/^.*"\(.*\)".*$/\1/g'` || failure
   [ "${version}" != "" ] || failure
   case x"${version}" in
-    x21*) JAVAVER=21;;
-    x20*) JAVAVER=20;;
-    x19*) JAVAVER=19;;
-    x18*) JAVAVER=18;;
-    x17*) JAVAVER=17;;
     x16.*) JAVAVER=16;;
     x15.*) JAVAVER=15;;
     x14.*) JAVAVER=14;;
@@ -81,7 +76,8 @@ then
     x1.4.*) JAVAVER=1.4;;
     x1.3.*) JAVAVER=1.3;;
     x1.2.*) JAVAVER=1.2;;
-    *) failure;;
+    *) components=(${version//./ }) 
+       JAVAVER=${components[0]};;
   esac
 
   cat > conftest.java <<EOF
