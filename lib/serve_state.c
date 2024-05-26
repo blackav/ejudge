@@ -47,6 +47,7 @@
 #include "ejudge/logger.h"
 #include "ejudge/osdeps.h"
 
+#include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -681,9 +682,7 @@ const size_t serve_struct_sizes_array_num = sizeof(serve_struct_sizes_array) / s
 struct compile_cfg_entry
 {
   const unsigned char *id;
-  struct generic_section_config *cfg;
-  int max_lang;
-  struct section_language_data **langs;
+  struct compile_server_config *csc;
 };
 
 int
@@ -702,11 +701,15 @@ serve_state_import_languages(
   const struct section_language_data **cid_langs_alloc = NULL;
   int has_different_compile_id = 0;
   signed char *enable_flags = NULL;
+  char *log_s = NULL;
+  size_t log_z = 0;
+  FILE *log_f = NULL;
 
   if (global->enable_language_import <= 0) {
     return 0;
   }
 
+  log_f = open_memstream(&log_s, &log_z);
   const unsigned char *compile_spool_dir = "";
 #if !defined EJUDGE_COMPILE_SPOOL_DIR
   err("%s: --enable-compile-spool-dir must be enabled", __FUNCTION__);
@@ -749,48 +752,9 @@ serve_state_import_languages(
 
   for (int i = 0; i < entries_u; ++i) {
     struct compile_cfg_entry *e = &entries[i];
-    unsigned char conf_path[PATH_MAX];
-    _ = snprintf(conf_path, sizeof(conf_path), "%s/%s/config/dir/compile.cfg",
-                 compile_spool_dir, e->id);
-    int cond_count = 0;
-    e->cfg = prepare_parse_config_file(conf_path, &cond_count);
-    if (!e->cfg) {
-      err("%s: failed to parse config for server '%s': '%s'", __FUNCTION__, e->id, conf_path);
+    e->csc = compile_server_load(log_f, compile_spool_dir, e->id);
+    if (!e->csc) {
       goto cleanup;
-    }
-    if (cond_count > 0) {
-      err("%s: config for server '%s' ('%s') contains conditional directives", __FUNCTION__, e->id, conf_path);
-      goto cleanup;
-    }
-
-    int max_lang_id = 0;
-    int cur_id = 0;
-    for (struct generic_section_config *gsc = e->cfg; gsc; gsc = gsc->next) {
-      if (strcmp(gsc->name, "language") != 0) continue;
-      struct section_language_data *lang = (struct section_language_data *) gsc;
-      if (lang->id < 0) {
-        err("%s: lang_id %d is invalid in compile server %s", __FUNCTION__, lang->id, e->id);
-        goto cleanup;
-      }
-      if (lang->id == 0) lang->id = cur_id + 1;
-      cur_id = lang->id;
-      if (cur_id > max_lang_id) max_lang_id = cur_id;
-    }
-    if (max_lang_id > EJ_MAX_LANG_ID) {
-      err("%s: max lang_id %d is too big in compile server %s", __FUNCTION__, max_lang_id, e->id);
-      goto cleanup;
-    }
-
-    e->max_lang = max_lang_id;
-    XCALLOC(e->langs, max_lang_id + 1);
-    for (struct generic_section_config *gsc = e->cfg; gsc; gsc = gsc->next) {
-      if (strcmp(gsc->name, "language") != 0) continue;
-      struct section_language_data *lang = (struct section_language_data *) gsc;
-      if (e->langs[lang->id]) {
-        err("%s: duplicated lang_id %d in compile server %s", __FUNCTION__, lang->id, e->id);
-        goto cleanup;
-      }
-      e->langs[lang->id] = lang;
     }
   }
 
@@ -818,8 +782,8 @@ serve_state_import_languages(
         }
         if (!e) e = &entries[0];
         const struct section_language_data *imp_lang = NULL;
-        for (int i = 1; i <= e->max_lang; ++i) {
-          const struct section_language_data *l = e->langs[i];
+        for (int i = 1; i <= e->csc->max_lang; ++i) {
+          const struct section_language_data *l = e->csc->langs[i];
           if (l && !strcmp(l->short_name, lang->short_name)) {
             imp_lang = l;
             break;
@@ -893,8 +857,8 @@ serve_state_import_languages(
   int max_lang = max_cid_lang;
   for (int i = 0; i < entries_u; ++i) {
     struct compile_cfg_entry *e = &entries[i];
-    if (e->max_lang > max_lang) {
-      max_lang = e->max_lang;
+    if (e->csc->max_lang > max_lang) {
+      max_lang = e->csc->max_lang;
     }
   }
   XCALLOC(new_langs, max_lang + 1);
@@ -902,8 +866,8 @@ serve_state_import_languages(
   memset(enable_flags, -1, (max_lang + 1) * sizeof(enable_flags[0]));
 
   struct compile_cfg_entry *global_entry = &entries[0];
-  for (int lang_id = 1; lang_id <= global_entry->max_lang; ++lang_id) {
-    const struct section_language_data *imp_lang = global_entry->langs[lang_id];
+  for (int lang_id = 1; lang_id <= global_entry->csc->max_lang; ++lang_id) {
+    const struct section_language_data *imp_lang = global_entry->csc->langs[lang_id];
     if (!imp_lang) continue;
     const struct section_language_data *cnts_lang = 0;
     if (lang_id <= max_cid_lang) {
@@ -973,8 +937,8 @@ serve_state_import_languages(
     if (cnts_lang->compile_id > 0) {
       compile_id = cnts_lang->compile_id;
     }
-    if (compile_id > 0 && compile_id <= entry->max_lang) {
-      imp_lang = entry->langs[compile_id];
+    if (compile_id > 0 && compile_id <= entry->csc->max_lang) {
+      imp_lang = entry->csc->langs[compile_id];
     }
     if (!imp_lang) {
       err("%s: language %d (%s) is not supported by compilation server %s", __FUNCTION__, lang_id, cnts_lang->short_name, entry->id);
@@ -1111,16 +1075,18 @@ serve_state_import_languages(
   retval = 0;
 
 cleanup:;
+  if (log_f) fclose(log_f);
+  errt(log_s, log_z);
   if (entries) {
     for (int i = 0; i < entries_u; ++i) {
-      prepare_free_config(entries[i].cfg);
-      xfree(entries[i].langs);
+      compile_server_config_free(entries[i].csc);
     }
     xfree(entries);
   }
   xfree(new_langs);
   xfree(cid_langs_alloc);
   xfree(enable_flags);
+  xfree(log_s);
   return retval;
 }
 
