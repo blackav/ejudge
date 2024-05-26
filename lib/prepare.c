@@ -7241,3 +7241,20 @@ compile_servers_config_free(struct compile_server_configs *cscs)
   }
   memset(cscs, 0xff, sizeof(*cscs));
 }
+
+struct compile_server_config *
+compile_servers_get(struct compile_server_configs *cscs, const unsigned char *id)
+{
+  for (int i = 0; i < cscs->u; ++i) {
+    if (!strcmp(cscs->v[i].id, id)) {
+      return &cscs->v[i];
+    }
+  }
+  if (cscs->a == cscs->u) {
+    XREALLOC(cscs->v, (cscs->a *= 2) * sizeof(cscs->v[0]));
+  }
+  struct compile_server_config *csc = &cscs->v[cscs->u++];
+  memset(csc, 0, sizeof(*csc));
+  csc->id = xstrdup(id);
+  return csc;
+}

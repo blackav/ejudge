@@ -1837,5 +1837,9 @@ void
 compile_servers_config_init(struct compile_server_configs *cscs);
 void
 compile_servers_config_free(struct compile_server_configs *cscs);
+struct compile_server_config *
+compile_servers_get(
+        struct compile_server_configs *cscs,
+        const unsigned char *id);
 
 #endif /* __PREPARE_H__ */
