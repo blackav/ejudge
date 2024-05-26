@@ -725,7 +725,7 @@ serve_state_import_languages(
   if (global->compile_server_id && global->compile_server_id[0]) {
     global_id = global->compile_server_id;
   }
-  entries[0].id = global_id;
+  entries[0].id = xstrdup(global_id);
   entries_u = 1;
 
   // languages in cs->langs are in disarray, scan for language servers without using lang->id
@@ -744,7 +744,7 @@ serve_state_import_languages(
           XREALLOC(entries, entries_a);
         }
         memset(&entries[entries_u], 0, sizeof(entries[entries_u]));
-        entries[entries_u].id = lang->compile_server_id;
+        entries[entries_u].id = xstrdup(lang->compile_server_id);
         ++entries_u;
       }
     }
@@ -752,7 +752,7 @@ serve_state_import_languages(
 
   for (int i = 0; i < entries_u; ++i) {
     struct compile_cfg_entry *e = &entries[i];
-    if (compile_server_load(&e->csc, log_f, compile_spool_dir, e->id) < 0) {
+    if (compile_server_load(&e->csc, log_f, compile_spool_dir) < 0) {
       goto cleanup;
     }
   }

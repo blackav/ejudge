@@ -1822,8 +1822,7 @@ int
 compile_server_load(
         struct compile_server_config *csc,
         FILE *log_f,
-        const unsigned char *spool_dir,
-        const unsigned char *id);
+        const unsigned char *spool_dir);
 
 /**
 a collection of compilation server configs

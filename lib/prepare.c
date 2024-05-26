@@ -7155,15 +7155,12 @@ int
 compile_server_load(
         struct compile_server_config *csc,
         FILE *log_f,
-        const unsigned char *spool_dir,
-        const unsigned char *id)
+        const unsigned char *spool_dir)
 {
   unsigned char conf_path[PATH_MAX];
   __attribute__((unused)) int _;
 
-  memset(csc, 0, sizeof(*csc));
-  csc->id = xstrdup(id);
-  _ = snprintf(conf_path, sizeof(conf_path), "%s/%s/config/dir/compile.cfg", spool_dir, id);
+  _ = snprintf(conf_path, sizeof(conf_path), "%s/%s/config/dir/compile.cfg", spool_dir, csc->id);
   struct stat stb;
   if (stat(conf_path, &stb) < 0) {
     fprintf(log_f, "%s: compile server config file '%s' is not accessible: %s\n", __FUNCTION__, conf_path, os_ErrorMsg());
@@ -7176,11 +7173,11 @@ compile_server_load(
   int cond_count = 0;
   csc->cfg = prepare_parse_config_file(conf_path, &cond_count);
   if (!csc->cfg) {
-    fprintf(log_f, "%s: failed to parse config for server '%s': '%s'\n", __FUNCTION__, id, conf_path);
+    fprintf(log_f, "%s: failed to parse config for server '%s': '%s'\n", __FUNCTION__, csc->id, conf_path);
     goto fail;
   }
   if (cond_count > 0) {
-    fprintf(log_f, "%s: config for server '%s' ('%s') contains conditional directives\n", __FUNCTION__, id, conf_path);
+    fprintf(log_f, "%s: config for server '%s' ('%s') contains conditional directives\n", __FUNCTION__, csc->id, conf_path);
     goto fail;
   }
 
@@ -7197,7 +7194,7 @@ compile_server_load(
     if (strcmp(gsc->name, "language") != 0) continue;
     struct section_language_data *lang = (struct section_language_data *) gsc;
     if (lang->id < 0 || lang->id > EJ_MAX_LANG_ID) {
-      fprintf(log_f, "%s: lang_id %d is invalid in compile server %s\n", __FUNCTION__, lang->id, id);
+      fprintf(log_f, "%s: lang_id %d is invalid in compile server %s\n", __FUNCTION__, lang->id, csc->id);
       goto fail;
     }
     if (lang->id == 0) lang->id = cur_id + 1;
@@ -7211,7 +7208,7 @@ compile_server_load(
     if (strcmp(gsc->name, "language") != 0) continue;
     struct section_language_data *lang = (struct section_language_data *) gsc;
     if (csc->langs[lang->id]) {
-      fprintf(log_f, "%s: duplicated lang_id %d in compile server %s\n", __FUNCTION__, lang->id, id);
+      fprintf(log_f, "%s: duplicated lang_id %d in compile server %s\n", __FUNCTION__, lang->id, csc->id);
       goto fail;
     }
     lang->compile_id = 0;
