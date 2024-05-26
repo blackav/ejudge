@@ -1803,4 +1803,25 @@ prepare_merge_language(
         const struct section_language_data *imp,
         const struct section_language_data *lang);
 
+/**
+exported configuration of a compilation server
+*/
+struct compile_server_config
+{
+  unsigned char *id;
+  struct generic_section_config *cfg;
+  struct section_global_data *global;
+  struct section_language_data **langs;
+  int max_lang;
+};
+
+struct compile_server_config *
+compile_server_config_free(struct compile_server_config *);
+
+struct compile_server_config *
+compile_server_load(
+        FILE *log_f,
+        const unsigned char *spool_dir,
+        const unsigned char *id);
+
 #endif /* __PREPARE_H__ */

@@ -16,6 +16,7 @@
 
 #include "ejudge/config.h"
 #include "ejudge/prepare.h"
+#include "ejudge/ej_limits.h"
 #include "ejudge/varsubst.h"
 #include "ejudge/version.h"
 #include "ejudge/meta/prepare_meta.h"
@@ -38,6 +39,7 @@
 #include "ejudge/logger.h"
 #include "ejudge/osdeps.h"
 
+#include <linux/limits.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -7136,4 +7138,91 @@ prepare_merge_language(
   LANG_MERGE_STRING(run_env_file);
   LANG_MERGE_STRING(clean_up_env_file);
   LANG_MERGE_STRING(version);
+}
+
+struct compile_server_config *
+compile_server_config_free(struct compile_server_config *csc)
+{
+  if (csc) {
+    prepare_free_config(csc->cfg);
+    xfree(csc->id);
+    xfree(csc->langs);
+    memset(csc, 0xff, sizeof(*csc));
+    free(csc);
+  }
+  return NULL;
+}
+
+struct compile_server_config *
+compile_server_load(
+        FILE *log_f,
+        const unsigned char *spool_dir,
+        const unsigned char *id)
+{
+  unsigned char conf_path[PATH_MAX];
+  __attribute__((unused)) int _;
+  struct compile_server_config *csc;
+
+  XCALLOC(csc, 1);
+  csc->id = xstrdup(id);
+  _ = snprintf(conf_path, sizeof(conf_path), "%s/%s/config/dir/compile.cfg", spool_dir, id);
+  struct stat stb;
+  if (stat(conf_path, &stb) < 0) {
+    fprintf(log_f, "%s: compile server config file '%s' is not accessible: %s\n", __FUNCTION__, conf_path, os_ErrorMsg());
+    goto fail;
+  }
+  if (access(conf_path, R_OK) < 0) {
+    fprintf(log_f, "%s: compile server config file '%s' is not readable: %s\n", __FUNCTION__, conf_path, os_ErrorMsg());
+    goto fail;
+  }
+  int cond_count = 0;
+  csc->cfg = prepare_parse_config_file(conf_path, &cond_count);
+  if (!csc->cfg) {
+    fprintf(log_f, "%s: failed to parse config for server '%s': '%s'\n", __FUNCTION__, id, conf_path);
+    goto fail;
+  }
+  if (cond_count > 0) {
+    fprintf(log_f, "%s: config for server '%s' ('%s') contains conditional directives\n", __FUNCTION__, id, conf_path);
+    goto fail;
+  }
+
+  for (struct generic_section_config *gsc = csc->cfg; gsc; gsc = gsc->next) {
+    if (!strcmp(gsc->name, "global") || !strcmp(gsc->name, "")) {
+      csc->global = (struct section_global_data *) gsc;
+      break;
+    }
+  }
+
+  int max_lang_id = 0;
+  int cur_id = 0;
+  for (struct generic_section_config *gsc = csc->cfg; gsc; gsc = gsc->next) {
+    if (strcmp(gsc->name, "language") != 0) continue;
+    struct section_language_data *lang = (struct section_language_data *) gsc;
+    if (lang->id < 0 || lang->id > EJ_MAX_LANG_ID) {
+      fprintf(log_f, "%s: lang_id %d is invalid in compile server %s\n", __FUNCTION__, lang->id, id);
+      goto fail;
+    }
+    if (lang->id == 0) lang->id = cur_id + 1;
+    cur_id = lang->id;
+    if (cur_id > max_lang_id) max_lang_id = cur_id;
+  }
+
+  csc->max_lang = max_lang_id;
+  XCALLOC(csc->langs, max_lang_id + 1);
+  for (struct generic_section_config *gsc = csc->cfg; gsc; gsc = gsc->next) {
+    if (strcmp(gsc->name, "language") != 0) continue;
+    struct section_language_data *lang = (struct section_language_data *) gsc;
+    if (csc->langs[lang->id]) {
+      fprintf(log_f, "%s: duplicated lang_id %d in compile server %s\n", __FUNCTION__, lang->id, id);
+      goto fail;
+    }
+    lang->compile_id = 0;
+    csc->langs[lang->id] = lang;
+  }
+
+  return csc;
+ 
+fail:;
+  compile_server_config_free(csc);
+  return NULL;
 }
