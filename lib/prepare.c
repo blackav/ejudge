@@ -40,6 +40,7 @@
 #include "ejudge/osdeps.h"
 
 #include <linux/limits.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -7257,4 +7258,72 @@ compile_servers_get(struct compile_server_configs *cscs, const unsigned char *id
   memset(csc, 0, sizeof(*csc));
   csc->id = xstrdup(id);
   return csc;
+}
+
+int
+compile_servers_arrange(
+        struct compile_server_configs *cscs,
+        FILE *log_f,
+        int *p_max_lang,
+        struct section_language_data ***p_langs)
+{
+  int max_lang = 0;
+  for (int lang_id = 0; lang_id <= *p_max_lang; ++lang_id) {
+    struct section_language_data *lang = (*p_langs)[lang_id];
+    if (!lang) continue;
+    if (lang->id > 0) {
+      if (lang->id > max_lang) max_lang = lang->id;
+    } else {
+      struct compile_server_config *e = NULL;
+      if (lang->compile_server_id && lang->compile_server_id[0]) {
+        e = compile_servers_get(cscs, lang->compile_server_id);
+        if (!e) {
+          fprintf(log_f, "%s: invalid compile server id '%s' for language '%s'\n",
+                  __FUNCTION__, lang->compile_server_id, lang->short_name);
+          return -1;
+        }
+      }
+      if (!e) e = &cscs->v[0];
+      const struct section_language_data *imp_lang = NULL;
+      for (int i = 1; i <= e->max_lang; ++i) {
+        const struct section_language_data *l = e->langs[i];
+        if (l && !strcmp(l->short_name, lang->short_name)) {
+          imp_lang = l;
+          break;
+        }
+      }
+      if (!imp_lang) {
+        fprintf(log_f, "%s: invalid language '%s' for compilation server '%s'\n",
+                __FUNCTION__, lang->short_name, e->id);
+        return -1;
+      }
+      lang->id = imp_lang->id;
+      if (lang->id > max_lang) max_lang = lang->id;
+    }
+  }
+
+  struct section_language_data **langs = NULL;
+  XCALLOC(langs, max_lang + 1);
+  for (int lang_id = 0; lang_id <= *p_max_lang; ++lang_id) {
+    struct section_language_data *lang = (*p_langs)[lang_id];
+    if (!lang) continue;
+    if (lang->id <= 0 || lang->id > max_lang) {
+        fprintf(log_f, "%s: invalid language id %d for language '%s'\n",
+                __FUNCTION__, lang->id, lang->short_name);
+        xfree(langs);
+        return -1;
+    }
+    if (langs[lang->id]) {
+      fprintf(log_f, "%s: duplicated language id %d for languages '%s' and '%s'\n",
+              __FUNCTION__, lang->id, lang->short_name, langs[lang->id]->short_name);
+      xfree(langs);
+      return -1;
+    }
+    langs[lang->id] = lang;
+  }
+
+  xfree(*p_langs);
+  *p_langs = langs;
+  *p_max_lang = max_lang;
+  return 0;
 }

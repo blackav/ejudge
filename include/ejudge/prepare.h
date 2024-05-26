@@ -1841,5 +1841,11 @@ struct compile_server_config *
 compile_servers_get(
         struct compile_server_configs *cscs,
         const unsigned char *id);
+int
+compile_servers_arrange(
+        struct compile_server_configs *cscs,
+        FILE *log_f,
+        int *p_max_lang,
+        struct section_language_data ***p_langs);
 
 #endif /* __PREPARE_H__ */
