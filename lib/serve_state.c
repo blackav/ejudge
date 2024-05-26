@@ -682,7 +682,7 @@ const size_t serve_struct_sizes_array_num = sizeof(serve_struct_sizes_array) / s
 struct compile_cfg_entry
 {
   const unsigned char *id;
-  struct compile_server_config *csc;
+  struct compile_server_config csc;
 };
 
 int
@@ -752,8 +752,7 @@ serve_state_import_languages(
 
   for (int i = 0; i < entries_u; ++i) {
     struct compile_cfg_entry *e = &entries[i];
-    e->csc = compile_server_load(log_f, compile_spool_dir, e->id);
-    if (!e->csc) {
+    if (compile_server_load(&e->csc, log_f, compile_spool_dir, e->id) < 0) {
       goto cleanup;
     }
   }
@@ -782,8 +781,8 @@ serve_state_import_languages(
         }
         if (!e) e = &entries[0];
         const struct section_language_data *imp_lang = NULL;
-        for (int i = 1; i <= e->csc->max_lang; ++i) {
-          const struct section_language_data *l = e->csc->langs[i];
+        for (int i = 1; i <= e->csc.max_lang; ++i) {
+          const struct section_language_data *l = e->csc.langs[i];
           if (l && !strcmp(l->short_name, lang->short_name)) {
             imp_lang = l;
             break;
@@ -857,8 +856,8 @@ serve_state_import_languages(
   int max_lang = max_cid_lang;
   for (int i = 0; i < entries_u; ++i) {
     struct compile_cfg_entry *e = &entries[i];
-    if (e->csc->max_lang > max_lang) {
-      max_lang = e->csc->max_lang;
+    if (e->csc.max_lang > max_lang) {
+      max_lang = e->csc.max_lang;
     }
   }
   XCALLOC(new_langs, max_lang + 1);
@@ -866,8 +865,8 @@ serve_state_import_languages(
   memset(enable_flags, -1, (max_lang + 1) * sizeof(enable_flags[0]));
 
   struct compile_cfg_entry *global_entry = &entries[0];
-  for (int lang_id = 1; lang_id <= global_entry->csc->max_lang; ++lang_id) {
-    const struct section_language_data *imp_lang = global_entry->csc->langs[lang_id];
+  for (int lang_id = 1; lang_id <= global_entry->csc.max_lang; ++lang_id) {
+    const struct section_language_data *imp_lang = global_entry->csc.langs[lang_id];
     if (!imp_lang) continue;
     const struct section_language_data *cnts_lang = 0;
     if (lang_id <= max_cid_lang) {
@@ -937,8 +936,8 @@ serve_state_import_languages(
     if (cnts_lang->compile_id > 0) {
       compile_id = cnts_lang->compile_id;
     }
-    if (compile_id > 0 && compile_id <= entry->csc->max_lang) {
-      imp_lang = entry->csc->langs[compile_id];
+    if (compile_id > 0 && compile_id <= entry->csc.max_lang) {
+      imp_lang = entry->csc.langs[compile_id];
     }
     if (!imp_lang) {
       err("%s: language %d (%s) is not supported by compilation server %s", __FUNCTION__, lang_id, cnts_lang->short_name, entry->id);
@@ -1079,7 +1078,7 @@ cleanup:;
   errt(log_s, log_z);
   if (entries) {
     for (int i = 0; i < entries_u; ++i) {
-      compile_server_config_free(entries[i].csc);
+      compile_server_config_free(&entries[i].csc);
     }
     xfree(entries);
   }

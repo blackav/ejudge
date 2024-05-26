@@ -1815,13 +1815,28 @@ struct compile_server_config
   int max_lang;
 };
 
-struct compile_server_config *
+void
 compile_server_config_free(struct compile_server_config *);
 
-struct compile_server_config *
+int
 compile_server_load(
+        struct compile_server_config *csc,
         FILE *log_f,
         const unsigned char *spool_dir,
         const unsigned char *id);
+
+/**
+a collection of compilation server configs
+*/
+struct compile_server_configs
+{
+  struct compile_server_config *v;
+  size_t u, a;
+};
+
+void
+compile_servers_config_init(struct compile_server_configs *cscs);
+void
+compile_servers_config_free(struct compile_server_configs *cscs);
 
 #endif /* __PREPARE_H__ */

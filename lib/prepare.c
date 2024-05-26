@@ -7140,7 +7140,7 @@ prepare_merge_language(
   LANG_MERGE_STRING(version);
 }
 
-struct compile_server_config *
+void
 compile_server_config_free(struct compile_server_config *csc)
 {
   if (csc) {
@@ -7148,22 +7148,20 @@ compile_server_config_free(struct compile_server_config *csc)
     xfree(csc->id);
     xfree(csc->langs);
     memset(csc, 0xff, sizeof(*csc));
-    free(csc);
   }
-  return NULL;
 }
 
-struct compile_server_config *
+int
 compile_server_load(
+        struct compile_server_config *csc,
         FILE *log_f,
         const unsigned char *spool_dir,
         const unsigned char *id)
 {
   unsigned char conf_path[PATH_MAX];
   __attribute__((unused)) int _;
-  struct compile_server_config *csc;
 
-  XCALLOC(csc, 1);
+  memset(csc, 0, sizeof(*csc));
   csc->id = xstrdup(id);
   _ = snprintf(conf_path, sizeof(conf_path), "%s/%s/config/dir/compile.cfg", spool_dir, id);
   struct stat stb;
@@ -7220,9 +7218,29 @@ compile_server_load(
     csc->langs[lang->id] = lang;
   }
 
-  return csc;
+  return 0;
  
 fail:;
   compile_server_config_free(csc);
-  return NULL;
+  return -1;
+}
+
+void
+compile_servers_config_init(struct compile_server_configs *cscs)
+{
+  memset(cscs, 0, sizeof(*cscs));
+  cscs->a = 4;
+  cscs->v = xmalloc(cscs->a * sizeof(cscs->v[0]));
+}
+
+void
+compile_servers_config_free(struct compile_server_configs *cscs)
+{
+  for (int i = 0; i < cscs->u; ++i) {
+    struct compile_server_config *csc = &cscs->v[i];
+    prepare_free_config(csc->cfg);
+    xfree(csc->id);
+    xfree(csc->langs);
+  }
+  memset(cscs, 0xff, sizeof(*cscs));
 }
