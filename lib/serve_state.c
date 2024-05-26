@@ -732,61 +732,8 @@ serve_state_import_languages(
     }
   }
 
-  // rearrange cs->langs according to the language ids from the servers
-  {
-    int max_lang = 0;
-    for (int lang_id = 1; lang_id <= cs->max_lang; ++lang_id) {
-      struct section_language_data *lang = cs->langs[lang_id];
-      if (!lang) continue;
-      if (lang->id > 0) {
-        if (lang->id > max_lang) max_lang = lang->id;
-      } else {
-        struct compile_server_config *e = NULL;
-        if (lang->compile_server_id && lang->compile_server_id[0]) {
-          e = compile_servers_get(&entries, lang->compile_server_id);
-          if (!e) {
-            err("%s: invalid compile server id '%s' for language '%s'", __FUNCTION__, lang->compile_server_id, lang->short_name);
-            goto cleanup;
-          }
-        }
-        if (!e) e = &entries.v[0];
-        const struct section_language_data *imp_lang = NULL;
-        for (int i = 1; i <= e->max_lang; ++i) {
-          const struct section_language_data *l = e->langs[i];
-          if (l && !strcmp(l->short_name, lang->short_name)) {
-            imp_lang = l;
-            break;
-          }
-        }
-        if (!imp_lang) {
-          err("%s: invalid language '%s' for compilation server '%s'", __FUNCTION__, lang->short_name, e->id);
-          goto cleanup;
-        }
-        lang->id = imp_lang->id;
-        if (lang->id > max_lang) max_lang = lang->id;
-      }
-    }
-
-    struct section_language_data **langs = NULL;
-    XCALLOC(langs, max_lang + 1);
-    for (int lang_id = 1; lang_id <= cs->max_lang; ++lang_id) {
-      struct section_language_data *lang = cs->langs[lang_id];
-      if (!lang) continue;
-      if (lang->id <= 0 || lang->id > max_lang) {
-        err("%s: invalid language id %d for language '%s'", __FUNCTION__, lang->id, lang->short_name);
-        xfree(langs);
-        goto cleanup;
-      }
-      if (langs[lang->id]) {
-        err("%s: duplicated language id %d for languages '%s' and '%s'", __FUNCTION__, lang->id, lang->short_name, langs[lang->id]->short_name);
-        xfree(langs);
-        goto cleanup;
-      }
-      langs[lang->id] = lang;
-    }
-    xfree(cs->langs);
-    cs->langs = langs; langs = NULL;
-    cs->max_lang = max_lang;
+  if (compile_servers_arrange(&entries, log_f, &cs->max_lang, &cs->langs) < 0) {
+    goto cleanup;
   }
 
   for (int lang_id = 1; lang_id <= cs->max_lang; ++lang_id) {
