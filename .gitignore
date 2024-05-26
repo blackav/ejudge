@@ -77,3 +77,4 @@ ej-vcs-compile
 /ej-postgres-cleanup
 /ej-postgres-exec
 compile_commands.json
+/.cache
