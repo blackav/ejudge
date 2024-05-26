@@ -1,9 +1,8 @@
 /* -*- c -*- */
-/* $Id$ */
 #ifndef __ERRLOG_H__
 #define __ERRLOG_H__
 
-/* Copyright (C) 2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2005-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -17,11 +16,14 @@
  * Lesser General Public License for more details.
  */
 
+#include <stddef.h>
 #include <stdarg.h>
 
 extern void vverr(char const *, va_list args);
 extern void err(char const *, ...) __attribute__((format(printf, 1, 2)));
 extern void info(char const *, ...) __attribute__((format(printf, 1, 2)));
 extern void do_err_r(char const *func, char const *txt, ...);
+extern void errt(const char *buf, size_t size);
+
 
 #endif /* __ERRLOG_H__ */
