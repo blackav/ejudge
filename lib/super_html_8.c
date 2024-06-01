@@ -168,38 +168,48 @@ super_html_read_serve(
   }
   */
 
-  // compile server must be used
-  if (!global->compile_dir || !global->compile_dir[0]) {
-    fprintf(flog, "compilation server is not used\n");
-    return -1;
+  if (global->enable_language_import > 0) {
+    sstate->cscs = xmalloc(sizeof(*sstate->cscs));
+    compile_servers_config_init(sstate->cscs);
+    const unsigned char *global_id = config->contest_server_id;
+    if (global->compile_server_id && global->compile_server_id[0]) {
+      global_id = global->compile_server_id;
+    }
+    (void) compile_servers_get(sstate->cscs, global_id);
+  } else {
+    // compile server must be used
+    if (!global->compile_dir || !global->compile_dir[0]) {
+      fprintf(flog, "compilation server is not used\n");
+      return -1;
+    }
+    if (!os_IsAbsolutePath(global->compile_dir)) {
+      usprintf(&global->compile_dir, "%s/var/%s", global->root_dir, global->compile_dir);
+    }
+    if (!config->compile_home_dir) {
+      fprintf(flog, "compile server home dir is not set\n");
+      return -1;
+    }
+    // cut off "/var/compile" suffix from the compile dir
+    snprintf(cs_spool_dir, sizeof(cs_spool_dir), "%s", global->compile_dir);
+    cs_spool_dir_len = strlen(cs_spool_dir);
+    if (cs_spool_dir_len < sizeof(compile_dir_suffix)
+        || strcmp(cs_spool_dir+cs_spool_dir_len-sizeof(compile_dir_suffix)+1,
+                  compile_dir_suffix) != 0) {
+      fprintf(flog, "invalid `compile_dir' %s\n", cs_spool_dir);
+      return -1;
+    }
+    cs_spool_dir[cs_spool_dir_len-sizeof(compile_dir_suffix)+1] = 0;
+    sstate->compile_home_dir = xstrdup(cs_spool_dir);
+    //fprintf(stderr, "compile_home_dir>>%s<<\n", sstate->compile_home_dir);
+    /*
+    snprintf(cs_spool_dir, sizeof(cs_spool_dir), "%s/var/compile",
+            config->compile_home_dir);
+    if (strcmp(cs_spool_dir, global->compile_dir)) {
+      fprintf(flog, "non-default compilation server is used\n");
+      return -1;
+    }
+    */
   }
-  if (!os_IsAbsolutePath(global->compile_dir)) {
-    usprintf(&global->compile_dir, "%s/var/%s", global->root_dir, global->compile_dir);
-  }
-  if (!config->compile_home_dir) {
-    fprintf(flog, "compile server home dir is not set\n");
-    return -1;
-  }
-  // cut off "/var/compile" suffix from the compile dir
-  snprintf(cs_spool_dir, sizeof(cs_spool_dir), "%s", global->compile_dir);
-  cs_spool_dir_len = strlen(cs_spool_dir);
-  if (cs_spool_dir_len < sizeof(compile_dir_suffix)
-      || strcmp(cs_spool_dir+cs_spool_dir_len-sizeof(compile_dir_suffix)+1,
-                compile_dir_suffix) != 0) {
-    fprintf(flog, "invalid `compile_dir' %s\n", cs_spool_dir);
-    return -1;
-  }
-  cs_spool_dir[cs_spool_dir_len-sizeof(compile_dir_suffix)+1] = 0;
-  sstate->compile_home_dir = xstrdup(cs_spool_dir);
-  //fprintf(stderr, "compile_home_dir>>%s<<\n", sstate->compile_home_dir);
-  /*
-  snprintf(cs_spool_dir, sizeof(cs_spool_dir), "%s/var/compile",
-           config->compile_home_dir);
-  if (strcmp(cs_spool_dir, global->compile_dir)) {
-    fprintf(flog, "non-default compilation server is used\n");
-    return -1;
-  }
-  */
 
   prepare_set_global_defaults(config, global);
   if (global->stand2_file_name && global->stand2_file_name[0]) sstate->enable_stand2 = 1;
@@ -216,127 +226,129 @@ super_html_read_serve(
   }
   fuh_text = 0; fuh_size = 0;
 
-  // collect languages
-  total = 0; cur_id = 0;
-  for (pg = sstate->cfg; pg; pg = pg->next) {
-    if (strcmp(pg->name, "language") != 0) continue;
-    lang = (struct section_language_data*) pg;
-    if (!lang->id) lang->id = cur_id + 1;
-    cur_id = lang->id;
-    if (lang->id <= 0 || lang->id > EJ_MAX_LANG_ID) {
-      fprintf(flog, "Invalid language ID\n");
-      return -1;
-    }
-    if (lang->id >= total) total = lang->id + 1;
-  }
-
-  sstate->lang_a = 0;
-  sstate->langs = 0;
-  sstate->loc_cs_map = 0;
-  sstate->lang_opts = 0;
-  sstate->lang_libs = 0;
-  sstate->lang_flags = 0;
-  if (total > 0) {
-    sstate->lang_a = 4;
-    while (total > sstate->lang_a) sstate->lang_a *= 2;
-    XCALLOC(sstate->langs, sstate->lang_a);
-    XCALLOC(sstate->loc_cs_map, sstate->lang_a);
-    XCALLOC(sstate->lang_opts, sstate->lang_a);
-    XCALLOC(sstate->lang_libs, sstate->lang_a);
-    XCALLOC(sstate->lang_flags, sstate->lang_a);
+  if (global->enable_language_import > 0) {
+    // collect languages
+    total = 0; cur_id = 0;
     for (pg = sstate->cfg; pg; pg = pg->next) {
       if (strcmp(pg->name, "language") != 0) continue;
       lang = (struct section_language_data*) pg;
-      if (sstate->langs[lang->id]) {
-        fprintf(flog, "Duplicated language ID %d\n", lang->id);
+      if (!lang->id) lang->id = cur_id + 1;
+      cur_id = lang->id;
+      if (lang->id <= 0 || lang->id > EJ_MAX_LANG_ID) {
+        fprintf(flog, "Invalid language ID\n");
         return -1;
       }
-      sstate->langs[lang->id] = lang;
-    }
-  }
-
-  // load the compilation server state and establish correspondence
-  if (super_load_cs_languages(config, sstate, global->extra_compile_dirs, 0,
-                              cs_conf_file, sizeof(cs_conf_file)) < 0) {
-    fprintf(flog, "Failed to load compilation server configuration\n");
-    return -1;
-  }
-
-  for (i = 1; i < sstate->lang_a; i++) {
-    if (!(lang = sstate->langs[i])) continue;
-    if (!lang->compile_id) lang->compile_id = lang->id;
-
-    if (prepare_check_forbidden_lang(flog, lang) < 0)
-      return -1;
-
-    /*
-    if (lang->compile_id <= 0 || lang->compile_id >= sstate->cs_lang_total
-        || !sstate->cs_langs[lang->compile_id]) {
-    }
-    */
-    // improve error messaging
-    if (lang->compile_id > 0 && lang->compile_id < sstate->cs_lang_total
-        && sstate->cs_langs[lang->compile_id]
-        && strcmp(lang->short_name, sstate->cs_langs[lang->compile_id]->short_name) != 0) {
-      fprintf(flog,
-              "contest configuration file '%s' specifies language short name '%s' for language %d\n"
-              "and it is different from language short name '%s' in compilation configuration file '%s'\n",
-              path, lang->short_name, lang->compile_id,
-              sstate->cs_langs[lang->compile_id]->short_name,
-              cs_conf_file);
-      return -1;
+      if (lang->id >= total) total = lang->id + 1;
     }
 
-    if (lang->compile_id <= 0
-        || lang->compile_id >= sstate->cs_lang_total
-        || !sstate->cs_langs[lang->compile_id]
-        || strcmp(lang->short_name, sstate->cs_langs[lang->compile_id]->short_name) != 0) {
-      lang->compile_id = 0;
-    }
-    for (int j = 1; j < sstate->cs_lang_total; ++j) {
-      if (sstate->cs_langs[j]
-          && !strcmp(lang->short_name, sstate->cs_langs[j]->short_name)) {
-        lang->compile_id = j;
-        break;
+    sstate->lang_a = 0;
+    sstate->langs = 0;
+    sstate->loc_cs_map = 0;
+    sstate->lang_opts = 0;
+    sstate->lang_libs = 0;
+    sstate->lang_flags = 0;
+    if (total > 0) {
+      sstate->lang_a = 4;
+      while (total > sstate->lang_a) sstate->lang_a *= 2;
+      XCALLOC(sstate->langs, sstate->lang_a);
+      XCALLOC(sstate->loc_cs_map, sstate->lang_a);
+      XCALLOC(sstate->lang_opts, sstate->lang_a);
+      XCALLOC(sstate->lang_libs, sstate->lang_a);
+      XCALLOC(sstate->lang_flags, sstate->lang_a);
+      for (pg = sstate->cfg; pg; pg = pg->next) {
+        if (strcmp(pg->name, "language") != 0) continue;
+        lang = (struct section_language_data*) pg;
+        if (sstate->langs[lang->id]) {
+          fprintf(flog, "Duplicated language ID %d\n", lang->id);
+          return -1;
+        }
+        sstate->langs[lang->id] = lang;
       }
     }
-    if (lang->compile_id <= 0) {
-      fprintf(flog, "contest configuration file '%s' specifies language short name '%s' with id %d\n"
-              "but such language is not specified in compilation configuration file '%s'\n",
-              path, lang->short_name, lang->id, cs_conf_file);
+
+    // load the compilation server state and establish correspondence
+    if (super_load_cs_languages(config, sstate, global->extra_compile_dirs, 0,
+                                cs_conf_file, sizeof(cs_conf_file)) < 0) {
+      fprintf(flog, "Failed to load compilation server configuration\n");
       return -1;
     }
 
-    sstate->loc_cs_map[lang->id] = lang->compile_id;
-    sstate->cs_loc_map[lang->compile_id] = lang->id;
+    for (i = 1; i < sstate->lang_a; i++) {
+      if (!(lang = sstate->langs[i])) continue;
+      if (!lang->compile_id) lang->compile_id = lang->id;
 
-    fuh = open_memstream(&fuh_text, &fuh_size);
-    prepare_unparse_unhandled_lang(fuh, lang);
-    close_memstream(fuh); fuh = 0;
-    if (fuh_text && *fuh_text) {
-      lang->unhandled_vars = fuh_text;
-    } else {
-      xfree(fuh_text);
-    }
-    fuh_text = 0; fuh_size = 0;
+      if (prepare_check_forbidden_lang(flog, lang) < 0)
+        return -1;
 
-    if (lang->compiler_env) {
-      for (j = 0; lang->compiler_env[j]; j++) {
-        if (!strncmp(lang->compiler_env[j], "EJUDGE_FLAGS=", 13)) {
-          sstate->lang_opts[lang->id] = xstrmerge1(sstate->lang_opts[lang->id],
-                                                   lang->compiler_env[j] + 13);
-        }
-        if (!strncmp(lang->compiler_env[j], "EJUDGE_LIBS=", 12)) {
-          sstate->lang_libs[lang->id] = xstrmerge1(sstate->lang_libs[lang->id], lang->compiler_env[j] + 12);
+      /*
+      if (lang->compile_id <= 0 || lang->compile_id >= sstate->cs_lang_total
+          || !sstate->cs_langs[lang->compile_id]) {
+      }
+      */
+      // improve error messaging
+      if (lang->compile_id > 0 && lang->compile_id < sstate->cs_lang_total
+          && sstate->cs_langs[lang->compile_id]
+          && strcmp(lang->short_name, sstate->cs_langs[lang->compile_id]->short_name) != 0) {
+        fprintf(flog,
+                "contest configuration file '%s' specifies language short name '%s' for language %d\n"
+                "and it is different from language short name '%s' in compilation configuration file '%s'\n",
+                path, lang->short_name, lang->compile_id,
+                sstate->cs_langs[lang->compile_id]->short_name,
+                cs_conf_file);
+        return -1;
+      }
+
+      if (lang->compile_id <= 0
+          || lang->compile_id >= sstate->cs_lang_total
+          || !sstate->cs_langs[lang->compile_id]
+          || strcmp(lang->short_name, sstate->cs_langs[lang->compile_id]->short_name) != 0) {
+        lang->compile_id = 0;
+      }
+      for (int j = 1; j < sstate->cs_lang_total; ++j) {
+        if (sstate->cs_langs[j]
+            && !strcmp(lang->short_name, sstate->cs_langs[j]->short_name)) {
+          lang->compile_id = j;
+          break;
         }
       }
-      for (--j; j >= 0; --j) {
-        if (!strncmp(lang->compiler_env[j], "EJUDGE_FLAGS=", 13) || !strncmp(lang->compiler_env[j], "EJUDGE_LIBS=", 12)) {
-          xfree(lang->compiler_env[j]); lang->compiler_env[j] = 0;
-          for (k = j + 1; lang->compiler_env[k]; k++) {
+      if (lang->compile_id <= 0) {
+        fprintf(flog, "contest configuration file '%s' specifies language short name '%s' with id %d\n"
+                "but such language is not specified in compilation configuration file '%s'\n",
+                path, lang->short_name, lang->id, cs_conf_file);
+        return -1;
+      }
+
+      sstate->loc_cs_map[lang->id] = lang->compile_id;
+      sstate->cs_loc_map[lang->compile_id] = lang->id;
+
+      fuh = open_memstream(&fuh_text, &fuh_size);
+      prepare_unparse_unhandled_lang(fuh, lang);
+      close_memstream(fuh); fuh = 0;
+      if (fuh_text && *fuh_text) {
+        lang->unhandled_vars = fuh_text;
+      } else {
+        xfree(fuh_text);
+      }
+      fuh_text = 0; fuh_size = 0;
+
+      if (lang->compiler_env) {
+        for (j = 0; lang->compiler_env[j]; j++) {
+          if (!strncmp(lang->compiler_env[j], "EJUDGE_FLAGS=", 13)) {
+            sstate->lang_opts[lang->id] = xstrmerge1(sstate->lang_opts[lang->id],
+                                                     lang->compiler_env[j] + 13);
+          }
+          if (!strncmp(lang->compiler_env[j], "EJUDGE_LIBS=", 12)) {
+            sstate->lang_libs[lang->id] = xstrmerge1(sstate->lang_libs[lang->id], lang->compiler_env[j] + 12);
+          }
+        }
+        for (--j; j >= 0; --j) {
+          if (!strncmp(lang->compiler_env[j], "EJUDGE_FLAGS=", 13) || !strncmp(lang->compiler_env[j], "EJUDGE_LIBS=", 12)) {
+            xfree(lang->compiler_env[j]); lang->compiler_env[j] = 0;
+            for (k = j + 1; lang->compiler_env[k]; k++) {
+              lang->compiler_env[k - 1] = lang->compiler_env[k];
+            }
             lang->compiler_env[k - 1] = lang->compiler_env[k];
           }
-          lang->compiler_env[k - 1] = lang->compiler_env[k];
         }
       }
     }
