@@ -7148,6 +7148,7 @@ compile_server_config_free(struct compile_server_config *csc)
     prepare_free_config(csc->cfg);
     xfree(csc->id);
     xfree(csc->langs);
+    xfree(csc->errors);
     memset(csc, 0xff, sizeof(*csc));
   }
 }
@@ -7326,4 +7327,55 @@ compile_servers_arrange(
   *p_langs = langs;
   *p_max_lang = max_lang;
   return 0;
+}
+
+int
+compile_servers_collect(
+        struct compile_server_configs *cscs,
+        FILE *log_f,
+        const unsigned char *spool_dir)
+{
+  __attribute__((unused)) int _;
+  unsigned char dir_path[PATH_MAX];
+
+  DIR *d = NULL;
+  if (!(d = opendir(spool_dir))) {
+    fprintf(log_f, "%s: failed to scan spool directory '%s': %s\n", __FUNCTION__, spool_dir, os_ErrorMsg());
+    goto fail;
+  }
+  struct dirent *dd;
+  while ((dd = readdir(d))) {
+    if (!strcmp(dd->d_name, ".") || !strcmp(dd->d_name, "..")) continue;
+    _ = snprintf(dir_path, sizeof(dir_path), "%s/%s", spool_dir, dd->d_name);
+    struct stat stb;
+    // symlinks are ok
+    if (stat(dir_path, &stb) < 0) continue;
+    if (!S_ISDIR(stb.st_mode)) continue;
+
+    (void) compile_servers_get(cscs, dd->d_name);
+  }
+  closedir(d); d = NULL;
+
+  int success_count = 0;
+  for (int i = 0; i < cscs->u; ++i) {
+    struct compile_server_config *csc = &cscs->v[i];
+    char *csl_s = NULL;
+    size_t csl_z = 0;
+    FILE *csl_f = open_memstream(&csl_s, &csl_z);
+    int r = compile_server_load(csc, csl_f, spool_dir);
+    fclose(csl_f); csl_f = NULL;
+    csc->errors = NULL;
+    if (r < 0) {
+      // parsing failed, preserve error messages
+      csc->errors = csl_s; csl_s = NULL;
+    } else {
+      ++success_count;
+    }
+    free(csl_s);
+  }
+  return success_count;
+
+fail:;
+  if (d) closedir(d);
+  return -1;
 }

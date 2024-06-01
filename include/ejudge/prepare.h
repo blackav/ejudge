@@ -1812,6 +1812,7 @@ struct compile_server_config
   struct generic_section_config *cfg;
   struct section_global_data *global;
   struct section_language_data **langs;
+  unsigned char *errors;
   int max_lang;
 };
 
@@ -1847,5 +1848,10 @@ compile_servers_arrange(
         FILE *log_f,
         int *p_max_lang,
         struct section_language_data ***p_langs);
+int
+compile_servers_collect(
+        struct compile_server_configs *cscs,
+        FILE *log_f,
+        const unsigned char *spool_dir);
 
 #endif /* __PREPARE_H__ */

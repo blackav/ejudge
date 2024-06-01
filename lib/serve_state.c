@@ -981,7 +981,6 @@ serve_state_import_languages(
   }
   fprintf(stderr, "======== end languages dump ========\n");
 
-
   retval = 0;
 
 cleanup:;
