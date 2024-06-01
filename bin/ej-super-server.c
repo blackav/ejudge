@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2003-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1458,9 +1458,12 @@ static int contest_mngmt_cmd(const struct contest_desc *cnts,
                              int user_id,
                              const unsigned char *user_login);
 static void
-cmd_simple_command(struct client_state *p, int len,
-                   struct prot_super_pkt_simple_cmd *pkt)
+cmd_simple_command(
+        struct client_state *p,
+        int len,
+        struct prot_super_packet *pp)
 {
+  struct prot_super_pkt_simple_cmd *pkt = (struct prot_super_pkt_simple_cmd *) pp;
   int r;
   const struct contest_desc *cnts;
   struct contest_desc *rw_cnts;
@@ -1531,9 +1534,12 @@ cmd_simple_command(struct client_state *p, int len,
 }
 
 static void
-cmd_simple_top_command(struct client_state *p, int len,
-                       struct prot_super_pkt_simple_cmd *pkt)
+cmd_simple_top_command(
+        struct client_state *p,
+        int len,
+        struct prot_super_packet *pp)
 {
+  struct prot_super_pkt_simple_cmd *pkt = (struct prot_super_pkt_simple_cmd *) pp;
   int r;
   struct sid_state *sstate;
 
@@ -1584,9 +1590,12 @@ cmd_simple_top_command(struct client_state *p, int len,
 }
 
 static void
-cmd_set_value(struct client_state *p, int len,
-              struct prot_super_pkt_set_param *pkt)
+cmd_set_value(
+        struct client_state *p,
+        int len,
+        struct prot_super_packet *pp)
 {
+  struct prot_super_pkt_set_param *pkt = (struct prot_super_pkt_set_param *) pp;
   unsigned char *param2_ptr;
   size_t param2_len, total_len;
   struct sid_state *sstate;
@@ -1739,8 +1748,9 @@ static void
 cmd_http_request(
         struct client_state *p,
         int pkt_size,
-        struct prot_super_pkt_http_request *pkt)
+        struct prot_super_packet *pp)
 {
+  struct prot_super_pkt_http_request *pkt = (struct prot_super_pkt_http_request *) pp;
   enum
   {
     MAX_PARAM_NUM = 10000,
@@ -1974,7 +1984,7 @@ cmd_http_request_continuation(struct http_request_info *phr)
 
 struct packet_handler
 {
-  void (*func)();
+  void (*func)(struct client_state *, int len, struct prot_super_packet *);
 };
 static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
 {
