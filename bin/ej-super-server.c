@@ -1343,6 +1343,11 @@ super_serve_clear_edited_contest(struct sid_state *p)
   xfree(p->lang_opts); p->lang_opts = 0;
   xfree(p->lang_libs); p->lang_libs = 0;
   xfree(p->lang_flags); p->lang_flags = 0;
+  if (p->cscs) {
+    compile_servers_config_free(p->cscs);
+    xfree(p->cscs);
+    p->cscs = NULL;
+  }
 
   xfree(p->contest_start_cmd_text); p->contest_start_cmd_text = 0;
   xfree(p->stand_header_text); p->stand_header_text = 0;

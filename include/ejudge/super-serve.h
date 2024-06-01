@@ -20,6 +20,7 @@
 #include "ejudge/opcaps.h"
 #include "ejudge/bitset.h"
 #include "ejudge/http_request.h"
+#include "ejudge/prepare.h"
 
 #include <time.h>
 
@@ -73,6 +74,7 @@ struct section_language_data;
 struct section_problem_data;
 struct section_tester_data;
 struct serve_state;
+struct compile_server_configs;
 
 struct update_state
 {
@@ -147,6 +149,7 @@ struct sid_state
   unsigned char **lang_opts;
   unsigned char **lang_libs;
   int *lang_flags;
+  struct compile_server_configs *cscs;
 
   /* abstract problems */
   int aprob_u;

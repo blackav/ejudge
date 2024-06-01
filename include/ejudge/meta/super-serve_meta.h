@@ -60,6 +60,7 @@ enum
   SSSS_lang_opts,
   SSSS_lang_libs,
   SSSS_lang_flags,
+  SSSS_cscs,
   SSSS_aprob_u,
   SSSS_aprob_a,
   SSSS_aprobs,

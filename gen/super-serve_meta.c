@@ -67,6 +67,7 @@ static struct meta_info_item meta_info_sid_state_data[] =
   [SSSS_lang_opts] = { SSSS_lang_opts, 'x', XSIZE(struct sid_state, lang_opts), "lang_opts", XOFFSET(struct sid_state, lang_opts) },
   [SSSS_lang_libs] = { SSSS_lang_libs, 'x', XSIZE(struct sid_state, lang_libs), "lang_libs", XOFFSET(struct sid_state, lang_libs) },
   [SSSS_lang_flags] = { SSSS_lang_flags, '?', XSIZE(struct sid_state, lang_flags), "lang_flags", XOFFSET(struct sid_state, lang_flags) },
+  [SSSS_cscs] = { SSSS_cscs, '?', XSIZE(struct sid_state, cscs), "cscs", XOFFSET(struct sid_state, cscs) },
   [SSSS_aprob_u] = { SSSS_aprob_u, 'i', XSIZE(struct sid_state, aprob_u), "aprob_u", XOFFSET(struct sid_state, aprob_u) },
   [SSSS_aprob_a] = { SSSS_aprob_a, 'i', XSIZE(struct sid_state, aprob_a), "aprob_a", XOFFSET(struct sid_state, aprob_a) },
   [SSSS_aprobs] = { SSSS_aprobs, '?', XSIZE(struct sid_state, aprobs), "aprobs", XOFFSET(struct sid_state, aprobs) },
@@ -254,6 +255,7 @@ void ss_sid_state_copy(struct sid_state *dst, const struct sid_state *src)
   dst->lang_opts = (typeof(dst->lang_opts)) sarray_copy((char**) src->lang_opts);
   dst->lang_libs = (typeof(dst->lang_libs)) sarray_copy((char**) src->lang_libs);
   // lang_flags
+  // cscs
   dst->aprob_u = src->aprob_u;
   dst->aprob_a = src->aprob_a;
   // aprobs
@@ -371,6 +373,7 @@ void ss_sid_state_free(struct sid_state *ptr)
   sarray_free((char**) ptr->lang_opts);
   sarray_free((char**) ptr->lang_libs);
   // lang_flags
+  // cscs
   // aprobs
   // aprob_flags
   // probs
