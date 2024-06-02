@@ -1274,6 +1274,15 @@ super_serve_find_problem(struct sid_state *ss, const unsigned char *name)
   return NULL;
 }
 
+static void
+language_extra_free(struct language_extra *ex)
+{
+  if (!ex) return;
+  xfree(ex->compiler_env);
+  xfree(ex->ejudge_libs);
+  xfree(ex->ejudge_flags);
+}
+
 void
 super_serve_clear_edited_contest(struct sid_state *p)
 {
@@ -1321,6 +1330,18 @@ super_serve_clear_edited_contest(struct sid_state *p)
   p->disable_compilation_server = 0;
   p->enable_win32_languages = 0;
 
+  if (p->lang_extra) {
+    for (int i = 0; i < p->lang_a; ++i) {
+      language_extra_free(&p->lang_extra[i]);
+    }
+    xfree(p->lang_extra);
+  }
+  if (p->serv_extra) {
+    for (int i = 0; i < p->lang_a; ++i) {
+      language_extra_free(&p->serv_extra[i]);
+    }
+    xfree(p->serv_extra);
+  }
   for (i = 0; i < p->lang_a; i++) {
     xfree(p->lang_opts[i]);
     xfree(p->lang_libs[i]);

@@ -89,7 +89,20 @@ struct update_state
   unsigned char *pid_file;
 };
 
-/* sizeof(struct sid_state) == 500 */
+struct language_extra
+{
+  // content of EJUDGE_FLAGS environment var
+  unsigned char *ejudge_flags;
+  // content of EJUDGE_LIBS environment var
+  unsigned char *ejudge_libs;
+  // other options in compiler_env
+  unsigned char *compiler_env;
+  // client language id for server langs in case of compile_id mappings
+  int rev_lang_id;
+  /// if the language enabled (-1 - unknown, 0 - not enabled, 1 - enabled, 2 - force disabled)
+  signed char enabled;
+};
+
 struct sid_state
 {
   struct sid_state *next;
@@ -190,6 +203,10 @@ struct sid_state
   unsigned int *serv_rev_map;
   /// if the language enabled (-1 - unknown, 0 - not enabled, 1 - enabled, 2 - force disabled)
   signed char *lang_enable_flags;
+  /// extra information about languages for config file
+  struct language_extra *lang_extra;
+  /// extra information about languages for the compilation servers
+  struct language_extra *serv_extra;
 
   const struct section_language_data *cur_lang;
   const struct section_problem_data *cur_prob;
