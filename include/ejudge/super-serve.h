@@ -142,14 +142,6 @@ struct sid_state
 
   struct generic_section_config *cfg;
   struct section_global_data *global;
-  int lang_a;
-  struct section_language_data **langs;
-  int *loc_cs_map;              /* map from local ids to compile ids */
-  int *cs_loc_map;              /* reverse map */
-  unsigned char **lang_opts;
-  unsigned char **lang_libs;
-  int *lang_flags;
-  struct compile_server_configs *cscs;
 
   /* abstract problems */
   int aprob_u;
@@ -174,6 +166,15 @@ struct sid_state
   ejintbool_t disable_compilation_server;
   ejintbool_t enable_win32_languages;
 
+  int lang_a;
+  struct section_language_data **langs;
+  int *loc_cs_map;              /* map from local ids to compile ids */
+  int *cs_loc_map;              /* reverse map */
+  unsigned char **lang_opts;
+  unsigned char **lang_libs;
+  int *lang_flags;
+  struct compile_server_configs *cscs;
+
   int cs_langs_loaded;
   int cs_lang_total;
   struct generic_section_config *cs_cfg;
@@ -182,6 +183,9 @@ struct sid_state
 
   int extra_cs_cfgs_total;
   struct generic_section_config **extra_cs_cfgs;
+
+  /// language specifications from the compulation servers, indexed by compile_id
+  struct section_language_data **serv_langs;
 
   const struct section_language_data *cur_lang;
   const struct section_problem_data *cur_prob;
