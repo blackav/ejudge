@@ -187,6 +187,9 @@ struct sid_state
   /// language specifications from the compulation servers, indexed by compile_id
   struct section_language_data **serv_langs;
 
+  /// if the language enabled (-1 - unknown, 0 - not enabled, 1 - enabled, 2 - force disabled)
+  signed char *lang_enable_flags;
+
   const struct section_language_data *cur_lang;
   const struct section_problem_data *cur_prob;
   ejintbool_t prob_show_adv;

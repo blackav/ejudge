@@ -92,6 +92,7 @@ static struct meta_info_item meta_info_sid_state_data[] =
   [SSSS_extra_cs_cfgs_total] = { SSSS_extra_cs_cfgs_total, 'i', XSIZE(struct sid_state, extra_cs_cfgs_total), "extra_cs_cfgs_total", XOFFSET(struct sid_state, extra_cs_cfgs_total) },
   [SSSS_extra_cs_cfgs] = { SSSS_extra_cs_cfgs, '?', XSIZE(struct sid_state, extra_cs_cfgs), "extra_cs_cfgs", XOFFSET(struct sid_state, extra_cs_cfgs) },
   [SSSS_serv_langs] = { SSSS_serv_langs, '?', XSIZE(struct sid_state, serv_langs), "serv_langs", XOFFSET(struct sid_state, serv_langs) },
+  [SSSS_lang_enable_flags] = { SSSS_lang_enable_flags, 's', XSIZE(struct sid_state, lang_enable_flags), "lang_enable_flags", XOFFSET(struct sid_state, lang_enable_flags) },
   [SSSS_cur_lang] = { SSSS_cur_lang, '?', XSIZE(struct sid_state, cur_lang), "cur_lang", XOFFSET(struct sid_state, cur_lang) },
   [SSSS_cur_prob] = { SSSS_cur_prob, '?', XSIZE(struct sid_state, cur_prob), "cur_prob", XOFFSET(struct sid_state, cur_prob) },
   [SSSS_prob_show_adv] = { SSSS_prob_show_adv, 'B', XSIZE(struct sid_state, prob_show_adv), "prob_show_adv", XOFFSET(struct sid_state, prob_show_adv) },
@@ -281,6 +282,9 @@ void ss_sid_state_copy(struct sid_state *dst, const struct sid_state *src)
   dst->extra_cs_cfgs_total = src->extra_cs_cfgs_total;
   // extra_cs_cfgs
   // serv_langs
+  if (src->lang_enable_flags) {
+    dst->lang_enable_flags = strdup(src->lang_enable_flags);
+  }
   // cur_lang
   // cur_prob
   dst->prob_show_adv = src->prob_show_adv;
@@ -387,6 +391,7 @@ void ss_sid_state_free(struct sid_state *ptr)
   sarray_free((char**) ptr->cs_lang_names);
   // extra_cs_cfgs
   // serv_langs
+  free(ptr->lang_enable_flags);
   // cur_lang
   // cur_prob
   free(ptr->contest_start_cmd_text);
