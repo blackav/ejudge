@@ -1370,8 +1370,6 @@ super_serve_clear_edited_contest(struct sid_state *p)
     p->cscs = NULL;
   }
   xfree(p->serv_langs);
-  xfree(p->serv_rev_map);
-  xfree(p->lang_enable_flags);
 
   xfree(p->contest_start_cmd_text); p->contest_start_cmd_text = 0;
   xfree(p->stand_header_text); p->stand_header_text = 0;
