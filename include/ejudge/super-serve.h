@@ -186,7 +186,8 @@ struct sid_state
 
   /// language specifications from the compulation servers, indexed by compile_id
   struct section_language_data **serv_langs;
-
+  /// reverse map from server languages to contest languages (item > 1 if the language is overriden in the contest config)
+  unsigned int *serv_rev_map;
   /// if the language enabled (-1 - unknown, 0 - not enabled, 1 - enabled, 2 - force disabled)
   signed char *lang_enable_flags;
 

@@ -85,6 +85,7 @@ enum
   SSSS_extra_cs_cfgs_total,
   SSSS_extra_cs_cfgs,
   SSSS_serv_langs,
+  SSSS_serv_rev_map,
   SSSS_lang_enable_flags,
   SSSS_cur_lang,
   SSSS_cur_prob,
