@@ -15,6 +15,7 @@
  */
 
 #include "ejudge/config.h"
+#include "ejudge/parsecfg.h"
 #include "ejudge/super_html.h"
 #include "ejudge/super-serve.h"
 #include "ejudge/pathutl.h"
@@ -32,6 +33,7 @@
 #include "ejudge/osdeps.h"
 #include "ejudge/logger.h"
 
+#include <ctype.h>
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -87,6 +89,7 @@ super_html_read_serve(
   unsigned char *prob_no_any = 0;
   size_t cs_spool_dir_len = 0;
   unsigned char cs_conf_file[PATH_MAX];
+  const unsigned char *compile_spool_dir = "";
 
   if (!cnts) {
     fprintf(flog, "No contest XML description\n");
@@ -227,6 +230,353 @@ super_html_read_serve(
   fuh_text = 0; fuh_size = 0;
 
   if (global->enable_language_import > 0) {
+    int lang_count = 0;
+    for (pg = sstate->cfg; pg; pg = pg->next) {
+      if (!strcmp(pg->name, "language")) {
+        ++lang_count;
+      }
+    }
+    sstate->lang_a = lang_count + 1;
+    XCALLOC(sstate->langs, sstate->lang_a + 1);
+    int idx = 0;
+    for (pg = sstate->cfg; pg; pg = pg->next) {
+      if (strcmp(pg->name, "language") != 0) continue;
+      lang = (struct section_language_data *) pg;
+      if (lang->id < 0 || lang->id > EJ_MAX_LANG_ID) {
+        fprintf(flog, "Invalid language id = %d for language '%s'\n", lang->id, lang->short_name);
+        return -1;
+      }
+      if (lang->compile_server_id && lang->compile_server_id[0]) {
+        (void) compile_servers_get(sstate->cscs, lang->compile_server_id);
+      }
+      sstate->langs[++idx] = lang;
+    }
+
+#if !defined EJUDGE_COMPILE_SPOOL_DIR
+    fprintf(flog, "--enable-compile-spool-dir must be enabled\n");
+    return -1;
+#else
+    compile_spool_dir = EJUDGE_COMPILE_SPOOL_DIR;
+#endif
+    if (compile_servers_collect(sstate->cscs, flog, compile_spool_dir) < 0) {
+      return -1;
+    }
+
+    int max_lang_id = 0;
+    for (int i = 0; i < sstate->lang_a; ++i) {
+      lang = sstate->langs[i];
+      if (!lang) continue;
+      if (lang->id > 0) {
+        if (lang->id > max_lang_id) max_lang_id = lang->id;
+        if (lang->compile_id > 0 && lang->compile_id > max_lang_id) max_lang_id = lang->compile_id;
+        struct compile_server_config *csc = NULL;
+        if (lang->compile_server_id && lang->compile_server_id[0]) {
+          csc = compile_servers_get(sstate->cscs, lang->compile_server_id);
+          if (!csc) {
+            fprintf(flog, "Compilation server '%s' is not available\n", lang->compile_server_id);
+            return -1;
+          }
+        } else {
+          csc = &sstate->cscs->v[0];
+          if (!csc) {
+            fprintf(flog, "Default compilation server is not available\n");
+            return -1;
+          }
+        }
+        if (csc->errors) {
+          fprintf(flog, "Failed to load compilation server '%s' configuration\n", csc->id);
+          return -1;
+        }
+        int compile_id = lang->id;
+        if (lang->compile_id > 0) compile_id = lang->compile_id;
+        if (compile_id <= 0 || compile_id > csc->max_lang || !csc->langs[compile_id]) {
+          fprintf(flog, "Language id %d is invalid for compilation server '%s'\n", compile_id, csc->id);
+          return -1;
+        }
+        struct section_language_data *serv_lang = csc->langs[compile_id];
+        if (strcmp(serv_lang->short_name, lang->short_name) != 0) {
+          fprintf(flog, "Short name mismatch: language %d (%s) and compile server %s language %d (%s)\n",
+                  lang->id, lang->short_name, csc->id, serv_lang->id, serv_lang->short_name);
+          return -1;
+        }
+      } else {
+        lang->compile_id = 0;
+        struct compile_server_config *csc = NULL;
+        if (lang->compile_server_id && lang->compile_server_id[0]) {
+          csc = compile_servers_get(sstate->cscs, lang->compile_server_id);
+          if (!csc) {
+            fprintf(flog, "Compilation server '%s' is not available\n", lang->compile_server_id);
+            return -1;
+          }
+        } else {
+          csc = &sstate->cscs->v[0];
+          if (!csc) {
+            fprintf(flog, "Default compilation server is not available\n");
+            return -1;
+          }
+        }
+        if (csc->errors) {
+          fprintf(flog, "Failed to load compilation server '%s' configuration\n", csc->id);
+          return -1;
+        }
+        struct section_language_data *serv_lang = NULL;
+        for (int i = 0; i <= csc->max_lang; ++i) {
+          struct section_language_data *sl = csc->langs[i];
+          if (sl && !strcmp(sl->short_name, lang->short_name)) {
+            serv_lang = sl;
+            break;
+          }
+        }
+        if (!serv_lang) {
+          fprintf(flog, "Language '%s' not found on compilation server '%s'\n", lang->short_name, csc->id);
+          return -1;
+        }
+        lang->id = serv_lang->id;
+        if (lang->id > max_lang_id) max_lang_id = lang->id;
+      }
+    }
+    // preallocate for all possible langs
+    for (int i = 0; i < sstate->cscs->u; ++i) {
+      int v = sstate->cscs->v[i].max_lang;
+      if (v > max_lang_id) max_lang_id = v;
+    }
+    struct section_language_data **new_langs = NULL;
+    XCALLOC(new_langs, max_lang_id + 1);
+    for (int i = 0; i < sstate->lang_a; ++i) {
+      struct section_language_data *lang = sstate->langs[i];
+      if (!lang) continue;
+      if (lang->id <= 0 || lang->id > max_lang_id) {
+        fprintf(flog, "Invalid language id = %d for language '%s'\n", lang->id, lang->short_name);
+        return -1;
+      }
+      if (new_langs[lang->id]) {
+        fprintf(flog, "Duplicated language id %d for languages '%s' and '%s'\n", lang->id, new_langs[lang->id]->short_name, lang->short_name);
+        return -1;
+      }
+      new_langs[lang->id] = lang;
+    }
+    xfree(sstate->langs);
+    sstate->langs = new_langs;
+    sstate->lang_a = max_lang_id + 1;
+
+    XCALLOC(sstate->serv_langs, sstate->lang_a);
+    XCALLOC(sstate->lang_extra, sstate->lang_a);
+    XCALLOC(sstate->serv_extra, sstate->lang_a);
+
+    for (int i = 0; i < sstate->lang_a; ++i) {
+      sstate->lang_extra[i].enabled = -1;
+    }
+
+    for (int lang_id = 0; lang_id < sstate->lang_a; ++lang_id) {
+      if (!(lang = sstate->langs[lang_id])) continue;
+      struct compile_server_config *csc = NULL;
+      if (lang->compile_server_id && lang->compile_server_id[0]) {
+        csc = compile_servers_get(sstate->cscs, lang->compile_server_id);
+      } else {
+        csc = &sstate->cscs->v[0];
+      }
+      ASSERT(csc);
+      int compile_id = lang->id;
+      if (lang->compile_id > 0) compile_id = lang->compile_id;
+      ASSERT(compile_id > 0 && compile_id <= csc->max_lang);
+      struct section_language_data *serv_lang = csc->langs[compile_id];
+      ASSERT(serv_lang);
+      sstate->serv_langs[compile_id] = serv_lang;
+      sstate->serv_extra[compile_id].rev_lang_id = lang->id;
+    }
+
+    // inject languages from the primary compilation server
+    struct compile_server_config *csc = &sstate->cscs->v[0];
+    for (int serv_lang_id = 0; serv_lang_id <= csc->max_lang; ++serv_lang_id) {
+      struct section_language_data *serv_lang = csc->langs[serv_lang_id];
+      if (!serv_lang) continue;
+      int found = 0;
+      for (int lang_id = 0; lang_id < sstate->lang_a; ++lang_id) {
+        if (sstate->langs[lang_id] == serv_lang) {
+          found = 1;
+          break;
+        }
+      }
+      if (found) continue;
+      if (sstate->serv_langs[serv_lang_id]) {
+        fprintf(flog, "Conflicting compile server '%s' languages with id %d: '%s', '%s'\n", csc->id, serv_lang_id, serv_lang->short_name, sstate->serv_langs[serv_lang_id]->short_name);
+        return -1;
+      }
+      sstate->serv_langs[serv_lang_id] = serv_lang;
+    }
+
+    // collect server disabled languages
+    for (int serv_lang_id = 0; serv_lang_id < sstate->lang_a; ++serv_lang_id) {
+      struct section_language_data *serv_lang = sstate->serv_langs[serv_lang_id];
+      if (!serv_lang) continue;
+      int id = serv_lang_id;
+      if (sstate->serv_extra[serv_lang_id].rev_lang_id > 0) id = sstate->serv_extra[serv_lang_id].rev_lang_id;
+      if (serv_lang->disabled > 0) {
+        sstate->lang_extra[id].enabled = 2;
+      } else if (serv_lang->default_disabled > 0) {
+        sstate->lang_extra[id].enabled = 0;
+      }
+      // 'enabled' is ignored in compile server config
+    }
+
+    // parse global language_import specs
+    if (global->language_import && global->language_import[0]) {
+      for (int i = 0; global->language_import[i]; ++i) {
+        const unsigned char *str = global->language_import[i];
+        int enable_flag = 0;
+        const unsigned char *s = str;
+        unsigned char short_name[64];
+        if (!strncmp(str, "enable ", 7)) {
+          s += 7;
+          enable_flag = 1;
+        } else if (!strncmp(str, "disable ", 8)) {
+          s += 8;
+        } else {
+          fprintf(flog, "Invalid language import specification\n");
+          return -1;
+        }
+        while (*s) {
+          while (isspace(*s) || *s == ',') ++s;
+          if (!*s) break;
+          const unsigned char *q = s;
+          while (*q && !isspace(*q) && *q != ',') ++q;
+          if (q - s >= sizeof(short_name)) {
+            fprintf(flog, "Language name is too long: '%s'", s);
+            return -1;
+          }
+          memcpy(short_name, s, q - s);
+          short_name[q-s] = 0;
+          s = q;
+
+          if (!strcmp(short_name, "all")) {
+            for (int i = 0; i < sstate->lang_a; ++i) {
+              if (sstate->lang_extra[i].enabled != 2) {
+                sstate->lang_extra[i].enabled = enable_flag;
+              }
+            }
+          } else {
+            int found = 0;
+            for (int lang_id = 0; lang_id < sstate->lang_a; ++lang_id) {
+              lang = sstate->langs[lang_id];
+              if (lang && !strcmp(lang->short_name, short_name)) {
+                found = 1;
+                if (sstate->lang_extra[lang_id].enabled != 2) {
+                  sstate->lang_extra[lang_id].enabled = enable_flag;
+                }
+              }
+            }
+            if (!found) {
+              for (int serv_lang_id = 0; serv_lang_id < sstate->lang_a; ++serv_lang_id) {
+                struct section_language_data *serv_lang = sstate->serv_langs[serv_lang_id];
+                if (serv_lang && sstate->serv_extra[serv_lang_id].rev_lang_id <= 0 && !strcmp(serv_lang->short_name, short_name)) {
+                  found = 1;
+                  if (sstate->lang_extra[serv_lang_id].enabled != 2) {
+                    sstate->lang_extra[serv_lang_id].enabled = enable_flag;
+                  }
+                }
+              }
+            }
+            if (!found) {
+              fprintf(flog, "Language '%s' in import_languages is not found in the supported languages\n", short_name);
+              return -1;
+            }
+          }
+        }
+      }
+    }
+
+    for (int lang_id = 0; lang_id < sstate->lang_a; ++lang_id) {
+      if (!(lang = sstate->langs[lang_id])) continue;
+      if (sstate->lang_extra[lang_id].enabled != 2) {
+        if (lang->enabled > 0) {
+          sstate->lang_extra[lang_id].enabled = 1;
+        } else if (lang->disabled > 0) {
+          sstate->lang_extra[lang_id].enabled = 0;
+        }
+      }
+    }
+
+    // collect unhandled vars and process options
+    for (int lang_id = 0; lang_id < sstate->lang_a; ++lang_id) {
+      if (!(lang = sstate->langs[lang_id])) continue;
+      fuh = open_memstream(&fuh_text, &fuh_size);
+      prepare_unparse_unhandled_lang(fuh, lang);
+      close_memstream(fuh); fuh = NULL;
+      if (fuh_text && *fuh_text) {
+        lang->unhandled_vars = fuh_text;
+      } else {
+        xfree(fuh_text);
+      }
+      fuh_text = NULL; fuh_size = 0;
+
+      if (lang->compiler_env && lang->compiler_env[0]) {
+        char *l_opts_s = NULL, *l_libs_s = NULL, *l_flags_s = NULL;
+        size_t l_opts_z = 0, l_libs_z = 0, l_flags_z = 0;
+        FILE *l_opts_f = open_memstream(&l_opts_s, &l_opts_z);
+        FILE *l_libs_f = open_memstream(&l_libs_s, &l_libs_z);
+        FILE *l_flags_f = open_memstream(&l_flags_s, &l_flags_z);
+        for (int j = 0; lang->compiler_env[j]; ++j) {
+          if (!strncmp(lang->compiler_env[j], "EJUDGE_FLAGS=", 13)) {
+            fprintf(l_flags_f, "%s\n", lang->compiler_env[j] + 13);
+          } else if (!strncmp(lang->compiler_env[j], "EJUDGE_LIBS=", 12)) {
+            fprintf(l_libs_f, "%s\n", lang->compiler_env[j] + 12);
+          } else {
+            fprintf(l_opts_f, "%s\n", lang->compiler_env[j]);
+          }
+        }
+        fclose(l_opts_f);
+        fclose(l_flags_f);
+        fclose(l_libs_f);
+        if (l_opts_z > 0) {
+          sstate->lang_extra[lang_id].compiler_env = l_opts_s; l_opts_s = NULL;
+        }
+        if (l_flags_z > 0) {
+          sstate->lang_extra[lang_id].ejudge_flags = l_flags_s; l_flags_s = NULL;
+        }
+        if (l_libs_z > 0) {
+          sstate->lang_extra[lang_id].ejudge_libs = l_libs_s; l_libs_s = NULL;
+        }
+        free(l_opts_s);
+        free(l_libs_s);
+        free(l_flags_s);
+      }
+    }
+
+    for (int serv_lang_id = 0; serv_lang_id < sstate->lang_a; ++serv_lang_id) {
+      if (!(lang = sstate->serv_langs[serv_lang_id])) continue;
+      if (lang->compiler_env && lang->compiler_env[0]) {
+        char *l_opts_s = NULL, *l_libs_s = NULL, *l_flags_s = NULL;
+        size_t l_opts_z = 0, l_libs_z = 0, l_flags_z = 0;
+        FILE *l_opts_f = open_memstream(&l_opts_s, &l_opts_z);
+        FILE *l_libs_f = open_memstream(&l_libs_s, &l_libs_z);
+        FILE *l_flags_f = open_memstream(&l_flags_s, &l_flags_z);
+        for (int j = 0; lang->compiler_env[j]; ++j) {
+          if (!strncmp(lang->compiler_env[j], "EJUDGE_FLAGS=", 13)) {
+            fprintf(l_flags_f, "%s\n", lang->compiler_env[j] + 13);
+          } else if (!strncmp(lang->compiler_env[j], "EJUDGE_LIBS=", 12)) {
+            fprintf(l_libs_f, "%s\n", lang->compiler_env[j] + 12);
+          } else {
+            fprintf(l_opts_f, "%s\n", lang->compiler_env[j]);
+          }
+        }
+        fclose(l_opts_f);
+        fclose(l_flags_f);
+        fclose(l_libs_f);
+        if (l_opts_z > 0) {
+          sstate->serv_extra[serv_lang_id].compiler_env = l_opts_s; l_opts_s = NULL;
+        }
+        if (l_flags_z > 0) {
+          sstate->serv_extra[serv_lang_id].ejudge_flags = l_flags_s; l_flags_s = NULL;
+        }
+        if (l_libs_z > 0) {
+          sstate->serv_extra[serv_lang_id].ejudge_libs = l_libs_s; l_libs_s = NULL;
+        }
+        free(l_opts_s);
+        free(l_libs_s);
+        free(l_flags_s);
+      }
+    }
+  } else {
     // collect languages
     total = 0; cur_id = 0;
     for (pg = sstate->cfg; pg; pg = pg->next) {
