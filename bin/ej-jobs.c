@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2006-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -193,6 +193,10 @@ struct AppState
     // Yandex Auth plugin
     const struct auth_plugin_iface *auth_yandex_iface;
     void *auth_yandex_data;
+
+    // OIDC Auth plugin
+    const struct auth_plugin_iface *auth_oidc_iface;
+    void *auth_oidc_data;
 
     // Gitlab VCS plugin
     const struct vcs_plugin_iface *vcs_gitlab_iface;
@@ -1734,6 +1738,51 @@ load_auth_yandex_plugin(struct AppState *as)
 }
 
 static int
+load_auth_oidc_plugin(struct AppState *as)
+{
+    struct xml_tree *oidc_cfg = ejudge_cfg_get_plugin_config(as->config, "auth", "oidc");
+    if (!oidc_cfg) return 0;
+
+    const struct common_loaded_plugin *oidc_plugin = plugin_load_external(NULL, "auth", "oidc", as->config);
+    if (!oidc_plugin) {
+        err("failed to load auth_oidc plugin");
+        return -1;
+    }
+
+    if (oidc_plugin->iface->b.size != sizeof(struct auth_plugin_iface)) {
+        err("auth_oidc plugin interface size mismatch");
+        return -1;
+    }
+
+    const struct auth_plugin_iface *auth_iface = (const struct auth_plugin_iface *) oidc_plugin->iface;
+    if (auth_iface->auth_version != AUTH_PLUGIN_IFACE_VERSION) {
+        err("auth_oidc plugin interface version mismatch");
+        return -1;
+    }
+
+    as->auth_oidc_iface = auth_iface;
+    as->auth_oidc_data = oidc_plugin->data;
+    as->auth_oidc_iface->set_set_command_handler(as->auth_oidc_data, add_handler_wrapper, as);
+
+    if (as->auth_oidc_iface->open(as->auth_oidc_data) < 0) {
+        err("auth_oidc plugin 'open' failed");
+        return -1;
+    }
+
+    if (as->auth_oidc_iface->check(as->auth_oidc_data) < 0) {
+        err("auth_oidc plugin 'check' failed");
+        return -1;
+    }
+
+    if (as->auth_oidc_iface->start_thread(as->auth_oidc_data) < 0) {
+        err("auth_oidc plugin 'start_thread' failed");
+        return -1;
+    }
+
+    return 0;
+}
+
+static int
 load_vcs_gitlab_plugin(struct AppState *as)
 {
     struct xml_tree *gitlab_cfg = ejudge_cfg_get_plugin_config(as->config, "vcs", "gitlab");
@@ -1789,6 +1838,7 @@ load_plugins(struct AppState *as)
     if (load_auth_google_plugin(as) < 0) return -1;
     if (load_auth_vk_plugin(as) < 0) return -1;
     if (load_auth_yandex_plugin(as) < 0) return -1;
+    if (load_auth_oidc_plugin(as) < 0) return -1;
     if (load_vcs_gitlab_plugin(as) < 0) return -1;
 
     return 0;
