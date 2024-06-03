@@ -143,6 +143,10 @@
     <s:param name="contest_id" value="phr->contest_id" />
     <s:param name="provider" value='"yandex"' />
 </s:url>
+<s:url name="LoginWithOIDCUrl" ac="oauth-login-1">
+    <s:param name="contest_id" value="phr->contest_id" />
+    <s:param name="provider" value='"oidc"' />
+</s:url>
 <p>
 <%
     if (oauth_is_available_num(phr->config, 1)) {
@@ -158,6 +162,11 @@
     if (oauth_is_available_num(phr->config, 3)) {
 %>
 <s:a url="LoginWithYandexUrl"><img src="<s:config name="style-prefix" />icons/yandex-logo.png" alt="yandex auth"></img></s:a>
+<%
+    }
+    if (oauth_is_available_num(phr->config, 4)) {
+%>
+<s:a url="LoginWithOIDCUrl"><img src="<s:config name="style-prefix" />icons/oidc-logo.svg" alt="OIDC auth" height="46px"></img></s:a>
 <%
     }
 %>
