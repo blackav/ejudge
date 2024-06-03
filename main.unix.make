@@ -1,6 +1,6 @@
 # -*- Makefile -*-
 
-# Copyright (C) 2014-2023 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2014-2024 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -224,6 +224,7 @@ subdirs_all:
 	$(MAKE) -C plugins/telegram DESTDIR="${DESTDIR}" all
 	$(MAKE) -C plugins/auth-base DESTDIR="${DESTDIR}" all
 	$(MAKE) -C plugins/auth-google DESTDIR="${DESTDIR}" all
+	$(MAKE) -C plugins/auth-oidc DESTDIR="${DESTDIR}" all
 	$(MAKE) -C plugins/auth-vk DESTDIR="${DESTDIR}" all
 	$(MAKE) -C plugins/auth-yandex DESTDIR="${DESTDIR}" all
 	$(MAKE) -C plugins/notify-redis DESTDIR="${DESTDIR}" all
@@ -307,6 +308,7 @@ install: local_install
 	$(MAKE) -C plugins/telegram DESTDIR="${DESTDIR}" install
 	$(MAKE) -C plugins/auth-base DESTDIR="${DESTDIR}" install
 	$(MAKE) -C plugins/auth-google DESTDIR="${DESTDIR}" install
+	$(MAKE) -C plugins/auth-oidc DESTDIR="${DESTDIR}" install
 	$(MAKE) -C plugins/auth-vk DESTDIR="${DESTDIR}" install
 	$(MAKE) -C plugins/auth-yandex DESTDIR="${DESTDIR}" install
 	$(MAKE) -C plugins/notify-redis DESTDIR="${DESTDIR}" install
@@ -519,6 +521,7 @@ subdir_clean:
 	$(MAKE) -C plugins/telegram DESTDIR="${DESTDIR}" clean
 	$(MAKE) -C plugins/auth-base DESTDIR="${DESTDIR}" clean
 	$(MAKE) -C plugins/auth-google DESTDIR="${DESTDIR}" clean
+	$(MAKE) -C plugins/auth-oidc DESTDIR="${DESTDIR}" clean
 	$(MAKE) -C plugins/auth-vk DESTDIR="${DESTDIR}" clean
 	$(MAKE) -C plugins/auth-yandex DESTDIR="${DESTDIR}" clean
 	$(MAKE) -C plugins/notify-redis DESTDIR="${DESTDIR}" clean
@@ -558,6 +561,7 @@ subdir_distclean :
 	$(MAKE) -C plugins/telegram DESTDIR="${DESTDIR}" distclean
 	$(MAKE) -C plugins/auth-base DESTDIR="${DESTDIR}" distclean
 	$(MAKE) -C plugins/auth-google DESTDIR="${DESTDIR}" distclean
+	$(MAKE) -C plugins/auth-oidc DESTDIR="${DESTDIR}" distclean
 	$(MAKE) -C plugins/auth-vk DESTDIR="${DESTDIR}" distclean
 	$(MAKE) -C plugins/auth-yandex DESTDIR="${DESTDIR}" distclean
 	$(MAKE) -C plugins/notify-redis DESTDIR="${DESTDIR}" distclean

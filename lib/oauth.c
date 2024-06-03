@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2021-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2021-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -31,13 +31,14 @@ struct ProviderInfo
     int failed;
 };
 
-enum { PROVIDER_COUNT = 3 };
+enum { PROVIDER_COUNT = 4 };
 
 static struct ProviderInfo providers[PROVIDER_COUNT] =
 {
     { "google" },
     { "vk" },
     { "yandex" },
+    { "oidc" },
 };
 
 static oauth_set_command_handler_t oauth_set_command_handler_func = NULL;
