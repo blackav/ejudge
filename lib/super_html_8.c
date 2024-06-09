@@ -28,6 +28,8 @@
 #include "ejudge/ej_process.h"
 #include "ejudge/super_proto.h"
 #include "ejudge/misctext.h"
+#include "ejudge/cJSON.h"
+#include "ejudge/random.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/osdeps.h"
@@ -1635,4 +1637,58 @@ super_html_get_contest_header_and_footer(
  failure:
   xfree(xml_text);
   return errcode;
+}
+
+void
+super_html_emit_json_result(
+        FILE *fout,
+        struct http_request_info *phr,
+        int ok,
+        int err_num,
+        unsigned err_id,
+        const unsigned char *err_msg,
+        cJSON *jr)
+{
+  phr->json_reply = 1;
+  if (!ok) {
+    if (err_num < 0) err_num = -err_num;
+    if (!err_id) {
+      random_init();
+      err_id = random_u32();
+    }
+    if (!err_msg || !*err_msg) {
+      err_msg = NULL;
+      if (err_num > 0 && err_num < SSERV_ERR_LAST) {
+        err_msg = super_proto_strerror(err_num);
+      }
+    }
+    cJSON_AddFalseToObject(jr, "ok");
+    cJSON *jerr = cJSON_CreateObject();
+    if (err_num > 0) {
+      cJSON_AddNumberToObject(jerr, "num", err_num);
+      //cJSON_AddStringToObject(jerr, "symbol", ns_error_symbol(err_num));
+    }
+    if (err_id) {
+      char xbuf[64];
+      sprintf(xbuf, "%08x", err_id);
+      cJSON_AddStringToObject(jerr, "log_id", xbuf);
+    }
+    if (err_msg) {
+      cJSON_AddStringToObject(jerr, "message", err_msg);
+    }
+    cJSON_AddItemToObject(jr, "error", jerr);
+    // FIXME: log event
+  } else {
+    cJSON_AddTrueToObject(jr, "ok");
+  }
+  cJSON_AddNumberToObject(jr, "server_time", (double) phr->current_time);
+  if (phr->request_id > 0) {
+    cJSON_AddNumberToObject(jr, "request_id", (double) phr->request_id);
+  }
+  if (phr->action > 0 && phr->action < SSERV_CMD_LAST && super_proto_cmd_names[phr->action]) {
+    cJSON_AddStringToObject(jr, "action", super_proto_cmd_names[phr->action]);
+  }
+  char *jrstr = cJSON_PrintUnformatted(jr);
+  fprintf(fout, "%s\n", jrstr);
+  free(jrstr);
 }
