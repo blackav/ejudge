@@ -101,6 +101,8 @@ struct language_extra
   int rev_lang_id;
   /// if the language enabled (-1 - unknown, 0 - not enabled, 1 - enabled, 2 - force disabled)
   signed char enabled;
+  // if the language section is expanded
+  unsigned char expanded;
 };
 
 struct sid_state
