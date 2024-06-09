@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2014-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2014-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -363,4 +363,6 @@ const unsigned char super_proto_is_http_request[] =
   [SSERV_CMD_MIGRATION_PAGE] = 1,
   [SSERV_CMD_EDIT_SESSIONS_PAGE] = 1,
   [SSERV_CMD_CLEAR_SESSION] = 1,
+
+  [SSERV_CMD_LANG_AJAX_ACTION] = 1,
 };
