@@ -1342,9 +1342,15 @@ super_serve_clear_edited_contest(struct sid_state *p)
     }
     xfree(p->serv_extra);
   }
-  for (i = 0; i < p->lang_a; i++) {
-    xfree(p->lang_opts[i]);
-    xfree(p->lang_libs[i]);
+  if (p->lang_opts) {
+    for (i = 0; i < p->lang_a; ++i) {
+      xfree(p->lang_opts[i]);
+    }
+  }
+  if (p->lang_libs) {
+    for (i = 0; i < p->lang_a; i++) {
+      xfree(p->lang_libs[i]);
+    }
   }
   for (i = 0; i < p->cs_lang_total; i++)
     xfree(p->cs_lang_names[i]);

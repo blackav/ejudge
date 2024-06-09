@@ -392,7 +392,7 @@ super_html_read_serve(
       if (!serv_lang) continue;
       int found = 0;
       for (int lang_id = 0; lang_id < sstate->lang_a; ++lang_id) {
-        if (sstate->langs[lang_id] == serv_lang) {
+        if (sstate->serv_langs[lang_id] == serv_lang) {
           found = 1;
           break;
         }
