@@ -16,8 +16,6 @@
  * GNU General Public License for more details.
  */
 
-#include "ejudge/config.h"
-
 struct telegram_user
 {
     long long _id;

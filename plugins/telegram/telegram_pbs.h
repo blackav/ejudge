@@ -16,8 +16,6 @@
  * GNU General Public License for more details.
  */
 
-#include "ejudge/config.h"
-
 /* persistent bot state for telegram bot */
 struct telegram_pbs
 {
