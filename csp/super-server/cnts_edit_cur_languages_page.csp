@@ -57,9 +57,11 @@ static const unsigned char * const form_row_attrs[]=
 <%
     goto bottom_links;
   }
-%>
-
-<%
+%><%
+  if (global->enable_language_import > 0) {
+    goto new_language_page;
+  }
+%><%
   if (phr->ss->disable_compilation_server) {
 %>
 <h2>Compilation server is disabled!</h2>
@@ -404,6 +406,7 @@ function mainDialogOnChange()
     </s:tr>
 
 <%
+  ////////////////////////////////////////////
   int i;
   for (i = 1; i < phr->ss->cs_lang_total; ++i) {
     const struct section_language_data *cs_lang = phr->ss->cs_langs[i];
@@ -733,6 +736,199 @@ bottom_links: ;
 %>
 
 <%@include "footer.csp"
+%><%
+  goto cleanup;
+
+/* ================== new language page ================== */
+new_language_page:;
+%>
+<table border="0">
+<%
+  if (phr->config->enable_compile_container <= 0) {
+%>
+
+    <s:tr attr="head_row_attr">
+        <td colspan="5" align="center"><b>Compilation limits</b></td>
+    </s:tr>
+
+<%
+    num_buf[0] = 0;
+    if (global->compile_max_vm_size > 0) {
+      ll_to_size_str(num_buf, sizeof(num_buf), global->compile_max_vm_size);
+    }
+%>
+    <s:tr id="orig-compile_max_vm_size-div" attr="form_row_attrs[row ^= 1]">
+        <td colspan="2">Maximum VM size for compilers:</td>
+        <td><s:textfield id="orig-compile_max_vm_size" readonly="readonly" name="param" value="num_buf" size="48" maxlength="1024" check="no" /></td>
+        <td>&nbsp;</td>
+        <td onclick="np(event);"><s:help topic="Serve.cfg:global:compile_max_vm_size" /></td>
+    </s:tr>
+
+<%
+    num_buf[0] = 0;
+    if (global->compile_max_rss_size > 0) {
+      ll_to_size_str(num_buf, sizeof(num_buf), global->compile_max_rss_size);
+    }
+%>
+    <s:tr id="orig-compile_max_rss_size-div" attr="form_row_attrs[row ^= 1]">
+        <td colspan="2">Maximum VM size for compilers:</td>
+        <td><s:textfield id="orig-compile_max_rss_size" readonly="readonly" name="param" value="num_buf" size="48" maxlength="1024" check="no" /></td>
+        <td>&nbsp;</td>
+        <td onclick="np(event);"><s:help topic="Serve.cfg:global:compile_max_rss_size" /></td>
+    </s:tr>
+
+<%
+    num_buf[0] = 0;
+    if (global->compile_max_stack_size > 0) {
+      ll_to_size_str(num_buf, sizeof(num_buf), global->compile_max_stack_size);
+    }
+%>
+    <s:tr id="orig-compile_max_stack_size-div" attr="form_row_attrs[row ^= 1]">
+        <td colspan="2">Maximum stack size for compilers:</td>
+        <td><s:textfield id="orig-compile_max_stack_size" readonly="readonly" name="param" value="num_buf" size="48" maxlength="1024" check="no" /></td>
+        <td>&nbsp;</td>
+        <td onclick="np(event);"><s:help topic="Serve.cfg:global:compile_max_stack_size" /></td>
+    </s:tr>
+
+<%
+    num_buf[0] = 0;
+    if (global->compile_max_file_size > 0) {
+      ll_to_size_str(num_buf, sizeof(num_buf), global->compile_max_file_size);
+    }
+%>
+    <s:tr id="orig-compile_max_file_size-div" attr="form_row_attrs[row ^= 1]">
+        <td colspan="2">Maximum file size for compilers:</td>
+        <td><s:textfield id="orig-compile_max_file_size" readonly="readonly" name="param" value="num_buf" size="48" maxlength="1024" check="no" /></td>
+        <td>&nbsp;</td>
+        <td onclick="np(event);"><s:help topic="Serve.cfg:global:compile_max_file_size" /></td>
+    </s:tr>
+<%
+  }
+%>
+
+    <s:tr attr="head_row_attr">
+        <td colspan="5" align="center"><b>Available compilers</b></td>
+    </s:tr>
+
+<%
+  int enable_container = 0;
+  if (phr->config->force_container > 0) {
+    enable_container = 1;
+  } else {
+    int prob_id;
+    for (prob_id = 0; prob_id < phr->ss->aprob_a; ++prob_id) {
+      const struct section_problem_data *aprob = phr->ss->aprobs[prob_id];
+      if (aprob && aprob->enable_container > 0) {
+        enable_container = 1;
+      }
+    }
+  }
+
+  int lang_id;
+  for (lang_id = 0; lang_id < phr->ss->lang_a; ++lang_id) {
+    const struct section_language_data *lang = phr->ss->langs[lang_id];
+    struct section_language_data *act_lang = NULL;
+    const unsigned char *td_attr = "";
+    unsigned char expanded = 0;
+    if (lang) {
+      __attribute__((unused)) struct language_extra *lang_extra = &phr->ss->lang_extra[lang_id];
+      __attribute__((unused)) const struct section_language_data *serv_lang = phr->ss->serv_langs[lang_id];
+
+      if (lang_extra->enabled == 2) {
+        // force disabled
+        td_attr = " bgcolor=\"#777777\"";
+      } else if (lang_extra->enabled < 0) {
+        // bad
+        td_attr = " bgcolor=\"#dd7777\"";
+      } else if (lang_extra->enabled == 0) {
+        // disabled
+        td_attr = " bgcolor=\"#dddddd\"";
+      } else {
+        if (enable_container > 0) {
+          td_attr = " bgcolor=\"#ddffdd\"";
+        } else {
+          if (lang && lang->insecure && global && global->secure_run > 0) {
+            td_attr = " bgcolor=\"#ffffdd\"";
+          } else if (lang) {
+            td_attr = " bgcolor=\"#ddffdd\"";
+          }
+        }
+      }
+
+      expanded = lang_extra->expanded;
+      act_lang = prepare_alloc_language();
+      prepare_merge_language(act_lang, serv_lang, lang);
+    } else {
+      // !lang
+      act_lang = prepare_alloc_language();
+      prepare_copy_language(new_lang, imp_lang);
+
+    }
+
+    if (!act_lang) continue;
+%>
+    <s:tr>
+        <td colspan="5"<s:v value="td_attr" escape="false" />><b><s:v value="act_lang->short_name" /><%
+    if (act_lang->long_name && act_lang->long_name[0]) {
+%> &mdash; <s:v value="act_lang->long_name" /><%
+    } else {
+%><%
+    }
+%></b><%
+    if (expanded) {
+%><span onclick="newLanguageOper1(<s:v value="lang_id" />)", "shrink">(-)</span><%
+    } else {
+%><span onclick="newLanguageOper1(<s:v value="lang_id" />)", "expand">(+)</span><%
+    }
+%></td>
+    </s:tr>
+<%
+    if (expanded) {
+%>
+<%
+    }
+    prepare_free_config(&act_lang->g);
+  }
+%>
+
+</table>
+
+<script type="text/javascript">
+var SID='<s:v value="phr->session_id" />';
+var self_url='<s:v value="phr->self_url" escape="false" />';
+var script_name='<s:v value="phr->script_name" escape="false" />';<%
+    int lang_ajax_action = SSERV_CMD_LANG_AJAX_ACTION;
+%>
+var lang_ajax_action='<s:v value="lang_ajax_action" />';
+
+function newExpandLanguage(lang_id)
+{
+    $.ajax({
+        url : self_url,
+        type: "POST",
+        data: {
+            SID: SID,
+            action: lang_ajax_action,
+            lang_id: lang_id,
+            oper: "expand"
+        },
+        contentType: "application/x-www-form-urlencoded; charset=utf-8",
+        dataType: "json",
+        success:function(data, textStatus, jqXHR) {
+            if (data.ok) {
+                document.location.reload(true);
+            }
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+        }
+    });
+
+}
+</script>
+
+<%@include "cnts_edit_cur_bottom_menu.csp"
+%><%
+/* ================== new language page end ================== */
 %><%
 cleanup:
   l10n_resetlocale();
