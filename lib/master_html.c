@@ -668,7 +668,7 @@ write_runs_dump(const serve_state_t state, FILE *f, const unsigned char *url,
     }
 
     if (re.prob_id > 0 && re.prob_id <= state->max_prob
-        /*&& state->probs[re.prob_id] && state->probs[re.prob_id]->short_name*/) {
+        && state->probs[re.prob_id] /*&& state->probs[re.prob_id]->short_name*/) {
       fprintf(f, "%s;", state->probs[re.prob_id]->short_name);
     } else {
       fprintf(f, "!INVALID PROBLEM %d!;", re.prob_id);
@@ -678,7 +678,7 @@ write_runs_dump(const serve_state_t state, FILE *f, const unsigned char *url,
     if (!re.lang_id) {
       fprintf(f, ";%s;", mime_type_get_type(re.mime_type));
     } else if (re.lang_id > 0 && re.lang_id <= state->max_lang
-               /*&& state->langs[re.lang_id] && state->langs[re.lang_id]->short_name*/) {
+               && state->langs[re.lang_id] /*&& state->langs[re.lang_id]->short_name*/) {
       fprintf(f, "%s;;", state->langs[re.lang_id]->short_name);
     } else {
       fprintf(f, "!INVALID LANGUAGE %d!;", re.lang_id);
