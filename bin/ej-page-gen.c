@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2014-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2014-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -39,6 +39,7 @@
 #include <errno.h>
 #include <limits.h>
 #include <stddef.h>
+#include <time.h>
 
 struct ProcessorState;
 struct ScannerState;
@@ -1636,14 +1637,14 @@ parse_declspec(
 {
     int retval = -1;
 
-    int auto_count = 0;
-    int const_count = 0;
-    int extern_count = 0;
-    int register_count = 0;
-    int restrict_count = 0;
-    int static_count = 0;
-    int typedef_count = 0;
-    int volatile_count = 0;
+    [[gnu::unused]] int auto_count = 0;
+    [[gnu::unused]] int const_count = 0;
+    [[gnu::unused]] int extern_count = 0;
+    [[gnu::unused]] int register_count = 0;
+    [[gnu::unused]] int restrict_count = 0;
+    [[gnu::unused]] int static_count = 0;
+    [[gnu::unused]] int typedef_count = 0;
+    [[gnu::unused]] int volatile_count = 0;
 
     int signed_count = 0;
     int unsigned_count = 0;
@@ -5405,10 +5406,23 @@ handle_help_open(
 {
     HtmlElement *elem = ps->el_stack->el;
     unsigned char buf[1024];
+    int need_icon = 0;
+
+    HtmlAttribute *icon_attr = html_element_find_attribute(elem, "icon");
+    if (icon_attr) {
+        int v;
+        if (xml_parse_bool(NULL, NULL, 0, 0, icon_attr->value, &v) >= 0) {
+            need_icon = v;
+        }
+    }
 
     HtmlAttribute *topic_attr = html_element_find_attribute(elem, "topic");
     if (topic_attr != NULL) {
-        fprintf(prg_f, "hr_print_help_url_2(out_f, \"%s\");\n", topic_attr->value);
+        if (need_icon > 0) {
+            fprintf(prg_f, "hr_print_help_url_3(out_f, \"%s\");\n", topic_attr->value);
+        } else {
+            fprintf(prg_f, "hr_print_help_url_2(out_f, \"%s\");\n", topic_attr->value);
+        }
     } else {
         if (process_ac_attr(log_f, cntx, ps, elem, buf, sizeof(buf)) > 0) {
             fprintf(prg_f, "hr_print_help_url(out_f, %s);\n", buf);
