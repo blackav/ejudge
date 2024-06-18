@@ -7145,11 +7145,25 @@ void
 compile_server_config_free(struct compile_server_config *csc)
 {
   if (csc) {
-    prepare_free_config(csc->cfg);
-    xfree(csc->id);
-    xfree(csc->langs);
-    xfree(csc->errors);
-    memset(csc, 0xff, sizeof(*csc));
+    prepare_free_config(csc->cfg); csc->cfg = NULL;
+    csc->global = NULL;
+    xfree(csc->id); csc->id = NULL;
+    xfree(csc->langs); csc->langs = NULL;
+    xfree(csc->errors); csc->errors = NULL;
+    csc->max_lang = 0;
+  }
+}
+
+void
+compile_server_config_partial_free(struct compile_server_config *csc)
+{
+  if (csc) {
+    prepare_free_config(csc->cfg); csc->cfg = NULL;
+    csc->global = NULL;
+    //xfree(csc->id);
+    xfree(csc->langs); csc->langs = NULL;
+    //xfree(csc->errors);
+    csc->max_lang = 0;
   }
 }
 
@@ -7220,7 +7234,7 @@ compile_server_load(
   return 0;
  
 fail:;
-  compile_server_config_free(csc);
+  compile_server_config_partial_free(csc);
   return -1;
 }
 
