@@ -914,7 +914,7 @@ cmd_submit_run(
   // check for binaryness
   switch (prob->type) {
   case PROB_TYPE_STANDARD:
-    if (!lang->binary && strlen(run_text) != run_size) {
+    if (lang->binary <= 0 && strlen(run_text) != run_size) {
       // guess utf-16/ucs-2
       if (((int) run_size) < 0
           || (utf8_len = ucs2_to_utf8(&utf8_str, run_text, run_size)) < 0) {
@@ -940,7 +940,7 @@ cmd_submit_run(
     break;
   }
 
-  if (global->ignore_bom > 0 && !prob->binary && (!lang || !lang->binary)) {
+  if (global->ignore_bom > 0 && !prob->binary && (!lang || lang->binary <= 0)) {
     if (run_text && run_size >= 3 && run_text[0] == 0xef
         && run_text[1] == 0xbb && run_text[2] == 0xbf) {
       run_text += 3; run_size -= 3;
@@ -1015,7 +1015,7 @@ cmd_submit_run(
 
   /* check for disabled languages */
   if (lang_id > 0) {
-    if (lang->disabled)
+    if (lang->disabled > 0)
       FAIL(NEW_SRV_ERR_LANG_DISABLED);
 
     if (prob->enable_language) {
@@ -1154,7 +1154,7 @@ cmd_submit_run(
   if (prob->type == PROB_TYPE_STANDARD) {
     if (prob->disable_auto_testing > 0
         || (prob->disable_testing > 0 && prob->enable_compilation <= 0)
-        || lang->disable_auto_testing || lang->disable_testing) {
+        || lang->disable_auto_testing > 0 || lang->disable_testing > 0) {
       serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                         "submit", "ok", RUN_PENDING,
                         "  Testing disabled for this problem or language");
@@ -1496,7 +1496,7 @@ do_dump_master_runs(
   int i, r;
   int *match_idx = 0;
   int match_tot = 0;
-  int transient_tot = 0;
+  [[gnu::unused]] int transient_tot = 0;
   int *list_idx = 0;
   int list_tot = 0;
   unsigned char statstr[64];

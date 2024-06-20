@@ -1125,6 +1125,73 @@ language_init_func(struct generic_section_config *gp)
 {
   struct section_language_data *p = (struct section_language_data*) gp;
 
+/*
+  int id;
+  int compile_id;
+*/
+  p->disabled = -1;
+ /*
+  int compile_real_time_limit;
+*/
+  p->binary = -1;
+/*
+  int priority_adjustment;
+*/
+  p->insecure = -1;
+  p->disable_security = -1;
+  p->enable_suid_run = -1;
+  p->is_dos = -1;
+/*
+  unsigned char short_name[32];
+  unsigned char *long_name;
+  unsigned char *key;
+  unsigned char *arch;
+  unsigned char src_sfx[32];
+  unsigned char exe_sfx[32];
+  unsigned char *content_type;
+  unsigned char *cmd;
+  unsigned char *style_checker_cmd;
+  ejenvlist_t style_checker_env;
+
+  unsigned char *extid;
+
+  unsigned char *super_run_dir;
+  */
+  p->disable_auto_testing = -1;
+  p->disable_testing = -1;
+  p->enable_custom = -1;
+  p->enable_ejudge_env = -1;
+  p->preserve_line_numbers = -1;
+  p->default_disabled = -1;
+  p->enabled = -1;
+  p->disable_auto_update = -1;
+  /*
+  ej_size64_t max_vm_size;
+  ej_size64_t max_stack_size;
+  ej_size64_t max_file_size;
+  ej_size64_t max_rss_size;
+  ej_size64_t run_max_stack_size;
+  ej_size64_t run_max_vm_size;
+  ej_size64_t run_max_rss_size;
+
+  int compile_dir_index;
+  unsigned char *compile_dir;
+  unsigned char *compile_queue_dir;
+  unsigned char *compile_src_dir;
+  unsigned char *compile_out_dir;
+  unsigned char *compile_status_dir;
+  unsigned char *compile_report_dir;
+  ejenvlist_t compiler_env;
+  unsigned char *compile_server_id;
+  unsigned char *multi_header_suffix;
+  unsigned char *container_options;
+  unsigned char *compiler_container_options;
+  unsigned char *clean_up_cmd;
+  unsigned char *run_env_file;
+  unsigned char *clean_up_env_file;
+  unsigned char *version;
+  unsigned char *unhandled_vars;
+*/
   p->compile_real_time_limit = -1;
 }
 

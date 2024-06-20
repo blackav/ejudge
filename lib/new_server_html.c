@@ -3668,7 +3668,7 @@ priv_submit_run(
 
   switch (prob->type) {
   case PROB_TYPE_STANDARD:
-    if (!lang->binary && strlen(run_text) != run_size) {
+    if (lang->binary <= 0 && strlen(run_text) != run_size) {
       // guess utf-16/ucs-2
       if (((int) run_size) < 0) goto binary_submission;
       if ((utf8_len = ucs2_to_utf8(&utf8_str, run_text, run_size)) < 0)
@@ -3731,7 +3731,7 @@ priv_submit_run(
   }
 
   // ignore BOM
-  if (global->ignore_bom > 0 && !prob->binary && (!lang || !lang->binary)) {
+  if (global->ignore_bom > 0 && !prob->binary && (!lang || lang->binary <= 0)) {
     if (run_text && run_size >= 3 && run_text[0] == 0xef
         && run_text[1] == 0xbb && run_text[2] == 0xbf) {
       run_text += 3; run_size -= 3;
@@ -3740,7 +3740,7 @@ priv_submit_run(
 
   /* check for disabled languages */
   if (lang_id > 0) {
-    if (lang->disabled) {
+    if (lang->disabled > 0) {
       fprintf(log_f, "Language '%s' is disabled\n", lang->short_name);
       FAIL(NEW_SRV_ERR_LANG_DISABLED);
     }
@@ -3857,7 +3857,7 @@ priv_submit_run(
     // automatically tested programs
     if (prob->disable_auto_testing > 0
         || (prob->disable_testing > 0 && prob->enable_compilation <= 0)
-        || lang->disable_auto_testing || lang->disable_testing) {
+        || lang->disable_auto_testing > 0 || lang->disable_testing > 0) {
       serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                       "priv-submit", "ok", RUN_PENDING,
                       "  Testing disabled for this problem or language");
@@ -5689,7 +5689,7 @@ priv_new_run(FILE *fout,
 
   switch (prob->type) {
   case PROB_TYPE_STANDARD:
-    if (!lang->binary && strlen(run_text) != run_size)
+    if (lang->binary <= 0 && strlen(run_text) != run_size)
       FAIL(NEW_SRV_ERR_BINARY_FILE);
     if (prob->disable_ctrl_chars > 0 && has_control_characters(run_text))
       FAIL(NEW_SRV_ERR_INV_CHAR);
@@ -5714,7 +5714,7 @@ priv_new_run(FILE *fout,
   }
 
   if (lang) {
-    if (lang->disabled) FAIL(NEW_SRV_ERR_LANG_DISABLED);
+    if (lang->disabled > 0) FAIL(NEW_SRV_ERR_LANG_DISABLED);
 
     if (prob->enable_language) {
       lang_list = prob->enable_language;
@@ -6395,7 +6395,7 @@ priv_download_source(
 
     if (lang->content_type && lang->content_type[0]) {
       content_type = lang->content_type;
-    } else if (lang->binary) {
+    } else if (lang->binary > 0) {
       if (re.mime_type <= 0 && !strcmp(src_sfx, ".tar")) {
         int mime_type = mime_type_guess(global->diff_work_dir,
                                         run_text, run_size);
@@ -13325,7 +13325,7 @@ unpriv_submit_run(
 
   switch (prob->type) {
   case PROB_TYPE_STANDARD:
-    if (!lang->binary && strlen(run_text) != run_size) {
+    if (lang->binary <= 0 && strlen(run_text) != run_size) {
       // guess utf-16/ucs-2
       if (((int) run_size) < 0
           || (utf8_len = ucs2_to_utf8(&utf8_str, run_text, run_size)) < 0) {
@@ -13403,7 +13403,7 @@ unpriv_submit_run(
   }
 
   // ignore BOM
-  if (global->ignore_bom > 0 && !prob->binary && (!lang || !lang->binary)) {
+  if (global->ignore_bom > 0 && !prob->binary && (!lang || lang->binary <= 0)) {
     if (run_text && run_size >= 3 && run_text[0] == 0xef
         && run_text[1] == 0xbb && run_text[2] == 0xbf) {
       run_text += 3; run_size -= 3;
@@ -13466,7 +13466,7 @@ unpriv_submit_run(
 
   /* check for disabled languages */
   if (lang_id > 0) {
-    if (lang->disabled || (prob->enable_container <= 0 && lang->insecure > 0 && global->secure_run)) {
+    if (lang->disabled > 0 || (prob->enable_container <= 0 && lang->insecure > 0 && global->secure_run)) {
       FAIL2(NEW_SRV_ERR_LANG_DISABLED);
     }
 
@@ -13655,7 +13655,7 @@ unpriv_submit_run(
   if (prob->type == PROB_TYPE_STANDARD) {
     if (prob->disable_auto_testing > 0
         || (prob->disable_testing > 0 && prob->enable_compilation <= 0)
-        || lang->disable_auto_testing || lang->disable_testing
+        || lang->disable_auto_testing > 0 || lang->disable_testing > 0
         || cs->testing_suspended) {
       serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                       "submit", "ok", RUN_PENDING,
@@ -15133,7 +15133,7 @@ unpriv_download_run(
       fprintf(fout, "Content-type: %s\n", lang->content_type);
       fprintf(fout, "Content-Disposition: attachment; filename=\"%06d%s\"\n\n",
               run_id, lang->src_sfx);
-    } else if (lang->binary) {
+    } else if (lang->binary > 0) {
       fprintf(fout, "Content-type: application/octet-stream\n");
       fprintf(fout, "Content-Disposition: attachment; filename=\"%06d%s\"\n\n",
               run_id, lang->src_sfx);

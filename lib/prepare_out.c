@@ -931,21 +931,21 @@ prepare_unparse_lang(
     if (lang->cmd && lang->cmd[0])
       fprintf(f, "cmd = \"%s\"\n", CARMOR(lang->cmd));
   }
-  if (lang->disabled)
+  if (lang->disabled > 0)
     unparse_bool(f, "disabled", lang->disabled);
-  if (lang->insecure)
+  if (lang->insecure > 0)
     unparse_bool(f, "insecure", lang->insecure);
-  if (lang->disable_security)
+  if (lang->disable_security > 0)
     unparse_bool(f, "disable_security", lang->disable_security);
-  if (lang->enable_suid_run)
+  if (lang->enable_suid_run > 0)
     unparse_bool(f, "enable_suid_run", lang->enable_suid_run);
   if (lang->is_dos > 0)
     unparse_bool(f, "is_dos", lang->is_dos);
-  if (lang->binary)
+  if (lang->binary > 0)
     unparse_bool(f, "binary", lang->binary);
-  if (lang->disable_auto_testing)
+  if (lang->disable_auto_testing > 0)
     unparse_bool(f, "disable_auto_testing", lang->disable_auto_testing);
-  if (lang->disable_testing)
+  if (lang->disable_testing > 0)
     unparse_bool(f, "disable_testing", lang->disable_testing);
   if (lang->enable_custom > 0)
     unparse_bool(f, "enable_custom", lang->enable_custom);

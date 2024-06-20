@@ -187,7 +187,7 @@
   int need_src = 1;
   if (prob && prob->type > 0 && re.mime_type > 0) {
     need_src = 0;
-  } else if (lang && lang->binary) {
+  } else if (lang && lang->binary > 0) {
     need_src = 0;
   } else if (re.is_imported) {
     need_src = 0;
@@ -556,7 +556,7 @@ function setDivVisibility(oper, value)
 <%    } else { %>
 <p><s:_>The submission is binary and thus is not shown.</s:_></p>
 <%    }
-  } else if (lang && lang->binary) {
+  } else if (lang && lang->binary > 0) {
 %><p><s:_>The submission is binary and thus is not shown.</s:_></p>
 <%  } else if (!re.is_imported) {
     if (src_flags < 0 || src_res < 0) {

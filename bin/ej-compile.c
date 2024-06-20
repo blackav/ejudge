@@ -2181,7 +2181,8 @@ static int
 filter_languages(char *key)
 {
   // key is not NULL
-  int i, total = 0;
+  int i;
+  [[gnu::unused]] int total = 0;
   const struct section_language_data *lang = 0;
 
   for (i = 1; i <= serve_state.max_lang; i++) {
@@ -2211,7 +2212,7 @@ static int
 check_config(void)
 {
   int i;
-  int total = 0;
+  [[gnu::unused]] int total = 0;
 
 #if !defined EJUDGE_COMPILE_SPOOL_DIR
   if (check_writable_spool(serve_state.global->compile_queue_dir, SPOOL_OUT) < 0)
