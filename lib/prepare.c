@@ -7089,9 +7089,7 @@ prepare_copy_language(
 }
 
 #define LANG_MERGE_BOOL(field) do { \
-  if (lang->field > 1) {            \
-    out->field = 0;                 \
-  } else if (lang->field > 0) {     \
+  if (lang->field >= 0) {            \
     out->field = lang->field;       \
   } else {                          \
     out->field = imp->field;        \
