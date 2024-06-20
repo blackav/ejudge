@@ -1,6 +1,6 @@
 /* -*- mode:c -*- */
 
-/* Copyright (C) 2002-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This library is free software; you can redistribute it and/or
@@ -25,10 +25,9 @@
  *          elsize - size of an element of the array
  */
 void
-xexpand2(arr, elsize)
-     genarray_t  *arr;
-     size_t       elsize;
+xexpand2(void *varr, size_t elsize)
 {
+  genarray_t *arr = varr;
   if (!arr) return;
 
   if (elsize <= 0) elsize = sizeof(int);
