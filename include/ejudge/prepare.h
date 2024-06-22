@@ -1802,6 +1802,8 @@ prepare_merge_language(
         struct section_language_data *out,
         const struct section_language_data *imp,
         const struct section_language_data *lang);
+void
+prepare_language_set_defaults(struct section_language_data *lang);
 
 /**
 exported configuration of a compilation server

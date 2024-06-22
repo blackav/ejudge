@@ -7207,6 +7207,25 @@ prepare_merge_language(
 }
 
 void
+prepare_language_set_defaults(struct section_language_data *lang)
+{
+  if (lang->disabled < 0) lang->disabled = 0;
+  if (lang->binary < 0) lang->binary = 0;
+  if (lang->insecure < 0) lang->insecure = 0;
+  if (lang->disable_security < 0) lang->disable_security = 0;
+  if (lang->enable_suid_run < 0) lang->enable_suid_run = 0;
+  if (lang->is_dos < 0) lang->is_dos = 0;
+  if (lang->disable_auto_testing < 0) lang->disable_auto_testing = 0;
+  if (lang->disable_testing < 0) lang->disable_testing = 0;
+  if (lang->enable_custom < 0) lang->enable_custom = 0;
+  if (lang->enable_ejudge_env < 0) lang->enable_ejudge_env = 0;
+  if (lang->preserve_line_numbers < 0) lang->preserve_line_numbers = 0;
+  if (lang->default_disabled < 0) lang->default_disabled = 0;
+  if (lang->enabled < 0) lang->enabled = 0;
+  if (lang->disable_auto_update < 0) lang->disable_auto_update = 0;
+}
+
+void
 compile_server_config_free(struct compile_server_config *csc)
 {
   if (csc) {
