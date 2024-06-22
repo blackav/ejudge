@@ -103,6 +103,8 @@ struct language_extra
   signed char enabled;
   // if the language section is expanded
   unsigned char expanded;
+  // if the language section is even more expanded
+  unsigned char more_expanded;
 };
 
 struct sid_state
