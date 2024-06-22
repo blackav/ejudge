@@ -4800,6 +4800,7 @@ handle_textarea_open(
         handle_html_string(prg_f, txt_f, log_f, " disabled=\"disabled\"");
         fprintf(prg_f, "}\n");
     }
+    handle_html_string(prg_f, txt_f, log_f, ">");
 
     int need_check = html_attribute_get_bool(html_element_find_attribute(elem, "check"), 1);
     if (has_ac > 0) need_check = 0;
@@ -4816,7 +4817,6 @@ handle_textarea_open(
             fprintf(prg_f, ") {\n");
         }
     }
-    handle_html_string(prg_f, txt_f, log_f, ">");
     processor_state_invoke_type_handler(log_f, cntx, ps, txt_f, prg_f, expr, elem, value_type);
     if (need_check) {
         fprintf(prg_f, "}\n");
