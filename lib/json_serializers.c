@@ -547,3 +547,192 @@ json_serialize_userlist_user(
 
     return jr;
 }
+
+cJSON *
+json_serialize_language(const struct section_language_data *lang)
+{
+    cJSON *jr = cJSON_CreateObject();
+
+    cJSON_AddNumberToObject(jr, "id", (double) lang->id);
+    if (lang->compile_id > 0 && lang->compile_id != lang->id) {
+        cJSON_AddNumberToObject(jr, "compile_id", (double) lang->compile_id);
+    }
+    if (lang->disabled > 0) {
+        cJSON_AddTrueToObject(jr, "disabled");
+    } else if (!lang->disabled) {
+        cJSON_AddFalseToObject(jr, "disabled");
+    }
+    if (lang->compile_real_time_limit > 0) {
+        cJSON_AddNumberToObject(jr, "compile_real_time_limit", (double) lang->compile_real_time_limit);
+    }
+    if (lang->binary > 0) {
+        cJSON_AddTrueToObject(jr, "binary");
+    } else if (!lang->binary) {
+        cJSON_AddFalseToObject(jr, "binary");
+    }
+    if (lang->priority_adjustment != 0) {
+        cJSON_AddNumberToObject(jr, "priority_adjustment", (double) lang->priority_adjustment);
+    }
+    if (lang->insecure > 0) {
+        cJSON_AddTrueToObject(jr, "insecure");
+    } else if (!lang->insecure) {
+        cJSON_AddFalseToObject(jr, "insecure");
+    }
+    if (lang->disable_security > 0) {
+        cJSON_AddTrueToObject(jr, "disable_security");
+    } else if (!lang->disable_security) {
+        cJSON_AddFalseToObject(jr, "disable_security");
+    }
+    if (lang->enable_suid_run > 0) {
+        cJSON_AddTrueToObject(jr, "enable_suid_run");
+    } else if (!lang->enable_suid_run) {
+        cJSON_AddFalseToObject(jr, "enable_suid_run");
+    }
+    if (lang->is_dos > 0) {
+        cJSON_AddTrueToObject(jr, "is_dos");
+    } else if (!lang->is_dos) {
+        cJSON_AddFalseToObject(jr, "is_dos");
+    }
+    cJSON_AddStringToObject(jr, "short_name", lang->short_name);
+    if (lang->long_name) {
+        cJSON_AddStringToObject(jr, "long_name", lang->long_name);
+    }
+    if (lang->key) {
+        cJSON_AddStringToObject(jr, "key", lang->key);
+    }
+    if (lang->arch) {
+        cJSON_AddStringToObject(jr, "arch", lang->arch);
+    }
+    cJSON_AddStringToObject(jr, "src_sfx", lang->src_sfx);
+    cJSON_AddStringToObject(jr, "exe_sfx", lang->exe_sfx);
+    if (lang->content_type) {
+        cJSON_AddStringToObject(jr, "content_type", lang->content_type);
+    }
+    if (lang->cmd) {
+        cJSON_AddStringToObject(jr, "cmd", lang->cmd);
+    }
+    if (lang->style_checker_cmd) {
+        cJSON_AddStringToObject(jr, "style_checker_cmd", lang->style_checker_cmd);
+    }
+    if (lang->style_checker_env) {
+        cJSON *ja = cJSON_CreateArray();
+        for (int i = 0; lang->style_checker_env[i]; ++i) {
+            cJSON *js = cJSON_CreateString(lang->style_checker_env[i]);
+            cJSON_AddItemToArray(ja, js);
+        }
+        cJSON_AddItemToObject(jr, "style_checker_env", ja);
+    }
+    if (lang->extid) {
+        cJSON_AddStringToObject(jr, "extid", lang->extid);
+    }
+    if (lang->super_run_dir) {
+        cJSON_AddStringToObject(jr, "super_run_dir", lang->super_run_dir);
+    }
+    if (lang->disable_auto_testing > 0) {
+        cJSON_AddTrueToObject(jr, "disable_auto_testing");
+    } else if (!lang->disable_auto_testing) {
+        cJSON_AddFalseToObject(jr, "disable_auto_testing");
+    }
+    if (lang->disable_testing > 0) {
+        cJSON_AddTrueToObject(jr, "disable_testing");
+    } else if (!lang->disable_testing) {
+        cJSON_AddFalseToObject(jr, "disable_testing");
+    }
+    if (lang->enable_custom > 0) {
+        cJSON_AddTrueToObject(jr, "enable_custom");
+    } else if (!lang->enable_custom) {
+        cJSON_AddFalseToObject(jr, "enable_custom");
+    }
+    if (lang->enable_ejudge_env > 0) {
+        cJSON_AddTrueToObject(jr, "enable_ejudge_env");
+    } else if (!lang->enable_ejudge_env) {
+        cJSON_AddFalseToObject(jr, "enable_ejudge_env");
+    }
+    if (lang->preserve_line_numbers > 0) {
+        cJSON_AddTrueToObject(jr, "preserve_line_numbers");
+    } else if (!lang->preserve_line_numbers) {
+        cJSON_AddFalseToObject(jr, "preserve_line_numbers");
+    }
+    if (lang->default_disabled > 0) {
+        cJSON_AddTrueToObject(jr, "default_disabled");
+    } else if (!lang->default_disabled) {
+        cJSON_AddFalseToObject(jr, "default_disabled");
+    }
+    if (lang->enabled > 0) {
+        cJSON_AddTrueToObject(jr, "enabled");
+    } else if (!lang->enabled) {
+        cJSON_AddFalseToObject(jr, "enabled");
+    }
+    if (lang->disable_auto_update > 0) {
+        cJSON_AddTrueToObject(jr, "disable_auto_update");
+    } else if (!lang->disable_auto_update) {
+        cJSON_AddFalseToObject(jr, "disable_auto_update");
+    }
+    if (lang->max_vm_size > 0) {
+        cJSON_AddNumberToObject(jr, "max_vm_size", (double) lang->max_vm_size);
+    }
+    if (lang->max_stack_size > 0) {
+        cJSON_AddNumberToObject(jr, "max_stack_size", (double) lang->max_stack_size);
+    }
+    if (lang->max_file_size > 0) {
+        cJSON_AddNumberToObject(jr, "max_file_size", (double) lang->max_file_size);
+    }
+    if (lang->max_rss_size > 0) {
+        cJSON_AddNumberToObject(jr, "max_rss_size", (double) lang->max_rss_size);
+    }
+    if (lang->run_max_stack_size > 0) {
+        cJSON_AddNumberToObject(jr, "run_max_stack_size", (double) lang->run_max_stack_size);
+    }
+    if (lang->run_max_vm_size > 0) {
+        cJSON_AddNumberToObject(jr, "run_max_vm_size", (double) lang->run_max_vm_size);
+    }
+    if (lang->run_max_rss_size > 0) {
+        cJSON_AddNumberToObject(jr, "run_max_rss_size", (double) lang->run_max_rss_size);
+    }
+/*
+  int compile_dir_index;
+  unsigned char *compile_dir;
+  unsigned char *compile_queue_dir;
+  unsigned char *compile_src_dir;
+  unsigned char *compile_out_dir;
+  unsigned char *compile_status_dir;
+  unsigned char *compile_report_dir;
+  */
+    if (lang->compiler_env) {
+        cJSON *ja = cJSON_CreateArray();
+        for (int i = 0; lang->compiler_env[i]; ++i) {
+            cJSON *js = cJSON_CreateString(lang->compiler_env[i]);
+            cJSON_AddItemToArray(ja, js);
+        }
+        cJSON_AddItemToObject(jr, "compiler_env", ja);
+    }
+    if (lang->compile_server_id) {
+        cJSON_AddStringToObject(jr, "compile_server_id", lang->compile_server_id);
+    }
+    if (lang->multi_header_suffix) {
+        cJSON_AddStringToObject(jr, "multi_header_suffix", lang->multi_header_suffix);
+    }
+    if (lang->container_options) {
+        cJSON_AddStringToObject(jr, "container_options", lang->container_options);
+    }
+    if (lang->compiler_container_options) {
+        cJSON_AddStringToObject(jr, "compiler_container_options", lang->compiler_container_options);
+    }
+    if (lang->clean_up_cmd) {
+        cJSON_AddStringToObject(jr, "clean_up_cmd", lang->clean_up_cmd);
+    }
+    if (lang->run_env_file) {
+        cJSON_AddStringToObject(jr, "run_env_file", lang->run_env_file);
+    }
+    if (lang->clean_up_env_file) {
+        cJSON_AddStringToObject(jr, "clean_up_env_file", lang->clean_up_env_file);
+    }
+    if (lang->version) {
+        cJSON_AddStringToObject(jr, "version", lang->version);
+    }
+    if (lang->unhandled_vars) {
+        cJSON_AddStringToObject(jr, "unhandled_vars", lang->unhandled_vars);
+    }
+
+    return jr;
+}

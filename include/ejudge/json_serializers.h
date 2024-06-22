@@ -46,4 +46,8 @@ json_serialize_userlist_user(
         const struct userlist_user_info *ui,
         const struct userlist_contest *uc);
 
+struct section_language_data;
+struct cJSON *
+json_serialize_language(const struct section_language_data *lang);
+
 #endif /* __JSON_SERIALIZERS_H__ */
