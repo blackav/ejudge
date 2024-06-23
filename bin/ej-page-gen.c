@@ -5199,9 +5199,11 @@ handle_yesno3_open(
         default_label = default_label_attr->value;
     }
 
-    HtmlAttribute *id_attr = html_element_find_attribute(elem, "id");
     HtmlAttribute *disabled_attr = html_element_find_attribute(elem, "disabled");
     if (!disabled_attr) disabled_attr = html_element_find_attribute(elem, "readonly");
+
+    HtmlAttribute *id_attr = html_element_find_attribute(elem, "id");
+    HtmlAttribute *idsuffix_attr = html_element_find_attribute(elem, "idsuffix");
 
     char *str_p = 0;
     size_t str_z = 0;
@@ -5210,7 +5212,19 @@ handle_yesno3_open(
     if (disabled_attr) {
         str_f = open_memstream(&str_p, &str_z);
         fprintf(str_f, "<input type=\"hidden\" name=\"%s\"", name_attr->value);
-        if (id_attr) {
+        if (id_attr && idsuffix_attr) {
+            fprintf(str_f, " id=\"%s", id_attr->value);
+            fclose(str_f); str_f = 0;
+            handle_html_string(prg_f, txt_f, log_f, str_p);
+            free(str_p); str_p = 0; str_z = 0;
+            TypeInfo *t = NULL;
+            int r = parse_c_expression(ps, cntx, log_f, idsuffix_attr->value, &t, ps->pos);
+            if (r >= 0) {
+                processor_state_invoke_type_handler(log_f, cntx, ps, txt_f, prg_f, idsuffix_attr->value, elem, t);
+            }
+            str_f = open_memstream(&str_p, &str_z);
+            fprintf(str_f, "\"");
+        } else if (id_attr) {
             fprintf(str_f, " id=\"%s\"", id_attr->value);
         }
         fprintf(str_f, " value=\"");
@@ -5258,7 +5272,19 @@ handle_yesno3_open(
 
     str_f = open_memstream(&str_p, &str_z);
     fprintf(str_f, "<select");
-    if (id_attr) {
+    if (id_attr && idsuffix_attr) {
+        fprintf(str_f, " id=\"%s", id_attr->value);
+        fclose(str_f); str_f = 0;
+        handle_html_string(prg_f, txt_f, log_f, str_p);
+        free(str_p); str_p = 0; str_z = 0;
+        TypeInfo *t = NULL;
+        int r = parse_c_expression(ps, cntx, log_f, idsuffix_attr->value, &t, ps->pos);
+        if (r >= 0) {
+            processor_state_invoke_type_handler(log_f, cntx, ps, txt_f, prg_f, idsuffix_attr->value, elem, t);
+        }
+        str_f = open_memstream(&str_p, &str_z);
+        fprintf(str_f, "\"");
+    } else if (id_attr) {
         fprintf(str_f, " id=\"%s\"", id_attr->value);
     }
     fprintf(str_f, " name=\"%s\"><option value=\"-1\"", name_attr->value);
