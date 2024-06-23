@@ -5020,6 +5020,10 @@ handle_select_open(
     } else if (id_attr) {
         fprintf(str_f, " id=\"%s\"", id_attr->value);
     }
+    HtmlAttribute *onchange_attr = html_element_find_attribute(elem, "onchange");
+    if (onchange_attr) {
+        fprintf(str_f, " onchange=\"%s\"", onchange_attr->value);
+    }
 
     fclose(str_f); str_f = 0;
     handle_html_string(prg_f, txt_f, log_f, str_p);
@@ -5227,6 +5231,10 @@ handle_yesno3_open(
         } else if (id_attr) {
             fprintf(str_f, " id=\"%s\"", id_attr->value);
         }
+        HtmlAttribute *onchange_attr = html_element_find_attribute(elem, "onchange");
+        if (onchange_attr) {
+            fprintf(str_f, " onchange=\"%s\"", onchange_attr->value);
+        }
         fprintf(str_f, " value=\"");
         fclose(str_f); str_f = NULL;
         handle_html_string(prg_f, txt_f, log_f, str_p);
@@ -5286,6 +5294,10 @@ handle_yesno3_open(
         fprintf(str_f, "\"");
     } else if (id_attr) {
         fprintf(str_f, " id=\"%s\"", id_attr->value);
+    }
+    HtmlAttribute *onchange_attr = html_element_find_attribute(elem, "onchange");
+    if (onchange_attr) {
+        fprintf(str_f, " onchange=\"%s\"", onchange_attr->value);
     }
     fprintf(str_f, " name=\"%s\"><option value=\"-1\"", name_attr->value);
     fclose(str_f); str_f = 0;
