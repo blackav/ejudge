@@ -5035,6 +5035,7 @@ handle_select_open(
         handle_html_string(prg_f, txt_f, log_f, " disabled=\"disabled\"");
         fprintf(prg_f, "}\n");
     }
+
     handle_html_string(prg_f, txt_f, log_f, ">");
     return 0;
 }
@@ -5294,6 +5295,16 @@ handle_yesno3_open(
         fprintf(str_f, "\"");
     } else if (id_attr) {
         fprintf(str_f, " id=\"%s\"", id_attr->value);
+    }
+    HtmlAttribute *disabledexpr_attr = html_element_find_attribute(elem, "disabledexpr");
+    if (disabledexpr_attr) {
+        fclose(str_f); str_f = 0;
+        handle_html_string(prg_f, txt_f, log_f, str_p);
+        free(str_p); str_p = 0; str_z = 0;
+        fprintf(prg_f, "if (%s) {\n", disabledexpr_attr->value);
+        handle_html_string(prg_f, txt_f, log_f, " disabled=\"disabled\"");
+        fprintf(prg_f, "}\n");
+        str_f = open_memstream(&str_p, &str_z);
     }
     HtmlAttribute *onchange_attr = html_element_find_attribute(elem, "onchange");
     if (onchange_attr) {
