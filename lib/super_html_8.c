@@ -1444,6 +1444,145 @@ super_html_get_serve_header_and_footer(
   return 0;
 }
 
+int
+super_html_simplify_lang(
+        const struct sid_state *sstate,
+        struct section_language_data *lang,
+        struct section_language_data *serv_lang)
+{
+  __attribute__((unused)) int _;
+  int need_section = 0;
+
+  if (!lang) {
+    return 0;
+  }
+  if (!serv_lang) {
+    return 1;
+  }
+
+  lang->id = serv_lang->id;
+  _ = snprintf(lang->short_name, sizeof(lang->short_name), "%s", serv_lang->short_name);
+  _ = snprintf(lang->src_sfx, sizeof(lang->src_sfx), "%s", serv_lang->src_sfx);
+  _ = snprintf(lang->exe_sfx, sizeof(lang->exe_sfx), "%s", serv_lang->exe_sfx);
+  if (lang->compile_id == lang->id) {
+    lang->compile_id = 0;
+  }
+
+  // evaluated later
+  lang->disable_auto_update = -1;
+  lang->disabled = -1;
+  lang->default_disabled = -1;
+  lang->enabled = -1;
+
+#define PROCESS_BOOL(field) do { if (lang->field < 0) { lang->field = -1; } else if (lang->field > 0 && serv_lang->field <= 0) { lang->field = 1; need_section = 1; } else if (lang->field == 0 && serv_lang->field > 0) { need_section = 1; } } while (0)
+  PROCESS_BOOL(binary);
+  PROCESS_BOOL(insecure);
+  PROCESS_BOOL(disable_security);
+  PROCESS_BOOL(enable_suid_run);
+  PROCESS_BOOL(is_dos);
+  PROCESS_BOOL(disable_auto_testing);
+  PROCESS_BOOL(disable_testing);
+  PROCESS_BOOL(enable_custom);
+  PROCESS_BOOL(enable_ejudge_env);
+  PROCESS_BOOL(preserve_line_numbers);
+#undef PROCESS_BOOL
+
+#define PROCESS_SIZE(field) do { if (lang->field <= 0) { lang->field = -1; } else if (lang->field > 0 && lang->field == serv_lang->field) { lang->field = -1; } else if (lang->field > 0) { need_section = 1; } } while (0)
+  PROCESS_SIZE(max_vm_size);
+  PROCESS_SIZE(max_stack_size);
+  PROCESS_SIZE(max_file_size);
+  PROCESS_SIZE(max_rss_size);
+  PROCESS_SIZE(run_max_stack_size);
+  PROCESS_SIZE(run_max_vm_size);
+  PROCESS_SIZE(run_max_rss_size);
+#undef PROCESS_SIZE
+
+  if (lang->compile_real_time_limit < 0) {
+    lang->compile_real_time_limit = 0;
+  } else if (lang->compile_real_time_limit > 0 && lang->compile_real_time_limit == serv_lang->compile_real_time_limit) {
+    lang->compile_real_time_limit = 0;
+  } else {
+    need_section = 1;
+  }
+  if (lang->priority_adjustment != 0 && lang->priority_adjustment != serv_lang->priority_adjustment) {
+    need_section = 1;
+  }
+  lang->compile_dir_index = 0;
+
+  if (lang->compile_server_id && !*lang->compile_server_id) {
+    xfree(lang->compile_server_id); lang->compile_server_id = NULL;
+  }
+  if (lang->compile_server_id && sstate->cscs && sstate->cscs->u > 0 && sstate->cscs->v[0].id && !strcmp(lang->compile_server_id, sstate->cscs->v[0].id)) {
+    xfree(lang->compile_server_id); lang->compile_server_id = NULL;
+  }
+  if (lang->compile_server_id) {
+    need_section = 1;
+  }
+
+  if (lang->super_run_dir && *lang->super_run_dir) {
+    xfree(lang->super_run_dir); lang->super_run_dir = NULL;
+  }
+  if (lang->super_run_dir) {
+    need_section = 1;
+  }
+
+#define PROCESS_STRING(field) do { \
+  if (lang->field && !*lang->field) { \
+    xfree(lang->field); lang->field = NULL; \
+  } \
+  if (lang->field && serv_lang->field && !strcmp(lang->field, serv_lang->field)) { \
+    xfree(lang->field); lang->field = NULL; \
+  } \
+  if (lang->field) { \
+    need_section = 1; \
+  } \
+  } while (0)
+  PROCESS_STRING(long_name);
+  PROCESS_STRING(version);
+  PROCESS_STRING(key);
+  PROCESS_STRING(arch);
+  PROCESS_STRING(content_type);
+  PROCESS_STRING(style_checker_cmd);
+  PROCESS_STRING(extid);
+  PROCESS_STRING(multi_header_suffix);
+  PROCESS_STRING(container_options);
+  PROCESS_STRING(compiler_container_options);
+  PROCESS_STRING(clean_up_cmd);
+  PROCESS_STRING(run_env_file);
+  PROCESS_STRING(clean_up_env_file);
+#undef PROCESS_STRING
+
+  if (lang->style_checker_env && lang->style_checker_env[0]) {
+    need_section = 1;
+  }
+
+  sarray_free(lang->compiler_env); lang->compiler_env = NULL;
+
+  struct language_extra *extra = &sstate->lang_extra[lang->id];
+  if (extra->ejudge_flags && *extra->ejudge_flags) {
+    char *tmp = NULL;
+    _ = asprintf(&tmp, "EJUDGE_FLAGS=%s", extra->ejudge_flags);
+    lang->compiler_env = sarray_append(lang->compiler_env, tmp);
+    free(tmp);
+    need_section = 1;
+  }
+  if (extra->ejudge_libs && *extra->ejudge_libs) {
+    char *tmp = NULL;
+    _ = asprintf(&tmp, "EJUDGE_LIBS=%s", extra->ejudge_libs);
+    lang->compiler_env = sarray_append(lang->compiler_env, tmp);
+    free(tmp);
+    need_section = 1;
+  }
+  if (extra->compiler_env && *extra->compiler_env) {
+    char **envs = NULL;
+    split_to_lines(extra->compiler_env, &envs, 0);
+    lang->compiler_env = sarray_merge_pf(lang->compiler_env, envs);
+    need_section = 1;
+  }
+
+  return need_section;
+}
+
 void
 super_html_serve_unparse_serve_cfg(
         FILE *f,
