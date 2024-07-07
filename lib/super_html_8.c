@@ -1444,6 +1444,20 @@ super_html_get_serve_header_and_footer(
   return 0;
 }
 
+static const unsigned char *
+simple_trim(unsigned char *s)
+{
+  if (!s) return "";
+
+  while (*s && isspace(*s)) ++s;
+
+  int len = strlen(s);
+  while (len > 0 && isspace(s[len-1])) --len;
+  s[len] = 0;
+
+  return s;
+}
+
 int
 super_html_simplify_lang(
         const struct sid_state *sstate,
@@ -1561,14 +1575,14 @@ super_html_simplify_lang(
   struct language_extra *extra = &sstate->lang_extra[lang->id];
   if (extra->ejudge_flags && *extra->ejudge_flags) {
     char *tmp = NULL;
-    _ = asprintf(&tmp, "EJUDGE_FLAGS=%s", extra->ejudge_flags);
+    _ = asprintf(&tmp, "EJUDGE_FLAGS=%s", simple_trim(extra->ejudge_flags));
     lang->compiler_env = sarray_append(lang->compiler_env, tmp);
     free(tmp);
     need_section = 1;
   }
   if (extra->ejudge_libs && *extra->ejudge_libs) {
     char *tmp = NULL;
-    _ = asprintf(&tmp, "EJUDGE_LIBS=%s", extra->ejudge_libs);
+    _ = asprintf(&tmp, "EJUDGE_LIBS=%s", simple_trim(extra->ejudge_libs));
     lang->compiler_env = sarray_append(lang->compiler_env, tmp);
     free(tmp);
     need_section = 1;
@@ -1592,6 +1606,11 @@ super_html_serve_unparse_serve_cfg(
   struct section_global_data *global = sstate->global;
   struct contest_desc *cnts = sstate->edited_cnts;
   int i, active_langs, need_variant_map = 0;
+  int *langs_to_enable = NULL;
+  int *langs_to_disable = NULL;
+  int langs_to_enable_u = 0;
+  int langs_to_disable_u = 0;
+  int default_enable = 0;
 
   if (!global) return;
   if (sstate->serve_parse_errors) return;
@@ -1630,13 +1649,112 @@ super_html_serve_unparse_serve_cfg(
     if (sstate->probs[i] && sstate->probs[i]->variant_num > 0)
       need_variant_map = 1;
 
+  if (global->enable_language_import) {
+    // count the number of languages to disable or enable
+    int disable_count = 0;
+    int enable_count = 0;
+    for (i = 0; i < sstate->lang_a; ++i) {
+      if (!sstate->serv_langs[i]) {
+        continue;
+      }
+      if (!super_html_simplify_lang(sstate, sstate->langs[i], sstate->serv_langs[i])) {
+        sstate->langs[i] = NULL;
+      }
+      if (sstate->serv_langs[i] && sstate->lang_extra[i].enabled != 1 && sstate->lang_extra[i].enabled != 2 && !sstate->langs[i]) {
+        ++disable_count;
+      }
+      if (sstate->serv_langs[i] && sstate->lang_extra[i].enabled == 1 && !sstate->langs[i]) {
+        ++enable_count;
+      }
+    }
+    if (enable_count < disable_count) {
+      // default mode is disabled, enable languages explicitly
+      // language_import = "enable L1,L2,L3"
+      // language_import = "disable all"
+      XALLOCAZ(langs_to_enable, enable_count);
+      for (i = 0; i < sstate->lang_a; ++i) {
+        if (sstate->serv_langs[i] && sstate->lang_extra[i].enabled == 1) {
+          if (sstate->langs[i]) {
+            sstate->langs[i]->enabled = 1;
+          } else {
+            langs_to_enable[langs_to_enable_u++] = i;
+          }
+        }
+      }
+    } else {
+      // default mode is enabled, disable languages explicitly
+      // language_import = "disable L1, L2, L3"
+      // language_import = "enable all"
+      XALLOCAZ(langs_to_disable, disable_count);
+      default_enable = 1;
+      for (i = 0; i < sstate->lang_a; ++i) {
+        if (sstate->serv_langs[i] && sstate->lang_extra[i].enabled != 1 && sstate->lang_extra[i].enabled != 2) {
+          if (sstate->langs[i]) {
+            sstate->langs[i]->disabled = 1;
+          } else {
+            langs_to_disable[langs_to_disable_u++] = i;
+          }
+        }
+      }
+    }
+
+    sarray_free(global->language_import); global->language_import = NULL;
+    if (langs_to_enable_u > 0) {
+      char *txt_s = NULL;
+      size_t txt_z = 0;
+      FILE *txt_f = open_memstream(&txt_s, &txt_z);
+      fprintf(txt_f, "enable ");
+      for (i = 0; i < langs_to_enable_u; ++i) {
+        if (i > 0) {
+          fprintf(txt_f, ",");
+        }
+        fprintf(txt_f, "%s", sstate->serv_langs[langs_to_enable[i]]->short_name);
+      }
+      fclose(txt_f);
+      global->language_import = sarray_append(global->language_import, txt_s);
+      free(txt_s);
+    }
+    if (langs_to_disable_u > 0) {
+      char *txt_s = NULL;
+      size_t txt_z = 0;
+      FILE *txt_f = open_memstream(&txt_s, &txt_z);
+      fprintf(txt_f, "disable ");
+      for (i = 0; i < langs_to_disable_u; ++i) {
+        if (i > 0) {
+          fprintf(txt_f, ",");
+        }
+        fprintf(txt_f, "%s", sstate->serv_langs[langs_to_disable[i]]->short_name);
+      }
+      fclose(txt_f);
+      global->language_import = sarray_append(global->language_import, txt_s);
+      free(txt_s);
+    }
+    if (default_enable) {
+      global->language_import = sarray_append(global->language_import, "enable all");
+    } else {
+      global->language_import = sarray_append(global->language_import, "disable all");
+    }
+  }
+
   prepare_unparse_global(f, cnts, global, sstate->compile_home_dir, need_variant_map, 0);
 
-  if (sstate->lang_a > 0) {
-    for (i = 1, active_langs = 0; i < sstate->lang_a; i++) {
-      if (!sstate->langs[i]) continue;
-      prepare_unparse_lang(f, sstate->langs[i], 0, 0, sstate->lang_opts[i], sstate->lang_libs[i]);
-      active_langs++;
+  if (global->enable_language_import > 0) {
+    for (i = 0; i < sstate->lang_a; ++i) {
+      struct section_language_data *lang = sstate->langs[i];
+      if (!lang) continue;
+
+      if (lang->compile_id > 0 && lang->id == lang->compile_id) lang->compile_id = 0;
+      if (sstate->serv_langs[i]->id == i && !strcmp(sstate->serv_langs[i]->short_name, lang->short_name)) lang->id = 0;
+
+      prepare_unparse_lang(f, sstate->langs[i], 0, NULL, NULL, NULL);
+    }
+  } else {
+    if (sstate->lang_a > 0) {
+      for (i = 1, active_langs = 0; i < sstate->lang_a; i++) {
+        if (!sstate->langs[i]) continue;
+        prepare_unparse_lang(f, sstate->langs[i], 0, 0, sstate->lang_opts[i], sstate->lang_libs[i]);
+        active_langs++;
+      }
     }
   }
 
@@ -1660,18 +1778,20 @@ super_html_serve_unparse_serve_cfg(
     prepare_unparse_prob(f, prob, aprob, global, global->score_system);
   }
 
-  prepare_unparse_testers(f, global->secure_run,
-                          sstate->global,
-                          sstate->lang_a,
-                          sstate->langs,
-                          sstate->aprob_u,
-                          sstate->aprobs,
-                          sstate->prob_a,
-                          sstate->probs,
-                          sstate->atester_total,
-                          sstate->atesters,
-                          config->testing_work_dir,
-                          config->contests_home_dir);
+  if (global->enable_language_import <= 0) {
+    prepare_unparse_testers(f, global->secure_run,
+                            sstate->global,
+                            sstate->lang_a,
+                            sstate->langs,
+                            sstate->aprob_u,
+                            sstate->aprobs,
+                            sstate->prob_a,
+                            sstate->probs,
+                            sstate->atester_total,
+                            sstate->atesters,
+                            config->testing_work_dir,
+                            config->contests_home_dir);
+  }
 }
 
 int
