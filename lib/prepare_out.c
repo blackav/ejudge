@@ -584,8 +584,9 @@ prepare_unparse_global(
 
   if (global->enable_language_import > 0) {
     unparse_bool(f, "enable_language_import", global->enable_language_import);
+    do_xstr(f, &ab, "language_import", global->language_import);
+    fprintf(f, "\n");
   }
-  do_xstr(f, &ab, "language_import", global->language_import);
 
   if (global->unhandled_vars) fprintf(f, "%s\n", global->unhandled_vars);
 
@@ -896,7 +897,7 @@ prepare_unparse_lang(
   fprintf(f, "[language]\n");
   if (lang_id > 0) {
     fprintf(f, "id = %d\n", lang_id);
-  } else {
+  } else if (lang->id > 0) {
     fprintf(f, "id = %d\n", lang->id);
     if (lang->compile_id && lang->compile_id != lang->id)
       fprintf(f, "compile_id = %d\n", lang->compile_id);
