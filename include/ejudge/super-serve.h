@@ -105,6 +105,10 @@ struct language_extra
   unsigned char expanded;
   // if the language section is even more expanded
   unsigned char more_expanded;
+  // if the compile_server_id changed, so disable further editing
+  unsigned char compile_server_id_changed;
+  // the original value of compile_server_id
+  unsigned char *orig_compile_server_id;
 };
 
 struct sid_state
@@ -207,6 +211,11 @@ struct sid_state
   struct language_extra *lang_extra;
   /// extra information about languages for the compilation servers
   struct language_extra *serv_extra;
+
+  /// if enable_language_import changed, so language editing is disabled
+  unsigned char enable_language_import_changed;
+  /// orig enable_language_import value
+  int orig_enable_language_import;
 
   const struct section_language_data *cur_lang;
   const struct section_problem_data *cur_prob;

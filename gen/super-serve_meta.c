@@ -94,6 +94,8 @@ static struct meta_info_item meta_info_sid_state_data[] =
   [SSSS_serv_langs] = { SSSS_serv_langs, '?', XSIZE(struct sid_state, serv_langs), "serv_langs", XOFFSET(struct sid_state, serv_langs) },
   [SSSS_lang_extra] = { SSSS_lang_extra, '?', XSIZE(struct sid_state, lang_extra), "lang_extra", XOFFSET(struct sid_state, lang_extra) },
   [SSSS_serv_extra] = { SSSS_serv_extra, '?', XSIZE(struct sid_state, serv_extra), "serv_extra", XOFFSET(struct sid_state, serv_extra) },
+  [SSSS_enable_language_import_changed] = { SSSS_enable_language_import_changed, '?', XSIZE(struct sid_state, enable_language_import_changed), "enable_language_import_changed", XOFFSET(struct sid_state, enable_language_import_changed) },
+  [SSSS_orig_enable_language_import] = { SSSS_orig_enable_language_import, 'i', XSIZE(struct sid_state, orig_enable_language_import), "orig_enable_language_import", XOFFSET(struct sid_state, orig_enable_language_import) },
   [SSSS_cur_lang] = { SSSS_cur_lang, '?', XSIZE(struct sid_state, cur_lang), "cur_lang", XOFFSET(struct sid_state, cur_lang) },
   [SSSS_cur_prob] = { SSSS_cur_prob, '?', XSIZE(struct sid_state, cur_prob), "cur_prob", XOFFSET(struct sid_state, cur_prob) },
   [SSSS_prob_show_adv] = { SSSS_prob_show_adv, 'B', XSIZE(struct sid_state, prob_show_adv), "prob_show_adv", XOFFSET(struct sid_state, prob_show_adv) },
@@ -285,6 +287,8 @@ void ss_sid_state_copy(struct sid_state *dst, const struct sid_state *src)
   // serv_langs
   // lang_extra
   // serv_extra
+  // enable_language_import_changed
+  dst->orig_enable_language_import = src->orig_enable_language_import;
   // cur_lang
   // cur_prob
   dst->prob_show_adv = src->prob_show_adv;
@@ -393,6 +397,7 @@ void ss_sid_state_free(struct sid_state *ptr)
   // serv_langs
   // lang_extra
   // serv_extra
+  // enable_language_import_changed
   // cur_lang
   // cur_prob
   free(ptr->contest_start_cmd_text);

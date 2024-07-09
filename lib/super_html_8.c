@@ -173,6 +173,8 @@ super_html_read_serve(
   }
   */
 
+  sstate->orig_enable_language_import = global->enable_language_import;
+  if (sstate->orig_enable_language_import < 0) sstate->orig_enable_language_import = 0;
   if (global->enable_language_import > 0) {
     sstate->cscs = xmalloc(sizeof(*sstate->cscs));
     compile_servers_config_init(sstate->cscs);
@@ -1649,7 +1651,7 @@ super_html_serve_unparse_serve_cfg(
     if (sstate->probs[i] && sstate->probs[i]->variant_num > 0)
       need_variant_map = 1;
 
-  if (global->enable_language_import) {
+  if (global->enable_language_import > 0) {
     // count the number of languages to disable or enable
     int disable_count = 0;
     int enable_count = 0;

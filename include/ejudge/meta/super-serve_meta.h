@@ -87,6 +87,8 @@ enum
   SSSS_serv_langs,
   SSSS_lang_extra,
   SSSS_serv_extra,
+  SSSS_enable_language_import_changed,
+  SSSS_orig_enable_language_import,
   SSSS_cur_lang,
   SSSS_cur_prob,
   SSSS_prob_show_adv,

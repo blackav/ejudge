@@ -1281,6 +1281,7 @@ language_extra_free(struct language_extra *ex)
   xfree(ex->compiler_env);
   xfree(ex->ejudge_libs);
   xfree(ex->ejudge_flags);
+  xfree(ex->orig_compile_server_id);
 }
 
 void
