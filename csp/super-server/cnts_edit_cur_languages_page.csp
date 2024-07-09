@@ -1,6 +1,8 @@
 <%
 %><%@include "includes.csp"
 %><%
+#include "ejudge/cJSON.h"
+#include "ejudge/json_serializers.h"
 %><%@set getter_name = "csp_get_cnts_edit_cur_languages_page"
 %><%@set ac_prefix = "SSERV_CMD_"
 %><%@set err_prefix = "SSERV_ERR_"
@@ -17,6 +19,11 @@
     unsigned char num_buf[1024];
     unsigned char *env = 0;
     unsigned char onclickstr_buf[128];
+    size_t text_z = 0;
+    char *text_s = NULL;
+    FILE *text_f = NULL;
+    cJSON *jl = NULL;
+    char *jstr = NULL;
 
 static const unsigned char head_row_attr[] =
   " bgcolor=\"#a0a0a0\"";
@@ -357,7 +364,52 @@ function mainDialogOnChange()
 }
 </script>
 
+<script type="text/javascript">
+<%
+    int lang_ajax_action_2 = SSERV_CMD_LANG_AJAX_ACTION;
+%>
+function newLanguageEnableImport()
+{
+    $.ajax({
+        url : '<s:v value="phr->self_url" escape="false" />',
+        type: "POST",
+        data: {
+            SID: '<s:v value="phr->session_id" />',
+            action: '<s:v value="lang_ajax_action_2" />',
+            lang_id: 0,
+            oper: 'enable_import'
+        },
+        contentType: "application/x-www-form-urlencoded; charset=utf-8",
+        dataType: "json",
+        success:function(data, textStatus, jqXHR) {
+            if (data.ok) {
+                document.location.reload(true);
+            }
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+        }
+    });
+
+}
+</script>
+
 <table border="0">
+
+    <s:tr attr="head_row_attr">
+        <td colspan="5" align="center">Compilation server integration <b style="color: red;">DISABLED</b>. <button onclick="newLanguageEnableImport()">Enable</button></td>
+    </s:tr>
+
+<%
+  if (phr->ss->enable_language_import_changed) {
+%>
+    <s:tr attr="head_row_attr">
+        <td colspan="5" align="center">You must commit changed and reopen contest to enable editing of languages!</td>
+    </s:tr>
+<%
+    goto bottom_links;
+  }
+%>
+
     <s:tr attr="head_row_attr" onclick="popupLimitsDialog()">
         <td colspan="5" align="center"><b>Compilation limitations</b></td>
     </s:tr>
@@ -406,7 +458,6 @@ function mainDialogOnChange()
     </s:tr>
 
 <%
-  ////////////////////////////////////////////
   int i;
   for (i = 1; i < phr->ss->cs_lang_total; ++i) {
     const struct section_language_data *cs_lang = phr->ss->cs_langs[i];
@@ -417,7 +468,7 @@ function mainDialogOnChange()
     if (phr->ss->cs_loc_map[i] > 0) lang = phr->ss->langs[phr->ss->cs_loc_map[i]];
     const unsigned char *td_attr = "";
     td_attr = "";
-    if (lang && lang->insecure && global && global->secure_run > 0) {
+    if (lang && lang->insecure > 0 && global && global->secure_run > 0) {
       td_attr = " bgcolor=\"#ffffdd\"";
     } else if (lang) {
       td_attr = " bgcolor=\"#ddffdd\"";
@@ -742,72 +793,99 @@ bottom_links: ;
 /* ================== new language page ================== */
 new_language_page:;
 %>
+
+<script type="text/javascript">
+var language_states = {};
+</script>
+
 <table border="0">
-<%
-  if (phr->config->enable_compile_container <= 0) {
-%>
 
     <s:tr attr="head_row_attr">
-        <td colspan="5" align="center"><b>Compilation limits</b></td>
+        <td colspan="4" align="center">Compilation server integration <b style="color: green;">ENABLED</b>. <button onclick="newLanguageOper1(0, 'disable_import')">Disable</button></td>
     </s:tr>
 
 <%
-    num_buf[0] = 0;
-    if (global->compile_max_vm_size > 0) {
-      ll_to_size_str(num_buf, sizeof(num_buf), global->compile_max_vm_size);
-    }
+  if (phr->ss->enable_language_import_changed) {
 %>
-    <s:tr id="orig-compile_max_vm_size-div" attr="form_row_attrs[row ^= 1]">
-        <td colspan="2">Maximum VM size for compilers:</td>
-        <td><s:textfield id="orig-compile_max_vm_size" readonly="readonly" name="param" value="num_buf" size="48" maxlength="1024" check="no" /></td>
-        <td>&nbsp;</td>
-        <td onclick="np(event);"><s:help topic="Serve.cfg:global:compile_max_vm_size" /></td>
-    </s:tr>
-
-<%
-    num_buf[0] = 0;
-    if (global->compile_max_rss_size > 0) {
-      ll_to_size_str(num_buf, sizeof(num_buf), global->compile_max_rss_size);
-    }
-%>
-    <s:tr id="orig-compile_max_rss_size-div" attr="form_row_attrs[row ^= 1]">
-        <td colspan="2">Maximum VM size for compilers:</td>
-        <td><s:textfield id="orig-compile_max_rss_size" readonly="readonly" name="param" value="num_buf" size="48" maxlength="1024" check="no" /></td>
-        <td>&nbsp;</td>
-        <td onclick="np(event);"><s:help topic="Serve.cfg:global:compile_max_rss_size" /></td>
-    </s:tr>
-
-<%
-    num_buf[0] = 0;
-    if (global->compile_max_stack_size > 0) {
-      ll_to_size_str(num_buf, sizeof(num_buf), global->compile_max_stack_size);
-    }
-%>
-    <s:tr id="orig-compile_max_stack_size-div" attr="form_row_attrs[row ^= 1]">
-        <td colspan="2">Maximum stack size for compilers:</td>
-        <td><s:textfield id="orig-compile_max_stack_size" readonly="readonly" name="param" value="num_buf" size="48" maxlength="1024" check="no" /></td>
-        <td>&nbsp;</td>
-        <td onclick="np(event);"><s:help topic="Serve.cfg:global:compile_max_stack_size" /></td>
-    </s:tr>
-
-<%
-    num_buf[0] = 0;
-    if (global->compile_max_file_size > 0) {
-      ll_to_size_str(num_buf, sizeof(num_buf), global->compile_max_file_size);
-    }
-%>
-    <s:tr id="orig-compile_max_file_size-div" attr="form_row_attrs[row ^= 1]">
-        <td colspan="2">Maximum file size for compilers:</td>
-        <td><s:textfield id="orig-compile_max_file_size" readonly="readonly" name="param" value="num_buf" size="48" maxlength="1024" check="no" /></td>
-        <td>&nbsp;</td>
-        <td onclick="np(event);"><s:help topic="Serve.cfg:global:compile_max_file_size" /></td>
+    <s:tr attr="head_row_attr">
+        <td colspan="4" align="center">You must commit changed and reopen contest to enable editing of languages!</td>
     </s:tr>
 <%
+    goto skip_all_new_language_rows;
   }
 %>
 
     <s:tr attr="head_row_attr">
-        <td colspan="5" align="center"><b>Available compilers</b></td>
+        <td colspan="4" align="center"><b>Compilation limits</b></td>
+    </s:tr>
+
+<%
+  jl = cJSON_CreateObject();
+  if (global->compile_max_vm_size > 0) {
+    cJSON_AddNumberToObject(jl, "global_compile_max_vm_size", global->compile_max_vm_size);
+  }
+  if (global->compile_max_rss_size > 0) {
+    cJSON_AddNumberToObject(jl, "global_compile_max_rss_size", global->compile_max_rss_size);
+  }
+  if (global->compile_max_stack_size > 0) {
+    cJSON_AddNumberToObject(jl, "global_compile_max_stack_size", global->compile_max_stack_size);
+  }
+  if (global->compile_max_file_size > 0) {
+    cJSON_AddNumberToObject(jl, "global_compile_max_file_size", global->compile_max_file_size);
+  }
+  jstr = cJSON_PrintUnformatted(jl);
+%>
+<script type="text/javascript">
+var global_language_sizes = <s:v value="jstr" escape="false" />;
+</script>
+<%
+  free(jstr); jstr = NULL;
+  cJSON_Delete(jl); jl = NULL;
+%>
+
+<%
+  if (phr->config->enable_compile_container <= 0) {
+%>
+
+    <s:tr id="global_compile_max_vm_size-div" attr="form_row_attrs[row ^= 1]">
+        <td colspan="2">Maximum VM size for compilers:</td>
+        <td><s:textfield id="global_compile_max_vm_size" name="param" value="global->compile_max_vm_size" format="V" size="48" maxlength="1024" check="no" onchange="newLangGlobalOnChange(this)" /></td>
+        <td><s:help icon="yes" topic="Serve.cfg:global:compile_max_vm_size" /></td>
+    </s:tr>
+
+    <s:tr id="global_compile_max_rss_size-div" attr="form_row_attrs[row ^= 1]">
+        <td colspan="2">Maximum VM size for compilers:</td>
+        <td><s:textfield id="global_compile_max_rss_size" name="param" value="global->compile_max_rss_size" format="V" size="48" maxlength="1024" check="no" onchange="newLangGlobalOnChange(this)" /></td>
+        <td><s:help icon="yes" topic="Serve.cfg:global:compile_max_rss_size" /></td>
+    </s:tr>
+
+    <s:tr id="global_compile_max_stack_size-div" attr="form_row_attrs[row ^= 1]">
+        <td colspan="2">Maximum stack size for compilers:</td>
+        <td><s:textfield id="global_compile_max_stack_size" name="param" value="global->compile_max_stack_size" format="V" size="48" maxlength="1024" check="no" onchange="newLangGlobalOnChange(this)" /></td>
+        <td><s:help icon="yes" topic="Serve.cfg:global:compile_max_stack_size" /></td>
+    </s:tr>
+
+<%
+  }
+%>
+
+    <s:tr id="global_compile_max_file_size-div" attr="form_row_attrs[row ^= 1]">
+        <td colspan="2">Maximum file size for compilers:</td>
+        <td><s:textfield id="global_compile_max_file_size" name="param" value="global->compile_max_file_size" format="V" size="48" maxlength="1024" check="no" onchange="newLangGlobalOnChange(this)" /></td>
+        <td><s:help icon="yes" topic="Serve.cfg:global:compile_max_file_size" /></td>
+    </s:tr>
+
+    <s:tr id="global-button-row-div" hiddenExpr="1" >
+        <td colspan="4" style="text-align: center;">
+            <span style="margin:0px auto;">
+                <button type="button" id="global-button-save" onclick="newLangGlobalSave()">Save <span class="ui-icon ui-icon-save"></span></button>
+                <button type="button" id="global-button-cancel" onclick="newLangGlobalCancel()">Cancel <span class="ui-icon ui-icon-cancel"></span></button>
+            </span>
+        </td>
+    </s:tr>
+
+    <s:tr attr="head_row_attr">
+        <td colspan="4" align="center"><b>Available compilers</b></td>
     </s:tr>
 
 <%
@@ -827,68 +905,499 @@ new_language_page:;
   int lang_id;
   for (lang_id = 0; lang_id < phr->ss->lang_a; ++lang_id) {
     const struct section_language_data *lang = phr->ss->langs[lang_id];
+    const struct section_language_data *serv_lang = phr->ss->serv_langs[lang_id];
+    struct section_language_data *work_lang = NULL;
     struct section_language_data *act_lang = NULL;
     const unsigned char *td_attr = "";
     unsigned char expanded = 0;
+    unsigned char enabled = 0;
+    unsigned char more_expanded = 0;
+    int idsuffix = -lang_id;
+    struct language_extra *lang_extra = &phr->ss->lang_extra[lang_id];
     if (lang) {
-      __attribute__((unused)) struct language_extra *lang_extra = &phr->ss->lang_extra[lang_id];
-      __attribute__((unused)) const struct section_language_data *serv_lang = phr->ss->serv_langs[lang_id];
-
-      if (lang_extra->enabled == 2) {
-        // force disabled
-        td_attr = " bgcolor=\"#777777\"";
-      } else if (lang_extra->enabled < 0) {
-        // bad
-        td_attr = " bgcolor=\"#dd7777\"";
-      } else if (lang_extra->enabled == 0) {
-        // disabled
-        td_attr = " bgcolor=\"#dddddd\"";
-      } else {
-        if (enable_container > 0) {
-          td_attr = " bgcolor=\"#ddffdd\"";
-        } else {
-          if (lang && lang->insecure && global && global->secure_run > 0) {
-            td_attr = " bgcolor=\"#ffffdd\"";
-          } else if (lang) {
-            td_attr = " bgcolor=\"#ddffdd\"";
-          }
-        }
-      }
-
-      expanded = lang_extra->expanded;
       act_lang = prepare_alloc_language();
       prepare_merge_language(act_lang, serv_lang, lang);
-    } else {
+      prepare_language_set_defaults(act_lang);
+    } else if (serv_lang) {
       // !lang
       act_lang = prepare_alloc_language();
-      prepare_copy_language(new_lang, imp_lang);
-
+      prepare_copy_language(act_lang, serv_lang);
+      prepare_language_set_defaults(act_lang);
+      work_lang = prepare_alloc_language();
+      work_lang->id = lang_id;
+      lang = work_lang;
     }
 
     if (!act_lang) continue;
+
+    if (lang_extra->enabled == 2) {
+      // force disabled
+      td_attr = " bgcolor=\"#777777\"";
+    } else if (lang_extra->enabled < 0) {
+      // bad
+      td_attr = " bgcolor=\"#dd7777\"";
+    } else if (lang_extra->enabled == 0) {
+      // disabled
+      td_attr = " bgcolor=\"#dddddd\"";
+    } else {
+      if (enable_container > 0) {
+        td_attr = " bgcolor=\"#ddffdd\"";
+      } else {
+        if (lang && lang->insecure > 0 && global && global->secure_run > 0) {
+          td_attr = " bgcolor=\"#ffffdd\"";
+        } else if (lang) {
+          td_attr = " bgcolor=\"#ddffdd\"";
+        }
+      }
+    }
+
+    expanded = lang_extra->expanded;
+    enabled = lang_extra->enabled == 1;
+    more_expanded = lang_extra->more_expanded;
+    if (lang && expanded) {
+      jl = json_serialize_language(lang);
+      jstr = cJSON_PrintUnformatted(jl);
+%>
+<script type="text/javascript">
+$(function() {
+    language_states[<s:v value="lang_id" />] = {
+        config: <s:v value="jstr" escape="false" />,
+        enabled: <s:v value="enabled" type="jsbool" />,
+        expanded: <s:v value="expanded" type="jsbool" />,
+        more_expanded: <s:v value="more_expanded" type="jsbool" />,
+        extra_ejudge_flags: "<s:v value="lang_extra->ejudge_flags" json="true" checkExpr="" />",
+        extra_ejudge_libs: "<s:v value="lang_extra->ejudge_libs" json="true" checkExpr="" />",
+        extra_compiler_env: "<s:v value="lang_extra->compiler_env" json="true" checkExpr="" />"
+    };
+});
+</script>
+<%
+      free(jstr); jstr = NULL;
+      cJSON_Delete(jl); jl = NULL;
+    }
 %>
     <s:tr>
-        <td colspan="5"<s:v value="td_attr" escape="false" />><b><s:v value="act_lang->short_name" /><%
+        <td colspan="4"<s:v value="td_attr" escape="false" />><b><s:v value="act_lang->short_name" /><%
     if (act_lang->long_name && act_lang->long_name[0]) {
 %> &mdash; <s:v value="act_lang->long_name" /><%
     } else {
 %><%
     }
-%></b><%
+%></b><span style="float: right;"><%
+%><span id="icon-disk-<s:v value="lang_id" />" class="ui-icon ui-icon-disk" onclick="newLangSave(<s:v value="lang_id" />)" style="display: none;"></span><%
     if (expanded) {
-%><span onclick="newLanguageOper1(<s:v value="lang_id" />)", "shrink">(-)</span><%
-    } else {
-%><span onclick="newLanguageOper1(<s:v value="lang_id" />)", "expand">(+)</span><%
+%><span id="icon-zoomin-<s:v value="lang_id" />" class="ui-icon ui-icon-zoomin" onclick="newLanguageZoomIn(<s:v value="lang_id" />)"<% if (more_expanded) { %> style="display: none;"<% }%> ></span><%
+%><span id="icon-zoomout-<s:v value="lang_id" />" class="ui-icon ui-icon-zoomout" onclick="newLanguageZoomOut(<s:v value="lang_id" />)"<% if (!more_expanded) { %> style="display: none;"<% }%> ></span><%
     }
-%></td>
+%><%
+    if (enabled) {
+%><span class="ui-icon ui-icon-toggle-on" onclick="newLanguageOper1(<s:v value="lang_id" />, 'disable')"></span><%
+    } else {
+%><span class="ui-icon ui-icon-toggle-off" onclick="newLanguageOper1(<s:v value="lang_id" />, 'enable')"></span><%
+    }
+%><%
+    if (expanded) {
+%><span id="icon-circle-triangle-n-<s:v value="lang_id" />" class="ui-icon ui-icon-circle-triangle-n" onclick="newLanguageShrink(<s:v value="lang_id" />)"></span><%
+%><span id="icon-circle-triangle-s-<s:v value="lang_id" />" class="ui-icon ui-icon-circle-triangle-s" onclick="newLanguageExpand(<s:v value="lang_id" />)" style="display: none;"></span><%
+    } else {
+%><span class="ui-icon ui-icon-circle-triangle-s" onclick="newLanguageOper1(<s:v value="lang_id" />, 'expand')"></span><%
+    }
+%></span></td>
     </s:tr>
 <%
     if (expanded) {
 %>
+
+    <s:tr id="lang_id-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]">
+        <td width="50">&nbsp;</td>
+        <td>Language ID:</td>
+        <td><s:textfield id="lang_id" idSuffix="idsuffix" readonly="readonly" name="param" value="act_lang->id" size="48" maxlength="1024" /></td>
+        <td><s:help icon="yes" topic="Serve.cfg:language:id" /></td>
+    </s:tr>
+
+<%
+      if (act_lang->compile_id > 0 && act_lang->compile_id != act_lang->id) {
+%>
+
+    <s:tr id="compile_id-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]">
+        <td width="50">&nbsp;</td>
+        <td>Compilation server ID:</td>
+        <td><s:textfield id="compile_id" idSuffix="idsuffix" readonly="readonly" name="param" value="act_lang->compile_id" size="48" maxlength="1024" /></td>
+        <td><s:help icon="yes" topic="Serve.cfg:language:compile_id" /></td>
+    </s:tr>
+
+<%
+      }
+%>
+
+    <s:tr id="short_name-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]">
+        <td width="50">&nbsp;</td>
+        <td>Language short name:</td>
+        <td><s:textfield id="short_name" idSuffix="idsuffix" readonly="readonly" name="param" value="act_lang->short_name" size="48" maxlength="1024" /></td>
+        <td><s:help icon="yes" topic="Serve.cfg:language:short_name" /></td>
+    </s:tr>
+
+    <s:tr id="src_sfx-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]">
+        <td width="50">&nbsp;</td>
+        <td>Source file suffix:</td>
+        <td><s:textfield id="src_sfx" idSuffix="idsuffix" readonly="readonly" name="param" value="act_lang->src_sfx" size="48" maxlength="1024" /></td>
+        <td><s:help icon="yes" topic="Serve.cfg:language:src_sfx" /></td>
+    </s:tr>
+
+    <s:tr id="exe_sfx-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]">
+        <td width="50">&nbsp;</td>
+        <td>Executable file suffix:</td>
+        <td><s:textfield id="exe_sfx" idSuffix="idsuffix" readonly="readonly" name="param" value="act_lang->exe_sfx" size="48" maxlength="1024" /></td>
+        <td><s:help icon="yes" topic="Serve.cfg:language:exe_sfx" /></td>
+    </s:tr>
+
+<%
+      if (phr->ss->cscs && phr->ss->cscs->u > 0) {
+        const unsigned char *default_server_id = phr->ss->cscs->v[0].id;
+        const unsigned char *cur_server_id = act_lang->compile_server_id;
+        const unsigned char *empty = "";
+        if (!cur_server_id || !*cur_server_id) cur_server_id = "";
+%>
+    <s:tr id="compile_server_id-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]">
+        <td width="50">&nbsp;</td>
+        <td valign="top">Compile queue:</td>
+        <td><div><s:select name="compile_server_id" id="compile_server_id" idSuffix="idsuffix" onchange="newLangOnChange(this)" disabledExpr="!enabled"><%
+%><s:option value="empty" selectedExpr="!strcmp(empty, cur_server_id)">Default</s:option><%
+        int serv_i;
+        for (serv_i = 0; serv_i < phr->ss->cscs->u; ++serv_i) {
+          struct compile_server_config *csc = &phr->ss->cscs->v[serv_i];
+          if (!csc->errors) {
+%><s:option value="csc->id" selectedExpr="!strcmp(csc->id, cur_server_id)"><s:v value="csc->id" /></s:option><%
+          }
+        }
+%></s:select></div>
+        <div style="font-size: 0.75em; color: gray;" ><code><s:v value="default_server_id" checkExpr="" /></code></div></td>
+        <td><s:help icon="yes" topic="Serve.cfg:language:compile_server_id" /></td>
+    </s:tr>
+<%
+      }
+%>
+
+    <s:tr id="super_run_dir-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]">
+        <td width="50">&nbsp;</td>
+        <td valign="top">Run queue:</td>
+        <td><div><s:textfield id="super_run_dir" idSuffix="idsuffix" name="param" value="lang->super_run_dir" size="48" maxlength="1024" checkExpr="" onchange="newLangOnChange(this)" disabledExpr="!enabled"/></div>
+            <div style="font-size: 0.75em; color: gray;" ><code><s:v value="act_lang->super_run_dir" checkExpr="" /></code></div></td>
+        <td><s:help icon="yes" topic="Serve.cfg:language:super_run_dir" /></td>
+    </s:tr>
+
+    <s:tr id="long_name-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]">
+        <td width="50">&nbsp;</td>
+        <td valign="top">Language long name:</td>
+        <td><div><s:textfield id="long_name" idSuffix="idsuffix" name="param" value="lang->long_name" size="48" maxlength="1024" checkExpr="" onchange="newLangOnChange(this)" disabledExpr="!enabled"/></div>
+            <div style="font-size: 0.75em; color: gray;" ><code><s:v value="act_lang->long_name" checkExpr="" /></code></div></td>
+        <td><s:help icon="yes" topic="Serve.cfg:language:long_name" /></td>
+    </s:tr>
+
+    <s:tr id="version-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]">
+        <td width="50">&nbsp;</td>
+        <td valign="top">Language version:</td>
+        <td><div><s:textfield id="version" idSuffix="idsuffix" name="param" value="lang->version" size="48" maxlength="1024" checkExpr="" onchange="newLangOnChange(this)" disabledExpr="!enabled" /></div>
+            <div style="font-size: 0.75em; color: gray;" ><code><s:v value="act_lang->version" checkExpr="" /></code></div></td>
+        <td><s:help icon="yes" topic="Serve.cfg:language:version" /></td>
+    </s:tr>
+
+    <s:tr id="compile_real_time_limit-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]">
+        <td width="50">&nbsp;</td>
+        <td valign="top">Compilation real-time limit (s):</td>
+        <td><div><s:textfield id="compile_real_time_limit" idSuffix="idsuffix" name="param" value="lang->compile_real_time_limit" size="48" maxlength="1024" checkExpr="&gt; 0" onchange="newLangOnChange(this)" disabledExpr="!enabled" /></div>
+            <div style="font-size: 0.75em; color: gray;" ><code><s:v value="act_lang->compile_real_time_limit" checkExpr="&gt; 0" /></code></div></td>
+        <td><s:help icon="yes" topic="Serve.cfg:language:compile_real_time_limit" /></td>
+    </s:tr>
+
+    <s:tr id="priority_adjustment-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]">
+        <td width="50">&nbsp;</td>
+        <td valign="top">Run priority adjustment:</td>
+        <td><div><s:textfield id="priority_adjustment" idSuffix="idsuffix" name="param" value="lang->priority_adjustment" size="48" maxlength="1024" checkExpr="!= 0" onchange="newLangOnChange(this)" disabledExpr="!enabled" /></div>
+            <div style="font-size: 0.75em; color: gray;" ><code><s:v value="act_lang->priority_adjustment" checkExpr="!= 0" /></code></div></td>
+        <td><s:help icon="yes" topic="Serve.cfg:language:priority_adjustment" /></td>
+    </s:tr>
+
+    <s:tr id="style_checker_cmd-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]">
+        <td width="50">&nbsp;</td>
+        <td valign="top">Style checker command:</td>
+        <td><div><s:textfield id="style_checker_cmd" idSuffix="idsuffix" name="param" value="lang->style_checker_cmd" size="48" maxlength="1024" checkExpr="" onchange="newLangOnChange(this)" disabledExpr="!enabled" /></div>
+            <div style="font-size: 0.75em; color: gray;" ><code><s:v value="act_lang->style_checker_cmd" checkExpr="" /></code></div></td>
+        <td><s:help icon="yes" topic="Serve.cfg:language:style_checker_cmd" /></td>
+    </s:tr>
+
+<%
+      text_f = open_memstream(&text_s, &text_z);
+      if (lang->style_checker_env) {
+        for (i = 0; lang->style_checker_env[i]; ++i) {
+          fprintf(text_f, "%s\n", lang->style_checker_env[i]);
+        }
+      }
+      fclose(text_f); text_f = NULL;
+%>
+
+    <s:tr id="style_checker_env-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]">
+        <td width="50">&nbsp;</td>
+        <td valign="top">Style checker environment:</td>
+        <td><div><s:textarea id="style_checker_env" idSuffix="idsuffix" name="param" value="text_s" cols="55" rows="2" checkExpr="" onchange="newLangOnChange(this)" disabledExpr="!enabled" /></div></td>
+        <td><s:help icon="yes" topic="Serve.cfg:language:style_checker_env" /></td>
+    </s:tr>
+
+<%
+      free(text_s); text_s = NULL; text_z = 0;
+%>
+
+    <s:tr id="disable_auto_testing-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]">
+        <td width="50">&nbsp;</td>
+        <td valign="top">Do not test submits automatically:</td>
+        <td><div><s:yesno3 id="disable_auto_testing" idSuffix="idsuffix" name="param" value="lang->disable_auto_testing" default="act_lang->disable_auto_testing" onchange="newLangOnChange(this)" disabledExpr="!enabled" /></div>
+            <div style="font-size: 0.75em; color: gray;" ><s:yesno name="param" readonly="readonly" value="act_lang->disable_auto_testing" /></div></td>
+        <td><s:help icon="yes" topic="Serve.cfg:language:disable_auto_testing" /></td>
+    </s:tr>
+
+    <s:tr id="disable_testing-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]">
+        <td width="50">&nbsp;</td>
+        <td valign="top">Disable any testing:</td>
+        <td><div><s:yesno3 id="disable_testing" idSuffix="idsuffix" name="param" value="lang->disable_testing" default="act_lang->disable_testing" onchange="newLangOnChange(this)" disabledExpr="!enabled" /></div>
+            <div style="font-size: 0.75em; color: gray;" ><s:yesno name="param" readonly="readonly" value="act_lang->disable_testing" /></div></td>
+        <td><s:help icon="yes" topic="Serve.cfg:language:disable_testing" /></td>
+    </s:tr>
+
+    <s:tr id="enable_ejudge_env-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]">
+        <td width="50">&nbsp;</td>
+        <td valign="top">Enable run-time ejudge-specific env vars:</td>
+        <td><div><s:yesno3 id="enable_ejudge_env" idSuffix="idsuffix" name="param" value="lang->enable_ejudge_env" default="act_lang->enable_ejudge_env" onchange="newLangOnChange(this)" disabledExpr="!enabled" /></div>
+            <div style="font-size: 0.75em; color: gray;" ><s:yesno name="param" readonly="readonly" value="act_lang->enable_ejudge_env" /></div></td>
+        <td><s:help icon="yes" topic="Serve.cfg:language:enable_ejudge_env" /></td>
+    </s:tr>
+
+    <s:tr id="run_env_file-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]">
+        <td width="50">&nbsp;</td>
+        <td valign="top">Run-time environment file:</td>
+        <td><div><s:textfield id="run_env_file" idSuffix="idsuffix" name="param" value="lang->run_env_file" size="48" maxlength="1024" checkExpr="" onchange="newLangOnChange(this)" disabledExpr="!enabled" /></div>
+            <div style="font-size: 0.75em; color: gray;" ><code><s:v value="act_lang->run_env_file" checkExpr="" /></code></div></td>
+        <td><s:help icon="yes" topic="Serve.cfg:language:run_env_file" /></td>
+    </s:tr>
+
+    <s:tr id="run_max_stack_size-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]">
+        <td width="50">&nbsp;</td>
+        <td valign="top">Run-time max stack size:</td>
+        <td><div><s:textfield id="run_max_stack_size" idSuffix="idsuffix" name="param" value="lang->run_max_stack_size" size="48" format="V" onchange="newLangOnChange(this)" disabledExpr="!enabled" /></div>
+            <div style="font-size: 0.75em; color: gray;" ><code><s:v value="act_lang->run_max_stack_size" checkExpr="&gt; 0" format="V" /></code></div></td>
+        <td><s:help icon="yes" topic="Serve.cfg:language:run_max_stack_size" /></td>
+    </s:tr>
+
+    <s:tr id="run_max_rss_size-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]">
+        <td width="50">&nbsp;</td>
+        <td valign="top">Run-time max resident set size:</td>
+        <td><div><s:textfield id="run_max_rss_size" idSuffix="idsuffix" name="param" value="lang->run_max_rss_size" size="48" format="V" onchange="newLangOnChange(this)" disabledExpr="!enabled" /></div>
+            <div style="font-size: 0.75em; color: gray;" ><code><s:v value="act_lang->run_max_rss_size" checkExpr="&gt; 0" format="V" /></code></div></td>
+        <td><s:help icon="yes" topic="Serve.cfg:language:run_max_rss_size" /></td>
+    </s:tr>
+
+    <s:tr id="extra_ejudge_flags-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]">
+        <td width="50">&nbsp;</td>
+        <td valign="top">Compilation flags:</td>
+        <td><s:textarea id="extra_ejudge_flags" idSuffix="idsuffix" name="param" value="lang_extra->ejudge_flags" cols="55" rows="2" checkExpr="" onchange="newLangOnChange(this)" disabledExpr="!enabled" /></td>
+        <td></td>
+    </s:tr>
+
+    <s:tr id="extra_ejudge_libs-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]">
+        <td width="50">&nbsp;</td>
+        <td valign="top">Compilation libraries:</td>
+        <td><s:textarea id="extra_ejudge_libs" idSuffix="idsuffix" name="param" value="lang_extra->ejudge_libs" cols="55" rows="2" checkExpr="" onchange="newLangOnChange(this)" disabledExpr="!enabled" /></td>
+        <td></td>
+    </s:tr>
+
+    <s:tr id="extra_compiler_env-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]">
+        <td width="50">&nbsp;</td>
+        <td valign="top">Compiler environment:</td>
+        <td><s:textarea id="extra_compiler_env" idSuffix="idsuffix" name="param" value="text_s" cols="55" rows="2" checkExpr="" onchange="newLangOnChange(this)" disabledExpr="!enabled" /></td>
+        <td></td>
+    </s:tr>
+
+    <s:tr id="container_options-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]">
+        <td width="50">&nbsp;</td>
+        <td valign="top">Run-time container options:</td>
+        <td><div><s:textfield id="container_options" idSuffix="idsuffix" name="param" value="lang->container_options" size="48" maxlength="1024" checkExpr="" onchange="newLangOnChange(this)" disabledExpr="!enabled" /></div>
+            <div style="font-size: 0.75em; color: gray;" ><code><s:v value="act_lang->container_options" checkExpr="" /></code></div></td>
+        <td><s:help icon="yes" topic="Serve.cfg:language:container_options" /></td>
+    </s:tr>
+
+    <s:tr id="compiler_container_options-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]">
+        <td width="50">&nbsp;</td>
+        <td valign="top">Compile-time container options:</td>
+        <td><div><s:textfield id="compiler_container_options" idSuffix="idsuffix" name="param" value="lang->compiler_container_options" size="48" maxlength="1024" checkExpr="" onchange="newLangOnChange(this)" disabledExpr="!enabled" /></div>
+            <div style="font-size: 0.75em; color: gray;" ><code><s:v value="act_lang->compiler_container_options" checkExpr="" /></code></div></td>
+        <td><s:help icon="yes" topic="Serve.cfg:language:compiler_container_options" /></td>
+    </s:tr>
+
+    <s:tr id="clean_up_cmd-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]">
+        <td width="50">&nbsp;</td>
+        <td valign="top">Clean-up command:</td>
+        <td><div><s:textfield id="clean_up_cmd" idSuffix="idsuffix" name="param" value="lang->clean_up_cmd" size="48" maxlength="1024" checkExpr="" onchange="newLangOnChange(this)" disabledExpr="!enabled" /></div>
+            <div style="font-size: 0.75em; color: gray;" ><code><s:v value="act_lang->clean_up_cmd" checkExpr="" /></code></div></td>
+        <td><s:help icon="yes" topic="Serve.cfg:language:clean_up_cmd" /></td>
+    </s:tr>
+
+    <s:tr id="clean_up_env_file-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]">
+        <td width="50">&nbsp;</td>
+        <td valign="top">Clean-up environment file:</td>
+        <td><div><s:textfield id="clean_up_env_file" idSuffix="idsuffix" name="param" value="lang->clean_up_env_file" size="48" maxlength="1024" checkExpr="" onchange="newLangOnChange(this)" disabledExpr="!enabled" /></div>
+            <div style="font-size: 0.75em; color: gray;" ><code><s:v value="act_lang->clean_up_env_file" checkExpr="" /></code></div></td>
+        <td><s:help icon="yes" topic="Serve.cfg:language:clean_up_env_file" /></td>
+    </s:tr>
+
+    <s:tr id="multi_header_suffix-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]">
+        <td width="50">&nbsp;</td>
+        <td valign="top">Multi-header name suffix:</td>
+        <td><div><s:textfield id="multi_header_suffix" idSuffix="idsuffix" name="param" value="lang->multi_header_suffix" size="48" maxlength="1024" checkExpr="" onchange="newLangOnChange(this)" disabledExpr="!enabled" /></div>
+            <div style="font-size: 0.75em; color: gray;" ><code><s:v value="act_lang->multi_header_suffix" checkExpr="" /></code></div></td>
+        <td><s:help icon="yes" topic="Serve.cfg:language:multi_header_suffix" /></td>
+    </s:tr>
+
+    <s:tr id="arch-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" hiddenExpr="!more_expanded">
+        <td width="50">&nbsp;</td>
+        <td valign="top">Language architecture (obsolete):</td>
+        <td><div><s:textfield id="arch" idSuffix="idsuffix" name="param" value="lang->arch" size="48" maxlength="1024" checkExpr="" onchange="newLangOnChange(this)" disabledExpr="!enabled" /></div>
+            <div style="font-size: 0.75em; color: gray;" ><code><s:v value="act_lang->arch" checkExpr="" /></code></div></td>
+        <td><s:help icon="yes" topic="Serve.cfg:language:arch" /></td>
+    </s:tr>
+
+    <s:tr id="binary-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" hiddenExpr="!more_expanded">
+        <td width="50">&nbsp;</td>
+        <td valign="top">Accept binary files:</td>
+        <td><div><s:yesno3 id="binary" idSuffix="idsuffix" name="param" value="lang->binary" default="act_lang->binary" onchange="newLangOnChange(this)" disabledExpr="!enabled" /></div>
+            <div style="font-size: 0.75em; color: gray;" ><s:yesno name="param" readonly="readonly" value="act_lang->binary" /></div></td>
+        <td><s:help icon="yes" topic="Serve.cfg:language:binary" /></td>
+    </s:tr>
+
+    <s:tr id="content_type-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" hiddenExpr="!more_expanded">
+        <td width="50">&nbsp;</td>
+        <td valign="top">Content type for download:</td>
+        <td><div><s:textfield id="content_type" idSuffix="idsuffix" name="param" value="lang->content_type" size="48" maxlength="1024" checkExpr="" onchange="newLangOnChange(this)" disabledExpr="!enabled" /></div>
+            <div style="font-size: 0.75em; color: gray;" ><code><s:v value="act_lang->content_type" checkExpr="" /></code></div></td>
+        <td><s:help icon="yes" topic="Serve.cfg:language:content_type" /></td>
+    </s:tr>
+
+    <s:tr id="disable_security-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" hiddenExpr="!more_expanded">
+        <td width="50">&nbsp;</td>
+        <td valign="top">Disable security restrictions (obsolete):</td>
+        <td><div><s:yesno3 id="disable_security" idSuffix="idsuffix" name="param" value="lang->disable_security" default="act_lang->disable_security" onchange="newLangOnChange(this)" disabledExpr="!enabled" /></div>
+            <div style="font-size: 0.75em; color: gray;" ><s:yesno name="param" readonly="readonly" value="act_lang->disable_security" /></div></td>
+        <td><s:help icon="yes" topic="Serve.cfg:language:disable_security" /></td>
+    </s:tr>
+
+    <s:tr id="enable_custom-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" hiddenExpr="!more_expanded">
+        <td width="50">&nbsp;</td>
+        <td valign="top">Use custom compilation script:</td>
+        <td><div><s:yesno3 id="enable_custom" idSuffix="idsuffix" name="param" value="lang->enable_custom" default="act_lang->enable_custom" onchange="newLangOnChange(this)" disabledExpr="!enabled" /></div>
+            <div style="font-size: 0.75em; color: gray;" ><s:yesno name="param" readonly="readonly" value="act_lang->enable_custom" /></div></td>
+        <td><s:help icon="yes" topic="Serve.cfg:language:enable_custom" /></td>
+    </s:tr>
+
+    <s:tr id="enable_suid_run-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" hiddenExpr="!more_expanded">
+        <td width="50">&nbsp;</td>
+        <td valign="top">Enable separate user at run time (obsolete):</td>
+        <td><div><s:yesno3 id="enable_suid_run" idSuffix="idsuffix" name="param" value="lang->enable_suid_run" default="act_lang->enable_suid_run" onchange="newLangOnChange(this)" disabledExpr="!enabled" /></div>
+            <div style="font-size: 0.75em; color: gray;" ><s:yesno name="param" readonly="readonly" value="act_lang->enable_suid_run" /></div></td>
+        <td><s:help icon="yes" topic="Serve.cfg:language:enable_suid_run" /></td>
+    </s:tr>
+
+    <s:tr id="insecure-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" hiddenExpr="!more_expanded">
+        <td width="50">&nbsp;</td>
+        <td valign="top">Language is insecure at run-time (obsolete):</td>
+        <td><div><s:yesno3 id="insecure" idSuffix="idsuffix" name="param" value="lang->insecure" default="act_lang->insecure" onchange="newLangOnChange(this)" disabledExpr="!enabled" /></div>
+            <div style="font-size: 0.75em; color: gray;" ><s:yesno name="param" readonly="readonly" value="act_lang->insecure" /></div></td>
+        <td><s:help icon="yes" topic="Serve.cfg:language:insecure" /></td>
+    </s:tr>
+
+    <s:tr id="is_dos-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" hiddenExpr="!more_expanded">
+        <td width="50">&nbsp;</td>
+        <td valign="top">Perform line ending conversion for input/output:</td>
+        <td><div><s:yesno3 id="is_dos" idSuffix="idsuffix" name="param" value="lang->is_dos" default="act_lang->is_dos" onchange="newLangOnChange(this)" disabledExpr="!enabled" /></div>
+            <div style="font-size: 0.75em; color: gray;" ><s:yesno name="param" readonly="readonly" value="act_lang->is_dos" /></div></td>
+        <td><s:help icon="yes" topic="Serve.cfg:language:is_dos" /></td>
+    </s:tr>
+
+    <s:tr id="key-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" hiddenExpr="!more_expanded">
+        <td width="50">&nbsp;</td>
+        <td valign="top">Language key (obsolete):</td>
+        <td><div><s:textfield id="key" idSuffix="idsuffix" name="param" value="lang->key" size="48" maxlength="1024" checkExpr="" onchange="newLangOnChange(this)" disabledExpr="!enabled" /></div>
+            <div style="font-size: 0.75em; color: gray;" ><code><s:v value="act_lang->key" checkExpr="" /></code></div></td>
+        <td><s:help icon="yes" topic="Serve.cfg:language:key" /></td>
+    </s:tr>
+
+    <s:tr id="max_file_size-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" hiddenExpr="!more_expanded">
+        <td width="50">&nbsp;</td>
+        <td valign="top">Compile max file size:</td>
+        <td><div><s:textfield id="max_file_size" idSuffix="idsuffix" name="param" value="lang->max_file_size" size="48" format="V" onchange="newLangOnChange(this)" disabledExpr="!enabled" /></div>
+            <div style="font-size: 0.75em; color: gray;" ><code><s:v value="act_lang->max_file_size" checkExpr="&gt; 0" format="V" /></code></div></td>
+        <td><s:help icon="yes" topic="Serve.cfg:language:max_file_size" /></td>
+    </s:tr>
+
+    <s:tr id="max_stack_size-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" hiddenExpr="!more_expanded">
+        <td width="50">&nbsp;</td>
+        <td valign="top">Compile max stack size (obsolete):</td>
+        <td><div><s:textfield id="max_stack_size" idSuffix="idsuffix" name="param" value="lang->max_stack_size" size="48" format="V" onchange="newLangOnChange(this)" disabledExpr="!enabled" /></div>
+            <div style="font-size: 0.75em; color: gray;" ><code><s:v value="act_lang->max_stack_size" checkExpr="&gt; 0" format="V" /></code></div></td>
+        <td><s:help icon="yes" topic="Serve.cfg:language:max_stack_size" /></td>
+    </s:tr>
+
+    <s:tr id="max_vm_size-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" hiddenExpr="!more_expanded">
+        <td width="50">&nbsp;</td>
+        <td valign="top">Compile max VM size (obsolete):</td>
+        <td><div><s:textfield id="max_vm_size" idSuffix="idsuffix" name="param" value="lang->max_vm_size" size="48" format="V" onchange="newLangOnChange(this)" disabledExpr="!enabled" /></div>
+            <div style="font-size: 0.75em; color: gray;" ><code><s:v value="act_lang->max_vm_size" checkExpr="&gt; 0" format="V" /></code></div></td>
+        <td><s:help icon="yes" topic="Serve.cfg:language:max_vm_size" /></td>
+    </s:tr>
+
+    <s:tr id="max_rss_size-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" hiddenExpr="!more_expanded">
+        <td width="50">&nbsp;</td>
+        <td valign="top">Compile max RSS size (obsolete):</td>
+        <td><div><s:textfield id="max_rss_size" idSuffix="idsuffix" name="param" value="lang->max_rss_size" size="48" format="V" onchange="newLangOnChange(this)" disabledExpr="!enabled" /></div>
+            <div style="font-size: 0.75em; color: gray;" ><code><s:v value="act_lang->max_rss_size" checkExpr="&gt; 0" format="V" /></code></div></td>
+        <td><s:help icon="yes" topic="Serve.cfg:language:max_rss_size" /></td>
+    </s:tr>
+
+    <s:tr id="preserve_line_numbers-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" hiddenExpr="!more_expanded">
+        <td width="50">&nbsp;</td>
+        <td valign="top">Track source line numbers at run time (obsolete):</td>
+        <td><div><s:yesno3 id="preserve_line_numbers" idSuffix="idsuffix" name="param" value="lang->preserve_line_numbers" default="act_lang->preserve_line_numbers" onchange="newLangOnChange(this)" disabledExpr="!enabled" /></div>
+            <div style="font-size: 0.75em; color: gray;" ><s:yesno name="param" readonly="readonly" value="act_lang->preserve_line_numbers" /></div></td>
+        <td><s:help icon="yes" topic="Serve.cfg:language:preserve_line_numbers" /></td>
+    </s:tr>
+
+    <s:tr id="run_max_vm_size-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" hiddenExpr="!more_expanded">
+        <td width="50">&nbsp;</td>
+        <td valign="top">Run-time max VM size (obsolete):</td>
+        <td><div><s:textfield id="run_max_vm_size" idSuffix="idsuffix" name="param" value="lang->run_max_vm_size" size="48" format="V" onchange="newLangOnChange(this)" disabledExpr="!enabled" /></div>
+            <div style="font-size: 0.75em; color: gray;" ><code><s:v value="act_lang->run_max_vm_size" checkExpr="&gt; 0" format="V" /></code></div></td>
+        <td><s:help icon="yes" topic="Serve.cfg:language:run_max_vm_size" /></td>
+    </s:tr>
+
+    <s:tr id="button-row-div" idSuffix="idsuffix" hiddenExpr="1" >
+        <td colspan="4" style="text-align: center;">
+            <span style="margin:0px auto;">
+                <button type="button" id="button-save-<s:v value="lang_id" />" onclick="newLangSave(<s:v value="lang_id" />)">Save <span class="ui-icon ui-icon-save"></span></button>
+                <button type="button" id="button-cancel-<s:v value="lang_id" />" onclick="newLangCancel(<s:v value="lang_id" />)">Cancel <span class="ui-icon ui-icon-cancel"></span></button>
+            </span>
+        </td>
+    </s:tr>
+
 <%
     }
-    prepare_free_config(&act_lang->g);
+    if (act_lang) {
+      prepare_free_config(&act_lang->g);
+    }
+    if (work_lang) {
+      prepare_free_config(&work_lang->g);
+    }
   }
+%>
+
+<%
+skip_all_new_language_rows:;
 %>
 
 </table>
@@ -901,7 +1410,7 @@ var script_name='<s:v value="phr->script_name" escape="false" />';<%
 %>
 var lang_ajax_action='<s:v value="lang_ajax_action" />';
 
-function newExpandLanguage(lang_id)
+function newLanguageOper1(lang_id, oper)
 {
     $.ajax({
         url : self_url,
@@ -910,7 +1419,7 @@ function newExpandLanguage(lang_id)
             SID: SID,
             action: lang_ajax_action,
             lang_id: lang_id,
-            oper: "expand"
+            oper: oper
         },
         contentType: "application/x-www-form-urlencoded; charset=utf-8",
         dataType: "json",
@@ -922,8 +1431,439 @@ function newExpandLanguage(lang_id)
         error: function(jqXHR, textStatus, errorThrown) {
         }
     });
-
 }
+
+const main_div_ids = // 27
+[
+    "lang_id", "compile_id", "short_name", "src_sfx", "exe_sfx",
+    "compile_server_id", "super_run_dir", "long_name", "version", "compile_real_time_limit",
+    "priority_adjustment", "style_checker_cmd", "style_checker_env", "disable_auto_testing", "disable_testing",
+    "enable_ejudge_env", "run_env_file", "run_max_stack_size", "run_max_rss_size", "extra_ejudge_flags",
+    "extra_ejudge_libs", "extra_compiler_env", "container_options", "compiler_container_options", "clean_up_cmd",
+    "clean_up_env_file", "multi_header_suffix"
+];
+
+const verbose_div_ids = // 14
+[
+    "arch", "binary", "content_type", "disable_security", "enable_custom",
+    "enable_suid_run", "insecure", "is_dos", "key", "max_file_size",
+    "max_stack_size", "max_vm_size", "max_rss_size", "preserve_line_numbers", "run_max_vm_size"
+];
+
+function newLanguageZoomIn(lang_id)
+{
+    $("#icon-zoomin-" + lang_id).hide();
+    $("#icon-zoomout-" + lang_id).show();
+    for (const d of verbose_div_ids) {
+        $("#" + d + "-div-" + lang_id).show();
+    }
+    language_states[lang_id]["more_expanded"] = true;
+}
+
+function newLanguageZoomOut(lang_id)
+{
+    $("#icon-zoomin-" + lang_id).show();
+    $("#icon-zoomout-" + lang_id).hide();
+    for (const d of verbose_div_ids) {
+        $("#" + d + "-div-" + lang_id).hide();
+    }
+    language_states[lang_id]["more_expanded"] = false;
+}
+
+function newLanguageShrink(lang_id)
+{
+    $("#icon-zoomin-" + lang_id).hide();
+    $("#icon-zoomout-" + lang_id).hide();
+    $("#icon-circle-triangle-n-" + lang_id).hide();
+    $("#icon-circle-triangle-s-" + lang_id).show();
+    language_states[lang_id]["expanded"] = false;
+    for (const d of main_div_ids) {
+        $("#" + d + "-div-" + lang_id).hide();
+    }
+    for (const d of verbose_div_ids) {
+        $("#" + d + "-div-" + lang_id).hide();
+    }
+    //console.log(collectLanguageForm(lang_id));
+}
+
+function newLanguageExpand(lang_id)
+{
+    if (!language_states.hasOwnProperty(lang_id)) {
+        newLanguageOper1(lang_id, 'expand');
+        return;
+    }
+    $("#icon-circle-triangle-n-" + lang_id).show();
+    $("#icon-circle-triangle-s-" + lang_id).hide();
+    language_states[lang_id]["expanded"] = true;
+    for (const d of main_div_ids) {
+        $("#" + d + "-div-" + lang_id).show();
+    }
+    if (language_states[lang_id]["more_expanded"]) {
+        newLanguageZoomIn(lang_id);
+    } else {
+        newLanguageZoomOut(lang_id);
+    }
+}
+
+const lang_boolean_inputs = // 10
+[
+    "disable_auto_testing", "disable_testing", "enable_ejudge_env", "binary", "disable_security",
+    "enable_custom", "enable_suid_run", "insecure", "is_dos", "preserve_line_numbers"
+];
+
+const lang_size_inputs = // 7
+[
+    "run_max_stack_size", "run_max_rss_size", "max_file_size", "max_stack_size", "max_vm_size",
+    "run_max_vm_size", "max_rss_size"
+];
+
+const lang_int_inputs = // 2
+[
+    "compile_real_time_limit", "priority_adjustment"
+];
+
+const lang_string_inputs = // 18
+[
+    "compile_server_id", "super_run_dir", "long_name", "version", "style_checker_cmd",
+    "style_checker_env", "run_env_file", "extra_ejudge_flags", "extra_ejudge_libs", "extra_compiler_env",
+    "container_options", "compiler_container_options", "clean_up_cmd", "clean_up_env_file", "multi_header_suffix",
+    "arch", "content_type", "key"
+];
+
+function parseSizeString(str)
+{
+    if (str === undefined) {
+        return NaN;
+    }
+    const ss = str.trim();
+    if (ss === "") {
+        return NaN;
+    }
+    const sss = ss.match(/([^GgKkMm]+)([GgKkMm]$)?/);
+    if (sss === undefined || sss === null || sss.length != 3) {
+        return NaN;
+    }
+    if (sss[2] === undefined) {
+        if (sss[1].length != ss.length) {
+            return NaN;
+        }
+        return parseInt(sss[1]);
+    }
+    let v = parseInt(sss[1]);
+    if (sss[2] === "k" || sss[2] === "K") {
+        v *= 1024;
+    } else if (sss[2] === "m" || sss[2] === "M") {
+        v *= 1024 * 1024;
+    } else if (sss[2] === "g" || sss[2] === "G") {
+        v *= 1024 * 1024 * 1024;
+    }
+    return v;
+}
+
+function unparseSize(size)
+{
+    if (size === undefined || size <= 0) return "";
+    if (size % (1024*1024*1024) == 0) {
+        return "" + (size / (1024*1024*1024)) + "G";
+    }
+    if (size % (1024*1024) == 0) {
+        return "" + (size / (1024*1024)) + "M";
+    }
+    if (size % (1024) == 0) {
+        return "" + (size / (1024)) + "K";
+    }
+    return "" + size;
+}
+
+function collectLanguageForm(lang_id)
+{
+    let r = {};
+    for (const i of lang_string_inputs) {
+        const s = $("#" + i + "-" + lang_id).val();
+        if (s !== undefined) {
+            r[i] = s.trim();
+        }
+    }
+    for (const i of lang_int_inputs) {
+        const s = $("#" + i + "-" + lang_id).val();
+        if (s !== undefined) {
+            const ss = s.trim();
+            if (ss === "") {
+                r[i] = 0;
+            } else {
+                const v = parseInt(ss);
+                if (isNaN(v)) {
+                    r[i] = 0;
+                } else {
+                    r[i] = v;
+                }
+            }
+        }
+    }
+    for (const i of lang_boolean_inputs) {
+        const s = $("#" + i + "-" + lang_id).val();
+        if (s !== undefined) {
+            const ss = s.trim();
+            if (ss === "") {
+                r[i] = 0;
+            } else {
+                const v = parseInt(ss);
+                if (isNaN(v)) {
+                    r[i] = 0;
+                } else {
+                    r[i] = v;
+                }
+            }
+        }
+    }
+    for (const i of lang_size_inputs) {
+        const s = $("#" + i + "-" + lang_id).val();
+        const v = parseSizeString(s);
+        if (v !== undefined && !isNaN(v)) {
+            r[i] = v;
+        }
+    }
+    return r;
+}
+
+function isEqualStrings(s1, s2)
+{
+    if ((s1 === undefined || s1 === null || s1 === "") && (s2 === undefined || s2 === null || s2 === "")) {
+        return true;
+    }
+    if ((s1 === undefined || s1 === null || s1 === "") || (s2 === undefined || s2 === null || s2 === "")) {
+        return false;
+    }
+    return s1.trim() === s2.trim();
+}
+
+function isEqualNumber(n1, n2)
+{
+    if ((n1 === undefined || n1 === null || n1 === 0) && (n2 === undefined || n2 === null || n2 === 0)) {
+        return true;
+    }
+    if ((n1 === undefined || n1 === null || n1 === 0) || (n2 === undefined || n2 === null || n2 === 0)) {
+        return false;
+    }
+    return n1 === n2;
+}
+
+function isEqualBoolean(st, dt)
+{
+    if ((st === undefined || st === null || st < 0) && (dt === undefined || dt === null || dt < 0)) {
+        return true;
+    }
+    if ((st === undefined || st === null || st < 0) || (dt === undefined || dt === null || dt < 0)) {
+        return false;
+    }
+    return !!s1 === !!dt;
+}
+
+function isChanged(lang_id, data)
+{
+    if (!language_states.hasOwnProperty(lang_id)) {
+        return false;
+    }
+    const st = language_states[lang_id];
+
+    for (const i of lang_string_inputs) {
+        if (i === "extra_ejudge_flags" || i === "extra_ejudge_libs" || i === "extra_compiler_env") {
+            if (!isEqualStrings(st[i], data[i])) {
+                console.log("differs: ", i, ": ", st[i], ":", data[i]);
+                return true;
+            }
+        } else {
+            if (!isEqualStrings(st.config[i], data[i])) {
+                console.log("differs: ", i, ": ", st.config[i], ":", data[i]);
+                return true;
+            }
+        }
+    }
+    for (const i of lang_int_inputs) {
+        if (!isEqualNumber(st.config[i], data[i])) {
+            console.log("differs: ", i, ": ", st.config[i], ":", data[i]);
+            return true;
+        }
+    }
+    for (const i of lang_boolean_inputs) {
+        if (!isEqualBoolean(st.config[i], data[i])) {
+            console.log("differs: ", i, ": ", st.config[i], ":", data[i]);
+            return true;
+        }
+    }
+    for (const i of lang_size_inputs) {
+        if (!isEqualNumber(st.config[i], data[i])) {
+            console.log("differs: ", i, ": ", st.config[i], ":", data[i]);
+            return true;
+        }
+    }
+    return false;
+}
+
+function newLangOnChange(ev)
+{
+    const lang_id = ~~ev.id.substring(ev.id.lastIndexOf("-")+1);
+    const data = collectLanguageForm(lang_id);
+    if (isChanged(lang_id, data)) {
+        $("#icon-disk-" + lang_id).show();
+        $("#button-row-div-" + lang_id).show();
+    } else {
+        $("#icon-disk-" + lang_id).hide();
+        $("#button-row-div-" + lang_id).hide();
+    }
+}
+
+function newLangCancel(lang_id)
+{
+    if (!language_states.hasOwnProperty(lang_id)) {
+        return false;
+    }
+    const st = language_states[lang_id];
+    for (const i of lang_string_inputs) {
+        const id = "#" + i + "-" + lang_id;
+        if (i === "extra_ejudge_flags" || i === "extra_ejudge_libs" || i === "extra_compiler_env") {
+            if (st.hasOwnProperty(i)) {
+                $(id).val(st[i]);
+            } else {
+                $(id).val("");
+            }
+        } else {
+            if (st.config.hasOwnProperty(i)) {
+                $(id).val(st.config[i]);
+            } else {
+                $(id).val("");
+            }
+        }
+    }
+    for (const i of lang_int_inputs) {
+        const id = "#" + i + "-" + lang_id;
+        if (st.config.hasOwnProperty(i)) {
+            $(id).val(st.config[i]);
+        } else {
+            $(id).val("");
+        }
+    }
+    for (const i of lang_boolean_inputs) {
+        const id = "#" + i + "-" + lang_id;
+        if (st.config.hasOwnProperty(i)) {
+            if (st.config[i]) {
+                $(id).val(1);
+            } else {
+                $(id).val(0);
+            }
+        } else {
+            $(id).val(-1);
+        }
+    }
+    for (const i of lang_size_inputs) {
+        const id = "#" + i + "-" + lang_id;
+        if (st.config.hasOwnProperty(i)) {
+            if (st.config[i] > 0) {
+                $(id).val(unparseSize(st.config[i]));
+            } else {
+                $(id).val("");
+            }
+        } else {
+            $(id).val("");
+        }
+    }
+    $("#icon-disk-" + lang_id).hide();
+    $("#button-row-div-" + lang_id).hide();
+}
+
+function newLangSave(lang_id)
+{
+    data = collectLanguageForm(lang_id);
+    data["SID"] = SID;
+    data["action"] = lang_ajax_action;
+    data["lang_id"] = lang_id;
+    data["oper"] = "save";
+    $.ajax({
+        url : self_url,
+        type: "POST",
+        data: data,
+        contentType: "application/x-www-form-urlencoded; charset=utf-8",
+        dataType: "json",
+        success:function(data, textStatus, jqXHR) {
+            if (data.ok) {
+                document.location.reload(true);
+            }
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+        }
+    });
+}
+
+const global_size_inputs =
+[
+    "global_compile_max_vm_size", "global_compile_max_rss_size", "global_compile_max_stack_size", "global_compile_max_file_size", 
+];
+
+function collectGlobalSizeForm()
+{
+    let r = {};
+    for (const i of global_size_inputs) {
+        const s = $("#" + i).val();
+        const v = parseSizeString(s);
+        if (v !== undefined && !isNaN(v)) {
+            r[i] = v;
+        }
+    }
+    return r;
+}
+
+function isChangedGlobalSizeForm(orig, data)
+{
+    for (const i of global_size_inputs) {
+        if (!isEqualNumber(orig[i], data[i])) {
+            console.log("differs: ", i, ": ", orig[i], ":", data[i]);
+            return true;
+        }
+    }
+    return false;
+}
+
+function newLangGlobalOnChange(obj)
+{
+    r = collectGlobalSizeForm();
+    if (isChangedGlobalSizeForm(global_language_sizes, r)) {
+        $("#global-button-row-div").show();
+    } else {
+        $("#global-button-row-div").hide();
+    }
+}
+
+function newLangGlobalSave()
+{
+    data = collectGlobalSizeForm();
+    data["SID"] = SID;
+    data["action"] = lang_ajax_action;
+    data["lang_id"] = 0;
+    data["oper"] = "save_global";
+    $.ajax({
+        url : self_url,
+        type: "POST",
+        data: data,
+        contentType: "application/x-www-form-urlencoded; charset=utf-8",
+        dataType: "json",
+        success:function(data, textStatus, jqXHR) {
+            if (data.ok) {
+                document.location.reload(true);
+            }
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+        }
+    });
+}
+
+function newLangGlobalCancel()
+{
+    for (const i of global_size_inputs) {
+        $("#" + i).val(unparseSize(global_language_sizes[i]));
+    }
+    newLangGlobalOnChange();
+}
+
 </script>
 
 <%@include "cnts_edit_cur_bottom_menu.csp"
@@ -931,6 +1871,8 @@ function newExpandLanguage(lang_id)
 /* ================== new language page end ================== */
 %><%
 cleanup:
+  if (text_f) fclose(text_f);
+  free(text_s);
   l10n_resetlocale();
   html_armor_free(&ab);
 %>
