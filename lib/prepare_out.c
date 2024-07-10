@@ -102,7 +102,8 @@ prepare_unparse_global(
         const struct contest_desc *cnts,
         struct section_global_data *global,
         const unsigned char *compile_dir,
-        int need_variant_map)
+        int need_variant_map,
+        int compile_mode)
 {
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   path_t compile_spool_dir, tmp1, tmp2, contests_home_dir;
@@ -124,6 +125,19 @@ prepare_unparse_global(
   };
   unsigned char nbuf[64];
   unsigned char size_buf[256];
+
+  if (compile_mode) {
+    // TODO: add compile-related global vars
+    do_str(f, &ab, "root_dir", global->root_dir);
+    do_str(f, &ab, "lang_config_dir", global->lang_config_dir);
+    if (global->sleep_time > 0)
+      fprintf(f, "sleep_time = %d\n", global->sleep_time);
+    if (global->cr_serialization_key > 0)
+      fprintf(f, "cr_serialization_key = %d\n", global->cr_serialization_key);
+
+    html_armor_free(&ab);
+    return;
+  }
 
   /*
   fprintf(f, "contest_id = %d\n", global->contest_id);
@@ -568,6 +582,12 @@ prepare_unparse_global(
     fprintf(f, "\n");
   }
 
+  if (global->enable_language_import > 0) {
+    unparse_bool(f, "enable_language_import", global->enable_language_import);
+    do_xstr(f, &ab, "language_import", global->language_import);
+    fprintf(f, "\n");
+  }
+
   if (global->unhandled_vars) fprintf(f, "%s\n", global->unhandled_vars);
 
   html_armor_free(&ab);
@@ -865,6 +885,7 @@ void
 prepare_unparse_lang(
         FILE *f,
         const struct section_language_data *lang,
+        int lang_id,
         const unsigned char *long_name,
         const unsigned char *options,
         const unsigned char *libs)
@@ -874,9 +895,13 @@ prepare_unparse_lang(
   unsigned char size_buf[256];
 
   fprintf(f, "[language]\n");
-  fprintf(f, "id = %d\n", lang->id);
-  if (lang->compile_id && lang->compile_id != lang->id)
-    fprintf(f, "compile_id = %d\n", lang->compile_id);
+  if (lang_id > 0) {
+    fprintf(f, "id = %d\n", lang_id);
+  } else if (lang->id > 0) {
+    fprintf(f, "id = %d\n", lang->id);
+    if (lang->compile_id && lang->compile_id != lang->id)
+      fprintf(f, "compile_id = %d\n", lang->compile_id);
+  }
   if (lang->compile_dir_index > 0) {
     fprintf(f, "compile_dir_index = %d\n", lang->compile_dir_index);
   }
@@ -902,24 +927,26 @@ prepare_unparse_lang(
   /*
   if (lang->key[0])
     fprintf(f, "key = \"%s\"\n", CARMOR(lang->key));
-  if (lang->cmd[0])
-    fprintf(f, "cmd = \"%s\"\n", CARMOR(lang->cmd));
   */
-  if (lang->disabled)
+  if (lang_id <= 0) {
+    if (lang->cmd && lang->cmd[0])
+      fprintf(f, "cmd = \"%s\"\n", CARMOR(lang->cmd));
+  }
+  if (lang->disabled > 0)
     unparse_bool(f, "disabled", lang->disabled);
-  if (lang->insecure)
+  if (lang->insecure > 0)
     unparse_bool(f, "insecure", lang->insecure);
-  if (lang->disable_security)
+  if (lang->disable_security > 0)
     unparse_bool(f, "disable_security", lang->disable_security);
-  if (lang->enable_suid_run)
+  if (lang->enable_suid_run > 0)
     unparse_bool(f, "enable_suid_run", lang->enable_suid_run);
   if (lang->is_dos > 0)
     unparse_bool(f, "is_dos", lang->is_dos);
-  if (lang->binary)
+  if (lang->binary > 0)
     unparse_bool(f, "binary", lang->binary);
-  if (lang->disable_auto_testing)
+  if (lang->disable_auto_testing > 0)
     unparse_bool(f, "disable_auto_testing", lang->disable_auto_testing);
-  if (lang->disable_testing)
+  if (lang->disable_testing > 0)
     unparse_bool(f, "disable_testing", lang->disable_testing);
   if (lang->enable_custom > 0)
     unparse_bool(f, "enable_custom", lang->enable_custom);
@@ -931,6 +958,8 @@ prepare_unparse_lang(
     unparse_bool(f, "default_disabled", lang->default_disabled);
   if (lang->enabled > 0)
     unparse_bool(f, "enabled", lang->enabled);
+  if (lang->disable_auto_update > 0)
+    unparse_bool(f, "disable_auto_update", lang->disable_auto_update);
   if (lang->content_type && lang->content_type[0]) {
     fprintf(f, "content_type = \"%s\"\n", CARMOR(lang->content_type));
   }

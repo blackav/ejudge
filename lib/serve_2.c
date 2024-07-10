@@ -1816,7 +1816,7 @@ serve_compile_request(
   rx.priority_adjustment = priority_adjustment;
   rx.notify_flag = notify_flag;
   if (lang) {
-    rx.is_dos = lang->is_dos;
+    rx.is_dos = lang->is_dos > 0;
   }
   rx.rejudge_flag = rejudge_flag;
   rx.not_ok_is_cf = not_ok_is_cf;
@@ -2243,7 +2243,7 @@ serve_run_request(
 
   secure_run = global->secure_run;
   if (secure_run && prob->disable_security) secure_run = 0;
-  if (secure_run && lang && lang->disable_security) secure_run = 0;
+  if (secure_run && lang && lang->disable_security > 0) secure_run = 0;
 
   if (!secure_run) {
     if (prob->enable_suid_run > 0) suid_run = 1;
@@ -2357,7 +2357,7 @@ serve_run_request(
     if (lang->key && lang->key[0]) {
       srgp->lang_key = xstrdup(lang->key);
     }
-    if (eoln_type <= 0) srgp->is_dos = lang->is_dos;
+    if (eoln_type <= 0) srgp->is_dos = lang->is_dos > 0;
   }
   if (!no_db_flag) {
     if (/*te.login &&*/ te.login[0]) {
@@ -2776,7 +2776,7 @@ serve_run_request(
   }
   srpp->checker_extra_files = sarray_copy(prob->checker_extra_files);
   if (lang && lang->enable_ejudge_env > 0) {
-    srgp->enable_ejudge_env = lang->enable_ejudge_env;
+    srgp->enable_ejudge_env = lang->enable_ejudge_env > 0;
   }
   if (prob->disable_vm_size_limit > 0) {
     srpp->disable_vm_size_limit = 1;
@@ -5519,7 +5519,7 @@ is_generally_rejudgable(const serve_state_t state,
   if (prob->type == PROB_TYPE_STANDARD) {
     if (pe->lang_id <= 0 || pe->lang_id > state->max_lang
         || !(lang = state->langs[pe->lang_id])) return 0;
-    if (lang->disable_testing) return 0;
+    if (lang->disable_testing > 0) return 0;
   }
   if (prob->manual_checking) return 0;
 

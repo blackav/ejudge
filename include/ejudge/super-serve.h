@@ -20,6 +20,7 @@
 #include "ejudge/opcaps.h"
 #include "ejudge/bitset.h"
 #include "ejudge/http_request.h"
+#include "ejudge/prepare.h"
 
 #include <time.h>
 
@@ -73,6 +74,7 @@ struct section_language_data;
 struct section_problem_data;
 struct section_tester_data;
 struct serve_state;
+struct compile_server_configs;
 
 struct update_state
 {
@@ -87,7 +89,28 @@ struct update_state
   unsigned char *pid_file;
 };
 
-/* sizeof(struct sid_state) == 500 */
+struct language_extra
+{
+  // content of EJUDGE_FLAGS environment var
+  unsigned char *ejudge_flags;
+  // content of EJUDGE_LIBS environment var
+  unsigned char *ejudge_libs;
+  // other options in compiler_env
+  unsigned char *compiler_env;
+  // client language id for server langs in case of compile_id mappings
+  int rev_lang_id;
+  /// if the language enabled (-1 - unknown, 0 - not enabled, 1 - enabled, 2 - force disabled)
+  signed char enabled;
+  // if the language section is expanded
+  unsigned char expanded;
+  // if the language section is even more expanded
+  unsigned char more_expanded;
+  // if the compile_server_id changed, so disable further editing
+  unsigned char compile_server_id_changed;
+  // the original value of compile_server_id
+  unsigned char *orig_compile_server_id;
+};
+
 struct sid_state
 {
   struct sid_state *next;
@@ -140,13 +163,6 @@ struct sid_state
 
   struct generic_section_config *cfg;
   struct section_global_data *global;
-  int lang_a;
-  struct section_language_data **langs;
-  int *loc_cs_map;              /* map from local ids to compile ids */
-  int *cs_loc_map;              /* reverse map */
-  unsigned char **lang_opts;
-  unsigned char **lang_libs;
-  int *lang_flags;
 
   /* abstract problems */
   int aprob_u;
@@ -171,6 +187,15 @@ struct sid_state
   ejintbool_t disable_compilation_server;
   ejintbool_t enable_win32_languages;
 
+  int lang_a;
+  struct section_language_data **langs;
+  int *loc_cs_map;              /* map from local ids to compile ids */
+  int *cs_loc_map;              /* reverse map */
+  unsigned char **lang_opts;
+  unsigned char **lang_libs;
+  int *lang_flags;
+  struct compile_server_configs *cscs;
+
   int cs_langs_loaded;
   int cs_lang_total;
   struct generic_section_config *cs_cfg;
@@ -179,6 +204,18 @@ struct sid_state
 
   int extra_cs_cfgs_total;
   struct generic_section_config **extra_cs_cfgs;
+
+  /// language specifications from the compulation servers, indexed by compile_id
+  struct section_language_data **serv_langs;
+  /// extra information about languages for config file
+  struct language_extra *lang_extra;
+  /// extra information about languages for the compilation servers
+  struct language_extra *serv_extra;
+
+  /// if enable_language_import changed, so language editing is disabled
+  unsigned char enable_language_import_changed;
+  /// orig enable_language_import value
+  int orig_enable_language_import;
 
   const struct section_language_data *cur_lang;
   const struct section_problem_data *cur_prob;

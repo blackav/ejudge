@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2003-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1274,6 +1274,16 @@ super_serve_find_problem(struct sid_state *ss, const unsigned char *name)
   return NULL;
 }
 
+static void
+language_extra_free(struct language_extra *ex)
+{
+  if (!ex) return;
+  xfree(ex->compiler_env);
+  xfree(ex->ejudge_libs);
+  xfree(ex->ejudge_flags);
+  xfree(ex->orig_compile_server_id);
+}
+
 void
 super_serve_clear_edited_contest(struct sid_state *p)
 {
@@ -1321,9 +1331,27 @@ super_serve_clear_edited_contest(struct sid_state *p)
   p->disable_compilation_server = 0;
   p->enable_win32_languages = 0;
 
-  for (i = 0; i < p->lang_a; i++) {
-    xfree(p->lang_opts[i]);
-    xfree(p->lang_libs[i]);
+  if (p->lang_extra) {
+    for (int i = 0; i < p->lang_a; ++i) {
+      language_extra_free(&p->lang_extra[i]);
+    }
+    xfree(p->lang_extra);
+  }
+  if (p->serv_extra) {
+    for (int i = 0; i < p->lang_a; ++i) {
+      language_extra_free(&p->serv_extra[i]);
+    }
+    xfree(p->serv_extra);
+  }
+  if (p->lang_opts) {
+    for (i = 0; i < p->lang_a; ++i) {
+      xfree(p->lang_opts[i]);
+    }
+  }
+  if (p->lang_libs) {
+    for (i = 0; i < p->lang_a; i++) {
+      xfree(p->lang_libs[i]);
+    }
   }
   for (i = 0; i < p->cs_lang_total; i++)
     xfree(p->cs_lang_names[i]);
@@ -1343,6 +1371,12 @@ super_serve_clear_edited_contest(struct sid_state *p)
   xfree(p->lang_opts); p->lang_opts = 0;
   xfree(p->lang_libs); p->lang_libs = 0;
   xfree(p->lang_flags); p->lang_flags = 0;
+  if (p->cscs) {
+    compile_servers_config_free(p->cscs);
+    xfree(p->cscs);
+    p->cscs = NULL;
+  }
+  xfree(p->serv_langs);
 
   xfree(p->contest_start_cmd_text); p->contest_start_cmd_text = 0;
   xfree(p->stand_header_text); p->stand_header_text = 0;
@@ -1453,9 +1487,12 @@ static int contest_mngmt_cmd(const struct contest_desc *cnts,
                              int user_id,
                              const unsigned char *user_login);
 static void
-cmd_simple_command(struct client_state *p, int len,
-                   struct prot_super_pkt_simple_cmd *pkt)
+cmd_simple_command(
+        struct client_state *p,
+        int len,
+        struct prot_super_packet *pp)
 {
+  struct prot_super_pkt_simple_cmd *pkt = (struct prot_super_pkt_simple_cmd *) pp;
   int r;
   const struct contest_desc *cnts;
   struct contest_desc *rw_cnts;
@@ -1526,9 +1563,12 @@ cmd_simple_command(struct client_state *p, int len,
 }
 
 static void
-cmd_simple_top_command(struct client_state *p, int len,
-                       struct prot_super_pkt_simple_cmd *pkt)
+cmd_simple_top_command(
+        struct client_state *p,
+        int len,
+        struct prot_super_packet *pp)
 {
+  struct prot_super_pkt_simple_cmd *pkt = (struct prot_super_pkt_simple_cmd *) pp;
   int r;
   struct sid_state *sstate;
 
@@ -1579,9 +1619,12 @@ cmd_simple_top_command(struct client_state *p, int len,
 }
 
 static void
-cmd_set_value(struct client_state *p, int len,
-              struct prot_super_pkt_set_param *pkt)
+cmd_set_value(
+        struct client_state *p,
+        int len,
+        struct prot_super_packet *pp)
 {
+  struct prot_super_pkt_set_param *pkt = (struct prot_super_pkt_set_param *) pp;
   unsigned char *param2_ptr;
   size_t param2_len, total_len;
   struct sid_state *sstate;
@@ -1734,8 +1777,9 @@ static void
 cmd_http_request(
         struct client_state *p,
         int pkt_size,
-        struct prot_super_pkt_http_request *pkt)
+        struct prot_super_packet *pp)
 {
+  struct prot_super_pkt_http_request *pkt = (struct prot_super_pkt_http_request *) pp;
   enum
   {
     MAX_PARAM_NUM = 10000,
@@ -1969,7 +2013,7 @@ cmd_http_request_continuation(struct http_request_info *phr)
 
 struct packet_handler
 {
-  void (*func)();
+  void (*func)(struct client_state *, int len, struct prot_super_packet *);
 };
 static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
 {

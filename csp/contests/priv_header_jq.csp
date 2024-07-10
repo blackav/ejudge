@@ -5,6 +5,8 @@
 <link rel="stylesheet" href='<s:config name="style-prefix" />ejudge3_ss.css' type="text/css" />
 <script type="text/javascript" charset="UTF-8" src="<s:config name="style-prefix"/>priv.js"></script>
 
+<link rel="icon" href="data:," />
+<link rel="stylesheet" type="text/css" media="screen" href='<s:config name="style-prefix" />jquery-ui.min.css' />
 <link rel="stylesheet" type="text/css" media="screen" href='<s:config name="style-prefix" />jquery-ui/jquery-ui.theme.css' />
 <link rel="stylesheet" type="text/css" media="screen" href='<s:config name="style-prefix" />jqgrid/css/ui.jqgrid.css' />
 <link rel="stylesheet" type="text/css" media="screen" href='<s:config name="style-prefix" />jquery.timepicker.css' />

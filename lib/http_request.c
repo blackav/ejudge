@@ -847,6 +847,16 @@ hr_print_help_url_2(FILE *f, const unsigned char *topic)
   }
 }
 
+void
+hr_print_help_url_3(FILE *f, const unsigned char *topic)
+{
+  if (topic) {
+    fprintf(f, "<a target=\"_blank\" href=\"http://ejudge.ru/wiki/index.php/%s\"><span class=\"ui-icon ui-icon-help-plain\"></span></a>", topic);
+  } else {
+    fprintf(f, "&nbsp;");
+  }
+}
+
 int
 hr_cgi_param_string(
         const struct http_request_info *phr,

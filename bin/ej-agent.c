@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2022-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2022-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -190,6 +190,9 @@ struct AppState
     unsigned char *heartbeat_dir;
     unsigned char *heartbeat_packet_dir;
     unsigned char *heartbeat_in_dir;
+    unsigned char *config_dir;
+    unsigned char *config_packet_dir;
+    unsigned char *config_in_dir;
 
     int verbose_mode;
 };
@@ -862,6 +865,12 @@ app_state_configure_directories(struct AppState *as)
         as->heartbeat_packet_dir = s; s = NULL;
         r = asprintf(&s, "%s/in", as->heartbeat_dir);
         as->heartbeat_in_dir = s; s = NULL;
+        r = asprintf(&s, "%s/%s/config", EJUDGE_COMPILE_SPOOL_DIR, as->queue_id);
+        as->config_dir = s; s = NULL;
+        r = asprintf(&s, "%s/dir", as->config_dir);
+        as->config_packet_dir = s; s = NULL;
+        r = asprintf(&s, "%s/in", as->config_dir);
+        as->config_in_dir = s; s = NULL;
 #endif
     } else if (as->mode == PREPARE_RUN) {
 #if defined EJUDGE_RUN_SPOOL_DIR
@@ -902,6 +911,11 @@ app_state_configure_directories(struct AppState *as)
     }
     if (as->heartbeat_dir && as->heartbeat_dir[0]) {
         if (make_all_dir(as->heartbeat_dir, 0700) < 0) {
+            return -1;
+        }
+    }
+    if (as->config_dir && as->config_dir[0]) {
+        if (make_all_dir(as->config_dir, 0700) < 0) {
             return -1;
         }
     }
@@ -2197,6 +2211,77 @@ cancel_func(
     return 1;
 }
 
+static int
+put_config_func(
+        struct AppState *as,
+        const struct QueryCallback *cb,
+        cJSON *query,
+        cJSON *reply)
+{
+    int result = 0;
+    char *data = NULL;
+    size_t size = 0;
+    unsigned char in_path[PATH_MAX];
+    int fd = -1;
+    unsigned char *mem = MAP_FAILED;
+    unsigned char dir_path[PATH_MAX];
+
+    in_path[0] = 0;
+    cJSON *jn = cJSON_GetObjectItem(query, "name");
+    if (!jn || jn->type != cJSON_String) {
+        cJSON_AddStringToObject(reply, "message", "invalid json");
+        err("%s: %s: missing name", as->inst_id, __FUNCTION__);
+        goto done;
+    }
+    const unsigned char *file_name = jn->valuestring;
+    if (extract_file(as, query, &data, &size) < 0) {
+        cJSON_AddStringToObject(reply, "message", "invalid json");
+        goto done;
+    }
+
+    snprintf(in_path, sizeof(in_path), "%s/%s", as->config_in_dir, file_name);
+
+    fd = open(in_path, O_RDWR | O_CREAT | O_TRUNC, 0600);
+    if (fd < 0) {
+        err("%s: %s: open failed: %s", as->inst_id, __FUNCTION__, os_ErrorMsg());
+        cJSON_AddStringToObject(reply, "message", "filesystem error");
+        goto done;
+    }
+    if (ftruncate(fd, size) < 0) {
+        err("%s: %s: ftruncate failed: %s", as->inst_id, __FUNCTION__, os_ErrorMsg());
+        cJSON_AddStringToObject(reply, "message", "filesystem error");
+        goto done;
+    }
+    if (size > 0) {
+        mem = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+        if (mem == MAP_FAILED) {
+            err("%s: %s: mmap failed: %s", as->inst_id, __FUNCTION__, os_ErrorMsg());
+            cJSON_AddStringToObject(reply, "message", "filesystem error");
+            goto done;
+        }
+        memmove(mem, data, size);
+        munmap(mem, size); mem = MAP_FAILED;
+    }
+    close(fd); fd = -1;
+
+    snprintf(dir_path, sizeof(dir_path), "%s/%s", as->config_packet_dir, file_name);
+    if (rename(in_path, dir_path) < 0) {
+        err("%s: %s: rename failed: %s", as->inst_id, __FUNCTION__, os_ErrorMsg());
+        goto done;
+    }
+    in_path[0] = 0;
+
+    result = 1;
+
+done:;
+    cJSON_AddStringToObject(reply, "q", "config-result");
+    if (mem != MAP_FAILED) munmap(mem, size);
+    if (fd >= 0) close(fd);
+    if (in_path[0]) unlink(in_path);
+    free(data);
+    return result;
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -2309,6 +2394,7 @@ main(int argc, char *argv[])
     app_state_add_query_callback(&app, "put-archive", NULL, put_archive_func);
     app_state_add_query_callback(&app, "mirror", NULL, mirror_func);
     app_state_add_query_callback(&app, "cancel", NULL, cancel_func);
+    app_state_add_query_callback(&app, "put-config", NULL, put_config_func);
 
     if (log_file && *log_file) {
         int fd = open(log_file, O_WRONLY | O_CREAT | O_APPEND | O_NOCTTY, 0600);

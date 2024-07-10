@@ -1,7 +1,7 @@
 #ifndef __REUSE_XALLOC_H__
 #define __REUSE_XALLOC_H__
 
-/* Copyright (C) 1996-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 1996-2024 Alexander Chernov <cher@ejudge.ru> */
 /* Created: Fri Nov  1 18:58:50 1996 by cher (Alexander Chernov) */
 
 /*
@@ -83,7 +83,7 @@ typedef struct genarray_t
 } genarray_t;
 
 void  xexpand(strarray_t *);
-void  xexpand2(/* array, elsize */);
+void  xexpand2(void *, size_t);
 void  xexpand3(/* array, elsize */);
 void  xexpand4(/* array, elsize, newsize */);
 

@@ -1,6 +1,6 @@
 # -*- Makefile -*-
 
-# Copyright (C) 2014-2023 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2014-2024 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -86,6 +86,7 @@ CFILES = \
  csp_glob_save_attrs_form.c\
  csp_glob_save_advanced_form.c\
  csp_glob_save_limits_form.c\
+ csp_lang_ajax_action.c\
  csp_lang_save_main_form.c\
  csp_prob_save_id_form.c\
  csp_prob_save_files_form.c\
@@ -195,6 +196,7 @@ csp_glob_save_urls_form.c : glob_save_urls_form.csp includes.csp stdvars.csp
 csp_glob_save_attrs_form.c : glob_save_attrs_form.csp includes.csp stdvars.csp
 csp_glob_save_advanced_form.c : glob_save_advanced_form.csp includes.csp stdvars.csp
 csp_glob_save_limits_form.c : glob_save_limits_form.csp includes.csp stdvars.csp
+csp_lang_ajax_action.c : lang_ajax_action.csp includes.csp stdvars.csp
 csp_lang_save_main_form.c : lang_save_main_form.csp includes.csp stdvars.csp
 csp_prob_save_id_form.c : prob_save_id_form.csp includes.csp stdvars.csp
 csp_prob_save_files_form.c : prob_save_files_form.csp includes.csp stdvars.csp

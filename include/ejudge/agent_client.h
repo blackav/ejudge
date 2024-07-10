@@ -2,7 +2,7 @@
 #ifndef __AGENT_CLIENT_H__
 #define __AGENT_CLIENT_H__
 
-/* Copyright (C) 2022-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2022-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -155,6 +155,12 @@ struct AgentClientOps
         int *p_new_mode,
         int *p_uid,
         int *p_gid);
+
+    int (*put_config)(
+        struct AgentClient *ac,
+        const unsigned char *file_name,
+        const void *data,
+        size_t size);
 };
 
 struct AgentClient

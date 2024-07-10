@@ -3988,7 +3988,7 @@ ns_upload_csv_runs(
       }
       runs[row].lang_id = lang->id;
 
-      if (lang->disabled) {
+      if (lang->disabled > 0) {
         fprintf(log_f, _("Language %s is disabled in row %d\n"),
                 lang->short_name, row);
         goto cleanup;
@@ -6221,7 +6221,8 @@ ns_examiners_page(
   unsigned char bb[1024];
   const unsigned char *s_beg = 0, *s_end = 0;
   unsigned char nbuf[1024];
-  int exam_role_count = 0, chief_role_count = 0, add_count, ex_num;
+  int exam_role_count = 0, add_count, ex_num;
+  [[gnu::unused]] int chief_role_count = 0;
   int assignable_runs, assigned_runs;
   unsigned char *exam_flag = 0;
 

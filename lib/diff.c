@@ -1,7 +1,6 @@
 /* -*- c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2004-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -79,7 +78,7 @@ compare_runs(const serve_state_t state, FILE *fout, int run_id1, int run_id2)
   }
   if (prob1->type == 0) {
     if (info1.lang_id <= 0 || info1.lang_id > state->max_lang
-        || !state->langs[info1.lang_id] || state->langs[info1.lang_id]->binary) {
+        || !state->langs[info1.lang_id] || state->langs[info1.lang_id]->binary > 0) {
       errcode = -SRV_ERR_BAD_RUN_ID;
       goto cleanup;
     }
@@ -106,7 +105,7 @@ compare_runs(const serve_state_t state, FILE *fout, int run_id1, int run_id2)
   }
   if (prob2->type == 0) {
     if (info2.lang_id <= 0 || info2.lang_id > state->max_lang
-        || !state->langs[info2.lang_id] || state->langs[info2.lang_id]->binary) {
+        || !state->langs[info2.lang_id] || state->langs[info2.lang_id]->binary > 0) {
       errcode = -SRV_ERR_BAD_LANG_ID;
       goto cleanup;
     }

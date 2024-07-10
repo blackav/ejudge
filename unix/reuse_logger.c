@@ -1,4 +1,4 @@
-/* Copyright (C) 1997-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 1997-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This library is free software; you can redistribute it and/or
@@ -20,6 +20,7 @@
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
 
+#include <bits/types/struct_iovec.h>
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -34,6 +35,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <string.h>
+#include <sys/uio.h>
 
 static int   log_fd    = 2;     /* logging file descriptor */
 static int   log2_fd   = -1;    /* secondary log descriptor */
@@ -260,6 +262,60 @@ logger_get_fd(void)
   if (!initialized) minimal_init();
 
   return log_fd;
+}
+
+void
+logger_write_lines(int level, const char *buf, size_t size)
+{
+  if (!buf || !size) return;
+
+  char bprio[32];
+  const char *prio = NULL;
+  time_t tt = time(NULL);
+  struct tm ttm;
+  const struct tm *ptm = gmtime_r(&tt, &ttm);
+  char atm[64];
+  size_t alen;
+  __attribute__((unused)) int _;
+  size_t plen;
+
+  alen = snprintf(atm, sizeof(atm), "%d-%02d-%02dT%02d:%02d:%02dZ:",
+                  ptm->tm_year + 1900, ptm->tm_mon + 1, ptm->tm_mday,
+                  ptm->tm_hour, ptm->tm_min, ptm->tm_sec);
+
+  if (level < LOG_MIN_PRIO || level > LOG_MAX_PRIO) {
+    sprintf(bprio, "%d", level);
+    prio = bprio;
+  } else {
+    prio = priority_names[level];
+  }
+  plen = strlen(prio);
+
+  struct iovec iov[] =
+  {
+    { .iov_base = atm, .iov_len = alen },
+    { .iov_base = (void*) prio, .iov_len = plen },
+    { .iov_base = ":", .iov_len = 1 },
+    { .iov_base = (void*) buf, .iov_len = size },
+    { .iov_base = "\n", .iov_len = 1 },
+  };
+
+  const char *bp = buf;
+  while (*bp) {
+    iov[3].iov_base = (void*) bp;
+    char *ep = strchr(bp, '\n');
+    if (!ep) {
+      iov[3].iov_len = (buf + size) - ep;
+      _ = writev(log_fd, iov, 5);
+      if (log2_fd >= 0) _ = writev(log2_fd, iov, 5);
+      bp = buf + size;
+    } else {
+      iov[3].iov_len = ep - bp + 1;
+      _ = writev(log_fd, iov, 4);
+      if (log2_fd >= 0) _ = writev(log2_fd, iov, 4);
+      bp = ep + 1;
+    }
+  }
 }
 
 /* ==================== Fatal errors handling ======================= */

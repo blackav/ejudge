@@ -1,6 +1,6 @@
 /* -*- mode:c -*- */
 
-/* Copyright (C) 2008-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -86,15 +86,6 @@ static void log_printf(FILE *out_f, WINDOW *out_win, const char *format, ...)
   }
 }
 
-static void
-generate_compile_cfg(FILE *f)
-{
-  lang_config_generate_compile_cfg(f, "ejudge-configure-compilers",
-                                   config->compile_home_dir,
-                                   config->serialization_key,
-                                   config_dir);
-}
-
 static int
 is_file_changed(
         const unsigned char *path,
@@ -117,52 +108,6 @@ is_file_changed(
 
   if (mem_z != size || memcmp(mem_t, text, size)) retval = 1;
   xfree(mem_t);
-  return retval;
-}
-
-static int
-is_comment_line(const unsigned char *str)
-{
-  while (isspace(*str)) str++;
-  return (!*str || *str == '#');
-}
-
-static unsigned char *
-fgets_no_cmt(unsigned char *buf, size_t size, FILE *f)
-{
-  unsigned char *r;
-
-  while ((r = fgets(buf, size, f)) && is_comment_line(buf));
-  return r;
-}
-
-static int
-is_file_changed_no_cmt(
-        const unsigned char *path,
-        unsigned char *text,
-        size_t size)
-{
-  FILE *f1, *f2;
-  unsigned char buf1[4096], buf2[4096];
-  int retval = 1;
-  unsigned char *r1, *r2;
-
-  if (!(f1 = fopen(path, "r"))) return 1;
-  if (!(f2 = fmemopen(text, size, "r"))) return 1;
-
-  while (((r1 = fgets_no_cmt(buf1, sizeof(buf1), f1)),
-          (r2 = fgets_no_cmt(buf2, sizeof(buf2), f2)), r1) && r2
-         && !strcmp(buf1, buf2)) {
-  }
-  if (r1 || r2) goto cleanup;
-
-  fclose(f1); f1 = 0;
-  fmemclose(f2); f2 = 0;
-  retval = 0;
-
- cleanup:;
-  if (f1) fclose(f1);
-  if (f2) fmemclose(f2);
   return retval;
 }
 
@@ -213,62 +158,21 @@ save_config_file(
 }
 
 static void
-save_compile_cfg(FILE  *log_f, WINDOW *out_win)
+save_compile_cfg(FILE *log_f, WINDOW *out_win)
 {
-  FILE *cfg_f = 0;
-  char *cfg_t = 0;
-  size_t cfg_z = 0;
-  struct stat stb;
-  path_t cfg_path;
-  path_t cfg_path_old;
-  path_t cfg_path_new;
-
-  cfg_f = open_memstream(&cfg_t, &cfg_z);
-  generate_compile_cfg(cfg_f);
-  close_memstream(cfg_f); cfg_f = 0;
-
-  snprintf(cfg_path, sizeof(cfg_path), "%s/conf/compile.cfg",
+  unsigned char compile_cfg_path[PATH_MAX];
+  snprintf(compile_cfg_path, sizeof(compile_cfg_path), "%s/conf/compile.cfg",
            config->compile_home_dir);
-  if (stat(cfg_path, &stb) < 0) {
-    log_printf(log_f, out_win, "%s does not exist\n", cfg_path);
-    if (do_save(cfg_path, cfg_t, cfg_z) < 0)
-      log_printf(log_f, out_win, "error: write to %s failed\n", cfg_path);
-    goto cleanup;
-  }
-  if (!S_ISREG(stb.st_mode)) {
-    log_printf(log_f, out_win, "error: %s is not a regular file\n", cfg_path);
-    goto cleanup;
-  }
+  int r = lang_config_update_compile_cfg(log_f, "ejudge-configure-compilers",
+                                         config->compile_home_dir);
 
-  if (!is_file_changed_no_cmt(cfg_path, cfg_t, cfg_z)) {
-    log_printf(log_f, out_win, "%s: not changed\n", cfg_path);
-    goto cleanup;
+  if (r > 0) {
+    log_printf(log_f, out_win, "%s: saved\n", compile_cfg_path);
+  } else if (r == 0) {
+    log_printf(log_f, out_win, "%s: not changed\n", compile_cfg_path);
+  } else {
+    log_printf(log_f, out_win, "%s: save failed\n", compile_cfg_path);
   }
-
-  snprintf(cfg_path_new, sizeof(cfg_path_new), "%s.new", cfg_path);
-  snprintf(cfg_path_old, sizeof(cfg_path_old), "%s.old", cfg_path);
-  if (do_save(cfg_path_new, cfg_t, cfg_z) < 0) {
-    log_printf(log_f, out_win, "error: write to %s failed\n", cfg_path_new);
-    goto cleanup;
-  }
-  if (rename(cfg_path, cfg_path_old) < 0) {
-    log_printf(log_f, out_win, "error: rename %s to %s failed\n",
-               cfg_path, cfg_path_old);
-    unlink(cfg_path_new);
-    goto cleanup;
-  }
-  if (rename(cfg_path_new, cfg_path) < 0) {
-    log_printf(log_f, out_win, "error: rename %s to %s failed\n",
-               cfg_path_new, cfg_path);
-    unlink(cfg_path_new);
-    goto cleanup;
-  }
-
-  log_printf(log_f, out_win, "%s: saved\n", cfg_path);
-
- cleanup:
-  if (cfg_f) fclose(cfg_f);
-  xfree(cfg_t);
 }
 
 static void

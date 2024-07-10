@@ -1,7 +1,6 @@
 /* -*- c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2005-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -65,4 +64,13 @@ info(char const *msg, ...)
   va_start(args, msg);
   vwrite_log(0, LOG_INFO, msg, args);
   va_end(args);
+}
+
+/**
+split the buffer line by line and log each line separately
+*/
+void
+errt(const char *buf, size_t size)
+{
+  logger_write_lines(LOG_ERR, buf, size);
 }

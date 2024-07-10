@@ -1,0 +1,279 @@
+<% //-*- c -*-
+%><%@include "includes.csp"
+%><%
+#include "ejudge/cJSON.h"
+#undef FAIL
+#define FAIL(c) do { err_num = -(c); goto done; } while (0)
+%><%@set getter_name = "csp_get_lang_ajax_action"
+%><%@set ac_prefix = "SSERV_CMD_"
+%><%@set err_prefix = "SSERV_ERR_"
+%><%@page csp_view_lang_ajax_action(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "stdvars.csp"
+%><%
+    int ok = 0;
+    int err_num = -SSERV_UNKNOWN_ERROR;
+    const unsigned char *err_msg = NULL;
+    cJSON *jr = cJSON_CreateObject();
+    snprintf(phr->content_type, sizeof(phr->content_type), "application/json; charset=%s", EJUDGE_CHARSET);
+    phr->json_reply = 1;
+    int lang_id = 0;
+    const unsigned char *oper = NULL;
+
+    int binary = -1;
+    int disable_auto_testing = -1;
+    int disable_security = -1;
+    int disable_testing = -1;
+    int enable_custom = -1;
+    int enable_ejudge_env = -1;
+    int enable_suid_run = -1;
+    int insecure = -1;
+    int is_dos = -1;
+    int preserve_line_numbers = -1;
+
+    ej_size64_t max_file_size = -1;
+    ej_size64_t max_stack_size = -1;
+    ej_size64_t max_vm_size = -1;
+    ej_size64_t max_rss_size = -1;
+    ej_size64_t run_max_rss_size = -1;
+    ej_size64_t run_max_stack_size = -1;
+    ej_size64_t run_max_vm_size = -1;
+
+    int compile_real_time_limit = -1;
+    int priority_adjustment = 0;
+
+    unsigned char *arch = NULL;
+    unsigned char *clean_up_cmd = NULL;
+    unsigned char *clean_up_env_file = NULL;
+    unsigned char *compiler_container_options = NULL;
+    unsigned char *compile_server_id = NULL;
+    unsigned char *container_options = NULL;
+    unsigned char *content_type = NULL;
+    unsigned char *extra_compiler_env = NULL;
+    unsigned char *extra_ejudge_flags = NULL;
+    unsigned char *extra_ejudge_libs = NULL;
+    unsigned char *key = NULL;
+    unsigned char *long_name = NULL;
+    unsigned char *multi_header_suffix = NULL;
+    unsigned char *run_env_file = NULL;
+    unsigned char *style_checker_cmd = NULL;
+    unsigned char *style_checker_env = NULL;
+    unsigned char *super_run_dir = NULL;
+    unsigned char *version = NULL;
+
+    ej_size64_t global_compile_max_vm_size = -1;
+    ej_size64_t global_compile_max_rss_size = -1;
+    ej_size64_t global_compile_max_stack_size = -1;
+    ej_size64_t global_compile_max_file_size = -1; 
+
+%><s:read var="lang_id" required="yes" /><%
+%><s:read var="oper" required="yes" /><%
+
+    if (!strcmp(oper, "expand")) {
+        if (lang_id <= 0 || lang_id >= phr->ss->lang_a) FAIL(SSERV_ERR_INV_LANG_ID);
+        if (phr->ss->serv_langs[lang_id]) {
+            phr->ss->lang_extra[lang_id].expanded = 1;
+            ok = 1;
+        }
+    } else if (!strcmp(oper, "shrink")) {
+        if (lang_id <= 0 || lang_id >= phr->ss->lang_a) FAIL(SSERV_ERR_INV_LANG_ID);
+        if (phr->ss->serv_langs[lang_id]) {
+            phr->ss->lang_extra[lang_id].expanded = 0;
+            ok = 1;
+        }
+    } else if (!strcmp(oper, "enable")) {
+        if (lang_id <= 0 || lang_id >= phr->ss->lang_a) FAIL(SSERV_ERR_INV_LANG_ID);
+        if (!phr->ss->serv_langs[lang_id]) FAIL(SSERV_ERR_INV_LANG_ID);
+        if (phr->ss->lang_extra[lang_id].enabled != 2) {
+            phr->ss->lang_extra[lang_id].enabled = 1;
+        }
+        ok = 1;
+    } else if (!strcmp(oper, "disable")) {
+        if (lang_id <= 0 || lang_id >= phr->ss->lang_a) FAIL(SSERV_ERR_INV_LANG_ID);
+        if (phr->ss->lang_extra[lang_id].enabled != 2) {
+            phr->ss->lang_extra[lang_id].enabled = 0;
+        }
+        ok = 1;
+    } else if (!strcmp(oper, "save")) {
+%><s:read var="binary" default="-1" /><%
+%><s:read var="disable_auto_testing" default="-1" /><%
+%><s:read var="disable_security" default="-1" /><%
+%><s:read var="disable_testing" default="-1" /><%
+%><s:read var="enable_custom" default="-1" /><%
+%><s:read var="enable_ejudge_env" default="-1" /><%
+%><s:read var="enable_suid_run" default="-1" /><%
+%><s:read var="insecure" default="-1" /><%
+%><s:read var="is_dos" default="-1" /><%
+%><s:read var="preserve_line_numbers" default="-1" /><%
+%><s:read var="max_file_size" default="-1" /><%
+%><s:read var="max_stack_size" default="-1" /><%
+%><s:read var="max_vm_size" default="-1" /><%
+%><s:read var="max_rss_size" default="-1" /><%
+%><s:read var="run_max_rss_size" default="-1" /><%
+%><s:read var="run_max_stack_size" default="-1" /><%
+%><s:read var="run_max_vm_size" default="-1" /><%
+%><s:read var="compile_real_time_limit" default="-1" /><%
+%><s:read var="priority_adjustment" default="0" /><%
+%><s:read var="arch" normalize="yes" /><%
+%><s:read var="clean_up_cmd" normalize="yes" /><%
+%><s:read var="clean_up_env_file" normalize="yes" /><%
+%><s:read var="compiler_container_options" normalize="yes" /><%
+%><s:read var="compile_server_id" normalize="yes" /><%
+%><s:read var="container_options" normalize="yes" /><%
+%><s:read var="content_type" normalize="yes" /><%
+%><s:read var="extra_compiler_env" normalize="yes" /><%
+%><s:read var="extra_ejudge_flags" normalize="yes" /><%
+%><s:read var="extra_ejudge_libs" normalize="yes" /><%
+%><s:read var="key" normalize="yes" /><%
+%><s:read var="long_name" normalize="yes" /><%
+%><s:read var="multi_header_suffix" normalize="yes" /><%
+%><s:read var="run_env_file" normalize="yes" /><%
+%><s:read var="style_checker_cmd" normalize="yes" /><%
+%><s:read var="style_checker_env" normalize="yes" /><%
+%><s:read var="super_run_dir" normalize="yes" /><%
+%><s:read var="version" normalize="yes" /><%
+        if (lang_id <= 0 || lang_id >= phr->ss->lang_a) FAIL(SSERV_ERR_INV_LANG_ID);
+        if (phr->ss->lang_extra[lang_id].enabled != 1) FAIL(SSERV_ERR_INV_LANG_ID);
+        const struct section_language_data *serv_lang = phr->ss->serv_langs[lang_id];
+        if (!serv_lang) FAIL(SSERV_ERR_INV_LANG_ID);
+        struct section_language_data *lang = phr->ss->langs[lang_id];
+        if (!lang) {
+            lang = prepare_alloc_language();
+            phr->ss->cfg = param_merge(phr->ss->cfg, &lang->g);
+            lang->id = lang_id;
+        }
+
+#define ASSIGN_BOOL(field) do { if (field < 0) { lang->field = -1; } else if (field > 0) { lang->field = 1; } else { lang->field = 0; } } while (0)
+        ASSIGN_BOOL(binary);
+        ASSIGN_BOOL(disable_auto_testing);
+        ASSIGN_BOOL(disable_security);
+        ASSIGN_BOOL(disable_testing);
+        ASSIGN_BOOL(enable_custom);
+        ASSIGN_BOOL(enable_ejudge_env);
+        ASSIGN_BOOL(enable_suid_run);
+        ASSIGN_BOOL(insecure);
+        ASSIGN_BOOL(is_dos);
+        ASSIGN_BOOL(preserve_line_numbers);
+#undef ASSIGN_BOOL
+
+#define ASSIGN_SIZE(field) do { if (field < 0) { lang->field = -1; } else { lang->field = field; } } while (0)
+        ASSIGN_SIZE(max_file_size);
+        ASSIGN_SIZE(max_stack_size);
+        ASSIGN_SIZE(max_vm_size);
+        ASSIGN_SIZE(max_rss_size);
+        ASSIGN_SIZE(run_max_rss_size);
+        ASSIGN_SIZE(run_max_stack_size);
+        ASSIGN_SIZE(run_max_vm_size);
+#undef ASSIGN_SIZE
+
+        if (compile_real_time_limit < 0) {
+            lang->compile_real_time_limit = -1;
+        } else {
+            lang->compile_real_time_limit = compile_real_time_limit;
+        }
+        lang->priority_adjustment = priority_adjustment;
+
+#define ASSIGN_STRING(field) do { xfree(lang->field); lang->field = NULL; if (field && *field) { lang->field = field; field = NULL; } } while (0)
+        ASSIGN_STRING(arch);
+        ASSIGN_STRING(clean_up_cmd);
+        ASSIGN_STRING(clean_up_env_file);
+        ASSIGN_STRING(compiler_container_options);
+        ASSIGN_STRING(compile_server_id);
+        ASSIGN_STRING(container_options);
+        ASSIGN_STRING(content_type);
+        ASSIGN_STRING(key);
+        ASSIGN_STRING(long_name);
+        ASSIGN_STRING(multi_header_suffix);
+        ASSIGN_STRING(run_env_file);
+        ASSIGN_STRING(style_checker_cmd);
+        ASSIGN_STRING(super_run_dir);
+        ASSIGN_STRING(version);
+#undef ASSIGN_STRING
+
+        sarray_free(lang->style_checker_env); lang->style_checker_env = NULL;
+        if (style_checker_env && *style_checker_env) {
+            split_to_lines(style_checker_env, &lang->style_checker_env, 0);
+        }
+
+        struct language_extra *extra = &phr->ss->lang_extra[lang_id];
+        xfree(extra->compiler_env); extra->compiler_env = NULL;
+        if (extra_compiler_env && *extra_compiler_env) {
+            extra->compiler_env = extra_compiler_env; extra_compiler_env = NULL;
+        }
+        xfree(extra->ejudge_flags); extra->ejudge_flags = NULL;
+        if (extra_ejudge_flags && *extra_ejudge_flags) {
+            extra->ejudge_flags = extra_ejudge_flags; extra_ejudge_flags = NULL;
+        }
+        xfree(extra->ejudge_libs); extra->ejudge_libs = NULL;
+        if (extra_ejudge_libs && *extra_ejudge_libs) {
+            extra->ejudge_libs = extra_ejudge_libs; extra_ejudge_libs = NULL;
+        }
+
+        ok = 1;
+    } else if (!strcmp(oper, "disable_import")) {
+        if (phr->ss && phr->ss->global) {
+            phr->ss->global->enable_language_import = 0;
+            phr->ss->enable_language_import_changed = (phr->ss->global->enable_language_import != phr->ss->orig_enable_language_import);
+        }
+        ok = 1;
+    } else if (!strcmp(oper, "enable_import")) {
+        if (phr->ss && phr->ss->global) {
+            phr->ss->global->enable_language_import = 1;
+            phr->ss->enable_language_import_changed = (phr->ss->global->enable_language_import != phr->ss->orig_enable_language_import);
+        }
+        ok = 1;
+    } else if (!strcmp(oper, "save_global")) {
+%><s:read var="global_compile_max_vm_size" default="-1" /><%
+%><s:read var="global_compile_max_rss_size" default="-1" /><%
+%><s:read var="global_compile_max_stack_size" default="-1" /><%
+%><s:read var="global_compile_max_file_size" default="-1" /><%
+        if (global_compile_max_vm_size > 0) {
+            phr->ss->global->compile_max_vm_size = global_compile_max_vm_size;
+        } else {
+            phr->ss->global->compile_max_vm_size = 0;
+        }
+        if (global_compile_max_rss_size > 0) {
+            phr->ss->global->compile_max_rss_size = global_compile_max_rss_size;
+        } else {
+            phr->ss->global->compile_max_rss_size = 0;
+        }
+        if (global_compile_max_stack_size > 0) {
+            phr->ss->global->compile_max_stack_size = global_compile_max_stack_size;
+        } else {
+            phr->ss->global->compile_max_stack_size = 0;
+        }
+        if (global_compile_max_file_size > 0) {
+            phr->ss->global->compile_max_file_size = global_compile_max_file_size;
+        } else {
+            phr->ss->global->compile_max_file_size = 0;
+        }
+
+        ok = 1;
+    } else {
+        FAIL(SSERV_ERR_INVALID_PARAMETER);
+    }
+
+done:;
+    super_html_emit_json_result(out_f, phr, ok, err_num, 0, err_msg, jr);
+
+    if (jr) {
+      cJSON_Delete(jr);
+    }
+    xfree(arch);
+    xfree(clean_up_cmd);
+    xfree(clean_up_env_file);
+    xfree(compiler_container_options);
+    xfree(compile_server_id);
+    xfree(container_options);
+    xfree(content_type);
+    xfree(extra_compiler_env);
+    xfree(extra_ejudge_flags);
+    xfree(extra_ejudge_libs);
+    xfree(key);
+    xfree(long_name);
+    xfree(multi_header_suffix);
+    xfree(run_env_file);
+    xfree(style_checker_cmd);
+    xfree(style_checker_env);
+    xfree(super_run_dir);
+    xfree(version);
+%>

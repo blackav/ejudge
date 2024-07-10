@@ -1,0 +1,2 @@
+Diagnostics:
+  Suppress: [bugprone-sizeof-expression,unused-includes,bugprone-integer-division]

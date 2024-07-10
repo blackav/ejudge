@@ -92,6 +92,7 @@ static unsigned char compile_server_queue_dir[PATH_MAX];
 static unsigned char compile_server_queue_dir_dir[PATH_MAX];
 static unsigned char compile_server_src_dir[PATH_MAX];
 static unsigned char heartbeat_dir[PATH_MAX];
+static unsigned char export_config_dir[PATH_MAX];
 static unsigned char *agent_name;
 static struct AgentClient *agent;
 static unsigned char *instance_id;
@@ -1535,6 +1536,53 @@ copy_to_local_cache(
 }
 
 static int
+save_config(void)
+{
+  char *cfg_s = NULL;
+  size_t cfg_z = 0;
+  FILE *cfg_f = open_memstream(&cfg_s, &cfg_z);
+  int max_lang = serve_state.max_lang;
+  struct section_language_data **langs = serve_state.langs;
+  if (lang_id_map) {
+    int new_max_lang = max_lang;
+    if (lang_id_map_size > new_max_lang) new_max_lang = lang_id_map_size;
+    struct section_language_data **new_langs = NULL;
+    XALLOCAZ(new_langs, new_max_lang + 1);
+
+    for (int i = 1; i <= max_lang; ++i) {
+      if (langs[i]) {
+        new_langs[i] = langs[i];
+      }
+    }
+    for (int i = 1; i < lang_id_map_size; ++i) {
+      int j = lang_id_map[i];
+      if (j > 0 && j <= max_lang && langs[j]) {
+        langs[i] = langs[j];
+      }
+    }
+
+    langs = new_langs;
+    max_lang = new_max_lang;
+  }
+
+  for (int i = 1; i <= max_lang; ++i) {
+    if (langs[i]) {
+      prepare_unparse_lang(cfg_f, langs[i], i, NULL, NULL, NULL);
+    }
+  }
+  fclose(cfg_f); cfg_f = NULL;
+
+  if (agent) {
+    agent->ops->put_config(agent, "compile.cfg", cfg_s, cfg_z);
+  } else {
+    generic_write_file(cfg_s, cfg_z, SAFE, export_config_dir, "compile.cfg", NULL);
+  }
+  free(cfg_s); cfg_s = NULL; cfg_z = 0;
+
+  return 0;
+}
+
+static int
 new_loop(int parallel_mode, const unsigned char *global_log_path)
 {
   int retval = 0;
@@ -1588,7 +1636,9 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
   }
 
 #if defined EJUDGE_COMPILE_SPOOL_DIR
-  // nothing to do
+  if (save_config() < 0) {
+    return -1;
+  }
 #else
   if (snprintf(compile_server_queue_dir, sizeof(compile_server_queue_dir), "%s", global->compile_queue_dir) >= sizeof(compile_server_queue_dir)) {
     err("path '%s' is too long", global->compile_queue_dir);
@@ -2131,7 +2181,8 @@ static int
 filter_languages(char *key)
 {
   // key is not NULL
-  int i, total = 0;
+  int i;
+  [[gnu::unused]] int total = 0;
   const struct section_language_data *lang = 0;
 
   for (i = 1; i <= serve_state.max_lang; i++) {
@@ -2161,7 +2212,7 @@ static int
 check_config(void)
 {
   int i;
-  int total = 0;
+  [[gnu::unused]] int total = 0;
 
 #if !defined EJUDGE_COMPILE_SPOOL_DIR
   if (check_writable_spool(serve_state.global->compile_queue_dir, SPOOL_OUT) < 0)
@@ -2748,6 +2799,9 @@ main(int argc, char *argv[])
 
     snprintf(heartbeat_dir, sizeof(heartbeat_dir), "%s/heartbeat", compile_server_spool_dir);
     if (make_all_dir(heartbeat_dir, 0777) < 0) return 1;
+
+    snprintf(export_config_dir, sizeof(export_config_dir), "%s/config", compile_server_spool_dir);
+    if (make_all_dir(export_config_dir, 0777) < 0) return 1;
   }
 #endif
 
@@ -2816,21 +2870,36 @@ main(int argc, char *argv[])
 
  print_usage:
   printf("Usage: %s [ OPTS ] [config-file]\n", argv[0]);
-  printf("  -k key - specify language key\n");
-  printf("  -DDEF  - define a symbol for preprocessor\n");
-  printf("  -D     - start in daemon mode\n");
-  printf("  -i     - initialize mode: create all dirs and exit\n");
-  printf("  -p     - parallel mode: support multiple instances\n");
-  printf("  -k KEY - specify a language filter key\n");
-  printf("  -u U   - start as user U (only as root)\n");
-  printf("  -g G   - start as group G (only as root)\n");
-  printf("  -C D   - change directory to D\n");
-  printf("  -x X   - specify a path to ejudge.xml file\n");
-  printf("  -I ID  - specify compile server id\n");
-  printf("  -r S   - substitute ${CONTESTS_HOME_DIR} for S in the config\n");
-  printf("  -c C   - substitute ${COMPILE_HOME_DIR} for C in the config\n");
-  printf("  -a A   - use agent A to access to compile queue\n");
-  printf("  -s I   - set instance Id to I\n");
-  printf("  -y S   - set instance serial number to S\n");
+  printf("  --agent AGENT   - specify server connection agent\n");
+  printf("  -C D            - change directory to D\n");
+  printf("  -c C            - substitute ${COMPILE_HOME_DIR} for C in the config\n");
+  printf("  -D              - start in daemon mode\n");
+  printf("  -DVAR[=VAL]     - define a variable\n");
+  printf("  -d              - start in daemon mode\n");
+  printf("  -e FD           - set logging file descriptor\n");
+  printf("  -g G            - start as group G (only as root)\n");
+  printf("  -hb             - enable heartbeat mode\n");
+  printf("  -hc CMD         - specify halt command\n");
+  printf("  -hi ID          - specify hearbeat instance ID\n");
+  printf("  -I ID           - specify compile server id\n");
+  printf("  -i              - initialize mode: create all dirs and exit\n");
+  printf("  --instance-id I - specify instance ID\n");
+  printf("  --ip IP         - specify IP to report to server\n");
+  printf("  -k KEY          - specify a language filter key\n");
+  printf("  -l FD           - set ejudge.xml file descriptor\n");
+  printf("  --lang-id-map M - specify language ID map file\n");
+  printf("  --local-cache D - specify local cache directory\n");
+  printf("  -nhb            - disable heartbeat mode\n");
+  printf("  -nst            - disable stack trace on crash\n");
+  printf("  -p              - parallel mode: support multiple instances\n");
+  printf("  -R              - restart mode\n");
+  printf("  -r S            - substitute ${CONTESTS_HOME_DIR} for S in the config\n");
+  printf("  -rc CMD         - specify reboot command\n");
+  printf("  -S              - start in slave mode\n");
+  printf("  -s I            - set instance Id to I\n");
+  printf("  -u U            - start as user U (only as root)\n");
+  printf("  -v              - verbose mode\n");
+  printf("  -x X            - specify a path to ejudge.xml file\n");
+  printf("  -y S            - set instance serial number to S\n");
   return code;
 }

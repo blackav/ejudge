@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2022-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2022-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1909,6 +1909,38 @@ done:;
     return result;
 }
 
+static int
+put_config_func(
+        struct AgentClient *ac,
+        const unsigned char *file_name,
+        const void *data,
+        size_t size)
+{
+    int result = 0;
+    struct AgentClientSsh *acs = (struct AgentClientSsh *) ac;
+    struct Future f;
+    long long time_ms;
+
+    cJSON *jq = create_request(acs, &f, &time_ms, "put-config");
+    cJSON_AddStringToObject(jq, "name", file_name);
+    add_file_to_object(jq, data, size);
+    add_wchunk_json(acs, jq);
+    cJSON_Delete(jq); jq = NULL;
+
+    future_wait(acs, &f);
+    if (acs->is_stopped) {
+        result = -1;
+    } else if (f.value) {
+        cJSON *jok = cJSON_GetObjectItem(f.value, "ok");
+        if (!jok || jok->type != cJSON_True) {
+            result = -1;
+        }
+    }
+
+    future_fini(&f);
+    return result;
+}
+
 static const struct AgentClientOps ops_ssh =
 {
     destroy_func,
@@ -1931,6 +1963,7 @@ static const struct AgentClientOps ops_ssh =
     delete_heartbeat_func,
     put_archive_2_func,
     mirror_file_func,
+    put_config_func,
 };
 
 struct AgentClient *

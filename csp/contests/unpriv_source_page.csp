@@ -81,7 +81,7 @@ ns_unpriv_parse_run_id(
   }
 
   if (re.lang_id > 0 && re.lang_id <= cs->max_lang) lang = cs->langs[re.lang_id];
-  if (lang && lang->binary) view_enabled = 0;
+  if (lang && lang->binary > 0) view_enabled = 0;
   if (prob && prob->binary) view_enabled = 0;
   if (view_enabled && run_text && run_size != strlen(run_text)) view_enabled = 0;
   if (lang) {

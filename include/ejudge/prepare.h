@@ -145,7 +145,7 @@ struct virtual_end_info_s
   int checker_comment_mode;
 };
 
-/* sizeof(struct section_global_data) == 1208/1920 */
+/* sizeof(struct section_global_data) == 1208/1984 */
 struct section_global_data
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));
@@ -816,6 +816,11 @@ struct section_global_data
   int max_submit_num;
   /** max size of submits and data */
   ejintsize_t max_submit_total;
+
+  /** import language specifications from the corresponding compile.cfg */
+  ejintbool_t enable_language_import;
+  /** additional specifications for language imports */
+  char **language_import;
 };
 
 /* sizeof(struct section_problem_data) == 820/1280 */
@@ -1399,6 +1404,8 @@ struct section_language_data
   ejintbool_t default_disabled;
   /** enable this language (overrides default_disabled) */
   ejintbool_t enabled;
+  /** disable automatic update of this language (by ejudge-configure-compilers) */
+  ejintbool_t disable_auto_update;
 
   /** max virtual size limit  */
   ej_size64_t max_vm_size;
@@ -1625,7 +1632,8 @@ prepare_unparse_global(
         const struct contest_desc *cnts,
         struct section_global_data *global,
         const unsigned char *compile_dir,
-        int need_variant_map);
+        int need_variant_map,
+        int compile_mode);
 void prepare_unparse_unhandled_global(FILE *f,
                                       const struct section_global_data *global);
 int prepare_check_forbidden_global(FILE *f, const struct section_global_data *global);
@@ -1634,6 +1642,7 @@ void
 prepare_unparse_lang(
         FILE *f,
         const struct section_language_data *lang,
+        int lang_id,
         const unsigned char *long_name,
         const unsigned char *options,
         const unsigned char *libs);
@@ -1782,5 +1791,69 @@ prepare_problem(
         int abstr_count,
         struct section_problem_data **abstr_probs,
         struct section_problem_data *prob);
+
+void
+prepare_copy_language(
+        struct section_language_data *out,
+        const struct section_language_data *in);
+
+void
+prepare_merge_language(
+        struct section_language_data *out,
+        const struct section_language_data *imp,
+        const struct section_language_data *lang);
+void
+prepare_language_set_defaults(struct section_language_data *lang);
+
+/**
+exported configuration of a compilation server
+*/
+struct compile_server_config
+{
+  unsigned char *id;
+  struct generic_section_config *cfg;
+  struct section_global_data *global;
+  struct section_language_data **langs;
+  unsigned char *errors;
+  int max_lang;
+};
+
+void
+compile_server_config_free(struct compile_server_config *);
+
+int
+compile_server_load(
+        struct compile_server_config *csc,
+        FILE *log_f,
+        const unsigned char *spool_dir);
+
+/**
+a collection of compilation server configs
+*/
+struct compile_server_configs
+{
+  struct compile_server_config *v;
+  size_t u, a;
+};
+
+void
+compile_servers_config_init(struct compile_server_configs *cscs);
+void
+compile_servers_config_free(struct compile_server_configs *cscs);
+struct compile_server_config *
+compile_servers_get(
+        struct compile_server_configs *cscs,
+        const unsigned char *id);
+int
+compile_servers_arrange(
+        struct compile_server_configs *cscs,
+        FILE *log_f,
+        int *p_max_lang,
+        struct section_language_data ***p_langs);
+int
+compile_servers_collect(
+        struct compile_server_configs *cscs,
+        FILE *log_f,
+        const unsigned char *spool_dir);
 
 #endif /* __PREPARE_H__ */

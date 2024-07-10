@@ -60,13 +60,6 @@ static struct meta_info_item meta_info_sid_state_data[] =
   [SSSS_serve_parse_errors] = { SSSS_serve_parse_errors, 's', XSIZE(struct sid_state, serve_parse_errors), "serve_parse_errors", XOFFSET(struct sid_state, serve_parse_errors) },
   [SSSS_cfg] = { SSSS_cfg, '?', XSIZE(struct sid_state, cfg), "cfg", XOFFSET(struct sid_state, cfg) },
   [SSSS_global] = { SSSS_global, '?', XSIZE(struct sid_state, global), "global", XOFFSET(struct sid_state, global) },
-  [SSSS_lang_a] = { SSSS_lang_a, 'i', XSIZE(struct sid_state, lang_a), "lang_a", XOFFSET(struct sid_state, lang_a) },
-  [SSSS_langs] = { SSSS_langs, '?', XSIZE(struct sid_state, langs), "langs", XOFFSET(struct sid_state, langs) },
-  [SSSS_loc_cs_map] = { SSSS_loc_cs_map, '?', XSIZE(struct sid_state, loc_cs_map), "loc_cs_map", XOFFSET(struct sid_state, loc_cs_map) },
-  [SSSS_cs_loc_map] = { SSSS_cs_loc_map, '?', XSIZE(struct sid_state, cs_loc_map), "cs_loc_map", XOFFSET(struct sid_state, cs_loc_map) },
-  [SSSS_lang_opts] = { SSSS_lang_opts, 'x', XSIZE(struct sid_state, lang_opts), "lang_opts", XOFFSET(struct sid_state, lang_opts) },
-  [SSSS_lang_libs] = { SSSS_lang_libs, 'x', XSIZE(struct sid_state, lang_libs), "lang_libs", XOFFSET(struct sid_state, lang_libs) },
-  [SSSS_lang_flags] = { SSSS_lang_flags, '?', XSIZE(struct sid_state, lang_flags), "lang_flags", XOFFSET(struct sid_state, lang_flags) },
   [SSSS_aprob_u] = { SSSS_aprob_u, 'i', XSIZE(struct sid_state, aprob_u), "aprob_u", XOFFSET(struct sid_state, aprob_u) },
   [SSSS_aprob_a] = { SSSS_aprob_a, 'i', XSIZE(struct sid_state, aprob_a), "aprob_a", XOFFSET(struct sid_state, aprob_a) },
   [SSSS_aprobs] = { SSSS_aprobs, '?', XSIZE(struct sid_state, aprobs), "aprobs", XOFFSET(struct sid_state, aprobs) },
@@ -83,6 +76,14 @@ static struct meta_info_item meta_info_sid_state_data[] =
   [SSSS_enable_extra_col] = { SSSS_enable_extra_col, 'B', XSIZE(struct sid_state, enable_extra_col), "enable_extra_col", XOFFSET(struct sid_state, enable_extra_col) },
   [SSSS_disable_compilation_server] = { SSSS_disable_compilation_server, 'B', XSIZE(struct sid_state, disable_compilation_server), "disable_compilation_server", XOFFSET(struct sid_state, disable_compilation_server) },
   [SSSS_enable_win32_languages] = { SSSS_enable_win32_languages, 'B', XSIZE(struct sid_state, enable_win32_languages), "enable_win32_languages", XOFFSET(struct sid_state, enable_win32_languages) },
+  [SSSS_lang_a] = { SSSS_lang_a, 'i', XSIZE(struct sid_state, lang_a), "lang_a", XOFFSET(struct sid_state, lang_a) },
+  [SSSS_langs] = { SSSS_langs, '?', XSIZE(struct sid_state, langs), "langs", XOFFSET(struct sid_state, langs) },
+  [SSSS_loc_cs_map] = { SSSS_loc_cs_map, '?', XSIZE(struct sid_state, loc_cs_map), "loc_cs_map", XOFFSET(struct sid_state, loc_cs_map) },
+  [SSSS_cs_loc_map] = { SSSS_cs_loc_map, '?', XSIZE(struct sid_state, cs_loc_map), "cs_loc_map", XOFFSET(struct sid_state, cs_loc_map) },
+  [SSSS_lang_opts] = { SSSS_lang_opts, 'x', XSIZE(struct sid_state, lang_opts), "lang_opts", XOFFSET(struct sid_state, lang_opts) },
+  [SSSS_lang_libs] = { SSSS_lang_libs, 'x', XSIZE(struct sid_state, lang_libs), "lang_libs", XOFFSET(struct sid_state, lang_libs) },
+  [SSSS_lang_flags] = { SSSS_lang_flags, '?', XSIZE(struct sid_state, lang_flags), "lang_flags", XOFFSET(struct sid_state, lang_flags) },
+  [SSSS_cscs] = { SSSS_cscs, '?', XSIZE(struct sid_state, cscs), "cscs", XOFFSET(struct sid_state, cscs) },
   [SSSS_cs_langs_loaded] = { SSSS_cs_langs_loaded, 'i', XSIZE(struct sid_state, cs_langs_loaded), "cs_langs_loaded", XOFFSET(struct sid_state, cs_langs_loaded) },
   [SSSS_cs_lang_total] = { SSSS_cs_lang_total, 'i', XSIZE(struct sid_state, cs_lang_total), "cs_lang_total", XOFFSET(struct sid_state, cs_lang_total) },
   [SSSS_cs_cfg] = { SSSS_cs_cfg, '?', XSIZE(struct sid_state, cs_cfg), "cs_cfg", XOFFSET(struct sid_state, cs_cfg) },
@@ -90,6 +91,11 @@ static struct meta_info_item meta_info_sid_state_data[] =
   [SSSS_cs_lang_names] = { SSSS_cs_lang_names, 'x', XSIZE(struct sid_state, cs_lang_names), "cs_lang_names", XOFFSET(struct sid_state, cs_lang_names) },
   [SSSS_extra_cs_cfgs_total] = { SSSS_extra_cs_cfgs_total, 'i', XSIZE(struct sid_state, extra_cs_cfgs_total), "extra_cs_cfgs_total", XOFFSET(struct sid_state, extra_cs_cfgs_total) },
   [SSSS_extra_cs_cfgs] = { SSSS_extra_cs_cfgs, '?', XSIZE(struct sid_state, extra_cs_cfgs), "extra_cs_cfgs", XOFFSET(struct sid_state, extra_cs_cfgs) },
+  [SSSS_serv_langs] = { SSSS_serv_langs, '?', XSIZE(struct sid_state, serv_langs), "serv_langs", XOFFSET(struct sid_state, serv_langs) },
+  [SSSS_lang_extra] = { SSSS_lang_extra, '?', XSIZE(struct sid_state, lang_extra), "lang_extra", XOFFSET(struct sid_state, lang_extra) },
+  [SSSS_serv_extra] = { SSSS_serv_extra, '?', XSIZE(struct sid_state, serv_extra), "serv_extra", XOFFSET(struct sid_state, serv_extra) },
+  [SSSS_enable_language_import_changed] = { SSSS_enable_language_import_changed, '?', XSIZE(struct sid_state, enable_language_import_changed), "enable_language_import_changed", XOFFSET(struct sid_state, enable_language_import_changed) },
+  [SSSS_orig_enable_language_import] = { SSSS_orig_enable_language_import, 'i', XSIZE(struct sid_state, orig_enable_language_import), "orig_enable_language_import", XOFFSET(struct sid_state, orig_enable_language_import) },
   [SSSS_cur_lang] = { SSSS_cur_lang, '?', XSIZE(struct sid_state, cur_lang), "cur_lang", XOFFSET(struct sid_state, cur_lang) },
   [SSSS_cur_prob] = { SSSS_cur_prob, '?', XSIZE(struct sid_state, cur_prob), "cur_prob", XOFFSET(struct sid_state, cur_prob) },
   [SSSS_prob_show_adv] = { SSSS_prob_show_adv, 'B', XSIZE(struct sid_state, prob_show_adv), "prob_show_adv", XOFFSET(struct sid_state, prob_show_adv) },
@@ -247,13 +253,6 @@ void ss_sid_state_copy(struct sid_state *dst, const struct sid_state *src)
   }
   // cfg
   // global
-  dst->lang_a = src->lang_a;
-  // langs
-  // loc_cs_map
-  // cs_loc_map
-  dst->lang_opts = (typeof(dst->lang_opts)) sarray_copy((char**) src->lang_opts);
-  dst->lang_libs = (typeof(dst->lang_libs)) sarray_copy((char**) src->lang_libs);
-  // lang_flags
   dst->aprob_u = src->aprob_u;
   dst->aprob_a = src->aprob_a;
   // aprobs
@@ -270,6 +269,14 @@ void ss_sid_state_copy(struct sid_state *dst, const struct sid_state *src)
   dst->enable_extra_col = src->enable_extra_col;
   dst->disable_compilation_server = src->disable_compilation_server;
   dst->enable_win32_languages = src->enable_win32_languages;
+  dst->lang_a = src->lang_a;
+  // langs
+  // loc_cs_map
+  // cs_loc_map
+  dst->lang_opts = (typeof(dst->lang_opts)) sarray_copy((char**) src->lang_opts);
+  dst->lang_libs = (typeof(dst->lang_libs)) sarray_copy((char**) src->lang_libs);
+  // lang_flags
+  // cscs
   dst->cs_langs_loaded = src->cs_langs_loaded;
   dst->cs_lang_total = src->cs_lang_total;
   // cs_cfg
@@ -277,6 +284,11 @@ void ss_sid_state_copy(struct sid_state *dst, const struct sid_state *src)
   dst->cs_lang_names = (typeof(dst->cs_lang_names)) sarray_copy((char**) src->cs_lang_names);
   dst->extra_cs_cfgs_total = src->extra_cs_cfgs_total;
   // extra_cs_cfgs
+  // serv_langs
+  // lang_extra
+  // serv_extra
+  // enable_language_import_changed
+  dst->orig_enable_language_import = src->orig_enable_language_import;
   // cur_lang
   // cur_prob
   dst->prob_show_adv = src->prob_show_adv;
@@ -365,22 +377,27 @@ void ss_sid_state_free(struct sid_state *ptr)
   free(ptr->serve_parse_errors);
   // cfg
   // global
-  // langs
-  // loc_cs_map
-  // cs_loc_map
-  sarray_free((char**) ptr->lang_opts);
-  sarray_free((char**) ptr->lang_libs);
-  // lang_flags
   // aprobs
   // aprob_flags
   // probs
   // prob_flags
   // atesters
   // testers
+  // langs
+  // loc_cs_map
+  // cs_loc_map
+  sarray_free((char**) ptr->lang_opts);
+  sarray_free((char**) ptr->lang_libs);
+  // lang_flags
+  // cscs
   // cs_cfg
   // cs_langs
   sarray_free((char**) ptr->cs_lang_names);
   // extra_cs_cfgs
+  // serv_langs
+  // lang_extra
+  // serv_extra
+  // enable_language_import_changed
   // cur_lang
   // cur_prob
   free(ptr->contest_start_cmd_text);

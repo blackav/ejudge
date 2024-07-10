@@ -324,6 +324,8 @@ void
 hr_print_help_url(FILE *f, int action);
 void
 hr_print_help_url_2(FILE *f, const unsigned char *topic);
+void
+hr_print_help_url_3(FILE *f, const unsigned char *topic);
 
 int
 hr_cgi_param_h64(

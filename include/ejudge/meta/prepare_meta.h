@@ -308,6 +308,8 @@ enum
   CNTSGLOB_max_input_size,
   CNTSGLOB_max_submit_num,
   CNTSGLOB_max_submit_total,
+  CNTSGLOB_enable_language_import,
+  CNTSGLOB_language_import,
 
   CNTSGLOB_LAST_FIELD,
 };
@@ -626,6 +628,7 @@ enum
   CNTSLANG_preserve_line_numbers,
   CNTSLANG_default_disabled,
   CNTSLANG_enabled,
+  CNTSLANG_disable_auto_update,
   CNTSLANG_max_vm_size,
   CNTSLANG_max_stack_size,
   CNTSLANG_max_file_size,

@@ -1,9 +1,7 @@
-/* $Id$ */
-
 #ifndef __REUSE_LOGGER_H__
 #define __REUSE_LOGGER_H__
 
-/* Copyright (C) 1997-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 1997-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This library is free software; you can redistribute it and/or
@@ -17,6 +15,7 @@
  * Lesser General Public License for more details.
  */
 
+#include <stddef.h>
 #include <stdarg.h>
 
 #ifdef __cplusplus
@@ -62,6 +61,8 @@ void logger_set_level(int fac, int level);
 int  write_log(int facility, int level, char const *format, ...);
 int  vwrite_log(int facility, int level,char const*format,va_list args);
 int  logger_get_fd(void);
+
+void logger_write_lines(int level, const char *buf, size_t size);
 
 /* These do return */
 #define SWWARN(t)       do { swerr_SetPos(__FILE__, __LINE__); swwarn t; } while(0)

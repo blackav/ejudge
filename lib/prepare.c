@@ -16,6 +16,7 @@
 
 #include "ejudge/config.h"
 #include "ejudge/prepare.h"
+#include "ejudge/ej_limits.h"
 #include "ejudge/varsubst.h"
 #include "ejudge/version.h"
 #include "ejudge/meta/prepare_meta.h"
@@ -38,6 +39,8 @@
 #include "ejudge/logger.h"
 #include "ejudge/osdeps.h"
 
+#include <linux/limits.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -362,6 +365,8 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(max_input_size, "d"),
   GLOBAL_PARAM(max_submit_num, "d"),
   GLOBAL_PARAM(max_submit_total, "d"),
+  GLOBAL_PARAM(enable_language_import, "d"),
+  GLOBAL_PARAM(language_import, "x"),
 
   { 0, 0, 0, 0 }
 };
@@ -629,6 +634,7 @@ static const struct config_parse_info section_language_params[] =
   LANGUAGE_PARAM(preserve_line_numbers, "d"),
   LANGUAGE_PARAM(default_disabled, "d"),
   LANGUAGE_PARAM(enabled, "d"),
+  LANGUAGE_PARAM(disable_auto_update, "d"),
   LANGUAGE_PARAM(max_vm_size, "E"),
   LANGUAGE_PARAM(max_stack_size, "E"),
   LANGUAGE_PARAM(max_file_size, "E"),
@@ -1119,6 +1125,73 @@ language_init_func(struct generic_section_config *gp)
 {
   struct section_language_data *p = (struct section_language_data*) gp;
 
+/*
+  int id;
+  int compile_id;
+*/
+  p->disabled = -1;
+ /*
+  int compile_real_time_limit;
+*/
+  p->binary = -1;
+/*
+  int priority_adjustment;
+*/
+  p->insecure = -1;
+  p->disable_security = -1;
+  p->enable_suid_run = -1;
+  p->is_dos = -1;
+/*
+  unsigned char short_name[32];
+  unsigned char *long_name;
+  unsigned char *key;
+  unsigned char *arch;
+  unsigned char src_sfx[32];
+  unsigned char exe_sfx[32];
+  unsigned char *content_type;
+  unsigned char *cmd;
+  unsigned char *style_checker_cmd;
+  ejenvlist_t style_checker_env;
+
+  unsigned char *extid;
+
+  unsigned char *super_run_dir;
+  */
+  p->disable_auto_testing = -1;
+  p->disable_testing = -1;
+  p->enable_custom = -1;
+  p->enable_ejudge_env = -1;
+  p->preserve_line_numbers = -1;
+  p->default_disabled = -1;
+  p->enabled = -1;
+  p->disable_auto_update = -1;
+  /*
+  ej_size64_t max_vm_size;
+  ej_size64_t max_stack_size;
+  ej_size64_t max_file_size;
+  ej_size64_t max_rss_size;
+  ej_size64_t run_max_stack_size;
+  ej_size64_t run_max_vm_size;
+  ej_size64_t run_max_rss_size;
+
+  int compile_dir_index;
+  unsigned char *compile_dir;
+  unsigned char *compile_queue_dir;
+  unsigned char *compile_src_dir;
+  unsigned char *compile_out_dir;
+  unsigned char *compile_status_dir;
+  unsigned char *compile_report_dir;
+  ejenvlist_t compiler_env;
+  unsigned char *compile_server_id;
+  unsigned char *multi_header_suffix;
+  unsigned char *container_options;
+  unsigned char *compiler_container_options;
+  unsigned char *clean_up_cmd;
+  unsigned char *run_env_file;
+  unsigned char *clean_up_env_file;
+  unsigned char *version;
+  unsigned char *unhandled_vars;
+*/
   p->compile_real_time_limit = -1;
 }
 
@@ -3834,9 +3907,11 @@ set_defaults(
       vinfo("language.%d.short_name set to \"lang%d\"", i, i);
       sprintf(lang->short_name, "lang%d", i);
     }
-    if (!lang->long_name || !lang->long_name[0]) {
-      vinfo("language.%d.long_name set to \"Language %d\"", i, i);
-      usprintf(&lang->long_name, "Language %d", i);
+    if (g->enable_language_import <= 0) {
+      if (!lang->long_name || !lang->long_name[0]) {
+        vinfo("language.%d.long_name set to \"Language %d\"", i, i);
+        usprintf(&lang->long_name, "Language %d", i);
+      }
     }
 
     if (mode == PREPARE_SERVE) {
@@ -3886,7 +3961,7 @@ set_defaults(
       path_prepend_dir(&lang->style_checker_cmd, g->ejudge_checkers_dir);
     }
 
-    if (!lang->src_sfx[0]) {
+    if (g->enable_language_import <= 0 && !lang->src_sfx[0]) {
       err("language.%d.src_sfx must be set", i);
       return -1;
     }
@@ -4369,10 +4444,21 @@ collect_sections(serve_state_t state, int mode)
   struct section_language_data  *l;
   struct section_problem_data   *q;
   struct section_tester_data    *t;
+  struct section_global_data    *g = NULL;
   int last_lang = 0, last_prob = 0, last_tester = 0;
   int abstr_prob_count = 0, abstr_tester_count = 0;
+  int enable_language_import = 0;
+  int lang_count = 0;
 
   state->max_lang = state->max_prob = state->max_tester = 0;
+
+  for (p = state->config; p; p = p->next) {
+    if (!p->name[0] || !strcmp(p->name, "global")) {
+      g = state->global = (struct section_global_data*) p;
+      break;
+    }
+  }
+  if (g && g->enable_language_import > 0) enable_language_import = 1;
 
   // process abstract problems and testers
   for (p = state->config; p; p = p->next) {
@@ -4395,14 +4481,19 @@ collect_sections(serve_state_t state, int mode)
   for (p = state->config; p; p = p->next) {
     if (!strcmp(p->name, "language") && mode != PREPARE_RUN) {
       l = (struct section_language_data*) p;
-      if (!l->id) vinfo("assigned language id = %d", (l->id = last_lang + 1));
-      if (l->id <= 0 || l->id > EJ_MAX_LANG_ID) {
-        err("language id %d is out of range", l->id);
-        return -1;
+      if (enable_language_import) {
+        // do not assign language id, it happens later, at the import phase
+        lang_count += 1;
+      } else {
+        if (!l->id) vinfo("assigned language id = %d", (l->id = last_lang + 1));
+        if (l->id <= 0 || l->id > EJ_MAX_LANG_ID) {
+          err("language id %d is out of range", l->id);
+          return -1;
+        }
+        if (l->id > state->max_lang) state->max_lang = l->id;
+        last_lang = l->id;
+        if (!l->compile_id) l->compile_id = l->id;
       }
-      if (l->id > state->max_lang) state->max_lang = l->id;
-      last_lang = l->id;
-      if (!l->compile_id) l->compile_id = l->id;
     } else if (!strcmp(p->name, "problem") && mode != PREPARE_COMPILE) {
       q = (struct section_problem_data*) p;
       if (q->abstract) continue;
@@ -4427,7 +4518,10 @@ collect_sections(serve_state_t state, int mode)
     }
   }
 
-  if (state->max_lang > 0) {
+  if (enable_language_import && lang_count > 0) {
+    state->max_lang = lang_count;
+    XCALLOC(state->langs, lang_count + 1);
+  } else if (state->max_lang > 0) {
     XCALLOC(state->langs, state->max_lang + 1);
   }
   if (state->max_prob > 0) {
@@ -4437,14 +4531,19 @@ collect_sections(serve_state_t state, int mode)
     XCALLOC(state->testers, state->max_tester + 1);
   }
 
+  int cur_lang_id = 0;
   for (p = state->config; p; p = p->next) {
     if (!strcmp(p->name, "language") && mode != PREPARE_RUN) {
       l = (struct section_language_data*) p;
-      if (state->langs[l->id]) {
-        err("duplicated language id %d", l->id);
-        return -1;
+      if (enable_language_import) {
+        state->langs[++cur_lang_id] = l;
+      } else {
+        if (state->langs[l->id]) {
+          err("duplicated language id %d", l->id);
+          return -1;
+        }
+        state->langs[l->id] = l;
       }
-      state->langs[l->id] = l;
     } else if (!strcmp(p->name, "problem") && mode != PREPARE_COMPILE) {
       q = (struct section_problem_data*) p;
       if (q->abstract) {
@@ -6979,4 +7078,402 @@ prepare_sarray_varsubst(
                               global, prob, lang, tester);
   }
   return aa;
+}
+
+void
+prepare_copy_language(
+        struct section_language_data *out,
+        const struct section_language_data *in)
+{
+  cntslang_copy(out, in);
+}
+
+#define LANG_MERGE_BOOL(field) do { \
+  if (lang->field >= 0) {            \
+    out->field = lang->field;       \
+  } else {                          \
+    out->field = imp->field;        \
+  }                                 \
+} while (0)
+
+#define LANG_MERGE_STRING(field) do {  \
+  if (lang->field) {                   \
+    out->field = xstrdup(lang->field); \
+  } else if (imp->long_name) {         \
+    out->field = xstrdup(imp->field);  \
+  }                                    \
+} while (0)
+
+#define LANG_MERGE_SIZE(field) do {      \
+  if ((int64_t) lang->field > 0) {       \
+    out->field = lang->field;            \
+  } else if ((int64_t) imp->field > 0) { \
+    out->field = imp->field;             \
+  }                                      \
+} while (0)
+
+void
+prepare_merge_language(
+        struct section_language_data *out,
+        const struct section_language_data *imp,  // imported from the compilation server config
+        const struct section_language_data *lang) // the current contest config
+{
+  if (!lang) {
+    prepare_copy_language(out, imp);
+    return;
+  }
+
+  // use the current contest language id
+  out->id = lang->id;
+  out->compile_id = lang->compile_id;
+  strcpy(out->short_name, lang->short_name);
+
+  if (lang->long_name && lang->long_name[0]) {
+    out->long_name = xstrdup(lang->long_name);
+  } else if (imp->long_name && imp->long_name[0]) {
+    const unsigned char *v = NULL;
+    if (lang->version && lang->version[0]) {
+      v = lang->version;
+    } else if (imp->version && imp->version[0]) {
+      v = imp->version;
+    }
+    if (v) {
+    char *s = NULL;
+    asprintf(&s, "%s %s", imp->long_name, v);
+    out->long_name = s;
+    } else {
+      out->long_name = xstrdup(imp->long_name);
+    }
+  } else {
+    char *s = NULL;
+    asprintf(&s, "Language %d", out->id);
+    out->long_name = s;
+  }
+
+  /* special handling:
+  ejintbool_t disabled;
+  ejintbool_t default_disabled;
+  ejintbool_t enabled;
+  ejintbool_t disable_auto_update;
+   */
+
+  if (lang->compile_real_time_limit > 0) {
+    out->compile_real_time_limit = lang->compile_real_time_limit;
+  } else if (imp->compile_real_time_limit > 0) {
+    out->compile_real_time_limit = imp->compile_real_time_limit;
+  }
+
+  LANG_MERGE_BOOL(binary);
+  if (lang->priority_adjustment > 0) {
+    out->priority_adjustment = lang->priority_adjustment;
+  } else {
+    out->priority_adjustment = imp->priority_adjustment;
+  }
+  LANG_MERGE_BOOL(insecure);
+  LANG_MERGE_BOOL(disable_security);
+  LANG_MERGE_BOOL(enable_suid_run);
+  LANG_MERGE_BOOL(is_dos);
+  LANG_MERGE_STRING(key);
+  LANG_MERGE_STRING(arch);
+  strcpy(out->src_sfx, imp->src_sfx);
+  strcpy(out->exe_sfx, imp->exe_sfx);
+  LANG_MERGE_STRING(content_type);
+  LANG_MERGE_STRING(cmd);
+  LANG_MERGE_STRING(style_checker_cmd);
+  out->style_checker_env = sarray_merge_pp(imp->style_checker_env, lang->style_checker_env);
+  LANG_MERGE_STRING(extid);
+  LANG_MERGE_STRING(super_run_dir);
+  LANG_MERGE_BOOL(disable_auto_testing);
+  LANG_MERGE_BOOL(disable_testing);
+  LANG_MERGE_BOOL(enable_custom);
+  LANG_MERGE_BOOL(enable_ejudge_env);
+  LANG_MERGE_BOOL(preserve_line_numbers);
+  LANG_MERGE_SIZE(max_vm_size);
+  LANG_MERGE_SIZE(max_stack_size);
+  LANG_MERGE_SIZE(max_file_size);
+  LANG_MERGE_SIZE(max_rss_size);
+  LANG_MERGE_SIZE(run_max_stack_size);
+  LANG_MERGE_SIZE(run_max_vm_size);
+  LANG_MERGE_SIZE(run_max_rss_size);
+  out->compiler_env = sarray_merge_pp(imp->compiler_env, lang->compiler_env);
+  LANG_MERGE_STRING(compile_server_id);
+  LANG_MERGE_STRING(multi_header_suffix);
+  LANG_MERGE_STRING(container_options);
+  LANG_MERGE_STRING(compiler_container_options);
+  LANG_MERGE_STRING(clean_up_cmd);
+  LANG_MERGE_STRING(run_env_file);
+  LANG_MERGE_STRING(clean_up_env_file);
+  LANG_MERGE_STRING(version);
+}
+
+void
+prepare_language_set_defaults(struct section_language_data *lang)
+{
+  if (lang->disabled < 0) lang->disabled = 0;
+  if (lang->binary < 0) lang->binary = 0;
+  if (lang->insecure < 0) lang->insecure = 0;
+  if (lang->disable_security < 0) lang->disable_security = 0;
+  if (lang->enable_suid_run < 0) lang->enable_suid_run = 0;
+  if (lang->is_dos < 0) lang->is_dos = 0;
+  if (lang->disable_auto_testing < 0) lang->disable_auto_testing = 0;
+  if (lang->disable_testing < 0) lang->disable_testing = 0;
+  if (lang->enable_custom < 0) lang->enable_custom = 0;
+  if (lang->enable_ejudge_env < 0) lang->enable_ejudge_env = 0;
+  if (lang->preserve_line_numbers < 0) lang->preserve_line_numbers = 0;
+  if (lang->default_disabled < 0) lang->default_disabled = 0;
+  if (lang->enabled < 0) lang->enabled = 0;
+  if (lang->disable_auto_update < 0) lang->disable_auto_update = 0;
+}
+
+void
+compile_server_config_free(struct compile_server_config *csc)
+{
+  if (csc) {
+    prepare_free_config(csc->cfg); csc->cfg = NULL;
+    csc->global = NULL;
+    xfree(csc->id); csc->id = NULL;
+    xfree(csc->langs); csc->langs = NULL;
+    xfree(csc->errors); csc->errors = NULL;
+    csc->max_lang = 0;
+  }
+}
+
+void
+compile_server_config_partial_free(struct compile_server_config *csc)
+{
+  if (csc) {
+    prepare_free_config(csc->cfg); csc->cfg = NULL;
+    csc->global = NULL;
+    //xfree(csc->id);
+    xfree(csc->langs); csc->langs = NULL;
+    //xfree(csc->errors);
+    csc->max_lang = 0;
+  }
+}
+
+int
+compile_server_load(
+        struct compile_server_config *csc,
+        FILE *log_f,
+        const unsigned char *spool_dir)
+{
+  unsigned char conf_path[PATH_MAX];
+  __attribute__((unused)) int _;
+
+  _ = snprintf(conf_path, sizeof(conf_path), "%s/%s/config/dir/compile.cfg", spool_dir, csc->id);
+  struct stat stb;
+  if (stat(conf_path, &stb) < 0) {
+    fprintf(log_f, "%s: compile server config file '%s' is not accessible: %s\n", __FUNCTION__, conf_path, os_ErrorMsg());
+    goto fail;
+  }
+  if (access(conf_path, R_OK) < 0) {
+    fprintf(log_f, "%s: compile server config file '%s' is not readable: %s\n", __FUNCTION__, conf_path, os_ErrorMsg());
+    goto fail;
+  }
+  int cond_count = 0;
+  csc->cfg = prepare_parse_config_file(conf_path, &cond_count);
+  if (!csc->cfg) {
+    fprintf(log_f, "%s: failed to parse config for server '%s': '%s'\n", __FUNCTION__, csc->id, conf_path);
+    goto fail;
+  }
+  if (cond_count > 0) {
+    fprintf(log_f, "%s: config for server '%s' ('%s') contains conditional directives\n", __FUNCTION__, csc->id, conf_path);
+    goto fail;
+  }
+
+  for (struct generic_section_config *gsc = csc->cfg; gsc; gsc = gsc->next) {
+    if (!strcmp(gsc->name, "global") || !strcmp(gsc->name, "")) {
+      csc->global = (struct section_global_data *) gsc;
+      break;
+    }
+  }
+
+  int max_lang_id = 0;
+  int cur_id = 0;
+  for (struct generic_section_config *gsc = csc->cfg; gsc; gsc = gsc->next) {
+    if (strcmp(gsc->name, "language") != 0) continue;
+    struct section_language_data *lang = (struct section_language_data *) gsc;
+    if (lang->id < 0 || lang->id > EJ_MAX_LANG_ID) {
+      fprintf(log_f, "%s: lang_id %d is invalid in compile server %s\n", __FUNCTION__, lang->id, csc->id);
+      goto fail;
+    }
+    if (lang->id == 0) lang->id = cur_id + 1;
+    cur_id = lang->id;
+    if (cur_id > max_lang_id) max_lang_id = cur_id;
+  }
+
+  csc->max_lang = max_lang_id;
+  XCALLOC(csc->langs, max_lang_id + 1);
+  for (struct generic_section_config *gsc = csc->cfg; gsc; gsc = gsc->next) {
+    if (strcmp(gsc->name, "language") != 0) continue;
+    struct section_language_data *lang = (struct section_language_data *) gsc;
+    if (csc->langs[lang->id]) {
+      fprintf(log_f, "%s: duplicated lang_id %d in compile server %s\n", __FUNCTION__, lang->id, csc->id);
+      goto fail;
+    }
+    lang->compile_id = 0;
+    csc->langs[lang->id] = lang;
+  }
+
+  return 0;
+ 
+fail:;
+  compile_server_config_partial_free(csc);
+  return -1;
+}
+
+void
+compile_servers_config_init(struct compile_server_configs *cscs)
+{
+  memset(cscs, 0, sizeof(*cscs));
+  cscs->a = 4;
+  cscs->v = xmalloc(cscs->a * sizeof(cscs->v[0]));
+}
+
+void
+compile_servers_config_free(struct compile_server_configs *cscs)
+{
+  for (int i = 0; i < cscs->u; ++i) {
+    struct compile_server_config *csc = &cscs->v[i];
+    prepare_free_config(csc->cfg);
+    xfree(csc->id);
+    xfree(csc->langs);
+  }
+  memset(cscs, 0xff, sizeof(*cscs));
+}
+
+struct compile_server_config *
+compile_servers_get(struct compile_server_configs *cscs, const unsigned char *id)
+{
+  for (int i = 0; i < cscs->u; ++i) {
+    if (!strcmp(cscs->v[i].id, id)) {
+      return &cscs->v[i];
+    }
+  }
+  if (cscs->a == cscs->u) {
+    XREALLOC(cscs->v, (cscs->a *= 2) * sizeof(cscs->v[0]));
+  }
+  struct compile_server_config *csc = &cscs->v[cscs->u++];
+  memset(csc, 0, sizeof(*csc));
+  csc->id = xstrdup(id);
+  return csc;
+}
+
+int
+compile_servers_arrange(
+        struct compile_server_configs *cscs,
+        FILE *log_f,
+        int *p_max_lang,
+        struct section_language_data ***p_langs)
+{
+  int max_lang = 0;
+  for (int lang_id = 0; lang_id <= *p_max_lang; ++lang_id) {
+    struct section_language_data *lang = (*p_langs)[lang_id];
+    if (!lang) continue;
+    if (lang->id > 0) {
+      if (lang->id > max_lang) max_lang = lang->id;
+    } else {
+      struct compile_server_config *e = NULL;
+      if (lang->compile_server_id && lang->compile_server_id[0]) {
+        e = compile_servers_get(cscs, lang->compile_server_id);
+        if (!e) {
+          fprintf(log_f, "%s: invalid compile server id '%s' for language '%s'\n",
+                  __FUNCTION__, lang->compile_server_id, lang->short_name);
+          return -1;
+        }
+      }
+      if (!e) e = &cscs->v[0];
+      const struct section_language_data *imp_lang = NULL;
+      for (int i = 1; i <= e->max_lang; ++i) {
+        const struct section_language_data *l = e->langs[i];
+        if (l && !strcmp(l->short_name, lang->short_name)) {
+          imp_lang = l;
+          break;
+        }
+      }
+      if (!imp_lang) {
+        fprintf(log_f, "%s: invalid language '%s' for compilation server '%s'\n",
+                __FUNCTION__, lang->short_name, e->id);
+        return -1;
+      }
+      lang->id = imp_lang->id;
+      if (lang->id > max_lang) max_lang = lang->id;
+    }
+  }
+
+  struct section_language_data **langs = NULL;
+  XCALLOC(langs, max_lang + 1);
+  for (int lang_id = 0; lang_id <= *p_max_lang; ++lang_id) {
+    struct section_language_data *lang = (*p_langs)[lang_id];
+    if (!lang) continue;
+    if (lang->id <= 0 || lang->id > max_lang) {
+        fprintf(log_f, "%s: invalid language id %d for language '%s'\n",
+                __FUNCTION__, lang->id, lang->short_name);
+        xfree(langs);
+        return -1;
+    }
+    if (langs[lang->id]) {
+      fprintf(log_f, "%s: duplicated language id %d for languages '%s' and '%s'\n",
+              __FUNCTION__, lang->id, lang->short_name, langs[lang->id]->short_name);
+      xfree(langs);
+      return -1;
+    }
+    langs[lang->id] = lang;
+  }
+
+  xfree(*p_langs);
+  *p_langs = langs;
+  *p_max_lang = max_lang;
+  return 0;
+}
+
+int
+compile_servers_collect(
+        struct compile_server_configs *cscs,
+        FILE *log_f,
+        const unsigned char *spool_dir)
+{
+  __attribute__((unused)) int _;
+  unsigned char dir_path[PATH_MAX];
+
+  DIR *d = NULL;
+  if (!(d = opendir(spool_dir))) {
+    fprintf(log_f, "%s: failed to scan spool directory '%s': %s\n", __FUNCTION__, spool_dir, os_ErrorMsg());
+    goto fail;
+  }
+  struct dirent *dd;
+  while ((dd = readdir(d))) {
+    if (!strcmp(dd->d_name, ".") || !strcmp(dd->d_name, "..")) continue;
+    _ = snprintf(dir_path, sizeof(dir_path), "%s/%s", spool_dir, dd->d_name);
+    struct stat stb;
+    // symlinks are ok
+    if (stat(dir_path, &stb) < 0) continue;
+    if (!S_ISDIR(stb.st_mode)) continue;
+
+    (void) compile_servers_get(cscs, dd->d_name);
+  }
+  closedir(d); d = NULL;
+
+  int success_count = 0;
+  for (int i = 0; i < cscs->u; ++i) {
+    struct compile_server_config *csc = &cscs->v[i];
+    char *csl_s = NULL;
+    size_t csl_z = 0;
+    FILE *csl_f = open_memstream(&csl_s, &csl_z);
+    int r = compile_server_load(csc, csl_f, spool_dir);
+    fclose(csl_f); csl_f = NULL;
+    csc->errors = NULL;
+    if (r < 0) {
+      // parsing failed, preserve error messages
+      csc->errors = csl_s; csl_s = NULL;
+    } else {
+      ++success_count;
+    }
+    free(csl_s);
+  }
+  return success_count;
+
+fail:;
+  if (d) closedir(d);
+  return -1;
 }

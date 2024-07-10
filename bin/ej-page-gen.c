@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2014-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2014-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -39,6 +39,7 @@
 #include <errno.h>
 #include <limits.h>
 #include <stddef.h>
+#include <time.h>
 
 struct ProcessorState;
 struct ScannerState;
@@ -1636,14 +1637,14 @@ parse_declspec(
 {
     int retval = -1;
 
-    int auto_count = 0;
-    int const_count = 0;
-    int extern_count = 0;
-    int register_count = 0;
-    int restrict_count = 0;
-    int static_count = 0;
-    int typedef_count = 0;
-    int volatile_count = 0;
+    [[gnu::unused]] int auto_count = 0;
+    [[gnu::unused]] int const_count = 0;
+    [[gnu::unused]] int extern_count = 0;
+    [[gnu::unused]] int register_count = 0;
+    [[gnu::unused]] int restrict_count = 0;
+    [[gnu::unused]] int static_count = 0;
+    [[gnu::unused]] int typedef_count = 0;
+    [[gnu::unused]] int volatile_count = 0;
 
     int signed_count = 0;
     int unsigned_count = 0;
@@ -4680,6 +4681,151 @@ handle_textfield_open(
 }
 
 static int
+handle_textarea_open(
+        FILE *log_f,
+        TypeContext *cntx,
+        ProcessorState *ps,
+        FILE *txt_f,
+        FILE *prg_f)
+{
+    HtmlElement *elem = ps->el_stack->el;
+    if (!elem->no_body) {
+        parser_error_2(ps, "<s:textarea> element must not have a body");
+        return -1;
+    }
+
+    // supported attributes: name, value, size, escape (for string values), check, checkExpr
+    HtmlAttribute *name_attr = html_element_find_attribute(elem, "name");
+    if (!name_attr) {
+        parser_error_2(ps, "<s:textarea> element requires 'name' attribute");
+        return -1;
+    }
+    int skip_value = 0;
+    unsigned char ac_buf[1024];
+    int has_ac = process_ac_attr(log_f, cntx, ps, elem, ac_buf, sizeof(ac_buf));
+    HtmlAttribute *value_attr = html_element_find_attribute(elem, "value");
+    TypeInfo *value_type = NULL;
+    const unsigned char *expr = NULL;
+    if (has_ac > 0) {
+        expr = ac_buf;
+        value_type = tc_get_i32_type(cntx);
+    } else if (!value_attr) {
+        expr = name_attr->value;
+        parse_c_expression(ps, cntx, log_f, name_attr->value, &value_type, ps->pos); // return value is ignored!
+        if (!value_type) {
+            skip_value = 1;
+        }
+    } else {
+        expr = value_attr->value;
+        if (!value_attr->value || !value_attr->value[0]) {
+            skip_value = 1;
+        } else {
+            parse_c_expression(ps, cntx, log_f, value_attr->value, &value_type, ps->pos); // return value is ignored!
+        }
+    }
+
+    HtmlAttribute *disabled_attr = html_element_find_attribute(elem, "disabledexpr");
+
+    char *str_p = 0;
+    size_t str_z = 0;
+    FILE *str_f = open_memstream(&str_p, &str_z);
+    fprintf(str_f, "<textarea name=\"%s\"", name_attr->value);
+    HtmlAttribute *cols_attr = html_element_find_attribute(elem, "cols");
+    if (cols_attr) {
+        fprintf(str_f, " cols=\"%s\"", cols_attr->value);
+    }
+    HtmlAttribute *rows_attr = html_element_find_attribute(elem, "rows");
+    if (rows_attr) {
+        fprintf(str_f, " rows=\"%s\"", rows_attr->value);
+    }
+    HtmlAttribute *disabled2_attr = html_element_find_attribute(elem, "disabled");
+    if (disabled2_attr) {
+        fprintf(str_f, " disabled=\"%s\"", disabled2_attr->value);
+    }
+    HtmlAttribute *readonly_attr = html_element_find_attribute(elem, "readonly");
+    if (readonly_attr) {
+        fprintf(str_f, " readonly=\"%s\"", readonly_attr->value);
+    }
+    HtmlAttribute *onclick_attr = html_element_find_attribute(elem, "onclick");
+    if (onclick_attr) {
+        fprintf(str_f, " onclick=\"%s\"", onclick_attr->value);
+    }
+    HtmlAttribute *onchange_attr = html_element_find_attribute(elem, "onchange");
+    if (onchange_attr) {
+        fprintf(str_f, " onchange=\"%s\"", onchange_attr->value);
+    }
+    HtmlAttribute *class_attr = html_element_find_attribute(elem, "class");
+    if (class_attr) {
+        fprintf(str_f, " class=\"%s\"", class_attr->value);
+    }
+    HtmlAttribute *id_attr = html_element_find_attribute(elem, "id");
+    HtmlAttribute *idsuffix_attr = html_element_find_attribute(elem, "idsuffix");
+    if (id_attr && idsuffix_attr) {
+        fprintf(str_f, " id=\"%s", id_attr->value);
+        fclose(str_f); str_f = 0;
+        handle_html_string(prg_f, txt_f, log_f, str_p);
+        free(str_p); str_p = 0; str_z = 0;
+        TypeInfo *t = NULL;
+        int r = parse_c_expression(ps, cntx, log_f, idsuffix_attr->value, &t, ps->pos);
+        if (r >= 0) {
+            processor_state_invoke_type_handler(log_f, cntx, ps, txt_f, prg_f, idsuffix_attr->value, elem, t);
+        }
+        str_f = open_memstream(&str_p, &str_z);
+        fprintf(str_f, "\"");
+    } else if (id_attr) {
+        fprintf(str_f, " id=\"%s\"", id_attr->value);
+    }
+    if (skip_value) {
+        if (disabled_attr) {
+            fclose(str_f); str_f = 0;
+            handle_html_string(prg_f, txt_f, log_f, str_p);
+            free(str_p); str_p = 0; str_z = 0;
+            fprintf(prg_f, "if (%s) {\n", disabled_attr->value);
+            handle_html_string(prg_f, txt_f, log_f, " disabled=\"disabled\"");
+            fprintf(prg_f, "}\n");
+            handle_html_string(prg_f, txt_f, log_f, " />");
+        } else {
+            fprintf(str_f, " />");
+            fclose(str_f); str_f = 0;
+            handle_html_string(prg_f, txt_f, log_f, str_p);
+            free(str_p); str_p = 0; str_z = 0;
+        }
+        return 0;
+    }
+    fclose(str_f); str_f = 0;
+    handle_html_string(prg_f, txt_f, log_f, str_p);
+    free(str_p); str_p = 0; str_z = 0;
+    if (disabled_attr) {
+        fprintf(prg_f, "if (%s) {\n", disabled_attr->value);
+        handle_html_string(prg_f, txt_f, log_f, " disabled=\"disabled\"");
+        fprintf(prg_f, "}\n");
+    }
+    handle_html_string(prg_f, txt_f, log_f, ">");
+
+    int need_check = html_attribute_get_bool(html_element_find_attribute(elem, "check"), 1);
+    if (has_ac > 0) need_check = 0;
+    if (need_check) {
+        HtmlAttribute *full_check_expr_attr = html_element_find_attribute(elem, "fullcheckexpr");
+        if (full_check_expr_attr) {
+            fprintf(prg_f, "if (%s) {\n", full_check_expr_attr->value);
+        } else {
+            HtmlAttribute *check_expr_attr = html_element_find_attribute(elem, "checkexpr");
+            fprintf(prg_f, "if ((%s)", expr);
+            if (check_expr_attr) {
+                fprintf(prg_f, " %s", check_expr_attr->value);
+            }
+            fprintf(prg_f, ") {\n");
+        }
+    }
+    processor_state_invoke_type_handler(log_f, cntx, ps, txt_f, prg_f, expr, elem, value_type);
+    if (need_check) {
+        fprintf(prg_f, "}\n");
+    }
+    handle_html_string(prg_f, txt_f, log_f, "</textarea>");
+    return 0;
+}
+
+static int
 handle_checkbox_open(
         FILE *log_f,
         TypeContext *cntx,
@@ -4856,6 +5002,29 @@ handle_select_open(
     size_t str_z = 0;
     FILE *str_f = open_memstream(&str_p, &str_z);
     fprintf(str_f, "<select name=\"%s\"", name_attr->value);
+
+    HtmlAttribute *id_attr = html_element_find_attribute(elem, "id");
+    HtmlAttribute *idsuffix_attr = html_element_find_attribute(elem, "idsuffix");
+    if (id_attr && idsuffix_attr) {
+        fprintf(str_f, " id=\"%s", id_attr->value);
+        fclose(str_f); str_f = 0;
+        handle_html_string(prg_f, txt_f, log_f, str_p);
+        free(str_p); str_p = 0; str_z = 0;
+        TypeInfo *t = NULL;
+        int r = parse_c_expression(ps, cntx, log_f, idsuffix_attr->value, &t, ps->pos);
+        if (r >= 0) {
+            processor_state_invoke_type_handler(log_f, cntx, ps, txt_f, prg_f, idsuffix_attr->value, elem, t);
+        }
+        str_f = open_memstream(&str_p, &str_z);
+        fprintf(str_f, "\"");
+    } else if (id_attr) {
+        fprintf(str_f, " id=\"%s\"", id_attr->value);
+    }
+    HtmlAttribute *onchange_attr = html_element_find_attribute(elem, "onchange");
+    if (onchange_attr) {
+        fprintf(str_f, " onchange=\"%s\"", onchange_attr->value);
+    }
+
     fclose(str_f); str_f = 0;
     handle_html_string(prg_f, txt_f, log_f, str_p);
     free(str_p); str_p = 0; str_z = 0;
@@ -4866,6 +5035,7 @@ handle_select_open(
         handle_html_string(prg_f, txt_f, log_f, " disabled=\"disabled\"");
         fprintf(prg_f, "}\n");
     }
+
     handle_html_string(prg_f, txt_f, log_f, ">");
     return 0;
 }
@@ -5034,9 +5204,11 @@ handle_yesno3_open(
         default_label = default_label_attr->value;
     }
 
-    HtmlAttribute *id_attr = html_element_find_attribute(elem, "id");
     HtmlAttribute *disabled_attr = html_element_find_attribute(elem, "disabled");
     if (!disabled_attr) disabled_attr = html_element_find_attribute(elem, "readonly");
+
+    HtmlAttribute *id_attr = html_element_find_attribute(elem, "id");
+    HtmlAttribute *idsuffix_attr = html_element_find_attribute(elem, "idsuffix");
 
     char *str_p = 0;
     size_t str_z = 0;
@@ -5045,8 +5217,24 @@ handle_yesno3_open(
     if (disabled_attr) {
         str_f = open_memstream(&str_p, &str_z);
         fprintf(str_f, "<input type=\"hidden\" name=\"%s\"", name_attr->value);
-        if (id_attr) {
+        if (id_attr && idsuffix_attr) {
+            fprintf(str_f, " id=\"%s", id_attr->value);
+            fclose(str_f); str_f = 0;
+            handle_html_string(prg_f, txt_f, log_f, str_p);
+            free(str_p); str_p = 0; str_z = 0;
+            TypeInfo *t = NULL;
+            int r = parse_c_expression(ps, cntx, log_f, idsuffix_attr->value, &t, ps->pos);
+            if (r >= 0) {
+                processor_state_invoke_type_handler(log_f, cntx, ps, txt_f, prg_f, idsuffix_attr->value, elem, t);
+            }
+            str_f = open_memstream(&str_p, &str_z);
+            fprintf(str_f, "\"");
+        } else if (id_attr) {
             fprintf(str_f, " id=\"%s\"", id_attr->value);
+        }
+        HtmlAttribute *onchange_attr = html_element_find_attribute(elem, "onchange");
+        if (onchange_attr) {
+            fprintf(str_f, " onchange=\"%s\"", onchange_attr->value);
         }
         fprintf(str_f, " value=\"");
         fclose(str_f); str_f = NULL;
@@ -5093,8 +5281,34 @@ handle_yesno3_open(
 
     str_f = open_memstream(&str_p, &str_z);
     fprintf(str_f, "<select");
-    if (id_attr) {
+    if (id_attr && idsuffix_attr) {
+        fprintf(str_f, " id=\"%s", id_attr->value);
+        fclose(str_f); str_f = 0;
+        handle_html_string(prg_f, txt_f, log_f, str_p);
+        free(str_p); str_p = 0; str_z = 0;
+        TypeInfo *t = NULL;
+        int r = parse_c_expression(ps, cntx, log_f, idsuffix_attr->value, &t, ps->pos);
+        if (r >= 0) {
+            processor_state_invoke_type_handler(log_f, cntx, ps, txt_f, prg_f, idsuffix_attr->value, elem, t);
+        }
+        str_f = open_memstream(&str_p, &str_z);
+        fprintf(str_f, "\"");
+    } else if (id_attr) {
         fprintf(str_f, " id=\"%s\"", id_attr->value);
+    }
+    HtmlAttribute *disabledexpr_attr = html_element_find_attribute(elem, "disabledexpr");
+    if (disabledexpr_attr) {
+        fclose(str_f); str_f = 0;
+        handle_html_string(prg_f, txt_f, log_f, str_p);
+        free(str_p); str_p = 0; str_z = 0;
+        fprintf(prg_f, "if (%s) {\n", disabledexpr_attr->value);
+        handle_html_string(prg_f, txt_f, log_f, " disabled=\"disabled\"");
+        fprintf(prg_f, "}\n");
+        str_f = open_memstream(&str_p, &str_z);
+    }
+    HtmlAttribute *onchange_attr = html_element_find_attribute(elem, "onchange");
+    if (onchange_attr) {
+        fprintf(str_f, " onchange=\"%s\"", onchange_attr->value);
     }
     fprintf(str_f, " name=\"%s\"><option value=\"-1\"", name_attr->value);
     fclose(str_f); str_f = 0;
@@ -5405,10 +5619,23 @@ handle_help_open(
 {
     HtmlElement *elem = ps->el_stack->el;
     unsigned char buf[1024];
+    int need_icon = 0;
+
+    HtmlAttribute *icon_attr = html_element_find_attribute(elem, "icon");
+    if (icon_attr) {
+        int v;
+        if (xml_parse_bool(NULL, NULL, 0, 0, icon_attr->value, &v) >= 0) {
+            need_icon = v;
+        }
+    }
 
     HtmlAttribute *topic_attr = html_element_find_attribute(elem, "topic");
     if (topic_attr != NULL) {
-        fprintf(prg_f, "hr_print_help_url_2(out_f, \"%s\");\n", topic_attr->value);
+        if (need_icon > 0) {
+            fprintf(prg_f, "hr_print_help_url_3(out_f, \"%s\");\n", topic_attr->value);
+        } else {
+            fprintf(prg_f, "hr_print_help_url_2(out_f, \"%s\");\n", topic_attr->value);
+        }
     } else {
         if (process_ac_attr(log_f, cntx, ps, elem, buf, sizeof(buf)) > 0) {
             fprintf(prg_f, "hr_print_help_url(out_f, %s);\n", buf);
@@ -5469,6 +5696,7 @@ static const struct ElementInfo element_handlers[] =
     { "s:redirect", handle_redirect_open, NULL },
     { "s:help", handle_help_open, NULL },
     { "s:indir", handle_indir_open, handle_indir_close },
+    { "s:textarea", handle_textarea_open, NULL },
 
     { NULL, NULL, NULL },
 };

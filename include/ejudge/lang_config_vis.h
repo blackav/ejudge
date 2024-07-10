@@ -1,9 +1,8 @@
 /* -*- c -*- */
-/* $Id$ */
 #ifndef __LANG_CONFIG_VIS_H__
 #define __LANG_CONFIG_VIS_H__
 
-/* Copyright (C) 2008-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -85,5 +84,11 @@ lang_config_generate_compile_cfg(
         const unsigned char *compile_home_dir,
         int serialization_key,
         const unsigned char *lang_config_dir);
+
+int
+lang_config_update_compile_cfg(
+        FILE *log_f,
+        const unsigned char *prog,
+        const unsigned char *compile_home_dir);
 
 #endif /* __LANG_CONFIG_VIS_H__ */

@@ -326,8 +326,8 @@
           if (!prob->custom_compile_cmd || !prob->custom_compile_cmd[0]) {
             for (i = 1; i <= cs->max_lang; i++) {
               const struct section_language_data *lang = cs->langs[i];
-              if (!lang || lang->disabled
-                  || (prob->enable_container <= 0 && lang->insecure && global->secure_run)) continue;
+              if (!lang || lang->disabled > 0
+                  || (prob->enable_container <= 0 && lang->insecure > 0 && global->secure_run)) continue;
               if (lang->enable_custom > 0) continue;
               if ((lang_list = prob->enable_language)) {
                 for (j = 0; lang_list[j]; j++)

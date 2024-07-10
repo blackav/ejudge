@@ -315,6 +315,8 @@ static struct meta_info_item meta_info_section_global_data_data[] =
   [CNTSGLOB_max_input_size] = { CNTSGLOB_max_input_size, 'z', XSIZE(struct section_global_data, max_input_size), "max_input_size", XOFFSET(struct section_global_data, max_input_size) },
   [CNTSGLOB_max_submit_num] = { CNTSGLOB_max_submit_num, 'i', XSIZE(struct section_global_data, max_submit_num), "max_submit_num", XOFFSET(struct section_global_data, max_submit_num) },
   [CNTSGLOB_max_submit_total] = { CNTSGLOB_max_submit_total, 'z', XSIZE(struct section_global_data, max_submit_total), "max_submit_total", XOFFSET(struct section_global_data, max_submit_total) },
+  [CNTSGLOB_enable_language_import] = { CNTSGLOB_enable_language_import, 'B', XSIZE(struct section_global_data, enable_language_import), "enable_language_import", XOFFSET(struct section_global_data, enable_language_import) },
+  [CNTSGLOB_language_import] = { CNTSGLOB_language_import, 'x', XSIZE(struct section_global_data, language_import), "language_import", XOFFSET(struct section_global_data, language_import) },
 };
 
 int cntsglob_get_type(int tag)
@@ -939,6 +941,8 @@ void cntsglob_copy(struct section_global_data *dst, const struct section_global_
   dst->max_input_size = src->max_input_size;
   dst->max_submit_num = src->max_submit_num;
   dst->max_submit_total = src->max_submit_total;
+  dst->enable_language_import = src->enable_language_import;
+  dst->language_import = (typeof(dst->language_import)) sarray_copy((char**) src->language_import);
 }
 
 void cntsglob_free(struct section_global_data *ptr)
@@ -1118,6 +1122,7 @@ void cntsglob_free(struct section_global_data *ptr)
   free(ptr->unhandled_vars);
   // private disable_prob_long_name
   // private disable_passed_tests
+  sarray_free((char**) ptr->language_import);
 }
 
 const struct meta_methods cntsglob_methods =
@@ -1982,6 +1987,7 @@ static struct meta_info_item meta_info_section_language_data_data[] =
   [CNTSLANG_preserve_line_numbers] = { CNTSLANG_preserve_line_numbers, 'B', XSIZE(struct section_language_data, preserve_line_numbers), "preserve_line_numbers", XOFFSET(struct section_language_data, preserve_line_numbers) },
   [CNTSLANG_default_disabled] = { CNTSLANG_default_disabled, 'B', XSIZE(struct section_language_data, default_disabled), "default_disabled", XOFFSET(struct section_language_data, default_disabled) },
   [CNTSLANG_enabled] = { CNTSLANG_enabled, 'B', XSIZE(struct section_language_data, enabled), "enabled", XOFFSET(struct section_language_data, enabled) },
+  [CNTSLANG_disable_auto_update] = { CNTSLANG_disable_auto_update, 'B', XSIZE(struct section_language_data, disable_auto_update), "disable_auto_update", XOFFSET(struct section_language_data, disable_auto_update) },
   [CNTSLANG_max_vm_size] = { CNTSLANG_max_vm_size, 'E', XSIZE(struct section_language_data, max_vm_size), "max_vm_size", XOFFSET(struct section_language_data, max_vm_size) },
   [CNTSLANG_max_stack_size] = { CNTSLANG_max_stack_size, 'E', XSIZE(struct section_language_data, max_stack_size), "max_stack_size", XOFFSET(struct section_language_data, max_stack_size) },
   [CNTSLANG_max_file_size] = { CNTSLANG_max_file_size, 'E', XSIZE(struct section_language_data, max_file_size), "max_file_size", XOFFSET(struct section_language_data, max_file_size) },
@@ -2095,6 +2101,7 @@ void cntslang_copy(struct section_language_data *dst, const struct section_langu
   dst->preserve_line_numbers = src->preserve_line_numbers;
   dst->default_disabled = src->default_disabled;
   dst->enabled = src->enabled;
+  dst->disable_auto_update = src->disable_auto_update;
   dst->max_vm_size = src->max_vm_size;
   dst->max_stack_size = src->max_stack_size;
   dst->max_file_size = src->max_file_size;
