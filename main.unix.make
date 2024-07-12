@@ -232,6 +232,7 @@ subdirs_all:
 	$(MAKE) -C plugins/auth-vk DESTDIR="${DESTDIR}" all
 	$(MAKE) -C plugins/auth-yandex DESTDIR="${DESTDIR}" all
 	$(MAKE) -C plugins/notify-redis DESTDIR="${DESTDIR}" all
+	$(MAKE) -C plugins/notify-redis-streams DESTDIR="${DESTDIR}" all
 	$(MAKE) -C csp/contests DESTDIR="${DESTDIR}" all
 	$(MAKE) -C csp/super-server DESTDIR="${DESTDIR}" all
 
@@ -317,6 +318,7 @@ install: local_install
 	$(MAKE) -C plugins/auth-vk DESTDIR="${DESTDIR}" install
 	$(MAKE) -C plugins/auth-yandex DESTDIR="${DESTDIR}" install
 	$(MAKE) -C plugins/notify-redis DESTDIR="${DESTDIR}" install
+	$(MAKE) -C plugins/notify-redis-streams DESTDIR="${DESTDIR}" install
 	$(MAKE) -C csp/contests DESTDIR="${DESTDIR}" install
 	$(MAKE) -C csp/super-server DESTDIR="${DESTDIR}" install
 	#if [ ! -f "${INSTALLSCRIPT}" ]; then ./ejudge-setup -b; fi
@@ -530,6 +532,7 @@ subdir_clean:
 	$(MAKE) -C plugins/auth-vk DESTDIR="${DESTDIR}" clean
 	$(MAKE) -C plugins/auth-yandex DESTDIR="${DESTDIR}" clean
 	$(MAKE) -C plugins/notify-redis DESTDIR="${DESTDIR}" clean
+	$(MAKE) -C plugins/notify-redis-streams DESTDIR="${DESTDIR}" clean
 	$(MAKE) -C csp/contests DESTDIR="${DESTDIR}" clean
 	$(MAKE) -C csp/super-server DESTDIR="${DESTDIR}" clean
 	$(MAKE) -C cfront clean
@@ -570,6 +573,7 @@ subdir_distclean :
 	$(MAKE) -C plugins/auth-vk DESTDIR="${DESTDIR}" distclean
 	$(MAKE) -C plugins/auth-yandex DESTDIR="${DESTDIR}" distclean
 	$(MAKE) -C plugins/notify-redis DESTDIR="${DESTDIR}" distclean
+	$(MAKE) -C plugins/notify-redis-streams DESTDIR="${DESTDIR}" distclean
 	$(MAKE) -C csp/contests DESTDIR="${DESTDIR}" distclean
 	$(MAKE) -C csp/super-server DESTDIR="${DESTDIR}" distclean
 	$(MAKE) -C cfront distclean
