@@ -1478,8 +1478,11 @@ super_html_simplify_lang(
 
   lang->id = serv_lang->id;
   _ = snprintf(lang->short_name, sizeof(lang->short_name), "%s", serv_lang->short_name);
-  _ = snprintf(lang->src_sfx, sizeof(lang->src_sfx), "%s", serv_lang->src_sfx);
-  _ = snprintf(lang->exe_sfx, sizeof(lang->exe_sfx), "%s", serv_lang->exe_sfx);
+  // always inherited
+  //_ = snprintf(lang->src_sfx, sizeof(lang->src_sfx), "%s", serv_lang->src_sfx);
+  //_ = snprintf(lang->exe_sfx, sizeof(lang->exe_sfx), "%s", serv_lang->exe_sfx);
+  lang->src_sfx[0] = 0;
+  lang->exe_sfx[0] = 0;
   if (lang->compile_id == lang->id) {
     lang->compile_id = 0;
   }
@@ -1748,13 +1751,13 @@ super_html_serve_unparse_serve_cfg(
       if (lang->compile_id > 0 && lang->id == lang->compile_id) lang->compile_id = 0;
       if (sstate->serv_langs[i]->id == i && !strcmp(sstate->serv_langs[i]->short_name, lang->short_name)) lang->id = 0;
 
-      prepare_unparse_lang(f, sstate->langs[i], 0, NULL, NULL, NULL);
+      prepare_unparse_lang(f, sstate->langs[i], 0, NULL, NULL, NULL, 1);
     }
   } else {
     if (sstate->lang_a > 0) {
       for (i = 1, active_langs = 0; i < sstate->lang_a; i++) {
         if (!sstate->langs[i]) continue;
-        prepare_unparse_lang(f, sstate->langs[i], 0, 0, sstate->lang_opts[i], sstate->lang_libs[i]);
+        prepare_unparse_lang(f, sstate->langs[i], 0, 0, sstate->lang_opts[i], sstate->lang_libs[i], 0);
         active_langs++;
       }
     }
