@@ -1764,7 +1764,7 @@ lang_config_update_compile_cfg(
   for (int lang_id = 1; lang_id <= max_lang_id; ++lang_id) {
     struct section_language_data *lang = langs[lang_id];
     if (!lang) continue;
-    prepare_unparse_lang(cfg_f, lang, 0, NULL, NULL, NULL);
+    prepare_unparse_lang(cfg_f, lang, 0, NULL, NULL, NULL, 0);
   }
   fclose(cfg_f); cfg_f = NULL;
 

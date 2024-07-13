@@ -888,7 +888,8 @@ prepare_unparse_lang(
         int lang_id,
         const unsigned char *long_name,
         const unsigned char *options,
-        const unsigned char *libs)
+        const unsigned char *libs,
+        int skip_suffixes)
 {
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   int i, flag = 0, lib_flag = 0;
@@ -921,9 +922,11 @@ prepare_unparse_lang(
   }
   if (lang->arch && lang->arch[0])
     fprintf(f, "arch = \"%s\"\n", CARMOR(lang->arch));
-  fprintf(f, "src_sfx = \"%s\"\n", CARMOR(lang->src_sfx));
-  if (lang->exe_sfx[0])
-    fprintf(f, "exe_sfx = \"%s\"\n", CARMOR(lang->exe_sfx));
+  if (!skip_suffixes) {
+    fprintf(f, "src_sfx = \"%s\"\n", CARMOR(lang->src_sfx));
+    if (lang->exe_sfx[0])
+      fprintf(f, "exe_sfx = \"%s\"\n", CARMOR(lang->exe_sfx));
+  }
   /*
   if (lang->key[0])
     fprintf(f, "key = \"%s\"\n", CARMOR(lang->key));

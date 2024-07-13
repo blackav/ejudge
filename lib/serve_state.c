@@ -976,7 +976,7 @@ serve_state_import_languages(
   for (int lang_id = 1; lang_id <= cs->max_lang; ++lang_id) {
     const struct section_language_data *lang = cs->langs[lang_id];
     if (lang && lang->disabled <= 0) {
-      prepare_unparse_lang(stderr, lang, 0, NULL, NULL, NULL);
+      prepare_unparse_lang(stderr, lang, 0, NULL, NULL, NULL, 0);
     }
   }
   fprintf(stderr, "======== end languages dump ========\n");
