@@ -1645,7 +1645,8 @@ prepare_unparse_lang(
         int lang_id,
         const unsigned char *long_name,
         const unsigned char *options,
-        const unsigned char *libs);
+        const unsigned char *libs,
+        int skip_suffixes);
 void prepare_unparse_unhandled_lang(FILE *f,
                                     const struct section_language_data *lang);
 int prepare_check_forbidden_lang(FILE *f, const struct section_language_data *lang);

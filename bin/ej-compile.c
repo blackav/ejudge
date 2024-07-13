@@ -1567,7 +1567,7 @@ save_config(void)
 
   for (int i = 1; i <= max_lang; ++i) {
     if (langs[i]) {
-      prepare_unparse_lang(cfg_f, langs[i], i, NULL, NULL, NULL);
+      prepare_unparse_lang(cfg_f, langs[i], i, NULL, NULL, NULL, 0);
     }
   }
   fclose(cfg_f); cfg_f = NULL;
