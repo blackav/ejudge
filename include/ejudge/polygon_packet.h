@@ -2,7 +2,7 @@
 #ifndef __POLYGON_PACKET_H__
 #define __POLYGON_PACKET_H__
 
-/* Copyright (C) 2012-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -45,6 +45,7 @@ struct polygon_packet
     ejintbool_t enable_api;
     ejintbool_t verbose;
     ejintbool_t ignore_main_solution;
+    ejintbool_t enable_rss_limit;
 
     unsigned char *polygon_url;
     unsigned char *login;
