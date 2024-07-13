@@ -18,6 +18,7 @@ enum
   META_POLYGON_PACKET_enable_api,
   META_POLYGON_PACKET_verbose,
   META_POLYGON_PACKET_ignore_main_solution,
+  META_POLYGON_PACKET_enable_rss_limit,
   META_POLYGON_PACKET_polygon_url,
   META_POLYGON_PACKET_login,
   META_POLYGON_PACKET_password,
