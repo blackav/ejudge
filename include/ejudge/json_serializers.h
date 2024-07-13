@@ -48,6 +48,6 @@ json_serialize_userlist_user(
 
 struct section_language_data;
 struct cJSON *
-json_serialize_language(const struct section_language_data *lang);
+json_serialize_language(const struct section_language_data *lang, int final_mode);
 
 #endif /* __JSON_SERIALIZERS_H__ */

@@ -549,7 +549,7 @@ json_serialize_userlist_user(
 }
 
 cJSON *
-json_serialize_language(const struct section_language_data *lang)
+json_serialize_language(const struct section_language_data *lang, int final_mode)
 {
     cJSON *jr = cJSON_CreateObject();
 
@@ -559,7 +559,7 @@ json_serialize_language(const struct section_language_data *lang)
     }
     if (lang->disabled > 0) {
         cJSON_AddTrueToObject(jr, "disabled");
-    } else if (!lang->disabled) {
+    } else if (!lang->disabled && !final_mode) {
         cJSON_AddFalseToObject(jr, "disabled");
     }
     if (lang->compile_real_time_limit > 0) {
@@ -567,7 +567,7 @@ json_serialize_language(const struct section_language_data *lang)
     }
     if (lang->binary > 0) {
         cJSON_AddTrueToObject(jr, "binary");
-    } else if (!lang->binary) {
+    } else if (!lang->binary && !final_mode) {
         cJSON_AddFalseToObject(jr, "binary");
     }
     if (lang->priority_adjustment != 0) {
@@ -575,46 +575,46 @@ json_serialize_language(const struct section_language_data *lang)
     }
     if (lang->insecure > 0) {
         cJSON_AddTrueToObject(jr, "insecure");
-    } else if (!lang->insecure) {
+    } else if (!lang->insecure && !final_mode) {
         cJSON_AddFalseToObject(jr, "insecure");
     }
     if (lang->disable_security > 0) {
         cJSON_AddTrueToObject(jr, "disable_security");
-    } else if (!lang->disable_security) {
+    } else if (!lang->disable_security && !final_mode) {
         cJSON_AddFalseToObject(jr, "disable_security");
     }
     if (lang->enable_suid_run > 0) {
         cJSON_AddTrueToObject(jr, "enable_suid_run");
-    } else if (!lang->enable_suid_run) {
+    } else if (!lang->enable_suid_run && !final_mode) {
         cJSON_AddFalseToObject(jr, "enable_suid_run");
     }
     if (lang->is_dos > 0) {
         cJSON_AddTrueToObject(jr, "is_dos");
-    } else if (!lang->is_dos) {
+    } else if (!lang->is_dos && !final_mode) {
         cJSON_AddFalseToObject(jr, "is_dos");
     }
     cJSON_AddStringToObject(jr, "short_name", lang->short_name);
     if (lang->long_name) {
         cJSON_AddStringToObject(jr, "long_name", lang->long_name);
     }
-    if (lang->key) {
+    if (lang->key && (!final_mode || lang->key[0])) {
         cJSON_AddStringToObject(jr, "key", lang->key);
     }
-    if (lang->arch) {
+    if (lang->arch && (!final_mode || lang->arch[0])) {
         cJSON_AddStringToObject(jr, "arch", lang->arch);
     }
     cJSON_AddStringToObject(jr, "src_sfx", lang->src_sfx);
     cJSON_AddStringToObject(jr, "exe_sfx", lang->exe_sfx);
-    if (lang->content_type) {
+    if (lang->content_type && (!final_mode || lang->content_type[0])) {
         cJSON_AddStringToObject(jr, "content_type", lang->content_type);
     }
-    if (lang->cmd) {
+    if (lang->cmd && (!final_mode || lang->cmd[0])) {
         cJSON_AddStringToObject(jr, "cmd", lang->cmd);
     }
-    if (lang->style_checker_cmd) {
+    if (lang->style_checker_cmd && (!final_mode || lang->style_checker_cmd[0])) {
         cJSON_AddStringToObject(jr, "style_checker_cmd", lang->style_checker_cmd);
     }
-    if (lang->style_checker_env) {
+    if (lang->style_checker_env && (!final_mode || lang->style_checker_env[0])) {
         cJSON *ja = cJSON_CreateArray();
         for (int i = 0; lang->style_checker_env[i]; ++i) {
             cJSON *js = cJSON_CreateString(lang->style_checker_env[i]);
@@ -622,50 +622,50 @@ json_serialize_language(const struct section_language_data *lang)
         }
         cJSON_AddItemToObject(jr, "style_checker_env", ja);
     }
-    if (lang->extid) {
+    if (lang->extid && (!final_mode || lang->extid[0])) {
         cJSON_AddStringToObject(jr, "extid", lang->extid);
     }
-    if (lang->super_run_dir) {
+    if (lang->super_run_dir && (!final_mode || lang->super_run_dir[0])) {
         cJSON_AddStringToObject(jr, "super_run_dir", lang->super_run_dir);
     }
     if (lang->disable_auto_testing > 0) {
         cJSON_AddTrueToObject(jr, "disable_auto_testing");
-    } else if (!lang->disable_auto_testing) {
+    } else if (!lang->disable_auto_testing && !final_mode) {
         cJSON_AddFalseToObject(jr, "disable_auto_testing");
     }
     if (lang->disable_testing > 0) {
         cJSON_AddTrueToObject(jr, "disable_testing");
-    } else if (!lang->disable_testing) {
+    } else if (!lang->disable_testing && !final_mode) {
         cJSON_AddFalseToObject(jr, "disable_testing");
     }
     if (lang->enable_custom > 0) {
         cJSON_AddTrueToObject(jr, "enable_custom");
-    } else if (!lang->enable_custom) {
+    } else if (!lang->enable_custom && !final_mode) {
         cJSON_AddFalseToObject(jr, "enable_custom");
     }
     if (lang->enable_ejudge_env > 0) {
         cJSON_AddTrueToObject(jr, "enable_ejudge_env");
-    } else if (!lang->enable_ejudge_env) {
+    } else if (!lang->enable_ejudge_env && !final_mode) {
         cJSON_AddFalseToObject(jr, "enable_ejudge_env");
     }
     if (lang->preserve_line_numbers > 0) {
         cJSON_AddTrueToObject(jr, "preserve_line_numbers");
-    } else if (!lang->preserve_line_numbers) {
+    } else if (!lang->preserve_line_numbers && !final_mode) {
         cJSON_AddFalseToObject(jr, "preserve_line_numbers");
     }
     if (lang->default_disabled > 0) {
         cJSON_AddTrueToObject(jr, "default_disabled");
-    } else if (!lang->default_disabled) {
+    } else if (!lang->default_disabled && !final_mode) {
         cJSON_AddFalseToObject(jr, "default_disabled");
     }
     if (lang->enabled > 0) {
         cJSON_AddTrueToObject(jr, "enabled");
-    } else if (!lang->enabled) {
+    } else if (!lang->enabled && !final_mode) {
         cJSON_AddFalseToObject(jr, "enabled");
     }
     if (lang->disable_auto_update > 0) {
         cJSON_AddTrueToObject(jr, "disable_auto_update");
-    } else if (!lang->disable_auto_update) {
+    } else if (!lang->disable_auto_update && !final_mode) {
         cJSON_AddFalseToObject(jr, "disable_auto_update");
     }
     if (lang->max_vm_size > 0) {
@@ -698,7 +698,7 @@ json_serialize_language(const struct section_language_data *lang)
   unsigned char *compile_status_dir;
   unsigned char *compile_report_dir;
   */
-    if (lang->compiler_env) {
+    if (lang->compiler_env && (!final_mode || lang->compiler_env[0])) {
         cJSON *ja = cJSON_CreateArray();
         for (int i = 0; lang->compiler_env[i]; ++i) {
             cJSON *js = cJSON_CreateString(lang->compiler_env[i]);
@@ -706,31 +706,31 @@ json_serialize_language(const struct section_language_data *lang)
         }
         cJSON_AddItemToObject(jr, "compiler_env", ja);
     }
-    if (lang->compile_server_id) {
+    if (lang->compile_server_id && (!final_mode || lang->compile_server_id[0])) {
         cJSON_AddStringToObject(jr, "compile_server_id", lang->compile_server_id);
     }
-    if (lang->multi_header_suffix) {
+    if (lang->multi_header_suffix && (!final_mode || lang->multi_header_suffix[0])) {
         cJSON_AddStringToObject(jr, "multi_header_suffix", lang->multi_header_suffix);
     }
-    if (lang->container_options) {
+    if (lang->container_options && (!final_mode || lang->container_options[0])) {
         cJSON_AddStringToObject(jr, "container_options", lang->container_options);
     }
-    if (lang->compiler_container_options) {
+    if (lang->compiler_container_options && (!final_mode || lang->compiler_container_options[0])) {
         cJSON_AddStringToObject(jr, "compiler_container_options", lang->compiler_container_options);
     }
-    if (lang->clean_up_cmd) {
+    if (lang->clean_up_cmd && (!final_mode || lang->clean_up_cmd[0])) {
         cJSON_AddStringToObject(jr, "clean_up_cmd", lang->clean_up_cmd);
     }
-    if (lang->run_env_file) {
+    if (lang->run_env_file && (!final_mode || lang->run_env_file[0])) {
         cJSON_AddStringToObject(jr, "run_env_file", lang->run_env_file);
     }
-    if (lang->clean_up_env_file) {
+    if (lang->clean_up_env_file && (!final_mode || lang->clean_up_env_file[0])) {
         cJSON_AddStringToObject(jr, "clean_up_env_file", lang->clean_up_env_file);
     }
-    if (lang->version) {
+    if (lang->version && (!final_mode || lang->version[0])) {
         cJSON_AddStringToObject(jr, "version", lang->version);
     }
-    if (lang->unhandled_vars) {
+    if (lang->unhandled_vars && !final_mode) {
         cJSON_AddStringToObject(jr, "unhandled_vars", lang->unhandled_vars);
     }
 
