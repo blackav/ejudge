@@ -10658,6 +10658,72 @@ userlist_error:;
   goto done;
 }
 
+static void
+priv_list_languages_json(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  serve_state_t cs = extra->serve_state;
+  const struct section_global_data *global = cs->global;
+  int ok = 0;
+  int err_num = NEW_SRV_ERR_INV_PARAM;
+  const unsigned char *err_msg = NULL;
+  cJSON *jr = cJSON_CreateObject();
+  int http_status = 400;
+
+  cJSON *jec = cJSON_CreateObject();
+  if (phr->config->enable_compile_container > 0) {
+    cJSON_AddTrueToObject(jec, "enable_compile_container");
+  }
+  cJSON_AddItemToObject(jr, "ejudge", jec);
+
+  cJSON *jg = cJSON_CreateObject();
+  if (global->enable_language_import > 0) {
+    cJSON_AddTrueToObject(jg, "enable_language_import");
+  }
+  if (phr->config->enable_compile_container <= 0) {
+    if (global->compile_max_vm_size > 0) {
+      cJSON_AddNumberToObject(jg, "compile_max_vm_size", global->compile_max_vm_size);
+    }
+    if (global->compile_max_stack_size > 0) {
+      cJSON_AddNumberToObject(jg, "compile_max_stack_size", global->compile_max_stack_size);
+    }
+    if (global->compile_max_rss_size > 0) {
+      cJSON_AddNumberToObject(jg, "compile_max_rss_size", global->compile_max_rss_size);
+    }
+  }
+  if (global->compile_max_file_size > 0) {
+    cJSON_AddNumberToObject(jg, "compile_max_file_size", global->compile_max_file_size);
+  }
+  if (global->compile_server_id && global->compile_server_id[0]) {
+    cJSON_AddStringToObject(jg, "compile_server_id", global->compile_server_id);
+  }
+  cJSON_AddItemToObject(jr, "global", jg);
+
+  cJSON *jls = cJSON_CreateObject();
+  for (int lang_id = 1; lang_id <= cs->max_lang; ++lang_id) {
+    const struct section_language_data *lang = cs->langs[lang_id];
+    if (!lang) continue;
+    if (lang->disabled > 0) continue;
+    cJSON *jl = json_serialize_language(lang, 1);
+    cJSON_AddItemToObject(jls, lang->short_name, jl);
+  }
+  cJSON_AddItemToObject(jr, "languages", jls);
+
+  ok = 1;
+  err_num = 0;
+  http_status = 200;
+
+  phr->json_reply = 1;
+  phr->status_code = http_status;
+  emit_json_result(fout, phr, ok, err_num, 0, err_msg, jr);
+  if (jr) {
+    cJSON_Delete(jr);
+  }
+}
+
 typedef PageInterface *(*external_action_handler_t)(void);
 
 typedef int (*new_action_handler_t)(
@@ -10899,6 +10965,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_COPY_USER_INFO] = priv_copy_user_info,
   [NEW_SRV_ACTION_CHANGE_REGISTRATION] = priv_change_registration,
   [NEW_SRV_ACTION_PROBLEM_STATUS_JSON] = priv_problem_status_json,
+  [NEW_SRV_ACTION_LIST_LANGUAGES] = priv_list_languages_json,
 };
 
 static const unsigned char * const external_priv_action_names[NEW_SRV_ACTION_LAST] =
