@@ -955,7 +955,7 @@ var global_language_sizes = <s:v value="jstr" escape="false" />;
     enabled = lang_extra->enabled == 1;
     more_expanded = lang_extra->more_expanded;
     if (lang && expanded) {
-      jl = json_serialize_language(lang);
+      jl = json_serialize_language(lang, 0);
       jstr = cJSON_PrintUnformatted(jl);
 %>
 <script type="text/javascript">
