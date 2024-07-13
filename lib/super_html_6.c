@@ -4477,6 +4477,7 @@ super_serve_op_IMPORT_FROM_POLYGON_ACTION(
   int enable_api_flag = 0;
   int verbose_flag = 0;
   int ignore_main_solution_flag = 0;
+  int enable_rss_limit_flag = 0;
 
   if (!ss->edited_cnts || !ss->global) {
     FAIL(SSERV_ERR_NO_EDITED_CNTS);
@@ -4633,6 +4634,7 @@ super_serve_op_IMPORT_FROM_POLYGON_ACTION(
   if (hr_cgi_param(phr, "fetch_latest_available", &s) > 0) fetch_latest_available_flag = 1;
   if (hr_cgi_param(phr, "binary_input", &s) > 0) binary_input_flag = 1;
   if (hr_cgi_param(phr, "enable_iframe_statement", &s) > 0) enable_iframe_statement_flag = 1;
+  if (hr_cgi_param(phr, "enable_rss_limit", &s) > 0) enable_rss_limit_flag = 1;
 
   if (hr_cgi_param(phr, "language_priority", &s) > 0 && *s) {
     if (!strcmp(s, "ru,en")
@@ -4724,6 +4726,7 @@ super_serve_op_IMPORT_FROM_POLYGON_ACTION(
   pp->ignore_solutions = ignore_solutions_flag;
   pp->binary_input = binary_input_flag;
   pp->enable_iframe_statement = enable_iframe_statement_flag;
+  pp->enable_rss_limit = enable_rss_limit_flag;
   pp->verbose = verbose_flag;
   pp->create_mode = 1;
   if (upload_mode <= 0) {
@@ -5143,6 +5146,9 @@ do_import_problem(
   if (cfg->max_rss_size != (size_t) -1L && cfg->max_rss_size) {
     prob->max_rss_size = cfg->max_rss_size;
   }
+  if (cfg->disable_vm_size_limit > 0) {
+    prob->disable_vm_size_limit = 1;
+  }
   if (cfg->test_pat && cfg->test_pat[0]) {
     xstrdup3(&prob->test_pat, cfg->test_pat);
   }
@@ -5205,7 +5211,8 @@ super_serve_op_DOWNLOAD_CLEANUP_AND_IMPORT_ACTION(
   struct sid_state *ss = phr->ss;
   struct update_state *us = ss->update_state;
   FILE *f = NULL;
-  int exit_code = -1, count = 0, successes = 0, failures = 0;
+  int exit_code = -1, count = 0, failures = 0;
+  __attribute__((unused)) int successes = 0;
   struct ss_download_status *statuses = NULL;
 
   if (!us) {
@@ -5302,6 +5309,7 @@ super_serve_op_UPDATE_FROM_POLYGON_ACTION(
   int verbose_flag = 0;
   int binary_input_flag = 0;
   int enable_iframe_statement_flag = 0;
+  int enable_rss_limit_flag = 0;
 
   if (hr_cgi_param(phr, "verbose", &s) > 0) verbose_flag = 1;
 
@@ -5408,6 +5416,7 @@ super_serve_op_UPDATE_FROM_POLYGON_ACTION(
   if (hr_cgi_param(phr, "fetch_latest_available", &s) > 0) fetch_latest_available_flag = 1;
   if (hr_cgi_param(phr, "binary_input", &s) > 0) binary_input_flag = 1;
   if (hr_cgi_param(phr, "enable_iframe_statement", &s) > 0) enable_iframe_statement_flag = 1;
+  if (hr_cgi_param(phr, "enable_rss_limit_flag", &s) > 0) enable_rss_limit_flag = 1;
 
   if ((r = hr_cgi_param(phr, "polygon_url", &s)) < 0) {
     fprintf(log_f, "polygon url is invalid\n");
@@ -5493,6 +5502,7 @@ super_serve_op_UPDATE_FROM_POLYGON_ACTION(
   pp->file_group = xstrdup2(cnts->file_group);
   pp->binary_input = binary_input_flag;
   pp->enable_iframe_statement = enable_iframe_statement_flag;
+  pp->enable_rss_limit = enable_rss_limit_flag;
   XCALLOC(pp->id, polygon_count + 1);
   for (int prob_id = 1, ind = 0; prob_id < ss->prob_a; ++prob_id) {
     const struct section_problem_data *prob = ss->probs[prob_id];
