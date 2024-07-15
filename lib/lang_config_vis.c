@@ -543,7 +543,7 @@ update_language_script(
   } else {
     // preserve the old output file
     _ = snprintf(old_path, sizeof(old_path), "%s.old", script_out);
-    if (rename(script_out, old_path) < 0) {
+    if (rename(script_out, old_path) < 0 && errno != ENOENT) {
       log_printf(err_f, win, "error: cannot rename `%s'\n", script_out);
       goto cleanup;
     }
@@ -1053,14 +1053,14 @@ lang_config_menu(
       c = getch();
       cmd = -1;
       switch (c) {
-      case 'q': case 'Q': /*case 'Ê' & 255: case 'ê' & 255:*/ case 'G' & 31:
+      case 'q': case 'Q': /*case 'ï¿½' & 255: case 'ï¿½' & 255:*/ case 'G' & 31:
       case 033:
         c = 'q';
         goto menu_done;
       case '\n': case '\r':
         c = '\n';
         goto menu_done;
-      case 'b': case 'B': /*case 'É' & 255: case 'é' & 255:*/
+      case 'b': case 'B': /*case 'ï¿½' & 255: case 'ï¿½' & 255:*/
         c = 'b';
         goto menu_done;
       case KEY_UP: case KEY_LEFT:
