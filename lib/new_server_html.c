@@ -176,6 +176,9 @@ emit_json_result(
         const unsigned char *err_msg,
         cJSON *jr);
 
+static struct new_session_info *priv_get_cached_session(struct http_request_info *phr);
+static struct new_session_info *unpriv_get_cached_session(struct http_request_info *phr);
+
 void
 ns_invalidate_session(
         unsigned long long session_id,
@@ -3105,6 +3108,12 @@ priv_change_language(FILE *fout,
                                     new_locale_id)) < 0) {
     ns_error(log_f, NEW_SRV_ERR_SESSION_UPDATE_FAILED, userlist_strerror(-r));
   }
+
+  struct new_session_info *nsi = priv_get_cached_session(phr);
+  if (nsi) {
+    nsi->locale_id = new_locale_id;
+  }
+
   return 0;
 
  invalid_param:
@@ -11568,6 +11577,12 @@ priv_check_cached_session(struct http_request_info *phr)
   return 0;
 }
 
+static struct new_session_info *
+priv_get_cached_session(struct http_request_info *phr)
+{
+  return nsc_find(&main_id_cache.s, phr->session_id, phr->client_key);
+}
+
 static void
 privileged_entry_point(
         FILE *fout,
@@ -12065,6 +12080,11 @@ unpriv_change_language(
     fprintf(phr->log_f, "set_cookie failed: %s\n", userlist_strerror(-r));
     error_page(fout, phr, 0, NEW_SRV_ERR_INTERNAL);
     goto cleanup;
+  }
+
+  struct new_session_info *nsi = unpriv_get_cached_session(phr);
+  if (nsi) {
+    nsi->locale_id = new_locale_id;
   }
 
   ns_refresh_page(fout, phr, NEW_SRV_ACTION_MAIN_PAGE, 0);
@@ -18826,6 +18846,12 @@ unpriv_check_cached_key(struct http_request_info *phr)
     ++metrics.data->get_key_count;
   }
   return 0;
+}
+
+static struct new_session_info *
+unpriv_get_cached_session(struct http_request_info *phr)
+{
+  return nsc_find(&main_id_cache.s, phr->session_id, phr->client_key);
 }
 
 static int
