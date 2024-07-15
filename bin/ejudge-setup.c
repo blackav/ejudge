@@ -1,6 +1,6 @@
 /* -*- mode:c -*- */
 
-/* Copyright (C) 2004-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -2672,6 +2672,8 @@ generate_serve_cfg(FILE *f)
   fprintf(f, "compile_max_vm_size = 512M\n");
   fprintf(f, "compile_max_file_size = 32M\n");
   fprintf(f, "\n");
+
+  fprintf(f, "enable_language_import\n\n");
 
   for (i = 0; i < lang_num; i++) {
     p = langs[i];
