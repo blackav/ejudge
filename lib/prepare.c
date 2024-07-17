@@ -7086,6 +7086,14 @@ prepare_copy_language(
         const struct section_language_data *in)
 {
   cntslang_copy(out, in);
+  // append version to the long_name
+  if (out->version && out->version[0] && out->long_name && out->long_name[0]) {
+    if (!strstr(out->long_name, out->version)) {
+      char *s = NULL;
+      asprintf(&s, "%s %s", out->long_name, out->version);
+      xfree(out->long_name); out->long_name = s;
+    }
+  }
 }
 
 #define LANG_MERGE_BOOL(field) do { \
