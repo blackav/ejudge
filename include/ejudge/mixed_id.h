@@ -2,7 +2,7 @@
 #ifndef __MIXED_ID_H__
 #define __MIXED_ID_H__
 
-/* Copyright (C) 2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2023-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -16,7 +16,13 @@
  * GNU General Public License for more details.
  */
 
-typedef __attribute__((aligned(16))) struct ej_mixed_id_t
+#ifdef __GCC__
+#define GCC_ATTRIB(x) __attribute__(x)
+#else
+#define GCC_ATTRIB(x)
+#endif
+
+typedef GCC_ATTRIB((aligned(16))) struct ej_mixed_id_t
 {
   unsigned char data[16];
 } ej_mixed_id_t;
