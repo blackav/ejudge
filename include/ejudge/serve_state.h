@@ -22,6 +22,7 @@
 #include "ejudge/watched_file.h"
 #include "ejudge/problem_plugin.h"
 #include "ejudge/contest_plugin.h"
+#include "ejudge/mixed_id.h"
 
 #include <time.h>
 #include <sys/time.h>
@@ -379,6 +380,13 @@ struct serve_state
 
   // serial number for the testing user
   int exec_user_serial;
+
+  // global notification driver id
+  unsigned char notify_driver;
+  // global notification queue kind
+  unsigned char notify_kind;
+  // global notification queue id
+  ej_mixed_id_t notify_queue;
 };
 typedef struct serve_state *serve_state_t;
 
