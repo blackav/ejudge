@@ -570,6 +570,7 @@ prepare_unparse_global(
   if (global->variant_plugin && global->variant_plugin[0] && strcmp(global->variant_plugin, "file"))
     fprintf(f, "variant_plugin = \"%s\"\n", CARMOR(global->variant_plugin));
   do_xstr(f, &ab, "load_user_group", global->load_user_group);
+  do_str(f, &ab, "notification_spec", global->notification_spec);
   fprintf(f, "\n");
 
   if (global->tokens && global->tokens[0]) {

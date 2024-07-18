@@ -145,7 +145,7 @@ struct virtual_end_info_s
   int checker_comment_mode;
 };
 
-/* sizeof(struct section_global_data) == 1208/1984 */
+/* sizeof(struct section_global_data) == ?/2000 */
 struct section_global_data
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));
@@ -821,9 +821,12 @@ struct section_global_data
   ejintbool_t enable_language_import;
   /** additional specifications for language imports */
   char **language_import;
+
+  /** specification of the notification destination */
+  unsigned char *notification_spec;
 };
 
-/* sizeof(struct section_problem_data) == 820/1280 */
+/* sizeof(struct section_problem_data) == ?/1392 */
 struct section_problem_data
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));   // 32 bytes
