@@ -5315,7 +5315,7 @@ serve_rejudge_run(
                                 re.is_vcs /* vcs_mode */,
                                 0 /* not_ok_is_cf */,
                                 user,
-                                NULL);
+                                &re);
       if (r < 0) {
         serve_report_check_failed(config, cnts, state, run_id, serve_err_str(r));
         err("rejudge_run: serve_compile_request failed: %s", serve_err_str(r));
@@ -5374,7 +5374,7 @@ serve_rejudge_run(
                             re.is_vcs /* vcs_mode */,
                             0 /* not_ok_is_cf */,
                             user,
-                            NULL);
+                            &re);
   if (r < 0) {
     serve_report_check_failed(config, cnts, state, run_id, serve_err_str(r));
     err("rejudge_run: serve_compile_request failed: %s", serve_err_str(r));
