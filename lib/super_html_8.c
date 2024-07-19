@@ -466,7 +466,10 @@ super_html_read_serve(
           if (!strcmp(short_name, "all")) {
             for (int i = 0; i < sstate->lang_a; ++i) {
               if (sstate->lang_extra[i].enabled != 2) {
-                sstate->lang_extra[i].enabled = enable_flag;
+                // "enable all" does not enable "default_disabled" languages
+                if (!enable_flag || !sstate->serv_langs[i] || sstate->serv_langs[i]->default_disabled <= 0) {
+                  sstate->lang_extra[i].enabled = enable_flag;
+                }
               }
             }
           } else {
@@ -1713,6 +1716,7 @@ super_html_serve_unparse_serve_cfg(
         // language_import = "disable L1, L2, L3"
         // language_import = "enable all"
         XALLOCAZ(langs_to_disable, disable_count);
+        XALLOCAZ(langs_to_enable, enable_count);
         default_enable = 1;
         for (i = 0; i < sstate->lang_a; ++i) {
           if (sstate->serv_langs[i] && sstate->lang_extra[i].enabled != 1 && sstate->lang_extra[i].enabled != 2 && (!sstate->serv_langs[i] || sstate->serv_langs[i]->default_disabled <= 0)) {
@@ -1721,6 +1725,9 @@ super_html_serve_unparse_serve_cfg(
             } else {
               langs_to_disable[langs_to_disable_u++] = i;
             }
+          }
+          if (sstate->serv_langs[i] && sstate->serv_langs[i]->default_disabled > 0 && sstate->lang_extra[i].enabled == 1) {
+            langs_to_enable[langs_to_enable_u++] = i;
           }
         }
       }

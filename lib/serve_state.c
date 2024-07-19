@@ -805,8 +805,8 @@ serve_state_import_languages(
         // not overridable by contest
         enable_flags[new_lang->id] = 2;
       } else if (imp_lang->default_disabled > 0) {
-        // overridable by contest
-        enable_flags[new_lang->id] = 0;
+        // overridable by contest, but not by "enable all"
+        enable_flags[new_lang->id] = 3;
       }
       continue;
     }
@@ -825,7 +825,7 @@ serve_state_import_languages(
       enable_flags[new_lang->id] = 2;
     } else if (imp_lang->default_disabled > 0) {
       // overridable by contest
-      enable_flags[new_lang->id] = 0;
+      enable_flags[new_lang->id] = 3;
     }
     new_langs[new_lang->id] = new_lang;
   }
@@ -870,7 +870,7 @@ serve_state_import_languages(
       enable_flags[new_lang->id] = 2;
     } else if (imp_lang->default_disabled > 0) {
       // overridable by contest
-      enable_flags[new_lang->id] = 0;
+      enable_flags[new_lang->id] = 3;
     }
   }
 
@@ -910,7 +910,9 @@ serve_state_import_languages(
         if (!strcmp(short_name, "all")) {
           for (int lang_id = 1; lang_id <= max_lang; ++lang_id) {
             if (enable_flags[lang_id] != 2) {
-              enable_flags[lang_id] = enable_flag;
+              if (!enable_flag || enable_flags[lang_id] != 3) {
+                enable_flags[lang_id] = enable_flag;
+              }
             }
           }
         } else {
@@ -963,7 +965,7 @@ serve_state_import_languages(
     }
     lang->enabled = 0;
     lang->default_disabled = 0;
-    if (enable_flags[lang_id] == 2) {
+    if (enable_flags[lang_id] >= 2) {
       lang->disabled = 1;
     } else if (enable_flags[lang_id] == 1) {
       lang->disabled = 0;
