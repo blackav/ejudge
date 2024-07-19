@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2023-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -130,6 +130,38 @@ mixed_id_parse_kind(const unsigned char *str)
         } else if (str[1] == 'u' && str[2] == 'i' && str[3] == 'd' && !str[4]){
             return MIXED_ID_UUID;
         } else if (str[1] == 'l' && str[2] == 'i' && str[3] == 'd' && !str[4]){
+            return MIXED_ID_ULID;
+        } else {
+            return -1;
+        }
+    } else {
+        return -1;
+    }
+}
+
+int
+mixed_it_parse_kind_2(const unsigned char *str, size_t *p_shift)
+{
+    if (!str) {
+        *p_shift = 0;
+        return 0;
+    }
+    if (str[0] == 's') {
+        if (str[1] == 't' && str[2] == 'r') {
+            *p_shift = 3;
+            return MIXED_ID_STRING;
+        } else {
+            return -1;
+        }
+    } else if (str[0] == 'u') {
+        if (str[1] == '6' && str[2] == '4') {
+            *p_shift = 3;
+            return MIXED_ID_U64;
+        } else if (str[1] == 'u' && str[2] == 'i' && str[3] == 'd'){
+            *p_shift = 4;
+            return MIXED_ID_UUID;
+        } else if (str[1] == 'l' && str[2] == 'i' && str[3] == 'd'){
+            *p_shift = 4;
             return MIXED_ID_ULID;
         } else {
             return -1;

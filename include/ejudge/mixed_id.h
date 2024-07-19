@@ -16,6 +16,8 @@
  * GNU General Public License for more details.
  */
 
+#include <stdlib.h>
+
 #ifdef __GCC__
 #define GCC_ATTRIB(x) __attribute__(x)
 #else
@@ -45,6 +47,9 @@ mixed_id_unmarshall(
 
 int
 mixed_id_parse_kind(const unsigned char *str);
+
+int
+mixed_it_parse_kind_2(const unsigned char *str, size_t *p_shift);
 
 const unsigned char *
 mixed_id_unparse_kind(int kind);
