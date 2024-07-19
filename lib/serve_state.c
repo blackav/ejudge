@@ -958,6 +958,9 @@ serve_state_import_languages(
   for (int lang_id = 1; lang_id <= max_lang; ++lang_id) {
     struct section_language_data *lang = new_langs[lang_id];
     if (!lang) continue;
+    if (lang->compile_id <= 0) {
+      lang->compile_id = lang_id;
+    }
     lang->enabled = 0;
     lang->default_disabled = 0;
     if (enable_flags[lang_id] == 2) {
@@ -1146,6 +1149,7 @@ serve_state_load_contest(
 
   if (global->notification_spec) {
     const unsigned char *spec = global->notification_spec;
+    struct notify_plugin_data *np = NULL;
     char *eptr = NULL;
     errno = 0;
     long notify_driver = strtol(spec, &eptr, 10);
@@ -1153,7 +1157,7 @@ serve_state_load_contest(
       err("invalid notification_spec");
       goto failure;
     }
-    if (!notify_plugin_get(config, notify_driver)) {
+    if (!(np = notify_plugin_get(config, notify_driver))) {
       err("invalid notification plugin");
       goto failure;
     }
@@ -1174,8 +1178,10 @@ serve_state_load_contest(
       err("invalid notification_spec");
       goto failure;
     }
+    mixed_id_marshall(state->notify_queue_buf, kind, &state->notify_queue);
     state->notify_driver = (int) notify_driver;
     state->notify_kind = kind;
+    state->notify_plugin = np;
   }
 
   if (global->enable_language_import > 0) {
