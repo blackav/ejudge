@@ -16,6 +16,7 @@
 
 #include "ejudge/serve_state.h"
 #include "ejudge/filter_tree.h"
+#include "ejudge/mixed_id.h"
 #include "ejudge/runlog.h"
 #include "ejudge/team_extra.h"
 #include "ejudge/teamdb.h"
@@ -42,6 +43,7 @@
 #include "ejudge/variant_plugin.h"
 #include "ejudge/submit_plugin.h"
 #include "ejudge/metrics_contest.h"
+#include "ejudge/notify_plugin.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -54,6 +56,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <ctype.h>
+#include <errno.h>
 
 serve_state_t
 serve_state_init(int contest_id)
@@ -1140,6 +1143,40 @@ serve_state_load_contest(
   serve_build_run_dirs(config, state, cnts);
 
   global = state->global;
+
+  if (global->notification_spec) {
+    const unsigned char *spec = global->notification_spec;
+    char *eptr = NULL;
+    errno = 0;
+    long notify_driver = strtol(spec, &eptr, 10);
+    if (errno || notify_driver <= 0 || notify_driver >= 128 || *eptr != ':') {
+      err("invalid notification_spec");
+      goto failure;
+    }
+    if (!notify_plugin_get(config, notify_driver)) {
+      err("invalid notification plugin");
+      goto failure;
+    }
+    spec = eptr + 1;
+    size_t offset = 0;
+    int kind = mixed_it_parse_kind_2(spec, &offset);
+    if (kind <= 0) {
+      err("invalid notification queue kind");
+      goto failure;
+    }
+    spec += offset;
+    if (*spec != ':') {
+      err("invalid notification_spec");
+      goto failure;
+    }
+    spec += 1;
+    if (mixed_id_unmarshall(&state->notify_queue, kind, spec) < 0) {
+      err("invalid notification_spec");
+      goto failure;
+    }
+    state->notify_driver = (int) notify_driver;
+    state->notify_kind = kind;
+  }
 
   if (global->enable_language_import > 0) {
     if (serve_state_import_languages(config, state) < 0) goto failure;
