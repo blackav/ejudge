@@ -110,6 +110,7 @@ FILES="${FILES} "*.ttf
 FILES="${FILES} "*.gif
 FILES="${FILES} "*.html
 FILES="${FILES} icons images jqgrid jquery-ui font"
+FILES=`echo $FILES`
 
 # symlink the necessary style files
 cd "${destdir}${target}"
