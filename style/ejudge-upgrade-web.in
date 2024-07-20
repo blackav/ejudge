@@ -101,6 +101,7 @@ then
     die "cannot remove old files from ${destdir}${target}"
 fi
 
+cd "${destdir}${datadir}/ejudge/style"
 FILES=*.png
 FILES="${FILES} "*.css
 FILES="${FILES} "*.jpg
@@ -111,6 +112,7 @@ FILES="${FILES} "*.html
 FILES="${FILES} icons images jqgrid jquery-ui font"
 
 # symlink the necessary style files
+cd "${destdir}${target}"
 for i in ${FILES}
 do
     if [ "${copy_mode}" = 1 ]
