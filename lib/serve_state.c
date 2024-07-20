@@ -16,6 +16,7 @@
 
 #include "ejudge/serve_state.h"
 #include "ejudge/filter_tree.h"
+#include "ejudge/mixed_id.h"
 #include "ejudge/runlog.h"
 #include "ejudge/team_extra.h"
 #include "ejudge/teamdb.h"
@@ -42,6 +43,7 @@
 #include "ejudge/variant_plugin.h"
 #include "ejudge/submit_plugin.h"
 #include "ejudge/metrics_contest.h"
+#include "ejudge/notify_plugin.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -54,6 +56,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <ctype.h>
+#include <errno.h>
 
 serve_state_t
 serve_state_init(int contest_id)
@@ -802,8 +805,8 @@ serve_state_import_languages(
         // not overridable by contest
         enable_flags[new_lang->id] = 2;
       } else if (imp_lang->default_disabled > 0) {
-        // overridable by contest
-        enable_flags[new_lang->id] = 0;
+        // overridable by contest, but not by "enable all"
+        enable_flags[new_lang->id] = 3;
       }
       continue;
     }
@@ -822,7 +825,7 @@ serve_state_import_languages(
       enable_flags[new_lang->id] = 2;
     } else if (imp_lang->default_disabled > 0) {
       // overridable by contest
-      enable_flags[new_lang->id] = 0;
+      enable_flags[new_lang->id] = 3;
     }
     new_langs[new_lang->id] = new_lang;
   }
@@ -867,7 +870,7 @@ serve_state_import_languages(
       enable_flags[new_lang->id] = 2;
     } else if (imp_lang->default_disabled > 0) {
       // overridable by contest
-      enable_flags[new_lang->id] = 0;
+      enable_flags[new_lang->id] = 3;
     }
   }
 
@@ -907,7 +910,9 @@ serve_state_import_languages(
         if (!strcmp(short_name, "all")) {
           for (int lang_id = 1; lang_id <= max_lang; ++lang_id) {
             if (enable_flags[lang_id] != 2) {
-              enable_flags[lang_id] = enable_flag;
+              if (!enable_flag || enable_flags[lang_id] != 3) {
+                enable_flags[lang_id] = enable_flag;
+              }
             }
           }
         } else {
@@ -955,9 +960,12 @@ serve_state_import_languages(
   for (int lang_id = 1; lang_id <= max_lang; ++lang_id) {
     struct section_language_data *lang = new_langs[lang_id];
     if (!lang) continue;
+    if (lang->compile_id <= 0) {
+      lang->compile_id = lang_id;
+    }
     lang->enabled = 0;
     lang->default_disabled = 0;
-    if (enable_flags[lang_id] == 2) {
+    if (enable_flags[lang_id] >= 2) {
       lang->disabled = 1;
     } else if (enable_flags[lang_id] == 1) {
       lang->disabled = 0;
@@ -1140,6 +1148,43 @@ serve_state_load_contest(
   serve_build_run_dirs(config, state, cnts);
 
   global = state->global;
+
+  if (global->notification_spec) {
+    const unsigned char *spec = global->notification_spec;
+    struct notify_plugin_data *np = NULL;
+    char *eptr = NULL;
+    errno = 0;
+    long notify_driver = strtol(spec, &eptr, 10);
+    if (errno || notify_driver <= 0 || notify_driver >= 128 || *eptr != ':') {
+      err("invalid notification_spec");
+      goto failure;
+    }
+    if (!(np = notify_plugin_get(config, notify_driver))) {
+      err("invalid notification plugin");
+      goto failure;
+    }
+    spec = eptr + 1;
+    size_t offset = 0;
+    int kind = mixed_it_parse_kind_2(spec, &offset);
+    if (kind <= 0) {
+      err("invalid notification queue kind");
+      goto failure;
+    }
+    spec += offset;
+    if (*spec != ':') {
+      err("invalid notification_spec");
+      goto failure;
+    }
+    spec += 1;
+    if (mixed_id_unmarshall(&state->notify_queue, kind, spec) < 0) {
+      err("invalid notification_spec");
+      goto failure;
+    }
+    mixed_id_marshall(state->notify_queue_buf, kind, &state->notify_queue);
+    state->notify_driver = (int) notify_driver;
+    state->notify_kind = kind;
+    state->notify_plugin = np;
+  }
 
   if (global->enable_language_import > 0) {
     if (serve_state_import_languages(config, state) < 0) goto failure;

@@ -1330,28 +1330,34 @@ super_serve_clear_edited_contest(struct sid_state *p)
   p->enable_extra_col = 0;
   p->disable_compilation_server = 0;
   p->enable_win32_languages = 0;
+  p->enable_language_import_changed = 0;
+  p->orig_enable_language_import = 0;
 
   if (p->lang_extra) {
     for (int i = 0; i < p->lang_a; ++i) {
       language_extra_free(&p->lang_extra[i]);
     }
     xfree(p->lang_extra);
+    p->lang_extra = NULL;
   }
   if (p->serv_extra) {
     for (int i = 0; i < p->lang_a; ++i) {
       language_extra_free(&p->serv_extra[i]);
     }
     xfree(p->serv_extra);
+    p->serv_extra = NULL;
   }
   if (p->lang_opts) {
     for (i = 0; i < p->lang_a; ++i) {
       xfree(p->lang_opts[i]);
     }
+    p->lang_opts = NULL;
   }
   if (p->lang_libs) {
     for (i = 0; i < p->lang_a; i++) {
       xfree(p->lang_libs[i]);
     }
+    p->lang_libs = NULL;
   }
   for (i = 0; i < p->cs_lang_total; i++)
     xfree(p->cs_lang_names[i]);
@@ -1376,7 +1382,7 @@ super_serve_clear_edited_contest(struct sid_state *p)
     xfree(p->cscs);
     p->cscs = NULL;
   }
-  xfree(p->serv_langs);
+  xfree(p->serv_langs); p->serv_langs = NULL;
 
   xfree(p->contest_start_cmd_text); p->contest_start_cmd_text = 0;
   xfree(p->stand_header_text); p->stand_header_text = 0;

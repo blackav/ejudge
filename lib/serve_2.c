@@ -15,6 +15,7 @@
  */
 
 #include "ejudge/config.h"
+#include "ejudge/ej_types.h"
 #include "ejudge/serve_state.h"
 #include "ejudge/runlog.h"
 #include "ejudge/prepare.h"
@@ -3348,23 +3349,26 @@ serve_notify_run_update(
         serve_state_t cs,
         const struct run_entry *re)
 {
-  if (!re) return;
-  if (!re->notify_driver) return;
+  int need_re_notify = 0;
+  struct notify_plugin_data *np = NULL;
+  unsigned char np_buf[64];
 
-  struct notify_plugin_data *np = notify_plugin_get(config, re->notify_driver);
-  if (!np) {
-    err("notify_run_update: failed to get notify_plugin %d",
-        re->notify_driver);
+  if (!re) {
     return;
   }
-  if (re->notify_kind < 0 || re->notify_kind >= MIXED_ID_LAST) {
-    err("notify_run_update: invalid se.notify_kind %d", re->notify_kind);
+
+  if (re->notify_driver > 0) {
+    if ((np = notify_plugin_get(config, re->notify_driver))) {
+      if (re->notify_kind > 0 && re->notify_kind < MIXED_ID_LAST) {
+        need_re_notify = 1;
+        mixed_id_marshall(np_buf, re->notify_kind, &re->notify_queue);
+      }
+    }
+  }
+
+  if (!need_re_notify && !cs->notify_plugin) {
     return;
   }
-  if (!re->notify_kind) return;
-
-  unsigned char buf[64];
-  mixed_id_marshall(buf, re->notify_kind, &re->notify_queue);
 
   cJSON *jr = cJSON_CreateObject();
 
@@ -3378,8 +3382,15 @@ serve_notify_run_update(
   char *jrstr = cJSON_PrintUnformatted(jr);
   cJSON_Delete(jr);
 
-  if (np->vt->notify(np, buf, jrstr) < 0) {
-    err("notify_submit_update: notify failed");
+  if (need_re_notify) {
+    if (np->vt->notify(np, np_buf, jrstr) < 0) {
+      err("notify_submit_update: notify failed");
+    }
+  }
+  if (cs->notify_plugin) {
+    if (cs->notify_plugin->vt->notify(cs->notify_plugin, cs->notify_queue_buf, jrstr) < 0) {
+      err("notify_submit_update: notify failed");
+    }
   }
   free(jrstr);
 }
@@ -5304,7 +5315,7 @@ serve_rejudge_run(
                                 re.is_vcs /* vcs_mode */,
                                 0 /* not_ok_is_cf */,
                                 user,
-                                NULL);
+                                &re);
       if (r < 0) {
         serve_report_check_failed(config, cnts, state, run_id, serve_err_str(r));
         err("rejudge_run: serve_compile_request failed: %s", serve_err_str(r));
@@ -5363,7 +5374,7 @@ serve_rejudge_run(
                             re.is_vcs /* vcs_mode */,
                             0 /* not_ok_is_cf */,
                             user,
-                            NULL);
+                            &re);
   if (r < 0) {
     serve_report_check_failed(config, cnts, state, run_id, serve_err_str(r));
     err("rejudge_run: serve_compile_request failed: %s", serve_err_str(r));

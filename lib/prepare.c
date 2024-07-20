@@ -367,6 +367,7 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(max_submit_total, "d"),
   GLOBAL_PARAM(enable_language_import, "d"),
   GLOBAL_PARAM(language_import, "x"),
+  GLOBAL_PARAM(notification_spec, "S"),
 
   { 0, 0, 0, 0 }
 };

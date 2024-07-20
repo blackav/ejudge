@@ -582,6 +582,11 @@ prepare_unparse_global(
     fprintf(f, "\n");
   }
 
+  if (global->notification_spec && global->notification_spec[0]) {
+    do_str(f, &ab, "notification_spec", global->notification_spec);
+    fprintf(f, "\n");
+  }
+
   if (global->enable_language_import > 0) {
     unparse_bool(f, "enable_language_import", global->enable_language_import);
     do_xstr(f, &ab, "language_import", global->language_import);
