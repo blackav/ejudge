@@ -1785,9 +1785,11 @@ super_html_serve_unparse_serve_cfg(
       if (lang->compile_id > 0 && lang->id == lang->compile_id) lang->compile_id = 0;
       if (sstate->serv_langs) {
         if (sstate->serv_langs[i]->id == i && !strcmp(sstate->serv_langs[i]->short_name, lang->short_name)) lang->id = 0;
+        prepare_unparse_lang(f, sstate->langs[i], 0, NULL, NULL, NULL, 1);
+      } else {
+        // initial transition to the language import mode
+        prepare_unparse_lang(f, sstate->langs[i], 0, NULL, sstate->lang_opts[i], sstate->lang_libs[i], 0);
       }
-
-      prepare_unparse_lang(f, sstate->langs[i], 0, NULL, NULL, NULL, 1);
     }
   } else {
     if (sstate->lang_a > 0) {
