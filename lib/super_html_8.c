@@ -1507,7 +1507,7 @@ super_html_simplify_lang(
   lang->default_disabled = -1;
   lang->enabled = -1;
 
-#define PROCESS_BOOL(field) do { if (lang->field < 0) { lang->field = -1; } else if (lang->field > 0 && serv_lang->field <= 0) { lang->field = 1; need_section = 1; } else if (lang->field == 0 && serv_lang->field > 0) { need_section = 1; } } while (0)
+#define PROCESS_BOOL(field) do { if (lang->field < 0) { lang->field = -1; } else if (lang->field > 0 && serv_lang->field <= 0) { lang->field = 1; need_section = 1; } else if (lang->field > 0 && serv_lang->field > 0) { lang->field = -1; } else if (lang->field == 0 && serv_lang->field > 0) { need_section = 1; } else if (lang->field == 0 && serv_lang->field == 0) { lang->field = -1; } } while (0)
   PROCESS_BOOL(binary);
   PROCESS_BOOL(insecure);
   PROCESS_BOOL(disable_security);
