@@ -1691,6 +1691,9 @@ lang_config_update_compile_cfg(
       lang->disabled = 1;
       continue;
     }
+    if (lang->disable_auto_update > 0) {
+      continue;
+    }
 
     lang->disabled = 0;
     s = shellconfig_get(lci->cfg, "long_name");
