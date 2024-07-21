@@ -1676,11 +1676,12 @@ lang_config_update_compile_cfg(
   for (int lang_id = 1; lang_id <= max_lang_id; ++lang_id) {
     struct section_language_data *lang = langs[lang_id];
     lci = lcis[lang_id];
-    if (!lang && lci) {
+    if (!lang && lci && lci->enabled > 0) {
       lang = prepare_alloc_language();
       cfg = param_merge(cfg, &lang->g);
       lang->id = lci->id;
       _ = snprintf(lang->short_name, sizeof(lang->short_name), "%s", lci->short_name);
+      langs[lang_id] = lang;
     }
     if (!lang) continue;
     if (!lci) {
