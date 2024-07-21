@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2002-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -667,8 +667,7 @@ write_runs_dump(const serve_state_t state, FILE *f, const unsigned char *url,
       continue;
     }
 
-    if (re.prob_id > 0 && re.prob_id <= state->max_prob
-        && state->probs[re.prob_id] /*&& state->probs[re.prob_id]->short_name*/) {
+    if (re.prob_id > 0 && re.prob_id <= state->max_prob && state->probs[re.prob_id]) {
       fprintf(f, "%s;", state->probs[re.prob_id]->short_name);
     } else {
       fprintf(f, "!INVALID PROBLEM %d!;", re.prob_id);
@@ -677,8 +676,7 @@ write_runs_dump(const serve_state_t state, FILE *f, const unsigned char *url,
 
     if (!re.lang_id) {
       fprintf(f, ";%s;", mime_type_get_type(re.mime_type));
-    } else if (re.lang_id > 0 && re.lang_id <= state->max_lang
-               && state->langs[re.lang_id] /*&& state->langs[re.lang_id]->short_name*/) {
+    } else if (re.lang_id > 0 && re.lang_id <= state->max_lang && state->langs[re.lang_id]) {
       fprintf(f, "%s;;", state->langs[re.lang_id]->short_name);
     } else {
       fprintf(f, "!INVALID LANGUAGE %d!;", re.lang_id);
