@@ -7375,6 +7375,9 @@ compile_servers_arrange(
         int *p_max_lang,
         struct section_language_data ***p_langs)
 {
+  if (!*p_langs) {
+    return 0;
+  }
   int max_lang = 0;
   for (int lang_id = 0; lang_id <= *p_max_lang; ++lang_id) {
     struct section_language_data *lang = (*p_langs)[lang_id];
