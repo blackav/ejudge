@@ -1549,15 +1549,16 @@ save_config(void)
     struct section_language_data **new_langs = NULL;
     XALLOCAZ(new_langs, new_max_lang + 1);
 
-    for (int i = 1; i <= max_lang; ++i) {
-      if (langs[i]) {
-        new_langs[i] = langs[i];
-      }
-    }
     for (int i = 1; i < lang_id_map_size; ++i) {
       int j = lang_id_map[i];
       if (j > 0 && j <= max_lang && langs[j]) {
-        langs[i] = langs[j];
+        new_langs[i] = langs[j];
+        langs[j] = NULL;
+      }
+    }
+    for (int i = 1; i <= max_lang; ++i) {
+      if (langs[i] && !new_langs[i]) {
+        new_langs[i] = langs[i];
       }
     }
 
