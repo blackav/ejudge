@@ -109,7 +109,7 @@ FILES="${FILES} "*.js
 FILES="${FILES} "*.ttf
 FILES="${FILES} "*.gif
 FILES="${FILES} "*.html
-FILES="${FILES} icons images jqgrid jquery-ui font"
+FILES="${FILES} icons images jqgrid jquery-ui font mathjax"
 FILES=`echo $FILES`
 
 # symlink the necessary style files

@@ -274,6 +274,7 @@ local_install: ${TARGETS} ejudge-config po mo
 	tar x -C "${DESTDIR}${datadir}/ejudge/style" -f style/jquery-ui.tbz
 	tar x -C "${DESTDIR}${datadir}/ejudge/style" -f style/jqgrid.tbz
 	tar x -C "${DESTDIR}${datadir}/ejudge/style" -f style/font.tbz
+	tar x -C "${DESTDIR}${datadir}/ejudge/style" -f style/mathjax-3.2.2.tbz
 	install -d "${DESTDIR}${datadir}/ejudge/style/icons"
 	install -d "${DESTDIR}${datadir}/ejudge/style/images"
 	for i in style/icons/*.png; do install -m 0644 $$i "${DESTDIR}${datadir}/ejudge/style/icons"; done
