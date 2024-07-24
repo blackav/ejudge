@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2008-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -532,6 +532,7 @@ generate_free_fields(
       fprintf(out_c, "  // %s\n", ident_get(idnode->id.id));
       break;
     default:
+      break;
       //abort();
     }
   }
