@@ -1,4 +1,4 @@
-/* Copyright (C) 2012-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -342,7 +342,7 @@ public:
 
     ~ConfigParser()
     {
-        if (!in_f) fclose(in_f);
+        if (in_f) fclose(in_f);
         in_f = NULL;
     }
 
@@ -502,9 +502,9 @@ public:
                 }
                 if (t_type != ';') parse_error("';' expected");
                 if (directive == "0_if") {
-                    g.add_zero_set(move(zs));
+                    g.add_zero_set(std::move(zs));
                 } else {
-                    g.add_zero_subset(move(zs));
+                    g.add_zero_subset(std::move(zs));
                 }
                 next_token();
             } else if (token == "offline") {
