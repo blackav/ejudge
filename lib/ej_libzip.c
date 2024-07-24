@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2016-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -188,7 +188,7 @@ add_file_func(
     }
     file_buf = NULL; file_size = 0;
 
-    if (zip_add(rz->z, name, zsrc) < 0) {
+    if (zip_file_add(rz->z, name, zsrc, 0) < 0) {
         if (rz->log_f) {
             fprintf(rz->log_f, "'%s': append of '%s' failed: %s", rz->path, path, zip_strerror(rz->z));
         }
@@ -221,10 +221,10 @@ ej_libzip_open(FILE *log_f, const unsigned char *path, int flags)
     int zip_err = 0;
     struct zip *zz = zip_open(path, zf, &zip_err);
     if (!zz) {
-        char errbuf[1024];
-        zip_error_to_str(errbuf, sizeof(errbuf), zip_err, errno);
         if (log_f) {
-            fprintf(log_f, "'%s': cannot open zip file: %s\n", path, errbuf);
+            zip_error_t ze;
+            zip_error_init_with_code(&ze, zip_err);
+            fprintf(log_f, "'%s': cannot open zip file: %s\n", path, zip_error_strerror(&ze));
         }
         goto cleanup;
     }

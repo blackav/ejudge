@@ -1156,12 +1156,12 @@ zip_open_func(FILE *log_f, const unsigned char *path)
 {
     int zip_err = 0;
     struct zip *zzz = NULL;
-    char errbuf[1024];
     struct ZipData *zdata = NULL;
 
     if (!(zzz = zip_open(path, 0, &zip_err))) {
-        zip_error_to_str(errbuf, sizeof(errbuf), zip_err, errno);
-        fprintf(log_f, "%s: failed to open ZIP '%s': %s\n", __FUNCTION__, path, errbuf);
+        zip_error_t ze;
+        zip_error_init_with_code(&ze, zip_err);
+        fprintf(log_f, "%s: failed to open ZIP '%s': %s\n", __FUNCTION__, path, zip_error_strerror(&ze));
     } else {
         XCALLOC(zdata, 1);
         zdata->log_f = log_f;

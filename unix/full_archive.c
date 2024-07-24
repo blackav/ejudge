@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2005-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -433,11 +433,11 @@ full_archive_open_write_zip(const unsigned char *path)
   full_archive_t af = NULL;
   int zip_err = 0;
   struct zip *zzz = NULL;
-  char errbuf[1024];
 
   if (!(zzz = zip_open(path, ZIP_CREATE, &zip_err))) {
-    zip_error_to_str(errbuf, sizeof(errbuf), zip_err, errno);
-    err("%s: failed to open ZIP '%s': %s", __FUNCTION__, path, errbuf);
+    zip_error_t ze;
+    zip_error_init_with_code(&ze, zip_err);
+    err("%s: failed to open ZIP '%s': %s", __FUNCTION__, path, zip_error_strerror(&ze));
     goto cleanup;
   }
 
@@ -456,11 +456,11 @@ full_archive_open_read_zip(const unsigned char *path)
   full_archive_t af = NULL;
   int zip_err = 0;
   struct zip *zzz = NULL;
-  char errbuf[1024];
 
   if (!(zzz = zip_open(path, ZIP_CHECKCONS, &zip_err))) {
-    zip_error_to_str(errbuf, sizeof(errbuf), zip_err, errno);
-    err("%s: failed to open ZIP '%s': %s", __FUNCTION__, path, errbuf);
+    zip_error_t ze;
+    zip_error_init_with_code(&ze, zip_err);
+    err("%s: failed to open ZIP '%s': %s", __FUNCTION__, path, zip_error_strerror(&ze));
     goto cleanup;
   }
 
@@ -515,7 +515,7 @@ full_archive_append_file_zip(
   }
   file_buf = NULL;
 
-  if (zip_add(af->hzip, entry_name, zsrc) < 0) {
+  if (zip_file_add(af->hzip, entry_name, zsrc, 0) < 0) {
     err("%s: append of '%s' failed: %s", __FUNCTION__, path, zip_strerror(af->hzip));
     goto cleanup;
   }

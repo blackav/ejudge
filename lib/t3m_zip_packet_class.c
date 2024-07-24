@@ -1,7 +1,6 @@
 /* -*- c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2010-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2010-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -143,7 +142,6 @@ zip_packet_class_parse(
   struct zip_packet_class *zp = (struct zip_packet_class*) data;
   int zip_err = 0;
   struct zip *oz = 0;
-  char errbuf[1024];
   int retval = -1;
   int root_xml_ind;
   struct zip_stat zs;
@@ -152,8 +150,9 @@ zip_packet_class_parse(
   int i, file_ind;
 
   if (!(zp->in_zip = zip_open(path, ZIP_CHECKCONS, &zip_err))) {
-    zip_error_to_str(errbuf, sizeof(errbuf), zip_err, errno);
-    logerr("failed to open ZIP '%s': %s", path, errbuf);
+    zip_error_t ze;
+    zip_error_init_with_code(&ze, zip_err);
+    logerr("failed to open ZIP '%s': %s", path, zip_error_strerror(&ze));
     goto cleanup;
   }
 
@@ -276,7 +275,6 @@ zip_packet_class_generate(
   char *res_t = 0;
   size_t res_z = 0;
   int zip_err = 0;
-  char errbuf[1024];
   struct zip *oz = 0;
   struct zip_source *zr = 0;
 
@@ -288,20 +286,19 @@ zip_packet_class_generate(
   t3_out_packet_write(res_f, zp->out_packet);
   fclose(res_f); res_f = 0;
 
-  zip_err = 0; errbuf[0] = 0;
+  zip_err = 0;
   oz = zip_open(out_path, ZIP_CREATE, &zip_err);
   if (!oz) {
-    zip_error_to_str(errbuf, sizeof(errbuf), zip_err, errno);
-    logerr("failed to create '%s' in '%s': %s",
-           OUTPUT_XML_FILE_NAME, out_path, errbuf);
-    goto cleanup;
+    zip_error_t ze;
+    zip_error_init_with_code(&ze, zip_err);
+    logerr("failed to create ZIP '%s': %s", out_path, zip_error_strerror(&ze));
   }
   if (!(zr = zip_source_buffer(oz, res_t, res_z, 0))) {
     logerr("failed to create '%s' in '%s': %s",
            OUTPUT_XML_FILE_NAME, out_path, zip_strerror(oz));
     goto cleanup;
   }
-  if (zip_add(oz, OUTPUT_XML_FILE_NAME, zr) < 0) {
+  if (zip_file_add(oz, out_path, zr, 0) < 0) {
     logerr("failed to create '%s' in '%s': %s",
            OUTPUT_XML_FILE_NAME, out_path, zip_strerror(oz));
     goto cleanup;
@@ -343,7 +340,6 @@ zip_packet_make_error_packet(
   size_t pkt_z = 0;
   FILE *pkt_f = 0;
   int zip_err = 0;
-  unsigned char errbuf[1024];
   struct zip *oz = 0;
   struct zip_source *zr = 0;
 
@@ -356,12 +352,13 @@ zip_packet_make_error_packet(
   xfree(escaped_str); escaped_str = 0;
   fclose(pkt_f); pkt_f = 0;
 
-  zip_err = 0; errbuf[0] = 0;
+  zip_err = 0;
   oz = zip_open(out_path, ZIP_CREATE, &zip_err);
   if (!oz) {
-    zip_error_to_str(errbuf, sizeof(errbuf), zip_err, errno);
+    zip_error_t ze;
+    zip_error_init_with_code(&ze, zip_err);
     logerr("failed to create '%s' in '%s': %s",
-           OUTPUT_XML_FILE_NAME, out_path, errbuf);
+           OUTPUT_XML_FILE_NAME, out_path, zip_error_strerror(&ze));
     goto cleanup;
   }
   if (!(zr = zip_source_buffer(oz, pkt_t, pkt_z, 0))) {
@@ -369,7 +366,7 @@ zip_packet_make_error_packet(
            OUTPUT_XML_FILE_NAME, out_path, zip_strerror(oz));
     goto cleanup;
   }
-  if (zip_add(oz, OUTPUT_XML_FILE_NAME, zr) < 0) {
+  if (zip_file_add(oz, OUTPUT_XML_FILE_NAME, zr, 0) < 0) {
     logerr("failed to create '%s' in '%s': %s",
            OUTPUT_XML_FILE_NAME, out_path, zip_strerror(oz));
     goto cleanup;
