@@ -1547,18 +1547,21 @@ save_config(void)
     int new_max_lang = max_lang;
     if (lang_id_map_size > new_max_lang) new_max_lang = lang_id_map_size;
     struct section_language_data **new_langs = NULL;
+    struct section_language_data **old_langs = NULL;
     XALLOCAZ(new_langs, new_max_lang + 1);
+    XALLOCAZ(old_langs, serve_state.max_lang + 1);
+    memcpy(old_langs, langs, (serve_state.max_lang + 1) * sizeof(old_langs[0]));
 
     for (int i = 1; i < lang_id_map_size; ++i) {
       int j = lang_id_map[i];
-      if (j > 0 && j <= max_lang && langs[j]) {
-        new_langs[i] = langs[j];
-        langs[j] = NULL;
+      if (j > 0 && j <= max_lang && old_langs[j]) {
+        new_langs[i] = old_langs[j];
+        old_langs[j] = NULL;
       }
     }
     for (int i = 1; i <= max_lang; ++i) {
-      if (langs[i] && !new_langs[i]) {
-        new_langs[i] = langs[i];
+      if (old_langs[i] && !new_langs[i]) {
+        new_langs[i] = old_langs[i];
       }
     }
 
