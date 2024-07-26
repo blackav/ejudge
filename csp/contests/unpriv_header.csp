@@ -5,6 +5,19 @@
 <script src="<s:config name="style-prefix" />jquery.min.js"></script>
 <script src="<s:config name="style-prefix" />jquery-ui.min.js"></script>
 <script type="text/javascript" src="<s:config name="style-prefix" />unpriv.js"></script>
+<script>
+MathJax = {
+  chtml: {
+    scale: 1,
+    mtextInheritFont: true
+  },
+  options: {
+    enableMenu: false
+  }
+};
+</script>
+<script type="text/javascript" id="MathJax-script" async src="<s:config name="style-prefix" />mathjax/tex-mml-chtml.js">
+</script>
 <script type="text/javascript">
   var SID="<s:v value="phr->session_id" />";
   var NEW_SRV_ACTION_JSON_USER_STATE=<s:ac ac="json-user-state" />;
