@@ -5,6 +5,19 @@
 <script src="<s:config name="style-prefix" />jquery.min.js"></script>
 <script src="<s:config name="style-prefix" />jquery-ui.min.js"></script>
 <script type="text/javascript" src="<s:config name="style-prefix" />unpriv.js"></script>
+<script>
+MathJax = {
+  chtml: {
+    scale: 1,
+    mtextInheritFont: true
+  },
+  options: {
+    enableMenu: false
+  }
+};
+</script>
+<script type="text/javascript" id="MathJax-script" async src="<s:config name="style-prefix" />mathjax/tex-mml-chtml.js">
+</script>
 <script type="text/javascript">
   var SID="<s:v value="phr->session_id" />";
   var NEW_SRV_ACTION_JSON_USER_STATE=<s:ac ac="json-user-state" />;
@@ -26,6 +39,9 @@
 </script>
 <link rel="stylesheet" href="<s:config name="style-prefix" />unpriv.css" type="text/css" />
 <link rel="stylesheet" href="<s:config name="style-prefix" />unpriv3.css" type="text/css" />
+<% if (cnts && cnts->css_url && *cnts->css_url) { %>
+<link rel="stylesheet" href="<s:v value="cnts->css_url" />" type="text/css" />
+<% } %>
 <%
 #ifdef INCLUDE_PRISM
 %>
