@@ -1,4 +1,6 @@
-<%
+<%@set getter_name = "csp_get_priv_submit_page"
+%><%@set ac_prefix = "NEW_SRV_ACTION_"
+%><%@set err_prefix = "NEW_SRV_ERR_"
 %><%@include "priv_includes.csp"
 %><%
 void
@@ -28,9 +30,6 @@ ns_unparse_answers(
         int next_prob_id,
         int enable_js,
         const unsigned char *class_name);
-%><%@set getter_name = "csp_get_priv_submit_page"
-%><%@set ac_prefix = "NEW_SRV_ACTION_"
-%><%@set err_prefix = "NEW_SRV_ERR_"
 %><%@page csp_view_priv_submit_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 %><%@include "priv_stdvars.csp"
 %><%
