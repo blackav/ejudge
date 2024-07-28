@@ -15005,7 +15005,6 @@ unpriv_command(
 
   switch (phr->action) {
   case NEW_SRV_ACTION_VIRTUAL_START:
-  case NEW_SRV_ACTION_VIRTUAL_STOP:
   case NEW_SRV_ACTION_VIRTUAL_RESTART:
     if (global->is_virtual <= 0) {
       FAIL2(NEW_SRV_ERR_NOT_VIRTUAL);
@@ -15015,6 +15014,23 @@ unpriv_command(
     }
     if (run_get_start_time(cs->runlog_state) <= 0) {
       FAIL2(NEW_SRV_ERR_VIRTUAL_NOT_STARTED);
+    }
+    break;
+  case NEW_SRV_ACTION_VIRTUAL_STOP:
+    // virtual-stop works for both virtual and non-virtual contests
+    if (global->is_virtual > 0) {
+      // virtual contest case
+      if (hdr.start_time <= 0) {
+        FAIL2(NEW_SRV_ERR_VIRTUAL_NOT_STARTED);
+      }
+      if (run_get_start_time(cs->runlog_state) <= 0) {
+        FAIL2(NEW_SRV_ERR_VIRTUAL_NOT_STARTED);
+      }
+    } else {
+      // non-virtual contest case
+      if (run_get_start_time(cs->runlog_state) <= 0) {
+        FAIL2(NEW_SRV_ERR_CONTEST_NOT_STARTED);
+      }
     }
     break;
   default:
@@ -15078,6 +15094,21 @@ unpriv_command(
                     virtual_stop_callback);
     break;
   case NEW_SRV_ACTION_VIRTUAL_STOP:
+    if (global->is_virtual <= 0) {
+      // finish non-virtual contest for the current user
+      start_time = run_get_start_time(cs->runlog_state);
+      if (start_time <= 0) {
+        FAIL2(NEW_SRV_ERR_CONTEST_NOT_STARTED);
+      }
+      stop_time = run_get_stop_time(cs->runlog_state, phr->user_id, cs->current_time);
+      if (stop_time > 0) {
+        break;
+      }
+      if (run_set_user_stop_time(cs->runlog_state, phr->user_id, cs->current_time, phr->user_id) < 0) {
+        FAIL2(NEW_SRV_ERR_SYSTEM_ERROR);
+      }
+      break;
+    }
     start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
     if (start_time <= 0) {
       FAIL2(NEW_SRV_ERR_CONTEST_NOT_STARTED);
