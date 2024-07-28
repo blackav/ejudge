@@ -190,6 +190,40 @@ $(function() {
 <p><span class="ui-icon ui-icon-alert" style="float:left; margin:12px 12px 20px 0;"></span>Are you sure you want to stop your virtual contest?</p>
 </div>
 
+<% if (global->is_virtual <= 0 && start_time > 0 && stop_time <= 0) { %>
+<div id="real-stop-confirm" title="<s:_>Finish contest?</s:_>">
+<p><span class="ui-icon ui-icon-alert" style="float:left; margin:12px 12px 20px 0;"></span><s:_>Are you sure you want to finish your contest?</s:_></p>
+</div>
+
+<script>
+$(function() {
+  $("#real-stop-confirm").dialog({
+    resizable: true,
+    autoOpen: false,
+    height: "auto",
+    width: 600,
+    modal: true,
+    open: function() {
+    },
+    buttons: {
+      "Finish the contest": function() {
+        $(this).dialog("close");
+        $("#real-stop-form").submit();
+      },
+      Cancel: function() {
+        $(this).dialog("close");
+      }
+    }
+  });
+  $("#real-stop-button").on("click", function(event) {
+    $("#real-stop-confirm").dialog("open");
+    event.preventDefault();
+    return false;
+  });
+});
+</script>
+<% } %>
+
 <%
   if (!cnts->exam_mode && global->is_virtual && start_time <= 0) {
     enable_virtual_start = 1;
@@ -213,7 +247,7 @@ $(function() {
       }
 %></s:form><%
     }
-  } else if (!cnts->exam_mode && global->is_virtual && stop_time <= 0) {
+  } else if (!cnts->exam_mode && global->is_virtual > 0 && stop_time <= 0) {
 %><s:form id="virtual-stop-form">
 <s:hidden name="action" ac="virtual-stop" /><%
     if (cnts->exam_mode) {
@@ -222,7 +256,16 @@ $(function() {
 %><p><button class="ui-button ui-widget" id="virtual-stop-button"><s:_>Stop virtual contest</s:_></button></p><%
     }
 %></s:form><%
-  } else if (!cnts->exam_mode && global->is_virtual && start_time > 0 && stop_time > 0 && global->enable_virtual_restart > 0 && !cs->upsolving_mode) {
+  } else if (!cnts->exam_mode && global->is_virtual <= 0 && start_time > 0 && stop_time <= 0) {
+%><s:form id="real-stop-form">
+<s:hidden name="action" ac="virtual-stop" /><%
+    if (cnts->exam_mode) {
+%><p><button class="ui-button ui-widget" id="real-stop-button"><s:_>Finish exam</s:_></button></p><%
+    } else {
+%><p><button class="ui-button ui-widget" id="real-stop-button"><s:_>Finish contest</s:_></button></p><%
+    }
+%></s:form><%
+  } else if (!cnts->exam_mode && global->is_virtual > 0 && start_time > 0 && stop_time > 0 && global->enable_virtual_restart > 0 && !cs->upsolving_mode) {
 %><p><s:form><s:submit ac="virtual-restart" /></s:form></p>
 <p><b><s:_>ALL PREVIOUS SUBMITS WILL BE LOST!</s:_></b></p><%
   }
