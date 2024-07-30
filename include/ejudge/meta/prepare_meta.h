@@ -61,6 +61,7 @@ enum
   CNTSGLOB_problem_navigation,
   CNTSGLOB_problem_tab_size,
   CNTSGLOB_vertical_navigation,
+  CNTSGLOB_vertical_navigation_sdate_sort,
   CNTSGLOB_disable_virtual_start,
   CNTSGLOB_disable_virtual_auto_judge,
   CNTSGLOB_enable_auto_print_protocol,
