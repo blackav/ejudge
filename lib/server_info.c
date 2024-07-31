@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2023-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -287,7 +287,7 @@ server_info_get_processes(void)
         __attribute__((unused)) int _;
         _ = snprintf(path, sizeof(path), "/proc/%d/cmdline", pid);
 
-        free(file_txt);
+        free(file_txt); file_txt = NULL;
         int r = read_file(path, &file_txt, &file_size);
         if (r < 0) {
             continue;
