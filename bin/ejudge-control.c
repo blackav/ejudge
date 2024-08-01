@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -815,13 +815,13 @@ main(int argc, char *argv[])
 
   if (!(config = ejudge_cfg_parse(ejudge_xml_path, 0))) return 1;
 
-  parallelism = ejudge_cfg_get_host_option_int(config, host_names, "parallelism", 1, 0);
-  if (parallelism <= 0 || parallelism > 128) {
+  parallelism = ejudge_cfg_get_host_option_int(config, host_names, "parallelism", 1, -1);
+  if (parallelism < 0 || parallelism > 128) {
     startup_error("invalid value of parallelism host option");
   }
 
-  compile_parallelism = ejudge_cfg_get_host_option_int(config, host_names, "compile_parallelism", 1, 0);
-  if (compile_parallelism <= 0 || compile_parallelism > 128) {
+  compile_parallelism = ejudge_cfg_get_host_option_int(config, host_names, "compile_parallelism", 1, -1);
+  if (compile_parallelism < 0 || compile_parallelism > 128) {
     startup_error("invalid value of compile_parallelism host option");
   }
 
