@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-03-17 14:06+0300\n"
+"POT-Creation-Date: 2024-07-31 00:07+0300\n"
 "PO-Revision-Date: 2024-03-17 14:09+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -528,6 +528,9 @@ msgstr "Апр"
 
 msgid "Archive creation with tar failed"
 msgstr "При создании архива программой tar произошла ошибка"
+
+msgid "Are you sure you want to finish your contest?"
+msgstr "Вы уверены, что хотите завершить турнир?"
 
 msgid "Area"
 msgstr "Район"
@@ -1532,6 +1535,15 @@ msgstr "Финальные правила видимости тестов"
 
 msgid "Final visibility rules are active"
 msgstr "Финальные правила видимости тестов активны"
+
+msgid "Finish contest"
+msgstr "Завершить турнир"
+
+msgid "Finish contest?"
+msgstr "Завершить турнир?"
+
+msgid "Finish exam"
+msgstr "Завершить экзамен"
 
 msgid "Finish session"
 msgstr "Завершить сеанс работы"

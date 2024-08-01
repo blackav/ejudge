@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-03-17 14:06+0300\n"
+"POT-Creation-Date: 2024-07-31 00:07+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Kazakh <uk@li.org>\n"
@@ -477,6 +477,9 @@ msgid "Apr"
 msgstr ""
 
 msgid "Archive creation with tar failed"
+msgstr ""
+
+msgid "Are you sure you want to finish your contest?"
 msgstr ""
 
 msgid "Area"
@@ -1476,6 +1479,15 @@ msgid "Final test visibility rules"
 msgstr ""
 
 msgid "Final visibility rules are active"
+msgstr ""
+
+msgid "Finish contest"
+msgstr ""
+
+msgid "Finish contest?"
+msgstr ""
+
+msgid "Finish exam"
 msgstr ""
 
 msgid "Finish session"
