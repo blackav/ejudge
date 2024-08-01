@@ -1146,18 +1146,20 @@ int main(int argc, char *argv[])
     }
 
     int compile_parallelism = 1;
-    compile_parallelism = ejudge_cfg_get_host_option_int(config, host_names, "compile_parallelism", 1, 0);
-    if (compile_parallelism <= 0 || compile_parallelism > 128) {
+    compile_parallelism = ejudge_cfg_get_host_option_int(config, host_names, "compile_parallelism", 1, -1);
+    if (compile_parallelism < 0 || compile_parallelism > 128) {
         system_error("invalid value of compile_parallelism host option");
     }
 
-    ejudge_xml_fds = malloc(compile_parallelism * sizeof(ejudge_xml_fds[0]));
-    memset(ejudge_xml_fds, -1, compile_parallelism * sizeof(ejudge_xml_fds[0]));
-    if (primary_uid != compile_uid) {
-        for (int i = 0; i < compile_parallelism; ++i) {
-            ejudge_xml_fds[i] = open(ejudge_xml_path, O_RDONLY);
-            if (ejudge_xml_fds[i] < 0) {
-                system_error("cannot open '%s'", ejudge_xml_path);
+    if (compile_parallelism > 0) {
+        ejudge_xml_fds = malloc(compile_parallelism * sizeof(ejudge_xml_fds[0]));
+        memset(ejudge_xml_fds, -1, compile_parallelism * sizeof(ejudge_xml_fds[0]));
+        if (primary_uid != compile_uid) {
+            for (int i = 0; i < compile_parallelism; ++i) {
+                ejudge_xml_fds[i] = open(ejudge_xml_path, O_RDONLY);
+                if (ejudge_xml_fds[i] < 0) {
+                    system_error("cannot open '%s'", ejudge_xml_path);
+                }
             }
         }
     }
@@ -1350,19 +1352,21 @@ int main(int argc, char *argv[])
                 }
             }
 
-            int sleep_count = 0;
-            // wait 1s max
-            while (sleep_count < START_WAIT_COUNT) {
-                pv_free(&pv);
-                usleep(100000);
-                if (find_all(EJ_COMPILE_PROGRAM, EJ_COMPILE_PROGRAM_DELETED, NULL, &pv) < 0) {
-                    system_error("cannot enumerate processes");
+            if (compile_parallelism > 0) {
+                int sleep_count = 0;
+                // wait 1s max
+                while (sleep_count < START_WAIT_COUNT) {
+                    pv_free(&pv);
+                    usleep(100000);
+                    if (find_all(EJ_COMPILE_PROGRAM, EJ_COMPILE_PROGRAM_DELETED, NULL, &pv) < 0) {
+                        system_error("cannot enumerate processes");
+                    }
+                    if (pv.u == compile_parallelism) break;
+                    ++sleep_count;
                 }
-                if (pv.u == compile_parallelism) break;
-                ++sleep_count;
-            }
-            if (sleep_count >= START_WAIT_COUNT) {
-                system_error("failed to start ej-compile, please see the logs");
+                if (sleep_count >= START_WAIT_COUNT) {
+                    system_error("failed to start ej-compile, please see the logs");
+                }
             }
         }
         break;

@@ -2588,8 +2588,8 @@ main(int argc, char *argv[])
     return 1;
   }
 
-  int parallelism = ejudge_cfg_get_host_option_int(ejudge_config, host_names, "compile_parallelism", 1, 0);
-  if (parallelism <= 0 || parallelism > 128) {
+  int parallelism = ejudge_cfg_get_host_option_int(ejudge_config, host_names, "compile_parallelism", 1, -1);
+  if (parallelism < 0 || parallelism > 128) {
     fprintf(stderr, "%s: invalid value of compile_parallelism host option\n", argv[0]);
     return 1;
   }
