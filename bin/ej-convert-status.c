@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2022-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2022-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -185,7 +185,7 @@ process_contest(
 
     struct prot_serve_status ss = {};
     if (statusdb_load(old_sdb_state, ejudge_config, cnts, global, 0, &ss) > 0) {
-        res = statusdb_save(new_sdb_state, ejudge_config, cnts, global, 0, &ss);
+        res = statusdb_save(new_sdb_state, ejudge_config, contest_id, cnts, global, 0, &ss);
         if (res < 0) {
             fprintf(stderr, "contest %d saving to plugin %s failed\n",
                     contest_id, to_plugin);
