@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2019-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2019-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -78,6 +78,7 @@ static int
 save_func(
         struct statusdb_state *sds,
         const struct ejudge_cfg *config,
+        int contest_id,
         const struct contest_desc *cnts,
         const struct section_global_data *global,
         int flags,
@@ -303,6 +304,7 @@ static int
 save_func(
         struct statusdb_state *sds,
         const struct ejudge_cfg *config,
+        int contest_id,
         const struct contest_desc *cnts,
         const struct section_global_data *global,
         int flags,
@@ -318,10 +320,10 @@ save_func(
     bson_t *index = NULL;
 
     filter = bson_new();
-    bson_append_int32(filter, "contest_id", -1, cnts->id);
+    bson_append_int32(filter, "contest_id", -1, contest_id);
     bstat = serve_status_bson_unparse(stat);
     update = bson_new();
-    bson_append_int32(update, "contest_id", -1, cnts->id);
+    bson_append_int32(update, "contest_id", -1, contest_id);
     bson_append_document(update, "s", -1, bstat);
 
     retval = ps->common->i->upsert_and_free(ps->common, "status", &filter, &update);

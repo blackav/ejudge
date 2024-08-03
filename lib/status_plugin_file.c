@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2019 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2019-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -163,6 +163,7 @@ static int
 save_func(
         struct statusdb_state *sds,
         const struct ejudge_cfg *config,
+        int contest_id,
         const struct contest_desc *cnts,
         const struct section_global_data *global,
         int flags,
@@ -403,6 +404,7 @@ static int
 save_func(
         struct statusdb_state *sds,
         const struct ejudge_cfg *config,
+        int contest_id,
         const struct contest_desc *cnts,
         const struct section_global_data *global,
         int flags,
@@ -416,8 +418,8 @@ save_func(
     unsigned char status_dir[PATH_MAX];
     unsigned char *status_dir_ptr = status_dir;
 #if defined EJUDGE_CONTESTS_STATUS_DIR
-    if (snprintf(status_dir, sizeof(status_dir), "%s/%06d", EJUDGE_CONTESTS_STATUS_DIR, cnts->id) >= sizeof(status_dir)) {
-        err("status_plugin_file:save_func: path %s/%06d is too long", EJUDGE_CONTESTS_STATUS_DIR, cnts->id);
+    if (snprintf(status_dir, sizeof(status_dir), "%s/%06d", EJUDGE_CONTESTS_STATUS_DIR, contest_id) >= sizeof(status_dir)) {
+        err("status_plugin_file:save_func: path %s/%06d is too long", EJUDGE_CONTESTS_STATUS_DIR, contest_id);
         return -1;
     }
 #else

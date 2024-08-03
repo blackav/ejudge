@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2019-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2019-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -113,7 +113,7 @@ statusdb_open(
     struct prot_serve_status stat = {};
     int lr = fif->load(sfs, config, cnts, global, flags, &stat);
     if (lr > 0) {
-        if (iface->save(sds, config, cnts, global, flags, &stat) < 0) {
+        if (iface->save(sds, config, cnts->id, cnts, global, flags, &stat) < 0) {
             err("failed to save the contest state by plugin %s", plugin_name);
             return NULL;
         }
@@ -159,13 +159,14 @@ int
 statusdb_save(
         struct statusdb_state *sds,
         const struct ejudge_cfg *config,
+        int contest_id,
         const struct contest_desc *cnts,
         const struct section_global_data *global,
         int flags,
         const struct prot_serve_status *stat)
 {
     const struct status_plugin_iface *iface = (struct status_plugin_iface*) sds->plugin->iface;
-    return iface->save(sds, config, cnts, global, flags, stat);
+    return iface->save(sds, config, contest_id, cnts, global, flags, stat);
 }
 
 void

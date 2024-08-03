@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2022-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2022-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -444,6 +444,7 @@ static int
 save_func(
         struct statusdb_state *sds,
         const struct ejudge_cfg *config,
+        int contest_id,
         const struct contest_desc *cnts,
         const struct section_global_data *global,
         int flags,

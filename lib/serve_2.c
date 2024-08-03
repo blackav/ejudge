@@ -421,7 +421,7 @@ serve_update_status_file(
 
   memcpy(status.prob_prio, state->prob_prio, sizeof(status.prob_prio));
 
-  statusdb_save(state->statusdb_state, config, cnts, state->global, 0, &status);
+  statusdb_save(state->statusdb_state, config, state->contest_id, cnts, state->global, 0, &status);
   state->last_update_status_file = state->current_time;
   return 1;
 }

@@ -3,7 +3,7 @@
 #ifndef __STATUSDB_H__
 #define __STATUSDB_H__
 
-/* Copyright (C) 2019-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2019-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -116,6 +116,7 @@ int
 statusdb_save(
         struct statusdb_state *sds,
         const struct ejudge_cfg *config,
+        int contest_id,
         const struct contest_desc *cnts,
         const struct section_global_data *global,
         int flags,
