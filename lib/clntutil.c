@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2000-2021 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -114,6 +114,7 @@ client_put_header(
         int http_flag,
         int locale_id,
         ej_cookie_t client_key,
+        int status,
         char const *format, ...)
 {
   va_list args;
@@ -129,11 +130,13 @@ client_put_header(
   if (!charset) charset = DEFAULT_CHARSET;
   if (!content_type) content_type = "text/html";
   if (!template) template = default_header_template;
+  if (status <= 0) status = 200;
 
   if (http_flag) {
     fprintf(out, "Content-Type: %s; charset=%s\n"
             "Cache-Control: no-cache\n"
-            "Pragma: no-cache\n", content_type, charset);
+            "Status: %d\n"
+            "Pragma: no-cache\n", content_type, charset, status);
     if (client_key) {
       fprintf(out, "Set-Cookie: EJSID=%016llx; Path=/; SameSite=Lax\n", client_key);
     }
@@ -153,7 +156,7 @@ client_put_footer(FILE *out, unsigned char const *template)
 void
 client_access_denied(char const *charset, int locale_id)
 {
-  client_put_header(stdout, 0, 0, charset, 1, locale_id, NULL_CLIENT_KEY, _("Access denied"));
+  client_put_header(stdout, 0, 0, charset, 1, locale_id, NULL_CLIENT_KEY, 403, _("Access denied"));
   printf("<p>%s</p>", _("You do not have permissions to use this service."));
   client_put_footer(stdout, 0);
   exit(0);
@@ -167,7 +170,7 @@ client_not_configured(
         const char *messages)
 {
   write_log(0, LOG_ERR, (char*) str);
-  client_put_header(stdout, 0, 0, charset, 1, locale_id, NULL_CLIENT_KEY, _("Service is not available"));
+  client_put_header(stdout, 0, 0, charset, 1, locale_id, NULL_CLIENT_KEY, 500, _("Service is not available"));
   printf("<p>%s</p>", _("Service is not available. Please, come later."));
   if (messages) {
     printf("<pre>%s</pre>\n", messages);

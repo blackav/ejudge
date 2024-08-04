@@ -2,7 +2,7 @@
 #ifndef __CLNTUTIL_H__
 #define __CLNTUTIL_H__
 
-/* Copyright (C) 2000-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -42,9 +42,10 @@ void  client_put_header(
         int http_flag,
         int locale_id,
         ej_cookie_t client_key,
+        int status,
         char const *format,
         ...)
-  __attribute__((format(printf, 8, 9)));
+  __attribute__((format(printf, 9, 10)));
 void  client_put_footer(FILE *out, unsigned char const *template);
 
 void parse_client_ip(ej_ip_t *p_ip);
