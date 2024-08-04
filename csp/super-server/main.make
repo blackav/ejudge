@@ -20,7 +20,7 @@ endif
 CEXTRAFLAGS=
 LDEXTRAFLAGS=
 EXTRALIBS=
-CCOMPFLAGS=-D_GNU_SOURCE -std=gnu11 -I../.. -I../../include -g -DPIC -fPIC -fno-var-tracking-assignments
+CCOMPFLAGS=-D_GNU_SOURCE -std=gnu11 -I../.. -I../../include -g -DPIC -fPIC
 LDCOMPFLAGS= -g -shared
 EXESFX=
 

@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2001-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2001-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -550,7 +550,7 @@ information_not_available(unsigned char const *header_txt,
                           unsigned char const *footer_txt)
 {
   client_put_header(stdout, header_txt, 0, config->charset, 1,
-                    client_locale_id, NULL_CLIENT_KEY, _("Information is not available"));
+                    client_locale_id, NULL_CLIENT_KEY, 404, _("Information is not available"));
   printf("<p>%s</p>\n",
          _("Information by your request is not available."));
   client_put_footer(stdout, footer_txt);
@@ -588,7 +588,7 @@ main(int argc, char const *argv[])
     fprintf(stderr, "cannot set contest directory '%s': %s\n",
             config->contests_dir, contests_strerror(-errcode));
     client_put_header(stdout, header_txt, 0, config->charset, 1,
-                      client_locale_id, NULL_CLIENT_KEY, _("Invalid configuration"));
+                      client_locale_id, NULL_CLIENT_KEY, 500, _("Invalid configuration"));
     printf("<h2>%s</h2>\n<p>%s</p>\n",
            _("Configuration error"),
            _("This program is configured incorrectly and cannot perform normal operation. Please contact the site (or contest) administrator."));
@@ -637,6 +637,7 @@ main(int argc, char const *argv[])
     client_put_header(stdout, header_txt, 0, config->charset, 1,
                       client_locale_id,
                       NULL_CLIENT_KEY,
+                      403,
                       _("Permission denied"));
     printf("<h2>%s</h2>\n",_("You have no permissions to view this contest."));
     client_put_footer(stdout, footer_txt);
@@ -647,11 +648,13 @@ main(int argc, char const *argv[])
     client_put_header(stdout, header_txt, 0, config->charset, 1,
                       client_locale_id,
                       NULL_CLIENT_KEY,
+                      200,
                       _("Detailed information about participant"));
   } else {
     client_put_header(stdout, header_txt, 0, config->charset, 1,
                       client_locale_id,
                       NULL_CLIENT_KEY,
+                      200,
                       _("List of registered participants"));
     printf("<%s>%s: %s</%s>\n",
            cnts->users_head_style,

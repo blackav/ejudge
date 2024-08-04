@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2004-2021 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -477,7 +477,7 @@ open_userlist_server(void)
   if (userlist_conn) return;
   if (!(userlist_conn = userlist_clnt_open(config->socket_path))) {
     client_put_header(stdout, 0, 0, config->charset, 1, 0,
-                      NULL_CLIENT_KEY,
+                      NULL_CLIENT_KEY, 500,
                       _("Server is down"));
     printf("<p>%s</p>",
            _("The server is down. Try again later."));
@@ -491,7 +491,7 @@ open_super_server(void)
   if (super_serve_fd >= 0) return;
   if ((super_serve_fd = super_clnt_open(config->super_serve_socket)) < 0) {
     client_put_header(stdout, 0, 0, config->charset, 1, 0,
-                      NULL_CLIENT_KEY,
+                      NULL_CLIENT_KEY, 500,
                       _("Server is down"));
     printf("<p>%s</p>",
            _("The server is down. Try again later."));
@@ -505,7 +505,7 @@ static void
 fatal_server_error(int r)
 {
   client_put_header(stdout, 0, 0, config->charset, 1, 0,
-                    NULL_CLIENT_KEY, _("Server error"));
+                    NULL_CLIENT_KEY, 500, _("Server error"));
   printf("<p>Server error: %s</p>", userlist_strerror(-r));
   client_put_footer(stdout, 0);
   exit(0);
@@ -516,7 +516,7 @@ static void
 permission_denied(void)
 {
   client_put_header(stdout,0,0,config->charset,1,0,
-                    NULL_CLIENT_KEY, _("Permission denied"));
+                    NULL_CLIENT_KEY, 403, _("Permission denied"));
   printf("<p>%s</p>", _("You do not have permissions to use this service"));
   client_put_footer(stdout, 0);
   exit(0);
@@ -527,7 +527,7 @@ static void
 invalid_login(void)
 {
   client_put_header(stdout, 0, 0, config->charset, 1, 0,
-                    NULL_CLIENT_KEY,
+                    NULL_CLIENT_KEY, 403,
                     _("Invalid login"));
   printf("<p>%s</p>",
          "Invalid login. You have typed invalid login, invalid password,"
@@ -734,7 +734,7 @@ operation_status_page(int userlist_code,
   va_list args;
 
   if (userlist_code == -1 && super_code == -1) {
-    client_put_header(stdout, 0, 0, config->charset, 1, 0, NULL_CLIENT_KEY, "Operation failed");
+    client_put_header(stdout, 0, 0, config->charset, 1, 0, NULL_CLIENT_KEY, 400, "Operation failed");
     va_start(args, format);
     vsnprintf(msg, sizeof(msg), format, args);
     va_end(args);
@@ -743,21 +743,21 @@ operation_status_page(int userlist_code,
     exit(0);
   }
   if (userlist_code == -1 && super_code < -1) {
-    client_put_header(stdout, 0, 0, config->charset, 1, 0, NULL_CLIENT_KEY, "Operation failed");
+    client_put_header(stdout, 0, 0, config->charset, 1, 0, NULL_CLIENT_KEY, 400, "Operation failed");
     printf("<h2><font color=\"red\">super-serve error: %s</font></h2>\n",
            super_proto_strerror(-super_code));
     client_put_footer(stdout, 0);
     exit(0);
   }
   if (userlist_code < -1 && super_code == -1) {
-    client_put_header(stdout, 0, 0, config->charset, 1, 0, NULL_CLIENT_KEY, "Operation failed");
+    client_put_header(stdout, 0, 0, config->charset, 1, 0, NULL_CLIENT_KEY, 400, "Operation failed");
     printf("<h2><font color=\"red\">userlist-server error: %s</font></h2>\n",
            userlist_strerror(-userlist_code));
     client_put_footer(stdout, 0);
     exit(0);
   }
   if (userlist_code < -1 && super_code < -1) {
-    client_put_header(stdout, 0, 0, config->charset, 1, 0, NULL_CLIENT_KEY, "Operation failed");
+    client_put_header(stdout, 0, 0, config->charset, 1, 0, NULL_CLIENT_KEY, 400, "Operation failed");
     printf("<h2><font color=\"red\">Unknown error: %d, %d</font></h2>\n",
            userlist_code, super_code);
     client_put_footer(stdout, 0);
