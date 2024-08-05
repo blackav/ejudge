@@ -50,4 +50,8 @@ struct section_language_data;
 struct cJSON *
 json_serialize_language(const struct section_language_data *lang, int final_mode);
 
+struct userlist_cookie;
+struct cJSON *
+json_serialize_userlist_cookie(const struct userlist_cookie *c);
+
 #endif /* __JSON_SERIALIZERS_H__ */
