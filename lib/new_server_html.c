@@ -9900,6 +9900,10 @@ priv_change_registration(
     err("%s: invalid operation", __PRETTY_FUNCTION__);
     goto done;
   }
+  int ignore = 0;
+  if (hr_cgi_param_jsbool_opt(phr, "ignore", &ignore, 0) < 0) {
+    goto done;
+  }
 
   if (!strcmp(op, "delete")) {
     if (opcaps_find(&cnts->capabilities, other_user_login, &caps) >= 0) {
@@ -9915,7 +9919,12 @@ priv_change_registration(
       goto done;
     }
     r = userlist_clnt_change_registration(ul_conn, other_user_id, phr->contest_id, -2, 0, 0);
-    if (r < 0) {
+    if (r == -ULS_ERR_NOT_REGISTERED && ignore <= 0) {
+        err_num = NEW_SRV_ERR_USER_NOT_REGISTERED;
+        http_status = 404;
+        goto done;
+    }
+    if (r < 0 && r != ULS_ERR_NOT_REGISTERED) {
       goto userlist_error;
     }
 
@@ -9974,10 +9983,6 @@ priv_change_registration(
   if (hr_cgi_param_jsbool_opt(phr, "is_reg_readonly", &is_reg_readonly, -1) < 0) {
     goto done;
   }
-  int ignore = 0;
-  if (hr_cgi_param_jsbool_opt(phr, "ignore", &ignore, 0) < 0) {
-    goto done;
-  }
   int clear_name = 0;
   if (hr_cgi_param_jsbool_opt(phr, "clear_name", &clear_name, 0) < 0) {
     goto done;
@@ -10033,7 +10038,7 @@ priv_change_registration(
     if (uc) {
       err("%s: user %d already registered to contest %d", __PRETTY_FUNCTION__, other_user_id, phr->contest_id);
       http_status = 409;
-      err_num = NEW_SRV_ERR_ALREADY_PRINTED;
+      err_num = NEW_SRV_ERR_ALREADY_EXISTS;
       goto done;
     }
   }
@@ -10818,7 +10823,7 @@ priv_create_user_session_json(
     if (xml_parse_ipv6(NULL, 0, 0, 0, s, &sender_ip) < 0) {
       goto done;
     }
-    hr_cgi_param_int_opt(phr, "sender_ssl_flag", &sender_ssl_flag, 0);
+    hr_cgi_param_jsbool_opt(phr, "sender_ssl_flag", &sender_ssl_flag, 0);
   } else {
     sender_ip = phr->ip;
     sender_ssl_flag = phr->ssl_flag;
@@ -10836,7 +10841,7 @@ priv_create_user_session_json(
   if (locale_id < 0) {
     locale_id = 0;
   }
-  if (hr_cgi_param_int_opt(phr, "create_reg", &create_reg, 0) < 0) {
+  if (hr_cgi_param_jsbool_opt(phr, "create_reg", &create_reg, 0) < 0) {
     goto done;
   }
   if (hr_cgi_param_int_opt(phr, "base_contest_id", &base_contest_id, 0) < 0) {
