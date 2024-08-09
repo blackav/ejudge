@@ -10976,7 +10976,32 @@ priv_create_user_session_json(
         goto userlist_error;
       }
     }
-    uc = base_uc;
+
+    free(xml_text); xml_text = NULL;
+    if (u) {
+      userlist_free(&u->b);
+      u = NULL;
+    }
+    r = userlist_clnt_get_info(ul_conn, ULS_PRIV_GET_USER_INFO, other_user_id, phr->contest_id, &xml_text);
+    if (r < 0 && r != -ULS_ERR_BAD_UID) {
+      goto userlist_error;
+    }
+    if (r < 0) {
+      err_num = NEW_SRV_ERR_INV_USER_ID;
+      goto done;
+    }
+    u = userlist_parse_user_str(xml_text);
+    if (!u) {
+      err("%s: XML parse error", __PRETTY_FUNCTION__);
+      http_status = 500;
+      err_num = NEW_SRV_ERR_INTERNAL;
+      goto done;
+    }
+    uc = userlist_get_user_contest(u, phr->contest_id);
+    if (!uc) {
+      err_num = NEW_SRV_ERR_USER_NOT_REGISTERED;
+      goto done;
+    }
   }
   req_caps = 0;
   if (u->is_banned > 0) {
