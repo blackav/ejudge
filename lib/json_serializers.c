@@ -744,7 +744,9 @@ json_serialize_userlist_cookie(const struct userlist_cookie *c)
     cJSON *jr = cJSON_CreateObject();
     unsigned char buf[64];
 
-    cJSON_AddStringToObject(jr, "ip", xml_unparse_ipv6(&c->ip));
+    if (!ipv6_is_empty(&c->ip)) {
+        cJSON_AddStringToObject(jr, "ip", xml_unparse_ipv6(&c->ip));
+    }
     snprintf(buf, sizeof(buf), "%016llx", c->cookie);
     cJSON_AddStringToObject(jr, "cookie", buf);
     snprintf(buf, sizeof(buf), "%016llx", c->client_key);
