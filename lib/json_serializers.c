@@ -753,7 +753,7 @@ json_serialize_userlist_cookie(const struct userlist_cookie *c)
         cJSON_AddNumberToObject(jr, "expire", c->expire);
     }
     if (c->user_id > 0) {
-        cJSON_AddNumberToObject(jr, "expire", c->user_id);
+        cJSON_AddNumberToObject(jr, "user_id", c->user_id);
     }
     if (c->ssl > 0) {
         cJSON_AddTrueToObject(jr, "ssl");

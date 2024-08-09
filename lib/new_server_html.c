@@ -9924,7 +9924,7 @@ priv_change_registration(
         http_status = 404;
         goto done;
     }
-    if (r < 0 && r != ULS_ERR_NOT_REGISTERED) {
+    if (r < 0 && r != -ULS_ERR_NOT_REGISTERED) {
       goto userlist_error;
     }
 
@@ -11037,7 +11037,7 @@ priv_create_user_session_json(
   in_c.cookie = random_u64();
   in_c.client_key = random_u64();
 
-  r = userlist_clnt_create_cookie(ul_conn, ULS_CREATE_COOKIE, &in_c, &out_c);
+  r = userlist_clnt_create_cookie(ul_conn, ULS_PRIV_CREATE_COOKIE, &in_c, &out_c);
   if (r < 0) {
     goto userlist_error;
   }
