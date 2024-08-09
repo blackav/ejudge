@@ -28,6 +28,7 @@
 #include "ejudge/sha256.h"
 #include "ejudge/mime_type.h"
 #include "ejudge/userlist.h"
+#include <stdio.h>
 
 cJSON *
 json_serialize_submit(
@@ -732,6 +733,56 @@ json_serialize_language(const struct section_language_data *lang, int final_mode
     }
     if (lang->unhandled_vars && !final_mode) {
         cJSON_AddStringToObject(jr, "unhandled_vars", lang->unhandled_vars);
+    }
+
+    return jr;
+}
+
+cJSON *
+json_serialize_userlist_cookie(const struct userlist_cookie *c)
+{
+    cJSON *jr = cJSON_CreateObject();
+    unsigned char buf[64];
+
+    if (!ipv6_is_empty(&c->ip)) {
+        cJSON_AddStringToObject(jr, "ip", xml_unparse_ipv6(&c->ip));
+    }
+    snprintf(buf, sizeof(buf), "%016llx", c->cookie);
+    cJSON_AddStringToObject(jr, "cookie", buf);
+    snprintf(buf, sizeof(buf), "%016llx", c->client_key);
+    cJSON_AddStringToObject(jr, "client_key", buf);
+    if (c->expire > 0) {
+        cJSON_AddNumberToObject(jr, "expire", c->expire);
+    }
+    if (c->user_id > 0) {
+        cJSON_AddNumberToObject(jr, "user_id", c->user_id);
+    }
+    if (c->ssl > 0) {
+        cJSON_AddTrueToObject(jr, "ssl");
+    }
+    if (c->contest_id > 0) {
+        cJSON_AddNumberToObject(jr, "contest_id", c->contest_id);
+    }
+    if (c->locale_id > 0) {
+        cJSON_AddNumberToObject(jr, "locale_id", c->locale_id);
+    }
+    if (c->priv_level > 0) {
+        cJSON_AddNumberToObject(jr, "priv_level", c->priv_level);
+    }
+    if (c->role > 0) {
+        cJSON_AddNumberToObject(jr, "role", c->role);
+    }
+    if (c->recovery > 0) {
+        cJSON_AddTrueToObject(jr, "recovery");
+    }
+    if (c->team_login > 0) {
+        cJSON_AddTrueToObject(jr, "team_login");
+    }
+    if (c->is_ws > 0) {
+        cJSON_AddTrueToObject(jr, "is_ws");
+    }
+    if (c->is_job > 0) {
+        cJSON_AddTrueToObject(jr, "is_job");
     }
 
     return jr;

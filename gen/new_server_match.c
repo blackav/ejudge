@@ -2358,6 +2358,41 @@ int ns_match_action(const unsigned char *str)
                                     return 0;
                                   }
                                   return 0;
+                                } else if (c < 'p') {
+                                  if (c == '-') {
+                                    c = str[12];
+                                    if (c == 's') {
+                                      c = str[13];
+                                      if (c == 'e') {
+                                        c = str[14];
+                                        if (c == 's') {
+                                          c = str[15];
+                                          if (c == 's') {
+                                            c = str[16];
+                                            if (c == 'i') {
+                                              c = str[17];
+                                              if (c == 'o') {
+                                                c = str[18];
+                                                if (c == 'n') {
+                                                  c = str[19];
+                                                  if (!c) return NEW_SRV_ACTION_CREATE_USER_SESSION;
+                                                  return 0;
+                                                }
+                                                return 0;
+                                              }
+                                              return 0;
+                                            }
+                                            return 0;
+                                          }
+                                          return 0;
+                                        }
+                                        return 0;
+                                      }
+                                      return 0;
+                                    }
+                                    return 0;
+                                  }
+                                } else {
                                 }
                                 return 0;
                               }

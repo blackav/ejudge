@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-07-31 00:07+0300\n"
+"POT-Creation-Date: 2024-08-06 02:06+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Ukrainian <uk@li.org>\n"
@@ -4306,6 +4306,12 @@ msgstr ""
 msgid "User info"
 msgstr ""
 
+msgid "User is banned"
+msgstr ""
+
+msgid "User is locked"
+msgstr ""
+
 msgid "User is simple registered"
 msgstr ""
 
@@ -4325,6 +4331,9 @@ msgid "User name"
 msgstr ""
 
 msgid "User name (for standings)"
+msgstr ""
+
+msgid "User not registered for contest"
 msgstr ""
 
 msgid ""

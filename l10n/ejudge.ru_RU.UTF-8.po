@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-07-31 00:07+0300\n"
+"POT-Creation-Date: 2024-08-06 02:06+0300\n"
 "PO-Revision-Date: 2024-03-17 14:09+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -4499,6 +4499,12 @@ msgstr "Условие отбора участников"
 msgid "User info"
 msgstr "Информация о пользователе"
 
+msgid "User is banned"
+msgstr "Пользователь заблокирован"
+
+msgid "User is locked"
+msgstr "Пользователь заперт"
+
 msgid "User is simple registered"
 msgstr "Пользователь создан по упрощённой процедуре регистрации"
 
@@ -4519,6 +4525,9 @@ msgstr "Имя участника"
 
 msgid "User name (for standings)"
 msgstr "Имя участника (для таблицы результатов)"
+
+msgid "User not registered for contest"
+msgstr "Пользователь не зарегистрирован на турнир"
 
 msgid ""
 "User quota exceeded. This clarification request is too large, you already "

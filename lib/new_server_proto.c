@@ -193,6 +193,9 @@ static const unsigned char * const ns_error_messages[NEW_SRV_ERR_LAST]=
   [NEW_SRV_ERR_INV_EXT_USER] = __("Invalid external user"),
   [NEW_SRV_ERR_INV_NOTIFY] = __("Invalid notification"),
   [NEW_SRV_ERR_ALREADY_EXISTS] = __("Already exists"),
+  [NEW_SRV_ERR_USER_NOT_REGISTERED] = __("User not registered for contest"),
+  [NEW_SRV_ERR_USER_BANNED] = __("User is banned"),
+  [NEW_SRV_ERR_USER_LOCKED] = __("User is locked"),
 };
 
 static const unsigned char * const ns_error_titles[NEW_SRV_ERR_LAST]=
@@ -358,6 +361,9 @@ static const unsigned char * const ns_error_titles[NEW_SRV_ERR_LAST]=
   [NEW_SRV_ERR_INV_EXT_USER] = __("Invalid external user"),
   [NEW_SRV_ERR_INV_NOTIFY] = __("Invalid notification"),
   [NEW_SRV_ERR_ALREADY_EXISTS] = __("Already exists"),
+  [NEW_SRV_ERR_USER_NOT_REGISTERED] = __("User not registered for contest"),
+  [NEW_SRV_ERR_USER_BANNED] = __("User is banned"),
+  [NEW_SRV_ERR_USER_LOCKED] = __("User is locked"),
 };
 
 static const unsigned char * const ns_error_symbols[NEW_SRV_ERR_LAST]=
@@ -522,6 +528,9 @@ static const unsigned char * const ns_error_symbols[NEW_SRV_ERR_LAST]=
   [NEW_SRV_ERR_INV_EXT_USER] = "ERR_INV_EXT_USER",
   [NEW_SRV_ERR_INV_NOTIFY] = "ERR_INV_NOTIFY",
   [NEW_SRV_ERR_ALREADY_EXISTS] = "ERR_ALREADY_EXISTS",
+  [NEW_SRV_ERR_USER_NOT_REGISTERED] = "ERR_USER_NOT_REGISTERED",
+  [NEW_SRV_ERR_USER_BANNED] = "ERR_USER_BANNED",
+  [NEW_SRV_ERR_USER_LOCKED] = "ERR_USER_LOCKED",
 };
 
 const unsigned char *
