@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2002-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -10876,9 +10876,9 @@ cmd_priv_create_cookie(
     data->ssl,
     0 /* cookie */,     // ignore data->cookie
     data->client_key,
-    0 /* expire */,     // ignore data->expire
+    data->expire,
     data->contest_id,
-    0 /* locale_id */,  // ignore data->locale_id
+    data->locale_id,
     data->priv_level,
     data->role,
     0 /* recovery */,   // ignore data->recovery
