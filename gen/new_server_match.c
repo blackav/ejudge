@@ -2221,6 +2221,11 @@ int ns_match_action(const unsigned char *str)
                                                     if (c == 'n') {
                                                       c = str[19];
                                                       if (!c) return NEW_SRV_ACTION_CHANGE_REGISTRATION;
+                                                      if (c == 's') {
+                                                        c = str[20];
+                                                        if (!c) return NEW_SRV_ACTION_CHANGE_REGISTRATIONS;
+                                                        return 0;
+                                                      }
                                                       return 0;
                                                     }
                                                     return 0;
