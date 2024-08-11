@@ -11097,6 +11097,364 @@ userlist_error:;
   goto done;
 }
 
+static int int_sort_func(const void *p1, const void *p2);
+
+static void
+priv_change_registrations_json(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  int ok = 0;
+  int err_num = NEW_SRV_ERR_INV_PARAM;
+  const unsigned char *err_msg = NULL;
+  cJSON *jr = cJSON_CreateObject();
+  int http_status = 400;
+  const serve_state_t cs = extra->serve_state;
+  intarray_t uset = {};
+  __attribute__((unused)) int r;
+  const unsigned char *op = NULL;
+  const unsigned char *s;
+  unsigned char *disq_comment = NULL;
+  enum { FLAGS_COUNT = 7 };
+  int flags[FLAGS_COUNT] = { 0, 0, 0, 0, 0, 0, 0 };
+  int flag_map[FLAGS_COUNT] =
+  {
+    USERLIST_UC_BANNED,
+    USERLIST_UC_INVISIBLE,
+    USERLIST_UC_LOCKED,
+    USERLIST_UC_INCOMPLETE,
+    USERLIST_UC_DISQUALIFIED,
+    USERLIST_UC_PRIVILEGED,
+    USERLIST_UC_REG_READONLY
+  };
+  int new_status = -1;
+  int opcode = 0;
+  int *user_statuses = NULL;
+  int success_count = 0;
+  int total_count = 0;
+  int cmd = -1;
+  int flag = -1;
+  unsigned char **login_strs = NULL;
+  unsigned char *xml_text = NULL;
+  struct userlist_user *u = NULL;
+  const struct userlist_contest *uc = NULL;
+  opcap_t req_caps = 0, caps;
+  unsigned char **messages = NULL;
+
+  if (opcaps_check(phr->caps, OPCAP_LIST_USERS) < 0) {
+    http_status = 403;
+    err_num = NEW_SRV_ERR_PERMISSION_DENIED;
+    goto done;
+  }
+
+  if (parse_user_list(phr, cs, &uset, 1) < 0) {
+    goto done;
+  }
+  if (hr_cgi_param(phr, "op", &op) <= 0) {
+    goto done;
+  }
+  if (!op || !*op) {
+    goto done;
+  }
+
+  if (!strcmp(op, "remove-registrations")) {
+    opcode = NEW_SRV_ACTION_USERS_REMOVE_REGISTRATIONS;
+  } else if (!strcmp(op, "set-pending")) {
+    opcode = NEW_SRV_ACTION_USERS_SET_PENDING;
+    new_status = USERLIST_REG_PENDING;
+  } else if (!strcmp(op, "set-status")) {
+    opcode = NEW_SRV_ACTION_USERS_SET_STATUS;
+  } else if (!strcmp(op, "set-ok")) {
+    opcode = NEW_SRV_ACTION_USERS_SET_OK;
+    new_status = USERLIST_REG_OK;
+  } else if (!strcmp(op, "set-rejected")) {
+    opcode = NEW_SRV_ACTION_USERS_SET_REJECTED;
+    new_status = USERLIST_REG_REJECTED;
+  } else if (!strcmp(op, "set-invisible")) {
+    opcode = NEW_SRV_ACTION_USERS_SET_INVISIBLE;
+    cmd = 1;
+    flag = USERLIST_UC_INVISIBLE;
+  } else if (!strcmp(op, "clear-invisible")) {
+    opcode = NEW_SRV_ACTION_USERS_CLEAR_INVISIBLE;
+    cmd = 2;
+    flag = USERLIST_UC_INVISIBLE;
+  } else if (!strcmp(op, "set-banned")) {
+    opcode = NEW_SRV_ACTION_USERS_SET_BANNED;
+    cmd = 1;
+    flag = USERLIST_UC_BANNED;
+  } else if (!strcmp(op, "clear-banned")) {
+    opcode = NEW_SRV_ACTION_USERS_CLEAR_BANNED;
+    cmd = 2;
+    flag = USERLIST_UC_BANNED;
+  } else if (!strcmp(op, "set-locked")) {
+    opcode = NEW_SRV_ACTION_USERS_SET_LOCKED;
+    cmd = 1;
+    flag = USERLIST_UC_LOCKED;
+  } else if (!strcmp(op, "clear-locked")) {
+    opcode = NEW_SRV_ACTION_USERS_CLEAR_LOCKED;
+    cmd = 2;
+    flag = USERLIST_UC_LOCKED;
+  } else if (!strcmp(op, "set-incomplete")) {
+    opcode = NEW_SRV_ACTION_USERS_SET_INCOMPLETE;
+    cmd = 1;
+    flag = USERLIST_UC_INCOMPLETE;
+  } else if (!strcmp(op, "clear-incomplete")) {
+    opcode = NEW_SRV_ACTION_USERS_CLEAR_INCOMPLETE;
+    cmd = 2;
+    flag = USERLIST_UC_INCOMPLETE;
+  } else if (!strcmp(op, "set-disqualified")) {
+    opcode = NEW_SRV_ACTION_USERS_SET_DISQUALIFIED;
+    cmd = 1;
+    flag = USERLIST_UC_DISQUALIFIED;
+  } else if (!strcmp(op, "clear-disqualified")) {
+    opcode = NEW_SRV_ACTION_USERS_CLEAR_DISQUALIFIED;
+    cmd = 2;
+    flag = USERLIST_UC_DISQUALIFIED;
+  } else if (!strcmp(op, "change-flags")) {
+    opcode = NEW_SRV_ACTION_USERS_CHANGE_FLAGS;
+  } else {
+    goto done;
+  }
+
+  if (opcode == NEW_SRV_ACTION_USERS_SET_DISQUALIFIED) {
+    if (hr_cgi_param(phr, "disq_comment", &s) < 0) {
+      goto done;
+    }
+    disq_comment = text_area_process_string(s, 0, 0);
+  }
+  if (opcode == NEW_SRV_ACTION_USERS_CHANGE_FLAGS) {
+    hr_cgi_param_int_opt(phr, "flag_0", &flags[0], 0);
+    hr_cgi_param_int_opt(phr, "flag_1", &flags[1], 0);
+    hr_cgi_param_int_opt(phr, "flag_2", &flags[2], 0);
+    hr_cgi_param_int_opt(phr, "flag_3", &flags[3], 0);
+    hr_cgi_param_int_opt(phr, "flag_4", &flags[4], 0);
+    hr_cgi_param_int_opt(phr, "flag_5", &flags[5], 0);
+    hr_cgi_param_int_opt(phr, "flag_6", &flags[6], 0);
+  }
+  if (opcode == NEW_SRV_ACTION_USERS_SET_STATUS) {
+    if (hr_cgi_param_int_opt(phr, "new_status", &new_status, -1) < 0) {
+      goto done;
+    }
+    if (new_status < 0 || new_status >= USERLIST_REG_LAST) {
+      goto done;
+    }
+  }
+
+  {
+    qsort(uset.v, uset.u, sizeof(uset.v[0]), int_sort_func);
+    int src, dst = 1;
+    for (src = 1; src < uset.u; ++src) {
+      if (uset.v[src-1] != uset.v[src]) {
+        uset.v[dst++] = uset.v[src];
+      }
+    }
+    uset.u = dst;
+  }
+  if (uset.u > 0) {
+    XCALLOC(user_statuses, uset.u);
+    XCALLOC(login_strs, uset.u);
+    XCALLOC(messages, uset.u);
+  }
+
+  if ((r = ns_open_ul_connection(phr->fw_state)) < 0) {
+    goto userlist_error;
+  }
+
+  info("audit:%s:%d:%d:%s:%d", phr->action_str, phr->user_id, phr->contest_id, op, (int) uset.u);
+
+  for (int i = 0; i < uset.u; ++i) {
+    ++total_count;
+    r = userlist_clnt_lookup_user_id(ul_conn, uset.v[i], 0, &login_strs[i], NULL);
+    if (r < 0) {
+      user_statuses[i] = r;
+      continue;
+    }
+    xfree(xml_text); xml_text = NULL;
+    r = userlist_clnt_get_info(ul_conn, ULS_PRIV_GET_USER_INFO, uset.v[i], phr->contest_id, &xml_text);
+    if (r < 0) {
+      user_statuses[i] = r;
+      continue;
+    }
+    if (u) {
+      userlist_free(&u->b);
+    }
+    u = userlist_parse_user_str(xml_text);
+    if (!u) {
+      user_statuses[i] = -ULS_ERR_XML_PARSE;
+      continue;
+    }
+    xfree(xml_text); xml_text = NULL;
+    uc = userlist_get_user_contest(u, phr->contest_id);
+    int is_privileged = u->is_privileged || (uc->flags & USERLIST_UC_PRIVILEGED)
+      || opcaps_find(&cnts->capabilities, login_strs[i], &caps) >= 0;
+
+    if (opcode == NEW_SRV_ACTION_USERS_REMOVE_REGISTRATIONS) {
+      if (!uc) {
+        ++success_count;
+        continue;
+      }
+      if (is_privileged) {
+        req_caps = OPCAP_PRIV_DELETE_REG;
+      } else {
+        req_caps = OPCAP_DELETE_REG;
+      }
+      if ((phr->caps & req_caps) != req_caps) {
+        user_statuses[i] = -ULS_ERR_NO_PERMS;
+        continue;
+      }
+      r = userlist_clnt_change_registration(ul_conn, uset.v[i], phr->contest_id, -2, 0, 0);
+      if (r < 0) {
+        user_statuses[i] = r;
+        continue;
+      }
+      ++success_count;
+    } else if (new_status >= 0) {
+      if (is_privileged) {
+        req_caps = OPCAP_PRIV_EDIT_REG;
+      } else {
+        req_caps = OPCAP_EDIT_REG;
+      }
+      if ((phr->caps & req_caps) != req_caps) {
+        user_statuses[i] = -ULS_ERR_NO_PERMS;
+        continue;
+      }
+      r = userlist_clnt_change_registration(ul_conn, uset.v[i], phr->contest_id, new_status, 0, 0);
+      if (r < 0) {
+        user_statuses[i] = r;
+        continue;
+      }
+      ++success_count;
+    } else if (opcode == NEW_SRV_ACTION_USERS_SET_DISQUALIFIED) {
+      if (is_privileged) {
+        req_caps = OPCAP_PRIV_EDIT_REG;
+      } else {
+        req_caps = OPCAP_EDIT_REG;
+      }
+      if ((phr->caps & req_caps) != req_caps) {
+        user_statuses[i] = -ULS_ERR_NO_PERMS;
+        continue;
+      }
+      if (cs->xuser_state) {
+        cs->xuser_state->vt->set_disq_comment(cs->xuser_state, uset.v[i], disq_comment);
+      }
+      r = userlist_clnt_change_registration(ul_conn, uset.v[i], phr->contest_id, -1, cmd, flag);
+      if (r < 0) {
+        user_statuses[i] = r;
+        continue;
+      }
+      ++success_count;
+    } else if (cmd > 0) {
+      if (is_privileged) {
+        req_caps = OPCAP_PRIV_EDIT_REG;
+      } else {
+        req_caps = OPCAP_EDIT_REG;
+      }
+      if ((phr->caps & req_caps) != req_caps) {
+        user_statuses[i] = -ULS_ERR_NO_PERMS;
+        continue;
+      }
+      r = userlist_clnt_change_registration(ul_conn, uset.v[i], phr->contest_id, -1, cmd, flag);
+      if (r < 0) {
+        user_statuses[i] = r;
+        continue;
+      }
+      ++success_count;
+    } else if (opcode == NEW_SRV_ACTION_USERS_CHANGE_FLAGS) {
+      if (is_privileged) {
+        req_caps = OPCAP_PRIV_EDIT_REG;
+      } else {
+        req_caps = OPCAP_EDIT_REG;
+      }
+      if ((phr->caps & req_caps) != req_caps) {
+        user_statuses[i] = -ULS_ERR_NO_PERMS;
+        continue;
+      }
+      r = 0;
+      for (int j = 0; j < FLAGS_COUNT; ++j) {
+        if (flags[j] > 0 && flags[j] <= 3) {
+          r = userlist_clnt_change_registration(ul_conn, uset.v[i],
+                                                phr->contest_id, -1, flags[j],
+                                                flag_map[j]);
+          if (r < 0) {
+            break;
+          }
+        }
+      }
+      if (r < 0) {
+        user_statuses[i] = r;
+        continue;
+      }
+      ++success_count;
+    }
+  }
+
+  if (opcode == NEW_SRV_ACTION_USERS_SET_DISQUALIFIED) {
+    if (cs->xuser_state) {
+      cs->xuser_state->vt->flush(cs->xuser_state);
+    }
+  }
+
+  cJSON *jim = cJSON_CreateObject();
+  for (int i = 0; i < uset.u; ++i) {
+    cJSON *ji = cJSON_CreateObject();
+    cJSON_AddNumberToObject(ji, "status", user_statuses[i]);
+    if (login_strs[i]) {
+      cJSON_AddStringToObject(ji, "login", login_strs[i]);
+    }
+    if (messages[i]) {
+      cJSON_AddStringToObject(ji, "message", messages[i]);
+    } else if (user_statuses[i] < 0) {
+      cJSON_AddStringToObject(ji, "message", userlist_strerror(-user_statuses[i]));
+    }
+    unsigned char buf[64];
+    snprintf(buf, sizeof(buf), "%d", uset.v[i]);
+    cJSON_AddItemToObject(jim, buf, ji);
+  }
+  cJSON *js = cJSON_CreateObject();
+  cJSON_AddNumberToObject(js, "total_count", total_count);
+  cJSON_AddNumberToObject(js, "success_count", success_count);
+  cJSON_AddItemToObject(js, "items", jim);
+  cJSON_AddItemToObject(jr, "result", js);
+  ok = 1;
+  http_status = 200;
+
+done:;
+  phr->json_reply = 1;
+  phr->status_code = http_status;
+  emit_json_result(fout, phr, ok, err_num, 0, err_msg, jr);
+  if (jr) {
+    cJSON_Delete(jr);
+  }
+  xfree(uset.v);
+  xfree(disq_comment);
+  xfree(user_statuses);
+  if (login_strs) {
+    for (int i = 0; i < uset.u; ++i) {
+      xfree(login_strs[i]);
+    }
+    xfree(login_strs);
+  }
+  if (messages) {
+    for (int i = 0; i < uset.u; ++i) {
+      xfree(messages[i]);
+    }
+    xfree(messages);
+  }
+  xfree(xml_text);
+  if (u) {
+    userlist_free(&u->b);
+  }
+  return;
+
+userlist_error:;
+  err("%s: userlist server error %d", __PRETTY_FUNCTION__, r);
+  http_status = 500;
+  err_num = NEW_SRV_ERR_INTERNAL;
+  goto done;
+}
+
 typedef PageInterface *(*external_action_handler_t)(void);
 
 typedef int (*new_action_handler_t)(
@@ -11340,6 +11698,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_PROBLEM_STATUS_JSON] = priv_problem_status_json,
   [NEW_SRV_ACTION_LIST_LANGUAGES] = priv_list_languages_json,
   [NEW_SRV_ACTION_CREATE_USER_SESSION] = priv_create_user_session_json,
+  [NEW_SRV_ACTION_CHANGE_REGISTRATIONS] = priv_change_registrations_json,
 };
 
 static const unsigned char * const external_priv_action_names[NEW_SRV_ACTION_LAST] =
