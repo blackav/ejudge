@@ -76,16 +76,21 @@
   if (phr->role == USER_ROLE_ADMIN) {
 %>
 
-<h2>Change registration status</h2>
+<h2>Remove registrations</h2>
 
-<s:form onsubmit="usersRemoveRegistrationsSubmit()">
+<s:form id="UsersRemoveRegistrationForm" onsubmit="usersRemoveRegistrationsSubmit(event)">
 <s:hidden id="UsersRemoveIdList" name="new_user_id_list" value ="" />
+<s:hidden name="op" value='"remove-registrations"' />
+<s:hidden name="action" value='"change-registrations"' />
 <s:submit ac="users-remove-registrations" />
 </s:form>
-<br/>
 
-<s:form onsubmit="usersChangeRegistrationsSubmit()">
+<h2>Change registration status</h2>
+
+<s:form id="UsersChangeRegistrationForm" onsubmit="usersChangeRegistrationsSubmit(event)">
 <s:hidden id="UsersChangeIdList" name="new_user_id_list" value ="" />
+<s:hidden name="op" value='"set-status"' />
+<s:hidden name="action" value='"change-registrations"' />
 <select name="new_status">
 <option value="-1"></option>
 <option value="0">OK</option>
@@ -95,8 +100,12 @@
 <s:submit ac="users-set-status" />
 </s:form>
 
-<s:form onsubmit="usersChangeFlagsSubmit()">
+<h2>Change registration flags</h2>
+
+<s:form id="UsersChangeFlagsForm" onsubmit="usersChangeFlagsSubmit(event)">
 <s:hidden id="FlagsChangeIdList" name="new_user_id_list" value ="" />
+<s:hidden name="op" value='"change-flags"' />
+<s:hidden name="action" value='"change-registrations"' />
 <table border="0">
 <tr><td>&nbsp;</td><td>BANNED</td><td>INVISIBLE</td><td>LOCKED</td><td>INCOMPLETE</td><td>DISQUALIFIED</td><td>PRIVILEGED</td><td>REG. READ-ONLY</td></tr>
 <tr>
@@ -144,8 +153,11 @@
 </s:form>
 
 <h2><s:_>Disqualify selected users</s:_></h2>
-<s:form onsubmit="usersDisqualifySubmit()">
+
+<s:form  id="UsersDisqualifyForm" onsubmit="usersDisqualifySubmit(event)">
 <s:hidden id="UsersDisqualifyIdList" name="new_user_id_list" value ="" />
+<s:hidden name="op" value='"set-disqualified"' />
+<s:hidden name="action" value='"change-registrations"' />
 <p><s:_>Disqualification explanation</s:_>:<br>
 <textarea name="disq_comment" rows="5" cols="60">
 </textarea></p>
@@ -202,6 +214,24 @@
 </s:form>
 <%  }%>
 
+<div id="RegistrationOperationCompleteDialog" title="Operation Completed" style="overflow: auto;">
+    <div id="RegistrationOperationSuccess">
+        <p>Operation completed successfully!</p>
+        <p>Registrations updated: <span id="RegistrationOperationSuccessTotal1"></span></p>
+    </div>
+    <div id="RegistrationOperationPartial">
+        <p>Operation completed partially.</p>
+        <p>Registrations updated: <span id="RegistrationOperationPartial1"></span> out of <span id="RegistrationOperationPartial2"></span></p>
+        <p>Failed operations:</p>
+        <pre id="RegistrationOperationPartialPre"></pre>
+    </div>
+    <div id="RegistrationOperationFailure">
+        <p>Operation failed.</p>
+        <p>Error code: <span id="RegistrationOperationFailure1"></span></p>
+        <p>Message: <span id="RegistrationOperationFailure2"></span></p>
+    </div>
+</div>
+
 <script type="text/javascript">
     var SID='<s:v value="phr->session_id" />';
     var self_url='<s:v value="phr->self_url" escape="false" />';
@@ -220,6 +250,20 @@
 </script>
 
 <script type="text/javascript">
+$(function() {
+    $("#RegistrationOperationCompleteDialog").dialog({
+        autoOpen: false,
+        //height: 500,
+        width: 450,
+        modal: true,
+        buttons: {
+            Ok: function() {
+                $(this).dialog( "close" );
+            }
+        }
+    });
+});
+
 var htmlEscapes = {
 	'&': '&amp;',
 	'<': '&lt;',
@@ -274,32 +318,153 @@ function showOnlyPendingUsersChange()
     loadTable();
 }
 
-function usersRemoveRegistrationsSubmit()
+function registrationOperationCallbackSuccess(data)
+{
+    clearUserSelection();
+    $("#UsersRemoveRegistrationForm").trigger("reset");
+    $("#UsersChangeRegistrationForm").trigger("reset");
+    $("#UsersChangeFlagsForm").trigger("reset");
+    $("#UsersDisqualifyForm").trigger("reset");
+    if (data.ok && data.result.total_count == data.result.success_count) {
+        $("#RegistrationOperationSuccess").show();
+        $("#RegistrationOperationPartial").hide();
+        $("#RegistrationOperationFailure").hide();
+        $("#RegistrationOperationSuccessTotal1").text(data.result.success_count);
+    } else if (data.ok) {
+        $("#RegistrationOperationSuccess").hide();
+        $("#RegistrationOperationPartial").show();
+        $("#RegistrationOperationFailure").hide();
+        $("#RegistrationOperationPartial1").text(data.result.success_count);
+        $("#RegistrationOperationPartial2").text(data.result.total_count);
+        var text = "";
+        for (const [k,i] of Object.entries(data.result.items)) {
+            if (i.status != 0) {
+                text += i.login;
+                text += " ";
+                text += i.message;
+                text += "\r\n";
+            }
+        }
+        $("#RegistrationOperationPartialPre").text(text);
+    } else {
+        $("#RegistrationOperationSuccess").hide();
+        $("#RegistrationOperationPartial").hide();
+        $("#RegistrationOperationFailure").show();
+        $("#RegistrationOperationFailure1").text(data.error.symbol);
+        $("#RegistrationOperationFailure2").text(data.error.message);
+    }
+    loadTable();
+    $("#RegistrationOperationCompleteDialog").dialog("open");
+}
+
+function registrationOperationCallbackFailure(jqXHR)
+{
+    clearUserSelection();
+    $("#UsersRemoveRegistrationForm").trigger("reset");
+    $("#UsersChangeRegistrationForm").trigger("reset");
+    $("#UsersChangeFlagsForm").trigger("reset");
+    $("#UsersDisqualifyForm").trigger("reset");
+    $("#RegistrationOperationSuccess").hide();
+    $("#RegistrationOperationPartial").hide();
+    $("#RegistrationOperationFailure").show();
+    if (jqXHR.responseJSON) {
+        $("#RegistrationOperationFailure1").text(jqXHR.responseJSON.error.symbol);
+        $("#RegistrationOperationFailure2").text(jqXHR.responseJSON.error.message);
+    } else {
+        $("#RegistrationOperationFailure1").text(jqXHR.status);
+        $("#RegistrationOperationFailure2").text(jqXHR.statusText);
+    }
+    $("#RegistrationOperationCompleteDialog").dialog("open");
+}
+
+function usersRemoveRegistrationsSubmit(event)
 {
     var ids = makeUserIdList();
     $("#UsersRemoveIdList").val(ids);
-    return true;
+
+    $.ajax({
+        url : self_url,
+        type: "POST",
+        data: $("#UsersRemoveRegistrationForm").serialize(),
+        contentType: "application/x-www-form-urlencoded; charset=utf-8",
+        dataType: "json",
+        success:function(data, textStatus, jqXHR) {
+            registrationOperationCallbackSuccess(data);
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+            registrationOperationCallbackFailure(jqXHR);
+        }
+    });
+
+    event.preventDefault();
+    return false;
 }
 
-function usersChangeRegistrationsSubmit()
+function usersChangeRegistrationsSubmit(event)
 {
     var ids = makeUserIdList();
     $("#UsersChangeIdList").val(ids);
-    return true;
+
+    $.ajax({
+        url : self_url,
+        type: "POST",
+        data: $("#UsersChangeRegistrationForm").serialize(),
+        contentType: "application/x-www-form-urlencoded; charset=utf-8",
+        dataType: "json",
+        success:function(data, textStatus, jqXHR) {
+            registrationOperationCallbackSuccess(data);
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+            registrationOperationCallbackFailure(jqXHR);
+        }
+    });
+
+    event.preventDefault();
+    return false;
 }
 
-function usersChangeFlagsSubmit()
+function usersChangeFlagsSubmit(event)
 {
-    var ids = makeUserIdList();
-    $("#FlagsChangeIdList").val(ids);
-    return true;
+    $("#FlagsChangeIdList").val(makeUserIdList());
+
+    $.ajax({
+        url : self_url,
+        type: "POST",
+        data: $("#UsersChangeFlagsForm").serialize(),
+        contentType: "application/x-www-form-urlencoded; charset=utf-8",
+        dataType: "json",
+        success:function(data, textStatus, jqXHR) {
+            registrationOperationCallbackSuccess(data);
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+            registrationOperationCallbackFailure(jqXHR);
+        }
+    });
+
+    event.preventDefault();
+    return false;
 }
 
-function usersDisqualifySubmit()
+function usersDisqualifySubmit(event)
 {
-    var ids = makeUserIdList();
-    $("#UsersDisqualifyIdList").val(ids);
-    return true;
+    $("#UsersDisqualifyIdList").val(makeUserIdList());
+
+    $.ajax({
+        url : self_url,
+        type: "POST",
+        data: $("#UsersDisqualifyForm").serialize(),
+        contentType: "application/x-www-form-urlencoded; charset=utf-8",
+        dataType: "json",
+        success:function(data, textStatus, jqXHR) {
+            registrationOperationCallbackSuccess(data);
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+            registrationOperationCallbackFailure(jqXHR);
+        }
+    });
+
+    event.preventDefault();
+    return false;
 }
 
 function printProtocolSubmit()
