@@ -309,6 +309,59 @@ function showOnlyPendingUsersChange()
     loadTable();
 }
 
+function registrationOperationCallbackSuccess(data)
+{
+    clearUserSelection();
+    $("#UsersRemoveRegistrationForm").trigger("reset");
+    if (data.ok && data.result.total_count == data.result.success_count) {
+        $("#RegistrationOperationSuccess").show();
+        $("#RegistrationOperationPartial").hide();
+        $("#RegistrationOperationFailure").hide();
+        $("#RegistrationOperationSuccessTotal1").text(data.result.success_count);
+    } else if (data.ok) {
+        $("#RegistrationOperationSuccess").hide();
+        $("#RegistrationOperationPartial").show();
+        $("#RegistrationOperationFailure").hide();
+        $("#RegistrationOperationPartial1").text(data.result.success_count);
+        $("#RegistrationOperationPartial2").text(data.result.total_count);
+        var text = "";
+        for (const [k,i] of Object.entries(data.result.items)) {
+            if (i.status != 0) {
+                text += i.login;
+                text += " ";
+                text += i.message;
+                text += "\r\n";
+            }
+        }
+        $("#RegistrationOperationPartialPre").text(text);
+    } else {
+        $("#RegistrationOperationSuccess").hide();
+        $("#RegistrationOperationPartial").hide();
+        $("#RegistrationOperationFailure").show();
+        $("#RegistrationOperationFailure1").text(data.error.symbol);
+        $("#RegistrationOperationFailure2").text(data.error.message);
+    }
+    loadTable();
+    $("#RegistrationOperationCompleteDialog").dialog("open");
+}
+
+function registrationOperationCallbackFailure(jqXHR)
+{
+    clearUserSelection();
+    $("#UsersRemoveRegistrationForm").trigger("reset");
+    $("#RegistrationOperationSuccess").hide();
+    $("#RegistrationOperationPartial").hide();
+    $("#RegistrationOperationFailure").show();
+    if (jqXHR.responseJSON) {
+        $("#RegistrationOperationFailure1").text(jqXHR.responseJSON.error.symbol);
+        $("#RegistrationOperationFailure2").text(jqXHR.responseJSON.error.message);
+    } else {
+        $("#RegistrationOperationFailure1").text(jqXHR.status);
+        $("#RegistrationOperationFailure2").text(jqXHR.statusText);
+    }
+    $("#RegistrationOperationCompleteDialog").dialog("open");
+}
+
 function usersRemoveRegistrationsSubmit(event)
 {
     var ids = makeUserIdList();
@@ -321,54 +374,10 @@ function usersRemoveRegistrationsSubmit(event)
         contentType: "application/x-www-form-urlencoded; charset=utf-8",
         dataType: "json",
         success:function(data, textStatus, jqXHR) {
-            console.log(data);
-            clearUserSelection();
-            $("#UsersRemoveRegistrationForm").trigger("reset");
-            if (data.ok && data.result.total_count == data.result.success_count) {
-                $("#RegistrationOperationSuccess").show();
-                $("#RegistrationOperationPartial").hide();
-                $("#RegistrationOperationFailure").hide();
-                $("#RegistrationOperationSuccessTotal1").text(data.result.success_count);
-            } else if (data.ok) {
-                $("#RegistrationOperationSuccess").hide();
-                $("#RegistrationOperationPartial").show();
-                $("#RegistrationOperationFailure").hide();
-                $("#RegistrationOperationPartial1").text(data.result.success_count);
-                $("#RegistrationOperationPartial2").text(data.result.total_count);
-                var text = "";
-                for (const [k,i] of Object.entries(data.result.items)) {
-                    if (i.status != 0) {
-                        text += i.login;
-                        text += " ";
-                        text += i.message;
-                        text += "\r\n";
-                    }
-                }
-                $("#RegistrationOperationPartialPre").text(text);
-            } else {
-                $("#RegistrationOperationSuccess").hide();
-                $("#RegistrationOperationPartial").hide();
-                $("#RegistrationOperationFailure").show();
-                $("#RegistrationOperationFailure1").text(data.error.symbol);
-                $("#RegistrationOperationFailure2").text(data.error.message);
-            }
-            loadTable();
-            $("#RegistrationOperationCompleteDialog").dialog("open");
+            registrationOperationCallbackSuccess(data);
         },
         error: function(jqXHR, textStatus, errorThrown) {
-            clearUserSelection();
-            $("#UsersRemoveRegistrationForm").trigger("reset");
-            $("#RegistrationOperationSuccess").hide();
-            $("#RegistrationOperationPartial").hide();
-            $("#RegistrationOperationFailure").show();
-            if (jqXHR.responseJSON) {
-                $("#RegistrationOperationFailure1").text(jqXHR.responseJSON.error.symbol);
-                $("#RegistrationOperationFailure2").text(jqXHR.responseJSON.error.message);
-            } else {
-                $("#RegistrationOperationFailure1").text(jqXHR.status);
-                $("#RegistrationOperationFailure2").text(jqXHR.statusText);
-            }
-            $("#RegistrationOperationCompleteDialog").dialog("open");
+            registrationOperationCallbackFailure(jqXHR);
         }
     });
 
