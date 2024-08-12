@@ -87,8 +87,10 @@
 
 <h2>Change registration status</h2>
 
-<s:form onsubmit="usersChangeRegistrationsSubmit()">
+<s:form id="UsersChangeRegistrationForm" onsubmit="usersChangeRegistrationsSubmit(event)">
 <s:hidden id="UsersChangeIdList" name="new_user_id_list" value ="" />
+<s:hidden name="op" value='"set-status"' />
+<s:hidden name="action" value='"change-registrations"' />
 <select name="new_status">
 <option value="-1"></option>
 <option value="0">OK</option>
@@ -98,8 +100,12 @@
 <s:submit ac="users-set-status" />
 </s:form>
 
-<s:form onsubmit="usersChangeFlagsSubmit()">
+<h2>Change registration flags</h2>
+
+<s:form id="UsersChangeFlagsForm" onsubmit="usersChangeFlagsSubmit(event)">
 <s:hidden id="FlagsChangeIdList" name="new_user_id_list" value ="" />
+<s:hidden name="op" value='"change-flags"' />
+<s:hidden name="action" value='"change-registrations"' />
 <table border="0">
 <tr><td>&nbsp;</td><td>BANNED</td><td>INVISIBLE</td><td>LOCKED</td><td>INCOMPLETE</td><td>DISQUALIFIED</td><td>PRIVILEGED</td><td>REG. READ-ONLY</td></tr>
 <tr>
@@ -147,8 +153,11 @@
 </s:form>
 
 <h2><s:_>Disqualify selected users</s:_></h2>
-<s:form onsubmit="usersDisqualifySubmit()">
+
+<s:form  id="UsersDisqualifyForm" onsubmit="usersDisqualifySubmit(event)">
 <s:hidden id="UsersDisqualifyIdList" name="new_user_id_list" value ="" />
+<s:hidden name="op" value='"set-disqualified"' />
+<s:hidden name="action" value='"change-registrations"' />
 <p><s:_>Disqualification explanation</s:_>:<br>
 <textarea name="disq_comment" rows="5" cols="60">
 </textarea></p>
@@ -313,6 +322,9 @@ function registrationOperationCallbackSuccess(data)
 {
     clearUserSelection();
     $("#UsersRemoveRegistrationForm").trigger("reset");
+    $("#UsersChangeRegistrationForm").trigger("reset");
+    $("#UsersChangeFlagsForm").trigger("reset");
+    $("#UsersDisqualifyForm").trigger("reset");
     if (data.ok && data.result.total_count == data.result.success_count) {
         $("#RegistrationOperationSuccess").show();
         $("#RegistrationOperationPartial").hide();
@@ -349,6 +361,9 @@ function registrationOperationCallbackFailure(jqXHR)
 {
     clearUserSelection();
     $("#UsersRemoveRegistrationForm").trigger("reset");
+    $("#UsersChangeRegistrationForm").trigger("reset");
+    $("#UsersChangeFlagsForm").trigger("reset");
+    $("#UsersDisqualifyForm").trigger("reset");
     $("#RegistrationOperationSuccess").hide();
     $("#RegistrationOperationPartial").hide();
     $("#RegistrationOperationFailure").show();
@@ -385,25 +400,71 @@ function usersRemoveRegistrationsSubmit(event)
     return false;
 }
 
-function usersChangeRegistrationsSubmit()
+function usersChangeRegistrationsSubmit(event)
 {
     var ids = makeUserIdList();
     $("#UsersChangeIdList").val(ids);
-    return true;
+
+    $.ajax({
+        url : self_url,
+        type: "POST",
+        data: $("#UsersChangeRegistrationForm").serialize(),
+        contentType: "application/x-www-form-urlencoded; charset=utf-8",
+        dataType: "json",
+        success:function(data, textStatus, jqXHR) {
+            registrationOperationCallbackSuccess(data);
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+            registrationOperationCallbackFailure(jqXHR);
+        }
+    });
+
+    event.preventDefault();
+    return false;
 }
 
-function usersChangeFlagsSubmit()
+function usersChangeFlagsSubmit(event)
 {
-    var ids = makeUserIdList();
-    $("#FlagsChangeIdList").val(ids);
-    return true;
+    $("#FlagsChangeIdList").val(makeUserIdList());
+
+    $.ajax({
+        url : self_url,
+        type: "POST",
+        data: $("#UsersChangeFlagsForm").serialize(),
+        contentType: "application/x-www-form-urlencoded; charset=utf-8",
+        dataType: "json",
+        success:function(data, textStatus, jqXHR) {
+            registrationOperationCallbackSuccess(data);
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+            registrationOperationCallbackFailure(jqXHR);
+        }
+    });
+
+    event.preventDefault();
+    return false;
 }
 
-function usersDisqualifySubmit()
+function usersDisqualifySubmit(event)
 {
-    var ids = makeUserIdList();
-    $("#UsersDisqualifyIdList").val(ids);
-    return true;
+    $("#UsersDisqualifyIdList").val(makeUserIdList());
+
+    $.ajax({
+        url : self_url,
+        type: "POST",
+        data: $("#UsersDisqualifyForm").serialize(),
+        contentType: "application/x-www-form-urlencoded; charset=utf-8",
+        dataType: "json",
+        success:function(data, textStatus, jqXHR) {
+            registrationOperationCallbackSuccess(data);
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+            registrationOperationCallbackFailure(jqXHR);
+        }
+    });
+
+    event.preventDefault();
+    return false;
 }
 
 function printProtocolSubmit()
