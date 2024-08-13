@@ -833,10 +833,13 @@ var language_states = {};
   if (global->compile_max_file_size > 0) {
     cJSON_AddNumberToObject(jl, "global_compile_max_file_size", global->compile_max_file_size);
   }
+  if (global->compile_server_id && global->compile_server_id[0]) {
+    cJSON_AddStringToObject(jl, "global_compile_server_id", global->compile_server_id);
+  }
   jstr = cJSON_PrintUnformatted(jl);
 %>
 <script type="text/javascript">
-var global_language_sizes = <s:v value="jstr" escape="false" />;
+var global_language_params = <s:v value="jstr" escape="false" />;
 </script>
 <%
   free(jstr); jstr = NULL;
@@ -874,6 +877,34 @@ var global_language_sizes = <s:v value="jstr" escape="false" />;
         <td><s:textfield id="global_compile_max_file_size" name="param" value="global->compile_max_file_size" format="V" size="48" maxlength="1024" check="no" onchange="newLangGlobalOnChange(this)" /></td>
         <td><s:help icon="yes" topic="Serve.cfg:global:compile_max_file_size" /></td>
     </s:tr>
+
+<%
+      if (phr->ss->cscs && phr->ss->cscs->u > 0) {
+        const unsigned char *default_server_id = phr->ss->cscs->v[0].id;
+        const unsigned char *cur_server_id = global->compile_server_id;
+        const unsigned char *empty = "";
+        if (!cur_server_id || !*cur_server_id) cur_server_id = "";
+%>
+
+    <s:tr id="global_compile_server_id-div" attr="form_row_attrs[row ^= 1]">
+        <td colspan="2" valign="top">Compile queue:</td>
+        <td><div><s:select name="global_compile_server_id" id="global_compile_server_id" onchange="newLangGlobalOnChange(this)"><%
+%><s:option value="empty" selectedExpr="!strcmp(empty, cur_server_id)">Default</s:option><%
+        int serv_i;
+        for (serv_i = 0; serv_i < phr->ss->cscs->u; ++serv_i) {
+          struct compile_server_config *csc = &phr->ss->cscs->v[serv_i];
+          if (!csc->errors) {
+%><s:option value="csc->id" selectedExpr="!strcmp(csc->id, cur_server_id)"><s:v value="csc->id" /></s:option><%
+          }
+        }
+%></s:select></div>
+        <div style="font-size: 0.75em; color: gray;" ><code><s:v value="default_server_id" checkExpr="" /></code></div>
+        </td>
+        <td><s:help icon="yes" topic="Serve.cfg:global:compile_server_id" /></td>
+    </s:tr>
+<%
+      }
+%>
 
     <s:tr id="global-button-row-div" hiddenExpr="1" >
         <td colspan="4" style="text-align: center;">
@@ -1799,7 +1830,7 @@ const global_size_inputs =
     "global_compile_max_vm_size", "global_compile_max_rss_size", "global_compile_max_stack_size", "global_compile_max_file_size", 
 ];
 
-function collectGlobalSizeForm()
+function collectGlobalForm()
 {
     let r = {};
     for (const i of global_size_inputs) {
@@ -1809,10 +1840,14 @@ function collectGlobalSizeForm()
             r[i] = v;
         }
     }
+    const compile_server_id = $("#global_compile_server_id").val();
+    if (compile_server_id) {
+        r["global_compile_server_id"] = compile_server_id;
+    }
     return r;
 }
 
-function isChangedGlobalSizeForm(orig, data)
+function isChangedGlobalForm(orig, data)
 {
     for (const i of global_size_inputs) {
         if (!isEqualNumber(orig[i], data[i])) {
@@ -1820,13 +1855,16 @@ function isChangedGlobalSizeForm(orig, data)
             return true;
         }
     }
+    if (!isEqualStrings(orig["global_compile_server_id"], data["global_compile_server_id"])) {
+        return true;
+    }
     return false;
 }
 
 function newLangGlobalOnChange(obj)
 {
-    r = collectGlobalSizeForm();
-    if (isChangedGlobalSizeForm(global_language_sizes, r)) {
+    r = collectGlobalForm();
+    if (isChangedGlobalForm(global_language_params, r)) {
         $("#global-button-row-div").show();
     } else {
         $("#global-button-row-div").hide();
@@ -1835,7 +1873,7 @@ function newLangGlobalOnChange(obj)
 
 function newLangGlobalSave()
 {
-    data = collectGlobalSizeForm();
+    data = collectGlobalForm();
     data["SID"] = SID;
     data["action"] = lang_ajax_action;
     data["lang_id"] = 0;
@@ -1859,7 +1897,7 @@ function newLangGlobalSave()
 function newLangGlobalCancel()
 {
     for (const i of global_size_inputs) {
-        $("#" + i).val(unparseSize(global_language_sizes[i]));
+        $("#" + i).val(unparseSize(global_language_params[i]));
     }
     newLangGlobalOnChange();
 }
