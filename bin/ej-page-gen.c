@@ -6866,10 +6866,6 @@ super_serve_sid_state_get_cnts_editor_nc(int contest_id)
 {
     return NULL;
 }
-void
-super_serve_clear_edited_contest(/*struct sid_state *p*/ void *p)
-{
-}
 int
 super_serve_sid_state_get_max_edited_cnts(void)
 {
