@@ -1332,6 +1332,8 @@ super_serve_clear_edited_contest(struct sid_state *p)
   p->enable_win32_languages = 0;
   p->enable_language_import_changed = 0;
   p->orig_enable_language_import = 0;
+  p->global_compile_server_id_changed = 0;
+  xfree(p->orig_global_compile_server_id); p->orig_global_compile_server_id = NULL;
 
   if (p->lang_extra) {
     for (int i = 0; i < p->lang_a; ++i) {

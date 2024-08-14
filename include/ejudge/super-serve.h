@@ -217,6 +217,11 @@ struct sid_state
   /// orig enable_language_import value
   int orig_enable_language_import;
 
+  /// if global_compile_server_id changed, so language editing is disabled
+  unsigned char global_compile_server_id_changed;
+  /// orig global compile_server_id value
+  unsigned char *orig_global_compile_server_id;
+
   const struct section_language_data *cur_lang;
   const struct section_problem_data *cur_prob;
   ejintbool_t prob_show_adv;
