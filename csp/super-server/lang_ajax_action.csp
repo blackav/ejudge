@@ -249,9 +249,19 @@
         }
         xfree(phr->ss->global->compile_server_id);
         phr->ss->global->compile_server_id = NULL;
-        if (global_compile_server_id && global_compile_server_id[0]) {
+        if (global_compile_server_id && !global_compile_server_id[0]) {
+            xfree(global_compile_server_id); global_compile_server_id = NULL;
+        }
+        if (global_compile_server_id) {
             phr->ss->global->compile_server_id = global_compile_server_id;
-            phr->ss->global->compile_server_id = NULL;
+            global_compile_server_id = NULL;
+        }
+        if (!phr->ss->global->compile_server_id && !phr->ss->orig_global_compile_server_id) {
+            phr->ss->global_compile_server_id_changed = 0;
+        } else if (!phr->ss->global->compile_server_id || !phr->ss->orig_global_compile_server_id) {
+            phr->ss->global_compile_server_id_changed = 1;
+        } else {
+            phr->ss->global_compile_server_id_changed = (strcmp(phr->ss->global->compile_server_id, phr->ss->orig_global_compile_server_id) != 0);
         }
         ok = 1;
     } else {

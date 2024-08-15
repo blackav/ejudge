@@ -175,6 +175,14 @@ super_html_read_serve(
 
   sstate->orig_enable_language_import = global->enable_language_import;
   if (sstate->orig_enable_language_import < 0) sstate->orig_enable_language_import = 0;
+  sstate->orig_global_compile_server_id = NULL;
+  if (global->compile_server_id && !global->compile_server_id[0]) {
+    xfree(global->compile_server_id); global->compile_server_id = NULL;
+  }
+  if (global->compile_server_id) {
+    sstate->orig_global_compile_server_id = xstrdup(global->compile_server_id);
+  }
+  sstate->global_compile_server_id_changed = 0;
   if (global->enable_language_import > 0) {
     sstate->cscs = xmalloc(sizeof(*sstate->cscs));
     compile_servers_config_init(sstate->cscs);
