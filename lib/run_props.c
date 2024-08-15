@@ -51,15 +51,16 @@ run_properties_parse_json_str(
         struct run_properties **p_props,
         unsigned char **p_message)
 {
+    __attribute__((unused)) int _;
     char *emsg = NULL;
     cJSON *j = cJSON_Parse(str);
     struct run_properties *props = NULL;
     if (!j) {
-        asprintf(&emsg, "%s: JSON parse failed", __FUNCTION__);
+        _ = asprintf(&emsg, "%s: JSON parse failed", __FUNCTION__);
         goto fail;
     }
     if (j->type != cJSON_Object) {
-        asprintf(&emsg, "%s: object expected", __FUNCTION__);
+        _ = asprintf(&emsg, "%s: object expected", __FUNCTION__);
         goto fail;
     }
 
@@ -68,7 +69,7 @@ run_properties_parse_json_str(
     cJSON *jj = cJSON_GetObjectItem(j, "is_archive");
     if (jj) {
         if (jj->type != cJSON_False && jj->type != cJSON_True) {
-            asprintf(&emsg, "%s: is_archive must be boolean", __FUNCTION__);
+            _ = asprintf(&emsg, "%s: is_archive must be boolean", __FUNCTION__);
             goto fail;
         }
         if (jj->type == cJSON_True) {
@@ -79,7 +80,7 @@ run_properties_parse_json_str(
     jj = cJSON_GetObjectItem(j, "start_cmd");
     if (jj) {
         if (jj->type != cJSON_String) {
-            asprintf(&emsg, "%s: start_cmd must be string", __FUNCTION__);
+            _ = asprintf(&emsg, "%s: start_cmd must be string", __FUNCTION__);
             goto fail;
         }
         props->start_cmd = xstrdup(jj->valuestring);
@@ -88,23 +89,23 @@ run_properties_parse_json_str(
     jj = cJSON_GetObjectItem(j, "start_args");
     if (jj) {
         if (jj->type != cJSON_Array) {
-            asprintf(&emsg, "%s: start_args must be array", __FUNCTION__);
+            _ = asprintf(&emsg, "%s: start_args must be array", __FUNCTION__);
             goto fail;
         }
         int size = cJSON_GetArraySize(jj);
         if (size < 0 || size > 1000) {
-            asprintf(&emsg, "%s: start_args has invalid size %d", __FUNCTION__, size);
+            _ = asprintf(&emsg, "%s: start_args has invalid size %d", __FUNCTION__, size);
             goto fail;
         }
         XCALLOC(props->start_args, size + 1);
         for (int i = 0; i < size; ++i) {
             cJSON *jjj = cJSON_GetArrayItem(jj, i);
             if (!jjj || jjj->type == cJSON_NULL) {
-                asprintf(&emsg, "%s: start_args must not contain nulls", __FUNCTION__);
+                _ = asprintf(&emsg, "%s: start_args must not contain nulls", __FUNCTION__);
                 goto fail;
             }
             if (jjj->type != cJSON_String) {
-                asprintf(&emsg, "%s: start_args must contain strings", __FUNCTION__);
+                _ = asprintf(&emsg, "%s: start_args must contain strings", __FUNCTION__);
                 goto fail;
             }
             props->start_args[i] = xstrdup(jjj->valuestring);
@@ -114,19 +115,19 @@ run_properties_parse_json_str(
     jj = cJSON_GetObjectItem(j, "start_env");
     if (jj) {
         if (jj->type != cJSON_Object) {
-            asprintf(&emsg, "%s: start_env must be object", __FUNCTION__);
+            _ = asprintf(&emsg, "%s: start_env must be object", __FUNCTION__);
             goto fail;
         }
         int size = cJSON_GetArraySize(jj);
         if (size < 0 || size > 1000) {
-            asprintf(&emsg, "%s: start_env has invalid size %d", __FUNCTION__, size);
+            _ = asprintf(&emsg, "%s: start_env has invalid size %d", __FUNCTION__, size);
             goto fail;
         }
         XCALLOC(props->start_env, size + 1);
         int i = 0;
         for (cJSON *jjj = jj->child; jjj; jjj = jjj->next, ++i) {
             if (jjj->type != cJSON_String) {
-                asprintf(&emsg, "%s: start_env must be object of strings", __FUNCTION__);
+                _ = asprintf(&emsg, "%s: start_env must be object of strings", __FUNCTION__);
                 goto fail;
             }
             XCALLOC(props->start_env[i], 2);

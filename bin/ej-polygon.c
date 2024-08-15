@@ -2563,6 +2563,7 @@ process_polygon_zip(
     int full_score = -1;
     int full_user_score = -1;
     int has_hidden_groups = 0;
+    __attribute__((unused)) int _;
 
     if (!(zid = zif->open(log_f, zip_path))) {
         fprintf(log_f, "Failed to open zip file '%s'\n", zip_path);
@@ -3055,7 +3056,7 @@ process_polygon_zip(
     }
     if (test_group_required) {
         char *s = NULL;
-        asprintf(&s, "1-%d:full", pi->test_u);
+        _ = asprintf(&s, "1-%d:full", pi->test_u);
         pi->final_open_tests = s;
 
         char *ot_s = NULL;

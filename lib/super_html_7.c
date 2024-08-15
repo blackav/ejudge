@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2011-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2011-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -2982,7 +2982,7 @@ start_background_make(
   int argc = 0;
   unsigned char prefix_buf[1024];
   unsigned char home_buf[1024];
-  unsigned char local_buf[1024];
+  __attribute__((unused)) unsigned char local_buf[1024];
   unsigned char test_num_buf[1024];
 
   args[argc++] = MAKE_PATH;
@@ -6251,7 +6251,7 @@ super_serve_op_TESTS_MAKE(
   struct tests_make_context *cntx = NULL;
   unsigned char prefix_buf[4096];
   unsigned char home_buf[4096];
-  unsigned char local_buf[4096];
+  __attribute__((unused)) unsigned char local_buf[4096];
   const unsigned char *target = "all";
 
   hr_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);

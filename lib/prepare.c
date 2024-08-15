@@ -7086,12 +7086,13 @@ prepare_copy_language(
         struct section_language_data *out,
         const struct section_language_data *in)
 {
+  __attribute__((unused)) int _;
   cntslang_copy(out, in);
   // append version to the long_name
   if (out->version && out->version[0] && out->long_name && out->long_name[0]) {
     if (!strstr(out->long_name, out->version)) {
       char *s = NULL;
-      asprintf(&s, "%s %s", out->long_name, out->version);
+      _ = asprintf(&s, "%s %s", out->long_name, out->version);
       xfree(out->long_name); out->long_name = s;
     }
   }
@@ -7127,6 +7128,8 @@ prepare_merge_language(
         const struct section_language_data *imp,  // imported from the compilation server config
         const struct section_language_data *lang) // the current contest config
 {
+  __attribute__((unused)) int _;
+
   if (!lang) {
     prepare_copy_language(out, imp);
     return;
@@ -7148,14 +7151,14 @@ prepare_merge_language(
     }
     if (v) {
     char *s = NULL;
-    asprintf(&s, "%s %s", imp->long_name, v);
+    _ = asprintf(&s, "%s %s", imp->long_name, v);
     out->long_name = s;
     } else {
       out->long_name = xstrdup(imp->long_name);
     }
   } else {
     char *s = NULL;
-    asprintf(&s, "Language %d", out->id);
+    _ = asprintf(&s, "Language %d", out->id);
     out->long_name = s;
   }
 

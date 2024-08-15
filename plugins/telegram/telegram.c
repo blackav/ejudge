@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2016-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2016-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1345,6 +1345,7 @@ handle_get_password(
     const unsigned char *errmsg = "Invalid input.";
     const unsigned char *te_user = "unknown";
     unsigned char te_user_buf[64];
+    __attribute__((unused)) int _;
 
     int len = strlen(tem->text);
 
@@ -1387,7 +1388,7 @@ handle_get_password(
         goto fail;
     }
     char *s = NULL;
-    asprintf(&s, "Login: %s\nPassword: %s\n", login, password);
+    _ = asprintf(&s, "Login: %s\nPassword: %s\n", login, password);
     free(login); login = NULL;
     free(password); password = NULL;
     return s;

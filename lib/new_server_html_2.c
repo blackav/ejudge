@@ -10231,6 +10231,7 @@ ns_get_vcs_snapshot_url(
   unsigned char *vcs_url = NULL;
   unsigned char *vcs_ptr = NULL;
   unsigned char *commit_id = NULL;
+  __attribute__((unused)) int _;
 
   up_plugin = userprob_plugin_get(phr->config, NULL, 0);
   if (!up_plugin) {
@@ -10292,9 +10293,9 @@ ns_get_vcs_snapshot_url(
 
   char *out = NULL;
   if (!strcmp(ue->vcs_type, "github")) {
-    asprintf(&out, "https://%s/tree/%s", vcs_ptr, commit_id);
+    _ = asprintf(&out, "https://%s/tree/%s", vcs_ptr, commit_id);
   } else if (!strcmp(ue->vcs_type, "gitlab")) {
-    asprintf(&out, "https://%s/-/tree/%s", vcs_ptr, commit_id);
+    _ = asprintf(&out, "https://%s/-/tree/%s", vcs_ptr, commit_id);
   }
 
   xfree(commit_id);

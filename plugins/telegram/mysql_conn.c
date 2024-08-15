@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2022-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2022-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1164,6 +1164,7 @@ password_get_func(
     struct grouptocontest_internal gtci = {};
     unsigned char *in_login = NULL;
     struct userpassword_internal upi = {};
+    __attribute__((unused)) int _;
 
     mi->lock(md);
     cmd_f = open_memstream(&cmd_s, &cmd_z);
@@ -1188,7 +1189,7 @@ password_get_func(
 
     {
         char *s = NULL;
-        asprintf(&s, "s%s", student_id);
+        _ = asprintf(&s, "s%s", student_id);
         in_login = s;
     }
 
