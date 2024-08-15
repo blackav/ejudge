@@ -59,6 +59,7 @@
     unsigned char *style_checker_env = NULL;
     unsigned char *super_run_dir = NULL;
     unsigned char *version = NULL;
+    unsigned char *global_compile_server_id = NULL;
 
     ej_size64_t global_compile_max_vm_size = -1;
     ej_size64_t global_compile_max_rss_size = -1;
@@ -207,7 +208,6 @@
         if (extra_ejudge_libs && *extra_ejudge_libs) {
             extra->ejudge_libs = extra_ejudge_libs; extra_ejudge_libs = NULL;
         }
-
         ok = 1;
     } else if (!strcmp(oper, "disable_import")) {
         if (phr->ss && phr->ss->global) {
@@ -226,6 +226,7 @@
 %><s:read var="global_compile_max_rss_size" default="-1" /><%
 %><s:read var="global_compile_max_stack_size" default="-1" /><%
 %><s:read var="global_compile_max_file_size" default="-1" /><%
+%><s:read var="global_compile_server_id" normalize="yes" /><%
         if (global_compile_max_vm_size > 0) {
             phr->ss->global->compile_max_vm_size = global_compile_max_vm_size;
         } else {
@@ -246,7 +247,22 @@
         } else {
             phr->ss->global->compile_max_file_size = 0;
         }
-
+        xfree(phr->ss->global->compile_server_id);
+        phr->ss->global->compile_server_id = NULL;
+        if (global_compile_server_id && !global_compile_server_id[0]) {
+            xfree(global_compile_server_id); global_compile_server_id = NULL;
+        }
+        if (global_compile_server_id) {
+            phr->ss->global->compile_server_id = global_compile_server_id;
+            global_compile_server_id = NULL;
+        }
+        if (!phr->ss->global->compile_server_id && !phr->ss->orig_global_compile_server_id) {
+            phr->ss->global_compile_server_id_changed = 0;
+        } else if (!phr->ss->global->compile_server_id || !phr->ss->orig_global_compile_server_id) {
+            phr->ss->global_compile_server_id_changed = 1;
+        } else {
+            phr->ss->global_compile_server_id_changed = (strcmp(phr->ss->global->compile_server_id, phr->ss->orig_global_compile_server_id) != 0);
+        }
         ok = 1;
     } else {
         FAIL(SSERV_ERR_INVALID_PARAMETER);
@@ -276,4 +292,5 @@ done:;
     xfree(style_checker_env);
     xfree(super_run_dir);
     xfree(version);
+    xfree(global_compile_server_id);
 %>

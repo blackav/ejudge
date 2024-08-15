@@ -592,6 +592,9 @@ prepare_unparse_global(
     do_xstr(f, &ab, "language_import", global->language_import);
     fprintf(f, "\n");
   }
+  //GLOBAL_PARAM(compile_server_id, "S"),
+  do_str(f, &ab, "compile_server_id", global->compile_server_id);
+  fprintf(f, "\n");
 
   if (global->unhandled_vars) fprintf(f, "%s\n", global->unhandled_vars);
 
@@ -679,9 +682,6 @@ prepare_unparse_unhandled_global(FILE *f, const struct section_global_data *glob
 
   //GLOBAL_PARAM(super_run_dir, "S"),
   do_str(f, &ab, "super_run_dir", global->super_run_dir);
-
-  //GLOBAL_PARAM(compile_server_id, "S"),
-  do_str(f, &ab, "compile_server_id", global->compile_server_id);
 
   //GLOBAL_PARAM(tests_to_accept, "d"),
   if (global->tests_to_accept >= 0

@@ -89,6 +89,8 @@ enum
   SSSS_serv_extra,
   SSSS_enable_language_import_changed,
   SSSS_orig_enable_language_import,
+  SSSS_global_compile_server_id_changed,
+  SSSS_orig_global_compile_server_id,
   SSSS_cur_lang,
   SSSS_cur_prob,
   SSSS_prob_show_adv,
