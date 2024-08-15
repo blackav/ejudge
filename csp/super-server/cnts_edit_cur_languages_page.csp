@@ -804,17 +804,6 @@ var language_states = {};
         <td colspan="4" align="center">Compilation server integration <b style="color: green;">ENABLED</b>. <button onclick="newLanguageOper1(0, 'disable_import')">Disable</button></td>
     </s:tr>
 
-<%
-  if (phr->ss->enable_language_import_changed) {
-%>
-    <s:tr attr="head_row_attr">
-        <td colspan="4" align="center">You must commit changed and reopen contest to enable editing of languages!</td>
-    </s:tr>
-<%
-    goto skip_all_new_language_rows;
-  }
-%>
-
     <s:tr attr="head_row_attr">
         <td colspan="4" align="center"><b>Compilation limits</b></td>
     </s:tr>
@@ -878,6 +867,10 @@ var global_language_params = <s:v value="jstr" escape="false" />;
         <td><s:help icon="yes" topic="Serve.cfg:global:compile_max_file_size" /></td>
     </s:tr>
 
+    <s:tr attr="head_row_attr">
+        <td colspan="4" align="center"><b>Global compilation server</b></td>
+    </s:tr>
+
 <%
       if (phr->ss->cscs && phr->ss->cscs->u > 0) {
         const unsigned char *default_server_id = phr->ss->cscs->v[0].id;
@@ -914,6 +907,17 @@ var global_language_params = <s:v value="jstr" escape="false" />;
             </span>
         </td>
     </s:tr>
+
+<%
+  if (phr->ss->enable_language_import_changed || phr->ss->global_compile_server_id_changed) {
+%>
+    <s:tr attr="head_row_attr">
+        <td colspan="4" align="center">You must commit changed and reopen contest to enable editing of languages!</td>
+    </s:tr>
+<%
+    goto skip_all_new_language_rows;
+  }
+%>
 
     <s:tr attr="head_row_attr">
         <td colspan="4" align="center"><b>Available compilers</b></td>
