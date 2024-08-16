@@ -9675,6 +9675,8 @@ priv_get_user(
     uc = userlist_get_user_contest(u, phr->contest_id);
   }
 
+  info("audit:%s:%d:%d:%d:%s", phr->action_str, phr->user_id, phr->contest_id, u->id, u->login);
+
   cJSON *jrr = json_serialize_userlist_user(u, ui, uc);
   cJSON_AddItemToObject(jr, "result", jrr);
   ok = 1;
@@ -9804,6 +9806,10 @@ priv_copy_user_info(
     goto done;
   }
 
+  const unsigned char *s = "";
+  if (other_user_login) s = other_user_login;
+  info("audit:%s:%d:%d:%s:%d:%d:%d", phr->action_str, phr->user_id, phr->contest_id, s, other_user_id, from_contest_id, to_contest_id);
+
   r = userlist_clnt_copy_user_info(ul_conn, ULS_COPY_ALL, other_user_id, from_contest_id, to_contest_id);
   if (r < 0) {
     err("priv_copy_user_info: userlist server error %d", r);
@@ -9848,6 +9854,7 @@ priv_change_registration(
   unsigned char *xml_text = NULL;
   struct userlist_user *u = NULL;
   const struct userlist_contest *uc = NULL;
+  const unsigned char *s;
 
   if (hr_cgi_param_int_opt(phr, "other_user_id", &other_user_id, 0) < 0)
     goto done;
@@ -9857,6 +9864,10 @@ priv_change_registration(
     goto done;
   if (other_user_id > 0 && other_user_login && other_user_login[0])
     goto done;
+
+  s = "";
+  if (other_user_login) s = other_user_login;
+  info("audit:%s:%d:%d:%s:%d", phr->action_str, phr->user_id, phr->contest_id, s, other_user_id);
 
   if (ns_open_ul_connection(phr->fw_state) < 0) {
     err("%s: failed to open userlist connection", __PRETTY_FUNCTION__);
@@ -9936,7 +9947,7 @@ priv_change_registration(
   }
 
   // common parse registration data
-  const unsigned char *s = NULL;
+  s = NULL;
   int status = -1;
   if (hr_cgi_param(phr, "status", &s) > 0 && s) {
     if (!strcasecmp(s, "ok")) {
@@ -10178,6 +10189,11 @@ priv_problem_status_json(
     goto done;
   if (other_user_id > 0 && other_user_login && other_user_login[0])
     goto done;
+
+  s = "";
+  if (other_user_login) s = other_user_login;
+  info("audit:%s:%d:%d:%s:%d", phr->action_str, phr->user_id, phr->contest_id, s, other_user_id);
+  s = NULL;
 
   if (ns_open_ul_connection(phr->fw_state) < 0) {
     err("%s: failed to open userlist connection", __PRETTY_FUNCTION__);
@@ -10689,6 +10705,8 @@ priv_list_languages_json(
   cJSON *jr = cJSON_CreateObject();
   int http_status = 400;
 
+  info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
+
   cJSON *jec = cJSON_CreateObject();
   if (phr->config->enable_compile_container > 0) {
     cJSON_AddTrueToObject(jec, "enable_compile_container");
@@ -10786,6 +10804,10 @@ priv_create_user_session_json(
     goto done;
   if (other_user_id > 0 && other_user_login && other_user_login[0])
     goto done;
+
+  s = "";
+  if (other_user_login) s = other_user_login;
+  info("audit:%s:%d:%d:%s:%d", phr->action_str, phr->user_id, phr->contest_id, s, other_user_id);
 
   if (ns_open_ul_connection(phr->fw_state) < 0) {
     err("%s: failed to open userlist connection", __PRETTY_FUNCTION__);
