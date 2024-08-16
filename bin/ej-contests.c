@@ -492,8 +492,6 @@ cmd_http_request(
   xfree(hr.login);
   xfree(hr.name);
   xfree(hr.name_arm);
-  xfree(hr.script_part);
-  xfree(hr.body_attr);
   if (hr.user_info) {
     userlist_free(&hr.user_info->b);
   }
@@ -615,8 +613,6 @@ handle_ws_request(
   xfree(hr.login);
   xfree(hr.name);
   xfree(hr.name_arm);
-  xfree(hr.script_part);
-  xfree(hr.body_attr);
   cJSON_Delete(root);
 }
 

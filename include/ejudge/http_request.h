@@ -91,8 +91,6 @@ struct http_request_info
   struct new_session_info *nsi;       // cached session data
   opcap_t caps;
   opcap_t dbcaps;
-  unsigned char *script_part;
-  unsigned char *body_attr;
   int online_users;
 
   // array of split components of URL:

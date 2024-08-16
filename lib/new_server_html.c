@@ -12523,7 +12523,6 @@ unpriv_load_html_style(struct http_request_info *phr,
   struct contest_extra *extra = 0;
   time_t cur_time = 0;
 #if defined CONF_ENABLE_AJAX && CONF_ENABLE_AJAX
-  unsigned char bb[8192];
   char *state_json_txt = 0;
   size_t state_json_len = 0;
   FILE *state_json_f = 0;
@@ -12564,31 +12563,7 @@ unpriv_load_html_style(struct http_request_info *phr,
   } else {
     state_json_txt = xstrdup("");
   }
-
-  snprintf(bb, sizeof(bb),
-           "<script type=\"text/javascript\" src=\"" CONF_STYLE_PREFIX "dojo/dojo.js\" djConfig=\"isDebug: false, parseOnLoad: true, dojoIframeHistoryUrl:'" CONF_STYLE_PREFIX "dojo/resources/iframe_history.html'\"></script>\n"
-           "<script type=\"text/javascript\" src=\"" CONF_STYLE_PREFIX "unpriv.js\"></script>\n"
-           "<script type=\"text/javascript\">\n"
-           "  var SID=\"%016llx\";\n"
-           "  var NEW_SRV_ACTION_JSON_USER_STATE=%d;\n"
-           "  var NEW_SRV_ACTION_VIEW_PROBLEM_SUMMARY=%d;\n"
-           "  var self_url=\"%s\";\n"
-           "  var script_name=\"%s\";\n"
-           "  dojo.require(\"dojo.parser\");\n"
-           "  var jsonState = %s;\n"
-           "  var updateFailedMessage = \"%s\";\n"
-           "  var testingInProgressMessage = \"%s\";\n"
-           "  var testingCompleted = \"%s\";\n"
-           "  var waitingTooLong = \"%s\";\n"
-           "</script>\n", phr->session_id, NEW_SRV_ACTION_JSON_USER_STATE,
-           NEW_SRV_ACTION_VIEW_PROBLEM_SUMMARY,
-           phr->self_url, phr->script_name, state_json_txt,
-           _("STATUS UPDATE FAILED!"), _("TESTING IN PROGRESS..."),
-           _("TESTING COMPLETED"), _("REFRESH PAGE MANUALLY!"));
   xfree(state_json_txt); state_json_txt = 0;
-  phr->script_part = xstrdup(bb);
-  snprintf(bb, sizeof(bb), " onload=\"startClock()\"");
-  phr->body_attr = xstrdup(bb);
 #endif
 }
 
