@@ -244,7 +244,7 @@ open_func(void *data)
     return 0;
 }
 
-enum { OAUTH_VERSION_LATEST = 3 };
+enum { OAUTH_VERSION_LATEST = 4 };
 
 static const char oauth_stage1_create_str[] =
 "CREATE TABLE %soauth_stage1 ( \n"
@@ -273,8 +273,8 @@ static const char oauth_stage2_create_str[] =
 "    response_user_id VARCHAR(64) DEFAULT NULL,\n"
 "    response_email VARCHAR(64) DEFAULT NULL,\n"
 "    response_name VARCHAR(64) DEFAULT NULL,\n"
-"    access_token VARCHAR(256) DEFAULT NULL,\n"
-"    id_token VARCHAR(2048) DEFAULT NULL,\n"
+"    access_token VARBINARY(16384) DEFAULT NULL,\n"
+"    id_token VARBINARY(16384) DEFAULT NULL,\n"
 "    error_message VARCHAR(256) DEFAULT NULL\n"
 ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;";
 
@@ -335,6 +335,11 @@ do_check_database(struct auth_base_state *state)
                                              state->md->table_prefix) < 0)
                     return -1;
                 if (state->mi->simple_fquery(state->md, "ALTER TABLE %soauth_stage2 MODIFY COLUMN request_id VARCHAR(64) NOT NULL, MODIFY COLUMN provider VARCHAR(64) NOT NULL, MODIFY COLUMN role VARCHAR(64) DEFAULT NULL, MODIFY COLUMN request_code VARCHAR(256) NOT NULL, MODIFY COLUMN cookie VARCHAR(64) NOT NULL, MODIFY COLUMN extra_data VARCHAR(512) DEFAULT NULL, MODIFY COLUMN response_user_id VARCHAR(64) DEFAULT NULL, MODIFY COLUMN response_email VARCHAR(64) DEFAULT NULL, MODIFY COLUMN response_name VARCHAR(64) DEFAULT NULL, MODIFY COLUMN access_token VARCHAR(256) DEFAULT NULL, MODIFY COLUMN id_token VARCHAR(2048) DEFAULT NULL, MODIFY COLUMN error_message VARCHAR(256) DEFAULT NULL ;",
+                                             state->md->table_prefix) < 0)
+                    return -1;
+                break;
+            case 3:
+                if (state->mi->simple_fquery(state->md, "ALTER TABLE %soauth_stage2 MODIFY COLUMN access_token VARBINARY(16384) DEFAULT NULL, MODIFY COLUMN id_token VARBINARY(16384) DEFAULT NULL ;",
                                              state->md->table_prefix) < 0)
                     return -1;
                 break;
