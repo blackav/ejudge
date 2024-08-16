@@ -74,6 +74,10 @@
       }
     }
 
+    if (ns_open_ul_connection(phr->fw_state) < 0) {
+      FAIL(NEW_SRV_ERR_USERLIST_SERVER_DOWN);
+    }
+
     if ((r = userlist_clnt_lookup_user(ul_conn, user_login, 0, &user_id, NULL)) < 0) {
       FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
     }
