@@ -1,6 +1,6 @@
 # -*- Makefile -*-
 
-# Copyright (C) 2011-2022 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2011-2024 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -12,7 +12,7 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 # Lesser General Public License for more details.
 
-META_C_FILES = gen/contests_meta.c gen/super-serve_meta.c gen/prepare_meta.c gen/super_html_6_meta.c gen/super_run_packet_meta.c gen/problem_config_meta.c gen/polygon_packet_meta.c gen/ej_import_packet_meta.c gen/new_server_match.c gen/dates_config_meta.c gen/compile_packet_meta.c gen/testinfo_lookup.c
+META_C_FILES = gen/contests_meta.c gen/super-serve_meta.c gen/prepare_meta.c gen/super_html_6_meta.c gen/super_run_packet_meta.c gen/problem_config_meta.c gen/polygon_packet_meta.c gen/ej_import_packet_meta.c gen/new_server_match.c gen/dates_config_meta.c gen/compile_packet_meta.c gen/testinfo_lookup.c gen/super_actions_lookup.c
 META_H_FILES = ./include/ejudge/meta/contests_meta.h ./include/ejudge/meta/super-serve_meta.h ./include/ejudge/meta/prepare_meta.h ./include/ejudge/meta/super_html_6_meta.h ./include/ejudge/meta/super_run_packet_meta.h ./include/ejudge/meta/problem_config_meta.h ./include/ejudge/meta/polygon_packet_meta.h ./include/ejudge/meta/ej_import_packet_meta.h ./include/ejudge/meta/dates_config_meta.h ./include/ejudge/meta/compile_packet_meta.h
 META_O_FILES = $(META_C_FILES:.c=.o)
 
@@ -75,3 +75,9 @@ gen/testing_report_tags.c : tools/genmatcher2 lib/testing_report_tags.txt
 
 gen/testinfo_lookup.c : tools/genmatcher3 lib/testinfo.c
 	./tools/genmatcher3 lib/testinfo.c testinfo > gen/testinfo_lookup.c
+
+tools/extract_super_actions : tools/extract_super_actions.c include/ejudge/super_proto.h lib/super_proto.c
+	$(CC) $(CFLAGS) tools/extract_super_actions.c -o $@
+
+gen/super_actions_lookup.c : tools/extract_super_actions include/ejudge/super_proto.h lib/super_proto.c tools/genmatcher3
+	./tools/extract_super_actions | ./tools/genmatcher3 /dev/stdin super_actions > gen/super_actions_lookup.c
