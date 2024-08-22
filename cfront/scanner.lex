@@ -1,6 +1,6 @@
 /* -*- mode:c -*- */
 
-/* Copyright (C) 2003-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -964,10 +964,11 @@ handle_integral(int start, int length, int base, int flags)
 static void
 handle_float(int start, int length, int base, int flags)
 {
+  typedef int (*read_func_t)(const unsigned char *, char **, void *);
   unsigned char *buf = 0;
   unsigned char *base_type = "";
   int ret = 0;
-  int (*read_func)() = 0;
+  read_func_t read_func = NULL;
   void *addr = 0;
 
   buf = (unsigned char *) alloca(length + 1);
@@ -983,46 +984,46 @@ handle_float(int start, int length, int base, int flags)
     base_type = "double";
     yylval->val.val.tag = C_DOUBLE;
     addr = &yylval->val.val.v.ct_double;
-    if (base == 16) read_func = reuse_readhd;
-    else read_func = os_readdd;
+    if (base == 16) read_func = (read_func_t) reuse_readhd;
+    else read_func = (read_func_t) os_readdd;
     break;
   case LT_IMAG:
     base_type = "double";
     memset(&yylval->val.val, 0, sizeof(yylval->val.val));
     yylval->val.val.tag = C_DCOMPLEX;
     addr = &yylval->val.val.v.ct_dcomplex.d_im;
-    if (base == 16) read_func = reuse_readhd;
-    else read_func = os_readdd;
+    if (base == 16) read_func = (read_func_t) reuse_readhd;
+    else read_func = (read_func_t) os_readdd;
     break;
   case LT_FLOAT:
     base_type = "float";
     yylval->val.val.tag = C_FLOAT;
     addr = &yylval->val.val.v.ct_float;
-    if (base == 16) read_func = reuse_readhf;
-    else read_func = os_readdf;
+    if (base == 16) read_func = (read_func_t) reuse_readhf;
+    else read_func = (read_func_t) os_readdf;
     break;
   case LT_FLOAT | LT_IMAG:
     base_type = "float";
     memset(&yylval->val.val, 0, sizeof(yylval->val.val));
     yylval->val.val.tag = C_FCOMPLEX;
     addr = &yylval->val.val.v.ct_fcomplex.f_im;
-    if (base == 16) read_func = reuse_readhf;
-    else read_func = os_readdf;
+    if (base == 16) read_func = (read_func_t) reuse_readhf;
+    else read_func = (read_func_t) os_readdf;
     break;
   case LT_LONG:
     base_type = "long double";
     yylval->val.val.tag = C_LDOUBLE;
     addr = &yylval->val.val.v.ct_ldouble;
-    if (base == 16) read_func = reuse_readhld;
-    else read_func = os_readdld;
+    if (base == 16) read_func = (read_func_t) reuse_readhld;
+    else read_func = (read_func_t) os_readdld;
     break;
   case LT_LONG | LT_IMAG:
     base_type = "long double";
     memset(&yylval->val.val, 0, sizeof(yylval->val.val));
     yylval->val.val.tag = C_LCOMPLEX;
     addr = &yylval->val.val.v.ct_lcomplex.l_im;
-    if (base == 16) read_func = reuse_readhld;
-    else read_func = os_readdld;
+    if (base == 16) read_func = (read_func_t) reuse_readhld;
+    else read_func = (read_func_t) os_readdld;
     break;
   default:
     SWERR(("unhandled case %d", flags));

@@ -1,9 +1,7 @@
-/* $Id$ */
-
 #ifndef __REUSE_GETOPT_H__
 #define __REUSE_GETOPT_H__
 
-/* Copyright (C) 1997-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 1997-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This library is free software; you can redistribute it and/or
@@ -93,10 +91,10 @@ int   opt_getquiet();
  */
 #ifdef __GNUC__
 void err_Startup(char *format, ...) __attribute__((noreturn));
-void err_vStartup(/* char *format, va_list args */) __attribute__ ((noreturn));
+void err_vStartup(char *format, va_list args) __attribute__ ((noreturn));
 #else
 void err_Startup(char *format, ...);
-void err_vStartup(/* char *format, va_list args */);
+void err_vStartup(char *format, va_list args);
 #endif
 
 #define opt_default ((char *) 2L)

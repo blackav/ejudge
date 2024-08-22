@@ -1,6 +1,6 @@
 /* -*- mode:c -*- */
 
-/* Copyright (C) 2002-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This library is free software; you can redistribute it and/or
@@ -26,10 +26,7 @@
  *          newsize - new size of the array
  */
 void
-xexpand4(arr, elsize, newsize)
-     genarray_t *arr;
-     size_t      elsize;
-     int         newsize;
+xexpand4(genarray_t *arr, size_t elsize, size_t newsize)
 {
   int newsz;
 

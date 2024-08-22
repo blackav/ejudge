@@ -1,6 +1,4 @@
-/* $Id$ */
-
-/* Copyright (C) 1997-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 1997-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This library is free software; you can redistribute it and/or
@@ -38,6 +36,7 @@
 #include <stdlib.h>
 /* FIXME: does not exist on win32 #include <unistd.h> */
 #include <stdarg.h>
+#include <stdint.h>
 
 /* option reading types */
 #define OSRC_ARRAY 0            /* read options from array */
@@ -210,10 +209,11 @@ handle_s(optrec_t *rec,         /* Option record */
          int       mod_type,    /* modifier type */
          char     *w1,          /* first option word */
          char     *w2,          /* second option word */
-         short    *pdata,       /* data pointer */
+         void     *vdata,       /* data pointer */
          int      *args         /* extra args */
          )
 {
+  short *pdata = (short*) vdata;
   long  val;
   char *p;
 
@@ -258,10 +258,11 @@ handle_l(optrec_t *rec,         /* Option record */
          int       mod_type,    /* modifier type */
          char     *w1,          /* first option word */
          char     *w2,          /* second option word */
-         long     *pdata,       /* data pointer */
+         void     *vdata,       /* data pointer */
          int      *args         /* extra args */
          )
 {
+  long *pdata = (long *) vdata;
   long  val;
   char *p;
 
@@ -312,9 +313,10 @@ handle_m(optrec_t  *rec,
          int        mod_type,
          char      *w1,
          char      *w2,
-         optmask_t *pdata,
+         void      *vdata,
          int       *args)
 {
+  optmask_t *pdata = (optmask_t*) vdata;
   switch (mod_type)
     {
     case 91:                    /* m- */
@@ -349,9 +351,10 @@ handle_c(optrec_t  *rec,
          int        mod_type,
          char      *w1,
          char      *w2,
-         char     **pdata,
+         void      *vdata,
          int       *args)
 {
+  char **pdata = (char**) vdata;
   switch (mod_type)
     {
     case 101:                   /* c */
@@ -388,9 +391,10 @@ handle_f(optrec_t  *rec,
          int        mod_type,
          char      *w1,
          char      *w2,
-         optfile_t *pdata,
+         void      *vdata,
          int       *args)
 {
+  optfile_t *pdata = (optfile_t *) vdata;
   if (pdata->name != NULL)
     {
       xfclose(pdata->file); pdata->file = 0;
@@ -431,9 +435,10 @@ handle_a(optrec_t  *rec,
          int        mod_type,
          char      *w1,
          char      *w2,
-         int      (*pdata)(),
-         int        args)
+         void      *vdata,
+         int       *args)
 {
+  int (*pdata)(char *w1, ...) = (int (*)(char *w1, ...)) vdata;
   switch (mod_type)
     {
     case 21:                    /* a+ */
@@ -462,9 +467,10 @@ handle_A(optrec_t  *rec,
          int        mod_type,
          char      *w1,
          char      *w2,
-         int      (*pdata)(),
-         int        args)
+         void      *vdata,
+         int       *args)
 {
+  int (*pdata)(const char *, ...) = (int (*)(const char *, ...)) vdata;
   switch (mod_type)
     {
     case 31:                    /* A+ */
@@ -495,9 +501,10 @@ handle_t_(optrec_t  *rec,
          int        mod_type,
          char      *w1,
          char      *w2,
-         char     **pdata,
-         int        args)
+         void      *vdata,
+         int       *args)
 {
+  char **pdata = (char**) vdata;
   switch (mod_type)
     {
     case 41:                    /* t+ */
@@ -530,7 +537,13 @@ handle_t_(optrec_t  *rec,
  *          is to print the tool's version (eg --version)
  */
   static int
-handle_v(void)
+handle_v(optrec_t  *rec,
+         char      *modif,
+         int        mod_type,
+         char      *w1,
+         char      *w2,
+         void      *vdata,
+         int       *args)
 {
   int i;
 
@@ -560,9 +573,10 @@ handle_h(optrec_t      *rec,
          int            mod_type,
          char          *w1,
          char          *w2,
-         unsigned long  pdata,
-         int            args)
+         void          *vdata,
+         int           *args)
 {
+  unsigned long  pdata = (unsigned long) (uintptr_t) vdata;
   int            i, j;
   char          *d = 0;
   unsigned long  um;
@@ -672,7 +686,7 @@ handle_U(optrec_t  *rec,
          char      *w1,
          char      *w2,
          void      *pdata,
-         int        args)
+         int       *args)
 {
   if (!(opt_flags & OPTF_NOWARN))
     {
@@ -697,9 +711,10 @@ handle_V(optrec_t   *rec,
          int         mod_type,
          char       *w1,
          char       *w2,
-         strarray_t *pdata,
-         int         args)
+         void       *vdata,
+         int        *args)
 {
+  strarray_t *pdata = (strarray_t *) vdata;
   switch (mod_type)
     {
     case 81:                    /* V+ */
@@ -727,7 +742,7 @@ struct modif_info
   int    mod_params;            /* if 1, integer parameter should be read
                                  * from option parse type string */
   char  *mod_format;            /* format for sscanf to check for option */
-  int  (*mod_handler)(/* optrec_t*,char*,int,char*,char*,void*,int* */);
+  int  (*mod_handler)(optrec_t*,char*,int,char*,char*,void*,int*);
                                 /* option parse handler */
 };
 

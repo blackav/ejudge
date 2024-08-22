@@ -1,9 +1,7 @@
-/* $Id$ */
-
 #ifndef __REUSE_ERRORS_H__
 #define __REUSE_ERRORS_H__
 
-/* Copyright (C) 1997-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 1997-2024 Alexander Chernov <cher@ejudge.ru> */
 /* Created: Fri Jul 11 20:17:26 1997 by cher (Alexander Chernov) */
 
 /*
@@ -17,6 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  */
+
+#include <stdarg.h>
 
 /* Error classes */
 enum
@@ -50,24 +50,23 @@ void err_Initialize(void);
 int  err_Register(const tErrorTable * const);
 
 int  err_Write(int, ...);
-int  err_vWrite(/*int code, va_list args*/);
+int  err_vWrite(int code, va_list args);
 int  err_sWrite(int, char *, ...);
-int  err_vsWrite(/*int severity, char *format, va_list args*/);
+int  err_vsWrite(int severity, char *format, va_list args);
 int  err_psWrite(int, struct tPosition *, char *, ...);
-int  err_vpsWrite(/*int sev, tPosition *pos, char *f, va_list args*/);
+int  err_vpsWrite(int sev, struct tPosition *pos, char *f, va_list args);
 int  err_pWrite(int, struct tPosition *, ...);
-int  err_vpWrite(/*int code, tPosition *pos, va_list args*/);
+int  err_vpWrite(int code, struct tPosition *pos, va_list args);
 
-typedef int (*err_tfWriteHandler)(/*
-                                   *void              *data,
-                                   *int               sev,
-                                   *int               code,
-                                   *struct tPosition *pos,
-                                   *char             *sev_str,
-                                   *char             *pos_str,
-                                   *char             *format,
-                                   *va_list           args
-                                   */);
+typedef int (*err_tfWriteHandler)(
+        void              *data,
+        int               sev,
+        int               code,
+        struct tPosition *pos,
+        const char       *sev_str,
+        const char       *pos_str,
+        const char       *format,
+        va_list           args);
 
 err_tfWriteHandler err_InstallWriteHandler(err_tfWriteHandler, void*);
 

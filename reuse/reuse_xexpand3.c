@@ -1,6 +1,6 @@
 /* -*- mode:c -*- */
 
-/* Copyright (C) 2002-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This library is free software; you can redistribute it and/or
@@ -25,9 +25,7 @@
  *          elsize - element size
  */
 void
-xexpand3(arr, elsize)
-     genarray_t  *arr;
-     size_t       elsize;
+xexpand3(genarray_t *arr, size_t elsize)
 {
   if (!arr) return;
 

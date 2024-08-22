@@ -1,6 +1,4 @@
-/*$Id$*/
-
-/* Copyright (C) 1997-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 1997-2024 Alexander Chernov <cher@ejudge.ru> */
 /* Created: Fri Jul 11 20:19:57 1997 by cher (Alexander Chernov) */
 
 /*
@@ -33,7 +31,15 @@
 #include <stdarg.h>
 #include <stdlib.h>
 
-static int standard_write_handler();
+static int
+standard_write_handler(void *data, /* not used */
+                       int severity, /* not used */
+                       int code, /* not used */
+                       tPosition *pos, /* not used */
+                       const char *severity_str,
+                       const char *pos_str,
+                       const char *format,
+                       va_list args);
 /* error write handler */
 static err_tfWriteHandler  write_handler = standard_write_handler;
 /* extra user provided data to be passed to the callback */
@@ -328,9 +334,9 @@ standard_write_handler(void *data, /* not used */
                        int severity, /* not used */
                        int code, /* not used */
                        tPosition *pos, /* not used */
-                       char *severity_str,
-                       char *pos_str,
-                       char *format,
+                       const char *severity_str,
+                       const char *pos_str,
+                       const char *format,
                        va_list args)
 {
   int r;

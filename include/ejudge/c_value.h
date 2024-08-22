@@ -1,10 +1,9 @@
 /* -*- mode:c -*- */
-/* $Id$ */
 
 #ifndef __REUSE_C_VALUE_H__
 #define __REUSE_C_VALUE_H__
 
-/* Copyright (C) 2002-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -19,6 +18,8 @@
  */
 
 #include "ejudge/integral.h"
+
+#include <stdio.h>
 
 /* C Built-in types */
 typedef enum c_builtin_t
@@ -172,7 +173,7 @@ typedef enum c_operation_t
   COP_LAST
 } c_operation_t;
 
-void         c_value_print(/* (c_value_t *, FILE *) */);
+void         c_value_print(c_value_t *, FILE *);
 int          c_value_sprint(char *, c_value_t *);
 unsigned int c_value_size(c_value_t *);
 

@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2003-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -740,9 +740,10 @@ read_float_suffix(int tok)
 static int
 handle_float(int start, int length, int base, int flags)
 {
+  typedef int (*read_func_t)(const unsigned char *, char **, void *);
   unsigned char *buf = 0;
   int ret = 0;
-  int (*read_func)() = 0;
+  read_func_t read_func = NULL;
   void *addr = 0;
 
   buf = (unsigned char *) alloca(length + 1);
@@ -754,38 +755,38 @@ handle_float(int start, int length, int base, int flags)
   case 0:
     cur_val.val.val.tag = C_DOUBLE;
     addr = &cur_val.val.val.v.ct_double;
-    if (base == 16) read_func = reuse_readhd;
-    else read_func = os_readdd;
+    if (base == 16) read_func = (read_func_t) reuse_readhd;
+    else read_func = (read_func_t) os_readdd;
     break;
   case LT_IMAG:
     cur_val.val.val.tag = C_DCOMPLEX;
     addr = &cur_val.val.val.v.ct_dcomplex.d_im;
-    if (base == 16) read_func = reuse_readhd;
-    else read_func = os_readdd;
+    if (base == 16) read_func = (read_func_t) reuse_readhd;
+    else read_func = (read_func_t) os_readdd;
     break;
   case LT_FLOAT:
     cur_val.val.val.tag = C_FLOAT;
     addr = &cur_val.val.val.v.ct_float;
-    if (base == 16) read_func = reuse_readhf;
-    else read_func = os_readdf;
+    if (base == 16) read_func = (read_func_t) reuse_readhf;
+    else read_func = (read_func_t) os_readdf;
     break;
   case LT_FLOAT | LT_IMAG:
     cur_val.val.val.tag = C_FCOMPLEX;
     addr = &cur_val.val.val.v.ct_fcomplex.f_im;
-    if (base == 16) read_func = reuse_readhf;
-    else read_func = os_readdf;
+    if (base == 16) read_func = (read_func_t) reuse_readhf;
+    else read_func = (read_func_t) os_readdf;
     break;
   case LT_LONG:
     cur_val.val.val.tag = C_LDOUBLE;
     addr = &cur_val.val.val.v.ct_ldouble;
-    if (base == 16) read_func = reuse_readhld;
-    else read_func = os_readdld;
+    if (base == 16) read_func = (read_func_t) reuse_readhld;
+    else read_func = (read_func_t) os_readdld;
     break;
   case LT_LONG | LT_IMAG:
     cur_val.val.val.tag = C_LCOMPLEX;
     addr = &cur_val.val.val.v.ct_lcomplex.l_im;
-    if (base == 16) read_func = reuse_readhld;
-    else read_func = os_readdld;
+    if (base == 16) read_func = (read_func_t) reuse_readhld;
+    else read_func = (read_func_t) os_readdld;
     break;
   }
 

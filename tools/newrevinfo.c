@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2014-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2014-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -390,6 +390,7 @@ static void
 read_build(char const *name, int *pbuild)
 {
     FILE *f;
+    __attribute__((unused)) int _;
 
     if (pbuild) *pbuild = 0;
     if (!(f = fopen(name, "r"))) return;
@@ -397,7 +398,7 @@ read_build(char const *name, int *pbuild)
         fprintf(stderr, "%s: cannot read build number\n", name);
         exit(1);
     }
-    fscanf(f, " ");
+    _ = fscanf(f, " ");
     if (getc(f) != EOF) {
         fprintf(stderr, "%s: garbage after build number\n", name);
         exit(1);
