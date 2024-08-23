@@ -16,6 +16,7 @@
 
 #include "ejudge/config.h"
 #include "ejudge/ej_types.h"
+#include "ejudge/http_request.h"
 #include "ejudge/version.h"
 #include "ejudge/ejudge_cfg.h"
 #include "ejudge/contests.h"
@@ -1657,6 +1658,14 @@ cmd_control_server(struct client_state *p, int len,
 static void
 cmd_http_request_continuation(struct http_request_info *phr);
 
+struct trie_data;
+extern const struct trie_data super_actions_trie;
+
+int
+trie_check_16(
+        const struct trie_data *td,
+        const unsigned char *str);
+
 static void
 cmd_http_request(
         struct client_state *p,
@@ -1831,6 +1840,43 @@ cmd_http_request(
   phr->system_login = userlist_login;
   phr->userlist_clnt = userlist_clnt;
   phr->config = config;
+
+  const unsigned char *script_name = hr_getenv(phr, "SCRIPT_NAME");
+  if (script_name) {
+    const unsigned char *script_ptr = script_name;
+    if (!strncmp(script_ptr, "/cgi-bin", 8)) {
+      script_ptr += 8;
+    }
+    if (!strncmp(script_ptr, "/serve-control", 14)) {
+      script_ptr += 14;
+    }
+#if defined CGI_PROG_SUFFIX
+    if (sizeof(CGI_PROG_SUFFIX) > 1) {
+      if (!strncmp(script_ptr, CGI_PROG_SUFFIX, sizeof(CGI_PROG_SUFFIX) - 1)) {
+        script_ptr += sizeof(CGI_PROG_SUFFIX) - 1;
+      }
+    }
+#endif
+    if (script_ptr[0] == '/') {
+      if (!strncmp(script_ptr, "/api/v1/", 8)) {
+        script_ptr += 8;
+      }
+      const unsigned char *q = script_ptr;
+      while (*q && *q != '/') {
+        ++q;
+      }
+      ptrdiff_t action_len = q - script_ptr;
+      unsigned char *action_str = alloca(action_len + 1);
+      memcpy(action_str, script_ptr, action_len);
+      action_str[action_len] = 0;
+      int action = trie_check_16(&super_actions_trie, action_str);
+      if (action >= SSERV_CMD_HTTP_REQUEST_FIRST) {
+        phr->action_str = action_str;
+        phr->action = action;
+
+      }
+    }
+  }
 
   const unsigned char *s = 0;
   if (hr_cgi_param(phr, "login_page", &s) > 0) {
