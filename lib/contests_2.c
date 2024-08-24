@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2008-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -77,7 +77,7 @@ contests_write_header(
     CONTEST_A_DISABLE_MEMBER_DELETE, CONTEST_A_CLOSED, CONTEST_A_INVISIBLE,
     CONTEST_A_MANAGED, CONTEST_A_RUN_MANAGED, CONTEST_A_OLD_RUN_MANAGED, CONTEST_A_READY, CONTEST_A_READ_ONLY_NAME,
     CONTEST_A_ENABLE_OAUTH, CONTEST_A_ENABLE_REMINDERS,
-    CONTEST_A_DISABLE_STANDALONE_REG, CONTEST_A_ENABLE_TELEGRAM_REGISTRATION,
+    CONTEST_A_DISABLE_STANDALONE_REG, CONTEST_A_ENABLE_TELEGRAM_REGISTRATION, CONTEST_A_ENABLE_SPECIAL_FLOW,
     0
   };
   for (i = 0; flist[i]; ++i) {
@@ -356,6 +356,7 @@ contests_unparse(
     CONTEST_AVATAR_PLUGIN,
     CONTEST_CONTENT_PLUGIN,
     CONTEST_CONTENT_URL_PREFIX,
+    CONTEST_SPECIAL_FLOW_OPTIONS,
 
     0,
   });
