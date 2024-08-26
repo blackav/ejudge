@@ -22,6 +22,7 @@
 #include "ejudge/new_server_proto.h"
 #include "ejudge/opcaps.h"
 #include "ejudge/pathutl.h"
+#include "ejudge/super_proto.h"
 #include "ejudge/xml_utils.h"
 #include "ejudge/misctext.h"
 #include "ejudge/copyright.h"
@@ -19444,6 +19445,332 @@ done:;
   cJSON_Delete(jr);
 }
 
+#define ERROR() do { fail_lineno = __LINE__; goto done; } while (0)
+#define USERLIST_ERROR() do { fail_lineno = __LINE__; goto userlist_error; } while (0)
+#define PERMISSION_DENIED_ERROR() do { err_num = NEW_SRV_ERR_PERMISSION_DENIED; http_status = 403; fail_lineno = __LINE__; goto done; } while (0)
+
+static void
+unpriv_special_flow(
+        FILE *fout,
+        struct http_request_info *phr)
+{
+  int ok = 0;
+  int err_num = NEW_SRV_ERR_INV_PARAM;
+  const unsigned char *err_msg = NULL;
+  cJSON *jr = cJSON_CreateObject();
+  int http_status = 400;
+  const struct contest_desc *cnts = NULL;
+  const unsigned char *login_str = NULL;
+  unsigned char *xml_text = NULL;
+  struct userlist_user *u = NULL;
+  const struct userlist_contest *uc = NULL;
+  const struct userlist_user_info *ui = NULL;
+  int user_id = 0;
+  int r;
+  int option_disable_password_check = 0;
+  int option_create_session = 0;
+  int option_base_contest_id = 0;
+  char *option_base_login = NULL;
+  const unsigned char *password = NULL;
+  time_t expiration_time = 0;
+  unsigned char session_buf[64];
+  __attribute__((unused)) int _;
+  struct userlist_cookie in_c = {};
+  struct userlist_cookie out_c = {};
+  const struct contest_desc *base_cnts = NULL;
+  int base_user_id = 0;
+  int fail_lineno = 0;
+  cJSON *jrr = NULL;
+
+  if (contests_get(phr->contest_id, &cnts) < 0 || !cnts) {
+    ERROR();
+  }
+  if (!contests_check_team_ip(phr->contest_id, &phr->ip, phr->ssl_flag)) {
+    PERMISSION_DENIED_ERROR();
+  }
+  if (cnts->enable_special_flow <= 0 || cnts->disable_team_password > 0) {
+    ERROR();
+  }
+  if (cnts->closed > 0) {
+    ERROR();
+  }
+  if (cnts->managed <= 0) {
+    ERROR();
+  }
+
+  hr_cgi_param_int_opt(phr, "locale_id", &phr->locale_id, 0);
+
+  if (hr_cgi_param(phr, "login", &login_str) <= 0) {
+    PERMISSION_DENIED_ERROR();
+  }
+  if (!login_str || !login_str[0] || check_login(login_str) < 0) {
+    PERMISSION_DENIED_ERROR();
+  }
+  if ((r = ns_open_ul_connection(phr->fw_state)) < 0) {
+    USERLIST_ERROR();
+  }
+  r = userlist_clnt_lookup_user(ul_conn, login_str, 0, &user_id, NULL);
+  if (r == -ULS_ERR_INVALID_LOGIN) {
+    PERMISSION_DENIED_ERROR();
+  }
+  if (r < 0) {
+    USERLIST_ERROR();
+  }
+
+  if ((r = userlist_clnt_get_info(ul_conn, ULS_PRIV_GET_USER_INFO, user_id, phr->contest_id, &xml_text)) < 0 || !xml_text) {
+    USERLIST_ERROR();
+  }
+  u = userlist_parse_user_str(xml_text);
+  if (!u) {
+    USERLIST_ERROR();
+  }
+  uc = userlist_get_user_contest(u, phr->contest_id);
+  ui = userlist_get_cnts0(u);
+
+  // special_flow_options:
+  // <disable-password-check:0,1>,<create-session:0,1>,<base-contest-id>,<base-login>
+  if (cnts->special_flow_options && cnts->special_flow_options[0]) {
+    if (sscanf(cnts->special_flow_options, "%d,%d,%d,%ms", &option_disable_password_check, &option_create_session, &option_base_contest_id, &option_base_login) != 4) {
+      ERROR();
+    }
+  }
+
+  if (!uc) {
+    if (option_base_contest_id <= 0) {
+      PERMISSION_DENIED_ERROR();
+    }
+    if (!contests_check_register_ip(phr->contest_id, &phr->ip, phr->ssl_flag)) {
+      PERMISSION_DENIED_ERROR();
+    }
+
+    if (contests_get(option_base_contest_id, &base_cnts) < 0 || !base_cnts) {
+      ERROR();
+    }
+    xfree(xml_text); xml_text = NULL;
+    if ((r = userlist_clnt_get_info(ul_conn, ULS_PRIV_GET_USER_INFO, user_id, option_base_contest_id, &xml_text)) < 0 || !xml_text) {
+      USERLIST_ERROR();
+    }
+    if (u) {
+      userlist_free(&u->b);
+      u = NULL;
+    }
+    uc = NULL;
+    ui = NULL;
+    u = userlist_parse_user_str(xml_text);
+    if (!u) {
+      USERLIST_ERROR();
+    }
+    uc = userlist_get_user_contest(u, option_base_contest_id);
+    ui = userlist_get_cnts0(u);
+    if (!uc) {
+      PERMISSION_DENIED_ERROR();
+    }
+    if (uc->status != 0) {
+      PERMISSION_DENIED_ERROR();
+    }
+    if ((uc->flags & ~USERLIST_UC_REG_READONLY) != 0) {
+      PERMISSION_DENIED_ERROR();
+    }
+    r = userlist_clnt_register_contest(ul_conn,
+                                        ULS_PRIV_REGISTER_CONTEST,
+                                        user_id, phr->contest_id,
+                                        &phr->ip, phr->ssl_flag);
+    if (r < 0) {
+      USERLIST_ERROR();
+    }
+    r = userlist_clnt_change_registration(ul_conn, user_id, phr->contest_id, 0, 0, 0);
+    if (r < 0) {
+      USERLIST_ERROR();
+    }
+    r = userlist_clnt_copy_user_info(ul_conn, ULS_COPY_ALL, user_id, option_base_contest_id, phr->contest_id);
+    if (r < 0) {
+      USERLIST_ERROR();
+    }
+    if (option_base_login && option_base_login[0]) {
+      r = userlist_clnt_lookup_user(ul_conn, option_base_login, 0, &base_user_id, NULL);
+      if (r < 0) {
+        USERLIST_ERROR();
+      }
+      xfree(xml_text); xml_text = NULL;
+      if ((r = userlist_clnt_get_info(ul_conn, ULS_PRIV_GET_USER_INFO, base_user_id, phr->contest_id, &xml_text)) < 0 || !xml_text) {
+        USERLIST_ERROR();
+      }
+      if (u) {
+        userlist_free(&u->b);
+        u = NULL;
+      }
+      uc = NULL;
+      ui = NULL;
+      u = userlist_parse_user_str(xml_text);
+      if (!u) {
+        USERLIST_ERROR();
+      }
+      uc = userlist_get_user_contest(u, phr->contest_id);
+      ui = userlist_get_cnts0(u);
+      if (!uc || uc->status != 0 || (uc->flags & ~USERLIST_UC_REG_READONLY) != 0) {
+        ERROR();
+      }
+      if (!ui->team_passwd || !ui->team_passwd[0] || ui->team_passwd_method) {
+        ERROR();
+      }
+      r = userlist_clnt_edit_field(ul_conn, ULS_EDIT_FIELD, user_id, phr->contest_id, 0, USERLIST_NC_TEAM_PASSWD, ui->team_passwd);
+      if (r < 0) {
+        USERLIST_ERROR();
+      }
+    }
+    xfree(xml_text); xml_text = NULL;
+    if (u) {
+      userlist_free(&u->b);
+      u = NULL;
+    }
+    uc = NULL;
+    ui = NULL;
+    if ((r = userlist_clnt_get_info(ul_conn, ULS_PRIV_GET_USER_INFO, user_id, phr->contest_id, &xml_text)) < 0 || !xml_text) {
+      USERLIST_ERROR();
+    }
+    u = userlist_parse_user_str(xml_text);
+    if (!u) {
+      ERROR();
+    }
+    uc = userlist_get_user_contest(u, phr->contest_id);
+    ui = userlist_get_cnts0(u);
+    if (!uc) {
+      ERROR();
+    }
+  }
+
+  if (uc->status != 0) {
+    PERMISSION_DENIED_ERROR();
+  }
+  if ((uc->flags & ~USERLIST_UC_REG_READONLY) != 0) {
+    PERMISSION_DENIED_ERROR();
+  }
+  if (option_create_session <= 0) {
+    jrr = cJSON_CreateObject();
+    cJSON_AddNumberToObject(jrr, "user_id", user_id);
+    cJSON_AddStringToObject(jrr, "user_login", login_str);
+    cJSON_AddNumberToObject(jrr, "contest_id", phr->contest_id);
+    if (ui && ui->name && ui->name[0]) {
+      cJSON_AddStringToObject(jrr, "user_name", ui->name);
+    }
+    cJSON_AddItemToObject(jr, "result", jrr);
+    ok = 1;
+    http_status = 200;
+    goto done;
+  }
+  if (option_disable_password_check <= 0) {
+    if (hr_cgi_param(phr, "password", &password) <= 0 || !password || !*password) {
+      PERMISSION_DENIED_ERROR();
+    }
+    r = userlist_clnt_login(ul_conn, ULS_TEAM_CHECK_USER, &phr->ip,
+                            0 /* cookie*/, 0 /* client_key */, 0 /* expire */,
+                            phr->ssl_flag, phr->contest_id, phr->locale_id,
+                            0 /* pwd_special*/, 0 /* is_ws */, 0 /* is_job */,
+                            login_str, password,
+                            &phr->user_id, &phr->session_id, &phr->client_key,
+                            &phr->name, &expiration_time,
+                            &phr->priv_level, &phr->reg_status,
+                            &phr->reg_flags);
+    if (r < 0) {
+      r = -r;
+      switch (r) {
+      case ULS_ERR_INVALID_LOGIN:
+      case ULS_ERR_INVALID_PASSWORD:
+      case ULS_ERR_BAD_CONTEST_ID:
+      case ULS_ERR_IP_NOT_ALLOWED:
+      case ULS_ERR_NO_PERMS:
+      case ULS_ERR_NOT_REGISTERED:
+      case ULS_ERR_CANNOT_PARTICIPATE:
+      case ULS_ERR_INCOMPLETE_REG:
+        PERMISSION_DENIED_ERROR();
+      default:
+        USERLIST_ERROR();
+      }
+    }
+    jrr = cJSON_CreateObject();
+    cJSON_AddNumberToObject(jrr, "user_id", user_id);
+    cJSON_AddStringToObject(jrr, "user_login", login_str);
+    cJSON_AddNumberToObject(jrr, "contest_id", phr->contest_id);
+    if (ui && ui->name && ui->name[0]) {
+      cJSON_AddStringToObject(jrr, "user_name", ui->name);
+    }
+    _ = snprintf(session_buf, sizeof(session_buf), "%016llx-%016llx", phr->session_id, phr->client_key);
+    cJSON_AddStringToObject(jrr, "session", session_buf);
+    _ = snprintf(session_buf, sizeof(session_buf), "%016llx", phr->session_id);
+    cJSON_AddStringToObject(jrr, "SID", session_buf);
+    _ = snprintf(session_buf, sizeof(session_buf), "%016llx", phr->client_key);
+    cJSON_AddStringToObject(jrr, "EJSID", session_buf);
+    if (expiration_time > 0) {
+      cJSON_AddNumberToObject(jrr, "expire", (long long) expiration_time);
+    }
+    cJSON_AddItemToObject(jr, "result", jrr);
+    ok = 1;
+    http_status = 200;
+    goto done;
+  }
+  in_c.ip = phr->ip;
+  in_c.ssl = phr->ssl_flag;
+  in_c.user_id = user_id;
+  in_c.contest_id = phr->contest_id;
+  in_c.locale_id = phr->locale_id;
+  in_c.priv_level = 0;
+  in_c.role = USER_ROLE_CONTESTANT;
+  in_c.team_login = 1;
+  random_init();
+  in_c.cookie = random_u64();
+  in_c.client_key = random_u64();
+  r = userlist_clnt_create_cookie(ul_conn, ULS_PRIV_CREATE_COOKIE, &in_c, &out_c);
+  if (r < 0) {
+    USERLIST_ERROR();
+  }
+  jrr = cJSON_CreateObject();
+  cJSON_AddNumberToObject(jrr, "user_id", out_c.user_id);
+  cJSON_AddStringToObject(jrr, "user_login", login_str);
+  cJSON_AddNumberToObject(jrr, "contest_id", out_c.contest_id);
+  if (ui && ui->name && ui->name[0]) {
+    cJSON_AddStringToObject(jrr, "user_name", ui->name);
+  }
+  _ = snprintf(session_buf, sizeof(session_buf), "%016llx-%016llx", out_c.cookie, out_c.client_key);
+  cJSON_AddStringToObject(jrr, "session", session_buf);
+  _ = snprintf(session_buf, sizeof(session_buf), "%016llx", out_c.cookie);
+  cJSON_AddStringToObject(jrr, "SID", session_buf);
+  _ = snprintf(session_buf, sizeof(session_buf), "%016llx", out_c.client_key);
+  cJSON_AddStringToObject(jrr, "EJSID", session_buf);
+  if (out_c.expire > 0) {
+    cJSON_AddNumberToObject(jrr, "expire", (long long) out_c.expire);
+  }
+  cJSON_AddItemToObject(jr, "result", jrr);
+  ok = 1;
+  http_status = 200;
+
+done:;
+  if (fail_lineno > 0) {
+    err("%s: %d: operation failed: http_status = %d", __PRETTY_FUNCTION__, fail_lineno, http_status);
+  }
+  phr->json_reply = 1;
+  phr->status_code = http_status;
+  emit_json_result(fout, phr, ok, err_num, 0, err_msg, jr);
+  if (jr) {
+    cJSON_Delete(jr);
+  }
+  xfree(xml_text);
+  if (u) {
+    userlist_free(&u->b);
+  }
+  free(option_base_login);
+  return;
+
+userlist_error:;
+  err("%s: %d: userlist server error %d", __PRETTY_FUNCTION__, fail_lineno, r);
+  http_status = 500;
+  err_num = NEW_SRV_ERR_INTERNAL;
+  goto done;
+}
+
+#undef ERROR
+#undef USERLIST_ERROR
+#undef PERMISSION_DENIED_ERROR
+
 static int
 unpriv_check_cached_key(struct http_request_info *phr)
 {
@@ -19768,6 +20095,10 @@ unprivileged_entry_point(
 
   if (phr->action == NEW_SRV_ACTION_VCS_WEBHOOK) {
     unpriv_gitlab_webhook(fout, phr);
+    return;
+  }
+  if (phr->action == NEW_SRV_ACTION_SPECIAL_FLOW) {
+    unpriv_special_flow(fout, phr);
     return;
   }
 

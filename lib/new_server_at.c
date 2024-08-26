@@ -346,4 +346,5 @@ const unsigned char * const ns_symbolic_action_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_LIST_LANGUAGES] = "list-languages",
   [NEW_SRV_ACTION_CREATE_USER_SESSION] = "create-user-session",
   [NEW_SRV_ACTION_CHANGE_REGISTRATIONS] = "change-registrations",
+  [NEW_SRV_ACTION_SPECIAL_FLOW] = "special-flow",
 };

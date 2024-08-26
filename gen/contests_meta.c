@@ -45,6 +45,7 @@ static struct meta_info_item meta_info_contest_desc_data[] =
   [CNTS_enable_reminders] = { CNTS_enable_reminders, 'b', XSIZE(struct contest_desc, enable_reminders), "enable_reminders", XOFFSET(struct contest_desc, enable_reminders) },
   [CNTS_disable_standalone_reg] = { CNTS_disable_standalone_reg, 'b', XSIZE(struct contest_desc, disable_standalone_reg), "disable_standalone_reg", XOFFSET(struct contest_desc, disable_standalone_reg) },
   [CNTS_enable_telegram_registration] = { CNTS_enable_telegram_registration, 'b', XSIZE(struct contest_desc, enable_telegram_registration), "enable_telegram_registration", XOFFSET(struct contest_desc, enable_telegram_registration) },
+  [CNTS_enable_special_flow] = { CNTS_enable_special_flow, 'b', XSIZE(struct contest_desc, enable_special_flow), "enable_special_flow", XOFFSET(struct contest_desc, enable_special_flow) },
   [CNTS_reg_deadline] = { CNTS_reg_deadline, 't', XSIZE(struct contest_desc, reg_deadline), "reg_deadline", XOFFSET(struct contest_desc, reg_deadline) },
   [CNTS_sched_time] = { CNTS_sched_time, 't', XSIZE(struct contest_desc, sched_time), "sched_time", XOFFSET(struct contest_desc, sched_time) },
   [CNTS_open_time] = { CNTS_open_time, 't', XSIZE(struct contest_desc, open_time), "open_time", XOFFSET(struct contest_desc, open_time) },
@@ -131,6 +132,7 @@ static struct meta_info_item meta_info_contest_desc_data[] =
   [CNTS_avatar_plugin] = { CNTS_avatar_plugin, 's', XSIZE(struct contest_desc, avatar_plugin), "avatar_plugin", XOFFSET(struct contest_desc, avatar_plugin) },
   [CNTS_content_plugin] = { CNTS_content_plugin, 's', XSIZE(struct contest_desc, content_plugin), "content_plugin", XOFFSET(struct contest_desc, content_plugin) },
   [CNTS_content_url_prefix] = { CNTS_content_url_prefix, 's', XSIZE(struct contest_desc, content_url_prefix), "content_url_prefix", XOFFSET(struct contest_desc, content_url_prefix) },
+  [CNTS_special_flow_options] = { CNTS_special_flow_options, 's', XSIZE(struct contest_desc, special_flow_options), "special_flow_options", XOFFSET(struct contest_desc, special_flow_options) },
   [CNTS_slave_rules] = { CNTS_slave_rules, '?', XSIZE(struct contest_desc, slave_rules), "slave_rules", XOFFSET(struct contest_desc, slave_rules) },
   [CNTS_oauth_rules] = { CNTS_oauth_rules, '?', XSIZE(struct contest_desc, oauth_rules), "oauth_rules", XOFFSET(struct contest_desc, oauth_rules) },
   [CNTS_user_contest_num] = { CNTS_user_contest_num, 'i', XSIZE(struct contest_desc, user_contest_num), "user_contest_num", XOFFSET(struct contest_desc, user_contest_num) },
@@ -209,6 +211,7 @@ void contest_desc_copy(struct contest_desc *dst, const struct contest_desc *src)
   dst->enable_reminders = src->enable_reminders;
   dst->disable_standalone_reg = src->disable_standalone_reg;
   dst->enable_telegram_registration = src->enable_telegram_registration;
+  dst->enable_special_flow = src->enable_special_flow;
   dst->reg_deadline = src->reg_deadline;
   dst->sched_time = src->sched_time;
   dst->open_time = src->open_time;
@@ -437,6 +440,9 @@ void contest_desc_copy(struct contest_desc *dst, const struct contest_desc *src)
   if (src->content_url_prefix) {
     dst->content_url_prefix = strdup(src->content_url_prefix);
   }
+  if (src->special_flow_options) {
+    dst->special_flow_options = strdup(src->special_flow_options);
+  }
   // slave_rules
   // oauth_rules
   dst->user_contest_num = src->user_contest_num;
@@ -529,6 +535,7 @@ void contest_desc_free(struct contest_desc *ptr)
   free(ptr->avatar_plugin);
   free(ptr->content_plugin);
   free(ptr->content_url_prefix);
+  free(ptr->special_flow_options);
   // slave_rules
   // oauth_rules
   // hidden last_check_time
