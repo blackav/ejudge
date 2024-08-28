@@ -564,7 +564,7 @@ display_login_page(char *argv[])
   r = super_clnt_http_request(super_serve_fd, 1, (unsigned char**) argv,
                               (unsigned char **) environ,
                               param_num, param_names,
-                              param_sizes, params, 0, 0);
+                              param_sizes, params, 0 /* api_mode */, 0, 0);
   if (r < 0) {
     operation_status_page(-1, -1, "Invalid request");
   }
@@ -1232,7 +1232,7 @@ action_http_request(char **argv)
   r = super_clnt_http_request(super_serve_fd, 1, (unsigned char**) argv,
                               (unsigned char **) environ,
                               param_num, param_names,
-                              param_sizes, params, 0, 0);
+                              param_sizes, params, 0 /* api_mode */, 0, 0);
   if (r < 0) {
     operation_status_page(-1, -1, "Invalid request");
   }

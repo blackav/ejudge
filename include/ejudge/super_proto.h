@@ -556,6 +556,7 @@ struct prot_super_pkt_set_param
 struct prot_super_pkt_http_request
 {
   struct prot_super_packet b;
+  int api_mode;
   int arg_num;
   int env_num;
   int param_num;
