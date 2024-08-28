@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2005-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -461,7 +461,7 @@ super_html_commit_contest_2(
   unsigned char *serve_footer = 0;
   unsigned char audit_rec[1024];
   unsigned char serve_audit_rec[1024];
-  int i, j;
+  __attribute__((unused)) int i, j;
 
   path_t conf_path;
   path_t var_path;

@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2007-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2007-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -120,7 +120,7 @@ tex_armor_buf(struct html_armor_buffer *pb, const unsigned char *s)
 {
   const unsigned char *p = s, *q;
   int needed = 0;
-  size_t s_sz = 0, d_sz = 0;
+  __attribute__((unused)) size_t s_sz = 0, d_sz = 0;
   unsigned char *t;
 
   if (!s) return "";

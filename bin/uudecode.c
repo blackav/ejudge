@@ -1,5 +1,3 @@
-/* $Id$ */
-
 static const char cright_years_z[] =
 
 /* uudecode utility.   Copyright (C) */
@@ -87,7 +85,7 @@ static const char cright_years_z[] =
 #define UU_CHMOD(_n, _fd, _m)   chmod ((_n), UU_MODE_BITS(_m))
 #endif
 
-struct passwd *getpwnam ();
+//struct passwd *getpwnam ();
 
 static struct option longopts[] =
 {
@@ -142,8 +140,7 @@ myerr(int unused, int errcode, const char *format, ...)
                        } while (0)
 
 static int
-read_stduu (inname, outname)
-     const char *inname, *outname;
+read_stduu (const char *inname, const char *outname)
 {
   char buf[2 * BUFSIZ];
 
@@ -195,8 +192,7 @@ read_stduu (inname, outname)
 }
 
 static int
-read_base64 (inname, outname)
-     const char *inname, *outname;
+read_base64 (const char *inname, const char *outname)
 {
   static const char b64_tab[256] =
   {
@@ -317,9 +313,7 @@ read_base64 (inname, outname)
 
 
 static int
-decode (inname, forced_outname)
-     const char *inname;
-     const char *forced_outname;
+decode (const char *inname, const char *forced_outname)
 {
   struct passwd *pw;
   register int n;
@@ -448,8 +442,7 @@ decode (inname, forced_outname)
 }
 
 static void
-usage (status)
-     int status;
+usage (int status)
 {
   if (status != 0)
     fprintf (stderr, "Try `%s --help' for more information.\n",
@@ -469,9 +462,7 @@ Mandatory arguments to long options are mandatory to short options too.\n\
 }
 
 int
-main (argc, argv)
-     int argc;
-     char *const *argv;
+main (int argc, char **argv)
 {
   int opt;
   int exit_status;

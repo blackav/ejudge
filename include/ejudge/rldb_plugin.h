@@ -3,7 +3,7 @@
 #ifndef __RLDB_PLUGIN_H__
 #define __RLDB_PLUGIN_H__
 
-/* Copyright (C) 2008-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -130,7 +130,7 @@ struct rldb_plugin_iface
         int new_hidden,
         struct run_entry *ure);
   // set the judge_id value
-  __attribute__((deprecated)) int (*deprecated_set_judge_id)(struct rldb_plugin_cnts *,
+  int (*deprecated_set_judge_id)(struct rldb_plugin_cnts *,
                       int run_id,
                       int new_judge_id);
   // set the pages value
@@ -153,7 +153,7 @@ struct rldb_plugin_iface
   // insert the whole header
   int (*put_header)(struct rldb_plugin_cnts *, const struct run_header *);
   // change the status (extended version)
-  __attribute__((deprecated)) int (*deprecated_change_status_2)(struct rldb_plugin_cnts *,
+  int (*deprecated_change_status_2)(struct rldb_plugin_cnts *,
                          int run_id,
                          int new_status,
                          int new_test,
@@ -195,7 +195,7 @@ struct rldb_plugin_iface
         struct run_entry **p_entries);
 
   // write a new run to the database, including problem UUID
-  __attribute__((deprecated)) int (*deprecated_add_entry_2)(
+  int (*deprecated_add_entry_2)(
         struct rldb_plugin_cnts *,
         int i,
         const struct run_entry *,

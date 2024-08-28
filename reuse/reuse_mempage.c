@@ -1,4 +1,4 @@
-/* Copyright (C) 1995-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 1995-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This library is free software; you can redistribute it and/or
@@ -18,9 +18,14 @@
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
+#include <stdint.h>
 
 #define DEFAULT_SIZE   32000
+#if UINTPTR_MAX == 0xFFFFFFFF
 #define ALIGN_SIZE(sz) ((sz+7) & ~7)
+#else
+#define ALIGN_SIZE(sz) ((sz+15) & ~15)
+#endif
 
 struct tPageDesc
 {

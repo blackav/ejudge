@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2012-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -882,7 +882,7 @@ do_generate_makefile(
   unsigned char test_pr_pat[PATH_MAX];
   unsigned char tgzdir_pr_pat[PATH_MAX];
   unsigned long languages = 0;
-  unsigned long enabled_languages = 0;
+  __attribute__((unused)) unsigned long enabled_languages = 0;
   unsigned char tmp_path[PATH_MAX];
   unsigned char *compiler_path = NULL;
   const unsigned char *compiler_flags = NULL;
@@ -912,7 +912,7 @@ do_generate_makefile(
   ejudge_lib_dir[0] = 0;
 #if defined EJUDGE_LIB_DIR
   if (!strncmp(EJUDGE_LIB_DIR, EJUDGE_PREFIX_DIR, strlen(EJUDGE_PREFIX_DIR))) {
-    snprintf(ejudge_lib_dir, sizeof(ejudge_lib_dir), "${EJUDGE_PREFIX_DIR}%s", EJUDGE_LIB_DIR + strlen(EJUDGE_PREFIX_DIR));
+    snprintf(ejudge_lib_dir, sizeof(ejudge_lib_dir), "${EJUDGE_PREFIX_DIR}%s", &EJUDGE_LIB_DIR[strlen(EJUDGE_PREFIX_DIR)]);
   } else {
     snprintf(ejudge_lib_dir, sizeof(ejudge_lib_dir), "%s", EJUDGE_LIB_DIR);
   }
@@ -923,7 +923,7 @@ do_generate_makefile(
   ejudge_lib32_dir[0] = 0;
 #if defined EJUDGE_LIB32_DIR
   if (!strncmp(EJUDGE_LIB32_DIR, EJUDGE_PREFIX_DIR, strlen(EJUDGE_PREFIX_DIR))) {
-    snprintf(ejudge_lib32_dir, sizeof(ejudge_lib32_dir), "${EJUDGE_PREFIX_DIR}%s", EJUDGE_LIB32_DIR + strlen(EJUDGE_PREFIX_DIR));
+    snprintf(ejudge_lib32_dir, sizeof(ejudge_lib32_dir), "${EJUDGE_PREFIX_DIR}%s", &EJUDGE_LIB32_DIR[strlen(EJUDGE_PREFIX_DIR)]);
   } else {
     snprintf(ejudge_lib32_dir, sizeof(ejudge_lib32_dir), "%s", EJUDGE_LIB32_DIR);
   }

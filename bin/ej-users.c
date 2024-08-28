@@ -5104,7 +5104,7 @@ cmd_list_standings_users_2(
         int pkt_len,
         struct userlist_pk_map_contest *data)
 {
-  int flags = 0, subflags;
+  __attribute__((unused)) int flags = 0, subflags;
   const struct contest_desc *cnts = 0;
   unsigned char logbuf[1024];
   ptr_iterator_t iter;
@@ -11571,7 +11571,6 @@ static int (*check_table[])() =
   [ULS_LIST_ALL_USERS_4] =      check_pk_list_users_2,
   [ULS_GET_GROUP_INFO] =        check_pk_map_contest,
   [ULS_LIST_STANDINGS_USERS_2] =check_pk_map_contest,
-  [ULS_CHECK_USER] =            NULL,
   [ULS_CREATE_COOKIE] =         NULL,
   [ULS_CREATE_API_KEY] =        check_pk_api_key_data,
   [ULS_GET_API_KEY] =           check_pk_api_key_data,
@@ -11599,10 +11598,10 @@ process_packet(struct client_state *p, int pkt_len, unsigned char *data)
     return;
   }
   if (check_table[packet->id]
-      && (*check_table[packet->id])(p, pkt_len, data) < 0) {
+      && (*(int (*)(struct client_state *, int, unsigned char *)) check_table[packet->id])(p, pkt_len, data) < 0) {
     return;
   }
-  (*cmd_table[packet->id])(p, pkt_len, data);
+  (*(void (*)(struct client_state *, int, unsigned char *)) cmd_table[packet->id])(p, pkt_len, data);
 }
 
 static void

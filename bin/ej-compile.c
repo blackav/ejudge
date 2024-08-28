@@ -688,8 +688,10 @@ done:;
   if (mem != MAP_FAILED) munmap(mem, size);
 }
 
+#ifdef __GCC__
 #pragma GCC push_options
 #pragma GCC optimize "no-inline"
+#endif
 static void
 save_heartbeat(void)
 {
@@ -745,7 +747,9 @@ save_heartbeat(void)
   flatcc_builder_clear(&builder);
   last_heartbeat_update_ms = current_time_ms;
 }
+#ifdef __GCC__
 #pragma GCC pop_options
+#endif
 
 static void
 delete_heartbeat(void)

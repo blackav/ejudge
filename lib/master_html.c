@@ -770,7 +770,7 @@ generate_daily_statistics(
   int *sort_num, *sort_idx;
 
   int total_empty = 0;
-  int total_errors = 0;
+  __attribute__((unused)) int total_errors = 0;
   int total_status[128];
   int total_pseudo = 0;
   int total_afterok = 0;

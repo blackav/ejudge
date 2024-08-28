@@ -86,7 +86,7 @@ static struct run_test_info *tests = 0;
 static int
 filter_testers(char *key)
 {
-  int i, total = 0;
+  __attribute__((unused)) int i, total = 0;
 
   for (i = 1; i <= serve_state.max_tester; i++) {
     if (key && !serve_state.testers[i]->key) {

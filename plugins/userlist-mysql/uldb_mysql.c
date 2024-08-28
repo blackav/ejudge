@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -6393,7 +6393,7 @@ get_api_keys_for_user_func(
     if (api_key_parse(state, &tmp_apks[i]) < 0) goto fail;
   }
 
-  int new_count = 0;
+  __attribute__((unused)) int new_count = 0;
   for (int i = 0; i < tmp_apks_size; ++i) {
     new_count += (api_key_cache_index_find(state, tmp_apks[i].token) <= 0);
   }
