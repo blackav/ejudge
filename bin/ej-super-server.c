@@ -1841,6 +1841,16 @@ cmd_http_request(
   phr->userlist_clnt = userlist_clnt;
   phr->config = config;
 
+  if (pkt->api_mode > 0) {
+    super_html_api_request(&out_t, &out_z, phr);
+    q = client_state_new_autoclose(p, out_t, out_z);
+    (void) q;
+    info("cmd_api_request: %zu, %d", out_z, phr->status_code);
+    send_reply(p, SSERV_RPL_OK);
+    goto cleanup;
+  }
+
+/*
   const unsigned char *script_name = hr_getenv(phr, "SCRIPT_NAME");
   if (script_name) {
     const unsigned char *script_ptr = script_name;
@@ -1873,10 +1883,12 @@ cmd_http_request(
       if (action >= SSERV_CMD_HTTP_REQUEST_FIRST) {
         phr->action_str = action_str;
         phr->action = action;
-
+        super_html_api_request(&out_t, &out_z, phr);
+        api_request_handled = 1;
       }
     }
   }
+*/
 
   const unsigned char *s = 0;
   if (hr_cgi_param(phr, "login_page", &s) > 0) {
@@ -1919,10 +1931,10 @@ cmd_http_request(
   (void) q;
   info("cmd_http_request: %zu", out_z);
   send_reply(p, SSERV_RPL_OK);
+
+cleanup:;
   xfree(phr->redirect);
   xfree(phr);
-
-  //cleanup:
 }
 
 static void
