@@ -29,11 +29,13 @@
 #include "ejudge/super_clnt.h"
 #include "ejudge/super_proto.h"
 #include "ejudge/compat.h"
+#include "ejudge/cJSON.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
 #include "ejudge/osdeps.h"
 
+#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
@@ -1285,6 +1287,108 @@ static const int next_action_map[SSERV_CMD_LAST] =
   [SSERV_CMD_LANG_UPDATE_VERSIONS] = SSERV_CMD_CNTS_EDIT_CUR_LANGUAGES_PAGE,
 };
 
+static void
+client_json_reply(
+        FILE *out,
+        int status,
+        int ok,
+        int err_num,
+        const unsigned char *err_msg,
+        cJSON *jr)
+{
+  fprintf(out, "Content-Type: %s; charset=%s\n"
+          "Cache-Control: no-cache\n"
+          "Status: %d\n"
+          "Pragma: no-cache\n\n", "application/json", DEFAULT_CHARSET, status);
+  if (!ok) {
+    if (err_num < 0) err_num = -err_num;
+    if (!err_msg || !*err_msg) {
+      err_msg = NULL;
+      if (err_num > 0 && err_num < SSERV_ERR_LAST) {
+        err_msg = super_proto_error_messages[err_num];
+        if (err_msg && !*err_msg) {
+          err_msg = NULL;
+        }
+      }
+    }
+    cJSON_AddFalseToObject(jr, "ok");
+    cJSON *jerr = cJSON_CreateObject();
+    if (err_num > 0) {
+      cJSON_AddNumberToObject(jerr, "num", err_num);
+    }
+    if (err_msg) {
+      cJSON_AddStringToObject(jerr, "message", err_msg);
+    }
+    cJSON_AddItemToObject(jr, "error", jerr);
+  } else {
+    cJSON_AddTrueToObject(jr, "ok");
+  }
+  cJSON_AddNumberToObject(jr, "server_time", (double) time(NULL));
+  char *jrstr = cJSON_PrintUnformatted(jr);
+  fprintf(out, "%s\n", jrstr);
+  free(jrstr);
+}
+
+static void
+process_api_mode(char **argv)
+{
+  const unsigned char *script_name = getenv("SCRIPT_NAME");
+  if (!script_name) return;
+
+  const unsigned char *script_ptr = script_name;
+  if (!strncmp(script_ptr, "/cgi-bin", 8)) {
+    script_ptr += 8;
+  }
+  if (!strncmp(script_ptr, "/serve-control", 14)) {
+    script_ptr += 14;
+  } else {
+    return;
+  }
+#if defined CGI_PROG_SUFFIX
+  if (sizeof(CGI_PROG_SUFFIX) > 1) {
+    if (!strncmp(script_ptr, CGI_PROG_SUFFIX, sizeof(CGI_PROG_SUFFIX) - 1)) {
+      script_ptr += sizeof(CGI_PROG_SUFFIX) - 1;
+    }
+  }
+#endif
+  if (script_ptr[0] != '/') {
+    return;
+  }
+  if (!strncmp(script_ptr, "/api/v1/", 8)) {
+    script_ptr += 8;
+  } else {
+    return;
+  }
+
+  cJSON *jr = cJSON_CreateObject();
+  if (super_serve_fd < 0) {
+    super_serve_fd = super_clnt_open(config->super_serve_socket);
+    if (super_serve_fd < 0) {
+      client_json_reply(stdout, 500, 0, SSERV_ERR_CONNECT_FAILED, NULL, jr);
+      exit(0);
+    }
+  }
+
+  int param_num, i, r;
+  unsigned char **param_names, **params;
+  size_t *param_sizes;
+  param_num = cgi_get_param_num();
+  XALLOCAZ(param_names, param_num);
+  XALLOCAZ(param_sizes, param_num);
+  XALLOCAZ(params, param_num);
+  for (i = 0; i < param_num; i++) {
+    cgi_get_nth_param_bin(i, &param_names[i], &param_sizes[i], &params[i]);
+  }
+  r = super_clnt_http_request(super_serve_fd, 1, (unsigned char**) argv,
+                              (unsigned char **) environ,
+                              param_num, param_names,
+                              param_sizes, params, 1, NULL, NULL);
+  if (r < 0) {
+    client_json_reply(stdout, 500, 0, SSERV_ERR_OPERATION_FAILED, NULL, jr);
+  }
+  exit(0);
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -1294,6 +1398,8 @@ main(int argc, char *argv[])
   if (!check_source_ip()) {
     client_access_denied(config->charset, 0);
   }
+
+  process_api_mode(argv);
 
   authentificate(argv);
   read_state_params();
