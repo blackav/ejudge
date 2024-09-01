@@ -131,9 +131,10 @@ html .ui-datepicker .ui-datepicker-next .ui-icon {
 /* close button positioning on dialogs titlebar */
 html .ui-dialog .ui-dialog-titlebar-close {
   height: 1.8em;
-  margin: -0.9em 0 0 0;
+  margin: 0 0 0 0;
   right: 0.3em;
   width: 1.8em;
+  float: right;
 }
 /* resizable on dialog */
 html .ui-dialog .ui-resizable-se {

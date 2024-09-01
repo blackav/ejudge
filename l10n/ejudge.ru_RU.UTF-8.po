@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-08-06 02:06+0300\n"
+"POT-Creation-Date: 2024-09-01 16:22+0300\n"
 "PO-Revision-Date: 2024-03-17 14:09+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -531,6 +531,9 @@ msgstr "При создании архива программой tar произ
 
 msgid "Are you sure you want to finish your contest?"
 msgstr "Вы уверены, что хотите завершить турнир?"
+
+msgid "Are you sure you want to stop your virtual contest?"
+msgstr "Вы уверены, что хотите завершить виртуальный турнир?"
 
 msgid "Area"
 msgstr "Район"
@@ -1547,6 +1550,9 @@ msgstr "Завершить экзамен"
 
 msgid "Finish session"
 msgstr "Завершить сеанс работы"
+
+msgid "Finish the contest"
+msgstr "Завершить турнир"
 
 msgid "Finish the exam"
 msgstr "Завершить экзамен"

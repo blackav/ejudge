@@ -187,12 +187,17 @@ $(function() {
 </script>
 
 <div id="virtual-stop-confirm" title="<s:_>Stop virtual contest?</s:_>">
-<p><span class="ui-icon ui-icon-alert" style="float:left; margin:12px 12px 20px 0;"></span>Are you sure you want to stop your virtual contest?</p>
+<p><span class="ui-icon ui-icon-alert" style="float:left; margin:0px 10px 0px 0px; font-size: 20px;"></span><s:_>Are you sure you want to stop your virtual contest?</s:_></p>
 </div>
 
 <% if (global->is_virtual <= 0 && start_time > 0 && stop_time <= 0) { %>
 <div id="real-stop-confirm" title="<s:_>Finish contest?</s:_>">
-<p><span class="ui-icon ui-icon-alert" style="float:left; margin:12px 12px 20px 0;"></span><s:_>Are you sure you want to finish your contest?</s:_></p>
+<p><span class="ui-icon ui-icon-alert" style="float:left; margin:0px 10px 0px 0px; font-size: 20px;"></span><s:_>Are you sure you want to finish your contest?</s:_></p>
+</div>
+
+<div style="display: none;">
+<span id="FinishDialogOk"><s:_>Finish the contest</s:_></span>
+<span id="FinishDialogCancel"><s:_>Cancel</s:_></span>
 </div>
 
 <script>
@@ -205,15 +210,21 @@ $(function() {
     modal: true,
     open: function() {
     },
-    buttons: {
-      "Finish the contest": function() {
-        $(this).dialog("close");
-        $("#real-stop-form").submit();
+    buttons: [
+      {
+        text: $("#FinishDialogOk").text(),
+        click: function() {
+          $(this).dialog("close");
+          $("#real-stop-form").submit();
+        }
       },
-      Cancel: function() {
-        $(this).dialog("close");
+      {
+        text: $("#FinishDialogCancel").text(),
+        click: function() {
+          $(this).dialog("close");
+        }
       }
-    }
+    ]
   });
   $("#real-stop-button").on("click", function(event) {
     $("#real-stop-confirm").dialog("open");

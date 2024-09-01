@@ -464,7 +464,7 @@ function newLanguageEnableImport()
     if (!cs_lang) continue;
     if (!phr->ss->cs_lang_names[i]) continue;
     if (!*phr->ss->cs_lang_names[i]) continue;
-    const struct section_language_data *lang = 0;
+    struct section_language_data *lang = 0;
     if (phr->ss->cs_loc_map[i] > 0) lang = phr->ss->langs[phr->ss->cs_loc_map[i]];
     const unsigned char *td_attr = "";
     td_attr = "";
@@ -517,6 +517,21 @@ function newLanguageEnableImport()
     int compile_id = lang->compile_id;
     row = 1;
     snprintf(onclickstr_buf, sizeof(onclickstr_buf), "popupMainDialog(%d)", compile_id);
+
+    if (lang->disabled < 0) lang->disabled = 0;
+    if (lang->binary < 0) lang->binary = 0;
+    if (lang->insecure < 0) lang->insecure = 0;
+    if (lang->disable_security < 0) lang->disable_security = 0;
+    if (lang->enable_suid_run < 0) lang->enable_suid_run = 0;
+    if (lang->is_dos < 0) lang->is_dos = 0;
+    if (lang->disable_auto_testing < 0) lang->disable_auto_testing = 0;
+    if (lang->disable_testing < 0) lang->disable_testing = 0;
+    if (lang->enable_custom < 0) lang->enable_custom = 0;
+    if (lang->enable_ejudge_env < 0) lang->enable_ejudge_env = 0;
+    if (lang->preserve_line_numbers < 0) lang->preserve_line_numbers = 0;
+    if (lang->default_disabled < 0) lang->default_disabled = 0;
+    if (lang->enabled < 0) lang->enabled = 0;
+    if (lang->disable_auto_update < 0) lang->disable_auto_update = 0;
 %>
 
     <s:tr id="orig-lang_id-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" onclickExpr="onclickstr_buf">

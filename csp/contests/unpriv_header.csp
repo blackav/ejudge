@@ -2,6 +2,7 @@
 <html><head>
 <meta http-equiv="Content-type" content="text/html; charset=<s:config name="charset" />"/>
 <link rel="stylesheet" href="<s:config name="style-prefix" />jquery-ui.min.css">
+<link rel="stylesheet" type="text/css" media="screen" href='<s:config name="style-prefix" />jquery-ui.icon-font.css' />
 <script src="<s:config name="style-prefix" />jquery.min.js"></script>
 <script src="<s:config name="style-prefix" />jquery-ui.min.js"></script>
 <script type="text/javascript" src="<s:config name="style-prefix" />unpriv.js"></script>
