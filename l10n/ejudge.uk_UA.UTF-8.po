@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-08-06 02:06+0300\n"
+"POT-Creation-Date: 2024-09-01 16:22+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Ukrainian <uk@li.org>\n"
@@ -480,6 +480,9 @@ msgid "Archive creation with tar failed"
 msgstr ""
 
 msgid "Are you sure you want to finish your contest?"
+msgstr ""
+
+msgid "Are you sure you want to stop your virtual contest?"
 msgstr ""
 
 msgid "Area"
@@ -1491,6 +1494,9 @@ msgid "Finish exam"
 msgstr ""
 
 msgid "Finish session"
+msgstr ""
+
+msgid "Finish the contest"
 msgstr ""
 
 msgid "Finish the exam"
