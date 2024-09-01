@@ -5721,7 +5721,7 @@ cleanup:
 }
 
 void
-super_serve_json_result(
+super_html_json_result(
         FILE *fout,
         struct http_request_info *phr,
         int ok,
