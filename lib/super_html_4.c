@@ -41,10 +41,12 @@
 #include "ejudge/compat.h"
 #include "ejudge/errlog.h"
 #include "ejudge/external_action.h"
+#include "ejudge/cJSON.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
 
+#include <stdio.h>
 #include <string.h>
 #include <errno.h>
 #include <ctype.h>
@@ -911,3 +913,67 @@ void *super_html_forced_link[] =
 {
   html_date_select, sarray_unparse_2, contest_tmpl_new
 };
+
+void
+super_html_api_request(
+        char **p_out_t,
+        size_t *p_out_z,
+        struct http_request_info *phr)
+{
+  int ok = 0;
+  int err_num = SSERV_ERR_INV_PARAM;
+  const unsigned char *err_msg = NULL;
+  cJSON *jr = cJSON_CreateObject();
+  int http_status = 400;
+
+  phr->out_f = open_memstream(&phr->out_t, &phr->out_z);
+  /*
+  const unsigned char *script_name = hr_getenv(phr, "SCRIPT_NAME");
+  if (script_name) {
+    const unsigned char *script_ptr = script_name;
+    if (!strncmp(script_ptr, "/cgi-bin", 8)) {
+      script_ptr += 8;
+    }
+    if (!strncmp(script_ptr, "/serve-control", 14)) {
+      script_ptr += 14;
+    }
+#if defined CGI_PROG_SUFFIX
+    if (sizeof(CGI_PROG_SUFFIX) > 1) {
+      if (!strncmp(script_ptr, CGI_PROG_SUFFIX, sizeof(CGI_PROG_SUFFIX) - 1)) {
+        script_ptr += sizeof(CGI_PROG_SUFFIX) - 1;
+      }
+    }
+#endif
+    if (script_ptr[0] == '/') {
+      if (!strncmp(script_ptr, "/api/v1/", 8)) {
+        script_ptr += 8;
+      }
+      const unsigned char *q = script_ptr;
+      while (*q && *q != '/') {
+        ++q;
+      }
+      ptrdiff_t action_len = q - script_ptr;
+      unsigned char *action_str = alloca(action_len + 1);
+      memcpy(action_str, script_ptr, action_len);
+      action_str[action_len] = 0;
+      int action = trie_check_16(&super_actions_trie, action_str);
+      if (action >= SSERV_CMD_HTTP_REQUEST_FIRST) {
+        phr->action_str = action_str;
+        phr->action = action;
+        super_html_api_request(&out_t, &out_z, phr);
+        api_request_handled = 1;
+      }
+    }
+  }
+  */
+  http_status = 200;
+  (void) http_status;
+  goto done;
+
+done:;
+  super_html_json_result(phr->out_f, phr, ok, err_num, 0, err_msg, jr);
+  cJSON_Delete(jr);
+  fclose(phr->out_f); phr->out_f = NULL;
+  *p_out_t = phr->out_t; phr->out_t = NULL;
+  *p_out_z = phr->out_z; phr->out_z = 0;
+}
