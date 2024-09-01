@@ -5720,8 +5720,8 @@ cleanup:
   return 0;
 }
 
-static void __attribute__((unused))
-emit_json_result(
+void
+super_serve_json_result(
         FILE *fout,
         struct http_request_info *phr,
         int ok,
