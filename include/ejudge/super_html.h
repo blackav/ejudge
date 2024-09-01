@@ -215,6 +215,23 @@ super_html_http_request(
         size_t *p_out_z,
         struct http_request_info *hr);
 
+struct cJSON;
+void
+super_html_json_result(
+        FILE *fout,
+        struct http_request_info *phr,
+        int ok,
+        int err_num,
+        unsigned err_id,
+        const unsigned char *err_msg,
+        struct cJSON *jr);
+
+void
+super_html_api_request(
+        char **p_out_t,
+        size_t *p_out_z,
+        struct http_request_info *hr);
+
 struct contest_access;
 void
 super_html_unparse_access_2(FILE *out_f, const struct contest_access *acc);
