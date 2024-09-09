@@ -15,6 +15,9 @@
  */
 
 #include "ejudge/config.h"
+#include "ejudge/ej_types.h"
+#include "ejudge/http_request.h"
+#include "ejudge/opcaps.h"
 #include "ejudge/version.h"
 #include "ejudge/ej_limits.h"
 #include "ejudge/super_html.h"
@@ -42,6 +45,8 @@
 #include "ejudge/errlog.h"
 #include "ejudge/external_action.h"
 #include "ejudge/cJSON.h"
+#include "ejudge/base64.h"
+#include "ejudge/userlist_proto.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -914,6 +919,144 @@ void *super_html_forced_link[] =
   html_date_select, sarray_unparse_2, contest_tmpl_new
 };
 
+struct trie_data;
+extern const struct trie_data super_actions_trie;
+
+static void
+handle_bearer_auth(struct http_request_info *phr, const unsigned char *http_authorization)
+{
+  const unsigned char *p = http_authorization;
+  struct userlist_contest_info cnts_info = {};
+  struct userlist_api_key in_api_key = {};
+  struct userlist_api_key *out_keys = NULL;
+  int out_count = 0;
+  unsigned char *user_login = NULL;
+  unsigned char *user_name = NULL;
+
+  if ((p[0] != 'b' && p[0] != 'B')
+      || (p[1] != 'e' && p[1] != 'E')
+      || (p[2] != 'a' && p[2] != 'A')
+      || (p[3] != 'r' && p[3] != 'R')
+      || (p[4] != 'e' && p[4] != 'E')
+      || (p[5] != 'r' && p[5] != 'R')
+      || p[6] != ' ') goto cleanup;
+  p += 7;
+
+  // AQAA - token type 1
+  if (p[0] == 'A' && p[1] == 'Q' && p[2] == 'A' && p[3] == 'A') {
+    p += 4;
+    int token_len = strlen(p);
+    if (token_len != 43) goto cleanup;
+    char token[32];
+    static const char zero_token[32] = {};
+    int err_flag = 0;
+    base64u_decode(p, 43, token, &err_flag);
+    if (err_flag) goto cleanup;
+    if (!memcmp(token, zero_token, 32)) goto cleanup;
+
+    // bearer parsed ok
+    memcpy(phr->token, token, 32);
+    memcpy(in_api_key.token, phr->token, 32);
+    int r = userlist_clnt_api_key_request(phr->userlist_clnt, ULS_GET_API_KEY, 1, &in_api_key, &out_count, &out_keys, &cnts_info);
+    if (r < 0) {
+      err("%s: api key error: %d (%s)", __FUNCTION__, -r, userlist_strerror(-r));
+      goto cleanup;
+    }
+    if (r != 1) goto cleanup;
+
+    // check API key for correctness
+    if (out_keys[0].user_id <= 0) goto cleanup;
+    if (out_keys[0].contest_id != 0) goto cleanup;
+    if (out_keys[0].expiry_time > 0 && phr->current_time >= out_keys[0].expiry_time) goto cleanup;
+    if (out_keys[0].all_contests <= 0) goto cleanup;
+    if (out_keys[0].role != USER_ROLE_ADMIN) goto cleanup;
+
+    r = userlist_clnt_lookup_user_id(phr->userlist_clnt, out_keys[0].user_id, 0, &user_login, &user_name);
+    if (r < 0) {
+      err("%s: user lookup error: %d (%s)", __FUNCTION__, -r, userlist_strerror(-r));
+      goto cleanup;
+    }
+
+    opcap_t caps = 0;
+    if (ejudge_cfg_opcaps_find(phr->config, user_login, &caps) < 0) {
+      goto cleanup;
+    }
+    if (opcaps_check(caps, OPCAP_MASTER_LOGIN) < 0) goto cleanup;
+
+    phr->caps = caps;
+    phr->priv_level = PRIV_LEVEL_ADMIN;
+    phr->user_id = out_keys[0].user_id;
+    phr->role = out_keys[0].role;
+    phr->login = user_login; user_login = NULL;
+    phr->name = user_name; user_name = NULL;
+    goto cleanup;
+  }
+  if (p[0] == 'A' && p[1] == 'g' && p[2] == 'A' && p[3] == 'A') {
+    p += 4;
+    unsigned long long session_id = 0, client_key = 0;
+    int n;
+    if (sscanf(p, "%llx-%llx%n", &session_id, &client_key, &n) != 2 || p[n]) goto cleanup;
+    int user_id = 0;
+    int contest_id = 0;
+    int locale_id = 0;
+    int priv_level = 0;
+    int r = userlist_clnt_priv_cookie(phr->userlist_clnt,
+                                      &phr->ip,
+                                      phr->ssl_flag,
+                                      0 /* contest_id */,
+                                      session_id,
+                                      client_key,
+                                      -1 /* priv_level */,
+                                      &user_id,
+                                      &contest_id,
+                                      &locale_id,
+                                      &priv_level,
+                                      &user_login,
+                                      &user_name);
+    if (r < 0) goto cleanup;
+    if (user_id <= 0) goto cleanup;
+    if (priv_level != PRIV_LEVEL_ADMIN) goto cleanup;
+    if (!user_login || !user_login[0]) goto cleanup;
+
+    opcap_t caps = 0;
+    if (ejudge_cfg_opcaps_find(phr->config, user_login, &caps) < 0) {
+      goto cleanup;
+    }
+    if (opcaps_check(caps, OPCAP_MASTER_LOGIN) < 0) goto cleanup;
+
+    phr->caps = caps;
+    phr->role = USER_ROLE_ADMIN;
+    phr->priv_level = PRIV_LEVEL_ADMIN;
+    phr->locale_id = locale_id;
+    phr->user_id = user_id;
+    phr->login = user_login; user_login = NULL;
+    phr->name = user_name; user_name = NULL;
+    goto cleanup;
+  }
+
+cleanup:;
+  if (out_count > 0) {
+    for (int i = 0; i < out_count; ++i) {
+      free(out_keys[i].payload);
+      free(out_keys[i].origin);
+    }
+    free(out_keys);
+  }
+  free(cnts_info.login);
+  free(cnts_info.name);
+  free(user_login);
+  free(user_name);
+}
+
+int
+trie_check_16(
+        const struct trie_data *td,
+        const unsigned char *str);
+void
+super_serve_api_LOGIN_ACTION_JSON(
+        FILE *out_f,
+        struct http_request_info *phr);
+
 void
 super_html_api_request(
         char **p_out_t,
@@ -925,55 +1068,150 @@ super_html_api_request(
   const unsigned char *err_msg = NULL;
   cJSON *jr = cJSON_CreateObject();
   int http_status = 400;
+  const unsigned char *remote_addr = NULL;
+  __attribute__((unused)) int _;
 
+  phr->json_reply = 1;
   phr->out_f = open_memstream(&phr->out_t, &phr->out_z);
-  /*
+
+  if (hr_getenv(phr, "SSL_PROTOCOL") || hr_getenv(phr, "HTTPS")) {
+    phr->ssl_flag = 1;
+  }
+  if (!(remote_addr = hr_getenv(phr, "REMOTE_ADDR"))) {
+    goto emit_result;
+  }
+  if (!strcmp(remote_addr, "::1")) remote_addr = "127.0.0.1";
+  if (xml_parse_ipv6(NULL, 0, 0, 0, remote_addr, &phr->ip) < 0) {
+    goto emit_result;
+  }
+
+/*
+    if (!contests_check_master_ip(phr->contest_id, &phr->ip, phr->ssl_flag)) {
+      fprintf(phr->log_f, "%s://%s is not allowed for MASTER for contest %d", ns_ssl_flag_str[phr->ssl_flag],
+              xml_unparse_ipv6(&phr->ip), phr->contest_id);
+      return error_page(fout, phr, 1, NEW_SRV_ERR_PERMISSION_DENIED);
+    }
+
+*/
+
   const unsigned char *script_name = hr_getenv(phr, "SCRIPT_NAME");
-  if (script_name) {
-    const unsigned char *script_ptr = script_name;
-    if (!strncmp(script_ptr, "/cgi-bin", 8)) {
-      script_ptr += 8;
-    }
-    if (!strncmp(script_ptr, "/serve-control", 14)) {
-      script_ptr += 14;
-    }
+  if (!script_name) {
+    goto emit_result;
+  }
+  const unsigned char *script_ptr = script_name;
+  if (!strncmp(script_ptr, "/cgi-bin", 8)) {
+    script_ptr += 8;
+  }
+  if (!strncmp(script_ptr, "/serve-control", 14)) {
+    script_ptr += 14;
+  } else {
+    goto emit_result;
+  }
 #if defined CGI_PROG_SUFFIX
-    if (sizeof(CGI_PROG_SUFFIX) > 1) {
-      if (!strncmp(script_ptr, CGI_PROG_SUFFIX, sizeof(CGI_PROG_SUFFIX) - 1)) {
-        script_ptr += sizeof(CGI_PROG_SUFFIX) - 1;
-      }
-    }
-#endif
-    if (script_ptr[0] == '/') {
-      if (!strncmp(script_ptr, "/api/v1/", 8)) {
-        script_ptr += 8;
-      }
-      const unsigned char *q = script_ptr;
-      while (*q && *q != '/') {
-        ++q;
-      }
-      ptrdiff_t action_len = q - script_ptr;
-      unsigned char *action_str = alloca(action_len + 1);
-      memcpy(action_str, script_ptr, action_len);
-      action_str[action_len] = 0;
-      int action = trie_check_16(&super_actions_trie, action_str);
-      if (action >= SSERV_CMD_HTTP_REQUEST_FIRST) {
-        phr->action_str = action_str;
-        phr->action = action;
-        super_html_api_request(&out_t, &out_z, phr);
-        api_request_handled = 1;
-      }
+  if (sizeof(CGI_PROG_SUFFIX) > 1) {
+    if (!strncmp(script_ptr, CGI_PROG_SUFFIX, sizeof(CGI_PROG_SUFFIX) - 1)) {
+      script_ptr += sizeof(CGI_PROG_SUFFIX) - 1;
     }
   }
-  */
-  http_status = 200;
-  (void) http_status;
+#endif
+  if (!strncmp(script_ptr, "/api/v1/", 8)) {
+    script_ptr += 8;
+  } else {
+    goto emit_result;
+  }
+  const unsigned char *q = script_ptr;
+  while (*q && *q != '/') {
+    ++q;
+  }
+  ptrdiff_t action_len = q - script_ptr;
+  unsigned char *action_str = alloca(action_len + 1);
+  memcpy(action_str, script_ptr, action_len);
+  action_str[action_len] = 0;
+  int action = trie_check_16(&super_actions_trie, action_str);
+  if (action < SSERV_CMD_HTTP_REQUEST_FIRST) {
+    goto emit_result;
+  }
+  phr->action_str = action_str;
+  phr->action = action;
+
+  if (action == SSERV_CMD_LOGIN_ACTION_JSON) {
+    super_serve_api_LOGIN_ACTION_JSON(phr->out_f, phr);
+    goto done;
+  }
+
+  // check auth
+  const unsigned char *http_authorization = hr_getenv(phr, "HTTP_AUTHORIZATION");
+  if (http_authorization) {
+    handle_bearer_auth(phr, http_authorization);
+  }
+  if (phr->user_id <= 0) {
+    http_status = 401;
+    err_num = SSERV_ERR_PERMISSION_DENIED;
+    goto emit_result;
+  }
+
+  if (action < SSERV_CMD_HTTP_REQUEST_FIRST || action >= SSERV_CMD_LAST || !super_proto_cmd_names[action]) {
+    err_num = SSERV_ERR_INV_OPER;
+    goto emit_result;
+  }
+
+  typedef void (*api_handler_t)(FILE *, struct http_request_info *);
+  static api_handler_t api_handlers[SSERV_CMD_LAST];
+  if (api_handlers[phr->action] == (api_handler_t) 1) {
+    err_num = SSERV_ERR_NOT_IMPLEMENTED;
+    goto emit_result;
+  }
+  if (!api_handlers[phr->action]) {
+    if (self_dl_handle == (void *)1) {
+      err_num = SSERV_ERR_NOT_IMPLEMENTED;
+      goto emit_result;
+    }
+    self_dl_handle = dlopen(NULL, RTLD_NOW);
+    if (!self_dl_handle) {
+      self_dl_handle = (void*) 1;
+      err_num = SSERV_ERR_NOT_IMPLEMENTED;
+      goto emit_result;
+    }
+    unsigned char func_name[512];
+    _ = snprintf(func_name, sizeof(func_name), "super_serve_api_%s", super_proto_cmd_names[phr->action]);
+    void *void_func = dlsym(self_dl_handle, func_name);
+    if (!void_func) {
+      api_handlers[phr->action] = (api_handler_t) 1;
+      err_num = SSERV_ERR_NOT_IMPLEMENTED;
+      goto emit_result;
+    }
+    api_handlers[phr->action] = (api_handler_t) void_func;
+  }
+
+  api_handlers[phr->action](phr->log_f, phr);
+  goto done;
+
+emit_result:;
+  phr->status_code = http_status;
+  super_html_json_result(phr->out_f, phr, ok, err_num, 0, err_msg, jr);
   goto done;
 
 done:;
-  super_html_json_result(phr->out_f, phr, ok, err_num, 0, err_msg, jr);
-  cJSON_Delete(jr);
-  fclose(phr->out_f); phr->out_f = NULL;
-  *p_out_t = phr->out_t; phr->out_t = NULL;
-  *p_out_z = phr->out_z; phr->out_z = 0;
+  if (phr->out_f) {
+    fclose(phr->out_f); phr->out_f = NULL;
+  }
+  if (phr->status_code <= 0) phr->status_code = 200;
+  if (!phr->content_type[0]) {
+    strcpy(phr->content_type, "application/json; charset=UTF-8");
+  }
+  char *res_s = NULL;
+  size_t res_z = 0;
+  FILE *res_f = open_memstream(&res_s, &res_z);
+  fprintf(res_f, "Status: %d\n", phr->status_code);
+  fprintf(res_f, "Content-Type: %s\n", phr->content_type);
+  fprintf(res_f, "\n");
+  fwrite_unlocked(phr->out_t, 1, phr->out_z, res_f);
+  fclose(res_f); res_f = NULL;
+  free(phr->out_t); phr->out_t = NULL; phr->out_z = 0;
+  if (jr) {
+    cJSON_Delete(jr);
+  }
+
+  *p_out_t = res_s; res_s = NULL;
+  *p_out_z = res_z; res_z = 0;
 }

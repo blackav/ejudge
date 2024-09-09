@@ -1838,8 +1838,18 @@ cmd_http_request(
   phr->param_sizes = my_param_sizes;
   phr->params = params;
   phr->system_login = userlist_login;
-  phr->userlist_clnt = userlist_clnt;
   phr->config = config;
+
+  struct timeval ctv;
+  gettimeofday(&ctv, NULL);
+  phr->current_time = ctv.tv_sec;
+  phr->current_time_us = ctv.tv_sec * 1000000LL + ctv.tv_usec;
+
+  if (open_connection() < 0) {
+    send_reply(p, SSERV_ERR_USERLIST_DOWN);
+    goto cleanup;
+  }
+  phr->userlist_clnt = userlist_clnt;
 
   if (pkt->api_mode > 0) {
     super_html_api_request(&out_t, &out_z, phr);
@@ -1910,13 +1920,13 @@ cmd_http_request(
 
     phr->user_id = p->user_id;
     phr->priv_level = p->priv_level;
-    phr->login = p->login;
-    phr->name = p->name;
-    phr->html_login = p->html_login;
-    phr->html_name = p->html_name;
+    phr->login = p->login; p->login = NULL;
+    phr->name = p->name; p->name = NULL;
+    phr->html_login = p->html_login; p->html_login = NULL;
+    phr->html_name = p->html_name; p->html_name = NULL;
     phr->ip = p->ip;
     phr->ssl_flag = p->ssl;
-    phr->ss = sid_state_get(p->cookie, &p->ip, p->user_id, p->login, p->name);
+    phr->ss = sid_state_get(p->cookie, &p->ip, p->user_id, phr->login, phr->name);
   }
 
   super_html_http_request(&out_t, &out_z, phr);
@@ -1933,6 +1943,10 @@ cmd_http_request(
   send_reply(p, SSERV_RPL_OK);
 
 cleanup:;
+  xfree(phr->login);
+  xfree(phr->name);
+  xfree(phr->html_login);
+  xfree(phr->html_name);
   xfree(phr->redirect);
   xfree(phr);
 }

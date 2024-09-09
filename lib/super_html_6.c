@@ -5768,7 +5768,9 @@ super_html_json_result(
   if (phr->request_id > 0) {
     cJSON_AddNumberToObject(jr, "request_id", (double) phr->request_id);
   }
-  if (phr->action > 0 && phr->action < SSERV_CMD_LAST && super_proto_cmd_names[phr->action]) {
+  if (phr->action_str) {
+    cJSON_AddStringToObject(jr, "action", phr->action_str);
+  } else if (phr->action > 0 && phr->action < SSERV_CMD_LAST && super_proto_cmd_names[phr->action]) {
     cJSON_AddStringToObject(jr, "action", super_proto_cmd_names[phr->action]);
   }
   /*
@@ -5782,12 +5784,9 @@ super_html_json_result(
   free(jrstr);
 }
 
-int
-super_serve_op_LOGIN_ACTION_JSON(
-        FILE *log_f,
+void
+super_serve_api_LOGIN_ACTION_JSON(
         FILE *out_f,
         struct http_request_info *phr)
 {
-  // login, password
-  return 0;
 }
