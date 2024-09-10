@@ -18,6 +18,7 @@
 #include "ejudge/ej_types.h"
 #include "ejudge/ej_limits.h"
 #include "ejudge/ejudge_cfg.h"
+#include "ejudge/opcaps.h"
 #include "ejudge/userlist.h"
 #include "ejudge/pathutl.h"
 #include "ejudge/errlog.h"
@@ -3905,6 +3906,166 @@ cmd_priv_check_user(
   out->name_len = name_len;
   strcpy(login_ptr, u->login);
   strcpy(name_ptr, name);
+
+  enqueue_reply_to_client(p, out_size, out);
+  default_touch_login_time(out->user_id, 0, cur_time);
+  if (daemon_mode) {
+    info("%s -> OK, %d, %s", logbuf, out->user_id,
+         xml_unparse_full_cookie(cbuf, sizeof(cbuf), &out->cookie, &out->client_key));
+  } else {
+    info("%s -> %d, %s, %s, time = %llu us", logbuf,
+         out->user_id, login_ptr,
+         xml_unparse_full_cookie(cbuf, sizeof(cbuf), &out->cookie, &out->client_key),
+         tsc2);
+  }
+}
+
+static void
+cmd_priv_check_user_2(
+        struct client_state *p,
+        int pkt_len,
+        struct userlist_pk_do_login *data)
+{
+  unsigned char *login_ptr, *passwd_ptr;
+  struct passwd_internal pwdint;
+  const struct userlist_user *u = 0;
+  struct userlist_pk_login_ok *out = 0;
+  int login_len, priv_level = -1, capbit = 0;
+  size_t out_size = 0;
+  const struct userlist_cookie *cookie;
+  ej_tsc_t tsc1, tsc2;
+  unsigned char logbuf[1024];
+  unsigned char cbuf[64];
+  int user_id;
+
+  if (pkt_len < sizeof(*data)) {
+    CONN_BAD("packet length too small: %d", pkt_len);
+    return;
+  }
+  login_ptr = data->data;
+  if (strlen(login_ptr) != data->login_length) {
+    CONN_BAD("login length mismatch");
+    return;
+  }
+  passwd_ptr = login_ptr + data->login_length + 1;
+  if (strlen(passwd_ptr) != data->password_length) {
+    CONN_BAD("password length mismatch");
+    return;
+  }
+  if (pkt_len != sizeof(*data) + data->login_length + data->password_length) {
+    CONN_BAD("packet length mismatch");
+    return;
+  }
+
+  snprintf(logbuf, sizeof(logbuf),
+           "PRIV_CHECK_USER_2: %s, %d, %s, %d, %d",
+           xml_unparse_ipv6(&data->origin_ip), data->ssl, login_ptr,
+           data->locale_id, data->role);
+
+  if (p->user_id <= 0) {
+    err("%s -> not authentificated", logbuf);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+
+  if (data->role < USER_ROLE_JUDGE || data->role > USER_ROLE_ADMIN) {
+    err("%s -> invalid role %d", logbuf, data->role);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+
+  if (data->role == USER_ROLE_JUDGE)
+    priv_level = PRIV_LEVEL_JUDGE;
+  else if (data->role == USER_ROLE_ADMIN)
+    priv_level = PRIV_LEVEL_ADMIN;
+
+  if (is_db_capable(p, OPCAP_LIST_USERS, logbuf)) return;
+
+  if (passwd_convert_to_internal(passwd_ptr, &pwdint) < 0) {
+    err("%s -> invalid password", logbuf);
+    send_reply(p, -ULS_ERR_INVALID_PASSWORD);
+    return;
+  }
+
+  rdtscll(tsc1);
+  if ((user_id = default_get_user_by_login(login_ptr)) <= 0) {
+    err("%s -> WRONG LOGIN", logbuf);
+    send_reply(p, -ULS_ERR_INVALID_LOGIN);
+    return;
+  }
+  if (default_get_user_info_1(user_id, &u) < 0 || !u) {
+    err("%s -> database error", logbuf);
+    send_reply(p, -ULS_ERR_DB_ERROR);
+    return;
+  }
+  rdtscll(tsc2);
+  if (cpu_frequency > 0) {
+    tsc2 = (tsc2 - tsc1) * 1000000 / cpu_frequency;
+  } else {
+    tsc2 = tsc2 - tsc1;
+  }
+
+  if (!u) {
+    err("%s -> WRONG LOGIN", logbuf);
+    send_reply(p, -ULS_ERR_INVALID_LOGIN);
+    return;
+  }
+  if (!u->passwd) {
+    err("%s -> EMPTY PASSWORD", logbuf);
+    send_reply(p, -ULS_ERR_INVALID_PASSWORD);
+    return;
+  }
+  if (passwd_check(&pwdint, u->passwd, u->passwd_method) < 0) {
+    err("%s -> WRONG PASSWORD", logbuf);
+    send_reply(p, -ULS_ERR_INVALID_PASSWORD);
+    return;
+  }
+
+  capbit = OPCAP_JUDGE_LOGIN;
+  if (data->role == USER_ROLE_ADMIN) capbit = OPCAP_MASTER_LOGIN;
+  opcap_t caps = 0;
+  if (ejudge_cfg_opcaps_find(config, u->login, &caps) < 0) {
+    err("%s -> NO CAPABILITIES", logbuf);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+  if (opcaps_check(caps, capbit) < 0) {
+    err("%s -> INSUFFICIENT CAPABILITIES", logbuf);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+
+  login_len = strlen(u->login);
+  out_size = sizeof(*out) + login_len;
+  out = alloca(out_size);
+  memset(out, 0, out_size);
+  login_ptr = out->data;
+  if (data->locale_id == -1) {
+    data->locale_id = 0;
+  }
+
+  if (default_new_cookie_2(u->id, &data->origin_ip, data->ssl, 0, data->client_key, 0,
+                           0, data->locale_id,
+                           priv_level, data->role, 0, 0,
+                           0, /* is_ws */
+                           0, /* is_job */
+                           &cookie) < 0) {
+    err("%s -> cookie creation failed", logbuf);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+
+  out->cookie = cookie->cookie;
+  out->client_key = cookie->client_key;
+  out->reply_id = ULS_LOGIN_COOKIE;
+  out->user_id = u->id;
+  out->contest_id = 0;
+  out->locale_id = data->locale_id;
+  out->passwd_method = u->passwd_method;
+  out->priv_level = priv_level;
+  out->login_len = login_len;
+  out->name_len = 0;
+  strcpy(login_ptr, u->login);
 
   enqueue_reply_to_client(p, out_size, out);
   default_touch_login_time(out->user_id, 0, cur_time);
@@ -11466,6 +11627,7 @@ static void (*cmd_table[])() =
   [ULS_DELETE_API_KEY] =        cmd_delete_api_key,
   [ULS_PRIV_CREATE_COOKIE] =    cmd_priv_create_cookie,
   [ULS_COPY_ALL] =              cmd_copy_all,
+  [ULS_PRIV_CHECK_USER_2] =     cmd_priv_check_user_2,
 
   [ULS_LAST_CMD] = 0
 };
@@ -11578,6 +11740,7 @@ static int (*check_table[])() =
   [ULS_DELETE_API_KEY] =        check_pk_api_key_data,
   [ULS_PRIV_CREATE_COOKIE] =    NULL,
   [ULS_COPY_ALL] =              check_pk_edit_field,
+  [ULS_PRIV_CHECK_USER_2] =     0,
 
   [ULS_LAST_CMD] = 0
 };
