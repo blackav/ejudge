@@ -996,26 +996,27 @@ handle_bearer_auth(struct http_request_info *phr, const unsigned char *http_auth
     unsigned long long session_id = 0, client_key = 0;
     int n;
     if (sscanf(p, "%llx-%llx%n", &session_id, &client_key, &n) != 2 || p[n]) goto cleanup;
-    int user_id = 0;
-    int contest_id = 0;
-    int locale_id = 0;
-    int priv_level = 0;
-    int r = userlist_clnt_priv_cookie(phr->userlist_clnt,
-                                      &phr->ip,
-                                      phr->ssl_flag,
-                                      0 /* contest_id */,
-                                      session_id,
-                                      client_key,
-                                      -1 /* priv_level */,
-                                      &user_id,
-                                      &contest_id,
-                                      &locale_id,
-                                      &priv_level,
-                                      &user_login,
-                                      &user_name);
+    struct UserlistGetCookieResult result = {};
+    int r = userlist_clnt_get_cookie_2(phr->userlist_clnt, ULS_PRIV_GET_COOKIE, &phr->ip, phr->ssl_flag,
+                                       session_id, client_key, &result);
     if (r < 0) goto cleanup;
-    if (user_id <= 0) goto cleanup;
-    if (priv_level != PRIV_LEVEL_ADMIN) goto cleanup;
+
+    if (result.login) {
+      user_login = xstrdup(result.login);
+    }
+    if (result.name) {
+      user_name = xstrdup(result.name);
+    }
+    struct userlist_pk_login_ok ok_copy = *result.data;
+    free(result.data); result.data = NULL;
+    if (ok_copy.user_id <= 0) goto cleanup;
+    if (ok_copy.contest_id != 0) goto cleanup;
+    if (ok_copy.priv_level != PRIV_LEVEL_ADMIN) goto cleanup;
+    // ok_copy.role ?
+    if (ok_copy.team_login > 0) goto cleanup;
+    if (ok_copy.is_ws > 0) goto cleanup;
+    if (ok_copy.is_job > 0) goto cleanup;
+    if (phr->current_time >= ok_copy.expire) goto cleanup;
     if (!user_login || !user_login[0]) goto cleanup;
 
     opcap_t caps = 0;
@@ -1027,8 +1028,8 @@ handle_bearer_auth(struct http_request_info *phr, const unsigned char *http_auth
     phr->caps = caps;
     phr->role = USER_ROLE_ADMIN;
     phr->priv_level = PRIV_LEVEL_ADMIN;
-    phr->locale_id = locale_id;
-    phr->user_id = user_id;
+    phr->locale_id = ok_copy.locale_id;
+    phr->user_id = ok_copy.user_id;
     phr->login = user_login; user_login = NULL;
     phr->name = user_name; user_name = NULL;
     goto cleanup;
@@ -1135,7 +1136,13 @@ super_html_api_request(
   phr->action = action;
 
   if (action == SSERV_CMD_LOGIN_ACTION_JSON) {
+    phr->json_result = cJSON_CreateObject();
     super_serve_api_LOGIN_ACTION_JSON(phr->out_f, phr);
+    if (phr->err_num) {
+      super_html_json_result(phr->out_f, phr, 0, phr->err_num, 0, phr->err_msg, phr->json_result);
+    } else if (phr->json_result) {
+      super_html_json_result(phr->out_f, phr, 1, 0, 0, NULL, phr->json_result);
+    }
     goto done;
   }
 
@@ -1183,7 +1190,13 @@ super_html_api_request(
     api_handlers[phr->action] = (api_handler_t) void_func;
   }
 
+  phr->json_result = cJSON_CreateObject();
   api_handlers[phr->action](phr->log_f, phr);
+  if (phr->err_num) {
+    super_html_json_result(phr->out_f, phr, 0, phr->err_num, 0, phr->err_msg, phr->json_result);
+  } else if (phr->json_result) {
+    super_html_json_result(phr->out_f, phr, 1, 0, 0, NULL, phr->json_result);
+  }
   goto done;
 
 emit_result:;
@@ -1211,6 +1224,10 @@ done:;
   if (jr) {
     cJSON_Delete(jr);
   }
+  if (phr->json_result) {
+    cJSON_Delete(phr->json_result);
+  }
+  free(phr->err_msg);
 
   *p_out_t = res_s; res_s = NULL;
   *p_out_z = res_z; res_z = 0;
