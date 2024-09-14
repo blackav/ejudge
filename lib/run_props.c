@@ -168,9 +168,10 @@ run_properties_parse_json_file(
     FILE *jf = NULL;
     int c;
     int ret = -1;
+    __attribute__((unused)) int _;
 
     if (!(fin = fopen(path, "r"))) {
-        asprintf(&emsg, "%s: failed to open '%s': %s", __FUNCTION__, path, os_ErrorMsg());
+        _ = asprintf(&emsg, "%s: failed to open '%s': %s", __FUNCTION__, path, os_ErrorMsg());
         goto fail;
     }
     jf = open_memstream(&jt, &js);
