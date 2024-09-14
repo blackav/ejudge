@@ -704,6 +704,14 @@ serve_state_import_languages(
     return 0;
   }
 
+  // explicitly set 'enabled' for langs in language list
+  for (int lang_id = 1; lang_id <= cs->max_lang; ++lang_id) {
+    struct section_language_data *lang = cs->langs[lang_id];
+    if (lang && lang->disabled < 0 && lang->enabled < 0) {
+      lang->enabled = 1;
+    }
+  }
+
   const unsigned char *compile_spool_dir = "";
 #if !defined EJUDGE_COMPILE_SPOOL_DIR
   err("%s: --enable-compile-spool-dir must be enabled", __FUNCTION__);

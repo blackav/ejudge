@@ -269,6 +269,9 @@ super_html_read_serve(
         fprintf(flog, "Invalid language id = %d for language '%s'\n", lang->id, lang->short_name);
         return -1;
       }
+      if (lang->enabled < 0 && lang->disabled < 0) {
+        lang->enabled = 1;
+      }
       if (lang->compile_server_id && lang->compile_server_id[0]) {
         (void) compile_servers_get(sstate->cscs, lang->compile_server_id);
       }
@@ -1790,6 +1793,9 @@ super_html_serve_unparse_serve_cfg(
       struct section_language_data *lang = sstate->langs[i];
       if (!lang) continue;
 
+      if (lang->disabled <= 0 && lang->enabled > 0) {
+        lang->enabled = -1;
+      }
       if (lang->compile_id > 0 && lang->id == lang->compile_id) lang->compile_id = 0;
       if (sstate->serv_langs) {
         if (sstate->serv_langs[i]->id == i && !strcmp(sstate->serv_langs[i]->short_name, lang->short_name)) lang->id = 0;
