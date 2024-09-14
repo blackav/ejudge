@@ -15,6 +15,8 @@
  */
 
 #include "ejudge/config.h"
+#include "ejudge/ej_types.h"
+#include "ejudge/http_request.h"
 #include "ejudge/version.h"
 #include "ejudge/ej_limits.h"
 #include "ejudge/super_html.h"
@@ -50,6 +52,7 @@
 #include <printf.h>
 #include <limits.h>
 #include <errno.h>
+#include <stdio.h>
 #include <sys/types.h>
 #include <pwd.h>
 #include <unistd.h>
@@ -5789,4 +5792,80 @@ super_serve_api_LOGIN_ACTION_JSON(
         FILE *out_f,
         struct http_request_info *phr)
 {
+  const unsigned char *user_login = NULL;
+  const unsigned char *user_password = NULL;
+  unsigned char *user_name = NULL;
+  unsigned char buf[128];
+  __attribute__((unused)) int _;
+
+  if (hr_cgi_param(phr, "login", &user_login) <= 0
+      || hr_cgi_param(phr, "password", &user_password) <= 0
+      || !user_login || !user_password || !user_login[0] || !user_password[0]) {
+    phr->err_num = SSERV_ERR_PERM_DENIED;
+    phr->status_code = 401;
+    goto done;
+  }
+
+  int user_id = 0;
+  ej_cookie_t session_id = 0;
+  ej_cookie_t client_key = 0;
+  int priv_level = 0;
+  int r;
+
+  r = userlist_clnt_priv_login(phr->userlist_clnt, ULS_PRIV_CHECK_USER_2, &phr->ip, 0, phr->ssl_flag,
+                               0, 0, USER_ROLE_ADMIN,
+                               user_login, user_password,
+                               &user_id, &session_id, &client_key, &priv_level, &user_name);
+  if (r < 0) {
+    switch (-r) {
+    case ULS_ERR_INVALID_LOGIN:
+    case ULS_ERR_INVALID_PASSWORD:
+    case ULS_ERR_BAD_CONTEST_ID:
+    case ULS_ERR_IP_NOT_ALLOWED:
+    case ULS_ERR_NO_PERMS:
+    case ULS_ERR_NOT_REGISTERED:
+    case ULS_ERR_CANNOT_PARTICIPATE:
+    case ULS_ERR_NO_COOKIE:
+      phr->err_num = SSERV_ERR_PERM_DENIED;
+      phr->status_code = 401;
+      goto done;
+    default:
+      phr->err_num = SSERV_ERR_USERLIST_DOWN;
+      phr->status_code = 500;
+      goto done;
+    }
+  }
+  if (priv_level != PRIV_LEVEL_ADMIN || user_id <= 0) {
+    phr->err_num = SSERV_ERR_PERM_DENIED;
+    phr->status_code = 401;
+    goto done;
+  }
+  opcap_t caps = 0;
+  if (ejudge_cfg_opcaps_find(phr->config, user_login, &caps) < 0) {
+    phr->err_num = SSERV_ERR_PERM_DENIED;
+    phr->status_code = 401;
+    goto done;
+  }
+  if (opcaps_check(caps, OPCAP_MASTER_LOGIN) < 0) {
+    phr->err_num = SSERV_ERR_PERM_DENIED;
+    phr->status_code = 401;
+    goto done;
+  }
+
+  cJSON *jrr = cJSON_CreateObject();
+  cJSON_AddNumberToObject(jrr, "user_id", user_id);
+  cJSON_AddStringToObject(jrr, "user_login", user_login);
+  if (user_name && user_name[0]) {
+    cJSON_AddStringToObject(jrr, "user_name", user_name);
+  }
+  _ = snprintf(buf, sizeof(buf), "%016llx-%016llx", session_id, client_key);
+  cJSON_AddStringToObject(jrr, "session", buf);
+  _ = snprintf(buf, sizeof(buf), "%016llx", session_id);
+  cJSON_AddStringToObject(jrr, "SID", buf);
+  _ = snprintf(buf, sizeof(buf), "%016llx", client_key);
+  cJSON_AddStringToObject(jrr, "EJSID", buf);
+  cJSON_AddItemToObject(phr->json_result, "result", jrr);
+
+done:;
+  free(user_name);
 }
