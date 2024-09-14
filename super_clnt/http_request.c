@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2008-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -75,6 +75,7 @@ super_clnt_http_request(
         unsigned char *param_names[],
         size_t param_sizes_in[],
         unsigned char *params[],
+        int api_mode,
         unsigned char **reply_bytes,
         size_t *reply_size)
 {
@@ -145,6 +146,7 @@ super_clnt_http_request(
   out = (struct prot_super_pkt_http_request*) xcalloc(out_size, 1);
   out->b.magic = PROT_SUPER_PACKET_MAGIC;
   out->b.id = SSERV_CMD_HTTP_REQUEST;
+  out->api_mode = api_mode;
   out->arg_num = arg_num;
   out->env_num = env_num;
   out->param_num = param_num;

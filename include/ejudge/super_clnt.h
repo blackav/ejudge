@@ -1,10 +1,9 @@
 /* -*- c -*- */
-/* $Id$ */
 
 #ifndef __SUPER_CLNT_H__
 #define __SUPER_CLNT_H__
 
-/* Copyright (C) 2004-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -67,6 +66,7 @@ super_clnt_http_request(
         unsigned char *param_names[],
         size_t param_sizes_in[],
         unsigned char *params[],
+        int api_mode,
         unsigned char **reply_bytes,
         size_t *reply_size);
 

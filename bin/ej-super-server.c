@@ -16,6 +16,7 @@
 
 #include "ejudge/config.h"
 #include "ejudge/ej_types.h"
+#include "ejudge/http_request.h"
 #include "ejudge/version.h"
 #include "ejudge/ejudge_cfg.h"
 #include "ejudge/contests.h"
@@ -1657,6 +1658,14 @@ cmd_control_server(struct client_state *p, int len,
 static void
 cmd_http_request_continuation(struct http_request_info *phr);
 
+struct trie_data;
+extern const struct trie_data super_actions_trie;
+
+int
+trie_check_16(
+        const struct trie_data *td,
+        const unsigned char *str);
+
 static void
 cmd_http_request(
         struct client_state *p,
@@ -1829,8 +1838,67 @@ cmd_http_request(
   phr->param_sizes = my_param_sizes;
   phr->params = params;
   phr->system_login = userlist_login;
-  phr->userlist_clnt = userlist_clnt;
   phr->config = config;
+
+  struct timeval ctv;
+  gettimeofday(&ctv, NULL);
+  phr->current_time = ctv.tv_sec;
+  phr->current_time_us = ctv.tv_sec * 1000000LL + ctv.tv_usec;
+
+  if (open_connection() < 0) {
+    send_reply(p, SSERV_ERR_USERLIST_DOWN);
+    goto cleanup;
+  }
+  phr->userlist_clnt = userlist_clnt;
+
+  if (pkt->api_mode > 0) {
+    super_html_api_request(&out_t, &out_z, phr);
+    q = client_state_new_autoclose(p, out_t, out_z);
+    (void) q;
+    info("cmd_api_request: %zu, %d", out_z, phr->status_code);
+    send_reply(p, SSERV_RPL_OK);
+    goto cleanup;
+  }
+
+/*
+  const unsigned char *script_name = hr_getenv(phr, "SCRIPT_NAME");
+  if (script_name) {
+    const unsigned char *script_ptr = script_name;
+    if (!strncmp(script_ptr, "/cgi-bin", 8)) {
+      script_ptr += 8;
+    }
+    if (!strncmp(script_ptr, "/serve-control", 14)) {
+      script_ptr += 14;
+    }
+#if defined CGI_PROG_SUFFIX
+    if (sizeof(CGI_PROG_SUFFIX) > 1) {
+      if (!strncmp(script_ptr, CGI_PROG_SUFFIX, sizeof(CGI_PROG_SUFFIX) - 1)) {
+        script_ptr += sizeof(CGI_PROG_SUFFIX) - 1;
+      }
+    }
+#endif
+    if (script_ptr[0] == '/') {
+      if (!strncmp(script_ptr, "/api/v1/", 8)) {
+        script_ptr += 8;
+      }
+      const unsigned char *q = script_ptr;
+      while (*q && *q != '/') {
+        ++q;
+      }
+      ptrdiff_t action_len = q - script_ptr;
+      unsigned char *action_str = alloca(action_len + 1);
+      memcpy(action_str, script_ptr, action_len);
+      action_str[action_len] = 0;
+      int action = trie_check_16(&super_actions_trie, action_str);
+      if (action >= SSERV_CMD_HTTP_REQUEST_FIRST) {
+        phr->action_str = action_str;
+        phr->action = action;
+        super_html_api_request(&out_t, &out_z, phr);
+        api_request_handled = 1;
+      }
+    }
+  }
+*/
 
   const unsigned char *s = 0;
   if (hr_cgi_param(phr, "login_page", &s) > 0) {
@@ -1852,13 +1920,13 @@ cmd_http_request(
 
     phr->user_id = p->user_id;
     phr->priv_level = p->priv_level;
-    phr->login = p->login;
-    phr->name = p->name;
-    phr->html_login = p->html_login;
-    phr->html_name = p->html_name;
+    phr->login = p->login; p->login = NULL;
+    phr->name = p->name; p->name = NULL;
+    phr->html_login = p->html_login; p->html_login = NULL;
+    phr->html_name = p->html_name; p->html_name = NULL;
     phr->ip = p->ip;
     phr->ssl_flag = p->ssl;
-    phr->ss = sid_state_get(p->cookie, &p->ip, p->user_id, p->login, p->name);
+    phr->ss = sid_state_get(p->cookie, &p->ip, p->user_id, phr->login, phr->name);
   }
 
   super_html_http_request(&out_t, &out_z, phr);
@@ -1873,10 +1941,14 @@ cmd_http_request(
   (void) q;
   info("cmd_http_request: %zu", out_z);
   send_reply(p, SSERV_RPL_OK);
+
+cleanup:;
+  xfree(phr->login);
+  xfree(phr->name);
+  xfree(phr->html_login);
+  xfree(phr->html_name);
   xfree(phr->redirect);
   xfree(phr);
-
-  //cleanup:
 }
 
 static void

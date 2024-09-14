@@ -154,7 +154,12 @@ struct http_request_info
   const unsigned char *action_str;
   int status_code;
 
-  unsigned char data[0];
+  // for API actions producing JSON
+  struct cJSON *json_result;
+  unsigned char *err_msg;
+  int err_num;
+
+  __attribute__((aligned(16))) unsigned char data[0];
 };
 
 const unsigned char*
