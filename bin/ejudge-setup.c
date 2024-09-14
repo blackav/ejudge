@@ -2688,7 +2688,7 @@ generate_serve_cfg(FILE *f)
     }
     s = shellconfig_get(p->cfg, "long_name");
     if (!s) s = "";
-    fprintf(f, "long_name = \"%s ", s);
+    fprintf(f, "# long_name = \"%s ", s);
     s = shellconfig_get(p->cfg, "version");
     if (!s) s = "";
     fprintf(f, "%s\"\n", s);
