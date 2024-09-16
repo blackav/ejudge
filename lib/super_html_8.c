@@ -407,8 +407,8 @@ super_html_read_serve(
       ASSERT(compile_id > 0 && compile_id <= csc->max_lang);
       struct section_language_data *serv_lang = csc->langs[compile_id];
       ASSERT(serv_lang);
-      sstate->serv_langs[compile_id] = serv_lang;
-      sstate->serv_extra[compile_id].rev_lang_id = lang->id;
+      sstate->serv_langs[lang->id] = serv_lang;
+      sstate->serv_extra[lang->id].rev_lang_id = compile_id;
     }
 
     // inject languages from the primary compilation server
@@ -1501,7 +1501,7 @@ super_html_simplify_lang(
     return 1;
   }
 
-  lang->id = serv_lang->id;
+  //lang->id = serv_lang->id;
   _ = snprintf(lang->short_name, sizeof(lang->short_name), "%s", serv_lang->short_name);
   // always inherited
   //_ = snprintf(lang->src_sfx, sizeof(lang->src_sfx), "%s", serv_lang->src_sfx);
@@ -1510,6 +1510,9 @@ super_html_simplify_lang(
   lang->exe_sfx[0] = 0;
   if (lang->compile_id == lang->id) {
     lang->compile_id = 0;
+  }
+  if (lang->compile_id > 0) {
+    need_section = 1;
   }
 
   // evaluated later
