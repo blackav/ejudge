@@ -1,4 +1,19 @@
 <%
+  int enable_user_finish = 0;
+  if (global->is_virtual > 0) {
+    enable_user_finish = 1;
+  } else {
+    if (duration > 0) {
+      enable_user_finish = 1;
+      if (cnts->disable_user_finish > 0) {
+        enable_user_finish = 0;
+      }
+    } else {
+      if (cnts->enable_user_finish > 0) {
+        enable_user_finish = 1;
+      }
+    }
+  }
   if (!cnts->exam_mode) {
 %><div class="h2-long"><h2><s:_>Server status</s:_></h2></div>
 <p><b><%
@@ -267,7 +282,7 @@ $(function() {
 %><p><button class="ui-button ui-widget" id="virtual-stop-button"><s:_>Stop virtual contest</s:_></button></p><%
     }
 %></s:form><%
-  } else if (!cnts->exam_mode && global->is_virtual <= 0 && start_time > 0 && stop_time <= 0) {
+  } else if (!cnts->exam_mode && global->is_virtual <= 0 && start_time > 0 && stop_time <= 0 && enable_user_finish > 0) {
 %><s:form id="real-stop-form">
 <s:hidden name="action" ac="virtual-stop" /><%
     if (cnts->exam_mode) {

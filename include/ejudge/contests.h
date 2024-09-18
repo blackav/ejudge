@@ -196,6 +196,8 @@ enum
     CONTEST_A_DISABLE_STANDALONE_REG,
     CONTEST_A_ENABLE_TELEGRAM_REGISTRATION,
     CONTEST_A_ENABLE_SPECIAL_FLOW,
+    CONTEST_A_ENABLE_USER_FINISH,
+    CONTEST_A_DISABLE_USER_FINISH,
 
     CONTEST_LAST_ATTR
   };
@@ -349,6 +351,8 @@ struct contest_desc
   ejbytebool_t disable_standalone_reg;
   ejbytebool_t enable_telegram_registration;
   ejbytebool_t enable_special_flow;
+  ejbytebool_t enable_user_finish;
+  ejbytebool_t disable_user_finish;
 
   time_t         reg_deadline;
   time_t         sched_time;

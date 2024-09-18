@@ -46,6 +46,8 @@ static struct meta_info_item meta_info_contest_desc_data[] =
   [CNTS_disable_standalone_reg] = { CNTS_disable_standalone_reg, 'b', XSIZE(struct contest_desc, disable_standalone_reg), "disable_standalone_reg", XOFFSET(struct contest_desc, disable_standalone_reg) },
   [CNTS_enable_telegram_registration] = { CNTS_enable_telegram_registration, 'b', XSIZE(struct contest_desc, enable_telegram_registration), "enable_telegram_registration", XOFFSET(struct contest_desc, enable_telegram_registration) },
   [CNTS_enable_special_flow] = { CNTS_enable_special_flow, 'b', XSIZE(struct contest_desc, enable_special_flow), "enable_special_flow", XOFFSET(struct contest_desc, enable_special_flow) },
+  [CNTS_enable_user_finish] = { CNTS_enable_user_finish, 'b', XSIZE(struct contest_desc, enable_user_finish), "enable_user_finish", XOFFSET(struct contest_desc, enable_user_finish) },
+  [CNTS_disable_user_finish] = { CNTS_disable_user_finish, 'b', XSIZE(struct contest_desc, disable_user_finish), "disable_user_finish", XOFFSET(struct contest_desc, disable_user_finish) },
   [CNTS_reg_deadline] = { CNTS_reg_deadline, 't', XSIZE(struct contest_desc, reg_deadline), "reg_deadline", XOFFSET(struct contest_desc, reg_deadline) },
   [CNTS_sched_time] = { CNTS_sched_time, 't', XSIZE(struct contest_desc, sched_time), "sched_time", XOFFSET(struct contest_desc, sched_time) },
   [CNTS_open_time] = { CNTS_open_time, 't', XSIZE(struct contest_desc, open_time), "open_time", XOFFSET(struct contest_desc, open_time) },
@@ -212,6 +214,8 @@ void contest_desc_copy(struct contest_desc *dst, const struct contest_desc *src)
   dst->disable_standalone_reg = src->disable_standalone_reg;
   dst->enable_telegram_registration = src->enable_telegram_registration;
   dst->enable_special_flow = src->enable_special_flow;
+  dst->enable_user_finish = src->enable_user_finish;
+  dst->disable_user_finish = src->disable_user_finish;
   dst->reg_deadline = src->reg_deadline;
   dst->sched_time = src->sched_time;
   dst->open_time = src->open_time;

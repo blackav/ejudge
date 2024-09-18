@@ -184,6 +184,8 @@ const int contests_attr_to_meta_map[CONTEST_LAST_ATTR] =
   [CONTEST_A_DISABLE_STANDALONE_REG] = CNTS_disable_standalone_reg,
   [CONTEST_A_ENABLE_TELEGRAM_REGISTRATION] = CNTS_enable_telegram_registration,
   [CONTEST_A_ENABLE_SPECIAL_FLOW] = CNTS_enable_special_flow,
+  [CONTEST_A_ENABLE_USER_FINISH] = CNTS_enable_user_finish,
+  [CONTEST_A_DISABLE_USER_FINISH] = CNTS_disable_user_finish,
 };
 
 char const * const contests_elem_map[] =
@@ -345,6 +347,8 @@ char const * const contests_attr_map[] =
   "disable_standalone_reg",
   "enable_telegram_registration",
   "enable_special_flow",
+  "enable_user_finish",
+  "disable_user_finish",
 
   0
 };
@@ -889,6 +893,8 @@ static const unsigned char contest_bool_attr_set[CONTEST_LAST_ATTR] =
   [CONTEST_A_DISABLE_STANDALONE_REG] = 1,
   [CONTEST_A_ENABLE_TELEGRAM_REGISTRATION] = 1,
   [CONTEST_A_ENABLE_SPECIAL_FLOW] = 1,
+  [CONTEST_A_ENABLE_USER_FINISH] = 1,
+  [CONTEST_A_DISABLE_USER_FINISH] = 1,
 };
 
 static void
