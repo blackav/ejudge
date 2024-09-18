@@ -39,6 +39,8 @@ enum
   CNTS_disable_standalone_reg,
   CNTS_enable_telegram_registration,
   CNTS_enable_special_flow,
+  CNTS_enable_user_finish,
+  CNTS_disable_user_finish,
   CNTS_reg_deadline,
   CNTS_sched_time,
   CNTS_open_time,
