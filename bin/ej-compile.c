@@ -92,7 +92,9 @@ static unsigned char compile_server_queue_dir[PATH_MAX];
 static unsigned char compile_server_queue_dir_dir[PATH_MAX];
 static unsigned char compile_server_src_dir[PATH_MAX];
 static unsigned char heartbeat_dir[PATH_MAX];
+#if defined EJUDGE_COMPILE_SPOOL_DIR
 static unsigned char export_config_dir[PATH_MAX];
+#endif
 static unsigned char *agent_name;
 static struct AgentClient *agent;
 static unsigned char *instance_id;
@@ -1539,6 +1541,7 @@ copy_to_local_cache(
   return 0;
 }
 
+#if defined EJUDGE_COMPILE_SPOOL_DIR
 static int
 save_config(void)
 {
@@ -1589,6 +1592,7 @@ save_config(void)
 
   return 0;
 }
+#endif
 
 static int
 new_loop(int parallel_mode, const unsigned char *global_log_path)
