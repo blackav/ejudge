@@ -16,8 +16,6 @@
  * GNU General Public License for more details.
  */
 
-#include "ejudge/config.h"
-
 struct telegram_chat_state
 {
     long long _id;

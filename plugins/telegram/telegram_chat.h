@@ -16,8 +16,6 @@
  * GNU General Public License for more details.
  */
 
-#include "ejudge/config.h"
-
 /*
 id 	Integer 	Unique identifier for this chat. This number may be greater than 32 bits and some programming languages may have difficulty/silent defects in interpreting it. But it smaller than 52 bits, so a signed 64 bit integer or double-precision float type are safe for storing this identifier.
 type 	String 	Type of chat, can be either “private”, “group”, “supergroup” or “channel”

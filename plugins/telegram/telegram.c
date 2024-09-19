@@ -14,6 +14,7 @@
  * GNU General Public License for more details.
  */
 
+#include "ejudge/config.h"
 #include "ejudge/telegram.h"
 #include "ejudge/xml_utils.h"
 #include "ejudge/random.h"
@@ -351,6 +352,10 @@ prepare_func(
         conn = mongo_conn_create();
     } else {
         err("telegram: invalid storage '%s'", storage);
+        return -1;
+    }
+    if (!conn) {
+        err("telegram: storage '%s' is not supported", storage);
         return -1;
     }
     state->conn = conn;
@@ -1563,8 +1568,8 @@ handle_incoming_message(
         struct telegram_pbs *pbs,
         TeMessage *tem)
 {
-    struct telegram_user *mu = NULL; // mongo user
-    struct telegram_chat *mc = NULL; // mongo chat
+    struct telegram_user *mu = NULL; // mongo/mysql user. TODO use plugin-independent names
+    struct telegram_chat *mc = NULL; // mongo/mysql chat
     struct TeSendMessageResult *send_result = NULL;
     struct telegram_chat_state *tcs = NULL;
     struct telegram_token *token = NULL;

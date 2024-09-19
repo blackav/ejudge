@@ -56,7 +56,7 @@ EXTRALIBS=
 CCOMPFLAGS=-D_GNU_SOURCE -std=gnu11
 LDCOMPFLAGS=
 
-ifneq ($(MONGO_EXISTS)$(MONGOC_EXISTS)$(MYSQL_LIBS),)
+ifneq ($(MYSQL_LIBS),)
 include main.make
 else
 include empty.make
