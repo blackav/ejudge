@@ -10533,6 +10533,9 @@ priv_problem_status_json(
   if (prob->disable_vm_size_limit > 0) {
     cJSON_AddTrueToObject(jp, "disable_vm_size_limit");
   }
+  if (prob->enable_group_merge > 0) {
+    cJSON_AddTrueToObject(jp, "enable_group_merge");
+  }
 
   // whether statement is available
   if (variant > 0 && prob->xml.a[variant - 1]) {
