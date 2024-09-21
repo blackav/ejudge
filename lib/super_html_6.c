@@ -5154,6 +5154,9 @@ do_import_problem(
   if (cfg->disable_vm_size_limit > 0) {
     prob->disable_vm_size_limit = 1;
   }
+  if (cfg->enable_group_merge > 0) {
+    prob->enable_group_merge = 1;
+  }
   if (cfg->test_pat && cfg->test_pat[0]) {
     xstrdup3(&prob->test_pat, cfg->test_pat);
   }
