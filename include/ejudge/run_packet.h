@@ -2,7 +2,7 @@
 #ifndef __RUN_PACKET_H__
 #define __RUN_PACKET_H__
 
-/* Copyright (C) 2005-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -63,6 +63,8 @@ struct run_reply_packet
   /* UUID of the run */
   ej_uuid_t uuid;
   ej_uuid_t judge_uuid;
+  int group_count;
+  int group_scores[15];
 };
 
 int
