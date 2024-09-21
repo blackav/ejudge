@@ -196,6 +196,7 @@ enum
   META_SUPER_RUN_IN_PROBLEM_PACKET_copy_exe_to_tgzdir,
   META_SUPER_RUN_IN_PROBLEM_PACKET_checker_extra_files,
   META_SUPER_RUN_IN_PROBLEM_PACKET_disable_vm_size_limit,
+  META_SUPER_RUN_IN_PROBLEM_PACKET_enable_group_merge,
 
   META_SUPER_RUN_IN_PROBLEM_PACKET_LAST_FIELD,
 };

@@ -392,6 +392,7 @@ static struct meta_info_item meta_info_super_run_in_problem_packet_data[] =
   [META_SUPER_RUN_IN_PROBLEM_PACKET_copy_exe_to_tgzdir] = { META_SUPER_RUN_IN_PROBLEM_PACKET_copy_exe_to_tgzdir, 'B', XSIZE(struct super_run_in_problem_packet, copy_exe_to_tgzdir), "copy_exe_to_tgzdir", XOFFSET(struct super_run_in_problem_packet, copy_exe_to_tgzdir) },
   [META_SUPER_RUN_IN_PROBLEM_PACKET_checker_extra_files] = { META_SUPER_RUN_IN_PROBLEM_PACKET_checker_extra_files, 'x', XSIZE(struct super_run_in_problem_packet, checker_extra_files), "checker_extra_files", XOFFSET(struct super_run_in_problem_packet, checker_extra_files) },
   [META_SUPER_RUN_IN_PROBLEM_PACKET_disable_vm_size_limit] = { META_SUPER_RUN_IN_PROBLEM_PACKET_disable_vm_size_limit, 'B', XSIZE(struct super_run_in_problem_packet, disable_vm_size_limit), "disable_vm_size_limit", XOFFSET(struct super_run_in_problem_packet, disable_vm_size_limit) },
+  [META_SUPER_RUN_IN_PROBLEM_PACKET_enable_group_merge] = { META_SUPER_RUN_IN_PROBLEM_PACKET_enable_group_merge, 'B', XSIZE(struct super_run_in_problem_packet, enable_group_merge), "enable_group_merge", XOFFSET(struct super_run_in_problem_packet, enable_group_merge) },
 };
 
 int meta_super_run_in_problem_packet_get_type(int tag)
@@ -601,6 +602,7 @@ void meta_super_run_in_problem_packet_copy(struct super_run_in_problem_packet *d
   dst->copy_exe_to_tgzdir = src->copy_exe_to_tgzdir;
   dst->checker_extra_files = (typeof(dst->checker_extra_files)) sarray_copy((char**) src->checker_extra_files);
   dst->disable_vm_size_limit = src->disable_vm_size_limit;
+  dst->enable_group_merge = src->enable_group_merge;
   // hidden type_val
 }
 
