@@ -72,6 +72,7 @@ static bool user_score_flag;
 static bool interactive_flag;
 static bool rejudge_flag;
 static int locale_id = 0;
+static bool group_merge_flag;
 
 static int parse_status(const string &str)
 {
@@ -820,6 +821,7 @@ main(int argc, char *argv[])
     if (getenv("EJUDGE_MARKED")) marked_flag = true;
     if (getenv("EJUDGE_INTERACTIVE")) interactive_flag = true;
     if (getenv("EJUDGE_REJUDGE")) rejudge_flag = true;
+    if (getenv("EJUDGE_GROUP_MERGE")) group_merge_flag = true;
     {
         char *ls = getenv("EJUDGE_LOCALE");
         if (ls) {
@@ -982,7 +984,6 @@ main(int argc, char *argv[])
                 fprintf(fcmt, "Test group '%s': tests %d-%d: score %d\n",
                         g.get_group_id().c_str(), g.get_first(), g.get_last(), group_score);
             }
-
         }
         if (g.get_offline()) {
             score += group_score;
@@ -1006,6 +1007,18 @@ main(int argc, char *argv[])
         printf(" %d %d %d", user_status, user_score, user_tests_passed);
     }
     printf("\n");
+    if (group_merge_flag) {
+        const auto &groups = parser.get_groups();
+        printf("%zu", groups.size());
+        for (const auto &g : groups) {
+            auto score = g.calc_score();
+            if (g.get_offline()) {
+                score = -score;
+            }
+            printf(" %d", score);
+        }
+        printf("\n");
+    }
     fflush(stdout);
 }
 
