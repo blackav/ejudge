@@ -16,6 +16,7 @@
  * GNU General Public License for more details.
  */
 
+#include "ejudge/ej_limits.h"
 #include "ejudge/ej_types.h"
 
 #include <stdlib.h>
@@ -64,7 +65,7 @@ struct run_reply_packet
   ej_uuid_t uuid;
   ej_uuid_t judge_uuid;
   int group_count;
-  int group_scores[15];
+  int group_scores[EJ_MAX_TEST_GROUP];
 };
 
 int

@@ -107,10 +107,9 @@ run_reply_packet_read(
   */
 
   pout->group_count = cvt_bin_to_host_32(pin->group_count);
-  FAIL_IF(pout->group_count < 0 || pout->group_count > 15);
+  FAIL_IF(pout->group_count < 0 || pout->group_count > EJ_MAX_TEST_GROUP);
   for (int i = 0; i < pout->group_count; ++i) {
     pout->group_scores[i] = cvt_bin_to_host_32(pin->group_scores[i]);
-    FAIL_IF(pout->group_scores[i] < 0);
   }
 
   *p_out_data = pout;

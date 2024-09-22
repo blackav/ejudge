@@ -16,6 +16,7 @@
  * GNU General Public License for more details.
  */
 
+#include "ejudge/ej_limits.h"
 #include "ejudge/integral.h"
 
 /* various private data structures and constants for run packets */
@@ -77,7 +78,7 @@ struct run_reply_bin_packet
   ej_uuid_t uuid;
   ej_uuid_t judge_uuid;
   rint32_t  group_count;
-  rint32_t  group_scores[15];
+  rint32_t  group_scores[EJ_MAX_TEST_GROUP];
 };
 
 #endif /* __RUN_PACKET_PRIV_H__ */
