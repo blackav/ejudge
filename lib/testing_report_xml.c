@@ -1440,7 +1440,7 @@ testing_report_free(testing_report_xml_t r)
   xfree(r->cpu_mhz); r->cpu_mhz = 0;
   xfree(r->errors); r->errors = 0;
   xfree(r->compiler_output); r->compiler_output = 0;
-  xfree(r->group_scores);
+  xfree(r->group_scores); r->group_scores = NULL; r->group_count = 0; r->has_group_scores = 0;
 
   if (r->tt_rows) {
     for (i = 0; i < r->tt_row_count; ++i) {

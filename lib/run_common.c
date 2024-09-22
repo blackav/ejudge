@@ -301,7 +301,9 @@ generate_xml_report(
         const unsigned char *valuer_errors,
         const unsigned char *cpu_model,
         const unsigned char *cpu_mhz,
-        const unsigned char *hostname)
+        const unsigned char *hostname,
+        int group_count,
+        int *group_scores)
 {
   int i;
   unsigned char *msg = 0;
@@ -519,6 +521,16 @@ generate_xml_report(
   }
   tr->verdict_bits = verdict_bits;
   reply_pkt->verdict_bits = verdict_bits;
+  if (srp->problem->enable_group_merge > 0) {
+    if (group_count >= 0 && group_count <= EJ_MAX_TEST_GROUP) {
+      tr->has_group_scores = 1;
+      tr->group_count = group_count;
+      if (group_count > 0) {
+        XCALLOC(tr->group_scores, group_count);
+        memcpy(tr->group_scores, group_scores, group_count * sizeof(group_scores[0]));
+      }
+    }
+  }
 
   if (srgp->bson_available && testing_report_bson_available()) {
     if (testing_report_to_file_bson(report_path, tr) < 0) {
@@ -947,6 +959,32 @@ parse_valuer_score(
       goto invalid_reply;
     }
   }
+  if (enable_groups > 0) {
+    int v_group_count = -1;
+    if (sscanf(buf + idx, "%d%n", &v_group_count, &n) != 1) {
+      lineno = __LINE__;
+      goto invalid_reply;
+    }
+    idx += n;
+    if (v_group_count < 0 || v_group_count > EJ_MAX_TEST_GROUP) {
+      lineno = __LINE__;
+      goto invalid_reply;
+    }
+    if (p_group_count) {
+      *p_group_count = v_group_count;
+    }
+    for (int i = 0; i < v_group_count; ++i) {
+      int x = 0;
+      if (sscanf(buf + idx, "%d%n", &x, &n) != 1) {
+        lineno = __LINE__;
+        goto invalid_reply;
+      }
+      idx += n;
+      if (p_group_scores) {
+        p_group_scores[i] = x;
+      }
+    }
+  }
   if (buf[idx]) {
     lineno = __LINE__;
     goto invalid_reply;
@@ -1196,6 +1234,9 @@ setup_ejudge_environment(
       snprintf(buf, sizeof(buf), "%d", srpp->test_count);
       task_SetEnv(tsk, "EJUDGE_TEST_COUNT", buf);
     }
+  }
+  if (srpp->enable_group_merge > 0) {
+    task_SetEnv(tsk, "EJUDGE_GROUP_MERGE", "1");
   }
   if (src_path) {
     task_SetEnv(tsk, "EJUDGE_SOURCE_PATH", src_path);
@@ -5411,7 +5452,7 @@ run_tests(
   unsigned char b_test_dir[PATH_MAX];
 
   int valuer_group_count = 0;
-  int valuer_group_scores[16];
+  int valuer_group_scores[EJ_MAX_TEST_GROUP + 1] = {};
 
   valuer_cmd[0] = 0;
   valuer_cmt_file[0] = 0;
@@ -6064,6 +6105,14 @@ done:;
   reply_pkt->user_status = user_status;
   reply_pkt->user_score = user_score;
   reply_pkt->user_tests_passed = user_tests_passed;
+  if (srpp->enable_group_merge > 0) {
+    if (valuer_group_count >= 0 && valuer_group_count <= EJ_MAX_TEST_GROUP) {
+      reply_pkt->group_count = valuer_group_count;
+      if (valuer_group_count > 0) {
+        memcpy(reply_pkt->group_scores, valuer_group_scores, valuer_group_count * sizeof(reply_pkt->group_scores[0]));
+      }
+    }
+  }
 
   generate_xml_report(srp, reply_pkt, report_path,
                       tests.size, tests.data, utf8_mode,
@@ -6077,7 +6126,8 @@ done:;
                       user_run_tests,
                       additional_comment, valuer_comment,
                       valuer_judge_comment, valuer_errors,
-                      cpu_model, cpu_mhz, hostname);
+                      cpu_model, cpu_mhz, hostname,
+                      valuer_group_count, valuer_group_scores);
 
   get_current_time(&reply_pkt->ts7, &reply_pkt->ts7_us);
 
