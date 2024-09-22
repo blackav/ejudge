@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2019-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2019-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -14,6 +14,7 @@
  * GNU General Public License for more details.
  */
 
+#include "bson/bson.h"
 #include "ejudge/config.h"
 
 #include "ejudge/runlog.h"
@@ -440,9 +441,11 @@ parse_testing_report_bson(bson_iter_t *bi, testing_report_xml_t r)
     bson_iter_t tests_iter;
     bson_iter_t ttrows_iter;
     bson_iter_t ttcells_iter;
+    bson_iter_t groups_iter;
     int has_tests = 0;
     int has_ttrows = 0;
     int has_ttcells = 0;
+    int has_group_scores = 0;
 
     r->run_id = -1;
     r->judge_id = -1;
@@ -664,6 +667,11 @@ parse_testing_report_bson(bson_iter_t *bi, testing_report_xml_t r)
             if (ej_bson_parse_int_new(bi, key, &r->verdict_bits, 1, 0, 0, 0) < 0)
                 return -1;
             break;
+        case Tag_group_scores:
+            if (bson_iter_type(bi) == BSON_TYPE_ARRAY && bson_iter_recurse(bi, &groups_iter)) {
+                has_group_scores = 1;
+            }
+            break;
         }
     }
 
@@ -722,6 +730,45 @@ parse_testing_report_bson(bson_iter_t *bi, testing_report_xml_t r)
         if (has_tests) {
             if (parse_array(&tests_iter, r, parse_test) < 0)
                 return -1;
+        }
+    }
+    if (has_group_scores) {
+        r->has_group_scores = 1;
+        int *vi = NULL;
+        int va = 0;
+        int vu = 0;
+        int index = -1;
+        while (bson_iter_next(&groups_iter)) {
+            const char *key = bson_iter_key(&groups_iter);
+            ++index;
+            errno = 0;
+            char *eptr = NULL;
+            long val = strtol(key, &eptr, 10);
+            if (errno || *eptr || eptr == key || val != index) {
+                free(vi);
+                return -1;
+            }
+            if (bson_iter_type(&groups_iter) != BSON_TYPE_INT32) {
+                free(vi);
+                return -1;
+            }
+            if (!va) {
+                va = 16;
+                XCALLOC(vi, va);
+            } else {
+                XREALLOC(vi, va *= 2);
+            }
+            int x = bson_iter_int32(&groups_iter);
+            if (x < 0) {
+                free(vi);
+                return -1;
+            }
+            vi[vu++] = x;
+        }
+        r->group_count = vu;
+        r->group_scores = vi;
+        if (r->group_count > 15) {
+            return -1;
         }
     }
 
@@ -1152,6 +1199,15 @@ do_unparse(
             }
         }
         bson_append_array_end(b, &b_ttcells);
+    }
+
+    if (r->has_group_scores) {
+        bson_array_builder_t *b_scores = NULL;
+        bson_append_array_builder_begin(b, tag_table[Tag_group_scores], -1, &b_scores);
+        for (int i = 0; i < r->group_count; ++i) {
+            bson_array_builder_append_int32(b_scores, r->group_scores[i]);
+        }
+        bson_append_array_builder_end(b, b_scores); b_scores = NULL;
     }
     return 0;
 }

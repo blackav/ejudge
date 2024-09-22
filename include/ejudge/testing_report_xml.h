@@ -2,7 +2,7 @@
 #ifndef __TESTING_REPORT_XML_H__
 #define __TESTING_REPORT_XML_H__
 
-/* Copyright (C) 2005-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -167,6 +167,10 @@ typedef struct testing_report_xml
 
   ej_uuid_t uuid;
   ej_uuid_t judge_uuid;
+
+  int has_group_scores;
+  int group_count;
+  int *group_scores;
 
   struct testing_report_test **tests;
 

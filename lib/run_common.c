@@ -826,12 +826,15 @@ parse_valuer_score(
         int max_score,
         int valuer_sets_marked,
         int separate_user_score,
+        int enable_groups,
         int *p_reply_next_num,
         int *p_score,
         int *p_marked,
         int *p_user_status,
         int *p_user_score,
-        int *p_user_tests_passed)
+        int *p_user_tests_passed,
+        int *p_group_count,
+        int *p_group_scores)
 {
   if (p_marked) *p_marked = -1;
 
@@ -973,11 +976,14 @@ read_valuer_score(
         int max_score,
         int valuer_sets_marked,
         int separate_user_score,
+        int enable_groups,
         int *p_score,
         int *p_marked,
         int *p_user_status,
         int *p_user_score,
-        int *p_user_tests_passed)
+        int *p_user_tests_passed,
+        int *p_group_count,
+        int *p_group_scores)
 {
   char *score_buf = 0;
   size_t score_buf_size = 0;
@@ -994,8 +1000,10 @@ read_valuer_score(
 
   r = parse_valuer_score(log_path, score_buf, score_buf_size,
                          0, max_score, valuer_sets_marked, separate_user_score,
+                         enable_groups,
                          NULL, p_score, p_marked,
-                         p_user_status, p_user_score, p_user_tests_passed);
+                         p_user_status, p_user_score, p_user_tests_passed,
+                         p_group_count, p_group_scores);
 
   xfree(score_buf);
   return r;
@@ -1246,6 +1254,8 @@ invoke_valuer(
         int *p_user_status,
         int *p_user_score,
         int *p_user_tests_passed,
+        int *p_group_count,
+        int *p_group_scores,
         char **p_err_txt,
         char **p_cmt_txt,
         char **p_jcmt_txt,
@@ -1364,7 +1374,9 @@ invoke_valuer(
 
   if (read_valuer_score(score_res, score_err, "valuer", max_score,
                         srpp->valuer_sets_marked, srgp->separate_user_score,
-                        p_score, p_marked, p_user_status, p_user_score, p_user_tests_passed) < 0) {
+                        srpp->enable_group_merge > 0,
+                        p_score, p_marked, p_user_status, p_user_score, p_user_tests_passed,
+                        p_group_count, p_group_scores) < 0) {
     goto cleanup;
   }
   read_log_file(score_cmt, p_cmt_txt);
@@ -5398,6 +5410,9 @@ run_tests(
   const unsigned char *tgz_dir = srpp->tgz_dir;
   unsigned char b_test_dir[PATH_MAX];
 
+  int valuer_group_count = 0;
+  int valuer_group_scores[16];
+
   valuer_cmd[0] = 0;
   valuer_cmt_file[0] = 0;
   valuer_jcmt_file[0] = 0;
@@ -5738,12 +5753,15 @@ run_tests(
       if (parse_valuer_score(messages_path, buf, buflen, 1, srpp->full_score,
                              srpp->valuer_sets_marked,
                              srgp->separate_user_score,
+                             srpp->enable_group_merge > 0,
                              &reply_next_num,
                              &valuer_score,
                              &valuer_marked,
                              &valuer_user_status,
                              &valuer_user_score,
-                             &valuer_user_tests_passed) < 0) {
+                             &valuer_user_tests_passed,
+                             &valuer_group_count,
+                             valuer_group_scores) < 0) {
         append_msg_to_log(messages_path, "interactive valuer protocol error");
         goto check_failed;
       }
@@ -5792,12 +5810,15 @@ run_tests(
     if (parse_valuer_score(messages_path, buf, buflen, 0, srpp->full_score,
                            srpp->valuer_sets_marked,
                            srgp->separate_user_score,
+                           srpp->enable_group_merge > 0,
                            NULL,
                            &valuer_score,
                            &valuer_marked,
                            &valuer_user_status,
                            &valuer_user_score,
-                           &valuer_user_tests_passed) < 0) {
+                           &valuer_user_tests_passed,
+                           &valuer_group_count,
+                           valuer_group_scores) < 0) {
       append_msg_to_log(messages_path, "interactive valuer protocol error");
       goto check_failed;
     }
@@ -5951,6 +5972,7 @@ run_tests(
                         state->exec_user_serial,
                         &total_score, &marked_flag,
                         &user_status, &user_score, &user_tests_passed,
+                        &valuer_group_count, valuer_group_scores,
                         &valuer_errors, &valuer_comment,
                         &valuer_judge_comment, src_path) < 0) {
         goto check_failed;
