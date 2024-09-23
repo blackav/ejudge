@@ -26,8 +26,6 @@
 #include <mongoc.h>
 #elif HAVE_LIBMONGOC - 0 > 0
 #include <mongoc.h>
-#elif HAVE_LIBMONGO_CLIENT - 0 == 1
-#include <mongo.h>
 #endif
 
 #include <string.h>
@@ -284,20 +282,6 @@ prepare_func(
             return -1;
         }
     }
-#elif HAVE_LIBMONGO_CLIENT - 0 == 1
-    state->conn = mongo_sync_connect(state->host, state->port, 0);
-    if (!state->conn) {
-        err("cannot connect to mongodb: %s", os_ErrorMsg());
-        return -1;
-    }
-    mongo_sync_conn_set_safe_mode(state->conn, 1);
-    mongo_sync_conn_set_auto_reconnect(state->conn, 1);
-    if (state->user && state->password) {
-        if (!mongo_sync_cmd_authenticate(state->conn, state->database, state->user, state->password)) {
-            err("authentification failed: %s", os_ErrorMsg());
-            return -1;
-        }
-    }
 #endif
 
     return 0;
@@ -359,50 +343,6 @@ cleanup:
     if (coll) mongoc_collection_destroy(coll);
     free(full_table_name);
     return retval;
-#elif HAVE_LIBMONGO_CLIENT - 0 == 1
-    mongo_packet *pkt = NULL;
-    mongo_sync_cursor *cursor = NULL;
-    unsigned char ns[1024];
-    bson **res = NULL;
-    int a = 0, u = 0;
-    bson *result = NULL;
-
-    if (state->show_queries > 0) {
-        fprintf(stderr, "query: "); ej_bson_unparse(stderr, query, 0); fprintf(stderr, "\n");
-    }
-
-    snprintf(ns, sizeof(ns), "%s.%s%s", state->database, state->table_prefix, table);
-    if (!(pkt = mongo_sync_cmd_query(state->conn, ns, 0, skip, count, query, sel))) {
-        if (errno == ENOENT) {
-            // empty result set
-            *p_res = NULL;
-            return 0;
-        }
-        err("common_mongo::query: failed: %s", os_ErrorMsg());
-        return -1;
-    }
-
-    if (!(cursor = mongo_sync_cursor_new(state->conn, ns, pkt))) {
-        err("common_mongo::query: cannot create cursor: %s", os_ErrorMsg());
-        mongo_wire_packet_free(pkt);
-        return -1;
-    }
-    pkt = NULL;
-    while (mongo_sync_cursor_next(cursor)) {
-        result = mongo_sync_cursor_get_data(cursor);
-        if (state->show_queries > 0) {
-            fprintf(stderr, "result: "); ej_bson_unparse(stderr, result, 0); fprintf(stderr, "\n");
-        }
-        if (u == a) {
-            if (!(a *= 2)) a = 8;
-            XREALLOC(res, a);
-        }
-        res[u++] = result;
-        result = NULL;
-    }
-    mongo_sync_cursor_free(cursor);
-    *p_res = res;
-    return u;
 #else
     return 0;
 #endif
@@ -443,18 +383,6 @@ insert_func(
 
     mongoc_collection_destroy(coll);
     free(full_table_name);
-    return 0;
-#elif HAVE_LIBMONGO_CLIENT - 0 == 1
-    unsigned char ns[1024];
-
-    if (state->show_queries > 0) {
-        fprintf(stderr, "insert: "); ej_bson_unparse(stderr, b, 0); fprintf(stderr, "\n");
-    }
-    snprintf(ns, sizeof(ns), "%s.%s%s", state->database, state->table_prefix, table);
-    if (!mongo_sync_cmd_insert(state->conn, ns, b, NULL)) {
-        err("common_mongo::insert: failed: %s", os_ErrorMsg());
-        return -1;
-    }
     return 0;
 #else
     return 0;
@@ -502,15 +430,6 @@ insert_and_free_func(
     bson_destroy(bb);
     *b = NULL;
     return 0;
-#elif HAVE_LIBMONGO_CLIENT - 0 == 1
-    bson *p = NULL;
-    if (b) p = *b;
-    int res = insert_func(state, table, p);
-    if (p) {
-        bson_free(p);
-        *b = NULL;
-    }
-    return res;
 #else
     return 0;
 #endif
@@ -553,19 +472,6 @@ update_func(
 
     mongoc_collection_destroy(coll);
         free(full_table_name);
-    return 0;
-#elif HAVE_LIBMONGO_CLIENT - 0 == 1
-    unsigned char ns[1024];
-
-    if (state->show_queries > 0) {
-        fprintf(stderr, "update selector: "); ej_bson_unparse(stderr, selector, 0); fprintf(stderr, "\n");
-        fprintf(stderr, "update update: "); ej_bson_unparse(stderr, update, 0); fprintf(stderr, "\n");
-    }
-    snprintf(ns, sizeof(ns), "%s.%s%s", state->database, state->table_prefix, table);
-    if (!mongo_sync_cmd_update(state->conn, ns, 0, selector, update)) {
-        err("common_mongo::update: failed: %s", os_ErrorMsg());
-        return -1;
-    }
     return 0;
 #else
     return 0;
@@ -621,21 +527,6 @@ cleanup:
     if (*pupdate) *pupdate = NULL;
     free(full_table_name);
     return retval;
-#elif HAVE_LIBMONGO_CLIENT - 0 == 1
-    bson *selector = NULL;
-    bson *update = NULL;
-    if (pselector) selector = *pselector;
-    if (pupdate) update = *pupdate;
-    int res = update_func(state, table, selector, update);
-    if (selector) {
-        bson_free(selector);
-        *pselector = NULL;
-    }
-    if (update) {
-        bson_free(update);
-        *pupdate = NULL;
-    }
-    return res;
 #else
     return 0;
 #endif
@@ -668,20 +559,8 @@ index_create_func(
     bson_destroy(index_bson);
     bson_free(index_name);
     free(full_table_name);
-
-    return 0;
-#elif HAVE_LIBMONGO_CLIENT - 0 == 1
-    unsigned char ns[1024];
-
-    snprintf(ns, sizeof(ns), "%s.%s%s", state->database, state->table_prefix, table);
-    if (!mongo_sync_cmd_index_create(state->conn, ns, b, 0)) {
-        err("common_mongo::index_create: failed: %s", os_ErrorMsg());
-        return -1;
-    }
-    return 0;
-#else
-    return 0;
 #endif
+    return 0;
 }
 
 static int
@@ -719,18 +598,6 @@ remove_func(
 
     mongoc_collection_destroy(coll);
     free(full_table_name);
-    return 0;
-#elif HAVE_LIBMONGO_CLIENT - 0 == 1
-    unsigned char ns[1024];
-
-    if (state->show_queries > 0) {
-        fprintf(stderr, "delete selector: "); ej_bson_unparse(stderr, selector, 0); fprintf(stderr, "\n");
-    }
-    snprintf(ns, sizeof(ns), "%s.%s%s", state->database, state->table_prefix, table);
-    if (!mongo_sync_cmd_delete(state->conn, ns, 0, selector)) {
-        err("common_mongo::delete: failed: %s", os_ErrorMsg());
-        return -1;
-    }
     return 0;
 #else
     return 0;
@@ -774,19 +641,6 @@ upsert_func(
 
     mongoc_collection_destroy(coll);
     free(full_table_name);
-    return 0;
-#elif HAVE_LIBMONGO_CLIENT - 0 == 1
-    unsigned char ns[1024];
-
-    if (state->show_queries > 0) {
-        fprintf(stderr, "update selector: "); ej_bson_unparse(stderr, selector, 0); fprintf(stderr, "\n");
-        fprintf(stderr, "update update: "); ej_bson_unparse(stderr, update, 0); fprintf(stderr, "\n");
-    }
-    snprintf(ns, sizeof(ns), "%s.%s%s", state->database, state->table_prefix, table);
-    if (!mongo_sync_cmd_update(state->conn, ns, MONGO_WIRE_FLAG_UPDATE_UPSERT, selector, update)) {
-        err("common_mongo::update: failed: %s", os_ErrorMsg());
-        return -1;
-    }
     return 0;
 #else
     return 0;
@@ -842,21 +696,6 @@ cleanup:
     if (*pupdate) *pupdate = NULL;
     free(full_table_name);
     return retval;
-#elif HAVE_LIBMONGO_CLIENT - 0 == 1
-    bson *selector = NULL;
-    bson *update = NULL;
-    if (pselector) selector = *pselector;
-    if (pupdate) update = *pupdate;
-    int res = upsert_func(state, table, selector, update);
-    if (selector) {
-        bson_free(selector);
-        *pselector = NULL;
-    }
-    if (update) {
-        bson_free(update);
-        *pupdate = NULL;
-    }
-    return res;
 #else
     return 0;
 #endif

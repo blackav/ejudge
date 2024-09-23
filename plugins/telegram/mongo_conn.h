@@ -25,8 +25,6 @@
 #include <mongoc/mongoc.h>
 #elif HAVE_LIBMONGOC - 0 > 0
 #include <mongoc.h>
-#elif HAVE_LIBMONGO_CLIENT - 0 == 1
-struct _mongo_sync_connection;
 #endif
 
 // mongo connectivity
@@ -35,8 +33,6 @@ struct mongo_conn
     struct generic_conn b;
 #if HAVE_LIBMONGOC - 0 > 0
     mongoc_client_t *client;
-#elif HAVE_LIBMONGO_CLIENT - 0 == 1
-    struct _mongo_sync_connection *conn;
 #endif
     time_t last_check_time;
     int token_index_created;

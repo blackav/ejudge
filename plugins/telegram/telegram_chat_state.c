@@ -28,8 +28,6 @@
 #include <mongoc/mongoc.h>
 #elif HAVE_LIBMONGOC - 0 > 0
 #include <mongoc.h>
-#elif HAVE_LIBMONGO_CLIENT - 0 == 1
-#include <mongo.h>
 #endif
 
 #include <errno.h>
@@ -38,9 +36,6 @@
 #if HAVE_LIBMONGOC - 0 > 0
 struct _bson_t;
 typedef struct _bson_t ej_bson_t;
-#elif HAVE_LIBMONGO_CLIENT - 0 == 1
-struct _bson;
-typedef struct _bson ej_bson_t;
 #endif
 
 #define TELEGRAM_CHAT_STATES_TABLE_NAME "telegram_chat_states"
@@ -110,34 +105,6 @@ telegram_chat_state_parse_bson(const ej_bson_t *bson)
 cleanup:
     telegram_chat_state_free(tcs);
     return NULL;
-#elif HAVE_LIBMONGO_CLIENT - 0 == 1
-    bson_cursor *bc = NULL;
-    struct telegram_chat_state *tcs = NULL;
-
-    XCALLOC(tcs, 1);
-    bc = bson_cursor_new(bson);
-    while (bson_cursor_next(bc)) {
-        const unsigned char *key = bson_cursor_key(bc);
-        if (!strcmp(key, "_id")) {
-            if (ej_bson_parse_int64(bc, "_id", &tcs->_id) < 0) goto cleanup;
-        } else if (!strcmp(key, "command")) {
-            if (ej_bson_parse_string(bc, "command", &tcs->command) < 0) goto cleanup;
-        } else if (!strcmp(key, "token")) {
-            if (ej_bson_parse_string(bc, "token", &tcs->token) < 0) goto cleanup;
-        } else if (!strcmp(key, "state")) {
-            if (ej_bson_parse_int(bc, "state", &tcs->state, 0, 0, 0, 0) < 0) goto cleanup;
-        } else if (!strcmp(key, "review_flag")) {
-            if (ej_bson_parse_int(bc, "review_flag", &tcs->review_flag, 0, 0, 0, 0) < 0) goto cleanup;
-        } else if (!strcmp(key, "reply_flag")) {
-            if (ej_bson_parse_int(bc, "reply_flag", &tcs->reply_flag, 0, 0, 0, 0) < 0) goto cleanup;
-        }
-    }
-    bson_cursor_free(bc);
-    return tcs;
-
-cleanup:
-    telegram_chat_state_free(tcs);
-    return NULL;
 #else
     return NULL;
 #endif
@@ -170,30 +137,6 @@ telegram_chat_state_unparse_bson(const struct telegram_chat_state *tcs)
         bson_append_int32(bson, "reply_flag", -1, tcs->reply_flag);
     }
 
-    return bson;
-#elif HAVE_LIBMONGO_CLIENT - 0 == 1
-    if (!tcs) return NULL;
-
-    bson *bson = bson_new();
-    if (tcs->_id) {
-        bson_append_int64(bson, "_id", tcs->_id);
-    }
-    if (tcs->command && *tcs->command) {
-        bson_append_string(bson, "command", tcs->command, strlen(tcs->command));
-    }
-    if (tcs->token && *tcs->token) {
-        bson_append_string(bson, "token", tcs->token, strlen(tcs->token));
-    }
-    if (tcs->state > 0) {
-        bson_append_int32(bson, "state", tcs->state);
-    }
-    if (tcs->review_flag > 0) {
-        bson_append_int32(bson, "review_flag", tcs->review_flag);
-    }
-    if (tcs->reply_flag > 0) {
-        bson_append_int32(bson, "reply_flag", tcs->reply_flag);
-    }
-    bson_finish(bson);
     return bson;
 #else
     return NULL;
@@ -232,48 +175,6 @@ cleanup:
     if (coll) mongoc_collection_destroy(coll);
 
     return retval;
-#elif HAVE_LIBMONGO_CLIENT - 0 == 1
-    if (!mongo_conn_open(conn)) return NULL;
-
-    bson *query = NULL;
-    mongo_packet *pkt = NULL;
-    mongo_sync_cursor *cursor = NULL;
-    bson *result = NULL;
-    struct telegram_chat_state *retval = NULL;
-
-    query = bson_new();
-    bson_append_int64(query, "_id", _id);
-    bson_finish(query);
-
-    pkt = mongo_sync_cmd_query(conn->conn, mongo_conn_ns(conn, TELEGRAM_CHAT_STATES_TABLE_NAME), 0, 0, 1, query, NULL);
-    if (!pkt && errno == ENOENT) {
-        goto cleanup;
-    }
-    if (!pkt) {
-        err("mongo query failed: %s", os_ErrorMsg());
-        goto cleanup;
-    }
-    bson_free(query); query = NULL;
-
-    cursor = mongo_sync_cursor_new(conn->conn, conn->ns, pkt);
-    if (!cursor) {
-        err("mongo query failed: cannot create cursor: %s", os_ErrorMsg());
-        goto cleanup;
-    }
-    pkt = NULL;
-    if (mongo_sync_cursor_next(cursor)) {
-        result = mongo_sync_cursor_get_data(cursor);
-        if (result) {
-            retval = telegram_chat_state_parse_bson(result);
-        }
-    }
-
-cleanup:
-    if (result) bson_free(result);
-    if (cursor) mongo_sync_cursor_free(cursor);
-    if (pkt) mongo_wire_packet_free(pkt);
-    if (query) bson_free(query);
-    return retval;
 #else
     return NULL;
 #endif
@@ -310,26 +211,6 @@ cleanup:
     if (coll) mongoc_collection_destroy(coll);
     if (query) bson_destroy(query);
     if (bson) bson_destroy(bson);
-    return retval;
-#elif HAVE_LIBMONGO_CLIENT - 0 == 1
-    if (!mongo_conn_open(conn)) return -1;
-    int retval = -1;
-
-    bson *b = telegram_chat_state_unparse_bson(tcs);
-    bson *q = bson_new();
-    bson_append_int64(q, "_id", tcs->_id);
-    bson_finish(q);
-
-    if (!mongo_sync_cmd_update(conn->conn, mongo_conn_ns(conn, TELEGRAM_CHAT_STATES_TABLE_NAME), MONGO_WIRE_FLAG_UPDATE_UPSERT, q, b)) {
-        err("save_token: failed: %s", os_ErrorMsg());
-        goto cleanup;
-    }
-
-    retval = 0;
-
-cleanup:
-    bson_free(q);
-    bson_free(b);
     return retval;
 #else
     return 0;

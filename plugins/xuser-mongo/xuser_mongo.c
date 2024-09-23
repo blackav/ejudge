@@ -34,8 +34,6 @@
 #include <mongoc/mongoc.h>
 #elif HAVE_LIBMONGOC - 0 > 0
 #include <mongoc.h>
-#elif HAVE_LIBMONGO_CLIENT - 0 == 1
-#include <mongo.h>
 #endif
 
 #include <string.h>
@@ -377,48 +375,6 @@ done:;
     }
     if (query) bson_destroy(query);
     return extra;
-#elif HAVE_LIBMONGO_CLIENT - 0 == 1
-    struct team_extra *extra = NULL;
-    bson *query = NULL;
-    int pos = 0, count = 0;
-    bson **results = NULL;
-
-    if (user_id <= 0) return NULL;
-
-    if ((extra = find_entry(state, user_id, &pos)))
-        return extra;
-
-    query = bson_new();
-    bson_append_int32(query, "contest_id", state->contest_id);
-    bson_append_int32(query, "user_id", user_id);
-    bson_finish(query);
-    count = state->plugin_state->common->i->query(state->plugin_state->common, "xuser", 0, 1, query, NULL, &results);
-    if (count < 0) goto done;
-    if (count > 1) {
-        err("do_get_entry: multiple entries returned: %d", count);
-        goto done;
-    }
-    if (count == 1) {
-        if (!(extra = team_extra_bson_parse(results[0]))) {
-            goto done;
-        }
-    }
-    if (!extra) {
-        XCALLOC(extra, 1);
-        extra->user_id = user_id;
-        extra->contest_id = state->contest_id;
-    }
-    insert_entry(state, user_id, extra, pos);
-
-done:
-    if (query) bson_free(query);
-    if (results) {
-        for (int i = 0; i < count; ++i) {
-            bson_free(results[i]);
-        }
-        xfree(results);
-    }
-    return extra;
 #else
     return NULL;
 #endif
@@ -464,16 +420,6 @@ do_insert(
         return -1;
     }
     return 0;
-#elif HAVE_LIBMONGO_CLIENT - 0 == 1
-    if (extra->contest_id <= 0) extra->contest_id = state->contest_id;
-    if (!ej_uuid_is_nonempty(extra->uuid)) {
-        ej_uuid_generate(&extra->uuid);
-    }
-    bson *b = team_extra_bson_unparse(extra);
-    if (state->plugin_state->common->i->insert_and_free(state->plugin_state->common, "xuser", &b) < 0) {
-        return -1;
-    }
-    return 0;
 #else
     return -1;
 #endif
@@ -495,20 +441,6 @@ do_update(
     bson_destroy(update_doc); update_doc = NULL;
 
     int retval = state->plugin_state->common->i->update_and_free(state->plugin_state->common, "xuser", &filter, &update);
-    return retval;
-#elif HAVE_LIBMONGO_CLIENT - 0 == 1
-    bson *filter = bson_new();
-    ej_bson_append_uuid(filter, "_id", &extra->uuid);
-    bson_finish(filter);
-    bson *update = bson_new();
-    if (!op) op = "$set";
-    bson_append_document(update, op, update_doc);
-    bson_finish(update);
-
-    int retval = state->plugin_state->common->i->update(state->plugin_state->common, "xuser", filter, update);
-    bson_free(update); update = NULL;
-    bson_free(filter); filter = NULL;
-    bson_free(update_doc); update_doc = NULL;
     return retval;
 #else
     return -1;
@@ -534,24 +466,6 @@ set_clar_status_func(
         bson_t *doc = bson_new();
         bson_append_array(doc, "clar_uuids", -1, arr);
         bson_destroy(arr); arr = NULL;
-        return do_update(state, extra, NULL, doc);
-    } else {
-        return do_insert(state, extra);
-    }
-    return -1;
-#elif HAVE_LIBMONGO_CLIENT - 0 == 1
-    struct xuser_mongo_cnts_state *state = (struct xuser_mongo_cnts_state *) data;
-    struct team_extra *extra = do_get_entry(state, user_id);
-    if (!extra) return -1;
-    if (!p_clar_uuid) return -1;
-    int r = team_extra_add_clar_uuid(extra, p_clar_uuid);
-    if (r <= 0) return r;
-    if (ej_uuid_is_nonempty(extra->uuid)) {
-        bson *arr = ej_bson_unparse_array_uuid(extra->clar_uuids, extra->clar_uuids_size);
-        bson *doc = bson_new();
-        bson_append_array(doc, "clar_uuids", arr);
-        bson_free(arr); arr = NULL;
-        bson_finish(doc);
         return do_update(state, extra, NULL, doc);
     } else {
         return do_insert(state, extra);
@@ -606,35 +520,6 @@ append_warning_func(
     } else {
         return do_insert(state, extra);
     }
-#elif HAVE_LIBMONGO_CLIENT - 0 == 1
-    struct xuser_mongo_cnts_state *state = (struct xuser_mongo_cnts_state *) data;
-    struct team_extra *extra = do_get_entry(state, user_id);
-    if (!extra) return -1;
-
-    if (extra->warn_u == extra->warn_a) {
-        extra->warn_a *= 2;
-        if (!extra->warn_a) extra->warn_a = 8;
-        XREALLOC(extra->warns, extra->warn_a);
-    }
-    struct team_warning *cur_warn = NULL;
-    XCALLOC(cur_warn, 1);
-    extra->warns[extra->warn_u++] = cur_warn;
-
-    cur_warn->date = issue_date;
-    cur_warn->issuer_id = issuer_id;
-    cur_warn->issuer_ip = *issuer_ip;
-    cur_warn->text = xstrdup(txt);
-    cur_warn->comment = xstrdup(cmt);
-    if (ej_uuid_is_nonempty(extra->uuid)) {
-        bson *w = team_warning_bson_unparse(cur_warn);
-        bson *doc = bson_new();
-        bson_append_document(doc, "warnings", w);
-        bson_free(w); w = NULL;
-        bson_finish(doc);
-        return do_update(state, extra, "$push", doc);
-    } else {
-        return do_insert(state, extra);
-    }
 #else
     return -1;
 #endif
@@ -655,20 +540,6 @@ set_status_func(
     if (ej_uuid_is_nonempty(extra->uuid)) {
         bson_t *doc = bson_new();
         bson_append_int32(doc, "status", -1, status);
-        return do_update(state, extra, NULL, doc);
-    } else {
-        return do_insert(state, extra);
-    }
-#elif HAVE_LIBMONGO_CLIENT - 0 == 1
-    struct xuser_mongo_cnts_state *state = (struct xuser_mongo_cnts_state *) data;
-    struct team_extra *extra = do_get_entry(state, user_id);
-    if (!extra) return -1;
-    if (extra->status == status) return 0;
-    extra->status = status;
-    if (ej_uuid_is_nonempty(extra->uuid)) {
-        bson *doc = bson_new();
-        bson_append_int32(doc, "status", status);
-        bson_finish(doc);
         return do_update(state, extra, NULL, doc);
     } else {
         return do_insert(state, extra);
@@ -709,33 +580,6 @@ set_disq_comment_func(
     } else {
         return do_insert(state, extra);
     }
-#elif HAVE_LIBMONGO_CLIENT - 0 == 1
-    struct xuser_mongo_cnts_state *state = (struct xuser_mongo_cnts_state *) data;
-    struct team_extra *extra = do_get_entry(state, user_id);
-    if (!extra) return -1;
-    if (!extra->disq_comment && !disq_comment) {
-        return 0;
-    }
-    if (extra->disq_comment && !disq_comment) {
-        ASSERT(ej_uuid_is_nonempty(extra->uuid));
-        xfree(extra->disq_comment); extra->disq_comment = NULL;
-        bson *doc = bson_new();
-        bson_append_string(doc, "disq_comment", "", 0);
-        bson_finish(doc);
-        return do_update(state, extra, "$unset", doc);
-    }
-    if (extra->disq_comment && !strcmp(extra->disq_comment, disq_comment))
-        return 0;
-    xfree(extra->disq_comment);
-    extra->disq_comment = xstrdup(disq_comment);
-    if (ej_uuid_is_nonempty(extra->uuid)) {
-        bson *doc = bson_new();
-        bson_append_string(doc, "disq_comment", extra->disq_comment, strlen(extra->disq_comment));
-        bson_finish(doc);
-        return do_update(state, extra, NULL, doc);
-    } else {
-        return do_insert(state, extra);
-    }
 #else
     return -1;
 #endif
@@ -767,21 +611,6 @@ set_run_fields_func(
     if (ej_uuid_is_nonempty(extra->uuid)) {
         bson_t *doc = bson_new();
         bson_append_int64(doc, "run_fields", -1, run_fields);
-        return do_update(state, extra, NULL, doc);
-    } else {
-        return do_insert(state, extra);
-    }
-#elif HAVE_LIBMONGO_CLIENT - 0 == 1
-    struct xuser_mongo_cnts_state *state = (struct xuser_mongo_cnts_state *) data;
-    struct team_extra *extra = do_get_entry(state, user_id);
-    if (!extra) return -1;
-    if (extra->run_fields == run_fields) return 0;
-    extra->run_fields = run_fields;
-    if (ej_uuid_is_nonempty(extra->uuid)) {
-        bson *doc = bson_new();
-        bson_append_int64(doc, "run_fields", run_fields);
-        bson_finish(doc);
-
         return do_update(state, extra, NULL, doc);
     } else {
         return do_insert(state, extra);
@@ -947,34 +776,6 @@ get_entries_func(
         bson_destroy(query); query = NULL;
         xfree(query_results); query_results = NULL;
     }
-#elif HAVE_LIBMONGO_CLIENT - 0 == 1
-    {
-        int query_count = 0;
-        struct team_extra *extra = NULL;
-        bson **query_results = NULL;
-        bson *arr = ej_bson_unparse_array_int(loc_users, loc_count);
-        bson *indoc = bson_new();
-        bson_append_array(indoc, "$in", arr);
-        bson_finish(indoc);
-        bson_free(arr); arr = NULL;
-        bson *query = bson_new();
-        bson_append_int32(query, "contest_id", state->contest_id);
-        bson_append_document(query, "user_id", indoc);
-        bson_finish(query);
-        bson_free(indoc); indoc = NULL;
-
-        query_count = state->plugin_state->common->i->query(state->plugin_state->common, "xuser", 0, loc_count, query, NULL, &query_results);
-        if (query_count > 0) {
-            for (i1 = 0; i1 < query_count; ++i1) {
-                if ((extra = team_extra_bson_parse(query_results[i1]))) {
-                    insert_entry(state, extra->user_id, extra, -1);
-                }
-                bson_free(query_results[i1]); query_results[i1] = NULL;
-            }
-        }
-        bson_free(query); query = NULL;
-        xfree(query_results); query_results = NULL;
-    }
 #else
     return NULL;
 #endif
@@ -1060,33 +861,6 @@ set_problem_dir_prefix_func(
     } else {
         return do_insert(state, extra);
     }
-#elif HAVE_LIBMONGO_CLIENT - 0 == 1
-    struct xuser_mongo_cnts_state *state = (struct xuser_mongo_cnts_state *) data;
-    struct team_extra *extra = do_get_entry(state, user_id);
-    if (!extra) return -1;
-    if (!extra->problem_dir_prefix && !problem_dir_prefix) {
-        return 0;
-    }
-    if (extra->problem_dir_prefix && !problem_dir_prefix) {
-        ASSERT(ej_uuid_is_nonempty(extra->uuid));
-        xfree(extra->problem_dir_prefix); extra->problem_dir_prefix = NULL;
-        bson *doc = bson_new();
-        bson_append_string(doc, "problem_dir_prefix", "", 0);
-        bson_finish(doc);
-        return do_update(state, extra, "$unset", doc);
-    }
-    if (extra->problem_dir_prefix && !strcmp(extra->problem_dir_prefix, problem_dir_prefix))
-        return 0;
-    xfree(extra->problem_dir_prefix);
-    extra->problem_dir_prefix = xstrdup(problem_dir_prefix);
-    if (ej_uuid_is_nonempty(extra->uuid)) {
-        bson *doc = bson_new();
-        bson_append_string(doc, "problem_dir_prefix", extra->problem_dir_prefix, strlen(extra->problem_dir_prefix));
-        bson_finish(doc);
-        return do_update(state, extra, NULL, doc);
-    } else {
-        return do_insert(state, extra);
-    }
 #else
     return -1;
 #endif
@@ -1142,51 +916,6 @@ get_user_ids_func(
     }
     if (query) bson_destroy(query);
     if (sel) bson_destroy(sel);
-    *p_count = size;
-    *p_user_ids = user_ids;
-    return 0;
-#elif HAVE_LIBMONGO_CLIENT - 0 == 1
-    bson *query = NULL;
-    bson *sel = NULL;
-    int count = 0;
-    bson **results = NULL;
-    bson_cursor *bc = NULL;
-
-    query = bson_new();
-    bson_append_int32(query, "contest_id", state->contest_id);
-    bson_finish(query);
-    sel = bson_new();
-    bson_append_int32(sel, "user_id", 1);
-    bson_finish(sel);
-    count = state->plugin_state->common->i->query(state->plugin_state->common, "xuser", 0, 1, query, NULL, &results);
-    if (count > 0) {
-        for (int i = 0; i < count; ++i) {
-            int user_id = 0;
-            bc = bson_cursor_new(results[i]);
-            if (bson_cursor_find(bc, "user_id")
-                && bson_cursor_type(bc) == BSON_TYPE_INT32
-                && bson_cursor_get_int32(bc, &user_id)) {
-                if (size == reserved) {
-                    if (!(reserved *= 2)) reserved = 16;
-                    XREALLOC(user_ids, reserved);
-                }
-                user_ids[size++] = user_id;
-            }
-            bson_cursor_free(bc); bc = NULL;
-        }
-    }
-    if (size > 1) {
-        qsort(user_ids, size, sizeof(user_ids[0]), isort_func);
-    }
-    if (bc) bson_cursor_free(bc);
-    if (query) bson_free(query);
-    if (sel) bson_free(sel);
-    if (results) {
-        for (int i = 0; i < count; ++i) {
-            bson_free(results[i]);
-        }
-        xfree(results);
-    }
     *p_count = size;
     *p_user_ids = user_ids;
     return 0;
