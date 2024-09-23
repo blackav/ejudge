@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2008-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -64,6 +64,7 @@ static const char create_runs_query[] =
 "        notify_driver TINYINT NOT NULL DEFAULT 0, "
 "        notify_kind TINYINT NOT NULL DEFAULT 0, "
 "        notify_queue VARCHAR(40) DEFAULT NULL, "
+"        group_scores VARCHAR(256) DEFAULT NULL, "
 "        UNIQUE KEY runs_run_contest_id_idx(run_id, contest_id), "
 "        KEY runs_contest_id_idx (contest_id) "
 "        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;";
@@ -119,9 +120,10 @@ struct run_entry_internal
   int notify_driver;            /* 45 */
   int notify_kind;
   unsigned char *notify_queue;
+  unsigned char *group_scores;
 };
 
-enum { RUNS_ROW_WIDTH = 48 };
+enum { RUNS_ROW_WIDTH = 49 };
 
 #define RUNS_OFFSET(f) XOFFSET(struct run_entry_internal, f)
 static const struct common_mysql_parse_spec runs_spec[RUNS_ROW_WIDTH] =
@@ -174,6 +176,7 @@ static const struct common_mysql_parse_spec runs_spec[RUNS_ROW_WIDTH] =
   { 0, 'd', "notify_driver", RUNS_OFFSET(notify_driver), 0 },
   { 0, 'd', "notify_kind", RUNS_OFFSET(notify_kind), 0 },
   { 1, 's', "notify_queue", RUNS_OFFSET(notify_queue), 0 },
+  { 1, 's', "group_scores", RUNS_OFFSET(group_scores), 0 },
 };
 
 enum

@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2008-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -197,7 +197,7 @@ prepare_func(
 
 #include "tables.inc.c"
 
-#define RUN_DB_VERSION 28
+#define RUN_DB_VERSION 29
 
 static int
 do_create(struct rldb_mysql_state *state)
@@ -486,6 +486,10 @@ do_open(struct rldb_mysql_state *state)
       break;
     case 27:
       if (mi->simple_fquery(md, "ALTER TABLE %sruns MODIFY COLUMN mime_type VARCHAR(128) DEFAULT NULL ;", md->table_prefix) < 0)
+        return -1;
+      break;
+    case 28:
+      if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD COLUMN group_scores VARCHAR(256) DEFAULT NULL AFTER notify_queue", md->table_prefix) < 0)
         return -1;
       break;
     case RUN_DB_VERSION:
@@ -875,6 +879,7 @@ load_runs(struct rldb_mysql_cnts *cs)
       xfree(ri.judge_uuid); ri.judge_uuid = NULL;
       xfree(ri.ext_user); ri.ext_user = NULL;
       xfree(ri.notify_queue); ri.notify_queue = NULL;
+      xfree(ri.group_scores); ri.group_scores = NULL;
 
       expand_runs(rls, ri.run_id);
       re = &rls->runs[ri.run_id - rls->run_f];
@@ -940,6 +945,7 @@ load_runs(struct rldb_mysql_cnts *cs)
     xfree(ri.judge_uuid); ri.judge_uuid = NULL;
     xfree(ri.ext_user); ri.ext_user = NULL;
     xfree(ri.notify_queue); ri.notify_queue = NULL;
+    xfree(ri.group_scores); ri.group_scores = NULL;
 
     expand_runs(rls, ri.run_id);
     re = &rls->runs[ri.run_id - rls->run_f];
@@ -1009,6 +1015,7 @@ load_runs(struct rldb_mysql_cnts *cs)
   xfree(ri.judge_uuid);
   xfree(ri.ext_user);
   xfree(ri.notify_queue);
+  xfree(ri.group_scores);
   mi->free_res(md);
   return -1;
 }
