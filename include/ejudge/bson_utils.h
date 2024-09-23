@@ -26,7 +26,7 @@
 struct _bson;
 struct _bson_cursor;
 
-// for libmogoc
+// for libmongoc
 struct _bson_t;
 // FIXME: no opaque structure tag for bson_iter_t
 

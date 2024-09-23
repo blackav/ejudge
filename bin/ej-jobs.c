@@ -2026,12 +2026,4 @@ job_server_force_link[] =
   ej_bson_parse_string_new,
 };
 
-#elif HAVE_LIBMONGO_CLIENT - 0 == 1
-
-void *
-job_server_force_link[] =
-{
-  ej_bson_parse_string,
-};
-
 #endif

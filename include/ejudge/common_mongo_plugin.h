@@ -30,12 +30,6 @@ struct _bson_t;
 
 typedef struct _mongoc_client_t ej_mongo_conn_t;
 typedef struct _bson_t ej_bson_t;
-#elif HAVE_LIBMONGO_CLIENT - 0 == 1
-struct _mongo_sync_connection;
-struct _bson;
-
-typedef struct _mongo_sync_connection ej_mongo_conn_t;
-typedef struct _bson ej_bson_t;
 #else
 struct mongo_connection_missing;
 struct bson_definition_missing;

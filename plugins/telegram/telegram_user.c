@@ -28,8 +28,6 @@
 #include <mongoc/mongoc.h>
 #elif HAVE_LIBMONGOC - 0 > 0
 #include <mongoc.h>
-#elif HAVE_LIBMONGO_CLIENT - 0 == 1
-#include <mongo.h>
 #endif
 
 #include <errno.h>
@@ -38,9 +36,6 @@
 #if HAVE_LIBMONGOC - 0 > 0
 struct _bson_t;
 typedef struct _bson_t ej_bson_t;
-#elif HAVE_LIBMONGO_CLIENT - 0 == 1
-struct _bson;
-typedef struct _bson ej_bson_t;
 #endif
 
 #define TELEGRAM_USERS_TABLE_NAME "telegram_users"
@@ -99,30 +94,6 @@ telegram_user_parse_bson(const ej_bson_t *bson)
 cleanup:
     telegram_user_free(tu);
     return NULL;
-#elif HAVE_LIBMONGO_CLIENT - 0 == 1
-    bson_cursor *bc = NULL;
-    struct telegram_user *tu = NULL;
-
-    XCALLOC(tu, 1);
-    bc = bson_cursor_new(bson);
-    while (bson_cursor_next(bc)) {
-        const unsigned char *key = bson_cursor_key(bc);
-        if (!strcmp(key, "_id")) {
-            if (ej_bson_parse_int64(bc, "_id", &tu->_id) < 0) goto cleanup;
-        } else if (!strcmp(key, "username")) {
-            if (ej_bson_parse_string(bc, "username", &tu->username) < 0) goto cleanup;
-        } else if (!strcmp(key, "first_name")) {
-            if (ej_bson_parse_string(bc, "first_name", &tu->first_name) < 0) goto cleanup;
-        } else if (!strcmp(key, "last_name")) {
-            if (ej_bson_parse_string(bc, "last_name", &tu->last_name) < 0) goto cleanup;
-        }
-    }
-    bson_cursor_free(bc);
-    return tu;
-
-cleanup:
-    telegram_user_free(tu);
-    return NULL;
 #else
     return NULL;
 #endif
@@ -149,24 +120,6 @@ telegram_user_unparse_bson(const struct telegram_user *tu)
         bson_append_utf8(bson, "last_name", -1, tu->last_name, strlen(tu->last_name));
     }
 
-    return bson;
-#elif HAVE_LIBMONGO_CLIENT - 0 == 1
-    if (!tu) return NULL;
-
-    bson *bson = bson_new();
-    if (tu->_id) {
-        bson_append_int64(bson, "_id", tu->_id);
-    }
-    if (tu->username && *tu->username) {
-        bson_append_string(bson, "username", tu->username, strlen(tu->username));
-    }
-    if (tu->first_name && *tu->first_name) {
-        bson_append_string(bson, "first_name", tu->first_name, strlen(tu->first_name));
-    }
-    if (tu->last_name && *tu->last_name) {
-        bson_append_string(bson, "last_name", tu->last_name, strlen(tu->last_name));
-    }
-    bson_finish(bson);
     return bson;
 #else
     return NULL;
@@ -205,48 +158,6 @@ cleanup:
     if (query) bson_destroy(query);
     if (coll) mongoc_collection_destroy(coll);
     return retval;
-#elif HAVE_LIBMONGO_CLIENT - 0 == 1
-    if (!mongo_conn_open(conn)) return NULL;
-
-    bson *query = NULL;
-    mongo_packet *pkt = NULL;
-    mongo_sync_cursor *cursor = NULL;
-    bson *result = NULL;
-    struct telegram_user *retval = NULL;
-
-    query = bson_new();
-    bson_append_int64(query, "_id", _id);
-    bson_finish(query);
-
-    pkt = mongo_sync_cmd_query(conn->conn, mongo_conn_ns(conn, TELEGRAM_USERS_TABLE_NAME), 0, 0, 1, query, NULL);
-    if (!pkt && errno == ENOENT) {
-        goto cleanup;
-    }
-    if (!pkt) {
-        err("mongo query failed: %s", os_ErrorMsg());
-        goto cleanup;
-    }
-    bson_free(query); query = NULL;
-
-    cursor = mongo_sync_cursor_new(conn->conn, conn->ns, pkt);
-    if (!cursor) {
-        err("mongo query failed: cannot create cursor: %s", os_ErrorMsg());
-        goto cleanup;
-    }
-    pkt = NULL;
-    if (mongo_sync_cursor_next(cursor)) {
-        result = mongo_sync_cursor_get_data(cursor);
-        if (result) {
-            retval = telegram_user_parse_bson(result);
-        }
-    }
-
-cleanup:
-    if (result) bson_free(result);
-    if (cursor) mongo_sync_cursor_free(cursor);
-    if (pkt) mongo_wire_packet_free(pkt);
-    if (query) bson_free(query);
-    return retval;
 #else
     return NULL;
 #endif
@@ -284,26 +195,6 @@ cleanup:
     if (query) bson_destroy(query);
     if (bson) bson_destroy(bson);
     if (coll) mongoc_collection_destroy(coll);
-    return retval;
-#elif HAVE_LIBMONGO_CLIENT - 0 == 1
-    if (!mongo_conn_open(conn)) return -1;
-    int retval = -1;
-
-    bson *b = telegram_user_unparse_bson(tu);
-    bson *q = bson_new();
-    bson_append_int64(q, "_id", tu->_id);
-    bson_finish(q);
-
-    if (!mongo_sync_cmd_update(conn->conn, mongo_conn_ns(conn, TELEGRAM_USERS_TABLE_NAME), MONGO_WIRE_FLAG_UPDATE_UPSERT, q, b)) {
-        err("save_token: failed: %s", os_ErrorMsg());
-        goto cleanup;
-    }
-
-    retval = 0;
-
-cleanup:
-    bson_free(b);
-    bson_free(q);
     return retval;
 #else
     return 0;
