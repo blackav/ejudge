@@ -44,6 +44,7 @@ char *xmemdup(char const *, size_t size);
 #define XMEMMOVE(d,s,c) (memmove((d),(s),(c)*sizeof(*(d))))
 #define XMEMZERO(d,c)   (memset((d),0,(c)*sizeof(*(d))))
 #define XEXPAND2(a)     (xexpand2(&(a),sizeof((a).v[0])))
+#define XMEMCPY(d,s,c)  (memcpy((d),(s),(c)*sizeof(*(d))))
 
 #define XOFFSET(type,field)       ((long) &((type*) 0)->field)
 #define XDEREF(type,base,offset)  (((type*) (((char*) &(base)) + (offset))))
