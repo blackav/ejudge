@@ -150,6 +150,8 @@ run_destroy(runlog_state_t state)
 
   if (state->iface) state->iface->close(state->cnts);
 
+  xfree(state->group_scores.data);
+
   memset(state, 0, sizeof(*state));
   xfree(state);
   return 0;

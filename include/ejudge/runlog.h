@@ -2,7 +2,7 @@
 #ifndef __RUNLOG_H__
 #define __RUNLOG_H__
 
-/* Copyright (C) 2000-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -289,7 +289,8 @@ enum
     RE_VERDICT_BITS  = 0x400000000ULL,
     RE_EXT_USER      = 0x800000000ULL,
     RE_NOTIFY        = 0x1000000000ULL,
-    RE_ALL           = 0x1FFFFFFFFFULL,
+    RE_GROUP_SCORES  = 0x2000000000ULL,
+    RE_ALL           = 0x3FFFFFFFFFULL,
   };
 
 struct run_entry
@@ -352,7 +353,8 @@ struct run_entry
   unsigned char  notify_kind;   /* 1 */
   ruint32_t      verdict_bits;  /* 4 */
   rint64_t       last_change_us;/* 8 */
-  char _pad1[8];
+  ruint32_t      group_scores;  /* 4 */
+  char _pad1[4];
   ej_mixed_id_t  ext_user;      /* 16 */
   ej_mixed_id_t  notify_queue;  /* 16 */
   char _pad[32];

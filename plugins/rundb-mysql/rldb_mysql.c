@@ -16,10 +16,14 @@
 
 #include "ejudge/config.h"
 #include "ejudge/ej_limits.h"
+#include "ejudge/ej_limits.h"
 #include "ejudge/rldb_plugin.h"
 #include "ejudge/runlog.h"
 #include "ejudge/teamdb.h"
 #include "../common-mysql/common_mysql.h"
+#include <ctype.h>
+#include <stdint.h>
+#include <string.h>
 
 #define RUNS_ACCESS
 #include "ejudge/runlog_state.h"
@@ -811,6 +815,29 @@ expand_runs(struct runlog_state *rls, int run_id)
   rls->run_u = run_id + 1;
 }
 
+static uint32_t
+alloc_group_scores(struct rldb_mysql_cnts *cs, int count, int *scores)
+{
+  struct runlog_state *rls = cs->rl_state;
+  if (count <= 0 || count > EJ_MAX_TEST_GROUP) {
+    if (rls->group_scores.size == 0) {
+      rls->group_scores.reserved = 16;
+      XCALLOC(rls->group_scores.data, rls->group_scores.reserved);
+      rls->group_scores.size = 1;
+    }
+    return 0;
+  }
+  if (rls->group_scores.size + 1 + count > rls->group_scores.reserved) {
+    rls->group_scores.reserved *= 2;
+    XREALLOC(rls->group_scores.data, rls->group_scores.reserved);
+  }
+  uint32_t res = rls->group_scores.size;
+  rls->group_scores.data[rls->group_scores.size++] = count;
+  XMEMCPY(&rls->group_scores.data[rls->group_scores.size], scores, count);
+  rls->group_scores.size += count;
+  return res;
+}
+
 static int
 load_runs(struct rldb_mysql_cnts *cs)
 {
@@ -827,6 +854,7 @@ load_runs(struct rldb_mysql_cnts *cs)
   ej_uuid_t judge_uuid;
   ej_mixed_id_t ext_user;
   ej_mixed_id_t notify_queue;
+  uint32_t group_scores_index = 0;
 
   memset(&ri, 0, sizeof(ri));
   if (state->window > 0) {
@@ -938,6 +966,29 @@ load_runs(struct rldb_mysql_cnts *cs)
       ri.notify_kind = 0;
       memset(&notify_queue, 0, sizeof(notify_queue));
     }
+    if (ri.group_scores && ri.group_scores[0]) {
+      int group_scores[EJ_MAX_TEST_GROUP + 1];
+      int group_count = 0;
+      const char *p = ri.group_scores;
+      while (1) {
+        while (isspace((unsigned char) *p)) ++p;
+        if (!*p) break;
+        if (group_count == EJ_MAX_TEST_GROUP) {
+          db_error_inv_value_fail(md, "too many groups");
+        }
+        errno = 0;
+        char *eptr = NULL;
+        long vv = strtol(p, &eptr, 10);
+        if (errno || (*eptr && !isspace((unsigned char) *eptr)) || (int) vv != vv) {
+          db_error_inv_value_fail(md, "invalid score");
+        }
+        group_scores[group_count++] = vv;
+        p = eptr;
+      }
+      if (group_count > 0) {
+        group_scores_index = alloc_group_scores(cs, group_count, group_scores);
+      }
+    }
     xfree(ri.hash); ri.hash = 0;
     xfree(ri.mime_type); ri.mime_type = 0;
     xfree(ri.run_uuid); ri.run_uuid = 0;
@@ -1004,6 +1055,7 @@ load_runs(struct rldb_mysql_cnts *cs)
     re->notify_driver = ri.notify_driver;
     re->notify_kind = ri.notify_kind;
     re->notify_queue = notify_queue;
+    re->group_scores = group_scores_index;
   }
   return 1;
 
