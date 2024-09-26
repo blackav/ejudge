@@ -132,6 +132,7 @@ struct rldb_plugin_iface plugin_rldb_mysql =
   user_run_header_delete_func,
   append_run_func,
   run_set_is_checked_func,
+  get_group_scores_func,
 };
 
 static long long
@@ -3165,4 +3166,24 @@ run_set_is_checked_func(
   te.is_checked = !!is_checked;
 
   return do_update_entry(cs, run_id, &te, RE_IS_CHECKED, NULL);
+}
+
+static const int *
+get_group_scores_func(
+        struct rldb_plugin_cnts *cdata,
+        uint32_t index)
+{
+  struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts *) cdata;
+  struct runlog_state *rls = cs->rl_state;
+  if (!rls->group_scores.data) {
+    return NULL;
+  }
+  if (index >= rls->group_scores.size) {
+    return &rls->group_scores.data[0];
+  }
+  int count = rls->group_scores.data[index];
+  if (count < 0 || index + 1 + count > rls->group_scores.size) {
+    return &rls->group_scores.data[0];
+  }
+  return &rls->group_scores.data[index];
 }

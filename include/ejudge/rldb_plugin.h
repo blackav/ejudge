@@ -250,6 +250,11 @@ struct rldb_plugin_iface
         struct rldb_plugin_cnts *cdata,
         int run_id,
         int is_checked);
+
+  // get group scores by group score index
+  const int * (*get_group_scores)(
+        struct rldb_plugin_cnts *cdata,
+        uint32_t index);
 };
 
 /* default plugin: compiled into new-server */

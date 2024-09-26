@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2008-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -246,3 +246,8 @@ run_set_is_checked_func(
         struct rldb_plugin_cnts *cdata,
         int run_id,
         int is_checked);
+
+static const int *
+get_group_scores_func(
+        struct rldb_plugin_cnts *cdata,
+        uint32_t index);
