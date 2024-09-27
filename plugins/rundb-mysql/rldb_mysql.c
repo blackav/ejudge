@@ -23,6 +23,7 @@
 #include "../common-mysql/common_mysql.h"
 #include <ctype.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <string.h>
 
 #define RUNS_ACCESS
@@ -2642,6 +2643,8 @@ static int
 append_run_func(
         struct rldb_plugin_cnts *cdata,
         const struct run_entry *in_re,
+        int group_count,
+        int *group_scores,
         uint64_t mask,
         struct timeval *p_tv,
         int64_t *p_serial_id,
@@ -2815,6 +2818,9 @@ append_run_func(
   if ((mask & RE_NOTIFY)) {
     fputs(",notify_driver,notify_kind,notify_queue", cmd_f);
   }
+  if ((mask & RE_GROUP_SCORES)) {
+    fputs(",group_scores", cmd_f);
+  }
   fprintf(cmd_f, ") VALUES (%lld, %d, %d, NOW(6), MICROSECOND(NOW(6)) * 1000, '%s', NOW(), MICROSECOND(NOW(6)) * 1000",
           serial_id,
           run_id,
@@ -2963,6 +2969,16 @@ append_run_func(
     } else {
       fprintf(cmd_f, ",0,0,NULL");
     }
+  }
+  if ((mask & RE_GROUP_SCORES)) {
+    fputs(",\"", cmd_f);
+    if (group_count > 0 && group_scores) {
+      for (int i = 0; i < group_count; ++i) {
+        if (i > 0) putc_unlocked(' ', cmd_f);
+        fprintf(cmd_f, "%d", group_scores[i]);
+      }
+    }
+    fputs("\"", cmd_f);
   }
   fprintf(cmd_f, ") ;");
   fclose(cmd_f); cmd_f = NULL;
@@ -3131,6 +3147,9 @@ append_run_func(
     new_re->notify_driver = in_re->notify_driver;
     new_re->notify_kind = in_re->notify_kind;
     new_re->notify_queue = in_re->notify_queue;
+  }
+  if ((mask & RE_GROUP_SCORES)) {
+    new_re->group_scores = alloc_group_scores(cs, group_count, group_scores);
   }
 
   if (p_tv) *p_tv = current_time_tv;

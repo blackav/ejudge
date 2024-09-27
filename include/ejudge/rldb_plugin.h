@@ -239,6 +239,8 @@ struct rldb_plugin_iface
   int (*append_run)(
         struct rldb_plugin_cnts *cdata,
         const struct run_entry *re,
+        int group_count,
+        int *group_scores,
         uint64_t mask,
         struct timeval *p_tv,
         int64_t *p_serial_id,
