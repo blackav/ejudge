@@ -822,12 +822,12 @@ alloc_group_scores(struct rldb_mysql_cnts *cs, int count, const int *scores)
 {
   struct runlog_state *rls = cs->rl_state;
   if (count <= 0 || count > EJ_MAX_TEST_GROUP) {
-    if (rls->group_scores.size == 0) {
-      rls->group_scores.reserved = 16;
-      XCALLOC(rls->group_scores.data, rls->group_scores.reserved);
-      rls->group_scores.size = 1;
-    }
     return 0;
+  }
+  if (rls->group_scores.size == 0) {
+    rls->group_scores.reserved = 16;
+    XCALLOC(rls->group_scores.data, rls->group_scores.reserved);
+    rls->group_scores.size = 1;
   }
   if (rls->group_scores.size + 1 + count > rls->group_scores.reserved) {
     rls->group_scores.reserved *= 2;

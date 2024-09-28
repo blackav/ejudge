@@ -1006,10 +1006,9 @@ main(int argc, char *argv[])
     if (user_score_flag) {
         printf(" %d %d %d", user_status, user_score, user_tests_passed);
     }
-    printf("\n");
     if (group_merge_flag) {
         const auto &groups = parser.get_groups();
-        printf("%zu", groups.size());
+        printf(" %zu", groups.size());
         for (const auto &g : groups) {
             auto score = g.calc_score();
             if (g.get_offline()) {
