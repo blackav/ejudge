@@ -179,6 +179,8 @@ struct rldb_plugin_iface
         int user_tests_passed,
         int user_score,
         unsigned int verdict_bits,
+        int group_count,
+        const int *group_scores,
         struct run_entry *ure);
   // change the status (brief version)
   int (*change_status_4)(

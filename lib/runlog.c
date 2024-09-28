@@ -671,6 +671,8 @@ run_change_status_3(
                                        user_tests_passed, /* user_tests_passed */
                                        user_score,       /* user_score */
                                        verdict_bits,
+                                       -1,
+                                       NULL,
                                        ure);
 }
 

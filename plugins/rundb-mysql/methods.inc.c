@@ -190,6 +190,8 @@ change_status_3_func(
         int user_tests_passed,
         int user_score,
         unsigned int verdict_bits,
+        int group_count,
+        const int *group_scores,
         struct run_entry *ure);
 
 static int

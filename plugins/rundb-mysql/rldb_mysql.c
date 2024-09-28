@@ -2389,6 +2389,8 @@ change_status_3_func(
         int user_tests_passed,
         int user_score,
         unsigned int verdict_bits,
+        int group_count,
+        const int *group_scores,
         struct run_entry *ure)
 {
   struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts *) cdata;
@@ -2406,12 +2408,17 @@ change_status_3_func(
   te.saved_test = user_tests_passed;
   te.saved_score = user_score;
   te.verdict_bits = verdict_bits;
+  if (group_count == -1) {
+    te.group_scores = 0;
+  } else {
+    te.group_scores = alloc_group_scores(cs, group_count, group_scores);
+  }
 
   return do_update_entry(cs, run_id, &te,
                          RE_STATUS | RE_TEST | RE_SCORE | RE_JUDGE_ID
                          | RE_IS_MARKED | RE_IS_SAVED | RE_SAVED_STATUS
                          | RE_SAVED_TEST | RE_SAVED_SCORE | RE_PASSED_MODE
-                         | RE_VERDICT_BITS, ure);
+                         | RE_VERDICT_BITS | RE_GROUP_SCORES, ure);
 }
 
 static int
