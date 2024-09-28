@@ -144,6 +144,7 @@ var ej_valid_fields =
 
 function ej_field_popup(field_mask)
 {
+  const field_mask_big = BigInt(field_mask);
   var d = document.getElementById("ej_field_popup");
   if (d == null) return;
   if (d.style.display == "block") {
@@ -210,7 +211,7 @@ function ej_field_popup(field_mask)
     a = document.createAttribute("name");
     a.value = "field_" + p;
     s.setAttributeNode(a);
-    if (((1 << p) & field_mask) != 0) {
+    if (((BigInt(1) << BigInt(p)) & field_mask_big) != BigInt(0)) {
       a = document.createAttribute("checked");
       a.value = "checked";
       s.setAttributeNode(a);

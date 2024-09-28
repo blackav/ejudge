@@ -9316,7 +9316,7 @@ priv_list_runs_json(
                   JARMOR(mixed_id_marshall(mbuf, pe->ext_user_kind, &pe->ext_user)));
         }
       }
-      if ((run_fields & (1 << RUN_VIEW_NOTIFY))) {
+      if ((run_fields & (1LL << RUN_VIEW_NOTIFY))) {
         if (pe->notify_driver > 0
             && pe->notify_kind > 0 && pe->notify_kind < MIXED_ID_LAST) {
           unsigned char mbuf[64];

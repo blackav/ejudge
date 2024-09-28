@@ -475,7 +475,7 @@ ns_write_priv_all_runs(
     if (run_fields & (1 << RUN_VIEW_EXT_USER)) {
       fprintf(f, "<th%s>%s</th>", cl, "External User");
     }
-    if (run_fields & (1 << RUN_VIEW_NOTIFY)) {
+    if (run_fields & (1LL << RUN_VIEW_NOTIFY)) {
       fprintf(f, "<th%s>%s</th>", cl, "Notify Info");
     }
     if (run_fields & (1LL << RUN_VIEW_GROUP_SCORES)) {
@@ -624,7 +624,7 @@ ns_write_priv_all_runs(
         if (run_fields & (1 << RUN_VIEW_EXT_USER)) {
           fprintf(f, "<td%s>&nbsp;</td>", cl);
         }
-        if (run_fields & (1 << RUN_VIEW_NOTIFY)) {
+        if (run_fields & (1LL << RUN_VIEW_NOTIFY)) {
           fprintf(f, "<td%s>&nbsp;</td>", cl);
         }
         if (run_fields & (1LL << RUN_VIEW_GROUP_SCORES)) {
@@ -746,7 +746,7 @@ ns_write_priv_all_runs(
         if (run_fields & (1 << RUN_VIEW_EXT_USER)) {
           fprintf(f, "<td%s>&nbsp;</td>", cl);
         }
-        if (run_fields & (1 << RUN_VIEW_NOTIFY)) {
+        if (run_fields & (1LL << RUN_VIEW_NOTIFY)) {
           fprintf(f, "<td%s>&nbsp;</td>", cl);
         }
         if (run_fields & (1LL << RUN_VIEW_GROUP_SCORES)) {
@@ -978,7 +978,7 @@ ns_write_priv_all_runs(
           fprintf(f, "<td%s>&nbsp;</td>", cl);
         }
       }
-      if (run_fields & (1 << RUN_VIEW_NOTIFY)) {
+      if (run_fields & (1LL << RUN_VIEW_NOTIFY)) {
         if (pe->notify_driver > 0
             && pe->notify_kind > 0 && pe->notify_kind < MIXED_ID_LAST) {
           fprintf(f, "<td%s>%d:%s</td>", cl,
