@@ -158,6 +158,8 @@ run_change_status(
         int judge_id,
         const ej_uuid_t *judge_uuid,
         unsigned int verdict_bits,
+        int group_count,
+        const int *group_scores,
         struct run_entry *ure);
 int
 run_change_status_3(
