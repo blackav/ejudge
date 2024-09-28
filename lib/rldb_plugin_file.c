@@ -201,6 +201,8 @@ change_status_3_func(
         int user_tests_passed,
         int user_score,
         unsigned int verdict_bits,
+        int group_count,              // UNUSED!
+        const int *group_scores,      // UNUSED!
         struct run_entry *ure);
 static int
 change_status_4_func(
@@ -1821,6 +1823,8 @@ change_status_3_func(
         int user_tests_passed,
         int user_score,
         unsigned int verdict_bits,
+        int group_count,
+        const int *group_scores,
         struct run_entry *ure)
 {
   struct rldb_file_cnts *cs = (struct rldb_file_cnts*) cdata;

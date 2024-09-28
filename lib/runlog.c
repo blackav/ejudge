@@ -634,6 +634,8 @@ run_change_status_3(
         int user_tests_passed,
         int user_score,
         unsigned int verdict_bits,
+        int group_count,
+        const int *group_scores,
         struct run_entry *ure)
 {
   if (runid < state->run_f || runid >= state->run_u) ERR_R("bad runid: %d", runid);
@@ -671,8 +673,8 @@ run_change_status_3(
                                        user_tests_passed, /* user_tests_passed */
                                        user_score,       /* user_score */
                                        verdict_bits,
-                                       -1,
-                                       NULL,
+                                       group_count,
+                                       group_scores,
                                        ure);
 }
 

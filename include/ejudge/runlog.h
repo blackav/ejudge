@@ -175,6 +175,8 @@ run_change_status_3(
         int user_tests_passed,
         int user_score,
         unsigned int verdict_bits,
+        int group_count,
+        const int *group_scores,
         struct run_entry *ure);
 int
 run_change_status_4(

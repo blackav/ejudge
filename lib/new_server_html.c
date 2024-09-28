@@ -4461,7 +4461,10 @@ priv_submit_run_comment(
                         user_status,      /* user_status -> saved_status */
                         re.saved_test,    /* user_tests_passed -> saved_test */
                         user_score,       /* user_score -> saved_score */
-                        re.verdict_bits, &re);
+                        re.verdict_bits,
+                        -2,   /* do not change group_score */
+                        NULL,
+                        &re);
     serve_notify_run_update(phr->config, cs, &re);
   }
 
