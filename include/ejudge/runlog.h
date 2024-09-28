@@ -453,6 +453,8 @@ int run_set_pages(
         struct run_entry *ure);
 int run_get_total_pages(runlog_state_t, int run_id);
 
+const int *run_get_group_scores(runlog_state_t, uint32_t);
+
 int run_find(
         runlog_state_t,
         int first_run,

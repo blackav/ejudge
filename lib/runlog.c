@@ -2562,6 +2562,16 @@ run_get_pages(runlog_state_t state, int run_id)
   return state->runs[run_id - state->run_f].pages;
 }
 
+const int *
+run_get_group_scores(runlog_state_t state, uint32_t index)
+{
+  if (state->iface->get_group_scores) {
+    return state->iface->get_group_scores(state->cnts, index);
+  } else {
+    return NULL;
+  }
+}
+
 int
 run_set_pages(
         runlog_state_t state,
