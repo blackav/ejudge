@@ -93,6 +93,8 @@ change_status_func(
         int judge_id,
         const ej_uuid_t *judge_uuid,
         unsigned int verdict_bits,
+        int group_count,
+        const int *group_scores,
         struct run_entry *ure);
 
 static int
@@ -236,7 +238,7 @@ append_run_func(
         struct rldb_plugin_cnts *cdata,
         const struct run_entry *re,
         int group_count,
-        int *group_scores,
+        const int *group_scores,
         uint64_t mask,
         struct timeval *p_tv,
         int64_t *p_serial_id,

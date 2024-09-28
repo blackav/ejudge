@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2008-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -128,6 +128,8 @@ change_status_func(
         int judge_id,
         const ej_uuid_t *judge_uuid,
         unsigned int verdict_bits,
+        int group_count,
+        const int *group_scores,
         struct run_entry *ure);
 static int
 start_func(
@@ -1536,6 +1538,8 @@ change_status_func(
         int judge_id,
         const ej_uuid_t *judge_uuid,
         unsigned int verdict_bits,
+        int group_count,          // IGNORED!
+        const int *group_scores,  // IGNORED!
         struct run_entry *ure)
 {
   struct rldb_file_cnts *cs = (struct rldb_file_cnts*) cdata;

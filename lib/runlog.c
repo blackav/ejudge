@@ -614,7 +614,7 @@ run_change_status(
 
   return state->iface->change_status(state->cnts, runid, newstatus, newtest,
                                      newpassedmode, newscore, judge_id,
-                                     judge_uuid, verdict_bits, ure);
+                                     judge_uuid, verdict_bits, -1, NULL, ure);
 }
 
 int

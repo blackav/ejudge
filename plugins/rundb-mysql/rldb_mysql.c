@@ -818,7 +818,7 @@ expand_runs(struct runlog_state *rls, int run_id)
 }
 
 static uint32_t
-alloc_group_scores(struct rldb_mysql_cnts *cs, int count, int *scores)
+alloc_group_scores(struct rldb_mysql_cnts *cs, int count, const int *scores)
 {
   struct runlog_state *rls = cs->rl_state;
   if (count <= 0 || count > EJ_MAX_TEST_GROUP) {
@@ -1454,12 +1454,13 @@ to_uuid_str(unsigned char *buf, size_t size, const ej_uuid_t *p_uuid)
 
 static void
 generate_update_entry_clause(
-        struct rldb_mysql_state *state,
+        struct rldb_mysql_cnts *cs,
         FILE *f,
         const struct run_entry *re,
         uint64_t mask,
         const struct timeval *curtime)
 {
+  struct rldb_mysql_state *state = cs->plugin_state;
   const unsigned char *sep = "";
   const unsigned char *comma = ", ";
   unsigned char uuid_buf[128];
@@ -1606,7 +1607,7 @@ generate_update_entry_clause(
     sep = comma;
   }
   if ((mask & RE_PROB_UUID)) {
-    fprintf(f, "%prob_uuid = %s", sep,
+    fprintf(f, "%sprob_uuid = %s", sep,
             to_uuid_str(uuid_buf, sizeof(uuid_buf), &re->prob_uuid));
     sep = comma;
     /*
@@ -1648,6 +1649,21 @@ generate_update_entry_clause(
               sep);
       sep = comma;
     }
+  }
+  if ((mask & RE_GROUP_SCORES)) {
+    if (!re->group_scores) {
+      fprintf(f, "%sgroup_scores=NULL", sep);
+    } else {
+      fprintf(f, "%sgroup_scores=\"", sep);
+      const int *p = get_group_scores_func((struct rldb_plugin_cnts *) cs, re->group_scores);
+      int count = *p++;
+      for (int i = 0; i < count; ++i) {
+        if (i > 0) putc_unlocked(' ', f);
+        fprintf(f, "%d", p[i]);
+      }
+      fprintf(f, "\"");
+    }
+    sep = comma;
   }
 
   fprintf(f, "%slast_change_time = ", sep);
@@ -1776,6 +1792,9 @@ update_entry(
     dst->notify_kind = src->notify_kind;
     dst->notify_queue = src->notify_queue;
   }
+  if ((mask & RE_GROUP_SCORES)) {
+    dst->group_scores = src->group_scores;
+  }
 }
 
 static int
@@ -1801,7 +1820,7 @@ do_update_entry(
 
   cmd_f = open_memstream(&cmd_t, &cmd_z);
   fprintf(cmd_f, "UPDATE %sruns SET ", state->md->table_prefix);
-  generate_update_entry_clause(state, cmd_f, re, mask, &curtime);
+  generate_update_entry_clause(cs, cmd_f, re, mask, &curtime);
   fprintf(cmd_f, " WHERE contest_id = %d AND run_id = %d ;",
           cs->contest_id, run_id);
   close_memstream(cmd_f); cmd_f = 0;
@@ -1879,6 +1898,8 @@ change_status_func(
         int new_judge_id,
         const ej_uuid_t *judge_uuid,
         unsigned int verdict_bits,
+        int group_count,
+        const int *group_scores,
         struct run_entry *ure)
 {
   struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts *) cdata;
@@ -1899,6 +1920,14 @@ change_status_func(
     mask |= RE_JUDGE_ID;
   }
   te.verdict_bits = verdict_bits;
+  if (group_count >= -1) {
+    mask |= RE_GROUP_SCORES;
+    if (group_count == -1) {
+      te.group_scores = 0;
+    } else {
+      te.group_scores = alloc_group_scores(cs, group_count, group_scores);
+    }
+  }
 
   return do_update_entry(cs, run_id, &te, mask, ure);
 }
@@ -2644,7 +2673,7 @@ append_run_func(
         struct rldb_plugin_cnts *cdata,
         const struct run_entry *in_re,
         int group_count,
-        int *group_scores,
+        const int *group_scores,
         uint64_t mask,
         struct timeval *p_tv,
         int64_t *p_serial_id,
