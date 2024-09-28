@@ -25,6 +25,7 @@
 #include "ejudge/html.h"
 #include "ejudge/clarlog.h"
 #include "ejudge/base64.h"
+#include "ejudge/runlog.h"
 #include "ejudge/xml_utils.h"
 #include "ejudge/archive_paths.h"
 #include "ejudge/fileutl.h"
@@ -63,6 +64,7 @@
 #include "ejudge/logger.h"
 #include "ejudge/osdeps.h"
 
+#include <stdio.h>
 #include <zlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -476,6 +478,9 @@ ns_write_priv_all_runs(
     if (run_fields & (1 << RUN_VIEW_NOTIFY)) {
       fprintf(f, "<th%s>%s</th>", cl, "Notify Info");
     }
+    if (run_fields & (1LL << RUN_VIEW_GROUP_SCORES)) {
+      fprintf(f, "<th%s>%s</th>", cl, "Group Scores");
+    }
     /*
     if (phr->role == USER_ROLE_ADMIN) {
       fprintf(f, "<th%s>%s</th>", cl, _("New result"));
@@ -622,6 +627,9 @@ ns_write_priv_all_runs(
         if (run_fields & (1 << RUN_VIEW_NOTIFY)) {
           fprintf(f, "<td%s>&nbsp;</td>", cl);
         }
+        if (run_fields & (1LL << RUN_VIEW_GROUP_SCORES)) {
+          fprintf(f, "<td%s>&nbsp;</td>", cl);
+        }
         fprintf(f, "<td%s>&nbsp;</td>", cl);
         fprintf(f, "<td%s>&nbsp;</td>", cl);
         /*
@@ -739,6 +747,9 @@ ns_write_priv_all_runs(
           fprintf(f, "<td%s>&nbsp;</td>", cl);
         }
         if (run_fields & (1 << RUN_VIEW_NOTIFY)) {
+          fprintf(f, "<td%s>&nbsp;</td>", cl);
+        }
+        if (run_fields & (1LL << RUN_VIEW_GROUP_SCORES)) {
           fprintf(f, "<td%s>&nbsp;</td>", cl);
         }
 
@@ -974,6 +985,24 @@ ns_write_priv_all_runs(
                   pe->notify_driver,
                   ARMOR(mixed_id_marshall(durstr, pe->notify_kind,
                                           &pe->notify_queue)));
+        } else {
+          fprintf(f, "<td%s>&nbsp;</td>", cl);
+        }
+      }
+      if (run_fields & (1LL << RUN_VIEW_GROUP_SCORES)) {
+        if (pe->group_scores) {
+          const int *p = run_get_group_scores(cs->runlog_state, pe->group_scores);
+          if (p) {
+            int count = *p++;
+            fprintf(f, "<td%s>", cl);
+            for (int i = 0; i < count; ++i) {
+              if (i > 0) putc_unlocked(' ', f);
+              fprintf(f, "%d", p[i]);
+            }
+            fprintf(f, "</td>");
+          } else {
+            fprintf(f, "<td%s>&nbsp;</td>", cl);
+          }
         } else {
           fprintf(f, "<td%s>&nbsp;</td>", cl);
         }

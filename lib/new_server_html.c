@@ -9462,6 +9462,18 @@ priv_list_runs_json(
         if ((run_fields & (1 << RUN_VIEW_SAVED_TEST)) && pe->is_saved > 0 && pe->saved_test >= 0) {
           fprintf(fout, ",\"saved_test\":%d", pe->saved_test);
         }
+        if ((run_fields & (1LL << RUN_VIEW_GROUP_SCORES)) && pe->group_scores) {
+          fprintf(fout, ",\"group_scores\":[");
+          const int *p = run_get_group_scores(cs->runlog_state, pe->group_scores);
+          if (p) {
+            int count = *p++;
+            for (int i = 0; i < count; ++i) {
+              if (i > 0) putc_unlocked(',', fout);
+              fprintf(fout, "%d", p[i]);
+            }
+          }
+          fprintf(fout, "]");
+        }
       }
     }
     fprintf(fout, "}");

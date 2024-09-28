@@ -1,6 +1,6 @@
 /* -*- mode: java; coding: utf-8 -*- */
 
-// Copyright (C) 2008-2023 Alexander Chernov <cher@ejudge.ru>
+// Copyright (C) 2008-2024 Alexander Chernov <cher@ejudge.ru>
 
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -138,7 +138,8 @@ var ej_valid_fields =
   28 : "Verdict Bits",
   29 : "Last Change Time",
   30 : "External User",
-  31 : "Notification Info"
+  31 : "Notification Info",
+  32 : "Group Scores"
 }
 
 function ej_field_popup(field_mask)
