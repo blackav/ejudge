@@ -1202,12 +1202,15 @@ do_unparse(
     }
 
     if (r->has_group_scores) {
-        bson_array_builder_t *b_scores = NULL;
-        bson_append_array_builder_begin(b, tag_table[Tag_group_scores], -1, &b_scores);
+        bson_t b_scores;
+        bson_append_array_begin(b, tag_table[Tag_group_scores], -1, &b_scores);
         for (int i = 0; i < r->group_count; ++i) {
-            bson_array_builder_append_int32(b_scores, r->group_scores[i]);
+            char indbuf[32];
+            const char *key = NULL;
+            bson_uint32_to_string(i, &key, indbuf, sizeof indbuf);
+            bson_append_int32(&b_scores, key, -1, r->group_scores[i]);
         }
-        bson_append_array_builder_end(b, b_scores); b_scores = NULL;
+        bson_append_array_end(b, &b_scores);
     }
     return 0;
 }
