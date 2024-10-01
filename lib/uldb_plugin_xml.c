@@ -902,7 +902,7 @@ get_cookie_func(
     }
   }
 
-  if (c && client_key && c->client_key != client_key) {
+  if (c && c->client_key != client_key) {
     c = NULL;
   }
 
