@@ -7970,8 +7970,8 @@ priv_logout(FILE *fout,
     return error_page(fout, phr, 0, NEW_SRV_ERR_USERLIST_SERVER_DOWN);
   userlist_clnt_delete_cookie(ul_conn, phr->user_id,
                               phr->contest_id,
-                              phr->client_key,
-                              phr->session_id);
+                              phr->session_id,
+                              phr->client_key);
   snprintf(urlbuf, sizeof(urlbuf),
            "%s?contest_id=%d&locale_id=%d&role=%d",
            phr->self_url, phr->contest_id, phr->locale_id, phr->role);

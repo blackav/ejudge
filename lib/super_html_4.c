@@ -258,8 +258,8 @@ cmd_logout(
   if (phr->userlist_clnt) {
     userlist_clnt_delete_cookie(phr->userlist_clnt, phr->user_id,
                                 0,
-                                phr->client_key,
-                                phr->session_id);
+                                phr->session_id,
+                                phr->client_key);
   }
   // FIXME: release other session-related resources
   phr->session_id = 0;
