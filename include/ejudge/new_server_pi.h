@@ -2,7 +2,7 @@
 #ifndef __NEW_SERVER_PI_H__
 #define __NEW_SERVER_PI_H__
 
-/* Copyright (C) 2014-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2014-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -153,6 +153,8 @@ typedef struct UserProblemInfo
     unsigned char rejected_flag;  // if there are "Rejected" runs
     unsigned char need_eff_time_flag; // if effective time needs to be recorded
     unsigned char summoned_flag; // if "Summoned for Defence"
+    int group_count;       // number of test groups
+    int group_scores[15];  // test groups
 } UserProblemInfo;
 
 /* */

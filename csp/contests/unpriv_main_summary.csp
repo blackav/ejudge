@@ -51,6 +51,14 @@
         int total_score_uncertain = 0;
         int act_status = RUN_CHECK_FAILED;
         if (vend_info && vend_info->score_mode > 0) separate_user_score = 0;
+        int need_group_scores = 0;
+        for (int prob_id = 1; prob_id <= cs->max_prob; ++prob_id) {
+          const struct section_problem_data *prob = cs->probs[prob_id];
+          if (prob && prob->enable_group_merge > 0) {
+            need_group_scores = 1;
+            break;
+          }
+        }
 %>
 <table class="table">
     <tr>
@@ -91,6 +99,11 @@
         } else {
 %>
         <th class="b1"><s:_>Failed test</s:_></th>
+<%
+        }
+        if (need_group_scores) {
+%>
+        <th class="b1"><s:_>Group scores</s:_></th>
 <%
         }
         if (!cnts->exam_mode) {
@@ -182,6 +195,11 @@
         <td class="b1">&nbsp;</td>
 <%
               }
+            }
+            if (need_group_scores) {
+%>
+        <td class="b1">&nbsp;</td>
+<%
             }
             if (!cnts->exam_mode) {
 %>
@@ -384,6 +402,30 @@
         <td class="b1">&nbsp;</td>
 <%
                 break;
+              }
+            }
+            if (need_group_scores) {
+              if (prob->enable_group_merge > 0 && pinfo[prob_id].group_count > 0) {
+%>
+        <td class="b1"><%
+                const char *sep = "";
+                for (int i = 0; i < pinfo[prob_id].group_count; ++i) {
+                  int gs = pinfo[prob_id].group_scores[i];
+                  if (gs >= 0) {
+%><s:v value="sep" escape="false" /><s:v value="gs" /><%
+                    sep = " ";
+                  } else if (!separate_user_score) {
+                    gs = -gs;
+%><s:v value="sep" escape="false" /><s:v value="gs" /><%
+                    sep = " ";
+                  }
+                }
+%></td>
+<%
+              } else {
+%>
+        <td class="b1">&nbsp;</td>
+<%
               }
             }
             if (!cnts->exam_mode) {
