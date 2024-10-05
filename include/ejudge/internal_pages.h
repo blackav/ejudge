@@ -2,7 +2,7 @@
 #ifndef __INTERNAL_PAGES_H__
 #define __INTERNAL_PAGES_H__
 
-/* Copyright (C) 2017-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2017-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -40,6 +40,8 @@ typedef struct StandingsCell
     unsigned char rj_flag;  // 1, if rejected
     unsigned char marked_flag; // 1, if marked
     unsigned char first_solver; // 1, if first solution of the problem
+    int group_count;        // the count of test groups (if enable_group_merge is set)
+    int group_scores[15];   // the test group scores (if enable_group_merge is set)
 } StandingsCell;
 
 typedef struct StandingsUserRow

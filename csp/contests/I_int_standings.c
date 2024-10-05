@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2017-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2017-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -311,6 +311,27 @@ process_kirov_run(
             }
         }
         run_tests = pe->saved_test;
+        if (prob->enable_group_merge > 0) {
+            if (pe->group_scores) {
+                const int *p = run_get_group_scores(cs->runlog_state, pe->group_scores);
+                if (p && p[0] > 0) {
+                    int count = *p++;
+                    if (count > cell->group_count) {
+                        cell->group_count = count;
+                    }
+                    run_score = 0;
+                    for (int i = 0; i < count; ++i) {
+                        int s = p[i];
+                        if (s > 0) {
+                            if (s > cell->group_scores[i]) {
+                                cell->group_scores[i] = s;
+                            }
+                            run_score += cell->group_scores[i];
+                        }
+                    }
+                }
+            }
+        }
     } else {
         run_status = pe->status;
         run_score = pe->score;
@@ -321,6 +342,26 @@ process_kirov_run(
             run_tests = pe->test;
         } else {
             run_tests = pe->test - 1;
+        }
+        if (prob->enable_group_merge > 0) {
+            if (pe->group_scores) {
+                const int *p = run_get_group_scores(cs->runlog_state, pe->group_scores);
+                if (p && p[0] > 0) {
+                    int count = *p++;
+                    if (count > cell->group_count) {
+                        cell->group_count = count;
+                    }
+                    run_score = 0;
+                    for (int i = 0; i < count; ++i) {
+                        int s = p[i];
+                        if (s < 0) s = -s;
+                        if (s > cell->group_scores[i]) {
+                            cell->group_scores[i] = s;
+                        }
+                        run_score += cell->group_scores[i];
+                    }
+                }
+            }
         }
     }
 
