@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-09-01 16:22+0300\n"
+"POT-Creation-Date: 2024-10-02 00:48+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Kazakh <uk@li.org>\n"
@@ -1638,6 +1638,9 @@ msgid "Group (En)"
 msgstr ""
 
 msgid "Group Info"
+msgstr ""
+
+msgid "Group scores"
 msgstr ""
 
 msgid "Guest"
