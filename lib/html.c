@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2000-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -91,7 +91,8 @@ calc_kirov_score(
         int prev_successes,
         int *p_date_penalty,
         int format,
-        time_t effective_time)
+        time_t effective_time,
+        int total_group_score)
 {
   int score, init_score, dpi, score_mult = 1, score_bonus = 0;
   int status, dp = 0;
@@ -116,6 +117,9 @@ calc_kirov_score(
     init_score = pe->score;
     if (status == RUN_OK && !pr->variable_full_score)
       init_score = pr->full_score;
+  }
+  if (total_group_score >= 0) {
+    init_score = total_group_score;
   }
   if (pr->score_multiplier > 1) score_mult = pr->score_multiplier;
 
@@ -413,7 +417,8 @@ write_json_run_status(
         int final_score = calc_kirov_score(score_str, sizeof(score_str),
                                            start_time, separate_user_score, !priv_level, pe->token_flags,
                                            pe, prob, attempts, disq_attempts, ce_attempts, prev_successes,
-                                           NULL, 1, effective_time);
+                                           NULL, 1, effective_time,
+                                           -1 /* TODO: total_group_score */);
         fprintf(f, ",\"score\":%d", final_score);
         fprintf(f, ",\"score_str\":\"%s\"", score_str);
       }
@@ -446,7 +451,8 @@ write_json_run_status(
         int final_score = calc_kirov_score(score_str, sizeof(score_str),
                                            start_time, separate_user_score, !priv_level, pe->token_flags,
                                            pe, prob, attempts, disq_attempts, ce_attempts, prev_successes,
-                                           NULL, 1, effective_time);
+                                           NULL, 1, effective_time,
+                                           -1 /* TODO: total_group_score */);
         fprintf(f, ",\"score\":%d", final_score);
         fprintf(f, ",\"score_str\":\"%s\"", score_str);
       }
@@ -666,7 +672,8 @@ write_html_run_status(
       calc_kirov_score(score_str, sizeof(score_str),
                        start_time, separate_user_score, user_mode, pe->token_flags,
                        pe, pr, attempts,
-                       disq_attempts, ce_attempts, prev_successes, 0, 0, effective_time);
+                       disq_attempts, ce_attempts, prev_successes, 0, 0, effective_time,
+                       -1 /* TODO: total_group_score */);
       fprintf(f, "<td%s>%s</td>", cl, score_str);
     }
   }
@@ -780,7 +787,8 @@ write_text_run_status(
     calc_kirov_score(score_str, sizeof(score_str),
                      start_time, separate_user_score, user_mode, pe->token_flags,
                      pe, pr, attempts,
-                     disq_attempts, ce_attempts, prev_successes, 0, 1, effective_time);
+                     disq_attempts, ce_attempts, prev_successes, 0, 1, effective_time,
+                     -1 /* TODO: total_group_score */);
     fprintf(f, "%s;", score_str);
   }
 }

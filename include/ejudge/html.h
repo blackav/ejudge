@@ -88,7 +88,8 @@ calc_kirov_score(
         int prev_successes,
         int *p_date_penalty,
         int format,
-        time_t effective_time);
+        time_t effective_time,
+        int total_group_score);
 void
 write_html_run_status(
         const serve_state_t,

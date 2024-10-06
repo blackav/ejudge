@@ -5228,7 +5228,8 @@ kirov_score_latest_or_unmarked(
                                  1 /* user_mode */, re->token_flags, re, cur_prob,
                                  pinfo->attempts,
                                  pinfo->disqualified, pinfo->ce_attempts,
-                                 pinfo->prev_successes, 0, 0, pinfo->effective_time);
+                                 pinfo->prev_successes, 0, 0, pinfo->effective_time,
+                                 -1 /* TODO: total_group_score */);
     if (re->is_marked || cur_score > pinfo->best_score) {
       pinfo->best_score = cur_score;
       pinfo->best_run = run_id;
@@ -5243,7 +5244,8 @@ kirov_score_latest_or_unmarked(
                                  1 /* user_mode */, re->token_flags, re, cur_prob,
                                  pinfo->attempts,
                                  pinfo->disqualified, pinfo->ce_attempts,
-                                 pinfo->prev_successes, 0, 0, pinfo->effective_time);
+                                 pinfo->prev_successes, 0, 0, pinfo->effective_time,
+                                 -1 /* TODO: total_group_score */);
     if (re->is_marked || cur_score > pinfo->best_score) {
       pinfo->best_score = cur_score;
       pinfo->best_run = run_id;
@@ -5283,7 +5285,8 @@ kirov_score_latest_or_unmarked(
                                  1 /* user_mode */, re->token_flags, re, cur_prob,
                                  pinfo->attempts,
                                  pinfo->disqualified, pinfo->ce_attempts,
-                                 pinfo->prev_successes, 0, 0, pinfo->effective_time);
+                                 pinfo->prev_successes, 0, 0, pinfo->effective_time,
+                                 -1 /* TODO: total_group_score */);
     pinfo->attempts++;
     if (re->is_marked || cur_score > pinfo->best_score || pinfo->best_score <= 0) {
       pinfo->best_score = cur_score;
@@ -5335,7 +5338,8 @@ kirov_score_latest(
                                1 /* user_mode */, re->token_flags, re, cur_prob,
                                pinfo->attempts,
                                pinfo->disqualified, pinfo->ce_attempts,
-                               pinfo->prev_successes, 0, 0, pinfo->effective_time);
+                               pinfo->prev_successes, 0, 0, pinfo->effective_time,
+                               -1 /* TODO: total_group_score */);
   switch (status) {
   case RUN_OK:
     pinfo->marked_flag = re->is_marked;
@@ -5476,7 +5480,8 @@ kirov_score_tokenized(
                                1 /* user_mode */, re->token_flags, re, cur_prob,
                                pinfo->attempts,
                                pinfo->disqualified, pinfo->ce_attempts,
-                               pinfo->prev_successes, 0, 0, pinfo->effective_time);
+                               pinfo->prev_successes, 0, 0, pinfo->effective_time,
+                               -1 /* TODO: total_group_score */);
 
   switch (status) {
   case RUN_OK:
@@ -5558,7 +5563,8 @@ kirov_score_default(
                                1 /* user_mode */, re->token_flags, re, cur_prob,
                                pinfo->attempts,
                                pinfo->disqualified, pinfo->ce_attempts,
-                               pinfo->prev_successes, 0, 0, pinfo->effective_time);
+                               pinfo->prev_successes, 0, 0, pinfo->effective_time,
+                               -1 /* TODO: total_group_score */);
 
   switch (status) {
   case RUN_OK:
@@ -5943,7 +5949,8 @@ ns_get_user_problems_summary(
         cur_pinfo->best_run = run_id;
         cur_score = calc_kirov_score(0, 0, start_time,
                                      separate_user_score, 1 /* user_mode */, re.token_flags,
-                                     &re, cur_prob, 0, 0, 0, 0, 0, 0, 0);
+                                     &re, cur_prob, 0, 0, 0, 0, 0, 0, 0,
+                                     -1 /* TODO: total_group_score */);
         //if (cur_score > best_score[re.prob_id])
         cur_pinfo->best_score = cur_score;
         break;
@@ -5968,7 +5975,8 @@ ns_get_user_problems_summary(
         cur_pinfo->attempts++;
         cur_score = calc_kirov_score(0, 0, start_time, separate_user_score,
                                      1 /* user_mode */, re.token_flags,
-                                     &re, cur_prob, 0, 0, 0, 0, 0, 0, 0);
+                                     &re, cur_prob, 0, 0, 0, 0, 0, 0, 0,
+                                     -1 /* TODO: total_group_score */);
         //if (cur_score > best_score[re.prob_id])
         cur_pinfo->best_score = cur_score;
         break;
@@ -6986,7 +6994,8 @@ collect_run_status(
     ri->score = calc_kirov_score(score_buf, sizeof(score_buf),
                                  start_time, separate_user_score, user_mode, pe->token_flags,
                                  pe, pr, attempts,
-                                 disq_attempts, ce_attempts, prev_successes, 0, 1, effective_time);
+                                 disq_attempts, ce_attempts, prev_successes, 0, 1, effective_time,
+                                 -1 /* TODO: total_group_score */);
     if (gen_strings_flag) {
       ri->score_str = strdup(score_buf);
     }

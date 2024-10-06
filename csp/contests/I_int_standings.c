@@ -134,7 +134,8 @@ calc_kirov_score(
         int prev_successes,
         int *p_date_penalty,
         int format,
-        time_t effective_time);
+        time_t effective_time,
+        int total_group_score);
 
 static void
 process_acm_run(
@@ -560,7 +561,8 @@ process_kirov_run(
                                              pe, prob, cell->att_num,
                                              cell->disq_num, cell->ce_num,
                                              cell->full_sol?RUN_TOO_MANY:col->succ_att,
-                                             0, 0, effective_time);
+                                             0, 0, effective_time,
+                                             -1 /* TODO: total_group_score */);
                 if (pe->is_marked) {
                     // latest
                     cell->marked_flag = 1;
@@ -591,7 +593,8 @@ process_kirov_run(
                                              pg->separate_user_score, sii->user_mode, token_flags,
                                              pe, prob, cell->att_num,
                                              cell->disq_num, cell->ce_num, RUN_TOO_MANY, 0, 0,
-                                             effective_time);
+                                             effective_time,
+                                             -1 /* TODO: total_group_score */);
                 if (pe->is_marked) {
                     // latest
                     cell->marked_flag = 1;
@@ -677,7 +680,8 @@ process_kirov_run(
                                                  pe, prob, cell->sol_att,
                                                  cell->disq_num, cell->ce_num,
                                                  cell->full_sol?RUN_TOO_MANY:col->succ_att,
-                                                 0, 0, effective_time);
+                                                 0, 0, effective_time,
+                                                 -1 /* TODO: total_group_score */);
                     if (prob->score_latest > 0 || score > cell->score) {
                         cell->score = score;
                         if (prob->stand_hide_time <= 0) cell->sol_time = run_time;
@@ -739,7 +743,8 @@ process_kirov_run(
                                                  pg->separate_user_score, sii->user_mode, token_flags,
                                                  pe, prob, cell->sol_att,
                                                  cell->disq_num, cell->ce_num, RUN_TOO_MANY, 0, 0,
-                                                 effective_time);
+                                                 effective_time,
+                                                 -1 /* TODO: total_group_score */);
                     ++cell->sol_att;
                     if (prob->score_latest > 0 || score > cell->score) {
                         cell->score = score;
@@ -756,7 +761,8 @@ process_kirov_run(
                                              pg->separate_user_score, sii->user_mode, token_flags,
                                              pe, prob, cell->sol_att,
                                              cell->disq_num, cell->ce_num, RUN_TOO_MANY, 0, 0,
-                                             effective_time);
+                                             effective_time,
+                                             -1 /* TODO: total_group_score */);
                 ++cell->sol_att;
                 if (prob->score_latest > 0 || score > cell->score) {
                     cell->score = score;
