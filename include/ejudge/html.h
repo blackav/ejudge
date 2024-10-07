@@ -106,7 +106,8 @@ write_html_run_status(
         int disable_failed,
         int enable_js_status_menu,
         long long run_fields,
-        time_t effective_time);
+        time_t effective_time,
+        int total_group_score);
 void
 write_json_run_status(
         const serve_state_t state,

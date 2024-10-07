@@ -204,7 +204,8 @@
         write_html_run_status(cs, out_f, start_time, pe, 1,
                               0, attempts, disq_attempts, ce_attempts,
                               prev_successes, 0, 1, 0, RUN_VIEW_DEFAULT,
-                              effective_time);
+                              effective_time,
+                              -1 /* TODO: total_group_score */);
 %>
   </tr>
 <%

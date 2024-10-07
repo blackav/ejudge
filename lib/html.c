@@ -477,7 +477,8 @@ write_html_run_status(
         int disable_failed,
         int enable_js_status_menu,
         long long run_fields,
-        time_t effective_time)
+        time_t effective_time,
+        int total_group_score)
 {
   const struct section_global_data *global = state->global;
   unsigned char status_str[128], score_str[128];
@@ -674,7 +675,7 @@ write_html_run_status(
                        start_time, separate_user_score, user_mode, pe->token_flags,
                        pe, pr, attempts,
                        disq_attempts, ce_attempts, prev_successes, 0, 0, effective_time,
-                       -1 /* TODO: total_group_score */);
+                       total_group_score);
       fprintf(f, "<td%s>%s</td>", cl, score_str);
     }
   }

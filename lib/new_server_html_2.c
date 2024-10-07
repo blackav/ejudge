@@ -932,7 +932,8 @@ ns_write_priv_all_runs(
       run_status_str(pe->status, statstr, sizeof(statstr), prob_type, 0);
       write_html_run_status(cs, f, start_time, pe, 0, 1, attempts, disq_attempts, ce_attempts,
                             prev_successes, "b1", 0,
-                            enable_js_status_menu, run_fields, effective_time);
+                            enable_js_status_menu, run_fields, effective_time,
+                            -1 /* TODO: total_group_score */);
 
       if (run_fields & (1 << RUN_VIEW_SCORE_ADJ)) {
         fprintf(f, "<td%s>%d</td>", cl, pe->score_adj);
@@ -7502,7 +7503,8 @@ new_write_user_runs(
     write_html_run_status(state, f, start_time, &re, separate_user_score /* user_mode */,
                           0, attempts, disq_attempts, ce_attempts,
                           prev_successes, table_class, 0, 0, RUN_VIEW_DEFAULT,
-                          effective_time);
+                          effective_time,
+                          -1 /* TODO: total_group_score */);
 
     if (enable_src_view) {
       fprintf(f, "<td%s>", cl);
