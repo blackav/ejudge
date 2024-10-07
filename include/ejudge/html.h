@@ -121,7 +121,8 @@ write_json_run_status(
         int disable_failed,
         long long run_fields,
         time_t effective_time,
-        const unsigned char *indent);
+        const unsigned char *indent,
+        int total_group_score);
 
 struct testing_report_xml;
 

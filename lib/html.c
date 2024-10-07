@@ -285,7 +285,8 @@ write_json_run_status(
         int disable_failed,
         long long run_fields,
         time_t effective_time,
-        const unsigned char *indent)
+        const unsigned char *indent,
+        int total_group_score)
 {
   const struct section_global_data *global = state->global;
   struct section_problem_data *prob = NULL;
@@ -418,7 +419,7 @@ write_json_run_status(
                                            start_time, separate_user_score, !priv_level, pe->token_flags,
                                            pe, prob, attempts, disq_attempts, ce_attempts, prev_successes,
                                            NULL, 1, effective_time,
-                                           -1 /* TODO: total_group_score */);
+                                           total_group_score);
         fprintf(f, ",\"score\":%d", final_score);
         fprintf(f, ",\"score_str\":\"%s\"", score_str);
       }
@@ -452,7 +453,7 @@ write_json_run_status(
                                            start_time, separate_user_score, !priv_level, pe->token_flags,
                                            pe, prob, attempts, disq_attempts, ce_attempts, prev_successes,
                                            NULL, 1, effective_time,
-                                           -1 /* TODO: total_group_score */);
+                                           total_group_score);
         fprintf(f, ",\"score\":%d", final_score);
         fprintf(f, ",\"score_str\":\"%s\"", score_str);
       }

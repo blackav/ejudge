@@ -9446,7 +9446,8 @@ priv_list_runs_json(
         }
 
         write_json_run_status(cs, fout, env.rhead.start_time, pe, 1, attempts, disq_attempts, ce_attempts, prev_successes,
-                              0, run_fields, effective_time, "");
+                              0, run_fields, effective_time, "",
+                              -1 /* TODO: total_group_score */);
 
         if ((run_fields & (1 << RUN_VIEW_SCORE_ADJ)) && pe->score_adj != 0) {
           fprintf(fout, ",\"score_adj\":%d", pe->score_adj);
