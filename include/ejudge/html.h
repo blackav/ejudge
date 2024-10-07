@@ -178,7 +178,8 @@ write_text_run_status(
         int disq_attempts,
         int ce_attempts,
         int prev_successes,
-        time_t effective_time);
+        time_t effective_time,
+        int total_group_score);
 
 unsigned char*
 score_view_display(

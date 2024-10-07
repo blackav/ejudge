@@ -693,7 +693,8 @@ write_text_run_status(
         int disq_attempts,
         int ce_attempts,
         int prev_successes,
-        time_t effective_time)
+        time_t effective_time,
+        int total_group_score)
 {
   const struct section_global_data *global = state->global;
   unsigned char status_str[64], score_str[64];
@@ -790,7 +791,7 @@ write_text_run_status(
                      start_time, separate_user_score, user_mode, pe->token_flags,
                      pe, pr, attempts,
                      disq_attempts, ce_attempts, prev_successes, 0, 1, effective_time,
-                     -1 /* TODO: total_group_score */);
+                     total_group_score);
     fprintf(f, "%s;", score_str);
   }
 }

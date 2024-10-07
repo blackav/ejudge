@@ -4566,7 +4566,8 @@ ns_write_user_run_status(
   fprintf(fout, "%d;%s;%s;%u;%s;%s;", run_id, run_kind_str, dur_str, re.size,
           prob_str, lang_str);
   write_text_run_status(cs, fout, start_time, &re, 1 /* user_mode */, 0, attempts,
-                        disq_attempts, ce_attempts, prev_successes, effective_time);
+                        disq_attempts, ce_attempts, prev_successes, effective_time,
+                        -1 /* TODO: total_group_score */);
   fprintf(fout, "\n");
 
   return 0;
