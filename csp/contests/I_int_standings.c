@@ -290,6 +290,7 @@ process_kirov_run(
     StandingsUserRow *row = &pg->rows[tind];
     StandingsProblemColumn *col = &pg->columns[pind];
     time_t run_time = pe->time;
+    int total_group_score = -1;
 
     int token_flags = 0;
     if (sii->user_mode && sii->user_id > 0 && sii->user_id == pe->user_id) {
@@ -330,6 +331,7 @@ process_kirov_run(
                             run_score += cell->group_scores[i];
                         }
                     }
+                    total_group_score = run_score;
                 }
             }
         }
@@ -361,6 +363,7 @@ process_kirov_run(
                         }
                         run_score += cell->group_scores[i];
                     }
+                    total_group_score = run_score;
                 }
             }
         }
@@ -562,7 +565,7 @@ process_kirov_run(
                                              cell->disq_num, cell->ce_num,
                                              cell->full_sol?RUN_TOO_MANY:col->succ_att,
                                              0, 0, effective_time,
-                                             -1 /* TODO: total_group_score */);
+                                             total_group_score);
                 if (pe->is_marked) {
                     // latest
                     cell->marked_flag = 1;
@@ -594,7 +597,7 @@ process_kirov_run(
                                              pe, prob, cell->att_num,
                                              cell->disq_num, cell->ce_num, RUN_TOO_MANY, 0, 0,
                                              effective_time,
-                                             -1 /* TODO: total_group_score */);
+                                             total_group_score);
                 if (pe->is_marked) {
                     // latest
                     cell->marked_flag = 1;
@@ -681,7 +684,7 @@ process_kirov_run(
                                                  cell->disq_num, cell->ce_num,
                                                  cell->full_sol?RUN_TOO_MANY:col->succ_att,
                                                  0, 0, effective_time,
-                                                 -1 /* TODO: total_group_score */);
+                                                 total_group_score);
                     if (prob->score_latest > 0 || score > cell->score) {
                         cell->score = score;
                         if (prob->stand_hide_time <= 0) cell->sol_time = run_time;
@@ -744,7 +747,7 @@ process_kirov_run(
                                                  pe, prob, cell->sol_att,
                                                  cell->disq_num, cell->ce_num, RUN_TOO_MANY, 0, 0,
                                                  effective_time,
-                                                 -1 /* TODO: total_group_score */);
+                                                 total_group_score);
                     ++cell->sol_att;
                     if (prob->score_latest > 0 || score > cell->score) {
                         cell->score = score;
@@ -762,7 +765,7 @@ process_kirov_run(
                                              pe, prob, cell->sol_att,
                                              cell->disq_num, cell->ce_num, RUN_TOO_MANY, 0, 0,
                                              effective_time,
-                                             -1 /* TODO: total_group_score */);
+                                             total_group_score);
                 ++cell->sol_att;
                 if (prob->score_latest > 0 || score > cell->score) {
                     cell->score = score;

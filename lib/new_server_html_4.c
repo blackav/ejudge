@@ -1460,8 +1460,9 @@ enum
   F_IS_READONLY,                /* 42 */
   F_PAGES,                      /* 43 */
   F_JUDGE_ID,                   /* 44 */
+  F_GROUP_SCORES,               /* 45 */
 
-  F_TOTAL_FIELDS,               /* 45 */
+  F_TOTAL_FIELDS,               /* 46 */
 };
 
 static void
@@ -1517,6 +1518,7 @@ do_dump_master_runs(
   unsigned char user_id_buf[128], ip_buf[128], prob_id_buf[128];
   unsigned char lang_id_buf[128], judge_id_buf[128], pages_buf[128];
   unsigned char locale_id_buf[128], sha1_buf[256], base_score_buf[128];
+  unsigned char group_score_buf[512];
   const unsigned char *csv_rec[F_TOTAL_FIELDS];
 
   const serve_state_t cs = extra->serve_state;
@@ -1861,9 +1863,10 @@ do_dump_master_runs(
         orig_score = prob->full_score;
       snprintf(base_score_buf, sizeof(base_score_buf), "%d", orig_score);
       csv_rec[F_BASE_SCORE] = base_score_buf;
+      // TODO: track test groups for problems with enable_runlog_merge, pass the score to calc_kiron_score
       score = calc_kirov_score(0, 0, start_time, 0, 0, 0, pe, prob, attempts, disq_attempts, ce_attempts,
                                prev_successes, &date_penalty, 0, effective_time,
-                               -1 /* TODO: total_group_score */);
+                               -1);
       snprintf(score_buf, sizeof(score_buf), "%d", score);
       csv_rec[F_TOTAL_SCORE] = score_buf;
       if (attempts > 0) {
@@ -1893,6 +1896,20 @@ do_dump_master_runs(
       if (pe->score_adj != 0) {
         snprintf(score_adj_buf, sizeof(score_adj_buf), "%d", pe->score_adj);
         csv_rec[F_SCORE_ADJUSTMENT] = score_adj_buf;
+      }
+      if (prob->enable_group_merge > 0 && pe->group_scores) {
+        const int *p = run_get_group_scores(cs->runlog_state, pe->group_scores);
+        if (p && *p > 0) {
+          int count = *p++;
+          unsigned char *s = group_score_buf;
+          for (int i = 0; i < count; ++i) {
+            if (i > 0) {
+              *s++ = ' ';
+            }
+            s += sprintf(s, "%d", p[i]);
+          }
+          csv_rec[F_GROUP_SCORES] = group_score_buf;
+        }
       }
       write_csv_record(fout, F_TOTAL_FIELDS, csv_rec);
       continue;
