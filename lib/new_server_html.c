@@ -9352,12 +9352,14 @@ priv_list_runs_json(
 
         int attempts = 0, disq_attempts = 0, ce_attempts = 0;
         if (global->score_system == SCORE_KIROV && !pe->is_hidden) {
-          int ice = 0, cep = -1;
+          int ice = 0, cep = -1, egm = 0;
           if (prob) {
             ice = prob->ignore_compile_errors;
             cep = prob->compile_error_penalty;
+            egm = prob->enable_group_merge;
           }
-          run_get_attempts(cs->runlog_state, rid, &attempts, &disq_attempts, &ce_attempts, p_eff_time, ice, cep);
+          run_get_attempts(cs->runlog_state, rid, &attempts, &disq_attempts, &ce_attempts, p_eff_time, ice, cep, egm,
+                           NULL /* TODO: group_count*/, NULL /* TODO: group_scores */);
         }
 
         if (pe->is_imported > 0) {

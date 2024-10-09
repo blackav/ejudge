@@ -16,6 +16,7 @@
 
 #include "ejudge/config.h"
 #include "ejudge/runlog.h"
+#include "ejudge/ej_limits.h"
 #include "ejudge/teamdb.h"
 #include "ejudge/pathutl.h"
 #include "ejudge/errlog.h"
@@ -916,13 +917,20 @@ run_get_attempts(
         int *pce_attempts,
         time_t *peffective_time,
         int skip_ce_flag,
-        int ce_penalty)
+        int ce_penalty,
+        int group_merge_flag,
+        int *p_group_count,
+        int *p_group_scores)
 {
   int i, n = 0, m = 0, cen = 0;
 
   *pattempts = 0;
   if (pdisqattempts) *pdisqattempts = 0;
   if (pce_attempts) *pce_attempts = 0;
+  if (group_merge_flag > 0) {
+    if (p_group_count) *p_group_count = 0;
+    if (p_group_scores) XMEMZERO(p_group_scores, EJ_MAX_TEST_GROUP);
+  }
 
   if (runid < state->run_f || runid >= state->run_u) ERR_R("bad runid: %d", runid);
   const struct run_entry *sample_re = &state->runs[runid - state->run_f];
@@ -943,6 +951,26 @@ run_get_attempts(
     const struct run_entry *re = &state->runs[i - state->run_f];
     ASSERT(re->user_id == sample_re->user_id);
     if (i >= runid) break;
+
+    if (group_merge_flag > 0 && re->group_scores) {
+      const int *p = run_get_group_scores(state, re->group_scores);
+      if (p && *p > 0) {
+        int count = *p++;
+        if (count > *p_group_count) *p_group_count = count;
+        for (int i = 0; i < count; ++i) {
+          if (p[i] >= 0 && p_group_scores[i] >= 0) {
+            if (p_group_scores[i] < p[i]) p_group_scores[i] = p[i];
+          } else if (p[i] >= 0 && p_group_scores[i] < 0) {
+            if (-p[i] < p_group_scores[i]) p_group_scores[i] = -p[i];
+          } else if (p[i] < 0 && p_group_scores[i] >= 0) {
+            p_group_scores[i] = -p_group_scores[i];
+            if (p_group_scores[i] > p[i]) p_group_scores[i] = p[i];
+          } else {
+            if (p_group_scores[i] > p[i]) p_group_scores[i] = p[i];
+          }
+        }
+      }
+    }
 
     if (re->status == RUN_VIRTUAL_START || re->status == RUN_VIRTUAL_STOP) continue;
     if (re->prob_id != sample_re->prob_id) continue;

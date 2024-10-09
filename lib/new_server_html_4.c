@@ -1853,9 +1853,12 @@ do_dump_master_runs(
       effective_time = 0; p_eff_time = NULL;
       if (prob->enable_submit_after_reject > 0) p_eff_time = &effective_time;
       if (global->score_system == SCORE_KIROV && !pe->is_hidden) {
+        // assert(prob != NULL);
         run_get_attempts(cs->runlog_state, rid, &attempts, &disq_attempts, &ce_attempts,
                          p_eff_time,
-                         prob->ignore_compile_errors, prob->compile_error_penalty);
+                         prob->ignore_compile_errors, prob->compile_error_penalty,
+                         prob->enable_group_merge,
+                         NULL /* TODO: group_count */, NULL /* TODO: group_scores */);
       }
 
       orig_score = pe->score;

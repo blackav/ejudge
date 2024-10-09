@@ -206,7 +206,21 @@ time_t run_get_finish_time(runlog_state_t state);
 time_t run_get_duration(runlog_state_t, int user_id);
 
 void run_get_team_usage(runlog_state_t, int, int *, size_t*);
-int  run_get_attempts(runlog_state_t, int, int *, int *, int *, time_t *, int, int);
+
+int
+run_get_attempts(
+        runlog_state_t state,
+        int runid,
+        int *pattempts,
+        int *pdisqattempts,
+        int *pce_attempts,
+        time_t *peffective_time,
+        int skip_ce_flag,
+        int ce_penalty,
+        int group_merge_flag,
+        int *p_group_count,
+        int *p_group_scores);
+
 int run_count_all_attempts(runlog_state_t state, int user_id, int prob_id);
 int run_count_all_attempts_2(runlog_state_t state, int user_id, int prob_id, int ignored_set);
 int run_count_all_attempts_3(runlog_state_t state, int user_id, int prob_id);

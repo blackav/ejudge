@@ -161,9 +161,18 @@
             p_eff_time = &effective_time;
         }
         if (global->score_system == SCORE_KIROV) {
+            int ice = 0;
+            int cep = -1;
+            int egm = 0;
+            if (cur_prob) {
+                ice = cur_prob->ignore_compile_errors;
+                cep = cur_prob->compile_error_penalty;
+                egm = cur_prob->enable_group_merge;
+            }
             run_get_attempts(cs->runlog_state, i, &attempts, &disq_attempts, &ce_attempts,
                              p_eff_time,
-                             cur_prob->ignore_compile_errors, cur_prob->compile_error_penalty);
+                             ice, cep, egm,
+                             NULL /* TODO: group_count */, NULL /* TODO: group_scores */);
             if (status == RUN_OK && cur_prob && cur_prob->score_bonus_total > 0) {
                 prev_successes = run_get_prev_successes(cs->runlog_state, i);
                 if (prev_successes < 0) prev_successes = RUN_TOO_MANY;

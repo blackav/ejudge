@@ -789,13 +789,15 @@ ns_write_priv_all_runs(
       if (prob && prob->enable_submit_after_reject > 0)
         p_eff_time = &effective_time;
       if (global->score_system == SCORE_KIROV && !pe->is_hidden) {
-        int ice = 0, cep = -1;
+        int ice = 0, cep = -1, egm = 0;
         if (prob) {
           ice = prob->ignore_compile_errors;
           cep = prob->compile_error_penalty;
+          egm = prob->enable_group_merge;
         }
         run_get_attempts(cs->runlog_state, rid, &attempts, &disq_attempts, &ce_attempts,
-                         p_eff_time, ice, cep);
+                         p_eff_time, ice, cep, egm,
+                         NULL /* TODO: group_counter */, NULL /* TODO: group_scores */);
       }
       run_time = pe->time;
       imported_str = "";
@@ -4517,10 +4519,18 @@ ns_write_user_run_status(
   attempts = 0; disq_attempts = 0; ce_attempts = 0;
   if (cur_prob && cur_prob->enable_submit_after_reject > 0)
     p_eff_time = &effective_time;
-  if (cs->global->score_system == SCORE_KIROV && !re.is_hidden)
+  if (cs->global->score_system == SCORE_KIROV && !re.is_hidden) {
+    int ice = 0, cep = -1, egm = 0;
+    if (cur_prob) {
+      ice = cur_prob->ignore_compile_errors;
+      cep = cur_prob->compile_error_penalty;
+      egm = cur_prob->enable_group_merge;
+    }
     run_get_attempts(cs->runlog_state, run_id, &attempts, &disq_attempts, &ce_attempts,
                      p_eff_time,
-                     cur_prob->ignore_compile_errors, cur_prob->compile_error_penalty);
+                     ice, cep, egm,
+                     NULL /* TODO: group_count */, NULL /* TODO: group_scores */);
+  }
 
   prev_successes = RUN_TOO_MANY;
   if (cs->global->score_system == SCORE_KIROV
@@ -7070,10 +7080,18 @@ fill_user_run_info(
   if (cur_prob && cur_prob->enable_submit_after_reject > 0)
     p_eff_time = &effective_time;
 
-  if (global->score_system == SCORE_KIROV && !pre->is_hidden)
+  if (global->score_system == SCORE_KIROV && !pre->is_hidden) {
+    int ice = 0, cep = -1, egm = 0;
+    if (cur_prob) {
+      ice = cur_prob->ignore_compile_errors;
+      cep = cur_prob->compile_error_penalty;
+      egm = cur_prob->enable_group_merge;
+    }
     run_get_attempts(cs->runlog_state, run_id, &attempts, &disq_attempts, &ce_attempts,
                      p_eff_time,
-                     cur_prob->ignore_compile_errors, cur_prob->compile_error_penalty);
+                     ice, cep, egm,
+                     NULL /* TODO: group_count */, NULL /* TODO: group_scores */);
+  }
   prev_successes = RUN_TOO_MANY;
   if (global->score_system == SCORE_KIROV
       && status == RUN_OK
@@ -7452,7 +7470,9 @@ new_write_user_runs(
     if (global->score_system == SCORE_KIROV && !re.is_hidden)
       run_get_attempts(state->runlog_state, i, &attempts, &disq_attempts, &ce_attempts,
                        p_eff_time,
-                       cur_prob->ignore_compile_errors, cur_prob->compile_error_penalty);
+                       cur_prob->ignore_compile_errors, cur_prob->compile_error_penalty,
+                       cur_prob->enable_group_merge,
+                      NULL /* TODO: group_count */, NULL /* TODO: group_scores */);
 
     prev_successes = RUN_TOO_MANY;
     if (global->score_system == SCORE_KIROV
