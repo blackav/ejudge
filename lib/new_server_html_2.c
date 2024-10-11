@@ -6965,6 +6965,7 @@ collect_run_status(
         int disable_failed,
         time_t effective_time,
         int gen_strings_flag,
+        int total_group_score,
         RunDisplayInfo *ri) // out
 {
   const struct section_global_data *global = cs->global;
@@ -7120,7 +7121,7 @@ collect_run_status(
                                  start_time, separate_user_score, user_mode, pe->token_flags,
                                  pe, pr, attempts,
                                  disq_attempts, ce_attempts, prev_successes, 0, 1, effective_time,
-                                 -1 /* TODO: total_group_score */);
+                                 total_group_score);
     if (gen_strings_flag) {
       ri->score_str = strdup(score_buf);
     }
@@ -7144,7 +7145,7 @@ fill_user_run_info(
   int status = -1;
   int group_count;
   int group_scores[EJ_MAX_TEST_GROUP];
-  __attribute__((unused)) int total_group_score = -1;
+  int total_group_score = -1;
 
   struct virtual_end_info_s *vend_info = NULL;
 
@@ -7308,6 +7309,7 @@ fill_user_run_info(
                      0 /* disable_failed */,
                      effective_time,
                      gen_strings_flag,
+                     total_group_score,
                      ri);
 
   ri->is_src_enabled = (enable_src_view > 0);
