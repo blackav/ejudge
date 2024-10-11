@@ -591,6 +591,8 @@ cmd_run_operation(
   path_t src_path;
   char *src_text = 0;
   size_t src_len = 0;
+  int separate_user_score = global->separate_user_score > 0 && cs->online_view_judge_score <= 0;
+
 
   if (hr_cgi_param(phr, "run_id", &s) <= 0)
     FAIL(NEW_SRV_ERR_INV_RUN_ID);
@@ -653,7 +655,7 @@ cmd_run_operation(
 
   switch (phr->action) {
   case NEW_SRV_ACTION_DUMP_RUN_STATUS:
-    retval = ns_write_user_run_status(cs, fout, run_id);
+    retval = ns_write_user_run_status(cs, fout, run_id, separate_user_score);
     break;
   case NEW_SRV_ACTION_DUMP_SOURCE:
     src_flags = serve_make_source_read_path(cs, src_path, sizeof(src_path), &re);

@@ -4498,7 +4498,8 @@ int
 ns_write_user_run_status(
         const serve_state_t cs,
         FILE *fout,
-        int run_id)
+        int run_id,
+        int separate_user_score)
 {
   struct run_entry re;
   int attempts = 0, disq_attempts = 0, ce_attempts = 0;
@@ -4507,6 +4508,9 @@ ns_write_user_run_status(
   unsigned char *run_kind_str = "", *prob_str = "???", *lang_str = "???";
   time_t run_time, start_time;
   unsigned char dur_str[64];
+  int group_count;
+  int group_scores[EJ_MAX_TEST_GROUP];
+  int total_group_score = -1;
 
   time_t effective_time = 0;
   time_t *p_eff_time = NULL;
@@ -4542,7 +4546,25 @@ ns_write_user_run_status(
     run_get_attempts(cs->runlog_state, run_id, &attempts, &disq_attempts, &ce_attempts,
                      p_eff_time,
                      ice, cep, egm,
-                     NULL /* TODO: group_count */, NULL /* TODO: group_scores */);
+                     &group_count, group_scores);
+    if (egm > 0) {
+      total_group_score = 0;
+      if (separate_user_score > 0) {
+        for (int i = 0; i < group_count; ++i) {
+          if (group_scores[i] > 0) {
+            total_group_score += group_scores[i];
+          }
+        }
+      } else {
+        for (int i = 0; i < group_count; ++i) {
+          if (group_scores[i] >= 0) {
+            total_group_score += group_scores[i];
+          } else {
+            total_group_score -= group_scores[i];
+          }
+        }
+      }      
+    }
   }
 
   prev_successes = RUN_TOO_MANY;
@@ -4590,7 +4612,7 @@ ns_write_user_run_status(
           prob_str, lang_str);
   write_text_run_status(cs, fout, start_time, &re, 1 /* user_mode */, 0, attempts,
                         disq_attempts, ce_attempts, prev_successes, effective_time,
-                        -1 /* TODO: total_group_score */);
+                        total_group_score);
   fprintf(fout, "\n");
 
   return 0;
