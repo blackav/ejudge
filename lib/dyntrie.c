@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2022-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -291,7 +291,7 @@ dyntrie_get(
             return item->t.value;
         }
         if (item->is_leaf) {
-            if (s[matched]) abort();
+            if (s[matched]) return NULL;
             return item->t.value;
         }
         s += matched;
