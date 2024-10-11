@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2005-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -100,6 +100,10 @@ run_reply_packet_write(
   out_data->uuid.v[2] = cvt_host_to_bin_32(in_data->uuid.v[2]);
   out_data->uuid.v[3] = cvt_host_to_bin_32(in_data->uuid.v[3]);
   */
+  out_data->group_count = cvt_host_to_bin_32(in_data->group_count);
+  for (int i = 0; i < in_data->group_count; ++i) {
+    out_data->group_scores[i] = cvt_host_to_bin_32(in_data->group_scores[i]);
+  }
 
   *p_out_size = out_size;
   *p_out_data = out_data;

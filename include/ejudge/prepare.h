@@ -1028,6 +1028,8 @@ struct section_problem_data
 
   ejbyteflag_t disable_vm_size_limit;
 
+  ejbyteflag_t enable_group_merge;
+
   // padding to 8-byte boundary
   //unsigned char _pad1[1];
 

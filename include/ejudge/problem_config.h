@@ -108,6 +108,7 @@ struct problem_config_section
   ejintbool_t enable_iframe_statement;
   ejintbool_t copy_exe_to_tgzdir;
   ejintbool_t ignore_term_signal;
+  ejintbool_t enable_group_merge;
 
   int id;
   int real_time_limit;

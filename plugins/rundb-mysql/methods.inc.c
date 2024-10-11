@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2008-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -93,6 +93,8 @@ change_status_func(
         int judge_id,
         const ej_uuid_t *judge_uuid,
         unsigned int verdict_bits,
+        int group_count,
+        const int *group_scores,
         struct run_entry *ure);
 
 static int
@@ -188,6 +190,8 @@ change_status_3_func(
         int user_tests_passed,
         int user_score,
         unsigned int verdict_bits,
+        int group_count,
+        const int *group_scores,
         struct run_entry *ure);
 
 static int
@@ -235,6 +239,8 @@ static int
 append_run_func(
         struct rldb_plugin_cnts *cdata,
         const struct run_entry *re,
+        int group_count,
+        const int *group_scores,
         uint64_t mask,
         struct timeval *p_tv,
         int64_t *p_serial_id,
@@ -246,3 +252,8 @@ run_set_is_checked_func(
         struct rldb_plugin_cnts *cdata,
         int run_id,
         int is_checked);
+
+static const int *
+get_group_scores_func(
+        struct rldb_plugin_cnts *cdata,
+        uint32_t index);

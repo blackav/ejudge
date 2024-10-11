@@ -4461,7 +4461,10 @@ priv_submit_run_comment(
                         user_status,      /* user_status -> saved_status */
                         re.saved_test,    /* user_tests_passed -> saved_test */
                         user_score,       /* user_score -> saved_score */
-                        re.verdict_bits, &re);
+                        re.verdict_bits,
+                        -2,   /* do not change group_score */
+                        NULL,
+                        &re);
     serve_notify_run_update(phr->config, cs, &re);
   }
 
@@ -9109,6 +9112,9 @@ priv_list_runs_json(
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   struct filter_env env;
   const unsigned char *s = NULL;
+  int group_count;
+  int group_scores[EJ_MAX_TEST_GROUP];
+  int total_group_score;
 
   phr->json_reply = 1;
   memset(&env, 0, sizeof(env));
@@ -9313,7 +9319,7 @@ priv_list_runs_json(
                   JARMOR(mixed_id_marshall(mbuf, pe->ext_user_kind, &pe->ext_user)));
         }
       }
-      if ((run_fields & (1 << RUN_VIEW_NOTIFY))) {
+      if ((run_fields & (1LL << RUN_VIEW_NOTIFY))) {
         if (pe->notify_driver > 0
             && pe->notify_kind > 0 && pe->notify_kind < MIXED_ID_LAST) {
           unsigned char mbuf[64];
@@ -9348,13 +9354,25 @@ priv_list_runs_json(
           p_eff_time = &effective_time;
 
         int attempts = 0, disq_attempts = 0, ce_attempts = 0;
+        total_group_score = -1;
         if (global->score_system == SCORE_KIROV && !pe->is_hidden) {
-          int ice = 0, cep = -1;
+          int ice = 0, cep = -1, egm = 0;
           if (prob) {
             ice = prob->ignore_compile_errors;
             cep = prob->compile_error_penalty;
+            egm = prob->enable_group_merge;
           }
-          run_get_attempts(cs->runlog_state, rid, &attempts, &disq_attempts, &ce_attempts, p_eff_time, ice, cep);
+          run_get_attempts(cs->runlog_state, rid, &attempts, &disq_attempts, &ce_attempts, p_eff_time, ice, cep, egm,
+                           &group_count, group_scores);
+          if (egm > 0) {
+            for (int i = 0; i < group_count; ++i) {
+              if (group_scores[i] >= 0) {
+                total_group_score += group_scores[i];
+              } else {
+                total_group_score -= group_scores[i];
+              }
+            }
+          }
         }
 
         if (pe->is_imported > 0) {
@@ -9443,7 +9461,8 @@ priv_list_runs_json(
         }
 
         write_json_run_status(cs, fout, env.rhead.start_time, pe, 1, attempts, disq_attempts, ce_attempts, prev_successes,
-                              0, run_fields, effective_time, "");
+                              0, run_fields, effective_time, "",
+                              total_group_score);
 
         if ((run_fields & (1 << RUN_VIEW_SCORE_ADJ)) && pe->score_adj != 0) {
           fprintf(fout, ",\"score_adj\":%d", pe->score_adj);
@@ -9458,6 +9477,18 @@ priv_list_runs_json(
         }
         if ((run_fields & (1 << RUN_VIEW_SAVED_TEST)) && pe->is_saved > 0 && pe->saved_test >= 0) {
           fprintf(fout, ",\"saved_test\":%d", pe->saved_test);
+        }
+        if ((run_fields & (1LL << RUN_VIEW_GROUP_SCORES)) && pe->group_scores) {
+          fprintf(fout, ",\"group_scores\":[");
+          const int *p = run_get_group_scores(cs->runlog_state, pe->group_scores);
+          if (p) {
+            int count = *p++;
+            for (int i = 0; i < count; ++i) {
+              if (i > 0) putc_unlocked(',', fout);
+              fprintf(fout, "%d", p[i]);
+            }
+          }
+          fprintf(fout, "]");
         }
       }
     }
@@ -10532,6 +10563,9 @@ priv_problem_status_json(
   }
   if (prob->disable_vm_size_limit > 0) {
     cJSON_AddTrueToObject(jp, "disable_vm_size_limit");
+  }
+  if (prob->enable_group_merge > 0) {
+    cJSON_AddTrueToObject(jp, "enable_group_merge");
   }
 
   // whether statement is available

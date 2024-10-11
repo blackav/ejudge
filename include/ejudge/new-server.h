@@ -470,7 +470,8 @@ int
 ns_write_user_run_status(
         const serve_state_t cs,
         FILE *fout,
-        int run_id);
+        int run_id,
+        int separate_user_score);
 void
 ns_write_olympiads_user_runs(
         struct http_request_info *phr,

@@ -2,7 +2,7 @@
 #ifndef __RUNLOG_H__
 #define __RUNLOG_H__
 
-/* Copyright (C) 2000-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -158,6 +158,8 @@ run_change_status(
         int judge_id,
         const ej_uuid_t *judge_uuid,
         unsigned int verdict_bits,
+        int group_count,
+        const int *group_scores,
         struct run_entry *ure);
 int
 run_change_status_3(
@@ -173,6 +175,8 @@ run_change_status_3(
         int user_tests_passed,
         int user_score,
         unsigned int verdict_bits,
+        int group_count,
+        const int *group_scores,
         struct run_entry *ure);
 int
 run_change_status_4(
@@ -202,7 +206,21 @@ time_t run_get_finish_time(runlog_state_t state);
 time_t run_get_duration(runlog_state_t, int user_id);
 
 void run_get_team_usage(runlog_state_t, int, int *, size_t*);
-int  run_get_attempts(runlog_state_t, int, int *, int *, int *, time_t *, int, int);
+
+int
+run_get_attempts(
+        runlog_state_t state,
+        int runid,
+        int *pattempts,
+        int *pdisqattempts,
+        int *pce_attempts,
+        time_t *peffective_time,
+        int skip_ce_flag,
+        int ce_penalty,
+        int group_merge_flag,
+        int *p_group_count,
+        int *p_group_scores);
+
 int run_count_all_attempts(runlog_state_t state, int user_id, int prob_id);
 int run_count_all_attempts_2(runlog_state_t state, int user_id, int prob_id, int ignored_set);
 int run_count_all_attempts_3(runlog_state_t state, int user_id, int prob_id);
@@ -289,7 +307,8 @@ enum
     RE_VERDICT_BITS  = 0x400000000ULL,
     RE_EXT_USER      = 0x800000000ULL,
     RE_NOTIFY        = 0x1000000000ULL,
-    RE_ALL           = 0x1FFFFFFFFFULL,
+    RE_GROUP_SCORES  = 0x2000000000ULL,
+    RE_ALL           = 0x3FFFFFFFFFULL,
   };
 
 struct run_entry
@@ -352,7 +371,8 @@ struct run_entry
   unsigned char  notify_kind;   /* 1 */
   ruint32_t      verdict_bits;  /* 4 */
   rint64_t       last_change_us;/* 8 */
-  char _pad1[8];
+  ruint32_t      group_scores;  /* 4 */
+  char _pad1[4];
   ej_mixed_id_t  ext_user;      /* 16 */
   ej_mixed_id_t  notify_queue;  /* 16 */
   char _pad[32];
@@ -446,6 +466,8 @@ int run_set_pages(
         int pages,
         struct run_entry *ure);
 int run_get_total_pages(runlog_state_t, int run_id);
+
+const int *run_get_group_scores(runlog_state_t, uint32_t);
 
 int run_find(
         runlog_state_t,

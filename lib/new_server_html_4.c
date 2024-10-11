@@ -591,6 +591,8 @@ cmd_run_operation(
   path_t src_path;
   char *src_text = 0;
   size_t src_len = 0;
+  int separate_user_score = global->separate_user_score > 0 && cs->online_view_judge_score <= 0;
+
 
   if (hr_cgi_param(phr, "run_id", &s) <= 0)
     FAIL(NEW_SRV_ERR_INV_RUN_ID);
@@ -653,7 +655,7 @@ cmd_run_operation(
 
   switch (phr->action) {
   case NEW_SRV_ACTION_DUMP_RUN_STATUS:
-    retval = ns_write_user_run_status(cs, fout, run_id);
+    retval = ns_write_user_run_status(cs, fout, run_id, separate_user_score);
     break;
   case NEW_SRV_ACTION_DUMP_SOURCE:
     src_flags = serve_make_source_read_path(cs, src_path, sizeof(src_path), &re);
@@ -1460,8 +1462,9 @@ enum
   F_IS_READONLY,                /* 42 */
   F_PAGES,                      /* 43 */
   F_JUDGE_ID,                   /* 44 */
+  F_GROUP_SCORES,               /* 45 */
 
-  F_TOTAL_FIELDS,               /* 45 */
+  F_TOTAL_FIELDS,               /* 46 */
 };
 
 static void
@@ -1517,6 +1520,7 @@ do_dump_master_runs(
   unsigned char user_id_buf[128], ip_buf[128], prob_id_buf[128];
   unsigned char lang_id_buf[128], judge_id_buf[128], pages_buf[128];
   unsigned char locale_id_buf[128], sha1_buf[256], base_score_buf[128];
+  unsigned char group_score_buf[512];
   const unsigned char *csv_rec[F_TOTAL_FIELDS];
 
   const serve_state_t cs = extra->serve_state;
@@ -1525,6 +1529,9 @@ do_dump_master_runs(
   const struct section_language_data *lang = 0;
   time_t effective_time;
   time_t *p_eff_time;
+  int total_group_score;
+  int group_count;
+  int group_scores[EJ_MAX_TEST_GROUP];
 
   filter_expr_nerrs = 0;
   u = user_filter_info_allocate(cs, phr->user_id, phr->session_id);
@@ -1849,11 +1856,24 @@ do_dump_master_runs(
 
       attempts = 0; disq_attempts = 0; ce_attempts = 0;
       effective_time = 0; p_eff_time = NULL;
+      total_group_score = -1;
       if (prob->enable_submit_after_reject > 0) p_eff_time = &effective_time;
       if (global->score_system == SCORE_KIROV && !pe->is_hidden) {
+        // assert(prob != NULL);
         run_get_attempts(cs->runlog_state, rid, &attempts, &disq_attempts, &ce_attempts,
                          p_eff_time,
-                         prob->ignore_compile_errors, prob->compile_error_penalty);
+                         prob->ignore_compile_errors, prob->compile_error_penalty,
+                         prob->enable_group_merge,
+                         &group_count, group_scores);
+        if (prob->enable_group_merge > 0) {
+          for (int i = 0; i < group_count; ++i) {
+            if (group_scores[i] >= 0) {
+              total_group_score += group_scores[i];
+            } else {
+              total_group_score -= group_scores[i];
+            }
+          }
+        }
       }
 
       orig_score = pe->score;
@@ -1862,7 +1882,8 @@ do_dump_master_runs(
       snprintf(base_score_buf, sizeof(base_score_buf), "%d", orig_score);
       csv_rec[F_BASE_SCORE] = base_score_buf;
       score = calc_kirov_score(0, 0, start_time, 0, 0, 0, pe, prob, attempts, disq_attempts, ce_attempts,
-                               prev_successes, &date_penalty, 0, effective_time);
+                               prev_successes, &date_penalty, 0, effective_time,
+                               total_group_score);
       snprintf(score_buf, sizeof(score_buf), "%d", score);
       csv_rec[F_TOTAL_SCORE] = score_buf;
       if (attempts > 0) {
@@ -1892,6 +1913,20 @@ do_dump_master_runs(
       if (pe->score_adj != 0) {
         snprintf(score_adj_buf, sizeof(score_adj_buf), "%d", pe->score_adj);
         csv_rec[F_SCORE_ADJUSTMENT] = score_adj_buf;
+      }
+      if (prob->enable_group_merge > 0 && pe->group_scores) {
+        const int *p = run_get_group_scores(cs->runlog_state, pe->group_scores);
+        if (p && *p > 0) {
+          int count = *p++;
+          unsigned char *s = group_score_buf;
+          for (int i = 0; i < count; ++i) {
+            if (i > 0) {
+              *s++ = ' ';
+            }
+            s += sprintf(s, "%d", p[i]);
+          }
+          csv_rec[F_GROUP_SCORES] = group_score_buf;
+        }
       }
       write_csv_record(fout, F_TOTAL_FIELDS, csv_rec);
       continue;

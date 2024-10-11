@@ -16,6 +16,7 @@
 
 #include "ejudge/config.h"
 #include "ejudge/runlog.h"
+#include "ejudge/ej_limits.h"
 #include "ejudge/teamdb.h"
 #include "ejudge/pathutl.h"
 #include "ejudge/errlog.h"
@@ -149,6 +150,8 @@ run_destroy(runlog_state_t state)
   xfree(state->urh.infos);
 
   if (state->iface) state->iface->close(state->cnts);
+
+  xfree(state->group_scores.data);
 
   memset(state, 0, sizeof(*state));
   xfree(state);
@@ -449,7 +452,7 @@ run_add_record(
 
   int64_t serial_id = 0;
   if (state->iface->append_run) {
-    i = state->iface->append_run(state->cnts, &re, flags, p_tv, &serial_id, puuid, ure);
+    i = state->iface->append_run(state->cnts, &re, 0, NULL, flags, p_tv, &serial_id, puuid, ure);
     if (i < 0) {
       return -1;
     }
@@ -583,6 +586,8 @@ run_change_status(
         int judge_id,
         const ej_uuid_t *judge_uuid,
         unsigned int verdict_bits,
+        int group_count,
+        const int *group_scores,
         struct run_entry *ure)
 {
   if (runid < state->run_f || runid >= state->run_u) ERR_R("bad runid: %d", runid);
@@ -612,7 +617,8 @@ run_change_status(
 
   return state->iface->change_status(state->cnts, runid, newstatus, newtest,
                                      newpassedmode, newscore, judge_id,
-                                     judge_uuid, verdict_bits, ure);
+                                     judge_uuid, verdict_bits,
+                                     group_count, group_scores, ure);
 }
 
 int
@@ -629,6 +635,8 @@ run_change_status_3(
         int user_tests_passed,
         int user_score,
         unsigned int verdict_bits,
+        int group_count,
+        const int *group_scores,
         struct run_entry *ure)
 {
   if (runid < state->run_f || runid >= state->run_u) ERR_R("bad runid: %d", runid);
@@ -666,6 +674,8 @@ run_change_status_3(
                                        user_tests_passed, /* user_tests_passed */
                                        user_score,       /* user_score */
                                        verdict_bits,
+                                       group_count,
+                                       group_scores,
                                        ure);
 }
 
@@ -907,13 +917,20 @@ run_get_attempts(
         int *pce_attempts,
         time_t *peffective_time,
         int skip_ce_flag,
-        int ce_penalty)
+        int ce_penalty,
+        int group_merge_flag,
+        int *p_group_count,
+        int *p_group_scores)
 {
   int i, n = 0, m = 0, cen = 0;
 
   *pattempts = 0;
   if (pdisqattempts) *pdisqattempts = 0;
   if (pce_attempts) *pce_attempts = 0;
+  if (group_merge_flag > 0) {
+    if (p_group_count) *p_group_count = 0;
+    if (p_group_scores) XMEMZERO(p_group_scores, EJ_MAX_TEST_GROUP);
+  }
 
   if (runid < state->run_f || runid >= state->run_u) ERR_R("bad runid: %d", runid);
   const struct run_entry *sample_re = &state->runs[runid - state->run_f];
@@ -934,6 +951,26 @@ run_get_attempts(
     const struct run_entry *re = &state->runs[i - state->run_f];
     ASSERT(re->user_id == sample_re->user_id);
     if (i >= runid) break;
+
+    if (group_merge_flag > 0 && re->group_scores) {
+      const int *p = run_get_group_scores(state, re->group_scores);
+      if (p && *p > 0) {
+        int count = *p++;
+        if (count > *p_group_count) *p_group_count = count;
+        for (int i = 0; i < count; ++i) {
+          if (p[i] >= 0 && p_group_scores[i] >= 0) {
+            if (p_group_scores[i] < p[i]) p_group_scores[i] = p[i];
+          } else if (p[i] >= 0 && p_group_scores[i] < 0) {
+            if (-p[i] < p_group_scores[i]) p_group_scores[i] = -p[i];
+          } else if (p[i] < 0 && p_group_scores[i] >= 0) {
+            p_group_scores[i] = -p_group_scores[i];
+            if (p_group_scores[i] > p[i]) p_group_scores[i] = p[i];
+          } else {
+            if (p_group_scores[i] > p[i]) p_group_scores[i] = p[i];
+          }
+        }
+      }
+    }
 
     if (re->status == RUN_VIRTUAL_START || re->status == RUN_VIRTUAL_STOP) continue;
     if (re->prob_id != sample_re->prob_id) continue;
@@ -2551,6 +2588,16 @@ run_get_pages(runlog_state_t state, int run_id)
 {
   if (run_id < state->run_f || run_id >= state->run_u) ERR_R("bad runid: %d", run_id);
   return state->runs[run_id - state->run_f].pages;
+}
+
+const int *
+run_get_group_scores(runlog_state_t state, uint32_t index)
+{
+  if (state->iface->get_group_scores) {
+    return state->iface->get_group_scores(state->cnts, index);
+  } else {
+    return NULL;
+  }
 }
 
 int

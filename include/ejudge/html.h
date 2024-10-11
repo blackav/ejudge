@@ -2,7 +2,7 @@
 #ifndef __HTML_H__
 #define __HTML_H__
 
-/* Copyright (C) 2000-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -88,7 +88,8 @@ calc_kirov_score(
         int prev_successes,
         int *p_date_penalty,
         int format,
-        time_t effective_time);
+        time_t effective_time,
+        int total_group_score);
 void
 write_html_run_status(
         const serve_state_t,
@@ -105,7 +106,8 @@ write_html_run_status(
         int disable_failed,
         int enable_js_status_menu,
         long long run_fields,
-        time_t effective_time);
+        time_t effective_time,
+        int total_group_score);
 void
 write_json_run_status(
         const serve_state_t state,
@@ -120,7 +122,8 @@ write_json_run_status(
         int disable_failed,
         long long run_fields,
         time_t effective_time,
-        const unsigned char *indent);
+        const unsigned char *indent,
+        int total_group_score);
 
 struct testing_report_xml;
 
@@ -175,7 +178,8 @@ write_text_run_status(
         int disq_attempts,
         int ce_attempts,
         int prev_successes,
-        time_t effective_time);
+        time_t effective_time,
+        int total_group_score);
 
 unsigned char*
 score_view_display(
@@ -224,6 +228,7 @@ enum
   RUN_VIEW_LAST_CHANGE_US,
   RUN_VIEW_EXT_USER,
   RUN_VIEW_NOTIFY,
+  RUN_VIEW_GROUP_SCORES,
 
   RUN_VIEW_LAST,
 

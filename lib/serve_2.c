@@ -1945,7 +1945,7 @@ serve_compile_request(
 
   if (!no_db_flag) {
     if (run_change_status(state->runlog_state, run_id, RUN_COMPILING, 0, 1, -1,
-                          cp.judge_id, &cp.judge_uuid, 0, ure) < 0) {
+                          cp.judge_id, &cp.judge_uuid, 0, -1, NULL, ure) < 0) {
       errcode = -SERVE_ERR_DB;
       goto failed;
     }
@@ -2782,6 +2782,9 @@ serve_run_request(
   if (prob->disable_vm_size_limit > 0) {
     srpp->disable_vm_size_limit = 1;
   }
+  if (prob->enable_group_merge > 0) {
+    srpp->enable_group_merge = 1;
+  }
 
   if (tester) {
     struct super_run_in_tester_packet *srtp = srp->tester;
@@ -2834,7 +2837,7 @@ serve_run_request(
   /* update status */
   if (!no_db_flag) {
     if (run_change_status(state->runlog_state, run_id, RUN_RUNNING, 0, 1, -1,
-                          judge_id, judge_uuid, 0, ure) < 0) {
+                          judge_id, judge_uuid, 0, -1, NULL, ure) < 0) {
       goto fail;
     }
     serve_notify_run_update(config, state, ure);
@@ -4755,7 +4758,8 @@ serve_read_run_packet(
                             reply_pkt->status, reply_pkt->tests_passed, 1,
                             reply_pkt->score, reply_pkt->marked_flag,
                             has_user_score, user_status, user_tests_passed,
-                            user_score, reply_pkt->verdict_bits, &re) < 0)
+                            user_score, reply_pkt->verdict_bits,
+                            reply_pkt->group_count, reply_pkt->group_scores, &re) < 0)
       goto failed;
     serve_notify_run_update(config, state, &re);
   }
@@ -4919,11 +4923,11 @@ serve_read_run_packet(
       if (run_get_entry(state->runlog_state, i, &pe) < 0) continue;
       if ((pe.status == RUN_ACCEPTED || pe.status == RUN_PENDING_REVIEW)
           && pe.prob_id == re.prob_id && pe.user_id == re.user_id) {
-        run_change_status_3(state->runlog_state, i, RUN_IGNORED, 0, 1, 0, 0, 0, 0, 0, 0, 0, &re);
+        run_change_status_3(state->runlog_state, i, RUN_IGNORED, 0, 1, 0, 0, 0, 0, 0, 0, 0, -1, NULL, &re);
         serve_notify_run_update(config, state, &re);
       } else if (pe.is_saved && (pe.saved_status == RUN_ACCEPTED || pe.saved_status == RUN_PENDING_REVIEW)
           && pe.prob_id == re.prob_id && pe.user_id == re.user_id) {
-        run_change_status_3(state->runlog_state, i, RUN_IGNORED, 0, 1, 0, 0, 0, 0, 0, 0, 0, &re);
+        run_change_status_3(state->runlog_state, i, RUN_IGNORED, 0, 1, 0, 0, 0, 0, 0, 0, 0, -1, NULL, &re);
         serve_notify_run_update(config, state, &re);
       }
     }
@@ -5122,7 +5126,7 @@ serve_judge_built_in_problem(
   /* FIXME: handle database update error */
   (void) failed_test;
   run_change_status_3(state->runlog_state, run_id, glob_status, passed_tests, 1,
-                      score, 0, 0, 0, 0, 0, 0, re);
+                      score, 0, 0, 0, 0, 0, 0, -1, NULL, re);
   serve_notify_run_update(config, state, re);
   serve_update_standings_file(extra, state, cnts, 0);
   /*

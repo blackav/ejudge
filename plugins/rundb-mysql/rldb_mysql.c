@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2008-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -16,10 +16,15 @@
 
 #include "ejudge/config.h"
 #include "ejudge/ej_limits.h"
+#include "ejudge/ej_limits.h"
 #include "ejudge/rldb_plugin.h"
 #include "ejudge/runlog.h"
 #include "ejudge/teamdb.h"
 #include "../common-mysql/common_mysql.h"
+#include <ctype.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
 
 #define RUNS_ACCESS
 #include "ejudge/runlog_state.h"
@@ -128,6 +133,7 @@ struct rldb_plugin_iface plugin_rldb_mysql =
   user_run_header_delete_func,
   append_run_func,
   run_set_is_checked_func,
+  get_group_scores_func,
 };
 
 static long long
@@ -197,7 +203,7 @@ prepare_func(
 
 #include "tables.inc.c"
 
-#define RUN_DB_VERSION 28
+#define RUN_DB_VERSION 29
 
 static int
 do_create(struct rldb_mysql_state *state)
@@ -486,6 +492,10 @@ do_open(struct rldb_mysql_state *state)
       break;
     case 27:
       if (mi->simple_fquery(md, "ALTER TABLE %sruns MODIFY COLUMN mime_type VARCHAR(128) DEFAULT NULL ;", md->table_prefix) < 0)
+        return -1;
+      break;
+    case 28:
+      if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD COLUMN group_scores VARCHAR(256) DEFAULT NULL AFTER notify_queue", md->table_prefix) < 0)
         return -1;
       break;
     case RUN_DB_VERSION:
@@ -807,6 +817,29 @@ expand_runs(struct runlog_state *rls, int run_id)
   rls->run_u = run_id + 1;
 }
 
+static uint32_t
+alloc_group_scores(struct rldb_mysql_cnts *cs, int count, const int *scores)
+{
+  struct runlog_state *rls = cs->rl_state;
+  if (count <= 0 || count > EJ_MAX_TEST_GROUP) {
+    return 0;
+  }
+  if (rls->group_scores.size == 0) {
+    rls->group_scores.reserved = 16;
+    XCALLOC(rls->group_scores.data, rls->group_scores.reserved);
+    rls->group_scores.size = 1;
+  }
+  if (rls->group_scores.size + 1 + count > rls->group_scores.reserved) {
+    rls->group_scores.reserved *= 2;
+    XREALLOC(rls->group_scores.data, rls->group_scores.reserved);
+  }
+  uint32_t res = rls->group_scores.size;
+  rls->group_scores.data[rls->group_scores.size++] = count;
+  XMEMCPY(&rls->group_scores.data[rls->group_scores.size], scores, count);
+  rls->group_scores.size += count;
+  return res;
+}
+
 static int
 load_runs(struct rldb_mysql_cnts *cs)
 {
@@ -823,6 +856,7 @@ load_runs(struct rldb_mysql_cnts *cs)
   ej_uuid_t judge_uuid;
   ej_mixed_id_t ext_user;
   ej_mixed_id_t notify_queue;
+  uint32_t group_scores_index = 0;
 
   memset(&ri, 0, sizeof(ri));
   if (state->window > 0) {
@@ -875,6 +909,7 @@ load_runs(struct rldb_mysql_cnts *cs)
       xfree(ri.judge_uuid); ri.judge_uuid = NULL;
       xfree(ri.ext_user); ri.ext_user = NULL;
       xfree(ri.notify_queue); ri.notify_queue = NULL;
+      xfree(ri.group_scores); ri.group_scores = NULL;
 
       expand_runs(rls, ri.run_id);
       re = &rls->runs[ri.run_id - rls->run_f];
@@ -933,6 +968,29 @@ load_runs(struct rldb_mysql_cnts *cs)
       ri.notify_kind = 0;
       memset(&notify_queue, 0, sizeof(notify_queue));
     }
+    if (ri.group_scores && ri.group_scores[0]) {
+      int group_scores[EJ_MAX_TEST_GROUP + 1];
+      int group_count = 0;
+      const char *p = ri.group_scores;
+      while (1) {
+        while (isspace((unsigned char) *p)) ++p;
+        if (!*p) break;
+        if (group_count == EJ_MAX_TEST_GROUP) {
+          db_error_inv_value_fail(md, "too many groups");
+        }
+        errno = 0;
+        char *eptr = NULL;
+        long vv = strtol(p, &eptr, 10);
+        if (errno || (*eptr && !isspace((unsigned char) *eptr)) || (int) vv != vv) {
+          db_error_inv_value_fail(md, "invalid score");
+        }
+        group_scores[group_count++] = vv;
+        p = eptr;
+      }
+      if (group_count > 0) {
+        group_scores_index = alloc_group_scores(cs, group_count, group_scores);
+      }
+    }
     xfree(ri.hash); ri.hash = 0;
     xfree(ri.mime_type); ri.mime_type = 0;
     xfree(ri.run_uuid); ri.run_uuid = 0;
@@ -940,6 +998,7 @@ load_runs(struct rldb_mysql_cnts *cs)
     xfree(ri.judge_uuid); ri.judge_uuid = NULL;
     xfree(ri.ext_user); ri.ext_user = NULL;
     xfree(ri.notify_queue); ri.notify_queue = NULL;
+    xfree(ri.group_scores); ri.group_scores = NULL;
 
     expand_runs(rls, ri.run_id);
     re = &rls->runs[ri.run_id - rls->run_f];
@@ -998,6 +1057,7 @@ load_runs(struct rldb_mysql_cnts *cs)
     re->notify_driver = ri.notify_driver;
     re->notify_kind = ri.notify_kind;
     re->notify_queue = notify_queue;
+    re->group_scores = group_scores_index;
   }
   return 1;
 
@@ -1009,6 +1069,7 @@ load_runs(struct rldb_mysql_cnts *cs)
   xfree(ri.judge_uuid);
   xfree(ri.ext_user);
   xfree(ri.notify_queue);
+  xfree(ri.group_scores);
   mi->free_res(md);
   return -1;
 }
@@ -1393,12 +1454,13 @@ to_uuid_str(unsigned char *buf, size_t size, const ej_uuid_t *p_uuid)
 
 static void
 generate_update_entry_clause(
-        struct rldb_mysql_state *state,
+        struct rldb_mysql_cnts *cs,
         FILE *f,
         const struct run_entry *re,
         uint64_t mask,
         const struct timeval *curtime)
 {
+  struct rldb_mysql_state *state = cs->plugin_state;
   const unsigned char *sep = "";
   const unsigned char *comma = ", ";
   unsigned char uuid_buf[128];
@@ -1545,7 +1607,7 @@ generate_update_entry_clause(
     sep = comma;
   }
   if ((mask & RE_PROB_UUID)) {
-    fprintf(f, "%prob_uuid = %s", sep,
+    fprintf(f, "%sprob_uuid = %s", sep,
             to_uuid_str(uuid_buf, sizeof(uuid_buf), &re->prob_uuid));
     sep = comma;
     /*
@@ -1587,6 +1649,21 @@ generate_update_entry_clause(
               sep);
       sep = comma;
     }
+  }
+  if ((mask & RE_GROUP_SCORES)) {
+    if (!re->group_scores) {
+      fprintf(f, "%sgroup_scores=NULL", sep);
+    } else {
+      fprintf(f, "%sgroup_scores=\"", sep);
+      const int *p = get_group_scores_func((struct rldb_plugin_cnts *) cs, re->group_scores);
+      int count = *p++;
+      for (int i = 0; i < count; ++i) {
+        if (i > 0) putc_unlocked(' ', f);
+        fprintf(f, "%d", p[i]);
+      }
+      fprintf(f, "\"");
+    }
+    sep = comma;
   }
 
   fprintf(f, "%slast_change_time = ", sep);
@@ -1715,6 +1792,9 @@ update_entry(
     dst->notify_kind = src->notify_kind;
     dst->notify_queue = src->notify_queue;
   }
+  if ((mask & RE_GROUP_SCORES)) {
+    dst->group_scores = src->group_scores;
+  }
 }
 
 static int
@@ -1740,7 +1820,7 @@ do_update_entry(
 
   cmd_f = open_memstream(&cmd_t, &cmd_z);
   fprintf(cmd_f, "UPDATE %sruns SET ", state->md->table_prefix);
-  generate_update_entry_clause(state, cmd_f, re, mask, &curtime);
+  generate_update_entry_clause(cs, cmd_f, re, mask, &curtime);
   fprintf(cmd_f, " WHERE contest_id = %d AND run_id = %d ;",
           cs->contest_id, run_id);
   close_memstream(cmd_f); cmd_f = 0;
@@ -1818,6 +1898,8 @@ change_status_func(
         int new_judge_id,
         const ej_uuid_t *judge_uuid,
         unsigned int verdict_bits,
+        int group_count,
+        const int *group_scores,
         struct run_entry *ure)
 {
   struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts *) cdata;
@@ -1838,6 +1920,14 @@ change_status_func(
     mask |= RE_JUDGE_ID;
   }
   te.verdict_bits = verdict_bits;
+  if (group_count >= -1) {
+    mask |= RE_GROUP_SCORES;
+    if (group_count == -1) {
+      te.group_scores = 0;
+    } else {
+      te.group_scores = alloc_group_scores(cs, group_count, group_scores);
+    }
+  }
 
   return do_update_entry(cs, run_id, &te, mask, ure);
 }
@@ -2299,6 +2389,8 @@ change_status_3_func(
         int user_tests_passed,
         int user_score,
         unsigned int verdict_bits,
+        int group_count,
+        const int *group_scores,
         struct run_entry *ure)
 {
   struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts *) cdata;
@@ -2316,12 +2408,17 @@ change_status_3_func(
   te.saved_test = user_tests_passed;
   te.saved_score = user_score;
   te.verdict_bits = verdict_bits;
+  if (group_count == -1) {
+    te.group_scores = 0;
+  } else {
+    te.group_scores = alloc_group_scores(cs, group_count, group_scores);
+  }
 
   return do_update_entry(cs, run_id, &te,
                          RE_STATUS | RE_TEST | RE_SCORE | RE_JUDGE_ID
                          | RE_IS_MARKED | RE_IS_SAVED | RE_SAVED_STATUS
                          | RE_SAVED_TEST | RE_SAVED_SCORE | RE_PASSED_MODE
-                         | RE_VERDICT_BITS, ure);
+                         | RE_VERDICT_BITS | RE_GROUP_SCORES, ure);
 }
 
 static int
@@ -2582,6 +2679,8 @@ static int
 append_run_func(
         struct rldb_plugin_cnts *cdata,
         const struct run_entry *in_re,
+        int group_count,
+        const int *group_scores,
         uint64_t mask,
         struct timeval *p_tv,
         int64_t *p_serial_id,
@@ -2755,6 +2854,9 @@ append_run_func(
   if ((mask & RE_NOTIFY)) {
     fputs(",notify_driver,notify_kind,notify_queue", cmd_f);
   }
+  if ((mask & RE_GROUP_SCORES)) {
+    fputs(",group_scores", cmd_f);
+  }
   fprintf(cmd_f, ") VALUES (%lld, %d, %d, NOW(6), MICROSECOND(NOW(6)) * 1000, '%s', NOW(), MICROSECOND(NOW(6)) * 1000",
           serial_id,
           run_id,
@@ -2903,6 +3005,16 @@ append_run_func(
     } else {
       fprintf(cmd_f, ",0,0,NULL");
     }
+  }
+  if ((mask & RE_GROUP_SCORES)) {
+    fputs(",\"", cmd_f);
+    if (group_count > 0 && group_scores) {
+      for (int i = 0; i < group_count; ++i) {
+        if (i > 0) putc_unlocked(' ', cmd_f);
+        fprintf(cmd_f, "%d", group_scores[i]);
+      }
+    }
+    fputs("\"", cmd_f);
   }
   fprintf(cmd_f, ") ;");
   fclose(cmd_f); cmd_f = NULL;
@@ -3072,6 +3184,9 @@ append_run_func(
     new_re->notify_kind = in_re->notify_kind;
     new_re->notify_queue = in_re->notify_queue;
   }
+  if ((mask & RE_GROUP_SCORES)) {
+    new_re->group_scores = alloc_group_scores(cs, group_count, group_scores);
+  }
 
   if (p_tv) *p_tv = current_time_tv;
   if (p_serial_id) *p_serial_id = serial_id;
@@ -3106,4 +3221,24 @@ run_set_is_checked_func(
   te.is_checked = !!is_checked;
 
   return do_update_entry(cs, run_id, &te, RE_IS_CHECKED, NULL);
+}
+
+static const int *
+get_group_scores_func(
+        struct rldb_plugin_cnts *cdata,
+        uint32_t index)
+{
+  struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts *) cdata;
+  struct runlog_state *rls = cs->rl_state;
+  if (!rls->group_scores.data) {
+    return NULL;
+  }
+  if (index >= rls->group_scores.size) {
+    return &rls->group_scores.data[0];
+  }
+  int count = rls->group_scores.data[index];
+  if (count < 0 || index + 1 + count > rls->group_scores.size) {
+    return &rls->group_scores.data[0];
+  }
+  return &rls->group_scores.data[index];
 }

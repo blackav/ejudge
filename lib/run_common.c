@@ -301,7 +301,9 @@ generate_xml_report(
         const unsigned char *valuer_errors,
         const unsigned char *cpu_model,
         const unsigned char *cpu_mhz,
-        const unsigned char *hostname)
+        const unsigned char *hostname,
+        int group_count,
+        int *group_scores)
 {
   int i;
   unsigned char *msg = 0;
@@ -519,6 +521,16 @@ generate_xml_report(
   }
   tr->verdict_bits = verdict_bits;
   reply_pkt->verdict_bits = verdict_bits;
+  if (srp->problem->enable_group_merge > 0) {
+    if (group_count >= 0 && group_count <= EJ_MAX_TEST_GROUP) {
+      tr->has_group_scores = 1;
+      tr->group_count = group_count;
+      if (group_count > 0) {
+        XCALLOC(tr->group_scores, group_count);
+        memcpy(tr->group_scores, group_scores, group_count * sizeof(group_scores[0]));
+      }
+    }
+  }
 
   if (srgp->bson_available && testing_report_bson_available()) {
     if (testing_report_to_file_bson(report_path, tr) < 0) {
@@ -826,12 +838,15 @@ parse_valuer_score(
         int max_score,
         int valuer_sets_marked,
         int separate_user_score,
+        int enable_groups,
         int *p_reply_next_num,
         int *p_score,
         int *p_marked,
         int *p_user_status,
         int *p_user_score,
-        int *p_user_tests_passed)
+        int *p_user_tests_passed,
+        int *p_group_count,
+        int *p_group_scores)
 {
   if (p_marked) *p_marked = -1;
 
@@ -944,6 +959,32 @@ parse_valuer_score(
       goto invalid_reply;
     }
   }
+  if (enable_groups > 0) {
+    int v_group_count = -1;
+    if (sscanf(buf + idx, "%d%n", &v_group_count, &n) != 1) {
+      lineno = __LINE__;
+      goto invalid_reply;
+    }
+    idx += n;
+    if (v_group_count < 0 || v_group_count > EJ_MAX_TEST_GROUP) {
+      lineno = __LINE__;
+      goto invalid_reply;
+    }
+    if (p_group_count) {
+      *p_group_count = v_group_count;
+    }
+    for (int i = 0; i < v_group_count; ++i) {
+      int x = 0;
+      if (sscanf(buf + idx, "%d%n", &x, &n) != 1) {
+        lineno = __LINE__;
+        goto invalid_reply;
+      }
+      idx += n;
+      if (p_group_scores) {
+        p_group_scores[i] = x;
+      }
+    }
+  }
   if (buf[idx]) {
     lineno = __LINE__;
     goto invalid_reply;
@@ -973,11 +1014,14 @@ read_valuer_score(
         int max_score,
         int valuer_sets_marked,
         int separate_user_score,
+        int enable_groups,
         int *p_score,
         int *p_marked,
         int *p_user_status,
         int *p_user_score,
-        int *p_user_tests_passed)
+        int *p_user_tests_passed,
+        int *p_group_count,
+        int *p_group_scores)
 {
   char *score_buf = 0;
   size_t score_buf_size = 0;
@@ -994,8 +1038,10 @@ read_valuer_score(
 
   r = parse_valuer_score(log_path, score_buf, score_buf_size,
                          0, max_score, valuer_sets_marked, separate_user_score,
+                         enable_groups,
                          NULL, p_score, p_marked,
-                         p_user_status, p_user_score, p_user_tests_passed);
+                         p_user_status, p_user_score, p_user_tests_passed,
+                         p_group_count, p_group_scores);
 
   xfree(score_buf);
   return r;
@@ -1189,6 +1235,9 @@ setup_ejudge_environment(
       task_SetEnv(tsk, "EJUDGE_TEST_COUNT", buf);
     }
   }
+  if (srpp->enable_group_merge > 0) {
+    task_SetEnv(tsk, "EJUDGE_GROUP_MERGE", "1");
+  }
   if (src_path) {
     task_SetEnv(tsk, "EJUDGE_SOURCE_PATH", src_path);
   }
@@ -1246,6 +1295,8 @@ invoke_valuer(
         int *p_user_status,
         int *p_user_score,
         int *p_user_tests_passed,
+        int *p_group_count,
+        int *p_group_scores,
         char **p_err_txt,
         char **p_cmt_txt,
         char **p_jcmt_txt,
@@ -1364,7 +1415,9 @@ invoke_valuer(
 
   if (read_valuer_score(score_res, score_err, "valuer", max_score,
                         srpp->valuer_sets_marked, srgp->separate_user_score,
-                        p_score, p_marked, p_user_status, p_user_score, p_user_tests_passed) < 0) {
+                        srpp->enable_group_merge > 0,
+                        p_score, p_marked, p_user_status, p_user_score, p_user_tests_passed,
+                        p_group_count, p_group_scores) < 0) {
     goto cleanup;
   }
   read_log_file(score_cmt, p_cmt_txt);
@@ -5398,6 +5451,9 @@ run_tests(
   const unsigned char *tgz_dir = srpp->tgz_dir;
   unsigned char b_test_dir[PATH_MAX];
 
+  int valuer_group_count = 0;
+  int valuer_group_scores[EJ_MAX_TEST_GROUP + 1] = {};
+
   valuer_cmd[0] = 0;
   valuer_cmt_file[0] = 0;
   valuer_jcmt_file[0] = 0;
@@ -5738,12 +5794,15 @@ run_tests(
       if (parse_valuer_score(messages_path, buf, buflen, 1, srpp->full_score,
                              srpp->valuer_sets_marked,
                              srgp->separate_user_score,
+                             srpp->enable_group_merge > 0,
                              &reply_next_num,
                              &valuer_score,
                              &valuer_marked,
                              &valuer_user_status,
                              &valuer_user_score,
-                             &valuer_user_tests_passed) < 0) {
+                             &valuer_user_tests_passed,
+                             &valuer_group_count,
+                             valuer_group_scores) < 0) {
         append_msg_to_log(messages_path, "interactive valuer protocol error");
         goto check_failed;
       }
@@ -5792,12 +5851,15 @@ run_tests(
     if (parse_valuer_score(messages_path, buf, buflen, 0, srpp->full_score,
                            srpp->valuer_sets_marked,
                            srgp->separate_user_score,
+                           srpp->enable_group_merge > 0,
                            NULL,
                            &valuer_score,
                            &valuer_marked,
                            &valuer_user_status,
                            &valuer_user_score,
-                           &valuer_user_tests_passed) < 0) {
+                           &valuer_user_tests_passed,
+                           &valuer_group_count,
+                           valuer_group_scores) < 0) {
       append_msg_to_log(messages_path, "interactive valuer protocol error");
       goto check_failed;
     }
@@ -5951,6 +6013,7 @@ run_tests(
                         state->exec_user_serial,
                         &total_score, &marked_flag,
                         &user_status, &user_score, &user_tests_passed,
+                        &valuer_group_count, valuer_group_scores,
                         &valuer_errors, &valuer_comment,
                         &valuer_judge_comment, src_path) < 0) {
         goto check_failed;
@@ -6042,6 +6105,14 @@ done:;
   reply_pkt->user_status = user_status;
   reply_pkt->user_score = user_score;
   reply_pkt->user_tests_passed = user_tests_passed;
+  if (srpp->enable_group_merge > 0) {
+    if (valuer_group_count >= 0 && valuer_group_count <= EJ_MAX_TEST_GROUP) {
+      reply_pkt->group_count = valuer_group_count;
+      if (valuer_group_count > 0) {
+        memcpy(reply_pkt->group_scores, valuer_group_scores, valuer_group_count * sizeof(reply_pkt->group_scores[0]));
+      }
+    }
+  }
 
   generate_xml_report(srp, reply_pkt, report_path,
                       tests.size, tests.data, utf8_mode,
@@ -6055,7 +6126,8 @@ done:;
                       user_run_tests,
                       additional_comment, valuer_comment,
                       valuer_judge_comment, valuer_errors,
-                      cpu_model, cpu_mhz, hostname);
+                      cpu_model, cpu_mhz, hostname,
+                      valuer_group_count, valuer_group_scores);
 
   get_current_time(&reply_pkt->ts7, &reply_pkt->ts7_us);
 

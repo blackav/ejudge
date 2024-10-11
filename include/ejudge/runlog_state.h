@@ -2,7 +2,7 @@
 #ifndef __RUNLOG_STATE_H__
 #define __RUNLOG_STATE_H__
 
-/* Copyright (C) 2008-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -78,6 +78,13 @@ struct user_run_header_state
   struct user_run_header_info *infos; // user infos
 };
 
+struct runlog_group_scores_pool
+{
+  unsigned size;
+  unsigned reserved;
+  int *data;
+};
+
 struct runlog_state
 {
   RUNS_ACCESS struct run_header  head;
@@ -114,6 +121,8 @@ struct runlog_state
   struct rldb_plugin_iface *iface;
   struct rldb_plugin_data *data;
   struct rldb_plugin_cnts *cnts;
+
+  struct runlog_group_scores_pool group_scores;
 };
 
 void

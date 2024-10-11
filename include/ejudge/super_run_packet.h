@@ -208,6 +208,7 @@ struct super_run_in_problem_packet
   ejintbool_t copy_exe_to_tgzdir;
   char **checker_extra_files;
   ejintbool_t disable_vm_size_limit;
+  ejintbool_t enable_group_merge;
 
   int type_val META_ATTRIB((meta_hidden));
 };

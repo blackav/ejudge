@@ -87,6 +87,7 @@ static struct meta_info_item meta_info_problem_config_section_data[] =
   [META_PROBLEM_CONFIG_SECTION_enable_iframe_statement] = { META_PROBLEM_CONFIG_SECTION_enable_iframe_statement, 'B', XSIZE(struct problem_config_section, enable_iframe_statement), "enable_iframe_statement", XOFFSET(struct problem_config_section, enable_iframe_statement) },
   [META_PROBLEM_CONFIG_SECTION_copy_exe_to_tgzdir] = { META_PROBLEM_CONFIG_SECTION_copy_exe_to_tgzdir, 'B', XSIZE(struct problem_config_section, copy_exe_to_tgzdir), "copy_exe_to_tgzdir", XOFFSET(struct problem_config_section, copy_exe_to_tgzdir) },
   [META_PROBLEM_CONFIG_SECTION_ignore_term_signal] = { META_PROBLEM_CONFIG_SECTION_ignore_term_signal, 'B', XSIZE(struct problem_config_section, ignore_term_signal), "ignore_term_signal", XOFFSET(struct problem_config_section, ignore_term_signal) },
+  [META_PROBLEM_CONFIG_SECTION_enable_group_merge] = { META_PROBLEM_CONFIG_SECTION_enable_group_merge, 'B', XSIZE(struct problem_config_section, enable_group_merge), "enable_group_merge", XOFFSET(struct problem_config_section, enable_group_merge) },
   [META_PROBLEM_CONFIG_SECTION_id] = { META_PROBLEM_CONFIG_SECTION_id, 'i', XSIZE(struct problem_config_section, id), "id", XOFFSET(struct problem_config_section, id) },
   [META_PROBLEM_CONFIG_SECTION_real_time_limit] = { META_PROBLEM_CONFIG_SECTION_real_time_limit, 'i', XSIZE(struct problem_config_section, real_time_limit), "real_time_limit", XOFFSET(struct problem_config_section, real_time_limit) },
   [META_PROBLEM_CONFIG_SECTION_time_limit] = { META_PROBLEM_CONFIG_SECTION_time_limit, 'i', XSIZE(struct problem_config_section, time_limit), "time_limit", XOFFSET(struct problem_config_section, time_limit) },
@@ -324,6 +325,7 @@ void meta_problem_config_section_copy(struct problem_config_section *dst, const 
   dst->enable_iframe_statement = src->enable_iframe_statement;
   dst->copy_exe_to_tgzdir = src->copy_exe_to_tgzdir;
   dst->ignore_term_signal = src->ignore_term_signal;
+  dst->enable_group_merge = src->enable_group_merge;
   dst->id = src->id;
   dst->real_time_limit = src->real_time_limit;
   dst->time_limit = src->time_limit;

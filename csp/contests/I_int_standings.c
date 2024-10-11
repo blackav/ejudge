@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2017-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2017-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -134,7 +134,8 @@ calc_kirov_score(
         int prev_successes,
         int *p_date_penalty,
         int format,
-        time_t effective_time);
+        time_t effective_time,
+        int total_group_score);
 
 static void
 process_acm_run(
@@ -289,6 +290,7 @@ process_kirov_run(
     StandingsUserRow *row = &pg->rows[tind];
     StandingsProblemColumn *col = &pg->columns[pind];
     time_t run_time = pe->time;
+    int total_group_score = -1;
 
     int token_flags = 0;
     if (sii->user_mode && sii->user_id > 0 && sii->user_id == pe->user_id) {
@@ -311,6 +313,28 @@ process_kirov_run(
             }
         }
         run_tests = pe->saved_test;
+        if (prob->enable_group_merge > 0) {
+            if (pe->group_scores) {
+                const int *p = run_get_group_scores(cs->runlog_state, pe->group_scores);
+                if (p && p[0] > 0) {
+                    int count = *p++;
+                    if (count > cell->group_count) {
+                        cell->group_count = count;
+                    }
+                    run_score = 0;
+                    for (int i = 0; i < count; ++i) {
+                        int s = p[i];
+                        if (s > 0) {
+                            if (s > cell->group_scores[i]) {
+                                cell->group_scores[i] = s;
+                            }
+                            run_score += cell->group_scores[i];
+                        }
+                    }
+                    total_group_score = run_score;
+                }
+            }
+        }
     } else {
         run_status = pe->status;
         run_score = pe->score;
@@ -321,6 +345,27 @@ process_kirov_run(
             run_tests = pe->test;
         } else {
             run_tests = pe->test - 1;
+        }
+        if (prob->enable_group_merge > 0) {
+            if (pe->group_scores) {
+                const int *p = run_get_group_scores(cs->runlog_state, pe->group_scores);
+                if (p && p[0] > 0) {
+                    int count = *p++;
+                    if (count > cell->group_count) {
+                        cell->group_count = count;
+                    }
+                    run_score = 0;
+                    for (int i = 0; i < count; ++i) {
+                        int s = p[i];
+                        if (s < 0) s = -s;
+                        if (s > cell->group_scores[i]) {
+                            cell->group_scores[i] = s;
+                        }
+                        run_score += cell->group_scores[i];
+                    }
+                    total_group_score = run_score;
+                }
+            }
         }
     }
 
@@ -519,7 +564,8 @@ process_kirov_run(
                                              pe, prob, cell->att_num,
                                              cell->disq_num, cell->ce_num,
                                              cell->full_sol?RUN_TOO_MANY:col->succ_att,
-                                             0, 0, effective_time);
+                                             0, 0, effective_time,
+                                             total_group_score);
                 if (pe->is_marked) {
                     // latest
                     cell->marked_flag = 1;
@@ -550,7 +596,8 @@ process_kirov_run(
                                              pg->separate_user_score, sii->user_mode, token_flags,
                                              pe, prob, cell->att_num,
                                              cell->disq_num, cell->ce_num, RUN_TOO_MANY, 0, 0,
-                                             effective_time);
+                                             effective_time,
+                                             total_group_score);
                 if (pe->is_marked) {
                     // latest
                     cell->marked_flag = 1;
@@ -636,7 +683,8 @@ process_kirov_run(
                                                  pe, prob, cell->sol_att,
                                                  cell->disq_num, cell->ce_num,
                                                  cell->full_sol?RUN_TOO_MANY:col->succ_att,
-                                                 0, 0, effective_time);
+                                                 0, 0, effective_time,
+                                                 total_group_score);
                     if (prob->score_latest > 0 || score > cell->score) {
                         cell->score = score;
                         if (prob->stand_hide_time <= 0) cell->sol_time = run_time;
@@ -698,7 +746,8 @@ process_kirov_run(
                                                  pg->separate_user_score, sii->user_mode, token_flags,
                                                  pe, prob, cell->sol_att,
                                                  cell->disq_num, cell->ce_num, RUN_TOO_MANY, 0, 0,
-                                                 effective_time);
+                                                 effective_time,
+                                                 total_group_score);
                     ++cell->sol_att;
                     if (prob->score_latest > 0 || score > cell->score) {
                         cell->score = score;
@@ -715,7 +764,8 @@ process_kirov_run(
                                              pg->separate_user_score, sii->user_mode, token_flags,
                                              pe, prob, cell->sol_att,
                                              cell->disq_num, cell->ce_num, RUN_TOO_MANY, 0, 0,
-                                             effective_time);
+                                             effective_time,
+                                             total_group_score);
                 ++cell->sol_att;
                 if (prob->score_latest > 0 || score > cell->score) {
                     cell->score = score;

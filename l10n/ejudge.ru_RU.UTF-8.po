@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-09-01 16:22+0300\n"
+"POT-Creation-Date: 2024-10-02 00:48+0300\n"
 "PO-Revision-Date: 2024-03-17 14:09+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -1694,6 +1694,9 @@ msgstr "Группа (класс) (Англ.)"
 
 msgid "Group Info"
 msgstr "Информация о группах тестов"
+
+msgid "Group scores"
+msgstr "Балл за группы"
 
 msgid "Guest"
 msgstr "Гость"
