@@ -1527,6 +1527,9 @@ do_dump_master_runs(
   const struct section_language_data *lang = 0;
   time_t effective_time;
   time_t *p_eff_time;
+  int total_group_score;
+  int group_count;
+  int group_scores[EJ_MAX_TEST_GROUP];
 
   filter_expr_nerrs = 0;
   u = user_filter_info_allocate(cs, phr->user_id, phr->session_id);
@@ -1851,6 +1854,7 @@ do_dump_master_runs(
 
       attempts = 0; disq_attempts = 0; ce_attempts = 0;
       effective_time = 0; p_eff_time = NULL;
+      total_group_score = -1;
       if (prob->enable_submit_after_reject > 0) p_eff_time = &effective_time;
       if (global->score_system == SCORE_KIROV && !pe->is_hidden) {
         // assert(prob != NULL);
@@ -1858,7 +1862,16 @@ do_dump_master_runs(
                          p_eff_time,
                          prob->ignore_compile_errors, prob->compile_error_penalty,
                          prob->enable_group_merge,
-                         NULL /* TODO: group_count */, NULL /* TODO: group_scores */);
+                         &group_count, group_scores);
+        if (prob->enable_group_merge > 0) {
+          for (int i = 0; i < group_count; ++i) {
+            if (group_scores[i] >= 0) {
+              total_group_score += group_scores[i];
+            } else {
+              total_group_score -= group_scores[i];
+            }
+          }
+        }
       }
 
       orig_score = pe->score;
@@ -1866,10 +1879,9 @@ do_dump_master_runs(
         orig_score = prob->full_score;
       snprintf(base_score_buf, sizeof(base_score_buf), "%d", orig_score);
       csv_rec[F_BASE_SCORE] = base_score_buf;
-      // TODO: track test groups for problems with enable_runlog_merge, pass the score to calc_kiron_score
       score = calc_kirov_score(0, 0, start_time, 0, 0, 0, pe, prob, attempts, disq_attempts, ce_attempts,
                                prev_successes, &date_penalty, 0, effective_time,
-                               -1);
+                               total_group_score);
       snprintf(score_buf, sizeof(score_buf), "%d", score);
       csv_rec[F_TOTAL_SCORE] = score_buf;
       if (attempts > 0) {

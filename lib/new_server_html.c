@@ -9112,6 +9112,9 @@ priv_list_runs_json(
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   struct filter_env env;
   const unsigned char *s = NULL;
+  int group_count;
+  int group_scores[EJ_MAX_TEST_GROUP];
+  int total_group_score;
 
   phr->json_reply = 1;
   memset(&env, 0, sizeof(env));
@@ -9351,6 +9354,7 @@ priv_list_runs_json(
           p_eff_time = &effective_time;
 
         int attempts = 0, disq_attempts = 0, ce_attempts = 0;
+        total_group_score = -1;
         if (global->score_system == SCORE_KIROV && !pe->is_hidden) {
           int ice = 0, cep = -1, egm = 0;
           if (prob) {
@@ -9359,7 +9363,16 @@ priv_list_runs_json(
             egm = prob->enable_group_merge;
           }
           run_get_attempts(cs->runlog_state, rid, &attempts, &disq_attempts, &ce_attempts, p_eff_time, ice, cep, egm,
-                           NULL /* TODO: group_count*/, NULL /* TODO: group_scores */);
+                           &group_count, group_scores);
+          if (egm > 0) {
+            for (int i = 0; i < group_count; ++i) {
+              if (group_scores[i] >= 0) {
+                total_group_score += group_scores[i];
+              } else {
+                total_group_score -= group_scores[i];
+              }
+            }
+          }
         }
 
         if (pe->is_imported > 0) {
@@ -9449,7 +9462,7 @@ priv_list_runs_json(
 
         write_json_run_status(cs, fout, env.rhead.start_time, pe, 1, attempts, disq_attempts, ce_attempts, prev_successes,
                               0, run_fields, effective_time, "",
-                              -1 /* TODO: total_group_score */);
+                              total_group_score);
 
         if ((run_fields & (1 << RUN_VIEW_SCORE_ADJ)) && pe->score_adj != 0) {
           fprintf(fout, ",\"score_adj\":%d", pe->score_adj);

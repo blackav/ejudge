@@ -35,6 +35,9 @@
     int unfog_flag = 0;
     unsigned char dur_buf[1024];
     unsigned char stat_buf[1024];
+    int group_count;
+    int group_scores[EJ_MAX_TEST_GROUP];
+    int total_group_score;
 
     if (duration > 0 && global->board_fog_time) {
         duration_before_fog = duration - global->board_fog_time;
@@ -160,6 +163,7 @@
         if (cur_prob && cur_prob->enable_submit_after_reject > 0) {
             p_eff_time = &effective_time;
         }
+        total_group_score = -1;
         if (global->score_system == SCORE_KIROV) {
             int ice = 0;
             int cep = -1;
@@ -172,10 +176,28 @@
             run_get_attempts(cs->runlog_state, i, &attempts, &disq_attempts, &ce_attempts,
                              p_eff_time,
                              ice, cep, egm,
-                             NULL /* TODO: group_count */, NULL /* TODO: group_scores */);
+                             &group_count, group_scores);
             if (status == RUN_OK && cur_prob && cur_prob->score_bonus_total > 0) {
                 prev_successes = run_get_prev_successes(cs->runlog_state, i);
                 if (prev_successes < 0) prev_successes = RUN_TOO_MANY;
+            }
+            if (egm > 0) {
+                total_group_score = 0;
+                if (separate_user_score > 0) {
+                    for (int i = 0; i < group_count; ++i) {
+                        if (group_scores[i] > 0) {
+                            total_group_score += group_scores[i];
+                        }
+                    }
+                } else {
+                    for (int i = 0; i < group_count; ++i) {
+                        if (group_scores[i] >= 0) {
+                            total_group_score += group_scores[i];
+                        } else {
+                            total_group_score -= group_scores[i];
+                        }
+                    }
+                }
             }
         }
         duration_str(global->show_astr_time, run_time, start_time, dur_buf, 0);
@@ -214,7 +236,7 @@
                               0, attempts, disq_attempts, ce_attempts,
                               prev_successes, 0, 1, 0, RUN_VIEW_DEFAULT,
                               effective_time,
-                              -1 /* TODO: total_group_score */);
+                              total_group_score);
 %>
   </tr>
 <%

@@ -150,6 +150,9 @@ ns_write_priv_all_runs(
   long long run_fields;
 
   time_t effective_time, *p_eff_time;
+  int group_count;
+  int group_scores[EJ_MAX_TEST_GROUP];
+  int total_group_score;
 
   if (!u) u = user_filter_info_allocate(cs, phr->user_id, phr->session_id);
 
@@ -786,6 +789,7 @@ ns_write_priv_all_runs(
 
       attempts = 0; disq_attempts = 0; ce_attempts = 0;
       effective_time = 0; p_eff_time = NULL;
+      total_group_score = -1;
       if (prob && prob->enable_submit_after_reject > 0)
         p_eff_time = &effective_time;
       if (global->score_system == SCORE_KIROV && !pe->is_hidden) {
@@ -797,7 +801,16 @@ ns_write_priv_all_runs(
         }
         run_get_attempts(cs->runlog_state, rid, &attempts, &disq_attempts, &ce_attempts,
                          p_eff_time, ice, cep, egm,
-                         NULL /* TODO: group_counter */, NULL /* TODO: group_scores */);
+                         &group_count, group_scores);
+        if (egm > 0) {
+          for (int i = 0; i < group_count; ++i) {
+            if (group_scores[i] >= 0) {
+              total_group_score += group_scores[i];
+            } else {
+              total_group_score -= group_scores[i];
+            }
+          }
+        }
       }
       run_time = pe->time;
       imported_str = "";
@@ -935,7 +948,7 @@ ns_write_priv_all_runs(
       write_html_run_status(cs, f, start_time, pe, 0, 1, attempts, disq_attempts, ce_attempts,
                             prev_successes, "b1", 0,
                             enable_js_status_menu, run_fields, effective_time,
-                            -1 /* TODO: total_group_score */);
+                            total_group_score);
 
       if (run_fields & (1 << RUN_VIEW_SCORE_ADJ)) {
         fprintf(f, "<td%s>%d</td>", cl, pe->score_adj);
@@ -5223,6 +5236,25 @@ kirov_score_latest_or_unmarked(
 
   ASSERT(cur_prob->score_latest_or_unmarked > 0);
 
+  int total_group_score = -1;
+  if (cur_prob->enable_group_merge > 0) {
+    if (separate_user_score > 0) {
+      for (int i = 0; i < pinfo->group_count; ++i) {
+        if (pinfo->group_scores[i] > 0) {
+          total_group_score += pinfo->group_scores[i];
+        }
+      }
+    } else {
+      for (int i = 0; i < pinfo->group_count; ++i) {
+        if (pinfo->group_scores[i] >= 0) {
+          total_group_score += pinfo->group_scores[i];
+        } else {
+          total_group_score -= pinfo->group_scores[i];
+        }
+      }
+    }
+  }
+
   /*
    * if there exists a "marked" run, the last "marked" score is taken
    * if there is no "marked" run, the max score is taken
@@ -5241,7 +5273,7 @@ kirov_score_latest_or_unmarked(
                                  pinfo->attempts,
                                  pinfo->disqualified, pinfo->ce_attempts,
                                  pinfo->prev_successes, 0, 0, pinfo->effective_time,
-                                 -1 /* TODO: total_group_score */);
+                                 total_group_score);
     if (re->is_marked || cur_score > pinfo->best_score) {
       pinfo->best_score = cur_score;
       pinfo->best_run = run_id;
@@ -5257,7 +5289,7 @@ kirov_score_latest_or_unmarked(
                                  pinfo->attempts,
                                  pinfo->disqualified, pinfo->ce_attempts,
                                  pinfo->prev_successes, 0, 0, pinfo->effective_time,
-                                 -1 /* TODO: total_group_score */);
+                                 total_group_score);
     if (re->is_marked || cur_score > pinfo->best_score) {
       pinfo->best_score = cur_score;
       pinfo->best_run = run_id;
@@ -5298,7 +5330,7 @@ kirov_score_latest_or_unmarked(
                                  pinfo->attempts,
                                  pinfo->disqualified, pinfo->ce_attempts,
                                  pinfo->prev_successes, 0, 0, pinfo->effective_time,
-                                 -1 /* TODO: total_group_score */);
+                                 total_group_score);
     pinfo->attempts++;
     if (re->is_marked || cur_score > pinfo->best_score || pinfo->best_score <= 0) {
       pinfo->best_score = cur_score;
@@ -5346,12 +5378,31 @@ kirov_score_latest(
     return;
   }
 
+  int total_group_score = -1;
+  if (cur_prob->enable_group_merge > 0) {
+    if (separate_user_score > 0) {
+      for (int i = 0; i < pinfo->group_count; ++i) {
+        if (pinfo->group_scores[i] > 0) {
+          total_group_score += pinfo->group_scores[i];
+        }
+      }
+    } else {
+      for (int i = 0; i < pinfo->group_count; ++i) {
+        if (pinfo->group_scores[i] >= 0) {
+          total_group_score += pinfo->group_scores[i];
+        } else {
+          total_group_score -= pinfo->group_scores[i];
+        }
+      }
+    }
+  }
+
   cur_score = calc_kirov_score(0, 0, start_time, separate_user_score,
                                1 /* user_mode */, re->token_flags, re, cur_prob,
                                pinfo->attempts,
                                pinfo->disqualified, pinfo->ce_attempts,
                                pinfo->prev_successes, 0, 0, pinfo->effective_time,
-                               -1 /* TODO: total_group_score */);
+                               total_group_score);
   switch (status) {
   case RUN_OK:
     pinfo->marked_flag = re->is_marked;
@@ -5475,6 +5526,25 @@ kirov_score_tokenized(
 {
   ASSERT(cur_prob->score_tokenized > 0);
 
+  int total_group_score = -1;
+  if (cur_prob->enable_group_merge > 0) {
+    if (separate_user_score > 0) {
+      for (int i = 0; i < pinfo->group_count; ++i) {
+        if (pinfo->group_scores[i] > 0) {
+          total_group_score += pinfo->group_scores[i];
+        }
+      }
+    } else {
+      for (int i = 0; i < pinfo->group_count; ++i) {
+        if (pinfo->group_scores[i] >= 0) {
+          total_group_score += pinfo->group_scores[i];
+        } else {
+          total_group_score -= pinfo->group_scores[i];
+        }
+      }
+    }
+  }
+
   int cur_score = 0;
 
   if (!re->token_flags) {
@@ -5493,7 +5563,7 @@ kirov_score_tokenized(
                                pinfo->attempts,
                                pinfo->disqualified, pinfo->ce_attempts,
                                pinfo->prev_successes, 0, 0, pinfo->effective_time,
-                               -1 /* TODO: total_group_score */);
+                               total_group_score);
 
   switch (status) {
   case RUN_OK:
@@ -5571,12 +5641,31 @@ kirov_score_default(
     return;
   }
 
+  int total_group_score = -1;
+  if (cur_prob->enable_group_merge > 0) {
+    if (separate_user_score > 0) {
+      for (int i = 0; i < pinfo->group_count; ++i) {
+        if (pinfo->group_scores[i] > 0) {
+          total_group_score += pinfo->group_scores[i];
+        }
+      }
+    } else {
+      for (int i = 0; i < pinfo->group_count; ++i) {
+        if (pinfo->group_scores[i] >= 0) {
+          total_group_score += pinfo->group_scores[i];
+        } else {
+          total_group_score -= pinfo->group_scores[i];
+        }
+      }
+    }
+  }
+
   cur_score = calc_kirov_score(0, 0, start_time, separate_user_score,
                                1 /* user_mode */, re->token_flags, re, cur_prob,
                                pinfo->attempts,
                                pinfo->disqualified, pinfo->ce_attempts,
                                pinfo->prev_successes, 0, 0, pinfo->effective_time,
-                               -1 /* TODO: total_group_score */);
+                               total_group_score);
 
   switch (status) {
   case RUN_OK:
@@ -5763,6 +5852,7 @@ ns_get_user_problems_summary(
       status = re.status;
       score = re.score;
     }
+    int total_group_score = -1;
     if (cur_prob->enable_group_merge > 0) {
       if (re.group_scores > 0) {
         const int *p = run_get_group_scores(cs->runlog_state, re.group_scores);
@@ -5803,6 +5893,7 @@ ns_get_user_problems_summary(
           }
         }
       }
+      total_group_score = score;
     }
 
     if (need_prev_succ && re.user_id != user_id) {
@@ -5962,7 +6053,7 @@ ns_get_user_problems_summary(
         cur_score = calc_kirov_score(0, 0, start_time,
                                      separate_user_score, 1 /* user_mode */, re.token_flags,
                                      &re, cur_prob, 0, 0, 0, 0, 0, 0, 0,
-                                     -1 /* TODO: total_group_score */);
+                                     total_group_score);
         //if (cur_score > best_score[re.prob_id])
         cur_pinfo->best_score = cur_score;
         break;
@@ -5988,7 +6079,7 @@ ns_get_user_problems_summary(
         cur_score = calc_kirov_score(0, 0, start_time, separate_user_score,
                                      1 /* user_mode */, re.token_flags,
                                      &re, cur_prob, 0, 0, 0, 0, 0, 0, 0,
-                                     -1 /* TODO: total_group_score */);
+                                     total_group_score);
         //if (cur_score > best_score[re.prob_id])
         cur_pinfo->best_score = cur_score;
         break;
@@ -7029,6 +7120,9 @@ fill_user_run_info(
   const struct section_language_data *lang = NULL;
   const struct section_problem_data *cur_prob = NULL;
   int status = -1;
+  int group_count;
+  int group_scores[EJ_MAX_TEST_GROUP];
+  __attribute__((unused)) int total_group_score = -1;
 
   struct virtual_end_info_s *vend_info = NULL;
 
@@ -7090,7 +7184,25 @@ fill_user_run_info(
     run_get_attempts(cs->runlog_state, run_id, &attempts, &disq_attempts, &ce_attempts,
                      p_eff_time,
                      ice, cep, egm,
-                     NULL /* TODO: group_count */, NULL /* TODO: group_scores */);
+                     &group_count, group_scores);
+    if (egm > 0) {
+      if (separate_user_score > 0) {
+        total_group_score = 0;
+        for (int i = 0; i < pinfo->group_count; ++i) {
+          if (pinfo->group_scores[i] > 0) {
+            total_group_score += pinfo->group_scores[i];
+          }
+        }
+      } else {
+        for (int i = 0; i < pinfo->group_count; ++i) {
+          if (pinfo->group_scores[i] >= 0) {
+            total_group_score += pinfo->group_scores[i];
+          } else {
+            total_group_score -= pinfo->group_scores[i];
+          }
+        }
+      }
+    }
   }
   prev_successes = RUN_TOO_MANY;
   if (global->score_system == SCORE_KIROV
@@ -7368,6 +7480,9 @@ new_write_user_runs(
   struct virtual_end_info_s *vend_info = NULL;
 
   time_t effective_time, *p_eff_time;
+  int group_count;
+  int group_scores[EJ_MAX_TEST_GROUP];
+  int total_group_score = -1;
 
   if (table_class && *table_class) {
     cl = alloca(strlen(table_class) + 16);
@@ -7467,12 +7582,32 @@ new_write_user_runs(
     effective_time = 0; p_eff_time = NULL;
     if (cur_prob && cur_prob->enable_submit_after_reject > 0)
       p_eff_time = &effective_time;
-    if (global->score_system == SCORE_KIROV && !re.is_hidden)
+    total_group_score = -1;
+    if (global->score_system == SCORE_KIROV && !re.is_hidden) {
       run_get_attempts(state->runlog_state, i, &attempts, &disq_attempts, &ce_attempts,
                        p_eff_time,
                        cur_prob->ignore_compile_errors, cur_prob->compile_error_penalty,
                        cur_prob->enable_group_merge,
-                      NULL /* TODO: group_count */, NULL /* TODO: group_scores */);
+                       &group_count, group_scores);
+      if (cur_prob->enable_group_merge > 0) {
+        total_group_score = 0;
+        if (separate_user_score > 0) {
+          for (int i = 0; i < group_count; ++i) {
+            if (group_scores[i] > 0) {
+              total_group_score += group_scores[i];
+            }
+          }
+        } else {
+          for (int i = 0; i < group_count; ++i) {
+            if (group_scores[i] >= 0) {
+              total_group_score += group_scores[i];
+            } else {
+              total_group_score -= group_scores[i];
+            }
+          }
+        }
+      }
+    }
 
     prev_successes = RUN_TOO_MANY;
     if (global->score_system == SCORE_KIROV
@@ -7525,7 +7660,7 @@ new_write_user_runs(
                           0, attempts, disq_attempts, ce_attempts,
                           prev_successes, table_class, 0, 0, RUN_VIEW_DEFAULT,
                           effective_time,
-                          -1 /* TODO: total_group_score */);
+                          total_group_score);
 
     if (enable_src_view) {
       fprintf(f, "<td%s>", cl);
