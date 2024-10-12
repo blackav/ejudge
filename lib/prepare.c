@@ -633,6 +633,7 @@ static const struct config_parse_info section_language_params[] =
   LANGUAGE_PARAM(disable_testing, "d"),
   LANGUAGE_PARAM(enable_custom, "d"),
   LANGUAGE_PARAM(enable_ejudge_env, "d"),
+  LANGUAGE_PARAM(enable_network, "d"),
   LANGUAGE_PARAM(preserve_line_numbers, "d"),
   LANGUAGE_PARAM(default_disabled, "d"),
   LANGUAGE_PARAM(enabled, "d"),
@@ -1164,6 +1165,7 @@ language_init_func(struct generic_section_config *gp)
   p->disable_testing = -1;
   p->enable_custom = -1;
   p->enable_ejudge_env = -1;
+  p->enable_network = -1;
   p->preserve_line_numbers = -1;
   p->default_disabled = -1;
   p->enabled = -1;
@@ -7206,6 +7208,7 @@ prepare_merge_language(
   LANG_MERGE_BOOL(disable_testing);
   LANG_MERGE_BOOL(enable_custom);
   LANG_MERGE_BOOL(enable_ejudge_env);
+  LANG_MERGE_BOOL(enable_network);
   LANG_MERGE_BOOL(preserve_line_numbers);
   LANG_MERGE_SIZE(max_vm_size);
   LANG_MERGE_SIZE(max_stack_size);
@@ -7239,6 +7242,7 @@ prepare_language_set_defaults(struct section_language_data *lang)
   if (lang->disable_testing < 0) lang->disable_testing = 0;
   if (lang->enable_custom < 0) lang->enable_custom = 0;
   if (lang->enable_ejudge_env < 0) lang->enable_ejudge_env = 0;
+  if (lang->enable_network < 0) lang->enable_network = 0;
   if (lang->preserve_line_numbers < 0) lang->preserve_line_numbers = 0;
   if (lang->default_disabled < 0) lang->default_disabled = 0;
   if (lang->enabled < 0) lang->enabled = 0;

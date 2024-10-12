@@ -251,6 +251,7 @@ super_html_lang_activate(
   lang->insecure = cs_lang->insecure;
   lang->enable_custom = cs_lang->enable_custom;
   lang->enable_ejudge_env = cs_lang->enable_ejudge_env;
+  lang->enable_network = cs_lang->enable_network;
   lang->preserve_line_numbers = cs_lang->preserve_line_numbers;
   xstrdup3(&lang->content_type, cs_lang->content_type);
   lang->compile_dir_index = cs_lang->compile_dir_index;

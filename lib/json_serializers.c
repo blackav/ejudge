@@ -649,6 +649,11 @@ json_serialize_language(const struct section_language_data *lang, int final_mode
     } else if (!lang->enable_ejudge_env && !final_mode) {
         cJSON_AddFalseToObject(jr, "enable_ejudge_env");
     }
+    if (lang->enable_network > 0) {
+        cJSON_AddTrueToObject(jr, "enable_network");
+    } else if (!lang->enable_network && !final_mode) {
+        cJSON_AddFalseToObject(jr, "enable_network");
+    }
     if (lang->preserve_line_numbers > 0) {
         cJSON_AddTrueToObject(jr, "preserve_line_numbers");
     } else if (!lang->preserve_line_numbers && !final_mode) {

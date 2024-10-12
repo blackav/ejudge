@@ -1239,6 +1239,9 @@ lang_config_generate_compile_cfg(
     if ((s = shellconfig_get(p->cfg, "enable_ejudge_env"))) {
       fprintf(f, "enable_ejudge_env\n");
     }
+    if ((s = shellconfig_get(p->cfg, "enable_network"))) {
+      fprintf(f, "enable_network\n");
+    }
     if ((s = shellconfig_get(p->cfg, "default_disabled"))) {
       fprintf(f, "default_disabled\n");
     }
@@ -1771,6 +1774,10 @@ lang_config_update_compile_cfg(
     lang->enable_ejudge_env = 0;
     if ((s = shellconfig_get(lci->cfg, "enable_ejudge_env"))) {
       lang->enable_ejudge_env = 1;
+    }
+    lang->enable_network = 0;
+    if ((s = shellconfig_get(lci->cfg, "enable_network"))) {
+      lang->enable_network = 1;
     }
     lang->default_disabled = 0;
     if ((s = shellconfig_get(lci->cfg, "default_disabled"))) {

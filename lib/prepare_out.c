@@ -960,6 +960,8 @@ prepare_unparse_lang(
     unparse_bool(f, "enable_custom", lang->enable_custom);
   if (lang->enable_ejudge_env > 0)
     unparse_bool(f, "enable_ejudge_env", lang->enable_ejudge_env);
+  if (lang->enable_network > 0)
+    unparse_bool(f, "enable_network", lang->enable_network);
   if (lang->preserve_line_numbers > 0)
     unparse_bool(f, "preserve_line_numbers", lang->preserve_line_numbers);
   if (lang->default_disabled > 0)

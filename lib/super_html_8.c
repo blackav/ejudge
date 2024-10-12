@@ -1532,6 +1532,7 @@ super_html_simplify_lang(
   PROCESS_BOOL(enable_custom);
   PROCESS_BOOL(enable_ejudge_env);
   PROCESS_BOOL(preserve_line_numbers);
+  PROCESS_BOOL(enable_network);
 #undef PROCESS_BOOL
 
 #define PROCESS_SIZE(field) do { if (lang->field <= 0) { lang->field = -1; } else if (lang->field > 0 && lang->field == serv_lang->field) { lang->field = -1; } else if (lang->field > 0) { need_section = 1; } } while (0)
