@@ -1809,8 +1809,16 @@ serve_compile_request(
   if (global->preserve_line_numbers > 0 || (lang && lang->preserve_line_numbers > 0)) {
     cp.preserve_numbers = 1;
   }
-  cp.enable_remote_cache = (global->enable_remote_cache > 0);
+  if (lang && lang->enable_remote_cache >= 0) {
+    cp.enable_remote_cache = (lang->enable_remote_cache > 0);
+  } else {
+    cp.enable_remote_cache = (global->enable_remote_cache > 0);
+  }
   cp.enable_run_props = (global->enable_run_props > 0);
+  cp.enable_network = -1;
+  if (lang && lang->enable_network >= 0) {
+    cp.enable_network = lang->enable_network;
+  }
 
   memset(&rx, 0, sizeof(rx));
   rx.accepting_mode = accepting_mode;
@@ -2774,6 +2782,9 @@ serve_run_request(
   }
   if (lang && lang->run_max_rss_size > 0) {
     srpp->max_rss_size = lang->run_max_rss_size;
+  }
+  if (lang && lang->run_max_file_size > 0) {
+    srpp->max_file_size = lang->run_max_file_size;
   }
   srpp->checker_extra_files = sarray_copy(prob->checker_extra_files);
   if (lang && lang->enable_ejudge_env > 0) {

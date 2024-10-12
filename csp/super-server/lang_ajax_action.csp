@@ -29,6 +29,8 @@
     int insecure = -1;
     int is_dos = -1;
     int preserve_line_numbers = -1;
+    int enable_network = -1;
+    int enable_remote_cache = -1;
 
     ej_size64_t max_file_size = -1;
     ej_size64_t max_stack_size = -1;
@@ -37,6 +39,7 @@
     ej_size64_t run_max_rss_size = -1;
     ej_size64_t run_max_stack_size = -1;
     ej_size64_t run_max_vm_size = -1;
+    ej_size64_t run_max_file_size = -1;
 
     int compile_real_time_limit = -1;
     int priority_adjustment = 0;
@@ -105,6 +108,8 @@
 %><s:read var="insecure" default="-1" /><%
 %><s:read var="is_dos" default="-1" /><%
 %><s:read var="preserve_line_numbers" default="-1" /><%
+%><s:read var="enable_network" default="-1" /><%
+%><s:read var="enable_remote_cache" default="-1" /><%
 %><s:read var="max_file_size" default="-1" /><%
 %><s:read var="max_stack_size" default="-1" /><%
 %><s:read var="max_vm_size" default="-1" /><%
@@ -112,6 +117,7 @@
 %><s:read var="run_max_rss_size" default="-1" /><%
 %><s:read var="run_max_stack_size" default="-1" /><%
 %><s:read var="run_max_vm_size" default="-1" /><%
+%><s:read var="run_max_file_size" default="-1" /><%
 %><s:read var="compile_real_time_limit" default="-1" /><%
 %><s:read var="priority_adjustment" default="0" /><%
 %><s:read var="arch" normalize="yes" /><%
@@ -154,6 +160,8 @@
         ASSIGN_BOOL(insecure);
         ASSIGN_BOOL(is_dos);
         ASSIGN_BOOL(preserve_line_numbers);
+        ASSIGN_BOOL(enable_network);
+        ASSIGN_BOOL(enable_remote_cache);
 #undef ASSIGN_BOOL
 
 #define ASSIGN_SIZE(field) do { if (field < 0) { lang->field = -1; } else { lang->field = field; } } while (0)
@@ -164,6 +172,7 @@
         ASSIGN_SIZE(run_max_rss_size);
         ASSIGN_SIZE(run_max_stack_size);
         ASSIGN_SIZE(run_max_vm_size);
+        ASSIGN_SIZE(run_max_file_size);
 #undef ASSIGN_SIZE
 
         if (compile_real_time_limit < 0) {

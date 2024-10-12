@@ -649,6 +649,16 @@ json_serialize_language(const struct section_language_data *lang, int final_mode
     } else if (!lang->enable_ejudge_env && !final_mode) {
         cJSON_AddFalseToObject(jr, "enable_ejudge_env");
     }
+    if (lang->enable_network > 0) {
+        cJSON_AddTrueToObject(jr, "enable_network");
+    } else if (!lang->enable_network && !final_mode) {
+        cJSON_AddFalseToObject(jr, "enable_network");
+    }
+    if (lang->enable_remote_cache > 0) {
+        cJSON_AddTrueToObject(jr, "enable_remote_cache");
+    } else if (!lang->enable_remote_cache && !final_mode) {
+        cJSON_AddFalseToObject(jr, "enable_remote_cache");
+    }
     if (lang->preserve_line_numbers > 0) {
         cJSON_AddTrueToObject(jr, "preserve_line_numbers");
     } else if (!lang->preserve_line_numbers && !final_mode) {
@@ -689,6 +699,9 @@ json_serialize_language(const struct section_language_data *lang, int final_mode
     }
     if (lang->run_max_rss_size > 0) {
         cJSON_AddNumberToObject(jr, "run_max_rss_size", (double) lang->run_max_rss_size);
+    }
+    if (lang->run_max_file_size > 0) {
+        cJSON_AddNumberToObject(jr, "run_max_file_size", (double) lang->run_max_file_size);
     }
 /*
   int compile_dir_index;

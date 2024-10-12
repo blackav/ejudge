@@ -1,4 +1,3 @@
-; $Id$
 	section	.data
 format1	db	"%d%d", 0
 format2	db	"%d", 10, 0

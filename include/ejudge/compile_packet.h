@@ -41,6 +41,7 @@ struct compile_request_packet
   int preserve_numbers;
   int enable_remote_cache;
   int enable_run_props;            // 1, if an extended running properties (JSON) is supported
+  int enable_network;              // 1, if network access is enabled for compiler
   int64_t submit_id;
   ej_uuid_t uuid;
   ej_uuid_t judge_uuid;

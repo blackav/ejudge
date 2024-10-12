@@ -1,5 +1,5 @@
 #! /bin/bash
-# Copyright (c) 2019-2023 Alexander Chernov <cher@ejudge.ru>
+# Copyright (c) 2019-2024 Alexander Chernov <cher@ejudge.ru>
 
 # compiler script interface is as follows
 # <comp>-version [OPTION]
@@ -24,6 +24,7 @@ common_config() {
   echo 'exe_sfx=".dll"'
   echo 'arch="dotnet"'
   echo 'insecure=1'
+  echo 'run_max_file_size=8G'
 }
 
 failure() {

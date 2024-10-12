@@ -960,6 +960,10 @@ prepare_unparse_lang(
     unparse_bool(f, "enable_custom", lang->enable_custom);
   if (lang->enable_ejudge_env > 0)
     unparse_bool(f, "enable_ejudge_env", lang->enable_ejudge_env);
+  if (lang->enable_network > 0)
+    unparse_bool(f, "enable_network", lang->enable_network);
+  if (lang->enable_remote_cache > 0)
+    unparse_bool(f, "enable_remote_cache", lang->enable_remote_cache);
   if (lang->preserve_line_numbers > 0)
     unparse_bool(f, "preserve_line_numbers", lang->preserve_line_numbers);
   if (lang->default_disabled > 0)
@@ -995,6 +999,9 @@ prepare_unparse_lang(
   }
   if (lang->run_max_rss_size > 0) {
     fprintf(f, "run_max_rss_size = %s\n", ll_to_size_str(size_buf, sizeof(size_buf), lang->run_max_rss_size));
+  }
+  if (lang->run_max_file_size > 0) {
+    fprintf(f, "run_max_file_size = %s\n", ll_to_size_str(size_buf, sizeof(size_buf), lang->run_max_file_size));
   }
 
   if (lang->compiler_env) {

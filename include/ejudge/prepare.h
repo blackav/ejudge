@@ -1411,6 +1411,10 @@ struct section_language_data
   ejintbool_t enabled;
   /** disable automatic update of this language (by ejudge-configure-compilers) */
   ejintbool_t disable_auto_update;
+  /** enable network access for the compiler */
+  ejintbool_t enable_network;
+  /** enable remote cache for this language */
+  ejintbool_t enable_remote_cache;
 
   /** max virtual size limit  */
   ej_size64_t max_vm_size;
@@ -1426,6 +1430,8 @@ struct section_language_data
   ej_size64_t run_max_vm_size;
   /** max resident set size limit for compiled programs, overrides the problem settings */
   ej_size64_t run_max_rss_size;
+  /** max file size for compiled programs, overrides the problem settings */
+  ej_size64_t run_max_file_size;
 
   /** index of the compile directory in the list of compile servers */
   int compile_dir_index;

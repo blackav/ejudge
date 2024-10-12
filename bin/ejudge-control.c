@@ -185,6 +185,7 @@ command_start(
         const char *agent,
         const char *instance_id,
         const char *queue,
+        const char *compile_queue,
         int verbose_mode,
         const char *mirror,
         int enable_heartbeat,
@@ -298,7 +299,10 @@ command_start(
       task_AddArg(tsk, "-hi");
       task_AddArg(tsk, instance_id);
     }
-    if (queue && *queue) {
+    if (compile_queue && *compile_queue) {
+      task_AddArg(tsk, "--queue");
+      task_AddArg(tsk, compile_queue);
+    } else if (queue && *queue) {
       task_AddArg(tsk, "--queue");
       task_AddArg(tsk, queue);
     }
@@ -647,6 +651,7 @@ main(int argc, char *argv[])
   const char *agent = NULL;
   const char *instance_id = NULL;
   const char *queue = NULL;
+  const char *compile_queue = NULL;
   int verbose_mode = 0;
   const char *mirror = NULL;
   int enable_heartbeat = 0;
@@ -694,6 +699,10 @@ main(int argc, char *argv[])
     } else if (!strcmp(argv[i], "--queue")) {
       if (i + 1 >= argc) startup_error("argument expected for `--queue'");
       queue = argv[i + 1];
+      i += 2;
+    } else if (!strcmp(argv[i], "--compile-queue")) {
+      if (i + 1 >= argc) startup_error("argument expected for `--compile-queue'");
+      compile_queue = argv[i + 1];
       i += 2;
     } else if (!strcmp(argv[i], "--mirror")) {
       if (i + 1 >= argc) startup_error("argument expected for `--mirror'");
@@ -829,7 +838,7 @@ main(int argc, char *argv[])
     if (command_start(config, user, group, ejudge_xml_path, force_mode,
                       slave_mode, all_run_serve, master_mode, parallelism,
                       compile_parallelism, skip_mask,
-                      agent, instance_id, queue, verbose_mode,
+                      agent, instance_id, queue, compile_queue, verbose_mode,
                       mirror, enable_heartbeat, disable_heartbeat,
                       timeout_str, shutdown_script, ip_address,
                       reboot_script, lang_id_map, local_cache) < 0)

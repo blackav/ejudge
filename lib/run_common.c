@@ -5471,13 +5471,15 @@ run_tests(
 
   snprintf(messages_path, sizeof(messages_path), "%s/%s", global->run_work_dir, "messages");
 
-  if (is_piped_core_dump()) {
-    append_msg_to_log(messages_path,
-                      "ATTENTION: core file pattern in /proc/sys/kernel/core_pattern\n"
-                      "is set to pipe the core file to a helper program.\n"
-                      "This is NOT RECOMMENDED for correct judging.\n"
-                      "Please, modify the core_pattern file.\n"
-                      "For example, consider disabling abrtd.\n");
+  if (srgp->enable_container <= 0) {
+    if (is_piped_core_dump()) {
+      append_msg_to_log(messages_path,
+                        "ATTENTION: core file pattern in /proc/sys/kernel/core_pattern\n"
+                        "is set to pipe the core file to a helper program.\n"
+                        "This is NOT RECOMMENDED for correct judging.\n"
+                        "Please, modify the core_pattern file.\n"
+                        "For example, consider disabling abrtd.\n");
+    }
   }
 
   if (tst) {

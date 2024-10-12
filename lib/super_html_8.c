@@ -1532,6 +1532,8 @@ super_html_simplify_lang(
   PROCESS_BOOL(enable_custom);
   PROCESS_BOOL(enable_ejudge_env);
   PROCESS_BOOL(preserve_line_numbers);
+  PROCESS_BOOL(enable_network);
+  PROCESS_BOOL(enable_remote_cache);
 #undef PROCESS_BOOL
 
 #define PROCESS_SIZE(field) do { if (lang->field <= 0) { lang->field = -1; } else if (lang->field > 0 && lang->field == serv_lang->field) { lang->field = -1; } else if (lang->field > 0) { need_section = 1; } } while (0)
@@ -1542,6 +1544,7 @@ super_html_simplify_lang(
   PROCESS_SIZE(run_max_stack_size);
   PROCESS_SIZE(run_max_vm_size);
   PROCESS_SIZE(run_max_rss_size);
+  PROCESS_SIZE(run_max_file_size);
 #undef PROCESS_SIZE
 
   if (lang->compile_real_time_limit < 0) {
@@ -1566,7 +1569,7 @@ super_html_simplify_lang(
     need_section = 1;
   }
 
-  if (lang->super_run_dir && *lang->super_run_dir) {
+  if (lang->super_run_dir && !*lang->super_run_dir) {
     xfree(lang->super_run_dir); lang->super_run_dir = NULL;
   }
   if (lang->super_run_dir) {
