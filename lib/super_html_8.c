@@ -1569,7 +1569,7 @@ super_html_simplify_lang(
     need_section = 1;
   }
 
-  if (lang->super_run_dir && *lang->super_run_dir) {
+  if (lang->super_run_dir && !*lang->super_run_dir) {
     xfree(lang->super_run_dir); lang->super_run_dir = NULL;
   }
   if (lang->super_run_dir) {
