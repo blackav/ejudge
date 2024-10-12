@@ -2002,6 +2002,7 @@ static struct meta_info_item meta_info_section_language_data_data[] =
   [CNTSLANG_run_max_stack_size] = { CNTSLANG_run_max_stack_size, 'E', XSIZE(struct section_language_data, run_max_stack_size), "run_max_stack_size", XOFFSET(struct section_language_data, run_max_stack_size) },
   [CNTSLANG_run_max_vm_size] = { CNTSLANG_run_max_vm_size, 'E', XSIZE(struct section_language_data, run_max_vm_size), "run_max_vm_size", XOFFSET(struct section_language_data, run_max_vm_size) },
   [CNTSLANG_run_max_rss_size] = { CNTSLANG_run_max_rss_size, 'E', XSIZE(struct section_language_data, run_max_rss_size), "run_max_rss_size", XOFFSET(struct section_language_data, run_max_rss_size) },
+  [CNTSLANG_run_max_file_size] = { CNTSLANG_run_max_file_size, 'E', XSIZE(struct section_language_data, run_max_file_size), "run_max_file_size", XOFFSET(struct section_language_data, run_max_file_size) },
   [CNTSLANG_compile_dir_index] = { CNTSLANG_compile_dir_index, 'i', XSIZE(struct section_language_data, compile_dir_index), "compile_dir_index", XOFFSET(struct section_language_data, compile_dir_index) },
   [CNTSLANG_compile_dir] = { CNTSLANG_compile_dir, 's', XSIZE(struct section_language_data, compile_dir), "compile_dir", XOFFSET(struct section_language_data, compile_dir) },
   [CNTSLANG_compile_queue_dir] = { CNTSLANG_compile_queue_dir, 's', XSIZE(struct section_language_data, compile_queue_dir), "compile_queue_dir", XOFFSET(struct section_language_data, compile_queue_dir) },
@@ -2116,6 +2117,7 @@ void cntslang_copy(struct section_language_data *dst, const struct section_langu
   dst->run_max_stack_size = src->run_max_stack_size;
   dst->run_max_vm_size = src->run_max_vm_size;
   dst->run_max_rss_size = src->run_max_rss_size;
+  dst->run_max_file_size = src->run_max_file_size;
   dst->compile_dir_index = src->compile_dir_index;
   if (src->compile_dir) {
     dst->compile_dir = strdup(src->compile_dir);

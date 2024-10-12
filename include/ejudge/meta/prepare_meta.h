@@ -638,6 +638,7 @@ enum
   CNTSLANG_run_max_stack_size,
   CNTSLANG_run_max_vm_size,
   CNTSLANG_run_max_rss_size,
+  CNTSLANG_run_max_file_size,
   CNTSLANG_compile_dir_index,
   CNTSLANG_compile_dir,
   CNTSLANG_compile_queue_dir,

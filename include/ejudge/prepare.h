@@ -1426,6 +1426,8 @@ struct section_language_data
   ej_size64_t run_max_vm_size;
   /** max resident set size limit for compiled programs, overrides the problem settings */
   ej_size64_t run_max_rss_size;
+  /** max file size for compiled programs, overrides the problem settings */
+  ej_size64_t run_max_file_size;
 
   /** index of the compile directory in the list of compile servers */
   int compile_dir_index;
