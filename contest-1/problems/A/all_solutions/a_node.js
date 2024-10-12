@@ -1,7 +1,16 @@
-var fs = require('fs');
+const readline = require('readline');
+const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+});
 
-var data = fs.readFileSync('/dev/stdin', 'utf8');
-var args = data.split(/\s+/);
-var a = parseInt(args[0]);
-var b = parseInt(args[1]);
-console.log(a + b);
+let input = [];
+
+
+rl.on('line', (line) => {
+    input.push(parseInt(line));
+    if (input.length === 2) {
+        console.log(input[0] + input[1]);
+        rl.close();
+    }
+});

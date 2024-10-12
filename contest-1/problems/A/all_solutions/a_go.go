@@ -7,5 +7,3 @@ func main(){
     fmt.Scan(&b)
     fmt.Printf("%d\n", a + b)
 }
-
-
