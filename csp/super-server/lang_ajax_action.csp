@@ -30,6 +30,7 @@
     int is_dos = -1;
     int preserve_line_numbers = -1;
     int enable_network = -1;
+    int enable_remote_cache = -1;
 
     ej_size64_t max_file_size = -1;
     ej_size64_t max_stack_size = -1;
@@ -108,6 +109,7 @@
 %><s:read var="is_dos" default="-1" /><%
 %><s:read var="preserve_line_numbers" default="-1" /><%
 %><s:read var="enable_network" default="-1" /><%
+%><s:read var="enable_remote_cache" default="-1" /><%
 %><s:read var="max_file_size" default="-1" /><%
 %><s:read var="max_stack_size" default="-1" /><%
 %><s:read var="max_vm_size" default="-1" /><%
@@ -159,6 +161,7 @@
         ASSIGN_BOOL(is_dos);
         ASSIGN_BOOL(preserve_line_numbers);
         ASSIGN_BOOL(enable_network);
+        ASSIGN_BOOL(enable_remote_cache);
 #undef ASSIGN_BOOL
 
 #define ASSIGN_SIZE(field) do { if (field < 0) { lang->field = -1; } else { lang->field = field; } } while (0)

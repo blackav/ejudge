@@ -1996,6 +1996,7 @@ static struct meta_info_item meta_info_section_language_data_data[] =
   [CNTSLANG_enabled] = { CNTSLANG_enabled, 'B', XSIZE(struct section_language_data, enabled), "enabled", XOFFSET(struct section_language_data, enabled) },
   [CNTSLANG_disable_auto_update] = { CNTSLANG_disable_auto_update, 'B', XSIZE(struct section_language_data, disable_auto_update), "disable_auto_update", XOFFSET(struct section_language_data, disable_auto_update) },
   [CNTSLANG_enable_network] = { CNTSLANG_enable_network, 'B', XSIZE(struct section_language_data, enable_network), "enable_network", XOFFSET(struct section_language_data, enable_network) },
+  [CNTSLANG_enable_remote_cache] = { CNTSLANG_enable_remote_cache, 'B', XSIZE(struct section_language_data, enable_remote_cache), "enable_remote_cache", XOFFSET(struct section_language_data, enable_remote_cache) },
   [CNTSLANG_max_vm_size] = { CNTSLANG_max_vm_size, 'E', XSIZE(struct section_language_data, max_vm_size), "max_vm_size", XOFFSET(struct section_language_data, max_vm_size) },
   [CNTSLANG_max_stack_size] = { CNTSLANG_max_stack_size, 'E', XSIZE(struct section_language_data, max_stack_size), "max_stack_size", XOFFSET(struct section_language_data, max_stack_size) },
   [CNTSLANG_max_file_size] = { CNTSLANG_max_file_size, 'E', XSIZE(struct section_language_data, max_file_size), "max_file_size", XOFFSET(struct section_language_data, max_file_size) },
@@ -2112,6 +2113,7 @@ void cntslang_copy(struct section_language_data *dst, const struct section_langu
   dst->enabled = src->enabled;
   dst->disable_auto_update = src->disable_auto_update;
   dst->enable_network = src->enable_network;
+  dst->enable_remote_cache = src->enable_remote_cache;
   dst->max_vm_size = src->max_vm_size;
   dst->max_stack_size = src->max_stack_size;
   dst->max_file_size = src->max_file_size;

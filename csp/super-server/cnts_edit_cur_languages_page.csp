@@ -1229,6 +1229,14 @@ $(function() {
         <td><s:help icon="yes" topic="Serve.cfg:language:enable_network" /></td>
     </s:tr>
 
+    <s:tr id="enable_remote_cache-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]">
+        <td width="50">&nbsp;</td>
+        <td valign="top">Enable run-time ejudge-specific env vars:</td>
+        <td><div><s:yesno3 id="enable_remote_cache" idSuffix="idsuffix" name="param" value="lang->enable_remote_cache" default="act_lang->enable_remote_cache" onchange="newLangOnChange(this)" disabledExpr="!enabled" /></div>
+            <div style="font-size: 0.75em; color: gray;" ><s:yesno name="param" readonly="readonly" value="act_lang->enable_remote_cache" /></div></td>
+        <td><s:help icon="yes" topic="Serve.cfg:language:enable_remote_cache" /></td>
+    </s:tr>
+
     <s:tr id="run_env_file-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]">
         <td width="50">&nbsp;</td>
         <td valign="top">Run-time environment file:</td>
@@ -1499,14 +1507,14 @@ function newLanguageOper1(lang_id, oper)
     });
 }
 
-const main_div_ids = // 29
+const main_div_ids = // 30
 [
     "lang_id", "compile_id", "short_name", "src_sfx", "exe_sfx",
     "compile_server_id", "super_run_dir", "long_name", "version", "compile_real_time_limit",
     "priority_adjustment", "style_checker_cmd", "style_checker_env", "disable_auto_testing", "disable_testing",
-    "enable_ejudge_env", "enable_network", "run_env_file", "run_max_stack_size", "run_max_rss_size",
-    "run_max_file_size", "extra_ejudge_flags", "extra_ejudge_libs", "extra_compiler_env", "container_options",
-    "compiler_container_options", "clean_up_cmd", "clean_up_env_file", "multi_header_suffix"
+    "enable_ejudge_env", "enable_network", "enable_remote_cache", "run_env_file", "run_max_stack_size",
+    "run_max_rss_size", "run_max_file_size", "extra_ejudge_flags", "extra_ejudge_libs", "extra_compiler_env",
+    "container_options", "compiler_container_options", "clean_up_cmd", "clean_up_env_file", "multi_header_suffix"
 ];
 
 const verbose_div_ids = // 15
@@ -1571,11 +1579,11 @@ function newLanguageExpand(lang_id)
     }
 }
 
-const lang_boolean_inputs = // 11
+const lang_boolean_inputs = // 12
 [
     "disable_auto_testing", "disable_testing", "enable_ejudge_env", "binary", "disable_security",
     "enable_custom", "enable_suid_run", "insecure", "is_dos", "preserve_line_numbers",
-    "enable_network"
+    "enable_network", "enable_remote_cache"
 ];
 
 const lang_size_inputs = // 8

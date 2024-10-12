@@ -654,6 +654,11 @@ json_serialize_language(const struct section_language_data *lang, int final_mode
     } else if (!lang->enable_network && !final_mode) {
         cJSON_AddFalseToObject(jr, "enable_network");
     }
+    if (lang->enable_remote_cache > 0) {
+        cJSON_AddTrueToObject(jr, "enable_remote_cache");
+    } else if (!lang->enable_remote_cache && !final_mode) {
+        cJSON_AddFalseToObject(jr, "enable_remote_cache");
+    }
     if (lang->preserve_line_numbers > 0) {
         cJSON_AddTrueToObject(jr, "preserve_line_numbers");
     } else if (!lang->preserve_line_numbers && !final_mode) {

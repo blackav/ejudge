@@ -1413,6 +1413,8 @@ struct section_language_data
   ejintbool_t disable_auto_update;
   /** enable network access for the compiler */
   ejintbool_t enable_network;
+  /** enable remote cache for this language */
+  ejintbool_t enable_remote_cache;
 
   /** max virtual size limit  */
   ej_size64_t max_vm_size;

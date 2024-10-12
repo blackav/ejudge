@@ -632,6 +632,7 @@ enum
   CNTSLANG_enabled,
   CNTSLANG_disable_auto_update,
   CNTSLANG_enable_network,
+  CNTSLANG_enable_remote_cache,
   CNTSLANG_max_vm_size,
   CNTSLANG_max_stack_size,
   CNTSLANG_max_file_size,
