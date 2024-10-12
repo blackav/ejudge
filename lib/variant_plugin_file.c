@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2022-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -182,9 +182,11 @@ find_variant_func(
             *p_virtual_variant = vi->variants[pmap->prob_map[prob_id]];
         int v = vi->variants[pmap->prob_map[prob_id]];
         if (!v && prob->autoassign_variants > 0) {
+            const unsigned char *user_login = teamdb_get_login(state->teamdb_state, user_id);
+            if (!user_login) return 0;
             v = random_range(1, prob->variant_num + 1);
             variant_map_set_variant(pmap, user_id,
-                                    teamdb_get_login(state->teamdb_state, user_id),
+                                    user_login,
                                     prob_id,
                                     v);
             // FIXME: handle errors
@@ -194,9 +196,11 @@ find_variant_func(
             return 0;
         return v;
     } else if (prob->autoassign_variants > 0) {
+        const unsigned char *user_login = teamdb_get_login(state->teamdb_state, user_id);
+        if (!user_login) return 0;
         int v = random_range(1, prob->variant_num + 1);
         variant_map_set_variant(pmap, user_id,
-                                teamdb_get_login(state->teamdb_state, user_id),
+                                user_login,
                                 prob_id,
                                 v);
         // FIXME: handle errors
