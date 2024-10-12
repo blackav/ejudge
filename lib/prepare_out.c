@@ -996,6 +996,9 @@ prepare_unparse_lang(
   if (lang->run_max_rss_size > 0) {
     fprintf(f, "run_max_rss_size = %s\n", ll_to_size_str(size_buf, sizeof(size_buf), lang->run_max_rss_size));
   }
+  if (lang->run_max_file_size > 0) {
+    fprintf(f, "run_max_file_size = %s\n", ll_to_size_str(size_buf, sizeof(size_buf), lang->run_max_file_size));
+  }
 
   if (lang->compiler_env) {
     for (i = 0; lang->compiler_env[i]; i++) {

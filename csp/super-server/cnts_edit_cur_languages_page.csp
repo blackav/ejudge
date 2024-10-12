@@ -1426,6 +1426,14 @@ $(function() {
         <td><s:help icon="yes" topic="Serve.cfg:language:run_max_vm_size" /></td>
     </s:tr>
 
+    <s:tr id="run_max_file_size-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" hiddenExpr="!more_expanded">
+        <td width="50">&nbsp;</td>
+        <td valign="top">Run-time max file size (obsolete):</td>
+        <td><div><s:textfield id="run_max_file_size" idSuffix="idsuffix" name="param" value="lang->run_max_file_size" size="48" format="V" onchange="newLangOnChange(this)" disabledExpr="!enabled" /></div>
+            <div style="font-size: 0.75em; color: gray;" ><code><s:v value="act_lang->run_max_file_size" checkExpr="&gt; 0" format="V" /></code></div></td>
+        <td><s:help icon="yes" topic="Serve.cfg:language:run_max_file_size" /></td>
+    </s:tr>
+
     <s:tr id="button-row-div" idSuffix="idsuffix" hiddenExpr="1" >
         <td colspan="4" style="text-align: center;">
             <span style="margin:0px auto;">
@@ -1493,11 +1501,12 @@ const main_div_ids = // 27
     "clean_up_env_file", "multi_header_suffix"
 ];
 
-const verbose_div_ids = // 14
+const verbose_div_ids = // 16
 [
     "arch", "binary", "content_type", "disable_security", "enable_custom",
     "enable_suid_run", "insecure", "is_dos", "key", "max_file_size",
-    "max_stack_size", "max_vm_size", "max_rss_size", "preserve_line_numbers", "run_max_vm_size"
+    "max_stack_size", "max_vm_size", "max_rss_size", "preserve_line_numbers", "run_max_vm_size",
+    "run_max_file_size"
 ];
 
 function newLanguageZoomIn(lang_id)
@@ -1561,10 +1570,10 @@ const lang_boolean_inputs = // 10
     "enable_custom", "enable_suid_run", "insecure", "is_dos", "preserve_line_numbers"
 ];
 
-const lang_size_inputs = // 7
+const lang_size_inputs = // 8
 [
     "run_max_stack_size", "run_max_rss_size", "max_file_size", "max_stack_size", "max_vm_size",
-    "run_max_vm_size", "max_rss_size"
+    "run_max_vm_size", "max_rss_size", "run_max_file_size"
 ];
 
 const lang_int_inputs = // 2

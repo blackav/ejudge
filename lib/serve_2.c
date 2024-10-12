@@ -2775,6 +2775,9 @@ serve_run_request(
   if (lang && lang->run_max_rss_size > 0) {
     srpp->max_rss_size = lang->run_max_rss_size;
   }
+  if (lang && lang->run_max_file_size > 0) {
+    srpp->max_file_size = lang->run_max_file_size;
+  }
   srpp->checker_extra_files = sarray_copy(prob->checker_extra_files);
   if (lang && lang->enable_ejudge_env > 0) {
     srgp->enable_ejudge_env = lang->enable_ejudge_env > 0;

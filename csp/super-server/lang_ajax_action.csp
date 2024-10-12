@@ -37,6 +37,7 @@
     ej_size64_t run_max_rss_size = -1;
     ej_size64_t run_max_stack_size = -1;
     ej_size64_t run_max_vm_size = -1;
+    ej_size64_t run_max_file_size = -1;
 
     int compile_real_time_limit = -1;
     int priority_adjustment = 0;
@@ -112,6 +113,7 @@
 %><s:read var="run_max_rss_size" default="-1" /><%
 %><s:read var="run_max_stack_size" default="-1" /><%
 %><s:read var="run_max_vm_size" default="-1" /><%
+%><s:read var="run_max_file_size" default="-1" /><%
 %><s:read var="compile_real_time_limit" default="-1" /><%
 %><s:read var="priority_adjustment" default="0" /><%
 %><s:read var="arch" normalize="yes" /><%
@@ -164,6 +166,7 @@
         ASSIGN_SIZE(run_max_rss_size);
         ASSIGN_SIZE(run_max_stack_size);
         ASSIGN_SIZE(run_max_vm_size);
+        ASSIGN_SIZE(run_max_file_size);
 #undef ASSIGN_SIZE
 
         if (compile_real_time_limit < 0) {

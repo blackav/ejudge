@@ -1542,6 +1542,7 @@ super_html_simplify_lang(
   PROCESS_SIZE(run_max_stack_size);
   PROCESS_SIZE(run_max_vm_size);
   PROCESS_SIZE(run_max_rss_size);
+  PROCESS_SIZE(run_max_file_size);
 #undef PROCESS_SIZE
 
   if (lang->compile_real_time_limit < 0) {

@@ -644,6 +644,7 @@ static const struct config_parse_info section_language_params[] =
   LANGUAGE_PARAM(run_max_stack_size, "E"),
   LANGUAGE_PARAM(run_max_vm_size, "E"),
   LANGUAGE_PARAM(run_max_rss_size, "E"),
+  LANGUAGE_PARAM(run_max_file_size, "E"),
 
   LANGUAGE_PARAM(compile_dir, "S"),
   LANGUAGE_PARAM(compile_dir_index, "d"),
@@ -1175,6 +1176,7 @@ language_init_func(struct generic_section_config *gp)
   ej_size64_t run_max_stack_size;
   ej_size64_t run_max_vm_size;
   ej_size64_t run_max_rss_size;
+  ej_size64_t run_max_file_size;
 
   int compile_dir_index;
   unsigned char *compile_dir;
@@ -7212,6 +7214,7 @@ prepare_merge_language(
   LANG_MERGE_SIZE(run_max_stack_size);
   LANG_MERGE_SIZE(run_max_vm_size);
   LANG_MERGE_SIZE(run_max_rss_size);
+  LANG_MERGE_SIZE(run_max_file_size);
   out->compiler_env = sarray_merge_pp(imp->compiler_env, lang->compiler_env);
   LANG_MERGE_STRING(compile_server_id);
   LANG_MERGE_STRING(multi_header_suffix);

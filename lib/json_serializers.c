@@ -690,6 +690,9 @@ json_serialize_language(const struct section_language_data *lang, int final_mode
     if (lang->run_max_rss_size > 0) {
         cJSON_AddNumberToObject(jr, "run_max_rss_size", (double) lang->run_max_rss_size);
     }
+    if (lang->run_max_file_size > 0) {
+        cJSON_AddNumberToObject(jr, "run_max_file_size", (double) lang->run_max_file_size);
+    }
 /*
   int compile_dir_index;
   unsigned char *compile_dir;
