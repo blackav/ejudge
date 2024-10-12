@@ -18,7 +18,7 @@
 
 #include "ejudge/integral.h"
 
-#define EJ_COMPILE_PACKET_VERSION 17
+#define EJ_COMPILE_PACKET_VERSION 18
 #define EJ_COMPILE_REPLY_PACKET_VERSION 4
 
 /* various private data structures and constants for compile packets */
@@ -55,6 +55,7 @@ struct compile_request_bin_packet
   rint32_t preserve_numbers;    /* Try to preserve line numbers in the source */
   rint32_t enable_remote_cache; /* Enable cacheing on the remote side */
   rint32_t enable_run_props;    /* Enable extended running properties from compiler */
+  rint32_t enable_network;      /* Enable network access for compiler */
   ej_uuid_t uuid;               /* UUID */
   ej_uuid_t judge_uuid;         /* judging UUID */
   rint32_t multi_header;        /* multi-header mode */

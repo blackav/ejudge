@@ -1811,6 +1811,10 @@ serve_compile_request(
   }
   cp.enable_remote_cache = (global->enable_remote_cache > 0);
   cp.enable_run_props = (global->enable_run_props > 0);
+  cp.enable_network = -1;
+  if (lang && lang->enable_network >= 0) {
+    cp.enable_network = lang->enable_network;
+  }
 
   memset(&rx, 0, sizeof(rx));
   rx.accepting_mode = accepting_mode;

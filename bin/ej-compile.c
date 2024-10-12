@@ -554,6 +554,15 @@ invoke_compiler(
     if (req->container_options && req->container_options[0]) {
       task_AppendContainerOptions(tsk, req->container_options);
     }
+    int enable_network = -1;
+    if (req->enable_network >= 0) {
+      enable_network = req->enable_network;
+    } else {
+      enable_network = lang->enable_network;
+    }
+    if (enable_network > 0) {
+      task_AppendContainerOptions(tsk, "mn");
+    }
     task_SetLanguageName(tsk, lang->short_name);
   }
   if (req->enable_run_props > 0) {
