@@ -73,6 +73,7 @@ struct compile_request_bin_packet
   rint32_t vcs_compile_cmd_len;  /* compile command for vcs_mode */
   rint32_t compile_cmd_len;      /* custom compile command */
   rint32_t extra_src_dir_len;    /* directory with additional source files */
+  unsigned char pad[12];
   /* style checker command (aligned to 16 byte boundary) */
   /* run_block (aligned to 16 byte boundary) */
   /* env variable length array (aligned to 16-byte address boundary) */
