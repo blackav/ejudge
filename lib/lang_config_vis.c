@@ -1250,6 +1250,9 @@ lang_config_generate_compile_cfg(
     if ((s = shellconfig_get(p->cfg, "clean_up_cmd"))) {
       fprintf(f, "clean_up_cmd = \"%s\"\n", s);
     }
+    if ((s = shellconfig_get(p->cfg, "run_max_file_size"))) {
+      fprintf(f, "run_max_file_size\n");
+    }
     fprintf(f, "\n");
   }
 
@@ -1450,6 +1453,33 @@ lang_config_split_file(
   if (p_body) *p_body = body;
 
   xfree(text);
+  return 0;
+}
+
+static long long
+num_suffix(const unsigned char *str)
+{
+  if (!str[0]) return 1;
+  if (str[1]) return 0;
+  if (str[0] == 'k' || str[0] == 'K') return 1024;
+  if (str[0] == 'm' || str[0] == 'M') return 1024 * 1024;
+  if (str[0] == 'g' || str[0] == 'G') return 1024 * 1024 * 1024;
+  return 0;
+}
+
+static int
+parse_size(const unsigned char *str, long long *sz)
+{
+  if (!str || !*str) return -1;
+
+  char *eptr = NULL;
+  errno = 0;
+  long long val = strtoll(str, &eptr, 10);
+  if (errno || val < -1) return -1;
+  long long sfx = num_suffix(eptr);
+  if (sfx <= 0) return -1;
+  if (__builtin_mul_overflow(val, sfx, &val)) return -1;
+  *sz = val;
   return 0;
 }
 
@@ -1758,6 +1788,13 @@ lang_config_update_compile_cfg(
     xfree(lang->clean_up_cmd); lang->clean_up_cmd = NULL;
     if ((s = shellconfig_get(lci->cfg, "clean_up_cmd")) && *s) {
       lang->clean_up_cmd = xstrdup(s);
+    }
+    lang->run_max_file_size = 0;
+    if ((s = shellconfig_get(lci->cfg, "run_max_file_size"))) {
+      long long v;
+      if (parse_size(s, &v) >= 0) {
+        lang->run_max_file_size = v;
+      }
     }
   }
 
