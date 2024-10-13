@@ -28,84 +28,158 @@
 #include "ejudge/sha256.h"
 #include "ejudge/mime_type.h"
 #include "ejudge/userlist.h"
+#include "ejudge/xalloc.h"
+#include "ejudge/base64.h"
+
 #include <stdio.h>
+
+void
+json_serialize_file_content(
+                            cJSON *jd, // target json
+                            const unsigned char *attr_name,
+                            const unsigned char *orig_attr_name,
+                            const struct testing_report_file_content *fc)
+{
+    if (fc->size <= 0) return;
+    if (fc->is_too_big <= 0 && fc->is_base64 <= 0 && fc->is_bzip2 <= 0) {
+        cJSON_AddStringToObject(jd, attr_name, fc->data);
+        return;
+    }
+    cJSON *jfc = cJSON_CreateObject();
+    if (fc->size > 0) {
+        cJSON_AddNumberToObject(jfc, "size", fc->size);
+    }
+    if (fc->orig_size > 0) {
+        cJSON_AddNumberToObject(jfc, "orig_size", fc->orig_size);
+    }
+    if (fc->data) {
+        cJSON_AddStringToObject(jfc, "data", fc->data);
+    }
+    if (fc->is_too_big > 0) {
+        cJSON_AddTrueToObject(jfc, "is_too_big");
+    }
+    if (fc->is_base64 > 0) {
+        cJSON_AddTrueToObject(jfc, "is_base64");
+    }
+    if (fc->is_bzip2 > 0) {
+        cJSON_AddTrueToObject(jfc, "is_bzip2");
+    }
+    cJSON_AddItemToObject(jd, orig_attr_name, jfc);
+    if (fc->is_bzip2 > 0) {
+        cJSON_AddStringToObject(jd, attr_name, "[data format is not supported]");
+        return;
+    }
+    if (fc->is_too_big > 0) {
+        cJSON_AddStringToObject(jd, attr_name, "[data is too big]");
+        return;
+    }
+    size_t in_len = strlen(fc->data);
+    unsigned char *out_buf = xmalloc(in_len + 16);
+    int error_flag = 0;
+    int out_len = base64_decode(fc->data, in_len, out_buf, &error_flag);
+    if (error_flag) {
+        cJSON_AddStringToObject(jd, attr_name, "[data is invalid]");
+        xfree(out_buf);
+        return;
+    }
+    out_buf[out_len] = 0;
+    if (strlen(out_buf) == out_len) {
+        cJSON_AddStringToObject(jd, attr_name, out_buf);
+        xfree(out_buf);
+        return;
+    }
+    // count the number of zero bytes
+    int zero_cnt = 0;
+    for (int i = 0; i < out_len; ++i) {
+        if (!out_buf[i]) {
+            ++zero_cnt;
+        }
+    }
+    unsigned char *w_buf = xmalloc(out_len + 1 + zero_cnt * 2);
+    unsigned char *w_ptr = w_buf;
+    for (int i = 0; i < out_len; ++i) {
+        if (!out_buf[i]) {
+            *w_ptr++ = 0xef;
+            *w_ptr++ = 0xbf;
+            *w_ptr++ = 0xbd;
+        } else {
+            *w_ptr++ = out_buf[i];
+        }
+    }
+    *w_ptr = 0;
+    xfree(out_buf);
+    cJSON_AddStringToObject(jd, attr_name, w_buf);
+    xfree(w_buf);
+}
 
 cJSON *
 json_serialize_submit(
         const struct submit_entry *se,
         const struct testing_report_xml *tr)
 {
-  cJSON *jrr = cJSON_CreateObject();
-  cJSON_AddNumberToObject(jrr, "submit_id", se->serial_id);
-  cJSON_AddNumberToObject(jrr, "contest_id", se->contest_id);
-  cJSON_AddNumberToObject(jrr, "user_id", se->user_id);
-  cJSON_AddNumberToObject(jrr, "prob_id", se->prob_id);
-  cJSON_AddNumberToObject(jrr, "lang_id", se->lang_id);
-  cJSON_AddNumberToObject(jrr, "status", se->status);
-  cJSON_AddStringToObject(jrr, "status_str",
-                          run_status_short_str(se->status));
-  cJSON_AddStringToObject(jrr, "status_desc",
-                          run_status_str(se->status, NULL, 0, 0, 0));
-  if (se->ext_user_kind > 0 && se->ext_user_kind < MIXED_ID_LAST) {
-    unsigned char buf[64];
-    cJSON_AddStringToObject(jrr, "ext_user_kind",
-                            mixed_id_unparse_kind(se->ext_user_kind));
-    cJSON_AddStringToObject(jrr, "ext_user",
-                            mixed_id_marshall(buf, se->ext_user_kind,
-                                              &se->ext_user));
-  }
-  if (se->notify_driver > 0
-      && se->notify_kind > 0 && se->notify_kind < MIXED_ID_LAST) {
-    unsigned char buf[64];
-    cJSON_AddNumberToObject(jrr, "notify_driver", se->notify_driver);
-    cJSON_AddStringToObject(jrr, "notify_kind",
-                            mixed_id_unparse_kind(se->notify_kind));
-    cJSON_AddStringToObject(jrr, "notify_queue",
-                            mixed_id_marshall(buf, se->notify_kind,
-                                              &se->notify_queue));
-  }
-  if (tr) {
-    if (tr->compiler_output && *tr->compiler_output) {
-      cJSON_AddStringToObject(jrr, "compiler_output", tr->compiler_output);
+    cJSON *jrr = cJSON_CreateObject();
+    cJSON_AddNumberToObject(jrr, "submit_id", se->serial_id);
+    cJSON_AddNumberToObject(jrr, "contest_id", se->contest_id);
+    cJSON_AddNumberToObject(jrr, "user_id", se->user_id);
+    cJSON_AddNumberToObject(jrr, "prob_id", se->prob_id);
+    cJSON_AddNumberToObject(jrr, "lang_id", se->lang_id);
+    cJSON_AddNumberToObject(jrr, "status", se->status);
+    cJSON_AddStringToObject(jrr, "status_str",
+                            run_status_short_str(se->status));
+    cJSON_AddStringToObject(jrr, "status_desc",
+                            run_status_str(se->status, NULL, 0, 0, 0));
+    if (se->ext_user_kind > 0 && se->ext_user_kind < MIXED_ID_LAST) {
+        unsigned char buf[64];
+        cJSON_AddStringToObject(jrr, "ext_user_kind",
+                                mixed_id_unparse_kind(se->ext_user_kind));
+        cJSON_AddStringToObject(jrr, "ext_user",
+                                mixed_id_marshall(buf, se->ext_user_kind,
+                                                  &se->ext_user));
     }
-    if (tr->run_tests > 0) {
-      if (tr->tests && tr->tests[0]) {
-        struct testing_report_test *ttr = tr->tests[0];
-        if (ttr) {
-          cJSON_AddNumberToObject(jrr, "time", ttr->time);
-          if (ttr->real_time > 0) {
-            cJSON_AddNumberToObject(jrr, "real_time", ttr->real_time);
-          }
-          if (ttr->exit_code >= 0) {
-            cJSON_AddNumberToObject(jrr, "exit_code", ttr->exit_code);
-          }
-          if (ttr->term_signal > 0) {
-            cJSON_AddNumberToObject(jrr, "term_signal", ttr->term_signal);
-          }
-          if (ttr->max_memory_used > 0) {
-            cJSON_AddNumberToObject(jrr, "max_memory_used", ttr->max_memory_used);
-          }
-          if (ttr->max_rss > 0) {
-            cJSON_AddNumberToObject(jrr, "max_rss", ttr->max_rss);
-          }
-          if (ttr->input.size > 0) {
-            cJSON_AddStringToObject(jrr, "input", ttr->input.data);
-          }
-          if (ttr->output.size > 0) {
-            cJSON_AddStringToObject(jrr, "output", ttr->output.data);
-          }
-          if (ttr->error.size > 0) {
-            cJSON_AddStringToObject(jrr, "error", ttr->error.data);
-          }
-          if (ttr->test_checker.size > 0) {
-            cJSON_AddStringToObject(jrr, "test_checker", ttr->test_checker.data);
-          }
+    if (se->notify_driver > 0
+        && se->notify_kind > 0 && se->notify_kind < MIXED_ID_LAST) {
+        unsigned char buf[64];
+        cJSON_AddNumberToObject(jrr, "notify_driver", se->notify_driver);
+        cJSON_AddStringToObject(jrr, "notify_kind",
+                                mixed_id_unparse_kind(se->notify_kind));
+        cJSON_AddStringToObject(jrr, "notify_queue",
+                                mixed_id_marshall(buf, se->notify_kind,
+                                                  &se->notify_queue));
+    }
+    if (tr) {
+        if (tr->compiler_output && *tr->compiler_output) {
+            cJSON_AddStringToObject(jrr, "compiler_output", tr->compiler_output);
         }
-      }
+        if (tr->run_tests > 0) {
+            if (tr->tests && tr->tests[0]) {
+                struct testing_report_test *ttr = tr->tests[0];
+                if (ttr) {
+                    cJSON_AddNumberToObject(jrr, "time", ttr->time);
+                    if (ttr->real_time > 0) {
+                        cJSON_AddNumberToObject(jrr, "real_time", ttr->real_time);
+                    }
+                    if (ttr->exit_code >= 0) {
+                        cJSON_AddNumberToObject(jrr, "exit_code", ttr->exit_code);
+                    }
+                    if (ttr->term_signal > 0) {
+                        cJSON_AddNumberToObject(jrr, "term_signal", ttr->term_signal);
+                    }
+                    if (ttr->max_memory_used > 0) {
+                        cJSON_AddNumberToObject(jrr, "max_memory_used", ttr->max_memory_used);
+                    }
+                    if (ttr->max_rss > 0) {
+                        cJSON_AddNumberToObject(jrr, "max_rss", ttr->max_rss);
+                    }
+                    json_serialize_file_content(jrr, "input", "input_orig", &ttr->input);
+                    json_serialize_file_content(jrr, "output", "output_orig", &ttr->output);
+                    json_serialize_file_content(jrr, "error", "error_orig", &ttr->error);
+                    json_serialize_file_content(jrr, "test_checker", "test_checker_orig", &ttr->test_checker);
+                }
+            }
+        }
     }
-  }
 
-  return jrr;
+    return jrr;
 }
 
 cJSON *
@@ -703,15 +777,7 @@ json_serialize_language(const struct section_language_data *lang, int final_mode
     if (lang->run_max_file_size > 0) {
         cJSON_AddNumberToObject(jr, "run_max_file_size", (double) lang->run_max_file_size);
     }
-/*
-  int compile_dir_index;
-  unsigned char *compile_dir;
-  unsigned char *compile_queue_dir;
-  unsigned char *compile_src_dir;
-  unsigned char *compile_out_dir;
-  unsigned char *compile_status_dir;
-  unsigned char *compile_report_dir;
-  */
+
     if (lang->compiler_env && (!final_mode || lang->compiler_env[0])) {
         cJSON *ja = cJSON_CreateArray();
         for (int i = 0; lang->compiler_env[i]; ++i) {
