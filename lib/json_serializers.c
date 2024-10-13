@@ -99,9 +99,9 @@ json_serialize_file_content(
     unsigned char *w_ptr = w_buf;
     for (int i = 0; i < out_len; ++i) {
         if (!out_buf[i]) {
-            *w_ptr++ = 0xef;
-            *w_ptr++ = 0xbf;
-            *w_ptr++ = 0xbd;
+            *w_ptr++ = 0xe2;
+            *w_ptr++ = 0x90;
+            *w_ptr++ = 0x80;
         } else {
             *w_ptr++ = out_buf[i];
         }
