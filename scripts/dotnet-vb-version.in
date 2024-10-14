@@ -24,7 +24,7 @@ common_config() {
   echo 'exe_sfx=".dll"'
   echo 'arch="dotnet"'
   echo 'insecure=1'
-  echo 'run_max_file_size=8G'
+  echo 'run_max_file_size=4096G'
 }
 
 failure() {
