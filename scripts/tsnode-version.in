@@ -1,5 +1,5 @@
-#!/bin/sh
-# Copyright (c) 2023 Alexander Chernov <cher@ejudge.ru>
+#! /bin/bash
+# Copyright (c) 2023-2024 Alexander Chernov <cher@ejudge.ru>
 
 LANG_CONFIG_DIR="@lang_config_dir@"
 
@@ -21,6 +21,27 @@ failure() {
   exit 1
 }
 
+try_compiler() {
+  compiler="$1"
+  "${compiler}" --version >/dev/null 2>&1 || return 1
+  version=`"${compiler}" --version 2>&1 | gawk '{ v=$(NF); gsub("^v", "", v); print v; exit(0); }'` || return 1
+  [ "${version}" != "" ] || return 1
+  NODEPATH=`which "${compiler}"` || return 1
+  [ "${NODEPATH}" != "" ] || return 1
+  echo "#! ${NODEPATH}" > conftest.ts
+  echo "console.log('yes');" >> conftest.ts
+  if ! chmod +x ./conftest.ts >/dev/null 2>&1
+  then
+    rm -f ./conftest.ts
+    return 1
+  fi
+  if ! ./conftest.ts >/dev/null 2>&1
+  then
+    rm -f ./conftest.ts
+    return 1
+  fi
+}
+
 unset LANG
 unset LC_ALL
 unset LC_MESSAGES
@@ -37,18 +58,25 @@ if [ x"$1" = x-r ]
 then
   arg="$2"
   [ x"$2" != x ] && node="$2"
-  [ "${node}" = "" ] && node="ts-node"
 
   [ "${verbose}" = 1 ] && echo -n "checking whether TypeScript is available..." >&2
-  "${node}" --version >/dev/null 2>&1 || failure
-  version=`"${node}" --version 2>&1 | sed 's/v//g'` || failure
-  [ "${version}" != "" ] || failure
-  NODEPATH=`which "${node}"` || failure
-  [ "${NODEPATH}" != "" ] || failure
-  echo "#! ${NODEPATH}" > conftest.rb
-  echo "console.log('yes');" >> conftest.rb
-  chmod +x ./conftest.rb || failure
-  ./conftest.rb >/dev/null 2>&1 || failure
+  if [ "${node}" != "" ]
+  then
+    try_compiler "${node}" || failure
+    NODEPATH=`which "${node}"`
+  else
+    if try_compiler tsx
+    then
+      NODEPATH=`which tsx`
+    else
+      if try_compiler ts-node
+      then
+        NODEPATH=`which ts-node`
+      else
+        failure
+      fi
+    fi
+  fi
 
   rm -f ./conftest*
   echo 'version="'"${version}"'"'
