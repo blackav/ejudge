@@ -14010,6 +14010,26 @@ unpriv_submit_run(
     FAIL2(NEW_SRV_ERR_PERMISSION_DENIED);
   }
 
+  int ip_allowed = 1;
+  if (prob->allow_ip) {
+    ip_allowed = 0;
+    int j;
+    for (j = 0; prob->allow_ip[j]; ++j) {
+      ej_ip_t ip_addr, ip_mask;
+      if (xml_parse_ipv6_mask(NULL, "", 0, 0, prob->allow_ip[j], &ip_addr, &ip_mask) >= 0) {
+        if (ipv6_match_mask(&ip_addr, &ip_mask, &phr->ip)) {
+          break;
+        }
+      }
+    }
+    if (prob->allow_ip[j]) {
+      ip_allowed = 1;
+    }
+  }
+  if (!ip_allowed) {
+    FAIL2(NEW_SRV_ERR_PERMISSION_DENIED);
+  }
+
   // "STANDARD" problems need programming language identifier
   if (prob->type == PROB_TYPE_STANDARD) {
     int r = hr_cgi_param(phr, "lang_id", &s);
