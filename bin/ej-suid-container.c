@@ -1869,7 +1869,7 @@ apply_language_profiles(void)
     } else if (!strcmp(language_name, "tsnode")) {
         enable_sys_fork = 1;
         enable_sys_execve = 1;
-        limit_processes = 20;
+        limit_processes = 50;
         limit_stack_size = 1024 * 1024; // 1M
         if (limit_vm_size > 0 && limit_rss_size <= 0) {
             limit_rss_size = limit_vm_size;
