@@ -6186,7 +6186,7 @@ get_api_key_func(
   struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
   char *cmd_t = 0;
   size_t cmd_z = 0;
-  FILE *cmd_f = open_memstream(&cmd_t, &cmd_z);
+  FILE *cmd_f = NULL;
   char token_buf[64];
   int token_len = base64u_encode(token, 32, token_buf);
   struct userlist_api_key tmp_apk;
@@ -6201,6 +6201,7 @@ get_api_key_func(
     return 1;
   }
 
+  cmd_f = open_memstream(&cmd_t, &cmd_z);
   memset(&tmp_apk, 0, sizeof(tmp_apk));
   token_buf[token_len] = 0;
   fprintf(cmd_f, "SELECT * FROM %sapikeys WHERE token = '%s' ;", state->md->table_prefix, token_buf);
@@ -6245,6 +6246,7 @@ get_api_key_func(
   return 1;
 
 fail:
+  if (cmd_f) fclose(cmd_f);
   xfree(cmd_t);
   state->mi->free_res(state->md);
   return -1;
