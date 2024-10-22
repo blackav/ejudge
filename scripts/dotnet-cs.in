@@ -96,10 +96,19 @@ then
         exit 1
     fi
 else
-    if ! "${DOTNETRUN}" new console -lang 'c#' -n solution
+    if [ -f "${TEMPLATE_FILE}" ]
     then
-        echo "Compilation failed." >&2
-        exit 1
+        if ! tar xf "${TEMPLATE_FILE}"
+        then
+            echo "Failed to restore template file." >&2
+            exit 1
+        fi
+    else
+        if ! "${DOTNETRUN}" new console -lang 'c#' -n solution
+        then
+            echo "Compilation failed." >&2
+            exit 1
+        fi
     fi
 fi
 
