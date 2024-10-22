@@ -1799,7 +1799,12 @@ static void
 apply_language_profiles(void)
 {
     if (!language_name || !*language_name) return;
-    if (enable_compile_mode) return;
+    if (enable_compile_mode) {
+        if (!strcmp(language_name, "ghc")) {
+            enable_var = 1;
+        }
+        return;
+    }
 
     if (!strcmp(language_name, "javac7")
         || !strcmp(language_name, "javac")
@@ -1886,6 +1891,11 @@ apply_language_profiles(void)
         enable_etc = 1;
         enable_net_ns = 0;
         limit_processes = 20;
+    } else if (!strcmp(language_name, "ghc")) {
+        enable_sys_fork = 1;
+        enable_proc = 1;
+        limit_processes = 20;
+        limit_stack_size = 1024 * 1024; // 1M
     }
 }
 
