@@ -4666,8 +4666,20 @@ run_one_test(
     goto cleanup;
   }
 
+  if (srgp->enable_container > 0 && srgp->enable_memory_limit_error > 0 && task_IsMemoryLimit(tsk)) {
+    status = RUN_MEM_LIMIT_ERR;
+    if (tsk_int) goto read_checker_output;
+    goto cleanup;
+  }
+
   if (tst && tst->enable_memory_limit_error > 0 && srgp->detect_violations > 0
       && srgp->secure_run > 0 && task_IsSecurityViolation(tsk)) {
+    status = RUN_SECURITY_ERR;
+    if (tsk_int) goto read_checker_output;
+    goto cleanup;
+  }
+
+  if (srgp->enable_container > 0 && srgp->detect_violations > 0 && task_IsSecurityViolation(tsk)) {
     status = RUN_SECURITY_ERR;
     if (tsk_int) goto read_checker_output;
     goto cleanup;
