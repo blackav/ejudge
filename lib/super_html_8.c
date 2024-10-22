@@ -424,11 +424,15 @@ super_html_read_serve(
         }
       }
       if (found) continue;
+/*
       if (sstate->serv_langs[serv_lang_id]) {
         fprintf(flog, "Conflicting compile server '%s' languages with id %d: '%s', '%s'\n", csc->id, serv_lang_id, serv_lang->short_name, sstate->serv_langs[serv_lang_id]->short_name);
         return -1;
       }
-      sstate->serv_langs[serv_lang_id] = serv_lang;
+*/
+      if (!sstate->serv_langs[serv_lang_id]) {
+        sstate->serv_langs[serv_lang_id] = serv_lang;
+      }
     }
 
     // collect server disabled languages
