@@ -165,7 +165,7 @@
 
 <%
         if (pinfo[prob_id].deadline <= 0 || cs->current_time < pinfo[prob_id].deadline) {
-          if ((pinfo[prob_id].status & PROB_STATUS_SUBMITTABLE) && prob->date_penalty) {
+          if (prob->date_penalty) {
             int dpi;
             time_t base_time = start_time;
             if (prob->start_date > 0 && prob->start_date > base_time) {
