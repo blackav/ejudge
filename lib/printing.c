@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2004-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -39,7 +39,7 @@ fix_path_component(unsigned char *buf, int size, const unsigned char *str)
   if (!str) str = "";
   snprintf(buf, size, "%s", str);
   for (int i = 0; buf[i]; ++i) {
-    if (buf[i] <= ' ' || buf[i] == 0x7f || buf[i] == '/' || buf[i] == '\\') {
+    if (buf[i] <= ' ' || buf[i] >= 0x7f || buf[i] == '/' || buf[i] == '\\') {
       buf[i] = '_';
     }
   }
