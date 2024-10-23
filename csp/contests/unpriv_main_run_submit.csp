@@ -483,7 +483,9 @@
             fprintf(out_f, "</tr></table></form>");
           }
         } else {
-          if (!prob || prob->enable_vcs <= 0) {
+          if (prob && prob->enable_vcs > 0) {
+%></table></form><%
+          } else {
 %><tr><td class="b0"><s:_>Send!</s:_></td><td class="b0"><s:submit ac="submit-run" /></td></tr></table></form>
 <%
           }
