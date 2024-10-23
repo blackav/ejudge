@@ -522,7 +522,9 @@ run_add_record(
     run_rebuild_user_run_index(state, team);
     for (int j = i + 1; j < state->run_u; ++j) {
       int uu = state->runs[j - state->run_f].user_id;
-      run_rebuild_user_run_index(state, uu);
+      if (uu > 0) {
+        run_rebuild_user_run_index(state, uu);
+      }
     }
     // increase run_id for runs inserted after the given
     if (state->uuid_hash_state > 0) {
