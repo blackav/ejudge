@@ -955,23 +955,7 @@ run_get_attempts(
     if (i >= runid) break;
 
     if (group_merge_flag > 0 && re->group_scores) {
-      const int *p = run_get_group_scores(state, re->group_scores);
-      if (p && *p > 0) {
-        int count = *p++;
-        if (count > *p_group_count) *p_group_count = count;
-        for (int i = 0; i < count; ++i) {
-          if (p[i] >= 0 && p_group_scores[i] >= 0) {
-            if (p_group_scores[i] < p[i]) p_group_scores[i] = p[i];
-          } else if (p[i] >= 0 && p_group_scores[i] < 0) {
-            if (-p[i] < p_group_scores[i]) p_group_scores[i] = -p[i];
-          } else if (p[i] < 0 && p_group_scores[i] >= 0) {
-            p_group_scores[i] = -p_group_scores[i];
-            if (p_group_scores[i] > p[i]) p_group_scores[i] = p[i];
-          } else {
-            if (p_group_scores[i] > p[i]) p_group_scores[i] = p[i];
-          }
-        }
-      }
+      group_scores_merge_1(p_group_count, p_group_scores, run_get_group_scores(state, re->group_scores));
     }
 
     if (re->status == RUN_VIRTUAL_START || re->status == RUN_VIRTUAL_STOP) continue;
@@ -3316,4 +3300,29 @@ group_scores_merge_1(
       if (p_group_scores[i] > p[i]) p_group_scores[i] = p[i];
     }
   }
+}
+
+int
+group_scores_calc(
+        int group_count,
+        const int *group_scores,
+        int separate_user_score)
+{
+  int total_group_score = 0;
+  if (separate_user_score > 0) {
+    for (int i = 0; i < group_count; ++i) {
+      if (group_scores[i] > 0) {
+        total_group_score += group_scores[i];
+      }
+    }
+  } else {
+    for (int i = 0; i < group_count; ++i) {
+      if (group_scores[i] >= 0) {
+        total_group_score += group_scores[i];
+      } else {
+        total_group_score -= group_scores[i];
+      }
+    }
+  }
+  return total_group_score;
 }

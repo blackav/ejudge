@@ -617,4 +617,10 @@ group_scores_merge_1(
         int *p_group_scores,
         const int *p);
 
+int
+group_scores_calc(
+        int group_count,
+        const int *group_scores,
+        int separate_user_score);
+
 #endif /* __RUNLOG_H__ */
