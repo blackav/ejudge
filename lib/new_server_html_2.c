@@ -5665,6 +5665,7 @@ kirov_score_default(
 
   int total_group_score = -1;
   if (cur_prob->enable_group_merge > 0) {
+    total_group_score = 0;
     if (separate_user_score > 0) {
       for (int i = 0; i < pinfo->group_count; ++i) {
         if (pinfo->group_scores[i] > 0) {
@@ -7507,6 +7508,7 @@ new_write_user_runs(
   int group_count;
   int group_scores[EJ_MAX_TEST_GROUP];
   int total_group_score = -1;
+  int show_groups = 0;
 
   if (table_class && *table_class) {
     cl = alloca(strlen(table_class) + 16);
@@ -7521,7 +7523,10 @@ new_write_user_runs(
       || !state->probs || !state->probs[prob_id])
     prob_id = 0;
 
-  if (prob_id > 0) runs_to_show = state->probs[prob_id]->prev_runs_to_show;
+  if (prob_id > 0) {
+    runs_to_show = state->probs[prob_id]->prev_runs_to_show;
+    show_groups = state->probs[prob_id]->enable_group_merge;
+  }
   if (runs_to_show <= 0) runs_to_show = 15;
   if (show_flags) runs_to_show = 100000;
 
@@ -7557,6 +7562,9 @@ new_write_user_runs(
     if (vend_info->score_mode > 0) separate_user_score = 0;
   }
 
+  if (show_groups > 0) {
+    fprintf(f, "<th%s>%s</th>", cl, _("Group scores"));
+  }
   if (enable_src_view)
     fprintf(f, "<th%s>%s</th>", cl, _("View source"));
   if (enable_rep_view || global->team_enable_ce_view || global->enable_tokens > 0)
@@ -7613,23 +7621,10 @@ new_write_user_runs(
                        cur_prob->ignore_compile_errors, cur_prob->compile_error_penalty,
                        cur_prob->enable_group_merge,
                        &group_count, group_scores);
-      if (cur_prob->enable_group_merge > 0) {
-        total_group_score = 0;
-        if (separate_user_score > 0) {
-          for (int i = 0; i < group_count; ++i) {
-            if (group_scores[i] > 0) {
-              total_group_score += group_scores[i];
-            }
-          }
-        } else {
-          for (int i = 0; i < group_count; ++i) {
-            if (group_scores[i] >= 0) {
-              total_group_score += group_scores[i];
-            } else {
-              total_group_score -= group_scores[i];
-            }
-          }
-        }
+      if (cur_prob->enable_group_merge > 0 && re.group_scores) {
+        group_scores_merge_1(&group_count, group_scores,
+                          run_get_group_scores(state->runlog_state, re.group_scores));
+        total_group_score = group_scores_calc(group_count, group_scores, separate_user_score);
       }
     }
 
@@ -7686,6 +7681,29 @@ new_write_user_runs(
                           effective_time,
                           total_group_score);
 
+    if (show_groups > 0) {
+      fprintf(f, "<td%s>", cl);
+      if (separate_user_score) {
+        const char *sep = "";
+        for (int i = 0; i < group_count; ++i) {
+          if (group_scores[i] >= 0) {
+            fprintf(f, "%s%d", sep, group_scores[i]);
+            sep = " ";
+          }
+        }
+      } else {
+        const char *sep = "";
+        for (int i = 0; i < group_count; ++i) {
+          if (group_scores[i] >= 0) {
+            fprintf(f, "%s%d", sep, group_scores[i]);
+          } else {
+            fprintf(f, "%s%d", sep, -group_scores[i]);
+          }
+          sep = " ";
+        }
+      }
+      fprintf(f, "</td>");
+    }
     if (enable_src_view) {
       fprintf(f, "<td%s>", cl);
       fprintf(f, "%s", ns_aref(href, sizeof(href), phr, NEW_SRV_ACTION_VIEW_SOURCE, "run_id=%d", i));

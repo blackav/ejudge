@@ -324,12 +324,10 @@ process_kirov_run(
                     run_score = 0;
                     for (int i = 0; i < count; ++i) {
                         int s = p[i];
-                        if (s > 0) {
-                            if (s > cell->group_scores[i]) {
-                                cell->group_scores[i] = s;
-                            }
-                            run_score += cell->group_scores[i];
+                        if (s > 0 && s > cell->group_scores[i]) {
+                            cell->group_scores[i] = s;
                         }
+                        run_score += cell->group_scores[i];
                     }
                     total_group_score = run_score;
                 }
