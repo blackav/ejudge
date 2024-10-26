@@ -1322,3 +1322,27 @@ html_timestamp_with_ago_ms(
            buf2);
   return buf;
 }
+
+void
+group_scores_merge_1(
+        int *p_group_count,
+        int *p_group_scores,
+        const int *p)
+{
+  if (!p || *p <= 0) return;
+
+  int count = *p++;
+  if (count > *p_group_count) *p_group_count = count;
+  for (int i = 0; i < count; ++i) {
+    if (p[i] >= 0 && p_group_scores[i] >= 0) {
+      if (p_group_scores[i] < p[i]) p_group_scores[i] = p[i];
+    } else if (p[i] >= 0 && p_group_scores[i] < 0) {
+      if (-p[i] < p_group_scores[i]) p_group_scores[i] = -p[i];
+    } else if (p[i] < 0 && p_group_scores[i] >= 0) {
+      p_group_scores[i] = -p_group_scores[i];
+      if (p_group_scores[i] > p[i]) p_group_scores[i] = p[i];
+    } else {
+      if (p_group_scores[i] > p[i]) p_group_scores[i] = p[i];
+    }
+  }
+}
