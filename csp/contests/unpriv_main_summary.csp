@@ -415,7 +415,7 @@
 %><s:v value="sep" escape="false" /><s:v value="gs" /><%
                     sep = " ";
                   } else if (!separate_user_score) {
-                    gs = -gs;
+                    gs = ~gs;
 %><s:v value="sep" escape="false" /><s:v value="gs" /><%
                     sep = " ";
                   }

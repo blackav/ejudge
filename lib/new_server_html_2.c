@@ -807,7 +807,7 @@ ns_write_priv_all_runs(
             if (group_scores[i] >= 0) {
               total_group_score += group_scores[i];
             } else {
-              total_group_score -= group_scores[i];
+              total_group_score += ~group_scores[i];
             }
           }
         }
@@ -4548,22 +4548,7 @@ ns_write_user_run_status(
                      ice, cep, egm,
                      &group_count, group_scores);
     if (egm > 0) {
-      total_group_score = 0;
-      if (separate_user_score > 0) {
-        for (int i = 0; i < group_count; ++i) {
-          if (group_scores[i] > 0) {
-            total_group_score += group_scores[i];
-          }
-        }
-      } else {
-        for (int i = 0; i < group_count; ++i) {
-          if (group_scores[i] >= 0) {
-            total_group_score += group_scores[i];
-          } else {
-            total_group_score -= group_scores[i];
-          }
-        }
-      }      
+      total_group_score = group_scores_calc(group_count, group_scores, separate_user_score);
     }
   }
 
@@ -5260,21 +5245,7 @@ kirov_score_latest_or_unmarked(
 
   int total_group_score = -1;
   if (cur_prob->enable_group_merge > 0) {
-    if (separate_user_score > 0) {
-      for (int i = 0; i < pinfo->group_count; ++i) {
-        if (pinfo->group_scores[i] > 0) {
-          total_group_score += pinfo->group_scores[i];
-        }
-      }
-    } else {
-      for (int i = 0; i < pinfo->group_count; ++i) {
-        if (pinfo->group_scores[i] >= 0) {
-          total_group_score += pinfo->group_scores[i];
-        } else {
-          total_group_score -= pinfo->group_scores[i];
-        }
-      }
-    }
+    total_group_score = group_scores_calc(pinfo->group_count, pinfo->group_scores, separate_user_score);
   }
 
   /*
@@ -5402,21 +5373,7 @@ kirov_score_latest(
 
   int total_group_score = -1;
   if (cur_prob->enable_group_merge > 0) {
-    if (separate_user_score > 0) {
-      for (int i = 0; i < pinfo->group_count; ++i) {
-        if (pinfo->group_scores[i] > 0) {
-          total_group_score += pinfo->group_scores[i];
-        }
-      }
-    } else {
-      for (int i = 0; i < pinfo->group_count; ++i) {
-        if (pinfo->group_scores[i] >= 0) {
-          total_group_score += pinfo->group_scores[i];
-        } else {
-          total_group_score -= pinfo->group_scores[i];
-        }
-      }
-    }
+    total_group_score = group_scores_calc(pinfo->group_count, pinfo->group_scores, separate_user_score);
   }
 
   cur_score = calc_kirov_score(0, 0, start_time, separate_user_score,
@@ -5550,21 +5507,7 @@ kirov_score_tokenized(
 
   int total_group_score = -1;
   if (cur_prob->enable_group_merge > 0) {
-    if (separate_user_score > 0) {
-      for (int i = 0; i < pinfo->group_count; ++i) {
-        if (pinfo->group_scores[i] > 0) {
-          total_group_score += pinfo->group_scores[i];
-        }
-      }
-    } else {
-      for (int i = 0; i < pinfo->group_count; ++i) {
-        if (pinfo->group_scores[i] >= 0) {
-          total_group_score += pinfo->group_scores[i];
-        } else {
-          total_group_score -= pinfo->group_scores[i];
-        }
-      }
-    }
+    total_group_score = group_scores_calc(pinfo->group_count, pinfo->group_scores, separate_user_score);
   }
 
   int cur_score = 0;
@@ -5665,22 +5608,7 @@ kirov_score_default(
 
   int total_group_score = -1;
   if (cur_prob->enable_group_merge > 0) {
-    total_group_score = 0;
-    if (separate_user_score > 0) {
-      for (int i = 0; i < pinfo->group_count; ++i) {
-        if (pinfo->group_scores[i] > 0) {
-          total_group_score += pinfo->group_scores[i];
-        }
-      }
-    } else {
-      for (int i = 0; i < pinfo->group_count; ++i) {
-        if (pinfo->group_scores[i] >= 0) {
-          total_group_score += pinfo->group_scores[i];
-        } else {
-          total_group_score -= pinfo->group_scores[i];
-        }
-      }
-    }
+    total_group_score = group_scores_calc(pinfo->group_count, pinfo->group_scores, separate_user_score);
   }
 
   cur_score = calc_kirov_score(0, 0, start_time, separate_user_score,
@@ -5879,44 +5807,9 @@ ns_get_user_problems_summary(
     if (cur_prob->enable_group_merge > 0) {
       if (re.group_scores > 0) {
         const int *p = run_get_group_scores(cs->runlog_state, re.group_scores);
-        if (p) {
-          int group_count = *p++;
-          if (group_count > cur_pinfo->group_count) {
-            cur_pinfo->group_count = group_count;
-          }
-          for (int i = 0; i < group_count; ++i) {
-            if (p[i] >= 0 && cur_pinfo->group_scores[i] >= 0 && p[i] > cur_pinfo->group_scores[i]) {
-              cur_pinfo->group_scores[i] = p[i];
-            } else if (p[i] < 0 && cur_pinfo->group_scores[i] < 0 && p[i] < cur_pinfo->group_scores[i]) {
-              cur_pinfo->group_scores[i] = p[i];
-            } else if (p[i] < 0 && cur_pinfo->group_scores[i] >= 0) {
-              cur_pinfo->group_scores[i] = -cur_pinfo->group_scores[i];
-              if (p[i] < cur_pinfo->group_scores[i]) {
-                cur_pinfo->group_scores[i] = p[i];
-              }
-            } else if (p[i] >= 0 && cur_pinfo->group_scores[i] < 0 && -p[i] < cur_pinfo->group_scores[i]) {
-              cur_pinfo->group_scores[i] = -p[i];
-            }
-          }
-        }
+        group_scores_merge_1(&cur_pinfo->group_count, cur_pinfo->group_scores, p);
       }
-      score = 0;
-      if (separate_user_score > 0) {
-        for (int i = 0; i < cur_pinfo->group_count; ++i) {
-          if (cur_pinfo->group_scores[i] >= 0) {
-            score += cur_pinfo->group_scores[i];
-          }
-        }
-      } else {
-        for (int i = 0; i < cur_pinfo->group_count; ++i) {
-          if (cur_pinfo->group_scores[i] >= 0) {
-            score += cur_pinfo->group_scores[i];
-          } else {
-            score -= cur_pinfo->group_scores[i];
-          }
-        }
-      }
-      total_group_score = score;
+      total_group_score = group_scores_calc(cur_pinfo->group_count, cur_pinfo->group_scores, separate_user_score);
     }
 
     if (need_prev_succ && re.user_id != user_id) {
@@ -7210,22 +7103,7 @@ fill_user_run_info(
                      ice, cep, egm,
                      &group_count, group_scores);
     if (egm > 0) {
-      if (separate_user_score > 0) {
-        total_group_score = 0;
-        for (int i = 0; i < pinfo->group_count; ++i) {
-          if (pinfo->group_scores[i] > 0) {
-            total_group_score += pinfo->group_scores[i];
-          }
-        }
-      } else {
-        for (int i = 0; i < pinfo->group_count; ++i) {
-          if (pinfo->group_scores[i] >= 0) {
-            total_group_score += pinfo->group_scores[i];
-          } else {
-            total_group_score -= pinfo->group_scores[i];
-          }
-        }
-      }
+      total_group_score = group_scores_calc(pinfo->group_count, pinfo->group_scores, separate_user_score);
     }
   }
   prev_successes = RUN_TOO_MANY;
@@ -7697,7 +7575,7 @@ new_write_user_runs(
           if (group_scores[i] >= 0) {
             fprintf(f, "%s%d", sep, group_scores[i]);
           } else {
-            fprintf(f, "%s%d", sep, -group_scores[i]);
+            fprintf(f, "%s%d", sep, ~group_scores[i]);
           }
           sep = " ";
         }

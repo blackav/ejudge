@@ -1870,7 +1870,7 @@ do_dump_master_runs(
             if (group_scores[i] >= 0) {
               total_group_score += group_scores[i];
             } else {
-              total_group_score -= group_scores[i];
+              total_group_score += ~group_scores[i];
             }
           }
         }

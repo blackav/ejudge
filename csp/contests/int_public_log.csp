@@ -182,22 +182,7 @@
                 if (prev_successes < 0) prev_successes = RUN_TOO_MANY;
             }
             if (egm > 0) {
-                total_group_score = 0;
-                if (separate_user_score > 0) {
-                    for (int i = 0; i < group_count; ++i) {
-                        if (group_scores[i] > 0) {
-                            total_group_score += group_scores[i];
-                        }
-                    }
-                } else {
-                    for (int i = 0; i < group_count; ++i) {
-                        if (group_scores[i] >= 0) {
-                            total_group_score += group_scores[i];
-                        } else {
-                            total_group_score -= group_scores[i];
-                        }
-                    }
-                }
+                total_group_score = group_scores_calc(group_count, group_scores, separate_user_score);
             }
         }
         duration_str(global->show_astr_time, run_time, start_time, dur_buf, 0);

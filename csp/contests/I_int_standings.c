@@ -355,7 +355,7 @@ process_kirov_run(
                     run_score = 0;
                     for (int i = 0; i < count; ++i) {
                         int s = p[i];
-                        if (s < 0) s = -s;
+                        if (s < 0) s = ~s;
                         if (s > cell->group_scores[i]) {
                             cell->group_scores[i] = s;
                         }

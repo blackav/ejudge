@@ -1012,7 +1012,7 @@ main(int argc, char *argv[])
         for (const auto &g : groups) {
             auto score = g.calc_score();
             if (g.get_offline()) {
-                score = -score;
+                score = ~score;
             }
             printf(" %d", score);
         }

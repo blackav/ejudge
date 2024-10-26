@@ -3292,9 +3292,9 @@ group_scores_merge_1(
     if (p[i] >= 0 && p_group_scores[i] >= 0) {
       if (p_group_scores[i] < p[i]) p_group_scores[i] = p[i];
     } else if (p[i] >= 0 && p_group_scores[i] < 0) {
-      if (-p[i] < p_group_scores[i]) p_group_scores[i] = -p[i];
+      if (~p[i] < p_group_scores[i]) p_group_scores[i] = ~p[i];
     } else if (p[i] < 0 && p_group_scores[i] >= 0) {
-      p_group_scores[i] = -p_group_scores[i];
+      p_group_scores[i] = ~p_group_scores[i];
       if (p_group_scores[i] > p[i]) p_group_scores[i] = p[i];
     } else {
       if (p_group_scores[i] > p[i]) p_group_scores[i] = p[i];
@@ -3320,7 +3320,7 @@ group_scores_calc(
       if (group_scores[i] >= 0) {
         total_group_score += group_scores[i];
       } else {
-        total_group_score -= group_scores[i];
+        total_group_score += ~group_scores[i];
       }
     }
   }
