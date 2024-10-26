@@ -21682,6 +21682,10 @@ ns_handle_http_request(
     }
   }
 
+  if (phr->action >= 0 && phr->action < NEW_SRV_ACTION_LAST) {
+    phr->action_str = ns_symbolic_action_table[phr->action];
+  }
+
   if (*phr->role_name) {
     if (phr->action == NEW_SRV_ACTION_CONTEST_BATCH) {
       batch_entry_point(fout, phr);
