@@ -611,4 +611,10 @@ static inline _Bool __attribute__((always_inline)) run_is_pseudo_status(unsigned
   return status >= RUN_PSEUDO_FIRST && status <= RUN_PSEUDO_LAST;
 }
 
+void
+group_scores_merge_1(
+        int *p_group_count,
+        int *p_group_scores,
+        const int *p);
+
 #endif /* __RUNLOG_H__ */

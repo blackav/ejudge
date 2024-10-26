@@ -3293,3 +3293,27 @@ run_get_user_run_header_id_range(
   if (p_low_user_id) *p_low_user_id = urh->low_user_id;
   if (p_high_user_id) *p_high_user_id = urh->high_user_id;
 }
+
+void
+group_scores_merge_1(
+        int *p_group_count,
+        int *p_group_scores,
+        const int *p)
+{
+  if (!p || *p <= 0) return;
+
+  int count = *p++;
+  if (count > *p_group_count) *p_group_count = count;
+  for (int i = 0; i < count; ++i) {
+    if (p[i] >= 0 && p_group_scores[i] >= 0) {
+      if (p_group_scores[i] < p[i]) p_group_scores[i] = p[i];
+    } else if (p[i] >= 0 && p_group_scores[i] < 0) {
+      if (-p[i] < p_group_scores[i]) p_group_scores[i] = -p[i];
+    } else if (p[i] < 0 && p_group_scores[i] >= 0) {
+      p_group_scores[i] = -p_group_scores[i];
+      if (p_group_scores[i] > p[i]) p_group_scores[i] = p[i];
+    } else {
+      if (p_group_scores[i] > p[i]) p_group_scores[i] = p[i];
+    }
+  }
+}

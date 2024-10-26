@@ -316,10 +316,4 @@ html_timestamp_with_ago_ms(
         long long timestamp_ms,
         long long current_time_ms);
 
-void
-group_scores_merge_1(
-        int *p_group_count,
-        int *p_group_scores,
-        const int *p);
-
 #endif /* __HTML_H__ */
