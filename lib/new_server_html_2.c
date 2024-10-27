@@ -3796,7 +3796,7 @@ do_add_row(
   int store_flags = 0;
   if (cs->global->uuid_run_store > 0 && run_get_uuid_hash_state(cs->runlog_state) >= 0) {
     store_flags = STORE_FLAGS_UUID;
-    if (testing_report_bson_available()) store_flags = STORE_FLAGS_UUID_BSON;
+    if (testing_report_bson_available() && cs->global->disable_bson_store <= 0) store_flags = STORE_FLAGS_UUID_BSON;
   }
   run_id = run_add_record(cs->runlog_state,
                           &precise_time,

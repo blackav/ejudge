@@ -119,6 +119,7 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(memoize_user_results, "d"),
   GLOBAL_PARAM(advanced_layout, "d"),
   GLOBAL_PARAM(uuid_run_store, "d"),
+  GLOBAL_PARAM(disable_bson_store, "d"),
   GLOBAL_PARAM(enable_32bit_checkers, "d"),
   GLOBAL_PARAM(ignore_bom, "d"),
   GLOBAL_PARAM(disable_auto_refresh, "d"),
@@ -965,6 +966,7 @@ global_init_func(struct generic_section_config *gp)
   p->xml_report = -1;
   p->advanced_layout = -1;
   p->uuid_run_store = -1;
+  p->disable_bson_store = -1;
   p->enable_32bit_checkers = -1;
   p->ignore_bom = -1;
   p->disable_auto_refresh = -1;
@@ -3297,6 +3299,8 @@ set_defaults(
     g->advanced_layout = 0;
   if (g->uuid_run_store < 0)
     g->uuid_run_store = 0;
+  if (g->disable_bson_store < 0)
+    g->disable_bson_store = 0;
   if (g->enable_32bit_checkers < 0)
     g->enable_32bit_checkers = 0;
   if (g->ignore_bom < 0)
@@ -5466,6 +5470,8 @@ prepare_set_global_defaults(
     g->advanced_layout = 0;
   if (g->uuid_run_store < 0)
     g->uuid_run_store = 0;
+  if (g->disable_bson_store < 0)
+    g->disable_bson_store = 0;
   if (g->enable_32bit_checkers < 0)
     g->enable_32bit_checkers = 0;
   if (g->ignore_bom < 0)
