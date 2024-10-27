@@ -3819,7 +3819,7 @@ priv_submit_run(
   int store_flags = 0;
   if (global->uuid_run_store > 0 && run_get_uuid_hash_state(cs->runlog_state) >= 0) {
     store_flags = STORE_FLAGS_UUID;
-    if (testing_report_bson_available()) store_flags = STORE_FLAGS_UUID_BSON;
+    if (testing_report_bson_available() && global->disable_bson_store <= 0) store_flags = STORE_FLAGS_UUID_BSON;
   }
   run_id = run_add_record(cs->runlog_state,
                           &precise_time,
@@ -5828,7 +5828,7 @@ priv_new_run(FILE *fout,
   int store_flags = 0;
   if (global->uuid_run_store > 0 && run_get_uuid_hash_state(cs->runlog_state) >= 0) {
     store_flags = STORE_FLAGS_UUID;
-    if (testing_report_bson_available()) store_flags = STORE_FLAGS_UUID_BSON;
+    if (testing_report_bson_available() && global->disable_bson_store <= 0) store_flags = STORE_FLAGS_UUID_BSON;
   }
   run_id = run_add_record(cs->runlog_state,
                           &precise_time,
@@ -13693,7 +13693,7 @@ ns_submit_run(
   }
   if (global->uuid_run_store > 0 && run_get_uuid_hash_state(cs->runlog_state) >= 0) {
     store_flags = STORE_FLAGS_UUID;
-    if (testing_report_bson_available()) store_flags = STORE_FLAGS_UUID_BSON;
+    if (testing_report_bson_available() && global->disable_bson_store <= 0) store_flags = STORE_FLAGS_UUID_BSON;
   }
   run_id = run_add_record(cs->runlog_state,
                           &precise_time,
@@ -14458,7 +14458,7 @@ unpriv_submit_run(
   int store_flags = 0;
   if (global->uuid_run_store > 0 && run_get_uuid_hash_state(cs->runlog_state) >= 0) {
     store_flags = STORE_FLAGS_UUID;
-    if (testing_report_bson_available()) store_flags = STORE_FLAGS_UUID_BSON;
+    if (testing_report_bson_available() && global->disable_bson_store <= 0) store_flags = STORE_FLAGS_UUID_BSON;
   }
   int is_hidden = 0;
   if (cs->upsolving_mode) {
@@ -16935,7 +16935,7 @@ unpriv_xml_update_answer(
   if (run_id < 0) {
     if (global->uuid_run_store > 0 && run_get_uuid_hash_state(cs->runlog_state) >= 0) {
       store_flags = STORE_FLAGS_UUID;
-      if (testing_report_bson_available()) store_flags = STORE_FLAGS_UUID_BSON;
+      if (testing_report_bson_available() && global->disable_bson_store <= 0) store_flags = STORE_FLAGS_UUID_BSON;
     }
     run_id = run_add_record(cs->runlog_state,
                             &precise_time,
