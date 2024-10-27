@@ -17063,7 +17063,7 @@ unpriv_get_file(
   if (cs->clients_suspended) FAIL(NEW_SRV_ERR_CLIENTS_SUSPENDED);
   if (start_time <= 0) FAIL(NEW_SRV_ERR_CONTEST_NOT_STARTED);
   if (stop_time > 0 && cs->current_time >= stop_time
-      && prob->unrestricted_statement <= 0)
+      && prob->unrestricted_statement <= 0 && !cs->upsolving_mode)
     FAIL(NEW_SRV_ERR_CONTEST_ALREADY_FINISHED);
   if (!serve_is_problem_started(cs, phr->user_id, prob, 0))
     FAIL(NEW_SRV_ERR_PROB_UNAVAILABLE);
