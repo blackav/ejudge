@@ -4494,7 +4494,11 @@ read_run_packet_input(
         err("read_run_packet_input: invalid length of compilation XML report");
         goto done;
       }
-      cp_tr = testing_report_parse_xml(cp_se.content);
+      const unsigned char *cur_start_ptr = NULL;
+      int cur_content_type = get_content_type(cp_se.content, &cur_start_ptr);
+      if (cur_content_type == CONTENT_TYPE_XML && cur_start_ptr) {
+        cp_tr = testing_report_parse_xml(cur_start_ptr);
+      }
     } else {
       err("read_run_packet_input: invalid mime type of compilation protocol");
       goto done;
@@ -4511,7 +4515,11 @@ read_run_packet_input(
         err("read_run_packet_input: invalid length of testing report");
         goto done;
       }
-      tr = testing_report_parse_xml(rep_data);
+      const unsigned char *cur_start_ptr = NULL;
+      int cur_content_type = get_content_type(rep_data, &cur_start_ptr);
+      if (cur_content_type == CONTENT_TYPE_XML && cur_start_ptr) {
+        tr = testing_report_parse_xml(cur_start_ptr);
+      }
     }
     if (!tr) {
       err("read_run_packet_input: failed to parse testing report");
@@ -4541,7 +4549,11 @@ read_run_packet_input(
           err("read_run_packet_input: invalid length of testing report");
           goto done;
         }
-        tr = testing_report_parse_xml(rep_data);
+        const unsigned char *cur_start_ptr = NULL;
+        int cur_content_type = get_content_type(rep_data, &cur_start_ptr);
+        if (cur_content_type == CONTENT_TYPE_XML && cur_start_ptr) {
+          tr = testing_report_parse_xml(cur_start_ptr);
+	}
       }
       if (!tr) {
         err("read_run_packet_input: failed to parse testing report");

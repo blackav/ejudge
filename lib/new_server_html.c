@@ -15424,7 +15424,13 @@ ns_get_submit(
         err_num = NEW_SRV_ERR_INV_SUBMIT_ID;
         goto done;
       }
-      tr = testing_report_parse_xml(prot_se.content);
+      const unsigned char *start_ptr = NULL;
+      if (get_content_type(prot_se.content, &start_ptr) != CONTENT_TYPE_XML) {
+        err("invalid mime type of testing protocol");
+        err_num = NEW_SRV_ERR_REPORT_NONEXISTANT;
+        goto done;
+      }
+      tr = testing_report_parse_xml(start_ptr);
     } else {
       err("invalid mime type of testing protocol");
       err_num = NEW_SRV_ERR_INV_SUBMIT_ID;
