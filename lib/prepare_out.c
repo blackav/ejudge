@@ -528,6 +528,8 @@ prepare_unparse_global(
     unparse_bool(f, "advanced_layout", global->advanced_layout);
   if (global->uuid_run_store > 0)
     unparse_bool(f, "uuid_run_store", global->uuid_run_store);
+  if (global->disable_bson_store > 0)
+    unparse_bool(f, "disable_bson_store", global->disable_bson_store);
   if (global->enable_32bit_checkers > 0)
     unparse_bool(f, "enable_32bit_checkers", global->enable_32bit_checkers);
   if (global->ignore_bom > 0)
