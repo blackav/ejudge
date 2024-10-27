@@ -29,6 +29,7 @@ enum
   CNTSGLOB_enable_memory_limit_error,
   CNTSGLOB_advanced_layout,
   CNTSGLOB_uuid_run_store,
+  CNTSGLOB_disable_bson_store,
   CNTSGLOB_enable_32bit_checkers,
   CNTSGLOB_ignore_bom,
   CNTSGLOB_disable_user_database,
