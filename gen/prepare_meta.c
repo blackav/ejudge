@@ -36,6 +36,7 @@ static struct meta_info_item meta_info_section_global_data_data[] =
   [CNTSGLOB_enable_memory_limit_error] = { CNTSGLOB_enable_memory_limit_error, 'B', XSIZE(struct section_global_data, enable_memory_limit_error), "enable_memory_limit_error", XOFFSET(struct section_global_data, enable_memory_limit_error) },
   [CNTSGLOB_advanced_layout] = { CNTSGLOB_advanced_layout, 'B', XSIZE(struct section_global_data, advanced_layout), "advanced_layout", XOFFSET(struct section_global_data, advanced_layout) },
   [CNTSGLOB_uuid_run_store] = { CNTSGLOB_uuid_run_store, 'B', XSIZE(struct section_global_data, uuid_run_store), "uuid_run_store", XOFFSET(struct section_global_data, uuid_run_store) },
+  [CNTSGLOB_disable_bson_store] = { CNTSGLOB_disable_bson_store, 'B', XSIZE(struct section_global_data, disable_bson_store), "disable_bson_store", XOFFSET(struct section_global_data, disable_bson_store) },
   [CNTSGLOB_enable_32bit_checkers] = { CNTSGLOB_enable_32bit_checkers, 'B', XSIZE(struct section_global_data, enable_32bit_checkers), "enable_32bit_checkers", XOFFSET(struct section_global_data, enable_32bit_checkers) },
   [CNTSGLOB_ignore_bom] = { CNTSGLOB_ignore_bom, 'B', XSIZE(struct section_global_data, ignore_bom), "ignore_bom", XOFFSET(struct section_global_data, ignore_bom) },
   [CNTSGLOB_disable_user_database] = { CNTSGLOB_disable_user_database, 'B', XSIZE(struct section_global_data, disable_user_database), "disable_user_database", XOFFSET(struct section_global_data, disable_user_database) },
@@ -383,6 +384,7 @@ void cntsglob_copy(struct section_global_data *dst, const struct section_global_
   dst->enable_memory_limit_error = src->enable_memory_limit_error;
   dst->advanced_layout = src->advanced_layout;
   dst->uuid_run_store = src->uuid_run_store;
+  dst->disable_bson_store = src->disable_bson_store;
   dst->enable_32bit_checkers = src->enable_32bit_checkers;
   dst->ignore_bom = src->ignore_bom;
   dst->disable_user_database = src->disable_user_database;

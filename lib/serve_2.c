@@ -2430,7 +2430,7 @@ serve_run_request(
   srgp->zip_mode = zip_mode;
   srgp->contest_server_id = xstrdup(config->contest_server_id);
   if (submit_id > 0) {
-    srgp->bson_available = testing_report_bson_available();
+    srgp->bson_available = testing_report_bson_available() && global->disable_bson_store <= 0;
   } else {
     srgp->bson_available = (store_flags == STORE_FLAGS_UUID_BSON);
   }
@@ -3518,7 +3518,7 @@ read_compile_packet_input(
     txt_text = NULL; txt_size = 0;
     utf8_fix_string(tr->compiler_output, NULL);
     tr->compile_error = 1;
-    if (testing_report_bson_available()) {
+    if (testing_report_bson_available() && cs->global->disable_bson_store <= 0) {
       testing_report_to_mem_bson(&txt_text, &txt_size, tr);
       mime_type = MIME_TYPE_BSON;
     } else {
@@ -3570,7 +3570,7 @@ read_compile_packet_input(
     txt_text = NULL; txt_size = 0;
     utf8_fix_string(tr->compiler_output, NULL);
     tr->compile_error = 1;
-    if (testing_report_bson_available()) {
+    if (testing_report_bson_available() && cs->global->disable_bson_store <= 0) {
       testing_report_to_mem_bson(&txt_text, &txt_size, tr);
       mime_type = MIME_TYPE_BSON;
     } else {
@@ -4521,7 +4521,7 @@ read_run_packet_input(
       tr->compiler_output = xstrdup(cp_tr->compiler_output);
     }
     free(rep_data); rep_data = NULL; rep_size = 0;
-    if (testing_report_bson_available()) {
+    if (testing_report_bson_available() && cs->global->disable_bson_store <= 0) {
       testing_report_to_mem_bson(&rep_data, &rep_size, tr);
       mime_type = MIME_TYPE_BSON;
     } else {

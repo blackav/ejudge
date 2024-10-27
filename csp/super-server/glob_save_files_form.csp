@@ -12,6 +12,7 @@
 
     ejintbool_t advanced_layout = 0;
     ejintbool_t uuid_run_store = 0;
+    ejintbool_t disable_bson_store = 0;
     unsigned char *test_dir = NULL;
     unsigned char *corr_dir = NULL;
     unsigned char *info_dir = NULL;
@@ -26,6 +27,7 @@
     FILE *msg_f = open_memstream(&msg_s, &msg_z);
 %><s:read var="advanced_layout" default="0" /><%
 %><s:read var="uuid_run_store" default="0" /><%
+%><s:read var="disable_bson_store" default="0" /><%
 %><s:read var="test_dir" normalize="yes" /><%
 %><s:read var="corr_dir" normalize="yes" /><%
 %><s:read var="info_dir" normalize="yes" /><%
@@ -42,6 +44,7 @@
         if (global) {
             global->advanced_layout = advanced_layout;
             global->uuid_run_store = uuid_run_store;
+            global->disable_bson_store = disable_bson_store;
             xstrdup3(&global->test_dir, test_dir);
             xstrdup3(&global->corr_dir, corr_dir);
             xstrdup3(&global->info_dir, info_dir);

@@ -54,6 +54,7 @@ static const unsigned char MSG_start_on_first_login[] = "Start virtual contest o
 static const unsigned char MSG_enable_virtual_restart[] = "Enable virtual contest restart option";
 static const unsigned char MSG_advanced_layout[] = "Advanced problem files layout";
 static const unsigned char MSG_uuid_run_store[] = "Use UUID instead of run_id to store runs";
+static const unsigned char MSG_disable_bson_store[] = "Do not use BSON for protocols";
 static const unsigned char MSG_test_dir[] = "Directory for tests";
 static const unsigned char MSG_corr_dir[] = "Directory for correct answers";
 static const unsigned char MSG_info_dir[] = "Directory for test info files";
@@ -345,6 +346,7 @@ static const unsigned char * const form_row_attrs[]=
 
         <%@expand EDIT_BOOL_ROW "advanced_layout" "files" "300px" %>
         <%@expand EDIT_BOOL_ROW "uuid_run_store" "files" "300px" %>
+        <%@expand EDIT_BOOL_ROW "disable_bson_store" "files" "300px" %>
         <%@expand EDIT_TEXT_ROW "test_dir" "files" "48" "300px" %>
         <%@expand EDIT_TEXT_ROW "corr_dir" "files" "48" "300px" %>
         <%@expand EDIT_TEXT_ROW "info_dir" "files" "48" "300px" %>
@@ -935,6 +937,7 @@ function popupFilesDialog(e, skipField)
 {
     copyCheckbox("files-advanced_layout", "orig-advanced_layout");
     copyCheckbox("files-uuid_run_store", "orig-uuid_run_store");
+    copyCheckbox("files-disable_bson_store", "orig-disable_bson_store");
     $("#files-test_dir").val($("#orig-test_dir").val());
     $("#files-corr_dir").val($("#orig-corr_dir").val());
     $("#files-info_dir").val($("#orig-info_dir").val());
@@ -1459,6 +1462,7 @@ function advancedDialogOnChange()
 %>
             <%@expand ORIG_BOOL_ROW "advanced_layout" %>
             <%@expand ORIG_BOOL_ROW "uuid_run_store" %>
+            <%@expand ORIG_BOOL_ROW "disable_bson_store" %>
             <%@expand ORIG_TEXT_ROW "test_dir" "Files" "48" %>
             <%@expand ORIG_TEXT_ROW "corr_dir" "Files" "48" %>
             <%@expand ORIG_TEXT_ROW "info_dir" "Files" "48" %>
