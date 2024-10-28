@@ -523,7 +523,7 @@ save_func(
     // skip the last field 'last_update_time'
     mi->unparse_spec_2(md, cmd_f, STATUS_ROW_WIDTH, status_spec,
                        (1ULL << (STATUS_ROW_WIDTH - 1)), &stint);
-    fprintf(cmd_f, ", last_update_time = NOW(6)) ON DUPLICATE KEY UPDATE ");
+    fprintf(cmd_f, ", NOW(6)) ON DUPLICATE KEY UPDATE ");
     // skip the first field 'contest_id' and the last field 'last_update_time'
     mi->unparse_spec_3(md, cmd_f, STATUS_ROW_WIDTH, status_spec,
                        (1ULL << (STATUS_ROW_WIDTH - 1)) | 1,
