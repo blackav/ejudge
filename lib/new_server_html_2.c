@@ -803,6 +803,9 @@ ns_write_priv_all_runs(
                          p_eff_time, ice, cep, egm,
                          &group_count, group_scores);
         if (egm > 0) {
+          group_scores_merge_1(&group_count, group_scores,
+                            run_get_group_scores(cs->runlog_state, pe->group_scores));
+          total_group_score = 0;
           for (int i = 0; i < group_count; ++i) {
             if (group_scores[i] >= 0) {
               total_group_score += group_scores[i];
