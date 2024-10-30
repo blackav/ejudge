@@ -13968,7 +13968,7 @@ unpriv_submit_run(
   const struct section_global_data *global = cs->global;
   const struct section_problem_data *prob = 0, *prob2;
   const struct section_language_data *lang = 0;
-  int prob_id, n, lang_id = 0, i, ans, max_ans, j, r;
+  int prob_id = 0, n, lang_id = 0, i, ans, max_ans, j, r;
   const unsigned char *s, *run_text = 0, *text_form_text = 0;
   size_t run_size = 0, ans_size, text_form_size = 0;
   unsigned char *ans_buf, *ans_map, *ans_tmp;
@@ -13999,10 +13999,30 @@ unpriv_submit_run(
 
   l10n_setlocale(phr->locale_id);
 
-  if (hr_cgi_param(phr, "prob_id", &s) <= 0
-      || sscanf(s, "%d%n", &prob_id, &n) != 1 || s[n]
-      || prob_id <= 0 || prob_id > cs->max_prob
-      || !(prob = cs->probs[prob_id])) {
+  if (hr_cgi_param(phr, "prob_id", &s) <= 0) {
+    FAIL2(NEW_SRV_ERR_INV_PROB_ID);
+  }
+  prob_id = 0;
+  {
+    errno = 0;
+    char *ep = NULL;
+    long v = strtol(s, &ep, 10);
+    if (!errno && !*ep && ep != (const char *) s && v > 0 && v < cs->max_prob && cs->probs[v]) {
+      prob_id = v;
+      prob = cs->probs[prob_id];
+    }
+  }
+  if (!prob) {
+    for (int pid = 1; pid <= cs->max_prob; ++pid) {
+      const struct section_problem_data *pp = cs->probs[pid];
+      if (pp && !strcmp(pp->short_name, s)) {
+        prob = pp;
+        prob_id = pid;
+        break;
+      }
+    }
+  }
+  if (!prob) {
     FAIL2(NEW_SRV_ERR_INV_PROB_ID);
   }
 
