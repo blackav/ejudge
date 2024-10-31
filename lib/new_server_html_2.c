@@ -7471,6 +7471,7 @@ new_write_user_runs(
     if (!cur_prob) continue;
 
     showed++;
+    group_count = 0;
 
     lang = 0;
     if (re.lang_id > 0 && re.lang_id <= state->max_lang)
@@ -7507,6 +7508,11 @@ new_write_user_runs(
                           run_get_group_scores(state->runlog_state, re.group_scores));
         total_group_score = group_scores_calc(group_count, group_scores, separate_user_score);
       }
+    } else if (re.group_scores) {
+      group_count = 0;
+      memset(group_scores, 0, sizeof(group_scores));
+      group_scores_merge_1(&group_count, group_scores,
+                        run_get_group_scores(state->runlog_state, re.group_scores));
     }
 
     prev_successes = RUN_TOO_MANY;
