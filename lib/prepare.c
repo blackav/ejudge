@@ -7373,6 +7373,7 @@ compile_servers_config_free(struct compile_server_configs *cscs)
     xfree(csc->id);
     xfree(csc->langs);
   }
+  free(cscs->v);
   memset(cscs, 0xff, sizeof(*cscs));
 }
 

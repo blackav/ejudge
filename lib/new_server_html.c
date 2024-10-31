@@ -14007,7 +14007,7 @@ unpriv_submit_run(
     errno = 0;
     char *ep = NULL;
     long v = strtol(s, &ep, 10);
-    if (!errno && !*ep && ep != (const char *) s && v > 0 && v < cs->max_prob && cs->probs[v]) {
+    if (!errno && !*ep && ep != (const char *) s && v > 0 && v <= cs->max_prob && cs->probs[v]) {
       prob_id = v;
       prob = cs->probs[prob_id];
     }
