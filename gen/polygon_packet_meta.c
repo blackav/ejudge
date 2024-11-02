@@ -26,6 +26,7 @@ static struct meta_info_item meta_info_polygon_packet_data[] =
   [META_POLYGON_PACKET_verbose] = { META_POLYGON_PACKET_verbose, 'B', XSIZE(struct polygon_packet, verbose), "verbose", XOFFSET(struct polygon_packet, verbose) },
   [META_POLYGON_PACKET_ignore_main_solution] = { META_POLYGON_PACKET_ignore_main_solution, 'B', XSIZE(struct polygon_packet, ignore_main_solution), "ignore_main_solution", XOFFSET(struct polygon_packet, ignore_main_solution) },
   [META_POLYGON_PACKET_enable_rss_limit] = { META_POLYGON_PACKET_enable_rss_limit, 'B', XSIZE(struct polygon_packet, enable_rss_limit), "enable_rss_limit", XOFFSET(struct polygon_packet, enable_rss_limit) },
+  [META_POLYGON_PACKET_enable_group_merge] = { META_POLYGON_PACKET_enable_group_merge, 'B', XSIZE(struct polygon_packet, enable_group_merge), "enable_group_merge", XOFFSET(struct polygon_packet, enable_group_merge) },
   [META_POLYGON_PACKET_polygon_url] = { META_POLYGON_PACKET_polygon_url, 's', XSIZE(struct polygon_packet, polygon_url), "polygon_url", XOFFSET(struct polygon_packet, polygon_url) },
   [META_POLYGON_PACKET_login] = { META_POLYGON_PACKET_login, 's', XSIZE(struct polygon_packet, login), "login", XOFFSET(struct polygon_packet, login) },
   [META_POLYGON_PACKET_password] = { META_POLYGON_PACKET_password, 's', XSIZE(struct polygon_packet, password), "password", XOFFSET(struct polygon_packet, password) },
@@ -106,6 +107,7 @@ void meta_polygon_packet_copy(struct polygon_packet *dst, const struct polygon_p
   dst->verbose = src->verbose;
   dst->ignore_main_solution = src->ignore_main_solution;
   dst->enable_rss_limit = src->enable_rss_limit;
+  dst->enable_group_merge = src->enable_group_merge;
   if (src->polygon_url) {
     dst->polygon_url = strdup(src->polygon_url);
   }

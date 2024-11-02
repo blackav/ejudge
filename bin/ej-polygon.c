@@ -3552,6 +3552,9 @@ process_polygon_zip(
     if (full_user_score > 0) {
         prob_cfg->full_user_score = full_user_score;
     }
+    if (pkt->enable_group_merge > 0) {
+        prob_cfg->enable_group_merge = 1;
+    }
 
     cfg_file = open_memstream(&cfg_text, &cfg_size);
     problem_config_section_unparse_cfg(cfg_file, prob_cfg);

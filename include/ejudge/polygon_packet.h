@@ -46,6 +46,7 @@ struct polygon_packet
     ejintbool_t verbose;
     ejintbool_t ignore_main_solution;
     ejintbool_t enable_rss_limit;
+    ejintbool_t enable_group_merge;
 
     unsigned char *polygon_url;
     unsigned char *login;
