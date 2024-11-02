@@ -106,6 +106,8 @@
 
         <tr><td class="b0">Use RSS memory limit instead of VM:</td><td class="b0"><s:checkbox name="enable_rss_limit" value="1" checkedExpr="enable_rss_limit" /></td></tr>
 
+        <tr><td class="b0">Enable test group merging:</td><td class="b0"><s:checkbox name="enable_group_merge" value="1" /></td></tr>
+
         <tr><td class="b0">Verbose importer output:</td><td class="b0"><input type="checkbox" name="verbose" value="1" /></td></tr>
 
         <tr><td class="b0"><s:submit ac="import-from-polygon-action" label="Import" /></td></tr>
