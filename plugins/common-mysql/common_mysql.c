@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2008-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2024 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -22,6 +22,7 @@
 #include "ejudge/errlog.h"
 #include "ejudge/base64.h"
 #include "ejudge/ej_uuid.h"
+#include "ejudge/random.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -35,6 +36,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/time.h>
+#include <stdint.h>
 
 static struct common_plugin_data *
 init_func(void);
@@ -494,12 +496,14 @@ connect_func(struct common_mysql_state *state)
     err("mysql_options failed");
     return -1;
   }
+  /*
   //my_bool flag = 1;
   char flag = 1;
   if (mysql_options(state->conn, MYSQL_OPT_RECONNECT, &flag) < 0) {
     err("mysql_options failed");
     return -1;
   }
+  */
   if (!mysql_real_connect(state->conn,
                           state->host, state->user, state->password,
                           state->database, state->port, state->socket, 0))
@@ -520,52 +524,84 @@ do_query(
         const unsigned char *cmd,
         int cmdlen)
 {
-  int sleep_time = 0;
   int r;
-  unsigned char buf[1024];
-  int buflen;
+  int query_count = 0;
 
-  if (!mysql_real_query(state->conn, cmd, cmdlen)) return 0;
-  if (mysql_errno(state->conn) != CR_SERVER_GONE_ERROR) db_error_fail(state);
-
-  // try to reconnect
-  while (sleep_time != 8) {
-    if (state->conn) mysql_close(state->conn);
-    state->conn = 0;
-    if (sleep_time) {
-      sleep(sleep_time);
-      sleep_time *= 2;
-    } else {
-      sleep_time = 1;
+  while (1) {
+    if (!mysql_real_query(state->conn, cmd, cmdlen)) {
+      return 0;
     }
-
-    if (!(state->conn = mysql_init(0))) {
-      err("mysql_init failed");
-      return -1;
-    }
-    if (mysql_real_connect(state->conn,
-                           state->host, state->user, state->password,
-                           state->database, state->port, state->socket, 0))
-      break;
     r = mysql_errno(state->conn);
-    if (r != CR_CONNECTION_ERROR && r != CR_CONN_HOST_ERROR
-        && r != CR_SERVER_GONE_ERROR && r != CR_SERVER_LOST)
+    if (r != CR_CONNECTION_ERROR && r != CR_CONN_HOST_ERROR && r != CR_SERVER_GONE_ERROR && r != CR_SERVER_LOST) {
       db_error_fail(state);
-  }
-
-  // reconnected
-  info("reconnected to MySQL daemon");
-  if (state->charset) {
-    snprintf(buf, sizeof(buf), "SET NAMES '%s' ;", state->charset);
-    buflen = strlen(buf);
-    if (mysql_real_query(state->conn, buf, buflen))
+    }
+    if (++query_count == 3) {
+      err("do_query: still cannot connect to the MySQL server, aborting");
       db_error_fail(state);
-  }
+    }
 
-  // reissue the query
-  if (mysql_real_query(state->conn, cmd, cmdlen))
-    db_error_fail(state);
-  return 0;
+    int reconnect_attempt = 0;
+    while (1) {
+      if (state->conn) mysql_close(state->conn);
+      state->conn = NULL;
+
+      if (!(state->conn = mysql_init(0))) {
+        err("do_query: mysql_init failed");
+        return -1;
+      }
+
+      const char *charset = state->charset;
+      if (!charset || !*charset) {
+        charset = "utf8mb4";
+      }
+      static unsigned char names_buf[256];
+      snprintf(names_buf, sizeof(names_buf), "SET NAMES '%s' ;", charset);
+      if (mysql_options(state->conn, MYSQL_INIT_COMMAND, names_buf) < 0) {
+        err("do_query: mysql_options failed");
+        return -1;
+      }
+
+      if (mysql_real_connect(state->conn,
+                             state->host, state->user, state->password,
+                             state->database, state->port, state->socket, 0)) {
+        break;
+      }
+      r = mysql_errno(state->conn);
+      if (r != CR_CONNECTION_ERROR && r != CR_CONN_HOST_ERROR && r != CR_SERVER_GONE_ERROR && r != CR_SERVER_LOST) {
+        db_error_fail(state);
+      }
+      if (reconnect_attempt == 10) {
+        err("do_query: too many reconnect attempts, aborting");
+        db_error_fail(state);
+      }
+      err("do_query: reconnect attempt %d failed", reconnect_attempt);
+
+      static const int wait_time_us[][2] =
+      {
+        { 100000, 150000 }, // after the first failed reconnect wait 100-150ms
+        { 200000, 300000 }, // after the second failed reconnect wait 200-300ms,
+        { 400000, 500000 },
+        { 800000, 1000000 },
+        { 1600000, 1800000 },
+        { 3200000, 3400000 },
+        { 6400000, 6600000 },
+        { 10000000, 10200000 },
+        { 10000000, 10200000 },
+        { 10000000, 10200000 },
+        { 10000000, 10200000 },
+        { 10000000, 10200000 },
+      };
+      int low = wait_time_us[reconnect_attempt][0];
+      int high = wait_time_us[reconnect_attempt][1];
+      ++reconnect_attempt;
+
+      random_init();
+      uint32_t rr = random_u32();
+      int wt = rr % (high - low) + low;
+      err("do_query: sleeping for %d us", wt);
+      usleep(wt);
+    }
+  }
 
  fail:
   return -1;
