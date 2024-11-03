@@ -15299,6 +15299,9 @@ ns_submit_run_input(
     err_num = NEW_SRV_ERR_RUNLOG_UPDATE_FAILED;
     goto done;
   }
+  if (metrics.data) {
+    ++metrics.data->submits_submitted;
+  }
 
   ej_uuid_generate(&se.judge_uuid);
   r = serve_compile_request(phr->config,

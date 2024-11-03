@@ -82,6 +82,10 @@
         <td class="b1"><s:v value="mcd->runs_submitted" /></td>
     </tr>
     <tr>
+        <td class="b1">Submitted submits:</td>
+        <td class="b1"><s:v value="mcd->submits_submitted" /></td>
+    </tr>
+    <tr>
         <td class="b1">Time spent on compilation (ms):</td>
         <td class="b1"><s:v value="mcd->total_compile_time_ms" /></td>
     </tr>
@@ -161,8 +165,22 @@
     if (mcd->append_run_count > 0) {
 %>
     <tr>
-        <td class="b1">Average INSERT time (μs):</td>
+        <td class="b1">Average INSERT INTO runs time (μs):</td>
         <td class="b1"><s:v value="mcd->append_run_us / mcd->append_run_count" /></td>
+    </tr>
+<%
+    }
+%>
+    <tr>
+        <td class="b1">'<tt>INSERT INTO submits</tt>' operations:</td>
+        <td class="b1"><s:v value="mcd->append_submit_count" /></td>
+    </tr>
+<%
+    if (mcd->append_submit_count > 0) {
+%>
+    <tr>
+        <td class="b1">Average INSERT INTO submits time (μs):</td>
+        <td class="b1"><s:v value="mcd->append_submit_us / mcd->append_submit_count" /></td>
     </tr>
 <%
     }
