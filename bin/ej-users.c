@@ -11341,7 +11341,7 @@ cmd_get_api_key(
   int token_len = base64u_encode(in_apk->token, 32, token_buf);
   token_buf[token_len] = 0;
   unsigned char logbuf[1024];
-  snprintf(logbuf, sizeof(logbuf), "GET_API_KEY: %s", token_buf);
+  snprintf(logbuf, sizeof(logbuf), "GET_API_KEY: %s, %d", token_buf, in_apk->contest_id);
 
   if (is_admin(p, logbuf) < 0) return;
   if (is_db_capable(p, OPCAP_LIST_USERS, logbuf) < 0) return;

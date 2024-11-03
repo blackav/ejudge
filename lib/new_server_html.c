@@ -12390,6 +12390,14 @@ privileged_entry_point(
       goto cleanup;
     }
 
+    if (phr->contest_id > 0) {
+      if (contests_get(phr->contest_id, &cnts) < 0 || !cnts) {
+        fprintf(phr->log_f, "invalid contest_id %d", phr->contest_id);
+        error_page(fout, phr, 0, -NEW_SRV_ERR_INV_CONTEST_ID);
+        goto cleanup;
+      }
+    }
+
     r = priv_check_cached_key(phr);
     if (r < 0) {
       error_page(fout, phr, 0, r);
