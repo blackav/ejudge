@@ -1152,9 +1152,6 @@ serve_state_load_contest(
   if (prepare_serve_defaults(cnts, state, p_cnts) < 0) goto failure;
   if (create_dirs(cnts, state, PREPARE_SERVE) < 0) goto failure;
 
-  serve_build_compile_dirs(config, state);
-  serve_build_run_dirs(config, state, cnts);
-
   global = state->global;
 
   if (global->notification_spec) {
@@ -1197,6 +1194,9 @@ serve_state_load_contest(
   if (global->enable_language_import > 0) {
     if (serve_state_import_languages(config, state) < 0) goto failure;
   }
+
+  serve_build_compile_dirs(config, state);
+  serve_build_run_dirs(config, state, cnts);
 
   teamdb_disable(state->teamdb_state, global->disable_user_database);
 
