@@ -65,6 +65,7 @@
 #include "ejudge/osdeps.h"
 
 #include <stdio.h>
+#include <string.h>
 #include <zlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -9803,9 +9804,13 @@ write_json_brief_test(
         const unsigned char *name,
         const struct testing_report_file_content *fc,
         const unsigned char *sep,
-        const unsigned char *indent)
+        const unsigned char *indent,
+        int content_mode,
+        int max_content_size)
 {
   if (fc->size < 0) return sep;
+
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
 
   fprintf(fout, "%s\n%s\"%s\": {", sep, indent, name);
   if (fc->is_too_big) {
@@ -9814,9 +9819,25 @@ write_json_brief_test(
     fprintf(fout, "\n%s  \"size\": %lld", indent, (long long) fc->size);
     if (fc->is_base64) {
       fprintf(fout, ",\n%s  \"is_binary\": %s", indent, to_json_bool(1));
+      // TODO: support content_mode flag
+    } else {
+      if (fc->size > 0) {
+        if (max_content_size >= 0 && fc->size > max_content_size) {
+          // TODO: implement armoring that accepts string_view
+          // FIXME: inefficient
+          unsigned char *tmp = xmalloc(max_content_size + 1);
+          memcpy(tmp, fc->data, max_content_size);
+          tmp[max_content_size] = 0;
+          fprintf(fout, ",\n%s  \"data\": \"%s\"", indent, json_armor_buf(&ab, tmp));
+          xfree(tmp);
+        } else {
+          fprintf(fout, ",\n%s  \"data\": \"%s\"", indent, json_armor_buf(&ab, fc->data));
+        }
+      }
     }
   }
   fprintf(fout, "\n%s}", indent);
+  html_armor_free(&ab);
   return ",";
 }
 
@@ -9829,7 +9850,9 @@ write_json_run_info(
         const struct run_entry *pre,
         time_t start_time,
         time_t stop_time,
-        int accepting_mode)
+        int accepting_mode,
+        int content_mode,
+        int max_content_size)
 {
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   const struct section_global_data *global = cs->global;
@@ -10366,11 +10389,11 @@ write_json_run_info(
               }
               fprintf(fout, "\n          }");
             }
-            write_json_brief_test(fout, "input", &t->input, ",", "          ");
-            write_json_brief_test(fout, "output", &t->output, ",", "          ");
-            write_json_brief_test(fout, "correct", &t->correct, ",", "          ");
-            write_json_brief_test(fout, "error", &t->error, ",", "          ");
-            write_json_brief_test(fout, "checker", &t->checker, ",", "          ");
+            write_json_brief_test(fout, "input", &t->input, ",", "          ", content_mode, max_content_size);
+            write_json_brief_test(fout, "output", &t->output, ",", "          ", content_mode, max_content_size);
+            write_json_brief_test(fout, "correct", &t->correct, ",", "          ", content_mode, max_content_size);
+            write_json_brief_test(fout, "error", &t->error, ",", "          ", content_mode, max_content_size);
+            write_json_brief_test(fout, "checker", &t->checker, ",", "          ", content_mode, max_content_size);
           }
         }
         fprintf(fout, "\n        }");

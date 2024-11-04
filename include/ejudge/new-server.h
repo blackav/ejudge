@@ -934,7 +934,9 @@ write_json_run_info(
         const struct run_entry *pre,
         time_t start_time,
         time_t stop_time,
-        int accepting_mode);
+        int accepting_mode,
+        int content_mode,
+        int max_content_size);
 const unsigned char *
 write_json_content(
         FILE *fout,

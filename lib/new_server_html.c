@@ -17967,6 +17967,8 @@ unpriv_run_status_json(
   serve_state_t cs = extra->serve_state;
   const struct section_global_data *global = cs->global;
   phr->json_reply = 1;
+  int content_mode = 0;
+  int max_content_size = -1;
 
   time_t start_time = 0;
   time_t stop_time = 0;
@@ -18018,8 +18020,10 @@ unpriv_run_status_json(
     error_page(fout, phr, 0, NEW_SRV_ERR_INV_RUN_ID);
     goto cleanup;
   }
+  hr_cgi_param_int_opt(phr, "enable_content", &content_mode, 0);
+  hr_cgi_param_int_opt(phr, "max_content_size", &max_content_size, -1);
 
-  write_json_run_info(fout, cs, phr, run_id, &re, start_time, stop_time, accepting_mode);
+  write_json_run_info(fout, cs, phr, run_id, &re, start_time, stop_time, accepting_mode, content_mode, max_content_size);
 
 cleanup:
   ;
