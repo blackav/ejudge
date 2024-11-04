@@ -8123,7 +8123,8 @@ write_xml_team_testing_report(
     } else {
       max_rss /= 1024;
       if (max_rss > 1024) {
-        fprintf(f, " %lld MiB, %lld KiB", max_rss / 1024, max_rss % 1024);
+        max_rss = (max_rss + 1024) / 1024;
+        fprintf(f, " %lld MiB", max_rss);
       } else {
         fprintf(f, " %lld KiB", max_rss);
       }
@@ -9073,6 +9074,8 @@ write_xml_testing_report(
   int max_cpu_time = -1, max_cpu_time_tl = -1;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   int need_checker_token = 0;
+  int has_max_rss = 0;
+  long long max_rss = 0;
 
   if (class1 && *class1) {
     cl1 = (unsigned char *) alloca(strlen(class1) + 16);
@@ -9164,16 +9167,31 @@ write_xml_testing_report(
       max_cpu_time_tl = 1;
       break;
     }
+    if (t->max_rss > 0) {
+      if (!has_max_rss) {
+        has_max_rss = 1;
+        max_rss = t->max_rss;
+      } else if (t->max_rss > max_rss) {
+        max_rss = t->max_rss;
+      }
+    }
   }
 
+  fprintf(f, "<big>Max. CPU time: ");
   if (r->time_limit_ms > 0 && max_cpu_time_tl > 0) {
-    fprintf(f, "<big>Max. CPU time: &gt;%d.%03d (time-limit exceeded)<br><br></big>\n", r->time_limit_ms / 1000, r->time_limit_ms % 1000);
+    fprintf(f, "&gt;%d.%03d (time-limit exceeded)", r->time_limit_ms / 1000, r->time_limit_ms % 1000);
   } else if (max_cpu_time_tl > 0) {
-    fprintf(f, "<big>Max. CPU time: %d.%03d (time-limit exceeded)<br><br></big>\n", max_cpu_time / 1000, max_cpu_time % 1000);
+    fprintf(f, "%d.%03d (time-limit exceeded)", max_cpu_time / 1000, max_cpu_time % 1000);
   } else if (!max_cpu_time_tl && max_cpu_time >= 0) {
-    fprintf(f, "<big>Max. CPU time: %d.%03d<br><br></big>\n",
+    fprintf(f, "%d.%03d",
             max_cpu_time / 1000, max_cpu_time % 1000);
   }
+  if (has_max_rss) {
+    max_rss /= 1024;
+    max_rss = (max_rss + 1023) / 1024;
+    fprintf(f, " ; Max. RSS: %lld MiB", max_rss);
+  }
+  fprintf(f, "<br><br></big>\n");
 
   if (r->host && !user_mode) {
     fprintf(f, "<big>Tested on host: %s</big><br/><br/>\n", r->host);
