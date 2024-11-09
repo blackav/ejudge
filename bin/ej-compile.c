@@ -2186,8 +2186,10 @@ static void
 make_heartbeat_file_name(void)
 {
   const unsigned char *basename = NULL;
-  if (compile_server_id && *compile_server_id) {
-    basename = compile_server_id;
+  if (heartbeat_instance_id && *heartbeat_instance_id) {
+    basename = heartbeat_instance_id;
+  } else if (instance_id && *instance_id) {
+    basename = instance_id;
   } else if (ip_address && *ip_address) {
     basename = ip_address;
   } else {
