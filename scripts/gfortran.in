@@ -1,5 +1,5 @@
-#!/bin/sh
-# Copyright (c) 2008-2016 Alexander Chernov <cher@ejudge.ru>
+#! /bin/bash
+# Copyright (c) 2008-2024 Alexander Chernov <cher@ejudge.ru>
 
 # using EJUDGE_FLAGS we may pass additional flags
 
@@ -24,6 +24,13 @@ fi
 if [ x"${GFORTRANDIR}" != x ]
 then
     PATH="${GFORTRANDIR}:${PATH}"
+fi
+
+if [ "${EJUDGE_BUILD_SCRIPT}" != "" ]
+then
+    export EJUDGE_LANGUAGE="gfortran"
+    export EJUDGE_COMPILER="${GFORTRANRUN}"
+    exec "${EJUDGE_BUILD_SCRIPT}" $@
 fi
 
 [ x"${EJUDGE_FLAGS}" = x ] && EJUDGE_FLAGS="-O2"

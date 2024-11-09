@@ -1,5 +1,5 @@
-#!/bin/sh
-# Copyright (c) 2001-2023 Alexander Chernov <cher@ejudge.ru>
+#! /bin/bash
+# Copyright (c) 2001-2024 Alexander Chernov <cher@ejudge.ru>
 
 # using EJUDGE_FLAGS we may pass additional flags
 
@@ -24,6 +24,13 @@ fi
 if [ x"${GCCDIR}" != x ]
 then
     PATH="${GCCDIR}:${PATH}"
+fi
+
+if [ "${EJUDGE_BUILD_SCRIPT}" != "" ]
+then
+    export EJUDGE_LANGUAGE="gcc"
+    export EJUDGE_COMPILER="${GCCRUN}"
+    exec "${EJUDGE_BUILD_SCRIPT}" $@
 fi
 
 [ x"${EJUDGE_FLAGS}" = x ] && EJUDGE_FLAGS="-Wall -O2"

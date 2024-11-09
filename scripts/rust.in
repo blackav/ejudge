@@ -26,6 +26,13 @@ then
     PATH="${RUSTDIR}:${PATH}"
 fi
 
+if [ "${EJUDGE_BUILD_SCRIPT}" != "" ]
+then
+    export EJUDGE_LANGUAGE="rust"
+    export EJUDGE_COMPILER="${RUSTRUN}"
+    exec "${EJUDGE_BUILD_SCRIPT}" $@
+fi
+
 if [ "${EJUDGE_ENABLE_CARGO}" = "1" ]
 then
     [ "${EJUDGE_PROJECT_ARCHIVE}" != "" ] || EJUDGE_PROJECT_ARCHIVE="project.tbz"

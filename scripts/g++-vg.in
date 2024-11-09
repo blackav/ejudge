@@ -1,6 +1,5 @@
-#!/bin/sh
-# $Id$
-# Copyright (c) 2012-2014 Alexander Chernov <cher@ejudge.ru>
+#! /bin/bash
+# Copyright (c) 2012-2024 Alexander Chernov <cher@ejudge.ru>
 
 # using EJUDGE_FLAGS we may pass additional flags
 
@@ -25,6 +24,13 @@ fi
 if [ x"${GPPDIR}" != x ]
 then
     PATH="${GPPDIR}:${PATH}"
+fi
+
+if [ "${EJUDGE_BUILD_SCRIPT}" != "" ]
+then
+    export EJUDGE_LANGUAGE="g++-vg"
+    export EJUDGE_COMPILER="${GPPRUN}"
+    exec "${EJUDGE_BUILD_SCRIPT}" $@
 fi
 
 [ x"${EJUDGE_FLAGS}" = x ] && EJUDGE_FLAGS="-O2 -g"

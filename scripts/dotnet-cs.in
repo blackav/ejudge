@@ -29,6 +29,13 @@ then
   PATH="${DOTNETDIR}/bin:${PATH}"
 fi
 
+if [ "${EJUDGE_BUILD_SCRIPT}" != "" ]
+then
+    export EJUDGE_LANGUAGE="dotnet-cs"
+    export EJUDGE_COMPILER="${DOTNETRUN}"
+    exec "${EJUDGE_BUILD_SCRIPT}" $@
+fi
+
 #[[ "${EJUDGE_FLAGS}" = "" ]] && EJUDGE_FLAGS="-optimize+"
 
 unset LANG

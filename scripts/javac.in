@@ -1,5 +1,5 @@
-#!/bin/bash
-# Copyright (c) 2004-2023 Alexander Chernov <cher@ejudge.ru>
+#! /bin/bash
+# Copyright (c) 2004-2024 Alexander Chernov <cher@ejudge.ru>
 
 # Usage: javac in-file out-file
 
@@ -30,6 +30,13 @@ if [ x"${version}" = x ]
 then
     echo "This language is not supported." >&2
     exit 1
+fi
+
+if [ "${EJUDGE_BUILD_SCRIPT}" != "" ]
+then
+    export EJUDGE_LANGUAGE="javac"
+    export EJUDGE_COMPILER="${JAVACRUN}"
+    exec "${EJUDGE_BUILD_SCRIPT}" $@
 fi
 
 # avoid setting JAVA_HOME if it is already set

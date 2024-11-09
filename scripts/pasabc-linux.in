@@ -1,5 +1,5 @@
-#!/bin/bash
-# Copyright (c) 2013-2023 Alexander Chernov <cher@ejudge.ru>
+#! /bin/bash
+# Copyright (c) 2013-2024 Alexander Chernov <cher@ejudge.ru>
 
 # A script for compilation of Pascal ABC.NET programs using the mono compiler.
 # Usage: pasabc-linux in-file out-file
@@ -22,6 +22,13 @@ if [ x"${version}" = x ]
 then
   echo "This language is not supported." >&2
   exit 1
+fi
+
+if [ "${EJUDGE_BUILD_SCRIPT}" != "" ]
+then
+    export EJUDGE_LANGUAGE="pasabc-linux"
+    export EJUDGE_COMPILER="${PASABC}"
+    exec "${EJUDGE_BUILD_SCRIPT}" $@
 fi
 
 PATH=`dirname "${PASABC}"`:"${PATH}"

@@ -26,6 +26,13 @@ then
     PATH="${GPPDIR}:${PATH}"
 fi
 
+if [ "${EJUDGE_BUILD_SCRIPT}" != "" ]
+then
+    export EJUDGE_LANGUAGE="g++"
+    export EJUDGE_COMPILER="${GPPRUN}"
+    exec "${EJUDGE_BUILD_SCRIPT}" $@
+fi
+
 [ x"${EJUDGE_FLAGS}" = x ] && EJUDGE_FLAGS="-Wall -O2"
 #[ x"${EJUDGE_LIBS}" = x ] && EJUDGE_LIBS="-lm"
 

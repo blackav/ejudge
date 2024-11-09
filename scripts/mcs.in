@@ -1,5 +1,5 @@
 #! /bin/bash
-# Copyright (c) 2005-2017 Alexander Chernov <cher@ejudge.ru>
+# Copyright (c) 2005-2024 Alexander Chernov <cher@ejudge.ru>
 
 # A script for compilation of C# programs using the mono compiler.
 # Usage: mcs in-file out-file
@@ -27,6 +27,13 @@ fi
 if [ x"${MCSDIR}" != x ]
 then
   PATH="${MCSDIR}/bin:${PATH}"
+fi
+
+if [ "${EJUDGE_BUILD_SCRIPT}" != "" ]
+then
+    export EJUDGE_LANGUAGE="mcs"
+    export EJUDGE_COMPILER="${MCSRUN}"
+    exec "${EJUDGE_BUILD_SCRIPT}" $@
 fi
 
 [[ "${EJUDGE_FLAGS}" = "" ]] && EJUDGE_FLAGS="-optimize+"

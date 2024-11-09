@@ -1,5 +1,5 @@
-#!/bin/bash
-# Copyright (c) 2017-2023 Alexander Chernov <cher@ejudge.ru>
+#! /bin/bash
+# Copyright (c) 2017-2024 Alexander Chernov <cher@ejudge.ru>
 
 # Usage: scala in-file out-file
 # The working dir must not contain any .class files.
@@ -30,6 +30,13 @@ if [ x"${version}" = x ]
 then
   echo "This language is not supported." >&2
   exit 1
+fi
+
+if [ "${EJUDGE_BUILD_SCRIPT}" != "" ]
+then
+    export EJUDGE_LANGUAGE="scala"
+    export EJUDGE_COMPILER="${SCALACRUN}"
+    exec "${EJUDGE_BUILD_SCRIPT}" $@
 fi
 
 if [ x"EJUDGE_ENABLE_SBT" == x1 ]

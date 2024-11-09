@@ -1,6 +1,5 @@
-#!/bin/sh
-# $Id$
-# Copyright (c) 2003-2008 Alexander Chernov <cher@ejudge.ru>
+#! /bin/bash
+# Copyright (c) 2003-2024 Alexander Chernov <cher@ejudge.ru>
 
 # This is a `compilation' script for the Perl language.
 # The idea is to append "#!${PERLPATH} -W" string
@@ -24,6 +23,13 @@ if [ x"${version}" = x ]
 then
   echo "This language is not supported." >&2
   exit 1
+fi
+
+if [ "${EJUDGE_BUILD_SCRIPT}" != "" ]
+then
+    export EJUDGE_LANGUAGE="perl"
+    export EJUDGE_COMPILER="${PERLPATH}"
+    exec "${EJUDGE_BUILD_SCRIPT}" $@
 fi
 
 echo "#! ${PERLPATH} -W ${EJUDGE_FLAGS}" > $2

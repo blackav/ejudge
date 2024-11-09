@@ -20,6 +20,13 @@ then
   exit 1
 fi
 
+if [ "${EJUDGE_BUILD_SCRIPT}" != "" ]
+then
+    export EJUDGE_LANGUAGE="node"
+    export EJUDGE_COMPILER="${NODEPATH}"
+    exec "${EJUDGE_BUILD_SCRIPT}" $@
+fi
+
 if [ x"${EJUDGE_EXE_PROPERTIES}" = x1 ]
 then
     extra_args=""

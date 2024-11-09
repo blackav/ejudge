@@ -1,6 +1,5 @@
-#!/bin/sh
-# $Id$
-# Copyright (c) 2002-2012 Alexander Chernov <cher@ejudge.ru>
+#! /bin/bash
+# Copyright (c) 2002-2024 Alexander Chernov <cher@ejudge.ru>
 
 # using EJUDGE_FLAGS we may pass additional flags
 
@@ -25,6 +24,13 @@ fi
 if [ x"${FPCDIR}" != x ]
 then
     PATH="${FPCDIR}:${PATH}"
+fi
+
+if [ "${EJUDGE_BUILD_SCRIPT}" != "" ]
+then
+    export EJUDGE_LANGUAGE="fpc"
+    export EJUDGE_COMPILER="${FPCRUN}"
+    exec "${EJUDGE_BUILD_SCRIPT}" $@
 fi
 
 unset LANG
