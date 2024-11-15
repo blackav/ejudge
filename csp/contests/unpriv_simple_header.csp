@@ -3,6 +3,9 @@
 <meta http-equiv="Content-type" content="text/html; charset=<s:config name="charset" />"/>
 <link rel="stylesheet" href="<s:config name="style-prefix" />unpriv.css" type="text/css"/>
 <link rel="stylesheet" href="<s:config name="style-prefix" />unpriv3.css" type="text/css" />
+<% if (cnts && cnts->css_url && *cnts->css_url) { %>
+<link rel="stylesheet" href="<s:v value="cnts->css_url" />" type="text/css" />
+<% } %>
 <title><s:v value="title" escape="false" /></title></head>
 <body>
 <div id="main-cont">
