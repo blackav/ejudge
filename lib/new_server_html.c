@@ -11344,7 +11344,7 @@ priv_change_registrations_json(
     }
     xfree(xml_text); xml_text = NULL;
     uc = userlist_get_user_contest(u, phr->contest_id);
-    int is_privileged = u->is_privileged || (uc->flags & USERLIST_UC_PRIVILEGED)
+    int is_privileged = u->is_privileged || (uc && (uc->flags & USERLIST_UC_PRIVILEGED))
       || opcaps_find(&cnts->capabilities, login_strs[i], &caps) >= 0;
 
     if (opcode == NEW_SRV_ACTION_USERS_REMOVE_REGISTRATIONS) {
