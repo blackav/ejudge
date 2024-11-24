@@ -33,25 +33,21 @@ then
     exec "${EJUDGE_BUILD_SCRIPT}" $@
 fi
 
-[ x"${EJUDGE_FLAGS}" = x ] && EJUDGE_FLAGS="-Wall -O2"
-#[ x"${EJUDGE_LIBS}" = x ] && EJUDGE_LIBS="-lm"
+[ x"${EJUDGE_FLAGS}" = x ] && EJUDGE_FLAGS="-O2"
 
 unset LANG
 unset LC_ALL
 unset LC_MESSAGES
 unset LANGUAGE
 
-if [ "${EJUDGE_COMPILE_MASK}" != "" ]
+if [ "${EJUDGE_SOLUTION_FILE}" != "" ]
 then
-    if [ "${EJUDGE_SOLUTION_FILE}" != "" ]
+    if ! mv "$1" "${EJUDGE_SOLUTION_FILE}.cpp"
     then
-        if ! mv "$1" "${EJUDGE_SOLUTION_FILE}.cpp"
-        then
-            echo "failed to rename $1 to $EJUDGE_SOLUTION_FILE" >&2
-            exit 1
-        fi
-        exec "${GPPRUN}" ${EJUDGE_FLAGS} ${EJUDGE_COMPILE_MASK} -o "$2" -lm ${EJUDGE_LIBS}
+        echo "failed to rename ${1} to ${EJUDGE_SOLUTION_FILE}.cpp" >&2
+        exit 1
     fi
+    exec "${GPPRUN}" ${EJUDGE_FLAGS} *.cpp -o "$2" ${EJUDGE_LIBS}
 fi
 
 exec "${GPPRUN}" ${EJUDGE_FLAGS} "$1" -o "$2" -lm ${EJUDGE_LIBS}

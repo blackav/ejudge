@@ -49,6 +49,55 @@ then
     export PATH
 fi
 
+D=`dirname "${JAVARUN}"`
+if [ "$D" = "." ]
+then
+    JARRUN=jar
+else
+    JARRUN="${D}/jar"
+fi
+
+solution_file=""
+if [ "${EJUDGE_SOLUTION_FILE_JAVA}" != "" ]
+then
+    solution_file="${EJUDGE_SOLUTION_FILE_JAVA}"
+elif [ "${EJUDGE_SOLUTION_FILE}" != "" ]
+    solution_file="${EJUDGE_SOLUTION_FILE}"
+fi
+start_file=""
+if [ "${EJUDGE_START_FILE_JAVA}" != "" ]
+then
+    start_file="${EJUDGE_START_FILE_JAVA}"
+elif [ "${EJUDGE_START_FILE}" != "" ]
+    start_file="${EJUDGE_START_FILE}"
+fi
+
+if [ "${solution_file}" != "" -a "${start_file}" != "" ]
+then
+    if ! mv "${infile}" "${solution_file}.java"
+    then
+        echo "failed to rename source file" >&2
+        exit 1
+    fi
+
+    CPOPT=
+    if [ "${EJUDGE_CLASSPATH}" != "" ]
+    then
+        CPOPT=" -cp ${EJUDGE_CLASSPATH} "
+    fi
+
+    "${JAVACRUN}" --target "${JAVAVER}" ${CPOPT} *.java || exit 1
+
+    MOPT=
+    if [ "${EJUDGE_CLASSPATH}" != "" ]
+    then
+        echo "Class-Path: ${EJUDGE_CLASSPATH}" > manifest.txt
+        MOPT=" -m manifest.txt "
+    fi
+
+    exec "${JARRUN}" -c -f "${outfile}" ${MOPT} -e "${start_file}" *.class
+fi
+
 rm -f *.class
 
 JAVA_CLASSNAME="${libexecdir}/ejudge/lang/java-classname.jar"
@@ -86,14 +135,6 @@ then
 fi
 
 "${JAVACRUN}" --target "${JAVAVER}" ${CPOPT} *.java || exit 1
-
-D=`dirname "${JAVARUN}"`
-if [ "$D" = "." ]
-then
-    JARRUN=jar
-else
-    JARRUN="${D}/jar"
-fi
 
 MOPT=
 if [ "${EJUDGE_CLASSPATH}" != "" ]

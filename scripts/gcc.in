@@ -33,12 +33,22 @@ then
     exec "${EJUDGE_BUILD_SCRIPT}" $@
 fi
 
-[ x"${EJUDGE_FLAGS}" = x ] && EJUDGE_FLAGS="-Wall -O2"
+[ x"${EJUDGE_FLAGS}" = x ] && EJUDGE_FLAGS="-O2"
 [ x"${EJUDGE_LIBS}" = x ] && EJUDGE_LIBS="-lm"
 
 unset LANG
 unset LC_ALL
 unset LC_MESSAGES
 unset LANGUAGE
+
+if [ "${EJUDGE_SOLUTION_FILE}" != "" ]
+then
+    if ! mv "$1" "${EJUDGE_SOLUTION_FILE}.c"
+    then
+        echo "failed to rename ${1} to ${EJUDGE_SOLUTION_FILE}.c" >&2
+        exit 1
+    fi
+    exec "${GCCRUN}" ${EJUDGE_FLAGS} *.c -o "$2" ${EJUDGE_LIBS}
+fi
 
 exec "${GCCRUN}" ${EJUDGE_FLAGS} "$1" -o "$2" ${EJUDGE_LIBS}
