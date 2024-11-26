@@ -496,7 +496,7 @@ generic_write_file(char const *buf, size_t size, int flags,
       pathmake(wrt_path, dir, "/", name, sfx, NULL);
     }
   }
-  info("writing file %s", wrt_path);
+  //info("writing file %s", wrt_path);
   if ((flags & GZIP)) {
     r = gzip_write_file(buf, size, wrt_path, flags);
   } else {
@@ -509,7 +509,7 @@ generic_write_file(char const *buf, size_t size, int flags,
   }
   if ((flags & SAFE)) {
     pathmake(out_path, dir, "/", "dir", "/", name, sfx, NULL);
-    info("Move: %s -> %s", wrt_path, out_path);
+    //info("Move: %s -> %s", wrt_path, out_path);
     if (rename(wrt_path, out_path) < 0) {
       r = errno;
       err("rename failed: %s", os_ErrorMsg());
@@ -721,7 +721,7 @@ generic_read_file(char **pbuf, size_t maxsz, size_t *prsz, int flags,
     get_uniq_prefix(uniq_pfx);
     pathmake(in_path, dir, "/", "dir", "/", name, sfx, NULL);
     pathmake(read_path, dir, "/", "out", "/",  uniq_pfx, name, sfx, NULL);
-    write_log(0, LOG_INFO, "Move: %s -> %s", in_path, read_path);
+    //write_log(0, LOG_INFO, "Move: %s -> %s", in_path, read_path);
     if (rename(in_path, read_path) < 0) {
       if (errno == ENOENT) {
         write_log(0, LOG_WARN, "rename: no source file %s", in_path);
@@ -740,7 +740,7 @@ generic_read_file(char **pbuf, size_t maxsz, size_t *prsz, int flags,
       pathmake(read_path, dir, "/", name, sfx, NULL);
     }
   }
-  info("reading file %s", read_path);
+  //info("reading file %s", read_path);
   if ((flags & GZIP)) {
     r = gzip_read_file(pbuf, maxsz, prsz, flags, read_path);
   } else {
@@ -1159,7 +1159,7 @@ generic_copy_file(int sflags,
     pathmake(move_src, sdir, "/", "dir", "/", sname, ssfx, NULL);
     pathmake(copy_src, sdir, "/", "out", "/", uniq_pfx, sname, ssfx, NULL);
 
-    write_log(0, LOG_INFO, "Move: %s -> %s", move_src, copy_src);
+    //write_log(0, LOG_INFO, "Move: %s -> %s", move_src, copy_src);
     if (rename(move_src, copy_src) < 0) {
       if (errno == ENOENT) {
         write_log(0, LOG_WARN, "rename: no source file %s", move_src);
@@ -1189,14 +1189,14 @@ generic_copy_file(int sflags,
     }
   }
 
-  write_log(0, LOG_INFO, "Copy: %s -> %s", copy_src, copy_dst);
+  //write_log(0, LOG_INFO, "Copy: %s -> %s", copy_src, copy_dst);
   if ((r = do_copy_file(copy_src, sflags, copy_dst, dflags)) < 0) {
     if ((sflags & SAFE)) rename(copy_src, move_src);
     return r;
   }
 
   if ((dflags & SAFE)) {
-    write_log(0, LOG_INFO, "Move: %s -> %s", copy_dst, move_dst);
+    //write_log(0, LOG_INFO, "Move: %s -> %s", copy_dst, move_dst);
     if (rename(copy_dst, move_dst) < 0) {
       saved_errno = errno;
       err("rename failed: %s", os_ErrorMsg());
