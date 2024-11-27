@@ -62,6 +62,7 @@ if [ "${EJUDGE_SOLUTION_FILE_JAVA}" != "" ]
 then
     solution_file="${EJUDGE_SOLUTION_FILE_JAVA}"
 elif [ "${EJUDGE_SOLUTION_FILE}" != "" ]
+then
     solution_file="${EJUDGE_SOLUTION_FILE}"
 fi
 start_file=""
@@ -69,6 +70,7 @@ if [ "${EJUDGE_START_FILE_JAVA}" != "" ]
 then
     start_file="${EJUDGE_START_FILE_JAVA}"
 elif [ "${EJUDGE_START_FILE}" != "" ]
+then
     start_file="${EJUDGE_START_FILE}"
 fi
 
