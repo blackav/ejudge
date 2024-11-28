@@ -37,7 +37,7 @@ ej_bson_unparse_new(
         const bson_t *b,
         int is_array)
 {
-    char *json = bson_as_json(b, NULL);
+    char *json = bson_as_canonical_extended_json(b, NULL);
     fprintf(out, "%s", json);
     bson_free(json);
 }
