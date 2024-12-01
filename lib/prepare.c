@@ -7126,7 +7126,7 @@ prepare_copy_language(
 #define LANG_MERGE_STRING(field) do {  \
   if (lang->field) {                   \
     out->field = xstrdup(lang->field); \
-  } else if (imp->long_name) {         \
+  } else if (imp->field) {         \
     out->field = xstrdup(imp->field);  \
   }                                    \
 } while (0)

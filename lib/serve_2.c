@@ -2445,10 +2445,10 @@ serve_run_request(
   if (lang && lang->clean_up_cmd) {
     srgp->clean_up_cmd = xstrdup(lang->clean_up_cmd);
   }
-  if (lang && lang->run_env_file) {
+  if (lang && lang->run_env_file && *lang->run_env_file) {
     srgp->run_env_file = xstrdup(lang->run_env_file);
   }
-  if (lang && lang->clean_up_env_file) {
+  if (lang && lang->clean_up_env_file && *lang->clean_up_env_file) {
     srgp->clean_up_env_file = xstrdup(lang->clean_up_env_file);
   }
 

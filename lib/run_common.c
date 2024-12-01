@@ -4212,7 +4212,7 @@ run_one_test(
       task_SetEnv(tsk, "OUTPUT_FILE", srpp->output_file);
     }
   }
-  if (srgp->run_env_file) {
+  if (srgp->run_env_file && *srgp->run_env_file) {
     read_env_file(tsk, srgp->run_env_file);
   }
 
