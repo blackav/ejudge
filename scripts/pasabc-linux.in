@@ -31,6 +31,13 @@ then
     exec "${EJUDGE_BUILD_SCRIPT}" $@
 fi
 
+if [ "${EJUDGE_OPT_BUILD_SCRIPT}" != "" -a -x "${EJUDGE_OPT_BUILD_SCRIPT}" ]
+then
+    export EJUDGE_LANGUAGE="pasabc-linux"
+    export EJUDGE_COMPILER="${PASABC}"
+    exec "${EJUDGE_OPT_BUILD_SCRIPT}" $@
+fi
+
 PATH=`dirname "${PASABC}"`:"${PATH}"
 
 unset LANG

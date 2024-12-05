@@ -33,6 +33,13 @@ then
     exec "${EJUDGE_BUILD_SCRIPT}" $@
 fi
 
+if [ "${EJUDGE_OPT_BUILD_SCRIPT}" != "" -a -x "${EJUDGE_OPT_BUILD_SCRIPT}" ]
+then
+    export EJUDGE_LANGUAGE="rust"
+    export EJUDGE_COMPILER="${RUSTRUN}"
+    exec "${EJUDGE_OPT_BUILD_SCRIPT}" $@
+fi
+
 if [ "${EJUDGE_ENABLE_CARGO}" = "1" ]
 then
     [ "${EJUDGE_PROJECT_ARCHIVE}" != "" ] || EJUDGE_PROJECT_ARCHIVE="project.tbz"

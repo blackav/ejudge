@@ -39,6 +39,13 @@ then
     exec "${EJUDGE_BUILD_SCRIPT}" $@
 fi
 
+if [ "${EJUDGE_OPT_BUILD_SCRIPT}" != "" -a -x "${EJUDGE_OPT_BUILD_SCRIPT}" ]
+then
+    export EJUDGE_LANGUAGE="scala"
+    export EJUDGE_COMPILER="${SCALACRUN}"
+    exec "${EJUDGE_OPT_BUILD_SCRIPT}" $@
+fi
+
 if [ x"EJUDGE_ENABLE_SBT" == x1 ]
 then
     # Add assembly plugin to generate all-on-one jar

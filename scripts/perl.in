@@ -32,6 +32,13 @@ then
     exec "${EJUDGE_BUILD_SCRIPT}" $@
 fi
 
+if [ "${EJUDGE_OPT_BUILD_SCRIPT}" != "" -a -x "${EJUDGE_OPT_BUILD_SCRIPT}" ]
+then
+    export EJUDGE_LANGUAGE="perl"
+    export EJUDGE_COMPILER="${PERLPATH}"
+    exec "${EJUDGE_OPT_BUILD_SCRIPT}" $@
+fi
+
 echo "#! ${PERLPATH} -W ${EJUDGE_FLAGS}" > $2
 echo >> $2
 cat $1 >> $2

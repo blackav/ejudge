@@ -39,6 +39,13 @@ then
     exec "${EJUDGE_BUILD_SCRIPT}" $@
 fi
 
+if [ "${EJUDGE_OPT_BUILD_SCRIPT}" != "" -a -x "${EJUDGE_OPT_BUILD_SCRIPT}" ]
+then
+    export EJUDGE_LANGUAGE="javac"
+    export EJUDGE_COMPILER="${JAVACRUN}"
+    exec "${EJUDGE_OPT_BUILD_SCRIPT}" $@
+fi
+
 # avoid setting JAVA_HOME if it is already set
 # actually, setting of JAVA_HOME breaks some systems, so don't do it
 MY_JAVA_HOME="${JAVA_HOME}"
