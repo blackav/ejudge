@@ -510,6 +510,7 @@ ns_write_priv_all_runs(
       rid = list_idx[i];
       ASSERT(rid >= env.rbegin && rid < env.rtotal);
       pe = &env.rentries[rid];
+      group_count = 0;
 
       displayed_mask[rid / BITS_PER_LONG] |= (1L << (rid % BITS_PER_LONG));
 

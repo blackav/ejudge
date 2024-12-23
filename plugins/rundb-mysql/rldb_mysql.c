@@ -879,6 +879,7 @@ load_runs(struct rldb_mysql_cnts *cs)
   int run_f = -1;
 
   for (i = 0; i < md->row_count; i++) {
+    group_scores_index = 0;
     memset(&ri, 0, sizeof(ri));
     memset(sha1, 0, sizeof(sha1));
     memset(&run_uuid, 0, sizeof(run_uuid));
@@ -1002,6 +1003,7 @@ load_runs(struct rldb_mysql_cnts *cs)
 
     expand_runs(rls, ri.run_id);
     re = &rls->runs[ri.run_id - rls->run_f];
+    memset(re, 0, sizeof(*re));
 
     re->run_id = ri.run_id;
     re->serial_id = ri.serial_id;
