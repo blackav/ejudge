@@ -16,6 +16,7 @@
 #include "ejudge/userlist.h"
 #include "ejudge/sformat.h"
 #include "ejudge/session_cache.h"
+#include "ejudge/sha256utils.h"
 
 #include "ejudge/xalloc.h"
 

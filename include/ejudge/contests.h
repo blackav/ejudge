@@ -3,7 +3,7 @@
 #ifndef __CONTESTS_H__
 #define __CONTESTS_H__
 
-/* Copyright (C) 2002-2024 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2025 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -73,6 +73,8 @@ enum
     CONTEST_ROOT_DIR,
     CONTEST_STANDINGS_URL,
     CONTEST_PROBLEMS_URL,
+    CONTEST_ANALYTICS_URL,
+    CONTEST_ANALYTICS_KEY,
     CONTEST_CLIENT_FLAGS,
     CONTEST_SERVE_USER,
     CONTEST_SERVE_GROUP,
@@ -387,6 +389,8 @@ struct contest_desc
   unsigned char *conf_dir;
   unsigned char *standings_url;
   unsigned char *problems_url;
+  unsigned char *analytics_url;
+  unsigned char *analytics_key;
   unsigned char *serve_user;
   unsigned char *serve_group;
   unsigned char *run_user;

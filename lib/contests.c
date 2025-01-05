@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2002-2024 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2025 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -77,6 +77,8 @@ const int contests_tag_to_meta_map[CONTEST_LAST_TAG] =
   [CONTEST_ROOT_DIR] = CNTS_root_dir,
   [CONTEST_STANDINGS_URL] = CNTS_standings_url,
   [CONTEST_PROBLEMS_URL] = CNTS_problems_url,
+  [CONTEST_ANALYTICS_URL] = CNTS_analytics_url,
+  [CONTEST_ANALYTICS_KEY] = CNTS_analytics_key,
   [CONTEST_SERVE_USER] = CNTS_serve_user,
   [CONTEST_SERVE_GROUP] = CNTS_serve_group,
   [CONTEST_REGISTER_HEADER_FILE] = CNTS_register_header_file,
@@ -223,6 +225,8 @@ char const * const contests_elem_map[] =
   "root_dir",
   "standings_url",
   "problems_url",
+  "analytics_url",
+  "analytics_key",
   "client_flags",
   "serve_user",
   "serve_group",
@@ -788,6 +792,8 @@ static const unsigned char contest_final_set[CONTEST_LAST_TAG] =
   [CONTEST_ROOT_DIR] = 1,
   [CONTEST_STANDINGS_URL] = 1,
   [CONTEST_PROBLEMS_URL] = 1,
+  [CONTEST_ANALYTICS_URL] = 1,
+  [CONTEST_ANALYTICS_KEY] = 1,
   [CONTEST_SERVE_USER] = 1,
   [CONTEST_SERVE_GROUP] = 1,
   [CONTEST_REGISTER_HEADER_FILE] = 1,

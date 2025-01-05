@@ -1,4 +1,24 @@
-<div id="footer"><s:copyright /></div>
+<div id="footer"><s:copyright /></div><%
+  if (cnts && cnts->analytics_url) {
+    const unsigned char *key = "";
+    if (cnts->analytics_key) {
+      key = cnts->analytics_key;
+    }
+    const unsigned char *login = "";
+    if (phr->login) {
+      login = phr->login;
+    }
+    unsigned char sig_buf[1024];
+    int sig_len = snprintf(sig_buf, sizeof(sig_buf), "%d;%s;%s", cnts->id, login, key);
+    unsigned char sha_buf[128];
+    sha256b64ubuf(sha_buf, sizeof(sha_buf), sig_buf, sig_len);
+    unsigned char url[1024];
+    // unsafe
+    snprintf(url, sizeof(url), cnts->analytics_url, sha_buf);
+    fprintf(out_f, "<img src=\"%s\" />", url);
+%><%
+  }
+%>
 </div>
 </div>
 </div>
