@@ -73,6 +73,8 @@ enum
   CNTS_conf_dir,
   CNTS_standings_url,
   CNTS_problems_url,
+  CNTS_analytics_url,
+  CNTS_analytics_key,
   CNTS_serve_user,
   CNTS_serve_group,
   CNTS_run_user,

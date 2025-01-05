@@ -80,6 +80,8 @@ static struct meta_info_item meta_info_contest_desc_data[] =
   [CNTS_conf_dir] = { CNTS_conf_dir, 's', XSIZE(struct contest_desc, conf_dir), "conf_dir", XOFFSET(struct contest_desc, conf_dir) },
   [CNTS_standings_url] = { CNTS_standings_url, 's', XSIZE(struct contest_desc, standings_url), "standings_url", XOFFSET(struct contest_desc, standings_url) },
   [CNTS_problems_url] = { CNTS_problems_url, 's', XSIZE(struct contest_desc, problems_url), "problems_url", XOFFSET(struct contest_desc, problems_url) },
+  [CNTS_analytics_url] = { CNTS_analytics_url, 's', XSIZE(struct contest_desc, analytics_url), "analytics_url", XOFFSET(struct contest_desc, analytics_url) },
+  [CNTS_analytics_key] = { CNTS_analytics_key, 's', XSIZE(struct contest_desc, analytics_key), "analytics_key", XOFFSET(struct contest_desc, analytics_key) },
   [CNTS_serve_user] = { CNTS_serve_user, 's', XSIZE(struct contest_desc, serve_user), "serve_user", XOFFSET(struct contest_desc, serve_user) },
   [CNTS_serve_group] = { CNTS_serve_group, 's', XSIZE(struct contest_desc, serve_group), "serve_group", XOFFSET(struct contest_desc, serve_group) },
   [CNTS_run_user] = { CNTS_run_user, 's', XSIZE(struct contest_desc, run_user), "run_user", XOFFSET(struct contest_desc, run_user) },
@@ -302,6 +304,12 @@ void contest_desc_copy(struct contest_desc *dst, const struct contest_desc *src)
   if (src->problems_url) {
     dst->problems_url = strdup(src->problems_url);
   }
+  if (src->analytics_url) {
+    dst->analytics_url = strdup(src->analytics_url);
+  }
+  if (src->analytics_key) {
+    dst->analytics_key = strdup(src->analytics_key);
+  }
   if (src->serve_user) {
     dst->serve_user = strdup(src->serve_user);
   }
@@ -485,6 +493,8 @@ void contest_desc_free(struct contest_desc *ptr)
   free(ptr->conf_dir);
   free(ptr->standings_url);
   free(ptr->problems_url);
+  free(ptr->analytics_url);
+  free(ptr->analytics_key);
   free(ptr->serve_user);
   free(ptr->serve_group);
   free(ptr->run_user);
