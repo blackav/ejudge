@@ -21,7 +21,10 @@ $(function() {
   $.ajax({
     method: "POST",
     url: "<s:v value="url" />",
-    cache: false
+    cache: false,
+    global: false,
+    success: function(data) {},
+    error: function(xhr, options, err) {}
   });
 });
 </script><%
