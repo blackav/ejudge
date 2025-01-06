@@ -15,8 +15,16 @@
     unsigned char url[1024];
     // unsafe
     snprintf(url, sizeof(url), cnts->analytics_url, sha_buf);
-    fprintf(out_f, "<img src=\"%s\" />", url);
-%><%
+%>
+<script>
+$(function() {
+  $.ajax({
+    method: "POST",
+    url: "<s:v value="url" />",
+    cache: false
+  });
+});
+</script><%
   }
 %>
 </div>
