@@ -22,10 +22,6 @@
 #include <stdio.h>
 #include <time.h>
 
-// for libmongo-client (obsolete)
-struct _bson;
-struct _bson_cursor;
-
 // for libmongoc
 struct _bson_t;
 // FIXME: no opaque structure tag for bson_iter_t

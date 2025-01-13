@@ -31,10 +31,6 @@ MYSQL_INCL_OPT=@ac_cv_mysql_include_opt@
 MYSQL_LIB_OPT=@ac_cv_mysql_lib_opt@
 MYSQL_LIBS=@ac_cv_mysql_libs@
 
-MONGO_EXISTS=@ac_cv_has_libmongo_client@
-MONGO_CFLAGS=@ac_cv_libmongo_client_cflags@
-MONGO_LIBS=@ac_cv_libmongo_client_libs@
-
 MONGOC_EXISTS=@ac_cv_has_libmongoc@
 MONGOC_CFLAGS=@ac_cv_libmongoc_cflags@
 MONGOC_LIBS=@ac_cv_libmongoc_libs@
@@ -56,7 +52,7 @@ EXTRALIBS=
 CCOMPFLAGS=-D_GNU_SOURCE -std=gnu11
 LDCOMPFLAGS=
 
-ifneq ($(MONGO_EXISTS)$(MONGOC_EXISTS)$(MYSQL_LIBS),)
+ifneq ($(MONGOC_EXISTS)$(MYSQL_LIBS),)
 include main.make
 else
 include empty.make

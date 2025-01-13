@@ -17,9 +17,9 @@ PLUGINDIR = $(libexecdir)/ejudge/plugins
 CC = gcc
 LD = gcc
 
-CFLAGS = -I../../include $(MYSQL_INCL_OPT) $(MONGO_CFLAGS) $(MONGOC_CFLAGS) $(CDEBUGFLAGS) $(CCOMPFLAGS) $(CEXTRAFLAGS) $(WPTRSIGN)
+CFLAGS = -I../../include $(MYSQL_INCL_OPT) $(MONGOC_CFLAGS) $(CDEBUGFLAGS) $(CCOMPFLAGS) $(CEXTRAFLAGS) $(WPTRSIGN)
 LDFLAGS = $(MYSQL_LIB_OPT) $(EXPAT_LIB_OPT) $(CDEBUGFLAGS) $(LDCOMPFLAGS) $(LDEXTRAFLAGS)
-LDLIBS = $(EXTRALIBS) $(MYSQL_LIBS) $(MONGO_LIBS) $(MONGOC_LIBS) -lcurl -lexpat -lm
+LDLIBS = $(EXTRALIBS) $(MYSQL_LIBS) $(MONGOC_LIBS) -lcurl -lexpat -lm
 
 CFILES = telegram.c telegram_data.c telegram_pbs.c telegram_token.c mongo_conn.c telegram_chat.c telegram_user.c telegram_chat_state.c telegram_subscription.c mysql_conn.c
 

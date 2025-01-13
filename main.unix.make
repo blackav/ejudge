@@ -344,7 +344,7 @@ ej-agent : $(CA_OBJECTS)
 	$(LD) $(LDFLAGS) $(CA_OBJECTS) -o $@ $(LDLIBS) ${EXPAT_LIB} ${LIBLZMA}
 
 ej-run${EXESFX} : $(RUN_OBJECTS)
-	$(LD) $(LDFLAGS) $(RUN_OBJECTS) -o $@ $(LDLIBS) ${EXPAT_LIB} ${LIBZIP} ${LIBUUID} $(MONGO_LIBS) $(MONGOC_LIBS) -lbacktrace
+	$(LD) $(LDFLAGS) $(RUN_OBJECTS) -o $@ $(LDLIBS) ${EXPAT_LIB} ${LIBZIP} ${LIBUUID} $(MONGOC_LIBS) -lbacktrace
 
 ej-nwrun${EXESFX} : $(NWRUN_OBJECTS)
 	$(LD) $(LDFLAGS) $(NWRUN_OBJECTS) -o $@ $(LDLIBS) ${EXPAT_LIB} ${LIBZIP}
@@ -353,10 +353,10 @@ ej-ncheck${EXESFX} : $(NCHECK_OBJECTS)
 	$(LD) $(LDFLAGS) $(NCHECK_OBJECTS) -o $@ $(LDLIBS) ${EXPAT_LIB}
 
 ej-batch : $(T3M_OBJECTS)
-	$(LD) $(LDFLAGS) $(T3M_OBJECTS) -o $@ $(LDLIBS) -ldl ${EXPAT_LIB} ${LIBZIP} ${LIBUUID} $(MONGO_LIBS) $(MONGOC_LIBS) -lbacktrace
+	$(LD) $(LDFLAGS) $(T3M_OBJECTS) -o $@ $(LDLIBS) -ldl ${EXPAT_LIB} ${LIBZIP} ${LIBUUID} $(MONGOC_LIBS) -lbacktrace
 
 ej-serve : $(SERVE_OBJECTS)
-	$(LD) $(LDFLAGS) $(SERVE_OBJECTS) -o $@ $(LDLIBS) -ldl ${EXPAT_LIB} ${LIBUUID} $(MONGO_LIBS) $(MONGOC_LIBS) -lbacktrace
+	$(LD) $(LDFLAGS) $(SERVE_OBJECTS) -o $@ $(LDLIBS) -ldl ${EXPAT_LIB} ${LIBUUID} $(MONGOC_LIBS) -lbacktrace
 
 cgi-bin/serve-control${CGI_PROG_SUFFIX}: ${SC_OBJECTS}
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB}
@@ -368,7 +368,7 @@ ej-users-control: ${ULC_OBJECTS}
 	${LD} ${LDFLAGS} $^  libcommon.a -rdynamic -o $@ ${LDLIBS} ${EXPAT_LIB} -lbacktrace
 
 ej-jobs: ${JS_OBJECTS}
-	${LD} ${LDFLAGS} $^ -pthread libcommon.a libplatform.a -rdynamic -o $@ ${LDLIBS} -ldl ${EXPAT_LIB} ${LIBCURL} ${LIBZIP} ${LIBUUID} $(MONGO_LIBS) $(MONGOC_LIBS) -lbacktrace
+	${LD} ${LDFLAGS} $^ -pthread libcommon.a libplatform.a -rdynamic -o $@ ${LDLIBS} -ldl ${EXPAT_LIB} ${LIBCURL} ${LIBZIP} ${LIBUUID} $(MONGOC_LIBS) -lbacktrace
 
 ej-jobs-control: ${JSC_OBJECTS}
 	${LD} ${LDFLAGS} $^ libcommon.a libplatform.a -o $@ ${LDLIBS} ${EXPAT_LIB} -lbacktrace
@@ -377,13 +377,13 @@ ejudge-jobs-cmd: ${JP_OBJECTS}
 	${LD} ${LDFLAGS} $^ libcommon.a libplatform.a -o $@ ${LDLIBS} ${EXPAT_LIB}
 
 ej-super-server: ${SS_OBJECTS}
-	${LD} ${LDFLAGS} -rdynamic $^ libcommon.a -o $@ ${LDLIBS} ${EXPAT_LIB} -ldl ${LIBUUID} $(MONGO_LIBS) $(MONGOC_LIBS) -lbacktrace
+	${LD} ${LDFLAGS} -rdynamic $^ libcommon.a -o $@ ${LDLIBS} ${EXPAT_LIB} -ldl ${LIBUUID} $(MONGOC_LIBS) -lbacktrace
 
 ej-super-server-control: ${SSC_OBJECTS}
 	${LD} ${LDFLAGS} $^ libcommon.a -o $@ ${LDLIBS} ${EXPAT_LIB} -lbacktrace
 
 ej-super-run: ${SR_OBJECTS}
-	${LD} ${LDFLAGS} -pthread -rdynamic $^ libcommon.a -o $@ ${LDLIBS} ${EXPAT_LIB} -ldl ${LIBZIP} ${LIBUUID} $(MONGO_LIBS) $(MONGOC_LIBS) ${LIBLZMA} -lbacktrace
+	${LD} ${LDFLAGS} -pthread -rdynamic $^ libcommon.a -o $@ ${LDLIBS} ${EXPAT_LIB} -ldl ${LIBZIP} ${LIBUUID} $(MONGOC_LIBS) ${LIBLZMA} -lbacktrace
 
 ej-super-run-control: ${SRC_OBJECTS}
 	${LD} ${LDFLAGS} -rdynamic $^ libcommon.a -o $@ ${LDLIBS} ${EXPAT_LIB} -ldl -lbacktrace
@@ -398,7 +398,7 @@ ej-import-contest: ${IC_OBJECTS}
 	${LD} ${LDFLAGS} $^ libcommon.a -o $@ ${LDLIBS} ${EXPAT_LIB} ${LIBCURL} ${LIBZIP} -ldl
 
 ej-page-gen: ${G_OBJECTS} libuserlist_clnt.a libnew_server_clnt.a
-	${LD} -pthread ${LDFLAGS} -Wl,--whole-archive $^ -o $@ ${LDLIBS} libdwarf/libdwarf/.libs/libdwarf.a -lelf ${EXPAT_LIB} ${LIBZIP} -ldl -lpanel${NCURSES_SUFFIX} -lmenu${NCURSES_SUFFIX} -lncurses${NCURSES_SUFFIX} ${LIBUUID} -Wl,--no-whole-archive $(MONGO_LIBS) $(MONGOC_LIBS) ${LIBLZMA} -lbacktrace
+	${LD} -pthread ${LDFLAGS} -Wl,--whole-archive $^ -o $@ ${LDLIBS} libdwarf/libdwarf/.libs/libdwarf.a -lelf ${EXPAT_LIB} ${LIBZIP} -ldl -lpanel${NCURSES_SUFFIX} -lmenu${NCURSES_SUFFIX} -lncurses${NCURSES_SUFFIX} ${LIBUUID} -Wl,--no-whole-archive $(MONGOC_LIBS) ${LIBLZMA} -lbacktrace
 ej-page-gen.debug : ej-page-gen
 	objcopy --only-keep-debug $< $@
 
@@ -406,19 +406,19 @@ ej-convert-clars: ${CU_OBJECTS}
 	${LD} ${LDFLAGS} -rdynamic $^ libcommon.a libplatform.a -o $@ ${LDLIBS} ${EXPAT_LIB} ${LIBUUID} -ldl
 
 ej-convert-runs: ${CR_OBJECTS}
-	${LD} ${LDFLAGS} -rdynamic $^ libcommon.a -o $@ ${LDLIBS} ${EXPAT_LIB} -ldl ${LIBUUID} $(MONGO_LIBS) $(MONGOC_LIBS)
+	${LD} ${LDFLAGS} -rdynamic $^ libcommon.a -o $@ ${LDLIBS} ${EXPAT_LIB} -ldl ${LIBUUID} $(MONGOC_LIBS)
 
 ej-convert-status: ${CVTS_OBJECTS}
-	${LD} ${LDFLAGS} -rdynamic $^ libcommon.a -o $@ ${LDLIBS} ${EXPAT_LIB} -ldl ${LIBUUID} $(MONGO_LIBS) $(MONGOC_LIBS)
+	${LD} ${LDFLAGS} -rdynamic $^ libcommon.a -o $@ ${LDLIBS} ${EXPAT_LIB} -ldl ${LIBUUID} $(MONGOC_LIBS)
 
 ej-convert-xuser: ${CVTX_OBJECTS}
-	${LD} ${LDFLAGS} -rdynamic $^ libcommon.a -o $@ ${LDLIBS} ${EXPAT_LIB} -ldl ${LIBUUID} $(MONGO_LIBS) $(MONGOC_LIBS)
+	${LD} ${LDFLAGS} -rdynamic $^ libcommon.a -o $@ ${LDLIBS} ${EXPAT_LIB} -ldl ${LIBUUID} $(MONGOC_LIBS)
 
 ej-convert-variant: ${CVTV_OBJECTS}
-	${LD} ${LDFLAGS} -rdynamic $^ libcommon.a -o $@ ${LDLIBS} ${EXPAT_LIB} -ldl ${LIBUUID} $(MONGO_LIBS) $(MONGOC_LIBS)
+	${LD} ${LDFLAGS} -rdynamic $^ libcommon.a -o $@ ${LDLIBS} ${EXPAT_LIB} -ldl ${LIBUUID} $(MONGOC_LIBS)
 
 ej-fix-db: ${FIX_DB_OBJECTS}
-	${LD} ${LDFLAGS} -rdynamic ${FIX_DB_OBJECTS} -o $@ ${LDLIBS} ${EXPAT_LIB} -ldl ${LIBUUID} $(MONGO_LIBS) $(MONGOC_LIBS)
+	${LD} ${LDFLAGS} -rdynamic ${FIX_DB_OBJECTS} -o $@ ${LDLIBS} ${EXPAT_LIB} -ldl ${LIBUUID} $(MONGOC_LIBS)
 
 ej-parblock: ${PB_OBJECTS}
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB} -ldl ${LIBUUID}
@@ -484,7 +484,7 @@ cgi-bin/new-client${CGI_PROG_SUFFIX} : $(NC_OBJECTS)
 	$(LD) $(LDFLAGS) -static $^ -o $@
 
 ej-contests : $(NS_OBJECTS)
-	$(LD) $(LDFLAGS) -pthread -rdynamic $(NS_OBJECTS) -o $@ $(LDLIBS) -lbacktrace -ldl ${EXPAT_LIB} ${LIBZIP} ${LIBUUID} $(MONGO_LIBS) $(MONGOC_LIBS)
+	$(LD) $(LDFLAGS) -pthread -rdynamic $(NS_OBJECTS) -o $@ $(LDLIBS) -lbacktrace -ldl ${EXPAT_LIB} ${LIBZIP} ${LIBUUID} $(MONGOC_LIBS)
 
 ejudge-contests-cmd : $(NSM_OBJECTS)
 	$(LD) $(LDFLAGS) $(NSM_OBJECTS) -o $@ $(LDLIBS) ${EXPAT_LIB}
@@ -725,7 +725,7 @@ include/libdwarf-internal/dwarf.h include/libdwarf-internal/libdwarf.h libdwarf/
 	$(MAKE) -C libdwarf all
 
 lib/bson_utils.o : lib/bson_utils.c
-	$(CC) $(CFLAGS) $(MONGO_CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
 
 lib/bson_utils_new.o : lib/bson_utils_new.c
 	$(CC) $(CFLAGS) $(MONGOC_CFLAGS) -c $< -o $@

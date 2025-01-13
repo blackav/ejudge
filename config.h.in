@@ -129,8 +129,6 @@
 // official mongo client library
 #undef HAVE_LIBMONGOC
 
-#undef HAVE_LIBMONGO_CLIENT
-
 /* path to the web server cgi-bin dir */
 #undef EJUDGE_HTTPD_CGI_BIN_DIR
 
