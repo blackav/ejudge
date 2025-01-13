@@ -657,9 +657,6 @@ ac_cv_primary_user
 ac_cv_libmongoc_libs
 ac_cv_libmongoc_cflags
 ac_cv_has_libmongoc
-ac_cv_libmongo_client_libs
-ac_cv_libmongo_client_cflags
-ac_cv_has_libmongo_client
 ac_cv_lang_config_dir_expanded
 ac_cv_lang_config_dir
 ac_cv_ejudge_server_bin_path_m
@@ -8506,28 +8503,6 @@ then
   ac_cv_libmongoc_libs=`pkg-config --libs libmongoc-1.0`
 fi
 
-if [ x"${ac_cv_has_libmongoc}" = x ]
-then
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for libmongo-client" >&5
-printf %s "checking for libmongo-client... " >&6; }
-  if pkg-config --exists libmongo-client
-  then
-    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-printf "%s\n" "yes" >&6; }
-    ac_cv_has_libmongo_client=1
-  else
-    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
-printf "%s\n" "no" >&6; }
-    ac_cv_has_libmongo_client=
-  fi
-
-  if [ x"${ac_cv_has_libmongo_client}" = x1 ]
-  then
-    ac_cv_libmongo_client_cflags=`pkg-config --cflags libmongo-client`
-    ac_cv_libmongo_client_libs=`pkg-config --libs libmongo-client`
-  fi
-fi
-
 
 
 if [ x"${prefix}" = xNONE ]
@@ -8667,9 +8642,6 @@ if [ x"${ac_cv_rest}" = x ]
 then
   ac_cv_rest="/ej/"
 fi
-
-
-
 
 
 
@@ -9013,12 +8985,6 @@ then
 elif [ x"${ac_cv_has_libmongoc}" = x1 ]
 then
   printf "%s\n" "#define HAVE_LIBMONGOC 1" >>confdefs.h
-
-fi
-
-if [ x"${ac_cv_has_libmongo_client}" = x1 ]
-then
-  printf "%s\n" "#define HAVE_LIBMONGO_CLIENT 1" >>confdefs.h
 
 fi
 
