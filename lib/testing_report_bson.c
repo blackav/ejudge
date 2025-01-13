@@ -14,7 +14,6 @@
  * GNU General Public License for more details.
  */
 
-#include "bson/bson.h"
 #include "ejudge/config.h"
 
 #include "ejudge/runlog.h"
@@ -29,6 +28,7 @@
 #include <sys/mman.h>
 
 #if HAVE_LIBMONGOC - 0 > 0
+#include <bson/bson.h>
 
 #if HAVE_LIBMONGOC - 0 > 1
 #include <mongoc/mongoc.h>
