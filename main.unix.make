@@ -724,9 +724,6 @@ cfront/ej-cfront : reuse/objs/libreuse.a
 include/libdwarf-internal/dwarf.h include/libdwarf-internal/libdwarf.h libdwarf/libdwarf/libdwarf.a:
 	$(MAKE) -C libdwarf all
 
-lib/bson_utils.o : lib/bson_utils.c
-	$(CC) $(CFLAGS) -c $< -o $@
-
 lib/bson_utils_new.o : lib/bson_utils_new.c
 	$(CC) $(CFLAGS) $(MONGOC_CFLAGS) -c $< -o $@
 lib/testing_report_bson.o : lib/testing_report_bson.c gen/testing_report_tags.c
