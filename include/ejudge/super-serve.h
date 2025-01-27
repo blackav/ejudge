@@ -2,7 +2,7 @@
 #ifndef __SUPER_SERVE_H__
 #define __SUPER_SERVE_H__
 
-/* Copyright (C) 2004-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2025 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -274,6 +274,30 @@ void super_serve_move_edited_contest(struct sid_state *dst,
 int super_serve_start_serve_test_mode(const struct contest_desc *cnts,
                                       unsigned char **p_log,
                                       int pass_socket);
+
+struct sid_state *sid_state_find(ej_cookie_t sid);
+struct sid_state*
+sid_state_add(
+        ej_cookie_t sid,
+        const ej_ip_t *remote_addr,
+        int user_id,
+        const unsigned char *user_login,
+        const unsigned char *user_name);
+        struct sid_state*
+sid_state_get(
+        ej_cookie_t sid,
+        const ej_ip_t *remote_addr,
+        int user_id,
+        const unsigned char *user_login,
+        const unsigned char *user_name);
+void
+sid_state_clear(struct sid_state *p);
+struct sid_state*
+sid_state_delete(struct sid_state *p);
+void
+sid_state_cleanup(void);
+void
+super_serve_sid_state_cleanup(time_t current_time);
 
 int super_serve_sid_state_get_max_edited_cnts(void);
 const struct sid_state* super_serve_sid_state_get_cnts_editor(int contest_id);

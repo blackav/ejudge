@@ -1,6 +1,6 @@
 # -*- Makefile -*-
 
-# Copyright (C) 2002-2024 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2002-2025 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -253,6 +253,7 @@ COMMON_CFILES=\
  lib/session_cache.c\
  lib/sformat.c\
  lib/shellcfg_parse.c\
+ lib/sid_state.c\
  lib/standings.c\
  lib/statusdb.c\
  lib/status_plugin_file.c\

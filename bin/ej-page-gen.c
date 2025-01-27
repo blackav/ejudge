@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2014-2024 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2014-2025 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -6850,30 +6850,6 @@ void * /*struct background_process * */
 super_serve_find_process(const unsigned char *name)
 {
     return NULL;
-}
-const void * /*const struct sid_state* */
-super_serve_sid_state_get_test_editor(int contest_id)
-{
-    return NULL;
-}
-const void * /*struct sid_state* */
-super_serve_sid_state_get_cnts_editor(int contest_id)
-{
-    return NULL;
-}
-void * /*struct sid_state**/
-super_serve_sid_state_get_cnts_editor_nc(int contest_id)
-{
-    return NULL;
-}
-int
-super_serve_sid_state_get_max_edited_cnts(void)
-{
-    return 0;
-}
-void
-super_serve_sid_state_clear(ej_cookie_t cookie)
-{
 }
 void
 super_serve_move_edited_contest(void *dst, void * src /*struct sid_state *dst, struct sid_state *src*/)
