@@ -90,10 +90,8 @@ sid_state_get(
 }
 
 void
-sid_state_clear(struct sid_state *p)
+sid_state_clear(const struct ejudge_cfg *config, struct sid_state *p)
 {
-    void *config = NULL; ////////////////////////// FIXME
-
   super_serve_clear_edited_contest(p);
   xfree(p->user_login);
   xfree(p->user_name);
@@ -105,7 +103,7 @@ sid_state_clear(struct sid_state *p)
 }
 
 struct sid_state*
-sid_state_delete(struct sid_state *p)
+sid_state_delete(const struct ejudge_cfg *config, struct sid_state *p)
 {
   ASSERT(p);
   if (!p->prev) {
@@ -118,20 +116,20 @@ sid_state_delete(struct sid_state *p)
   } else {
     p->next->prev = p->prev;
   }
-  sid_state_clear(p);
+  sid_state_clear(config, p);
   xfree(p);
   return 0;
 }
 
 void
-sid_state_cleanup(time_t current_time)
+sid_state_cleanup(const struct ejudge_cfg *config, time_t current_time)
 {
   struct sid_state *p;
 
   do {
     for (p = sid_state_first; p; p = p->next) {
       if (p->init_time + SID_STATE_CLEANUP_TIME < current_time) {
-        sid_state_delete(p);
+        sid_state_delete(config, p);
         break;
       }
     }
@@ -202,19 +200,19 @@ super_serve_sid_state_get_first(void)
 }
 
 void
-super_serve_sid_state_clear(ej_cookie_t sid)
+super_serve_sid_state_clear(const struct ejudge_cfg *config, ej_cookie_t sid)
 {
   struct sid_state *p = sid_state_find(sid);
   if (p) {
-    sid_state_delete(p);
+    sid_state_delete(config, p);
   }
 }
 
 void
-super_serve_sid_state_cleanup(time_t current_time)
+super_serve_sid_state_cleanup(const struct ejudge_cfg *config, time_t current_time)
 {
   if (sid_state_last_check_time < current_time + SID_STATE_CHECK_INTERVAL) {
-    sid_state_cleanup(current_time);
+    sid_state_cleanup(config, current_time);
     sid_state_last_check_time = current_time;
   }
 }

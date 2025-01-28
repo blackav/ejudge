@@ -291,13 +291,13 @@ sid_state_get(
         const unsigned char *user_login,
         const unsigned char *user_name);
 void
-sid_state_clear(struct sid_state *p);
+sid_state_clear(const struct ejudge_cfg *config, struct sid_state *p);
 struct sid_state*
-sid_state_delete(struct sid_state *p);
+sid_state_delete(const struct ejudge_cfg *config, struct sid_state *p);
 void
-sid_state_cleanup(time_t current_time);
+sid_state_cleanup(const struct ejudge_cfg *config, time_t current_time);
 void
-super_serve_sid_state_cleanup(time_t current_time);
+super_serve_sid_state_cleanup(const struct ejudge_cfg *config, time_t current_time);
 
 int super_serve_sid_state_get_max_edited_cnts(void);
 const struct sid_state* super_serve_sid_state_get_cnts_editor(int contest_id);
@@ -305,7 +305,7 @@ struct sid_state* super_serve_sid_state_get_cnts_editor_nc(int contest_id);
 const struct sid_state* super_serve_sid_state_get_test_editor(int contest_id);
 struct sid_state* super_serve_sid_state_get_test_editor_nc(int contest_id);
 struct sid_state *super_serve_sid_state_get_first(void);
-void super_serve_sid_state_clear(ej_cookie_t sid);
+void super_serve_sid_state_clear(const struct ejudge_cfg *config, ej_cookie_t sid);
 
 struct background_process;
 void super_serve_register_process(struct background_process *prc);

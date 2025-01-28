@@ -295,7 +295,7 @@ cmd_clear_session(
     goto done;
   }
 
-  super_serve_sid_state_clear(other_session_id);
+  super_serve_sid_state_clear(phr->config, other_session_id);
   info("session %016llx cleared by %s", other_session_id, phr->login);
 
 done:;

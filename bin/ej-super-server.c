@@ -2290,7 +2290,7 @@ do_loop(void)
 
       background_process_cleanup(&background_processes);
 
-      super_serve_sid_state_cleanup(current_time);
+      super_serve_sid_state_cleanup(config, current_time);
 
       if (hup_flag || term_flag) break;
 
