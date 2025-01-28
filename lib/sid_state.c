@@ -124,15 +124,13 @@ sid_state_delete(struct sid_state *p)
 }
 
 void
-sid_state_cleanup(void)
+sid_state_cleanup(time_t current_time)
 {
-  time_t cur_time;
   struct sid_state *p;
 
-  cur_time = time(0);
   do {
     for (p = sid_state_first; p; p = p->next) {
-      if (p->init_time + SID_STATE_CLEANUP_TIME < cur_time) {
+      if (p->init_time + SID_STATE_CLEANUP_TIME < current_time) {
         sid_state_delete(p);
         break;
       }
@@ -216,7 +214,7 @@ void
 super_serve_sid_state_cleanup(time_t current_time)
 {
   if (sid_state_last_check_time < current_time + SID_STATE_CHECK_INTERVAL) {
-    sid_state_cleanup();
+    sid_state_cleanup(current_time);
     sid_state_last_check_time = current_time;
   }
 }

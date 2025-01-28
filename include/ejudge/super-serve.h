@@ -295,7 +295,7 @@ sid_state_clear(struct sid_state *p);
 struct sid_state*
 sid_state_delete(struct sid_state *p);
 void
-sid_state_cleanup(void);
+sid_state_cleanup(time_t current_time);
 void
 super_serve_sid_state_cleanup(time_t current_time);
 
