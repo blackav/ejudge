@@ -109,6 +109,7 @@ struct client_state
   int user_id;
   int priv_level;
   ej_cookie_t cookie;
+  ej_cookie_t client_key;
   ej_ip_t ip;
   int ssl;
   unsigned char *login;
@@ -1011,6 +1012,7 @@ get_peer_local_user(struct client_state *p)
   int r;
   int uid, priv_level, ssl;
   ej_cookie_t cookie;
+  ej_cookie_t client_key = 0;
   ej_ip_t ip;
   unsigned char *login, *name;
 
@@ -1022,7 +1024,7 @@ get_peer_local_user(struct client_state *p)
                                      p->peer_gid, p->peer_pid, 0,
                                      &uid, &priv_level,
                                      &cookie,
-                                     NULL /* FIXME: p_client_key */,
+                                     &client_key,
                                      &ip, &ssl,
                                      &login, &name);
   if (r < 0) {
@@ -1054,6 +1056,7 @@ get_peer_local_user(struct client_state *p)
 
   p->user_id = uid;
   p->cookie = cookie;
+  p->client_key = client_key;
   p->ip = ip;
   p->ssl = ssl;
   p->login = login;
@@ -1288,7 +1291,7 @@ cmd_simple_top_command(
   if ((r = get_peer_local_user(p)) < 0) {
     return send_reply(p, r);
   }
-  sstate = sid_state_get(p->cookie, &p->ip, p->user_id, p->login, p->name);
+  sstate = sid_state_get(p->cookie, p->client_key, &p->ip, p->user_id, p->login, p->name); // FIXME!!!
 
   switch (pkt->b.id) {
   case SSERV_CMD_SHOW_HIDDEN:
@@ -1353,7 +1356,7 @@ cmd_set_value(
   if ((r = get_peer_local_user(p)) < 0) {
     return send_reply(p, r);
   }
-  sstate = sid_state_get(p->cookie, &p->ip, p->user_id, p->login, p->name);
+  sstate = sid_state_get(p->cookie, p->client_key, &p->ip, p->user_id, p->login, p->name);  /// FIXME!!!
 
   switch (pkt->b.id) {
   case SSERV_CMD_CNTS_DEFAULT_ACCESS:
@@ -1749,7 +1752,7 @@ cmd_http_request(
     phr->html_name = p->html_name; p->html_name = NULL;
     phr->ip = p->ip;
     phr->ssl_flag = p->ssl;
-    phr->ss = sid_state_get(p->cookie, &p->ip, p->user_id, phr->login, phr->name);
+    phr->ss = sid_state_get(p->cookie, p->client_key, &p->ip, p->user_id, phr->login, phr->name); /// FIXME!!!
   }
 
   super_html_http_request(&out_t, &out_z, phr);
