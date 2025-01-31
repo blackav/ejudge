@@ -283,6 +283,15 @@ cmd_clear_session(
   if (errno || *eptr || eptr == (char*) s || !other_session_id) {
     goto done;
   }
+  if (hr_cgi_param(phr, "other_client_key", &s) <= 0 || !s) {
+    goto done;
+  }
+  eptr = NULL;
+  errno = 0;
+  unsigned long long other_client_key = strtoull(s, &eptr, 16);
+  if (errno || *eptr || eptr == (char*) s) {
+    goto done;
+  }
 
   if (phr->priv_level != PRIV_LEVEL_ADMIN) {
     goto done;
@@ -295,8 +304,8 @@ cmd_clear_session(
     goto done;
   }
 
-  super_serve_sid_state_clear(phr->config, other_session_id);
-  info("session %016llx cleared by %s", other_session_id, phr->login);
+  super_serve_sid_state_clear(phr->config, other_session_id, other_client_key);
+  info("session %016llx-%016llx cleared by %s", other_session_id, other_client_key, phr->login);
 
 done:;
   refresh_page(out_f, phr, "action=%d", SSERV_CMD_MAIN_PAGE);
