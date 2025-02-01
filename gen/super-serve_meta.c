@@ -17,6 +17,7 @@ static struct meta_info_item meta_info_sid_state_data[] =
   [SSSS_next] = { SSSS_next, '?', XSIZE(struct sid_state, next), "next", XOFFSET(struct sid_state, next) },
   [SSSS_prev] = { SSSS_prev, '?', XSIZE(struct sid_state, prev), "prev", XOFFSET(struct sid_state, prev) },
   [SSSS_sid] = { SSSS_sid, '?', XSIZE(struct sid_state, sid), "sid", XOFFSET(struct sid_state, sid) },
+  [SSSS_client_key] = { SSSS_client_key, '?', XSIZE(struct sid_state, client_key), "client_key", XOFFSET(struct sid_state, client_key) },
   [SSSS_remote_addr] = { SSSS_remote_addr, '?', XSIZE(struct sid_state, remote_addr), "remote_addr", XOFFSET(struct sid_state, remote_addr) },
   [SSSS_init_time] = { SSSS_init_time, 't', XSIZE(struct sid_state, init_time), "init_time", XOFFSET(struct sid_state, init_time) },
   [SSSS_flags] = { SSSS_flags, '?', XSIZE(struct sid_state, flags), "flags", XOFFSET(struct sid_state, flags) },
@@ -174,6 +175,7 @@ void ss_sid_state_copy(struct sid_state *dst, const struct sid_state *src)
   // next
   // prev
   // sid
+  // client_key
   // remote_addr
   dst->init_time = src->init_time;
   // flags
@@ -359,6 +361,7 @@ void ss_sid_state_free(struct sid_state *ptr)
   // next
   // prev
   // sid
+  // client_key
   // remote_addr
   // flags
   // edited_cnts

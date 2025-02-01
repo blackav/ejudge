@@ -32,19 +32,20 @@ static time_t sid_state_last_check_time = 0;
 #define SID_STATE_CHECK_INTERVAL 3600
 
 struct sid_state*
-sid_state_find(ej_cookie_t sid)
+sid_state_find(ej_cookie_t sid, ej_cookie_t client_key)
 {
   struct sid_state *p;
 
   ASSERT(sid);
   for (p = sid_state_first; p; p = p->next)
-    if (p->sid == sid) break;
+    if (p->sid == sid && p->client_key == client_key) break;
   return p;
 }
 
 struct sid_state*
 sid_state_add(
         ej_cookie_t sid,
+        ej_cookie_t client_key,
         const ej_ip_t *remote_addr,
         int user_id,
         const unsigned char *user_login,
@@ -55,6 +56,7 @@ sid_state_add(
   ASSERT(sid);
   XCALLOC(n, 1);
   n->sid = sid;
+  n->client_key = client_key;
   n->remote_addr = *remote_addr;
   n->init_time = time(0);
   n->flags |= SID_STATE_SHOW_CLOSED;
@@ -77,6 +79,7 @@ sid_state_add(
 struct sid_state*
 sid_state_get(
         ej_cookie_t sid,
+        ej_cookie_t client_key,
         const ej_ip_t *remote_addr,
         int user_id,
         const unsigned char *user_login,
@@ -84,8 +87,8 @@ sid_state_get(
 {
   struct sid_state *p;
 
-  if (!(p = sid_state_find(sid)))
-    p = sid_state_add(sid, remote_addr, user_id, user_login, user_name);
+  if (!(p = sid_state_find(sid, client_key)))
+    p = sid_state_add(sid, client_key, remote_addr, user_id, user_login, user_name);
   return p;
 }
 
@@ -200,9 +203,9 @@ super_serve_sid_state_get_first(void)
 }
 
 void
-super_serve_sid_state_clear(const struct ejudge_cfg *config, ej_cookie_t sid)
+super_serve_sid_state_clear(const struct ejudge_cfg *config, ej_cookie_t sid, ej_cookie_t client_key)
 {
-  struct sid_state *p = sid_state_find(sid);
+  struct sid_state *p = sid_state_find(sid, client_key);
   if (p) {
     sid_state_delete(config, p);
   }
