@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2011-2024 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2011-2025 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -15,8 +15,10 @@
  */
 
 #include "ejudge/config.h"
+#include "ejudge/contests.h"
 #include "ejudge/ej_types.h"
 #include "ejudge/http_request.h"
+#include "ejudge/logger.h"
 #include "ejudge/version.h"
 #include "ejudge/ej_limits.h"
 #include "ejudge/super_html.h"
@@ -5730,151 +5732,4 @@ cleanup:
   xfree(out_text);
   xfree(cfg_file_text);
   return 0;
-}
-
-void
-super_html_json_result(
-        FILE *fout,
-        struct http_request_info *phr,
-        int ok,
-        int err_num,
-        unsigned err_id,
-        const unsigned char *err_msg,
-        cJSON *jr)
-{
-  phr->json_reply = 1;
-  if (!ok) {
-    if (err_num < 0) err_num = -err_num;
-    if (!err_id) {
-      random_init();
-      err_id = random_u32();
-    }
-    if (!err_msg || !*err_msg) {
-      err_msg = NULL;
-      if (err_num > 0 && err_num < SSERV_ERR_LAST) {
-        err_msg = super_proto_error_messages[err_num];
-        if (err_msg && !*err_msg) {
-          err_msg = NULL;
-        }
-      }
-    }
-    cJSON_AddFalseToObject(jr, "ok");
-    cJSON *jerr = cJSON_CreateObject();
-    if (err_num > 0) {
-      cJSON_AddNumberToObject(jerr, "num", err_num);
-    }
-    if (err_id) {
-      char xbuf[64];
-      sprintf(xbuf, "%08x", err_id);
-      cJSON_AddStringToObject(jerr, "log_id", xbuf);
-    }
-    if (err_msg) {
-      cJSON_AddStringToObject(jerr, "message", err_msg);
-    }
-    cJSON_AddItemToObject(jr, "error", jerr);
-    // FIXME: log event
-  } else {
-    cJSON_AddTrueToObject(jr, "ok");
-  }
-  cJSON_AddNumberToObject(jr, "server_time", (double) phr->current_time);
-  if (phr->request_id > 0) {
-    cJSON_AddNumberToObject(jr, "request_id", (double) phr->request_id);
-  }
-  if (phr->action_str) {
-    cJSON_AddStringToObject(jr, "action", phr->action_str);
-  } else if (phr->action > 0 && phr->action < SSERV_CMD_LAST && super_proto_cmd_names[phr->action]) {
-    cJSON_AddStringToObject(jr, "action", super_proto_cmd_names[phr->action]);
-  }
-  /*
-  if (phr->client_state && phr->client_state->ops->get_reply_id) {
-    int reply_id = phr->client_state->ops->get_reply_id(phr->client_state);
-    cJSON_AddNumberToObject(jr, "reply_id", (double) reply_id);
-  }
-  */
-  char *jrstr = cJSON_PrintUnformatted(jr);
-  fprintf(fout, "%s\n", jrstr);
-  free(jrstr);
-}
-
-void
-super_serve_api_LOGIN_ACTION_JSON(
-        FILE *out_f,
-        struct http_request_info *phr)
-{
-  const unsigned char *user_login = NULL;
-  const unsigned char *user_password = NULL;
-  unsigned char *user_name = NULL;
-  unsigned char buf[128];
-  __attribute__((unused)) int _;
-
-  if (hr_cgi_param(phr, "login", &user_login) <= 0
-      || hr_cgi_param(phr, "password", &user_password) <= 0
-      || !user_login || !user_password || !user_login[0] || !user_password[0]) {
-    phr->err_num = SSERV_ERR_PERM_DENIED;
-    phr->status_code = 401;
-    goto done;
-  }
-
-  int user_id = 0;
-  ej_cookie_t session_id = 0;
-  ej_cookie_t client_key = 0;
-  int priv_level = 0;
-  int r;
-
-  r = userlist_clnt_priv_login(phr->userlist_clnt, ULS_PRIV_CHECK_USER_2, &phr->ip, 0, phr->ssl_flag,
-                               0, 0, USER_ROLE_ADMIN,
-                               user_login, user_password,
-                               &user_id, &session_id, &client_key, &priv_level, &user_name);
-  if (r < 0) {
-    switch (-r) {
-    case ULS_ERR_INVALID_LOGIN:
-    case ULS_ERR_INVALID_PASSWORD:
-    case ULS_ERR_BAD_CONTEST_ID:
-    case ULS_ERR_IP_NOT_ALLOWED:
-    case ULS_ERR_NO_PERMS:
-    case ULS_ERR_NOT_REGISTERED:
-    case ULS_ERR_CANNOT_PARTICIPATE:
-    case ULS_ERR_NO_COOKIE:
-      phr->err_num = SSERV_ERR_PERM_DENIED;
-      phr->status_code = 401;
-      goto done;
-    default:
-      phr->err_num = SSERV_ERR_USERLIST_DOWN;
-      phr->status_code = 500;
-      goto done;
-    }
-  }
-  if (priv_level != PRIV_LEVEL_ADMIN || user_id <= 0) {
-    phr->err_num = SSERV_ERR_PERM_DENIED;
-    phr->status_code = 401;
-    goto done;
-  }
-  opcap_t caps = 0;
-  if (ejudge_cfg_opcaps_find(phr->config, user_login, &caps) < 0) {
-    phr->err_num = SSERV_ERR_PERM_DENIED;
-    phr->status_code = 401;
-    goto done;
-  }
-  if (opcaps_check(caps, OPCAP_MASTER_LOGIN) < 0) {
-    phr->err_num = SSERV_ERR_PERM_DENIED;
-    phr->status_code = 401;
-    goto done;
-  }
-
-  cJSON *jrr = cJSON_CreateObject();
-  cJSON_AddNumberToObject(jrr, "user_id", user_id);
-  cJSON_AddStringToObject(jrr, "user_login", user_login);
-  if (user_name && user_name[0]) {
-    cJSON_AddStringToObject(jrr, "user_name", user_name);
-  }
-  _ = snprintf(buf, sizeof(buf), "%016llx-%016llx", session_id, client_key);
-  cJSON_AddStringToObject(jrr, "session", buf);
-  _ = snprintf(buf, sizeof(buf), "%016llx", session_id);
-  cJSON_AddStringToObject(jrr, "SID", buf);
-  _ = snprintf(buf, sizeof(buf), "%016llx", client_key);
-  cJSON_AddStringToObject(jrr, "EJSID", buf);
-  cJSON_AddItemToObject(phr->json_result, "result", jrr);
-
-done:;
-  free(user_name);
 }
