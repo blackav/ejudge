@@ -268,6 +268,7 @@ COMMON_CFILES=\
  lib/super_html_6.c\
  lib/super_html_7.c\
  lib/super_html_8.c\
+ lib/super_html_9.c\
  lib/super_http_request.c\
  lib/super_proto.c\
  lib/super_run_packet.c\

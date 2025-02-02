@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2014-2024 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2014-2025 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -365,4 +365,7 @@ const unsigned char super_proto_is_http_request[] =
   [SSERV_CMD_CLEAR_SESSION] = 1,
 
   [SSERV_CMD_LANG_AJAX_ACTION] = 1,
+  [SSERV_CMD_CREATE_SESSION_JSON] = 1,
+  [SSERV_CMD_CNTS_START_EDIT_JSON] = 1,
+  [SSERV_CMD_CNTS_FORGET_JSON] = 1,
 };
