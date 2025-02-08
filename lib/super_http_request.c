@@ -368,4 +368,5 @@ const unsigned char super_proto_is_http_request[] =
   [SSERV_CMD_CREATE_SESSION_JSON] = 1,
   [SSERV_CMD_CNTS_START_EDIT_JSON] = 1,
   [SSERV_CMD_CNTS_FORGET_JSON] = 1,
+  [SSERV_CMD_CNTS_LIST_SESSIONS_JSON] = 1,
 };

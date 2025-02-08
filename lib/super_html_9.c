@@ -311,7 +311,52 @@ super_serve_api_CNTS_FORGET_JSON(
 {
     // method: POST
     // parameters: session
+    // parameters: other_contest_id
     // parameters: allow_other_user [true|false] - remove another user's session
+    int other_contest_id = 0;
+    if (hr_cgi_param_int_opt(phr, "other_contest_id", &other_contest_id, 0) < 0) {
+        phr->err_num = SSERV_ERR_INV_CONTEST;
+        phr->status_code = 400;
+        return;
+    }
+    const struct contest_desc *other_cnts = NULL;
+    if (contests_get(other_contest_id, &other_cnts) < 0 || !other_cnts) {
+        phr->err_num = SSERV_ERR_INV_CONTEST;
+        phr->status_code = 400;
+        return;
+    }
+    if (other_cnts) {
+        struct sid_state *ss = super_serve_sid_state_get_cnts_editor_nc(other_contest_id);
+        if (!ss) {
+            cJSON_AddTrueToObject(phr->json_result, "result");
+            phr->status_code = 200;
+            return;
+        }
+        if (ss->user_id == phr->user_id) {
+            super_serve_clear_edited_contest(ss);
+            cJSON_AddTrueToObject(phr->json_result, "result");
+            phr->status_code = 200;
+            return;
+        }
+        ASSERT(ss->edited_cnts);
+        opcap_t caps = 0;
+        if (ss_get_global_caps(phr, &caps) < 0 || opcaps_check(caps, OPCAP_EDIT_CONTEST) < 0) {
+            phr->err_num = SSERV_ERR_PERM_DENIED;
+            phr->status_code = 401;
+            return;
+        }
+        caps = 0;
+        ss_get_contest_caps(phr, other_cnts, &caps);
+        if (opcaps_check(caps, OPCAP_EDIT_CONTEST) < 0) {
+            phr->err_num = SSERV_ERR_PERM_DENIED;
+            phr->status_code = 401;
+            return;
+        }
+        super_serve_clear_edited_contest(ss);
+        cJSON_AddTrueToObject(phr->json_result, "result");
+        phr->status_code = 200;
+        return;
+    }
     ej_cookie_t sid = 0;
     ej_cookie_t client_key = 0;
     if (parse_session(phr, "session", &sid, &client_key) <= 0) {
@@ -323,6 +368,11 @@ super_serve_api_CNTS_FORGET_JSON(
     if (!ss) {
         phr->err_num = SSERV_ERR_INV_SESSION;
         phr->status_code = 400;
+        return;
+    }
+    if (!ss->edited_cnts) {
+        cJSON_AddTrueToObject(phr->json_result, "result");
+        phr->status_code = 200;
         return;
     }
     if (ss->user_id != phr->user_id) {
@@ -347,5 +397,42 @@ super_serve_api_CNTS_FORGET_JSON(
 
     super_serve_clear_edited_contest(ss);
     cJSON_AddTrueToObject(phr->json_result, "result");
+    phr->status_code = 200;
+}
+
+void
+super_serve_api_CNTS_LIST_SESSIONS_JSON(
+        FILE *out_f,
+        struct http_request_info *phr)
+{
+    cJSON *jr = cJSON_CreateObject();
+    cJSON *jsa = cJSON_CreateArray();
+    struct sid_state *ss = super_serve_sid_state_get_first();
+    opcap_t gcaps = 0;
+    int has_global_edit_contest = ss_get_global_caps(phr, &gcaps) >= 0 && opcaps_check(gcaps, OPCAP_EDIT_CONTEST) >= 0;
+
+    for (; ss; ss = ss->next) {
+        if (!ss->edited_cnts) continue;
+        const struct contest_desc *cnts = NULL;
+        opcap_t caps = 0;
+        if (ss->user_id == phr->user_id || has_global_edit_contest > 0 ||
+            (contests_get(ss->edited_cnts->id, &cnts) >= 0 && cnts
+             && ss_get_contest_caps(phr, ss->edited_cnts, &caps) >= 0
+             && opcaps_check(caps, OPCAP_EDIT_CONTEST) >= 0)) {
+            cJSON *jsai = cJSON_CreateObject();
+            cJSON_AddNumberToObject(jsai, "contest_id", ss->edited_cnts->id);
+            cJSON_AddNumberToObject(jsai, "user_id", ss->user_id);
+            cJSON_AddStringToObject(jsai, "user_login", ss->user_login);
+            if (phr->user_id == ss->user_id) {
+                char sbuf[64];
+                snprintf(sbuf, sizeof(sbuf), "%016llx-%016llx", ss->sid, ss->client_key);
+                cJSON_AddStringToObject(jsai, "session", sbuf);
+            }
+            cJSON_AddItemToArray(jsa, jsai);
+        }
+    }
+
+    cJSON_AddItemToObject(jr, "sessions", jsa);
+    cJSON_AddItemToObject(phr->json_result, "result", jr);
     phr->status_code = 200;
 }
