@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2005-2024 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2025 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1351,7 +1351,7 @@ parse_testing_report(struct xml_tree *t, testing_report_xml_t r)
             char *ep = NULL;
             errno = 0;
             long v = strtol(t3->text, &ep, 10);
-            if (errno || *ep || ep == t3->text || (int) v != v || v < 0) {
+            if (errno || *ep || ep == t3->text || (int) v != v) {
               xml_err(t3, "invalid group-score");
               return -1;
             }
