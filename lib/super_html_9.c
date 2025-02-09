@@ -436,3 +436,75 @@ super_serve_api_CNTS_LIST_SESSIONS_JSON(
     cJSON_AddItemToObject(phr->json_result, "result", jr);
     phr->status_code = 200;
 }
+
+void
+super_serve_api_CNTS_COMMIT_JSON(
+        FILE *out_f,
+        struct http_request_info *phr)
+{
+    ej_cookie_t sid = 0;
+    ej_cookie_t client_key = 0;
+    if (parse_session(phr, "session", &sid, &client_key) <= 0) {
+        phr->err_num = SSERV_ERR_INV_SESSION;
+        phr->status_code = 400;
+        return;
+    }
+    struct sid_state *ss = sid_state_find(sid, client_key);
+    if (!ss) {
+        phr->err_num = SSERV_ERR_INV_SESSION;
+        phr->status_code = 400;
+        return;
+    }
+    phr->ss = ss;
+    if (!ss->edited_cnts) {
+        phr->err_num = SSERV_ERR_NO_EDITED_CNTS;
+        phr->status_code = 400;
+        return;
+    }
+    const struct contest_desc *cur_cnts = NULL;
+    if (contests_get(ss->edited_cnts->id, &cur_cnts) >= 0 && cur_cnts) {
+        opcap_t caps = 0;
+        if (ss_get_contest_caps(phr, cur_cnts, &caps) < 0 || opcaps_check(caps, OPCAP_EDIT_CONTEST) < 0) {
+            phr->err_num = SSERV_ERR_PERM_DENIED;
+            phr->status_code = 401;
+            return;
+        }
+    } else {
+        opcap_t caps = 0;
+        if (ss_get_global_caps(phr, &caps) < 0 || opcaps_check(caps, OPCAP_EDIT_CONTEST) < 0) {
+            phr->err_num = SSERV_ERR_PERM_DENIED;
+            phr->status_code = 401;
+            return;
+        }
+    }
+    // add editing caps for this user anyway
+    opcap_t newcaps = 0;
+    opcaps_find(&ss->edited_cnts->capabilities, phr->login, &newcaps);
+    newcaps |= 1ULL << OPCAP_EDIT_CONTEST;
+    contests_upsert_permission(ss->edited_cnts, phr->login, newcaps);
+
+    char *comm_s = NULL;
+    size_t comm_z = 0;
+    FILE *comm_f = NULL;
+    int r = 0;
+
+    comm_f = open_memstream(&comm_s, &comm_z);
+    r = super_html_commit_contest_2(comm_f, phr->user_id, phr->login, &phr->ip, phr->config, phr->userlist_clnt, phr->ss);
+    fclose(comm_f); comm_f = NULL;
+
+    cJSON *jr = cJSON_CreateObject();
+    if (r < 0) {
+        cJSON_AddFalseToObject(jr, "success");
+    } else {
+        cJSON_AddTrueToObject(jr, "success");
+    }
+    cJSON_AddStringToObject(jr, "messages", comm_s);
+    free(comm_s); comm_s = NULL;
+
+    if (r >= 0) {
+        super_serve_clear_edited_contest(phr->ss);
+    }
+
+    cJSON_AddItemToObject(phr->json_result, "result", jr);
+    phr->status_code = 200;
+}
