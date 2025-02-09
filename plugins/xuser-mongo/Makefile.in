@@ -26,10 +26,6 @@ EXPAT_DIR=@ac_cv_expat_root@
 EXPAT_INCL_OPT=@ac_cv_expat_include_opt@
 EXPAT_LIB_OPT=@ac_cv_expat_lib_opt@
 
-MONGO_EXISTS=@ac_cv_has_libmongo_client@
-MONGO_CFLAGS=@ac_cv_libmongo_client_cflags@
-MONGO_LIBS=@ac_cv_libmongo_client_libs@
-
 MONGOC_EXISTS=@ac_cv_has_libmongoc@
 MONGOC_CFLAGS=@ac_cv_libmongoc_cflags@
 MONGOC_LIBS=@ac_cv_libmongoc_libs@
@@ -51,7 +47,7 @@ EXTRALIBS=
 CCOMPFLAGS=-D_GNU_SOURCE -std=gnu11
 LDCOMPFLAGS=
 
-ifneq ($(MONGO_EXISTS)$(MONGOC_EXISTS),)
+ifneq ($(MONGOC_EXISTS),)
 include main.make
 else
 include empty.make
