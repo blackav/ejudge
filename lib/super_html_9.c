@@ -508,3 +508,79 @@ super_serve_api_CNTS_COMMIT_JSON(
     cJSON_AddItemToObject(phr->json_result, "result", jr);
     phr->status_code = 200;
 }
+
+void
+super_serve_api_CHECK_TESTS_JSON(
+        FILE *out_f,
+        struct http_request_info *phr)
+{
+    int contest_id = 0;
+    if (hr_cgi_param_int(phr, "contest_id", &contest_id) <= 0) {
+        phr->err_num = SSERV_ERR_INV_CONTEST;
+        phr->status_code = 400;
+        return;
+    }
+    const struct contest_desc *cnts = NULL;
+    if (contests_get(contest_id, &cnts) < 0 || !cnts) {
+        phr->err_num = SSERV_ERR_INV_CONTEST;
+        phr->status_code = 400;
+        return;
+    }
+    phr->contest_id = contest_id;
+    phr->cnts = cnts;
+    opcap_t caps = 0;
+    if (ss_get_contest_caps(phr, cnts, &caps) < 0 || opcaps_check(caps, OPCAP_EDIT_CONTEST) < 0) {
+        phr->err_num = SSERV_ERR_PERM_DENIED;
+        phr->status_code = 401;
+        return;
+    }
+    const struct sid_state *other_ss = super_serve_sid_state_get_cnts_editor(phr->contest_id);
+    if (other_ss) {
+        phr->err_num = SSERV_ERR_CONTEST_ALREADY_EDITED;
+        phr->status_code = 423;
+        return;
+    }
+
+    random_init();
+    ej_cookie_t sid = random_u64();
+    ej_cookie_t client_key = random_u64();
+    while (sid_state_find(sid, client_key)) {
+        sid = random_u64();
+        client_key = random_u64();
+    }
+    phr->ss = sid_state_add(sid, client_key, &phr->ip, phr->user_id, phr->login, phr->name);
+    ASSERT(!phr->ss->edited_cnts);
+
+    struct contest_desc *rw_cnts = 0;
+    if (contests_load(phr->contest_id, &rw_cnts) < 0 || !rw_cnts) {
+        // FIXME: memleak on rw_cnts
+        phr->err_num = SSERV_ERR_INV_CONTEST;
+        phr->status_code = 400;
+        return;
+    }
+    phr->ss->edited_cnts = rw_cnts;
+    super_html_load_serve_cfg(rw_cnts, phr->config, phr->ss);
+
+    char *log_t = 0;
+    size_t log_z = 0;
+    FILE *log_f = open_memstream(&log_t, &log_z);
+    int r = super_html_new_check_tests(log_f, phr->config, phr->ss);
+    fclose(log_f); log_f = NULL;
+    super_serve_clear_edited_contest(phr->ss);
+
+    cJSON *jr = cJSON_CreateObject();
+    if (r < 0) {
+        cJSON_AddFalseToObject(jr, "success");
+    } else {
+        cJSON_AddTrueToObject(jr, "success");
+    }
+    cJSON_AddStringToObject(jr, "messages", log_t);
+    free(log_t); log_t = NULL;
+
+    if (r >= 0) {
+        super_serve_clear_edited_contest(phr->ss);
+    }
+
+    cJSON_AddItemToObject(phr->json_result, "result", jr);
+    phr->status_code = 200;
+}
