@@ -320,7 +320,7 @@ super_serve_api_CNTS_FORGET_JSON(
         return;
     }
     const struct contest_desc *other_cnts = NULL;
-    if (contests_get(other_contest_id, &other_cnts) < 0 || !other_cnts) {
+    if (other_contest_id > 0 && (contests_get(other_contest_id, &other_cnts) < 0 || !other_cnts)) {
         phr->err_num = SSERV_ERR_INV_CONTEST;
         phr->status_code = 400;
         return;
@@ -401,7 +401,7 @@ super_serve_api_CNTS_FORGET_JSON(
 }
 
 void
-super_serve_api_CNTS_LIST_SESSIONS_JSON(
+super_serve_api_CNTS_LIST_SESSION_JSON(
         FILE *out_f,
         struct http_request_info *phr)
 {
