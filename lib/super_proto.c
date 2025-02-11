@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2004-2024 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2025 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -112,6 +112,7 @@ unsigned char const * const super_proto_error_messages[] =
   [SSERV_ERR_UNSPEC_PROB_PACKAGE] = "Problem package is unspecified",
   [SSERV_ERR_UNSPEC_PROB_NAME] = "Problem name is unspecified",
   [SSERV_ERR_INV_XHTML] = "Invalid XHTML",
+  [SSERV_ERR_INV_SESSION] = "Invalid session",
 
   "unknown error",
 };
@@ -588,4 +589,10 @@ const unsigned char * const super_proto_cmd_names[SSERV_CMD_LAST] =
   [SSERV_CMD_CLEAR_SESSION] = "CLEAR_SESSION",
   [SSERV_CMD_LANG_AJAX_ACTION] = "LANG_AJAX_ACTION",
   [SSERV_CMD_LOGIN_ACTION_JSON] = "LOGIN_ACTION_JSON",
+  [SSERV_CMD_CREATE_SESSION_JSON] = "CREATE_SESSION_JSON",
+  [SSERV_CMD_CNTS_START_EDIT_JSON] = "CNTS_START_EDIT_JSON",
+  [SSERV_CMD_CNTS_FORGET_JSON] = "CNTS_FORGET_JSON",
+  [SSERV_CMD_CNTS_LIST_SESSIONS_JSON] = "CNTS_LIST_SESSION_JSON",
+  [SSERV_CMD_CNTS_COMMIT_JSON] = "CNTS_COMMIT_JSON",
+  [SSERV_CMD_CHECK_TESTS_JSON] = "CHECK_TESTS_JSON",
 };

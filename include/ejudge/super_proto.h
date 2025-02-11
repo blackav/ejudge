@@ -3,7 +3,7 @@
 #ifndef __SUPER_PROTO_H__
 #define __SUPER_PROTO_H__
 
-/* Copyright (C) 2004-2024 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2025 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -398,6 +398,12 @@ enum
   SSERV_CMD_LANG_AJAX_ACTION,
 
   SSERV_CMD_LOGIN_ACTION_JSON,
+  SSERV_CMD_CREATE_SESSION_JSON,
+  SSERV_CMD_CNTS_START_EDIT_JSON,
+  SSERV_CMD_CNTS_FORGET_JSON,
+  SSERV_CMD_CNTS_LIST_SESSIONS_JSON,
+  SSERV_CMD_CNTS_COMMIT_JSON,
+  SSERV_CMD_CHECK_TESTS_JSON,
 
   SSERV_CMD_LAST,
 };
@@ -503,6 +509,7 @@ enum
   SSERV_ERR_UNSPEC_PROB_PACKAGE,
   SSERV_ERR_UNSPEC_PROB_NAME,
   SSERV_ERR_INV_XHTML,
+  SSERV_ERR_INV_SESSION,
 
   SSERV_UNKNOWN_ERROR,
 

@@ -10,6 +10,7 @@ enum
   SSSS_next = 1,
   SSSS_prev,
   SSSS_sid,
+  SSSS_client_key,
   SSSS_remote_addr,
   SSSS_init_time,
   SSSS_flags,
