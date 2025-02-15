@@ -15,9 +15,13 @@
  */
 
 #include "ejudge/config.h"
+#include "ejudge/contests.h"
+#include "ejudge/expat_iface.h"
+#include "ejudge/meta/contests_meta.h"
 #include "ejudge/ej_types.h"
 #include "ejudge/json_serializers.h"
 #include "ejudge/cJSON.h"
+#include "ejudge/opcaps.h"
 #include "ejudge/testing_report_xml.h"
 #include "ejudge/submit_plugin.h"
 #include "ejudge/runlog.h"
@@ -32,6 +36,7 @@
 #include "ejudge/base64.h"
 
 #include <stdio.h>
+#include <time.h>
 
 void
 json_serialize_file_content(
@@ -862,6 +867,324 @@ json_serialize_userlist_cookie(const struct userlist_cookie *c)
     }
     if (c->is_job > 0) {
         cJSON_AddTrueToObject(jr, "is_job");
+    }
+
+    return jr;
+}
+
+static const unsigned char *
+unparse_date_iso(unsigned char *buf, size_t size, time_t t)
+{
+    struct tm tt;
+    gmtime_r(&t, &tt);
+    snprintf(buf, size, "%04d-%02d-%02dT%02d:%02d:%02dZ",
+        tt.tm_year + 1900, tt.tm_mon + 1, tt.tm_mday, tt.tm_hour, tt.tm_min, tt.tm_sec);
+    return buf;
+}
+
+static const unsigned char * const field_names[] =
+{
+    [1] = "homepage", "phone", "inst",
+    "inst_en", "instshort", "instshort_en", "instnum",
+    "fac", "fac_en", "facshort", "facshort_en",
+    "city", "city_en", "country", "country_en",
+    "region", "area", "zip", "street",
+    "languages", "field0", "field1", "field2",
+    "field3", "field4", "field5", "field6",
+    "field7", "field8", "field9",
+};
+
+static const unsigned char * const member_names[] =
+{
+    "contestant", "reserve", "coach", "advisor",
+    "guest",
+};
+
+static const unsigned char * const member_field_names[] =
+{
+    "serial", "firstname", "firstname_en", "middlename",
+    "middlename_en", "surname", "surname_en", "status",
+    "gender", "grade", "group", "group_en",
+    "email", "homepage", "phone", "inst",
+    "inst_en", "instshort", "instshort_en", "fac",
+    "fac_en", "facshort", "facshort_en", "occupation",
+    "occupation_en", "discipline", "birth_date", "entry_date",
+    "graduation_date",
+};
+
+cJSON *
+json_serialize_contest_access(const struct contest_access *ac)
+{
+    cJSON *jr = cJSON_CreateObject();
+    if (ac && ac->default_is_allow > 0) {
+        cJSON_AddTrueToObject(jr, "default_is_allow");
+        if (ac->b.first_down) {
+            cJSON *jrs = cJSON_CreateArray();
+            for (struct xml_tree *p = ac->b.first_down; p; p = p->right) {
+                struct contest_ip *pp = (struct contest_ip *) p;
+                cJSON *ja = cJSON_CreateObject();
+                if (pp->allow) {
+                    cJSON_AddTrueToObject(ja, "allow");
+                }
+                if (pp->ssl) {
+                    cJSON_AddTrueToObject(ja, "ssl");
+                }
+                cJSON_AddStringToObject(ja, "addr", xml_unparse_ipv6_mask(&pp->addr, &pp->mask));
+                cJSON_AddItemToArray(jrs, ja);
+            }
+            cJSON_AddItemToObject(jr, "rules", jrs);
+        }
+    }
+    return jr;
+}
+
+static cJSON*
+serialize_contest_field(const struct contest_field *f)
+{
+    cJSON *jf = cJSON_CreateObject();
+    if (f->mandatory > 0) {
+        cJSON_AddTrueToObject(jf, "mandatory");
+    }
+    if (f->legend) {
+        cJSON_AddStringToObject(jf, "legend", f->legend);
+    }
+    if (f->separator) {
+        cJSON_AddStringToObject(jf, "separator", f->separator);
+    }
+    if (f->options) {
+        cJSON_AddStringToObject(jf, "options", f->options);
+    }
+    if (f->checkbox > 0) {
+        cJSON_AddTrueToObject(jf, "checkbox");
+    }
+    if (f->is_password > 0) {
+        cJSON_AddTrueToObject(jf, "is_password");
+    }
+    return jf;
+}
+
+cJSON *
+json_serialize_contest_xml_full(const struct contest_desc *cnts, int date_mode)
+{
+    cJSON *jr = cJSON_CreateObject();
+
+    if (cnts->id > 0) {
+        cJSON_AddNumberToObject(jr, "id", cnts->id);
+    }
+
+    const static int bool_fields[] =
+    {
+        CNTS_autoregister, CNTS_disable_team_password, CNTS_managed, CNTS_run_managed,
+        CNTS_clean_users, CNTS_closed, CNTS_invisible, CNTS_simple_registration,
+        CNTS_send_passwd_email, CNTS_assign_logins, CNTS_force_registration, CNTS_disable_name,
+        CNTS_enable_password_recovery, CNTS_exam_mode, CNTS_disable_password_change, CNTS_disable_locale_change,
+        CNTS_personal, CNTS_allow_reg_data_edit, CNTS_disable_member_delete, CNTS_ready,
+        CNTS_force_password_change, CNTS_enable_user_telegram, CNTS_enable_avatar, CNTS_enable_local_pages,
+        CNTS_read_only_name, CNTS_enable_oauth, CNTS_enable_reminders, CNTS_disable_standalone_reg,
+        CNTS_enable_telegram_registration, CNTS_enable_special_flow, CNTS_enable_user_finish, CNTS_disable_user_finish,
+    };
+    for (int i = 0; i < sizeof(bool_fields) / sizeof(bool_fields[0]); ++i) {
+        const ejbytebool_t *ptr = (const ejbytebool_t *) contest_desc_get_ptr(cnts, bool_fields[i]);
+        const unsigned char *name = contest_desc_get_name(bool_fields[i]);
+        if (*ptr > 0) {
+            cJSON_AddTrueToObject(jr, name);
+        }
+    }
+
+    const static int time_fields[] =
+    {
+        CNTS_reg_deadline, CNTS_sched_time, CNTS_open_time, CNTS_close_time,
+        CNTS_update_time,
+    };
+    for (int i = 0; i < sizeof(time_fields)/sizeof(time_fields[0]); ++i) {
+        const time_t *ptr = (const time_t *) contest_desc_get_ptr(cnts, time_fields[i]);
+        const unsigned char *name = contest_desc_get_name(time_fields[i]);
+        if (*ptr > 0) {
+            if (date_mode == 1) {
+                unsigned char buf[64];
+                cJSON_AddStringToObject(jr, name, unparse_date_iso(buf, sizeof(buf), *ptr));
+            } else if (date_mode == 2) {
+                cJSON_AddNumberToObject(jr, name, (double) *ptr);
+            } else {
+                cJSON_AddStringToObject(jr, name, xml_unparse_date(*ptr));
+            }
+        }
+    }
+
+    const static int string_fields[] =
+    {
+        CNTS_name, CNTS_name_en, CNTS_main_url, CNTS_keywords,
+        CNTS_comment, CNTS_users_header_file, CNTS_users_footer_file, CNTS_register_header_file,
+        CNTS_register_footer_file, CNTS_team_header_file, CNTS_team_menu_1_file, CNTS_team_menu_2_file,
+        CNTS_team_menu_3_file, CNTS_team_separator_file, CNTS_team_footer_file, CNTS_priv_header_file,
+        CNTS_priv_footer_file, CNTS_copyright_file, CNTS_register_email, CNTS_register_url,
+        CNTS_team_url, CNTS_login_template, CNTS_login_template_options, CNTS_root_dir,
+        CNTS_conf_dir, CNTS_standings_url, CNTS_problems_url, CNTS_analytics_url,
+        CNTS_analytics_key, CNTS_serve_user, CNTS_serve_group, CNTS_run_user,
+        CNTS_run_group, CNTS_register_email_file, CNTS_register_subject, CNTS_register_subject_en,
+        CNTS_users_head_style, CNTS_users_par_style, CNTS_users_table_style, CNTS_users_verb_style,
+        CNTS_users_table_format, CNTS_users_table_format_en, CNTS_users_table_legend, CNTS_users_table_legend_en,
+        CNTS_register_head_style, CNTS_register_par_style, CNTS_register_table_style, CNTS_team_head_style,
+        CNTS_team_par_style, CNTS_cf_notify_email, CNTS_clar_notify_email, CNTS_daily_stat_email,
+        CNTS_user_name_comment, CNTS_allowed_languages, CNTS_allowed_regions, CNTS_dir_mode,
+        CNTS_dir_group, CNTS_file_mode, CNTS_file_group, CNTS_welcome_file,
+        CNTS_reg_welcome_file, CNTS_logo_url, CNTS_css_url, CNTS_ext_id,
+        CNTS_problem_count, CNTS_telegram_bot_id, CNTS_telegram_admin_chat_id, CNTS_telegram_user_chat_id,
+        CNTS_avatar_plugin, CNTS_content_plugin, CNTS_content_url_prefix, CNTS_special_flow_options,
+    };
+    for (int i = 0; i < sizeof(string_fields)/sizeof(string_fields[0]); ++i) {
+        unsigned char **ptr = (unsigned char **) contest_desc_get_ptr(cnts, string_fields[i]);
+        const unsigned char *name = contest_desc_get_name(string_fields[i]);
+        if (*ptr) {
+            cJSON_AddStringToObject(jr, name, *ptr);
+        }
+    }
+    if (cnts->user_contest_num > 0) {
+        cJSON_AddNumberToObject(jr, "user_contest", cnts->user_contest_num);
+    }
+    if (cnts->default_locale_num > 0) {
+        cJSON_AddNumberToObject(jr, "default_locale", cnts->default_locale_num);
+    }
+    if (cnts->register_access) {
+        cJSON_AddItemToObject(jr, "register_access", json_serialize_contest_access(cnts->register_access));
+    }
+    if (cnts->users_access) {
+        cJSON_AddItemToObject(jr, "users_access", json_serialize_contest_access(cnts->users_access));
+    }
+    if (cnts->master_access) {
+        cJSON_AddItemToObject(jr, "master_access", json_serialize_contest_access(cnts->master_access));
+    }
+    if (cnts->judge_access) {
+        cJSON_AddItemToObject(jr, "judge_access", json_serialize_contest_access(cnts->judge_access));
+    }
+    if (cnts->team_access) {
+        cJSON_AddItemToObject(jr, "team_access", json_serialize_contest_access(cnts->team_access));
+    }
+    if (cnts->serve_control_access) {
+        cJSON_AddItemToObject(jr, "serve_control_access", json_serialize_contest_access(cnts->serve_control_access));
+    }
+    if (cnts->capabilities.first) {
+        cJSON *jcs = cJSON_CreateArray();
+        for (struct opcap_list_item *p = cnts->capabilities.first; p; p = (struct opcap_list_item *) p->b.right) {
+            cJSON *jc = cJSON_CreateObject();
+            cJSON_AddStringToObject(jc, "login", p->login);
+            unsigned char *s = opcaps_unparse(0, 1024, p->caps);
+            cJSON_AddStringToObject(jc, "caps", s);
+            xfree(s);
+            cJSON_AddItemToArray(jcs, jc);
+        }
+        cJSON_AddItemToObject(jr, "capabilities", jcs);
+    }
+    if (cnts->oauth_rules) {
+        cJSON *ors = cJSON_CreateArray();
+        for (const struct xml_tree *p1 = cnts->oauth_rules->first_down; p1; p1 = p1->right) {
+            if (p1->tag == CONTEST_OAUTH_RULE) {
+                cJSON *or = cJSON_CreateObject();
+                for (const struct xml_attr *a = p1->first; a; a = a->next) {
+                    switch (a->tag) {
+                    case CONTEST_A_DOMAIN:
+                        cJSON_AddStringToObject(or, "domain", a->text);
+                        break;
+                    case CONTEST_A_ALLOW: {
+                        int val = 0;
+                        xml_parse_bool(NULL, NULL, 0, 0, a->text, &val);
+                        if (val > 0) {
+                            cJSON_AddTrueToObject(or, "allow");
+                        }
+                        break;
+                    }
+                    case CONTEST_A_DENY: {
+                        int val = 0;
+                        xml_parse_bool(NULL, NULL, 0, 0, a->text, &val);
+                        if (val > 0) {
+                            cJSON_AddTrueToObject(or, "deny");
+                        }
+                        break;
+                    }
+                    case CONTEST_A_STRIP_DOMAIN: {
+                        int val = 0;
+                        xml_parse_bool(NULL, NULL, 0, 0, a->text, &val);
+                        if (val > 0) {
+                            cJSON_AddTrueToObject(or, "strip_domain");
+                        }
+                        break;
+                    }
+                    case CONTEST_A_DISABLE_EMAIL_CHECK: {
+                        int val = 0;
+                        xml_parse_bool(NULL, NULL, 0, 0, a->text, &val);
+                        if (val > 0) {
+                            cJSON_AddTrueToObject(or, "disable_email_check");
+                        }
+                        break;
+                    }
+                    }
+                }
+                cJSON_AddItemToArray(ors, or);
+            }
+        }
+        cJSON_AddItemToObject(jr, "oauth_rules", ors);
+    }
+
+    int need_fields = 0;
+    for (int i = 0; i < CONTEST_LAST_FIELD; ++i) {
+        if (cnts->fields[i]) {
+            need_fields = 1;
+            break;
+        }
+    }
+    if (need_fields) {
+        cJSON *jfs = cJSON_CreateObject();
+        for (int i = 0; i < CONTEST_LAST_FIELD; ++i) {
+            struct contest_field *f = cnts->fields[i];
+            if (f) {
+                cJSON_AddItemToObject(jfs, field_names[i], serialize_contest_field(f));
+            }
+        }
+        cJSON_AddItemToObject(jr, "fields", jfs);
+    }
+    int need_members = 0;
+    for (int i = 0; i < CONTEST_LAST_MEMBER; ++i) {
+        if (cnts->members[i]) {
+            need_members = 1;
+            break;
+        }
+    }
+    if (need_members) {
+        cJSON *jms = cJSON_CreateObject();
+        for (int i = 0; i < CONTEST_LAST_MEMBER; ++i) {
+            struct contest_member *m = cnts->members[i];
+            if (m) {
+                cJSON *jm = cJSON_CreateObject();
+                if (m->min_count > 0) {
+                    cJSON_AddNumberToObject(jm, "min_count", m->min_count);
+                }
+                if (m->max_count > 0) {
+                    cJSON_AddNumberToObject(jm, "max_count", m->max_count);
+                }
+                if (m->init_count > 0) {
+                    cJSON_AddNumberToObject(jm, "init_count", m->init_count);
+                }
+                int need_fields = 0;
+                for (int j = 0; j < CONTEST_LAST_MEMBER_FIELD; ++j) {
+                    if (m->fields[j]) {
+                        need_fields = 1;
+                        break;
+                    }
+                }
+                if (need_fields) {
+                    cJSON *jmfs = cJSON_CreateObject();
+                    for (int j = 0; j < CONTEST_LAST_MEMBER_FIELD; ++j) {
+                        struct contest_field *f = m->fields[j];
+                        if (f) {
+                            cJSON_AddItemToObject(jmfs, member_field_names[j], serialize_contest_field(f));
+                        }
+                    }
+                    cJSON_AddItemToObject(jm, "fields", jmfs);
+                }
+                cJSON_AddItemToObject(jms, member_names[i], jm);
+            }
+        }
+        cJSON_AddItemToObject(jr, "members", jms);
     }
 
     return jr;
