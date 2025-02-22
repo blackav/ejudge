@@ -16,6 +16,7 @@
 
 #include "ejudge/config.h"
 #include "ejudge/ej_types.h"
+#include "ejudge/json_serializers.h"
 #include "ejudge/opcaps.h"
 #include "ejudge/super-serve.h"
 #include "ejudge/super_html.h"
@@ -28,6 +29,7 @@
 #include "ejudge/random.h"
 #include "ejudge/logger.h"
 #include "ejudge/cJSON.h"
+#include "ejudge/websocket.h"
 
 #include <stdlib.h>
 #include <ctype.h>
@@ -583,4 +585,245 @@ super_serve_api_CHECK_TESTS_JSON(
 
     cJSON_AddItemToObject(phr->json_result, "result", jr);
     phr->status_code = 200;
+}
+
+enum
+{
+    FILE_USERS_HEADER = 1,
+    FILE_USERS_FOOTER,
+    FILE_REGISTER_HEADER,
+    FILE_REGISTER_FOOTER,
+    FILE_TEAM_HEADER,
+    FILE_TEAM_MENU_1,
+    FILE_TEAM_MENU_2,
+    FILE_TEAM_MENU_3,
+    FILE_TEAM_SEPARATOR,
+    FILE_TEAM_FOOTER,
+    FILE_PRIV_HEADER,
+    FILE_PRIV_FOOTER,
+    FILE_COPYRIGHT,
+    FILE_REGISTER_EMAIL,
+    FILE_WELCOME,
+    FILE_REG_WELCOME,
+};
+
+static const unsigned char * const file_names[] =
+{
+    [FILE_USERS_HEADER] = "users_header",
+    [FILE_USERS_FOOTER] = "users_footer",
+    [FILE_REGISTER_HEADER] = "register_header",
+    [FILE_REGISTER_FOOTER] = "register_footer",
+    [FILE_TEAM_HEADER] = "team_header",
+    [FILE_TEAM_MENU_1] = "team_menu_1",
+    [FILE_TEAM_MENU_2] = "team_menu_2",
+    [FILE_TEAM_MENU_3] = "team_menu_3",
+    [FILE_TEAM_SEPARATOR] = "team_separator",
+    [FILE_TEAM_FOOTER] = "team_footer",
+    [FILE_PRIV_HEADER] = "priv_header",
+    [FILE_PRIV_FOOTER] = "priv_footer",
+    [FILE_COPYRIGHT] = "copyright",
+    [FILE_REGISTER_EMAIL] = "register_email",
+    [FILE_WELCOME] = "welcome",
+    [FILE_REG_WELCOME] = "reg_welcome",
+};
+
+static int
+parse_file_field_name(const unsigned char *s)
+{
+    if (!s) return -1;
+    for (int i = 1; i < sizeof(file_names)/sizeof(file_names[0]); ++i) {
+        if (!strcmp(s, file_names[i])) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+static void
+get_state_file_pointers(
+        struct sid_state *ss,
+        struct contest_desc *cnts,
+        int field,
+        const unsigned char **p_name,
+        unsigned char ***p_text,
+        ejintbool_t **p_loaded)
+{
+    switch (field) {
+    case FILE_USERS_HEADER:
+        *p_name = cnts->users_header_file;
+        *p_text = &ss->users_header_text;
+        *p_loaded = &ss->users_header_loaded;
+        break;
+    case FILE_USERS_FOOTER:
+        *p_name = cnts->users_footer_file;
+        *p_text = &ss->users_footer_text;
+        *p_loaded = &ss->users_footer_loaded;
+        break;
+    case FILE_REGISTER_HEADER:
+        *p_name = cnts->register_header_file;
+        *p_text = &ss->register_header_text;
+        *p_loaded = &ss->register_header_loaded;
+        break;
+    case FILE_REGISTER_FOOTER:
+        *p_name = cnts->register_footer_file;
+        *p_text = &ss->register_footer_text;
+        *p_loaded = &ss->register_footer_loaded;
+        break;
+    case FILE_TEAM_HEADER:
+        *p_name = cnts->team_header_file;
+        *p_text = &ss->team_header_text;
+        *p_loaded = &ss->team_header_loaded;
+        break;
+    case FILE_TEAM_MENU_1:
+        *p_name = cnts->team_menu_1_file;
+        *p_text = &ss->team_menu_1_text;
+        *p_loaded = &ss->team_menu_1_loaded;
+        break;
+    case FILE_TEAM_MENU_2:
+        *p_name = cnts->team_menu_2_file;
+        *p_text = &ss->team_menu_2_text;
+        *p_loaded = &ss->team_menu_2_loaded;
+        break;
+    case FILE_TEAM_MENU_3:
+        *p_name = cnts->team_menu_3_file;
+        *p_text = &ss->team_menu_3_text;
+        *p_loaded = &ss->team_menu_3_loaded;
+        break;
+    case FILE_TEAM_SEPARATOR:
+        *p_name = cnts->team_separator_file;
+        *p_text = &ss->team_separator_text;
+        *p_loaded = &ss->team_separator_loaded;
+        break;
+    case FILE_TEAM_FOOTER:
+        *p_name = cnts->team_footer_file;
+        *p_text = &ss->team_footer_text;
+        *p_loaded = &ss->team_footer_loaded;
+        break;
+    case FILE_PRIV_HEADER:
+        *p_name = cnts->priv_header_file;
+        *p_text = &ss->priv_header_text;
+        *p_loaded = &ss->priv_header_loaded;
+        break;
+    case FILE_PRIV_FOOTER:
+        *p_name = cnts->priv_footer_file;
+        *p_text = &ss->priv_footer_text;
+        *p_loaded = &ss->priv_footer_loaded;
+        break;
+    case FILE_COPYRIGHT:
+        *p_name = cnts->copyright_file;
+        *p_text = &ss->copyright_text;
+        *p_loaded = &ss->copyright_loaded;
+        break;
+    case FILE_REGISTER_EMAIL:
+        *p_name = cnts->register_email_file;
+        *p_text = &ss->register_email_text;
+        *p_loaded = &ss->register_email_loaded;
+        break;
+    case FILE_WELCOME:
+        *p_name = cnts->welcome_file;
+        *p_text = &ss->welcome_text;
+        *p_loaded = &ss->welcome_loaded;
+        break;
+    case FILE_REG_WELCOME:
+        *p_name = cnts->reg_welcome_file;
+        *p_text = &ss->reg_welcome_text;
+        *p_loaded = &ss->reg_welcome_loaded;
+        break;
+    default:
+        *p_name = NULL;
+        *p_text = NULL;
+        *p_loaded = NULL;
+        break;
+    }
+}
+
+static void
+get_contest_xml_json(struct http_request_info *phr)
+{
+    int date_mode = 0;
+    hr_cgi_param_int_opt(phr, "date_mode", &date_mode, 0);
+    cJSON_AddItemToObject(phr->json_result, "result", json_serialize_contest_xml_full(phr->ss->edited_cnts, date_mode));
+    phr->status_code = 200;
+}
+
+static void
+get_contest_file_json(struct http_request_info *phr)
+{
+    const unsigned char *field_name = NULL;
+    if (hr_cgi_param(phr, "field_name", &field_name) <= 0) {
+        phr->err_num = SSERV_ERR_INV_PARAM;
+        phr->status_code = 400;
+        return;
+    }
+    int field_id = parse_file_field_name(field_name);
+    if (field_id <= 0) {
+        phr->err_num = SSERV_ERR_INV_PARAM;
+        phr->status_code = 400;
+        return;
+    }
+    const unsigned char *file_name = NULL;
+    unsigned char **p_text = NULL;
+    ejintbool_t *p_loaded = 0;
+    get_state_file_pointers(phr->ss, phr->ss->edited_cnts, field_id, &file_name, &p_text, &p_loaded);
+    if (!p_text) {
+        phr->err_num = SSERV_ERR_INV_PARAM;
+        phr->status_code = 400;
+        return;
+    }
+    cJSON *jr = cJSON_CreateObject();
+    cJSON_AddStringToObject(jr, "field_name", field_name);
+    if (file_name) {
+        cJSON_AddStringToObject(jr, "file_name", file_name);
+        if (*p_text) {
+            cJSON_AddStringToObject(jr, "text", *p_text);
+        }
+        if (*p_loaded > 0) {
+            cJSON_AddTrueToObject(jr, "loaded");
+        }
+    }
+    cJSON_AddItemToObject(phr->json_result, "result", jr);
+    phr->status_code = 200;
+}
+
+void
+super_serve_api_CNTS_GET_VALUE_JSON(
+        FILE *out_f,
+        struct http_request_info *phr)
+{
+    ej_cookie_t sid = 0;
+    ej_cookie_t client_key = 0;
+    if (parse_session(phr, "session", &sid, &client_key) <= 0) {
+        phr->err_num = SSERV_ERR_INV_SESSION;
+        phr->status_code = 400;
+        return;
+    }
+    struct sid_state *ss = sid_state_find(sid, client_key);
+    if (!ss) {
+        phr->err_num = SSERV_ERR_INV_SESSION;
+        phr->status_code = 400;
+        return;
+    }
+    phr->ss = ss;
+    if (!ss->edited_cnts) {
+        phr->err_num = SSERV_ERR_NO_EDITED_CNTS;
+        phr->status_code = 400;
+        return;
+    }
+    const unsigned char *section = NULL;
+    if (hr_cgi_param(phr, "section", &section) <= 0) {
+        phr->err_num = SSERV_ERR_INV_PARAM;
+        phr->status_code = 400;
+        return;
+    }
+    if (!strcmp(section, "contest.xml")) {
+        get_contest_xml_json(phr);
+        return;
+    } else if (!strcmp(section, "file")) {
+        get_contest_file_json(phr);
+        return;
+    } else {
+        phr->err_num = SSERV_ERR_INV_PARAM;
+        phr->status_code = 400;
+        return;
+    }
 }

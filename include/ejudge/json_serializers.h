@@ -2,7 +2,7 @@
 #ifndef __JSON_SERIALIZERS_H__
 #define __JSON_SERIALIZERS_H__
 
-/* Copyright (C) 2023-2024 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2023-2025 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -16,6 +16,7 @@
  * GNU General Public License for more details.
  */
 
+#include "ejudge/contests.h"
 struct submit_entry;
 struct testing_report_xml;
 struct cJSON;
@@ -53,5 +54,10 @@ json_serialize_language(const struct section_language_data *lang, int final_mode
 struct userlist_cookie;
 struct cJSON *
 json_serialize_userlist_cookie(const struct userlist_cookie *c);
+
+struct contest_desc;
+struct cJSON *
+json_serialize_contest_xml_full(const struct contest_desc *cnts, int date_mode);
+
 
 #endif /* __JSON_SERIALIZERS_H__ */
