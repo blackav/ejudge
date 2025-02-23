@@ -594,6 +594,28 @@ contests_remove_nth_permission(struct contest_desc *cnts, int n)
 }
 
 int
+contests_remove_login_permission(struct contest_desc *cnts, const unsigned char *login)
+{
+  struct opcap_list_item *perms;
+
+  for (perms = CNTS_FIRST_PERM(cnts); perms; ) {
+    struct opcap_list_item *next = CNTS_NEXT_PERM_NC(perms);
+    if (!strcmp(perms->login, login)) {
+      xml_unlink_node(&perms->b);
+      contests_free_2(&perms->b);    
+    }
+    perms = next;
+  }
+  cnts->capabilities.first=(struct opcap_list_item*)cnts->caps_node->first_down;
+  if (!cnts->capabilities.first) {
+    xml_unlink_node(cnts->caps_node);
+    contests_free_2(cnts->caps_node);
+    cnts->caps_node = NULL;
+  }
+  return 0;
+}
+
+int
 contests_add_permission(
         struct contest_desc *cnts,
         const unsigned char *login,
