@@ -571,6 +571,17 @@ contests_unparse_and_save(
   return 0;
 }
 
+void
+contest_remove_all_permissions(struct contest_desc *cnts)
+{
+  if (cnts->caps_node) {
+    xml_unlink_node(cnts->caps_node);
+    contests_free_2(cnts->caps_node);
+    cnts->caps_node = NULL;
+    memset(&cnts->capabilities, 0, sizeof(cnts->capabilities));
+  }
+}
+
 int
 contests_remove_nth_permission(struct contest_desc *cnts, int n)
 {

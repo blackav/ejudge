@@ -546,6 +546,8 @@ const unsigned char *contests_get_form_field_name(int ff);
 const unsigned char *contests_get_member_field_name(int ff);
 const unsigned char *contests_get_member_name(int ff);
 
+void
+contest_remove_all_permissions(struct contest_desc *cnts);
 int contests_remove_nth_permission(struct contest_desc *cnts, int n);
 int
 contests_remove_login_permission(
