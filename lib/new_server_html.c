@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2024 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2025 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -11299,7 +11299,7 @@ priv_change_registrations_json(
     }
   }
 
-  {
+  if (uset.u > 0) {
     qsort(uset.v, uset.u, sizeof(uset.v[0]), int_sort_func);
     int src, dst = 1;
     for (src = 1; src < uset.u; ++src) {
@@ -21489,6 +21489,11 @@ ns_handle_http_request(
 
     s = script_name + EJUDGE_REST_PREFIX_LEN;
     s_offset = EJUDGE_REST_PREFIX_LEN;
+
+    if (!strncmp(s, "ej/", 3)) {
+        s += 3;
+        s_offset += 3;
+    }
 
     // EJUDGE_REST_PREFIX "/ej/"
     // skip api/v1/ part
