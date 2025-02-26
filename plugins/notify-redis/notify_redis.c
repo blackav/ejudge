@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2023-2025 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -225,7 +225,7 @@ get_registered_number_func(
 {
     __attribute__((unused)) struct notify_redis_plugin_data *nrpd = (struct notify_redis_plugin_data*) data;
 
-    return 1;
+    return REGISTERED_NUMBER;
 }
 
 static int
