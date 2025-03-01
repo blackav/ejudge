@@ -16,6 +16,7 @@
 
 #include "ejudge/config.h"
 #include "ejudge/contests.h"
+#include "ejudge/ej_types.h"
 #include "ejudge/meta/contests_meta.h"
 #include "ejudge/xml_utils.h"
 #include "ejudge/misctext.h"
@@ -806,6 +807,29 @@ contests_get_ip_rule_nc(
   for (i = 0, p = CNTS_FIRST_IP_NC(acc); p && i != n;
        ++i, p = CNTS_NEXT_IP_NC(p));
   if (p && i == n) return p;
+  return 0;
+}
+
+int
+contests_delete_ip_rule_by_mask(
+        struct contest_access **p_acc,
+        ej_ip_t *ip,
+        ej_ip_t *mask,
+        int ssl_flag)
+{
+  for (struct contest_ip *p = CNTS_FIRST_IP_NC(*p_acc); p; ) {
+    struct contest_ip *q = CNTS_NEXT_IP_NC(p);
+    if (!ipv6cmp(ip, &p->addr) && !ipv6cmp(mask, &p->mask) && ssl_flag == p->ssl) {
+      xml_unlink_node(&p->b);
+      contests_free_2(&p->b);
+    }
+    p = q;
+  }
+  if (!CNTS_FIRST_IP(*p_acc) && !(*p_acc)->default_is_allow) {
+    xml_unlink_node(&(*p_acc)->b);
+    contests_free_2(&(*p_acc)->b);
+    *p_acc = NULL;
+  }
   return 0;
 }
 

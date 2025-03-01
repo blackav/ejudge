@@ -595,6 +595,12 @@ contests_delete_ip_rule(
         struct contest_access **p_acc,
         int n);
 int
+contests_delete_ip_rule_by_mask(
+        struct contest_access **p_acc,
+        ej_ip_t *ip,
+        ej_ip_t *mask,
+        int ssl_flag);
+int
 contests_forward_ip_rule(
         struct contest_access **p_acc,
         int n);
