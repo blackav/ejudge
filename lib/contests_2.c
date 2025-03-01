@@ -810,6 +810,14 @@ contests_get_ip_rule_nc(
   return 0;
 }
 
+void
+contests_delete_all_rules(struct contest_access **p_acc)
+{
+  xml_unlink_node(&(*p_acc)->b);
+  contests_free_2(&(*p_acc)->b);
+  *p_acc = NULL;
+}
+
 int
 contests_delete_ip_rule_by_mask(
         struct contest_access **p_acc,
