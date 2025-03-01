@@ -590,6 +590,8 @@ struct contest_ip *
 contests_get_ip_rule_nc(
         struct contest_access *acc,
         int n);
+void
+contests_delete_all_rules(struct contest_access **p_acc);
 int
 contests_delete_ip_rule(
         struct contest_access **p_acc,
