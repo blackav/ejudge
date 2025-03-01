@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2014-2024 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2014-2025 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -259,11 +259,44 @@ hr_cgi_param_bool_opt(
         int *p_val,
         int default_value)
 {
-    int ret = hr_cgi_param_int_opt(phr, name, p_val, default_value);
-    if (p_val) {
-        if (*p_val != 1) *p_val = 0;
+    const unsigned char *s = NULL;
+    int r = hr_cgi_param(phr, name, &s);
+    if (r < 0) {
+        return r;
     }
-    return ret;
+    if (!r || !s || !*s) {
+        if (p_val) *p_val = !!default_value;
+        return 0;
+    }
+    if (!strcasecmp(s, "false")) {
+        if (p_val) *p_val = 0;
+        return 1;
+    }
+    if (!strcasecmp(s, "true")) {
+        if (p_val) *p_val = 1;
+        return 1;
+    }
+    if (!strcasecmp(s, "no")) {
+        if (p_val) *p_val = 0;
+        return 1;
+    }
+    if (!strcasecmp(s, "yes")) {
+        if (p_val) *p_val = 1;
+        return 1;
+    }
+    char *eptr = NULL;
+    errno = 0;
+    long v = strtol(s, &eptr, 10);
+    if (errno || *eptr) {
+        return -1;
+    }
+    if (v < 0) {
+        v = !!default_value;
+    } else if (v > 0) {
+        v = 1;
+    }
+    if (p_val) *p_val = v;
+    return 1;
 }
 
 int
