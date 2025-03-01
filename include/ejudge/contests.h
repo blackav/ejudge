@@ -662,4 +662,10 @@ int contests_apply_oauth_rules(
         unsigned char **p_login,
         int *p_disable_email_check);
 
+int contests_parse_user_field_name(const unsigned char *s);
+int contests_parse_member_field_name(const unsigned char *s);
+int contests_parse_member(const unsigned char *s);
+
+void contests_delete_oauth_rule(struct contest_desc *cnts, const unsigned char *domain);
+
 #endif /* __CONTESTS_H__ */

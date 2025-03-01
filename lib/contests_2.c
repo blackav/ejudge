@@ -17,6 +17,7 @@
 #include "ejudge/config.h"
 #include "ejudge/contests.h"
 #include "ejudge/ej_types.h"
+#include "ejudge/expat_iface.h"
 #include "ejudge/meta/contests_meta.h"
 #include "ejudge/xml_utils.h"
 #include "ejudge/misctext.h"
@@ -1064,5 +1065,73 @@ contests_set_member_field(
   if (!p->legend || p->legend != legend) {
     xfree(p->legend); p->legend = 0;
     if (legend) p->legend = xstrdup(legend);
+  }
+}
+
+int
+contests_parse_user_field_name(const unsigned char *s)
+{
+  if (!s || !*s) return 0;
+  for (int i = 1; contests_field_map[i]; ++i) {
+    if (!strcmp(contests_field_map[i], s)) {
+      return i;
+    }
+  }
+  return 0;
+}
+
+int
+contests_parse_member_field_name(const unsigned char *s)
+{
+  if (!s || !*s) return 0;
+  for (int i = 1; contests_member_field_map[i]; ++i) {
+    if (!strcmp(contests_member_field_map[i], s)) {
+      return i;
+    }
+  }
+  return 0;
+}
+
+static const unsigned char * const contests_member_map[] =
+{
+  "contestant", "reserve", "coach", "advisor", "guest", NULL
+};
+
+int
+contests_parse_member(const unsigned char *s)
+{
+  if (!s || !*s) return 0;
+  for (int i = 0; contests_member_map[i]; ++i) {
+    if (!strcmp(contests_member_map[i], s)) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+void
+contests_delete_oauth_rule(struct contest_desc *cnts, const unsigned char *domain)
+{
+  if (!cnts->oauth_rules) return;
+  struct xml_tree *p = cnts->oauth_rules->first_down;
+  struct xml_tree *q;
+  for (; p; p = q) {
+    q = p->right;
+    const unsigned char *cur_domain = NULL;
+    for (struct xml_attr *a = p->first; a; a = a->next) {
+      if (a->tag == CONTEST_A_DOMAIN) {
+        cur_domain = a->text;
+        break;
+      }
+    }
+    if (cur_domain && !strcmp(cur_domain, domain)) {
+      xml_unlink_node(p);
+      contests_free_2(p);
+    }
+  }
+  if (!cnts->oauth_rules->first_down) {
+    xml_unlink_node(cnts->oauth_rules);
+    contests_free_2(cnts->oauth_rules);
+    cnts->oauth_rules = NULL;
   }
 }
