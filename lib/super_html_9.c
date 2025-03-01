@@ -1037,6 +1037,67 @@ delete_contest_xml_json(struct http_request_info *phr)
         phr->status_code = 200;
         return;
     }
+    case CNTS_fields: {
+        const unsigned char *user_field_name = NULL;
+        if (hr_cgi_param(phr, "user_field_name", &user_field_name) <= 0) {
+            phr->err_num = SSERV_ERR_INV_PARAM;
+            phr->status_code = 400;
+            return;
+        }
+        int user_field = contests_parse_user_field_name(user_field_name);
+        if (user_field < CONTEST_FIRST_FIELD || user_field >= CONTEST_LAST_FIELD) {
+            phr->err_num = SSERV_ERR_INV_PARAM;
+            phr->status_code = 400;
+            return;
+        }
+        // should not be a memory leak
+        phr->ss->edited_cnts->fields[user_field] = NULL;
+        cJSON_AddTrueToObject(phr->json_result, "result");
+        phr->status_code = 200;
+        return;
+    }
+    case CNTS_members: {
+        const unsigned char *member = NULL;
+        if (hr_cgi_param(phr, "member", &member) <= 0) {
+            phr->err_num = SSERV_ERR_INV_PARAM;
+            phr->status_code = 400;
+            return;
+        }
+        int member_id = contests_parse_member(member);
+        if (member_id < 0) {
+            phr->err_num = SSERV_ERR_INV_PARAM;
+            phr->status_code = 400;
+            return;
+        }
+        const unsigned char *member_field_name = NULL;
+        if (hr_cgi_param(phr, "member_field_name", &member_field_name) > 0) {
+            int member_field = contests_parse_member_field_name(member_field_name);
+            if (member_field <= 0 || member_field >= CONTEST_LAST_MEMBER_FIELD) {
+                phr->err_num = SSERV_ERR_INV_PARAM;
+                phr->status_code = 400;
+                return;
+            }
+            if (phr->ss->edited_cnts->members[member_id]) {
+                phr->ss->edited_cnts->members[member_id]->fields[member_field] = NULL;
+            }
+        } else {
+            phr->ss->edited_cnts->members[member_id] = NULL;
+        }
+        cJSON_AddTrueToObject(phr->json_result, "result");
+        phr->status_code = 200;
+        return;
+    }
+    case CNTS_oauth_rules: {
+        const unsigned char *domain = NULL;
+        if (hr_cgi_param(phr, "domain", &domain) > 0) {
+            contests_delete_oauth_rule(phr->ss->edited_cnts, domain);
+        } else {
+            phr->ss->edited_cnts->oauth_rules = NULL;
+        }
+        cJSON_AddTrueToObject(phr->json_result, "result");
+        phr->status_code = 200;
+        return;
+    }
     default:
         break;
     }
@@ -1047,17 +1108,6 @@ delete_contest_xml_json(struct http_request_info *phr)
         phr->status_code = 200;
         return;
     }
-    /*
-  struct contest_field *fields[CONTEST_LAST_FIELD];
-  struct contest_member *members[CONTEST_LAST_MEMBER];
-  struct xml_tree *oauth_rules;
-};
-    */
-    /*
-  CNTS_fields,
-  CNTS_members,
-  CNTS_oauth_rules,
-    */
     phr->err_num = SSERV_ERR_INV_PARAM;
     phr->status_code = 400;
 }
