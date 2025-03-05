@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2019-2024 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2019-2025 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -759,10 +759,6 @@ parse_testing_report_bson(bson_iter_t *bi, testing_report_xml_t r)
                 XREALLOC(vi, va *= 2);
             }
             int x = bson_iter_int32(&groups_iter);
-            if (x < 0) {
-                free(vi);
-                return -1;
-            }
             vi[vu++] = x;
         }
         r->group_count = vu;
