@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2002-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2025 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -983,6 +983,23 @@ xml_link_node_last(struct xml_tree *p, struct xml_tree *c)
     c->left = p->last_down;
     p->last_down->right = c;
     p->last_down = c;
+  }
+}
+
+void
+xml_link_node_before(
+        struct xml_tree *before,
+        struct xml_tree *node)
+{
+  if (!before || !node) return;
+  node->up = before->up;
+  node->left = before->left;
+  node->right = before;
+  before->left = node;
+  if (!before->left) {
+    before->up->first_down = node;
+  } else {
+    node->left->right = node;
   }
 }
 

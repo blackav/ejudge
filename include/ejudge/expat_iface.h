@@ -3,7 +3,7 @@
 #ifndef __EXPAT_IFACE_H__
 #define __EXPAT_IFACE_H__ 1
 
-/* Copyright (C) 2002-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2025 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -93,6 +93,10 @@ xml_unparse_tree_str(char *buf,
 void xml_unlink_node(struct xml_tree *p);
 void xml_link_node_first(struct xml_tree *p, struct xml_tree *c);
 void xml_link_node_last(struct xml_tree *p, struct xml_tree *c);
+void
+xml_link_node_before(
+        struct xml_tree *before,
+        struct xml_tree *node);
 
 struct xml_tree *xml_elem_alloc(int tag, const size_t *sizes);
 struct xml_attr *xml_attr_alloc(int tag, const size_t *sizes);
