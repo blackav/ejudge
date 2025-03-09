@@ -796,6 +796,26 @@ contests_add_ip(
 }
 
 struct contest_ip *
+contests_find_ip_rule_nc(
+  struct contest_access *acc,
+  const ej_ip_t *p_addr,
+  const ej_ip_t *p_mask,
+  int ssl_flag)
+{
+  struct contest_ip *p;
+  if (!acc) return 0;
+
+  for (p = CNTS_FIRST_IP_NC(acc); p; p = CNTS_NEXT_IP_NC(p)) {
+    if (!ipv6cmp(&p->addr, p_addr) && !ipv6cmp(&p->mask, p_mask)) {
+      if (ssl_flag < 0 || ssl_flag == p->ssl) {
+        return p;
+      }
+    }
+  }
+  return NULL;
+}
+
+struct contest_ip *
 contests_get_ip_rule_nc(
         struct contest_access *acc,
         int n)
@@ -822,15 +842,17 @@ contests_delete_all_rules(struct contest_access **p_acc)
 int
 contests_delete_ip_rule_by_mask(
         struct contest_access **p_acc,
-        ej_ip_t *ip,
-        ej_ip_t *mask,
+        const ej_ip_t *p_ip,
+        const ej_ip_t *p_mask,
         int ssl_flag)
 {
   for (struct contest_ip *p = CNTS_FIRST_IP_NC(*p_acc); p; ) {
     struct contest_ip *q = CNTS_NEXT_IP_NC(p);
-    if (!ipv6cmp(ip, &p->addr) && !ipv6cmp(mask, &p->mask) && ssl_flag == p->ssl) {
-      xml_unlink_node(&p->b);
-      contests_free_2(&p->b);
+    if (!ipv6cmp(p_ip, &p->addr) && !ipv6cmp(p_mask, &p->mask)) {
+      if (ssl_flag < 0 || ssl_flag == p->ssl) {
+        xml_unlink_node(&p->b);
+        contests_free_2(&p->b);
+      }
     }
     p = q;
   }
