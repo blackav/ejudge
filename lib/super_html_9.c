@@ -16,12 +16,16 @@
 
 #include "ejudge/config.h"
 #include "ejudge/ej_types.h"
+#include "ejudge/expat_iface.h"
 #include "ejudge/json_serializers.h"
+#include "ejudge/l10n.h"
 #include "ejudge/meta/contests_meta.h"
+#include "ejudge/new_server_proto.h"
 #include "ejudge/opcaps.h"
 #include "ejudge/super-serve.h"
 #include "ejudge/super_html.h"
 #include "ejudge/super_proto.h"
+#include "ejudge/type_info.h"
 #include "ejudge/userlist_clnt.h"
 #include "ejudge/userlist_proto.h"
 #include "ejudge/http_request.h"
@@ -33,10 +37,12 @@
 #include "ejudge/xalloc.h"
 #include "ejudge/xml_utils.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
 #include <errno.h>
+#include <strings.h>
 #include <time.h>
 
 int
@@ -988,7 +994,7 @@ delete_contest_xml_json(struct http_request_info *phr)
     case CNTS_default_locale:
     case CNTS_default_locale_num:
         xfree(phr->ss->edited_cnts->default_locale); phr->ss->edited_cnts->default_locale = NULL;
-        phr->ss->edited_cnts->default_locale_num = 0;
+        phr->ss->edited_cnts->default_locale_num = -1;
         cJSON_AddTrueToObject(phr->json_result, "result");
         phr->status_code = 200;
         return;
@@ -1003,7 +1009,7 @@ delete_contest_xml_json(struct http_request_info *phr)
     case CNTS_capabilities:
     case CNTS_caps_node: {
         const unsigned char *other_login = NULL;
-        if (hr_cgi_param(phr, "other_login", &other_login) <= 0) {
+        if (hr_cgi_param(phr, "login", &other_login) <= 0) {
             contest_remove_all_permissions(phr->ss->edited_cnts);
         } else {
             contests_remove_login_permission(phr->ss->edited_cnts, other_login);
@@ -1030,7 +1036,8 @@ delete_contest_xml_json(struct http_request_info *phr)
                 return;
             }
             int ssl_flag = 0;
-            hr_cgi_param_bool_opt(phr, "ssl", &ssl_flag, 0);
+            hr_cgi_param_int_opt(phr, "ssl", &ssl_flag, -1);
+            ssl_flag = EJ_SIGN(ssl_flag);
             contests_delete_ip_rule_by_mask(p_acc, &addr, &mask, ssl_flag);
         }
         cJSON_AddTrueToObject(phr->json_result, "result");
@@ -1187,6 +1194,757 @@ super_serve_api_CNTS_DELETE_VALUE_JSON(
     }
 }
 
+static void
+set_capability(
+        struct contest_desc *cnts,
+        const unsigned char *login,
+        opcap_t caps,
+        int atfront,
+        int atback,
+        const unsigned char *before)
+{
+    struct opcap_list_item *cur;
+    for (cur = cnts->capabilities.first; cur; cur = (struct opcap_list_item *) cur->b.right) {
+        if (!strcmp(cur->login, login))
+            break;
+    }
+    if (cur) {
+        cur->caps = caps;
+        if (atfront <= 0 && atback <= 0 && !before) {
+            return;
+        }
+        if (atfront && !cur->b.left) {
+            return;
+        }
+        if (atback && !cur->b.right) {
+            return;
+        }
+        if (before) {
+            struct opcap_list_item *next = (struct opcap_list_item *) cur->b.right;
+            if (next && !strcmp(next->login, before)) {
+                return;
+            }
+        }
+        xml_unlink_node(&cur->b);
+    } else {
+        cur = (struct opcap_list_item *) contests_new_node(CONTEST_CAP);
+        cur->login = xstrdup(login);
+        cur->caps = caps;
+    }
+    if (!cnts->caps_node) {
+        cnts->caps_node = contests_new_node(CONTEST_CAPS);
+        xml_link_node_last(&cnts->b, cnts->caps_node);
+    }
+    if (atfront > 0) {
+        xml_link_node_first(cnts->caps_node, &cur->b);
+    } else if (before) {
+        struct opcap_list_item *bn;
+        for (bn = cnts->capabilities.first; bn; bn = (struct opcap_list_item* ) bn->b.right) {
+            if (!strcmp(bn->login, before)) {
+                break;
+            }
+        }
+        ASSERT(bn);
+        xml_link_node_before(&bn->b, &cur->b);
+    } else {
+        xml_link_node_last(cnts->caps_node, &cur->b);
+    }
+    cnts->capabilities.first = (struct opcap_list_item *) cnts->caps_node->first_down;
+}
+
+static void
+set_ip_restriction(
+        struct contest_desc *cnts,
+        struct contest_access **p_acc,
+        int tag,
+        const ej_ip_t *p_addr,
+        const ej_ip_t *p_mask,
+        int ssl_flag,
+        int allow,
+        int atfront,
+        int atback,
+        int has_before,
+        const ej_ip_t *before_addr,
+        const ej_ip_t *before_mask,
+        int before_ssl)
+{
+    struct contest_ip *cur = contests_find_ip_rule_nc(*p_acc, p_addr, p_mask, ssl_flag);
+    if (cur) {
+        cur->allow = !!allow;
+        if (atfront <= 0 && atback <= 0 && has_before <= 0) {
+            return;
+        }
+        if (atfront > 0 && !cur->b.left) {
+            return;
+        }
+        if (atback > 0 && !cur->b.right) {
+            return;
+        }
+        if (has_before > 0) {
+            struct contest_ip *next = (struct contest_ip *) cur->b.right;
+            if (!next) return;
+            if (!ipv6cmp(&next->addr, before_addr) && !ipv6cmp(&next->mask, before_mask)) {
+                if (before_ssl < 0 || before_ssl == next->ssl) {
+                    return;
+                }
+            }
+        }
+        xml_unlink_node(&cur->b);
+    } else {
+        cur = (struct contest_ip *) contests_new_node(CONTEST_IP);
+        cur->addr = *p_addr;
+        cur->mask = *p_mask;
+        cur->ssl = ssl_flag;
+        cur->allow = allow;
+    }
+    struct contest_access *acc = *p_acc;
+    if (!acc) {
+        acc = (struct contest_access *) contests_new_node(tag);
+        xml_link_node_last(&cnts->b, &acc->b);
+        *p_acc = acc;
+    }
+    if (atfront > 0) {
+        xml_link_node_first(&acc->b, &cur->b);
+    } else if (has_before > 0) {
+        struct contest_ip *before = contests_find_ip_rule_nc(acc, before_addr, before_mask, before_ssl);
+        if (before) {
+            xml_link_node_before(&before->b, &cur->b);
+        } else {
+            xml_link_node_last(&acc->b, &cur->b);
+        }
+    } else {
+        xml_link_node_last(&acc->b, &cur->b);
+    }
+}
+
+static void
+set_oauth_rule(
+        struct contest_desc *cnts,
+        const unsigned char *domain,
+        int allow,
+        int deny,
+        int strip_domain,
+        int disable_email_check,
+        int atfront,
+        int atback,
+        const unsigned char *before)
+{
+    struct xml_tree *cur = contests_find_oauth_rule_nc(cnts, domain);
+    int found = 0;
+    if (cur) {
+        contests_free_attrs(cur);
+        found = 1;
+    } else {
+        cur = contests_new_node(CONTEST_OAUTH_RULE);
+    }
+    xml_link_attr_last(cur, contests_new_attr(CONTEST_A_DOMAIN, domain));
+    if (allow >= 0) {
+        xml_link_attr_last(cur, contests_new_attr(CONTEST_A_ALLOW, xml_unparse_bool(allow)));
+    } else if (deny >= 0) {
+        xml_link_attr_last(cur, contests_new_attr(CONTEST_A_DENY, xml_unparse_bool(deny)));
+    }
+    if (strip_domain >= 0) {
+        xml_link_attr_last(cur, contests_new_attr(CONTEST_A_STRIP_DOMAIN, xml_unparse_bool(strip_domain)));
+    }
+    if (disable_email_check >= 0) {
+        xml_link_attr_last(cur, contests_new_attr(CONTEST_A_DISABLE_EMAIL_CHECK, xml_unparse_bool(disable_email_check)));
+    }
+    struct xml_tree *before_node = NULL;
+    if (before) {
+        before_node = contests_find_oauth_rule_nc(cnts, before);
+    }
+    if (found) {
+        if (atfront <= 0 && atback <= 0 && !before_node) {
+            return;
+        }
+        if (atfront > 0 && !cur->left) {
+            return;
+        }
+        if (atback > 0 && !cur->right) {
+            return;
+        }
+        if (before_node && cur->right == before_node) {
+            return;
+        }
+        xml_unlink_node(cur);
+    }
+    if (!cnts->oauth_rules) {
+        cnts->oauth_rules = contests_new_node(CONTEST_OAUTH_RULES);
+        xml_link_node_last(&cnts->b, cnts->oauth_rules);
+    }
+    if (atfront > 0) {
+        xml_link_node_first(cnts->oauth_rules, cur);
+    } else if (before_node) {
+        xml_link_node_before(before_node, cur);
+    } else {
+        xml_link_node_last(cnts->oauth_rules, cur);
+    }
+}
+
+static const int access_tags_map[] =
+{   
+  CONTEST_REGISTER_ACCESS,
+  CONTEST_USERS_ACCESS,
+  CONTEST_MASTER_ACCESS,
+  CONTEST_JUDGE_ACCESS,
+  CONTEST_TEAM_ACCESS,
+  CONTEST_SERVE_CONTROL_ACCESS,
+};
+
+static void
+set_contest_xml_json(struct http_request_info *phr)
+{
+    const unsigned char *field_name = NULL;
+    if (hr_cgi_param(phr, "field_name", &field_name) <= 0) {
+        phr->err_num = SSERV_ERR_INV_PARAM;
+        phr->status_code = 400;
+        return;
+    }
+    int field_id = contest_desc_lookup_field(field_name);
+    if (field_id <= 0) {
+        phr->err_num = SSERV_ERR_INV_PARAM;
+        phr->status_code = 400;
+        return;
+    }
+    void *field_ptr = contest_desc_get_ptr_nc(phr->ss->edited_cnts, field_id);
+    if (!field_ptr) {
+        phr->err_num = SSERV_ERR_INV_PARAM;
+        phr->status_code = 400;
+        return;
+    }
+    int field_type = contest_desc_get_type(field_id);
+    if (field_type == 'b') {
+        ejbytebool_t *ptr = (ejbytebool_t*) field_ptr;
+        int value = 0;
+        if (hr_cgi_param_bool_opt(phr, "value", &value, 0) <= 0) {
+            phr->err_num = SSERV_ERR_INV_PARAM;
+            phr->status_code = 400;
+            return;
+        }
+        *ptr = !!value;
+        if (*ptr) {
+            cJSON_AddTrueToObject(phr->json_result, "result");
+        } else {
+            cJSON_AddFalseToObject(phr->json_result, "result");
+        }
+        phr->status_code = 200;
+        return;
+    }
+    if (field_type == 't') {
+        time_t *ptr = (time_t *) field_ptr;
+        const unsigned char *value_str = NULL;
+        if (hr_cgi_param(phr, "value", &value_str) <= 0 || !value_str || !*value_str) {
+            phr->err_num = SSERV_ERR_INV_PARAM;
+            phr->status_code = 400;
+            return;
+        }
+        time_t tvalue = 0;
+        char *eptr = NULL;
+        errno = 0;
+        long value = strtol(value_str, &eptr, 10);
+        if (errno || *eptr || value_str == (const unsigned char *) eptr || value < 0 || (time_t) value != value) {
+            if (xml_parse_date(NULL, NULL, 0, 0, value_str, &tvalue) < 0 || tvalue < 0) {
+                phr->err_num = SSERV_ERR_INV_PARAM;
+                phr->status_code = 400;
+                return;
+            }
+        } else {
+            tvalue = value;
+        }
+        *ptr = tvalue;
+        cJSON_AddNumberToObject(phr->json_result, "result", tvalue);
+        phr->status_code = 200;
+        return;
+    }
+    unsigned char **field_text_ptr = NULL;
+    ejintbool_t *field_text_loaded_ptr = NULL;
+    get_state_file_pointers_by_field_id(phr->ss, field_id, &field_text_ptr, &field_text_loaded_ptr);
+    if (field_text_ptr && field_text_loaded_ptr) {
+        const unsigned char *value = NULL;
+        if (hr_cgi_param(phr, "value", &value) <= 0 || !value) {
+            phr->err_num = SSERV_ERR_INV_PARAM;
+            phr->status_code = 400;
+            return;
+        }
+        if (!*value) {
+            xfree(*field_text_ptr); *field_text_ptr = NULL;
+            *field_text_loaded_ptr = 0;
+            xfree(field_ptr); field_ptr = NULL;
+            cJSON_AddNullToObject(phr->json_result, "result");
+            phr->status_code = 200;
+            return;
+        }
+        // FIXME: validate file name
+        unsigned char **ptr = (unsigned char **) field_ptr;
+        xfree(*ptr);
+        *ptr = xstrdup(value);
+        cJSON_AddStringToObject(phr->json_result, "result", value);
+        phr->status_code = 200;
+        return;
+    }
+
+    switch (field_id) {
+    case CNTS_id:
+    case CNTS_root_dir:
+    case CNTS_conf_dir:
+    case CNTS_serve_user:
+    case CNTS_serve_group:
+    case CNTS_run_user:
+    case CNTS_run_group:
+    case CNTS_slave_rules:
+        phr->err_num = SSERV_ERR_INV_PARAM;
+        phr->status_code = 400;
+        return;
+    case CNTS_name: {
+        unsigned char **ptr = (unsigned char **) field_ptr;
+        const unsigned char *value = NULL;
+        if (hr_cgi_param(phr, "value", &value) <= 0 || !value) {
+            phr->err_num = SSERV_ERR_INV_PARAM;
+            phr->status_code = 400;
+            return;
+        }
+        xfree(*ptr); *ptr = xstrdup(value);
+        cJSON_AddStringToObject(phr->json_result, "result", value);
+        phr->status_code = 200;
+        return;
+    }
+    case CNTS_user_contest:
+    case CNTS_user_contest_num: {
+        int value = 0;
+        if (hr_cgi_param_int_opt(phr, "value", &value, 0) <= 0) {
+            phr->err_num = SSERV_ERR_INV_PARAM;
+            phr->status_code = 400;
+            return;
+        }
+        if (value == 0) {
+            xfree(phr->ss->edited_cnts->user_contest); phr->ss->edited_cnts->user_contest = NULL;
+            phr->ss->edited_cnts->user_contest_num = 0;
+            cJSON_AddNumberToObject(phr->json_result, "result", 0);
+            phr->status_code = 200;
+            return;
+        }
+        if (value < 0 || value == phr->ss->edited_cnts->id) {
+            phr->err_num = SSERV_ERR_INV_PARAM;
+            phr->status_code = 400;
+            return;
+        }
+        const struct contest_desc *other_cnts = NULL;
+        if (contests_get(value, &other_cnts) < 0 || !other_cnts) {
+            phr->err_num = SSERV_ERR_INV_PARAM;
+            phr->status_code = 400;
+            return;
+        }
+        if (other_cnts->user_contest_num > 0) {
+            phr->err_num = SSERV_ERR_INV_PARAM;
+            phr->status_code = 400;
+            return;
+        }
+        char *user_contest_str = NULL;
+        asprintf(&user_contest_str, "%d", value);
+        xfree(phr->ss->edited_cnts->user_contest);
+        phr->ss->edited_cnts->user_contest = user_contest_str;
+        phr->ss->edited_cnts->user_contest_num = value;
+        cJSON_AddNumberToObject(phr->json_result, "result", value);
+        phr->status_code = 200;
+        return;
+    }
+    case CNTS_default_locale:
+    case CNTS_default_locale_num: {
+        const unsigned char *value_str = NULL;
+        if (hr_cgi_param(phr, "value", &value_str) <= 0) {
+            phr->err_num = SSERV_ERR_INV_PARAM;
+            phr->status_code = 400;
+            return;
+        }
+        if (!value_str || !*value_str) {
+            xfree(phr->ss->edited_cnts->default_locale); phr->ss->edited_cnts->default_locale = NULL;
+            phr->ss->edited_cnts->default_locale_num = -1;
+            cJSON_AddNullToObject(phr->json_result, "result");
+            phr->status_code = 200;
+            return;
+        }
+        int locale_id = l10n_parse_locale(value_str);
+        if (locale_id < 0) {
+            phr->err_num = SSERV_ERR_INV_PARAM;
+            phr->status_code = 400;
+            return;
+        }
+        xfree(phr->ss->edited_cnts->default_locale);
+        phr->ss->edited_cnts->default_locale = xstrdup(l10n_unparse_locale(locale_id));
+        phr->ss->edited_cnts->default_locale_num = locale_id;
+        cJSON_AddNumberToObject(phr->json_result, "result", locale_id);
+        phr->status_code = 200;
+        return;
+    }
+    case CNTS_file_mode:
+    case CNTS_dir_mode: {
+        unsigned char **ptr = (unsigned char **) field_ptr;
+        const unsigned char *value_str = NULL;
+        if (hr_cgi_param(phr, "value", &value_str) <= 0) {
+            phr->err_num = SSERV_ERR_INV_PARAM;
+            phr->status_code = 400;
+            return;
+        }
+        if (!value_str || !*value_str) {
+            xfree(*ptr); *ptr = NULL;
+            cJSON_AddNullToObject(phr->json_result, "result");
+            phr->status_code = 200;
+            return;
+        }
+        errno = 0;
+        char *eptr = NULL;
+        unsigned long val = strtoul(value_str, &eptr, 8);
+        if (errno || *eptr || value_str == (unsigned char *) eptr || val == 0 || val > 07777) {
+            phr->err_num = SSERV_ERR_INV_PARAM;
+            phr->status_code = 400;
+            return;
+        }
+        char *sval = 0;
+        asprintf(&sval, "%04lo", val);
+        xfree(*ptr); *ptr = sval;
+        cJSON_AddStringToObject(phr->json_result, "result", sval);
+        phr->status_code = 200;
+        return;
+    }
+    case CNTS_capabilities:
+    case CNTS_caps_node: {
+        const unsigned char *other_login = NULL;
+        if (hr_cgi_param(phr, "login", &other_login) <= 0) {
+            phr->err_num = SSERV_ERR_INV_PARAM;
+            phr->status_code = 400;
+            return;
+        }
+        const unsigned char *caps_str = NULL;
+        if (hr_cgi_param(phr, "caps", &caps_str) <= 0 || !caps_str) {
+            phr->err_num = SSERV_ERR_INV_PARAM;
+            phr->status_code = 400;
+            return;
+        }
+        opcap_t caps = 0;
+        if (opcaps_parse(caps_str, &caps) < 0) {
+            phr->err_num = SSERV_ERR_INV_PARAM;
+            phr->status_code = 400;
+            return;
+        }
+        int atfront = 0, atback = 0;
+        const unsigned char *before = NULL;
+        hr_cgi_param_bool_opt(phr, "atfront", &atfront, 0);
+        hr_cgi_param_bool_opt(phr, "atback", &atback, 0);
+        if (hr_cgi_param(phr, "before", &before) < 0) {
+            phr->err_num = SSERV_ERR_INV_PARAM;
+            phr->status_code = 400;
+            return;
+        }
+        if (before && !strcmp(other_login, before)) {
+            phr->err_num = SSERV_ERR_INV_PARAM;
+            phr->status_code = 400;
+            return;
+        }
+        if (before) {
+            opcap_t ocap = 0;
+            if (opcaps_find(&phr->ss->edited_cnts->capabilities, other_login, &ocap) < 0) {
+                phr->err_num = SSERV_ERR_INV_PARAM;
+                phr->status_code = 400;
+                return;
+            }
+        }
+        set_capability(phr->ss->edited_cnts, other_login, caps, atfront, atback, before);
+        cJSON_AddTrueToObject(phr->json_result, "result");
+        phr->status_code = 200;
+        return;
+    }
+    case CNTS_register_access:
+    case CNTS_users_access:
+    case CNTS_master_access:
+    case CNTS_judge_access:
+    case CNTS_team_access:
+    case CNTS_serve_control_access: {
+        struct contest_access **p_acc = (struct contest_access**) field_ptr;
+        // default [allow|deny]
+        const unsigned char *default_str = NULL;
+        int r = hr_cgi_param(phr, "default", &default_str);
+        if (r < 0) {
+            phr->err_num = SSERV_ERR_INV_PARAM;
+            phr->status_code = 400;
+            return;
+        }
+        if (r > 0) {
+            int default_access = 0;
+            if (!strcasecmp(default_str, "allow")) {
+                contests_set_default(phr->ss->edited_cnts, p_acc, access_tags_map[field_id-CNTS_register_access], 1);
+                default_access = 1;
+            } else if (!strcasecmp(default_str, "deny")) {
+                contests_set_default(phr->ss->edited_cnts, p_acc, access_tags_map[field_id-CNTS_register_access], 0);
+            } else {
+                phr->err_num = SSERV_ERR_INV_PARAM;
+                phr->status_code = 400;
+                return;
+            }
+            cJSON_AddNumberToObject(phr->json_result, "result", default_access);
+            phr->status_code = 200;
+            return;
+        }
+        const unsigned char *mask_str = NULL;
+        ej_ip_t addr, mask;
+        if (hr_cgi_param(phr, "mask", &mask_str) <= 0) {
+            phr->err_num = SSERV_ERR_INV_PARAM;
+            phr->status_code = 400;
+            return;
+        }
+        if (xml_parse_ipv6_mask(NULL, NULL, 0, 0, mask_str, &addr, &mask) < 0) {
+            phr->err_num = SSERV_ERR_INV_PARAM;
+            phr->status_code = 400;
+            return;
+        }
+        int ssl_flag = 0, allow = 0;
+        hr_cgi_param_int_opt(phr, "ssl", &ssl_flag, -1);
+        ssl_flag = EJ_SIGN(ssl_flag);
+        hr_cgi_param_bool_opt(phr, "allow", &allow, 0);
+        if (allow > 0) allow = 1;
+        else allow = 0;
+        int atfront = 0, atback = 0;
+        const unsigned char *before_str = NULL;
+        hr_cgi_param_bool_opt(phr, "atfront", &atfront, 0);
+        hr_cgi_param_bool_opt(phr, "atback", &atback, 0);
+        if (hr_cgi_param(phr, "before", &before_str) < 0) {
+            phr->err_num = SSERV_ERR_INV_PARAM;
+            phr->status_code = 400;
+            return;
+        }
+        int has_before = 0;
+        ej_ip_t before_addr = {}, before_mask = {};
+        int before_ssl = -1;
+        if (before_str) {
+            if (xml_parse_ipv6_mask(NULL, NULL, 0, 0, before_str, &before_addr, &before_mask) < 0) {
+                phr->err_num = SSERV_ERR_INV_PARAM;
+                phr->status_code = 400;
+                return;
+            }
+            hr_cgi_param_int_opt(phr, "before_ssl", &before_ssl, -1);
+            before_ssl = EJ_SIGN(before_ssl);
+            if (!contests_find_ip_rule_nc(*p_acc, &before_addr, &before_mask, -1)) {
+                phr->err_num = SSERV_ERR_INV_PARAM;
+                phr->status_code = 400;
+                return;
+            }
+            has_before = 1;
+        }
+        set_ip_restriction(phr->ss->edited_cnts, p_acc, access_tags_map[field_id-CNTS_register_access],
+                           &addr, &mask, ssl_flag, allow, atfront, atback,
+                           has_before, &before_addr, &before_mask, before_ssl);
+        cJSON_AddTrueToObject(phr->json_result, "result");
+        phr->status_code = 200;
+        return;
+    }
+    case CNTS_fields: {
+        const unsigned char *user_field_name = NULL;
+        if (hr_cgi_param(phr, "user_field_name", &user_field_name) <= 0) {
+            phr->err_num = SSERV_ERR_INV_PARAM;
+            phr->status_code = 400;
+            return;
+        }
+        int user_field = contests_parse_user_field_name(user_field_name);
+        if (user_field < CONTEST_FIRST_FIELD || user_field >= CONTEST_LAST_FIELD) {
+            phr->err_num = SSERV_ERR_INV_PARAM;
+            phr->status_code = 400;
+            return;
+        }
+        int mandatory = -1, checkbox = -1, is_password = -1;
+        const unsigned char *legend = NULL, *separator = NULL, *options = NULL;
+        hr_cgi_param_bool_opt(phr, "mandatory", &mandatory, 0);
+        hr_cgi_param_bool_opt(phr, "checkbox", &checkbox, 0);
+        hr_cgi_param_bool_opt(phr, "is_password", &is_password, 0);
+        hr_cgi_param(phr, "legend", &legend);
+        hr_cgi_param(phr, "separator", &separator);
+        hr_cgi_param(phr, "options", &options);
+        struct contest_field *f = phr->ss->edited_cnts->fields[user_field];
+        if (f) {
+            f->mandatory = 0;
+            f->checkbox = 0;
+            f->is_password = 0;
+            xfree(f->legend); f->legend = NULL;
+            xfree(f->separator); f->separator = NULL;
+            xfree(f->options); f->options = NULL;
+        } else {
+            f = (struct contest_field *) contests_new_node(CONTEST_FIELD);
+            xml_link_node_last(&phr->ss->edited_cnts->b, &f->b);
+            phr->ss->edited_cnts->fields[user_field] = f;
+            f->id = user_field;
+        }
+        f->mandatory = mandatory;
+        f->checkbox = checkbox;
+        f->is_password = is_password;
+        if (legend) {
+            f->legend = xstrdup(legend);
+        }
+        if (separator) {
+            f->separator = xstrdup(separator);
+        }
+        if (options) {
+            f->options = xstrdup(options);
+        }
+        cJSON_AddTrueToObject(phr->json_result, "result");
+        phr->status_code = 200;
+        return;
+    }
+    case CNTS_members: {
+        const unsigned char *member = NULL;
+        if (hr_cgi_param(phr, "member", &member) <= 0) {
+            phr->err_num = SSERV_ERR_INV_PARAM;
+            phr->status_code = 400;
+            return;
+        }
+        int member_id = contests_parse_member(member);
+        if (member_id < 0) {
+            phr->err_num = SSERV_ERR_INV_PARAM;
+            phr->status_code = 400;
+            return;
+        }
+        const unsigned char *member_field_name = NULL;
+        int r = hr_cgi_param(phr, "member_field_name", &member_field_name);
+        if (r < 0) {
+            phr->err_num = SSERV_ERR_INV_PARAM;
+            phr->status_code = 400;
+            return;
+        }
+        if (!r || !member_field_name || !*member_field_name) {
+            int min_count = 0, max_count = 0, init_count = 0;
+            if (hr_cgi_param_int(phr, "min_count", &min_count) < 0 || min_count < 0 || min_count > 100) {
+                phr->err_num = SSERV_ERR_INV_PARAM;
+                phr->status_code = 400;
+                return;
+            }
+            if (hr_cgi_param_int(phr, "max_count", &max_count) < 0 || max_count < min_count || max_count > 100) {
+                phr->err_num = SSERV_ERR_INV_PARAM;
+                phr->status_code = 400;
+                return;
+            }
+            if (hr_cgi_param_int(phr, "init_count", &init_count) < 0 || init_count < min_count || init_count > max_count) {
+                phr->err_num = SSERV_ERR_INV_PARAM;
+                phr->status_code = 400;
+                return;
+            }
+            struct contest_member *m = phr->ss->edited_cnts->members[member_id];
+            if (!m) {
+                m = (struct contest_member *) contests_new_node(CONTEST_CONTESTANTS + member_id);
+                xml_link_node_last(&phr->ss->edited_cnts->b, &m->b);
+                phr->ss->edited_cnts->members[member_id] = m;
+            }
+            m->min_count = min_count;
+            m->max_count = max_count;
+            m->init_count = init_count;
+            cJSON_AddTrueToObject(phr->json_result, "result");
+            phr->status_code = 200;
+            return;
+        }
+        int member_field = contests_parse_member_field_name(member_field_name);
+        if (member_field <= 0 || member_field >= CONTEST_LAST_MEMBER_FIELD) {
+            phr->err_num = SSERV_ERR_INV_PARAM;
+            phr->status_code = 400;
+            return;
+        }
+        struct contest_member *m = phr->ss->edited_cnts->members[member_id];
+        if (!m) {
+            m = (struct contest_member *) contests_new_node(CONTEST_CONTESTANTS + member_id);
+            xml_link_node_last(&phr->ss->edited_cnts->b, &m->b);
+            phr->ss->edited_cnts->members[member_id] = m;
+        }
+        int mandatory = -1, checkbox = -1, is_password = -1;
+        const unsigned char *legend = NULL, *separator = NULL, *options = NULL;
+        hr_cgi_param_bool_opt(phr, "mandatory", &mandatory, 0);
+        hr_cgi_param_bool_opt(phr, "checkbox", &checkbox, 0);
+        hr_cgi_param_bool_opt(phr, "is_password", &is_password, 0);
+        hr_cgi_param(phr, "legend", &legend);
+        hr_cgi_param(phr, "separator", &separator);
+        hr_cgi_param(phr, "options", &options);
+        struct contest_field *f = m->fields[member_field];
+        if (f) {
+            f->mandatory = 0;
+            f->checkbox = 0;
+            f->is_password = 0;
+            xfree(f->legend); f->legend = NULL;
+            xfree(f->separator); f->separator = NULL;
+            xfree(f->options); f->options = NULL;
+        } else {
+            f = (struct contest_field *) contests_new_node(CONTEST_FIELD);
+            xml_link_node_last(&m->b, &f->b);
+            m->fields[member_field] = f;
+            f->id = member_field;
+        }
+        f->mandatory = mandatory;
+        f->checkbox = checkbox;
+        f->is_password = is_password;
+        if (legend) {
+            f->legend = xstrdup(legend);
+        }
+        if (separator) {
+            f->separator = xstrdup(separator);
+        }
+        if (options) {
+            f->options = xstrdup(options);
+        }
+        cJSON_AddTrueToObject(phr->json_result, "result");
+        phr->status_code = 200;
+        return;
+    }
+    case CNTS_oauth_rules: {
+        const unsigned char *domain = NULL;
+        if (hr_cgi_param(phr, "domain", &domain) <= 0) {
+            phr->err_num = SSERV_ERR_INV_PARAM;
+            phr->status_code = 400;
+            return;
+        }
+        int allow = -1, deny = -1, strip_domain = -1, disable_email_check = -1;
+        hr_cgi_param_bool_opt(phr, "allow", &allow, -1);
+        hr_cgi_param_bool_opt(phr, "deny", &deny, -1);
+        hr_cgi_param_bool_opt(phr, "strip_domain", &strip_domain, -1);
+        hr_cgi_param_bool_opt(phr, "disable_email_check", &disable_email_check, -1);
+        int atfront = 0, atback = 0;
+        const unsigned char *before = NULL;
+        hr_cgi_param_bool_opt(phr, "atfront", &atfront, 0);
+        hr_cgi_param_bool_opt(phr, "atback", &atback, 0);
+        if (hr_cgi_param(phr, "before", &before) < 0) {
+            phr->err_num = SSERV_ERR_INV_PARAM;
+            phr->status_code = 400;
+            return;
+        }
+        if (before) {
+            if (!strcmp(before, domain)) {
+                phr->err_num = SSERV_ERR_INV_PARAM;
+                phr->status_code = 400;
+                return;
+            }
+            if (!contests_find_oauth_rule_nc(phr->ss->edited_cnts, before)) {
+                phr->err_num = SSERV_ERR_INV_PARAM;
+                phr->status_code = 400;
+                return;
+            }
+        }
+        set_oauth_rule(phr->ss->edited_cnts, domain, allow, deny, strip_domain, disable_email_check, atfront, atback, before);
+        cJSON_AddTrueToObject(phr->json_result, "result");
+        phr->status_code = 200;
+        return;
+    }
+    default:
+        break;
+    }
+    if (field_type == 's') {
+        unsigned char **ptr = (unsigned char **) field_ptr;
+        const unsigned char *value = NULL;
+        if (hr_cgi_param(phr, "value", &value) <= 0 || !value) {
+            phr->err_num = SSERV_ERR_INV_PARAM;
+            phr->status_code = 400;
+            return;
+        }
+        xfree(*ptr); *ptr = xstrdup(value);
+        cJSON_AddStringToObject(phr->json_result, "result", value);
+        phr->status_code = 200;
+        return;
+    }
+    phr->err_num = SSERV_ERR_INV_PARAM;
+    phr->status_code = 400;
+}
+
 void
 super_serve_api_CNTS_SET_VALUE_JSON(
         FILE *out_f,
@@ -1218,7 +1976,7 @@ super_serve_api_CNTS_SET_VALUE_JSON(
         return;
     }
     if (!strcmp(section, "contest.xml")) {
-        //get_contest_xml_json(phr);
+        set_contest_xml_json(phr);
         return;
     } else if (!strcmp(section, "file")) {
         //get_contest_file_json(phr);
