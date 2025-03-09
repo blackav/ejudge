@@ -122,4 +122,7 @@ xml_parse_text(
         int root_node,
         const struct xml_parse_spec *spec);
 
+void
+xml_link_attr_last(struct xml_tree *node, struct xml_attr *attr);
+
 #endif /* __EXPAT_IFACE_H__ */

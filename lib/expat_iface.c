@@ -1003,6 +1003,21 @@ xml_link_node_before(
   }
 }
 
+void
+xml_link_attr_last(struct xml_tree *node, struct xml_attr *attr)
+{
+  if (!node || !attr) return;
+  attr->next = NULL;
+  attr->prev = node->last;
+  if (node->last) {
+    node->last->next = attr;
+  } else {
+    node->first = attr;
+  }
+  node->last = attr;
+}
+
+
 static const unsigned char *
 do_subst(
         struct html_armor_buffer *pb,
