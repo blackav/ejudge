@@ -205,6 +205,9 @@ super_serve_api_CNTS_START_EDIT_JSON(
     int contest_id = 0;
     unsigned char buf[128];
 
+    int xml_only = 0;
+    hr_cgi_param_bool_opt(phr, "xml_only", &xml_only, 0);
+
     if (hr_cgi_param_int_opt(phr, "contest_id", &contest_id, 0) < 0) {
         phr->err_num = SSERV_ERR_INV_CONTEST;
         phr->status_code = 400;
@@ -269,7 +272,9 @@ super_serve_api_CNTS_START_EDIT_JSON(
     }
 
     phr->ss->edited_cnts = rw_cnts;
-    super_html_load_serve_cfg(rw_cnts, phr->config, phr->ss);
+    if (!xml_only) {
+        super_html_load_serve_cfg(rw_cnts, phr->config, phr->ss);
+    }
 
     // { "session": "SID-CK", "init_time": TS, "is_created": false }
     cJSON *jrr = cJSON_CreateObject();
