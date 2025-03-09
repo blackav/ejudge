@@ -1945,6 +1945,43 @@ set_contest_xml_json(struct http_request_info *phr)
     phr->status_code = 400;
 }
 
+static void
+set_contest_file_json(struct http_request_info *phr)
+{
+    const unsigned char *field_name = NULL;
+    if (hr_cgi_param(phr, "field_name", &field_name) <= 0) {
+        phr->err_num = SSERV_ERR_INV_PARAM;
+        phr->status_code = 400;
+        return;
+    }
+    int field_id = parse_file_field_name(field_name);
+    if (field_id <= 0) {
+        phr->err_num = SSERV_ERR_INV_PARAM;
+        phr->status_code = 400;
+        return;
+    }
+    const unsigned char *value = NULL;
+    if (hr_cgi_param(phr, "value", &value) <= 0) {
+        phr->err_num = SSERV_ERR_INV_PARAM;
+        phr->status_code = 400;
+        return;
+    }
+    const unsigned char *file_name = NULL;
+    unsigned char **p_text = NULL;
+    ejintbool_t *p_loaded = 0;
+    get_state_file_pointers(phr->ss, phr->ss->edited_cnts, field_id, &file_name, &p_text, &p_loaded);
+    if (!p_text) {
+        phr->err_num = SSERV_ERR_INV_PARAM;
+        phr->status_code = 400;
+        return;
+    }
+    xfree(*p_text);
+    *p_text = xstrdup(value);
+    *p_loaded = 1;
+    cJSON_AddTrueToObject(phr->json_result, "result");
+    phr->status_code = 200;
+}
+
 void
 super_serve_api_CNTS_SET_VALUE_JSON(
         FILE *out_f,
@@ -1979,7 +2016,7 @@ super_serve_api_CNTS_SET_VALUE_JSON(
         set_contest_xml_json(phr);
         return;
     } else if (!strcmp(section, "file")) {
-        //get_contest_file_json(phr);
+        set_contest_file_json(phr);
         return;
     } else {
         phr->err_num = SSERV_ERR_INV_PARAM;
