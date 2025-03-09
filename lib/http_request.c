@@ -265,7 +265,7 @@ hr_cgi_param_bool_opt(
         return r;
     }
     if (!r || !s || !*s) {
-        if (p_val) *p_val = !!default_value;
+        if (p_val) *p_val = default_value;
         return 0;
     }
     if (!strcasecmp(s, "false")) {
@@ -291,7 +291,7 @@ hr_cgi_param_bool_opt(
         return -1;
     }
     if (v < 0) {
-        v = !!default_value;
+        v = default_value;
     } else if (v > 0) {
         v = 1;
     }
