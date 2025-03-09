@@ -1131,6 +1131,20 @@ contests_parse_member(const unsigned char *s)
   return -1;
 }
 
+const unsigned char *
+contests_get_oauth_domain(struct xml_tree *p)
+{
+  if (p->tag != CONTEST_OAUTH_RULE) {
+    return NULL;
+  }
+  for (struct xml_attr *a = p->first; a; a = a->next) {
+    if (a->tag == CONTEST_A_DOMAIN) {
+      return a->text;
+    }
+  }
+  return NULL;
+}
+
 void
 contests_delete_oauth_rule(struct contest_desc *cnts, const unsigned char *domain)
 {
@@ -1139,13 +1153,7 @@ contests_delete_oauth_rule(struct contest_desc *cnts, const unsigned char *domai
   struct xml_tree *q;
   for (; p; p = q) {
     q = p->right;
-    const unsigned char *cur_domain = NULL;
-    for (struct xml_attr *a = p->first; a; a = a->next) {
-      if (a->tag == CONTEST_A_DOMAIN) {
-        cur_domain = a->text;
-        break;
-      }
-    }
+    const unsigned char *cur_domain = contests_get_oauth_domain(p);
     if (cur_domain && !strcmp(cur_domain, domain)) {
       xml_unlink_node(p);
       contests_free_2(p);
@@ -1156,4 +1164,22 @@ contests_delete_oauth_rule(struct contest_desc *cnts, const unsigned char *domai
     contests_free_2(cnts->oauth_rules);
     cnts->oauth_rules = NULL;
   }
+}
+
+struct xml_tree *
+contests_find_oauth_rule_nc(struct contest_desc *cnts, const unsigned char *domain)
+{
+  if (!cnts->oauth_rules) {
+    return NULL;
+  }
+  for (struct xml_tree *p = cnts->oauth_rules->first_down; p; p = p->right) {
+    if (p->tag != CONTEST_OAUTH_RULE) {
+      continue;
+    }
+    const unsigned char *cur_domain = contests_get_oauth_domain(p);
+    if (cur_domain && !strcmp(cur_domain, domain)) {
+      return p;
+    }
+  }
+  return NULL;
 }

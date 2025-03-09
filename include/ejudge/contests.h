@@ -493,6 +493,7 @@ struct contest_desc *contests_free(struct contest_desc *cnts);
 void contests_free_2(struct xml_tree *t);
 struct xml_tree *contests_new_node(int tag);
 void contests_clear_cache(void);
+void contests_free_attrs(struct xml_tree *p);
 
 const unsigned char *contests_strerror(int);
 
@@ -672,6 +673,11 @@ int contests_parse_user_field_name(const unsigned char *s);
 int contests_parse_member_field_name(const unsigned char *s);
 int contests_parse_member(const unsigned char *s);
 
+const unsigned char *contests_get_oauth_domain(struct xml_tree *p);
 void contests_delete_oauth_rule(struct contest_desc *cnts, const unsigned char *domain);
+struct xml_tree *contests_find_oauth_rule_nc(struct contest_desc *cnts, const unsigned char *domain);
+
+void contests_free_attrs(struct xml_tree *p);
+struct xml_attr *contests_new_attr(int attr, const unsigned char *text);
 
 #endif /* __CONTESTS_H__ */
