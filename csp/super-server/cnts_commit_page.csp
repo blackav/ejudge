@@ -21,7 +21,7 @@
     if (!phr->ss->edited_cnts) FAIL(SSERV_ERR_CONTEST_NOT_EDITED);
 
     comm_f = open_memstream(&comm_s, &comm_z);
-    r = super_html_commit_contest_2(comm_f, phr->user_id, phr->login, &phr->ip, phr->config, phr->userlist_clnt, phr->ss);
+    r = super_html_commit_contest_2(comm_f, phr->user_id, phr->login, &phr->ip, phr->config, phr->userlist_clnt, phr->ss, 0, NULL);
     fclose(comm_f); comm_f = 0;
 
     if (r < 0) {

@@ -38,6 +38,7 @@
 #include "ejudge/compat.h"
 #include "ejudge/file_perms.h"
 #include "ejudge/variant_map.h"
+#include "ejudge/cJSON.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -448,7 +449,9 @@ super_html_commit_contest_2(
         const ej_ip_t *ip_address,
         const struct ejudge_cfg *config,
         struct userlist_clnt *us_conn,
-        struct sid_state *sstate)
+        struct sid_state *sstate,
+        int dry_run_flag,
+        cJSON **pjresult)
 {
   struct contest_desc *cnts = sstate->edited_cnts;
   struct section_global_data *global = sstate->global;
@@ -728,6 +731,7 @@ super_html_commit_contest_2(
                             cnts->team_menu_1_file, sstate->team_menu_1_text,
                             conf_path,
                             team_menu_1_path, team_menu_1_path_2)) < 0)
+    goto failed;
 
   /* Save the team_menu_2_file as temporary file */
   if ((t2f = save_conf_file(log_f, "`team' HTML content menu2",
@@ -1134,7 +1138,7 @@ super_html_commit_contest(
   char *log_s = 0;
   size_t log_z = 0;
   FILE *log_f = open_memstream(&log_s, &log_z);
-  int r = super_html_commit_contest_2(log_f, user_id, login, ip_address, config, us_conn, sstate);
+  int r = super_html_commit_contest_2(log_f, user_id, login, ip_address, config, us_conn, sstate, 0, NULL);
   fclose(log_f); log_f = 0;
   if (r < 0) goto failed;
 
