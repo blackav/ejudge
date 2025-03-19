@@ -31,6 +31,7 @@
 #include "ejudge/logger.h"
 #include "ejudge/osdeps.h"
 
+#include <limits.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -472,8 +473,8 @@ contests_unparse_and_save(
         int dry_flag)
 {
   int serial = 1;
-  unsigned char tmp_path[1024];
-  unsigned char xml_path[1024];
+  unsigned char tmp_path[PATH_MAX];
+  unsigned char xml_path[PATH_MAX];
   int fd;
   FILE *f;
   struct stat xml_stat;
@@ -497,7 +498,13 @@ contests_unparse_and_save(
   // read the previuos file and compare it with the new
   if (generic_read_file(&old_text, 0, &old_size, 0, 0, xml_path, 0) >= 0
       && new_size == old_size && memcmp(new_text, old_text, new_size) == 0) {
-    info("contest_save_xml: %d is not changed", cnts->id);
+    if (dry_flag) {
+      if (p_diff_txt) {
+        *p_diff_txt = xstrdup("");
+      }
+    } else {
+      info("contest_save_xml: %d is not changed", cnts->id);
+    }
     xfree(old_text);
     xfree(new_text);
     return 0;
@@ -538,6 +545,12 @@ contests_unparse_and_save(
 
   if (diff_func && p_diff_txt) {
     diff_txt = (*diff_func)(xml_path, tmp_path);
+  }
+
+  if (dry_flag) {
+    if (p_diff_txt) *p_diff_txt = diff_txt;
+    unlink(tmp_path);
+    return 0;
   }
 
   if (stat(xml_path, &xml_stat) >= 0) {
