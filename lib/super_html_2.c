@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2005-2024 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2025 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -457,7 +457,6 @@ super_html_commit_contest_2(
   struct section_global_data *global = sstate->global;
   struct stat sb;
   int errcode;
-  unsigned char hbuf[1024];
   unsigned char *xml_header = 0;
   unsigned char *xml_footer = 0;
   unsigned char *serve_header = 0;
@@ -885,9 +884,7 @@ super_html_commit_contest_2(
              xml_unparse_ipv6(ip_address));
   }
   if (!xml_header) {
-    snprintf(hbuf, sizeof(hbuf),
-             "<!-- $%s$ -->\n", "Id");
-    xml_header = xstrdup(hbuf);
+    xml_header = xstrdup("");
   }
   if (!xml_footer) xml_footer = xstrdup("\n");
 
@@ -903,7 +900,7 @@ super_html_commit_contest_2(
     errcode = super_html_get_serve_header_and_footer(serve_cfg_path, &serve_header, &serve_footer);
     if (errcode == -SSERV_ERR_FILE_NOT_EXIST) {
       fprintf(log_f, "serve configuration file `%s' does not exist\n", serve_cfg_path);
-      serve_header = xstrdup("# $" "Id" "$\n");
+      serve_header = xstrdup("");
       snprintf(serve_audit_rec, sizeof(serve_audit_rec),
                "# audit: created %s %d (%s) %s\n",
                xml_unparse_date(time(0)), user_id, login,
@@ -940,7 +937,7 @@ super_html_commit_contest_2(
 
   /* 11. Save the XML file */
   errcode = contests_unparse_and_save(cnts, NULL, xml_header, xml_footer,
-                                      audit_rec, diff_func, &diff_str);
+                                      audit_rec, diff_func, &diff_str, dry_run_flag);
   if (errcode < 0) {
     fprintf(log_f, "error: saving of `%s' failed: %s\n", xml_path,
             contests_strerror(-errcode));

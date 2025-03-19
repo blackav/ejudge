@@ -527,14 +527,18 @@ int contests_save_xml(struct contest_desc *cnts,
                       const unsigned char *txt1,
                       const unsigned char *txt2,
                       const unsigned char *txt3);
-int contests_unparse_and_save(struct contest_desc *cnts,
-                              const unsigned char *charset,
-                              const unsigned char *header,
-                              const unsigned char *footer,
-                              const unsigned char *add_footer,
-                              unsigned char *(*diff_func)(const unsigned char *,
-                                                          const unsigned char *),
-                              unsigned char **p_diff_txt);
+int
+contests_unparse_and_save(
+        struct contest_desc *cnts,
+        const unsigned char *charset,
+        const unsigned char *header,
+        const unsigned char *footer,
+        const unsigned char *add_footer,
+        unsigned char *(*diff_func)(
+                const unsigned char *,
+                const unsigned char *),
+        unsigned char **p_diff_txt,
+        int dry_flag);
 
 void
 contests_get_path_in_conf_dir(

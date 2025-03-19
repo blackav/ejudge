@@ -468,7 +468,8 @@ contests_unparse_and_save(
         const unsigned char *add_footer,
         unsigned char *(*diff_func)(const unsigned char *,
                                     const unsigned char *),
-        unsigned char **p_diff_txt)
+        unsigned char **p_diff_txt,
+        int dry_flag)
 {
   int serial = 1;
   unsigned char tmp_path[1024];

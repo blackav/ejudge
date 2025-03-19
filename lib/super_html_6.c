@@ -5683,7 +5683,7 @@ super_serve_op_CREATE_CONTEST_BATCH_ACTION(
 
   rw_cnts->id = contest_id;
   xfree(rw_cnts->root_dir); rw_cnts->root_dir = NULL;
-  if (contests_unparse_and_save(rw_cnts, NULL, NULL, NULL, NULL, NULL, NULL) < 0) {
+  if (contests_unparse_and_save(rw_cnts, NULL, NULL, NULL, NULL, NULL, NULL, 0) < 0) {
     snprintf(errbuf, sizeof(errbuf), "failed to write contest.xml file");
     FAIL(SSERV_ERR_INV_OPER);
   }

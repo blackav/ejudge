@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2020 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2020-2025 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -634,7 +634,7 @@ main(int argc, char *argv[])
                      "<!-- audit: ejudge-change-contests: %s, %s -->\n", updates_buf, xml_unparse_date(current_time));
         }
 
-        if (contests_unparse_and_save(cnts, NULL, "", txt2, audit_str, NULL, NULL) < 0) {
+        if (contests_unparse_and_save(cnts, NULL, "", txt2, audit_str, NULL, NULL, 0) < 0) {
             printf("%d: failed to save contest\n", contest_id);
             ++failed_count;
         }
