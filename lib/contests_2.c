@@ -16,6 +16,8 @@
 
 #include "ejudge/config.h"
 #include "ejudge/contests.h"
+#include "ejudge/ej_types.h"
+#include "ejudge/expat_iface.h"
 #include "ejudge/meta/contests_meta.h"
 #include "ejudge/xml_utils.h"
 #include "ejudge/misctext.h"
@@ -29,6 +31,7 @@
 #include "ejudge/logger.h"
 #include "ejudge/osdeps.h"
 
+#include <limits.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -466,11 +469,12 @@ contests_unparse_and_save(
         const unsigned char *add_footer,
         unsigned char *(*diff_func)(const unsigned char *,
                                     const unsigned char *),
-        unsigned char **p_diff_txt)
+        unsigned char **p_diff_txt,
+        int dry_flag)
 {
   int serial = 1;
-  unsigned char tmp_path[1024];
-  unsigned char xml_path[1024];
+  unsigned char tmp_path[PATH_MAX];
+  unsigned char xml_path[PATH_MAX];
   int fd;
   FILE *f;
   struct stat xml_stat;
@@ -494,7 +498,13 @@ contests_unparse_and_save(
   // read the previuos file and compare it with the new
   if (generic_read_file(&old_text, 0, &old_size, 0, 0, xml_path, 0) >= 0
       && new_size == old_size && memcmp(new_text, old_text, new_size) == 0) {
-    info("contest_save_xml: %d is not changed", cnts->id);
+    if (dry_flag) {
+      if (p_diff_txt) {
+        *p_diff_txt = xstrdup("");
+      }
+    } else {
+      info("contest_save_xml: %d is not changed", cnts->id);
+    }
     xfree(old_text);
     xfree(new_text);
     return 0;
@@ -537,6 +547,12 @@ contests_unparse_and_save(
     diff_txt = (*diff_func)(xml_path, tmp_path);
   }
 
+  if (dry_flag) {
+    if (p_diff_txt) *p_diff_txt = diff_txt;
+    unlink(tmp_path);
+    return 0;
+  }
+
   if (stat(xml_path, &xml_stat) >= 0) {
     if (!S_ISREG(xml_stat.st_mode)) {
       unlink(tmp_path);
@@ -571,6 +587,17 @@ contests_unparse_and_save(
   return 0;
 }
 
+void
+contest_remove_all_permissions(struct contest_desc *cnts)
+{
+  if (cnts->caps_node) {
+    xml_unlink_node(cnts->caps_node);
+    contests_free_2(cnts->caps_node);
+    cnts->caps_node = NULL;
+    memset(&cnts->capabilities, 0, sizeof(cnts->capabilities));
+  }
+}
+
 int
 contests_remove_nth_permission(struct contest_desc *cnts, int n)
 {
@@ -589,6 +616,28 @@ contests_remove_nth_permission(struct contest_desc *cnts, int n)
     xml_unlink_node(cnts->caps_node);
     contests_free_2(cnts->caps_node);
     cnts->caps_node = 0;
+  }
+  return 0;
+}
+
+int
+contests_remove_login_permission(struct contest_desc *cnts, const unsigned char *login)
+{
+  struct opcap_list_item *perms;
+
+  for (perms = CNTS_FIRST_PERM(cnts); perms; ) {
+    struct opcap_list_item *next = CNTS_NEXT_PERM_NC(perms);
+    if (!strcmp(perms->login, login)) {
+      xml_unlink_node(&perms->b);
+      contests_free_2(&perms->b);    
+    }
+    perms = next;
+  }
+  cnts->capabilities.first=(struct opcap_list_item*)cnts->caps_node->first_down;
+  if (!cnts->capabilities.first) {
+    xml_unlink_node(cnts->caps_node);
+    contests_free_2(cnts->caps_node);
+    cnts->caps_node = NULL;
   }
   return 0;
 }
@@ -761,6 +810,26 @@ contests_add_ip(
 }
 
 struct contest_ip *
+contests_find_ip_rule_nc(
+  struct contest_access *acc,
+  const ej_ip_t *p_addr,
+  const ej_ip_t *p_mask,
+  int ssl_flag)
+{
+  struct contest_ip *p;
+  if (!acc) return 0;
+
+  for (p = CNTS_FIRST_IP_NC(acc); p; p = CNTS_NEXT_IP_NC(p)) {
+    if (!ipv6cmp(&p->addr, p_addr) && !ipv6cmp(&p->mask, p_mask)) {
+      if (ssl_flag < 0 || ssl_flag == p->ssl) {
+        return p;
+      }
+    }
+  }
+  return NULL;
+}
+
+struct contest_ip *
 contests_get_ip_rule_nc(
         struct contest_access *acc,
         int n)
@@ -773,6 +842,39 @@ contests_get_ip_rule_nc(
   for (i = 0, p = CNTS_FIRST_IP_NC(acc); p && i != n;
        ++i, p = CNTS_NEXT_IP_NC(p));
   if (p && i == n) return p;
+  return 0;
+}
+
+void
+contests_delete_all_rules(struct contest_access **p_acc)
+{
+  xml_unlink_node(&(*p_acc)->b);
+  contests_free_2(&(*p_acc)->b);
+  *p_acc = NULL;
+}
+
+int
+contests_delete_ip_rule_by_mask(
+        struct contest_access **p_acc,
+        const ej_ip_t *p_ip,
+        const ej_ip_t *p_mask,
+        int ssl_flag)
+{
+  for (struct contest_ip *p = CNTS_FIRST_IP_NC(*p_acc); p; ) {
+    struct contest_ip *q = CNTS_NEXT_IP_NC(p);
+    if (!ipv6cmp(p_ip, &p->addr) && !ipv6cmp(p_mask, &p->mask)) {
+      if (ssl_flag < 0 || ssl_flag == p->ssl) {
+        xml_unlink_node(&p->b);
+        contests_free_2(&p->b);
+      }
+    }
+    p = q;
+  }
+  if (!CNTS_FIRST_IP(*p_acc) && !(*p_acc)->default_is_allow) {
+    xml_unlink_node(&(*p_acc)->b);
+    contests_free_2(&(*p_acc)->b);
+    *p_acc = NULL;
+  }
   return 0;
 }
 
@@ -1000,4 +1102,98 @@ contests_set_member_field(
     xfree(p->legend); p->legend = 0;
     if (legend) p->legend = xstrdup(legend);
   }
+}
+
+int
+contests_parse_user_field_name(const unsigned char *s)
+{
+  if (!s || !*s) return 0;
+  for (int i = 1; contests_field_map[i]; ++i) {
+    if (!strcmp(contests_field_map[i], s)) {
+      return i;
+    }
+  }
+  return 0;
+}
+
+int
+contests_parse_member_field_name(const unsigned char *s)
+{
+  if (!s || !*s) return 0;
+  for (int i = 1; contests_member_field_map[i]; ++i) {
+    if (!strcmp(contests_member_field_map[i], s)) {
+      return i;
+    }
+  }
+  return 0;
+}
+
+static const unsigned char * const contests_member_map[] =
+{
+  "contestant", "reserve", "coach", "advisor", "guest", NULL
+};
+
+int
+contests_parse_member(const unsigned char *s)
+{
+  if (!s || !*s) return 0;
+  for (int i = 0; contests_member_map[i]; ++i) {
+    if (!strcmp(contests_member_map[i], s)) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+const unsigned char *
+contests_get_oauth_domain(struct xml_tree *p)
+{
+  if (p->tag != CONTEST_OAUTH_RULE) {
+    return NULL;
+  }
+  for (struct xml_attr *a = p->first; a; a = a->next) {
+    if (a->tag == CONTEST_A_DOMAIN) {
+      return a->text;
+    }
+  }
+  return NULL;
+}
+
+void
+contests_delete_oauth_rule(struct contest_desc *cnts, const unsigned char *domain)
+{
+  if (!cnts->oauth_rules) return;
+  struct xml_tree *p = cnts->oauth_rules->first_down;
+  struct xml_tree *q;
+  for (; p; p = q) {
+    q = p->right;
+    const unsigned char *cur_domain = contests_get_oauth_domain(p);
+    if (cur_domain && !strcmp(cur_domain, domain)) {
+      xml_unlink_node(p);
+      contests_free_2(p);
+    }
+  }
+  if (!cnts->oauth_rules->first_down) {
+    xml_unlink_node(cnts->oauth_rules);
+    contests_free_2(cnts->oauth_rules);
+    cnts->oauth_rules = NULL;
+  }
+}
+
+struct xml_tree *
+contests_find_oauth_rule_nc(struct contest_desc *cnts, const unsigned char *domain)
+{
+  if (!cnts->oauth_rules) {
+    return NULL;
+  }
+  for (struct xml_tree *p = cnts->oauth_rules->first_down; p; p = p->right) {
+    if (p->tag != CONTEST_OAUTH_RULE) {
+      continue;
+    }
+    const unsigned char *cur_domain = contests_get_oauth_domain(p);
+    if (cur_domain && !strcmp(cur_domain, domain)) {
+      return p;
+    }
+  }
+  return NULL;
 }

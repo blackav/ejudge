@@ -2,7 +2,7 @@
 #ifndef __EJ_TYPES_H__
 #define __EJ_TYPES_H__
 
-/* Copyright (C) 2005-2024 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2025 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -220,5 +220,7 @@ enum
   MIXED_ID_ULID,     // ULID (base32) https://github.com/ulid/spec
   MIXED_ID_LAST,
 };
+
+#define EJ_SIGN(x) ({ typeof(x) __tmp = x; (__tmp > 0) - (__tmp < 0); })
 
 #endif /* __EJ_TYPES_H__ */

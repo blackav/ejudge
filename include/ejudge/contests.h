@@ -493,6 +493,7 @@ struct contest_desc *contests_free(struct contest_desc *cnts);
 void contests_free_2(struct xml_tree *t);
 struct xml_tree *contests_new_node(int tag);
 void contests_clear_cache(void);
+void contests_free_attrs(struct xml_tree *p);
 
 const unsigned char *contests_strerror(int);
 
@@ -526,14 +527,18 @@ int contests_save_xml(struct contest_desc *cnts,
                       const unsigned char *txt1,
                       const unsigned char *txt2,
                       const unsigned char *txt3);
-int contests_unparse_and_save(struct contest_desc *cnts,
-                              const unsigned char *charset,
-                              const unsigned char *header,
-                              const unsigned char *footer,
-                              const unsigned char *add_footer,
-                              unsigned char *(*diff_func)(const unsigned char *,
-                                                          const unsigned char *),
-                              unsigned char **p_diff_txt);
+int
+contests_unparse_and_save(
+        struct contest_desc *cnts,
+        const unsigned char *charset,
+        const unsigned char *header,
+        const unsigned char *footer,
+        const unsigned char *add_footer,
+        unsigned char *(*diff_func)(
+                const unsigned char *,
+                const unsigned char *),
+        unsigned char **p_diff_txt,
+        int dry_flag);
 
 void
 contests_get_path_in_conf_dir(
@@ -546,7 +551,13 @@ const unsigned char *contests_get_form_field_name(int ff);
 const unsigned char *contests_get_member_field_name(int ff);
 const unsigned char *contests_get_member_name(int ff);
 
+void
+contest_remove_all_permissions(struct contest_desc *cnts);
 int contests_remove_nth_permission(struct contest_desc *cnts, int n);
+int
+contests_remove_login_permission(
+        struct contest_desc *cnts,
+        const unsigned char *login);
 int contests_add_permission(
         struct contest_desc *cnts,
         const unsigned char *login,
@@ -584,10 +595,18 @@ struct contest_ip *
 contests_get_ip_rule_nc(
         struct contest_access *acc,
         int n);
+void
+contests_delete_all_rules(struct contest_access **p_acc);
 int
 contests_delete_ip_rule(
         struct contest_access **p_acc,
         int n);
+int
+contests_delete_ip_rule_by_mask(
+        struct contest_access **p_acc,
+        const ej_ip_t *ip,
+        const ej_ip_t *mask,
+        int ssl_flag);
 int
 contests_forward_ip_rule(
         struct contest_access **p_acc,
@@ -596,6 +615,12 @@ int
 contests_backward_ip_rule(
         struct contest_access **p_acc,
         int n);
+struct contest_ip *
+contests_find_ip_rule_nc(
+        struct contest_access *acc,
+        const ej_ip_t *p_addr,
+        const ej_ip_t *p_mask,
+        int ssl_flag);
 
 int
 contests_set_general_field(
@@ -647,5 +672,16 @@ int contests_apply_oauth_rules(
         const unsigned char *email,
         unsigned char **p_login,
         int *p_disable_email_check);
+
+int contests_parse_user_field_name(const unsigned char *s);
+int contests_parse_member_field_name(const unsigned char *s);
+int contests_parse_member(const unsigned char *s);
+
+const unsigned char *contests_get_oauth_domain(struct xml_tree *p);
+void contests_delete_oauth_rule(struct contest_desc *cnts, const unsigned char *domain);
+struct xml_tree *contests_find_oauth_rule_nc(struct contest_desc *cnts, const unsigned char *domain);
+
+void contests_free_attrs(struct xml_tree *p);
+struct xml_attr *contests_new_attr(int attr, const unsigned char *text);
 
 #endif /* __CONTESTS_H__ */

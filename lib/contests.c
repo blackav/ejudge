@@ -17,6 +17,7 @@
 #include "ejudge/config.h"
 #include "ejudge/ej_limits.h"
 #include "ejudge/contests.h"
+#include "ejudge/expat_iface.h"
 #include "ejudge/pathutl.h"
 #include "ejudge/errlog.h"
 #include "ejudge/userlist.h"
@@ -2136,4 +2137,20 @@ contests_apply_oauth_rules(
   if (p_login) *p_login = xstrdup(email);
   if (p_disable_email_check) *p_disable_email_check = -1;
   return 1;
+}
+
+void
+contests_free_attrs(struct xml_tree *p)
+{
+  xml_tree_free_attrs(p, &contests_parse_spec);
+}
+
+struct xml_attr *
+contests_new_attr(int attr, const unsigned char *text)
+{
+  struct xml_attr *a = xml_attr_alloc(attr, contests_parse_spec.attr_sizes);
+  if (text) {
+    a->text = xstrdup(text);
+  }
+  return a;
 }

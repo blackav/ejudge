@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2005-2024 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2025 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -38,6 +38,7 @@
 #include "ejudge/compat.h"
 #include "ejudge/file_perms.h"
 #include "ejudge/variant_map.h"
+#include "ejudge/cJSON.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -448,13 +449,14 @@ super_html_commit_contest_2(
         const ej_ip_t *ip_address,
         const struct ejudge_cfg *config,
         struct userlist_clnt *us_conn,
-        struct sid_state *sstate)
+        struct sid_state *sstate,
+        int dry_run_flag,
+        cJSON **pjresult)
 {
   struct contest_desc *cnts = sstate->edited_cnts;
   struct section_global_data *global = sstate->global;
   struct stat sb;
   int errcode;
-  unsigned char hbuf[1024];
   unsigned char *xml_header = 0;
   unsigned char *xml_footer = 0;
   unsigned char *serve_header = 0;
@@ -728,6 +730,7 @@ super_html_commit_contest_2(
                             cnts->team_menu_1_file, sstate->team_menu_1_text,
                             conf_path,
                             team_menu_1_path, team_menu_1_path_2)) < 0)
+    goto failed;
 
   /* Save the team_menu_2_file as temporary file */
   if ((t2f = save_conf_file(log_f, "`team' HTML content menu2",
@@ -881,9 +884,7 @@ super_html_commit_contest_2(
              xml_unparse_ipv6(ip_address));
   }
   if (!xml_header) {
-    snprintf(hbuf, sizeof(hbuf),
-             "<!-- $%s$ -->\n", "Id");
-    xml_header = xstrdup(hbuf);
+    xml_header = xstrdup("");
   }
   if (!xml_footer) xml_footer = xstrdup("\n");
 
@@ -899,7 +900,7 @@ super_html_commit_contest_2(
     errcode = super_html_get_serve_header_and_footer(serve_cfg_path, &serve_header, &serve_footer);
     if (errcode == -SSERV_ERR_FILE_NOT_EXIST) {
       fprintf(log_f, "serve configuration file `%s' does not exist\n", serve_cfg_path);
-      serve_header = xstrdup("# $" "Id" "$\n");
+      serve_header = xstrdup("");
       snprintf(serve_audit_rec, sizeof(serve_audit_rec),
                "# audit: created %s %d (%s) %s\n",
                xml_unparse_date(time(0)), user_id, login,
@@ -929,18 +930,28 @@ super_html_commit_contest_2(
       snprintf(diff_cmdline, sizeof(diff_cmdline),
                "/usr/bin/diff -u \"%s\" \"%s\"", serve_cfg_path, serve_cfg_path_2);
       diff_str = read_process_output(diff_cmdline, 0, 1, 0);
-      fprintf(log_f, "Changes in serve.cfg:\n%s\n", diff_str);
+      if (dry_run_flag) {
+        if (pjresult) {
+          cJSON_AddStringToObject(*pjresult, "serve.cfg", diff_str);
+        }
+      } else {
+        fprintf(log_f, "Changes in serve.cfg:\n%s\n", diff_str);
+      }
       xfree(diff_str); diff_str = 0;
     }
   }
 
   /* 11. Save the XML file */
   errcode = contests_unparse_and_save(cnts, NULL, xml_header, xml_footer,
-                                      audit_rec, diff_func, &diff_str);
+                                      audit_rec, diff_func, &diff_str, dry_run_flag);
   if (errcode < 0) {
     fprintf(log_f, "error: saving of `%s' failed: %s\n", xml_path,
             contests_strerror(-errcode));
     goto failed;
+  } else if (dry_run_flag) {
+    if (pjresult) {
+      cJSON_AddStringToObject(*pjresult, "contest.xml", diff_str);
+    }
   } else if (diff_str && *diff_str) {
     fprintf(log_f, "contest XML file `%s' saved successfully\n", xml_path);
     fprintf(log_f, "Changes in the file:\n%s\n", diff_str);
@@ -968,6 +979,26 @@ super_html_commit_contest_2(
   xfree(diff_str); diff_str = 0;
   xfree(vcs_str); vcs_str = 0;
 
+  if (dry_run_flag) {
+    const unsigned char *paths_2[] =
+    {
+      users_header_path_2, users_footer_path_2, register_header_path_2, register_footer_path_2, team_header_path_2,
+      team_menu_1_path_2, team_menu_2_path_2, team_menu_3_path_2, team_separator_path_2, team_footer_path_2,
+      priv_header_path_2, priv_footer_path_2, copyright_path_2, welcome_path_2, reg_welcome_path_2,
+      register_email_path_2, contest_start_cmd_path_2, contest_stop_cmd_path_2, stand_header_path_2, stand_footer_path_2,
+      stand2_header_path_2, stand2_footer_path_2, plog_header_path_2, plog_footer_path_2, vmap_path_2,
+      serve_cfg_path_2, NULL,
+    };
+    for (int i = 0; paths_2[i]; ++i) {
+      if (paths_2[i][0]) {
+        unlink(paths_2[i]);
+      }
+    }
+
+    xfree(xml_header);
+    xfree(xml_footer);
+    return 0;
+  }
 
   /* 12. Rename files */
   rename_files(log_f, uhf, users_header_path, users_header_path_2, file_group, file_mode);
@@ -1134,7 +1165,7 @@ super_html_commit_contest(
   char *log_s = 0;
   size_t log_z = 0;
   FILE *log_f = open_memstream(&log_s, &log_z);
-  int r = super_html_commit_contest_2(log_f, user_id, login, ip_address, config, us_conn, sstate);
+  int r = super_html_commit_contest_2(log_f, user_id, login, ip_address, config, us_conn, sstate, 0, NULL);
   fclose(log_f); log_f = 0;
   if (r < 0) goto failed;
 

@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2012-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2025 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1164,7 +1164,7 @@ update_contest_xml(
     if (!xml_footer) xml_footer = xstrdup("\n");
 
     contests_unparse_and_save(rw_cnts, NULL, xml_header, xml_footer,
-                              audit_rec, NULL, NULL);
+                              audit_rec, NULL, NULL, 0);
 cleanup:
     xfree(xml_header);
     xfree(xml_footer);

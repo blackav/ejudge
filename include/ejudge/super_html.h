@@ -52,6 +52,7 @@ int super_html_commit_contest(FILE *f,
                               const unsigned char *hidden_vars,
                               const unsigned char *extra_args);
 
+struct cJSON;
 int
 super_html_commit_contest_2(
         FILE *log_f,
@@ -60,7 +61,9 @@ super_html_commit_contest_2(
         const ej_ip_t *ip_address,
         const struct ejudge_cfg *config,
         struct userlist_clnt *us_conn,
-        struct sid_state *sstate);
+        struct sid_state *sstate,
+        int dry_run_flag,
+        struct cJSON **pjresult);
 
 struct contest_desc;
 struct sid_state;
