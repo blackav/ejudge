@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2008-2024 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2025 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -17,6 +17,7 @@
 #include "meta_gen.h"
 #include "c_errors.h"
 
+#include "ejudge/hash.h"
 #include "ejudge/osdeps.h"
 #include "ejudge/logger.h"
 
@@ -662,9 +663,10 @@ generate_field_description(
           "  %s_lookup_field,\n"
           "  (void (*)(void *, const void *))%s_copy,\n"
           "  (void (*)(void *))%s_free,\n"
+          "  meta_info_%s_data,\n"
           "};\n\n",
           func_pfx, enum_pfx, ident_get(id), func_pfx, func_pfx, func_pfx, func_pfx, func_pfx,
-          func_pfx, func_pfx, func_pfx);
+          func_pfx, func_pfx, func_pfx, ident_get(id));
   return 0;
 }
 

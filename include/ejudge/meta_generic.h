@@ -3,7 +3,7 @@
 #ifndef __META_GENERIC_H__
 #define __META_GENERIC_H__
 
-/* Copyright (C) 2008-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2025 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -60,6 +60,7 @@ struct meta_methods
   int (*lookup_field)(const char *name);
   void (*copy)(void *dst, const void *src);
   void (*free)(void *ptr);
+  struct meta_info_item *items;
 };
 
 void
