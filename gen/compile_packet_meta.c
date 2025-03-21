@@ -216,5 +216,6 @@ const struct meta_methods meta_compile_request_packet_methods =
   meta_compile_request_packet_lookup_field,
   (void (*)(void *, const void *))meta_compile_request_packet_copy,
   (void (*)(void *))meta_compile_request_packet_free,
+  meta_info_compile_request_packet_data,
 };
 

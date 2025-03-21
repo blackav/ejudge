@@ -441,5 +441,6 @@ const struct meta_methods ss_sid_state_methods =
   ss_sid_state_lookup_field,
   (void (*)(void *, const void *))ss_sid_state_copy,
   (void (*)(void *))ss_sid_state_free,
+  meta_info_sid_state_data,
 };
 

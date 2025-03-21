@@ -1144,6 +1144,7 @@ const struct meta_methods cntsglob_methods =
   cntsglob_lookup_field,
   (void (*)(void *, const void *))cntsglob_copy,
   (void (*)(void *))cntsglob_free,
+  meta_info_section_global_data_data,
 };
 
 static struct meta_info_item meta_info_section_problem_data_data[] =
@@ -1963,6 +1964,7 @@ const struct meta_methods cntsprob_methods =
   cntsprob_lookup_field,
   (void (*)(void *, const void *))cntsprob_copy,
   (void (*)(void *))cntsprob_free,
+  meta_info_section_problem_data_data,
 };
 
 static struct meta_info_item meta_info_section_language_data_data[] =
@@ -2217,6 +2219,7 @@ const struct meta_methods cntslang_methods =
   cntslang_lookup_field,
   (void (*)(void *, const void *))cntslang_copy,
   (void (*)(void *))cntslang_free,
+  meta_info_section_language_data_data,
 };
 
 static struct meta_info_item meta_info_section_tester_data_data[] =
@@ -2432,5 +2435,6 @@ const struct meta_methods cntstester_methods =
   cntstester_lookup_field,
   (void (*)(void *, const void *))cntstester_copy,
   (void (*)(void *))cntstester_free,
+  meta_info_section_tester_data_data,
 };
 

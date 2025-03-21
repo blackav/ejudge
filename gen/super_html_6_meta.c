@@ -167,6 +167,7 @@ const struct meta_methods meta_ss_op_param_USER_CREATE_ONE_ACTION_methods =
   meta_ss_op_param_USER_CREATE_ONE_ACTION_lookup_field,
   (void (*)(void *, const void *))meta_ss_op_param_USER_CREATE_ONE_ACTION_copy,
   (void (*)(void *))meta_ss_op_param_USER_CREATE_ONE_ACTION_free,
+  meta_info_ss_op_param_USER_CREATE_ONE_ACTION_data,
 };
 
 static struct meta_info_item meta_info_ss_op_param_USER_CREATE_MANY_ACTION_data[] =
@@ -313,6 +314,7 @@ const struct meta_methods meta_ss_op_param_USER_CREATE_MANY_ACTION_methods =
   meta_ss_op_param_USER_CREATE_MANY_ACTION_lookup_field,
   (void (*)(void *, const void *))meta_ss_op_param_USER_CREATE_MANY_ACTION_copy,
   (void (*)(void *))meta_ss_op_param_USER_CREATE_MANY_ACTION_free,
+  meta_info_ss_op_param_USER_CREATE_MANY_ACTION_data,
 };
 
 static struct meta_info_item meta_info_ss_op_param_USER_CREATE_FROM_CSV_ACTION_data[] =
@@ -458,6 +460,7 @@ const struct meta_methods meta_ss_op_param_USER_CREATE_FROM_CSV_ACTION_methods =
   meta_ss_op_param_USER_CREATE_FROM_CSV_ACTION_lookup_field,
   (void (*)(void *, const void *))meta_ss_op_param_USER_CREATE_FROM_CSV_ACTION_copy,
   (void (*)(void *))meta_ss_op_param_USER_CREATE_FROM_CSV_ACTION_free,
+  meta_info_ss_op_param_USER_CREATE_FROM_CSV_ACTION_data,
 };
 
 static struct meta_info_item meta_info_ss_op_param_USER_CREATE_REG_ACTION_data[] =
@@ -546,6 +549,7 @@ const struct meta_methods meta_ss_op_param_USER_CREATE_REG_ACTION_methods =
   meta_ss_op_param_USER_CREATE_REG_ACTION_lookup_field,
   (void (*)(void *, const void *))meta_ss_op_param_USER_CREATE_REG_ACTION_copy,
   (void (*)(void *))meta_ss_op_param_USER_CREATE_REG_ACTION_free,
+  meta_info_ss_op_param_USER_CREATE_REG_ACTION_data,
 };
 
 static struct meta_info_item meta_info_ss_op_param_USER_EDIT_REG_ACTION_data[] =
@@ -636,5 +640,6 @@ const struct meta_methods meta_ss_op_param_USER_EDIT_REG_ACTION_methods =
   meta_ss_op_param_USER_EDIT_REG_ACTION_lookup_field,
   (void (*)(void *, const void *))meta_ss_op_param_USER_EDIT_REG_ACTION_copy,
   (void (*)(void *))meta_ss_op_param_USER_EDIT_REG_ACTION_free,
+  meta_info_ss_op_param_USER_EDIT_REG_ACTION_data,
 };
 

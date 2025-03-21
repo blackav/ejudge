@@ -290,6 +290,7 @@ const struct meta_methods meta_super_run_in_global_packet_methods =
   meta_super_run_in_global_packet_lookup_field,
   (void (*)(void *, const void *))meta_super_run_in_global_packet_copy,
   (void (*)(void *))meta_super_run_in_global_packet_free,
+  meta_info_super_run_in_global_packet_data,
 };
 
 static struct meta_info_item meta_info_super_run_in_problem_packet_data[] =
@@ -667,6 +668,7 @@ const struct meta_methods meta_super_run_in_problem_packet_methods =
   meta_super_run_in_problem_packet_lookup_field,
   (void (*)(void *, const void *))meta_super_run_in_problem_packet_copy,
   (void (*)(void *))meta_super_run_in_problem_packet_free,
+  meta_info_super_run_in_problem_packet_data,
 };
 
 static struct meta_info_item meta_info_super_run_in_tester_packet_data[] =
@@ -804,5 +806,6 @@ const struct meta_methods meta_super_run_in_tester_packet_methods =
   meta_super_run_in_tester_packet_lookup_field,
   (void (*)(void *, const void *))meta_super_run_in_tester_packet_copy,
   (void (*)(void *))meta_super_run_in_tester_packet_free,
+  meta_info_super_run_in_tester_packet_data,
 };
 

@@ -664,5 +664,6 @@ const struct meta_methods meta_problem_config_section_methods =
   meta_problem_config_section_lookup_field,
   (void (*)(void *, const void *))meta_problem_config_section_copy,
   (void (*)(void *))meta_problem_config_section_free,
+  meta_info_problem_config_section_data,
 };
 

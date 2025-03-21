@@ -132,5 +132,6 @@ const struct meta_methods meta_ej_import_packet_methods =
   meta_ej_import_packet_lookup_field,
   (void (*)(void *, const void *))meta_ej_import_packet_copy,
   (void (*)(void *))meta_ej_import_packet_free,
+  meta_info_ej_import_packet_data,
 };
 

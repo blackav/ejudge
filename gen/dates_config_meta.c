@@ -92,6 +92,7 @@ const struct meta_methods meta_dates_global_data_methods =
   meta_dates_global_data_lookup_field,
   (void (*)(void *, const void *))meta_dates_global_data_copy,
   (void (*)(void *))meta_dates_global_data_free,
+  meta_info_dates_global_data_data,
 };
 
 static struct meta_info_item meta_info_dates_problem_data_data[] =
@@ -200,5 +201,6 @@ const struct meta_methods meta_dates_problem_data_methods =
   meta_dates_problem_data_lookup_field,
   (void (*)(void *, const void *))meta_dates_problem_data_copy,
   (void (*)(void *))meta_dates_problem_data_free,
+  meta_info_dates_problem_data_data,
 };
 
