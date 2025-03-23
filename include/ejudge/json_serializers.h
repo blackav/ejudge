@@ -17,6 +17,7 @@
  */
 
 #include "ejudge/contests.h"
+#include "ejudge/prepare.h"
 struct submit_entry;
 struct testing_report_xml;
 struct cJSON;
@@ -58,6 +59,14 @@ json_serialize_userlist_cookie(const struct userlist_cookie *c);
 struct contest_desc;
 struct cJSON *
 json_serialize_contest_xml_full(const struct contest_desc *cnts, int date_mode);
+
+struct section_global_data;
+struct cJSON *
+json_serialize_global(
+        const struct section_global_data *g,
+        int date_mode,
+        int size_mode,
+        const unsigned char *ignored_fields);
 
 
 #endif /* __JSON_SERIALIZERS_H__ */

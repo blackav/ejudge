@@ -21,6 +21,7 @@
 #include "ejudge/ej_types.h"
 #include "ejudge/json_serializers.h"
 #include "ejudge/cJSON.h"
+#include "ejudge/meta_generic.h"
 #include "ejudge/opcaps.h"
 #include "ejudge/testing_report_xml.h"
 #include "ejudge/submit_plugin.h"
@@ -34,6 +35,7 @@
 #include "ejudge/userlist.h"
 #include "ejudge/xalloc.h"
 #include "ejudge/base64.h"
+#include "ejudge/meta/prepare_meta.h"
 
 #include <stdio.h>
 #include <time.h>
@@ -1188,4 +1190,123 @@ json_serialize_contest_xml_full(const struct contest_desc *cnts, int date_mode)
     }
 
     return jr;
+}
+
+static void
+json_serialize_meta_field(
+        cJSON *j,
+        const void *ptr,
+        const struct meta_methods *meta,
+        int field,
+        int date_mode,
+        int size_mode)
+{
+    struct meta_info_item *item = &meta->items[field];
+    switch (item->type) {
+    case 'i': {
+        int value = *(int *) meta->get_ptr(ptr, field);
+        if (value >= 0) {
+            cJSON_AddNumberToObject(j, item->name, value);
+        }
+        break;
+    }
+    case 'z': {
+        ejintsize_t value = *(ejintsize_t *) meta->get_ptr(ptr, field);
+        if (value > 0) {
+            if (size_mode == 1) {
+                cJSON_AddNumberToObject(j, item->name, value);
+            } else {
+                unsigned char buf[128];
+                num_to_size_str(buf, sizeof(buf), value);
+                cJSON_AddStringToObject(j, item->name, buf);
+            }
+        }
+        break;
+    }
+    case 'B': {
+        ejintbool_t value = *(ejintbool_t *) meta->get_ptr(ptr, field);
+        if (value > 0) {
+            cJSON_AddTrueToObject(j, item->name);
+        } else if (!value) {
+            cJSON_AddFalseToObject(j, item->name);
+        }
+        break;
+    }
+    case 't': {
+        time_t value = *(time_t *) meta->get_ptr(ptr, field);
+        if (value > 0) {
+            if (date_mode == 1) {
+                unsigned char buf[64];
+                cJSON_AddStringToObject(j, item->name, unparse_date_iso(buf, sizeof(buf), value));
+            } else if (date_mode == 2) {
+                cJSON_AddNumberToObject(j, item->name, (double) value);
+            } else {
+                cJSON_AddStringToObject(j, item->name, xml_unparse_date(value));
+            }
+        }
+        break;
+    }
+    case 's': {
+        const unsigned char *value = *(const unsigned char **) meta->get_ptr(ptr, field);
+        if (value) {
+            cJSON_AddStringToObject(j, item->name, value);
+        }
+        break;
+    }
+    case 'x': {
+        char **value = *(char ***) meta->get_ptr(ptr, field);
+        if (value) {
+            cJSON *ja = cJSON_CreateArray();
+            for (int i = 0; value[i]; ++i) {
+                cJSON_AddItemToArray(ja, cJSON_CreateString(value[i]));
+            }
+            cJSON_AddItemToObject(j, item->name, ja);
+        }
+        break;
+    }
+    case 'E': {
+        ej_size64_t value = *(ej_size64_t *) meta->get_ptr(ptr, field);
+        if (value > 0) {
+            if (size_mode == 1) {
+                cJSON_AddNumberToObject(j, item->name, value);
+            } else {
+                unsigned char buf[128];
+                ll_to_size_str(buf, sizeof(buf), value);
+                cJSON_AddStringToObject(j, item->name, buf);
+            }
+        }
+        break;
+    }
+    }
+}
+
+cJSON *
+json_serialize_global(const struct section_global_data *g, int date_mode, int size_mode, const unsigned char *ignored_fields)
+{
+    cJSON *jg = cJSON_CreateObject();
+    for (int field = 1; field < CNTSGLOB_LAST_FIELD; ++field) {
+        if (ignored_fields[field]) {
+            continue;
+        }
+        switch (field) {
+        case CNTSGLOB_priority_adjustment:
+            if (g->priority_adjustment != 0) {
+                cJSON_AddNumberToObject(jg, "priority_adjustment", g->priority_adjustment);
+            }
+            break;
+        case CNTSGLOB_score_system:
+            if (g->score_system >= 0 && g->score_system < SCORE_TOTAL) {
+                cJSON_AddStringToObject(jg, "score_system", prepare_unparse_score_system(g->score_system));
+            }
+            break;
+        case CNTSGLOB_rounding_mode:
+            if (g->rounding_mode >= 0 && g->rounding_mode <= 2) {
+                cJSON_AddStringToObject(jg, "rounding_mode", prepare_unparse_rounding_mode(g->rounding_mode));
+            }
+            break;
+        default:
+            json_serialize_meta_field(jg, g, &cntsglob_methods, field, date_mode, size_mode);
+        }
+    }
+    return jg;
 }
