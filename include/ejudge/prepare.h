@@ -2,7 +2,7 @@
 #ifndef __PREPARE_H__
 #define __PREPARE_H__
 
-/* Copyright (C) 2000-2024 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2025 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1869,5 +1869,11 @@ compile_servers_collect(
         struct compile_server_configs *cscs,
         FILE *log_f,
         const unsigned char *spool_dir);
+
+const unsigned char *
+prepare_unparse_score_system(int ss);
+
+const unsigned char *
+prepare_unparse_rounding_mode(int rm);
 
 #endif /* __PREPARE_H__ */
