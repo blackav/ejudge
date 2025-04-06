@@ -1717,6 +1717,8 @@ int prepare_parse_secure_exec_type(const unsigned char *str);
 int
 prepare_parse_score_system(const unsigned char *str);
 int
+prepare_parse_rounding_mode(const unsigned char *str);
+int
 prepare_insert_variant_num(
         unsigned char *buf,
         size_t size,

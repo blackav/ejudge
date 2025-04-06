@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2000-2024 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2025 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -817,6 +817,22 @@ global_parse_rounding_mode(
 
   *(int*) ptr = val;
   return 0;
+}
+
+int
+prepare_parse_rounding_mode(const unsigned char *s)
+{
+  if (!s || !s[0]) {
+    return SEC_CEIL;
+  } else if (!strcasecmp(s, "ceil")) {
+    return SEC_CEIL;
+  } else if (!strcasecmp(s, "floor")) {
+    return SEC_FLOOR;
+  } else if (!strcasecmp(s, "round")) {
+    return SEC_ROUND;
+  } else {
+    return -1;
+  }
 }
 
 static int verbose_info_flag = 0;
