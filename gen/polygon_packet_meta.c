@@ -221,5 +221,6 @@ const struct meta_methods meta_polygon_packet_methods =
   meta_polygon_packet_lookup_field,
   (void (*)(void *, const void *))meta_polygon_packet_copy,
   (void (*)(void *))meta_polygon_packet_free,
+  meta_info_polygon_packet_data,
 };
 

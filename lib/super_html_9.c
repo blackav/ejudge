@@ -20,8 +20,12 @@
 #include "ejudge/json_serializers.h"
 #include "ejudge/l10n.h"
 #include "ejudge/meta/contests_meta.h"
+#include "ejudge/meta/prepare_meta.h"
+#include "ejudge/misctext.h"
 #include "ejudge/new_server_proto.h"
 #include "ejudge/opcaps.h"
+#include "ejudge/parsecfg.h"
+#include "ejudge/prepare.h"
 #include "ejudge/super-serve.h"
 #include "ejudge/super_html.h"
 #include "ejudge/super_proto.h"
@@ -902,6 +906,69 @@ get_state_file_pointers_by_field_id(
     }
 }
 
+static const unsigned char global_ignored_fields[CNTSGLOB_LAST_FIELD] =
+{
+    [CNTSGLOB_name] = 1,
+    [CNTSGLOB_root_dir] = 1,
+    [CNTSGLOB_serve_socket] = 1,
+    [CNTSGLOB_l10n_dir] = 1,
+    [CNTSGLOB_standings_locale_id] = 1,
+    [CNTSGLOB_contest_id] = 1,
+    [CNTSGLOB_socket_path] = 1,
+    [CNTSGLOB_contests_dir] = 1,
+    [CNTSGLOB_lang_config_dir] = 1,
+    [CNTSGLOB_conf_dir] = 1,
+    [CNTSGLOB_problems_dir] = 1,
+    [CNTSGLOB_super_run_dir] = 1,
+    [CNTSGLOB_virtual_end_info] = 1,
+    [CNTSGLOB_var_dir] = 1,
+    [CNTSGLOB_run_log_file] = 1,
+    [CNTSGLOB_clar_log_file] = 1,
+    [CNTSGLOB_archive_dir] = 1,
+    [CNTSGLOB_clar_archive_dir] = 1,
+    [CNTSGLOB_run_archive_dir] = 1,
+    [CNTSGLOB_report_archive_dir] = 1,
+    [CNTSGLOB_team_report_archive_dir] = 1,
+    [CNTSGLOB_xml_report_archive_dir] = 1,
+    [CNTSGLOB_full_archive_dir] = 1,
+    [CNTSGLOB_audit_log_dir] = 1,
+    [CNTSGLOB_uuid_archive_dir] = 1,
+    [CNTSGLOB_team_extra_dir] = 1,
+    [CNTSGLOB_legacy_status_dir] = 1,
+    [CNTSGLOB_work_dir] = 1,
+    [CNTSGLOB_print_work_dir] = 1,
+    [CNTSGLOB_diff_work_dir] = 1,
+    [CNTSGLOB_compile_queue_dir] = 1,
+    [CNTSGLOB_compile_src_dir] = 1,
+    [CNTSGLOB_compile_out_dir] = 1,
+    [CNTSGLOB_compile_status_dir] = 1,
+    [CNTSGLOB_compile_report_dir] = 1,
+    [CNTSGLOB_compile_work_dir] = 1,
+    [CNTSGLOB_run_queue_dir] = 1,
+    [CNTSGLOB_run_exe_dir] = 1,
+    [CNTSGLOB_run_out_dir] = 1,
+    [CNTSGLOB_run_status_dir] = 1,
+    [CNTSGLOB_run_report_dir] = 1,
+    [CNTSGLOB_run_team_report_dir] = 1,
+    [CNTSGLOB_run_full_archive_dir] = 1,
+    [CNTSGLOB_run_work_dir] = 1,
+    [CNTSGLOB_run_check_dir] = 1,
+    [CNTSGLOB_stand_header_txt] = 1,
+    [CNTSGLOB_stand_footer_txt] = 1,
+    [CNTSGLOB_stand2_header_txt] = 1,
+    [CNTSGLOB_stand2_footer_txt] = 1,
+    [CNTSGLOB_plog_header_txt] = 1,
+    [CNTSGLOB_plog_footer_txt] = 1,
+    [CNTSGLOB_user_exam_protocol_header_txt] = 1,
+    [CNTSGLOB_user_exam_protocol_footer_txt] = 1,
+    [CNTSGLOB_prob_exam_protocol_header_txt] = 1,
+    [CNTSGLOB_prob_exam_protocol_footer_txt] = 1,
+    [CNTSGLOB_full_exam_protocol_header_txt] = 1,
+    [CNTSGLOB_full_exam_protocol_footer_txt] = 1,
+    [CNTSGLOB_unhandled_vars] = 1,
+    [CNTSGLOB_language_import] = 1,
+};
+
 static void
 get_contest_xml_json(struct http_request_info *phr)
 {
@@ -950,6 +1017,20 @@ get_contest_file_json(struct http_request_info *phr)
     phr->status_code = 200;
 }
 
+static void
+get_contest_global_json(struct http_request_info *phr)
+{
+    int date_mode = 0, size_mode = 0;
+    hr_cgi_param_int_opt(phr, "date_mode", &date_mode, 0);
+    hr_cgi_param_int_opt(phr, "size_mode", &size_mode, 0);
+    if (phr->ss->global) {
+        cJSON_AddItemToObject(phr->json_result, "result", json_serialize_global(phr->ss->global, date_mode, size_mode, global_ignored_fields));
+    } else {
+        cJSON_AddNullToObject(phr->json_result, "result");
+    }
+    phr->status_code = 200;
+}
+
 void
 super_serve_api_CNTS_GET_VALUE_JSON(
         FILE *out_f,
@@ -985,6 +1066,9 @@ super_serve_api_CNTS_GET_VALUE_JSON(
         return;
     } else if (!strcmp(section, "file")) {
         get_contest_file_json(phr);
+        return;
+    } else if (!strcmp(section, "global")) {
+        get_contest_global_json(phr);
         return;
     } else {
         phr->err_num = SSERV_ERR_INV_PARAM;
@@ -1228,6 +1312,98 @@ delete_contest_file_json(struct http_request_info *phr)
     phr->status_code = 200;
 }
 
+static void
+delete_contest_global_json(struct http_request_info *phr)
+{
+    if (!phr->ss->global) goto status_400;
+    const unsigned char *field_name = NULL;
+    if (hr_cgi_param(phr, "field_name", &field_name) <= 0) goto status_400;
+    int field_id = cntsglob_lookup_field(field_name);
+    if (field_id <= 0) goto status_400;
+    if (global_ignored_fields[field_id]) goto status_400;
+    void *field_ptr = cntsglob_get_ptr_nc(phr->ss->global, field_id);
+    if (!field_ptr) goto status_400;
+
+    switch (field_id) {
+    case CNTSGLOB_priority_adjustment:
+        phr->ss->global->priority_adjustment = 0;
+        goto status_200_default;
+    case CNTSGLOB_score_system:
+        phr->ss->global->score_system = SCORE_ACM;
+        goto status_200_default;
+    case CNTSGLOB_rounding_mode:
+        phr->ss->global->rounding_mode = 0;
+        goto status_200_default;
+    default:
+        break;
+    }
+
+    int field_type = cntsglob_get_type(field_id);
+    switch (field_type) {
+    case 'i': {
+        int *ptr = (int*) field_ptr;
+        *ptr = -1;
+        goto status_200_default;
+    }
+    case 'z': {
+        ejintsize_t *ptr = (ejintsize_t*) field_ptr;
+        *ptr = 0;
+        goto status_200_default;
+    }
+    case 'B': {
+        ejintbool_t *ptr = (ejintbool_t*) field_ptr;
+        *ptr = 0;
+        goto status_200_default;
+    }
+    case 't': {
+        time_t *ptr = (time_t*) field_ptr;
+        *ptr = 0;
+        goto status_200_default;
+    }
+    case 's': {
+        unsigned char **ptr = (unsigned char **) field_ptr;
+        if (*ptr) xfree(*ptr);
+        *ptr = NULL;
+        goto status_200_default;
+    }
+    case 'E': {
+        ej_size64_t *ptr = (ej_size64_t *) field_ptr;
+        *ptr = 0;
+        goto status_200_default;
+    }
+    case 'x': {
+        char ***ptr = (char***) field_ptr;
+        const unsigned char *s = NULL;
+        int r = hr_cgi_param(phr, "old_item", &s);
+        if (r < 0) goto status_400;
+        if (r == 0) {
+            sarray_free(*ptr);
+            *ptr = NULL;
+        } else {
+            int i = 0;
+            for (; (*ptr)[i] && strcmp((*ptr)[i], s) != 0; ++i) {}
+            if ((*ptr)[i]) {
+                xfree((*ptr)[i]);
+                while (((*ptr)[i] = (*ptr)[i+1])) {
+                    ++i;
+                }
+            }
+        }
+        goto status_200_default;
+    }
+    }
+
+status_400:;
+    phr->err_num = SSERV_ERR_INV_PARAM;
+    phr->status_code = 400;
+    return;
+
+status_200_default:;
+    cJSON_AddTrueToObject(phr->json_result, "result");
+    phr->status_code = 200;
+    return;
+}
+
 void
 super_serve_api_CNTS_DELETE_VALUE_JSON(
         FILE *out_f,
@@ -1263,6 +1439,9 @@ super_serve_api_CNTS_DELETE_VALUE_JSON(
         return;
     } else if (!strcmp(section, "file")) {
         delete_contest_file_json(phr);
+        return;
+    } else if (!strcmp(section, "global")) {
+        delete_contest_global_json(phr);
         return;
     } else {
         phr->err_num = SSERV_ERR_INV_PARAM;
@@ -2059,6 +2238,191 @@ set_contest_file_json(struct http_request_info *phr)
     phr->status_code = 200;
 }
 
+static char **
+split_by_sep(const unsigned char *str, const unsigned char *sep)
+{
+    int seplen = strlen(sep);
+    int cnt = 0;
+    char **res = NULL;
+    char *cur = strstr(str, sep);
+    if (!cur) {
+        XCALLOC(res, 2);
+        res[0] = xstrdup(str);
+        return res;
+    }
+    ++cnt;
+    do {
+        cur += seplen;
+        ++cnt;
+        cur = strstr(str, sep);
+    } while (cur);
+    XCALLOC(res, cnt + 1);
+    cur = (char*) str;
+    int i = 0;
+    for (; i < cnt - 1; ++i){
+        char *next = strstr(cur, sep);
+        res[i] = xmemdup(cur, next - cur);
+        cur += seplen;
+    }
+    res[i] = xstrdup(cur);
+    return res;
+}
+
+static int
+parse_and_set_xarray(struct http_request_info *phr, char ***ptr)
+{
+    // atfront, atback, before, old_value, separator, value, index
+    const unsigned char *value = NULL;
+    if (hr_cgi_param(phr, "value", &value) <= 0 || !value) return -1;
+    const unsigned char *sep = NULL;
+    int r = hr_cgi_param(phr, "separator", &sep);
+    if (r < 0) return -1;
+    if (r > 0 && sep) {
+        sarray_free(*ptr);
+        *ptr = split_by_sep(value, sep);
+        return 0;
+    }
+    int index = -1;
+    if (hr_cgi_param_int_opt(phr, "index", &index, -1) < 0) return -1;
+    if (index >= 0) {
+        int slen = sarray_len(*ptr);
+        if (index >= slen) return -1;
+        xfree((*ptr)[index]);
+        (*ptr)[index] = xstrdup(value);
+        return 0;
+    }
+    return -1;
+}
+
+static int
+parse_and_set_time(struct http_request_info *phr, time_t *ptr)
+{
+    const unsigned char *s = NULL;
+    if (hr_cgi_param(phr, "value", &s) <= 0) return -1;
+    // try time in time_t format
+    char *eptr = NULL;
+    errno = 0;
+    long long llv = strtoll(s, &eptr, 10);
+    if (!errno && !*eptr && eptr != (char*) s) {
+        if (llv < 0) return -1;
+        if ((time_t) llv != llv) return -1;
+        *ptr = (time_t) llv;
+        return 0;
+    }
+    time_t tv = 0;
+    if (xml_parse_date(NULL, NULL, 0, 0, s, &tv) < 0) return -1;
+    if (tv < 0) tv = 0;
+    *ptr = tv;
+    return 0;
+}
+
+static void
+set_contest_global_json(struct http_request_info *phr)
+{
+    if (!phr->ss->global) goto status_400;
+    const unsigned char *field_name = NULL;
+    if (hr_cgi_param(phr, "field_name", &field_name) <= 0) goto status_400;
+    int field_id = cntsglob_lookup_field(field_name);
+    if (field_id <= 0) goto status_400;
+    if (global_ignored_fields[field_id]) goto status_400;
+    void *field_ptr = cntsglob_get_ptr_nc(phr->ss->global, field_id);
+    if (!field_ptr) goto status_400;
+
+    switch (field_id) {
+    case CNTSGLOB_priority_adjustment: {
+        int value = 0;
+        if (hr_cgi_param_int(phr, "value", &value) <= 0 || value < -16 || value > 15) goto status_400;
+        phr->ss->global->priority_adjustment = value;
+        goto status_200_default;
+    }
+    case CNTSGLOB_score_system: {
+        const unsigned char *s = NULL;
+        if (hr_cgi_param(phr, "value", &s) <= 0) goto status_400;
+        int value = prepare_parse_score_system(s);
+        if (value < SCORE_ACM || value > SCORE_MOSCOW) goto status_400;
+        phr->ss->global->score_system = value;
+        goto status_200_default;
+    }
+    case CNTSGLOB_rounding_mode: {
+        const unsigned char *s = NULL;
+        if (hr_cgi_param(phr, "value", &s) <= 0) goto status_400;
+        int value = prepare_parse_rounding_mode(s);
+        if (value < SEC_CEIL || value > SEC_ROUND) goto status_400;
+        phr->ss->global->rounding_mode = value;
+        goto status_200_default;
+    }
+    default:
+        break;
+    }
+
+    int field_type = cntsglob_get_type(field_id);
+    switch (field_type) {
+    case 'i': {
+        int *ptr = (int*) field_ptr;
+        int iv = -1;
+        if (hr_cgi_param_int(phr, "value", &iv) < 0) goto status_400;
+        if (iv < 0) iv = -1;
+        *ptr = iv;
+        goto status_200_default;
+    }
+    case 'z': {
+        ejintsize_t *ptr = (ejintsize_t*) field_ptr;
+        const unsigned char *s = NULL;
+        if (hr_cgi_param(phr, "value", &s) <= 0 || !s) goto status_400;
+        int iv = 0;
+        if (size_str_to_num(s, &iv) < 0) goto status_400;
+        if (iv < 0) iv = -1;
+        *ptr = iv;
+        goto status_200_default;
+    }
+    case 'B': {
+        ejintbool_t *ptr = (ejintbool_t*) field_ptr;
+        int value = -1;
+        if (hr_cgi_param_bool_opt(phr, "value", &value, -1) < 0) goto status_400;
+        *ptr = value;
+        goto status_200_default;
+    }
+    case 't': {
+        time_t *ptr = (time_t*) field_ptr;
+        if (parse_and_set_time(phr, ptr) < 0) goto status_400;
+        goto status_200_default;
+    }
+    case 's': {
+        unsigned char **ptr = (unsigned char **) field_ptr;
+        const unsigned char *s = NULL;
+        if (hr_cgi_param(phr, "value", &s) <= 0 || !s) goto status_400;
+        if (*ptr) xfree(*ptr);
+        *ptr = xstrdup(s);
+        goto status_200_default;
+    }
+    case 'E': {
+        ej_size64_t *ptr = (ej_size64_t *) field_ptr;
+        const unsigned char *s = NULL;
+        if (hr_cgi_param(phr, "value", &s) <= 0 || !s) goto status_400;
+        long long llv = 0;
+        if (size_str_to_size64_t(s, &llv) < 0) goto status_400;
+        if (llv < 0) llv = -1;
+        *ptr = llv;
+        goto status_200_default;
+    }
+    case 'x': {
+        char ***ptr = (char***) field_ptr;
+        if (parse_and_set_xarray(phr, ptr) < 0) goto status_400;
+        goto status_200_default;
+    }
+    }
+
+status_400:;
+    phr->err_num = SSERV_ERR_INV_PARAM;
+    phr->status_code = 400;
+    return;
+
+status_200_default:;
+    cJSON_AddTrueToObject(phr->json_result, "result");
+    phr->status_code = 200;
+    return;
+}
+
 void
 super_serve_api_CNTS_SET_VALUE_JSON(
         FILE *out_f,
@@ -2094,6 +2458,9 @@ super_serve_api_CNTS_SET_VALUE_JSON(
         return;
     } else if (!strcmp(section, "file")) {
         set_contest_file_json(phr);
+        return;
+    } else if (!strcmp(section, "global")) {
+        set_contest_global_json(phr);
         return;
     } else {
         phr->err_num = SSERV_ERR_INV_PARAM;

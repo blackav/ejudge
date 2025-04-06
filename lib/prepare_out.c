@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2005-2024 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2025 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -96,6 +96,33 @@ do_xstr(
   }
 }
 
+static const unsigned char * const global_contest_types[] =
+{
+  "acm",
+  "kirov",
+  "olympiad",
+  "moscow",
+  0,
+};
+const unsigned char *
+prepare_unparse_score_system(int ss)
+{
+  return global_contest_types[ss];
+}
+
+static const unsigned char * const global_rounding_modes[] =
+{
+  "ceil",
+  "floor",
+  "round",
+  0,
+};
+const unsigned char *
+prepare_unparse_rounding_mode(int rm)
+{
+  return global_rounding_modes[rm];
+}
+
 void
 prepare_unparse_global(
         FILE *f,
@@ -108,21 +135,6 @@ prepare_unparse_global(
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   path_t compile_spool_dir, tmp1, tmp2, contests_home_dir;
   int skip_elem, len;
-  static const unsigned char * const contest_types[] =
-  {
-    "acm",
-    "kirov",
-    "olympiad",
-    "moscow",
-    0,
-  };
-  static const unsigned char * const rounding_modes[] =
-  {
-    "ceil",
-    "floor",
-    "round",
-    0,
-  };
   unsigned char nbuf[64];
   unsigned char size_buf[256];
 
@@ -190,7 +202,7 @@ prepare_unparse_global(
             xml_unparse_date(global->contest_finish_time));
   }
   ASSERT(global->score_system >= 0 && global->score_system < SCORE_TOTAL);
-  fprintf(f, "score_system = %s\n", contest_types[global->score_system]);
+  fprintf(f, "score_system = %s\n", global_contest_types[global->score_system]);
   if (global->is_virtual)
     fprintf(f, "virtual\n");
   if (global->board_fog_time != DFLT_G_BOARD_FOG_TIME)
@@ -498,7 +510,7 @@ prepare_unparse_global(
     fprintf(f, "inactivity_timeout = %d\n", global->inactivity_timeout);
   ASSERT(global->rounding_mode >= 0 && global->rounding_mode <= 2);
   if (global->rounding_mode)
-    fprintf(f, "rounding_mode = %s\n", rounding_modes[global->rounding_mode]);
+    fprintf(f, "rounding_mode = %s\n", global_rounding_modes[global->rounding_mode]);
   if (global->max_file_length && global->max_file_length != DFLT_G_MAX_FILE_LENGTH)
     fprintf(f, "max_file_length = %s\n",
             num_to_size_str(nbuf, sizeof(nbuf), global->max_file_length));

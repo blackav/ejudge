@@ -568,5 +568,6 @@ const struct meta_methods contest_desc_methods =
   contest_desc_lookup_field,
   (void (*)(void *, const void *))contest_desc_copy,
   (void (*)(void *))contest_desc_free,
+  meta_info_contest_desc_data,
 };
 
