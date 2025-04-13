@@ -375,4 +375,5 @@ const unsigned char super_proto_is_http_request[] =
   [SSERV_CMD_CNTS_GET_VALUE_JSON] = 1,
   [SSERV_CMD_CNTS_DELETE_VALUE_JSON] = 1,
   [SSERV_CMD_CNTS_SET_VALUE_JSON] = 1,
+  [SSERV_CMD_CNTS_MINIMIZE_PROBLEM_JSON] = 1,
 };
