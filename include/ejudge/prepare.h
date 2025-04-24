@@ -1878,4 +1878,9 @@ prepare_unparse_score_system(int ss);
 const unsigned char *
 prepare_unparse_rounding_mode(int rm);
 
+void
+problem_minimize(
+        struct section_problem_data *prob,
+        const struct section_problem_data *aprob);
+
 #endif /* __PREPARE_H__ */
