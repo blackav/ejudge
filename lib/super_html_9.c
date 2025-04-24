@@ -2640,3 +2640,69 @@ super_serve_api_CNTS_SET_VALUE_JSON(
         return;
     }
 }
+
+void
+super_serve_api_MINIMIZE_PROBLEM_JSON(
+        FILE *out_f,
+        struct http_request_info *phr)
+{
+    ej_cookie_t sid = 0;
+    ej_cookie_t client_key = 0;
+    if (parse_session(phr, "session", &sid, &client_key) <= 0) {
+        phr->err_num = SSERV_ERR_INV_SESSION;
+        phr->status_code = 400;
+        return;
+    }
+    struct sid_state *ss = sid_state_find(sid, client_key);
+    if (!ss) {
+        phr->err_num = SSERV_ERR_INV_SESSION;
+        phr->status_code = 400;
+        return;
+    }
+    phr->ss = ss;
+    if (!ss->edited_cnts) {
+        phr->err_num = SSERV_ERR_NO_EDITED_CNTS;
+        phr->status_code = 400;
+        return;
+    }
+
+    int abstract = -1;
+    hr_cgi_param_bool_opt(phr, "abstract", &abstract, -1);
+    int prob_id = -1;
+    hr_cgi_param_int_opt(phr, "prob_id", &prob_id, -1);
+    const unsigned char *short_name = NULL;
+    hr_cgi_param(phr, "short_name", &short_name);
+    const unsigned char *long_name = NULL;
+    hr_cgi_param(phr, "long_name", &long_name);
+    const unsigned char *internal_name = NULL;
+    hr_cgi_param(phr, "internal_name", &internal_name);
+    const unsigned char *uuid = NULL;
+    hr_cgi_param(phr, "uuid", &uuid);
+    const unsigned char *extid = NULL;
+    hr_cgi_param(phr, "extid", &extid);
+    struct section_problem_data *prob = NULL;
+    int r = lookup_contest_problem(phr->ss, abstract, prob_id, short_name, long_name, internal_name, uuid, extid, NULL, NULL, &prob);
+    if (r < 0) {
+        phr->status_code = -r;
+        return;
+    }
+    if (!prob) {
+        phr->status_code = 404;
+        return;
+    }
+    const struct section_problem_data *aprob = NULL;
+    if (prob->abstract <= 0 && prob->super[0]) {
+        for (int i = 0; i < phr->ss->aprob_u; ++i) {
+            const struct section_problem_data *p = phr->ss->aprobs[i];
+            if (p && !strcmp(p->short_name, prob->super)) {
+                aprob = p;
+                break;
+            }
+        }
+    }
+
+    problem_minimize(prob, aprob);
+    cJSON_AddTrueToObject(phr->json_result, "result");
+    phr->status_code = 200;
+    return;
+}
