@@ -274,8 +274,6 @@ problem_minimize_standalone(struct section_problem_data *prob)
 static void
 problem_minimize_inherited(struct section_problem_data *prob, const struct section_problem_data *aprob)
 {
-    prob->abstract = -1;
-    prob->super[0] = 0;
     prob->examinator_num = 0;
     if (prob->time_limit_millis > 0) {
         prob->time_limit = -1;
@@ -430,4 +428,70 @@ problem_minimize(struct section_problem_data *prob, const struct section_problem
     } else {
         problem_minimize_inherited(prob, aprob);
     }
+}
+
+int
+problem_delete_field(struct section_problem_data *prob, int field_id)
+{
+    if (problem_typically_ignored_fields[field_id]) {
+        return -1;
+    }
+
+    switch (field_id) {
+    case CNTSPROB_abstract:
+    case CNTSPROB_short_name:
+    case CNTSPROB_id:
+        return -1;
+    case CNTSPROB_priority_adjustment:
+        prob->priority_adjustment = 0;
+        return 0;
+    default:
+        break;
+    }
+
+    int t = cntsprob_get_type(field_id);
+    void *ptr = cntsprob_get_ptr_nc(prob, field_id);
+    switch (t) {
+    case 'i': { // int
+        int *field_ptr = (int*) ptr;
+        *field_ptr = -1;
+        break;
+    }
+    case 'S': { // unsigned char[]
+        unsigned char *field_ptr = (unsigned char *) ptr;
+        *field_ptr = 0;
+        break;
+    }
+    case 'f': { // ejbyteflag_t
+        ejbyteflag_t *field_ptr = (ejbyteflag_t *) ptr;
+        *field_ptr = -1;
+        break;
+    }
+    case 's': { // unsigned char *
+        unsigned char **field_ptr = (unsigned char **) ptr;
+        xfree(*field_ptr); *field_ptr = NULL;
+        break;
+    }
+    case 'x': { // char **
+        char ***field_ptr = (char ***) ptr;
+        sarray_free(*field_ptr); *field_ptr = NULL;
+        break;
+    }
+    case 't': { // time_t
+        time_t *field_ptr = (time_t *) ptr;
+        *field_ptr = -1;
+        break;
+    }
+    case 'X': { // ejenvlist_t
+        char ***field_ptr = (char ***) ptr;
+        sarray_free(*field_ptr); *field_ptr = NULL;
+        break;
+    }
+    case 'E': { // ej_size64_t
+        ej_size64_t *field_ptr = (ej_size64_t *) ptr;
+        *field_ptr = -1;
+        break;
+    }
+    }
+    return 0;
 }

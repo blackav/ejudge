@@ -1882,5 +1882,9 @@ void
 problem_minimize(
         struct section_problem_data *prob,
         const struct section_problem_data *aprob);
+int
+problem_delete_field(
+        struct section_problem_data *prob,
+        int field_id);
 
 #endif /* __PREPARE_H__ */
