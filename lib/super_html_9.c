@@ -1576,6 +1576,64 @@ status_200_default:;
     return;
 }
 
+extern const unsigned char problem_typically_ignored_fields[CNTSPROB_LAST_FIELD];
+
+static void
+delete_contest_problem_json(struct http_request_info *phr)
+{
+    int abstract = -1;
+    hr_cgi_param_bool_opt(phr, "abstract", &abstract, -1);
+    int prob_id = -1;
+    hr_cgi_param_int_opt(phr, "prob_id", &prob_id, -1);
+    const unsigned char *short_name = NULL;
+    hr_cgi_param(phr, "short_name", &short_name);
+    const unsigned char *long_name = NULL;
+    hr_cgi_param(phr, "long_name", &long_name);
+    const unsigned char *internal_name = NULL;
+    hr_cgi_param(phr, "internal_name", &internal_name);
+    const unsigned char *uuid = NULL;
+    hr_cgi_param(phr, "uuid", &uuid);
+    const unsigned char *extid = NULL;
+    hr_cgi_param(phr, "extid", &extid);
+    struct section_problem_data *prob = NULL;
+    int r = lookup_contest_problem(phr->ss, abstract, prob_id, short_name, long_name, internal_name, uuid, extid, &abstract, &prob_id, &prob);
+    if (r < 0) {
+        cJSON_AddFalseToObject(phr->json_result, "result");
+        phr->status_code = 200;
+        return;
+    }
+
+    const unsigned char *field_name = NULL;
+    r = hr_cgi_param(phr, "field_name", &field_name);
+    if (r < 0) goto status_400;
+    if (r == 0) {
+        if (abstract) {
+            for (int i = prob_id + 1; i < phr->ss->aprob_u; ++i) {
+                phr->ss->aprobs[i-1] = phr->ss->aprobs[i];
+                phr->ss->aprob_flags[i-1] = phr->ss->aprob_flags[i];
+            }
+            --phr->ss->aprob_u;
+            phr->ss->aprobs[phr->ss->aprob_u] = NULL;
+            phr->ss->aprob_flags[phr->ss->aprob_u] = 0;
+        } else {
+            phr->ss->probs[prob_id] = NULL;
+            phr->ss->prob_flags[prob_id] = 0;
+        }
+    } else {
+        int field_id = cntsprob_lookup_field(field_name);
+        if (field_id <= 0) goto status_400;
+        if (problem_delete_field(prob, field_id) < 0) goto status_400;
+    }
+    cJSON_AddTrueToObject(phr->json_result, "result");
+    phr->status_code = 200;
+    return;
+
+status_400:;
+    phr->err_num = SSERV_ERR_INV_PARAM;
+    phr->status_code = 400;
+    return;
+}
+
 void
 super_serve_api_CNTS_DELETE_VALUE_JSON(
         FILE *out_f,
@@ -1614,6 +1672,9 @@ super_serve_api_CNTS_DELETE_VALUE_JSON(
         return;
     } else if (!strcmp(section, "global")) {
         delete_contest_global_json(phr);
+        return;
+    } else if (!strcmp(section, "problem")) {
+        delete_contest_problem_json(phr);
         return;
     } else {
         phr->err_num = SSERV_ERR_INV_PARAM;
