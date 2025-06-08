@@ -40,6 +40,7 @@
 #include "ejudge/cJSON.h"
 #include "ejudge/xalloc.h"
 #include "ejudge/xml_utils.h"
+#include "ejudge/userlist.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -2657,6 +2658,191 @@ status_200_default:;
     return;
 }
 
+static int
+create_abstract_problem(
+        struct sid_state *ss,
+        const unsigned char *short_name,
+        int *p_abstract,
+        int *p_prob_id,
+        struct section_problem_data **p_prob)
+{
+    int prob_id = ss->aprob_u;
+    if (ss->aprob_u == ss->aprob_a) {
+        if (!ss->aprob_a) ss->aprob_a = 4;
+        ss->aprob_a *= 2;
+        XREALLOC(ss->aprobs, ss->aprob_a);
+        XREALLOC(ss->aprob_flags, ss->aprob_a);
+    }
+    struct section_problem_data *prob = prepare_alloc_problem();
+    prepare_problem_init_func(&prob->g);
+    ss->cfg = param_merge(&prob->g, ss->cfg);
+    ss->aprobs[prob_id] = prob;
+    ss->aprob_flags[prob_id] = 0;
+    ss->aprob_u++;
+    snprintf(prob->short_name, sizeof(prob->short_name), "%s", short_name);
+    prob->abstract = 1;
+    prob->id = prob_id;
+    *p_abstract = 1;
+    *p_prob_id = prob_id;
+    *p_prob = prob;
+    return 1;
+}
+
+static int
+create_contest_problem(
+        struct sid_state *ss,
+        int abstract,
+        int prob_id,
+        const unsigned char *short_name,
+        const unsigned char *long_name,
+        const unsigned char *internal_name,
+        const unsigned char *uuid,
+        const unsigned char *extid,
+        int *p_abstract,
+        int *p_prob_id,
+        struct section_problem_data **p_prob)
+{
+    if (abstract > 0) {
+        // only short name is used
+        if (!short_name || !*short_name) {
+            return -1;
+        }
+        if (strlen(short_name) >= 32) {
+            return -1;
+        }
+        if (check_str(short_name, login_accept_chars) < 0) {
+            return -1;
+        }
+        for (int i = 0; i < ss->aprob_a; ++i) {
+            if (!strcmp(ss->aprobs[i]->short_name, short_name)) {
+                return -1;
+            }
+        }
+        for (int i = 0; i < ss->prob_a; ++i) {
+            const struct section_problem_data *pp = ss->probs[i];
+            if (pp && !strcmp(pp->short_name, short_name)) {
+                return -1;
+            }
+        }
+        return create_abstract_problem(ss, short_name, p_abstract, p_prob_id, p_prob);
+    }
+
+    if (prob_id > 0) {
+        if (prob_id > EJ_MAX_PROB_ID) {
+            return -1;
+        }
+        if (prob_id < ss->prob_a && ss->probs[prob_id]) {
+            return -1;
+        }
+    } else {
+        for (prob_id = 1; prob_id < ss->prob_a; ++prob_id) {
+            if (!ss->probs[prob_id]) {
+                break;
+            }
+        }
+    }
+
+    if (prob_id >= ss->prob_a) {
+        int new_prob_a = ss->prob_a;
+        if (!new_prob_a) new_prob_a = 16;
+        while (prob_id >= new_prob_a) new_prob_a *= 2;
+        struct section_problem_data **new_probs;
+        int *new_prob_flags;
+        XCALLOC(new_probs, new_prob_a);
+        XCALLOC(new_prob_flags, new_prob_a);
+        if (ss->prob_a > 0) {
+            XMEMCPY(new_probs, ss->probs, ss->prob_a);
+            XMEMCPY(new_prob_flags, ss->prob_flags, ss->prob_a);
+        }
+        xfree(ss->probs);
+        xfree(ss->prob_flags);
+        ss->probs = new_probs;
+        ss->prob_flags = new_prob_flags;
+        ss->prob_a = new_prob_a;
+    }
+
+    unsigned char short_name_buf[32];
+    if (!short_name || !*short_name) {
+        snprintf(short_name_buf, sizeof(short_name_buf), "prob_%d", prob_id);
+        short_name = short_name_buf;
+    } else {
+        if (strlen(short_name) >= 32) {
+            return -1;
+        }
+        if (check_str(short_name, login_accept_chars) < 0) {
+            return -1;
+        }
+    }
+    for (int aprob_id = 0; aprob_id < ss->aprob_u; ++aprob_id) {
+        if (!strcmp(short_name, ss->aprobs[aprob_id]->short_name)) {
+            return -1;
+        }
+    }
+    for (int id = 0; id < ss->prob_a; ++id) {
+        const struct section_problem_data *pp = ss->probs[id];
+        if (!strcmp(pp->short_name, short_name)) {
+            return -1;
+        }
+        if (pp->internal_name && !strcmp(pp->internal_name, short_name)) {
+            return -1;
+        }
+    }
+    if (long_name && !*long_name) {
+        long_name = NULL;
+    }
+    if (internal_name && !*internal_name) {
+        internal_name = NULL;
+    }
+    if (internal_name) {
+        for (int aprob_id = 0; aprob_id < ss->aprob_u; ++aprob_id) {
+            if (!strcmp(internal_name, ss->aprobs[aprob_id]->short_name)) {
+                return -1;
+            }
+        }
+        for (int id = 0; id < ss->prob_a; ++id) {
+            const struct section_problem_data *pp = ss->probs[id];
+            if (!strcmp(pp->short_name, internal_name)) {
+                return -1;
+            }
+            if (pp->internal_name && !strcmp(pp->internal_name, internal_name)) {
+                return -1;
+            }
+        }
+    }
+    if (uuid && !*uuid) {
+        uuid = NULL;
+    }
+    if (extid && !*extid) {
+        extid = NULL;
+    }
+
+    struct section_problem_data *prob = prepare_alloc_problem();
+    prepare_problem_init_func(&prob->g);
+    ss->cfg = param_merge(&prob->g, ss->cfg);
+    ss->probs[prob_id] = prob;
+    ss->prob_flags[prob_id] = 0;
+    snprintf(prob->short_name, sizeof(prob->short_name), "%s", short_name);
+    prob->abstract = 0;
+    prob->id = prob_id;
+    if (long_name) {
+        prob->long_name = xstrdup(long_name);
+    }
+    if (internal_name) {
+        prob->internal_name = xstrdup(internal_name);
+    }
+    if (uuid) {
+        prob->uuid = xstrdup(uuid);
+    }
+    if (extid) {
+        prob->extid = xstrdup(extid);
+    }
+
+    *p_abstract = 0;
+    *p_prob_id = prob_id;
+    *p_prob = prob;
+    return 1;
+}
+
 static void
 set_contest_problem_json_json(struct http_request_info *phr)
 {
@@ -2679,10 +2865,27 @@ set_contest_problem_json_json(struct http_request_info *phr)
     hr_cgi_param(phr, "uuid", &uuid);
     const unsigned char *extid = NULL;
     hr_cgi_param(phr, "extid", &extid);
+    int create_mode = 0, exclusive_mode = 0;
+    hr_cgi_param_bool_opt(phr, "create", &create_mode, 0);
+    hr_cgi_param_bool_opt(phr, "exclusive", &exclusive_mode, 0);
     struct section_problem_data *prob = NULL;
-    int r = lookup_contest_problem(phr->ss, abstract, prob_id, short_name, long_name, internal_name, uuid, extid, &abstract, &prob_id, &prob);
+    int out_abstract = -1, out_prob_id = -1;
+    int r = lookup_contest_problem(phr->ss, abstract, prob_id, short_name, long_name, internal_name, uuid, extid, &out_abstract, &out_prob_id, &prob);
     if (r < 0) {
-        goto status_404;
+        if (create_mode <= 0) goto status_404;
+        r = create_contest_problem(phr->ss, abstract, prob_id, short_name, long_name, internal_name, uuid, extid, &out_abstract, &out_prob_id, &prob);
+        if (r < 0) {
+            goto status_400;
+        }
+        prob_id = out_prob_id;
+        abstract = out_abstract;
+        is_changed = 1;
+    } else {
+        if (create_mode > 0 && exclusive_mode > 0) {
+            goto status_429;
+        }
+        prob_id = out_prob_id;
+        abstract = out_abstract;
     }
 
     // protected_fields, allowed_fields, problem
@@ -2732,6 +2935,11 @@ status_400:;
 status_404:;
     phr->err_num = SSERV_ERR_INV_PARAM;
     phr->status_code = 404;
+    goto cleanup;
+
+status_429:;
+    phr->err_num = SSERV_ERR_INV_PARAM;
+    phr->status_code = 429;
     goto cleanup;
 }
 
