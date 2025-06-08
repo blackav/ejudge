@@ -2656,6 +2656,74 @@ status_200_default:;
     return;
 }
 
+static void
+set_contest_problem_json_json(struct http_request_info *phr)
+{
+    cJSON *jpf = NULL, *jaf = NULL, *jp = NULL;
+    char *msg_s = NULL;
+    size_t msg_z = 0;
+    FILE *msg_f = NULL;
+    int abstract = -1;
+    hr_cgi_param_bool_opt(phr, "abstract", &abstract, -1);
+    int prob_id = -1;
+    hr_cgi_param_int_opt(phr, "prob_id", &prob_id, -1);
+    const unsigned char *short_name = NULL;
+    hr_cgi_param(phr, "short_name", &short_name);
+    const unsigned char *long_name = NULL;
+    hr_cgi_param(phr, "long_name", &long_name);
+    const unsigned char *internal_name = NULL;
+    hr_cgi_param(phr, "internal_name", &internal_name);
+    const unsigned char *uuid = NULL;
+    hr_cgi_param(phr, "uuid", &uuid);
+    const unsigned char *extid = NULL;
+    hr_cgi_param(phr, "extid", &extid);
+    struct section_problem_data *prob = NULL;
+    int r = lookup_contest_problem(phr->ss, abstract, prob_id, short_name, long_name, internal_name, uuid, extid, &abstract, &prob_id, &prob);
+    if (r < 0) {
+        goto status_404;
+    }
+
+    // protected_fields, allowed_fields, problem
+    const unsigned char *s = NULL;
+    r = hr_cgi_param(phr, "protected_fields", &s);
+    if (r < 0) goto status_400;
+    if (r > 0 && !(jpf = cJSON_Parse(s))) goto status_400;
+    r = hr_cgi_param(phr, "allowed_fields", &s);
+    if (r < 0) goto status_400;
+    if (r > 0 && !(jaf = cJSON_Parse(s))) goto status_400;
+    r = hr_cgi_param(phr, "problem", &s);
+    if (r <= 0) goto status_400;
+    if (!(jp = cJSON_Parse(s))) goto status_400;
+
+    msg_f = open_memstream(&msg_s, &msg_z);
+    r = problem_assign_json(prob, jpf, jaf, jp, msg_f);
+    fclose(msg_f); msg_f = NULL;
+
+    cJSON *jr = cJSON_CreateObject();
+    cJSON_AddNumberToObject(jr, "result", r);
+    cJSON_AddStringToObject(jr, "messages", msg_s);
+    cJSON_AddItemToObject(phr->json_result, "result", jr);
+    phr->status_code = 200;
+
+cleanup:;
+    if (msg_f) fclose(msg_f);
+    free(msg_s);
+    if (jpf) cJSON_Delete(jpf);
+    if (jaf) cJSON_Delete(jaf);
+    if (jp) cJSON_Delete(jp);
+    return;
+
+status_400:;
+    phr->err_num = SSERV_ERR_INV_PARAM;
+    phr->status_code = 400;
+    goto cleanup;
+
+status_404:;
+    phr->err_num = SSERV_ERR_INV_PARAM;
+    phr->status_code = 404;
+    goto cleanup;
+}
+
 void
 super_serve_api_CNTS_SET_VALUE_JSON(
         FILE *out_f,
@@ -2694,6 +2762,9 @@ super_serve_api_CNTS_SET_VALUE_JSON(
         return;
     } else if (!strcmp(section, "global")) {
         set_contest_global_json(phr);
+        return;
+    } else if (!strcmp(section, "problem.json")) {
+        set_contest_problem_json_json(phr);
         return;
     } else {
         phr->err_num = SSERV_ERR_INV_PARAM;

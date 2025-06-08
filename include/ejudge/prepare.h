@@ -1887,4 +1887,13 @@ problem_delete_field(
         struct section_problem_data *prob,
         int field_id);
 
+struct cJSON;
+int
+problem_assign_json(
+        struct section_problem_data *prob,
+        struct cJSON *protected_fields,
+        struct cJSON *allowed_fields,
+        struct cJSON *jp,
+        FILE *log_f);
+
 #endif /* __PREPARE_H__ */
