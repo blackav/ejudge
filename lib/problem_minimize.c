@@ -436,7 +436,10 @@ problem_minimize(struct section_problem_data *prob, const struct section_problem
 }
 
 int
-problem_delete_field(struct section_problem_data *prob, int field_id)
+problem_delete_field(
+        struct section_problem_data *prob,
+        int field_id,
+        int *p_changed)
 {
     if (problem_typically_ignored_fields[field_id]) {
         return -1;
@@ -745,7 +748,8 @@ problem_assign_json(
         cJSON *protected_fields,
         cJSON *allowed_fields,
         cJSON *jp,
-        FILE *log_f)
+        FILE *log_f,
+        int *p_changed)
 {
     unsigned char ignored_fields[CNTSPROB_LAST_FIELD];
     unsigned char af[CNTSPROB_LAST_FIELD];
@@ -786,7 +790,7 @@ problem_assign_json(
         const unsigned char *field_name = cntsprob_get_name(field_id);
         cJSON *ji = cJSON_GetObjectItem(jp, field_name);
         if (!ji) {
-            problem_delete_field(prob, field_id);
+            problem_delete_field(prob, field_id, p_changed);
             continue;
         }
         if (field_id == CNTSPROB_type) {

@@ -1581,6 +1581,7 @@ extern const unsigned char problem_typically_ignored_fields[CNTSPROB_LAST_FIELD]
 static void
 delete_contest_problem_json(struct http_request_info *phr)
 {
+    int is_changed = 0;
     int abstract = -1;
     hr_cgi_param_bool_opt(phr, "abstract", &abstract, -1);
     int prob_id = -1;
@@ -1622,7 +1623,7 @@ delete_contest_problem_json(struct http_request_info *phr)
     } else {
         int field_id = cntsprob_lookup_field(field_name);
         if (field_id <= 0) goto status_400;
-        if (problem_delete_field(prob, field_id) < 0) goto status_400;
+        if (problem_delete_field(prob, field_id, &is_changed) < 0) goto status_400;
     }
     cJSON_AddTrueToObject(phr->json_result, "result");
     phr->status_code = 200;
@@ -2659,6 +2660,7 @@ status_200_default:;
 static void
 set_contest_problem_json_json(struct http_request_info *phr)
 {
+    int is_changed = 0;
     cJSON *jpf = NULL, *jaf = NULL, *jp = NULL;
     char *msg_s = NULL;
     size_t msg_z = 0;
@@ -2696,10 +2698,19 @@ set_contest_problem_json_json(struct http_request_info *phr)
     if (!(jp = cJSON_Parse(s))) goto status_400;
 
     msg_f = open_memstream(&msg_s, &msg_z);
-    r = problem_assign_json(prob, jpf, jaf, jp, msg_f);
+    r = problem_assign_json(prob, jpf, jaf, jp, msg_f, &is_changed);
     fclose(msg_f); msg_f = NULL;
 
     cJSON *jr = cJSON_CreateObject();
+    if (abstract) {
+        cJSON_AddTrueToObject(jr, "abstract");
+    } else {
+        cJSON_AddFalseToObject(jr, "abstract");
+    }
+    if (is_changed) {
+        cJSON_AddTrueToObject(jr, "changed");
+    }
+    cJSON_AddNumberToObject(jr, "prob_id", prob_id);
     cJSON_AddNumberToObject(jr, "result", r);
     cJSON_AddStringToObject(jr, "messages", msg_s);
     cJSON_AddItemToObject(phr->json_result, "result", jr);

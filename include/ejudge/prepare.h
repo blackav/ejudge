@@ -1885,7 +1885,8 @@ problem_minimize(
 int
 problem_delete_field(
         struct section_problem_data *prob,
-        int field_id);
+        int field_id,
+        int *p_changed);
 
 struct cJSON;
 int
@@ -1894,6 +1895,7 @@ problem_assign_json(
         struct cJSON *protected_fields,
         struct cJSON *allowed_fields,
         struct cJSON *jp,
-        FILE *log_f);
+        FILE *log_f,
+        int *p_changed);
 
 #endif /* __PREPARE_H__ */
