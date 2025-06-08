@@ -451,7 +451,10 @@ problem_delete_field(
     case CNTSPROB_id:
         return -1;
     case CNTSPROB_priority_adjustment:
-        prob->priority_adjustment = 0;
+        if (prob->priority_adjustment != 0) {
+            prob->priority_adjustment = 0;
+            *p_changed = 1;
+        }
         return 0;
     default:
         break;
@@ -462,42 +465,66 @@ problem_delete_field(
     switch (t) {
     case 'i': { // int
         int *field_ptr = (int*) ptr;
-        *field_ptr = -1;
+        if (*field_ptr != -1) {
+            *field_ptr = -1;
+            *p_changed = 1;
+        }
         break;
     }
     case 'S': { // unsigned char[]
         unsigned char *field_ptr = (unsigned char *) ptr;
-        *field_ptr = 0;
+        if (*field_ptr) {
+            *field_ptr = 0;
+            *p_changed = 1;
+        }
         break;
     }
     case 'f': { // ejbyteflag_t
         ejbyteflag_t *field_ptr = (ejbyteflag_t *) ptr;
-        *field_ptr = -1;
+        if (*field_ptr != -1) {
+            *field_ptr = -1;
+            *p_changed = 1;
+        }
         break;
     }
     case 's': { // unsigned char *
         unsigned char **field_ptr = (unsigned char **) ptr;
-        xfree(*field_ptr); *field_ptr = NULL;
+        if (*field_ptr) {
+            xfree(*field_ptr); *field_ptr = NULL;
+            *p_changed = 1;
+        }
         break;
     }
     case 'x': { // char **
         char ***field_ptr = (char ***) ptr;
-        sarray_free(*field_ptr); *field_ptr = NULL;
+        if (*field_ptr) {
+            sarray_free(*field_ptr); *field_ptr = NULL;
+            *p_changed = 1;
+        }
         break;
     }
     case 't': { // time_t
         time_t *field_ptr = (time_t *) ptr;
-        *field_ptr = -1;
+        if (*field_ptr != -1) {
+            *field_ptr = -1;
+            *p_changed = 1;
+        }
         break;
     }
     case 'X': { // ejenvlist_t
         char ***field_ptr = (char ***) ptr;
-        sarray_free(*field_ptr); *field_ptr = NULL;
+        if (*field_ptr) {
+            sarray_free(*field_ptr); *field_ptr = NULL;
+            *p_changed = 1;
+        }
         break;
     }
     case 'E': { // ej_size64_t
         ej_size64_t *field_ptr = (ej_size64_t *) ptr;
-        *field_ptr = -1;
+        if (*field_ptr != -1) {
+            *field_ptr = -1;
+            *p_changed = 1;
+        }
         break;
     }
     }
