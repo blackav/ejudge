@@ -769,6 +769,20 @@ parse_json_sarray(
     }
 }
 
+static int
+strcmpex(const unsigned char *s1, const unsigned char *s2)
+{
+    if (!s1 && !s2) {
+        return 0;
+    } else if (!s1) {
+        return -1;
+    } else if (!s2) {
+        return 1;
+    } else {
+        return strcmp(s1, s2);
+    }
+}
+
 int
 problem_assign_json(
         struct section_problem_data *prob,
@@ -830,7 +844,10 @@ problem_assign_json(
                 flog(log_f, field_name, "invalid value");
                 continue;
             }
-            prob->type = val;
+            if (prob->type != val) {
+                prob->type = val;
+                *p_changed = 1;
+            }
             continue;
         }
         int t = cntsprob_get_type(field_id);
@@ -847,7 +864,10 @@ problem_assign_json(
                     flog(log_f, field_name, "invalid value");
                     continue;
                 }
-                *p = value;
+                if (*p != value) {
+                    *p = value;
+                    *p_changed = 1;
+                }
                 continue;
             }
             if (value < 0) {
@@ -862,7 +882,10 @@ problem_assign_json(
               prev_runs_to_show max_user_run_count interactor_time_limit interactor_real_time_limit max_open_file_count
               max_process_count
              */
-            *p = value;
+            if (*p != value) {
+                *p = value;
+                *p_changed = 1;
+            }
             break;
         }
         case 'S': {
@@ -879,7 +902,10 @@ problem_assign_json(
             /*
               super short_name
              */
-            snprintf(p, sz, "%s", ji->valuestring);
+            if (strcmp(p, ji->valuestring) != 0) {
+                snprintf(p, sz, "%s", ji->valuestring);
+                *p_changed = 1;
+            }
             break;
         }
         case 'f': {
@@ -907,7 +933,10 @@ problem_assign_json(
               notify_on_submit enable_user_input enable_vcs enable_iframe_statement enable_src_for_testing
               disable_vm_size_limit enable_group_merge
              */
-            *p = value;
+            if (*p != value) {
+                *p = value;
+                *p_changed = 1;
+            }
             break;
         }
         case 's': {
@@ -937,10 +966,13 @@ problem_assign_json(
               solution_src solution_cmd post_pull_cmd vcs_compile_cmd super_run_dir
               score_bonus open_tests final_open_tests token_open_tests extid
              */
-            if (*p) {
-                xfree(*p); *p = NULL;
+            if (strcmpex(*p, ji->valuestring) != 0) {
+                if (*p) {
+                    xfree(*p); *p = NULL;
+                }
+                *p = xstrdup(ji->valuestring);
+                *p_changed = 1;
             }
-            *p = xstrdup(ji->valuestring);
             break;
         }
         case 'x': {
@@ -955,7 +987,11 @@ problem_assign_json(
               lang_time_adj_millis lang_max_vm_size lang_max_stack_size lang_max_rss_size checker_extra_files
               alternative personal_deadline score_view
              */
-            *p = value;
+            if (sarray_cmp(*p, value) != 0) {
+                sarray_free(*p);
+                *p = value;
+                *p_changed = 1;
+            }
             break;
         }
         case 't': {
@@ -967,7 +1003,10 @@ problem_assign_json(
             /*
               deadline start_date
              */
-            *p = value;
+            if (*p != value) {
+                *p = value;
+                *p_changed = 1;
+            }
             break;
         }
         case 'X': {
@@ -981,7 +1020,11 @@ problem_assign_json(
               style_checker_env test_checker_env test_generator_env init_env start_env
               statement_env
              */
-            *p = value;
+            if (sarray_cmp(*p, value) != 0) {
+                sarray_free(*p);
+                *p = value;
+                *p_changed = 1;
+            }
             break;
         }
         case 'E': {
@@ -994,7 +1037,10 @@ problem_assign_json(
               max_vm_size max_data_size max_stack_size max_rss_size max_core_size
               max_file_size checker_max_vm_size checker_max_stack_size checker_max_rss_size
              */
-            *p = value;
+            if (*p != value) {
+                *p = value;
+                *p_changed = 1;
+            }
             break;
         }
         }
