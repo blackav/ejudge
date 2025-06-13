@@ -23,6 +23,7 @@
 #include "ejudge/cJSON.h"
 #include "ejudge/meta_generic.h"
 #include "ejudge/opcaps.h"
+#include "ejudge/problem_common.h"
 #include "ejudge/testing_report_xml.h"
 #include "ejudge/submit_plugin.h"
 #include "ejudge/runlog.h"
@@ -1309,4 +1310,43 @@ json_serialize_global(const struct section_global_data *g, int date_mode, int si
         }
     }
     return jg;
+}
+
+cJSON *
+json_serialize_problem(const struct section_problem_data *p, int date_mode, int size_mode, const unsigned char *ignored_fields)
+{
+    cJSON *jp = cJSON_CreateObject();
+    for (int field = CNTSPROB_id; field < CNTSPROB_LAST_FIELD; ++field) {
+        if (ignored_fields[field]) continue;
+        switch (field) {
+        case CNTSPROB_type:
+            if (p->type >= PROB_TYPE_STANDARD && p->type < PROB_TYPE_LAST) {
+                cJSON_AddStringToObject(jp, "type", problem_unparse_type(p->type));
+            }
+            break;
+        default:
+            json_serialize_meta_field(jp, p, &cntsprob_methods, field, date_mode, size_mode);
+        }
+    }
+    return jp;
+}
+
+cJSON *
+json_serialize_problem_id(const struct section_problem_data *p)
+{
+    cJSON *jp = cJSON_CreateObject();
+    if (p->id > 0) cJSON_AddNumberToObject(jp, "id", p->id);
+    if (p->tester_id > 0) cJSON_AddNumberToObject(jp, "tester_id", p->tester_id);
+    if (p->type >= PROB_TYPE_STANDARD && p->type < PROB_TYPE_LAST) {
+        cJSON_AddStringToObject(jp, "type", problem_unparse_type(p->type));
+    }
+    if (p->variant_num > 0) cJSON_AddNumberToObject(jp, "variant_num", p->variant_num);
+    if (p->super[0]) cJSON_AddStringToObject(jp, "super", p->super);
+    if (p->short_name[0]) cJSON_AddStringToObject(jp, "short_name", p->short_name);
+    if (p->abstract > 0) cJSON_AddTrueToObject(jp, "abstract");
+    if (p->long_name) cJSON_AddStringToObject(jp, "long_name", p->long_name);
+    if (p->internal_name) cJSON_AddStringToObject(jp, "internal_name", p->internal_name);
+    if (p->uuid) cJSON_AddStringToObject(jp, "uuid", p->uuid);
+    if (p->extid) cJSON_AddStringToObject(jp, "extid", p->extid);
+    return jp;
 }

@@ -40,6 +40,7 @@
 #include "ejudge/cJSON.h"
 #include "ejudge/xalloc.h"
 #include "ejudge/xml_utils.h"
+#include "ejudge/userlist.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -1031,6 +1032,172 @@ get_contest_global_json(struct http_request_info *phr)
     phr->status_code = 200;
 }
 
+static void
+get_contest_problems_json(struct http_request_info *phr)
+{
+    cJSON *jps = cJSON_CreateArray();
+    for (int i = 0; i < phr->ss->aprob_u; ++i) {
+        if (phr->ss->aprobs[i]) {
+            cJSON_AddItemToArray(jps, json_serialize_problem_id(phr->ss->aprobs[i]));
+        }
+    }
+    for (int i = 0; i < phr->ss->prob_a; ++i) {
+        if (phr->ss->probs[i]) {
+            cJSON_AddItemToArray(jps, json_serialize_problem_id(phr->ss->probs[i]));
+        }
+    }
+    cJSON_AddItemToObject(phr->json_result, "result", jps);
+    phr->status_code = 200;
+}
+
+static const unsigned char problem_ignored_fields[CNTSPROB_LAST_FIELD] =
+{
+    [CNTSPROB_ntests] = 1,
+    [CNTSPROB_tscores] = 1,
+    [CNTSPROB_x_score_tests] = 1,
+    [CNTSPROB_ts_total] = 1,
+    [CNTSPROB_ts_infos] = 1,
+    [CNTSPROB_normalization_val] = 1,
+    [CNTSPROB_dp_total] = 1,
+    [CNTSPROB_dp_infos] = 1,
+    [CNTSPROB_gsd] = 1,
+    [CNTSPROB_gdl] = 1,
+    [CNTSPROB_pd_total] = 1,
+    [CNTSPROB_pd_infos] = 1,
+    [CNTSPROB_score_bonus_total] = 1,
+    [CNTSPROB_score_bonus_val] = 1,
+    [CNTSPROB_open_tests_count] = 1,
+    [CNTSPROB_open_tests_val] = 1,
+    [CNTSPROB_open_tests_group] = 1,
+    [CNTSPROB_final_open_tests_count] = 1,
+    [CNTSPROB_final_open_tests_val] = 1,
+    [CNTSPROB_final_open_tests_group] = 1,
+    [CNTSPROB_token_open_tests_count] = 1,
+    [CNTSPROB_token_open_tests_val] = 1,
+    [CNTSPROB_token_open_tests_group] = 1,
+    [CNTSPROB_score_view_score] = 1,
+    [CNTSPROB_score_view_text] = 1,
+    [CNTSPROB_xml_file_path] = 1,
+    [CNTSPROB_var_xml_file_paths] = 1,
+};
+
+static int
+does_problem_match(
+        const struct section_problem_data *prob,
+        const unsigned char *short_name,
+        const unsigned char *long_name,
+        const unsigned char *internal_name,
+        const unsigned char *uuid,
+        const unsigned char *extid)
+{
+    if (!prob) return 0;
+    if (short_name && !strcmp(prob->short_name, short_name)) return 1;
+    if (uuid && prob->uuid && !strcmp(prob->uuid, uuid)) return 1;
+    if (internal_name && prob->internal_name && !strcmp(prob->internal_name, internal_name)) return 1;
+    if (extid && prob->extid && !strcmp(prob->extid, extid)) return 1;
+    if (long_name && prob->long_name && !strcmp(prob->long_name, long_name)) return 1;
+    return 0;
+}
+
+static int
+lookup_contest_problem(
+        const struct sid_state *ss,
+        int abstract,
+        int prob_id,
+        const unsigned char *short_name,
+        const unsigned char *long_name,
+        const unsigned char *internal_name,
+        const unsigned char *uuid,
+        const unsigned char *extid,
+        int *p_abstract,
+        int *p_prob_id,
+        struct section_problem_data **p_prob)
+{
+    if (!ss) return 404;
+    int found_abstract = -1;
+    int found_prob_id = -1;
+    struct section_problem_data *prob = NULL;
+    if (abstract != 0) { // true or undefined
+        if (abstract > 0 && prob_id >= 0) {
+            if (prob_id >= ss->aprob_u) return -404;
+            prob = ss->aprobs[prob_id];
+            if (!prob) return -404;
+            if (p_abstract) *p_abstract = 1;
+            if (p_prob_id) *p_prob_id = prob_id;
+            if (p_prob) *p_prob = prob;
+            return 0;
+        }
+        for (int i = 0; i < ss->aprob_u; ++i) {
+            if (does_problem_match(ss->aprobs[i], short_name, long_name, internal_name, uuid, extid)) {
+                if (prob) return -429;
+                found_abstract = 1;
+                found_prob_id = i;
+                prob = ss->aprobs[i];
+            }
+        }
+    }
+    if (abstract <= 0) { // false or undefined
+        if (abstract == 0 && prob_id >= 0) {
+            if (prob_id >= ss->prob_a) return -404;
+            prob = ss->probs[prob_id];
+            if (!prob) return -404;
+            if (p_abstract) *p_abstract = 0;
+            if (p_prob_id) *p_prob_id = prob_id;
+            if (p_prob) *p_prob = prob;
+            return 0;
+        }
+        for (int i = 0; i < ss->prob_a; ++i) {
+            if (does_problem_match(ss->probs[i], short_name, long_name, internal_name, uuid, extid)) {
+                if (prob) return -429;
+                found_abstract = 0;
+                found_prob_id = i;
+                prob = ss->probs[i];
+            }
+        }
+    }
+    if (!prob) {
+        return -404;
+    }
+    if (p_abstract) *p_abstract = found_abstract;
+    if (p_prob_id) *p_prob_id = found_prob_id;
+    if (p_prob) *p_prob = prob;
+    return 0;
+}
+
+static void
+get_contest_problem_json(struct http_request_info *phr)
+{
+    int date_mode = 0, size_mode = 0;
+    hr_cgi_param_int_opt(phr, "date_mode", &date_mode, 0);
+    hr_cgi_param_int_opt(phr, "size_mode", &size_mode, 0);
+    int abstract = -1;
+    hr_cgi_param_bool_opt(phr, "abstract", &abstract, -1);
+    int prob_id = -1;
+    hr_cgi_param_int_opt(phr, "prob_id", &prob_id, -1);
+    const unsigned char *short_name = NULL;
+    hr_cgi_param(phr, "short_name", &short_name);
+    const unsigned char *long_name = NULL;
+    hr_cgi_param(phr, "long_name", &long_name);
+    const unsigned char *internal_name = NULL;
+    hr_cgi_param(phr, "internal_name", &internal_name);
+    const unsigned char *uuid = NULL;
+    hr_cgi_param(phr, "uuid", &uuid);
+    const unsigned char *extid = NULL;
+    hr_cgi_param(phr, "extid", &extid);
+    struct section_problem_data *prob = NULL;
+    int r = lookup_contest_problem(phr->ss, abstract, prob_id, short_name, long_name, internal_name, uuid, extid, NULL, NULL, &prob);
+    if (r < 0) {
+        phr->status_code = -r;
+        return;
+    }
+    if (!prob) {
+        phr->status_code = 404;
+        return;
+    }
+    cJSON_AddItemToObject(phr->json_result, "result", json_serialize_problem(prob, date_mode, size_mode, problem_ignored_fields));
+    phr->status_code = 200;
+}
+
 void
 super_serve_api_CNTS_GET_VALUE_JSON(
         FILE *out_f,
@@ -1069,6 +1236,12 @@ super_serve_api_CNTS_GET_VALUE_JSON(
         return;
     } else if (!strcmp(section, "global")) {
         get_contest_global_json(phr);
+        return;
+    } else if (!strcmp(section, "problems")) {
+        get_contest_problems_json(phr);
+        return;
+    } else if (!strcmp(section, "problem")) {
+        get_contest_problem_json(phr);
         return;
     } else {
         phr->err_num = SSERV_ERR_INV_PARAM;
@@ -1404,6 +1577,65 @@ status_200_default:;
     return;
 }
 
+extern const unsigned char problem_typically_ignored_fields[CNTSPROB_LAST_FIELD];
+
+static void
+delete_contest_problem_json(struct http_request_info *phr)
+{
+    int is_changed = 0;
+    int abstract = -1;
+    hr_cgi_param_bool_opt(phr, "abstract", &abstract, -1);
+    int prob_id = -1;
+    hr_cgi_param_int_opt(phr, "prob_id", &prob_id, -1);
+    const unsigned char *short_name = NULL;
+    hr_cgi_param(phr, "short_name", &short_name);
+    const unsigned char *long_name = NULL;
+    hr_cgi_param(phr, "long_name", &long_name);
+    const unsigned char *internal_name = NULL;
+    hr_cgi_param(phr, "internal_name", &internal_name);
+    const unsigned char *uuid = NULL;
+    hr_cgi_param(phr, "uuid", &uuid);
+    const unsigned char *extid = NULL;
+    hr_cgi_param(phr, "extid", &extid);
+    struct section_problem_data *prob = NULL;
+    int r = lookup_contest_problem(phr->ss, abstract, prob_id, short_name, long_name, internal_name, uuid, extid, &abstract, &prob_id, &prob);
+    if (r < 0) {
+        cJSON_AddFalseToObject(phr->json_result, "result");
+        phr->status_code = 200;
+        return;
+    }
+
+    const unsigned char *field_name = NULL;
+    r = hr_cgi_param(phr, "field_name", &field_name);
+    if (r < 0) goto status_400;
+    if (r == 0) {
+        if (abstract) {
+            for (int i = prob_id + 1; i < phr->ss->aprob_u; ++i) {
+                phr->ss->aprobs[i-1] = phr->ss->aprobs[i];
+                phr->ss->aprob_flags[i-1] = phr->ss->aprob_flags[i];
+            }
+            --phr->ss->aprob_u;
+            phr->ss->aprobs[phr->ss->aprob_u] = NULL;
+            phr->ss->aprob_flags[phr->ss->aprob_u] = 0;
+        } else {
+            phr->ss->probs[prob_id] = NULL;
+            phr->ss->prob_flags[prob_id] = 0;
+        }
+    } else {
+        int field_id = cntsprob_lookup_field(field_name);
+        if (field_id <= 0) goto status_400;
+        if (problem_delete_field(prob, field_id, &is_changed) < 0) goto status_400;
+    }
+    cJSON_AddTrueToObject(phr->json_result, "result");
+    phr->status_code = 200;
+    return;
+
+status_400:;
+    phr->err_num = SSERV_ERR_INV_PARAM;
+    phr->status_code = 400;
+    return;
+}
+
 void
 super_serve_api_CNTS_DELETE_VALUE_JSON(
         FILE *out_f,
@@ -1442,6 +1674,9 @@ super_serve_api_CNTS_DELETE_VALUE_JSON(
         return;
     } else if (!strcmp(section, "global")) {
         delete_contest_global_json(phr);
+        return;
+    } else if (!strcmp(section, "problem")) {
+        delete_contest_problem_json(phr);
         return;
     } else {
         phr->err_num = SSERV_ERR_INV_PARAM;
@@ -2423,6 +2658,291 @@ status_200_default:;
     return;
 }
 
+static int
+create_abstract_problem(
+        struct sid_state *ss,
+        const unsigned char *short_name,
+        int *p_abstract,
+        int *p_prob_id,
+        struct section_problem_data **p_prob)
+{
+    int prob_id = ss->aprob_u;
+    if (ss->aprob_u == ss->aprob_a) {
+        if (!ss->aprob_a) ss->aprob_a = 4;
+        ss->aprob_a *= 2;
+        XREALLOC(ss->aprobs, ss->aprob_a);
+        XREALLOC(ss->aprob_flags, ss->aprob_a);
+    }
+    struct section_problem_data *prob = prepare_alloc_problem();
+    prepare_problem_init_func(&prob->g);
+    ss->cfg = param_merge(&prob->g, ss->cfg);
+    ss->aprobs[prob_id] = prob;
+    ss->aprob_flags[prob_id] = 0;
+    ss->aprob_u++;
+    snprintf(prob->short_name, sizeof(prob->short_name), "%s", short_name);
+    prob->abstract = 1;
+    prob->id = prob_id;
+    *p_abstract = 1;
+    *p_prob_id = prob_id;
+    *p_prob = prob;
+    return 1;
+}
+
+static int
+create_contest_problem(
+        struct sid_state *ss,
+        int abstract,
+        int prob_id,
+        const unsigned char *short_name,
+        const unsigned char *long_name,
+        const unsigned char *internal_name,
+        const unsigned char *uuid,
+        const unsigned char *extid,
+        int *p_abstract,
+        int *p_prob_id,
+        struct section_problem_data **p_prob)
+{
+    if (abstract > 0) {
+        // only short name is used
+        if (!short_name || !*short_name) {
+            return -1;
+        }
+        if (strlen(short_name) >= 32) {
+            return -1;
+        }
+        if (check_str(short_name, login_accept_chars) < 0) {
+            return -1;
+        }
+        for (int i = 0; i < ss->aprob_a; ++i) {
+            if (!strcmp(ss->aprobs[i]->short_name, short_name)) {
+                return -1;
+            }
+        }
+        for (int i = 0; i < ss->prob_a; ++i) {
+            const struct section_problem_data *pp = ss->probs[i];
+            if (pp && !strcmp(pp->short_name, short_name)) {
+                return -1;
+            }
+        }
+        return create_abstract_problem(ss, short_name, p_abstract, p_prob_id, p_prob);
+    }
+
+    if (prob_id > 0) {
+        if (prob_id > EJ_MAX_PROB_ID) {
+            return -1;
+        }
+        if (prob_id < ss->prob_a && ss->probs[prob_id]) {
+            return -1;
+        }
+    } else {
+        for (prob_id = 1; prob_id < ss->prob_a; ++prob_id) {
+            if (!ss->probs[prob_id]) {
+                break;
+            }
+        }
+    }
+
+    if (prob_id >= ss->prob_a) {
+        int new_prob_a = ss->prob_a;
+        if (!new_prob_a) new_prob_a = 16;
+        while (prob_id >= new_prob_a) new_prob_a *= 2;
+        struct section_problem_data **new_probs;
+        int *new_prob_flags;
+        XCALLOC(new_probs, new_prob_a);
+        XCALLOC(new_prob_flags, new_prob_a);
+        if (ss->prob_a > 0) {
+            XMEMCPY(new_probs, ss->probs, ss->prob_a);
+            XMEMCPY(new_prob_flags, ss->prob_flags, ss->prob_a);
+        }
+        xfree(ss->probs);
+        xfree(ss->prob_flags);
+        ss->probs = new_probs;
+        ss->prob_flags = new_prob_flags;
+        ss->prob_a = new_prob_a;
+    }
+
+    unsigned char short_name_buf[32];
+    if (!short_name || !*short_name) {
+        snprintf(short_name_buf, sizeof(short_name_buf), "prob_%d", prob_id);
+        short_name = short_name_buf;
+    } else {
+        if (strlen(short_name) >= 32) {
+            return -1;
+        }
+        if (check_str(short_name, login_accept_chars) < 0) {
+            return -1;
+        }
+    }
+    for (int aprob_id = 0; aprob_id < ss->aprob_u; ++aprob_id) {
+        if (!strcmp(short_name, ss->aprobs[aprob_id]->short_name)) {
+            return -1;
+        }
+    }
+    for (int id = 0; id < ss->prob_a; ++id) {
+        const struct section_problem_data *pp = ss->probs[id];
+        if (!strcmp(pp->short_name, short_name)) {
+            return -1;
+        }
+        if (pp->internal_name && !strcmp(pp->internal_name, short_name)) {
+            return -1;
+        }
+    }
+    if (long_name && !*long_name) {
+        long_name = NULL;
+    }
+    if (internal_name && !*internal_name) {
+        internal_name = NULL;
+    }
+    if (internal_name) {
+        for (int aprob_id = 0; aprob_id < ss->aprob_u; ++aprob_id) {
+            if (!strcmp(internal_name, ss->aprobs[aprob_id]->short_name)) {
+                return -1;
+            }
+        }
+        for (int id = 0; id < ss->prob_a; ++id) {
+            const struct section_problem_data *pp = ss->probs[id];
+            if (!strcmp(pp->short_name, internal_name)) {
+                return -1;
+            }
+            if (pp->internal_name && !strcmp(pp->internal_name, internal_name)) {
+                return -1;
+            }
+        }
+    }
+    if (uuid && !*uuid) {
+        uuid = NULL;
+    }
+    if (extid && !*extid) {
+        extid = NULL;
+    }
+
+    struct section_problem_data *prob = prepare_alloc_problem();
+    prepare_problem_init_func(&prob->g);
+    ss->cfg = param_merge(&prob->g, ss->cfg);
+    ss->probs[prob_id] = prob;
+    ss->prob_flags[prob_id] = 0;
+    snprintf(prob->short_name, sizeof(prob->short_name), "%s", short_name);
+    prob->abstract = 0;
+    prob->id = prob_id;
+    if (long_name) {
+        prob->long_name = xstrdup(long_name);
+    }
+    if (internal_name) {
+        prob->internal_name = xstrdup(internal_name);
+    }
+    if (uuid) {
+        prob->uuid = xstrdup(uuid);
+    }
+    if (extid) {
+        prob->extid = xstrdup(extid);
+    }
+
+    *p_abstract = 0;
+    *p_prob_id = prob_id;
+    *p_prob = prob;
+    return 1;
+}
+
+static void
+set_contest_problem_json_json(struct http_request_info *phr)
+{
+    int is_changed = 0;
+    cJSON *jpf = NULL, *jaf = NULL, *jp = NULL;
+    char *msg_s = NULL;
+    size_t msg_z = 0;
+    FILE *msg_f = NULL;
+    int abstract = -1;
+    hr_cgi_param_bool_opt(phr, "abstract", &abstract, -1);
+    int prob_id = -1;
+    hr_cgi_param_int_opt(phr, "prob_id", &prob_id, -1);
+    const unsigned char *short_name = NULL;
+    hr_cgi_param(phr, "short_name", &short_name);
+    const unsigned char *long_name = NULL;
+    hr_cgi_param(phr, "long_name", &long_name);
+    const unsigned char *internal_name = NULL;
+    hr_cgi_param(phr, "internal_name", &internal_name);
+    const unsigned char *uuid = NULL;
+    hr_cgi_param(phr, "uuid", &uuid);
+    const unsigned char *extid = NULL;
+    hr_cgi_param(phr, "extid", &extid);
+    int create_mode = 0, exclusive_mode = 0;
+    hr_cgi_param_bool_opt(phr, "create", &create_mode, 0);
+    hr_cgi_param_bool_opt(phr, "exclusive", &exclusive_mode, 0);
+    struct section_problem_data *prob = NULL;
+    int out_abstract = -1, out_prob_id = -1;
+    int r = lookup_contest_problem(phr->ss, abstract, prob_id, short_name, long_name, internal_name, uuid, extid, &out_abstract, &out_prob_id, &prob);
+    if (r < 0) {
+        if (create_mode <= 0) goto status_404;
+        r = create_contest_problem(phr->ss, abstract, prob_id, short_name, long_name, internal_name, uuid, extid, &out_abstract, &out_prob_id, &prob);
+        if (r < 0) {
+            goto status_400;
+        }
+        prob_id = out_prob_id;
+        abstract = out_abstract;
+        is_changed = 1;
+    } else {
+        if (create_mode > 0 && exclusive_mode > 0) {
+            goto status_429;
+        }
+        prob_id = out_prob_id;
+        abstract = out_abstract;
+    }
+
+    // protected_fields, allowed_fields, problem
+    const unsigned char *s = NULL;
+    r = hr_cgi_param(phr, "protected_fields", &s);
+    if (r < 0) goto status_400;
+    if (r > 0 && !(jpf = cJSON_Parse(s))) goto status_400;
+    r = hr_cgi_param(phr, "allowed_fields", &s);
+    if (r < 0) goto status_400;
+    if (r > 0 && !(jaf = cJSON_Parse(s))) goto status_400;
+    r = hr_cgi_param(phr, "problem", &s);
+    if (r <= 0) goto status_400;
+    if (!(jp = cJSON_Parse(s))) goto status_400;
+
+    msg_f = open_memstream(&msg_s, &msg_z);
+    r = problem_assign_json(prob, jpf, jaf, jp, msg_f, &is_changed);
+    fclose(msg_f); msg_f = NULL;
+
+    cJSON *jr = cJSON_CreateObject();
+    if (abstract) {
+        cJSON_AddTrueToObject(jr, "abstract");
+    } else {
+        cJSON_AddFalseToObject(jr, "abstract");
+    }
+    if (is_changed) {
+        cJSON_AddTrueToObject(jr, "changed");
+    }
+    cJSON_AddNumberToObject(jr, "prob_id", prob_id);
+    cJSON_AddNumberToObject(jr, "result", r);
+    cJSON_AddStringToObject(jr, "messages", msg_s);
+    cJSON_AddItemToObject(phr->json_result, "result", jr);
+    phr->status_code = 200;
+
+cleanup:;
+    if (msg_f) fclose(msg_f);
+    free(msg_s);
+    if (jpf) cJSON_Delete(jpf);
+    if (jaf) cJSON_Delete(jaf);
+    if (jp) cJSON_Delete(jp);
+    return;
+
+status_400:;
+    phr->err_num = SSERV_ERR_INV_PARAM;
+    phr->status_code = 400;
+    goto cleanup;
+
+status_404:;
+    phr->err_num = SSERV_ERR_INV_PARAM;
+    phr->status_code = 404;
+    goto cleanup;
+
+status_429:;
+    phr->err_num = SSERV_ERR_INV_PARAM;
+    phr->status_code = 429;
+    goto cleanup;
+}
+
 void
 super_serve_api_CNTS_SET_VALUE_JSON(
         FILE *out_f,
@@ -2462,9 +2982,78 @@ super_serve_api_CNTS_SET_VALUE_JSON(
     } else if (!strcmp(section, "global")) {
         set_contest_global_json(phr);
         return;
+    } else if (!strcmp(section, "problem.json")) {
+        set_contest_problem_json_json(phr);
+        return;
     } else {
         phr->err_num = SSERV_ERR_INV_PARAM;
         phr->status_code = 400;
         return;
     }
+}
+
+void
+super_serve_api_MINIMIZE_PROBLEM_JSON(
+        FILE *out_f,
+        struct http_request_info *phr)
+{
+    ej_cookie_t sid = 0;
+    ej_cookie_t client_key = 0;
+    if (parse_session(phr, "session", &sid, &client_key) <= 0) {
+        phr->err_num = SSERV_ERR_INV_SESSION;
+        phr->status_code = 400;
+        return;
+    }
+    struct sid_state *ss = sid_state_find(sid, client_key);
+    if (!ss) {
+        phr->err_num = SSERV_ERR_INV_SESSION;
+        phr->status_code = 400;
+        return;
+    }
+    phr->ss = ss;
+    if (!ss->edited_cnts) {
+        phr->err_num = SSERV_ERR_NO_EDITED_CNTS;
+        phr->status_code = 400;
+        return;
+    }
+
+    int abstract = -1;
+    hr_cgi_param_bool_opt(phr, "abstract", &abstract, -1);
+    int prob_id = -1;
+    hr_cgi_param_int_opt(phr, "prob_id", &prob_id, -1);
+    const unsigned char *short_name = NULL;
+    hr_cgi_param(phr, "short_name", &short_name);
+    const unsigned char *long_name = NULL;
+    hr_cgi_param(phr, "long_name", &long_name);
+    const unsigned char *internal_name = NULL;
+    hr_cgi_param(phr, "internal_name", &internal_name);
+    const unsigned char *uuid = NULL;
+    hr_cgi_param(phr, "uuid", &uuid);
+    const unsigned char *extid = NULL;
+    hr_cgi_param(phr, "extid", &extid);
+    struct section_problem_data *prob = NULL;
+    int r = lookup_contest_problem(phr->ss, abstract, prob_id, short_name, long_name, internal_name, uuid, extid, NULL, NULL, &prob);
+    if (r < 0) {
+        phr->status_code = -r;
+        return;
+    }
+    if (!prob) {
+        phr->status_code = 404;
+        return;
+    }
+    const struct section_problem_data *aprob = NULL;
+    if (prob->abstract <= 0 && prob->super[0]) {
+        for (int i = 0; i < phr->ss->aprob_u; ++i) {
+            const struct section_problem_data *p = phr->ss->aprobs[i];
+            if (p && !strcmp(p->short_name, prob->super)) {
+                aprob = p;
+                break;
+            }
+        }
+    }
+
+    problem_minimize(prob, aprob);
+    cJSON_AddTrueToObject(phr->json_result, "result");
+    phr->status_code = 200;
+    return;
 }

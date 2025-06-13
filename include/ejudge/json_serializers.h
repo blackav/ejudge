@@ -68,5 +68,14 @@ json_serialize_global(
         int size_mode,
         const unsigned char *ignored_fields);
 
+struct section_problem_data;
+struct cJSON *
+json_serialize_problem(
+        const struct section_problem_data *p,
+        int date_mode,
+        int size_mode,
+        const unsigned char *ignored_fields);
+struct cJSON *
+json_serialize_problem_id(const struct section_problem_data *p);
 
 #endif /* __JSON_SERIALIZERS_H__ */

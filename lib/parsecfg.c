@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2000-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2025 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1972,4 +1972,21 @@ sarray_copy(char **a1)
       aa[i++] = xstrdup(a1[j]);
   }
   return aa;
+}
+
+int
+sarray_cmp(char **a1, char **a2)
+{
+  if (!a1 && !a2) return 0;
+  if (!a1) return -1;
+  if (!a2) return 1;
+  int i = 0;
+  while (1) {
+    if (!a1[i] && !a2[i]) return 0;
+    if (!a1[i]) return -1;
+    if (!a2[i]) return 1;
+    int r = strcmp(a1[i], a2[i]);
+    if (r != 0) return r;
+  }
+  return 0;
 }

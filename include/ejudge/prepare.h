@@ -1878,4 +1878,24 @@ prepare_unparse_score_system(int ss);
 const unsigned char *
 prepare_unparse_rounding_mode(int rm);
 
+void
+problem_minimize(
+        struct section_problem_data *prob,
+        const struct section_problem_data *aprob);
+int
+problem_delete_field(
+        struct section_problem_data *prob,
+        int field_id,
+        int *p_changed);
+
+struct cJSON;
+int
+problem_assign_json(
+        struct section_problem_data *prob,
+        struct cJSON *protected_fields,
+        struct cJSON *allowed_fields,
+        struct cJSON *jp,
+        FILE *log_f,
+        int *p_changed);
+
 #endif /* __PREPARE_H__ */

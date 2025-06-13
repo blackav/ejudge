@@ -227,6 +227,7 @@ COMMON_CFILES=\
  lib/printing.c\
  lib/problem_common.c\
  lib/problem_config.c\
+ lib/problem_minimize.c\
  lib/problem_xml.c\
  lib/problem_xml_2.c\
  lib/process_stats.c\
