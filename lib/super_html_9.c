@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2011-2025 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2025 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1198,6 +1198,207 @@ get_contest_problem_json(struct http_request_info *phr)
     phr->status_code = 200;
 }
 
+static void
+get_contest_compile_servers(struct http_request_info *phr)
+{
+    cJSON *jr = cJSON_CreateObject();
+    cJSON *jcs = cJSON_CreateArray();
+    if (phr->ss->cscs && phr->ss->cscs->u > 0) {
+        for (int serv_i = 0; serv_i < phr->ss->cscs->u; ++serv_i) {
+            struct compile_server_config *csc = &phr->ss->cscs->v[serv_i];
+            cJSON *jc = cJSON_CreateObject();
+            cJSON_AddStringToObject(jc, "id", csc->id);
+            if (serv_i == 0) {
+                cJSON_AddTrueToObject(jc, "default");
+            }
+            if (!csc->errors) {
+                cJSON_AddTrueToObject(jc, "available");
+            }
+            if (csc->errors) {
+                cJSON_AddStringToObject(jc, "errors", csc->errors);
+            }
+            cJSON_AddItemToArray(jcs, jc);
+        }
+    }
+    cJSON_AddItemToObject(jr, "compile_servers", jcs);
+    cJSON_AddItemToObject(phr->json_result, "result", jr);
+    phr->status_code = 200;
+}
+
+static void
+get_contest_compile_server(struct http_request_info *phr)
+{
+    const unsigned char *compile_server_id = NULL;
+    int date_mode = 0, size_mode = 0;
+    if (hr_cgi_param(phr, "compile_server_id", &compile_server_id) < 0) {
+        phr->err_num = SSERV_ERR_INV_PARAM;
+        phr->status_code = 400;
+        return;
+    }
+    hr_cgi_param_int_opt(phr, "date_mode", &date_mode, 0);
+    hr_cgi_param_int_opt(phr, "size_mode", &size_mode, 0);
+    if (!*compile_server_id) compile_server_id = NULL;
+    if (!phr->ss->cscs || !phr->ss->cscs->u) {
+        phr->err_num = SSERV_ERR_INV_PARAM;
+        phr->status_code = 404;
+        return;
+    }
+
+    const struct compile_server_config *csc = NULL;
+    if (!compile_server_id) {
+        csc = &phr->ss->cscs->v[0];
+    } else {
+        for (int i = 0; i < phr->ss->cscs->u; ++i) {
+            const struct compile_server_config *cc = &phr->ss->cscs->v[i];
+            if (cc->id && !strcmp(compile_server_id, cc->id)) {
+                csc = cc;
+                break;
+            }
+        }
+    }
+    if (!csc) {
+        phr->err_num = SSERV_ERR_INV_PARAM;
+        phr->status_code = 404;
+        return;
+    }
+
+    cJSON *jr = cJSON_CreateObject();
+    cJSON_AddStringToObject(jr, "compile_server_id", csc->id);
+    if (csc->global) {
+        cJSON_AddItemToObject(jr, "global", json_serialize_global(phr->ss->global, date_mode, size_mode, global_ignored_fields));
+    }
+    cJSON *jls = cJSON_CreateArray();
+    if (csc->langs) {
+        for (int lang_id = 0; lang_id <= csc->max_lang; ++lang_id) {
+            const struct section_language_data *lang = csc->langs[lang_id];
+            if (!lang) continue;
+            cJSON_AddItemToArray(jls, json_serialize_language(lang, 1));
+        }
+    }
+    cJSON_AddItemToObject(jr, "languages", jls);
+    cJSON_AddItemToObject(phr->json_result, "result", jr);
+    phr->status_code = 200;
+}
+
+static void
+add_ejsize64_to_object(
+        cJSON *j,
+        const unsigned char *name,
+        ej_size64_t value,
+        int size_mode)
+{
+    if (value > 0) {
+        if (size_mode == 1) {
+            cJSON_AddNumberToObject(j, name, value);
+        } else {
+            unsigned char buf[128];
+            ll_to_size_str(buf, sizeof(buf), value);
+            cJSON_AddStringToObject(j, name, buf);
+        }
+    }
+}
+
+static void
+get_contest_languages(struct http_request_info *phr)
+{
+    int date_mode = 0, size_mode = 0;
+    hr_cgi_param_int_opt(phr, "date_mode", &date_mode, 0);
+    hr_cgi_param_int_opt(phr, "size_mode", &size_mode, 0);
+
+    cJSON *jr = cJSON_CreateObject();
+    cJSON *jg = cJSON_CreateObject();
+    const struct section_global_data *global = phr->ss->global;
+    if (phr->config->enable_compile_container > 0) {
+        if (global && global->compile_max_vm_size) {
+            add_ejsize64_to_object(jg, "compile_max_vm_size", global->compile_max_vm_size, size_mode);
+        }
+        if (global && global->compile_max_rss_size) {
+            add_ejsize64_to_object(jg, "compile_max_rss_size", global->compile_max_rss_size, size_mode);
+        }
+        if (global && global->compile_max_stack_size) {
+            add_ejsize64_to_object(jg, "compile_max_stack_size", global->compile_max_stack_size, size_mode);
+        }
+    }
+    if (global && global->compile_max_file_size) {
+        add_ejsize64_to_object(jg, "compile_max_file_size", global->compile_max_file_size, size_mode);
+    }
+    if (global && global->compile_server_id && global->compile_server_id[0]) {
+        cJSON_AddStringToObject(jg, "compile_server_id", global->compile_server_id);
+    }
+    cJSON_AddItemToObject(jr, "global", jg);
+    cJSON *jls = cJSON_CreateArray();
+    for (int lang_id = 0; lang_id < phr->ss->lang_a; ++lang_id) {
+        const struct section_language_data *lang = phr->ss->langs[lang_id];
+        const struct section_language_data *serv_lang = phr->ss->serv_langs[lang_id];
+        struct section_language_data *work_lang = NULL;
+        struct section_language_data *act_lang = NULL;
+        struct language_extra *lang_extra = &phr->ss->lang_extra[lang_id];
+        if (lang) {
+            act_lang = prepare_alloc_language();
+            prepare_merge_language(act_lang, serv_lang, lang);
+            prepare_language_set_defaults(act_lang);
+        } else if (serv_lang) {
+            // !lang
+            act_lang = prepare_alloc_language();
+            prepare_copy_language(act_lang, serv_lang);
+            prepare_language_set_defaults(act_lang);
+            work_lang = prepare_alloc_language();
+            work_lang->id = lang_id;
+            lang = work_lang;
+        }
+
+        if (!act_lang) continue;
+
+        cJSON *jl = cJSON_CreateObject();
+        if (lang_extra->enabled == 2) {
+            cJSON_AddTrueToObject(jl, "force_disabled");
+        } else if (lang_extra->enabled < 0) {
+            cJSON_AddTrueToObject(jl, "invalid");
+        } else if (lang_extra->enabled == 0) {
+            cJSON_AddTrueToObject(jl, "disabled");
+        } else {
+            /*
+        if (enable_container > 0) {
+        } else {
+            if (lang && lang->insecure > 0 && global && global->secure_run > 0) {
+            td_attr = " bgcolor=\"#ffffdd\"";
+            } else if (lang) {
+            td_attr = " bgcolor=\"#ddffdd\"";
+            }
+        }
+            */
+        }
+        if (lang_extra->enabled == 1) {
+            cJSON_AddTrueToObject(jl, "enabled");
+        }
+
+        cJSON_AddItemToObject(jl, "config", json_serialize_language(lang, 0));
+        cJSON *je = cJSON_CreateObject();
+        if (lang_extra->ejudge_flags) {
+            cJSON_AddStringToObject(je, "ejudge_flags", lang_extra->ejudge_flags);
+        }
+        if (lang_extra->ejudge_libs) {
+            cJSON_AddStringToObject(je, "ejudge_libs", lang_extra->ejudge_libs);
+        }
+        if (lang_extra->compiler_env) {
+            cJSON_AddStringToObject(je, "compiler_env", lang_extra->compiler_env);
+        }
+        cJSON_AddItemToObject(jl, "extra", je);
+
+        cJSON_AddItemToObject(jl, "expanded", json_serialize_language(act_lang, 0));
+        cJSON_AddItemToArray(jls, jl);
+        if (act_lang) {
+            prepare_free_config(&act_lang->g);
+        }
+        if (work_lang) {
+            prepare_free_config(&work_lang->g);
+        }
+    }
+    cJSON_AddItemToObject(jr, "languages", jls);
+    cJSON_AddItemToObject(phr->json_result, "result", jr);
+    phr->status_code = 200;
+}
+
 void
 super_serve_api_CNTS_GET_VALUE_JSON(
         FILE *out_f,
@@ -1242,6 +1443,15 @@ super_serve_api_CNTS_GET_VALUE_JSON(
         return;
     } else if (!strcmp(section, "problem")) {
         get_contest_problem_json(phr);
+        return;
+    } else if (!strcmp(section, "compile-servers")) {
+        get_contest_compile_servers(phr);
+        return;
+    } else if (!strcmp(section, "compile-server")) {
+        get_contest_compile_server(phr);
+        return;
+    } else if (!strcmp(section, "languages")) {
+        get_contest_languages(phr);
         return;
     } else {
         phr->err_num = SSERV_ERR_INV_PARAM;
