@@ -27,7 +27,7 @@
 #include <string.h>
 #include <time.h>
 
-static char const * const problem_xml_elem_map[PPXML_TAG_LAST] =
+static char const * const problem_xml_elem_map[] =
 {
     [0] = NULL,
     [PPXML_PROBLEM] = "problem",
@@ -54,6 +54,7 @@ static char const * const problem_xml_elem_map[PPXML_TAG_LAST] =
     [PPXML_EXECUTABLES] = "executables",
     [PPXML_EXECUTABLE] = "executable",
     [PPXML_SOURCE] = "source",
+    [PPXML_BINARY] = "binary",
     [PPXML_ASSETS] = "assets",
     [PPXML_CHECKER] = "checker",
     [PPXML_COPY] = "copy",
@@ -65,11 +66,20 @@ static char const * const problem_xml_elem_map[PPXML_TAG_LAST] =
     [PPXML_PROPERTIES] = "properties",
     [PPXML_PROPERTY] = "property",
     [PPXML_STRESSES] = "stresses",
+    [PPXML_STRESS] = "stress",
     [PPXML_STRESS_COUNT] = "stress-count",
     [PPXML_STRESS_PATH_PATTERN] = "stress-path-pattern",
     [PPXML_LIST] = "list",
     [PPXML_TAGS] = "tags",
     [PPXML_TAG] = "tag",
+    [PPXML_DEPENDENCY] = "dependency",
+    [PPXML_DEPENDENCIES] = "dependencies",
+    [PPXML_DOCUMENT] = "document",
+    [PPXML_DOCUMENTS] = "documents",
+    [PPXML_EXTRA_TAG] = "extra-tag",
+    [PPXML_EXTRA_TAGS] = "extra-tags",
+    [PPXML_INTERACTOR] = "interactor",
+    NULL,
 };
 
 static char const * const problem_xml_attr_map[] =
@@ -99,6 +109,11 @@ static char const * const problem_xml_attr_map[] =
     [PPXML_A_POINTS_POLICY] = "points-policy",
     [PPXML_A_VERDICT] = "verdict",
     [PPXML_A_TAG] = "tag",
+    [PPXML_A_DESCRIPTION] = "description",
+    [PPXML_A_INDEX] = "index",
+    [PPXML_A_TESTSET] = "testset",
+    [PPXML_A_NOTE] = "note",
+    [PPXML_A_FROM_FILE] = "from-file",
     NULL,
 };
 
@@ -123,6 +138,7 @@ static size_t const problem_xml_sizes[PPXML_TAG_LAST] =
     [PPXML_EXECUTABLES] = sizeof(struct ppxml_executables),
     [PPXML_EXECUTABLE] = sizeof(struct ppxml_executable),
     [PPXML_SOURCE] = sizeof(struct ppxml_source),
+    [PPXML_BINARY] = sizeof(struct ppxml_binary),
     [PPXML_ASSETS] = sizeof(struct ppxml_assets),
     [PPXML_CHECKER] = sizeof(struct ppxml_checker),
     [PPXML_COPY] = sizeof(struct ppxml_copy),
@@ -134,6 +150,13 @@ static size_t const problem_xml_sizes[PPXML_TAG_LAST] =
     [PPXML_PROPERTY] = sizeof(struct ppxml_property),
     [PPXML_TAGS] = sizeof(struct ppxml_tags),
     [PPXML_TAG] = sizeof(struct ppxml_tag),
+    [PPXML_DEPENDENCY] = sizeof(struct ppxml_dependency),
+    [PPXML_DEPENDENCIES] = sizeof(struct ppxml_dependencies),
+    [PPXML_DOCUMENT] = sizeof(struct ppxml_document),
+    [PPXML_DOCUMENTS] = sizeof(struct ppxml_documents),
+    [PPXML_EXTRA_TAG] = sizeof(struct ppxml_extra_tag),
+    [PPXML_EXTRA_TAGS] = sizeof(struct ppxml_extra_tags),
+    [PPXML_INTERACTOR] = sizeof(struct ppxml_interactor),
 };
 
 static void
@@ -286,6 +309,7 @@ static const char * const ppxml_feedback_strings[] =
 {
     [PPXML_FEEDBACK_COMPLETE] = "complete",
     [PPXML_FEEDBACK_ICPC] = "icpc",
+    [PPXML_FEEDBACK_POINTS] = "points",
 };
 static int ppxml_feedback_parse(const unsigned char *s)
 {
@@ -302,6 +326,7 @@ static int ppxml_feedback_parse(const unsigned char *s)
 static const char * const ppxml_points_strings[] =
 {
     [PPXML_POINTS_EACH_TEST] = "each-test",
+    [PPXML_POINTS_COMPLETE_GROUP] = "complete-group",
 };
 static int ppxml_points_parse(const unsigned char *s)
 {
@@ -319,6 +344,9 @@ static const char * const ppxml_verdict_strings[] =
 {
     [PPXML_VERDICT_INVALID] = "invalid",
     [PPXML_VERDICT_VALID] = "valid",
+    [PPXML_VERDICT_OK] = "ok",
+    [PPXML_VERDICT_WRONG_ANSWER] = "wrong-answer",
+    [PPXML_VERDICT_CRASHED] = "crashed",
 };
 static int ppxml_verdict_parse(const unsigned char *s)
 {
@@ -334,9 +362,14 @@ static int ppxml_verdict_parse(const unsigned char *s)
 
 static const char * const ppxml_solution_tag_strings[] =
 {
-    [PPXML_SOLUTION_TAG_WRONG_ANSWER] = "wrong-answer",
-    [PPXML_SOLUTION_TAG_REJECTED] = "rejected",
     [PPXML_SOLUTION_TAG_MAIN] = "main",
+    [PPXML_SOLUTION_TAG_ACCEPTED] = "accepted",
+    [PPXML_SOLUTION_TAG_REJECTED] = "rejected",
+    [PPXML_SOLUTION_TAG_WRONG_ANSWER] = "wrong-answer",
+    [PPXML_SOLUTION_TAG_TIME_LIMIT] = "time-limit-exceeded",
+    [PPXML_SOLUTION_TAG_MEMORY_LIMIT] = "memory-limit-exceeded",
+    [PPXML_SOLUTION_TAG_TIME_LIMIT_OR_ACCEPTED] = "time-limit-exceeded-or-accepted",
+    [PPXML_SOLUTION_TAG_TIME_LIMIT_OR_MEMORY_LIMIT] = "time-limit-exceeded-or-memory-limit-exceeded",
 };
 static int ppxml_solution_tag_parse(const unsigned char *s)
 {
@@ -368,7 +401,6 @@ ppxml_parse_bool(const unsigned char *s, int *p_v)
 static struct ppxml_tag *
 ppxml_parse_tag(struct ppxml_parse_context *cntx, struct xml_tree *p)
 {
-    if (p->tag != PPXML_TAG) return cntx->ops->err_elem_not_allowed(cntx, p);
     if (p->first_down) return cntx->ops->err_nested_elems(cntx, p);
     struct ppxml_tag *pp = (struct ppxml_tag *) p;
     for (struct xml_attr *a = pp->b.first; a; a = a->next) {
@@ -385,7 +417,6 @@ ppxml_parse_tag(struct ppxml_parse_context *cntx, struct xml_tree *p)
 static struct ppxml_tags *
 ppxml_parse_tags(struct ppxml_parse_context *cntx, struct xml_tree *p)
 {
-    if (p->tag != PPXML_TAGS) return cntx->ops->err_elem_not_allowed(cntx, p);
     if (p->first) return cntx->ops->err_attr_not_allowed(cntx, p, p->first);
     struct ppxml_tags *pp = (struct ppxml_tags *) p;
     for (struct xml_tree *q = p->first_down; q; q = q->right) {
@@ -404,11 +435,10 @@ ppxml_parse_tags(struct ppxml_parse_context *cntx, struct xml_tree *p)
 static struct ppxml_property *
 ppxml_parse_property(struct ppxml_parse_context *cntx, struct xml_tree *p)
 {
-    if (p->tag != PPXML_PROPERTY) return cntx->ops->err_elem_not_allowed(cntx, p);
     if (p->first_down) return cntx->ops->err_nested_elems(cntx, p);
     struct ppxml_property *pp = (struct ppxml_property *) p;
     for (struct xml_attr *a = pp->b.first; a; a = a->next) {
-        if (a->tag == PPXML_NAME) {
+        if (a->tag == PPXML_A_NAME) {
             pp->name = a->text;
         } else if (a->tag == PPXML_A_VALUE) {
             pp->value = a->text;
@@ -424,7 +454,6 @@ ppxml_parse_property(struct ppxml_parse_context *cntx, struct xml_tree *p)
 static struct ppxml_properties *
 ppxml_parse_properties(struct ppxml_parse_context *cntx, struct xml_tree *p)
 {
-    if (p->tag != PPXML_PROPERTIES) return cntx->ops->err_elem_not_allowed(cntx, p);
     if (p->first) return cntx->ops->err_attr_not_allowed(cntx, p, p->first);
     struct ppxml_properties *pp = (struct ppxml_properties *) p;
     for (struct xml_tree *q = p->first_down; q; q = q->right) {
@@ -443,7 +472,6 @@ ppxml_parse_properties(struct ppxml_parse_context *cntx, struct xml_tree *p)
 static struct ppxml_source *
 ppxml_parse_source(struct ppxml_parse_context *cntx, struct xml_tree *p)
 {
-    if (p->tag != PPXML_SOURCE) return cntx->ops->err_elem_not_allowed(cntx, p);
     if (p->first_down) return cntx->ops->err_nested_elems(cntx, p);
     struct ppxml_source *pp = (struct ppxml_source *) p;
     for (struct xml_attr *a = pp->b.first; a; a = a->next) {
@@ -460,16 +488,75 @@ ppxml_parse_source(struct ppxml_parse_context *cntx, struct xml_tree *p)
     return pp;
 }
 
+static struct ppxml_binary *
+ppxml_parse_binary(struct ppxml_parse_context *cntx, struct xml_tree *p)
+{
+    if (p->first_down) return cntx->ops->err_nested_elems(cntx, p);
+    struct ppxml_binary *pp = (struct ppxml_binary *) p;
+    for (struct xml_attr *a = pp->b.first; a; a = a->next) {
+        if (a->tag == PPXML_A_PATH) {
+            pp->path = a->text;
+        } else if (a->tag == PPXML_A_TYPE) {
+            pp->type = a->text;
+        } else {
+            return cntx->ops->err_attr_not_allowed(cntx, p, a);
+        }
+    }
+    if (!pp->path) return cntx->ops->err_attr_undefined(cntx, p, PPXML_A_PATH);
+    if (!pp->type) return cntx->ops->err_attr_undefined(cntx, p, PPXML_A_TYPE);
+    return pp;
+}
+
+static struct ppxml_extra_tag *
+ppxml_parse_extra_tag(struct ppxml_parse_context *cntx, struct xml_tree *p)
+{
+    if (p->first_down) return cntx->ops->err_nested_elems(cntx, p);
+    struct ppxml_extra_tag *pp = (struct ppxml_extra_tag *) p;
+    for (struct xml_attr *a = pp->b.first; a; a = a->next) {
+        if (a->tag == PPXML_A_GROUP) {
+            pp->group = a->text;
+        } else if (a->tag == PPXML_A_TESTSET) {
+            pp->testset = a->text;
+        } else if (a->tag == PPXML_A_TAG) {
+            int t = ppxml_solution_tag_parse(a->text);
+            if (!t) return cntx->ops->err_attr_invalid(cntx, a);
+            pp->tag = t;
+        } else {
+            return cntx->ops->err_attr_not_allowed(cntx, p, a);
+        }
+    }
+    return pp;
+}
+
+static struct ppxml_extra_tags *
+ppxml_parse_extra_tags(struct ppxml_parse_context *cntx, struct xml_tree *p)
+{
+    if (p->first) return cntx->ops->err_attr_not_allowed(cntx, p, p->first);
+    struct ppxml_extra_tags *pp = (struct ppxml_extra_tags *) p;
+    for (struct xml_tree *q = p->first_down; q; q = q->right) {
+        if (q->tag == PPXML_EXTRA_TAG) {
+            struct ppxml_extra_tag *tt = ppxml_parse_extra_tag(cntx, q);
+            if (!tt) return NULL;
+            XML_TREE_VECTOR_PUSH(pp, tt);
+        } else {
+            return cntx->ops->err_elem_not_allowed(cntx, q);
+        }
+    }
+
+    return pp;
+}
+
 static struct ppxml_solution *
 ppxml_parse_solution(struct ppxml_parse_context *cntx, struct xml_tree *p)
 {
-    if (p->tag != PPXML_SOLUTION) return cntx->ops->err_elem_not_allowed(cntx, p);
     struct ppxml_solution *pp = (struct ppxml_solution *) p;
     for (struct xml_attr *a = pp->b.first; a; a = a->next) {
         if (a->tag == PPXML_A_TAG) {
             int t = ppxml_solution_tag_parse(a->text);
             if (!t) return cntx->ops->err_attr_invalid(cntx, a);
             pp->tag = t;
+        } else if (a->tag == PPXML_A_NOTE) {
+            pp->note = a->text;
         } else {
             return cntx->ops->err_attr_not_allowed(cntx, p, a);
         }
@@ -480,6 +567,16 @@ ppxml_parse_solution(struct ppxml_parse_context *cntx, struct xml_tree *p)
             struct ppxml_source *t = ppxml_parse_source(cntx, q);
             if (!t) return NULL;
             pp->source = t;
+        } else if (q->tag == PPXML_BINARY) {
+            if (pp->binary) return cntx->ops->err_elem_redefined(cntx, q);
+            struct ppxml_binary *t = ppxml_parse_binary(cntx, q);
+            if (!t) return NULL;
+            pp->binary = t;
+        } else if (q->tag == PPXML_EXTRA_TAGS) {
+            if (pp->extra_tags) return cntx->ops->err_elem_redefined(cntx, q);
+            struct ppxml_extra_tags *t = ppxml_parse_extra_tags(cntx, q);
+            if (!t) return NULL;
+            pp->extra_tags = t;
         } else {
             return cntx->ops->err_elem_invalid(cntx, q);
         }
@@ -492,7 +589,6 @@ ppxml_parse_solution(struct ppxml_parse_context *cntx, struct xml_tree *p)
 static struct ppxml_solutions *
 ppxml_parse_solutions(struct ppxml_parse_context *cntx, struct xml_tree *p)
 {
-    if (p->tag != PPXML_SOLUTIONS) return cntx->ops->err_elem_not_allowed(cntx, p);
     if (p->first) return cntx->ops->err_attr_not_allowed(cntx, p, p->first);
     struct ppxml_solutions *pp = (struct ppxml_solutions *) p;
     for (struct xml_tree *q = p->first_down; q; q = q->right) {
@@ -511,9 +607,9 @@ ppxml_parse_solutions(struct ppxml_parse_context *cntx, struct xml_tree *p)
 static struct ppxml_test *
 ppxml_parse_test(struct ppxml_parse_context *cntx, struct xml_tree *p)
 {
-    if (p->tag != PPXML_TEST) return cntx->ops->err_elem_not_allowed(cntx, p);
     if (p->first_down) return cntx->ops->err_nested_elems(cntx, p);
     struct ppxml_test *pp = (struct ppxml_test *) p;
+    pp->points = -1;
     for (struct xml_attr *a = p->first; a; a = a->next) {
         if (a->tag == PPXML_A_GROUP) {
             pp->group = a->text;
@@ -531,12 +627,16 @@ ppxml_parse_test(struct ppxml_parse_context *cntx, struct xml_tree *p)
             pp->points = v;
         } else if (a->tag == PPXML_A_SAMPLE) {
             int v = -1;
-            if (ppxml_parse_bool(p->text, &v) < 0) {
+            if (ppxml_parse_bool(a->text, &v) < 0) {
                 return cntx->ops->err_attr_invalid(cntx, a);
             }
             pp->sample = v;
         } else if (a->tag == PPXML_A_CMD) {
             pp->cmd = a->text;
+        } else if (a->tag == PPXML_A_DESCRIPTION) {
+            pp->description = a->text;
+        } else if (a->tag == PPXML_A_FROM_FILE) {
+            pp->from_file = a->text;
         } else if (a->tag == PPXML_A_VERDICT) {
             int t = ppxml_verdict_parse(a->text);
             if (!t) return cntx->ops->err_attr_invalid(cntx, a);
@@ -552,7 +652,6 @@ ppxml_parse_test(struct ppxml_parse_context *cntx, struct xml_tree *p)
 static struct ppxml_tests *
 ppxml_parse_tests(struct ppxml_parse_context *cntx, struct xml_tree *p)
 {
-    if (p->tag != PPXML_TESTS) return cntx->ops->err_elem_not_allowed(cntx, p);
     if (p->first) return cntx->ops->err_attr_not_allowed(cntx, p, p->first);
     struct ppxml_tests *pp = (struct ppxml_tests *) p;
     for (struct xml_tree *q = p->first_down; q; q = q->right) {
@@ -568,12 +667,46 @@ ppxml_parse_tests(struct ppxml_parse_context *cntx, struct xml_tree *p)
     return pp;
 }
 
+static struct ppxml_dependency *
+ppxml_parse_dependency(struct ppxml_parse_context *cntx, struct xml_tree *p)
+{
+    if (p->first_down) return cntx->ops->err_nested_elems(cntx, p);
+    struct ppxml_dependency *pp = (struct ppxml_dependency *) p;
+    for (struct xml_attr *a = p->first; a; a = a->next) {
+        if (a->tag == PPXML_A_GROUP) {
+            pp->group = a->text;
+        } else {
+            return cntx->ops->err_attr_not_allowed(cntx, p, a);
+        }
+    }
+    if (!pp->group) return cntx->ops->err_attr_undefined(cntx, p, PPXML_A_GROUP);
+
+    return pp;
+}
+
+static struct ppxml_dependencies *
+ppxml_parse_dependencies(struct ppxml_parse_context *cntx, struct xml_tree *p)
+{
+    if (p->first) return cntx->ops->err_attr_not_allowed(cntx, p, p->first);
+    struct ppxml_dependencies *pp = (struct ppxml_dependencies *) p;
+    for (struct xml_tree *q = p->first_down; q; q = q->right) {
+        if (q->tag == PPXML_DEPENDENCY) {
+            struct ppxml_dependency *tt = ppxml_parse_dependency(cntx, q);
+            if (!tt) return NULL;
+            XML_TREE_VECTOR_PUSH(pp, tt);
+        } else {
+            return cntx->ops->err_elem_not_allowed(cntx, q);
+        }
+    }
+
+    return pp;
+}
+
 static struct ppxml_group *
 ppxml_parse_group(struct ppxml_parse_context *cntx, struct xml_tree *p)
 {
-    if (p->tag != PPXML_GROUP) return cntx->ops->err_elem_not_allowed(cntx, p);
-    if (p->first_down) return cntx->ops->err_nested_elems(cntx, p);
     struct ppxml_group *pp = (struct ppxml_group *) p;
+    pp->points = -1;
     for (struct xml_attr *a = p->first; a; a = a->next) {
         if (a->tag == PPXML_A_NAME) {
             pp->name = a->text;
@@ -585,8 +718,26 @@ ppxml_parse_group(struct ppxml_parse_context *cntx, struct xml_tree *p)
             int t = ppxml_points_parse(a->text);
             if (!t) return cntx->ops->err_attr_invalid(cntx, a);
             pp->points_policy = t;
+        } else if (a->tag == PPXML_A_POINTS) {
+            char *e = NULL;
+            errno = 0;
+            double v = strtod(a->text, &e);
+            if (errno || *e || e == a->text || isnan(v) || isinf(v) || v < 0) {
+                return cntx->ops->err_attr_invalid(cntx, a);
+            }
+            pp->points = v;
         } else {
             return cntx->ops->err_attr_not_allowed(cntx, p, a);
+        }
+    }
+    for (struct xml_tree *q = p->first_down; q; q = q->right) {
+        if (q->tag == PPXML_DEPENDENCIES) {
+            if (pp->dependencies) return cntx->ops->err_elem_redefined(cntx, q);
+            struct ppxml_dependencies *t = ppxml_parse_dependencies(cntx, q);
+            if (!t) return NULL;
+            pp->dependencies = t;
+        } else {
+            return cntx->ops->err_elem_invalid(cntx, q);
         }
     }
     if (!pp->name) return cntx->ops->err_attr_undefined(cntx, p, PPXML_A_NAME);
@@ -599,7 +750,6 @@ ppxml_parse_group(struct ppxml_parse_context *cntx, struct xml_tree *p)
 static struct ppxml_groups *
 ppxml_parse_groups(struct ppxml_parse_context *cntx, struct xml_tree *p)
 {
-    if (p->tag != PPXML_GROUPS) return cntx->ops->err_elem_not_allowed(cntx, p);
     if (p->first) return cntx->ops->err_attr_not_allowed(cntx, p, p->first);
     struct ppxml_groups *pp = (struct ppxml_groups *) p;
     for (struct xml_tree *q = p->first_down; q; q = q->right) {
@@ -618,7 +768,6 @@ ppxml_parse_groups(struct ppxml_parse_context *cntx, struct xml_tree *p)
 static struct ppxml_testset *
 ppxml_parse_testset(struct ppxml_parse_context *cntx, struct xml_tree *p)
 {
-    if (p->tag != PPXML_TESTSET) return cntx->ops->err_elem_not_allowed(cntx, p);
     struct ppxml_testset *pp = (struct ppxml_testset *) p;
     for (struct xml_attr *a = p->first; a; a = a->next) {
         if (a->tag == PPXML_A_NAME) {
@@ -702,7 +851,6 @@ ppxml_parse_testset(struct ppxml_parse_context *cntx, struct xml_tree *p)
 static struct ppxml_validator *
 ppxml_parse_validator(struct ppxml_parse_context *cntx, struct xml_tree *p)
 {
-    if (p->tag != PPXML_VALIDATOR) return cntx->ops->err_elem_not_allowed(cntx, p);
     if (p->first) return cntx->ops->err_attr_not_allowed(cntx, p, p->first);
     struct ppxml_validator *pp = (struct ppxml_validator *) p;
     for (struct xml_tree *q = p->first_down; q; q = q->right) {
@@ -711,8 +859,13 @@ ppxml_parse_validator(struct ppxml_parse_context *cntx, struct xml_tree *p)
             struct ppxml_source *t = ppxml_parse_source(cntx, q);
             if (!t) return NULL;
             pp->source = t;
+        } else if (q->tag == PPXML_BINARY) {
+            if (pp->binary) return cntx->ops->err_elem_redefined(cntx, q);
+            struct ppxml_binary *t = ppxml_parse_binary(cntx, q);
+            if (!t) return NULL;
+            pp->binary = t;
         } else if (q->tag == PPXML_TESTSET) {
-            if (pp->source) return cntx->ops->err_elem_redefined(cntx, q);
+            if (pp->testset) return cntx->ops->err_elem_redefined(cntx, q);
             struct ppxml_testset *t = ppxml_parse_testset(cntx, q);
             if (!t) return NULL;
             pp->testset = t;
@@ -728,7 +881,6 @@ ppxml_parse_validator(struct ppxml_parse_context *cntx, struct xml_tree *p)
 static struct ppxml_validators *
 ppxml_parse_validators(struct ppxml_parse_context *cntx, struct xml_tree *p)
 {
-    if (p->tag != PPXML_VALIDATORS) return cntx->ops->err_elem_not_allowed(cntx, p);
     if (p->first) return cntx->ops->err_attr_not_allowed(cntx, p, p->first);
     struct ppxml_validators *pp = (struct ppxml_validators *) p;
     for (struct xml_tree *q = p->first_down; q; q = q->right) {
@@ -744,15 +896,40 @@ ppxml_parse_validators(struct ppxml_parse_context *cntx, struct xml_tree *p)
     return pp;
 }
 
+static struct ppxml_interactor *
+ppxml_parse_interactor(struct ppxml_parse_context *cntx, struct xml_tree *p)
+{
+    if (p->first) return cntx->ops->err_attr_not_allowed(cntx, p, p->first);
+    struct ppxml_interactor *pp = (struct ppxml_interactor *) p;
+    for (struct xml_tree *q = p->first_down; q; q = q->right) {
+        if (q->tag == PPXML_SOURCE) {
+            if (pp->source) return cntx->ops->err_elem_redefined(cntx, q);
+            struct ppxml_source *t = ppxml_parse_source(cntx, q);
+            if (!t) return NULL;
+            pp->source = t;
+        } else if (q->tag == PPXML_BINARY) {
+            if (pp->binary) return cntx->ops->err_elem_redefined(cntx, q);
+            struct ppxml_binary *t = ppxml_parse_binary(cntx, q);
+            if (!t) return NULL;
+            pp->binary = t;
+        } else {
+            return cntx->ops->err_elem_invalid(cntx, q);
+        }
+    }
+    if (!pp->source) return cntx->ops->err_elem_undefined(cntx, p, PPXML_SOURCE);
+    return pp;
+}
+
 static struct ppxml_copy *
 ppxml_parse_copy(struct ppxml_parse_context *cntx, struct xml_tree *p)
 {
-    if (p->tag != PPXML_COPY) return cntx->ops->err_elem_not_allowed(cntx, p);
     if (p->first_down) return cntx->ops->err_nested_elems(cntx, p);
     struct ppxml_copy *pp = (struct ppxml_copy *) p;
     for (struct xml_attr *a = p->first; a; a = a->next) {
         if (a->tag == PPXML_A_PATH) {
             pp->path = a->text;
+        } else if (a->tag == PPXML_A_TYPE) {
+            pp->type = a->text;
         } else {
             return cntx->ops->err_attr_not_allowed(cntx, p, a);
         }
@@ -765,13 +942,12 @@ ppxml_parse_copy(struct ppxml_parse_context *cntx, struct xml_tree *p)
 static struct ppxml_checker *
 ppxml_parse_checker(struct ppxml_parse_context *cntx, struct xml_tree *p)
 {
-    if (p->tag != PPXML_CHECKER) return cntx->ops->err_elem_not_allowed(cntx, p);
     struct ppxml_checker *pp = (struct ppxml_checker *) p;
     for (struct xml_attr *a = p->first; a; a = a->next) {
         if (a->tag == PPXML_A_NAME) {
             pp->name = a->text;
         } else if (a->tag == PPXML_A_TYPE) {
-            pp->name = a->text;
+            pp->type = a->text;
         } else {
             return cntx->ops->err_attr_not_allowed(cntx, p, a);
         }
@@ -782,6 +958,11 @@ ppxml_parse_checker(struct ppxml_parse_context *cntx, struct xml_tree *p)
             struct ppxml_source *t = ppxml_parse_source(cntx, q);
             if (!t) return NULL;
             pp->source = t;
+        } else if (q->tag == PPXML_BINARY) {
+            if (pp->binary) return cntx->ops->err_elem_redefined(cntx, q);
+            struct ppxml_binary *t = ppxml_parse_binary(cntx, q);
+            if (!t) return NULL;
+            pp->binary = t;
         } else if (q->tag == PPXML_COPY) {
             if (pp->copy) return cntx->ops->err_elem_redefined(cntx, q);
             struct ppxml_copy *t = ppxml_parse_copy(cntx, q);
@@ -796,7 +977,6 @@ ppxml_parse_checker(struct ppxml_parse_context *cntx, struct xml_tree *p)
             return cntx->ops->err_elem_not_allowed(cntx, q);
         }
     }
-    if (!pp->name) return cntx->ops->err_attr_undefined(cntx, p, PPXML_A_NAME);
     if (!pp->type) return cntx->ops->err_attr_undefined(cntx, p, PPXML_A_TYPE);
     if (!pp->source) return cntx->ops->err_elem_undefined(cntx, p, PPXML_SOURCE);
     if (!pp->copy) return cntx->ops->err_elem_undefined(cntx, p, PPXML_COPY);
@@ -808,7 +988,6 @@ ppxml_parse_checker(struct ppxml_parse_context *cntx, struct xml_tree *p)
 static struct ppxml_assets *
 ppxml_parse_assets(struct ppxml_parse_context *cntx, struct xml_tree *p)
 {
-    if (p->tag != PPXML_ASSETS) return cntx->ops->err_elem_not_allowed(cntx, p);
     if (p->first) return cntx->ops->err_attr_not_allowed(cntx, p, p->first);
     struct ppxml_assets *pp = (struct ppxml_assets *) p;
     for (struct xml_tree *q = p->first_down; q; q = q->right) {
@@ -817,6 +996,11 @@ ppxml_parse_assets(struct ppxml_parse_context *cntx, struct xml_tree *p)
             struct ppxml_checker *t = ppxml_parse_checker(cntx, q);
             if (!t) return NULL;
             pp->checker = t;
+        } else if (q->tag == PPXML_INTERACTOR) {
+            if (pp->interactor) return cntx->ops->err_elem_redefined(cntx, q);
+            struct ppxml_interactor *t = ppxml_parse_interactor(cntx, q);
+            if (!t) return NULL;
+            pp->interactor = t;
         } else if (q->tag == PPXML_VALIDATORS) {
             if (pp->validators) return cntx->ops->err_elem_redefined(cntx, q);
             struct ppxml_validators *t = ppxml_parse_validators(cntx, q);
@@ -839,7 +1023,6 @@ ppxml_parse_assets(struct ppxml_parse_context *cntx, struct xml_tree *p)
 static struct ppxml_executable *
 ppxml_parse_executable(struct ppxml_parse_context *cntx, struct xml_tree *p)
 {
-    if (p->tag != PPXML_EXECUTABLE) return cntx->ops->err_elem_not_allowed(cntx, p);
     if (p->first) return cntx->ops->err_attr_not_allowed(cntx, p, p->first);
     struct ppxml_executable *pp = (struct ppxml_executable *) p;
     for (struct xml_tree *q = p->first_down; q; q = q->right) {
@@ -848,6 +1031,11 @@ ppxml_parse_executable(struct ppxml_parse_context *cntx, struct xml_tree *p)
             struct ppxml_source *t = ppxml_parse_source(cntx, q);
             if (!t) return NULL;
             pp->source = t;
+        } else if (q->tag == PPXML_BINARY) {
+            if (pp->binary) return cntx->ops->err_elem_redefined(cntx, q);
+            struct ppxml_binary *t = ppxml_parse_binary(cntx, q);
+            if (!t) return NULL;
+            pp->binary = t;
         } else {
             return cntx->ops->err_elem_not_allowed(cntx, q);
         }
@@ -860,7 +1048,6 @@ ppxml_parse_executable(struct ppxml_parse_context *cntx, struct xml_tree *p)
 static struct ppxml_executables *
 ppxml_parse_executables(struct ppxml_parse_context *cntx, struct xml_tree *p)
 {
-    if (p->tag != PPXML_EXECUTABLES) return cntx->ops->err_elem_not_allowed(cntx, p);
     if (p->first) return cntx->ops->err_attr_not_allowed(cntx, p, p->first);
     struct ppxml_executables *pp = (struct ppxml_executables *) p;
     for (struct xml_tree *q = p->first_down; q; q = q->right) {
@@ -879,7 +1066,6 @@ ppxml_parse_executables(struct ppxml_parse_context *cntx, struct xml_tree *p)
 static struct ppxml_file *
 ppxml_parse_file(struct ppxml_parse_context *cntx, struct xml_tree *p)
 {
-    if (p->tag != PPXML_FILE) return cntx->ops->err_elem_not_allowed(cntx, p);
     if (p->first_down) return cntx->ops->err_nested_elems(cntx, p);
     struct ppxml_file *pp = (struct ppxml_file *) p;
     for (struct xml_attr *a = p->first; a; a = a->next) {
@@ -899,7 +1085,6 @@ ppxml_parse_file(struct ppxml_parse_context *cntx, struct xml_tree *p)
 static struct ppxml_resources *
 ppxml_parse_resources(struct ppxml_parse_context *cntx, struct xml_tree *p)
 {
-    if (p->tag != PPXML_RESOURCES) return cntx->ops->err_elem_not_allowed(cntx, p);
     if (p->first) return cntx->ops->err_attr_not_allowed(cntx, p, p->first);
     struct ppxml_resources *pp = (struct ppxml_resources *) p;
     for (struct xml_tree *q = p->first_down; q; q = q->right) {
@@ -918,7 +1103,6 @@ ppxml_parse_resources(struct ppxml_parse_context *cntx, struct xml_tree *p)
 static struct ppxml_files *
 ppxml_parse_files(struct ppxml_parse_context *cntx, struct xml_tree *p)
 {
-    if (p->tag != PPXML_FILES) return cntx->ops->err_elem_not_allowed(cntx, p);
     if (p->first) return cntx->ops->err_attr_not_allowed(cntx, p, p->first);
     struct ppxml_files *pp = (struct ppxml_files *) p;
     for (struct xml_tree *q = p->first_down; q; q = q->right) {
@@ -943,7 +1127,6 @@ ppxml_parse_files(struct ppxml_parse_context *cntx, struct xml_tree *p)
 static struct ppxml_judging *
 ppxml_parse_judging(struct ppxml_parse_context *cntx, struct xml_tree *p)
 {
-    if (p->tag != PPXML_JUDGING) return cntx->ops->err_elem_not_allowed(cntx, p);
     struct ppxml_judging *pp = (struct ppxml_judging *) p;
     for (struct xml_attr *a = p->first; a; a = a->next) {
         if (a->tag == PPXML_A_CPU_NAME) {
@@ -987,9 +1170,8 @@ ppxml_parse_judging(struct ppxml_parse_context *cntx, struct xml_tree *p)
 }
 
 static struct ppxml_statement *
-ppxml_parse_statement(struct ppxml_parse_context *cntx, struct xml_tree *p, int tag)
+ppxml_parse_statement(struct ppxml_parse_context *cntx, struct xml_tree *p)
 {
-    if (p->tag != tag) return cntx->ops->err_elem_not_allowed(cntx, p);
     if (p->first_down) return cntx->ops->err_nested_elems(cntx, p);
     struct ppxml_statement *pp = (struct ppxml_statement *) p;
 
@@ -1004,7 +1186,7 @@ ppxml_parse_statement(struct ppxml_parse_context *cntx, struct xml_tree *p, int 
             pp->language = t;
         } else if (a->tag == PPXML_A_MATHJAX) {
             int v = -1;
-            if (ppxml_parse_bool(p->text, &v) < 0) {
+            if (ppxml_parse_bool(a->text, &v) < 0) {
                 return cntx->ops->err_attr_invalid(cntx, a);
             }
             pp->mathjax = v;
@@ -1026,7 +1208,6 @@ ppxml_parse_statement(struct ppxml_parse_context *cntx, struct xml_tree *p, int 
 static struct ppxml_statements *
 ppxml_parse_statements(struct ppxml_parse_context *cntx, struct xml_tree *p, int ltag)
 {
-    if (p->tag != ltag) return cntx->ops->err_elem_not_allowed(cntx, p);
     if (p->first) return cntx->ops->err_attr_not_allowed(cntx, p, p->first);
     struct ppxml_statements *pp = (struct ppxml_statements *) p;
     int etag = 0;
@@ -1039,7 +1220,7 @@ ppxml_parse_statements(struct ppxml_parse_context *cntx, struct xml_tree *p, int
     }
     for (struct xml_tree *q = p->first_down; q; q = q->right) {
         if (q->tag == etag) {
-            struct ppxml_statement *tt = ppxml_parse_statement(cntx, q, etag);
+            struct ppxml_statement *tt = ppxml_parse_statement(cntx, q);
             if (!tt) return NULL;
             XML_TREE_VECTOR_PUSH(pp, tt);
         } else {
@@ -1053,7 +1234,6 @@ ppxml_parse_statements(struct ppxml_parse_context *cntx, struct xml_tree *p, int
 static struct ppxml_name *
 ppxml_parse_name(struct ppxml_parse_context *cntx, struct xml_tree *p)
 {
-    if (p->tag != PPXML_NAME) return cntx->ops->err_elem_not_allowed(cntx, p);
     if (p->first_down) return cntx->ops->err_nested_elems(cntx, p);
     struct ppxml_name *pp = (struct ppxml_name *) p;
 
@@ -1076,7 +1256,6 @@ ppxml_parse_name(struct ppxml_parse_context *cntx, struct xml_tree *p)
 static struct ppxml_names *
 ppxml_parse_names(struct ppxml_parse_context *cntx, struct xml_tree *p)
 {
-    if (p->tag != PPXML_NAMES) return cntx->ops->err_elem_not_allowed(cntx, p);
     if (p->first) return cntx->ops->err_attr_not_allowed(cntx, p, p->first);
     struct ppxml_names *pp = (struct ppxml_names *) p;
     for (struct xml_tree *q = p->first_down; q; q = q->right) {
@@ -1092,10 +1271,46 @@ ppxml_parse_names(struct ppxml_parse_context *cntx, struct xml_tree *p)
     return pp;
 }
 
+static struct ppxml_document *
+ppxml_parse_document(struct ppxml_parse_context *cntx, struct xml_tree *p)
+{
+    if (p->first_down) return cntx->ops->err_nested_elems(cntx, p);
+    struct ppxml_document *pp = (struct ppxml_document *) p;
+    for (struct xml_attr *a = pp->b.first; a; a = a->next) {
+        if (a->tag == PPXML_A_PATH) {
+            pp->path = a->text;
+        } else if (a->tag == PPXML_A_TYPE) {
+            pp->type = a->text;
+        } else {
+            return cntx->ops->err_attr_not_allowed(cntx, p, a);
+        }
+    }
+    if (!pp->path) return cntx->ops->err_attr_undefined(cntx, p, PPXML_A_PATH);
+    if (!pp->type) return cntx->ops->err_attr_undefined(cntx, p, PPXML_A_TYPE);
+    return pp;
+}
+
+static struct ppxml_documents *
+ppxml_parse_documents(struct ppxml_parse_context *cntx, struct xml_tree *p)
+{
+    if (p->first) return cntx->ops->err_attr_not_allowed(cntx, p, p->first);
+    struct ppxml_documents *pp = (struct ppxml_documents *) p;
+    for (struct xml_tree *q = p->first_down; q; q = q->right) {
+        if (q->tag == PPXML_DOCUMENT) {
+            struct ppxml_document *tt = ppxml_parse_document(cntx, q);
+            if (!tt) return NULL;
+            XML_TREE_VECTOR_PUSH(pp, tt);
+        } else {
+            return cntx->ops->err_elem_not_allowed(cntx, q);
+        }
+    }
+
+    return pp;
+}
+
 static struct ppxml_problem *
 ppxml_parse_problem(struct ppxml_parse_context *cntx, struct xml_tree *p)
 {
-    if (p->tag != PPXML_PROBLEM) return cntx->ops->err_elem_not_allowed(cntx, p);
     struct ppxml_problem *pp = (struct ppxml_problem *) p;
     for (struct xml_attr *a = p->first; a; a = a->next) {
         if (a->tag == PPXML_A_REVISION) {
@@ -1157,6 +1372,11 @@ ppxml_parse_problem(struct ppxml_parse_context *cntx, struct xml_tree *p)
             struct ppxml_tags *t = ppxml_parse_tags(cntx, q);
             if (!t) return NULL;
             pp->tags = t;
+        } else if (q->tag == PPXML_DOCUMENTS) {
+            if (pp->tags) return cntx->ops->err_elem_redefined(cntx, q);
+            struct ppxml_documents *t = ppxml_parse_documents(cntx, q);
+            if (!t) return NULL;
+            pp->documents = t;
         } else {
             return cntx->ops->err_elem_not_allowed(cntx, q);
         }

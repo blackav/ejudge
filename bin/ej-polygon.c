@@ -4603,12 +4603,58 @@ done:;
     return retval;
 }
 
+static void
+check_xml(const char *zip_path)
+{
+    const struct ZipInterface *zif = NULL;
+
+#if CONF_HAS_LIBZIP - 0 == 0
+    fprintf(stderr, "libzip library was missing during the complation, functionality is not available\n");
+    exit(1);
+#else
+    zif = get_zip_interface(stderr);
+#endif
+
+    if (!zif) {
+        fprintf(stderr, "zip interface is not available\n");
+        exit(1);
+    }
+
+    struct ZipData *zd = zif->open(stderr, zip_path);
+    if (!zd) {
+        fprintf(stderr, "failed to open zip file '%s'\n", zip_path);
+        exit(1);
+    }
+
+    unsigned char *data = NULL;
+    size_t size = 0;
+    int r = zif->read_file(zd, "problem.xml", &data, &size);
+    if (r < 0) {
+        fprintf(stderr, "read error from '%s'\n", zip_path);
+        exit(1);
+    }
+    if (!r) {
+        fprintf(stderr, "file 'problem.xml' not found in '%s'\n", zip_path);
+        exit(1);
+    }
+
+    struct ppxml_problem *ppxml = ppxml_parse_str(stderr, "polygon.xml", data);
+    if (!ppxml) {
+        fprintf(stderr, "failed to parse 'polygon.xml' in '%s'\n", zip_path);
+        exit(1);
+    }
+
+    // success
+    exit(0);
+}
+
 int
 main(int argc, char **argv)
 {
     int cur_arg = 1;
     int retval = 0;
     struct RandomSource *rand = NULL;
+    int check_xml_flag = 0;
 
     signal(SIGPIPE, SIG_IGN);
     signal(SIGINT, sigint_handler);
@@ -4619,6 +4665,9 @@ main(int argc, char **argv)
     while (cur_arg < argc) {
         if (!strcmp(argv[cur_arg], "--version")) {
             report_version();
+        } else if (!strcmp(argv[cur_arg], "--check-xml")) {
+            check_xml_flag = 1;
+            ++cur_arg;
         } else if (!strcmp(argv[cur_arg], "--")) {
             ++cur_arg;
             break;
@@ -4634,6 +4683,11 @@ main(int argc, char **argv)
     }
     if (cur_arg < argc - 1) {
         fatal("too many arguments");
+    }
+
+    if (check_xml_flag) {
+        check_xml(argv[cur_arg]);
+        return 0;
     }
 
     FILE *f = fopen(argv[cur_arg], "r");

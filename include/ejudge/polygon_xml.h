@@ -46,6 +46,7 @@ enum
     PPXML_EXECUTABLES,
     PPXML_EXECUTABLE,
     PPXML_SOURCE,
+    PPXML_BINARY,
     PPXML_ASSETS,
     PPXML_CHECKER,
     PPXML_COPY,
@@ -57,11 +58,19 @@ enum
     PPXML_PROPERTIES,
     PPXML_PROPERTY,
     PPXML_STRESSES,
+    PPXML_STRESS,
     PPXML_STRESS_COUNT,
     PPXML_STRESS_PATH_PATTERN,
     PPXML_LIST,
     PPXML_TAGS,
     PPXML_TAG,
+    PPXML_DEPENDENCY,
+    PPXML_DEPENDENCIES,
+    PPXML_DOCUMENT,
+    PPXML_DOCUMENTS,
+    PPXML_EXTRA_TAG,
+    PPXML_EXTRA_TAGS,
+    PPXML_INTERACTOR,
 
     PPXML_TAG_LAST,
 };
@@ -92,6 +101,11 @@ enum
     PPXML_A_POINTS_POLICY,
     PPXML_A_VERDICT,
     PPXML_A_TAG,
+    PPXML_A_DESCRIPTION,
+    PPXML_A_INDEX,
+    PPXML_A_TESTSET,
+    PPXML_A_NOTE,
+    PPXML_A_FROM_FILE,
 };
 
 enum
@@ -127,12 +141,14 @@ enum
     PPXML_FEEDBACK_UNKNOWN,
     PPXML_FEEDBACK_COMPLETE,
     PPXML_FEEDBACK_ICPC,
+    PPXML_FEEDBACK_POINTS,
 };
 
 enum
 {
     PPXML_POINTS_UNKNOWN,
     PPXML_POINTS_EACH_TEST,
+    PPXML_POINTS_COMPLETE_GROUP,
 };
 
 enum
@@ -140,14 +156,22 @@ enum
     PPXML_VERDICT_UNKNOWN,
     PPXML_VERDICT_INVALID,
     PPXML_VERDICT_VALID,
+    PPXML_VERDICT_OK,
+    PPXML_VERDICT_WRONG_ANSWER,
+    PPXML_VERDICT_CRASHED,
 };
 
 enum
 {
     PPXML_SOLUTION_TAG_UNKNOWN,
-    PPXML_SOLUTION_TAG_WRONG_ANSWER,
-    PPXML_SOLUTION_TAG_REJECTED,
     PPXML_SOLUTION_TAG_MAIN,
+    PPXML_SOLUTION_TAG_ACCEPTED,
+    PPXML_SOLUTION_TAG_REJECTED,
+    PPXML_SOLUTION_TAG_WRONG_ANSWER,
+    PPXML_SOLUTION_TAG_TIME_LIMIT,
+    PPXML_SOLUTION_TAG_MEMORY_LIMIT,
+    PPXML_SOLUTION_TAG_TIME_LIMIT_OR_ACCEPTED,
+    PPXML_SOLUTION_TAG_TIME_LIMIT_OR_MEMORY_LIMIT,
 };
 
 struct ppxml_name
@@ -184,6 +208,8 @@ struct ppxml_test
     struct xml_tree b;
     unsigned char *group;
     unsigned char *cmd;
+    unsigned char *description;
+    unsigned char *from_file;
     double points;
     unsigned char method;
     unsigned char sample;
@@ -196,10 +222,24 @@ struct ppxml_tests
     XML_TREE_VECTOR_T(ppxml_test) n;
 };
 
+struct ppxml_dependency
+{
+    struct xml_tree b;
+    unsigned char *group;
+};
+
+struct ppxml_dependencies
+{
+    struct xml_tree b;
+    XML_TREE_VECTOR_T(ppxml_dependency) n;
+};
+
 struct ppxml_group
 {
     struct xml_tree b;
     unsigned char *name;
+    struct ppxml_dependencies *dependencies;
+    double points;
     unsigned char feedback_policy;
     unsigned char points_policy;
 };
@@ -255,10 +295,18 @@ struct ppxml_source
     unsigned char *type;
 };
 
+struct ppxml_binary
+{
+    struct xml_tree b;
+    unsigned char *path;
+    unsigned char *type;
+};
+
 struct ppxml_executable
 {
     struct xml_tree b;
     struct ppxml_source *source;
+    struct ppxml_binary *binary;
 };
 
 struct ppxml_executables
@@ -278,6 +326,7 @@ struct ppxml_copy
 {
     struct xml_tree b;
     unsigned char *path;
+    unsigned char *type;
 };
 
 struct ppxml_checker
@@ -286,6 +335,7 @@ struct ppxml_checker
     unsigned char *name;
     unsigned char *type;
     struct ppxml_source *source;
+    struct ppxml_binary *binary;
     struct ppxml_copy *copy;
     struct ppxml_testset *testset;
 };
@@ -294,6 +344,7 @@ struct ppxml_validator
 {
     struct xml_tree b;
     struct ppxml_source *source;
+    struct ppxml_binary *binary;
     struct ppxml_testset *testset;
 };
 
@@ -303,10 +354,34 @@ struct ppxml_validators
     XML_TREE_VECTOR_T(ppxml_validator) n;
 };
 
+struct ppxml_interactor
+{
+    struct xml_tree b;
+    struct ppxml_source *source;
+    struct ppxml_binary *binary;
+};
+
+struct ppxml_extra_tag
+{
+    struct xml_tree b;
+    unsigned char *group;
+    unsigned char *testset;
+    unsigned char tag;
+};
+
+struct ppxml_extra_tags
+{
+    struct xml_tree b;
+    XML_TREE_VECTOR_T(ppxml_extra_tag) n;
+};
+
 struct ppxml_solution
 {
     struct xml_tree b;
     struct ppxml_source *source;
+    struct ppxml_binary *binary;
+    struct ppxml_extra_tags *extra_tags;
+    unsigned char *note;
     unsigned char tag;
 };
 
@@ -320,6 +395,7 @@ struct ppxml_assets
 {
     struct xml_tree b;
     struct ppxml_checker *checker;
+    struct ppxml_interactor *interactor;
     struct ppxml_validators *validators;
     struct ppxml_solutions *solutions;
 };
@@ -349,6 +425,19 @@ struct ppxml_tags
     XML_TREE_VECTOR_T(ppxml_tag) n;
 };
 
+struct ppxml_document
+{
+    struct xml_tree b;
+    unsigned char *path;
+    unsigned char *type;
+};
+
+struct ppxml_documents
+{
+    struct xml_tree b;
+    XML_TREE_VECTOR_T(ppxml_documents) n;
+};
+
 /*
     <stresses>
         <stress-count>0</stress-count>
@@ -371,6 +460,7 @@ struct ppxml_problem
     struct ppxml_assets *assets;
     struct ppxml_properties *properties;
     struct ppxml_tags *tags;
+    struct ppxml_documents *documents;
 };
 
 struct ppxml_parse_context;
@@ -405,5 +495,8 @@ struct ppxml_parse_context
     unsigned char log_flag;
     unsigned char stderr_flag;
 };
+
+struct ppxml_problem *
+ppxml_parse_str(FILE *log_f, const char *path, const char *str);
 
 #endif /* __POLYGON_XML_H__ */
