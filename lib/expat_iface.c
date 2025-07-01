@@ -1017,6 +1017,18 @@ xml_link_attr_last(struct xml_tree *node, struct xml_attr *attr)
   node->last = attr;
 }
 
+void
+xml_tree_vector_push(struct xml_tree_vector *v, struct xml_tree *p)
+{
+  if (!v->a) {
+    v->a = 4;
+    XCALLOC(v->v, v->a);
+  } else if (v->u == v->a) {
+    v->a *= 2;
+    XREALLOC(v->v, v->a);
+  }
+  v->v[v->u++] = p;
+}
 
 static const unsigned char *
 do_subst(
