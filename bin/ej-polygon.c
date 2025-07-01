@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2012-2024 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2025 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -27,6 +27,7 @@
 #include "ejudge/sha512utils.h"
 #include "ejudge/cJSON.h"
 #include "ejudge/fileutl.h"
+#include "ejudge/polygon_xml.h"
 
 #include "ejudge/osdeps.h"
 #include "ejudge/xalloc.h"
@@ -1257,16 +1258,16 @@ static const struct ZipInterface zip_interface =
 };
 
 static const struct ZipInterface *
-get_zip_interface(FILE *log_f, const struct polygon_packet *pkt)
+get_zip_interface(FILE *log_f)
 {
     return &zip_interface;
 }
 #else
 static const struct ZipInterface *
-get_zip_interface(FILE *log_f, const struct polygon_packet *pkt)
+get_zip_interface(FILE *log_f)
     __attribute__((unused));
 static const struct ZipInterface *
-get_zip_interface(FILE *log_f, const struct polygon_packet *pkt)
+get_zip_interface(FILE *log_f)
 {
     fprintf(log_f, "libzip library was missing during the compilation\n");
     return NULL;
@@ -4369,7 +4370,7 @@ do_work_api(
     retval = 1;
     goto done;
 #else
-    zif = get_zip_interface(log_f, pkt);
+    zif = get_zip_interface(log_f);
 #endif
     if (!zif) {
         fprintf(log_f, "zip interface is not available\n");
@@ -4456,7 +4457,7 @@ do_work(
     retval = 1;
     goto done;
 #else
-    zif = get_zip_interface(log_f, pkt);
+    zif = get_zip_interface(log_f);
 #endif
     if (!zif) {
         fprintf(log_f, "zip interface is not available\n");
@@ -4568,7 +4569,7 @@ do_work_file(
     retval = 1;
     goto done;
 #else
-    zif = get_zip_interface(log_f, pkt);
+    zif = get_zip_interface(log_f);
 #endif
 
     if (!zif) {
