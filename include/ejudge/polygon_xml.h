@@ -1,0 +1,409 @@
+/* -*- mode: c; c-basic-offset: 4 -*- */
+#ifndef __POLYGON_XML_H__
+#define __POLYGON_XML_H__
+
+/* Copyright (C) 2025 Alexander Chernov <cher@ejudge.ru> */
+
+/*
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+#include "ejudge/expat_iface.h"
+
+#include <stdio.h>
+
+enum
+{
+    PPXML_PROBLEM = 1,
+    PPXML_NAMES,
+    PPXML_NAME,
+    PPXML_STATEMENTS,
+    PPXML_STATEMENT,
+    PPXML_TUTORIALS,
+    PPXML_TUTORIAL,
+    PPXML_JUDGING,
+    PPXML_TESTSET,
+    PPXML_TIME_LIMIT,
+    PPXML_MEMORY_LIMIT,
+    PPXML_TEST_COUNT,
+    PPXML_INPUT_PATH_PATTERN,
+    PPXML_ANSWER_PATH_PATTERN,
+    PPXML_TESTS,
+    PPXML_TEST,
+    PPXML_GROUPS,
+    PPXML_GROUP,
+    PPXML_FILES,
+    PPXML_RESOURCES,
+    PPXML_FILE,
+    PPXML_EXECUTABLES,
+    PPXML_EXECUTABLE,
+    PPXML_SOURCE,
+    PPXML_ASSETS,
+    PPXML_CHECKER,
+    PPXML_COPY,
+    PPXML_OUTPUT_PATH_PATTERN,
+    PPXML_VALIDATORS,
+    PPXML_VALIDATOR,
+    PPXML_SOLUTIONS,
+    PPXML_SOLUTION,
+    PPXML_PROPERTIES,
+    PPXML_PROPERTY,
+    PPXML_STRESSES,
+    PPXML_STRESS_COUNT,
+    PPXML_STRESS_PATH_PATTERN,
+    PPXML_LIST,
+    PPXML_TAGS,
+    PPXML_TAG,
+
+    PPXML_TAG_LAST,
+};
+
+enum
+{
+    PPXML_A_REVISION = 1,
+    PPXML_A_SHORT_NAME,
+    PPXML_A_URL,
+    PPXML_A_LANGUAGE,
+    PPXML_A_VALUE,
+    PPXML_A_CHARSET,
+    PPXML_A_MATHJAX,
+    PPXML_A_PATH,
+    PPXML_A_TYPE,
+    PPXML_A_CPU_NAME,
+    PPXML_A_CPU_SPEED,
+    PPXML_A_INPUT_FILE,
+    PPXML_A_OUTPUT_FILE,
+    PPXML_A_RUN_COUNT,
+    PPXML_A_NAME,
+    PPXML_A_GROUP,
+    PPXML_A_METHOD,
+    PPXML_A_POINTS,
+    PPXML_A_SAMPLE,
+    PPXML_A_CMD,
+    PPXML_A_FEEDBACK_POLICY,
+    PPXML_A_POINTS_POLICY,
+    PPXML_A_VERDICT,
+    PPXML_A_TAG,
+};
+
+enum
+{
+    PPXML_LANG_UNKNOWN,
+    PPXML_LANG_RUSSIAN,
+};
+
+enum
+{
+    PPXML_CHARSET_UNKNOWN,
+    PPXML_CHARSET_UTF_8,
+};
+
+enum
+{
+    PPXML_TYPE_UNKNOWN,
+    PPXML_TYPE_TEXT,
+    PPXML_TYPE_TEX,
+    PPXML_TYPE_HTML,
+    PPXML_TYPE_PDF,
+};
+
+enum
+{
+    PPXML_METHOD_UNKNOWN,
+    PPXML_METHOD_MANUAL,
+    PPXML_METHOD_GENERATED,
+};
+
+enum
+{
+    PPXML_FEEDBACK_UNKNOWN,
+    PPXML_FEEDBACK_COMPLETE,
+    PPXML_FEEDBACK_ICPC,
+};
+
+enum
+{
+    PPXML_POINTS_UNKNOWN,
+    PPXML_POINTS_EACH_TEST,
+};
+
+enum
+{
+    PPXML_VERDICT_UNKNOWN,
+    PPXML_VERDICT_INVALID,
+    PPXML_VERDICT_VALID,
+};
+
+enum
+{
+    PPXML_SOLUTION_TAG_UNKNOWN,
+    PPXML_SOLUTION_TAG_WRONG_ANSWER,
+    PPXML_SOLUTION_TAG_REJECTED,
+    PPXML_SOLUTION_TAG_MAIN,
+};
+
+struct ppxml_name
+{
+    struct xml_tree b;
+    unsigned char *value;
+    unsigned char language;
+};
+
+struct ppxml_names
+{
+    struct xml_tree b;
+    XML_TREE_VECTOR_T(ppxml_name) n;
+};
+
+struct ppxml_statement
+{
+    struct xml_tree b;
+    unsigned char *path;
+    unsigned char charset;
+    unsigned char language;
+    unsigned char mathjax;
+    unsigned char type;
+};
+
+struct ppxml_statements
+{
+    struct xml_tree b;
+    XML_TREE_VECTOR_T(ppxml_statement) n;
+};
+
+struct ppxml_test
+{
+    struct xml_tree b;
+    unsigned char *group;
+    unsigned char *cmd;
+    double points;
+    unsigned char method;
+    unsigned char sample;
+    unsigned char verdict;
+};
+
+struct ppxml_tests
+{
+    struct xml_tree b;
+    XML_TREE_VECTOR_T(ppxml_test) n;
+};
+
+struct ppxml_group
+{
+    struct xml_tree b;
+    unsigned char *name;
+    unsigned char feedback_policy;
+    unsigned char points_policy;
+};
+
+struct ppxml_groups
+{
+    struct xml_tree b;
+    XML_TREE_VECTOR_T(ppxml_group) n;
+};
+
+struct ppxml_testset
+{
+    struct xml_tree b;
+    unsigned char *name;
+    unsigned char *input_path_pattern;
+    unsigned char *output_path_pattern;
+    unsigned char *answer_path_pattern;
+    struct ppxml_tests *tests;
+    struct ppxml_groups *groups;
+    long long memory_limit;
+    int time_limit;
+    int test_count;
+};
+
+struct ppxml_judging
+{
+    struct xml_tree b;
+    struct ppxml_testset *testset;
+    unsigned char *cpu_name;
+    unsigned char *input_file;
+    unsigned char *output_file;
+    double cpu_speed;
+    int run_count;
+};
+
+struct ppxml_file
+{
+    struct xml_tree b;
+    unsigned char *path;
+    unsigned char *type;
+};
+
+struct ppxml_resources
+{
+    struct xml_tree b;
+    XML_TREE_VECTOR_T(ppxml_file) n;
+};
+
+struct ppxml_source
+{
+    struct xml_tree b;
+    unsigned char *path;
+    unsigned char *type;
+};
+
+struct ppxml_executable
+{
+    struct xml_tree b;
+    struct ppxml_source *source;
+};
+
+struct ppxml_executables
+{
+    struct xml_tree b;
+    XML_TREE_VECTOR_T(ppxml_executable) n;
+};
+
+struct ppxml_files
+{
+    struct xml_tree b;
+    struct ppxml_resources *resources;
+    struct ppxml_executables *executables;
+};
+
+struct ppxml_copy
+{
+    struct xml_tree b;
+    unsigned char *path;
+};
+
+struct ppxml_checker
+{
+    struct xml_tree b;
+    unsigned char *name;
+    unsigned char *type;
+    struct ppxml_source *source;
+    struct ppxml_copy *copy;
+    struct ppxml_testset *testset;
+};
+
+struct ppxml_validator
+{
+    struct xml_tree b;
+    struct ppxml_source *source;
+    struct ppxml_testset *testset;
+};
+
+struct ppxml_validators
+{
+    struct xml_tree b;
+    XML_TREE_VECTOR_T(ppxml_validator) n;
+};
+
+struct ppxml_solution
+{
+    struct xml_tree b;
+    struct ppxml_source *source;
+    unsigned char tag;
+};
+
+struct ppxml_solutions
+{
+    struct xml_tree b;
+    XML_TREE_VECTOR_T(ppxml_solution) n;
+};
+
+struct ppxml_assets
+{
+    struct xml_tree b;
+    struct ppxml_checker *checker;
+    struct ppxml_validators *validators;
+    struct ppxml_solutions *solutions;
+};
+
+struct ppxml_property
+{
+    struct xml_tree b;
+    unsigned char *name;
+    unsigned char *value;
+};
+
+struct ppxml_properties
+{
+    struct xml_tree b;
+    XML_TREE_VECTOR_T(ppxml_property) n;
+};
+
+struct ppxml_tag
+{
+    struct xml_tree b;
+    unsigned char *value;
+};
+
+struct ppxml_tags
+{
+    struct xml_tree b;
+    XML_TREE_VECTOR_T(ppxml_tag) n;
+};
+
+/*
+    <stresses>
+        <stress-count>0</stress-count>
+        <stress-path-pattern>stresses/%03d</stress-path-pattern>
+        <list/>
+    </stresses>
+*/
+
+struct ppxml_problem
+{
+    struct xml_tree b;
+    int revision;
+    unsigned char *short_name;
+    unsigned char *url;
+    struct ppxml_names *names;
+    struct ppxml_statements *statements;
+    struct ppxml_statements *tutorials;
+    struct ppxml_judging *judging;
+    struct ppxml_files *files;
+    struct ppxml_assets *assets;
+    struct ppxml_properties *properties;
+    struct ppxml_tags *tags;
+};
+
+struct ppxml_parse_context;
+
+struct ppxml_parse_ops
+{
+    void* (*free_context)(struct ppxml_parse_context *cntx);
+
+    __attribute__((format(printf, 4, 5)))
+    void* (*err)(struct ppxml_parse_context *cntx, int line, int column, const char *format, ...);
+
+    void* (*err_elem_not_allowed)(struct ppxml_parse_context *cntx, const struct xml_tree *p);
+    void* (*err_nested_elems)(struct ppxml_parse_context *cntx, const struct xml_tree *p);
+    void* (*err_attr_not_allowed)(struct ppxml_parse_context *cntx, const struct xml_tree *p, const struct xml_attr *a);
+    void* (*err_attr_undefined)(struct ppxml_parse_context *cntx, const struct xml_tree *p, int a);
+    void* (*err_attr_invalid)(struct ppxml_parse_context *cntx, const struct xml_attr *a);
+    void* (*err_elem_redefined)(struct ppxml_parse_context *cntx, const struct xml_tree *p);
+    void* (*err_elem_invalid)(struct ppxml_parse_context *cntx, const struct xml_tree *p);
+    void* (*err_elem_undefined)(struct ppxml_parse_context *cntx, const struct xml_tree *p, int q);
+};
+
+struct xml_parse_spec;
+
+struct ppxml_parse_context
+{
+    const struct ppxml_parse_ops *ops;
+    const struct xml_parse_spec *spec;
+    FILE *log_f;
+    const unsigned char *path;
+    int error_count;
+    unsigned char quiet_flag;
+    unsigned char log_flag;
+    unsigned char stderr_flag;
+};
+
+#endif /* __POLYGON_XML_H__ */
