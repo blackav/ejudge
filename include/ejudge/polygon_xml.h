@@ -71,6 +71,13 @@ enum
     PPXML_EXTRA_TAG,
     PPXML_EXTRA_TAGS,
     PPXML_INTERACTOR,
+    PPXML_ATTACHMENTS,
+    PPXML_SCORER,
+    PPXML_ASSET,
+    PPXML_STAGE,
+    PPXML_STAGES,
+    PPXML_MATERIAL,
+    PPXML_MATERIALS,
 
     PPXML_TAG_LAST,
 };
@@ -106,12 +113,38 @@ enum
     PPXML_A_TESTSET,
     PPXML_A_NOTE,
     PPXML_A_FROM_FILE,
+    PPXML_A_FOR_TYPES,
+    PPXML_A_PUBLISH,
 };
 
 enum
 {
     PPXML_LANG_UNKNOWN,
     PPXML_LANG_RUSSIAN,
+    PPXML_LANG_ENGLISH,
+    PPXML_LANG_AFRIKAANS,
+    PPXML_LANG_ARMENIAN,
+    PPXML_LANG_AZERBAIJANI,
+    PPXML_LANG_BELARUSIAN,
+    PPXML_LANG_BOSNIAN,
+    PPXML_LANG_BULGARIAN,
+    PPXML_LANG_CHINESE,
+    PPXML_LANG_CROATIAN,
+    PPXML_LANG_ESTONIAN,
+    PPXML_LANG_FINNISH,
+    PPXML_LANG_GERMAN,
+    PPXML_LANG_HEBREW,
+    PPXML_LANG_HUNGARIAN,
+    PPXML_LANG_INDONESIAN,
+    PPXML_LANG_MALAY,
+    PPXML_LANG_POLISH,
+    PPXML_LANG_ROMANIAN,
+    PPXML_LANG_SERBIAN,
+    PPXML_LANG_SLOVAK,
+    PPXML_LANG_SLOVENE,
+    PPXML_LANG_TURKISH,
+    PPXML_LANG_UZBEK,
+    PPXML_LANG_VIETNAMESE,
 };
 
 enum
@@ -142,6 +175,7 @@ enum
     PPXML_FEEDBACK_COMPLETE,
     PPXML_FEEDBACK_ICPC,
     PPXML_FEEDBACK_POINTS,
+    PPXML_FEEDBACK_NONE,
 };
 
 enum
@@ -159,6 +193,7 @@ enum
     PPXML_VERDICT_OK,
     PPXML_VERDICT_WRONG_ANSWER,
     PPXML_VERDICT_CRASHED,
+    PPXML_VERDICT_PRESENTATION_ERROR,
 };
 
 enum
@@ -172,6 +207,8 @@ enum
     PPXML_SOLUTION_TAG_MEMORY_LIMIT,
     PPXML_SOLUTION_TAG_TIME_LIMIT_OR_ACCEPTED,
     PPXML_SOLUTION_TAG_TIME_LIMIT_OR_MEMORY_LIMIT,
+    PPXML_SOLUTION_TAG_PRESENTATION_ERROR,
+    PPXML_SOLUTION_TAG_FAILED,
 };
 
 struct ppxml_name
@@ -267,7 +304,7 @@ struct ppxml_testset
 struct ppxml_judging
 {
     struct xml_tree b;
-    struct ppxml_testset *testset;
+    XML_TREE_VECTOR_T(ppxml_testset) testsets;
     unsigned char *cpu_name;
     unsigned char *input_file;
     unsigned char *output_file;
@@ -275,14 +312,44 @@ struct ppxml_judging
     int run_count;
 };
 
+struct ppxml_assets;
+struct ppxml_stages;
+
 struct ppxml_file
 {
     struct xml_tree b;
     unsigned char *path;
     unsigned char *type;
+    unsigned char *for_types;
+    struct ppxml_assets *assets;
+    struct ppxml_stages *stages;
+};
+
+struct ppxml_asset
+{
+    struct xml_tree b;
+    unsigned char *name;
+};
+
+struct ppxml_stage
+{
+    struct xml_tree b;
+    unsigned char *name;
+};
+
+struct ppxml_stages
+{
+    struct xml_tree b;
+    XML_TREE_VECTOR_T(ppxml_stage) n;
 };
 
 struct ppxml_resources
+{
+    struct xml_tree b;
+    XML_TREE_VECTOR_T(ppxml_file) n;
+};
+
+struct ppxml_attachments
 {
     struct xml_tree b;
     XML_TREE_VECTOR_T(ppxml_file) n;
@@ -319,6 +386,7 @@ struct ppxml_files
 {
     struct xml_tree b;
     struct ppxml_resources *resources;
+    struct ppxml_attachments *attachments;
     struct ppxml_executables *executables;
 };
 
@@ -361,6 +429,13 @@ struct ppxml_interactor
     struct ppxml_binary *binary;
 };
 
+struct ppxml_scorer
+{
+    struct xml_tree b;
+    struct ppxml_source *source;
+    struct ppxml_binary *binary;
+};
+
 struct ppxml_extra_tag
 {
     struct xml_tree b;
@@ -394,10 +469,12 @@ struct ppxml_solutions
 struct ppxml_assets
 {
     struct xml_tree b;
+    XML_TREE_VECTOR_T(ppxml_asset) assets;
     struct ppxml_checker *checker;
     struct ppxml_interactor *interactor;
     struct ppxml_validators *validators;
     struct ppxml_solutions *solutions;
+    struct ppxml_scorer *scorer;
 };
 
 struct ppxml_property

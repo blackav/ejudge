@@ -79,6 +79,13 @@ static char const * const problem_xml_elem_map[] =
     [PPXML_EXTRA_TAG] = "extra-tag",
     [PPXML_EXTRA_TAGS] = "extra-tags",
     [PPXML_INTERACTOR] = "interactor",
+    [PPXML_ATTACHMENTS] = "attachments",
+    [PPXML_SCORER] = "scorer",
+    [PPXML_ASSET] = "asset",
+    [PPXML_STAGE] = "stage",
+    [PPXML_STAGES] = "stages",
+    [PPXML_MATERIAL] = "material",
+    [PPXML_MATERIALS] = "materials",
     NULL,
 };
 
@@ -114,6 +121,8 @@ static char const * const problem_xml_attr_map[] =
     [PPXML_A_TESTSET] = "testset",
     [PPXML_A_NOTE] = "note",
     [PPXML_A_FROM_FILE] = "from-file",
+    [PPXML_A_FOR_TYPES] = "for-types",
+    [PPXML_A_PUBLISH] = "publish",
     NULL,
 };
 
@@ -157,6 +166,11 @@ static size_t const problem_xml_sizes[PPXML_TAG_LAST] =
     [PPXML_EXTRA_TAG] = sizeof(struct ppxml_extra_tag),
     [PPXML_EXTRA_TAGS] = sizeof(struct ppxml_extra_tags),
     [PPXML_INTERACTOR] = sizeof(struct ppxml_interactor),
+    [PPXML_ATTACHMENTS] = sizeof(struct ppxml_attachments),
+    [PPXML_SCORER] = sizeof(struct ppxml_scorer),
+    [PPXML_ASSET] = sizeof(struct ppxml_asset),
+    [PPXML_STAGE] = sizeof(struct ppxml_stage),
+    [PPXML_STAGES] = sizeof(struct ppxml_stages),
 };
 
 static void
@@ -240,6 +254,30 @@ static const struct xml_parse_spec polygon_xml_parse_spec =
 static const char * const ppxml_lang_strings[] =
 {
     [PPXML_LANG_RUSSIAN] = "russian",
+    [PPXML_LANG_ENGLISH] = "english",
+    [PPXML_LANG_AFRIKAANS] = "afrikaans",
+    [PPXML_LANG_ARMENIAN] = "armenian",
+    [PPXML_LANG_AZERBAIJANI] = "azerbaijani",
+    [PPXML_LANG_BELARUSIAN] = "belarusian",
+    [PPXML_LANG_BOSNIAN] = "bosnian",
+    [PPXML_LANG_BULGARIAN] = "bulgarian",
+    [PPXML_LANG_CHINESE] = "chinese",
+    [PPXML_LANG_CROATIAN] = "croatian",
+    [PPXML_LANG_ESTONIAN] = "estonian",
+    [PPXML_LANG_FINNISH] = "finnish",
+    [PPXML_LANG_GERMAN] = "german",
+    [PPXML_LANG_HEBREW] = "hebrew",
+    [PPXML_LANG_HUNGARIAN] = "hungarian",
+    [PPXML_LANG_INDONESIAN] = "indonesian",
+    [PPXML_LANG_MALAY] = "malay",
+    [PPXML_LANG_POLISH] = "polish",
+    [PPXML_LANG_ROMANIAN] = "romanian",
+    [PPXML_LANG_SERBIAN] = "serbian",
+    [PPXML_LANG_SLOVAK] = "slovak",
+    [PPXML_LANG_SLOVENE] = "slovene",
+    [PPXML_LANG_TURKISH] = "turkish",
+    [PPXML_LANG_UZBEK] = "uzbek",
+    [PPXML_LANG_VIETNAMESE] = "vietnamese",
 };
 static int ppxml_lang_parse(const unsigned char *s)
 {
@@ -310,6 +348,7 @@ static const char * const ppxml_feedback_strings[] =
     [PPXML_FEEDBACK_COMPLETE] = "complete",
     [PPXML_FEEDBACK_ICPC] = "icpc",
     [PPXML_FEEDBACK_POINTS] = "points",
+    [PPXML_FEEDBACK_NONE] = "none",
 };
 static int ppxml_feedback_parse(const unsigned char *s)
 {
@@ -347,6 +386,7 @@ static const char * const ppxml_verdict_strings[] =
     [PPXML_VERDICT_OK] = "ok",
     [PPXML_VERDICT_WRONG_ANSWER] = "wrong-answer",
     [PPXML_VERDICT_CRASHED] = "crashed",
+    [PPXML_VERDICT_PRESENTATION_ERROR] = "presentation-error",
 };
 static int ppxml_verdict_parse(const unsigned char *s)
 {
@@ -370,6 +410,8 @@ static const char * const ppxml_solution_tag_strings[] =
     [PPXML_SOLUTION_TAG_MEMORY_LIMIT] = "memory-limit-exceeded",
     [PPXML_SOLUTION_TAG_TIME_LIMIT_OR_ACCEPTED] = "time-limit-exceeded-or-accepted",
     [PPXML_SOLUTION_TAG_TIME_LIMIT_OR_MEMORY_LIMIT] = "time-limit-exceeded-or-memory-limit-exceeded",
+    [PPXML_SOLUTION_TAG_PRESENTATION_ERROR] = "presentation-error",
+    [PPXML_SOLUTION_TAG_FAILED] = "failed",
 };
 static int ppxml_solution_tag_parse(const unsigned char *s)
 {
@@ -459,6 +501,56 @@ ppxml_parse_properties(struct ppxml_parse_context *cntx, struct xml_tree *p)
     for (struct xml_tree *q = p->first_down; q; q = q->right) {
         if (q->tag == PPXML_PROPERTY) {
             struct ppxml_property *tt = ppxml_parse_property(cntx, q);
+            if (!tt) return NULL;
+            XML_TREE_VECTOR_PUSH(pp, tt);
+        } else {
+            return cntx->ops->err_elem_not_allowed(cntx, q);
+        }
+    }
+
+    return pp;
+}
+
+static struct ppxml_asset *
+ppxml_parse_asset(struct ppxml_parse_context *cntx, struct xml_tree *p)
+{
+    if (p->first_down) return cntx->ops->err_nested_elems(cntx, p);
+    struct ppxml_asset *pp = (struct ppxml_asset *) p;
+    for (struct xml_attr *a = pp->b.first; a; a = a->next) {
+        if (a->tag == PPXML_A_NAME) {
+            pp->name = a->text;
+        } else {
+            return cntx->ops->err_attr_not_allowed(cntx, p, a);
+        }
+    }
+    if (!pp->name) return cntx->ops->err_attr_undefined(cntx, p, PPXML_A_NAME);
+    return pp;
+}
+
+static struct ppxml_stage *
+ppxml_parse_stage(struct ppxml_parse_context *cntx, struct xml_tree *p)
+{
+    if (p->first_down) return cntx->ops->err_nested_elems(cntx, p);
+    struct ppxml_stage *pp = (struct ppxml_stage *) p;
+    for (struct xml_attr *a = pp->b.first; a; a = a->next) {
+        if (a->tag == PPXML_A_NAME) {
+            pp->name = a->text;
+        } else {
+            return cntx->ops->err_attr_not_allowed(cntx, p, a);
+        }
+    }
+    if (!pp->name) return cntx->ops->err_attr_undefined(cntx, p, PPXML_A_NAME);
+    return pp;
+}
+
+static struct ppxml_stages *
+ppxml_parse_stages(struct ppxml_parse_context *cntx, struct xml_tree *p)
+{
+    if (p->first) return cntx->ops->err_attr_not_allowed(cntx, p, p->first);
+    struct ppxml_stages *pp = (struct ppxml_stages *) p;
+    for (struct xml_tree *q = p->first_down; q; q = q->right) {
+        if (q->tag == PPXML_STAGE) {
+            struct ppxml_stage *tt = ppxml_parse_stage(cntx, q);
             if (!tt) return NULL;
             XML_TREE_VECTOR_PUSH(pp, tt);
         } else {
@@ -741,7 +833,6 @@ ppxml_parse_group(struct ppxml_parse_context *cntx, struct xml_tree *p)
         }
     }
     if (!pp->name) return cntx->ops->err_attr_undefined(cntx, p, PPXML_A_NAME);
-    if (!pp->feedback_policy) return cntx->ops->err_attr_undefined(cntx, p, PPXML_A_FEEDBACK_POLICY);
     if (!pp->points_policy) return cntx->ops->err_attr_undefined(cntx, p, PPXML_A_POINTS_POLICY);
 
     return pp;
@@ -874,7 +965,6 @@ ppxml_parse_validator(struct ppxml_parse_context *cntx, struct xml_tree *p)
         }
     }
     if (!pp->source) return cntx->ops->err_elem_undefined(cntx, p, PPXML_SOURCE);
-    if (!pp->testset) return cntx->ops->err_elem_undefined(cntx, p, PPXML_TESTSET);
     return pp;
 }
 
@@ -901,6 +991,30 @@ ppxml_parse_interactor(struct ppxml_parse_context *cntx, struct xml_tree *p)
 {
     if (p->first) return cntx->ops->err_attr_not_allowed(cntx, p, p->first);
     struct ppxml_interactor *pp = (struct ppxml_interactor *) p;
+    for (struct xml_tree *q = p->first_down; q; q = q->right) {
+        if (q->tag == PPXML_SOURCE) {
+            if (pp->source) return cntx->ops->err_elem_redefined(cntx, q);
+            struct ppxml_source *t = ppxml_parse_source(cntx, q);
+            if (!t) return NULL;
+            pp->source = t;
+        } else if (q->tag == PPXML_BINARY) {
+            if (pp->binary) return cntx->ops->err_elem_redefined(cntx, q);
+            struct ppxml_binary *t = ppxml_parse_binary(cntx, q);
+            if (!t) return NULL;
+            pp->binary = t;
+        } else {
+            return cntx->ops->err_elem_invalid(cntx, q);
+        }
+    }
+    if (!pp->source) return cntx->ops->err_elem_undefined(cntx, p, PPXML_SOURCE);
+    return pp;
+}
+
+static struct ppxml_scorer *
+ppxml_parse_scorer(struct ppxml_parse_context *cntx, struct xml_tree *p)
+{
+    if (p->first) return cntx->ops->err_attr_not_allowed(cntx, p, p->first);
+    struct ppxml_scorer *pp = (struct ppxml_scorer *) p;
     for (struct xml_tree *q = p->first_down; q; q = q->right) {
         if (q->tag == PPXML_SOURCE) {
             if (pp->source) return cntx->ops->err_elem_redefined(cntx, q);
@@ -980,7 +1094,6 @@ ppxml_parse_checker(struct ppxml_parse_context *cntx, struct xml_tree *p)
     if (!pp->type) return cntx->ops->err_attr_undefined(cntx, p, PPXML_A_TYPE);
     if (!pp->source) return cntx->ops->err_elem_undefined(cntx, p, PPXML_SOURCE);
     if (!pp->copy) return cntx->ops->err_elem_undefined(cntx, p, PPXML_COPY);
-    if (!pp->testset) return cntx->ops->err_elem_undefined(cntx, p, PPXML_TESTSET);
 
     return pp;
 }
@@ -1006,16 +1119,24 @@ ppxml_parse_assets(struct ppxml_parse_context *cntx, struct xml_tree *p)
             struct ppxml_validators *t = ppxml_parse_validators(cntx, q);
             if (!t) return NULL;
             pp->validators = t;
+        } else if (q->tag == PPXML_SCORER) {
+            if (pp->validators) return cntx->ops->err_elem_redefined(cntx, q);
+            struct ppxml_scorer *t = ppxml_parse_scorer(cntx, q);
+            if (!t) return NULL;
+            pp->scorer = t;
         } else if (q->tag == PPXML_SOLUTIONS) {
             if (pp->solutions) return cntx->ops->err_elem_redefined(cntx, q);
             struct ppxml_solutions *t = ppxml_parse_solutions(cntx, q);
             if (!t) return NULL;
             pp->solutions = t;
+        } else if (q->tag == PPXML_ASSET) {
+            struct ppxml_asset *t = ppxml_parse_asset(cntx, q);
+            if (!t) return NULL;
+            xml_tree_vector_push((struct xml_tree_vector *) &(pp->assets), &((t)->b));
         } else {
             return cntx->ops->err_elem_not_allowed(cntx, q);
         }
     }
-    if (!pp->checker) return cntx->ops->err_elem_undefined(cntx, p, PPXML_CHECKER);
 
     return pp;
 }
@@ -1066,15 +1187,31 @@ ppxml_parse_executables(struct ppxml_parse_context *cntx, struct xml_tree *p)
 static struct ppxml_file *
 ppxml_parse_file(struct ppxml_parse_context *cntx, struct xml_tree *p)
 {
-    if (p->first_down) return cntx->ops->err_nested_elems(cntx, p);
     struct ppxml_file *pp = (struct ppxml_file *) p;
     for (struct xml_attr *a = p->first; a; a = a->next) {
         if (a->tag == PPXML_A_PATH) {
             pp->path = a->text;
         } else if (a->tag == PPXML_A_TYPE) {
             pp->type = a->text;
+        } else if (a->tag == PPXML_A_FOR_TYPES) {
+            pp->for_types = a->text;
         } else {
             return cntx->ops->err_attr_not_allowed(cntx, p, a);
+        }
+    }
+    for (struct xml_tree *q = p->first_down; q; q = q->right) {
+        if (q->tag == PPXML_ASSETS) {
+            if (pp->assets) return cntx->ops->err_elem_redefined(cntx, q);
+            struct ppxml_assets *tt = ppxml_parse_assets(cntx, q);
+            if (!tt) return NULL;
+            pp->assets = tt;
+        } else if (q->tag == PPXML_STAGES) {
+            if (pp->stages) return cntx->ops->err_elem_redefined(cntx, q);
+            struct ppxml_stages *tt = ppxml_parse_stages(cntx, q);
+            if (!tt) return NULL;
+            pp->stages = tt;
+        } else {
+            return cntx->ops->err_elem_not_allowed(cntx, q);
         }
     }
     if (!pp->path) return cntx->ops->err_attr_undefined(cntx, p, PPXML_A_PATH);
@@ -1100,6 +1237,24 @@ ppxml_parse_resources(struct ppxml_parse_context *cntx, struct xml_tree *p)
     return pp;
 }
 
+static struct ppxml_attachments *
+ppxml_parse_attachments(struct ppxml_parse_context *cntx, struct xml_tree *p)
+{
+    if (p->first) return cntx->ops->err_attr_not_allowed(cntx, p, p->first);
+    struct ppxml_attachments *pp = (struct ppxml_attachments *) p;
+    for (struct xml_tree *q = p->first_down; q; q = q->right) {
+        if (q->tag == PPXML_FILE) {
+            struct ppxml_file *tt = ppxml_parse_file(cntx, q);
+            if (!tt) return NULL;
+            XML_TREE_VECTOR_PUSH(pp, tt);
+        } else {
+            return cntx->ops->err_elem_not_allowed(cntx, q);
+        }
+    }
+
+    return pp;
+}
+
 static struct ppxml_files *
 ppxml_parse_files(struct ppxml_parse_context *cntx, struct xml_tree *p)
 {
@@ -1111,6 +1266,11 @@ ppxml_parse_files(struct ppxml_parse_context *cntx, struct xml_tree *p)
             struct ppxml_resources *t = ppxml_parse_resources(cntx, q);
             if (!t) return NULL;
             pp->resources = t;
+        } else if (q->tag == PPXML_ATTACHMENTS) {
+            if (pp->attachments) return cntx->ops->err_elem_redefined(cntx, q);
+            struct ppxml_attachments *t = ppxml_parse_attachments(cntx, q);
+            if (!t) return NULL;
+            pp->attachments = t;
         } else if (q->tag == PPXML_EXECUTABLES) {
             if (pp->executables) return cntx->ops->err_elem_redefined(cntx, q);
             struct ppxml_executables *t = ppxml_parse_executables(cntx, q);
@@ -1157,15 +1317,13 @@ ppxml_parse_judging(struct ppxml_parse_context *cntx, struct xml_tree *p)
     }
     for (struct xml_tree *q = p->first_down; q; q = q->right) {
         if (q->tag == PPXML_TESTSET) {
-            if (pp->testset) return cntx->ops->err_elem_redefined(cntx, q);
             struct ppxml_testset *t = ppxml_parse_testset(cntx, q);
             if (!t) return NULL;
-            pp->testset = t;
+            xml_tree_vector_push((struct xml_tree_vector *) &(pp->testsets), &((t)->b));
         } else {
             return cntx->ops->err_elem_not_allowed(cntx, q);
         }
     }
-    if (!pp->testset) return cntx->ops->err_elem_undefined(cntx, p, PPXML_TESTSET);
     return pp;
 }
 
@@ -1366,6 +1524,8 @@ ppxml_parse_problem(struct ppxml_parse_context *cntx, struct xml_tree *p)
             if (!t) return NULL;
             pp->properties = t;
         } else if (q->tag == PPXML_STRESSES) {
+            // nothing
+        } else if (q->tag == PPXML_MATERIALS) {
             // nothing
         } else if (q->tag == PPXML_TAGS) {
             if (pp->tags) return cntx->ops->err_elem_redefined(cntx, q);
