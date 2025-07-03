@@ -194,6 +194,11 @@ node_free(struct xml_tree *t)
         free(tt->n.v);
         break;
     }
+    case PPXML_JUDGING: {
+        struct ppxml_judging *tt = (struct ppxml_judging *) t;
+        free(tt->testsets.v);
+        break;
+    }
     case PPXML_TESTS: {
         struct ppxml_tests *tt = (struct ppxml_tests *) t;
         free(tt->n.v);
@@ -214,6 +219,11 @@ node_free(struct xml_tree *t)
         free(tt->n.v);
         break;
     }
+    case PPXML_ASSETS: {
+        struct ppxml_assets *tt = (struct ppxml_assets *) t;
+        free(tt->assets.v);
+        break;
+    }
     case PPXML_VALIDATORS: {
         struct ppxml_validators *tt = (struct ppxml_validators *) t;
         free(tt->n.v);
@@ -231,6 +241,31 @@ node_free(struct xml_tree *t)
     }
     case PPXML_TAGS: {
         struct ppxml_tags *tt = (struct ppxml_tags *) t;
+        free(tt->n.v);
+        break;
+    }
+    case PPXML_DEPENDENCIES: {
+        struct ppxml_dependencies *tt = (struct ppxml_dependencies *) t;
+        free(tt->n.v);
+        break;
+    }
+    case PPXML_DOCUMENTS: {
+        struct ppxml_documents *tt = (struct ppxml_documents *) t;
+        free(tt->n.v);
+        break;
+    }
+    case PPXML_EXTRA_TAGS: {
+        struct ppxml_extra_tags *tt = (struct ppxml_extra_tags *) t;
+        free(tt->n.v);
+        break;
+    }
+    case PPXML_ATTACHMENTS: {
+        struct ppxml_attachments *tt = (struct ppxml_attachments *) t;
+        free(tt->n.v);
+        break;
+    }
+    case PPXML_STAGES: {
+        struct ppxml_stages *tt = (struct ppxml_stages *) t;
         free(tt->n.v);
         break;
     }
