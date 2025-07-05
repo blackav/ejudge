@@ -220,6 +220,7 @@ COMMON_CFILES=\
  lib/pathutl.c\
  lib/plugin.c\
  lib/polygon_packet.c\
+ lib/polygon_xml.c\
  lib/prepare.c\
  lib/prepare_out.c\
  lib/prepare_serve.c\
@@ -645,6 +646,7 @@ HFILES=\
  ./include/ejudge/pathutl.h\
  ./include/ejudge/pollfds.h\
  ./include/ejudge/polygon_packet.h\
+ ./include/ejudge/polygon_xml.h\
  ./include/ejudge/prepare.h\
  ./include/ejudge/prepare_dflt.h\
  ./include/ejudge/prepare_serve.h\

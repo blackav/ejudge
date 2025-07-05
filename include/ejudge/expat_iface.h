@@ -44,6 +44,20 @@ struct xml_tree
   char *name[0];                /* when "default" node is enabled */
 };
 
+/*
+vector of xml_tree nodes
+*/
+struct xml_tree_vector
+{
+    struct xml_tree **v;
+    size_t a, u;
+};
+
+#define XML_TREE_VECTOR_T(t) struct { struct t **v; size_t a, u; }
+
+void xml_tree_vector_push(struct xml_tree_vector *v, struct xml_tree *p);
+#define XML_TREE_VECTOR_PUSH(p, q) xml_tree_vector_push((struct xml_tree_vector *) &((p)->n), &((q)->b))
+
 struct xml_parse_spec
 {
   char const * const *elem_map;
