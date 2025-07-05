@@ -2982,6 +2982,47 @@ done:;
     return retval;
 }
 
+static const unsigned char *
+lastname_view(const unsigned char *s)
+{
+    const char *p = strrchr(s, '/');
+    if (!p) return s;
+    return p + 1;
+}
+
+static unsigned char *
+basename_copy(const unsigned char *s) {
+    const unsigned char *p = strrchr(s, '/');
+    if (!p) p = s;
+    else p = s + 1;
+    const unsigned char *q = strrchr(p, '.');
+    if (!q || p == q) {
+        return xstrdup(p);
+    } else {
+        return xmemdup(p, q-p);
+    }
+}
+
+struct polygon_checker_item
+{
+    const unsigned char *polygon_name;
+    const unsigned char *ejudge_name;
+    const unsigned char *ejudge_env;
+};
+
+static const struct polygon_checker_item polygon_checker_map[] =
+{
+    { "std::hcmp.cpp", "cmp_huge_int", NULL },
+    { "std::rcmp9.cpp", "cmp_double_seq", "EPS=1e-9" },
+    { "std::rcmp4.cpp", "cmp_double_seq", "EPS=1e-4" },
+    { "std::rcmp6.cpp", "cmp_double_seq", "EPS=1e-6" },
+    { "std::yesno.cpp", "cmp_yesno", "CASE_INSENSITIVE=1" },
+    { "std::lcmp.cpp", "cmp_file_nospace", NULL },
+    { "std::fcmp.cpp", "cmp_file", NULL },
+    { "std::ncmp.cpp", "cmp_long_long_seq", NULL },
+    { NULL, NULL, NULL },
+};
+
 static void
 process_polygon_zip(
         FILE *log_f,
@@ -2994,13 +3035,10 @@ process_polygon_zip(
     struct ZipData *zid = NULL;
     unsigned char *data = NULL;
     ssize_t size = 0;
-    struct xml_tree *tree = NULL;
-    struct xml_attr *a;
     struct problem_config_section *prob_cfg = NULL;
     char *cfg_text = NULL;
     size_t cfg_size = 0;
     FILE *cfg_file = NULL;
-    unsigned char *problem_url = NULL;
     int full_score = -1;
     int full_user_score = -1;
     int has_hidden_groups = 0;
@@ -3020,305 +3058,11 @@ process_polygon_zip(
         fprintf(log_f, "%s\n", data);
     }
 
-    tree = xml_build_tree_str(log_f, data, &generic_xml_parse_spec);
-    if (!tree) {
-        fprintf(log_f, "parsing of '%s' failed\n", pkt->problem_xml_name);
+    if (old_parse_polygon_xml(log_f, data, size, pkt->problem_xml_name,
+                              fill_info_mode, pkt->fetch_latest_available,
+                              pkt->testset, pi) < 0) {
+        fprintf(log_f, "Failed to parse XML file '%s'\n", pkt->problem_xml_name);
         goto zip_error;
-    }
-    xfree(data); data = NULL; size = 0;
-    if (strcmp(tree->name[0], "problem")) {
-        fprintf(log_f, "%s: root element must be <problem>\n", pkt->problem_xml_name);
-        goto zip_error;
-    }
-    for (a = tree->first; a; a = a->next) {
-        if (!strcmp(a->name[0], "short-name")) {
-            if (fill_info_mode > 0) {
-                pi->problem_name = xstrdup(a->text);
-            }
-        } else if (!strcmp(a->name[0], "name")) {
-            if (strcmp(pi->problem_name, a->text)) {
-                fprintf(log_f, "problem name mismatch: db == '%s', xml attr == '%s'\n", pi->problem_name, a->text);
-                goto zip_error;
-            }
-        } else if (!strcmp(a->name[0], "revision")) {
-            int revision = -1;
-            if (xml_parse_int(log_f, pkt->problem_xml_name, a->line, a->column, a->text, &revision)) {
-                fprintf(log_f, "failed to parse revision attribute\n");
-                goto zip_error;
-            }
-            if (fill_info_mode > 0) {
-                pi->package_rev = revision;
-            } else if (pi->package_rev != revision && pkt->fetch_latest_available <= 0) {
-                fprintf(log_f, "package revision mismatch: db == %d, xml attr == %d\n", pi->package_rev, revision);
-                goto zip_error;
-            }
-        } else if (!strcmp(a->name[0], "url")) {
-            const char *p = a->text;
-            if (!strncasecmp(p, "http://", 7)) {
-                p += 7;
-            } else if (!strncasecmp(p, "https://", 8)) {
-                p += 8;
-            }
-            const char *q = strchr(p, '/');
-            if (q) {
-                problem_url = xstrdup(q + 1);
-            }
-        }
-    }
-
-    for (struct xml_tree *t1 = tree->first_down; t1; t1 = t1->right) {
-        if (!strcmp(t1->name[0], "names")) {
-            for (struct xml_tree *t2 = t1->first_down; t2; t2 = t2->right) {
-                if (!strcmp(t2->name[0], "name")) {
-                    const unsigned char *language = NULL;
-                    const unsigned char *value = NULL;
-                    for (a = t2->first; a; a = a->next) {
-                        if (!strcmp(a->name[0], "language")) {
-                            language = a->text;
-                        } else if (!strcmp(a->name[0], "value")) {
-                            value = a->text;
-                        }
-                    }
-                    if(language && value) {
-                        if (!strcmp(language, "russian")) {
-                            pi->long_name_ru = xstrdup(value);
-                        } else if (!strcmp(language, "english")) {
-                            pi->long_name_en = xstrdup(value);
-                        }
-                    }
-                }
-            }
-        } else if (!strcmp(t1->name[0], "judging")) {
-            const unsigned char *input_file = NULL;
-            const unsigned char *output_file = NULL;
-            for (a = t1->first; a; a = a->next) {
-                if (!strcmp(a->name[0], "input-file") && a->text[0]) {
-                    input_file = a->text;
-                } else if (!strcmp(a->name[0], "output-file") && a->text[0]) {
-                    output_file = a->text;
-                }
-            }
-            if (input_file) pi->input_file = xstrdup(input_file);
-            if (output_file) pi->output_file = xstrdup(output_file);
-            for (struct xml_tree *t2 = t1->first_down; t2; t2 = t2->right) {
-                if (!strcmp(t2->name[0], "testset")) {
-                    const unsigned char *testset_name = NULL;
-                    for (a = t2->first; a; a = a->next) {
-                        if (!strcmp(a->name[0], "name")) {
-                            testset_name = a->text;
-                        }
-                    }
-                    if (!testset_name) {
-                        fprintf(log_f, "anonymous testset is ignored\n");
-                        continue;
-                    }
-                    if (strcmp(testset_name, pkt->testset)) {
-                        fprintf(log_f, "testset '%s' is ignored\n", testset_name);
-                        continue;
-                    }
-
-                    for (struct xml_tree *t3 = t2->first_down; t3; t3 = t3->right) {
-                        if (!strcmp(t3->name[0], "time-limit")) {
-                            int time_limit = -1;
-                            if (xml_parse_int(log_f, pkt->problem_xml_name, t3->line, t3->column, t3->text, &time_limit)) {
-                                fprintf(log_f, "failed to parse <time-limit> element '%s'\n", t3->text);
-                                goto zip_error;
-                            }
-                            if (time_limit < 0 || time_limit >= 2000000000) {
-                                fprintf(log_f, "invalid value of <time-limit> element %d\n", time_limit);
-                                goto zip_error;
-                            }
-                            pi->time_limit_ms = time_limit;
-                        } else if (!strcmp(t3->name[0], "memory-limit")) {
-                            ssize_t ml = parse_memory_limit(log_f, t3->text);
-                            if (ml < 0) {
-                                fprintf(log_f, "invalid value of <memory-limit> element '%s'\n", t3->text);
-                                goto zip_error;
-                            }
-                            pi->memory_limit = ml;
-                        } else if (!strcmp(t3->name[0], "test-count")) {
-                            int test_count = -1;
-                            if (xml_parse_int(log_f, pkt->problem_xml_name, t3->line, t3->column, t3->text, &test_count)) {
-                                fprintf(log_f, "failed to parse <test-count> element '%s'\n", t3->text);
-                                goto zip_error;
-                            }
-                            if (test_count <= 0 || test_count >= 2000000000) {
-                                fprintf(log_f, "invalid value of <test-count> element %d\n", test_count);
-                                goto zip_error;
-                            }
-                            pi->test_count = test_count;
-                        } else if (!strcmp(t3->name[0], "input-path-pattern")) {
-                            pi->input_path_pattern = xstrdup(t3->text);
-                        } else if (!strcmp(t3->name[0], "answer-path-pattern")) {
-                            pi->answer_path_pattern = xstrdup(t3->text);
-                        } else if (!strcmp(t3->name[0], "tests")) {
-                            int serial = 0;
-                            for (struct xml_tree *t4 = t3->first_down; t4; t4 = t4->right) {
-                                if (!strcmp(t4->name[0], "test")) {
-                                    if (pi->test_a == pi->test_u) {
-                                        if (!pi->test_a) {
-                                            pi->test_a = 16;
-                                            XCALLOC(pi->tests, pi->test_a);
-                                        } else {
-                                            int new_a = pi->test_a * 2;
-                                            struct TestInfo *new_t;
-                                            XCALLOC(new_t, new_a);
-                                            XMEMMOVE(new_t, pi->tests, pi->test_a);
-                                            xfree(pi->tests);
-                                            pi->tests = new_t;
-                                            pi->test_a = new_a;
-                                        }
-                                    }
-                                    struct TestInfo *ti = &pi->tests[pi->test_u++];
-                                    ti->serial = ++serial;
-                                    for (a = t4->first; a; a = a->next) {
-                                        if (!strcmp(a->name[0], "group")) {
-                                            xfree(ti->group); ti->group = xstrdup(a->text);
-                                        } else if (!strcmp(a->name[0], "points")) {
-                                            if (parse_score_from_double(a->text, &ti->score) < 0) {
-                                                fprintf(log_f, "invalid points value '%s'\n", a->text);
-                                                goto zip_error;
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        } else if (!strcmp(t3->name[0], "groups")) {
-                            for (struct xml_tree *t4 = t3->first_down; t4; t4 = t4->right) {
-                                if (!strcmp(t4->name[0], "group")) {
-                                    if (pi->group_a == pi->group_u) {
-                                        if (!pi->group_a) {
-                                            pi->group_a = 16;
-                                            XCALLOC(pi->groups, pi->group_a);
-                                        } else {
-                                            int na = pi->group_a * 2;
-                                            struct GroupInfo *ng;
-                                            XCALLOC(ng, na);
-                                            XMEMMOVE(ng, pi->groups, pi->group_a);
-                                            xfree(pi->groups);
-                                            pi->groups = ng;
-                                            pi->group_a = na;
-                                        }
-                                    }
-                                    struct GroupInfo *gi = &pi->groups[pi->group_u++];
-                                    gi->first_test = INT_MAX;
-                                    gi->last_test = INT_MIN;
-                                    gi->test_score = -1;
-                                    gi->group_score = -1;
-                                    int points = 0;
-                                    int is_group_score = 0;
-                                    int is_test_score = 0;
-                                    for (a = t4->first; a; a = a->next) {
-                                        if (!strcmp(a->name[0], "feedback-policy")) {
-                                            if (!strcmp(a->text, "complete")) {
-                                                gi->visibility = "full";
-                                            } else if (!strcmp(a->text, "icpc")) {
-                                                gi->visibility = "icpc";
-                                            } else if (!strcmp(a->text, "points")) {
-                                                gi->visibility = "exists";
-                                            } else if (!strcmp(a->text, "none")) {
-                                                gi->visibility = "hidden";
-                                                has_hidden_groups = 1;
-                                            } else {
-                                                fprintf(log_f, "feedback-policy '%s' is invalid\n", a->text);
-                                                goto zip_error;
-                                            }
-                                        } else if (!strcmp(a->name[0], "name")) {
-                                            xfree(gi->name); gi->name = xstrdup(a->text);
-                                        } else if (!strcmp(a->name[0], "points")) {
-                                            if (parse_score_from_double(a->text, &points) < 0) {
-                                                fprintf(log_f, "invalid points value '%s'\n", a->text);
-                                                goto zip_error;
-                                            }
-                                        } else if (!strcmp(a->name[0], "points-policy")) {
-                                            if (!strcmp(a->text, "complete-group")) {
-                                                is_group_score = 1;
-                                            } else if (!strcmp(a->text, "each-test")) {
-                                                is_test_score = 1;
-                                            } else {
-                                                fprintf(log_f, "invalid value of points-policy attribute '%s'\n", a->text);
-                                                goto zip_error;
-                                            }
-                                        }
-                                    }
-                                    if (is_group_score + is_test_score != 1) {
-                                        fprintf(log_f, "invalid points policy\n");
-                                    }
-                                    if (is_group_score) {
-                                        gi->group_score = points;
-                                    } else if (is_test_score) {
-                                        gi->test_score = points;
-                                    }
-                                    for (struct xml_tree *t5 = t4->first_down; t5; t5 = t5->right) {
-                                        if (!strcmp(t5->name[0], "dependencies")) {
-                                            for (struct xml_tree *t6 = t5->first_down; t6; t6 = t6->right) {
-                                                if (!strcmp(t6->name[0], "dependency")) {
-                                                    if (gi->dep_a == gi->dep_u) {
-                                                        if (!gi->dep_a) {
-                                                            gi->dep_a = 16;
-                                                            XCALLOC(gi->deps, gi->dep_a);
-                                                        } else {
-                                                            int na = gi->dep_a * 2;
-                                                            unsigned char **np;
-                                                            XCALLOC(np, na);
-                                                            XMEMMOVE(np, gi->deps, na);
-                                                            xfree(gi->deps);
-                                                            gi->dep_a = na;
-                                                            gi->deps = np;
-                                                        }
-                                                    }
-                                                    const unsigned char *target_group = NULL;
-                                                    for (a = t6->first; a; a = a->next) {
-                                                        if (!strcmp(a->name[0], "group")) {
-                                                            target_group = a->text;
-                                                        }
-                                                    }
-                                                    if (!target_group) {
-                                                        fprintf(log_f, "'group' attribute expected\n");
-                                                        goto zip_error;
-                                                    }
-                                                    gi->deps[gi->dep_u++] = xstrdup(target_group);
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        } else if (!strcmp(t1->name[0], "files")) {
-        } else if (!strcmp(t1->name[0], "assets")) {
-        } else if (!strcmp(t1->name[0], "statements")) {
-            for (struct xml_tree *t2 = t1->first_down; t2; t2 = t2->right) {
-                if (!strcmp(t2->name[0], "statement")) {
-                    const unsigned char *cur_charset = NULL;
-                    const unsigned char *cur_language = NULL;
-                    int cur_mathjax = 0;
-                    const unsigned char *cur_path = NULL;
-                    const unsigned char *cur_type = NULL;
-                    for (a = t2->first; a; a = a->next) {
-                        if (!strcmp(a->name[0], "charset")) {
-                            cur_charset = a->text;
-                        } else if (!strcmp(a->name[0], "language")) {
-                            cur_language = a->text;
-                        } else if (!strcmp(a->name[0], "mathjax")) {
-                            xml_attr_bool(a, &cur_mathjax);
-                        } else if (!strcmp(a->name[0], "path")) {
-                            cur_path = a->text;
-                        } else if (!strcmp(a->name[0], "type")) {
-                            cur_type = a->text;
-                        }
-                    }
-                    if (!strcasecmp(cur_type, "text/html")
-                        && !strcasecmp(cur_language, "russian")
-                        && !strcasecmp(cur_charset, "utf-8")) {
-                        pi->html_statement_path = xstrdup(cur_path);
-                    }
-                }
-            }
-        }
     }
 
     if (pi->test_count <= 0) {
@@ -3642,183 +3386,60 @@ process_polygon_zip(
         }
     }
 
-    for (struct xml_tree *t1 = tree->first_down; t1; t1 = t1->right) {
-        if (!strcmp(t1->name[0], "files")) {
-            for (struct xml_tree *t2 = t1->first_down; t2; t2 = t2->right) {
-                if (!strcmp(t2->name[0], "resources")) {
-                    for (struct xml_tree *t3 = t2->first_down; t3; t3 = t3->right) {
-                        if (!strcmp(t3->name[0], "file")) {
-                            const unsigned char *path = NULL;
-                            const unsigned char *type = NULL;
-                            for (a = t3->first; a; a = a->next) {
-                                if (!strcmp(a->name[0], "path")) {
-                                    path = a->text;
-                                } else if (!strcmp(a->name[0], "type")) {
-                                    type = a->text;
-                                }
-                            }
-                            (void) type;
-                            if (path) {
-                                if (!strcmp(path, "files/problem.tex")) {
-                                    // ignore it
-                                } else {
-                                    // copy to the root dir
-                                    if (!(s = strrchr(path, '/'))) {
-                                        s = path;
-                                    } else {
-                                        ++s;
-                                    }
-                                    unsigned char dst_path[PATH_MAX];
-                                    snprintf(dst_path, sizeof(dst_path), "%s/%s", problem_path, s);
-                                    if (copy_from_zip(log_f, pkt, zif, zid, zip_path, path, dst_path)) goto zip_error;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        } else if (!strcmp(t1->name[0], "assets")) {
-            for (struct xml_tree *t2 = t1->first_down; t2; t2 = t2->right) {
-                if (!strcmp(t2->name[0], "checker")) {
-                    const unsigned char *name = NULL;
-                    const unsigned char *src_path = NULL;
-                    for (a = t2->first; a; a = a->next) {
-                        if (!strcmp(a->name[0], "name")) {
-                            name = a->text;
-                        }
-                    }
-                    for (struct xml_tree *t3 = t2->first_down; t3; t3 = t3->right) {
-                        if (!strcmp(t3->name[0], "source")) {
-                            for (a = t3->first; a; a = a->next) {
-                                if (!strcmp(a->name[0], "path")) {
-                                    src_path = a->text;
-                                }
-                            }
-                        }
-                    }
-                    if (name && !strcmp(name, "std::hcmp.cpp")) {
-                        pi->standard_checker = xstrdup("cmp_huge_int");
-                    } else if (name && !strcmp(name, "std::rcmp9.cpp")) {
-                        pi->standard_checker = xstrdup("cmp_double_seq");
-                        pi->checker_env = xstrdup("EPS=1e-9");
-                    } else if (name && !strcmp(name, "std::rcmp4.cpp")) {
-                        pi->standard_checker = xstrdup("cmp_double_seq");
-                        pi->checker_env = xstrdup("EPS=1e-4");
-                    } else if (name && !strcmp(name, "std::rcmp6.cpp")) {
-                        pi->standard_checker = xstrdup("cmp_double_seq");
-                        pi->checker_env = xstrdup("EPS=1e-6");
-                    } else if (name && !strcmp(name, "std::yesno.cpp")) {
-                        pi->standard_checker = xstrdup("cmp_yesno");
-                        pi->checker_env = xstrdup("CASE_INSENSITIVE=1");
-                    } else if (name && !strcmp(name, "std::lcmp.cpp")) {
-                        pi->standard_checker = xstrdup("cmp_file_nospace");
-                    } else if (name && !strcmp(name, "std::fcmp.cpp")) {
-                        pi->standard_checker = xstrdup("cmp_file");
-                    } else if (name && !strcmp(name, "std::ncmp.cpp")) {
-                        pi->standard_checker = xstrdup("cmp_long_long_seq");
-                    } else {
-                        // std::wcmp.cpp checker is not supported as a standard checker
-                        if (!src_path) {
-                            fprintf(log_f, "source path is undefined for the checker\n");
-                            goto zip_error;
-                        }
-                        if (!(s = strrchr(src_path, '/'))) {
-                            s = src_path;
-                        } else {
-                            ++s;
-                        }
-                        unsigned char dst_path[PATH_MAX];
-                        snprintf(dst_path, sizeof(dst_path), "%s/%s", problem_path, s);
-                        if (copy_from_zip(log_f, pkt, zif, zid, zip_path, src_path, dst_path)) goto zip_error;
-                        pi->check_cmd = xstrdup(s);
-                        unsigned char *q;
-                        if ((q = strrchr(pi->check_cmd, '.'))) {
-                            *q = 0;
-                        }
-                    }
-                } else if (!strcmp(t2->name[0], "interactor")) {
+    if (pi->tex_path && pi->tex_path[0]) {
+        unsigned char dst_path[PATH_MAX];
+        snprintf(dst_path, sizeof(dst_path), "%s/%s", problem_path, lastname_view(pi->tex_path));
+        if (copy_from_zip(log_f, pkt, zif, zid, zip_path, pi->tex_path, dst_path)) goto zip_error;
+    }
 
-                    const unsigned char *src_path = NULL;
-                    for (struct xml_tree *t3 = t2->first_down; t3; t3 = t3->right) {
-                        if (!strcmp(t3->name[0], "source")) {
-                            for (a = t3->first; a; a = a->next) {
-                                if (!strcmp(a->name[0], "path")) {
-                                    src_path = a->text;
-                                }
-                            }
-                        }
-                    }
-                    if (!src_path) {
-                        fprintf(log_f, "source path is undefined for the checker\n");
-                        goto zip_error;
-                    }
-
-                    if (!(s = strrchr(src_path, '/'))) {
-                        s = src_path;
-                    } else {
-                        ++s;
-                    }
-                    unsigned char dst_path[PATH_MAX];
-                    snprintf(dst_path, sizeof(dst_path), "%s/%s", problem_path, s);
-                    if (copy_from_zip(log_f, pkt, zif, zid, zip_path, src_path, dst_path)) goto zip_error;
-                    pi->interactor_cmd = xstrdup(s);
-                    unsigned char *q;
-                    if ((q = strrchr(pi->interactor_cmd, '.'))) {
-                        *q = 0;
-                    }
-                } else if (!strcmp(t2->name[0], "validator")) {
-                    struct xml_tree *t3 = get_elem_by_name(t2, "source");
-                    if (t3) {
-                        const unsigned char *src_path = get_attr_by_name(t3, "path");
-                        if (src_path) {
-                            if (!(s = strrchr(src_path, '/'))) {
-                                s = src_path;
-                            } else {
-                                ++s;
-                            }
-                            unsigned char dst_path[PATH_MAX];
-                            snprintf(dst_path, sizeof(dst_path), "%s/%s", problem_path, s);
-                            if (copy_from_zip(log_f, pkt, zif, zid, zip_path, src_path, dst_path)) goto zip_error;
-                            pi->test_checker_cmd = xstrdup(s);
-                            unsigned char *q;
-                            if ((q = strrchr(pi->test_checker_cmd, '.'))) {
-                                *q = 0;
-                            }
-                        }
-                    }
-                } else if (!strcmp(t2->name[0], "solutions")) {
-                    struct xml_tree *t3 = get_elem_by_name(t2, "solution");
-                    while (t3) {
-                        const unsigned char *sol_tag = get_attr_by_name(t3, "tag");
-                        struct xml_tree *t4 = get_elem_by_name(t3, "source");
-                        if (t4) {
-                            const unsigned char *src_path = get_attr_by_name(t4, "path");
-                            if (src_path) {
-                                if (!(s = strrchr(src_path, '/'))) {
-                                    s = src_path;
-                                } else {
-                                    ++s;
-                                }
-                                unsigned char dst_path[PATH_MAX];
-                                snprintf(dst_path, sizeof(dst_path), "%s/%s", solutions_path, s);
-                                if (copy_from_zip(log_f, pkt, zif, zid, zip_path, src_path, dst_path)) goto zip_error;
-                                if (sol_tag && !strcmp(sol_tag, "main")) {
-                                    snprintf(dst_path, sizeof(dst_path), "%s/%s", problem_path, s);
-                                    if (copy_from_zip(log_f, pkt, zif, zid, zip_path, src_path, dst_path)) goto zip_error;
-                                    pi->solution_cmd = xstrdup(s);
-                                    unsigned char *q;
-                                    if ((q = strrchr(pi->solution_cmd, '.'))) {
-                                        *q = 0;
-                                    }
-                                }
-                            }
-                        }
-                        t3 = get_next_elem_by_name(t3, "solution");
-                    }
+    if (pi->xml_checker_name && pi->xml_checker_name[0]) {
+        for (int i = 0; polygon_checker_map[i].polygon_name; ++i) {
+            if (!strcmp(pi->xml_checker_name, polygon_checker_map[i].polygon_name)) {
+                pi->standard_checker = xstrdup(polygon_checker_map[i].ejudge_name);
+                if (polygon_checker_map[i].ejudge_env) {
+                    pi->checker_env = xstrdup(polygon_checker_map[i].ejudge_env);
                 }
             }
         }
     }
+    if (!pi->standard_checker) {
+        if (!pi->xml_checker_path || !pi->xml_checker_path[0]) {
+            fprintf(log_f, "source path is undefined for the checker\n");
+            goto zip_error;
+        }
+        unsigned char dst_path[PATH_MAX];
+        snprintf(dst_path, sizeof(dst_path), "%s/%s", problem_path, lastname_view(pi->xml_checker_path));
+        if (copy_from_zip(log_f, pkt, zif, zid, zip_path, pi->xml_checker_path, dst_path)) goto zip_error;
+        pi->check_cmd = basename_copy(pi->xml_checker_path);
+    }
+
+    if (pi->xml_interactor_path && pi->xml_interactor_path[0]) {
+        unsigned char dst_path[PATH_MAX];
+        snprintf(dst_path, sizeof(dst_path), "%s/%s", problem_path, lastname_view(pi->xml_interactor_path));
+        if (copy_from_zip(log_f, pkt, zif, zid, zip_path, pi->xml_interactor_path, dst_path)) goto zip_error;
+        pi->interactor_cmd = basename_copy(pi->xml_interactor_path);
+    }
+
+    if (pi->xml_validator_path && pi->xml_validator_path[0]) {
+        unsigned char dst_path[PATH_MAX];
+        snprintf(dst_path, sizeof(dst_path), "%s/%s", problem_path, lastname_view(pi->xml_validator_path));
+        if (copy_from_zip(log_f, pkt, zif, zid, zip_path, pi->xml_validator_path, dst_path)) goto zip_error;
+        pi->test_checker_cmd = basename_copy(pi->xml_validator_path);
+    }
+
+    if (pi->xml_main_solution_path && pi->xml_main_solution_path[0]) {
+        unsigned char dst_path[PATH_MAX];
+        snprintf(dst_path, sizeof(dst_path), "%s/%s", problem_path, lastname_view(pi->xml_main_solution_path));
+        if (copy_from_zip(log_f, pkt, zif, zid, zip_path, pi->xml_main_solution_path, dst_path)) goto zip_error;
+        pi->solution_cmd = basename_copy(pi->xml_main_solution_path);
+    }
+    for (int i = 0; i < pi->xml_source_path.u; ++i) {
+        const unsigned char *src_path = pi->xml_source_path.v[i];
+        unsigned char dst_path[PATH_MAX];
+        snprintf(dst_path, sizeof(dst_path), "%s/%s", solutions_path, lastname_view(src_path));
+        if (copy_from_zip(log_f, pkt, zif, zid, zip_path, src_path, dst_path)) goto zip_error;
+    }
+
     if (pi->html_statement_path && pkt->enable_iframe_statement > 0) {
         unsigned char attachments_path[PATH_MAX];
         snprintf(attachments_path, sizeof(attachments_path),
@@ -3893,8 +3514,8 @@ process_polygon_zip(
     if (pi->problem_id > 0) {
         snprintf(buf, sizeof(buf), "polygon:%d", pi->problem_id);
         prob_cfg->extid = xstrdup(buf);
-    } else if (problem_url && problem_url[0]) {
-        snprintf(buf, sizeof(buf), "polygon:%s", problem_url);
+    } else if (pi->problem_url && pi->problem_url[0]) {
+        snprintf(buf, sizeof(buf), "polygon:%s", pi->problem_url);
         prob_cfg->extid = xstrdup(buf);
     }
     snprintf(buf, sizeof(buf), "%d", pi->package_rev);
@@ -4023,9 +3644,7 @@ cleanup:
     xfree(data);
     if (cfg_file) fclose(cfg_file);
     xfree(cfg_text);
-    xml_tree_free(tree, &generic_xml_parse_spec);
     problem_config_section_free((struct generic_section_config *) prob_cfg);
-    free(problem_url);
     return;
 
 zip_error:
