@@ -1504,6 +1504,9 @@ ppxml_parse_documents(struct ppxml_parse_context *cntx, struct xml_tree *p)
 static struct ppxml_problem *
 ppxml_parse_problem(struct ppxml_parse_context *cntx, struct xml_tree *p)
 {
+    if (p->tag != PPXML_PROBLEM) {
+        return cntx->ops->err_elem_invalid(cntx, p);
+    }
     struct ppxml_problem *pp = (struct ppxml_problem *) p;
     for (struct xml_attr *a = p->first; a; a = a->next) {
         if (a->tag == PPXML_A_REVISION) {

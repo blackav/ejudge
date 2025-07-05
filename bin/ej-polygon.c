@@ -2561,7 +2561,243 @@ save_valuer_cfg(
     return 0;
 }
 
-[[gnu::unused]]
+static int
+new_parse_polygon_xml(
+        FILE *log_f,
+        const unsigned char *data,
+        size_t size,
+        const unsigned char *file_name,
+        int fill_info_mode,
+        int fetch_latest_available,
+        const unsigned char *testset,
+        struct ProblemInfo *pi)
+{
+    int retval = -1;
+    struct ppxml_problem *ppx = ppxml_parse_str(log_f, file_name, data);
+    if (!ppx) {
+        fprintf(log_f, "parsing of '%s' failed\n", file_name);
+        goto done;
+    }
+
+    if (fill_info_mode > 0 && ppx->short_name && *ppx->short_name) {
+        pi->problem_name = xstrdup(ppx->short_name);
+    }
+    if (ppx->revision > 0) {
+        if (fill_info_mode > 0) {
+            pi->package_rev = ppx->revision;
+        } else if (pi->package_rev != ppx->revision && fetch_latest_available <= 0) {
+            fprintf(log_f, "package revision mismatch: db == %d, xml attr == %d\n", pi->package_rev, ppx->revision);
+            goto done;
+        }
+    }
+    if (ppx->url && ppx->url[0]) {
+        const char *p = ppx->url;
+        if (!strncasecmp(p, "http://", 7)) {
+            p += 7;
+        } else if (!strncasecmp(p, "https://", 8)) {
+            p += 8;
+        }
+        const char *q = strchr(p, '/');
+        if (q) {
+            pi->problem_url = xstrdup(q + 1);
+        }
+    }
+    if (ppx->names) {
+        for (int i = 0; i < ppx->names->n.u; ++i) {
+            struct ppxml_name *n = ppx->names->n.v[i];
+            if (n->language == PPXML_LANG_RUSSIAN) {
+                pi->long_name_ru = xstrdup(n->value);
+            } else if (n->language == PPXML_LANG_ENGLISH) {
+                pi->long_name_en = xstrdup(n->value);
+            }
+        }
+    }
+    if (ppx->judging) {
+        struct ppxml_judging *ppj = ppx->judging;
+        if (ppj->input_file && ppj->input_file[0]) {
+            pi->input_file = xstrdup(ppj->input_file);
+        }
+        if (ppj->output_file && ppj->output_file[0]) {
+            pi->output_file = xstrdup(ppj->output_file);
+        }
+        for (int tsi = 0; tsi < ppj->testsets.u; ++tsi) {
+            struct ppxml_testset *ppts = ppj->testsets.v[tsi];
+            if (!ppts->name || !ppts->name[0]) {
+                fprintf(log_f, "anonymous testset is ignored\n");
+                continue;
+            }
+            if (strcmp(ppts->name, testset)) {
+                fprintf(log_f, "testset '%s' is ignored\n", ppts->name);
+                continue;
+            }
+            if (ppts->time_limit > 0) {
+                pi->time_limit_ms = ppts->time_limit;
+            }
+            if (ppts->memory_limit > 0) {
+                pi->memory_limit = ppts->memory_limit;
+            }
+            if (ppts->test_count >= 0) {
+                pi->test_count = ppts->test_count;
+            }
+            if (ppts->input_path_pattern && ppts->input_path_pattern[0]) {
+                pi->input_path_pattern = xstrdup(ppts->input_path_pattern);
+            }
+            if (ppts->answer_path_pattern && ppts->answer_path_pattern[0]) {
+                pi->answer_path_pattern = strdup(ppts->answer_path_pattern);
+            }
+            if (ppts->tests) {
+                struct ppxml_tests *pptt = ppts->tests;
+                if (pptt->n.u > 0) {
+                    pi->test_a = pptt->n.u;
+                    pi->test_u = pptt->n.u;
+                    XCALLOC(pi->tests, pi->test_a);
+                }
+                for (int ii = 0; ii < pptt->n.u; ++ii) {
+                    struct ppxml_test *ppt = pptt->n.v[ii];
+                    struct TestInfo *ti = &pi->tests[pi->test_u++];
+                    ti->serial = ii + 1;
+                    if (ppt->points >= 0) {
+                        // FIXME: check that no precision loss
+                        ti->score = (int) ppt->points;
+                    }
+                    if (ppt->group && ppt->group[0]) {
+                        ti->group = strdup(ppt->group);
+                    }
+                }
+            }
+            if (ppts->groups) {
+                struct ppxml_groups *ppgg = ppts->groups;
+                if (ppgg->n.u > 0) {
+                    pi->group_a = ppgg->n.u;
+                    pi->group_u = ppgg->n.u;
+                    XCALLOC(pi->groups, pi->group_u);
+                }
+                for (int ii = 0; ii < ppgg->n.u; ++ii) {
+                    struct ppxml_group *ppg = ppgg->n.v[ii];
+                    struct GroupInfo *gi = &pi->groups[pi->group_u++];
+                    gi->first_test = INT_MAX;
+                    gi->last_test = INT_MIN;
+                    gi->test_score = -1;
+                    gi->group_score = -1;
+                    int points = 0;
+                    int is_group_score = 0;
+                    int is_test_score = 0;
+                    if (ppg->feedback_policy == PPXML_FEEDBACK_COMPLETE) {
+                        gi->visibility = "full";
+                    } else if (ppg->feedback_policy == PPXML_FEEDBACK_ICPC) {
+                        gi->visibility = "icpc";
+                    } else if (ppg->feedback_policy == PPXML_FEEDBACK_POINTS) {
+                        gi->visibility = "exists";
+                    } else if (ppg->feedback_policy == PPXML_FEEDBACK_NONE) {
+                        gi->visibility = "hidden";
+                        pi->has_hidden_groups = 1;
+                    } else {
+                        fprintf(log_f, "feedback-policy (%d) is invalid\n", ppg->feedback_policy);
+                        goto done;
+                    }
+                    if (ppg->name && ppg->name[0]) {
+                        gi->name = xstrdup(ppg->name);
+                    }
+                    if (ppg->points >= 0) {
+                        // FIXME: check precision loss on conversion
+                        points = (int) ppg->points;
+                    }
+                    if (ppg->points_policy == PPXML_POINTS_COMPLETE_GROUP) {
+                        is_group_score = 1;
+                    } else if (ppg->points_policy == PPXML_POINTS_EACH_TEST) {
+                        is_test_score = 1;
+                    } else {
+                        fprintf(log_f, "invalid value of points-policy attribute (%d)\n", ppg->points_policy);
+                        goto done;
+                    }
+                    if (is_group_score) {
+                        gi->group_score = points;
+                    } else if (is_test_score) {
+                        gi->test_score = points;
+                    }
+                    if (ppg->dependencies) {
+                        struct ppxml_dependencies *ppdd = ppg->dependencies;
+                        if (ppdd->n.u > 0) {
+                            gi->dep_a = ppdd->n.u;
+                            gi->dep_u = ppdd->n.u;
+                            XCALLOC(gi->deps, ppdd->n.u);
+                        }
+                        for (int jj = 0; jj < ppdd->n.u; ++jj) {
+                            struct ppxml_dependency *ppd = ppdd->n.v[jj];
+                            gi->deps[jj] = xstrdup(ppd->group);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    if (ppx->statements) {
+        for (int i = 0; i < ppx->statements->n.u; ++i) {
+            struct ppxml_statement *pps = ppx->statements->n.v[i];
+            if (pps->charset == PPXML_CHARSET_UTF_8 && pps->language == PPXML_LANG_RUSSIAN && pps->type == PPXML_TYPE_HTML) {
+                pi->html_statement_path = xstrdup(pps->path);
+            }
+        }
+    }
+    if (ppx->files) {
+        if (ppx->files->resources) {
+            for (int i = 0; i < ppx->files->resources->n.u; ++i) {
+                struct ppxml_file *ppf = ppx->files->resources->n.v[i];
+                if (ppf->path && ppf->path[0]) {
+                    if (!strcmp(ppf->path, "files/problem.tex")) {
+                        // ignore it
+                    } else {
+                        pi->tex_path = xstrdup(ppf->path);
+                    }
+                }
+            }
+        }
+    }
+    if (ppx->assets) {
+        struct ppxml_assets *ppa = ppx->assets;
+        if (ppa->checker) {
+            struct ppxml_checker *ppc = ppa->checker;
+            if (ppc->name && ppc->name[0]) {
+                pi->xml_checker_name = xstrdup(ppc->name);
+            }
+            if (ppc->source && ppc->source->path && ppc->source->path[0]) {
+                pi->xml_checker_path = xstrdup(ppc->source->path);
+            }
+        }
+        if (ppa->interactor && ppa->interactor->source && ppa->interactor->source->path && ppa->interactor->source->path[0]) {
+            pi->xml_interactor_path = xstrdup(ppa->interactor->source->path);
+        }
+        if (ppa->validators) {
+            struct ppxml_validators *ppvv = ppa->validators;
+            if (ppvv->n.u > 0) {
+                struct ppxml_validator *ppv = ppvv->n.v[0];
+                if (ppv->source && ppv->source->path && ppv->source->path[0]) {
+                    pi->xml_validator_path = xstrdup(ppv->source->path);
+                }
+            }
+        }
+        if (ppa->solutions) {
+            struct ppxml_solutions *ppss = ppa->solutions;
+            for (int i = 0; i < ppss->n.u; ++i) {
+                struct ppxml_solution *pps = ppss->n.v[i];
+                if (pps->source && pps->source->path && pps->source->path[0]) {
+                    if (pps->tag == PPXML_SOLUTION_TAG_MAIN) {
+                        pi->xml_main_solution_path = xstrdup(pps->source->path);
+                    }
+                    xexpand(&pi->xml_source_path);
+                    pi->xml_source_path.v[pi->xml_source_path.u++] = xstrdup(pps->source->path);
+                }
+            }
+        }
+    }
+
+    retval = 0;
+
+done:;
+    ppxml_free(ppx);
+    return retval;
+}
+
 static int
 old_parse_polygon_xml(
         FILE *log_f,
@@ -3058,9 +3294,16 @@ process_polygon_zip(
         fprintf(log_f, "%s\n", data);
     }
 
-    if (old_parse_polygon_xml(log_f, data, size, pkt->problem_xml_name,
-                              fill_info_mode, pkt->fetch_latest_available,
-                              pkt->testset, pi) < 0) {
+    int r = new_parse_polygon_xml(log_f, data, size, pkt->problem_xml_name,
+                                  fill_info_mode, pkt->fetch_latest_available,
+                                  pkt->testset, pi);
+    if (r < 0) {
+        fprintf(log_f, "new parser failed to parse XML file '%s', retry with the old one\n", pkt->problem_xml_name);
+        r = old_parse_polygon_xml(log_f, data, size, pkt->problem_xml_name,
+                                  fill_info_mode, pkt->fetch_latest_available,
+                                  pkt->testset, pi);
+    }
+    if (r < 0) {
         fprintf(log_f, "Failed to parse XML file '%s'\n", pkt->problem_xml_name);
         goto zip_error;
     }
