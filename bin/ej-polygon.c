@@ -32,6 +32,7 @@
 #include "ejudge/osdeps.h"
 #include "ejudge/xalloc.h"
 
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -121,6 +122,7 @@ struct ProblemInfo
     int continue_id;
     int discard_id;
     unsigned char *edit_session;
+    int has_hidden_groups;
 
     // extracted from problem.xml
     int time_limit_ms;
@@ -145,6 +147,15 @@ struct ProblemInfo
     unsigned char *final_open_tests;
     unsigned char *test_score_list;
     unsigned char *standard_valuer;
+
+    unsigned char *problem_url;
+    unsigned char *tex_path;
+    unsigned char *xml_checker_path; // checker from XML
+    unsigned char *xml_checker_name;
+    unsigned char *xml_interactor_path;
+    unsigned char *xml_validator_path;
+    unsigned char *xml_main_solution_path;
+    strarray_t xml_source_path;
 
     int test_a, test_u;
     struct TestInfo *tests;
@@ -1358,6 +1369,14 @@ free_problem_infos(struct ProblemSet *probset)
         xfree(pi->final_open_tests);
         xfree(pi->test_score_list);
         xfree(pi->standard_valuer);
+        xfree(pi->problem_url);
+        xfree(pi->tex_path);
+        xfree(pi->xml_checker_path);
+        xfree(pi->xml_checker_name);
+        xfree(pi->xml_interactor_path);
+        xfree(pi->xml_validator_path);
+        xfree(pi->xml_main_solution_path);
+        xstrarrayfree(&pi->xml_source_path);
 
         for (int i = 0; i < pi->test_u; ++i) {
             struct TestInfo *ti = &pi->tests[i];
@@ -2540,6 +2559,427 @@ save_valuer_cfg(
 
     free(vs);
     return 0;
+}
+
+[[gnu::unused]]
+static int
+old_parse_polygon_xml(
+        FILE *log_f,
+        const unsigned char *data,
+        size_t size,
+        const unsigned char *file_name,
+        int fill_info_mode,
+        int fetch_latest_available,
+        const unsigned char *testset,
+        struct ProblemInfo *pi)
+{
+    int retval = -1;
+    struct xml_tree *tree = xml_build_tree_str(log_f, data, &generic_xml_parse_spec);
+    struct xml_attr *a;
+
+    if (!tree) {
+        fprintf(log_f, "parsing of '%s' failed\n", file_name);
+        goto done;
+    }
+    if (strcmp(tree->name[0], "problem")) {
+        fprintf(log_f, "%s: root element must be <problem>\n", file_name);
+        goto done;
+    }
+
+    for (a = tree->first; a; a = a->next) {
+        if (!strcmp(a->name[0], "short-name")) {
+            if (fill_info_mode > 0) {
+                pi->problem_name = xstrdup(a->text);
+            }
+        } else if (!strcmp(a->name[0], "name")) {
+            if (strcmp(pi->problem_name, a->text)) {
+                fprintf(log_f, "problem name mismatch: db == '%s', xml attr == '%s'\n", pi->problem_name, a->text);
+                goto done;
+            }
+        } else if (!strcmp(a->name[0], "revision")) {
+            int revision = -1;
+            if (xml_parse_int(log_f, file_name, a->line, a->column, a->text, &revision)) {
+                fprintf(log_f, "failed to parse revision attribute\n");
+                goto done;
+            }
+            if (fill_info_mode > 0) {
+                pi->package_rev = revision;
+            } else if (pi->package_rev != revision && fetch_latest_available <= 0) {
+                fprintf(log_f, "package revision mismatch: db == %d, xml attr == %d\n", pi->package_rev, revision);
+                goto done;
+            }
+        } else if (!strcmp(a->name[0], "url")) {
+            const char *p = a->text;
+            if (!strncasecmp(p, "http://", 7)) {
+                p += 7;
+            } else if (!strncasecmp(p, "https://", 8)) {
+                p += 8;
+            }
+            const char *q = strchr(p, '/');
+            if (q) {
+                pi->problem_url = xstrdup(q + 1);
+            }
+        }
+    }
+
+    for (struct xml_tree *t1 = tree->first_down; t1; t1 = t1->right) {
+        if (!strcmp(t1->name[0], "names")) {
+            for (struct xml_tree *t2 = t1->first_down; t2; t2 = t2->right) {
+                if (!strcmp(t2->name[0], "name")) {
+                    const unsigned char *language = NULL;
+                    const unsigned char *value = NULL;
+                    for (a = t2->first; a; a = a->next) {
+                        if (!strcmp(a->name[0], "language")) {
+                            language = a->text;
+                        } else if (!strcmp(a->name[0], "value")) {
+                            value = a->text;
+                        }
+                    }
+                    if(language && value) {
+                        if (!strcmp(language, "russian")) {
+                            pi->long_name_ru = xstrdup(value);
+                        } else if (!strcmp(language, "english")) {
+                            pi->long_name_en = xstrdup(value);
+                        }
+                    }
+                }
+            }
+        } else if (!strcmp(t1->name[0], "judging")) {
+            const unsigned char *input_file = NULL;
+            const unsigned char *output_file = NULL;
+            for (a = t1->first; a; a = a->next) {
+                if (!strcmp(a->name[0], "input-file") && a->text[0]) {
+                    input_file = a->text;
+                } else if (!strcmp(a->name[0], "output-file") && a->text[0]) {
+                    output_file = a->text;
+                }
+            }
+            if (input_file) pi->input_file = xstrdup(input_file);
+            if (output_file) pi->output_file = xstrdup(output_file);
+            for (struct xml_tree *t2 = t1->first_down; t2; t2 = t2->right) {
+                if (!strcmp(t2->name[0], "testset")) {
+                    const unsigned char *testset_name = NULL;
+                    for (a = t2->first; a; a = a->next) {
+                        if (!strcmp(a->name[0], "name")) {
+                            testset_name = a->text;
+                        }
+                    }
+                    if (!testset_name) {
+                        fprintf(log_f, "anonymous testset is ignored\n");
+                        continue;
+                    }
+                    if (strcmp(testset_name, testset)) {
+                        fprintf(log_f, "testset '%s' is ignored\n", testset_name);
+                        continue;
+                    }
+
+                    for (struct xml_tree *t3 = t2->first_down; t3; t3 = t3->right) {
+                        if (!strcmp(t3->name[0], "time-limit")) {
+                            int time_limit = -1;
+                            if (xml_parse_int(log_f, file_name, t3->line, t3->column, t3->text, &time_limit)) {
+                                fprintf(log_f, "failed to parse <time-limit> element '%s'\n", t3->text);
+                                goto done;
+                            }
+                            if (time_limit < 0 || time_limit >= 2000000000) {
+                                fprintf(log_f, "invalid value of <time-limit> element %d\n", time_limit);
+                                goto done;
+                            }
+                            pi->time_limit_ms = time_limit;
+                        } else if (!strcmp(t3->name[0], "memory-limit")) {
+                            ssize_t ml = parse_memory_limit(log_f, t3->text);
+                            if (ml < 0) {
+                                fprintf(log_f, "invalid value of <memory-limit> element '%s'\n", t3->text);
+                                goto done;
+                            }
+                            pi->memory_limit = ml;
+                        } else if (!strcmp(t3->name[0], "test-count")) {
+                            int test_count = -1;
+                            if (xml_parse_int(log_f, file_name, t3->line, t3->column, t3->text, &test_count)) {
+                                fprintf(log_f, "failed to parse <test-count> element '%s'\n", t3->text);
+                                goto done;
+                            }
+                            if (test_count <= 0 || test_count >= 2000000000) {
+                                fprintf(log_f, "invalid value of <test-count> element %d\n", test_count);
+                                goto done;
+                            }
+                            pi->test_count = test_count;
+                        } else if (!strcmp(t3->name[0], "input-path-pattern")) {
+                            pi->input_path_pattern = xstrdup(t3->text);
+                        } else if (!strcmp(t3->name[0], "answer-path-pattern")) {
+                            pi->answer_path_pattern = xstrdup(t3->text);
+                        } else if (!strcmp(t3->name[0], "tests")) {
+                            int serial = 0;
+                            for (struct xml_tree *t4 = t3->first_down; t4; t4 = t4->right) {
+                                if (!strcmp(t4->name[0], "test")) {
+                                    if (pi->test_a == pi->test_u) {
+                                        if (!pi->test_a) {
+                                            pi->test_a = 16;
+                                            XCALLOC(pi->tests, pi->test_a);
+                                        } else {
+                                            int new_a = pi->test_a * 2;
+                                            struct TestInfo *new_t;
+                                            XCALLOC(new_t, new_a);
+                                            XMEMMOVE(new_t, pi->tests, pi->test_a);
+                                            xfree(pi->tests);
+                                            pi->tests = new_t;
+                                            pi->test_a = new_a;
+                                        }
+                                    }
+                                    struct TestInfo *ti = &pi->tests[pi->test_u++];
+                                    ti->serial = ++serial;
+                                    for (a = t4->first; a; a = a->next) {
+                                        if (!strcmp(a->name[0], "group")) {
+                                            xfree(ti->group); ti->group = xstrdup(a->text);
+                                        } else if (!strcmp(a->name[0], "points")) {
+                                            if (parse_score_from_double(a->text, &ti->score) < 0) {
+                                                fprintf(log_f, "invalid points value '%s'\n", a->text);
+                                                goto done;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        } else if (!strcmp(t3->name[0], "groups")) {
+                            for (struct xml_tree *t4 = t3->first_down; t4; t4 = t4->right) {
+                                if (!strcmp(t4->name[0], "group")) {
+                                    if (pi->group_a == pi->group_u) {
+                                        if (!pi->group_a) {
+                                            pi->group_a = 16;
+                                            XCALLOC(pi->groups, pi->group_a);
+                                        } else {
+                                            int na = pi->group_a * 2;
+                                            struct GroupInfo *ng;
+                                            XCALLOC(ng, na);
+                                            XMEMMOVE(ng, pi->groups, pi->group_a);
+                                            xfree(pi->groups);
+                                            pi->groups = ng;
+                                            pi->group_a = na;
+                                        }
+                                    }
+                                    struct GroupInfo *gi = &pi->groups[pi->group_u++];
+                                    gi->first_test = INT_MAX;
+                                    gi->last_test = INT_MIN;
+                                    gi->test_score = -1;
+                                    gi->group_score = -1;
+                                    int points = 0;
+                                    int is_group_score = 0;
+                                    int is_test_score = 0;
+                                    for (a = t4->first; a; a = a->next) {
+                                        if (!strcmp(a->name[0], "feedback-policy")) {
+                                            if (!strcmp(a->text, "complete")) {
+                                                gi->visibility = "full";
+                                            } else if (!strcmp(a->text, "icpc")) {
+                                                gi->visibility = "icpc";
+                                            } else if (!strcmp(a->text, "points")) {
+                                                gi->visibility = "exists";
+                                            } else if (!strcmp(a->text, "none")) {
+                                                gi->visibility = "hidden";
+                                                pi->has_hidden_groups = 1;
+                                            } else {
+                                                fprintf(log_f, "feedback-policy '%s' is invalid\n", a->text);
+                                                goto done;
+                                            }
+                                        } else if (!strcmp(a->name[0], "name")) {
+                                            xfree(gi->name); gi->name = xstrdup(a->text);
+                                        } else if (!strcmp(a->name[0], "points")) {
+                                            if (parse_score_from_double(a->text, &points) < 0) {
+                                                fprintf(log_f, "invalid points value '%s'\n", a->text);
+                                                goto done;
+                                            }
+                                        } else if (!strcmp(a->name[0], "points-policy")) {
+                                            if (!strcmp(a->text, "complete-group")) {
+                                                is_group_score = 1;
+                                            } else if (!strcmp(a->text, "each-test")) {
+                                                is_test_score = 1;
+                                            } else {
+                                                fprintf(log_f, "invalid value of points-policy attribute '%s'\n", a->text);
+                                                goto done;
+                                            }
+                                        }
+                                    }
+                                    if (is_group_score + is_test_score != 1) {
+                                        fprintf(log_f, "invalid points policy\n");
+                                    }
+                                    if (is_group_score) {
+                                        gi->group_score = points;
+                                    } else if (is_test_score) {
+                                        gi->test_score = points;
+                                    }
+                                    for (struct xml_tree *t5 = t4->first_down; t5; t5 = t5->right) {
+                                        if (!strcmp(t5->name[0], "dependencies")) {
+                                            for (struct xml_tree *t6 = t5->first_down; t6; t6 = t6->right) {
+                                                if (!strcmp(t6->name[0], "dependency")) {
+                                                    if (gi->dep_a == gi->dep_u) {
+                                                        if (!gi->dep_a) {
+                                                            gi->dep_a = 16;
+                                                            XCALLOC(gi->deps, gi->dep_a);
+                                                        } else {
+                                                            int na = gi->dep_a * 2;
+                                                            unsigned char **np;
+                                                            XCALLOC(np, na);
+                                                            XMEMMOVE(np, gi->deps, na);
+                                                            xfree(gi->deps);
+                                                            gi->dep_a = na;
+                                                            gi->deps = np;
+                                                        }
+                                                    }
+                                                    const unsigned char *target_group = NULL;
+                                                    for (a = t6->first; a; a = a->next) {
+                                                        if (!strcmp(a->name[0], "group")) {
+                                                            target_group = a->text;
+                                                        }
+                                                    }
+                                                    if (!target_group) {
+                                                        fprintf(log_f, "'group' attribute expected\n");
+                                                        goto done;
+                                                    }
+                                                    gi->deps[gi->dep_u++] = xstrdup(target_group);
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } else if (!strcmp(t1->name[0], "files")) {
+        } else if (!strcmp(t1->name[0], "assets")) {
+        } else if (!strcmp(t1->name[0], "statements")) {
+            for (struct xml_tree *t2 = t1->first_down; t2; t2 = t2->right) {
+                if (!strcmp(t2->name[0], "statement")) {
+                    const unsigned char *cur_charset = NULL;
+                    const unsigned char *cur_language = NULL;
+                    int cur_mathjax = 0;
+                    const unsigned char *cur_path = NULL;
+                    const unsigned char *cur_type = NULL;
+                    for (a = t2->first; a; a = a->next) {
+                        if (!strcmp(a->name[0], "charset")) {
+                            cur_charset = a->text;
+                        } else if (!strcmp(a->name[0], "language")) {
+                            cur_language = a->text;
+                        } else if (!strcmp(a->name[0], "mathjax")) {
+                            xml_attr_bool(a, &cur_mathjax);
+                        } else if (!strcmp(a->name[0], "path")) {
+                            cur_path = a->text;
+                        } else if (!strcmp(a->name[0], "type")) {
+                            cur_type = a->text;
+                        }
+                    }
+                    if (!strcasecmp(cur_type, "text/html")
+                        && !strcasecmp(cur_language, "russian")
+                        && !strcasecmp(cur_charset, "utf-8")) {
+                        pi->html_statement_path = xstrdup(cur_path);
+                    }
+                }
+            }
+        }
+    }
+
+    for (struct xml_tree *t1 = tree->first_down; t1; t1 = t1->right) {
+        if (!strcmp(t1->name[0], "files")) {
+            for (struct xml_tree *t2 = t1->first_down; t2; t2 = t2->right) {
+                if (!strcmp(t2->name[0], "resources")) {
+                    for (struct xml_tree *t3 = t2->first_down; t3; t3 = t3->right) {
+                        if (!strcmp(t3->name[0], "file")) {
+                            const unsigned char *path = NULL;
+                            const unsigned char *type = NULL;
+                            for (a = t3->first; a; a = a->next) {
+                                if (!strcmp(a->name[0], "path")) {
+                                    path = a->text;
+                                } else if (!strcmp(a->name[0], "type")) {
+                                    type = a->text;
+                                }
+                            }
+                            (void) type;
+                            if (path) {
+                                if (!strcmp(path, "files/problem.tex")) {
+                                    // ignore it
+                                } else {
+                                    pi->tex_path = xstrdup(path);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } else if (!strcmp(t1->name[0], "assets")) {
+            for (struct xml_tree *t2 = t1->first_down; t2; t2 = t2->right) {
+                if (!strcmp(t2->name[0], "checker")) {
+                    const unsigned char *name = NULL;
+                    const unsigned char *src_path = NULL;
+                    for (a = t2->first; a; a = a->next) {
+                        if (!strcmp(a->name[0], "name")) {
+                            name = a->text;
+                        }
+                    }
+                    for (struct xml_tree *t3 = t2->first_down; t3; t3 = t3->right) {
+                        if (!strcmp(t3->name[0], "source")) {
+                            for (a = t3->first; a; a = a->next) {
+                                if (!strcmp(a->name[0], "path")) {
+                                    src_path = a->text;
+                                }
+                            }
+                        }
+                    }
+                    if (name) {
+                        pi->xml_checker_name = xstrdup(name);
+                    }
+                    if (src_path) {
+                        pi->xml_checker_path = xstrdup(src_path);
+                    }
+                } else if (!strcmp(t2->name[0], "interactor")) {
+                    const unsigned char *src_path = NULL;
+                    for (struct xml_tree *t3 = t2->first_down; t3; t3 = t3->right) {
+                        if (!strcmp(t3->name[0], "source")) {
+                            for (a = t3->first; a; a = a->next) {
+                                if (!strcmp(a->name[0], "path")) {
+                                    src_path = a->text;
+                                }
+                            }
+                        }
+                    }
+                    if (!src_path) {
+                        fprintf(log_f, "source path is undefined for the interactor\n");
+                        goto done;
+                    }
+                    pi->xml_interactor_path = xstrdup(src_path);
+                } else if (!strcmp(t2->name[0], "validator")) {
+                    struct xml_tree *t3 = get_elem_by_name(t2, "source");
+                    if (t3) {
+                        const unsigned char *src_path = get_attr_by_name(t3, "path");
+                        if (src_path) {
+                            pi->xml_validator_path = xstrdup(src_path);
+                        }
+                    }
+                } else if (!strcmp(t2->name[0], "solutions")) {
+                    struct xml_tree *t3 = get_elem_by_name(t2, "solution");
+                    while (t3) {
+                        const unsigned char *sol_tag = get_attr_by_name(t3, "tag");
+                        struct xml_tree *t4 = get_elem_by_name(t3, "source");
+                        if (t4) {
+                            const unsigned char *src_path = get_attr_by_name(t4, "path");
+                            if (src_path) {
+                                xexpand(&pi->xml_source_path);
+                                pi->xml_source_path.v[pi->xml_source_path.u++] = xstrdup(src_path);
+                                if (sol_tag && !strcmp(sol_tag, "main")) {
+                                    pi->xml_main_solution_path = xstrdup(src_path);
+                                }
+                            }
+                        }
+                        t3 = get_next_elem_by_name(t3, "solution");
+                    }
+                }
+            }
+        }
+    }
+
+    retval = 0;
+
+done:;
+    xml_tree_free(tree, &generic_xml_parse_spec);
+    return retval;
 }
 
 static void
