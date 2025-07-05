@@ -1710,3 +1710,12 @@ ppxml_parse_str(FILE *log_f, const char *path, const char *str)
     }
     return prob;
 }
+
+struct ppxml_problem *
+ppxml_free(struct ppxml_problem *prob)
+{
+    if (prob) {
+        xml_tree_free(&prob->b, &polygon_xml_parse_spec);
+    }
+    return NULL;
+}

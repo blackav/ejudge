@@ -575,5 +575,7 @@ struct ppxml_parse_context
 
 struct ppxml_problem *
 ppxml_parse_str(FILE *log_f, const char *path, const char *str);
+struct ppxml_problem *
+ppxml_free(struct ppxml_problem *prob);
 
 #endif /* __POLYGON_XML_H__ */
