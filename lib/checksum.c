@@ -133,6 +133,7 @@ sha256_file(FILE *log_f, const char *path, unsigned char *res)
 int
 checksum_compute(struct checksum_context *cntx, FILE *log_f)
 {
+    checksum_sort(cntx);
     SHA256_CTX ctx;
     sha256_init(&ctx);
     for (size_t i = 0; i < cntx->path_u; ++i) {

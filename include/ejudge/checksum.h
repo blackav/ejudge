@@ -30,5 +30,7 @@ void checksum_free(struct checksum_context *cntx);
 void checksum_add_file(struct checksum_context *cntx, const unsigned char *path);
 void checksum_sort(struct checksum_context *cntx);
 int checksum_compute(struct checksum_context *cntx, FILE *log_f);
+unsigned char *checksum_bytes(struct checksum_context *cntx);
+unsigned char *checksum_hex(struct checksum_context *cntx, unsigned char *buf);
 
  #endif /* __CHECKSUM_H__ */
