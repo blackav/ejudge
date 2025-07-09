@@ -155,6 +155,7 @@ COMMON_CFILES=\
  lib/copyright.c\
  lib/csv.c\
  lib/dates_config.c\
+ lib/depgraph.c\
  lib/diff.c\
  lib/digest_1.c\
  lib/digest_2.c\
@@ -462,6 +463,7 @@ CFILES=\
  bin/ej-super-server-control.c\
  bin/ej-users.c\
  bin/ej-users-control.c\
+ bin/ejudge-make.c\
  cgi-bin/users.c\
  unix/cpu.c\
  win32/cpu.c\
@@ -592,6 +594,7 @@ HFILES=\
  ./include/ejudge/csv.h\
  ./include/ejudge/curtime.h\
  ./include/ejudge/dates_config.h\
+ ./include/ejudge/depgraph.h\
  ./include/ejudge/diff.h\
  ./include/ejudge/digest_io.h\
  ./include/ejudge/dwarf_parse.h\
