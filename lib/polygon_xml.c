@@ -15,6 +15,7 @@
  */
 
 #include "ejudge/polygon_xml.h"
+#include "ejudge/ej_types.h"
 #include "ejudge/expat_iface.h"
 #include "ejudge/xml_utils.h"
 #include "ejudge/errlog.h"
@@ -123,6 +124,11 @@ static char const * const problem_xml_attr_map[] =
     [PPXML_A_FROM_FILE] = "from-file",
     [PPXML_A_FOR_TYPES] = "for-types",
     [PPXML_A_PUBLISH] = "publish",
+    [PPXML_A_UUID_FROM_HISTORY] = "uuid-from-history",
+    [PPXML_A_EXTRA_CONFIG] = "extra-config",
+    [PPXML_A_GENERATE_ANSWER] = "generate-answer",
+    [PPXML_A_AUTO_COUNT] = "auto-count",
+    [PPXML_A_NORMALIZATION] = "normalization",
     NULL,
 };
 
@@ -348,6 +354,7 @@ static const char * const ppxml_type_strings[] =
     [PPXML_TYPE_TEX] = "application/x-tex",
     [PPXML_TYPE_HTML] = "text/html",
     [PPXML_TYPE_PDF] = "application/pdf",
+    [PPXML_TYPE_EJUDGE_XML] = "application/x-ejudge-xml",
 };
 static int ppxml_type_parse(const unsigned char *s)
 {
@@ -611,7 +618,6 @@ ppxml_parse_source(struct ppxml_parse_context *cntx, struct xml_tree *p)
         }
     }
     if (!pp->path) return cntx->ops->err_attr_undefined(cntx, p, PPXML_A_PATH);
-    if (!pp->type) return cntx->ops->err_attr_undefined(cntx, p, PPXML_A_TYPE);
     return pp;
 }
 
@@ -898,6 +904,24 @@ ppxml_parse_testset(struct ppxml_parse_context *cntx, struct xml_tree *p)
     for (struct xml_attr *a = p->first; a; a = a->next) {
         if (a->tag == PPXML_A_NAME) {
             pp->name = a->text;
+        } else if (a->tag == PPXML_A_GENERATE_ANSWER) {
+            int v = -1;
+            if (ppxml_parse_bool(a->text, &v) < 0) {
+                return cntx->ops->err_attr_invalid(cntx, a);
+            }
+            pp->generate_answer = v;
+        } else if (a->tag == PPXML_A_AUTO_COUNT) {
+            int v = -1;
+            if (ppxml_parse_bool(a->text, &v) < 0) {
+                return cntx->ops->err_attr_invalid(cntx, a);
+            }
+            pp->auto_count = v;
+        } else if (a->tag == PPXML_A_NORMALIZATION) {
+            int v = -1;
+            if ((v = test_normalization_parse(a->text)) < 0) {
+                return cntx->ops->err_attr_invalid(cntx, a);
+            }
+            pp->normalization = v;
         } else {
             return cntx->ops->err_attr_not_allowed(cntx, p, a);
         }
@@ -1127,8 +1151,8 @@ ppxml_parse_checker(struct ppxml_parse_context *cntx, struct xml_tree *p)
         }
     }
     if (!pp->type) return cntx->ops->err_attr_undefined(cntx, p, PPXML_A_TYPE);
-    if (!pp->source) return cntx->ops->err_elem_undefined(cntx, p, PPXML_SOURCE);
-    if (!pp->copy) return cntx->ops->err_elem_undefined(cntx, p, PPXML_COPY);
+    //if (!pp->source) return cntx->ops->err_elem_undefined(cntx, p, PPXML_SOURCE);
+    //if (!pp->copy) return cntx->ops->err_elem_undefined(cntx, p, PPXML_COPY);
 
     return pp;
 }
@@ -1346,6 +1370,12 @@ ppxml_parse_judging(struct ppxml_parse_context *cntx, struct xml_tree *p)
                 return cntx->ops->err_attr_invalid(cntx, a);
             }
             pp->run_count = v;
+        } else if (a->tag == PPXML_A_EXTRA_CONFIG) {
+            int v = -1;
+            if (ppxml_parse_bool(a->text, &v) < 0) {
+                return cntx->ops->err_attr_invalid(cntx, a);
+            }
+            pp->extra_config = v;
         } else {
             return cntx->ops->err_attr_not_allowed(cntx, p, a);
         }
@@ -1521,6 +1551,12 @@ ppxml_parse_problem(struct ppxml_parse_context *cntx, struct xml_tree *p)
             pp->short_name = a->text;
         } else if (a->tag == PPXML_A_URL) {
             pp->url = a->text;
+        } else if (a->tag == PPXML_A_UUID_FROM_HISTORY) {
+            int v = -1;
+            if (ppxml_parse_bool(a->text, &v) < 0) {
+                return cntx->ops->err_attr_invalid(cntx, a);
+            }
+            pp->uuid_from_history = v;
         } else {
             return cntx->ops->err_attr_not_allowed(cntx, p, a);
         }

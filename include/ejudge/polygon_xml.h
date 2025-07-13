@@ -115,6 +115,11 @@ enum
     PPXML_A_FROM_FILE,
     PPXML_A_FOR_TYPES,
     PPXML_A_PUBLISH,
+    PPXML_A_UUID_FROM_HISTORY,
+    PPXML_A_EXTRA_CONFIG,
+    PPXML_A_GENERATE_ANSWER,
+    PPXML_A_AUTO_COUNT,
+    PPXML_A_NORMALIZATION,
 };
 
 enum
@@ -160,6 +165,7 @@ enum
     PPXML_TYPE_TEX,
     PPXML_TYPE_HTML,
     PPXML_TYPE_PDF,
+    PPXML_TYPE_EJUDGE_XML,
 };
 
 enum
@@ -299,6 +305,9 @@ struct ppxml_testset
     long long memory_limit;
     int time_limit;
     int test_count;
+    unsigned char generate_answer;
+    unsigned char auto_count;
+    unsigned char normalization;
 };
 
 struct ppxml_judging
@@ -310,6 +319,7 @@ struct ppxml_judging
     unsigned char *output_file;
     double cpu_speed;
     int run_count;
+    unsigned char extra_config;
 };
 
 struct ppxml_assets;
@@ -538,6 +548,7 @@ struct ppxml_problem
     struct ppxml_properties *properties;
     struct ppxml_tags *tags;
     struct ppxml_documents *documents;
+    unsigned char uuid_from_history;
 };
 
 struct ppxml_parse_context;
