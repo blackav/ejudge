@@ -973,25 +973,6 @@ then
   ac_cv_libmongoc_libs=`pkg-config --libs libmongoc-1.0`
 fi
 
-if [[ x"${ac_cv_has_libmongoc}" = x ]]
-then
-  AC_MSG_CHECKING([for libmongo-client])
-  if pkg-config --exists libmongo-client
-  then
-    AC_MSG_RESULT([yes])
-    ac_cv_has_libmongo_client=1
-  else
-    AC_MSG_RESULT([no])
-    ac_cv_has_libmongo_client=
-  fi
-
-  if [[ x"${ac_cv_has_libmongo_client}" = x1 ]]
-  then
-    ac_cv_libmongo_client_cflags=`pkg-config --cflags libmongo-client`
-    ac_cv_libmongo_client_libs=`pkg-config --libs libmongo-client`
-  fi
-fi
-
 dnl Checking for available languages
 dnl AC_MSG_NOTICE([checking available languages])
 
@@ -1206,9 +1187,6 @@ AC_SUBST(ac_cv_libcap_link)
 AC_SUBST(ac_cv_ejudge_server_bin_path_m)
 AC_SUBST(ac_cv_lang_config_dir)
 AC_SUBST(ac_cv_lang_config_dir_expanded)
-AC_SUBST(ac_cv_has_libmongo_client)
-AC_SUBST(ac_cv_libmongo_client_cflags)
-AC_SUBST(ac_cv_libmongo_client_libs)
 AC_SUBST(ac_cv_has_libmongoc)
 AC_SUBST(ac_cv_libmongoc_cflags)
 AC_SUBST(ac_cv_libmongoc_libs)
@@ -1440,11 +1418,6 @@ then
 elif [[ x"${ac_cv_has_libmongoc}" = x1 ]]
 then
   AC_DEFINE(HAVE_LIBMONGOC, 1)
-fi
-
-if [[ x"${ac_cv_has_libmongo_client}" = x1 ]]
-then
-  AC_DEFINE(HAVE_LIBMONGO_CLIENT, 1)
 fi
 
 AC_CONFIG_HEADERS([config.h])
