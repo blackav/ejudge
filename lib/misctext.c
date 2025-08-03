@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2000-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2025 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1080,6 +1080,97 @@ filename_armor_bytes(
   }
   if (outsize) *pout = 0;
   return out;
+}
+
+int
+is_valid_utf8(const unsigned char *str, size_t size, size_t *p_offset)
+{
+  if (!str) return 0;
+  const unsigned char *s = str;
+  const unsigned char *e = str + size;
+  while (s < e) {
+    if (*s <= 0x7f) {
+      s++;
+    } else if (*s <= 0xbf) {
+      // middle of multibyte sequence
+      goto fail;
+    } else if (*s <= 0xc1) {
+      // reserved
+      goto fail;
+    } else if (*s <= 0xdf) {
+      // two bytes: 0x80-0x7ff
+      if (s + 1 >= e) {
+        goto fail;
+      }
+      if (s[1] >= 0x80 && s[1] <= 0xbf) {
+        int w = ((s[0] & 0x1f) << 6) | (s[1] & 0x3f);
+        if (w < 0x80) {
+          goto fail;
+        } else {
+          s += 2;
+        }
+      } else {
+        // second byte is invalid
+        goto fail;
+      }
+    } else if (*s <= 0xef) {
+      // three bytes: 0x800-0xffff
+      if (s + 2 >= e) {
+        goto fail;
+      }
+      if (s[1] >= 0x80 && s[1] <= 0xbf) {
+        if (s[2] >= 0x80 && s[2] <= 0xbf) {
+          int w = ((s[0] & 0x0f) << 12) | ((s[1] & 0x3f) << 6) | (s[2] & 0x3f);
+          if (w < 0x800) {
+            goto fail;
+          } else {
+            if (w == 0xffff || w == 0xfffe) {
+              goto fail;
+            } else {
+              s += 3;
+            }
+          }
+        } else {
+          // third byte is invalid
+          goto fail;
+        }
+      } else {
+        // second byte is invalid
+        goto fail;
+      }
+    } else if (*s <= 0xf7) {
+      // four bytes: 0x10000-0x10ffff
+      if (s + 3 >= e) {
+        goto fail;
+      }
+      if (s[1] >= 0x80 && s[1] <= 0xbf) {
+        if (s[2] >= 0x80 && s[2] <= 0xbf) {
+          if (s[3] >= 0x80 && s[3] <= 0xbf) {
+            int w = ((s[0] & 0x07) << 18) | ((s[1] & 0x3f) << 12) | ((s[2] & 0x3f) << 6) | (s[3] & 0x3f);
+            if (w < 0x10000) {
+              goto fail;
+            } else {
+              s += 4;
+            }
+          } else {
+            goto fail;
+          }
+        } else {
+          goto fail;
+        }
+      } else {
+        goto fail;
+      }
+    } else {
+      // reserved
+      goto fail;
+    }
+  }
+  return 1;
+
+fail:;
+  if (p_offset) *p_offset = (size_t)(s - str);
+  return 0;
 }
 
 int

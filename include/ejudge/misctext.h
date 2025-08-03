@@ -2,7 +2,7 @@
 #ifndef __MISCTEXT_H__
 #define __MISCTEXT_H__
 
-/* Copyright (C) 2000-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2025 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -115,6 +115,12 @@ unsigned char *filename_armor_bytes(unsigned char *out, size_t outsize,
                                     const unsigned char *in, size_t insize);
 
 int utf8_fix_string(unsigned char *str, int *gl_ind);
+
+int
+is_valid_utf8(
+        const unsigned char *str,
+        size_t size,
+        size_t *p_offset);
 
 int utf8_cnt(const unsigned char *s, int width, int *p_w);
 
