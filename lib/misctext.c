@@ -2313,6 +2313,58 @@ text_normalize_dup(
   return text_normalize_buf(out_text, in_size, op_mask, p_count, p_done_mask);
 }
 
+int
+is_text_normalized(
+        const unsigned char *str,
+        size_t size,
+        int mode,
+        size_t *p_offset)
+{
+  if (!size) return 1;
+  const unsigned char *e = str + size;
+  const unsigned char *s = str;
+  if ((mode & TEXT_FIX_NP) != 0) {
+    while (s < e) {
+      if (*s == 127) goto fail;
+      if (*s < ' ' && (*s != '\n' && *s != '\r' && *s != '\t')) goto fail;
+      ++s;
+    }
+  }
+  if ((mode & TEXT_FIX_CR) != 0) {
+    s = str;
+    while (s < e) {
+      if (*s == '\r') goto fail;
+      ++s;
+    }
+  }
+  if ((mode & TEXT_FIX_FINAL_NL) != 0) {
+    s = e - 1;
+    if (*s != '\n') goto fail;
+  }
+  if ((mode & TEXT_FIX_TR_SP) != 0) {
+    s = str;
+    while (s < e) {
+      if (*s == '\n') {
+        const unsigned char *q = s - 1;
+        if (q > str && *q == '\r') --q;
+        if (isspace(*q)) goto fail;
+      }
+      ++s;
+    }
+  }
+  if ((mode & TEXT_FIX_TR_NL) != 0) {
+    s = e;
+    if (s[-1] == '\n') --s;
+    while (s > str && isspace(s[-1]) && s[-1] != '\n') --s;
+    if (s > str && s[-1] == '\n') goto fail;
+  }
+  return 1;
+
+fail:;
+  if (p_offset) *p_offset = (size_t)(s - str);
+  return 0;
+}
+
 void
 html_print_by_line(
         FILE *f,

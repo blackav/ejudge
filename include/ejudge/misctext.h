@@ -288,6 +288,13 @@ text_normalize_dup(
         size_t *p_count,
         int *p_done_mask);
 
+int
+is_text_normalized(
+        const unsigned char *str,
+        size_t size,
+        int mode,
+        size_t *p_offset);
+
 void
 html_print_by_line(
         FILE *f,
