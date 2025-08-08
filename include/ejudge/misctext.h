@@ -354,4 +354,8 @@ utf8_trim_last_codepoint(
         const unsigned char *str,
         ssize_t size);
 
+struct strarray_t;
+int
+split_cmdline(const unsigned char *str, struct strarray_t *pcmd);
+
 #endif /* __MISCTEXT_H__ */

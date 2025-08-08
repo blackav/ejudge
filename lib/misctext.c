@@ -2941,3 +2941,169 @@ json_armor_buf(struct html_armor_buffer *pb, const unsigned char *s)
   json_armor_string(s, pb->buf);
   return pb->buf;
 }
+
+int
+split_cmdline(const unsigned char *str, struct strarray_t *pcmd)
+{
+  unsigned char *locbuf, *q, *qq;
+  char **old_v;
+  const unsigned char *p = str;
+  unsigned char nb[4];
+  int q_char = 0;
+  int code, i;
+
+  memset(pcmd, 0, sizeof(*pcmd));
+  pcmd->a = 16;
+  if (!(pcmd->v = (char**) malloc(pcmd->a * sizeof(pcmd->v[0])))) {
+    code = -ENOMEM;
+    goto failure;
+  }
+  pcmd->u = 0;
+  pcmd->v[0] = 0;
+  if (!(q = locbuf = (unsigned char*) alloca(strlen(str) + 16))) {
+    code = -ENOMEM;
+    goto failure;
+  }
+  while (isspace(*p)) p++;
+  if (*p) {
+    while (1) {
+      if (!*p) {
+        if (q_char) {
+          code = -EINVAL;
+          goto failure;
+        }
+        *q = 0;
+        if (pcmd->u + 1 >= pcmd->a) {
+          pcmd->a *= 2;
+          old_v = pcmd->v;
+          pcmd->v=(char**)realloc(pcmd->v,pcmd->a*sizeof(pcmd->v[0]));
+          if (!pcmd->v) {
+            pcmd->v = old_v;
+            code = -ENOMEM;
+            goto failure;
+          }
+        }
+        if (!(qq = strdup(locbuf))) {
+          code = -ENOMEM;
+          goto failure;
+        }
+        pcmd->v[pcmd->u++] = qq;
+        pcmd->v[pcmd->u] = 0;
+        break;
+      } else if (*p == '\"') {
+        if (!q_char) {
+          q_char = *p++;
+        } else if (q_char == '\"') {
+          q_char = 0;
+          p++;
+        } else {
+          *q++ = *p++;
+        }
+      } else if (*p == '\'') {
+        if (!q_char) {
+          q_char = *p++;
+        } else if (q_char == '\'') {
+          q_char = 0;
+          p++;
+        } else {
+          *q++ = *p++;
+        }
+      } else if (*p == '\\') {
+        if (q_char == '\'') {
+          *q++ = *p++;
+        } else {
+          switch (p[1]) {
+          case 0:
+            *q++ = '\\';
+            p++;
+            break;
+          case 'x': case 'X':
+            if (!isxdigit(p[2])) {
+              code = -EINVAL;
+              goto failure;
+              p++;
+              break;
+            }
+            p += 2;
+            memset(nb, 0, sizeof(nb));
+            nb[0] = *p++;
+            if (isxdigit(*p)) nb[1] = *p++;
+            *q++ = strtol(nb, 0, 16);
+            break;
+
+          case '0': case '1': case '2': case '3':
+            p++;
+            memset(nb, 0, sizeof(nb));
+            nb[0] = *p++;
+            if (*p >= '0' && *p <= '7') nb[1] = *p++;
+            if (*p >= '0' && *p <= '7') nb[2] = *p++;
+            *q++ = strtol(nb, 0, 8);
+            break;
+
+          case '4': case '5': case '6': case '7':
+            p++;
+            memset(nb, 0, sizeof(nb));
+            nb[0] = *p++;
+            if (*p >= '0' && *p <= '7') nb[1] = *p++;
+            *q++ = strtol(nb, 0, 8);
+            break;
+
+          case 'a': *q++ = '\a'; p += 2; break;
+          case 'b': *q++ = '\b'; p += 2; break;
+          case 'f': *q++ = '\f'; p += 2; break;
+          case 'n': *q++ = '\n'; p += 2; break;
+          case 'r': *q++ = '\r'; p += 2; break;
+          case 't': *q++ = '\t'; p += 2; break;
+          case 'v': *q++ = '\v'; p += 2; break;
+          default:
+            p++;
+            *q++ = *p++;
+            break;
+          }
+        }
+      } else if (isspace(*p)) {
+        if (q_char) {
+          *q++ = *p++;
+        } else {
+          *q = 0;
+          if (pcmd->u + 1 >= pcmd->a) {
+            pcmd->a *= 2;
+            old_v = pcmd->v;
+            pcmd->v=(char**)realloc(pcmd->v,
+                                             pcmd->a*sizeof(pcmd->v[0]));
+            if (!pcmd->v) {
+              pcmd->v = old_v;
+              code = -ENOMEM;
+              goto failure;
+            }
+          }
+          if (!(qq = strdup(locbuf))) {
+            code = -ENOMEM;
+            goto failure;
+          }
+          pcmd->v[pcmd->u++] = qq;
+          pcmd->v[pcmd->u] = 0;
+          while (isspace(*p)) p++;
+          if (!*p) break;
+          q = locbuf;
+        }
+      } else if (*p < ' ') {
+        code = -EINVAL;
+        goto failure;
+        *q++ = ' ';
+      } else {
+        *q++ = *p++;
+      }
+    }
+  }
+  return 0;
+
+ failure:
+  if (pcmd->v) {
+    for (i = 0; i < pcmd->u; i++)
+      if (pcmd->v[i]) free(pcmd->v[i]);
+    free(pcmd->v);
+  }
+  memset(pcmd, 0, sizeof(*pcmd));
+  return code;
+}
