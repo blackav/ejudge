@@ -248,6 +248,7 @@ COMMON_CFILES=\
  lib/run_packet_5.c\
  lib/run_packet_6.c\
  lib/run_props.c\
+ lib/safe_format.c\
  lib/send_job_packet.c\
  lib/server_info.c\
  lib/server_framework.c\
@@ -669,6 +670,7 @@ HFILES=\
  ./include/ejudge/run_packet.h\
  ./include/ejudge/run_packet_priv.h\
  ./include/ejudge/run_props.h\
+ ./include/ejudge/safe_format.h\
  ./include/ejudge/server_info.h\
  ./include/ejudge/server_framework.h\
  ./include/ejudge/serve_state.h\
