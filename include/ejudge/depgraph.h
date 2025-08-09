@@ -16,4 +16,31 @@
  * GNU General Public License for more details.
  */
 
+#include <stdlib.h>
+
+struct depgraph_file
+{
+    size_t index;
+    unsigned char *path;
+    size_t dep_a, dep_u;
+    size_t *deps;
+};
+
+struct depgraph
+{
+    struct depgraph_file *files;
+    size_t file_a, file_u;
+
+    size_t sorted_u;
+    size_t *sorted;
+};
+
+void depgraph_free(struct depgraph *dgr);
+struct depgraph_file *depgraph_add_file(struct depgraph *dgr, const unsigned char *path);
+struct depgraph_file *depgraph_find_file(struct depgraph *dgr, const unsigned char *path);
+
+void depgraph_add_dependency(struct depgraph_file *target, struct depgraph_file *source);
+
+int depgraph_topological_sort(struct depgraph *dgr);
+
  #endif /* __DEPGRAPH_H__ */
