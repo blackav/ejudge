@@ -129,6 +129,7 @@ static char const * const problem_xml_attr_map[] =
     [PPXML_A_GENERATE_ANSWER] = "generate-answer",
     [PPXML_A_AUTO_COUNT] = "auto-count",
     [PPXML_A_NORMALIZATION] = "normalization",
+    [PPXML_A_FILE_TYPE] = "file-type",
     NULL,
 };
 
@@ -142,6 +143,9 @@ static size_t const problem_xml_sizes[PPXML_TAG_LAST] =
     [PPXML_TUTORIALS] = sizeof(struct ppxml_statements),
     [PPXML_TUTORIAL] = sizeof(struct ppxml_statement),
     [PPXML_JUDGING] = sizeof(struct ppxml_judging),
+    [PPXML_INPUT_PATH_PATTERN] = sizeof(struct ppxml_path_pattern),
+    [PPXML_OUTPUT_PATH_PATTERN] = sizeof(struct ppxml_path_pattern),
+    [PPXML_ANSWER_PATH_PATTERN] = sizeof(struct ppxml_path_pattern),
     [PPXML_TESTSET] = sizeof(struct ppxml_testset),
     [PPXML_TESTS] = sizeof(struct ppxml_tests),
     [PPXML_TEST] = sizeof(struct ppxml_test),
@@ -460,6 +464,24 @@ static int ppxml_solution_tag_parse(const unsigned char *s)
     if (s) {
         for (int i = 1; i < sizeof(ppxml_solution_tag_strings)/sizeof(ppxml_solution_tag_strings[0]); ++i) {
             if (!strcasecmp(s, ppxml_solution_tag_strings[i])) {
+                return i;
+            }
+        }
+    }
+    return 0;
+}
+
+static const char * const ppxml_file_type_strings[] =
+{
+    [PPXML_FILE_TYPE_TEXT] = "text",
+    [PPXML_FILE_TYPE_RELAXED_TEXT] = "relaxed-text",
+    [PPXML_FILE_TYPE_BINARY] = "binary",
+};
+static int ppxml_file_type_parse(const unsigned char *s)
+{
+    if (s) {
+        for (int i = 1; i < sizeof(ppxml_file_type_strings)/sizeof(ppxml_file_type_strings[0]); ++i) {
+            if (!strcasecmp(s, ppxml_file_type_strings[i])) {
                 return i;
             }
         }
@@ -897,6 +919,34 @@ ppxml_parse_groups(struct ppxml_parse_context *cntx, struct xml_tree *p)
     return pp;
 }
 
+static struct ppxml_path_pattern *
+ppxml_parse_path_pattern(struct ppxml_parse_context *cntx, struct xml_tree *p)
+{
+    struct ppxml_path_pattern *pp = (struct ppxml_path_pattern *) p;
+    for (struct xml_attr *a = p->first; a; a = a->next) {
+        if (a->tag == PPXML_A_FILE_TYPE) {
+            int t = ppxml_file_type_parse(a->text);
+            if (!t) return cntx->ops->err_attr_invalid(cntx, a);
+            pp->file_type = t;
+        } else if (a->tag == PPXML_A_CHARSET) {
+            pp->charset = a->text;
+        } else if (a->tag == PPXML_A_NORMALIZATION) {
+            int v = -1;
+            if ((v = test_normalization_parse(a->text)) < 0) {
+                return cntx->ops->err_attr_invalid(cntx, a);
+            }
+            pp->normalization = v;
+        } else {
+            return cntx->ops->err_attr_not_allowed(cntx, p, a);
+        }
+    }
+    if (p->first_down) {
+        return cntx->ops->err_elem_invalid(cntx, p->first_down);
+    }
+    pp->pattern = p->text;
+    return pp;
+}
+
 static struct ppxml_testset *
 ppxml_parse_testset(struct ppxml_parse_context *cntx, struct xml_tree *p)
 {
@@ -964,20 +1014,20 @@ ppxml_parse_testset(struct ppxml_parse_context *cntx, struct xml_tree *p)
             }
             pp->test_count = v;
         } else if (q->tag == PPXML_INPUT_PATH_PATTERN) {
-            if (pp->input_path_pattern) return cntx->ops->err_elem_redefined(cntx, q);
-            if (q->first) return cntx->ops->err_attr_not_allowed(cntx, q, q->first);
-            if (q->first_down) return cntx->ops->err_nested_elems(cntx, q);
-            pp->input_path_pattern = q->text;
+            if (pp->input) return cntx->ops->err_elem_redefined(cntx, q);
+            struct ppxml_path_pattern *t = ppxml_parse_path_pattern(cntx, q);
+            if (!t) return NULL;
+            pp->input = t;
         } else if (q->tag == PPXML_OUTPUT_PATH_PATTERN) {
-            if (pp->output_path_pattern) return cntx->ops->err_elem_redefined(cntx, q);
-            if (q->first) return cntx->ops->err_attr_not_allowed(cntx, q, q->first);
-            if (q->first_down) return cntx->ops->err_nested_elems(cntx, q);
-            pp->output_path_pattern = q->text;
+            if (pp->output) return cntx->ops->err_elem_redefined(cntx, q);
+            struct ppxml_path_pattern *t = ppxml_parse_path_pattern(cntx, q);
+            if (!t) return NULL;
+            pp->output = t;
         } else if (q->tag == PPXML_ANSWER_PATH_PATTERN) {
-            if (pp->answer_path_pattern) return cntx->ops->err_elem_redefined(cntx, q);
-            if (q->first) return cntx->ops->err_attr_not_allowed(cntx, q, q->first);
-            if (q->first_down) return cntx->ops->err_nested_elems(cntx, q);
-            pp->answer_path_pattern = q->text;
+            if (pp->answer) return cntx->ops->err_elem_redefined(cntx, q);
+            struct ppxml_path_pattern *t = ppxml_parse_path_pattern(cntx, q);
+            if (!t) return NULL;
+            pp->answer = t;
         } else if (q->tag == PPXML_TESTS) {
             if (pp->tests) return cntx->ops->err_elem_redefined(cntx, q);
             struct ppxml_tests *t = ppxml_parse_tests(cntx, q);

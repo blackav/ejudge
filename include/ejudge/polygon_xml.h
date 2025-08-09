@@ -120,6 +120,7 @@ enum
     PPXML_A_GENERATE_ANSWER,
     PPXML_A_AUTO_COUNT,
     PPXML_A_NORMALIZATION,
+    PPXML_A_FILE_TYPE,
 };
 
 enum
@@ -217,6 +218,14 @@ enum
     PPXML_SOLUTION_TAG_FAILED,
 };
 
+enum
+{
+    PPXML_FILE_TYPE_UNKNOWN,
+    PPXML_FILE_TYPE_TEXT,
+    PPXML_FILE_TYPE_RELAXED_TEXT,
+    PPXML_FILE_TYPE_BINARY,
+};
+
 struct ppxml_name
 {
     struct xml_tree b;
@@ -293,13 +302,22 @@ struct ppxml_groups
     XML_TREE_VECTOR_T(ppxml_group) n;
 };
 
+struct ppxml_path_pattern
+{
+    struct xml_tree b;
+    unsigned char *pattern;
+    unsigned char file_type;
+    unsigned char *charset;
+    unsigned char normalization;
+};
+
 struct ppxml_testset
 {
     struct xml_tree b;
     unsigned char *name;
-    unsigned char *input_path_pattern;
-    unsigned char *output_path_pattern;
-    unsigned char *answer_path_pattern;
+    struct ppxml_path_pattern *input;
+    struct ppxml_path_pattern *output;
+    struct ppxml_path_pattern *answer;
     struct ppxml_tests *tests;
     struct ppxml_groups *groups;
     long long memory_limit;
