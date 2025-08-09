@@ -79,3 +79,4 @@ ej-vcs-compile
 compile_commands.json
 /.cache
 /ejudge-make
+/ejudge-problem

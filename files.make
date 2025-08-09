@@ -464,7 +464,7 @@ CFILES=\
  bin/ej-super-server-control.c\
  bin/ej-users.c\
  bin/ej-users-control.c\
- bin/ejudge-make.c\
+ bin/ejudge-problem.c\
  cgi-bin/users.c\
  unix/cpu.c\
  win32/cpu.c\
