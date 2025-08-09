@@ -158,12 +158,12 @@ checksum_bytes(struct checksum_context *cntx)
 unsigned char *
 checksum_hex(struct checksum_context *cntx, unsigned char *buf)
 {
-    const unsigned char hh[] = "0123456789abcdef";
+    static const unsigned char hh[] = "0123456789abcdef";
     unsigned char *p = buf;
     unsigned char *s = cntx->checksum;
-    for (size_t i = 0; i < 32; ++i) {
-        *p++ = hh[*s++ >> 4];
-        *p++ = hh[*s++ & 0xf];
+    for (size_t i = 0; i < 32; ++i, ++s) {
+        *p++ = hh[*s >> 4];
+        *p++ = hh[*s & 0xf];
     }
     *p = 0;
     return buf;

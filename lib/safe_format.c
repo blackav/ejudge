@@ -49,7 +49,7 @@ safe_format_validate(const safe_format_type_t *types, const char *format)
         }
         if (format[i] >= '0' && format[i] <= '9') {
             int val = 0;
-            while (format[i] >= 0 && format[i] <= '9') {
+            while (format[i] >= '0' && format[i] <= '9') {
                 val = val * 10 + (format[i] - '0');
                 if (val > 100) return -1;
                 ++i;
@@ -61,7 +61,7 @@ safe_format_validate(const safe_format_type_t *types, const char *format)
             if (i == len) return -1;
             if (format[i] < '0' || format[i] > '9') return -1;
             int val = 0;
-            while (format[i] >= 0 && format[i] <= '9') {
+            while (format[i] >= '0' && format[i] <= '9') {
                 val = val * 10 + (format[i] - '0');
                 if (val > 100) return -1;
                 ++i;
