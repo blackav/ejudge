@@ -180,8 +180,8 @@ PGE_OBJECTS = $(PGE_CFILES:.c=.o)
 PGC_CFILES = bin/ej-postgres-cleanup.c
 PGC_OBJECTS = $(PGC_CFILES:.c=.o)
 
-EM_CFILES = bin/ejudge-make.c
-EM_OBJECTS = $(EM_CFILES:.c=.o)
+EM_CFILES = bin/ejudge-make.c version.c
+EM_OBJECTS = $(EM_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a
 
 INSTALLSCRIPT = ejudge-install.sh
 BINTARGETS = ejudge-jobs-cmd ejudge-edit-users ejudge-setup ejudge-configure-compilers ejudge-control ejudge-execute ejudge-contests-cmd ejudge-suid-setup ejudge-change-contests ejudge-make
