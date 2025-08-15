@@ -1082,7 +1082,7 @@ filename_armor_bytes(
   return out;
 }
 
-int
+_Bool
 is_valid_utf8(const unsigned char *str, size_t size, size_t *p_offset)
 {
   if (!str) return 0;

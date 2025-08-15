@@ -116,7 +116,7 @@ unsigned char *filename_armor_bytes(unsigned char *out, size_t outsize,
 
 int utf8_fix_string(unsigned char *str, int *gl_ind);
 
-int
+_Bool
 is_valid_utf8(
         const unsigned char *str,
         size_t size,
