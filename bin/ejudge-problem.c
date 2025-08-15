@@ -90,6 +90,48 @@ print_help(void)
     exit(0);
 }
 
+static const unsigned char valid_filename_chars[256] =
+{
+    ['!'] = 1,
+    ['%'] = 1,
+    ['+'] = 1,
+    [','] = 1,
+    ['-'] = 1,
+    ['.'] = 1,
+    ['/'] = 1,
+    ['0' ... '9'] = 1,
+    [':'] = 1,
+    ['='] = 1,
+    ['@'] = 1,
+    ['A' ... 'Z'] = 1,
+    ['['] = 1,
+    [']'] = 1,
+    ['^'] = 1,
+    ['_'] = 1,
+    ['a' ... 'z'] = 1,
+    ['~'] = 1,
+    [128 ... 255] = 1,
+};
+
+static _Bool
+is_valid_path(const unsigned char *s)
+{
+    if (!s) return 0;
+    size_t len = strlen(s);
+    if (!len) return 0;
+    if (!is_valid_utf8(s, len, NULL)) return 0;
+    const unsigned char *p = s;
+    while (*p) {
+        if (!valid_filename_chars[*p]) return 0;
+        ++p;
+    }
+    if (s[0] == '.' && s[1] == '.' && (!s[2] || s[2] == '/')) return 0;
+    if (len <= 2) return 1;
+    if (p[-1] == '.' && p[-2] == '.' && p[-3] == '/') return 0;
+    if (strstr(s, "/../")) return 0;
+    return 1;
+}
+
 static int
 read_full_file(FILE *log_f, const unsigned char *path, unsigned char **p_str, size_t *p_size)
 {
@@ -172,7 +214,7 @@ split_path(
     return 0;
 }
 
-int
+static int
 split_suffix(
         FILE *log_f,
         const unsigned char *param_name,
@@ -215,12 +257,33 @@ split_suffix(
     return 0;
 }
 
+static _Bool
+is_simple_name(const unsigned char *s)
+{
+    return !strchr(s, '/');
+}
+
 struct test_state
 {
     const struct ppxml_test *xml_test;
     int serial;
     unsigned char method;
     unsigned char *generator;
+};
+
+struct language_profile_info
+{
+    const unsigned char *name;
+    const unsigned char *command;
+};
+
+struct language_info
+{
+    const unsigned char *suffix;
+    const unsigned char *name;
+    const unsigned char *default_solution_profile;
+    const unsigned char *default_checker_profile;
+    const struct language_profile_info * const profiles;
 };
 
 struct problem_state
@@ -236,6 +299,60 @@ struct problem_state
 
     size_t solution_exe_index;
 };
+
+static const struct language_profile_info c_profiles[] =
+{
+    {
+        "gcc-gnu18-debug-sanitizers",
+        "gcc -std=gnu18 -Wall -Werror -g -D_GNU_SOURCE -fsanitize=undefined,address,leak ${source} -o${target} -lm",
+    },
+    {
+        "gcc-gnu18-release",
+        "gcc -std=gnu18 -Wall -Werror -O2 -D_GNU_SOURCE ${source} -o${target} -lm",
+    },
+    {
+        "gcc-gnu18-release-ejudge",
+        "gcc -std=gnu18 -Wall -Werror -O2 -D_GNU_SOURCE -DEJUDGE ${source} -o${target} -lm",
+    },
+    {
+        NULL,
+        NULL,
+    },
+};
+
+static const struct language_info languages[] =
+{
+    {
+        ".c",
+        "C",
+        "gcc-gnu18-debug-sanitizers",
+        "gcc-gnu18-release-ejudge",
+        c_profiles,
+    },
+    {
+        NULL,
+    },
+};
+
+static const struct language_info *
+find_language(const unsigned char *suffix)
+{
+    for (size_t i = 0; languages[i].suffix; ++i) {
+        if (!strcmp(languages[i].suffix, suffix))
+            return &languages[i];
+    }
+    return NULL;
+}
+
+static const struct language_profile_info *
+find_profile(const struct language_info *lang, const unsigned char *profile)
+{
+    for (size_t i = 0; lang->profiles[i].name; ++i) {
+        if (!strcmp(lang->profiles[i].name, profile))
+            return &lang->profiles[i];
+    }
+    return NULL;
+}
 
 static struct test_state *
 push_test(struct problem_state *ps)
@@ -490,7 +607,15 @@ collect_tests(
                     L_ERR("main solution is undefined");
                     return -1;
                 }
-                depgraph_add_dependency(ans, &ps->dg.files[ps->solution_exe_index]);
+                struct depgraph_file *sol = &ps->dg.files[ps->solution_exe_index];
+                depgraph_add_dependency(ans, sol);
+                const unsigned char *sol_path = "";
+                if (is_simple_name(sol->path)) {
+                    sol_path = "./";
+                }
+                char *cmd = NULL;
+                asprintf(&cmd, "%s%s < %s > %s", sol_path, sol->path, tdf->path, ans->path);
+                depgraph_add_command_move(ans, cmd);
             }
             continue;
         }
@@ -508,7 +633,15 @@ collect_tests(
                 L_ERR("main solution is undefined");
                 return -1;
             }
-            depgraph_add_dependency(ans, &ps->dg.files[ps->solution_exe_index]);
+            struct depgraph_file *sol = &ps->dg.files[ps->solution_exe_index];
+            depgraph_add_dependency(ans, sol);
+            const unsigned char *sol_path = "";
+            if (is_simple_name(sol->path)) {
+                sol_path = "./";
+            }
+            char *cmd = NULL;
+            asprintf(&cmd, "%s%s < %s > %s", sol_path, sol->path, tdf->path, ans->path);
+            depgraph_add_command_move(ans, cmd);
         } else if (corr_pat[0]) {
             depgraph_add_file(&ps->dg, corr_path);
             if (lstat(corr_path, &stb) < 0) {
@@ -522,6 +655,48 @@ collect_tests(
     }
 
     return 0;
+}
+
+struct variable_list
+{
+    const unsigned char * const * const names;
+    const unsigned char * const * values;
+};
+
+static unsigned char *
+find_in_variable_list(const void *p, const unsigned char *name)
+{
+    const struct variable_list *pp = (const struct variable_list *) p;
+    size_t i = 0;
+    while (pp->names[i] && strcmp(pp->names[i], name)) ++i;
+    if (!pp->names[i]) return NULL;
+    return xstrdup(pp->values[i]);
+}
+
+static unsigned char *
+substitute_rule_vars(
+        const unsigned char *pattern,
+        const unsigned char *source,
+        const unsigned char *target)
+{
+    static const unsigned char * const var_names[] =
+    {
+        "source",
+        "target",
+        NULL,
+    };
+    const unsigned char * const var_values[] =
+    {
+        source,
+        target,
+        NULL,
+    };
+    struct variable_list vars =
+    {
+        var_names,
+        var_values,
+    };
+    return text_substitute(&vars, pattern, find_in_variable_list);
 }
 
 static int
@@ -570,6 +745,10 @@ collect_dependencies(
                     L_ERR("main solution source code not available");
                     return -1;
                 }
+                if (!is_valid_path(ppsol->source->path)) {
+                    L_ERR("invalid source path '%s'", ppsol->source->path);
+                    return -1;
+                }
                 struct depgraph_file *sf = depgraph_add_file(&ps->dg, ppsol->source->path);
 
                 unsigned char source_base[PATH_MAX];
@@ -581,6 +760,24 @@ collect_dependencies(
                 struct depgraph_file *xf = depgraph_add_file(&ps->dg, source_base);
                 ps->solution_exe_index = xf->index;
                 depgraph_add_dependency(xf, sf);
+
+                const struct language_info *lang = find_language(source_suffix);
+                if (!lang) {
+                    L_ERR("no rule to compile source file '%s", ppsol->source->path);
+                    return -1;
+                }
+                const struct language_profile_info *prof = find_profile(lang, lang->default_solution_profile);
+                if (!prof) {
+                    L_ERR("profile '%s' is undefined for language '%s'", lang->default_solution_profile, lang->name);
+                    return -1;
+                }
+
+                unsigned char *cmd = substitute_rule_vars(prof->command, ppsol->source->path, source_base);
+                if (!cmd) {
+                    L_ERR("command substitution failed for '%s'", prof->command);
+                    return -1;
+                }
+                depgraph_add_command_move(xf, cmd);
             }
         }
     }
@@ -608,6 +805,9 @@ print_makefile(FILE *log_f, struct problem_state *ps, char *args[])
             printf(" %s", sf->path);
         }
         printf("\n");
+        for (size_t j = 0; j < df->cmd_u; ++j) {
+            printf("\t%s\n", df->cmds[j].command);
+        }
     }
     return 0;
 }
@@ -699,7 +899,7 @@ main(int argc, char *argv[])
         die("invalid tool '%s'", argv[cur_arg]);
     }
     ++cur_arg;
-    problem_xml_file = "problem.xml";
+    problem_xml_file = "ejproblem.xml";
     if (read_full_file(stderr, problem_xml_file, &p_xml_s, &p_xml_z) < 0) {
         die("failed to read '%s'", problem_xml_file);
     }
