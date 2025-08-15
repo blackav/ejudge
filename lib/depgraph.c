@@ -27,6 +27,12 @@ depgraph_free(struct depgraph *dgr)
         struct depgraph_file *df = &dgr->files[i];
         xfree(df->path);
         xfree(df->deps);
+        if (df->cmds) {
+            for (size_t i = 0; df->cmd_u; ++i) {
+                xfree(df->cmds[i].command);
+            }
+        }
+        xfree(df->cmds);
     }
     xfree(dgr->files);
     xfree(dgr->sorted);
@@ -70,6 +76,24 @@ depgraph_add_dependency(struct depgraph_file *target, struct depgraph_file *sour
     }
     XEXPAND(target->deps, target->dep_a, target->dep_u);
     target->deps[target->dep_u++] = source->index;
+}
+
+void
+depgraph_add_command(struct depgraph_file *target, const unsigned char *command)
+{
+    XEXPAND(target->cmds, target->cmd_a, target->cmd_u);
+    struct depgraph_command *cmd = &target->cmds[target->cmd_u++];
+    memset(cmd, 0, sizeof(*cmd));
+    cmd->command = xstrdup(command);
+}
+
+void
+depgraph_add_command_move(struct depgraph_file *target, unsigned char *command)
+{
+    XEXPAND(target->cmds, target->cmd_a, target->cmd_u);
+    struct depgraph_command *cmd = &target->cmds[target->cmd_u++];
+    memset(cmd, 0, sizeof(*cmd));
+    cmd->command = command;
 }
 
 static int

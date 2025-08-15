@@ -18,12 +18,19 @@
 
 #include <stdlib.h>
 
+struct depgraph_command
+{
+    unsigned char *command;
+};
+
 struct depgraph_file
 {
     size_t index;
     unsigned char *path;
     size_t dep_a, dep_u;
     size_t *deps;
+    size_t cmd_a, cmd_u;
+    struct depgraph_command *cmds;
 };
 
 struct depgraph
@@ -40,6 +47,9 @@ struct depgraph_file *depgraph_add_file(struct depgraph *dgr, const unsigned cha
 struct depgraph_file *depgraph_find_file(struct depgraph *dgr, const unsigned char *path);
 
 void depgraph_add_dependency(struct depgraph_file *target, struct depgraph_file *source);
+
+void depgraph_add_command(struct depgraph_file *target, const unsigned char *command);
+void depgraph_add_command_move(struct depgraph_file *target, unsigned char *command);
 
 int depgraph_topological_sort(struct depgraph *dgr);
 
