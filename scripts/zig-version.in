@@ -1,0 +1,116 @@
+#!/bin/sh
+# Copyright (c) 2005-2025 Alexander Chernov <cher@ejudge.ru>
+
+# compiler script interface is as follows
+# <comp>-version [OPTION]
+# OPTION is:
+#  -r P fully check the availability of the compiler (like configure
+#       script does). P is a proposed path to the compiler (like in
+#       --with-<comp> configure option).
+#       returns failure (exit code 1), if the compiler is not available
+#       or is not functional.
+#       in case of success exit code is 0, and the necessary configuration
+#       variables are written to stdout.
+#  -v   verbose operation (configure mode)
+#  -l   output the compiler name to the stdout (list mode)
+#  -p   write to the stdout the command line of the compiler
+#  -f   write the compiler full name and the compiler version
+
+LANG_CONFIG_DIR="/home/judges/compile/conf/lang.d"
+
+common_config() {
+  echo 'long_name="Zig"'
+  echo 'src_sfx=".zig"'
+}
+
+failure() {
+  rm -f conftest*
+  echo 'version='
+  echo 'arg="'"${arg}"'"'
+  common_config
+  echo 'ZIGRUN=false'
+  echo 'ZIGDIR='
+  [ "${verbose}" = 1 ] && echo "no" >&2
+  exit 1
+}
+
+unset LANG
+unset LC_ALL
+unset LC_MESSAGES
+unset LANGUAGE
+
+if [ x"$1" = x-v ]
+then
+  verbose=1
+  shift
+fi
+
+# recheck the language
+if [ x"$1" = x-r ]
+then
+  arg="$2"
+  [ x"$2" != x ] && ZIGRUN="$2"
+  [ "${ZIGRUN}" = "" ] && ZIGRUN="zig"
+
+  [ "${verbose}" = 1 ] && echo -n "checking whether Zig is available... " >&2
+  "${ZIGRUN}" version >/dev/null 2>&1 || failure
+  version=`"${ZIGRUN}" version 2>&1`|| failure
+  [ "${version}" != "" ] || failure
+  cat > conftest.zig <<EOF
+const std = @import("std");
+pub fn main() !void { _ = try std.io.getStdOut().writer().writeAll("ok\n"); }
+EOF
+  "${ZIGRUN}" build-exe conftest.zig -femit-bin=conftest >/dev/null 2>&1 || failure
+  [ -x conftest ] || failure
+  ./conftest >/dev/null 2>&1 || failure
+
+  rm -f ./conftest*
+  ZIGDIR=`dirname "${ZIGRUN}"`
+  [ "${ZIGDIR}" = . ] && ZIGDIR=""
+  echo 'version="'"${version}"'"'
+  echo 'arg="'"${arg}"'"'
+  common_config
+  echo 'ZIGRUN="'"${ZIGRUN}"'"'
+  echo 'ZIGDIR="'"${ZIGDIR}"'"'
+  [ "${verbose}" = 1 ] && echo "yes, ${ZIGRUN}, ${version}" >&2
+  exit 0
+fi
+
+if [ x"$1" = x-l ]
+then
+  echo "Zig compiler [https://ziglang.org]"
+  exit 0
+fi
+
+[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/zig.cfg"
+
+if [ -f "${EJUDGE_LANG_CONFIG}" ]
+then
+  . "${EJUDGE_LANG_CONFIG}"
+else
+  ZIGRUN="zig"
+  ZIGDIR=
+fi
+
+if [ x"${ZIGRUN}" = x -o x"${ZIGRUN}" = xfalse ]
+then
+  echo "This language is not supported." >&2
+  exit 1
+fi
+
+if [ x"${ZIGDIR}" != x ]
+then
+    PATH="${ZIGDIR}:${PATH}"
+fi
+
+if [ x"$1" = x-p ]
+then
+    echo "${ZIGRUN}"
+    exit 0
+fi
+
+"${ZIGRUN}" version >/dev/null 2>&1 || exit 1
+
+[ x"$1" = x-f ] && echo -n "Zig "
+
+"${ZIGRUN}" version 2>&1
