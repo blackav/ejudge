@@ -932,6 +932,20 @@ print_makefile(FILE *log_f, struct problem_state *ps, char *args[])
 }
 
 static int
+print_topological(FILE *log_f, struct problem_state *ps, char *args[])
+{
+    if (depgraph_topological_sort(&ps->dg) < 0) {
+        L_ERR("circular dependencies detected");
+        return -1;
+    }
+    for (size_t i = 0; i < ps->dg.sorted_u; ++i) {
+        struct depgraph_file *df = &ps->dg.files[ps->dg.sorted[i]];
+        printf("%s\n", df->path);
+    }
+    return 0;
+}
+
+static int
 print_hash(FILE *log_f, struct problem_state *ps, char *args[])
 {
     struct checksum_context cc = {};
@@ -1039,6 +1053,7 @@ static const struct tool_registry tools[] =
     { "print-hash", print_hash },
     { "print-makefile", print_makefile },
     { "print-source-files", print_source_files },
+    { "print-topological", print_topological },
     { "normalize", normalize_tests },
 };
 
@@ -1050,7 +1065,7 @@ main(int argc, char *argv[])
     size_t p_xml_z = 0;
     struct ppxml_problem *ppxml = NULL;
     struct problem_state ps = {};
-    int (*tool)(FILE *log_f, struct problem_state *ps, char *args[]);
+    int (*tool)(FILE *log_f, struct problem_state *ps, char *args[]) = NULL;
     int no_norm_check = 0;
 
     get_program_name(argv[0]);
