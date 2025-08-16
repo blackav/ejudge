@@ -19,6 +19,7 @@
 #include "ejudge/misctext.h"
 #include "ejudge/polygon_xml.h"
 #include "ejudge/problem_config.h"
+#include "ejudge/random.h"
 #include "ejudge/version.h"
 #include "ejudge/depgraph.h"
 #include "ejudge/safe_format.h"
@@ -88,6 +89,34 @@ print_help(void)
     printf("%s usage: execute [OPTIONS]... program [ARGUMENTS]...\n", program_name);
     fputs(help_str, stdout);
     exit(0);
+}
+
+static int
+normalization_to_flags(unsigned char norm)
+{
+    switch (norm) {
+    case TEST_NORM_NONE:
+        return 0;
+    case TEST_NORM_DEFAULT:
+        return TEXT_FIX_CR | TEXT_FIX_TR_SP | TEXT_FIX_FINAL_NL;
+    case TEST_NORM_NL:
+        return TEXT_FIX_CR;
+    case TEST_NORM_NLWS:
+        return TEXT_FIX_CR | TEXT_FIX_TR_SP | TEXT_FIX_FINAL_NL | TEXT_FIX_TR_NL;
+    case TEST_NORM_NLWSNP:
+        return TEXT_FIX_CR | TEXT_FIX_TR_SP | TEXT_FIX_FINAL_NL | TEXT_FIX_TR_NL | TEXT_FIX_NP;
+    case TEST_NORM_NLNP:
+        return TEXT_FIX_CR | TEXT_FIX_NP;
+    default:
+        return 0;
+    }
+}
+
+static _Bool
+is_utf8(const unsigned char *charset)
+{
+    if (!charset || !*charset) return 1;
+    return !strcasecmp(charset, "utf-8") || !strcasecmp(charset, "utf8");
 }
 
 static const unsigned char valid_filename_chars[256] =
@@ -160,6 +189,62 @@ read_full_file(FILE *log_f, const unsigned char *path, unsigned char **p_str, si
 static const unsigned char problem_cfg_name[] = "problem.cfg";
 
 #define L_ERR(format, ...) fprintf(log_f, "%s:%d:" format "\n", __FUNCTION__, __LINE__, ##__VA_ARGS__)
+
+static int
+overwrite_file(FILE *log_f, const unsigned char *path, unsigned char *data, size_t size)
+{
+    unsigned char tmp_path[PATH_MAX];
+    int fd = -1;
+    struct stat ist;
+    __attribute__((unused)) int _;
+
+    if (stat(path, &ist) < 0) {
+        L_ERR("stat error for '%s': %s", path, strerror(errno));
+        return -1;
+    }
+    if (snprintf(tmp_path, sizeof tmp_path, "%s.%d", path, random_u32()) >= (int) sizeof tmp_path) {
+        L_ERR("path to the temporary file is too long: '%s'", tmp_path);
+        return -1;
+    }
+    fd = open(tmp_path, O_WRONLY | O_CREAT | O_EXCL, 0600);
+    if (fd < 0) {
+        L_ERR("failed to open output file '%s': %s", tmp_path, strerror(errno));
+        return -1;
+    }
+    size_t rem = size;
+    const unsigned char *p = data;
+    while (rem > 0) {
+        ssize_t w = write(fd, p, rem);
+        if (!w) {
+            L_ERR("write returned 0!");
+            close(fd);
+            unlink(tmp_path);
+            return -1;
+        }
+        if (w < 0) {
+            L_ERR("write failed to '%s': %s", tmp_path, strerror(errno));
+            close(fd);
+            unlink(tmp_path);
+            return -1;
+        }
+        p += w;
+        rem -= w;
+    }
+    if (close(fd) < 0) {
+        L_ERR("close of '%s' failed: %s", tmp_path, strerror(errno));
+        unlink(tmp_path);
+        return -1;
+    }
+    fd = -1;
+    _ = chmod(tmp_path, ist.st_mode & 07777);
+    _ = chown(tmp_path, ist.st_uid, ist.st_gid);
+    if (rename(tmp_path, path) < 0) {
+        L_ERR("rename to '%s' failed: %s", path, strerror(errno));
+        unlink(tmp_path);
+        return -1;
+    }
+    return 0;
+}
 
 static int
 split_path(
@@ -263,14 +348,6 @@ is_simple_name(const unsigned char *s)
     return !strchr(s, '/');
 }
 
-struct test_state
-{
-    const struct ppxml_test *xml_test;
-    int serial;
-    unsigned char method;
-    unsigned char *generator;
-};
-
 struct language_profile_info
 {
     const unsigned char *name;
@@ -286,6 +363,16 @@ struct language_info
     const struct language_profile_info * const profiles;
 };
 
+struct test_state
+{
+    const struct ppxml_test *xml_test;
+    int serial;
+    unsigned char method;
+    unsigned char *generator;
+    unsigned char *input_path;
+    unsigned char *answer_path;
+};
+
 struct problem_state
 {
     struct ppxml_problem *ppxml;
@@ -298,6 +385,9 @@ struct problem_state
     struct problem_config_section *cfg;
 
     size_t solution_exe_index;
+
+    struct ppxml_path_pattern *input;
+    struct ppxml_path_pattern *answer;
 };
 
 static const struct language_profile_info c_profiles[] =
@@ -374,7 +464,11 @@ push_test(struct problem_state *ps)
 static int
 check_file(
         FILE *log_f,
-        const unsigned char *path)
+        const unsigned char *path,
+        int file_type,
+        int is_utf8,
+        int normalization,
+        int no_norm_check)
 {
     struct stat stb;
     int r;
@@ -412,22 +506,35 @@ check_file(
         goto done;
     }
     close(fd); fd = -1;
-    // FIXME: check binary flag
-    if (text_is_binary(mem, size)) {
-        L_ERR("file '%s' is not text", path);
+    int flags = normalization_to_flags(normalization);
+    switch (file_type) {
+    case PPXML_FILE_TYPE_TEXT:
+        if (text_is_binary(mem, size)) {
+            L_ERR("file '%s' is not text", path);
+            goto done;
+        }
+        break;
+    case PPXML_FILE_TYPE_RELAXED_TEXT: // check only for \0 in the file
+        if (strnlen(mem, size) != size) {
+            L_ERR("file '%s' contains zero byte", path);
+            goto done;
+        }
+        flags &= ~TEXT_FIX_NP;
+        break;
+    default: // no additional check
+        retval = 0;
         goto done;
     }
-    // FIXME: check utf-8 flag
-    if (!is_valid_utf8(mem, size, &err_offset)) {
+    if (is_utf8 && !is_valid_utf8(mem, size, &err_offset)) {
         L_ERR("file '%s' is not UTF-8 at offset %zu", path, err_offset);
         goto done;
     }
-    // FIXME: check normalization flag
-    if (!is_text_normalized(mem, size,
-        TEXT_FIX_CR|TEXT_FIX_TR_SP|TEXT_FIX_FINAL_NL|TEXT_FIX_TR_NL|TEXT_FIX_NP,
-        &err_offset)) {
-        L_ERR("file '%s' is not normalized %zu", path, err_offset);
-        goto done;
+    if (!no_norm_check) {
+        if (!is_text_normalized(mem, size, flags,
+            &err_offset)) {
+            L_ERR("file '%s' is not normalized %zu", path, err_offset);
+            goto done;
+        }
     }
     munmap(mem, size);
     retval = 0;
@@ -441,7 +548,8 @@ done:;
 static int
 collect_tests(
         FILE *log_f,
-        struct problem_state *ps)
+        struct problem_state *ps,
+        int no_norm_check)
 {
     int r;
     unsigned char test_dir[PATH_MAX];
@@ -472,6 +580,7 @@ collect_tests(
     }
     const struct ppxml_testset *ppts = ppj->testsets.v[0];
     const struct ppxml_path_pattern *input = ppts->input;
+    ps->input = ppts->input;
 
     if (input->pattern && input->pattern[0]) {
         if ((r = split_path(log_f, "input_path_pattern", input->pattern, test_dir, sizeof test_dir, test_pat, sizeof test_pat)) < 0) {
@@ -500,6 +609,8 @@ collect_tests(
     }
 
     const struct ppxml_path_pattern *answer = ppts->answer;
+    ps->answer = ppts->answer;
+
     if (answer->pattern && answer->pattern[0]) {
         if ((r = split_path(log_f, "answer_path_pattern", answer->pattern, corr_dir, sizeof corr_dir, corr_pat, sizeof corr_pat)) < 0) {
             return r;
@@ -572,6 +683,7 @@ collect_tests(
             L_ERR("test path is too long");
             return -1;
         }
+        t->input_path = xstrdup(test_path);
 
         if (corr_pat[0]) {
             if (snprintf(corr_name, sizeof(corr_name), corr_pat, t->serial) >= (int) sizeof(corr_name)) {
@@ -582,6 +694,7 @@ collect_tests(
                 L_ERR("answer path is too long");
                 return -1;
             }
+            t->answer_path = xstrdup(corr_path);
         }
 
         struct depgraph_file *tdf = depgraph_add_file(&ps->dg, test_path);
@@ -623,7 +736,7 @@ collect_tests(
             L_ERR("manual test '%s' does not exist", test_name);
             return -1;
         }
-        if (check_file(log_f, test_path) < 0) {
+        if (check_file(log_f, test_path, input->file_type, is_utf8(input->charset), input->normalization, no_norm_check) < 0) {
             return -1;
         }
         if (corr_pat[0] && ppts->generate_answer > 0) {
@@ -648,7 +761,7 @@ collect_tests(
                 L_ERR("manual answer '%s' does not exist", corr_name);
                 return -1;
             }
-            if (check_file(log_f, corr_path) < 0) {
+            if (check_file(log_f, corr_path, answer->file_type, is_utf8(answer->charset), answer->normalization, no_norm_check) < 0) {
                 return -1;
             }
         }
@@ -702,7 +815,8 @@ substitute_rule_vars(
 static int
 collect_dependencies(
         FILE *log_f,
-        struct problem_state *ps)
+        struct problem_state *ps,
+        int no_norm_check)
 {
     struct ppxml_problem *ppxml = ps->ppxml;
     if (ppxml->statements) {
@@ -782,7 +896,7 @@ collect_dependencies(
         }
     }
 
-    if (collect_tests(log_f, ps) < 0) {
+    if (collect_tests(log_f, ps, no_norm_check) < 0) {
         L_ERR("failed to collect tests");
         return -1;
     }
@@ -848,6 +962,65 @@ print_source_files(FILE *log_f, struct problem_state *ps, char *args[])
     return 0;
 }
 
+static int
+normalize_file(FILE *log_f, const unsigned char *path, int file_type, int normalization)
+{
+    int retval = -1;
+    unsigned char *data = NULL;
+    unsigned char *out_data = NULL;
+    size_t size = 0;
+    size_t out_size = 0;
+
+    if (file_type != PPXML_FILE_TYPE_TEXT && file_type != PPXML_FILE_TYPE_RELAXED_TEXT) {
+        retval = 0;
+        goto done;
+    }
+    if (normalization == TEST_NORM_NONE) {
+        retval = 0;
+        goto done;
+    }
+
+    if (read_full_file(log_f, path, &data, &size) < 0) {
+        // do not treat it as an error
+        retval = 0;
+        goto done;
+    }
+    text_normalize_dup(data, size, normalization_to_flags(normalization), &out_data, &out_size, NULL);
+    if (size == out_size && !memcmp(data, out_data, size)) {
+        retval = 0;
+        goto done;
+    }
+    if (overwrite_file(log_f, path, out_data, out_size) < 0) {
+        goto done;
+    }
+    fprintf(log_f, "%s normalized: old size: %zu, new size: %zu", path, size, out_size);
+    retval = 0;
+
+done:;
+    xfree(out_data);
+    xfree(data);
+    return retval;
+}
+
+static int
+normalize_tests(FILE *log_f, struct problem_state *ps, char *args[])
+{
+    for (size_t i = 0; i < ps->test_u; ++i) {
+        struct test_state *pt = &ps->tests[i];
+        if (pt->input_path) {
+            if (normalize_file(log_f, pt->input_path, ps->input->file_type, ps->input->normalization) < 0) {
+                return -1;
+            }
+        }
+        if (pt->answer_path) {
+            if (normalize_file(log_f, pt->answer_path, ps->answer->file_type, ps->answer->normalization) < 0) {
+                return -1;
+            }
+        }
+    }
+    return 0;
+}
+
 struct tool_registry
 {
     const unsigned char *name;
@@ -858,6 +1031,7 @@ static const struct tool_registry tools[] =
     { "print-hash", print_hash },
     { "print-makefile", print_makefile },
     { "print-source-files", print_source_files },
+    { "normalize", normalize_tests },
 };
 
 int
@@ -869,8 +1043,10 @@ main(int argc, char *argv[])
     struct ppxml_problem *ppxml = NULL;
     struct problem_state ps = {};
     int (*tool)(FILE *log_f, struct problem_state *ps, char *args[]);
+    int no_norm_check = 0;
 
     get_program_name(argv[0]);
+    random_init();
 
     int cur_arg = 1;
     while (cur_arg < argc) {
@@ -898,7 +1074,11 @@ main(int argc, char *argv[])
     if (!tool) {
         die("invalid tool '%s'", argv[cur_arg]);
     }
+    if (tool == normalize_tests) {
+        no_norm_check = 1;
+    }
     ++cur_arg;
+
     problem_xml_file = "ejproblem.xml";
     if (read_full_file(stderr, problem_xml_file, &p_xml_s, &p_xml_z) < 0) {
         die("failed to read '%s'", problem_xml_file);
@@ -909,7 +1089,7 @@ main(int argc, char *argv[])
     }
     ps.ppxml = ppxml;
     depgraph_add_file(&ps.dg, problem_xml_file);
-    if (collect_dependencies(stderr, &ps) < 0) {
+    if (collect_dependencies(stderr, &ps, no_norm_check) < 0) {
         die("failed to collect dependencies");
     }
 
