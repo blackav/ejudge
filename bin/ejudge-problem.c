@@ -909,6 +909,47 @@ collect_dependencies(
 }
 
 static int
+compute_build_info(FILE *log_f, struct problem_state *ps)
+{
+    for (size_t i = 1; i < ps->dg.file_u; ++i) {
+        struct depgraph_file *df = &ps->dg.files[i];
+        struct stat stb;
+        errno = 0;
+        if (stat(df->path, &stb) < 0) {
+            if (errno != ENOENT) {
+                L_ERR("stat for file '%s' failed: %s", df->path, strerror(errno));
+                return -1;
+            }
+            if (!df->dep_u) {
+                L_ERR("file '%s' does not exist and is primary file", df->path);
+                return -1;
+            }
+            df->mtime_us = LONG_LONG_MIN;
+        } else {
+            df->mtime_us = stb.st_mtim.tv_sec * 1000000LL + stb.st_mtim.tv_nsec / 1000;
+        }
+    }
+    for (size_t i = ps->dg.sorted_u; i; --i) {
+        struct depgraph_file *df = &ps->dg.files[ps->dg.sorted[i-1]];
+        if (!df->dep_u) continue;
+        if (df->mtime_us == LONG_LONG_MIN) {
+            df->need_build = 1;
+            continue;
+        }
+        _Bool need_build = 0;
+        for (size_t j = 0; j < df->dep_u; ++j) {
+            struct depgraph_file *sf = &ps->dg.files[df->deps[j]];
+            if (sf->need_build || sf->mtime_us > df->mtime_us) {
+                need_build = 1;
+                break;
+            }
+        }
+        df->need_build = need_build;
+    }
+    return 0;
+}
+
+static int
 print_makefile(FILE *log_f, struct problem_state *ps, char *args[])
 {
     if (depgraph_topological_sort(&ps->dg) < 0) {
@@ -941,6 +982,33 @@ print_topological(FILE *log_f, struct problem_state *ps, char *args[])
     for (size_t i = 0; i < ps->dg.sorted_u; ++i) {
         struct depgraph_file *df = &ps->dg.files[ps->dg.sorted[i]];
         printf("%s\n", df->path);
+    }
+    return 0;
+}
+
+static int
+print_build_info(FILE *log_f, struct problem_state *ps, char *args[])
+{
+    unsigned char ts_buf[64];
+
+    if (depgraph_topological_sort(&ps->dg) < 0) {
+        L_ERR("circular dependencies detected");
+        return -1;
+    }
+    if (compute_build_info(log_f, ps) < 0) {
+        L_ERR("build is impossible");
+        return -1;
+    }
+    for (size_t i = 0; i < ps->dg.sorted_u; ++i) {
+        struct depgraph_file *df = &ps->dg.files[ps->dg.sorted[i]];
+        const unsigned char *ts;
+        if (df->mtime_us == LONG_LONG_MIN) {
+            ts = "N/A";
+        } else {
+            sprintf(ts_buf, "%lld", df->mtime_us);
+            ts = ts_buf;
+        }
+        printf("%16s %d %s\n", ts, df->need_build, df->path);
     }
     return 0;
 }
@@ -1054,6 +1122,7 @@ static const struct tool_registry tools[] =
     { "print-makefile", print_makefile },
     { "print-source-files", print_source_files },
     { "print-topological", print_topological },
+    { "print-build-info", print_build_info },
     { "normalize", normalize_tests },
 };
 

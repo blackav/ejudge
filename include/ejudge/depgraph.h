@@ -31,6 +31,8 @@ struct depgraph_file
     size_t *deps;
     size_t cmd_a, cmd_u;
     struct depgraph_command *cmds;
+    long long mtime_us;            // last modification time (microseconds), LONG_LONG_MIN if do not exist
+    _Bool need_build;
 };
 
 struct depgraph
