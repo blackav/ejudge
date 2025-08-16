@@ -923,6 +923,7 @@ static struct ppxml_path_pattern *
 ppxml_parse_path_pattern(struct ppxml_parse_context *cntx, struct xml_tree *p)
 {
     struct ppxml_path_pattern *pp = (struct ppxml_path_pattern *) p;
+    pp->normalization = -1;
     for (struct xml_attr *a = p->first; a; a = a->next) {
         if (a->tag == PPXML_A_FILE_TYPE) {
             int t = ppxml_file_type_parse(a->text);
@@ -944,6 +945,7 @@ ppxml_parse_path_pattern(struct ppxml_parse_context *cntx, struct xml_tree *p)
         return cntx->ops->err_elem_invalid(cntx, p->first_down);
     }
     pp->pattern = p->text;
+    if (pp->normalization < 0) pp->normalization = TEST_NORM_DEFAULT;
     return pp;
 }
 
@@ -951,6 +953,7 @@ static struct ppxml_testset *
 ppxml_parse_testset(struct ppxml_parse_context *cntx, struct xml_tree *p)
 {
     struct ppxml_testset *pp = (struct ppxml_testset *) p;
+    pp->normalization = -1;
     for (struct xml_attr *a = p->first; a; a = a->next) {
         if (a->tag == PPXML_A_NAME) {
             pp->name = a->text;
@@ -976,6 +979,7 @@ ppxml_parse_testset(struct ppxml_parse_context *cntx, struct xml_tree *p)
             return cntx->ops->err_attr_not_allowed(cntx, p, a);
         }
     }
+    if (pp->normalization < 0) pp->normalization = TEST_NORM_DEFAULT;
     pp->time_limit = -1;
     pp->memory_limit = -1;
     pp->test_count = -1;

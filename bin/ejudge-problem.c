@@ -81,12 +81,17 @@ static const unsigned char help_str[] =
 "--version                print the version and exit\n"
 "--help                   print this help and exit\n"
 "--                       stop option processing\n"
+"Supported tools:\n"
+"print-hash               print SHA256 hash of the source files\n"
+"print-makefile           print Makefile (for debugging)\n"
+"print-source-files       print the list of the source files\n"
+"normalize                normalize the test files\n"
 ;
 
 static __attribute__((noreturn)) void
 print_help(void)
 {
-    printf("%s usage: execute [OPTIONS]... program [ARGUMENTS]...\n", program_name);
+    printf("%s usage: ejudge-problem [OPTION]... TOOL ...\n", program_name);
     fputs(help_str, stdout);
     exit(0);
 }
@@ -971,6 +976,9 @@ normalize_file(FILE *log_f, const unsigned char *path, int file_type, int normal
     size_t size = 0;
     size_t out_size = 0;
 
+    if (file_type == PPXML_FILE_TYPE_UNKNOWN) file_type = PPXML_FILE_TYPE_TEXT;
+    if (normalization < 0) normalization = TEST_NORM_DEFAULT;
+
     if (file_type != PPXML_FILE_TYPE_TEXT && file_type != PPXML_FILE_TYPE_RELAXED_TEXT) {
         retval = 0;
         goto done;
@@ -985,7 +993,7 @@ normalize_file(FILE *log_f, const unsigned char *path, int file_type, int normal
         retval = 0;
         goto done;
     }
-    text_normalize_dup(data, size, normalization_to_flags(normalization), &out_data, &out_size, NULL);
+    out_size = text_normalize_dup(data, size, normalization_to_flags(normalization), &out_data, NULL, NULL);
     if (size == out_size && !memcmp(data, out_data, size)) {
         retval = 0;
         goto done;
@@ -993,7 +1001,7 @@ normalize_file(FILE *log_f, const unsigned char *path, int file_type, int normal
     if (overwrite_file(log_f, path, out_data, out_size) < 0) {
         goto done;
     }
-    fprintf(log_f, "%s normalized: old size: %zu, new size: %zu", path, size, out_size);
+    fprintf(log_f, "%s normalized: old size: %zu, new size: %zu\n", path, size, out_size);
     retval = 0;
 
 done:;

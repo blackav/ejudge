@@ -308,7 +308,7 @@ struct ppxml_path_pattern
     unsigned char *pattern;
     unsigned char file_type;
     unsigned char *charset;
-    unsigned char normalization;
+    signed char normalization; // -1 for undefined value
 };
 
 struct ppxml_testset
@@ -325,7 +325,7 @@ struct ppxml_testset
     int test_count;
     unsigned char generate_answer;
     unsigned char auto_count;
-    unsigned char normalization;
+    signed char normalization; // -1 for undefined value
 };
 
 struct ppxml_judging
