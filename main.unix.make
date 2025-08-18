@@ -181,7 +181,7 @@ PGC_CFILES = bin/ej-postgres-cleanup.c
 PGC_OBJECTS = $(PGC_CFILES:.c=.o)
 
 EM_CFILES = bin/ejudge-problem.c version.c
-EM_OBJECTS = $(EM_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a
+EM_OBJECTS = $(EM_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a libplatform.a
 
 INSTALLSCRIPT = ejudge-install.sh
 BINTARGETS = ejudge-jobs-cmd ejudge-edit-users ejudge-setup ejudge-configure-compilers ejudge-control ejudge-execute ejudge-contests-cmd ejudge-suid-setup ejudge-change-contests ejudge-problem
@@ -502,7 +502,7 @@ tools/struct-sizes : tools/struct-sizes.o
 	$(LD) $(LDFLAGS) $^ -o $@ $(LDLIBS) ${EXPAT_LIB}
 
 ejudge-problem: ${EM_OBJECTS}
-	${LD} ${LDFLAGS} $^ libcommon.a -o $@ ${LDLIBS} ${EXPAT_LIB}
+	${LD} ${LDFLAGS} $^ libcommon.a libplatform.a -o $@ ${LDLIBS} ${EXPAT_LIB}
 
 ejudge-install.sh : ejudge-setup
 	./ejudge-setup -b -i scripts/lang_ids.cfg

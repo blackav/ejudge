@@ -16,6 +16,7 @@
 
 #include "ejudge/config.h"
 #include "ejudge/ej_types.h"
+#include "ejudge/fileutl.h"
 #include "ejudge/misctext.h"
 #include "ejudge/polygon_xml.h"
 #include "ejudge/problem_config.h"
@@ -25,6 +26,7 @@
 #include "ejudge/safe_format.h"
 #include "ejudge/xalloc.h"
 #include "ejudge/checksum.h"
+#include "ejudge/osdeps.h"
 
 #include <errno.h>
 #include <fcntl.h>
@@ -950,6 +952,413 @@ compute_build_info(FILE *log_f, struct problem_state *ps)
 }
 
 static int
+make_target_path(
+        FILE *log_f,
+        unsigned char *buf,
+        size_t bufsize,
+        const unsigned char *path,
+        const unsigned char *target,
+        int create_flag)
+{
+    unsigned char dir[PATH_MAX];
+    unsigned char name[PATH_MAX];
+    unsigned char tdir[PATH_MAX];
+
+    if (split_path(log_f, "path", path, dir, sizeof(dir), name, sizeof(name)) < 0) {
+        L_ERR("split_path for '%s' failed", path);
+        return -1;
+    }
+    if (dir[0] && strcmp(dir, ".")) {
+        // non-trivial dir
+        if (snprintf(tdir, sizeof(tdir), "%s/%s", target, dir) >= sizeof(tdir)) {
+            L_ERR("path '%s/%s' is too long", target, dir);
+            return -1;
+        }
+        if (create_flag && os_MakeDirPath(tdir, 0755) < 0) {
+            L_ERR("failed to create directory '%s'", tdir);
+            return -1;
+        }
+    } else {
+        if (snprintf(tdir, sizeof(tdir), "%s", target) >= (int) sizeof(tdir)) {
+            L_ERR("path '%s' is too long", target);
+            return -1;
+        }
+    }
+    if (snprintf(buf, bufsize, "%s/%s", tdir, name) >= (int) bufsize) {
+        L_ERR("path %s/%s is too long", tdir, name);
+        return -1;
+    }
+    return 0;
+}
+
+static int
+copy_file(FILE *log_f, const unsigned char *src, const unsigned char *targetdir)
+{
+    int retval = -1;
+    struct stat sb;
+    struct stat sb2;
+    unsigned char fullpath[PATH_MAX];
+    int rfd = -1;
+    int wfd = -1;
+    __attribute__((unused)) int _;
+
+    if (lstat(src, &sb) < 0) {
+        L_ERR("source file '%s' stat failed: %s", src, strerror(errno));
+        goto done;
+    }
+    if (!S_ISREG(sb.st_mode)) {
+        L_ERR("source file '%s' is not regular", src);
+        goto done;
+    }
+    if (make_target_path(log_f, fullpath, sizeof(fullpath), src, targetdir, 1) < 0) {
+        goto done;
+    }
+
+    rfd = open(src, O_RDONLY | O_NOCTTY | O_NOFOLLOW | O_NONBLOCK, 0);
+    if (rfd < 0) {
+        L_ERR("failed to open '%s': %s", src, strerror(errno));
+        goto done;
+    }
+    if (fstat(rfd, &sb2) < 0) {
+        L_ERR("fstat failed: %s", strerror(errno));
+        goto done;
+    }
+    if (sb.st_dev != sb2.st_dev || sb.st_ino != sb2.st_ino) {
+        L_ERR("file '%s' changed", src);
+        goto done;
+    }
+    wfd = open(fullpath, O_WRONLY | O_TRUNC | O_CREAT | O_NOCTTY | O_NOFOLLOW | O_NONBLOCK, 0600);
+    if (wfd < 0) {
+        L_ERR("failed to open '%s': %s", fullpath, strerror(errno));
+        goto done;
+    }
+    size_t size = sb2.st_size;
+    if (size != sb2.st_size) {
+        L_ERR("file '%s' too big", src);
+        unlink(fullpath);
+        goto done;
+    }
+    while (size > 0) {
+        ssize_t ret = copy_file_range(rfd, NULL, wfd, NULL, size, 0);
+        if (ret < 0) {
+            L_ERR("copy_file_range failed: %s", strerror(errno));
+            unlink(fullpath);
+            goto done;
+        }
+        if (!ret) {
+            L_ERR("zero return value");
+            unlink(fullpath);
+            goto done;
+        }
+        size -= ret;
+    }
+    if (close(wfd) < 0) {
+        L_ERR("close failed: %s", strerror(errno));
+        wfd = -1;
+        unlink(fullpath);
+        goto done;
+    }
+    wfd = -1;
+    close(rfd); rfd = -1;
+
+    _ = chmod(fullpath, sb2.st_mode & 07777);
+    _ = chown(fullpath, sb2.st_uid, sb2.st_gid);
+    retval = 0;
+
+done:;
+    if (rfd >= 0) close(rfd);
+    if (wfd >= 0) close(wfd);
+    return retval;
+}
+
+static int
+are_files_equal(FILE *log_f, const unsigned char *path1, const unsigned char *path2)
+{
+    int retval = -1;
+    struct stat s1, s2;
+    int f1 = -1, f2 = -1;
+    size_t size = 0;
+    unsigned char *mem1 = MAP_FAILED;
+    unsigned char *mem2 = MAP_FAILED;
+
+    if ((f1 = open(path1, O_RDONLY | O_CLOEXEC | O_NOCTTY | O_NONBLOCK, 0)) < 0) {
+        L_ERR("failed to open '%s': %s", path1, strerror(errno));
+        goto done;
+    }
+    if (fstat(f1, &s1) < 0) {
+        L_ERR("fstat failed: %s", strerror(errno));
+        goto done;
+    }
+    if (!S_ISREG(s1.st_mode)) {
+        L_ERR("file '%s' is not regular", path1);
+        goto done;
+    }
+
+    if ((f2 = open(path2, O_RDONLY | O_CLOEXEC | O_NOCTTY | O_NONBLOCK, 0)) < 0) {
+        L_ERR("failed to open '%s': %s", path2, strerror(errno));
+        goto done;
+    }
+    if (fstat(f2, &s2) < 0) {
+        L_ERR("fstat failed: %s", strerror(errno));
+        goto done;
+    }
+    if (!S_ISREG(s2.st_mode)) {
+        L_ERR("file '%s' is not regular", path2);
+        goto done;
+    }
+
+    if (s1.st_size == 0 && s2.st_size == 0) {
+        // both empty files
+        retval = 1;
+        goto done;
+    }
+    if (s1.st_size != s2.st_size) {
+        // different sizes
+        retval = 0;
+        goto done;
+    }
+    size = s1.st_size;
+    if (size != s1.st_size) {
+        L_ERR("files are too big to compare");
+        goto done;
+    }
+
+    if ((mem1 = mmap(NULL, size, PROT_READ, MAP_PRIVATE, f1, 0)) == MAP_FAILED) {
+        L_ERR("mmap failed: %s", strerror(errno));
+        goto done;
+    }
+    if ((mem2 = mmap(NULL, size, PROT_READ, MAP_PRIVATE, f2, 0)) == MAP_FAILED) {
+        L_ERR("mmap failed: %s", strerror(errno));
+        goto done;
+    }
+    retval = memcmp(mem1, mem2, size) == 0;
+
+done:;
+    if (f1 >= 0) close(f1);
+    if (f2 >= 0) close(f2);
+    if (mem1 != MAP_FAILED) munmap(mem1, size);
+    if (mem2 != MAP_FAILED) munmap(mem2, size);
+    return retval;
+}
+
+static int
+move_file(FILE *log_f, const unsigned char *src, const unsigned char *dst)
+{
+    int retval = -1;
+    struct stat ds;
+    struct stat ss;
+    __attribute__((unused)) int _;
+    int r;
+
+    if (stat(src, &ss) < 0) {
+        L_ERR("stat '%s' failed: %s", src, strerror(errno));
+        goto done;
+    }
+    errno = 0;
+    if (stat(dst, &ds) < 0) {
+        if (errno != ENOENT) {
+            L_ERR("stat '%s' failed: %s", dst, strerror(errno));
+            goto done;
+        }
+        if (rename(src, dst) < 0) {
+            L_ERR("rename '%s'->'%s' failed: %s", src, dst, strerror(errno));
+            goto done;
+        }
+        retval = 0;
+        goto done;
+    }
+    if (S_ISDIR(ds.st_mode)) {
+        L_ERR("destination '%s' must not be directory", dst);
+        goto done;
+    }
+    if (!S_ISREG(ds.st_mode)) {
+        if (rename(src, dst) < 0) {
+            L_ERR("rename '%s'->'%s' failed: %s", src, dst, strerror(errno));
+            goto done;
+        }
+        retval = 0;
+        goto done;
+    }
+    r = are_files_equal(log_f, src, dst);
+    if (r < 0) {
+        goto done;
+    }
+    if (r) {
+        // TODO: touch the destination file?
+        retval = 0;
+        goto done;
+    }
+    if (rename(src, dst) < 0) {
+        L_ERR("rename '%s'->'%s' failed: %s", src, dst, strerror(errno));
+        goto done;
+    }
+    _ = chmod(dst, ds.st_mode & 07777);
+    _ = chown(dst, ds.st_uid, ds.st_gid);
+    retval = 0;
+
+done:;
+    return retval;
+}
+
+static int
+run_command(
+        FILE *log_f,
+        struct problem_state *ps,
+        const struct depgraph_file *df,
+        const struct depgraph_command *cmd)
+{
+    int retval = -1;
+
+    // TODO: implement properly
+    int r = system(cmd->command);
+    if (r) {
+        L_ERR("command '%s' failed", cmd->command);
+        goto done;
+    }
+    retval = 0;
+
+done:;
+    return retval;
+}
+
+static int
+run_commands(
+        FILE *log_f,
+        struct problem_state *ps,
+        const struct depgraph_file *df)
+{
+    int retval = -1;
+
+    for (size_t i = 0; i < df->cmd_u; ++i) {
+        if (run_command(log_f, ps, df, &df->cmds[i]) < 0) {
+            goto done;
+        }
+    }
+    retval = 0;
+
+done:;
+    return retval;
+}
+
+static int
+build_target(
+        FILE *log_f,
+        struct problem_state *ps,
+        const struct depgraph_file *df,
+        const unsigned char *build_dir)
+{
+    int retval = -1;
+    unsigned char local_dir[PATH_MAX];
+    local_dir[0] = 0;
+    int curdir = -1;
+    unsigned char buildres[PATH_MAX];
+
+    snprintf(local_dir, sizeof(local_dir), "%s/b%x", build_dir, random_u32());
+    if (mkdir(local_dir, 0700) < 0) {
+        L_ERR("failed to create build directory '%s': %s", local_dir, strerror(errno));
+        local_dir[0] = 0;
+        goto done;
+    }
+
+    // copy dependencies
+    for (size_t i = 0; i < df->dep_u; ++i) {
+        struct depgraph_file *sf = &ps->dg.files[df->deps[i]];
+        if (copy_file(log_f, sf->path, local_dir) < 0) {
+            L_ERR("failed to copy '%s' to '%s'", sf->path, local_dir);
+            goto done;
+        }
+    }
+
+    // very dumb version of running a command
+    curdir = open(".", O_RDONLY | O_DIRECTORY | O_PATH, 0);
+    if (curdir < 0) {
+        L_ERR("failed to open current directory: %s", strerror(errno));
+        goto done;
+    }
+    if (chdir(local_dir) < 0) {
+        L_ERR("failed to change directory to '%s': %s", local_dir, strerror(errno));
+        goto done;
+    }
+
+    if (run_commands(log_f, ps, df) >= 0) {
+        retval = 0;
+    }
+
+    if (fchdir(curdir) < 0) {
+        L_ERR("failed to change directory back");
+        retval = -1;
+        goto done;
+    }
+    close(curdir);
+
+    if (make_target_path(log_f, buildres, sizeof(buildres), df->path, local_dir, 0) < 0) {
+        retval = -1;
+        goto done;
+    }
+    if (move_file(log_f, buildres, df->path) < 0) {
+        retval = -1;
+        goto done;
+    }
+
+done:;
+    if (local_dir[0]) {
+        remove_directory_recursively(local_dir, 0);
+    }
+    if (curdir >= 0) close(curdir);
+    return retval;
+}
+
+static int
+do_build(FILE *log_f, struct problem_state *ps)
+{
+    int retval = -1;
+    unsigned char build_dir[PATH_MAX];
+
+    build_dir[0] = 0;
+    snprintf(build_dir, sizeof(build_dir), "build%llx", random_u64());
+    if (mkdir(build_dir, 0700) < 0) {
+        L_ERR("failed to create build directory '%s': %s", build_dir, strerror(errno));
+        build_dir[0] = 0;
+        goto done;
+    }
+
+    for (size_t i = ps->dg.sorted_u; i; --i) {
+        struct depgraph_file *df = &ps->dg.files[ps->dg.sorted[i-1]];
+        if (!df->need_build) continue;
+        if (build_target(log_f, ps, df, build_dir) < 0) {
+            L_ERR("build of '%s' failed", df->path);
+            goto done;
+        }
+    }
+    retval = 0;
+
+done:;
+    if (build_dir[0]) {
+        remove_directory_recursively(build_dir, 0);
+    }
+    return retval;
+}
+
+static int
+build(FILE *log_f, struct problem_state *ps, char *args[])
+{
+    if (depgraph_topological_sort(&ps->dg) < 0) {
+        L_ERR("circular dependencies detected");
+        return -1;
+    }
+    if (compute_build_info(log_f, ps) < 0) {
+        L_ERR("build is impossible");
+        return -1;
+    }
+    if (do_build(log_f, ps) < 0) {
+        L_ERR("build failed");
+        return -1;
+    }
+
+    return 0;
+}
+
+static int
 print_makefile(FILE *log_f, struct problem_state *ps, char *args[])
 {
     if (depgraph_topological_sort(&ps->dg) < 0) {
@@ -1124,6 +1533,7 @@ static const struct tool_registry tools[] =
     { "print-topological", print_topological },
     { "print-build-info", print_build_info },
     { "normalize", normalize_tests },
+    { "build", build },
 };
 
 int
