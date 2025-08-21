@@ -1359,6 +1359,22 @@ build(FILE *log_f, struct problem_state *ps, char *args[])
 }
 
 static int
+clean(FILE *log_f, struct problem_state *ps, char *args[])
+{
+    if (depgraph_topological_sort(&ps->dg) < 0) {
+        L_ERR("circular dependencies detected");
+        return -1;
+    }
+    for (size_t i = 0; i < ps->dg.sorted_u; ++i) {
+        struct depgraph_file *df = &ps->dg.files[ps->dg.sorted[i]];
+        if (!df->dep_u) continue;
+        unlink(df->path);
+    }
+
+    return 0;
+}
+
+static int
 print_makefile(FILE *log_f, struct problem_state *ps, char *args[])
 {
     if (depgraph_topological_sort(&ps->dg) < 0) {
@@ -1534,6 +1550,7 @@ static const struct tool_registry tools[] =
     { "print-build-info", print_build_info },
     { "normalize", normalize_tests },
     { "build", build },
+    { "clean", clean },
 };
 
 int
