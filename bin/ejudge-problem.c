@@ -41,6 +41,7 @@
 #include <sys/types.h>
 #include <time.h>
 #include <unistd.h>
+#include <zip.h>
 
 static const unsigned char *program_name = "";
 
@@ -245,6 +246,53 @@ overwrite_file(FILE *log_f, const unsigned char *path, unsigned char *data, size
     fd = -1;
     _ = chmod(tmp_path, ist.st_mode & 07777);
     _ = chown(tmp_path, ist.st_uid, ist.st_gid);
+    if (rename(tmp_path, path) < 0) {
+        L_ERR("rename to '%s' failed: %s", path, strerror(errno));
+        unlink(tmp_path);
+        return -1;
+    }
+    return 0;
+}
+
+static int
+write_file(FILE *log_f, const unsigned char *path, unsigned char *data, size_t size)
+{
+    unsigned char tmp_path[PATH_MAX];
+    int fd = -1;
+    if (snprintf(tmp_path, sizeof tmp_path, "%s.%d", path, random_u32()) >= (int) sizeof tmp_path) {
+        L_ERR("path to the temporary file is too long: '%s'", tmp_path);
+        return -1;
+    }
+    fd = open(tmp_path, O_WRONLY | O_CREAT | O_EXCL, 0666);
+    if (fd < 0) {
+        L_ERR("failed to open output file '%s': %s", tmp_path, strerror(errno));
+        return -1;
+    }
+    size_t rem = size;
+    const unsigned char *p = data;
+    while (rem > 0) {
+        ssize_t w = write(fd, p, rem);
+        if (!w) {
+            L_ERR("write returned 0!");
+            close(fd);
+            unlink(tmp_path);
+            return -1;
+        }
+        if (w < 0) {
+            L_ERR("write failed to '%s': %s", tmp_path, strerror(errno));
+            close(fd);
+            unlink(tmp_path);
+            return -1;
+        }
+        p += w;
+        rem -= w;
+    }
+    if (close(fd) < 0) {
+        L_ERR("close of '%s' failed: %s", tmp_path, strerror(errno));
+        unlink(tmp_path);
+        return -1;
+    }
+    fd = -1;
     if (rename(tmp_path, path) < 0) {
         L_ERR("rename to '%s' failed: %s", path, strerror(errno));
         unlink(tmp_path);
@@ -1536,6 +1584,122 @@ normalize_tests(FILE *log_f, struct problem_state *ps, char *args[])
     return 0;
 }
 
+static int
+create_zip(FILE *log_f, struct problem_state *ps, unsigned char **p_data, size_t *p_size)
+{
+    int retval = -1;
+    zip_error_t ze = {};
+    zip_t *zz = NULL;
+    zip_source_t *zs = NULL;
+    size_t size = 0;
+    unsigned char *data = NULL;
+    struct checksum_context cc = {};
+
+    for (size_t i = 1; i < ps->dg.file_u; ++i) {
+        if (!ps->dg.files[i].dep_u) {
+            checksum_add_file(&cc, ps->dg.files[i].path);
+        }
+    }
+    checksum_sort(&cc);
+
+    zs = zip_source_buffer_create(NULL, 0, 0, &ze);
+    if (!zs) {
+        L_ERR("failed to create zip buffer: %s", zip_error_strerror(&ze));
+        goto done;
+    }
+    zip_source_keep(zs);
+    zz = zip_open_from_source(zs, ZIP_TRUNCATE, &ze);
+    if (!zz) {
+        L_ERR("failed to open zip: %s", zip_error_strerror(&ze));
+        goto done;
+    }
+    for (size_t i = 0; i < cc.path_u; ++i) {
+        size_t fz = 0;
+        unsigned char *fd = NULL;
+        if (read_full_file(log_f, cc.paths[i], &fd, &fz) < 0) {
+            L_ERR("failed to read file '%s'", cc.paths[i]);
+            goto done;
+        }
+        zip_source_t *fs = zip_source_buffer(zz, fd, fz, 1);
+        if (!fs) {
+            L_ERR("failed to add '%s: %s", cc.paths[i], zip_strerror(zz));
+            free(fd);
+            goto done;
+        }
+        fd = NULL; fz = 0;
+        if (zip_file_add(zz, cc.paths[i], fs, 0) < 0) {
+            L_ERR("failed to add '%s': %s", cc.paths[i], zip_strerror(zz));
+            zip_source_free(fs);
+            goto done;
+        }
+    }
+    int zc = zip_close(zz);
+    if (zc != 0) {
+        zip_error_init_with_code(&ze, zc);
+        L_ERR("failed to close zip: %s", zip_error_strerror(&ze));
+        zz = NULL;
+        goto done;
+    }
+    zz = NULL;
+
+    if (zip_source_open(zs) < 0) {
+        L_ERR("failed to open zip: %s", zip_error_strerror(zip_source_error(zs)));
+        goto done;
+    }
+    zip_source_seek(zs, 0, SEEK_END);
+    long long ss = zip_source_tell(zs);
+    size = ss;
+    if (size != ss) {
+        L_ERR("zip file is too big");
+        goto done;
+    }
+    zip_source_seek(zs, 0, SEEK_SET);
+    data = xmalloc(size);
+    zip_source_read(zs, data, size);
+    *p_data = data;
+    *p_size = size;
+    retval = 0;
+
+done:;
+    if (zz) zip_close(zz);
+    if (zs) zip_source_free(zs);
+    checksum_free(&cc);
+    return retval;
+}
+
+static int
+create_zip_tool(FILE *log_f, struct problem_state *ps, char *args[])
+{
+    int retval = -1;
+    unsigned char *data = NULL;
+    size_t size = 0;
+    int arg_ind = 0;
+    const unsigned char *output_path = NULL;
+
+    if (!args[arg_ind]) {
+        L_ERR("output zip file name expected");
+        goto done;
+    }
+    output_path = args[arg_ind++];
+    if (args[arg_ind]) {
+        L_ERR("extra arguments");
+        goto done;
+    }
+
+    if (create_zip(log_f, ps, &data, &size) < 0) {
+        goto done;
+    }
+    if (write_file(log_f, output_path, data, size) < 0) {
+        goto done;
+    }
+
+    retval = 0;
+
+done:;
+    xfree(data);
+    return retval;
+}
+
 struct tool_registry
 {
     const unsigned char *name;
@@ -1551,6 +1715,7 @@ static const struct tool_registry tools[] =
     { "normalize", normalize_tests },
     { "build", build },
     { "clean", clean },
+    { "zip", create_zip_tool }
 };
 
 int
