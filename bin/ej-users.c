@@ -1143,8 +1143,10 @@ static int
 check_pk_map_contest(
         struct client_state *p,
         int pkt_len,
-        struct userlist_pk_map_contest *data)
+        const void *vdata)
 {
+  const struct userlist_pk_map_contest *data = vdata;
+
   if (pkt_len != sizeof(*data)) {
     CONN_BAD("packet length mismatch");
     return -1;
@@ -1156,9 +1158,11 @@ static int
 check_pk_edit_field(
         struct client_state *p,
         int pkt_len,
-        const struct userlist_pk_edit_field *data)
+        const void *vdata)
 {
   int value_len;
+
+  const struct userlist_pk_edit_field *data = vdata;
 
   if (pkt_len < sizeof(*data)) {
     CONN_BAD("bad packet length: %d instead of %d", pkt_len,(int)sizeof(*data));
@@ -1182,8 +1186,10 @@ static int
 check_pk_delete_info(
         struct client_state *p,
         int pkt_len,
-        const struct userlist_pk_delete_info *data)
+        const void *vdata)
 {
+  const struct userlist_pk_delete_info *data = vdata;
+
   if (pkt_len != sizeof(*data)) {
     CONN_BAD("bad packet length: %d instead of %d",pkt_len,(int) sizeof(*data));
     return -1;
@@ -1196,8 +1202,10 @@ static int
 check_pk_register_contest(
         struct client_state *p,
         int pkt_len,
-        const struct userlist_pk_register_contest *data)
+        const void *vdata)
 {
+  const struct userlist_pk_register_contest *data = vdata;
+
   if (pkt_len != sizeof(*data)) {
     CONN_BAD("bad packet length: %d instead of %d",pkt_len,(int) sizeof(*data));
     return -1;
@@ -1210,10 +1218,12 @@ static int
 check_pk_set_password(
         struct client_state *p,
         int pkt_len,
-        const struct userlist_pk_set_password *data)
+        const void *vdata)
 {
   const char *old_pwd, *new_pwd, *admin_pwd;
   int old_len, new_len, admin_len, exp_len;
+
+  const struct userlist_pk_set_password *data = vdata;
 
   if (pkt_len < sizeof(*data)) {
     CONN_BAD("packet too small: %d instead of %d",
@@ -1255,9 +1265,11 @@ static int
 check_pk_set_user_info(
         struct client_state *p,
         int pkt_len,
-        const struct userlist_pk_set_user_info *data)
+        const void *vdata)
 {
   int xml_len, exp_len;
+
+  const struct userlist_pk_set_user_info *data = vdata;
 
   if (pkt_len < sizeof(*data)) {
     CONN_BAD("packet too small: %d instead of %d",
@@ -1282,9 +1294,11 @@ static int
 check_pk_list_users_2(
         struct client_state *p,
         int pkt_len,
-        const struct userlist_pk_list_users_2 *data)
+        const void *vdata)
 {
   int filter_len, exp_len;
+
+  const struct userlist_pk_list_users_2 *data = vdata;
 
   if (pkt_len < sizeof(*data)) {
     CONN_BAD("packet too small: %d instead of %d",
@@ -1318,8 +1332,10 @@ static int
 check_pk_create_user_2(
         struct client_state *p,
         int pkt_len,
-        const struct userlist_pk_create_user_2 *data)
+        const void *vdata)
 {
+  const struct userlist_pk_create_user_2 *data = vdata;
+
   if (pkt_len < sizeof(*data)) {
     CONN_BAD("packet too small: %d instead of %d", pkt_len, (int) sizeof(*data));
     return -1;
@@ -1768,9 +1784,10 @@ send_registration_email(
 }
 
 static void
-cmd_register_new_2(struct client_state *p,
-                   int pkt_len,
-                   struct userlist_pk_register_new * data)
+cmd_register_new_2(
+        struct client_state *p,
+        int pkt_len,
+        void *vdata)
 {
   unsigned char * login;
   unsigned char * email;
@@ -1785,6 +1802,8 @@ cmd_register_new_2(struct client_state *p,
   int user_id, serial = 0, action = 3, serial_step = 1, n;
   const struct userlist_user *u;
   unsigned char login_buf[1024];
+
+  struct userlist_pk_register_new * data = vdata;
 
   // validate packet
   login = data->data;
@@ -2064,9 +2083,10 @@ cmd_register_new_2(struct client_state *p,
 }
 
 static void
-cmd_register_new(struct client_state *p,
-                 int pkt_len,
-                 struct userlist_pk_register_new * data)
+cmd_register_new(
+        struct client_state *p,
+        int pkt_len,
+        void *vdata)
 {
   const struct userlist_user *u;
   char * buf;
@@ -2091,6 +2111,8 @@ cmd_register_new(struct client_state *p,
   unsigned char login_buf[1024];
   unsigned char *self_url = 0;
   int self_url_len;
+
+  struct userlist_pk_register_new *data = vdata;
 
   // validate packet
   login = data->data;
@@ -2318,9 +2340,10 @@ cmd_register_new(struct client_state *p,
 }
 
 static void
-cmd_recover_password_1(struct client_state *p,
-                       int pkt_len,
-                       struct userlist_pk_register_new *data)
+cmd_recover_password_1(
+        struct client_state *p,
+        int pkt_len,
+        void *vdata)
 {
   unsigned char *login, *email, *originator_email, *self_url;
   int login_len, email_len, exp_pkt_len, errcode, user_id, self_url_len;
@@ -2335,6 +2358,8 @@ cmd_recover_password_1(struct client_state *p,
   char *msg_text = 0;
   size_t msg_size = 0;
   unsigned char *mail_args[7];
+
+  struct userlist_pk_register_new *data = vdata;
 
   login = data->data;
   login_len = strlen(login);
@@ -2503,9 +2528,10 @@ cmd_recover_password_1(struct client_state *p,
 }
 
 static void
-cmd_recover_password_2(struct client_state *p,
-                       int pkt_len,
-                       struct userlist_pk_check_cookie *data)
+cmd_recover_password_2(
+        struct client_state *p,
+        int pkt_len,
+        void *vdata)
 {
   unsigned char logbuf[1024], passwd_buf[64];
   const struct userlist_cookie *cookie = 0;
@@ -2527,6 +2553,8 @@ cmd_recover_password_2(struct client_state *p,
   int user_id = 0, regstatus = -1;
   unsigned char *login = 0;
   unsigned char *email = 0;
+
+  struct userlist_pk_check_cookie *data = vdata;
 
   if (pkt_len != sizeof(*data)) {
     CONN_BAD("bad packet length: %d", pkt_len);
@@ -2723,7 +2751,7 @@ static void
 cmd_login(
         struct client_state *p,
         int pkt_len,
-        struct userlist_pk_do_login * data)
+        void *vdata)
 {
   const struct userlist_user *u = 0;
   struct userlist_pk_login_ok * answer;
@@ -2740,6 +2768,8 @@ cmd_login(
   const struct contest_desc *cnts = 0;
   const unsigned char *name = 0;
   unsigned char cbuf[64];
+
+  struct userlist_pk_do_login *data = vdata;
 
   if (pkt_len < sizeof(*data)) {
     CONN_BAD("packet is too small: %d", pkt_len);
@@ -2869,7 +2899,7 @@ static void
 cmd_check_user(
         struct client_state *p,
         int pkt_len,
-        struct userlist_pk_do_login *data)
+        void *vdata)
 {
   const struct userlist_user *u = 0;
   struct userlist_pk_login_ok * answer;
@@ -2886,6 +2916,8 @@ cmd_check_user(
   const struct contest_desc *cnts = 0;
   const unsigned char *name = 0;
   unsigned char cbuf[64];
+
+  struct userlist_pk_do_login *data = vdata;
 
   if (pkt_len < sizeof(*data)) {
     CONN_BAD("packet is too small: %d", pkt_len);
@@ -3008,7 +3040,7 @@ static void
 cmd_check_user_2(
         struct client_state *p,
         int pkt_len,
-        struct userlist_pk_do_login *data)
+        void *vdata)
 {
   const struct userlist_user *u = 0;
   struct userlist_pk_login_ok * answer;
@@ -3024,6 +3056,8 @@ cmd_check_user_2(
   int user_id;
   const unsigned char *name = 0;
   unsigned char cbuf[64];
+
+  struct userlist_pk_do_login *data = vdata;
 
   if (pkt_len < sizeof(*data)) {
     CONN_BAD("packet is too small: %d", pkt_len);
@@ -3127,7 +3161,7 @@ static void
 cmd_team_login(
         struct client_state *p,
         int pkt_len,
-        struct userlist_pk_do_login * data)
+        void *vdata)
 {
   unsigned char *login_ptr, *passwd_ptr, *name_ptr;
   const struct userlist_user *u = 0;
@@ -3144,6 +3178,8 @@ cmd_team_login(
   int orig_contest_id;
   const unsigned char *name = 0;
   unsigned char cbuf[64];
+
+  struct userlist_pk_do_login * data = vdata;
 
   if (pkt_len < sizeof(*data)) {
     CONN_BAD("packet length is too small: %d", pkt_len);
@@ -3316,7 +3352,7 @@ static void
 cmd_team_check_user(
         struct client_state *p,
         int pkt_len,
-        struct userlist_pk_do_login *data)
+        void *vdata)
 {
   unsigned char *login_ptr, *passwd_ptr, *name_ptr;
   const struct userlist_user *u = 0;
@@ -3332,6 +3368,8 @@ cmd_team_check_user(
   int user_id, orig_contest_id = 0;
   const unsigned char *name = 0;
   unsigned char cbuf[64];
+
+  struct userlist_pk_do_login *data = vdata;
 
   if (pkt_len < sizeof(*data)) {
     CONN_BAD("packet length is too small: %d", pkt_len);
@@ -3505,7 +3543,7 @@ static void
 cmd_priv_login(
         struct client_state *p,
         int pkt_len,
-        struct userlist_pk_do_login *data)
+        void *vdata)
 {
   unsigned char *login_ptr, *passwd_ptr, *name_ptr;
   const struct contest_desc *cnts = 0;
@@ -3523,6 +3561,8 @@ cmd_priv_login(
   const struct userlist_user_info *ui;
   const unsigned char *name = 0;
   unsigned char cbuf[64];
+
+  struct userlist_pk_do_login *data = vdata;
 
   if (pkt_len < sizeof(*data)) {
     CONN_BAD("packet length too small: %d", pkt_len);
@@ -3737,7 +3777,7 @@ static void
 cmd_priv_check_user(
         struct client_state *p,
         int pkt_len,
-        struct userlist_pk_do_login *data)
+        void *vdata)
 {
   unsigned char *login_ptr, *passwd_ptr, *name_ptr;
   struct passwd_internal pwdint;
@@ -3754,6 +3794,8 @@ cmd_priv_check_user(
   const struct userlist_user_info *ui;
   const struct contest_desc *cnts = 0;
   const unsigned char *name = 0;
+
+  struct userlist_pk_do_login *data = vdata;
 
   if (pkt_len < sizeof(*data)) {
     CONN_BAD("packet length too small: %d", pkt_len);
@@ -3924,7 +3966,7 @@ static void
 cmd_priv_check_user_2(
         struct client_state *p,
         int pkt_len,
-        struct userlist_pk_do_login *data)
+        void *vdata)
 {
   unsigned char *login_ptr, *passwd_ptr;
   struct passwd_internal pwdint;
@@ -3937,6 +3979,8 @@ cmd_priv_check_user_2(
   unsigned char logbuf[1024];
   unsigned char cbuf[64];
   int user_id;
+
+  struct userlist_pk_do_login *data = vdata;
 
   if (pkt_len < sizeof(*data)) {
     CONN_BAD("packet length too small: %d", pkt_len);
@@ -4084,7 +4128,7 @@ static void
 cmd_priv_check_password(
         struct client_state *p,
         int pkt_len,
-        struct userlist_pk_do_login *data)
+        void *vdata)
 {
   unsigned char *login_ptr, *passwd_ptr, *name_ptr;
   struct passwd_internal pwdint;
@@ -4098,6 +4142,8 @@ cmd_priv_check_password(
   int user_id;
   const struct userlist_user_info *ui;
   const unsigned char *name = 0;
+
+  struct userlist_pk_do_login *data = vdata;
 
   if (pkt_len < sizeof(*data)) {
     CONN_BAD("packet length too small: %d", pkt_len);
@@ -4199,7 +4245,7 @@ static void
 cmd_check_cookie(
         struct client_state *p,
         int pkt_len,
-        struct userlist_pk_check_cookie * data)
+        void *vdata)
 {
   const struct userlist_user *u;
   struct userlist_pk_login_ok * answer;
@@ -4214,6 +4260,8 @@ cmd_check_cookie(
   const struct contest_desc *cnts = 0;
   int orig_contest_id = 0;
   unsigned char *name = 0;
+
+  struct userlist_pk_check_cookie *data = vdata;
 
   if (pkt_len != sizeof(*data)) {
     CONN_BAD("bad packet length: %d", pkt_len);
@@ -4338,7 +4386,7 @@ static void
 cmd_team_check_cookie(
         struct client_state *p,
         int pkt_len,
-        struct userlist_pk_check_cookie * data)
+        void *vdata)
 {
   const struct contest_desc *cnts = 0;
   const struct userlist_user *u = 0;
@@ -4358,6 +4406,8 @@ cmd_team_check_cookie(
   const unsigned char *user_login = 0;
   int user_id = 0;
   int need_touch_login_time = 0;
+
+  struct userlist_pk_check_cookie * data = vdata;
 
   if (pkt_len != sizeof(*data)) {
     CONN_BAD("bad packet length: %d", pkt_len);
@@ -4513,7 +4563,7 @@ static void
 cmd_priv_check_cookie(
         struct client_state *p,
         int pkt_len,
-        struct userlist_pk_check_cookie *data)
+        void *vdata)
 {
   const struct contest_desc *cnts = 0;
   const struct userlist_user *u = 0;
@@ -4530,6 +4580,8 @@ cmd_priv_check_cookie(
   unsigned char logbuf[1024];
   unsigned char cbuf[64];
   const unsigned char *name = 0;
+
+  struct userlist_pk_check_cookie *data = vdata;
 
   if (pkt_len != sizeof(*data)) {
     CONN_BAD("bad packet length: %d", pkt_len);
@@ -4700,7 +4752,7 @@ static void
 cmd_priv_cookie_login(
         struct client_state *p,
         int pkt_len,
-        struct userlist_pk_cookie_login *data)
+        void *vdata)
 {
   const struct contest_desc *cnts = 0;
   const struct userlist_user *u = 0;
@@ -4716,6 +4768,8 @@ cmd_priv_cookie_login(
   ej_tsc_t tsc1, tsc2;
   unsigned char logbuf[1024], cbuf[64];
   const unsigned char *name = 0;
+
+  struct userlist_pk_cookie_login *data = vdata;
 
   if (pkt_len != sizeof(*data)) {
     CONN_BAD("bad packet length: %d", pkt_len);
@@ -4911,11 +4965,13 @@ static void
 cmd_do_logout(
         struct client_state *p,
         int pkt_len,
-        struct userlist_pk_do_logout * data)
+        void *vdata)
 {
   const struct userlist_cookie *cookie;
   unsigned char logbuf[1024];
   unsigned char cbuf[64];
+
+  struct userlist_pk_do_logout *data = vdata;
 
   if (pkt_len != sizeof(*data)) {
     CONN_BAD("packet length mismatch: %d", pkt_len);
@@ -4975,9 +5031,10 @@ cmd_do_logout(
  * A user may only get information about himself.
  */
 static void
-cmd_get_user_info(struct client_state *p,
-                  int pkt_len,
-                  struct userlist_pk_get_user_info *data)
+cmd_get_user_info(
+        struct client_state *p,
+        int pkt_len,
+        void *vdata)
 {
   FILE *f = 0;
   char *xml_ptr = 0;
@@ -4988,6 +5045,8 @@ cmd_get_user_info(struct client_state *p,
   unsigned char logbuf[1024];
   const struct contest_desc *cnts = 0;
   int orig_contest_id;
+
+  struct userlist_pk_get_user_info *data = vdata;
 
   if (pkt_len != sizeof(*data)) {
     CONN_BAD("packet length mismatch: %d", pkt_len);
@@ -5052,9 +5111,10 @@ cmd_get_user_info(struct client_state *p,
 }
 
 static void
-cmd_priv_get_user_info(struct client_state *p,
-                       int pkt_len,
-                       struct userlist_pk_get_user_info *data)
+cmd_priv_get_user_info(
+        struct client_state *p,
+        int pkt_len,
+        void *vdata)
 {
   FILE *f = 0;
   char *xml_ptr = 0;
@@ -5065,6 +5125,8 @@ cmd_priv_get_user_info(struct client_state *p,
   unsigned char logbuf[1024];
   int flags, capbit = -1;
   const struct contest_desc *cnts = 0;
+
+  struct userlist_pk_get_user_info *data = vdata;
 
   if (pkt_len != sizeof(*data)) {
     CONN_BAD("packet length mismatch: %d", pkt_len);
@@ -5125,7 +5187,7 @@ static void
 cmd_list_all_users(
         struct client_state *p,
         int pkt_len,
-        struct userlist_pk_map_contest *data)
+        void *vdata)
 {
   FILE *f = 0;
   char *xml_ptr = 0;
@@ -5136,6 +5198,8 @@ cmd_list_all_users(
   unsigned char logbuf[1024];
   ptr_iterator_t iter;
   const struct userlist_user *u;
+
+  struct userlist_pk_map_contest *data = vdata;
 
   snprintf(logbuf, sizeof(logbuf), "PRIV_ALL_USERS: %d, %d",
            p->user_id, data->contest_id);
@@ -5175,7 +5239,7 @@ static void
 cmd_list_standings_users(
         struct client_state *p,
         int pkt_len,
-        struct userlist_pk_map_contest *data)
+        void *vdata)
 {
   FILE *f = 0;
   char *xml_ptr = 0;
@@ -5188,6 +5252,8 @@ cmd_list_standings_users(
   ptr_iterator_t iter;
   const struct userlist_user *u;
   struct timeval ts1, ts2;
+
+  struct userlist_pk_map_contest *data = vdata;
 
   snprintf(logbuf, sizeof(logbuf), "PRIV_STANDINGS_USERS: %d, %d",
            p->user_id, data->contest_id);
@@ -5263,7 +5329,7 @@ static void
 cmd_list_standings_users_2(
         struct client_state *p,
         int pkt_len,
-        struct userlist_pk_map_contest *data)
+        void *vdata)
 {
   __attribute__((unused)) int flags = 0, subflags;
   const struct contest_desc *cnts = 0;
@@ -5272,6 +5338,8 @@ cmd_list_standings_users_2(
   const struct userlist_user *u;
   UserlistBinaryContext cntx;
   struct timeval ts1, ts2;
+
+  struct userlist_pk_map_contest *data = vdata;
 
   snprintf(logbuf, sizeof(logbuf), "PRIV_STANDINGS_USERS_2: %d, %d",
            p->user_id, data->contest_id);
@@ -5339,9 +5407,10 @@ cmd_list_standings_users_2(
 }
 
 static void
-cmd_get_user_contests(struct client_state *p,
-                      int pkt_len,
-                      struct userlist_pk_get_user_info *data)
+cmd_get_user_contests(
+        struct client_state *p,
+        int pkt_len,
+        void *vdata)
 {
   FILE *f = 0;
   char *xml_ptr = 0;
@@ -5351,6 +5420,8 @@ cmd_get_user_contests(struct client_state *p,
   unsigned char logbuf[1024];
   ptr_iterator_t iter;
   const struct userlist_contest *c;
+
+  struct userlist_pk_get_user_info *data = vdata;
 
   if (pkt_len != sizeof(*data)) {
     CONN_BAD("packet length mismatch");
@@ -5409,14 +5480,17 @@ cmd_get_user_contests(struct client_state *p,
 }
 
 static void
-cmd_set_user_info(struct client_state *p,
-                  int pkt_len,
-                  struct userlist_pk_set_user_info *data)
+cmd_set_user_info(
+        struct client_state *p,
+        int pkt_len,
+        void *vdata)
 {
   const struct contest_desc *cnts = 0;
   unsigned char logbuf[1024];
   struct userlist_user *new_u = 0;
   int reply_code = ULS_OK, cloned_flag = 0;
+
+  struct userlist_pk_set_user_info *data = vdata;
 
   snprintf(logbuf, sizeof(logbuf),
            "SET_USER_INFO: %d, %d", data->user_id, data->info_len);
@@ -5485,7 +5559,7 @@ static void
 cmd_set_passwd(
         struct client_state *p,
         int pkt_len,
-        struct userlist_pk_set_password *data)
+        void *vdata)
 {
   int contest_id = 0;
   unsigned char *old_pwd, *new_pwd;
@@ -5493,6 +5567,8 @@ cmd_set_passwd(
   struct passwd_internal oldint, newint;
   unsigned char logbuf[1024];
   const struct contest_desc *cnts = 0;
+
+  struct userlist_pk_set_password *data = vdata;
 
   old_pwd = data->data;
   new_pwd = old_pwd + data->old_len + 1;
@@ -5564,7 +5640,7 @@ static void
 cmd_team_set_passwd(
         struct client_state *p,
         int pkt_len,
-        struct userlist_pk_set_password *data)
+        void *vdata)
 {
   unsigned char *old_pwd, *new_pwd;
   const struct userlist_user *u;
@@ -5574,6 +5650,8 @@ cmd_team_set_passwd(
   unsigned char logbuf[1024];
   const struct userlist_user_info *ui;
   const struct userlist_contest *c;
+
+  struct userlist_pk_set_password *data = vdata;
 
   old_pwd = data->data;
   new_pwd = old_pwd + data->old_len + 1;
@@ -5664,12 +5742,14 @@ static void
 cmd_register_contest(
         struct client_state *p,
         int pkt_len,
-        struct userlist_pk_register_contest *data)
+        void *vdata)
 {
   const struct contest_desc *c = 0;
   const struct userlist_contest *r;
   int errcode, status = USERLIST_REG_PENDING, orig_contest_id = 0;
   unsigned char logbuf[1024];
+
+  struct userlist_pk_register_contest *data = vdata;
 
   snprintf(logbuf, sizeof(logbuf), "REGISTER_CONTEST: %d, %d",
            data->user_id, data->contest_id);
@@ -5731,13 +5811,15 @@ static void
 cmd_register_contest_2(
         struct client_state *p,
         int pkt_len,
-        struct userlist_pk_register_contest *data)
+        void *vdata)
 {
   const struct contest_desc *c = 0;
   const struct userlist_contest *r;
   int errcode, status = USERLIST_REG_PENDING, bit;
   unsigned char logbuf[1024];
   const struct userlist_user *u = 0;
+
+  struct userlist_pk_register_contest *data = vdata;
 
   snprintf(logbuf, sizeof(logbuf), "REGISTER_CONTEST_2: %d, %d",
            data->user_id, data->contest_id);
@@ -5804,13 +5886,15 @@ static void
 cmd_priv_register_contest(
         struct client_state *p,
         int pkt_len,
-        struct userlist_pk_register_contest *data)
+        void *vdata)
 {
   const struct userlist_user *u;
   const struct contest_desc *c = 0;
   const struct userlist_contest *r;
   int status = USERLIST_REG_PENDING, bit;
   unsigned char logbuf[1024];
+
+  struct userlist_pk_register_contest *data = vdata;
 
   snprintf(logbuf, sizeof(logbuf), "PRIV_REGISTER_CONTEST: %d, %d, %d",
            p->user_id, data->user_id, data->contest_id);
@@ -5850,12 +5934,16 @@ cmd_priv_register_contest(
 }
 
 static void
-cmd_delete_member(struct client_state *p, int pkt_len,
-                  struct userlist_pk_delete_info *data)
+cmd_delete_member(
+        struct client_state *p,
+        int pkt_len,
+        void *vdata)
 {
   unsigned char logbuf[1024];
   const struct contest_desc *cnts;
   int reply_code = ULS_OK, cloned_flag = 0;
+
+  struct userlist_pk_delete_info *data = vdata;
 
   if (pkt_len != sizeof(*data)) {
     CONN_BAD("bad packet length: %d", pkt_len);
@@ -5904,9 +5992,13 @@ cmd_delete_member(struct client_state *p, int pkt_len,
 }
 
 static void
-cmd_pass_fd(struct client_state *p, int pkt_len,
-            struct userlist_packet *data)
+cmd_pass_fd(
+        struct client_state *p,
+        int pkt_len,
+        void *vdata)
 {
+  struct userlist_packet *data = vdata;
+
   if (pkt_len != sizeof(*data)) {
     CONN_BAD("bad packet length: %d", pkt_len);
     return;
@@ -6631,8 +6723,10 @@ do_dump_whole_database(FILE *f, int contest_id, struct contest_desc *d,
 }
 
 static void
-cmd_list_users(struct client_state *p, int pkt_len,
-               struct userlist_pk_list_users *data)
+cmd_list_users(
+        struct client_state *p,
+        int pkt_len,
+        void *vdata)
 {
   struct client_state *q;
   FILE *f = 0;
@@ -6642,6 +6736,8 @@ cmd_list_users(struct client_state *p, int pkt_len,
   const struct contest_desc *cnts = 0;
   int exp_len, url_len, srch_len;
   unsigned char logbuf[1024];
+
+  struct userlist_pk_list_users *data = vdata;
 
   if (pkt_len < sizeof (*data)) {
     CONN_BAD("packet is too short: %d", pkt_len);
@@ -6714,8 +6810,10 @@ cmd_list_users(struct client_state *p, int pkt_len,
 }
 
 static void
-cmd_dump_database(struct client_state *p, int pkt_len,
-                  struct userlist_pk_dump_database *data)
+cmd_dump_database(
+        struct client_state *p,
+        int pkt_len,
+        void *vdata)
 {
   struct client_state *q;
   FILE *f = 0;
@@ -6723,6 +6821,8 @@ cmd_dump_database(struct client_state *p, int pkt_len,
   size_t html_size = 0;
   const struct contest_desc *cnts = 0;
   unsigned char logbuf[1024];
+
+  struct userlist_pk_dump_database *data = vdata;
 
   if (pkt_len != sizeof(*data)) {
     CONN_BAD("bad packet length: %d", pkt_len);
@@ -6767,8 +6867,10 @@ cmd_dump_database(struct client_state *p, int pkt_len,
 }
 
 static void
-cmd_dump_whole_database(struct client_state *p, int pkt_len,
-                        struct userlist_pk_dump_database *data)
+cmd_dump_whole_database(
+        struct client_state *p,
+        int pkt_len,
+        void *vdata)
 {
   struct client_state *q;
   FILE *f = 0;
@@ -6776,6 +6878,8 @@ cmd_dump_whole_database(struct client_state *p, int pkt_len,
   size_t html_size = 0;
   struct contest_desc *cnts = 0;
   unsigned char logbuf[1024];
+
+  struct userlist_pk_dump_database *data = vdata;
 
   if (pkt_len != sizeof(*data)) {
     CONN_BAD("bad packet length: %d", pkt_len);
@@ -6822,7 +6926,7 @@ static void
 cmd_map_contest(
         struct client_state *p,
         int pkt_len,
-        struct userlist_pk_map_contest *data)
+        void *vdata)
 {
   const struct contest_desc *cnts = 0;
   struct contest_extra *ex = 0;
@@ -6830,6 +6934,8 @@ cmd_map_contest(
   struct userlist_pk_contest_mapped *out;
   int errcode;
   unsigned char logbuf[1024];
+
+  struct userlist_pk_map_contest *data = vdata;
 
   snprintf(logbuf, sizeof(logbuf), "MAP_CONTEST: %d, %d",
            p->user_id, data->contest_id);
@@ -6860,8 +6966,10 @@ cmd_map_contest(
 
 // just assigns the connection user_id by the system user_id
 static void
-cmd_admin_process(struct client_state *p, int pkt_len,
-                  struct userlist_packet *data)
+cmd_admin_process(
+        struct client_state *p,
+        int pkt_len,
+        void *vdata)
 {
   unsigned char logbuf[1024];
   const struct userlist_user *u = 0;
@@ -6870,6 +6978,8 @@ cmd_admin_process(struct client_state *p, int pkt_len,
   size_t login_len, name_len, out_len;
   struct userlist_pk_uid_2 *out;
   int user_id;
+
+  struct userlist_packet *data = vdata;
 
   if (pkt_len != sizeof(*data)) {
     CONN_BAD("bad packet length: %d", pkt_len);
@@ -6987,7 +7097,7 @@ static void
 cmd_generate_register_passwords(
         struct client_state *p,
         int pkt_len,
-        struct userlist_pk_map_contest *data)
+        void *vdata)
 {
   char *log_ptr = 0;
   size_t log_size = 0;
@@ -6996,6 +7106,8 @@ cmd_generate_register_passwords(
   const struct contest_desc *cnts = 0;
   int errcode;
   unsigned char logbuf[1024];
+
+  struct userlist_pk_map_contest *data = vdata;
 
   snprintf(logbuf, sizeof(logbuf), "GENERATE_REGISTER_PASSWORDS: %d, %d",
            p->user_id, data->contest_id);
@@ -7045,7 +7157,7 @@ static void
 cmd_generate_register_passwords_2(
         struct client_state *p,
         int pkt_len,
-        struct userlist_pk_map_contest *data)
+        void *vdata)
 {
   const struct userlist_user *u;
   const struct userlist_contest *c;
@@ -7054,6 +7166,8 @@ cmd_generate_register_passwords_2(
   const struct contest_desc *cnts;
   int errcode;
   unsigned char logbuf[1024];
+
+  struct userlist_pk_map_contest *data = vdata;
 
   snprintf(logbuf, sizeof(logbuf), "GENERATE_REGISTER_PASSWORDS_2: %d, %d",
            p->user_id, data->contest_id);
@@ -7104,7 +7218,7 @@ static void
 cmd_generate_team_passwords_2(
         struct client_state *p,
         int pkt_len,
-        struct userlist_pk_map_contest *data)
+        void *vdata)
 {
   const struct userlist_user *u;
   const struct userlist_contest *c;
@@ -7113,6 +7227,8 @@ cmd_generate_team_passwords_2(
   const struct contest_desc *cnts = NULL;
   unsigned char logbuf[1024];
   int errcode = 0;
+
+  struct userlist_pk_map_contest *data = vdata;
 
   snprintf(logbuf, sizeof(logbuf), "GENERATE_TEAM_PASSWORDS_2: %d, %d",
            p->user_id, data->contest_id);
@@ -7213,7 +7329,7 @@ static void
 cmd_generate_team_passwords(
         struct client_state *p,
         int pkt_len,
-        struct userlist_pk_map_contest *data)
+        void *vdata)
 {
   char *log_ptr = 0;
   size_t log_size = 0;
@@ -7221,6 +7337,8 @@ cmd_generate_team_passwords(
   struct client_state *q = 0;
   const struct contest_desc *cnts = 0;
   unsigned char logbuf[1024];
+
+  struct userlist_pk_map_contest *data = vdata;
 
   snprintf(logbuf, sizeof(logbuf), "GENERATE_TEAM_PASSWORDS: %d, %d",
            p->user_id, data->contest_id);
@@ -7298,10 +7416,12 @@ static void
 cmd_clear_team_passwords(
         struct client_state *p,
         int pkt_len,
-        struct userlist_pk_map_contest *data)
+        void *vdata)
 {
   const struct contest_desc *cnts = 0;
   unsigned char logbuf[1024];
+
+  struct userlist_pk_map_contest *data = vdata;
 
   snprintf(logbuf, sizeof(logbuf), "CLEAR_TEAM_PASSWORDS: %d, %d",
            p->user_id, data->contest_id);
@@ -7320,13 +7440,15 @@ static void
 cmd_get_contest_name(
         struct client_state *p,
         int pkt_len,
-        struct userlist_pk_map_contest *data)
+        void *vdata)
 {
   struct userlist_pk_xml_data *out = 0;
   const struct contest_desc *cnts = 0;
   int out_size = 0, name_len = 0;
   int errcode;
   unsigned char logbuf[1024];
+
+  struct userlist_pk_map_contest *data = vdata;
 
   snprintf(logbuf, sizeof(logbuf), "GET_CONTEST_NAME: %d",
            data->contest_id);
@@ -7353,14 +7475,18 @@ cmd_get_contest_name(
 }
 
 static void
-cmd_edit_registration(struct client_state *p, int pkt_len,
-                      struct userlist_pk_edit_registration *data)
+cmd_edit_registration(
+        struct client_state *p,
+        int pkt_len,
+        void *vdata)
 {
   const struct userlist_user *u;
   const struct contest_desc *c = 0;
   const struct userlist_contest *uc = 0;
   int bit;
   unsigned char logbuf[1024];
+
+  struct userlist_pk_edit_registration *data = vdata;
 
   if (pkt_len != sizeof(*data)) {
     CONN_BAD("bad packet length: %d", pkt_len);
@@ -7430,11 +7556,15 @@ cmd_edit_registration(struct client_state *p, int pkt_len,
 }
 
 static void
-cmd_delete_user(struct client_state *p, int pkt_len,
-                struct userlist_pk_delete_info *data)
+cmd_delete_user(
+        struct client_state *p,
+        int pkt_len,
+        void *vdata)
 {
   unsigned char logbuf[1024];
   const struct userlist_user *u;
+
+  struct userlist_pk_delete_info *data = vdata;
 
   if (pkt_len != sizeof(*data)) {
     CONN_BAD("bad packet length: %d", pkt_len);
@@ -7470,13 +7600,17 @@ cmd_delete_user(struct client_state *p, int pkt_len,
 }
 
 static void
-cmd_priv_delete_member(struct client_state *p, int pkt_len,
-                       struct userlist_pk_delete_info *data)
+cmd_priv_delete_member(
+        struct client_state *p,
+        int pkt_len,
+        void *vdata)
 {
   unsigned char logbuf[1024];
   const struct userlist_user *u;
   const struct contest_desc *cnts;
   int r, reply_code = ULS_OK, cloned_flag = 0, bit;
+
+  struct userlist_pk_delete_info *data = vdata;
 
   if (pkt_len != sizeof(*data)) {
     CONN_BAD("bad packet length: %d", pkt_len);
@@ -7530,12 +7664,14 @@ static void
 cmd_delete_cookie(
         struct client_state *p,
         int pkt_len,
-        struct userlist_pk_edit_field *data)
+        void *vdata)
 {
   unsigned char logbuf[1024];
   unsigned char cbuf[64];
   const struct userlist_user *u;
   const struct userlist_cookie *c;
+
+  struct userlist_pk_edit_field *data = vdata;
 
   snprintf(logbuf, sizeof(logbuf), "DELETE_COOKIE: %d, %d, %s",
            p->user_id, data->user_id,
@@ -7581,13 +7717,17 @@ cmd_delete_cookie(
 }
 
 static void
-cmd_delete_user_info(struct client_state *p, int pkt_len,
-                     struct userlist_pk_delete_info *data)
+cmd_delete_user_info(
+        struct client_state *p,
+        int pkt_len,
+        void *vdata)
 {
   unsigned char logbuf[1024];
   const struct userlist_user *u;
   const struct contest_desc *cnts;
   int r, capbit;
+
+  struct userlist_pk_delete_info *data = vdata;
 
   if (pkt_len != sizeof(*data)) {
     CONN_BAD("bad packet length: %d", pkt_len);
@@ -7626,12 +7766,14 @@ static void
 cmd_delete_field(
         struct client_state *p,
         int pkt_len,
-        struct userlist_pk_edit_field *data)
+        void *vdata)
 {
   const struct userlist_user *u;
   const struct contest_desc *cnts = 0;
   unsigned char logbuf[1024];
   int r, reply_code = ULS_OK, cloned_flag = 0, bit = 0;
+
+  struct userlist_pk_edit_field *data = vdata;
 
   if (!data->user_id) data->user_id = p->user_id;
   snprintf(logbuf, sizeof(logbuf), "DELETE_FIELD: %d, %d, %d, %d, %d",
@@ -7736,12 +7878,14 @@ static void
 cmd_edit_field(
         struct client_state *p,
         int pkt_len,
-        struct userlist_pk_edit_field *data)
+        void *vdata)
 {
   const struct userlist_user *u;
   const struct contest_desc *cnts = 0;
   unsigned char logbuf[1024];
   int r = 0, reply_code = ULS_OK, cloned_flag = 0, bit;
+
+  struct userlist_pk_edit_field *data = vdata;
 
   if (!data->user_id) data->user_id = p->user_id;
   snprintf(logbuf, sizeof(logbuf), "EDIT_FIELD: %d, %d, %d, %d, %d",
@@ -7825,13 +7969,15 @@ static void
 cmd_create_user(
         struct client_state *p,
         int pkt_len,
-        struct userlist_pk_edit_field *data)
+        void *vdata)
 {
   struct userlist_pk_login_ok out;
   unsigned char logbuf[1024];
   int serial = -1, user_id;
   unsigned char buf[64];
   unsigned char *login_ptr = 0;
+
+  struct userlist_pk_edit_field *data = vdata;
 
   snprintf(logbuf, sizeof(logbuf), "CREATE_USER: %d, %s", p->user_id,
            data->data);
@@ -7891,13 +8037,15 @@ static void
 cmd_create_member(
         struct client_state *p,
         int pkt_len,
-        struct userlist_pk_edit_field *data)
+        void *vdata)
 {
   unsigned char logbuf[1024];
   const struct contest_desc *cnts = 0;
   const struct userlist_user *u;
   int cloned_flag = 0, m = 0, bit;
   struct userlist_pk_login_ok out;
+
+  struct userlist_pk_edit_field *data = vdata;
 
   if (data->serial < -1 || data->serial >= CONTEST_LAST_MEMBER) {
     err("%s -> invalid role", logbuf);
@@ -7955,10 +8103,12 @@ static void
 cmd_get_uid_by_pid(
         struct client_state *p,
         int pkt_len,
-        struct userlist_pk_get_uid_by_pid *data)
+        void *vdata)
 {
   struct client_state *q = 0;
   struct userlist_pk_uid out;
+
+  struct userlist_pk_get_uid_by_pid *data = vdata;
 
   if (pkt_len != sizeof(*data)) {
     CONN_BAD("bad packet length: %d", pkt_len);
@@ -8000,7 +8150,7 @@ static void
 cmd_get_uid_by_pid_2(
         struct client_state *p,
         int pkt_len,
-        struct userlist_pk_get_uid_by_pid *data)
+        void *vdata)
 {
   struct client_state *q = 0;
   struct userlist_pk_uid_2 *out = 0;
@@ -8009,6 +8159,8 @@ cmd_get_uid_by_pid_2(
   int login_len, name_len, out_len;
   const struct userlist_user *u;
   const struct userlist_user_info *ui;
+
+  struct userlist_pk_get_uid_by_pid *data = vdata;
 
   if (pkt_len != sizeof(*data)) {
     CONN_BAD("bad packet length: %d", pkt_len);
@@ -8077,9 +8229,11 @@ static void
 cmd_is_valid_cookie(
         struct client_state *p,
         int pkt_len,
-        struct userlist_pk_do_logout *data)
+        void *vdata)
 {
   const struct userlist_cookie *c = 0;
+
+  struct userlist_pk_do_logout *data = vdata;
 
   if (pkt_len != sizeof(*data)) {
     CONN_BAD("bad packet length: %d", pkt_len);
@@ -8099,7 +8253,7 @@ static void
 cmd_user_op(
         struct client_state *p,
         int pkt_len,
-        struct userlist_pk_register_contest *data)
+        void *vdata)
 {
   unsigned char logbuf[1024];
   const struct userlist_user *u = 0;
@@ -8107,6 +8261,8 @@ cmd_user_op(
   const struct userlist_user_info *ui;
   int reply_code = ULS_OK, cloned_flag = 0;
   const struct contest_desc *cnts = 0;
+
+  struct userlist_pk_register_contest *data = vdata;
 
   if (!data->user_id) data->user_id = p->user_id;
   snprintf(logbuf, sizeof(logbuf), "USER_OP: %d, %d, %d, %d",
@@ -8226,12 +8382,14 @@ static void
 cmd_copy_user_info(
         struct client_state *p,
         int pkt_len,
-        struct userlist_pk_edit_field *data)
+        void *vdata)
 {
   unsigned char logbuf[1024];
   const struct userlist_user *u = 0;
   const struct contest_desc *cnts = 0, *cnts2 = 0;
   int reply_code = ULS_OK, copy_passwd_flag = 1;
+
+  struct userlist_pk_edit_field *data = vdata;
 
   // data->contest_id --- source contest
   // data->serial     --- destination contest
@@ -8281,9 +8439,11 @@ static void
 cmd_copy_all(
         struct client_state *p,
         int pkt_len,
-        struct userlist_pk_edit_field *data)
+        void *vdata)
 {
   unsigned char logbuf[1024];
+
+  struct userlist_pk_edit_field *data = vdata;
 
   int user_id = data->user_id;
   if (user_id <= 0) user_id = p->user_id;
@@ -8356,9 +8516,10 @@ cmd_copy_all(
 }
 
 static void
-cmd_lookup_user(struct client_state *p,
-                int pkt_len,
-                struct userlist_pk_do_login *data)
+cmd_lookup_user(
+        struct client_state *p,
+        int pkt_len,
+        void *vdata)
 {
   struct userlist_pk_login_ok *out;
   size_t l, out_size, login_len, name_len;
@@ -8369,6 +8530,8 @@ cmd_lookup_user(struct client_state *p,
   int user_id;
   const struct contest_desc *cnts = 0;
   const unsigned char *name = 0;
+
+  struct userlist_pk_do_login *data = vdata;
 
   if (pkt_len < sizeof(*data)) {
     CONN_BAD("packet length is too small: %d, must be >= %zu",
@@ -8434,9 +8597,10 @@ cmd_lookup_user(struct client_state *p,
 }
 
 static void
-cmd_lookup_user_id(struct client_state *p,
-                   int pkt_len,
-                   struct userlist_pk_get_user_info *data)
+cmd_lookup_user_id(
+        struct client_state *p,
+        int pkt_len,
+        void *vdata)
 {
   struct userlist_pk_login_ok *out;
   size_t out_size, login_len, name_len;
@@ -8446,6 +8610,8 @@ cmd_lookup_user_id(struct client_state *p,
   const struct userlist_user_info *ui;
   const struct contest_desc *cnts = 0;
   const unsigned char *name = 0;
+
+  struct userlist_pk_get_user_info *data = vdata;
 
   if (pkt_len != sizeof(*data)) {
     CONN_BAD("packet length is too small: %d, must be >= %zu",
@@ -8497,7 +8663,7 @@ static void
 cmd_get_cookie(
         struct client_state *p,
         int pkt_len,
-        struct userlist_pk_check_cookie *data)
+        void *vdata)
 {
   const struct userlist_user *u = 0;
   const struct userlist_cookie *cookie = 0;
@@ -8526,6 +8692,8 @@ cmd_get_cookie(
   int cookie_is_ws = 0;
   int cookie_is_job = 0;
   time_t cookie_expire = 0;
+
+  struct userlist_pk_check_cookie *data = vdata;
 
   if (pkt_len != sizeof(*data)) {
     CONN_BAD("bad packet length: %d", pkt_len);
@@ -8690,13 +8858,15 @@ static void
 cmd_set_cookie(
         struct client_state *p,
         int pkt_len,
-        struct userlist_pk_edit_field *data)
+        void *vdata)
 {
   unsigned char logbuf[1024];
   unsigned char cbuf[64];
   const struct userlist_cookie *cookie;
   int contest_id = 0;
   const struct contest_desc *cnts = 0;
+
+  struct userlist_pk_edit_field *data = vdata;
 
   snprintf(logbuf, sizeof(logbuf),
            "SET_COOKIE: %s, %d, %d",
@@ -8732,10 +8902,12 @@ static void
 cmd_observer_cmd(
         struct client_state *p,
         int pkt_len,
-        struct userlist_pk_map_contest *data)
+        void *vdata)
 {
   unsigned char logbuf[1024];
   const struct contest_desc *cnts = 0;
+
+  struct userlist_pk_map_contest *data = vdata;
 
   snprintf(logbuf, sizeof(logbuf), "OBSERVER: %d, %d, %d",
            p->id, data->request_id, data->contest_id);
@@ -8768,7 +8940,7 @@ static void
 cmd_priv_set_passwd(
         struct client_state *p,
         int pkt_len,
-        struct userlist_pk_set_password *data)
+        void *vdata)
 {
   const unsigned char *old_pwd, *new_pwd;
   unsigned char logbuf[1024];
@@ -8778,6 +8950,8 @@ cmd_priv_set_passwd(
   const struct userlist_user_info *ui = 0;
   const struct userlist_contest *c = 0;
   int reply_code = ULS_OK, cloned_flag = 0, contest_id = 0;
+
+  struct userlist_pk_set_password *data = vdata;
 
   old_pwd = data->data;
   new_pwd = old_pwd + data->old_len + 1;
@@ -8900,7 +9074,7 @@ static void
 cmd_priv_set_passwd_2(
         struct client_state *p,
         int pkt_len,
-        struct userlist_pk_set_password *data)
+        void *vdata)
 {
   const unsigned char *old_pwd, *new_pwd, *admin_pwd;
   unsigned char logbuf[1024];
@@ -8911,6 +9085,8 @@ cmd_priv_set_passwd_2(
   const struct userlist_user_info *ui = 0;
   const struct userlist_contest *c = 0;
   int reply_code = ULS_OK, cloned_flag = 0, contest_id = 0;
+
+  struct userlist_pk_set_password *data = vdata;
 
   old_pwd = data->data;
   new_pwd = old_pwd + data->old_len + 1;
@@ -9203,8 +9379,10 @@ do_get_database(FILE *f, int contest_id, const struct contest_desc *cnts)
 }
 
 static void
-cmd_get_database(struct client_state *p, int pkt_len,
-                 struct userlist_pk_dump_database *data)
+cmd_get_database(
+        struct client_state *p,
+        int pkt_len,
+        void *vdata)
 {
   unsigned char logbuf[1024];
   const struct contest_desc *cnts = 0;
@@ -9212,6 +9390,8 @@ cmd_get_database(struct client_state *p, int pkt_len,
   size_t db_size = 0, out_size = 0;
   FILE *f = 0;
   struct userlist_pk_xml_data *out = 0;
+
+  struct userlist_pk_dump_database *data = vdata;
 
   if (pkt_len != sizeof(*data)) {
     CONN_BAD("bad packet length: %d", pkt_len);
@@ -9266,10 +9446,14 @@ check_restart_permissions(struct client_state *p)
 }
 
 static void
-cmd_control_server(struct client_state *p, int pkt_len,
-                   struct userlist_packet *data)
+cmd_control_server(
+        struct client_state *p,
+        int pkt_len,
+        void *vdata)
 {
   int mon_fd = -1;
+
+  struct userlist_packet *data = vdata;
 
   if (pkt_len != sizeof(*data)) {
     CONN_BAD("bad packet length: %d", pkt_len);
@@ -9312,7 +9496,7 @@ static void
 cmd_edit_field_seq(
         struct client_state *p,
         int pkt_len,
-        struct userlist_pk_edit_field_seq *data)
+        void *vdata)
 {
   size_t cur_size, sz;
   const unsigned char *pktptr;
@@ -9325,6 +9509,8 @@ cmd_edit_field_seq(
   const struct userlist_user_info *ui = 0;
   const struct userlist_member *m = 0;
   const struct userlist_members *mm = 0;
+
+  struct userlist_pk_edit_field_seq *data = vdata;
 
   if (pkt_len < sizeof(*data)) {
     CONN_BAD("packet is too small: %d < %zu", pkt_len, sizeof(*data));
@@ -9543,13 +9729,17 @@ cmd_edit_field_seq(
 }
 
 static void
-cmd_move_member(struct client_state *p, int pkt_len,
-                struct userlist_pk_move_info *data)
+cmd_move_member(
+        struct client_state *p,
+        int pkt_len,
+        void *vdata)
 {
   unsigned char logbuf[1024];
   const struct userlist_user *u;
   const struct contest_desc *cnts = 0;
   int r, reply_code = ULS_OK, cloned_flag = 0, bit;
+
+  struct userlist_pk_move_info *data = vdata;
 
   if (pkt_len != sizeof(*data)) {
     CONN_BAD("bad packet length: %d", pkt_len);
@@ -9676,7 +9866,7 @@ static void
 cmd_import_csv_users(
         struct client_state *p,
         int pkt_len,
-        struct userlist_pk_edit_field *data)
+        void *vdata)
 {
   const struct contest_desc *cnts = 0;
   unsigned char logbuf[1024];
@@ -9698,6 +9888,8 @@ cmd_import_csv_users(
   size_t out_size = 0;
   int cloned_flag = 0;
   int member_serial = 0;
+
+  struct userlist_pk_edit_field *data = vdata;
 
   snprintf(logbuf, sizeof(logbuf), "IMPORT_CSV_USERS: %d, %d, %d",
            data->contest_id, data->field, data->serial);
@@ -9896,7 +10088,7 @@ static void
 cmd_list_all_groups(
         struct client_state *p,
         int pkt_len,
-        struct userlist_pk_map_contest *data)
+        void *vdata)
 {
   unsigned char logbuf[1024];
   FILE *fout = 0;
@@ -9949,13 +10141,15 @@ static void
 cmd_create_group(
         struct client_state *p,
         int pkt_len,
-        struct userlist_pk_edit_field *data)
+        void *vdata)
 {
   unsigned char logbuf[1024];
   unsigned char buf[64];
   const unsigned char *group_name = 0;
   int group_id = -1;
   struct userlist_pk_login_ok out;
+
+  struct userlist_pk_edit_field *data = vdata;
 
   snprintf(logbuf, sizeof(logbuf), "CREATE_GROUP: %d, %s",
            p->user_id, data->data);
@@ -10008,9 +10202,11 @@ static void
 cmd_delete_group(
         struct client_state *p,
         int pkt_len,
-        struct userlist_pk_delete_info *data)
+        void *vdata)
 {
   unsigned char logbuf[1024];
+
+  struct userlist_pk_delete_info *data = vdata;
 
   snprintf(logbuf, sizeof(logbuf), "DELETE_GROUP: %d, %d",
            p->user_id, data->user_id);
@@ -10027,10 +10223,12 @@ static void
 cmd_edit_group_field(
         struct client_state *p,
         int pkt_len,
-        struct userlist_pk_edit_field *data)
+        void *vdata)
 {
   unsigned char logbuf[1024];
   int errcode = 0;
+
+  struct userlist_pk_edit_field *data = vdata;
 
   snprintf(logbuf, sizeof(logbuf), "EDIT_GROUP_FIELD: %d, %d, %d, \"%s\"",
            p->user_id, data->user_id, data->field, data->data);
@@ -10052,10 +10250,12 @@ static void
 cmd_delete_group_field(
         struct client_state *p,
         int pkt_len,
-        struct userlist_pk_edit_field *data)
+        void *vdata)
 {
   unsigned char logbuf[1024];
   int errcode = 0;
+
+  struct userlist_pk_edit_field *data = vdata;
 
   snprintf(logbuf, sizeof(logbuf), "DELETE_GROUP_FIELD: %d, %d, %d",
            p->user_id, data->user_id, data->field);
@@ -10077,7 +10277,7 @@ static void
 cmd_list_group_users(
         struct client_state *p,
         int pkt_len,
-        struct userlist_pk_map_contest *data)
+        void *vdata)
 {
   unsigned char logbuf[1024];
   char *xml_ptr = 0;
@@ -10089,6 +10289,8 @@ cmd_list_group_users(
   ptr_iterator_t iter = 0;
   const struct userlist_user *u;
   const struct userlist_groupmember *gm;
+
+  struct userlist_pk_map_contest *data = vdata;
 
   snprintf(logbuf, sizeof(logbuf), "LIST_GROUP_USERS: %d, %d",
            p->user_id, data->contest_id);
@@ -10145,12 +10347,14 @@ static void
 cmd_create_group_member(
         struct client_state *p,
         int pkt_len,
-        struct userlist_pk_register_contest *data)
+        void *vdata)
 {
   unsigned char logbuf[1024];
   const struct userlist_user *u = 0;
   const struct userlist_group *grp = 0;
   int r;
+
+  struct userlist_pk_register_contest *data = vdata;
 
   snprintf(logbuf, sizeof(logbuf), "CREATE_GROUP_MEMBER: %d, %d, %d",
            p->user_id, data->user_id, data->contest_id);
@@ -10183,12 +10387,14 @@ static void
 cmd_delete_group_member(
         struct client_state *p,
         int pkt_len,
-        struct userlist_pk_register_contest *data)
+        void *vdata)
 {
   unsigned char logbuf[1024];
   const struct userlist_user *u = 0;
   const struct userlist_group *grp = 0;
   int r;
+
+  struct userlist_pk_register_contest *data = vdata;
 
   snprintf(logbuf, sizeof(logbuf), "DELETE_GROUP_MEMBER: %d, %d, %d",
            p->user_id, data->user_id, data->contest_id);
@@ -10221,7 +10427,7 @@ static void
 cmd_get_groups(
         struct client_state *p,
         int pkt_len,
-        struct userlist_pk_set_user_info *data)
+        void *vdata)
 {
   unsigned char logbuf[1024];
   struct userlist_pk_xml_data *out = 0;
@@ -10234,6 +10440,8 @@ cmd_get_groups(
   const struct userlist_group *grp;
   ptr_iterator_t iter = 0;
   const struct userlist_groupmember *gm;
+
+  struct userlist_pk_set_user_info *data = vdata;
 
   snprintf(logbuf, sizeof(logbuf), "GET_GROUPS: %d, %s",
            p->user_id, data->data);
@@ -10317,7 +10525,7 @@ static void
 cmd_list_all_users_2(
         struct client_state *p,
         int pkt_len,
-        struct userlist_pk_list_users_2 *data)
+        void *vdata)
 {
   FILE *f = 0;
   char *xml_ptr = 0;
@@ -10328,6 +10536,8 @@ cmd_list_all_users_2(
   unsigned char logbuf[1024];
   ptr_iterator_t iter;
   const struct userlist_user *u;
+
+  struct userlist_pk_list_users_2 *data = vdata;
 
   snprintf(logbuf, sizeof(logbuf), "LIST_ALL_USERS_2: %d, %d, %d, %d, %d",
            p->user_id, data->contest_id, data->group_id, data->offset, data->count);
@@ -10374,13 +10584,15 @@ static void
 cmd_get_user_count(
         struct client_state *p,
         int pkt_len,
-        struct userlist_pk_list_users_2 *data)
+        void *vdata)
 {
   struct userlist_pk_count out;
   const struct contest_desc *cnts = 0;
   unsigned char logbuf[1024];
   long long count = -1;
   int r;
+
+  struct userlist_pk_list_users_2 *data = vdata;
 
   snprintf(logbuf, sizeof(logbuf), "GET_USER_COUNT: %d, %d",
            p->user_id, data->contest_id);
@@ -10414,7 +10626,7 @@ static void
 cmd_list_all_groups_2(
         struct client_state *p,
         int pkt_len,
-        struct userlist_pk_list_users_2 *data)
+        void *vdata)
 {
   FILE *fout = 0;
   char *xml_ptr = 0;
@@ -10424,6 +10636,8 @@ cmd_list_all_groups_2(
   unsigned char logbuf[1024];
   ptr_iterator_t iter;
   const struct userlist_group *grp;
+
+  struct userlist_pk_list_users_2 *data = vdata;
 
   snprintf(logbuf, sizeof(logbuf), "LIST_ALL_GROUPS_2: %d, %d, %d",
            p->user_id, data->offset, data->count);
@@ -10466,12 +10680,14 @@ static void
 cmd_get_group_count(
         struct client_state *p,
         int pkt_len,
-        struct userlist_pk_list_users_2 *data)
+        void *vdata)
 {
   struct userlist_pk_count out;
   unsigned char logbuf[1024];
   long long count = -1;
   int r;
+
+  struct userlist_pk_list_users_2 *data = vdata;
 
   snprintf(logbuf, sizeof(logbuf), "GET_GROUP_COUNT: %d", p->user_id);
 
@@ -10501,8 +10717,10 @@ static void
 cmd_create_user_2(
         struct client_state *p,
         int pkt_len,
-        struct userlist_pk_create_user_2 *data)
+        void *vdata)
 {
+  struct userlist_pk_create_user_2 *data = vdata;
+
   unsigned char logbuf[1024];
   const unsigned char *login_str = data->data;
   const unsigned char *email_str = login_str + data->login_len + 1;
@@ -10733,11 +10951,13 @@ static void
 cmd_next_user(
         struct client_state *p,
         int pkt_len,
-        struct userlist_pk_list_users_2 *data)
+        void *vdata)
 {
   unsigned char logbuf[1024];
   const struct contest_desc *cnts = 0;
   int user_id = 0;
+
+  struct userlist_pk_list_users_2 *data = vdata;
 
   snprintf(logbuf, sizeof(logbuf), "NEXT_USER: %d, %d, %d, %d", p->user_id,
            data->user_id, data->contest_id, data->group_id);
@@ -10789,7 +11009,7 @@ static void
 cmd_list_all_users_3(
         struct client_state *p,
         int pkt_len,
-        struct userlist_pk_list_users_2 *data)
+        void *vdata)
 {
   FILE *f = 0;
   char *xml_ptr = 0;
@@ -10801,6 +11021,8 @@ cmd_list_all_users_3(
   const struct userlist_user *u = 0;
   bitset_t marked = BITSET_INITIALIZER;
   int user_id;
+
+  struct userlist_pk_list_users_2 *data = vdata;
 
   snprintf(logbuf, sizeof(logbuf), "LIST_ALL_USERS_3: %d, %d, %d, %d, %d",
            p->user_id, data->contest_id, data->group_id, data->offset, data->count);
@@ -10844,7 +11066,7 @@ static void
 cmd_list_all_users_4(
         struct client_state *p,
         int pkt_len,
-        struct userlist_pk_list_users_2 *data)
+        void *vdata)
 {
   FILE *f = 0;
   char *xml_ptr = 0;
@@ -10856,6 +11078,8 @@ cmd_list_all_users_4(
   const struct userlist_user *u = 0;
   bitset_t marked = BITSET_INITIALIZER;
   int user_id;
+
+  struct userlist_pk_list_users_2 *data = vdata;
 
   snprintf(logbuf, sizeof(logbuf), "LIST_ALL_USERS_4: %d, %d, %d, %d, %d",
            p->user_id, data->contest_id, data->group_id, data->offset, data->count);
@@ -10900,7 +11124,7 @@ static void
 cmd_get_group_info(
         struct client_state *p,
         int pkt_len,
-        struct userlist_pk_map_contest *data)
+        void *vdata)
 {
   unsigned char logbuf[1024];
   const struct userlist_group *grp;
@@ -10909,6 +11133,8 @@ cmd_get_group_info(
   FILE *fout = 0;
   struct userlist_pk_xml_data *out = 0;
   size_t out_size;
+
+  struct userlist_pk_map_contest *data = vdata;
 
   snprintf(logbuf, sizeof(logbuf), "GET_GROUP_INFO: %d, %d",
            p->user_id, data->contest_id);
@@ -10945,7 +11171,7 @@ static void
 cmd_create_cookie(
         struct client_state *p,
         int pkt_len,
-        struct userlist_pk_cookie_login *data)
+        void *vdata)
 {
   unsigned char logbuf[1024];
   unsigned char cbuf[64];
@@ -10953,6 +11179,8 @@ cmd_create_cookie(
   int ans_len = 0;
   const struct userlist_cookie *cookie = NULL;
   time_t current_time = time(NULL);
+
+  struct userlist_pk_cookie_login *data = vdata;
 
   if (pkt_len != sizeof(*data)) {
     CONN_BAD("packet size is invalid: %d instead of %d", pkt_len, (int) sizeof(*data));
@@ -11013,13 +11241,15 @@ static void
 cmd_priv_create_cookie(
         struct client_state *p,
         int pkt_len,
-        struct userlist_pk_cookie_login *data)
+        void *vdata)
 {
   unsigned char logbuf[1024];
   unsigned char cbuf[64];
   struct userlist_pk_login_ok *answer = NULL;
   int ans_len = 0;
   const struct userlist_cookie *cookie = NULL;
+
+  struct userlist_pk_cookie_login *data = vdata;
 
   if (pkt_len != sizeof(*data)) {
     CONN_BAD("packet size is invalid: %d instead of %d", pkt_len, (int) sizeof(*data));
@@ -11078,8 +11308,10 @@ static int
 check_pk_api_key_data(
         struct client_state *p,
         int pkt_len,
-        struct userlist_pk_api_key_data *data)
+        const void *vdata)
 {
+  const struct userlist_pk_api_key_data *data = vdata;
+
   if (pkt_len < sizeof(struct userlist_pk_api_key_data)) {
     CONN_BAD("packet length mismatch");
     return -1;
@@ -11245,8 +11477,9 @@ static void
 cmd_create_api_key(
         struct client_state *p,
         int pkt_len,
-        struct userlist_pk_api_key_data *data)
+        void *vdata)
 {
+  struct userlist_pk_api_key_data *data = vdata;
 
   if (data->api_key_count != 1) {
     err("CREATE_API_KEY: -> invalid api_key_count %d", data->api_key_count);
@@ -11323,8 +11556,10 @@ static void
 cmd_get_api_key(
         struct client_state *p,
         int pkt_len,
-        struct userlist_pk_api_key_data *data)
+        void *vdata)
 {
+  struct userlist_pk_api_key_data *data = vdata;
+
   if (data->api_key_count != 1) {
     err("GET_API_KEY: -> invalid api_key_count %d", data->api_key_count);
     send_reply(p, -ULS_ERR_PROTOCOL);
@@ -11429,8 +11664,10 @@ static void
 cmd_get_api_keys_for_user(
         struct client_state *p,
         int pkt_len,
-        struct userlist_pk_api_key_data *data)
+        void *vdata)
 {
+  struct userlist_pk_api_key_data *data = vdata;
+
   if (data->api_key_count != 1) {
     err("GET_API_KEYS_FOR_USER: -> invalid api_key_count %d", data->api_key_count);
     send_reply(p, -ULS_ERR_PROTOCOL);
@@ -11477,8 +11714,10 @@ static void
 cmd_delete_api_key(
         struct client_state *p,
         int pkt_len,
-        struct userlist_pk_api_key_data *data)
+        void *vdata)
 {
+  struct userlist_pk_api_key_data *data = vdata;
+
   if (data->api_key_count != 1) {
     err("DELETE_API_KEY: -> invalid api_key_count %d", data->api_key_count);
     send_reply(p, -ULS_ERR_PROTOCOL);
@@ -11517,7 +11756,7 @@ cmd_delete_api_key(
   info("%s -> OK", logbuf);
 }
 
-static void (*cmd_table[])() =
+static void (*cmd_table[])(struct client_state *, int, void *) =
 {
   [ULS_REGISTER_NEW] =          cmd_register_new,
   [ULS_DO_LOGIN] =              cmd_login,
@@ -11632,7 +11871,7 @@ static void (*cmd_table[])() =
   [ULS_LAST_CMD] = 0
 };
 
-static int (*check_table[])() =
+static int (*check_table[])(struct client_state *, int, const void *) =
 {
   [ULS_REGISTER_NEW] =          0,
   [ULS_DO_LOGIN] =              0,
