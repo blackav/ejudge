@@ -2639,11 +2639,11 @@ new_parse_polygon_xml(
             if (ppts->test_count >= 0) {
                 pi->test_count = ppts->test_count;
             }
-            if (ppts->input_path_pattern && ppts->input_path_pattern[0]) {
-                pi->input_path_pattern = xstrdup(ppts->input_path_pattern);
+            if (ppts->input && ppts->input->pattern && ppts->input->pattern[0]) {
+                pi->input_path_pattern = xstrdup(ppts->input->pattern);
             }
-            if (ppts->answer_path_pattern && ppts->answer_path_pattern[0]) {
-                pi->answer_path_pattern = strdup(ppts->answer_path_pattern);
+            if (ppts->answer && ppts->answer->pattern && ppts->answer->pattern[0]) {
+                pi->answer_path_pattern = strdup(ppts->answer->pattern);
             }
             if (ppts->tests) {
                 struct ppxml_tests *pptt = ppts->tests;

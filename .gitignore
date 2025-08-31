@@ -78,3 +78,5 @@ ej-vcs-compile
 /ej-postgres-exec
 compile_commands.json
 /.cache
+/ejudge-make
+/ejudge-problem

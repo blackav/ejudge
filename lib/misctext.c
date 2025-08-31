@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2000-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2025 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1080,6 +1080,97 @@ filename_armor_bytes(
   }
   if (outsize) *pout = 0;
   return out;
+}
+
+_Bool
+is_valid_utf8(const unsigned char *str, size_t size, size_t *p_offset)
+{
+  if (!str) return 0;
+  const unsigned char *s = str;
+  const unsigned char *e = str + size;
+  while (s < e) {
+    if (*s <= 0x7f) {
+      s++;
+    } else if (*s <= 0xbf) {
+      // middle of multibyte sequence
+      goto fail;
+    } else if (*s <= 0xc1) {
+      // reserved
+      goto fail;
+    } else if (*s <= 0xdf) {
+      // two bytes: 0x80-0x7ff
+      if (s + 1 >= e) {
+        goto fail;
+      }
+      if (s[1] >= 0x80 && s[1] <= 0xbf) {
+        int w = ((s[0] & 0x1f) << 6) | (s[1] & 0x3f);
+        if (w < 0x80) {
+          goto fail;
+        } else {
+          s += 2;
+        }
+      } else {
+        // second byte is invalid
+        goto fail;
+      }
+    } else if (*s <= 0xef) {
+      // three bytes: 0x800-0xffff
+      if (s + 2 >= e) {
+        goto fail;
+      }
+      if (s[1] >= 0x80 && s[1] <= 0xbf) {
+        if (s[2] >= 0x80 && s[2] <= 0xbf) {
+          int w = ((s[0] & 0x0f) << 12) | ((s[1] & 0x3f) << 6) | (s[2] & 0x3f);
+          if (w < 0x800) {
+            goto fail;
+          } else {
+            if (w == 0xffff || w == 0xfffe) {
+              goto fail;
+            } else {
+              s += 3;
+            }
+          }
+        } else {
+          // third byte is invalid
+          goto fail;
+        }
+      } else {
+        // second byte is invalid
+        goto fail;
+      }
+    } else if (*s <= 0xf7) {
+      // four bytes: 0x10000-0x10ffff
+      if (s + 3 >= e) {
+        goto fail;
+      }
+      if (s[1] >= 0x80 && s[1] <= 0xbf) {
+        if (s[2] >= 0x80 && s[2] <= 0xbf) {
+          if (s[3] >= 0x80 && s[3] <= 0xbf) {
+            int w = ((s[0] & 0x07) << 18) | ((s[1] & 0x3f) << 12) | ((s[2] & 0x3f) << 6) | (s[3] & 0x3f);
+            if (w < 0x10000) {
+              goto fail;
+            } else {
+              s += 4;
+            }
+          } else {
+            goto fail;
+          }
+        } else {
+          goto fail;
+        }
+      } else {
+        goto fail;
+      }
+    } else {
+      // reserved
+      goto fail;
+    }
+  }
+  return 1;
+
+fail:;
+  if (p_offset) *p_offset = (size_t)(s - str);
+  return 0;
 }
 
 int
@@ -2222,6 +2313,58 @@ text_normalize_dup(
   return text_normalize_buf(out_text, in_size, op_mask, p_count, p_done_mask);
 }
 
+int
+is_text_normalized(
+        const unsigned char *str,
+        size_t size,
+        int mode,
+        size_t *p_offset)
+{
+  if (!size) return 1;
+  const unsigned char *e = str + size;
+  const unsigned char *s = str;
+  if ((mode & TEXT_FIX_NP) != 0) {
+    while (s < e) {
+      if (*s == 127) goto fail;
+      if (*s < ' ' && (*s != '\n' && *s != '\r' && *s != '\t')) goto fail;
+      ++s;
+    }
+  }
+  if ((mode & TEXT_FIX_CR) != 0) {
+    s = str;
+    while (s < e) {
+      if (*s == '\r') goto fail;
+      ++s;
+    }
+  }
+  if ((mode & TEXT_FIX_FINAL_NL) != 0) {
+    s = e - 1;
+    if (*s != '\n') goto fail;
+  }
+  if ((mode & TEXT_FIX_TR_SP) != 0) {
+    s = str;
+    while (s < e) {
+      if (*s == '\n') {
+        const unsigned char *q = s - 1;
+        if (q > str && *q == '\r') --q;
+        if (isspace(*q)) goto fail;
+      }
+      ++s;
+    }
+  }
+  if ((mode & TEXT_FIX_TR_NL) != 0) {
+    s = e;
+    if (s[-1] == '\n') --s;
+    while (s > str && isspace(s[-1]) && s[-1] != '\n') --s;
+    if (s > str && s[-1] == '\n') goto fail;
+  }
+  return 1;
+
+fail:;
+  if (p_offset) *p_offset = (size_t)(s - str);
+  return 0;
+}
+
 void
 html_print_by_line(
         FILE *f,
@@ -2797,4 +2940,170 @@ json_armor_buf(struct html_armor_buffer *pb, const unsigned char *s)
   }
   json_armor_string(s, pb->buf);
   return pb->buf;
+}
+
+int
+split_cmdline(const unsigned char *str, struct strarray_t *pcmd)
+{
+  unsigned char *locbuf, *q, *qq;
+  char **old_v;
+  const unsigned char *p = str;
+  unsigned char nb[4];
+  int q_char = 0;
+  int code, i;
+
+  memset(pcmd, 0, sizeof(*pcmd));
+  pcmd->a = 16;
+  if (!(pcmd->v = (char**) malloc(pcmd->a * sizeof(pcmd->v[0])))) {
+    code = -ENOMEM;
+    goto failure;
+  }
+  pcmd->u = 0;
+  pcmd->v[0] = 0;
+  if (!(q = locbuf = (unsigned char*) alloca(strlen(str) + 16))) {
+    code = -ENOMEM;
+    goto failure;
+  }
+  while (isspace(*p)) p++;
+  if (*p) {
+    while (1) {
+      if (!*p) {
+        if (q_char) {
+          code = -EINVAL;
+          goto failure;
+        }
+        *q = 0;
+        if (pcmd->u + 1 >= pcmd->a) {
+          pcmd->a *= 2;
+          old_v = pcmd->v;
+          pcmd->v=(char**)realloc(pcmd->v,pcmd->a*sizeof(pcmd->v[0]));
+          if (!pcmd->v) {
+            pcmd->v = old_v;
+            code = -ENOMEM;
+            goto failure;
+          }
+        }
+        if (!(qq = strdup(locbuf))) {
+          code = -ENOMEM;
+          goto failure;
+        }
+        pcmd->v[pcmd->u++] = qq;
+        pcmd->v[pcmd->u] = 0;
+        break;
+      } else if (*p == '\"') {
+        if (!q_char) {
+          q_char = *p++;
+        } else if (q_char == '\"') {
+          q_char = 0;
+          p++;
+        } else {
+          *q++ = *p++;
+        }
+      } else if (*p == '\'') {
+        if (!q_char) {
+          q_char = *p++;
+        } else if (q_char == '\'') {
+          q_char = 0;
+          p++;
+        } else {
+          *q++ = *p++;
+        }
+      } else if (*p == '\\') {
+        if (q_char == '\'') {
+          *q++ = *p++;
+        } else {
+          switch (p[1]) {
+          case 0:
+            *q++ = '\\';
+            p++;
+            break;
+          case 'x': case 'X':
+            if (!isxdigit(p[2])) {
+              code = -EINVAL;
+              goto failure;
+              p++;
+              break;
+            }
+            p += 2;
+            memset(nb, 0, sizeof(nb));
+            nb[0] = *p++;
+            if (isxdigit(*p)) nb[1] = *p++;
+            *q++ = strtol(nb, 0, 16);
+            break;
+
+          case '0': case '1': case '2': case '3':
+            p++;
+            memset(nb, 0, sizeof(nb));
+            nb[0] = *p++;
+            if (*p >= '0' && *p <= '7') nb[1] = *p++;
+            if (*p >= '0' && *p <= '7') nb[2] = *p++;
+            *q++ = strtol(nb, 0, 8);
+            break;
+
+          case '4': case '5': case '6': case '7':
+            p++;
+            memset(nb, 0, sizeof(nb));
+            nb[0] = *p++;
+            if (*p >= '0' && *p <= '7') nb[1] = *p++;
+            *q++ = strtol(nb, 0, 8);
+            break;
+
+          case 'a': *q++ = '\a'; p += 2; break;
+          case 'b': *q++ = '\b'; p += 2; break;
+          case 'f': *q++ = '\f'; p += 2; break;
+          case 'n': *q++ = '\n'; p += 2; break;
+          case 'r': *q++ = '\r'; p += 2; break;
+          case 't': *q++ = '\t'; p += 2; break;
+          case 'v': *q++ = '\v'; p += 2; break;
+          default:
+            p++;
+            *q++ = *p++;
+            break;
+          }
+        }
+      } else if (isspace(*p)) {
+        if (q_char) {
+          *q++ = *p++;
+        } else {
+          *q = 0;
+          if (pcmd->u + 1 >= pcmd->a) {
+            pcmd->a *= 2;
+            old_v = pcmd->v;
+            pcmd->v=(char**)realloc(pcmd->v,
+                                             pcmd->a*sizeof(pcmd->v[0]));
+            if (!pcmd->v) {
+              pcmd->v = old_v;
+              code = -ENOMEM;
+              goto failure;
+            }
+          }
+          if (!(qq = strdup(locbuf))) {
+            code = -ENOMEM;
+            goto failure;
+          }
+          pcmd->v[pcmd->u++] = qq;
+          pcmd->v[pcmd->u] = 0;
+          while (isspace(*p)) p++;
+          if (!*p) break;
+          q = locbuf;
+        }
+      } else if (*p < ' ') {
+        code = -EINVAL;
+        goto failure;
+        *q++ = ' ';
+      } else {
+        *q++ = *p++;
+      }
+    }
+  }
+  return 0;
+
+ failure:
+  if (pcmd->v) {
+    for (i = 0; i < pcmd->u; i++)
+      if (pcmd->v[i]) free(pcmd->v[i]);
+    free(pcmd->v);
+  }
+  memset(pcmd, 0, sizeof(*pcmd));
+  return code;
 }

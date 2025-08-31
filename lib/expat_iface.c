@@ -466,7 +466,7 @@ start_hnd(void *data, const XML_Char *name, const XML_Char **atts)
       iattr = pd->spec->default_attr;
       generic_flag = 1;
       if (iattr <= 0) {
-        parse_err(pd, "unknown attribute <%s> at line %ld", cur_attr, (long) XML_GetCurrentLineNumber(p));
+        parse_err(pd, "unknown attribute \"%s\" at line %ld", cur_attr, (long) XML_GetCurrentLineNumber(p));
         pd->err_cntr++;
         atts += 2;
         xfree(cur_val); cur_val = 0;
@@ -480,7 +480,7 @@ start_hnd(void *data, const XML_Char *name, const XML_Char **atts)
         iattr = pd->spec->default_attr;
         generic_flag = 1;
         if (iattr <= 0) {
-          parse_err(pd, "unknown attribute <%s> at line %ld", cur_attr, (long) XML_GetCurrentLineNumber(p));
+          parse_err(pd, "unknown attribute \"%s\" at line %ld", cur_attr, (long) XML_GetCurrentLineNumber(p));
           pd->err_cntr++;
           atts += 2;
           xfree(cur_val); cur_val = 0;

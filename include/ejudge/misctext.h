@@ -2,7 +2,7 @@
 #ifndef __MISCTEXT_H__
 #define __MISCTEXT_H__
 
-/* Copyright (C) 2000-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2025 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -115,6 +115,12 @@ unsigned char *filename_armor_bytes(unsigned char *out, size_t outsize,
                                     const unsigned char *in, size_t insize);
 
 int utf8_fix_string(unsigned char *str, int *gl_ind);
+
+_Bool
+is_valid_utf8(
+        const unsigned char *str,
+        size_t size,
+        size_t *p_offset);
 
 int utf8_cnt(const unsigned char *s, int width, int *p_w);
 
@@ -282,6 +288,13 @@ text_normalize_dup(
         size_t *p_count,
         int *p_done_mask);
 
+int
+is_text_normalized(
+        const unsigned char *str,
+        size_t size,
+        int mode,
+        size_t *p_offset);
+
 void
 html_print_by_line(
         FILE *f,
@@ -340,5 +353,9 @@ ssize_t
 utf8_trim_last_codepoint(
         const unsigned char *str,
         ssize_t size);
+
+struct strarray_t;
+int
+split_cmdline(const unsigned char *str, struct strarray_t *pcmd);
 
 #endif /* __MISCTEXT_H__ */

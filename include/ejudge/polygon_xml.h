@@ -115,6 +115,12 @@ enum
     PPXML_A_FROM_FILE,
     PPXML_A_FOR_TYPES,
     PPXML_A_PUBLISH,
+    PPXML_A_UUID_FROM_HISTORY,
+    PPXML_A_EXTRA_CONFIG,
+    PPXML_A_GENERATE_ANSWER,
+    PPXML_A_AUTO_COUNT,
+    PPXML_A_NORMALIZATION,
+    PPXML_A_FILE_TYPE,
 };
 
 enum
@@ -160,6 +166,7 @@ enum
     PPXML_TYPE_TEX,
     PPXML_TYPE_HTML,
     PPXML_TYPE_PDF,
+    PPXML_TYPE_EJUDGE_XML,
 };
 
 enum
@@ -209,6 +216,14 @@ enum
     PPXML_SOLUTION_TAG_TIME_LIMIT_OR_MEMORY_LIMIT,
     PPXML_SOLUTION_TAG_PRESENTATION_ERROR,
     PPXML_SOLUTION_TAG_FAILED,
+};
+
+enum
+{
+    PPXML_FILE_TYPE_UNKNOWN,
+    PPXML_FILE_TYPE_TEXT,
+    PPXML_FILE_TYPE_RELAXED_TEXT,
+    PPXML_FILE_TYPE_BINARY,
 };
 
 struct ppxml_name
@@ -287,18 +302,30 @@ struct ppxml_groups
     XML_TREE_VECTOR_T(ppxml_group) n;
 };
 
+struct ppxml_path_pattern
+{
+    struct xml_tree b;
+    unsigned char *pattern;
+    unsigned char file_type;
+    unsigned char *charset;
+    signed char normalization; // -1 for undefined value
+};
+
 struct ppxml_testset
 {
     struct xml_tree b;
     unsigned char *name;
-    unsigned char *input_path_pattern;
-    unsigned char *output_path_pattern;
-    unsigned char *answer_path_pattern;
+    struct ppxml_path_pattern *input;
+    struct ppxml_path_pattern *output;
+    struct ppxml_path_pattern *answer;
     struct ppxml_tests *tests;
     struct ppxml_groups *groups;
     long long memory_limit;
     int time_limit;
     int test_count;
+    unsigned char generate_answer;
+    unsigned char auto_count;
+    signed char normalization; // -1 for undefined value
 };
 
 struct ppxml_judging
@@ -310,6 +337,7 @@ struct ppxml_judging
     unsigned char *output_file;
     double cpu_speed;
     int run_count;
+    unsigned char extra_config;
 };
 
 struct ppxml_assets;
@@ -538,6 +566,7 @@ struct ppxml_problem
     struct ppxml_properties *properties;
     struct ppxml_tags *tags;
     struct ppxml_documents *documents;
+    unsigned char uuid_from_history;
 };
 
 struct ppxml_parse_context;

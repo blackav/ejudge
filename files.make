@@ -132,6 +132,7 @@ COMMON_CFILES=\
  lib/build_support.c\
  lib/cgi.c\
  lib/charsets.c\
+ lib/checksum.c\
  lib/cJSON.c\
  lib/clarlog.c\
  lib/cldb_plugin_file.c\
@@ -154,6 +155,7 @@ COMMON_CFILES=\
  lib/copyright.c\
  lib/csv.c\
  lib/dates_config.c\
+ lib/depgraph.c\
  lib/diff.c\
  lib/digest_1.c\
  lib/digest_2.c\
@@ -246,6 +248,7 @@ COMMON_CFILES=\
  lib/run_packet_5.c\
  lib/run_packet_6.c\
  lib/run_props.c\
+ lib/safe_format.c\
  lib/send_job_packet.c\
  lib/server_info.c\
  lib/server_framework.c\
@@ -461,6 +464,7 @@ CFILES=\
  bin/ej-super-server-control.c\
  bin/ej-users.c\
  bin/ej-users-control.c\
+ bin/ejudge-problem.c\
  cgi-bin/users.c\
  unix/cpu.c\
  win32/cpu.c\
@@ -572,6 +576,7 @@ HFILES=\
  ./include/ejudge/build_support.h\
  ./include/ejudge/cgi.h\
  ./include/ejudge/charsets.h\
+ ./include/ejudge/checksum.h\
  ./include/ejudge/cJSON.h\
  ./include/ejudge/clarlog.h\
  ./include/ejudge/clarlog_state.h\
@@ -590,6 +595,7 @@ HFILES=\
  ./include/ejudge/csv.h\
  ./include/ejudge/curtime.h\
  ./include/ejudge/dates_config.h\
+ ./include/ejudge/depgraph.h\
  ./include/ejudge/diff.h\
  ./include/ejudge/digest_io.h\
  ./include/ejudge/dwarf_parse.h\
@@ -664,6 +670,7 @@ HFILES=\
  ./include/ejudge/run_packet.h\
  ./include/ejudge/run_packet_priv.h\
  ./include/ejudge/run_props.h\
+ ./include/ejudge/safe_format.h\
  ./include/ejudge/server_info.h\
  ./include/ejudge/server_framework.h\
  ./include/ejudge/serve_state.h\

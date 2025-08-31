@@ -41,6 +41,17 @@ char *xmemdup(char const *, size_t size);
 #define XREALLOC(p,s) ((p) = xrealloc((p), (s) * sizeof((p)[0])))
 #endif /* __GNUC__ */
 
+#define XEXPAND(p,a,u) do { \
+    if ((a) == 0) { \
+        (a) = 4; \
+        (p) = (typeof(p)) xcalloc((a), sizeof(*(p))); \
+    } else if ((a)==(u)) { \
+        (p) = (typeof(p)) xrealloc((p), (a)*2*sizeof(*(p))); \
+        memset((p)+(a), 0, (a)*sizeof(*(p))); \
+        (a) *= 2; \
+    } \
+} while (0)
+
 #define XMEMMOVE(d,s,c) (memmove((d),(s),(c)*sizeof(*(d))))
 #define XMEMZERO(d,c)   (memset((d),0,(c)*sizeof(*(d))))
 #define XEXPAND2(a)     (xexpand2(&(a),sizeof((a).v[0])))
