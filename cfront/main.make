@@ -1,6 +1,6 @@
 # -*- mode: Makefile -*-
 
-# Copyright (C) 2014-2018 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2014-2025 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -14,16 +14,16 @@
 
 ifeq ($(ARCH), unix)
 CFLAGS = -Wall -g ${WERROR}
-CFLAGSINT = -D_GNU_SOURCE -I. -I.. -I../include -std=gnu11 ${NO_POINTER_SIGN}
+CFLAGSINT = -D_GNU_SOURCE -I. -I.. -I../include -std=gnu17 ${NO_POINTER_SIGN}
 LDFLAGS = -Wall -g
-LDFLAGSINT = -L../reuse/objs -std=gnu11
+LDFLAGSINT = -L../reuse/objs -std=gnu17
 LDLIBSINT = -lreuse -lm
 LDLIBS =
 else
 CFLAGS = -O2 -Wall
-CFLAGSINT = -D_GNU_SOURCE -I. -I.. -I../include -mno-cygwin -std=gnu11
+CFLAGSINT = -D_GNU_SOURCE -I. -I.. -I../include -mno-cygwin -std=gnu17
 LDFLAGS = -s
-LDFLAGSINT = -L../reuse/objs -mno-cygwin -std=gnu11
+LDFLAGSINT = -L../reuse/objs -mno-cygwin -std=gnu17
 LDLIBSINT = -lreuse
 LDLIBS =
 endif

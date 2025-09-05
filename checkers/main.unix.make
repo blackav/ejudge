@@ -1,6 +1,6 @@
 # -*- Makefile -*-
 
-# Copyright (C) 2015-2024 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2015-2025 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -125,29 +125,29 @@ pic/corr_close.o: corr_close.c checker_internal.h
 corr_eof.o: corr_eof.c checker_internal.h
 pic/corr_eof.o: corr_eof.c checker_internal.h
 eq_double.o : eq_double.c checker_internal.h
-	${CC} ${CFLAGS} -std=gnu11 -c $< -o $@
+	${CC} ${CFLAGS} -std=gnu17 -c $< -o $@
 eq_double_abs.o : eq_double_abs.c checker_internal.h
-	${CC} ${CFLAGS} -std=gnu11 -c $< -o $@
+	${CC} ${CFLAGS} -std=gnu17 -c $< -o $@
 pic/eq_double.o : eq_double.c checker_internal.h
-	${CC} ${CFLAGS} -fPIC -DPIC -std=gnu11 -c $< -o $@
+	${CC} ${CFLAGS} -fPIC -DPIC -std=gnu17 -c $< -o $@
 pic/eq_double_abs.o : eq_double_abs.c checker_internal.h
-	${CC} ${CFLAGS} -fPIC -DPIC -std=gnu11 -c $< -o $@
+	${CC} ${CFLAGS} -fPIC -DPIC -std=gnu17 -c $< -o $@
 eq_float.o : eq_float.c checker_internal.h
-	${CC} ${CFLAGS} -std=gnu11 -c $< -o $@
+	${CC} ${CFLAGS} -std=gnu17 -c $< -o $@
 eq_float_abs.o : eq_float_abs.c checker_internal.h
-	${CC} ${CFLAGS} -std=gnu11 -c $< -o $@
+	${CC} ${CFLAGS} -std=gnu17 -c $< -o $@
 pic/eq_float.o : eq_float.c checker_internal.h
-	${CC} ${CFLAGS} -fPIC -DPIC -std=gnu11 -c $< -o $@
+	${CC} ${CFLAGS} -fPIC -DPIC -std=gnu17 -c $< -o $@
 pic/eq_float_abs.o : eq_float_abs.c checker_internal.h
-	${CC} ${CFLAGS} -fPIC -DPIC -std=gnu11 -c $< -o $@
+	${CC} ${CFLAGS} -fPIC -DPIC -std=gnu17 -c $< -o $@
 eq_long_double.o : eq_long_double.c checker_internal.h
-	${CC} ${CFLAGS} -std=gnu11 -c $< -o $@
+	${CC} ${CFLAGS} -std=gnu17 -c $< -o $@
 eq_long_double_abs.o : eq_long_double_abs.c checker_internal.h
-	${CC} ${CFLAGS} -std=gnu11 -c $< -o $@
+	${CC} ${CFLAGS} -std=gnu17 -c $< -o $@
 pic/eq_long_double.o : eq_long_double.c checker_internal.h
-	${CC} ${CFLAGS} -fPIC -DPIC -std=gnu11 -c $< -o $@
+	${CC} ${CFLAGS} -fPIC -DPIC -std=gnu17 -c $< -o $@
 pic/eq_long_double_abs.o : eq_long_double_abs.c checker_internal.h
-	${CC} ${CFLAGS} -fPIC -DPIC -std=gnu11 -c $< -o $@
+	${CC} ${CFLAGS} -fPIC -DPIC -std=gnu17 -c $< -o $@
 fatal.o: fatal.c checker_internal.h
 pic/fatal.o: fatal.c checker_internal.h
 fatal_cf.o: fatal_cf.c checker_internal.h

@@ -1,6 +1,6 @@
 # -*- Makefile -*-
 
-# Copyright (C) 2014-2024 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2014-2025 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -20,7 +20,7 @@ endif
 CEXTRAFLAGS=
 LDEXTRAFLAGS=
 EXTRALIBS=
-CCOMPFLAGS=-D_GNU_SOURCE -std=gnu11 -I../.. -I../../include -g -DPIC -fPIC -fno-var-tracking-assignments
+CCOMPFLAGS=-D_GNU_SOURCE -std=gnu17 -I../.. -I../../include -g -DPIC -fPIC -fno-var-tracking-assignments
 LDCOMPFLAGS= -g -shared
 EXESFX=
 
