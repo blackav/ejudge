@@ -88,6 +88,14 @@ static struct meta_info_item meta_info_problem_config_section_data[] =
   [META_PROBLEM_CONFIG_SECTION_copy_exe_to_tgzdir] = { META_PROBLEM_CONFIG_SECTION_copy_exe_to_tgzdir, 'B', XSIZE(struct problem_config_section, copy_exe_to_tgzdir), "copy_exe_to_tgzdir", XOFFSET(struct problem_config_section, copy_exe_to_tgzdir) },
   [META_PROBLEM_CONFIG_SECTION_ignore_term_signal] = { META_PROBLEM_CONFIG_SECTION_ignore_term_signal, 'B', XSIZE(struct problem_config_section, ignore_term_signal), "ignore_term_signal", XOFFSET(struct problem_config_section, ignore_term_signal) },
   [META_PROBLEM_CONFIG_SECTION_enable_group_merge] = { META_PROBLEM_CONFIG_SECTION_enable_group_merge, 'B', XSIZE(struct problem_config_section, enable_group_merge), "enable_group_merge", XOFFSET(struct problem_config_section, enable_group_merge) },
+  [META_PROBLEM_CONFIG_SECTION_disable_vm_size_limit] = { META_PROBLEM_CONFIG_SECTION_disable_vm_size_limit, 'B', XSIZE(struct problem_config_section, disable_vm_size_limit), "disable_vm_size_limit", XOFFSET(struct problem_config_section, disable_vm_size_limit) },
+  [META_PROBLEM_CONFIG_SECTION_restricted_statement] = { META_PROBLEM_CONFIG_SECTION_restricted_statement, 'B', XSIZE(struct problem_config_section, restricted_statement), "restricted_statement", XOFFSET(struct problem_config_section, restricted_statement) },
+  [META_PROBLEM_CONFIG_SECTION_enable_dynamic_priority] = { META_PROBLEM_CONFIG_SECTION_enable_dynamic_priority, 'B', XSIZE(struct problem_config_section, enable_dynamic_priority), "enable_dynamic_priority", XOFFSET(struct problem_config_section, enable_dynamic_priority) },
+  [META_PROBLEM_CONFIG_SECTION_autoassign_variants] = { META_PROBLEM_CONFIG_SECTION_autoassign_variants, 'B', XSIZE(struct problem_config_section, autoassign_variants), "autoassign_variants", XOFFSET(struct problem_config_section, autoassign_variants) },
+  [META_PROBLEM_CONFIG_SECTION_notify_on_submit] = { META_PROBLEM_CONFIG_SECTION_notify_on_submit, 'B', XSIZE(struct problem_config_section, notify_on_submit), "notify_on_submit", XOFFSET(struct problem_config_section, notify_on_submit) },
+  [META_PROBLEM_CONFIG_SECTION_enable_user_input] = { META_PROBLEM_CONFIG_SECTION_enable_user_input, 'B', XSIZE(struct problem_config_section, enable_user_input), "enable_user_input", XOFFSET(struct problem_config_section, enable_user_input) },
+  [META_PROBLEM_CONFIG_SECTION_enable_vcs] = { META_PROBLEM_CONFIG_SECTION_enable_vcs, 'B', XSIZE(struct problem_config_section, enable_vcs), "enable_vcs", XOFFSET(struct problem_config_section, enable_vcs) },
+  [META_PROBLEM_CONFIG_SECTION_enable_src_for_testing] = { META_PROBLEM_CONFIG_SECTION_enable_src_for_testing, 'B', XSIZE(struct problem_config_section, enable_src_for_testing), "enable_src_for_testing", XOFFSET(struct problem_config_section, enable_src_for_testing) },
   [META_PROBLEM_CONFIG_SECTION_id] = { META_PROBLEM_CONFIG_SECTION_id, 'i', XSIZE(struct problem_config_section, id), "id", XOFFSET(struct problem_config_section, id) },
   [META_PROBLEM_CONFIG_SECTION_real_time_limit] = { META_PROBLEM_CONFIG_SECTION_real_time_limit, 'i', XSIZE(struct problem_config_section, real_time_limit), "real_time_limit", XOFFSET(struct problem_config_section, real_time_limit) },
   [META_PROBLEM_CONFIG_SECTION_time_limit] = { META_PROBLEM_CONFIG_SECTION_time_limit, 'i', XSIZE(struct problem_config_section, time_limit), "time_limit", XOFFSET(struct problem_config_section, time_limit) },
@@ -113,7 +121,7 @@ static struct meta_info_item meta_info_problem_config_section_data[] =
   [META_PROBLEM_CONFIG_SECTION_max_open_file_count] = { META_PROBLEM_CONFIG_SECTION_max_open_file_count, 'i', XSIZE(struct problem_config_section, max_open_file_count), "max_open_file_count", XOFFSET(struct problem_config_section, max_open_file_count) },
   [META_PROBLEM_CONFIG_SECTION_max_process_count] = { META_PROBLEM_CONFIG_SECTION_max_process_count, 'i', XSIZE(struct problem_config_section, max_process_count), "max_process_count", XOFFSET(struct problem_config_section, max_process_count) },
   [META_PROBLEM_CONFIG_SECTION_tests_to_accept] = { META_PROBLEM_CONFIG_SECTION_tests_to_accept, 'i', XSIZE(struct problem_config_section, tests_to_accept), "tests_to_accept", XOFFSET(struct problem_config_section, tests_to_accept) },
-  [META_PROBLEM_CONFIG_SECTION_disable_vm_size_limit] = { META_PROBLEM_CONFIG_SECTION_disable_vm_size_limit, 'i', XSIZE(struct problem_config_section, disable_vm_size_limit), "disable_vm_size_limit", XOFFSET(struct problem_config_section, disable_vm_size_limit) },
+  [META_PROBLEM_CONFIG_SECTION_variant_num] = { META_PROBLEM_CONFIG_SECTION_variant_num, 'i', XSIZE(struct problem_config_section, variant_num), "variant_num", XOFFSET(struct problem_config_section, variant_num) },
   [META_PROBLEM_CONFIG_SECTION_deadline] = { META_PROBLEM_CONFIG_SECTION_deadline, 't', XSIZE(struct problem_config_section, deadline), "deadline", XOFFSET(struct problem_config_section, deadline) },
   [META_PROBLEM_CONFIG_SECTION_start_date] = { META_PROBLEM_CONFIG_SECTION_start_date, 't', XSIZE(struct problem_config_section, start_date), "start_date", XOFFSET(struct problem_config_section, start_date) },
   [META_PROBLEM_CONFIG_SECTION_max_vm_size] = { META_PROBLEM_CONFIG_SECTION_max_vm_size, 'Z', XSIZE(struct problem_config_section, max_vm_size), "max_vm_size", XOFFSET(struct problem_config_section, max_vm_size) },
@@ -182,6 +190,17 @@ static struct meta_info_item meta_info_problem_config_section_data[] =
   [META_PROBLEM_CONFIG_SECTION_iframe_statement] = { META_PROBLEM_CONFIG_SECTION_iframe_statement, 's', XSIZE(struct problem_config_section, iframe_statement), "iframe_statement", XOFFSET(struct problem_config_section, iframe_statement) },
   [META_PROBLEM_CONFIG_SECTION_extra_src_dir] = { META_PROBLEM_CONFIG_SECTION_extra_src_dir, 's', XSIZE(struct problem_config_section, extra_src_dir), "extra_src_dir", XOFFSET(struct problem_config_section, extra_src_dir) },
   [META_PROBLEM_CONFIG_SECTION_standard_valuer] = { META_PROBLEM_CONFIG_SECTION_standard_valuer, 's', XSIZE(struct problem_config_section, standard_valuer), "standard_valuer", XOFFSET(struct problem_config_section, standard_valuer) },
+  [META_PROBLEM_CONFIG_SECTION_stand_column] = { META_PROBLEM_CONFIG_SECTION_stand_column, 's', XSIZE(struct problem_config_section, stand_column), "stand_column", XOFFSET(struct problem_config_section, stand_column) },
+  [META_PROBLEM_CONFIG_SECTION_group_name] = { META_PROBLEM_CONFIG_SECTION_group_name, 's', XSIZE(struct problem_config_section, group_name), "group_name", XOFFSET(struct problem_config_section, group_name) },
+  [META_PROBLEM_CONFIG_SECTION_corr_dir] = { META_PROBLEM_CONFIG_SECTION_corr_dir, 's', XSIZE(struct problem_config_section, corr_dir), "corr_dir", XOFFSET(struct problem_config_section, corr_dir) },
+  [META_PROBLEM_CONFIG_SECTION_info_dir] = { META_PROBLEM_CONFIG_SECTION_info_dir, 's', XSIZE(struct problem_config_section, info_dir), "info_dir", XOFFSET(struct problem_config_section, info_dir) },
+  [META_PROBLEM_CONFIG_SECTION_tgz_dir] = { META_PROBLEM_CONFIG_SECTION_tgz_dir, 's', XSIZE(struct problem_config_section, tgz_dir), "tgz_dir", XOFFSET(struct problem_config_section, tgz_dir) },
+  [META_PROBLEM_CONFIG_SECTION_statement_file] = { META_PROBLEM_CONFIG_SECTION_statement_file, 's', XSIZE(struct problem_config_section, statement_file), "statement_file", XOFFSET(struct problem_config_section, statement_file) },
+  [META_PROBLEM_CONFIG_SECTION_custom_compile_cmd] = { META_PROBLEM_CONFIG_SECTION_custom_compile_cmd, 's', XSIZE(struct problem_config_section, custom_compile_cmd), "custom_compile_cmd", XOFFSET(struct problem_config_section, custom_compile_cmd) },
+  [META_PROBLEM_CONFIG_SECTION_custom_lang_name] = { META_PROBLEM_CONFIG_SECTION_custom_lang_name, 's', XSIZE(struct problem_config_section, custom_lang_name), "custom_lang_name", XOFFSET(struct problem_config_section, custom_lang_name) },
+  [META_PROBLEM_CONFIG_SECTION_post_pull_cmd] = { META_PROBLEM_CONFIG_SECTION_post_pull_cmd, 's', XSIZE(struct problem_config_section, post_pull_cmd), "post_pull_cmd", XOFFSET(struct problem_config_section, post_pull_cmd) },
+  [META_PROBLEM_CONFIG_SECTION_vcs_compile_cmd] = { META_PROBLEM_CONFIG_SECTION_vcs_compile_cmd, 's', XSIZE(struct problem_config_section, vcs_compile_cmd), "vcs_compile_cmd", XOFFSET(struct problem_config_section, vcs_compile_cmd) },
+  [META_PROBLEM_CONFIG_SECTION_super_run_dir] = { META_PROBLEM_CONFIG_SECTION_super_run_dir, 's', XSIZE(struct problem_config_section, super_run_dir), "super_run_dir", XOFFSET(struct problem_config_section, super_run_dir) },
   [META_PROBLEM_CONFIG_SECTION_test_sets] = { META_PROBLEM_CONFIG_SECTION_test_sets, 'x', XSIZE(struct problem_config_section, test_sets), "test_sets", XOFFSET(struct problem_config_section, test_sets) },
   [META_PROBLEM_CONFIG_SECTION_date_penalty] = { META_PROBLEM_CONFIG_SECTION_date_penalty, 'x', XSIZE(struct problem_config_section, date_penalty), "date_penalty", XOFFSET(struct problem_config_section, date_penalty) },
   [META_PROBLEM_CONFIG_SECTION_group_start_date] = { META_PROBLEM_CONFIG_SECTION_group_start_date, 'x', XSIZE(struct problem_config_section, group_start_date), "group_start_date", XOFFSET(struct problem_config_section, group_start_date) },
@@ -196,8 +215,8 @@ static struct meta_info_item meta_info_problem_config_section_data[] =
   [META_PROBLEM_CONFIG_SECTION_lang_max_stack_size] = { META_PROBLEM_CONFIG_SECTION_lang_max_stack_size, 'x', XSIZE(struct problem_config_section, lang_max_stack_size), "lang_max_stack_size", XOFFSET(struct problem_config_section, lang_max_stack_size) },
   [META_PROBLEM_CONFIG_SECTION_lang_max_rss_size] = { META_PROBLEM_CONFIG_SECTION_lang_max_rss_size, 'x', XSIZE(struct problem_config_section, lang_max_rss_size), "lang_max_rss_size", XOFFSET(struct problem_config_section, lang_max_rss_size) },
   [META_PROBLEM_CONFIG_SECTION_personal_deadline] = { META_PROBLEM_CONFIG_SECTION_personal_deadline, 'x', XSIZE(struct problem_config_section, personal_deadline), "personal_deadline", XOFFSET(struct problem_config_section, personal_deadline) },
-  [META_PROBLEM_CONFIG_SECTION_score_view] = { META_PROBLEM_CONFIG_SECTION_score_view, 'x', XSIZE(struct problem_config_section, score_view), "score_view", XOFFSET(struct problem_config_section, score_view) },
-  [META_PROBLEM_CONFIG_SECTION_score_view_text] = { META_PROBLEM_CONFIG_SECTION_score_view_text, 'x', XSIZE(struct problem_config_section, score_view_text), "score_view_text", XOFFSET(struct problem_config_section, score_view_text) },
+  [META_PROBLEM_CONFIG_SECTION_allow_ip] = { META_PROBLEM_CONFIG_SECTION_allow_ip, 'x', XSIZE(struct problem_config_section, allow_ip), "allow_ip", XOFFSET(struct problem_config_section, allow_ip) },
+  [META_PROBLEM_CONFIG_SECTION_checker_extra_files] = { META_PROBLEM_CONFIG_SECTION_checker_extra_files, 'x', XSIZE(struct problem_config_section, checker_extra_files), "checker_extra_files", XOFFSET(struct problem_config_section, checker_extra_files) },
   [META_PROBLEM_CONFIG_SECTION_lang_compiler_env] = { META_PROBLEM_CONFIG_SECTION_lang_compiler_env, 'X', XSIZE(struct problem_config_section, lang_compiler_env), "lang_compiler_env", XOFFSET(struct problem_config_section, lang_compiler_env) },
   [META_PROBLEM_CONFIG_SECTION_checker_env] = { META_PROBLEM_CONFIG_SECTION_checker_env, 'X', XSIZE(struct problem_config_section, checker_env), "checker_env", XOFFSET(struct problem_config_section, checker_env) },
   [META_PROBLEM_CONFIG_SECTION_valuer_env] = { META_PROBLEM_CONFIG_SECTION_valuer_env, 'X', XSIZE(struct problem_config_section, valuer_env), "valuer_env", XOFFSET(struct problem_config_section, valuer_env) },
@@ -326,6 +345,14 @@ void meta_problem_config_section_copy(struct problem_config_section *dst, const 
   dst->copy_exe_to_tgzdir = src->copy_exe_to_tgzdir;
   dst->ignore_term_signal = src->ignore_term_signal;
   dst->enable_group_merge = src->enable_group_merge;
+  dst->disable_vm_size_limit = src->disable_vm_size_limit;
+  dst->restricted_statement = src->restricted_statement;
+  dst->enable_dynamic_priority = src->enable_dynamic_priority;
+  dst->autoassign_variants = src->autoassign_variants;
+  dst->notify_on_submit = src->notify_on_submit;
+  dst->enable_user_input = src->enable_user_input;
+  dst->enable_vcs = src->enable_vcs;
+  dst->enable_src_for_testing = src->enable_src_for_testing;
   dst->id = src->id;
   dst->real_time_limit = src->real_time_limit;
   dst->time_limit = src->time_limit;
@@ -351,7 +378,7 @@ void meta_problem_config_section_copy(struct problem_config_section *dst, const 
   dst->max_open_file_count = src->max_open_file_count;
   dst->max_process_count = src->max_process_count;
   dst->tests_to_accept = src->tests_to_accept;
-  dst->disable_vm_size_limit = src->disable_vm_size_limit;
+  dst->variant_num = src->variant_num;
   dst->deadline = src->deadline;
   dst->start_date = src->start_date;
   dst->max_vm_size = src->max_vm_size;
@@ -534,6 +561,39 @@ void meta_problem_config_section_copy(struct problem_config_section *dst, const 
   if (src->standard_valuer) {
     dst->standard_valuer = strdup(src->standard_valuer);
   }
+  if (src->stand_column) {
+    dst->stand_column = strdup(src->stand_column);
+  }
+  if (src->group_name) {
+    dst->group_name = strdup(src->group_name);
+  }
+  if (src->corr_dir) {
+    dst->corr_dir = strdup(src->corr_dir);
+  }
+  if (src->info_dir) {
+    dst->info_dir = strdup(src->info_dir);
+  }
+  if (src->tgz_dir) {
+    dst->tgz_dir = strdup(src->tgz_dir);
+  }
+  if (src->statement_file) {
+    dst->statement_file = strdup(src->statement_file);
+  }
+  if (src->custom_compile_cmd) {
+    dst->custom_compile_cmd = strdup(src->custom_compile_cmd);
+  }
+  if (src->custom_lang_name) {
+    dst->custom_lang_name = strdup(src->custom_lang_name);
+  }
+  if (src->post_pull_cmd) {
+    dst->post_pull_cmd = strdup(src->post_pull_cmd);
+  }
+  if (src->vcs_compile_cmd) {
+    dst->vcs_compile_cmd = strdup(src->vcs_compile_cmd);
+  }
+  if (src->super_run_dir) {
+    dst->super_run_dir = strdup(src->super_run_dir);
+  }
   dst->test_sets = (typeof(dst->test_sets)) sarray_copy((char**) src->test_sets);
   dst->date_penalty = (typeof(dst->date_penalty)) sarray_copy((char**) src->date_penalty);
   dst->group_start_date = (typeof(dst->group_start_date)) sarray_copy((char**) src->group_start_date);
@@ -548,8 +608,8 @@ void meta_problem_config_section_copy(struct problem_config_section *dst, const 
   dst->lang_max_stack_size = (typeof(dst->lang_max_stack_size)) sarray_copy((char**) src->lang_max_stack_size);
   dst->lang_max_rss_size = (typeof(dst->lang_max_rss_size)) sarray_copy((char**) src->lang_max_rss_size);
   dst->personal_deadline = (typeof(dst->personal_deadline)) sarray_copy((char**) src->personal_deadline);
-  dst->score_view = (typeof(dst->score_view)) sarray_copy((char**) src->score_view);
-  dst->score_view_text = (typeof(dst->score_view_text)) sarray_copy((char**) src->score_view_text);
+  dst->allow_ip = (typeof(dst->allow_ip)) sarray_copy((char**) src->allow_ip);
+  dst->checker_extra_files = (typeof(dst->checker_extra_files)) sarray_copy((char**) src->checker_extra_files);
   dst->lang_compiler_env = (typeof(dst->lang_compiler_env)) sarray_copy((char**) src->lang_compiler_env);
   dst->checker_env = (typeof(dst->checker_env)) sarray_copy((char**) src->checker_env);
   dst->valuer_env = (typeof(dst->valuer_env)) sarray_copy((char**) src->valuer_env);
@@ -623,6 +683,17 @@ void meta_problem_config_section_free(struct problem_config_section *ptr)
   free(ptr->iframe_statement);
   free(ptr->extra_src_dir);
   free(ptr->standard_valuer);
+  free(ptr->stand_column);
+  free(ptr->group_name);
+  free(ptr->corr_dir);
+  free(ptr->info_dir);
+  free(ptr->tgz_dir);
+  free(ptr->statement_file);
+  free(ptr->custom_compile_cmd);
+  free(ptr->custom_lang_name);
+  free(ptr->post_pull_cmd);
+  free(ptr->vcs_compile_cmd);
+  free(ptr->super_run_dir);
   sarray_free((char**) ptr->test_sets);
   sarray_free((char**) ptr->date_penalty);
   sarray_free((char**) ptr->group_start_date);
@@ -637,8 +708,8 @@ void meta_problem_config_section_free(struct problem_config_section *ptr)
   sarray_free((char**) ptr->lang_max_stack_size);
   sarray_free((char**) ptr->lang_max_rss_size);
   sarray_free((char**) ptr->personal_deadline);
-  sarray_free((char**) ptr->score_view);
-  sarray_free((char**) ptr->score_view_text);
+  sarray_free((char**) ptr->allow_ip);
+  sarray_free((char**) ptr->checker_extra_files);
   sarray_free((char**) ptr->lang_compiler_env);
   sarray_free((char**) ptr->checker_env);
   sarray_free((char**) ptr->valuer_env);
