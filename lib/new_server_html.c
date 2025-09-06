@@ -10569,7 +10569,19 @@ priv_problem_status_json(
   }
 
   // whether statement is available
-  if (variant > 0 && prob->xml.a[variant - 1]) {
+  if (prob->variant_num > 0 && variant > 0 && prob->md_size > 0 && variant <= prob->md_size) {
+    struct md_content *mdp = &prob->md_files[variant - 1];
+    if (mdp->size > 0) {
+      cJSON_AddTrueToObject(jp, "is_statement_avaiable");
+      cJSON_AddNumberToObject(jp, "est_stmt_size", mdp->size);
+    }
+  } else if (prob->variant_num <= 0 && variant <= 0 && prob->md_size == 1) {
+    struct md_content *mdp = &prob->md_files[0];
+    if (mdp->size > 0) {
+      cJSON_AddTrueToObject(jp, "is_statement_avaiable");
+      cJSON_AddNumberToObject(jp, "est_stmt_size", mdp->size);
+    }
+  } else if (variant > 0 && prob->xml.a[variant - 1]) {
     cJSON_AddTrueToObject(jp, "is_statement_avaiable");
     // FIXME: calculate size estimate?
     cJSON_AddNumberToObject(jp, "est_stmt_size", 4096);
@@ -17657,7 +17669,19 @@ unpriv_problem_status_json(
     fprintf(fout, ",\n      \"max_rss_size\": \"%llu\"", prob->max_rss_size);
   }
   // whether statement is available
-  if (variant > 0 && prob->xml.a[variant - 1]) {
+  if (prob->variant_num > 0 && variant > 0 && prob->md_size > 0 && variant <= prob->md_size) {
+    struct md_content *pmd = &prob->md_files[variant - 1];
+    if (pmd->size > 0) {
+      fprintf(fout, ",\n      \"is_statement_avaiable\": %s", to_json_bool(1));
+      fprintf(fout, ",\n      \"est_stmt_size\": %zu", pmd->size);
+    }
+  } else if (prob->variant_num <= 0 && variant <= 0 && prob->md_size == 1) {
+    struct md_content *pmd = &prob->md_files[0];
+    if (pmd->size > 0) {
+      fprintf(fout, ",\n      \"is_statement_avaiable\": %s", to_json_bool(1));
+      fprintf(fout, ",\n      \"est_stmt_size\": %zu", pmd->size);
+    }
+  } else if (variant > 0 && prob->xml.a[variant - 1]) {
     fprintf(fout, ",\n      \"is_statement_avaiable\": %s", to_json_bool(1));
     // FIXME: calculate size estimate?
     fprintf(fout, ",\n      \"est_stmt_size\": %d", 4096);
@@ -17849,15 +17873,25 @@ unpriv_problem_statement_json(
   }
 
   problem_xml_t px = NULL;
-  if (variant > 0 && prob->xml.a && prob->xml.a[variant - 1]) {
-    px = prob->xml.a[variant - 1];
-  } else if (variant <= 0 && prob->xml.p) {
-    px = prob->xml.p;
+  struct md_content *pmd = NULL;
+  if (prob->variant_num > 0 && variant > 0 && prob->md_size > 0 && variant <= prob->md_size) {
+    pmd = &prob->md_files[variant - 1];
+  } else if (prob->variant_num <= 0 && variant <= 0 && prob->md_size == 1) {
+    pmd = &prob->md_files[0];
   }
-  if (!px || !px->stmts) {
-    goto fail;
+  if (pmd && pmd->size > 0) {
+    fwrite_unlocked(pmd->data, 1, pmd->size, fout);
+  } else {
+    if (variant > 0 && prob->xml.a && prob->xml.a[variant - 1]) {
+      px = prob->xml.a[variant - 1];
+    } else if (variant <= 0 && prob->xml.p) {
+      px = prob->xml.p;
+    }
+    if (!px || !px->stmts) {
+      goto fail;
+    }
+    ns_unparse_statement(fout, phr, cnts, extra, prob, 0, px, NULL, 0);
   }
-  ns_unparse_statement(fout, phr, cnts, extra, prob, 0, px, NULL, 0);
 
 cleanup:
   html_armor_free(&ab);

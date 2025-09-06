@@ -47,6 +47,7 @@ markdown_parse(
     int c;
 
     memset(res, 0, sizeof(*res));
+    res->path = xstrdup(path);
 
     fin = fopen(path, "r");
     if (!fin) goto done;
@@ -67,7 +68,6 @@ markdown_parse(
     }
     fclose(fhtml); fhtml = NULL;
 
-    res->path = xstrdup(path);
     res->data = bhtml; bhtml = NULL;
     res->size = zhtml; zhtml = 0;
     retval = 0;
