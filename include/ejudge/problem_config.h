@@ -2,7 +2,7 @@
 #ifndef __PROBLEM_CONFIG_H__
 #define __PROBLEM_CONFIG_H__
 
-/* Copyright (C) 2012-2024 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2025 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -109,6 +109,14 @@ struct problem_config_section
   ejintbool_t copy_exe_to_tgzdir;
   ejintbool_t ignore_term_signal;
   ejintbool_t enable_group_merge;
+  ejintbool_t disable_vm_size_limit;
+  ejintbool_t restricted_statement;
+  ejintbool_t enable_dynamic_priority;
+  ejintbool_t autoassign_variants;
+  ejintbool_t notify_on_submit;
+  ejintbool_t enable_user_input;
+  ejintbool_t enable_vcs;
+  ejintbool_t enable_src_for_testing;
 
   int id;
   int real_time_limit;
@@ -135,7 +143,7 @@ struct problem_config_section
   int max_open_file_count;
   int max_process_count;
   int tests_to_accept;
-  int disable_vm_size_limit;
+  int variant_num;
 
   time_t deadline;
   time_t start_date;
@@ -207,6 +215,17 @@ struct problem_config_section
   unsigned char *iframe_statement;
   unsigned char *extra_src_dir;
   unsigned char *standard_valuer;
+  unsigned char *stand_column;
+  unsigned char *group_name;
+  unsigned char *corr_dir;
+  unsigned char *info_dir;
+  unsigned char *tgz_dir;
+  unsigned char *statement_file;
+  unsigned char *custom_compile_cmd;
+  unsigned char *custom_lang_name;
+  unsigned char *post_pull_cmd;
+  unsigned char *vcs_compile_cmd;
+  unsigned char *super_run_dir;
 
   char **test_sets;
   char **date_penalty;
@@ -222,8 +241,8 @@ struct problem_config_section
   char **lang_max_stack_size;
   char **lang_max_rss_size;
   char **personal_deadline;
-  char **score_view;
-  char **score_view_text;
+  char **allow_ip;
+  char **checker_extra_files;
 
   ejenvlist_t lang_compiler_env;
   ejenvlist_t checker_env;
