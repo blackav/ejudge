@@ -1231,6 +1231,8 @@ prepare_unparse_prob(
   if ((prob->abstract && prob->score_tokenized > 0)
       || (!prob->abstract && prob->score_tokenized >= 0))
     unparse_bool(f, "score_tokenized", prob->score_tokenized);
+  if (prob->md_file)
+    fprintf(f, "md_file = \"%s\"\n", CARMOR(prob->md_file));
   if (prob->xml_file)
     fprintf(f, "xml_file = \"%s\"\n", CARMOR(prob->xml_file));
   if (prob->alternatives_file)
@@ -1865,6 +1867,8 @@ prepare_unparse_actual_prob(
     unparse_bool(f, "score_latest_marked", prob->score_latest_marked);
   if (prob->score_tokenized > 0)
     unparse_bool(f, "score_tokenized", prob->score_tokenized);
+  if ((show_paths || (global && global->advanced_layout > 0)) && prob->md_file)
+    fprintf(f, "md_file = \"%s\"\n", CARMOR(prob->md_file));
   if ((show_paths || (global && global->advanced_layout > 0)) && prob->xml_file)
     fprintf(f, "xml_file = \"%s\"\n", CARMOR(prob->xml_file));
   if (show_paths && prob->alternatives_file)
@@ -3225,6 +3229,11 @@ prob_instr(
 
     fprintf(f, "<p><b>Makefile (optional):</b></p>\n");
     handle_file(f, global, tmp_prob, "Makefile", 0);
+  }
+  prepare_set_prob_value(CNTSPROB_md_file, tmp_prob, abstr, global);
+  if (tmp_prob->md_file && tmp_prob->md_file[0]) {
+    fprintf(f, "<p><b>Problem statement markdown file:</b></p>\n");
+    handle_file(f, global, tmp_prob, tmp_prob->md_file, 0);
   }
   prepare_set_prob_value(CNTSPROB_xml_file, tmp_prob, abstr, global);
   if (tmp_prob->xml_file && tmp_prob->xml_file[0]) {

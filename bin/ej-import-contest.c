@@ -924,6 +924,7 @@ merge_problem_section(
         { CNTSPROB_spelling, META_PROBLEM_CONFIG_SECTION_spelling },
         { CNTSPROB_plugin_file, META_PROBLEM_CONFIG_SECTION_plugin_file },
         { CNTSPROB_xml_file, META_PROBLEM_CONFIG_SECTION_xml_file },
+        { CNTSPROB_md_file, META_PROBLEM_CONFIG_SECTION_md_file },
         { CNTSPROB_stand_attr, META_PROBLEM_CONFIG_SECTION_stand_attr },
         { CNTSPROB_source_header, META_PROBLEM_CONFIG_SECTION_source_header },
         { CNTSPROB_source_footer, META_PROBLEM_CONFIG_SECTION_source_footer },

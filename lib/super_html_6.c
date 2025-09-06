@@ -5195,6 +5195,9 @@ do_import_problem(
   } else if (cfg->valuer_cmd && cfg->valuer_cmd[0]) {
     xstrdup3(&prob->valuer_cmd, cfg->valuer_cmd);
   }
+  if (cfg->md_file && cfg->md_file[0]) {
+    xstrdup3(&prob->md_file, cfg->md_file);
+  }
   if (cfg->xml_file && cfg->xml_file[0]) {
     xstrdup3(&prob->xml_file, cfg->xml_file);
   }
