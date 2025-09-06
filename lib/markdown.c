@@ -18,6 +18,7 @@
 #include "ejudge/xalloc.h"
 
 #include "md4c/md4c-html.h"
+#include "md4c/src/md4c-html.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -62,7 +63,7 @@ markdown_parse(
     fhtml = open_memstream(&bhtml, &zhtml);
     if (!fhtml) goto done;
     unsigned parser_flags = MD_FLAG_LATEXMATHSPANS;
-    unsigned renderer_flags = MD_HTML_FLAG_SKIP_UTF8_BOM;
+    unsigned renderer_flags = MD_HTML_FLAG_SKIP_UTF8_BOM | MD_HTML_FLAG_MATHJAX;
     if (md_html(bmem, zmem, output_func, fhtml, parser_flags, renderer_flags) < 0) {
         goto done;
     }
