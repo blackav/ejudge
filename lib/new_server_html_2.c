@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2024 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2025 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -9540,6 +9540,7 @@ struct ReloadStatementContext
   int prob_id;
   int variant;
   const unsigned char *xml_path;
+  const unsigned char *md_path;
 };
 
 static void
@@ -9553,10 +9554,16 @@ do_reload_statement(
   for (int prob_id = 1; prob_id <= cs->max_prob; ++prob_id) {
     struct section_problem_data *prob = cs->probs[prob_id];
     if (!prob) continue;
-
     if (prob->variant_num <= 0) {
       if (extra->contest_id == cntx->contest_id && prob_id == cntx->prob_id)
         continue;
+      if (cntx->md_path && prob->md_size == 1 && !strcmp(prob->md_files[0].path, cntx->md_path)) {
+        struct md_content *mdp = &prob->md_files[0];
+        free(mdp->data);
+        free(mdp->path);
+        markdown_parse(cntx->md_path, mdp);
+        continue;
+      }
       if (!prob->xml_file_path || strcmp(prob->xml_file_path, cntx->xml_path) != 0)
         continue;
       prob->xml.p = problem_xml_free(prob->xml.p);
@@ -9567,6 +9574,13 @@ do_reload_statement(
             && prob_id == cntx->prob_id
             && variant == cntx->variant)
           continue;
+        if (cntx->md_path && variant <= prob->md_size && !strcmp(prob->md_files[variant - 1].path, cntx->md_path)) {
+          struct md_content *mdp = &prob->md_files[variant - 1];
+          free(mdp->data);
+          free(mdp->path);
+          markdown_parse(cntx->md_path, mdp);
+          continue;
+        }
         if (!prob->var_xml_file_paths || !prob->var_xml_file_paths[variant - 1])
           continue;
         if (strcmp(prob->var_xml_file_paths[variant - 1], cntx->xml_path) != 0)
@@ -9607,18 +9621,37 @@ ns_reload_statement(
   };
 
   if (prob->variant_num <= 0) {
-    if (!prob->xml.p) return;
-    if (!prob->xml_file_path) return;
-    prob->xml.p = problem_xml_free(prob->xml.p);
-    prob->xml.p = problem_xml_parse_safe(NULL, prob->xml_file_path);
-    cntx.xml_path = prob->xml_file_path;
+    if (prob->md_size == 1) {
+      struct md_content *mdp = &prob->md_files[0];
+      unsigned char *saved_path = mdp->path;
+      free(mdp->data);
+      markdown_parse(saved_path, mdp);
+      cntx.md_path = mdp->path;
+      free(saved_path);
+    } else {
+      if (!prob->xml.p) return;
+      if (!prob->xml_file_path) return;
+      prob->xml.p = problem_xml_free(prob->xml.p);
+      prob->xml.p = problem_xml_parse_safe(NULL, prob->xml_file_path);
+      cntx.xml_path = prob->xml_file_path;
+    }
   } else {
-    if (!prob->xml.a[variant - 1]) return;
-    if (!prob->var_xml_file_paths) return;
-    if (!prob->var_xml_file_paths[variant - 1]) return;
-    prob->xml.a[variant - 1] = problem_xml_free(prob->xml.a[variant - 1]);
-    prob->xml.a[variant - 1] = problem_xml_parse_safe(NULL, prob->var_xml_file_paths[variant - 1]);
-    cntx.xml_path = prob->var_xml_file_paths[variant - 1];
+    if (prob->md_size > 0 && variant <= prob->md_size) {
+      struct md_content *mdp = &prob->md_files[variant - 1];
+      unsigned char *saved_path = mdp->path;
+      free(mdp->data);
+      markdown_parse(saved_path, mdp);
+      cntx.md_path = mdp->path;
+      free(saved_path);
+    } else {
+      if (!prob->xml.a) return;
+      if (!prob->xml.a[variant - 1]) return;
+      if (!prob->var_xml_file_paths) return;
+      if (!prob->var_xml_file_paths[variant - 1]) return;
+      prob->xml.a[variant - 1] = problem_xml_free(prob->xml.a[variant - 1]);
+      prob->xml.a[variant - 1] = problem_xml_parse_safe(NULL, prob->var_xml_file_paths[variant - 1]);
+      cntx.xml_path = prob->var_xml_file_paths[variant - 1];
+    }
   }
 
   if (reload_all) {

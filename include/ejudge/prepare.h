@@ -23,6 +23,7 @@
 #include "ejudge/serve_state.h"
 #include "ejudge/problem_common.h"
 #include "ejudge/problem_xml.h"
+#include "ejudge/markdown.h"
 
 #include <stdio.h>
 #include <time.h>
@@ -1158,6 +1159,8 @@ struct section_problem_data
   unsigned char *extra_src_dir;
   /** standard valuer program */
   unsigned char *standard_valuer;
+  /** name of Markdown statement file */
+  unsigned char *md_file;
 
   /** printf pattern for the test files */
   unsigned char *test_pat;
@@ -1344,6 +1347,9 @@ struct section_problem_data
     problem_xml_t p;            /* for single problems */
     problem_xml_t *a;           /* for variant problems */
   } xml META_ATTRIB((meta_hidden));
+
+  struct md_content *md_files META_ATTRIB((meta_private));
+  size_t md_size META_ATTRIB((meta_private));
 };
 
 /* sizeof(struct section_language_data) == ?/472 */

@@ -1303,6 +1303,7 @@ static struct meta_info_item meta_info_section_problem_data_data[] =
   [CNTSPROB_custom_lang_name] = { CNTSPROB_custom_lang_name, 's', XSIZE(struct section_problem_data, custom_lang_name), "custom_lang_name", XOFFSET(struct section_problem_data, custom_lang_name) },
   [CNTSPROB_extra_src_dir] = { CNTSPROB_extra_src_dir, 's', XSIZE(struct section_problem_data, extra_src_dir), "extra_src_dir", XOFFSET(struct section_problem_data, extra_src_dir) },
   [CNTSPROB_standard_valuer] = { CNTSPROB_standard_valuer, 's', XSIZE(struct section_problem_data, standard_valuer), "standard_valuer", XOFFSET(struct section_problem_data, standard_valuer) },
+  [CNTSPROB_md_file] = { CNTSPROB_md_file, 's', XSIZE(struct section_problem_data, md_file), "md_file", XOFFSET(struct section_problem_data, md_file) },
   [CNTSPROB_test_pat] = { CNTSPROB_test_pat, 's', XSIZE(struct section_problem_data, test_pat), "test_pat", XOFFSET(struct section_problem_data, test_pat) },
   [CNTSPROB_corr_pat] = { CNTSPROB_corr_pat, 's', XSIZE(struct section_problem_data, corr_pat), "corr_pat", XOFFSET(struct section_problem_data, corr_pat) },
   [CNTSPROB_info_pat] = { CNTSPROB_info_pat, 's', XSIZE(struct section_problem_data, info_pat), "info_pat", XOFFSET(struct section_problem_data, info_pat) },
@@ -1397,6 +1398,8 @@ static struct meta_info_item meta_info_section_problem_data_data[] =
   [CNTSPROB_score_view_text] = { CNTSPROB_score_view_text, 'x', XSIZE(struct section_problem_data, score_view_text), NULL, XOFFSET(struct section_problem_data, score_view_text) },
   [CNTSPROB_xml_file_path] = { CNTSPROB_xml_file_path, 's', XSIZE(struct section_problem_data, xml_file_path), NULL, XOFFSET(struct section_problem_data, xml_file_path) },
   [CNTSPROB_var_xml_file_paths] = { CNTSPROB_var_xml_file_paths, 'x', XSIZE(struct section_problem_data, var_xml_file_paths), NULL, XOFFSET(struct section_problem_data, var_xml_file_paths) },
+  [CNTSPROB_md_files] = { CNTSPROB_md_files, '?', XSIZE(struct section_problem_data, md_files), NULL, XOFFSET(struct section_problem_data, md_files) },
+  [CNTSPROB_md_size] = { CNTSPROB_md_size, 'Z', XSIZE(struct section_problem_data, md_size), NULL, XOFFSET(struct section_problem_data, md_size) },
 };
 
 int cntsprob_get_type(int tag)
@@ -1676,6 +1679,9 @@ void cntsprob_copy(struct section_problem_data *dst, const struct section_proble
   if (src->standard_valuer) {
     dst->standard_valuer = strdup(src->standard_valuer);
   }
+  if (src->md_file) {
+    dst->md_file = strdup(src->md_file);
+  }
   if (src->test_pat) {
     dst->test_pat = strdup(src->test_pat);
   }
@@ -1821,6 +1827,8 @@ void cntsprob_copy(struct section_problem_data *dst, const struct section_proble
   // private xml_file_path
   // private var_xml_file_paths
   // hidden xml
+  // private md_files
+  // private md_size
 }
 
 void cntsprob_free(struct section_problem_data *ptr)
@@ -1868,6 +1876,7 @@ void cntsprob_free(struct section_problem_data *ptr)
   free(ptr->custom_lang_name);
   free(ptr->extra_src_dir);
   free(ptr->standard_valuer);
+  free(ptr->md_file);
   free(ptr->test_pat);
   free(ptr->corr_pat);
   free(ptr->info_pat);
@@ -1950,6 +1959,8 @@ void cntsprob_free(struct section_problem_data *ptr)
   // private xml_file_path
   // private var_xml_file_paths
   // hidden xml
+  // private md_files
+  // private md_size
 }
 
 const struct meta_methods cntsprob_methods =

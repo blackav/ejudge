@@ -34,6 +34,7 @@
 #include "ejudge/variant_map.h"
 #include "ejudge/dates_config.h"
 #include "ejudge/l10n.h"
+#include "ejudge/markdown.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -601,6 +602,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(custom_lang_name, "S"),
   PROBLEM_PARAM(extra_src_dir, "S"),
   PROBLEM_PARAM(standard_valuer, "S"),
+  PROBLEM_PARAM(md_file, "S"),
 
   { 0, 0, 0, 0 }
 };
@@ -1397,6 +1399,14 @@ prepare_problem_free_func(struct generic_section_config *gp)
       xfree(p->var_xml_file_paths[i - 1]);
     }
     xfree(p->var_xml_file_paths);
+  }
+
+  if (p->md_files) {
+    for (int i = 0; i < p->md_size; ++i) {
+      xfree(p->md_files[i].path);
+      xfree(p->md_files[i].data);
+    }
+    xfree(p->md_files);
   }
 
   memset(p, 0xab, sizeof(*p));
@@ -2761,11 +2771,31 @@ prepare_problem(
   prepare_set_prob_value(CNTSPROB_use_info, prob, aprob, g);
   prepare_set_prob_value(CNTSPROB_use_tgz, prob, aprob, g);
 
+  if (!prob->md_file && aprob && aprob->md_file) {
+    sformat_message_2(&prob->md_file, 0, aprob->md_file, 0, prob, 0, 0, 0, 0, 0, 0);
+  }
+  if (prob->md_file && prob->md_file[0] && g->advanced_layout > 0) {
+    if (prob->variant_num > 0) {
+      prob->md_size = prob->variant_num;
+      XCALLOC(prob->md_files, prob->md_size);
+      for (int j = 1; j <= prob->variant_num; ++j) {
+        get_advanced_layout_path(xml_path, sizeof(xml_path), g, prob, prob->md_file, j);
+        // return status is ignored
+        markdown_parse(xml_path, &prob->md_files[j]);
+      }
+    } else {
+      get_advanced_layout_path(xml_path, sizeof(xml_path), g, prob, prob->md_file, -1);
+      prob->md_size = 1;
+      XCALLOC(prob->md_files, 1);
+      // return status is ignored
+      markdown_parse(xml_path, &prob->md_files[0]);
+    }
+  }
+
   // parse XML statement
   if (!prob->xml_file && aprob && aprob->xml_file) {
     sformat_message_2(&prob->xml_file, 0, aprob->xml_file, 0, prob, 0, 0, 0, 0, 0, 0);
   }
-
   if (prob->xml_file && prob->xml_file[0]) {
     if (g->advanced_layout > 0) {
       if (prob->variant_num > 0) {
@@ -6630,6 +6660,12 @@ prepare_set_prob_value(
     }
     break;
 
+  case CNTSPROB_md_file:
+    if (!out->md_file && abstr && abstr->md_file) {
+      sformat_message_2(&out->md_file, 0, abstr->md_file, 0, out, 0, 0, 0, 0, 0, 0);
+    }
+    break;
+
   case CNTSPROB_open_tests:
     break;
 
@@ -6768,6 +6804,7 @@ prepare_set_all_prob_values(
     //CNTSPROB_standard_checker,
     //CNTSPROB_spelling,
     CNTSPROB_xml_file,
+    CNTSPROB_md_file,
     CNTSPROB_stand_attr,
     CNTSPROB_source_header,
     CNTSPROB_source_footer,

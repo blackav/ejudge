@@ -195,6 +195,7 @@ COMMON_CFILES=\
  lib/lang_config.c\
  lib/lang_config_vis.c\
  lib/logrotate.c\
+ lib/markdown.c\
  lib/master_html.c\
  lib/meta_generic.c\
  lib/metrics_contest.c\
@@ -364,6 +365,9 @@ COMMON_CFILES=\
  xml_utils/unparse_text.c\
  xml_utils/xml_err.c\
  xml_utils/xml_err_a.c\
+ md4c/src/md4c-entity.c\
+ md4c/src/md4c.c\
+ md4c/src/md4c-html.c\
  ${REUSE_CFILES}
 
 FLATCC_CFILES =\
@@ -633,6 +637,7 @@ HFILES=\
  ./include/ejudge/lang_config_vis.h\
  ./include/ejudge/list_ops.h\
  ./include/ejudge/logrotate.h\
+ ./include/ejudge/markdown.h\
  ./include/ejudge/meta_generic.h\
  ./include/ejudge/metrics_contest.h\
  ./include/ejudge/mime_type.h\
@@ -732,7 +737,10 @@ HFILES=\
  new_server_clnt/new_server_clnt_priv.h\
  ./include/ejudge/xml_utils.h\
  ./include/ejudge/xuser_plugin.h\
- ./include/ejudge/zip_utils.h
+ ./include/ejudge/zip_utils.h\
+ md4c/src/md4c-entity.h\
+ md4c/src/md4c.h\
+ md4c/src/md4c-html.h
 
 OTHERFILES=\
  lib/filter_expr.y\

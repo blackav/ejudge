@@ -487,6 +487,7 @@ enum
   CNTSPROB_custom_lang_name,
   CNTSPROB_extra_src_dir,
   CNTSPROB_standard_valuer,
+  CNTSPROB_md_file,
   CNTSPROB_test_pat,
   CNTSPROB_corr_pat,
   CNTSPROB_info_pat,
@@ -581,6 +582,8 @@ enum
   CNTSPROB_score_view_text,
   CNTSPROB_xml_file_path,
   CNTSPROB_var_xml_file_paths,
+  CNTSPROB_md_files,
+  CNTSPROB_md_size,
 
   CNTSPROB_LAST_FIELD,
 };

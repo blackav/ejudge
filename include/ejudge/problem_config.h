@@ -226,6 +226,7 @@ struct problem_config_section
   unsigned char *post_pull_cmd;
   unsigned char *vcs_compile_cmd;
   unsigned char *super_run_dir;
+  unsigned char *md_file;
 
   char **test_sets;
   char **date_penalty;
