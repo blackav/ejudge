@@ -69,6 +69,7 @@ ns_unparse_answers(
   avatar_url[0] = 0;
   struct virtual_end_info_s *vend_info = NULL;
   int summoned_count = 0;
+  struct md_content *pmd = NULL;
 
 %><s:read var="telegram_token" ignoreerrors="yes" /><%
 %><s:read var="all_runs" ignoreerrors="yes" default="0" /><%

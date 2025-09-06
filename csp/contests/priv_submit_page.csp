@@ -43,6 +43,7 @@ ns_unparse_answers(
   path_t variant_stmt_file;
   unsigned char title[1024];
   int enable_main_menu = 0;
+  struct md_content *pmd = NULL;
 
   if (cs) global = cs->global;
 
@@ -238,11 +239,22 @@ ns_unparse_answers(
 
 <%
   /* output the problem statement */
+  pmd = NULL;
+  if (prob && prob->variant_num > 0 && variant > 0 && prob->md_size > 0 && variant <= prob->md_size) {
+    pmd = &prob->md_files[variant-1];
+  } else if (prob && prob->variant_num <= 0 && prob->md_size == 1) {
+    pmd = &prob->md_files[0];
+  }
+  if (pmd && pmd->data) {
+    putc_unlocked('\n', out_f);
+    fwrite_unlocked(pmd->data, 1, pmd->size, out_f);
+    putc_unlocked('\n', out_f);
+  }
   px = 0; pw = 0; pw_path = 0;
-  if (prob && prob->variant_num > 0 && variant > 0 && prob->xml.a
+  if (!pmd && prob && prob->variant_num > 0 && variant > 0 && prob->xml.a
       && prob->xml.a[variant - 1]) {
     px = prob->xml.a[variant - 1];
-  } else if (prob && prob->variant_num <= 0 && prob->xml.p) {
+  } else if (!pmd && prob && prob->variant_num <= 0 && prob->xml.p) {
     px = prob->xml.p;
   }
   if (px && px->stmts) {
