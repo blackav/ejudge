@@ -997,8 +997,6 @@ merge_problem_section(
         { CNTSPROB_lang_max_vm_size, META_PROBLEM_CONFIG_SECTION_lang_max_vm_size },
         { CNTSPROB_lang_max_stack_size, META_PROBLEM_CONFIG_SECTION_lang_max_stack_size },
         { CNTSPROB_personal_deadline, META_PROBLEM_CONFIG_SECTION_personal_deadline },
-        { CNTSPROB_score_view, META_PROBLEM_CONFIG_SECTION_score_view },
-        { CNTSPROB_score_view_text, META_PROBLEM_CONFIG_SECTION_score_view_text },
 
         { CNTSPROB_lang_compiler_env, META_PROBLEM_CONFIG_SECTION_lang_compiler_env },
         { CNTSPROB_lang_compiler_container_options, META_PROBLEM_CONFIG_SECTION_lang_compiler_container_options },
