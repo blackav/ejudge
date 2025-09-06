@@ -201,6 +201,7 @@ static struct meta_info_item meta_info_problem_config_section_data[] =
   [META_PROBLEM_CONFIG_SECTION_post_pull_cmd] = { META_PROBLEM_CONFIG_SECTION_post_pull_cmd, 's', XSIZE(struct problem_config_section, post_pull_cmd), "post_pull_cmd", XOFFSET(struct problem_config_section, post_pull_cmd) },
   [META_PROBLEM_CONFIG_SECTION_vcs_compile_cmd] = { META_PROBLEM_CONFIG_SECTION_vcs_compile_cmd, 's', XSIZE(struct problem_config_section, vcs_compile_cmd), "vcs_compile_cmd", XOFFSET(struct problem_config_section, vcs_compile_cmd) },
   [META_PROBLEM_CONFIG_SECTION_super_run_dir] = { META_PROBLEM_CONFIG_SECTION_super_run_dir, 's', XSIZE(struct problem_config_section, super_run_dir), "super_run_dir", XOFFSET(struct problem_config_section, super_run_dir) },
+  [META_PROBLEM_CONFIG_SECTION_md_file] = { META_PROBLEM_CONFIG_SECTION_md_file, 's', XSIZE(struct problem_config_section, md_file), "md_file", XOFFSET(struct problem_config_section, md_file) },
   [META_PROBLEM_CONFIG_SECTION_test_sets] = { META_PROBLEM_CONFIG_SECTION_test_sets, 'x', XSIZE(struct problem_config_section, test_sets), "test_sets", XOFFSET(struct problem_config_section, test_sets) },
   [META_PROBLEM_CONFIG_SECTION_date_penalty] = { META_PROBLEM_CONFIG_SECTION_date_penalty, 'x', XSIZE(struct problem_config_section, date_penalty), "date_penalty", XOFFSET(struct problem_config_section, date_penalty) },
   [META_PROBLEM_CONFIG_SECTION_group_start_date] = { META_PROBLEM_CONFIG_SECTION_group_start_date, 'x', XSIZE(struct problem_config_section, group_start_date), "group_start_date", XOFFSET(struct problem_config_section, group_start_date) },
@@ -594,6 +595,9 @@ void meta_problem_config_section_copy(struct problem_config_section *dst, const 
   if (src->super_run_dir) {
     dst->super_run_dir = strdup(src->super_run_dir);
   }
+  if (src->md_file) {
+    dst->md_file = strdup(src->md_file);
+  }
   dst->test_sets = (typeof(dst->test_sets)) sarray_copy((char**) src->test_sets);
   dst->date_penalty = (typeof(dst->date_penalty)) sarray_copy((char**) src->date_penalty);
   dst->group_start_date = (typeof(dst->group_start_date)) sarray_copy((char**) src->group_start_date);
@@ -694,6 +698,7 @@ void meta_problem_config_section_free(struct problem_config_section *ptr)
   free(ptr->post_pull_cmd);
   free(ptr->vcs_compile_cmd);
   free(ptr->super_run_dir);
+  free(ptr->md_file);
   sarray_free((char**) ptr->test_sets);
   sarray_free((char**) ptr->date_penalty);
   sarray_free((char**) ptr->group_start_date);
