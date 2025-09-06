@@ -3205,6 +3205,8 @@ prob_instr(
   }
 
   tmp_prob = prepare_copy_problem(prob);
+  /* resolve inherited problem_dir before using it */
+  prepare_set_prob_value(CNTSPROB_problem_dir, tmp_prob, abstr, global);
   mkpath(conf_path, root_dir, conf_dir, "conf");
 
   if (global->advanced_layout > 0) {
