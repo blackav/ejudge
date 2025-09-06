@@ -364,6 +364,9 @@ COMMON_CFILES=\
  xml_utils/unparse_text.c\
  xml_utils/xml_err.c\
  xml_utils/xml_err_a.c\
+ md4c/src/md4c-entity.c\
+ md4c/src/md4c.c\
+ md4c/src/md4c-html.c\
  ${REUSE_CFILES}
 
 FLATCC_CFILES =\
@@ -732,7 +735,10 @@ HFILES=\
  new_server_clnt/new_server_clnt_priv.h\
  ./include/ejudge/xml_utils.h\
  ./include/ejudge/xuser_plugin.h\
- ./include/ejudge/zip_utils.h
+ ./include/ejudge/zip_utils.h\
+ md4c/src/md4c-entity.h\
+ md4c/src/md4c.h\
+ md4c/src/md4c-html.h
 
 OTHERFILES=\
  lib/filter_expr.y\
