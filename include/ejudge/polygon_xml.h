@@ -78,6 +78,8 @@ enum
     PPXML_STAGES,
     PPXML_MATERIAL,
     PPXML_MATERIALS,
+    PPXML_GENERATOR,
+    PPXML_GENERATORS,
 
     PPXML_TAG_LAST,
 };
@@ -167,6 +169,7 @@ enum
     PPXML_TYPE_HTML,
     PPXML_TYPE_PDF,
     PPXML_TYPE_EJUDGE_XML,
+    PPXML_TYPE_MARKDOWN,
 };
 
 enum
@@ -494,6 +497,19 @@ struct ppxml_solutions
     XML_TREE_VECTOR_T(ppxml_solution) n;
 };
 
+struct ppxml_generator
+{
+    struct xml_tree b;
+    struct ppxml_source *source;
+    struct ppxml_binary *binary;
+};
+
+struct ppxml_generators
+{
+    struct xml_tree b;
+    XML_TREE_VECTOR_T(ppxml_generator) n;
+};
+
 struct ppxml_assets
 {
     struct xml_tree b;
@@ -503,6 +519,7 @@ struct ppxml_assets
     struct ppxml_validators *validators;
     struct ppxml_solutions *solutions;
     struct ppxml_scorer *scorer;
+    struct ppxml_generators *generators;
 };
 
 struct ppxml_property

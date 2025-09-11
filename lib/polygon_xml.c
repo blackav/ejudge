@@ -87,6 +87,8 @@ static char const * const problem_xml_elem_map[] =
     [PPXML_STAGES] = "stages",
     [PPXML_MATERIAL] = "material",
     [PPXML_MATERIALS] = "materials",
+    [PPXML_GENERATOR] = "generator",
+    [PPXML_GENERATORS] = "generators",
     NULL,
 };
 
@@ -181,6 +183,8 @@ static size_t const problem_xml_sizes[PPXML_TAG_LAST] =
     [PPXML_ASSET] = sizeof(struct ppxml_asset),
     [PPXML_STAGE] = sizeof(struct ppxml_stage),
     [PPXML_STAGES] = sizeof(struct ppxml_stages),
+    [PPXML_GENERATOR] = sizeof(struct ppxml_generator),
+    [PPXML_GENERATORS] = sizeof(struct ppxml_generators),
 };
 
 static void
@@ -279,6 +283,11 @@ node_free(struct xml_tree *t)
         free(tt->n.v);
         break;
     }
+    case PPXML_GENERATORS: {
+        struct ppxml_generators *tt = (struct ppxml_generators *) t;
+        free(tt->n.v);
+        break;
+    }
     }
 }
 
@@ -359,6 +368,7 @@ static const char * const ppxml_type_strings[] =
     [PPXML_TYPE_HTML] = "text/html",
     [PPXML_TYPE_PDF] = "application/pdf",
     [PPXML_TYPE_EJUDGE_XML] = "application/x-ejudge-xml",
+    [PPXML_TYPE_MARKDOWN] = "text/markdown",
 };
 static int ppxml_type_parse(const unsigned char *s)
 {
@@ -749,6 +759,48 @@ ppxml_parse_solutions(struct ppxml_parse_context *cntx, struct xml_tree *p)
     for (struct xml_tree *q = p->first_down; q; q = q->right) {
         if (q->tag == PPXML_SOLUTION) {
             struct ppxml_solution *tt = ppxml_parse_solution(cntx, q);
+            if (!tt) return NULL;
+            XML_TREE_VECTOR_PUSH(pp, tt);
+        } else {
+            return cntx->ops->err_elem_not_allowed(cntx, q);
+        }
+    }
+
+    return pp;
+}
+
+static struct ppxml_generator *
+ppxml_parse_generator(struct ppxml_parse_context *cntx, struct xml_tree *p)
+{
+    if (p->first) return cntx->ops->err_attr_not_allowed(cntx, p, p->first);
+    struct ppxml_generator *pp = (struct ppxml_generator *) p;
+    for (struct xml_tree *q = p->first_down; q; q = q->right) {
+        if (q->tag == PPXML_SOURCE) {
+            if (pp->source) return cntx->ops->err_elem_redefined(cntx, q);
+            struct ppxml_source *t = ppxml_parse_source(cntx, q);
+            if (!t) return NULL;
+            pp->source = t;
+        } else if (q->tag == PPXML_BINARY) {
+            if (pp->binary) return cntx->ops->err_elem_redefined(cntx, q);
+            struct ppxml_binary *t = ppxml_parse_binary(cntx, q);
+            if (!t) return NULL;
+            pp->binary = t;
+        } else {
+            return cntx->ops->err_elem_invalid(cntx, q);
+        }
+    }
+    if (!pp->source) return cntx->ops->err_elem_undefined(cntx, p, PPXML_SOURCE);
+    return pp;
+}
+
+static struct ppxml_generators *
+ppxml_parse_generators(struct ppxml_parse_context *cntx, struct xml_tree *p)
+{
+    if (p->first) return cntx->ops->err_attr_not_allowed(cntx, p, p->first);
+    struct ppxml_generators *pp = (struct ppxml_generators *) p;
+    for (struct xml_tree *q = p->first_down; q; q = q->right) {
+        if (q->tag == PPXML_GENERATOR) {
+            struct ppxml_generator *tt = ppxml_parse_generator(cntx, q);
             if (!tt) return NULL;
             XML_TREE_VECTOR_PUSH(pp, tt);
         } else {
@@ -1242,6 +1294,11 @@ ppxml_parse_assets(struct ppxml_parse_context *cntx, struct xml_tree *p)
             struct ppxml_solutions *t = ppxml_parse_solutions(cntx, q);
             if (!t) return NULL;
             pp->solutions = t;
+        } else if (q->tag == PPXML_GENERATORS) {
+            if (pp->generators) return cntx->ops->err_elem_redefined(cntx, q);
+            struct ppxml_generators *t = ppxml_parse_generators(cntx, q);
+            if (!t) return NULL;
+            pp->generators = t;
         } else if (q->tag == PPXML_ASSET) {
             struct ppxml_asset *t = ppxml_parse_asset(cntx, q);
             if (!t) return NULL;

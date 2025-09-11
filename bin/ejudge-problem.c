@@ -465,6 +465,22 @@ static const struct language_profile_info c_profiles[] =
     },
 };
 
+static const struct language_profile_info cpp_profiles[] =
+{
+    {
+        "g++-gnu++20-debug-sanitizers",
+        "g++ -std=gnu++20 -Wall -Werror -g -D_GNU_SOURCE -fsanitize=undefined,address,leak ${source} -o${target} -lm",
+    },
+    {
+        "g++-gnu++20-release-ejudge",
+        "g++ -std=gnu++20 -Wall -Werror -O2 -D_GNU_SOURCE -DEJUDGE ${source} -o${target} -lm",
+    },
+    {
+        NULL,
+        NULL,
+    },
+};
+
 static const struct language_info languages[] =
 {
     {
@@ -473,6 +489,13 @@ static const struct language_info languages[] =
         "gcc-gnu18-debug-sanitizers",
         "gcc-gnu18-release-ejudge",
         c_profiles,
+    },
+    {
+        ".cpp",
+        "C++",
+        "g++-gnu++20-debug-sanitizers",
+        "g++-gnu++20-release-ejudge",
+        cpp_profiles,
     },
     {
         NULL,
@@ -765,9 +788,26 @@ collect_tests(
                 return -1;
             }
             t->generator = xstrdup(cc.v[0]);
-            xstrarrayfree(&cc);
             struct depgraph_file *gen = depgraph_add_file(&ps->dg, t->generator);
             depgraph_add_dependency(tdf, gen);
+            depgraph_add_command(tdf, "mkdir -p tests");
+            {
+                char *gen_s = NULL;
+                size_t gen_z = 0;
+                FILE *gen_f = open_memstream(&gen_s, &gen_z);
+                if (is_simple_name(cc.v[0])) {
+                    fprintf(gen_f, "./%s", cc.v[0]);
+                } else {
+                    fprintf(gen_f, "%s", cc.v[0]);
+                }
+                for (int i = 1; i < cc.u; ++i) {
+                    fprintf(gen_f, " \"%s\"", cc.v[i]);
+                }
+                fprintf(gen_f, " >%s", tdf->path);
+                fclose(gen_f);
+                depgraph_add_command_move(tdf, gen_s);
+            }
+            xstrarrayfree(&cc);
             if (corr_pat[0]) {
                 struct depgraph_file *ans = depgraph_add_file(&ps->dg, corr_path);
                 depgraph_add_dependency(ans, tdf);
@@ -903,6 +943,47 @@ collect_dependencies(
             return -1;
         }
         f = NULL;
+    }
+
+    if (ppxml->assets && ppxml->assets->generators) {
+        struct ppxml_generators *ppgens = ppxml->assets->generators;
+        for (size_t i = 0; i < ppgens->n.u; ++i) {
+            struct ppxml_generator *ppgen = ppgens->n.v[i];
+                if (!ppgen->source) {
+                    L_ERR("generator source code not available");
+                    return -1;
+                }
+                if (!is_valid_path(ppgen->source->path)) {
+                    L_ERR("invalid source path '%s'", ppgen->source->path);
+                    return -1;
+                }
+                struct depgraph_file *sf = depgraph_add_file(&ps->dg, ppgen->source->path);
+                unsigned char source_base[PATH_MAX];
+                unsigned char source_suffix[64];
+                if (split_suffix(log_f, "source", ppgen->source->path, source_base, sizeof source_base, source_suffix, sizeof source_suffix) < 0) {
+                    L_ERR("invalid source path");
+                    return -1;
+                }
+                struct depgraph_file *xf = depgraph_add_file(&ps->dg, source_base);
+                depgraph_add_dependency(xf, sf);
+                const struct language_info *lang = find_language(source_suffix);
+                if (!lang) {
+                    L_ERR("no rule to compile source file '%s", ppgen->source->path);
+                    return -1;
+                }
+                const struct language_profile_info *prof = find_profile(lang, lang->default_checker_profile);
+                if (!prof) {
+                    L_ERR("profile '%s' is undefined for language '%s'", lang->default_solution_profile, lang->name);
+                    return -1;
+                }
+                unsigned char *cmd = substitute_rule_vars(prof->command, ppgen->source->path, source_base);
+                if (!cmd) {
+                    L_ERR("command substitution failed for '%s'", prof->command);
+                    return -1;
+                }
+                depgraph_add_command_move(xf, cmd);
+        }
+
     }
 
     if (ppxml->assets && ppxml->assets->solutions) {
