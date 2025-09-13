@@ -3292,6 +3292,35 @@ ns_load_problem_uuid(
 }
 
 static int
+get_text_form_normalized(
+        struct http_request_info *phr,
+        const unsigned char *param_name,
+        const unsigned char *src_normalization,
+        const unsigned char **p_text_form_text,
+        unsigned char **p_text_form_mem,
+        size_t *p_text_form_size)
+{
+  int r = hr_cgi_param_bin(phr, param_name, p_text_form_text, p_text_form_size);
+  if (!r) return 0;
+  if (!src_normalization) return r;
+  int norm = test_normalization_parse(src_normalization);
+  int bits = 0;
+  switch (norm) {
+    case TEST_NORM_NL: bits = TEXT_FIX_CR | TEXT_FIX_FINAL_NL; break;
+    case TEST_NORM_NLWS: bits = TEXT_FIX_CR | TEXT_FIX_TR_SP | TEXT_FIX_FINAL_NL; break;
+    default: break;
+  }
+  if (!bits) return 0;
+
+  unsigned char *out_text = NULL;
+  size_t out_size = text_normalize_dup(*p_text_form_text, *p_text_form_size, bits, &out_text, NULL, NULL);
+  *p_text_form_mem = out_text;
+  *p_text_form_text = out_text;
+  *p_text_form_size = out_size;
+  return 1;
+}
+
+static int
 priv_submit_run(
         FILE *fout,
         FILE *log_f,
@@ -3317,6 +3346,7 @@ priv_submit_run(
   struct problem_plugin_iface *plg = 0;
   int skip_mime_type_test = 0;
   const unsigned char *text_form_text = 0;
+  unsigned char *text_form_mem = NULL;
   size_t text_form_size = 0;
   unsigned char *utf8_str = 0;
   int utf8_len = 0;
@@ -3603,8 +3633,7 @@ priv_submit_run(
   case PROB_TYPE_TESTS:
     if (prob->enable_text_form > 0) {
       int r1 = hr_cgi_param_bin(phr, "file", &run_text, &run_size);
-      int r2 = hr_cgi_param_bin(phr, "text_form", &text_form_text,
-                                &text_form_size);
+      int r2 = get_text_form_normalized(phr, "text_form", prob->src_normalization, &text_form_text, &text_form_mem, &text_form_size);
       if (!r1 && !r2) {
         fprintf(phr->log_f, "neither 'file' nor 'text' parameters are set\n");
         FAIL(NEW_SRV_ERR_INV_PARAM);
@@ -4027,6 +4056,7 @@ priv_submit_run(
 
  cleanup:
   xfree(utf8_str);
+  xfree(text_form_mem);
   return retval;
 }
 
@@ -13232,6 +13262,7 @@ ns_submit_run(
   ssize_t utf8_len = 0;
   const unsigned char *s;
   const unsigned char *run_text = NULL;
+  unsigned char *run_text_mem = NULL;
   ssize_t run_size = 0;
   size_t tmpsz;
   char *ans_text = NULL;
@@ -13332,7 +13363,8 @@ ns_submit_run(
     }
     if (r <= 0 || !run_text || run_size <= 0) {
       if (prob->enable_text_form > 0) {
-        r = hr_cgi_param_bin(phr, "text_form", &run_text, &tmpsz); run_size = tmpsz;
+        r = get_text_form_normalized(phr, "text_form", prob->src_normalization, &run_text, &run_text_mem, &tmpsz);
+        run_size = tmpsz;
         if (r <= 0 || !run_text || run_size <= 0) {
           FAIL(NEW_SRV_ERR_FILE_EMPTY);
         }
@@ -13972,6 +14004,7 @@ cleanup:
   xfree(ans_text);
   xfree(utf8_str);
   xfree(run_file);
+  xfree(run_text_mem);
   return retval;
 }
 
@@ -13990,6 +14023,7 @@ unpriv_submit_run(
   const struct section_language_data *lang = 0;
   int prob_id = 0, n, lang_id = 0, i, ans, max_ans, j, r;
   const unsigned char *s, *run_text = 0, *text_form_text = 0;
+  unsigned char *text_form_mem = NULL;
   size_t run_size = 0, ans_size, text_form_size = 0;
   unsigned char *ans_buf, *ans_map, *ans_tmp;
   time_t start_time, stop_time, user_deadline = 0;
@@ -14157,7 +14191,7 @@ unpriv_submit_run(
   case PROB_TYPE_TESTS:
     if (prob->enable_text_form > 0) {
       int r1 = hr_cgi_param_bin(phr, "file", &run_text, &run_size);
-      int r2 =hr_cgi_param_bin(phr,"text_form",&text_form_text,&text_form_size);
+      int r2 = get_text_form_normalized(phr, "text_form", prob->src_normalization, &text_form_text, &text_form_mem, &text_form_size);
       if (!r1 && !r2) {
         FAIL2(NEW_SRV_ERR_FILE_UNSPECIFIED);
       }
@@ -14765,6 +14799,7 @@ unpriv_submit_run(
 cleanup:;
   l10n_resetlocale();
   xfree(utf8_str);
+  xfree(text_form_mem);
   return;
 
 fail:
@@ -14878,6 +14913,7 @@ ns_submit_run_input(
   int notify_driver = 0;
   int notify_kind = 0;
   ej_mixed_id_t notify_queue = {};
+  unsigned char *run_text_mem = NULL;
 
   if (admin_mode) {
     if (opcaps_check(phr->caps, OPCAP_SUBMIT_RUN) < 0) {
@@ -15053,7 +15089,8 @@ ns_submit_run_input(
 
   r = hr_cgi_param_bin(phr, "file", &run_text, &tmpsz); run_size = tmpsz;
   if ((r <= 0 || !run_text || run_size <= 0) && prob->enable_text_form > 0) {
-    r = hr_cgi_param_bin(phr, "text_form", &run_text, &tmpsz); run_size = tmpsz;
+    r = get_text_form_normalized(phr, "text_form", prob->src_normalization, &run_text, &run_text_mem, &tmpsz);
+    run_size = tmpsz;
   }
   if (r <= 0 || !run_text || run_size <= 0) {
     err_num = NEW_SRV_ERR_FILE_UNSPECIFIED;
@@ -15373,6 +15410,7 @@ done:;
   free(ses);
   free(run_fixed_text);
   free(inp_fixed_text);
+  free(run_text_mem);
 }
 
 static void

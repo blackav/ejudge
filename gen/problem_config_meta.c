@@ -163,6 +163,7 @@ static struct meta_info_item meta_info_problem_config_section_data[] =
   [META_PROBLEM_CONFIG_SECTION_tgz_pat] = { META_PROBLEM_CONFIG_SECTION_tgz_pat, 's', XSIZE(struct problem_config_section, tgz_pat), "tgz_pat", XOFFSET(struct problem_config_section, tgz_pat) },
   [META_PROBLEM_CONFIG_SECTION_tgzdir_pat] = { META_PROBLEM_CONFIG_SECTION_tgzdir_pat, 's', XSIZE(struct problem_config_section, tgzdir_pat), "tgzdir_pat", XOFFSET(struct problem_config_section, tgzdir_pat) },
   [META_PROBLEM_CONFIG_SECTION_normalization] = { META_PROBLEM_CONFIG_SECTION_normalization, 's', XSIZE(struct problem_config_section, normalization), "normalization", XOFFSET(struct problem_config_section, normalization) },
+  [META_PROBLEM_CONFIG_SECTION_src_normalization] = { META_PROBLEM_CONFIG_SECTION_src_normalization, 's', XSIZE(struct problem_config_section, src_normalization), "src_normalization", XOFFSET(struct problem_config_section, src_normalization) },
   [META_PROBLEM_CONFIG_SECTION_check_cmd] = { META_PROBLEM_CONFIG_SECTION_check_cmd, 's', XSIZE(struct problem_config_section, check_cmd), "check_cmd", XOFFSET(struct problem_config_section, check_cmd) },
   [META_PROBLEM_CONFIG_SECTION_valuer_cmd] = { META_PROBLEM_CONFIG_SECTION_valuer_cmd, 's', XSIZE(struct problem_config_section, valuer_cmd), "valuer_cmd", XOFFSET(struct problem_config_section, valuer_cmd) },
   [META_PROBLEM_CONFIG_SECTION_interactor_cmd] = { META_PROBLEM_CONFIG_SECTION_interactor_cmd, 's', XSIZE(struct problem_config_section, interactor_cmd), "interactor_cmd", XOFFSET(struct problem_config_section, interactor_cmd) },
@@ -481,6 +482,9 @@ void meta_problem_config_section_copy(struct problem_config_section *dst, const 
   if (src->normalization) {
     dst->normalization = strdup(src->normalization);
   }
+  if (src->src_normalization) {
+    dst->src_normalization = strdup(src->src_normalization);
+  }
   if (src->check_cmd) {
     dst->check_cmd = strdup(src->check_cmd);
   }
@@ -660,6 +664,7 @@ void meta_problem_config_section_free(struct problem_config_section *ptr)
   free(ptr->tgz_pat);
   free(ptr->tgzdir_pat);
   free(ptr->normalization);
+  free(ptr->src_normalization);
   free(ptr->check_cmd);
   free(ptr->valuer_cmd);
   free(ptr->interactor_cmd);

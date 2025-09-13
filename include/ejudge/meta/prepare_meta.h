@@ -501,6 +501,7 @@ enum
   CNTSPROB_ts_infos,
   CNTSPROB_normalization,
   CNTSPROB_normalization_val,
+  CNTSPROB_src_normalization,
   CNTSPROB_deadline,
   CNTSPROB_start_date,
   CNTSPROB_date_penalty,

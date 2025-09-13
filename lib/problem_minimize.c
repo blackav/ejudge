@@ -951,6 +951,12 @@ problem_assign_json(
                     continue;
                 }
             }
+            if (field_id == CNTSPROB_src_normalization) {
+                if (test_normalization_parse(ji->valuestring) < 0) {
+                    flog(log_f, field_name, "invalid value");
+                    continue;
+                }
+            }
             /*
               long_name stand_name stand_column group_name internal_name
               plugin_entry_name uuid problem_dir test_dir test_sfx
@@ -964,7 +970,7 @@ problem_assign_json(
               tgzdir_pat normalization check_cmd valuer_cmd interactor_cmd
               style_checker_cmd test_checker_cmd test_generator_cmd init_cmd start_cmd
               solution_src solution_cmd post_pull_cmd vcs_compile_cmd super_run_dir
-              score_bonus open_tests final_open_tests token_open_tests extid
+              score_bonus open_tests final_open_tests token_open_tests extid src_normalization
              */
             if (strcmpex(*p, ji->valuestring) != 0) {
                 if (*p) {

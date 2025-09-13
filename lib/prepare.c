@@ -589,6 +589,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(score_view, "x"),
   PROBLEM_PARAM(extid, "S"),
   PROBLEM_PARAM(normalization, "S"),
+  PROBLEM_PARAM(src_normalization, "S"),
   PROBLEM_PARAM(super_run_dir, "S"),
   PROBLEM_PARAM(tokens, "S"),
   PROBLEM_PARAM(umask, "S"),
@@ -1351,6 +1352,7 @@ prepare_problem_init_func(struct generic_section_config *gp)
   p->checker_max_vm_size = -1LL;
   p->checker_max_stack_size = -1LL;
   p->checker_max_rss_size = -1LL;
+  p->normalization_val = -1;
 }
 
 void prepare_free_testsets(int t, struct testset_info *p);
@@ -2764,6 +2766,7 @@ prepare_problem(
   prepare_set_prob_value(CNTSPROB_source_header, prob, aprob, g);
   prepare_set_prob_value(CNTSPROB_source_footer, prob, aprob, g);
   prepare_set_prob_value(CNTSPROB_normalization, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_src_normalization, prob, aprob, g);
   prepare_set_prob_value(CNTSPROB_max_user_run_count, prob, aprob, g);
   prepare_set_prob_value(CNTSPROB_score_bonus, prob, aprob, g);
   prepare_set_prob_value(CNTSPROB_stand_attr, prob, aprob, g);
@@ -6649,6 +6652,12 @@ prepare_set_prob_value(
     }
     break;
 
+  case CNTSPROB_src_normalization:
+    if (!out->src_normalization && abstr && abstr->src_normalization) {
+      xstrdup3(&out->src_normalization, abstr->src_normalization);
+    }
+    break;
+
   case CNTSPROB_xml_file:
     if (!out->xml_file && abstr && abstr->xml_file) {
       sformat_message_2(&out->xml_file, 0, abstr->xml_file, 0, out, 0, 0, 0, 0, 0, 0);
@@ -6834,6 +6843,7 @@ prepare_set_all_prob_values(
     CNTSPROB_tgzdir_pat,
     //CNTSPROB_test_sets,
     CNTSPROB_normalization,
+    CNTSPROB_src_normalization,
     //CNTSPROB_deadline,
     //CNTSPROB_start_date,
     CNTSPROB_autoassign_variants,
