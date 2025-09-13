@@ -188,6 +188,7 @@ struct problem_config_section
   unsigned char *tgz_pat;
   unsigned char *tgzdir_pat;
   unsigned char *normalization;
+  unsigned char *src_normalization;
   unsigned char *check_cmd;
   unsigned char *valuer_cmd;
   unsigned char *interactor_cmd;
