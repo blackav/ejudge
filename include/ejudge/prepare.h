@@ -1191,7 +1191,6 @@ struct section_problem_data
 
   /** source normalization type for textarea submits */
   unsigned char *src_normalization;
-  int src_normalization_val META_ATTRIB((meta_private));
 
   /** deadline for sending this problem */
   time_t deadline;

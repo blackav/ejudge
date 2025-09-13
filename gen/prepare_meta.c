@@ -1318,7 +1318,6 @@ static struct meta_info_item meta_info_section_problem_data_data[] =
   [CNTSPROB_normalization] = { CNTSPROB_normalization, 's', XSIZE(struct section_problem_data, normalization), "normalization", XOFFSET(struct section_problem_data, normalization) },
   [CNTSPROB_normalization_val] = { CNTSPROB_normalization_val, 'i', XSIZE(struct section_problem_data, normalization_val), NULL, XOFFSET(struct section_problem_data, normalization_val) },
   [CNTSPROB_src_normalization] = { CNTSPROB_src_normalization, 's', XSIZE(struct section_problem_data, src_normalization), "src_normalization", XOFFSET(struct section_problem_data, src_normalization) },
-  [CNTSPROB_src_normalization_val] = { CNTSPROB_src_normalization_val, 'i', XSIZE(struct section_problem_data, src_normalization_val), NULL, XOFFSET(struct section_problem_data, src_normalization_val) },
   [CNTSPROB_deadline] = { CNTSPROB_deadline, 't', XSIZE(struct section_problem_data, deadline), "deadline", XOFFSET(struct section_problem_data, deadline) },
   [CNTSPROB_start_date] = { CNTSPROB_start_date, 't', XSIZE(struct section_problem_data, start_date), "start_date", XOFFSET(struct section_problem_data, start_date) },
   [CNTSPROB_date_penalty] = { CNTSPROB_date_penalty, 'x', XSIZE(struct section_problem_data, date_penalty), "date_penalty", XOFFSET(struct section_problem_data, date_penalty) },
@@ -1712,7 +1711,6 @@ void cntsprob_copy(struct section_problem_data *dst, const struct section_proble
   if (src->src_normalization) {
     dst->src_normalization = strdup(src->src_normalization);
   }
-  // private src_normalization_val
   dst->deadline = src->deadline;
   dst->start_date = src->start_date;
   dst->date_penalty = (typeof(dst->date_penalty)) sarray_copy((char**) src->date_penalty);
@@ -1897,7 +1895,6 @@ void cntsprob_free(struct section_problem_data *ptr)
   free(ptr->normalization);
   // private normalization_val
   free(ptr->src_normalization);
-  // private src_normalization_val
   sarray_free((char**) ptr->date_penalty);
   // private dp_total
   // private dp_infos

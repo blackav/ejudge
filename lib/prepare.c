@@ -1352,6 +1352,7 @@ prepare_problem_init_func(struct generic_section_config *gp)
   p->checker_max_vm_size = -1LL;
   p->checker_max_stack_size = -1LL;
   p->checker_max_rss_size = -1LL;
+  p->normalization_val = -1;
 }
 
 void prepare_free_testsets(int t, struct testset_info *p);
@@ -5970,7 +5971,6 @@ prepare_copy_problem(const struct section_problem_data *in)
   cntsprob_copy(out, in);
 
   out->normalization_val = in->normalization_val;
-  out->src_normalization_val = in->src_normalization_val;
 
   return out;
 }
