@@ -1783,6 +1783,8 @@ prepare_unparse_prob(
     fprintf(f, "extra_src_dir = \"%s\"\n", CARMOR(prob->extra_src_dir));
   if (prob->normalization)
     fprintf(f, "normalization = \"%s\"\n", CARMOR(prob->normalization));
+  if (prob->src_normalization)
+    fprintf(f, "src_normalization = \"%s\"\n", CARMOR(prob->src_normalization));
   if (prob->super_run_dir && prob->super_run_dir[0]) {
     fprintf(f,"super_run_dir = \"%s\"\n", CARMOR(prob->super_run_dir));
   }
@@ -2247,6 +2249,8 @@ prepare_unparse_actual_prob(
     fprintf(f, "extra_src_dir = \"%s\"\n", CARMOR(prob->extra_src_dir));
   if (prob->normalization)
     fprintf(f, "normalization = \"%s\"\n", CARMOR(prob->normalization));
+  if (prob->src_normalization)
+    fprintf(f, "src_normalization = \"%s\"\n", CARMOR(prob->src_normalization));
   if (prob->extid && prob->extid[0])
     fprintf(f, "extid = \"%s\"\n", CARMOR(prob->extid));
 
