@@ -920,12 +920,10 @@ setup_spool_dirs(const struct ejudge_cfg *config, struct server_framework_state 
 #endif /* EJUDGE_RUN_SPOOL_DIR */
 }
 
-extern int ej_bson_force_link_dummy;
 extern int ej_bson_new_force_link_dummy;
 
 static void *forced_symbols[] __attribute__((unused,used)) =
 {
-  &ej_bson_force_link_dummy,
   &ej_bson_new_force_link_dummy,
   &base64u_encode,
   &base64u_decode,
