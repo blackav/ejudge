@@ -782,7 +782,7 @@ Max Memory Used: <span id="ej-submit-max-rss"></span></p>
     </div>
     <div>
       <div>Git type:</div>
-      <div><select id="ej-gitlab-vcs-type" name="vcs_type"><option>gitlab</option><option>github</option></select></div>
+      <div><select id="ej-gitlab-vcs-type" name="vcs_type"><option>gitlab</option><option>github</option><option>gitlab-token</option></select></div>
     </div>
     <div>
       <div>GIT SSH URL:</div>
@@ -813,7 +813,7 @@ Max Memory Used: <span id="ej-submit-max-rss"></span></p>
       <div><input size="80" id="ej-gitlab-vcs-branch-spec" type="text" name="vcs_branch_spec" /></div>
     </div>
     <div>
-      <div>SSH private key (deploy key):</div>
+      <div>SSH private key (deploy key) or access token:</div>
       <div><textarea id="ej-gitlab-ssh-private-key" name="ssh_private_key" rows="10" cols="80"></textarea></div>
     </div>
   </form>
