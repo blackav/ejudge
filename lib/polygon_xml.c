@@ -508,6 +508,23 @@ static int ppxml_file_type_parse(const unsigned char *s)
     return 0;
 }
 
+static const char * const ppxml_solution_file_type_strings[] =
+{
+    [PPXML_SOLUTION_FILE_HEADER] = "header",
+    [PPXML_SOLUTION_FILE_FOOTER] = "footer",
+};
+static int ppxml_solution_file_type_parse(const unsigned char *s)
+{
+    if (s) {
+        for (int i = 1; i < sizeof(ppxml_solution_file_type_strings)/sizeof(ppxml_solution_file_type_strings[0]); ++i) {
+            if (!strcasecmp(s, ppxml_solution_file_type_strings[i])) {
+                return i;
+            }
+        }
+    }
+    return 0;
+}
+
 static int
 ppxml_parse_bool(const unsigned char *s, int *p_v)
 {
@@ -824,25 +841,22 @@ static struct ppxml_solution_file *
 ppxml_parse_solution_file(struct ppxml_parse_context *cntx, struct xml_tree *p)
 {
     struct ppxml_solution_file *pp = (struct ppxml_solution_file *) p;
-    /*
-    if (p->first) return cntx->ops->err_attr_not_allowed(cntx, p, p->first);
-    for (struct xml_tree *q = p->first_down; q; q = q->right) {
-        if (q->tag == PPXML_SOURCE) {
-            if (pp->source) return cntx->ops->err_elem_redefined(cntx, q);
-            struct ppxml_source *t = ppxml_parse_source(cntx, q);
-            if (!t) return NULL;
-            pp->source = t;
-        } else if (q->tag == PPXML_BINARY) {
-            if (pp->binary) return cntx->ops->err_elem_redefined(cntx, q);
-            struct ppxml_binary *t = ppxml_parse_binary(cntx, q);
-            if (!t) return NULL;
-            pp->binary = t;
+    for (struct xml_attr *a = pp->b.first; a; a = a->next) {
+        if (a->tag == PPXML_A_TYPE) {
+            int t = ppxml_solution_file_type_parse(a->text);
+            if (!t) return cntx->ops->err_attr_invalid(cntx, a);
+            pp->type = t;
+        } else if (a->tag == PPXML_A_PATH) {
+            pp->path = a->text;
         } else {
-            return cntx->ops->err_elem_invalid(cntx, q);
+            return cntx->ops->err_attr_not_allowed(cntx, p, a);
         }
     }
-    if (!pp->source) return cntx->ops->err_elem_undefined(cntx, p, PPXML_SOURCE);
-    */
+    for (struct xml_tree *q = p->first_down; q; q = q->right) {
+        return cntx->ops->err_elem_invalid(cntx, q);
+    }
+    if (!pp->path) return cntx->ops->err_attr_undefined(cntx, p, PPXML_A_PATH);
+    if (!pp->type) return cntx->ops->err_attr_undefined(cntx, p, PPXML_A_TYPE);
     return pp;
 }
 

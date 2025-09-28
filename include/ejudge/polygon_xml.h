@@ -231,6 +231,13 @@ enum
     PPXML_FILE_TYPE_BINARY,
 };
 
+enum
+{
+    PPXML_SOLUTION_FILE_UNKNOWN,
+    PPXML_SOLUTION_FILE_HEADER,
+    PPXML_SOLUTION_FILE_FOOTER,
+};
+
 struct ppxml_name
 {
     struct xml_tree b;
@@ -515,6 +522,8 @@ struct ppxml_generators
 struct ppxml_solution_file
 {
     struct xml_tree b;
+    unsigned char *path;
+    unsigned char type;
 };
 
 struct ppxml_solution_files
