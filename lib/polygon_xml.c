@@ -89,6 +89,8 @@ static char const * const problem_xml_elem_map[] =
     [PPXML_MATERIALS] = "materials",
     [PPXML_GENERATOR] = "generator",
     [PPXML_GENERATORS] = "generators",
+    [PPXML_SOLUTION_FILE] = "solution-file",
+    [PPXML_SOLUTION_FILES] = "solution-files",
     NULL,
 };
 
@@ -185,6 +187,8 @@ static size_t const problem_xml_sizes[PPXML_TAG_LAST] =
     [PPXML_STAGES] = sizeof(struct ppxml_stages),
     [PPXML_GENERATOR] = sizeof(struct ppxml_generator),
     [PPXML_GENERATORS] = sizeof(struct ppxml_generators),
+    [PPXML_SOLUTION_FILE] = sizeof(struct ppxml_solution_file),
+    [PPXML_SOLUTION_FILES] = sizeof(struct ppxml_solution_files),
 };
 
 static void
@@ -285,6 +289,11 @@ node_free(struct xml_tree *t)
     }
     case PPXML_GENERATORS: {
         struct ppxml_generators *tt = (struct ppxml_generators *) t;
+        free(tt->n.v);
+        break;
+    }
+    case PPXML_SOLUTION_FILES: {
+        struct ppxml_solution_files *tt = (struct ppxml_solution_files *) t;
         free(tt->n.v);
         break;
     }
@@ -492,6 +501,23 @@ static int ppxml_file_type_parse(const unsigned char *s)
     if (s) {
         for (int i = 1; i < sizeof(ppxml_file_type_strings)/sizeof(ppxml_file_type_strings[0]); ++i) {
             if (!strcasecmp(s, ppxml_file_type_strings[i])) {
+                return i;
+            }
+        }
+    }
+    return 0;
+}
+
+static const char * const ppxml_solution_file_type_strings[] =
+{
+    [PPXML_SOLUTION_FILE_HEADER] = "header",
+    [PPXML_SOLUTION_FILE_FOOTER] = "footer",
+};
+static int ppxml_solution_file_type_parse(const unsigned char *s)
+{
+    if (s) {
+        for (int i = 1; i < sizeof(ppxml_solution_file_type_strings)/sizeof(ppxml_solution_file_type_strings[0]); ++i) {
+            if (!strcasecmp(s, ppxml_solution_file_type_strings[i])) {
                 return i;
             }
         }
@@ -803,6 +829,52 @@ ppxml_parse_generators(struct ppxml_parse_context *cntx, struct xml_tree *p)
             struct ppxml_generator *tt = ppxml_parse_generator(cntx, q);
             if (!tt) return NULL;
             XML_TREE_VECTOR_PUSH(pp, tt);
+        } else {
+            return cntx->ops->err_elem_not_allowed(cntx, q);
+        }
+    }
+
+    return pp;
+}
+
+static struct ppxml_solution_file *
+ppxml_parse_solution_file(struct ppxml_parse_context *cntx, struct xml_tree *p)
+{
+    struct ppxml_solution_file *pp = (struct ppxml_solution_file *) p;
+    for (struct xml_attr *a = pp->b.first; a; a = a->next) {
+        if (a->tag == PPXML_A_TYPE) {
+            int t = ppxml_solution_file_type_parse(a->text);
+            if (!t) return cntx->ops->err_attr_invalid(cntx, a);
+            pp->type = t;
+        } else if (a->tag == PPXML_A_PATH) {
+            pp->path = a->text;
+        } else {
+            return cntx->ops->err_attr_not_allowed(cntx, p, a);
+        }
+    }
+    for (struct xml_tree *q = p->first_down; q; q = q->right) {
+        return cntx->ops->err_elem_invalid(cntx, q);
+    }
+    if (!pp->path) return cntx->ops->err_attr_undefined(cntx, p, PPXML_A_PATH);
+    if (!pp->type) return cntx->ops->err_attr_undefined(cntx, p, PPXML_A_TYPE);
+    return pp;
+}
+
+static struct ppxml_solution_files *
+ppxml_parse_solution_files(struct ppxml_parse_context *cntx, struct xml_tree *p)
+{
+    if (p->first) return cntx->ops->err_attr_not_allowed(cntx, p, p->first);
+    struct ppxml_solution_files *pp = (struct ppxml_solution_files *) p;
+    for (struct xml_tree *q = p->first_down; q; q = q->right) {
+        if (q->tag == PPXML_SOLUTION_FILE) {
+            struct ppxml_solution_file *tt = ppxml_parse_solution_file(cntx, q);
+            if (!tt) return NULL;
+            XML_TREE_VECTOR_PUSH(pp, tt);
+            if (tt->type == PPXML_SOLUTION_FILE_HEADER) {
+                pp->header = tt;
+            } else if (tt->type == PPXML_SOLUTION_FILE_FOOTER) {
+                pp->footer = tt;
+            }
         } else {
             return cntx->ops->err_elem_not_allowed(cntx, q);
         }
@@ -1299,6 +1371,11 @@ ppxml_parse_assets(struct ppxml_parse_context *cntx, struct xml_tree *p)
             struct ppxml_generators *t = ppxml_parse_generators(cntx, q);
             if (!t) return NULL;
             pp->generators = t;
+        } else if (q->tag == PPXML_SOLUTION_FILES) {
+            if (pp->solution_files) return cntx->ops->err_elem_redefined(cntx, q);
+            struct ppxml_solution_files *t = ppxml_parse_solution_files(cntx, q);
+            if (!t) return NULL;
+            pp->solution_files = t;
         } else if (q->tag == PPXML_ASSET) {
             struct ppxml_asset *t = ppxml_parse_asset(cntx, q);
             if (!t) return NULL;
