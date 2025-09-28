@@ -9564,7 +9564,7 @@ do_reload_statement(
         markdown_parse(cntx->md_path, mdp);
         continue;
       }
-      if (!prob->xml_file_path || strcmp(prob->xml_file_path, cntx->xml_path) != 0)
+      if (!prob->xml_file_path || !cntx->xml_path || strcmp(prob->xml_file_path, cntx->xml_path) != 0)
         continue;
       prob->xml.p = problem_xml_free(prob->xml.p);
       prob->xml.p = problem_xml_parse_safe(NULL, prob->xml_file_path);
@@ -9581,7 +9581,7 @@ do_reload_statement(
           markdown_parse(cntx->md_path, mdp);
           continue;
         }
-        if (!prob->var_xml_file_paths || !prob->var_xml_file_paths[variant - 1])
+        if (!prob->var_xml_file_paths || !prob->var_xml_file_paths[variant - 1] || !cntx->xml_path)
           continue;
         if (strcmp(prob->var_xml_file_paths[variant - 1], cntx->xml_path) != 0)
           continue;
