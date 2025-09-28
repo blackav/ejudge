@@ -15287,9 +15287,14 @@ ns_submit_run_input(
   }
   free(ses); ses = NULL; sez = 0;
 
-  if (cs->submit_state->vt->fetch_totals(cs->submit_state, sender_user_id, &st) < 0) {
-    err_num = NEW_SRV_ERR_DATABASE_FAILED;
-    goto done;
+  // fetch_totals is a heavy query, avoid it in the admin mode
+  if (!admin_mode) {
+    if (cs->submit_state->vt->fetch_totals(cs->submit_state, sender_user_id, &st) < 0) {
+      err_num = NEW_SRV_ERR_DATABASE_FAILED;
+      goto done;
+    }
+  } else {
+    memset(&st, 0, sizeof(st));
   }
   {
     int max_submit_num = DFLT_G_MAX_SUBMIT_NUM;
