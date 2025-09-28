@@ -80,6 +80,8 @@ enum
     PPXML_MATERIALS,
     PPXML_GENERATOR,
     PPXML_GENERATORS,
+    PPXML_SOLUTION_FILE,
+    PPXML_SOLUTION_FILES,
 
     PPXML_TAG_LAST,
 };
@@ -510,6 +512,17 @@ struct ppxml_generators
     XML_TREE_VECTOR_T(ppxml_generator) n;
 };
 
+struct ppxml_solution_file
+{
+    struct xml_tree b;
+};
+
+struct ppxml_solution_files
+{
+    struct xml_tree b;
+    XML_TREE_VECTOR_T(ppxml_solution_file) n;
+};
+
 struct ppxml_assets
 {
     struct xml_tree b;
@@ -520,6 +533,7 @@ struct ppxml_assets
     struct ppxml_solutions *solutions;
     struct ppxml_scorer *scorer;
     struct ppxml_generators *generators;
+    struct ppxml_solution_files *solution_files;
 };
 
 struct ppxml_property
