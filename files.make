@@ -168,6 +168,7 @@ COMMON_CFILES=\
  lib/ej_import_packet.c\
  lib/ejudge_cfg.c\
  lib/ejudge_cfg_var.c\
+ lib/ejudge_problem_impl.c\
  lib/ej_libzip.c\
  lib/ej_lzma.c\
  lib/ej_uuid.c\
@@ -606,6 +607,7 @@ HFILES=\
  ./include/ejudge/dyntrie.h\
  ./include/ejudge/ejudge_cfg.h\
  ./include/ejudge/ejudge_plugin.h\
+ ./include/ejudge/ejudge_problem_impl.h\
  ./include/ejudge/ej_byteorder.h\
  ./include/ejudge/ej_import_packet.h\
  ./include/ejudge/ej_limits.h\
