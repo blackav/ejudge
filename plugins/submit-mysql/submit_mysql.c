@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2022-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2022-2025 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -623,7 +623,7 @@ fetch_for_user_func(
     struct submit_entry *v = NULL;
 
     cmd_f = open_memstream(&cmd_s, &cmd_z);
-    fprintf(cmd_f, "SELECT * FROM `%ssubmits` WHERE user_id = %d AND contest_id = %d ORDER BY serial_id DESC",
+    fprintf(cmd_f, "SELECT * FROM `%ssubmits` USE INDEX (s_uc_ids_idx) WHERE user_id = %d AND contest_id = %d ORDER BY serial_id DESC",
             md->table_prefix, user_id, scmd->contest_id);
     if (limit > 0) {
         fprintf(cmd_f, " LIMIT %d", limit);
