@@ -530,6 +530,8 @@ struct ppxml_solution_files
 {
     struct xml_tree b;
     XML_TREE_VECTOR_T(ppxml_solution_file) n;
+    struct ppxml_solution_file *header;
+    struct ppxml_solution_file *footer;
 };
 
 struct ppxml_assets

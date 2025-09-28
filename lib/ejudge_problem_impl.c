@@ -982,9 +982,60 @@ ejudge_problem_collect_dependencies(
 
                 unsigned char source_base[PATH_MAX];
                 unsigned char source_suffix[64];
-                if (split_suffix(log_f, "source", ppsol->source->path, source_base, sizeof source_base, source_suffix, sizeof source_suffix) < 0) {
-                    L_ERR("invalid source path");
-                    return -1;
+                unsigned char source_full[PATH_MAX];
+                if (ppxml->assets->solution_files && (ppxml->assets->solution_files->header || ppxml->assets->solution_files->footer)) {
+                    struct depgraph_file *hf = NULL;
+                    struct depgraph_file *ff = NULL;
+                    struct depgraph_file *mf = sf;
+                    if (ppxml->assets->solution_files->header) {
+                        hf = depgraph_add_file(&ps->dg, ppxml->assets->solution_files->header->path);
+                    }
+                    if (ppxml->assets->solution_files->footer) {
+                        ff = depgraph_add_file(&ps->dg, ppxml->assets->solution_files->footer->path);
+                    }
+                    if (split_suffix(log_f, "source", ppsol->source->path, source_base, sizeof source_base, source_suffix, sizeof source_suffix) < 0) {
+                        L_ERR("invalid source path");
+                        return -1;
+                    }
+                    // generated full source to be solution.SUFFIX
+                    // TODO: add param
+                    // TODO: handle directories
+                    if (snprintf(source_full, sizeof(source_full), "%s%s", "solution", source_suffix) >= (int) sizeof(source_full)) {
+                        L_ERR("source file name too long");
+                        return -1;
+                    }
+                    snprintf(source_base, sizeof(source_base), "%s", "solution");
+                    sf = depgraph_add_file(&ps->dg, source_full);
+                    if (hf) {
+                        depgraph_add_dependency(sf, hf);
+                    }
+                    depgraph_add_dependency(sf, mf);
+                    if (ff) {
+                        depgraph_add_dependency(sf, ff);
+                    }
+                    char *cmd_s = NULL;
+                    size_t cmd_z = 0;
+                    FILE *cmd_f = open_memstream(&cmd_s, &cmd_z);
+                    fprintf(cmd_f, "cat");
+                    if (hf) {
+                        fprintf(cmd_f, " %s", hf->path);
+                    }
+                    fprintf(cmd_f, " %s", mf->path);
+                    if (ff) {
+                        fprintf(cmd_f, " %s", ff->path);
+                    }
+                    fprintf(cmd_f, " >%s", sf->path);
+                    fclose(cmd_f);
+                    depgraph_add_command_move(sf, cmd_s);
+                } else {
+                    if (snprintf(source_full, sizeof(source_full), "%s", ppsol->source->path) >= (int) sizeof(source_full)) {
+                        L_ERR("source path too long");
+                        return -1;
+                    }
+                    if (split_suffix(log_f, "source", ppsol->source->path, source_base, sizeof source_base, source_suffix, sizeof source_suffix) < 0) {
+                        L_ERR("invalid source path");
+                        return -1;
+                    }
                 }
                 struct depgraph_file *xf = depgraph_add_file(&ps->dg, source_base);
                 ps->solution_exe_index = xf->index;
@@ -992,7 +1043,7 @@ ejudge_problem_collect_dependencies(
 
                 const struct language_info *lang = find_language(source_suffix);
                 if (!lang) {
-                    L_ERR("no rule to compile source file '%s", ppsol->source->path);
+                    L_ERR("no rule to compile source file '%s", source_full);
                     return -1;
                 }
                 const struct language_profile_info *prof = find_profile(lang, lang->default_solution_profile);
@@ -1001,7 +1052,7 @@ ejudge_problem_collect_dependencies(
                     return -1;
                 }
 
-                unsigned char *cmd = substitute_rule_vars(prof->command, ppsol->source->path, source_base);
+                unsigned char *cmd = substitute_rule_vars(prof->command, source_full, source_base);
                 if (!cmd) {
                     L_ERR("command substitution failed for '%s'", prof->command);
                     return -1;

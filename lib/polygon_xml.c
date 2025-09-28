@@ -870,6 +870,11 @@ ppxml_parse_solution_files(struct ppxml_parse_context *cntx, struct xml_tree *p)
             struct ppxml_solution_file *tt = ppxml_parse_solution_file(cntx, q);
             if (!tt) return NULL;
             XML_TREE_VECTOR_PUSH(pp, tt);
+            if (tt->type == PPXML_SOLUTION_FILE_HEADER) {
+                pp->header = tt;
+            } else if (tt->type == PPXML_SOLUTION_FILE_FOOTER) {
+                pp->footer = tt;
+            }
         } else {
             return cntx->ops->err_elem_not_allowed(cntx, q);
         }
