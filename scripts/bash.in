@@ -1,0 +1,27 @@
+#! /bin/bash
+# Copyright (c) 2025 Alexander Chernov <cher@ejudge.ru>
+
+# Usage: bash <input> <output> <property-file>
+
+LANG_CONFIG_DIR="@lang_config_dir@"
+[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/bash.cfg"
+
+if [ -f "${EJUDGE_LANG_CONFIG}" ]
+then
+  . "${EJUDGE_LANG_CONFIG}"
+else
+  version="unknown"
+  BASHPATH="/bin/bash"
+fi
+
+if [ x"${version}" = x ]
+then
+  echo "This language is not supported." >&2
+  exit 1
+fi
+
+echo "#! ${BASHPATH}" > $2
+echo >> $2
+cat $1 >> $2
+chmod +x $2
+exit 0
