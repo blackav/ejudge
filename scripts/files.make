@@ -1,6 +1,6 @@
 # -*- Makefile -*-
 
-# Copyright (C) 2017-2023 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2017-2025 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -122,6 +122,10 @@ SCRIPTS_IN = \
  gccgo-version.in\
  pasabc-linux.in\
  pasabc-linux-version.in\
+ zig.in\
+ zig-version.in\
+ bash.in\
+ bash-version.in\
  mars.in\
  mars-version.in\
  rars.in\

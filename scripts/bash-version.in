@@ -1,0 +1,87 @@
+#! /bin/bash
+# Copyright (c) 2025 Alexander Chernov <cher@ejudge.ru>
+
+LANG_CONFIG_DIR="@lang_config_dir@"
+
+common_config() {
+  echo 'long_name="Bash"'
+  echo 'src_sfx=".sh"'
+  echo 'arch="linux-shared"'
+}
+
+failure() {
+  rm -f conftest*
+  echo 'version='
+  echo 'arg="'"${arg}"'"'
+  common_config
+  echo 'BASHPATH=/bin/false'
+  [ "${verbose}" = 1 ] && echo "no" >&2
+  exit 1
+}
+
+unset LANG
+unset LC_ALL
+unset LC_MESSAGES
+unset LANGUAGE
+
+if [ x"$1" = x-v ]
+then
+  verbose=1
+  shift
+fi
+
+# recheck the language
+if [ x"$1" = x-r ]
+then
+  arg="$2"
+  [ x"$2" != x ] && basah="$2"
+  [ "${bash}" = "" ] && bash="bash"
+
+  [ "${verbose}" = 1 ] && echo -n "checking whether Bash is available..." >&2
+  "${bash}" --version >/dev/null 2>&1 || failure
+  version=`"${bash}" --version 2>&1 | head -1 | gawk '{ print $4; }'` || failure
+  [ "${version}" != "" ] || failure
+  BASHPATH=`which "${bash}"` || failure
+  [ "${BASHPATH}" != "" ] || failure
+
+  rm -f ./conftest*
+  echo 'version="'"${version}"'"'
+  echo 'arg="'"${arg}"'"'
+  common_config
+  echo 'BASHPATH="'"${BASHPATH}"'"'
+  [ "${verbose}" = 1 ] && echo "yes, ${BASHPATH}, ${version}" >&2
+  exit 0
+fi
+
+if [ x"$1" = x-l ]
+then
+  echo "Bash shell [https://www.gnu.org/software/bash/]"
+  exit 0
+fi
+
+[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/bash.cfg"
+
+if [ -f "${EJUDGE_LANG_CONFIG}" ]
+then
+  . "${EJUDGE_LANG_CONFIG}"
+else
+  BASHPATH="/bin/bash"
+fi
+
+if [ x"${BASHPATH}" = x -o x"${BASHPATH}" = x/bin/false ]
+then
+  echo "This language is not supported." >&2
+  exit 1
+fi
+
+if [ x"$1" = x-p ]
+then
+    echo "${BASHPATH}"
+    exit 0
+fi
+
+"${BASHPATH}" --version 2>/dev/null >/dev/null || exit 1
+    
+[ x"$1" = x-f ] && echo -n "Bash "
+
+"${BASHPATH}" --version 2>&1 | head -1 | gawk '{ print $4; }'
