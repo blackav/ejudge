@@ -27,14 +27,17 @@
 
 #include <curl/curl.h>
 
+#include <stdio.h>
 #include <string.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <limits.h>
+#include <strings.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <ctype.h>
 
 struct vcs_gitlab_data
 {
@@ -145,6 +148,50 @@ struct vcs_plugin_iface plugin_vcs_gitlab =
     set_work_dir_func,
 };
 
+static _Bool
+is_gitlab_token_valid_char(unsigned char c)
+{
+    return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
+        || (c >= '0' && c <= '9') || c == '_' || c == '.' || c == '-';
+}
+
+static unsigned char *
+extract_gitlab_token(const unsigned char *text)
+{
+    enum { MAX_TOKEN_SIZE = 128 };
+    unsigned char token_buf[MAX_TOKEN_SIZE];
+    int len = 0;
+    const unsigned char *p = text;
+    unsigned char *q = token_buf;
+    while (*p && isspace(*p)) {
+        ++p;
+    }
+    while (len < MAX_TOKEN_SIZE-1 && is_gitlab_token_valid_char(*p)) {
+        *q++ = *p++;
+        ++len;
+    }
+    *q = 0;
+    return xstrdup(token_buf);
+}
+
+static unsigned char *
+insert_gitlab_token(const unsigned char *url, const unsigned char *token)
+{
+    static const char https[] = "https://";
+    static const char http[] = "http://";
+    if (!strncasecmp(https, url, sizeof(https)-1)) {
+        char *s = NULL;
+        asprintf(&s, "%suser:%s@%s", https, token, url + sizeof(https)-1);
+        return s;
+    } else if (!strncasecmp(http, url, sizeof(http)-1)) {
+        char *s = NULL;
+        asprintf(&s, "%suser:%s@%s", http, token, url + sizeof(http)-1);
+        return s;
+    } else {
+        return xstrdup(url);
+    }
+}
+
 /*
   jobs_args[0] = "gitlab_webhook";
   jobs_args[1] = gitlab_event;
@@ -192,6 +239,9 @@ gitlab_webhook_handler(
     FILE *resp_f = NULL;
     unsigned char ejsid_buf[64];
     struct curl_slist *list = NULL;
+    unsigned char *gitlab_token = NULL;
+    unsigned char *vcs_url_buf = NULL;
+    const unsigned char *vcs_url = NULL;
 
     work_dir[0] = 0;
 
@@ -243,15 +293,26 @@ gitlab_webhook_handler(
         err("%s: ssh private key or token is not set", __FUNCTION__);
         goto done;
     }
-    if (generic_write_file(ue->ssh_private_key, strlen(ue->ssh_private_key), 0,
-                           work_dir, "ssh_id", NULL) < 0) {
-        err("%s: failed to save ssh private key", __FUNCTION__);
-        goto done;
-    }
-    snprintf(id_path, sizeof(id_path), "%s/%s", work_dir, "ssh_id");
-    if (chmod(id_path, 0600) < 0) {
-        err("%s: failed to chmod: %s", __FUNCTION__, os_ErrorMsg());
-        goto done;
+    if (!strcmp(ue->vcs_type, "gitlab-token")) {
+        gitlab_token = extract_gitlab_token(ue->ssh_private_key);
+        if (!gitlab_token[0]) {
+            err("%s: gitlab token is invalid", __FUNCTION__);
+            goto done;
+        }
+        vcs_url_buf = insert_gitlab_token(vcs_url, gitlab_token);
+        vcs_url = vcs_url_buf;
+    } else {
+        if (generic_write_file(ue->ssh_private_key, strlen(ue->ssh_private_key), 0,
+                            work_dir, "ssh_id", NULL) < 0) {
+            err("%s: failed to save ssh private key", __FUNCTION__);
+            goto done;
+        }
+        snprintf(id_path, sizeof(id_path), "%s/%s", work_dir, "ssh_id");
+        if (chmod(id_path, 0600) < 0) {
+            err("%s: failed to chmod: %s", __FUNCTION__, os_ErrorMsg());
+            goto done;
+        }
+        vcs_url = ue->vcs_url;
     }
 
     info("cloning repository %s", ue->vcs_url);
@@ -259,9 +320,11 @@ gitlab_webhook_handler(
     git_task = task_New();
     task_AddArg(git_task, "/usr/bin/git");
     task_AddArg(git_task, "clone");
-    task_AddArg(git_task, ue->vcs_url);
+    task_AddArg(git_task, vcs_url);
     task_SetPathAsArg0(git_task);
-    task_SetEnv(git_task, "GIT_SSH_COMMAND", "ssh -i ssh_id -o IdentitiesOnly=yes -o StrictHostKeychecking=no");
+    if (!vcs_url_buf) {
+        task_SetEnv(git_task, "GIT_SSH_COMMAND", "ssh -i ssh_id -o IdentitiesOnly=yes -o StrictHostKeychecking=no");
+    }
     task_SetWorkingDir(git_task, work_dir);
     if (task_Start(git_task) < 0) {
         err("%s: failed to start git", __FUNCTION__);
@@ -483,4 +546,6 @@ done:;
     if (list) {
         curl_slist_free_all(list);
     }
+    free(gitlab_token);
+    free(vcs_url_buf);
 }
