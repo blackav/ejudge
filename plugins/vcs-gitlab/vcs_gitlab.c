@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2022-2025 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -27,14 +27,17 @@
 
 #include <curl/curl.h>
 
+#include <stdio.h>
 #include <string.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <limits.h>
+#include <strings.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <ctype.h>
 
 struct vcs_gitlab_data
 {
@@ -145,6 +148,50 @@ struct vcs_plugin_iface plugin_vcs_gitlab =
     set_work_dir_func,
 };
 
+static _Bool
+is_gitlab_token_valid_char(unsigned char c)
+{
+    return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
+        || (c >= '0' && c <= '9') || c == '_' || c == '.' || c == '-';
+}
+
+static unsigned char *
+extract_gitlab_token(const unsigned char *text)
+{
+    enum { MAX_TOKEN_SIZE = 128 };
+    unsigned char token_buf[MAX_TOKEN_SIZE];
+    int len = 0;
+    const unsigned char *p = text;
+    unsigned char *q = token_buf;
+    while (*p && isspace(*p)) {
+        ++p;
+    }
+    while (len < MAX_TOKEN_SIZE-1 && is_gitlab_token_valid_char(*p)) {
+        *q++ = *p++;
+        ++len;
+    }
+    *q = 0;
+    return xstrdup(token_buf);
+}
+
+static unsigned char *
+insert_gitlab_token(const unsigned char *url, const unsigned char *token)
+{
+    static const char https[] = "https://";
+    static const char http[] = "http://";
+    if (!strncasecmp(https, url, sizeof(https)-1)) {
+        char *s = NULL;
+        asprintf(&s, "%suser:%s@%s", https, token, url + sizeof(https)-1);
+        return s;
+    } else if (!strncasecmp(http, url, sizeof(http)-1)) {
+        char *s = NULL;
+        asprintf(&s, "%suser:%s@%s", http, token, url + sizeof(http)-1);
+        return s;
+    } else {
+        return xstrdup(url);
+    }
+}
+
 /*
   jobs_args[0] = "gitlab_webhook";
   jobs_args[1] = gitlab_event;
@@ -192,6 +239,9 @@ gitlab_webhook_handler(
     FILE *resp_f = NULL;
     unsigned char ejsid_buf[64];
     struct curl_slist *list = NULL;
+    unsigned char *gitlab_token = NULL;
+    unsigned char *vcs_url_buf = NULL;
+    const unsigned char *vcs_url = NULL;
 
     work_dir[0] = 0;
 
@@ -200,7 +250,7 @@ gitlab_webhook_handler(
     const unsigned char *self_url = argv[7];
 
     if (argc != 9) {
-        err("gitlab_webhook_handler: wrong number of arguments");
+        err("%s: wrong number of arguments", __FUNCTION__);
         goto done;
     }
 
@@ -212,7 +262,7 @@ gitlab_webhook_handler(
     */
 
     if (sscanf(argv[6], "%llx-%llx", &session_id, &client_key) != 2) {
-        err("gitlab_webhook_handler: failed to parse user session");
+        err("%s: failed to parse user session", __FUNCTION__);
         goto done;
     }
 
@@ -221,13 +271,13 @@ gitlab_webhook_handler(
         errno = 0;
         serial_id = strtoll(argv[3], &eptr, 10);
         if (*eptr || errno || eptr == argv[3] || serial_id <= 0) {
-            err("gitlab_webhook_handler: invalid serial_id");
+            err("%s: invalid serial_id", __FUNCTION__);
             goto done;
         }
     }
     ue = vgd->userprob_plugin->vt->fetch_by_serial_id(vgd->userprob_plugin, serial_id);
     if (!ue) {
-        err("gitlab_webhook_handler: invalid serial_id");
+        err("%s: invalid serial_id", __FUNCTION__);
         goto done;
     }
 
@@ -235,23 +285,34 @@ gitlab_webhook_handler(
     snprintf(randdir, sizeof(randdir), "gitlab_%llu", random_u64());
     snprintf(work_dir, sizeof(work_dir), "%s/%s", vgd->work_dir, randdir);
     if (make_dir(work_dir, 0700) < 0) {
-        err("gitlab_webhook_handler: failed to create directory '%s'", work_dir);
+        err("%s: failed to create directory '%s'", __FUNCTION__, work_dir);
         goto done;
     }
 
     if (!ue->ssh_private_key || !*ue->ssh_private_key) {
-        err("gitlab_webhook_handler: ssh private key is not set");
+        err("%s: ssh private key or token is not set", __FUNCTION__);
         goto done;
     }
-    if (generic_write_file(ue->ssh_private_key, strlen(ue->ssh_private_key), 0,
-                           work_dir, "ssh_id", NULL) < 0) {
-        err("gitlab_webhook_handler: failed to save ssh private key");
-        goto done;
-    }
-    snprintf(id_path, sizeof(id_path), "%s/%s", work_dir, "ssh_id");
-    if (chmod(id_path, 0600) < 0) {
-        err("gitlab_webhook_handler: failed to chmod: %s", os_ErrorMsg());
-        goto done;
+    if (!strcmp(ue->vcs_type, "gitlab-token")) {
+        gitlab_token = extract_gitlab_token(ue->ssh_private_key);
+        if (!gitlab_token[0]) {
+            err("%s: gitlab token is invalid", __FUNCTION__);
+            goto done;
+        }
+        vcs_url_buf = insert_gitlab_token(vcs_url, gitlab_token);
+        vcs_url = vcs_url_buf;
+    } else {
+        if (generic_write_file(ue->ssh_private_key, strlen(ue->ssh_private_key), 0,
+                            work_dir, "ssh_id", NULL) < 0) {
+            err("%s: failed to save ssh private key", __FUNCTION__);
+            goto done;
+        }
+        snprintf(id_path, sizeof(id_path), "%s/%s", work_dir, "ssh_id");
+        if (chmod(id_path, 0600) < 0) {
+            err("%s: failed to chmod: %s", __FUNCTION__, os_ErrorMsg());
+            goto done;
+        }
+        vcs_url = ue->vcs_url;
     }
 
     info("cloning repository %s", ue->vcs_url);
@@ -259,17 +320,19 @@ gitlab_webhook_handler(
     git_task = task_New();
     task_AddArg(git_task, "/usr/bin/git");
     task_AddArg(git_task, "clone");
-    task_AddArg(git_task, ue->vcs_url);
+    task_AddArg(git_task, vcs_url);
     task_SetPathAsArg0(git_task);
-    task_SetEnv(git_task, "GIT_SSH_COMMAND", "ssh -i ssh_id -o IdentitiesOnly=yes -o StrictHostKeychecking=no");
+    if (!vcs_url_buf) {
+        task_SetEnv(git_task, "GIT_SSH_COMMAND", "ssh -i ssh_id -o IdentitiesOnly=yes -o StrictHostKeychecking=no");
+    }
     task_SetWorkingDir(git_task, work_dir);
     if (task_Start(git_task) < 0) {
-        err("gitlab_webhook_handler: failed to start git");
+        err("%s: failed to start git", __FUNCTION__);
         goto done;
     }
     task_NewWait(git_task);
     if (task_IsAbnormal(git_task)) {
-        err("gitlab_webhook_handler: git clone failed");
+        err("%s: git clone failed", __FUNCTION__);
         goto done;
     }
     task_Delete(git_task); git_task = NULL;
@@ -277,7 +340,7 @@ gitlab_webhook_handler(
     {
         char *p = strrchr(ue->vcs_url, '/');
         if (!p) {
-            err("gitlab_webhook_handler: cannot extract directory name from %s", ue->vcs_url);
+            err("%s: cannot extract directory name from %s", __FUNCTION__, ue->vcs_url);
             goto done;
         }
         snprintf(repo_dir, sizeof(repo_dir), "%s", p + 1);
@@ -298,12 +361,12 @@ gitlab_webhook_handler(
     task_SetRedir(git_task, 1, TSR_FILE, git_info_path, TSK_REWRITE, 0600);
     task_SetWorkingDir(git_task, git_dir);
     if (task_Start(git_task) < 0) {
-        err("gitlab_webhook_handler: failed to start git");
+        err("%s: failed to start git", __FUNCTION__);
         goto done;
     }
     task_NewWait(git_task);
     if (task_IsAbnormal(git_task)) {
-        err("gitlab_webhook_handler: git log failed");
+        err("%s: git log failed", __FUNCTION__);
         goto done;
     }
     task_Delete(git_task); git_task = NULL;
@@ -318,7 +381,7 @@ gitlab_webhook_handler(
         snprintf(orig_path, sizeof(orig_path), "%s", git_dir);
     }
     if (rename(orig_path, source_path) < 0) {
-        err("gitlab_webhook_handler: rename failed: %s -> %s", orig_path, source_path);
+        err("%s: rename failed: %s -> %s", __FUNCTION__, orig_path, source_path);
         goto done;
     }
 
@@ -336,12 +399,12 @@ gitlab_webhook_handler(
         task_AddArg(git_task, ue->lang_name);
         task_SetWorkingDir(git_task, source_path);
         if (task_Start(git_task) < 0) {
-            err("gitlab_webhook_handler: post_pull_cmd failed to start: %s", post_pull_path);
+            err("%s: post_pull_cmd failed to start: %s", __FUNCTION__, post_pull_path);
             goto done;
         }
         task_NewWait(git_task);
         if (task_IsAbnormal(git_task)) {
-            err("gitlab_webhook_handler: post_pull_cmd failed");
+            err("%s: post_pull_cmd failed", __FUNCTION__);
             goto done;
         }
         task_Delete(git_task); git_task = NULL;
@@ -355,12 +418,12 @@ gitlab_webhook_handler(
     task_AddArg(git_task, "source");
     task_SetWorkingDir(git_task, work_dir);
     if (task_Start(git_task) < 0) {
-        err("gitlab_webhook_handler: failed to start tar");
+        err("%s: failed to start tar", __FUNCTION__);
         goto done;
     }
     task_NewWait(git_task);
     if (task_IsAbnormal(git_task)) {
-        err("gitlab_webhook_handler: tar failed");
+        err("%s: tar failed", __FUNCTION__);
         goto done;
     }
     task_Delete(git_task); git_task = NULL;
@@ -375,12 +438,12 @@ gitlab_webhook_handler(
     task_SetRedir(git_task, 0, TSR_FILE, tbz_path, TSK_READ, 0);
     task_SetRedir(git_task, 1, TSR_FILE, b64_path, TSK_REWRITE, 0600);
     if (task_Start(git_task) < 0) {
-        err("gitlab_webhook_handler: failed to start base64");
+        err("%s: failed to start base64", __FUNCTION__);
         goto done;
     }
     task_NewWait(git_task);
     if (task_IsAbnormal(git_task)) {
-        err("gitlab_webhook_handler: base64 failed");
+        err("%s: base64 failed", __FUNCTION__);
         goto done;
     }
     task_Delete(git_task); git_task = NULL;
@@ -388,7 +451,7 @@ gitlab_webhook_handler(
     snprintf(res_path, sizeof(res_path), "%s/%s", work_dir, "source.res");
     dst_f = fopen(res_path, "w");
     if (!dst_f) {
-        err("gitlab_webhook_handler: cannot open '%s' for write", res_path);
+        err("%s: cannot open '%s' for write", res_path, __FUNCTION__);
         goto done;
     }
     src_f = fopen(git_info_path, "r");
@@ -413,7 +476,7 @@ gitlab_webhook_handler(
 
     curl = curl_easy_init();
     if (!curl) {
-        err("gitlab_webhook_handler: cannot initialize curl");
+        err("%s: cannot initialize curl", __FUNCTION__);
         goto done;
     }
     curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1L);
@@ -461,7 +524,7 @@ gitlab_webhook_handler(
     CURLcode res = curl_easy_perform(curl);
     fclose(resp_f);
     if (res != CURLE_OK) {
-        err("curl request failed");
+        err("%s: curl request failed", __FUNCTION__);
     }
 
     fprintf(stderr, "response: <%s>\n", resp_s);
@@ -483,4 +546,6 @@ done:;
     if (list) {
         curl_slist_free_all(list);
     }
+    free(gitlab_token);
+    free(vcs_url_buf);
 }
