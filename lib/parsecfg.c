@@ -76,6 +76,21 @@ struct parsecfg_state
   int charset_id;
 };
 
+static void
+append_problem_dir_entry(struct section_problem_data *prob,
+                         const unsigned char *value)
+{
+  if (!prob || !value) return;
+
+  prob->variant_problem_dirs = (unsigned char **)
+    sarray_append((char**) prob->variant_problem_dirs, value);
+  if (prob->variant_problem_dirs && prob->variant_problem_dirs[0]) {
+    prob->problem_dir = prob->variant_problem_dirs[0];
+  } else {
+    prob->problem_dir = NULL;
+  }
+}
+
 static int
 ps_getc(struct parsecfg_state *ps)
 {
@@ -1164,13 +1179,7 @@ copy_param(
         decoded = xstrdup(varvalue);
       }
       if (decoded) {
-        prob->variant_problem_dirs = (unsigned char **)
-          sarray_append((char**) prob->variant_problem_dirs, decoded);
-        if (prob->variant_problem_dirs) {
-          prob->problem_dir = prob->variant_problem_dirs[0];
-        } else {
-          prob->problem_dir = NULL;
-        }
+        append_problem_dir_entry(prob, decoded);
         xfree(decoded);
       }
       return 0;
@@ -1190,6 +1199,22 @@ copy_param(
   if (!params[i].name) {
     fprintf(stderr, "%d: unknown parameter '%s'\n", ps->f_stack->lineno - 1, varname);
     return -1;
+  }
+
+  if (!strcmp(sinfo->name, "problem") && !strcmp(varname, "problem_dir")) {
+    struct section_problem_data *prob = (struct section_problem_data *) cfg;
+    unsigned char *decoded = NULL;
+
+    if (ps->charset_id > 0) {
+      decoded = charset_decode_to_heap(ps->charset_id, varvalue);
+    } else {
+      decoded = xstrdup(varvalue);
+    }
+    if (decoded) {
+      append_problem_dir_entry(prob, decoded);
+      xfree(decoded);
+    }
+    return 0;
   }
 
   if (!strcmp(params[i].type, "f")) {
