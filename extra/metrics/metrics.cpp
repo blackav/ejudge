@@ -5,6 +5,7 @@
 #include <map>
 #include <vector>
 #include <string_view>
+#include <cstdint>
 
 #include <stdio.h>
 #include <sys/types.h>
