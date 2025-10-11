@@ -1267,6 +1267,7 @@ static struct meta_info_item meta_info_section_problem_data_data[] =
   [CNTSPROB_plugin_entry_name] = { CNTSPROB_plugin_entry_name, 's', XSIZE(struct section_problem_data, plugin_entry_name), "plugin_entry_name", XOFFSET(struct section_problem_data, plugin_entry_name) },
   [CNTSPROB_uuid] = { CNTSPROB_uuid, 's', XSIZE(struct section_problem_data, uuid), "uuid", XOFFSET(struct section_problem_data, uuid) },
   [CNTSPROB_problem_dir] = { CNTSPROB_problem_dir, 's', XSIZE(struct section_problem_data, problem_dir), "problem_dir", XOFFSET(struct section_problem_data, problem_dir) },
+  [CNTSPROB_variant_problem_dirs] = { CNTSPROB_variant_problem_dirs, 'x', XSIZE(struct section_problem_data, variant_problem_dirs), "variant_problem_dirs", XOFFSET(struct section_problem_data, variant_problem_dirs) },
   [CNTSPROB_test_dir] = { CNTSPROB_test_dir, 's', XSIZE(struct section_problem_data, test_dir), "test_dir", XOFFSET(struct section_problem_data, test_dir) },
   [CNTSPROB_test_sfx] = { CNTSPROB_test_sfx, 's', XSIZE(struct section_problem_data, test_sfx), "test_sfx", XOFFSET(struct section_problem_data, test_sfx) },
   [CNTSPROB_corr_dir] = { CNTSPROB_corr_dir, 's', XSIZE(struct section_problem_data, corr_dir), "corr_dir", XOFFSET(struct section_problem_data, corr_dir) },
@@ -1575,7 +1576,13 @@ void cntsprob_copy(struct section_problem_data *dst, const struct section_proble
   if (src->uuid) {
     dst->uuid = strdup(src->uuid);
   }
-  if (src->problem_dir) {
+  if (src->variant_problem_dirs) {
+    dst->variant_problem_dirs = (typeof(dst->variant_problem_dirs))
+      sarray_copy((char**) src->variant_problem_dirs);
+  }
+  if (dst->variant_problem_dirs && dst->variant_problem_dirs[0]) {
+    dst->problem_dir = dst->variant_problem_dirs[0];
+  } else if (src->problem_dir) {
     dst->problem_dir = strdup(src->problem_dir);
   }
   if (src->test_dir) {
@@ -1845,7 +1852,13 @@ void cntsprob_free(struct section_problem_data *ptr)
   free(ptr->internal_name);
   free(ptr->plugin_entry_name);
   free(ptr->uuid);
-  free(ptr->problem_dir);
+  if (ptr->variant_problem_dirs) {
+    sarray_free((char**) ptr->variant_problem_dirs);
+    ptr->variant_problem_dirs = NULL;
+    ptr->problem_dir = NULL;
+  } else {
+    free(ptr->problem_dir);
+  }
   free(ptr->test_dir);
   free(ptr->test_sfx);
   free(ptr->corr_dir);

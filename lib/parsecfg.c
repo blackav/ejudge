@@ -19,6 +19,8 @@
 #include "ejudge/xml_utils.h"
 #include "ejudge/misctext.h"
 #include "ejudge/meta_generic.h"
+#include "ejudge/meta/prepare_meta.h"
+#include "ejudge/prepare.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -1152,6 +1154,28 @@ copy_param(
       fprintf(stderr, "%d: unknown parameter '%s'\n", ps->f_stack->lineno - 1, varname);
       return -1;
     }
+    if (sinfo->mm == &cntsprob_methods && !strcmp(varname, "problem_dir")) {
+      struct section_problem_data *prob = (struct section_problem_data *) cfg;
+      unsigned char *decoded = NULL;
+
+      if (ps->charset_id > 0) {
+        decoded = charset_decode_to_heap(ps->charset_id, varvalue);
+      } else {
+        decoded = xstrdup(varvalue);
+      }
+      if (decoded) {
+        prob->variant_problem_dirs = (unsigned char **)
+          sarray_append((char**) prob->variant_problem_dirs, decoded);
+        if (prob->variant_problem_dirs) {
+          prob->problem_dir = prob->variant_problem_dirs[0];
+        } else {
+          prob->problem_dir = NULL;
+        }
+        xfree(decoded);
+      }
+      return 0;
+    }
+
     if (meta_parse_string(stderr, ps->f_stack->lineno - 1, cfg, field_id, sinfo->mm,
                           varname, varvalue, ps->charset_id) < 0) {
       return -1;
