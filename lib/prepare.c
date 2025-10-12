@@ -1386,8 +1386,6 @@ prepare_problem_free_func(struct generic_section_config *gp)
   xfree(p->score_view_score);
   xfree(p->score_view_text);
   xfree(p->xml_file_path);
-  sarray_free((char**) p->variant_problem_dirs);
-
   if (p->variant_num > 0 && p->xml.a) {
     for (i = 1; i <= p->variant_num; i++) {
       p->xml.a[i - 1] = problem_xml_free(p->xml.a[i - 1]);
