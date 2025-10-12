@@ -58,6 +58,8 @@ static int
 global_parse_score_system(const unsigned char *str, void *ptr, size_t size);
 static int
 global_parse_rounding_mode(const unsigned char *str, void *ptr, size_t size);
+static void
+prepare_sync_problem_dir_from_variants(struct section_problem_data *prob);
 
 #define XFSIZE(t, x) (sizeof(((t*) 0)->x))
 
