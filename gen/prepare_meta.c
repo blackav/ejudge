@@ -1580,9 +1580,7 @@ void cntsprob_copy(struct section_problem_data *dst, const struct section_proble
     dst->variant_problem_dirs = (typeof(dst->variant_problem_dirs))
       sarray_copy((char**) src->variant_problem_dirs);
   }
-  if (dst->variant_problem_dirs && dst->variant_problem_dirs[0]) {
-    dst->problem_dir = dst->variant_problem_dirs[0];
-  } else if (src->problem_dir) {
+  if (src->problem_dir) {
     dst->problem_dir = strdup(src->problem_dir);
   }
   if (src->test_dir) {
@@ -1853,12 +1851,21 @@ void cntsprob_free(struct section_problem_data *ptr)
   free(ptr->plugin_entry_name);
   free(ptr->uuid);
   if (ptr->variant_problem_dirs) {
+    unsigned char *shared = NULL;
+    for (int i = 0; ptr->variant_problem_dirs[i]; ++i) {
+      if (ptr->problem_dir == ptr->variant_problem_dirs[i]) {
+        shared = ptr->variant_problem_dirs[i];
+        break;
+      }
+    }
     sarray_free((char**) ptr->variant_problem_dirs);
     ptr->variant_problem_dirs = NULL;
-    ptr->problem_dir = NULL;
-  } else {
-    free(ptr->problem_dir);
+    if (ptr->problem_dir == shared) {
+      ptr->problem_dir = NULL;
+    }
   }
+  free(ptr->problem_dir);
+  ptr->problem_dir = NULL;
   free(ptr->test_dir);
   free(ptr->test_sfx);
   free(ptr->corr_dir);
