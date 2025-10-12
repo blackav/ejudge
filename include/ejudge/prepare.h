@@ -1084,6 +1084,8 @@ struct section_problem_data
   unsigned char *plugin_entry_name;
   /** problem UUID */
   unsigned char *uuid;
+  /** variant-specific problem directories */
+  unsigned char **variant_problem_dirs;
   /** problem directory (relative to problems or absolute) */
   unsigned char *problem_dir;
   /** directory with tests */
