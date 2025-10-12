@@ -453,6 +453,7 @@ curl_iface_cleanup_func(struct DownloadData *data)
             curl_easy_cleanup(data->curl);
         }
         xfree(data->page_text);
+        xfree(data->clean_url);
         xfree(data);
     }
     return NULL;
@@ -2654,7 +2655,7 @@ new_parse_polygon_xml(
                 }
                 for (int ii = 0; ii < pptt->n.u; ++ii) {
                     struct ppxml_test *ppt = pptt->n.v[ii];
-                    struct TestInfo *ti = &pi->tests[pi->test_u++];
+                    struct TestInfo *ti = &pi->tests[ii];
                     ti->serial = ii + 1;
                     if (ppt->points >= 0) {
                         // FIXME: check that no precision loss
@@ -2674,7 +2675,7 @@ new_parse_polygon_xml(
                 }
                 for (int ii = 0; ii < ppgg->n.u; ++ii) {
                     struct ppxml_group *ppg = ppgg->n.v[ii];
-                    struct GroupInfo *gi = &pi->groups[pi->group_u++];
+                    struct GroupInfo *gi = &pi->groups[ii];
                     gi->first_test = INT_MAX;
                     gi->last_test = INT_MIN;
                     gi->test_score = -1;
@@ -2683,13 +2684,13 @@ new_parse_polygon_xml(
                     int is_group_score = 0;
                     int is_test_score = 0;
                     if (ppg->feedback_policy == PPXML_FEEDBACK_COMPLETE) {
-                        gi->visibility = "full";
+                        gi->visibility = xstrdup("full");
                     } else if (ppg->feedback_policy == PPXML_FEEDBACK_ICPC) {
-                        gi->visibility = "icpc";
+                        gi->visibility = xstrdup("icpc");
                     } else if (ppg->feedback_policy == PPXML_FEEDBACK_POINTS) {
-                        gi->visibility = "exists";
+                        gi->visibility = xstrdup("exists");
                     } else if (ppg->feedback_policy == PPXML_FEEDBACK_NONE) {
-                        gi->visibility = "hidden";
+                        gi->visibility = xstrdup("hidden");
                         pi->has_hidden_groups = 1;
                     } else {
                         fprintf(log_f, "feedback-policy (%d) is invalid\n", ppg->feedback_policy);
@@ -2747,6 +2748,7 @@ new_parse_polygon_xml(
                     if (!strcmp(ppf->path, "files/problem.tex")) {
                         // ignore it
                     } else {
+                        xfree(pi->tex_path);
                         pi->tex_path = xstrdup(ppf->path);
                     }
                 }
@@ -3003,13 +3005,13 @@ old_parse_polygon_xml(
                                     for (a = t4->first; a; a = a->next) {
                                         if (!strcmp(a->name[0], "feedback-policy")) {
                                             if (!strcmp(a->text, "complete")) {
-                                                gi->visibility = "full";
+                                                gi->visibility = xstrdup("full");
                                             } else if (!strcmp(a->text, "icpc")) {
-                                                gi->visibility = "icpc";
+                                                gi->visibility = xstrdup("icpc");
                                             } else if (!strcmp(a->text, "points")) {
-                                                gi->visibility = "exists";
+                                                gi->visibility = xstrdup("exists");
                                             } else if (!strcmp(a->text, "none")) {
-                                                gi->visibility = "hidden";
+                                                gi->visibility = xstrdup("hidden");
                                                 pi->has_hidden_groups = 1;
                                             } else {
                                                 fprintf(log_f, "feedback-policy '%s' is invalid\n", a->text);
@@ -3133,6 +3135,7 @@ old_parse_polygon_xml(
                                 if (!strcmp(path, "files/problem.tex")) {
                                     // ignore it
                                 } else {
+                                    xfree(pi->tex_path);
                                     pi->tex_path = xstrdup(path);
                                 }
                             }
@@ -3498,7 +3501,7 @@ process_polygon_zip(
         }
         fclose(ot_f);
         pi->open_tests = ot_s;
-        pi->standard_valuer = "gvaluer";
+        pi->standard_valuer = xstrdup("gvaluer");
     }
     if (pi->test_u > 0) {
         int sum = 0;
