@@ -299,7 +299,7 @@ gitlab_webhook_handler(
             err("%s: gitlab token is invalid", __FUNCTION__);
             goto done;
         }
-        vcs_url_buf = insert_gitlab_token(vcs_url, gitlab_token);
+        vcs_url_buf = insert_gitlab_token(ue->vcs_url, gitlab_token);
         vcs_url = vcs_url_buf;
     } else {
         if (generic_write_file(ue->ssh_private_key, strlen(ue->ssh_private_key), 0,
