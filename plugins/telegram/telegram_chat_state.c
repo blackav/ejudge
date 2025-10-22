@@ -33,10 +33,8 @@
 #include <errno.h>
 #include <string.h>
 
-#if HAVE_LIBMONGOC - 0 > 0
 struct _bson_t;
 typedef struct _bson_t ej_bson_t;
-#endif
 
 #define TELEGRAM_CHAT_STATES_TABLE_NAME "telegram_chat_states"
 
