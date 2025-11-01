@@ -156,6 +156,7 @@ struct ProblemInfo
     unsigned char *xml_validator_path;
     unsigned char *xml_main_solution_path;
     strarray_t xml_source_path;
+    unsigned char *testlib_h_path;
 
     int test_a, test_u;
     struct TestInfo *tests;
@@ -1155,6 +1156,11 @@ struct ZipInterface
         const unsigned char *name,
         unsigned char **p_data,
         ssize_t *p_size);
+    int (*list_files)(
+        struct ZipData *zdata,
+        const unsigned char *prefix,
+        unsigned char ***p_names,
+        size_t *p_size);
 };
 
 #if CONF_HAS_LIBZIP - 0 == 1
@@ -1262,11 +1268,49 @@ fail:
     return -1;
 }
 
+static int
+zip_list_files_func(
+        struct ZipData *zdata,
+        const unsigned char *prefix,
+        unsigned char ***p_names,
+        size_t *p_size)
+{
+    size_t prefix_len = strlen(prefix);
+    unsigned char **names = NULL;
+    size_t size = 0;
+    int64_t count = zip_get_num_entries(zdata->zf, 0);
+    if (count < 0) {
+        return -1;
+    }
+    XCALLOC(names, count);
+    for (int64_t i = 0; i < count; ++i) {
+        zip_stat_t sb = {};
+        if (zip_stat_index(zdata->zf, i, 0, &sb) < 0) {
+            for (size_t j = 0; j < size; ++j) {
+                xfree(names[j]);
+            }
+            xfree(names);
+            return -1;
+        }
+        if (!(sb.valid & ZIP_STAT_NAME)) {
+            continue;
+        }
+        if (strncmp(prefix, sb.name, prefix_len) != 0) {
+            continue;
+        }
+        names[size++] = xstrdup(sb.name);
+    }
+    *p_names = names;
+    *p_size = size;
+    return 1;
+}
+
 static const struct ZipInterface zip_interface =
 {
     zip_open_func,
     zip_close_func,
     zip_read_file_func,
+    zip_list_files_func,
 };
 
 static const struct ZipInterface *
@@ -1378,6 +1422,7 @@ free_problem_infos(struct ProblemSet *probset)
         xfree(pi->xml_validator_path);
         xfree(pi->xml_main_solution_path);
         xstrarrayfree(&pi->xml_source_path);
+        xfree(pi->testlib_h_path);
 
         for (int i = 0; i < pi->test_u; ++i) {
             struct TestInfo *ti = &pi->tests[i];
@@ -2751,6 +2796,9 @@ new_parse_polygon_xml(
                         xfree(pi->tex_path);
                         pi->tex_path = xstrdup(ppf->path);
                     }
+                    if (!strcmp(ppf->path, "files/testlib.h")) {
+                        pi->testlib_h_path = xstrdup(ppf->path);
+                    }
                 }
             }
         }
@@ -3230,10 +3278,11 @@ lastname_view(const unsigned char *s)
 }
 
 static unsigned char *
-basename_copy(const unsigned char *s) {
+basename_copy(const unsigned char *s)
+{
     const unsigned char *p = strrchr(s, '/');
     if (!p) p = s;
-    else p = s + 1;
+    else p = p + 1;
     const unsigned char *q = strrchr(p, '.');
     if (!q || p == q) {
         return xstrdup(p);
@@ -3548,17 +3597,33 @@ process_polygon_zip(
     pi->corr_pat = xstrdup(s);
 
     fprintf(log_f, "problem %d (%s):\n", pi->problem_id, pi->problem_name);
-    fprintf(log_f, "    long_name_en: %s\n", pi->long_name_en);
-    fprintf(log_f, "    long_name_ru: %s\n", pi->long_name_ru);
-    fprintf(log_f, "    input_file: %s\n", pi->input_file);
-    fprintf(log_f, "    output_file: %s\n", pi->output_file);
+    if (pi->long_name_en) {
+        fprintf(log_f, "    long_name_en: %s\n", pi->long_name_en);
+    }
+    if (pi->long_name_ru) {
+        fprintf(log_f, "    long_name_ru: %s\n", pi->long_name_ru);
+    }
+    if (pi->input_file) {
+        fprintf(log_f, "    input_file: %s\n", pi->input_file);
+    }
+    if (pi->output_file) {
+        fprintf(log_f, "    output_file: %s\n", pi->output_file);
+    }
     fprintf(log_f, "    time_limit_ms: %d\n", pi->time_limit_ms);
     fprintf(log_f, "    test_count: %d\n", pi->test_count);
-    fprintf(log_f, "    input_pattern: %s\n", pi->input_path_pattern);
-    fprintf(log_f, "    answer_pattern: %s\n", pi->answer_path_pattern);
+    if (pi->input_path_pattern) {
+        fprintf(log_f, "    input_pattern: %s\n", pi->input_path_pattern);
+    }
+    if (pi->answer_path_pattern) {
+        fprintf(log_f, "    answer_pattern: %s\n", pi->answer_path_pattern);
+    }
     fprintf(log_f, "    memory_limit: %lld\n", (long long) pi->memory_limit);
-    fprintf(log_f, "    test_pat: %s\n", pi->test_pat);
-    fprintf(log_f, "    corr_pat: %s\n", pi->corr_pat);
+    if (pi->test_pat) {
+        fprintf(log_f, "    test_pat: %s\n", pi->test_pat);
+    }
+    if (pi->corr_pat) {
+        fprintf(log_f, "    corr_pat: %s\n", pi->corr_pat);
+    }
     if (full_score > 0) {
         fprintf(log_f, "    full_score: %d\n", full_score);
     }
@@ -3588,7 +3653,7 @@ process_polygon_zip(
     }
     unsigned char solutions_path[PATH_MAX];
     if (pkt->ignore_solutions) {
-        snprintf(solutions_path, sizeof(solutions_path), "%s/solutions1", problem_path);
+        snprintf(solutions_path, sizeof(solutions_path), "%s/solutions_orig", problem_path);
     } else {
         snprintf(solutions_path, sizeof(solutions_path), "%s/solutions", problem_path);
     }
@@ -3612,7 +3677,7 @@ process_polygon_zip(
         if (copy_from_zip(log_f, pkt, zif, zid, zip_path, path1, path3)) goto zip_error;
     }
 
-    // remote the remaining files, which match the test file pattern
+    // remove the remaining files, which match the test file pattern
     int removed_flag = 1;
     for (int num = pi->test_count + 1; removed_flag; ++num) {
         removed_flag = 0;
@@ -3659,6 +3724,12 @@ process_polygon_zip(
         pi->check_cmd = basename_copy(pi->xml_checker_path);
     }
 
+    if (pi->testlib_h_path && pi->testlib_h_path[0]) {
+        unsigned char dst_path[PATH_MAX];
+        snprintf(dst_path, sizeof(dst_path), "%s/%s", problem_path, lastname_view(pi->testlib_h_path));
+        if (copy_from_zip(log_f, pkt, zif, zid, zip_path, pi->testlib_h_path, dst_path)) goto zip_error;
+    }
+
     if (pi->xml_interactor_path && pi->xml_interactor_path[0]) {
         unsigned char dst_path[PATH_MAX];
         snprintf(dst_path, sizeof(dst_path), "%s/%s", problem_path, lastname_view(pi->xml_interactor_path));
@@ -3694,46 +3765,65 @@ process_polygon_zip(
             fprintf(log_f, "failed to create directory '%s'\n", attachments_path);
             goto zip_error;
         }
-        unsigned char statement_path[PATH_MAX];
-        snprintf(statement_path, sizeof(statement_path),
-                 "%s/statement.html", attachments_path);
-        if (copy_from_zip(log_f, pkt, zif, zid, zip_path, pi->html_statement_path, statement_path)) goto zip_error;
 
-        unsigned char html_statement_dir[PATH_MAX];
-        unsigned char css_src_path[PATH_MAX];
-        unsigned char css_dst_path[PATH_MAX];
         const unsigned char *p = strrchr(pi->html_statement_path, '/');
         if (p) {
+            unsigned char html_statement_dir[PATH_MAX];
             snprintf(html_statement_dir, sizeof(html_statement_dir),
-                     "%.*s", (int) (p - pi->html_statement_path),
+                     "%.*s", (int) (p - pi->html_statement_path + 1),
                      pi->html_statement_path);
-            snprintf(css_src_path, sizeof(css_src_path),
-                     "%s/problem-statement.css", html_statement_dir);
-            snprintf(css_dst_path, sizeof(css_dst_path),
-                     "%s/problem-statement.css", attachments_path);
-            if (copy_from_zip(log_f, pkt, zif, zid, zip_path, css_src_path, css_dst_path)) goto zip_error;
-        }
+            const unsigned char *html_statement_name = p + 1;
+            unsigned char **statement_files = NULL;
+            size_t statement_file_count = 0;
+            if (zif->list_files(zid, html_statement_dir, &statement_files, &statement_file_count) > 0) {
+                for (size_t i = 0; i < statement_file_count; ++i) {
+                    unsigned char *name = strrchr(statement_files[i], '/');
+                    if (name && name[1]) {
+                        ++name;
+                        unsigned char dstpath[PATH_MAX];
+                        snprintf(dstpath, sizeof(dstpath), "%s/%s", attachments_path, name);
+                        copy_from_zip(log_f, pkt, zif, zid, zip_path, statement_files[i], dstpath);
+                    }
+                }
+                for (size_t i = 0; i < statement_file_count; ++i) {
+                    free(statement_files[i]);
+                }
+                free(statement_files);
 
-        unsigned char statement_xml_path[PATH_MAX];
-        snprintf(statement_xml_path, sizeof(statement_xml_path),
+                unsigned char statement_xml_path[PATH_MAX];
+                snprintf(statement_xml_path, sizeof(statement_xml_path),
                  "%s/statement.xml", problem_path);
-        FILE *f = fopen(statement_xml_path, "w");
-        if (f) {
-            fputs("<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n"
-                  "<problem><statement language=\"ru_RU\"><description><div id=\"polygon_iframe\"><iframe src=\"${getfile}=statement.html\" title=\"statement\" style=\"border:none;\" width=\"80%\" height=\"700px\" > </iframe></div></description></statement></problem>\n", f);
-            fclose(f);
+                FILE *f = fopen(statement_xml_path, "w");
+                if (f) {
+                    fprintf(f, "<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n"
+                            "<problem><statement language=\"ru_RU\"><description><div id=\"polygon_iframe\"><iframe src=\"${getfile}=%s\" title=\"statement\" style=\"border:none;\" width=\"80%%\" height=\"700px\" > </iframe></div></description></statement></problem>\n", html_statement_name);
+                    fclose(f);
+                }
+            }
         }
     }
 
-    fprintf(log_f, "    standard_checker: %s\n", pi->standard_checker);
-    fprintf(log_f, "    checker_env: %s\n", pi->checker_env);
-    fprintf(log_f, "    check_cmd: %s\n", pi->check_cmd);
-    fprintf(log_f, "    test_checker_cmd: %s\n", pi->test_checker_cmd);
-    if (pkt->ignore_main_solution <= 0) {
+    if (pi->standard_checker) {
+        fprintf(log_f, "    standard_checker: %s\n", pi->standard_checker);
+    }
+    if (pi->checker_env) {
+        fprintf(log_f, "    checker_env: %s\n", pi->checker_env);
+    }
+    if (pi->check_cmd) {
+        fprintf(log_f, "    check_cmd: %s\n", pi->check_cmd);
+    }
+    if (pi->test_checker_cmd) {
+        fprintf(log_f, "    test_checker_cmd: %s\n", pi->test_checker_cmd);
+    }
+    if (pkt->ignore_main_solution <= 0 && pi->solution_cmd) {
         fprintf(log_f, "    solution_cmd: %s\n", pi->solution_cmd);
     }
-    fprintf(log_f, "    interactor_cmd: %s\n", pi->interactor_cmd);
-    fprintf(log_f, "    html_statement: %s\n", pi->html_statement_path);
+    if (pi->interactor_cmd) {
+        fprintf(log_f, "    interactor_cmd: %s\n", pi->interactor_cmd);
+    }
+    if (pi->html_statement_path) {
+        fprintf(log_f, "    html_statement: %s\n", pi->html_statement_path);
+    }
     if (pi->test_score_list) {
         fprintf(log_f, "    test_score_list: %s\n", pi->test_score_list);
     }
@@ -4671,7 +4761,7 @@ do_work_api(
     }
 
 #if CONF_HAS_LIBZIP - 0 == 0
-    fprintf(log_f, "libzip library was missing during the complation, functionality is not available\n");
+    fprintf(log_f, "libzip library was missing during the complation, feature is not available\n");
     retval = 1;
     goto done;
 #else
@@ -4870,7 +4960,7 @@ do_work_file(
     int retval = 1;
 
 #if CONF_HAS_LIBZIP - 0 == 0
-    fprintf(log_f, "libzip library was missing during the complation, functionality is not available\n");
+    fprintf(log_f, "libzip library was missing during the complation, feature is not available\n");
     retval = 1;
     goto done;
 #else
@@ -4914,7 +5004,7 @@ check_xml(const char *zip_path)
     const struct ZipInterface *zif = NULL;
 
 #if CONF_HAS_LIBZIP - 0 == 0
-    fprintf(stderr, "libzip library was missing during the complation, functionality is not available\n");
+    fprintf(stderr, "libzip library was missing during the complation, feature is not available\n");
     exit(1);
 #else
     zif = get_zip_interface(stderr);
@@ -4953,6 +5043,46 @@ check_xml(const char *zip_path)
     exit(0);
 }
 
+static void
+handle_local_zip(const char *zip_path)
+{
+    const struct ZipInterface *zif = NULL;
+
+#if CONF_HAS_LIBZIP - 0 == 0
+    fprintf(stderr, "libzip library was missing during the complation, feature is not available\n");
+    exit(1);
+#else
+    zif = get_zip_interface(stderr);
+#endif
+
+    if (!zif) {
+        fprintf(stderr, "zip interface is not available\n");
+        exit(1);
+    }
+
+    struct polygon_packet *pkt = polygon_packet_alloc();
+    pkt->enable_max_stack_size = 1;
+    pkt->create_mode = 0;
+    pkt->ignore_solutions = 1;
+    pkt->binary_input = 0;
+    pkt->enable_iframe_statement = 1;
+    pkt->verbose = 1;
+    pkt->ignore_main_solution = 1;
+    pkt->enable_rss_limit = 1;
+    pkt->enable_group_merge = 0;
+
+    pkt->problem_dir = xstrdup(".");
+    pkt->problem_xml_name = xstrdup(DEFAULT_PROBLEM_XML_NAME);
+    pkt->testset = xstrdup(DEFAULT_TESTSET);
+
+    struct ProblemSet ps = {};
+    ps.count = 1;
+    XCALLOC(ps.infos, 1);
+
+    process_polygon_zip(stderr, pkt, zif, zip_path, &ps.infos[0], 1);
+    exit(0);
+}
+
 int
 main(int argc, char **argv)
 {
@@ -4960,6 +5090,7 @@ main(int argc, char **argv)
     int retval = 0;
     struct RandomSource *rand = NULL;
     int check_xml_flag = 0;
+    int local_flag = 0;
 
     signal(SIGPIPE, SIG_IGN);
     signal(SIGINT, sigint_handler);
@@ -4972,6 +5103,9 @@ main(int argc, char **argv)
             report_version();
         } else if (!strcmp(argv[cur_arg], "--check-xml")) {
             check_xml_flag = 1;
+            ++cur_arg;
+        } else if (!strcmp(argv[cur_arg], "--local")) {
+            local_flag = 1;
             ++cur_arg;
         } else if (!strcmp(argv[cur_arg], "--")) {
             ++cur_arg;
@@ -4992,6 +5126,10 @@ main(int argc, char **argv)
 
     if (check_xml_flag) {
         check_xml(argv[cur_arg]);
+        return 0;
+    }
+    if (local_flag) {
+        handle_local_zip(argv[cur_arg]);
         return 0;
     }
 
