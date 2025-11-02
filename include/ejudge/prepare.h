@@ -20,6 +20,7 @@
 #include "ejudge/pathutl.h"
 #include "ejudge/contests.h"
 #include "ejudge/parsecfg.h"
+#include "ejudge/problem_config.h"
 #include "ejudge/serve_state.h"
 #include "ejudge/problem_common.h"
 #include "ejudge/problem_xml.h"
@@ -1904,6 +1905,16 @@ problem_assign_json(
         struct cJSON *protected_fields,
         struct cJSON *allowed_fields,
         struct cJSON *jp,
+        FILE *log_f,
+        int *p_changed);
+
+struct problem_config_section;
+int
+problem_assign_cfg(
+        struct section_problem_data *prob,
+        struct cJSON *protected_fields,
+        struct cJSON *allowed_fields,
+        const struct problem_config_section *pp,
         FILE *log_f,
         int *p_changed);
 
