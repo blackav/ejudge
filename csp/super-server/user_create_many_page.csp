@@ -273,6 +273,16 @@ function formatLogins()
     var node = document.createTextNode(str);
     div_obj.appendChild(node);
 }
+
+function changeRandomRegPassword(obj)
+{
+  var form_obj = document.getElementById("RegPasswordTemplateRow");
+  if (obj.checked) {
+    form_obj.style.display = "none";
+  } else {
+    form_obj.style.display = "";
+  }
+}
 </script>
 
 <s:form id="CreateForm">
@@ -301,7 +311,7 @@ function formatLogins()
     </tr>
     <tr>
       <td class="b0"><b>Use random password:</b></td>
-      <td class="b0"><input type="checkbox" onchange="changeRandomRegPassword()" name="reg_random" value="1" /></td>
+      <td class="b0"><input type="checkbox" onchange="changeRandomRegPassword(this)" name="reg_random" value="1" /></td>
       <td class="b0">&nbsp;</td>
     </tr>
     <tr id="RegPasswordTemplateRow">
