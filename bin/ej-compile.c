@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2000-2024 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2025 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -978,7 +978,11 @@ handle_packet(
   // multi-header mode
   snprintf(exe_work_name, PATH_MAX, "%llx%s", random_u64(), lang->exe_sfx);
   unsigned char exe_work_path[PATH_MAX];
-  snprintf(exe_work_path, sizeof(exe_work_path), "%s/%s", build_dir_ptr, exe_work_name);
+  if (req->enable_run_props > 0) {
+    snprintf(exe_work_path, sizeof(exe_work_path), "%s/../%s", build_dir_ptr, exe_work_name);
+  } else {
+    snprintf(exe_work_path, sizeof(exe_work_path), "%s/%s", build_dir_ptr, exe_work_name);
+  }
   zf = ej_libzip_open(log_f, exe_work_path, O_CREAT | O_TRUNC | O_WRONLY);
   if (!zf) {
     fprintf(log_f, "cannot create zip archive '%s'\n", exe_work_path);
