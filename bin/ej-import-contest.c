@@ -1788,7 +1788,7 @@ do_import_contest(
             p->cfg->max_vm_size = 256 * 1024 * 1024;
         }
         if (!p->cfg->max_stack_size || p->cfg->max_stack_size == (size_t) -1L) {
-            warning("'max_stack_size' attribute is undefined in '%s', default value is %zu",
+            warning("'max_stack_size' attribute is undefined in '%s', default value is %lld",
                     rel_path, p->cfg->max_vm_size);
             p->cfg->max_stack_size = p->cfg->max_vm_size;
         }

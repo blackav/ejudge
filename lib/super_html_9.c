@@ -41,6 +41,7 @@
 #include "ejudge/xalloc.h"
 #include "ejudge/xml_utils.h"
 #include "ejudge/userlist.h"
+#include "ejudge/problem_config.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -3058,6 +3059,9 @@ set_contest_problem_json_json(struct http_request_info *phr)
 {
     int is_changed = 0;
     cJSON *jpf = NULL, *jaf = NULL, *jp = NULL;
+    unsigned char *cfg_str = NULL;
+    struct problem_config_section *cfg = NULL;
+    ///////////////////////
     char *msg_s = NULL;
     size_t msg_z = 0;
     FILE *msg_f = NULL;
@@ -3106,12 +3110,22 @@ set_contest_problem_json_json(struct http_request_info *phr)
     r = hr_cgi_param(phr, "allowed_fields", &s);
     if (r < 0) goto status_400;
     if (r > 0 && !(jaf = cJSON_Parse(s))) goto status_400;
-    r = hr_cgi_param(phr, "problem", &s);
-    if (r <= 0) goto status_400;
-    if (!(jp = cJSON_Parse(s))) goto status_400;
+    if (hr_cgi_param(phr, "problem_cfg", &s) > 0 && s) {
+        cfg_str = xstrdup(s);
+        cfg = problem_config_section_parse_cfg_str("problem_cfg", cfg_str, strlen(cfg_str));
+        if (!cfg) goto status_400;
+    } else {
+        r = hr_cgi_param(phr, "problem", &s);
+        if (r <= 0) goto status_400;
+        if (!(jp = cJSON_Parse(s))) goto status_400;
+    }
 
     msg_f = open_memstream(&msg_s, &msg_z);
-    r = problem_assign_json(prob, jpf, jaf, jp, msg_f, &is_changed);
+    if (cfg) {
+        r = problem_assign_cfg(prob, jpf, jaf, cfg, msg_f, &is_changed);
+    } else {
+        r = problem_assign_json(prob, jpf, jaf, jp, msg_f, &is_changed);
+    }
     fclose(msg_f); msg_f = NULL;
 
     cJSON *jr = cJSON_CreateObject();
@@ -3135,6 +3149,8 @@ cleanup:;
     if (jpf) cJSON_Delete(jpf);
     if (jaf) cJSON_Delete(jaf);
     if (jp) cJSON_Delete(jp);
+    if (cfg) problem_config_section_free(&cfg->g);
+    free(cfg_str);
     return;
 
 status_400:;
