@@ -38,6 +38,9 @@ LIBLZMA=@ac_cv_has_lib_liblzma@
 LIBCURL=@ac_cv_has_lib_libcurl@
 LIBUUID=@ac_cv_has_lib_libuuid@
 LIBUV=@ac_cv_has_lib_libuv@
+LIBWEBSOCKETS=@ac_cv_has_lib_libwebsockets@
+LIBWEBSOCKETS_INCLUDE=@ac_cv_libwebsockets_include@
+LIBWEBSOCKETS_LIB=@ac_cv_libwebsockets_lib@
 NCURSESINCLUDE=@ac_cv_ncurses_include@
 
 ICONV=@ICONV@

@@ -155,6 +155,9 @@
 /* libuv available */
 #undef CONF_HAS_LIBUV
 
+/* libwebsockets available */
+#undef CONF_HAS_LIBWEBSOCKETS
+
 /* regex.h available */
 #undef CONF_HAS_REGEX
 

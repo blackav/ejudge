@@ -96,6 +96,9 @@ AC_ARG_WITH([httpd-htdocs-dir],AS_HELP_STRING([--with-httpd-htdocs-dir],[specify
 
 AC_ARG_WITH([festival],AS_HELP_STRING([--with-festival],[specify the home directory of the festival speech generator]),[ac_cv_festival_home="$withval"])
 
+AC_ARG_WITH([libwebsockets-include],AS_HELP_STRING([--with-libwebsockets-include],[specify libwebsockets include directory]),[ac_cv_libwebsockets_include="$withval"])
+AC_ARG_WITH([libwebsockets-lib],AS_HELP_STRING([--with-libwebsockets-lib],[specify libwebsockets lib directory]),[ac_cv_libwebsockets_lib="$withval"])
+
 dnl setup default values
 [[ x"${ac_cv_contests_home_dir}" = x -o x"${ac_cv_contests_home_dir}" = xyes ]] && ac_cv_contests_home_dir="/home/judges"
 
@@ -425,6 +428,24 @@ fi
 dnl check libuv library
 AC_CHECK_HEADER([uv.h],[ac_cv_has_libuv=1],[ac_cv_has_libuv=0])
 AC_CHECK_LIB([uv],[uv_default_loop],[ac_cv_has_lib_libuv=-luv],[ac_cv_has_lib_libuv=])
+
+dnl check libwebsockets library
+[[ x"$ac_cv_libwebsockets_include" != x ]] && ac_cv_libwebsockets_include_opt="-I$ac_cv_libwebsockets_include"
+[[ x"$ac_cv_libwebsockets_lib" != x ]] && ac_cv_libwebsockets_lib_opt="-L$ac_cv_libwebsockets_lib"
+saved_CFLAGS="${CFLAGS}"
+saved_CPPFLAGS="${CPPFLAGS}"
+saved_LDFLAGS="${LDFLAGS}"
+saved_LIBS="${LIBS}"
+CFLAGS="${CFLAGS} ${ac_cv_libwebsockets_include_opt}"
+CPPFLAGS="${CPPFLAGS} ${ac_cv_libwebsockets_include_opt}"
+LDFLAGS="${LDFLAGS} ${ac_cv_libwebsockets_lib_opt}"
+LIBS="-lwebsockets -luv -lssl -lcrypto ${LIBS}"
+AC_CHECK_HEADER([libwebsockets.h],[ac_cv_has_libwebsockets=1],[ac_cv_has_libwebsockets=0])
+AC_CHECK_LIB([websockets],[lws_create_context],[ac_cv_has_lib_libwebsockets=-lwebsockets],[ac_cv_has_lib_libwebsockets=])
+CFLAGS="${saved_CFLAGS}"
+CPPFLAGS="${saved_CPPFLAGS}"
+LDFLAGS="${saved_LDFLAGS}"
+LIBS="${saved_LIBS}"
 
 dnl check regex library
 AC_CHECK_HEADER([regex.h],[ac_cv_has_regex=1],[ac_cv_has_regex=0])
@@ -1201,6 +1222,10 @@ AC_SUBST(ac_cv_has_lib_libcurl)
 AC_SUBST(ac_cv_has_lib_libuuid)
 AC_SUBST(ac_cv_has_lib_libuv)
 AC_SUBST(ac_cv_has_lib_hiredis)
+AC_SUBST(ac_cv_libwebsockets_include)
+AC_SUBST(ac_cv_libwebsockets_lib)
+AC_SUBST(ac_cv_has_libwebsockets)
+AC_SUBST(ac_cv_has_lib_libwebsockets)
 AC_SUBST(ac_cv_meta_cc)
 AC_SUBST(ac_cv_need_32)
 AC_SUBST(ac_cv_need_64)
@@ -1260,6 +1285,11 @@ fi
 if [[ x"${ac_cv_has_libuv}" = x1 -a x"${ac_cv_has_lib_libuv}" != x ]]
 then
   AC_DEFINE(CONF_HAS_LIBUV,1)
+fi
+
+if [[ x"${ac_cv_has_libwebsockets}" = x1 -a x"${ac_cv_has_lib_libwebsockets}" != x ]]
+then
+  AC_DEFINE(CONF_HAS_LIBWEBSOCKETS,1)
 fi
 
 if [[ x"${ac_cv_has_libcap}" != x -a x"${ac_cv_ejudge_arch}" != xwin32 ]]
