@@ -19,6 +19,8 @@
 #include "ejudge/xml_utils.h"
 #include "ejudge/misctext.h"
 #include "ejudge/meta_generic.h"
+#include "ejudge/meta/prepare_meta.h"
+#include "ejudge/prepare.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -73,6 +75,54 @@ struct parsecfg_state
   int output_enabled;
   int charset_id;
 };
+
+static void
+sync_problem_dir_from_variants(struct section_problem_data *prob)
+{
+  if (!prob) return;
+
+  unsigned char *first = NULL;
+  if (prob->variant_problem_dirs && prob->variant_problem_dirs[0]) {
+    first = prob->variant_problem_dirs[0];
+  }
+
+  if (!first) {
+    if (prob->problem_dir) {
+      xfree(prob->problem_dir);
+      prob->problem_dir = NULL;
+    }
+    return;
+  }
+
+  if (prob->problem_dir == first) {
+    prob->problem_dir = xstrdup(first);
+    return;
+  }
+
+  if (prob->problem_dir
+      && strcmp((const char*) prob->problem_dir, (const char*) first) == 0) {
+    return;
+  }
+
+  xfree(prob->problem_dir);
+  prob->problem_dir = xstrdup(first);
+}
+
+static void
+append_problem_dir_entry(struct section_problem_data *prob,
+                         const unsigned char *value)
+{
+  if (!prob || !value) return;
+
+  char **old_entries = (char**) prob->variant_problem_dirs;
+  char **new_entries = sarray_append(old_entries, value);
+  if (old_entries && old_entries != new_entries) {
+    xfree(old_entries);
+  }
+  prob->variant_problem_dirs = (unsigned char **) new_entries;
+
+  sync_problem_dir_from_variants(prob);
+}
 
 static int
 ps_getc(struct parsecfg_state *ps)
@@ -1152,6 +1202,22 @@ copy_param(
       fprintf(stderr, "%d: unknown parameter '%s'\n", ps->f_stack->lineno - 1, varname);
       return -1;
     }
+    if (sinfo->mm == &cntsprob_methods && !strcmp(varname, "problem_dir")) {
+      struct section_problem_data *prob = (struct section_problem_data *) cfg;
+      unsigned char *decoded = NULL;
+
+      if (ps->charset_id > 0) {
+        decoded = charset_decode_to_heap(ps->charset_id, varvalue);
+      } else {
+        decoded = xstrdup(varvalue);
+      }
+      if (decoded) {
+        append_problem_dir_entry(prob, decoded);
+        xfree(decoded);
+      }
+      return 0;
+    }
+
     if (meta_parse_string(stderr, ps->f_stack->lineno - 1, cfg, field_id, sinfo->mm,
                           varname, varvalue, ps->charset_id) < 0) {
       return -1;
@@ -1166,6 +1232,22 @@ copy_param(
   if (!params[i].name) {
     fprintf(stderr, "%d: unknown parameter '%s'\n", ps->f_stack->lineno - 1, varname);
     return -1;
+  }
+
+  if (!strcmp(sinfo->name, "problem") && !strcmp(varname, "problem_dir")) {
+    struct section_problem_data *prob = (struct section_problem_data *) cfg;
+    unsigned char *decoded = NULL;
+
+    if (ps->charset_id > 0) {
+      decoded = charset_decode_to_heap(ps->charset_id, varvalue);
+    } else {
+      decoded = xstrdup(varvalue);
+    }
+    if (decoded) {
+      append_problem_dir_entry(prob, decoded);
+      xfree(decoded);
+    }
+    return 0;
   }
 
   if (!strcmp(params[i].type, "f")) {
