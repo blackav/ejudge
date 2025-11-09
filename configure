@@ -670,6 +670,7 @@ ac_cv_need_64
 ac_cv_need_32
 ac_cv_meta_cc
 ac_cv_has_lib_hiredis
+ac_cv_has_lib_libuv
 ac_cv_has_lib_libuuid
 ac_cv_has_lib_libcurl
 ac_cv_has_lib_liblzma
@@ -7444,6 +7445,57 @@ as_fn_error $? "please install libuuid development package
 See \`config.log' for more details" "$LINENO" 5; }
 fi
 
+ac_fn_c_check_header_compile "$LINENO" "uv.h" "ac_cv_header_uv_h" "$ac_includes_default"
+if test "x$ac_cv_header_uv_h" = xyes
+then :
+  ac_cv_has_libuv=1
+else $as_nop
+  ac_cv_has_libuv=0
+fi
+
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for uv_default_loop in -luv" >&5
+printf %s "checking for uv_default_loop in -luv... " >&6; }
+if test ${ac_cv_lib_uv_uv_default_loop+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-luv  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+char uv_default_loop ();
+int
+main (void)
+{
+return uv_default_loop ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  ac_cv_lib_uv_uv_default_loop=yes
+else $as_nop
+  ac_cv_lib_uv_uv_default_loop=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_uv_uv_default_loop" >&5
+printf "%s\n" "$ac_cv_lib_uv_uv_default_loop" >&6; }
+if test "x$ac_cv_lib_uv_uv_default_loop" = xyes
+then :
+  ac_cv_has_lib_libuv=-luv
+else $as_nop
+  ac_cv_has_lib_libuv=
+fi
+
+
 ac_fn_c_check_header_compile "$LINENO" "regex.h" "ac_cv_header_regex_h" "$ac_includes_default"
 if test "x$ac_cv_header_regex_h" = xyes
 then :
@@ -8730,6 +8782,7 @@ fi
 
 
 
+
 if [ x"${ac_cv_has_regex}" = x1 ]
 then
   printf "%s\n" "#define CONF_HAS_REGEX 1" >>confdefs.h
@@ -8769,6 +8822,12 @@ fi
 if [ x"${ac_cv_nls}" = x1 -a x"${ac_cv_ejudge_arch}" != xwin32 ]
 then
   printf "%s\n" "#define CONF_HAS_LIBINTL 1" >>confdefs.h
+
+fi
+
+if [ x"${ac_cv_has_libuv}" = x1 -a x"${ac_cv_has_lib_libuv}" != x ]
+then
+  printf "%s\n" "#define CONF_HAS_LIBUV 1" >>confdefs.h
 
 fi
 
