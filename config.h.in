@@ -152,6 +152,9 @@
 /* libuuid available */
 #undef CONF_HAS_LIBUUID
 
+/* libuv available */
+#undef CONF_HAS_LIBUV
+
 /* regex.h available */
 #undef CONF_HAS_REGEX
 

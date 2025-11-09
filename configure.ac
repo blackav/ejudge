@@ -1,4 +1,4 @@
-dnl Copyright (C) 2004-2024 Alexander Chernov <cher@ejudge.ru>
+dnl Copyright (C) 2004-2025 Alexander Chernov <cher@ejudge.ru>
 
 AC_INIT([ejudge],[3])
 AC_PREREQ([2.71])
@@ -421,6 +421,10 @@ if [[ x"${ac_cv_has_libuuid}" != x1 -a x"${ac_cv_ejudge_arch}" != xwin32 ]]
 then
   AC_MSG_FAILURE([please install libuuid development package])
 fi
+
+dnl check libuv library
+AC_CHECK_HEADER([uv.h],[ac_cv_has_libuv=1],[ac_cv_has_libuv=0])
+AC_CHECK_LIB([uv],[uv_default_loop],[ac_cv_has_lib_libuv=-luv],[ac_cv_has_lib_libuv=])
 
 dnl check regex library
 AC_CHECK_HEADER([regex.h],[ac_cv_has_regex=1],[ac_cv_has_regex=0])
@@ -1195,6 +1199,7 @@ AC_SUBST(ac_cv_has_lib_libzip)
 AC_SUBST(ac_cv_has_lib_liblzma)
 AC_SUBST(ac_cv_has_lib_libcurl)
 AC_SUBST(ac_cv_has_lib_libuuid)
+AC_SUBST(ac_cv_has_lib_libuv)
 AC_SUBST(ac_cv_has_lib_hiredis)
 AC_SUBST(ac_cv_meta_cc)
 AC_SUBST(ac_cv_need_32)
@@ -1250,6 +1255,11 @@ fi
 if [[ x"${ac_cv_nls}" = x1 -a x"${ac_cv_ejudge_arch}" != xwin32 ]]
 then
   AC_DEFINE(CONF_HAS_LIBINTL,1)
+fi
+
+if [[ x"${ac_cv_has_libuv}" = x1 -a x"${ac_cv_has_lib_libuv}" != x ]]
+then
+  AC_DEFINE(CONF_HAS_LIBUV,1)
 fi
 
 if [[ x"${ac_cv_has_libcap}" != x -a x"${ac_cv_ejudge_arch}" != xwin32 ]]
