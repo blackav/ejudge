@@ -470,6 +470,7 @@ CFILES=\
  bin/ej-users.c\
  bin/ej-users-control.c\
  bin/ejudge-problem.c\
+ bin/ej-ws-server.c\
  cgi-bin/users.c\
  unix/cpu.c\
  win32/cpu.c\

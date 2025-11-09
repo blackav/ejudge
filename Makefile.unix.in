@@ -1,7 +1,7 @@
 # -*- Makefile -*-
 # @configure_input@
 
-# Copyright (C) 2000-2022 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2000-2025 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -37,6 +37,10 @@ LIBZIP=@ac_cv_has_lib_libzip@
 LIBLZMA=@ac_cv_has_lib_liblzma@
 LIBCURL=@ac_cv_has_lib_libcurl@
 LIBUUID=@ac_cv_has_lib_libuuid@
+LIBUV=@ac_cv_has_lib_libuv@
+LIBWEBSOCKETS=@ac_cv_has_lib_libwebsockets@
+LIBWEBSOCKETS_INCLUDE=@ac_cv_libwebsockets_include@
+LIBWEBSOCKETS_LIB=@ac_cv_libwebsockets_lib@
 NCURSESINCLUDE=@ac_cv_ncurses_include@
 
 ICONV=@ICONV@

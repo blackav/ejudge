@@ -669,7 +669,12 @@ lib32dir
 ac_cv_need_64
 ac_cv_need_32
 ac_cv_meta_cc
+ac_cv_has_lib_libwebsockets
+ac_cv_has_libwebsockets
+ac_cv_libwebsockets_lib
+ac_cv_libwebsockets_include
 ac_cv_has_lib_hiredis
+ac_cv_has_lib_libuv
 ac_cv_has_lib_libuuid
 ac_cv_has_lib_libcurl
 ac_cv_has_lib_liblzma
@@ -815,6 +820,8 @@ with_compile_user
 with_httpd_cgi_bin_dir
 with_httpd_htdocs_dir
 with_festival
+with_libwebsockets_include
+with_libwebsockets_lib
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1515,6 +1522,10 @@ Optional Packages:
   --with-httpd-htdocs-dir specify the path to the web server HTML directory
   --with-festival         specify the home directory of the festival speech
                           generator
+  --with-libwebsockets-include
+                          specify libwebsockets include directory
+  --with-libwebsockets-lib
+                          specify libwebsockets lib directory
 
 Some influential environment variables:
   CC          C compiler command
@@ -6427,6 +6438,21 @@ then :
 fi
 
 
+
+# Check whether --with-libwebsockets-include was given.
+if test ${with_libwebsockets_include+y}
+then :
+  withval=$with_libwebsockets_include; ac_cv_libwebsockets_include="$withval"
+fi
+
+
+# Check whether --with-libwebsockets-lib was given.
+if test ${with_libwebsockets_lib+y}
+then :
+  withval=$with_libwebsockets_lib; ac_cv_libwebsockets_lib="$withval"
+fi
+
+
 [ x"${ac_cv_contests_home_dir}" = x -o x"${ac_cv_contests_home_dir}" = xyes ] && ac_cv_contests_home_dir="/home/judges"
 
 [ x"${ac_cv_local_dir}" = xyes ] && ac_cv_local_dir="/var/lib/ejudge"
@@ -7443,6 +7469,122 @@ printf "%s\n" "$as_me: error: in \`$ac_pwd':" >&2;}
 as_fn_error $? "please install libuuid development package
 See \`config.log' for more details" "$LINENO" 5; }
 fi
+
+ac_fn_c_check_header_compile "$LINENO" "uv.h" "ac_cv_header_uv_h" "$ac_includes_default"
+if test "x$ac_cv_header_uv_h" = xyes
+then :
+  ac_cv_has_libuv=1
+else $as_nop
+  ac_cv_has_libuv=0
+fi
+
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for uv_default_loop in -luv" >&5
+printf %s "checking for uv_default_loop in -luv... " >&6; }
+if test ${ac_cv_lib_uv_uv_default_loop+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-luv  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+char uv_default_loop ();
+int
+main (void)
+{
+return uv_default_loop ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  ac_cv_lib_uv_uv_default_loop=yes
+else $as_nop
+  ac_cv_lib_uv_uv_default_loop=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_uv_uv_default_loop" >&5
+printf "%s\n" "$ac_cv_lib_uv_uv_default_loop" >&6; }
+if test "x$ac_cv_lib_uv_uv_default_loop" = xyes
+then :
+  ac_cv_has_lib_libuv=-luv
+else $as_nop
+  ac_cv_has_lib_libuv=
+fi
+
+
+[ x"$ac_cv_libwebsockets_include" != x ] && ac_cv_libwebsockets_include_opt="-I$ac_cv_libwebsockets_include"
+[ x"$ac_cv_libwebsockets_lib" != x ] && ac_cv_libwebsockets_lib_opt="-L$ac_cv_libwebsockets_lib"
+saved_CFLAGS="${CFLAGS}"
+saved_CPPFLAGS="${CPPFLAGS}"
+saved_LDFLAGS="${LDFLAGS}"
+saved_LIBS="${LIBS}"
+CFLAGS="${CFLAGS} ${ac_cv_libwebsockets_include_opt}"
+CPPFLAGS="${CPPFLAGS} ${ac_cv_libwebsockets_include_opt}"
+LDFLAGS="${LDFLAGS} ${ac_cv_libwebsockets_lib_opt}"
+LIBS="-lwebsockets -luv -lssl -lcrypto ${LIBS}"
+ac_fn_c_check_header_compile "$LINENO" "libwebsockets.h" "ac_cv_header_libwebsockets_h" "$ac_includes_default"
+if test "x$ac_cv_header_libwebsockets_h" = xyes
+then :
+  ac_cv_has_libwebsockets=1
+else $as_nop
+  ac_cv_has_libwebsockets=0
+fi
+
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for lws_create_context in -lwebsockets" >&5
+printf %s "checking for lws_create_context in -lwebsockets... " >&6; }
+if test ${ac_cv_lib_websockets_lws_create_context+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lwebsockets  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+char lws_create_context ();
+int
+main (void)
+{
+return lws_create_context ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  ac_cv_lib_websockets_lws_create_context=yes
+else $as_nop
+  ac_cv_lib_websockets_lws_create_context=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_websockets_lws_create_context" >&5
+printf "%s\n" "$ac_cv_lib_websockets_lws_create_context" >&6; }
+if test "x$ac_cv_lib_websockets_lws_create_context" = xyes
+then :
+  ac_cv_has_lib_libwebsockets=-lwebsockets
+else $as_nop
+  ac_cv_has_lib_libwebsockets=
+fi
+
+CFLAGS="${saved_CFLAGS}"
+CPPFLAGS="${saved_CPPFLAGS}"
+LDFLAGS="${saved_LDFLAGS}"
+LIBS="${saved_LIBS}"
 
 ac_fn_c_check_header_compile "$LINENO" "regex.h" "ac_cv_header_regex_h" "$ac_includes_default"
 if test "x$ac_cv_header_regex_h" = xyes
@@ -8730,6 +8872,11 @@ fi
 
 
 
+
+
+
+
+
 if [ x"${ac_cv_has_regex}" = x1 ]
 then
   printf "%s\n" "#define CONF_HAS_REGEX 1" >>confdefs.h
@@ -8769,6 +8916,18 @@ fi
 if [ x"${ac_cv_nls}" = x1 -a x"${ac_cv_ejudge_arch}" != xwin32 ]
 then
   printf "%s\n" "#define CONF_HAS_LIBINTL 1" >>confdefs.h
+
+fi
+
+if [ x"${ac_cv_has_libuv}" = x1 -a x"${ac_cv_has_lib_libuv}" != x ]
+then
+  printf "%s\n" "#define CONF_HAS_LIBUV 1" >>confdefs.h
+
+fi
+
+if [ x"${ac_cv_has_libwebsockets}" = x1 -a x"${ac_cv_has_lib_libwebsockets}" != x ]
+then
+  printf "%s\n" "#define CONF_HAS_LIBWEBSOCKETS 1" >>confdefs.h
 
 fi
 
