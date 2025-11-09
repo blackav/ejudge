@@ -120,6 +120,8 @@ REUSE_CFILES=\
 
 COMMON_CFILES=\
  lib/agent_client_ssh.c\
+ lib/agent_client_ws.c\
+ lib/agent_server.c\
  lib/allowed_list.c\
  lib/archive_paths.c\
  lib/avatar_plugin.c\
@@ -470,7 +472,7 @@ CFILES=\
  bin/ej-users.c\
  bin/ej-users-control.c\
  bin/ejudge-problem.c\
- bin/ej-ws-server.c\
+ bin/ej-agent-server.c\
  cgi-bin/users.c\
  unix/cpu.c\
  win32/cpu.c\
@@ -573,6 +575,7 @@ CFILES=\
 
 HFILES=\
  ./include/ejudge/agent_client.h\
+ ./include/ejudge/agent_server.h\
  ./include/ejudge/archive_paths.h\
  ./include/ejudge/avatar_plugin.h\
  ./include/ejudge/base32.h\

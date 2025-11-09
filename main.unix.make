@@ -184,14 +184,14 @@ EM_CFILES = bin/ejudge-problem.c version.c
 EM_OBJECTS = $(EM_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a libplatform.a
 
 ifdef LIBWEBSOCKETS
-EJ_WS_SERVER_TARGET = ej-ws-server
+EJ_AGENT_SERVER_TARGET = ej-agent-server
 endif
-WSS_CFILES = bin/ej-ws-server.c version.c
+WSS_CFILES = bin/ej-agent-server.c version.c
 WSS_OBJECTS = $(WSS_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a libplatform.a
 
 INSTALLSCRIPT = ejudge-install.sh
 BINTARGETS = ejudge-jobs-cmd ejudge-edit-users ejudge-setup ejudge-configure-compilers ejudge-control ejudge-execute ejudge-contests-cmd ejudge-suid-setup ejudge-change-contests ejudge-problem
-SERVERBINTARGETS = ej-compile ej-run ej-nwrun ej-ncheck ej-batch ej-serve ej-users ej-users-control ej-jobs ej-jobs-control ej-super-server ej-super-server-control ej-contests ej-contests-control uudecode ej-convert-clars ej-convert-runs ej-fix-db ej-super-run ej-super-run-control ej-normalize ej-polygon ej-import-contest ej-page-gen ej-parblock ej-convert-status ej-convert-xuser ej-agent ej-convert-variant ej-vcs-compile ej-postgres-exec ej-postgres-cleanup $(EJ_WS_SERVER_TARGET)
+SERVERBINTARGETS = ej-compile ej-run ej-nwrun ej-ncheck ej-batch ej-serve ej-users ej-users-control ej-jobs ej-jobs-control ej-super-server ej-super-server-control ej-contests ej-contests-control uudecode ej-convert-clars ej-convert-runs ej-fix-db ej-super-run ej-super-run-control ej-normalize ej-polygon ej-import-contest ej-page-gen ej-parblock ej-convert-status ej-convert-xuser ej-agent ej-convert-variant ej-vcs-compile ej-postgres-exec ej-postgres-cleanup $(EJ_AGENT_SERVER_TARGET)
 SUIDBINTARGETS = ej-suid-chown ej-suid-exec ej-suid-ipcrm ej-suid-kill ej-suid-container ej-suid-update-scripts
 CGITARGETS = cgi-bin/users${CGI_PROG_SUFFIX} cgi-bin/serve-control${CGI_PROG_SUFFIX} cgi-bin/new-client${CGI_PROG_SUFFIX}
 TARGETS = ${SERVERBINTARGETS} ${BINTARGETS} ${CGITARGETS} tools/newrevinfo ${SUIDBINTARGETS} ej-compile-control
@@ -517,10 +517,10 @@ ifdef LIBWEBSOCKETS_LIB
 LIBWEBSOCKETS_LIB_OPT=-L$(LIBWEBSOCKETS_LIB)
 endif
 
-ej-ws-server: ${WSS_OBJECTS}
+ej-agent-server: ${WSS_OBJECTS}
 	${LD} ${LDFLAGS} $(LIBWEBSOCKETS_LIB_OPT) $^ libcommon.a libplatform.a -o $@ ${LIBWEBSOCKETS} ${LIBUV} -lssl -lcrypto ${LDLIBS} ${EXPAT_LIB} ${LIBZIP}
 
-bin/ej-ws-server.o : bin/ej-ws-server.c
+bin/ej-agent-server.o : bin/ej-agent-server.c
 	${CC} ${CFLAGS} ${LIBWEBSOCKETS_INCLUDE_OPT} $^ -o $@ -c
 
 ejudge-install.sh : ejudge-setup

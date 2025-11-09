@@ -80,4 +80,4 @@ compile_commands.json
 /.cache
 /ejudge-make
 /ejudge-problem
-/ej-ws-server
+/ej-agent-server
