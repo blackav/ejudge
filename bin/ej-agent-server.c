@@ -14,6 +14,12 @@
  * GNU General Public License for more details.
  */
 
-int main()
+#include "ejudge/config.h"
+#include "ejudge/version.h"
+#include "ejudge/agent_server.h"
+
+int main(int argc, char *argv[])
 {
+    AgentServerParams params = {};
+    return agent_server_start(&params) < 0;
 }

@@ -407,7 +407,7 @@ ej-import-contest: ${IC_OBJECTS}
 	${LD} ${LDFLAGS} $^ libcommon.a -o $@ ${LDLIBS} ${EXPAT_LIB} ${LIBCURL} ${LIBZIP} -ldl
 
 ej-page-gen: ${G_OBJECTS} libuserlist_clnt.a libnew_server_clnt.a
-	${LD} -pthread ${LDFLAGS} -Wl,--whole-archive $^ -o $@ ${LDLIBS} libdwarf/libdwarf/.libs/libdwarf.a -lelf ${EXPAT_LIB} ${LIBZIP} -ldl -lpanel${NCURSES_SUFFIX} -lmenu${NCURSES_SUFFIX} -lncurses${NCURSES_SUFFIX} ${LIBUUID} -Wl,--no-whole-archive $(MONGO_LIBS) $(MONGOC_LIBS) ${LIBLZMA} -lbacktrace
+	${LD} ${LIBWEBSOCKETS_LIB_OPT} -pthread ${LDFLAGS} -Wl,--whole-archive $^ -o $@ ${LDLIBS} libdwarf/libdwarf/.libs/libdwarf.a -lelf ${LIBWEBSOCKETS} ${LIBUV} ${EXPAT_LIB} ${LIBZIP} -ldl -lpanel${NCURSES_SUFFIX} -lmenu${NCURSES_SUFFIX} -lncurses${NCURSES_SUFFIX} ${LIBUUID} -Wl,--no-whole-archive $(MONGO_LIBS) $(MONGOC_LIBS) -lssl -lcrypto ${LIBLZMA} -lbacktrace
 ej-page-gen.debug : ej-page-gen
 	objcopy --only-keep-debug $< $@
 
@@ -521,7 +521,10 @@ ej-agent-server: ${WSS_OBJECTS}
 	${LD} ${LDFLAGS} $(LIBWEBSOCKETS_LIB_OPT) $^ libcommon.a libplatform.a -o $@ ${LIBWEBSOCKETS} ${LIBUV} -lssl -lcrypto ${LDLIBS} ${EXPAT_LIB} ${LIBZIP}
 
 bin/ej-agent-server.o : bin/ej-agent-server.c
-	${CC} ${CFLAGS} ${LIBWEBSOCKETS_INCLUDE_OPT} $^ -o $@ -c
+	${CC} ${CFLAGS} ${LIBWEBSOCKETS_INCLUDE_OPT} bin/ej-agent-server.c -o $@ -c
+
+lib/agent_server.o : lib/agent_server.c
+	${CC} ${CFLAGS} ${LIBWEBSOCKETS_INCLUDE_OPT} lib/agent_server.c -o $@ -c
 
 ejudge-install.sh : ejudge-setup
 	./ejudge-setup -b -i scripts/lang_ids.cfg
