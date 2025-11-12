@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2002-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2025 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -114,6 +114,9 @@ enum
     TG_OAUTH_ENTRY,
     TG_COMPILER_OPTIONS,
     TG_COMPILER_OPTION,
+    TG_AGENT_SERVER,
+    TG_PORT,
+    TG_TOKEN_FILE,
 
     TG__BARRIER,
     TG__DEFAULT,
@@ -146,6 +149,7 @@ enum
     AT_OPTION,
     AT_DISABLE_AUTOUPDATE_STANDINDGS,
     AT_ENABLE_TELEGRAM_REGISTRATION,
+    AT_ENABLE,
 
     AT__BARRIER,
     AT__DEFAULT,
@@ -223,6 +227,9 @@ static char const * const elem_map[] =
   "oauth_entry",
   "compiler_options",
   "compiler_option",
+  "agent_server",
+  "port",
+  "token_file",
   0,
   "_default",
 
@@ -256,6 +263,7 @@ static char const * const attr_map[] =
   "option",
   "disable_autoupdate_standings",
   "enable_telegram_registration",
+  "enable",
   0,
   "_default",
 
@@ -269,6 +277,7 @@ static size_t elem_sizes[TG_LAST_TAG] =
   [TG_CAP] = sizeof(struct opcap_list_item),
   [TG_PLUGIN] = sizeof(struct ejudge_plugin),
   [TG_OAUTH_ENTRY] = sizeof(struct ejudge_cfg_oauth_user_map),
+  [TG_AGENT_SERVER] = sizeof(struct ejudge_cfg_agent_server),
 };
 
 static const unsigned char verbatim_flags[TG_LAST_TAG] =
@@ -366,6 +375,11 @@ node_free(struct xml_tree *t)
       xfree(p->provider);
     }
     break;
+  case TG_AGENT_SERVER: {
+    struct ejudge_cfg_agent_server *p = (struct ejudge_cfg_agent_server *) t;
+    xfree(p->token_file);
+    break;
+  }
   }
 }
 
@@ -606,6 +620,67 @@ parse_compile_servers(struct ejudge_cfg *cfg, struct xml_tree *tree)
   return 0;
 }
 
+static struct ejudge_cfg_agent_server *
+parse_agent_server(struct ejudge_cfg *cfg, struct xml_tree *tree)
+{
+  if (!tree) goto fail;
+  if (tree->tag != TG_AGENT_SERVER) {
+    xml_err_elem_not_allowed(tree);
+    goto fail;
+  }
+  if (xml_empty_text(tree) < 0) goto fail;
+  if (cfg->agent_server) {
+    xml_err_elem_redefined(tree);
+    goto fail;
+  }
+  struct ejudge_cfg_agent_server *as = (struct ejudge_cfg_agent_server *) tree;
+
+  for (struct xml_attr *a = tree->first; a; a = a->next) {
+    switch (a->tag) {
+    case AT_ENABLE:
+      if (xml_attr_bool(a, &as->enable) < 0) goto fail;
+      break;
+    default:
+      xml_err_attr_not_allowed(tree, a);
+      goto fail;
+    }
+  }
+
+  for (struct xml_tree *p = tree->first_down; p; p = p->right) {
+    switch (p->tag) {
+    case TG_PORT: {
+      if (as->port > 0) {
+        xml_err_elem_redefined(p);
+        goto fail;
+      }
+      char *eptr = NULL;
+      errno = 0;
+      long pp = strtol(p->text, &eptr, 10);
+      if (errno || *eptr || p->text == eptr || pp < 1 || pp > 65535) {
+        xml_err_elem_invalid(p);
+        goto fail;
+      }
+      break;
+    }
+    case TG_TOKEN_FILE:
+      if (as->token_file) {
+        xml_err_elem_redefined(p);
+        goto fail;
+      }
+      as->token_file = xstrdup(p->text);
+      break;
+    default:
+      xml_err_elem_not_allowed(p);
+      goto fail;
+    }
+  }
+
+  return as;
+
+fail:;
+  return NULL;
+}
+
 #define CONFIG_OFFSET(f) XOFFSET(struct ejudge_cfg, f)
 
 static const size_t cfg_final_offsets[TG_LAST_TAG] =
@@ -812,6 +887,10 @@ ejudge_cfg_do_parse(char const *path, FILE *in_file, int no_system_lookup)
         }
       }
       break;
+    case TG_AGENT_SERVER: {
+      if (!parse_agent_server(cfg, p)) goto failed;
+      break;
+    }
     default:
       xml_err_elem_not_allowed(p);
       break;
