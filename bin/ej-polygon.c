@@ -4326,10 +4326,13 @@ process_problems_json(
     }
 
     cJSON *jstatus = cJSON_GetObjectItem(root, "status");
-    if (!jstatus || jstatus->type != cJSON_String || strcmp(jstatus->valuestring, "OK")) {
+    if (!jstatus || jstatus->type != cJSON_String) {
         fprintf(log_f, "invalid json: invalid or missing 'status'\n");
         retval = 1;
         goto done;
+    }
+    if (strcmp(jstatus->valuestring, "OK") != 0) {
+        fprintf(log_f, "unexpected value of 'status': '%s'\n", jstatus->valuestring);
     }
     cJSON *jresult = cJSON_GetObjectItem(root, "result");
     if (!jresult || jresult->type != cJSON_Array) {
