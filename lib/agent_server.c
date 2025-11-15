@@ -18,6 +18,8 @@
 #include "ejudge/agent_server.h"
 #include "ejudge/ejudge_cfg.h"
 #include "ejudge/prepare.h"
+#include "ejudge/dyntrie.h"
+#include "ejudge/cJSON.h"
 #include "ejudge/osdeps.h"
 #include "ejudge/xalloc.h"
 
@@ -32,9 +34,20 @@
 #include <string.h>
 
 #define DEFAULT_SERVER_PORT 8888
+#define MAX_OUTPUT_FRAGMENT_SIZE 65000
+
+typedef struct OutputFragment
+{
+    unsigned char *msg;
+    size_t size;
+    unsigned offset;
+    int flags;
+} OutputFragment;
 
 typedef struct ConnectionState
 {
+    struct lws *wsi;                  // websocket connection descriptor
+
     unsigned char *queue_id;
     unsigned char *inst_id;
     unsigned char *param_mode;
@@ -42,6 +55,23 @@ typedef struct ConnectionState
     int serial;
     int mode;
     int established;
+
+    // incoming message
+    unsigned char *msg;
+    size_t msg_a;
+    size_t msg_u;
+    cJSON *jmsg;
+
+    cJSON *jreply;
+
+    // outbound queue
+    OutputFragment *out;
+    size_t out_a;
+    size_t out_u;
+    size_t out_h;     // head element to send
+
+    unsigned msg_serial;
+    long long current_time_ms;
 } ConnectionState;
 
 static void
@@ -52,7 +82,30 @@ free_connection_state(ConnectionState *conn)
     free(conn->inst_id);
     free(conn->param_mode);
     free(conn->remote_addr);
+    free(conn->msg);
+    if (conn->jmsg) cJSON_Delete(conn->jmsg);
+    if (conn->jreply) cJSON_Delete(conn->jreply);
+    for (size_t i = conn->out_h; i < conn->out_u; ++i) {
+        free(conn->out[i].msg);
+    }
+    free(conn->out);
 }
+
+struct AgentServerState;
+struct QueryCallback;
+typedef int (*QueryCallbackFunc)(
+    const struct QueryCallback *cb,
+    struct AgentServerState *ass,
+    ConnectionState *conn,
+    cJSON *req,
+    cJSON *reply);
+
+typedef struct QueryCallback
+{
+    unsigned char *query;
+    void *extra;
+    QueryCallbackFunc callback;
+} QueryCallback;
 
 typedef struct AgentServerState
 {
@@ -62,7 +115,32 @@ typedef struct AgentServerState
     const struct ejudge_cfg *ejudge_config;
     int connect_serial;
     unsigned char *ejudge_xml_dir;
+
+    struct QueryCallback *querys;
+    int querya;
+    int queryu;
+    struct dyntrie_node *queryi;
 } AgentServerState;
+
+__attribute__((unused))
+static void
+add_query_callback(
+    AgentServerState *ass,
+    const unsigned char *query,
+    void *extra,
+    QueryCallbackFunc callback)
+{
+    if (ass->querya == ass->queryu) {
+        if (!(ass->querya *= 2)) ass->querya = 8;
+        XREALLOC(ass->querys, ass->querya);
+    }
+    int index = ass->queryu++;
+    struct QueryCallback *c = &ass->querys[index];
+    c->query = xstrdup(query);
+    c->extra = extra;
+    c->callback = callback;
+    dyntrie_insert(&ass->queryi, query, (void*) (intptr_t) (index + 1), 1, NULL);
+}
 
 #define L_ERR(format, ...) fprintf(log_f, "%s:%d:" format "\n", __FUNCTION__, __LINE__, ##__VA_ARGS__)
 #define L_ERR_FAIL(format, ...) do { fprintf(log_f, "%s:%d:" format "\n", __FUNCTION__, __LINE__, ##__VA_ARGS__); goto fail; } while (0)
@@ -134,8 +212,7 @@ static int
 handle_filter_protocol_connection(
     struct lws *wsi,
     AgentServerState *ass,
-    ConnectionState *conn
-)
+    ConnectionState *conn)
 {
     conn->serial = ++ass->connect_serial;
 
@@ -245,9 +322,146 @@ handle_filter_protocol_connection(
     }
 
     conn->established = 1;
-    lwsl_user("%d: %s: %s: connection established, queue %s, mode %s\n", conn->serial, conn->remote_addr, conn->inst_id,
+    conn->wsi = wsi;
+    lwsl_user("%d: %s: %s: connection checked, queue %s, mode %s\n", conn->serial, conn->remote_addr, conn->inst_id,
         conn->queue_id, conn->param_mode);
 
+    return 0;
+}
+
+static void
+conn_queue_data(
+    ConnectionState *conn,
+    const unsigned char *data,
+    size_t size)
+{
+    int is_start = 1;
+    while (size > 0) {
+        size_t fragment = size;
+        if (fragment > MAX_OUTPUT_FRAGMENT_SIZE) fragment = MAX_OUTPUT_FRAGMENT_SIZE;
+
+        if (conn->out_h > 0 && conn->out_h == conn->out_u) {
+            conn->out_h = 0;
+            conn->out_u = 0;
+        }
+        if (conn->out_u == conn->out_a) {
+            if (!(conn->out_a *= 2)) conn->out_a = 16;
+            XREALLOC(conn->out, conn->out_a);
+        }
+        OutputFragment *f = &conn->out[conn->out_u++];
+        memset(f, 0, sizeof(*f));
+        f->flags = lws_write_ws_flags(LWS_WRITE_TEXT, is_start, size == fragment);
+        f->offset = LWS_PRE;
+        f->size = fragment;
+        f->msg = xmalloc(LWS_PRE + fragment);
+        memcpy(f->msg + f->offset, data, fragment);
+
+        data += fragment;
+        size -= fragment;
+        is_start = 0;
+    }
+}
+
+static int
+handle_incoming_json(
+    struct lws *wsi,
+    AgentServerState *ass,
+    ConnectionState *conn,
+    cJSON *req,
+    cJSON *reply)
+{
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    conn->current_time_ms = tv.tv_sec * 1000LL + tv.tv_usec / 1000;
+
+    cJSON_AddNumberToObject(reply, "tt", (double) conn->current_time_ms);
+    cJSON_AddNumberToObject(reply, "ss", (double) ++conn->msg_serial);
+    cJSON *jt = cJSON_GetObjectItem(req, "t");
+    if (jt && jt->type == cJSON_Number) {
+        cJSON_AddNumberToObject(reply, "t", jt->valuedouble);
+    }
+    cJSON *js = cJSON_GetObjectItem(req, "s");
+    if (js && js->type == cJSON_Number) {
+        cJSON_AddNumberToObject(reply, "s", js->valuedouble);
+    }
+    cJSON *jq = cJSON_GetObjectItem(req, "q");
+    if (!jq || jq->type != cJSON_String) {
+        cJSON_AddStringToObject(reply, "message", "Invalid query");
+        lwsl_err("%d: %s: %s: invalid query: string expected\n", conn->serial, conn->remote_addr, conn->inst_id);
+        return 0;
+    }
+    const unsigned char *query = jq->valuestring;
+
+    cJSON_AddStringToObject(reply, "qq", query);
+    void *vp = dyntrie_get(&ass->queryi, query);
+    if (!vp) {
+        cJSON_AddStringToObject(reply, "message", "Invalid query");
+        lwsl_err("%d: %s: %s: invalid query: unhandled query\n", conn->serial, conn->remote_addr, conn->inst_id);
+        return 0;
+    }
+    const struct QueryCallback *c = &ass->querys[((int)(intptr_t) vp) - 1];
+    return c->callback(c, ass, conn, req, reply);
+}
+
+static int
+handle_receive(
+    struct lws *wsi,
+    AgentServerState *ass,
+    ConnectionState *conn,
+    unsigned char *data,
+    size_t len)
+{
+    if (lws_frame_is_binary(wsi)) {
+        lwsl_err("%d: %s: %s: binary frame\n", conn->serial, conn->remote_addr, conn->inst_id);
+        return -1;
+    }
+
+    if (lws_is_first_fragment(wsi) && conn->msg_u > 0) {
+        lwsl_err("%d: %s: %s: first fragment flag set, but buffer not empty\n", conn->serial, conn->remote_addr, conn->inst_id);
+        return -1;
+    }
+
+    size_t new_a = conn->msg_a;
+    while (conn->msg_u + len + 1 > new_a) {
+        if (!new_a) {
+            new_a = 128;
+        } else {
+            new_a *= 2;
+        }
+    }
+    if (new_a != conn->msg_a) {
+        conn->msg = xrealloc(conn->msg, new_a);
+        conn->msg_a = new_a;
+    }
+    memcpy(conn->msg + conn->msg_u, data, len);
+    conn->msg_u += len;
+    conn->msg[conn->msg_u] = 0;
+    if (!lws_is_final_fragment(wsi)) {
+        return 0;
+    }
+
+    conn->jmsg = cJSON_Parse(conn->msg);
+    if (!conn->jmsg) {
+        lwsl_user("%d: %s: %s: failed to parse JSON\n", conn->serial, conn->remote_addr, conn->inst_id);
+        return -1;
+    }
+
+    conn->jreply = cJSON_CreateObject();
+    int ok = handle_incoming_json(wsi, ass, conn, conn->jmsg, conn->jreply);
+    cJSON_AddBoolToObject(conn->jreply, "ok", ok);
+    unsigned char *jstr = cJSON_PrintUnformatted(conn->jreply);
+    size_t jlen = strlen(jstr);
+    conn_queue_data(conn, jstr, jlen);
+    free(jstr);
+    if (conn->out_h != conn->out_u) {
+        lws_callback_on_writable(wsi);
+    }
+
+    conn->msg_u = 0;
+    if (conn->jmsg) cJSON_Delete(conn->jmsg);
+    conn->jmsg = NULL;
+    if (conn->jreply) cJSON_Delete(conn->jreply);
+    conn->jreply = NULL;
     return 0;
 }
 
@@ -272,28 +486,29 @@ callback_server(
     case LWS_CALLBACK_FILTER_PROTOCOL_CONNECTION:
         return handle_filter_protocol_connection(wsi, ass, conn);
 
-/*
-
     case LWS_CALLBACK_ESTABLISHED:
-        printf("established\n");
-        app->current_wsi = wsi;
+        lwsl_user("%d: %s: %s: connection established\n", conn->serial, conn->remote_addr, conn->inst_id);
         break;
+
+    case LWS_CALLBACK_RECEIVE:
+        return handle_receive(wsi, ass, conn, in, len);
+
     case LWS_CALLBACK_SERVER_WRITEABLE: {
-        const char msg[] = "timer";
-        char buf[LWS_PRE + sizeof(msg)];
-        memcpy(&buf[LWS_PRE], msg, sizeof(msg));
-        lws_write(wsi, (unsigned char *) &buf[LWS_PRE], sizeof(msg) - 1, LWS_WRITE_TEXT);
+        if (conn->out_h != conn->out_u) {
+            OutputFragment *f = &conn->out[conn->out_h];
+            lws_write(wsi, f->msg + f->offset, f->size, f->flags);
+            memset(f, 0, sizeof(*f));
+            if (++conn->out_h == conn->out_u) {
+                conn->out_h = 0;
+                conn->out_u = 0;
+            }
+        }
+        if (conn->out_h != conn->out_u) {
+            lws_callback_on_writable(wsi);
+        }
         break;
     }
-    case LWS_CALLBACK_RECEIVE: {
-        int is_first = lws_is_first_fragment(wsi);
-        int is_final = lws_is_final_fragment(wsi);
-        int is_binary = lws_frame_is_binary(wsi);
-        printf("receive: %d %d %d %d\n", is_first, is_final, is_binary, (int) len);
-        //lws_callback_on_writable(wsi);
-        break;
-    }
-*/
+
     case LWS_CALLBACK_CLOSED: {
         if (conn->established) {
             lwsl_user("%d: %s: %s: connection closed, queue %s, mode %s\n", conn->serial, conn->remote_addr, conn->inst_id,
