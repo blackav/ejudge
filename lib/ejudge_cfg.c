@@ -888,7 +888,7 @@ ejudge_cfg_do_parse(char const *path, FILE *in_file, int no_system_lookup)
       }
       break;
     case TG_AGENT_SERVER: {
-      if (!parse_agent_server(cfg, p)) goto failed;
+      if (!(cfg->agent_server = parse_agent_server(cfg, p))) goto failed;
       break;
     }
     default:
