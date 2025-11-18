@@ -16,10 +16,12 @@
 
 #include "ejudge/config.h"
 #include "ejudge/agent_server.h"
+#include "ejudge/agent_common.h"
 #include "ejudge/ejudge_cfg.h"
 #include "ejudge/prepare.h"
 #include "ejudge/dyntrie.h"
 #include "ejudge/cJSON.h"
+#include "ejudge/fileutl.h"
 #include "ejudge/osdeps.h"
 #include "ejudge/xalloc.h"
 
@@ -72,6 +74,8 @@ typedef struct ConnectionState
 
     unsigned msg_serial;
     long long current_time_ms;
+
+    SpoolQueue *spool_queue;
 } ConnectionState;
 
 static void
@@ -120,6 +124,10 @@ typedef struct AgentServerState
     int querya;
     int queryu;
     struct dyntrie_node *queryi;
+
+    SpoolQueue *spools;
+    size_t spool_u;
+    size_t spool_a;
 } AgentServerState;
 
 __attribute__((unused))
@@ -140,6 +148,32 @@ add_query_callback(
     c->extra = extra;
     c->callback = callback;
     dyntrie_insert(&ass->queryi, query, (void*) (intptr_t) (index + 1), 1, NULL);
+}
+
+__attribute__((unused))
+static SpoolQueue *
+get_spool_queue(
+    AgentServerState *ass,
+    unsigned char *queue_id,
+    int mode)
+{
+    for (size_t i = 0; i < ass->spool_u; ++i) {
+        if (!strcmp(ass->spools[i].queue_id, queue_id) && ass->spools[i].mode == mode) {
+            return &ass->spools[i];
+        }
+    }
+
+    if (ass->spool_u == ass->spool_a) {
+        if (!(ass->spool_a *= 2)) ass->spool_a = 16;
+        XREALLOC(ass->spools, ass->spool_a);
+    }
+    unsigned index = ass->spool_u++;
+    SpoolQueue *q = &ass->spools[index];
+    if (spool_queue_init(q, queue_id, mode, index) < 0) {
+        --ass->spool_u;
+        return NULL;
+    }
+    return q;
 }
 
 #define L_ERR(format, ...) fprintf(log_f, "%s:%d:" format "\n", __FUNCTION__, __LINE__, ##__VA_ARGS__)
@@ -321,8 +355,17 @@ handle_filter_protocol_connection(
         return -1;
     }
 
+    SpoolQueue *sq = get_spool_queue(ass, conn->queue_id, conn->mode);
+    if (!sq) {
+        lwsl_err("%d: %s: %s: failed to create queue %s, mode %s\n", conn->serial, conn->remote_addr, conn->inst_id,
+            conn->queue_id, conn->param_mode);
+        return -1;
+    }
+
     conn->established = 1;
     conn->wsi = wsi;
+    conn->spool_queue = sq;
+    ++sq->refcount;
     lwsl_user("%d: %s: %s: connection checked, queue %s, mode %s\n", conn->serial, conn->remote_addr, conn->inst_id,
         conn->queue_id, conn->param_mode);
 
@@ -513,6 +556,9 @@ callback_server(
         if (conn->established) {
             lwsl_user("%d: %s: %s: connection closed, queue %s, mode %s\n", conn->serial, conn->remote_addr, conn->inst_id,
                 conn->queue_id, conn->param_mode);
+        }
+        if (conn->spool_queue) {
+            --conn->spool_queue->refcount;
         }
         free_connection_state(conn);
         break;

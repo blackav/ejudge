@@ -16,5 +16,44 @@
  * GNU General Public License for more details.
  */
 
+#include <stddef.h>
+
+typedef struct SpoolQueue
+{
+    int refcount;
+    unsigned index;
+
+    unsigned char *queue_id;
+    unsigned char *spool_dir;
+    unsigned char *queue_dir;
+    unsigned char *queue_packet_dir;
+    unsigned char *queue_out_dir;
+    unsigned char *data_dir;
+    unsigned char *heartbeat_dir;
+    unsigned char *heartbeat_packet_dir;
+    unsigned char *heartbeat_in_dir;
+    unsigned char *config_dir;
+    unsigned char *config_packet_dir;
+    unsigned char *config_in_dir;
+
+    int mode;
+} SpoolQueue;
+
+int
+spool_queue_init(
+    SpoolQueue *q,
+    const unsigned char *queue_id,
+    int mode,
+    unsigned index);
+
+void
+spool_queue_destroy(SpoolQueue *q);
+
+struct cJSON;
+void
+agent_add_file_to_object(
+    struct cJSON *j,
+    const char *data,
+    size_t size);
 
 #endif /* __AGENT_COMMON_H__ */
