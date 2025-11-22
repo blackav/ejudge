@@ -20,6 +20,7 @@
 #include "ejudge/ejudge_cfg.h"
 #include "ejudge/prepare.h"
 #include "ejudge/dyntrie.h"
+#include "ejudge/random.h"
 #include "ejudge/cJSON.h"
 #include "ejudge/fileutl.h"
 #include "ejudge/osdeps.h"
@@ -406,6 +407,18 @@ conn_queue_data(
 }
 
 static int
+ping_query_func(
+    const struct QueryCallback *cb,
+    struct AgentServerState *ass,
+    ConnectionState *conn,
+    cJSON *req,
+    cJSON *reply)
+{
+    cJSON_AddStringToObject(reply, "q", "pong");
+    return 1;
+}
+
+static int
 handle_incoming_json(
     struct lws *wsi,
     AgentServerState *ass,
@@ -611,6 +624,8 @@ agent_server_start(const AgentServerParams *params)
     const unsigned char *ejudge_xml_path = NULL;
     const struct ejudge_cfg *ejudge_config = NULL;
 
+    random_init();
+
 #if defined EJUDGE_XML_PATH
     if (!ejudge_xml_path) ejudge_xml_path = EJUDGE_XML_PATH;
 #endif /* EJUDGE_XML_PATH */
@@ -647,6 +662,27 @@ agent_server_start(const AgentServerParams *params)
     if (!ass->context) {
         L_ERR_DONE("failed to create libwebsockets context");
     }
+
+    add_query_callback(ass, "ping", NULL, ping_query_func);
+
+/*
+    app_state_add_query_callback(&app, "set", NULL, set_query_func);
+    app_state_add_query_callback(&app, "poll", NULL, poll_func);
+    app_state_add_query_callback(&app, "get-packet", NULL, get_packet_func);
+    app_state_add_query_callback(&app, "get-data", NULL, get_data_func);
+    app_state_add_query_callback(&app, "put-reply", NULL, put_reply_func);
+    app_state_add_query_callback(&app, "put-output", NULL, put_output_func);
+    app_state_add_query_callback(&app, "wait", NULL, wait_func);
+    app_state_add_query_callback(&app, "add-ignored", NULL, add_ignored_func);
+    app_state_add_query_callback(&app, "put-packet", NULL, put_packet_func);
+    app_state_add_query_callback(&app, "put-heartbeat", NULL, put_heartbeat_func);
+    app_state_add_query_callback(&app, "delete-heartbeat", NULL, delete_heartbeat_func);
+    app_state_add_query_callback(&app, "put-archive", NULL, put_archive_func);
+    app_state_add_query_callback(&app, "mirror", NULL, mirror_func);
+    app_state_add_query_callback(&app, "cancel", NULL, cancel_func);
+    app_state_add_query_callback(&app, "put-config", NULL, put_config_func);
+
+*/
 
     lwsl_user("server started");
     int r;

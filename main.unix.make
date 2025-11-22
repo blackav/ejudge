@@ -518,7 +518,7 @@ LIBWEBSOCKETS_LIB_OPT=-L$(LIBWEBSOCKETS_LIB)
 endif
 
 ej-agent-server: ${WSS_OBJECTS}
-	${LD} ${LDFLAGS} $(LIBWEBSOCKETS_LIB_OPT) $^ libcommon.a libplatform.a -o $@ ${LIBWEBSOCKETS} ${LIBUV} -lssl -lcrypto ${LDLIBS} ${EXPAT_LIB} ${LIBZIP}
+	${LD} ${LDFLAGS} $(LIBWEBSOCKETS_LIB_OPT) $^ libcommon.a libplatform.a -o $@ ${LIBWEBSOCKETS} ${LIBUV} -lssl -lcrypto ${LIBLZMA} ${LDLIBS} ${EXPAT_LIB} ${LIBZIP}
 
 bin/ej-agent-server.o : bin/ej-agent-server.c
 	${CC} ${CFLAGS} ${LIBWEBSOCKETS_INCLUDE_OPT} bin/ej-agent-server.c -o $@ -c

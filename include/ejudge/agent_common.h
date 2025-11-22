@@ -39,6 +39,27 @@ typedef struct SpoolQueue
     int mode;
 } SpoolQueue;
 
+typedef struct ContestSpool
+{
+    unsigned char *server;
+    int contest_id;
+    int mode;
+    unsigned serial;
+
+    unsigned char *server_dir;
+    unsigned char *server_contest_dir;
+    unsigned char *status_dir;
+    unsigned char *report_dir;
+    unsigned char *output_dir;
+} ContestSpool;
+
+typedef struct ContestSpools
+{
+    ContestSpool *v;
+    size_t u;
+    size_t a;
+} ContestSpools;
+
 int
 spool_queue_init(
     SpoolQueue *q,
@@ -48,6 +69,12 @@ spool_queue_init(
 
 void
 spool_queue_destroy(SpoolQueue *q);
+int
+spool_queue_read_packet(
+        SpoolQueue *q,
+        const unsigned char *pkt_name,
+        char **p_data,
+        size_t *p_size);
 
 struct cJSON;
 void
@@ -55,5 +82,11 @@ agent_add_file_to_object(
     struct cJSON *j,
     const char *data,
     size_t size);
+int
+agent_extract_file(
+    const unsigned char *queue_id,
+    struct cJSON *j,
+    char **p_pkt_ptr,
+    size_t *p_pkt_len);
 
 #endif /* __AGENT_COMMON_H__ */

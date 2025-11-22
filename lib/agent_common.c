@@ -21,10 +21,17 @@
 #include "ejudge/base64.h"
 #include "ejudge/ej_lzma.h"
 #include "ejudge/cJSON.h"
+#include "ejudge/random.h"
+#include "ejudge/errlog.h"
+#include "ejudge/osdeps.h"
 #include "ejudge/xalloc.h"
 
+#include <bits/endian.h>
 #include <zlib.h>
+#include <sys/stat.h>
 #include <string.h>
+#include <errno.h>
+#include <fcntl.h>
 
 int
 spool_queue_init(
@@ -140,8 +147,100 @@ spool_queue_destroy(SpoolQueue *q)
     memset(q, 0, sizeof(*q));
 }
 
+int
+spool_queue_read_packet(
+        SpoolQueue *q,
+        const unsigned char *pkt_name,
+        char **p_data,
+        size_t *p_size)
+{
+    unsigned char dir_path[PATH_MAX];
+    unsigned char out_path[PATH_MAX];
+    __attribute__((unused)) int r;
+    int fd = -1;
+    char *data = NULL;
+    unsigned long long unique_prefix = random_u64();
+
+    r = snprintf(dir_path, sizeof(dir_path), "%s/%s", q->queue_packet_dir, pkt_name);
+    r = snprintf(out_path, sizeof(out_path), "%s/%llx%s", q->queue_out_dir, unique_prefix, pkt_name);
+
+    r = rename(dir_path, out_path);
+    if (r < 0 && errno == ENOENT) {
+        return 0;
+    }
+    if (r < 0) {
+        err("%s: %s:%d: rename %s->%s failed: %s", q->queue_id, __FUNCTION__, __LINE__, dir_path, out_path, os_ErrorMsg());
+        out_path[0] = 0;
+        goto fail;
+    }
+    struct stat stb;
+    if (lstat(out_path, &stb) < 0) {
+        err("%s: %s:%d: lstat %s failed: %s", q->queue_id, __FUNCTION__, __LINE__, out_path, os_ErrorMsg());
+        goto fail;
+    }
+    if (!S_ISREG(stb.st_mode)) {
+        err("%s: %s:%d: not regular file %s", q->queue_id, __FUNCTION__, __LINE__, out_path);
+        goto fail;
+    }
+    if (stb.st_nlink != 1) {
+        // two processes renamed the file simultaneously
+        rename(out_path, dir_path);
+        unlink(out_path);
+        info("%s: rename created two hardlinks, rollback", q->queue_id);
+        return 0;
+    }
+    if (stb.st_size <= 0) {
+        char *data = malloc(1);
+        data[0] = 0;
+        *p_data = data;
+        *p_size = 0;
+        unlink(out_path);
+        return 1;
+    }
+
+    data = malloc(stb.st_size + 1);
+    data[stb.st_size] = 0;
+    fd = open(out_path, O_RDONLY, 0);
+    if (fd < 0) {
+        err("%s: %s:%d: cannot open '%s': %s", q->queue_id, __FUNCTION__, __LINE__, out_path, os_ErrorMsg());
+        goto fail;
+    }
+    char *ptr = data;
+    size_t remain = stb.st_size;
+    while (remain > 0) {
+        ssize_t rr = read(fd, ptr, remain);
+        if (rr < 0) {
+            err("%s: %s:%d: read error on '%s': %s", q->queue_id, __FUNCTION__, __LINE__, out_path, os_ErrorMsg());
+            goto fail;
+        }
+        if (!rr) {
+            err("%s: %s:%d: unexpected EOF on '%s'", q->queue_id, __FUNCTION__, __LINE__, out_path);
+            goto fail;
+        }
+        remain -= rr;
+    }
+
+    close(fd);
+    unlink(out_path);
+    *p_data = data;
+    *p_size = stb.st_size;
+
+    info("%s: read file '%s', %lld", q->queue_id, pkt_name, (long long) stb.st_size);
+
+    return 1;
+
+fail:;
+    if (out_path[0]) unlink(out_path);
+    if (fd >= 0) close(fd);
+    free(data);
+    return -1;
+}
+
 void
-agent_add_file_to_object(cJSON *j, const char *data, size_t size)
+agent_add_file_to_object(
+        cJSON *j,
+        const char *data,
+        size_t size)
 {
     cJSON_AddNumberToObject(j, "size", (double) size);
     if (!size) {
@@ -221,4 +320,186 @@ agent_add_file_to_object(cJSON *j, const char *data, size_t size)
         }
     }
 #endif
+}
+
+int
+agent_extract_file(
+        const unsigned char *queue_id,
+        cJSON *j,
+        char **p_pkt_ptr,
+        size_t *p_pkt_len)
+{
+    cJSON *jz = cJSON_GetObjectItem(j, "size");
+    if (!jz || jz->type != cJSON_Number) {
+        err("%s: %s:%d: invalid json: no size", queue_id, __FUNCTION__, __LINE__);
+        return -1;
+    }
+    size_t size = (int) jz->valuedouble;
+    if (size < 0 || size > 1000000000) {
+        err("%s: %s:%d: invalid json: invalid size", queue_id, __FUNCTION__, __LINE__);
+        return -1;
+    }
+    if (!size) {
+        char *ptr = malloc(1);
+        *ptr = 0;
+        *p_pkt_ptr = ptr;
+        *p_pkt_len = 0;
+        return 1;
+    }
+    cJSON *jb64 = cJSON_GetObjectItem(j, "b64");
+    if (!jb64 || jb64->type != cJSON_True) {
+        err("%s: %s:%d: invalid json: no encoding", queue_id, __FUNCTION__, __LINE__);
+        return -1;
+    }
+    cJSON *jd = cJSON_GetObjectItem(j, "data");
+    if (!jd || jd->type != cJSON_String) {
+        err("%s: %s:%d: invalid json: no data", queue_id, __FUNCTION__, __LINE__);
+        return -1;
+    }
+    int len = strlen(jd->valuestring);
+    cJSON *jgz = cJSON_GetObjectItem(j, "gz");
+    cJSON *jlzma = cJSON_GetObjectItem(j, "lzma");
+    if (jgz && jgz->type == cJSON_True) {
+        cJSON *jgzz = cJSON_GetObjectItem(j, "gz_size");
+        if (!jgzz || jgzz->type != cJSON_Number) {
+            err("%s: %s:%d: invalid json: no gz_size", queue_id, __FUNCTION__, __LINE__);
+            return -1;
+        }
+        size_t gz_size = (size_t) jgzz->valuedouble;
+        char *gz_buf = malloc(len + 1);
+        int b64err = 0;
+        int n = base64u_decode(jd->valuestring, len, gz_buf, &b64err);
+        if (n != gz_size) {
+            err("%s: %s:%d: invalid json: size mismatch", queue_id, __FUNCTION__, __LINE__);
+            free(gz_buf);
+            return -1;
+        }
+
+        z_stream zs = {};
+        if (inflateInit(&zs) != Z_OK) {
+            err("%s: %s:%d: invalid json: libz failed", queue_id, __FUNCTION__, __LINE__);
+            free(gz_buf);
+            return -1;
+        }
+        zs.next_in = (Bytef *) gz_buf;
+        zs.avail_in = gz_size;
+        zs.total_in = gz_size;
+        unsigned char *ptr = malloc(size + 1);
+        zs.next_out = (Bytef *) ptr;
+        zs.avail_out = size;
+        zs.total_out = 0;
+        if (inflate(&zs, Z_FINISH) != Z_STREAM_END) {
+            err("%s: %s:%d: invalid json: libz inflate failed", queue_id, __FUNCTION__, __LINE__);
+            free(gz_buf);
+            free(ptr);
+            inflateEnd(&zs);
+            return -1;
+        }
+        if (inflateEnd(&zs) != Z_OK) {
+            err("%s: %s:%d: invalid json: libz inflate failed", queue_id, __FUNCTION__, __LINE__);
+            free(gz_buf);
+            free(ptr);
+            return -1;
+        }
+        ptr[size] = 0;
+        free(gz_buf);
+        *p_pkt_ptr = ptr;
+        *p_pkt_len = size;
+    } else if (jlzma && jlzma->type == cJSON_True) {
+        cJSON *jlzmaz = cJSON_GetObjectItem(j, "lzma_size");
+        if (!jlzmaz || jlzmaz->type != cJSON_Number) {
+            err("%s: %s:%d: invalid json: no lzma_size", queue_id, __FUNCTION__, __LINE__);
+            return -1;
+        }
+        size_t lzma_size = (size_t) jlzmaz->valuedouble;
+        char *lzma_buf = malloc(len + 1);
+        int b64err = 0;
+        int n = base64u_decode(jd->valuestring, len, lzma_buf, &b64err);
+        if (n != lzma_size) {
+            err("%s: %s:%d: invalid json: size mismatch", queue_id, __FUNCTION__, __LINE__);
+            free(lzma_buf);
+            return -1;
+        }
+        unsigned char *ptr = NULL;
+        size_t ptr_size = 0;
+        if (ej_lzma_decode_buf(lzma_buf, lzma_size, size, &ptr, &ptr_size) < 0) {
+            err("%s: %s:%d: invalid json: lzma decode error", queue_id, __FUNCTION__, __LINE__);
+            free(lzma_buf);
+            return -1;
+        }
+        free(lzma_buf);
+        *p_pkt_ptr = ptr;
+        *p_pkt_len = ptr_size;
+    } else {
+        char *ptr = malloc(len + 1);
+        int b64err = 0;
+        int n = base64u_decode(jd->valuestring, len, ptr, &b64err);
+        if (n != size) {
+            err("%s: %s:%d: invalid json: size mismatch", queue_id, __FUNCTION__, __LINE__);
+            free(ptr);
+            return -1;
+        }
+        ptr[size] = 0;
+        *p_pkt_ptr = ptr;
+        *p_pkt_len = size;
+    }
+    return 1;
+}
+
+ContestSpool *
+contest_spool_get(
+        ContestSpools *ss,
+        const unsigned char *server,
+        int contest_id,
+        int mode)
+{
+    for (unsigned i = 0; i < ss->u; ++i) {
+        ContestSpool *cs = &ss->v[i];
+        if (!strcmp(cs->server, server) && cs->contest_id == contest_id && cs->mode == mode) {
+            return cs;
+        }
+    }
+
+    const unsigned char *root_dir = NULL;
+    if (mode == PREPARE_COMPILE) {
+#if defined EJUDGE_COMPILE_SPOOL_DIR
+        root_dir = EJUDGE_COMPILE_SPOOL_DIR;
+#endif
+    } else if (mode == PREPARE_RUN) {
+#if defined EJUDGE_RUN_SPOOL_DIR
+        root_dir = EJUDGE_RUN_SPOOL_DIR;
+#endif
+    }
+
+    __attribute__((unused)) int _;
+    unsigned char server_dir[PATH_MAX];
+    _ = snprintf(server_dir, sizeof(server_dir), "%s/%s", root_dir, server);
+    unsigned char server_contest_dir[PATH_MAX];
+    strcpy(server_contest_dir, server_dir);
+    unsigned char status_dir[PATH_MAX];
+    _ = snprintf(status_dir, sizeof(status_dir), "%s/status", server_contest_dir);
+    unsigned char report_dir[PATH_MAX];
+    _ = snprintf(report_dir, sizeof(report_dir), "%s/report", server_contest_dir);
+    unsigned char output_dir[PATH_MAX];
+    _ = snprintf(output_dir, sizeof(output_dir), "%s/output", server_contest_dir);
+
+    if (ss->u == ss->a) {
+        if (!(ss->a *= 2)) ss->a = 16;
+        XREALLOC(ss->v, ss->a);
+    }
+
+    unsigned i = ss->u++;
+    ContestSpool *cs = &ss->v[i];
+    memset(cs, 0, sizeof(*cs));
+    cs->serial = i;
+    cs->mode = mode;
+    cs->server = xstrdup(server);
+    cs->contest_id = contest_id;
+    cs->server_dir = xstrdup(server_dir);
+    cs->server_contest_dir = xstrdup(server_contest_dir);
+    cs->status_dir = xstrdup(status_dir);
+    cs->report_dir = xstrdup(report_dir);
+    cs->output_dir = xstrdup(output_dir);
+
+    return cs;
 }
