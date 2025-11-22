@@ -2,7 +2,7 @@
 #ifndef __AGENT_CLIENT_H__
 #define __AGENT_CLIENT_H__
 
-/* Copyright (C) 2022-2024 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2022-2025 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -169,5 +169,6 @@ struct AgentClient
 };
 
 struct AgentClient *agent_client_ssh_create(void);
+struct AgentClient *agent_client_ws_create(void);
 
 #endif /* __AGENT_CLIENT_H__ */

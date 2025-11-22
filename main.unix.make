@@ -344,7 +344,7 @@ suid_install : ${SUIDBINTARGETS} ejudge-suid-setup ej-compile-control
 suid_bins : ${SUIDBINTARGETS}
 
 ej-compile$(EXESFX) : $(C_OBJECTS)
-	$(LD) $(LDFLAGS) $(C_OBJECTS) -pthread -o $@ $(LDLIBS) ${EXPAT_LIB} ${LIBZIP} ${LIBUUID} ${LIBLZMA} -lbacktrace
+	$(LD) $(LDFLAGS) $(C_OBJECTS) -pthread -o $@ $(LDLIBS) ${LIBCURL} ${EXPAT_LIB} ${LIBZIP} ${LIBUUID} ${LIBLZMA} -lbacktrace
 
 ej-compile-control : $(CC_OBJECTS)
 	$(LD) $(LDFLAGS) $(CC_OBJECTS) -o $@ $(LDLIBS) ${EXPAT_LIB} -lbacktrace
@@ -392,7 +392,7 @@ ej-super-server-control: ${SSC_OBJECTS}
 	${LD} ${LDFLAGS} $^ libcommon.a -o $@ ${LDLIBS} ${EXPAT_LIB} -lbacktrace
 
 ej-super-run: ${SR_OBJECTS}
-	${LD} ${LDFLAGS} -pthread -rdynamic $^ libcommon.a -o $@ ${LDLIBS} ${EXPAT_LIB} -ldl ${LIBZIP} ${LIBUUID} $(MONGO_LIBS) $(MONGOC_LIBS) ${LIBLZMA} -lbacktrace
+	${LD} ${LDFLAGS} -pthread -rdynamic $^ libcommon.a -o $@ ${LDLIBS} $(LIBCURL) ${EXPAT_LIB} -ldl ${LIBZIP} ${LIBUUID} $(MONGO_LIBS) $(MONGOC_LIBS) ${LIBLZMA} -lbacktrace
 
 ej-super-run-control: ${SRC_OBJECTS}
 	${LD} ${LDFLAGS} -rdynamic $^ libcommon.a -o $@ ${LDLIBS} ${EXPAT_LIB} -ldl -lbacktrace
@@ -407,7 +407,7 @@ ej-import-contest: ${IC_OBJECTS}
 	${LD} ${LDFLAGS} $^ libcommon.a -o $@ ${LDLIBS} ${EXPAT_LIB} ${LIBCURL} ${LIBZIP} -ldl
 
 ej-page-gen: ${G_OBJECTS} libuserlist_clnt.a libnew_server_clnt.a
-	${LD} ${LIBWEBSOCKETS_LIB_OPT} -pthread ${LDFLAGS} -Wl,--whole-archive $^ -o $@ ${LDLIBS} libdwarf/libdwarf/.libs/libdwarf.a -lelf ${LIBWEBSOCKETS} ${LIBUV} ${EXPAT_LIB} ${LIBZIP} -ldl -lpanel${NCURSES_SUFFIX} -lmenu${NCURSES_SUFFIX} -lncurses${NCURSES_SUFFIX} ${LIBUUID} -Wl,--no-whole-archive $(MONGO_LIBS) $(MONGOC_LIBS) -lssl -lcrypto ${LIBLZMA} -lbacktrace
+	${LD} ${LIBWEBSOCKETS_LIB_OPT} -pthread ${LDFLAGS} -Wl,--whole-archive $^ -o $@ ${LDLIBS} libdwarf/libdwarf/.libs/libdwarf.a -lelf ${LIBWEBSOCKETS} ${LIBUV} ${EXPAT_LIB} ${LIBZIP} -ldl -lpanel${NCURSES_SUFFIX} -lmenu${NCURSES_SUFFIX} -lncurses${NCURSES_SUFFIX} ${LIBUUID} -Wl,--no-whole-archive $(MONGO_LIBS) $(MONGOC_LIBS) ${LIBCURL} -lssl -lcrypto ${LIBLZMA} -lbacktrace
 ej-page-gen.debug : ej-page-gen
 	objcopy --only-keep-debug $< $@
 
