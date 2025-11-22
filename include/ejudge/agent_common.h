@@ -84,9 +84,24 @@ agent_add_file_to_object(
     size_t size);
 int
 agent_extract_file(
-    const unsigned char *queue_id,
+    const unsigned char *inst_id,
     struct cJSON *j,
     char **p_pkt_ptr,
     size_t *p_pkt_len);
+
+ContestSpool *
+contest_spool_get(
+    ContestSpools *css,
+    const unsigned char *server,
+    int contest_id,
+    int mode);
+
+int
+agent_save_to_spool(
+    const unsigned char *inst_id,
+    const unsigned char *spool_dir,
+    const unsigned char *file_name,
+    const unsigned char *data,
+    size_t size);
 
 #endif /* __AGENT_COMMON_H__ */

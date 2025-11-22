@@ -26,12 +26,15 @@
 #include "ejudge/osdeps.h"
 #include "ejudge/xalloc.h"
 
-#include <bits/endian.h>
+#include <limits.h>
+#include <stdio.h>
+#include <unistd.h>
 #include <zlib.h>
 #include <sys/stat.h>
 #include <string.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <sys/mman.h>
 
 int
 spool_queue_init(
@@ -324,19 +327,19 @@ agent_add_file_to_object(
 
 int
 agent_extract_file(
-        const unsigned char *queue_id,
+        const unsigned char *inst_id,
         cJSON *j,
         char **p_pkt_ptr,
         size_t *p_pkt_len)
 {
     cJSON *jz = cJSON_GetObjectItem(j, "size");
     if (!jz || jz->type != cJSON_Number) {
-        err("%s: %s:%d: invalid json: no size", queue_id, __FUNCTION__, __LINE__);
+        err("%s: %s:%d: invalid json: no size", inst_id, __FUNCTION__, __LINE__);
         return -1;
     }
     size_t size = (int) jz->valuedouble;
     if (size < 0 || size > 1000000000) {
-        err("%s: %s:%d: invalid json: invalid size", queue_id, __FUNCTION__, __LINE__);
+        err("%s: %s:%d: invalid json: invalid size", inst_id, __FUNCTION__, __LINE__);
         return -1;
     }
     if (!size) {
@@ -348,12 +351,12 @@ agent_extract_file(
     }
     cJSON *jb64 = cJSON_GetObjectItem(j, "b64");
     if (!jb64 || jb64->type != cJSON_True) {
-        err("%s: %s:%d: invalid json: no encoding", queue_id, __FUNCTION__, __LINE__);
+        err("%s: %s:%d: invalid json: no encoding", inst_id, __FUNCTION__, __LINE__);
         return -1;
     }
     cJSON *jd = cJSON_GetObjectItem(j, "data");
     if (!jd || jd->type != cJSON_String) {
-        err("%s: %s:%d: invalid json: no data", queue_id, __FUNCTION__, __LINE__);
+        err("%s: %s:%d: invalid json: no data", inst_id, __FUNCTION__, __LINE__);
         return -1;
     }
     int len = strlen(jd->valuestring);
@@ -362,7 +365,7 @@ agent_extract_file(
     if (jgz && jgz->type == cJSON_True) {
         cJSON *jgzz = cJSON_GetObjectItem(j, "gz_size");
         if (!jgzz || jgzz->type != cJSON_Number) {
-            err("%s: %s:%d: invalid json: no gz_size", queue_id, __FUNCTION__, __LINE__);
+            err("%s: %s:%d: invalid json: no gz_size", inst_id, __FUNCTION__, __LINE__);
             return -1;
         }
         size_t gz_size = (size_t) jgzz->valuedouble;
@@ -370,14 +373,14 @@ agent_extract_file(
         int b64err = 0;
         int n = base64u_decode(jd->valuestring, len, gz_buf, &b64err);
         if (n != gz_size) {
-            err("%s: %s:%d: invalid json: size mismatch", queue_id, __FUNCTION__, __LINE__);
+            err("%s: %s:%d: invalid json: size mismatch", inst_id, __FUNCTION__, __LINE__);
             free(gz_buf);
             return -1;
         }
 
         z_stream zs = {};
         if (inflateInit(&zs) != Z_OK) {
-            err("%s: %s:%d: invalid json: libz failed", queue_id, __FUNCTION__, __LINE__);
+            err("%s: %s:%d: invalid json: libz failed", inst_id, __FUNCTION__, __LINE__);
             free(gz_buf);
             return -1;
         }
@@ -389,14 +392,14 @@ agent_extract_file(
         zs.avail_out = size;
         zs.total_out = 0;
         if (inflate(&zs, Z_FINISH) != Z_STREAM_END) {
-            err("%s: %s:%d: invalid json: libz inflate failed", queue_id, __FUNCTION__, __LINE__);
+            err("%s: %s:%d: invalid json: libz inflate failed", inst_id, __FUNCTION__, __LINE__);
             free(gz_buf);
             free(ptr);
             inflateEnd(&zs);
             return -1;
         }
         if (inflateEnd(&zs) != Z_OK) {
-            err("%s: %s:%d: invalid json: libz inflate failed", queue_id, __FUNCTION__, __LINE__);
+            err("%s: %s:%d: invalid json: libz inflate failed", inst_id, __FUNCTION__, __LINE__);
             free(gz_buf);
             free(ptr);
             return -1;
@@ -408,7 +411,7 @@ agent_extract_file(
     } else if (jlzma && jlzma->type == cJSON_True) {
         cJSON *jlzmaz = cJSON_GetObjectItem(j, "lzma_size");
         if (!jlzmaz || jlzmaz->type != cJSON_Number) {
-            err("%s: %s:%d: invalid json: no lzma_size", queue_id, __FUNCTION__, __LINE__);
+            err("%s: %s:%d: invalid json: no lzma_size", inst_id, __FUNCTION__, __LINE__);
             return -1;
         }
         size_t lzma_size = (size_t) jlzmaz->valuedouble;
@@ -416,14 +419,14 @@ agent_extract_file(
         int b64err = 0;
         int n = base64u_decode(jd->valuestring, len, lzma_buf, &b64err);
         if (n != lzma_size) {
-            err("%s: %s:%d: invalid json: size mismatch", queue_id, __FUNCTION__, __LINE__);
+            err("%s: %s:%d: invalid json: size mismatch", inst_id, __FUNCTION__, __LINE__);
             free(lzma_buf);
             return -1;
         }
         unsigned char *ptr = NULL;
         size_t ptr_size = 0;
         if (ej_lzma_decode_buf(lzma_buf, lzma_size, size, &ptr, &ptr_size) < 0) {
-            err("%s: %s:%d: invalid json: lzma decode error", queue_id, __FUNCTION__, __LINE__);
+            err("%s: %s:%d: invalid json: lzma decode error", inst_id, __FUNCTION__, __LINE__);
             free(lzma_buf);
             return -1;
         }
@@ -435,7 +438,7 @@ agent_extract_file(
         int b64err = 0;
         int n = base64u_decode(jd->valuestring, len, ptr, &b64err);
         if (n != size) {
-            err("%s: %s:%d: invalid json: size mismatch", queue_id, __FUNCTION__, __LINE__);
+            err("%s: %s:%d: invalid json: size mismatch", inst_id, __FUNCTION__, __LINE__);
             free(ptr);
             return -1;
         }
@@ -502,4 +505,56 @@ contest_spool_get(
     cs->output_dir = xstrdup(output_dir);
 
     return cs;
+}
+
+int
+agent_save_to_spool(
+    const unsigned char *inst_id,
+    const unsigned char *spool_dir,
+    const unsigned char *file_name,
+    const unsigned char *data,
+    size_t size)
+{
+    __attribute__((unused)) int _;
+    unsigned char in_path[PATH_MAX];
+    unsigned char dir_path[PATH_MAX];
+    int fd = -1;
+    int retval = -1;
+    unsigned char *mem = MAP_FAILED;
+
+    _ = snprintf(in_path, sizeof(in_path), "%s/in/%s", spool_dir, file_name);
+    fd = open(in_path, O_RDWR | O_CREAT | O_TRUNC, 0600);
+    if (fd < 0) {
+        err("%s: %s:%d: put_heartbeat: open %s failed: %s", inst_id, __FUNCTION__, __LINE__, in_path, os_ErrorMsg());
+        goto done;
+    }
+    if (ftruncate(fd, size) < 0) {
+        err("%s: %s:%d: ftruncate failed: %s", inst_id, __FUNCTION__, __LINE__, os_ErrorMsg());
+        goto done;
+    }
+    if (size > 0) {
+        mem = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+        if (mem == MAP_FAILED) {
+            err("%s: %s:%d: mmap failed: %s", inst_id, __FUNCTION__, __LINE__, os_ErrorMsg());
+            goto done;
+        }
+        memmove(mem, data, size);
+        munmap(mem, size); mem = MAP_FAILED;
+    }
+    close(fd); fd = -1;
+
+    _ = snprintf(dir_path, sizeof(dir_path), "%s/dir/%s", spool_dir, file_name);
+    if (rename(in_path, dir_path) < 0) {
+        err("%s: %s:%d: %s", inst_id, __FUNCTION__, __LINE__, os_ErrorMsg());
+        goto done;
+    }
+    in_path[0] = 0;
+
+    retval = 0;
+
+done:;
+    if (mem != MAP_FAILED) munmap(mem, size);
+    if (fd >= 0) close(fd);
+    if (in_path[0]) unlink(in_path);
+    return retval;
 }
