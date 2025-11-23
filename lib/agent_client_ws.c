@@ -30,6 +30,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <time.h>
+#include <unistd.h>
 
 struct AgentClientWs
 {
@@ -73,13 +74,13 @@ destroy_func(struct AgentClient *ac)
 
 static int
 init_func(
-        struct AgentClient *ac,
-        const unsigned char *inst_id,
-        const unsigned char *endpoint,
-        const unsigned char *queue_id,
-        int mode,
-        int verbose_mode,
-        const unsigned char *ip_address)
+    struct AgentClient *ac,
+    const unsigned char *inst_id,
+    const unsigned char *endpoint,
+    const unsigned char *queue_id,
+    int mode,
+    int verbose_mode,
+    const unsigned char *ip_address)
 {
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
 
@@ -246,9 +247,9 @@ is_closed_func(struct AgentClient *ac)
 
 static cJSON *
 create_request(
-        struct AgentClientWs *acw,
-        long long *p_time_ms,
-        const unsigned char *query)
+    struct AgentClientWs *acw,
+    long long *p_time_ms,
+    const unsigned char *query)
 {
     cJSON *jq = cJSON_CreateObject();
     int serial = ++acw->serial;
@@ -363,13 +364,13 @@ recv_json(struct AgentClientWs *acw)
 
 static int
 poll_queue_func(
-        struct AgentClient *ac,
-        unsigned char *pkt_name,
-        size_t pkt_len,
-        int random_mode,
-        int enable_file,
-        char **p_data,
-        size_t *p_size)
+    struct AgentClient *ac,
+    unsigned char *pkt_name,
+    size_t pkt_len,
+    int random_mode,
+    int enable_file,
+    char **p_data,
+    size_t *p_size)
 {
     int result = -1;
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
@@ -432,10 +433,10 @@ done:;
 
 static int
 get_packet_func(
-        struct AgentClient *ac,
-        const unsigned char *pkt_name,
-        char **p_pkt_ptr,
-        size_t *p_pkt_len)
+    struct AgentClient *ac,
+    const unsigned char *pkt_name,
+    char **p_pkt_ptr,
+    size_t *p_pkt_len)
 {
     int result = -1;
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
@@ -466,11 +467,11 @@ done:;
 
 static int
 get_data_func(
-        struct AgentClient *ac,
-        const unsigned char *pkt_name,
-        const unsigned char *suffix,
-        char **p_pkt_ptr,
-        size_t *p_pkt_len)
+    struct AgentClient *ac,
+    const unsigned char *pkt_name,
+    const unsigned char *suffix,
+    char **p_pkt_ptr,
+    size_t *p_pkt_len)
 {
     int result = -1;
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
@@ -504,12 +505,12 @@ done:;
 
 static int
 put_reply_func(
-        struct AgentClient *ac,
-        const unsigned char *contest_server_name,
-        int contest_id,
-        const unsigned char *run_name,
-        const unsigned char *pkt_ptr,
-        size_t pkt_len)
+    struct AgentClient *ac,
+    const unsigned char *contest_server_name,
+    int contest_id,
+    const unsigned char *run_name,
+    const unsigned char *pkt_ptr,
+    size_t pkt_len)
 {
     int result = -1;
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
@@ -546,13 +547,13 @@ done:;
 
 static int
 put_output_func(
-        struct AgentClient *ac,
-        const unsigned char *contest_server_name,
-        int contest_id,
-        const unsigned char *run_name,
-        const unsigned char *suffix,
-        const unsigned char *pkt_ptr,
-        size_t pkt_len)
+    struct AgentClient *ac,
+    const unsigned char *contest_server_name,
+    int contest_id,
+    const unsigned char *run_name,
+    const unsigned char *suffix,
+    const unsigned char *pkt_ptr,
+    size_t pkt_len)
 {
     int result = -1;
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
@@ -592,12 +593,12 @@ done:;
 
 static int
 put_output_2_func(
-        struct AgentClient *ac,
-        const unsigned char *contest_server_name,
-        int contest_id,
-        const unsigned char *run_name,
-        const unsigned char *suffix,
-        const unsigned char *path)
+    struct AgentClient *ac,
+    const unsigned char *contest_server_name,
+    int contest_id,
+    const unsigned char *run_name,
+    const unsigned char *suffix,
+    const unsigned char *path)
 {
     int result = -1;
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
@@ -641,10 +642,106 @@ done:;
     return result;
 }
 
+// this implementation is synchronous
+// it uses poll and sleeps retrying
+// will do, until the server supports wait too
+// so it never returns 0
+static int
+async_wait_init_func(
+        struct AgentClient *ac,
+        int notify_signal,
+        int random_mode,
+        int enable_file,
+        unsigned char *pkt_name,
+        size_t pkt_len,
+        struct Future **p_future,
+        long long timeout_ms,
+        char **p_data,
+        size_t *p_size)
+{
+    int result = -1;
+    struct AgentClientWs *acw = (struct AgentClientWs *) ac;
+    cJSON *jr = NULL;
+    cJSON *jq = NULL;
+
+    while (1) {
+        jq = create_request(acw, NULL, "poll");
+        if (random_mode > 0) {
+            cJSON_AddTrueToObject(jq, "random_mode");
+        }
+        if (enable_file > 0) {
+            cJSON_AddTrueToObject(jq, "enable_file");
+        }
+        if (send_json(acw, jq) < 0) {
+            err("%s:%d: send_json failed", __FUNCTION__, __LINE__);
+            goto done;
+        }
+        cJSON_Delete(jq); jq = NULL;
+
+        jr = recv_json(acw);
+        if (!jr) {
+            err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
+            goto done;
+        }
+        cJSON *jj = cJSON_GetObjectItem(jr, "q");
+        if (jj && jj->type == cJSON_String && !strcmp("poll-result", jj->valuestring)) {
+            cJSON *jn = cJSON_GetObjectItem(jr, "pkt-name");
+            if (!jn) {
+                pkt_name[0] = 0;
+                result = 1;
+            } else if (jn->type == cJSON_String) {
+                snprintf(pkt_name, pkt_len, "%s", jn->valuestring);
+                result = 1;
+            } else {
+                err("%s:%d: pkt-name is invalid", __FUNCTION__, __LINE__);
+            }
+            goto done;
+        }
+        if (jj && jj->type == cJSON_String && !strcmp("file-result", jj->valuestring)) {
+            cJSON *jn = cJSON_GetObjectItem(jr, "pkt-name");
+            if (!jn) {
+                pkt_name[0] = 0;
+                result = 1;
+            } else if (jn->type == cJSON_String) {
+                snprintf(pkt_name, pkt_len, "%s", jn->valuestring);
+                result = 1;
+            }
+            result = agent_extract_file_result(jr, p_data, p_size);
+            if (result < 0) {
+                err("%s:%d: json processing failed", __FUNCTION__, __LINE__);
+            }
+            goto done;
+        }
+        cJSON_Delete(jr); jr = NULL;
+
+        // TODO
+        sleep(5);
+    }
+
+done:;
+    if (jq) cJSON_Delete(jq);
+    if (jr) cJSON_Delete(jr);
+    if (!result) abort();
+    return result;
+}
+
+static int
+async_wait_complete_func(
+        struct AgentClient *ac,
+        struct Future **p_future,
+        unsigned char *pkt_name,
+        size_t pkt_len,
+        char **p_data,
+        size_t *p_size)
+{
+    // should never get here
+    abort();
+}
+
 static int
 add_ignored_func(
-        struct AgentClient *ac,
-        const unsigned char *pkt_name)
+    struct AgentClient *ac,
+    const unsigned char *pkt_name)
 {
     int result = -1;
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
@@ -678,10 +775,10 @@ done:;
 
 static int
 put_packet_func(
-        struct AgentClient *ac,
-        const unsigned char *pkt_name,
-        const unsigned char *pkt_ptr,
-        size_t pkt_len)
+    struct AgentClient *ac,
+    const unsigned char *pkt_name,
+    const unsigned char *pkt_ptr,
+    size_t pkt_len)
 {
     int result = -1;
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
@@ -716,12 +813,12 @@ done:;
 
 static int
 get_data_2_func(
-        struct AgentClient *ac,
-        const unsigned char *pkt_name,
-        const unsigned char *suffix,
-        const unsigned char *dir,
-        const unsigned char *name,
-        const unsigned char *out_suffix)
+    struct AgentClient *ac,
+    const unsigned char *pkt_name,
+    const unsigned char *suffix,
+    const unsigned char *dir,
+    const unsigned char *name,
+    const unsigned char *out_suffix)
 {
     int retval = -1;
     char *data = NULL;
@@ -742,14 +839,14 @@ done:
 
 static int
 put_heartbeat_func(
-        struct AgentClient *ac,
-        const unsigned char *file_name,
-        const void *data,
-        size_t size,
-        long long *p_last_saved_time_ms,
-        unsigned char *p_stop_flag,
-        unsigned char *p_down_flag,
-        unsigned char *p_reboot_flag)
+    struct AgentClient *ac,
+    const unsigned char *file_name,
+    const void *data,
+    size_t size,
+    long long *p_last_saved_time_ms,
+    unsigned char *p_stop_flag,
+    unsigned char *p_down_flag,
+    unsigned char *p_reboot_flag)
 {
     int result = -1;
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
@@ -800,8 +897,8 @@ done:;
 
 static int
 delete_heartbeat_func(
-        struct AgentClient *ac,
-        const unsigned char *file_name)
+    struct AgentClient *ac,
+    const unsigned char *file_name)
 {
     int result = -1;
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
@@ -835,12 +932,12 @@ done:;
 
 static int
 put_archive_2_func(
-        struct AgentClient *ac,
-        const unsigned char *contest_server_name,
-        int contest_id,
-        const unsigned char *run_name,
-        const unsigned char *suffix,
-        const unsigned char *path)
+    struct AgentClient *ac,
+    const unsigned char *contest_server_name,
+    int contest_id,
+    const unsigned char *run_name,
+    const unsigned char *suffix,
+    const unsigned char *path)
 {
     int result = -1;
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
@@ -886,17 +983,17 @@ done:;
 
 static int
 mirror_file_func(
-        struct AgentClient *ac,
-        const unsigned char *path,
-        time_t current_mtime,
-        long long current_size,
-        int current_mode,
-        char **p_pkt_ptr,
-        size_t *p_pkt_len,
-        time_t *p_new_mtime,
-        int *p_new_mode,
-        int *p_uid,
-        int *p_gid)
+    struct AgentClient *ac,
+    const unsigned char *path,
+    time_t current_mtime,
+    long long current_size,
+    int current_mode,
+    char **p_pkt_ptr,
+    size_t *p_pkt_len,
+    time_t *p_new_mtime,
+    int *p_new_mode,
+    int *p_uid,
+    int *p_gid)
 {
     int result = -1;
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
@@ -989,10 +1086,10 @@ done:;
 
 static int
 put_config_func(
-        struct AgentClient *ac,
-        const unsigned char *file_name,
-        const void *data,
-        size_t size)
+    struct AgentClient *ac,
+    const unsigned char *file_name,
+    const void *data,
+    size_t size)
 {
     int result = -1;
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
@@ -1027,8 +1124,8 @@ done:;
 
 static int
 set_token_file_func(
-        struct AgentClient *ac,
-        const unsigned char *token_file)
+    struct AgentClient *ac,
+    const unsigned char *token_file)
 {
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
     acw->token_file = xstrdup(token_file);
@@ -1048,8 +1145,8 @@ static const struct AgentClientOps ops_ws =
     put_reply_func,
     put_output_func,
     put_output_2_func,
-    NULL, //async_wait_init_func,
-    NULL, //async_wait_complete_func,
+    async_wait_init_func,
+    async_wait_complete_func,
     add_ignored_func,
     put_packet_func,
     get_data_2_func,
