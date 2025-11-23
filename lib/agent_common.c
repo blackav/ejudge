@@ -449,6 +449,145 @@ agent_extract_file(
     return 1;
 }
 
+int
+agent_extract_file_result(
+        cJSON *j,
+        char **p_pkt_ptr,
+        size_t *p_pkt_len)
+{
+    cJSON *jok = cJSON_GetObjectItem(j, "ok");
+    if (!jok || jok->type != cJSON_True) {
+        return -1;
+    }
+    cJSON *jq = cJSON_GetObjectItem(j, "q");
+    if (!jq || jq->type != cJSON_String || strcmp("file-result", jq->valuestring) != 0) {
+        err("%s:%d: invalid json", __FUNCTION__, __LINE__);
+        return -1;
+    }
+    cJSON *jf = cJSON_GetObjectItem(j, "found");
+    if (!jf || jf->type != cJSON_True) {
+        return 0;
+    }
+    // TODO: call agent_extract_file?
+    cJSON *jz = cJSON_GetObjectItem(j, "size");
+    if (!jz || jz->type != cJSON_Number) {
+        err("%s:%d: invalid json: no size", __FUNCTION__, __LINE__);
+        return -1;
+    }
+    int size = (int) jz->valuedouble;
+    if (size < 0 || size > 1000000000) {
+        err("%s:%d: invalid json: invalid size", __FUNCTION__, __LINE__);
+        return -1;
+    }
+    if (!size) {
+        char *ptr = malloc(1);
+        *ptr = 0;
+        *p_pkt_ptr = ptr;
+        *p_pkt_len = 0;
+        return 1;
+    }
+    cJSON *jb64 = cJSON_GetObjectItem(j, "b64");
+    if (!jb64 || jb64->type != cJSON_True) {
+        err("%s:%d: invalid json: no encoding", __FUNCTION__, __LINE__);
+        return -1;
+    }
+    cJSON *jd = cJSON_GetObjectItem(j, "data");
+    if (!jd || jd->type != cJSON_String) {
+        err("%s:%d: invalid json: no data", __FUNCTION__, __LINE__);
+        return -1;
+    }
+    int len = strlen(jd->valuestring);
+    cJSON *jgz = cJSON_GetObjectItem(j, "gz");
+    cJSON *jlzma = cJSON_GetObjectItem(j, "lzma");
+
+    if (jgz && jgz->type == cJSON_True) {
+        cJSON *jgzz = cJSON_GetObjectItem(j, "gz_size");
+        if (!jgzz || jgzz->type != cJSON_Number) {
+            err("%s:%d: invalid json: no gz_size", __FUNCTION__, __LINE__);
+            return -1;
+        }
+        size_t gz_size = (size_t) jgzz->valuedouble;
+        char *gz_buf = malloc(len + 1);
+        int b64err = 0;
+        int n = base64u_decode(jd->valuestring, len, gz_buf, &b64err);
+        if (n != gz_size) {
+            err("%s:%d: invalid json: size mismatch", __FUNCTION__, __LINE__);
+            free(gz_buf);
+            return -1;
+        }
+
+        z_stream zs = {};
+        if (inflateInit(&zs) != Z_OK) {
+            err("%s:%d: invalid json: libz failed", __FUNCTION__, __LINE__);
+            free(gz_buf);
+            return -1;
+        }
+        zs.next_in = (Bytef *) gz_buf;
+        zs.avail_in = gz_size;
+        zs.total_in = gz_size;
+        unsigned char *ptr = malloc(size + 1);
+        zs.next_out = (Bytef *) ptr;
+        zs.avail_out = size;
+        zs.total_out = 0;
+        if (inflate(&zs, Z_FINISH) != Z_STREAM_END) {
+            err("%s:%d: invalid json: libz inflate failed", __FUNCTION__, __LINE__);
+            free(gz_buf);
+            free(ptr);
+            inflateEnd(&zs);
+            return -1;
+        }
+        if (inflateEnd(&zs) != Z_OK) {
+            err("%s:%d: invalid json: libz inflate failed", __FUNCTION__, __LINE__);
+            free(gz_buf);
+            free(ptr);
+            return -1;
+        }
+        ptr[size] = 0;
+        free(gz_buf);
+        *p_pkt_ptr = ptr;
+        *p_pkt_len = size;
+    } else if (jlzma && jlzma->type == cJSON_True) {
+        cJSON *jlzmaz = cJSON_GetObjectItem(j, "lzma_size");
+        if (!jlzmaz || jlzmaz->type != cJSON_Number) {
+            err("%s:%d: invalid json: no lzma_size", __FUNCTION__, __LINE__);
+            return -1;
+        }
+        size_t lzma_size = (size_t) jlzmaz->valuedouble;
+        char *lzma_buf = malloc(len + 1);
+        int b64err = 0;
+        int n = base64u_decode(jd->valuestring, len, lzma_buf, &b64err);
+        if (n != lzma_size) {
+            err("%s:%d: invalid json: size mismatch", __FUNCTION__, __LINE__);
+            free(lzma_buf);
+            return -1;
+        }
+        unsigned char *ptr = NULL;
+        size_t ptr_size = 0;
+        if (ej_lzma_decode_buf(lzma_buf, lzma_size, size, &ptr, &ptr_size) < 0) {
+            err("%s:%d: invalid json: lzma decode error", __FUNCTION__, __LINE__);
+            free(lzma_buf);
+            return -1;
+        }
+        free(lzma_buf);
+        *p_pkt_ptr = ptr;
+        *p_pkt_len = ptr_size;
+    } else {
+        char *ptr = malloc(len + 1);
+        int b64err = 0;
+        int n = base64u_decode(jd->valuestring, len, ptr, &b64err);
+        if (n != size) {
+            err("%s:%d: invalid json: size mismatch", __FUNCTION__, __LINE__);
+            free(ptr);
+            return -1;
+        }
+        ptr[size] = 0;
+        *p_pkt_ptr = ptr;
+        *p_pkt_len = size;
+    }
+
+    return 1;
+}
+
 ContestSpool *
 contest_spool_get(
         ContestSpools *ss,

@@ -88,6 +88,11 @@ agent_extract_file(
     struct cJSON *j,
     char **p_pkt_ptr,
     size_t *p_pkt_len);
+int
+agent_extract_file_result(
+    struct cJSON *j,
+    char **p_pkt_ptr,
+    size_t *p_pkt_len);
 
 ContestSpool *
 contest_spool_get(

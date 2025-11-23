@@ -16,8 +16,10 @@
 
 #include "ejudge/config.h"
 #include "ejudge/agent_client.h"
+#include "ejudge/agent_common.h"
 #include "ejudge/prepare.h"
 #include "ejudge/misctext.h"
+#include "ejudge/cJSON.h"
 #include "ejudge/osdeps.h"
 #include "ejudge/errlog.h"
 #include "ejudge/xalloc.h"
@@ -44,6 +46,12 @@ struct AgentClientWs
 
     int mode;
     int verbose_mode;
+    int is_stopped;
+    int serial;
+
+    unsigned char *in_buf;
+    size_t in_buf_a;
+    size_t in_buf_u;
 };
 
 static struct AgentClient *
@@ -220,6 +228,209 @@ done:;
     return retval;
 }
 
+static void
+close_func(struct AgentClient *ac)
+{
+    struct AgentClientWs *acw = (struct AgentClientWs *) ac;
+    curl_easy_cleanup(acw->curl);
+    acw->curl = NULL;
+    acw->is_stopped = 1;
+}
+
+static int
+is_closed_func(struct AgentClient *ac)
+{
+    struct AgentClientWs *acw = (struct AgentClientWs *) ac;
+    return acw->is_stopped;
+}
+
+static cJSON *
+create_request(
+        struct AgentClientWs *acw,
+        long long *p_time_ms,
+        const unsigned char *query)
+{
+    cJSON *jq = cJSON_CreateObject();
+    int serial = ++acw->serial;
+
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    long long current_time_ms = tv.tv_sec * 1000LL + tv.tv_usec / 1000;
+    if (p_time_ms) *p_time_ms = current_time_ms;
+
+    cJSON_AddNumberToObject(jq, "t", (double) current_time_ms);
+    cJSON_AddNumberToObject(jq, "s", (double) serial);
+    cJSON_AddStringToObject(jq, "q", query);
+
+    return jq;
+}
+
+static int
+send_json(struct AgentClientWs *acw, cJSON *json)
+{
+    /*
+ res = curl_easy_getinfo(curl, CURLINFO_ACTIVESOCKET, &sockfd);
+    if(!res && sockfd != CURL_SOCKET_BAD) {
+      // operate on sockfd
+    }
+    */
+    char *str = cJSON_PrintUnformatted(json);
+    size_t len = strlen(str);
+    if (acw->verbose_mode) {
+        info("to agent: %s", str);
+    }
+    char *ptr = str;
+    while (len) {
+        size_t sent = 0;
+        CURLcode res = curl_ws_send(acw->curl, ptr, len, &sent, 0, CURLWS_TEXT);
+        if (res == CURLE_AGAIN) {
+            // in real application: wait for socket here, e.g. using select()
+            continue;
+        }
+        if (res != CURLE_OK) {
+            err("%s:%d: curl_ws_send failed: %s", __FUNCTION__, __LINE__, curl_easy_strerror(res));
+            free(str);
+            return -1;
+        }
+        ptr += sent;
+        len -= sent;
+    }
+    return 0;
+}
+
+static cJSON *
+recv_json(struct AgentClientWs *acw)
+{
+    if (!acw->in_buf_a) {
+        acw->in_buf_a = 4096;
+        acw->in_buf = xmalloc(acw->in_buf_a);
+    }
+    acw->in_buf_u = 0;
+
+    while (1) {
+        size_t recv;
+        const struct curl_ws_frame *meta;
+        CURLcode res = curl_ws_recv(acw->curl, &acw->in_buf[acw->in_buf_u], acw->in_buf_a - acw->in_buf_u, &recv, &meta);
+        if (res == CURLE_AGAIN) {
+            // in real application: wait for socket here, e.g. using select()
+            continue;
+        }
+        if (res != CURLE_OK) {
+            err("%s:%d: websocket read error: %s", __FUNCTION__, __LINE__, curl_easy_strerror(res));
+            return NULL;
+        }
+        if ((meta->flags & CURLWS_CLOSE)) {
+            err("%s:%d: websocket connection close", __FUNCTION__, __LINE__);
+            return NULL;
+        }
+        if ((meta->flags & (CURLWS_PING | CURLWS_PONG))) {
+            continue;
+        }
+        if ((meta->flags & CURLWS_BINARY)) {
+            err("%s:%d: binary frame received", __FUNCTION__, __LINE__);
+            return NULL;
+        }
+        acw->in_buf_u += recv;
+        if (meta->bytesleft > 0) {
+            // preallocate for \0 terminator
+            size_t exp_size = acw->in_buf_u + meta->bytesleft + 1;
+            if (exp_size > acw->in_buf_a) {
+                size_t a = acw->in_buf_a;
+                while (exp_size > a) {
+                    a *= 2;
+                }
+                XREALLOC(acw->in_buf, a);
+                acw->in_buf_a = a;
+            }
+            continue;
+        }
+        if (!(meta->flags & CURLWS_CONT)) {
+            // frame transfer completed
+            break;
+        }
+    }
+    if (acw->in_buf_u == acw->in_buf_a) {
+        acw->in_buf_a *= 2;
+        XREALLOC(acw->in_buf, acw->in_buf_a);
+    }
+    acw->in_buf[acw->in_buf_u] = 0;
+    cJSON *j = cJSON_Parse(acw->in_buf);
+    if (!j) {
+        err("%s:%d: failed to parse JSON", __FUNCTION__, __LINE__);
+    }
+    return j;
+}
+
+static int
+poll_queue_func(
+        struct AgentClient *ac,
+        unsigned char *pkt_name,
+        size_t pkt_len,
+        int random_mode,
+        int enable_file,
+        char **p_data,
+        size_t *p_size)
+{
+    int result = -1;
+    struct AgentClientWs *acw = (struct AgentClientWs *) ac;
+    long long time_ms;
+    cJSON *jr = NULL;
+
+    cJSON *jq = create_request(acw, &time_ms, "poll");
+    if (random_mode > 0) {
+        cJSON_AddTrueToObject(jq, "random_mode");
+    }
+    if (enable_file > 0) {
+        cJSON_AddTrueToObject(jq, "enable_file");
+    }
+    if (send_json(acw, jq) < 0) {
+        err("%s:%d: send_json failed", __FUNCTION__, __LINE__);
+        goto done;
+    }
+    cJSON_Delete(jq); jq = NULL;
+
+    jr = recv_json(acw);
+    if (!jr) {
+        err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
+        goto done;
+    }
+    cJSON *jj = cJSON_GetObjectItem(jr, "q");
+    if (jj && jj->type == cJSON_String && !strcmp("poll-result", jj->valuestring)) {
+        cJSON *jn = cJSON_GetObjectItem(jr, "pkt-name");
+        if (!jn) {
+            pkt_name[0] = 0;
+            result = 1;
+        } else if (jn->type == cJSON_String) {
+            snprintf(pkt_name, pkt_len, "%s", jn->valuestring);
+            result = 1;
+        } else {
+            err("%s:%d: pkt-name is invalid", __FUNCTION__, __LINE__);
+        }
+        goto done;
+    }
+    if (jj && jj->type == cJSON_String && !strcmp("file-result", jj->valuestring)) {
+        cJSON *jn = cJSON_GetObjectItem(jr, "pkt-name");
+        if (!jn) {
+            pkt_name[0] = 0;
+            result = 1;
+        } else if (jn->type == cJSON_String) {
+            snprintf(pkt_name, pkt_len, "%s", jn->valuestring);
+            result = 1;
+        }
+        result = agent_extract_file_result(jr, p_data, p_size);
+        if (result < 0) {
+            err("%s:%d: json processing failed", __FUNCTION__, __LINE__);
+        }
+        goto done;
+    }
+    err("%s:%d: unexpected JSON result", __FUNCTION__, __LINE__);
+
+done:;
+    if (jq) cJSON_Delete(jq);
+    if (jr) cJSON_Delete(jr);
+    return result;
+}
+
 static int
 set_token_file_func(
         struct AgentClient *ac,
@@ -235,9 +446,9 @@ static const struct AgentClientOps ops_ws =
     destroy_func,
     init_func,
     connect_func,
-    //close_func,
-    //is_closed_func,
-    //poll_queue_func,
+    close_func,
+    is_closed_func,
+    poll_queue_func,
     //get_packet_func,
     //get_data_func,
     //put_reply_func,
