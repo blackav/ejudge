@@ -867,7 +867,7 @@ do_loop(
       return -1;
     }
     if (agent->ops->init(agent, agent_instance_id,
-                          agent_name + 4, run_server_id,
+                          agent_name + 3, run_server_id,
                           PREPARE_RUN, verbose_mode, ip_address) < 0) {
       err("failed to initalize agent");
       return -1;

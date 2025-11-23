@@ -17,6 +17,7 @@
 #include "ejudge/config.h"
 #include "ejudge/agent_client.h"
 #include "ejudge/agent_common.h"
+#include "ejudge/interrupt.h"
 #include "ejudge/prepare.h"
 #include "ejudge/misctext.h"
 #include "ejudge/cJSON.h"
@@ -206,7 +207,7 @@ connect_func(struct AgentClient *ac)
         headers = curl_slist_append(headers, authorization);
     }
 
-    curl_easy_setopt(acw->curl, CURLOPT_URL, urlf);
+    curl_easy_setopt(acw->curl, CURLOPT_URL, urlt);
     if (headers) {
         curl_easy_setopt(acw->curl, CURLOPT_HTTPHEADER, headers);
     }
@@ -687,15 +688,19 @@ async_wait_init_func(
         if (jj && jj->type == cJSON_String && !strcmp("poll-result", jj->valuestring)) {
             cJSON *jn = cJSON_GetObjectItem(jr, "pkt-name");
             if (!jn) {
-                pkt_name[0] = 0;
-                result = 1;
+                // wait
+                info("%s:%d: no pkt_name, waiting", __FUNCTION__, __LINE__);
             } else if (jn->type == cJSON_String) {
-                snprintf(pkt_name, pkt_len, "%s", jn->valuestring);
-                result = 1;
+                if (jn->valuestring[0]) {
+                    snprintf(pkt_name, pkt_len, "%s", jn->valuestring);
+                    result = 1;
+                    goto done;
+                }
+                info("%s:%d: no pkt_name, waiting", __FUNCTION__, __LINE__);
             } else {
                 err("%s:%d: pkt-name is invalid", __FUNCTION__, __LINE__);
+                goto done;
             }
-            goto done;
         }
         if (jj && jj->type == cJSON_String && !strcmp("file-result", jj->valuestring)) {
             cJSON *jn = cJSON_GetObjectItem(jr, "pkt-name");
@@ -715,7 +720,14 @@ async_wait_init_func(
         cJSON_Delete(jr); jr = NULL;
 
         // TODO
+        interrupt_enable();
         sleep(5);
+        if (interrupt_get_status()) {
+            err("%s:%d: interrupt", __FUNCTION__, __LINE__);
+            result = -1;
+            break;
+        }
+        interrupt_disable();
     }
 
 done:;

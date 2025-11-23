@@ -486,12 +486,17 @@ get_packet_func(
     cJSON *reply)
 {
     cJSON *jp = cJSON_GetObjectItem(query, "pkt_name");
-    if (!jp || jp->type != cJSON_String) {
+    if (!jp || jp->type != cJSON_String || !is_valid_id(jp->valuestring)) {
         cJSON_AddStringToObject(reply, "message", "invalid json");
         conn_err(conn, "missing pkt_name");
         return 0;
     }
     const unsigned char *pkt_name = jp->valuestring;
+    if (!*pkt_name) {
+        cJSON_AddStringToObject(reply, "message", "invalid json");
+        conn_err(conn, "empty pkt_name");
+        return 0;
+    }
     char *pkt_ptr = NULL;
     size_t pkt_len = 0;
     int r = generic_read_file(&pkt_ptr, 0, &pkt_len, SAFE | REMOVE,
@@ -1138,11 +1143,16 @@ handle_receive(
         return -1;
     }
 
+    //printf("recv: %s\n", conn->msg);
+
     conn->jreply = cJSON_CreateObject();
     int ok = handle_incoming_json(wsi, ass, conn, conn->jmsg, conn->jreply);
     cJSON_AddBoolToObject(conn->jreply, "ok", ok);
     unsigned char *jstr = cJSON_PrintUnformatted(conn->jreply);
     size_t jlen = strlen(jstr);
+
+    //printf("send: %s\n", jstr);
+
     conn_queue_data(conn, jstr, jlen);
     free(jstr);
     if (conn->out_h != conn->out_u) {

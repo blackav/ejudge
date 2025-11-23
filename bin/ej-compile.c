@@ -1648,7 +1648,7 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
       return -1;
     }
     if (agent->ops->init(agent, instance_id,
-                          agent_name + 4, compile_server_id,
+                          agent_name + 3, compile_server_id,
                           PREPARE_COMPILE, verbose_mode, ip_address) < 0) {
       err("failed to initalize agent");
       return -1;
