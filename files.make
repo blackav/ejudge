@@ -12,6 +12,10 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 # Lesser General Public License for more details.
 
+ifdef LIBWEBSOCKETS
+AGENT_SERVER_C = lib/agent_server.c
+endif
+
 USERLIST_CLNT_CFILES=\
  userlist_clnt/admin_process.c\
  userlist_clnt/api_key_request.c\
@@ -122,7 +126,7 @@ COMMON_CFILES=\
  lib/agent_client_ssh.c\
  lib/agent_client_ws.c\
  lib/agent_common.c\
- lib/agent_server.c\
+ $(AGENT_SERVER_C)\
  lib/allowed_list.c\
  lib/archive_paths.c\
  lib/avatar_plugin.c\
