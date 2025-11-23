@@ -161,6 +161,10 @@ struct AgentClientOps
         const unsigned char *file_name,
         const void *data,
         size_t size);
+
+    int (*set_token_file)(
+        struct AgentClient *ac,
+        const unsigned char *token_file);
 };
 
 struct AgentClient

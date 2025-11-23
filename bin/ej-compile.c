@@ -1640,6 +1640,9 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
       agent = agent_client_ssh_create();
     } else if (!strncmp(agent_name, "ws:", 3)) {
       agent = agent_client_ws_create();
+      if (ejudge_config && ejudge_config->agent_server && ejudge_config->agent_server->token_file) {
+        agent->ops->set_token_file(agent, ejudge_config->agent_server->token_file);
+      }
     } else {
       err("invalid agent");
       return -1;

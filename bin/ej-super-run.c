@@ -859,6 +859,9 @@ do_loop(
         agent_instance_id = xstrdup(super_run_id);
       }
       agent = agent_client_ws_create();
+      if (ejudge_config && ejudge_config->agent_server && ejudge_config->agent_server->token_file) {
+        agent->ops->set_token_file(agent, ejudge_config->agent_server->token_file);
+      }
     } else {
       err("invalid agent");
       return -1;

@@ -18,12 +18,14 @@
 #include "ejudge/agent_client.h"
 #include "ejudge/prepare.h"
 #include "ejudge/misctext.h"
+#include "ejudge/osdeps.h"
 #include "ejudge/errlog.h"
 #include "ejudge/xalloc.h"
 
 #include <curl/curl.h>
 
-#include <curl/easy.h>
+#include <ctype.h>
+#include <errno.h>
 #include <stdio.h>
 #include <time.h>
 
@@ -33,10 +35,12 @@ struct AgentClientWs
 
     CURL *curl;
 
+    unsigned char *ejudge_xml_dir;
     unsigned char *inst_id;
     unsigned char *endpoint;
     unsigned char *queue_id;
     unsigned char *ip_address;
+    unsigned char *token_file;
 
     int mode;
     int verbose_mode;
@@ -49,10 +53,12 @@ destroy_func(struct AgentClient *ac)
     if (!acw) return NULL;
 
     if (acw->curl) curl_easy_cleanup(acw->curl);
+    free(acw->token_file);
     free(acw->ip_address);
     free(acw->queue_id);
     free(acw->endpoint);
     free(acw->inst_id);
+    free(acw->ejudge_xml_dir);
     free(acw);
     return NULL;
 }
@@ -68,6 +74,7 @@ init_func(
         const unsigned char *ip_address)
 {
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
+
     acw->inst_id = xstrdup(inst_id);
     acw->endpoint = xstrdup(endpoint);
     if (queue_id) {
@@ -78,7 +85,54 @@ init_func(
     }
     acw->mode = mode;
     acw->verbose_mode = verbose_mode;
+
+    const unsigned char *ejudge_xml_path = NULL;
+#if defined EJUDGE_XML_PATH
+    if (!ejudge_xml_path) ejudge_xml_path = EJUDGE_XML_PATH;
+#endif
+    if (!ejudge_xml_path) {
+        err("%s:%d: ejudge.xml path is unspecified", __FUNCTION__, __LINE__);
+        return -1;
+    }
+    acw->ejudge_xml_dir = os_DirName(ejudge_xml_path);
+
     return 0;
+}
+
+static unsigned char *
+read_token(
+    struct AgentClientWs *acw,
+    const unsigned char *token_file)
+{
+    unsigned char full_path[PATH_MAX];
+    if (os_IsAbsolutePath(token_file)) {
+        if (snprintf(full_path, sizeof(full_path), "%s", token_file) >= (int) sizeof(full_path)) {
+            err("%s:%d: token path is too long", __FUNCTION__, __LINE__);
+            return NULL;
+        }
+    } else {
+        if (snprintf(full_path, sizeof(full_path), "%s/%s", acw->ejudge_xml_dir, token_file) >= (int) sizeof(full_path)) {
+            err("%s:%d: token path is too long", __FUNCTION__, __LINE__);
+            return NULL;
+        }
+    }
+    FILE *fin = fopen(full_path, "r");
+    if (!fin) {
+        err("%s:%d: failed to open token file '%s': %s", __FUNCTION__, __LINE__, full_path, strerror(errno));
+        return NULL;
+    }
+    char *stxt = NULL;
+    size_t ztxt = 0;
+    FILE *ftxt = open_memstream(&stxt, &ztxt);
+    int c;
+    while ((c = getc_unlocked(fin)) != EOF) {
+        putc_unlocked(c, ftxt);
+    }
+    fclose(ftxt); ftxt = NULL;
+    fclose(fin); fin = NULL;
+    while (ztxt > 0 && isspace((unsigned char) stxt[ztxt - 1])) --ztxt;
+    stxt[ztxt] = 0;
+    return stxt;
 }
 
 static int
@@ -90,6 +144,10 @@ connect_func(struct AgentClient *ac)
     char *urlt = NULL;
     size_t urlz = 0;
     FILE *urlf = NULL;
+    struct curl_slist *headers = NULL;
+    char *authorization = NULL;
+    unsigned char *token = NULL;
+    __attribute__((unused)) int _;
 
     CURLcode cc = curl_global_init(CURL_GLOBAL_ALL);
     if (cc != CURLE_OK) {
@@ -130,7 +188,19 @@ connect_func(struct AgentClient *ac)
     }
     fclose(urlf); urlf = NULL;
 
+    if (acw->token_file && acw->token_file[0]) {
+        if (!(token = read_token(acw, acw->token_file))) {
+            err("%s:%d: read_token failed", __FUNCTION__, __LINE__);
+            goto done;
+        }
+        _ = asprintf(&authorization, "Authorization: Bearer %s", token);
+        headers = curl_slist_append(headers, authorization);
+    }
+
     curl_easy_setopt(acw->curl, CURLOPT_URL, urlf);
+    if (headers) {
+        curl_easy_setopt(acw->curl, CURLOPT_HTTPHEADER, headers);
+    }
     curl_easy_setopt(acw->curl, CURLOPT_CONNECT_ONLY, 2L);
     cc = curl_easy_perform(acw->curl);
     if (cc != CURLE_OK) {
@@ -144,7 +214,20 @@ done:;
     html_armor_free(&ab);
     if (urlf) fclose(urlf);
     free(urlt);
+    if (headers) curl_slist_free_all(headers);
+    free(authorization);
+    free(token);
     return retval;
+}
+
+static int
+set_token_file_func(
+        struct AgentClient *ac,
+        const unsigned char *token_file)
+{
+    struct AgentClientWs *acw = (struct AgentClientWs *) ac;
+    acw->token_file = xstrdup(token_file);
+    return 0;
 }
 
 static const struct AgentClientOps ops_ws =
@@ -170,6 +253,7 @@ static const struct AgentClientOps ops_ws =
     //put_archive_2_func,
     //mirror_file_func,
     //put_config_func,
+    .set_token_file = set_token_file_func,
 };
 
 struct AgentClient *
