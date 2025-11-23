@@ -373,10 +373,9 @@ poll_queue_func(
 {
     int result = -1;
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
-    long long time_ms;
     cJSON *jr = NULL;
 
-    cJSON *jq = create_request(acw, &time_ms, "poll");
+    cJSON *jq = create_request(acw, NULL, "poll");
     if (random_mode > 0) {
         cJSON_AddTrueToObject(jq, "random_mode");
     }
@@ -432,6 +431,601 @@ done:;
 }
 
 static int
+get_packet_func(
+        struct AgentClient *ac,
+        const unsigned char *pkt_name,
+        char **p_pkt_ptr,
+        size_t *p_pkt_len)
+{
+    int result = -1;
+    struct AgentClientWs *acw = (struct AgentClientWs *) ac;
+    cJSON *jr = NULL;
+    cJSON *jq = create_request(acw, NULL, "get-packet");
+    cJSON_AddStringToObject(jq, "pkt_name", pkt_name);
+    if (send_json(acw, jq) < 0) {
+        err("%s:%d: send_json failed", __FUNCTION__, __LINE__);
+        goto done;
+    }
+    cJSON_Delete(jq); jq = NULL;
+
+    jr = recv_json(acw);
+    if (!jr) {
+        err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
+        goto done;
+    }
+    result = agent_extract_file_result(jr, p_pkt_ptr, p_pkt_len);
+    if (result < 0) {
+        err("%s:%d: json processing failed", __FUNCTION__, __LINE__);
+    }
+
+done:;
+    if (jq) cJSON_Delete(jq);
+    if (jr) cJSON_Delete(jr);
+    return result;
+}
+
+static int
+get_data_func(
+        struct AgentClient *ac,
+        const unsigned char *pkt_name,
+        const unsigned char *suffix,
+        char **p_pkt_ptr,
+        size_t *p_pkt_len)
+{
+    int result = -1;
+    struct AgentClientWs *acw = (struct AgentClientWs *) ac;
+    cJSON *jr = NULL;
+    cJSON *jq = create_request(acw, NULL, "get-data");
+    cJSON_AddStringToObject(jq, "pkt_name", pkt_name);
+    if (suffix) {
+        cJSON_AddStringToObject(jq, "suffix", suffix);
+    }
+    if (send_json(acw, jq) < 0) {
+        err("%s:%d: send_json failed", __FUNCTION__, __LINE__);
+        goto done;
+    }
+    cJSON_Delete(jq); jq = NULL;
+
+    jr = recv_json(acw);
+    if (!jr) {
+        err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
+        goto done;
+    }
+    result = agent_extract_file_result(jr, p_pkt_ptr, p_pkt_len);
+    if (result < 0) {
+        err("%s:%d: json processing failed", __FUNCTION__, __LINE__);
+    }
+
+done:;
+    if (jq) cJSON_Delete(jq);
+    if (jr) cJSON_Delete(jr);
+    return result;
+}
+
+static int
+put_reply_func(
+        struct AgentClient *ac,
+        const unsigned char *contest_server_name,
+        int contest_id,
+        const unsigned char *run_name,
+        const unsigned char *pkt_ptr,
+        size_t pkt_len)
+{
+    int result = -1;
+    struct AgentClientWs *acw = (struct AgentClientWs *) ac;
+    cJSON *jr = NULL;
+    cJSON *jq = create_request(acw, NULL, "put-reply");
+    cJSON_AddStringToObject(jq, "server", contest_server_name);
+    cJSON_AddNumberToObject(jq, "contest", contest_id);
+    cJSON_AddStringToObject(jq, "run_name", run_name);
+    agent_add_file_to_object(jq, pkt_ptr, pkt_len);
+    if (send_json(acw, jq) < 0) {
+        err("%s:%d: send_json failed", __FUNCTION__, __LINE__);
+        goto done;
+    }
+    cJSON_Delete(jq); jq = NULL;
+
+    jr = recv_json(acw);
+    if (!jr) {
+        err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
+        goto done;
+    }
+    cJSON *jok = cJSON_GetObjectItem(jr, "ok");
+    if (!jok || jok->type != cJSON_True) {
+        err("%s:%d: request failed on server side", __FUNCTION__, __LINE__);
+        goto done;
+    }
+
+    result = 0;
+
+done:;
+    if (jq) cJSON_Delete(jq);
+    if (jr) cJSON_Delete(jr);
+    return result;
+}
+
+static int
+put_output_func(
+        struct AgentClient *ac,
+        const unsigned char *contest_server_name,
+        int contest_id,
+        const unsigned char *run_name,
+        const unsigned char *suffix,
+        const unsigned char *pkt_ptr,
+        size_t pkt_len)
+{
+    int result = -1;
+    struct AgentClientWs *acw = (struct AgentClientWs *) ac;
+    cJSON *jr = NULL;
+    cJSON *jq = create_request(acw, NULL, "put-output");
+    cJSON_AddStringToObject(jq, "server", contest_server_name);
+    cJSON_AddNumberToObject(jq, "contest", contest_id);
+    cJSON_AddStringToObject(jq, "run_name", run_name);
+    if (suffix) {
+        cJSON_AddStringToObject(jq, "suffix", suffix);
+    }
+    agent_add_file_to_object(jq, pkt_ptr, pkt_len);
+    if (send_json(acw, jq) < 0) {
+        err("%s:%d: send_json failed", __FUNCTION__, __LINE__);
+        goto done;
+    }
+    cJSON_Delete(jq); jq = NULL;
+
+    jr = recv_json(acw);
+    if (!jr) {
+        err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
+        goto done;
+    }
+    cJSON *jok = cJSON_GetObjectItem(jr, "ok");
+    if (!jok || jok->type != cJSON_True) {
+        err("%s:%d: request failed on server side", __FUNCTION__, __LINE__);
+        goto done;
+    }
+
+    result = 0;
+
+done:;
+    if (jq) cJSON_Delete(jq);
+    if (jr) cJSON_Delete(jr);
+    return result;
+}
+
+static int
+put_output_2_func(
+        struct AgentClient *ac,
+        const unsigned char *contest_server_name,
+        int contest_id,
+        const unsigned char *run_name,
+        const unsigned char *suffix,
+        const unsigned char *path)
+{
+    int result = -1;
+    struct AgentClientWs *acw = (struct AgentClientWs *) ac;
+    cJSON *jr = NULL;
+    cJSON *jq = create_request(acw, NULL, "put-output");
+    MappedFile mf = {};
+    if (agent_file_map(&mf, path) < 0) {
+        err("%s:%d: failed to map file '%s'", __FUNCTION__, __LINE__, path);
+        goto done;
+    }
+    cJSON_AddStringToObject(jq, "server", contest_server_name);
+    cJSON_AddNumberToObject(jq, "contest", contest_id);
+    cJSON_AddStringToObject(jq, "run_name", run_name);
+    if (suffix) {
+        cJSON_AddStringToObject(jq, "suffix", suffix);
+    }
+    agent_add_file_to_object(jq, mf.data, mf.size);
+    if (send_json(acw, jq) < 0) {
+        err("%s:%d: send_json failed", __FUNCTION__, __LINE__);
+        goto done;
+    }
+    cJSON_Delete(jq); jq = NULL;
+
+    jr = recv_json(acw);
+    if (!jr) {
+        err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
+        goto done;
+    }
+    cJSON *jok = cJSON_GetObjectItem(jr, "ok");
+    if (!jok || jok->type != cJSON_True) {
+        err("%s:%d: request failed on server side", __FUNCTION__, __LINE__);
+        goto done;
+    }
+
+    result = 0;
+
+done:;
+    if (jq) cJSON_Delete(jq);
+    if (jr) cJSON_Delete(jr);
+    agent_file_unmap(&mf);
+    return result;
+}
+
+static int
+add_ignored_func(
+        struct AgentClient *ac,
+        const unsigned char *pkt_name)
+{
+    int result = -1;
+    struct AgentClientWs *acw = (struct AgentClientWs *) ac;
+    cJSON *jr = NULL;
+    cJSON *jq = create_request(acw, NULL, "add-ignored");
+    cJSON_AddStringToObject(jq, "pkt_name", pkt_name);
+    if (send_json(acw, jq) < 0) {
+        err("%s:%d: send_json failed", __FUNCTION__, __LINE__);
+        goto done;
+    }
+    cJSON_Delete(jq); jq = NULL;
+
+    jr = recv_json(acw);
+    if (!jr) {
+        err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
+        goto done;
+    }
+    cJSON *jok = cJSON_GetObjectItem(jr, "ok");
+    if (!jok || jok->type != cJSON_True) {
+        err("%s:%d: request failed on server side", __FUNCTION__, __LINE__);
+        goto done;
+    }
+
+    result = 0;
+
+done:;
+    if (jq) cJSON_Delete(jq);
+    if (jr) cJSON_Delete(jr);
+    return result;
+}
+
+static int
+put_packet_func(
+        struct AgentClient *ac,
+        const unsigned char *pkt_name,
+        const unsigned char *pkt_ptr,
+        size_t pkt_len)
+{
+    int result = -1;
+    struct AgentClientWs *acw = (struct AgentClientWs *) ac;
+    cJSON *jr = NULL;
+    cJSON *jq = create_request(acw, NULL, "put-packet");
+    cJSON_AddStringToObject(jq, "pkt_name", pkt_name);
+    agent_add_file_to_object(jq, pkt_ptr, pkt_len);
+    if (send_json(acw, jq) < 0) {
+        err("%s:%d: send_json failed", __FUNCTION__, __LINE__);
+        goto done;
+    }
+    cJSON_Delete(jq); jq = NULL;
+
+    jr = recv_json(acw);
+    if (!jr) {
+        err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
+        goto done;
+    }
+    cJSON *jok = cJSON_GetObjectItem(jr, "ok");
+    if (!jok || jok->type != cJSON_True) {
+        err("%s:%d: request failed on server side", __FUNCTION__, __LINE__);
+        goto done;
+    }
+
+    result = 0;
+
+done:;
+    if (jq) cJSON_Delete(jq);
+    if (jr) cJSON_Delete(jr);
+    return result;
+}
+
+static int
+get_data_2_func(
+        struct AgentClient *ac,
+        const unsigned char *pkt_name,
+        const unsigned char *suffix,
+        const unsigned char *dir,
+        const unsigned char *name,
+        const unsigned char *out_suffix)
+{
+    int retval = -1;
+    char *data = NULL;
+    size_t size = 0;
+    retval = get_data_func(ac, pkt_name, suffix, &data, &size);
+    if (retval <= 0) {
+        goto done;
+    }
+    retval = agent_save_file(dir, name, out_suffix, data, size);
+    if (retval < 0) {
+        err("%s:%d: save file failed", __FUNCTION__, __LINE__);
+    }
+
+done:
+    free(data);
+    return retval;
+}
+
+static int
+put_heartbeat_func(
+        struct AgentClient *ac,
+        const unsigned char *file_name,
+        const void *data,
+        size_t size,
+        long long *p_last_saved_time_ms,
+        unsigned char *p_stop_flag,
+        unsigned char *p_down_flag,
+        unsigned char *p_reboot_flag)
+{
+    int result = -1;
+    struct AgentClientWs *acw = (struct AgentClientWs *) ac;
+    cJSON *jr = NULL;
+    cJSON *jq = create_request(acw, NULL, "put-heartbeat");
+    cJSON_AddStringToObject(jq, "name", file_name);
+    agent_add_file_to_object(jq, data, size);
+    if (send_json(acw, jq) < 0) {
+        err("%s:%d: send_json failed", __FUNCTION__, __LINE__);
+        goto done;
+    }
+    cJSON_Delete(jq); jq = NULL;
+
+    jr = recv_json(acw);
+    if (!jr) {
+        err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
+        goto done;
+    }
+    cJSON *jok = cJSON_GetObjectItem(jr, "ok");
+    if (!jok || jok->type != cJSON_True) {
+        err("%s:%d: request failed on server side", __FUNCTION__, __LINE__);
+        goto done;
+    }
+    cJSON *jtt = cJSON_GetObjectItem(jr, "tt");
+    if (jtt && jtt->type == cJSON_Number && p_last_saved_time_ms) {
+        *p_last_saved_time_ms = (long long) jtt->valuedouble;
+    }
+    cJSON *jsf = cJSON_GetObjectItem(jr, "stop_flag");
+    if (jsf && jsf->type == cJSON_True && p_stop_flag) {
+        *p_stop_flag = 1;
+    }
+    cJSON *jdf = cJSON_GetObjectItem(jr, "down_flag");
+    if (jdf && jdf->type == cJSON_True && p_down_flag) {
+        *p_down_flag = 1;
+    }
+    cJSON *jrf = cJSON_GetObjectItem(jr, "reboot_flag");
+    if (jrf && jrf->type == cJSON_True && p_reboot_flag) {
+        *p_reboot_flag = 1;
+    }
+
+    result = 0;
+
+done:;
+    if (jq) cJSON_Delete(jq);
+    if (jr) cJSON_Delete(jr);
+    return result;
+}
+
+static int
+delete_heartbeat_func(
+        struct AgentClient *ac,
+        const unsigned char *file_name)
+{
+    int result = -1;
+    struct AgentClientWs *acw = (struct AgentClientWs *) ac;
+    cJSON *jr = NULL;
+    cJSON *jq = create_request(acw, NULL, "delete-heartbeat");
+    cJSON_AddStringToObject(jq, "name", file_name);
+    if (send_json(acw, jq) < 0) {
+        err("%s:%d: send_json failed", __FUNCTION__, __LINE__);
+        goto done;
+    }
+    cJSON_Delete(jq); jq = NULL;
+
+    jr = recv_json(acw);
+    if (!jr) {
+        err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
+        goto done;
+    }
+    cJSON *jok = cJSON_GetObjectItem(jr, "ok");
+    if (!jok || jok->type != cJSON_True) {
+        err("%s:%d: request failed on server side", __FUNCTION__, __LINE__);
+        goto done;
+    }
+
+    result = 0;
+
+done:;
+    if (jq) cJSON_Delete(jq);
+    if (jr) cJSON_Delete(jr);
+    return result;
+}
+
+static int
+put_archive_2_func(
+        struct AgentClient *ac,
+        const unsigned char *contest_server_name,
+        int contest_id,
+        const unsigned char *run_name,
+        const unsigned char *suffix,
+        const unsigned char *path)
+{
+    int result = -1;
+    struct AgentClientWs *acw = (struct AgentClientWs *) ac;
+    cJSON *jr = NULL;
+    cJSON *jq = create_request(acw, NULL, "put-archive");
+    MappedFile mf = {};
+    if (agent_file_map(&mf, path) < 0) {
+        err("%s:%d: failed to map file", __FUNCTION__, __LINE__);
+        goto done;
+    }
+    cJSON_AddStringToObject(jq, "server", contest_server_name);
+    cJSON_AddNumberToObject(jq, "contest", contest_id);
+    cJSON_AddStringToObject(jq, "run_name", run_name);
+    if (suffix) {
+        cJSON_AddStringToObject(jq, "suffix", suffix);
+    }
+    agent_add_file_to_object(jq, mf.data, mf.size);
+    if (send_json(acw, jq) < 0) {
+        err("%s:%d: send_json failed", __FUNCTION__, __LINE__);
+        goto done;
+    }
+    cJSON_Delete(jq); jq = NULL;
+
+    jr = recv_json(acw);
+    if (!jr) {
+        err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
+        goto done;
+    }
+    cJSON *jok = cJSON_GetObjectItem(jr, "ok");
+    if (!jok || jok->type != cJSON_True) {
+        err("%s:%d: request failed on server side", __FUNCTION__, __LINE__);
+        goto done;
+    }
+
+    result = 0;
+
+done:;
+    if (jq) cJSON_Delete(jq);
+    if (jr) cJSON_Delete(jr);
+    agent_file_unmap(&mf);
+    return result;
+}
+
+static int
+mirror_file_func(
+        struct AgentClient *ac,
+        const unsigned char *path,
+        time_t current_mtime,
+        long long current_size,
+        int current_mode,
+        char **p_pkt_ptr,
+        size_t *p_pkt_len,
+        time_t *p_new_mtime,
+        int *p_new_mode,
+        int *p_uid,
+        int *p_gid)
+{
+    int result = -1;
+    struct AgentClientWs *acw = (struct AgentClientWs *) ac;
+    cJSON *jr = NULL;
+    cJSON *jq = create_request(acw, NULL, "mirror");
+    char *pkt_ptr = NULL;
+    size_t pkt_len = 0;
+    cJSON_AddStringToObject(jq, "path", path);
+    if (current_mtime > 0) {
+        cJSON_AddNumberToObject(jq, "mtime", current_mtime);
+    }
+    if (current_size >= 0) {
+        cJSON_AddNumberToObject(jq, "size", current_size);
+    }
+    if (current_mode >= 0) {
+        unsigned char mb[64];
+        snprintf(mb, sizeof(mb), "%04o", current_mode);
+        cJSON_AddStringToObject(jq, "mode", mb);
+    }
+    if (send_json(acw, jq) < 0) {
+        err("%s:%d: send_json failed", __FUNCTION__, __LINE__);
+        goto done;
+    }
+    cJSON_Delete(jq); jq = NULL;
+
+    jr = recv_json(acw);
+    if (!jr) {
+        err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
+        goto done;
+    }
+    cJSON *jok = cJSON_GetObjectItem(jr, "ok");
+    if (!jok || jok->type != cJSON_True) {
+        err("%s:%d: request failed on server side", __FUNCTION__, __LINE__);
+        goto done;
+    }
+    jq = cJSON_GetObjectItem(jr, "q");
+    if (!jq || jq->type != cJSON_String) {
+        err("%s:%d: invalid or missing 'q' in reply", __FUNCTION__, __LINE__);
+        goto done;
+    }
+    if (!strcmp(jq->valuestring, "file-unchanged")) {
+        result = 0;
+        goto done;
+    }
+    if (agent_extract_file_result(jr, &pkt_ptr, &pkt_len) < 0) {
+        err("%s:%d: failed to extract file result", __FUNCTION__, __LINE__);
+        goto done;
+    }
+
+    time_t mtime = 0;
+    int mode = -1;
+    int uid = -1;
+    int gid = -1;
+
+    cJSON *jj = cJSON_GetObjectItem(jr, "mtime");
+    if (jj && jj->type == cJSON_Number) {
+        mtime = jj->valuedouble;
+        if (mtime < 0) mtime = 0;
+    }
+    jj = cJSON_GetObjectItem(jr, "mode");
+    if (jj && jj->type == cJSON_String) {
+        mode = strtol(jj->valuestring, NULL, 8);
+        mode &= 07777;
+    }
+    jj = cJSON_GetObjectItem(jr, "uid");
+    if (jj && jj->type == cJSON_Number) {
+        uid = jj->valuedouble;
+        if (uid < 0) uid = -1;
+    }
+    jj = cJSON_GetObjectItem(jr, "gid");
+    if (jj && jj->type == cJSON_Number) {
+        gid = jj->valuedouble;
+        if (gid < 0) gid = -1;
+    }
+
+    *p_pkt_ptr = pkt_ptr; pkt_ptr = NULL;
+    *p_pkt_len = pkt_len; pkt_len = 0;
+    if (p_new_mtime) *p_new_mtime = mtime;
+    if (p_new_mode) *p_new_mode = mode;
+    if (p_uid) *p_uid = uid;
+    if (p_gid) *p_gid = gid;
+    result = 1;
+
+done:;
+    if (jq) cJSON_Delete(jq);
+    if (jr) cJSON_Delete(jr);
+    if (pkt_ptr) free(pkt_ptr);
+    return result;
+}
+
+static int
+put_config_func(
+        struct AgentClient *ac,
+        const unsigned char *file_name,
+        const void *data,
+        size_t size)
+{
+    int result = -1;
+    struct AgentClientWs *acw = (struct AgentClientWs *) ac;
+    cJSON *jr = NULL;
+    cJSON *jq = create_request(acw, NULL, "put-config");
+    cJSON_AddStringToObject(jq, "name", file_name);
+    agent_add_file_to_object(jq, data, size);
+    if (send_json(acw, jq) < 0) {
+        err("%s:%d: send_json failed", __FUNCTION__, __LINE__);
+        goto done;
+    }
+    cJSON_Delete(jq); jq = NULL;
+
+    jr = recv_json(acw);
+    if (!jr) {
+        err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
+        goto done;
+    }
+    cJSON *jok = cJSON_GetObjectItem(jr, "ok");
+    if (!jok || jok->type != cJSON_True) {
+        err("%s:%d: request failed on server side", __FUNCTION__, __LINE__);
+        goto done;
+    }
+
+    result = 0;
+
+done:;
+    if (jq) cJSON_Delete(jq);
+    if (jr) cJSON_Delete(jr);
+    return result;
+}
+
+static int
 set_token_file_func(
         struct AgentClient *ac,
         const unsigned char *token_file)
@@ -449,21 +1043,21 @@ static const struct AgentClientOps ops_ws =
     close_func,
     is_closed_func,
     poll_queue_func,
-    //get_packet_func,
-    //get_data_func,
-    //put_reply_func,
-    //put_output_func,
-    //put_output_2_func,
-    //async_wait_init_func,
-    //async_wait_complete_func,
-    //add_ignored_func,
-    //put_packet_func,
-    //get_data_2_func,
-    //put_heartbeat_func,
-    //delete_heartbeat_func,
-    //put_archive_2_func,
-    //mirror_file_func,
-    //put_config_func,
+    get_packet_func,
+    get_data_func,
+    put_reply_func,
+    put_output_func,
+    put_output_2_func,
+    NULL, //async_wait_init_func,
+    NULL, //async_wait_complete_func,
+    add_ignored_func,
+    put_packet_func,
+    get_data_2_func,
+    put_heartbeat_func,
+    delete_heartbeat_func,
+    put_archive_2_func,
+    mirror_file_func,
+    put_config_func,
     .set_token_file = set_token_file_func,
 };
 

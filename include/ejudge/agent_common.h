@@ -60,6 +60,12 @@ typedef struct ContestSpools
     size_t a;
 } ContestSpools;
 
+typedef struct MappedFile
+{
+    unsigned char *data;
+    size_t size;
+} MappedFile;
+
 int
 spool_queue_init(
     SpoolQueue *q,
@@ -108,5 +114,17 @@ agent_save_to_spool(
     const unsigned char *file_name,
     const unsigned char *data,
     size_t size);
+int
+agent_save_file(
+    const unsigned char *dir,
+    const unsigned char *name,
+    const unsigned char *suffix,
+    const unsigned char *data,
+    size_t size);
+
+void
+agent_file_unmap(MappedFile *mf);
+int
+agent_file_map(MappedFile *mf, const unsigned char *path);
 
 #endif /* __AGENT_COMMON_H__ */

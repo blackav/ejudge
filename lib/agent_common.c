@@ -697,3 +697,99 @@ done:;
     if (in_path[0]) unlink(in_path);
     return retval;
 }
+
+int
+agent_save_file(
+    const unsigned char *dir,
+    const unsigned char *name,
+    const unsigned char *suffix,
+    const unsigned char *data,
+    size_t size)
+{
+    int retval = -1;
+    int fd = -1;
+    char *mem = MAP_FAILED;
+    if (!dir) dir = "";
+    if (!name) name = "";
+    if (!suffix) suffix = "";
+    unsigned char path[PATH_MAX];
+    if (!*dir) {
+        snprintf(path, sizeof(path), "%s%s", name, suffix);
+    } else {
+        snprintf(path, sizeof(path), "%s/%s%s", dir, name, suffix);
+    }
+    fd = open(path, O_RDWR | O_CREAT | O_TRUNC, 0600);
+    if (fd < 0) {
+        err("%s:%d: failed to open output file: %s", __FUNCTION__, __LINE__, os_ErrorMsg());
+        goto done;
+    }
+    if (ftruncate(fd, size) < 0) {
+        err("%s:%d: failed to truncate output file: %s", __FUNCTION__, __LINE__, os_ErrorMsg());
+        goto done;
+    }
+    if (!size) {
+        retval = 0;
+        goto done;
+    }
+    mem = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    if (mem == MAP_FAILED) {
+        err("%s:%d: failed to mmap output file: %s", __FUNCTION__, __LINE__, os_ErrorMsg());
+        goto done;
+    }
+    memmove(mem, data, size);
+    retval = 1;
+
+done:
+    if (mem != MAP_FAILED) munmap(mem, size);
+    if (fd >= 0) close(fd);
+    return retval;
+}
+
+void
+agent_file_unmap(MappedFile *mf)
+{
+    if (mf->data != MAP_FAILED && mf->data != NULL) {
+        munmap(mf->data, mf->size);
+    }
+    mf->data = MAP_FAILED;
+    mf->size = 0;
+}
+
+int
+agent_file_map(MappedFile *mf, const unsigned char *path)
+{
+    int fd = open(path, O_RDONLY | O_NONBLOCK | O_NOCTTY | O_NOFOLLOW, 0);
+    if (fd < 0) {
+        err("%s:%d: cannot open '%s': %s", __FUNCTION__, __LINE__, path, os_ErrorMsg());
+        return -1;
+    }
+    struct stat stb;
+    if (fstat(fd, &stb) < 0) {
+        err("%s:%d: fstat failed '%s': %s", __FUNCTION__, __LINE__, path, os_ErrorMsg());
+        close(fd);
+        return -1;
+    }
+    if (!S_ISREG(stb.st_mode)) {
+        err("%s:%d: not a regular file '%s'", __FUNCTION__, __LINE__, path);
+        close(fd);
+        return -1;
+    }
+    if (stb.st_size < 0 || stb.st_size > 2000000000) {
+        err("%s:%d: file too big '%s': %lld", __FUNCTION__, __LINE__, path, (long long) stb.st_mode);
+        close(fd);
+        return -1;
+    }
+    mf->size = stb.st_size;
+    if (!mf->size) {
+        close(fd);
+        return 0;
+    }
+    mf->data = mmap(NULL, mf->size, PROT_READ, MAP_PRIVATE, fd, 0);
+    if (mf->data == MAP_FAILED) {
+        err("%s:%d: mmap failed '%s': %s", __FUNCTION__, __LINE__, path, os_ErrorMsg());
+        close(fd);
+        return -1;
+    }
+    close(fd);
+    return 1;
+}
