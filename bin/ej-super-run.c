@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2012-2024 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2025 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -854,18 +854,26 @@ do_loop(
         agent_instance_id = xstrdup(super_run_id);
       }
       agent = agent_client_ssh_create();
-      if (agent->ops->init(agent, agent_instance_id,
-                           agent_name + 4, run_server_id,
-                           PREPARE_RUN, verbose_mode, ip_address) < 0) {
-        err("failed to initalize agent");
-        return -1;
+    } else if (!strncmp(agent_name, "ws:", 3)) {
+      if (!agent_instance_id && super_run_id) {
+        agent_instance_id = xstrdup(super_run_id);
       }
-      if (agent->ops->connect(agent) < 0) {
-        err("failed to connect to client");
-        return -1;
+      agent = agent_client_ws_create();
+      if (ejudge_config && ejudge_config->agent_server && ejudge_config->agent_server->token_file) {
+        agent->ops->set_token_file(agent, ejudge_config->agent_server->token_file);
       }
     } else {
       err("invalid agent");
+      return -1;
+    }
+    if (agent->ops->init(agent, agent_instance_id,
+                          agent_name + 3, run_server_id,
+                          PREPARE_RUN, verbose_mode, ip_address) < 0) {
+      err("failed to initalize agent");
+      return -1;
+    }
+    if (agent->ops->connect(agent) < 0) {
+      err("failed to connect to client");
       return -1;
     }
   } else {

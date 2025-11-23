@@ -16,4 +16,10 @@
  * GNU General Public License for more details.
  */
 
+typedef struct AgentServerParams
+{
+} AgentServerParams;
+
+int agent_server_start(const AgentServerParams *params);
+
 #endif /* __AGENT_SERVER_H__ */

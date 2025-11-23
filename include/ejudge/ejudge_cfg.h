@@ -3,7 +3,7 @@
 #ifndef __EJUDGE_CFG_H__
 #define __EJUDGE_CFG_H__ 1
 
-/* Copyright (C) 2002-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2025 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -62,6 +62,15 @@ struct ejudge_cfg_caps_file
   struct ejudge_cfg *root;
   time_t last_caps_file_check;
   time_t last_caps_file_mtime;
+};
+
+struct ejudge_cfg_agent_server
+{
+  struct xml_tree b;
+
+  int enable;
+  int port;
+  unsigned char *token_file;
 };
 
 struct ejudge_cfg
@@ -145,6 +154,7 @@ struct ejudge_cfg
 
   struct ejudge_cfg_caps_file *caps_file_info;
   unsigned char *ejudge_xml_path;
+  struct ejudge_cfg_agent_server *agent_server;
 };
 
 struct ejudge_cfg *ejudge_cfg_parse(char const *, int no_system_lookup);

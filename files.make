@@ -121,6 +121,7 @@ REUSE_CFILES=\
 COMMON_CFILES=\
  lib/agent_client_ssh.c\
  lib/agent_client_ws.c\
+ lib/agent_common.c\
  lib/agent_server.c\
  lib/allowed_list.c\
  lib/archive_paths.c\
@@ -575,6 +576,7 @@ CFILES=\
 
 HFILES=\
  ./include/ejudge/agent_client.h\
+ ./include/ejudge/agent_common.h\
  ./include/ejudge/agent_server.h\
  ./include/ejudge/archive_paths.h\
  ./include/ejudge/avatar_plugin.h\

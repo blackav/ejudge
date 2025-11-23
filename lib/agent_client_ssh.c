@@ -1964,6 +1964,7 @@ static const struct AgentClientOps ops_ssh =
     put_archive_2_func,
     mirror_file_func,
     put_config_func,
+    NULL,
 };
 
 struct AgentClient *
