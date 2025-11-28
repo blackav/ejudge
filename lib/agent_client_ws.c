@@ -1340,12 +1340,12 @@ mirror_file_func(
             err("%s:%d: request failed on server side", __FUNCTION__, __LINE__);
             goto done;
         }
-        jq = cJSON_GetObjectItem(jr, "q");
-        if (!jq || jq->type != cJSON_String) {
+        cJSON *jrq = cJSON_GetObjectItem(jr, "q");
+        if (!jrq || jrq->type != cJSON_String) {
             err("%s:%d: invalid or missing 'q' in reply", __FUNCTION__, __LINE__);
             goto done;
         }
-        if (!strcmp(jq->valuestring, "file-unchanged")) {
+        if (!strcmp(jrq->valuestring, "file-unchanged")) {
             result = 0;
             goto done;
         }
