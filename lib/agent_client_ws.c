@@ -40,6 +40,7 @@ enum
     ACW_NO_DATA = 0,     // unused
     ACW_ERROR = -1,      // any error
     ACW_DISCONNECT = -2, // explicit disconnect, propagate up to reconnect
+    ACW_INTERRUPT = -3,  // user interrupt (SIGTERM or SIGINT)
 };
 
 struct AgentClientWs
@@ -296,7 +297,18 @@ send_json(struct AgentClientWs *acw, cJSON *json)
         CURLcode res = curl_ws_send(acw->curl, ptr, len, &sent, 0, CURLWS_TEXT);
         if (res == CURLE_AGAIN) {
             // FIXME: in real application: wait for socket here, e.g. using select()
+            interrupt_enable();
+            if (interrupt_get_status()) {
+                err("%s:%d: interrupt", __FUNCTION__, __LINE__);
+                interrupt_disable();
+                return -1;
+            }
             usleep(1000);
+            interrupt_disable();
+            if (interrupt_get_status()) {
+                err("%s:%d: interrupt", __FUNCTION__, __LINE__);
+                return -1;
+            }
             continue;
         }
         if (res != CURLE_OK) {
@@ -326,7 +338,18 @@ recv_json(struct AgentClientWs *acw, cJSON **pres)
         CURLcode res = curl_ws_recv(acw->curl, &acw->in_buf[acw->in_buf_u], acw->in_buf_a - acw->in_buf_u, &recv, &meta);
         if (res == CURLE_AGAIN) {
             // FIXME: in real application: wait for socket here, e.g. using select()
+            interrupt_enable();
+            if (interrupt_get_status()) {
+                err("%s:%d: interrupt", __FUNCTION__, __LINE__);
+                interrupt_disable();
+                return ACW_INTERRUPT;
+            }
             usleep(1000);
+            interrupt_disable();
+            if (interrupt_get_status()) {
+                err("%s:%d: interrupt", __FUNCTION__, __LINE__);
+                return ACW_INTERRUPT;
+            }
             continue;
         }
         if (res == CURLE_GOT_NOTHING) {
@@ -739,13 +762,19 @@ async_wait_init_func(
 
         // TODO
         interrupt_enable();
+        if (interrupt_get_status()) {
+            err("%s:%d: interrupt", __FUNCTION__, __LINE__);
+            interrupt_disable();
+            result = -1;
+            break;
+        }
         sleep(5);
+        interrupt_disable();
         if (interrupt_get_status()) {
             err("%s:%d: interrupt", __FUNCTION__, __LINE__);
             result = -1;
             break;
         }
-        interrupt_disable();
     }
 
 done:;
