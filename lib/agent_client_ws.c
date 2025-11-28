@@ -235,6 +235,42 @@ done:;
     return retval;
 }
 
+static int reconnect_wait_times_us[] =
+{
+    1000, 5000, 100000, 1000000, 10000000,
+};
+
+static int
+connect_with_backoff(struct AgentClientWs *acw, int is_initial)
+{
+    int res = do_connect(acw);
+    if (res != ACW_DISCONNECT || is_initial) {
+        return res;
+    }
+    int retry_index = 0;
+    while (res == ACW_DISCONNECT) {
+        if (reconnect_wait_times_us[retry_index] > 0) {
+            interrupt_enable();
+            if (interrupt_get_status()) {
+                err("%s:%d: interrupt", __FUNCTION__, __LINE__);
+                interrupt_disable();
+                return ACW_INTERRUPT;
+            }
+            usleep(reconnect_wait_times_us[retry_index]);
+            interrupt_disable();
+            if (interrupt_get_status()) {
+                err("%s:%d: interrupt", __FUNCTION__, __LINE__);
+                return ACW_INTERRUPT;
+            }
+        }
+        if (retry_index + 1 < sizeof(reconnect_wait_times_us)/sizeof(reconnect_wait_times_us[0])) {
+            ++retry_index;
+        }
+        res = do_connect(acw);
+    }
+    return res;
+}
+
 static int
 connect_func(struct AgentClient *ac)
 {
@@ -252,9 +288,9 @@ connect_func(struct AgentClient *ac)
         goto done;
     }
 
-    int rr = do_connect(acw);
+    int rr = connect_with_backoff(acw, 1);
     if (rr < 0) {
-        err("%s:%d: do_connect failed", __FUNCTION__, __LINE__);
+        err("%s:%d: connect_with_backoff", __FUNCTION__, __LINE__);
         goto done;
 
     }
