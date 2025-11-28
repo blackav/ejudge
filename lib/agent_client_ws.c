@@ -39,7 +39,7 @@ enum
     ACW_OK = 1,
     ACW_NO_DATA = 0,     // unused
     ACW_ERROR = -1,      // any error
-    ACW_DISCONNECT = -2, // explicit disconnect, propagate up to reconnect
+    ACW_DISCONNECT = -2, // disconnect, propagate up to reconnect
     ACW_INTERRUPT = -3,  // user interrupt (SIGTERM or SIGINT)
 };
 
@@ -417,6 +417,7 @@ poll_queue_func(
     int result = -1;
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
     cJSON *jr = NULL;
+    int rr = 0;
 
     cJSON *jq = create_request(acw, NULL, "poll");
     if (random_mode > 0) {
@@ -425,13 +426,14 @@ poll_queue_func(
     if (enable_file > 0) {
         cJSON_AddTrueToObject(jq, "enable_file");
     }
-    if (send_json(acw, jq) < 0) {
+    rr = send_json(acw, jq);
+    cJSON_Delete(jq); jq = NULL;
+    if (rr < 0) {
         err("%s:%d: send_json failed", __FUNCTION__, __LINE__);
         goto done;
     }
-    cJSON_Delete(jq); jq = NULL;
 
-    int rr = recv_json(acw, &jr);
+    rr = recv_json(acw, &jr);
     if (rr != ACW_OK) {
         err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
         goto done;
@@ -484,14 +486,17 @@ get_packet_func(
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
     cJSON *jr = NULL;
     cJSON *jq = create_request(acw, NULL, "get-packet");
+    int rr;
+
     cJSON_AddStringToObject(jq, "pkt_name", pkt_name);
-    if (send_json(acw, jq) < 0) {
+    rr = send_json(acw, jq);
+    cJSON_Delete(jq); jq = NULL;
+    if (rr < 0) {
         err("%s:%d: send_json failed", __FUNCTION__, __LINE__);
         goto done;
     }
-    cJSON_Delete(jq); jq = NULL;
 
-    int rr = recv_json(acw, &jr);
+    rr = recv_json(acw, &jr);
     if (rr != ACW_OK) {
         err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
         goto done;
@@ -519,17 +524,20 @@ get_data_func(
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
     cJSON *jr = NULL;
     cJSON *jq = create_request(acw, NULL, "get-data");
+    int rr;
+
     cJSON_AddStringToObject(jq, "pkt_name", pkt_name);
     if (suffix) {
         cJSON_AddStringToObject(jq, "suffix", suffix);
     }
-    if (send_json(acw, jq) < 0) {
+    rr = send_json(acw, jq);
+    cJSON_Delete(jq); jq = NULL;
+    if (rr < 0) {
         err("%s:%d: send_json failed", __FUNCTION__, __LINE__);
         goto done;
     }
-    cJSON_Delete(jq); jq = NULL;
 
-    int rr = recv_json(acw, &jr);
+    rr = recv_json(acw, &jr);
     if (rr != ACW_OK) {
         err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
         goto done;
@@ -558,17 +566,20 @@ put_reply_func(
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
     cJSON *jr = NULL;
     cJSON *jq = create_request(acw, NULL, "put-reply");
+    int rr;
+
     cJSON_AddStringToObject(jq, "server", contest_server_name);
     cJSON_AddNumberToObject(jq, "contest", contest_id);
     cJSON_AddStringToObject(jq, "run_name", run_name);
     agent_add_file_to_object(jq, pkt_ptr, pkt_len);
-    if (send_json(acw, jq) < 0) {
+    rr = send_json(acw, jq);
+    cJSON_Delete(jq); jq = NULL;
+    if (rr < 0) {
         err("%s:%d: send_json failed", __FUNCTION__, __LINE__);
         goto done;
     }
-    cJSON_Delete(jq); jq = NULL;
 
-    int rr = recv_json(acw, &jr);
+    rr = recv_json(acw, &jr);
     if (rr != ACW_OK) {
         err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
         goto done;
@@ -601,6 +612,8 @@ put_output_func(
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
     cJSON *jr = NULL;
     cJSON *jq = create_request(acw, NULL, "put-output");
+    int rr;
+
     cJSON_AddStringToObject(jq, "server", contest_server_name);
     cJSON_AddNumberToObject(jq, "contest", contest_id);
     cJSON_AddStringToObject(jq, "run_name", run_name);
@@ -608,13 +621,14 @@ put_output_func(
         cJSON_AddStringToObject(jq, "suffix", suffix);
     }
     agent_add_file_to_object(jq, pkt_ptr, pkt_len);
-    if (send_json(acw, jq) < 0) {
+    rr = send_json(acw, jq);
+    cJSON_Delete(jq); jq = NULL;
+    if (rr < 0) {
         err("%s:%d: send_json failed", __FUNCTION__, __LINE__);
         goto done;
     }
-    cJSON_Delete(jq); jq = NULL;
 
-    int rr = recv_json(acw, &jr);
+    rr = recv_json(acw, &jr);
     if (rr != ACW_OK) {
         err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
         goto done;
@@ -647,6 +661,8 @@ put_output_2_func(
     cJSON *jr = NULL;
     cJSON *jq = create_request(acw, NULL, "put-output");
     MappedFile mf = {};
+    int rr;
+
     if (agent_file_map(&mf, path) < 0) {
         err("%s:%d: failed to map file '%s'", __FUNCTION__, __LINE__, path);
         goto done;
@@ -658,13 +674,14 @@ put_output_2_func(
         cJSON_AddStringToObject(jq, "suffix", suffix);
     }
     agent_add_file_to_object(jq, mf.data, mf.size);
-    if (send_json(acw, jq) < 0) {
+    rr = send_json(acw, jq);
+    cJSON_Delete(jq); jq = NULL;
+    if (rr < 0) {
         err("%s:%d: send_json failed", __FUNCTION__, __LINE__);
         goto done;
     }
-    cJSON_Delete(jq); jq = NULL;
 
-    int rr = recv_json(acw, &jr);
+    rr = recv_json(acw, &jr);
     if (rr != ACW_OK) {
         err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
         goto done;
@@ -705,6 +722,7 @@ async_wait_init_func(
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
     cJSON *jr = NULL;
     cJSON *jq = NULL;
+    int rr;
 
     while (1) {
         jq = create_request(acw, NULL, "poll");
@@ -714,13 +732,14 @@ async_wait_init_func(
         if (enable_file > 0) {
             cJSON_AddTrueToObject(jq, "enable_file");
         }
-        if (send_json(acw, jq) < 0) {
+        rr = send_json(acw, jq);
+        cJSON_Delete(jq); jq = NULL;
+        if (rr < 0) {
             err("%s:%d: send_json failed", __FUNCTION__, __LINE__);
             goto done;
         }
-        cJSON_Delete(jq); jq = NULL;
 
-        int rr = recv_json(acw, &jr);
+        rr = recv_json(acw, &jr);
         if (rr != ACW_OK) {
             err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
             goto done;
@@ -806,14 +825,17 @@ add_ignored_func(
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
     cJSON *jr = NULL;
     cJSON *jq = create_request(acw, NULL, "add-ignored");
+    int rr;
+
     cJSON_AddStringToObject(jq, "pkt_name", pkt_name);
-    if (send_json(acw, jq) < 0) {
+    rr = send_json(acw, jq);
+    cJSON_Delete(jq); jq = NULL;
+    if (rr < 0) {
         err("%s:%d: send_json failed", __FUNCTION__, __LINE__);
         goto done;
     }
-    cJSON_Delete(jq); jq = NULL;
 
-    int rr = recv_json(acw, &jr);
+    rr = recv_json(acw, &jr);
     if (rr != ACW_OK) {
         err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
         goto done;
@@ -843,15 +865,18 @@ put_packet_func(
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
     cJSON *jr = NULL;
     cJSON *jq = create_request(acw, NULL, "put-packet");
+    int rr;
+
     cJSON_AddStringToObject(jq, "pkt_name", pkt_name);
     agent_add_file_to_object(jq, pkt_ptr, pkt_len);
-    if (send_json(acw, jq) < 0) {
+    rr = send_json(acw, jq);
+    cJSON_Delete(jq); jq = NULL;
+    if (rr < 0) {
         err("%s:%d: send_json failed", __FUNCTION__, __LINE__);
         goto done;
     }
-    cJSON_Delete(jq); jq = NULL;
 
-    int rr = recv_json(acw, &jr);
+    rr = recv_json(acw, &jr);
     if (rr != ACW_OK) {
         err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
         goto done;
@@ -911,15 +936,18 @@ put_heartbeat_func(
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
     cJSON *jr = NULL;
     cJSON *jq = create_request(acw, NULL, "put-heartbeat");
+    int rr;
+
     cJSON_AddStringToObject(jq, "name", file_name);
     agent_add_file_to_object(jq, data, size);
-    if (send_json(acw, jq) < 0) {
+    rr = send_json(acw, jq);
+    cJSON_Delete(jq); jq = NULL;
+    if (rr < 0) {
         err("%s:%d: send_json failed", __FUNCTION__, __LINE__);
         goto done;
     }
-    cJSON_Delete(jq); jq = NULL;
 
-    int rr = recv_json(acw, &jr);
+    rr = recv_json(acw, &jr);
     if (rr != ACW_OK) {
         err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
         goto done;
@@ -963,14 +991,17 @@ delete_heartbeat_func(
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
     cJSON *jr = NULL;
     cJSON *jq = create_request(acw, NULL, "delete-heartbeat");
+    int rr;
+
     cJSON_AddStringToObject(jq, "name", file_name);
-    if (send_json(acw, jq) < 0) {
+    rr = send_json(acw, jq);
+    cJSON_Delete(jq); jq = NULL;
+    if (rr < 0) {
         err("%s:%d: send_json failed", __FUNCTION__, __LINE__);
         goto done;
     }
-    cJSON_Delete(jq); jq = NULL;
 
-    int rr = recv_json(acw, &jr);
+    rr = recv_json(acw, &jr);
     if (rr != ACW_OK) {
         err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
         goto done;
@@ -1003,6 +1034,8 @@ put_archive_2_func(
     cJSON *jr = NULL;
     cJSON *jq = create_request(acw, NULL, "put-archive");
     MappedFile mf = {};
+    int rr;
+
     if (agent_file_map(&mf, path) < 0) {
         err("%s:%d: failed to map file", __FUNCTION__, __LINE__);
         goto done;
@@ -1014,13 +1047,14 @@ put_archive_2_func(
         cJSON_AddStringToObject(jq, "suffix", suffix);
     }
     agent_add_file_to_object(jq, mf.data, mf.size);
-    if (send_json(acw, jq) < 0) {
+    rr = send_json(acw, jq);
+    cJSON_Delete(jq); jq = NULL;
+    if (rr < 0) {
         err("%s:%d: send_json failed", __FUNCTION__, __LINE__);
         goto done;
     }
-    cJSON_Delete(jq); jq = NULL;
 
-    int rr = recv_json(acw, &jr);
+    rr = recv_json(acw, &jr);
     if (rr != ACW_OK) {
         err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
         goto done;
@@ -1060,6 +1094,8 @@ mirror_file_func(
     cJSON *jq = create_request(acw, NULL, "mirror");
     char *pkt_ptr = NULL;
     size_t pkt_len = 0;
+    int rr;
+
     cJSON_AddStringToObject(jq, "path", path);
     if (current_mtime > 0) {
         cJSON_AddNumberToObject(jq, "mtime", current_mtime);
@@ -1072,13 +1108,14 @@ mirror_file_func(
         snprintf(mb, sizeof(mb), "%04o", current_mode);
         cJSON_AddStringToObject(jq, "mode", mb);
     }
-    if (send_json(acw, jq) < 0) {
+    rr = send_json(acw, jq);
+    cJSON_Delete(jq); jq = NULL;
+    if (rr < 0) {
         err("%s:%d: send_json failed", __FUNCTION__, __LINE__);
         goto done;
     }
-    cJSON_Delete(jq); jq = NULL;
 
-    int rr = recv_json(acw, &jr);
+    rr = recv_json(acw, &jr);
     if (rr != ACW_OK) {
         err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
         goto done;
@@ -1154,15 +1191,18 @@ put_config_func(
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
     cJSON *jr = NULL;
     cJSON *jq = create_request(acw, NULL, "put-config");
+    int rr;
+
     cJSON_AddStringToObject(jq, "name", file_name);
     agent_add_file_to_object(jq, data, size);
-    if (send_json(acw, jq) < 0) {
+    rr = send_json(acw, jq);
+    cJSON_Delete(jq); jq = NULL;
+    if (rr < 0) {
         err("%s:%d: send_json failed", __FUNCTION__, __LINE__);
         goto done;
     }
-    cJSON_Delete(jq); jq = NULL;
 
-    int rr = recv_json(acw, &jr);
+    rr = recv_json(acw, &jr);
     if (rr != ACW_OK) {
         err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
         goto done;
