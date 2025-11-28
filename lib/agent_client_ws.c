@@ -479,8 +479,9 @@ poll_queue_func(
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
     cJSON *jr = NULL;
     int rr = 0;
+    cJSON *jq = NULL;
 
-    cJSON *jq = create_request(acw, NULL, "poll");
+    jq = create_request(acw, NULL, "poll");
     if (random_mode > 0) {
         cJSON_AddTrueToObject(jq, "random_mode");
     }
@@ -546,9 +547,10 @@ get_packet_func(
     int result = -1;
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
     cJSON *jr = NULL;
-    cJSON *jq = create_request(acw, NULL, "get-packet");
+    cJSON *jq = NULL;
     int rr;
 
+    jq = create_request(acw, NULL, "get-packet");
     cJSON_AddStringToObject(jq, "pkt_name", pkt_name);
     rr = send_json(acw, jq);
     cJSON_Delete(jq); jq = NULL;
@@ -584,9 +586,10 @@ get_data_func(
     int result = -1;
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
     cJSON *jr = NULL;
-    cJSON *jq = create_request(acw, NULL, "get-data");
+    cJSON *jq = NULL;
     int rr;
 
+    jq = create_request(acw, NULL, "get-data");
     cJSON_AddStringToObject(jq, "pkt_name", pkt_name);
     if (suffix) {
         cJSON_AddStringToObject(jq, "suffix", suffix);
@@ -626,9 +629,10 @@ put_reply_func(
     int result = -1;
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
     cJSON *jr = NULL;
-    cJSON *jq = create_request(acw, NULL, "put-reply");
+    cJSON *jq = NULL;
     int rr;
 
+    jq = create_request(acw, NULL, "put-reply");
     cJSON_AddStringToObject(jq, "server", contest_server_name);
     cJSON_AddNumberToObject(jq, "contest", contest_id);
     cJSON_AddStringToObject(jq, "run_name", run_name);
@@ -672,9 +676,10 @@ put_output_func(
     int result = -1;
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
     cJSON *jr = NULL;
-    cJSON *jq = create_request(acw, NULL, "put-output");
+    cJSON *jq = NULL;
     int rr;
 
+    jq = create_request(acw, NULL, "put-output");
     cJSON_AddStringToObject(jq, "server", contest_server_name);
     cJSON_AddNumberToObject(jq, "contest", contest_id);
     cJSON_AddStringToObject(jq, "run_name", run_name);
@@ -720,10 +725,11 @@ put_output_2_func(
     int result = -1;
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
     cJSON *jr = NULL;
-    cJSON *jq = create_request(acw, NULL, "put-output");
+    cJSON *jq = NULL;
     MappedFile mf = {};
     int rr;
 
+    jq = create_request(acw, NULL, "put-output");
     if (agent_file_map(&mf, path) < 0) {
         err("%s:%d: failed to map file '%s'", __FUNCTION__, __LINE__, path);
         goto done;
@@ -885,9 +891,10 @@ add_ignored_func(
     int result = -1;
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
     cJSON *jr = NULL;
-    cJSON *jq = create_request(acw, NULL, "add-ignored");
+    cJSON *jq = NULL;
     int rr;
 
+    jq = create_request(acw, NULL, "add-ignored");
     cJSON_AddStringToObject(jq, "pkt_name", pkt_name);
     rr = send_json(acw, jq);
     cJSON_Delete(jq); jq = NULL;
@@ -925,9 +932,10 @@ put_packet_func(
     int result = -1;
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
     cJSON *jr = NULL;
-    cJSON *jq = create_request(acw, NULL, "put-packet");
+    cJSON *jq = NULL;
     int rr;
 
+    jq = create_request(acw, NULL, "put-packet");
     cJSON_AddStringToObject(jq, "pkt_name", pkt_name);
     agent_add_file_to_object(jq, pkt_ptr, pkt_len);
     rr = send_json(acw, jq);
@@ -996,9 +1004,10 @@ put_heartbeat_func(
     int result = -1;
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
     cJSON *jr = NULL;
-    cJSON *jq = create_request(acw, NULL, "put-heartbeat");
+    cJSON *jq = NULL;
     int rr;
 
+    jq = create_request(acw, NULL, "put-heartbeat");
     cJSON_AddStringToObject(jq, "name", file_name);
     agent_add_file_to_object(jq, data, size);
     rr = send_json(acw, jq);
@@ -1051,9 +1060,10 @@ delete_heartbeat_func(
     int result = -1;
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
     cJSON *jr = NULL;
-    cJSON *jq = create_request(acw, NULL, "delete-heartbeat");
+    cJSON *jq = NULL;
     int rr;
 
+    jq = create_request(acw, NULL, "delete-heartbeat");
     cJSON_AddStringToObject(jq, "name", file_name);
     rr = send_json(acw, jq);
     cJSON_Delete(jq); jq = NULL;
@@ -1093,10 +1103,11 @@ put_archive_2_func(
     int result = -1;
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
     cJSON *jr = NULL;
-    cJSON *jq = create_request(acw, NULL, "put-archive");
+    cJSON *jq = NULL;
     MappedFile mf = {};
     int rr;
 
+    jq = create_request(acw, NULL, "put-archive");
     if (agent_file_map(&mf, path) < 0) {
         err("%s:%d: failed to map file", __FUNCTION__, __LINE__);
         goto done;
@@ -1152,11 +1163,12 @@ mirror_file_func(
     int result = -1;
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
     cJSON *jr = NULL;
-    cJSON *jq = create_request(acw, NULL, "mirror");
+    cJSON *jq = NULL;
     char *pkt_ptr = NULL;
     size_t pkt_len = 0;
     int rr;
 
+    jq = create_request(acw, NULL, "mirror");
     cJSON_AddStringToObject(jq, "path", path);
     if (current_mtime > 0) {
         cJSON_AddNumberToObject(jq, "mtime", current_mtime);
@@ -1251,9 +1263,10 @@ put_config_func(
     int result = -1;
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
     cJSON *jr = NULL;
-    cJSON *jq = create_request(acw, NULL, "put-config");
+    cJSON *jq = NULL;
     int rr;
 
+    jq = create_request(acw, NULL, "put-config");
     cJSON_AddStringToObject(jq, "name", file_name);
     agent_add_file_to_object(jq, data, size);
     rr = send_json(acw, jq);
@@ -1328,11 +1341,3 @@ agent_client_ws_create(void)
 
     return &acw->b;
 }
-
-/*
-2025-11-27T15:50:19Z:error:recv_json:321: websocket read error: Server returned nothing (no headers, no data)
-2025-11-27T15:50:19Z:error:async_wait_init_func:684: recv_json failed
-2025-11-27T15:50:19Z:error:async_wait_init failed
-2025-11-27T15:50:19Z:error:send_json:293: curl_ws_send failed: Failed sending data to the peer
-2025-11-27T15:50:19Z:error:delete_heartbeat_func:921: send_json failed
-*/
