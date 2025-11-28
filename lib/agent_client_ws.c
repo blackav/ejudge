@@ -33,6 +33,15 @@
 #include <time.h>
 #include <unistd.h>
 
+// error codes
+enum
+{
+    ACW_OK = 1,
+    ACW_NO_DATA = 0,     // unused
+    ACW_ERROR = -1,      // any error
+    ACW_DISCONNECT = -2, // explicit disconnect, propagate up to reconnect
+};
+
 struct AgentClientWs
 {
     struct AgentClient b;
@@ -286,7 +295,8 @@ send_json(struct AgentClientWs *acw, cJSON *json)
         size_t sent = 0;
         CURLcode res = curl_ws_send(acw->curl, ptr, len, &sent, 0, CURLWS_TEXT);
         if (res == CURLE_AGAIN) {
-            // in real application: wait for socket here, e.g. using select()
+            // FIXME: in real application: wait for socket here, e.g. using select()
+            usleep(1000);
             continue;
         }
         if (res != CURLE_OK) {
@@ -300,37 +310,43 @@ send_json(struct AgentClientWs *acw, cJSON *json)
     return 0;
 }
 
-static cJSON *
-recv_json(struct AgentClientWs *acw)
+static int
+recv_json(struct AgentClientWs *acw, cJSON **pres)
 {
     if (!acw->in_buf_a) {
         acw->in_buf_a = 4096;
         acw->in_buf = xmalloc(acw->in_buf_a);
     }
     acw->in_buf_u = 0;
+    *pres = NULL;
 
     while (1) {
         size_t recv;
         const struct curl_ws_frame *meta;
         CURLcode res = curl_ws_recv(acw->curl, &acw->in_buf[acw->in_buf_u], acw->in_buf_a - acw->in_buf_u, &recv, &meta);
         if (res == CURLE_AGAIN) {
-            // in real application: wait for socket here, e.g. using select()
+            // FIXME: in real application: wait for socket here, e.g. using select()
+            usleep(1000);
             continue;
+        }
+        if (res == CURLE_GOT_NOTHING) {
+            err("%s:%d: websocket connection lost", __FUNCTION__, __LINE__);
+            return ACW_DISCONNECT;
         }
         if (res != CURLE_OK) {
             err("%s:%d: websocket read error: %s", __FUNCTION__, __LINE__, curl_easy_strerror(res));
-            return NULL;
+            return ACW_ERROR;
         }
         if ((meta->flags & CURLWS_CLOSE)) {
             err("%s:%d: websocket connection close", __FUNCTION__, __LINE__);
-            return NULL;
+            return ACW_DISCONNECT;
         }
         if ((meta->flags & (CURLWS_PING | CURLWS_PONG))) {
             continue;
         }
         if ((meta->flags & CURLWS_BINARY)) {
             err("%s:%d: binary frame received", __FUNCTION__, __LINE__);
-            return NULL;
+            return ACW_ERROR;
         }
         acw->in_buf_u += recv;
         if (meta->bytesleft > 0) {
@@ -359,8 +375,10 @@ recv_json(struct AgentClientWs *acw)
     cJSON *j = cJSON_Parse(acw->in_buf);
     if (!j) {
         err("%s:%d: failed to parse JSON", __FUNCTION__, __LINE__);
+        return ACW_ERROR;
     }
-    return j;
+    *pres = j;
+    return ACW_OK;
 }
 
 static int
@@ -390,8 +408,8 @@ poll_queue_func(
     }
     cJSON_Delete(jq); jq = NULL;
 
-    jr = recv_json(acw);
-    if (!jr) {
+    int rr = recv_json(acw, &jr);
+    if (rr != ACW_OK) {
         err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
         goto done;
     }
@@ -450,8 +468,8 @@ get_packet_func(
     }
     cJSON_Delete(jq); jq = NULL;
 
-    jr = recv_json(acw);
-    if (!jr) {
+    int rr = recv_json(acw, &jr);
+    if (rr != ACW_OK) {
         err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
         goto done;
     }
@@ -488,8 +506,8 @@ get_data_func(
     }
     cJSON_Delete(jq); jq = NULL;
 
-    jr = recv_json(acw);
-    if (!jr) {
+    int rr = recv_json(acw, &jr);
+    if (rr != ACW_OK) {
         err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
         goto done;
     }
@@ -527,8 +545,8 @@ put_reply_func(
     }
     cJSON_Delete(jq); jq = NULL;
 
-    jr = recv_json(acw);
-    if (!jr) {
+    int rr = recv_json(acw, &jr);
+    if (rr != ACW_OK) {
         err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
         goto done;
     }
@@ -573,8 +591,8 @@ put_output_func(
     }
     cJSON_Delete(jq); jq = NULL;
 
-    jr = recv_json(acw);
-    if (!jr) {
+    int rr = recv_json(acw, &jr);
+    if (rr != ACW_OK) {
         err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
         goto done;
     }
@@ -623,8 +641,8 @@ put_output_2_func(
     }
     cJSON_Delete(jq); jq = NULL;
 
-    jr = recv_json(acw);
-    if (!jr) {
+    int rr = recv_json(acw, &jr);
+    if (rr != ACW_OK) {
         err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
         goto done;
     }
@@ -679,8 +697,8 @@ async_wait_init_func(
         }
         cJSON_Delete(jq); jq = NULL;
 
-        jr = recv_json(acw);
-        if (!jr) {
+        int rr = recv_json(acw, &jr);
+        if (rr != ACW_OK) {
             err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
             goto done;
         }
@@ -766,8 +784,8 @@ add_ignored_func(
     }
     cJSON_Delete(jq); jq = NULL;
 
-    jr = recv_json(acw);
-    if (!jr) {
+    int rr = recv_json(acw, &jr);
+    if (rr != ACW_OK) {
         err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
         goto done;
     }
@@ -804,8 +822,8 @@ put_packet_func(
     }
     cJSON_Delete(jq); jq = NULL;
 
-    jr = recv_json(acw);
-    if (!jr) {
+    int rr = recv_json(acw, &jr);
+    if (rr != ACW_OK) {
         err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
         goto done;
     }
@@ -872,8 +890,8 @@ put_heartbeat_func(
     }
     cJSON_Delete(jq); jq = NULL;
 
-    jr = recv_json(acw);
-    if (!jr) {
+    int rr = recv_json(acw, &jr);
+    if (rr != ACW_OK) {
         err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
         goto done;
     }
@@ -923,8 +941,8 @@ delete_heartbeat_func(
     }
     cJSON_Delete(jq); jq = NULL;
 
-    jr = recv_json(acw);
-    if (!jr) {
+    int rr = recv_json(acw, &jr);
+    if (rr != ACW_OK) {
         err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
         goto done;
     }
@@ -973,8 +991,8 @@ put_archive_2_func(
     }
     cJSON_Delete(jq); jq = NULL;
 
-    jr = recv_json(acw);
-    if (!jr) {
+    int rr = recv_json(acw, &jr);
+    if (rr != ACW_OK) {
         err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
         goto done;
     }
@@ -1031,8 +1049,8 @@ mirror_file_func(
     }
     cJSON_Delete(jq); jq = NULL;
 
-    jr = recv_json(acw);
-    if (!jr) {
+    int rr = recv_json(acw, &jr);
+    if (rr != ACW_OK) {
         err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
         goto done;
     }
@@ -1115,8 +1133,8 @@ put_config_func(
     }
     cJSON_Delete(jq); jq = NULL;
 
-    jr = recv_json(acw);
-    if (!jr) {
+    int rr = recv_json(acw, &jr);
+    if (rr != ACW_OK) {
         err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
         goto done;
     }
@@ -1180,3 +1198,11 @@ agent_client_ws_create(void)
 
     return &acw->b;
 }
+
+/*
+2025-11-27T15:50:19Z:error:recv_json:321: websocket read error: Server returned nothing (no headers, no data)
+2025-11-27T15:50:19Z:error:async_wait_init_func:684: recv_json failed
+2025-11-27T15:50:19Z:error:async_wait_init failed
+2025-11-27T15:50:19Z:error:send_json:293: curl_ws_send failed: Failed sending data to the peer
+2025-11-27T15:50:19Z:error:delete_heartbeat_func:921: send_json failed
+*/
