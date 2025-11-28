@@ -19,7 +19,6 @@
 #include "ejudge/agent_common.h"
 #include "ejudge/interrupt.h"
 #include "ejudge/prepare.h"
-#include "ejudge/misctext.h"
 #include "ejudge/cJSON.h"
 #include "ejudge/osdeps.h"
 #include "ejudge/errlog.h"
@@ -32,6 +31,8 @@
 #include <stdio.h>
 #include <time.h>
 #include <unistd.h>
+#include <string.h>
+#include <errno.h>
 
 // error codes
 enum
@@ -160,13 +161,13 @@ connect_func(struct AgentClient *ac)
 {
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
     int retval = -1;
-    struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
     char *urlt = NULL;
     size_t urlz = 0;
     FILE *urlf = NULL;
     struct curl_slist *headers = NULL;
     char *authorization = NULL;
     unsigned char *token = NULL;
+    unsigned char *s;
     __attribute__((unused)) int _;
 
     CURLcode cc = curl_global_init(CURL_GLOBAL_ALL);
@@ -184,15 +185,21 @@ connect_func(struct AgentClient *ac)
     unsigned char sep = '?';
     fprintf(urlf, "%s", acw->endpoint);
     if (acw->inst_id) {
-        fprintf(urlf, "%cinst_id=%s", sep, url_armor_buf(&ab, acw->inst_id));
+        s = curl_easy_escape(acw->curl, acw->inst_id, 0);
+        fprintf(urlf, "%cinst_id=%s", sep, s);
+        free(s);
         sep = '&';
     }
     if (acw->queue_id) {
-        fprintf(urlf, "%cqueue_id=%s", sep, url_armor_buf(&ab, acw->queue_id));
+        s = curl_easy_escape(acw->curl, acw->queue_id, 0);
+        fprintf(urlf, "%cqueue_id=%s", sep, s);
+        free(s);
         sep = '&';
     }
     if (acw->ip_address) {
-        fprintf(urlf, "%cip_address=%s", sep, url_armor_buf(&ab, acw->ip_address));
+        s = curl_easy_escape(acw->curl, acw->ip_address, 0);
+        fprintf(urlf, "%cip_address=%s", sep, s);
+        free(s);
         sep = '&';
     }
     if (acw->mode == PREPARE_COMPILE) {
@@ -231,7 +238,6 @@ connect_func(struct AgentClient *ac)
     retval = 0;
 
 done:;
-    html_armor_free(&ab);
     if (urlf) fclose(urlf);
     free(urlt);
     if (headers) curl_slist_free_all(headers);
