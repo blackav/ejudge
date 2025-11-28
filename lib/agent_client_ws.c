@@ -157,10 +157,9 @@ read_token(
 }
 
 static int
-connect_func(struct AgentClient *ac)
+do_connect(struct AgentClientWs *acw)
 {
-    struct AgentClientWs *acw = (struct AgentClientWs *) ac;
-    int retval = -1;
+    int retval = ACW_ERROR;
     char *urlt = NULL;
     size_t urlz = 0;
     FILE *urlf = NULL;
@@ -169,17 +168,6 @@ connect_func(struct AgentClient *ac)
     unsigned char *token = NULL;
     unsigned char *s;
     __attribute__((unused)) int _;
-
-    CURLcode cc = curl_global_init(CURL_GLOBAL_ALL);
-    if (cc != CURLE_OK) {
-        err("%s:%d: curl_global_init failed: %s", __FUNCTION__, __LINE__, curl_easy_strerror(cc));
-        goto done;
-    }
-    acw->curl = curl_easy_init();
-    if (!acw->curl) {
-        err("%s:%d: curl_easy_init failed", __FUNCTION__, __LINE__);
-        goto done;
-    }
 
     urlf = open_memstream(&urlt, &urlz);
     unsigned char sep = '?';
@@ -229,13 +217,14 @@ connect_func(struct AgentClient *ac)
         curl_easy_setopt(acw->curl, CURLOPT_HTTPHEADER, headers);
     }
     curl_easy_setopt(acw->curl, CURLOPT_CONNECT_ONLY, 2L);
-    cc = curl_easy_perform(acw->curl);
+    CURLcode cc = curl_easy_perform(acw->curl);
     if (cc != CURLE_OK) {
         err("%s:%d: curl_easy_perform failed: %s", __FUNCTION__, __LINE__, curl_easy_strerror(cc));
+        retval = ACW_DISCONNECT;
         goto done;
     }
 
-    retval = 0;
+    retval = ACW_OK;
 
 done:;
     if (urlf) fclose(urlf);
@@ -243,6 +232,36 @@ done:;
     if (headers) curl_slist_free_all(headers);
     free(authorization);
     free(token);
+    return retval;
+}
+
+static int
+connect_func(struct AgentClient *ac)
+{
+    struct AgentClientWs *acw = (struct AgentClientWs *) ac;
+    int retval = -1;
+
+    CURLcode cc = curl_global_init(CURL_GLOBAL_ALL);
+    if (cc != CURLE_OK) {
+        err("%s:%d: curl_global_init failed: %s", __FUNCTION__, __LINE__, curl_easy_strerror(cc));
+        goto done;
+    }
+    acw->curl = curl_easy_init();
+    if (!acw->curl) {
+        err("%s:%d: curl_easy_init failed", __FUNCTION__, __LINE__);
+        goto done;
+    }
+
+    int rr = do_connect(acw);
+    if (rr < 0) {
+        err("%s:%d: do_connect failed", __FUNCTION__, __LINE__);
+        goto done;
+
+    }
+
+    retval = 0;
+
+done:;
     return retval;
 }
 
