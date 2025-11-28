@@ -478,58 +478,60 @@ poll_queue_func(
     int result = -1;
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
     cJSON *jr = NULL;
-    int rr = 0;
     cJSON *jq = NULL;
+    int rr = 0;
 
-    jq = create_request(acw, NULL, "poll");
-    if (random_mode > 0) {
-        cJSON_AddTrueToObject(jq, "random_mode");
-    }
-    if (enable_file > 0) {
-        cJSON_AddTrueToObject(jq, "enable_file");
-    }
-    rr = send_json(acw, jq);
-    cJSON_Delete(jq); jq = NULL;
-    if (rr < 0) {
-        err("%s:%d: send_json failed", __FUNCTION__, __LINE__);
-        goto done;
-    }
+    do {
+        jq = create_request(acw, NULL, "poll");
+        if (random_mode > 0) {
+            cJSON_AddTrueToObject(jq, "random_mode");
+        }
+        if (enable_file > 0) {
+            cJSON_AddTrueToObject(jq, "enable_file");
+        }
+        rr = send_json(acw, jq);
+        cJSON_Delete(jq); jq = NULL;
+        if (rr < 0) {
+            err("%s:%d: send_json failed", __FUNCTION__, __LINE__);
+            goto done;
+        }
 
-    rr = recv_json(acw, &jr);
-    if (rr != ACW_OK) {
-        err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
-        goto done;
-    }
-    cJSON *jj = cJSON_GetObjectItem(jr, "q");
-    if (jj && jj->type == cJSON_String && !strcmp("poll-result", jj->valuestring)) {
-        cJSON *jn = cJSON_GetObjectItem(jr, "pkt-name");
-        if (!jn) {
-            pkt_name[0] = 0;
-            result = 1;
-        } else if (jn->type == cJSON_String) {
-            snprintf(pkt_name, pkt_len, "%s", jn->valuestring);
-            result = 1;
-        } else {
-            err("%s:%d: pkt-name is invalid", __FUNCTION__, __LINE__);
+        rr = recv_json(acw, &jr);
+        if (rr != ACW_OK) {
+            err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
+            goto done;
         }
-        goto done;
-    }
-    if (jj && jj->type == cJSON_String && !strcmp("file-result", jj->valuestring)) {
-        cJSON *jn = cJSON_GetObjectItem(jr, "pkt-name");
-        if (!jn) {
-            pkt_name[0] = 0;
-            result = 1;
-        } else if (jn->type == cJSON_String) {
-            snprintf(pkt_name, pkt_len, "%s", jn->valuestring);
-            result = 1;
+        cJSON *jj = cJSON_GetObjectItem(jr, "q");
+        if (jj && jj->type == cJSON_String && !strcmp("poll-result", jj->valuestring)) {
+            cJSON *jn = cJSON_GetObjectItem(jr, "pkt-name");
+            if (!jn) {
+                pkt_name[0] = 0;
+                result = 1;
+            } else if (jn->type == cJSON_String) {
+                snprintf(pkt_name, pkt_len, "%s", jn->valuestring);
+                result = 1;
+            } else {
+                err("%s:%d: pkt-name is invalid", __FUNCTION__, __LINE__);
+            }
+            goto done;
         }
-        result = agent_extract_file_result(jr, p_data, p_size);
-        if (result < 0) {
-            err("%s:%d: json processing failed", __FUNCTION__, __LINE__);
+        if (jj && jj->type == cJSON_String && !strcmp("file-result", jj->valuestring)) {
+            cJSON *jn = cJSON_GetObjectItem(jr, "pkt-name");
+            if (!jn) {
+                pkt_name[0] = 0;
+                result = 1;
+            } else if (jn->type == cJSON_String) {
+                snprintf(pkt_name, pkt_len, "%s", jn->valuestring);
+                result = 1;
+            }
+            result = agent_extract_file_result(jr, p_data, p_size);
+            if (result < 0) {
+                err("%s:%d: json processing failed", __FUNCTION__, __LINE__);
+            }
+            goto done;
         }
-        goto done;
-    }
-    err("%s:%d: unexpected JSON result", __FUNCTION__, __LINE__);
+        err("%s:%d: unexpected JSON result", __FUNCTION__, __LINE__);
+    } while (0);
 
 done:;
     if (jq) cJSON_Delete(jq);
@@ -550,24 +552,26 @@ get_packet_func(
     cJSON *jq = NULL;
     int rr;
 
-    jq = create_request(acw, NULL, "get-packet");
-    cJSON_AddStringToObject(jq, "pkt_name", pkt_name);
-    rr = send_json(acw, jq);
-    cJSON_Delete(jq); jq = NULL;
-    if (rr < 0) {
-        err("%s:%d: send_json failed", __FUNCTION__, __LINE__);
-        goto done;
-    }
+    do {
+        jq = create_request(acw, NULL, "get-packet");
+        cJSON_AddStringToObject(jq, "pkt_name", pkt_name);
+        rr = send_json(acw, jq);
+        cJSON_Delete(jq); jq = NULL;
+        if (rr < 0) {
+            err("%s:%d: send_json failed", __FUNCTION__, __LINE__);
+            goto done;
+        }
 
-    rr = recv_json(acw, &jr);
-    if (rr != ACW_OK) {
-        err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
-        goto done;
-    }
-    result = agent_extract_file_result(jr, p_pkt_ptr, p_pkt_len);
-    if (result < 0) {
-        err("%s:%d: json processing failed", __FUNCTION__, __LINE__);
-    }
+        rr = recv_json(acw, &jr);
+        if (rr != ACW_OK) {
+            err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
+            goto done;
+        }
+        result = agent_extract_file_result(jr, p_pkt_ptr, p_pkt_len);
+        if (result < 0) {
+            err("%s:%d: json processing failed", __FUNCTION__, __LINE__);
+        }
+    } while (0);
 
 done:;
     if (jq) cJSON_Delete(jq);
@@ -589,27 +593,29 @@ get_data_func(
     cJSON *jq = NULL;
     int rr;
 
-    jq = create_request(acw, NULL, "get-data");
-    cJSON_AddStringToObject(jq, "pkt_name", pkt_name);
-    if (suffix) {
-        cJSON_AddStringToObject(jq, "suffix", suffix);
-    }
-    rr = send_json(acw, jq);
-    cJSON_Delete(jq); jq = NULL;
-    if (rr < 0) {
-        err("%s:%d: send_json failed", __FUNCTION__, __LINE__);
-        goto done;
-    }
+    do {
+        jq = create_request(acw, NULL, "get-data");
+        cJSON_AddStringToObject(jq, "pkt_name", pkt_name);
+        if (suffix) {
+            cJSON_AddStringToObject(jq, "suffix", suffix);
+        }
+        rr = send_json(acw, jq);
+        cJSON_Delete(jq); jq = NULL;
+        if (rr < 0) {
+            err("%s:%d: send_json failed", __FUNCTION__, __LINE__);
+            goto done;
+        }
 
-    rr = recv_json(acw, &jr);
-    if (rr != ACW_OK) {
-        err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
-        goto done;
-    }
-    result = agent_extract_file_result(jr, p_pkt_ptr, p_pkt_len);
-    if (result < 0) {
-        err("%s:%d: json processing failed", __FUNCTION__, __LINE__);
-    }
+        rr = recv_json(acw, &jr);
+        if (rr != ACW_OK) {
+            err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
+            goto done;
+        }
+        result = agent_extract_file_result(jr, p_pkt_ptr, p_pkt_len);
+        if (result < 0) {
+            err("%s:%d: json processing failed", __FUNCTION__, __LINE__);
+        }
+    } while (0);
 
 done:;
     if (jq) cJSON_Delete(jq);
@@ -632,30 +638,32 @@ put_reply_func(
     cJSON *jq = NULL;
     int rr;
 
-    jq = create_request(acw, NULL, "put-reply");
-    cJSON_AddStringToObject(jq, "server", contest_server_name);
-    cJSON_AddNumberToObject(jq, "contest", contest_id);
-    cJSON_AddStringToObject(jq, "run_name", run_name);
-    agent_add_file_to_object(jq, pkt_ptr, pkt_len);
-    rr = send_json(acw, jq);
-    cJSON_Delete(jq); jq = NULL;
-    if (rr < 0) {
-        err("%s:%d: send_json failed", __FUNCTION__, __LINE__);
-        goto done;
-    }
+    do {
+        jq = create_request(acw, NULL, "put-reply");
+        cJSON_AddStringToObject(jq, "server", contest_server_name);
+        cJSON_AddNumberToObject(jq, "contest", contest_id);
+        cJSON_AddStringToObject(jq, "run_name", run_name);
+        agent_add_file_to_object(jq, pkt_ptr, pkt_len);
+        rr = send_json(acw, jq);
+        cJSON_Delete(jq); jq = NULL;
+        if (rr < 0) {
+            err("%s:%d: send_json failed", __FUNCTION__, __LINE__);
+            goto done;
+        }
 
-    rr = recv_json(acw, &jr);
-    if (rr != ACW_OK) {
-        err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
-        goto done;
-    }
-    cJSON *jok = cJSON_GetObjectItem(jr, "ok");
-    if (!jok || jok->type != cJSON_True) {
-        err("%s:%d: request failed on server side", __FUNCTION__, __LINE__);
-        goto done;
-    }
+        rr = recv_json(acw, &jr);
+        if (rr != ACW_OK) {
+            err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
+            goto done;
+        }
+        cJSON *jok = cJSON_GetObjectItem(jr, "ok");
+        if (!jok || jok->type != cJSON_True) {
+            err("%s:%d: request failed on server side", __FUNCTION__, __LINE__);
+            goto done;
+        }
 
-    result = 0;
+        result = 0;
+    } while (0);
 
 done:;
     if (jq) cJSON_Delete(jq);
@@ -679,33 +687,35 @@ put_output_func(
     cJSON *jq = NULL;
     int rr;
 
-    jq = create_request(acw, NULL, "put-output");
-    cJSON_AddStringToObject(jq, "server", contest_server_name);
-    cJSON_AddNumberToObject(jq, "contest", contest_id);
-    cJSON_AddStringToObject(jq, "run_name", run_name);
-    if (suffix) {
-        cJSON_AddStringToObject(jq, "suffix", suffix);
-    }
-    agent_add_file_to_object(jq, pkt_ptr, pkt_len);
-    rr = send_json(acw, jq);
-    cJSON_Delete(jq); jq = NULL;
-    if (rr < 0) {
-        err("%s:%d: send_json failed", __FUNCTION__, __LINE__);
-        goto done;
-    }
+    do {
+        jq = create_request(acw, NULL, "put-output");
+        cJSON_AddStringToObject(jq, "server", contest_server_name);
+        cJSON_AddNumberToObject(jq, "contest", contest_id);
+        cJSON_AddStringToObject(jq, "run_name", run_name);
+        if (suffix) {
+            cJSON_AddStringToObject(jq, "suffix", suffix);
+        }
+        agent_add_file_to_object(jq, pkt_ptr, pkt_len);
+        rr = send_json(acw, jq);
+        cJSON_Delete(jq); jq = NULL;
+        if (rr < 0) {
+            err("%s:%d: send_json failed", __FUNCTION__, __LINE__);
+            goto done;
+        }
 
-    rr = recv_json(acw, &jr);
-    if (rr != ACW_OK) {
-        err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
-        goto done;
-    }
-    cJSON *jok = cJSON_GetObjectItem(jr, "ok");
-    if (!jok || jok->type != cJSON_True) {
-        err("%s:%d: request failed on server side", __FUNCTION__, __LINE__);
-        goto done;
-    }
+        rr = recv_json(acw, &jr);
+        if (rr != ACW_OK) {
+            err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
+            goto done;
+        }
+        cJSON *jok = cJSON_GetObjectItem(jr, "ok");
+        if (!jok || jok->type != cJSON_True) {
+            err("%s:%d: request failed on server side", __FUNCTION__, __LINE__);
+            goto done;
+        }
 
-    result = 0;
+        result = 0;
+    } while (0);
 
 done:;
     if (jq) cJSON_Delete(jq);
@@ -729,37 +739,40 @@ put_output_2_func(
     MappedFile mf = {};
     int rr;
 
-    jq = create_request(acw, NULL, "put-output");
     if (agent_file_map(&mf, path) < 0) {
         err("%s:%d: failed to map file '%s'", __FUNCTION__, __LINE__, path);
         goto done;
     }
-    cJSON_AddStringToObject(jq, "server", contest_server_name);
-    cJSON_AddNumberToObject(jq, "contest", contest_id);
-    cJSON_AddStringToObject(jq, "run_name", run_name);
-    if (suffix) {
-        cJSON_AddStringToObject(jq, "suffix", suffix);
-    }
-    agent_add_file_to_object(jq, mf.data, mf.size);
-    rr = send_json(acw, jq);
-    cJSON_Delete(jq); jq = NULL;
-    if (rr < 0) {
-        err("%s:%d: send_json failed", __FUNCTION__, __LINE__);
-        goto done;
-    }
 
-    rr = recv_json(acw, &jr);
-    if (rr != ACW_OK) {
-        err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
-        goto done;
-    }
-    cJSON *jok = cJSON_GetObjectItem(jr, "ok");
-    if (!jok || jok->type != cJSON_True) {
-        err("%s:%d: request failed on server side", __FUNCTION__, __LINE__);
-        goto done;
-    }
+    do {
+        jq = create_request(acw, NULL, "put-output");
+        cJSON_AddStringToObject(jq, "server", contest_server_name);
+        cJSON_AddNumberToObject(jq, "contest", contest_id);
+        cJSON_AddStringToObject(jq, "run_name", run_name);
+        if (suffix) {
+            cJSON_AddStringToObject(jq, "suffix", suffix);
+        }
+        agent_add_file_to_object(jq, mf.data, mf.size);
+        rr = send_json(acw, jq);
+        cJSON_Delete(jq); jq = NULL;
+        if (rr < 0) {
+            err("%s:%d: send_json failed", __FUNCTION__, __LINE__);
+            goto done;
+        }
 
-    result = 0;
+        rr = recv_json(acw, &jr);
+        if (rr != ACW_OK) {
+            err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
+            goto done;
+        }
+        cJSON *jok = cJSON_GetObjectItem(jr, "ok");
+        if (!jok || jok->type != cJSON_True) {
+            err("%s:%d: request failed on server side", __FUNCTION__, __LINE__);
+            goto done;
+        }
+
+        result = 0;
+    } while (0);
 
 done:;
     if (jq) cJSON_Delete(jq);
@@ -894,27 +907,29 @@ add_ignored_func(
     cJSON *jq = NULL;
     int rr;
 
-    jq = create_request(acw, NULL, "add-ignored");
-    cJSON_AddStringToObject(jq, "pkt_name", pkt_name);
-    rr = send_json(acw, jq);
-    cJSON_Delete(jq); jq = NULL;
-    if (rr < 0) {
-        err("%s:%d: send_json failed", __FUNCTION__, __LINE__);
-        goto done;
-    }
+    do {
+        jq = create_request(acw, NULL, "add-ignored");
+        cJSON_AddStringToObject(jq, "pkt_name", pkt_name);
+        rr = send_json(acw, jq);
+        cJSON_Delete(jq); jq = NULL;
+        if (rr < 0) {
+            err("%s:%d: send_json failed", __FUNCTION__, __LINE__);
+            goto done;
+        }
 
-    rr = recv_json(acw, &jr);
-    if (rr != ACW_OK) {
-        err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
-        goto done;
-    }
-    cJSON *jok = cJSON_GetObjectItem(jr, "ok");
-    if (!jok || jok->type != cJSON_True) {
-        err("%s:%d: request failed on server side", __FUNCTION__, __LINE__);
-        goto done;
-    }
+        rr = recv_json(acw, &jr);
+        if (rr != ACW_OK) {
+            err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
+            goto done;
+        }
+        cJSON *jok = cJSON_GetObjectItem(jr, "ok");
+        if (!jok || jok->type != cJSON_True) {
+            err("%s:%d: request failed on server side", __FUNCTION__, __LINE__);
+            goto done;
+        }
 
-    result = 0;
+        result = 0;
+    } while (0);
 
 done:;
     if (jq) cJSON_Delete(jq);
@@ -935,28 +950,30 @@ put_packet_func(
     cJSON *jq = NULL;
     int rr;
 
-    jq = create_request(acw, NULL, "put-packet");
-    cJSON_AddStringToObject(jq, "pkt_name", pkt_name);
-    agent_add_file_to_object(jq, pkt_ptr, pkt_len);
-    rr = send_json(acw, jq);
-    cJSON_Delete(jq); jq = NULL;
-    if (rr < 0) {
-        err("%s:%d: send_json failed", __FUNCTION__, __LINE__);
-        goto done;
-    }
+    do {
+        jq = create_request(acw, NULL, "put-packet");
+        cJSON_AddStringToObject(jq, "pkt_name", pkt_name);
+        agent_add_file_to_object(jq, pkt_ptr, pkt_len);
+        rr = send_json(acw, jq);
+        cJSON_Delete(jq); jq = NULL;
+        if (rr < 0) {
+            err("%s:%d: send_json failed", __FUNCTION__, __LINE__);
+            goto done;
+        }
 
-    rr = recv_json(acw, &jr);
-    if (rr != ACW_OK) {
-        err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
-        goto done;
-    }
-    cJSON *jok = cJSON_GetObjectItem(jr, "ok");
-    if (!jok || jok->type != cJSON_True) {
-        err("%s:%d: request failed on server side", __FUNCTION__, __LINE__);
-        goto done;
-    }
+        rr = recv_json(acw, &jr);
+        if (rr != ACW_OK) {
+            err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
+            goto done;
+        }
+        cJSON *jok = cJSON_GetObjectItem(jr, "ok");
+        if (!jok || jok->type != cJSON_True) {
+            err("%s:%d: request failed on server side", __FUNCTION__, __LINE__);
+            goto done;
+        }
 
-    result = 0;
+        result = 0;
+    } while (0);
 
 done:;
     if (jq) cJSON_Delete(jq);
@@ -1007,44 +1024,46 @@ put_heartbeat_func(
     cJSON *jq = NULL;
     int rr;
 
-    jq = create_request(acw, NULL, "put-heartbeat");
-    cJSON_AddStringToObject(jq, "name", file_name);
-    agent_add_file_to_object(jq, data, size);
-    rr = send_json(acw, jq);
-    cJSON_Delete(jq); jq = NULL;
-    if (rr < 0) {
-        err("%s:%d: send_json failed", __FUNCTION__, __LINE__);
-        goto done;
-    }
+    do {
+        jq = create_request(acw, NULL, "put-heartbeat");
+        cJSON_AddStringToObject(jq, "name", file_name);
+        agent_add_file_to_object(jq, data, size);
+        rr = send_json(acw, jq);
+        cJSON_Delete(jq); jq = NULL;
+        if (rr < 0) {
+            err("%s:%d: send_json failed", __FUNCTION__, __LINE__);
+            goto done;
+        }
 
-    rr = recv_json(acw, &jr);
-    if (rr != ACW_OK) {
-        err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
-        goto done;
-    }
-    cJSON *jok = cJSON_GetObjectItem(jr, "ok");
-    if (!jok || jok->type != cJSON_True) {
-        err("%s:%d: request failed on server side", __FUNCTION__, __LINE__);
-        goto done;
-    }
-    cJSON *jtt = cJSON_GetObjectItem(jr, "tt");
-    if (jtt && jtt->type == cJSON_Number && p_last_saved_time_ms) {
-        *p_last_saved_time_ms = (long long) jtt->valuedouble;
-    }
-    cJSON *jsf = cJSON_GetObjectItem(jr, "stop_flag");
-    if (jsf && jsf->type == cJSON_True && p_stop_flag) {
-        *p_stop_flag = 1;
-    }
-    cJSON *jdf = cJSON_GetObjectItem(jr, "down_flag");
-    if (jdf && jdf->type == cJSON_True && p_down_flag) {
-        *p_down_flag = 1;
-    }
-    cJSON *jrf = cJSON_GetObjectItem(jr, "reboot_flag");
-    if (jrf && jrf->type == cJSON_True && p_reboot_flag) {
-        *p_reboot_flag = 1;
-    }
+        rr = recv_json(acw, &jr);
+        if (rr != ACW_OK) {
+            err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
+            goto done;
+        }
+        cJSON *jok = cJSON_GetObjectItem(jr, "ok");
+        if (!jok || jok->type != cJSON_True) {
+            err("%s:%d: request failed on server side", __FUNCTION__, __LINE__);
+            goto done;
+        }
+        cJSON *jtt = cJSON_GetObjectItem(jr, "tt");
+        if (jtt && jtt->type == cJSON_Number && p_last_saved_time_ms) {
+            *p_last_saved_time_ms = (long long) jtt->valuedouble;
+        }
+        cJSON *jsf = cJSON_GetObjectItem(jr, "stop_flag");
+        if (jsf && jsf->type == cJSON_True && p_stop_flag) {
+            *p_stop_flag = 1;
+        }
+        cJSON *jdf = cJSON_GetObjectItem(jr, "down_flag");
+        if (jdf && jdf->type == cJSON_True && p_down_flag) {
+            *p_down_flag = 1;
+        }
+        cJSON *jrf = cJSON_GetObjectItem(jr, "reboot_flag");
+        if (jrf && jrf->type == cJSON_True && p_reboot_flag) {
+            *p_reboot_flag = 1;
+        }
 
-    result = 0;
+        result = 0;
+    } while (0);
 
 done:;
     if (jq) cJSON_Delete(jq);
@@ -1063,27 +1082,29 @@ delete_heartbeat_func(
     cJSON *jq = NULL;
     int rr;
 
-    jq = create_request(acw, NULL, "delete-heartbeat");
-    cJSON_AddStringToObject(jq, "name", file_name);
-    rr = send_json(acw, jq);
-    cJSON_Delete(jq); jq = NULL;
-    if (rr < 0) {
-        err("%s:%d: send_json failed", __FUNCTION__, __LINE__);
-        goto done;
-    }
+    do {
+        jq = create_request(acw, NULL, "delete-heartbeat");
+        cJSON_AddStringToObject(jq, "name", file_name);
+        rr = send_json(acw, jq);
+        cJSON_Delete(jq); jq = NULL;
+        if (rr < 0) {
+            err("%s:%d: send_json failed", __FUNCTION__, __LINE__);
+            goto done;
+        }
 
-    rr = recv_json(acw, &jr);
-    if (rr != ACW_OK) {
-        err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
-        goto done;
-    }
-    cJSON *jok = cJSON_GetObjectItem(jr, "ok");
-    if (!jok || jok->type != cJSON_True) {
-        err("%s:%d: request failed on server side", __FUNCTION__, __LINE__);
-        goto done;
-    }
+        rr = recv_json(acw, &jr);
+        if (rr != ACW_OK) {
+            err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
+            goto done;
+        }
+        cJSON *jok = cJSON_GetObjectItem(jr, "ok");
+        if (!jok || jok->type != cJSON_True) {
+            err("%s:%d: request failed on server side", __FUNCTION__, __LINE__);
+            goto done;
+        }
 
-    result = 0;
+        result = 0;
+    } while (0);
 
 done:;
     if (jq) cJSON_Delete(jq);
@@ -1107,37 +1128,40 @@ put_archive_2_func(
     MappedFile mf = {};
     int rr;
 
-    jq = create_request(acw, NULL, "put-archive");
     if (agent_file_map(&mf, path) < 0) {
         err("%s:%d: failed to map file", __FUNCTION__, __LINE__);
         goto done;
     }
-    cJSON_AddStringToObject(jq, "server", contest_server_name);
-    cJSON_AddNumberToObject(jq, "contest", contest_id);
-    cJSON_AddStringToObject(jq, "run_name", run_name);
-    if (suffix) {
-        cJSON_AddStringToObject(jq, "suffix", suffix);
-    }
-    agent_add_file_to_object(jq, mf.data, mf.size);
-    rr = send_json(acw, jq);
-    cJSON_Delete(jq); jq = NULL;
-    if (rr < 0) {
-        err("%s:%d: send_json failed", __FUNCTION__, __LINE__);
-        goto done;
-    }
 
-    rr = recv_json(acw, &jr);
-    if (rr != ACW_OK) {
-        err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
-        goto done;
-    }
-    cJSON *jok = cJSON_GetObjectItem(jr, "ok");
-    if (!jok || jok->type != cJSON_True) {
-        err("%s:%d: request failed on server side", __FUNCTION__, __LINE__);
-        goto done;
-    }
+    do {
+        jq = create_request(acw, NULL, "put-archive");
+        cJSON_AddStringToObject(jq, "server", contest_server_name);
+        cJSON_AddNumberToObject(jq, "contest", contest_id);
+        cJSON_AddStringToObject(jq, "run_name", run_name);
+        if (suffix) {
+            cJSON_AddStringToObject(jq, "suffix", suffix);
+        }
+        agent_add_file_to_object(jq, mf.data, mf.size);
+        rr = send_json(acw, jq);
+        cJSON_Delete(jq); jq = NULL;
+        if (rr < 0) {
+            err("%s:%d: send_json failed", __FUNCTION__, __LINE__);
+            goto done;
+        }
 
-    result = 0;
+        rr = recv_json(acw, &jr);
+        if (rr != ACW_OK) {
+            err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
+            goto done;
+        }
+        cJSON *jok = cJSON_GetObjectItem(jr, "ok");
+        if (!jok || jok->type != cJSON_True) {
+            err("%s:%d: request failed on server side", __FUNCTION__, __LINE__);
+            goto done;
+        }
+
+        result = 0;
+    } while (0);
 
 done:;
     if (jq) cJSON_Delete(jq);
@@ -1168,83 +1192,85 @@ mirror_file_func(
     size_t pkt_len = 0;
     int rr;
 
-    jq = create_request(acw, NULL, "mirror");
-    cJSON_AddStringToObject(jq, "path", path);
-    if (current_mtime > 0) {
-        cJSON_AddNumberToObject(jq, "mtime", current_mtime);
-    }
-    if (current_size >= 0) {
-        cJSON_AddNumberToObject(jq, "size", current_size);
-    }
-    if (current_mode >= 0) {
-        unsigned char mb[64];
-        snprintf(mb, sizeof(mb), "%04o", current_mode);
-        cJSON_AddStringToObject(jq, "mode", mb);
-    }
-    rr = send_json(acw, jq);
-    cJSON_Delete(jq); jq = NULL;
-    if (rr < 0) {
-        err("%s:%d: send_json failed", __FUNCTION__, __LINE__);
-        goto done;
-    }
+    do {
+        jq = create_request(acw, NULL, "mirror");
+        cJSON_AddStringToObject(jq, "path", path);
+        if (current_mtime > 0) {
+            cJSON_AddNumberToObject(jq, "mtime", current_mtime);
+        }
+        if (current_size >= 0) {
+            cJSON_AddNumberToObject(jq, "size", current_size);
+        }
+        if (current_mode >= 0) {
+            unsigned char mb[64];
+            snprintf(mb, sizeof(mb), "%04o", current_mode);
+            cJSON_AddStringToObject(jq, "mode", mb);
+        }
+        rr = send_json(acw, jq);
+        cJSON_Delete(jq); jq = NULL;
+        if (rr < 0) {
+            err("%s:%d: send_json failed", __FUNCTION__, __LINE__);
+            goto done;
+        }
 
-    rr = recv_json(acw, &jr);
-    if (rr != ACW_OK) {
-        err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
-        goto done;
-    }
-    cJSON *jok = cJSON_GetObjectItem(jr, "ok");
-    if (!jok || jok->type != cJSON_True) {
-        err("%s:%d: request failed on server side", __FUNCTION__, __LINE__);
-        goto done;
-    }
-    jq = cJSON_GetObjectItem(jr, "q");
-    if (!jq || jq->type != cJSON_String) {
-        err("%s:%d: invalid or missing 'q' in reply", __FUNCTION__, __LINE__);
-        goto done;
-    }
-    if (!strcmp(jq->valuestring, "file-unchanged")) {
-        result = 0;
-        goto done;
-    }
-    if (agent_extract_file_result(jr, &pkt_ptr, &pkt_len) < 0) {
-        err("%s:%d: failed to extract file result", __FUNCTION__, __LINE__);
-        goto done;
-    }
+        rr = recv_json(acw, &jr);
+        if (rr != ACW_OK) {
+            err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
+            goto done;
+        }
+        cJSON *jok = cJSON_GetObjectItem(jr, "ok");
+        if (!jok || jok->type != cJSON_True) {
+            err("%s:%d: request failed on server side", __FUNCTION__, __LINE__);
+            goto done;
+        }
+        jq = cJSON_GetObjectItem(jr, "q");
+        if (!jq || jq->type != cJSON_String) {
+            err("%s:%d: invalid or missing 'q' in reply", __FUNCTION__, __LINE__);
+            goto done;
+        }
+        if (!strcmp(jq->valuestring, "file-unchanged")) {
+            result = 0;
+            goto done;
+        }
+        if (agent_extract_file_result(jr, &pkt_ptr, &pkt_len) < 0) {
+            err("%s:%d: failed to extract file result", __FUNCTION__, __LINE__);
+            goto done;
+        }
 
-    time_t mtime = 0;
-    int mode = -1;
-    int uid = -1;
-    int gid = -1;
+        time_t mtime = 0;
+        int mode = -1;
+        int uid = -1;
+        int gid = -1;
 
-    cJSON *jj = cJSON_GetObjectItem(jr, "mtime");
-    if (jj && jj->type == cJSON_Number) {
-        mtime = jj->valuedouble;
-        if (mtime < 0) mtime = 0;
-    }
-    jj = cJSON_GetObjectItem(jr, "mode");
-    if (jj && jj->type == cJSON_String) {
-        mode = strtol(jj->valuestring, NULL, 8);
-        mode &= 07777;
-    }
-    jj = cJSON_GetObjectItem(jr, "uid");
-    if (jj && jj->type == cJSON_Number) {
-        uid = jj->valuedouble;
-        if (uid < 0) uid = -1;
-    }
-    jj = cJSON_GetObjectItem(jr, "gid");
-    if (jj && jj->type == cJSON_Number) {
-        gid = jj->valuedouble;
-        if (gid < 0) gid = -1;
-    }
+        cJSON *jj = cJSON_GetObjectItem(jr, "mtime");
+        if (jj && jj->type == cJSON_Number) {
+            mtime = jj->valuedouble;
+            if (mtime < 0) mtime = 0;
+        }
+        jj = cJSON_GetObjectItem(jr, "mode");
+        if (jj && jj->type == cJSON_String) {
+            mode = strtol(jj->valuestring, NULL, 8);
+            mode &= 07777;
+        }
+        jj = cJSON_GetObjectItem(jr, "uid");
+        if (jj && jj->type == cJSON_Number) {
+            uid = jj->valuedouble;
+            if (uid < 0) uid = -1;
+        }
+        jj = cJSON_GetObjectItem(jr, "gid");
+        if (jj && jj->type == cJSON_Number) {
+            gid = jj->valuedouble;
+            if (gid < 0) gid = -1;
+        }
 
-    *p_pkt_ptr = pkt_ptr; pkt_ptr = NULL;
-    *p_pkt_len = pkt_len; pkt_len = 0;
-    if (p_new_mtime) *p_new_mtime = mtime;
-    if (p_new_mode) *p_new_mode = mode;
-    if (p_uid) *p_uid = uid;
-    if (p_gid) *p_gid = gid;
-    result = 1;
+        *p_pkt_ptr = pkt_ptr; pkt_ptr = NULL;
+        *p_pkt_len = pkt_len; pkt_len = 0;
+        if (p_new_mtime) *p_new_mtime = mtime;
+        if (p_new_mode) *p_new_mode = mode;
+        if (p_uid) *p_uid = uid;
+        if (p_gid) *p_gid = gid;
+        result = 1;
+    } while (0);
 
 done:;
     if (jq) cJSON_Delete(jq);
@@ -1266,28 +1292,30 @@ put_config_func(
     cJSON *jq = NULL;
     int rr;
 
-    jq = create_request(acw, NULL, "put-config");
-    cJSON_AddStringToObject(jq, "name", file_name);
-    agent_add_file_to_object(jq, data, size);
-    rr = send_json(acw, jq);
-    cJSON_Delete(jq); jq = NULL;
-    if (rr < 0) {
-        err("%s:%d: send_json failed", __FUNCTION__, __LINE__);
-        goto done;
-    }
+    do {
+        jq = create_request(acw, NULL, "put-config");
+        cJSON_AddStringToObject(jq, "name", file_name);
+        agent_add_file_to_object(jq, data, size);
+        rr = send_json(acw, jq);
+        cJSON_Delete(jq); jq = NULL;
+        if (rr < 0) {
+            err("%s:%d: send_json failed", __FUNCTION__, __LINE__);
+            goto done;
+        }
 
-    rr = recv_json(acw, &jr);
-    if (rr != ACW_OK) {
-        err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
-        goto done;
-    }
-    cJSON *jok = cJSON_GetObjectItem(jr, "ok");
-    if (!jok || jok->type != cJSON_True) {
-        err("%s:%d: request failed on server side", __FUNCTION__, __LINE__);
-        goto done;
-    }
+        rr = recv_json(acw, &jr);
+        if (rr != ACW_OK) {
+            err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
+            goto done;
+        }
+        cJSON *jok = cJSON_GetObjectItem(jr, "ok");
+        if (!jok || jok->type != cJSON_True) {
+            err("%s:%d: request failed on server side", __FUNCTION__, __LINE__);
+            goto done;
+        }
 
-    result = 0;
+        result = 0;
+    } while (0);
 
 done:;
     if (jq) cJSON_Delete(jq);
