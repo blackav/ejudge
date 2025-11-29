@@ -50,12 +50,12 @@ struct FDChunk
     int size;
 };
 
-struct Future
+struct SshFuture
 {
     int serial;
     int notify_signal;
     pthread_t notify_thread;
-    void (*callback)(struct Future *f, void *u);
+    void (*callback)(struct SshFuture *f, void *u);
     void *user;
 
     int ready;
@@ -71,7 +71,7 @@ struct Future
     int chained_notify_signal;
     pthread_t chained_notify_thread;
     long long chained_timeout_ms;
-    struct Future *chained_future;
+    struct SshFuture *chained_future;
 };
 
 struct AgentClientSsh
@@ -107,7 +107,7 @@ struct AgentClientSsh
     uint32_t wevents;
 
     pthread_mutex_t futurem;
-    struct Future **futures;
+    struct SshFuture **futures;
     int futureu;
     int futurea;
 
@@ -131,10 +131,10 @@ struct AgentClientSsh
     int timer_flag;
 
     long long ping_time_ms;
-    struct Future *ping_future;
+    struct SshFuture *ping_future;
 };
 
-static void future_init(struct Future *f, int serial)
+static void future_init(struct SshFuture *f, int serial)
 {
     memset(f, 0, sizeof(*f));
     f->serial = serial;
@@ -142,14 +142,14 @@ static void future_init(struct Future *f, int serial)
     pthread_cond_init(&f->c, NULL);
 }
 
-static void future_fini(struct Future *f)
+static void future_fini(struct SshFuture *f)
 {
     pthread_mutex_destroy(&f->m);
     pthread_cond_destroy(&f->c);
     if (f->value) cJSON_Delete(f->value);
 }
 
-static void future_wait(struct AgentClientSsh *acs, struct Future *f)
+static void future_wait(struct AgentClientSsh *acs, struct SshFuture *f)
 {
     pthread_mutex_lock(&f->m);
     while (!f->ready && !acs->is_stopped) {
@@ -256,7 +256,7 @@ add_wchunk_move(struct AgentClientSsh *acs, unsigned char *data, int size)
 }
 
 static void
-add_future(struct AgentClientSsh *acs, struct Future *f)
+add_future(struct AgentClientSsh *acs, struct SshFuture *f)
 {
     pthread_mutex_lock(&acs->futurem);
     if (acs->futurea == acs->futureu) {
@@ -267,10 +267,10 @@ add_future(struct AgentClientSsh *acs, struct Future *f)
     pthread_mutex_unlock(&acs->futurem);
 }
 
-static struct Future *
+static struct SshFuture *
 get_future(struct AgentClientSsh *acs, int serial)
 {
-    struct Future *result = NULL;
+    struct SshFuture *result = NULL;
     pthread_mutex_lock(&acs->futurem);
     for (int i = 0; i < acs->futureu; ++i) {
         if (acs->futures[i]->serial == serial) {
@@ -450,7 +450,7 @@ handle_rchunks(struct AgentClientSsh *acs)
                 err("invalid JSON");
             } else {
                 int serial = js->valuedouble;
-                struct Future *f = get_future(acs, serial);
+                struct SshFuture *f = get_future(acs, serial);
                 if (f) {
                     if (f->callback) {
                         f->value = j; j = NULL;
@@ -465,7 +465,7 @@ handle_rchunks(struct AgentClientSsh *acs)
                             cJSON *jc = cJSON_GetObjectItem(j, "channel");
                             if (jc && jc->type == cJSON_Number) {
                                 int channel = jc->valuedouble;
-                                struct Future *future = calloc(1, sizeof(*future));
+                                struct SshFuture *future = calloc(1, sizeof(*future));
                                 f->chained_future = future;
                                 future_init(future, channel);
                                 future->notify_signal = f->chained_notify_signal;
@@ -502,7 +502,7 @@ done1:
     pthread_mutex_unlock(&acs->rchunkm);
 }
 
-static struct Future *
+static struct SshFuture *
 internal_ping(struct AgentClientSsh *acs);
 static void
 internal_cancel(struct AgentClientSsh *acs, int channel);
@@ -586,7 +586,7 @@ thread_func(void *ptr)
             pthread_mutex_lock(&acs->futurem);
             int fut_index;
             for (fut_index = 0; fut_index < acs->futureu; ++fut_index) {
-                struct Future *f = acs->futures[fut_index];
+                struct SshFuture *f = acs->futures[fut_index];
                 if (f->expiration_time_ms > 0 && acs->current_time_ms > f->expiration_time_ms && !f->cancel_requested) {
                     f->cancel_requested = 1;
                     internal_cancel(acs, f->serial);
@@ -626,7 +626,7 @@ thread_func(void *ptr)
     // wake up all futures
     pthread_mutex_lock(&acs->futurem);
     for (int i = 0; i < acs->futureu; ++i) {
-        struct Future *f = acs->futures[i];
+        struct SshFuture *f = acs->futures[i];
         int notify_signal = f->notify_signal;
         pthread_t notify_thread = f->notify_thread;
         pthread_mutex_lock(&f->m);
@@ -841,7 +841,7 @@ add_wchunk_json(
 static cJSON *
 create_request(
         struct AgentClientSsh *acs,
-        struct Future *f,
+        struct SshFuture *f,
         long long *p_time_ms,
         const unsigned char *query)
 {
@@ -884,7 +884,7 @@ poll_queue_func(
 {
     int result = 0;
     struct AgentClientSsh *acs = (struct AgentClientSsh *) ac;
-    struct Future f;
+    struct SshFuture f;
     long long time_ms;
     cJSON *jq = create_request(acs, &f, &time_ms, "poll");
     if (random_mode > 0) {
@@ -1086,7 +1086,7 @@ get_packet_func(
 {
     int result = 0;
     struct AgentClientSsh *acs = (struct AgentClientSsh *) ac;
-    struct Future f;
+    struct SshFuture f;
     long long time_ms;
     cJSON *jq = create_request(acs, &f, &time_ms, "get-packet");
     cJSON_AddStringToObject(jq, "pkt_name", pkt_name);
@@ -1114,7 +1114,7 @@ get_data_func(
 {
     int result = 0;
     struct AgentClientSsh *acs = (struct AgentClientSsh *) ac;
-    struct Future f;
+    struct SshFuture f;
     long long time_ms;
     cJSON *jq = create_request(acs, &f, &time_ms, "get-data");
     cJSON_AddStringToObject(jq, "pkt_name", pkt_name);
@@ -1226,7 +1226,7 @@ put_reply_func(
 {
     int result = 0;
     struct AgentClientSsh *acs = (struct AgentClientSsh *) ac;
-    struct Future f;
+    struct SshFuture f;
     long long time_ms;
     cJSON *jq = create_request(acs, &f, &time_ms, "put-reply");
     cJSON_AddStringToObject(jq, "server", contest_server_name);
@@ -1262,7 +1262,7 @@ put_output_func(
 {
     int result = 0;
     struct AgentClientSsh *acs = (struct AgentClientSsh *) ac;
-    struct Future f;
+    struct SshFuture f;
     long long time_ms;
     cJSON *jq = create_request(acs, &f, &time_ms, "put-output");
     cJSON_AddStringToObject(jq, "server", contest_server_name);
@@ -1334,7 +1334,7 @@ put_output_2_func(
 
     int result = 0;
     struct AgentClientSsh *acs = (struct AgentClientSsh *) ac;
-    struct Future f;
+    struct SshFuture f;
     long long time_ms;
     cJSON *jq = create_request(acs, &f, &time_ms, "put-output");
     cJSON_AddStringToObject(jq, "server", contest_server_name);
@@ -1379,7 +1379,7 @@ async_wait_init_func(
 {
     int result = 0;
     struct AgentClientSsh *acs = (struct AgentClientSsh *) ac;
-    struct Future f;
+    struct SshFuture f;
     long long time_ms;
     cJSON *jq = create_request(acs, &f, &time_ms, "wait");
     cJSON_AddNumberToObject(jq, "channel", (double) ++acs->serial);
@@ -1455,7 +1455,7 @@ async_wait_complete_func(
         size_t *p_size)
 {
     __attribute__((unused)) struct AgentClientSsh *acs = (struct AgentClientSsh *) ac;
-    struct Future *future = *p_vfuture;
+    struct SshFuture *future = *p_vfuture;
     if (!future) return 0;
     pthread_mutex_lock(&future->m);
     int ready = future->ready;
@@ -1499,7 +1499,7 @@ done:
 
 static void
 internal_ping_callback(
-        struct Future *f,
+        struct SshFuture *f,
         void *u)
 {
     struct AgentClientSsh *acs = (struct AgentClientSsh *) u;
@@ -1513,10 +1513,10 @@ internal_ping_callback(
     }
 }
 
-static struct Future *
+static struct SshFuture *
 internal_ping(struct AgentClientSsh *acs)
 {
-    struct Future *f;
+    struct SshFuture *f;
     XCALLOC(f, 1);
     cJSON *jq = create_request(acs, f, &acs->ping_time_ms, "ping");
     f->callback = internal_ping_callback;
@@ -1542,7 +1542,7 @@ add_ignored_func(
 {
     int result = 0;
     struct AgentClientSsh *acs = (struct AgentClientSsh *) ac;
-    struct Future f;
+    struct SshFuture f;
     long long time_ms;
     cJSON *jq = create_request(acs, &f, &time_ms, "add-ignored");
     cJSON_AddStringToObject(jq, "pkt_name", pkt_name);
@@ -1572,7 +1572,7 @@ put_packet_func(
 {
     int result = 0;
     struct AgentClientSsh *acs = (struct AgentClientSsh *) ac;
-    struct Future f;
+    struct SshFuture f;
     long long time_ms;
     cJSON *jq = create_request(acs, &f, &time_ms, "put-packet");
     cJSON_AddStringToObject(jq, "pkt_name", pkt_name);
@@ -1663,7 +1663,7 @@ put_heartbeat_func(
 {
     int result = -1;
     struct AgentClientSsh *acs = (struct AgentClientSsh *) ac;
-    struct Future f;
+    struct SshFuture f;
     long long time_ms;
     cJSON *jq = create_request(acs, &f, &time_ms, "put-heartbeat");
     cJSON_AddStringToObject(jq, "name", file_name);
@@ -1712,7 +1712,7 @@ delete_heartbeat_func(
 {
     int result = -1;
     struct AgentClientSsh *acs = (struct AgentClientSsh *) ac;
-    struct Future f;
+    struct SshFuture f;
     long long time_ms;
     cJSON *jq = create_request(acs, &f, &time_ms, "delete-heartbeat");
     cJSON_AddStringToObject(jq, "name", file_name);
@@ -1781,7 +1781,7 @@ put_archive_2_func(
 
     int result = 0;
     struct AgentClientSsh *acs = (struct AgentClientSsh *) ac;
-    struct Future f;
+    struct SshFuture f;
     long long time_ms;
     cJSON *jq = create_request(acs, &f, &time_ms, "put-archive");
     cJSON_AddStringToObject(jq, "server", contest_server_name);
@@ -1827,7 +1827,7 @@ mirror_file_func(
 {
     int result = -1;
     struct AgentClientSsh *acs = (struct AgentClientSsh *) ac;
-    struct Future f;
+    struct SshFuture f;
     long long time_ms;
     char *pkt_ptr = NULL;
     size_t pkt_len = 0;
@@ -1918,7 +1918,7 @@ put_config_func(
 {
     int result = 0;
     struct AgentClientSsh *acs = (struct AgentClientSsh *) ac;
-    struct Future f;
+    struct SshFuture f;
     long long time_ms;
 
     cJSON *jq = create_request(acs, &f, &time_ms, "put-config");
