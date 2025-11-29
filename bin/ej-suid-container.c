@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2021-2024 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2021-2025 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -143,6 +143,7 @@ static int enable_loopback = 0;
 static int enable_vm_limit = 1;
 static int enable_mem_limit_detect = 0;
 static int enable_security_detect = 0;
+static int enable_ignore_sigpipe = 0;
 
 static int enable_seccomp = 1;
 static int enable_sys_execve = 0;
@@ -1988,6 +1989,7 @@ extract_size(const char **ppos, int init_offset, const char *opt_name)
  *   mV     - explicitly disable setting of VM size limit
  *   mM     - enable memory limit error detection
  *   mE     - enable security violation detection
+ *   mf     - set SIGPIPE ignore for child
  *   w<DIR> - working directory (cwd by default)
  *   rn     - redirect to/from /dev/null for standard streams
  *   rm     - merge stdout and stderr output
@@ -2135,6 +2137,9 @@ main(int argc, char *argv[])
                 opt += 2;
             } else if (*opt == 'm' && opt[1] == 'E') {
                 enable_security_detect = 1;
+                opt += 2;
+            } else if (*opt == 'm' && opt[1] == 'f') {
+                enable_ignore_sigpipe = 1;
                 opt += 2;
             } else if (*opt == 'w') {
                 working_dir = extract_string(&opt, 1, "w");
@@ -2554,7 +2559,11 @@ main(int argc, char *argv[])
             sigset_t ss;
             sigemptyset(&ss);
             sigprocmask(SIG_SETMASK, &ss, NULL);
-            signal(SIGPIPE, SIG_DFL);
+            if (enable_ignore_sigpipe) {
+                signal(SIGPIPE, SIG_IGN);
+            } else {
+                signal(SIGPIPE, SIG_DFL);
+            }
 
             // switch to ejexec user
             if (setgid(slave_gid) < 0) {
