@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2024 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2025 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -27,12 +27,18 @@
 #include "ejudge/osdeps.h"
 #include "ejudge/exec.h"
 
+#include <fcntl.h>
+#include <grp.h>
+#include <limits.h>
+#include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
 #include <ctype.h>
 #include <signal.h>
+#include <unistd.h>
+#include <errno.h>
 
 #define EJ_USERS_MASK 1
 #define EJ_SUPER_SERVER_MASK 2
@@ -41,8 +47,11 @@
 #define EJ_JOBS_MASK 16
 #define EJ_CONTESTS_MASK 32
 #define EJ_AGENT_MASK 64
-#define EJ_LAST_MASK 128
+#define EJ_AGENT_SERVER_MASK 128
+#define EJ_LAST_MASK 256
 #define EJ_ALL_MASK (EJ_LAST_MASK - 1)
+
+#define EJ_AGENT_SERVER_NAME "ej-agent-server"
 
 static const unsigned char *program_name = "";
 
@@ -170,6 +179,113 @@ invoke_rotate(
 }
 
 static int
+stop_processes(
+        const unsigned char *process_name,
+        const struct ejudge_cfg *config)
+{
+  int *pids = NULL;
+  int pid_count = start_find_all_processes(process_name, NULL, &pids);
+  for (int i = 0; i < pid_count; ++i) {
+    start_kill(pids[i], START_STOP);
+  }
+  free(pids); pids = NULL;
+  while (1) {
+    pid_count = start_find_all_processes(process_name, NULL, &pids);
+    if (!pid_count) break;
+    free(pids); pids = NULL;
+    usleep(100000);
+  }
+  return 0;
+}
+
+static int
+start_agent_server(
+        const struct ejudge_cfg *config,
+        const char *user,
+        const char *group,
+        const char *ejudge_xml_path,
+        const unsigned char *workdir)
+{
+  int *pids = NULL;
+  int pid_count = start_find_all_processes(EJ_AGENT_SERVER_NAME, NULL, &pids);
+  if (pid_count > 0) {
+    fprintf(stderr, "%s: process %s already running\n", program_name, EJ_AGENT_SERVER_NAME);
+    return -1;
+  }
+  unsigned char path[PATH_MAX];
+  __attribute__((unused)) int _;
+  _ = snprintf(path, sizeof(path), "%s/%s", EJUDGE_SERVER_BIN_PATH, EJ_AGENT_SERVER_NAME);
+  unsigned char log_path[PATH_MAX];
+  _ = snprintf(log_path, sizeof(log_path), "%s/var/%s.log", EJUDGE_CONTESTS_HOME_DIR, EJ_AGENT_SERVER_NAME);
+
+  int curuid = getuid();
+  int curgid = getgid();
+  struct passwd *pwd = NULL;
+  if (user) {
+    pwd = getpwnam(user);
+    if (!pwd) {
+      fprintf(stderr, "%s: no user %s\n", program_name, user);
+      return -1;
+    }
+  }
+  struct group *grp = NULL;
+  if (group) {
+    grp = getgrnam(group);
+    if (!grp) {
+      fprintf(stderr, "%s: no user %s\n", program_name, group);
+      return -1;
+    }
+  }
+  if (curuid && pwd && curuid != pwd->pw_uid) {
+    fprintf(stderr, "%s: current user is not %s\n", program_name, user);
+    return -1;
+  }
+  if (curuid && grp && curgid != grp->gr_gid) {
+    fprintf(stderr, "%s: current group is not %s\n", program_name, group);
+    return -1;
+  }
+
+  int fd = open(log_path, O_WRONLY | O_CREAT | O_APPEND | O_NOCTTY, 0600);
+  if (fd < 0) {
+    fprintf(stderr, "%s: cannot open log file %s: %s\n", program_name, log_path, strerror(errno));
+    return -1;
+  }
+  int pid = fork();
+  if (pid < 0) {
+    fprintf(stderr, "%s: fork failed: %s\n", program_name, strerror(errno));
+    close(fd);
+    return -1;
+  }
+  if (!pid) {
+    pid = fork();
+    if (pid < 0) _exit(1);
+    if (pid > 0) _exit(0);
+
+    setsid();
+    if (chdir(workdir) < 0) _exit(1);
+    int fdr = open("/dev/null", O_RDONLY);
+    if (fdr < 0) _exit(1);
+    if (dup2(fdr, STDIN_FILENO) < 0) _exit(1);
+    if (dup2(fd, STDOUT_FILENO) < 0) _exit(1);
+    if (dup2(fd, STDERR_FILENO) < 0) _exit(1);
+    close(fdr);
+    close(fd);
+    if (grp && curgid != grp->gr_gid) {
+      if (setgid(grp->gr_gid) < 0) _exit(1);
+    }
+    if (pwd && curuid != pwd->pw_uid) {
+      if (setuid(pwd->pw_uid) < 0) _exit(1);
+    }
+    execl(path, path, NULL);
+    _exit(1);
+  }
+
+  close(fd);
+
+  return 0;
+}
+
+static int
 command_start(
         const struct ejudge_cfg *config,
         const char *user,
@@ -206,6 +322,7 @@ command_start(
   int super_run_started = 0;
   int job_server_started = 0;
   int new_server_started = 0;
+  int agent_server_started = 0;
   char tool_instance_id[128];
 
   if (config->contests_home_dir) workdir = config->contests_home_dir;
@@ -452,6 +569,15 @@ command_start(
     job_server_started = 1;
   }
 
+  // start ej-agent-server
+  if (!slave_mode && !(skip_mask & EJ_AGENT_SERVER_MASK) &&
+      config->agent_server && config->agent_server->enable > 0) {
+    if (start_agent_server(config, user, group, ejudge_xml_path, workdir) < 0) {
+      goto failed;
+    }
+    agent_server_started = 1;
+  }
+
   // start ej-contests
   if (!slave_mode && !(skip_mask & EJ_CONTESTS_MASK)) {
     snprintf(path, sizeof(path), "%s/ej-contests", EJUDGE_SERVER_BIN_PATH);
@@ -493,6 +619,9 @@ command_start(
   if (super_run_started) {
     invoke_stopper("ej-super-run", ejudge_xml_path);
   }
+  if (agent_server_started) {
+    stop_processes(EJ_AGENT_SERVER_NAME, config);
+  }
   if (super_serve_started) {
     invoke_stopper("ej-super-server", ejudge_xml_path);
   }
@@ -523,6 +652,11 @@ command_stop(
   }
   if (!master_mode && !(skip_mask & EJ_SUPER_RUN_MASK)) {
     if (invoke_stopper("ej-super-run", ejudge_xml_path) < 0)
+      return -1;
+  }
+  if (!slave_mode && !(skip_mask & EJ_AGENT_SERVER_MASK) &&
+      config->agent_server && config->agent_server->enable > 0) {
+    if (stop_processes(EJ_AGENT_SERVER_NAME, config) < 0)
       return -1;
   }
   if (!slave_mode && !(skip_mask & EJ_SUPER_SERVER_MASK)) {
@@ -577,6 +711,36 @@ rotate_agent_log(
   }
 }
 
+static void
+rotate_agent_server_log(
+        const struct ejudge_cfg *config,
+        const char *ejudge_xml_path,
+        int date_suffix_flag)
+{
+  unsigned char lpd[PATH_MAX];
+  unsigned char lpf[PATH_MAX];
+  if (rotate_get_log_dir_and_file(lpd, sizeof(lpd),
+                                  lpf, sizeof(lpf),
+                                  config,
+                                  NULL,
+                                  EJ_AGENT_SERVER_NAME ".log") < 0) {
+    return;
+  }
+
+  unsigned char *log_group = NULL;
+#if defined EJUDGE_PRIMARY_USER
+  log_group = EJUDGE_PRIMARY_USER;
+#endif
+
+  rotate_log_files(lpd, lpf, NULL, NULL, log_group, 0620, date_suffix_flag);
+
+  int *pids = NULL;
+  int pid_count = start_find_all_processes(EJ_AGENT_SERVER_NAME, NULL, &pids);
+  for (int i = 0; i < pid_count; ++i) {
+    //start_kill(pids[i], SIGUSR1);
+  }
+}
+
 static int
 command_rotate(
         const struct ejudge_cfg *config,
@@ -609,6 +773,9 @@ command_rotate(
   if (!slave_mode && !(skip_mask & EJ_AGENT_MASK)) {
     rotate_agent_log(config, ejudge_xml_path, date_suffix_flag);
   }
+  if (!slave_mode && !(skip_mask & EJ_AGENT_SERVER_MASK) && config->agent_server && config->agent_server->enable > 0) {
+    rotate_agent_server_log(config, ejudge_xml_path, date_suffix_flag);
+  }
 
   return 0;
 }
@@ -628,6 +795,7 @@ static const struct tool_names_s tool_names[] =
   { EJ_JOBS_MASK, (const char *[]) { "ej-jobs", "jobs", "job", NULL } },
   { EJ_CONTESTS_MASK, (const char *[]) { "ej-contests", "contests", "contest", "cont", NULL } },
   { EJ_AGENT_MASK, (const char *[]) { "ej-agent", "agents", "agent", NULL } },
+  { EJ_AGENT_SERVER_MASK, (const char *[]) { "ej-agent-server", "agent-server", NULL } },
   { 0, NULL },
 };
 
@@ -764,6 +932,9 @@ main(int argc, char *argv[])
       i++;
     } else if (!strcmp(argv[i], "-nc")) {
       skip_mask |= EJ_CONTESTS_MASK;
+      i++;
+    } else if (!strcmp(argv[i], "-na")) {
+      skip_mask |= EJ_AGENT_SERVER_MASK;
       i++;
     } else if (!strcmp(argv[i], "-hb")) {
       enable_heartbeat = 1;

@@ -1612,6 +1612,10 @@ agent_server_start(const AgentServerParams *params)
         info.port = ejudge_config->agent_server->port;
     }
     if (!info.port) info.port = DEFAULT_SERVER_PORT;
+    if (ejudge_config->agent_server && ejudge_config->agent_server->service
+        && ejudge_config->agent_server->service[0]) {
+        protocols[0].name = xstrdup(ejudge_config->agent_server->service);
+    }
     info.protocols = protocols;
     info.options = LWS_SERVER_OPTION_LIBUV | LWS_SERVER_OPTION_VALIDATE_UTF8 | LWS_SERVER_OPTION_HTTP_HEADERS_SECURITY_BEST_PRACTICES_ENFORCE;
     info.pt_serv_buf_size = 65536;
