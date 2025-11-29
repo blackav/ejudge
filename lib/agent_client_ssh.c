@@ -1942,7 +1942,7 @@ put_config_func(
     return result;
 }
 
-static void
+static int
 wait_on_future_func(
         struct AgentClient *ac,
         void **p_vfuture,
@@ -1951,6 +1951,7 @@ wait_on_future_func(
     interrupt_enable();
     os_Sleep(5000);
     interrupt_disable();
+    return 0;
 }
 
 static const struct AgentClientOps ops_ssh =
