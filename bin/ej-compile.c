@@ -1615,7 +1615,7 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
   int override_exe = 0;
   int exe_copied = 0;
   path_t full_working_dir = { 0 };
-  struct Future *future = NULL;
+  void *future = NULL;
   int ifd = -1;
   int ifd_wd = -1;
   sigset_t emptymask;
@@ -1791,9 +1791,7 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
 
     if (!r) {
       if (agent) {
-        interrupt_enable();
-        os_Sleep(5000);
-        interrupt_disable();
+        agent->ops->wait_on_future(agent, &future, 5000);
       } else {
         struct epoll_event events[1];
         int r = epoll_pwait(efd, events, 1, HEARTBEAT_UPDATE_MS, &emptymask);

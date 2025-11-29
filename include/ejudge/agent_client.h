@@ -19,7 +19,6 @@
 #include <stdlib.h>
 
 struct AgentClient;
-struct Future;
 
 struct AgentClientOps
 {
@@ -90,14 +89,14 @@ struct AgentClientOps
         int enable_file,
         unsigned char *pkt_name,
         size_t pkt_len,
-        struct Future **p_future,
+        void **p_vfuture,
         long long timeout_ms,
         char **p_data,
         size_t *p_size);
 
     int (*async_wait_complete)(
         struct AgentClient *ac,
-        struct Future **p_future,
+        void **p_vfuture,
         unsigned char *pkt_name,
         size_t pkt_len,
         char **p_data,
@@ -165,6 +164,11 @@ struct AgentClientOps
     int (*set_token_file)(
         struct AgentClient *ac,
         const unsigned char *token_file);
+
+    int (*wait_on_future)(
+        struct AgentClient *ac,
+        void **p_vfuture,
+        long long timeout_ms);
 };
 
 struct AgentClient

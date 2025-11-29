@@ -36,6 +36,8 @@ typedef struct SpoolQueue
     unsigned char *config_packet_dir;
     unsigned char *config_in_dir;
 
+    void *extra;
+
     int mode;
 } SpoolQueue;
 
