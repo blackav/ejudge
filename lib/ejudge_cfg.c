@@ -117,6 +117,7 @@ enum
     TG_AGENT_SERVER,
     TG_PORT,
     TG_TOKEN_FILE,
+    TG_SERVICE,
 
     TG__BARRIER,
     TG__DEFAULT,
@@ -230,6 +231,7 @@ static char const * const elem_map[] =
   "agent_server",
   "port",
   "token_file",
+  "service",
   0,
   "_default",
 
@@ -378,6 +380,7 @@ node_free(struct xml_tree *t)
   case TG_AGENT_SERVER: {
     struct ejudge_cfg_agent_server *p = (struct ejudge_cfg_agent_server *) t;
     xfree(p->token_file);
+    xfree(p->service);
     break;
   }
   }
@@ -668,6 +671,13 @@ parse_agent_server(struct ejudge_cfg *cfg, struct xml_tree *tree)
         goto fail;
       }
       as->token_file = xstrdup(p->text);
+      break;
+    case TG_SERVICE:
+      if (as->service) {
+        xml_err_elem_redefined(p);
+        goto fail;
+      }
+      as->service = xstrdup(p->text);
       break;
     default:
       xml_err_elem_not_allowed(p);
