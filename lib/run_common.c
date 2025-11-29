@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2012-2024 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2025 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -4236,8 +4236,10 @@ run_one_test(
     *p_report_real_time_limit_ms = srpp->real_time_limit_ms;
   }
 
-  if (tst && tst->kill_signal && tst->kill_signal[0]) task_SetKillSignal(tsk, tst->kill_signal);
-  if (tst && tst->no_core_dump > 0) task_DisableCoreDump(tsk);
+  if (tst) {
+    if (tst->kill_signal && tst->kill_signal[0]) task_SetKillSignal(tsk, tst->kill_signal);
+    if (tst->no_core_dump > 0) task_DisableCoreDump(tsk);
+  }
 
   long long max_vm_size = -1LL;
   long long max_stack_size = -1LL;
@@ -4396,6 +4398,9 @@ run_one_test(
   */
   if (srgp->detect_violations > 0) {
     task_EnableSecurityViolationError(tsk);
+  }
+  if (srpp->ignore_sigpipe > 0) {
+    task_IgnoreSIGPIPE(tsk);
   }
 
 #ifdef HAVE_TERMIOS_H
