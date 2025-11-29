@@ -89,6 +89,7 @@ enum
   META_PROBLEM_CONFIG_SECTION_enable_src_for_testing,
   META_PROBLEM_CONFIG_SECTION_disable_vm_size_limit,
   META_PROBLEM_CONFIG_SECTION_enable_group_merge,
+  META_PROBLEM_CONFIG_SECTION_ignore_sigpipe,
   META_PROBLEM_CONFIG_SECTION_id,
   META_PROBLEM_CONFIG_SECTION_variant_num,
   META_PROBLEM_CONFIG_SECTION_full_score,

@@ -96,6 +96,7 @@ static struct meta_info_item meta_info_problem_config_section_data[] =
   [META_PROBLEM_CONFIG_SECTION_enable_src_for_testing] = { META_PROBLEM_CONFIG_SECTION_enable_src_for_testing, 'f', XSIZE(struct problem_config_section, enable_src_for_testing), "enable_src_for_testing", XOFFSET(struct problem_config_section, enable_src_for_testing) },
   [META_PROBLEM_CONFIG_SECTION_disable_vm_size_limit] = { META_PROBLEM_CONFIG_SECTION_disable_vm_size_limit, 'f', XSIZE(struct problem_config_section, disable_vm_size_limit), "disable_vm_size_limit", XOFFSET(struct problem_config_section, disable_vm_size_limit) },
   [META_PROBLEM_CONFIG_SECTION_enable_group_merge] = { META_PROBLEM_CONFIG_SECTION_enable_group_merge, 'f', XSIZE(struct problem_config_section, enable_group_merge), "enable_group_merge", XOFFSET(struct problem_config_section, enable_group_merge) },
+  [META_PROBLEM_CONFIG_SECTION_ignore_sigpipe] = { META_PROBLEM_CONFIG_SECTION_ignore_sigpipe, 'f', XSIZE(struct problem_config_section, ignore_sigpipe), "ignore_sigpipe", XOFFSET(struct problem_config_section, ignore_sigpipe) },
   [META_PROBLEM_CONFIG_SECTION_id] = { META_PROBLEM_CONFIG_SECTION_id, 'i', XSIZE(struct problem_config_section, id), "id", XOFFSET(struct problem_config_section, id) },
   [META_PROBLEM_CONFIG_SECTION_variant_num] = { META_PROBLEM_CONFIG_SECTION_variant_num, 'i', XSIZE(struct problem_config_section, variant_num), "variant_num", XOFFSET(struct problem_config_section, variant_num) },
   [META_PROBLEM_CONFIG_SECTION_full_score] = { META_PROBLEM_CONFIG_SECTION_full_score, 'i', XSIZE(struct problem_config_section, full_score), "full_score", XOFFSET(struct problem_config_section, full_score) },
@@ -355,6 +356,7 @@ void meta_problem_config_section_copy(struct problem_config_section *dst, const 
   dst->enable_src_for_testing = src->enable_src_for_testing;
   dst->disable_vm_size_limit = src->disable_vm_size_limit;
   dst->enable_group_merge = src->enable_group_merge;
+  dst->ignore_sigpipe = src->ignore_sigpipe;
   dst->id = src->id;
   dst->variant_num = src->variant_num;
   dst->full_score = src->full_score;

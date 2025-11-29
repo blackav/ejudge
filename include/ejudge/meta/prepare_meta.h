@@ -426,6 +426,7 @@ enum
   CNTSPROB_enable_src_for_testing,
   CNTSPROB_disable_vm_size_limit,
   CNTSPROB_enable_group_merge,
+  CNTSPROB_ignore_sigpipe,
   CNTSPROB_examinator_num,
   CNTSPROB_real_time_limit,
   CNTSPROB_time_limit,
