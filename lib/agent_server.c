@@ -27,6 +27,7 @@
 #include "ejudge/xalloc.h"
 
 #include <libwebsockets.h>
+#include <time.h>
 #include <uv.h>
 
 #include <ctype.h>
@@ -113,6 +114,25 @@ typedef struct QueryCallback
     QueryCallbackFunc callback;
 } QueryCallback;
 
+typedef struct SpoolQueueWaiter
+{
+    ConnectionState *conn;
+    long long wait_time_ms;
+    int channel;
+    signed char random_mode;
+    signed char enable_file;
+} SpoolQueueWaiter;
+
+typedef struct SpoolQueueExtra
+{
+    uv_fs_event_t handle;
+
+    struct AgentServerState *ass;
+    SpoolQueueWaiter *waiters;
+    size_t waiter_a;
+    size_t waiter_u;
+} SpoolQueueExtra;
+
 typedef struct AgentServerState
 {
     uv_loop_t *loop;
@@ -176,6 +196,92 @@ get_spool_queue(
         return NULL;
     }
     return q;
+}
+
+static void
+fs_event_handle(uv_fs_event_t *handle, const char *filename, int events, int status);
+
+static void
+spool_queue_add_waiter(
+    SpoolQueue *sq,
+    AgentServerState *ass,
+    ConnectionState *conn,
+    long long wait_time_ms,
+    int channel,
+    signed char random_mode,
+    signed char enable_file)
+{
+    SpoolQueueExtra *sqe;
+    if (!(sqe = (SpoolQueueExtra *) sq->extra)) {
+        XCALLOC(sqe, 1);
+        sq->extra = sqe;
+        sqe->waiter_a = 16;
+        XCALLOC(sqe->waiters, sqe->waiter_a);
+        uv_fs_event_init(ass->loop, &sqe->handle);
+        sqe->handle.data = sq;
+        sqe->ass = ass;
+    }
+
+    size_t i = 0;
+    for (i = 0; i < sqe->waiter_u; ++i) {
+        if (sqe->waiters[i].conn == conn) {
+            break;
+        }
+    }
+    if (i < sqe->waiter_u) {
+        return;
+    }
+
+    if (sqe->waiter_u == sqe->waiter_a) {
+        sqe->waiter_a *= 2;
+        XREALLOC(sqe->waiters, sqe->waiter_a);
+    }
+    SpoolQueueWaiter *sqw = &sqe->waiters[sqe->waiter_u++];
+    memset(sqw, 0, sizeof(*sqw));
+    sqw->conn = conn;
+    sqw->wait_time_ms = wait_time_ms;
+    sqw->channel = channel;
+    sqw->random_mode = random_mode;
+    sqw->enable_file = enable_file;
+
+    if (sqe->waiter_u == 1) {
+        uv_fs_event_start(&sqe->handle, fs_event_handle, sq->queue_packet_dir, 0);
+    }
+}
+
+static int
+spool_queue_remove_waiter(
+    SpoolQueue *sq,
+    ConnectionState *conn,
+    int channel,
+    int *p_wait_channel,
+    long long *p_wait_time_ms)
+{
+    if (!sq || !sq->extra) return 0;
+    SpoolQueueExtra *sqe = (SpoolQueueExtra *) sq->extra;
+
+    size_t i = 0;
+    for (i = 0; i < sqe->waiter_u; ++i) {
+        if (sqe->waiters[i].conn == conn) {
+            break;
+        }
+    }
+    if (i == sqe->waiter_u) return 0;
+
+    SpoolQueueWaiter *sqw = &sqe->waiters[i];
+    if (p_wait_channel) *p_wait_channel = sqw->channel;
+    if (p_wait_time_ms) *p_wait_time_ms = sqw->wait_time_ms;
+    if (channel >= 0 && sqw->channel != channel) {
+        return -1;
+    }
+
+    if (i + 1 < sqe->waiter_u) {
+        memmove(&sqe->waiters[i], &sqe->waiters[i+1], (sqe->waiter_u-i-1)*sizeof(sqe->waiters[0]));
+    }
+    if (!--sqe->waiter_u) {
+        uv_fs_event_stop(&sqe->handle);
+    }
+    return 1;
 }
 
 #define L_ERR(format, ...) fprintf(log_f, "%s:%d:" format "\n", __FUNCTION__, __LINE__, ##__VA_ARGS__)
@@ -1060,6 +1166,154 @@ done:;
 }
 
 static int
+simple_count_files(
+        const unsigned char *path)
+{
+    int count = 0;
+    DIR *d = opendir(path);
+    if (!d) return 0;
+
+    struct dirent *dd;
+    while ((dd = readdir(d))) {
+        if (strcmp(dd->d_name, ".") != 0 && strcmp(dd->d_name, "..") != 0) {
+            ++count;
+        }
+    }
+
+    closedir(d);
+    return count;
+}
+
+static int
+wait_func(
+    const struct QueryCallback *cb,
+    struct AgentServerState *ass,
+    ConnectionState *conn,
+    cJSON *query,
+    cJSON *reply)
+{
+    int result = 0;
+    int channel = 0;
+    int random_mode = 0;
+    int enable_file = 0;
+    unsigned char pkt_name[PATH_MAX];
+    char *data = NULL;
+    size_t size = 0;
+
+    cJSON *jc = cJSON_GetObjectItem(query, "channel");
+    if (!jc || jc->type != cJSON_Number || jc->valuedouble <= 0) {
+        cJSON_AddStringToObject(reply, "message", "invalid json");
+        conn_err(conn, "invalid channel");
+        goto done;
+    }
+    channel = (int) jc->valuedouble;
+    cJSON *jr = cJSON_GetObjectItem(query, "random_mode");
+    if (jr && jr->type == cJSON_True) {
+        random_mode = 1;
+    }
+    cJSON *jef = cJSON_GetObjectItem(query, "enable_file");
+    if (jef && jef->type == cJSON_True) {
+        enable_file = 1;
+    }
+
+    do {
+        // try to get a file from spool directory
+        while (1) {
+            int r = scan_dir(conn->spool_queue->queue_dir, pkt_name, sizeof(pkt_name), random_mode);
+            if (r < 0) {
+                cJSON_AddStringToObject(reply, "message", "scan_dir failed");
+                conn_err(conn, "scan_dir %s failed %s", conn->spool_queue->queue_dir, strerror(-r));
+                goto done;
+            }
+            if (!r) break;
+
+            if (!enable_file) {
+                cJSON_AddStringToObject(reply, "pkt-name", pkt_name);
+                cJSON_AddStringToObject(reply, "q", "poll-result");
+                result = 1;
+                goto done;
+            }
+
+            r = spool_queue_read_packet(conn->spool_queue, pkt_name, &data, &size);
+            if (r < 0) {
+                cJSON_AddStringToObject(reply, "message", "read_packet failed");
+                goto done;
+            }
+            if (r > 0) {
+                cJSON_AddStringToObject(reply, "pkt-name", pkt_name);
+                cJSON_AddStringToObject(reply, "q", "file-result");
+                cJSON_AddTrueToObject(reply, "found");
+                agent_add_file_to_object(reply, data, size);
+                result = 1;
+                goto done;
+            }
+        }
+
+        spool_queue_add_waiter(conn->spool_queue, ass, conn, conn->current_time_ms, channel, random_mode, enable_file);
+
+        if (simple_count_files(conn->spool_queue->queue_packet_dir) > 0) {
+            // if the packet directory is no longer empty, just restart
+            spool_queue_remove_waiter(conn->spool_queue, conn, channel, NULL, NULL);
+            continue;
+        }
+
+        cJSON_AddNumberToObject(reply, "channel", channel);
+        cJSON_AddStringToObject(reply, "q", "channel-result");
+        result = 1;
+        goto done;
+    } while (0);
+
+done:;
+    free(data);
+    return result;
+}
+
+static int
+cancel_func(
+    const struct QueryCallback *cb,
+    struct AgentServerState *ass,
+    ConnectionState *conn,
+    cJSON *query,
+    cJSON *reply)
+{
+    int result = 0;
+    int channel = 0;
+    int wait_channel = 0;
+    long long wait_time_ms = 0;
+
+    cJSON *jc = cJSON_GetObjectItem(query, "channel");
+    if (!jc || jc->type != cJSON_Number || jc->valuedouble <= 0) {
+        conn_err(conn, "invalid channel");
+        cJSON_AddStringToObject(reply, "message", "invalid json");
+        goto done;
+    }
+    channel = (int) jc->valuedouble;
+
+    int r = spool_queue_remove_waiter(conn->spool_queue, conn, channel, &wait_channel, &wait_time_ms);
+    if (!r) {
+        conn_err(conn, "requested %d but no wait channel registered", channel);
+        cJSON_AddStringToObject(reply, "message", "not in wait state");
+        cJSON_AddTrueToObject(reply, "invalid-channel");
+        goto done;
+    } else if (r < 0) {
+        conn_err(conn, "requested %d but %d registered", channel, wait_channel);
+        cJSON_AddStringToObject(reply, "message", "bad wait state");
+        cJSON_AddTrueToObject(reply, "invalid-channel");
+        goto done;
+    }
+
+    cJSON_ReplaceItemInObject(reply, "s", cJSON_CreateNumber(channel));
+    if (wait_time_ms > 0) {
+        cJSON_ReplaceItemInObject(reply, "t", cJSON_CreateNumber(wait_time_ms));
+    }
+    cJSON_AddStringToObject(reply, "q", "poll-result");
+    result = 1;
+
+done:;
+    return result;
+}
+
+static int
 handle_incoming_json(
     struct lws *wsi,
     AgentServerState *ass,
@@ -1216,6 +1470,7 @@ callback_server(
             lwsl_user("%d: %s: %s: connection closed, queue %s, mode %s\n", conn->serial, conn->remote_addr, conn->inst_id,
                 conn->queue_id, conn->param_mode);
         }
+        spool_queue_remove_waiter(conn->spool_queue, conn, -1, NULL, NULL);
         if (conn->spool_queue) {
             --conn->spool_queue->refcount;
         }
@@ -1242,23 +1497,83 @@ static struct lws_protocols protocols[] =
 	LWS_PROTOCOL_LIST_TERM
 };
 
-/*
-long long get_time_us()
+static void
+fs_event_handle(uv_fs_event_t *handle, const char *filename, int events, int status)
 {
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    return tv.tv_sec * 1000000LL + tv.tv_usec;
-}
+    SpoolQueue *sq = (SpoolQueue *) handle->data;
+    SpoolQueueExtra *sqe = (SpoolQueueExtra *) sq->extra;
+    unsigned char pkt_name[PATH_MAX];
+    char *data = NULL;
+    size_t size = 0;
 
-void timer_callback(uv_timer_t *handle)
-{
-    struct application_info *app = handle->data;
-    if (app->current_wsi) {
-        lws_callback_on_writable(app->current_wsi);
+    if (sqe->waiter_u == 0) {
+        lwsl_err("%s:%d: spurious wake-up on queue %s", __FUNCTION__, __LINE__, sq->queue_id);
+        // FIXME: is it safe?
+        // uv_fs_event_stop(&sqe->handle);
+        return;
     }
-    printf("timer callback\n");
+
+    while (sqe->waiter_u > 0) {
+        // proceed with the first waiter
+        SpoolQueueWaiter *sqw = &sqe->waiters[0];
+        ConnectionState *conn = sqw->conn;
+
+        do {
+            int r = scan_dir(sq->queue_dir, pkt_name, sizeof(pkt_name), sqw->random_mode);
+            if (r <= 0) {
+                // still no packet, wait further
+                return;
+            }
+
+            if (sqw->enable_file > 0) {
+                r = spool_queue_read_packet(sq, pkt_name, &data, &size);
+                if (r < 0) {
+                    // this means some hard error on reading
+                    lwsl_err("%s:%d: read packet failed", __FUNCTION__, __LINE__);
+                    // try another time
+                    continue;
+                }
+                if (!r) {
+                    continue;
+                }
+            }
+        } while (0);
+
+        cJSON *reply = cJSON_CreateObject();
+        struct timeval tv;
+        gettimeofday(&tv, NULL);
+        long long current_time_ms = tv.tv_sec * 1000LL + tv.tv_usec / 1000;
+        cJSON_AddNumberToObject(reply, "tt", (double) current_time_ms);
+        cJSON_AddNumberToObject(reply, "ss", (double) ++conn->msg_serial);
+        cJSON_AddNumberToObject(reply, "s", (double) sqw->channel);
+        cJSON_AddNumberToObject(reply, "t", (double) sqw->wait_time_ms);
+        cJSON_AddTrueToObject(reply, "wake-up");
+        if (data != NULL) {
+            cJSON_AddStringToObject(reply, "q", "file-result");
+            cJSON_AddTrueToObject(reply, "found");
+            agent_add_file_to_object(reply, data, size);
+            free(data); data = NULL;
+        } else {
+            cJSON_AddStringToObject(reply, "q", "poll-result");
+        }
+        cJSON_AddStringToObject(reply, "pkt-name", pkt_name);
+        cJSON_AddTrueToObject(reply, "ok");
+
+        lwsl_user("%s:%d: wake up on queue %s: %s, %d, %d, %s",
+            __FUNCTION__, __LINE__, sq->queue_id, conn->inst_id, conn->msg_serial, sqw->channel, pkt_name);
+
+        // FIXME: no guarantee, that the packet was really sent
+        unsigned char *jstr = cJSON_PrintUnformatted(reply);
+        size_t jlen = strlen(jstr);
+        cJSON_Delete(reply); reply = NULL;
+        conn_queue_data(sqw->conn, jstr, jlen);
+        free(jstr); jstr = NULL;
+        if (conn->out_h != conn->out_u) {
+            lws_callback_on_writable(conn->wsi);
+        }
+        spool_queue_remove_waiter(sq, conn, -1, NULL, NULL);
+    }
 }
-*/
 
 int
 agent_server_start(const AgentServerParams *params)
@@ -1322,11 +1637,11 @@ agent_server_start(const AgentServerParams *params)
     add_query_callback(ass, "put-archive", NULL, put_archive_func);
     add_query_callback(ass, "mirror", NULL, mirror_func);
     add_query_callback(ass, "put-config", NULL, put_config_func);
+    add_query_callback(ass, "wait", NULL, wait_func);
+    add_query_callback(ass, "cancel", NULL, cancel_func);
 
 /*
     app_state_add_query_callback(&app, "set", NULL, set_query_func);
-    app_state_add_query_callback(&app, "wait", NULL, wait_func);
-    app_state_add_query_callback(&app, "cancel", NULL, cancel_func);
 */
 
     lwsl_user("server started");
