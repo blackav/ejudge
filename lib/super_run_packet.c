@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2012-2024 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2025 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -161,6 +161,7 @@ super_run_in_problem_packet_init(struct generic_section_config *gp)
   p->test_count = -1;
   p->disable_vm_size_limit = -1;
   p->enable_group_merge = -1;
+  p->ignore_sigpipe = -1;
 
   p->type_val = -1;
 }

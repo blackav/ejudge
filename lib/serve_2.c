@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2024 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2025 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -2795,6 +2795,9 @@ serve_run_request(
   }
   if (prob->enable_group_merge > 0) {
     srpp->enable_group_merge = 1;
+  }
+  if (prob->ignore_sigpipe > 0) {
+    srpp->ignore_sigpipe = 1;
   }
 
   if (tester) {

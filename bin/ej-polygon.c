@@ -3953,6 +3953,7 @@ process_polygon_zip(
     if (pkt->enable_group_merge > 0) {
         prob_cfg->enable_group_merge = 1;
     }
+    prob_cfg->ignore_sigpipe = 1;
 
     cfg_file = open_memstream(&cfg_text, &cfg_size);
     problem_config_section_unparse_cfg(cfg_file, prob_cfg);

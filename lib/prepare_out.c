@@ -1753,6 +1753,10 @@ prepare_unparse_prob(
       || (!prob->abstract && prob->enable_group_merge >= 0)) {
     unparse_bool(f, "enable_group_merge", prob->enable_group_merge);
   }
+  if ((prob->abstract > 0 && prob->ignore_sigpipe > 0)
+      || (!prob->abstract && prob->ignore_sigpipe >= 0)) {
+    unparse_bool(f, "ignore_sigpipe", prob->ignore_sigpipe);
+  }
   if (prob->stand_ignore_score >= 0
       && ((prob->abstract && prob->stand_ignore_score) || !prob->abstract))
       unparse_bool(f, "stand_ignore_score", prob->stand_ignore_score);
@@ -2218,6 +2222,8 @@ prepare_unparse_actual_prob(
     unparse_bool(f, "disable_vm_size_limit", prob->disable_vm_size_limit);
   if (prob->enable_group_merge > 0)
     unparse_bool(f, "enable_group_merge", prob->enable_group_merge);
+  if (prob->ignore_sigpipe > 0)
+    unparse_bool(f, "ignore_sigpipe", prob->ignore_sigpipe);
   if (prob->stand_ignore_score > 0)
     unparse_bool(f, "stand_ignore_score", prob->stand_ignore_score);
   if (prob->stand_last_column > 0)

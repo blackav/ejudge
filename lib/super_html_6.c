@@ -5162,6 +5162,9 @@ do_import_problem(
   if (cfg->enable_group_merge > 0) {
     prob->enable_group_merge = 1;
   }
+  if (cfg->ignore_sigpipe > 0) {
+    prob->ignore_sigpipe = 1;
+  }
   if (cfg->test_pat && cfg->test_pat[0]) {
     xstrdup3(&prob->test_pat, cfg->test_pat);
   }

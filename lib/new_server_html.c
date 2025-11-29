@@ -10594,6 +10594,9 @@ priv_problem_status_json(
   if (prob->disable_vm_size_limit > 0) {
     cJSON_AddTrueToObject(jp, "disable_vm_size_limit");
   }
+  if (prob->ignore_sigpipe > 0) {
+    cJSON_AddTrueToObject(jp, "ignore_sigpipe");
+  }
   if (prob->enable_group_merge > 0) {
     cJSON_AddTrueToObject(jp, "enable_group_merge");
   }
