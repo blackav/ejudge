@@ -117,6 +117,7 @@ struct problem_config_section
   ejbyteflag_t enable_src_for_testing;
   ejbyteflag_t disable_vm_size_limit;
   ejbyteflag_t enable_group_merge;
+  ejbyteflag_t ignore_sigpipe;
 
   int id;
   int variant_num;
