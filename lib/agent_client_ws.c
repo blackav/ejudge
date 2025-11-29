@@ -847,7 +847,7 @@ async_wait_init_func(
         int enable_file,
         unsigned char *pkt_name,
         size_t pkt_len,
-        struct Future **p_future,
+        void **p_vfuture,
         long long timeout_ms,
         char **p_data,
         size_t *p_size)
@@ -949,7 +949,7 @@ done:;
 static int
 async_wait_complete_func(
         struct AgentClient *ac,
-        struct Future **p_future,
+        void **p_vfuture,
         unsigned char *pkt_name,
         size_t pkt_len,
         char **p_data,

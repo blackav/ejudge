@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2022-2024 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2022-2025 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1372,7 +1372,7 @@ async_wait_init_func(
         int enable_file,
         unsigned char *pkt_name,
         size_t pkt_len,
-        struct Future **p_future,
+        void **p_vfuture,
         long long timeout_ms,
         char **p_data,
         size_t *p_size)
@@ -1434,7 +1434,7 @@ async_wait_init_func(
             }
             if (jj && jj->type == cJSON_String && !strcmp("channel-result", jj->valuestring)) {
                 // the future to wait on is already create in the IO thread
-                *p_future = f.chained_future;
+                *p_vfuture = f.chained_future;
                 f.chained_future = NULL;
                 result = 0;
             }
@@ -1448,14 +1448,14 @@ async_wait_init_func(
 static int
 async_wait_complete_func(
         struct AgentClient *ac,
-        struct Future **p_future,
+        void **p_vfuture,
         unsigned char *pkt_name,
         size_t pkt_len,
         char **p_data,
         size_t *p_size)
 {
     __attribute__((unused)) struct AgentClientSsh *acs = (struct AgentClientSsh *) ac;
-    struct Future *future = *p_future;
+    struct Future *future = *p_vfuture;
     if (!future) return 0;
     pthread_mutex_lock(&future->m);
     int ready = future->ready;
@@ -1493,7 +1493,7 @@ async_wait_complete_func(
 done:
     future_fini(future);
     free(future);
-    *p_future = NULL;
+    *p_vfuture = NULL;
     return result;
 }
 

@@ -1615,7 +1615,7 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
   int override_exe = 0;
   int exe_copied = 0;
   path_t full_working_dir = { 0 };
-  struct Future *future = NULL;
+  void *future = NULL;
   int ifd = -1;
   int ifd_wd = -1;
   sigset_t emptymask;
