@@ -395,7 +395,6 @@ recv_json(struct AgentClientWs *acw, cJSON **pres)
         acw->in_buf_a = 4096;
         acw->in_buf = xmalloc(acw->in_buf_a);
     }
-    acw->in_buf_u = 0;
     *pres = NULL;
 
     while (1) {
@@ -467,6 +466,7 @@ recv_json(struct AgentClientWs *acw, cJSON **pres)
         return ACW_ERROR;
     }
     *pres = j;
+    acw->in_buf_u = 0;
     return ACW_OK;
 }
 
@@ -930,7 +930,6 @@ async_wait_init_func(
             acw->is_ready = 0;
             acw->random_mode = random_mode;
             acw->enable_file = enable_file;
-            acw->in_buf_u = 0;
             result = 0;
             goto done;
         }
@@ -1754,6 +1753,7 @@ wait_on_future_func(
     }
     acw->is_ready = 1;
     result = 1;
+    acw->in_buf_u = 0;
 
 done:;
     return result;
