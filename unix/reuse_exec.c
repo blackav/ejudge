@@ -1,4 +1,4 @@
-/* Copyright (C) 1998-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 1998-2025 Alexander Chernov <cher@ejudge.ru> */
 /* Created: <1998-01-21 14:33:28 cher> */
 
 /*
@@ -1736,6 +1736,9 @@ task_StartContainer(tTask *tsk)
   }
   if (tsk->enable_security_violation_error) {
     fprintf(spec_f, "mE");
+  }
+  if (tsk->ignore_sigpipe) {
+    fprintf(spec_f, "mf");
   }
 
   if (tsk->max_stack_size > 0) {
