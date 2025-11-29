@@ -77,6 +77,14 @@ struct AgentClientWs
     cJSON *wait_json;
 };
 
+static void
+set_wait_json(struct AgentClientWs *acw, cJSON *j)
+{
+    acw->wait_json = j;
+    acw->is_ready = 1;
+    interrupt_set_usr2();
+}
+
 static struct AgentClient *
 destroy_func(struct AgentClient *ac)
 {
@@ -461,12 +469,17 @@ recv_json(struct AgentClientWs *acw, cJSON **pres)
     }
     acw->in_buf[acw->in_buf_u] = 0;
     cJSON *j = cJSON_Parse(acw->in_buf);
+    acw->in_buf_u = 0;
     if (!j) {
         err("%s:%d: failed to parse JSON", __FUNCTION__, __LINE__);
         return ACW_ERROR;
     }
+    cJSON *jw = cJSON_GetObjectItem(j, "wake-up");
+    if (jw && jw->type == cJSON_True) {
+        set_wait_json(acw, jw);
+        return recv_json(acw, pres);
+    }
     *pres = j;
-    acw->in_buf_u = 0;
     return ACW_OK;
 }
 
@@ -1633,6 +1646,10 @@ wait_on_future_func(
 {
     int result = -1;
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
+    if (acw->is_ready) {
+        return 1;
+    }
+
     int sockfd = -1;
     CURLcode res = curl_easy_getinfo(acw->curl, CURLINFO_ACTIVESOCKET, &sockfd);
     if (res != CURLE_OK || sockfd < 0) {
@@ -1745,16 +1762,15 @@ wait_on_future_func(
         XREALLOC(acw->in_buf, acw->in_buf_a);
     }
     acw->in_buf[acw->in_buf_u] = 0;
-    acw->wait_json = cJSON_Parse(acw->in_buf);
-    if (!acw->wait_json) {
+    cJSON *jw = cJSON_Parse(acw->in_buf);
+    acw->in_buf_u = 0;
+    if (!jw) {
         err("%s:%d: failed to parse JSON", __FUNCTION__, __LINE__);
         *p_vfuture = NULL;
         goto done;
     }
-    acw->is_ready = 1;
+    set_wait_json(acw, jw);
     result = 1;
-    acw->in_buf_u = 0;
-    interrupt_set_usr2();
 
 done:;
     return result;
