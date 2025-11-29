@@ -1033,6 +1033,8 @@ do_loop(
             if (r <= 0) break;
           }
         }
+      } else if (agent) {
+        agent->ops->wait_on_future(agent, &future, 5000);
       } else {
         interrupt_enable();
         os_Sleep(5000);

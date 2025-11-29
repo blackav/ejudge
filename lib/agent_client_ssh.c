@@ -17,6 +17,7 @@
 #include "ejudge/config.h"
 #include "ejudge/agent_client.h"
 #include "ejudge/prepare.h"
+#include "ejudge/interrupt.h"
 #include "ejudge/xalloc.h"
 #include "ejudge/errlog.h"
 #include "ejudge/osdeps.h"
@@ -1941,6 +1942,17 @@ put_config_func(
     return result;
 }
 
+static void
+wait_on_future_func(
+        struct AgentClient *ac,
+        void **p_vfuture,
+        long long timeout_ms)
+{
+    interrupt_enable();
+    os_Sleep(5000);
+    interrupt_disable();
+}
+
 static const struct AgentClientOps ops_ssh =
 {
     destroy_func,
@@ -1965,6 +1977,7 @@ static const struct AgentClientOps ops_ssh =
     mirror_file_func,
     put_config_func,
     NULL,
+    wait_on_future_func,
 };
 
 struct AgentClient *

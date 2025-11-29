@@ -164,6 +164,11 @@ struct AgentClientOps
     int (*set_token_file)(
         struct AgentClient *ac,
         const unsigned char *token_file);
+
+    void (*wait_on_future)(
+        struct AgentClient *ac,
+        void **p_vfuture,
+        long long timeout_ms);
 };
 
 struct AgentClient

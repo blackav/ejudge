@@ -1459,6 +1459,17 @@ set_token_file_func(
     return 0;
 }
 
+static void
+wait_on_future_func(
+        struct AgentClient *ac,
+        void **p_vfuture,
+        long long timeout_ms)
+{
+    interrupt_enable();
+    os_Sleep(5000);
+    interrupt_disable();
+}
+
 static const struct AgentClientOps ops_ws =
 {
     destroy_func,
@@ -1482,7 +1493,8 @@ static const struct AgentClientOps ops_ws =
     put_archive_2_func,
     mirror_file_func,
     put_config_func,
-    .set_token_file = set_token_file_func,
+    set_token_file_func,
+    wait_on_future_func,
 };
 
 struct AgentClient *
