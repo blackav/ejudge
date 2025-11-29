@@ -3,7 +3,7 @@
 #ifndef __INTERRUPT_H__
 #define __INTERRUPT_H__
 
-/* Copyright (C) 2004-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2025 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -33,6 +33,7 @@ void interrupt_reset_usr1(void);
 int interrupt_was_usr1(void);
 
 void interrupt_setup_usr2(void);
+void interrupt_set_usr2(void);
 void interrupt_reset_usr2(void);
 int interrupt_was_usr2(void);
 

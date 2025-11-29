@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2004-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2025 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -126,6 +126,12 @@ interrupt_setup_usr2(void)
 {
   sigaddset(&work_mask, SIGUSR2);
   signal(SIGUSR2, sigusr2_handler);
+}
+
+void
+interrupt_set_usr2(void)
+{
+  was_usr2 = 1;
 }
 
 void

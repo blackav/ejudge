@@ -1754,6 +1754,7 @@ wait_on_future_func(
     acw->is_ready = 1;
     result = 1;
     acw->in_buf_u = 0;
+    interrupt_set_usr2();
 
 done:;
     return result;
