@@ -1146,7 +1146,11 @@ prepare_unparse_prob(
   if (!prob->abstract && prob->uuid && prob->uuid[0]) {
     fprintf(f, "uuid = \"%s\"\n", CARMOR(prob->uuid));
   }
-  if (prob->problem_dir && prob->problem_dir[0]) {
+  if (prob->variant_problem_dirs) {
+    for (int i = 0; prob->variant_problem_dirs[i]; ++i) {
+      fprintf(f, "problem_dir = \"%s\"\n", CARMOR(prob->variant_problem_dirs[i]));
+    }
+  } else if (prob->problem_dir && prob->problem_dir[0]) {
     fprintf(f, "problem_dir = \"%s\"\n", CARMOR(prob->problem_dir));
   }
 
@@ -1822,7 +1826,13 @@ prepare_unparse_actual_prob(
     fprintf(f, "plugin_entry_name = \"%s\"\n", CARMOR(prob->plugin_entry_name));
   }
   if (prob->uuid && prob->uuid[0]) fprintf(f, "uuid = \"%s\"\n", CARMOR(prob->uuid));
-  if (prob->problem_dir && prob->problem_dir[0]) fprintf(f, "problem_dir = \"%s\"\n", CARMOR(prob->problem_dir));
+  if (prob->variant_problem_dirs) {
+    for (int i = 0; prob->variant_problem_dirs[i]; ++i) {
+      fprintf(f, "problem_dir = \"%s\"\n", CARMOR(prob->variant_problem_dirs[i]));
+    }
+  } else if (prob->problem_dir && prob->problem_dir[0]) {
+    fprintf(f, "problem_dir = \"%s\"\n", CARMOR(prob->problem_dir));
+  }
   fprintf(f, "type = \"%s\"\n", problem_unparse_type(prob->type));
 
   if (prob->scoring_checker > 0)
@@ -3219,6 +3229,8 @@ prob_instr(
   }
 
   tmp_prob = prepare_copy_problem(prob);
+  /* resolve inherited problem_dir before using it */
+  prepare_set_prob_value(CNTSPROB_problem_dir, tmp_prob, abstr, global);
   mkpath(conf_path, root_dir, conf_dir, "conf");
 
   if (global->advanced_layout > 0) {

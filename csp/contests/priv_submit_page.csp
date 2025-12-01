@@ -41,8 +41,10 @@ ns_unparse_answers(
   struct watched_file *pw = 0;
   const unsigned char *pw_path = 0;
   path_t variant_stmt_file;
+  path_t display_problem_dir_buf;
   unsigned char title[1024];
   int enable_main_menu = 0;
+  const unsigned char *display_problem_dir = NULL;
   struct md_content *pmd = NULL;
 
   if (cs) global = cs->global;
@@ -78,6 +80,31 @@ ns_unparse_answers(
     snprintf(title, sizeof(title), "%s %s", _("Submit a solution for"), prob->short_name);
   } else {
     snprintf(title, sizeof(title), "%s", _("Submit a solution"));
+  }
+
+  if (prob && prob->problem_dir && prob->problem_dir[0]) {
+    display_problem_dir = prob->problem_dir;
+  }
+  if (prob && prob->variant_num > 0) {
+    int display_variant = variant;
+    if (display_variant <= 0 || display_variant > prob->variant_num) {
+      display_variant = 1;
+    }
+    if (global && global->advanced_layout > 0) {
+      get_advanced_layout_path(display_problem_dir_buf, sizeof(display_problem_dir_buf),
+                               global, prob, NULL, display_variant);
+      display_problem_dir = display_problem_dir_buf;
+    } else if (prob->variant_problem_dirs
+               && prob->variant_problem_dirs[display_variant - 1]
+               && prob->variant_problem_dirs[display_variant - 1][0]) {
+      snprintf(display_problem_dir_buf, sizeof(display_problem_dir_buf), "%s",
+               prob->variant_problem_dirs[display_variant - 1]);
+      display_problem_dir = display_problem_dir_buf;
+    } else if (prob->problem_dir && prob->problem_dir[0]) {
+      snprintf(display_problem_dir_buf, sizeof(display_problem_dir_buf), "%s-%d",
+               prob->problem_dir, display_variant);
+      display_problem_dir = display_problem_dir_buf;
+    }
   }
 %><%@include "priv_header.csp"
 %>
@@ -225,9 +252,9 @@ ns_unparse_answers(
 %>
 
 <%
-        if (prob && prob->problem_dir && prob->problem_dir[0]) {
+        if (prob && display_problem_dir && display_problem_dir[0]) {
 %>
-    <tr><td><b><s:_>Problem directory</s:_>:</b></td><td><tt><s:v value="prob->problem_dir" /></tt></td></tr>
+    <tr><td><b><s:_>Problem directory</s:_>:</b></td><td><tt><s:v value="display_problem_dir" /></tt></td></tr>
 <%
         }
 %>

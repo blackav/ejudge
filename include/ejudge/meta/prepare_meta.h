@@ -452,6 +452,7 @@ enum
   CNTSPROB_plugin_entry_name,
   CNTSPROB_uuid,
   CNTSPROB_problem_dir,
+  CNTSPROB_variant_problem_dirs,
   CNTSPROB_test_dir,
   CNTSPROB_test_sfx,
   CNTSPROB_corr_dir,
