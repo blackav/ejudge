@@ -25,6 +25,7 @@
 #include "ejudge/xalloc.h"
 
 #include <curl/curl.h>
+#include <curl/websockets.h>
 
 #include <ctype.h>
 #include <errno.h>

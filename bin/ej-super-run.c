@@ -849,12 +849,15 @@ do_loop(
   sigemptyset(&emptymask);
 
   if (agent_name && *agent_name) {
+    const unsigned char *agent_connect = NULL;
     if (!strncmp(agent_name, "ssh:", 4)) {
+      agent_connect = agent_name + 4;
       if (!agent_instance_id && super_run_id) {
         agent_instance_id = xstrdup(super_run_id);
       }
       agent = agent_client_ssh_create();
     } else if (!strncmp(agent_name, "ws:", 3)) {
+      agent_connect = agent_name + 3;
       if (!agent_instance_id && super_run_id) {
         agent_instance_id = xstrdup(super_run_id);
       }
@@ -867,7 +870,7 @@ do_loop(
       return -1;
     }
     if (agent->ops->init(agent, agent_instance_id,
-                          agent_name + 3, run_server_id,
+                          agent_connect, run_server_id,
                           PREPARE_RUN, verbose_mode, ip_address) < 0) {
       err("failed to initalize agent");
       return -1;

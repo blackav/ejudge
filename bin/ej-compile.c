@@ -1636,9 +1636,12 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
   }
 
   if (agent_name && *agent_name) {
+    const unsigned char *agent_connect = NULL;
     if (!strncmp(agent_name, "ssh:", 4)) {
+      agent_connect = agent_name + 4;
       agent = agent_client_ssh_create();
     } else if (!strncmp(agent_name, "ws:", 3)) {
+      agent_connect = agent_name + 3;
       agent = agent_client_ws_create();
       if (ejudge_config && ejudge_config->agent_server && ejudge_config->agent_server->token_file) {
         agent->ops->set_token_file(agent, ejudge_config->agent_server->token_file);
@@ -1648,7 +1651,7 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
       return -1;
     }
     if (agent->ops->init(agent, instance_id,
-                          agent_name + 3, compile_server_id,
+                          agent_connect, compile_server_id,
                           PREPARE_COMPILE, verbose_mode, ip_address) < 0) {
       err("failed to initalize agent");
       return -1;
