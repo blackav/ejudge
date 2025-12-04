@@ -1010,6 +1010,7 @@ finalize_wait:;
     acw->is_ready = 0;
     if (acw->wait_json) cJSON_Delete(acw->wait_json);
     acw->wait_json = NULL;
+    if (p_vfuture) *p_vfuture = NULL;
     goto done;
 }
 
