@@ -1214,11 +1214,18 @@ ejudge_cfg_get_host_option(
     if (p->tag != ejudge_config_parse_spec.default_elem) continue;
     if (strcmp(p->name[0], "host") != 0) continue;
     if (!(a = get_attr_by_name(p, "name"))) continue;
-    for (i = 0; host_names[i]; ++i) {
-      if (!strcmp(host_names[i], a->text))
-        break;
+    int found = 0;
+    if (!strcmp(a->text, "*")) {
+      found = 1;
+    } else {
+      for (i = 0; host_names[i]; ++i) {
+        if (!strcmp(host_names[i], a->text)) {
+          found = 1;
+          break;
+        }
+      }
     }
-    if (!host_names[i]) continue;
+    if (!found) continue;
     for (q = p->first_down; q; q = q->right) {
       if (q->tag != ejudge_config_parse_spec.default_elem) continue;
       if (strcmp(q->name[0], "option") != 0) continue;
