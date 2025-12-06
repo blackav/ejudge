@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2021-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2021-2025 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -199,7 +199,7 @@ fetch_google_endpoints(struct auth_google_state *state)
 
     curl_easy_reset(state->curl);
     curl_easy_setopt(state->curl, CURLOPT_NOSIGNAL, 1L);
-    curl_easy_setopt(state->curl, CURLOPT_FOLLOWLOCATION, 1);
+    curl_easy_setopt(state->curl, CURLOPT_FOLLOWLOCATION, 1L);
     curl_easy_setopt(state->curl, CURLOPT_COOKIEFILE, "");
     curl_easy_setopt(state->curl, CURLOPT_URL, "https://accounts.google.com/.well-known/openid-configuration");
     file = open_memstream(&page_text, &page_size);
