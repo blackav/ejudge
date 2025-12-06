@@ -149,6 +149,9 @@
 /* libcurl available */
 #undef CONF_HAS_LIBCURL
 
+/* libcurl supports websockets */
+#undef CONF_HAS_LIBCURL_WEBSOCKETS
+
 /* libuuid available */
 #undef CONF_HAS_LIBUUID
 

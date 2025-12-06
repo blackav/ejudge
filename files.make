@@ -16,6 +16,10 @@ ifdef LIBWEBSOCKETS
 AGENT_SERVER_C = lib/agent_server.c
 endif
 
+ifeq ($(LIBCURL_WEBSOCKETS), 1)
+AGENT_CLIENT_WS_C = lib/agent_client_ws.c
+endif
+
 USERLIST_CLNT_CFILES=\
  userlist_clnt/admin_process.c\
  userlist_clnt/api_key_request.c\
@@ -124,7 +128,7 @@ REUSE_CFILES=\
 
 COMMON_CFILES=\
  lib/agent_client_ssh.c\
- lib/agent_client_ws.c\
+ $(AGENT_CLIENT_WS_C)\
  lib/agent_common.c\
  $(AGENT_SERVER_C)\
  lib/allowed_list.c\

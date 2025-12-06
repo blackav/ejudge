@@ -36,6 +36,7 @@ LIBINTL=@ac_cv_has_lib_intl@
 LIBZIP=@ac_cv_has_lib_libzip@
 LIBLZMA=@ac_cv_has_lib_liblzma@
 LIBCURL=@ac_cv_has_lib_libcurl@
+LIBCURL_WEBSOCKETS=@ac_cv_has_libcurl_websockets@
 LIBUUID=@ac_cv_has_lib_libuuid@
 LIBUV=@ac_cv_has_lib_libuv@
 LIBWEBSOCKETS=@ac_cv_has_lib_libwebsockets@

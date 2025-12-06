@@ -856,6 +856,7 @@ do_loop(
         agent_instance_id = xstrdup(super_run_id);
       }
       agent = agent_client_ssh_create();
+#if CONF_HAS_LIBCURL_WEBSOCKETS - 0 == 1
     } else if (!strncmp(agent_name, "ws:", 3)) {
       agent_connect = agent_name + 3;
       if (!agent_instance_id && super_run_id) {
@@ -865,6 +866,7 @@ do_loop(
       if (ejudge_config && ejudge_config->agent_server && ejudge_config->agent_server->token_file) {
         agent->ops->set_token_file(agent, ejudge_config->agent_server->token_file);
       }
+#endif
     } else {
       err("invalid agent");
       return -1;
