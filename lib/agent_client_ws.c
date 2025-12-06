@@ -1002,6 +1002,16 @@ async_wait_complete_func(
         goto finalize_wait;
     }
 
+    if (!jj) {
+        err("%s:%d: unexpected JSON document with missing q", __FUNCTION__, __LINE__);
+        result = 0;
+        goto finalize_wait;
+    }
+
+    err("%s:%d: unexpected JSON document with q==\"%s\"", __FUNCTION__, __LINE__, jj->valuestring);
+    result = 0;
+    goto finalize_wait;
+
 done:;
     return result;
 
