@@ -673,6 +673,7 @@ ac_cv_has_lib_libwebsockets
 ac_cv_has_libwebsockets
 ac_cv_libwebsockets_lib
 ac_cv_libwebsockets_include
+ac_cv_has_libcurl_websockets
 ac_cv_has_lib_hiredis
 ac_cv_has_lib_libuv
 ac_cv_has_lib_libuuid
@@ -7405,6 +7406,61 @@ else $as_nop
 fi
 
 
+if [ "$ac_cv_has_libcurl" = "1" ]
+then
+  saved_CFLAGS="${CFLAGS}"
+  saved_CPPFLAGS="${CPPFLAGS}"
+  saved_LDFLAGS="${LDFLAGS}"
+  saved_LIBS="${LIBS}"
+  LIBS="-lcurl -lssl -lcrypto"
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking websockets support in curl" >&5
+printf %s "checking websockets support in curl... " >&6; }
+  if test "$cross_compiling" = yes
+then :
+  { { printf "%s\n" "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+printf "%s\n" "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "cannot run test program while cross compiling
+See \`config.log' for more details" "$LINENO" 5; }
+else $as_nop
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#include <curl/curl.h>
+#include <curl/websockets.h>
+int main(int argc, char *argv[])
+{
+  if (argc != 1000) return 0;
+  CURLcode res = curl_ws_send(NULL, NULL, 0, NULL, 0, CURLWS_TEXT);
+  return 1;
+}
+
+_ACEOF
+if ac_fn_c_try_run "$LINENO"
+then :
+
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+printf "%s\n" "yes" >&6; }
+  ac_cv_has_libcurl_websockets=1
+
+else $as_nop
+
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+  ac_cv_has_libcurl_websockets=0
+
+fi
+rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
+  conftest.$ac_objext conftest.beam conftest.$ac_ext
+fi
+
+  CFLAGS="${saved_CFLAGS}"
+  CPPFLAGS="${saved_CPPFLAGS}"
+  LDFLAGS="${saved_LDFLAGS}"
+  LIBS="${saved_LIBS}"
+else
+  ac_cv_has_libcurl_websockets=0
+fi
+
 ac_fn_c_check_header_compile "$LINENO" "uuid/uuid.h" "ac_cv_header_uuid_uuid_h" "$ac_includes_default"
 if test "x$ac_cv_header_uuid_uuid_h" = xyes
 then :
@@ -8877,6 +8933,7 @@ fi
 
 
 
+
 if [ x"${ac_cv_has_regex}" = x1 ]
 then
   printf "%s\n" "#define CONF_HAS_REGEX 1" >>confdefs.h
@@ -8892,6 +8949,12 @@ fi
 if [ x"${ac_cv_has_libcurl}" = x1 -a x"${ac_cv_has_lib_libcurl}" != x ]
 then
   printf "%s\n" "#define CONF_HAS_LIBCURL 1" >>confdefs.h
+
+fi
+
+if [ x"${ac_cv_has_libcurl_websockets}" = x1 ]
+then
+  printf "%s\n" "#define CONF_HAS_LIBCURL_WEBSOCKETS 1" >>confdefs.h
 
 fi
 
