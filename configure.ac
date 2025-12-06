@@ -413,6 +413,40 @@ dnl check libcurl library
 AC_CHECK_HEADER([curl/curl.h],[ac_cv_has_libcurl=1],[ac_cv_has_libcurl=0])
 AC_CHECK_LIB([curl],[curl_easy_init],[ac_cv_has_lib_libcurl=-lcurl],[ac_cv_has_lib_libcurl=])
 
+dnl check websockets support in libcurl
+if [[ "$ac_cv_has_libcurl" = "1" ]]
+then
+  saved_CFLAGS="${CFLAGS}"
+  saved_CPPFLAGS="${CPPFLAGS}"
+  saved_LDFLAGS="${LDFLAGS}"
+  saved_LIBS="${LIBS}"
+  LIBS="-lcurl -lssl -lcrypto"
+  AC_MSG_CHECKING([websockets support in curl])
+  AC_RUN_IFELSE(
+[AC_LANG_SOURCE([[
+#include <curl/curl.h>
+#include <curl/websockets.h>
+int main(int argc, char *argv[])
+{
+  if (argc != 1000) return 0;
+  CURLcode res = curl_ws_send(NULL, NULL, 0, NULL, 0, CURLWS_TEXT);
+  return 1;
+}
+]])],[
+AC_MSG_RESULT([yes])
+  ac_cv_has_libcurl_websockets=1
+],[
+AC_MSG_RESULT([no])
+  ac_cv_has_libcurl_websockets=0
+])
+  CFLAGS="${saved_CFLAGS}"
+  CPPFLAGS="${saved_CPPFLAGS}"
+  LDFLAGS="${saved_LDFLAGS}"
+  LIBS="${saved_LIBS}"
+else
+  ac_cv_has_libcurl_websockets=0
+fi
+
 dnl check libuuid library
 AC_CHECK_HEADER([uuid/uuid.h],[ac_cv_has_libuuid=1],[ac_cv_has_libuuid=0])
 if [[ x"${ac_cv_has_libuuid}" != x1 -a x"${ac_cv_ejudge_arch}" != xwin32 ]]
@@ -1222,6 +1256,7 @@ AC_SUBST(ac_cv_has_lib_libcurl)
 AC_SUBST(ac_cv_has_lib_libuuid)
 AC_SUBST(ac_cv_has_lib_libuv)
 AC_SUBST(ac_cv_has_lib_hiredis)
+AC_SUBST(ac_cv_has_libcurl_websockets)
 AC_SUBST(ac_cv_libwebsockets_include)
 AC_SUBST(ac_cv_libwebsockets_lib)
 AC_SUBST(ac_cv_has_libwebsockets)
@@ -1260,6 +1295,11 @@ fi
 if [[ x"${ac_cv_has_libcurl}" = x1 -a x"${ac_cv_has_lib_libcurl}" != x ]]
 then
   AC_DEFINE(CONF_HAS_LIBCURL,1)
+fi
+
+if [[ x"${ac_cv_has_libcurl_websockets}" = x1 ]]
+then
+  AC_DEFINE(CONF_HAS_LIBCURL_WEBSOCKETS,1)
 fi
 
 if [[ x"${ac_cv_has_libzip}" = x1 -a x"${ac_cv_has_lib_libzip}" != x ]]
