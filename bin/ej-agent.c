@@ -1118,6 +1118,7 @@ add_file_to_object(cJSON *j, const char *data, size_t size)
         ptr[n] = 0;
         cJSON_AddStringToObject(j, "data", ptr);
         free(ptr);
+        return;
     } else {
         z_stream zs = {};
         zs.next_in = (Bytef *) data;
@@ -1149,6 +1150,7 @@ add_file_to_object(cJSON *j, const char *data, size_t size)
         cJSON_AddStringToObject(j, "data", b64_buf);
         free(b64_buf);
         free(gz_buf);
+        return;
     }
     // lzma mode (unused)
     if (size < 160) {
