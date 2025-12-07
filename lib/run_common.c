@@ -693,7 +693,6 @@ parse_checker_score(
   }
 
   if (testlib_mode > 0) {
-    fprintf(stderr, ">>%s<<\n", score_buf);
     if (strncasecmp(score_buf, "points ", 7) != 0) {
       //append_msg_to_log(log_path, "The %s output does not start with 'points'",
       //                  what);
@@ -2858,7 +2857,7 @@ invoke_checker(
       status = RUN_CHECK_FAILED;
       goto cleanup;
     }
-    if (cur_info->score == test_max_score) {
+    if (cur_info->score == test_max_score && test_max_score > 0) {
       status = RUN_OK;
     }
     if (user_score_mode) {
