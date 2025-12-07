@@ -1449,7 +1449,7 @@ task_PrintArgs(tTask *tsk)
   if (!tsk->path && tsk->args.u > 0)
     tsk->path = xstrdup(tsk->args.v[0]);
 
-  if (1 /*verbose_flag*/)
+  if (0 /*verbose_flag*/)
     {
       if (tsk->main) {
         fprintf(stderr, "task_Start: 0x%08lx(%d):",
