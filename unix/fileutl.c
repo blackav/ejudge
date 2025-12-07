@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2000-2024 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2025 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -100,7 +100,7 @@ clear_directory(char const *path)
     }
   }
 
-  info("clear_directory: %s cleared", path);
+  //info("clear_directory: %s cleared", path);
   return -saved_errno;
 }
 
@@ -1597,7 +1597,9 @@ generic_file_size(const unsigned char *dir,
   }
 
   if (stat(path, &sb) < 0) {
-    err("generic_file_size: stat failed on `%s'", path);
+    if (errno != ENOENT) {
+      err("generic_file_size: stat failed on `%s'", path);
+    }
     return -1;
   }
   if (!S_ISREG(sb.st_mode)) {
