@@ -1267,6 +1267,8 @@ filter_expr_init_parser(struct filter_tree_mem *mem,
                         void (*errfunc)(void *, unsigned char const *, ...),
                         void *user_data)
 {
+  filter_expr_nerrs = 0;
+  filter_expr_lval = NULL;
   filter_expr_tree_mem = mem;
   filter_expr_parse_err = errfunc;
   filter_expr_user_data = user_data;
