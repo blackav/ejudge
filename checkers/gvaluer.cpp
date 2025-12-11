@@ -1,4 +1,4 @@
-/* Copyright (C) 2012-2024 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2025 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -195,7 +195,7 @@ public:
     bool get_test_all() const { return test_all; }
 
     void set_use_lowest_test_score(bool value) { use_lowest_test_score = value; }
-    bool get_use_lowest_test_score() { return use_lowest_test_score; }
+    bool get_use_lowest_test_score() const { return use_lowest_test_score; }
 
     void inc_passed_count() { ++passed_count; }
     int get_passed_count() const { return passed_count; }
@@ -991,10 +991,16 @@ main(int argc, char *argv[])
             user_tests_passed += g.get_passed_count();
             score += group_score;
             user_score += group_score;
-            if (!g.is_passed()) {
-                user_status = RUN_PARTIAL;
-            } else if (g.get_user_status() >= 0) {
-                user_status = g.get_user_status();
+            if (g.get_use_lowest_test_score()) {
+                if (group_score != g.get_test_score()) {
+                    user_status = RUN_PARTIAL;
+                }
+            } else {
+                if (!g.is_passed()) {
+                    user_status = RUN_PARTIAL;
+                } else if (g.get_user_status() >= 0) {
+                    user_status = g.get_user_status();
+                }
             }
         }
     }
