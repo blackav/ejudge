@@ -477,7 +477,7 @@ recv_json(struct AgentClientWs *acw, cJSON **pres)
     }
     cJSON *jw = cJSON_GetObjectItem(j, "wake-up");
     if (jw && jw->type == cJSON_True) {
-        set_wait_json(acw, jw);
+        set_wait_json(acw, j);
         return recv_json(acw, pres);
     }
     *pres = j;
