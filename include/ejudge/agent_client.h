@@ -18,6 +18,16 @@
 
 #include <stdlib.h>
 
+// error codes
+enum
+{
+    AC_CODE_OK = 1,
+    AC_CODE_NO_DATA = 0,     // unused
+    AC_CODE_ERROR = -1,      // error except from the following
+    AC_CODE_DISCONNECT = -2, // disconnect, must be handled at application level
+    AC_CODE_INTERRUPT = -3,  // user interrupt (SIGTERM or SIGINT)
+};
+
 struct AgentClient;
 
 struct AgentClientOps

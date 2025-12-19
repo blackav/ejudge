@@ -38,16 +38,6 @@
 #include <signal.h>
 #include <sys/time.h>
 
-// error codes
-enum
-{
-    ACW_OK = 1,
-    ACW_NO_DATA = 0,     // unused
-    ACW_ERROR = -1,      // any error
-    ACW_DISCONNECT = -2, // disconnect, propagate up to reconnect
-    ACW_INTERRUPT = -3,  // user interrupt (SIGTERM or SIGINT)
-};
-
 struct AgentClientWs
 {
     struct AgentClient b;
@@ -179,7 +169,7 @@ read_token(
 static int
 do_connect(struct AgentClientWs *acw)
 {
-    int retval = ACW_ERROR;
+    int retval = AC_CODE_ERROR;
     char *urlt = NULL;
     size_t urlz = 0;
     FILE *urlf = NULL;
@@ -240,11 +230,11 @@ do_connect(struct AgentClientWs *acw)
     CURLcode cc = curl_easy_perform(acw->curl);
     if (cc != CURLE_OK) {
         err("%s:%d: curl_easy_perform failed: %s", __FUNCTION__, __LINE__, curl_easy_strerror(cc));
-        retval = ACW_DISCONNECT;
+        retval = AC_CODE_DISCONNECT;
         goto done;
     }
 
-    retval = ACW_OK;
+    retval = AC_CODE_OK;
 
 done:;
     if (urlf) fclose(urlf);
@@ -264,23 +254,23 @@ static int
 connect_with_backoff(struct AgentClientWs *acw, int is_initial)
 {
     int res = do_connect(acw);
-    if (res != ACW_DISCONNECT || is_initial) {
+    if (res != AC_CODE_DISCONNECT || is_initial) {
         return res;
     }
     int retry_index = 0;
-    while (res == ACW_DISCONNECT) {
+    while (res == AC_CODE_DISCONNECT) {
         if (reconnect_wait_times_us[retry_index] > 0) {
             interrupt_enable();
             if (interrupt_get_status()) {
                 err("%s:%d: interrupt", __FUNCTION__, __LINE__);
                 interrupt_disable();
-                return ACW_INTERRUPT;
+                return AC_CODE_INTERRUPT;
             }
             usleep(reconnect_wait_times_us[retry_index]);
             interrupt_disable();
             if (interrupt_get_status()) {
                 err("%s:%d: interrupt", __FUNCTION__, __LINE__);
-                return ACW_INTERRUPT;
+                return AC_CODE_INTERRUPT;
             }
         }
         if (retry_index + 1 < sizeof(reconnect_wait_times_us)/sizeof(reconnect_wait_times_us[0])) {
@@ -416,34 +406,34 @@ recv_json(struct AgentClientWs *acw, cJSON **pres)
             if (interrupt_get_status()) {
                 err("%s:%d: interrupt", __FUNCTION__, __LINE__);
                 interrupt_disable();
-                return ACW_INTERRUPT;
+                return AC_CODE_INTERRUPT;
             }
             usleep(1000);
             interrupt_disable();
             if (interrupt_get_status()) {
                 err("%s:%d: interrupt", __FUNCTION__, __LINE__);
-                return ACW_INTERRUPT;
+                return AC_CODE_INTERRUPT;
             }
             continue;
         }
         if (res == CURLE_GOT_NOTHING) {
             err("%s:%d: websocket connection lost", __FUNCTION__, __LINE__);
-            return ACW_DISCONNECT;
+            return AC_CODE_DISCONNECT;
         }
         if (res != CURLE_OK) {
             err("%s:%d: websocket read error: %s", __FUNCTION__, __LINE__, curl_easy_strerror(res));
-            return ACW_ERROR;
+            return AC_CODE_ERROR;
         }
         if ((meta->flags & CURLWS_CLOSE)) {
             err("%s:%d: websocket connection close", __FUNCTION__, __LINE__);
-            return ACW_DISCONNECT;
+            return AC_CODE_DISCONNECT;
         }
         if ((meta->flags & (CURLWS_PING | CURLWS_PONG))) {
             continue;
         }
         if ((meta->flags & CURLWS_BINARY)) {
             err("%s:%d: binary frame received", __FUNCTION__, __LINE__);
-            return ACW_ERROR;
+            return AC_CODE_ERROR;
         }
         acw->in_buf_u += recv;
         if (meta->bytesleft > 0) {
@@ -473,7 +463,7 @@ recv_json(struct AgentClientWs *acw, cJSON **pres)
     acw->in_buf_u = 0;
     if (!j) {
         err("%s:%d: failed to parse JSON", __FUNCTION__, __LINE__);
-        return ACW_ERROR;
+        return AC_CODE_ERROR;
     }
     cJSON *jw = cJSON_GetObjectItem(j, "wake-up");
     if (jw && jw->type == cJSON_True) {
@@ -481,7 +471,7 @@ recv_json(struct AgentClientWs *acw, cJSON **pres)
         return recv_json(acw, pres);
     }
     *pres = j;
-    return ACW_OK;
+    return AC_CODE_OK;
 }
 
 static int
@@ -516,16 +506,16 @@ poll_queue_func(
         }
 
         rr = recv_json(acw, &jr);
-        if (rr == ACW_DISCONNECT) {
+        if (rr == AC_CODE_DISCONNECT) {
             err("%s:%d: reconnecting", __FUNCTION__, __LINE__);
             rr = connect_with_backoff(acw, 0);
-            if (rr != ACW_OK) {
+            if (rr != AC_CODE_OK) {
                 err("%s:%d: reconnect failed", __FUNCTION__, __LINE__);
                 goto done;
             }
             continue;
         }
-        if (rr != ACW_OK) {
+        if (rr != AC_CODE_OK) {
             err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
             goto done;
         }
@@ -591,16 +581,16 @@ get_packet_func(
         }
 
         rr = recv_json(acw, &jr);
-        if (rr == ACW_DISCONNECT) {
+        if (rr == AC_CODE_DISCONNECT) {
             err("%s:%d: reconnecting", __FUNCTION__, __LINE__);
             rr = connect_with_backoff(acw, 0);
-            if (rr != ACW_OK) {
+            if (rr != AC_CODE_OK) {
                 err("%s:%d: reconnect failed", __FUNCTION__, __LINE__);
                 goto done;
             }
             continue;
         }
-        if (rr != ACW_OK) {
+        if (rr != AC_CODE_OK) {
             err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
             goto done;
         }
@@ -644,16 +634,16 @@ get_data_func(
         }
 
         rr = recv_json(acw, &jr);
-        if (rr == ACW_DISCONNECT) {
+        if (rr == AC_CODE_DISCONNECT) {
             err("%s:%d: reconnecting", __FUNCTION__, __LINE__);
             rr = connect_with_backoff(acw, 0);
-            if (rr != ACW_OK) {
+            if (rr != AC_CODE_OK) {
                 err("%s:%d: reconnect failed", __FUNCTION__, __LINE__);
                 goto done;
             }
             continue;
         }
-        if (rr != ACW_OK) {
+        if (rr != AC_CODE_OK) {
             err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
             goto done;
         }
@@ -698,16 +688,16 @@ put_reply_func(
         }
 
         rr = recv_json(acw, &jr);
-        if (rr == ACW_DISCONNECT) {
+        if (rr == AC_CODE_DISCONNECT) {
             err("%s:%d: reconnecting", __FUNCTION__, __LINE__);
             rr = connect_with_backoff(acw, 0);
-            if (rr != ACW_OK) {
+            if (rr != AC_CODE_OK) {
                 err("%s:%d: reconnect failed", __FUNCTION__, __LINE__);
                 goto done;
             }
             continue;
         }
-        if (rr != ACW_OK) {
+        if (rr != AC_CODE_OK) {
             err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
             goto done;
         }
@@ -759,16 +749,16 @@ put_output_func(
         }
 
         rr = recv_json(acw, &jr);
-        if (rr == ACW_DISCONNECT) {
+        if (rr == AC_CODE_DISCONNECT) {
             err("%s:%d: reconnecting", __FUNCTION__, __LINE__);
             rr = connect_with_backoff(acw, 0);
-            if (rr != ACW_OK) {
+            if (rr != AC_CODE_OK) {
                 err("%s:%d: reconnect failed", __FUNCTION__, __LINE__);
                 goto done;
             }
             continue;
         }
-        if (rr != ACW_OK) {
+        if (rr != AC_CODE_OK) {
             err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
             goto done;
         }
@@ -825,16 +815,16 @@ put_output_2_func(
         }
 
         rr = recv_json(acw, &jr);
-        if (rr == ACW_DISCONNECT) {
+        if (rr == AC_CODE_DISCONNECT) {
             err("%s:%d: reconnecting", __FUNCTION__, __LINE__);
             rr = connect_with_backoff(acw, 0);
-            if (rr != ACW_OK) {
+            if (rr != AC_CODE_OK) {
                 err("%s:%d: reconnect failed", __FUNCTION__, __LINE__);
                 goto done;
             }
             continue;
         }
-        if (rr != ACW_OK) {
+        if (rr != AC_CODE_OK) {
             err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
             goto done;
         }
@@ -891,16 +881,16 @@ async_wait_init_func(
         }
 
         rr = recv_json(acw, &jr);
-        if (rr == ACW_DISCONNECT) {
+        if (rr == AC_CODE_DISCONNECT) {
             err("%s:%d: reconnecting", __FUNCTION__, __LINE__);
             rr = connect_with_backoff(acw, 0);
-            if (rr != ACW_OK) {
+            if (rr != AC_CODE_OK) {
                 err("%s:%d: reconnect failed", __FUNCTION__, __LINE__);
                 goto done;
             }
             continue;
         }
-        if (rr != ACW_OK) {
+        if (rr != AC_CODE_OK) {
             err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
             goto done;
         }
@@ -1064,16 +1054,16 @@ xasync_wait_init_func(
         }
 
         rr = recv_json(acw, &jr);
-        if (rr == ACW_DISCONNECT) {
+        if (rr == AC_CODE_DISCONNECT) {
             err("%s:%d: reconnecting", __FUNCTION__, __LINE__);
             rr = connect_with_backoff(acw, 0);
-            if (rr != ACW_OK) {
+            if (rr != AC_CODE_OK) {
                 err("%s:%d: reconnect failed", __FUNCTION__, __LINE__);
                 goto done;
             }
             continue;
         }
-        if (rr != ACW_OK) {
+        if (rr != AC_CODE_OK) {
             err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
             goto done;
         }
@@ -1172,16 +1162,16 @@ add_ignored_func(
         }
 
         rr = recv_json(acw, &jr);
-        if (rr == ACW_DISCONNECT) {
+        if (rr == AC_CODE_DISCONNECT) {
             err("%s:%d: reconnecting", __FUNCTION__, __LINE__);
             rr = connect_with_backoff(acw, 0);
-            if (rr != ACW_OK) {
+            if (rr != AC_CODE_OK) {
                 err("%s:%d: reconnect failed", __FUNCTION__, __LINE__);
                 goto done;
             }
             continue;
         }
-        if (rr != ACW_OK) {
+        if (rr != AC_CODE_OK) {
             err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
             goto done;
         }
@@ -1225,16 +1215,16 @@ put_packet_func(
         }
 
         rr = recv_json(acw, &jr);
-        if (rr == ACW_DISCONNECT) {
+        if (rr == AC_CODE_DISCONNECT) {
             err("%s:%d: reconnecting", __FUNCTION__, __LINE__);
             rr = connect_with_backoff(acw, 0);
-            if (rr != ACW_OK) {
+            if (rr != AC_CODE_OK) {
                 err("%s:%d: reconnect failed", __FUNCTION__, __LINE__);
                 goto done;
             }
             continue;
         }
-        if (rr != ACW_OK) {
+        if (rr != AC_CODE_OK) {
             err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
             goto done;
         }
@@ -1308,16 +1298,16 @@ put_heartbeat_func(
         }
 
         rr = recv_json(acw, &jr);
-        if (rr == ACW_DISCONNECT) {
+        if (rr == AC_CODE_DISCONNECT) {
             err("%s:%d: reconnecting", __FUNCTION__, __LINE__);
             rr = connect_with_backoff(acw, 0);
-            if (rr != ACW_OK) {
+            if (rr != AC_CODE_OK) {
                 err("%s:%d: reconnect failed", __FUNCTION__, __LINE__);
                 goto done;
             }
             continue;
         }
-        if (rr != ACW_OK) {
+        if (rr != AC_CODE_OK) {
             err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
             goto done;
         }
@@ -1374,16 +1364,16 @@ delete_heartbeat_func(
         }
 
         rr = recv_json(acw, &jr);
-        if (rr == ACW_DISCONNECT) {
+        if (rr == AC_CODE_DISCONNECT) {
             err("%s:%d: reconnecting", __FUNCTION__, __LINE__);
             rr = connect_with_backoff(acw, 0);
-            if (rr != ACW_OK) {
+            if (rr != AC_CODE_OK) {
                 err("%s:%d: reconnect failed", __FUNCTION__, __LINE__);
                 goto done;
             }
             continue;
         }
-        if (rr != ACW_OK) {
+        if (rr != AC_CODE_OK) {
             err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
             goto done;
         }
@@ -1440,16 +1430,16 @@ put_archive_2_func(
         }
 
         rr = recv_json(acw, &jr);
-        if (rr == ACW_DISCONNECT) {
+        if (rr == AC_CODE_DISCONNECT) {
             err("%s:%d: reconnecting", __FUNCTION__, __LINE__);
             rr = connect_with_backoff(acw, 0);
-            if (rr != ACW_OK) {
+            if (rr != AC_CODE_OK) {
                 err("%s:%d: reconnect failed", __FUNCTION__, __LINE__);
                 goto done;
             }
             continue;
         }
-        if (rr != ACW_OK) {
+        if (rr != AC_CODE_OK) {
             err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
             goto done;
         }
@@ -1513,16 +1503,16 @@ mirror_file_func(
         }
 
         rr = recv_json(acw, &jr);
-        if (rr == ACW_DISCONNECT) {
+        if (rr == AC_CODE_DISCONNECT) {
             err("%s:%d: reconnecting", __FUNCTION__, __LINE__);
             rr = connect_with_backoff(acw, 0);
-            if (rr != ACW_OK) {
+            if (rr != AC_CODE_OK) {
                 err("%s:%d: reconnect failed", __FUNCTION__, __LINE__);
                 goto done;
             }
             continue;
         }
-        if (rr != ACW_OK) {
+        if (rr != AC_CODE_OK) {
             err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
             goto done;
         }
@@ -1612,16 +1602,16 @@ put_config_func(
         }
 
         rr = recv_json(acw, &jr);
-        if (rr == ACW_DISCONNECT) {
+        if (rr == AC_CODE_DISCONNECT) {
             err("%s:%d: reconnecting", __FUNCTION__, __LINE__);
             rr = connect_with_backoff(acw, 0);
-            if (rr != ACW_OK) {
+            if (rr != AC_CODE_OK) {
                 err("%s:%d: reconnect failed", __FUNCTION__, __LINE__);
                 goto done;
             }
             continue;
         }
-        if (rr != ACW_OK) {
+        if (rr != AC_CODE_OK) {
             err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
             goto done;
         }
@@ -1715,7 +1705,7 @@ wait_on_future_func(
         if (res == CURLE_GOT_NOTHING) {
             err("%s:%d: websocket connection lost, reconnecting", __FUNCTION__, __LINE__);
             int rr = connect_with_backoff(acw, 0);
-            if (rr != ACW_OK) {
+            if (rr != AC_CODE_OK) {
                 err("%s:%d: reconnect failed", __FUNCTION__, __LINE__);
                 *p_vfuture = NULL;
                 goto done;
@@ -1732,7 +1722,7 @@ wait_on_future_func(
         if ((meta->flags & CURLWS_CLOSE)) {
             err("%s:%d: websocket connection close, reconnecting", __FUNCTION__, __LINE__);
             int rr = connect_with_backoff(acw, 0);
-            if (rr != ACW_OK) {
+            if (rr != AC_CODE_OK) {
                 err("%s:%d: reconnect failed", __FUNCTION__, __LINE__);
                 *p_vfuture = NULL;
                 goto done;
