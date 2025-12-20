@@ -880,6 +880,7 @@ poll_queue_func(
         size_t pkt_len,
         int random_mode,
         int enable_file,
+        int reconnect_flag,
         char **p_data,
         size_t *p_size)
 {
@@ -1082,6 +1083,7 @@ static int
 get_packet_func(
         struct AgentClient *ac,
         const unsigned char *pkt_name,
+        int reconnect_flag,
         char **p_pkt_ptr,
         size_t *p_pkt_len)
 {
@@ -1110,6 +1112,7 @@ get_data_func(
         struct AgentClient *ac,
         const unsigned char *pkt_name,
         const unsigned char *suffix,
+        int reconnect_flag,
         char **p_pkt_ptr,
         size_t *p_pkt_len)
 {
@@ -1225,7 +1228,8 @@ put_reply_func(
         int contest_id,
         const unsigned char *run_name,
         const unsigned char *pkt_ptr,
-        size_t pkt_len)
+        size_t pkt_len,
+        int reconnect_flag)
 {
     int result = 0;
     struct AgentClientSsh *acs = (struct AgentClientSsh *) ac;
@@ -1261,7 +1265,8 @@ put_output_func(
         const unsigned char *run_name,
         const unsigned char *suffix,
         const unsigned char *pkt_ptr,
-        size_t pkt_len)
+        size_t pkt_len,
+        int reconnect_flag)
 {
     int result = 0;
     struct AgentClientSsh *acs = (struct AgentClientSsh *) ac;
@@ -1300,7 +1305,8 @@ put_output_2_func(
         int contest_id,
         const unsigned char *run_name,
         const unsigned char *suffix,
-        const unsigned char *path)
+        const unsigned char *path,
+        int reconnect_flag)
 {
     int fd = open(path, O_RDONLY | O_NONBLOCK | O_NOCTTY | O_NOFOLLOW, 0);
     if (fd < 0) {
@@ -1611,7 +1617,7 @@ get_data_2_func(
     char *data = NULL;
     size_t size = 0;
     char *mem = MAP_FAILED;
-    int r = get_data_func(ac, pkt_name, suffix, &data, &size);
+    int r = get_data_func(ac, pkt_name, suffix, 0 /*reconnect_flag*/, &data, &size);
     if (r <= 0) {
         retval = r;
         goto done;

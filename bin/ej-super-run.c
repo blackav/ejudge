@@ -425,7 +425,7 @@ handle_packet(
 
   if (agent) {
     if (!srp_b) {
-      r = agent->ops->get_packet(agent, pkt_name, &srp_b, &srp_z);
+      r = agent->ops->get_packet(agent, pkt_name, 1, &srp_b, &srp_z);
       if (r < 0) {
         err("agent get_packet failed");
         goto cleanup;
@@ -563,7 +563,7 @@ handle_packet(
 
     if (srgp->has_run_props > 0 && srgp->zip_mode <= 0 && srgp->prop_file) {
       if (agent) {
-        r = agent->ops->get_data(agent, srgp->prop_file, NULL, &prop_data, &prop_size);
+        r = agent->ops->get_data(agent, srgp->prop_file, NULL, 1, &prop_data, &prop_size);
       } else {
         r = generic_read_file(&prop_data, 0, &prop_size, REMOVE, super_run_exe_path, srgp->prop_file, NULL);
       }
@@ -585,7 +585,7 @@ handle_packet(
         goto cleanup;
       }
       if (agent) {
-        r = agent->ops->get_data(agent, srpp->user_input_file, NULL,
+        r = agent->ops->get_data(agent, srpp->user_input_file, NULL, 1,
                                  &inp_data, &inp_size);
       } else {
         r = generic_read_file(&inp_data, 0, &inp_size, REMOVE, super_run_exe_path, srpp->user_input_file, NULL);
@@ -717,7 +717,7 @@ handle_packet(
                                  srgp->contest_id,
                                  reply_packet_name,
                                  "",
-                                 report_path) < 0) {
+                                 report_path, 1) < 0) {
       goto cleanup;
     }
   } else {
@@ -760,7 +760,7 @@ handle_packet(
                               srgp->contest_server_id,
                               srgp->contest_id,
                               reply_packet_name,
-                              reply_pkt_buf, reply_pkt_buf_size) < 0)
+                              reply_pkt_buf, reply_pkt_buf_size, 1) < 0)
       goto cleanup;
   } else {
     if (generic_write_file(reply_pkt_buf, reply_pkt_buf_size, SAFE, full_status_dir, reply_packet_name, "") < 0) {

@@ -749,7 +749,7 @@ handle_packet(
                                    rpl->contest_id,
                                    run_name,
                                    exe_sfx,
-                                   src_buf, src_len) < 0) {
+                                   src_buf, src_len, 1) < 0) {
           fprintf(log_f, "put_output failed\n");
           rpl->status = RUN_CHECK_FAILED;
           goto cleanup;
@@ -771,7 +771,7 @@ handle_packet(
                                    rpl->contest_id,
                                    run_name,
                                    exe_sfx,
-                                   src_path) < 0) {
+                                   src_path, 1) < 0) {
         fprintf(log_f, "put_output_2 failed\n");
         rpl->status = RUN_CHECK_FAILED;
         goto cleanup;
@@ -1725,7 +1725,7 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
 
     if (agent) {
       if (!pkt_ptr) {
-        r = agent->ops->get_packet(agent, pkt_name, &pkt_ptr, &pkt_len);
+        r = agent->ops->get_packet(agent, pkt_name, 1, &pkt_ptr, &pkt_len);
       } else {
         r = 1;
       }
@@ -1916,7 +1916,7 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
     char *src_buf = NULL;
     size_t src_len = 0;
     if (agent) {
-      r = agent->ops->get_data(agent, pkt_name, src_sfx, &src_buf, &src_len);
+      r = agent->ops->get_data(agent, pkt_name, src_sfx, 1, &src_buf, &src_len);
       if (r < 0) {
         err("agent get_data failed");
         fclose(log_f); log_f = NULL;
@@ -1993,7 +1993,7 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
                                            rpl.contest_id,
                                            run_name,
                                            exe_sfx,
-                                           exe_work_path) < 0) {
+                                           exe_work_path, 1) < 0) {
                 err("put_output failed");
                 fprintf(log_f, "\nput_output failed\n");
                 rpl.status = RUN_CHECK_FAILED;
@@ -2029,7 +2029,7 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
                                        rpl.contest_id,
                                        run_name,
                                        PROP_SUFFIX,
-                                       json_work_path);
+                                       json_work_path, 1);
         } else {
           r = generic_copy_file(0, NULL, json_work_path, "", 0, NULL, json_path, "");
         }
@@ -2042,7 +2042,7 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
                                    rpl.contest_id,
                                    run_name,
                                    ".txt",
-                                   log_work_path);
+                                   log_work_path, 1);
     } else {
       r = generic_copy_file(0, NULL, log_work_path, "", 0, NULL, log_path, "");
     }
@@ -2057,7 +2057,7 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
 
     if (override_exe || (rpl.status == RUN_STYLE_ERR || rpl.status == RUN_COMPILE_ERR || rpl.status == RUN_CHECK_FAILED)) {
       if (agent) {
-        agent->ops->put_output_2(agent, contest_server_id, rpl.contest_id, run_name, exe_sfx, log_work_path);
+        agent->ops->put_output_2(agent, contest_server_id, rpl.contest_id, run_name, exe_sfx, log_work_path, 1);
       } else {
         generic_copy_file(0, NULL, log_work_path, "", 0, NULL, exe_path, "");
       }
@@ -2074,7 +2074,7 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
       continue;
     }
     if (agent) {
-      r = agent->ops->put_reply(agent, contest_server_id, rpl.contest_id, run_name, rpl_pkt, rpl_size);
+      r = agent->ops->put_reply(agent, contest_server_id, rpl.contest_id, run_name, rpl_pkt, rpl_size, 1);
     } else {
       r = generic_write_file(rpl_pkt, rpl_size, SAFE, status_dir, run_name, 0);
     }

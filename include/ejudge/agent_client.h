@@ -51,12 +51,14 @@ struct AgentClientOps
         size_t pkt_len,
         int random_mode,
         int enable_file,
+        int reconnect_flag,
         char **p_data,
         size_t *p_size);
 
     int (*get_packet)(
         struct AgentClient *ac,
         const unsigned char *pkt_name,
+        int reconnect_flag,
         char **p_pkt_ptr,
         size_t *p_pkt_len);
 
@@ -64,6 +66,7 @@ struct AgentClientOps
         struct AgentClient *ac,
         const unsigned char *pkt_name,
         const unsigned char *suffix,
+        int reconnect_flag,
         char **p_pkt_ptr,
         size_t *p_pkt_len);
 
@@ -73,7 +76,8 @@ struct AgentClientOps
         int contest_id,
         const unsigned char *run_name,
         const unsigned char *pkt_ptr,
-        size_t pkt_len);
+        size_t pkt_len,
+        int reconnect_flag);
 
     int (*put_output)(
         struct AgentClient *ac,
@@ -82,7 +86,8 @@ struct AgentClientOps
         const unsigned char *run_name,
         const unsigned char *suffix,
         const unsigned char *pkt_ptr,
-        size_t pkt_len);
+        size_t pkt_len,
+        int reconnect_flag);
 
     int (*put_output_2)(
         struct AgentClient *ac,
@@ -90,7 +95,8 @@ struct AgentClientOps
         int contest_id,
         const unsigned char *run_name,
         const unsigned char *suffix,
-        const unsigned char *path);
+        const unsigned char *path,
+        int reconnect_flag);
 
     int (*async_wait_init)(
         struct AgentClient *ac,

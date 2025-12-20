@@ -96,13 +96,13 @@ destroy_func(struct AgentClient *ac)
 
 static int
 init_func(
-    struct AgentClient *ac,
-    const unsigned char *inst_id,
-    const unsigned char *endpoint,
-    const unsigned char *queue_id,
-    int mode,
-    int verbose_mode,
-    const unsigned char *ip_address)
+        struct AgentClient *ac,
+        const unsigned char *inst_id,
+        const unsigned char *endpoint,
+        const unsigned char *queue_id,
+        int mode,
+        int verbose_mode,
+        const unsigned char *ip_address)
 {
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
 
@@ -132,8 +132,8 @@ init_func(
 
 static unsigned char *
 read_token(
-    struct AgentClientWs *acw,
-    const unsigned char *token_file)
+        struct AgentClientWs *acw,
+        const unsigned char *token_file)
 {
     unsigned char full_path[PATH_MAX];
     if (os_IsAbsolutePath(token_file)) {
@@ -336,9 +336,9 @@ is_closed_func(struct AgentClient *ac)
 
 static cJSON *
 create_request(
-    struct AgentClientWs *acw,
-    long long *p_time_ms,
-    const unsigned char *query)
+        struct AgentClientWs *acw,
+        long long *p_time_ms,
+        const unsigned char *query)
 {
     cJSON *jq = cJSON_CreateObject();
     int serial = ++acw->serial;
@@ -494,13 +494,14 @@ recv_json(struct AgentClientWs *acw, cJSON **pres)
 
 static int
 poll_queue_func(
-    struct AgentClient *ac,
-    unsigned char *pkt_name,
-    size_t pkt_len,
-    int random_mode,
-    int enable_file,
-    char **p_data,
-    size_t *p_size)
+        struct AgentClient *ac,
+        unsigned char *pkt_name,
+        size_t pkt_len,
+        int random_mode,
+        int enable_file,
+        int reconnect_flag,
+        char **p_data,
+        size_t *p_size)
 {
     int result = AC_CODE_ERROR;
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
@@ -586,10 +587,11 @@ done:;
 
 static int
 get_packet_func(
-    struct AgentClient *ac,
-    const unsigned char *pkt_name,
-    char **p_pkt_ptr,
-    size_t *p_pkt_len)
+        struct AgentClient *ac,
+        const unsigned char *pkt_name,
+        int reconnect_flag,
+        char **p_pkt_ptr,
+        size_t *p_pkt_len)
 {
     int result = AC_CODE_ERROR;
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
@@ -634,11 +636,12 @@ done:;
 
 static int
 get_data_func(
-    struct AgentClient *ac,
-    const unsigned char *pkt_name,
-    const unsigned char *suffix,
-    char **p_pkt_ptr,
-    size_t *p_pkt_len)
+        struct AgentClient *ac,
+        const unsigned char *pkt_name,
+        const unsigned char *suffix,
+        int reconnect_flag,
+        char **p_pkt_ptr,
+        size_t *p_pkt_len)
 {
     int result = AC_CODE_ERROR;
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
@@ -686,12 +689,13 @@ done:;
 
 static int
 put_reply_func(
-    struct AgentClient *ac,
-    const unsigned char *contest_server_name,
-    int contest_id,
-    const unsigned char *run_name,
-    const unsigned char *pkt_ptr,
-    size_t pkt_len)
+        struct AgentClient *ac,
+        const unsigned char *contest_server_name,
+        int contest_id,
+        const unsigned char *run_name,
+        const unsigned char *pkt_ptr,
+        size_t pkt_len,
+        int reconnect_flag)
 {
     int result = AC_CODE_ERROR;
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
@@ -740,13 +744,14 @@ done:;
 
 static int
 put_output_func(
-    struct AgentClient *ac,
-    const unsigned char *contest_server_name,
-    int contest_id,
-    const unsigned char *run_name,
-    const unsigned char *suffix,
-    const unsigned char *pkt_ptr,
-    size_t pkt_len)
+        struct AgentClient *ac,
+        const unsigned char *contest_server_name,
+        int contest_id,
+        const unsigned char *run_name,
+        const unsigned char *suffix,
+        const unsigned char *pkt_ptr,
+        size_t pkt_len,
+        int reconnect_flag)
 {
     int result = AC_CODE_ERROR;
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
@@ -799,12 +804,13 @@ done:;
 
 static int
 put_output_2_func(
-    struct AgentClient *ac,
-    const unsigned char *contest_server_name,
-    int contest_id,
-    const unsigned char *run_name,
-    const unsigned char *suffix,
-    const unsigned char *path)
+        struct AgentClient *ac,
+        const unsigned char *contest_server_name,
+        int contest_id,
+        const unsigned char *run_name,
+        const unsigned char *suffix,
+        const unsigned char *path,
+        int reconnect_flag)
 {
     int result = AC_CODE_ERROR;
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
@@ -1275,7 +1281,7 @@ get_data_2_func(
     int retval = AC_CODE_ERROR;
     char *data = NULL;
     size_t size = 0;
-    retval = get_data_func(ac, pkt_name, suffix, &data, &size);
+    retval = get_data_func(ac, pkt_name, suffix, 0 /* reconnect_flag */, &data, &size);
     if (retval <= 0) {
         goto done;
     }
