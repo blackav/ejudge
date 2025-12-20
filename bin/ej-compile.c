@@ -596,17 +596,19 @@ done:;
 #pragma GCC push_options
 #pragma GCC optimize "no-inline"
 #endif
-static void
+static __attribute__ ((warn_unused_result)) int
 save_heartbeat(void)
 {
-  if (!heartbeat_mode) return;
-  if (!heartbeat_dir[0]) return;
+  int result = AC_CODE_ERROR;
+
+  if (!heartbeat_mode) return AC_CODE_NO_DATA;
+  if (!heartbeat_dir[0]) return AC_CODE_NO_DATA;
 
   struct timeval tv;
   gettimeofday(&tv, NULL);
   long long current_time_ms = tv.tv_sec * 1000LL + tv.tv_usec / 1000;
   if (last_heartbeat_update_ms + HEARTBEAT_UPDATE_MS > current_time_ms) {
-    return;
+    return AC_CODE_NO_DATA;
   }
 
   flatcc_builder_t builder;
@@ -640,16 +642,18 @@ save_heartbeat(void)
   if (agent) {
     __attribute__((unused)) long long last_saved_time_ms = 0;
 
-    agent->ops->put_heartbeat(agent, heartbeat_file_name, buffer, size,
+    result = agent->ops->put_heartbeat(agent, heartbeat_file_name, buffer, size,
                               &last_saved_time_ms,
                               &pending_stop_flag, &pending_down_flag,
                               &pending_reboot_flag);
   } else {
     save_heartbeat_file(buffer, size);
+    result = AC_CODE_OK;
   }
 
   flatcc_builder_clear(&builder);
   last_heartbeat_update_ms = current_time_ms;
+  return result;
 }
 #ifdef __GCC__
 #pragma GCC pop_options
@@ -1513,6 +1517,7 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
   int ifd_wd = -1;
   sigset_t emptymask;
   int efd = -1;
+  int need_reconnect = 0;
 
   random_init();
   sigemptyset(&emptymask);
@@ -1612,6 +1617,15 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
 
   while (1) {
     interrupt_enable();
+    if (interrupt_get_status() || interrupt_restart_requested()) break;
+    if (need_reconnect) {
+      // TODO: reset future, if such exists
+      int res = agent->ops->reconnect(agent);
+      if (res < 0) {
+        break;
+      }
+      need_reconnect = 0;
+    }
     interrupt_disable();
 
     // terminate if signaled
@@ -1625,7 +1639,10 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
       continue;
     }
 
-    save_heartbeat();
+    // FIXME: todo
+    {
+      __attribute__((unused)) int _ = save_heartbeat();
+    }
     if (pending_stop_flag || pending_down_flag || pending_reboot_flag) {
       break;
     }
