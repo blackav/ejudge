@@ -179,6 +179,8 @@ struct AgentClientOps
         struct AgentClient *ac,
         void **p_vfuture,
         long long timeout_ms);
+
+    int (*reconnect)(struct AgentClient *ac);
 };
 
 struct AgentClient

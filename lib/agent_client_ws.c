@@ -305,10 +305,17 @@ connect_func(struct AgentClient *ac)
 
     }
 
-    retval = 0;
+    retval = AC_CODE_OK;
 
 done:;
     return retval;
+}
+
+static int
+reconnect_func(struct AgentClient *ac)
+{
+    struct AgentClientWs *acw = (struct AgentClientWs *) ac;
+    return connect_with_backoff(acw, 0);
 }
 
 static void
@@ -1794,6 +1801,7 @@ static const struct AgentClientOps ops_ws =
     put_config_func,
     set_token_file_func,
     wait_on_future_func,
+    reconnect_func,
 };
 
 struct AgentClient *
