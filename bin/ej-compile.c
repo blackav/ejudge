@@ -240,112 +240,6 @@ cleanup:
   return retval;
 }
 
-// non-recursive
-static __attribute__((unused)) int
-copy_all_files(
-        FILE *log_f,
-        const unsigned char *src_dir,
-        const unsigned char *dst_dir)
-{
-  unsigned char spath[PATH_MAX];
-  unsigned char dpath[PATH_MAX];
-  int retval = -1;
-  int rfd = -1;
-  int wfd = -1;
-  unsigned char buf[65536];
-  DIR *d = opendir(src_dir);
-  if (!d) {
-    err("copy_all_files: cannot open '%s': %s", src_dir, os_ErrorMsg());
-    goto cleanup;
-  }
-  struct dirent *dd;
-  while ((dd = readdir(d))) {
-    if (!strcmp(dd->d_name, ".") || !strcmp(dd->d_name, "..")) {
-      continue;
-    }
-
-    if (snprintf(spath, sizeof(spath), "%s/%s", src_dir, dd->d_name) >= (int) sizeof(spath)) {
-      err("copy_all_files: source path '%s/%s' too long", src_dir, dd->d_name);
-      goto cleanup;
-    }
-    if (snprintf(dpath, sizeof(dpath), "%s/%s", dst_dir, dd->d_name) >= (int) sizeof(dpath)) {
-      err("copy_all_files: destination path '%s/%s' too long", dst_dir, dd->d_name);
-      goto cleanup;
-    }
-
-    // symlink is ok, its content is copied
-    struct stat stb;
-    if (stat(spath, &stb) < 0) {
-      continue;
-    }
-    if (!S_ISREG(stb.st_mode)) {
-      err("copy_all_files: file '%s' is not regular", spath);
-      fprintf(log_f, "\nfile '%s' is not regular\n", spath);
-      goto cleanup;
-    }
-    int mode = (stb.st_mode & 0777) | 0600;
-    rfd = open(spath, O_RDONLY | O_NOCTTY | O_NONBLOCK);
-    if (rfd < 0) {
-      err("copy_all_files: failed to open '%s': %s", spath, os_ErrorMsg());
-      goto cleanup;
-    }
-    if (fstat(rfd, &stb) < 0) {
-      err("copy_all_files: fstat failed");
-      goto cleanup;
-    }
-    if (!S_ISREG(stb.st_mode)) {
-      err("copy_all_files: source file is not regular");
-      goto cleanup;
-    }
-    wfd = open(dpath, O_WRONLY | O_CREAT | O_TRUNC | O_NOCTTY | O_NOFOLLOW | O_NONBLOCK, 0600);
-    if (wfd < 0) {
-      err("copy_all_files: failed to open '%s': %s", dpath, os_ErrorMsg());
-      goto cleanup;
-    }
-    if (fstat(wfd, &stb) < 0) {
-      err("copy_all_files: fstat failed");
-      goto cleanup;
-    }
-    if (!S_ISREG(stb.st_mode)) {
-      err("copy_all_files: destination file is not regular");
-      goto cleanup;
-    }
-    fchmod(wfd, mode);
-
-    while (1) {
-      int rsz = read(rfd, buf, sizeof(buf));
-      if (rsz < 0) {
-        err("copy_all_files: read error: %s", os_ErrorMsg());
-        goto cleanup;
-      }
-      if (!rsz) break;
-      unsigned char *wptr = buf;
-      while (rsz > 0) {
-        int wsz = write(wfd, wptr, rsz);
-        if (wsz <= 0) {
-          err("copy_all_files: write error: %s", os_ErrorMsg());
-          goto cleanup;
-        }
-        rsz -= wsz;
-        wptr += wsz;
-      }
-    }
-
-    close(rfd); rfd = -1;
-    close(wfd); wfd = -1;
-  }
-
-  closedir(d);
-  d = NULL;
-  retval = 0;
-
-cleanup:;
-  if (rfd >= 0) close(rfd);
-  if (wfd >= 0) close(wfd);
-  if (d) closedir(d);
-  return retval;
-}
-
 static int
 detect_prepended_size(
         const unsigned char *working_dir,
@@ -466,7 +360,6 @@ invoke_compiler(
 
   if (req->extra_src_dir && req->extra_src_dir[0]) {
     int r = copy_directory_recursively(log_f, req->extra_src_dir, working_dir);
-    //int r = copy_all_files(log_f, req->extra_src_dir, working_dir);
     if (r < 0) {
       err("failed to copy extra_src_dir from %s to %s",
           req->extra_src_dir, working_dir);
