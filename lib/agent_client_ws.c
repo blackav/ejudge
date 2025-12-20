@@ -351,6 +351,7 @@ create_request(
 static int
 send_json(struct AgentClientWs *acw, cJSON *json)
 {
+    int result = AC_CODE_ERROR;
     char *str = cJSON_PrintUnformatted(json);
     size_t len = strlen(str);
     if (acw->verbose_mode) {
@@ -362,29 +363,38 @@ send_json(struct AgentClientWs *acw, cJSON *json)
         CURLcode res = curl_ws_send(acw->curl, ptr, len, &sent, 0, CURLWS_TEXT);
         if (res == CURLE_AGAIN) {
             // FIXME: in real application: wait for socket here, e.g. using select()
+            info("%s:%d: curl_ws_send returned CURLE_AGAIN", __FUNCTION__, __LINE__);
             interrupt_enable();
             if (interrupt_get_status()) {
                 err("%s:%d: interrupt", __FUNCTION__, __LINE__);
                 interrupt_disable();
-                return -1;
+                result = AC_CODE_INTERRUPT;
+                goto done;
             }
             usleep(1000);
             interrupt_disable();
             if (interrupt_get_status()) {
                 err("%s:%d: interrupt", __FUNCTION__, __LINE__);
-                return -1;
+                result = AC_CODE_INTERRUPT;
+                goto done;
             }
             continue;
         }
         if (res != CURLE_OK) {
             err("%s:%d: curl_ws_send failed: %s", __FUNCTION__, __LINE__, curl_easy_strerror(res));
-            free(str);
-            return -1;
+            if (res == CURLE_GOT_NOTHING) {
+                result = AC_CODE_DISCONNECT;
+            }
+            goto done;
         }
         ptr += sent;
         len -= sent;
     }
-    return 0;
+    result = AC_CODE_OK;
+
+done:;
+    free(str);
+    return result;
 }
 
 static int
@@ -402,6 +412,7 @@ recv_json(struct AgentClientWs *acw, cJSON **pres)
         CURLcode res = curl_ws_recv(acw->curl, &acw->in_buf[acw->in_buf_u], acw->in_buf_a - acw->in_buf_u, &recv, &meta);
         if (res == CURLE_AGAIN) {
             // FIXME: in real application: wait for socket here, e.g. using select()
+            info("%s:%d: curl_ws_recv returned CURLE_AGAIN", __FUNCTION__, __LINE__);
             interrupt_enable();
             if (interrupt_get_status()) {
                 err("%s:%d: interrupt", __FUNCTION__, __LINE__);
@@ -484,7 +495,7 @@ poll_queue_func(
     char **p_data,
     size_t *p_size)
 {
-    int result = -1;
+    int result = AC_CODE_ERROR;
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
     cJSON *jr = NULL;
     cJSON *jq = NULL;
@@ -502,21 +513,19 @@ poll_queue_func(
         cJSON_Delete(jq); jq = NULL;
         if (rr < 0) {
             err("%s:%d: send_json failed", __FUNCTION__, __LINE__);
+            result = rr;
             goto done;
         }
 
         rr = recv_json(acw, &jr);
         if (rr == AC_CODE_DISCONNECT) {
-            err("%s:%d: reconnecting", __FUNCTION__, __LINE__);
-            rr = connect_with_backoff(acw, 0);
-            if (rr != AC_CODE_OK) {
-                err("%s:%d: reconnect failed", __FUNCTION__, __LINE__);
-                goto done;
-            }
-            continue;
+            err("%s:%d: disconnect", __FUNCTION__, __LINE__);
+            result = rr;
+            goto done;
         }
         if (rr != AC_CODE_OK) {
             err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
+            result = rr;
             goto done;
         }
         cJSON *jj = cJSON_GetObjectItem(jr, "q");
@@ -524,24 +533,35 @@ poll_queue_func(
             cJSON *jn = cJSON_GetObjectItem(jr, "pkt-name");
             if (!jn) {
                 pkt_name[0] = 0;
-                result = 1;
-            } else if (jn->type == cJSON_String) {
-                snprintf(pkt_name, pkt_len, "%s", jn->valuestring);
-                result = 1;
-            } else {
+                result = AC_CODE_NO_DATA;
+                goto done;
+            } else if (jn->type != cJSON_String) {
                 err("%s:%d: pkt-name is invalid", __FUNCTION__, __LINE__);
+                goto done;
+            } else if (!jn->valuestring[0]) {
+                pkt_name[0] = 0;
+                result = AC_CODE_NO_DATA;
+                goto done;
             }
+            snprintf(pkt_name, pkt_len, "%s", jn->valuestring);
+            result = AC_CODE_OK;
             goto done;
         }
         if (jj && jj->type == cJSON_String && !strcmp("file-result", jj->valuestring)) {
             cJSON *jn = cJSON_GetObjectItem(jr, "pkt-name");
             if (!jn) {
                 pkt_name[0] = 0;
-                result = 1;
-            } else if (jn->type == cJSON_String) {
-                snprintf(pkt_name, pkt_len, "%s", jn->valuestring);
-                result = 1;
+                result = AC_CODE_NO_DATA;
+                goto done;
+            } else if (jn->type != cJSON_String) {
+                err("%s:%d: pkt-name is invalid", __FUNCTION__, __LINE__);
+                goto done;
+            } else if (!jn->valuestring[0]) {
+                pkt_name[0] = 0;
+                result = AC_CODE_NO_DATA;
+                goto done;
             }
+            snprintf(pkt_name, pkt_len, "%s", jn->valuestring);
             result = agent_extract_file_result(jr, p_data, p_size);
             if (result < 0) {
                 err("%s:%d: json processing failed", __FUNCTION__, __LINE__);
@@ -564,7 +584,7 @@ get_packet_func(
     char **p_pkt_ptr,
     size_t *p_pkt_len)
 {
-    int result = -1;
+    int result = AC_CODE_ERROR;
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
     cJSON *jr = NULL;
     cJSON *jq = NULL;
@@ -577,27 +597,26 @@ get_packet_func(
         cJSON_Delete(jq); jq = NULL;
         if (rr < 0) {
             err("%s:%d: send_json failed", __FUNCTION__, __LINE__);
+            result = rr;
             goto done;
         }
 
         rr = recv_json(acw, &jr);
         if (rr == AC_CODE_DISCONNECT) {
-            err("%s:%d: reconnecting", __FUNCTION__, __LINE__);
-            rr = connect_with_backoff(acw, 0);
-            if (rr != AC_CODE_OK) {
-                err("%s:%d: reconnect failed", __FUNCTION__, __LINE__);
-                goto done;
-            }
-            continue;
+            err("%s:%d: disconnect", __FUNCTION__, __LINE__);
+            result = rr;
+            goto done;
         }
         if (rr != AC_CODE_OK) {
             err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
+            result = rr;
             goto done;
         }
         result = agent_extract_file_result(jr, p_pkt_ptr, p_pkt_len);
         if (result < 0) {
             err("%s:%d: json processing failed", __FUNCTION__, __LINE__);
         }
+        result = AC_CODE_OK;
     } while (0);
 
 done:;
@@ -614,7 +633,7 @@ get_data_func(
     char **p_pkt_ptr,
     size_t *p_pkt_len)
 {
-    int result = -1;
+    int result = AC_CODE_ERROR;
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
     cJSON *jr = NULL;
     cJSON *jq = NULL;
@@ -630,27 +649,26 @@ get_data_func(
         cJSON_Delete(jq); jq = NULL;
         if (rr < 0) {
             err("%s:%d: send_json failed", __FUNCTION__, __LINE__);
+            result = rr;
             goto done;
         }
 
         rr = recv_json(acw, &jr);
         if (rr == AC_CODE_DISCONNECT) {
-            err("%s:%d: reconnecting", __FUNCTION__, __LINE__);
-            rr = connect_with_backoff(acw, 0);
-            if (rr != AC_CODE_OK) {
-                err("%s:%d: reconnect failed", __FUNCTION__, __LINE__);
-                goto done;
-            }
-            continue;
+            err("%s:%d: disconnect", __FUNCTION__, __LINE__);
+            result = rr;
+            goto done;
         }
         if (rr != AC_CODE_OK) {
             err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
+            result = rr;
             goto done;
         }
         result = agent_extract_file_result(jr, p_pkt_ptr, p_pkt_len);
         if (result < 0) {
             err("%s:%d: json processing failed", __FUNCTION__, __LINE__);
         }
+        result = AC_CODE_OK;
     } while (0);
 
 done:;
@@ -668,7 +686,7 @@ put_reply_func(
     const unsigned char *pkt_ptr,
     size_t pkt_len)
 {
-    int result = -1;
+    int result = AC_CODE_ERROR;
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
     cJSON *jr = NULL;
     cJSON *jq = NULL;
@@ -684,21 +702,19 @@ put_reply_func(
         cJSON_Delete(jq); jq = NULL;
         if (rr < 0) {
             err("%s:%d: send_json failed", __FUNCTION__, __LINE__);
+            result = rr;
             goto done;
         }
 
         rr = recv_json(acw, &jr);
         if (rr == AC_CODE_DISCONNECT) {
-            err("%s:%d: reconnecting", __FUNCTION__, __LINE__);
-            rr = connect_with_backoff(acw, 0);
-            if (rr != AC_CODE_OK) {
-                err("%s:%d: reconnect failed", __FUNCTION__, __LINE__);
-                goto done;
-            }
-            continue;
+            err("%s:%d: disconnect", __FUNCTION__, __LINE__);
+            result = rr;
+            goto done;
         }
         if (rr != AC_CODE_OK) {
             err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
+            result = rr;
             goto done;
         }
         cJSON *jok = cJSON_GetObjectItem(jr, "ok");
@@ -706,8 +722,7 @@ put_reply_func(
             err("%s:%d: request failed on server side", __FUNCTION__, __LINE__);
             goto done;
         }
-
-        result = 0;
+        result = AC_CODE_OK;
     } while (0);
 
 done:;
@@ -726,7 +741,7 @@ put_output_func(
     const unsigned char *pkt_ptr,
     size_t pkt_len)
 {
-    int result = -1;
+    int result = AC_CODE_ERROR;
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
     cJSON *jr = NULL;
     cJSON *jq = NULL;
@@ -745,21 +760,19 @@ put_output_func(
         cJSON_Delete(jq); jq = NULL;
         if (rr < 0) {
             err("%s:%d: send_json failed", __FUNCTION__, __LINE__);
+            result = rr;
             goto done;
         }
 
         rr = recv_json(acw, &jr);
         if (rr == AC_CODE_DISCONNECT) {
-            err("%s:%d: reconnecting", __FUNCTION__, __LINE__);
-            rr = connect_with_backoff(acw, 0);
-            if (rr != AC_CODE_OK) {
-                err("%s:%d: reconnect failed", __FUNCTION__, __LINE__);
-                goto done;
-            }
-            continue;
+            err("%s:%d: disconnect", __FUNCTION__, __LINE__);
+            result = rr;
+            goto done;
         }
         if (rr != AC_CODE_OK) {
             err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
+            result = rr;
             goto done;
         }
         cJSON *jok = cJSON_GetObjectItem(jr, "ok");
@@ -768,7 +781,7 @@ put_output_func(
             goto done;
         }
 
-        result = 0;
+        result = AC_CODE_OK;
     } while (0);
 
 done:;
@@ -786,7 +799,7 @@ put_output_2_func(
     const unsigned char *suffix,
     const unsigned char *path)
 {
-    int result = -1;
+    int result = AC_CODE_ERROR;
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
     cJSON *jr = NULL;
     cJSON *jq = NULL;
@@ -811,21 +824,19 @@ put_output_2_func(
         cJSON_Delete(jq); jq = NULL;
         if (rr < 0) {
             err("%s:%d: send_json failed", __FUNCTION__, __LINE__);
+            result = rr;
             goto done;
         }
 
         rr = recv_json(acw, &jr);
         if (rr == AC_CODE_DISCONNECT) {
-            err("%s:%d: reconnecting", __FUNCTION__, __LINE__);
-            rr = connect_with_backoff(acw, 0);
-            if (rr != AC_CODE_OK) {
-                err("%s:%d: reconnect failed", __FUNCTION__, __LINE__);
-                goto done;
-            }
-            continue;
+            err("%s:%d: disconnect", __FUNCTION__, __LINE__);
+            result = rr;
+            goto done;
         }
         if (rr != AC_CODE_OK) {
             err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
+            result = rr;
             goto done;
         }
         cJSON *jok = cJSON_GetObjectItem(jr, "ok");
@@ -834,7 +845,7 @@ put_output_2_func(
             goto done;
         }
 
-        result = 0;
+        result = AC_CODE_OK;
     } while (0);
 
 done:;
@@ -857,7 +868,7 @@ async_wait_init_func(
         char **p_data,
         size_t *p_size)
 {
-    int result = -1;
+    int result = AC_CODE_ERROR;
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
     cJSON *jr = NULL;
     cJSON *jq = NULL;
@@ -877,21 +888,19 @@ async_wait_init_func(
         cJSON_Delete(jq); jq = NULL;
         if (rr < 0) {
             err("%s:%d: send_json failed", __FUNCTION__, __LINE__);
+            result = rr;
             goto done;
         }
 
         rr = recv_json(acw, &jr);
         if (rr == AC_CODE_DISCONNECT) {
-            err("%s:%d: reconnecting", __FUNCTION__, __LINE__);
-            rr = connect_with_backoff(acw, 0);
-            if (rr != AC_CODE_OK) {
-                err("%s:%d: reconnect failed", __FUNCTION__, __LINE__);
-                goto done;
-            }
-            continue;
+            err("%s:%d: disconnect", __FUNCTION__, __LINE__);
+            result = rr;
+            goto done;
         }
         if (rr != AC_CODE_OK) {
             err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
+            result = rr;
             goto done;
         }
         cJSON *jj = cJSON_GetObjectItem(jr, "q");
@@ -903,10 +912,10 @@ async_wait_init_func(
             } else if (jn->type == cJSON_String) {
                 if (jn->valuestring[0]) {
                     snprintf(pkt_name, pkt_len, "%s", jn->valuestring);
-                    result = 1;
+                    result = AC_CODE_OK;
                     goto done;
                 }
-                info("%s:%d: no pkt_name", __FUNCTION__, __LINE__);
+                err("%s:%d: no pkt_name", __FUNCTION__, __LINE__);
                 goto done;
             } else {
                 err("%s:%d: pkt-name is invalid", __FUNCTION__, __LINE__);
@@ -920,12 +929,12 @@ async_wait_init_func(
                 goto done;
             } else if (jn->type == cJSON_String) {
                 snprintf(pkt_name, pkt_len, "%s", jn->valuestring);
-                result = 1;
             }
             result = agent_extract_file_result(jr, p_data, p_size);
             if (result < 0) {
                 err("%s:%d: json processing failed", __FUNCTION__, __LINE__);
             }
+            result = AC_CODE_OK;
             goto done;
         }
         if (jj && jj->type == cJSON_String && !strcmp("channel-result", jj->valuestring)) {
@@ -934,7 +943,7 @@ async_wait_init_func(
             acw->is_ready = 0;
             acw->random_mode = random_mode;
             acw->enable_file = enable_file;
-            result = 0;
+            result = AC_CODE_NO_DATA;
             goto done;
         }
     }
@@ -954,10 +963,10 @@ async_wait_complete_func(
         char **p_data,
         size_t *p_size)
 {
-    int result = -1;
+    int result = AC_CODE_ERROR;
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
     if (!acw->wait_channel || !acw->is_ready) {
-        result = 0;
+        result = AC_CODE_NO_DATA;
         goto done;
     }
 
@@ -975,7 +984,7 @@ async_wait_complete_func(
             err("%s:%d: invalid packet name", __FUNCTION__, __LINE__);
         } else {
             snprintf(pkt_name, pkt_len, "%s", jn->valuestring);
-            result = 1;
+            result = AC_CODE_OK;
         }
         goto finalize_wait;
     }
@@ -994,12 +1003,12 @@ async_wait_complete_func(
 
     if (!jj) {
         err("%s:%d: unexpected JSON document with missing q", __FUNCTION__, __LINE__);
-        result = 0;
+        result = AC_CODE_ERROR;
         goto finalize_wait;
     }
 
     err("%s:%d: unexpected JSON document with q==\"%s\"", __FUNCTION__, __LINE__, jj->valuestring);
-    result = 0;
+    result = AC_CODE_ERROR;
     goto finalize_wait;
 
 done:;
@@ -1032,7 +1041,7 @@ xasync_wait_init_func(
         char **p_data,
         size_t *p_size)
 {
-    int result = -1;
+    int result = AC_CODE_ERROR;
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
     cJSON *jr = NULL;
     cJSON *jq = NULL;
@@ -1050,21 +1059,19 @@ xasync_wait_init_func(
         cJSON_Delete(jq); jq = NULL;
         if (rr < 0) {
             err("%s:%d: send_json failed", __FUNCTION__, __LINE__);
+            result = rr;
             goto done;
         }
 
         rr = recv_json(acw, &jr);
         if (rr == AC_CODE_DISCONNECT) {
-            err("%s:%d: reconnecting", __FUNCTION__, __LINE__);
-            rr = connect_with_backoff(acw, 0);
-            if (rr != AC_CODE_OK) {
-                err("%s:%d: reconnect failed", __FUNCTION__, __LINE__);
-                goto done;
-            }
-            continue;
+            err("%s:%d: disconnect", __FUNCTION__, __LINE__);
+            result = rr;
+            goto done;
         }
         if (rr != AC_CODE_OK) {
             err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
+            result = rr;
             goto done;
         }
         cJSON *jj = cJSON_GetObjectItem(jr, "q");
@@ -1073,13 +1080,15 @@ xasync_wait_init_func(
             if (!jn) {
                 // wait
                 info("%s:%d: no pkt_name, waiting", __FUNCTION__, __LINE__);
+                result = AC_CODE_NO_DATA;
             } else if (jn->type == cJSON_String) {
                 if (jn->valuestring[0]) {
                     snprintf(pkt_name, pkt_len, "%s", jn->valuestring);
-                    result = 1;
+                    result = AC_CODE_OK;
                     goto done;
                 }
                 info("%s:%d: no pkt_name, waiting", __FUNCTION__, __LINE__);
+                result = AC_CODE_NO_DATA;
             } else {
                 err("%s:%d: pkt-name is invalid", __FUNCTION__, __LINE__);
                 goto done;
@@ -1089,15 +1098,23 @@ xasync_wait_init_func(
             cJSON *jn = cJSON_GetObjectItem(jr, "pkt-name");
             if (!jn) {
                 pkt_name[0] = 0;
-                result = 1;
-            } else if (jn->type == cJSON_String) {
-                snprintf(pkt_name, pkt_len, "%s", jn->valuestring);
-                result = 1;
+                result = AC_CODE_NO_DATA;
+                goto done;
+            } else if (jn->type != cJSON_String) {
+                err("%s:%d: pkt-name is invalid", __FUNCTION__, __LINE__);
+                goto done;
             }
+            if (!jn->valuestring[0]) {
+                pkt_name[0] = 0;
+                result = AC_CODE_NO_DATA;
+                goto done;
+            }
+            snprintf(pkt_name, pkt_len, "%s", jn->valuestring);
             result = agent_extract_file_result(jr, p_data, p_size);
             if (result < 0) {
                 err("%s:%d: json processing failed", __FUNCTION__, __LINE__);
             }
+            result = AC_CODE_OK;
             goto done;
         }
         cJSON_Delete(jr); jr = NULL;
@@ -1107,14 +1124,14 @@ xasync_wait_init_func(
         if (interrupt_get_status()) {
             err("%s:%d: interrupt", __FUNCTION__, __LINE__);
             interrupt_disable();
-            result = -1;
+            result = AC_CODE_INTERRUPT;
             break;
         }
         sleep(5);
         interrupt_disable();
         if (interrupt_get_status()) {
             err("%s:%d: interrupt", __FUNCTION__, __LINE__);
-            result = -1;
+            result = AC_CODE_INTERRUPT;
             break;
         }
     }
@@ -1145,7 +1162,7 @@ add_ignored_func(
     struct AgentClient *ac,
     const unsigned char *pkt_name)
 {
-    int result = -1;
+    int result = AC_CODE_ERROR;
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
     cJSON *jr = NULL;
     cJSON *jq = NULL;
@@ -1158,21 +1175,19 @@ add_ignored_func(
         cJSON_Delete(jq); jq = NULL;
         if (rr < 0) {
             err("%s:%d: send_json failed", __FUNCTION__, __LINE__);
+            result = rr;
             goto done;
         }
 
         rr = recv_json(acw, &jr);
         if (rr == AC_CODE_DISCONNECT) {
-            err("%s:%d: reconnecting", __FUNCTION__, __LINE__);
-            rr = connect_with_backoff(acw, 0);
-            if (rr != AC_CODE_OK) {
-                err("%s:%d: reconnect failed", __FUNCTION__, __LINE__);
-                goto done;
-            }
-            continue;
+            err("%s:%d: disconnect", __FUNCTION__, __LINE__);
+            result = rr;
+            goto done;
         }
         if (rr != AC_CODE_OK) {
             err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
+            result = rr;
             goto done;
         }
         cJSON *jok = cJSON_GetObjectItem(jr, "ok");
@@ -1181,7 +1196,7 @@ add_ignored_func(
             goto done;
         }
 
-        result = 0;
+        result = AC_CODE_OK;
     } while (0);
 
 done:;
@@ -1197,7 +1212,7 @@ put_packet_func(
     const unsigned char *pkt_ptr,
     size_t pkt_len)
 {
-    int result = -1;
+    int result = AC_CODE_ERROR;
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
     cJSON *jr = NULL;
     cJSON *jq = NULL;
@@ -1211,21 +1226,19 @@ put_packet_func(
         cJSON_Delete(jq); jq = NULL;
         if (rr < 0) {
             err("%s:%d: send_json failed", __FUNCTION__, __LINE__);
+            result = rr;
             goto done;
         }
 
         rr = recv_json(acw, &jr);
         if (rr == AC_CODE_DISCONNECT) {
-            err("%s:%d: reconnecting", __FUNCTION__, __LINE__);
-            rr = connect_with_backoff(acw, 0);
-            if (rr != AC_CODE_OK) {
-                err("%s:%d: reconnect failed", __FUNCTION__, __LINE__);
-                goto done;
-            }
-            continue;
+            err("%s:%d: disconnect", __FUNCTION__, __LINE__);
+            result = rr;
+            goto done;
         }
         if (rr != AC_CODE_OK) {
             err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
+            result = rr;
             goto done;
         }
         cJSON *jok = cJSON_GetObjectItem(jr, "ok");
@@ -1234,7 +1247,7 @@ put_packet_func(
             goto done;
         }
 
-        result = 0;
+        result = AC_CODE_OK;
     } while (0);
 
 done:;
@@ -1252,7 +1265,7 @@ get_data_2_func(
     const unsigned char *name,
     const unsigned char *out_suffix)
 {
-    int retval = -1;
+    int retval = AC_CODE_ERROR;
     char *data = NULL;
     size_t size = 0;
     retval = get_data_func(ac, pkt_name, suffix, &data, &size);
@@ -1280,7 +1293,7 @@ put_heartbeat_func(
     unsigned char *p_down_flag,
     unsigned char *p_reboot_flag)
 {
-    int result = -1;
+    int result = AC_CODE_ERROR;
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
     cJSON *jr = NULL;
     cJSON *jq = NULL;
@@ -1294,21 +1307,19 @@ put_heartbeat_func(
         cJSON_Delete(jq); jq = NULL;
         if (rr < 0) {
             err("%s:%d: send_json failed", __FUNCTION__, __LINE__);
+            result = rr;
             goto done;
         }
 
         rr = recv_json(acw, &jr);
         if (rr == AC_CODE_DISCONNECT) {
-            err("%s:%d: reconnecting", __FUNCTION__, __LINE__);
-            rr = connect_with_backoff(acw, 0);
-            if (rr != AC_CODE_OK) {
-                err("%s:%d: reconnect failed", __FUNCTION__, __LINE__);
-                goto done;
-            }
-            continue;
+            err("%s:%d: disconnect", __FUNCTION__, __LINE__);
+            result = rr;
+            goto done;
         }
         if (rr != AC_CODE_OK) {
             err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
+            result = rr;
             goto done;
         }
         cJSON *jok = cJSON_GetObjectItem(jr, "ok");
@@ -1333,7 +1344,7 @@ put_heartbeat_func(
             *p_reboot_flag = 1;
         }
 
-        result = 0;
+        result = AC_CODE_OK;
     } while (0);
 
 done:;
@@ -1347,7 +1358,7 @@ delete_heartbeat_func(
     struct AgentClient *ac,
     const unsigned char *file_name)
 {
-    int result = -1;
+    int result = AC_CODE_ERROR;
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
     cJSON *jr = NULL;
     cJSON *jq = NULL;
@@ -1360,21 +1371,19 @@ delete_heartbeat_func(
         cJSON_Delete(jq); jq = NULL;
         if (rr < 0) {
             err("%s:%d: send_json failed", __FUNCTION__, __LINE__);
+            result = rr;
             goto done;
         }
 
         rr = recv_json(acw, &jr);
         if (rr == AC_CODE_DISCONNECT) {
-            err("%s:%d: reconnecting", __FUNCTION__, __LINE__);
-            rr = connect_with_backoff(acw, 0);
-            if (rr != AC_CODE_OK) {
-                err("%s:%d: reconnect failed", __FUNCTION__, __LINE__);
-                goto done;
-            }
-            continue;
+            err("%s:%d: disconnect", __FUNCTION__, __LINE__);
+            result = rr;
+            goto done;
         }
         if (rr != AC_CODE_OK) {
             err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
+            result = rr;
             goto done;
         }
         cJSON *jok = cJSON_GetObjectItem(jr, "ok");
@@ -1383,7 +1392,7 @@ delete_heartbeat_func(
             goto done;
         }
 
-        result = 0;
+        result = AC_CODE_OK;
     } while (0);
 
 done:;
@@ -1401,7 +1410,7 @@ put_archive_2_func(
     const unsigned char *suffix,
     const unsigned char *path)
 {
-    int result = -1;
+    int result = AC_CODE_ERROR;
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
     cJSON *jr = NULL;
     cJSON *jq = NULL;
@@ -1426,21 +1435,19 @@ put_archive_2_func(
         cJSON_Delete(jq); jq = NULL;
         if (rr < 0) {
             err("%s:%d: send_json failed", __FUNCTION__, __LINE__);
+            result = rr;
             goto done;
         }
 
         rr = recv_json(acw, &jr);
         if (rr == AC_CODE_DISCONNECT) {
-            err("%s:%d: reconnecting", __FUNCTION__, __LINE__);
-            rr = connect_with_backoff(acw, 0);
-            if (rr != AC_CODE_OK) {
-                err("%s:%d: reconnect failed", __FUNCTION__, __LINE__);
-                goto done;
-            }
-            continue;
+            err("%s:%d: disconnect", __FUNCTION__, __LINE__);
+            result = rr;
+            goto done;
         }
         if (rr != AC_CODE_OK) {
             err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
+            result = rr;
             goto done;
         }
         cJSON *jok = cJSON_GetObjectItem(jr, "ok");
@@ -1449,7 +1456,7 @@ put_archive_2_func(
             goto done;
         }
 
-        result = 0;
+        result = AC_CODE_OK;
     } while (0);
 
 done:;
@@ -1473,7 +1480,7 @@ mirror_file_func(
     int *p_uid,
     int *p_gid)
 {
-    int result = -1;
+    int result = AC_CODE_ERROR;
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
     cJSON *jr = NULL;
     cJSON *jq = NULL;
@@ -1499,21 +1506,19 @@ mirror_file_func(
         cJSON_Delete(jq); jq = NULL;
         if (rr < 0) {
             err("%s:%d: send_json failed", __FUNCTION__, __LINE__);
+            result = rr;
             goto done;
         }
 
         rr = recv_json(acw, &jr);
         if (rr == AC_CODE_DISCONNECT) {
-            err("%s:%d: reconnecting", __FUNCTION__, __LINE__);
-            rr = connect_with_backoff(acw, 0);
-            if (rr != AC_CODE_OK) {
-                err("%s:%d: reconnect failed", __FUNCTION__, __LINE__);
-                goto done;
-            }
-            continue;
+            err("%s:%d: disconnect", __FUNCTION__, __LINE__);
+            result = rr;
+            goto done;
         }
         if (rr != AC_CODE_OK) {
             err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
+            result = rr;
             goto done;
         }
         cJSON *jok = cJSON_GetObjectItem(jr, "ok");
@@ -1527,7 +1532,7 @@ mirror_file_func(
             goto done;
         }
         if (!strcmp(jrq->valuestring, "file-unchanged")) {
-            result = 0;
+            result = AC_CODE_NO_DATA;
             goto done;
         }
         if (agent_extract_file_result(jr, &pkt_ptr, &pkt_len) < 0) {
@@ -1567,7 +1572,7 @@ mirror_file_func(
         if (p_new_mode) *p_new_mode = mode;
         if (p_uid) *p_uid = uid;
         if (p_gid) *p_gid = gid;
-        result = 1;
+        result = AC_CODE_OK;
     } while (0);
 
 done:;
@@ -1584,7 +1589,7 @@ put_config_func(
     const void *data,
     size_t size)
 {
-    int result = -1;
+    int result = AC_CODE_ERROR;
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
     cJSON *jr = NULL;
     cJSON *jq = NULL;
@@ -1598,21 +1603,19 @@ put_config_func(
         cJSON_Delete(jq); jq = NULL;
         if (rr < 0) {
             err("%s:%d: send_json failed", __FUNCTION__, __LINE__);
+            result = rr;
             goto done;
         }
 
         rr = recv_json(acw, &jr);
         if (rr == AC_CODE_DISCONNECT) {
-            err("%s:%d: reconnecting", __FUNCTION__, __LINE__);
-            rr = connect_with_backoff(acw, 0);
-            if (rr != AC_CODE_OK) {
-                err("%s:%d: reconnect failed", __FUNCTION__, __LINE__);
-                goto done;
-            }
-            continue;
+            err("%s:%d: disconnect", __FUNCTION__, __LINE__);
+            result = rr;
+            goto done;
         }
         if (rr != AC_CODE_OK) {
             err("%s:%d: recv_json failed", __FUNCTION__, __LINE__);
+            result = rr;
             goto done;
         }
         cJSON *jok = cJSON_GetObjectItem(jr, "ok");
@@ -1621,7 +1624,7 @@ put_config_func(
             goto done;
         }
 
-        result = 0;
+        result = AC_CODE_OK;
     } while (0);
 
 done:;
@@ -1637,7 +1640,7 @@ set_token_file_func(
 {
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
     acw->token_file = xstrdup(token_file);
-    return 0;
+    return AC_CODE_OK;
 }
 
 static int
@@ -1646,10 +1649,10 @@ wait_on_future_func(
         void **p_vfuture,
         long long timeout_ms)
 {
-    int result = -1;
+    int result = AC_CODE_ERROR;
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
     if (acw->is_ready) {
-        return 1;
+        return AC_CODE_OK;
     }
 
     int sockfd = -1;
@@ -1676,7 +1679,7 @@ wait_on_future_func(
         }
         int n = pselect(sockfd + 1, &rset, NULL, NULL, pto, &ss);
         if (n < 0 && errno == EINTR) {
-            result = 0;
+            result = AC_CODE_NO_DATA;
             goto done;
         }
         if (n < 0) {
@@ -1686,7 +1689,7 @@ wait_on_future_func(
         }
         if (n == 0) {
             // timeout
-            result = 0;
+            result = AC_CODE_NO_DATA;
             goto done;
         }
         if (!FD_ISSET(sockfd, &rset)) {
@@ -1699,19 +1702,13 @@ wait_on_future_func(
         const struct curl_ws_frame *meta;
         res = curl_ws_recv(acw->curl, &acw->in_buf[acw->in_buf_u], acw->in_buf_a - acw->in_buf_u, &recv, &meta);
         if (res == CURLE_AGAIN) {
-            result = 0;
+            result = AC_CODE_NO_DATA;
             goto done;
         }
         if (res == CURLE_GOT_NOTHING) {
-            err("%s:%d: websocket connection lost, reconnecting", __FUNCTION__, __LINE__);
-            int rr = connect_with_backoff(acw, 0);
-            if (rr != AC_CODE_OK) {
-                err("%s:%d: reconnect failed", __FUNCTION__, __LINE__);
-                *p_vfuture = NULL;
-                goto done;
-            }
+            err("%s:%d: disconnect", __FUNCTION__, __LINE__);
+            result = AC_CODE_DISCONNECT;
             *p_vfuture = NULL; // need to restart operation
-            result = 0;
             goto done;
         }
         if (res != CURLE_OK) {
@@ -1720,15 +1717,9 @@ wait_on_future_func(
             goto done;
         }
         if ((meta->flags & CURLWS_CLOSE)) {
-            err("%s:%d: websocket connection close, reconnecting", __FUNCTION__, __LINE__);
-            int rr = connect_with_backoff(acw, 0);
-            if (rr != AC_CODE_OK) {
-                err("%s:%d: reconnect failed", __FUNCTION__, __LINE__);
-                *p_vfuture = NULL;
-                goto done;
-            }
+            err("%s:%d: disconnect", __FUNCTION__, __LINE__);
+            result = AC_CODE_DISCONNECT;
             *p_vfuture = NULL; // need to restart operation
-            result = 0;
             goto done;
         }
         if ((meta->flags & (CURLWS_PING | CURLWS_PONG))) {
@@ -1772,7 +1763,7 @@ wait_on_future_func(
         goto done;
     }
     set_wait_json(acw, jw);
-    result = 1;
+    result = AC_CODE_OK;
 
 done:;
     return result;
