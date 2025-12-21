@@ -438,24 +438,40 @@ recv_json(struct AgentClientWs *acw, cJSON **pres)
     }
     *pres = NULL;
 
+    int sockfd = -1;
+    CURLcode res = curl_easy_getinfo(acw->curl, CURLINFO_ACTIVESOCKET, &sockfd);
+    if (res != CURLE_OK || sockfd < 0) {
+        err("%s:%d: failed to receive curl fd", __FUNCTION__, __LINE__);
+        return AC_CODE_ERROR;
+    }
+
     while (1) {
         size_t recv;
         const struct curl_ws_frame *meta;
         CURLcode res = curl_ws_recv(acw->curl, &acw->in_buf[acw->in_buf_u], acw->in_buf_a - acw->in_buf_u, &recv, &meta);
         if (res == CURLE_AGAIN) {
-            // FIXME: in real application: wait for socket here, e.g. using select()
-            info("%s:%d: curl_ws_recv returned CURLE_AGAIN", __FUNCTION__, __LINE__);
-            interrupt_enable();
-            if (interrupt_get_status()) {
+            fd_set rset;
+            FD_ZERO(&rset);
+            FD_SET(sockfd, &rset);
+            sigset_t ss;
+            sigemptyset(&ss);
+            int n = pselect(sockfd + 1, &rset, NULL, NULL, NULL, &ss);
+            if (n < 0 && errno == EINTR) {
                 err("%s:%d: interrupt", __FUNCTION__, __LINE__);
-                interrupt_disable();
                 return AC_CODE_INTERRUPT;
             }
-            usleep(1000);
-            interrupt_disable();
-            if (interrupt_get_status()) {
-                err("%s:%d: interrupt", __FUNCTION__, __LINE__);
-                return AC_CODE_INTERRUPT;
+            if (n < 0) {
+                err("%s:%d: pselect failed: %s", __FUNCTION__, __LINE__, strerror(errno));
+                return AC_CODE_ERROR;
+            }
+            if (n == 0) {
+                // timeout
+                err("%s:%d: timeout is impossible", __FUNCTION__, __LINE__);
+                return AC_CODE_ERROR;
+            }
+            if (!FD_ISSET(sockfd, &rset)) {
+                err("%s:%d: curl socket not ready", __FUNCTION__, __LINE__);
+                return AC_CODE_ERROR;
             }
             continue;
         }
