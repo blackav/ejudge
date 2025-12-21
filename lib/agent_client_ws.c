@@ -1172,8 +1172,8 @@ xasync_wait_complete_func(
 
 static int
 add_ignored_func(
-    struct AgentClient *ac,
-    const unsigned char *pkt_name)
+        struct AgentClient *ac,
+        const unsigned char *pkt_name)
 {
     int result = AC_CODE_ERROR;
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
@@ -1220,10 +1220,10 @@ done:;
 
 static int
 put_packet_func(
-    struct AgentClient *ac,
-    const unsigned char *pkt_name,
-    const unsigned char *pkt_ptr,
-    size_t pkt_len)
+        struct AgentClient *ac,
+        const unsigned char *pkt_name,
+        const unsigned char *pkt_ptr,
+        size_t pkt_len)
 {
     int result = AC_CODE_ERROR;
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
@@ -1271,12 +1271,12 @@ done:;
 
 static int
 get_data_2_func(
-    struct AgentClient *ac,
-    const unsigned char *pkt_name,
-    const unsigned char *suffix,
-    const unsigned char *dir,
-    const unsigned char *name,
-    const unsigned char *out_suffix)
+        struct AgentClient *ac,
+        const unsigned char *pkt_name,
+        const unsigned char *suffix,
+        const unsigned char *dir,
+        const unsigned char *name,
+        const unsigned char *out_suffix)
 {
     int retval = AC_CODE_ERROR;
     char *data = NULL;
@@ -1297,14 +1297,14 @@ done:
 
 static int
 put_heartbeat_func(
-    struct AgentClient *ac,
-    const unsigned char *file_name,
-    const void *data,
-    size_t size,
-    long long *p_last_saved_time_ms,
-    unsigned char *p_stop_flag,
-    unsigned char *p_down_flag,
-    unsigned char *p_reboot_flag)
+        struct AgentClient *ac,
+        const unsigned char *file_name,
+        const void *data,
+        size_t size,
+        long long *p_last_saved_time_ms,
+        unsigned char *p_stop_flag,
+        unsigned char *p_down_flag,
+        unsigned char *p_reboot_flag)
 {
     int result = AC_CODE_ERROR;
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
@@ -1368,8 +1368,8 @@ done:;
 
 static int
 delete_heartbeat_func(
-    struct AgentClient *ac,
-    const unsigned char *file_name)
+        struct AgentClient *ac,
+        const unsigned char *file_name)
 {
     int result = AC_CODE_ERROR;
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
@@ -1416,12 +1416,12 @@ done:;
 
 static int
 put_archive_2_func(
-    struct AgentClient *ac,
-    const unsigned char *contest_server_name,
-    int contest_id,
-    const unsigned char *run_name,
-    const unsigned char *suffix,
-    const unsigned char *path)
+        struct AgentClient *ac,
+        const unsigned char *contest_server_name,
+        int contest_id,
+        const unsigned char *run_name,
+        const unsigned char *suffix,
+        const unsigned char *path)
 {
     int result = AC_CODE_ERROR;
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
@@ -1481,17 +1481,17 @@ done:;
 
 static int
 mirror_file_func(
-    struct AgentClient *ac,
-    const unsigned char *path,
-    time_t current_mtime,
-    long long current_size,
-    int current_mode,
-    char **p_pkt_ptr,
-    size_t *p_pkt_len,
-    time_t *p_new_mtime,
-    int *p_new_mode,
-    int *p_uid,
-    int *p_gid)
+        struct AgentClient *ac,
+        const unsigned char *path,
+        time_t current_mtime,
+        long long current_size,
+        int current_mode,
+        char **p_pkt_ptr,
+        size_t *p_pkt_len,
+        time_t *p_new_mtime,
+        int *p_new_mode,
+        int *p_uid,
+        int *p_gid)
 {
     int result = AC_CODE_ERROR;
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
@@ -1597,10 +1597,10 @@ done:;
 
 static int
 put_config_func(
-    struct AgentClient *ac,
-    const unsigned char *file_name,
-    const void *data,
-    size_t size)
+        struct AgentClient *ac,
+        const unsigned char *file_name,
+        const void *data,
+        size_t size)
 {
     int result = AC_CODE_ERROR;
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
@@ -1648,8 +1648,8 @@ done:;
 
 static int
 set_token_file_func(
-    struct AgentClient *ac,
-    const unsigned char *token_file)
+        struct AgentClient *ac,
+        const unsigned char *token_file)
 {
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
     acw->token_file = xstrdup(token_file);
