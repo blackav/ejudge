@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2015-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2015-2025 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -114,6 +114,7 @@ super_run_status_save(
 
     if (agent) {
         agent->ops->put_heartbeat(agent, file_name, psrs, sizeof(*psrs),
+                                  AC_RECONNECT_TODO,
                                   p_last_saved_time_ms, p_stop_flag,
                                   p_down_flag,
                                   p_reboot_flag);
@@ -183,7 +184,7 @@ super_run_status_remove(
         const unsigned char *file_name)
 {
     if (agent) {
-        agent->ops->delete_heartbeat(agent, file_name);
+        agent->ops->delete_heartbeat(agent, file_name, AC_RECONNECT_DISABLE);
     } else {
         unsigned char dir_path[PATH_MAX];
         snprintf(dir_path, sizeof(dir_path), "%s/dir/%s", heartbeat_dir, file_name);

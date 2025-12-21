@@ -642,7 +642,7 @@ save_heartbeat(void)
   if (agent) {
     __attribute__((unused)) long long last_saved_time_ms = 0;
 
-    result = agent->ops->put_heartbeat(agent, heartbeat_file_name, buffer, size,
+    result = agent->ops->put_heartbeat(agent, heartbeat_file_name, buffer, size, AC_RECONNECT_TODO,
                               &last_saved_time_ms,
                               &pending_stop_flag, &pending_down_flag,
                               &pending_reboot_flag);
@@ -666,7 +666,7 @@ delete_heartbeat(void)
   if (!heartbeat_dir[0]) return;
 
   if (agent) {
-    agent->ops->delete_heartbeat(agent, heartbeat_file_name);
+    agent->ops->delete_heartbeat(agent, heartbeat_file_name, AC_RECONNECT_DISABLE);
   } else {
     unsigned char path[PATH_MAX];
     __attribute__((unused)) int r;
@@ -749,7 +749,7 @@ handle_packet(
                                    rpl->contest_id,
                                    run_name,
                                    exe_sfx,
-                                   src_buf, src_len, 1) < 0) {
+                                   src_buf, src_len, AC_RECONNECT_ENABLE) < 0) {
           fprintf(log_f, "put_output failed\n");
           rpl->status = RUN_CHECK_FAILED;
           goto cleanup;
@@ -771,7 +771,7 @@ handle_packet(
                                    rpl->contest_id,
                                    run_name,
                                    exe_sfx,
-                                   src_path, 1) < 0) {
+                                   src_path, AC_RECONNECT_ENABLE) < 0) {
         fprintf(log_f, "put_output_2 failed\n");
         rpl->status = RUN_CHECK_FAILED;
         goto cleanup;
@@ -1494,7 +1494,7 @@ save_config(void)
   fclose(cfg_f); cfg_f = NULL;
 
   if (agent) {
-    agent->ops->put_config(agent, "compile.cfg", cfg_s, cfg_z);
+    agent->ops->put_config(agent, "compile.cfg", cfg_s, cfg_z, AC_RECONNECT_TODO);
   } else {
     generic_write_file(cfg_s, cfg_z, SAFE, export_config_dir, "compile.cfg", NULL);
   }
@@ -1657,7 +1657,9 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
       if (interrupt_was_usr2()) {
         interrupt_reset_usr2();
         if (future) {
-          r = agent->ops->async_wait_complete(agent, &future,
+          r = agent->ops->async_wait_complete(agent,
+                                              AC_RECONNECT_TODO,
+                                              &future,
                                               pkt_name, sizeof(pkt_name),
                                               &pkt_ptr,
                                               &pkt_len);
@@ -1672,6 +1674,7 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
       } else if (!future) {
         r = agent->ops->async_wait_init(agent, SIGUSR2, 0,
                                         1,
+                                        AC_RECONNECT_TODO,
                                         pkt_name, sizeof(pkt_name), &future,
                                         DEFAULT_WAIT_TIMEOUT_MS,
                                         &pkt_ptr,
@@ -1706,7 +1709,7 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
 
     if (!r) {
       if (agent) {
-        agent->ops->wait_on_future(agent, &future, 5000);
+        agent->ops->wait_on_future(agent, &future, 5000, AC_RECONNECT_TODO);
       } else {
         struct epoll_event events[1];
         int r = epoll_pwait(efd, events, 1, HEARTBEAT_UPDATE_MS, &emptymask);
@@ -1725,7 +1728,7 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
 
     if (agent) {
       if (!pkt_ptr) {
-        r = agent->ops->get_packet(agent, pkt_name, 1, &pkt_ptr, &pkt_len);
+        r = agent->ops->get_packet(agent, pkt_name, AC_RECONNECT_ENABLE, &pkt_ptr, &pkt_len);
       } else {
         r = 1;
       }
@@ -1916,7 +1919,7 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
     char *src_buf = NULL;
     size_t src_len = 0;
     if (agent) {
-      r = agent->ops->get_data(agent, pkt_name, src_sfx, 1, &src_buf, &src_len);
+      r = agent->ops->get_data(agent, pkt_name, src_sfx, AC_RECONNECT_ENABLE, &src_buf, &src_len);
       if (r < 0) {
         err("agent get_data failed");
         fclose(log_f); log_f = NULL;
@@ -1993,7 +1996,7 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
                                            rpl.contest_id,
                                            run_name,
                                            exe_sfx,
-                                           exe_work_path, 1) < 0) {
+                                           exe_work_path, AC_RECONNECT_ENABLE) < 0) {
                 err("put_output failed");
                 fprintf(log_f, "\nput_output failed\n");
                 rpl.status = RUN_CHECK_FAILED;
@@ -2029,7 +2032,7 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
                                        rpl.contest_id,
                                        run_name,
                                        PROP_SUFFIX,
-                                       json_work_path, 1);
+                                       json_work_path, AC_RECONNECT_ENABLE);
         } else {
           r = generic_copy_file(0, NULL, json_work_path, "", 0, NULL, json_path, "");
         }
@@ -2042,7 +2045,7 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
                                    rpl.contest_id,
                                    run_name,
                                    ".txt",
-                                   log_work_path, 1);
+                                   log_work_path, AC_RECONNECT_ENABLE);
     } else {
       r = generic_copy_file(0, NULL, log_work_path, "", 0, NULL, log_path, "");
     }
@@ -2057,7 +2060,7 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
 
     if (override_exe || (rpl.status == RUN_STYLE_ERR || rpl.status == RUN_COMPILE_ERR || rpl.status == RUN_CHECK_FAILED)) {
       if (agent) {
-        agent->ops->put_output_2(agent, contest_server_id, rpl.contest_id, run_name, exe_sfx, log_work_path, 1);
+        agent->ops->put_output_2(agent, contest_server_id, rpl.contest_id, run_name, exe_sfx, log_work_path, AC_RECONNECT_ENABLE);
       } else {
         generic_copy_file(0, NULL, log_work_path, "", 0, NULL, exe_path, "");
       }
@@ -2074,7 +2077,7 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
       continue;
     }
     if (agent) {
-      r = agent->ops->put_reply(agent, contest_server_id, rpl.contest_id, run_name, rpl_pkt, rpl_size, 1);
+      r = agent->ops->put_reply(agent, contest_server_id, rpl.contest_id, run_name, rpl_pkt, rpl_size, AC_RECONNECT_ENABLE);
     } else {
       r = generic_write_file(rpl_pkt, rpl_size, SAFE, status_dir, run_name, 0);
     }

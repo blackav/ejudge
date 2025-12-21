@@ -425,7 +425,7 @@ handle_packet(
 
   if (agent) {
     if (!srp_b) {
-      r = agent->ops->get_packet(agent, pkt_name, 1, &srp_b, &srp_z);
+      r = agent->ops->get_packet(agent, pkt_name, AC_RECONNECT_ENABLE, &srp_b, &srp_z);
       if (r < 0) {
         err("agent get_packet failed");
         goto cleanup;
@@ -481,7 +481,7 @@ handle_packet(
   if (is_packet_to_ignore(pkt_name, srgp->contest_id, srgp->rejudge_flag, short_name, arch)) {
     retval = 0;
     if (agent) {
-      agent->ops->put_packet(agent, pkt_name, srp_b, srp_z);
+      agent->ops->put_packet(agent, pkt_name, srp_b, srp_z, AC_RECONNECT_ENABLE);
     } else {
       generic_write_file(srp_b, srp_z, SAFE, super_run_spool_path, pkt_name, "");
     }
@@ -506,7 +506,7 @@ handle_packet(
         err("no support for architecture %s here", arch);
         retval = 0;
         if (agent) {
-          agent->ops->put_packet(agent, pkt_name, srp_b, srp_z);
+          agent->ops->put_packet(agent, pkt_name, srp_b, srp_z, AC_RECONNECT_ENABLE);
         } else {
           generic_write_file(srp_b, srp_z, SAFE, super_run_spool_path, pkt_name, "");
         }
@@ -519,7 +519,7 @@ handle_packet(
 
     if (agent) {
       r = agent->ops->get_data_2(agent, pkt_name, srgp->exe_sfx,
-                                 global->run_work_dir, run_base, srgp->exe_sfx);
+                                 global->run_work_dir, run_base, srgp->exe_sfx, AC_RECONNECT_ENABLE);
       if (local_cache && *local_cache && srgp->judge_uuid && *srgp->judge_uuid && srgp->cached_on_remote > 0) {
         move_from_local_cache(srgp->judge_uuid, global->run_work_dir, run_base, srgp->exe_sfx);
       }
@@ -531,7 +531,7 @@ handle_packet(
       // FIXME: handle this differently?
       retval = 0;
       if (agent) {
-        agent->ops->put_packet(agent, pkt_name, srp_b, srp_z);
+        agent->ops->put_packet(agent, pkt_name, srp_b, srp_z, AC_RECONNECT_ENABLE);
       } else {
         generic_write_file(srp_b, srp_z, SAFE, super_run_spool_path, pkt_name, "");
       }
@@ -547,7 +547,7 @@ handle_packet(
       if (agent) {
         r = agent->ops->get_data_2(agent, srgp->src_file, src_sfx,
                                    global->run_work_dir, srgp->src_file,
-                                   src_sfx);
+                                   src_sfx, AC_RECONNECT_ENABLE);
         // FIXME: support local cache
       } else {
         r = generic_copy_file(REMOVE, super_run_exe_path,srgp->src_file, src_sfx,
@@ -563,7 +563,7 @@ handle_packet(
 
     if (srgp->has_run_props > 0 && srgp->zip_mode <= 0 && srgp->prop_file) {
       if (agent) {
-        r = agent->ops->get_data(agent, srgp->prop_file, NULL, 1, &prop_data, &prop_size);
+        r = agent->ops->get_data(agent, srgp->prop_file, NULL, AC_RECONNECT_ENABLE, &prop_data, &prop_size);
       } else {
         r = generic_read_file(&prop_data, 0, &prop_size, REMOVE, super_run_exe_path, srgp->prop_file, NULL);
       }
@@ -585,7 +585,7 @@ handle_packet(
         goto cleanup;
       }
       if (agent) {
-        r = agent->ops->get_data(agent, srpp->user_input_file, NULL, 1,
+        r = agent->ops->get_data(agent, srpp->user_input_file, NULL, AC_RECONNECT_ENABLE,
                                  &inp_data, &inp_size);
       } else {
         r = generic_read_file(&inp_data, 0, &inp_size, REMOVE, super_run_exe_path, srpp->user_input_file, NULL);
@@ -717,7 +717,7 @@ handle_packet(
                                  srgp->contest_id,
                                  reply_packet_name,
                                  "",
-                                 report_path, 1) < 0) {
+                                 report_path, AC_RECONNECT_ENABLE) < 0) {
       goto cleanup;
     }
   } else {
@@ -739,7 +739,8 @@ handle_packet(
                                     srgp->contest_id,
                                     reply_packet_name,
                                     zip_suffix,
-                                    full_report_path) < 0) {
+                                    full_report_path,
+                                    AC_RECONNECT_ENABLE) < 0) {
         goto cleanup;
       }
     } else {
@@ -760,7 +761,7 @@ handle_packet(
                               srgp->contest_server_id,
                               srgp->contest_id,
                               reply_packet_name,
-                              reply_pkt_buf, reply_pkt_buf_size, 1) < 0)
+                              reply_pkt_buf, reply_pkt_buf_size, AC_RECONNECT_ENABLE) < 0)
       goto cleanup;
   } else {
     if (generic_write_file(reply_pkt_buf, reply_pkt_buf_size, SAFE, full_status_dir, reply_packet_name, "") < 0) {
@@ -966,7 +967,9 @@ do_loop(
       if (interrupt_was_usr2()) {
         interrupt_reset_usr2();
         if (future) {
-          r = agent->ops->async_wait_complete(agent, &future,
+          r = agent->ops->async_wait_complete(agent,
+                                              AC_RECONNECT_TODO,
+                                              &future,
                                               pkt_name, sizeof(pkt_name),
                                               &pkt_data,
                                               &pkt_size);
@@ -983,6 +986,7 @@ do_loop(
       } else if (!future) {
         r = agent->ops->async_wait_init(agent, SIGUSR2, 1,
                                         1,
+                                        AC_RECONNECT_TODO,
                                         pkt_name, sizeof(pkt_name), &future,
                                         DEFAULT_WAIT_TIMEOUT_MS,
                                         &pkt_data,
@@ -1039,7 +1043,7 @@ do_loop(
           }
         }
       } else if (agent) {
-        agent->ops->wait_on_future(agent, &future, 5000);
+        agent->ops->wait_on_future(agent, &future, 5000, AC_RECONNECT_TODO);
       } else {
         interrupt_enable();
         os_Sleep(5000);

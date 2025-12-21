@@ -874,6 +874,7 @@ async_wait_init_func(
         int notify_signal,
         int random_mode,
         int enable_file,
+        int reconnect_flag,
         unsigned char *pkt_name,
         size_t pkt_len,
         void **p_vfuture,
@@ -970,6 +971,7 @@ done:;
 static int
 async_wait_complete_func(
         struct AgentClient *ac,
+        int reconnect_flag,
         void **p_vfuture,
         unsigned char *pkt_name,
         size_t pkt_len,
@@ -1173,7 +1175,8 @@ xasync_wait_complete_func(
 static int
 add_ignored_func(
         struct AgentClient *ac,
-        const unsigned char *pkt_name)
+        const unsigned char *pkt_name,
+        int reconnect_flag)
 {
     int result = AC_CODE_ERROR;
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
@@ -1223,7 +1226,8 @@ put_packet_func(
         struct AgentClient *ac,
         const unsigned char *pkt_name,
         const unsigned char *pkt_ptr,
-        size_t pkt_len)
+        size_t pkt_len,
+        int reconnect_flag)
 {
     int result = AC_CODE_ERROR;
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
@@ -1276,12 +1280,13 @@ get_data_2_func(
         const unsigned char *suffix,
         const unsigned char *dir,
         const unsigned char *name,
-        const unsigned char *out_suffix)
+        const unsigned char *out_suffix,
+        int reconnect_flag)
 {
     int retval = AC_CODE_ERROR;
     char *data = NULL;
     size_t size = 0;
-    retval = get_data_func(ac, pkt_name, suffix, 0 /* reconnect_flag */, &data, &size);
+    retval = get_data_func(ac, pkt_name, suffix, reconnect_flag, &data, &size);
     if (retval <= 0) {
         goto done;
     }
@@ -1301,6 +1306,7 @@ put_heartbeat_func(
         const unsigned char *file_name,
         const void *data,
         size_t size,
+        int reconnect_flag,
         long long *p_last_saved_time_ms,
         unsigned char *p_stop_flag,
         unsigned char *p_down_flag,
@@ -1369,7 +1375,8 @@ done:;
 static int
 delete_heartbeat_func(
         struct AgentClient *ac,
-        const unsigned char *file_name)
+        const unsigned char *file_name,
+        int reconnect_flag)
 {
     int result = AC_CODE_ERROR;
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
@@ -1421,7 +1428,8 @@ put_archive_2_func(
         int contest_id,
         const unsigned char *run_name,
         const unsigned char *suffix,
-        const unsigned char *path)
+        const unsigned char *path,
+        int reconnect_flag)
 {
     int result = AC_CODE_ERROR;
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
@@ -1486,6 +1494,7 @@ mirror_file_func(
         time_t current_mtime,
         long long current_size,
         int current_mode,
+        int reconnect_flag,
         char **p_pkt_ptr,
         size_t *p_pkt_len,
         time_t *p_new_mtime,
@@ -1600,7 +1609,8 @@ put_config_func(
         struct AgentClient *ac,
         const unsigned char *file_name,
         const void *data,
-        size_t size)
+        size_t size,
+        int reconnect_flag)
 {
     int result = AC_CODE_ERROR;
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
@@ -1660,7 +1670,8 @@ static int
 wait_on_future_func(
         struct AgentClient *ac,
         void **p_vfuture,
-        long long timeout_ms)
+        long long timeout_ms,
+        int reconnect_flag)
 {
     int result = AC_CODE_ERROR;
     struct AgentClientWs *acw = (struct AgentClientWs *) ac;
