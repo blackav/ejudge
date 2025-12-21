@@ -1709,7 +1709,9 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
 
     if (!r) {
       if (agent) {
-        agent->ops->wait_on_future(agent, &future, 5000, AC_RECONNECT_TODO);
+        // AC_RECONNECT_TODO
+        __attribute__((unused)) int _ =
+        agent->ops->wait_on_future(agent, &future, 5000);
       } else {
         struct epoll_event events[1];
         int r = epoll_pwait(efd, events, 1, HEARTBEAT_UPDATE_MS, &emptymask);

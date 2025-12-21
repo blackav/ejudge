@@ -1964,8 +1964,7 @@ static int
 wait_on_future_func(
         struct AgentClient *ac,
         void **p_vfuture,
-        long long timeout_ms,
-        int reconnect_flag)
+        long long timeout_ms)
 {
     interrupt_enable();
     os_Sleep(5000);

@@ -1043,7 +1043,9 @@ do_loop(
           }
         }
       } else if (agent) {
-        agent->ops->wait_on_future(agent, &future, 5000, AC_RECONNECT_TODO);
+        // AC_RECONNECT_TODO
+        __attribute__((unused)) int _ =
+        agent->ops->wait_on_future(agent, &future, 5000);
       } else {
         interrupt_enable();
         os_Sleep(5000);

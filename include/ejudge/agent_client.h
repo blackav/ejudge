@@ -199,11 +199,11 @@ struct AgentClientOps
         struct AgentClient *ac,
         const unsigned char *token_file);
 
+    __attribute__((warn_unused_result))
     int (*wait_on_future)(
         struct AgentClient *ac,
         void **p_vfuture,
-        long long timeout_ms,
-        int reconnect_flag);
+        long long timeout_ms);
 
     int (*reconnect)(struct AgentClient *ac);
 };
