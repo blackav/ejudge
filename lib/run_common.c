@@ -1619,6 +1619,7 @@ agent_mirror_file(
   int new_uid = -1;
   int new_gid = -1;
   int r = agent->ops->mirror_file(agent, buf, mtime, fsize, mode,
+                                  AC_RECONNECT_ENABLE,
                                   &pkt_ptr, &pkt_len, &new_mtime,
                                   &new_mode, &new_uid, &new_gid);
   if (r < 0) {
@@ -5731,7 +5732,8 @@ run_tests(
     if (tl_retry_count <= 0) tl_retry_count = 1;
 
     if (listener && listener->ops && listener->ops->before_test) {
-      listener->ops->before_test(listener, cur_test);
+      __attribute__((unused)) int _ =
+      listener->ops->before_test(listener, cur_test, AC_RECONNECT_ENABLE);
     }
 
     while (1) {

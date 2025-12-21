@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2015-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2015-2025 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -89,13 +89,14 @@ super_run_status_check(const void *data, size_t size)
     return 0;
 }
 
-void
+int
 super_run_status_save(
         struct AgentClient *agent,
         const unsigned char *heartbeat_dir,
         const unsigned char *file_name,
         const struct super_run_status *psrs,
         long long current_time_ms,
+        int reconnect_flag,
         long long *p_last_saved_time_ms,
         long long timeout_ms,
         unsigned char *p_stop_flag,
@@ -108,21 +109,21 @@ super_run_status_save(
 
     if (p_last_saved_time_ms) {
         if (timeout_ms > 0 && *p_last_saved_time_ms > 0 && *p_last_saved_time_ms + timeout_ms > current_time_ms) {
-            return;
+            return AC_CODE_OK;
         }
     }
 
     if (agent) {
-        agent->ops->put_heartbeat(agent, file_name, psrs, sizeof(*psrs),
+        return agent->ops->put_heartbeat(agent, file_name, psrs, sizeof(*psrs),
+                                  reconnect_flag,
                                   p_last_saved_time_ms, p_stop_flag,
                                   p_down_flag,
                                   p_reboot_flag);
-        return;
     }
 
     snprintf(in_path, sizeof(in_path), "%s/in/%s", heartbeat_dir, file_name);
     fd = open(in_path, O_WRONLY | O_CREAT | O_TRUNC, 0666);
-    if (fd < 0) return;
+    if (fd < 0) return AC_CODE_ERROR;
 
     const unsigned char *pp = (const unsigned char *) psrs;
     size_t zz = sizeof(*psrs);
@@ -134,11 +135,11 @@ super_run_status_save(
     if (w <= 0) {
         close(fd); fd = -1;
         unlink(in_path);
-        return;
+        return AC_CODE_ERROR;
     }
     if (close(fd) < 0) {
         unlink(in_path);
-        return;
+        return AC_CODE_ERROR;
     }
     fd = -1;
 
@@ -174,6 +175,7 @@ super_run_status_save(
             unlink(dir_path);
         }
     }
+    return AC_CODE_OK;
 }
 
 void
@@ -183,7 +185,7 @@ super_run_status_remove(
         const unsigned char *file_name)
 {
     if (agent) {
-        agent->ops->delete_heartbeat(agent, file_name);
+        agent->ops->delete_heartbeat(agent, file_name, AC_RECONNECT_DISABLE);
     } else {
         unsigned char dir_path[PATH_MAX];
         snprintf(dir_path, sizeof(dir_path), "%s/dir/%s", heartbeat_dir, file_name);

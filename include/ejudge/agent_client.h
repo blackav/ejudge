@@ -18,6 +18,24 @@
 
 #include <stdlib.h>
 
+// error codes
+enum
+{
+    AC_CODE_OK = 1,
+    AC_CODE_NO_DATA = 0,     // unused
+    AC_CODE_ERROR = -1,      // error except from the following
+    AC_CODE_DISCONNECT = -2, // disconnect, must be handled at application level
+    AC_CODE_INTERRUPT = -3,  // user interrupt (SIGTERM or SIGINT)
+};
+
+// reconnect_flag
+enum
+{
+    AC_RECONNECT_DISABLE,
+    AC_RECONNECT_ENABLE,
+    AC_RECONNECT_TODO,
+};
+
 struct AgentClient;
 
 struct AgentClientOps
@@ -41,12 +59,14 @@ struct AgentClientOps
         size_t pkt_len,
         int random_mode,
         int enable_file,
+        int reconnect_flag,
         char **p_data,
         size_t *p_size);
 
     int (*get_packet)(
         struct AgentClient *ac,
         const unsigned char *pkt_name,
+        int reconnect_flag,
         char **p_pkt_ptr,
         size_t *p_pkt_len);
 
@@ -54,6 +74,7 @@ struct AgentClientOps
         struct AgentClient *ac,
         const unsigned char *pkt_name,
         const unsigned char *suffix,
+        int reconnect_flag,
         char **p_pkt_ptr,
         size_t *p_pkt_len);
 
@@ -63,7 +84,8 @@ struct AgentClientOps
         int contest_id,
         const unsigned char *run_name,
         const unsigned char *pkt_ptr,
-        size_t pkt_len);
+        size_t pkt_len,
+        int reconnect_flag);
 
     int (*put_output)(
         struct AgentClient *ac,
@@ -72,7 +94,8 @@ struct AgentClientOps
         const unsigned char *run_name,
         const unsigned char *suffix,
         const unsigned char *pkt_ptr,
-        size_t pkt_len);
+        size_t pkt_len,
+        int reconnect_flag);
 
     int (*put_output_2)(
         struct AgentClient *ac,
@@ -80,13 +103,15 @@ struct AgentClientOps
         int contest_id,
         const unsigned char *run_name,
         const unsigned char *suffix,
-        const unsigned char *path);
+        const unsigned char *path,
+        int reconnect_flag);
 
     int (*async_wait_init)(
         struct AgentClient *ac,
         int notify_signal,
         int random_mode,
         int enable_file,
+        int reconnect_flag,
         unsigned char *pkt_name,
         size_t pkt_len,
         void **p_vfuture,
@@ -104,13 +129,15 @@ struct AgentClientOps
 
     int (*add_ignored)(
         struct AgentClient *ac,
-        const unsigned char *pkt_name);
+        const unsigned char *pkt_name,
+        int reconnect_flag);
 
     int (*put_packet)(
         struct AgentClient *ac,
         const unsigned char *pkt_name,
         const unsigned char *pkt_ptr,
-        size_t pkt_len);
+        size_t pkt_len,
+        int reconnect_flag);
 
     int (*get_data_2)(
         struct AgentClient *ac,
@@ -118,13 +145,15 @@ struct AgentClientOps
         const unsigned char *suffix,
         const unsigned char *dir,
         const unsigned char *name,
-        const unsigned char *out_suffix);
+        const unsigned char *out_suffix,
+        int reconnect_flag);
 
     int (*put_heartbeat)(
         struct AgentClient *ac,
         const unsigned char *file_name,
         const void *data,
         size_t size,
+        int reconnect_flag,
         long long *p_last_saved_time_ms,
         unsigned char *p_stop_flag,
         unsigned char *p_down_flag,
@@ -132,7 +161,8 @@ struct AgentClientOps
 
     int (*delete_heartbeat)(
         struct AgentClient *ac,
-        const unsigned char *file_name);
+        const unsigned char *file_name,
+        int reconnect_flag);
 
     int (*put_archive_2)(
         struct AgentClient *ac,
@@ -140,7 +170,8 @@ struct AgentClientOps
         int contest_id,
         const unsigned char *run_name,
         const unsigned char *suffix,
-        const unsigned char *path);
+        const unsigned char *path,
+        int reconnect_flag);
 
     int (*mirror_file)(
         struct AgentClient *ac,
@@ -148,6 +179,7 @@ struct AgentClientOps
         time_t current_mtime,
         long long current_size,
         int current_mode,
+        int reconnect_flag,
         char **p_pkt_ptr,
         size_t *p_pkt_len,
         time_t *p_new_mtime,
@@ -159,16 +191,24 @@ struct AgentClientOps
         struct AgentClient *ac,
         const unsigned char *file_name,
         const void *data,
-        size_t size);
+        size_t size,
+        int reconnect_flag);
 
     int (*set_token_file)(
         struct AgentClient *ac,
         const unsigned char *token_file);
 
+    __attribute__((warn_unused_result))
     int (*wait_on_future)(
         struct AgentClient *ac,
         void **p_vfuture,
         long long timeout_ms);
+
+    int (*reconnect)(struct AgentClient *ac);
+
+    int (*cancel_future)(
+        struct AgentClient *ac,
+        void **p_vfuture);
 };
 
 struct AgentClient
