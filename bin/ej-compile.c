@@ -597,7 +597,7 @@ done:;
 #pragma GCC optimize "no-inline"
 #endif
 static __attribute__ ((warn_unused_result)) int
-save_heartbeat(void)
+save_heartbeat(int reconnect_flag)
 {
   int result = AC_CODE_ERROR;
 
@@ -642,7 +642,7 @@ save_heartbeat(void)
   if (agent) {
     __attribute__((unused)) long long last_saved_time_ms = 0;
 
-    result = agent->ops->put_heartbeat(agent, heartbeat_file_name, buffer, size, AC_RECONNECT_TODO,
+    result = agent->ops->put_heartbeat(agent, heartbeat_file_name, buffer, size, reconnect_flag,
                               &last_saved_time_ms,
                               &pending_stop_flag, &pending_down_flag,
                               &pending_reboot_flag);
@@ -1494,7 +1494,7 @@ save_config(void)
   fclose(cfg_f); cfg_f = NULL;
 
   if (agent) {
-    agent->ops->put_config(agent, "compile.cfg", cfg_s, cfg_z, AC_RECONNECT_TODO);
+    agent->ops->put_config(agent, "compile.cfg", cfg_s, cfg_z, AC_RECONNECT_ENABLE);
   } else {
     generic_write_file(cfg_s, cfg_z, SAFE, export_config_dir, "compile.cfg", NULL);
   }
@@ -1619,11 +1619,12 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
     interrupt_enable();
     if (interrupt_get_status() || interrupt_restart_requested()) break;
     if (need_reconnect) {
-      // TODO: reset future, if such exists
+      info("%s:%d: reconnecting...", __FUNCTION__, __LINE__);
       int res = agent->ops->reconnect(agent);
       if (res < 0) {
         break;
       }
+      info("%s:%d: reconnect successful", __FUNCTION__, __LINE__);
       need_reconnect = 0;
     }
     interrupt_disable();
@@ -1639,9 +1640,21 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
       continue;
     }
 
-    // FIXME: todo
     {
-      __attribute__((unused)) int _ = save_heartbeat();
+      int r = save_heartbeat(AC_RECONNECT_DISABLE);
+      if (r == AC_CODE_DISCONNECT) {
+        err("%s:%d: disconnect", __FUNCTION__, __LINE__);
+        agent->ops->cancel_future(agent, &future);
+        need_reconnect = 1;
+        continue;
+      }
+      if (r == AC_CODE_INTERRUPT) {
+        break;
+      }
+      if (r < 0) {
+        err("%s:%d: save_heartbeat failed", __FUNCTION__, __LINE__);
+        break;
+      }
     }
     if (pending_stop_flag || pending_down_flag || pending_reboot_flag) {
       break;
@@ -1658,14 +1671,16 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
         interrupt_reset_usr2();
         if (future) {
           r = agent->ops->async_wait_complete(agent,
-                                              AC_RECONNECT_TODO,
+                                              AC_RECONNECT_DISABLE,
                                               &future,
                                               pkt_name, sizeof(pkt_name),
                                               &pkt_ptr,
                                               &pkt_len);
-          if (r < 0) {
-            err("async_wait_complete failed");
-            break;
+          if (r == AC_CODE_DISCONNECT) {
+            err("%s:%d: disconnect", __FUNCTION__, __LINE__);
+            agent->ops->cancel_future(agent, &future);
+            need_reconnect = 1;
+            continue;
           }
           if (!pkt_name[0]) {
             continue;
@@ -1674,7 +1689,7 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
       } else if (!future) {
         r = agent->ops->async_wait_init(agent, SIGUSR2, 0,
                                         1,
-                                        AC_RECONNECT_TODO,
+                                        AC_RECONNECT_ENABLE,
                                         pkt_name, sizeof(pkt_name), &future,
                                         DEFAULT_WAIT_TIMEOUT_MS,
                                         &pkt_ptr,
@@ -1709,9 +1724,17 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
 
     if (!r) {
       if (agent) {
-        // AC_RECONNECT_TODO
-        __attribute__((unused)) int _ =
-        agent->ops->wait_on_future(agent, &future, 5000);
+        int r = agent->ops->wait_on_future(agent, &future, 5000);
+        if (r == AC_CODE_DISCONNECT) {
+          err("%s:%d: disconnect", __FUNCTION__, __LINE__);
+          agent->ops->cancel_future(agent, &future);
+          need_reconnect = 1;
+          continue;
+        }
+        if (r < 0) {
+          err("%s:%d: wait on future failed", __FUNCTION__, __LINE__);
+          break;
+        }
       } else {
         struct epoll_event events[1];
         int r = epoll_pwait(efd, events, 1, HEARTBEAT_UPDATE_MS, &emptymask);
