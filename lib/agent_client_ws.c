@@ -1842,6 +1842,15 @@ done:;
     return result;
 }
 
+static int
+cancel_future_func(
+        struct AgentClient *ac,
+        void **p_vfuture)
+{
+    if (p_vfuture) *p_vfuture = NULL;
+    return AC_CODE_OK;
+}
+
 static const struct AgentClientOps ops_ws =
 {
     destroy_func,
@@ -1868,6 +1877,7 @@ static const struct AgentClientOps ops_ws =
     set_token_file_func,
     wait_on_future_func,
     reconnect_func,
+    cancel_future_func,
 };
 
 struct AgentClient *

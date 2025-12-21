@@ -206,6 +206,10 @@ struct AgentClientOps
         long long timeout_ms);
 
     int (*reconnect)(struct AgentClient *ac);
+
+    int (*cancel_future)(
+        struct AgentClient *ac,
+        void **p_vfuture);
 };
 
 struct AgentClient

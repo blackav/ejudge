@@ -1997,6 +1997,8 @@ static const struct AgentClientOps ops_ssh =
     put_config_func,
     NULL,
     wait_on_future_func,
+    NULL,
+    NULL,
 };
 
 struct AgentClient *
