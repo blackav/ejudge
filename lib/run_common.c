@@ -1619,7 +1619,7 @@ agent_mirror_file(
   int new_uid = -1;
   int new_gid = -1;
   int r = agent->ops->mirror_file(agent, buf, mtime, fsize, mode,
-                                  AC_RECONNECT_TODO,
+                                  AC_RECONNECT_ENABLE,
                                   &pkt_ptr, &pkt_len, &new_mtime,
                                   &new_mode, &new_uid, &new_gid);
   if (r < 0) {
