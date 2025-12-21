@@ -1099,6 +1099,7 @@ xasync_wait_init_func(
         int notify_signal,
         int random_mode,
         int enable_file,
+        int reconnect_flag,
         unsigned char *pkt_name,
         size_t pkt_len,
         void **p_vfuture,
@@ -1120,7 +1121,7 @@ xasync_wait_init_func(
         if (enable_file > 0) {
             cJSON_AddTrueToObject(jq, "enable_file");
         }
-        rr = send_json_reconnect(acw, jq, AC_RECONNECT_TODO);
+        rr = send_json_reconnect(acw, jq, reconnect_flag);
         cJSON_Delete(jq); jq = NULL;
         if (rr < 0) {
             err("%s:%d: send_json failed", __FUNCTION__, __LINE__);
@@ -1128,7 +1129,7 @@ xasync_wait_init_func(
             goto done;
         }
 
-        rr = recv_json_reconnect(acw, AC_RECONNECT_TODO, &jr);
+        rr = recv_json_reconnect(acw, reconnect_flag, &jr);
         if (rr == AC_CODE_DISCONNECT) {
             err("%s:%d: disconnect", __FUNCTION__, __LINE__);
             result = rr;
