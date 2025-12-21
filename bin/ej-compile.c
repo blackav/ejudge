@@ -1610,6 +1610,8 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
     }
   }
 
+  info("%s %s, compiled %s", "ej-compile", compile_version, compile_date);
+
   interrupt_init();
   interrupt_setup_usr1();
   interrupt_setup_usr2();
