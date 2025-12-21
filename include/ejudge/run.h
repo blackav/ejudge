@@ -2,7 +2,7 @@
 #ifndef __RUN_H__
 #define __RUN_H__
 
-/* Copyright (C) 2010-2024 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2010-2025 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -88,7 +88,8 @@ struct run_test_info_vector
 struct run_listener;
 struct run_listener_ops
 {
-  void (*before_test)(struct run_listener *self, int test_no);
+  __attribute__((warn_unused_result))
+  int (*before_test)(struct run_listener *self, int test_no, int reconnect_flag);
 };
 struct run_listener
 {

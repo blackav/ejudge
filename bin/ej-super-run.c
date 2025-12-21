@@ -211,11 +211,12 @@ struct super_run_listener
 static void
 do_super_run_status_init(struct super_run_status *prs);
 
-static void
-super_run_before_tests(struct run_listener *gself, int test_no)
+__attribute__((warn_unused_result))
+static int
+super_run_before_tests(struct run_listener *gself, int test_no, int reconnect_flag)
 {
   struct super_run_listener *self = (struct super_run_listener *) gself;
-  if (!heartbeat_mode) return;
+  if (!heartbeat_mode) return AC_CODE_OK;
 
   struct super_run_status rs;
   do_super_run_status_init(&rs);
@@ -238,16 +239,16 @@ super_run_before_tests(struct run_listener *gself, int test_no)
   rs.queue_ts = self->queue_ts;
   rs.testing_start_ts = self->testing_start_ts;
 
-  __attribute__((unused)) int _ =
-  super_run_status_save(agent, super_run_heartbeat_path, status_file_name, &rs,
+  int result = super_run_status_save(agent, super_run_heartbeat_path, status_file_name, &rs,
                         current_time_ms,
-                        AC_RECONNECT_TODO,
+                        reconnect_flag,
                         &last_heartbear_save_time, HEARTBEAT_SAVE_INTERVAL_MS,
                         &pending_stop_flag, &pending_down_flag,
                         &pending_reboot_flag);
   if (!master_stop_enabled) pending_stop_flag = 0;
   if (!master_down_enabled) pending_down_flag = 0;
   if (!master_reboot_enabled) pending_reboot_flag = 0;
+  return result;
 }
 
 static const struct run_listener_ops super_run_listener_ops =
@@ -809,27 +810,28 @@ do_super_run_status_init(struct super_run_status *prs)
   prs->down_pending = pending_down_flag;
 }
 
-static void
-report_waiting_state(long long current_time_ms, long long last_check_time_ms)
+__attribute__((warn_unused_result))
+static int
+report_waiting_state(long long current_time_ms, long long last_check_time_ms, int reconnect_flag)
 {
   struct super_run_status rs;
 
-  if (!heartbeat_mode) return;
+  if (!heartbeat_mode) return AC_CODE_OK;
 
   do_super_run_status_init(&rs);
   rs.timestamp = current_time_ms;
   rs.last_run_ts = last_check_time_ms;
   rs.status = SRS_WAITING;
-  __attribute__((unused)) int _ =
-  super_run_status_save(agent, super_run_heartbeat_path, status_file_name, &rs,
+  int result = super_run_status_save(agent, super_run_heartbeat_path, status_file_name, &rs,
                         current_time_ms,
-                        AC_RECONNECT_TODO,
+                        reconnect_flag,
                         &last_heartbear_save_time, HEARTBEAT_SAVE_INTERVAL_MS,
                         &pending_stop_flag, &pending_down_flag,
                         &pending_reboot_flag);
   if (!master_stop_enabled) pending_stop_flag = 0;
   if (!master_down_enabled) pending_down_flag = 0;
   if (!master_reboot_enabled) pending_reboot_flag = 0;
+  return result;
 }
 
 static int
@@ -852,6 +854,7 @@ do_loop(
   int efd = -1;
   int ifd_wd = -1;
   sigset_t emptymask;
+  int need_reconnect = 0;
 
   sigemptyset(&emptymask);
 
@@ -941,10 +944,23 @@ do_loop(
 
   while (1) {
     interrupt_enable();
-    /* time window for immediate signal delivery */
+    if (interrupt_get_status()) break;
+    if (interrupt_restart_requested()) {
+      restart_flag = 1;
+    }
+    if (restart_flag) break;
+
+    if (need_reconnect) {
+      info("%s:%d: reconnecting...", __FUNCTION__, __LINE__);
+      int res = agent->ops->reconnect(agent);
+      if (res < 0) {
+        break;
+      }
+      info("%s:%d: reconnect successful", __FUNCTION__, __LINE__);
+      need_reconnect = 0;
+    }
     interrupt_disable();
 
-    // terminate, if signaled
     if (interrupt_get_status()) break;
     if (interrupt_restart_requested()) {
       restart_flag = 1;
@@ -974,7 +990,6 @@ do_loop(
         interrupt_reset_usr2();
         if (future) {
           r = agent->ops->async_wait_complete(agent,
-                                              AC_RECONNECT_TODO,
                                               &future,
                                               pkt_name, sizeof(pkt_name),
                                               &pkt_data,
@@ -992,7 +1007,7 @@ do_loop(
       } else if (!future) {
         r = agent->ops->async_wait_init(agent, SIGUSR2, 1,
                                         1,
-                                        AC_RECONNECT_TODO,
+                                        AC_RECONNECT_ENABLE,
                                         pkt_name, sizeof(pkt_name), &future,
                                         DEFAULT_WAIT_TIMEOUT_MS,
                                         &pkt_data,
@@ -1017,7 +1032,13 @@ do_loop(
     if (r < 0) {
       gettimeofday(&ctv, NULL);
       current_time_ms = ((long long) ctv.tv_sec) * 1000 + ctv.tv_usec / 1000;
-      report_waiting_state(current_time_ms, last_handled_ms);
+      r = report_waiting_state(current_time_ms, last_handled_ms, AC_RECONNECT_DISABLE);
+      if (r == AC_CODE_DISCONNECT) {
+        err("%s:%d: disconnect", __FUNCTION__, __LINE__);
+        agent->ops->cancel_future(agent, &future);
+        need_reconnect = 1;
+        continue;
+      }
 
       int sleep_time = agent?30000:global->sleep_time;
       interrupt_enable();
@@ -1034,7 +1055,13 @@ do_loop(
 
       gettimeofday(&ctv, NULL);
       current_time_ms = ((long long) ctv.tv_sec) * 1000 + ctv.tv_usec / 1000;
-      report_waiting_state(current_time_ms, last_handled_ms);
+      r = report_waiting_state(current_time_ms, last_handled_ms, AC_RECONNECT_DISABLE);
+      if (r == AC_CODE_DISCONNECT) {
+        err("%s:%d: disconnect", __FUNCTION__, __LINE__);
+        agent->ops->cancel_future(agent, &future);
+        need_reconnect = 1;
+        continue;
+      }
 
       if (efd >= 0) {
         struct epoll_event events[1];
@@ -1049,9 +1076,13 @@ do_loop(
           }
         }
       } else if (agent) {
-        // AC_RECONNECT_TODO
-        __attribute__((unused)) int _ =
-        agent->ops->wait_on_future(agent, &future, 5000);
+        r = agent->ops->wait_on_future(agent, &future, 5000);
+        if (r == AC_CODE_DISCONNECT) {
+          err("%s:%d: disconnect", __FUNCTION__, __LINE__);
+          agent->ops->cancel_future(agent, &future);
+          need_reconnect = 1;
+          continue;
+        }
       } else {
         interrupt_enable();
         os_Sleep(5000);

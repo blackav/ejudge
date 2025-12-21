@@ -121,7 +121,6 @@ struct AgentClientOps
 
     int (*async_wait_complete)(
         struct AgentClient *ac,
-        int reconnect_flag,
         void **p_vfuture,
         unsigned char *pkt_name,
         size_t pkt_len,

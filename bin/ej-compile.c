@@ -1671,17 +1671,10 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
         interrupt_reset_usr2();
         if (future) {
           r = agent->ops->async_wait_complete(agent,
-                                              AC_RECONNECT_DISABLE,
                                               &future,
                                               pkt_name, sizeof(pkt_name),
                                               &pkt_ptr,
                                               &pkt_len);
-          if (r == AC_CODE_DISCONNECT) {
-            err("%s:%d: disconnect", __FUNCTION__, __LINE__);
-            agent->ops->cancel_future(agent, &future);
-            need_reconnect = 1;
-            continue;
-          }
           if (!pkt_name[0]) {
             continue;
           }

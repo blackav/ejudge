@@ -1458,7 +1458,6 @@ async_wait_init_func(
 static int
 async_wait_complete_func(
         struct AgentClient *ac,
-        int reconnect_flag,
         void **p_vfuture,
         unsigned char *pkt_name,
         size_t pkt_len,

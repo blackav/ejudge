@@ -5732,7 +5732,8 @@ run_tests(
     if (tl_retry_count <= 0) tl_retry_count = 1;
 
     if (listener && listener->ops && listener->ops->before_test) {
-      listener->ops->before_test(listener, cur_test);
+      __attribute__((unused)) int _ =
+      listener->ops->before_test(listener, cur_test, AC_RECONNECT_ENABLE);
     }
 
     while (1) {
