@@ -1,5 +1,5 @@
 #! /bin/bash
-# Copyright (c) 2001-2024 Alexander Chernov <cher@ejudge.ru>
+# Copyright (c) 2001-2025 Alexander Chernov <cher@ejudge.ru>
 
 # using EJUDGE_FLAGS we may pass additional flags
 
@@ -54,7 +54,7 @@ then
         echo "failed to rename ${1} to ${EJUDGE_SOLUTION_FILE}.cpp" >&2
         exit 1
     fi
-    exec "${GPPRUN}" ${EJUDGE_FLAGS} *.cpp -o "$2" ${EJUDGE_LIBS}
+    exec "${GPPRUN}" ${EJUDGE_FLAGS} *.cpp ${EJUDGE_FLAGS_2} -o "$2" ${EJUDGE_LIBS}
 fi
 
-exec "${GPPRUN}" ${EJUDGE_FLAGS} "$1" -o "$2" -lm ${EJUDGE_LIBS}
+exec "${GPPRUN}" ${EJUDGE_FLAGS} "$1" ${EJUDGE_FLAGS_2} -o "$2" -lm ${EJUDGE_LIBS}

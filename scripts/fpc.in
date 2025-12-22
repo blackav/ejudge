@@ -1,5 +1,5 @@
 #! /bin/bash
-# Copyright (c) 2002-2024 Alexander Chernov <cher@ejudge.ru>
+# Copyright (c) 2002-2025 Alexander Chernov <cher@ejudge.ru>
 
 # using EJUDGE_FLAGS we may pass additional flags
 
@@ -45,7 +45,7 @@ unset LC_ALL
 unset LC_MESSAGES
 unset LANGUAGE
 
-"${FPCRUN}" ${EJUDGE_FLAGS} -XS "$1" "-o$2"
+"${FPCRUN}" ${EJUDGE_FLAGS} -XS "$1" ${EJUDGE_FLAGS_2} "-o$2"
 
 #if the output file is not created - compile error
 [ -f "$2" ] || exit 1

@@ -1,5 +1,5 @@
 #! /bin/bash
-# Copyright (c) 2013-2024 Alexander Chernov <cher@ejudge.ru>
+# Copyright (c) 2013-2025 Alexander Chernov <cher@ejudge.ru>
 
 # A script for compilation of Pascal ABC.NET programs using the mono compiler.
 # Usage: pasabc-linux in-file out-file
@@ -47,4 +47,4 @@ unset LANGUAGE
 
 TMPOUT="${1/.pas/.exe}"
 
-"${MONORUN}" "${PASABC}" ${EJUDGE_FLAGS} "$1" && mv "${TMPOUT}" "$2"
+"${MONORUN}" "${PASABC}" ${EJUDGE_FLAGS} "$1" ${EJUDGE_FLAGS_2} && mv "${TMPOUT}" "$2"

@@ -1,5 +1,5 @@
 #! /bin/bash
-# Copyright (c) 2011-2024 Alexander Chernov <cher@ejudge.ru>
+# Copyright (c) 2011-2025 Alexander Chernov <cher@ejudge.ru>
 
 # using EJUDGE_FLAGS we may pass additional flags
 
@@ -47,7 +47,7 @@ unset LC_ALL
 unset LC_MESSAGES
 unset LANGUAGE
 
-"${GHCRUN}" ${EJUDGE_FLAGS} "$1" -o "$2" || exit 1
+"${GHCRUN}" ${EJUDGE_FLAGS} "$1" ${EJUDGE_FLAGS_2} -o "$2" || exit 1
 if [ ! -x "$2" ]
 then
     echo "Executable file is not created" >&2
