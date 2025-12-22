@@ -717,7 +717,7 @@ handle_packet(
   if (req->output_only) {
     if (req->style_checker && req->style_checker[0]) {
       unsigned char src_work_name[PATH_MAX];
-      snprintf(src_work_name, sizeof(src_work_name), "%llx", random_u64());
+      snprintf(src_work_name, sizeof(src_work_name), "f%llx", random_u64());
       unsigned char src_work_path[PATH_MAX];
       snprintf(src_work_path, sizeof(src_work_path), "%s/%s", build_dir_ptr, src_work_name);
 
@@ -808,7 +808,7 @@ handle_packet(
   }
 
   unsigned char src_work_name[PATH_MAX];
-  snprintf(src_work_name, sizeof(src_work_name), "%llx%s", random_u64(), lang->src_sfx);
+  snprintf(src_work_name, sizeof(src_work_name), "f%llx%s", random_u64(), lang->src_sfx);
   unsigned char src_work_path[PATH_MAX];
   snprintf(src_work_path, sizeof(src_work_path), "%s/%s", build_dir_ptr, src_work_name);
 
@@ -832,7 +832,7 @@ handle_packet(
   }
 
   if (!req->multi_header) {
-    snprintf(exe_work_name, PATH_MAX, "%llx%s", random_u64(), lang->exe_sfx);
+    snprintf(exe_work_name, PATH_MAX, "f%llx%s", random_u64(), lang->exe_sfx);
     unsigned char exe_work_path[PATH_MAX];
     snprintf(exe_work_path, sizeof(exe_work_path), "%s/%s", build_dir_ptr, exe_work_name);
     if (req->enable_run_props > 0) {
@@ -873,7 +873,7 @@ handle_packet(
   }
 
   // multi-header mode
-  snprintf(exe_work_name, PATH_MAX, "%llx%s", random_u64(), lang->exe_sfx);
+  snprintf(exe_work_name, PATH_MAX, "f%llx%s", random_u64(), lang->exe_sfx);
   unsigned char exe_work_path[PATH_MAX];
   if (req->enable_run_props > 0) {
     snprintf(exe_work_path, sizeof(exe_work_path), "%s/../%s", build_dir_ptr, exe_work_name);
@@ -1062,7 +1062,7 @@ handle_packet(
     full_s[full_z] = 0;
 
     unsigned char test_src_name[PATH_MAX];
-    snprintf(test_src_name, sizeof(test_src_name), "%llx%s", random_u64(), lang->src_sfx);
+    snprintf(test_src_name, sizeof(test_src_name), "f%llx%s", random_u64(), lang->src_sfx);
     unsigned char test_src_path[PATH_MAX];
     snprintf(test_src_path, sizeof(test_src_path), "%s/%s", build_dir_ptr, test_src_name);
     if (generic_write_file(full_s, full_z, 0, NULL, test_src_path, NULL) < 0) {
@@ -1524,7 +1524,7 @@ new_loop(int parallel_mode, const unsigned char *global_log_path)
 
   if (parallel_mode) {
     unsigned long long u64 = random_u64();
-    snprintf(full_working_dir, sizeof(full_working_dir), "%s/%016llx", global->compile_work_dir, u64);
+    snprintf(full_working_dir, sizeof(full_working_dir), "%s/f%016llx", global->compile_work_dir, u64);
     if (make_dir(full_working_dir, 0) < 0) {
       err("cannot create '%s': %s", full_working_dir, os_ErrorMsg());
       return -1;
