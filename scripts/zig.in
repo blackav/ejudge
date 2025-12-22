@@ -1,5 +1,5 @@
 #! /bin/bash
-# Copyright (c) 2001-2024 Alexander Chernov <cher@ejudge.ru>
+# Copyright (c) 2001-2025 Alexander Chernov <cher@ejudge.ru>
 
 # using EJUDGE_FLAGS we may pass additional flags
 
@@ -40,4 +40,4 @@ unset LC_ALL
 unset LC_MESSAGES
 unset LANGUAGE
 
-exec "${ZIGRUN}" build-exe ${EJUDGE_FLAGS} "$1" -femit-bin="$2"
+exec "${ZIGRUN}" build-exe ${EJUDGE_FLAGS} "$1" ${EJUDGE_FLAGS_2} -femit-bin="$2"

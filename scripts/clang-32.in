@@ -1,5 +1,5 @@
 #! /bin/bash
-# Copyright (c) 2013-2024 Alexander Chernov <cher@ejudge.ru>
+# Copyright (c) 2013-2025 Alexander Chernov <cher@ejudge.ru>
 
 # using EJUDGE_FLAGS we may pass additional flags
 
@@ -55,7 +55,7 @@ then
         echo "failed to rename ${1} to ${EJUDGE_SOLUTION_FILE}.c" >&2
         exit 1
     fi
-    exec "${CLANGRUN}" -m32 ${EJUDGE_FLAGS} *.c -o "$2" ${EJUDGE_LIBS}
+    exec "${CLANGRUN}" -m32 ${EJUDGE_FLAGS} *.c ${EJUDGE_FLAGS_2} -o "$2" ${EJUDGE_LIBS}
 fi
 
-exec "${CLANGRUN}" -m32 ${EJUDGE_FLAGS} "$1" -o "$2" ${EJUDGE_LIBS}
+exec "${CLANGRUN}" -m32 ${EJUDGE_FLAGS} "$1" ${EJUDGE_FLAGS_2} -o "$2" ${EJUDGE_LIBS}

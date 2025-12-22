@@ -1,5 +1,5 @@
 #! /bin/bash
-# Copyright (c) 2012-2024 Alexander Chernov <cher@ejudge.ru>
+# Copyright (c) 2012-2025 Alexander Chernov <cher@ejudge.ru>
 
 # using EJUDGE_FLAGS we may pass additional flags
 
@@ -56,5 +56,5 @@ unset LANGUAGE
 
 cp -p "${LANG_CONFIG_DIR}/nasm/io.inc" .
 
-"${NASMRUN}" ${EJUDGE_FLAGS} -DUNIX -f elf "$1" -o "$2.o" || exit $?
+"${NASMRUN}" ${EJUDGE_FLAGS} -DUNIX -f elf "$1" ${EJUDGE_FLAGS_2} -o "$2.o" || exit $?
 exec "${GCCRUN}" -m32 -o "$2" "$2.o" 

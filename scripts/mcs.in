@@ -1,5 +1,5 @@
 #! /bin/bash
-# Copyright (c) 2005-2024 Alexander Chernov <cher@ejudge.ru>
+# Copyright (c) 2005-2025 Alexander Chernov <cher@ejudge.ru>
 
 # A script for compilation of C# programs using the mono compiler.
 # Usage: mcs in-file out-file
@@ -50,4 +50,4 @@ unset LC_ALL
 unset LC_MESSAGES
 unset LANGUAGE
 
-exec "${MCSRUN}" ${EJUDGE_FLAGS} "$1" -out:"$2"
+exec "${MCSRUN}" ${EJUDGE_FLAGS} "$1" ${EJUDGE_FLAGS_2} -out:"$2"
