@@ -23,11 +23,15 @@
 #include "ejudge/random.h"
 #include "ejudge/cJSON.h"
 #include "ejudge/fileutl.h"
+#include "ejudge/startstop.h"
+#include "ejudge/errlog.h"
 #include "ejudge/osdeps.h"
 #include "ejudge/xalloc.h"
 
+#include <fcntl.h>
 #include <libwebsockets.h>
 #include <time.h>
+#include <unistd.h>
 #include <uv.h>
 
 #include <ctype.h>
@@ -1582,8 +1586,11 @@ agent_server_start(const AgentServerParams *params)
     AgentServerState *ass = NULL;
     XCALLOC(ass, 1);
     FILE *log_f = stderr;
-    const unsigned char *ejudge_xml_path = NULL;
+    const unsigned char *ejudge_xml_path = params->config_file;
     const struct ejudge_cfg *ejudge_config = NULL;
+    int *pids = NULL;
+    int log_fd = -1;
+    int null_fd = -1;
 
     random_init();
 
@@ -1600,6 +1607,48 @@ agent_server_start(const AgentServerParams *params)
         L_ERR_DONE("ej-agent-server is not enabled in '%s'", ejudge_xml_path);
     }
 
+    __attribute__((unused)) int _;
+    unsigned char log_path[PATH_MAX];
+    _ = snprintf(log_path, sizeof(log_path), "%s/var/%s.log", EJUDGE_CONTESTS_HOME_DIR, params->process_name);
+
+    if (start_prepare(params->user, params->group, params->workdir) < 0) {
+        return 1;
+    }
+
+    int pid_count;
+    if ((pid_count = start_find_all_processes("ej-compile", NULL, &pids)) < 0) {
+        L_ERR_DONE("cannot get the list of processes");
+    }
+    if (pid_count > 1) {
+        L_ERR_DONE("%d process(es) already running", pid_count - 1);
+    }
+    xfree(pids); pids = NULL;
+
+    // this banner goes to not yet redirected stderr
+    info("%s %s, compiled %s", params->process_name, params->compile_version, params->compile_date);
+
+
+    if (params->daemon_mode) {
+        log_fd = open(log_path, O_WRONLY | O_CREAT | O_APPEND | O_NOCTTY | O_CLOEXEC, 0600);
+        if (log_fd < 0) {
+            L_ERR_DONE("cannot open log file '%s': %s", log_path, strerror(errno));
+        }
+        null_fd = open("/dev/null", O_RDONLY | O_NOCTTY | O_CLOEXEC, 0);
+        if (null_fd < 0) {
+            L_ERR_DONE("cannot open /dev/null: %s", strerror(errno));
+        }
+        if (dup2(null_fd, STDIN_FILENO) < 0) goto done;
+        if (dup2(log_fd, STDOUT_FILENO) < 0) goto done;
+        if (dup2(log_fd, STDERR_FILENO) < 0) goto done;
+        close(log_fd); log_fd = -1;
+        close(null_fd); null_fd = -1;
+
+        int pid = fork();
+        if (pid < 0) goto done;
+        if (pid > 0) _exit(0);
+        if (setsid() < 0) goto done;
+    }
+
     ass->ejudge_config = ejudge_config;
     ass->ejudge_xml_dir = os_DirName(ejudge_xml_path);
     ass->loop = uv_default_loop();
@@ -1607,23 +1656,23 @@ agent_server_start(const AgentServerParams *params)
 
     lws_set_log_level(LLL_WARN | LLL_ERR | LLL_USER, NULL);
 
-    struct lws_context_creation_info info = {};
+    struct lws_context_creation_info lws_info = {};
     if (ejudge_config->agent_server) {
-        info.port = ejudge_config->agent_server->port;
+        lws_info.port = ejudge_config->agent_server->port;
     }
-    if (!info.port) info.port = DEFAULT_SERVER_PORT;
+    if (!lws_info.port) lws_info.port = DEFAULT_SERVER_PORT;
     if (ejudge_config->agent_server && ejudge_config->agent_server->service
         && ejudge_config->agent_server->service[0]) {
         protocols[0].name = xstrdup(ejudge_config->agent_server->service);
     }
-    info.protocols = protocols;
-    info.options = LWS_SERVER_OPTION_LIBUV | LWS_SERVER_OPTION_VALIDATE_UTF8 | LWS_SERVER_OPTION_HTTP_HEADERS_SECURITY_BEST_PRACTICES_ENFORCE;
-    info.pt_serv_buf_size = 65536;
-    info.foreign_loops = ass->loops;
-    info.count_threads = 1;
-    info.user = ass;
+    lws_info.protocols = protocols;
+    lws_info.options = LWS_SERVER_OPTION_LIBUV | LWS_SERVER_OPTION_VALIDATE_UTF8 | LWS_SERVER_OPTION_HTTP_HEADERS_SECURITY_BEST_PRACTICES_ENFORCE;
+    lws_info.pt_serv_buf_size = 65536;
+    lws_info.foreign_loops = ass->loops;
+    lws_info.count_threads = 1;
+    lws_info.user = ass;
 
-    ass->context = lws_create_context(&info);
+    ass->context = lws_create_context(&lws_info);
     if (!ass->context) {
         L_ERR_DONE("failed to create libwebsockets context");
     }
@@ -1648,6 +1697,11 @@ agent_server_start(const AgentServerParams *params)
     app_state_add_query_callback(&app, "set", NULL, set_query_func);
 */
 
+    // this banner goes to the log file
+    if (params->daemon_mode) {
+        info("%s %s, compiled %s", params->process_name, params->compile_version, params->compile_date);
+    }
+
     lwsl_user("server started");
     int r;
     while ((r = lws_service(ass->context, 0)) >= 0) {
@@ -1658,6 +1712,9 @@ agent_server_start(const AgentServerParams *params)
 done:;
     if (ass->context) lws_context_destroy(ass->context);
     if (ass->loop) uv_loop_close(ass->loop);
+    if (log_fd >= 0) close(log_fd);
+    if (null_fd >= 0) close(null_fd);
     xfree(ass);
+    xfree(pids);
     return retval;
 }

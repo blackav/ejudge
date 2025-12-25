@@ -18,6 +18,14 @@
 
 typedef struct AgentServerParams
 {
+    unsigned char *process_name;
+    unsigned char *config_file;
+    unsigned char *user;
+    unsigned char *group;
+    unsigned char *workdir;
+    const unsigned char *compile_version;
+    const unsigned char *compile_date;
+    int daemon_mode;
 } AgentServerParams;
 
 int agent_server_start(const AgentServerParams *params);
