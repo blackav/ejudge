@@ -183,8 +183,24 @@ stop_processes(
         const unsigned char *process_name,
         const struct ejudge_cfg *config)
 {
+  int result = -1;
   int *pids = NULL;
+
   int pid_count = start_find_all_processes(process_name, NULL, &pids);
+  if (pid_count < 0) {
+    fprintf(stderr, "%s: cannot get the list of processes from /proc\n", program_name);
+    goto done;
+  }
+  if (!pid_count) {
+    fprintf(stderr, "%s: %s is not running", program_name, process_name);
+    result = 0;
+    goto done;
+  }
+  fprintf(stderr, "%s: %s is running as pids", program_name, process_name);
+  for (int i = 0; i < pid_count; ++i) {
+    fprintf(stderr, " %d", pids[i]);
+  }
+  fprintf(stderr, "\n");
   for (int i = 0; i < pid_count; ++i) {
     start_kill(pids[i], START_STOP);
   }
@@ -195,7 +211,10 @@ stop_processes(
     free(pids); pids = NULL;
     usleep(100000);
   }
-  return 0;
+
+done:;
+  free(pids);
+  return result;
 }
 
 static int
@@ -206,82 +225,35 @@ start_agent_server(
         const char *ejudge_xml_path,
         const unsigned char *workdir)
 {
-  int *pids = NULL;
-  int pid_count = start_find_all_processes(EJ_AGENT_SERVER_NAME, NULL, &pids);
-  if (pid_count > 0) {
-    fprintf(stderr, "%s: process %s already running\n", program_name, EJ_AGENT_SERVER_NAME);
-    return -1;
-  }
+  tTask *tsk = 0;
   unsigned char path[PATH_MAX];
   __attribute__((unused)) int _;
   _ = snprintf(path, sizeof(path), "%s/%s", EJUDGE_SERVER_BIN_PATH, EJ_AGENT_SERVER_NAME);
-  unsigned char log_path[PATH_MAX];
-  _ = snprintf(log_path, sizeof(log_path), "%s/var/%s.log", EJUDGE_CONTESTS_HOME_DIR, EJ_AGENT_SERVER_NAME);
 
-  int curuid = getuid();
-  int curgid = getgid();
-  struct passwd *pwd = NULL;
+  tsk = task_New();
+  task_AddArg(tsk, path);
+  task_AddArg(tsk, "-D");
   if (user) {
-    pwd = getpwnam(user);
-    if (!pwd) {
-      fprintf(stderr, "%s: no user %s\n", program_name, user);
-      return -1;
-    }
+    task_AddArg(tsk, "-u");
+    task_AddArg(tsk, user);
   }
-  struct group *grp = NULL;
   if (group) {
-    grp = getgrnam(group);
-    if (!grp) {
-      fprintf(stderr, "%s: no user %s\n", program_name, group);
-      return -1;
-    }
+    task_AddArg(tsk, "-g");
+    task_AddArg(tsk, group);
   }
-  if (curuid && pwd && curuid != pwd->pw_uid) {
-    fprintf(stderr, "%s: current user is not %s\n", program_name, user);
+  if (workdir) {
+    task_AddArg(tsk, "-C");
+    task_AddArg(tsk, workdir);
+  }
+  task_AddArg(tsk, ejudge_xml_path);
+  task_SetPathAsArg0(tsk);
+  task_Start(tsk);
+  task_Wait(tsk);
+  if (task_IsAbnormal(tsk)) {
+    task_Delete(tsk);
     return -1;
   }
-  if (curuid && grp && curgid != grp->gr_gid) {
-    fprintf(stderr, "%s: current group is not %s\n", program_name, group);
-    return -1;
-  }
-
-  int fd = open(log_path, O_WRONLY | O_CREAT | O_APPEND | O_NOCTTY, 0600);
-  if (fd < 0) {
-    fprintf(stderr, "%s: cannot open log file %s: %s\n", program_name, log_path, strerror(errno));
-    return -1;
-  }
-  int pid = fork();
-  if (pid < 0) {
-    fprintf(stderr, "%s: fork failed: %s\n", program_name, strerror(errno));
-    close(fd);
-    return -1;
-  }
-  if (!pid) {
-    pid = fork();
-    if (pid < 0) _exit(1);
-    if (pid > 0) _exit(0);
-
-    setsid();
-    if (chdir(workdir) < 0) _exit(1);
-    int fdr = open("/dev/null", O_RDONLY);
-    if (fdr < 0) _exit(1);
-    if (dup2(fdr, STDIN_FILENO) < 0) _exit(1);
-    if (dup2(fd, STDOUT_FILENO) < 0) _exit(1);
-    if (dup2(fd, STDERR_FILENO) < 0) _exit(1);
-    close(fdr);
-    close(fd);
-    if (grp && curgid != grp->gr_gid) {
-      if (setgid(grp->gr_gid) < 0) _exit(1);
-    }
-    if (pwd && curuid != pwd->pw_uid) {
-      if (setuid(pwd->pw_uid) < 0) _exit(1);
-    }
-    execl(path, path, NULL);
-    _exit(1);
-  }
-
-  close(fd);
-
+  task_Delete(tsk); tsk = 0;
   return 0;
 }
 

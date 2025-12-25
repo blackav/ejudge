@@ -1627,7 +1627,6 @@ agent_server_start(const AgentServerParams *params)
     // this banner goes to not yet redirected stderr
     info("%s %s, compiled %s", params->process_name, params->compile_version, params->compile_date);
 
-
     if (params->daemon_mode) {
         log_fd = open(log_path, O_WRONLY | O_CREAT | O_APPEND | O_NOCTTY | O_CLOEXEC, 0600);
         if (log_fd < 0) {
