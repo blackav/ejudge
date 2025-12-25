@@ -192,7 +192,6 @@ stop_processes(
     goto done;
   }
   if (!pid_count) {
-    fprintf(stderr, "%s: %s is not running", program_name, process_name);
     result = 0;
     goto done;
   }
@@ -201,6 +200,7 @@ stop_processes(
     fprintf(stderr, " %d", pids[i]);
   }
   fprintf(stderr, "\n");
+  fprintf(stderr, "%s: sending the TERM signal\n", program_name);
   for (int i = 0; i < pid_count; ++i) {
     start_kill(pids[i], START_STOP);
   }
@@ -211,6 +211,7 @@ stop_processes(
     free(pids); pids = NULL;
     usleep(100000);
   }
+  result = 1;
 
 done:;
   free(pids);
