@@ -354,6 +354,38 @@ is_valid_id(const unsigned char *p)
     return true;
 }
 
+static void
+handle_remote_ip(
+        struct lws *wsi,
+        ConnectionState *conn)
+{
+    // X-Real-Ip
+    int tlen = lws_hdr_total_length(wsi, WSI_TOKEN_HTTP_X_REAL_IP);
+    if (tlen > 0) {
+        char *ip = malloc(tlen + 1);
+        lws_hdr_copy(wsi, ip, tlen + 1, WSI_TOKEN_HTTP_X_REAL_IP);
+        conn->remote_addr = ip;
+        return;
+    }
+    // X-Forwarded-For
+    tlen = lws_hdr_total_length(wsi, WSI_TOKEN_X_FORWARDED_FOR);
+    if (tlen > 0) {
+        char *ip = malloc(tlen + 1);
+        lws_hdr_copy(wsi, ip, tlen + 1, WSI_TOKEN_X_FORWARDED_FOR);
+        conn->remote_addr = ip;
+        return;
+    }
+
+    unsigned char remote_addr_buf[128];
+    remote_addr_buf[0] = 0;
+    lws_get_peer_simple(wsi, remote_addr_buf, sizeof(remote_addr_buf));
+    if (!remote_addr_buf[0]) {
+        conn->remote_addr = strdup("UNKNOWN");
+        return;
+    }
+    conn->remote_addr = strdup(remote_addr_buf);
+}
+
 static int
 handle_filter_protocol_connection(
     struct lws *wsi,
@@ -362,14 +394,7 @@ handle_filter_protocol_connection(
 {
     conn->serial = ++ass->connect_serial;
 
-    unsigned char remote_addr_buf[128];
-    remote_addr_buf[0] = 0;
-    lws_get_peer_simple(wsi, remote_addr_buf, sizeof(remote_addr_buf));
-    if (!remote_addr_buf[0]) {
-        lwsl_err("%d: %s:%d: remote address is unknown\n", conn->serial, __FUNCTION__, __LINE__);
-        return -1;
-    }
-    conn->remote_addr = strdup(remote_addr_buf);
+    handle_remote_ip(wsi, conn);
 
     if (ass->ejudge_config && ass->ejudge_config->agent_server && ass->ejudge_config->agent_server->token_file) {
         unsigned char *token = read_token(ass, conn, ass->ejudge_config->agent_server->token_file);
