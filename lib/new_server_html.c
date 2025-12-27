@@ -293,6 +293,157 @@ ns_try_contest_external_actions(int contest_id)
   return NULL;
 }
 
+static int
+parse_header_line(
+        const unsigned char *buf,
+        size_t size,
+        unsigned char **p_header,
+        unsigned char **p_env_var,
+        unsigned char **p_value)
+{
+  const unsigned char *p = buf;
+  const unsigned char *ebuf = buf + size;
+  while (isspace(*p)) ++p;
+  const unsigned char *h_start = p;
+  while (isalnum(*p) || *p == '-' || *p == '_') ++p;
+  const unsigned char *h_end = p;
+  while (isspace(*p)) ++p;
+  if (*p != ':') {
+    err("%s:%d: ':' expected", __FUNCTION__, __LINE__);
+    return -1;
+  }
+  ++p;
+  while (isspace(*p)) ++p;
+  const unsigned char *v_start = p;
+  if (h_start == h_end) {
+    err("%s:%d: empty header", __FUNCTION__, __LINE__);
+    return -1;
+  }
+  if (v_start == ebuf) {
+    err("%s:%d: empty value", __FUNCTION__, __LINE__);
+    return -1;
+  }
+  size_t h_size = h_end - h_start;
+  size_t v_size = ebuf - v_start;
+  unsigned char *header = malloc(h_size + 1);
+  unsigned char *env_var = malloc(h_size + 6);
+  unsigned char *value = malloc(v_size + 1);
+  memcpy(header, h_start, h_size);
+  header[h_size] = 0;
+  memcpy(env_var + 5, h_start, h_size);
+  env_var[h_size + 5] = 0;
+  memcpy(value, v_start, v_size);
+  value[v_size] = 0;
+  int is_upper = 1;
+  for (unsigned char *q = header; *q; ++q) {
+    if (*q == '-') {
+      is_upper = 1;
+    } else if (is_upper) {
+      *q = toupper(*q);
+      is_upper = 0;
+    } else {
+      *q = tolower(*q);
+    }
+  }
+  env_var[0] = 'H';
+  env_var[1] = 'T';
+  env_var[2] = 'T';
+  env_var[3] = 'P';
+  env_var[4] = '_';
+  for (unsigned char *q = env_var + 5; *q; ++q) {
+    if (*q == '-') {
+      *q = '_';
+    } else {
+      *q = toupper(*q);
+    }
+  }
+
+  *p_header = header;
+  *p_env_var = env_var;
+  *p_value = value;
+  return 1;
+}
+
+static void
+load_client_headers(
+        struct contest_extra *extra,
+        const struct contest_desc *cnts,
+        const struct ejudge_cfg *config)
+{
+  unsigned char path[PATH_MAX];
+  int res;
+  time_t current_time;
+  FILE *f = NULL;
+  char *buf = NULL;
+  size_t abuf = 0;
+  ssize_t sbuf = 0;
+
+  if (!cnts->client_headers_file || !cnts->client_headers_file[0]) {
+    return;
+  }
+
+  current_time = time(NULL);
+  extra->ch.required = 1;
+  if (os_IsAbsolutePath(cnts->client_headers_file)) {
+    res = snprintf(path, sizeof(path), "%s", cnts->client_headers_file);
+  } else {
+    res = snprintf(path, sizeof(path), "%s/%s", cnts->conf_dir, cnts->client_headers_file);
+  }
+  if (res >= (int) sizeof(path)) {
+    err("%s:%d: file path is too long (%d)", __FUNCTION__, __LINE__, res);
+    goto fail;
+  }
+  if (!(f = fopen(path, "r"))) {
+    err("%s:%d: failed to open '%s': %s", __FUNCTION__, __LINE__, path, os_ErrorMsg());
+    goto fail;
+  }
+  struct stat stb;
+  if (fstat(fileno(f), &stb) < 0) {
+    err("%s:%d: fstat failed: %s", __FUNCTION__, __LINE__, os_ErrorMsg());
+    goto fail;
+  }
+  extra->ch.last_mtime = stb.st_mtime;
+  while ((sbuf = getline(&buf, &abuf, f)) >= 0) {
+    while (sbuf > 0 && isspace((unsigned char) buf[sbuf-1])) --sbuf;
+    buf[sbuf] = 0;
+    if (sbuf == 0) continue;
+    unsigned char *header, *env_var, *value;
+    int r = parse_header_line(buf, sbuf, &header, &env_var, &value);
+    if (r < 0) {
+      goto fail;
+    }
+    if (r > 0) {
+      if (extra->ch.size == extra->ch.allocated) {
+        if (!(extra->ch.allocated *= 2)) extra->ch.allocated = 8;
+        XREALLOC(extra->ch.headers, extra->ch.allocated);
+      }
+      struct ClientHeader *h = &extra->ch.headers[extra->ch.size++];
+      memset(h, 0, sizeof(*h));
+      h->header = header;
+      h->env_var = env_var;
+      h->value = value;
+    }
+  }
+  fclose(f); f = NULL;
+  free(buf); buf = NULL;
+  extra->ch.loaded = 1;
+  extra->ch.last_check = current_time;
+
+  for (int i = 0; i < extra->ch.size; ++i) {
+    const struct ClientHeader *h = &extra->ch.headers[i];
+    info("%s:%d: header: %s, env: %s, value: %s", __FUNCTION__, __LINE__, h->header, h->env_var, h->value);
+  }
+
+  return;
+
+fail:;
+  extra->ch.failed = 1;
+  extra->ch.last_check = current_time;
+  if (f) fclose(f);
+  free(buf);
+  return;
+}
+
 struct contest_extra *
 ns_get_contest_extra(
         const struct contest_desc *cnts,
@@ -317,6 +468,7 @@ ns_get_contest_extra(
     if (cnts->enable_local_pages > 0 && !p->cnts_actions) {
       p->cnts_actions = ns_get_contest_external_actions(contest_id, p->last_access_time);
     }
+    load_client_headers(p, cnts, config);
     return p;
   }
 
@@ -332,6 +484,7 @@ ns_get_contest_extra(
     if (cnts->enable_local_pages > 0 && !p->cnts_actions) {
       p->cnts_actions = ns_get_contest_external_actions(contest_id, p->last_access_time);
     }
+    load_client_headers(p, cnts, config);
     return p;
   }
 
@@ -367,6 +520,7 @@ ns_get_contest_extra(
     if (cnts->enable_local_pages > 0 && !p->cnts_actions) {
       p->cnts_actions = ns_get_contest_external_actions(contest_id, p->last_access_time);
     }
+    load_client_headers(p, cnts, config);
     if (config && config->max_loaded_contests > 0) {
       // count loaded contests and the oldest contest
       int loaded_count = 0;
@@ -402,6 +556,7 @@ ns_get_contest_extra(
   if (cnts->enable_local_pages > 0 && !p->cnts_actions) {
     p->cnts_actions = ns_get_contest_external_actions(contest_id, p->last_access_time);
   }
+  load_client_headers(p, cnts, config);
   if (config && config->max_loaded_contests > 0) {
     // count loaded contests and the oldest contest
     int loaded_count = 0;
@@ -528,6 +683,13 @@ do_unload_contest(int idx)
 
   avatar_plugin_destroy(extra->main_avatar_plugin);
   content_plugin_destroy(extra->main_content_plugin);
+
+  for (int i = 0; i < extra->ch.size; ++i) {
+    xfree(extra->ch.headers[i].header);
+    xfree(extra->ch.headers[i].env_var);
+    xfree(extra->ch.headers->value);
+  }
+  xfree(extra->ch.headers);
 
   memset(extra, 0, sizeof(*extra));
   xfree(extra);
