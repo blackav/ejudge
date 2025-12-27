@@ -142,6 +142,7 @@ enum
     CONTEST_OAUTH_RULES,
     CONTEST_OAUTH_RULE,
     CONTEST_SPECIAL_FLOW_OPTIONS,
+    CONTEST_CLIENT_HEADERS_FILE,
 
     CONTEST_LAST_TAG
   };
@@ -448,6 +449,7 @@ struct contest_desc
   unsigned char *content_plugin;
   unsigned char *content_url_prefix;
   unsigned char *special_flow_options;
+  unsigned char *client_headers_file;
 
   struct xml_tree *slave_rules;
   struct xml_tree *oauth_rules;
