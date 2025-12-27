@@ -3,7 +3,7 @@
 #ifndef __NEW_SERVER_H__
 #define __NEW_SERVER_H__
 
-/* Copyright (C) 2006-2024 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2025 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -87,6 +87,25 @@ struct avatar_loaded_plugin;
 struct content_loaded_plugin;
 struct ContestExternalActions;
 
+struct ClientHeader
+{
+  unsigned char *header;
+  unsigned char *env_var;
+  unsigned char *value;
+};
+
+struct ClientHeaders
+{
+  struct ClientHeader *headers;
+  size_t size;
+  size_t allocated;
+  time_t last_check;
+  time_t last_mtime;
+  unsigned char required;
+  unsigned char loaded;
+  unsigned char failed;
+};
+
 struct contest_extra
 {
   int contest_id;
@@ -120,6 +139,9 @@ struct contest_extra
 
   // contest-specific pages
   struct ContestExternalActions *cnts_actions;
+
+  // client headers
+  struct ClientHeaders ch;
 };
 
 int nsdb_check_role(int user_id, int contest_id, int role);

@@ -130,6 +130,7 @@ enum
   CNTS_content_plugin,
   CNTS_content_url_prefix,
   CNTS_special_flow_options,
+  CNTS_client_headers_file,
   CNTS_slave_rules,
   CNTS_oauth_rules,
   CNTS_user_contest_num,
