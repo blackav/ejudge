@@ -137,6 +137,7 @@ static struct meta_info_item meta_info_contest_desc_data[] =
   [CNTS_content_plugin] = { CNTS_content_plugin, 's', XSIZE(struct contest_desc, content_plugin), "content_plugin", XOFFSET(struct contest_desc, content_plugin) },
   [CNTS_content_url_prefix] = { CNTS_content_url_prefix, 's', XSIZE(struct contest_desc, content_url_prefix), "content_url_prefix", XOFFSET(struct contest_desc, content_url_prefix) },
   [CNTS_special_flow_options] = { CNTS_special_flow_options, 's', XSIZE(struct contest_desc, special_flow_options), "special_flow_options", XOFFSET(struct contest_desc, special_flow_options) },
+  [CNTS_client_headers_file] = { CNTS_client_headers_file, 's', XSIZE(struct contest_desc, client_headers_file), "client_headers_file", XOFFSET(struct contest_desc, client_headers_file) },
   [CNTS_slave_rules] = { CNTS_slave_rules, '?', XSIZE(struct contest_desc, slave_rules), "slave_rules", XOFFSET(struct contest_desc, slave_rules) },
   [CNTS_oauth_rules] = { CNTS_oauth_rules, '?', XSIZE(struct contest_desc, oauth_rules), "oauth_rules", XOFFSET(struct contest_desc, oauth_rules) },
   [CNTS_user_contest_num] = { CNTS_user_contest_num, 'i', XSIZE(struct contest_desc, user_contest_num), "user_contest_num", XOFFSET(struct contest_desc, user_contest_num) },
@@ -455,6 +456,9 @@ void contest_desc_copy(struct contest_desc *dst, const struct contest_desc *src)
   if (src->special_flow_options) {
     dst->special_flow_options = strdup(src->special_flow_options);
   }
+  if (src->client_headers_file) {
+    dst->client_headers_file = strdup(src->client_headers_file);
+  }
   // slave_rules
   // oauth_rules
   dst->user_contest_num = src->user_contest_num;
@@ -550,6 +554,7 @@ void contest_desc_free(struct contest_desc *ptr)
   free(ptr->content_plugin);
   free(ptr->content_url_prefix);
   free(ptr->special_flow_options);
+  free(ptr->client_headers_file);
   // slave_rules
   // oauth_rules
   // hidden last_check_time
