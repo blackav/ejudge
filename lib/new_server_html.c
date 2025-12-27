@@ -20570,6 +20570,28 @@ unprivileged_entry_point(
     goto cleanup;
   }
 
+  if (extra->ch.required) {
+    if (extra->ch.failed > 0 || !extra->ch.loaded) {
+      fprintf(phr->log_f, "invalid client headers for contest %d", cnts->id);
+      error_page(fout, phr, 0, -NEW_SRV_ERR_SERVICE_NOT_AVAILABLE);
+      goto cleanup;
+    }
+    int success = 0;
+    for (int i = 0; i < extra->ch.size; ++i) {
+      struct ClientHeader *ch = &extra->ch.headers[i];
+      const unsigned char *s = hr_getenv(phr, ch->env_var);
+      if (s && !strcmp(s, ch->value)) {
+        success = 1;
+        break;
+      }
+    }
+    if (!success) {
+      fprintf(phr->log_f, "missing client headers for contest %d", cnts->id);
+      error_page(fout, phr, 0, -NEW_SRV_ERR_PERMISSION_DENIED);
+      goto cleanup;
+    }
+  }
+
   watched_file_update(&extra->copyright, cnts->copyright_file, cur_time);
   extra->copyright_txt = extra->copyright.text;
   //if (!extra->header_txt) extra->header_txt = ns_fancy_header;
