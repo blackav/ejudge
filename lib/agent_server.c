@@ -28,19 +28,20 @@
 #include "ejudge/osdeps.h"
 #include "ejudge/xalloc.h"
 
-#include <fcntl.h>
 #include <libwebsockets.h>
-#include <time.h>
-#include <unistd.h>
 #include <uv.h>
 
 #include <ctype.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <limits.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/mman.h>
+#include <time.h>
+#include <unistd.h>
 
 #define DEFAULT_SERVER_PORT 8888
 #define MAX_OUTPUT_FRAGMENT_SIZE 65000
@@ -661,7 +662,7 @@ get_data_func(
     cJSON *reply)
 {
     cJSON *jp = cJSON_GetObjectItem(query, "pkt_name");
-    if (!jp || jp->type != cJSON_String) {
+    if (!jp || jp->type != cJSON_String || !is_valid_id(jp->valuestring)) {
         cJSON_AddStringToObject(reply, "message", "invalid json");
         conn_err(conn, "missing pkt_name");
         return 0;
@@ -669,7 +670,7 @@ get_data_func(
     const unsigned char *pkt_name = jp->valuestring;
     const unsigned char *suffix = NULL;
     cJSON *js = cJSON_GetObjectItem(query, "suffix");
-    if (js && js->type == cJSON_String) {
+    if (js && js->type == cJSON_String && is_valid_id(js->valuestring)) {
         suffix = js->valuestring;
     }
     char *pkt_ptr = NULL;
@@ -795,7 +796,7 @@ put_output_func(
     const unsigned char *run_name = jrun->valuestring;
 
     cJSON *jsuffix = cJSON_GetObjectItem(query, "suffix");
-    if (jsuffix && jsuffix->type == cJSON_String) {
+    if (jsuffix && jsuffix->type == cJSON_String && is_valid_id(jsuffix->valuestring)) {
         suffix = jsuffix->valuestring;
     }
 
@@ -893,7 +894,7 @@ put_heartbeat_func(
     __attribute__((unused)) int _;
 
     cJSON *jn = cJSON_GetObjectItem(query, "name");
-    if (!jn || jn->type != cJSON_String) {
+    if (!jn || jn->type != cJSON_String || !is_valid_id(jn->valuestring)) {
         cJSON_AddStringToObject(reply, "message", "invalid json");
         conn_err(conn, "invalid name");
         goto done;
@@ -997,7 +998,7 @@ put_archive_func(
     int contest_id = jcid->valuedouble;
 
     cJSON *jrun = cJSON_GetObjectItem(query, "run_name");
-    if (!jrun || jrun->type != cJSON_String || !jrun->valuestring) {
+    if (!jrun || jrun->type != cJSON_String || !jrun->valuestring || !is_valid_id(jrun->valuestring)) {
         conn_err(conn, "invalid run_name");
         cJSON_AddStringToObject(reply, "message", "invalid json");
         goto done;
@@ -1034,6 +1035,13 @@ done:;
 }
 
 static int
+is_valid_path(const unsigned char *path)
+{
+    //unsigned char *rp = realpath(path, NULL);
+    return 1;
+}
+
+static int
 mirror_func(
     const struct QueryCallback *cb,
     struct AgentServerState *ass,
@@ -1054,6 +1062,11 @@ mirror_func(
         goto done;
     }
     const unsigned char *path = jpath->valuestring;
+    if (!is_valid_path(path)) {
+        cJSON_AddStringToObject(reply, "message", "invalid path");
+        conn_err(conn, "invalid path");
+        goto done;
+    }
 
     cJSON *jsize = cJSON_GetObjectItem(query, "size");
     int64_t size = -1;
