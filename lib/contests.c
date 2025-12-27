@@ -146,6 +146,7 @@ const int contests_tag_to_meta_map[CONTEST_LAST_TAG] =
   [CONTEST_OAUTH_RULE] = CNTS_oauth_rule,
   */
   [CONTEST_SPECIAL_FLOW_OPTIONS] = CNTS_special_flow_options,
+  [CONTEST_CLIENT_HEADERS_FILE] = CNTS_client_headers_file,
 };
 const int contests_attr_to_meta_map[CONTEST_LAST_ATTR] =
 {
@@ -295,6 +296,7 @@ char const * const contests_elem_map[] =
   "oauth_rules",
   "oauth_rule",
   "special_flow_options",
+  "client_headers_file",
 
   0
 };
@@ -853,6 +855,7 @@ static const unsigned char contest_final_set[CONTEST_LAST_TAG] =
   [CONTEST_CONTENT_URL_PREFIX] = 1,
   [CONTEST_COMMENT] = 1,
   [CONTEST_SPECIAL_FLOW_OPTIONS] = 1,
+  [CONTEST_CLIENT_HEADERS_FILE] = 1,
 };
 
 static const unsigned char contest_access_set[CONTEST_LAST_TAG] =
