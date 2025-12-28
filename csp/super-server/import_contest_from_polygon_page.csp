@@ -21,6 +21,7 @@
     int enable_api = 0;
     int save_auth = 0;
     int enable_rss_limit = 0;
+    int fix_mathjax_link = 1;
 
     if (!ss->edited_cnts || !ss->global) {
         FAIL(SSERV_ERR_NO_EDITED_CNTS);
@@ -107,6 +108,8 @@
         <tr><td class="b0">Use RSS memory limit instead of VM:</td><td class="b0"><s:checkbox name="enable_rss_limit" value="1" checkedExpr="enable_rss_limit" /></td></tr>
 
         <tr><td class="b0">Enable test group merging:</td><td class="b0"><s:checkbox name="enable_group_merge" value="1" /></td></tr>
+
+        <tr><td class="b0">Fix MathJax link in statement files:</td><td class="b0"><s:checkbox name="fix_mathjax_link" value="1" checkedExpr="fix_mathjax_link" /></td></tr>
 
         <tr><td class="b0">Verbose importer output:</td><td class="b0"><input type="checkbox" name="verbose" value="1" /></td></tr>
 
