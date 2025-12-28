@@ -72,6 +72,7 @@ struct ejudge_cfg_agent_server
   int port;
   unsigned char *token_file;
   unsigned char *service;
+  unsigned char *rules_file;
 };
 
 struct ejudge_cfg

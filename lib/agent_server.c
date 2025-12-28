@@ -28,19 +28,21 @@
 #include "ejudge/osdeps.h"
 #include "ejudge/xalloc.h"
 
-#include <fcntl.h>
 #include <libwebsockets.h>
-#include <time.h>
-#include <unistd.h>
 #include <uv.h>
 
 #include <ctype.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <limits.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/mman.h>
+#include <sys/stat.h>
+#include <time.h>
+#include <unistd.h>
 
 #define DEFAULT_SERVER_PORT 8888
 #define MAX_OUTPUT_FRAGMENT_SIZE 65000
@@ -80,6 +82,7 @@ typedef struct ConnectionState
     size_t out_h;     // head element to send
 
     unsigned msg_serial;
+    time_t current_time;
     long long current_time_ms;
 
     SpoolQueue *spool_queue;
@@ -137,6 +140,33 @@ typedef struct SpoolQueueExtra
     size_t waiter_u;
 } SpoolQueueExtra;
 
+enum
+{
+    PATH_RULE_UNKNOWN = 0,
+    PATH_RULE_PREFIX,
+};
+
+typedef struct PathRule
+{
+    unsigned char *path;
+    size_t length;
+    unsigned char kind;
+    unsigned char accept;
+} PathRule;
+
+typedef struct RuleFile
+{
+    unsigned char *path;
+    unsigned char *text;
+    cJSON *json;
+    PathRule *rules;
+    size_t size;
+    size_t allocated;
+    time_t last_check;
+    time_t last_mtime;
+    unsigned char failed;
+} RuleFile;
+
 typedef struct AgentServerState
 {
     uv_loop_t *loop;
@@ -156,6 +186,7 @@ typedef struct AgentServerState
     size_t spool_a;
 
     ContestSpools css;
+    RuleFile r;
 } AgentServerState;
 
 static void
@@ -286,6 +317,180 @@ spool_queue_remove_waiter(
         uv_fs_event_stop(&sqe->handle);
     }
     return 1;
+}
+
+enum { RULES_CHECK_INTERVAL = 60 };
+
+static int
+update_rules(AgentServerState *ass, time_t current_time)
+{
+    int result = -1;
+    int fd = -1;
+    char *txt_s = NULL;
+    size_t txt_z = 0;
+    FILE *txt_f = NULL;
+    char buf[4096];
+    ssize_t r;
+
+    if (ass->r.last_check + RULES_CHECK_INTERVAL > current_time) return 0;
+
+    fd = open(ass->r.path, O_RDONLY | O_NOCTTY | O_CLOEXEC, 0);
+    if (fd < 0) {
+        lwsl_err("%s:%d: cannot open '%s': %s", __FUNCTION__, __LINE__, ass->r.path, strerror(errno));
+        ass->r.failed = 1;
+        goto done;
+    }
+    struct stat stb;
+    if (fstat(fd, &stb) < 0) {
+        lwsl_err("%s:%d: fstat failed: %s", __FUNCTION__, __LINE__, strerror(errno));
+        ass->r.failed = 1;
+        goto done;
+    }
+    if (ass->r.last_mtime >= stb.st_mtime) {
+        result = 0;
+        goto done;
+    }
+
+    txt_f = open_memstream(&txt_s, &txt_z);
+    while ((r = read(fd, buf, sizeof(buf))) > 0) {
+        fwrite_unlocked(buf, 1, r, txt_f);
+    }
+    if (r < 0) {
+        lwsl_err("%s:%d: read error from '%s': %s", __FUNCTION__, __LINE__, ass->r.path, strerror(errno));
+        ass->r.failed = 1;
+        ass->r.last_mtime = stb.st_mtime;
+        goto done;
+    }
+    fclose(txt_f); txt_f = NULL;
+    close(fd); fd = -1;
+    if (strlen(txt_s) != txt_z) {
+        lwsl_err("%s:%d: file '%s' contains NUL byte", __FUNCTION__, __LINE__, ass->r.path);
+        ass->r.failed = 1;
+        ass->r.last_mtime = stb.st_mtime;
+        goto done;
+    }
+    if (ass->r.text && !strcmp(ass->r.text, txt_s)) {
+        ass->r.last_mtime = stb.st_mtime;
+        result = 0;
+        goto done;
+    }
+    free(ass->r.text); ass->r.text = txt_s; txt_s = NULL;
+    if (ass->r.json) cJSON_Delete(ass->r.json);
+    ass->r.json = cJSON_Parse(ass->r.text);
+    if (!ass->r.json) {
+        lwsl_err("%s:%d: file '%s' is invalid JSON", __FUNCTION__, __LINE__, ass->r.path);
+        ass->r.failed = 1;
+        ass->r.last_mtime = stb.st_mtime;
+        goto done;
+    }
+
+    for (int i = 0; i < ass->r.size; ++i) {
+        xfree(ass->r.rules[i].path);
+    }
+    ass->r.size = 0;
+    cJSON *jrs = cJSON_GetObjectItem(ass->r.json, "rules");
+    if (!jrs) {
+        ass->r.failed = 0;
+        ass->r.last_mtime = stb.st_mtime;
+        result = 1;
+    }
+    if (jrs->type != cJSON_Array) {
+        lwsl_err("%s:%d: file '%s': \"rules\" must be array", __FUNCTION__, __LINE__, ass->r.path);
+        ass->r.failed = 1;
+        ass->r.last_mtime = stb.st_mtime;
+        goto done;
+    }
+    int count = cJSON_GetArraySize(jrs);
+    for (int i = 0; i < count; ++i) {
+        cJSON *jr = cJSON_GetArrayItem(jrs, i);
+        if (!jr) {
+            lwsl_err("%s:%d: file '%s': \"rules\" item must not be null", __FUNCTION__, __LINE__, ass->r.path);
+            ass->r.failed = 1;
+            ass->r.last_mtime = stb.st_mtime;
+            goto done;
+        }
+        if (jr->type != cJSON_Object) {
+            lwsl_err("%s:%d: file '%s': \"rules\" item must be object", __FUNCTION__, __LINE__, ass->r.path);
+            ass->r.failed = 1;
+            ass->r.last_mtime = stb.st_mtime;
+            goto done;
+        }
+        unsigned char kind = PATH_RULE_UNKNOWN;
+        cJSON *jkind = cJSON_GetObjectItem(jr, "kind");
+        if (!jkind) {
+            kind = PATH_RULE_PREFIX;
+        } else if (jkind->type != cJSON_String) {
+            lwsl_err("%s:%d: file '%s': \"kind\" must be string", __FUNCTION__, __LINE__, ass->r.path);
+            ass->r.failed = 1;
+            ass->r.last_mtime = stb.st_mtime;
+            goto done;
+        } else if (!strcmp(jkind->valuestring, "prefix")) {
+            kind = PATH_RULE_PREFIX;
+        } else {
+            lwsl_err("%s:%d: file '%s': invalid kind '%s'", __FUNCTION__, __LINE__, ass->r.path, jkind->valuestring);
+            ass->r.failed = 1;
+            ass->r.last_mtime = stb.st_mtime;
+            goto done;
+        }
+        unsigned char accept = 0;
+        cJSON *jaccept = cJSON_GetObjectItem(jr, "accept");
+        if (!jaccept) {
+            // nothing
+        } else if (jaccept->type == cJSON_True) {
+            accept = 1;
+        } else if (jaccept->type == cJSON_False) {
+            accept = 0;
+        } else {
+            lwsl_err("%s:%d: file '%s': \"accept\" must be boolean", __FUNCTION__, __LINE__, ass->r.path);
+            ass->r.failed = 1;
+            ass->r.last_mtime = stb.st_mtime;
+            goto done;
+        }
+        unsigned char *path = NULL;
+        cJSON *jpath = cJSON_GetObjectItem(jr, "path");
+        if (!jpath) {
+            lwsl_err("%s:%d: file '%s': \"path\" must present", __FUNCTION__, __LINE__, ass->r.path);
+            ass->r.failed = 1;
+            ass->r.last_mtime = stb.st_mtime;
+            goto done;
+        }
+        if (jpath->type != cJSON_String) {
+            lwsl_err("%s:%d: file '%s': \"path\" must be string", __FUNCTION__, __LINE__, ass->r.path);
+            ass->r.failed = 1;
+            ass->r.last_mtime = stb.st_mtime;
+            goto done;
+        }
+        path = jpath->valuestring;
+
+        if (ass->r.size == ass->r.allocated) {
+            if (!(ass->r.allocated *= 2)) ass->r.allocated = 8;
+            XREALLOC(ass->r.rules, ass->r.allocated);
+        }
+        PathRule *pr = &ass->r.rules[ass->r.size++];
+        memset(pr, 0, sizeof(*pr));
+        pr->path = xstrdup(path);
+        pr->length = strlen(path);
+        pr->accept = accept;
+        pr->kind = kind;
+    }
+
+    ass->r.failed = 0;
+    ass->r.last_mtime = stb.st_mtime;
+    result = 1;
+
+    /*
+    for (int i = 0; i < ass->r.size; ++i) {
+        PathRule *pr = &ass->r.rules[i];
+        fprintf(stderr, ">>%d, %d, <%s>, %zu\n", pr->kind, pr->accept, pr->path, pr->length);
+    }
+    */
+
+done:;
+    ass->r.last_check = current_time;
+    if (fd >= 0) close(fd);
+    if (txt_f) fclose(txt_f);
+    free(txt_s);
+    return result;
 }
 
 #define L_ERR(format, ...) fprintf(log_f, "%s:%d:" format "\n", __FUNCTION__, __LINE__, ##__VA_ARGS__)
@@ -661,7 +866,7 @@ get_data_func(
     cJSON *reply)
 {
     cJSON *jp = cJSON_GetObjectItem(query, "pkt_name");
-    if (!jp || jp->type != cJSON_String) {
+    if (!jp || jp->type != cJSON_String || !is_valid_id(jp->valuestring)) {
         cJSON_AddStringToObject(reply, "message", "invalid json");
         conn_err(conn, "missing pkt_name");
         return 0;
@@ -669,7 +874,7 @@ get_data_func(
     const unsigned char *pkt_name = jp->valuestring;
     const unsigned char *suffix = NULL;
     cJSON *js = cJSON_GetObjectItem(query, "suffix");
-    if (js && js->type == cJSON_String) {
+    if (js && js->type == cJSON_String && is_valid_id(js->valuestring)) {
         suffix = js->valuestring;
     }
     char *pkt_ptr = NULL;
@@ -795,7 +1000,7 @@ put_output_func(
     const unsigned char *run_name = jrun->valuestring;
 
     cJSON *jsuffix = cJSON_GetObjectItem(query, "suffix");
-    if (jsuffix && jsuffix->type == cJSON_String) {
+    if (jsuffix && jsuffix->type == cJSON_String && is_valid_id(jsuffix->valuestring)) {
         suffix = jsuffix->valuestring;
     }
 
@@ -893,7 +1098,7 @@ put_heartbeat_func(
     __attribute__((unused)) int _;
 
     cJSON *jn = cJSON_GetObjectItem(query, "name");
-    if (!jn || jn->type != cJSON_String) {
+    if (!jn || jn->type != cJSON_String || !is_valid_id(jn->valuestring)) {
         cJSON_AddStringToObject(reply, "message", "invalid json");
         conn_err(conn, "invalid name");
         goto done;
@@ -997,7 +1202,7 @@ put_archive_func(
     int contest_id = jcid->valuedouble;
 
     cJSON *jrun = cJSON_GetObjectItem(query, "run_name");
-    if (!jrun || jrun->type != cJSON_String || !jrun->valuestring) {
+    if (!jrun || jrun->type != cJSON_String || !jrun->valuestring || !is_valid_id(jrun->valuestring)) {
         conn_err(conn, "invalid run_name");
         cJSON_AddStringToObject(reply, "message", "invalid json");
         goto done;
@@ -1034,6 +1239,88 @@ done:;
 }
 
 static int
+check_contest_rule(
+    struct AgentServerState *ass,
+    const unsigned char *path)
+{
+    if (strncmp(path, EJUDGE_CONTESTS_HOME_DIR, sizeof(EJUDGE_CONTESTS_HOME_DIR)-1) != 0) {
+        return -1;
+    }
+    const unsigned char *p = path + sizeof(EJUDGE_CONTESTS_HOME_DIR) - 1;
+    if (*p != '/') return -1;
+    ++p;
+    if (!isdigit(p[0]) || !isdigit(p[1]) || !isdigit(p[2]) || !isdigit(p[3]) || !isdigit(p[4]) ||
+        !isdigit(p[5]) || p[6] != '/') {
+        return 0;
+    }
+    p += 7;
+    if (!strncmp(p, "conf/", 5)) return 0;
+    if (!strncmp(p, "var/", 4)) return 0;
+    return 1;
+}
+
+static int
+check_script_rule(
+    struct AgentServerState *ass,
+    const unsigned char *path)
+{
+    if (strncmp(path, EJUDGE_SCRIPT_DIR, sizeof(EJUDGE_SCRIPT_DIR)-1) != 0) {
+        return -1;
+    }
+    const unsigned char *p = path + sizeof(EJUDGE_SCRIPT_DIR) - 1;
+    if (*p != '/') return -1;
+    return 1;
+}
+
+static int
+is_valid_path(
+    struct AgentServerState *ass,
+    ConnectionState *conn,
+    const unsigned char *path)
+{
+    cJSON *jrules = NULL;
+    if (ass->r.path && ass->r.last_check + RULES_CHECK_INTERVAL <= conn->current_time) {
+        update_rules(ass, conn->current_time);
+    }
+    if (ass->r.path && ass->r.failed) {
+        lwsl_err("%s:%d: path rules are invalid in '%s'", __FUNCTION__, __LINE__, ass->r.path);
+        return 0;
+    }
+    if (ass->r.path) {
+        jrules = ass->r.json;
+        if (!jrules) {
+            lwsl_err("%s:%d: path rules in '%s' are NULL json", __FUNCTION__, __LINE__, ass->r.path);
+            return 0;
+        }
+    }
+
+    unsigned char *rp = realpath(path, NULL);
+    // FIXME: this is slow, should use trie
+    for (int i = 0; i < ass->r.size; ++i) {
+        const PathRule *pr = &ass->r.rules[i];
+        if (pr->kind == PATH_RULE_PREFIX) {
+            if (!strncmp(rp, pr->path, pr->length)) {
+                return pr->accept;
+            }
+        } else {
+            abort();
+        }
+    }
+
+    // default rules:
+    // disable: ${EJUDGE_CONTESTS_HOME_DIR}/000000/conf/
+    // disable: ${EJUDGE_CONTESTS_HOME_DIR}/000000/var/
+    // enable: ${EJUDGE_CONTESTS_HOME_DIR}/000000/
+    int r = check_contest_rule(ass, rp);
+    if (r >= 0) return r;
+    // enable: ${EJUDGE_SCRIPT_DIR}
+    r = check_script_rule(ass, rp);
+    if (r >= 0) return r;
+    // default disable
+    return 0;
+}
+
+static int
 mirror_func(
     const struct QueryCallback *cb,
     struct AgentServerState *ass,
@@ -1054,6 +1341,11 @@ mirror_func(
         goto done;
     }
     const unsigned char *path = jpath->valuestring;
+    if (!is_valid_path(ass, conn, path)) {
+        cJSON_AddStringToObject(reply, "message", "invalid path");
+        conn_err(conn, "invalid path");
+        goto done;
+    }
 
     cJSON *jsize = cJSON_GetObjectItem(query, "size");
     int64_t size = -1;
@@ -1352,6 +1644,7 @@ handle_incoming_json(
 {
     struct timeval tv;
     gettimeofday(&tv, NULL);
+    conn->current_time = tv.tv_sec;
     conn->current_time_ms = tv.tv_sec * 1000LL + tv.tv_usec / 1000;
 
     cJSON_AddNumberToObject(reply, "tt", (double) conn->current_time_ms);
@@ -1616,6 +1909,7 @@ agent_server_start(const AgentServerParams *params)
     int *pids = NULL;
     int log_fd = -1;
     int null_fd = -1;
+    unsigned char *ejudge_xml_dir = NULL;
 
     random_init();
 
@@ -1630,6 +1924,25 @@ agent_server_start(const AgentServerParams *params)
     }
     if (ejudge_config->agent_server->enable <= 0) {
         L_ERR_DONE("ej-agent-server is not enabled in '%s'", ejudge_xml_path);
+    }
+
+    ejudge_xml_dir = os_DirName(ejudge_xml_path);
+    if (ejudge_config->agent_server->rules_file && ejudge_config->agent_server->rules_file[0]) {
+        const unsigned char *rules_file = ejudge_config->agent_server->rules_file;
+        unsigned char full_path[PATH_MAX];
+        int res;
+        if (os_IsAbsolutePath(rules_file)) {
+            res = snprintf(full_path, sizeof(full_path), "%s", rules_file);
+        } else {
+            res = snprintf(full_path, sizeof(full_path), "%s/%s", ejudge_xml_dir, rules_file);
+        }
+        if (res >= (int) sizeof(full_path)) {
+            L_ERR_DONE("rules_file path is too long");
+        }
+        ass->r.path = strdup(full_path);
+        if (update_rules(ass, time(NULL)) < 0) {
+            L_ERR_DONE("failed to load rules");
+        }
     }
 
     __attribute__((unused)) int _;
@@ -1674,7 +1987,7 @@ agent_server_start(const AgentServerParams *params)
     }
 
     ass->ejudge_config = ejudge_config;
-    ass->ejudge_xml_dir = os_DirName(ejudge_xml_path);
+    ass->ejudge_xml_dir = ejudge_xml_dir; ejudge_xml_dir = NULL;
     ass->loop = uv_default_loop();
     ass->loops[0] = ass->loop;
 
@@ -1740,5 +2053,6 @@ done:;
     if (null_fd >= 0) close(null_fd);
     xfree(ass);
     xfree(pids);
+    xfree(ejudge_xml_dir);
     return retval;
 }
