@@ -2763,7 +2763,11 @@ serve_run_request(
   if (prob->umask && prob->umask[0]) {
     srpp->umask = xstrdup(prob->umask);
   }
-  srpp->test_count = test_count_cache_get(NULL, srpp->test_dir, srpp->test_pat);
+  if (prob->forced_test_count > 0) {
+    srpp->test_count = prob->forced_test_count;
+  } else {
+    srpp->test_count = test_count_cache_get(NULL, srpp->test_dir, srpp->test_pat);
+  }
 
   if (find_lang_specific_size(prob->lang_max_vm_size, lang, &lang_specific_size) > 0) {
     srpp->max_vm_size = lang_specific_size;

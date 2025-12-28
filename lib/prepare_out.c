@@ -1430,6 +1430,9 @@ prepare_unparse_prob(
   if (prob->max_process_count >= 0) {
     fprintf(f, "max_process_count = %d\n", prob->max_process_count);
   }
+  if (prob->forced_test_count >= 0) {
+    fprintf(f, "forced_test_count = %d\n", prob->forced_test_count);
+  }
   if (prob->umask && prob->umask[0])
     fprintf(f, "umask = \"%s\"\n", CARMOR(prob->umask));
 
@@ -1965,6 +1968,9 @@ prepare_unparse_actual_prob(
   }
   if (prob->max_process_count > 0) {
     fprintf(f, "max_process_count = %d\n", prob->max_process_count);
+  }
+  if (prob->forced_test_count > 0) {
+    fprintf(f, "forced_test_count = %d\n", prob->forced_test_count);
   }
   if (prob->umask && prob->umask[0])
     fprintf(f, "umask = \"%s\"\n", CARMOR(prob->umask));

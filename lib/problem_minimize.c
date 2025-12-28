@@ -1304,6 +1304,7 @@ static const int cnts_to_cfg_field_map[CNTSPROB_LAST_FIELD] =
   [CNTSPROB_checker_max_rss_size] = META_PROBLEM_CONFIG_SECTION_checker_max_rss_size,
   [CNTSPROB_max_open_file_count] = META_PROBLEM_CONFIG_SECTION_max_open_file_count,
   [CNTSPROB_max_process_count] = META_PROBLEM_CONFIG_SECTION_max_process_count,
+  [CNTSPROB_forced_test_count] = META_PROBLEM_CONFIG_SECTION_forced_test_count,
   [CNTSPROB_extid] = META_PROBLEM_CONFIG_SECTION_extid,
   [CNTSPROB_unhandled_vars] = 0,
   [CNTSPROB_score_view] = 0,

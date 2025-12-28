@@ -821,6 +821,7 @@ merge_problem_section(
         { CNTSPROB_interactor_real_time_limit, META_PROBLEM_CONFIG_SECTION_interactor_real_time_limit, 0 },
         { CNTSPROB_max_open_file_count, META_PROBLEM_CONFIG_SECTION_max_open_file_count, 0 },
         { CNTSPROB_max_process_count, META_PROBLEM_CONFIG_SECTION_max_process_count, 0 },
+        { CNTSPROB_forced_test_count, META_PROBLEM_CONFIG_SECTION_forced_test_count, 0 },
 
         { 0, 0, 0 },
     };

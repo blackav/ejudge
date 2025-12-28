@@ -504,6 +504,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(checker_max_vm_size, "E"),
   PROBLEM_PARAM(checker_max_stack_size, "E"),
   PROBLEM_PARAM(checker_max_rss_size, "E"),
+  PROBLEM_PARAM(forced_test_count, "d"),
 
   PROBLEM_PARAM(super, "s"),
   PROBLEM_PARAM(short_name, "s"),
@@ -1355,6 +1356,7 @@ prepare_problem_init_func(struct generic_section_config *gp)
   p->checker_max_stack_size = -1LL;
   p->checker_max_rss_size = -1LL;
   p->normalization_val = -1;
+  p->forced_test_count = -1;
 }
 
 void prepare_free_testsets(int t, struct testset_info *p);
@@ -2776,6 +2778,7 @@ prepare_problem(
   prepare_set_prob_value(CNTSPROB_use_corr, prob, aprob, g);
   prepare_set_prob_value(CNTSPROB_use_info, prob, aprob, g);
   prepare_set_prob_value(CNTSPROB_use_tgz, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_forced_test_count, prob, aprob, g);
 
   if (!prob->md_file && aprob && aprob->md_file) {
     sformat_message_2(&prob->md_file, 0, aprob->md_file, 0, prob, 0, 0, 0, 0, 0, 0);
@@ -6244,6 +6247,10 @@ prepare_set_prob_value(
     if (out->max_process_count < 0 && abstr) out->max_process_count = abstr->max_process_count;
     break;
 
+  case CNTSPROB_forced_test_count:
+    if (out->forced_test_count < 0 && abstr) out->forced_test_count = abstr->forced_test_count;
+    break;
+
   case CNTSPROB_checker_max_vm_size:
     if (out->checker_max_vm_size < 0 && abstr) out->checker_max_vm_size = abstr->checker_max_vm_size;
     break;
@@ -6903,6 +6910,7 @@ prepare_set_all_prob_values(
     CNTSPROB_checker_max_vm_size,
     CNTSPROB_checker_max_stack_size,
     CNTSPROB_checker_max_rss_size,
+    CNTSPROB_forced_test_count,
     //CNTSPROB_extid,
     //CNTSPROB_score_view,
     //CNTSPROB_score_view_text,
