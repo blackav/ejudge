@@ -116,6 +116,7 @@ enum
   META_PROBLEM_CONFIG_SECTION_interactor_real_time_limit,
   META_PROBLEM_CONFIG_SECTION_max_open_file_count,
   META_PROBLEM_CONFIG_SECTION_max_process_count,
+  META_PROBLEM_CONFIG_SECTION_forced_test_count,
   META_PROBLEM_CONFIG_SECTION_deadline,
   META_PROBLEM_CONFIG_SECTION_start_date,
   META_PROBLEM_CONFIG_SECTION_max_vm_size,

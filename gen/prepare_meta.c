@@ -1393,6 +1393,7 @@ static struct meta_info_item meta_info_section_problem_data_data[] =
   [CNTSPROB_checker_max_rss_size] = { CNTSPROB_checker_max_rss_size, 'E', XSIZE(struct section_problem_data, checker_max_rss_size), "checker_max_rss_size", XOFFSET(struct section_problem_data, checker_max_rss_size) },
   [CNTSPROB_max_open_file_count] = { CNTSPROB_max_open_file_count, 'i', XSIZE(struct section_problem_data, max_open_file_count), "max_open_file_count", XOFFSET(struct section_problem_data, max_open_file_count) },
   [CNTSPROB_max_process_count] = { CNTSPROB_max_process_count, 'i', XSIZE(struct section_problem_data, max_process_count), "max_process_count", XOFFSET(struct section_problem_data, max_process_count) },
+  [CNTSPROB_forced_test_count] = { CNTSPROB_forced_test_count, 'i', XSIZE(struct section_problem_data, forced_test_count), "forced_test_count", XOFFSET(struct section_problem_data, forced_test_count) },
   [CNTSPROB_extid] = { CNTSPROB_extid, 's', XSIZE(struct section_problem_data, extid), "extid", XOFFSET(struct section_problem_data, extid) },
   [CNTSPROB_unhandled_vars] = { CNTSPROB_unhandled_vars, 's', XSIZE(struct section_problem_data, unhandled_vars), "unhandled_vars", XOFFSET(struct section_problem_data, unhandled_vars) },
   [CNTSPROB_score_view] = { CNTSPROB_score_view, 'x', XSIZE(struct section_problem_data, score_view), "score_view", XOFFSET(struct section_problem_data, score_view) },
@@ -1821,6 +1822,7 @@ void cntsprob_copy(struct section_problem_data *dst, const struct section_proble
   dst->checker_max_rss_size = src->checker_max_rss_size;
   dst->max_open_file_count = src->max_open_file_count;
   dst->max_process_count = src->max_process_count;
+  dst->forced_test_count = src->forced_test_count;
   if (src->extid) {
     dst->extid = strdup(src->extid);
   }

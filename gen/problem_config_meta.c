@@ -123,6 +123,7 @@ static struct meta_info_item meta_info_problem_config_section_data[] =
   [META_PROBLEM_CONFIG_SECTION_interactor_real_time_limit] = { META_PROBLEM_CONFIG_SECTION_interactor_real_time_limit, 'i', XSIZE(struct problem_config_section, interactor_real_time_limit), "interactor_real_time_limit", XOFFSET(struct problem_config_section, interactor_real_time_limit) },
   [META_PROBLEM_CONFIG_SECTION_max_open_file_count] = { META_PROBLEM_CONFIG_SECTION_max_open_file_count, 'i', XSIZE(struct problem_config_section, max_open_file_count), "max_open_file_count", XOFFSET(struct problem_config_section, max_open_file_count) },
   [META_PROBLEM_CONFIG_SECTION_max_process_count] = { META_PROBLEM_CONFIG_SECTION_max_process_count, 'i', XSIZE(struct problem_config_section, max_process_count), "max_process_count", XOFFSET(struct problem_config_section, max_process_count) },
+  [META_PROBLEM_CONFIG_SECTION_forced_test_count] = { META_PROBLEM_CONFIG_SECTION_forced_test_count, 'i', XSIZE(struct problem_config_section, forced_test_count), "forced_test_count", XOFFSET(struct problem_config_section, forced_test_count) },
   [META_PROBLEM_CONFIG_SECTION_deadline] = { META_PROBLEM_CONFIG_SECTION_deadline, 't', XSIZE(struct problem_config_section, deadline), "deadline", XOFFSET(struct problem_config_section, deadline) },
   [META_PROBLEM_CONFIG_SECTION_start_date] = { META_PROBLEM_CONFIG_SECTION_start_date, 't', XSIZE(struct problem_config_section, start_date), "start_date", XOFFSET(struct problem_config_section, start_date) },
   [META_PROBLEM_CONFIG_SECTION_max_vm_size] = { META_PROBLEM_CONFIG_SECTION_max_vm_size, 'E', XSIZE(struct problem_config_section, max_vm_size), "max_vm_size", XOFFSET(struct problem_config_section, max_vm_size) },
@@ -383,6 +384,7 @@ void meta_problem_config_section_copy(struct problem_config_section *dst, const 
   dst->interactor_real_time_limit = src->interactor_real_time_limit;
   dst->max_open_file_count = src->max_open_file_count;
   dst->max_process_count = src->max_process_count;
+  dst->forced_test_count = src->forced_test_count;
   dst->deadline = src->deadline;
   dst->start_date = src->start_date;
   dst->max_vm_size = src->max_vm_size;
