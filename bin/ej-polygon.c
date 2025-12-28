@@ -2465,6 +2465,44 @@ check_format(const unsigned char *format)
   return 0;
 }
 
+typedef void (*transformer_func_t)(void *user, unsigned char **p_data, size_t *p_size);
+
+static int
+transform_from_zip(
+        FILE *log_f,
+        const struct polygon_packet *pkt,
+        const struct ZipInterface *zif,
+        struct ZipData *zid,
+        const unsigned char *arch_path,
+        const unsigned char *zip_path,
+        const unsigned char *path,
+        transformer_func_t transform,
+        void *user)
+{
+    unsigned char *data = NULL;
+    ssize_t size = 0;
+    int is_changed = 0;
+    int r = zif->read_file(zid, zip_path, &data, &size);
+    if (!r) {
+        fprintf(log_f, "file '%s' does not exist in archive '%s'\n", zip_path, arch_path);
+        return 1;
+    }
+    if (r < 0) {
+        fprintf(log_f, "failed to read '%s' from archive '%s'\n", zip_path, arch_path);
+        return 1;
+    }
+    if (transform) {
+        transform(user, &data, &size);
+    }
+    if (save_file(log_f, path, data, size, pkt->file_mode, pkt->file_group, &is_changed)) {
+        xfree(data);
+        return 1;
+    }
+    if (is_changed) fprintf(log_f, "%s saved ok\n", path);
+    xfree(data);
+    return 0;
+}
+
 static int
 copy_from_zip(
         FILE *log_f,
@@ -3312,6 +3350,41 @@ static const struct polygon_checker_item polygon_checker_map[] =
 };
 
 static void
+replace(
+        unsigned char **p_data,
+        size_t *p_size,
+        const unsigned char *from,
+        size_t from_size,
+        const unsigned char *to,
+        size_t to_size)
+{
+    if (from_size >= to_size) {
+        // inplace
+        // FIXME: implement it properly!
+        unsigned char *p = *p_data;
+        unsigned char *q;
+        while ((q = strstr(p, from)) != NULL) {
+            memcpy(q, to, to_size);
+            memmove(q + to_size, q + from_size, *p_size - (q - p) - from_size + 1);
+            p = q + to_size;
+        }
+    } else {
+        abort();
+    }
+}
+
+static void
+fix_mathjax_link(
+        void *user,
+        unsigned char **p_data,
+        size_t *p_size)
+{
+    static const unsigned char from_pattern[] = "https://polygon.codeforces.com/lib/MathJax/MathJax.js";
+    static const unsigned char to_pattern[] = "/lib/MathJax/MathJax.js";
+    replace(p_data, p_size, from_pattern, sizeof(from_pattern)-1, to_pattern, sizeof(to_pattern)-1);
+}
+
+static void
 process_polygon_zip(
         FILE *log_f,
         const struct polygon_packet *pkt,
@@ -3766,6 +3839,11 @@ process_polygon_zip(
             goto zip_error;
         }
 
+        transformer_func_t transform = NULL;
+        if (pkt->fix_mathjax_link > 0) {
+            transform = fix_mathjax_link;
+        }
+
         const unsigned char *p = strrchr(pi->html_statement_path, '/');
         if (p) {
             unsigned char html_statement_dir[PATH_MAX];
@@ -3782,7 +3860,7 @@ process_polygon_zip(
                         ++name;
                         unsigned char dstpath[PATH_MAX];
                         snprintf(dstpath, sizeof(dstpath), "%s/%s", attachments_path, name);
-                        copy_from_zip(log_f, pkt, zif, zid, zip_path, statement_files[i], dstpath);
+                        transform_from_zip(log_f, pkt, zif, zid, zip_path, statement_files[i], dstpath, transform, NULL);
                     }
                 }
                 for (size_t i = 0; i < statement_file_count; ++i) {
