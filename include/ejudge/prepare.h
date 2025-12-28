@@ -1331,6 +1331,8 @@ struct section_problem_data
   int max_open_file_count;
   /** max number of processes per user */
   int max_process_count;
+  /** forced number of tests for the problem */
+  int forced_test_count;
 
   /** external id (for external application binding) */
   unsigned char *extid;
