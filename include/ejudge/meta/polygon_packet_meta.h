@@ -20,6 +20,7 @@ enum
   META_POLYGON_PACKET_ignore_main_solution,
   META_POLYGON_PACKET_enable_rss_limit,
   META_POLYGON_PACKET_enable_group_merge,
+  META_POLYGON_PACKET_fix_mathjax_link,
   META_POLYGON_PACKET_polygon_url,
   META_POLYGON_PACKET_login,
   META_POLYGON_PACKET_password,
