@@ -666,6 +666,7 @@ parse_agent_server(struct ejudge_cfg *cfg, struct xml_tree *tree)
         xml_err_elem_invalid(p);
         goto fail;
       }
+      as->port = pp;
       break;
     }
     case TG_TOKEN_FILE:
