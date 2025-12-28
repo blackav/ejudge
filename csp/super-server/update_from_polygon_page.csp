@@ -20,6 +20,7 @@
     int enable_api = 0;
     int save_auth = 0;
     int enable_rss_limit = 0;
+    int fix_mathjax_link = 1;
 
 %><s:read var="contest_id" /><%
     if (contest_id <= 0) FAIL(SSERV_ERR_INV_CONTEST);
@@ -79,6 +80,7 @@
         <tr><td class="b0">Embed statement in IFRAME:</td><td class="b0"><input type="checkbox" name="enable_iframe_statement" value="1" checked="checked" /></td></tr>
         <tr><td class="b0">Use RSS memory limit instead of VM:</td><td class="b0"><s:checkbox name="enable_rss_limit" value="1" checkedExpr="enable_rss_limit" /></td></tr>
         <tr><td class="b0">Enable test group merging:</td><td class="b0"><s:checkbox name="enable_group_merge" value="1" /></td></tr>
+        <tr><td class="b0">Fix MathJax link in statement files:</td><td class="b0"><s:checkbox name="fix_mathjax_link" value="1" checkedExpr="fix_mathjax_link" /></td></tr>
         <tr><td class="b0">Verbose importer output:</td><td class="b0"><input type="checkbox" name="verbose" value="1" /></td></tr>
         <tr><td class="b0"><s:submit ac="update-from-polygon-action" label="Update" /></td></tr>
     </table>
