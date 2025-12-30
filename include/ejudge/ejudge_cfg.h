@@ -97,6 +97,9 @@ struct ejudge_cfg
   // max loaded contests count for ej-contests
   int max_loaded_contests;
 
+  // the path to this configuration file
+  unsigned char *this_config_path;
+
   // these strings actually point into other strings in XML tree
   unsigned char *socket_path;
   unsigned char *db_path;
@@ -239,5 +242,10 @@ const unsigned char *
 ejudge_cfg_get_compiler_option(
         const struct ejudge_cfg *cfg,
         const unsigned char *compiler);
+
+unsigned char *
+ejudge_cfg_load_token_from_file(
+        const struct ejudge_cfg *cfg,
+        const unsigned char *token_file);
 
 #endif /* __EJUDGE_CFG_H__ */
