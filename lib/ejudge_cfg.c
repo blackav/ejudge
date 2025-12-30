@@ -1633,7 +1633,7 @@ ejudge_cfg_load_token_from_file(
     os_rDirName(cfg->this_config_path, dir, sizeof(dir));
     res = snprintf(path, sizeof(path), "%s/%s", dir, token_file);
   } else {
-    res = snprintf(path, sizeof(path), "%s/%s", EJUDGE_XML_PATH, token_file);
+    res = snprintf(path, sizeof(path), "%s/%s", EJUDGE_CONF_DIR, token_file);
   }
   if (res >= (int) sizeof(path)) {
     err("%s:%d: token path is too long (%d)", __FUNCTION__, __LINE__, res);

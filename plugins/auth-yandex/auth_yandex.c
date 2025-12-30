@@ -102,6 +102,11 @@ prepare_func(
 
         if (!strcmp(p->name[0], "client_id")) {
             if (xml_leaf_elem(p, &state->client_id, 1, 0) < 0) return -1;
+        } else if (!strcmp(p->name[0], "client_secret_file")) {
+            unsigned char *file = NULL;
+            if (xml_leaf_elem(p, &file, 0, 0) < 0) return -1;
+            state->client_secret = ejudge_cfg_load_token_from_file(config, file);
+            if (!state->client_secret) return -1;
         } else if (!strcmp(p->name[0], "client_secret")) {
             if (xml_leaf_elem(p, &state->client_secret, 1, 0) < 0) return -1;
         } else if (!strcmp(p->name[0], "redirect_uri")) {
