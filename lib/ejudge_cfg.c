@@ -348,6 +348,7 @@ node_free(struct xml_tree *t)
       xfree(p->default_content_url_prefix);
       xfree(p->default_status_plugin);
       xfree(p->caps_file);
+      xfree(p->this_config_path);
     }
     break;
   case TG_MAP:
@@ -1616,4 +1617,44 @@ ejudge_cfg_get_compiler_option(
     }
   }
   return NULL;
+}
+
+unsigned char *
+ejudge_cfg_load_token_from_file(
+        const struct ejudge_cfg *cfg,
+        const unsigned char *token_file)
+{
+  unsigned char path[PATH_MAX];
+  unsigned char dir[PATH_MAX];
+  int res;
+  if (os_IsAbsolutePath(token_file)) {
+    res = snprintf(path, sizeof(path), "%s", token_file);
+  } else if (cfg->this_config_path) {
+    os_rDirName(cfg->this_config_path, dir, sizeof(dir));
+    res = snprintf(path, sizeof(path), "%s/%s", dir, token_file);
+  } else {
+    res = snprintf(path, sizeof(path), "%s/%s", EJUDGE_CONF_DIR, token_file);
+  }
+  if (res >= (int) sizeof(path)) {
+    err("%s:%d: token path is too long (%d)", __FUNCTION__, __LINE__, res);
+    return NULL;
+  }
+  FILE *f = fopen(path, "r");
+  if (!f) {
+    err("%s:%d: cannot open '%s': %s", __FUNCTION__, __LINE__, path, os_ErrorMsg());
+    return NULL;
+  }
+  char *buf = NULL;
+  size_t bufz = 0;
+  ssize_t bufl;
+  if ((bufl = getline(&buf, &bufz, f)) < 0) {
+    err("%s:%d: no token in '%s'", __FUNCTION__, __LINE__, path);
+    free(buf);
+    fclose(f);
+    return NULL;
+  }
+  fclose(f); f = NULL;
+  while (bufl > 0 && isspace((unsigned char) buf[bufl])) --bufl;
+  buf[bufl] = 0;
+  return buf;
 }

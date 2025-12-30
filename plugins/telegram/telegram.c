@@ -291,6 +291,47 @@ finish_func(struct common_plugin_data *data)
 }
 
 static int
+read_bots_file(
+        struct telegram_plugin_data *state,
+        const struct ejudge_cfg *cfg,
+        const unsigned char *bots_file)
+{
+  unsigned char path[PATH_MAX];
+  unsigned char dir[PATH_MAX];
+  int res;
+  if (os_IsAbsolutePath(bots_file)) {
+    res = snprintf(path, sizeof(path), "%s", bots_file);
+  } else if (cfg->this_config_path) {
+    os_rDirName(cfg->this_config_path, dir, sizeof(dir));
+    res = snprintf(path, sizeof(path), "%s/%s", dir, bots_file);
+  } else {
+    res = snprintf(path, sizeof(path), "%s/%s", EJUDGE_CONF_DIR, bots_file);
+  }
+  if (res >= (int) sizeof(path)) {
+    err("%s:%d: token path is too long (%d)", __FUNCTION__, __LINE__, res);
+    return -1;
+  }
+  FILE *f = fopen(path, "r");
+  if (!f) {
+    err("%s:%d: cannot open '%s': %s", __FUNCTION__, __LINE__, path, os_ErrorMsg());
+    return -1;
+  }
+  char *buf = NULL;
+  size_t bufz = 0;
+  ssize_t bufl;
+  while ((bufl = getline(&buf, &bufz, f)) >= 0) {
+    while (bufl > 0 && isspace((unsigned char) buf[bufl])) --bufl;
+    buf[bufl] = 0;
+    if (bufl > 0) {
+      add_bot_id(state, buf);
+    }
+  }
+  free(buf);
+  fclose(f);
+  return 0;
+}
+
+static int
 prepare_func(
         struct common_plugin_data *data,
         const struct ejudge_cfg *config,
@@ -312,7 +353,9 @@ prepare_func(
 
     for (struct xml_tree *p = tree->first_down; p; p = p->right) {
         ASSERT(p->tag == spec->default_elem);
-        if (!strcmp(p->name[0], "bots")) {
+        if (!strcmp(p->name[0], "bots_file")) {
+            if (read_bots_file(state, config, p->text) < 0) return -1;
+        } else if (!strcmp(p->name[0], "bots")) {
             for (struct xml_tree *q = p->first_down; q; q = q->right) {
                 if (!strcmp(q->name[0], "bot")) {
                     unsigned char *bot_id = NULL;
