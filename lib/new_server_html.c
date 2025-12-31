@@ -23,6 +23,7 @@
 #include "ejudge/opcaps.h"
 #include "ejudge/pathutl.h"
 #include "ejudge/super_proto.h"
+#include "ejudge/varsubst.h"
 #include "ejudge/xml_utils.h"
 #include "ejudge/misctext.h"
 #include "ejudge/copyright.h"
@@ -16656,6 +16657,126 @@ rewrite_self_url(unsigned char *out, const unsigned char *in)
   strcpy(p1, EJUDGE_REST_PREFIX);
   p1 += EJUDGE_REST_PREFIX_LEN ;
   strcpy(p1, role);
+}
+
+struct statement_vars
+{
+  unsigned char **names;
+  int *name_lens;
+  unsigned char **values;
+  int *flags;
+};
+
+void
+ns_unparse_md_statement(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct section_problem_data *prob,
+        int variant,
+        const unsigned char *text)
+{
+  if (!strstr(text, "{{")) {
+    fputs_unlocked(text, fout);
+    return;
+  }
+
+  __attribute__((unused)) int _;
+  const unsigned char **vars = NULL;
+  int *varlens = NULL;
+  const unsigned char **vals = NULL;
+  unsigned int *flags = NULL;
+  int varcount = 8;
+  if (prob->statement_env) {
+    for (int i = 0; prob->statement_env[i]; ++i)
+      ++varcount;
+  }
+  vars = alloca((varcount + 1) * sizeof(vars[0]));
+  varlens = alloca((varcount + 1) * sizeof(varlens[0]));
+  vals = alloca((varcount + 1) * sizeof(vals[0]));
+  flags = alloca((varcount + 1) * sizeof(flags[0]));
+  memset(flags, 0, (varcount + 1) * sizeof(flags[0]));
+  int curvar = 0;
+  vars[curvar] = "self";
+  varlens[curvar] = 4;
+  unsigned char b1[4096];
+  _ = snprintf(b1, sizeof(b1), "%s?SID=%016llx", phr->self_url, phr->session_id);
+  vals[curvar] = b1;
+  ++curvar;
+  vars[curvar] = "prob";
+  varlens[curvar] = 4;
+  unsigned char b2[64];
+  _ = snprintf(b2, sizeof(b2), "&prob_id=%d", prob->id);
+  vals[curvar] = b2;
+  ++curvar;
+  vars[curvar] = "get";
+  varlens[curvar] = 3;
+  unsigned char b3[64];
+  _ = snprintf(b3, sizeof(b3), "&action=%d", NEW_SRV_ACTION_GET_FILE);
+  vals[curvar] = b3;
+  ++curvar;
+  vars[curvar] = "variant";
+  varlens[curvar] = 7;
+  unsigned char b7[64];
+  b7[0] = 0;
+  if (variant > 0) {
+    _ =snprintf(b7, sizeof(b7), "&variant=%d", variant);
+  }
+  vals[curvar] = b7;
+  ++curvar;
+  vars[curvar] = "getfile";
+  varlens[curvar] = 7;
+  unsigned char b4[4096];
+  _ = snprintf(b4, sizeof(b4), "%s%s%s%s&file", b1, b2, b3, b7);
+  vals[curvar] = b4;
+  ++curvar;
+  vars[curvar] = "input_file";
+  varlens[curvar] = 10;
+  unsigned char b5[4096];
+  b5[0] = 0;
+  if (prob->input_file) {
+    _ = snprintf(b5, sizeof(b5), "%s", prob->input_file);
+  }
+  vals[curvar] = b5;
+  ++curvar;
+  vars[curvar] = "output_file";
+  varlens[curvar] = 11;
+  unsigned char b6[4096];
+  b6[0] = 0;
+  if (prob->output_file) {
+    _ = snprintf(b6, sizeof(b6), "%s", prob->output_file);
+  }
+  vals[curvar] = b6;
+  ++curvar;
+  vars[curvar] = "rawvariant";
+  varlens[curvar] = 10;
+  unsigned char b8[64];
+  b8[0] = 0;
+  if (variant > 0) {
+    _ = snprintf(b8, sizeof(b8), "%d", variant);
+  }
+  vals[curvar] = b8;
+  ++curvar;
+  if (prob->statement_env) {
+    for (int i = 0; prob->statement_env[i]; ++i) {
+      const unsigned char *envvar = prob->statement_env[i];
+      const unsigned char *sep = strchr(envvar, '=');
+      if (!sep) {
+        vars[curvar] = envvar; vals[curvar] = "1";
+      } else {
+        int ll = sep - envvar;
+        unsigned char *dst = alloca(ll + 1);
+        vars[curvar] = dst;
+        memcpy(dst, envvar, ll);
+        dst[ll] = 0;
+        vals[curvar] = sep + 1;
+      }
+      varlens[curvar] = strlen(vars[curvar]);
+      ++curvar;
+    }
+  }
+  vars[curvar] = NULL; vals[curvar] = NULL;
+
+  substitute_curly(fout, text, vars, varlens, vals, flags);
 }
 
 void
