@@ -2,7 +2,7 @@
 #ifndef __VARSUBST_H__
 #define __VARSUBST_H__
 
-/* Copyright (C) 2004-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2025 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -18,6 +18,8 @@
 
 #include "ejudge/prepare.h"
 #include "ejudge/serve_state.h"
+
+#include <stdio.h>
 
 unsigned char *
 varsubst_heap(
@@ -36,5 +38,14 @@ unsigned char *
 config_var_substitute_heap(unsigned char *txt);
 unsigned char *
 config_var_substitute_buf(unsigned char *buf, size_t bufsize);
+
+void
+substitute_curly(
+        FILE *fout,
+        const unsigned char *text,
+        const unsigned char **names,
+        const int *name_lens,
+        const unsigned char **values,
+        const int *flags);
 
 #endif /* __VARSUBST_H__ */

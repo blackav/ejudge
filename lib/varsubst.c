@@ -22,6 +22,7 @@
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
 
+#include <stdio.h>
 #include <string.h>
 
 static const unsigned char *
@@ -278,4 +279,50 @@ config_var_substitute_buf(unsigned char *buf, size_t bufsize)
   snprintf(buf, bufsize, "%s", s);
   xfree(s);
   return buf;
+}
+
+void
+substitute_curly(
+        FILE *fout,
+        const unsigned char *text,
+        const unsigned char **names,
+        const int *name_lens,
+        const unsigned char **values,
+        const int *flags)
+{
+  const unsigned char *p = text;
+  while (*p) {
+    const unsigned char *q = p;
+    while (*q && (*q != '{' || q[1] != '{')) {
+      ++q;
+    }
+    if (!*q) {
+      fwrite_unlocked(p, 1, q - p, fout);
+      break;
+    }
+    const unsigned char *r = q + 2;
+    while (*r && (*r != '}' || r[1] != '}')) {
+      ++r;
+    }
+    if (!*r) {
+      fwrite_unlocked(p, 1, r - p, fout);
+      break;
+    }
+    int len = r - q - 2;
+    int idx = 0;
+    for (; names[idx]; ++idx) {
+      if (name_lens[idx] == len && strncmp(names[idx], q + 2, len)) {
+        break;
+      }
+    }
+    if (!names[idx]) {
+      fwrite_unlocked(p, 1, r - p + 2, fout);
+      p = r + 2;
+    } else {
+      fwrite_unlocked(p, 1, q - p, fout);
+      fputs_unlocked(values[idx], fout);
+      p = r + 2;
+      if (flags[idx] == 1 && *p == '=') ++p;
+    }
+  }
 }
