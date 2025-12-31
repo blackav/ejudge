@@ -247,7 +247,7 @@ ns_unparse_answers(
   }
   if (pmd && pmd->data) {
     putc_unlocked('\n', out_f);
-    fwrite_unlocked(pmd->data, 1, pmd->size, out_f);
+    ns_unparse_md_statement(out_f, phr, prob, variant, pmd->data);
     putc_unlocked('\n', out_f);
   }
   px = 0; pw = 0; pw_path = 0;

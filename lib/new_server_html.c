@@ -18209,7 +18209,9 @@ unpriv_problem_statement_json(
     pmd = &prob->md_files[0];
   }
   if (pmd && pmd->size > 0) {
-    fwrite_unlocked(pmd->data, 1, pmd->size, fout);
+    fputc_unlocked('\n', fout);
+    ns_unparse_md_statement(fout, phr, prob, variant, pmd->data);
+    fputc_unlocked('\n', fout);
   } else {
     if (variant > 0 && prob->xml.a && prob->xml.a[variant - 1]) {
       px = prob->xml.a[variant - 1];

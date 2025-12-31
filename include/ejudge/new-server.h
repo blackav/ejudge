@@ -1042,4 +1042,12 @@ ns_get_archive_download_job(
         struct server_framework_state *state,
         const unsigned char *job_id);
 
+void
+ns_unparse_md_statement(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct section_problem_data *prob,
+        int variant,
+        const unsigned char *text);
+
 #endif /* __NEW_SERVER_H__ */
