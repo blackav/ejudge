@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2025 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -9892,7 +9892,7 @@ write_json_run_info(
   const struct section_global_data *global = cs->global;
   const struct section_problem_data *prob = NULL;
   int ok = 1;
-  UserProblemInfo *pinfo = NULL;
+  UserProblemInfo *pinfo = NULL, *pinfo_heap = NULL;
   unsigned char rep_path[PATH_MAX];
   int flags;
   char *rep_txt = NULL;
@@ -9907,7 +9907,12 @@ write_json_run_info(
   if (pre->prob_id > 0 && pre->prob_id <= cs->max_prob)
     prob = cs->probs[pre->prob_id];
 
-  XALLOCAZ(pinfo, cs->max_prob + 1);
+  if (cs->max_prob > EJ_MAX_PINFO_ON_STACK) {
+    XCALLOC(pinfo_heap, cs->max_prob + 1);
+    pinfo = pinfo_heap;
+  } else {
+    XALLOCAZ(pinfo, cs->max_prob + 1);
+  }
   for (int i = 0; i <= cs->max_prob; ++i) {
     pinfo[i].best_run = -1;
   }
@@ -10445,6 +10450,7 @@ write_json_run_info(
   testing_report_free(tr);
   free(rep_txt);
   free(comp_out_txt);
+  free(pinfo_heap);
 }
 
 void
