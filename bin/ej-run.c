@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2000-2024 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -264,7 +264,7 @@ do_loop(void)
 
     if (srpp->type_val == PROB_TYPE_TESTS) {
       //cr_serialize_lock(&serve_state);
-      run_inverse_testing(&serve_state, srp, &reply_pkt,
+      run_inverse_testing(&serve_state, NULL, srp, &reply_pkt,
                           pkt_name, global->run_exe_dir,
                           report_path, sizeof(report_path),
                           utf8_mode);
