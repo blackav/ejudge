@@ -128,8 +128,18 @@ render_url_escaped(MD_HTML* r, const MD_CHAR* data, MD_SIZE size)
     #define NEED_URL_ESC(ch)    (r->escape_map[(unsigned char)(ch)] & NEED_URL_ESC_FLAG)
 
     while(1) {
-        while(off < size  &&  !NEED_URL_ESC(data[off]))
-            off++;
+        // preserve {{ and }} as is for further substitution
+        while (off < size) {
+            if (data[off] == '{' && off+1 < size && data[off+1] == '{') {
+                off += 2;
+            } else if (data[off] == '}' && off+1 < size && data[off+1] == '}') {
+                off += 2;
+            } else if (!NEED_URL_ESC(data[off])) {
+                ++off;
+            } else {
+                break;
+            }
+        }
         if(off > beg)
             render_verbatim(r, data + beg, off - beg);
 
