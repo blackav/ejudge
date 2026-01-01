@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2025 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -16675,7 +16675,7 @@ ns_unparse_md_statement(
         int variant,
         const unsigned char *text)
 {
-  if (!strstr(text, "@@")) {
+  if (!strstr(text, "{{")) {
     fputs_unlocked(text, fout);
     return;
   }

@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2004-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -293,7 +293,7 @@ substitute_curly(
   const unsigned char *p = text;
   while (*p) {
     const unsigned char *q = p;
-    while (*q && (*q != '@' || q[1] != '@')) {
+    while (*q && (*q != '{' || q[1] != '{')) {
       ++q;
     }
     if (!*q) {
@@ -301,7 +301,7 @@ substitute_curly(
       break;
     }
     const unsigned char *r = q + 2;
-    while (*r && (*r != '@' || r[1] != '@')) {
+    while (*r && (*r != '}' || r[1] != '}')) {
       ++r;
     }
     if (!*r) {
