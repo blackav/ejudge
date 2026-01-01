@@ -2,7 +2,7 @@
 #ifndef __EJ_LIMITS_H__
 #define __EJ_LIMITS_H__
 
-/* Copyright (C) 2005-2024 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -122,5 +122,8 @@
 
 /** max number of supported test groups for group merge mode */
 #define EJ_MAX_TEST_GROUP 15
+
+/* max number of problems to use stack for problem properties */
+#define EJ_MAX_PINFO_ON_STACK 1024
 
 #endif /* __EJ_LIMITS_H__ */

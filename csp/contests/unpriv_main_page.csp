@@ -59,7 +59,7 @@ ns_unparse_answers(
   int enable_virtual_start = 0;
   int tab_counter;
   const unsigned char *prob_name = 0;
-  UserProblemInfo *pinfo = 0;
+  UserProblemInfo *pinfo = 0, *pinfo_heap = NULL;
   const unsigned char *telegram_token = NULL;
   const struct userlist_user *u = teamdb_get_userlist(cs->teamdb_state, phr->user_id);
   const struct userlist_user_info *ui = NULL;
@@ -94,7 +94,12 @@ ns_unparse_answers(
   }
   prob = 0;
 
-  XALLOCAZ(pinfo, cs->max_prob + 1);
+  if (cs->max_prob > EJ_MAX_PINFO_ON_STACK) {
+    XCALLOC(pinfo_heap, cs->max_prob + 1);
+    pinfo = pinfo_heap;
+  } else {
+    XALLOCAZ(pinfo, cs->max_prob + 1);
+  }
   for (i = 0; i <= cs->max_prob; ++i) {
     pinfo[i].best_run = -1;
   }
@@ -355,4 +360,5 @@ ns_unparse_answers(
   l10n_resetlocale();
 //cleanup:;
   html_armor_free(&ab);
+  xfree(pinfo_heap);
 %>

@@ -10405,6 +10405,7 @@ priv_problem_status_json(
   time_t point_in_time = cs->current_time;
   long long rel_time = -1;
   long long abs_time = 0;
+  UserProblemInfo *pinfo = NULL, *pinfo_heap = NULL;
 
   if (hr_cgi_param_int_opt(phr, "other_user_id", &other_user_id, 0) < 0)
     goto done;
@@ -10532,8 +10533,12 @@ priv_problem_status_json(
     }
   }
 
-  UserProblemInfo *pinfo = NULL;
-  XALLOCAZ(pinfo, cs->max_prob + 1);
+  if (cs->max_prob > EJ_MAX_PINFO_ON_STACK) {
+    XCALLOC(pinfo_heap, cs->max_prob + 1);
+    pinfo = pinfo_heap;
+  } else {
+    XALLOCAZ(pinfo, cs->max_prob + 1);
+  }
   for (int i = 0; i <= cs->max_prob; ++i) {
     pinfo[i].best_run = -1;
   }
@@ -10924,6 +10929,7 @@ done:;
     cJSON_Delete(jr);
   }
   xfree(login_str);
+  xfree(pinfo_heap);
   return;
 
 userlist_error:;
@@ -17532,7 +17538,7 @@ unpriv_contest_status_json(
 
   serve_state_t cs = extra->serve_state;
   const struct section_global_data *global = cs->global;
-  UserProblemInfo *pinfo = NULL;
+  UserProblemInfo *pinfo = NULL, *pinfo_heap = NULL;
 
   time_t start_time;
   time_t stop_time;
@@ -17561,7 +17567,12 @@ unpriv_contest_status_json(
     if (fog_start_time < start_time) fog_start_time = start_time;
   }
 
-  XALLOCAZ(pinfo, cs->max_prob + 1);
+  if (cs->max_prob > EJ_MAX_PINFO_ON_STACK) {
+    XCALLOC(pinfo_heap, cs->max_prob + 1);
+    pinfo = pinfo_heap;
+  } else {
+    XALLOCAZ(pinfo, cs->max_prob + 1);
+  }
   for (int i = 0; i <= cs->max_prob; ++i) {
     pinfo[i].best_run = -1;
   }
@@ -17714,6 +17725,7 @@ unpriv_contest_status_json(
   fprintf(fout, "\n}\n");
 
   html_armor_free(&ab);
+  xfree(pinfo_heap);
 }
 
 static void
@@ -17727,6 +17739,7 @@ unpriv_problem_status_json(
   serve_state_t cs = extra->serve_state;
   const struct section_global_data *global = cs->global;
   int ok = 1;
+  UserProblemInfo *pinfo = NULL, *pinfo_heap = NULL;
 
   time_t start_time = 0;
   time_t stop_time = 0;
@@ -17770,8 +17783,12 @@ unpriv_problem_status_json(
     }
   }
 
-  UserProblemInfo *pinfo = NULL;
-  XALLOCAZ(pinfo, cs->max_prob + 1);
+  if (cs->max_prob > EJ_MAX_PINFO_ON_STACK) {
+    XCALLOC(pinfo_heap, cs->max_prob + 1);
+    pinfo = pinfo_heap;
+  } else {
+    XALLOCAZ(pinfo, cs->max_prob + 1);
+  }
   for (int i = 0; i <= cs->max_prob; ++i) {
     pinfo[i].best_run = -1;
   }
@@ -18141,6 +18158,7 @@ unpriv_problem_status_json(
   fprintf(fout, "\n}\n");
 cleanup:
   html_armor_free(&ab);
+  xfree(pinfo_heap);
 }
 
 static void
@@ -18156,6 +18174,7 @@ unpriv_problem_statement_json(
   time_t start_time = 0;
   time_t stop_time = 0;
   int accepting_mode = 0;
+  UserProblemInfo *pinfo = NULL, *pinfo_heap = NULL;
 
   if (global->is_virtual) {
     start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
@@ -18191,8 +18210,12 @@ unpriv_problem_statement_json(
     }
   }
 
-  UserProblemInfo *pinfo = NULL;
-  XALLOCAZ(pinfo, cs->max_prob + 1);
+  if (cs->max_prob > EJ_MAX_PINFO_ON_STACK) {
+    XCALLOC(pinfo_heap, cs->max_prob + 1);
+    pinfo = pinfo_heap;
+  } else {
+    XALLOCAZ(pinfo, cs->max_prob + 1);
+  }
   for (int i = 0; i <= cs->max_prob; ++i) {
     pinfo[i].best_run = -1;
   }
@@ -18226,6 +18249,7 @@ unpriv_problem_statement_json(
 
 cleanup:
   html_armor_free(&ab);
+  xfree(pinfo_heap);
   return;
 
 fail:
@@ -18245,6 +18269,8 @@ unpriv_list_runs_json(
   const struct section_global_data *global = cs->global;
   RunDisplayInfos rdis = {};
   int ok = 1;
+  UserProblemInfo *pinfo = NULL, *pinfo_heap = NULL;
+
   phr->json_reply = 1;
 
   time_t start_time = 0;
@@ -18280,8 +18306,12 @@ unpriv_list_runs_json(
     }
   }
 
-  UserProblemInfo *pinfo = NULL;
-  XALLOCAZ(pinfo, cs->max_prob + 1);
+  if (cs->max_prob > EJ_MAX_PINFO_ON_STACK) {
+    XCALLOC(pinfo_heap, cs->max_prob + 1);
+    pinfo = pinfo_heap;
+  } else {
+    XALLOCAZ(pinfo, cs->max_prob + 1);
+  }
   for (int i = 0; i <= cs->max_prob; ++i) {
     pinfo[i].best_run = -1;
   }
@@ -18320,6 +18350,7 @@ unpriv_list_runs_json(
 cleanup:
   free(rdis.runs);
   html_armor_free(&ab);
+  xfree(pinfo_heap);
 }
 
 static void
@@ -18499,6 +18530,7 @@ unpriv_run_test_json(
   char *rep_txt = NULL;
   size_t rep_len = 0;
   testing_report_xml_t tr = NULL;
+  UserProblemInfo *pinfo = NULL, *pinfo_heap = NULL;
 
   time_t start_time = 0;
   time_t stop_time = 0;
@@ -18561,8 +18593,12 @@ unpriv_run_test_json(
     goto cleanup;
   }
 
-  UserProblemInfo *pinfo = NULL;
-  XALLOCAZ(pinfo, cs->max_prob + 1);
+  if (cs->max_prob > EJ_MAX_PINFO_ON_STACK) {
+    XCALLOC(pinfo_heap, cs->max_prob + 1);
+    pinfo = pinfo_heap;
+  } else {
+    XALLOCAZ(pinfo, cs->max_prob + 1);
+  }
   for (int i = 0; i <= cs->max_prob; ++i) {
     pinfo[i].best_run = -1;
   }
@@ -18700,6 +18736,7 @@ cleanup:
   html_armor_free(&ab);
   testing_report_free(tr);
   free(rep_txt);
+  xfree(pinfo_heap);
 }
 
 static cJSON *
