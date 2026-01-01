@@ -293,7 +293,7 @@ substitute_curly(
   const unsigned char *p = text;
   while (*p) {
     const unsigned char *q = p;
-    while (*q && (*q != '{' || q[1] != '{')) {
+    while (*q && (*q != '@' || q[1] != '@')) {
       ++q;
     }
     if (!*q) {
@@ -301,7 +301,7 @@ substitute_curly(
       break;
     }
     const unsigned char *r = q + 2;
-    while (*r && (*r != '}' || r[1] != '}')) {
+    while (*r && (*r != '@' || r[1] != '@')) {
       ++r;
     }
     if (!*r) {
@@ -311,7 +311,7 @@ substitute_curly(
     int len = r - q - 2;
     int idx = 0;
     for (; names[idx]; ++idx) {
-      if (name_lens[idx] == len && strncmp(names[idx], q + 2, len)) {
+      if (name_lens[idx] == len && !strncmp(names[idx], q + 2, len)) {
         break;
       }
     }

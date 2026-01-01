@@ -16675,7 +16675,7 @@ ns_unparse_md_statement(
         int variant,
         const unsigned char *text)
 {
-  if (!strstr(text, "{{")) {
+  if (!strstr(text, "@@")) {
     fputs_unlocked(text, fout);
     return;
   }
