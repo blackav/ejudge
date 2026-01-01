@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2012-2025 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -498,7 +498,7 @@ handle_packet(
 
   if (srpp->type_val == PROB_TYPE_TESTS) {
     //cr_serialize_lock(state);
-    run_inverse_testing(state, srp, &reply_pkt,
+    run_inverse_testing(state, agent, srp, &reply_pkt,
                         pkt_name, super_run_exe_path,
                         report_path, sizeof(report_path),
                         utf8_mode);

@@ -2,7 +2,7 @@
 #ifndef __RUN_H__
 #define __RUN_H__
 
-/* Copyright (C) 2010-2025 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2010-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -104,9 +104,12 @@ struct remap_spec
   int dst_len;
 };
 
+struct AgentClient;
+
 void
 run_inverse_testing(
         struct serve_state *state,
+        struct AgentClient *agent,
         const struct super_run_in_packet *srp,
         struct run_reply_packet *reply_pkt,
         const unsigned char *pkt_name,
@@ -119,7 +122,6 @@ struct full_archive;
 struct serve_state;
 struct section_tester_data;
 struct ejudge_cfg;
-struct AgentClient;
 struct run_properties;
 
 void

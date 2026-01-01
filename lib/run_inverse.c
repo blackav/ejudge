@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2010-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2010-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -16,6 +16,7 @@
 
 #include "ejudge/config.h"
 #include "ejudge/ej_limits.h"
+#include "ejudge/agent_client.h"
 #include "ejudge/run.h"
 #include "ejudge/serve_state.h"
 #include "ejudge/fileutl.h"
@@ -1045,6 +1046,7 @@ done:
 void
 run_inverse_testing(
         struct serve_state *state,
+        struct AgentClient *agent,
         const struct super_run_in_packet *srp,
         struct run_reply_packet *reply_pkt,
         const unsigned char *pkt_name,
@@ -1198,8 +1200,13 @@ run_inverse_testing(
     goto cleanup;
   }
 
-  r = generic_copy_file(REMOVE, run_exe_dir, pkt_name, srgp->exe_sfx,
-                        0, global->run_work_dir, pkt_name, arch_sfx);
+  if (agent) {
+    r = agent->ops->get_data_2(agent, pkt_name, srgp->exe_sfx,
+      global->run_work_dir, pkt_name, arch_sfx, AC_RECONNECT_ENABLE);
+  } else {
+    r = generic_copy_file(REMOVE, run_exe_dir, pkt_name, srgp->exe_sfx,
+                          0, global->run_work_dir, pkt_name, arch_sfx);
+  }
   if (r <= 0) {
     perr(log_f, "failed to read archive file %s/%s%s",
          global->run_work_dir, pkt_name, arch_sfx);
