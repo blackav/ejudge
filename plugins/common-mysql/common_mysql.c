@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2008-2024 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -533,6 +533,7 @@ do_query(
     }
     r = mysql_errno(state->conn);
     if (r != CR_CONNECTION_ERROR && r != CR_CONN_HOST_ERROR && r != CR_SERVER_GONE_ERROR && r != CR_SERVER_LOST) {
+      err("%s:%d: mysql error %d", __FUNCTION__, __LINE__, r);
       db_error_fail(state);
     }
     if (++query_count == 3) {
@@ -568,6 +569,7 @@ do_query(
       }
       r = mysql_errno(state->conn);
       if (r != CR_CONNECTION_ERROR && r != CR_CONN_HOST_ERROR && r != CR_SERVER_GONE_ERROR && r != CR_SERVER_LOST) {
+        err("%s:%d: mysql error %d", __FUNCTION__, __LINE__, r);
         db_error_fail(state);
       }
       if (reconnect_attempt == 10) {
