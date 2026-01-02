@@ -38,6 +38,10 @@
 #include <sys/time.h>
 #include <stdint.h>
 
+#ifndef ER_CLIENT_INTERACTION_TIMEOUT
+#define ER_CLIENT_INTERACTION_TIMEOUT 4031
+#endif
+
 static struct common_plugin_data *
 init_func(void);
 static int
@@ -532,7 +536,7 @@ do_query(
       return 0;
     }
     r = mysql_errno(state->conn);
-    if (r != CR_CONNECTION_ERROR && r != CR_CONN_HOST_ERROR && r != CR_SERVER_GONE_ERROR && r != CR_SERVER_LOST) {
+    if (r != CR_CONNECTION_ERROR && r != CR_CONN_HOST_ERROR && r != CR_SERVER_GONE_ERROR && r != CR_SERVER_LOST && r != ER_CLIENT_INTERACTION_TIMEOUT) {
       err("%s:%d: mysql error %d", __FUNCTION__, __LINE__, r);
       db_error_fail(state);
     }
@@ -568,7 +572,7 @@ do_query(
         break;
       }
       r = mysql_errno(state->conn);
-      if (r != CR_CONNECTION_ERROR && r != CR_CONN_HOST_ERROR && r != CR_SERVER_GONE_ERROR && r != CR_SERVER_LOST) {
+      if (r != CR_CONNECTION_ERROR && r != CR_CONN_HOST_ERROR && r != CR_SERVER_GONE_ERROR && r != CR_SERVER_LOST && r != ER_CLIENT_INTERACTION_TIMEOUT) {
         err("%s:%d: mysql error %d", __FUNCTION__, __LINE__, r);
         db_error_fail(state);
       }
