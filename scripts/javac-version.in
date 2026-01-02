@@ -1,5 +1,5 @@
 #! /bin/bash
-# Copyright (c) 2005-2024 Alexander Chernov <cher@ejudge.ru>
+# Copyright (c) 2005-2026 Alexander Chernov <cher@ejudge.ru>
 
 LANG_CONFIG_DIR="@lang_config_dir@"
 
@@ -89,10 +89,9 @@ public class conftest
   }
 }
 EOF
-  "${JAVACRUN}" -source ${JAVAVER} conftest.java >/dev/null 2>/dev/null || failure
+  "${JAVACRUN}" --release ${JAVAVER} conftest.java >/dev/null 2>/dev/null || failure
   [ -f conftest.class ] || failure
-  touch conftest.policy
-  "${JAVARUN}" -Djava.security.manager -Djava.security.policy=conftest.policy conftest >/dev/null 2>/dev/null || failure
+  "${JAVARUN}" conftest >/dev/null 2>/dev/null || failure
 
   rm -f ./conftest*
   echo 'version="'"${version}"'"'
