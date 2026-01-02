@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2024-2025 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2024-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -283,7 +283,7 @@ packet_handler_auth_oidc(int uid, int argc, char **argv, void *user)
         goto done;
     }
 
-    fprintf(stderr, "oidc json: >>%s<<\n", json_s);
+    // fprintf(stderr, "oidc json: >>%s<<\n", json_s);
 
     if (!(root = cJSON_Parse(json_s))) {
         error_message = "oidc JSON parse failed";
