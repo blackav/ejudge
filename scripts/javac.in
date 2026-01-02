@@ -1,5 +1,5 @@
 #! /bin/bash
-# Copyright (c) 2004-2024 Alexander Chernov <cher@ejudge.ru>
+# Copyright (c) 2004-2026 Alexander Chernov <cher@ejudge.ru>
 
 # Usage: javac in-file out-file
 
@@ -95,7 +95,7 @@ then
         CPOPT=" -cp ${EJUDGE_CLASSPATH} "
     fi
 
-    "${JAVACRUN}" --target "${JAVAVER}" ${CPOPT} *.java || exit 1
+    "${JAVACRUN}" --release "${JAVAVER}" ${CPOPT} ${EJUDGE_FLAGS} *.java ${EJUDGE_FLAGS_2} || exit 1
 
     MOPT=
     if [ "${EJUDGE_CLASSPATH}" != "" ]
@@ -143,7 +143,7 @@ then
     CPOPT=" -cp ${EJUDGE_CLASSPATH} "
 fi
 
-"${JAVACRUN}" --target "${JAVAVER}" ${CPOPT} *.java || exit 1
+"${JAVACRUN}" --release "${JAVAVER}" ${CPOPT} ${EJUDGE_FLAGS} *.java ${EJUDGE_FLAGS_2} || exit 1
 
 MOPT=
 if [ "${EJUDGE_CLASSPATH}" != "" ]

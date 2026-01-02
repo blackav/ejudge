@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright (c) 2004-2021 Alexander Chernov <cher@ejudge.ru>
+# Copyright (c) 2004-2026 Alexander Chernov <cher@ejudge.ru>
 
 # assume that we have single argument
 # EJUDGE_JAVA_FLAGS may be used to pass additional flags
@@ -23,6 +23,7 @@ LANG_CONFIG_DIR="@lang_config_dir@"
 if [ -f "${EJUDGE_LANG_CONFIG}" ]
 then
   . "${EJUDGE_LANG_CONFIG}"
+  EJUDGE_JAVA_FLAGS="--release ${JAVAVER}"
 else
   JAVARUN="/usr/bin/java"
   JAVADIR="/usr"
@@ -73,4 +74,4 @@ then
 fi
 
 #exec "${JAVARUN}" ${EJUDGE_JAVA_FLAGS} -Djava.security.manager -Djava.security.policy="${policy_file}" -jar "${runfile}" "$@"
-exec "${JAVARUN}" ${EJUDGE_JAVA_FLAGS} -jar "${runfile}" "$@"
+exec "${JAVARUN}" ${EJUDGE_JAVA_FLAGS} ${EJUDGE_FLAGS} -jar "${runfile}" ${EJUDGE_FLAGS_2} "$@"
