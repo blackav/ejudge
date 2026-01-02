@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2021-2025 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2021-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1803,6 +1803,8 @@ apply_language_profiles(void)
     if (enable_compile_mode) {
         if (!strcmp(language_name, "ghc")) {
             enable_var = 1;
+        } else if (!strcmp(language_name, "dotnet-cs") || !strcmp(language_name, "dotnet-vb")) {
+            limit_file_size = -1;
         }
         return;
     }
