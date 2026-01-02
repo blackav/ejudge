@@ -20,7 +20,6 @@ else
 #
 #include javac.cfg
 #
-    EJUDGE_JAVA_FLAGS="--release ${JAVAVER}"
 fi
 
 if [ x"${JAVARUN}" = x ]

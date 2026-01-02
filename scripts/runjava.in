@@ -23,7 +23,6 @@ LANG_CONFIG_DIR="@lang_config_dir@"
 if [ -f "${EJUDGE_LANG_CONFIG}" ]
 then
   . "${EJUDGE_LANG_CONFIG}"
-  EJUDGE_JAVA_FLAGS="--release ${JAVAVER}"
 else
   JAVARUN="/usr/bin/java"
   JAVADIR="/usr"
