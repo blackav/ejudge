@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2025 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2025-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -86,6 +86,7 @@ typedef struct ConnectionState
     long long current_time_ms;
 
     SpoolQueue *spool_queue;
+    unsigned char *hearbeat_path;
 } ConnectionState;
 
 static void
@@ -103,6 +104,7 @@ free_connection_state(ConnectionState *conn)
         free(conn->out[i].msg);
     }
     free(conn->out);
+    free(conn->hearbeat_path);
 }
 
 struct AgentServerState;
@@ -1109,7 +1111,7 @@ put_heartbeat_func(
         goto done;
     }
 
-    if (agent_save_to_spool(conn->inst_id, conn->spool_queue->heartbeat_dir, file_name, data, size) < 0) {
+    if (agent_save_to_spool(conn->inst_id, conn->spool_queue->heartbeat_dir, file_name, data, size, &conn->hearbeat_path) < 0) {
         cJSON_AddStringToObject(reply, "message", "filesystem error");
         goto done;
     }
@@ -1473,7 +1475,7 @@ put_config_func(
         goto done;
     }
 
-    if (agent_save_to_spool(conn->inst_id, conn->spool_queue->config_dir, file_name, data, size) < 0) {
+    if (agent_save_to_spool(conn->inst_id, conn->spool_queue->config_dir, file_name, data, size, NULL) < 0) {
         cJSON_AddStringToObject(reply, "message", "filesystem error");
         goto done;
     }
@@ -1797,6 +1799,9 @@ callback_server(
         spool_queue_remove_waiter(conn->spool_queue, conn, -1, NULL, NULL);
         if (conn->spool_queue) {
             --conn->spool_queue->refcount;
+        }
+        if (conn->hearbeat_path && conn->hearbeat_path[0]) {
+            unlink(conn->hearbeat_path);
         }
         free_connection_state(conn);
         break;
