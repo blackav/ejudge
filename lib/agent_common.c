@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2025 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2025-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -652,7 +652,8 @@ agent_save_to_spool(
     const unsigned char *spool_dir,
     const unsigned char *file_name,
     const unsigned char *data,
-    size_t size)
+    size_t size,
+    unsigned char **p_heartbeat_path)
 {
     __attribute__((unused)) int _;
     unsigned char in_path[PATH_MAX];
@@ -688,6 +689,10 @@ agent_save_to_spool(
         goto done;
     }
     in_path[0] = 0;
+    if (p_heartbeat_path) {
+        free(*p_heartbeat_path);
+        *p_heartbeat_path = xstrdup(dir_path);
+    }
 
     retval = 0;
 

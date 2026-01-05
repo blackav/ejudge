@@ -2,7 +2,7 @@
 #ifndef __AGENT_COMMON_H__
 #define __AGENT_COMMON_H__
 
-/* Copyright (C) 2025 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2025-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -115,7 +115,8 @@ agent_save_to_spool(
     const unsigned char *spool_dir,
     const unsigned char *file_name,
     const unsigned char *data,
-    size_t size);
+    size_t size,
+    unsigned char **p_heartbeat_path);
 int
 agent_save_file(
     const unsigned char *dir,
