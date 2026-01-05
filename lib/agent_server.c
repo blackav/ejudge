@@ -1735,6 +1735,8 @@ handle_receive(
         lws_callback_on_writable(wsi);
     }
 
+    lws_validity_confirmed(wsi);
+
     conn->msg_u = 0;
     if (conn->jmsg) cJSON_Delete(conn->jmsg);
     conn->jmsg = NULL;
