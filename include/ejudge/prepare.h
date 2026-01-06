@@ -1743,6 +1743,12 @@ prepare_insert_variant_num(
         const unsigned char *file,
         int variant);
 
+int
+prepare_resolve_problem_dirs(
+        const struct section_global_data *global,
+        struct section_problem_data *prob,
+        const struct section_problem_data *aprob);
+
 struct token_info *
 prepare_parse_tokens(FILE *log_f, const unsigned char *tokens);
 

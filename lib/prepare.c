@@ -2633,17 +2633,7 @@ prepare_problem(
     prepare_copy_dates(prob, g->dates_config);
   }
 
-  if (prob->variant_num < 0 && aprob && aprob->variant_num >= 0) {
-    prob->variant_num = aprob->variant_num;
-  }
-  if (prob->variant_num < 0) {
-    prob->variant_num = 0;
-  }
-  if (prob->variant_num == 1) {
-    prob->variant_num = 0;
-  }
-
-  if (resolve_problem_dirs(g, prob, aprob) < 0) return -1;
+  if (prepare_resolve_problem_dirs(g, prob, aprob) < 0) return -1;
 
   prepare_set_prob_value(CNTSPROB_type, prob, aprob, g);
   prepare_set_prob_value(CNTSPROB_use_ac_not_ok, prob, aprob, g);
@@ -4113,13 +4103,7 @@ set_defaults(
       err("abstract problem %s cannot have a superproblem", ish);
       return -1;
     }
-    if (aprob->variant_num < 0) {
-      aprob->variant_num = 0;
-    }
-    if (aprob->variant_num == 1) {
-      aprob->variant_num = 0;
-    }
-    if (resolve_problem_dirs(g, aprob, NULL) < 0) return -1;
+    if (prepare_resolve_problem_dirs(g, aprob, NULL) < 0) return -1;
   }
 
   for (i = 1; i <= state->max_prob && mode != PREPARE_COMPILE; i++) {
@@ -7123,6 +7107,25 @@ resolve_problem_dirs(
   return 0;
 }
 
+int
+prepare_resolve_problem_dirs(
+        const struct section_global_data *global,
+        struct section_problem_data *prob,
+        const struct section_problem_data *aprob)
+{
+  if (!prob) return -1;
+  if (prob->variant_num < 0 && aprob && aprob->variant_num >= 0) {
+    prob->variant_num = aprob->variant_num;
+  }
+  if (prob->variant_num < 0) {
+    prob->variant_num = 0;
+  }
+  if (prob->variant_num == 1) {
+    prob->variant_num = 0;
+  }
+  return resolve_problem_dirs(global, prob, aprob);
+}
+
 const unsigned char*
 get_advanced_layout_path(
         unsigned char *buf,
@@ -7144,13 +7147,22 @@ get_advanced_layout_path(
     return buf;
   }
 
+  if (prob->abstract_problem_dir && prob->abstract_problem_dir[0]) {
+    snprintf(base_root, sizeof(base_root), "%s", prob->abstract_problem_dir);
+  }
+
   if (prob->problem_dirs && prob->problem_dirs[0]) {
     prob_dir_count = sarray_len((char**) prob->problem_dirs);
-    if (variant >= 1 && prob->variant_num > 0 && prob_dir_count > 1) {
-      if (variant - 1 < prob_dir_count) {
-        prob_dir = prob->problem_dirs[variant - 1];
+    if (variant >= 1 && prob->variant_num > 0) {
+      if (prob_dir_count > 1) {
+        if (variant - 1 < prob_dir_count) {
+          prob_dir = prob->problem_dirs[variant - 1];
+        } else {
+          prob_dir = prob->problem_dirs[0];
+        }
       } else {
         prob_dir = prob->problem_dirs[0];
+        append_variant = 1;
       }
     } else {
       prob_dir = prob->problem_dirs[0];
@@ -7166,6 +7178,7 @@ get_advanced_layout_path(
     } else {
       prob_dir = prob->short_name;
     }
+    if (variant >= 1 && prob->variant_num > 0) append_variant = 1;
   }
 
   if (!os_IsAbsolutePath(prob_dir)) {
