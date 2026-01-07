@@ -2039,6 +2039,78 @@ find_lang_specific_size(
   return 0;
 }
 
+static int
+pattern_missing_errno(
+        const unsigned char *dir,
+        const unsigned char *pat,
+        int num,
+        int *perrno)
+{
+  unsigned char name[PATH_MAX];
+  unsigned char path[PATH_MAX];
+  int res;
+
+  if (!dir || !dir[0] || !pat || !pat[0]) return 0;
+  if (strchr(pat, '/')) return 0;
+
+  if (snprintf(name, sizeof(name), pat, num) >= (int) sizeof(name)) return 0;
+  if (snprintf(path, sizeof(path), "%s/%s", dir, name) >= (int) sizeof(path)) return 0;
+
+  res = os_CheckAccess(path, REUSE_F_OK);
+  if (res >= 0) return 0;
+  if (perrno) *perrno = -res;
+  return (res == -ENOENT);
+}
+
+static int
+pattern_exists(
+        const unsigned char *dir,
+        const unsigned char *pat,
+        int num)
+{
+  unsigned char name[PATH_MAX];
+  unsigned char path[PATH_MAX];
+
+  if (!dir || !dir[0] || !pat || !pat[0]) return 0;
+  if (strchr(pat, '/')) return 0;
+
+  if (snprintf(name, sizeof(name), pat, num) >= (int) sizeof(name)) return 0;
+  if (snprintf(path, sizeof(path), "%s/%s", dir, name) >= (int) sizeof(path)) return 0;
+
+  return (os_CheckAccess(path, REUSE_F_OK) >= 0);
+}
+
+static unsigned char *
+resolve_file_pattern(
+        const unsigned char *dir,
+        const unsigned char *pat,
+        const unsigned char *sfx,
+        const unsigned char *default_pat)
+{
+  unsigned char *out = NULL;
+
+  if (pat && pat[0]) {
+    if (sfx && sfx[0] && !strchr(pat, '.') && !strchr(pat, '/')) {
+      int missing_errno = 0;
+      if (pattern_missing_errno(dir, pat, 1, &missing_errno) && missing_errno == ENOENT) {
+        unsigned char merged[PATH_MAX];
+        if (snprintf(merged, sizeof(merged), "%s%s", pat, sfx) < (int) sizeof(merged)) {
+          if (pattern_exists(dir, merged, 1)) {
+            return xstrdup(merged);
+          }
+        }
+      }
+    }
+    return xstrdup(pat);
+  }
+
+  if (sfx && sfx[0]) {
+    usprintf(&out, "%%03d%s", sfx);
+    return out;
+  }
+  return xstrdup(default_pat);
+}
+
 int
 serve_run_request(
         const struct ejudge_cfg *config,
@@ -2592,46 +2664,21 @@ serve_run_request(
     srpp->interactor_real_time_limit_ms = prob->interactor_real_time_limit * 1000;
   }
   srpp->disable_stderr = prob->disable_stderr;
-  if (prob->test_pat) {
-    srpp->test_pat = xstrdup(prob->test_pat);
-  } else if (prob->test_sfx) {
-    usprintf(&srpp->test_pat, "%%03d%s", prob->test_sfx);
-  } else {
-    srpp->test_pat = xstrdup("%03d.dat");
-  }
+  srpp->test_pat = resolve_file_pattern(srpp->test_dir, prob->test_pat,
+                                        prob->test_sfx, "%03d.dat");
   if (prob->use_corr > 0) {
-    if (prob->corr_pat) {
-      srpp->corr_pat = xstrdup(prob->corr_pat);
-    } else if (prob->corr_sfx) {
-      usprintf(&srpp->corr_pat, "%%03d%s", prob->corr_sfx);
-    } else {
-      srpp->corr_pat = xstrdup("%03d.ans");
-    }
+    srpp->corr_pat = resolve_file_pattern(srpp->corr_dir, prob->corr_pat,
+                                          prob->corr_sfx, "%03d.ans");
   }
   if (prob->use_info > 0) {
-    if (prob->info_pat) {
-      srpp->info_pat = xstrdup(prob->info_pat);
-    } else if (prob->info_sfx) {
-      usprintf(&srpp->info_pat, "%%03d%s", prob->info_sfx);
-    } else {
-      srpp->info_pat = xstrdup("%03d.inf");
-    }
+    srpp->info_pat = resolve_file_pattern(srpp->info_dir, prob->info_pat,
+                                          prob->info_sfx, "%03d.inf");
   }
   if (prob->use_tgz > 0) {
-    if (prob->tgz_pat) {
-      srpp->tgz_pat = xstrdup(prob->tgz_pat);
-    } else if (prob->tgz_sfx) {
-      usprintf(&srpp->tgz_pat, "%%03d%s", prob->tgz_sfx);
-    } else {
-      srpp->tgz_pat = xstrdup("%03d.tgz");
-    }
-    if (prob->tgzdir_pat) {
-      srpp->tgzdir_pat = xstrdup2(prob->tgzdir_pat);
-    } else if (prob->tgzdir_sfx) {
-      usprintf(&srpp->tgzdir_pat, "%%03d%s", prob->tgzdir_sfx);
-    } else {
-      srpp->tgzdir_pat = xstrdup("%03d.dir");
-    }
+    srpp->tgz_pat = resolve_file_pattern(srpp->tgz_dir, prob->tgz_pat,
+                                         prob->tgz_sfx, "%03d.tgz");
+    srpp->tgzdir_pat = resolve_file_pattern(srpp->tgz_dir, prob->tgzdir_pat,
+                                            prob->tgzdir_sfx, "%03d.dir");
   }
   srpp->test_sets = sarray_copy(prob->test_sets);
   srpp->checker_env = sarray_copy(prob->checker_env);
