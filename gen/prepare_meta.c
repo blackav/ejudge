@@ -1267,6 +1267,8 @@ static struct meta_info_item meta_info_section_problem_data_data[] =
   [CNTSPROB_internal_name] = { CNTSPROB_internal_name, 's', XSIZE(struct section_problem_data, internal_name), "internal_name", XOFFSET(struct section_problem_data, internal_name) },
   [CNTSPROB_plugin_entry_name] = { CNTSPROB_plugin_entry_name, 's', XSIZE(struct section_problem_data, plugin_entry_name), "plugin_entry_name", XOFFSET(struct section_problem_data, plugin_entry_name) },
   [CNTSPROB_uuid] = { CNTSPROB_uuid, 's', XSIZE(struct section_problem_data, uuid), "uuid", XOFFSET(struct section_problem_data, uuid) },
+  [CNTSPROB_abstract_problem_dir] = { CNTSPROB_abstract_problem_dir, 's', XSIZE(struct section_problem_data, abstract_problem_dir), "abstract_problem_dir", XOFFSET(struct section_problem_data, abstract_problem_dir) },
+  [CNTSPROB_problem_dirs] = { CNTSPROB_problem_dirs, 'x', XSIZE(struct section_problem_data, problem_dirs), "problem_dirs", XOFFSET(struct section_problem_data, problem_dirs) },
   [CNTSPROB_problem_dir] = { CNTSPROB_problem_dir, 's', XSIZE(struct section_problem_data, problem_dir), "problem_dir", XOFFSET(struct section_problem_data, problem_dir) },
   [CNTSPROB_test_dir] = { CNTSPROB_test_dir, 's', XSIZE(struct section_problem_data, test_dir), "test_dir", XOFFSET(struct section_problem_data, test_dir) },
   [CNTSPROB_test_sfx] = { CNTSPROB_test_sfx, 's', XSIZE(struct section_problem_data, test_sfx), "test_sfx", XOFFSET(struct section_problem_data, test_sfx) },
@@ -1578,6 +1580,10 @@ void cntsprob_copy(struct section_problem_data *dst, const struct section_proble
   if (src->uuid) {
     dst->uuid = strdup(src->uuid);
   }
+  if (src->abstract_problem_dir) {
+    dst->abstract_problem_dir = strdup(src->abstract_problem_dir);
+  }
+  dst->problem_dirs = (typeof(dst->problem_dirs)) sarray_copy((char**) src->problem_dirs);
   if (src->problem_dir) {
     dst->problem_dir = strdup(src->problem_dir);
   }
@@ -1849,6 +1855,8 @@ void cntsprob_free(struct section_problem_data *ptr)
   free(ptr->internal_name);
   free(ptr->plugin_entry_name);
   free(ptr->uuid);
+  free(ptr->abstract_problem_dir);
+  sarray_free((char**) ptr->problem_dirs);
   free(ptr->problem_dir);
   free(ptr->test_dir);
   free(ptr->test_sfx);
@@ -2457,4 +2465,3 @@ const struct meta_methods cntstester_methods =
   (void (*)(void *))cntstester_free,
   meta_info_section_tester_data_data,
 };
-

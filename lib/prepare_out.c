@@ -1146,7 +1146,14 @@ prepare_unparse_prob(
   if (!prob->abstract && prob->uuid && prob->uuid[0]) {
     fprintf(f, "uuid = \"%s\"\n", CARMOR(prob->uuid));
   }
-  if (prob->problem_dir && prob->problem_dir[0]) {
+  if (prob->abstract_problem_dir && prob->abstract_problem_dir[0]) {
+    fprintf(f, "# abstract_problem_dir = \"%s\"\n", CARMOR(prob->abstract_problem_dir));
+  }
+  if (prob->problem_dirs && prob->problem_dirs[0]) {
+    for (int i = 0; prob->problem_dirs[i]; ++i) {
+      fprintf(f, "problem_dir = \"%s\"\n", CARMOR(prob->problem_dirs[i]));
+    }
+  } else if (prob->problem_dir && prob->problem_dir[0]) {
     fprintf(f, "problem_dir = \"%s\"\n", CARMOR(prob->problem_dir));
   }
 
@@ -1825,7 +1832,16 @@ prepare_unparse_actual_prob(
     fprintf(f, "plugin_entry_name = \"%s\"\n", CARMOR(prob->plugin_entry_name));
   }
   if (prob->uuid && prob->uuid[0]) fprintf(f, "uuid = \"%s\"\n", CARMOR(prob->uuid));
-  if (prob->problem_dir && prob->problem_dir[0]) fprintf(f, "problem_dir = \"%s\"\n", CARMOR(prob->problem_dir));
+  if (prob->abstract_problem_dir && prob->abstract_problem_dir[0]) {
+    fprintf(f, "# abstract_problem_dir = \"%s\"\n", CARMOR(prob->abstract_problem_dir));
+  }
+  if (prob->problem_dirs && prob->problem_dirs[0]) {
+    for (int i = 0; prob->problem_dirs[i]; ++i) {
+      fprintf(f, "problem_dir = \"%s\"\n", CARMOR(prob->problem_dirs[i]));
+    }
+  } else if (prob->problem_dir && prob->problem_dir[0]) {
+    fprintf(f, "problem_dir = \"%s\"\n", CARMOR(prob->problem_dir));
+  }
   fprintf(f, "type = \"%s\"\n", problem_unparse_type(prob->type));
 
   if (prob->scoring_checker > 0)
@@ -3218,20 +3234,22 @@ prob_instr(
   path_t sc_path;
   int variant;
 
-  fprintf(f, "<h3>Problem %s: %s</h3>\n", prob->short_name, ARMOR(prob->long_name));
-  if (prob->variant_num > 0) {
-    fprintf(f, "<p>This is a variant problem with <b>%d variants</b> (1-%d).</p>\n",
-            prob->variant_num, prob->variant_num);
-  }
-
   tmp_prob = prepare_copy_problem(prob);
+  if (prepare_resolve_problem_dirs(global, tmp_prob, abstr) < 0) {
+    /* keep raw values on failure; errors are logged already */
+  }
+  fprintf(f, "<h3>Problem %s: %s</h3>\n", prob->short_name, ARMOR(prob->long_name));
+  if (tmp_prob->variant_num > 0) {
+    fprintf(f, "<p>This is a variant problem with <b>%d variants</b> (1-%d).</p>\n",
+            tmp_prob->variant_num, tmp_prob->variant_num);
+  }
   mkpath(conf_path, root_dir, conf_dir, "conf");
 
   if (global->advanced_layout > 0) {
     fprintf(f, "<p><b>Problem directory:</b></p>\n");
     fprintf(f, "<table border=\"1\">\n");
-    if (prob->variant_num > 0) {
-      for (variant = 1; variant <= prob->variant_num; ++variant) {
+    if (tmp_prob->variant_num > 0) {
+      for (variant = 1; variant <= tmp_prob->variant_num; ++variant) {
         get_advanced_layout_path(prob_path, sizeof(prob_path),
                                  global, tmp_prob, NULL, variant);
         report_directory(f, prob_path, variant);
