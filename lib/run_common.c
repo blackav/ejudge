@@ -3092,6 +3092,7 @@ does_test_exist(
 {
   unsigned char test_base[PATH_MAX];
   unsigned char test_src[PATH_MAX];
+  struct stat stb;
   const struct super_run_in_problem_packet *srpp = srp->problem;
 
   test_src[0] = 0;
@@ -3099,7 +3100,9 @@ does_test_exist(
     snprintf(test_base, sizeof(test_base), srpp->test_pat, cur_test);
     snprintf(test_src, sizeof(test_src), "%s/%s", test_dir, test_base);
   }
-  return os_CheckAccess(test_src, REUSE_R_OK) >= 0;
+  if (os_CheckAccess(test_src, REUSE_R_OK) >= 0) return 1;
+  if (stat(test_src, &stb) == 0 && S_ISREG(stb.st_mode)) return 1;
+  return 0;
 }
 
 static int
@@ -3632,7 +3635,10 @@ run_one_test(
 
   // avoid check access operation if the test count is known
   if (srpp->test_count <= 0 && os_CheckAccess(test_src, REUSE_R_OK) < 0) {
-    return -1;
+    struct stat stb;
+    if (stat(test_src, &stb) < 0 || !S_ISREG(stb.st_mode)) {
+      return -1;
+    }
   }
 
   if (tst && tst->check_dir && tst->check_dir[0]) {
@@ -4948,6 +4954,8 @@ debug_log_run_dirs(const struct super_run_in_packet *srp)
           srpp ? srpp->id : 0,
           (srpp && srpp->short_name) ? (const char *) srpp->short_name : "(null)");
   fprintf(df, "advanced_layout=%d\n", srgp ? srgp->advanced_layout : -1);
+  fprintf(df, "uid=%d euid=%d gid=%d egid=%d\n",
+          (int) getuid(), (int) geteuid(), (int) getgid(), (int) getegid());
   fprintf(df, "problem_dir=%s\n",
           (srpp && srpp->problem_dir) ? (const char *) srpp->problem_dir : "(null)");
   fprintf(df, "test_dir=%s test_pat=%s\n",
@@ -4965,10 +4973,16 @@ debug_log_run_dirs(const struct super_run_in_packet *srp)
   if (srpp && srpp->test_dir && srpp->test_pat && srpp->test_pat[0]) {
     unsigned char test_base[PATH_MAX];
     unsigned char test_src[PATH_MAX];
+    struct stat stb;
+    int stat_res = -1;
+    int access_res = 0;
     snprintf(test_base, sizeof(test_base), srpp->test_pat, 1);
     snprintf(test_src, sizeof(test_src), "%s/%s", srpp->test_dir, test_base);
-    fprintf(df, "test_1=%s readable=%d\n",
-            test_src, os_CheckAccess(test_src, REUSE_R_OK) >= 0);
+    access_res = os_CheckAccess(test_src, REUSE_R_OK);
+    stat_res = stat(test_src, &stb);
+    fprintf(df, "test_1=%s access=%d stat=%d mode=%o\n",
+            test_src, access_res, stat_res,
+            (stat_res == 0) ? (unsigned) (stb.st_mode & 0777) : 0);
   }
   fputc('\n', df);
   fclose(df);
