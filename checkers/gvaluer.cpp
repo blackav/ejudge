@@ -147,6 +147,8 @@ class Group
     vector<set<int> > zero_subsets;
     set<int> passed_set;
 
+    vector<int> test_points;
+
 public:
     Group() {}
 
@@ -250,10 +252,23 @@ public:
         zero_subsets.emplace_back(zs);
     }
 
+    void add_test_points(int tp)
+    {
+        test_points.push_back(tp);
+    }
+
+    bool has_test_points() const {
+        return !test_points.empty();
+    }
+
     bool meet_requirements(const ConfigParser &cfg, const Group *& grp) const;
 
-    void add_total_score()
+    void add_total_score(int test_num)
     {
+        if (has_test_points()) {
+            total_score += test_points[test_num - first];
+            return;
+        }
         if (test_score > 0 && !use_lowest_test_score) {
             total_score += test_score;
         }
@@ -276,7 +291,7 @@ public:
     {
         if (test_score < 0 && passed_count == (last - first + 1)) {
             return score;
-        } else if (test_score >= 0) {
+        } else if (test_score >= 0 || has_test_points()) {
             return total_score;
         }
         return 0;
@@ -584,6 +599,32 @@ public:
                 if (t_type != ';') parse_error("';' expected");
                 next_token();
                 g.set_test_score(test_score);
+            } else if (token == "test_points") {
+                int entry_count = 0;
+                try {
+                    next_token();
+                    int tp = stoi(token);
+                    g.add_test_points(tp);
+                    ++entry_count;
+                    next_token();
+                    while (t_type == ',') {
+                        next_token();
+                        tp = stoi(token);
+                        g.add_test_points(tp);
+                        ++entry_count;
+                        next_token();
+                    }
+                } catch (...) {
+                    parse_error("NUM expected");
+                }
+                if (entry_count != g.get_last() - g.get_first() + 1)
+                {
+                    string ec = to_string(entry_count);
+                    string tc = to_string(g.get_last() - g.get_first() + 1);
+                    parse_error(string("test_points length=") + ec + string(" doesn't match group's tests count=") + tc);
+                }
+                if (t_type != ';') parse_error("';' expected");
+                next_token();
             } else if (token == "pass_if_count") {
                 next_token();
                 if (t_type != T_IDENT) parse_error("NUM expected");
@@ -849,7 +890,7 @@ main(int argc, char *argv[])
         if (t_status == RUN_OK) {
             // just go to the next test...
             g->inc_passed_count();
-            g->add_total_score();
+            g->add_total_score(test_num);
             g->add_passed_test(test_num);
             ++test_num;
         } else if (t_score > 0) {
@@ -857,7 +898,7 @@ main(int argc, char *argv[])
             g->add_test_score(t_score);
             g->add_passed_test(test_num);
             ++test_num;
-        } else if (g->get_test_score() >= 0 && !g->get_use_lowest_test_score()) {
+        } else if ((g->get_test_score() >= 0 || g->has_test_points()) && !g->get_use_lowest_test_score()) {
             // by-test score, just go on
             if (test_num == g->get_last()) {
                 if (g->is_zero_score()) {
