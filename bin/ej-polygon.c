@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2012-2025 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -2767,7 +2767,7 @@ new_parse_polygon_xml(
                     int is_group_score = 0;
                     int is_test_score = 0;
                     if (ppg->feedback_policy == PPXML_FEEDBACK_COMPLETE) {
-                        gi->visibility = xstrdup("full");
+                        gi->visibility = xstrdup("brief");
                     } else if (ppg->feedback_policy == PPXML_FEEDBACK_ICPC) {
                         gi->visibility = xstrdup("icpc");
                     } else if (ppg->feedback_policy == PPXML_FEEDBACK_POINTS) {
@@ -3091,7 +3091,7 @@ old_parse_polygon_xml(
                                     for (a = t4->first; a; a = a->next) {
                                         if (!strcmp(a->name[0], "feedback-policy")) {
                                             if (!strcmp(a->text, "complete")) {
-                                                gi->visibility = xstrdup("full");
+                                                gi->visibility = xstrdup("brief");
                                             } else if (!strcmp(a->text, "icpc")) {
                                                 gi->visibility = xstrdup("icpc");
                                             } else if (!strcmp(a->text, "points")) {
