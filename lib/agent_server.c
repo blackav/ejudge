@@ -2015,6 +2015,12 @@ agent_server_start(const AgentServerParams *params)
     lws_info.foreign_loops = ass->loops;
     lws_info.count_threads = 1;
     lws_info.user = ass;
+    lws_retry_bo_t rip =
+    {
+        .secs_since_valid_ping = 120,
+        .secs_since_valid_hangup = 140,
+    };
+    lws_info.retry_and_idle_policy = &rip;
 
     ass->context = lws_create_context(&lws_info);
     if (!ass->context) {
