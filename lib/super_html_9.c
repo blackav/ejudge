@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2025 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2025-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -3219,7 +3219,7 @@ super_serve_api_CNTS_SET_VALUE_JSON(
 }
 
 void
-super_serve_api_MINIMIZE_PROBLEM_JSON(
+super_serve_api_CNTS_MINIMIZE_PROBLEM_JSON(
         FILE *out_f,
         struct http_request_info *phr)
 {
