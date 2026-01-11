@@ -90,6 +90,7 @@ struct TestInfo
     int score;
     unsigned char *group;
     struct GroupInfo *gi;
+    unsigned char sample;
 };
 
 struct GroupInfo
@@ -2747,6 +2748,7 @@ new_parse_polygon_xml(
                     if (ppt->group && ppt->group[0]) {
                         ti->group = strdup(ppt->group);
                     }
+                    ti->sample = ppt->sample > 0;
                 }
             }
             if (ppts->groups) {
@@ -3547,6 +3549,24 @@ process_polygon_zip(
             ti->gi = gi;
             if (ti->serial < gi->first_test) gi->first_test = ti->serial;
             if (ti->serial > gi->last_test) gi->last_test = ti->serial;
+        }
+    }
+
+    // fix visibility for sample tests
+    for (int i = 0; i < pi->group_u; ++i) {
+        struct GroupInfo *gi = &pi->groups[i];
+        int all_sample_tests = 1;
+        if (gi->first_test <= gi->last_test) {
+            for (int j = gi->first_test; j <= gi->last_test; ++j) {
+                if (j < 1 || j > pi->test_u || !pi->tests[j-1].sample) {
+                    all_sample_tests = 0;
+                    break;
+                }
+            }
+        }
+        if (all_sample_tests) {
+            xfree(gi->visibility);
+            gi->visibility = xstrdup("full");
         }
     }
 
