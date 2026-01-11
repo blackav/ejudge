@@ -101,6 +101,7 @@ struct GroupInfo
     int last_test;
     int group_score;
     int test_score;
+    int is_test_score;
 
     int dep_u, dep_a;
     unsigned char **deps;
@@ -2765,7 +2766,7 @@ new_parse_polygon_xml(
                     gi->last_test = INT_MIN;
                     gi->test_score = -1;
                     gi->group_score = -1;
-                    int points = 0;
+                    int points = -1;
                     int is_group_score = 0;
                     int is_test_score = 0;
                     if (ppg->feedback_policy == PPXML_FEEDBACK_COMPLETE) {
@@ -2800,6 +2801,7 @@ new_parse_polygon_xml(
                         gi->group_score = points;
                     } else if (is_test_score) {
                         gi->test_score = points;
+			gi->is_test_score = 1;
                     }
                     if (ppg->dependencies) {
                         struct ppxml_dependencies *ppdd = ppg->dependencies;
@@ -3552,7 +3554,7 @@ process_polygon_zip(
         }
     }
 
-    // fix visibility for sample tests
+    // fix visibility for sample tests and test_score
     for (int i = 0; i < pi->group_u; ++i) {
         struct GroupInfo *gi = &pi->groups[i];
         int all_sample_tests = 1;
@@ -3568,6 +3570,25 @@ process_polygon_zip(
             xfree(gi->visibility);
             gi->visibility = xstrdup("full");
         }
+	if (gi->is_test_score && gi->test_score < 0) {
+	    if (gi->first_test <= gi->last_test) {
+		int test_score = -1;
+		for (int j = gi->first_test; j <= gi->last_test; ++j) {
+		    if (j >= 1 && j <= pi->test_u) {
+			struct TestInfo *ti = &pi->tests[j-1];
+			if (ti->score >= 0) {
+			    if (test_score == -1) {
+				test_score = ti->score;
+			    } else if (test_score != ti->score) {
+				test_score = -2;
+			    }
+			}
+		    }
+		}
+		if (test_score < 0) test_score = 0;
+		gi->test_score = test_score;
+            }
+	}
     }
 
     if (pkt->verbose) {
