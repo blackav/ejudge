@@ -3589,6 +3589,19 @@ process_polygon_zip(
 		gi->test_score = test_score;
             }
 	}
+	if (gi->group_score >= 0) {
+	    if (gi->first_test <= gi->last_test) {
+		for (int j = gi->first_test; j <= gi->last_test; ++j) {
+		    if (j >= 1 && j <= pi->test_u) {
+			if (j == gi->last_test) {
+			    pi->tests[j-1].score = gi->group_score;
+			} else {
+			    pi->tests[j-1].score = 0;
+			}
+		    }
+		}
+	    }
+	}
     }
 
     if (pkt->verbose) {
