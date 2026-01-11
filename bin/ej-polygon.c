@@ -4013,7 +4013,7 @@ process_polygon_zip(
         prob_cfg->checker_env[0] = xstrdup(pi->checker_env);
     }
     if (pi->test_checker_cmd) {
-        prob_cfg->test_checker_cmd = xstrdup(pi->test_checker_cmd);
+        //prob_cfg->test_checker_cmd = xstrdup(pi->test_checker_cmd);
     }
     if (pi->interactor_cmd) {
         prob_cfg->interactor_cmd = xstrdup(pi->interactor_cmd);
