@@ -4935,6 +4935,45 @@ free_testinfo_vector(struct run_test_info_vector *tv)
   memset(tv, 0, sizeof(*tv));
 }
 
+static void
+debug_log_run_dirs(const struct super_run_in_packet *srp)
+{
+  static const char log_path[] = "/home/judges/var/problem_dir.log";
+  FILE *df = fopen(log_path, "a");
+  if (!df) return;
+
+  const struct super_run_in_problem_packet *srpp = srp ? srp->problem : NULL;
+  const struct super_run_in_global_packet *srgp = srp ? srp->global : NULL;
+  fprintf(df, "[run] problem_id=%d short_name=%s\n",
+          srpp ? srpp->id : 0,
+          (srpp && srpp->short_name) ? (const char *) srpp->short_name : "(null)");
+  fprintf(df, "advanced_layout=%d\n", srgp ? srgp->advanced_layout : -1);
+  fprintf(df, "problem_dir=%s\n",
+          (srpp && srpp->problem_dir) ? (const char *) srpp->problem_dir : "(null)");
+  fprintf(df, "test_dir=%s test_pat=%s\n",
+          (srpp && srpp->test_dir) ? (const char *) srpp->test_dir : "(null)",
+          (srpp && srpp->test_pat) ? (const char *) srpp->test_pat : "(null)");
+  fprintf(df, "corr_dir=%s corr_pat=%s\n",
+          (srpp && srpp->corr_dir) ? (const char *) srpp->corr_dir : "(null)",
+          (srpp && srpp->corr_pat) ? (const char *) srpp->corr_pat : "(null)");
+  fprintf(df, "info_dir=%s info_pat=%s\n",
+          (srpp && srpp->info_dir) ? (const char *) srpp->info_dir : "(null)",
+          (srpp && srpp->info_pat) ? (const char *) srpp->info_pat : "(null)");
+  fprintf(df, "tgz_dir=%s tgz_pat=%s\n",
+          (srpp && srpp->tgz_dir) ? (const char *) srpp->tgz_dir : "(null)",
+          (srpp && srpp->tgz_pat) ? (const char *) srpp->tgz_pat : "(null)");
+  if (srpp && srpp->test_dir && srpp->test_pat && srpp->test_pat[0]) {
+    unsigned char test_base[PATH_MAX];
+    unsigned char test_src[PATH_MAX];
+    snprintf(test_base, sizeof(test_base), srpp->test_pat, 1);
+    snprintf(test_src, sizeof(test_src), "%s/%s", srpp->test_dir, test_base);
+    fprintf(df, "test_1=%s readable=%d\n",
+            test_src, os_CheckAccess(test_src, REUSE_R_OK) >= 0);
+  }
+  fputc('\n', df);
+  fclose(df);
+}
+
 static int
 invoke_prepare_cmd(
         const unsigned char *prepare_cmd,
@@ -5474,6 +5513,8 @@ run_tests(
   valuer_cmd[0] = 0;
   valuer_cmt_file[0] = 0;
   valuer_jcmt_file[0] = 0;
+
+  debug_log_run_dirs(srp);
 
   cpu_get_performance_info(&cpu_model, &cpu_mhz);
 

@@ -1087,6 +1087,10 @@ struct section_problem_data
   unsigned char *plugin_entry_name;
   /** problem UUID */
   unsigned char *uuid;
+  /** resolved abstract problem directory */
+  unsigned char *abstract_problem_dir;
+  /** resolved problem directories (one per variant, or single for non-variant) */
+  unsigned char **problem_dirs;
   /** problem directory (relative to problems or absolute) */
   unsigned char *problem_dir;
   /** directory with tests */
@@ -1738,6 +1742,12 @@ prepare_insert_variant_num(
         size_t size,
         const unsigned char *file,
         int variant);
+
+int
+prepare_resolve_problem_dirs(
+        const struct section_global_data *global,
+        struct section_problem_data *prob,
+        const struct section_problem_data *aprob);
 
 struct token_info *
 prepare_parse_tokens(FILE *log_f, const unsigned char *tokens);
