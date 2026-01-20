@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2016-2024 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2016-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -320,7 +320,7 @@ read_bots_file(
   size_t bufz = 0;
   ssize_t bufl;
   while ((bufl = getline(&buf, &bufz, f)) >= 0) {
-    while (bufl > 0 && isspace((unsigned char) buf[bufl])) --bufl;
+    while (bufl > 0 && isspace((unsigned char) buf[bufl-1])) --bufl;
     buf[bufl] = 0;
     if (bufl > 0) {
       add_bot_id(state, buf);
@@ -603,7 +603,7 @@ send_message(
         CURLcode res = curl_easy_perform(curl);
         fclose(resp_f);
         if (res != CURLE_OK) {
-            err("curl request failed");
+            err("%s:%d:curl request failed", __FUNCTION__, __LINE__);
             goto cleanup;
         }
     }
@@ -695,7 +695,7 @@ packet_handler_telegram(int uid, int argc, char **argv, void *user)
     res = curl_easy_perform(curl);
     fclose(resp_f); resp_f = NULL;
     if (res != CURLE_OK) {
-        err("curl request failed");
+        err("%s:%d:curl request failed", __FUNCTION__, __LINE__);
         goto cleanup;
     }
     fprintf(stderr, ">%s<\n", resp_s);
@@ -1979,7 +1979,7 @@ get_updates(struct telegram_plugin_data *state, struct bot_state *bs)
         CURLcode res = curl_easy_perform(curl);
         fclose(resp_f);
         if (res != CURLE_OK) {
-            err("curl request failed");
+            err("%s:%d:curl request failed", __FUNCTION__, __LINE__);
             goto cleanup;
         }
     }
