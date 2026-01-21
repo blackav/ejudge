@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2002-2025 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -36,6 +36,9 @@
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <time.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 #if HAVE_PWD_H
 #include <pwd.h>
@@ -1515,6 +1518,133 @@ ejudge_cfg_caps_add(
   xml_link_node_last(cfg->caps_node, &cap_node->b);
 }
 
+struct bots_cache_data
+{
+  unsigned char *path;
+  time_t last_file_check;
+  time_t last_mtime;
+  strarray_t bots;
+  _Bool permanent_failure;
+  _Bool temporary_failure;
+};
+
+static struct bots_cache_data *bots_cache;
+
+enum { BOTS_CACHE_CHECK_INTERVAL = 30 };
+
+static const unsigned char *
+read_bots_file(
+        const struct ejudge_cfg *cfg,
+        const unsigned char *bots_file,
+        const unsigned char *bot_user_id)
+{
+  if (!bots_cache) {
+    XCALLOC(bots_cache, 1);
+    unsigned char path[PATH_MAX];
+    unsigned char dir[PATH_MAX];
+    int res;
+    if (os_IsAbsolutePath(bots_file)) {
+      res = snprintf(path, sizeof(path), "%s", bots_file);
+    } else if (cfg->this_config_path) {
+      os_rDirName(cfg->this_config_path, dir, sizeof(dir));
+      res = snprintf(path, sizeof(path), "%s/%s", dir, bots_file);
+    } else {
+      res = snprintf(path, sizeof(path), "%s/%s", EJUDGE_CONF_DIR, bots_file);
+    }
+    if (res >= (int) sizeof(path)) {
+      err("%s:%d: token path is too long (%d)", __FUNCTION__, __LINE__, res);
+      bots_cache->permanent_failure = 1;
+      return NULL;
+    }
+    bots_cache->path = xstrdup(path);
+  }
+  if (bots_cache->permanent_failure) {
+    return NULL;
+  }
+  time_t current_time = time(NULL);
+  if (bots_cache->last_file_check + BOTS_CACHE_CHECK_INTERVAL < current_time) {
+    int fd = open(bots_cache->path, O_RDONLY | O_NOCTTY | O_NONBLOCK | O_CLOEXEC, 0);
+    if (fd < 0) {
+      err("%s:%d: failed to open '%s':%s", __FUNCTION__, __LINE__, bots_cache->path, os_ErrorMsg());
+      bots_cache->temporary_failure = 1;
+      return NULL;
+    }
+    struct stat stb;
+    if (fstat(fd, &stb) < 0) {
+      err("%s:%d: fstat failed: %s", __FUNCTION__, __LINE__, os_ErrorMsg());
+      bots_cache->temporary_failure = 1;
+      close(fd);
+      return NULL;
+    }
+    if (!S_ISREG(stb.st_mode)) {
+      err("%s:%d: file '%s' is not regular", __FUNCTION__, __LINE__, bots_cache->path);
+      bots_cache->temporary_failure = 1;
+      close(fd);
+      return NULL;
+    }
+    if (bots_cache->last_mtime != stb.st_mtime) {
+      info("%s:%d: updating bots from '%s'", __FUNCTION__, __LINE__, bots_cache->path);
+
+      FILE *f = fdopen(fd, "r");
+      if (!f) {
+        err("%s:%d: fdopen failed: %s", __FUNCTION__, __LINE__, os_ErrorMsg());
+        bots_cache->temporary_failure = 1;
+        close(fd);
+        return NULL;
+      }
+      fd = -1;
+      for (int i = 0; i < bots_cache->bots.u; ++i) {
+        free(bots_cache->bots.v[i]);
+        bots_cache->bots.v[i] = NULL;
+      }
+      bots_cache->bots.u = 0;
+      char *buf = NULL;
+      size_t bufz = 0;
+      ssize_t bufl;
+      while ((bufl = getline(&buf, &bufz, f)) >= 0) {
+        while (bufl > 0 && isspace((unsigned char) buf[bufl-1])) --bufl;
+        buf[bufl] = 0;
+        if (bufl > 0) {
+          xexpand(&bots_cache->bots);
+          bots_cache->bots.v[bots_cache->bots.u++] = xstrdup(buf);
+        }
+      }
+      free(buf);
+      fclose(f);
+      bots_cache->last_mtime = stb.st_mtime;
+      bots_cache->temporary_failure = 0;
+    }
+  }
+  if (bots_cache->temporary_failure) {
+    return NULL;
+  }
+
+  if (!bot_user_id || !*bot_user_id) {
+    if (bots_cache->bots.u == 1) {
+      return bots_cache->bots.v[0];
+    } else {
+      return NULL;
+    }
+  }
+
+  int bot_user_id_len = 0;
+  if (bot_user_id) bot_user_id_len = strlen(bot_user_id);
+  const unsigned char *bot_token = NULL;
+  for (int i = 0; i < bots_cache->bots.u; ++i) {
+    const unsigned char *cur_id = bots_cache->bots.v[i];
+    int cur_id_len = strlen(cur_id);
+    if (cur_id_len > bot_user_id_len + 1
+        && !strncmp(cur_id, bot_user_id, bot_user_id_len)
+        && cur_id[bot_user_id_len] == ':') {
+      if (bot_token && *bot_token) {
+        return NULL;
+      }
+      bot_token = cur_id;
+    }
+  }
+  return bot_token;
+}
+
 const unsigned char *
 ejudge_cfg_get_telegram_bot_id(
         const struct ejudge_cfg *cfg,
@@ -1534,7 +1664,9 @@ ejudge_cfg_get_telegram_bot_id(
   const unsigned char *bot_token = NULL;
   for (struct xml_tree *p = tree->first_down; p; p = p->right) {
     ASSERT(p->tag == TG__DEFAULT);
-    if (!strcmp(p->name[0], "bots")) {
+    if (!strcmp(p->name[0], "bots_file")) {
+      return read_bots_file(cfg, p->text, bot_user_id);
+    } else if (!strcmp(p->name[0], "bots")) {
       for (struct xml_tree *q = p->first_down; q; q = q->right) {
         ASSERT(q->tag == TG__DEFAULT);
         if (!strcmp(q->name[0], "bot")) {
