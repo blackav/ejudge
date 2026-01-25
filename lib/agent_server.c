@@ -44,7 +44,8 @@
 #include <time.h>
 #include <unistd.h>
 
-#define DEFAULT_SERVER_PORT 8888
+#define DEFAULT_SERVER_PORT      9204
+#define DEFAULT_PROTOCOL_NAME    "ej-agent-server"
 #define MAX_OUTPUT_FRAGMENT_SIZE 65000
 
 typedef struct OutputFragment
@@ -1815,7 +1816,7 @@ callback_server(
 static struct lws_protocols protocols[] =
 {
     { 
-        "server",
+        DEFAULT_PROTOCOL_NAME,
         callback_server,
         sizeof(ConnectionState),
         65536,
