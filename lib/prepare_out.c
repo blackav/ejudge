@@ -292,6 +292,8 @@ prepare_unparse_global(
     unparse_bool(f, "problem_navigation", global->problem_navigation);
   if (global->vertical_navigation != DFLT_G_VERTICAL_NAVIGATION)
     unparse_bool(f, "vertical_navigation", global->vertical_navigation);
+  if (global->vertical_navigation_sdate_sort != DFLT_G_VERTICAL_NAVIGATION_SDATE_SORT)
+    unparse_bool(f, "vertical_navigation_sdate_sort", global->vertical_navigation_sdate_sort);
   if (global->disable_virtual_start != DFLT_G_DISABLE_VIRTUAL_START)
     unparse_bool(f, "disable_virtual_start", global->disable_virtual_start);
   if (global->disable_virtual_auto_judge != DFLT_G_DISABLE_VIRTUAL_AUTO_JUDGE)
