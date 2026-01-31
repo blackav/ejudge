@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2011-2025 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2011-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -5115,6 +5115,12 @@ do_import_problem(
   if (cfg->extid) prob->extid = xstrdup(cfg->extid);
   if (cfg->long_name) {
     xstrdup3(&prob->long_name, cfg->long_name);
+  }
+  if (cfg->full_score >= 0) {
+    prob->full_score = cfg->full_score;
+  }
+  if (cfg->full_user_score >= 0) {
+    prob->full_user_score = cfg->full_user_score;
   }
   long time_limit_ms = 0;
   if (cfg->time_limit_millis > 0) {

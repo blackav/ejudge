@@ -44,7 +44,8 @@
 #include <time.h>
 #include <unistd.h>
 
-#define DEFAULT_SERVER_PORT 8888
+#define DEFAULT_SERVER_PORT      9204
+#define DEFAULT_PROTOCOL_NAME    "ej-agent-server"
 #define MAX_OUTPUT_FRAGMENT_SIZE 65000
 
 typedef struct OutputFragment
@@ -1815,7 +1816,7 @@ callback_server(
 static struct lws_protocols protocols[] =
 {
     { 
-        "server",
+        DEFAULT_PROTOCOL_NAME,
         callback_server,
         sizeof(ConnectionState),
         65536,
@@ -2015,6 +2016,12 @@ agent_server_start(const AgentServerParams *params)
     lws_info.foreign_loops = ass->loops;
     lws_info.count_threads = 1;
     lws_info.user = ass;
+    lws_retry_bo_t rip =
+    {
+        .secs_since_valid_ping = 120,
+        .secs_since_valid_hangup = 140,
+    };
+    lws_info.retry_and_idle_policy = &rip;
 
     ass->context = lws_create_context(&lws_info);
     if (!ass->context) {

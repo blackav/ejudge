@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2012-2025 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -90,6 +90,7 @@ struct TestInfo
     int score;
     unsigned char *group;
     struct GroupInfo *gi;
+    unsigned char sample;
 };
 
 struct GroupInfo
@@ -100,6 +101,7 @@ struct GroupInfo
     int last_test;
     int group_score;
     int test_score;
+    int is_test_score;
 
     int dep_u, dep_a;
     unsigned char **deps;
@@ -2747,6 +2749,7 @@ new_parse_polygon_xml(
                     if (ppt->group && ppt->group[0]) {
                         ti->group = strdup(ppt->group);
                     }
+                    ti->sample = ppt->sample > 0;
                 }
             }
             if (ppts->groups) {
@@ -2763,11 +2766,11 @@ new_parse_polygon_xml(
                     gi->last_test = INT_MIN;
                     gi->test_score = -1;
                     gi->group_score = -1;
-                    int points = 0;
+                    int points = -1;
                     int is_group_score = 0;
                     int is_test_score = 0;
                     if (ppg->feedback_policy == PPXML_FEEDBACK_COMPLETE) {
-                        gi->visibility = xstrdup("full");
+                        gi->visibility = xstrdup("brief");
                     } else if (ppg->feedback_policy == PPXML_FEEDBACK_ICPC) {
                         gi->visibility = xstrdup("icpc");
                     } else if (ppg->feedback_policy == PPXML_FEEDBACK_POINTS) {
@@ -2798,6 +2801,7 @@ new_parse_polygon_xml(
                         gi->group_score = points;
                     } else if (is_test_score) {
                         gi->test_score = points;
+			gi->is_test_score = 1;
                     }
                     if (ppg->dependencies) {
                         struct ppxml_dependencies *ppdd = ppg->dependencies;
@@ -3091,7 +3095,7 @@ old_parse_polygon_xml(
                                     for (a = t4->first; a; a = a->next) {
                                         if (!strcmp(a->name[0], "feedback-policy")) {
                                             if (!strcmp(a->text, "complete")) {
-                                                gi->visibility = xstrdup("full");
+                                                gi->visibility = xstrdup("brief");
                                             } else if (!strcmp(a->text, "icpc")) {
                                                 gi->visibility = xstrdup("icpc");
                                             } else if (!strcmp(a->text, "points")) {
@@ -3550,6 +3554,56 @@ process_polygon_zip(
         }
     }
 
+    // fix visibility for sample tests and test_score
+    for (int i = 0; i < pi->group_u; ++i) {
+        struct GroupInfo *gi = &pi->groups[i];
+        int all_sample_tests = 1;
+        if (gi->first_test <= gi->last_test) {
+            for (int j = gi->first_test; j <= gi->last_test; ++j) {
+                if (j < 1 || j > pi->test_u || !pi->tests[j-1].sample) {
+                    all_sample_tests = 0;
+                    break;
+                }
+            }
+        }
+        if (all_sample_tests) {
+            xfree(gi->visibility);
+            gi->visibility = xstrdup("full");
+        }
+	if (gi->is_test_score && gi->test_score < 0) {
+	    if (gi->first_test <= gi->last_test) {
+		int test_score = -1;
+		for (int j = gi->first_test; j <= gi->last_test; ++j) {
+		    if (j >= 1 && j <= pi->test_u) {
+			struct TestInfo *ti = &pi->tests[j-1];
+			if (ti->score >= 0) {
+			    if (test_score == -1) {
+				test_score = ti->score;
+			    } else if (test_score != ti->score) {
+				test_score = -2;
+			    }
+			}
+		    }
+		}
+		if (test_score < 0) test_score = 0;
+		gi->test_score = test_score;
+            }
+	}
+	if (gi->group_score >= 0) {
+	    if (gi->first_test <= gi->last_test) {
+		for (int j = gi->first_test; j <= gi->last_test; ++j) {
+		    if (j >= 1 && j <= pi->test_u) {
+			if (j == gi->last_test) {
+			    pi->tests[j-1].score = gi->group_score;
+			} else {
+			    pi->tests[j-1].score = 0;
+			}
+		    }
+		}
+	    }
+	}
+    }
+
     if (pkt->verbose) {
         if (pi->group_u > 0) {
             fprintf(log_f, "Groups processed (%d):\n", pi->group_u);
@@ -3993,10 +4047,11 @@ process_polygon_zip(
         prob_cfg->checker_env[0] = xstrdup(pi->checker_env);
     }
     if (pi->test_checker_cmd) {
-        prob_cfg->test_checker_cmd = xstrdup(pi->test_checker_cmd);
+        //prob_cfg->test_checker_cmd = xstrdup(pi->test_checker_cmd);
     }
     if (pi->interactor_cmd) {
         prob_cfg->interactor_cmd = xstrdup(pi->interactor_cmd);
+        prob_cfg->ignore_sigpipe = 1;
     }
     if (pi->solution_cmd && pkt->ignore_main_solution <= 0) {
         prob_cfg->solution_cmd = xstrdup(pi->solution_cmd);
@@ -4031,7 +4086,6 @@ process_polygon_zip(
     if (pkt->enable_group_merge > 0) {
         prob_cfg->enable_group_merge = 1;
     }
-    prob_cfg->ignore_sigpipe = 1;
 
     cfg_file = open_memstream(&cfg_text, &cfg_size);
     problem_config_section_unparse_cfg(cfg_file, prob_cfg);
