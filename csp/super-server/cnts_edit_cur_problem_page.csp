@@ -2,6 +2,8 @@
 %><%@include "includes.csp"
 %><%
 #include "ejudge/meta/prepare_meta.h"
+#include "ejudge/prepare_dflt.h"
+#include "ejudge/osdeps.h"
 %><%@set getter_name = "csp_get_cnts_edit_cur_problem_page"
 %><%@set ac_prefix = "SSERV_CMD_"
 %><%@set err_prefix = "SSERV_ERR_"
@@ -18,11 +20,17 @@
     int prob_id = 0;
     const struct section_problem_data *prob = NULL;
     struct section_problem_data *tmp_prob = NULL;
+    struct section_problem_data *resolved_prob = NULL;
+    struct section_problem_data *resolved_sup = NULL;
     const struct section_problem_data *sup_prob = 0;
     int sup_id = 0, prob_type = 0;
     const unsigned char *str_value = NULL;
     int value;
     unsigned char *alloc_value = NULL;
+    unsigned char *problem_dir_edit = NULL;
+    size_t problem_dir_edit_len = 0;
+    unsigned char default_problem_root[PATH_MAX];
+    int problem_dir_rows = 1;
 
 static const unsigned char head_row_attr[] =
   " bgcolor=\"#a0a0a0\"";
@@ -69,6 +77,68 @@ static const unsigned char * const form_row_attrs[]=
     struct section_global_data *global = phr->ss->global;
 
     prepare_set_all_prob_values(tmp_prob, sup_prob, global);
+    default_problem_root[0] = 0;
+    if (global && global->problems_dir && global->problems_dir[0]) {
+        if (os_IsAbsolutePath(global->problems_dir)) {
+            snprintf(default_problem_root, sizeof(default_problem_root), "%s", global->problems_dir);
+        } else {
+            snprintf(default_problem_root, sizeof(default_problem_root), "%s/%s",
+                     global->root_dir, global->problems_dir);
+        }
+    } else if (global) {
+        snprintf(default_problem_root, sizeof(default_problem_root), "%s/%s",
+                 global->root_dir, DFLT_G_PROBLEMS_DIR);
+    }
+
+    resolved_prob = prepare_copy_problem(prob);
+    if (sup_prob) {
+        resolved_sup = prepare_copy_problem(sup_prob);
+        if (prepare_resolve_problem_dirs(global, resolved_sup, NULL) < 0) {
+            resolved_sup = prepare_problem_free(resolved_sup);
+        }
+    }
+    if (prepare_resolve_problem_dirs(global, resolved_prob, resolved_sup) < 0) {
+        /* keep raw values on failure; errors are logged already */
+    }
+    if (prob_id > 0 && resolved_prob && resolved_prob->variant_num > 1) {
+        problem_dir_rows = resolved_prob->variant_num;
+    } else {
+        problem_dir_rows = 1;
+    }
+    if (prob_id <= 0) {
+        const unsigned char *abs_dir = NULL;
+        if (resolved_prob && resolved_prob->abstract_problem_dir && resolved_prob->abstract_problem_dir[0]) {
+            abs_dir = resolved_prob->abstract_problem_dir;
+        }
+        if (abs_dir && abs_dir[0]) {
+            size_t base_len = strlen(default_problem_root);
+            if (strcmp(abs_dir, default_problem_root) == 0) {
+                /* default path, keep empty */
+            } else if (base_len > 0
+                       && strncmp(abs_dir, default_problem_root, base_len) == 0
+                       && abs_dir[base_len] == '/') {
+                problem_dir_edit = xstrdup(abs_dir + base_len + 1);
+            } else {
+                problem_dir_edit = xstrdup(abs_dir);
+            }
+        }
+    } else {
+        if (prob->problem_dirs && prob->problem_dirs[0]) {
+            FILE *pd_f = open_memstream((char **) &problem_dir_edit, &problem_dir_edit_len);
+            if (pd_f) {
+                for (i = 0; prob->problem_dirs[i]; ++i) {
+                    if (i > 0) fputc('\n', pd_f);
+                    fprintf(pd_f, "%s", prob->problem_dirs[i]);
+                }
+                fclose(pd_f);
+            }
+        } else if (prob->problem_dir && prob->problem_dir[0]) {
+            problem_dir_edit = xstrdup(prob->problem_dir);
+        }
+    }
+    if (!problem_dir_edit) {
+        problem_dir_edit = xstrdup("");
+    }
 
     (void) row;
     (void) head_row_attr;
@@ -149,6 +219,10 @@ static const unsigned char * const form_row_attrs[]=
         </div>
 
         <%@expand MENU_TEXTFIELD "variant_num" "id" "Number of variants" "250" %>
+        <div id="edit-problem_dir-div">
+            <div style="width: 250px; display: inline-block; vertical-align: top;"><label style="display:block; width: 250px" for="edit-problem_dir">Problem dir:</label></div>
+            <textarea name="problem_dir" id="edit-problem_dir" rows="<s:v value="problem_dir_rows" />" cols="40" class="text ui-widget-content ui-corner-all" onchange="idDialogOnChange('problem_dir')" style="border-style: solid;"></textarea>
+        </div>
         <%@expand MENU_YESNO3 "autoassign_variants" "id" "Assign variants automatically" "250" %>
 
     </s:form>
@@ -468,12 +542,14 @@ function popupIdDialog(e, skipField)
     <%@expand COPY_SIMPLE "super" %>
     <%@expand COPY_SIMPLE "type" %>
     <%@expand COPY_SIMPLE "variant_num" %>
+    <%@expand COPY_SIMPLE "problem_dir" %>
     <%@expand COPY_SIMPLE "autoassign_variants" %>
 
     <%@expand CLEAR_TEXTFIELD "short_name" %>
     <%@expand CLEAR_TEXTFIELD "internal_name" %>
     <%@expand CLEAR_TEXTFIELD "uuid" %>
     <%@expand CLEAR_TEXTFIELD "long_name" %>
+    <%@expand CLEAR_TEXTFIELD "problem_dir" %>
 
     if (e) e.stopPropagation();
     idDialogOnChange();
@@ -487,8 +563,11 @@ function idDialogOnChange()
     $("#edit-uuid-div").toggle(<s:v type="jsbool" value="prob_id > 0" />);
     $("#edit-super-div").toggle(<s:v type="jsbool" value="prob_id > 0" />);
     $("#edit-variant_num-div").toggle(<s:v type="jsbool" value="prob_id > 0" />);
-    var num = parseInt($("#edit-variant_num").val());
-    $("#edit-autoassign_variants-div").toggle(num > 0);
+    var var_num = parseInt($("#edit-variant_num").val());
+    var num = var_num;
+    if (!num || num <= 1) num = 1;
+    $("#edit-problem_dir").attr("rows", num);
+    $("#edit-autoassign_variants-div").toggle(var_num > 0);
 }
 
 function popupFilesDialog(e, skipField)
@@ -708,6 +787,34 @@ function viewDialogOnChange(field)
     }
 %></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:variant_num" /></td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-problem_dir-div">
+                <td>Problem dir:</td>
+                <td><%
+    if (prob_id <= 0) {
+      const unsigned char *abs_dir = NULL;
+      if (resolved_prob && resolved_prob->abstract_problem_dir && resolved_prob->abstract_problem_dir[0]) {
+        abs_dir = resolved_prob->abstract_problem_dir;
+      }
+      if (abs_dir && abs_dir[0]) {
+%><div><tt><s:v value="abs_dir" /></tt></div><%
+      } else {
+%>(<i>Not set</i>)<%
+      }
+    } else if (resolved_prob && resolved_prob->problem_dirs && resolved_prob->problem_dirs[0]) {
+      int k;
+      for (k = 0; resolved_prob->problem_dirs[k]; ++k) {
+%><div><tt><s:v value="resolved_prob->problem_dirs[k]" /></tt></div><%
+      }
+    } else if (resolved_prob && resolved_prob->problem_dir && resolved_prob->problem_dir[0]) {
+%><div><tt><s:v value="resolved_prob->problem_dir" /></tt></div><%
+    } else {
+%>(<i>Not set</i>)<%
+    }
+%><textarea id="orig-problem_dir" style="display:none"><s:v value="problem_dir_edit" /></textarea></td>
+                <td><input type="button" onclick="popupIdDialog(event, 'problem_dir')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:problem_dir" /></td>
             </s:tr>
 
             <%@expand ORIG_INHERITABLE_BOOLEAN "autoassign_variants" "Id" "Assign variants automatically" %>
@@ -2412,6 +2519,9 @@ bottom_links: ;
 cleanup:
   xfree(alloc_value);
   tmp_prob = prepare_problem_free(tmp_prob);
+  resolved_prob = prepare_problem_free(resolved_prob);
+  resolved_sup = prepare_problem_free(resolved_sup);
+  xfree(problem_dir_edit);
   l10n_resetlocale();
   html_armor_free(&ab);
 %>
