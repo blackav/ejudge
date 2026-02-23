@@ -1021,8 +1021,13 @@ parse_valuer_score(
             "  user_tests_passed: %d\n"
             "  group_count: %d\n",
             max_score, valuer_sets_marked, separate_user_score, enable_groups,
-            *p_reply_next_num, *p_score, *p_marked,
-            *p_user_status, *p_user_score, *p_user_tests_passed, *p_group_count);
+            p_reply_next_num?*p_reply_next_num:INT_MIN,
+            p_score?*p_score:INT_MIN,
+            p_marked?*p_marked:INT_MIN,
+            p_user_status?*p_user_status:INT_MIN,
+            p_user_score?*p_user_score:INT_MIN,
+            p_user_tests_passed?*p_user_tests_passed:INT_MIN,
+            p_group_count?*p_group_count:INT_MIN);
     if (*p_group_count > 0) {
       fprintf(debug_f, "  group_scores:");
       for (int i = 0; i < *p_group_count; ++i) {
