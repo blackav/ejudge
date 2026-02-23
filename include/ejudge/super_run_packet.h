@@ -2,7 +2,7 @@
 #ifndef __SUPER_RUN_PACKET_H__
 #define __SUPER_RUN_PACKET_H__
 
-/* Copyright (C) 2012-2025 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -210,6 +210,7 @@ struct super_run_in_problem_packet
   ejintbool_t disable_vm_size_limit;
   ejintbool_t enable_group_merge;
   ejintbool_t ignore_sigpipe;
+  int debug_flags;
 
   int type_val META_ATTRIB((meta_hidden));
 };

@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2012-2025 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -303,11 +303,13 @@ generate_xml_report(
         const unsigned char *cpu_mhz,
         const unsigned char *hostname,
         int group_count,
-        int *group_scores)
+        int *group_scores,
+        const unsigned char *valuer_log)
 {
   int i;
   unsigned char *msg = 0;
   const struct super_run_in_global_packet *srgp = srp->global;
+  const struct super_run_in_problem_packet *srpp = srp->problem;
 
   ej_uuid_t judge_uuid = {};
   if (srgp->judge_uuid && srgp->judge_uuid[0]) {
@@ -402,6 +404,9 @@ generate_xml_report(
   }
   if (srgp->run_uuid) {
     ej_uuid_parse(srgp->run_uuid, &tr->uuid);
+  }
+  if (srpp && (srpp->debug_flags & RUN_DEBUG_VALUER_LOG) && valuer_log && valuer_log[0]) {
+    tr->valuer_log = xstrdup(valuer_log);
   }
 
   unsigned int verdict_bits = 0;
@@ -5471,6 +5476,10 @@ run_tests(
   int valuer_group_count = 0;
   int valuer_group_scores[EJ_MAX_TEST_GROUP + 1] = {};
 
+  size_t vlog_z = 0;
+  char *vlog_s = NULL;
+  FILE *vlog_f = NULL;
+
   valuer_cmd[0] = 0;
   valuer_cmt_file[0] = 0;
   valuer_jcmt_file[0] = 0;
@@ -5714,6 +5723,10 @@ run_tests(
     }
     close(evfds[0]); evfds[0] = -1;
     close(vefds[1]); vefds[1] = -1;
+    if ((srpp->debug_flags & RUN_DEBUG_VALUER_LOG)) {
+      vlog_f = open_memstream(&vlog_s, &vlog_z);
+      fprintf(vlog_f, "> -1\n");
+    }
     if (ejudge_timed_write(messages_path, evfds[1], "-1\n", 3, 100) < 0) {
       append_msg_to_log(messages_path, "interactive valuer write failed");
       goto check_failed;
@@ -5796,6 +5809,9 @@ run_tests(
                tests.data[cur_test].status, tests.data[cur_test].score,
                tests.data[cur_test].times);
       ssize_t buflen = strlen(buf);
+      if ((srpp->debug_flags & RUN_DEBUG_VALUER_LOG)) {
+        fprintf(vlog_f, "> %s", buf);
+      }
       if (ejudge_timed_write(messages_path, evfds[1], buf, buflen, 100) < 0) {
         append_msg_to_log(messages_path, "interactive valuer write failed");
         goto check_failed;
@@ -5808,6 +5824,9 @@ run_tests(
       if (!buflen) {
         append_msg_to_log(messages_path, "interactive valuer unexpected EOF");
         goto check_failed;
+      }
+      if ((srpp->debug_flags & RUN_DEBUG_VALUER_LOG)) {
+        fprintf(vlog_f, "< %s", buf);
       }
 
       int reply_next_num = 0;
@@ -5867,6 +5886,9 @@ run_tests(
     if (!buflen) {
       append_msg_to_log(messages_path, "interactive valuer unexpected EOF");
       goto check_failed;
+    }
+    if ((srpp->debug_flags & RUN_DEBUG_VALUER_LOG)) {
+      fprintf(vlog_f, "< %s", buf);
     }
     if (parse_valuer_score(messages_path, buf, buflen, 0, srpp->full_score,
                            srpp->valuer_sets_marked,
@@ -6134,6 +6156,10 @@ done:;
     }
   }
 
+  if (vlog_f) {
+    fclose(vlog_f); vlog_f = NULL;
+  }
+
   generate_xml_report(srp, reply_pkt, report_path,
                       tests.size, tests.data, utf8_mode,
                       srgp->variant, total_score,
@@ -6147,7 +6173,8 @@ done:;
                       additional_comment, valuer_comment,
                       valuer_judge_comment, valuer_errors,
                       cpu_model, cpu_mhz, hostname,
-                      valuer_group_count, valuer_group_scores);
+                      valuer_group_count, valuer_group_scores,
+                      vlog_s);
 
   get_current_time(&reply_pkt->ts7, &reply_pkt->ts7_us);
 
@@ -6161,6 +6188,7 @@ done:;
     task_Delete(valuer_tsk);
   }
 
+  free(vlog_s);
   if (far) full_archive_close(far);
   free_testinfo_vector(&tests);
   xfree(open_tests_val);
