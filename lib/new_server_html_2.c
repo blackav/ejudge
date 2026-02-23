@@ -8155,6 +8155,9 @@ write_xml_team_testing_report(
             ARMOR(r->valuer_judge_comment));
     hide_score = 1;
   }
+  if (prob && prob->scoring_checker > 0) {
+    hide_score = 0;
+  }
 
   if (has_icpc_group) {
     fprintf(f, "<h3>%s</h3>\n", _("Open tests"));
