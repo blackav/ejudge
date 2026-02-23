@@ -8155,6 +8155,9 @@ write_xml_team_testing_report(
             ARMOR(r->valuer_judge_comment));
     hide_score = 1;
   }
+  if (prob && prob->scoring_checker > 0) {
+    hide_score = 0;
+  }
 
   if (has_icpc_group) {
     fprintf(f, "<h3>%s</h3>\n", _("Open tests"));
@@ -9122,27 +9125,6 @@ write_xml_testing_report(
     }
   }
 
-  if (r->errors && r->errors[0]) {
-    fprintf(f, "<font color=\"red\"><b><u>%s</u></b><br/><pre>%s</pre></font>\n",
-            "Errors", ARMOR(r->errors));
-  }
-
-  if (r->valuer_comment || r->valuer_judge_comment || r->valuer_errors) {
-    fprintf(f, "<h3>%s</h3>\n", _("Valuer information"));
-    if (r->valuer_comment) {
-      fprintf(f, "<b><u>%s</u></b><br/><pre>%s</pre>\n",
-              _("Valuer comments"), ARMOR(r->valuer_comment));
-    }
-    if (r->valuer_judge_comment) {
-      fprintf(f, "<b><u>%s</u></b><br/><pre>%s</pre>\n",
-              _("Valuer judge comments"), ARMOR(r->valuer_judge_comment));
-    }
-    if (r->valuer_errors) {
-      fprintf(f, "<b><u>%s</u></b><br/><pre><font color=\"red\">%s</font></pre>\n",
-              _("Valuer errors"), ARMOR(r->valuer_errors));
-    }
-  }
-
   // calculate max CPU time
   for (i = 0; i < r->run_tests; i++) {
     if (!(t = r->tests[i])) continue;
@@ -9194,6 +9176,27 @@ write_xml_testing_report(
     fprintf(f, " ; Max. RSS: %lld MiB", max_rss);
   }
   fprintf(f, "<br><br></big>\n");
+
+  if (r->errors && r->errors[0]) {
+    fprintf(f, "<font color=\"red\"><b><u>%s</u></b><br/><pre>%s</pre></font>\n",
+            "Errors", ARMOR(r->errors));
+  }
+
+  if (r->valuer_comment || r->valuer_judge_comment || r->valuer_errors) {
+    fprintf(f, "<h3>%s</h3>\n", _("Valuer information"));
+    if (r->valuer_comment) {
+      fprintf(f, "<b><u>%s</u></b><br/><pre>%s</pre>\n",
+              _("Valuer comments"), ARMOR(r->valuer_comment));
+    }
+    if (r->valuer_judge_comment) {
+      fprintf(f, "<b><u>%s</u></b><br/><pre>%s</pre>\n",
+              _("Valuer judge comments"), ARMOR(r->valuer_judge_comment));
+    }
+    if (r->valuer_errors) {
+      fprintf(f, "<b><u>%s</u></b><br/><pre><font color=\"red\">%s</font></pre>\n",
+              _("Valuer errors"), ARMOR(r->valuer_errors));
+    }
+  }
 
   if (r->host && !user_mode) {
     fprintf(f, "<big>Tested on host: %s</big><br/><br/>\n", r->host);
