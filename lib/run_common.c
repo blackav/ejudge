@@ -1007,7 +1007,7 @@ parse_valuer_score(
 
   if (debug_f) {
     fprintf(debug_f,
-            "Params:\n"
+            "\nParams:\n"
             "  max_score: %d\n"
             "  valuer_sets_marked: %d\n"
             "  separate_user_score: %d\n"
