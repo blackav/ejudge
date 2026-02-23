@@ -859,6 +859,9 @@ main(int argc, char *argv[])
             ++test_num;
         } else if (g->get_test_score() >= 0 && !g->get_use_lowest_test_score()) {
             // by-test score, just go on
+            if (t_score > 0) {
+                g->add_test_score(t_score);
+            }
             if (test_num == g->get_last()) {
                 if (g->is_zero_score()) {
                     char buf[1024];
