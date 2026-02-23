@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2005-2025 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1433,6 +1433,9 @@ prepare_unparse_prob(
   if (prob->forced_test_count >= 0) {
     fprintf(f, "forced_test_count = %d\n", prob->forced_test_count);
   }
+  if (prob->debug_flags >= 0) {
+    fprintf(f, "debug_flags = %d\n", prob->debug_flags);
+  }
   if (prob->umask && prob->umask[0])
     fprintf(f, "umask = \"%s\"\n", CARMOR(prob->umask));
 
@@ -1971,6 +1974,9 @@ prepare_unparse_actual_prob(
   }
   if (prob->forced_test_count > 0) {
     fprintf(f, "forced_test_count = %d\n", prob->forced_test_count);
+  }
+  if (prob->debug_flags > 0) {
+    fprintf(f, "debug_flags = %d\n", prob->debug_flags);
   }
   if (prob->umask && prob->umask[0])
     fprintf(f, "umask = \"%s\"\n", CARMOR(prob->umask));
