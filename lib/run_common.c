@@ -835,6 +835,7 @@ fail:
 
 static int
 parse_valuer_score(
+        FILE *debug_f,
         const unsigned char *log_path,
         const unsigned char *in_buf,
         ssize_t in_buf_size,
@@ -899,6 +900,9 @@ parse_valuer_score(
       goto invalid_reply;
     }
     if (p_reply_next_num) *p_reply_next_num = -v_score;
+    if (debug_f) {
+      fprintf(debug_f, "reply_next_num: %d\n", *p_reply_next_num);
+    }
     return 0;
   }
   if (v_score < 0 || v_score > max_score) {
@@ -1000,6 +1004,34 @@ parse_valuer_score(
   if (p_user_status) *p_user_status = v_user_status;
   if (p_user_score) *p_user_score = v_user_score;
   if (p_user_tests_passed) *p_user_tests_passed = v_user_tests_passed;
+
+  if (debug_f) {
+    fprintf(debug_f,
+            "Params:\n"
+            "  max_score: %d\n"
+            "  valuer_sets_marked: %d\n"
+            "  separate_user_score: %d\n"
+            "  enable_groups: %d\n"
+            "Outputs:\n"
+            "  reply_next_run: %d\n"
+            "  score: %d\n"
+            "  marked: %d\n"
+            "  user_status: %d\n"
+            "  user_score: %d\n"
+            "  user_tests_passed: %d\n"
+            "  group_count: %d\n",
+            max_score, valuer_sets_marked, separate_user_score, enable_groups,
+            *p_reply_next_num, *p_score, *p_marked,
+            *p_user_status, *p_user_score, *p_user_tests_passed, *p_group_count);
+    if (*p_group_count > 0) {
+      fprintf(debug_f, "  group_scores:");
+      for (int i = 0; i < *p_group_count; ++i) {
+        fprintf(debug_f, " %d", p_group_scores[i]);
+      }
+      fprintf(debug_f, "\n");
+    }
+  }
+
   return 0;
 
 invalid_reply:
@@ -1040,7 +1072,7 @@ read_valuer_score(
     return -1;
   }
 
-  r = parse_valuer_score(log_path, score_buf, score_buf_size,
+  r = parse_valuer_score(NULL, log_path, score_buf, score_buf_size,
                          0, max_score, valuer_sets_marked, separate_user_score,
                          enable_groups,
                          NULL, p_score, p_marked,
@@ -5830,7 +5862,7 @@ run_tests(
       }
 
       int reply_next_num = 0;
-      if (parse_valuer_score(messages_path, buf, buflen, 1, srpp->full_score,
+      if (parse_valuer_score(vlog_f, messages_path, buf, buflen, 1, srpp->full_score,
                              srpp->valuer_sets_marked,
                              srgp->separate_user_score,
                              srpp->enable_group_merge > 0,
@@ -5890,7 +5922,7 @@ run_tests(
     if ((srpp->debug_flags & RUN_DEBUG_VALUER_LOG)) {
       fprintf(vlog_f, "< %s", buf);
     }
-    if (parse_valuer_score(messages_path, buf, buflen, 0, srpp->full_score,
+    if (parse_valuer_score(vlog_f, messages_path, buf, buflen, 0, srpp->full_score,
                            srpp->valuer_sets_marked,
                            srgp->separate_user_score,
                            srpp->enable_group_merge > 0,
