@@ -2,7 +2,7 @@
 #ifndef __PREPARE_H__
 #define __PREPARE_H__
 
-/* Copyright (C) 2000-2025 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1333,6 +1333,8 @@ struct section_problem_data
   int max_process_count;
   /** forced number of tests for the problem */
   int forced_test_count;
+  /** debug flags */
+  int debug_flags;
 
   /** external id (for external application binding) */
   unsigned char *extid;

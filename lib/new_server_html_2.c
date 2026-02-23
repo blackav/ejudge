@@ -9212,6 +9212,13 @@ write_xml_testing_report(
     xfree(s);
   }
 
+  if (r->valuer_log) {
+    s = html_armor_string_dup(r->valuer_log);
+    fprintf(f, "<big><u>Interactive valuer log</u>:</big><br/><br/>\n");
+    fprintf(f, "<pre>%s</pre>\n", s);
+    xfree(s);
+  }
+
   for (i = 0; i < r->run_tests; i++) {
     if (!(t = r->tests[i])) continue;
     if (t->comment || t->team_comment) {

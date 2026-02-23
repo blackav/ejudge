@@ -147,4 +147,10 @@ run_tests(
         const unsigned char *src_path,
         const struct run_properties *run_props);
 
+/* run debug flags */
+enum
+{
+  RUN_DEBUG_VALUER_LOG = 1,
+};
+
 #endif /* __RUN_H__ */

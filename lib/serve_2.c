@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2025 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -2768,6 +2768,7 @@ serve_run_request(
   } else {
     srpp->test_count = test_count_cache_get(NULL, srpp->test_dir, srpp->test_pat);
   }
+  srpp->debug_flags = prob->debug_flags;
 
   if (find_lang_specific_size(prob->lang_max_vm_size, lang, &lang_specific_size) > 0) {
     srpp->max_vm_size = lang_specific_size;

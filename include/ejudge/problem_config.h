@@ -2,7 +2,7 @@
 #ifndef __PROBLEM_CONFIG_H__
 #define __PROBLEM_CONFIG_H__
 
-/* Copyright (C) 2012-2025 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -146,6 +146,7 @@ struct problem_config_section
   int max_open_file_count;
   int max_process_count;
   int forced_test_count;
+  int debug_flags;
 
   time_t deadline;
   time_t start_date;

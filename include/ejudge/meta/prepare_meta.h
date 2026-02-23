@@ -578,6 +578,7 @@ enum
   CNTSPROB_max_open_file_count,
   CNTSPROB_max_process_count,
   CNTSPROB_forced_test_count,
+  CNTSPROB_debug_flags,
   CNTSPROB_extid,
   CNTSPROB_unhandled_vars,
   CNTSPROB_score_view,

@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2025 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2025-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -884,7 +884,7 @@ problem_assign_json(
               test_score run_penalty acm_run_penalty disqualified_penalty compile_error_penalty
               tests_to_accept min_tests_to_accept checker_real_time_limit checker_time_limit_ms score_multiplier
               prev_runs_to_show max_user_run_count interactor_time_limit interactor_real_time_limit max_open_file_count
-              max_process_count
+              max_process_count debug_flags
              */
             if (*p != value) {
                 *p = value;
@@ -1305,6 +1305,7 @@ static const int cnts_to_cfg_field_map[CNTSPROB_LAST_FIELD] =
   [CNTSPROB_max_open_file_count] = META_PROBLEM_CONFIG_SECTION_max_open_file_count,
   [CNTSPROB_max_process_count] = META_PROBLEM_CONFIG_SECTION_max_process_count,
   [CNTSPROB_forced_test_count] = META_PROBLEM_CONFIG_SECTION_forced_test_count,
+  [CNTSPROB_debug_flags] = META_PROBLEM_CONFIG_SECTION_debug_flags,
   [CNTSPROB_extid] = META_PROBLEM_CONFIG_SECTION_extid,
   [CNTSPROB_unhandled_vars] = 0,
   [CNTSPROB_score_view] = 0,
@@ -1423,7 +1424,7 @@ problem_assign_cfg(
               test_score run_penalty acm_run_penalty disqualified_penalty compile_error_penalty
               tests_to_accept min_tests_to_accept checker_real_time_limit checker_time_limit_ms score_multiplier
               prev_runs_to_show max_user_run_count interactor_time_limit interactor_real_time_limit max_open_file_count
-              max_process_count
+              max_process_count debug_flags
              */
             if (*p != value) {
                 *p = value;
