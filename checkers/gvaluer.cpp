@@ -1,4 +1,4 @@
-/* Copyright (C) 2012-2025 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -852,7 +852,7 @@ main(int argc, char *argv[])
             g->add_total_score();
             g->add_passed_test(test_num);
             ++test_num;
-        } else if (t_score > 0) {
+        } else if (t_score > 0 && g->get_test_score() == t_score && !g->get_use_lowest_test_score()) {
             g->inc_passed_count();
             g->add_test_score(t_score);
             g->add_passed_test(test_num);
