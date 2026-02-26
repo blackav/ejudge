@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2023-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -70,15 +70,26 @@ int checker_main(int argc, char **argv)
     }
 
     int expect_mode = -1;
-    s = getenv("EJ_EXPECT_MODE");
+    s = getenv("EJ_EXPECT_MODE_OVERRIDE");
     if (s && *s) {
         errno = 0;
         char *eptr = NULL;
         long v = strtol(s, &eptr, 8);
         if (errno || *eptr || s == eptr || v < 0 || v > 07777) {
-            fatal_CF("EJ_EXPECT_MODE environment value '%s' is invalid", s); 
+            fatal_CF("EJ_EXPECT_MODE_OVERRIDE environment value '%s' is invalid", s); 
         }
         expect_mode = v;
+    } else {
+        s = getenv("EJ_EXPECT_MODE");
+        if (s && *s) {
+            errno = 0;
+            char *eptr = NULL;
+            long v = strtol(s, &eptr, 8);
+            if (errno || *eptr || s == eptr || v < 0 || v > 07777) {
+                fatal_CF("EJ_EXPECT_MODE environment value '%s' is invalid", s); 
+            }
+            expect_mode = v;
+        }
     }
     int expect_1_bits = -1;
     s = getenv("EJ_EXPECT_1_BITS");
