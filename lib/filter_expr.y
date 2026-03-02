@@ -1,6 +1,6 @@
 /* -*- mode: fundamental -*- */
 
-/* Copyright (C) 2002-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1270,6 +1270,7 @@ filter_expr_init_parser(struct filter_tree_mem *mem,
   filter_expr_tree_mem = mem;
   filter_expr_parse_err = errfunc;
   filter_expr_user_data = user_data;
+  filter_expr_nerrs = 0;
   if (!filter_expr_parse_err) filter_expr_parse_err = do_error;
   //yydebug = 1;
 }

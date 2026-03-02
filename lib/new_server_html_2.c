@@ -184,7 +184,6 @@ ns_write_priv_all_runs(
     u->tree_mem = filter_tree_new();
     filter_expr_set_string(filter_expr, u->tree_mem, parse_error_func, cs);
     filter_expr_init_parser(u->tree_mem, parse_error_func, cs);
-    filter_expr_nerrs = 0;
     i = filter_expr_parse();
     if (i + filter_expr_nerrs == 0 && filter_expr_lval &&
         filter_expr_lval->type == FILTER_TYPE_BOOL) {
@@ -3029,7 +3028,6 @@ ns_set_stand_filter(
       filter_expr_set_string(stand_user_expr, u->stand_mem,
                              stand_parse_error_func, state);
       filter_expr_init_parser(u->stand_mem, stand_parse_error_func, state);
-      filter_expr_nerrs = 0;
       r = filter_expr_parse();
       if (r + filter_expr_nerrs != 0 || !filter_expr_lval) {
         stand_parse_error_func(state, "user filter expression parsing failed");
@@ -3055,7 +3053,6 @@ ns_set_stand_filter(
       filter_expr_set_string(stand_prob_expr, u->stand_mem,
                              stand_parse_error_func, state);
       filter_expr_init_parser(u->stand_mem, stand_parse_error_func, state);
-      filter_expr_nerrs = 0;
       r = filter_expr_parse();
       if (r + filter_expr_nerrs != 0 || !filter_expr_lval) {
         stand_parse_error_func(state, "problem filter expression parsing failed");
@@ -3082,7 +3079,6 @@ ns_set_stand_filter(
       filter_expr_set_string(stand_run_expr, u->stand_mem,
                              stand_parse_error_func, state);
       filter_expr_init_parser(u->stand_mem, stand_parse_error_func, state);
-      filter_expr_nerrs = 0;
       r = filter_expr_parse();
       if (r + filter_expr_nerrs != 0 || !filter_expr_lval) {
         stand_parse_error_func(state, "run filter expression parsing failed");
