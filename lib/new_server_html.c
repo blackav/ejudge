@@ -10482,6 +10482,11 @@ priv_problem_status_json(
     prob = cs->probs[prob_id];
   }
   // FIXME: handle 'problem'
+  if (!prob) {
+    err_num = NEW_SRV_ERR_INV_PROB_ID;
+    http_status = 404;
+    goto done;
+  }
 
   // rel_time, abs_time
   if (hr_cgi_param_i64_opt(phr, "rel_time", &rel_time, -1) < 0) {
