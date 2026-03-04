@@ -405,7 +405,7 @@ generate_xml_report(
   if (srgp->run_uuid) {
     ej_uuid_parse(srgp->run_uuid, &tr->uuid);
   }
-  if (srpp && (srpp->debug_flags & RUN_DEBUG_VALUER_LOG) && valuer_log && valuer_log[0]) {
+  if (srpp && srpp->debug_flags > 0 && (srpp->debug_flags & RUN_DEBUG_VALUER_LOG) && valuer_log && valuer_log[0]) {
     tr->valuer_log = xstrdup(valuer_log);
   }
 
@@ -5760,7 +5760,7 @@ run_tests(
     }
     close(evfds[0]); evfds[0] = -1;
     close(vefds[1]); vefds[1] = -1;
-    if ((srpp->debug_flags & RUN_DEBUG_VALUER_LOG)) {
+    if (srpp->debug_flags > 0 && (srpp->debug_flags & RUN_DEBUG_VALUER_LOG)) {
       vlog_f = open_memstream(&vlog_s, &vlog_z);
       fprintf(vlog_f, "> -1\n");
     }
@@ -5846,7 +5846,7 @@ run_tests(
                tests.data[cur_test].status, tests.data[cur_test].score,
                tests.data[cur_test].times);
       ssize_t buflen = strlen(buf);
-      if ((srpp->debug_flags & RUN_DEBUG_VALUER_LOG)) {
+      if (srpp->debug_flags > 0 && (srpp->debug_flags & RUN_DEBUG_VALUER_LOG)) {
         fprintf(vlog_f, "> %s", buf);
       }
       if (ejudge_timed_write(messages_path, evfds[1], buf, buflen, 100) < 0) {
@@ -5862,7 +5862,7 @@ run_tests(
         append_msg_to_log(messages_path, "interactive valuer unexpected EOF");
         goto check_failed;
       }
-      if ((srpp->debug_flags & RUN_DEBUG_VALUER_LOG)) {
+      if (srpp->debug_flags > 0 && (srpp->debug_flags & RUN_DEBUG_VALUER_LOG)) {
         fprintf(vlog_f, "< %s", buf);
       }
 
@@ -5924,7 +5924,7 @@ run_tests(
       append_msg_to_log(messages_path, "interactive valuer unexpected EOF");
       goto check_failed;
     }
-    if ((srpp->debug_flags & RUN_DEBUG_VALUER_LOG)) {
+    if (srpp->debug_flags > 0 && (srpp->debug_flags & RUN_DEBUG_VALUER_LOG)) {
       fprintf(vlog_f, "< %s", buf);
     }
     if (parse_valuer_score(vlog_f, messages_path, buf, buflen, 0, srpp->full_score,
