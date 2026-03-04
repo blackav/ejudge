@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2000-2025 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -480,10 +480,11 @@ invoke_compiler(
   task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", TSK_READ);
   if (tinf && tinf->compiler_must_fail > 0) {
     task_SetRedir(tsk, 1, TSR_FILE, "/dev/null", TSK_WRITE, 0777);
+    task_SetRedir(tsk, 2, TSR_FILE, "/dev/null", TSK_WRITE, 0777);
   } else {
     task_SetRedir(tsk, 1, TSR_FILE, log_path, TSK_APPEND, 0777);
+    task_SetRedir(tsk, 2, TSR_FILE, log_path, TSK_APPEND, 0777);
   }
-  task_SetRedir(tsk, 2, TSR_FILE, log_path, TSK_APPEND, 0777);
   if (lang->compile_real_time_limit > 0) {
     task_SetMaxRealTime(tsk, lang->compile_real_time_limit);
   }
