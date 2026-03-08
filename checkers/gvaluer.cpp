@@ -879,6 +879,9 @@ main(int argc, char *argv[])
                 }
             }
             ++test_num;
+        } else if (t_score > 0 && g->get_use_lowest_test_score()) {
+            g->add_test_score(t_score);
+            ++test_num;
         } else if (g->get_test_all()) {
             // test everything even if fail
             ++test_num;
