@@ -22,6 +22,7 @@
 #include <vector>
 #include <algorithm>
 #include <set>
+#include <unordered_map>
 
 using namespace std;
 
@@ -787,6 +788,84 @@ Group::meet_requirements(const ConfigParser &cfg, const Group *&grp) const
     return false;
 }
 
+namespace
+{
+constexpr const char *MSG_ZERO_SCORED = "Test group %s (%d-%d) is scored 0 points because only specific tests were passed.\n";
+constexpr const char *MSG_NOT_PERFORMED_AND_0 = "Testing on tests %d-%d has not been performed, as test %d has not passed, and test group '%s' score is 0.\n";
+constexpr const char *MSG_NOT_PERFORMED_AS_NOT_PASSED = "Testing on tests %d-%d has not been performed, as one of the required groups '%s' has not passed.\n";
+constexpr const char *MSG_WILL_NOT_BE_PERFORMED = "Testing on tests %d-%d will not be performed after the tour finish, as one of the required groups '%s' has not passed.\n";
+constexpr const char *MSG_GROUP_SCORE = "Test group '%s': tests %d-%d: score %d\n";
+
+const unordered_map<const char *, vector<const char *>> translations
+{
+    {
+            MSG_ZERO_SCORED,
+            {
+                "",
+                "Группа тестов %s (%d-%d) оценена в 0 баллов, так как были пройдены только специальные тесты.\n",
+            }
+        },
+        {
+            MSG_NOT_PERFORMED_AND_0,
+            {
+                "",
+                "Тестирование на тестах %d-%d не выполнялось, так как тест %d не пройден, и оценка за группу тестов %s - 0 баллов.\n",
+            }
+        },
+        {
+            MSG_NOT_PERFORMED_AS_NOT_PASSED,
+            {
+                "",
+                "Тестирование на тестах %d-%d не выполнялось, так как не пройдена одна из требуемых групп %s.\n",
+            }
+        },
+        {
+            MSG_WILL_NOT_BE_PERFORMED,
+            {
+                "",
+                "Тестирование на тестах %d-%d не будет выполняться после окончания тура, так как не пройдена одна из требуемых групп %s.\n",
+            }
+        },
+        {
+            MSG_GROUP_SCORE,
+            {
+                "",
+                "Группа тестов %s: тесты %d-%d: балл %d\n",
+            }
+        },
+/*
+        {
+            "",
+            {
+                "",
+                "",
+            }
+        },
+*/
+};
+}
+
+#define MSGF(msg, ...) ({ \
+    char buf[4096]; \
+    std::unordered_map<const char *, vector<const char *>>::const_iterator it; \
+    if (locale_id > 0 && (it = translations.find(msg)) != translations.end() && locale_id < int(it->second.size())) { \
+        snprintf(buf, sizeof(buf), it->second[locale_id], ##__VA_ARGS__); \
+    } else { \
+        snprintf(buf, sizeof(buf), msg, ##__VA_ARGS__); \
+    } \
+    std::string res(buf); \
+    res; \
+  })
+
+#define FMSGF(f, msg, ...) ({ \
+    std::unordered_map<const char *, vector<const char *>>::const_iterator it; \
+    if (locale_id > 0 && (it = translations.find(msg)) != translations.end() && locale_id < int(it->second.size())) { \
+        fprintf(f, it->second[locale_id], ##__VA_ARGS__); \
+    } else { \
+        fprintf(f, msg, ##__VA_ARGS__); \
+    } \
+  })
+
 int
 main(int argc, char *argv[])
 {
@@ -864,18 +943,8 @@ main(int argc, char *argv[])
             }
             if (test_num == g->get_last()) {
                 if (g->is_zero_score()) {
-                    char buf[1024];
-                    if (locale_id == 1) {
-                        snprintf(buf, sizeof(buf), "Группа тестов %s (%d-%d) оценена в 0 баллов, "
-                                 "так как были пройдены только специальные тесты.\n",
-                                 g->get_group_id().c_str(), g->get_first(), g->get_last());
-                    } else {
-                        snprintf(buf, sizeof(buf), "Test group %s (%d-%d) is scored 0 points "
-                                 "because only specific tests were passed.\n",
-                                 g->get_group_id().c_str(), g->get_first(), g->get_last());
-                    }
+                    g->set_comment(MSGF(MSG_ZERO_SCORED, g->get_group_id().c_str(), g->get_first(), g->get_last()));
                     g->set_total_score(0);
-                    g->set_comment(string(buf));
                 }
             }
             ++test_num;
@@ -890,17 +959,7 @@ main(int argc, char *argv[])
                 g->set_total_score(0);
             }
             if (test_num < g->get_last() && !g->get_offline()) {
-                char buf[1024];
-                if (locale_id == 1) {
-                    snprintf(buf, sizeof(buf), "Тестирование на тестах %d-%d не выполнялось, "
-                             "так как тест %d не пройден, и оценка за группу тестов %s - 0 баллов.\n",
-                             test_num + 1, g->get_last(), test_num, g->get_group_id().c_str());
-                } else {
-                    snprintf(buf, sizeof(buf), "Testing on tests %d-%d has not been performed, "
-                             "as test %d has not passed, and test group '%s' score is 0.\n",
-                             test_num + 1, g->get_last(), test_num, g->get_group_id().c_str());
-                }
-                g->set_comment(string(buf));
+                g->set_comment(MSGF(MSG_NOT_PERFORMED_AND_0, test_num + 1, g->get_last(), test_num, g->get_group_id().c_str()));
             }
             test_num = g->get_last() + 1;
         }
@@ -912,29 +971,9 @@ main(int argc, char *argv[])
         const Group *gg = NULL;
         while ((g = parser.find_group(test_num)) && !g->meet_requirements(parser, gg)) {
             if (!g->get_offline()) {
-                char buf[1024];
-                if (locale_id == 1) {
-                    snprintf(buf, sizeof(buf), "Тестирование на тестах %d-%d не выполнялось, "
-                             "так как не пройдена одна из требуемых групп %s.\n",
-                             g->get_first(), g->get_last(), gg->get_group_id().c_str());
-                } else {
-                    snprintf(buf, sizeof(buf), "Testing on tests %d-%d has not been performed, "
-                             "as one of the required groups '%s' has not passed.\n",
-                             g->get_first(), g->get_last(), gg->get_group_id().c_str());
-                }
-                g->set_comment(string(buf));
+                g->set_comment(MSGF(MSG_NOT_PERFORMED_AS_NOT_PASSED, g->get_first(), g->get_last(), gg->get_group_id().c_str()));
             } else if (g->get_offline() && !gg->get_offline()) {
-                char buf[1024];
-                if (locale_id == 1) {
-                    snprintf(buf, sizeof(buf), "Тестирование на тестах %d-%d не будет выполняться после окончания тура, "
-                             "так как не пройдена одна из требуемых групп %s.\n",
-                             g->get_first(), g->get_last(), gg->get_group_id().c_str());
-                } else {
-                    snprintf(buf, sizeof(buf), "Testing on tests %d-%d will not be performed after the tour finish, "
-                             "as one of the required groups '%s' has not passed.\n",
-                             g->get_first(), g->get_last(), gg->get_group_id().c_str());
-                }
-                g->set_comment(string(buf));
+                g->set_comment(MSGF(MSG_WILL_NOT_BE_PERFORMED, g->get_first(), g->get_last(), gg->get_group_id().c_str()));
             }
             test_num = g->get_last() + 1;
         }
@@ -973,23 +1012,10 @@ main(int argc, char *argv[])
         }
         int group_score = g.calc_score();
         if (g.get_stat_to_judges()) {
-            if (locale_id == 1) {
-                fprintf(fjcmt, "Группа тестов %s: тесты %d-%d: балл %d\n",
-                        g.get_group_id().c_str(), g.get_first(), g.get_last(), group_score);
-            } else {
-                fprintf(fjcmt, "Test group '%s': tests %d-%d: score %d\n",
-                        g.get_group_id().c_str(), g.get_first(), g.get_last(), group_score);
-            }
-
+            FMSGF(fjcmt, MSG_GROUP_SCORE, g.get_group_id().c_str(), g.get_first(), g.get_last(), group_score);
         }
         if (g.get_stat_to_users() && !g.get_offline()) {
-            if (locale_id == 1) {
-                fprintf(fcmt, "Группа тестов %s: тесты %d-%d: балл %d\n",
-                        g.get_group_id().c_str(), g.get_first(), g.get_last(), group_score);
-            } else {
-                fprintf(fcmt, "Test group '%s': tests %d-%d: score %d\n",
-                        g.get_group_id().c_str(), g.get_first(), g.get_last(), group_score);
-            }
+            FMSGF(fcmt, MSG_GROUP_SCORE, g.get_group_id().c_str(), g.get_first(), g.get_last(), group_score);
         }
         if (g.get_offline()) {
             score += group_score;
