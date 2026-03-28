@@ -8036,6 +8036,8 @@ write_xml_team_testing_report(
       visibilities[i] = cntsprob_get_test_visibility(prob, i + 1, state->online_final_visibility, token_flags);
       if (visibilities[i] == TV_ICPC) {
         has_icpc_group = 1;
+      } else if (visibilities[i] == TV_CHECKER) {
+        need_comment = 1;
       }
     }
   }
@@ -8277,6 +8279,11 @@ write_xml_team_testing_report(
       fprintf(f, "<td%s>%d (%d)</td>", cl, score, max_score);
     }
     if (need_comment) {
+      if (visibility == TV_CHECKER && t->checker_comment && *t->checker_comment) {
+        s = html_armor_string_dup(t->checker_comment);
+        fprintf(f, "<td%s>%s</td>", cl, s);
+        xfree(s);
+      }
       if (!t->team_comment) {
         fprintf(f, "<td%s>&nbsp;</td>", cl);
       } else {
@@ -10363,66 +10370,12 @@ write_json_run_info(
             fprintf(fout, ",\n          \"score\": %d", score);
             fprintf(fout, ",\n          \"max_score\": %d", max_score);
           }
+          if (visibility == TV_CHECKER && t->checker_comment && t->checker_comment[0]) {
+            fprintf(fout, ",\n          \"checker_comment\": \"%s\"", json_armor_buf(&ab, t->checker_comment));
+          }
           if (t->team_comment && t->team_comment[0]) {
             fprintf(fout, ",\n          \"team_comment\": \"%s\"", json_armor_buf(&ab, t->team_comment));
           }
-    /*
-    if (need_links) {
-      fprintf(f, "<td%s>", cl);
-      if (visibility == TV_FULL) {
-        fprintf(f, "&nbsp;%s[I]</a>",
-                ns_aref_2(hbuf, sizeof(hbuf), phr,
-                          html_make_title(tbuf, sizeof(tbuf), _("Test input data")),
-                          NEW_SRV_ACTION_VIEW_TEST_INPUT,
-                          "run_id=%d&test_num=%d",
-                          r->run_id, t->num));
-        if (t->output_available) {
-          fprintf(f, "&nbsp;%s[O]</a>",
-                  ns_aref_2(hbuf, sizeof(hbuf), phr,
-                            html_make_title(tbuf, sizeof(tbuf), _("Program output")),
-                            NEW_SRV_ACTION_VIEW_TEST_OUTPUT,
-                            "run_id=%d&test_num=%d",
-                            r->run_id, t->num));
-        }
-        if (r->correct_available) {
-          fprintf(f, "&nbsp;%s[A]</a>",
-                  ns_aref_2(hbuf, sizeof(hbuf), phr,
-                            html_make_title(tbuf, sizeof(tbuf), _("Correct answer")),
-                            NEW_SRV_ACTION_VIEW_TEST_ANSWER,
-                            "run_id=%d&test_num=%d",
-                            r->run_id, t->num));
-        }
-        if (t->stderr_available) {
-          fprintf(f, "&nbsp;%s[E]</a>",
-                  ns_aref_2(hbuf, sizeof(hbuf), phr,
-                            html_make_title(tbuf, sizeof(tbuf), _("Program stderr output")),
-                            NEW_SRV_ACTION_VIEW_TEST_ERROR,
-                            "run_id=%d&test_num=%d",
-                            r->run_id, t->num));
-        }
-        if (t->checker_output_available) {
-          fprintf(f, "&nbsp;%s[C]</a>",
-                  ns_aref_2(hbuf, sizeof(hbuf), phr,
-                            html_make_title(tbuf, sizeof(tbuf), _("Checker output")),
-                            NEW_SRV_ACTION_VIEW_TEST_CHECKER,
-                            "run_id=%d&test_num=%d",
-                            r->run_id, t->num));
-        }
-        if (r->info_available) {
-          fprintf(f, "&nbsp;%s[F]</a>",
-                  ns_aref_2(hbuf, sizeof(hbuf), phr,
-                            html_make_title(tbuf, sizeof(tbuf), _("Test information")),
-                            NEW_SRV_ACTION_VIEW_TEST_INFO,
-                            "run_id=%d&test_num=%d",
-                            r->run_id, t->num));
-        }
-      }
-      fprintf(f, "</td>");
-    }
-    fprintf(f, "</tr>\n");
-  }
-  fprintf(f, "</table>\n");
-   */
           if (visibility == TV_FULL) {
             fprintf(fout, ",\n          \"is_visibility_full\": %s", to_json_bool(1));
             if (t->args_too_long || t->args) {
