@@ -3,7 +3,7 @@
 #ifndef __NEW_SERVER_PROTO_H__
 #define __NEW_SERVER_PROTO_H__
 
-/* Copyright (C) 2006-2024 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -391,6 +391,8 @@ enum
   NEW_SRV_ACTION_CREATE_USER_SESSION,
   NEW_SRV_ACTION_CHANGE_REGISTRATIONS,
   NEW_SRV_ACTION_SPECIAL_FLOW,
+  NEW_SRV_ACTION_LIST_PROBLEMS_JSON,
+  NEW_SRV_ACTION_GET_PROBLEM_JSON,
 
   NEW_SRV_ACTION_LAST,
 };
