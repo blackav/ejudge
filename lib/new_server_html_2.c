@@ -8283,8 +8283,7 @@ write_xml_team_testing_report(
         s = html_armor_string_dup(t->checker_comment);
         fprintf(f, "<td%s>%s</td>", cl, s);
         xfree(s);
-      }
-      if (!t->team_comment) {
+      } else if (!t->team_comment) {
         fprintf(f, "<td%s>&nbsp;</td>", cl);
       } else {
         s = html_armor_string_dup(t->team_comment);
