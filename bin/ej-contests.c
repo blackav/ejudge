@@ -42,6 +42,7 @@
 #include "ejudge/session_cache.h"
 #include "ejudge/server_info.h"
 #include "ejudge/mixed_id.h"
+#include "ejudge/neuroreview.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/osdeps.h"
@@ -1084,8 +1085,10 @@ main(int argc, char *argv[])
   if (!(state = nsf_init(&params, 0, server_start_time))) return 1;
   setup_spool_dirs(ejudge_config, state);
   if (nsf_prepare(state) < 0) return 1;
+  neuroreview_init_manager();
   nsf_main_loop(state);
   restart_flag = nsf_is_restart_requested(state);
+  neuroreview_stop_manager();
   ns_unload_contests();
   nsf_cleanup(state);
   nsdb_default->iface->close(nsdb_default->data);

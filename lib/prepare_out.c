@@ -558,6 +558,11 @@ prepare_unparse_global(
     fprintf(f, "score_n_best_problems = %d\n", global->score_n_best_problems);
   if (global->require_problem_uuid > 0)
     unparse_bool(f, "require_problem_uuid", global->require_problem_uuid);
+  if (global->enable_neuroreview > 0)
+    unparse_bool(f, "enable_neuroreview", global->enable_neuroreview);
+  do_str(f, &ab, "neuroreview_api_base", global->neuroreview_api_base);
+  do_str(f, &ab, "neuroreview_model", global->neuroreview_model);
+  do_str(f, &ab, "neuroreview_template", global->neuroreview_template);
 
   //???
   unparse_bool(f, "enable_l10n", global->enable_l10n);

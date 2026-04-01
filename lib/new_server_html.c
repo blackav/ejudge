@@ -85,6 +85,7 @@
 #include "ejudge/run_packet.h"
 #include "ejudge/notify_plugin.h"
 #include "ejudge/json_serializers.h"
+#include "ejudge/neuroreview.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -4736,6 +4737,114 @@ priv_submit_run_comment(
 }
 
 static int
+priv_neuroreview(
+        FILE *fout,
+        FILE *log_f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  const serve_state_t cs = extra->serve_state;
+  int run_id = 0;
+  struct run_entry re;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  int retval = 0;
+
+  if (parse_run_id(fout, phr, cnts, extra, &run_id, &re) < 0) return -1;
+  if (re.user_id && !teamdb_lookup(cs->teamdb_state, re.user_id)) {
+    ns_error(log_f, NEW_SRV_ERR_USER_ID_NONEXISTANT, re.user_id);
+    goto cleanup;
+  }
+
+
+  int src_flags;
+  const struct section_problem_data *prob = 0;
+  path_t src_path;
+  char *run_text = 0;
+  size_t run_size = 0;
+
+  if (opcaps_check(phr->caps, OPCAP_VIEW_SOURCE) < 0)
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+  if (re.prob_id <= 0 || re.prob_id > cs->max_prob ||
+      !(prob = cs->probs[re.prob_id]))
+    FAIL(NEW_SRV_ERR_INV_PROB_ID);
+  if (!run_is_normal_or_transient_status(re.status))
+    FAIL(NEW_SRV_ERR_SOURCE_UNAVAILABLE);
+
+  if ((src_flags = serve_make_source_read_path(cs, src_path, sizeof(src_path), &re)) < 0) {
+    FAIL(NEW_SRV_ERR_SOURCE_NONEXISTANT);
+  }
+  if (generic_read_file(&run_text, 0, &run_size, src_flags, 0, src_path, 0) < 0)
+    FAIL(NEW_SRV_ERR_DISK_READ_ERROR);
+
+
+  const char *statement;
+
+  int variant = 0;
+  if (prob->variant_num > 0) {
+    if ((variant = find_variant(cs, phr->user_id, re.prob_id, 0)) <= 0) {
+      FAIL(1);
+    }
+  }
+
+  problem_xml_t px = NULL;
+  struct md_content *pmd = NULL;
+  char *statement_buffer = NULL;
+  size_t statement_buffer_size = 0;
+  if (prob->variant_num > 0 && variant > 0 && prob->md_size > 0 && variant <= prob->md_size) {
+    pmd = &prob->md_files[variant - 1];
+  } else if (prob->variant_num <= 0 && variant <= 0 && prob->md_size == 1) {
+    pmd = &prob->md_files[0];
+  }
+  if (pmd && pmd->size > 0) {
+    statement = pmd->data;
+  } else {
+    if (variant > 0 && prob->xml.a && prob->xml.a[variant - 1]) {
+      px = prob->xml.a[variant - 1];
+    } else if (variant <= 0 && prob->xml.p) {
+      px = prob->xml.p;
+    }
+    if (!px || !px->stmts) {
+      FAIL(1);
+    }
+    
+    FILE *memstream = open_memstream(&statement_buffer, &statement_buffer_size);
+    if (!memstream) {
+      FAIL(1);
+    }
+
+    problem_xml_unparse(memstream, px);
+
+    fclose(memstream);
+    // ns_unparse_statement(fout, phr, cnts, extra, prob, 0, px, NULL, 0);
+
+    statement = statement_buffer;
+  }
+
+  struct neuroreview_review_state neuroreview_state = {
+    cs,
+    re.run_id,
+    re.run_uuid,
+    phr->ip,
+    phr->ssl_flag,
+    re.user_id,
+    phr->user_id,
+    phr->locale_id,
+  };
+
+  if (neuroreview_send_review(neuroreview_state, statement, run_text) < 0) {
+    FAIL(1);
+  }
+
+
+ cleanup:
+  html_armor_free(&ab);
+  free(statement_buffer);
+
+  return retval;
+}
+
+static int
 priv_clar_reply(
         FILE *fout,
         FILE *log_f,
@@ -8016,6 +8125,7 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_FORCE_START_VIRTUAL] = priv_force_start_virtual,
   [NEW_SRV_ACTION_ASSIGN_CYPHERS_2] = priv_assign_cyphers_2,
   [NEW_SRV_ACTION_SET_PRIORITIES] = priv_set_priorities,
+  [NEW_SRV_ACTION_PRIV_NEUROREVIEW] = priv_neuroreview,
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_IGNORE] = priv_submit_run_comment,
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_OK] = priv_submit_run_comment,
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_REJECT] = priv_submit_run_comment,
@@ -11906,6 +12016,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_VIEW_EXAM_INFO] = priv_generic_page,
   [NEW_SRV_ACTION_GET_FILE] = priv_get_file,
   [NEW_SRV_ACTION_SET_PRIORITIES] = priv_generic_operation,
+  [NEW_SRV_ACTION_PRIV_NEUROREVIEW] = priv_generic_operation,
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_IGNORE] = priv_generic_operation,
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_OK] = priv_generic_operation,
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_REJECT] = priv_generic_operation,

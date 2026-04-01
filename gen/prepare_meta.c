@@ -44,6 +44,10 @@ static struct meta_info_item meta_info_section_global_data_data[] =
   [CNTSGLOB_time_limit_retry_count] = { CNTSGLOB_time_limit_retry_count, 'i', XSIZE(struct section_global_data, time_limit_retry_count), "time_limit_retry_count", XOFFSET(struct section_global_data, time_limit_retry_count) },
   [CNTSGLOB_score_n_best_problems] = { CNTSGLOB_score_n_best_problems, 'i', XSIZE(struct section_global_data, score_n_best_problems), "score_n_best_problems", XOFFSET(struct section_global_data, score_n_best_problems) },
   [CNTSGLOB_require_problem_uuid] = { CNTSGLOB_require_problem_uuid, 'B', XSIZE(struct section_global_data, require_problem_uuid), "require_problem_uuid", XOFFSET(struct section_global_data, require_problem_uuid) },
+  [CNTSGLOB_enable_neuroreview] = { CNTSGLOB_enable_neuroreview, 'B', XSIZE(struct section_global_data, enable_neuroreview), "enable_neuroreview", XOFFSET(struct section_global_data, enable_neuroreview) },
+  [CNTSGLOB_neuroreview_api_base] = { CNTSGLOB_neuroreview_api_base, 's', XSIZE(struct section_global_data, neuroreview_api_base), "neuroreview_api_base", XOFFSET(struct section_global_data, neuroreview_api_base) },
+  [CNTSGLOB_neuroreview_model] = { CNTSGLOB_neuroreview_model, 's', XSIZE(struct section_global_data, neuroreview_model), "neuroreview_model", XOFFSET(struct section_global_data, neuroreview_model) },
+  [CNTSGLOB_neuroreview_template] = { CNTSGLOB_neuroreview_template, 's', XSIZE(struct section_global_data, neuroreview_template), "neuroreview_template", XOFFSET(struct section_global_data, neuroreview_template) },
   [CNTSGLOB_stand_ignore_after] = { CNTSGLOB_stand_ignore_after, 't', XSIZE(struct section_global_data, stand_ignore_after), "stand_ignore_after", XOFFSET(struct section_global_data, stand_ignore_after) },
   [CNTSGLOB_contest_finish_time] = { CNTSGLOB_contest_finish_time, 't', XSIZE(struct section_global_data, contest_finish_time), "contest_finish_time", XOFFSET(struct section_global_data, contest_finish_time) },
   [CNTSGLOB_appeal_deadline] = { CNTSGLOB_appeal_deadline, 't', XSIZE(struct section_global_data, appeal_deadline), "appeal_deadline", XOFFSET(struct section_global_data, appeal_deadline) },
@@ -392,6 +396,16 @@ void cntsglob_copy(struct section_global_data *dst, const struct section_global_
   dst->time_limit_retry_count = src->time_limit_retry_count;
   dst->score_n_best_problems = src->score_n_best_problems;
   dst->require_problem_uuid = src->require_problem_uuid;
+  dst->enable_neuroreview = src->enable_neuroreview;
+  if (src->neuroreview_api_base) {
+    dst->neuroreview_api_base = strdup(src->neuroreview_api_base);
+  }
+  if (src->neuroreview_model) {
+    dst->neuroreview_model = strdup(src->neuroreview_model);
+  }
+  if (src->neuroreview_template) {
+    dst->neuroreview_template = strdup(src->neuroreview_template);
+  }
   dst->stand_ignore_after = src->stand_ignore_after;
   dst->contest_finish_time = src->contest_finish_time;
   dst->appeal_deadline = src->appeal_deadline;
@@ -954,6 +968,9 @@ void cntsglob_copy(struct section_global_data *dst, const struct section_global_
 void cntsglob_free(struct section_global_data *ptr)
 {
   // hidden g
+  free(ptr->neuroreview_api_base);
+  free(ptr->neuroreview_model);
+  free(ptr->neuroreview_template);
   // private fog_standings_updated
   // private start_standings_updated
   // private unfog_standings_updated

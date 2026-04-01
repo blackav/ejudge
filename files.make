@@ -215,6 +215,7 @@ COMMON_CFILES=\
  lib/misctext.c\
  lib/mixed_id.c\
  lib/ncheck_packet.c\
+ lib/neuroreview.c\
  lib/new_server_html.c\
  lib/new_server_html_2.c\
  lib/new_server_html_3.c\

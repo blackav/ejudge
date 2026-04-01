@@ -154,6 +154,10 @@ static const unsigned char MSG_xuser_plugin[] = "XuserDB storage engine";
 static const unsigned char MSG_status_plugin[] = "Status storage engine";
 static const unsigned char MSG_enable_problem_history[] = "Load problem UUID from history.txt";
 static const unsigned char MSG_require_problem_uuid[] = "Require problem UUID";
+static const unsigned char MSG_enable_neuroreview[] = "Enable neuroreview";
+static const unsigned char MSG_neuroreview_api_base[] = "Neuroreview api base";
+static const unsigned char MSG_neuroreview_model[] = "Neuroreview model";
+static const unsigned char MSG_neuroreview_template[] = "Neuroreview prompt template path";
 
 %><%@set getter_name = "csp_get_cnts_edit_cur_global_page"
 %><%@set ac_prefix = "SSERV_CMD_"
@@ -481,6 +485,10 @@ static const unsigned char * const form_row_attrs[]=
         <%@expand EDIT_TEXT_ROW "status_plugin" "adv" "48" "400px" %>
         <%@expand EDIT_BOOL_ROW "enable_problem_history" "caps" "400px" %>
         <%@expand EDIT_BOOL_ROW "require_problem_uuid" "adv" "400px" %>
+        <%@expand EDIT_BOOL_ROW "enable_neuroreview" "adv" "400px" %>
+        <%@expand EDIT_TEXT_ROW "neuroreview_api_base" "adv" "400px" %>
+        <%@expand EDIT_TEXT_ROW "neuroreview_model" "adv" "400px" %>
+        <%@expand EDIT_TEXT_ROW "neuroreview_template" "adv" "400px" %>
     </s:form>
 </div>
 
@@ -1160,6 +1168,10 @@ function popupAdvancedDialog(e, skipField)
     $("#adv-rundb_plugin").val($("#orig-rundb_plugin").val());
     $("#adv-xuser_plugin").val($("#orig-xuser_plugin").val());
     $("#adv-status_plugin").val($("#orig-status_plugin").val());
+    copyCheckbox("adv-enable_neuroreview", "orig-enable_neuroreview");
+    $("#adv-neuroreview_api_base").val($("#orig-neuroreview_api_base").val());
+    $("#adv-neuroreview_model").val($("#orig-neuroreview_model").val());
+    $("#adv-neuroreview_template").val($("#orig-neuroreview_template").val());
     copyCheckbox("adv-enable_problem_history", "orig-enable_problem_history");
 
     if (skipField != null) {
@@ -1703,6 +1715,10 @@ function advancedDialogOnChange()
             <%@expand ORIG_BOOL_ROW "enable_l10n" %>
             <%@expand ORIG_TEXT_ROW "charset" "Advanced" "48" %>
             <%@expand ORIG_TEXT_ROW "standings_charset" "Advanced" "48" %>
+            <%@expand ORIG_BOOL_ROW "enable_neuroreview" %>
+            <%@expand ORIG_TEXT_ROW "neuroreview_api_base" "Advanced" "48" %>
+            <%@expand ORIG_TEXT_ROW "neuroreview_model" "Advanced" "48" %>
+            <%@expand ORIG_TEXT_ROW "neuroreview_template" "Advanced" "48" %>
 <%
   if (phr->ss->enable_stand2 && global->stand2_file_name && global->stand2_file_name[0]) {
 %>
