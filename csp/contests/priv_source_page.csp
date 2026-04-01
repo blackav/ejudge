@@ -804,6 +804,8 @@ Run Id: <s:a url="ViewOtherSourceUrl"><s:v value="fcev2.v[i].e.run_id" /></s:a>
 <s:submit ac="priv-submit-run-comment-and-reject" />
 <br/>
 <s:submit ac="priv-submit-run-comment-and-summon" />
+<br/>
+<s:submit ac="priv-neuroreview" label="Neuroreview" />
 </div></s:form>
 
 <%

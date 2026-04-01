@@ -135,6 +135,7 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(preserve_line_numbers, "d"),
   GLOBAL_PARAM(enable_remote_cache, "d"),
   GLOBAL_PARAM(enable_run_props, "d"),
+  GLOBAL_PARAM(enable_neuroreview, "d"),
 
   GLOBAL_PARAM(stand_ignore_after, "t"),
   GLOBAL_PARAM(appeal_deadline, "t"),
@@ -143,6 +144,9 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(standings_charset, "S"),
   GLOBAL_PARAM(stand2_charset, "S"),
   GLOBAL_PARAM(plog_charset, "S"),
+  GLOBAL_PARAM(neuroreview_api_base, "S"),
+  GLOBAL_PARAM(neuroreview_model, "S"),
+  GLOBAL_PARAM(neuroreview_template, "S"),
 
   GLOBAL_PARAM(root_dir, "S"),
   GLOBAL_PARAM(conf_dir, "S"),
@@ -995,6 +999,7 @@ global_init_func(struct generic_section_config *gp)
   p->disable_user_database = -1;
   p->enable_max_stack_size = -1;
   p->require_problem_uuid = -1;
+  p->enable_neuroreview = -1;
 
   p->compile_max_vm_size = ~(ej_size64_t) 0;
   p->compile_max_stack_size = ~(ej_size64_t) 0;
@@ -3369,6 +3374,7 @@ set_defaults(
     g->disable_user_database = 0;
   if (g->enable_max_stack_size < 0) g->enable_max_stack_size = 0;
   if (g->require_problem_uuid < 0) g->require_problem_uuid = 0;
+  if (g->enable_neuroreview < 0) g->enable_neuroreview = 0;
 
 #if defined EJUDGE_HTTPD_HTDOCS_DIR
   if (!g->htdocs_dir || !g->htdocs_dir[0]) {
@@ -5540,6 +5546,7 @@ prepare_set_global_defaults(
     g->disable_user_database = 0;
   if (g->enable_max_stack_size < 0) g->enable_max_stack_size = 0;
   if (g->require_problem_uuid < 0) g->require_problem_uuid = 0;
+  if (g->enable_neuroreview < 0) g->enable_neuroreview = 0;
 }
 
 void

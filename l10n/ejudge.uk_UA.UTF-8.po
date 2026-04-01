@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-10-02 00:48+0300\n"
+"POT-Creation-Date: 2026-03-29 17:07+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Ukrainian <uk@li.org>\n"
@@ -2450,6 +2450,9 @@ msgstr ""
 
 #, c-format
 msgid "Neither user_id, login, nor name are specified\n"
+msgstr ""
+
+msgid "Neuroreview"
 msgstr ""
 
 #, c-format

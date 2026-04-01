@@ -41,6 +41,10 @@
     unsigned char *rundb_plugin = NULL;
     unsigned char *xuser_plugin = NULL;
     unsigned char *status_plugin = NULL;
+    ejintbool_t enable_neuroreview = 0;
+    unsigned char *neuroreview_api_base = NULL;
+    unsigned char *neuroreview_model = NULL;
+    unsigned char *neuroreview_template = NULL;
 
     time_t appeal_deadline = 0;
 
@@ -76,6 +80,10 @@
 %><s:read var="rundb_plugin" normalize="yes" nonnull="yes" /><%
 %><s:read var="xuser_plugin" normalize="yes" nonnull="yes" /><%
 %><s:read var="status_plugin" normalize="yes" nonnull="yes" /><%
+%><s:read var="enable_neuroreview" default="0" /><%
+%><s:read var="neuroreview_api_base" normalize="yes" nonnull="yes" /><%
+%><s:read var="neuroreview_model" normalize="yes" nonnull="yes" /><%
+%><s:read var="neuroreview_template" normalize="yes" nonnull="yes" /><%
 
     if (parse_date_twopart(appeal_deadline_date, appeal_deadline_time, &appeal_deadline) < 0) {
         fprintf(msg_f, "Invalid finish time<br/>");
@@ -123,6 +131,10 @@
             MOVESTR(rundb_plugin);
             MOVESTR(xuser_plugin);
             MOVESTR(status_plugin);
+            global->enable_neuroreview = enable_neuroreview;
+            MOVESTR(neuroreview_api_base);
+            MOVESTR(neuroreview_model);
+            MOVESTR(neuroreview_template);
         }
     }
 

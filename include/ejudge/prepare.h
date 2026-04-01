@@ -214,6 +214,15 @@ struct section_global_data
   /** require problem UUID */
   ejintbool_t require_problem_uuid;
 
+  /** enable neuroreview */
+  ejintbool_t enable_neuroreview;
+  /** neuroreview api base */
+  unsigned char *neuroreview_api_base;
+  /** neuroreview model */
+  unsigned char *neuroreview_model;
+  /** neuroreview prompt template path */
+  unsigned char *neuroreview_template;
+
   /** do not show submits after this time in the standings */
   time_t stand_ignore_after;
 
