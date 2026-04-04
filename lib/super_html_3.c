@@ -1370,7 +1370,11 @@ super_html_new_check_tests(
       continue;
     }
 
-    if (tmp_prob->problem_dir && tmp_prob->problem_dir[0]) {
+    if (tmp_prob->problem_dirs && tmp_prob->problem_dirs[0]) {
+      for (variant = 0; tmp_prob->problem_dirs[variant]; ++variant) {
+        fprintf(flog, "problem_dir[%d] = %s\n", variant + 1, tmp_prob->problem_dirs[variant]);
+      }
+    } else if (tmp_prob->problem_dir && tmp_prob->problem_dir[0]) {
       fprintf(flog, "problem_dir = %s\n", tmp_prob->problem_dir);
     }
 
