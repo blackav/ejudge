@@ -19,12 +19,16 @@
     unsigned char *uuid = NULL;
     unsigned char *long_name = NULL;
     unsigned char *super = NULL;
+    unsigned char *problem_dir = NULL;
     const unsigned char *type = NULL;
     int variant_num = -1;
     int autoassign_variants = -1;
+    char **problem_dirs = NULL;
+    int problem_dir_count = 0;
 
     int i, j;
     struct section_problem_data *prob = NULL, *other_prob = NULL;
+    struct section_problem_data *sup_prob = NULL;
     int type_val;
 
     char *msg_s = NULL;
@@ -37,11 +41,20 @@
 %><s:read var="uuid" normalize="yes" /><%
 %><s:read var="long_name" normalize="yes" nonnull="yes" /><%
 %><s:read var="super" normalize="yes" nonnull="yes" /><%
+%><s:read var="problem_dir" normalize="yes" /><%
 %><s:read var="type" /><%
 %><s:read var="variant_num" default="-1" /><%
 %><s:read var="autoassign_variants" default="-1" /><%
 
     if (retval || !phr->ss) goto cleanup;
+
+    if (problem_dir && problem_dir[0]) {
+        if (sarray_parse_2(problem_dir, &problem_dirs) < 0) {
+            fprintf(msg_f, "problem_dir has invalid format<br/>");
+            FAIL(SSERV_ERR_INVALID_PARAMETER);
+        }
+    }
+    problem_dir_count = sarray_len(problem_dirs);
 
     if (type != NULL) {
         type_val = problem_parse_type(type);
@@ -73,6 +86,10 @@
         }
         variant_num = -1;
         autoassign_variants = -1;
+        if (problem_dir_count > 1) {
+            fprintf(msg_f, "problem_dir: invalid number of entries<br/>");
+            FAIL(SSERV_ERR_INVALID_PARAMETER);
+        }
     } else {
         i = prob_id;
         if (i >= phr->ss->prob_a) FAIL(SSERV_ERR_INVALID_PARAMETER);
@@ -92,20 +109,40 @@
             xfree(internal_name); internal_name = NULL;
         }
         if (internal_name) {
-            other_prob = super_serve_find_problem(phr->ss, internal_name);
-            if (other_prob && other_prob != prob) {
-                fprintf(msg_f, "internal_name is not unique<br/>");
-                FAIL(SSERV_ERR_INVALID_PARAMETER);
+            int check_internal = 1;
+            if (prob->internal_name && !strcmp(internal_name, prob->internal_name)) {
+                check_internal = 0;
+            }
+            if (check_internal) {
+                other_prob = super_serve_find_problem(phr->ss, internal_name);
+                if (other_prob && other_prob != prob) {
+                    fprintf(msg_f, "internal_name is not unique<br/>");
+                    FAIL(SSERV_ERR_INVALID_PARAMETER);
+                }
             }
         }
         if (*super) {
             for (j = 0; j < phr->ss->aprob_u; ++j) {
                 if (!phr->ss->aprobs[j]) continue;
-                if (!strcmp(super, phr->ss->aprobs[j]->short_name))
+                if (!strcmp(super, phr->ss->aprobs[j]->short_name)) {
+                    sup_prob = phr->ss->aprobs[j];
                     break;
+                }
             }
             if (j >= phr->ss->aprob_u) {
                 fprintf(msg_f, "super problem does not exist<br/>");
+                FAIL(SSERV_ERR_INVALID_PARAMETER);
+            }
+        }
+        {
+            int eff_variant_num = 1;
+            if (variant_num > 1) {
+                eff_variant_num = variant_num;
+            } else if (variant_num < 0 && sup_prob && sup_prob->variant_num > 1) {
+                eff_variant_num = sup_prob->variant_num;
+            }
+            if (problem_dir_count > 1 && problem_dir_count != eff_variant_num) {
+                fprintf(msg_f, "problem_dir: invalid number of entries<br/>");
                 FAIL(SSERV_ERR_INVALID_PARAMETER);
             }
         }
@@ -123,6 +160,14 @@
         prob->type = type_val;
         prob->variant_num = variant_num;
         prob->autoassign_variants = autoassign_variants;
+        sarray_free((char **) prob->problem_dirs);
+        prob->problem_dirs = (unsigned char **) problem_dirs;
+        problem_dirs = NULL;
+        xfree(prob->problem_dir);
+        prob->problem_dir = NULL;
+        if (prob->problem_dirs && prob->problem_dirs[0]) {
+            prob->problem_dir = xstrdup(prob->problem_dirs[0]);
+        }
     }
 
 cleanup:;
@@ -142,4 +187,6 @@ cleanup:;
     xfree(uuid);
     xfree(long_name);
     xfree(super);
+    xfree(problem_dir);
+    sarray_free(problem_dirs);
 %>
