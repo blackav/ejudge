@@ -3498,8 +3498,8 @@ priv_submit_run(
   const struct section_language_data *lang = 0;
   const unsigned char *s;
   int prob_id = 0, variant = 0, lang_id = 0, n, max_ans, ans, i, mime_type = 0, r;
-  const unsigned char *run_text;
-  size_t run_size, ans_size;
+  const unsigned char *run_text = NULL;
+  size_t run_size = 0, ans_size = 0;
   unsigned char *ans_map = 0, *ans_buf = 0, *ans_tmp = 0;
   char **lang_list = 0;
   const unsigned char *mime_type_str = 0;
@@ -3873,7 +3873,7 @@ priv_submit_run(
 
   switch (prob->type) {
   case PROB_TYPE_STANDARD:
-    if (lang->binary <= 0 && strlen(run_text) != run_size) {
+    if (lang->binary <= 0 && run_text && strlen(run_text) != run_size) {
       // guess utf-16/ucs-2
       if (((int) run_size) < 0) goto binary_submission;
       if ((utf8_len = ucs2_to_utf8(&utf8_str, run_text, run_size)) < 0)
