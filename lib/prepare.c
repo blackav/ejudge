@@ -5574,8 +5574,8 @@ prepare_set_abstr_problem_defaults(struct section_problem_data *prob,
   if (prob->time_limit < 0) prob->time_limit = 0;
   if (prob->time_limit_millis < 0) prob->time_limit_millis = 0;
   if (prob->real_time_limit < 0) prob->real_time_limit = 0;
-  if (prob->full_score < 0) prob->full_score = DFLT_P_FULL_SCORE;
-  if (prob->test_score < 0) prob->test_score = DFLT_P_TEST_SCORE;
+  if (prob->full_score < 0) prob->full_score = (global->score_system == SCORE_ACM ? -1 : DFLT_P_FULL_SCORE);
+  if (prob->test_score < 0) prob->test_score = (global->score_system == SCORE_ACM ? -1 : DFLT_P_TEST_SCORE);
   if (prob->variable_full_score < 0)
     prob->variable_full_score = DFLT_P_VARIABLE_FULL_SCORE;
   if (prob->run_penalty == -1) prob->run_penalty = DFLT_P_RUN_PENALTY;
@@ -6128,7 +6128,7 @@ prepare_set_prob_value(
 
   case CNTSPROB_full_score:
     if (out->full_score < 0 && abstr) out->full_score = abstr->full_score;
-    if (out->full_score < 0) out->full_score = DFLT_P_FULL_SCORE;
+    if (out->full_score < 0) out->full_score = (global->score_system == SCORE_ACM ? -1 : DFLT_P_FULL_SCORE);
     break;
 
   case CNTSPROB_full_user_score:
