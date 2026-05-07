@@ -2,7 +2,7 @@
 #ifndef __TESTINFO_H__
 #define __TESTINFO_H__
 
-/* Copyright (C) 2003-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -82,6 +82,7 @@ struct testinfo_struct
   int real_time_limit_ms;
   int allow_compile_error;
   int ignore_term_signal;
+  int must_fail;
 };
 typedef struct testinfo_struct testinfo_t;
 
