@@ -4740,6 +4740,12 @@ run_one_test(
 
   // terminated with a signal
   if (task_Status(tsk) == TSK_SIGNALED) {
+    if (srpp->use_info > 0 && tstinfo.must_fail > 0) {
+      cur_info->code = 256;
+      cur_info->termsig = task_TermSignal(tsk);
+      status = RUN_OK;
+      goto cleanup;
+    }
     int ignore_term_signal = 0;
     if (srpp->use_info > 0 && tstinfo.ignore_term_signal > 0) {
       ignore_term_signal = 1;
@@ -4765,6 +4771,10 @@ run_one_test(
     cur_info->code = task_ExitCode(tsk);
   }
 
+  if (srpp->use_info > 0 && tstinfo.must_fail > 0 && cur_info->code != 0) {
+    status = RUN_OK;
+    goto cleanup;
+  }
   if (srpp->use_info > 0 && tstinfo.exit_code > 0) {
     if (cur_info->code != tstinfo.exit_code) {
       status = RUN_WRONG_ANSWER_ERR;
@@ -4861,6 +4871,13 @@ run_checker:;
                           0, src_path,
                           state->exec_user_serial,
                           test_random_value);
+  if (srpp->use_info > 0 && tstinfo.must_fail > 0) {
+    if (status == RUN_OK) {
+      status = RUN_WRONG_ANSWER_ERR;
+    } else if (status != RUN_CHECK_FAILED) {
+      status = RUN_OK;
+    }
+  }
 
   // read the checker output
 read_checker_output:;
