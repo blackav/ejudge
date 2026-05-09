@@ -14,6 +14,7 @@
  * GNU General Public License for more details.
  */
 
+#include <asm/unistd_64.h>
 #include <sched.h>
 #include <stdio.h>
 #include <string.h>
@@ -150,6 +151,7 @@ static int enable_sys_execve = 0;
 static int enable_sys_fork = 0;
 static int enable_sys_memfd = 0;
 static int enable_sys_unshare = 0;
+static int enable_sys_splice = 0;
 
 static char *working_dir = NULL;
 static char *working_dir_parent = NULL;
@@ -1514,8 +1516,21 @@ static struct sock_filter seccomp_filter_default[] =
     /* 18 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
 #endif
 
+    // blacklist splice and vmsplice
+#if defined __NR_splice
+    /* 19 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_splice, 0, 1),
+    /* 20 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
+    /* 21 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_vmsplice, 0, 1),
+    /* 22 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
+#else
+    /* 19 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
+    /* 20 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
+    /* 21 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
+    /* 22 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
+#endif
+
     // allow remaining
-    /* 19 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_ALLOW),
+    /* 23 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_ALLOW),
 };
 
 static struct sock_filter seccomp_filter_x86_64[] =
@@ -1592,61 +1607,87 @@ static struct sock_filter seccomp_filter_x86_64[] =
     /* 22 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
 #endif
 
+    // blacklist splice and vmsplice
+#if defined __NR_splice
+    /* 23 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_splice, 0, 1),
+    /* 24 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
+    /* 25 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_vmsplice, 0, 1),
+    /* 26 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
+#else
+    /* 23 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
+    /* 24 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
+    /* 25 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
+    /* 26 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
+#endif
+
     // allow remaining
-    /* 23 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_ALLOW),
+    /* 27 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_ALLOW),
 
     // i686 under x86_64 part
     // load syscall number
-    /* 24 */ BPF_STMT(BPF_LD+BPF_W+BPF_ABS, (offsetof(struct seccomp_data, nr))),
+    /* 28 */ BPF_STMT(BPF_LD+BPF_W+BPF_ABS, (offsetof(struct seccomp_data, nr))),
 
     // blacklist fork-like syscalls
-    /* 25 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_32_fork, 0, 1),
-    /* 26 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
-    /* 27 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_32_vfork, 0, 1),
-    /* 28 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
-    /* 29 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_32_clone, 0, 1),
+    /* 29 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_32_fork, 0, 1),
     /* 30 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
-
-#if defined __NR_32_clone3
-    /* 31 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_32_clone3, 0, 1),
+    /* 31 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_32_vfork, 0, 1),
     /* 32 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
-#else
-    /* 31 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
-    /* 32 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
-#endif
-
-    // blacklist exec-like syscalls
-    /* 33 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_32_execve, 0, 1),
+    /* 33 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_32_clone, 0, 1),
     /* 34 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
 
-#if defined __NR_32_execveat
-    /* 35 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_32_execveat, 0, 1),
+#if defined __NR_32_clone3
+    /* 35 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_32_clone3, 0, 1),
     /* 36 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
 #else
     /* 35 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
     /* 36 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
 #endif
 
-    // blacklist memfd_create
-#if defined __NR_32_memfd_create
-    /* 37 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_32_memfd_create, 0, 1),
+    // blacklist exec-like syscalls
+    /* 37 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_32_execve, 0, 1),
     /* 38 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
-#else
-    /* 37 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
-    /* 38 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
-#endif
 
-    // blacklist unshare
-#if defined __NR_32_unshare
-    /* 39 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_32_unshare, 0, 1),
+#if defined __NR_32_execveat
+    /* 39 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_32_execveat, 0, 1),
     /* 40 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
 #else
     /* 39 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
     /* 40 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
 #endif
 
+    // blacklist memfd_create
+#if defined __NR_32_memfd_create
+    /* 41 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_32_memfd_create, 0, 1),
+    /* 42 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
+#else
+    /* 41 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
+    /* 42 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
+#endif
+
+    // blacklist unshare
+#if defined __NR_32_unshare
+    /* 43 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_32_unshare, 0, 1),
+    /* 44 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
+#else
+    /* 43 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
+    /* 44 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
+#endif
+
+    // blacklist splice and vmsplice
+#if defined __NR_splice
+    /* 45 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_splice, 0, 1),
+    /* 46 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
+    /* 47 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_vmsplice, 0, 1),
+    /* 48 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
+#else
+    /* 45 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
+    /* 46 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
+    /* 47 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
+    /* 48 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
+#endif
+
     // allow remaining
-    /* 41 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_ALLOW),
+    /* 49 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_ALLOW),
 };
 
 static __attribute__((unused)) struct sock_fprog seccomp_prog_x86_64 =
@@ -1691,14 +1732,14 @@ tune_seccomp()
         seccomp_filter_x86_64[10] = nop[0];
         seccomp_filter_x86_64[11] = nop[0];
         seccomp_filter_x86_64[12] = nop[0];
-        seccomp_filter_x86_64[25] = nop[0];
-        seccomp_filter_x86_64[26] = nop[0];
-        seccomp_filter_x86_64[27] = nop[0];
-        seccomp_filter_x86_64[28] = nop[0];
         seccomp_filter_x86_64[29] = nop[0];
         seccomp_filter_x86_64[30] = nop[0];
         seccomp_filter_x86_64[31] = nop[0];
         seccomp_filter_x86_64[32] = nop[0];
+        seccomp_filter_x86_64[33] = nop[0];
+        seccomp_filter_x86_64[34] = nop[0];
+        seccomp_filter_x86_64[35] = nop[0];
+        seccomp_filter_x86_64[36] = nop[0];
     }
     if (enable_sys_execve) {
         seccomp_filter_x86_64[13] = nop[0];
@@ -1707,22 +1748,32 @@ tune_seccomp()
         seccomp_filter_x86_64[16] = nop[0];
         seccomp_filter_x86_64[17] = nop[0];
         seccomp_filter_x86_64[18] = nop[0];
-        seccomp_filter_x86_64[33] = nop[0];
-        seccomp_filter_x86_64[34] = nop[0];
-        seccomp_filter_x86_64[35] = nop[0];
-        seccomp_filter_x86_64[36] = nop[0];
+        seccomp_filter_x86_64[37] = nop[0];
+        seccomp_filter_x86_64[38] = nop[0];
+        seccomp_filter_x86_64[39] = nop[0];
+        seccomp_filter_x86_64[40] = nop[0];
     }
     if (enable_sys_memfd) {
         seccomp_filter_x86_64[19] = nop[0];
         seccomp_filter_x86_64[20] = nop[0];
-        seccomp_filter_x86_64[37] = nop[0];
-        seccomp_filter_x86_64[38] = nop[0];
+        seccomp_filter_x86_64[41] = nop[0];
+        seccomp_filter_x86_64[42] = nop[0];
     }
     if (enable_sys_unshare) {
         seccomp_filter_x86_64[21] = nop[0];
         seccomp_filter_x86_64[22] = nop[0];
-        seccomp_filter_x86_64[39] = nop[0];
-        seccomp_filter_x86_64[40] = nop[0];
+        seccomp_filter_x86_64[43] = nop[0];
+        seccomp_filter_x86_64[44] = nop[0];
+    }
+    if (enable_sys_splice) {
+        seccomp_filter_x86_64[23] = nop[0];
+        seccomp_filter_x86_64[24] = nop[0];
+        seccomp_filter_x86_64[25] = nop[0];
+        seccomp_filter_x86_64[26] = nop[0];
+        seccomp_filter_x86_64[45] = nop[0];
+        seccomp_filter_x86_64[46] = nop[0];
+        seccomp_filter_x86_64[47] = nop[0];
+        seccomp_filter_x86_64[48] = nop[0];
     }
 #else
     seccomp_prog_active = &seccomp_prog_default;
@@ -1758,6 +1809,12 @@ tune_seccomp()
     if (enable_sys_unshare) {
         seccomp_filter_default[17] = nop[0];
         seccomp_filter_default[18] = nop[0];
+    }
+    if (enable_sys_splice) {
+        seccomp_filter_x86_64[19] = nop[0];
+        seccomp_filter_x86_64[20] = nop[0];
+        seccomp_filter_x86_64[21] = nop[0];
+        seccomp_filter_x86_64[22] = nop[0];
     }
 #endif
 }
@@ -2246,7 +2303,9 @@ main(int argc, char *argv[])
                 limit_real_time_ms = v;
                 opt = eptr;
             } else if (*opt == 's' && opt[1] == '0') {
-                enable_seccomp = 0;
+                //enable_seccomp = 0;
+                enable_sys_execve = 1;
+                enable_sys_fork = 1;
                 opt += 2;
             } else if (*opt == 's' && opt[1] == 'e') {
                 enable_sys_execve = 1;
@@ -2259,6 +2318,9 @@ main(int argc, char *argv[])
                 opt += 2;
             } else if (*opt == 's' && opt[1] == 'u') {
                 enable_sys_unshare = 1;
+                opt += 2;
+            } else if (*opt == 's' && opt[1] == 's') {
+                enable_sys_splice = 1;
                 opt += 2;
             } else if (*opt == 'o' && opt[1] == 'l') {
                 language_name = extract_string(&opt, 2, "ol");
