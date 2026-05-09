@@ -3590,6 +3590,7 @@ run_one_test(
   long long file_size;
   int init_cmd_started = 0;
   int pg_not_empty = 0;
+  unsigned char must_fail_flag = 0;
 
   int pfd1[2] = { -1, -1 };
   int pfd2[2] = { -1, -1 };
@@ -3808,6 +3809,9 @@ run_one_test(
     }
   }
 
+  if (srpp->use_info > 0 && tstinfo.must_fail > 0) {
+    must_fail_flag = 1;
+  }
   if (srpp->use_info > 0 && tstinfo.disable_stderr >= 0) {
     disable_stderr = tstinfo.disable_stderr;
   }
@@ -4683,6 +4687,11 @@ run_one_test(
   }
 
   if (task_IsRealTimeout(tsk)) {
+    if (must_fail_flag) {
+      rtf_printf(&cur_info->chk_out, "real-time limit exceeded\n");
+      status = RUN_OK;
+      goto cleanup;
+    }
     if (srpp->wtl_is_cf > 0) {
       goto check_failed;
     } else if (srpp->disable_wtl > 0) {
@@ -4694,6 +4703,11 @@ run_one_test(
     goto cleanup;
   }
   if (task_IsTimeout(tsk)) {
+    if (must_fail_flag) {
+      rtf_printf(&cur_info->chk_out, "time-limit exceeded\n");
+      status = RUN_OK;
+      goto cleanup;
+    }
     status = RUN_TIME_LIMIT_ERR;
     if (tsk_int) goto read_checker_output;
     goto cleanup;
@@ -4701,6 +4715,11 @@ run_one_test(
 
   if (tst && tst->enable_memory_limit_error > 0 && srgp->enable_memory_limit_error > 0
       && srgp->secure_run > 0 && task_IsMemoryLimit(tsk)) {
+    if (must_fail_flag) {
+      rtf_printf(&cur_info->chk_out, "memory-limit exceeded\n");
+      status = RUN_OK;
+      goto cleanup;
+    }
     status = RUN_MEM_LIMIT_ERR;
     if (tsk_int) goto read_checker_output;
     goto cleanup;
@@ -4708,12 +4727,22 @@ run_one_test(
 
   if (tst && tst->memory_limit_type_val == MEMLIMIT_TYPE_JAVA && srgp->enable_memory_limit_error > 0
       && task_IsAbnormal(tsk) && is_java_memory_limit(cur_info->error.data, cur_info->error.orig_size)) {
+    if (must_fail_flag) {
+      rtf_printf(&cur_info->chk_out, "memory-limit exceeded\n");
+      status = RUN_OK;
+      goto cleanup;
+    }
     status = RUN_MEM_LIMIT_ERR;
     if (tsk_int) goto read_checker_output;
     goto cleanup;
   }
 
   if (srgp->enable_container > 0 && srgp->enable_memory_limit_error > 0 && task_IsMemoryLimit(tsk)) {
+    if (must_fail_flag) {
+      rtf_printf(&cur_info->chk_out, "memory-limit exceeded\n");
+      status = RUN_OK;
+      goto cleanup;
+    }
     status = RUN_MEM_LIMIT_ERR;
     if (tsk_int) goto read_checker_output;
     goto cleanup;
@@ -4721,18 +4750,33 @@ run_one_test(
 
   if (tst && tst->enable_memory_limit_error > 0 && srgp->detect_violations > 0
       && srgp->secure_run > 0 && task_IsSecurityViolation(tsk)) {
+    if (must_fail_flag) {
+      rtf_printf(&cur_info->chk_out, "security violation\n");
+      status = RUN_OK;
+      goto cleanup;
+    }
     status = RUN_SECURITY_ERR;
     if (tsk_int) goto read_checker_output;
     goto cleanup;
   }
 
   if (srgp->enable_container > 0 && srgp->detect_violations > 0 && task_IsSecurityViolation(tsk)) {
+    if (must_fail_flag) {
+      rtf_printf(&cur_info->chk_out, "security violation\n");
+      status = RUN_OK;
+      goto cleanup;
+    }
     status = RUN_SECURITY_ERR;
     if (tsk_int) goto read_checker_output;
     goto cleanup;
   }
 
   if (task_GetIPCObjectCount(tsk) > 0) {
+    if (must_fail_flag) {
+      rtf_printf(&cur_info->chk_out, "IPC objects remaining\n");
+      status = RUN_OK;
+      goto cleanup;
+    }
     status = RUN_SECURITY_ERR;
     append_msg_to_log(check_out_path, "%s", task_GetErrorMessage(tsk));
     goto read_checker_output;
@@ -4740,9 +4784,10 @@ run_one_test(
 
   // terminated with a signal
   if (task_Status(tsk) == TSK_SIGNALED) {
-    if (srpp->use_info > 0 && tstinfo.must_fail > 0) {
+    if (must_fail_flag) {
       cur_info->code = 256;
       cur_info->termsig = task_TermSignal(tsk);
+      rtf_printf(&cur_info->chk_out, "terminated by signal %d\n", cur_info->termsig);
       status = RUN_OK;
       goto cleanup;
     }
@@ -4771,7 +4816,8 @@ run_one_test(
     cur_info->code = task_ExitCode(tsk);
   }
 
-  if (srpp->use_info > 0 && tstinfo.must_fail > 0 && cur_info->code != 0) {
+  if (must_fail_flag && cur_info->code != 0) {
+    rtf_printf(&cur_info->chk_out, "exit code %d\n", cur_info->code);
     status = RUN_OK;
     goto cleanup;
   }
@@ -4871,7 +4917,7 @@ run_checker:;
                           0, src_path,
                           state->exec_user_serial,
                           test_random_value);
-  if (srpp->use_info > 0 && tstinfo.must_fail > 0) {
+  if (must_fail_flag) {
     if (status == RUN_OK) {
       status = RUN_WRONG_ANSWER_ERR;
     } else if (status != RUN_CHECK_FAILED) {
