@@ -185,6 +185,7 @@ static char *start_program_name = NULL;
 static int stdin_external_fd = -1;
 static int stdout_external_fd = -1;
 static char *language_name = NULL;
+static char *exchange_dir = NULL;
 
 enum { DEFAULT_LIMIT_VM_SIZE = 67108864 };
 enum { DEFAULT_LIMIT_CPU_TIME_MS = 1000 };
@@ -395,7 +396,12 @@ safe_chown(const char *full, int to_user_id, int to_group_id, int from_user_id)
 }
 
 static void
-safe_chown_rec(const char *path, int user_id, int group_id, int from_user_id)
+safe_chown_rec(
+        const char *path,
+        int user_id,
+        int group_id,
+        int from_user_id,
+        const unsigned char *exchange_dir)
 {
     DIR *d = opendir(path);
     if (!d) return;
@@ -404,6 +410,7 @@ safe_chown_rec(const char *path, int user_id, int group_id, int from_user_id)
     char **names_s = malloc(names_a * sizeof(names_s[0]));
     while ((dd = readdir(d))) {
         if (!strcmp(dd->d_name, ".") || !strcmp(dd->d_name, "..")) continue;
+        if (exchange_dir && !strcmp(dd->d_name, exchange_dir)) continue;
         if (names_u == names_a) {
             names_s = realloc(names_s, (names_a *= 2) * sizeof(names_s[0]));
         }
@@ -416,7 +423,7 @@ safe_chown_rec(const char *path, int user_id, int group_id, int from_user_id)
         struct stat stb;
         if (lstat(full, &stb) < 0) continue;
         if (S_ISDIR(stb.st_mode)) {
-            safe_chown_rec(full, user_id, group_id, from_user_id);
+            safe_chown_rec(full, user_id, group_id, from_user_id, NULL);
         }
         safe_chown(full, user_id, group_id, from_user_id);
     }
@@ -426,12 +433,16 @@ safe_chown_rec(const char *path, int user_id, int group_id, int from_user_id)
 }
 
 static void
-change_ownership(int user_id, int group_id, int from_user_id)
+change_ownership(
+        int user_id,
+        int group_id,
+        int from_user_id,
+        const unsigned char *exchange_dir)
 {
     const char *dir = (enable_subdir_mode && working_dir)? working_dir_parent : working_dir;
     if (!dir) dir = ".";
     safe_chown(dir, user_id, group_id, from_user_id);
-    safe_chown_rec(dir, user_id, group_id, from_user_id);
+    safe_chown_rec(dir, user_id, group_id, from_user_id, exchange_dir);
 }
 
 static void
@@ -2121,6 +2132,7 @@ extract_size(const char **ppos, int init_offset, const char *opt_name)
  *   su     - enable unshare
  *   cf<FD> - specify control socket fd
  *   cu<N>  - specify ejcompile/ejexec serial (ejexec1, ejexec2...)
+ *   cw<DIR>- preserve ownership and rights on specified DIR
  */
 
 int
@@ -2393,6 +2405,8 @@ main(int argc, char *argv[])
                 }
                 exec_user_serial = v;
                 opt = eptr;
+            } else if (*opt == 'c' && opt[1] == 'w') {
+                exchange_dir = extract_string(&opt, 2, "cw");
             } else {
                 flog("invalid option: %s", opt);
                 fatal();
@@ -2487,12 +2501,12 @@ main(int argc, char *argv[])
     }
 
     if (enable_chown) {
-        change_ownership(slave_uid, slave_gid, primary_uid);
+        change_ownership(slave_uid, slave_gid, primary_uid, exchange_dir);
     }
 
     if (open_redirections() < 0) {
         if (enable_chown) {
-            change_ownership(primary_uid, primary_gid, slave_uid);
+            change_ownership(primary_uid, primary_gid, slave_uid, NULL);
         }
         fatal();
     }
@@ -2510,7 +2524,7 @@ main(int argc, char *argv[])
     pid_t tidptr = 0;
     int pid = syscall(__NR_clone, clone_flags, NULL, NULL, &tidptr);
     if (pid < 0) {
-        change_ownership(primary_uid, primary_gid, slave_uid);
+        change_ownership(primary_uid, primary_gid, slave_uid, NULL);
         if (cgroup_unified_path[0]) rmdir(cgroup_unified_path);
         if (cgroup_cpu_path[0]) rmdir(cgroup_cpu_path);
         if (cgroup_memory_path[0]) rmdir(cgroup_memory_path);
@@ -3035,7 +3049,7 @@ main(int argc, char *argv[])
         printf("parent: %d, %d\n", pid, tidptr);
     }
 
-    change_ownership(primary_uid, primary_gid, slave_uid);
+    change_ownership(primary_uid, primary_gid, slave_uid, NULL);
     if (cgroup_unified_path[0]) rmdir(cgroup_unified_path);
     if (cgroup_cpu_path[0]) rmdir(cgroup_cpu_path);
     if (cgroup_memory_path[0]) rmdir(cgroup_memory_path);
