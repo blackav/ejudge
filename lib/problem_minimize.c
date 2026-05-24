@@ -974,7 +974,8 @@ problem_assign_json(
               tgzdir_pat normalization check_cmd valuer_cmd interactor_cmd
               style_checker_cmd test_checker_cmd test_generator_cmd init_cmd start_cmd
               solution_src solution_cmd post_pull_cmd vcs_compile_cmd super_run_dir
-              score_bonus open_tests final_open_tests token_open_tests extid src_normalization
+              score_bonus open_tests final_open_tests token_open_tests extid
+              src_normalization exchange_dir
              */
             if (strcmpex(*p, ji->valuestring) != 0) {
                 if (*p) {
@@ -1269,6 +1270,7 @@ static const int cnts_to_cfg_field_map[CNTSPROB_LAST_FIELD] =
   [CNTSPROB_lang_time_adj] = META_PROBLEM_CONFIG_SECTION_lang_time_adj,
   [CNTSPROB_lang_time_adj_millis] = META_PROBLEM_CONFIG_SECTION_lang_time_adj_millis,
   [CNTSPROB_super_run_dir] = META_PROBLEM_CONFIG_SECTION_super_run_dir,
+  [CNTSPROB_exchange_dir] = META_PROBLEM_CONFIG_SECTION_exchange_dir,
   [CNTSPROB_lang_max_vm_size] = META_PROBLEM_CONFIG_SECTION_lang_max_vm_size,
   [CNTSPROB_lang_max_stack_size] = META_PROBLEM_CONFIG_SECTION_lang_max_stack_size,
   [CNTSPROB_lang_max_rss_size] = META_PROBLEM_CONFIG_SECTION_lang_max_rss_size,
@@ -1493,7 +1495,8 @@ problem_assign_cfg(
               tgzdir_pat normalization check_cmd valuer_cmd interactor_cmd
               style_checker_cmd test_checker_cmd test_generator_cmd init_cmd start_cmd
               solution_src solution_cmd post_pull_cmd vcs_compile_cmd super_run_dir
-              score_bonus open_tests final_open_tests token_open_tests extid src_normalization
+              score_bonus open_tests final_open_tests token_open_tests extid
+              src_normalization exchange_dir
              */
             if (strcmpex(*p, valuestring) != 0) {
                 if (*p) {
