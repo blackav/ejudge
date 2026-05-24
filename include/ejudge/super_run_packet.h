@@ -211,6 +211,7 @@ struct super_run_in_problem_packet
   ejintbool_t enable_group_merge;
   ejintbool_t ignore_sigpipe;
   int debug_flags;
+  unsigned char *exchange_dir;
 
   int type_val META_ATTRIB((meta_hidden));
 };

@@ -3577,6 +3577,7 @@ run_one_test(
   unsigned char arch_entry_name[PATH_MAX];
   unsigned char local_check_cmd[PATH_MAX];
   unsigned char exe_dir[PATH_MAX];
+  unsigned char exchange_dir[PATH_MAX];
 
   unsigned char mem_limit_buf[PATH_MAX];
 
@@ -3623,6 +3624,7 @@ run_one_test(
 
   test_checker_out_path[0] = 0;
   memset(&tstinfo, 0, sizeof(tstinfo));
+  exchange_dir[0] = 0;
 
 #ifdef HAVE_TERMIOS_H
   memset(&term_attrs, 0, sizeof(term_attrs));
@@ -4036,6 +4038,21 @@ run_one_test(
   snprintf(input_path, sizeof(input_path), "%s/%s", check_dir, srpp->input_file);
   snprintf(output_path, sizeof(output_path), "%s/%s", check_dir, srpp->output_file);
   snprintf(error_path, sizeof(error_path), "%s/%s", check_dir, error_file);
+
+  if (srpp->exchange_dir && srpp->exchange_dir[0]) {
+    snprintf(exchange_dir, sizeof(exchange_dir), "%s/%s", check_dir, srpp->exchange_dir);
+    if (mkdir(exchange_dir, 0777) < 0) {
+      append_msg_to_log(check_out_path, "failed to create exchange dir '%s': %s", exchange_dir, os_ErrorMsg());
+      status = RUN_CHECK_FAILED;
+      goto check_failed;
+    }
+    // FIXME: setup permissions properly, these perms are too broad
+    if (chmod(exchange_dir, 0777) < 0) {
+      append_msg_to_log(check_out_path, "failed to change permissions of '%s': %s", exchange_dir, os_ErrorMsg());
+      status = RUN_CHECK_FAILED;
+      goto check_failed;
+    }
+  }
 
   if (srpp->init_cmd && srpp->init_cmd[0]) {
     status = invoke_init_cmd(srp, "start", test_src, corr_src,
@@ -4490,6 +4507,9 @@ run_one_test(
   }
   if (state->exec_user_serial > 0) {
     task_SetUserSerial(tsk, state->exec_user_serial);
+  }
+  if (srpp->exchange_dir && srpp->exchange_dir[0]) {
+    task_SetExchangeDir(tsk, srpp->exchange_dir);
   }
 
   //task_PrintArgs(tsk);
