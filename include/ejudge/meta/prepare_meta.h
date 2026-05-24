@@ -542,6 +542,7 @@ enum
   CNTSPROB_lang_time_adj,
   CNTSPROB_lang_time_adj_millis,
   CNTSPROB_super_run_dir,
+  CNTSPROB_exchange_dir,
   CNTSPROB_lang_max_vm_size,
   CNTSPROB_lang_max_stack_size,
   CNTSPROB_lang_max_rss_size,

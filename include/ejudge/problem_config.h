@@ -230,9 +230,9 @@ struct problem_config_section
   unsigned char *src_normalization;
   unsigned char *score_bonus;
   unsigned char *super_run_dir;
+  unsigned char *exchange_dir;
   unsigned char *revision;           // not in prepare.h
   unsigned char *iframe_statement;   // not in prepare.h
-  unsigned char *exchange_dir;
 
   char **test_sets;
   char **date_penalty;

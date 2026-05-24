@@ -2771,6 +2771,9 @@ serve_run_request(
   if (prob->debug_flags > 0) {
     srpp->debug_flags = prob->debug_flags;
   }
+  if (prob->exchange_dir && prob->exchange_dir[0]) {
+    srpp->exchange_dir = xstrdup(prob->exchange_dir);
+  }
 
   if (find_lang_specific_size(prob->lang_max_vm_size, lang, &lang_specific_size) > 0) {
     srpp->max_vm_size = lang_specific_size;

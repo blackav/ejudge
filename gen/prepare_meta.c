@@ -1358,6 +1358,7 @@ static struct meta_info_item meta_info_section_problem_data_data[] =
   [CNTSPROB_lang_time_adj] = { CNTSPROB_lang_time_adj, 'x', XSIZE(struct section_problem_data, lang_time_adj), "lang_time_adj", XOFFSET(struct section_problem_data, lang_time_adj) },
   [CNTSPROB_lang_time_adj_millis] = { CNTSPROB_lang_time_adj_millis, 'x', XSIZE(struct section_problem_data, lang_time_adj_millis), "lang_time_adj_millis", XOFFSET(struct section_problem_data, lang_time_adj_millis) },
   [CNTSPROB_super_run_dir] = { CNTSPROB_super_run_dir, 's', XSIZE(struct section_problem_data, super_run_dir), "super_run_dir", XOFFSET(struct section_problem_data, super_run_dir) },
+  [CNTSPROB_exchange_dir] = { CNTSPROB_exchange_dir, 's', XSIZE(struct section_problem_data, exchange_dir), "exchange_dir", XOFFSET(struct section_problem_data, exchange_dir) },
   [CNTSPROB_lang_max_vm_size] = { CNTSPROB_lang_max_vm_size, 'x', XSIZE(struct section_problem_data, lang_max_vm_size), "lang_max_vm_size", XOFFSET(struct section_problem_data, lang_max_vm_size) },
   [CNTSPROB_lang_max_stack_size] = { CNTSPROB_lang_max_stack_size, 'x', XSIZE(struct section_problem_data, lang_max_stack_size), "lang_max_stack_size", XOFFSET(struct section_problem_data, lang_max_stack_size) },
   [CNTSPROB_lang_max_rss_size] = { CNTSPROB_lang_max_rss_size, 'x', XSIZE(struct section_problem_data, lang_max_rss_size), "lang_max_rss_size", XOFFSET(struct section_problem_data, lang_max_rss_size) },
@@ -1780,6 +1781,9 @@ void cntsprob_copy(struct section_problem_data *dst, const struct section_proble
   if (src->super_run_dir) {
     dst->super_run_dir = strdup(src->super_run_dir);
   }
+  if (src->exchange_dir) {
+    dst->exchange_dir = strdup(src->exchange_dir);
+  }
   dst->lang_max_vm_size = (typeof(dst->lang_max_vm_size)) sarray_copy((char**) src->lang_max_vm_size);
   dst->lang_max_stack_size = (typeof(dst->lang_max_stack_size)) sarray_copy((char**) src->lang_max_stack_size);
   dst->lang_max_rss_size = (typeof(dst->lang_max_rss_size)) sarray_copy((char**) src->lang_max_rss_size);
@@ -1938,6 +1942,7 @@ void cntsprob_free(struct section_problem_data *ptr)
   sarray_free((char**) ptr->lang_time_adj);
   sarray_free((char**) ptr->lang_time_adj_millis);
   free(ptr->super_run_dir);
+  free(ptr->exchange_dir);
   sarray_free((char**) ptr->lang_max_vm_size);
   sarray_free((char**) ptr->lang_max_stack_size);
   sarray_free((char**) ptr->lang_max_rss_size);

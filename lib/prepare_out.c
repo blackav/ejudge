@@ -1798,6 +1798,8 @@ prepare_unparse_prob(
   if (prob->super_run_dir && prob->super_run_dir[0]) {
     fprintf(f,"super_run_dir = \"%s\"\n", CARMOR(prob->super_run_dir));
   }
+  if (prob->exchange_dir)
+    fprintf(f, "exchange_dir = \"%s\"\n", CARMOR(prob->exchange_dir));
 
   fprintf(f, "\n");
   if (prob->unhandled_vars) fprintf(f, "%s\n", prob->unhandled_vars);
@@ -2271,6 +2273,8 @@ prepare_unparse_actual_prob(
     fprintf(f, "src_normalization = \"%s\"\n", CARMOR(prob->src_normalization));
   if (prob->extid && prob->extid[0])
     fprintf(f, "extid = \"%s\"\n", CARMOR(prob->extid));
+  if (prob->exchange_dir)
+    fprintf(f, "exchange_dir = \"%s\"\n", CARMOR(prob->exchange_dir));
 
   html_armor_free(&ab);
 }

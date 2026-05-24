@@ -607,6 +607,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(extra_src_dir, "S"),
   PROBLEM_PARAM(standard_valuer, "S"),
   PROBLEM_PARAM(md_file, "S"),
+  PROBLEM_PARAM(exchange_dir, "S"),
 
   { 0, 0, 0, 0 }
 };
@@ -3163,6 +3164,10 @@ prepare_problem(
   }
   if (!prob->output_file || !prob->output_file[0]) {
     xstrdup3(&prob->output_file, DFLT_P_OUTPUT_FILE);
+  }
+
+  if (!prob->exchange_dir && aprob && aprob->exchange_dir) {
+    xstrdup3(&prob->exchange_dir, aprob->exchange_dir);
   }
 
   if (prob->variant_num < 0 && aprob && aprob->variant_num >= 0) {
@@ -6700,6 +6705,12 @@ prepare_set_prob_value(
     break;
 
   case CNTSPROB_token_open_tests:
+    break;
+
+  case CNTSPROB_exchange_dir:
+    if (!out->exchange_dir && abstr && abstr->exchange_dir) {
+      xstrdup3(&out->exchange_dir, abstr->exchange_dir);
+    }
     break;
 
   default:
