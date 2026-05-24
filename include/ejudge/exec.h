@@ -1,7 +1,7 @@
 #ifndef __REUSE_EXEC_H__
 #define __REUSE_EXEC_H__
 
-/* Copyright (C) 1998-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 1998-2026 Alexander Chernov <cher@ejudge.ru> */
 /* Created: <1998-01-21 14:26:50 cher> */
 
 /*
@@ -77,6 +77,7 @@ void     task_Delete(tpTask);
 char    *task_SetPathAsArg0(tpTask);
 int      task_SetEntryFunction(tpTask, int (*)(int, char **));
 int      task_SetWorkingDir(tpTask, char const *);
+int      task_SetExchangeDir(tpTask, char const *);
 int      task_SetMaxTime(tpTask, int);
 int      task_SetMaxTimeMillis(tpTask, int);
 int      task_SetMaxRealTime(tpTask, int);
