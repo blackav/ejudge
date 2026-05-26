@@ -1,4 +1,4 @@
-/* Copyright (C) 1997-2024 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 1997-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This library is free software; you can redistribute it and/or
@@ -303,7 +303,7 @@ logger_write_lines(int level, const char *buf, size_t size)
   const char *bp = buf;
   while (*bp) {
     iov[3].iov_base = (void*) bp;
-    char *ep = strchr(bp, '\n');
+    const char *ep = strchr(bp, '\n');
     if (!ep) {
       iov[3].iov_len = (buf + size) - ep;
       _ = writev(log_fd, iov, 5);

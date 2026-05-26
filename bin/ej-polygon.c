@@ -1641,7 +1641,7 @@ extract_td_content(const unsigned char *s, unsigned char *out, const unsigned ch
 static int
 extract_raw_td_content(const unsigned char *s, unsigned char *out, const unsigned char **out_s)
 {
-    unsigned char *p = strstr(s, "</td>");
+    const unsigned char *p = strstr(s, "</td>");
     if (!p) {
         *out = 0;
         return -1;

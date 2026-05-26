@@ -310,12 +310,12 @@ packet_handler_auth_oidc(int uid, int argc, char **argv, void *user)
 
     // parse payload of JWT
     {
-        char *p1 = strchr(id_token, '.');
+        const char *p1 = strchr(id_token, '.');
         if (!p1) {
             error_message = "invalid oidc json: invalid JWT (1)";
             goto done;
         }
-        char *p2 = strchr(p1 + 1, '.');
+        const char *p2 = strchr(p1 + 1, '.');
         if (!p2) {
             error_message = "invalid oidc json: invalid JWT (2)";
             goto done;

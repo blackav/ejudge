@@ -2690,7 +2690,7 @@ split_by_sep(const unsigned char *str, const unsigned char *sep)
     int seplen = strlen(sep);
     int cnt = 0;
     char **res = NULL;
-    char *cur = strstr(str, sep);
+    const char *cur = strstr(str, sep);
     if (!cur) {
         XCALLOC(res, 2);
         res[0] = xstrdup(str);
@@ -2706,7 +2706,7 @@ split_by_sep(const unsigned char *str, const unsigned char *sep)
     cur = (char*) str;
     int i = 0;
     for (; i < cnt - 1; ++i){
-        char *next = strstr(cur, sep);
+        const char *next = strstr(cur, sep);
         res[i] = xmemdup(cur, next - cur);
         cur += seplen;
     }

@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2011-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2011-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -89,7 +89,7 @@ static unsigned char *
 get_last_name(const unsigned char *str)
 {
   if (!str) return 0;
-  char *p = strrchr(str, '/');
+  const char *p = strrchr(str, '/');
   if (!p) return strdup(str);
   return strdup(p + 1);
 }

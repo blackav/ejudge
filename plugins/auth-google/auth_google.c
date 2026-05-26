@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2021-2025 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2021-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -533,12 +533,12 @@ packet_handler_auth_google(int uid, int argc, char **argv, void *user)
 
     // parse payload of JWT
     {
-        char *p1 = strchr(id_token, '.');
+        const char *p1 = strchr(id_token, '.');
         if (!p1) {
             error_message = "invalid google json: invalid JWT (1)";
             goto done;
         }
-        char *p2 = strchr(p1 + 1, '.');
+        const char *p2 = strchr(p1 + 1, '.');
         if (!p2) {
             error_message = "invalid google json: invalid JWT (2)";
             goto done;

@@ -3041,7 +3041,7 @@ static const char *
 remap_start_cmd_for_container(const char *start_cmd)
 {
   if (!start_cmd || !*start_cmd) return NULL;
-  char *last = strrchr(start_cmd, '/');
+  const char *last = strrchr(start_cmd, '/');
   if (!last) return start_cmd;
   ++last;
 

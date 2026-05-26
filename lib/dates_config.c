@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2015-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2015-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -108,7 +108,7 @@ dates_config_parse_cfg(const unsigned char *path, const unsigned char *main_path
     } else if (path[0] == '/') {
         snprintf(file_path, sizeof(file_path), "%s", path);
     } else {
-        unsigned char *rs = strrchr(main_path, '/');
+        const unsigned char *rs = strrchr(main_path, '/');
         if (!rs || rs == main_path) {
             snprintf(file_path, sizeof(file_path), "%s", path);
         } else {
