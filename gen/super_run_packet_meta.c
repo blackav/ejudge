@@ -395,6 +395,8 @@ static struct meta_info_item meta_info_super_run_in_problem_packet_data[] =
   [META_SUPER_RUN_IN_PROBLEM_PACKET_disable_vm_size_limit] = { META_SUPER_RUN_IN_PROBLEM_PACKET_disable_vm_size_limit, 'B', XSIZE(struct super_run_in_problem_packet, disable_vm_size_limit), "disable_vm_size_limit", XOFFSET(struct super_run_in_problem_packet, disable_vm_size_limit) },
   [META_SUPER_RUN_IN_PROBLEM_PACKET_enable_group_merge] = { META_SUPER_RUN_IN_PROBLEM_PACKET_enable_group_merge, 'B', XSIZE(struct super_run_in_problem_packet, enable_group_merge), "enable_group_merge", XOFFSET(struct super_run_in_problem_packet, enable_group_merge) },
   [META_SUPER_RUN_IN_PROBLEM_PACKET_ignore_sigpipe] = { META_SUPER_RUN_IN_PROBLEM_PACKET_ignore_sigpipe, 'B', XSIZE(struct super_run_in_problem_packet, ignore_sigpipe), "ignore_sigpipe", XOFFSET(struct super_run_in_problem_packet, ignore_sigpipe) },
+  [META_SUPER_RUN_IN_PROBLEM_PACKET_debug_flags] = { META_SUPER_RUN_IN_PROBLEM_PACKET_debug_flags, 'i', XSIZE(struct super_run_in_problem_packet, debug_flags), "debug_flags", XOFFSET(struct super_run_in_problem_packet, debug_flags) },
+  [META_SUPER_RUN_IN_PROBLEM_PACKET_exchange_dir] = { META_SUPER_RUN_IN_PROBLEM_PACKET_exchange_dir, 's', XSIZE(struct super_run_in_problem_packet, exchange_dir), "exchange_dir", XOFFSET(struct super_run_in_problem_packet, exchange_dir) },
 };
 
 int meta_super_run_in_problem_packet_get_type(int tag)
@@ -606,6 +608,10 @@ void meta_super_run_in_problem_packet_copy(struct super_run_in_problem_packet *d
   dst->disable_vm_size_limit = src->disable_vm_size_limit;
   dst->enable_group_merge = src->enable_group_merge;
   dst->ignore_sigpipe = src->ignore_sigpipe;
+  dst->debug_flags = src->debug_flags;
+  if (src->exchange_dir) {
+    dst->exchange_dir = strdup(src->exchange_dir);
+  }
   // hidden type_val
 }
 
@@ -655,6 +661,7 @@ void meta_super_run_in_problem_packet_free(struct super_run_in_problem_packet *p
   free(ptr->container_options);
   free(ptr->user_input_file);
   sarray_free((char**) ptr->checker_extra_files);
+  free(ptr->exchange_dir);
   // hidden type_val
 }
 

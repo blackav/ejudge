@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2003-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -63,6 +63,7 @@ enum
   Tag_ignore_exit_code,
   Tag_check_cmd,
   Tag_ignore_term_signal,
+  Tag_must_fail,
 };
 
 /// TRIE_STRINGS_BEGIN
@@ -99,6 +100,7 @@ static __attribute__((unused)) const char * const tag_table[] =
   "ignore_exit_code",
   "check_cmd",
   "ignore_term_signal",
+  "must_fail",
 };
 /// TRIE_STRINGS_END
 
@@ -138,6 +140,7 @@ static unsigned int tag_offsets[] =
   [Tag_ignore_exit_code] = TESTINFO_OFFSET(ignore_exit_code),
   [Tag_check_cmd] = TESTINFO_OFFSET(check_cmd),
   [Tag_ignore_term_signal] = TESTINFO_OFFSET(ignore_term_signal),
+  [Tag_must_fail] = TESTINFO_OFFSET(must_fail),
 };
 
 struct trie_data;
@@ -701,6 +704,7 @@ parse_line(const unsigned char *str, size_t len, testinfo_t *pt, struct testinfo
   case Tag_disable_valgrind:
   case Tag_ignore_exit_code:
   case Tag_ignore_term_signal:
+  case Tag_must_fail:
   {
     int *pint = XPDEREF(int, pt, tag_offsets[tag]);
     if (cmd.u < 1) {
@@ -772,6 +776,7 @@ testinfo_parse(const char *path, testinfo_t *pt, struct testinfo_subst_handler *
   pt->max_rss_size = -1LL;
   pt->ignore_exit_code = -1;
   pt->ignore_term_signal = -1;
+  pt->must_fail = -1;
   if (!(fin = fopen(path, "r"))) {
     memset(pt, 0, sizeof(*pt));
     return -TINF_E_CANNOT_OPEN;

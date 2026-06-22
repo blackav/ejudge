@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2019-2025 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2019-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -640,6 +640,10 @@ parse_testing_report_bson(bson_iter_t *bi, testing_report_xml_t r)
             if (ej_bson_parse_string_new(bi, key, &r->compiler_output) < 0)
                 return -1;
             break;
+        case Tag_valuer_log:
+            if (ej_bson_parse_string_new(bi, key, &r->valuer_log) < 0)
+                return -1;
+            break;
         case Tag_uuid:
             if (ej_bson_parse_uuid_new(bi, key, &r->uuid) < 0)
                 return -1;
@@ -1020,6 +1024,9 @@ do_unparse(
     }
     if (r->compiler_output && r->compiler_output[0]) {
         bson_append_utf8(b, tag_table[Tag_compiler_output], -1, r->compiler_output, -1);
+    }
+    if (r->valuer_log && r->valuer_log[0]) {
+        bson_append_utf8(b, tag_table[Tag_valuer_log], -1, r->valuer_log, -1);
     }
     if (r->verdict_bits) {
         bson_append_int32(b, tag_table[Tag_verdict_bits], -1, r->verdict_bits);

@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2007-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2007-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -63,6 +63,7 @@ const unsigned char * const test_visibility_str[] =
   [TV_EXISTS] = "exists",
   [TV_HIDDEN] = "hidden",
   [TV_ICPC] = "icpc",
+  [TV_CHECKER] = "checker",
 
   [TV_LAST] = 0
 };

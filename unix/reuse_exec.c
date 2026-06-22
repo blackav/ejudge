@@ -1,4 +1,4 @@
-/* Copyright (C) 1998-2025 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 1998-2026 Alexander Chernov <cher@ejudge.ru> */
 /* Created: <1998-01-21 14:33:28 cher> */
 
 /*
@@ -153,6 +153,7 @@ struct tTask
   long long cgroup_ptime_us;
   long long cgroup_utime_us;
   long long cgroup_stime_us;
+  char *exchange_dir;
 };
 
 #define PIDARR_SIZE 32
@@ -487,6 +488,7 @@ task_Delete(tTask *tsk)
   if (tsk->status_fd >= 0) close(tsk->status_fd);
   //if (tsk->ctl_socket_fd_1 >= 0) close(tsk->ctl_socket_fd_1);
   //if (tsk->ctl_socket_fd_2 >= 0) close(tsk->ctl_socket_fd_2);
+  xfree(tsk->exchange_dir);
   xfree(tsk);
 }
 
@@ -748,6 +750,18 @@ task_SetWorkingDir(tTask *tsk, char const *path)
 
   xfree(tsk->working_dir);
   tsk->working_dir = xstrdup(path);
+  return 0;
+}
+
+int
+task_SetExchangeDir(tTask *tsk, char const *path)
+{
+  task_init_module();
+  ASSERT(tsk);
+  if (tsk->state != TSK_STOPPED) return 0;
+
+  xfree(tsk->exchange_dir);
+  tsk->exchange_dir = xstrdup(path);
   return 0;
 }
 
@@ -1739,6 +1753,10 @@ task_StartContainer(tTask *tsk)
   }
   if (tsk->ignore_sigpipe) {
     fprintf(spec_f, "mf");
+  }
+  if (tsk->exchange_dir && *tsk->exchange_dir) {
+    int len = strlen(tsk->exchange_dir);
+    fprintf(spec_f, "cw%d%s", len, tsk->exchange_dir);
   }
 
   if (tsk->max_stack_size > 0) {

@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2005-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -21,6 +21,7 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <byteswap.h>
 
 int
 xml_parse_ip_mask(
@@ -43,8 +44,7 @@ xml_parse_ip_mask(
   } else if (sscanf(s, "%u.%u.%u.%u/%u %n", &b1, &b2, &b3, &b4, &b5, &n) == 5
       && !s[n] && b1 <= 255 && b2 <= 255 && b3 <= 255 && b4 <= 255 && b5 <= 32) {
     *p_addr = b1 | b2 << 8 | b3 << 16 | b4 << 24;
-    //*p_mask = ((unsigned int) -1) << (32 - b5);
-    *p_mask = ((unsigned int) -1) >> (32 - b5);
+    *p_mask = bswap_32((~0U) << (32 - b5));
   } else if (sscanf(s, "%u.%u.%u.%u %n", &b1, &b2, &b3, &b4, &n) == 4
              && !s[n] && b1 <= 255 && b2 <= 255 && b3 <= 255 && b4 <= 255) {
     *p_addr = b1 | b2 << 8 | b3 << 16 | b4 << 24;

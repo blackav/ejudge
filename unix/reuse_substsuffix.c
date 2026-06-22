@@ -1,6 +1,6 @@
 /* -*- mode:c -*- */
 
-/* Copyright (C) 2002-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This library is free software; you can redistribute it and/or
@@ -29,8 +29,8 @@
   char *
 os_SubstSuffix(char const *path, char const *suffix)
 {
-  char *dp;
-  char *sp;
+  const char *dp;
+  const char *sp;
   char *r;
 
   if (path == NULL)

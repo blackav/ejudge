@@ -2,7 +2,7 @@
 #ifndef __EJ_TYPES_H__
 #define __EJ_TYPES_H__
 
-/* Copyright (C) 2005-2025 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -118,15 +118,16 @@ enum user_flags
 /* test visibility */
 enum test_visibility
 {
-  TV_NORMAL = 0, // normal visibility, default value
-  TV_FULL   = 1, // full visibility: show test, output, checker...
+  TV_NORMAL       = 0, // normal visibility, default value
+  TV_FULL         = 1, // full visibility: show test, output, checker...
   TV_FULLIFMARKED = 2, // full for the marked runs, hidden elsewhere
-  TV_BRIEF  = 3, // brief: only testing result
-  TV_EXISTS = 4, // only existance of the test, score is counted
-  TV_HIDDEN = 5, // completely hidden
-  TV_ICPC   = 6, // show only group total with relative counts
+  TV_BRIEF        = 3, // brief: only testing result
+  TV_EXISTS       = 4, // only existance of the test, score is counted
+  TV_HIDDEN       = 5, // completely hidden
+  TV_ICPC         = 6, // show only group total with relative counts
+  TV_CHECKER      = 7, // as brief, but with checker output
 
-  TV_LAST   = 7
+  TV_LAST   = 8
 };
 
 int test_visibility_parse(const unsigned char*);

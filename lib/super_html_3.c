@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2005-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -626,7 +626,8 @@ static unsigned char *
 strsubst(const unsigned char *str, const unsigned char *from,
          const unsigned char *to)
 {
-  unsigned char *p, *q;
+  const unsigned char *p;
+  unsigned char *q;
   size_t from_len = strlen(from);
   size_t to_len = strlen(to);
   size_t str_len = strlen(str);

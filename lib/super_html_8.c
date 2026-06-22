@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2012-2024 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1645,7 +1645,7 @@ super_html_serve_unparse_serve_cfg(
 {
   struct section_global_data *global = sstate->global;
   struct contest_desc *cnts = sstate->edited_cnts;
-  int i, active_langs, need_variant_map = 0;
+  int i, need_variant_map = 0;
   int *langs_to_enable = NULL;
   int *langs_to_disable = NULL;
   int langs_to_enable_u = 0;
@@ -1817,10 +1817,9 @@ super_html_serve_unparse_serve_cfg(
     }
   } else {
     if (sstate->lang_a > 0) {
-      for (i = 1, active_langs = 0; i < sstate->lang_a; i++) {
+      for (i = 1; i < sstate->lang_a; i++) {
         if (!sstate->langs[i]) continue;
         prepare_unparse_lang(f, sstate->langs[i], 0, 0, sstate->lang_opts[i], sstate->lang_libs[i], 0);
-        active_langs++;
       }
     }
   }

@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2025 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2025-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -884,7 +884,7 @@ problem_assign_json(
               test_score run_penalty acm_run_penalty disqualified_penalty compile_error_penalty
               tests_to_accept min_tests_to_accept checker_real_time_limit checker_time_limit_ms score_multiplier
               prev_runs_to_show max_user_run_count interactor_time_limit interactor_real_time_limit max_open_file_count
-              max_process_count
+              max_process_count debug_flags
              */
             if (*p != value) {
                 *p = value;
@@ -974,7 +974,8 @@ problem_assign_json(
               tgzdir_pat normalization check_cmd valuer_cmd interactor_cmd
               style_checker_cmd test_checker_cmd test_generator_cmd init_cmd start_cmd
               solution_src solution_cmd post_pull_cmd vcs_compile_cmd super_run_dir
-              score_bonus open_tests final_open_tests token_open_tests extid src_normalization
+              score_bonus open_tests final_open_tests token_open_tests extid
+              src_normalization exchange_dir
              */
             if (strcmpex(*p, ji->valuestring) != 0) {
                 if (*p) {
@@ -1269,6 +1270,7 @@ static const int cnts_to_cfg_field_map[CNTSPROB_LAST_FIELD] =
   [CNTSPROB_lang_time_adj] = META_PROBLEM_CONFIG_SECTION_lang_time_adj,
   [CNTSPROB_lang_time_adj_millis] = META_PROBLEM_CONFIG_SECTION_lang_time_adj_millis,
   [CNTSPROB_super_run_dir] = META_PROBLEM_CONFIG_SECTION_super_run_dir,
+  [CNTSPROB_exchange_dir] = META_PROBLEM_CONFIG_SECTION_exchange_dir,
   [CNTSPROB_lang_max_vm_size] = META_PROBLEM_CONFIG_SECTION_lang_max_vm_size,
   [CNTSPROB_lang_max_stack_size] = META_PROBLEM_CONFIG_SECTION_lang_max_stack_size,
   [CNTSPROB_lang_max_rss_size] = META_PROBLEM_CONFIG_SECTION_lang_max_rss_size,
@@ -1305,6 +1307,7 @@ static const int cnts_to_cfg_field_map[CNTSPROB_LAST_FIELD] =
   [CNTSPROB_max_open_file_count] = META_PROBLEM_CONFIG_SECTION_max_open_file_count,
   [CNTSPROB_max_process_count] = META_PROBLEM_CONFIG_SECTION_max_process_count,
   [CNTSPROB_forced_test_count] = META_PROBLEM_CONFIG_SECTION_forced_test_count,
+  [CNTSPROB_debug_flags] = META_PROBLEM_CONFIG_SECTION_debug_flags,
   [CNTSPROB_extid] = META_PROBLEM_CONFIG_SECTION_extid,
   [CNTSPROB_unhandled_vars] = 0,
   [CNTSPROB_score_view] = 0,
@@ -1423,7 +1426,7 @@ problem_assign_cfg(
               test_score run_penalty acm_run_penalty disqualified_penalty compile_error_penalty
               tests_to_accept min_tests_to_accept checker_real_time_limit checker_time_limit_ms score_multiplier
               prev_runs_to_show max_user_run_count interactor_time_limit interactor_real_time_limit max_open_file_count
-              max_process_count
+              max_process_count debug_flags
              */
             if (*p != value) {
                 *p = value;
@@ -1492,7 +1495,8 @@ problem_assign_cfg(
               tgzdir_pat normalization check_cmd valuer_cmd interactor_cmd
               style_checker_cmd test_checker_cmd test_generator_cmd init_cmd start_cmd
               solution_src solution_cmd post_pull_cmd vcs_compile_cmd super_run_dir
-              score_bonus open_tests final_open_tests token_open_tests extid src_normalization
+              score_bonus open_tests final_open_tests token_open_tests extid
+              src_normalization exchange_dir
              */
             if (strcmpex(*p, valuestring) != 0) {
                 if (*p) {

@@ -2,7 +2,7 @@
 #ifndef __POLYGON_XML_H__
 #define __POLYGON_XML_H__
 
-/* Copyright (C) 2025 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2025-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -125,6 +125,7 @@ enum
     PPXML_A_AUTO_COUNT,
     PPXML_A_NORMALIZATION,
     PPXML_A_FILE_TYPE,
+    PPXML_A_LATEX_PDF_MODE,
 };
 
 enum

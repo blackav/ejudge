@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2012-2025 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -303,11 +303,13 @@ generate_xml_report(
         const unsigned char *cpu_mhz,
         const unsigned char *hostname,
         int group_count,
-        int *group_scores)
+        int *group_scores,
+        const unsigned char *valuer_log)
 {
   int i;
   unsigned char *msg = 0;
   const struct super_run_in_global_packet *srgp = srp->global;
+  const struct super_run_in_problem_packet *srpp = srp->problem;
 
   ej_uuid_t judge_uuid = {};
   if (srgp->judge_uuid && srgp->judge_uuid[0]) {
@@ -402,6 +404,9 @@ generate_xml_report(
   }
   if (srgp->run_uuid) {
     ej_uuid_parse(srgp->run_uuid, &tr->uuid);
+  }
+  if (srpp && srpp->debug_flags > 0 && (srpp->debug_flags & RUN_DEBUG_VALUER_LOG) && valuer_log && valuer_log[0]) {
+    tr->valuer_log = xstrdup(valuer_log);
   }
 
   unsigned int verdict_bits = 0;
@@ -830,6 +835,7 @@ fail:
 
 static int
 parse_valuer_score(
+        FILE *debug_f,
         const unsigned char *log_path,
         const unsigned char *in_buf,
         ssize_t in_buf_size,
@@ -894,6 +900,9 @@ parse_valuer_score(
       goto invalid_reply;
     }
     if (p_reply_next_num) *p_reply_next_num = -v_score;
+    if (debug_f) {
+      fprintf(debug_f, "reply_next_num: %d\n", *p_reply_next_num);
+    }
     return 0;
   }
   if (v_score < 0 || v_score > max_score) {
@@ -995,6 +1004,39 @@ parse_valuer_score(
   if (p_user_status) *p_user_status = v_user_status;
   if (p_user_score) *p_user_score = v_user_score;
   if (p_user_tests_passed) *p_user_tests_passed = v_user_tests_passed;
+
+  if (debug_f) {
+    fprintf(debug_f,
+            "\nParams:\n"
+            "  max_score: %d\n"
+            "  valuer_sets_marked: %d\n"
+            "  separate_user_score: %d\n"
+            "  enable_groups: %d\n"
+            "Outputs:\n"
+            "  reply_next_run: %d\n"
+            "  score: %d\n"
+            "  marked: %d\n"
+            "  user_status: %d\n"
+            "  user_score: %d\n"
+            "  user_tests_passed: %d\n"
+            "  group_count: %d\n",
+            max_score, valuer_sets_marked, separate_user_score, enable_groups,
+            p_reply_next_num?*p_reply_next_num:INT_MIN,
+            p_score?*p_score:INT_MIN,
+            p_marked?*p_marked:INT_MIN,
+            p_user_status?*p_user_status:INT_MIN,
+            p_user_score?*p_user_score:INT_MIN,
+            p_user_tests_passed?*p_user_tests_passed:INT_MIN,
+            p_group_count?*p_group_count:INT_MIN);
+    if (*p_group_count > 0) {
+      fprintf(debug_f, "  group_scores:");
+      for (int i = 0; i < *p_group_count; ++i) {
+        fprintf(debug_f, " %d", p_group_scores[i]);
+      }
+      fprintf(debug_f, "\n");
+    }
+  }
+
   return 0;
 
 invalid_reply:
@@ -1035,7 +1077,7 @@ read_valuer_score(
     return -1;
   }
 
-  r = parse_valuer_score(log_path, score_buf, score_buf_size,
+  r = parse_valuer_score(NULL, log_path, score_buf, score_buf_size,
                          0, max_score, valuer_sets_marked, separate_user_score,
                          enable_groups,
                          NULL, p_score, p_marked,
@@ -2999,7 +3041,7 @@ static const char *
 remap_start_cmd_for_container(const char *start_cmd)
 {
   if (!start_cmd || !*start_cmd) return NULL;
-  char *last = strrchr(start_cmd, '/');
+  const char *last = strrchr(start_cmd, '/');
   if (!last) return start_cmd;
   ++last;
 
@@ -3535,6 +3577,7 @@ run_one_test(
   unsigned char arch_entry_name[PATH_MAX];
   unsigned char local_check_cmd[PATH_MAX];
   unsigned char exe_dir[PATH_MAX];
+  unsigned char exchange_dir[PATH_MAX];
 
   unsigned char mem_limit_buf[PATH_MAX];
 
@@ -3548,6 +3591,7 @@ run_one_test(
   long long file_size;
   int init_cmd_started = 0;
   int pg_not_empty = 0;
+  unsigned char must_fail_flag = 0;
 
   int pfd1[2] = { -1, -1 };
   int pfd2[2] = { -1, -1 };
@@ -3580,6 +3624,7 @@ run_one_test(
 
   test_checker_out_path[0] = 0;
   memset(&tstinfo, 0, sizeof(tstinfo));
+  exchange_dir[0] = 0;
 
 #ifdef HAVE_TERMIOS_H
   memset(&term_attrs, 0, sizeof(term_attrs));
@@ -3766,6 +3811,9 @@ run_one_test(
     }
   }
 
+  if (srpp->use_info > 0 && tstinfo.must_fail > 0) {
+    must_fail_flag = 1;
+  }
   if (srpp->use_info > 0 && tstinfo.disable_stderr >= 0) {
     disable_stderr = tstinfo.disable_stderr;
   }
@@ -3990,6 +4038,21 @@ run_one_test(
   snprintf(input_path, sizeof(input_path), "%s/%s", check_dir, srpp->input_file);
   snprintf(output_path, sizeof(output_path), "%s/%s", check_dir, srpp->output_file);
   snprintf(error_path, sizeof(error_path), "%s/%s", check_dir, error_file);
+
+  if (srpp->exchange_dir && srpp->exchange_dir[0]) {
+    snprintf(exchange_dir, sizeof(exchange_dir), "%s/%s", check_dir, srpp->exchange_dir);
+    if (mkdir(exchange_dir, 0777) < 0) {
+      append_msg_to_log(check_out_path, "failed to create exchange dir '%s': %s", exchange_dir, os_ErrorMsg());
+      status = RUN_CHECK_FAILED;
+      goto check_failed;
+    }
+    // FIXME: setup permissions properly, these perms are too broad
+    if (chmod(exchange_dir, 0777) < 0) {
+      append_msg_to_log(check_out_path, "failed to change permissions of '%s': %s", exchange_dir, os_ErrorMsg());
+      status = RUN_CHECK_FAILED;
+      goto check_failed;
+    }
+  }
 
   if (srpp->init_cmd && srpp->init_cmd[0]) {
     status = invoke_init_cmd(srp, "start", test_src, corr_src,
@@ -4445,6 +4508,9 @@ run_one_test(
   if (state->exec_user_serial > 0) {
     task_SetUserSerial(tsk, state->exec_user_serial);
   }
+  if (srpp->exchange_dir && srpp->exchange_dir[0]) {
+    task_SetExchangeDir(tsk, srpp->exchange_dir);
+  }
 
   //task_PrintArgs(tsk);
 
@@ -4641,6 +4707,11 @@ run_one_test(
   }
 
   if (task_IsRealTimeout(tsk)) {
+    if (must_fail_flag) {
+      rtf_printf(&cur_info->chk_out, "real-time limit exceeded\n");
+      status = RUN_OK;
+      goto cleanup;
+    }
     if (srpp->wtl_is_cf > 0) {
       goto check_failed;
     } else if (srpp->disable_wtl > 0) {
@@ -4652,6 +4723,11 @@ run_one_test(
     goto cleanup;
   }
   if (task_IsTimeout(tsk)) {
+    if (must_fail_flag) {
+      rtf_printf(&cur_info->chk_out, "time-limit exceeded\n");
+      status = RUN_OK;
+      goto cleanup;
+    }
     status = RUN_TIME_LIMIT_ERR;
     if (tsk_int) goto read_checker_output;
     goto cleanup;
@@ -4659,6 +4735,11 @@ run_one_test(
 
   if (tst && tst->enable_memory_limit_error > 0 && srgp->enable_memory_limit_error > 0
       && srgp->secure_run > 0 && task_IsMemoryLimit(tsk)) {
+    if (must_fail_flag) {
+      rtf_printf(&cur_info->chk_out, "memory-limit exceeded\n");
+      status = RUN_OK;
+      goto cleanup;
+    }
     status = RUN_MEM_LIMIT_ERR;
     if (tsk_int) goto read_checker_output;
     goto cleanup;
@@ -4666,12 +4747,22 @@ run_one_test(
 
   if (tst && tst->memory_limit_type_val == MEMLIMIT_TYPE_JAVA && srgp->enable_memory_limit_error > 0
       && task_IsAbnormal(tsk) && is_java_memory_limit(cur_info->error.data, cur_info->error.orig_size)) {
+    if (must_fail_flag) {
+      rtf_printf(&cur_info->chk_out, "memory-limit exceeded\n");
+      status = RUN_OK;
+      goto cleanup;
+    }
     status = RUN_MEM_LIMIT_ERR;
     if (tsk_int) goto read_checker_output;
     goto cleanup;
   }
 
   if (srgp->enable_container > 0 && srgp->enable_memory_limit_error > 0 && task_IsMemoryLimit(tsk)) {
+    if (must_fail_flag) {
+      rtf_printf(&cur_info->chk_out, "memory-limit exceeded\n");
+      status = RUN_OK;
+      goto cleanup;
+    }
     status = RUN_MEM_LIMIT_ERR;
     if (tsk_int) goto read_checker_output;
     goto cleanup;
@@ -4679,18 +4770,33 @@ run_one_test(
 
   if (tst && tst->enable_memory_limit_error > 0 && srgp->detect_violations > 0
       && srgp->secure_run > 0 && task_IsSecurityViolation(tsk)) {
+    if (must_fail_flag) {
+      rtf_printf(&cur_info->chk_out, "security violation\n");
+      status = RUN_OK;
+      goto cleanup;
+    }
     status = RUN_SECURITY_ERR;
     if (tsk_int) goto read_checker_output;
     goto cleanup;
   }
 
   if (srgp->enable_container > 0 && srgp->detect_violations > 0 && task_IsSecurityViolation(tsk)) {
+    if (must_fail_flag) {
+      rtf_printf(&cur_info->chk_out, "security violation\n");
+      status = RUN_OK;
+      goto cleanup;
+    }
     status = RUN_SECURITY_ERR;
     if (tsk_int) goto read_checker_output;
     goto cleanup;
   }
 
   if (task_GetIPCObjectCount(tsk) > 0) {
+    if (must_fail_flag) {
+      rtf_printf(&cur_info->chk_out, "IPC objects remaining\n");
+      status = RUN_OK;
+      goto cleanup;
+    }
     status = RUN_SECURITY_ERR;
     append_msg_to_log(check_out_path, "%s", task_GetErrorMessage(tsk));
     goto read_checker_output;
@@ -4698,6 +4804,13 @@ run_one_test(
 
   // terminated with a signal
   if (task_Status(tsk) == TSK_SIGNALED) {
+    if (must_fail_flag) {
+      cur_info->code = 256;
+      cur_info->termsig = task_TermSignal(tsk);
+      rtf_printf(&cur_info->chk_out, "terminated by signal %d\n", cur_info->termsig);
+      status = RUN_OK;
+      goto cleanup;
+    }
     int ignore_term_signal = 0;
     if (srpp->use_info > 0 && tstinfo.ignore_term_signal > 0) {
       ignore_term_signal = 1;
@@ -4723,6 +4836,11 @@ run_one_test(
     cur_info->code = task_ExitCode(tsk);
   }
 
+  if (must_fail_flag && cur_info->code != 0) {
+    rtf_printf(&cur_info->chk_out, "exit code %d\n", cur_info->code);
+    status = RUN_OK;
+    goto cleanup;
+  }
   if (srpp->use_info > 0 && tstinfo.exit_code > 0) {
     if (cur_info->code != tstinfo.exit_code) {
       status = RUN_WRONG_ANSWER_ERR;
@@ -4819,6 +4937,13 @@ run_checker:;
                           0, src_path,
                           state->exec_user_serial,
                           test_random_value);
+  if (must_fail_flag) {
+    if (status == RUN_OK) {
+      status = RUN_WRONG_ANSWER_ERR;
+    } else if (status != RUN_CHECK_FAILED) {
+      status = RUN_OK;
+    }
+  }
 
   // read the checker output
 read_checker_output:;
@@ -5510,6 +5635,10 @@ run_tests(
   int valuer_group_count = 0;
   int valuer_group_scores[EJ_MAX_TEST_GROUP + 1] = {};
 
+  size_t vlog_z = 0;
+  char *vlog_s = NULL;
+  FILE *vlog_f = NULL;
+
   valuer_cmd[0] = 0;
   valuer_cmt_file[0] = 0;
   valuer_jcmt_file[0] = 0;
@@ -5755,6 +5884,10 @@ run_tests(
     }
     close(evfds[0]); evfds[0] = -1;
     close(vefds[1]); vefds[1] = -1;
+    if (srpp->debug_flags > 0 && (srpp->debug_flags & RUN_DEBUG_VALUER_LOG)) {
+      vlog_f = open_memstream(&vlog_s, &vlog_z);
+      fprintf(vlog_f, "> -1\n");
+    }
     if (ejudge_timed_write(messages_path, evfds[1], "-1\n", 3, 100) < 0) {
       append_msg_to_log(messages_path, "interactive valuer write failed");
       goto check_failed;
@@ -5837,6 +5970,9 @@ run_tests(
                tests.data[cur_test].status, tests.data[cur_test].score,
                tests.data[cur_test].times);
       ssize_t buflen = strlen(buf);
+      if (srpp->debug_flags > 0 && (srpp->debug_flags & RUN_DEBUG_VALUER_LOG)) {
+        fprintf(vlog_f, "> %s", buf);
+      }
       if (ejudge_timed_write(messages_path, evfds[1], buf, buflen, 100) < 0) {
         append_msg_to_log(messages_path, "interactive valuer write failed");
         goto check_failed;
@@ -5850,9 +5986,12 @@ run_tests(
         append_msg_to_log(messages_path, "interactive valuer unexpected EOF");
         goto check_failed;
       }
+      if (srpp->debug_flags > 0 && (srpp->debug_flags & RUN_DEBUG_VALUER_LOG)) {
+        fprintf(vlog_f, "< %s", buf);
+      }
 
       int reply_next_num = 0;
-      if (parse_valuer_score(messages_path, buf, buflen, 1, srpp->full_score,
+      if (parse_valuer_score(vlog_f, messages_path, buf, buflen, 1, srpp->full_score,
                              srpp->valuer_sets_marked,
                              srgp->separate_user_score,
                              srpp->enable_group_merge > 0,
@@ -5909,7 +6048,10 @@ run_tests(
       append_msg_to_log(messages_path, "interactive valuer unexpected EOF");
       goto check_failed;
     }
-    if (parse_valuer_score(messages_path, buf, buflen, 0, srpp->full_score,
+    if (srpp->debug_flags > 0 && (srpp->debug_flags & RUN_DEBUG_VALUER_LOG)) {
+      fprintf(vlog_f, "< %s", buf);
+    }
+    if (parse_valuer_score(vlog_f, messages_path, buf, buflen, 0, srpp->full_score,
                            srpp->valuer_sets_marked,
                            srgp->separate_user_score,
                            srpp->enable_group_merge > 0,
@@ -6175,6 +6317,10 @@ done:;
     }
   }
 
+  if (vlog_f) {
+    fclose(vlog_f); vlog_f = NULL;
+  }
+
   generate_xml_report(srp, reply_pkt, report_path,
                       tests.size, tests.data, utf8_mode,
                       srgp->variant, total_score,
@@ -6188,7 +6334,8 @@ done:;
                       additional_comment, valuer_comment,
                       valuer_judge_comment, valuer_errors,
                       cpu_model, cpu_mhz, hostname,
-                      valuer_group_count, valuer_group_scores);
+                      valuer_group_count, valuer_group_scores,
+                      vlog_s);
 
   get_current_time(&reply_pkt->ts7, &reply_pkt->ts7_us);
 
@@ -6202,6 +6349,7 @@ done:;
     task_Delete(valuer_tsk);
   }
 
+  free(vlog_s);
   if (far) full_archive_close(far);
   free_testinfo_vector(&tests);
   xfree(open_tests_val);

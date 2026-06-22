@@ -1,6 +1,6 @@
 /* -*- mode:c -*- */
 
-/* Copyright (C) 2002-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This library is free software; you can redistribute it and/or
@@ -29,8 +29,8 @@
   int
 os_rGetSuffix(char const *path, char *buf, int size)
 {
-  char *dp;
-  char *sp;
+  const char *dp;
+  const char *sp;
 
   buf[0] = 0;
   if (!path) return 0;

@@ -184,7 +184,6 @@ ns_write_priv_all_runs(
     u->tree_mem = filter_tree_new();
     filter_expr_set_string(filter_expr, u->tree_mem, parse_error_func, cs);
     filter_expr_init_parser(u->tree_mem, parse_error_func, cs);
-    filter_expr_nerrs = 0;
     i = filter_expr_parse();
     if (i + filter_expr_nerrs == 0 && filter_expr_lval &&
         filter_expr_lval->type == FILTER_TYPE_BOOL) {
@@ -3029,7 +3028,6 @@ ns_set_stand_filter(
       filter_expr_set_string(stand_user_expr, u->stand_mem,
                              stand_parse_error_func, state);
       filter_expr_init_parser(u->stand_mem, stand_parse_error_func, state);
-      filter_expr_nerrs = 0;
       r = filter_expr_parse();
       if (r + filter_expr_nerrs != 0 || !filter_expr_lval) {
         stand_parse_error_func(state, "user filter expression parsing failed");
@@ -3055,7 +3053,6 @@ ns_set_stand_filter(
       filter_expr_set_string(stand_prob_expr, u->stand_mem,
                              stand_parse_error_func, state);
       filter_expr_init_parser(u->stand_mem, stand_parse_error_func, state);
-      filter_expr_nerrs = 0;
       r = filter_expr_parse();
       if (r + filter_expr_nerrs != 0 || !filter_expr_lval) {
         stand_parse_error_func(state, "problem filter expression parsing failed");
@@ -3082,7 +3079,6 @@ ns_set_stand_filter(
       filter_expr_set_string(stand_run_expr, u->stand_mem,
                              stand_parse_error_func, state);
       filter_expr_init_parser(u->stand_mem, stand_parse_error_func, state);
-      filter_expr_nerrs = 0;
       r = filter_expr_parse();
       if (r + filter_expr_nerrs != 0 || !filter_expr_lval) {
         stand_parse_error_func(state, "run filter expression parsing failed");
@@ -8040,6 +8036,8 @@ write_xml_team_testing_report(
       visibilities[i] = cntsprob_get_test_visibility(prob, i + 1, state->online_final_visibility, token_flags);
       if (visibilities[i] == TV_ICPC) {
         has_icpc_group = 1;
+      } else if (visibilities[i] == TV_CHECKER) {
+        need_comment = 1;
       }
     }
   }
@@ -8154,6 +8152,9 @@ write_xml_team_testing_report(
     fprintf(f, "<p><b>%s</b>:<br/></p><pre>%s</pre>\n", _("Valuer comments"),
             ARMOR(r->valuer_judge_comment));
     hide_score = 1;
+  }
+  if (prob && prob->scoring_checker > 0) {
+    hide_score = 0;
   }
 
   if (has_icpc_group) {
@@ -8278,7 +8279,11 @@ write_xml_team_testing_report(
       fprintf(f, "<td%s>%d (%d)</td>", cl, score, max_score);
     }
     if (need_comment) {
-      if (!t->team_comment) {
+      if (visibility == TV_CHECKER && t->checker_comment && *t->checker_comment) {
+        s = html_armor_string_dup(t->checker_comment);
+        fprintf(f, "<td%s>%s</td>", cl, s);
+        xfree(s);
+      } else if (!t->team_comment) {
         fprintf(f, "<td%s>&nbsp;</td>", cl);
       } else {
         s = html_armor_string_dup(t->team_comment);
@@ -9122,27 +9127,6 @@ write_xml_testing_report(
     }
   }
 
-  if (r->errors && r->errors[0]) {
-    fprintf(f, "<font color=\"red\"><b><u>%s</u></b><br/><pre>%s</pre></font>\n",
-            "Errors", ARMOR(r->errors));
-  }
-
-  if (r->valuer_comment || r->valuer_judge_comment || r->valuer_errors) {
-    fprintf(f, "<h3>%s</h3>\n", _("Valuer information"));
-    if (r->valuer_comment) {
-      fprintf(f, "<b><u>%s</u></b><br/><pre>%s</pre>\n",
-              _("Valuer comments"), ARMOR(r->valuer_comment));
-    }
-    if (r->valuer_judge_comment) {
-      fprintf(f, "<b><u>%s</u></b><br/><pre>%s</pre>\n",
-              _("Valuer judge comments"), ARMOR(r->valuer_judge_comment));
-    }
-    if (r->valuer_errors) {
-      fprintf(f, "<b><u>%s</u></b><br/><pre><font color=\"red\">%s</font></pre>\n",
-              _("Valuer errors"), ARMOR(r->valuer_errors));
-    }
-  }
-
   // calculate max CPU time
   for (i = 0; i < r->run_tests; i++) {
     if (!(t = r->tests[i])) continue;
@@ -9195,6 +9179,27 @@ write_xml_testing_report(
   }
   fprintf(f, "<br><br></big>\n");
 
+  if (r->errors && r->errors[0]) {
+    fprintf(f, "<font color=\"red\"><b><u>%s</u></b><br/><pre>%s</pre></font>\n",
+            "Errors", ARMOR(r->errors));
+  }
+
+  if (r->valuer_comment || r->valuer_judge_comment || r->valuer_errors) {
+    fprintf(f, "<h3>%s</h3>\n", _("Valuer information"));
+    if (r->valuer_comment) {
+      fprintf(f, "<b><u>%s</u></b><br/><pre>%s</pre>\n",
+              _("Valuer comments"), ARMOR(r->valuer_comment));
+    }
+    if (r->valuer_judge_comment) {
+      fprintf(f, "<b><u>%s</u></b><br/><pre>%s</pre>\n",
+              _("Valuer judge comments"), ARMOR(r->valuer_judge_comment));
+    }
+    if (r->valuer_errors) {
+      fprintf(f, "<b><u>%s</u></b><br/><pre><font color=\"red\">%s</font></pre>\n",
+              _("Valuer errors"), ARMOR(r->valuer_errors));
+    }
+  }
+
   if (r->host && !user_mode) {
     fprintf(f, "<big>Tested on host: %s</big><br/><br/>\n", r->host);
   }
@@ -9208,6 +9213,13 @@ write_xml_testing_report(
   if (r->comment) {
     s = html_armor_string_dup(r->comment);
     fprintf(f, "<big><u>Testing messages</u>:</big><br/><br/>\n");
+    fprintf(f, "<pre>%s</pre>\n", s);
+    xfree(s);
+  }
+
+  if (r->valuer_log) {
+    s = html_armor_string_dup(r->valuer_log);
+    fprintf(f, "<big><u>Interactive valuer log</u>:</big><br/><br/>\n");
     fprintf(f, "<pre>%s</pre>\n", s);
     xfree(s);
   }
@@ -10357,66 +10369,12 @@ write_json_run_info(
             fprintf(fout, ",\n          \"score\": %d", score);
             fprintf(fout, ",\n          \"max_score\": %d", max_score);
           }
+          if (visibility == TV_CHECKER && t->checker_comment && t->checker_comment[0]) {
+            fprintf(fout, ",\n          \"checker_comment\": \"%s\"", json_armor_buf(&ab, t->checker_comment));
+          }
           if (t->team_comment && t->team_comment[0]) {
             fprintf(fout, ",\n          \"team_comment\": \"%s\"", json_armor_buf(&ab, t->team_comment));
           }
-    /*
-    if (need_links) {
-      fprintf(f, "<td%s>", cl);
-      if (visibility == TV_FULL) {
-        fprintf(f, "&nbsp;%s[I]</a>",
-                ns_aref_2(hbuf, sizeof(hbuf), phr,
-                          html_make_title(tbuf, sizeof(tbuf), _("Test input data")),
-                          NEW_SRV_ACTION_VIEW_TEST_INPUT,
-                          "run_id=%d&test_num=%d",
-                          r->run_id, t->num));
-        if (t->output_available) {
-          fprintf(f, "&nbsp;%s[O]</a>",
-                  ns_aref_2(hbuf, sizeof(hbuf), phr,
-                            html_make_title(tbuf, sizeof(tbuf), _("Program output")),
-                            NEW_SRV_ACTION_VIEW_TEST_OUTPUT,
-                            "run_id=%d&test_num=%d",
-                            r->run_id, t->num));
-        }
-        if (r->correct_available) {
-          fprintf(f, "&nbsp;%s[A]</a>",
-                  ns_aref_2(hbuf, sizeof(hbuf), phr,
-                            html_make_title(tbuf, sizeof(tbuf), _("Correct answer")),
-                            NEW_SRV_ACTION_VIEW_TEST_ANSWER,
-                            "run_id=%d&test_num=%d",
-                            r->run_id, t->num));
-        }
-        if (t->stderr_available) {
-          fprintf(f, "&nbsp;%s[E]</a>",
-                  ns_aref_2(hbuf, sizeof(hbuf), phr,
-                            html_make_title(tbuf, sizeof(tbuf), _("Program stderr output")),
-                            NEW_SRV_ACTION_VIEW_TEST_ERROR,
-                            "run_id=%d&test_num=%d",
-                            r->run_id, t->num));
-        }
-        if (t->checker_output_available) {
-          fprintf(f, "&nbsp;%s[C]</a>",
-                  ns_aref_2(hbuf, sizeof(hbuf), phr,
-                            html_make_title(tbuf, sizeof(tbuf), _("Checker output")),
-                            NEW_SRV_ACTION_VIEW_TEST_CHECKER,
-                            "run_id=%d&test_num=%d",
-                            r->run_id, t->num));
-        }
-        if (r->info_available) {
-          fprintf(f, "&nbsp;%s[F]</a>",
-                  ns_aref_2(hbuf, sizeof(hbuf), phr,
-                            html_make_title(tbuf, sizeof(tbuf), _("Test information")),
-                            NEW_SRV_ACTION_VIEW_TEST_INFO,
-                            "run_id=%d&test_num=%d",
-                            r->run_id, t->num));
-        }
-      }
-      fprintf(f, "</td>");
-    }
-    fprintf(f, "</tr>\n");
-  }
-  fprintf(f, "</table>\n");
-   */
           if (visibility == TV_FULL) {
             fprintf(fout, ",\n          \"is_visibility_full\": %s", to_json_bool(1));
             if (t->args_too_long || t->args) {

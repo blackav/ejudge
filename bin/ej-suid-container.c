@@ -14,6 +14,7 @@
  * GNU General Public License for more details.
  */
 
+#include <asm/unistd_64.h>
 #include <sched.h>
 #include <stdio.h>
 #include <string.h>
@@ -150,6 +151,8 @@ static int enable_sys_execve = 0;
 static int enable_sys_fork = 0;
 static int enable_sys_memfd = 0;
 static int enable_sys_unshare = 0;
+static int enable_sys_splice = 0;
+static int enable_sys_io_uring = 0;
 
 static char *working_dir = NULL;
 static char *working_dir_parent = NULL;
@@ -182,6 +185,7 @@ static char *start_program_name = NULL;
 static int stdin_external_fd = -1;
 static int stdout_external_fd = -1;
 static char *language_name = NULL;
+static char *exchange_dir = NULL;
 
 enum { DEFAULT_LIMIT_VM_SIZE = 67108864 };
 enum { DEFAULT_LIMIT_CPU_TIME_MS = 1000 };
@@ -392,7 +396,12 @@ safe_chown(const char *full, int to_user_id, int to_group_id, int from_user_id)
 }
 
 static void
-safe_chown_rec(const char *path, int user_id, int group_id, int from_user_id)
+safe_chown_rec(
+        const char *path,
+        int user_id,
+        int group_id,
+        int from_user_id,
+        const unsigned char *exchange_dir)
 {
     DIR *d = opendir(path);
     if (!d) return;
@@ -401,6 +410,7 @@ safe_chown_rec(const char *path, int user_id, int group_id, int from_user_id)
     char **names_s = malloc(names_a * sizeof(names_s[0]));
     while ((dd = readdir(d))) {
         if (!strcmp(dd->d_name, ".") || !strcmp(dd->d_name, "..")) continue;
+        if (exchange_dir && !strcmp(dd->d_name, exchange_dir)) continue;
         if (names_u == names_a) {
             names_s = realloc(names_s, (names_a *= 2) * sizeof(names_s[0]));
         }
@@ -413,7 +423,7 @@ safe_chown_rec(const char *path, int user_id, int group_id, int from_user_id)
         struct stat stb;
         if (lstat(full, &stb) < 0) continue;
         if (S_ISDIR(stb.st_mode)) {
-            safe_chown_rec(full, user_id, group_id, from_user_id);
+            safe_chown_rec(full, user_id, group_id, from_user_id, NULL);
         }
         safe_chown(full, user_id, group_id, from_user_id);
     }
@@ -423,12 +433,16 @@ safe_chown_rec(const char *path, int user_id, int group_id, int from_user_id)
 }
 
 static void
-change_ownership(int user_id, int group_id, int from_user_id)
+change_ownership(
+        int user_id,
+        int group_id,
+        int from_user_id,
+        const unsigned char *exchange_dir)
 {
     const char *dir = (enable_subdir_mode && working_dir)? working_dir_parent : working_dir;
     if (!dir) dir = ".";
     safe_chown(dir, user_id, group_id, from_user_id);
-    safe_chown_rec(dir, user_id, group_id, from_user_id);
+    safe_chown_rec(dir, user_id, group_id, from_user_id, exchange_dir);
 }
 
 static void
@@ -1514,15 +1528,37 @@ static struct sock_filter seccomp_filter_default[] =
     /* 18 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
 #endif
 
+    // blacklist splice and vmsplice
+#if defined __NR_splice
+    /* 19 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_splice, 0, 1),
+    /* 20 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
+    /* 21 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_vmsplice, 0, 1),
+    /* 22 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
+#else
+    /* 19 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
+    /* 20 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
+    /* 21 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
+    /* 22 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
+#endif
+
+    // blacklist io_uring
+#if defined __NR_io_uring_setup
+    /* 23 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_io_uring_setup, 0, 1),
+    /* 24 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
+#else
+    /* 23 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
+    /* 24 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
+#endif
+
     // allow remaining
-    /* 19 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_ALLOW),
+    /* 25 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_ALLOW),
 };
 
 static struct sock_filter seccomp_filter_x86_64[] =
 {
     /*  0 */ BPF_STMT(BPF_LD+BPF_W+BPF_ABS, (offsetof(struct seccomp_data, arch))),
     /*  1 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, AUDIT_ARCH_X86_64, 2, 0), // jeq (4)
-    /*  2 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, AUDIT_ARCH_I386, 21, 0),  // jeq (24)
+    /*  2 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, AUDIT_ARCH_I386, 27, 0),  // jeq (24)
     /*  3 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
 
     // x86_64 part
@@ -1592,61 +1628,105 @@ static struct sock_filter seccomp_filter_x86_64[] =
     /* 22 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
 #endif
 
+    // blacklist splice and vmsplice
+#if defined __NR_splice
+    /* 23 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_splice, 0, 1),
+    /* 24 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
+    /* 25 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_vmsplice, 0, 1),
+    /* 26 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
+#else
+    /* 23 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
+    /* 24 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
+    /* 25 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
+    /* 26 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
+#endif
+
+    // blacklist io_uring_setup
+#if defined __NR_unshare
+    /* 27 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_io_uring_setup, 0, 1),
+    /* 28 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
+#else
+    /* 27 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
+    /* 28 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
+#endif
+
     // allow remaining
-    /* 23 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_ALLOW),
+    /* 29 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_ALLOW),
 
     // i686 under x86_64 part
     // load syscall number
-    /* 24 */ BPF_STMT(BPF_LD+BPF_W+BPF_ABS, (offsetof(struct seccomp_data, nr))),
+    /* 30 */ BPF_STMT(BPF_LD+BPF_W+BPF_ABS, (offsetof(struct seccomp_data, nr))),
 
     // blacklist fork-like syscalls
-    /* 25 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_32_fork, 0, 1),
-    /* 26 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
-    /* 27 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_32_vfork, 0, 1),
-    /* 28 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
-    /* 29 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_32_clone, 0, 1),
-    /* 30 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
+    /* 31 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_32_fork, 0, 1),
+    /* 32 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
+    /* 33 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_32_vfork, 0, 1),
+    /* 34 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
+    /* 35 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_32_clone, 0, 1),
+    /* 36 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
 
 #if defined __NR_32_clone3
-    /* 31 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_32_clone3, 0, 1),
-    /* 32 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
-#else
-    /* 31 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
-    /* 32 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
-#endif
-
-    // blacklist exec-like syscalls
-    /* 33 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_32_execve, 0, 1),
-    /* 34 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
-
-#if defined __NR_32_execveat
-    /* 35 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_32_execveat, 0, 1),
-    /* 36 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
-#else
-    /* 35 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
-    /* 36 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
-#endif
-
-    // blacklist memfd_create
-#if defined __NR_32_memfd_create
-    /* 37 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_32_memfd_create, 0, 1),
+    /* 37 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_32_clone3, 0, 1),
     /* 38 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
 #else
     /* 37 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
     /* 38 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
 #endif
 
+    // blacklist exec-like syscalls
+    /* 39 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_32_execve, 0, 1),
+    /* 40 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
+
+#if defined __NR_32_execveat
+    /* 41 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_32_execveat, 0, 1),
+    /* 42 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
+#else
+    /* 41 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
+    /* 42 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
+#endif
+
+    // blacklist memfd_create
+#if defined __NR_32_memfd_create
+    /* 43 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_32_memfd_create, 0, 1),
+    /* 44 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
+#else
+    /* 41 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
+    /* 44 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
+#endif
+
     // blacklist unshare
 #if defined __NR_32_unshare
-    /* 39 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_32_unshare, 0, 1),
-    /* 40 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
+    /* 45 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_32_unshare, 0, 1),
+    /* 46 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
 #else
-    /* 39 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
-    /* 40 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
+    /* 45 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
+    /* 46 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
+#endif
+
+    // blacklist splice and vmsplice
+#if defined __NR_32_splice
+    /* 47 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_32_splice, 0, 1),
+    /* 48 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
+    /* 49 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_32_vmsplice, 0, 1),
+    /* 50 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
+#else
+    /* 47 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
+    /* 48 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
+    /* 49 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
+    /* 50 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
+#endif
+
+    // blacklist unshare
+#if defined __NR_32_io_uring_setup
+    /* 51 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_32_io_uring_setup, 0, 1),
+    /* 52 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
+#else
+    /* 51 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
+    /* 52 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
 #endif
 
     // allow remaining
-    /* 41 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_ALLOW),
+    /* 53 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_ALLOW),
 };
 
 static __attribute__((unused)) struct sock_fprog seccomp_prog_x86_64 =
@@ -1691,14 +1771,15 @@ tune_seccomp()
         seccomp_filter_x86_64[10] = nop[0];
         seccomp_filter_x86_64[11] = nop[0];
         seccomp_filter_x86_64[12] = nop[0];
-        seccomp_filter_x86_64[25] = nop[0];
-        seccomp_filter_x86_64[26] = nop[0];
-        seccomp_filter_x86_64[27] = nop[0];
-        seccomp_filter_x86_64[28] = nop[0];
-        seccomp_filter_x86_64[29] = nop[0];
-        seccomp_filter_x86_64[30] = nop[0];
+
         seccomp_filter_x86_64[31] = nop[0];
         seccomp_filter_x86_64[32] = nop[0];
+        seccomp_filter_x86_64[33] = nop[0];
+        seccomp_filter_x86_64[34] = nop[0];
+        seccomp_filter_x86_64[35] = nop[0];
+        seccomp_filter_x86_64[36] = nop[0];
+        seccomp_filter_x86_64[37] = nop[0];
+        seccomp_filter_x86_64[38] = nop[0];
     }
     if (enable_sys_execve) {
         seccomp_filter_x86_64[13] = nop[0];
@@ -1707,22 +1788,43 @@ tune_seccomp()
         seccomp_filter_x86_64[16] = nop[0];
         seccomp_filter_x86_64[17] = nop[0];
         seccomp_filter_x86_64[18] = nop[0];
-        seccomp_filter_x86_64[33] = nop[0];
-        seccomp_filter_x86_64[34] = nop[0];
-        seccomp_filter_x86_64[35] = nop[0];
-        seccomp_filter_x86_64[36] = nop[0];
+
+        seccomp_filter_x86_64[39] = nop[0];
+        seccomp_filter_x86_64[40] = nop[0];
+        seccomp_filter_x86_64[41] = nop[0];
+        seccomp_filter_x86_64[42] = nop[0];
     }
     if (enable_sys_memfd) {
         seccomp_filter_x86_64[19] = nop[0];
         seccomp_filter_x86_64[20] = nop[0];
-        seccomp_filter_x86_64[37] = nop[0];
-        seccomp_filter_x86_64[38] = nop[0];
+
+        seccomp_filter_x86_64[43] = nop[0];
+        seccomp_filter_x86_64[44] = nop[0];
     }
     if (enable_sys_unshare) {
         seccomp_filter_x86_64[21] = nop[0];
         seccomp_filter_x86_64[22] = nop[0];
-        seccomp_filter_x86_64[39] = nop[0];
-        seccomp_filter_x86_64[40] = nop[0];
+
+        seccomp_filter_x86_64[45] = nop[0];
+        seccomp_filter_x86_64[46] = nop[0];
+    }
+    if (enable_sys_splice) {
+        seccomp_filter_x86_64[23] = nop[0];
+        seccomp_filter_x86_64[24] = nop[0];
+        seccomp_filter_x86_64[25] = nop[0];
+        seccomp_filter_x86_64[26] = nop[0];
+
+        seccomp_filter_x86_64[47] = nop[0];
+        seccomp_filter_x86_64[48] = nop[0];
+        seccomp_filter_x86_64[49] = nop[0];
+        seccomp_filter_x86_64[50] = nop[0];
+    }
+    if (enable_sys_io_uring) {
+        seccomp_filter_x86_64[27] = nop[0];
+        seccomp_filter_x86_64[28] = nop[0];
+
+        seccomp_filter_x86_64[51] = nop[0];
+        seccomp_filter_x86_64[52] = nop[0];
     }
 #else
     seccomp_prog_active = &seccomp_prog_default;
@@ -1758,6 +1860,16 @@ tune_seccomp()
     if (enable_sys_unshare) {
         seccomp_filter_default[17] = nop[0];
         seccomp_filter_default[18] = nop[0];
+    }
+    if (enable_sys_splice) {
+        seccomp_filter_x86_64[19] = nop[0];
+        seccomp_filter_x86_64[20] = nop[0];
+        seccomp_filter_x86_64[21] = nop[0];
+        seccomp_filter_x86_64[22] = nop[0];
+    }
+    if (enable_sys_io_uring) {
+        seccomp_filter_default[23] = nop[0];
+        seccomp_filter_default[24] = nop[0];
     }
 #endif
 }
@@ -2020,6 +2132,7 @@ extract_size(const char **ppos, int init_offset, const char *opt_name)
  *   su     - enable unshare
  *   cf<FD> - specify control socket fd
  *   cu<N>  - specify ejcompile/ejexec serial (ejexec1, ejexec2...)
+ *   cw<DIR>- preserve ownership and rights on specified DIR
  */
 
 int
@@ -2246,7 +2359,9 @@ main(int argc, char *argv[])
                 limit_real_time_ms = v;
                 opt = eptr;
             } else if (*opt == 's' && opt[1] == '0') {
-                enable_seccomp = 0;
+                //enable_seccomp = 0;
+                enable_sys_execve = 1;
+                enable_sys_fork = 1;
                 opt += 2;
             } else if (*opt == 's' && opt[1] == 'e') {
                 enable_sys_execve = 1;
@@ -2259,6 +2374,12 @@ main(int argc, char *argv[])
                 opt += 2;
             } else if (*opt == 's' && opt[1] == 'u') {
                 enable_sys_unshare = 1;
+                opt += 2;
+            } else if (*opt == 's' && opt[1] == 's') {
+                enable_sys_splice = 1;
+                opt += 2;
+            } else if (*opt == 's' && opt[1] == 'r') {
+                enable_sys_io_uring = 1;
                 opt += 2;
             } else if (*opt == 'o' && opt[1] == 'l') {
                 language_name = extract_string(&opt, 2, "ol");
@@ -2284,6 +2405,8 @@ main(int argc, char *argv[])
                 }
                 exec_user_serial = v;
                 opt = eptr;
+            } else if (*opt == 'c' && opt[1] == 'w') {
+                exchange_dir = extract_string(&opt, 2, "cw");
             } else {
                 flog("invalid option: %s", opt);
                 fatal();
@@ -2378,12 +2501,12 @@ main(int argc, char *argv[])
     }
 
     if (enable_chown) {
-        change_ownership(slave_uid, slave_gid, primary_uid);
+        change_ownership(slave_uid, slave_gid, primary_uid, exchange_dir);
     }
 
     if (open_redirections() < 0) {
         if (enable_chown) {
-            change_ownership(primary_uid, primary_gid, slave_uid);
+            change_ownership(primary_uid, primary_gid, slave_uid, NULL);
         }
         fatal();
     }
@@ -2401,7 +2524,7 @@ main(int argc, char *argv[])
     pid_t tidptr = 0;
     int pid = syscall(__NR_clone, clone_flags, NULL, NULL, &tidptr);
     if (pid < 0) {
-        change_ownership(primary_uid, primary_gid, slave_uid);
+        change_ownership(primary_uid, primary_gid, slave_uid, NULL);
         if (cgroup_unified_path[0]) rmdir(cgroup_unified_path);
         if (cgroup_cpu_path[0]) rmdir(cgroup_cpu_path);
         if (cgroup_memory_path[0]) rmdir(cgroup_memory_path);
@@ -2926,7 +3049,7 @@ main(int argc, char *argv[])
         printf("parent: %d, %d\n", pid, tidptr);
     }
 
-    change_ownership(primary_uid, primary_gid, slave_uid);
+    change_ownership(primary_uid, primary_gid, slave_uid, NULL);
     if (cgroup_unified_path[0]) rmdir(cgroup_unified_path);
     if (cgroup_cpu_path[0]) rmdir(cgroup_cpu_path);
     if (cgroup_memory_path[0]) rmdir(cgroup_memory_path);

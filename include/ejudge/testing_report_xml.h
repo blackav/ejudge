@@ -2,7 +2,7 @@
 #ifndef __TESTING_REPORT_XML_H__
 #define __TESTING_REPORT_XML_H__
 
-/* Copyright (C) 2005-2024 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -164,6 +164,7 @@ typedef struct testing_report_xml
   unsigned char *cpu_mhz;
   unsigned char *errors;
   unsigned char *compiler_output;
+  unsigned char *valuer_log;
 
   ej_uuid_t uuid;
   ej_uuid_t judge_uuid;

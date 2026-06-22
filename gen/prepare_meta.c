@@ -1360,6 +1360,7 @@ static struct meta_info_item meta_info_section_problem_data_data[] =
   [CNTSPROB_lang_time_adj] = { CNTSPROB_lang_time_adj, 'x', XSIZE(struct section_problem_data, lang_time_adj), "lang_time_adj", XOFFSET(struct section_problem_data, lang_time_adj) },
   [CNTSPROB_lang_time_adj_millis] = { CNTSPROB_lang_time_adj_millis, 'x', XSIZE(struct section_problem_data, lang_time_adj_millis), "lang_time_adj_millis", XOFFSET(struct section_problem_data, lang_time_adj_millis) },
   [CNTSPROB_super_run_dir] = { CNTSPROB_super_run_dir, 's', XSIZE(struct section_problem_data, super_run_dir), "super_run_dir", XOFFSET(struct section_problem_data, super_run_dir) },
+  [CNTSPROB_exchange_dir] = { CNTSPROB_exchange_dir, 's', XSIZE(struct section_problem_data, exchange_dir), "exchange_dir", XOFFSET(struct section_problem_data, exchange_dir) },
   [CNTSPROB_lang_max_vm_size] = { CNTSPROB_lang_max_vm_size, 'x', XSIZE(struct section_problem_data, lang_max_vm_size), "lang_max_vm_size", XOFFSET(struct section_problem_data, lang_max_vm_size) },
   [CNTSPROB_lang_max_stack_size] = { CNTSPROB_lang_max_stack_size, 'x', XSIZE(struct section_problem_data, lang_max_stack_size), "lang_max_stack_size", XOFFSET(struct section_problem_data, lang_max_stack_size) },
   [CNTSPROB_lang_max_rss_size] = { CNTSPROB_lang_max_rss_size, 'x', XSIZE(struct section_problem_data, lang_max_rss_size), "lang_max_rss_size", XOFFSET(struct section_problem_data, lang_max_rss_size) },
@@ -1396,6 +1397,7 @@ static struct meta_info_item meta_info_section_problem_data_data[] =
   [CNTSPROB_max_open_file_count] = { CNTSPROB_max_open_file_count, 'i', XSIZE(struct section_problem_data, max_open_file_count), "max_open_file_count", XOFFSET(struct section_problem_data, max_open_file_count) },
   [CNTSPROB_max_process_count] = { CNTSPROB_max_process_count, 'i', XSIZE(struct section_problem_data, max_process_count), "max_process_count", XOFFSET(struct section_problem_data, max_process_count) },
   [CNTSPROB_forced_test_count] = { CNTSPROB_forced_test_count, 'i', XSIZE(struct section_problem_data, forced_test_count), "forced_test_count", XOFFSET(struct section_problem_data, forced_test_count) },
+  [CNTSPROB_debug_flags] = { CNTSPROB_debug_flags, 'i', XSIZE(struct section_problem_data, debug_flags), "debug_flags", XOFFSET(struct section_problem_data, debug_flags) },
   [CNTSPROB_extid] = { CNTSPROB_extid, 's', XSIZE(struct section_problem_data, extid), "extid", XOFFSET(struct section_problem_data, extid) },
   [CNTSPROB_unhandled_vars] = { CNTSPROB_unhandled_vars, 's', XSIZE(struct section_problem_data, unhandled_vars), "unhandled_vars", XOFFSET(struct section_problem_data, unhandled_vars) },
   [CNTSPROB_score_view] = { CNTSPROB_score_view, 'x', XSIZE(struct section_problem_data, score_view), "score_view", XOFFSET(struct section_problem_data, score_view) },
@@ -1785,6 +1787,9 @@ void cntsprob_copy(struct section_problem_data *dst, const struct section_proble
   if (src->super_run_dir) {
     dst->super_run_dir = strdup(src->super_run_dir);
   }
+  if (src->exchange_dir) {
+    dst->exchange_dir = strdup(src->exchange_dir);
+  }
   dst->lang_max_vm_size = (typeof(dst->lang_max_vm_size)) sarray_copy((char**) src->lang_max_vm_size);
   dst->lang_max_stack_size = (typeof(dst->lang_max_stack_size)) sarray_copy((char**) src->lang_max_stack_size);
   dst->lang_max_rss_size = (typeof(dst->lang_max_rss_size)) sarray_copy((char**) src->lang_max_rss_size);
@@ -1829,6 +1834,7 @@ void cntsprob_copy(struct section_problem_data *dst, const struct section_proble
   dst->max_open_file_count = src->max_open_file_count;
   dst->max_process_count = src->max_process_count;
   dst->forced_test_count = src->forced_test_count;
+  dst->debug_flags = src->debug_flags;
   if (src->extid) {
     dst->extid = strdup(src->extid);
   }
@@ -1944,6 +1950,7 @@ void cntsprob_free(struct section_problem_data *ptr)
   sarray_free((char**) ptr->lang_time_adj);
   sarray_free((char**) ptr->lang_time_adj_millis);
   free(ptr->super_run_dir);
+  free(ptr->exchange_dir);
   sarray_free((char**) ptr->lang_max_vm_size);
   sarray_free((char**) ptr->lang_max_stack_size);
   sarray_free((char**) ptr->lang_max_rss_size);

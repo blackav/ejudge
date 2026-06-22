@@ -34,7 +34,7 @@ get_program_name(const unsigned char *arg0)
         fprintf(stderr, "no program name\n");
         exit(1);
     }
-    char *s = strrchr(arg0, '/');
+    const char *s = strrchr(arg0, '/');
     if (s) {
         program_name = s + 1;
     } else {

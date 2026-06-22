@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2007-2024 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2007-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -936,7 +936,7 @@ full_user_report_generate(
   const struct section_problem_data *prob;
   const struct section_language_data *lang;
   int *run_ids, *best_score, *best_status;
-  int total_runs, run_id, retval = -1, f_id, l_id, i, j, k;
+  int total_runs, run_id, retval = -1, f_id, l_id, i, j;
   struct run_entry re;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   path_t src_path;
@@ -1501,7 +1501,7 @@ full_user_report_generate(
 
     case PROB_TYPE_SHORT_ANSWER:
       need_variant = 0;
-      for (i = f_id, k = 0; i < l_id; i++, k++)
+      for (i = f_id; i < l_id; i++)
         if ((prob = cs->probs[i]) && prob->variant_num > 0)
           need_variant = 1;
 
@@ -1513,7 +1513,7 @@ full_user_report_generate(
       if (need_variant) fprintf(fout, " & V");
       fprintf(fout, " & %s & %s & %s & %s \\\\\n",
               _("Answer"), _("Score"), _("Status"), _("Comment"));
-      for (i = f_id, k = 0; i < l_id; i++, k++) {
+      for (i = f_id; i < l_id; i++) {
         if (!(prob = cs->probs[i])) continue;
         fprintf(fout, "\\hline\n");
 
@@ -1578,7 +1578,7 @@ full_user_report_generate(
 
     case PROB_TYPE_SELECT_ONE:
       need_variant = 0;
-      for (i = f_id, k = 0; i < l_id; i++, k++)
+      for (i = f_id; i < l_id; i++)
         if ((prob = cs->probs[i]) && prob->variant_num > 0)
           need_variant = 1;
 
@@ -1590,7 +1590,7 @@ full_user_report_generate(
       if (need_variant) fprintf(fout, " & V");
       fprintf(fout, " & %s & %s & %s & %s \\\\\n",
               _("Answer code"), _("Answer"), _("Score"), _("Status"));
-      for (i = f_id, k = 0; i < l_id; i++, k++) {
+      for (i = f_id; i < l_id; i++) {
         if (!(prob = cs->probs[i])) continue;
         fprintf(fout, "\\hline\n");
 

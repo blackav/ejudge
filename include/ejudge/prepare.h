@@ -2,7 +2,7 @@
 #ifndef __PREPARE_H__
 #define __PREPARE_H__
 
-/* Copyright (C) 2000-2025 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1272,6 +1272,8 @@ struct section_problem_data
   char **lang_time_adj_millis;
   /** tester specially for this problem */
   unsigned char *super_run_dir;
+  /** testing time exchange directory */
+  unsigned char *exchange_dir;
   /** language-specific memory limit */
   char **lang_max_vm_size;
   char **lang_max_stack_size;
@@ -1337,6 +1339,8 @@ struct section_problem_data
   int max_process_count;
   /** forced number of tests for the problem */
   int forced_test_count;
+  /** debug flags */
+  int debug_flags;
 
   /** external id (for external application binding) */
   unsigned char *extid;

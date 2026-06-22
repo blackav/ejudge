@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2021-2024 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2021-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -97,7 +97,7 @@ get_provider(
                 break;
         }
         if (!p) {
-            err("oauth_get_provider: plugin '%s' not registered", provider);
+            // err("oauth_get_provider: plugin '%s' not registered", provider);
             return NULL;
         }
         loaded_plugin = plugin_load_external(plg->path, plg->type, plg->name, config);

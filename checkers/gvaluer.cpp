@@ -1,4 +1,4 @@
-/* Copyright (C) 2012-2025 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -22,6 +22,7 @@
 #include <vector>
 #include <algorithm>
 #include <set>
+#include <unordered_map>
 
 using namespace std;
 
@@ -150,56 +151,56 @@ class Group
 public:
     Group() {}
 
-    void set_group_id(const string &group_id_) { group_id = group_id_; }
-    const string &get_group_id() const { return group_id; }
+    void set_group_id(string group_id_) noexcept { group_id = std::move(group_id_); }
+    const string &get_group_id() const noexcept { return group_id; }
 
-    void set_range(int first, int last)
+    void set_range(int first, int last) noexcept
     {
         this->first = first;
         this->last = last;
     }
-    int get_first() const { return first; }
-    int get_last() const { return last; }
+    int get_first() const noexcept { return first; }
+    int get_last() const noexcept { return last; }
 
     void add_requires(const string &s) { requirez.push_back(s); }
-    const vector<string> &get_requires() const { return requirez; }
+    const vector<string> &get_requires() const noexcept { return requirez; }
 
     void add_sets_marked_if_passed(const string &s) { sets_marked_if_passed.push_back(s); }
-    const vector<string> &get_sets_marked_if_passed() const { return sets_marked_if_passed; }
+    const vector<string> &get_sets_marked_if_passed() const noexcept { return sets_marked_if_passed; }
 
-    void set_offline(bool offline) { this->offline = offline; }
-    bool get_offline() const { return offline; }
+    void set_offline(bool offline) noexcept { this->offline = offline; }
+    bool get_offline() const noexcept { return offline; }
 
-    void set_sets_marked(bool sets_marked) { this->sets_marked = sets_marked; }
-    bool get_sets_marked() const { return sets_marked; }
+    void set_sets_marked(bool sets_marked) noexcept { this->sets_marked = sets_marked; }
+    bool get_sets_marked() const noexcept { return sets_marked; }
 
-    void set_skip(bool skip) { this->skip = skip; }
-    bool get_skip() const { return skip; }
+    void set_skip(bool skip) noexcept { this->skip = skip; }
+    bool get_skip() const noexcept { return skip; }
 
-    void set_skip_if_not_rejudge(bool skip) { this->skip_if_not_rejudge = skip; }
-    bool get_skip_if_not_rejudge() const { return skip_if_not_rejudge; }
+    void set_skip_if_not_rejudge(bool skip) noexcept { this->skip_if_not_rejudge = skip; }
+    bool get_skip_if_not_rejudge() const noexcept { return skip_if_not_rejudge; }
 
-    void set_stat_to_judges(bool stat) { this->stat_to_judges = stat; }
-    bool get_stat_to_judges() const { return stat_to_judges; }
+    void set_stat_to_judges(bool stat) noexcept { this->stat_to_judges = stat; }
+    bool get_stat_to_judges() const noexcept { return stat_to_judges; }
 
-    void set_stat_to_users(bool stat) { this->stat_to_users = stat; }
-    bool get_stat_to_users() const { return stat_to_users; }
+    void set_stat_to_users(bool stat) noexcept { this->stat_to_users = stat; }
+    bool get_stat_to_users() const noexcept { return stat_to_users; }
 
-    void set_score(int score) { this->score = score; }
-    int get_score() const { return score; }
+    void set_score(int score) noexcept { this->score = score; }
+    int get_score() const noexcept { return score; }
 
-    void set_pass_if_count(int count) { this->pass_if_count = count; }
-    int get_pass_if_count() const { return pass_if_count; }
+    void set_pass_if_count(int count) noexcept { this->pass_if_count = count; }
+    int get_pass_if_count() const noexcept { return pass_if_count; }
 
-    void set_test_all(bool value) { test_all = value; }
-    bool get_test_all() const { return test_all; }
+    void set_test_all(bool value) noexcept { test_all = value; }
+    bool get_test_all() const noexcept { return test_all; }
 
-    void set_use_lowest_test_score(bool value) { use_lowest_test_score = value; }
-    bool get_use_lowest_test_score() const { return use_lowest_test_score; }
+    void set_use_lowest_test_score(bool value) noexcept { use_lowest_test_score = value; }
+    bool get_use_lowest_test_score() const noexcept { return use_lowest_test_score; }
 
-    void inc_passed_count() { ++passed_count; }
-    int get_passed_count() const { return passed_count; }
-    bool is_passed() const
+    void inc_passed_count() noexcept { ++passed_count; }
+    int get_passed_count() const noexcept { return passed_count; }
+    bool is_passed() const noexcept
     {
         if (pass_if_count > 0) return passed_count >= pass_if_count;
         return passed_count == (last - first + 1);
@@ -210,7 +211,7 @@ public:
         passed_set.insert(test_num);
     }
 
-    bool is_zero_score() const
+    bool is_zero_score() const noexcept
     {
         for (const auto& zero_set : zero_sets) {
             if (passed_set == zero_set)
@@ -230,15 +231,15 @@ public:
         return false;
     }
 
-    void set_comment(const string &comment_) { comment = comment_; }
-    const string &get_comment() const { return comment; }
-    bool has_comment() const { return comment.length() > 0; }
+    void set_comment(string comment_) noexcept { comment = std::move(comment_); }
+    const string &get_comment() const noexcept { return comment; }
+    bool has_comment() const noexcept { return comment.length() > 0; }
 
-    void set_test_score(int ts) { test_score = ts; }
-    int get_test_score() const { return test_score; }
+    void set_test_score(int ts) noexcept { test_score = ts; }
+    int get_test_score() const noexcept { return test_score; }
 
-    void set_user_status(int user_status) { this->user_status = user_status; }
-    int get_user_status() const { return user_status; }
+    void set_user_status(int user_status) noexcept { this->user_status = user_status; }
+    int get_user_status() const noexcept { return user_status; }
 
     void add_zero_set(set<int> &&zs)
     {
@@ -252,13 +253,13 @@ public:
 
     bool meet_requirements(const ConfigParser &cfg, const Group *& grp) const;
 
-    void add_total_score()
+    void add_total_score() noexcept
     {
         if (test_score > 0 && !use_lowest_test_score) {
             total_score += test_score;
         }
     }
-    void add_test_score(int score)
+    void add_test_score(int score) noexcept
     {
         if (use_lowest_test_score) {
             total_score = min(total_score, score);
@@ -266,13 +267,13 @@ public:
             total_score += score;
         }
     }
-    void set_total_score(int total_score)
+    void set_total_score(int total_score) noexcept
     {
         this->total_score = total_score;
     }
-    int get_total_score() const { return total_score; }
+    int get_total_score() const noexcept { return total_score; }
 
-    int calc_score() const
+    int calc_score() const noexcept
     {
         if (test_score < 0 && passed_count == (last - first + 1)) {
             return score;
@@ -289,7 +290,7 @@ class Global
     int stat_to_users = -1;
 
 public:
-    void set_stat_to_judges(int value)
+    void set_stat_to_judges(int value) noexcept
     {
         if (value < 0) {
             value = -1;
@@ -298,9 +299,9 @@ public:
         }
         stat_to_judges = value;
     }
-    int get_stat_to_judges() const { return stat_to_judges; }
+    int get_stat_to_judges() const noexcept { return stat_to_judges; }
 
-    void set_stat_to_users(int value)
+    void set_stat_to_users(int value) noexcept
     {
         if (value < 0) {
             value = -1;
@@ -309,7 +310,7 @@ public:
         }
         stat_to_users = value;
     }
-    int get_stat_to_users() const { return stat_to_users; }
+    int get_stat_to_users() const noexcept { return stat_to_users; }
 };
 
 class ConfigParser
@@ -787,6 +788,84 @@ Group::meet_requirements(const ConfigParser &cfg, const Group *&grp) const
     return false;
 }
 
+namespace
+{
+constexpr const char *MSG_ZERO_SCORED = "Test group %s (%d-%d) is scored 0 points because only specific tests were passed.\n";
+constexpr const char *MSG_NOT_PERFORMED_AND_0 = "Testing on tests %d-%d has not been performed, as test %d has not passed, and test group '%s' score is 0.\n";
+constexpr const char *MSG_NOT_PERFORMED_AS_NOT_PASSED = "Testing on tests %d-%d has not been performed, as one of the required groups '%s' has not passed.\n";
+constexpr const char *MSG_WILL_NOT_BE_PERFORMED = "Testing on tests %d-%d will not be performed after the tour finish, as one of the required groups '%s' has not passed.\n";
+constexpr const char *MSG_GROUP_SCORE = "Test group '%s': tests %d-%d: score %d\n";
+
+const unordered_map<const char *, vector<const char *>> translations
+{
+    {
+            MSG_ZERO_SCORED,
+            {
+                "",
+                "Группа тестов %s (%d-%d) оценена в 0 баллов, так как были пройдены только специальные тесты.\n",
+            }
+        },
+        {
+            MSG_NOT_PERFORMED_AND_0,
+            {
+                "",
+                "Тестирование на тестах %d-%d не выполнялось, так как тест %d не пройден, и оценка за группу тестов %s - 0 баллов.\n",
+            }
+        },
+        {
+            MSG_NOT_PERFORMED_AS_NOT_PASSED,
+            {
+                "",
+                "Тестирование на тестах %d-%d не выполнялось, так как не пройдена одна из требуемых групп %s.\n",
+            }
+        },
+        {
+            MSG_WILL_NOT_BE_PERFORMED,
+            {
+                "",
+                "Тестирование на тестах %d-%d не будет выполняться после окончания тура, так как не пройдена одна из требуемых групп %s.\n",
+            }
+        },
+        {
+            MSG_GROUP_SCORE,
+            {
+                "",
+                "Группа тестов %s: тесты %d-%d: балл %d\n",
+            }
+        },
+/*
+        {
+            "",
+            {
+                "",
+                "",
+            }
+        },
+*/
+};
+}
+
+#define MSGF(msg, ...) ({ \
+    char buf[4096]; \
+    std::unordered_map<const char *, vector<const char *>>::const_iterator it; \
+    if (locale_id > 0 && (it = translations.find(msg)) != translations.end() && locale_id < int(it->second.size())) { \
+        snprintf(buf, sizeof(buf), it->second[locale_id], ##__VA_ARGS__); \
+    } else { \
+        snprintf(buf, sizeof(buf), msg, ##__VA_ARGS__); \
+    } \
+    std::string res(buf); \
+    res; \
+  })
+
+#define FMSGF(f, msg, ...) ({ \
+    std::unordered_map<const char *, vector<const char *>>::const_iterator it; \
+    if (locale_id > 0 && (it = translations.find(msg)) != translations.end() && locale_id < int(it->second.size())) { \
+        fprintf(f, it->second[locale_id], ##__VA_ARGS__); \
+    } else { \
+        fprintf(f, msg, ##__VA_ARGS__); \
+    } \
+  })
+
 int
 main(int argc, char *argv[])
 {
@@ -852,29 +931,25 @@ main(int argc, char *argv[])
             g->add_total_score();
             g->add_passed_test(test_num);
             ++test_num;
-        } else if (t_score > 0) {
+        } else if (t_score > 0 && g->get_test_score() == t_score && !g->get_use_lowest_test_score()) {
             g->inc_passed_count();
             g->add_test_score(t_score);
             g->add_passed_test(test_num);
             ++test_num;
         } else if (g->get_test_score() >= 0 && !g->get_use_lowest_test_score()) {
             // by-test score, just go on
+            if (t_score > 0) {
+                g->add_test_score(t_score);
+            }
             if (test_num == g->get_last()) {
                 if (g->is_zero_score()) {
-                    char buf[1024];
-                    if (locale_id == 1) {
-                        snprintf(buf, sizeof(buf), "Группа тестов %s (%d-%d) оценена в 0 баллов, "
-                                 "так как были пройдены только специальные тесты.\n",
-                                 g->get_group_id().c_str(), g->get_first(), g->get_last());
-                    } else {
-                        snprintf(buf, sizeof(buf), "Test group %s (%d-%d) is scored 0 points "
-                                 "because only specific tests were passed.\n",
-                                 g->get_group_id().c_str(), g->get_first(), g->get_last());
-                    }
+                    g->set_comment(MSGF(MSG_ZERO_SCORED, g->get_group_id().c_str(), g->get_first(), g->get_last()));
                     g->set_total_score(0);
-                    g->set_comment(string(buf));
                 }
             }
+            ++test_num;
+        } else if (t_score > 0 && g->get_use_lowest_test_score()) {
+            g->add_test_score(t_score);
             ++test_num;
         } else if (g->get_test_all()) {
             // test everything even if fail
@@ -884,17 +959,7 @@ main(int argc, char *argv[])
                 g->set_total_score(0);
             }
             if (test_num < g->get_last() && !g->get_offline()) {
-                char buf[1024];
-                if (locale_id == 1) {
-                    snprintf(buf, sizeof(buf), "Тестирование на тестах %d-%d не выполнялось, "
-                             "так как тест %d не пройден, и оценка за группу тестов %s - 0 баллов.\n",
-                             test_num + 1, g->get_last(), test_num, g->get_group_id().c_str());
-                } else {
-                    snprintf(buf, sizeof(buf), "Testing on tests %d-%d has not been performed, "
-                             "as test %d has not passed, and test group '%s' score is 0.\n",
-                             test_num + 1, g->get_last(), test_num, g->get_group_id().c_str());
-                }
-                g->set_comment(string(buf));
+                g->set_comment(MSGF(MSG_NOT_PERFORMED_AND_0, test_num + 1, g->get_last(), test_num, g->get_group_id().c_str()));
             }
             test_num = g->get_last() + 1;
         }
@@ -906,29 +971,9 @@ main(int argc, char *argv[])
         const Group *gg = NULL;
         while ((g = parser.find_group(test_num)) && !g->meet_requirements(parser, gg)) {
             if (!g->get_offline()) {
-                char buf[1024];
-                if (locale_id == 1) {
-                    snprintf(buf, sizeof(buf), "Тестирование на тестах %d-%d не выполнялось, "
-                             "так как не пройдена одна из требуемых групп %s.\n",
-                             g->get_first(), g->get_last(), gg->get_group_id().c_str());
-                } else {
-                    snprintf(buf, sizeof(buf), "Testing on tests %d-%d has not been performed, "
-                             "as one of the required groups '%s' has not passed.\n",
-                             g->get_first(), g->get_last(), gg->get_group_id().c_str());
-                }
-                g->set_comment(string(buf));
+                g->set_comment(MSGF(MSG_NOT_PERFORMED_AS_NOT_PASSED, g->get_first(), g->get_last(), gg->get_group_id().c_str()));
             } else if (g->get_offline() && !gg->get_offline()) {
-                char buf[1024];
-                if (locale_id == 1) {
-                    snprintf(buf, sizeof(buf), "Тестирование на тестах %d-%d не будет выполняться после окончания тура, "
-                             "так как не пройдена одна из требуемых групп %s.\n",
-                             g->get_first(), g->get_last(), gg->get_group_id().c_str());
-                } else {
-                    snprintf(buf, sizeof(buf), "Testing on tests %d-%d will not be performed after the tour finish, "
-                             "as one of the required groups '%s' has not passed.\n",
-                             g->get_first(), g->get_last(), gg->get_group_id().c_str());
-                }
-                g->set_comment(string(buf));
+                g->set_comment(MSGF(MSG_WILL_NOT_BE_PERFORMED, g->get_first(), g->get_last(), gg->get_group_id().c_str()));
             }
             test_num = g->get_last() + 1;
         }
@@ -967,23 +1012,10 @@ main(int argc, char *argv[])
         }
         int group_score = g.calc_score();
         if (g.get_stat_to_judges()) {
-            if (locale_id == 1) {
-                fprintf(fjcmt, "Группа тестов %s: тесты %d-%d: балл %d\n",
-                        g.get_group_id().c_str(), g.get_first(), g.get_last(), group_score);
-            } else {
-                fprintf(fjcmt, "Test group '%s': tests %d-%d: score %d\n",
-                        g.get_group_id().c_str(), g.get_first(), g.get_last(), group_score);
-            }
-
+            FMSGF(fjcmt, MSG_GROUP_SCORE, g.get_group_id().c_str(), g.get_first(), g.get_last(), group_score);
         }
         if (g.get_stat_to_users() && !g.get_offline()) {
-            if (locale_id == 1) {
-                fprintf(fcmt, "Группа тестов %s: тесты %d-%d: балл %d\n",
-                        g.get_group_id().c_str(), g.get_first(), g.get_last(), group_score);
-            } else {
-                fprintf(fcmt, "Test group '%s': tests %d-%d: score %d\n",
-                        g.get_group_id().c_str(), g.get_first(), g.get_last(), group_score);
-            }
+            FMSGF(fcmt, MSG_GROUP_SCORE, g.get_group_id().c_str(), g.get_first(), g.get_last(), group_score);
         }
         if (g.get_offline()) {
             score += group_score;

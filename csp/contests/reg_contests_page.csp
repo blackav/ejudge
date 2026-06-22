@@ -15,6 +15,7 @@
   const unsigned char *login = 0;
   const unsigned char *title = NULL;
   const unsigned char *cnts_name = NULL;
+  int can_participate;
 
 // initial code goes here
 %><s:read var="login" ignoreerrors="yes" /><%
@@ -57,25 +58,51 @@
   for (j = 0; j < cntsnum; j++) {
     i = cntslist[j];
     cnts = 0;
+    can_participate = 0;
     if (contests_get(i, &cnts) < 0 || !cnts) continue;
     if (cnts->closed) continue;
-    if (!contests_check_register_ip_2(cnts, &phr->ip, phr->ssl_flag)) continue;
-    if (cnts->reg_deadline > 0 && phr->current_time >= cnts->reg_deadline) continue;
+    if (cnts->invisible) continue;
+    if (!contests_check_register_ip_2(cnts, &phr->ip, phr->ssl_flag)) {
+      if (!contests_check_team_ip_2(cnts, &phr->ip, phr->ssl_flag)) {
+        continue;
+      }
+      can_participate = 1;
+    } else {
+      if (cnts->reg_deadline > 0 && phr->current_time >= cnts->reg_deadline) {
+        if (!contests_check_team_ip_2(cnts, &phr->ip, phr->ssl_flag)) {
+          continue;
+        }
+        can_participate = 1;
+      }
+    }
 %>
     <tr>
-        <td><s:v value="i" /></td>
+        <td><s:v value="i" /></td><%
+    cnts_name = NULL;
+    if (phr->locale_id == 0 && cnts->name_en) cnts_name = cnts->name_en;
+    if (!cnts_name) cnts_name = cnts->name;
+    if (can_participate) {
+%><td><s:v value="cnts_name" /></td>
+<s:url name="ClientUrl" script="client" ac="login-page" noSID="true">
+    <s:param name="contest_id" value="i" />
+    <s:param name="locale_id" value="phr->locale_id" fullCheckExpr="phr->locale_id > 0" />
+</s:url>
+        <td><s:a url="ClientUrl">Participate</s:a></td>
+        <td>&nbsp;</td>
+<%
+    } else {
+%>
 <s:url name="LoginUrl" ac="reg-login-page" noSID="true">
     <s:param name="contest_id" value="i" />
     <s:param name="locale_id" value="phr->locale_id" fullCheckExpr="phr->locale_id > 0" />
     <s:param name="login" value="login" fullCheckExpr="login && *login" />
-</s:url><%
-    cnts_name = NULL;
-    if (phr->locale_id == 0 && cnts->name_en) cnts_name = cnts->name_en;
-    if (!cnts_name) cnts_name = cnts->name;
-%>
+</s:url>
         <td><s:a url="LoginUrl"><s:v value="cnts_name" /></s:a></td>
         <td><% if (cnts->autoregister) { %><s:_>open</s:_><% } else { %><s:_>moderated</s:_><% } %></td>
         <td><s:v value="cnts->reg_deadline" checkExpr="> 0" defstr="&nbsp;" /></td>
+<%
+    }
+%>
     </tr>
 <%
   }

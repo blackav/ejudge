@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2005-2025 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -100,6 +100,7 @@ enum
   TR_T_TEST_CHECKER,
   TR_T_GROUP_SCORES,
   TR_T_GROUP_SCORE,
+  TR_T_VALUER_LOG,
 
   TR_T_LAST_TAG,
 };
@@ -205,6 +206,7 @@ static const char * const elem_map[] =
   [TR_T_TEST_CHECKER] = "test-checker",
   [TR_T_GROUP_SCORES] = "group-scores",
   [TR_T_GROUP_SCORE] = "group-score",
+  [TR_T_VALUER_LOG] = "valuer-log",
 
   [TR_T_LAST_TAG] = 0,
 };
@@ -1283,6 +1285,9 @@ parse_testing_report(struct xml_tree *t, testing_report_xml_t r)
     case TR_T_COMPILER_OUTPUT:
       if (xml_leaf_elem(t2, &r->compiler_output, 1, 1) < 0) return -1;
       break;
+    case TR_T_VALUER_LOG:
+      if (xml_leaf_elem(t2, &r->valuer_log, 1, 1) < 0) return -1;
+      break;
     case TR_T_UUID:
       {
         unsigned char *uuid = NULL;
@@ -1441,6 +1446,7 @@ testing_report_free(testing_report_xml_t r)
   xfree(r->errors); r->errors = 0;
   xfree(r->compiler_output); r->compiler_output = 0;
   xfree(r->group_scores); r->group_scores = NULL; r->group_count = 0; r->has_group_scores = 0;
+  xfree(r->valuer_log); r->valuer_log = NULL;
 
   if (r->tt_rows) {
     for (i = 0; i < r->tt_row_count; ++i) {
@@ -1751,6 +1757,7 @@ testing_report_unparse_xml(
   unparse_string_elem(out, &ab, TR_T_CPU_MHZ, r->cpu_mhz);
   unparse_string_elem(out, &ab, TR_T_ERRORS, r->errors);
   unparse_string_elem(out, &ab, TR_T_COMPILER_OUTPUT, r->compiler_output);
+  unparse_string_elem(out, &ab, TR_T_VALUER_LOG, r->valuer_log);
 
   if (r->run_tests > 0 && r->tests) {
     fprintf(out, "  <%s>\n", elem_map[TR_T_TESTS]);

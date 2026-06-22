@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2025 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -2767,6 +2767,12 @@ serve_run_request(
     srpp->test_count = prob->forced_test_count;
   } else {
     srpp->test_count = test_count_cache_get(NULL, srpp->test_dir, srpp->test_pat);
+  }
+  if (prob->debug_flags > 0) {
+    srpp->debug_flags = prob->debug_flags;
+  }
+  if (prob->exchange_dir && prob->exchange_dir[0]) {
+    srpp->exchange_dir = xstrdup(prob->exchange_dir);
   }
 
   if (find_lang_specific_size(prob->lang_max_vm_size, lang, &lang_specific_size) > 0) {

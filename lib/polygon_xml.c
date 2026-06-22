@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2025 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2025-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -134,6 +134,7 @@ static char const * const problem_xml_attr_map[] =
     [PPXML_A_AUTO_COUNT] = "auto-count",
     [PPXML_A_NORMALIZATION] = "normalization",
     [PPXML_A_FILE_TYPE] = "file-type",
+    [PPXML_A_LATEX_PDF_MODE] = "latex-pdf-mode",
     NULL,
 };
 
@@ -1619,7 +1620,8 @@ ppxml_parse_statement(struct ppxml_parse_context *cntx, struct xml_tree *p)
 static struct ppxml_statements *
 ppxml_parse_statements(struct ppxml_parse_context *cntx, struct xml_tree *p, int ltag)
 {
-    if (p->first) return cntx->ops->err_attr_not_allowed(cntx, p, p->first);
+    // ignore statements attributes
+    // if (p->first) return cntx->ops->err_attr_not_allowed(cntx, p, p->first);
     struct ppxml_statements *pp = (struct ppxml_statements *) p;
     int etag = 0;
     if (ltag == PPXML_STATEMENTS) {

@@ -384,7 +384,7 @@ render_open_wikilink_span(MD_HTML* r, const MD_SPAN_WIKILINK_DETAIL* det)
 static int
 enter_block_callback(MD_BLOCKTYPE type, void* detail, void* userdata)
 {
-    static const MD_CHAR* head[6] = { "<h1>", "<h2>", "<h3>", "<h4>", "<h5>", "<h6>" };
+    static const MD_CHAR* head[6] = { "<h1 style=\"display: none;\">", "<h2>", "<h3>", "<h4>", "<h5>", "<h6>" };
     MD_HTML* r = (MD_HTML*) userdata;
 
     switch(type) {

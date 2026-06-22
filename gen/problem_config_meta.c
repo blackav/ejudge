@@ -124,6 +124,7 @@ static struct meta_info_item meta_info_problem_config_section_data[] =
   [META_PROBLEM_CONFIG_SECTION_max_open_file_count] = { META_PROBLEM_CONFIG_SECTION_max_open_file_count, 'i', XSIZE(struct problem_config_section, max_open_file_count), "max_open_file_count", XOFFSET(struct problem_config_section, max_open_file_count) },
   [META_PROBLEM_CONFIG_SECTION_max_process_count] = { META_PROBLEM_CONFIG_SECTION_max_process_count, 'i', XSIZE(struct problem_config_section, max_process_count), "max_process_count", XOFFSET(struct problem_config_section, max_process_count) },
   [META_PROBLEM_CONFIG_SECTION_forced_test_count] = { META_PROBLEM_CONFIG_SECTION_forced_test_count, 'i', XSIZE(struct problem_config_section, forced_test_count), "forced_test_count", XOFFSET(struct problem_config_section, forced_test_count) },
+  [META_PROBLEM_CONFIG_SECTION_debug_flags] = { META_PROBLEM_CONFIG_SECTION_debug_flags, 'i', XSIZE(struct problem_config_section, debug_flags), "debug_flags", XOFFSET(struct problem_config_section, debug_flags) },
   [META_PROBLEM_CONFIG_SECTION_deadline] = { META_PROBLEM_CONFIG_SECTION_deadline, 't', XSIZE(struct problem_config_section, deadline), "deadline", XOFFSET(struct problem_config_section, deadline) },
   [META_PROBLEM_CONFIG_SECTION_start_date] = { META_PROBLEM_CONFIG_SECTION_start_date, 't', XSIZE(struct problem_config_section, start_date), "start_date", XOFFSET(struct problem_config_section, start_date) },
   [META_PROBLEM_CONFIG_SECTION_max_vm_size] = { META_PROBLEM_CONFIG_SECTION_max_vm_size, 'E', XSIZE(struct problem_config_section, max_vm_size), "max_vm_size", XOFFSET(struct problem_config_section, max_vm_size) },
@@ -203,6 +204,7 @@ static struct meta_info_item meta_info_problem_config_section_data[] =
   [META_PROBLEM_CONFIG_SECTION_src_normalization] = { META_PROBLEM_CONFIG_SECTION_src_normalization, 's', XSIZE(struct problem_config_section, src_normalization), "src_normalization", XOFFSET(struct problem_config_section, src_normalization) },
   [META_PROBLEM_CONFIG_SECTION_score_bonus] = { META_PROBLEM_CONFIG_SECTION_score_bonus, 's', XSIZE(struct problem_config_section, score_bonus), "score_bonus", XOFFSET(struct problem_config_section, score_bonus) },
   [META_PROBLEM_CONFIG_SECTION_super_run_dir] = { META_PROBLEM_CONFIG_SECTION_super_run_dir, 's', XSIZE(struct problem_config_section, super_run_dir), "super_run_dir", XOFFSET(struct problem_config_section, super_run_dir) },
+  [META_PROBLEM_CONFIG_SECTION_exchange_dir] = { META_PROBLEM_CONFIG_SECTION_exchange_dir, 's', XSIZE(struct problem_config_section, exchange_dir), "exchange_dir", XOFFSET(struct problem_config_section, exchange_dir) },
   [META_PROBLEM_CONFIG_SECTION_revision] = { META_PROBLEM_CONFIG_SECTION_revision, 's', XSIZE(struct problem_config_section, revision), "revision", XOFFSET(struct problem_config_section, revision) },
   [META_PROBLEM_CONFIG_SECTION_iframe_statement] = { META_PROBLEM_CONFIG_SECTION_iframe_statement, 's', XSIZE(struct problem_config_section, iframe_statement), "iframe_statement", XOFFSET(struct problem_config_section, iframe_statement) },
   [META_PROBLEM_CONFIG_SECTION_test_sets] = { META_PROBLEM_CONFIG_SECTION_test_sets, 'x', XSIZE(struct problem_config_section, test_sets), "test_sets", XOFFSET(struct problem_config_section, test_sets) },
@@ -385,6 +387,7 @@ void meta_problem_config_section_copy(struct problem_config_section *dst, const 
   dst->max_open_file_count = src->max_open_file_count;
   dst->max_process_count = src->max_process_count;
   dst->forced_test_count = src->forced_test_count;
+  dst->debug_flags = src->debug_flags;
   dst->deadline = src->deadline;
   dst->start_date = src->start_date;
   dst->max_vm_size = src->max_vm_size;
@@ -600,6 +603,9 @@ void meta_problem_config_section_copy(struct problem_config_section *dst, const 
   if (src->super_run_dir) {
     dst->super_run_dir = strdup(src->super_run_dir);
   }
+  if (src->exchange_dir) {
+    dst->exchange_dir = strdup(src->exchange_dir);
+  }
   if (src->revision) {
     dst->revision = strdup(src->revision);
   }
@@ -706,6 +712,7 @@ void meta_problem_config_section_free(struct problem_config_section *ptr)
   free(ptr->src_normalization);
   free(ptr->score_bonus);
   free(ptr->super_run_dir);
+  free(ptr->exchange_dir);
   free(ptr->revision);
   free(ptr->iframe_statement);
   sarray_free((char**) ptr->test_sets);

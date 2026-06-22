@@ -1614,6 +1614,7 @@ read_bots_file(
       bots_cache->last_mtime = stb.st_mtime;
       bots_cache->temporary_failure = 0;
     }
+    if (fd >= 0) close(fd);
   }
   if (bots_cache->temporary_failure) {
     return NULL;

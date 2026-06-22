@@ -93,7 +93,8 @@ enum
     Tag_judge_uuid,
     Tag_test_checker,
     Tag_verdict_bits,
-    Tag_group_scores
+    Tag_group_scores,
+    Tag_valuer_log
 };
 static __attribute__((unused)) const char * const tag_table[] =
 {
@@ -191,6 +192,7 @@ static __attribute__((unused)) const char * const tag_table[] =
     "test_checker",
     "verdict_bits",
     "group_scores",
+    "valuer_log",
 };
 static __attribute__((unused)) int
 match(const char *s)
@@ -574,6 +576,8 @@ match(const char *s)
                     return Tag_valuer_errors;
                 } else if (s[7] == 'j' && s[8] == 'u' && s[9] == 'd' && s[10] == 'g' && s[11] == 'e' && s[12] == '_' && s[13] == 'c' && s[14] == 'o' && s[15] == 'm' && s[16] == 'm' && s[17] == 'e' && s[18] == 'n' && s[19] == 't' && !s[20]) {
                     return Tag_valuer_judge_comment;
+                } else if (s[7] == 'l' && s[8] == 'o' && s[9] == 'g' && !s[10]) {
+                    return Tag_valuer_log;
                 } else {
                     return 0;
                 }
