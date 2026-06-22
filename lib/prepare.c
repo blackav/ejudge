@@ -35,6 +35,7 @@
 #include "ejudge/dates_config.h"
 #include "ejudge/l10n.h"
 #include "ejudge/markdown.h"
+#include "ejudge/pathutl.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -6945,6 +6946,24 @@ prepare_set_all_prob_values(
 }
 
 static void
+normalize_absolute_path(
+        unsigned char *path,
+        size_t size)
+{
+  if (path && path[0] && os_IsAbsolutePath(path)) {
+    path_normalize(path, size);
+  }
+}
+
+static void
+normalize_absolute_string(unsigned char *path)
+{
+  if (path && path[0] && os_IsAbsolutePath(path)) {
+    path_normalize(path, strlen((const char *) path) + 1);
+  }
+}
+
+static void
 get_default_problem_root(
         unsigned char *buf,
         size_t bufsize,
@@ -6964,6 +6983,7 @@ get_default_problem_root(
   } else {
     snprintf(buf, bufsize, "%s/%s", global->root_dir, DFLT_G_PROBLEMS_DIR);
   }
+  normalize_absolute_path(buf, bufsize);
 }
 
 static unsigned char *
@@ -6974,37 +6994,17 @@ resolve_problem_dir_single(
   unsigned char *out = NULL;
 
   if (!value || !*value) return NULL;
-  if (os_IsAbsolutePath(value)) return xstrdup(value);
+  if (os_IsAbsolutePath(value)) {
+    out = xstrdup(value);
+    normalize_absolute_string(out);
+    return out;
+  }
   if (base && base[0]) {
     usprintf(&out, "%s/%s", base, value);
+    normalize_absolute_string(out);
     return out;
   }
   return xstrdup(value);
-}
-
-static void
-debug_log_problem_dirs(
-        const char *tag,
-        const struct section_problem_data *prob)
-{
-  static const char log_path[] = "/home/judges/var/problem_dir.log";
-  FILE *df = fopen(log_path, "a");
-  if (!df) return;
-
-  fprintf(df, "[%s] id=%d short_name=%s variant_num=%d abstract=%d\n",
-          tag ? tag : "log", prob->id, prob->short_name,
-          prob->variant_num, prob->abstract);
-  fprintf(df, "abstract_problem_dir=%s\n",
-          prob->abstract_problem_dir ? (const char*) prob->abstract_problem_dir : "(null)");
-  if (prob->problem_dirs) {
-    for (int i = 0; prob->problem_dirs[i]; ++i) {
-      fprintf(df, "problem_dir[%d]=%s\n", i + 1, prob->problem_dirs[i]);
-    }
-  } else if (prob->problem_dir && prob->problem_dir[0]) {
-    fprintf(df, "problem_dir=%s\n", prob->problem_dir);
-  }
-  fputc('\n', df);
-  fclose(df);
 }
 
 static int
@@ -7046,7 +7046,7 @@ resolve_problem_dirs(
     } else {
       prob->abstract_problem_dir = xstrdup(default_root);
     }
-    debug_log_problem_dirs("abstract_resolved", prob);
+    normalize_absolute_string(prob->abstract_problem_dir);
     return 0;
   }
 
@@ -7075,6 +7075,7 @@ resolve_problem_dirs(
 
   xfree(prob->abstract_problem_dir);
   prob->abstract_problem_dir = xstrdup(abstract_base);
+  normalize_absolute_string(prob->abstract_problem_dir);
 
   if (prob->variant_num <= 0) {
     if (raw_count > 1) {
@@ -7116,6 +7117,7 @@ resolve_problem_dirs(
     resolved = xcalloc(prob->variant_num + 1, sizeof(*resolved));
     for (int i = 0; i < prob->variant_num; ++i) {
       usprintf(&resolved[i], "%s-%d", base_dir, i + 1);
+      normalize_absolute_string(resolved[i]);
     }
     xfree(base_dir);
   }
@@ -7125,11 +7127,11 @@ resolve_problem_dirs(
   xfree(prob->problem_dir);
   if (resolved && resolved[0]) {
     prob->problem_dir = xstrdup(resolved[0]);
+    normalize_absolute_string(prob->problem_dir);
   } else {
     prob->problem_dir = NULL;
   }
 
-  debug_log_problem_dirs("concrete_resolved", prob);
   return 0;
 }
 
@@ -7170,11 +7172,13 @@ get_advanced_layout_path(
 
   if (!prob) {
     snprintf(buf, bufsize, "%s", base_root);
+    normalize_absolute_path(buf, bufsize);
     return buf;
   }
 
   if (prob->abstract_problem_dir && prob->abstract_problem_dir[0]) {
     snprintf(base_root, sizeof(base_root), "%s", prob->abstract_problem_dir);
+    normalize_absolute_path(base_root, sizeof(base_root));
   }
 
   if (prob->problem_dirs && prob->problem_dirs[0]) {
@@ -7207,8 +7211,8 @@ get_advanced_layout_path(
     if (variant >= 1 && prob->variant_num > 0) append_variant = 1;
   }
 
-  if (!os_IsAbsolutePath(prob_dir)) {
-    if (!entry) {
+  if (!entry) {
+    if (!os_IsAbsolutePath(prob_dir)) {
       if (append_variant) {
         snprintf(buf, bufsize, "%s/%s-%d", base_root, prob_dir, variant);
       } else {
@@ -7216,27 +7220,27 @@ get_advanced_layout_path(
       }
     } else {
       if (append_variant) {
+        snprintf(buf, bufsize, "%s-%d", prob_dir, variant);
+      } else {
+        snprintf(buf, bufsize, "%s", prob_dir);
+      }
+    }
+  } else {
+    if (!os_IsAbsolutePath(prob_dir)) {
+      if (append_variant) {
         snprintf(buf, bufsize, "%s/%s-%d/%s", base_root, prob_dir, variant, entry);
       } else {
         snprintf(buf, bufsize, "%s/%s/%s", base_root, prob_dir, entry);
       }
-    }
-    return buf;
-  }
-
-  if (!entry) {
-    if (append_variant) {
-      snprintf(buf, bufsize, "%s-%d", prob_dir, variant);
     } else {
-      snprintf(buf, bufsize, "%s", prob_dir);
-    }
-  } else {
-    if (append_variant) {
-      snprintf(buf, bufsize, "%s-%d/%s", prob_dir, variant, entry);
-    } else {
-      snprintf(buf, bufsize, "%s/%s", prob_dir, entry);
+      if (append_variant) {
+        snprintf(buf, bufsize, "%s-%d/%s", prob_dir, variant, entry);
+      } else {
+        snprintf(buf, bufsize, "%s/%s", prob_dir, entry);
+      }
     }
   }
+  normalize_absolute_path(buf, bufsize);
   return buf;
 }
 
