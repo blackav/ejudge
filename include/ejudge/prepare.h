@@ -1089,9 +1089,9 @@ struct section_problem_data
   unsigned char *uuid;
   /** resolved abstract problem directory */
   unsigned char *abstract_problem_dir;
-  /** resolved problem directories (one per variant, or single for non-variant) */
+  /** raw problem_dir entries from serve.cfg */
   unsigned char **problem_dirs;
-  /** problem directory (relative to problems or absolute) */
+  /** first raw problem_dir entry (relative to problems or absolute) */
   unsigned char *problem_dir;
   /** directory with tests */
   unsigned char *test_dir;

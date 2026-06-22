@@ -1146,9 +1146,6 @@ prepare_unparse_prob(
   if (!prob->abstract && prob->uuid && prob->uuid[0]) {
     fprintf(f, "uuid = \"%s\"\n", CARMOR(prob->uuid));
   }
-  if (prob->abstract_problem_dir && prob->abstract_problem_dir[0]) {
-    fprintf(f, "# abstract_problem_dir = \"%s\"\n", CARMOR(prob->abstract_problem_dir));
-  }
   if (prob->problem_dirs && prob->problem_dirs[0]) {
     for (int i = 0; prob->problem_dirs[i]; ++i) {
       fprintf(f, "problem_dir = \"%s\"\n", CARMOR(prob->problem_dirs[i]));
@@ -1837,9 +1834,6 @@ prepare_unparse_actual_prob(
     fprintf(f, "plugin_entry_name = \"%s\"\n", CARMOR(prob->plugin_entry_name));
   }
   if (prob->uuid && prob->uuid[0]) fprintf(f, "uuid = \"%s\"\n", CARMOR(prob->uuid));
-  if (prob->abstract_problem_dir && prob->abstract_problem_dir[0]) {
-    fprintf(f, "# abstract_problem_dir = \"%s\"\n", CARMOR(prob->abstract_problem_dir));
-  }
   if (prob->problem_dirs && prob->problem_dirs[0]) {
     for (int i = 0; prob->problem_dirs[i]; ++i) {
       fprintf(f, "problem_dir = \"%s\"\n", CARMOR(prob->problem_dirs[i]));

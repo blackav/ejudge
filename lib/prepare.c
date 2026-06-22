@@ -6986,25 +6986,23 @@ get_default_problem_root(
   normalize_absolute_path(buf, bufsize);
 }
 
-static unsigned char *
-resolve_problem_dir_single(
-        const unsigned char *base,
-        const unsigned char *value)
+static void
+set_primary_problem_dir(
+        struct section_problem_data *prob,
+        int raw_count,
+        unsigned char **raw_dirs,
+        const unsigned char *single_raw)
 {
-  unsigned char *out = NULL;
+  unsigned char *copy = NULL;
 
-  if (!value || !*value) return NULL;
-  if (os_IsAbsolutePath(value)) {
-    out = xstrdup(value);
-    normalize_absolute_string(out);
-    return out;
+  if (raw_count > 0 && raw_dirs && raw_dirs[0] && raw_dirs[0][0]) {
+    copy = xstrdup(raw_dirs[0]);
+  } else if (single_raw && single_raw[0]) {
+    copy = xstrdup(single_raw);
   }
-  if (base && base[0]) {
-    usprintf(&out, "%s/%s", base, value);
-    normalize_absolute_string(out);
-    return out;
-  }
-  return xstrdup(value);
+
+  xfree(prob->problem_dir);
+  prob->problem_dir = copy;
 }
 
 static int
@@ -7047,6 +7045,7 @@ resolve_problem_dirs(
       prob->abstract_problem_dir = xstrdup(default_root);
     }
     normalize_absolute_string(prob->abstract_problem_dir);
+    set_primary_problem_dir(prob, raw_count, raw_dirs, single_raw);
     return 0;
   }
 
@@ -7089,49 +7088,7 @@ resolve_problem_dirs(
     }
   }
 
-  unsigned char **resolved = NULL;
-  if (prob->variant_num <= 0) {
-    resolved = xcalloc(2, sizeof(*resolved));
-    if (single_raw && single_raw[0]) {
-      resolved[0] = resolve_problem_dir_single(prob->abstract_problem_dir, single_raw);
-    } else if (prob->internal_name && prob->internal_name[0]) {
-      resolved[0] = resolve_problem_dir_single(prob->abstract_problem_dir, prob->internal_name);
-    } else {
-      resolved[0] = resolve_problem_dir_single(prob->abstract_problem_dir, prob->short_name);
-    }
-  } else if (raw_count == prob->variant_num) {
-    resolved = xcalloc(prob->variant_num + 1, sizeof(*resolved));
-    for (int i = 0; i < prob->variant_num; ++i) {
-      resolved[i] = resolve_problem_dir_single(prob->abstract_problem_dir, raw_dirs[i]);
-    }
-  } else {
-    const unsigned char *base_raw = NULL;
-    if (single_raw && single_raw[0]) {
-      base_raw = single_raw;
-    } else if (prob->internal_name && prob->internal_name[0]) {
-      base_raw = prob->internal_name;
-    } else {
-      base_raw = prob->short_name;
-    }
-    unsigned char *base_dir = resolve_problem_dir_single(prob->abstract_problem_dir, base_raw);
-    resolved = xcalloc(prob->variant_num + 1, sizeof(*resolved));
-    for (int i = 0; i < prob->variant_num; ++i) {
-      usprintf(&resolved[i], "%s-%d", base_dir, i + 1);
-      normalize_absolute_string(resolved[i]);
-    }
-    xfree(base_dir);
-  }
-
-  sarray_free((char**) prob->problem_dirs);
-  prob->problem_dirs = resolved;
-  xfree(prob->problem_dir);
-  if (resolved && resolved[0]) {
-    prob->problem_dir = xstrdup(resolved[0]);
-    normalize_absolute_string(prob->problem_dir);
-  } else {
-    prob->problem_dir = NULL;
-  }
-
+  set_primary_problem_dir(prob, raw_count, raw_dirs, single_raw);
   return 0;
 }
 

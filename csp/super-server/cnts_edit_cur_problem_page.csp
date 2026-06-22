@@ -2,8 +2,6 @@
 %><%@include "includes.csp"
 %><%
 #include "ejudge/meta/prepare_meta.h"
-#include "ejudge/prepare_dflt.h"
-#include "ejudge/osdeps.h"
 %><%@set getter_name = "csp_get_cnts_edit_cur_problem_page"
 %><%@set ac_prefix = "SSERV_CMD_"
 %><%@set err_prefix = "SSERV_ERR_"
@@ -29,7 +27,6 @@
     unsigned char *alloc_value = NULL;
     unsigned char *problem_dir_edit = NULL;
     size_t problem_dir_edit_len = 0;
-    unsigned char default_problem_root[PATH_MAX];
     int problem_dir_rows = 1;
 
 static const unsigned char head_row_attr[] =
@@ -77,18 +74,6 @@ static const unsigned char * const form_row_attrs[]=
     struct section_global_data *global = phr->ss->global;
 
     prepare_set_all_prob_values(tmp_prob, sup_prob, global);
-    default_problem_root[0] = 0;
-    if (global && global->problems_dir && global->problems_dir[0]) {
-        if (os_IsAbsolutePath(global->problems_dir)) {
-            snprintf(default_problem_root, sizeof(default_problem_root), "%s", global->problems_dir);
-        } else {
-            snprintf(default_problem_root, sizeof(default_problem_root), "%s/%s",
-                     global->root_dir, global->problems_dir);
-        }
-    } else if (global) {
-        snprintf(default_problem_root, sizeof(default_problem_root), "%s/%s",
-                 global->root_dir, DFLT_G_PROBLEMS_DIR);
-    }
 
     resolved_prob = prepare_copy_problem(prob);
     if (sup_prob) {
@@ -105,36 +90,18 @@ static const unsigned char * const form_row_attrs[]=
     } else {
         problem_dir_rows = 1;
     }
-    if (prob_id <= 0) {
-        const unsigned char *abs_dir = NULL;
-        if (resolved_prob && resolved_prob->abstract_problem_dir && resolved_prob->abstract_problem_dir[0]) {
-            abs_dir = resolved_prob->abstract_problem_dir;
-        }
-        if (abs_dir && abs_dir[0]) {
-            size_t base_len = strlen(default_problem_root);
-            if (strcmp(abs_dir, default_problem_root) == 0) {
-                /* default path, keep empty */
-            } else if (base_len > 0
-                       && strncmp(abs_dir, default_problem_root, base_len) == 0
-                       && abs_dir[base_len] == '/') {
-                problem_dir_edit = xstrdup(abs_dir + base_len + 1);
-            } else {
-                problem_dir_edit = xstrdup(abs_dir);
+
+    if (prob->problem_dirs && prob->problem_dirs[0]) {
+        FILE *pd_f = open_memstream((char **) &problem_dir_edit, &problem_dir_edit_len);
+        if (pd_f) {
+            for (i = 0; prob->problem_dirs[i]; ++i) {
+                if (i > 0) fputc('\n', pd_f);
+                fprintf(pd_f, "%s", prob->problem_dirs[i]);
             }
+            fclose(pd_f);
         }
-    } else {
-        if (prob->problem_dirs && prob->problem_dirs[0]) {
-            FILE *pd_f = open_memstream((char **) &problem_dir_edit, &problem_dir_edit_len);
-            if (pd_f) {
-                for (i = 0; prob->problem_dirs[i]; ++i) {
-                    if (i > 0) fputc('\n', pd_f);
-                    fprintf(pd_f, "%s", prob->problem_dirs[i]);
-                }
-                fclose(pd_f);
-            }
-        } else if (prob->problem_dir && prob->problem_dir[0]) {
-            problem_dir_edit = xstrdup(prob->problem_dir);
-        }
+    } else if (prob->problem_dir && prob->problem_dir[0]) {
+        problem_dir_edit = xstrdup(prob->problem_dir);
     }
     if (!problem_dir_edit) {
         problem_dir_edit = xstrdup("");
@@ -792,23 +759,13 @@ function viewDialogOnChange(field)
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-problem_dir-div">
                 <td>Problem dir:</td>
                 <td><%
-    if (prob_id <= 0) {
-      const unsigned char *abs_dir = NULL;
-      if (resolved_prob && resolved_prob->abstract_problem_dir && resolved_prob->abstract_problem_dir[0]) {
-        abs_dir = resolved_prob->abstract_problem_dir;
-      }
-      if (abs_dir && abs_dir[0]) {
-%><div><tt><s:v value="abs_dir" /></tt></div><%
-      } else {
-%>(<i>Not set</i>)<%
-      }
-    } else if (resolved_prob && resolved_prob->problem_dirs && resolved_prob->problem_dirs[0]) {
+    if (prob->problem_dirs && prob->problem_dirs[0]) {
       int k;
-      for (k = 0; resolved_prob->problem_dirs[k]; ++k) {
-%><div><tt><s:v value="resolved_prob->problem_dirs[k]" /></tt></div><%
+      for (k = 0; prob->problem_dirs[k]; ++k) {
+%><div><tt><s:v value="prob->problem_dirs[k]" /></tt></div><%
       }
-    } else if (resolved_prob && resolved_prob->problem_dir && resolved_prob->problem_dir[0]) {
-%><div><tt><s:v value="resolved_prob->problem_dir" /></tt></div><%
+    } else if (prob->problem_dir && prob->problem_dir[0]) {
+%><div><tt><s:v value="prob->problem_dir" /></tt></div><%
     } else {
 %>(<i>Not set</i>)<%
     }
