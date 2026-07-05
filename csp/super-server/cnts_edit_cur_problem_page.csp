@@ -1849,6 +1849,62 @@ function viewDialogOnChange(field)
             <%@expand ORIG_ENV "valuer_env" "Checking" "Valuer environment" %>
 
 <%
+{
+%>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-communication-div">
+                <td>Communication run count:</td>
+                <td><s:textfield id="orig-communication" readonly="readonly" name="param" value="prob->communication" size="48" maxlength="1024" checkExpr=" >= 2" /><%
+    if (prob_id <= 0) {
+      if (prob->communication < 2) {
+%>(<i>Not set</i>)<%
+      }
+    } else {
+      if (prob->communication < 2) {
+        if (tmp_prob->communication < 2) {
+%>(<i>Not set</i>)<%
+        } else {
+%>(<i>Default: <s:v value="tmp_prob->communication" /></i>)<%
+        }
+      }
+    }
+%></td>
+                <td><input type="button" onclick="popupCheckingDialog(event, 'communication')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:communication" /></td>
+            </s:tr>
+<%
+}
+%>
+
+<%
+{
+%>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-communication_flags-div">
+                <td>Communication flags:</td>
+                <td><%
+     const unsigned char *value = prob->communication_flags;
+%><s:textfield id="orig-communication_flags" readonly="readonly" name="param" value="value" size="48" maxlength="1024" checkExpr="" /><%
+     if (prob_id <= 0) {
+       if (!value || !value[0]) {
+%>(<i>Not set</i>)<%
+       }
+     } else {
+       if (!value || !value[0]) {
+         if (!tmp_prob->communication_flags || !tmp_prob->communication_flags[0]) {
+%>(<i>Not set</i>)<%
+         } else {
+%>(<i>Default: <s:v value="tmp_prob->communication_flags" /></i>)<%
+         }
+       }
+     }
+%></td>
+                <td><input type="button" onclick="popupCheckingDialog(event, 'communication_flags')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:communication_flags" /></td>
+            </s:tr>
+<%
+}
+%>
+
+<%
   {
 %>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-interactor_cmd-div">
