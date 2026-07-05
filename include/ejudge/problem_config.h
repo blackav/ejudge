@@ -147,6 +147,7 @@ struct problem_config_section
   int max_process_count;
   int forced_test_count;
   int debug_flags;
+  int communication;
 
   time_t deadline;
   time_t start_date;
