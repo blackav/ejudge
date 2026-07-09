@@ -869,7 +869,7 @@ generate_daily_statistics(
   XALLOCAZ(p_total, p_tot);
   XALLOCAZ(p_ok, p_tot);
 
-  for (i = r_beg, rcur = runs; i < r_tot; i++, rcur++) {
+  for (i = r_beg, rcur = runs + r_beg; i < r_tot; i++, rcur++) {
     if (rcur->time >= to_time) break;
     if (rcur->time < from_time) {
       if (rcur->status == RUN_EMPTY) continue;
