@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2008-2024 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -203,7 +203,7 @@ prepare_func(
 
 #include "tables.inc.c"
 
-#define RUN_DB_VERSION 29
+#define RUN_DB_VERSION 30
 
 static int
 do_create(struct rldb_mysql_state *state)
@@ -496,6 +496,10 @@ do_open(struct rldb_mysql_state *state)
       break;
     case 28:
       if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD COLUMN group_scores VARCHAR(256) DEFAULT NULL AFTER notify_queue", md->table_prefix) < 0)
+        return -1;
+      break;
+    case 29:
+      if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD COLUMN review_status TINYINT NOT NULL DEFAULT 0 AFTER group_scores", md->table_prefix) < 0)
         return -1;
       break;
     case RUN_DB_VERSION:
@@ -1060,6 +1064,7 @@ load_runs(struct rldb_mysql_cnts *cs)
     re->notify_kind = ri.notify_kind;
     re->notify_queue = notify_queue;
     re->group_scores = group_scores_index;
+    re->review_status = ri.review_status;
   }
   return 1;
 
@@ -1667,6 +1672,10 @@ generate_update_entry_clause(
     }
     sep = comma;
   }
+  if ((mask & RE_REVIEW_STATUS)) {
+    fprintf(f, "%sreview_status = %d", sep, re->review_status);
+    sep = comma;
+  }
 
   fprintf(f, "%slast_change_time = ", sep);
   state->mi->write_timestamp(state->md, f, 0, curtime->tv_sec);
@@ -1796,6 +1805,9 @@ update_entry(
   }
   if ((mask & RE_GROUP_SCORES)) {
     dst->group_scores = src->group_scores;
+  }
+  if ((mask & RE_REVIEW_STATUS)) {
+    dst->review_status = src->review_status;
   }
 }
 
@@ -2330,6 +2342,7 @@ put_entry_func(
     ri.notify_kind = 0;
     ri.notify_queue = NULL;
   }
+  ri.review_status = re->review_status;
 
   cmd_f = open_memstream(&cmd_t, &cmd_z);
   fprintf(cmd_f, "INSERT INTO %sruns VALUES ( ", state->md->table_prefix);
@@ -2859,6 +2872,9 @@ append_run_func(
   if ((mask & RE_GROUP_SCORES)) {
     fputs(",group_scores", cmd_f);
   }
+  if ((mask & RE_REVIEW_STATUS)) {
+    fputs(",review_status", cmd_f);
+  }
   fprintf(cmd_f, ") VALUES (%lld, %d, %d, NOW(6), MICROSECOND(NOW(6)) * 1000, '%s', NOW(), MICROSECOND(NOW(6)) * 1000",
           serial_id,
           run_id,
@@ -3017,6 +3033,9 @@ append_run_func(
       }
     }
     fputs("\"", cmd_f);
+  }
+  if ((mask & RE_REVIEW_STATUS)) {
+    fprintf(cmd_f, ",%d", in_re->review_status);
   }
   fprintf(cmd_f, ") ;");
   fclose(cmd_f); cmd_f = NULL;
@@ -3188,6 +3207,9 @@ append_run_func(
   }
   if ((mask & RE_GROUP_SCORES)) {
     new_re->group_scores = alloc_group_scores(cs, group_count, group_scores);
+  }
+  if ((mask & RE_REVIEW_STATUS)) {
+    new_re->review_status = in_re->review_status;
   }
 
   if (p_tv) *p_tv = current_time_tv;
