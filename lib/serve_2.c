@@ -2771,6 +2771,10 @@ serve_run_request(
   if (prob->debug_flags > 0) {
     srpp->debug_flags = prob->debug_flags;
   }
+  srpp->communication = prob->communication;
+  if (prob->communication >= 2) {
+    srpp->communication_flags = xstrdup2(prob->communication_flags);
+  }
   if (prob->exchange_dir && prob->exchange_dir[0]) {
     srpp->exchange_dir = xstrdup(prob->exchange_dir);
   }

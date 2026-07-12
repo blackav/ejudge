@@ -101,6 +101,10 @@ enum
   TR_T_GROUP_SCORES,
   TR_T_GROUP_SCORE,
   TR_T_VALUER_LOG,
+  TR_T_COMMUNICATION_RUNS,
+  TR_T_COMMUNICATION_RUN,
+  TR_T_COMMUNICATION_INPUTS,
+  TR_T_COMMUNICATION_OUTPUTS,
 
   TR_T_LAST_TAG,
 };
@@ -207,6 +211,10 @@ static const char * const elem_map[] =
   [TR_T_GROUP_SCORES] = "group-scores",
   [TR_T_GROUP_SCORE] = "group-score",
   [TR_T_VALUER_LOG] = "valuer-log",
+  [TR_T_COMMUNICATION_RUNS] = "communication-runs",
+  [TR_T_COMMUNICATION_RUN] = "communication-run",
+  [TR_T_COMMUNICATION_INPUTS] = "communication-inputs",
+  [TR_T_COMMUNICATION_OUTPUTS] = "communication-outputs",
 
   [TR_T_LAST_TAG] = 0,
 };
@@ -383,6 +391,64 @@ parse_file(
 
 failure:
   return -1;
+}
+
+static void
+init_tr_file_slot(struct testing_report_file_content *fc)
+{
+  memset(fc, 0, sizeof(*fc));
+  fc->size = -1;
+  fc->orig_size = -1;
+}
+
+static int
+ensure_communication_capacity(struct testing_report_test *p, int run_idx)
+{
+  if (!p || run_idx <= 0) return -1;
+  if (run_idx <= p->communication_run_count) return 0;
+
+  const int old_count = p->communication_run_count;
+  const int new_count = run_idx;
+
+  p->communication_time_ms = xrealloc(
+      p->communication_time_ms,
+      (size_t) (new_count + 1) * sizeof(p->communication_time_ms[0]));
+  p->communication_real_time_ms = xrealloc(
+      p->communication_real_time_ms,
+      (size_t) (new_count + 1) * sizeof(p->communication_real_time_ms[0]));
+  p->communication_max_memory_used = xrealloc(
+      p->communication_max_memory_used,
+      (size_t) (new_count + 1) * sizeof(p->communication_max_memory_used[0]));
+  p->communication_max_rss = xrealloc(
+      p->communication_max_rss,
+      (size_t) (new_count + 1) * sizeof(p->communication_max_rss[0]));
+  p->communication_inputs = xrealloc(
+      p->communication_inputs,
+      (size_t) (new_count + 1) * sizeof(p->communication_inputs[0]));
+  p->communication_outputs = xrealloc(
+      p->communication_outputs,
+      (size_t) (new_count + 1) * sizeof(p->communication_outputs[0]));
+
+  if (old_count <= 0) {
+    p->communication_time_ms[0] = -1;
+    p->communication_real_time_ms[0] = -1;
+    p->communication_max_memory_used[0] = 0;
+    p->communication_max_rss[0] = 0;
+    init_tr_file_slot(&p->communication_inputs[0]);
+    init_tr_file_slot(&p->communication_outputs[0]);
+  }
+
+  for (int i = old_count + 1; i <= new_count; ++i) {
+    p->communication_time_ms[i] = -1;
+    p->communication_real_time_ms[i] = -1;
+    p->communication_max_memory_used[i] = 0;
+    p->communication_max_rss[i] = 0;
+    init_tr_file_slot(&p->communication_inputs[i]);
+    init_tr_file_slot(&p->communication_outputs[i]);
+  }
+
+  p->communication_run_count = new_count;
+  return 0;
 }
 
 static int
@@ -640,6 +706,68 @@ parse_test(struct xml_tree *t, testing_report_xml_t r)
       break;
     case TR_T_TEST_CHECKER:
       if (parse_file(t2, &q->test_checker) < 0) goto failure;
+      break;
+    case TR_T_COMMUNICATION_RUNS:
+      for (struct xml_tree *t3 = t2->first_down; t3; t3 = t3->right) {
+        int num = -1, x = -1;
+        unsigned long ulx = 0;
+        if (t3->tag != TR_T_COMMUNICATION_RUN) goto failure;
+
+        for (struct xml_attr *a3 = t3->first; a3; a3 = a3->next) {
+          switch (a3->tag) {
+            case TR_A_NUM:
+              if (xml_attr_int(a3, &x) < 0 || x <= 0) goto failure;
+              num = x;
+              break;
+            case TR_A_TIME:
+              if (xml_attr_int(a3, &x) < 0 || x < 0) goto failure;
+              if (num > 0) {
+                if (ensure_communication_capacity(q, num) < 0) goto failure;
+                q->communication_time_ms[num] = x;
+              }
+              break;
+            case TR_A_REAL_TIME:
+              if (xml_attr_int(a3, &x) < 0 || x < 0) goto failure;
+              if (num > 0) {
+                if (ensure_communication_capacity(q, num) < 0) goto failure;
+                q->communication_real_time_ms[num] = x;
+              }
+              break;
+            case TR_A_MAX_MEMORY_USED:
+              if (xml_attr_ulong(a3, &ulx) < 0) goto failure;
+              if (num > 0) {
+                if (ensure_communication_capacity(q, num) < 0) goto failure;
+                q->communication_max_memory_used[num] = ulx;
+              }
+              break;
+            case TR_A_MAX_RSS:
+              if (xml_attr_ulong(a3, &ulx) < 0) goto failure;
+              if (num > 0) {
+                if (ensure_communication_capacity(q, num) < 0) goto failure;
+                q->communication_max_rss[num] = ulx;
+              }
+              break;
+            default:
+              goto failure;
+          }
+        }
+
+        if (num <= 0) goto failure;
+        if (ensure_communication_capacity(q, num) < 0) goto failure;
+
+        for (struct xml_tree *t4 = t3->first_down; t4; t4 = t4->right) {
+          switch (t4->tag) {
+            case TR_T_COMMUNICATION_INPUTS:
+              if (parse_file(t4, &q->communication_inputs[num]) < 0) goto failure;
+              break;
+            case TR_T_COMMUNICATION_OUTPUTS:
+              if (parse_file(t4, &q->communication_outputs[num]) < 0) goto failure;
+              break;
+            default:
+              goto failure;
+          }
+        }
+      }
       break;
 
     default:
@@ -1418,6 +1546,23 @@ testing_report_test_free(struct testing_report_test *p)
   xfree(p->checker.data); p->checker.data = 0;
   xfree(p->test_checker.data); p->test_checker.data = 0;
 
+  if (p->communication_inputs) {
+    for (int i = 1; i <= p->communication_run_count; ++i) {
+      xfree(p->communication_inputs[i].data);
+    }
+  }
+  if (p->communication_outputs) {
+    for (int i = 1; i <= p->communication_run_count; ++i) {
+      xfree(p->communication_outputs[i].data);
+    }
+  }
+  xfree(p->communication_time_ms);
+  xfree(p->communication_real_time_ms);
+  xfree(p->communication_max_memory_used);
+  xfree(p->communication_max_rss);
+  xfree(p->communication_inputs);
+  xfree(p->communication_outputs);
+
   xfree(p);
   return 0;
 }
@@ -1495,6 +1640,7 @@ testing_report_test_alloc(int num, int status)
   trt->checker.orig_size = -1;
   trt->test_checker.size = -1;
   trt->test_checker.orig_size = -1;
+  trt->communication_run_count = -1;
   return trt;
 }
 
@@ -1614,6 +1760,48 @@ unparse_file_content(
     }
     fprintf(out, "</%s>\n", elem_map[elem_index]);
   }
+}
+
+static void
+unparse_communication_runs(
+        FILE *out,
+        struct html_armor_buffer *pab,
+        testing_report_xml_t r,
+        struct testing_report_test *t)
+{
+  if (!t || t->communication_run_count < 2) {
+    return;
+  }
+
+  fprintf(out, "      <%s>\n", elem_map[TR_T_COMMUNICATION_RUNS]);
+  for (int c = 1; c <= t->communication_run_count; ++c) {
+    fprintf(out, "        <%s %s=\"%d\"", elem_map[TR_T_COMMUNICATION_RUN], attr_map[TR_A_NUM], c);
+    if (t->communication_time_ms && t->communication_time_ms[c] >= 0) {
+      fprintf(out, " %s=\"%d\"", attr_map[TR_A_TIME], t->communication_time_ms[c]);
+    }
+    if (r->real_time_available > 0 && t->communication_real_time_ms && t->communication_real_time_ms[c] >= 0) {
+      fprintf(out, " %s=\"%d\"", attr_map[TR_A_REAL_TIME], t->communication_real_time_ms[c]);
+    }
+    if (r->max_memory_used_available > 0 && t->communication_max_memory_used && t->communication_max_memory_used[c] > 0) {
+      fprintf(out, " %s=\"%lu\"", attr_map[TR_A_MAX_MEMORY_USED], t->communication_max_memory_used[c]);
+    }
+    if (r->max_rss_available > 0 && t->communication_max_rss && t->communication_max_rss[c] > 0) {
+      fprintf(out, " %s=\"%lld\"", attr_map[TR_A_MAX_RSS], t->communication_max_rss[c]);
+    }
+    fprintf(out, ">\n");
+
+    if (t->communication_inputs) {
+      unparse_file_content(out, pab, TR_T_COMMUNICATION_INPUTS, &t->communication_inputs[c]);
+    }
+
+    if (t->communication_outputs) {
+      unparse_file_content(out, pab, TR_T_COMMUNICATION_OUTPUTS, &t->communication_outputs[c]);
+    }
+
+    fprintf(out, "        </%s>\n", elem_map[TR_T_COMMUNICATION_RUN]);
+  }
+
+  fprintf(out, "      </%s>\n", elem_map[TR_T_COMMUNICATION_RUNS]);
 }
 
 void
@@ -1838,6 +2026,9 @@ testing_report_unparse_xml(
       unparse_file_content(out, &ab, TR_T_STDERR, &t->error);
       unparse_file_content(out, &ab, TR_T_CHECKER, &t->checker);
       unparse_file_content(out, &ab, TR_T_TEST_CHECKER, &t->test_checker);
+
+      unparse_communication_runs(out, &ab, r, t);
+
       fprintf(out, "    </%s>\n", elem_map[TR_T_TEST]);
     }
     fprintf(out, "  </%s>\n", elem_map[TR_T_TESTS]);
