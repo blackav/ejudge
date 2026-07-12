@@ -713,39 +713,34 @@ parse_test(struct xml_tree *t, testing_report_xml_t r)
         unsigned long ulx = 0;
         if (t3->tag != TR_T_COMMUNICATION_RUN) goto failure;
 
+        int time = -1;
+        int real_time = -1;
+        unsigned long max_memory_used = 0;
+        unsigned long max_rss = 0;
+        int has_time = 0;
+        int has_real_time = 0;
+        int has_max_memory_used = 0;
+        int has_max_rss = 0;
         for (struct xml_attr *a3 = t3->first; a3; a3 = a3->next) {
           switch (a3->tag) {
             case TR_A_NUM:
-              if (xml_attr_int(a3, &x) < 0 || x <= 0) goto failure;
-              num = x;
+              if (xml_attr_int(a3, &num) < 0 || num <= 0) goto failure;
               break;
             case TR_A_TIME:
-              if (xml_attr_int(a3, &x) < 0 || x < 0) goto failure;
-              if (num > 0) {
-                if (ensure_communication_capacity(q, num) < 0) goto failure;
-                q->communication_time_ms[num] = x;
-              }
+              if (xml_attr_int(a3, &time) < 0 || time < 0) goto failure;
+              has_time = 1;
               break;
             case TR_A_REAL_TIME:
-              if (xml_attr_int(a3, &x) < 0 || x < 0) goto failure;
-              if (num > 0) {
-                if (ensure_communication_capacity(q, num) < 0) goto failure;
-                q->communication_real_time_ms[num] = x;
-              }
+              if (xml_attr_int(a3, &real_time) < 0 || real_time < 0) goto failure;
+              has_real_time = 1;
               break;
             case TR_A_MAX_MEMORY_USED:
-              if (xml_attr_ulong(a3, &ulx) < 0) goto failure;
-              if (num > 0) {
-                if (ensure_communication_capacity(q, num) < 0) goto failure;
-                q->communication_max_memory_used[num] = ulx;
-              }
+              if (xml_attr_ulong(a3, &max_memory_used) < 0) goto failure;
+              has_max_memory_used = 1;
               break;
             case TR_A_MAX_RSS:
-              if (xml_attr_ulong(a3, &ulx) < 0) goto failure;
-              if (num > 0) {
-                if (ensure_communication_capacity(q, num) < 0) goto failure;
-                q->communication_max_rss[num] = ulx;
-              }
+              if (xml_attr_ulong(a3, &max_rss) < 0) goto failure;
+              has_max_rss = 1;
               break;
             default:
               goto failure;
@@ -754,6 +749,11 @@ parse_test(struct xml_tree *t, testing_report_xml_t r)
 
         if (num <= 0) goto failure;
         if (ensure_communication_capacity(q, num) < 0) goto failure;
+
+        if (has_time) q->communication_time_ms[num] = time;
+        if (has_real_time) q->communication_real_time_ms[num] = real_time;
+        if (has_max_memory_used) q->communication_max_memory_used[num] = max_memory_used;
+        if (has_max_rss) q->communication_max_rss[num] = max_rss;
 
         for (struct xml_tree *t4 = t3->first_down; t4; t4 = t4->right) {
           switch (t4->tag) {

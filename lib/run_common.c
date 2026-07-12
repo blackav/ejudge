@@ -489,6 +489,9 @@ generate_xml_report(
       if (ti->max_memory_used > 0) {
         trt->max_memory_used = ti->max_memory_used;
       }
+      if (communication_mem_max > trt->max_memory_used) {
+        trt->max_memory_used = communication_mem_max;
+      }
       if (ti->max_rss > 0) {
         trt->max_rss = ti->max_rss;
       }

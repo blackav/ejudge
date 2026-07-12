@@ -7862,8 +7862,8 @@ html_print_communication_runs(
       int tm = t->communication_real_time_ms[i];
       fprintf(f, "Real time (sec): %d.%03d\n", tm / 1000, tm % 1000);
     }
-    if (t->communication_max_memory_used && t->communication_max_memory_used[i] >= 0) {
-      fprintf(f, "Max memory used: %ld\n", t->communication_max_memory_used[i]);
+    if (t->communication_max_memory_used && t->communication_max_memory_used[i] > 0) {
+      fprintf(f, "Max memory used: %lu\n", t->communication_max_memory_used[i]);
     }
 
     if (t->communication_inputs) {
