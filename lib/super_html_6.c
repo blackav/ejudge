@@ -5122,6 +5122,12 @@ do_import_problem(
   if (cfg->full_user_score >= 0) {
     prob->full_user_score = cfg->full_user_score;
   }
+  if (cfg->communication >= 2) {
+    prob->communication = cfg->communication;
+    if (cfg->communication_flags && cfg->communication_flags[0]) {
+      xstrdup3(&prob->communication_flags, cfg->communication_flags);
+    }
+  }
   long time_limit_ms = 0;
   if (cfg->time_limit_millis > 0) {
     prob->time_limit_millis = cfg->time_limit_millis;

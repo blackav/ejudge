@@ -80,6 +80,8 @@ static char const * const problem_xml_elem_map[] =
     [PPXML_EXTRA_TAG] = "extra-tag",
     [PPXML_EXTRA_TAGS] = "extra-tags",
     [PPXML_INTERACTOR] = "interactor",
+    [PPXML_RUNS] = "runs",
+    [PPXML_RUN] = "run",
     [PPXML_ATTACHMENTS] = "attachments",
     [PPXML_SCORER] = "scorer",
     [PPXML_ASSET] = "asset",
@@ -275,6 +277,11 @@ node_free(struct xml_tree *t)
     }
     case PPXML_EXTRA_TAGS: {
         struct ppxml_extra_tags *tt = (struct ppxml_extra_tags *) t;
+        free(tt->n.v);
+        break;
+    }
+    case PPXML_RUNS: {
+        struct ppxml_runs *tt = (struct ppxml_runs *) t;
         free(tt->n.v);
         break;
     }
@@ -1223,6 +1230,40 @@ ppxml_parse_validators(struct ppxml_parse_context *cntx, struct xml_tree *p)
 
     return pp;
 }
+static struct ppxml_run *
+ppxml_parse_run(struct ppxml_parse_context *cntx, struct xml_tree *p)
+{
+  if (p->first) return cntx->ops->err_attr_not_allowed(cntx, p, p->first);
+  if (p->first_down) return cntx->ops->err_nested_elems(cntx, p);
+  struct ppxml_run *pp = (struct ppxml_run *) p;
+
+  errno = 0;
+  char *e = NULL;
+  long v = strtol(p->text, &e, 10);
+  if (errno || *e || p->text == e || (int) v != v || v <= 0) {
+    return cntx->ops->err_elem_invalid(cntx, p);
+  }
+  pp->value = (int) v;
+  return pp;
+}
+
+static struct ppxml_runs *
+ppxml_parse_runs(struct ppxml_parse_context *cntx, struct xml_tree *p)
+{
+  if (p->first) return cntx->ops->err_attr_not_allowed(cntx, p, p->first);
+  struct ppxml_runs *pp = (struct ppxml_runs *) p;
+
+  for (struct xml_tree *q = p->first_down; q; q = q->right) {
+    if (q->tag == PPXML_RUN) {
+      struct ppxml_run *tt = ppxml_parse_run(cntx, q);
+      if (!tt) return NULL;
+      XML_TREE_VECTOR_PUSH(pp, tt);
+    } else {
+      return cntx->ops->err_elem_not_allowed(cntx, q);
+    }
+  }
+  return pp;
+}
 
 static struct ppxml_interactor *
 ppxml_parse_interactor(struct ppxml_parse_context *cntx, struct xml_tree *p)
@@ -1240,6 +1281,11 @@ ppxml_parse_interactor(struct ppxml_parse_context *cntx, struct xml_tree *p)
             struct ppxml_binary *t = ppxml_parse_binary(cntx, q);
             if (!t) return NULL;
             pp->binary = t;
+        } else if (q->tag == PPXML_RUNS) {
+            if (pp->runs) return cntx->ops->err_elem_redefined(cntx, q);
+            struct ppxml_runs *t = ppxml_parse_runs(cntx, q);
+            if (!t) return NULL;
+            pp->runs = t;
         } else {
             return cntx->ops->err_elem_invalid(cntx, q);
         }
