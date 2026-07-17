@@ -101,6 +101,173 @@ parse_file(bson_iter_t *bi, struct testing_report_file_content *fc)
     return 0;
 }
 
+static void
+
+init_tr_fc_slot(struct testing_report_file_content *fc)
+{
+    memset(fc, 0, sizeof(*fc));
+    fc->size = -1;
+    fc->orig_size = -1;
+}
+
+static int
+ensure_communication_capacity_bson(struct testing_report_test *p, int need_count)
+{
+    if (!p || need_count <= 0)
+        return -1;
+    if (need_count <= p->communication_run_count)
+        return 0;
+
+    int old = p->communication_run_count;
+    const int new_count = need_count;
+
+    p->communication_time_ms = xrealloc(
+        p->communication_time_ms,
+        (size_t) (new_count + 1) * sizeof(p->communication_time_ms[0]));
+    p->communication_real_time_ms = xrealloc(
+        p->communication_real_time_ms,
+        (size_t) (new_count + 1) * sizeof(p->communication_real_time_ms[0]));
+    p->communication_max_memory_used = xrealloc(
+        p->communication_max_memory_used,
+        (size_t) (new_count + 1) * sizeof(p->communication_max_memory_used[0]));
+    p->communication_max_rss = xrealloc(
+        p->communication_max_rss,
+        (size_t) (new_count + 1) * sizeof(p->communication_max_rss[0]));
+    p->communication_inputs = xrealloc(
+        p->communication_inputs,
+        (size_t) (new_count + 1) * sizeof(p->communication_inputs[0]));
+    p->communication_outputs = xrealloc(
+        p->communication_outputs,
+        (size_t) (new_count + 1) * sizeof(p->communication_outputs[0]));
+
+    if (old <= 0) {
+        p->communication_time_ms[0] = -1;
+        p->communication_real_time_ms[0] = -1;
+        p->communication_max_memory_used[0] = 0;
+        p->communication_max_rss[0] = 0;
+        init_tr_fc_slot(&p->communication_inputs[0]);
+        init_tr_fc_slot(&p->communication_outputs[0]);
+        old = 0;
+    }
+
+    for (int i = old + 1; i <= new_count; ++i) {
+        p->communication_time_ms[i] = -1;
+        p->communication_real_time_ms[i] = -1;
+        p->communication_max_memory_used[i] = 0;
+        p->communication_max_rss[i] = 0;
+        init_tr_fc_slot(&p->communication_inputs[i]);
+        init_tr_fc_slot(&p->communication_outputs[i]);
+    }
+
+    p->communication_run_count = new_count;
+    return 0;
+}
+
+static int
+parse_communication_run_doc(bson_iter_t *bi, struct testing_report_test *p)
+{
+    int num = -1, time = -1, real_time = -1;
+    unsigned long max_mem = 0;
+    long long max_rss = 0;
+    struct testing_report_file_content *trfc = NULL;
+
+    while (bson_iter_next(bi)) {
+        const unsigned char *key = bson_iter_key(bi);
+        int tag = match(key);
+        bson_iter_t iter2;
+
+        switch (tag) {
+        case Tag_num:
+            if (ej_bson_parse_int_new(bi, key, &num, 1, 1, 0, 0) < 0)
+                return -1;
+            break;
+        case Tag_time:
+            if (ej_bson_parse_int_new(bi, key, &time, 0, 0, 0, 0) < 0)
+                return -1;
+            break;
+        case Tag_real_time:
+            if (ej_bson_parse_int_new(bi, key, &real_time, 0, 0, 0, 0) < 0)
+                return -1;
+            break;
+        case Tag_max_memory_used: {
+            long long v;
+            if (ej_bson_parse_int64_new(bi, key, &v) < 0)
+                return -1;
+            max_mem = (unsigned long) v;
+            break;
+        }
+        case Tag_max_rss:
+            if (ej_bson_parse_int64_new(bi, key, &max_rss) < 0)
+                return -1;
+            break;
+        case Tag_input:
+            trfc = NULL;
+            if (num <= 0) return -1;
+            if (ensure_communication_capacity_bson(p, num) < 0)
+                return -1;
+            trfc = &p->communication_inputs[num];
+            if (bson_iter_type(bi) != BSON_TYPE_DOCUMENT)
+                return -1;
+            if (!bson_iter_recurse(bi, &iter2))
+                return -1;
+            if (parse_file(&iter2, trfc) < 0)
+                return -1;
+            break;
+        case Tag_output:
+            trfc = NULL;
+            if (num <= 0) return -1;
+            if (ensure_communication_capacity_bson(p, num) < 0)
+                return -1;
+            trfc = &p->communication_outputs[num];
+            if (bson_iter_type(bi) != BSON_TYPE_DOCUMENT)
+                return -1;
+            if (!bson_iter_recurse(bi, &iter2))
+                return -1;
+            if (parse_file(&iter2, trfc) < 0)
+                return -1;
+            break;
+        default:
+            break;
+        }
+    }
+
+    if (num <= 0)
+        return -1;
+    if (ensure_communication_capacity_bson(p, num) < 0)
+        return -1;
+    p->communication_time_ms[num] = time;
+    p->communication_real_time_ms[num] = real_time;
+    p->communication_max_memory_used[num] = max_mem;
+    p->communication_max_rss[num] = max_rss;
+
+    return 0;
+}
+
+static int
+parse_communication_runs_array(bson_iter_t *bi, struct testing_report_test *p)
+{
+    int index = -1;
+    while (bson_iter_next(bi)) {
+        const char *key = bson_iter_key(bi);
+        ++index;
+
+        errno = 0;
+        char *eptr = NULL;
+        long val = strtol(key, &eptr, 10);
+        if (errno || *eptr || eptr == key || val != index)
+            return -1;
+        if (bson_iter_type(bi) != BSON_TYPE_DOCUMENT)
+            return -1;
+
+        bson_iter_t iter2;
+        if (!bson_iter_recurse(bi, &iter2))
+            return -1;
+        if (parse_communication_run_doc(&iter2, p) < 0)
+            return -1;
+    }
+    return 0;
+}
+
 static int
 parse_test(int index, bson_iter_t *bi, testing_report_xml_t r)
 {
@@ -283,6 +450,15 @@ parse_test(int index, bson_iter_t *bi, testing_report_xml_t r)
         case Tag_test_checker:
             trfc = &p->test_checker;
             goto common_file_content;
+        case Tag_communication_runs:
+            bson_iter_t comm_iter;
+            if (bson_iter_type(bi) != BSON_TYPE_ARRAY)
+                goto cleanup;
+            if (!bson_iter_recurse(bi, &comm_iter))
+                goto cleanup;
+            if (parse_communication_runs_array(&comm_iter, p) < 0)
+                goto cleanup;
+            break;
         common_file_content:
             if (bson_iter_type(bi) != BSON_TYPE_DOCUMENT)
                 goto cleanup;
@@ -886,6 +1062,56 @@ unparse_file_content(
     }
 }
 
+static void
+unparse_communication_runs(
+        bson_t *b_testp,
+        const struct testing_report_test *t)
+{
+    if (!t || t->communication_run_count < 2) {
+        return;
+    }
+
+    bson_t b_comms;
+    bson_append_array_begin(b_testp, tag_table[Tag_communication_runs], -1, &b_comms);
+
+    for (int ci = 1, cindex = 0; ci <= t->communication_run_count; ++ci, ++cindex) {
+        bson_t b_comm;
+        char buf[32];
+        const char *key = NULL;
+        uint32_t key_len = bson_uint32_to_string(cindex, &key, buf, sizeof(buf));
+        bson_append_document_begin(&b_comms, key, key_len, &b_comm);
+        bson_append_int32(&b_comm, tag_table[Tag_num], -1, ci);
+
+        if (t->communication_time_ms && t->communication_time_ms[ci] >= 0) {
+            bson_append_int32(&b_comm, tag_table[Tag_time], -1, t->communication_time_ms[ci]);
+        }
+
+        if (t->communication_real_time_ms && t->communication_real_time_ms[ci] >= 0) {
+            bson_append_int32(&b_comm, tag_table[Tag_real_time], -1, t->communication_real_time_ms[ci]);
+        }
+
+        if (t->communication_max_memory_used && t->communication_max_memory_used[ci] > 0) {
+            bson_append_int64(&b_comm, tag_table[Tag_max_memory_used], -1, t->communication_max_memory_used[ci]);
+        }
+
+        if (t->communication_max_rss && t->communication_max_rss[ci] > 0) {
+            bson_append_int64(&b_comm, tag_table[Tag_max_rss], -1, t->communication_max_rss[ci]);
+        }
+
+        if (t->communication_inputs) {
+            unparse_file_content(&b_comm, tag_table[Tag_input], &t->communication_inputs[ci]);
+        }
+
+        if (t->communication_outputs) {
+            unparse_file_content(&b_comm, tag_table[Tag_output], &t->communication_outputs[ci]);
+        }
+
+        bson_append_document_end(&b_comms, &b_comm);
+    }
+
+    bson_append_array_end(b_testp, &b_comms);
+}
+
 static bson_t *
 do_unparse(
         bson_t *b,
@@ -1136,6 +1362,9 @@ do_unparse(
             unparse_file_content(b_testp, tag_table[Tag_stderr], &t->error);
             unparse_file_content(b_testp, tag_table[Tag_checker], &t->checker);
             unparse_file_content(b_testp, tag_table[Tag_test_checker], &t->test_checker);
+
+            unparse_communication_runs(b_testp, t);
+
             bson_append_document_end(b_testsp, b_testp);
         }
         bson_append_array_end(b, b_testsp);

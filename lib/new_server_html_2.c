@@ -7842,6 +7842,50 @@ new_write_user_clars(
   fputs("</table>\n", f);
 }
 
+static void
+html_print_communication_runs(
+        FILE *f,
+        struct html_armor_buffer *pab,
+        const struct testing_report_test *t)
+{
+  if (!t || t->communication_run_count <= 0) return;
+
+  fprintf(f, "<u>--- Communication runs (%d) ---</u>\n", t->communication_run_count);
+  for (int i = 1; i <= t->communication_run_count; ++i) {
+    fprintf(f, "<b>Run #%d</b>\n", i );
+
+    if (t->communication_time_ms && t->communication_time_ms[i] >= 0) {
+      int tm = t->communication_time_ms[i];
+      fprintf(f, "Time (sec): %d.%03d\n", tm / 1000, tm % 1000);
+    }
+    if (t->communication_real_time_ms && t->communication_real_time_ms[i] >= 0) {
+      int tm = t->communication_real_time_ms[i];
+      fprintf(f, "Real time (sec): %d.%03d\n", tm / 1000, tm % 1000);
+    }
+    if (t->communication_max_memory_used && t->communication_max_memory_used[i] > 0) {
+      fprintf(f, "Max memory used: %lu\n", t->communication_max_memory_used[i]);
+    }
+
+    if (t->communication_inputs) {
+      const struct testing_report_file_content *fc_in = &t->communication_inputs[i];
+      if (fc_in->size >= 0 || fc_in->is_too_big) {
+        html_print_testing_report_file_content(
+            f, pab, (struct testing_report_file_content *) fc_in, TESTING_REPORT_INPUT);
+      }
+    }
+
+    if (t->communication_outputs) {
+      const struct testing_report_file_content *fc_out = &t->communication_outputs[i];
+      if (fc_out->size >= 0 || fc_out->is_too_big) {
+        html_print_testing_report_file_content(
+            f, pab, (struct testing_report_file_content *) fc_out, TESTING_REPORT_OUTPUT);
+      }
+    }
+
+    fprintf(f, "\n");
+  }
+}
+
 static const unsigned char *
 html_make_title(unsigned char *buf, size_t size, const unsigned char *title)
 {
@@ -8021,6 +8065,9 @@ write_xml_team_testing_report(
         if (t->checker.size >= 0 || t->checker.is_too_big) {
           fprintf(f, "<a name=\"%dC\"></a>", t->num);
           html_print_testing_report_file_content(f, &ab, &t->checker, TESTING_REPORT_CHECKER);
+        }
+        if (t->communication_run_count > 0) {
+          html_print_communication_runs(f, &ab, t);
         }
         fprintf(f, "</pre>");
       }
@@ -8451,9 +8498,8 @@ write_xml_team_testing_report(
         if (is_marked) visibility = TV_FULL;
       }
       if (visibility != TV_FULL) continue;
-      if (!t->args && !t->args_too_long && t->input.size < 0
-          && t->output.size < 0 && t->error.size < 0 && t->correct.size < 0 && t->checker.size < 0)
-        continue;
+      if (!t->args && !t->args_too_long && t->input.size < 0 && t->output.size < 0 && t->error.size < 0
+          && t->correct.size < 0 && t->checker.size < 0 && t->communication_run_count <= 0) continue;
       fprintf(f, _("<b>====== Test #%d =======</b>\n"), t->num);
       if (t->args || t->args_too_long) {
         fprintf(f, "<a name=\"%dL\"></a>", t->num);
@@ -8483,6 +8529,9 @@ write_xml_team_testing_report(
       if (t->checker.size >= 0 || t->checker.is_too_big) {
         fprintf(f, "<a name=\"%dC\"></a>", t->num);
         html_print_testing_report_file_content(f, &ab, &t->checker, TESTING_REPORT_CHECKER);
+      }
+      if (t->communication_run_count > 0) {
+        html_print_communication_runs(f, &ab, t);
       }
     }
     fprintf(f, "</pre>");
@@ -8912,8 +8961,8 @@ write_xml_team_accepting_report(
   fprintf(f, "<pre>");
   for (i = 0; i < tests_to_show; i++) {
     if (!(t = r->tests[i])) continue;
-    if (!t->args && !t->args_too_long && t->input.size < 0
-        && t->output.size < 0 && t->error.size < 0 && t->correct.size < 0 && t->checker.size < 0) continue;
+    if (!t->args && !t->args_too_long && t->input.size < 0 && t->output.size < 0 && t->error.size < 0
+        && t->correct.size < 0 && t->checker.size < 0 && t->communication_run_count <= 0) continue;
 
     fprintf(f, _("<b>====== Test #%d =======</b>\n"), t->num);
     if (t->args || t->args_too_long) {
@@ -8946,6 +8995,9 @@ write_xml_team_accepting_report(
     if (t->checker.size >= 0 || t->checker.is_too_big) {
       fprintf(f, "<a name=\"%dC\"></a>", t->num);
       html_print_testing_report_file_content(f, &ab, &t->checker, TESTING_REPORT_CHECKER);
+    }
+    if (t->communication_run_count > 0) {
+      html_print_communication_runs(f, &ab, t);
     }
   }
   fprintf(f, "</pre>");
@@ -9491,8 +9543,8 @@ write_xml_testing_report(
   for (i = 0; i < r->run_tests; i++) {
     if (!(t = r->tests[i])) continue;
     if (t->status == RUN_SKIPPED) continue;
-    if (!t->args && !t->args_too_long && t->input.size < 0
-        && t->output.size < 0 && t->error.size < 0 && t->correct.size < 0 && t->checker.size < 0) continue;
+    if (!t->args && !t->args_too_long && t->input.size < 0 && t->output.size < 0 && t->error.size < 0
+        && t->correct.size < 0 && t->checker.size < 0 && t->communication_run_count <= 0) continue;
 
     fprintf(f, _("<b>====== Test #%d =======</b>\n"), t->num);
     if (t->args || t->args_too_long) {
@@ -9525,6 +9577,9 @@ write_xml_testing_report(
     if (t->checker.size >= 0 || t->checker.is_too_big) {
       fprintf(f, "<a name=\"%dC\"></a>", t->num);
       html_print_testing_report_file_content(f, &ab, &t->checker, TESTING_REPORT_CHECKER);
+    }
+    if (t->communication_run_count > 0) {
+      html_print_communication_runs(f, &ab, t);
     }
     if (t->program_stats_str || t->interactor_stats_str || t->checker_stats_str) {
       fprintf(f, "<u>--- Resource usage ---</u>\n");
@@ -9884,6 +9939,128 @@ write_json_brief_test(
   }
   fprintf(fout, "\n%s}", indent);
   html_armor_free(&ab);
+  return ",";
+}
+
+static const unsigned char *
+write_json_comm_file_array(
+        FILE *fout,
+        const unsigned char *name,
+        const struct testing_report_file_content *arr,
+        int count,
+        const unsigned char *sep,
+        const unsigned char *indent,
+        int max_content_size)
+{
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+
+  fprintf(fout, "%s\n%s\"%s\": [", sep, indent, name);
+  for (int i = 1; i <= count; ++i) {
+    const struct testing_report_file_content *fc = &arr[i];
+    const unsigned char *sep2 = "";
+
+    fprintf(fout, "%s\n%s  {", (i > 1 ? "," : ""), indent);
+
+    if (fc->size >= 0) {
+      fprintf(fout, "%s\n%s    \"size\": %lld", sep2, indent, (long long) fc->size);
+      sep2 = ",";
+    }
+    if (fc->orig_size >= 0 && fc->orig_size != fc->size) {
+      fprintf(fout, "%s\n%s    \"orig_size\": %lld", sep2, indent, (long long) fc->orig_size);
+      sep2 = ",";
+    }
+    if (fc->is_too_big) {
+      fprintf(fout, "%s\n%s    \"is_too_big\": true", sep2, indent);
+      sep2 = ",";
+    }
+    if (fc->is_base64) {
+      fprintf(fout, "%s\n%s    \"is_binary\": true", sep2, indent);
+      sep2 = ",";
+    } else if (fc->size > 0 && fc->data) {
+      if (max_content_size >= 0 && fc->size > max_content_size) {
+        unsigned char *tmp = xmalloc(max_content_size + 1);
+        memcpy(tmp, fc->data, max_content_size);
+        tmp[max_content_size] = 0;
+        fprintf(fout, "%s\n%s    \"data\": \"%s\"", sep2, indent, json_armor_buf(&ab, tmp));
+        xfree(tmp);
+      } else {
+        fprintf(fout, "%s\n%s    \"data\": \"%s\"", sep2, indent, json_armor_buf(&ab, fc->data));
+      }
+    }
+
+    fprintf(fout, "\n%s  }", indent);
+  }
+  fprintf(fout, "\n%s]", indent);
+
+  html_armor_free(&ab);
+  return ",";
+}
+
+static const unsigned char *
+write_json_communication_runs(
+        FILE *fout,
+        const struct testing_report_test *t,
+        const unsigned char *sep,
+        const unsigned char *indent,
+        int max_content_size)
+{
+  char indent2[128];
+
+  if (!t || t->communication_run_count <= 0) return sep;
+
+  snprintf(indent2, sizeof(indent2), "%s  ", indent);
+
+  fprintf(fout, "%s\n%s\"communication\": {", sep, indent);
+  fprintf(fout, "\n%s  \"count\": %d", indent, t->communication_run_count);
+
+  if (t->communication_time_ms) {
+    fprintf(fout, ",\n%s  \"time_ms\": [", indent);
+    for (int i = 1; i <= t->communication_run_count; ++i) {
+      if (i > 1) fprintf(fout, ", ");
+      fprintf(fout, "%d", t->communication_time_ms[i]);
+    }
+    fprintf(fout, "]");
+  }
+
+  if (t->communication_real_time_ms) {
+    fprintf(fout, ",\n%s  \"real_time_ms\": [", indent);
+    for (int i = 1; i <= t->communication_run_count; ++i) {
+      if (i > 1) fprintf(fout, ", ");
+      fprintf(fout, "%d", t->communication_real_time_ms[i]);
+    }
+    fprintf(fout, "]");
+  }
+
+  if (t->communication_max_memory_used) {
+    fprintf(fout, ",\n%s  \"max_memory_used\": [", indent);
+    for (int i = 1; i <= t->communication_run_count; ++i) {
+      if (i > 1) fprintf(fout, ", ");
+      fprintf(fout, "%ld", t->communication_max_memory_used[i]);
+    }
+    fprintf(fout, "]");
+  }
+
+  if (t->communication_max_rss) {
+    fprintf(fout, ",\n%s  \"max_rss\": [", indent);
+    for (int i = 1; i <= t->communication_run_count; ++i) {
+      if (i > 1) fprintf(fout, ", ");
+      fprintf(fout, "%lld", t->communication_max_rss[i]);
+    }
+    fprintf(fout, "]");
+  }
+
+  if (t->communication_inputs) {
+    write_json_comm_file_array(
+        fout, "input", t->communication_inputs, t->communication_run_count,
+        ",", indent2, max_content_size);
+  }
+  if (t->communication_outputs) {
+    write_json_comm_file_array(
+        fout, "output", t->communication_outputs, t->communication_run_count,
+        ",", indent2, max_content_size);
+  }
+
+  fprintf(fout, "\n%s}", indent);
   return ",";
 }
 
@@ -10391,6 +10568,7 @@ write_json_run_info(
             write_json_brief_test(fout, "correct", &t->correct, ",", "          ", content_mode, max_content_size);
             write_json_brief_test(fout, "error", &t->error, ",", "          ", content_mode, max_content_size);
             write_json_brief_test(fout, "checker", &t->checker, ",", "          ", content_mode, max_content_size);
+            write_json_communication_runs(fout, t, ",", "          ", max_content_size);
           }
         }
         fprintf(fout, "\n        }");

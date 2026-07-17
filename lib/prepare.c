@@ -506,6 +506,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(checker_max_rss_size, "E"),
   PROBLEM_PARAM(forced_test_count, "d"),
   PROBLEM_PARAM(debug_flags, "d"),
+  PROBLEM_PARAM(communication, "d"),
 
   PROBLEM_PARAM(super, "s"),
   PROBLEM_PARAM(short_name, "s"),
@@ -608,6 +609,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(standard_valuer, "S"),
   PROBLEM_PARAM(md_file, "S"),
   PROBLEM_PARAM(exchange_dir, "S"),
+  PROBLEM_PARAM(communication_flags, "S"),
 
   { 0, 0, 0, 0 }
 };
@@ -1360,6 +1362,7 @@ prepare_problem_init_func(struct generic_section_config *gp)
   p->normalization_val = -1;
   p->forced_test_count = -1;
   p->debug_flags = -1;
+  p->communication = -1;
 }
 
 void prepare_free_testsets(int t, struct testset_info *p);
@@ -2783,6 +2786,8 @@ prepare_problem(
   prepare_set_prob_value(CNTSPROB_use_tgz, prob, aprob, g);
   prepare_set_prob_value(CNTSPROB_forced_test_count, prob, aprob, g);
   prepare_set_prob_value(CNTSPROB_debug_flags, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_communication, prob, aprob, g);
+  prepare_set_prob_value(CNTSPROB_communication_flags, prob, aprob, g);
 
   if (!prob->md_file && aprob && aprob->md_file) {
     sformat_message_2(&prob->md_file, 0, aprob->md_file, 0, prob, 0, 0, 0, 0, 0, 0);
@@ -6275,6 +6280,18 @@ prepare_set_prob_value(
     if (out->checker_max_rss_size < 0 && abstr) out->checker_max_rss_size = abstr->checker_max_rss_size;
     break;
 
+  case CNTSPROB_communication:
+    if (out->communication < 0 && abstr) out->communication = abstr->communication;
+    break;
+  
+  case CNTSPROB_communication_flags:
+    if ((!out->communication_flags || !out->communication_flags[0]) &&
+        abstr && abstr->communication_flags && abstr->communication_flags[0]) {
+      sformat_message_2(&out->communication_flags, 0, abstr->communication_flags,
+                        NULL, out, NULL, NULL, NULL, 0, 0, 0);
+    }
+    break;
+
   case CNTSPROB_input_file:
     if (!out->input_file && abstr && abstr->input_file) {
       sformat_message_2(&out->input_file, 0, abstr->input_file,
@@ -6933,6 +6950,8 @@ prepare_set_all_prob_values(
     //CNTSPROB_extid,
     //CNTSPROB_score_view,
     //CNTSPROB_score_view_text,
+    CNTSPROB_communication,
+    CNTSPROB_communication_flags,
     0
   };
 
@@ -7164,6 +7183,16 @@ prepare_varsubst(
                        section_language_params,
                        section_tester_params,
                        global, prob, lang, tester);
+}
+
+int
+prepare_parse_communication_flags(
+        FILE *log_f,
+        const unsigned char *communication_flags,
+        int **pflags,
+        int *pcount)
+{
+  return prepare_parse_test_score_list(log_f, communication_flags, pflags, pcount);
 }
 
 char **

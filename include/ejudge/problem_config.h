@@ -147,6 +147,7 @@ struct problem_config_section
   int max_process_count;
   int forced_test_count;
   int debug_flags;
+  int communication;
 
   time_t deadline;
   time_t start_date;
@@ -231,6 +232,7 @@ struct problem_config_section
   unsigned char *score_bonus;
   unsigned char *super_run_dir;
   unsigned char *exchange_dir;
+  unsigned char *communication_flags;
   unsigned char *revision;           // not in prepare.h
   unsigned char *iframe_statement;   // not in prepare.h
 
