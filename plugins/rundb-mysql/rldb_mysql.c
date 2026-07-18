@@ -76,6 +76,8 @@ struct rldb_mysql_cnts
   int next_run_id;
 };
 
+#include "reviews_table.inc.c"
+
 #include "methods.inc.c"
 
 /* plugin entry point */
@@ -203,7 +205,7 @@ prepare_func(
 
 #include "tables.inc.c"
 
-#define RUN_DB_VERSION 30
+#define RUN_DB_VERSION 31
 
 static int
 do_create(struct rldb_mysql_state *state)
@@ -217,6 +219,8 @@ do_create(struct rldb_mysql_state *state)
   if (mi->simple_fquery(md, create_runs_query, md->table_prefix) < 0)
     db_error_fail(md);
   if (mi->simple_fquery(md, create_userrunheaders_query, md->table_prefix) < 0)
+    db_error_fail(md);
+  if (mi->simple_fquery(md, ejudge_rundb_mysql_reviews, md->table_prefix) < 0)
     db_error_fail(md);
   if (mi->simple_fquery(md,
                         "INSERT INTO %sconfig VALUES ('run_version', '%d') ;",
@@ -500,6 +504,10 @@ do_open(struct rldb_mysql_state *state)
       break;
     case 29:
       if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD COLUMN review_status TINYINT NOT NULL DEFAULT 0 AFTER group_scores", md->table_prefix) < 0)
+        return -1;
+      break;
+    case 30:
+      if (mi->simple_fquery(md, ejudge_rundb_mysql_reviews, md->table_prefix) < 0)
         return -1;
       break;
     case RUN_DB_VERSION:

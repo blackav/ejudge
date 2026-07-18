@@ -46,5 +46,10 @@ deps.make : $(CFILES) $(HFILES)
 
 include deps.make
 
+rldb_mysql.o : reviews_table.inc.c
+
 rldb_mysql.so : $(RLDB_MYSQL_OFILES)
 	$(LD) -shared $(LDFLAGS) $^ -o $@ $(LDLIBS)
+
+reviews_table.inc.c : create-reviews.sql
+	xxd -t -i -n ejudge_rundb_mysql_reviews $^ > $@
