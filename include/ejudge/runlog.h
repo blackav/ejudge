@@ -374,7 +374,9 @@ struct run_entry
   rint64_t       last_change_us;/* 8 */
   ruint32_t      group_scores;  /* 4 */
   unsigned char  review_status; /* 1 */
-  char _pad1[3];
+  unsigned char  review_gen;    /* 1 */
+  unsigned char  hidden_review_status; /* 1 */
+  unsigned char  hidden_review_gen;    /* 1 */
   ej_mixed_id_t  ext_user;      /* 16 */
   ej_mixed_id_t  notify_queue;  /* 16 */
   char _pad[32];
