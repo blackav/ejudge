@@ -627,4 +627,84 @@ group_scores_calc(
         const int *group_scores,
         int separate_user_score);
 
+enum
+{
+  RER_SERIAL_ID = 0x1ULL,
+  RER_RUN_SERIAL_ID = 0x2ULL,
+  RER_CREATE_TIME_US = 0x4ULL,
+  RER_LAST_UPDATE_TIME_US = 0x8ULL,
+  RER_MODERATION_TIME_US = 0x10ULL,
+  RER_REVIEW_START_TIME_US = 0x20ULL,
+  RER_REVIEW_FINISH_TIME_US = 0x40ULL,
+  RER_APPROVE_TIME_US = 0x80ULL,
+  RER_USER_OPEN_TIME_US = 0x100ULL,
+  RER_REVIEW_UUID = 0x200ULL,
+  RER_MODERATION_TEXT = 0x400ULL,
+  RER_REVIEW_SOURCE = 0x800ULL,
+  RER_REVIEW_AGENT = 0x1000ULL,
+  RER_REVIEW_RESULT = 0x2000ULL,
+  RER_REVIEW_CONTENT_TYPE = 0x4000ULL,
+  RER_REVIEW_STATISTICS = 0x8000ULL,
+  RER_APPROVED_TEXT = 0x10000ULL,
+  RER_MODEL = 0x20000ULL,
+  RER_REVIEW_SOURCE_SHA256 = 0x40000ULL,
+  RER_CONTEST_ID = 0x80000ULL,
+  RER_RUN_ID = 0x100000ULL,
+  RER_REQUESTED_BY = 0x200000ULL,
+  RER_MODERATOR_USER_ID = 0x400000ULL,
+  RER_APPROVER_USER_ID = 0x800000ULL,
+  RER_INPUT_TOKENS = 0x1000000ULL,
+  RER_CACHED_INPUT_TOKENS = 0x2000000ULL,
+  RER_OUPUT_TOKENS = 0x4000000ULL,
+  RER_REASONING_TOKENS = 0x8000000ULL,
+  RER_TOTAL_TOKENS = 0x10000000ULL,
+  RER_GENERATION = 0x20000000ULL,
+  RER_STATUS = 0x40000000ULL,
+  RER_PURPOSE = 0x80000000ULL,
+  RER_REVIEW_RECOMMENDED_STATUS = 0x100000000ULL,
+  RER_APPROVER_REVIEW_MARK = 0x200000000ULL,
+  RER_USER_OPEN_COUNT = 0x400000000ULL,
+  RER_USER_REVIEW_MARK = 0x800000000ULL,
+};
+
+struct run_review
+{
+  int64_t serial_id;
+  int64_t run_serial_id;
+  int64_t create_time_us;
+  int64_t last_update_time_us;
+  int64_t moderation_time_us;
+  int64_t review_start_time_us;
+  int64_t review_finish_time_us;
+  int64_t approve_time_us;
+  int64_t user_open_time_us;
+  ej_uuid_t review_uuid;
+  unsigned char *moderation_text;
+  unsigned char *review_source;
+  unsigned char *review_agent;
+  unsigned char *review_result;
+  unsigned char *review_content_type;
+  unsigned char *review_statistics;
+  unsigned char *approved_text;
+  unsigned char *model;
+  unsigned char review_source_sha256[32];
+  int contest_id;
+  int run_id;
+  int requested_by;
+  int moderator_user_id;
+  int approver_user_id;
+  int input_tokens;
+  int cached_input_tokens;
+  int output_tokens;
+  int reasoning_tokens;
+  int total_tokens;
+  uint8_t generation;
+  uint8_t status;
+  uint8_t purpose;
+  int8_t review_recommended_status;
+  int8_t approver_review_mark;
+  uint8_t user_open_count;
+  int8_t user_review_mark;
+};
+
 #endif /* __RUNLOG_H__ */

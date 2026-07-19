@@ -16,7 +16,7 @@
 
 #include "ejudge/config.h"
 #include "ejudge/ej_limits.h"
-#include "ejudge/ej_limits.h"
+#include "ejudge/ej_types.h"
 #include "ejudge/rldb_plugin.h"
 #include "ejudge/runlog.h"
 #include "ejudge/teamdb.h"
@@ -3301,3 +3301,88 @@ get_group_scores_func(
   }
   return &rls->group_scores.data[index];
 }
+
+struct run_review_internal
+{
+  long long serial_id;
+  ej_uuid_t review_uuid;
+  long long run_serial_id;
+  int contest_id;
+  int run_id;
+  int generation;
+  int status;
+  int64_t create_time_us;
+  int purpose;
+  int64_t last_update_time_us;
+  int requested_by;
+  int moderator_user_id;
+  int64_t moderation_time_us;
+  unsigned char *moderation_text;
+  unsigned char *review_source;
+  unsigned char review_source_sha256[32];
+  int64_t review_start_time_us;
+  unsigned char *review_agent;
+  int64_t review_finish_time_us;
+  unsigned char *review_result;
+  unsigned char *review_content_type;
+  int review_recommended_status;
+  unsigned char *review_statistics;
+  int approver_user_id;
+  int64_t approve_time_us;
+  unsigned char *approved_text;
+  int approver_review_mark;
+  int64_t user_open_time_us;
+  int user_open_count;
+  int user_review_mark;
+  int input_tokens;
+  int cached_input_tokens;
+  int output_tokens;
+  int reasoning_tokens;
+  int total_tokens;
+  unsigned char *model;
+};
+
+enum { REVIEW_ROW_WIDTH = 36 };
+
+#define REVIEW_OFFSET(f) XOFFSET(struct run_review_internal, f)
+
+__attribute__((unused))
+static const struct common_mysql_parse_spec reviews_spec[REVIEW_ROW_WIDTH] =
+{
+  { 0, 'l', "serial_id", REVIEW_OFFSET(serial_id), 0 },
+  { 0, 'g', "review_uuid", REVIEW_OFFSET(review_uuid), 0 },
+  { 0, 'l', "run_serial_id", REVIEW_OFFSET(run_serial_id), 0 },
+  { 0, 'd', "contest_id", REVIEW_OFFSET(contest_id), 0 },
+  { 0, 'd', "run_id", REVIEW_OFFSET(run_id), 0 },
+  { 0, 'd', "generation", REVIEW_OFFSET(generation), 0 },
+  { 0, 'd', "status", REVIEW_OFFSET(status), 0 },
+  { 0, 'm', "create_time", REVIEW_OFFSET(create_time_us), 0 },
+  { 0, 'd', "purpose", REVIEW_OFFSET(purpose), 0 },
+  { 1, 'm', "last_update_time", REVIEW_OFFSET(last_update_time_us), 0 },
+  { 1, 'd', "requested_by", REVIEW_OFFSET(requested_by), 0 },
+  { 1, 'd', "moderator_user_id", REVIEW_OFFSET(moderator_user_id), 0 },
+  { 1, 'm', "moderation_time", REVIEW_OFFSET(moderation_time_us), 0 },
+  { 1, 's', "moderation_text", REVIEW_OFFSET(moderation_text), 0 },
+  { 1, 's', "review_source", REVIEW_OFFSET(review_source), 0 },
+  { 1, 'h', "review_source_sha256", REVIEW_OFFSET(review_source_sha256), 0 },
+  { 1, 'm', "review_start_time", REVIEW_OFFSET(review_start_time_us), 0 },
+  { 1, 's', "review_agent", REVIEW_OFFSET(review_agent), 0 },
+  { 1, 'm', "review_finish_time", REVIEW_OFFSET(review_finish_time_us), 0 },
+  { 1, 's', "review_result", REVIEW_OFFSET(review_result), 0 },
+  { 1, 's', "review_content_type", REVIEW_OFFSET(review_content_type), 0 },
+  { 1, 'd', "review_recommended_status", REVIEW_OFFSET(review_recommended_status), 0 },
+  { 1, 's', "review_statistics", REVIEW_OFFSET(review_statistics), 0 },
+  { 1, 'd', "approver_user_id", REVIEW_OFFSET(approver_user_id), 0 },
+  { 1, 'm', "approve_time", REVIEW_OFFSET(approve_time_us), 0 },
+  { 1, 's', "approved_text", REVIEW_OFFSET(approved_text), 0 },
+  { 1, 'd', "approver_review_mark", REVIEW_OFFSET(approver_review_mark), 0 },
+  { 1, 'm', "user_open_time", REVIEW_OFFSET(user_open_time_us), 0 },
+  { 1, 'd', "user_open_count", REVIEW_OFFSET(user_open_count), 0 },
+  { 1, 'd', "user_review_mark", REVIEW_OFFSET(user_review_mark), 0 },
+  { 1, 'd', "input_tokens", REVIEW_OFFSET(input_tokens), 0 },
+  { 1, 'd', "cached_input_tokens", REVIEW_OFFSET(cached_input_tokens), 0 },
+  { 1, 'd', "output_tokens", REVIEW_OFFSET(output_tokens), 0 },
+  { 1, 'd', "reasoning_tokens", REVIEW_OFFSET(reasoning_tokens), 0 },
+  { 1, 'd', "total_tokens", REVIEW_OFFSET(total_tokens), 0 },
+  { 1, 's', "model", REVIEW_OFFSET(model), 0 },
+};
