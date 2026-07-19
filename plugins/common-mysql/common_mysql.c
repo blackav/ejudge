@@ -791,6 +791,18 @@ error_inv_value_func(struct common_mysql_state *state, const char *field)
   return -1;
 }
 
+static int tohexdigit(int c)
+{
+  if (c >= '0' && c <= '9') {
+    return c - '0';
+  } else if (c >= 'A' && c <= 'F') {
+    return c - 'A' + 10;
+  } else if (c >= 'a' && c <= 'f') {
+    return c - 'a' + 10;
+  }
+  return -1;
+}
+
 #define DEFAULT_IP "127.0.0.127"
 
 static int
@@ -1072,6 +1084,59 @@ parse_spec_func(
         bin->size = lengths[i];
         bin->data = xmemdup(row[i], lengths[i]);
       }
+      break;
+    }
+
+    case 'h': {
+      enum { SHA256_SIZE = 32 };
+      unsigned char *p_data = XPDEREF(unsigned char, data, specs[i].offset);
+      if (row[i]) {
+        if (lengths[i] != SHA256_SIZE * 2) goto invalid_format;
+        unsigned char *p_out = p_data;
+        const unsigned char *p_in = row[i];
+        for (int i = SHA256_SIZE; i; --i) {
+          int vh = tohexdigit(*p_in++);
+          if (vh < 0) goto invalid_format;
+          int vl = tohexdigit(*p_in++);
+          if (vl < 0) goto invalid_format;
+          *p_out++ = (vh << 4) | vl;
+        }
+      } else {
+        memset(p_data, 0, SHA256_SIZE);
+      }
+      break;
+    }
+
+    case 'm': {
+      int64_t *pv = XPDEREF(int64_t, data, specs[i].offset);
+      const char *str = row[i];
+      int us = 0;
+      *pv = 0;
+      if (!str) break;
+      // special handling for '0' case
+      if (sscanf(str, "%d%n", &x, &n) == 1 && !str[n] && !x) break;
+      // 'YYYY-MM-DD hh:mm:ss[.uuuuuu]'
+      if (sscanf(str, "%d-%d-%d %d:%d:%d%n",
+                 &d_year, &d_mon, &d_day, &d_hour, &d_min, &d_sec, &n) != 6)
+        goto invalid_format;
+      if (str[n] == '.') {
+        str += n + 1; n = 0;
+        if (sscanf(str, "%d%n", &us, &n) != 1) goto invalid_format;
+      }
+      if (str[n]) goto invalid_format;
+      if (!d_year && !d_mon && !d_day && !d_hour && !d_min && !d_sec && !us)
+        break;
+      memset(&tt, 0, sizeof(tt));
+      tt.tm_year = d_year - 1900;
+      tt.tm_mon = d_mon - 1;
+      tt.tm_mday = d_day;
+      tt.tm_hour = d_hour;
+      tt.tm_min = d_min;
+      tt.tm_sec = d_sec;
+      tt.tm_isdst = -1;
+      if ((t = mktime(&tt)) == (time_t) -1) goto invalid_format;
+      if (t < 0) t = 0;
+      *pv = t * 1000000LL + us;
       break;
     }
 
