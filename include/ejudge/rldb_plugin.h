@@ -3,7 +3,7 @@
 #ifndef __RLDB_PLUGIN_H__
 #define __RLDB_PLUGIN_H__
 
-/* Copyright (C) 2008-2024 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -22,6 +22,7 @@
 #include "ejudge/ej_types.h"
 #include "ejudge/iterators.h"
 #include "ejudge/ejudge_cfg.h"
+#include "ejudge/runlog.h"
 
 #include <stdint.h>
 
@@ -261,6 +262,17 @@ struct rldb_plugin_iface
   const int * (*get_group_scores)(
         struct rldb_plugin_cnts *cdata,
         uint32_t index);
+
+  int (*create_review)(
+        struct rldb_plugin_cnts *cdata,
+        int64_t run_serial_id,
+        int contest_id,
+        int run_id,
+        int generation,
+        int status,
+        int purpose,
+        int requested_by,
+        struct run_review *p_result);
 };
 
 /* default plugin: compiled into new-server */

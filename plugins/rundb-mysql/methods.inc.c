@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2008-2024 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -257,3 +257,15 @@ static const int *
 get_group_scores_func(
         struct rldb_plugin_cnts *cdata,
         uint32_t index);
+
+static int
+create_review_func(
+        struct rldb_plugin_cnts *cdata,
+        int64_t run_serial_id,
+        int contest_id,
+        int run_id,
+        int generation,
+        int status,
+        int purpose,
+        int requested_by,
+        struct run_review *p_result);

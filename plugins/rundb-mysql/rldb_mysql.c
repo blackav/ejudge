@@ -136,6 +136,7 @@ struct rldb_plugin_iface plugin_rldb_mysql =
   append_run_func,
   run_set_is_checked_func,
   get_group_scores_func,
+  create_review_func,
 };
 
 static long long
@@ -3386,3 +3387,18 @@ static const struct common_mysql_parse_spec reviews_spec[REVIEW_ROW_WIDTH] =
   { 1, 'd', "total_tokens", REVIEW_OFFSET(total_tokens), 0 },
   { 1, 's', "model", REVIEW_OFFSET(model), 0 },
 };
+
+static int
+create_review_func(
+        struct rldb_plugin_cnts *cdata,
+        int64_t run_serial_id,
+        int contest_id,
+        int run_id,
+        int generation,
+        int status,
+        int purpose,
+        int requested_by,
+        struct run_review *p_result)
+{
+  return 0;
+}
