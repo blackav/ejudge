@@ -451,6 +451,8 @@ enum
   CNTSPROB_internal_name,
   CNTSPROB_plugin_entry_name,
   CNTSPROB_uuid,
+  CNTSPROB_abstract_problem_dir,
+  CNTSPROB_problem_dirs,
   CNTSPROB_problem_dir,
   CNTSPROB_test_dir,
   CNTSPROB_test_sfx,
