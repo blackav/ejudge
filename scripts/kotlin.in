@@ -1,5 +1,5 @@
 #! /bin/bash
-# Copyright (c) 2017-2024 Alexander Chernov <cher@ejudge.ru>
+# Copyright (c) 2017-2026 Alexander Chernov <cher@ejudge.ru>
 
 # Usage: kotlin in-file out-file
 # The working dir must not contain any .class files.
@@ -10,11 +10,17 @@ prefix="@prefix@"
 exec_prefix="@exec_prefix@"
 libexecdir="@libexecdir@"
 
-LANG_CONFIG_DIR="@lang_config_dir@"
-[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/kotlin.cfg"
-
 infile="$1"
 outfile="$2"
+
+LANG_CONFIG_DIR="@lang_config_dir@"
+THIS_LANGUAGE="kotlin"
+[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/kotlin.cfg"
+
+if [ -f "${LANG_CONFIG_DIR}/${THIS_LANGUAGE}.env" ]
+then
+  . "${LANG_CONFIG_DIR}/${THIS_LANGUAGE}.env"
+fi
 
 if [ -f "${EJUDGE_LANG_CONFIG}" ]
 then

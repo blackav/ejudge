@@ -2,6 +2,7 @@
 # Copyright (c) 2005-2026 Alexander Chernov <cher@ejudge.ru>
 
 LANG_CONFIG_DIR="@lang_config_dir@"
+THIS_LANGUAGE="javac"
 
 common_config() {
   echo 'long_name="Java JDK"'
@@ -27,6 +28,11 @@ unset LANG
 unset LC_ALL
 unset LC_MESSAGES
 unset LANGUAGE
+
+if [ -f "${LANG_CONFIG_DIR}/${THIS_LANGUAGE}.env" ]
+then
+  . "${LANG_CONFIG_DIR}/${THIS_LANGUAGE}.env"
+fi
 
 if [ x"$1" = x-v ]
 then
@@ -111,7 +117,7 @@ then
   exit 0
 fi
 
-[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/javac.cfg"
+[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/${THIS_LANGUAGE}.cfg"
 
 if [ -f "${EJUDGE_LANG_CONFIG}" ]
 then

@@ -1,5 +1,5 @@
-#!/bin/sh
-# Copyright (c) 2005-2025 Alexander Chernov <cher@ejudge.ru>
+#! /bin/bash
+# Copyright (c) 2025-2026 Alexander Chernov <cher@ejudge.ru>
 
 # compiler script interface is as follows
 # <comp>-version [OPTION]
@@ -17,6 +17,7 @@
 #  -f   write the compiler full name and the compiler version
 
 LANG_CONFIG_DIR="/home/judges/compile/conf/lang.d"
+THIS_LANGUAGE="zig"
 
 common_config() {
   echo 'long_name="Zig"'
@@ -38,6 +39,11 @@ unset LANG
 unset LC_ALL
 unset LC_MESSAGES
 unset LANGUAGE
+
+if [ -f "${LANG_CONFIG_DIR}/${THIS_LANGUAGE}.env" ]
+then
+  . "${LANG_CONFIG_DIR}/${THIS_LANGUAGE}.env"
+fi
 
 if [ x"$1" = x-v ]
 then
@@ -82,7 +88,7 @@ then
   exit 0
 fi
 
-[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/zig.cfg"
+[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/${THIS_LANGUAGE}.cfg"
 
 if [ -f "${EJUDGE_LANG_CONFIG}" ]
 then

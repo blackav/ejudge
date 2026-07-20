@@ -1,10 +1,16 @@
 #! /bin/bash
-# Copyright (c) 2001-2025 Alexander Chernov <cher@ejudge.ru>
+# Copyright (c) 2025-2026 Alexander Chernov <cher@ejudge.ru>
 
 # using EJUDGE_FLAGS we may pass additional flags
 
 LANG_CONFIG_DIR="/home/judges/compile/conf/lang.d"
-[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/zig.cfg"
+THIS_LANGUAGE="zig"
+[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/${THIS_LANGUAGE}.cfg"
+
+if [ -f "${LANG_CONFIG_DIR}/${THIS_LANGUAGE}.env" ]
+then
+  . "${LANG_CONFIG_DIR}/${THIS_LANGUAGE}.env"
+fi
 
 if [ -f "${EJUDGE_LANG_CONFIG}" ]
 then

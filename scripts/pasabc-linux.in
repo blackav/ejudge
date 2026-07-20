@@ -1,5 +1,5 @@
 #! /bin/bash
-# Copyright (c) 2013-2025 Alexander Chernov <cher@ejudge.ru>
+# Copyright (c) 2013-2026 Alexander Chernov <cher@ejudge.ru>
 
 # A script for compilation of Pascal ABC.NET programs using the mono compiler.
 # Usage: pasabc-linux in-file out-file
@@ -7,7 +7,13 @@
 # using EJUDGE_FLAGS we may pass additional flags
 
 LANG_CONFIG_DIR="@lang_config_dir@"
-[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/pasabc-linux.cfg"
+THIS_LANGUAGE="pasabc-linux"
+[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/${THIS_LANGUAGE}.cfg"
+
+if [ -f "${LANG_CONFIG_DIR}/${THIS_LANGUAGE}.env" ]
+then
+  . "${LANG_CONFIG_DIR}/${THIS_LANGUAGE}.env"
+fi
 
 if [ -f "${EJUDGE_LANG_CONFIG}" ]
 then
@@ -26,14 +32,14 @@ fi
 
 if [ "${EJUDGE_BUILD_SCRIPT}" != "" ]
 then
-    export EJUDGE_LANGUAGE="pasabc-linux"
+    export EJUDGE_LANGUAGE="${THIS_LANGUAGE}"
     export EJUDGE_COMPILER="${PASABC}"
     exec "${EJUDGE_BUILD_SCRIPT}" $@
 fi
 
 if [ "${EJUDGE_OPT_BUILD_SCRIPT}" != "" -a -x "${EJUDGE_OPT_BUILD_SCRIPT}" ]
 then
-    export EJUDGE_LANGUAGE="pasabc-linux"
+    export EJUDGE_LANGUAGE="${THIS_LANGUAGE}"
     export EJUDGE_COMPILER="${PASABC}"
     exec "${EJUDGE_OPT_BUILD_SCRIPT}" $@
 fi
