@@ -3,7 +3,7 @@
 #ifndef __COMMON_MYSQL_H__
 #define __COMMON_MYSQL_H__
 
-/* Copyright (C) 2008-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -69,6 +69,14 @@ struct common_mysql_state
 };
 
 #endif /* EJUDGE_SKIP_MYSQL */
+
+enum
+{
+  EJ_MYSQL_NULLABLE = 1,
+  EJ_MYSQL_DEFAULT_IS_M1 = 2,
+  EJ_MYSQL_NOW_IS_M2 = 4,
+  EJ_MYSQL_NULL_IS_M1 = 8,
+};
 
 struct common_mysql_parse_spec
 {
@@ -208,6 +216,22 @@ struct common_mysql_iface
 
   void (*lock)(struct common_mysql_state *state);
   void (*unlock)(struct common_mysql_state *state);
+
+  void (*write_timestamp_us)(
+        struct common_mysql_state *state,
+        FILE *f,
+        const unsigned char *pfx,
+        int64_t time,
+        int flags);
+  const unsigned char *(*unparse_spec_4_func)(
+        struct common_mysql_state *state,
+        FILE *fout,
+        int spec_num,
+        const struct common_mysql_parse_spec *specs,
+        unsigned long long mask,
+        const void *data,
+        const unsigned char *sep,
+        int update_clause_flag);
 };
 
 #define db_error_fail(s) do { s->i->error(s); goto fail; } while (0)
