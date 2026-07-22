@@ -41,6 +41,7 @@ CREATE TABLE reviews(
     KEY reviews_contest_id_idx (contest_id),
     KEY reviews_requested_idx (requested_by),
     KEY reviews_moderator_idx (moderator_user_id),
+    KEY reviews_reviewer_idx (reviewer_user_id),
     KEY reviews_approver_idx (approver_user_id),
     KEY reviews_contest_status_idx (contest_id, status),
     KEY reviews_status_idx (status)
