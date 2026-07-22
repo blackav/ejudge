@@ -273,6 +273,10 @@ struct rldb_plugin_iface
         int purpose,
         int requested_by,
         struct run_review *p_result);
+  int (*fetch_review)(
+        struct rldb_plugin_cnts *cdata,
+        const ej_uuid_t *p_uuid,
+        struct run_review *p_result);
 };
 
 /* default plugin: compiled into new-server */

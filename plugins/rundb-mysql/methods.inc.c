@@ -269,3 +269,9 @@ create_review_func(
         int purpose,
         int requested_by,
         struct run_review *p_result);
+
+static int
+fetch_review_func(
+        struct rldb_plugin_cnts *cdata,
+        const ej_uuid_t *p_uuid,
+        struct run_review *p_result);

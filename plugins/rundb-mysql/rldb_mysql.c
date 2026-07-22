@@ -137,6 +137,7 @@ struct rldb_plugin_iface plugin_rldb_mysql =
   run_set_is_checked_func,
   get_group_scores_func,
   create_review_func,
+  fetch_review_func,
 };
 
 static long long
@@ -3388,6 +3389,48 @@ static const struct common_mysql_parse_spec reviews_spec[REVIEW_ROW_WIDTH] =
   { 1, 's', "model", REVIEW_OFFSET(model), 0 },
 };
 
+#define REVIEW_OUT_OFFSET(f) XOFFSET(struct run_review, f)
+
+static const struct common_mysql_parse_spec reviews_out_spec[REVIEW_ROW_WIDTH] =
+{
+  { 0, 'l', "serial_id", REVIEW_OUT_OFFSET(serial_id), 0 },
+  { 0, 'l', "run_serial_id", REVIEW_OUT_OFFSET(run_serial_id), 0 },
+  { EJ_MYSQL_NOW_IS_M2, 'm', "create_time", REVIEW_OUT_OFFSET(create_time_us), 0 },
+  { EJ_MYSQL_NOW_IS_M2 | EJ_MYSQL_NULLABLE, 'm', "last_update_time", REVIEW_OUT_OFFSET(last_update_time_us) },
+  { EJ_MYSQL_NOW_IS_M2 | EJ_MYSQL_NULLABLE, 'm', "moderation_time", REVIEW_OUT_OFFSET(moderation_time_us) },
+  { EJ_MYSQL_NOW_IS_M2 | EJ_MYSQL_NULLABLE, 'm', "review_start_time", REVIEW_OUT_OFFSET(review_start_time_us), 0 },
+  { EJ_MYSQL_NOW_IS_M2 | EJ_MYSQL_NULLABLE, 'm', "review_finish_time", REVIEW_OUT_OFFSET(review_finish_time_us), 0 },
+  { EJ_MYSQL_NOW_IS_M2 | EJ_MYSQL_NULLABLE, 'm', "approve_time", REVIEW_OUT_OFFSET(approve_time_us), 0 },
+  { EJ_MYSQL_NOW_IS_M2 | EJ_MYSQL_NULLABLE, 'm', "user_open_time", REVIEW_OUT_OFFSET(user_open_time_us), 0 },
+  { 0, 'g', "review_uuid", REVIEW_OUT_OFFSET(review_uuid), 0 },
+  { EJ_MYSQL_NULLABLE, 's', "moderation_text", REVIEW_OUT_OFFSET(moderation_text), 0 },
+  { EJ_MYSQL_NULLABLE, 's', "review_source", REVIEW_OUT_OFFSET(review_source), 0 },
+  { EJ_MYSQL_NULLABLE, 's', "review_agent", REVIEW_OUT_OFFSET(review_agent), 0 },
+  { EJ_MYSQL_NULLABLE, 's', "review_result", REVIEW_OUT_OFFSET(review_result), 0 },
+  { EJ_MYSQL_NULLABLE, 's', "review_content_type", REVIEW_OUT_OFFSET(review_content_type), 0 },
+  { EJ_MYSQL_NULLABLE, 's', "review_statistics", REVIEW_OUT_OFFSET(review_statistics), 0 },
+  { EJ_MYSQL_NULLABLE, 's', "approved_text", REVIEW_OUT_OFFSET(approved_text), 0 },
+  { EJ_MYSQL_NULLABLE, 's', "model", REVIEW_OUT_OFFSET(model), 0 },
+  { EJ_MYSQL_NULLABLE, 'h', "review_source_sha256", REVIEW_OUT_OFFSET(review_source_sha256), 0 },
+  { 0, 'd', "contest_id", REVIEW_OUT_OFFSET(contest_id), 0 },
+  { 0, 'd', "run_id", REVIEW_OUT_OFFSET(run_id), 0 },
+  { EJ_MYSQL_NULL_IS_M1, 'd', "requested_by", REVIEW_OUT_OFFSET(requested_by), 0 },
+  { EJ_MYSQL_NULL_IS_M1, 'd', "moderator_user_id", REVIEW_OUT_OFFSET(moderator_user_id), 0 },
+  { EJ_MYSQL_NULL_IS_M1, 'd', "approver_user_id", REVIEW_OUT_OFFSET(approver_user_id), 0 },
+  { EJ_MYSQL_NULL_IS_M1, 'd', "input_tokens", REVIEW_OUT_OFFSET(input_tokens), 0 },
+  { EJ_MYSQL_NULL_IS_M1, 'd', "cached_input_tokens", REVIEW_OUT_OFFSET(cached_input_tokens), 0 },
+  { EJ_MYSQL_NULL_IS_M1, 'd', "output_tokens", REVIEW_OUT_OFFSET(output_tokens), 0 },
+  { EJ_MYSQL_NULL_IS_M1, 'd', "reasoning_tokens", REVIEW_OUT_OFFSET(reasoning_tokens), 0 },
+  { EJ_MYSQL_NULL_IS_M1, 'd', "total_tokens", REVIEW_OUT_OFFSET(total_tokens), 0 },
+  { 0, '1', "generation", REVIEW_OUT_OFFSET(generation), 0 },
+  { 0, '1', "status", REVIEW_OUT_OFFSET(status), 0 },
+  { 0, '1', "purpose", REVIEW_OUT_OFFSET(purpose), 0 },
+  { EJ_MYSQL_NULL_IS_M1, '!', "review_recommended_status", REVIEW_OUT_OFFSET(review_recommended_status), 0 },
+  { EJ_MYSQL_NULL_IS_M1, '!', "approver_review_mark", REVIEW_OUT_OFFSET(approver_review_mark), 0 },
+  { EJ_MYSQL_NULLABLE, '1', "user_open_count", REVIEW_OUT_OFFSET(user_open_count), 0 },
+  { EJ_MYSQL_NULL_IS_M1, '!', "user_review_mark", REVIEW_OUT_OFFSET(user_review_mark), 0 },
+};
+
 static int
 create_review_func(
         struct rldb_plugin_cnts *cdata,
@@ -3400,5 +3443,125 @@ create_review_func(
         int requested_by,
         struct run_review *p_result)
 {
+  struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts*) cdata;
+  struct rldb_mysql_state *state = cs->plugin_state;
+  char *cmd_s = NULL;
+  size_t cmd_z = 0;
+  FILE *cmd_f = open_memstream(&cmd_s, &cmd_z);
+
+  struct run_review rr = {};
+  rr.run_serial_id = run_serial_id;
+  rr.create_time_us = -2; // NOW()
+  ej_uuid_generate(&rr.review_uuid);
+  rr.contest_id = contest_id;
+  rr.run_id = run_id;
+  rr.generation = generation;
+  rr.status = status;
+  rr.purpose = purpose;
+  rr.requested_by = requested_by;
+  fprintf(cmd_f, "INSERT INTO %sreviews SET ", state->md->table_prefix);
+  state->mi->unparse_spec_4(state->md, cmd_f, REVIEW_ROW_WIDTH, reviews_out_spec,
+                            RER_RUN_SERIAL_ID|RER_CREATE_TIME_US|RER_REVIEW_UUID|RER_CONTEST_ID|RER_RUN_ID|RER_GENERATION|RER_STATUS|RER_PURPOSE|RER_REQUESTED_BY,
+                          &rr, "", 1);
+  fclose(cmd_f); cmd_f = NULL;
+
+  if (state->mi->simple_query(state->md, cmd_s, cmd_z) < 0) {
+    free(cmd_s);
+    return -1;
+  }
+  free(cmd_s); cmd_s = NULL;
+
+  return 0;
+}
+
+static void
+run_review_move_from_internal(struct run_review *dst, struct run_review_internal *src)
+{
+  dst->serial_id = src->serial_id;
+  dst->run_serial_id = src->run_serial_id;
+  dst->create_time_us = src->create_time_us;
+  dst->last_update_time_us = src->last_update_time_us;
+  dst->moderation_time_us = src->moderation_time_us;
+  dst->review_start_time_us = src->review_start_time_us;
+  dst->review_finish_time_us = src->review_finish_time_us;
+  dst->approve_time_us = src->approve_time_us;
+  dst->user_open_time_us = src->user_open_time_us;
+  memcpy(&dst->review_uuid, &src->review_uuid, 16);
+  dst->moderation_text = src->moderation_text; src->moderation_text = NULL;
+  dst->review_source = src->review_source; src->review_source = NULL;
+  dst->review_agent = src->review_agent; src->review_agent = NULL;
+  dst->review_result = src->review_result; src->review_result = NULL;
+  dst->review_content_type = src->review_content_type; src->review_content_type = NULL;
+  dst->review_statistics = src->review_statistics; src->review_statistics = NULL;
+  dst->approved_text = src->approved_text; src->approved_text = NULL;
+  dst->model = src->model; src->model = NULL;
+  memcpy(dst->review_source_sha256, src->review_source_sha256, sizeof(dst->review_source_sha256));
+  dst->contest_id = src->contest_id;
+  dst->run_id = src->run_id;
+  dst->requested_by = src->requested_by;
+  if (dst->requested_by <= 0) dst->requested_by = -1;
+  dst->moderator_user_id = src->moderator_user_id;
+  if (dst->moderator_user_id <= 0) dst->moderator_user_id = -1;
+  dst->approver_user_id = src->approver_user_id;
+  if (dst->approver_user_id <= 0) dst->approver_user_id = -1;
+  dst->input_tokens = src->input_tokens;
+  if (dst->input_tokens < 0) dst->input_tokens = -1;
+  dst->cached_input_tokens = src->cached_input_tokens;
+  if (dst->cached_input_tokens < 0) dst->cached_input_tokens = -1;
+  dst->output_tokens = src->output_tokens;
+  if (src->output_tokens < 0) src->output_tokens = -1;
+  dst->reasoning_tokens = src->reasoning_tokens;
+  if (src->reasoning_tokens < 0) src->reasoning_tokens = -1;
+  dst->total_tokens = src->total_tokens;
+  if (src->total_tokens < 0) src->total_tokens = -1;
+  if (src->generation < 0 || src->generation > 255) src->generation = 0;
+  dst->generation = src->generation;
+  if (src->status < 0 || src->status > 255) src->status =  255;
+  dst->status = src->status;
+  if (src->purpose < 0 || src->purpose > 255) src->purpose = 255;
+  dst->purpose = src->purpose;
+  if (src->review_recommended_status < -1) src->review_recommended_status = -1;
+  if (src->review_recommended_status > 127) src->review_recommended_status = 127;
+  dst->review_recommended_status = src->review_recommended_status;
+  if (src->approver_review_mark < -1) src->approver_review_mark = -1;
+  if (src->approver_review_mark > 127) src->approver_review_mark = 127;
+  dst->approver_review_mark = src->approver_review_mark;
+  if (src->user_open_count < 0) src->user_open_count = 0;
+  if (src->user_open_count > 255) src->user_open_count = 255;
+  dst->user_open_count = src->user_open_count;
+  if (src->user_review_mark < 0) src->user_review_mark = -1;
+  if (src->user_review_mark > 127) src->user_review_mark = 127;
+  dst->user_review_mark = src->user_review_mark;
+}
+
+static int
+fetch_review_func(
+        struct rldb_plugin_cnts *cdata,
+        const ej_uuid_t *p_uuid,
+        struct run_review *p_result)
+{
+  struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts*) cdata;
+  struct rldb_mysql_state *state = cs->plugin_state;
+  unsigned char buf[64];
+
+  if (state->mi->fquery(state->md, REVIEW_ROW_WIDTH,
+                 "SELECT * FROM %sreviews WHERE review_uuid='%s' ;",
+                 state->md->table_prefix,
+                ej_uuid_unparse_r(buf, sizeof(buf), p_uuid, NULL)) < 0) {
+    return -1;
+  }
+
+  if (state->md->row_count <= 0) {
+    return 0;
+  }
+
+  struct run_review_internal rri = {};
+  if (state->mi->next_row(state->md) < 0) {
+    return -1;
+  }
+  if (state->mi->parse_spec(state->md, state->md->field_count, state->md->row, state->md->lengths,
+                      REVIEW_ROW_WIDTH, reviews_spec, &rri) < 0)
+    return -1;
+  run_review_move_from_internal(p_result, &rri);
   return 0;
 }

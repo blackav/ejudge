@@ -223,7 +223,7 @@ struct common_mysql_iface
         const unsigned char *pfx,
         int64_t time,
         int flags);
-  const unsigned char *(*unparse_spec_4_func)(
+  const unsigned char *(*unparse_spec_4)(
         struct common_mysql_state *state,
         FILE *fout,
         int spec_num,
