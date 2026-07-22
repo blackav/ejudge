@@ -3322,6 +3322,7 @@ struct run_review_internal
   unsigned char *moderation_text;
   unsigned char *review_source;
   unsigned char review_source_sha256[32];
+  int reviewer_user_id;
   int64_t review_start_time_us;
   unsigned char *review_agent;
   int64_t review_finish_time_us;
@@ -3344,7 +3345,7 @@ struct run_review_internal
   unsigned char *model;
 };
 
-enum { REVIEW_ROW_WIDTH = 36 };
+enum { REVIEW_ROW_WIDTH = 37 };
 
 #define REVIEW_OFFSET(f) XOFFSET(struct run_review_internal, f)
 
@@ -3367,6 +3368,7 @@ static const struct common_mysql_parse_spec reviews_spec[REVIEW_ROW_WIDTH] =
   { 1, 's', "moderation_text", REVIEW_OFFSET(moderation_text), 0 },
   { 1, 's', "review_source", REVIEW_OFFSET(review_source), 0 },
   { 1, 'h', "review_source_sha256", REVIEW_OFFSET(review_source_sha256), 0 },
+  { 1, 'd', "reviewer_user_id", REVIEW_OFFSET(reviewer_user_id), 0 },
   { 1, 'm', "review_start_time", REVIEW_OFFSET(review_start_time_us), 0 },
   { 1, 's', "review_agent", REVIEW_OFFSET(review_agent), 0 },
   { 1, 'm', "review_finish_time", REVIEW_OFFSET(review_finish_time_us), 0 },
@@ -3416,6 +3418,7 @@ static const struct common_mysql_parse_spec reviews_out_spec[REVIEW_ROW_WIDTH] =
   { 0, 'd', "run_id", REVIEW_OUT_OFFSET(run_id), 0 },
   { EJ_MYSQL_NULL_IS_M1, 'd', "requested_by", REVIEW_OUT_OFFSET(requested_by), 0 },
   { EJ_MYSQL_NULL_IS_M1, 'd', "moderator_user_id", REVIEW_OUT_OFFSET(moderator_user_id), 0 },
+  { EJ_MYSQL_NULL_IS_M1, 'd', "reviewer_user_id", REVIEW_OUT_OFFSET(reviewer_user_id), 0 },
   { EJ_MYSQL_NULL_IS_M1, 'd', "approver_user_id", REVIEW_OUT_OFFSET(approver_user_id), 0 },
   { EJ_MYSQL_NULL_IS_M1, 'd', "input_tokens", REVIEW_OUT_OFFSET(input_tokens), 0 },
   { EJ_MYSQL_NULL_IS_M1, 'd', "cached_input_tokens", REVIEW_OUT_OFFSET(cached_input_tokens), 0 },
@@ -3502,6 +3505,8 @@ run_review_move_from_internal(struct run_review *dst, struct run_review_internal
   if (dst->requested_by <= 0) dst->requested_by = -1;
   dst->moderator_user_id = src->moderator_user_id;
   if (dst->moderator_user_id <= 0) dst->moderator_user_id = -1;
+  if (src->reviewer_user_id <= 0) src->reviewer_user_id = -1;
+  dst->reviewer_user_id = src->reviewer_user_id;
   dst->approver_user_id = src->approver_user_id;
   if (dst->approver_user_id <= 0) dst->approver_user_id = -1;
   dst->input_tokens = src->input_tokens;
