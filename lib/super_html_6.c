@@ -4255,6 +4255,8 @@ const unsigned char * const ss_global_cap_descs[OPCAP_LAST] =
   [OPCAP_LOCAL_1] = "Local capability 1",
   [OPCAP_LOCAL_2] = "Local capability 2",
   [OPCAP_LOCAL_3] = "Local capability 3",
+  [OPCAP_PREMOD_REVIEW] = NULL,
+  [OPCAP_EXT_REVIEW] = "Allow to perform review",
 };
 
 int

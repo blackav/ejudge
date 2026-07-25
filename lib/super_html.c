@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2004-2024 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -691,6 +691,8 @@ const char * super_html_contest_cap_descs[OPCAP_LAST] =
   [OPCAP_RESTART] = "Restart the server programs",
   [OPCAP_COMMENT_RUN] = "Comment the runs",
   [OPCAP_UNLOAD_CONTEST] = "Unload contests",
+  [OPCAP_PREMOD_REVIEW] = "Pre-moderate external review",
+  [OPCAP_EXT_REVIEW] = "Perform external review",
 };
 
 void
