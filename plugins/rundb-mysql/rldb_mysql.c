@@ -3327,7 +3327,7 @@ struct run_review_internal
   unsigned char *review_agent;
   int64_t review_finish_time_us;
   unsigned char *review_result;
-  unsigned char *review_content_type;
+  unsigned char *review_judge_result;
   int review_recommended_status;
   unsigned char *review_statistics;
   int approver_user_id;
@@ -3343,9 +3343,11 @@ struct run_review_internal
   int reasoning_tokens;
   int total_tokens;
   unsigned char *model;
+  int review_approved_as_is;
+  int status_approved_as_is;
 };
 
-enum { REVIEW_ROW_WIDTH = 37 };
+enum { REVIEW_ROW_WIDTH = 39 };
 
 #define REVIEW_OFFSET(f) XOFFSET(struct run_review_internal, f)
 
@@ -3373,7 +3375,7 @@ static const struct common_mysql_parse_spec reviews_spec[REVIEW_ROW_WIDTH] =
   { 1, 's', "review_agent", REVIEW_OFFSET(review_agent), 0 },
   { 1, 'm', "review_finish_time", REVIEW_OFFSET(review_finish_time_us), 0 },
   { 1, 's', "review_result", REVIEW_OFFSET(review_result), 0 },
-  { 1, 's', "review_content_type", REVIEW_OFFSET(review_content_type), 0 },
+  { 1, 's', "review_judge_result", REVIEW_OFFSET(review_judge_result), 0 },
   { 1, 'd', "review_recommended_status", REVIEW_OFFSET(review_recommended_status), 0 },
   { 1, 's', "review_statistics", REVIEW_OFFSET(review_statistics), 0 },
   { 1, 'd', "approver_user_id", REVIEW_OFFSET(approver_user_id), 0 },
@@ -3389,6 +3391,8 @@ static const struct common_mysql_parse_spec reviews_spec[REVIEW_ROW_WIDTH] =
   { 1, 'd', "reasoning_tokens", REVIEW_OFFSET(reasoning_tokens), 0 },
   { 1, 'd', "total_tokens", REVIEW_OFFSET(total_tokens), 0 },
   { 1, 's', "model", REVIEW_OFFSET(model), 0 },
+  { 1, 'd', "review_approved_as_is", REVIEW_OFFSET(review_approved_as_is), 0 },
+  { 1, 'd', "status_approved_as_is", REVIEW_OFFSET(status_approved_as_is), 0 },
 };
 
 #define REVIEW_OUT_OFFSET(f) XOFFSET(struct run_review, f)
@@ -3409,7 +3413,7 @@ static const struct common_mysql_parse_spec reviews_out_spec[REVIEW_ROW_WIDTH] =
   { EJ_MYSQL_NULLABLE, 's', "review_source", REVIEW_OUT_OFFSET(review_source), 0 },
   { EJ_MYSQL_NULLABLE, 's', "review_agent", REVIEW_OUT_OFFSET(review_agent), 0 },
   { EJ_MYSQL_NULLABLE, 's', "review_result", REVIEW_OUT_OFFSET(review_result), 0 },
-  { EJ_MYSQL_NULLABLE, 's', "review_content_type", REVIEW_OUT_OFFSET(review_content_type), 0 },
+  { EJ_MYSQL_NULLABLE, 's', "review_judge_result", REVIEW_OUT_OFFSET(review_judge_result), 0 },
   { EJ_MYSQL_NULLABLE, 's', "review_statistics", REVIEW_OUT_OFFSET(review_statistics), 0 },
   { EJ_MYSQL_NULLABLE, 's', "approved_text", REVIEW_OUT_OFFSET(approved_text), 0 },
   { EJ_MYSQL_NULLABLE, 's', "model", REVIEW_OUT_OFFSET(model), 0 },
@@ -3432,6 +3436,8 @@ static const struct common_mysql_parse_spec reviews_out_spec[REVIEW_ROW_WIDTH] =
   { EJ_MYSQL_NULL_IS_M1, '!', "approver_review_mark", REVIEW_OUT_OFFSET(approver_review_mark), 0 },
   { EJ_MYSQL_NULLABLE, '1', "user_open_count", REVIEW_OUT_OFFSET(user_open_count), 0 },
   { EJ_MYSQL_NULL_IS_M1, '!', "user_review_mark", REVIEW_OUT_OFFSET(user_review_mark), 0 },
+  { EJ_MYSQL_NULL_IS_M1, '!', "review_approved_as_is", REVIEW_OUT_OFFSET(review_approved_as_is), 0 },
+  { EJ_MYSQL_NULL_IS_M1, '!', "status_approved_as_is", REVIEW_OUT_OFFSET(status_approved_as_is), 0 },
 };
 
 static int
@@ -3494,7 +3500,7 @@ run_review_move_from_internal(struct run_review *dst, struct run_review_internal
   dst->review_source = src->review_source; src->review_source = NULL;
   dst->review_agent = src->review_agent; src->review_agent = NULL;
   dst->review_result = src->review_result; src->review_result = NULL;
-  dst->review_content_type = src->review_content_type; src->review_content_type = NULL;
+  dst->review_judge_result = src->review_judge_result; src->review_judge_result = NULL;
   dst->review_statistics = src->review_statistics; src->review_statistics = NULL;
   dst->approved_text = src->approved_text; src->approved_text = NULL;
   dst->model = src->model; src->model = NULL;
@@ -3537,6 +3543,12 @@ run_review_move_from_internal(struct run_review *dst, struct run_review_internal
   if (src->user_review_mark < 0) src->user_review_mark = -1;
   if (src->user_review_mark > 127) src->user_review_mark = 127;
   dst->user_review_mark = src->user_review_mark;
+  if (src->review_approved_as_is < 0) src->review_approved_as_is = -1;
+  if (src->review_approved_as_is > 0) src->review_approved_as_is = 1;
+  dst->review_approved_as_is = src->review_approved_as_is;
+  if (src->status_approved_as_is < 0) src->status_approved_as_is = -1;
+  if (src->status_approved_as_is > 0) src->status_approved_as_is = 1;
+  dst->status_approved_as_is = src->status_approved_as_is;
 }
 
 static int

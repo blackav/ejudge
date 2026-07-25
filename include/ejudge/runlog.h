@@ -643,7 +643,7 @@ enum
   RER_REVIEW_SOURCE = 0x800ULL,
   RER_REVIEW_AGENT = 0x1000ULL,
   RER_REVIEW_RESULT = 0x2000ULL,
-  RER_REVIEW_CONTENT_TYPE = 0x4000ULL,
+  RER_REVIEW_JUDGE_RESULT = 0x4000ULL,
   RER_REVIEW_STATISTICS = 0x8000ULL,
   RER_APPROVED_TEXT = 0x10000ULL,
   RER_MODEL = 0x20000ULL,
@@ -666,6 +666,8 @@ enum
   RER_APPROVER_REVIEW_MARK = 0x400000000ULL,
   RER_USER_OPEN_COUNT = 0x800000000ULL,
   RER_USER_REVIEW_MARK = 0x1000000000ULL,
+  RER_REVIEW_APPROVED_AS_IS = 0x2000000000ULL,
+  RER_STATUS_APPROVED_AS_IS = 0x4000000000ULL,
 };
 
 struct run_review
@@ -684,7 +686,7 @@ struct run_review
   unsigned char *review_source;
   unsigned char *review_agent;
   unsigned char *review_result;
-  unsigned char *review_content_type;
+  unsigned char *review_judge_result;
   unsigned char *review_statistics;
   unsigned char *approved_text;
   unsigned char *model;
@@ -707,6 +709,8 @@ struct run_review
   int8_t approver_review_mark;
   uint8_t user_open_count;
   int8_t user_review_mark;
+  int8_t review_approved_as_is;
+  int8_t status_approved_as_is;
 };
 
 #endif /* __RUNLOG_H__ */
