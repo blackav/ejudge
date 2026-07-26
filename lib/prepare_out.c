@@ -1763,6 +1763,17 @@ prepare_unparse_prob(
       || (!prob->abstract && prob->ignore_sigpipe >= 0)) {
     unparse_bool(f, "ignore_sigpipe", prob->ignore_sigpipe);
   }
+#define UNPARSE_BOOL(field) \
+  do { if ((prob->abstract > 0 && prob->field > 0) \
+      || (!prob->abstract && prob->field >= 0)) { \
+    unparse_bool(f, #field, prob->field); \
+  } } while (0)
+  UNPARSE_BOOL(enable_external_review);
+  UNPARSE_BOOL(enable_user_review_request);
+  UNPARSE_BOOL(enable_user_help_request);
+  UNPARSE_BOOL(disable_pre_moderation);
+  UNPARSE_BOOL(disable_post_approve);
+#undef UNPARSE_BOOL
   if (prob->stand_ignore_score >= 0
       && ((prob->abstract && prob->stand_ignore_score) || !prob->abstract))
       unparse_bool(f, "stand_ignore_score", prob->stand_ignore_score);
@@ -2238,6 +2249,16 @@ prepare_unparse_actual_prob(
     unparse_bool(f, "enable_group_merge", prob->enable_group_merge);
   if (prob->ignore_sigpipe > 0)
     unparse_bool(f, "ignore_sigpipe", prob->ignore_sigpipe);
+#define UNPARSE_BOOL(field) \
+  do { if (prob->field > 0) \
+    unparse_bool(f, #field, prob->field); } while (0)
+  UNPARSE_BOOL(enable_external_review);
+  UNPARSE_BOOL(enable_user_review_request);
+  UNPARSE_BOOL(enable_user_help_request);
+  UNPARSE_BOOL(disable_pre_moderation);
+  UNPARSE_BOOL(disable_post_approve);
+#undef UNPARSE_BOOL
+
   if (prob->stand_ignore_score > 0)
     unparse_bool(f, "stand_ignore_score", prob->stand_ignore_score);
   if (prob->stand_last_column > 0)

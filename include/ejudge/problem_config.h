@@ -118,6 +118,11 @@ struct problem_config_section
   ejbyteflag_t disable_vm_size_limit;
   ejbyteflag_t enable_group_merge;
   ejbyteflag_t ignore_sigpipe;
+  ejbyteflag_t enable_external_review;
+  ejbyteflag_t enable_user_review_request;
+  ejbyteflag_t enable_user_help_request;
+  ejbyteflag_t disable_pre_moderation;
+  ejbyteflag_t disable_post_approve;
 
   int id;
   int variant_num;
