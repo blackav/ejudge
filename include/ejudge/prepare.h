@@ -1073,6 +1073,8 @@ struct section_problem_data
   int prev_runs_to_show;
   /** limit for the number of submits for this problem for a user */
   int max_user_run_count;
+  /** number of runs of the problem */
+  int communication;
   /** long name of the problem */
   unsigned char *long_name;
   /** name for the standings column */
@@ -1127,6 +1129,8 @@ struct section_problem_data
   unsigned char *compiler_env_pat;
   /** options for container */
   unsigned char *container_options;
+  /** options for communication runs */
+  unsigned char *communication_flags;
 
   struct token_info *token_info META_ATTRIB((meta_private));
 
@@ -1792,6 +1796,14 @@ prepare_parse_testsets(
         char **set_in,
         int *p_total,
         struct testset_info **p_info);
+
+int
+prepare_parse_communication_flags(
+        FILE *log_f,
+        const unsigned char *communication_flags,
+        int **pflags,
+        int *pcount);
+
 void
 prepare_free_testsets(int t, struct testset_info *p);
 

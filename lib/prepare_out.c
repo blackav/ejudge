@@ -1532,6 +1532,16 @@ prepare_unparse_prob(
       fprintf(f, "min_tests_to_accept = %d\n", prob->min_tests_to_accept);
     }
   }
+
+  if ((prob->abstract && prob->communication >= 2) 
+      || (!prob->abstract && prob->communication >= 2)) {
+    fprintf(f, "communication = %d\n", prob->communication);
+
+    if (prob->communication_flags && prob->communication_flags[0]) {
+      fprintf(f, "communication_flags = \"%s\"\n", CARMOR(prob->communication_flags));
+    }
+  }
+
   if (prob->standard_checker)
     fprintf(f, "standard_checker = \"%s\"\n", CARMOR(prob->standard_checker));
   if (prob->check_cmd && prob->check_cmd[0])
@@ -2042,6 +2052,14 @@ prepare_unparse_actual_prob(
     fprintf(f, "token_open_tests = \"%s\"\n", CARMOR(prob->token_open_tests));
   if (prob->tokens && prob->tokens[0])
     fprintf(f, "tokens = \"%s\"\n", CARMOR(prob->tokens));
+
+  if (prob->communication >= 2) {
+    fprintf(f, "communication = %d\n", prob->communication);
+
+    if (prob->communication_flags && prob->communication_flags[0]) {
+      fprintf(f, "communication_flags = \"%s\"\n", CARMOR(prob->communication_flags));
+    }
+  }
 
   if (prob->standard_checker)
     fprintf(f, "standard_checker = \"%s\"\n", CARMOR(prob->standard_checker));

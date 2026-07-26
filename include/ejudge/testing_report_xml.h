@@ -100,6 +100,15 @@ struct testing_report_test
   struct testing_report_file_content checker;
   /* test checker output */
   struct testing_report_file_content test_checker;
+
+  /* communication per-run details */
+  int communication_run_count;
+  int *communication_time_ms;
+  int *communication_real_time_ms;
+  unsigned long *communication_max_memory_used;
+  long long *communication_max_rss;
+  struct testing_report_file_content *communication_inputs;
+  struct testing_report_file_content *communication_outputs;
 };
 
 struct testing_report_row
