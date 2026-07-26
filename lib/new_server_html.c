@@ -12189,6 +12189,15 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_CHANGE_REGISTRATIONS] = priv_change_registrations_json,
   [NEW_SRV_ACTION_LIST_PROBLEMS_JSON] = priv_list_problems_json,
   [NEW_SRV_ACTION_GET_PROBLEM_JSON] = priv_get_problem_json,
+  [NEW_SRV_ACTION_REQUEST_REVIEW_JSON] = NULL,
+  [NEW_SRV_ACTION_LIST_REVIEWS_JSON] = NULL,
+  [NEW_SRV_ACTION_GET_REVIEW_JSON] = NULL,
+  [NEW_SRV_ACTION_UPDATE_REVIEW_JSON] = NULL,
+  [NEW_SRV_ACTION_PREMODERATE_JSON] = NULL,
+  [NEW_SRV_ACTION_LIST_PENDING_REVIEWS_JSON] = NULL,
+  [NEW_SRV_ACTION_START_REVIEW_JSON] = NULL,
+  [NEW_SRV_ACTION_FINISH_REVIEW_JSON] = NULL,
+  [NEW_SRV_ACTION_POSTAPPROVE_JSON] = NULL,
 };
 
 static const unsigned char * const external_priv_action_names[NEW_SRV_ACTION_LAST] =
@@ -12237,6 +12246,9 @@ static const unsigned char * const external_priv_action_names[NEW_SRV_ACTION_LAS
   [NEW_SRV_ACTION_USER_RUN_HEADER_CLEAR_STOP_TIME] = "priv_user_run_header_clear_stop_time",
   [NEW_SRV_ACTION_SERVER_INFO_PAGE] = "priv_server_info_page",
   [NEW_SRV_ACTION_JOB_STATUS_PAGE] = "priv_job_status_page",
+  [NEW_SRV_ACTION_REVIEWS_PAGE] = "priv_reviews_page",
+  [NEW_SRV_ACTION_PREMODERATE_PAGE] = "priv_premoderate_page",
+  [NEW_SRV_ACTION_POSTAPPROVE_PAGE] = "priv_postapprove_page",
 };
 
 static const int external_priv_action_aliases[NEW_SRV_ACTION_LAST] =
@@ -19356,6 +19368,10 @@ static action_handler_t user_actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_CREATE_USERPROB] = unpriv_create_userprob,
   [NEW_SRV_ACTION_SAVE_USERPROB] = unpriv_save_userprob,
   [NEW_SRV_ACTION_REMOVE_USERPROB] = unpriv_remove_userprob,
+  [NEW_SRV_ACTION_REQUEST_REVIEW_JSON] = NULL,
+  [NEW_SRV_ACTION_LIST_REVIEWS_JSON] = NULL,
+  [NEW_SRV_ACTION_GET_REVIEW_JSON] = NULL,
+  [NEW_SRV_ACTION_UPDATE_REVIEW_JSON] = NULL,
 };
 
 static const unsigned char * const external_unpriv_action_names[NEW_SRV_ACTION_LAST] =

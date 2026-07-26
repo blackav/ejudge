@@ -1,6 +1,6 @@
 # -*- Makefile -*-
 
-# Copyright (C) 2014-2024 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2014-2026 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -76,6 +76,9 @@ SOFILES = \
  csp_priv_user_run_header_delete.so\
  csp_priv_user_run_header_change_duration.so\
  csp_priv_user_run_header_clear_stop_time.so\
+ csp_priv_reviews_page.so\
+ csp_priv_premoderate_page.so\
+ csp_priv_postapprove_page.so\
  csp_priv_users_page.so\
  csp_priv_users_new_page.so\
  csp_priv_users_new_ajax.so\
@@ -202,6 +205,9 @@ csp_priv_user_run_header_delete.c : priv_user_run_header_delete.csp priv_include
 csp_priv_user_run_header_change_duration.c : priv_user_run_header_change_duration.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 csp_priv_user_run_header_clear_stop_time.c : priv_user_run_header_clear_stop_time.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 csp_priv_job_status_page.c : priv_job_status_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
+csp_priv_reviews_page.c : priv_reviews_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
+csp_priv_premoderate_page.c : priv_premoderate_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
+csp_priv_postapprove_page.c : priv_postapprove_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 
 csp_priv_error_internal.c : priv_error_internal.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 csp_priv_error_inv_param.c : priv_error_inv_param.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp

@@ -28,6 +28,7 @@
 #include "ejudge/logger.h"
 #include "ejudge/osdeps.h"
 
+#include <stdio.h>
 #include <string.h>
 #include <ctype.h>
 #include <mysql.h>
@@ -188,6 +189,23 @@ lock_func(
 static void
 unlock_func(
         struct common_mysql_state *state);
+static void
+write_timestamp_us_func(
+        struct common_mysql_state *state,
+        FILE *f,
+        const unsigned char *pfx,
+        int64_t time,
+        int flags);
+static const unsigned char *
+unparse_spec_4_func(
+        struct common_mysql_state *state,
+        FILE *fout,
+        int spec_num,
+        const struct common_mysql_parse_spec *specs,
+        unsigned long long mask,
+        const void *data,
+        const unsigned char *sep,
+        int update_clause_flag);
 
 /* plugin entry point */
 struct common_mysql_iface plugin_common_mysql =
@@ -240,6 +258,9 @@ struct common_mysql_iface plugin_common_mysql =
   simple_query_bin_func,
   lock_func,
   unlock_func,
+
+  write_timestamp_us_func,
+  unparse_spec_4_func,
 };
 
 static struct common_plugin_data *
@@ -791,6 +812,18 @@ error_inv_value_func(struct common_mysql_state *state, const char *field)
   return -1;
 }
 
+static int tohexdigit(int c)
+{
+  if (c >= '0' && c <= '9') {
+    return c - '0';
+  } else if (c >= 'A' && c <= 'F') {
+    return c - 'A' + 10;
+  } else if (c >= 'a' && c <= 'f') {
+    return c - 'a' + 10;
+  }
+  return -1;
+}
+
 #define DEFAULT_IP "127.0.0.127"
 
 static int
@@ -1075,6 +1108,59 @@ parse_spec_func(
       break;
     }
 
+    case 'h': {
+      enum { SHA256_SIZE = 32 };
+      unsigned char *p_data = XPDEREF(unsigned char, data, specs[i].offset);
+      if (row[i]) {
+        if (lengths[i] != SHA256_SIZE * 2) goto invalid_format;
+        unsigned char *p_out = p_data;
+        const unsigned char *p_in = row[i];
+        for (int i = SHA256_SIZE; i; --i) {
+          int vh = tohexdigit(*p_in++);
+          if (vh < 0) goto invalid_format;
+          int vl = tohexdigit(*p_in++);
+          if (vl < 0) goto invalid_format;
+          *p_out++ = (vh << 4) | vl;
+        }
+      } else {
+        memset(p_data, 0, SHA256_SIZE);
+      }
+      break;
+    }
+
+    case 'm': {
+      int64_t *pv = XPDEREF(int64_t, data, specs[i].offset);
+      const char *str = row[i];
+      int us = 0;
+      *pv = 0;
+      if (!str) break;
+      // special handling for '0' case
+      if (sscanf(str, "%d%n", &x, &n) == 1 && !str[n] && !x) break;
+      // 'YYYY-MM-DD hh:mm:ss[.uuuuuu]'
+      if (sscanf(str, "%d-%d-%d %d:%d:%d%n",
+                 &d_year, &d_mon, &d_day, &d_hour, &d_min, &d_sec, &n) != 6)
+        goto invalid_format;
+      if (str[n] == '.') {
+        str += n + 1; n = 0;
+        if (sscanf(str, "%d%n", &us, &n) != 1) goto invalid_format;
+      }
+      if (str[n]) goto invalid_format;
+      if (!d_year && !d_mon && !d_day && !d_hour && !d_min && !d_sec && !us)
+        break;
+      memset(&tt, 0, sizeof(tt));
+      tt.tm_year = d_year - 1900;
+      tt.tm_mon = d_mon - 1;
+      tt.tm_mday = d_day;
+      tt.tm_hour = d_hour;
+      tt.tm_min = d_min;
+      tt.tm_sec = d_sec;
+      tt.tm_isdst = -1;
+      if ((t = mktime(&tt)) == (time_t) -1) goto invalid_format;
+      if (t < 0) t = 0;
+      *pv = t * 1000000LL + us;
+      break;
+    }
+
     default:
       err("unhandled format %d", specs[i].format);
       abort();
@@ -1287,6 +1373,38 @@ write_timestamp_func(
   fprintf(f, "%s'%04d-%02d-%02d %02d:%02d:%02d'",
           pfx, ptm->tm_year + 1900, ptm->tm_mon + 1, ptm->tm_mday,
           ptm->tm_hour, ptm->tm_min, ptm->tm_sec);
+}
+
+static void
+write_timestamp_us_func(
+        struct common_mysql_state *state,
+        FILE *f,
+        const unsigned char *pfx,
+        int64_t time,
+        int flags)
+{
+  if ((flags & EJ_MYSQL_NULLABLE) && !time) {
+    fprintf(f, "%sNULL", pfx);
+    return;
+  }
+  if ((flags & EJ_MYSQL_NOW_IS_M2) && time == -2LL) {
+    fprintf(f, "%sNOW(6)", pfx);
+    return;
+  }
+  time_t tt = time / 1000000;
+  int us = time % 1000000;
+  if (time < 0 && us != 0) {
+    us = 1000000 + us;
+    --time;
+  }
+  struct tm vtm = {};
+  localtime_r(&tt, &vtm);
+  fprintf(f, "%s'%04d-%02d-%02d %02d:%02d:%02d'",
+          pfx, vtm.tm_year + 1900, vtm.tm_mon + 1, vtm.tm_mday,
+          vtm.tm_hour, vtm.tm_min, vtm.tm_sec);
+  if (us != 0) {
+    fprintf(f, ".%06d", us);
+  }
 }
 
 static void
@@ -1725,4 +1843,163 @@ unlock_func(
         struct common_mysql_state *state)
 {
   pthread_mutex_unlock(&state->m);
+}
+
+/*
+  q - 64-bit hex as a string
+  l - 64-bit int
+  d - 32-bit int                              EJ_MYSQL_NULLABLE EJ_MYSQL_NULL_IS_M1
+  e - 32-bit int with DEFAULT
+  D - 32-bit int from varargs
+  b - 32-bit bool
+  B - 32-bit bool from varargs
+  s - string                                  EJ_MYSQL_NULLABLE
+  S - string from varargs
+  t - time from time_t
+  T - time from time_t with us precision
+  a - date
+  i - IPv4 address (ej_ip4_t)
+  I - IPv6 address (ej_ip_t)
+  u - full cookie                             EJ_MYSQL_NULLABLE
+  U - base64 256 bits                         EJ_MYSQL_NULLABLE
+  g - UUID (ej_uuid_t)                        EJ_MYSQL_NULLABLE
+  x - binary (struct common_mysql_binary)     EJ_MYSQL_NULLABLE
+  h - hex 256 bits                            EJ_MYSQL_NULLABLE
+  m - int64_t us timestamp                    EJ_MYSQL_NULLABLE EJ_MYSQL_NOW_IS_M2
+  1 - uint8_t                                 EJ_MYSQL_NULLABLE
+  ! - int8_t                                  EJ_MYSQL_NULL_IS_M1
+*/
+
+static const unsigned char *
+unparse_spec_4_func(
+        struct common_mysql_state *state,
+        FILE *fout,
+        int spec_num,
+        const struct common_mysql_parse_spec *specs,
+        unsigned long long mask,
+        const void *data,
+        const unsigned char *sep,
+        int update_clause_flag)
+{
+  for (int i = 0; i < spec_num; ++i) {
+    if (!(mask & (1ULL << i))) continue;
+
+    fputs_unlocked(sep, fout);
+    sep = ",";
+    if (update_clause_flag) {
+      fprintf(fout, "%s = ", specs[i].name);
+    }
+    switch (specs[i].format) {
+    case 'q': {
+      abort();
+    }
+    case 'e': {
+      abort();
+    }
+    case 'l': {
+      long long *p_llv = XPDEREF(long long, data, specs[i].offset);
+      fprintf(fout, "%lld", *p_llv);
+      break;
+    }
+    case 'd': {
+      int val = *XPDEREF(int, data, specs[i].offset);
+      if ((specs[i].null_allowed & EJ_MYSQL_NULLABLE) && val <= 0) {
+        fputs("NULL", fout);
+      } else if ((specs[i].null_allowed & EJ_MYSQL_NULL_IS_M1) && val < 0) {
+        fputs("NULL", fout);
+      } else {
+        fprintf(fout, "%d", val);
+      }
+      break;
+    }
+    case 'D': {
+      abort();
+    }
+    case 'b': {
+      abort();
+    }
+    case 'B': {
+      abort();
+    }
+    case 's': {
+      const unsigned char *val = *XPDEREF(unsigned char *, data, specs[i].offset);
+      write_escaped_string_func(state, fout, "", val);
+      break;
+    }
+    case 'S': {
+      abort();
+    }
+    case 't': {
+      time_t val = *XPDEREF(time_t, data, specs[i].offset);
+      write_timestamp_func(state, fout, "", val);
+      break;
+    }
+    case 'T': {
+      const struct timeval *ptv = XPDEREF(struct timeval, data, specs[i].offset);
+      write_datetime_func(state, fout, "", ptv);
+      break;
+    }
+    case 'a': {
+      time_t val = *XPDEREF(time_t, data, specs[i].offset);
+      write_date_func(state, fout, "", val);
+      break;
+    }
+    case 'i': {
+      ej_ip4_t *p_val = XPDEREF(ej_ip4_t, data, specs[i].offset);
+      fprintf(fout, "'%s'", xml_unparse_ip(*p_val));
+      break;
+    }
+    case 'I': {
+      ej_ip_t *p_val = XPDEREF(ej_ip_t, data, specs[i].offset);
+      fprintf(fout, "'%s'", xml_unparse_ipv6(p_val));
+      break;
+    }
+    case 'u': {
+      ej_cookie_t *p_val = XPDEREF(ej_cookie_t, data, specs[i].offset);
+      unsigned char buf[64];
+      fprintf(fout, "'%s'", xml_unparse_full_cookie(buf, sizeof(buf), p_val, p_val + 1));
+      break;
+    }
+    case 'g': {
+      ej_uuid_t *p_uuid = XPDEREF(ej_uuid_t, data, specs[i].offset);
+      char uuid_str[40];
+      if (!ej_uuid_is_nonempty(*p_uuid) && specs[i].null_allowed) {
+        fprintf(fout, "NULL");
+      } else {
+        ej_uuid_unparse_r(uuid_str, sizeof(uuid_str), p_uuid, NULL);
+        fprintf(fout, "'%s'", uuid_str);
+      }
+      break;
+    }
+    case 'x': {
+      abort();
+    }
+    case 'm': {
+      int64_t val = *XPDEREF(int64_t, data, specs[i].offset);
+      write_timestamp_us_func(state, fout, "", val, specs[i].null_allowed);
+      break;
+    }
+    case '1': {
+      int val = *XPDEREF(uint8_t, data, specs[i].offset);
+      if ((specs[i].null_allowed & EJ_MYSQL_NULLABLE) && !val) {
+        fputs("NULL", fout);
+      } else {
+        fprintf(fout, "%d", val);
+      }
+      break;
+    }
+    case '!': {
+      int val = *XPDEREF(int8_t, data, specs[i].offset);
+      if ((specs[i].null_allowed & EJ_MYSQL_NULLABLE) && val <= 0) {
+        fputs("NULL", fout);
+      } else if ((specs[i].null_allowed & EJ_MYSQL_NULL_IS_M1) && val < 0) {
+        fputs("NULL", fout);
+      } else {
+        fprintf(fout, "%d", val);
+      }
+      break;
+    }
+    }
+  }
+  return sep;
 }

@@ -1,7 +1,7 @@
 #ifndef __OPCAPS_H__
 #define __OPCAPS_H__
 
-/* Copyright (C) 2003-2020 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -61,6 +61,8 @@ enum
   OPCAP_LOCAL_1 = 38,
   OPCAP_LOCAL_2 = 39,
   OPCAP_LOCAL_3 = 40,
+  OPCAP_PREMOD_REVIEW = 41,
+  OPCAP_EXT_REVIEW = 42,
 
   OPCAP_LAST
 };
