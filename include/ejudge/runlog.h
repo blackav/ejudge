@@ -627,6 +627,24 @@ group_scores_calc(
         const int *group_scores,
         int separate_user_score);
 
+// review status
+enum
+{
+  RERS_REQUESTED_REVIEW = 1,
+  RERS_WAITING_REVIEW,
+  RERS_REVIEWING,
+  RERS_WAITING_APPROVAL,
+  RERS_COMPLETE,
+};
+
+// review purpose
+enum
+{
+  RERP_REVIEW = 1,
+  RERP_HELP,
+  RERP_JUDGE_HELP,
+};
+
 enum
 {
   RER_SERIAL_ID = 0x1ULL,

@@ -272,6 +272,7 @@ struct rldb_plugin_iface
         int status,
         int purpose,
         int requested_by,
+        int need_full,
         struct run_review *p_result);
   int (*fetch_review)(
         struct rldb_plugin_cnts *cdata,

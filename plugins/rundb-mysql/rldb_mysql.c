@@ -3450,6 +3450,7 @@ create_review_func(
         int status,
         int purpose,
         int requested_by,
+        int need_full,
         struct run_review *p_result)
 {
   struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts*) cdata;

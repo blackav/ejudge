@@ -268,6 +268,7 @@ create_review_func(
         int status,
         int purpose,
         int requested_by,
+        int need_full,
         struct run_review *p_result);
 
 static int
