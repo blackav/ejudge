@@ -207,7 +207,7 @@ prepare_func(
 
 #include "tables.inc.c"
 
-#define RUN_DB_VERSION 32
+#define RUN_DB_VERSION 33
 
 static int
 do_create(struct rldb_mysql_state *state)
@@ -516,6 +516,10 @@ do_open(struct rldb_mysql_state *state)
       if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD COLUMN review_gen TINYINT UNSIGNED NOT NULL DEFAULT 0 AFTER review_status,"
                                 "ADD COLUMN hidden_review_status TINYINT NOT NULL DEFAULT 0 AFTER review_gen,"
                                 "ADD COLUMN hidden_review_gen TINYINT UNSIGNED NOT NULL DEFAULT 0 AFTER hidden_review_status;", md->table_prefix) < 0)
+        return -1;
+      break;
+    case 32:
+      if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD COLUMN is_help_review TINYINT NOT NULL DEFAULT 0 AFTER hidden_review_gen", md->table_prefix) < 0)
         return -1;
       break;
     case RUN_DB_VERSION:
@@ -1084,6 +1088,7 @@ load_runs(struct rldb_mysql_cnts *cs)
     re->review_gen = ri.review_gen;
     re->hidden_review_status = ri.hidden_review_status;
     re->hidden_review_gen = ri.hidden_review_gen;
+    re->is_help_review = ri.is_help_review;
   }
   return 1;
 
@@ -1697,6 +1702,7 @@ generate_update_entry_clause(
     fprintf(f, "%sreview_gen = %d", sep, re->review_gen);
     fprintf(f, "%shidden_review_status = %d", sep, re->hidden_review_status);
     fprintf(f, "%shidden_review_gen = %d", sep, re->hidden_review_gen);
+    fprintf(f, "%sis_help_review = %d", sep, re->is_help_review);
   }
 
   fprintf(f, "%slast_change_time = ", sep);
@@ -1833,6 +1839,7 @@ update_entry(
     dst->review_gen = src->review_gen;
     dst->hidden_review_status = src->hidden_review_status;
     dst->hidden_review_gen = src->hidden_review_gen;
+    dst->is_help_review = src->is_help_review;
   }
 }
 
@@ -2371,6 +2378,7 @@ put_entry_func(
   ri.review_gen = re->review_gen;
   ri.hidden_review_status = re->hidden_review_status;
   ri.hidden_review_gen = re->hidden_review_gen;
+  ri.is_help_review = re->is_help_review;
 
   cmd_f = open_memstream(&cmd_t, &cmd_z);
   fprintf(cmd_f, "INSERT INTO %sruns VALUES ( ", state->md->table_prefix);
@@ -2905,6 +2913,7 @@ append_run_func(
     fputs(",review_gen", cmd_f);
     fputs(",hidden_review_status", cmd_f);
     fputs(",hidden_review_gen", cmd_f);
+    fputs(",is_help_review", cmd_f);
   }
   fprintf(cmd_f, ") VALUES (%lld, %d, %d, NOW(6), MICROSECOND(NOW(6)) * 1000, '%s', NOW(), MICROSECOND(NOW(6)) * 1000",
           serial_id,
@@ -3070,6 +3079,7 @@ append_run_func(
     fprintf(cmd_f, ",%d", in_re->review_gen);
     fprintf(cmd_f, ",%d", in_re->hidden_review_status);
     fprintf(cmd_f, ",%d", in_re->hidden_review_gen);
+    fprintf(cmd_f, ",%d", in_re->is_help_review);
   }
   fprintf(cmd_f, ") ;");
   fclose(cmd_f); cmd_f = NULL;
@@ -3247,6 +3257,7 @@ append_run_func(
     new_re->review_gen = in_re->review_gen;
     new_re->hidden_review_status = in_re->hidden_review_status;
     new_re->hidden_review_gen = in_re->hidden_review_gen;
+    new_re->is_help_review = in_re->is_help_review;
   }
 
   if (p_tv) *p_tv = current_time_tv;

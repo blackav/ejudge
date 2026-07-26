@@ -69,6 +69,7 @@ static const char create_runs_query[] =
 "        review_gen TINYINT UNSIGNED NOT NULL DEFAULT 0,"
 "        hidden_review_status TINYINT NOT NULL DEFAULT 0, "
 "        hidden_review_gen TINYINT UNSIGNED NOT NULL DEFAULT 0,"
+"        is_help_review TINYINT NOT NULL DEFAULT 0,"
 "        UNIQUE KEY runs_run_contest_id_idx(run_id, contest_id), "
 "        KEY runs_contest_id_idx (contest_id) "
 "        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;";
@@ -129,9 +130,10 @@ struct run_entry_internal
   int review_gen;               /* 50 */
   int hidden_review_status;
   int hidden_review_gen;
+  int is_help_review;
 };
 
-enum { RUNS_ROW_WIDTH = 53 };
+enum { RUNS_ROW_WIDTH = 54 };
 
 #define RUNS_OFFSET(f) XOFFSET(struct run_entry_internal, f)
 static const struct common_mysql_parse_spec runs_spec[RUNS_ROW_WIDTH] =
@@ -189,6 +191,7 @@ static const struct common_mysql_parse_spec runs_spec[RUNS_ROW_WIDTH] =
   { 0, 'd', "review_gen", RUNS_OFFSET(review_gen), 0 },
   { 0, 'd', "hidden_review_status", RUNS_OFFSET(hidden_review_status), 0 },
   { 0, 'd', "hidden_review_gen", RUNS_OFFSET(hidden_review_gen), 0 },
+  { 0, 'b', "is_help_review", RUNS_OFFSET(is_help_review), 0 },
 };
 
 enum
