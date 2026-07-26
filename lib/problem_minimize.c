@@ -935,7 +935,8 @@ problem_assign_json(
               hide_variant enable_testlib_mode autoassign_variants require_any enable_extended_info
               stop_on_first_fail enable_control_socket copy_exe_to_tgzdir enable_multi_header use_lang_multi_header
               notify_on_submit enable_user_input enable_vcs enable_iframe_statement enable_src_for_testing
-              disable_vm_size_limit enable_group_merge ignore_sigpipe
+              disable_vm_size_limit enable_group_merge ignore_sigpipe enable_external_review enable_user_review_request
+              enable_user_help_request disable_pre_moderation disable_post_approve
              */
             if (*p != value) {
                 *p = value;
@@ -1155,6 +1156,13 @@ static const int cnts_to_cfg_field_map[CNTSPROB_LAST_FIELD] =
   [CNTSPROB_disable_vm_size_limit] = META_PROBLEM_CONFIG_SECTION_disable_vm_size_limit,
   [CNTSPROB_enable_group_merge] = META_PROBLEM_CONFIG_SECTION_enable_group_merge,
   [CNTSPROB_ignore_sigpipe] = META_PROBLEM_CONFIG_SECTION_ignore_sigpipe,
+#define DEF_MAPPING(f) [CNTSPROB_##f] = META_PROBLEM_CONFIG_SECTION_##f
+  DEF_MAPPING(enable_external_review),
+  DEF_MAPPING(enable_user_review_request),
+  DEF_MAPPING(enable_user_help_request),
+  DEF_MAPPING(disable_pre_moderation),
+  DEF_MAPPING(disable_post_approve),
+#undef DEF_MAPPING
   [CNTSPROB_examinator_num] = 0,
   [CNTSPROB_real_time_limit] = META_PROBLEM_CONFIG_SECTION_real_time_limit,
   [CNTSPROB_time_limit] = META_PROBLEM_CONFIG_SECTION_time_limit,
@@ -1459,7 +1467,8 @@ problem_assign_cfg(
               hide_variant enable_testlib_mode autoassign_variants require_any enable_extended_info
               stop_on_first_fail enable_control_socket copy_exe_to_tgzdir enable_multi_header use_lang_multi_header
               notify_on_submit enable_user_input enable_vcs enable_iframe_statement enable_src_for_testing
-              disable_vm_size_limit enable_group_merge ignore_sigpipe
+              disable_vm_size_limit enable_group_merge ignore_sigpipe enable_external_review enable_user_review_request
+              enable_user_help_request disable_pre_moderation disable_post_approve
              */
             if (*p != value) {
                 *p = value;
