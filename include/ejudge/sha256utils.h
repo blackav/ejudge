@@ -3,7 +3,7 @@
 #ifndef __SHA256UTILS_H__
 #define __SHA256UTILS_H__
 
-/* Copyright (C) 2016-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2016-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -41,5 +41,11 @@ hmac_sha256_str(
         size_t data_len,
         const uint8_t *key,
         size_t key_len);
+
+#define sha256isnull(buf) ({ const unsigned long long *pv = (const unsigned long long *) (void *) (buf); !pv[0] && !pv[1] && !pv[2] && !pv[3]; })
+#define sha256isnotnull(buf) ({ const unsigned long long *pv = (const unsigned long long *) (void *) (buf); pv[0] || pv[1] || pv[2] || pv[3]; })
+
+const char *
+sha256hexsha(char *out, size_t out_size, const unsigned char *shabuf);
 
 #endif
