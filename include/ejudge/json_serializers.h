@@ -2,7 +2,7 @@
 #ifndef __JSON_SERIALIZERS_H__
 #define __JSON_SERIALIZERS_H__
 
-/* Copyright (C) 2023-2025 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2023-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -18,11 +18,13 @@
 
 #include "ejudge/contests.h"
 #include "ejudge/prepare.h"
+
 struct submit_entry;
 struct testing_report_xml;
 struct cJSON;
 struct run_entry;
 struct serve_state;
+struct run_review;
 
 struct cJSON *
 json_serialize_submit(
@@ -77,5 +79,10 @@ json_serialize_problem(
         const unsigned char *ignored_fields);
 struct cJSON *
 json_serialize_problem_id(const struct section_problem_data *p);
+
+struct cJSON *
+json_serialize_run_review(
+        const struct run_review *rr,
+        unsigned long long flags);
 
 #endif /* __JSON_SERIALIZERS_H__ */
