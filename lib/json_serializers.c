@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2023-2025 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2023-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -24,6 +24,7 @@
 #include "ejudge/meta_generic.h"
 #include "ejudge/opcaps.h"
 #include "ejudge/problem_common.h"
+#include "ejudge/sha256utils.h"
 #include "ejudge/testing_report_xml.h"
 #include "ejudge/submit_plugin.h"
 #include "ejudge/runlog.h"
@@ -37,9 +38,12 @@
 #include "ejudge/xalloc.h"
 #include "ejudge/base64.h"
 #include "ejudge/meta/prepare_meta.h"
+#include "ejudge/ej_uuid.h"
 
+#include <stdint.h>
 #include <stdio.h>
 #include <time.h>
+#include <uuid/uuid.h>
 
 void
 json_serialize_file_content(
@@ -1350,3 +1354,155 @@ json_serialize_problem_id(const struct section_problem_data *p)
     if (p->extid) cJSON_AddStringToObject(jp, "extid", p->extid);
     return jp;
 }
+
+static const unsigned char *
+unparse_review_status(unsigned val)
+{
+    static const unsigned char * const values[] =
+    {
+        [RERS_REQUESTED_REVIEW] = "requested_review",
+        [RERS_WAITING_REVIEW] = "waiting_review",
+        [RERS_REVIEWING] = "reviewing",
+        [RERS_WAITING_APPROVAL] = "waiting_approval",
+        [RERS_COMPLETE] = "complete",
+    };
+    if (val >= sizeof(values) / sizeof(values[0])) {
+        return "";
+    }
+    const unsigned char *s = values[val];
+    if (!s) return "";
+    return s;
+}
+
+static const unsigned char *
+unparse_review_purpose(unsigned val)
+{
+    static const unsigned char * const values[] =
+    {
+        [RERP_REVIEW] = "review",
+        [RERP_HELP] = "help",
+        [RERP_JUDGE_HELP] = "judge_help",
+    };
+    if (val >= sizeof(values) / sizeof(values[0])) {
+        return "";
+    }
+    const unsigned char *s = values[val];
+    if (!s) return "";
+    return s;
+}
+
+static void
+append_timestamp_ms_with_str(cJSON *j, int64_t ts, const unsigned char *name_base)
+{
+    if (ts <= 0) return;
+
+    unsigned char namebuf[64];
+    unsigned char valuebuf[64];
+    __attribute__((unused)) int _;
+    _ = snprintf(namebuf, sizeof(namebuf), "%s%s", name_base, "_ms");
+    cJSON_AddNumberToObject(j, namebuf, ts);
+    struct tm ttm;
+    time_t t_part = ts / 1000000;
+    int u_part = ts % 1000000;
+    localtime_r(&t_part, &ttm);
+    _ = snprintf(valuebuf, sizeof(valuebuf), "%04d-%02d-%02d %02d:%02d:%02d.%06d",
+        ttm.tm_year + 1900, ttm.tm_mon + 1, ttm.tm_mday,
+        ttm.tm_hour, ttm.tm_min, ttm.tm_sec, u_part);
+    _ = snprintf(namebuf, sizeof(namebuf), "%s%s", name_base, "_str");
+    cJSON_AddStringToObject(j, namebuf, valuebuf);
+}
+
+cJSON *
+json_serialize_run_review(const struct run_review *rr, unsigned long long flags)
+{
+    cJSON *jrr = cJSON_CreateObject();
+    cJSON_AddNumberToObject(jrr, "serial_id", rr->serial_id);
+    cJSON_AddNumberToObject(jrr, "run_serial_id", rr->run_serial_id);
+    cJSON_AddNumberToObject(jrr, "contest_id", rr->contest_id);
+    cJSON_AddNumberToObject(jrr, "run_id", rr->run_id);
+    cJSON_AddNumberToObject(jrr, "generation", rr->generation);
+
+    if (rr->status > 0) {
+        cJSON_AddNumberToObject(jrr, "status", rr->status);
+        cJSON_AddStringToObject(jrr, "status_str", unparse_review_status(rr->status));
+    }
+    if (rr->purpose > 0) {
+        cJSON_AddNumberToObject(jrr, "purpose", rr->purpose);
+        cJSON_AddStringToObject(jrr, "purpose_str", unparse_review_purpose(rr->purpose));
+    }
+
+    append_timestamp_ms_with_str(jrr, rr->create_time_us, "create_time");
+    append_timestamp_ms_with_str(jrr, rr->last_update_time_us, "last_update_time");
+    append_timestamp_ms_with_str(jrr, rr->moderation_time_us, "moderation_time");
+    append_timestamp_ms_with_str(jrr, rr->review_start_time_us, "review_start_time");
+    append_timestamp_ms_with_str(jrr, rr->approve_time_us, "approve_time");
+    append_timestamp_ms_with_str(jrr, rr->user_open_time_us, "user_open_time");
+
+    if (ej_uuid_is_nonempty(rr->review_uuid)) {
+        unsigned char valuebuf[64];
+        uuid_unparse((void*) &rr->review_uuid, valuebuf);
+        cJSON_AddStringToObject(jrr, "review_uuid", valuebuf);
+    }
+
+#define ADD_STRING(j, o, f) do { if (o->f) { \
+        cJSON_AddStringToObject(j, #f, o->f); \
+    }} while (0)
+    ADD_STRING(jrr, rr, moderation_text);
+    ADD_STRING(jrr, rr, review_source);
+    ADD_STRING(jrr, rr, review_agent);
+    ADD_STRING(jrr, rr, review_result);
+    ADD_STRING(jrr, rr, review_judge_result);
+    ADD_STRING(jrr, rr, review_statistics);
+    ADD_STRING(jrr, rr, approved_text);
+    ADD_STRING(jrr, rr, model);
+#undef ADD_STRING
+
+    if (sha256isnotnull(rr->review_source_sha256)) {
+        unsigned char valuebuf[72];
+        cJSON_AddStringToObject(jrr, "", sha256hexsha(valuebuf, sizeof(valuebuf), rr->review_source_sha256));
+    }
+
+#define ADD_POSITIVE_INT(j, o, f) do { if (o->f > 0) { \
+        cJSON_AddNumberToObject(j, #f, o->f); \
+    }} while (0)
+    ADD_POSITIVE_INT(jrr, rr, requested_by);
+    ADD_POSITIVE_INT(jrr, rr, moderator_user_id);
+    ADD_POSITIVE_INT(jrr, rr, reviewer_user_id);
+    ADD_POSITIVE_INT(jrr, rr, approver_user_id);
+    ADD_POSITIVE_INT(jrr, rr, user_open_count);
+#undef ADD_POSITIVE_INT
+
+#define ADD_NONNEG_INT(j, o, f) do { if (o->f >= 0) { \
+        cJSON_AddNumberToObject(j, #f, o->f); \
+    }} while (0)
+    ADD_NONNEG_INT(jrr, rr, input_tokens);
+    ADD_NONNEG_INT(jrr, rr, cached_input_tokens);
+    ADD_NONNEG_INT(jrr, rr, output_tokens);
+    ADD_NONNEG_INT(jrr, rr, reasoning_tokens);
+    ADD_NONNEG_INT(jrr, rr, total_tokens);
+    ADD_NONNEG_INT(jrr, rr, approver_review_mark);
+    ADD_NONNEG_INT(jrr, rr, user_review_mark);
+#undef ADD_NONNEG_INT
+
+    if (!rr->review_approved_as_is) {
+        cJSON_AddFalseToObject(jrr, "review_approved_as_is");
+    } else if (rr->review_approved_as_is > 0) {
+        cJSON_AddTrueToObject(jrr, "review_approved_as_is");
+    }
+    if (!rr->status_approved_as_is) {
+        cJSON_AddFalseToObject(jrr, "status_approved_as_is");
+    } else if (rr->status_approved_as_is > 0) {
+        cJSON_AddTrueToObject(jrr, "status_approved_as_is");
+    }
+
+    if (rr->review_recommended_status >= 0) {
+        cJSON_AddNumberToObject(jrr, "status", rr->review_recommended_status);
+        cJSON_AddStringToObject(jrr, "status_str",
+                                run_status_short_str(rr->review_recommended_status));
+        cJSON_AddStringToObject(jrr, "status_desc",
+                                run_status_str(rr->review_recommended_status, NULL, 0, 0, 0));
+    }
+
+    return jrr;
+}
+
