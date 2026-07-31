@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2016-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2016-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -89,4 +89,34 @@ void sha256b64file(char *out, size_t out_size, FILE *in)
         buf[z] = 0;
         snprintf(out, out_size, "%s", buf);
     }
+}
+
+const char *
+sha256hexsha(char *out, size_t out_size, const unsigned char *shabuf)
+{
+    unsigned char buf[72];
+    unsigned char *p = out;
+    buf[0] = 0;
+    if (out_size < 65) {
+        p = buf;
+    }
+    for (int i = 0; i < 32; ++i) {
+        unsigned char hv = shabuf[i] >> 4;
+        unsigned char lv = shabuf[i] & 0xf;
+        if (hv >= 10) {
+            *p++ = 'a' - 10 + hv;
+        } else {
+            *p++ = '0' + hv;
+        }
+        if (lv >= 10) {
+            *p++ = 'a' - 10 + lv;
+        } else {
+            *p++ = '0' + lv;
+        }
+    }
+    *p = 0;
+    if (out_size < 65) {
+        __attribute__((unused)) int _ = snprintf(out, out_size, "%s", buf);
+    }
+    return out;
 }
