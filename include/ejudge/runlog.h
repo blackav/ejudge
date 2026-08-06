@@ -636,6 +636,8 @@ enum
   RERS_REVIEWING,
   RERS_WAITING_APPROVAL,
   RERS_COMPLETE,
+
+  RERS_LAST,
 };
 
 // review purpose
@@ -644,6 +646,8 @@ enum
   RERP_REVIEW = 1,
   RERP_HELP,
   RERP_JUDGE_HELP,
+
+  RERP_LAST,
 };
 
 enum
@@ -733,5 +737,11 @@ struct run_review
   int8_t status_approved_as_is;
   int8_t ai_generation_score;
 };
+
+void
+run_review_free(struct run_review *rr);
+
+void
+run_review_free_array(struct run_review *rr, size_t count);
 
 #endif /* __RUNLOG_H__ */

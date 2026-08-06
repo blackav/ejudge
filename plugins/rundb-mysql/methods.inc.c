@@ -276,3 +276,10 @@ fetch_review_func(
         struct rldb_plugin_cnts *cdata,
         const ej_uuid_t *p_uuid,
         struct run_review *p_result);
+
+static int
+list_reviews_func(
+        struct rldb_plugin_cnts *cdata,
+        const struct list_review_filter *filter,
+        struct run_review **p_result,
+        size_t *p_count);

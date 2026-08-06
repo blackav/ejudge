@@ -11943,6 +11943,61 @@ userlist_error:;
   goto done;
 }
 
+static void
+priv_list_reviews_json(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  serve_state_t cs = extra->serve_state;
+  int ok = 0;
+  int err_num = NEW_SRV_ERR_INV_PARAM;
+  const unsigned char *err_msg = NULL;
+  cJSON *jr = cJSON_CreateObject();
+  int http_status = 400;
+
+  info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
+
+  int date_mode = 0, size_mode = 0;
+  hr_cgi_param_int_opt(phr, "date_mode", &date_mode, 0);
+  hr_cgi_param_int_opt(phr, "size_mode", &size_mode, 0);
+  int abstract = -1;
+  hr_cgi_param_bool_opt(phr, "abstract", &abstract, -1);
+  int prob_id = -1;
+  hr_cgi_param_int_opt(phr, "prob_id", &prob_id, -1);
+  const unsigned char *short_name = NULL;
+  hr_cgi_param(phr, "short_name", &short_name);
+  const unsigned char *long_name = NULL;
+  hr_cgi_param(phr, "long_name", &long_name);
+  const unsigned char *internal_name = NULL;
+  hr_cgi_param(phr, "internal_name", &internal_name);
+  const unsigned char *uuid = NULL;
+  hr_cgi_param(phr, "uuid", &uuid);
+  const unsigned char *extid = NULL;
+  hr_cgi_param(phr, "extid", &extid);
+  struct section_problem_data *prob = NULL;
+  int r = lookup_contest_problem(cs, abstract, prob_id, short_name, long_name, internal_name, uuid, extid, NULL, NULL, &prob);
+  if (r < 0) {
+    http_status = -r;
+  } else if (!prob) {
+    http_status = 404;
+    err_num = NEW_SRV_ERR_INV_PROB_ID;
+  } else {
+    cJSON_AddItemToObject(jr, "problem", json_serialize_problem(prob, date_mode, size_mode, problem_ignored_fields));
+    ok = 1;
+    err_num = 0;
+    http_status = 200;
+  }
+
+  phr->json_reply = 1;
+  phr->status_code = http_status;
+  emit_json_result(fout, phr, ok, err_num, 0, err_msg, jr);
+  if (jr) {
+    cJSON_Delete(jr);
+  }
+}
+
 typedef PageInterface *(*external_action_handler_t)(void);
 
 typedef int (*new_action_handler_t)(
@@ -12190,7 +12245,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_LIST_PROBLEMS_JSON] = priv_list_problems_json,
   [NEW_SRV_ACTION_GET_PROBLEM_JSON] = priv_get_problem_json,
   [NEW_SRV_ACTION_REQUEST_REVIEW_JSON] = NULL,
-  [NEW_SRV_ACTION_LIST_REVIEWS_JSON] = NULL,
+  [NEW_SRV_ACTION_LIST_REVIEWS_JSON] = priv_list_reviews_json,
   [NEW_SRV_ACTION_GET_REVIEW_JSON] = NULL,
   [NEW_SRV_ACTION_UPDATE_REVIEW_JSON] = NULL,
   [NEW_SRV_ACTION_PREMODERATE_JSON] = NULL,
