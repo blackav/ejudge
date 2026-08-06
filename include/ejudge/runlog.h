@@ -687,6 +687,7 @@ enum
   RER_USER_REVIEW_MARK = 0x1000000000ULL,
   RER_REVIEW_APPROVED_AS_IS = 0x2000000000ULL,
   RER_STATUS_APPROVED_AS_IS = 0x4000000000ULL,
+  RER_AI_GENERATION_SCORE = 0x8000000000ULL,
 };
 
 struct run_review
@@ -730,6 +731,7 @@ struct run_review
   int8_t user_review_mark;
   int8_t review_approved_as_is;
   int8_t status_approved_as_is;
+  int8_t ai_generation_score;
 };
 
 #endif /* __RUNLOG_H__ */
