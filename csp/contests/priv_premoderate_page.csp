@@ -8,9 +8,15 @@
 %><%@page csp_view_priv_premoderate_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 %><%@include "priv_stdvars.csp"
 %><%
-    const unsigned char *title = NULL;
+    const unsigned char *title = "Review premoderation";
     int enable_main_menu = 0;
-%><%@include "priv_header.csp"
+
+    if (phr->role < USER_ROLE_JUDGE || opcaps_check(phr->caps, OPCAP_PREMOD_REVIEW) < 0)
+        FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+
+    info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
+
+%><%@include "priv_header_jq.csp"
 %>
 </div>
 
@@ -19,6 +25,31 @@
 </tr></table>
 
 <h2>Reviews</h2>
+
+<div id="RunsTableDiv">
+    <table class="b1 table-b1">
+        <thead>
+            <tr>
+                <th class="b1">NN</th>
+            </tr>
+        </thead>
+        <tbody id="RunsTableTBody">
+        </tbody>
+    </table>
+</div>
+
+<script type="text/javascript">
+    var SID='<s:v value="phr->session_id" />';
+    var self_url='<s:v value="phr->self_url" escape="false" />';
+    var script_name='<s:v value="phr->script_name" escape="false" />';
+    var contest_id='<s:v value="phr->contest_id" escape="false" />';
+</script>
+
+<script type="text/javascript">
+$(function() {
+    // finish initialization
+});
+</script>
 
 <%@include "priv_footer.csp"
 %><%
