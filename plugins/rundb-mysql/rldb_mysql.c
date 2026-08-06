@@ -3356,9 +3356,10 @@ struct run_review_internal
   unsigned char *model;
   int review_approved_as_is;
   int status_approved_as_is;
+  int ai_generation_score;
 };
 
-enum { REVIEW_ROW_WIDTH = 39 };
+enum { REVIEW_ROW_WIDTH = 40 };
 
 #define REVIEW_OFFSET(f) XOFFSET(struct run_review_internal, f)
 
@@ -3404,6 +3405,7 @@ static const struct common_mysql_parse_spec reviews_spec[REVIEW_ROW_WIDTH] =
   { 1, 's', "model", REVIEW_OFFSET(model), 0 },
   { 1, 'd', "review_approved_as_is", REVIEW_OFFSET(review_approved_as_is), 0 },
   { 1, 'd', "status_approved_as_is", REVIEW_OFFSET(status_approved_as_is), 0 },
+  { 1, 'd', "ai_generation_score", REVIEW_OFFSET(ai_generation_score), 0 },
 };
 
 #define REVIEW_OUT_OFFSET(f) XOFFSET(struct run_review, f)
@@ -3449,6 +3451,7 @@ static const struct common_mysql_parse_spec reviews_out_spec[REVIEW_ROW_WIDTH] =
   { EJ_MYSQL_NULL_IS_M1, '!', "user_review_mark", REVIEW_OUT_OFFSET(user_review_mark), 0 },
   { EJ_MYSQL_NULL_IS_M1, '!', "review_approved_as_is", REVIEW_OUT_OFFSET(review_approved_as_is), 0 },
   { EJ_MYSQL_NULL_IS_M1, '!', "status_approved_as_is", REVIEW_OUT_OFFSET(status_approved_as_is), 0 },
+  { EJ_MYSQL_NULL_IS_M1, '!', "ai_generation_score", REVIEW_OUT_OFFSET(ai_generation_score), 0 },
 };
 
 static int
@@ -3561,6 +3564,9 @@ run_review_move_from_internal(struct run_review *dst, struct run_review_internal
   if (src->status_approved_as_is < 0) src->status_approved_as_is = -1;
   if (src->status_approved_as_is > 0) src->status_approved_as_is = 1;
   dst->status_approved_as_is = src->status_approved_as_is;
+  if (src->ai_generation_score < 0) src->ai_generation_score = -1;
+  if (src->ai_generation_score > 100) src->ai_generation_score = 100;
+  dst->ai_generation_score = src->ai_generation_score;
 }
 
 static int

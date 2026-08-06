@@ -38,6 +38,7 @@ CREATE TABLE reviews(
     model VARCHAR(128) DEFAULT NULL,
     review_approved_as_is TINYINT DEFAULT NULL,
     status_approved_as_is TINYINT DEFAULT NULL,
+    ai_generation_score INT DEFAULT NULL,
     UNIQUE KEY reviews_generation_idx (contest_id, run_id, generation),
     KEY reviews_run_idx (contest_id, run_id),
     KEY reviews_contest_id_idx (contest_id),
