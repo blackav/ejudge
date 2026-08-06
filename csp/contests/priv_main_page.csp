@@ -136,6 +136,10 @@
     <% if (phr->role >= USER_ROLE_ADMIN) { %>
             <li><s:a ac="server-info-page"><s:_>Server Info</s:_></s:a></li><br/>
     <% } %>
+    <% if (phr->role >= USER_ROLE_JUDGE && opcaps_check(phr->caps, OPCAP_PREMOD_REVIEW) >= 0) {%>
+            <li><s:a ac="premoderate-page"><s:_>Premoderate reviews</s:_></s:a></li><br/>
+            <li><s:a ac="postapprove-page"><s:_>Postapprove reviews</s:_></s:a></li><br/>
+    <% } %>
         </ul>
     </li>
 

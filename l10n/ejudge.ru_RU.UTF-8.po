@@ -1,12 +1,12 @@
 # -*- mode: po; coding: UTF-8 -*-
 # ejudge messages catalog
-# Copyright (C) 2002-2024 Alexander Chernov <cher@ejudge.ru>
+# Copyright (C) 2002-2026 Alexander Chernov <cher@ejudge.ru>
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-10-02 00:48+0300\n"
+"POT-Creation-Date: 2026-07-31 16:39+0300\n"
 "PO-Revision-Date: 2024-03-17 14:09+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -164,9 +164,9 @@ msgid ""
 "<p class=\"ejudge_copyright\">This program is copyright &copy; %s Alexander "
 "Chernov.</p>\n"
 "<p class=\"ejudge_copyright\">This program is free software; you can "
-"redistribute it and/or modify it under the terms of the <a href=\"http://www."
-"gnu.org/licenses/gpl.html\">GNU General Public License</a> as published by "
-"the <a href=\"http://www.fsf.org\">Free Software Foundation</a>; either "
+"redistribute it and/or modify it under the terms of the <a href=\"http://"
+"www.gnu.org/licenses/gpl.html\">GNU General Public License</a> as published "
+"by the <a href=\"http://www.fsf.org\">Free Software Foundation</a>; either "
 "version 2 of the License, or (at your option) any later version.</p>\n"
 msgstr ""
 "<p class=\"ejudge_copyright\">Это &mdash; система администрирования турниров "
@@ -176,9 +176,9 @@ msgstr ""
 "<p class=\"ejudge_copyright\">Данная программа является свободным ПО. Вы "
 "можете распространять и/или модифицировать её в соответствии с <a "
 "href=\"http://www.gnu.org/licenses/gpl.html\">Общей Лицензией GNU</a> (GNU "
-"General Public License), опубликованной <a href=\"http://www.fsf."
-"org\">Фондом свободного ПО</a> (Free Software Foundation), либо версии 2 "
-"Лицензии, либо (по Вашему желанию) любой последующей версии.</p>\n"
+"General Public License), опубликованной <a href=\"http://"
+"www.fsf.org\">Фондом свободного ПО</a> (Free Software Foundation), либо "
+"версии 2 Лицензии, либо (по Вашему желанию) любой последующей версии.</p>\n"
 
 msgid ""
 "<p class=\"fixed_width\">First stage of password recovery is successful. You "
@@ -2974,6 +2974,12 @@ msgstr ""
 
 msgid "Please, follow the following link."
 msgstr "Пожалуйста, перейдите по следующей ссылке"
+
+msgid "Postapprove reviews"
+msgstr ""
+
+msgid "Premoderate reviews"
+msgstr ""
 
 msgid "Presentation error"
 msgstr "Неправильный формат вывода"
