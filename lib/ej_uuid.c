@@ -118,6 +118,16 @@ ej_uuid_unparse_r(
   }
 }
 
+const unsigned char *
+ej_uuid_unparse_r_nonempty(
+        unsigned char *buf,
+        size_t size,
+        const ej_uuid_t *puuid)
+{
+  uuid_unparse((void*) puuid, buf);
+  return buf;
+}
+
 void
 ej_uuid_generate(ej_uuid_t *puuid)
 {
