@@ -139,6 +139,7 @@ struct rldb_plugin_iface plugin_rldb_mysql =
   create_review_func,
   fetch_review_func,
   list_reviews_func,
+  update_reviews_func,
 };
 
 static long long
@@ -3885,5 +3886,40 @@ fail:;
   run_review_free_array(reviews, count);
   run_review_internal_free(&rri);
   free(reviews);
+  return -1;
+}
+
+static int
+update_reviews_func(
+        struct rldb_plugin_cnts *cdata,
+        const struct run_review *rr,
+        uint64_t field_mask,
+        const struct list_review_filter *filter)
+{
+  struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts*) cdata;
+  struct rldb_mysql_state *state = cs->plugin_state;
+  struct common_mysql_iface *mi = state->mi;
+  struct common_mysql_state *md = state->md;
+  char *cmd_s = NULL;
+  size_t cmd_z = 0;
+  FILE *cmd_f = open_memstream(&cmd_s, &cmd_z);
+
+  fprintf(cmd_f, "UPDATE %sreviews SET ", state->md->table_prefix);
+  state->mi->unparse_spec_4(state->md, cmd_f, REVIEW_ROW_WIDTH, reviews_out_spec,
+                            RER_RUN_SERIAL_ID|RER_CREATE_TIME_US|RER_REVIEW_UUID|RER_CONTEST_ID|RER_RUN_ID|RER_GENERATION|RER_STATUS|RER_PURPOSE|RER_REQUESTED_BY,
+                          rr, "", 1);
+  fprintf(cmd_f, " WHERE ");
+  write_reviews_filter(mi, md, cmd_f, filter);
+  putc_unlocked(';', cmd_f);
+  fclose(cmd_f); cmd_f = NULL;
+
+  if (state->mi->simple_query(state->md, cmd_s, cmd_z) < 0) goto fail;
+  xfree(cmd_s); cmd_s = 0; cmd_z = 0;
+
+  return 0;
+
+fail:;
+  if (cmd_f) fclose(cmd_f);
+  xfree(cmd_s);
   return -1;
 }
