@@ -3349,3 +3349,18 @@ run_review_free_array(struct run_review *rrs, size_t count)
     run_review_free(&rrs[i]);
   }
 }
+
+int
+run_review_list(
+        runlog_state_t state,
+        const struct list_review_filter *filter,
+        struct run_review **p_result,
+        size_t *p_count)
+{
+  if (!state->iface->list_reviews) {
+    ERR_R("list_reviews is not implemented");
+  } else {
+    return state->iface->list_reviews(state->cnts, filter, p_result, p_count);
+  }
+  return -1;
+}

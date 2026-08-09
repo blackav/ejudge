@@ -744,10 +744,64 @@ struct run_review
   int8_t ai_generation_score;
 };
 
+struct list_review_filter
+{
+  uint64_t field_mask;
+  int64_t serial_id;
+  int64_t *serial_id_list;
+  int serial_id_count;
+  int64_t run_serial_id;
+  int64_t *run_serial_id_list;
+  int run_serial_id_count;
+  int contest_id;
+  int *contest_id_list;
+  int contest_id_count;
+  int run_id;
+  int *run_id_list;
+  int run_id_count;
+  unsigned include_status_mask;
+  unsigned exclude_status_mask;
+  unsigned include_purpose_mask;
+  unsigned exclude_purpose_mask;
+  uint64_t null_field_mask;
+  uint64_t not_null_field_mask;
+  int requested_by;
+  int touched_by;
+  int *touched_by_list;
+  int touched_by_count;
+  ej_uuid_t review_uuid;
+  ej_uuid_t *review_uuid_list;
+  int review_uuid_count;
+  int64_t create_time_us_not_before;
+  int64_t create_time_us_before;
+  int64_t last_update_time_us_not_before;
+  int64_t last_update_time_us_before;
+  int64_t moderation_time_us_not_before;
+  int64_t moderation_time_us_before;
+  int64_t review_start_time_us_not_before;
+  int64_t review_start_time_us_before;
+  int64_t review_finish_time_us_not_before;
+  int64_t review_finish_time_us_before;
+  int64_t approve_time_us_not_before;
+  int64_t approve_time_us_before;
+  int64_t user_open_time_us_not_before;
+  int64_t user_open_time_us_before;
+  int offset;
+  int count;
+  unsigned char *raw_filter_str;
+};
+
 void
 run_review_free(struct run_review *rr);
 
 void
 run_review_free_array(struct run_review *rr, size_t count);
+
+int
+run_review_list(
+        runlog_state_t state,
+        const struct list_review_filter *filter,
+        struct run_review **p_result,
+        size_t *p_count);
 
 #endif /* __RUNLOG_H__ */
