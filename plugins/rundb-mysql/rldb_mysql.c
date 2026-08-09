@@ -3336,6 +3336,8 @@ struct run_review_internal
   int reviewer_user_id;
   int64_t review_start_time_us;
   unsigned char *review_agent;
+  int64_t review_heartbeat_time_us;
+  unsigned char *review_heartbeat_status;
   int64_t review_finish_time_us;
   unsigned char *review_result;
   unsigned char *review_judge_result;
@@ -3359,7 +3361,7 @@ struct run_review_internal
   int ai_generation_score;
 };
 
-enum { REVIEW_ROW_WIDTH = 40 };
+enum { REVIEW_ROW_WIDTH = 42 };
 
 #define REVIEW_OFFSET(f) XOFFSET(struct run_review_internal, f)
 
@@ -3385,6 +3387,8 @@ static const struct common_mysql_parse_spec reviews_spec[REVIEW_ROW_WIDTH] =
   { 1, 'd', "reviewer_user_id", REVIEW_OFFSET(reviewer_user_id), 0 },
   { 1, 'm', "review_start_time", REVIEW_OFFSET(review_start_time_us), 0 },
   { 1, 's', "review_agent", REVIEW_OFFSET(review_agent), 0 },
+  { 1, 'm', "review_heartbeat_time", REVIEW_OFFSET(review_heartbeat_time_us), 0 },
+  { 1, 's', "review_heartbeat_status", REVIEW_OFFSET(review_heartbeat_status), 0 },
   { 1, 'm', "review_finish_time", REVIEW_OFFSET(review_finish_time_us), 0 },
   { 1, 's', "review_result", REVIEW_OFFSET(review_result), 0 },
   { 1, 's', "review_judge_result", REVIEW_OFFSET(review_judge_result), 0 },
@@ -3418,6 +3422,7 @@ static const struct common_mysql_parse_spec reviews_out_spec[REVIEW_ROW_WIDTH] =
   { EJ_MYSQL_NOW_IS_M2 | EJ_MYSQL_NULLABLE, 'm', "last_update_time", REVIEW_OUT_OFFSET(last_update_time_us) },
   { EJ_MYSQL_NOW_IS_M2 | EJ_MYSQL_NULLABLE, 'm', "moderation_time", REVIEW_OUT_OFFSET(moderation_time_us) },
   { EJ_MYSQL_NOW_IS_M2 | EJ_MYSQL_NULLABLE, 'm', "review_start_time", REVIEW_OUT_OFFSET(review_start_time_us), 0 },
+  { EJ_MYSQL_NOW_IS_M2 | EJ_MYSQL_NULLABLE, 'm', "review_heartbeat_time", REVIEW_OUT_OFFSET(review_heartbeat_time_us), 0 },
   { EJ_MYSQL_NOW_IS_M2 | EJ_MYSQL_NULLABLE, 'm', "review_finish_time", REVIEW_OUT_OFFSET(review_finish_time_us), 0 },
   { EJ_MYSQL_NOW_IS_M2 | EJ_MYSQL_NULLABLE, 'm', "approve_time", REVIEW_OUT_OFFSET(approve_time_us), 0 },
   { EJ_MYSQL_NOW_IS_M2 | EJ_MYSQL_NULLABLE, 'm', "user_open_time", REVIEW_OUT_OFFSET(user_open_time_us), 0 },
@@ -3425,6 +3430,7 @@ static const struct common_mysql_parse_spec reviews_out_spec[REVIEW_ROW_WIDTH] =
   { EJ_MYSQL_NULLABLE, 's', "moderation_text", REVIEW_OUT_OFFSET(moderation_text), 0 },
   { EJ_MYSQL_NULLABLE, 's', "review_source", REVIEW_OUT_OFFSET(review_source), 0 },
   { EJ_MYSQL_NULLABLE, 's', "review_agent", REVIEW_OUT_OFFSET(review_agent), 0 },
+  { EJ_MYSQL_NULLABLE, 's', "review_heartbeat_status", REVIEW_OUT_OFFSET(review_heartbeat_status), 0 },
   { EJ_MYSQL_NULLABLE, 's', "review_result", REVIEW_OUT_OFFSET(review_result), 0 },
   { EJ_MYSQL_NULLABLE, 's', "review_judge_result", REVIEW_OUT_OFFSET(review_judge_result), 0 },
   { EJ_MYSQL_NULLABLE, 's', "review_statistics", REVIEW_OUT_OFFSET(review_statistics), 0 },
@@ -3507,6 +3513,7 @@ run_review_move_from_internal(struct run_review *dst, struct run_review_internal
   dst->last_update_time_us = src->last_update_time_us;
   dst->moderation_time_us = src->moderation_time_us;
   dst->review_start_time_us = src->review_start_time_us;
+  dst->review_heartbeat_time_us = src->review_heartbeat_time_us;
   dst->review_finish_time_us = src->review_finish_time_us;
   dst->approve_time_us = src->approve_time_us;
   dst->user_open_time_us = src->user_open_time_us;
@@ -3514,6 +3521,7 @@ run_review_move_from_internal(struct run_review *dst, struct run_review_internal
   dst->moderation_text = src->moderation_text; src->moderation_text = NULL;
   dst->review_source = src->review_source; src->review_source = NULL;
   dst->review_agent = src->review_agent; src->review_agent = NULL;
+  dst->review_heartbeat_status = src->review_heartbeat_status; src->review_heartbeat_status = NULL;
   dst->review_result = src->review_result; src->review_result = NULL;
   dst->review_judge_result = src->review_judge_result; src->review_judge_result = NULL;
   dst->review_statistics = src->review_statistics; src->review_statistics = NULL;

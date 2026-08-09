@@ -18,6 +18,8 @@ CREATE TABLE reviews(
     reviewer_user_id INT DEFAULT NULL,
     review_start_time DATETIME(6) DEFAULT NULL,
     review_agent VARCHAR(512) DEFAULT NULL,
+    review_heartbeat_time DATETIME(6) DEFAULT NULL,
+    review_heartbeat_status VARCHAR(1024) DEFAULT NULL,
     review_finish_time DATETIME(6) DEFAULT NULL,
     review_result MEDIUMTEXT DEFAULT NULL,
     review_judge_result MEDIUMTEXT DEFAULT NULL,
