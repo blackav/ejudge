@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2000-2024 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -3326,4 +3326,26 @@ group_scores_calc(
     }
   }
   return total_group_score;
+}
+
+void
+run_review_free(struct run_review *rr)
+{
+  if (rr) {
+    free(rr->moderation_text);
+    free(rr->review_source);
+    free(rr->review_agent);
+    free(rr->review_judge_result);
+    free(rr->review_statistics);
+    free(rr->approved_text);
+    free(rr->model);
+  }
+}
+
+void
+run_review_free_array(struct run_review *rrs, size_t count)
+{
+  for (size_t i = 0; i < count; ++i) {
+    run_review_free(&rrs[i]);
+  }
 }
