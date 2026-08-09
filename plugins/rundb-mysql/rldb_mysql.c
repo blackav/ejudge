@@ -3362,6 +3362,21 @@ struct run_review_internal
   int ai_generation_score;
 };
 
+static void
+run_review_internal_free(struct run_review_internal *rri)
+{
+  if (!rri) return;
+
+  free(rri->moderation_text);
+  free(rri->review_source);
+  free(rri->review_agent);
+  free(rri->review_result);
+  free(rri->review_judge_result);
+  free(rri->review_statistics);
+  free(rri->approved_text);
+  free(rri->model);
+}
+
 enum { REVIEW_ROW_WIDTH = 42 };
 
 #define REVIEW_OFFSET(f) XOFFSET(struct run_review_internal, f)
@@ -3621,39 +3636,45 @@ write_int_list(FILE *out_f, int *nums, int count)
   putc_unlocked(')', out_f);
 }
 
-static int
-list_reviews_func(
-        struct rldb_plugin_cnts *cdata,
-        const struct list_review_filter *filter,
-        struct run_review **p_result,
-        size_t *p_count)
+static void
+write_int64_list(FILE *out_f, int64_t *nums, int count)
 {
-  struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts*) cdata;
-  struct rldb_mysql_state *state = cs->plugin_state;
-  struct common_mysql_iface *mi = state->mi;
-  struct common_mysql_state *md = state->md;
-  char *cmd_s = NULL;
-  size_t cmd_z = 0;
-  FILE *cmd_f = open_memstream(&cmd_s, &cmd_z);
-  static const unsigned char AND_STR[] = " AND ";
-  struct run_review *reviews = NULL;
-  size_t count = 0;
-
-  fprintf(cmd_f, "SELECT ");
-  if (!filter->field_mask) {
-    fprintf(cmd_f, "*");
-  } else {
-    const unsigned char *sep = "";
-    for (int i = 0; i < sizeof(reviews_out_spec) / sizeof(reviews_out_spec[0]); ++i) {
-      if ((filter->field_mask & (1ULL << i)) != 0) {
-        fprintf(cmd_f, "%s%s", sep, reviews_out_spec[i].name);
-        sep = ",";
-      }
-    }
+  putc_unlocked('(', out_f);
+  for (int i = 0; i < count; ++i) {
+    if (i > 0) putc_unlocked(',', out_f);
+    fprintf(out_f, "%lld", (long long) nums[i]);
   }
-  fprintf(cmd_f, " FROM %sreviews WHERE ", md->table_prefix);
+  putc_unlocked(')', out_f);
+}
 
+static void
+write_reviews_filter(
+        struct common_mysql_iface *mi,
+        struct common_mysql_state *md,
+        FILE *cmd_f,
+        const struct list_review_filter *filter)
+{
+  static const unsigned char AND_STR[] = " AND ";
   const unsigned char *asep = "";
+
+  if (filter->serial_id > 0) {
+    fprintf(cmd_f, "%sserial_id=%lld", asep, (long long) filter->serial_id);
+    asep = AND_STR;
+  }
+  if (filter->serial_id_count > 0) {
+    fprintf(cmd_f, "%sserial_id IN ", asep);
+    asep = AND_STR;
+    write_int64_list(cmd_f, filter->serial_id_list, filter->serial_id_count);
+  }
+  if (filter->run_serial_id > 0) {
+    fprintf(cmd_f, "%srun_serial_id=%lld", asep, (long long) filter->run_serial_id);
+    asep = AND_STR;
+  }
+  if (filter->run_serial_id_count > 0) {
+    fprintf(cmd_f, "%srun_serial_id IN ", asep);
+    asep = AND_STR;
+    write_int64_list(cmd_f, filter->run_serial_id_list, filter->run_serial_id_count);
+  }
   if (filter->contest_id > 0) {
     fprintf(cmd_f, "%scontest_id=%d", asep, filter->contest_id);
     asep = AND_STR;
@@ -3754,6 +3775,11 @@ list_reviews_func(
     putc_unlocked(')', cmd_f);
     asep = AND_STR;
   }
+  if (ej_uuid_is_nonempty(filter->review_uuid)) {
+    unsigned char uuid_buf[64];
+    fprintf(cmd_f, "%sreview_uuid=\"%s\"", asep, ej_uuid_unparse_r(uuid_buf, sizeof(uuid_buf), &filter->review_uuid, NULL));
+    asep = AND_STR;
+  }
   if (filter->review_uuid_count > 0) {
     fprintf(cmd_f, "%sreview_uuid IN (", asep);
     for (int i = 0; i < filter->review_uuid_count; ++i) {
@@ -3786,6 +3812,43 @@ list_reviews_func(
     fprintf(cmd_f, "%s%s", asep, filter->raw_filter_str);
     asep = AND_STR;
   }
+#undef DO_TIME_FILTER
+}
+
+static int
+list_reviews_func(
+        struct rldb_plugin_cnts *cdata,
+        const struct list_review_filter *filter,
+        struct run_review **p_result,
+        size_t *p_count)
+{
+  struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts*) cdata;
+  struct rldb_mysql_state *state = cs->plugin_state;
+  struct common_mysql_iface *mi = state->mi;
+  struct common_mysql_state *md = state->md;
+  char *cmd_s = NULL;
+  size_t cmd_z = 0;
+  FILE *cmd_f = open_memstream(&cmd_s, &cmd_z);
+  struct run_review *reviews = NULL;
+  size_t count = 0;
+  struct run_review_internal rri = {};
+
+  fprintf(cmd_f, "SELECT ");
+  if (!filter->field_mask) {
+    fprintf(cmd_f, "*");
+  } else {
+    const unsigned char *sep = "";
+    for (int i = 0; i < sizeof(reviews_out_spec) / sizeof(reviews_out_spec[0]); ++i) {
+      if ((filter->field_mask & (1ULL << i)) != 0) {
+        fprintf(cmd_f, "%s%s", sep, reviews_out_spec[i].name);
+        sep = ",";
+      }
+    }
+  }
+  fprintf(cmd_f, " FROM %sreviews WHERE ", md->table_prefix);
+
+  write_reviews_filter(mi, md, cmd_f, filter);
+
   fprintf(cmd_f, " ORDER BY serial_id");
   if (filter->count > 0) {
     fprintf(cmd_f, " LIMIT %d, %d", filter->offset, filter->count);
@@ -3804,13 +3867,15 @@ list_reviews_func(
   count = md->row_count;
   XCALLOC(reviews, count);
   for (size_t i = 0; i < count; ++i) {
-    struct run_review_internal rri = {};
+    memset(&rri, 0, sizeof(rri));
     if (mi->parse_spec(md, md->field_count, md->row, md->lengths, REVIEW_ROW_WIDTH, reviews_spec, &rri) < 0) {
       goto fail;
     }
     run_review_move_from_internal(&reviews[i], &rri);
   }
 
+  *p_result = reviews;
+  *p_count = count;
 
   return 1;
 
@@ -3818,192 +3883,7 @@ fail:;
   if (cmd_f) fclose(cmd_f);
   free(cmd_s);
   run_review_free_array(reviews, count);
+  run_review_internal_free(&rri);
   free(reviews);
   return -1;
 }
-
-/*
-
-
-  for (i = 0; i < md->row_count; i++) {
-    group_scores_index = 0;
-    memset(&ri, 0, sizeof(ri));
-    memset(sha1, 0, sizeof(sha1));
-    memset(&run_uuid, 0, sizeof(run_uuid));
-    memset(&prob_uuid, 0, sizeof(prob_uuid));
-    memset(&judge_uuid, 0, sizeof(judge_uuid));
-    if (mi->next_row(md) < 0) goto fail;
-    mime_type = 0;
-    if (mi->parse_spec(md, md->field_count, md->row, md->lengths,
-                       RUNS_ROW_WIDTH, runs_spec, &ri) < 0)
-      goto fail;
-    if (ri.run_id < 0) db_error_inv_value_fail(md, "run_id");
-    if (run_f < 0) {
-      run_f = ri.run_id;
-      rls->run_f = run_f; // FIXME: check!
-    }
-    if (ri.run_id < run_f) continue;
-    if (ri.size < 0) db_error_inv_value_fail(md, "size");
-    if (ri.create_nsec < 0 || ri.create_nsec > NSEC_MAX)
-      db_error_inv_value_fail(md, "create_nsec");
-    if (!run_is_valid_status(ri.status))
-      db_error_inv_value_fail(md, "status");
-    if (ri.status == RUN_EMPTY) {
-      xfree(ri.hash); ri.hash = 0;
-      xfree(ri.mime_type); ri.mime_type = 0;
-      xfree(ri.run_uuid); ri.run_uuid = 0;
-      xfree(ri.prob_uuid); ri.prob_uuid = NULL;
-      xfree(ri.judge_uuid); ri.judge_uuid = NULL;
-      xfree(ri.ext_user); ri.ext_user = NULL;
-      xfree(ri.notify_queue); ri.notify_queue = NULL;
-      xfree(ri.group_scores); ri.group_scores = NULL;
-
-      expand_runs(rls, ri.run_id);
-      re = &rls->runs[ri.run_id - rls->run_f];
-      memset(re, 0, sizeof(*re));
-
-      re->run_id = ri.run_id;
-      re->time = ri.create_tv.tv_sec;
-      re->nsec = ri.create_nsec;
-      if (re->nsec <= 0) re->nsec = ri.create_tv.tv_usec * 1000;
-      re->status = ri.status;
-      re->last_change_us = ri.last_change_time * 1000000LL + ri.last_change_nsec / 1000;
-      continue;
-    }
-    if (ri.user_id <= 0) db_error_inv_value_fail(md, "user_id");
-    if (ri.prob_id < 0) db_error_inv_value_fail(md, "prob_id");
-    if (ri.lang_id < 0) db_error_inv_value_fail(md, "lang_id");
-    if (ri.hash && parse_sha1(sha1, ri.hash) < 0)
-      db_error_inv_value_fail(md, "hash");
-    if (ri.run_uuid) {
-#if CONF_HAS_LIBUUID - 0 != 0
-      uuid_parse(ri.run_uuid, (void*) &run_uuid);
-#endif
-    }
-    if (ri.prob_uuid) {
-      uuid_parse(ri.prob_uuid, (void*) &prob_uuid);
-    }
-    if (ri.judge_uuid) {
-      uuid_parse(ri.judge_uuid, (void*) &judge_uuid);
-    }
-    //if (ri.ip_version != 4) db_error_inv_value_fail(md, "ip_version");
-    if (ri.mime_type && (mime_type = mime_type_parse(ri.mime_type)) < 0)
-      db_error_inv_value_fail(md, "mime_type");
-    if (ri.ext_user_kind > 0 && ri.ext_user_kind < MIXED_ID_LAST) {
-      if (mixed_id_unmarshall(&ext_user, ri.ext_user_kind, ri.ext_user) < 0) {
-        // silently ignore parse error
-        ri.ext_user_kind = 0;
-        memset(&ext_user, 0, sizeof(ext_user));
-      }
-    } else {
-      ri.ext_user_kind = 0;
-      memset(&ext_user, 0, sizeof(ext_user));
-    }
-    if (ri.notify_driver > 0
-        && ri.notify_kind > 0 && ri.notify_kind < MIXED_ID_LAST) {
-      if (mixed_id_unmarshall(&notify_queue, ri.notify_kind, ri.notify_queue) < 0) {
-        ri.notify_driver = 0;
-        ri.notify_kind = 0;
-        memset(&notify_queue, 0, sizeof(notify_queue));
-      }
-    } else {
-      ri.notify_driver = 0;
-      ri.notify_kind = 0;
-      memset(&notify_queue, 0, sizeof(notify_queue));
-    }
-    if (ri.group_scores && ri.group_scores[0]) {
-      int group_scores[EJ_MAX_TEST_GROUP + 1];
-      int group_count = 0;
-      const char *p = ri.group_scores;
-      while (1) {
-        while (isspace((unsigned char) *p)) ++p;
-        if (!*p) break;
-        if (group_count == EJ_MAX_TEST_GROUP) {
-          db_error_inv_value_fail(md, "too many groups");
-        }
-        errno = 0;
-        char *eptr = NULL;
-        long vv = strtol(p, &eptr, 10);
-        if (errno || (*eptr && !isspace((unsigned char) *eptr)) || (int) vv != vv) {
-          db_error_inv_value_fail(md, "invalid score");
-        }
-        group_scores[group_count++] = vv;
-        p = eptr;
-      }
-      if (group_count > 0) {
-        group_scores_index = alloc_group_scores(cs, group_count, group_scores);
-      }
-    }
-    xfree(ri.hash); ri.hash = 0;
-    xfree(ri.mime_type); ri.mime_type = 0;
-    xfree(ri.run_uuid); ri.run_uuid = 0;
-    xfree(ri.prob_uuid); ri.prob_uuid = NULL;
-    xfree(ri.judge_uuid); ri.judge_uuid = NULL;
-    xfree(ri.ext_user); ri.ext_user = NULL;
-    xfree(ri.notify_queue); ri.notify_queue = NULL;
-    xfree(ri.group_scores); ri.group_scores = NULL;
-
-    expand_runs(rls, ri.run_id);
-    re = &rls->runs[ri.run_id - rls->run_f];
-    memset(re, 0, sizeof(*re));
-
-    re->run_id = ri.run_id;
-    re->serial_id = ri.serial_id;
-    re->size = ri.size;
-    re->time = ri.create_tv.tv_sec;
-    re->nsec = ri.create_nsec;
-    if (re->nsec <= 0) re->nsec = ri.create_tv.tv_usec * 1000;
-    re->user_id = ri.user_id;
-    re->prob_id = ri.prob_id;
-    re->lang_id = ri.lang_id;
-    ipv6_to_run_entry(&ri.ip, re);
-    memcpy(re->h.sha1, sha1, sizeof(re->h.sha1));
-    memcpy(&re->run_uuid, &run_uuid, sizeof(re->run_uuid));
-    re->prob_uuid = prob_uuid;
-    if (ej_uuid_is_nonempty(judge_uuid)) {
-      re->judge_uuid_flag = 1;
-      re->j.judge_uuid = judge_uuid;
-    } else if (ri.judge_id > 0) {
-      re->j.judge_id = ri.judge_id;
-    }
-    re->score = ri.score;
-    re->test = ri.test_num;
-    re->score_adj = ri.score_adj;
-    re->locale_id = ri.locale_id;
-    re->status = ri.status;
-    re->is_imported = ri.is_imported;
-    re->variant = ri.variant;
-    re->is_hidden = ri.is_hidden;
-    re->is_readonly = ri.is_readonly;
-    re->pages = ri.pages;
-    re->ssl_flag = ri.ssl_flag;
-    re->mime_type = mime_type;
-    re->is_marked = ri.is_marked;
-    re->is_saved = ri.is_saved;
-    re->saved_status = ri.saved_status;
-    re->saved_score = ri.saved_score;
-    re->saved_test = ri.saved_test;
-    re->passed_mode = ri.passed_mode;
-    re->eoln_type = ri.eoln_type;
-    re->store_flags = ri.store_flags;
-    re->token_flags = ri.token_flags;
-    re->token_count = ri.token_count;
-    re->is_checked = ri.is_checked;
-    re->is_vcs = ri.is_vcs;
-    re->verdict_bits = ri.verdict_bits;
-    re->last_change_us = ri.last_change_time * 1000000LL + ri.last_change_nsec / 1000;
-    re->ext_user_kind = ri.ext_user_kind;
-    re->ext_user = ext_user;
-    re->notify_driver = ri.notify_driver;
-    re->notify_kind = ri.notify_kind;
-    re->notify_queue = notify_queue;
-    re->group_scores = group_scores_index;
-    re->review_status = ri.review_status;
-    re->review_gen = ri.review_gen;
-    re->hidden_review_status = ri.hidden_review_status;
-    re->hidden_review_gen = ri.hidden_review_gen;
-    re->is_help_review = ri.is_help_review;
-  }
-  return 1;
-
-*/
