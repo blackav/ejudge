@@ -2,7 +2,7 @@
 #ifndef __EJ_UUID_H__
 #define __EJ_UUID_H__
 
-/* Copyright (C) 2012-2022 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -29,6 +29,11 @@ ej_uuid_unparse_r(
         size_t size,
         const ej_uuid_t *puuid,
         const unsigned char *default_value);
+const unsigned char *
+ej_uuid_unparse_r_nonempty(
+        unsigned char *buf,
+        size_t size,
+        const ej_uuid_t *puuid);
 
 #define ej_uuid_is_nonempty(uuid) ((uuid).v[0] || (uuid).v[1] || (uuid).v[2] || (uuid).v[3])
 #define ej_uuid_is_empty(uuid) (!(uuid).v[0] && !(uuid).v[1] && !(uuid).v[2] && !(uuid).v[3])
