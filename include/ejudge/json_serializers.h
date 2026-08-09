@@ -83,6 +83,8 @@ json_serialize_problem_id(const struct section_problem_data *p);
 struct cJSON *
 json_serialize_run_review(
         const struct run_review *rr,
+        int date_mode,
+        unsigned long long mask,
         unsigned long long flags);
 
 #endif /* __JSON_SERIALIZERS_H__ */
