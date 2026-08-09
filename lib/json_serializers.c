@@ -1413,7 +1413,9 @@ append_timestamp_ms_with_str(cJSON *j, int64_t ts, const unsigned char *name_bas
 }
 
 cJSON *
-json_serialize_run_review(const struct run_review *rr, unsigned long long flags)
+json_serialize_run_review(
+        const struct run_review *rr,
+        unsigned long long flags)
 {
     cJSON *jrr = cJSON_CreateObject();
     cJSON_AddNumberToObject(jrr, "serial_id", rr->serial_id);
@@ -1482,6 +1484,7 @@ json_serialize_run_review(const struct run_review *rr, unsigned long long flags)
     ADD_NONNEG_INT(jrr, rr, total_tokens);
     ADD_NONNEG_INT(jrr, rr, approver_review_mark);
     ADD_NONNEG_INT(jrr, rr, user_review_mark);
+    ADD_NONNEG_INT(jrr, rr, ai_generation_score);
 #undef ADD_NONNEG_INT
 
     if (!rr->review_approved_as_is) {
@@ -1496,10 +1499,10 @@ json_serialize_run_review(const struct run_review *rr, unsigned long long flags)
     }
 
     if (rr->review_recommended_status >= 0) {
-        cJSON_AddNumberToObject(jrr, "status", rr->review_recommended_status);
-        cJSON_AddStringToObject(jrr, "status_str",
+        cJSON_AddNumberToObject(jrr, "recommended_status", rr->review_recommended_status);
+        cJSON_AddStringToObject(jrr, "recommended_status_str",
                                 run_status_short_str(rr->review_recommended_status));
-        cJSON_AddStringToObject(jrr, "status_desc",
+        cJSON_AddStringToObject(jrr, "recommended_status_desc",
                                 run_status_str(rr->review_recommended_status, NULL, 0, 0, 0));
     }
 
