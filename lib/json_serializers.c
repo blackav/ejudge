@@ -889,6 +889,19 @@ unparse_date_iso(unsigned char *buf, size_t size, time_t t)
     return buf;
 }
 
+static const unsigned char *
+unparse_date_iso_us(unsigned char *buf, size_t size, int64_t ts_us)
+{
+    // 2026-08-09T17:30:15.123456Z
+    struct tm tt;
+    time_t t = ts_us / 1000000;
+    int us = ts_us % 1000000;
+    gmtime_r(&t, &tt);
+    snprintf(buf, size, "%04d-%02d-%02dT%02d:%02d:%02d.%06dZ",
+        tt.tm_year + 1900, tt.tm_mon + 1, tt.tm_mday, tt.tm_hour, tt.tm_min, tt.tm_sec, us);
+    return buf;
+}
+
 static const unsigned char * const field_names[] =
 {
     [1] = "homepage", "phone", "inst",
@@ -1391,67 +1404,132 @@ unparse_review_purpose(unsigned val)
     return s;
 }
 
+// date_mode == 1 - ISO format
+// date_mode == 2 - floating point seconds with microseconds
+
 static void
-append_timestamp_ms_with_str(cJSON *j, int64_t ts, const unsigned char *name_base)
+append_timestamp(cJSON *j, int64_t ts, int date_mode, const unsigned char *name_base)
 {
     if (ts <= 0) return;
 
     unsigned char namebuf[64];
     unsigned char valuebuf[64];
     __attribute__((unused)) int _;
+
+    if (date_mode == 1) {
+        _ = snprintf(namebuf, sizeof(namebuf), "%s%s", name_base, "_iso");
+        cJSON_AddStringToObject(j, namebuf, unparse_date_iso_us(valuebuf, sizeof(valuebuf), ts));
+    } else if (date_mode == 2) {
+        cJSON_AddNumberToObject(j, name_base, (double) ts / 1000000.0);
+    } else {
+        struct tm ttm;
+        time_t t_part = ts / 1000000;
+        int u_part = ts % 1000000;
+        localtime_r(&t_part, &ttm);
+        _ = snprintf(valuebuf, sizeof(valuebuf), "%04d-%02d-%02d %02d:%02d:%02d.%06d",
+            ttm.tm_year + 1900, ttm.tm_mon + 1, ttm.tm_mday,
+            ttm.tm_hour, ttm.tm_min, ttm.tm_sec, u_part);
+        _ = snprintf(namebuf, sizeof(namebuf), "%s%s", name_base, "_str");
+        cJSON_AddStringToObject(j, namebuf, valuebuf);
+    }
+
     _ = snprintf(namebuf, sizeof(namebuf), "%s%s", name_base, "_ms");
     cJSON_AddNumberToObject(j, namebuf, ts);
-    struct tm ttm;
-    time_t t_part = ts / 1000000;
-    int u_part = ts % 1000000;
-    localtime_r(&t_part, &ttm);
-    _ = snprintf(valuebuf, sizeof(valuebuf), "%04d-%02d-%02d %02d:%02d:%02d.%06d",
-        ttm.tm_year + 1900, ttm.tm_mon + 1, ttm.tm_mday,
-        ttm.tm_hour, ttm.tm_min, ttm.tm_sec, u_part);
-    _ = snprintf(namebuf, sizeof(namebuf), "%s%s", name_base, "_str");
-    cJSON_AddStringToObject(j, namebuf, valuebuf);
 }
+
+#define RER_serial_id RER_SERIAL_ID
+#define RER_run_serial_id RER_RUN_SERIAL_ID
+#define RER_create_time_us RER_CREATE_TIME_US
+#define RER_last_update_time_us RER_LAST_UPDATE_TIME_US
+#define RER_moderation_time_us RER_MODERATION_TIME_US
+#define RER_review_start_time_us RER_REVIEW_START_TIME_US
+#define RER_review_heartbeat_time_us RER_REVIEW_HEARTBEAT_TIME_US
+#define RER_review_finish_time_us RER_REVIEW_FINISH_TIME_US
+#define RER_approve_time_us RER_APPROVE_TIME_US
+#define RER_user_open_time_us RER_USER_OPEN_TIME_US
+#define RER_review_uuid RER_REVIEW_UUID
+#define RER_moderation_text RER_MODERATION_TEXT
+#define RER_review_source RER_REVIEW_SOURCE
+#define RER_review_agent RER_REVIEW_AGENT
+#define RER_review_heartbeat_status RER_REVIEW_HEARTBEAT_STATUS
+#define RER_review_result RER_REVIEW_RESULT
+#define RER_review_judge_result RER_REVIEW_JUDGE_RESULT
+#define RER_review_statistics RER_REVIEW_STATISTICS
+#define RER_approved_text RER_APPROVED_TEXT
+#define RER_model RER_MODEL
+#define RER_review_source_sha256 RER_REVIEW_SOURCE_SHA256
+#define RER_contest_id RER_CONTEST_ID
+#define RER_run_id RER_RUN_ID
+#define RER_requested_by RER_REQUESTED_BY
+#define RER_moderator_user_id RER_MODERATOR_USER_ID
+#define RER_reviewer_user_id RER_REVIEWER_USER_ID
+#define RER_approver_user_id RER_APPROVER_USER_ID
+#define RER_input_tokens RER_INPUT_TOKENS
+#define RER_cached_input_tokens RER_CACHED_INPUT_TOKENS
+#define RER_output_tokens RER_OUPUT_TOKENS
+#define RER_reasoning_tokens RER_REASONING_TOKENS
+#define RER_total_tokens RER_TOTAL_TOKENS
+#define RER_generation RER_GENERATION
+#define RER_status RER_STATUS
+#define RER_purpose RER_PURPOSE
+#define RER_review_recommended_status RER_REVIEW_RECOMMENDED_STATUS
+#define RER_approver_review_mark RER_APPROVER_REVIEW_MARK
+#define RER_user_open_count RER_USER_OPEN_COUNT
+#define RER_user_review_mark RER_USER_REVIEW_MARK
+#define RER_review_approved_as_is RER_REVIEW_APPROVED_AS_IS
+#define RER_status_approved_as_is RER_STATUS_APPROVED_AS_IS
+#define RER_ai_generation_score RER_AI_GENERATION_SCORE
 
 cJSON *
 json_serialize_run_review(
         const struct run_review *rr,
+        int date_mode,
+        unsigned long long mask,
         unsigned long long flags)
 {
     cJSON *jrr = cJSON_CreateObject();
-    cJSON_AddNumberToObject(jrr, "serial_id", rr->serial_id);
-    cJSON_AddNumberToObject(jrr, "run_serial_id", rr->run_serial_id);
-    cJSON_AddNumberToObject(jrr, "contest_id", rr->contest_id);
-    cJSON_AddNumberToObject(jrr, "run_id", rr->run_id);
-    cJSON_AddNumberToObject(jrr, "generation", rr->generation);
 
-    if (rr->status > 0) {
+#define ADD_NUMBER(j, o, f) do { if ((mask & RER_##f)) { cJSON_AddNumberToObject(j, #f, o->f); }} while(0)
+    ADD_NUMBER(jrr, rr, serial_id);
+    ADD_NUMBER(jrr, rr, run_serial_id);
+    ADD_NUMBER(jrr, rr, contest_id);
+    ADD_NUMBER(jrr, rr, run_id);
+    ADD_NUMBER(jrr, rr, generation);
+#undef ADD_NUMBER
+
+    if (rr->status > 0 && (mask & RER_status) != 0) {
         cJSON_AddNumberToObject(jrr, "status", rr->status);
         cJSON_AddStringToObject(jrr, "status_str", unparse_review_status(rr->status));
     }
-    if (rr->purpose > 0) {
+    if (rr->purpose > 0 && (mask & RER_purpose) != 0) {
         cJSON_AddNumberToObject(jrr, "purpose", rr->purpose);
         cJSON_AddStringToObject(jrr, "purpose_str", unparse_review_purpose(rr->purpose));
     }
 
-    append_timestamp_ms_with_str(jrr, rr->create_time_us, "create_time");
-    append_timestamp_ms_with_str(jrr, rr->last_update_time_us, "last_update_time");
-    append_timestamp_ms_with_str(jrr, rr->moderation_time_us, "moderation_time");
-    append_timestamp_ms_with_str(jrr, rr->review_start_time_us, "review_start_time");
-    append_timestamp_ms_with_str(jrr, rr->approve_time_us, "approve_time");
-    append_timestamp_ms_with_str(jrr, rr->user_open_time_us, "user_open_time");
+#define ADD_TIMESTAMP(f) do { if ((mask & RER_##f##_us)) { append_timestamp(jrr, rr->f##_us, date_mode, #f); }} while(0)
+    ADD_TIMESTAMP(create_time);
+    ADD_TIMESTAMP(last_update_time);
+    ADD_TIMESTAMP(moderation_time);
+    ADD_TIMESTAMP(review_start_time);
+    ADD_TIMESTAMP(review_heartbeat_time);
+    ADD_TIMESTAMP(review_finish_time);
+    ADD_TIMESTAMP(approve_time);
+    ADD_TIMESTAMP(user_open_time);
+#undef ADD_TIMESTAMP
 
-    if (ej_uuid_is_nonempty(rr->review_uuid)) {
+    if (ej_uuid_is_nonempty(rr->review_uuid) && (mask & RER_review_uuid) != 0) {
         unsigned char valuebuf[64];
         uuid_unparse((void*) &rr->review_uuid, valuebuf);
         cJSON_AddStringToObject(jrr, "review_uuid", valuebuf);
     }
 
-#define ADD_STRING(j, o, f) do { if (o->f) { \
+#define ADD_STRING(j, o, f) do { if (o->f && (mask & RER_##f) != 0) { \
         cJSON_AddStringToObject(j, #f, o->f); \
     }} while (0)
     ADD_STRING(jrr, rr, moderation_text);
     ADD_STRING(jrr, rr, review_source);
     ADD_STRING(jrr, rr, review_agent);
+    ADD_STRING(jrr, rr, review_heartbeat_status);
     ADD_STRING(jrr, rr, review_result);
     ADD_STRING(jrr, rr, review_judge_result);
     ADD_STRING(jrr, rr, review_statistics);
@@ -1459,12 +1537,12 @@ json_serialize_run_review(
     ADD_STRING(jrr, rr, model);
 #undef ADD_STRING
 
-    if (sha256isnotnull(rr->review_source_sha256)) {
+    if (sha256isnotnull(rr->review_source_sha256) && (mask & RER_review_source_sha256) != 0) {
         unsigned char valuebuf[72];
         cJSON_AddStringToObject(jrr, "", sha256hexsha(valuebuf, sizeof(valuebuf), rr->review_source_sha256));
     }
 
-#define ADD_POSITIVE_INT(j, o, f) do { if (o->f > 0) { \
+#define ADD_POSITIVE_INT(j, o, f) do { if (o->f > 0 && (mask & RER_##f) != 0) { \
         cJSON_AddNumberToObject(j, #f, o->f); \
     }} while (0)
     ADD_POSITIVE_INT(jrr, rr, requested_by);
@@ -1474,7 +1552,7 @@ json_serialize_run_review(
     ADD_POSITIVE_INT(jrr, rr, user_open_count);
 #undef ADD_POSITIVE_INT
 
-#define ADD_NONNEG_INT(j, o, f) do { if (o->f >= 0) { \
+#define ADD_NONNEG_INT(j, o, f) do { if (o->f >= 0 && (mask & RER_##f) != 0) { \
         cJSON_AddNumberToObject(j, #f, o->f); \
     }} while (0)
     ADD_NONNEG_INT(jrr, rr, input_tokens);
@@ -1487,18 +1565,22 @@ json_serialize_run_review(
     ADD_NONNEG_INT(jrr, rr, ai_generation_score);
 #undef ADD_NONNEG_INT
 
-    if (!rr->review_approved_as_is) {
-        cJSON_AddFalseToObject(jrr, "review_approved_as_is");
-    } else if (rr->review_approved_as_is > 0) {
-        cJSON_AddTrueToObject(jrr, "review_approved_as_is");
+    if ((mask & RER_review_approved_as_is) != 0) {
+        if (!rr->review_approved_as_is) {
+            cJSON_AddFalseToObject(jrr, "review_approved_as_is");
+        } else if (rr->review_approved_as_is > 0) {
+            cJSON_AddTrueToObject(jrr, "review_approved_as_is");
+        }
     }
-    if (!rr->status_approved_as_is) {
-        cJSON_AddFalseToObject(jrr, "status_approved_as_is");
-    } else if (rr->status_approved_as_is > 0) {
-        cJSON_AddTrueToObject(jrr, "status_approved_as_is");
+    if ((mask & RER_status_approved_as_is) != 0) {
+        if (!rr->status_approved_as_is) {
+            cJSON_AddFalseToObject(jrr, "status_approved_as_is");
+        } else if (rr->status_approved_as_is > 0) {
+            cJSON_AddTrueToObject(jrr, "status_approved_as_is");
+        }
     }
 
-    if (rr->review_recommended_status >= 0) {
+    if (rr->review_recommended_status >= 0 && (mask & RER_review_recommended_status) != 0) {
         cJSON_AddNumberToObject(jrr, "recommended_status", rr->review_recommended_status);
         cJSON_AddStringToObject(jrr, "recommended_status_str",
                                 run_status_short_str(rr->review_recommended_status));
@@ -1508,4 +1590,3 @@ json_serialize_run_review(
 
     return jrr;
 }
-

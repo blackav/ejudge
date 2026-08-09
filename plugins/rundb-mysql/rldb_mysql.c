@@ -3905,9 +3905,7 @@ update_reviews_func(
   FILE *cmd_f = open_memstream(&cmd_s, &cmd_z);
 
   fprintf(cmd_f, "UPDATE %sreviews SET ", state->md->table_prefix);
-  state->mi->unparse_spec_4(state->md, cmd_f, REVIEW_ROW_WIDTH, reviews_out_spec,
-                            RER_RUN_SERIAL_ID|RER_CREATE_TIME_US|RER_REVIEW_UUID|RER_CONTEST_ID|RER_RUN_ID|RER_GENERATION|RER_STATUS|RER_PURPOSE|RER_REQUESTED_BY,
-                          rr, "", 1);
+  state->mi->unparse_spec_4(state->md, cmd_f, REVIEW_ROW_WIDTH, reviews_out_spec, field_mask, rr, "", 1);
   fprintf(cmd_f, " WHERE ");
   write_reviews_filter(mi, md, cmd_f, filter);
   putc_unlocked(';', cmd_f);
