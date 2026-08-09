@@ -43,6 +43,12 @@ struct rldb_plugin_cnts;
 struct list_review_filter
 {
   uint64_t field_mask;
+  int64_t serial_id;
+  int64_t *serial_id_list;
+  int serial_id_count;
+  int64_t run_serial_id;
+  int64_t *run_serial_id_list;
+  int run_serial_id_count;
   int contest_id;
   int *contest_id_list;
   int contest_id_count;
@@ -59,6 +65,7 @@ struct list_review_filter
   int touched_by;
   int *touched_by_list;
   int touched_by_count;
+  ej_uuid_t review_uuid;
   ej_uuid_t *review_uuid_list;
   int review_uuid_count;
   int64_t create_time_us_not_before;
@@ -323,6 +330,11 @@ struct rldb_plugin_iface
         const struct list_review_filter *filter,
         struct run_review **p_result,
         size_t *p_count);
+  int (*update_reviews)(
+        struct rldb_plugin_cnts *cdata,
+        const struct run_review *rr,
+        uint64_t field_mask,
+        const struct list_review_filter *filter);
 };
 
 /* default plugin: compiled into new-server */

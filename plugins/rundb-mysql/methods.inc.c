@@ -283,3 +283,10 @@ list_reviews_func(
         const struct list_review_filter *filter,
         struct run_review **p_result,
         size_t *p_count);
+
+static int
+update_reviews_func(
+        struct rldb_plugin_cnts *cdata,
+        const struct run_review *rr,
+        uint64_t field_mask,
+        const struct list_review_filter *filter);
