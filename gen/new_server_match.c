@@ -4531,41 +4531,53 @@ int ns_match_action(const unsigned char *str)
       } else if (c < 'i') {
         if (c == 'h') {
           c = str[1];
-          if (c == 'a') {
+          if (c == 'e') {
             c = str[2];
-            if (c == 's') {
+            if (c == 'a') {
               c = str[3];
-              if (c == '-') {
+              if (c == 'r') {
                 c = str[4];
                 if (c == 't') {
                   c = str[5];
-                  if (c == 'r') {
+                  if (c == 'b') {
                     c = str[6];
-                    if (c == 'a') {
+                    if (c == 'e') {
                       c = str[7];
-                      if (c == 'n') {
+                      if (c == 'a') {
                         c = str[8];
-                        if (c == 's') {
+                        if (c == 't') {
                           c = str[9];
-                          if (c == 'i') {
+                          if (c == '-') {
                             c = str[10];
-                            if (c == 'e') {
+                            if (c == 'r') {
                               c = str[11];
-                              if (c == 'n') {
+                              if (c == 'e') {
                                 c = str[12];
-                                if (c == 't') {
+                                if (c == 'v') {
                                   c = str[13];
-                                  if (c == '-') {
+                                  if (c == 'i') {
                                     c = str[14];
-                                    if (c == 'r') {
+                                    if (c == 'e') {
                                       c = str[15];
-                                      if (c == 'u') {
+                                      if (c == 'w') {
                                         c = str[16];
-                                        if (c == 'n') {
+                                        if (c == '-') {
                                           c = str[17];
-                                          if (c == 's') {
+                                          if (c == 'j') {
                                             c = str[18];
-                                            if (!c) return NEW_SRV_ACTION_HAS_TRANSIENT_RUNS;
+                                            if (c == 's') {
+                                              c = str[19];
+                                              if (c == 'o') {
+                                                c = str[20];
+                                                if (c == 'n') {
+                                                  c = str[21];
+                                                  if (!c) return NEW_SRV_ACTION_HEARTBEAT_REVIEW_JSON;
+                                                  return 0;
+                                                }
+                                                return 0;
+                                              }
+                                              return 0;
+                                            }
                                             return 0;
                                           }
                                           return 0;
@@ -4599,6 +4611,77 @@ int ns_match_action(const unsigned char *str)
               return 0;
             }
             return 0;
+          } else if (c < 'e') {
+            if (c == 'a') {
+              c = str[2];
+              if (c == 's') {
+                c = str[3];
+                if (c == '-') {
+                  c = str[4];
+                  if (c == 't') {
+                    c = str[5];
+                    if (c == 'r') {
+                      c = str[6];
+                      if (c == 'a') {
+                        c = str[7];
+                        if (c == 'n') {
+                          c = str[8];
+                          if (c == 's') {
+                            c = str[9];
+                            if (c == 'i') {
+                              c = str[10];
+                              if (c == 'e') {
+                                c = str[11];
+                                if (c == 'n') {
+                                  c = str[12];
+                                  if (c == 't') {
+                                    c = str[13];
+                                    if (c == '-') {
+                                      c = str[14];
+                                      if (c == 'r') {
+                                        c = str[15];
+                                        if (c == 'u') {
+                                          c = str[16];
+                                          if (c == 'n') {
+                                            c = str[17];
+                                            if (c == 's') {
+                                              c = str[18];
+                                              if (!c) return NEW_SRV_ACTION_HAS_TRANSIENT_RUNS;
+                                              return 0;
+                                            }
+                                            return 0;
+                                          }
+                                          return 0;
+                                        }
+                                        return 0;
+                                      }
+                                      return 0;
+                                    }
+                                    return 0;
+                                  }
+                                  return 0;
+                                }
+                                return 0;
+                              }
+                              return 0;
+                            }
+                            return 0;
+                          }
+                          return 0;
+                        }
+                        return 0;
+                      }
+                      return 0;
+                    }
+                    return 0;
+                  }
+                  return 0;
+                }
+                return 0;
+              }
+              return 0;
+            }
+          } else {
           }
           return 0;
         } else if (c < 'h') {
