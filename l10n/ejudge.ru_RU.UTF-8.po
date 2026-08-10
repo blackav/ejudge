@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-31 16:39+0300\n"
+"POT-Creation-Date: 2026-08-09 23:30+0300\n"
 "PO-Revision-Date: 2024-03-17 14:09+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -2657,6 +2657,9 @@ msgstr "Нет связи с сервером"
 
 msgid "No contestants are allowed in this contest"
 msgstr "Категория \"участники\" не поддерживается для этого турнира"
+
+msgid "No contests"
+msgstr ""
 
 msgid "No directory structure"
 msgstr "Нет структуры"
