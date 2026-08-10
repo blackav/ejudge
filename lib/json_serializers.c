@@ -1440,14 +1440,14 @@ append_timestamp(cJSON *j, int64_t ts, int date_mode, const unsigned char *name_
 
 #define RER_serial_id RER_SERIAL_ID
 #define RER_run_serial_id RER_RUN_SERIAL_ID
-#define RER_create_time_us RER_CREATE_TIME_US
-#define RER_last_update_time_us RER_LAST_UPDATE_TIME_US
-#define RER_moderation_time_us RER_MODERATION_TIME_US
-#define RER_review_start_time_us RER_REVIEW_START_TIME_US
-#define RER_review_heartbeat_time_us RER_REVIEW_HEARTBEAT_TIME_US
-#define RER_review_finish_time_us RER_REVIEW_FINISH_TIME_US
-#define RER_approve_time_us RER_APPROVE_TIME_US
-#define RER_user_open_time_us RER_USER_OPEN_TIME_US
+#define RER_creation_time RER_CREATION_TIME
+#define RER_last_update_time RER_LAST_UPDATE_TIME
+#define RER_moderation_time RER_MODERATION_TIME
+#define RER_review_start_time RER_REVIEW_START_TIME
+#define RER_review_heartbeat_time RER_REVIEW_HEARTBEAT_TIME
+#define RER_review_finish_time RER_REVIEW_FINISH_TIME
+#define RER_approval_time RER_APPROVAL_TIME
+#define RER_user_opened_time RER_USER_OPENED_TIME
 #define RER_review_uuid RER_REVIEW_UUID
 #define RER_moderation_text RER_MODERATION_TEXT
 #define RER_review_source RER_REVIEW_SOURCE
@@ -1475,7 +1475,7 @@ append_timestamp(cJSON *j, int64_t ts, int date_mode, const unsigned char *name_
 #define RER_purpose RER_PURPOSE
 #define RER_review_recommended_status RER_REVIEW_RECOMMENDED_STATUS
 #define RER_approver_review_mark RER_APPROVER_REVIEW_MARK
-#define RER_user_open_count RER_USER_OPEN_COUNT
+#define RER_user_opened_count RER_USER_OPENED_COUNT
 #define RER_user_review_mark RER_USER_REVIEW_MARK
 #define RER_review_approved_as_is RER_REVIEW_APPROVED_AS_IS
 #define RER_status_approved_as_is RER_STATUS_APPROVED_AS_IS
@@ -1507,15 +1507,15 @@ json_serialize_run_review(
         cJSON_AddStringToObject(jrr, "purpose_str", unparse_review_purpose(rr->purpose));
     }
 
-#define ADD_TIMESTAMP(f) do { if ((mask & RER_##f##_us)) { append_timestamp(jrr, rr->f##_us, date_mode, #f); }} while(0)
-    ADD_TIMESTAMP(create_time);
+#define ADD_TIMESTAMP(f) do { if ((mask & RER_##f)) { append_timestamp(jrr, rr->f, date_mode, #f); }} while(0)
+    ADD_TIMESTAMP(creation_time);
     ADD_TIMESTAMP(last_update_time);
     ADD_TIMESTAMP(moderation_time);
     ADD_TIMESTAMP(review_start_time);
     ADD_TIMESTAMP(review_heartbeat_time);
     ADD_TIMESTAMP(review_finish_time);
-    ADD_TIMESTAMP(approve_time);
-    ADD_TIMESTAMP(user_open_time);
+    ADD_TIMESTAMP(approval_time);
+    ADD_TIMESTAMP(user_opened_time);
 #undef ADD_TIMESTAMP
 
     if (ej_uuid_is_nonempty(rr->review_uuid) && (mask & RER_review_uuid) != 0) {
@@ -1550,7 +1550,7 @@ json_serialize_run_review(
     ADD_POSITIVE_INT(jrr, rr, moderator_user_id);
     ADD_POSITIVE_INT(jrr, rr, reviewer_user_id);
     ADD_POSITIVE_INT(jrr, rr, approver_user_id);
-    ADD_POSITIVE_INT(jrr, rr, user_open_count);
+    ADD_POSITIVE_INT(jrr, rr, user_opened_count);
 #undef ADD_POSITIVE_INT
 
 #define ADD_NONNEG_INT(j, o, f) do { if (o->f >= 0 && (mask & RER_##f) != 0) { \
