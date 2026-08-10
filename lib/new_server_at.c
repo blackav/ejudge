@@ -357,6 +357,7 @@ const unsigned char * const ns_symbolic_action_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_LIST_PENDING_REVIEWS_JSON] = "list-pending-reviews-json",
   [NEW_SRV_ACTION_START_REVIEW_JSON] = "start-review-json",
   [NEW_SRV_ACTION_FINISH_REVIEW_JSON] = "finish-review-json",
+  [NEW_SRV_ACTION_HEARTBEAT_REVIEW_JSON] = "heartbeat-review-json",
   [NEW_SRV_ACTION_POSTAPPROVE_JSON] = "postapprove-json",
   [NEW_SRV_ACTION_REVIEWS_PAGE] = "reviews-page",
   [NEW_SRV_ACTION_PREMODERATE_PAGE] = "premoderate-page",
