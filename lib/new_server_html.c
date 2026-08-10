@@ -12121,7 +12121,7 @@ scan_contests_in_list(
   return count;
 }
 
-__attribute__((unused)) static int
+static int
 make_contest_id_list(
         struct http_request_info *phr,
         const unsigned char *ids_str,
