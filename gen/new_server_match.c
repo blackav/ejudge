@@ -184,6 +184,85 @@ int ns_match_action(const unsigned char *str)
                   return 0;
                 }
                 return 0;
+              } else if (c < 'l') {
+                if (c == 'a') {
+                  c = str[6];
+                  if (c == 'c') {
+                    c = str[7];
+                    if (c == 't') {
+                      c = str[8];
+                      if (c == 'i') {
+                        c = str[9];
+                        if (c == 'v') {
+                          c = str[10];
+                          if (c == 'e') {
+                            c = str[11];
+                            if (c == '-') {
+                              c = str[12];
+                              if (c == 'r') {
+                                c = str[13];
+                                if (c == 'e') {
+                                  c = str[14];
+                                  if (c == 'v') {
+                                    c = str[15];
+                                    if (c == 'i') {
+                                      c = str[16];
+                                      if (c == 'e') {
+                                        c = str[17];
+                                        if (c == 'w') {
+                                          c = str[18];
+                                          if (c == 's') {
+                                            c = str[19];
+                                            if (c == '-') {
+                                              c = str[20];
+                                              if (c == 'j') {
+                                                c = str[21];
+                                                if (c == 's') {
+                                                  c = str[22];
+                                                  if (c == 'o') {
+                                                    c = str[23];
+                                                    if (c == 'n') {
+                                                      c = str[24];
+                                                      if (!c) return NEW_SRV_ACTION_LIST_ACTIVE_REVIEWS_JSON;
+                                                      return 0;
+                                                    }
+                                                    return 0;
+                                                  }
+                                                  return 0;
+                                                }
+                                                return 0;
+                                              }
+                                              return 0;
+                                            }
+                                            return 0;
+                                          }
+                                          return 0;
+                                        }
+                                        return 0;
+                                      }
+                                      return 0;
+                                    }
+                                    return 0;
+                                  }
+                                  return 0;
+                                }
+                                return 0;
+                              }
+                              return 0;
+                            }
+                            return 0;
+                          }
+                          return 0;
+                        }
+                        return 0;
+                      }
+                      return 0;
+                    }
+                    return 0;
+                  }
+                  return 0;
+                }
+              } else {
               }
             } else {
               if (c == 'r') {
@@ -4954,6 +5033,77 @@ int ns_match_action(const unsigned char *str)
                             return 0;
                           }
                           return 0;
+                        } else if (c < 'v') {
+                          if (c == 'c') {
+                            c = str[6];
+                            if (c == 't') {
+                              c = str[7];
+                              if (c == 'i') {
+                                c = str[8];
+                                if (c == 'v') {
+                                  c = str[9];
+                                  if (c == 'e') {
+                                    c = str[10];
+                                    if (c == '-') {
+                                      c = str[11];
+                                      if (c == 'r') {
+                                        c = str[12];
+                                        if (c == 'e') {
+                                          c = str[13];
+                                          if (c == 'v') {
+                                            c = str[14];
+                                            if (c == 'i') {
+                                              c = str[15];
+                                              if (c == 'e') {
+                                                c = str[16];
+                                                if (c == 'w') {
+                                                  c = str[17];
+                                                  if (c == '-') {
+                                                    c = str[18];
+                                                    if (c == 'j') {
+                                                      c = str[19];
+                                                      if (c == 's') {
+                                                        c = str[20];
+                                                        if (c == 'o') {
+                                                          c = str[21];
+                                                          if (c == 'n') {
+                                                            c = str[22];
+                                                            if (!c) return NEW_SRV_ACTION_GET_ACTIVE_REVIEW_JSON;
+                                                            return 0;
+                                                          }
+                                                          return 0;
+                                                        }
+                                                        return 0;
+                                                      }
+                                                      return 0;
+                                                    }
+                                                    return 0;
+                                                  }
+                                                  return 0;
+                                                }
+                                                return 0;
+                                              }
+                                              return 0;
+                                            }
+                                            return 0;
+                                          }
+                                          return 0;
+                                        }
+                                        return 0;
+                                      }
+                                      return 0;
+                                    }
+                                    return 0;
+                                  }
+                                  return 0;
+                                }
+                                return 0;
+                              }
+                              return 0;
+                            }
+                            return 0;
+                          }
+                        } else {
                         }
                         return 0;
                       }
