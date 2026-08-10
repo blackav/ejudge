@@ -3869,6 +3869,7 @@ list_reviews_func(
   XCALLOC(reviews, count);
   for (size_t i = 0; i < count; ++i) {
     memset(&rri, 0, sizeof(rri));
+    if (mi->next_row(md) < 0) goto fail;
     if (mi->parse_spec(md, md->field_count, md->row, md->lengths, REVIEW_ROW_WIDTH, reviews_spec, &rri) < 0) {
       goto fail;
     }

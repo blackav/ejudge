@@ -1420,7 +1420,11 @@ append_timestamp(cJSON *j, int64_t ts, int date_mode, const unsigned char *name_
         _ = snprintf(namebuf, sizeof(namebuf), "%s%s", name_base, "_iso");
         cJSON_AddStringToObject(j, namebuf, unparse_date_iso_us(valuebuf, sizeof(valuebuf), ts));
     } else if (date_mode == 2) {
-        cJSON_AddNumberToObject(j, name_base, (double) ts / 1000000.0);
+        long long t_part = ts / 1000000;
+        int u_part = ts % 1000000;
+        _ = snprintf(namebuf, sizeof(namebuf), "%s%s", name_base, "_us");
+        _ = snprintf(valuebuf, sizeof(valuebuf), "%lld.%06d", t_part, u_part);
+        cJSON_AddStringToObject(j, namebuf, valuebuf);
     } else {
         struct tm ttm;
         time_t t_part = ts / 1000000;
@@ -1432,9 +1436,6 @@ append_timestamp(cJSON *j, int64_t ts, int date_mode, const unsigned char *name_
         _ = snprintf(namebuf, sizeof(namebuf), "%s%s", name_base, "_str");
         cJSON_AddStringToObject(j, namebuf, valuebuf);
     }
-
-    _ = snprintf(namebuf, sizeof(namebuf), "%s%s", name_base, "_ms");
-    cJSON_AddNumberToObject(j, namebuf, ts);
 }
 
 #define RER_serial_id RER_SERIAL_ID
