@@ -12186,6 +12186,7 @@ priv_list_pending_reviews_json(
     goto done;
   }
 
+  filter.field_mask = RER_SERIAL_ID|RER_CREATION_TIME|RER_REVIEW_UUID|RER_CONTEST_ID|RER_RUN_ID|RER_STATUS|RER_PURPOSE|RER_STATUS|RER_LAST_UPDATE_TIME;
   filter.contest_id_list = contest_ids;
   filter.contest_id_count = contest_count;
   filter.run_id = -1;
@@ -12203,7 +12204,7 @@ priv_list_pending_reviews_json(
   cJSON *jrs = cJSON_CreateArray();
   for (int i = 0; i < review_count; ++i) {
     cJSON *jr = json_serialize_run_review(&reviews[i], date_mode,
-      RER_CREATE_TIME_US|RER_REVIEW_UUID|RER_CONTEST_ID|RER_RUN_ID|RER_STATUS|RER_PURPOSE|RER_STATUS,
+      RER_CREATION_TIME|RER_REVIEW_UUID|RER_CONTEST_ID|RER_RUN_ID|RER_STATUS|RER_PURPOSE|RER_STATUS|RER_LAST_UPDATE_TIME,
       0);
     cJSON_AddItemToArray(jrs, jr);
   }

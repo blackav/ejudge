@@ -654,14 +654,14 @@ enum
 {
   RER_SERIAL_ID = 0x1ULL,
   RER_RUN_SERIAL_ID = 0x2ULL,
-  RER_CREATE_TIME_US = 0x4ULL,
-  RER_LAST_UPDATE_TIME_US = 0x8ULL,
-  RER_MODERATION_TIME_US = 0x10ULL,
-  RER_REVIEW_START_TIME_US = 0x20ULL,
-  RER_REVIEW_HEARTBEAT_TIME_US = 0x40ULL, ///
-  RER_REVIEW_FINISH_TIME_US = 0x80ULL,
-  RER_APPROVE_TIME_US = 0x100ULL,
-  RER_USER_OPEN_TIME_US = 0x200ULL,
+  RER_CREATION_TIME = 0x4ULL,
+  RER_LAST_UPDATE_TIME = 0x8ULL,
+  RER_MODERATION_TIME = 0x10ULL,
+  RER_REVIEW_START_TIME = 0x20ULL,
+  RER_REVIEW_HEARTBEAT_TIME = 0x40ULL,
+  RER_REVIEW_FINISH_TIME = 0x80ULL,
+  RER_APPROVAL_TIME = 0x100ULL,
+  RER_USER_OPENED_TIME = 0x200ULL,
   RER_REVIEW_UUID = 0x400ULL,
   RER_MODERATION_TEXT = 0x800ULL,
   RER_REVIEW_SOURCE = 0x1000ULL,
@@ -689,7 +689,7 @@ enum
   RER_PURPOSE = 0x400000000ULL,
   RER_REVIEW_RECOMMENDED_STATUS = 0x800000000ULL,
   RER_APPROVER_REVIEW_MARK = 0x1000000000ULL,
-  RER_USER_OPEN_COUNT = 0x2000000000ULL,
+  RER_USER_OPENED_COUNT = 0x2000000000ULL,
   RER_USER_REVIEW_MARK = 0x4000000000ULL,
   RER_REVIEW_APPROVED_AS_IS = 0x8000000000ULL,
   RER_STATUS_APPROVED_AS_IS = 0x10000000000ULL,
@@ -702,14 +702,14 @@ struct run_review
 {
   int64_t serial_id;
   int64_t run_serial_id;
-  int64_t create_time_us;
-  int64_t last_update_time_us;
-  int64_t moderation_time_us;
-  int64_t review_start_time_us;
-  int64_t review_heartbeat_time_us;
-  int64_t review_finish_time_us;
-  int64_t approve_time_us;
-  int64_t user_open_time_us;
+  int64_t creation_time;
+  int64_t last_update_time;
+  int64_t moderation_time;
+  int64_t review_start_time;
+  int64_t review_heartbeat_time;
+  int64_t review_finish_time;
+  int64_t approval_time;
+  int64_t user_opened_time;
   ej_uuid_t review_uuid;
   unsigned char *moderation_text;
   unsigned char *review_source;
@@ -737,7 +737,7 @@ struct run_review
   uint8_t purpose;
   int8_t review_recommended_status;
   int8_t approver_review_mark;
-  uint8_t user_open_count;
+  uint8_t user_opened_count;
   int8_t user_review_mark;
   int8_t review_approved_as_is;
   int8_t status_approved_as_is;

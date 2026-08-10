@@ -3326,31 +3326,31 @@ struct run_review_internal
   int run_id;
   int generation;
   int status;
-  int64_t create_time_us;
+  int64_t creation_time;
   int purpose;
-  int64_t last_update_time_us;
+  int64_t last_update_time;
   int requested_by;
   int moderator_user_id;
-  int64_t moderation_time_us;
+  int64_t moderation_time;
   unsigned char *moderation_text;
   unsigned char *review_source;
   unsigned char review_source_sha256[32];
   int reviewer_user_id;
-  int64_t review_start_time_us;
+  int64_t review_start_time;
   unsigned char *review_agent;
-  int64_t review_heartbeat_time_us;
+  int64_t review_heartbeat_time;
   unsigned char *review_heartbeat_status;
-  int64_t review_finish_time_us;
+  int64_t review_finish_time;
   unsigned char *review_result;
   unsigned char *review_judge_result;
   int review_recommended_status;
   unsigned char *review_statistics;
   int approver_user_id;
-  int64_t approve_time_us;
+  int64_t approval_time;
   unsigned char *approved_text;
   int approver_review_mark;
-  int64_t user_open_time_us;
-  int user_open_count;
+  int64_t user_opened_time;
+  int user_opened_count;
   int user_review_mark;
   int input_tokens;
   int cached_input_tokens;
@@ -3392,31 +3392,31 @@ static const struct common_mysql_parse_spec reviews_spec[REVIEW_ROW_WIDTH] =
   { 0, 'd', "run_id", REVIEW_OFFSET(run_id), 0 },
   { 0, 'd', "generation", REVIEW_OFFSET(generation), 0 },
   { 0, 'd', "status", REVIEW_OFFSET(status), 0 },
-  { 0, 'm', "create_time", REVIEW_OFFSET(create_time_us), 0 },
+  { 0, 'm', "creation_time", REVIEW_OFFSET(creation_time), 0 },
   { 0, 'd', "purpose", REVIEW_OFFSET(purpose), 0 },
-  { 1, 'm', "last_update_time", REVIEW_OFFSET(last_update_time_us), 0 },
+  { 1, 'm', "last_update_time", REVIEW_OFFSET(last_update_time), 0 },
   { 1, 'd', "requested_by", REVIEW_OFFSET(requested_by), 0 },
   { 1, 'd', "moderator_user_id", REVIEW_OFFSET(moderator_user_id), 0 },
-  { 1, 'm', "moderation_time", REVIEW_OFFSET(moderation_time_us), 0 },
+  { 1, 'm', "moderation_time", REVIEW_OFFSET(moderation_time), 0 },
   { 1, 's', "moderation_text", REVIEW_OFFSET(moderation_text), 0 },
   { 1, 's', "review_source", REVIEW_OFFSET(review_source), 0 },
   { 1, 'h', "review_source_sha256", REVIEW_OFFSET(review_source_sha256), 0 },
   { 1, 'd', "reviewer_user_id", REVIEW_OFFSET(reviewer_user_id), 0 },
-  { 1, 'm', "review_start_time", REVIEW_OFFSET(review_start_time_us), 0 },
+  { 1, 'm', "review_start_time", REVIEW_OFFSET(review_start_time), 0 },
   { 1, 's', "review_agent", REVIEW_OFFSET(review_agent), 0 },
-  { 1, 'm', "review_heartbeat_time", REVIEW_OFFSET(review_heartbeat_time_us), 0 },
+  { 1, 'm', "review_heartbeat_time", REVIEW_OFFSET(review_heartbeat_time), 0 },
   { 1, 's', "review_heartbeat_status", REVIEW_OFFSET(review_heartbeat_status), 0 },
-  { 1, 'm', "review_finish_time", REVIEW_OFFSET(review_finish_time_us), 0 },
+  { 1, 'm', "review_finish_time", REVIEW_OFFSET(review_finish_time), 0 },
   { 1, 's', "review_result", REVIEW_OFFSET(review_result), 0 },
   { 1, 's', "review_judge_result", REVIEW_OFFSET(review_judge_result), 0 },
   { 1, 'd', "review_recommended_status", REVIEW_OFFSET(review_recommended_status), 0 },
   { 1, 's', "review_statistics", REVIEW_OFFSET(review_statistics), 0 },
   { 1, 'd', "approver_user_id", REVIEW_OFFSET(approver_user_id), 0 },
-  { 1, 'm', "approve_time", REVIEW_OFFSET(approve_time_us), 0 },
+  { 1, 'm', "approval_time", REVIEW_OFFSET(approval_time), 0 },
   { 1, 's', "approved_text", REVIEW_OFFSET(approved_text), 0 },
   { 1, 'd', "approver_review_mark", REVIEW_OFFSET(approver_review_mark), 0 },
-  { 1, 'm', "user_open_time", REVIEW_OFFSET(user_open_time_us), 0 },
-  { 1, 'd', "user_open_count", REVIEW_OFFSET(user_open_count), 0 },
+  { 1, 'm', "user_opened_time", REVIEW_OFFSET(user_opened_time), 0 },
+  { 1, 'd', "user_opened_count", REVIEW_OFFSET(user_opened_count), 0 },
   { 1, 'd', "user_review_mark", REVIEW_OFFSET(user_review_mark), 0 },
   { 1, 'd', "input_tokens", REVIEW_OFFSET(input_tokens), 0 },
   { 1, 'd', "cached_input_tokens", REVIEW_OFFSET(cached_input_tokens), 0 },
@@ -3435,14 +3435,14 @@ static const struct common_mysql_parse_spec reviews_out_spec[REVIEW_ROW_WIDTH] =
 {
   { 0, 'l', "serial_id", REVIEW_OUT_OFFSET(serial_id), 0 },
   { 0, 'l', "run_serial_id", REVIEW_OUT_OFFSET(run_serial_id), 0 },
-  { EJ_MYSQL_NOW_IS_M2, 'm', "create_time", REVIEW_OUT_OFFSET(create_time_us), 0 },
-  { EJ_MYSQL_NOW_IS_M2 | EJ_MYSQL_NULLABLE, 'm', "last_update_time", REVIEW_OUT_OFFSET(last_update_time_us) },
-  { EJ_MYSQL_NOW_IS_M2 | EJ_MYSQL_NULLABLE, 'm', "moderation_time", REVIEW_OUT_OFFSET(moderation_time_us) },
-  { EJ_MYSQL_NOW_IS_M2 | EJ_MYSQL_NULLABLE, 'm', "review_start_time", REVIEW_OUT_OFFSET(review_start_time_us), 0 },
-  { EJ_MYSQL_NOW_IS_M2 | EJ_MYSQL_NULLABLE, 'm', "review_heartbeat_time", REVIEW_OUT_OFFSET(review_heartbeat_time_us), 0 },
-  { EJ_MYSQL_NOW_IS_M2 | EJ_MYSQL_NULLABLE, 'm', "review_finish_time", REVIEW_OUT_OFFSET(review_finish_time_us), 0 },
-  { EJ_MYSQL_NOW_IS_M2 | EJ_MYSQL_NULLABLE, 'm', "approve_time", REVIEW_OUT_OFFSET(approve_time_us), 0 },
-  { EJ_MYSQL_NOW_IS_M2 | EJ_MYSQL_NULLABLE, 'm', "user_open_time", REVIEW_OUT_OFFSET(user_open_time_us), 0 },
+  { EJ_MYSQL_NOW_IS_M2, 'm', "creation_time", REVIEW_OUT_OFFSET(creation_time), 0 },
+  { EJ_MYSQL_NOW_IS_M2 | EJ_MYSQL_NULLABLE, 'm', "last_update_time", REVIEW_OUT_OFFSET(last_update_time) },
+  { EJ_MYSQL_NOW_IS_M2 | EJ_MYSQL_NULLABLE, 'm', "moderation_time", REVIEW_OUT_OFFSET(moderation_time) },
+  { EJ_MYSQL_NOW_IS_M2 | EJ_MYSQL_NULLABLE, 'm', "review_start_time", REVIEW_OUT_OFFSET(review_start_time), 0 },
+  { EJ_MYSQL_NOW_IS_M2 | EJ_MYSQL_NULLABLE, 'm', "review_heartbeat_time", REVIEW_OUT_OFFSET(review_heartbeat_time), 0 },
+  { EJ_MYSQL_NOW_IS_M2 | EJ_MYSQL_NULLABLE, 'm', "review_finish_time", REVIEW_OUT_OFFSET(review_finish_time), 0 },
+  { EJ_MYSQL_NOW_IS_M2 | EJ_MYSQL_NULLABLE, 'm', "approval_time", REVIEW_OUT_OFFSET(approval_time), 0 },
+  { EJ_MYSQL_NOW_IS_M2 | EJ_MYSQL_NULLABLE, 'm', "user_opened_time", REVIEW_OUT_OFFSET(user_opened_time), 0 },
   { 0, 'g', "review_uuid", REVIEW_OUT_OFFSET(review_uuid), 0 },
   { EJ_MYSQL_NULLABLE, 's', "moderation_text", REVIEW_OUT_OFFSET(moderation_text), 0 },
   { EJ_MYSQL_NULLABLE, 's', "review_source", REVIEW_OUT_OFFSET(review_source), 0 },
@@ -3470,7 +3470,7 @@ static const struct common_mysql_parse_spec reviews_out_spec[REVIEW_ROW_WIDTH] =
   { 0, '1', "purpose", REVIEW_OUT_OFFSET(purpose), 0 },
   { EJ_MYSQL_NULL_IS_M1, '!', "review_recommended_status", REVIEW_OUT_OFFSET(review_recommended_status), 0 },
   { EJ_MYSQL_NULL_IS_M1, '!', "approver_review_mark", REVIEW_OUT_OFFSET(approver_review_mark), 0 },
-  { EJ_MYSQL_NULLABLE, '1', "user_open_count", REVIEW_OUT_OFFSET(user_open_count), 0 },
+  { EJ_MYSQL_NULLABLE, '1', "user_opened_count", REVIEW_OUT_OFFSET(user_opened_count), 0 },
   { EJ_MYSQL_NULL_IS_M1, '!', "user_review_mark", REVIEW_OUT_OFFSET(user_review_mark), 0 },
   { EJ_MYSQL_NULL_IS_M1, '!', "review_approved_as_is", REVIEW_OUT_OFFSET(review_approved_as_is), 0 },
   { EJ_MYSQL_NULL_IS_M1, '!', "status_approved_as_is", REVIEW_OUT_OFFSET(status_approved_as_is), 0 },
@@ -3498,7 +3498,7 @@ create_review_func(
 
   struct run_review rr = {};
   rr.run_serial_id = run_serial_id;
-  rr.create_time_us = -2; // NOW()
+  rr.creation_time = -2; // NOW()
   ej_uuid_generate(&rr.review_uuid);
   rr.contest_id = contest_id;
   rr.run_id = run_id;
@@ -3508,7 +3508,7 @@ create_review_func(
   rr.requested_by = requested_by;
   fprintf(cmd_f, "INSERT INTO %sreviews SET ", state->md->table_prefix);
   state->mi->unparse_spec_4(state->md, cmd_f, REVIEW_ROW_WIDTH, reviews_out_spec,
-                            RER_RUN_SERIAL_ID|RER_CREATE_TIME_US|RER_REVIEW_UUID|RER_CONTEST_ID|RER_RUN_ID|RER_GENERATION|RER_STATUS|RER_PURPOSE|RER_REQUESTED_BY,
+                            RER_RUN_SERIAL_ID|RER_CREATION_TIME|RER_REVIEW_UUID|RER_CONTEST_ID|RER_RUN_ID|RER_GENERATION|RER_STATUS|RER_PURPOSE|RER_REQUESTED_BY,
                           &rr, "", 1);
   fclose(cmd_f); cmd_f = NULL;
 
@@ -3526,14 +3526,14 @@ run_review_move_from_internal(struct run_review *dst, struct run_review_internal
 {
   dst->serial_id = src->serial_id;
   dst->run_serial_id = src->run_serial_id;
-  dst->create_time_us = src->create_time_us;
-  dst->last_update_time_us = src->last_update_time_us;
-  dst->moderation_time_us = src->moderation_time_us;
-  dst->review_start_time_us = src->review_start_time_us;
-  dst->review_heartbeat_time_us = src->review_heartbeat_time_us;
-  dst->review_finish_time_us = src->review_finish_time_us;
-  dst->approve_time_us = src->approve_time_us;
-  dst->user_open_time_us = src->user_open_time_us;
+  dst->creation_time = src->creation_time;
+  dst->last_update_time = src->last_update_time;
+  dst->moderation_time = src->moderation_time;
+  dst->review_start_time = src->review_start_time;
+  dst->review_heartbeat_time = src->review_heartbeat_time;
+  dst->review_finish_time = src->review_finish_time;
+  dst->approval_time = src->approval_time;
+  dst->user_opened_time = src->user_opened_time;
   memcpy(&dst->review_uuid, &src->review_uuid, 16);
   dst->moderation_text = src->moderation_text; src->moderation_text = NULL;
   dst->review_source = src->review_source; src->review_source = NULL;
@@ -3577,9 +3577,9 @@ run_review_move_from_internal(struct run_review *dst, struct run_review_internal
   if (src->approver_review_mark < -1) src->approver_review_mark = -1;
   if (src->approver_review_mark > 127) src->approver_review_mark = 127;
   dst->approver_review_mark = src->approver_review_mark;
-  if (src->user_open_count < 0) src->user_open_count = 0;
-  if (src->user_open_count > 255) src->user_open_count = 255;
-  dst->user_open_count = src->user_open_count;
+  if (src->user_opened_count < 0) src->user_opened_count = 0;
+  if (src->user_opened_count > 255) src->user_opened_count = 255;
+  dst->user_opened_count = src->user_opened_count;
   if (src->user_review_mark < 0) src->user_review_mark = -1;
   if (src->user_review_mark > 127) src->user_review_mark = 127;
   dst->user_review_mark = src->user_review_mark;
