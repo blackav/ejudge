@@ -12002,6 +12002,145 @@ priv_list_reviews_json(
 */
 }
 
+static int
+scan_eligible_contests(
+        struct http_request_info *phr,
+        int **p_filtered)
+{
+  const int *cnts_ids = NULL;
+  int count = contests_get_list(&cnts_ids);
+  const struct contest_desc *cnts;
+  opcap_t caps;
+  opcap_t gcaps = 0;
+  _Bool has_global_perm = 0;
+  int *filtered = NULL;
+  int filtered_count = 0;
+
+  if (count <= 0) {
+    return 0;
+  }
+
+  XCALLOC(filtered, count);
+
+  if (opcaps_find(&phr->config->capabilities, phr->login, &gcaps) >= 0 && opcaps_check(gcaps, OPCAP_EXT_REVIEW) >= 0) {
+    has_global_perm = 1;
+  }
+
+  for (int i = 0; i < count; ++i) {
+    if (contests_get(cnts_ids[i], &cnts) < 0 || !cnts) continue;
+    if (cnts->closed > 0) continue;
+    if (!contests_check_judge_ip_2(cnts, &phr->ip, phr->ssl_flag)) continue;
+    if (!has_global_perm && opcaps_find(&cnts->capabilities, phr->login, &caps) < 0) continue;
+    if (!has_global_perm && opcaps_check(caps, OPCAP_EXT_REVIEW) < 0) continue;
+    filtered[filtered_count++] = cnts_ids[i];
+  }
+
+  if (!filtered_count) {
+    free(filtered); filtered = NULL;
+  }
+  *p_filtered = filtered;
+  return filtered_count;
+}
+
+static int
+parse_ints(const unsigned char *s, int **p_ids)
+{
+  int comma_count = 0;
+  for (const unsigned char *p = s; *p; ++p) {
+    comma_count += *p == ',';
+  }
+  int *ids = NULL;
+  XCALLOC(ids, comma_count+1);
+  const unsigned char *p = s;
+  int j = 0;
+  while (p) {
+    char *eptr;
+    errno = 0;
+    long v = strtol(p, &eptr, 10);
+    if (errno || v <= 0 || (int) v != v || p == (const unsigned char *) eptr) goto fail;
+    ids[j++] = v;
+    p = eptr;
+    if (*p && *p != ',') goto fail;
+    if (*p == ',') ++p;
+  }
+  if (!j) {
+    free(ids); ids = NULL;
+  }
+  *p_ids = ids;
+  return j;
+
+fail:;
+  free(ids);
+  return -1;
+}
+
+static int
+scan_contests_in_list(
+        struct http_request_info *phr,
+        const unsigned char *ids_str,
+        int **p_ids)
+{
+  int *ids = NULL;
+  int count = parse_ints(ids_str, &ids);
+  if (count <= 0) {
+    return count;
+  }
+  qsort(ids, count, sizeof(ids[0]), int_sort_func);
+  int j = 1;
+  for (int i = 1; i < count; ++i) {
+    if (ids[i] != ids[j - 1]) {
+      ids[j++] = ids[i];
+    }
+  }
+  count = j;
+
+  opcap_t gcaps;
+  _Bool has_global_perm = 0;
+
+  if (opcaps_find(&phr->config->capabilities, phr->login, &gcaps) >= 0 && opcaps_check(gcaps, OPCAP_EXT_REVIEW) >= 0) {
+    has_global_perm = 1;
+  }
+  j = 0;
+  for (int i = 0; i < count; ++i) {
+    const struct contest_desc *cnts = NULL;
+    opcap_t caps = 0;
+    if (contests_get(ids[i], &cnts) < 0 || !cnts) continue;
+    if (cnts->closed > 0) continue;
+    if (!contests_check_judge_ip_2(cnts, &phr->ip, phr->ssl_flag)) continue;
+    if (!has_global_perm && opcaps_find(&cnts->capabilities, phr->login, &caps) < 0) continue;
+    if (!has_global_perm && opcaps_check(caps, OPCAP_EXT_REVIEW) < 0) continue;
+    ids[j++] = ids[i];
+  }
+  count = j;
+
+  if (!count) {
+    free(ids);
+    ids = NULL;
+  }
+  *p_ids = ids;
+  return count;
+}
+
+__attribute__((unused)) static int
+make_contest_id_list(
+        struct http_request_info *phr,
+        const unsigned char *ids_str,
+        int **p_ids)
+{
+  if (ids_str && !strcmp(ids_str, "*")) {
+    return scan_eligible_contests(phr, p_ids);
+  } else if (ids_str) {
+    return scan_contests_in_list(phr, ids_str, p_ids);
+  } else {
+    if (phr->contest_id <= 0) return 0;
+    int *ids = NULL;
+    XCALLOC(ids, 1);
+    ids[0] = phr->contest_id;
+    *p_ids = ids;
+    return 1;
+  }
+}
+
 static void
 priv_list_pending_reviews_json(
         FILE *fout,
@@ -12009,56 +12148,79 @@ priv_list_pending_reviews_json(
         const struct contest_desc *cnts,
         struct contest_extra *extra)
 {
-/*
   serve_state_t cs = extra->serve_state;
+  cJSON *jr = cJSON_CreateObject();
   int ok = 0;
   int err_num = NEW_SRV_ERR_INV_PARAM;
   const unsigned char *err_msg = NULL;
-  cJSON *jr = cJSON_CreateObject();
   int http_status = 400;
-*/
+  const unsigned char *contest_ids_str = NULL;
+  int date_mode = 0;
+  int *contest_ids = NULL;
+  int contest_count = 0;
+  struct list_review_filter filter = {};
+  int offset = 0;
+  int count = 0;
+  struct run_review *reviews = NULL;
+  size_t review_count = 0;
+
+  if (opcaps_check(phr->caps, OPCAP_EXT_REVIEW) < 0) {
+    http_status = 403;
+    err_num = NEW_SRV_ERR_PERMISSION_DENIED;
+    goto done;
+  }
 
   info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
 
-/*
-  int date_mode = 0, size_mode = 0;
+  hr_cgi_param_int_opt(phr, "offset", &offset, 0);
+  hr_cgi_param_int_opt(phr, "count", &count, 0);
   hr_cgi_param_int_opt(phr, "date_mode", &date_mode, 0);
-  hr_cgi_param_int_opt(phr, "size_mode", &size_mode, 0);
-  int abstract = -1;
-  hr_cgi_param_bool_opt(phr, "abstract", &abstract, -1);
-  int prob_id = -1;
-  hr_cgi_param_int_opt(phr, "prob_id", &prob_id, -1);
-  const unsigned char *short_name = NULL;
-  hr_cgi_param(phr, "short_name", &short_name);
-  const unsigned char *long_name = NULL;
-  hr_cgi_param(phr, "long_name", &long_name);
-  const unsigned char *internal_name = NULL;
-  hr_cgi_param(phr, "internal_name", &internal_name);
-  const unsigned char *uuid = NULL;
-  hr_cgi_param(phr, "uuid", &uuid);
-  const unsigned char *extid = NULL;
-  hr_cgi_param(phr, "extid", &extid);
-  struct section_problem_data *prob = NULL;
-  int r = lookup_contest_problem(cs, abstract, prob_id, short_name, long_name, internal_name, uuid, extid, NULL, NULL, &prob);
-  if (r < 0) {
-    http_status = -r;
-  } else if (!prob) {
-    http_status = 404;
-    err_num = NEW_SRV_ERR_INV_PROB_ID;
-  } else {
-    cJSON_AddItemToObject(jr, "problem", json_serialize_problem(prob, date_mode, size_mode, problem_ignored_fields));
-    ok = 1;
-    err_num = 0;
-    http_status = 200;
+  hr_cgi_param(phr, "contest_ids", &contest_ids_str);
+  contest_count = make_contest_id_list(phr, contest_ids_str, &contest_ids);
+  if (contest_count < 0) {
+    err_num = NEW_SRV_ERR_INV_CONTEST_ID;
+    goto done;
+  }
+  if (!contest_count) {
+    err_num = NEW_SRV_ERR_NO_CONTESTS;
+    goto done;
   }
 
+  filter.contest_id_list = contest_ids;
+  filter.contest_id_count = contest_count;
+  filter.run_id = -1;
+  filter.include_status_mask = 1U << RERS_WAITING_REVIEW;
+  if (count <= 0) count = 50;
+  filter.offset = offset;
+  filter.count = count;
+
+  if (run_review_list(cs->runlog_state, &filter, &reviews, &review_count) < 0) {
+    http_status = 500;
+    err_num = NEW_SRV_ERR_DATABASE_FAILED;
+    goto done;
+  }
+
+  cJSON *jrs = cJSON_CreateArray();
+  for (int i = 0; i < review_count; ++i) {
+    cJSON *jr = json_serialize_run_review(&reviews[i], date_mode,
+      RER_CREATE_TIME_US|RER_REVIEW_UUID|RER_CONTEST_ID|RER_RUN_ID|RER_STATUS|RER_PURPOSE|RER_STATUS,
+      0);
+    cJSON_AddItemToArray(jrs, jr);
+  }
+  cJSON *jres = cJSON_CreateObject();
+  cJSON_AddItemToObject(jres, "reviews", jrs);
+  cJSON_AddItemToObject(jr, "result", jres);
+  ok = 1;
+  err_num = 0;
+  http_status = 200;
+
+done:;
   phr->json_reply = 1;
   phr->status_code = http_status;
   emit_json_result(fout, phr, ok, err_num, 0, err_msg, jr);
   if (jr) {
     cJSON_Delete(jr);
   }
-*/
 }
 
 typedef PageInterface *(*external_action_handler_t)(void);
