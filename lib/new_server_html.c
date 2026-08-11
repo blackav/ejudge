@@ -12224,6 +12224,161 @@ done:;
   }
 }
 
+static void
+priv_start_review_json(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  serve_state_t cs = extra->serve_state;
+  cJSON *jr = cJSON_CreateObject();
+  int ok = 0;
+  int err_num = NEW_SRV_ERR_INV_PARAM;
+  const unsigned char *err_msg = NULL;
+  int http_status = 400;
+  const unsigned char *review_uuid_str = NULL;
+  ej_uuid_t review_uuid = {};
+  struct run_review review = {};
+  struct run_review out_review = {};
+  const struct contest_desc *review_cnts = NULL;
+  struct list_review_filter filter = { .run_id = -1 };
+  const unsigned char *agent = NULL;
+  unsigned char *review_source = NULL;
+  size_t review_len = 0;
+  unsigned err_id = random_u32();
+  const unsigned char *heartbeat_status = NULL;
+  int date_mode = 0;
+
+  info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
+
+  #define ERR(msg, ...) err("%s:%d:%8x:" msg, __PRETTY_FUNCTION__, __LINE__, err_id ,##__VA_ARGS__)
+
+  if (opcaps_check(phr->caps, OPCAP_EXT_REVIEW) < 0) {
+    http_status = 403;
+    err_num = NEW_SRV_ERR_PERMISSION_DENIED;
+    ERR("no OPCAP_EXT_REVIEW permission");
+    goto done;
+  }
+
+  hr_cgi_param(phr, "review_uuid", &review_uuid_str);
+  if (!review_uuid_str) {
+    http_status = 400;
+    err_num = NEW_SRV_ERR_INV_UUID;
+    ERR("review_uuid undefined");
+    goto done;
+  }
+  if (ej_uuid_parse(review_uuid_str, &review_uuid) < 0) {
+    http_status = 400;
+    err_num = NEW_SRV_ERR_INV_UUID;
+    ERR("review_uuid invalid");
+    goto done;
+  }
+  if (run_review_fetch(cs->runlog_state, &review_uuid,
+      RER_SERIAL_ID|RER_REVIEW_UUID|RER_CONTEST_ID, &review) < 0) {
+    http_status = 404;
+    err_num = NEW_SRV_ERR_INV_UUID;
+    ERR("review '%s' not found", review_uuid_str);
+    goto done;
+  }
+  if (review.contest_id <= 0) {
+    http_status = 500;
+    err_num = NEW_SRV_ERR_DATABASE_FAILED;
+    ERR("review '%s' contest_id <= 0", review_uuid_str);
+    goto done;
+  }
+  if (contests_get(review.contest_id, &review_cnts) < 0 || !review_cnts) {
+    http_status = 403;
+    err_num = NEW_SRV_ERR_PERMISSION_DENIED;
+    ERR("review '%s' failed to get contest %d", review_uuid_str, review.contest_id);
+    goto done;
+  }
+  if (review_cnts->closed > 0) {
+    http_status = 403;
+    err_num = NEW_SRV_ERR_PERMISSION_DENIED;
+    ERR("review '%s' contest %d is closed", review_uuid_str, review.contest_id);
+    goto done;
+  }
+  if (!contests_check_judge_ip_2(review_cnts, &phr->ip, phr->ssl_flag)) {
+    http_status = 403;
+    err_num = NEW_SRV_ERR_PERMISSION_DENIED;
+    ERR("review '%s' contest %d IP restricted", review_uuid_str, review.contest_id);
+    goto done;
+  }
+  hr_cgi_param(phr, "agent", &agent);
+  if (!agent) {
+    http_status = 400;
+    err_num = NEW_SRV_ERR_INV_UUID;
+    ERR("agent is undefined");
+    goto done;
+  }
+  hr_cgi_param(phr, "heartbeat_status", &heartbeat_status);
+  hr_cgi_param_int_opt(phr, "date_mode", &date_mode, 0);
+
+  opcap_t gcaps = 0;
+  opcap_t caps = 0;
+  if ((opcaps_find(&phr->config->capabilities, phr->login, &gcaps) < 0 || opcaps_check(gcaps, OPCAP_EXT_REVIEW) < 0)
+      && (opcaps_find(&review_cnts->capabilities, phr->login, &caps) < 0 || opcaps_check(caps, OPCAP_EXT_REVIEW) < 0)) {
+    http_status = 403;
+    err_num = NEW_SRV_ERR_PERMISSION_DENIED;
+    ERR("review '%s' contest %d no capability OPCAP_EXT_REVIEW is set", review_uuid_str, review.contest_id);
+    goto done;
+  }
+
+  // permission ok
+  // TODO: generate review source
+  review_source = "TODO";
+  review_len = strlen(review_source);
+
+  filter.review_uuid = review_uuid;
+  filter.include_status_mask = 1ULL << RERS_WAITING_REVIEW;
+  filter.null_field_mask = RER_REVIEWER_USER_ID | RER_REVIEW_START_TIME | RER_REVIEW_AGENT;
+
+  out_review.last_update_time = -2;
+  out_review.review_start_time = -2;
+  out_review.review_heartbeat_time = -2;
+  out_review.review_source = review_source;
+  out_review.reviewer_user_id = phr->user_id;
+  out_review.status = RERS_REVIEWING;
+  out_review.review_agent = xstrdup(agent);
+  sha256binbuf(out_review.review_source_sha256, review_source, review_len);
+  if (heartbeat_status) out_review.review_heartbeat_status = xstrdup(heartbeat_status);
+
+  int res = run_review_update(cs->runlog_state, &out_review,
+    RER_LAST_UPDATE_TIME|RER_REVIEW_START_TIME|RER_REVIEW_HEARTBEAT_TIME
+    |RER_REVIEW_SOURCE|RER_REVIEW_SOURCE_SHA256|RER_REVIEWER_USER_ID|RER_STATUS
+    |RER_REVIEW_AGENT|RER_REVIEW_HEARTBEAT_STATUS,
+    &filter);
+  if (res < 0) {
+    http_status = 500;
+    err_num = NEW_SRV_ERR_DATABASE_FAILED;
+    ERR("database error");
+    goto done;
+  }
+  if (res == 0) {
+    http_status = 400;
+    err_num = NEW_SRV_ERR_NO_AFFECTED_ROWS;
+    ERR("no affected rows");
+    goto done;
+  }
+
+  ok = 1;
+  err_num = 0;
+  http_status = 200;
+
+done:;
+  free(review_source);
+  run_review_free(&out_review);
+  run_review_free(&review);
+  phr->json_reply = 1;
+  phr->status_code = http_status;
+  emit_json_result(fout, phr, ok, err_num, err_id, err_msg, jr);
+  if (jr) {
+    cJSON_Delete(jr);
+  }
+#undef ERR
+}
+
 typedef PageInterface *(*external_action_handler_t)(void);
 
 typedef int (*new_action_handler_t)(
@@ -12476,7 +12631,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_UPDATE_REVIEW_JSON] = NULL,
   [NEW_SRV_ACTION_PREMODERATE_JSON] = NULL,
   [NEW_SRV_ACTION_LIST_PENDING_REVIEWS_JSON] = priv_list_pending_reviews_json,
-  [NEW_SRV_ACTION_START_REVIEW_JSON] = NULL,
+  [NEW_SRV_ACTION_START_REVIEW_JSON] = priv_start_review_json,
   [NEW_SRV_ACTION_FINISH_REVIEW_JSON] = NULL,
   [NEW_SRV_ACTION_HEARTBEAT_REVIEW_JSON] = NULL,
   [NEW_SRV_ACTION_LIST_ACTIVE_REVIEWS_JSON] = NULL,
