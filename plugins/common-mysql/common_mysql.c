@@ -206,6 +206,9 @@ unparse_spec_4_func(
         const void *data,
         const unsigned char *sep,
         int update_clause_flag);
+static int
+affected_rows_func(
+        struct common_mysql_state *state);
 
 /* plugin entry point */
 struct common_mysql_iface plugin_common_mysql =
@@ -261,6 +264,7 @@ struct common_mysql_iface plugin_common_mysql =
 
   write_timestamp_us_func,
   unparse_spec_4_func,
+  affected_rows_func,
 };
 
 static struct common_plugin_data *
@@ -2002,4 +2006,11 @@ unparse_spec_4_func(
     }
   }
   return sep;
+}
+
+static int
+affected_rows_func(
+        struct common_mysql_state *state)
+{
+  return mysql_affected_rows(state->conn);
 }

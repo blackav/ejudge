@@ -232,6 +232,7 @@ struct common_mysql_iface
         const void *data,
         const unsigned char *sep,
         int update_clause_flag);
+  int (*affected_rows)(struct common_mysql_state *state);
 };
 
 #define db_error_fail(s) do { s->i->error(s); goto fail; } while (0)
