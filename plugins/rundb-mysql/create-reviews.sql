@@ -48,5 +48,5 @@ CREATE TABLE reviews(
     KEY reviews_reviewer_idx (reviewer_user_id),
     KEY reviews_approver_idx (approver_user_id),
     KEY reviews_contest_status_idx (contest_id, status),
-    KEY reviews_status_create_time_idx (status, create_time)
+    KEY reviews_status_create_time_idx (status, creation_time)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
