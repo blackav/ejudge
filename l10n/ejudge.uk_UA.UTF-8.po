@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-09 23:30+0300\n"
+"POT-Creation-Date: 2026-08-12 02:07+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Ukrainian <uk@li.org>\n"
@@ -2494,6 +2494,9 @@ msgid "No"
 msgstr ""
 
 msgid "No advisors are allowed in this contest"
+msgstr ""
+
+msgid "No affected rows"
 msgstr ""
 
 msgid "No answer"
