@@ -3351,6 +3351,21 @@ run_review_free_array(struct run_review *rrs, size_t count)
 }
 
 int
+run_review_fetch(
+        runlog_state_t state,
+        const ej_uuid_t *review_uuid,
+        uint64_t field_mask,
+        struct run_review *p_result)
+{
+  if (!state->iface->fetch_review) {
+    ERR_R("fetch_review is not implemented");
+  } else {
+    return state->iface->fetch_review(state->cnts, review_uuid, field_mask, p_result);
+  }
+  return -1;
+}
+
+int
 run_review_list(
         runlog_state_t state,
         const struct list_review_filter *filter,
@@ -3361,6 +3376,21 @@ run_review_list(
     ERR_R("list_reviews is not implemented");
   } else {
     return state->iface->list_reviews(state->cnts, filter, p_result, p_count);
+  }
+  return -1;
+}
+
+int
+run_review_update(
+        runlog_state_t state,
+        const struct run_review *rr,
+        uint64_t field_mask,
+        const struct list_review_filter *filter)
+{
+  if (!state->iface->update_reviews) {
+    ERR_R("update_reviews is not implemented");
+  } else {
+    return state->iface->update_reviews(state->cnts, rr, field_mask, filter);
   }
   return -1;
 }

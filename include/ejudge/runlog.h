@@ -798,10 +798,24 @@ void
 run_review_free_array(struct run_review *rr, size_t count);
 
 int
+run_review_fetch(
+        runlog_state_t state,
+        const ej_uuid_t *review_uuid,
+        uint64_t field_mask,
+        struct run_review *p_result);
+
+int
 run_review_list(
         runlog_state_t state,
         const struct list_review_filter *filter,
         struct run_review **p_result,
         size_t *p_count);
+
+int
+run_review_update(
+        runlog_state_t state,
+        const struct run_review *rr,
+        uint64_t field_mask,
+        const struct list_review_filter *filter);
 
 #endif /* __RUNLOG_H__ */
