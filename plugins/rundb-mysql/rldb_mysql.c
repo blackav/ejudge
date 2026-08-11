@@ -3598,6 +3598,7 @@ static int
 fetch_review_func(
         struct rldb_plugin_cnts *cdata,
         const ej_uuid_t *p_uuid,
+        uint64_t field_mask,
         struct run_review *p_result)
 {
   struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts*) cdata;
@@ -3906,16 +3907,16 @@ update_reviews_func(
   FILE *cmd_f = open_memstream(&cmd_s, &cmd_z);
 
   fprintf(cmd_f, "UPDATE %sreviews SET ", state->md->table_prefix);
-  state->mi->unparse_spec_4(state->md, cmd_f, REVIEW_ROW_WIDTH, reviews_out_spec, field_mask, rr, "", 1);
+  mi->unparse_spec_4(md, cmd_f, REVIEW_ROW_WIDTH, reviews_out_spec, field_mask, rr, "", 1);
   fprintf(cmd_f, " WHERE ");
   write_reviews_filter(mi, md, cmd_f, filter);
   putc_unlocked(';', cmd_f);
   fclose(cmd_f); cmd_f = NULL;
 
-  if (state->mi->simple_query(state->md, cmd_s, cmd_z) < 0) goto fail;
+  if (mi->simple_query(md, cmd_s, cmd_z) < 0) goto fail;
   xfree(cmd_s); cmd_s = 0; cmd_z = 0;
 
-  return 0;
+  return mi->affected_rows(md);
 
 fail:;
   if (cmd_f) fclose(cmd_f);
