@@ -21,6 +21,18 @@
 #include <string.h>
 #include <stdio.h>
 
+void
+sha256binbuf(
+        unsigned char hash[SHA256_BLOCK_SIZE],
+        const unsigned char *in,
+        size_t in_size)
+{
+    SHA256_CTX cntx;
+    sha256_init(&cntx);
+    sha256_update(&cntx, in, in_size);
+    sha256_final(&cntx, hash);
+}
+
 void sha256b64buf(char *out, size_t out_size, const unsigned char *in, size_t in_size)
 {
     unsigned char hash[SHA256_BLOCK_SIZE];
