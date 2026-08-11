@@ -277,6 +277,7 @@ struct rldb_plugin_iface
   int (*fetch_review)(
         struct rldb_plugin_cnts *cdata,
         const ej_uuid_t *p_uuid,
+        uint64_t field_mask,
         struct run_review *p_result);
   int (*list_reviews)(
         struct rldb_plugin_cnts *cdata,
