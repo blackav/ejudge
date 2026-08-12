@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2023-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -29,7 +29,8 @@
 #include <sys/wait.h>
 #include <sys/mman.h>
 #include <signal.h>
-#include <stdarg.h>
+#include <limits.h>
+#include <sys/random.h>
 
 static const char *program_name;
 
@@ -74,7 +75,9 @@ run_psql(
         const char *args[64];
         int i = 0;
 
-        setenv("PGPASSWORD", password, 1);
+        if (password) {
+            setenv("PGPASSWORD", password, 1);
+        }
         args[i++] = "psql";
         args[i++] = "-h";
         args[i++] = host;
@@ -166,6 +169,48 @@ create_database(
     free(cmd_s); cmd_s = NULL;
 
     return r;
+}
+
+static void
+prepare_restrict_command(
+        const char *exec_path,
+        char *out_name,
+        size_t out_size)
+{
+    char buf[PATH_MAX];
+    unsigned long long rnv = 0;
+    unsigned long long key = 0;
+
+    ssize_t r = getrandom(&rnv, sizeof(rnv), 0);
+    if (r < 0) {
+        die("getrandom failed %s", strerror(errno));
+    }
+    r = getrandom(&key, sizeof(key), 0);
+    if (r < 0) {
+        die("getrandom failed %s", strerror(errno));
+    }
+
+    const char *slash = strrchr(exec_path, '/');
+    int res;
+    if (slash) {
+        res = snprintf(buf, sizeof(buf), "%.*s/%016llx", (int)(slash-exec_path), exec_path, rnv);
+    } else {
+        res = snprintf(buf, sizeof(buf), "%016llx", rnv);
+    }
+    if (res >= (int) sizeof(buf)) {
+        die("path is too long");
+    }
+
+    FILE *outf = fopen(buf, "w");
+    if (!outf) {
+        die("cannot open '%s' for writing: %s", buf, strerror(errno));
+    }
+    fprintf(outf, "\\restrict %016llx\n", key);
+    fclose(outf);
+
+    if (snprintf(out_name, out_size, "%s", buf) >= (int) out_size) {
+        die("return path is too long");
+    }
 }
 
 /*
@@ -316,7 +361,7 @@ main(int argc, char *argv[])
         errno = 0;
         char *eptr = NULL;
         long v = strtol(s, &eptr, 10);
-        if (errno || !eptr || eptr == s || (int) v != v || v < 0) {
+        if (errno || !*eptr || eptr == s || (int) v != v || v < 0) {
             die("invalid EJUDGE_HTML_OUTPUT value: %s", s);
         }
         html_output_flag = v;
@@ -327,7 +372,7 @@ main(int argc, char *argv[])
         errno = 0;
         char *eptr = NULL;
         long v = strtol(s, &eptr, 10);
-        if (errno || !eptr || eptr == s || (int) v != v || v < 0) {
+        if (errno || !*eptr || eptr == s || (int) v != v || v < 0) {
             die("invalid EJUDGE_TUPLES_ONLY value: %s", s);
         }
         tuples_only_flag = v;
@@ -340,11 +385,16 @@ main(int argc, char *argv[])
         exec_password = user_password;
     }
 
+    char restrict_path[PATH_MAX];
+    prepare_restrict_command(exec_file, restrict_path, sizeof(restrict_path));
+
     r = run_psql(host, port, exec_user, exec_password, database,
                  0 /* ignore_stdout */,
                  html_output_flag,
                  tuples_only_flag,
-                 "-f", input_file, "-f", exec_file, NULL);
+                 "-f", restrict_path,
+                 "-f", input_file,
+                 "-f", exec_file, NULL);
     if (r != 0) {
         die("postgres execution failed");
     }
