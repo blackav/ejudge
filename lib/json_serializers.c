@@ -1461,7 +1461,7 @@ append_timestamp(cJSON *j, int64_t ts, int date_mode, const unsigned char *name_
 #define RER_review_source_sha256 RER_REVIEW_SOURCE_SHA256
 #define RER_contest_id RER_CONTEST_ID
 #define RER_run_id RER_RUN_ID
-#define RER_requested_by RER_REQUESTED_BY
+#define RER_request_user_id RER_REQUEST_USER_ID
 #define RER_moderator_user_id RER_MODERATOR_USER_ID
 #define RER_reviewer_user_id RER_REVIEWER_USER_ID
 #define RER_approver_user_id RER_APPROVER_USER_ID
@@ -1546,7 +1546,7 @@ json_serialize_run_review(
 #define ADD_POSITIVE_INT(j, o, f) do { if (o->f > 0 && (mask & RER_##f) != 0) { \
         cJSON_AddNumberToObject(j, #f, o->f); \
     }} while (0)
-    ADD_POSITIVE_INT(jrr, rr, requested_by);
+    ADD_POSITIVE_INT(jrr, rr, request_user_id);
     ADD_POSITIVE_INT(jrr, rr, moderator_user_id);
     ADD_POSITIVE_INT(jrr, rr, reviewer_user_id);
     ADD_POSITIVE_INT(jrr, rr, approver_user_id);

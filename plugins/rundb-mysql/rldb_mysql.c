@@ -3329,7 +3329,7 @@ struct run_review_internal
   int64_t creation_time;
   int purpose;
   int64_t last_update_time;
-  int requested_by;
+  int request_user_id;
   int moderator_user_id;
   int64_t moderation_time;
   unsigned char *moderation_text;
@@ -3395,7 +3395,7 @@ static const struct common_mysql_parse_spec reviews_spec[REVIEW_ROW_WIDTH] =
   { 0, 'm', "creation_time", REVIEW_OFFSET(creation_time), 0 },
   { 0, 'd', "purpose", REVIEW_OFFSET(purpose), 0 },
   { 1, 'm', "last_update_time", REVIEW_OFFSET(last_update_time), 0 },
-  { 1, 'd', "requested_by", REVIEW_OFFSET(requested_by), 0 },
+  { 1, 'd', "request_user_id", REVIEW_OFFSET(request_user_id), 0 },
   { 1, 'd', "moderator_user_id", REVIEW_OFFSET(moderator_user_id), 0 },
   { 1, 'm', "moderation_time", REVIEW_OFFSET(moderation_time), 0 },
   { 1, 's', "moderation_text", REVIEW_OFFSET(moderation_text), 0 },
@@ -3456,7 +3456,7 @@ static const struct common_mysql_parse_spec reviews_out_spec[REVIEW_ROW_WIDTH] =
   { EJ_MYSQL_NULLABLE, 'h', "review_source_sha256", REVIEW_OUT_OFFSET(review_source_sha256), 0 },
   { 0, 'd', "contest_id", REVIEW_OUT_OFFSET(contest_id), 0 },
   { 0, 'd', "run_id", REVIEW_OUT_OFFSET(run_id), 0 },
-  { EJ_MYSQL_NULL_IS_M1, 'd', "requested_by", REVIEW_OUT_OFFSET(requested_by), 0 },
+  { EJ_MYSQL_NULL_IS_M1, 'd', "request_user_id", REVIEW_OUT_OFFSET(request_user_id), 0 },
   { EJ_MYSQL_NULL_IS_M1, 'd', "moderator_user_id", REVIEW_OUT_OFFSET(moderator_user_id), 0 },
   { EJ_MYSQL_NULL_IS_M1, 'd', "reviewer_user_id", REVIEW_OUT_OFFSET(reviewer_user_id), 0 },
   { EJ_MYSQL_NULL_IS_M1, 'd', "approver_user_id", REVIEW_OUT_OFFSET(approver_user_id), 0 },
@@ -3486,7 +3486,7 @@ create_review_func(
         int generation,
         int status,
         int purpose,
-        int requested_by,
+        int request_user_id,
         int need_full,
         struct run_review *p_result)
 {
@@ -3505,10 +3505,10 @@ create_review_func(
   rr.generation = generation;
   rr.status = status;
   rr.purpose = purpose;
-  rr.requested_by = requested_by;
+  rr.request_user_id = request_user_id;
   fprintf(cmd_f, "INSERT INTO %sreviews SET ", state->md->table_prefix);
   state->mi->unparse_spec_4(state->md, cmd_f, REVIEW_ROW_WIDTH, reviews_out_spec,
-                            RER_RUN_SERIAL_ID|RER_CREATION_TIME|RER_REVIEW_UUID|RER_CONTEST_ID|RER_RUN_ID|RER_GENERATION|RER_STATUS|RER_PURPOSE|RER_REQUESTED_BY,
+                            RER_RUN_SERIAL_ID|RER_CREATION_TIME|RER_REVIEW_UUID|RER_CONTEST_ID|RER_RUN_ID|RER_GENERATION|RER_STATUS|RER_PURPOSE|RER_REQUEST_USER_ID,
                           &rr, "", 1);
   fclose(cmd_f); cmd_f = NULL;
 
@@ -3547,8 +3547,8 @@ run_review_move_from_internal(struct run_review *dst, struct run_review_internal
   memcpy(dst->review_source_sha256, src->review_source_sha256, sizeof(dst->review_source_sha256));
   dst->contest_id = src->contest_id;
   dst->run_id = src->run_id;
-  dst->requested_by = src->requested_by;
-  if (dst->requested_by <= 0) dst->requested_by = -1;
+  dst->request_user_id = src->request_user_id;
+  if (dst->request_user_id <= 0) dst->request_user_id = -1;
   dst->moderator_user_id = src->moderator_user_id;
   if (dst->moderator_user_id <= 0) dst->moderator_user_id = -1;
   if (src->reviewer_user_id <= 0) src->reviewer_user_id = -1;
@@ -3759,22 +3759,26 @@ write_reviews_filter(
       }
     }
   }
-  if (filter->requested_by > 0) {
-    fprintf(cmd_f, "%srequested_by=%d", asep, filter->requested_by);
+  if (filter->request_user_id > 0) {
+    fprintf(cmd_f, "%srequest_user_id=%d", asep, filter->request_user_id);
     asep = AND_STR;
   }
-  if (filter->touched_by > 0) {
-    fprintf(cmd_f, "%s(moderator_user_id=%d OR reviewer_user_id=%d OR approver_user_id=%d)", asep, filter->touched_by, filter->touched_by, filter->touched_by);
+  if (filter->touch_user_id > 0) {
+    fprintf(cmd_f, "%s(moderator_user_id=%d OR reviewer_user_id=%d OR approver_user_id=%d)", asep, filter->touch_user_id, filter->touch_user_id, filter->touch_user_id);
     asep = AND_STR;
   }
-  if (filter->touched_by_count > 0) {
+  if (filter->touch_user_id_count > 0) {
     fprintf(cmd_f, "%s(moderator_user_id IN ", asep);
-    write_int_list(cmd_f, filter->touched_by_list, filter->touched_by_count);
+    write_int_list(cmd_f, filter->touch_user_id_list, filter->touch_user_id_count);
     fprintf(cmd_f, " OR reviewer_user_id IN ");
-    write_int_list(cmd_f, filter->touched_by_list, filter->touched_by_count);
+    write_int_list(cmd_f, filter->touch_user_id_list, filter->touch_user_id_count);
     fprintf(cmd_f, " OR approver_user_id IN ");
-    write_int_list(cmd_f, filter->touched_by_list, filter->touched_by_count);
+    write_int_list(cmd_f, filter->touch_user_id_list, filter->touch_user_id_count);
     putc_unlocked(')', cmd_f);
+    asep = AND_STR;
+  }
+  if (filter->reviewer_user_id > 0) {
+    fprintf(cmd_f, "%sreviewer_user_id=%d", asep, filter->reviewer_user_id);
     asep = AND_STR;
   }
   if (ej_uuid_is_nonempty(filter->review_uuid)) {

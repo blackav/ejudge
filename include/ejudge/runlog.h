@@ -675,7 +675,7 @@ enum
   RER_REVIEW_SOURCE_SHA256 = 0x100000ULL,
   RER_CONTEST_ID = 0x200000ULL,
   RER_RUN_ID = 0x400000ULL,
-  RER_REQUESTED_BY = 0x800000ULL,
+  RER_REQUEST_USER_ID = 0x800000ULL,
   RER_MODERATOR_USER_ID = 0x1000000ULL,
   RER_REVIEWER_USER_ID = 0x2000000ULL,
   RER_APPROVER_USER_ID = 0x4000000ULL,
@@ -723,7 +723,7 @@ struct run_review
   unsigned char review_source_sha256[32];
   int contest_id;
   int run_id;
-  int requested_by;
+  int request_user_id;
   int moderator_user_id;
   int reviewer_user_id;
   int approver_user_id;
@@ -765,10 +765,11 @@ struct list_review_filter
   unsigned exclude_purpose_mask;
   uint64_t null_field_mask;
   uint64_t not_null_field_mask;
-  int requested_by;
-  int touched_by;
-  int *touched_by_list;
-  int touched_by_count;
+  int request_user_id;
+  int touch_user_id;
+  int *touch_user_id_list;
+  int touch_user_id_count;
+  int reviewer_user_id;
   ej_uuid_t review_uuid;
   ej_uuid_t *review_uuid_list;
   int review_uuid_count;

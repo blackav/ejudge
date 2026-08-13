@@ -9,7 +9,7 @@ CREATE TABLE reviews(
     creation_time DATETIME(6) NOT NULL,
     purpose TINYINT NOT NULL,
     last_update_time DATETIME(6) DEFAULT NULL,
-    requested_by INT DEFAULT NULL,
+    request_user_id INT DEFAULT NULL,
     moderator_user_id INT DEFAULT NULL,
     moderation_time DATETIME(6) DEFAULT NULL,
     moderation_text TEXT DEFAULT NULL,
