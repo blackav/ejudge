@@ -12164,13 +12164,13 @@ priv_list_pending_reviews_json(
   struct run_review *reviews = NULL;
   size_t review_count = 0;
 
+  info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
+
   if (opcaps_check(phr->caps, OPCAP_EXT_REVIEW) < 0) {
     http_status = 403;
     err_num = NEW_SRV_ERR_PERMISSION_DENIED;
     goto done;
   }
-
-  info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
 
   hr_cgi_param_int_opt(phr, "offset", &offset, 0);
   hr_cgi_param_int_opt(phr, "count", &count, 0);
@@ -12224,6 +12224,418 @@ done:;
   }
 }
 
+static int
+load_other_contest(
+        const struct ejudge_cfg *config,
+        struct server_framework_state *fw_state,
+        struct userlist_clnt *ul_conn,
+        int contest_id)
+{
+  const struct contest_desc *cnts = NULL;
+
+  if (contests_get(contest_id, &cnts) < 0 || !cnts) {
+    err("%s:%d: failed to load contest %d", __FUNCTION__, __LINE__, contest_id);
+    return -1;
+  }
+
+  struct contest_extra *extra = ns_get_contest_extra(cnts, config);
+  ASSERT(extra);
+
+  struct teamdb_db_callbacks callbacks = {};
+  callbacks.user_data = (void*) fw_state;
+  callbacks.list_all_users = ns_list_all_users_callback;
+
+  return serve_state_load_contest(extra, config, contest_id, ul_conn, &callbacks, NULL, 0, ns_load_problem_plugin);
+}
+
+static void
+fix_utf8_buf(char **p_text, size_t *p_size)
+{
+  if (strlen(*p_text) == *p_size) {
+    utf8_fix_string(*p_text, NULL);
+    return;
+  }
+
+  char *txt_s = NULL;
+  size_t txt_z = 0;
+  FILE *txt_f = open_memstream(&txt_s, &txt_z);
+  const unsigned char *p_in = (const unsigned char *) *p_text;
+  for (size_t i = 0; i < *p_size; ++i, ++p_in) {
+    if (!*p_in) {
+      fputs_unlocked("␀",txt_f);
+    } else {
+      putc_unlocked(*p_in, txt_f);
+    }
+  }
+  fclose(txt_f); txt_f = NULL;
+  free(*p_text);
+  *p_text = txt_s;
+  *p_size = txt_z;
+}
+
+static const unsigned char *
+get_language_name(int lang_id)
+{
+  static const unsigned char * const standard_languages[] =
+  {
+    [1] = "pascal",
+    [2] = "c",
+    [3] = "c++",
+    [4] = "pascal",
+    [5] = "java",
+    [6] = "fortran",
+    [7] = "pascal",
+    [8] = "delphi",
+    [9] = "c",
+    [10] = "c++",
+    [11] = "basic",
+    [12] = "scheme",
+    [13] = "python",
+    [14] = "perl",
+    [15] = "prolog",
+    [16] = "basic",
+    [17] = "java",
+    [18] = "java",
+    [19] = "csharp",
+    [20] = "visual basic",
+    [21] = "ruby",
+    [22] = "php",
+    [23] = "python",
+    [24] = "kumir",
+    [25] = "make",
+    [26] = "haskell",
+    [27] = "basic",
+    [28] = "c",
+    [29] = "c++",
+    [50] = "asm",
+    [51] = "c",
+    [52] = "c++",
+    [53] = "go",
+    [54] = "make",
+    [55] = "pascal abc.net",
+    [57] = "c",
+    [58] = "c++",
+    [59] = "pascal",
+    [60] = "basic",
+    [61] = "c",
+    [62] = "c++",
+    [63] = "python",
+    [64] = "python",
+    [65] = "kumir",
+    [66] = "asm",
+    [67] = "asm",
+    [68] = "mips assembly",
+    [69] = "scala",
+    [70] = "rust",
+    [71] = "kotlin",
+    [72] = "javascript",
+    [73] = "csharp",
+    [74] = "visual basic",
+    [75] = "riscv assembly",
+    [76] = "swift",
+    [79] = "postgres sql",
+    [80] = "zig",
+    [81] = "bash",
+  };
+  if ((unsigned) lang_id >= sizeof(standard_languages)/sizeof(standard_languages[0])) {
+    return "unknown";
+  }
+  if (!standard_languages[lang_id]) {
+    return "unknown";
+  }
+  return standard_languages[lang_id];
+}
+
+static unsigned char *
+safe_read_utf8_text_file(
+        const unsigned char *dir,
+        const unsigned char *file,
+        unsigned err_id,
+        int missing_is_ok)
+{
+  FILE *fin = NULL;
+  FILE *fout = NULL;
+  int fd = -1;
+  struct stat stb;
+  char *txt_s = NULL;
+  size_t txt_z = 0;
+  int c;
+  unsigned char path_buf[PATH_MAX];
+  const unsigned char *path = file;
+
+  if (dir && *dir) {
+    if (snprintf(path_buf, sizeof(path_buf), "%s/%s", dir, file) >= (int) sizeof(path_buf)) {
+      err("%s:%d:%8x: path is too long, file '%s'", __PRETTY_FUNCTION__, __LINE__, err_id, file);
+      goto fail;
+    }
+    path = path_buf;
+  }
+  fd = open(path, O_RDONLY | O_CLOEXEC | O_NOCTTY | O_NONBLOCK, 0);
+  if (fd < 0) {
+    if (missing_is_ok && errno == ENOENT) return NULL;
+    err("%s:%d:%8x: open '%s' failed: %s", __PRETTY_FUNCTION__, __LINE__, err_id, path, strerror(errno));
+    goto fail;
+  }
+  if (fstat(fd, &stb) < 0) {
+    err("%s:%d:%8x: fstat '%s' failed: %s", __PRETTY_FUNCTION__, __LINE__, err_id, path, strerror(errno));
+    goto fail;
+  }
+  if (!S_ISREG(stb.st_mode)) {
+    err("%s:%d:%8x: '%s' is not regular", __PRETTY_FUNCTION__, __LINE__, err_id, path);
+    goto fail;
+  }
+  fin = fdopen(fd, "r");
+  if (!fin) {
+    err("%s:%d:%8x: fdopen failed: %s", __PRETTY_FUNCTION__, __LINE__, err_id, strerror(errno));
+    goto fail;
+  }
+  fd = -1;
+  fout = open_memstream(&txt_s, &txt_z);
+  if (!fin) {
+    err("%s:%d:%8x: open_memstream failed: %s", __PRETTY_FUNCTION__, __LINE__, err_id, strerror(errno));
+    goto fail;
+  }
+  while ((c = getc_unlocked(fin)) != EOF) {
+    if (!c) {
+      fputs_unlocked("␀",fout);
+    } else {
+      putc_unlocked(c, fout);
+    }
+  }
+  fclose(fin);
+  fclose(fout);
+  utf8_fix_string(txt_s, NULL);
+  return txt_s;
+
+fail:;
+  if (fout) fclose(fout);
+  if (fin) fclose(fin);
+  if (fd >= 0) close(fd);
+  return NULL;
+}
+
+static void
+safe_add_to_object(cJSON *j, const char *n, unsigned char *s)
+{
+  if (!s) return;
+  cJSON_AddStringToObject(j, n, s);
+  free(s);
+}
+
+static void
+add_run_report(
+        cJSON *result,
+        unsigned err_id,
+        int contest_id,
+        int run_id,
+        serve_state_t cs,
+        const struct run_entry *re)
+{
+  unsigned char rep_path[PATH_MAX];
+  int rep_flag;
+  testing_report_xml_t r = NULL;
+  char *rep_text = NULL;
+  size_t rep_size = 0;
+  const unsigned char *start_ptr = NULL;
+
+  if ((rep_flag = serve_make_xml_report_read_path(cs, rep_path, sizeof(rep_path), re)) < 0
+      && (rep_flag = serve_make_report_read_path(cs, rep_path, sizeof(rep_path), re)) < 0) {
+    err("%s:%d:%8x: contest %d: run %d: no report", __FUNCTION__, __LINE__, err_id, contest_id, run_id);
+    goto done;
+  }
+
+  if (re->store_flags == STORE_FLAGS_UUID_BSON) {
+    if (!(r = testing_report_parse_bson_file(rep_path))) {
+      err("%s:%d:%8x: contest %d: run %d: invalid BSON report", __FUNCTION__, __LINE__, err_id, contest_id, run_id);
+      goto done;
+    }
+  } else {
+    if (generic_read_file(&rep_text, 0, &rep_size, rep_flag,0,rep_path, "") < 0) {
+      err("%s:%d:%8x: contest %d: run %d: failed to load report", __FUNCTION__, __LINE__, err_id, contest_id, run_id);
+      goto done;
+    }
+    if (get_content_type(rep_text, &start_ptr) != CONTENT_TYPE_XML) {
+      err("%s:%d:%8x: contest %d: run %d: not XML format", __FUNCTION__, __LINE__, err_id, contest_id, run_id);
+      goto done;
+    }
+    if (!(r = testing_report_parse_xml(start_ptr))) {
+      err("%s:%d:%8x: contest %d: run %d: invalid XML report", __FUNCTION__, __LINE__, err_id, contest_id, run_id);
+      goto done;
+    }
+    xfree(rep_text); rep_text = NULL;
+  }
+
+  if (r->compiler_output) {
+    utf8_fix_string(r->compiler_output, NULL);
+    cJSON_AddStringToObject(result, "compiler_messages", r->compiler_output);
+  }
+
+  // TODO: add info about tests
+
+done:;
+  xfree(rep_text);
+  testing_report_free(r);
+}
+
+static cJSON *
+make_review_document(
+        const struct ejudge_cfg *config,
+        unsigned err_id,
+        int contest_id,
+        int run_id,
+        int purpose)
+{
+  cJSON *result = cJSON_CreateObject();
+  unsigned char global_conf_path[PATH_MAX];
+  unsigned char prob_path[PATH_MAX];
+  char *run_text = NULL;
+  size_t run_size = 0;
+  unsigned char *text = NULL;
+  const unsigned char *source_language = NULL;
+  __attribute__((unused)) int _;
+
+  const struct contest_desc *cnts = NULL;
+
+  snprintf(global_conf_path, sizeof(global_conf_path), "%s", EJUDGE_CONF_DIR);
+
+#define ERR(msg, ...) err("%s:%d:%8x:" msg, __PRETTY_FUNCTION__, __LINE__, err_id ,##__VA_ARGS__)
+
+  if (contests_get(contest_id, &cnts) < 0 || !cnts) {
+    // logged many times at other locations
+    goto fail;
+  }
+  struct contest_extra *extra = ns_get_contest_extra(cnts, config);
+  ASSERT(extra);
+  serve_state_t cs = extra->serve_state;
+  if (!cs) {
+    // error already reported
+    goto fail;
+  }
+
+  struct run_entry re = {};
+  if (run_id < 0 || run_id >= run_get_total(cs->runlog_state)) {
+    ERR("contest %d:run %d:invalid run_id", contest_id, run_id);
+    goto fail;
+  }
+  if (run_get_entry(cs->runlog_state, run_id, &re) < 0) {
+    ERR("contest %d:run %d:failed to get run", contest_id, run_id);
+    goto fail;
+  }
+  if (!(re.status <= RUN_NORMAL_LAST || re.status == RUN_SUMMONED)) {
+    ERR("contest %d:run %d:invalid status %d", contest_id, run_id, re.status);
+    goto fail;
+  }
+
+  int prob_id = re.prob_id;
+  if (prob_id <= 0 || prob_id > cs->max_prob || !cs->probs[prob_id]) {
+    ERR("contest %d:run %d:invalid problem %d", contest_id, run_id, prob_id);
+    goto fail;
+  }
+  const struct section_problem_data *prob = cs->probs[prob_id];
+  if (prob->enable_external_review <= 0) {
+    ERR("contest %d:run %d:problem %s: external review disabled", contest_id, run_id, prob->short_name);
+    goto fail;
+  }
+  if (!prob->md_file || !prob->md_file[0]) {
+    ERR("contest %d:run %d:problem %s: md_file is not set", contest_id, run_id, prob->short_name);
+    goto fail;
+  }
+  if (cs->global->advanced_layout <= 0) {
+    ERR("contest %d:run %d:problem %s: advanced_layout is not set", contest_id, run_id, prob->short_name);
+    goto fail;
+  }
+
+  unsigned char src_path[PATH_MAX];
+  src_path[0] = 0;
+  int src_flags = serve_make_source_read_path(cs, src_path, sizeof(src_path), &re);
+  if (src_flags < 0) {
+    ERR("contest %d:run %d:source is missing", contest_id, run_id);
+    goto fail;
+  }
+  if (generic_read_file(&run_text, 0, &run_size, src_flags, NULL, src_path, NULL) < 0) {
+    ERR("contest %d:run %d:source read error", contest_id, run_id);
+    goto fail;
+  }
+  fix_utf8_buf(&run_text, &run_size);
+  cJSON_AddStringToObject(result, "source_code", run_text);
+  free(run_text); run_text = NULL; run_size = 0;
+
+  source_language = get_language_name(re.lang_id);
+  cJSON_AddStringToObject(result, "source_language", source_language);
+
+  int variant = re.variant;
+  if (prob->variant_num > 0) {
+    if (variant <= 0) variant = find_variant(cs, re.user_id, re.prob_id, NULL);
+    if (variant <= 0) {
+      ERR("contest %d:run %d:variant is not set", contest_id, run_id);
+      goto fail;
+    }
+  } else {
+    variant = 0;
+  }
+  get_advanced_layout_path(prob_path, sizeof(prob_path), cs->global, prob, NULL, variant);
+
+  text = safe_read_utf8_text_file(prob_path, prob->md_file, err_id, 0);
+  if (!text) {
+    ERR("contest %d:run %d:problem %s: failed to load statement", contest_id, run_id, prob->short_name);
+    goto fail;
+  }
+  cJSON_AddStringToObject(result, "problem_statement", text);
+  free(text); text = NULL;
+  cJSON_AddStringToObject(result, "interface_language", l10n_unparse_locale(re.locale_id));
+
+  unsigned char filename[PATH_MAX];
+  _ = snprintf(filename, sizeof(filename), "review.%s.md", source_language);
+
+  cJSON *jg = cJSON_CreateObject();
+  safe_add_to_object(jg, "hint", safe_read_utf8_text_file(global_conf_path, "review.md", err_id, 1));
+  safe_add_to_object(jg, "language_hint", safe_read_utf8_text_file(global_conf_path, filename, err_id, 1));
+  if (purpose == RERP_REVIEW) {
+    safe_add_to_object(jg, "review_hint", safe_read_utf8_text_file(global_conf_path, "review_user.md", err_id, 1));
+  } else if (purpose == RERP_JUDGE_HELP) {
+    safe_add_to_object(jg, "judge_help_hint", safe_read_utf8_text_file(global_conf_path, "review_judge_help.md", err_id, 1));
+  } else if (purpose == RERP_HELP) {
+    safe_add_to_object(jg, "help_hint", safe_read_utf8_text_file(global_conf_path, "review_help.md", err_id, 1));
+  }
+  cJSON_AddItemToObject(result, "global", jg);
+
+  cJSON *jc = cJSON_CreateObject();
+  safe_add_to_object(jc, "hint", safe_read_utf8_text_file(cnts->conf_dir, "review.md", err_id, 1));
+  safe_add_to_object(jc, "language_hint", safe_read_utf8_text_file(cnts->conf_dir, filename, err_id, 1));
+  if (purpose == RERP_REVIEW) {
+    safe_add_to_object(jc, "review_hint", safe_read_utf8_text_file(cnts->conf_dir, "review_user.md", err_id, 1));
+  } else if (purpose == RERP_JUDGE_HELP) {
+    safe_add_to_object(jc, "judge_help_hint", safe_read_utf8_text_file(cnts->conf_dir, "review_judge_help.md", err_id, 1));
+  } else if (purpose == RERP_HELP) {
+    safe_add_to_object(jc, "help_hint", safe_read_utf8_text_file(cnts->conf_dir, "review_help.md", err_id, 1));
+  }
+  cJSON_AddItemToObject(result, "contest", jc);
+
+  cJSON *jp = cJSON_CreateObject();
+  safe_add_to_object(jp, "hint", safe_read_utf8_text_file(prob_path, "review.md", err_id, 1));
+  safe_add_to_object(jp, "language_hint", safe_read_utf8_text_file(prob_path, filename, err_id, 1));
+  if (purpose == RERP_REVIEW) {
+    safe_add_to_object(jp, "review_hint", safe_read_utf8_text_file(prob_path, "review_user.md", err_id, 1));
+  } else if (purpose == RERP_JUDGE_HELP) {
+    safe_add_to_object(jp, "judge_help_hint", safe_read_utf8_text_file(prob_path, "review_judge_help.md", err_id, 1));
+  } else if (purpose == RERP_HELP) {
+    safe_add_to_object(jp, "help_hint", safe_read_utf8_text_file(prob_path, "review_help.md", err_id, 1));
+  }
+  cJSON_AddItemToObject(result, "problem", jp);
+
+  add_run_report(result, err_id, contest_id, run_id, cs, &re);
+
+#undef ERR
+
+  return result;
+
+fail:;
+  cJSON_Delete(result);
+  free(run_text);
+  free(text);
+  return NULL;
+}
+
 static void
 priv_start_review_json(
         FILE *fout,
@@ -12233,6 +12645,7 @@ priv_start_review_json(
 {
   serve_state_t cs = extra->serve_state;
   cJSON *jr = cJSON_CreateObject();
+  cJSON *jdetail = NULL;
   int ok = 0;
   int err_num = NEW_SRV_ERR_INV_PARAM;
   const unsigned char *err_msg = NULL;
@@ -12241,6 +12654,7 @@ priv_start_review_json(
   ej_uuid_t review_uuid = {};
   struct run_review review = {};
   struct run_review out_review = {};
+  struct run_review res_review = {};
   const struct contest_desc *review_cnts = NULL;
   struct list_review_filter filter = { .run_id = -1 };
   const unsigned char *agent = NULL;
@@ -12275,7 +12689,7 @@ priv_start_review_json(
     goto done;
   }
   if (run_review_fetch(cs->runlog_state, &review_uuid,
-      RER_SERIAL_ID|RER_REVIEW_UUID|RER_CONTEST_ID, &review) < 0) {
+      RER_SERIAL_ID|RER_REVIEW_UUID|RER_CONTEST_ID|RER_RUN_ID, &review) < 0) {
     http_status = 404;
     err_num = NEW_SRV_ERR_INV_UUID;
     ERR("review '%s' not found", review_uuid_str);
@@ -12325,9 +12739,21 @@ priv_start_review_json(
     goto done;
   }
 
-  // permission ok
-  // TODO: generate review source
-  review_source = "TODO";
+  if (load_other_contest(phr->config, phr->fw_state, ul_conn, review.contest_id) < 0) {
+    http_status = 400;
+    err_num = NEW_SRV_ERR_CNTS_UNAVAILABLE;
+    ERR("failed to load contest %d", review.contest_id);
+    goto done;
+  }
+
+  jdetail = make_review_document(phr->config, err_id, review.contest_id, review.run_id, review.purpose);
+  if (!jdetail) {
+    http_status = 400;
+    err_num = NEW_SRV_ERR_INV_PARAM;
+    ERR("failed to generate review document");
+    goto done;
+  }
+  review_source = cJSON_PrintUnformatted(jdetail);
   review_len = strlen(review_source);
 
   filter.review_uuid = review_uuid;
@@ -12362,6 +12788,24 @@ priv_start_review_json(
     goto done;
   }
 
+  uint64_t final_field_mask = RER_LAST_UPDATE_TIME | RER_REVIEW_START_TIME | RER_REVIEW_HEARTBEAT_TIME
+      | RER_REVIEW_UUID | RER_REVIEW_AGENT | RER_REVIEW_HEARTBEAT_STATUS
+      | RER_REVIEW_SOURCE_SHA256 | RER_CONTEST_ID | RER_RUN_ID | RER_REVIEWER_USER_ID
+      | RER_GENERATION | RER_STATUS | RER_PURPOSE;
+  if (run_review_fetch(cs->runlog_state, &review_uuid,
+      final_field_mask, &res_review) < 0) {
+    http_status = 500;
+    err_num = NEW_SRV_ERR_DATABASE_FAILED;
+    ERR("failed to reload review '%s'", review_uuid_str);
+    goto done;
+  }
+
+  cJSON *jfr = json_serialize_run_review(&res_review, date_mode, final_field_mask, 0);
+  cJSON *jres = cJSON_CreateObject();
+  cJSON_AddItemToObject(jres, "review", jfr);
+  cJSON_AddItemToObject(jres, "details", jdetail);
+  cJSON_AddItemToObject(jr, "result", jres);
+
   ok = 1;
   err_num = 0;
   http_status = 200;
@@ -12370,11 +12814,15 @@ done:;
   free(review_source);
   run_review_free(&out_review);
   run_review_free(&review);
+  run_review_free(&res_review);
   phr->json_reply = 1;
   phr->status_code = http_status;
   emit_json_result(fout, phr, ok, err_num, err_id, err_msg, jr);
   if (jr) {
     cJSON_Delete(jr);
+  }
+  if (jdetail) {
+    cJSON_Delete(jdetail);
   }
 #undef ERR
 }
@@ -13314,10 +13762,10 @@ privileged_entry_point(
     goto cleanup;
   }
   extra = ns_get_contest_extra(cnts, phr->config);
+  ASSERT(extra);
   if (cnts->enable_local_pages > 0 && !extra->cnts_actions) {
     extra->cnts_actions = ns_get_contest_external_actions(phr->contest_id, cur_time);
   }
-  ASSERT(extra);
 
   phr->cnts = cnts;
   phr->extra = extra;
