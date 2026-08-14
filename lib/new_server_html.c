@@ -12827,6 +12827,120 @@ done:;
 #undef ERR
 }
 
+static void
+priv_heartbeat_review_json(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  serve_state_t cs = extra->serve_state;
+  int ok = 0;
+  int err_num = NEW_SRV_ERR_INV_PARAM;
+  const unsigned char *err_msg = NULL;
+  int http_status = 400;
+  unsigned err_id = random_u32();
+  const unsigned char *review_uuid_str = NULL;
+  ej_uuid_t review_uuid = {};
+  cJSON *jr = cJSON_CreateObject();
+  struct run_review res_review = {};
+  struct run_review out_review = {};
+  struct list_review_filter filter = { .run_id = -1 };
+  const unsigned char *heartbeat_status = NULL;
+  int date_mode = 0;
+
+  info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
+
+  #define ERR(msg, ...) err("%s:%d:%8x:" msg, __PRETTY_FUNCTION__, __LINE__, err_id ,##__VA_ARGS__)
+
+  if (opcaps_check(phr->caps, OPCAP_EXT_REVIEW) < 0) {
+    http_status = 403;
+    err_num = NEW_SRV_ERR_PERMISSION_DENIED;
+    ERR("no OPCAP_EXT_REVIEW permission");
+    goto done;
+  }
+
+  hr_cgi_param(phr, "review_uuid", &review_uuid_str);
+  if (!review_uuid_str) {
+    http_status = 400;
+    err_num = NEW_SRV_ERR_INV_UUID;
+    ERR("review_uuid undefined");
+    goto done;
+  }
+  if (ej_uuid_parse(review_uuid_str, &review_uuid) < 0) {
+    http_status = 400;
+    err_num = NEW_SRV_ERR_INV_UUID;
+    ERR("review_uuid invalid");
+    goto done;
+  }
+  hr_cgi_param(phr, "heartbeat_status", &heartbeat_status);
+  hr_cgi_param_int_opt(phr, "date_mode", &date_mode, 0);
+  if (!heartbeat_status || !*heartbeat_status) {
+    http_status = 400;
+    err_num = NEW_SRV_ERR_INV_PARAM;
+    ERR("heartbeat_status undefined");
+    goto done;
+  }
+
+  filter.include_status_mask = 1U << RERS_REVIEWING;
+  filter.null_field_mask = RER_REVIEW_FINISH_TIME;
+  filter.not_null_field_mask = RER_REVIEW_START_TIME;
+  filter.review_uuid = review_uuid;
+  filter.reviewer_user_id = phr->user_id;
+
+  out_review.last_update_time = -2;
+  out_review.review_heartbeat_time = -2;
+  out_review.review_heartbeat_status = xstrdup(heartbeat_status);
+
+  int res = run_review_update(cs->runlog_state, &out_review,
+    RER_LAST_UPDATE_TIME|RER_REVIEW_HEARTBEAT_TIME|RER_REVIEW_HEARTBEAT_STATUS,
+    &filter);
+  if (res < 0) {
+    http_status = 500;
+    err_num = NEW_SRV_ERR_DATABASE_FAILED;
+    ERR("database error");
+    goto done;
+  }
+  if (res == 0) {
+    http_status = 400;
+    err_num = NEW_SRV_ERR_NO_AFFECTED_ROWS;
+    ERR("no affected rows");
+    goto done;
+  }
+
+  uint64_t final_field_mask = RER_LAST_UPDATE_TIME | RER_REVIEW_START_TIME | RER_REVIEW_HEARTBEAT_TIME
+      | RER_REVIEW_UUID | RER_REVIEW_AGENT | RER_REVIEW_HEARTBEAT_STATUS
+      | RER_CONTEST_ID | RER_RUN_ID | RER_REVIEWER_USER_ID
+      | RER_GENERATION | RER_STATUS | RER_PURPOSE;
+  if (run_review_fetch(cs->runlog_state, &review_uuid,
+      final_field_mask, &res_review) < 0) {
+    http_status = 500;
+    err_num = NEW_SRV_ERR_DATABASE_FAILED;
+    ERR("failed to reload review '%s'", review_uuid_str);
+    goto done;
+  }
+
+  cJSON *jfr = json_serialize_run_review(&res_review, date_mode, final_field_mask, 0);
+  cJSON *jres = cJSON_CreateObject();
+  cJSON_AddItemToObject(jres, "review", jfr);
+  cJSON_AddItemToObject(jr, "result", jres);
+
+  ok = 1;
+  err_num = 0;
+  http_status = 200;
+
+done:;
+  run_review_free(&out_review);
+  run_review_free(&res_review);
+  phr->json_reply = 1;
+  phr->status_code = http_status;
+  emit_json_result(fout, phr, ok, err_num, err_id, err_msg, jr);
+  if (jr) {
+    cJSON_Delete(jr);
+  }
+#undef ERR
+}
+
 typedef PageInterface *(*external_action_handler_t)(void);
 
 typedef int (*new_action_handler_t)(
@@ -13081,7 +13195,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_LIST_PENDING_REVIEWS_JSON] = priv_list_pending_reviews_json,
   [NEW_SRV_ACTION_START_REVIEW_JSON] = priv_start_review_json,
   [NEW_SRV_ACTION_FINISH_REVIEW_JSON] = NULL,
-  [NEW_SRV_ACTION_HEARTBEAT_REVIEW_JSON] = NULL,
+  [NEW_SRV_ACTION_HEARTBEAT_REVIEW_JSON] = priv_heartbeat_review_json,
   [NEW_SRV_ACTION_LIST_ACTIVE_REVIEWS_JSON] = NULL,
   [NEW_SRV_ACTION_GET_ACTIVE_REVIEW_JSON] = NULL,
   [NEW_SRV_ACTION_POSTAPPROVE_JSON] = NULL,
