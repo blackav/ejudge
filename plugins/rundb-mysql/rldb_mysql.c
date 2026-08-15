@@ -3317,164 +3317,53 @@ get_group_scores_func(
   return &rls->group_scores.data[index];
 }
 
-struct run_review_internal
-{
-  long long serial_id;
-  ej_uuid_t review_uuid;
-  long long run_serial_id;
-  int contest_id;
-  int run_id;
-  int generation;
-  int status;
-  int64_t creation_time;
-  int purpose;
-  int64_t last_update_time;
-  int request_user_id;
-  int moderator_user_id;
-  int64_t moderation_time;
-  unsigned char *moderation_text;
-  unsigned char *review_source;
-  unsigned char review_source_sha256[32];
-  int reviewer_user_id;
-  int64_t review_start_time;
-  unsigned char *review_agent;
-  int64_t review_heartbeat_time;
-  unsigned char *review_heartbeat_status;
-  int64_t review_finish_time;
-  unsigned char *review_result;
-  unsigned char *review_judge_result;
-  int review_recommended_status;
-  unsigned char *review_statistics;
-  int approver_user_id;
-  int64_t approval_time;
-  unsigned char *approved_text;
-  int approver_review_mark;
-  int64_t user_opened_time;
-  int user_opened_count;
-  int user_review_mark;
-  int input_tokens;
-  int cached_input_tokens;
-  int output_tokens;
-  int reasoning_tokens;
-  int total_tokens;
-  unsigned char *model;
-  int review_approved_as_is;
-  int status_approved_as_is;
-  int ai_generation_score;
-};
-
-static void
-run_review_internal_free(struct run_review_internal *rri)
-{
-  if (!rri) return;
-
-  free(rri->moderation_text);
-  free(rri->review_source);
-  free(rri->review_agent);
-  free(rri->review_result);
-  free(rri->review_judge_result);
-  free(rri->review_statistics);
-  free(rri->approved_text);
-  free(rri->model);
-}
-
 enum { REVIEW_ROW_WIDTH = 42 };
+#define REVIEW_OFFSET(f) XOFFSET(struct run_review, f)
 
-#define REVIEW_OFFSET(f) XOFFSET(struct run_review_internal, f)
-
-__attribute__((unused))
 static const struct common_mysql_parse_spec reviews_spec[REVIEW_ROW_WIDTH] =
 {
   { 0, 'l', "serial_id", REVIEW_OFFSET(serial_id), 0 },
-  { 0, 'g', "review_uuid", REVIEW_OFFSET(review_uuid), 0 },
   { 0, 'l', "run_serial_id", REVIEW_OFFSET(run_serial_id), 0 },
+  { EJ_MYSQL_NOW_IS_M2, 'm', "creation_time", REVIEW_OFFSET(creation_time), 0 },
+  { EJ_MYSQL_NOW_IS_M2 | EJ_MYSQL_NULLABLE, 'm', "last_update_time", REVIEW_OFFSET(last_update_time) },
+  { EJ_MYSQL_NOW_IS_M2 | EJ_MYSQL_NULLABLE, 'm', "moderation_time", REVIEW_OFFSET(moderation_time) },
+  { EJ_MYSQL_NOW_IS_M2 | EJ_MYSQL_NULLABLE, 'm', "review_start_time", REVIEW_OFFSET(review_start_time), 0 },
+  { EJ_MYSQL_NOW_IS_M2 | EJ_MYSQL_NULLABLE, 'm', "review_heartbeat_time", REVIEW_OFFSET(review_heartbeat_time), 0 },
+  { EJ_MYSQL_NOW_IS_M2 | EJ_MYSQL_NULLABLE, 'm', "review_finish_time", REVIEW_OFFSET(review_finish_time), 0 },
+  { EJ_MYSQL_NOW_IS_M2 | EJ_MYSQL_NULLABLE, 'm', "approval_time", REVIEW_OFFSET(approval_time), 0 },
+  { EJ_MYSQL_NOW_IS_M2 | EJ_MYSQL_NULLABLE, 'm', "user_opened_time", REVIEW_OFFSET(user_opened_time), 0 },
+  { 0, 'g', "review_uuid", REVIEW_OFFSET(review_uuid), 0 },
+  { EJ_MYSQL_NULLABLE, 's', "moderation_text", REVIEW_OFFSET(moderation_text), 0 },
+  { EJ_MYSQL_NULLABLE, 's', "review_source", REVIEW_OFFSET(review_source), 0 },
+  { EJ_MYSQL_NULLABLE, 's', "review_agent", REVIEW_OFFSET(review_agent), 0 },
+  { EJ_MYSQL_NULLABLE, 's', "review_heartbeat_status", REVIEW_OFFSET(review_heartbeat_status), 0 },
+  { EJ_MYSQL_NULLABLE, 's', "review_result", REVIEW_OFFSET(review_result), 0 },
+  { EJ_MYSQL_NULLABLE, 's', "review_judge_result", REVIEW_OFFSET(review_judge_result), 0 },
+  { EJ_MYSQL_NULLABLE, 's', "review_statistics", REVIEW_OFFSET(review_statistics), 0 },
+  { EJ_MYSQL_NULLABLE, 's', "approved_text", REVIEW_OFFSET(approved_text), 0 },
+  { EJ_MYSQL_NULLABLE, 's', "model", REVIEW_OFFSET(model), 0 },
+  { EJ_MYSQL_NULLABLE, 'h', "review_source_sha256", REVIEW_OFFSET(review_source_sha256), 0 },
   { 0, 'd', "contest_id", REVIEW_OFFSET(contest_id), 0 },
   { 0, 'd', "run_id", REVIEW_OFFSET(run_id), 0 },
-  { 0, 'd', "generation", REVIEW_OFFSET(generation), 0 },
-  { 0, 'd', "status", REVIEW_OFFSET(status), 0 },
-  { 0, 'm', "creation_time", REVIEW_OFFSET(creation_time), 0 },
-  { 0, 'd', "purpose", REVIEW_OFFSET(purpose), 0 },
-  { 1, 'm', "last_update_time", REVIEW_OFFSET(last_update_time), 0 },
-  { 1, 'd', "request_user_id", REVIEW_OFFSET(request_user_id), 0 },
-  { 1, 'd', "moderator_user_id", REVIEW_OFFSET(moderator_user_id), 0 },
-  { 1, 'm', "moderation_time", REVIEW_OFFSET(moderation_time), 0 },
-  { 1, 's', "moderation_text", REVIEW_OFFSET(moderation_text), 0 },
-  { 1, 's', "review_source", REVIEW_OFFSET(review_source), 0 },
-  { 1, 'h', "review_source_sha256", REVIEW_OFFSET(review_source_sha256), 0 },
-  { 1, 'd', "reviewer_user_id", REVIEW_OFFSET(reviewer_user_id), 0 },
-  { 1, 'm', "review_start_time", REVIEW_OFFSET(review_start_time), 0 },
-  { 1, 's', "review_agent", REVIEW_OFFSET(review_agent), 0 },
-  { 1, 'm', "review_heartbeat_time", REVIEW_OFFSET(review_heartbeat_time), 0 },
-  { 1, 's', "review_heartbeat_status", REVIEW_OFFSET(review_heartbeat_status), 0 },
-  { 1, 'm', "review_finish_time", REVIEW_OFFSET(review_finish_time), 0 },
-  { 1, 's', "review_result", REVIEW_OFFSET(review_result), 0 },
-  { 1, 's', "review_judge_result", REVIEW_OFFSET(review_judge_result), 0 },
-  { 1, 'd', "review_recommended_status", REVIEW_OFFSET(review_recommended_status), 0 },
-  { 1, 's', "review_statistics", REVIEW_OFFSET(review_statistics), 0 },
-  { 1, 'd', "approver_user_id", REVIEW_OFFSET(approver_user_id), 0 },
-  { 1, 'm', "approval_time", REVIEW_OFFSET(approval_time), 0 },
-  { 1, 's', "approved_text", REVIEW_OFFSET(approved_text), 0 },
-  { 1, 'd', "approver_review_mark", REVIEW_OFFSET(approver_review_mark), 0 },
-  { 1, 'm', "user_opened_time", REVIEW_OFFSET(user_opened_time), 0 },
-  { 1, 'd', "user_opened_count", REVIEW_OFFSET(user_opened_count), 0 },
-  { 1, 'd', "user_review_mark", REVIEW_OFFSET(user_review_mark), 0 },
-  { 1, 'd', "input_tokens", REVIEW_OFFSET(input_tokens), 0 },
-  { 1, 'd', "cached_input_tokens", REVIEW_OFFSET(cached_input_tokens), 0 },
-  { 1, 'd', "output_tokens", REVIEW_OFFSET(output_tokens), 0 },
-  { 1, 'd', "reasoning_tokens", REVIEW_OFFSET(reasoning_tokens), 0 },
-  { 1, 'd', "total_tokens", REVIEW_OFFSET(total_tokens), 0 },
-  { 1, 's', "model", REVIEW_OFFSET(model), 0 },
-  { 1, 'd', "review_approved_as_is", REVIEW_OFFSET(review_approved_as_is), 0 },
-  { 1, 'd', "status_approved_as_is", REVIEW_OFFSET(status_approved_as_is), 0 },
-  { 1, 'd', "ai_generation_score", REVIEW_OFFSET(ai_generation_score), 0 },
-};
-
-#define REVIEW_OUT_OFFSET(f) XOFFSET(struct run_review, f)
-
-static const struct common_mysql_parse_spec reviews_out_spec[REVIEW_ROW_WIDTH] =
-{
-  { 0, 'l', "serial_id", REVIEW_OUT_OFFSET(serial_id), 0 },
-  { 0, 'l', "run_serial_id", REVIEW_OUT_OFFSET(run_serial_id), 0 },
-  { EJ_MYSQL_NOW_IS_M2, 'm', "creation_time", REVIEW_OUT_OFFSET(creation_time), 0 },
-  { EJ_MYSQL_NOW_IS_M2 | EJ_MYSQL_NULLABLE, 'm', "last_update_time", REVIEW_OUT_OFFSET(last_update_time) },
-  { EJ_MYSQL_NOW_IS_M2 | EJ_MYSQL_NULLABLE, 'm', "moderation_time", REVIEW_OUT_OFFSET(moderation_time) },
-  { EJ_MYSQL_NOW_IS_M2 | EJ_MYSQL_NULLABLE, 'm', "review_start_time", REVIEW_OUT_OFFSET(review_start_time), 0 },
-  { EJ_MYSQL_NOW_IS_M2 | EJ_MYSQL_NULLABLE, 'm', "review_heartbeat_time", REVIEW_OUT_OFFSET(review_heartbeat_time), 0 },
-  { EJ_MYSQL_NOW_IS_M2 | EJ_MYSQL_NULLABLE, 'm', "review_finish_time", REVIEW_OUT_OFFSET(review_finish_time), 0 },
-  { EJ_MYSQL_NOW_IS_M2 | EJ_MYSQL_NULLABLE, 'm', "approval_time", REVIEW_OUT_OFFSET(approval_time), 0 },
-  { EJ_MYSQL_NOW_IS_M2 | EJ_MYSQL_NULLABLE, 'm', "user_opened_time", REVIEW_OUT_OFFSET(user_opened_time), 0 },
-  { 0, 'g', "review_uuid", REVIEW_OUT_OFFSET(review_uuid), 0 },
-  { EJ_MYSQL_NULLABLE, 's', "moderation_text", REVIEW_OUT_OFFSET(moderation_text), 0 },
-  { EJ_MYSQL_NULLABLE, 's', "review_source", REVIEW_OUT_OFFSET(review_source), 0 },
-  { EJ_MYSQL_NULLABLE, 's', "review_agent", REVIEW_OUT_OFFSET(review_agent), 0 },
-  { EJ_MYSQL_NULLABLE, 's', "review_heartbeat_status", REVIEW_OUT_OFFSET(review_heartbeat_status), 0 },
-  { EJ_MYSQL_NULLABLE, 's', "review_result", REVIEW_OUT_OFFSET(review_result), 0 },
-  { EJ_MYSQL_NULLABLE, 's', "review_judge_result", REVIEW_OUT_OFFSET(review_judge_result), 0 },
-  { EJ_MYSQL_NULLABLE, 's', "review_statistics", REVIEW_OUT_OFFSET(review_statistics), 0 },
-  { EJ_MYSQL_NULLABLE, 's', "approved_text", REVIEW_OUT_OFFSET(approved_text), 0 },
-  { EJ_MYSQL_NULLABLE, 's', "model", REVIEW_OUT_OFFSET(model), 0 },
-  { EJ_MYSQL_NULLABLE, 'h', "review_source_sha256", REVIEW_OUT_OFFSET(review_source_sha256), 0 },
-  { 0, 'd', "contest_id", REVIEW_OUT_OFFSET(contest_id), 0 },
-  { 0, 'd', "run_id", REVIEW_OUT_OFFSET(run_id), 0 },
-  { EJ_MYSQL_NULL_IS_M1, 'd', "request_user_id", REVIEW_OUT_OFFSET(request_user_id), 0 },
-  { EJ_MYSQL_NULL_IS_M1, 'd', "moderator_user_id", REVIEW_OUT_OFFSET(moderator_user_id), 0 },
-  { EJ_MYSQL_NULL_IS_M1, 'd', "reviewer_user_id", REVIEW_OUT_OFFSET(reviewer_user_id), 0 },
-  { EJ_MYSQL_NULL_IS_M1, 'd', "approver_user_id", REVIEW_OUT_OFFSET(approver_user_id), 0 },
-  { EJ_MYSQL_NULL_IS_M1, 'd', "input_tokens", REVIEW_OUT_OFFSET(input_tokens), 0 },
-  { EJ_MYSQL_NULL_IS_M1, 'd', "cached_input_tokens", REVIEW_OUT_OFFSET(cached_input_tokens), 0 },
-  { EJ_MYSQL_NULL_IS_M1, 'd', "output_tokens", REVIEW_OUT_OFFSET(output_tokens), 0 },
-  { EJ_MYSQL_NULL_IS_M1, 'd', "reasoning_tokens", REVIEW_OUT_OFFSET(reasoning_tokens), 0 },
-  { EJ_MYSQL_NULL_IS_M1, 'd', "total_tokens", REVIEW_OUT_OFFSET(total_tokens), 0 },
-  { 0, '1', "generation", REVIEW_OUT_OFFSET(generation), 0 },
-  { 0, '1', "status", REVIEW_OUT_OFFSET(status), 0 },
-  { 0, '1', "purpose", REVIEW_OUT_OFFSET(purpose), 0 },
-  { EJ_MYSQL_NULL_IS_M1, '!', "review_recommended_status", REVIEW_OUT_OFFSET(review_recommended_status), 0 },
-  { EJ_MYSQL_NULL_IS_M1, '!', "approver_review_mark", REVIEW_OUT_OFFSET(approver_review_mark), 0 },
-  { EJ_MYSQL_NULLABLE, '1', "user_opened_count", REVIEW_OUT_OFFSET(user_opened_count), 0 },
-  { EJ_MYSQL_NULL_IS_M1, '!', "user_review_mark", REVIEW_OUT_OFFSET(user_review_mark), 0 },
-  { EJ_MYSQL_NULL_IS_M1, '!', "review_approved_as_is", REVIEW_OUT_OFFSET(review_approved_as_is), 0 },
-  { EJ_MYSQL_NULL_IS_M1, '!', "status_approved_as_is", REVIEW_OUT_OFFSET(status_approved_as_is), 0 },
-  { EJ_MYSQL_NULL_IS_M1, '!', "ai_generation_score", REVIEW_OUT_OFFSET(ai_generation_score), 0 },
+  { EJ_MYSQL_NULL_IS_M1, 'd', "request_user_id", REVIEW_OFFSET(request_user_id), 0 },
+  { EJ_MYSQL_NULL_IS_M1, 'd', "moderator_user_id", REVIEW_OFFSET(moderator_user_id), 0 },
+  { EJ_MYSQL_NULL_IS_M1, 'd', "reviewer_user_id", REVIEW_OFFSET(reviewer_user_id), 0 },
+  { EJ_MYSQL_NULL_IS_M1, 'd', "approver_user_id", REVIEW_OFFSET(approver_user_id), 0 },
+  { EJ_MYSQL_NULL_IS_M1, 'd', "input_tokens", REVIEW_OFFSET(input_tokens), 0 },
+  { EJ_MYSQL_NULL_IS_M1, 'd', "cached_input_tokens", REVIEW_OFFSET(cached_input_tokens), 0 },
+  { EJ_MYSQL_NULL_IS_M1, 'd', "output_tokens", REVIEW_OFFSET(output_tokens), 0 },
+  { EJ_MYSQL_NULL_IS_M1, 'd', "reasoning_tokens", REVIEW_OFFSET(reasoning_tokens), 0 },
+  { EJ_MYSQL_NULL_IS_M1, 'd', "total_tokens", REVIEW_OFFSET(total_tokens), 0 },
+  { 0, '1', "generation", REVIEW_OFFSET(generation), 0 },
+  { 0, '1', "status", REVIEW_OFFSET(status), 0 },
+  { 0, '1', "purpose", REVIEW_OFFSET(purpose), 0 },
+  { EJ_MYSQL_NULL_IS_M1, '!', "review_recommended_status", REVIEW_OFFSET(review_recommended_status), 0 },
+  { EJ_MYSQL_NULL_IS_M1, '!', "approver_review_mark", REVIEW_OFFSET(approver_review_mark), 0 },
+  { EJ_MYSQL_NULLABLE, '1', "user_opened_count", REVIEW_OFFSET(user_opened_count), 0 },
+  { EJ_MYSQL_NULL_IS_M1, '!', "user_review_mark", REVIEW_OFFSET(user_review_mark), 0 },
+  { EJ_MYSQL_NULL_IS_M1, '!', "review_approved_as_is", REVIEW_OFFSET(review_approved_as_is), 0 },
+  { EJ_MYSQL_NULL_IS_M1, '!', "status_approved_as_is", REVIEW_OFFSET(status_approved_as_is), 0 },
+  { EJ_MYSQL_NULL_IS_M1, '!', "ai_generation_score", REVIEW_OFFSET(ai_generation_score), 0 },
 };
 
 static int
@@ -3507,7 +3396,7 @@ create_review_func(
   rr.purpose = purpose;
   rr.request_user_id = request_user_id;
   fprintf(cmd_f, "INSERT INTO %sreviews SET ", state->md->table_prefix);
-  state->mi->unparse_spec_4(state->md, cmd_f, REVIEW_ROW_WIDTH, reviews_out_spec,
+  state->mi->unparse_spec_4(state->md, cmd_f, REVIEW_ROW_WIDTH, reviews_spec,
                             RER_RUN_SERIAL_ID|RER_CREATION_TIME|RER_REVIEW_UUID|RER_CONTEST_ID|RER_RUN_ID|RER_GENERATION|RER_STATUS|RER_PURPOSE|RER_REQUEST_USER_ID,
                           &rr, "", 1);
   fclose(cmd_f); cmd_f = NULL;
@@ -3519,80 +3408,6 @@ create_review_func(
   free(cmd_s); cmd_s = NULL;
 
   return 0;
-}
-
-__attribute__((unused))
-static void
-run_review_move_from_internal(struct run_review *dst, struct run_review_internal *src)
-{
-  dst->serial_id = src->serial_id;
-  dst->run_serial_id = src->run_serial_id;
-  dst->creation_time = src->creation_time;
-  dst->last_update_time = src->last_update_time;
-  dst->moderation_time = src->moderation_time;
-  dst->review_start_time = src->review_start_time;
-  dst->review_heartbeat_time = src->review_heartbeat_time;
-  dst->review_finish_time = src->review_finish_time;
-  dst->approval_time = src->approval_time;
-  dst->user_opened_time = src->user_opened_time;
-  memcpy(&dst->review_uuid, &src->review_uuid, 16);
-  dst->moderation_text = src->moderation_text; src->moderation_text = NULL;
-  dst->review_source = src->review_source; src->review_source = NULL;
-  dst->review_agent = src->review_agent; src->review_agent = NULL;
-  dst->review_heartbeat_status = src->review_heartbeat_status; src->review_heartbeat_status = NULL;
-  dst->review_result = src->review_result; src->review_result = NULL;
-  dst->review_judge_result = src->review_judge_result; src->review_judge_result = NULL;
-  dst->review_statistics = src->review_statistics; src->review_statistics = NULL;
-  dst->approved_text = src->approved_text; src->approved_text = NULL;
-  dst->model = src->model; src->model = NULL;
-  memcpy(dst->review_source_sha256, src->review_source_sha256, sizeof(dst->review_source_sha256));
-  dst->contest_id = src->contest_id;
-  dst->run_id = src->run_id;
-  dst->request_user_id = src->request_user_id;
-  if (dst->request_user_id <= 0) dst->request_user_id = -1;
-  dst->moderator_user_id = src->moderator_user_id;
-  if (dst->moderator_user_id <= 0) dst->moderator_user_id = -1;
-  if (src->reviewer_user_id <= 0) src->reviewer_user_id = -1;
-  dst->reviewer_user_id = src->reviewer_user_id;
-  dst->approver_user_id = src->approver_user_id;
-  if (dst->approver_user_id <= 0) dst->approver_user_id = -1;
-  dst->input_tokens = src->input_tokens;
-  if (dst->input_tokens < 0) dst->input_tokens = -1;
-  dst->cached_input_tokens = src->cached_input_tokens;
-  if (dst->cached_input_tokens < 0) dst->cached_input_tokens = -1;
-  dst->output_tokens = src->output_tokens;
-  if (src->output_tokens < 0) src->output_tokens = -1;
-  dst->reasoning_tokens = src->reasoning_tokens;
-  if (src->reasoning_tokens < 0) src->reasoning_tokens = -1;
-  dst->total_tokens = src->total_tokens;
-  if (src->total_tokens < 0) src->total_tokens = -1;
-  if (src->generation < 0 || src->generation > 255) src->generation = 0;
-  dst->generation = src->generation;
-  if (src->status < 0 || src->status > 255) src->status =  255;
-  dst->status = src->status;
-  if (src->purpose < 0 || src->purpose > 255) src->purpose = 255;
-  dst->purpose = src->purpose;
-  if (src->review_recommended_status < -1) src->review_recommended_status = -1;
-  if (src->review_recommended_status > 127) src->review_recommended_status = 127;
-  dst->review_recommended_status = src->review_recommended_status;
-  if (src->approver_review_mark < -1) src->approver_review_mark = -1;
-  if (src->approver_review_mark > 127) src->approver_review_mark = 127;
-  dst->approver_review_mark = src->approver_review_mark;
-  if (src->user_opened_count < 0) src->user_opened_count = 0;
-  if (src->user_opened_count > 255) src->user_opened_count = 255;
-  dst->user_opened_count = src->user_opened_count;
-  if (src->user_review_mark < 0) src->user_review_mark = -1;
-  if (src->user_review_mark > 127) src->user_review_mark = 127;
-  dst->user_review_mark = src->user_review_mark;
-  if (src->review_approved_as_is < 0) src->review_approved_as_is = -1;
-  if (src->review_approved_as_is > 0) src->review_approved_as_is = 1;
-  dst->review_approved_as_is = src->review_approved_as_is;
-  if (src->status_approved_as_is < 0) src->status_approved_as_is = -1;
-  if (src->status_approved_as_is > 0) src->status_approved_as_is = 1;
-  dst->status_approved_as_is = src->status_approved_as_is;
-  if (src->ai_generation_score < 0) src->ai_generation_score = -1;
-  if (src->ai_generation_score > 100) src->ai_generation_score = 100;
-  dst->ai_generation_score = src->ai_generation_score;
 }
 
 static int
@@ -3618,9 +3433,9 @@ fetch_review_func(
     field_count = REVIEW_ROW_WIDTH;
   } else {
     const unsigned char *sep = "";
-    for (int i = 0; i < sizeof(reviews_out_spec) / sizeof(reviews_out_spec[0]); ++i) {
+    for (int i = 0; i < sizeof(reviews_spec) / sizeof(reviews_spec[0]); ++i) {
       if ((field_mask & (1ULL << i)) != 0) {
-        fprintf(cmd_f, "%s%s", sep, reviews_out_spec[i].name);
+        fprintf(cmd_f, "%s%s", sep, reviews_spec[i].name);
         sep = ",";
         ++field_count;
       }
@@ -3644,7 +3459,7 @@ fetch_review_func(
   if (mi->next_row(md) < 0) {
     return -1;
   }
-  int r = mi->parse_spec_2(md, REVIEW_ROW_WIDTH, reviews_out_spec, field_mask, p_result);
+  int r = mi->parse_spec_2(md, REVIEW_ROW_WIDTH, reviews_spec, field_mask, p_result);
   if (r < 0) return r;
   return 1;
 }
@@ -3766,17 +3581,17 @@ write_reviews_filter(
     fprintf(cmd_f, ")");
   }
   if (filter->null_field_mask) {
-    for (int i = 0; i < sizeof(reviews_out_spec) / sizeof(reviews_out_spec[0]); ++i) {
+    for (int i = 0; i < sizeof(reviews_spec) / sizeof(reviews_spec[0]); ++i) {
       if ((filter->null_field_mask & (1ULL << i)) != 0) {
-        fprintf(cmd_f, "%s%s IS NULL", asep, reviews_out_spec[i].name);
+        fprintf(cmd_f, "%s%s IS NULL", asep, reviews_spec[i].name);
         asep = AND_STR;
       }
     }
   }
   if (filter->not_null_field_mask) {
-    for (int i = 0; i < sizeof(reviews_out_spec) / sizeof(reviews_out_spec[0]); ++i) {
+    for (int i = 0; i < sizeof(reviews_spec) / sizeof(reviews_spec[0]); ++i) {
       if ((filter->not_null_field_mask & (1ULL << i)) != 0) {
-        fprintf(cmd_f, "%s%s IS NOT NULL", asep, reviews_out_spec[i].name);
+        fprintf(cmd_f, "%s%s IS NOT NULL", asep, reviews_spec[i].name);
         asep = AND_STR;
       }
     }
@@ -3859,7 +3674,6 @@ list_reviews_func(
   FILE *cmd_f = open_memstream(&cmd_s, &cmd_z);
   struct run_review *reviews = NULL;
   size_t count = 0;
-  struct run_review_internal rri = {};
   int field_count = 0;
 
   fprintf(cmd_f, "SELECT ");
@@ -3868,9 +3682,9 @@ list_reviews_func(
     field_count = REVIEW_ROW_WIDTH;
   } else {
     const unsigned char *sep = "";
-    for (int i = 0; i < sizeof(reviews_out_spec) / sizeof(reviews_out_spec[0]); ++i) {
+    for (int i = 0; i < sizeof(reviews_spec) / sizeof(reviews_spec[0]); ++i) {
       if ((filter->field_mask & (1ULL << i)) != 0) {
-        fprintf(cmd_f, "%s%s", sep, reviews_out_spec[i].name);
+        fprintf(cmd_f, "%s%s", sep, reviews_spec[i].name);
         ++field_count;
         sep = ",";
       }
@@ -3900,7 +3714,6 @@ list_reviews_func(
   count = md->row_count;
   XCALLOC(reviews, count);
   for (size_t i = 0; i < count; ++i) {
-    memset(&rri, 0, sizeof(rri));
     if (mi->next_row(md) < 0) goto fail;
     if (mi->parse_spec_2(md, REVIEW_ROW_WIDTH, reviews_spec, filter->field_mask, &reviews[i]) < 0) {
       goto fail;
@@ -3916,7 +3729,6 @@ fail:;
   if (cmd_f) fclose(cmd_f);
   free(cmd_s);
   run_review_free_array(reviews, count);
-  run_review_internal_free(&rri);
   free(reviews);
   return -1;
 }
@@ -3937,7 +3749,7 @@ update_reviews_func(
   FILE *cmd_f = open_memstream(&cmd_s, &cmd_z);
 
   fprintf(cmd_f, "UPDATE %sreviews SET ", state->md->table_prefix);
-  mi->unparse_spec_4(md, cmd_f, REVIEW_ROW_WIDTH, reviews_out_spec, field_mask, rr, "", 1);
+  mi->unparse_spec_4(md, cmd_f, REVIEW_ROW_WIDTH, reviews_spec, field_mask, rr, "", 1);
   fprintf(cmd_f, " WHERE ");
   write_reviews_filter(mi, md, cmd_f, filter);
   putc_unlocked(';', cmd_f);
