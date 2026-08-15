@@ -17,6 +17,7 @@
 #include "ejudge/config.h"
 #include "ejudge/ej_limits.h"
 #include "common_mysql.h"
+#include "ejudge/sha256utils.h"
 #include "ejudge/xml_utils.h"
 #include "ejudge/pathutl.h"
 #include "ejudge/errlog.h"
@@ -1991,6 +1992,16 @@ unparse_spec_4_func(
       write_timestamp_us_func(state, fout, "", val, specs[i].null_allowed);
       break;
     }
+    case 'h': {
+      const unsigned char *sha = XPDEREF(unsigned char, data, specs[i].offset);
+      unsigned char buf[72];
+      if (sha256isnull(sha) && specs[i].null_allowed) {
+        fprintf(fout, "NULL");
+      } else {
+        fprintf(fout, "'%s'", sha256hexsha(buf, sizeof(buf), sha));
+      }
+      break;
+    }
     case '1': {
       int val = *XPDEREF(uint8_t, data, specs[i].offset);
       if ((specs[i].null_allowed & EJ_MYSQL_NULLABLE) && !val) {
@@ -2164,7 +2175,7 @@ handle_timeval(void *p_res, const char *s, size_t len, unsigned flags)
   }
   val = 0;
   if (s[n] == '.') {
-    ++s;
+    s = s + n + 1;
     errno = 0;
     val = strtol(s, &eptr, 10);
     if (errno || *eptr || eptr == s || val < 0 || val >= 1000000) return -1;
@@ -2357,7 +2368,7 @@ handle_time_us(void *p_res, const char *s, size_t len, unsigned flags)
   }
   val = 0;
   if (s[n] == '.') {
-    ++s;
+    s = s + n + 1;
     errno = 0;
     val = strtol(s, &eptr, 10);
     if (errno || *eptr || eptr == s || val < 0 || val >= 1000000) return -1;

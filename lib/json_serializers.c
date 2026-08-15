@@ -1540,7 +1540,7 @@ json_serialize_run_review(
 
     if (sha256isnotnull(rr->review_source_sha256) && (mask & RER_review_source_sha256) != 0) {
         unsigned char valuebuf[72];
-        cJSON_AddStringToObject(jrr, "", sha256hexsha(valuebuf, sizeof(valuebuf), rr->review_source_sha256));
+        cJSON_AddStringToObject(jrr, "review_source_sha256", sha256hexsha(valuebuf, sizeof(valuebuf), rr->review_source_sha256));
     }
 
 #define ADD_POSITIVE_INT(j, o, f) do { if (o->f > 0 && (mask & RER_##f) != 0) { \
