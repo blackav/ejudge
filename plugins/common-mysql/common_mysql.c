@@ -209,6 +209,16 @@ unparse_spec_4_func(
 static int
 affected_rows_func(
         struct common_mysql_state *state);
+static int
+parse_spec_2_func(
+        struct common_mysql_state *state,
+        int field_count,
+        char **row,
+        const unsigned long *lengths,
+        int spec_num,
+        const struct common_mysql_parse_spec *specs,
+        unsigned long long mask,
+        void *data);
 
 /* plugin entry point */
 struct common_mysql_iface plugin_common_mysql =
@@ -265,6 +275,7 @@ struct common_mysql_iface plugin_common_mysql =
   write_timestamp_us_func,
   unparse_spec_4_func,
   affected_rows_func,
+  parse_spec_2_func,
 };
 
 static struct common_plugin_data *
@@ -2013,4 +2024,471 @@ affected_rows_func(
         struct common_mysql_state *state)
 {
   return mysql_affected_rows(state->conn);
+}
+
+static int
+handle_nop(void *p_res, const char *s, size_t len, unsigned flags)
+{
+  return 0;
+}
+
+static int
+handle_uint64_hex(void *p_res, const char *s, size_t len, unsigned flags)
+{
+  if (!s) {
+    *(unsigned long long *) p_res = (flags & EJ_MYSQL_NULL_IS_M1)?ULLONG_MAX:0;
+    return 0;
+  }
+  errno = 0;
+  char *eptr = NULL;
+  unsigned long long val = strtoull(s, &eptr, 16);
+  if (errno || *eptr || eptr == s) return -1;
+  *(unsigned long long *) p_res = val;
+  return 0;
+}
+
+static int
+handle_int64(void *p_res, const char *s, size_t len, unsigned flags)
+{
+  if (!s) {
+    *(long long *) p_res = (flags & EJ_MYSQL_NULL_IS_M1)?-1:0;
+    return 0;
+  }
+  errno = 0;
+  char *eptr = NULL;
+  long long val = strtoll(s, &eptr, 10);
+  if (errno || *eptr || eptr == s) return -1;
+  *(long long *) p_res = val;
+  return 0;
+}
+
+static int
+handle_int32(void *p_res, const char *s, size_t len, unsigned flags)
+{
+  if (!s) {
+    *(int *) p_res = (flags & EJ_MYSQL_NULL_IS_M1)?-1:0;
+    return 0;
+  }
+  errno = 0;
+  char *eptr = NULL;
+  long val = strtol(s, &eptr, 10);
+  if (errno || *eptr || eptr == s || (int) val != val) return -1;
+  *(int *) p_res = val;
+  return 0;
+}
+
+static int
+handle_bool32(void *p_res, const char *s, size_t len, unsigned flags)
+{
+  if (!s) {
+    *(int *) p_res = (flags & EJ_MYSQL_NULL_IS_M1)?-1:0;
+    return 0;
+  }
+  errno = 0;
+  char *eptr = NULL;
+  long val = strtol(s, &eptr, 10);
+  if (errno || *eptr || eptr == s || (val != 0 && val != 1)) return -1;
+  *(int *) p_res = val;
+  return 0;
+}
+
+static int
+handle_string(void *p_res, const char *s, size_t len, unsigned flags)
+{
+  if (!s) {
+    *(char **) p_res = NULL;
+    return 0;
+  }
+  *(char **) p_res = xstrdup(s);
+  return 0;
+}
+
+static int
+handle_time_t(void *p_res, const char *s, size_t len, unsigned flags)
+{
+  if (!s) {
+    *(time_t *) p_res = (flags & EJ_MYSQL_NULL_IS_M1)?-1:0;
+    return 0;
+  }
+
+  // special handling for '0' case
+  errno = 0;
+  char *eptr = NULL;
+  long val = strtol(s, &eptr, 10);
+  if (!errno && !eptr && eptr != s && !val) {
+    *(time_t *) p_res = 0;
+    return 0;
+  }
+
+  int n, d_year, d_mon, d_day, d_hour, d_min, d_sec;
+  // 'YYYY-MM-DD hh:mm:ss'
+  if (sscanf(s, "%d-%d-%d %d:%d:%d%n", &d_year, &d_mon, &d_day, &d_hour, &d_min, &d_sec, &n) != 6 || s[n]) {
+    return -1;
+  }
+  struct tm tt = {};
+  tt.tm_year = d_year - 1900;
+  tt.tm_mon = d_mon - 1;
+  tt.tm_mday = d_day;
+  tt.tm_hour = d_hour;
+  tt.tm_min = d_min;
+  tt.tm_sec = d_sec;
+  tt.tm_isdst = -1;
+  errno = 0;
+  time_t t = mktime(&tt);
+  if (t == -1 && errno) return -1;
+  *(time_t*) p_res = t;
+
+  return 0;
+}
+
+static int
+handle_timeval(void *p_res, const char *s, size_t len, unsigned flags)
+{
+  struct timeval *ptv = (struct timeval *) p_res;
+  ptv->tv_sec = 0; ptv->tv_usec = 0;
+
+  if (!s) {
+    if ((flags & EJ_MYSQL_NULL_IS_M1)) ptv->tv_sec = -1;
+    return 0;
+  }
+
+  // special handling for '0' case
+  errno = 0;
+  char *eptr = NULL;
+  long val = strtol(s, &eptr, 10);
+  if (!errno && !*eptr && eptr != s && !val) {
+    return 0;
+  }
+
+  int n = 0, d_year, d_mon, d_day, d_hour, d_min, d_sec;
+  // 'YYYY-MM-DD hh:mm:ss'
+  if (sscanf(s, "%d-%d-%d %d:%d:%d%n", &d_year, &d_mon, &d_day, &d_hour, &d_min, &d_sec, &n) != 6) {
+    return -1;
+  }
+  val = 0;
+  if (s[n] == '.') {
+    ++s;
+    errno = 0;
+    val = strtol(s, &eptr, 10);
+    if (errno || *eptr || eptr == s || val < 0 || val >= 1000000) return -1;
+  }
+
+  struct tm tt = {};
+  tt.tm_year = d_year - 1900;
+  tt.tm_mon = d_mon - 1;
+  tt.tm_mday = d_day;
+  tt.tm_hour = d_hour;
+  tt.tm_min = d_min;
+  tt.tm_sec = d_sec;
+  tt.tm_isdst = -1;
+  errno = 0;
+  time_t t = mktime(&tt);
+  if (t == -1 && errno) return -1;
+  ptv->tv_sec = t;
+  ptv->tv_usec = val;
+
+  return 0;
+}
+
+static int
+handle_date(void *p_res, const char *s, size_t len, unsigned flags)
+{
+  time_t *pt = (time_t *) p_res;
+
+  if (!s) {
+    *pt = (flags & EJ_MYSQL_NULL_IS_M1)?-1:0;
+    return 0;
+  }
+  // special handling for '0' case
+  errno = 0;
+  char *eptr = NULL;
+  long val = strtol(s, &eptr, 10);
+  if (!errno && !eptr && eptr != s && !val) {
+    *pt = 0;
+    return 0;
+  }
+
+  int n = 0, d_year, d_mon, d_day;
+  if (sscanf(s, "%d-%d-%d%n", &d_year, &d_mon, &d_day, &n) != 3 || s[n]) {
+    return -1;
+  }
+  if (!d_year && !d_mon && !d_day) {
+    *pt = 0;
+    return 0;
+  }
+  struct tm tt = {};
+  tt.tm_year = d_year - 1900;
+  tt.tm_mon = d_mon - 1;
+  tt.tm_mday = d_day;
+  tt.tm_isdst = -1;
+  errno = 0;
+  time_t t = timegm(&tt);
+  if (t == -1 && errno) return -1;
+  *pt = t;
+
+  return 0;
+}
+
+static int
+handle_ipv4(void *p_res, const char *s, size_t len, unsigned flags)
+{
+  ej_ip4_t *pv = (ej_ip4_t *) p_res;
+  if (!s) {
+    xml_parse_ip(NULL, 0, 0, 0, DEFAULT_IP, pv);
+  } else if (xml_parse_ip(NULL, 0, 0, 0, s, pv) < 0) {
+    xml_parse_ip(NULL, 0, 0, 0, DEFAULT_IP, pv);
+  }
+  return 0;
+}
+
+static int
+handle_ipv6(void *p_res, const char *s, size_t len, unsigned flags)
+{
+  ej_ip_t *pv = (ej_ip_t *) p_res;
+  if (!s) {
+    xml_parse_ipv6_2(DEFAULT_IP, pv);
+  } else if (xml_parse_ipv6_2(s, pv) < 0) {
+    xml_parse_ipv6_2(DEFAULT_IP, pv);
+  }
+  return 0;
+}
+
+static int
+handle_cookie(void *p_res, const char *s, size_t len, unsigned flags)
+{
+  ej_cookie_t *pv = (ej_cookie_t *) p_res;
+  if (!s) {
+    pv[0] = 0;
+    pv[1] = 0;
+    return 0;
+  }
+  if (xml_parse_full_cookie(s, pv, pv + 1) < 0)
+    return -1;
+  return 0;
+}
+
+static int
+handle_bit256_base64u(void *p_res, const char *s, size_t len, unsigned flags)
+{
+  unsigned char *dst_ptr = (unsigned char *) p_res;
+  if (!s || !len) {
+    memset(dst_ptr, 0, 32);
+  } else if (len >= 43) {
+    int err_flag = 0;
+    base64u_decode(s, 43, dst_ptr, &err_flag);
+    if (err_flag) return -1;
+  } else {
+    int err_flag = 0;
+    memset(dst_ptr, 0, 32);
+    base64u_decode(s, 43, dst_ptr, &err_flag);
+    if (err_flag) return -1;
+  }
+  return 0;
+}
+
+static int
+handle_uuid(void *p_res, const char *s, size_t len, unsigned flags)
+{
+  ej_uuid_t *pv = (ej_uuid_t *) p_res;
+  if (!s || !len) {
+    memset(pv, 0, sizeof(*pv));
+  } else {
+    if (ej_uuid_parse(s, pv) < 0) return -1;
+  }
+  return 0;
+}
+
+static int
+handle_bin(void *p_res, const char *s, size_t len, unsigned flags)
+{
+  struct common_mysql_binary *bin = (struct common_mysql_binary *) p_res;
+  if (!s) {
+    bin->size = 0;
+    bin->data = NULL;
+  } else {
+    bin->size = len;
+    bin->data = xmemdup(s, len);
+  }
+  return 0;
+}
+
+static int
+handle_sha256_hex(void *p_res, const char *s, size_t len, unsigned flags)
+{
+  enum { SHA256_SIZE = 32 };
+  unsigned char *p_data = (unsigned char *) p_res ;
+  if (s) {
+    if (len != SHA256_SIZE * 2) return -1;
+    unsigned char *p_out = p_data;
+    const unsigned char *p_in = s;
+    for (int i = SHA256_SIZE; i; --i) {
+      int vh = tohexdigit(*p_in++);
+      if (vh < 0) return -1;
+      int vl = tohexdigit(*p_in++);
+      if (vl < 0) return -1;
+      *p_out++ = (vh << 4) | vl;
+    }
+  } else {
+    memset(p_data, 0, SHA256_SIZE);
+  }
+  return 0;
+}
+
+static int
+handle_time_us(void *p_res, const char *s, size_t len, unsigned flags)
+{
+  long long *pv = (long long *) p_res;
+  *pv = 0;
+
+  if (!s) {
+    if ((flags & EJ_MYSQL_NULL_IS_M1)) *pv = -1;
+    return 0;
+  }
+
+  // special handling for '0' case
+  errno = 0;
+  char *eptr = NULL;
+  long val = strtol(s, &eptr, 10);
+  if (!errno && !*eptr && eptr != s && !val) {
+    return 0;
+  }
+
+  int n = 0, d_year, d_mon, d_day, d_hour, d_min, d_sec;
+  // 'YYYY-MM-DD hh:mm:ss'
+  if (sscanf(s, "%d-%d-%d %d:%d:%d%n", &d_year, &d_mon, &d_day, &d_hour, &d_min, &d_sec, &n) != 6) {
+    return -1;
+  }
+  val = 0;
+  if (s[n] == '.') {
+    ++s;
+    errno = 0;
+    val = strtol(s, &eptr, 10);
+    if (errno || *eptr || eptr == s || val < 0 || val >= 1000000) return -1;
+  }
+
+  struct tm tt = {};
+  tt.tm_year = d_year - 1900;
+  tt.tm_mon = d_mon - 1;
+  tt.tm_mday = d_day;
+  tt.tm_hour = d_hour;
+  tt.tm_min = d_min;
+  tt.tm_sec = d_sec;
+  tt.tm_isdst = -1;
+  errno = 0;
+  time_t t = mktime(&tt);
+  if (t == -1 && errno) return -1;
+  *pv = t * 1000000LL + val;
+
+  return 0;
+}
+
+static int
+handle_uint8(void *p_res, const char *s, size_t len, unsigned flags)
+{
+  if (!s) {
+    *(unsigned char *) p_res = (flags & EJ_MYSQL_NULL_IS_M1)?255:0;
+    return 0;
+  }
+  errno = 0;
+  char *eptr = NULL;
+  long val = strtol(s, &eptr, 10);
+  if (errno || *eptr || eptr == s || (unsigned char) val != val) return -1;
+  *(unsigned char *) p_res = val;
+  return 0;
+}
+
+static int
+handle_int8(void *p_res, const char *s, size_t len, unsigned flags)
+{
+  if (!s) {
+    *(signed char *) p_res = (flags & EJ_MYSQL_NULL_IS_M1)?-1:0;
+    return 0;
+  }
+  errno = 0;
+  char *eptr = NULL;
+  long val = strtol(s, &eptr, 10);
+  if (errno || *eptr || eptr == s || (signed char) val != val) return -1;
+  *(signed char *) p_res = val;
+  return 0;
+}
+
+typedef int (*parse_format_handler_t)(void *p_res, const char *s, size_t len, unsigned flags);
+
+static const parse_format_handler_t
+handlers[256] =
+{
+  [0] = handle_nop,
+  ['q'] = handle_uint64_hex,
+  ['l'] = handle_int64,
+  ['d'] = handle_int32,
+  ['e'] = handle_int32,
+  ['D'] = NULL, // not supported explicitly
+  ['b'] = handle_bool32,
+  ['B'] = NULL, // not supported explicitly
+  ['s'] = handle_string,
+  ['S'] = NULL, // not supported explicitly
+  ['t'] = handle_time_t,
+  ['T'] = handle_timeval,
+  ['a'] = handle_date,
+  ['i'] = handle_ipv4,
+  ['I'] = handle_ipv6,
+  ['u'] = handle_cookie,
+  ['U'] = handle_bit256_base64u,
+  ['g'] = handle_uuid,
+  ['x'] = handle_bin,
+  ['h'] = handle_sha256_hex,
+  ['m'] = handle_time_us,
+  ['1'] = handle_uint8,
+  ['!'] = handle_int8,
+};
+
+static int
+parse_spec_2_func(
+        struct common_mysql_state *state,
+        int field_count,
+        char **row,
+        const unsigned long *lengths,
+        int spec_num,
+        const struct common_mysql_parse_spec *specs,
+        unsigned long long mask,
+        void *data)
+{
+  unsigned exp_field_count = mask==0?spec_num:__builtin_popcountll(mask);
+  if (field_count != exp_field_count) {
+    err("%s:%d: wrong field count: expected %d, actual %d. invalid table format?", __FUNCTION__, __LINE__, exp_field_count, field_count);
+    return -1;
+  }
+  if (!mask) mask = (1ULL << spec_num) - 1;
+
+  int j = -1;
+  for (int i = 0; i < spec_num; ++i) {
+    if (!(mask & (1ULL << i))) continue;
+    ++j;
+    if (!specs[i].null_allowed && !row[j]) {
+      err("%s:%d: column %d (%s) cannot be NULL", __FUNCTION__, __LINE__, i, specs[i].name);
+      return -1;
+    }
+    if (specs[i].format != 'x' && row[j] && strlen(row[j]) != lengths[j]) {
+      err("%s:%d: column %d (%s) cannot be binary", __FUNCTION__, __LINE__, i, specs[i].name);
+      return -1;
+    }
+  }
+
+  j = -1;
+  for (int i = 0; i < spec_num; ++i) {
+    if (!(mask & (1ULL << i))) continue;
+    ++j;
+    parse_format_handler_t h = handlers[(unsigned char) specs[i].format];
+    if (!h) {
+      err("%s:%d: column %d (%s) invalid format %c", __FUNCTION__, __LINE__, i, specs[i].name, specs[i].format);
+      return -1;
+    }
+    int r = h(XPDEREF(unsigned long long, data, specs[i].offset), row[j], lengths[j], specs[i].null_allowed);
+    if (r < 0) {
+      err("%s:%d: column %d (%s) conversion error from %.32s", __FUNCTION__, __LINE__, i, specs[i].name, row[j]);
+      return -1;
+    }
+  }
+
+  return 0;
 }
