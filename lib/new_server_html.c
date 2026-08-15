@@ -12365,7 +12365,7 @@ safe_read_utf8_text_file(
 
   if (dir && *dir) {
     if (snprintf(path_buf, sizeof(path_buf), "%s/%s", dir, file) >= (int) sizeof(path_buf)) {
-      err("%s:%d:%8x: path is too long, file '%s'", __PRETTY_FUNCTION__, __LINE__, err_id, file);
+      err("%s:%d:%08x: path is too long, file '%s'", __PRETTY_FUNCTION__, __LINE__, err_id, file);
       goto fail;
     }
     path = path_buf;
@@ -12373,26 +12373,26 @@ safe_read_utf8_text_file(
   fd = open(path, O_RDONLY | O_CLOEXEC | O_NOCTTY | O_NONBLOCK, 0);
   if (fd < 0) {
     if (missing_is_ok && errno == ENOENT) return NULL;
-    err("%s:%d:%8x: open '%s' failed: %s", __PRETTY_FUNCTION__, __LINE__, err_id, path, strerror(errno));
+    err("%s:%d:%08x: open '%s' failed: %s", __PRETTY_FUNCTION__, __LINE__, err_id, path, strerror(errno));
     goto fail;
   }
   if (fstat(fd, &stb) < 0) {
-    err("%s:%d:%8x: fstat '%s' failed: %s", __PRETTY_FUNCTION__, __LINE__, err_id, path, strerror(errno));
+    err("%s:%d:%08x: fstat '%s' failed: %s", __PRETTY_FUNCTION__, __LINE__, err_id, path, strerror(errno));
     goto fail;
   }
   if (!S_ISREG(stb.st_mode)) {
-    err("%s:%d:%8x: '%s' is not regular", __PRETTY_FUNCTION__, __LINE__, err_id, path);
+    err("%s:%d:%08x: '%s' is not regular", __PRETTY_FUNCTION__, __LINE__, err_id, path);
     goto fail;
   }
   fin = fdopen(fd, "r");
   if (!fin) {
-    err("%s:%d:%8x: fdopen failed: %s", __PRETTY_FUNCTION__, __LINE__, err_id, strerror(errno));
+    err("%s:%d:%08x: fdopen failed: %s", __PRETTY_FUNCTION__, __LINE__, err_id, strerror(errno));
     goto fail;
   }
   fd = -1;
   fout = open_memstream(&txt_s, &txt_z);
   if (!fin) {
-    err("%s:%d:%8x: open_memstream failed: %s", __PRETTY_FUNCTION__, __LINE__, err_id, strerror(errno));
+    err("%s:%d:%08x: open_memstream failed: %s", __PRETTY_FUNCTION__, __LINE__, err_id, strerror(errno));
     goto fail;
   }
   while ((c = getc_unlocked(fin)) != EOF) {
@@ -12437,33 +12437,118 @@ add_run_report(
   char *rep_text = NULL;
   size_t rep_size = 0;
   const unsigned char *start_ptr = NULL;
+  unsigned char uuid_buf[64];
 
   if ((rep_flag = serve_make_xml_report_read_path(cs, rep_path, sizeof(rep_path), re)) < 0
       && (rep_flag = serve_make_report_read_path(cs, rep_path, sizeof(rep_path), re)) < 0) {
-    err("%s:%d:%8x: contest %d: run %d: no report", __FUNCTION__, __LINE__, err_id, contest_id, run_id);
+    err("%s:%d:%08x: contest %d: run %d: no report", __FUNCTION__, __LINE__, err_id, contest_id, run_id);
     goto done;
   }
 
   if (re->store_flags == STORE_FLAGS_UUID_BSON) {
     if (!(r = testing_report_parse_bson_file(rep_path))) {
-      err("%s:%d:%8x: contest %d: run %d: invalid BSON report", __FUNCTION__, __LINE__, err_id, contest_id, run_id);
+      err("%s:%d:%08x: contest %d: run %d: invalid BSON report", __FUNCTION__, __LINE__, err_id, contest_id, run_id);
       goto done;
     }
   } else {
     if (generic_read_file(&rep_text, 0, &rep_size, rep_flag,0,rep_path, "") < 0) {
-      err("%s:%d:%8x: contest %d: run %d: failed to load report", __FUNCTION__, __LINE__, err_id, contest_id, run_id);
+      err("%s:%d:%08x: contest %d: run %d: failed to load report", __FUNCTION__, __LINE__, err_id, contest_id, run_id);
       goto done;
     }
     if (get_content_type(rep_text, &start_ptr) != CONTENT_TYPE_XML) {
-      err("%s:%d:%8x: contest %d: run %d: not XML format", __FUNCTION__, __LINE__, err_id, contest_id, run_id);
+      err("%s:%d:%08x: contest %d: run %d: not XML format", __FUNCTION__, __LINE__, err_id, contest_id, run_id);
       goto done;
     }
     if (!(r = testing_report_parse_xml(start_ptr))) {
-      err("%s:%d:%8x: contest %d: run %d: invalid XML report", __FUNCTION__, __LINE__, err_id, contest_id, run_id);
+      err("%s:%d:%08x: contest %d: run %d: invalid XML report", __FUNCTION__, __LINE__, err_id, contest_id, run_id);
       goto done;
     }
     xfree(rep_text); rep_text = NULL;
   }
+
+  cJSON *jr = cJSON_CreateObject();
+  cJSON_AddNumberToObject(jr, "run_id", re->run_id);
+  if (ej_uuid_is_nonempty(re->run_uuid)) {
+      cJSON_AddStringToObject(jr, "run_uuid", ej_uuid_unparse_r_nonempty(uuid_buf, sizeof(uuid_buf), &re->run_uuid));
+  }
+  cJSON_AddNumberToObject(jr, "contest_id", cs->contest_id);
+  cJSON_AddNumberToObject(jr, "status", re->status);
+  cJSON_AddStringToObject(jr, "status_str",
+                          run_status_short_str(re->status));
+  cJSON_AddStringToObject(jr, "status_desc",
+                          run_status_str(re->status, NULL, 0, 0, 0));
+
+/*
+    cJSON_AddNumberToObject(jr, "run_time", (double) re->time);
+    cJSON_AddNumberToObject(jr, "nsec", (double) re->nsec);
+    cJSON_AddNumberToObject(jr, "run_time_us",
+                            (double) (re->time * 1000000LL + re->nsec / 1000));
+*/
+
+  cJSON_AddNumberToObject(jr, "user_id", re->user_id);
+  const unsigned char *s = teamdb_get_login(cs->teamdb_state, re->user_id);
+  if (s && *s) {
+      cJSON_AddStringToObject(jr, "user_login", s);
+  }
+  s = teamdb_get_name(cs->teamdb_state, re->user_id);
+  if (s && *s) {
+      cJSON_AddStringToObject(jr, "user_name", s);
+  }
+
+  cJSON_AddNumberToObject(jr, "prob_id", re->prob_id);
+  const struct section_problem_data *prob = NULL;
+  if (re->prob_id > 0 && re->prob_id <= cs->max_prob) {
+      prob = cs->probs[re->prob_id];
+  }
+  if (prob && prob->short_name[0]) {
+      cJSON_AddStringToObject(jr, "prob_name", prob->short_name);
+  }
+  if (prob && prob->internal_name && prob->internal_name[0]) {
+      cJSON_AddStringToObject(jr, "prob_internal_name", prob->internal_name);
+  }
+  if (ej_uuid_is_nonempty(re->prob_uuid)) {
+      cJSON_AddStringToObject(jr, "prob_uuid",
+                              ej_uuid_unparse_r_nonempty(uuid_buf, sizeof(uuid_buf), &re->prob_uuid));
+  } else if (prob && prob->uuid && prob->uuid[0]) {
+      cJSON_AddStringToObject(jr, "prob_uuid", prob->uuid);
+  }
+  cJSON_AddNumberToObject(jr, "lang_id", re->lang_id);
+  const struct section_language_data *lang = NULL;
+  if (re->lang_id > 0 && re->lang_id <= cs->max_lang) {
+      lang = cs->langs[re->lang_id];
+  }
+  if (lang && lang->short_name[0]) {
+      cJSON_AddStringToObject(jr, "lang_name", lang->short_name);
+  }
+  cJSON_AddNumberToObject(jr, "size", re->size);
+  if (re->locale_id > 0) {
+      cJSON_AddNumberToObject(jr, "locale_id", re->locale_id);
+  }
+  if (re->eoln_type > 0) {
+      cJSON_AddNumberToObject(jr, "eoln_type", re->eoln_type);
+  }
+  if (re->score >= 0) {
+      cJSON_AddNumberToObject(jr, "raw_score", re->score);
+  }
+  if (re->test >= 0) {
+      cJSON_AddNumberToObject(jr, "raw_test", re->test);
+  }
+  if (re->is_marked) {
+      cJSON_AddTrueToObject(jr, "is_marked");
+  }
+  if (re->score_adj != 0) {
+      cJSON_AddNumberToObject(jr, "score_adj", re->score_adj);
+  }
+  if (re->is_checked) {
+      cJSON_AddTrueToObject(jr, "is_checked");
+  }
+  if (re->is_vcs) {
+      cJSON_AddTrueToObject(jr, "is_vcs");
+  }
+  if (re->verdict_bits) {
+      cJSON_AddNumberToObject(jr, "verdict_bits", re->verdict_bits);
+  }
+  cJSON_AddItemToObject(result, "run", jr);
 
   if (r->compiler_output) {
     utf8_fix_string(r->compiler_output, NULL);
@@ -12498,7 +12583,7 @@ make_review_document(
 
   snprintf(global_conf_path, sizeof(global_conf_path), "%s", EJUDGE_CONF_DIR);
 
-#define ERR(msg, ...) err("%s:%d:%8x:" msg, __PRETTY_FUNCTION__, __LINE__, err_id ,##__VA_ARGS__)
+#define ERR(msg, ...) err("%s:%d:%08x:" msg, __PRETTY_FUNCTION__, __LINE__, err_id ,##__VA_ARGS__)
 
   if (contests_get(contest_id, &cnts) < 0 || !cnts) {
     // logged many times at other locations
@@ -12702,7 +12787,7 @@ priv_start_review_json(
 
   info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
 
-  #define ERR(msg, ...) err("%s:%d:%8x:" msg, __PRETTY_FUNCTION__, __LINE__, err_id ,##__VA_ARGS__)
+  #define ERR(msg, ...) err("%s:%d:%08x:" msg, __PRETTY_FUNCTION__, __LINE__, err_id ,##__VA_ARGS__)
 
   if (opcaps_check(phr->caps, OPCAP_EXT_REVIEW) < 0) {
     http_status = 403;
@@ -12728,7 +12813,7 @@ priv_start_review_json(
     goto done;
   }
   if (run_review_fetch(cs->runlog_state, &review_uuid,
-      RER_SERIAL_ID|RER_REVIEW_UUID|RER_CONTEST_ID|RER_RUN_ID, &review) < 0) {
+      RER_SERIAL_ID|RER_REVIEW_UUID|RER_CONTEST_ID|RER_RUN_ID|RER_STATUS|RER_PURPOSE, &review) < 0) {
     http_status = 404;
     err_num = NEW_SRV_ERR_INV_UUID;
     ERR("review '%s' not found", review_uuid_str);
@@ -12811,11 +12896,11 @@ priv_start_review_json(
   out_review.last_update_time = -2;
   out_review.review_start_time = -2;
   out_review.review_heartbeat_time = -2;
-  out_review.review_source = review_source;
+  out_review.review_source = review_source; review_source = NULL;
   out_review.reviewer_user_id = phr->user_id;
   out_review.status = RERS_REVIEWING;
   out_review.review_agent = xstrdup(agent);
-  sha256binbuf(out_review.review_source_sha256, review_source, review_len);
+  sha256binbuf(out_review.review_source_sha256, out_review.review_source, review_len);
   if (heartbeat_status) out_review.review_heartbeat_status = xstrdup(heartbeat_status);
 
   int res = run_review_update(cs->runlog_state, &out_review,
@@ -12851,7 +12936,7 @@ priv_start_review_json(
   cJSON *jfr = json_serialize_run_review(&res_review, date_mode, final_field_mask, 0);
   cJSON *jres = cJSON_CreateObject();
   cJSON_AddItemToObject(jres, "review", jfr);
-  cJSON_AddItemToObject(jres, "details", jdetail);
+  cJSON_AddItemToObject(jres, "details", jdetail); jdetail = NULL;
   cJSON_AddItemToObject(jr, "result", jres);
 
   ok = 1;
@@ -12903,7 +12988,7 @@ priv_heartbeat_review_json(
 
   info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
 
-  #define ERR(msg, ...) err("%s:%d:%8x:" msg, __PRETTY_FUNCTION__, __LINE__, err_id ,##__VA_ARGS__)
+  #define ERR(msg, ...) err("%s:%d:%08x:" msg, __PRETTY_FUNCTION__, __LINE__, err_id ,##__VA_ARGS__)
 
   if (opcaps_check(phr->caps, OPCAP_EXT_REVIEW) < 0) {
     http_status = 403;
@@ -13049,7 +13134,7 @@ priv_finish_review_json(
 
   info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
 
-  #define ERR(msg, ...) err("%s:%d:%8x:" msg, __PRETTY_FUNCTION__, __LINE__, err_id ,##__VA_ARGS__)
+  #define ERR(msg, ...) err("%s:%d:%08x:" msg, __PRETTY_FUNCTION__, __LINE__, err_id ,##__VA_ARGS__)
 
   if (opcaps_check(phr->caps, OPCAP_EXT_REVIEW) < 0) {
     http_status = 403;
@@ -23678,16 +23763,26 @@ ns_handle_http_request(
   }
 
   http_authorization = hr_getenv(phr, "HTTP_AUTHORIZATION");
+  int http_x_contest_id = 0;
   if (http_authorization) {
     int r = parse_bearer(phr, http_authorization);
     if (r == 0) {
       fprintf(phr->log_f, "cannot parse authorization bearer");
       return error_page(fout, phr, 0, NEW_SRV_ERR_PERMISSION_DENIED);
     }
+    const unsigned char *x_contest_id = hr_getenv(phr, "HTTP_X_CONTEST_ID");
+    if (x_contest_id) {
+      char *eptr = NULL;
+      errno = 0;
+      long x = strtol(x_contest_id, &eptr, 10);
+      if (!errno && !*eptr && eptr != (char*) x_contest_id && x > 0 && x < 1000000) {
+        http_x_contest_id = x;
+      }
+    }
   }
 
   // parse the contest_id
-  if ((r = hr_cgi_param_int_opt(phr, "contest_id", &phr->contest_id, 0)) < 0) {
+  if ((r = hr_cgi_param_int_opt(phr, "contest_id", &phr->contest_id, http_x_contest_id)) < 0) {
     err("cannot parse contest_id");
     fprintf(phr->log_f, "cannot parse contest_id");
     return error_page(fout, phr, 0, NEW_SRV_ERR_INV_PARAM);

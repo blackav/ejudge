@@ -43,7 +43,7 @@ CREATE TABLE reviews(
     ai_generation_score TINYINT DEFAULT NULL,
     UNIQUE KEY reviews_generation_idx (contest_id, run_id, generation),
     KEY reviews_run_serial_idx (run_serial_id),
-    KEY reviews_requested_idx (requested_by),
+    KEY reviews_requested_idx (request_user_id),
     KEY reviews_moderator_idx (moderator_user_id),
     KEY reviews_reviewer_idx (reviewer_user_id),
     KEY reviews_approver_idx (approver_user_id),
