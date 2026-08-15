@@ -3521,6 +3521,7 @@ create_review_func(
   return 0;
 }
 
+__attribute__((unused))
 static void
 run_review_move_from_internal(struct run_review *dst, struct run_review_internal *src)
 {
@@ -3603,28 +3604,49 @@ fetch_review_func(
 {
   struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts*) cdata;
   struct rldb_mysql_state *state = cs->plugin_state;
+  struct common_mysql_iface *mi = state->mi;
+  struct common_mysql_state *md = state->md;
   unsigned char buf[64];
+  char *cmd_s = NULL;
+  size_t cmd_z = 0;
+  FILE *cmd_f = open_memstream(&cmd_s, &cmd_z);
+  int field_count = 0;
 
-  if (state->mi->fquery(state->md, REVIEW_ROW_WIDTH,
-                 "SELECT * FROM %sreviews WHERE review_uuid='%s' ;",
-                 state->md->table_prefix,
-                ej_uuid_unparse_r(buf, sizeof(buf), p_uuid, NULL)) < 0) {
+  fprintf(cmd_f, "SELECT ");
+  if (!field_mask) {
+    fprintf(cmd_f, "*");
+    field_count = REVIEW_ROW_WIDTH;
+  } else {
+    const unsigned char *sep = "";
+    for (int i = 0; i < sizeof(reviews_out_spec) / sizeof(reviews_out_spec[0]); ++i) {
+      if ((field_mask & (1ULL << i)) != 0) {
+        fprintf(cmd_f, "%s%s", sep, reviews_out_spec[i].name);
+        sep = ",";
+        ++field_count;
+      }
+    }
+  }
+  fprintf(cmd_f, " FROM %sreviews WHERE review_uuid='%s' ;", md->table_prefix,
+          ej_uuid_unparse_r_nonempty(buf, sizeof(buf), p_uuid));
+  fclose(cmd_f); cmd_f = NULL;
+
+  if (mi->query(md, cmd_s, cmd_z, field_count) < 0) {
+    free(cmd_s);
     return -1;
   }
-
-  if (state->md->row_count <= 0) {
+  if (!md->row_count) {
+    mi->free_res(md);
+    free(cmd_s);
     return 0;
   }
 
-  struct run_review_internal rri = {};
-  if (state->mi->next_row(state->md) < 0) {
+  free(cmd_s); cmd_s = NULL;
+  if (mi->next_row(md) < 0) {
     return -1;
   }
-  if (state->mi->parse_spec(state->md, state->md->field_count, state->md->row, state->md->lengths,
-                      REVIEW_ROW_WIDTH, reviews_spec, &rri) < 0)
-    return -1;
-  run_review_move_from_internal(p_result, &rri);
-  return 0;
+  int r = mi->parse_spec_2(md, REVIEW_ROW_WIDTH, reviews_out_spec, field_mask, p_result);
+  if (r < 0) return r;
+  return 1;
 }
 
 static void
@@ -3838,15 +3860,18 @@ list_reviews_func(
   struct run_review *reviews = NULL;
   size_t count = 0;
   struct run_review_internal rri = {};
+  int field_count = 0;
 
   fprintf(cmd_f, "SELECT ");
   if (!filter->field_mask) {
     fprintf(cmd_f, "*");
+    field_count = REVIEW_ROW_WIDTH;
   } else {
     const unsigned char *sep = "";
     for (int i = 0; i < sizeof(reviews_out_spec) / sizeof(reviews_out_spec[0]); ++i) {
       if ((filter->field_mask & (1ULL << i)) != 0) {
         fprintf(cmd_f, "%s%s", sep, reviews_out_spec[i].name);
+        ++field_count;
         sep = ",";
       }
     }
@@ -3861,24 +3886,25 @@ list_reviews_func(
   }
   putc_unlocked(';', cmd_f);
   fclose(cmd_f); cmd_f = NULL;
-  if (mi->query(md, cmd_s, cmd_z, REVIEW_ROW_WIDTH) < 0) {
+  if (mi->query(md, cmd_s, cmd_z, field_count) < 0) {
     goto fail;
   }
   if (!md->row_count) {
     mi->free_res(md);
     *p_count = 0;
+    free(cmd_s);
     return 0;
   }
 
+  free(cmd_s); cmd_s = NULL;
   count = md->row_count;
   XCALLOC(reviews, count);
   for (size_t i = 0; i < count; ++i) {
     memset(&rri, 0, sizeof(rri));
     if (mi->next_row(md) < 0) goto fail;
-    if (mi->parse_spec(md, md->field_count, md->row, md->lengths, REVIEW_ROW_WIDTH, reviews_spec, &rri) < 0) {
+    if (mi->parse_spec_2(md, REVIEW_ROW_WIDTH, reviews_spec, filter->field_mask, &reviews[i]) < 0) {
       goto fail;
     }
-    run_review_move_from_internal(&reviews[i], &rri);
   }
 
   *p_result = reviews;
