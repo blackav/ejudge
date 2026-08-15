@@ -212,9 +212,6 @@ affected_rows_func(
 static int
 parse_spec_2_func(
         struct common_mysql_state *state,
-        int field_count,
-        char **row,
-        const unsigned long *lengths,
         int spec_num,
         const struct common_mysql_parse_spec *specs,
         unsigned long long mask,
@@ -2445,17 +2442,14 @@ handlers[256] =
 static int
 parse_spec_2_func(
         struct common_mysql_state *state,
-        int field_count,
-        char **row,
-        const unsigned long *lengths,
         int spec_num,
         const struct common_mysql_parse_spec *specs,
         unsigned long long mask,
         void *data)
 {
   unsigned exp_field_count = mask==0?spec_num:__builtin_popcountll(mask);
-  if (field_count != exp_field_count) {
-    err("%s:%d: wrong field count: expected %d, actual %d. invalid table format?", __FUNCTION__, __LINE__, exp_field_count, field_count);
+  if (state->field_count != exp_field_count) {
+    err("%s:%d: wrong field count: expected %d, actual %d. invalid table format?", __FUNCTION__, __LINE__, exp_field_count, state->field_count);
     return -1;
   }
   if (!mask) mask = (1ULL << spec_num) - 1;
@@ -2464,11 +2458,11 @@ parse_spec_2_func(
   for (int i = 0; i < spec_num; ++i) {
     if (!(mask & (1ULL << i))) continue;
     ++j;
-    if (!specs[i].null_allowed && !row[j]) {
+    if (!specs[i].null_allowed && !state->row[j]) {
       err("%s:%d: column %d (%s) cannot be NULL", __FUNCTION__, __LINE__, i, specs[i].name);
       return -1;
     }
-    if (specs[i].format != 'x' && row[j] && strlen(row[j]) != lengths[j]) {
+    if (specs[i].format != 'x' && state->row[j] && strlen(state->row[j]) != state->lengths[j]) {
       err("%s:%d: column %d (%s) cannot be binary", __FUNCTION__, __LINE__, i, specs[i].name);
       return -1;
     }
@@ -2483,9 +2477,9 @@ parse_spec_2_func(
       err("%s:%d: column %d (%s) invalid format %c", __FUNCTION__, __LINE__, i, specs[i].name, specs[i].format);
       return -1;
     }
-    int r = h(XPDEREF(unsigned long long, data, specs[i].offset), row[j], lengths[j], specs[i].null_allowed);
+    int r = h(XPDEREF(unsigned long long, data, specs[i].offset), state->row[j], state->lengths[j], specs[i].null_allowed);
     if (r < 0) {
-      err("%s:%d: column %d (%s) conversion error from %.32s", __FUNCTION__, __LINE__, i, specs[i].name, row[j]);
+      err("%s:%d: column %d (%s) conversion error from %.32s", __FUNCTION__, __LINE__, i, specs[i].name, state->row[j]);
       return -1;
     }
   }

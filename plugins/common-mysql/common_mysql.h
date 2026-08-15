@@ -236,9 +236,6 @@ struct common_mysql_iface
 
   int (*parse_spec_2)(
         struct common_mysql_state *state,
-        int field_count,
-        char **row,
-        const unsigned long *lengths,
         int spec_num,
         const struct common_mysql_parse_spec *specs,
         unsigned long long mask,
