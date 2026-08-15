@@ -12280,14 +12280,14 @@ get_language_name(int lang_id)
   {
     [1] = "pascal",
     [2] = "c",
-    [3] = "c++",
+    [3] = "cpp",
     [4] = "pascal",
     [5] = "java",
     [6] = "fortran",
     [7] = "pascal",
     [8] = "delphi",
     [9] = "c",
-    [10] = "c++",
+    [10] = "cpp",
     [11] = "basic",
     [12] = "scheme",
     [13] = "python",
@@ -12297,7 +12297,7 @@ get_language_name(int lang_id)
     [17] = "java",
     [18] = "java",
     [19] = "csharp",
-    [20] = "visual basic",
+    [20] = "visual_basic",
     [21] = "ruby",
     [22] = "php",
     [23] = "python",
@@ -12306,34 +12306,34 @@ get_language_name(int lang_id)
     [26] = "haskell",
     [27] = "basic",
     [28] = "c",
-    [29] = "c++",
+    [29] = "cpp",
     [50] = "asm",
     [51] = "c",
-    [52] = "c++",
+    [52] = "cpp",
     [53] = "go",
     [54] = "make",
-    [55] = "pascal abc.net",
+    [55] = "pascal_abc.net",
     [57] = "c",
-    [58] = "c++",
+    [58] = "cpp",
     [59] = "pascal",
     [60] = "basic",
     [61] = "c",
-    [62] = "c++",
+    [62] = "cpp",
     [63] = "python",
     [64] = "python",
     [65] = "kumir",
     [66] = "asm",
     [67] = "asm",
-    [68] = "mips assembly",
+    [68] = "mips_assembly",
     [69] = "scala",
     [70] = "rust",
     [71] = "kotlin",
     [72] = "javascript",
     [73] = "csharp",
-    [74] = "visual basic",
-    [75] = "riscv assembly",
+    [74] = "visual_basic",
+    [75] = "riscv_assembly",
     [76] = "swift",
-    [79] = "postgres sql",
+    [79] = "postgres_sql",
     [80] = "zig",
     [81] = "bash",
   };
@@ -12636,6 +12636,41 @@ fail:;
   return NULL;
 }
 
+static cJSON *
+get_request_json(
+        struct http_request_info *phr,
+        unsigned err_id)
+{
+  const unsigned char *s = hr_getenv(phr, "REQUEST_METHOD");
+  if (!s) {
+    err("%s:%d:%08x: REQUEST_METHOD undefined", __FUNCTION__, __LINE__, err_id);
+    return NULL;
+  }
+  if (strcmp(s, "POST")) {
+    err("%s:%d:%08x: POST method expected", __FUNCTION__, __LINE__, err_id);
+    return NULL;
+  }
+  s = hr_getenv(phr, "CONTENT_TYPE");
+  if (!s) {
+    err("%s:%d:%08x: CONTENT_TYPE undefined", __FUNCTION__, __LINE__, err_id);
+    return NULL;
+  }
+  if (strcmp(s, "application/json")) {
+    err("%s:%d:%08x: json application type expected", __FUNCTION__, __LINE__, err_id);
+    return NULL;
+  }
+  if (hr_cgi_param(phr, "JSON", &s) <= 0 && !s) {
+    err("%s:%d:%08x: JSON expected", __FUNCTION__, __LINE__, err_id);
+    return NULL;
+  }
+  cJSON *res = cJSON_Parse(s);
+  if (!res) {
+    err("%s:%d:%08x: parse JSON failed", __FUNCTION__, __LINE__, err_id);
+    return NULL;
+  }
+  return res;
+}
+
 static void
 priv_start_review_json(
         FILE *fout,
@@ -12663,6 +12698,7 @@ priv_start_review_json(
   unsigned err_id = random_u32();
   const unsigned char *heartbeat_status = NULL;
   int date_mode = 0;
+  cJSON *request_json = NULL;
 
   info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
 
@@ -12675,13 +12711,16 @@ priv_start_review_json(
     goto done;
   }
 
-  hr_cgi_param(phr, "review_uuid", &review_uuid_str);
-  if (!review_uuid_str) {
-    http_status = 400;
-    err_num = NEW_SRV_ERR_INV_UUID;
-    ERR("review_uuid undefined");
+  if (!(request_json = get_request_json(phr, err_id))) {
     goto done;
   }
+  cJSON *jru = cJSON_GetObjectItem(request_json, "review_uuid");
+  if (!jru || jru->type != cJSON_String) {
+    ERR("review_uuid undefined or not string");
+    goto done;
+  }
+  review_uuid_str = jru->valuestring;
+
   if (ej_uuid_parse(review_uuid_str, &review_uuid) < 0) {
     http_status = 400;
     err_num = NEW_SRV_ERR_INV_UUID;
@@ -12719,15 +12758,24 @@ priv_start_review_json(
     ERR("review '%s' contest %d IP restricted", review_uuid_str, review.contest_id);
     goto done;
   }
-  hr_cgi_param(phr, "agent", &agent);
-  if (!agent) {
-    http_status = 400;
-    err_num = NEW_SRV_ERR_INV_UUID;
-    ERR("agent is undefined");
+  cJSON *jcur = cJSON_GetObjectItem(request_json, "agent");
+  if (!jcur || jcur->type != cJSON_String) {
+    ERR("agent is undefined or not string");
     goto done;
   }
-  hr_cgi_param(phr, "heartbeat_status", &heartbeat_status);
-  hr_cgi_param_int_opt(phr, "date_mode", &date_mode, 0);
+  agent = jcur->valuestring;
+  jcur = cJSON_GetObjectItem(request_json, "heartbeat_status");
+  if (!jcur || jcur->type != cJSON_String) {
+    ERR("heartbeat_status is undefined or not string");
+    goto done;
+  }
+  heartbeat_status = jcur->valuestring;
+  jcur = cJSON_GetObjectItem(request_json, "date_mode");
+  if (jcur && jcur->type != cJSON_Number) {
+    ERR("date_mode must be number");
+    goto done;
+  }
+  if (jcur) date_mode = jcur->valueint;
 
   opcap_t gcaps = 0;
   opcap_t caps = 0;
@@ -12824,6 +12872,9 @@ done:;
   if (jdetail) {
     cJSON_Delete(jdetail);
   }
+  if (request_json) {
+    cJSON_Delete(request_json);
+  }
 #undef ERR
 }
 
@@ -12848,6 +12899,7 @@ priv_heartbeat_review_json(
   struct list_review_filter filter = { .run_id = -1 };
   const unsigned char *heartbeat_status = NULL;
   int date_mode = 0;
+  cJSON *request_json = NULL;
 
   info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
 
@@ -12860,27 +12912,33 @@ priv_heartbeat_review_json(
     goto done;
   }
 
-  hr_cgi_param(phr, "review_uuid", &review_uuid_str);
-  if (!review_uuid_str) {
-    http_status = 400;
-    err_num = NEW_SRV_ERR_INV_UUID;
-    ERR("review_uuid undefined");
+  if (!(request_json = get_request_json(phr, err_id))) {
     goto done;
   }
+  cJSON *jru = cJSON_GetObjectItem(request_json, "review_uuid");
+  if (!jru || jru->type != cJSON_String) {
+    ERR("review_uuid undefined or not string");
+    goto done;
+  }
+  review_uuid_str = jru->valuestring;
   if (ej_uuid_parse(review_uuid_str, &review_uuid) < 0) {
     http_status = 400;
     err_num = NEW_SRV_ERR_INV_UUID;
     ERR("review_uuid invalid");
     goto done;
   }
-  hr_cgi_param(phr, "heartbeat_status", &heartbeat_status);
-  hr_cgi_param_int_opt(phr, "date_mode", &date_mode, 0);
-  if (!heartbeat_status || !*heartbeat_status) {
-    http_status = 400;
-    err_num = NEW_SRV_ERR_INV_PARAM;
-    ERR("heartbeat_status undefined");
+  cJSON *jcur = cJSON_GetObjectItem(request_json, "heartbeat_status");
+  if (!jcur || jcur->type != cJSON_String) {
+    ERR("heartbeat_status is undefined or not string");
     goto done;
   }
+  heartbeat_status = jcur->valuestring;
+  jcur = cJSON_GetObjectItem(request_json, "date_mode");
+  if (jcur && jcur->type != cJSON_Number) {
+    ERR("date_mode must be number");
+    goto done;
+  }
+  if (jcur) date_mode = jcur->valueint;
 
   filter.include_status_mask = 1U << RERS_REVIEWING;
   filter.null_field_mask = RER_REVIEW_FINISH_TIME;
@@ -12937,6 +12995,341 @@ done:;
   emit_json_result(fout, phr, ok, err_num, err_id, err_msg, jr);
   if (jr) {
     cJSON_Delete(jr);
+  }
+  if (request_json) {
+    cJSON_Delete(request_json);
+  }
+#undef ERR
+}
+
+static int
+parse_recommended_status(const unsigned char *str)
+{
+  if (!str) {
+    return -1;
+  }
+  if (!strcasecmp(str, "ok")) {
+    return RUN_OK;
+  } else if (!strcasecmp(str, "reject")) {
+    return RUN_REJECTED;
+  } else if (!strcasecmp(str, "disqualify")) {
+    return RUN_DISQUALIFIED;
+  } else if (!strcasecmp(str, "ignore")) {
+    return RUN_IGNORED;
+  } else if (!strcasecmp(str, "summon")) {
+    return RUN_SUMMONED;
+  }
+  return -1;
+}
+
+static void
+priv_finish_review_json(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  serve_state_t cs = extra->serve_state;
+  int ok = 0;
+  int err_num = NEW_SRV_ERR_INV_PARAM;
+  const unsigned char *err_msg = NULL;
+  int http_status = 400;
+  unsigned err_id = random_u32();
+  const unsigned char *review_uuid_str = NULL;
+  ej_uuid_t review_uuid = {};
+  cJSON *jr = cJSON_CreateObject();
+  struct run_review review = {};
+  struct run_review out_review = {};
+  struct list_review_filter filter = { .run_id = -1 };
+  struct run_review res_review = {};
+  int date_mode = 0;
+  cJSON *request_json = NULL;
+  unsigned long long field_mask = 0;
+  const struct contest_desc *review_cnts = NULL;
+
+  info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
+
+  #define ERR(msg, ...) err("%s:%d:%8x:" msg, __PRETTY_FUNCTION__, __LINE__, err_id ,##__VA_ARGS__)
+
+  if (opcaps_check(phr->caps, OPCAP_EXT_REVIEW) < 0) {
+    http_status = 403;
+    err_num = NEW_SRV_ERR_PERMISSION_DENIED;
+    ERR("no OPCAP_EXT_REVIEW permission");
+    goto done;
+  }
+
+  if (!(request_json = get_request_json(phr, err_id))) {
+    goto done;
+  }
+  cJSON *jru = cJSON_GetObjectItem(request_json, "review_uuid");
+  if (!jru || jru->type != cJSON_String) {
+    ERR("review_uuid undefined or not string");
+    goto done;
+  }
+  review_uuid_str = jru->valuestring;
+  if (ej_uuid_parse(review_uuid_str, &review_uuid) < 0) {
+    http_status = 400;
+    err_num = NEW_SRV_ERR_INV_UUID;
+    ERR("review_uuid invalid");
+    goto done;
+  }
+  if (run_review_fetch(cs->runlog_state, &review_uuid,
+      RER_SERIAL_ID|RER_REVIEW_UUID|RER_CONTEST_ID|RER_RUN_ID, &review) < 0) {
+    http_status = 404;
+    err_num = NEW_SRV_ERR_INV_UUID;
+    ERR("review '%s' not found", review_uuid_str);
+    goto done;
+  }
+  if (review.reviewer_user_id != phr->user_id) {
+    err_num = NEW_SRV_ERR_NO_AFFECTED_ROWS;
+    ERR("wrong user_id: review: %d, request: %d", review.reviewer_user_id, phr->user_id);
+    goto done;
+  }
+  if (review.contest_id <= 0) {
+    http_status = 500;
+    err_num = NEW_SRV_ERR_DATABASE_FAILED;
+    ERR("review '%s' contest_id <= 0", review_uuid_str);
+    goto done;
+  }
+  if (contests_get(review.contest_id, &review_cnts) < 0 || !review_cnts) {
+    err_num = NEW_SRV_ERR_CNTS_UNAVAILABLE;
+    ERR("review '%s' failed to get contest %d", review_uuid_str, review.contest_id);
+    goto done;
+  }
+  if (load_other_contest(phr->config, phr->fw_state, ul_conn, review.contest_id) < 0) {
+    http_status = 400;
+    err_num = NEW_SRV_ERR_CNTS_UNAVAILABLE;
+    ERR("failed to load contest %d", review.contest_id);
+    goto done;
+  }
+
+  struct contest_extra *review_extra = ns_get_contest_extra(review_cnts, phr->config);
+  ASSERT(review_extra);
+  serve_state_t review_cs = review_extra->serve_state;
+  if (!review_cs) {
+    err_num = NEW_SRV_ERR_CNTS_UNAVAILABLE;
+    ERR("failed to load contest %d", review.contest_id);
+    goto done;
+  }
+  if (review.run_id < 0 || review.run_id >= run_get_total(review_cs->runlog_state)) {
+    err_num = NEW_SRV_ERR_CNTS_UNAVAILABLE;
+    ERR("contest %d:run %d:invalid run_id", review.contest_id, review.run_id);
+    goto done;
+  }
+  struct run_entry re = {};
+  if (run_get_entry(review_cs->runlog_state, review.run_id, &re) < 0) {
+    err_num = NEW_SRV_ERR_CNTS_UNAVAILABLE;
+    ERR("contest %d:run %d:failed to get run", review.contest_id, review.run_id);
+    goto done;
+  }
+  int prob_id = re.prob_id;
+  if (prob_id <= 0 || prob_id > review_cs->max_prob || !review_cs->probs[prob_id]) {
+    err_num = NEW_SRV_ERR_CNTS_UNAVAILABLE;
+    ERR("contest %d:run %d:invalid problem %d", review.contest_id, review.run_id, prob_id);
+    goto done;
+  }
+  const struct section_problem_data *prob = review_cs->probs[prob_id];
+
+  cJSON *jcur = cJSON_GetObjectItem(request_json, "date_mode");
+  if (jcur && jcur->type != cJSON_Number) {
+    ERR("date_mode must be number");
+    goto done;
+  }
+  if (jcur) date_mode = jcur->valueint;
+
+  if ((jcur = cJSON_GetObjectItem(request_json, "recommended_status"))) {
+    if (jcur->type != cJSON_String) {
+      ERR("recommended_status must be string");
+      goto done;
+    }
+    int r = parse_recommended_status(jcur->valuestring);
+    if (r < 0) {
+      ERR("recommended_status value '%s' is invalid", jcur->valuestring);
+      goto done;
+    }
+    field_mask |= RER_REVIEW_RECOMMENDED_STATUS;
+    out_review.review_recommended_status = r;
+  }
+  if ((jcur = cJSON_GetObjectItem(request_json, "result"))) {
+    if (jcur->type != cJSON_String) {
+      ERR("result must be string");
+      goto done;
+    }
+    field_mask |= RER_REVIEW_RESULT;
+    out_review.review_result = xstrdup(jcur->valuestring);
+    utf8_fix_string(out_review.review_result, NULL);
+  }
+  if ((jcur = cJSON_GetObjectItem(request_json, "judge_result"))) {
+    if (jcur->type != cJSON_String) {
+      ERR("judge_result must be string");
+      goto done;
+    }
+    field_mask |= RER_REVIEW_JUDGE_RESULT;
+    out_review.review_judge_result = xstrdup(jcur->valuestring);
+    utf8_fix_string(out_review.review_judge_result, NULL);
+  }
+  if ((jcur = cJSON_GetObjectItem(request_json, "agent"))) {
+    if (jcur->type != cJSON_String) {
+      ERR("agent must be string");
+      goto done;
+    }
+    field_mask |= RER_REVIEW_AGENT;
+    out_review.review_agent = xstrdup(jcur->valuestring);
+    utf8_fix_string(out_review.review_agent, NULL);
+  }
+  if ((jcur = cJSON_GetObjectItem(request_json, "statistics"))) {
+    if (jcur->type != cJSON_String) {
+      ERR("statistics must be string");
+      goto done;
+    }
+    field_mask |= RER_REVIEW_STATISTICS;
+    out_review.review_statistics = xstrdup(jcur->valuestring);
+    utf8_fix_string(out_review.review_statistics, NULL);
+  }
+  if ((jcur = cJSON_GetObjectItem(request_json, "model"))) {
+    if (jcur->type != cJSON_String) {
+      ERR("model must be string");
+      goto done;
+    }
+    field_mask |= RER_MODEL;
+    out_review.model = xstrdup(jcur->valuestring);
+    utf8_fix_string(out_review.model, NULL);
+  }
+  if ((jcur = cJSON_GetObjectItem(request_json, "input_tokens"))) {
+    if (jcur->type != cJSON_Number) {
+      ERR("input_tokens must be string");
+      goto done;
+    }
+    if (jcur->valueint < 0 || jcur->valueint > 2000000000) {
+      ERR("input_tokens value is invalid");
+      goto done;
+    }
+    field_mask |= RER_INPUT_TOKENS;
+    out_review.input_tokens = jcur->valueint;
+  }
+  if ((jcur = cJSON_GetObjectItem(request_json, "cached_input_tokens"))) {
+    if (jcur->type != cJSON_Number) {
+      ERR("cached_input_tokens must be string");
+      goto done;
+    }
+    if (jcur->valueint < 0 || jcur->valueint > 2000000000) {
+      ERR("cached_input_tokens value is invalid");
+      goto done;
+    }
+    field_mask |= RER_CACHED_INPUT_TOKENS;
+    out_review.cached_input_tokens = jcur->valueint;
+  }
+  if ((jcur = cJSON_GetObjectItem(request_json, "output_tokens"))) {
+    if (jcur->type != cJSON_Number) {
+      ERR("output_tokens must be string");
+      goto done;
+    }
+    if (jcur->valueint < 0 || jcur->valueint > 2000000000) {
+      ERR("output_tokens value is invalid");
+      goto done;
+    }
+    field_mask |= RER_OUPUT_TOKENS;
+    out_review.output_tokens = jcur->valueint;
+  }
+  if ((jcur = cJSON_GetObjectItem(request_json, "reasoning_tokens"))) {
+    if (jcur->type != cJSON_Number) {
+      ERR("reasoning_tokens must be string");
+      goto done;
+    }
+    if (jcur->valueint < 0 || jcur->valueint > 2000000000) {
+      ERR("reasoning_tokens value is invalid");
+      goto done;
+    }
+    field_mask |= RER_REASONING_TOKENS;
+    out_review.reasoning_tokens = jcur->valueint;
+  }
+  if ((jcur = cJSON_GetObjectItem(request_json, "total_tokens"))) {
+    if (jcur->type != cJSON_Number) {
+      ERR("total_tokens must be string");
+      goto done;
+    }
+    if (jcur->valueint < 0 || jcur->valueint > 2000000000) {
+      ERR("total_tokens value is invalid");
+      goto done;
+    }
+    field_mask |= RER_TOTAL_TOKENS;
+    out_review.total_tokens = jcur->valueint;
+  }
+  if ((jcur = cJSON_GetObjectItem(request_json, "ai_generation_score"))) {
+    if (jcur->type != cJSON_Number) {
+      ERR("ai_generation_score must be string");
+      goto done;
+    }
+    if (jcur->valueint < 0 || jcur->valueint > 100) {
+      ERR("ai_generation_score value is invalid");
+      goto done;
+    }
+    field_mask |= RER_AI_GENERATION_SCORE;
+    out_review.ai_generation_score = jcur->valueint;
+  }
+
+  filter.include_status_mask = 1U << RERS_REVIEWING;
+  filter.null_field_mask = RER_REVIEW_FINISH_TIME;
+  filter.not_null_field_mask = RER_REVIEW_START_TIME;
+  filter.review_uuid = review_uuid;
+  filter.reviewer_user_id = phr->user_id;
+
+  out_review.last_update_time = -2; field_mask |= RER_LAST_UPDATE_TIME;
+  out_review.review_heartbeat_time = 0; field_mask |= RER_REVIEW_HEARTBEAT_TIME;
+  out_review.review_heartbeat_status = NULL; field_mask |= RER_REVIEW_HEARTBEAT_STATUS;
+  out_review.review_finish_time = -2; field_mask |= RER_REVIEW_FINISH_TIME;
+  out_review.status = RERS_WAITING_APPROVAL; field_mask |= RER_STATUS;
+  if (prob->disable_post_approve > 0) {
+    out_review.status = RERS_COMPLETE;
+  }
+
+  int res = run_review_update(cs->runlog_state, &out_review, field_mask, &filter);
+  if (res < 0) {
+    http_status = 500;
+    err_num = NEW_SRV_ERR_DATABASE_FAILED;
+    ERR("database error");
+    goto done;
+  }
+  if (res == 0) {
+    http_status = 400;
+    err_num = NEW_SRV_ERR_NO_AFFECTED_ROWS;
+    ERR("no affected rows");
+    goto done;
+  }
+
+  uint64_t final_field_mask = RER_LAST_UPDATE_TIME | RER_REVIEW_START_TIME | RER_REVIEW_FINISH_TIME
+      | RER_REVIEW_UUID | RER_REVIEW_AGENT
+      | RER_CONTEST_ID | RER_RUN_ID | RER_REVIEWER_USER_ID
+      | RER_GENERATION | RER_STATUS | RER_PURPOSE;
+  if (run_review_fetch(cs->runlog_state, &review_uuid,
+      final_field_mask, &res_review) <= 0) {
+    http_status = 500;
+    err_num = NEW_SRV_ERR_DATABASE_FAILED;
+    ERR("failed to reload review '%s'", review_uuid_str);
+    goto done;
+  }
+
+  cJSON *jfr = json_serialize_run_review(&res_review, date_mode, final_field_mask, 0);
+  cJSON *jres = cJSON_CreateObject();
+  cJSON_AddItemToObject(jres, "review", jfr);
+  cJSON_AddItemToObject(jr, "result", jres);
+
+  ok = 1;
+  err_num = 0;
+  http_status = 200;
+
+done:;
+  phr->json_reply = 1;
+  phr->status_code = http_status;
+  emit_json_result(fout, phr, ok, err_num, err_id, err_msg, jr);
+  run_review_free(&review);
+  run_review_free(&out_review);
+  run_review_free(&res_review);
+  if (jr) {
+    cJSON_Delete(jr);
+  }
+  if (request_json) {
+    cJSON_Delete(request_json);
   }
 #undef ERR
 }
@@ -13194,7 +13587,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_PREMODERATE_JSON] = NULL,
   [NEW_SRV_ACTION_LIST_PENDING_REVIEWS_JSON] = priv_list_pending_reviews_json,
   [NEW_SRV_ACTION_START_REVIEW_JSON] = priv_start_review_json,
-  [NEW_SRV_ACTION_FINISH_REVIEW_JSON] = NULL,
+  [NEW_SRV_ACTION_FINISH_REVIEW_JSON] = priv_finish_review_json,
   [NEW_SRV_ACTION_HEARTBEAT_REVIEW_JSON] = priv_heartbeat_review_json,
   [NEW_SRV_ACTION_LIST_ACTIVE_REVIEWS_JSON] = NULL,
   [NEW_SRV_ACTION_GET_ACTIVE_REVIEW_JSON] = NULL,
