@@ -12813,7 +12813,7 @@ priv_start_review_json(
     goto done;
   }
   if (run_review_fetch(cs->runlog_state, &review_uuid,
-      RER_SERIAL_ID|RER_REVIEW_UUID|RER_CONTEST_ID|RER_RUN_ID|RER_STATUS|RER_PURPOSE, &review) < 0) {
+      RER_SERIAL_ID|RER_REVIEW_UUID|RER_CONTEST_ID|RER_RUN_ID|RER_STATUS|RER_PURPOSE, &review) <= 0) {
     http_status = 404;
     err_num = NEW_SRV_ERR_INV_UUID;
     ERR("review '%s' not found", review_uuid_str);
@@ -12926,7 +12926,7 @@ priv_start_review_json(
       | RER_REVIEW_SOURCE_SHA256 | RER_CONTEST_ID | RER_RUN_ID | RER_REVIEWER_USER_ID
       | RER_GENERATION | RER_STATUS | RER_PURPOSE;
   if (run_review_fetch(cs->runlog_state, &review_uuid,
-      final_field_mask, &res_review) < 0) {
+      final_field_mask, &res_review) <= 0) {
     http_status = 500;
     err_num = NEW_SRV_ERR_DATABASE_FAILED;
     ERR("failed to reload review '%s'", review_uuid_str);
@@ -13056,7 +13056,7 @@ priv_heartbeat_review_json(
       | RER_CONTEST_ID | RER_RUN_ID | RER_REVIEWER_USER_ID
       | RER_GENERATION | RER_STATUS | RER_PURPOSE;
   if (run_review_fetch(cs->runlog_state, &review_uuid,
-      final_field_mask, &res_review) < 0) {
+      final_field_mask, &res_review) <= 0) {
     http_status = 500;
     err_num = NEW_SRV_ERR_DATABASE_FAILED;
     ERR("failed to reload review '%s'", review_uuid_str);
@@ -13159,7 +13159,7 @@ priv_finish_review_json(
     goto done;
   }
   if (run_review_fetch(cs->runlog_state, &review_uuid,
-      RER_SERIAL_ID|RER_REVIEW_UUID|RER_CONTEST_ID|RER_RUN_ID, &review) < 0) {
+      RER_SERIAL_ID|RER_REVIEW_UUID|RER_CONTEST_ID|RER_RUN_ID, &review) <= 0) {
     http_status = 404;
     err_num = NEW_SRV_ERR_INV_UUID;
     ERR("review '%s' not found", review_uuid_str);
@@ -13366,6 +13366,8 @@ priv_finish_review_json(
   out_review.status = RERS_WAITING_APPROVAL; field_mask |= RER_STATUS;
   if (prob->disable_post_approve > 0) {
     out_review.status = RERS_COMPLETE;
+    out_review.status_approved_as_is = 1; field_mask |= RER_STATUS_APPROVED_AS_IS;
+    out_review.review_approved_as_is = 1; field_mask |= RER_REVIEW_APPROVED_AS_IS;
   }
 
   int res = run_review_update(cs->runlog_state, &out_review, field_mask, &filter);
@@ -13415,6 +13417,189 @@ done:;
   }
   if (request_json) {
     cJSON_Delete(request_json);
+  }
+#undef ERR
+}
+
+static void
+priv_list_active_reviews_json(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  serve_state_t cs = extra->serve_state;
+  cJSON *jr = cJSON_CreateObject();
+  int ok = 0;
+  int err_num = NEW_SRV_ERR_INV_PARAM;
+  const unsigned char *err_msg = NULL;
+  int http_status = 400;
+  struct run_review *reviews = NULL;
+  size_t review_count = 0;
+  struct list_review_filter filter = { .run_id = -1 };
+  int date_mode = 0;
+  int offset = 0;
+  int count = 0;
+
+  info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
+
+  if (opcaps_check(phr->caps, OPCAP_EXT_REVIEW) < 0) {
+    http_status = 403;
+    err_num = NEW_SRV_ERR_PERMISSION_DENIED;
+    goto done;
+  }
+
+  hr_cgi_param_int_opt(phr, "offset", &offset, 0);
+  hr_cgi_param_int_opt(phr, "count", &count, 0);
+  hr_cgi_param_int_opt(phr, "date_mode", &date_mode, 0);
+
+  uint64_t field_mask = RER_LAST_UPDATE_TIME | RER_REVIEW_START_TIME | RER_REVIEW_HEARTBEAT_TIME
+    | RER_REVIEW_UUID | RER_REVIEW_AGENT | RER_REVIEW_HEARTBEAT_STATUS
+    | RER_REVIEW_SOURCE_SHA256 | RER_CONTEST_ID | RER_RUN_ID
+    | RER_REVIEWER_USER_ID | RER_GENERATION | RER_STATUS | RER_PURPOSE;
+  filter.field_mask = RER_SERIAL_ID | field_mask;
+  filter.include_status_mask = 1U << RERS_REVIEWING;
+  filter.not_null_field_mask = RER_REVIEW_START_TIME;
+  filter.null_field_mask = RER_REVIEW_FINISH_TIME;
+  filter.reviewer_user_id = phr->user_id;
+  if (count <= 0) count = 50;
+  filter.offset = offset;
+  filter.count = count;
+  if (run_review_list(cs->runlog_state, &filter, &reviews, &review_count) < 0) {
+    http_status = 500;
+    err_num = NEW_SRV_ERR_DATABASE_FAILED;
+    goto done;
+  }
+
+  cJSON *jrs = cJSON_CreateArray();
+  for (int i = 0; i < review_count; ++i) {
+    cJSON *jr = json_serialize_run_review(&reviews[i], date_mode,
+      field_mask,
+      0);
+    cJSON_AddItemToArray(jrs, jr);
+  }
+  cJSON *jres = cJSON_CreateObject();
+  cJSON_AddItemToObject(jres, "reviews", jrs);
+  cJSON_AddItemToObject(jr, "result", jres);
+  ok = 1;
+  err_num = 0;
+  http_status = 200;
+
+done:;
+  phr->json_reply = 1;
+  phr->status_code = http_status;
+  emit_json_result(fout, phr, ok, err_num, 0, err_msg, jr);
+  if (jr) {
+    cJSON_Delete(jr);
+  }
+}
+
+static void
+priv_get_active_review_json(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  serve_state_t cs = extra->serve_state;
+  cJSON *jr = cJSON_CreateObject();
+  int ok = 0;
+  int err_num = NEW_SRV_ERR_INV_PARAM;
+  const unsigned char *err_msg = NULL;
+  int http_status = 400;
+  unsigned err_id = random_u32();
+  const unsigned char *review_uuid_str = NULL;
+  ej_uuid_t review_uuid = {};
+  struct run_review review = {};
+  cJSON *jdetail = NULL;
+  int date_mode = 0;
+
+  info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
+
+  #define ERR(msg, ...) err("%s:%d:%08x:" msg, __PRETTY_FUNCTION__, __LINE__, err_id ,##__VA_ARGS__)
+
+  if (opcaps_check(phr->caps, OPCAP_EXT_REVIEW) < 0) {
+    http_status = 403;
+    err_num = NEW_SRV_ERR_PERMISSION_DENIED;
+    ERR("no OPCAP_EXT_REVIEW permission");
+    goto done;
+  }
+
+  int r = hr_cgi_param(phr, "review_uuid", &review_uuid_str);
+  if (!r) {
+    http_status = 400;
+    err_num = NEW_SRV_ERR_INV_UUID;
+    ERR("review_uuid undefined");
+    goto done;
+  }
+  if (r < 0) {
+    http_status = 400;
+    err_num = NEW_SRV_ERR_INV_UUID;
+    ERR("review_uuid binary");
+    goto done;
+  }
+  if (ej_uuid_parse(review_uuid_str, &review_uuid) < 0) {
+    http_status = 400;
+    err_num = NEW_SRV_ERR_INV_UUID;
+    ERR("review_uuid invalid");
+    goto done;
+  }
+  hr_cgi_param_int_opt(phr, "date_mode", &date_mode, 0);
+
+  uint64_t field_mask = RER_LAST_UPDATE_TIME | RER_REVIEW_START_TIME | RER_REVIEW_HEARTBEAT_TIME
+    | RER_REVIEW_UUID | RER_REVIEW_AGENT | RER_REVIEW_HEARTBEAT_STATUS
+    | RER_REVIEW_SOURCE_SHA256 | RER_CONTEST_ID | RER_RUN_ID
+    | RER_REVIEWER_USER_ID | RER_GENERATION | RER_STATUS | RER_PURPOSE | RER_REVIEW_SOURCE;
+  r = run_review_fetch(cs->runlog_state, &review_uuid, field_mask | RER_SERIAL_ID, &review);
+  if (r < 0) {
+    http_status = 500;
+    err_num = NEW_SRV_ERR_DATABASE_FAILED;
+    ERR("database failed");
+    goto done;
+  }
+  if (!r) {
+    http_status = 404;
+    err_num = NEW_SRV_ERR_NO_AFFECTED_ROWS;
+    ERR("review '%s' not found", review_uuid_str);
+    goto done;
+  }
+  if (review.reviewer_user_id != phr->user_id || review.status != RERS_REVIEWING || review.review_start_time <= 0 || review.review_finish_time > 0) {
+    http_status = 404;
+    err_num = NEW_SRV_ERR_NO_AFFECTED_ROWS;
+    ERR("review '%s' is in wrong state", review_uuid_str);
+    goto done;
+  }
+
+  jdetail = cJSON_Parse(review.review_source);
+  if (!jdetail) {
+    http_status = 500;
+    err_num = NEW_SRV_ERR_DATABASE_FAILED;
+    ERR("failed to parse review_source as json");
+    goto done;
+  }
+  field_mask &= ~RER_REVIEW_SOURCE;
+  free(review.review_source); review.review_source = NULL;
+
+  cJSON *jfr = json_serialize_run_review(&review, date_mode, field_mask, 0);
+  cJSON *jres = cJSON_CreateObject();
+  cJSON_AddItemToObject(jres, "review", jfr);
+  cJSON_AddItemToObject(jres, "details", jdetail); jdetail = NULL;
+  cJSON_AddItemToObject(jr, "result", jres);
+
+  ok = 1;
+  err_num = 0;
+  http_status = 200;
+
+done:;
+  phr->json_reply = 1;
+  phr->status_code = http_status;
+  emit_json_result(fout, phr, ok, err_num, err_id, err_msg, jr);
+  run_review_free(&review);
+  if (jdetail) {
+    cJSON_Delete(jdetail);
+  }
+  if (jr) {
+    cJSON_Delete(jr);
   }
 #undef ERR
 }
@@ -13674,8 +13859,8 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_START_REVIEW_JSON] = priv_start_review_json,
   [NEW_SRV_ACTION_FINISH_REVIEW_JSON] = priv_finish_review_json,
   [NEW_SRV_ACTION_HEARTBEAT_REVIEW_JSON] = priv_heartbeat_review_json,
-  [NEW_SRV_ACTION_LIST_ACTIVE_REVIEWS_JSON] = NULL,
-  [NEW_SRV_ACTION_GET_ACTIVE_REVIEW_JSON] = NULL,
+  [NEW_SRV_ACTION_LIST_ACTIVE_REVIEWS_JSON] = priv_list_active_reviews_json,
+  [NEW_SRV_ACTION_GET_ACTIVE_REVIEW_JSON] = priv_get_active_review_json,
   [NEW_SRV_ACTION_POSTAPPROVE_JSON] = NULL,
 };
 
