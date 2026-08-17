@@ -819,4 +819,20 @@ run_review_update(
         uint64_t field_mask,
         const struct list_review_filter *filter);
 
+int
+run_review_fetch_by_crg(
+        runlog_state_t state,
+        int contest_id,
+        int run_id,
+        int generation,
+        uint64_t field_mask,
+        struct run_review *p_result);
+
+int
+run_review_update_view_counter(
+        runlog_state_t state,
+        int contest_id,
+        int run_id,
+        int generation);
+
 #endif /* __RUNLOG_H__ */
