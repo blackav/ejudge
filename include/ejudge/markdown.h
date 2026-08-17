@@ -2,7 +2,7 @@
 #ifndef __MARKDOWN_H__
 #define __MARKDOWN_H__
 
-/* Copyright (C) 2025 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2025-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -25,9 +25,16 @@ struct md_content
   size_t size;
 };
 
+void
+markdown_free(struct md_content *md);
+
 int
 markdown_parse(
         const unsigned char *path,
+        struct md_content *res);
+int
+markdown_parse_str(
+        const unsigned char *str,
         struct md_content *res);
 
 #endif /* __MARKDOWN_H__ */
