@@ -289,6 +289,18 @@ struct rldb_plugin_iface
         const struct run_review *rr,
         uint64_t field_mask,
         const struct list_review_filter *filter);
+  int (*fetch_review_by_crg)(
+        struct rldb_plugin_cnts *cdata,
+        int contest_id,
+        int run_id,
+        int generation,
+        uint64_t field_mask,
+        struct run_review *p_result);
+  int (*update_review_view_counter)(
+        struct rldb_plugin_cnts *cdata,
+        int contest_id,
+        int run_id,
+        int generation);
 };
 
 /* default plugin: compiled into new-server */
