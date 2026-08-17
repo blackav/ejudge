@@ -3319,7 +3319,7 @@ get_group_scores_func(
   return &rls->group_scores.data[index];
 }
 
-enum { REVIEW_ROW_WIDTH = 42 };
+enum { REVIEW_ROW_WIDTH = 45 };
 #define REVIEW_OFFSET(f) XOFFSET(struct run_review, f)
 
 static const struct common_mysql_parse_spec reviews_spec[REVIEW_ROW_WIDTH] =
@@ -3343,7 +3343,10 @@ static const struct common_mysql_parse_spec reviews_spec[REVIEW_ROW_WIDTH] =
   { EJ_MYSQL_NULLABLE, 's', "review_judge_result", REVIEW_OFFSET(review_judge_result), 0 },
   { EJ_MYSQL_NULLABLE, 's', "review_statistics", REVIEW_OFFSET(review_statistics), 0 },
   { EJ_MYSQL_NULLABLE, 's', "approved_text", REVIEW_OFFSET(approved_text), 0 },
+  { EJ_MYSQL_NULLABLE, 's', "judge_approved_text", REVIEW_OFFSET(judge_approved_text), 0 },
   { EJ_MYSQL_NULLABLE, 's', "model", REVIEW_OFFSET(model), 0 },
+  { EJ_MYSQL_NULLABLE, 's', "approver_feedback", REVIEW_OFFSET(approver_feedback), 0 },
+  { EJ_MYSQL_NULLABLE, 's', "user_feedback", REVIEW_OFFSET(user_feedback), 0 },
   { EJ_MYSQL_NULLABLE, 'h', "review_source_sha256", REVIEW_OFFSET(review_source_sha256), 0 },
   { 0, 'd', "contest_id", REVIEW_OFFSET(contest_id), 0 },
   { 0, 'd', "run_id", REVIEW_OFFSET(run_id), 0 },

@@ -1457,7 +1457,10 @@ append_timestamp(cJSON *j, int64_t ts, int date_mode, const unsigned char *name_
 #define RER_review_judge_result RER_REVIEW_JUDGE_RESULT
 #define RER_review_statistics RER_REVIEW_STATISTICS
 #define RER_approved_text RER_APPROVED_TEXT
+#define RER_judge_approved_text RER_JUDGE_APPROVED_TEXT
 #define RER_model RER_MODEL
+#define RER_approver_feedback RER_APPROVER_FEEDBACK
+#define RER_user_feedback RER_USER_FEEDBACK
 #define RER_review_source_sha256 RER_REVIEW_SOURCE_SHA256
 #define RER_contest_id RER_CONTEST_ID
 #define RER_run_id RER_RUN_ID
@@ -1535,7 +1538,10 @@ json_serialize_run_review(
     ADD_STRING(jrr, rr, review_judge_result);
     ADD_STRING(jrr, rr, review_statistics);
     ADD_STRING(jrr, rr, approved_text);
+    ADD_STRING(jrr, rr, judge_approved_text);
     ADD_STRING(jrr, rr, model);
+    ADD_STRING(jrr, rr, approver_feedback);
+    ADD_STRING(jrr, rr, user_feedback);
 #undef ADD_STRING
 
     if (sha256isnotnull(rr->review_source_sha256) && (mask & RER_review_source_sha256) != 0) {
