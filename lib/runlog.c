@@ -3398,7 +3398,6 @@ run_review_update(
 int
 run_review_fetch_by_crg(
         runlog_state_t state,
-        int contest_id,
         int run_id,
         int generation,
         uint64_t field_mask,
@@ -3408,14 +3407,13 @@ run_review_fetch_by_crg(
     ERR_R("fetch_review_by_crg is not implemented");
     return -1;
   } else {
-    return state->iface->fetch_review_by_crg(state->cnts, contest_id, run_id, generation, field_mask, p_result);
+    return state->iface->fetch_review_by_crg(state->cnts, run_id, generation, field_mask, p_result);
   }
 }
 
 int
 run_review_update_view_counter(
         runlog_state_t state,
-        int contest_id,
         int run_id,
         int generation)
 {
@@ -3423,6 +3421,6 @@ run_review_update_view_counter(
     ERR_R("update_review_view_counter is not implemented");
     return -1;
   } else {
-    return state->iface->update_review_view_counter(state->cnts, contest_id, run_id, generation);
+    return state->iface->update_review_view_counter(state->cnts, run_id, generation);
   }
 }

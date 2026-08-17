@@ -822,7 +822,6 @@ run_review_update(
 int
 run_review_fetch_by_crg(
         runlog_state_t state,
-        int contest_id,
         int run_id,
         int generation,
         uint64_t field_mask,
@@ -831,7 +830,6 @@ run_review_fetch_by_crg(
 int
 run_review_update_view_counter(
         runlog_state_t state,
-        int contest_id,
         int run_id,
         int generation);
 

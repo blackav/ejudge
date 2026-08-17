@@ -3769,7 +3769,6 @@ fail:;
 static int
 fetch_review_by_crg_func(
         struct rldb_plugin_cnts *cdata,
-        int contest_id,
         int run_id,
         int generation,
         uint64_t field_mask,
@@ -3787,7 +3786,7 @@ fetch_review_by_crg_func(
   fprintf(cmd_f, "SELECT ");
   field_count = unparse_review_fields(cmd_f, field_mask);
   fprintf(cmd_f, " FROM %sreviews WHERE contest_id = %d AND run_id = %d AND generation = %d ;",
-          md->table_prefix, contest_id, run_id, generation);
+          md->table_prefix, cs->contest_id, run_id, generation);
   fclose(cmd_f); cmd_f = NULL;
 
   if (mi->query(md, cmd_s, cmd_z, field_count) < 0) {
@@ -3812,7 +3811,6 @@ fetch_review_by_crg_func(
 static int
 update_review_view_counter_func(
         struct rldb_plugin_cnts *cdata,
-        int contest_id,
         int run_id,
         int generation)
 {
@@ -3827,7 +3825,7 @@ update_review_view_counter_func(
   fprintf(cmd_f,
           "UPDATE %sreviews SET user_opened_count=user_opened_count+1, user_opened_time=IFNULL(NOW(6),user_opened_time) "
           " WHERE contest_id=%d,run_id=%d,generation=%d;",
-          state->md->table_prefix, contest_id, run_id, generation);
+          state->md->table_prefix, cs->contest_id, run_id, generation);
   fclose(cmd_f); cmd_f = NULL;
   if (mi->simple_query(md, cmd_s, cmd_z) < 0) goto fail;
   xfree(cmd_s); cmd_s = 0; cmd_z = 0;

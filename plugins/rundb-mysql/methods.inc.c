@@ -295,7 +295,6 @@ update_reviews_func(
 static int
 fetch_review_by_crg_func(
         struct rldb_plugin_cnts *cdata,
-        int contest_id,
         int run_id,
         int generation,
         uint64_t field_mask,
@@ -304,6 +303,5 @@ fetch_review_by_crg_func(
 static int
 update_review_view_counter_func(
         struct rldb_plugin_cnts *cdata,
-        int contest_id,
         int run_id,
         int generation);
