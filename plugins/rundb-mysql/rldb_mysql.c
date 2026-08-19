@@ -140,6 +140,8 @@ struct rldb_plugin_iface plugin_rldb_mysql =
   fetch_review_func,
   list_reviews_func,
   update_reviews_func,
+  fetch_review_by_crg_func,
+  update_review_view_counter_func,
 };
 
 static long long
@@ -3317,7 +3319,7 @@ get_group_scores_func(
   return &rls->group_scores.data[index];
 }
 
-enum { REVIEW_ROW_WIDTH = 42 };
+enum { REVIEW_ROW_WIDTH = 45 };
 #define REVIEW_OFFSET(f) XOFFSET(struct run_review, f)
 
 static const struct common_mysql_parse_spec reviews_spec[REVIEW_ROW_WIDTH] =
@@ -3341,7 +3343,10 @@ static const struct common_mysql_parse_spec reviews_spec[REVIEW_ROW_WIDTH] =
   { EJ_MYSQL_NULLABLE, 's', "review_judge_result", REVIEW_OFFSET(review_judge_result), 0 },
   { EJ_MYSQL_NULLABLE, 's', "review_statistics", REVIEW_OFFSET(review_statistics), 0 },
   { EJ_MYSQL_NULLABLE, 's', "approved_text", REVIEW_OFFSET(approved_text), 0 },
+  { EJ_MYSQL_NULLABLE, 's', "judge_approved_text", REVIEW_OFFSET(judge_approved_text), 0 },
   { EJ_MYSQL_NULLABLE, 's', "model", REVIEW_OFFSET(model), 0 },
+  { EJ_MYSQL_NULLABLE, 's', "approver_feedback", REVIEW_OFFSET(approver_feedback), 0 },
+  { EJ_MYSQL_NULLABLE, 's', "user_feedback", REVIEW_OFFSET(user_feedback), 0 },
   { EJ_MYSQL_NULLABLE, 'h', "review_source_sha256", REVIEW_OFFSET(review_source_sha256), 0 },
   { 0, 'd', "contest_id", REVIEW_OFFSET(contest_id), 0 },
   { 0, 'd', "run_id", REVIEW_OFFSET(run_id), 0 },
@@ -3411,6 +3416,28 @@ create_review_func(
 }
 
 static int
+unparse_review_fields(
+        FILE *cmd_f,
+        uint64_t field_mask)
+{
+  int field_count = 0;
+  if (!field_mask) {
+    fprintf(cmd_f, "*");
+    field_count = REVIEW_ROW_WIDTH;
+  } else {
+    const unsigned char *sep = "";
+    for (int i = 0; i < sizeof(reviews_spec) / sizeof(reviews_spec[0]); ++i) {
+      if ((field_mask & (1ULL << i)) != 0) {
+        fprintf(cmd_f, "%s%s", sep, reviews_spec[i].name);
+        sep = ",";
+        ++field_count;
+      }
+    }
+  }
+  return field_count;
+}
+
+static int
 fetch_review_func(
         struct rldb_plugin_cnts *cdata,
         const ej_uuid_t *p_uuid,
@@ -3428,19 +3455,7 @@ fetch_review_func(
   int field_count = 0;
 
   fprintf(cmd_f, "SELECT ");
-  if (!field_mask) {
-    fprintf(cmd_f, "*");
-    field_count = REVIEW_ROW_WIDTH;
-  } else {
-    const unsigned char *sep = "";
-    for (int i = 0; i < sizeof(reviews_spec) / sizeof(reviews_spec[0]); ++i) {
-      if ((field_mask & (1ULL << i)) != 0) {
-        fprintf(cmd_f, "%s%s", sep, reviews_spec[i].name);
-        sep = ",";
-        ++field_count;
-      }
-    }
-  }
+  field_count = unparse_review_fields(cmd_f, field_mask);
   fprintf(cmd_f, " FROM %sreviews WHERE review_uuid='%s' ;", md->table_prefix,
           ej_uuid_unparse_r_nonempty(buf, sizeof(buf), p_uuid));
   fclose(cmd_f); cmd_f = NULL;
@@ -3677,19 +3692,7 @@ list_reviews_func(
   int field_count = 0;
 
   fprintf(cmd_f, "SELECT ");
-  if (!filter->field_mask) {
-    fprintf(cmd_f, "*");
-    field_count = REVIEW_ROW_WIDTH;
-  } else {
-    const unsigned char *sep = "";
-    for (int i = 0; i < sizeof(reviews_spec) / sizeof(reviews_spec[0]); ++i) {
-      if ((filter->field_mask & (1ULL << i)) != 0) {
-        fprintf(cmd_f, "%s%s", sep, reviews_spec[i].name);
-        ++field_count;
-        sep = ",";
-      }
-    }
-  }
+  field_count = unparse_review_fields(cmd_f, filter->field_mask);
   fprintf(cmd_f, " FROM %sreviews WHERE ", md->table_prefix);
 
   write_reviews_filter(mi, md, cmd_f, filter);
@@ -3755,6 +3758,78 @@ update_reviews_func(
   putc_unlocked(';', cmd_f);
   fclose(cmd_f); cmd_f = NULL;
 
+  if (mi->simple_query(md, cmd_s, cmd_z) < 0) goto fail;
+  xfree(cmd_s); cmd_s = 0; cmd_z = 0;
+
+  return mi->affected_rows(md);
+
+fail:;
+  if (cmd_f) fclose(cmd_f);
+  xfree(cmd_s);
+  return -1;
+}
+
+static int
+fetch_review_by_crg_func(
+        struct rldb_plugin_cnts *cdata,
+        int run_id,
+        int generation,
+        uint64_t field_mask,
+        struct run_review *p_result)
+{
+  struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts*) cdata;
+  struct rldb_mysql_state *state = cs->plugin_state;
+  struct common_mysql_iface *mi = state->mi;
+  struct common_mysql_state *md = state->md;
+  char *cmd_s = NULL;
+  size_t cmd_z = 0;
+  FILE *cmd_f = open_memstream(&cmd_s, &cmd_z);
+  int field_count = 0;
+
+  fprintf(cmd_f, "SELECT ");
+  field_count = unparse_review_fields(cmd_f, field_mask);
+  fprintf(cmd_f, " FROM %sreviews WHERE contest_id = %d AND run_id = %d AND generation = %d ;",
+          md->table_prefix, cs->contest_id, run_id, generation);
+  fclose(cmd_f); cmd_f = NULL;
+
+  if (mi->query(md, cmd_s, cmd_z, field_count) < 0) {
+    free(cmd_s);
+    return -1;
+  }
+  if (!md->row_count) {
+    mi->free_res(md);
+    free(cmd_s);
+    return 0;
+  }
+
+  free(cmd_s); cmd_s = NULL;
+  if (mi->next_row(md) < 0) {
+    return -1;
+  }
+  int r = mi->parse_spec_2(md, REVIEW_ROW_WIDTH, reviews_spec, field_mask, p_result);
+  if (r < 0) return r;
+  return 1;
+}
+
+static int
+update_review_view_counter_func(
+        struct rldb_plugin_cnts *cdata,
+        int run_id,
+        int generation)
+{
+  struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts*) cdata;
+  struct rldb_mysql_state *state = cs->plugin_state;
+  struct common_mysql_iface *mi = state->mi;
+  struct common_mysql_state *md = state->md;
+  char *cmd_s = NULL;
+  size_t cmd_z = 0;
+  FILE *cmd_f = open_memstream(&cmd_s, &cmd_z);
+
+  fprintf(cmd_f,
+          "UPDATE %sreviews SET user_opened_count=user_opened_count+1, user_opened_time=IFNULL(NOW(6),user_opened_time) "
+          " WHERE contest_id=%d,run_id=%d,generation=%d;",
+          state->md->table_prefix, cs->contest_id, run_id, generation);
+  fclose(cmd_f); cmd_f = NULL;
   if (mi->simple_query(md, cmd_s, cmd_z) < 0) goto fail;
   xfree(cmd_s); cmd_s = 0; cmd_z = 0;
 

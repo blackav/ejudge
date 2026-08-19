@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-12 02:07+0300\n"
+"POT-Creation-Date: 2026-08-18 02:31+0300\n"
 "PO-Revision-Date: 2024-03-17 14:09+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -3518,6 +3518,10 @@ msgstr "Штраф за посылку"
 
 msgid "Run program on server"
 msgstr "Запустите программу на сервере"
+
+#, fuzzy
+msgid "Run review"
+msgstr "Посылок ожидает подтверждения"
 
 msgid "Run selection"
 msgstr "Выбор посылок"

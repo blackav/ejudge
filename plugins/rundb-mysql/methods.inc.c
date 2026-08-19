@@ -291,3 +291,17 @@ update_reviews_func(
         const struct run_review *rr,
         uint64_t field_mask,
         const struct list_review_filter *filter);
+
+static int
+fetch_review_by_crg_func(
+        struct rldb_plugin_cnts *cdata,
+        int run_id,
+        int generation,
+        uint64_t field_mask,
+        struct run_review *p_result);
+
+static int
+update_review_view_counter_func(
+        struct rldb_plugin_cnts *cdata,
+        int run_id,
+        int generation);
