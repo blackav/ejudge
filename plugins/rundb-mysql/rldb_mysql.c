@@ -226,8 +226,10 @@ do_create(struct rldb_mysql_state *state)
     db_error_fail(md);
   if (mi->simple_fquery(md, create_userrunheaders_query, md->table_prefix) < 0)
     db_error_fail(md);
-  if (mi->simple_fquery(md, ejudge_rundb_mysql_reviews, md->table_prefix) < 0)
+  unsigned char *s = xmemdup(ejudge_rundb_mysql_reviews, ejudge_rundb_mysql_reviews_len);
+  if (mi->simple_fquery(md, s, md->table_prefix) < 0)
     db_error_fail(md);
+  free(s);
   if (mi->simple_fquery(md,
                         "INSERT INTO %sconfig VALUES ('run_version', '%d') ;",
                         md->table_prefix, RUN_DB_VERSION) < 0)
@@ -512,10 +514,13 @@ do_open(struct rldb_mysql_state *state)
       if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD COLUMN review_status TINYINT NOT NULL DEFAULT 0 AFTER group_scores", md->table_prefix) < 0)
         return -1;
       break;
-    case 30:
-      if (mi->simple_fquery(md, ejudge_rundb_mysql_reviews, md->table_prefix) < 0)
+    case 30: {
+      unsigned char *s = xmemdup(ejudge_rundb_mysql_reviews, ejudge_rundb_mysql_reviews_len);
+      if (mi->simple_fquery(md, s, md->table_prefix) < 0)
         return -1;
+      free(s);
       break;
+    }
     case 31:
       if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD COLUMN review_gen TINYINT UNSIGNED NOT NULL DEFAULT 0 AFTER review_status,"
                                 "ADD COLUMN hidden_review_status TINYINT NOT NULL DEFAULT 0 AFTER review_gen,"
