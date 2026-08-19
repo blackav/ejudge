@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-12 02:07+0300\n"
+"POT-Creation-Date: 2026-08-18 02:31+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Kazakh <uk@li.org>\n"
@@ -3362,6 +3362,9 @@ msgid "Run penalty"
 msgstr ""
 
 msgid "Run program on server"
+msgstr ""
+
+msgid "Run review"
 msgstr ""
 
 msgid "Run selection"
