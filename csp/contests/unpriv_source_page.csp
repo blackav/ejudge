@@ -40,6 +40,8 @@ ns_unpriv_parse_run_id(
   struct virtual_end_info_s *vend_info = NULL;
   int summoned_count = 0;
   unsigned char *vcs_url = NULL;
+  struct run_review review = {};
+  struct md_content md_review = {};
 
   start_time = run_get_start_time(cs->runlog_state);
   stop_time = run_get_stop_time(cs->runlog_state, phr->user_id, cs->current_time);
@@ -185,6 +187,21 @@ ns_unpriv_parse_run_id(
 <p style="display: inline-block;"><s:a url="ResubmitUrl"><s:_>Resubmit</s:_></s:a>&nbsp;&nbsp;<s:a url="DownloadRunUrl"><s:_>Download run</s:_></s:a></p>
 
 <%
+    if (re.review_gen > 0 && re.review_status == RERS_COMPLETE) {
+      if (run_review_fetch_by_crg(cs->runlog_state, run_id, re.review_gen, 0, &review) > 0) {
+        if (review.status == RERS_COMPLETE && (review.purpose == RERP_REVIEW || review.purpose == RERP_HELP)) {
+          if (markdown_parse_str(review.approved_text, &md_review) >= 0 && md_review.size > 0) {
+%>
+<h2><s:_>Run review</s:_></h2>
+<%
+            fwrite_unlocked(md_review.data, 1, md_review.size, out_f);
+          }
+        }
+      }
+    }
+%>
+
+<%
     if (fcev.u > 0) {
 %>
 <div class="h2-long" style="margin-top: 13px; margin-bottom: 10px;">
@@ -234,6 +251,8 @@ ns_unpriv_parse_run_id(
 <%@include "unpriv_footer.csp"
 %><%
 cleanup:;
+  markdown_free(&md_review);
+  run_review_free(&review);
   clar_free_fcev(&fcev);
   l10n_resetlocale();
   html_armor_free(&ab);

@@ -13368,6 +13368,12 @@ priv_finish_review_json(
     out_review.status = RERS_COMPLETE;
     out_review.status_approved_as_is = 1; field_mask |= RER_STATUS_APPROVED_AS_IS;
     out_review.review_approved_as_is = 1; field_mask |= RER_REVIEW_APPROVED_AS_IS;
+    if (out_review.review_result) {
+      out_review.approved_text = xstrdup(out_review.review_result); field_mask |= RER_APPROVED_TEXT;
+    }
+    if (out_review.review_judge_result) {
+      out_review.judge_approved_text = xstrdup(out_review.review_judge_result); field_mask |= RER_JUDGE_APPROVED_TEXT;
+    }
   }
 
   int res = run_review_update(cs->runlog_state, &out_review, field_mask, &filter);
@@ -13395,6 +13401,8 @@ priv_finish_review_json(
     ERR("failed to reload review '%s'", review_uuid_str);
     goto done;
   }
+
+  // TODO: update run_entry
 
   cJSON *jfr = json_serialize_run_review(&res_review, date_mode, final_field_mask, 0);
   cJSON *jres = cJSON_CreateObject();
