@@ -190,7 +190,7 @@ ns_unpriv_parse_run_id(
     if (re.review_gen > 0 && re.review_status == RERS_COMPLETE) {
       if (run_review_fetch_by_crg(cs->runlog_state, run_id, re.review_gen, 0, &review) > 0) {
         if (review.status == RERS_COMPLETE && (review.purpose == RERP_REVIEW || review.purpose == RERP_HELP)) {
-          if (markdown_parse_str(review.approved_text, &md_review) >= 0 && md_review.size > 0) {
+          if (review.approved_text && markdown_parse_str(review.approved_text, &md_review) >= 0 && md_review.size > 0) {
 %>
 <h2><s:_>Run review</s:_></h2>
 <%
