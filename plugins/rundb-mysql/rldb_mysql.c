@@ -142,6 +142,7 @@ struct rldb_plugin_iface plugin_rldb_mysql =
   update_reviews_func,
   fetch_review_by_crg_func,
   update_review_view_counter_func,
+  change_review_status_func,
 };
 
 static long long
@@ -3322,6 +3323,25 @@ get_group_scores_func(
     return &rls->group_scores.data[0];
   }
   return &rls->group_scores.data[index];
+}
+
+static int
+change_review_status_func(
+        struct rldb_plugin_cnts *cdata,
+        int run_id,
+        int review_status,
+        int review_gen,
+        int hidden_review_status,
+        int hidden_review_gen,
+        struct run_entry *ure)
+{
+  struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts *) cdata;
+  struct run_entry te = {};
+  te.review_status = review_status;
+  te.review_gen = review_gen;
+  te.hidden_review_status = hidden_review_status;
+  te.hidden_review_gen = hidden_review_gen;
+  return do_update_entry(cs, run_id, &te, RE_REVIEW_STATUS, ure);
 }
 
 enum { REVIEW_ROW_WIDTH = 45 };

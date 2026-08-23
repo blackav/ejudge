@@ -3328,6 +3328,20 @@ group_scores_calc(
   return total_group_score;
 }
 
+int
+run_change_review_status(
+        runlog_state_t state,
+        int run_id,
+        int review_status,
+        int review_gen,
+        int hidden_review_status,
+        int hidden_review_gen,
+        struct run_entry *ure)
+{
+  return state->iface->change_review_status(state->cnts, run_id,
+        review_status, review_gen, hidden_review_status, hidden_review_gen, ure);
+}
+
 void
 run_review_free(struct run_review *rr)
 {
@@ -3366,6 +3380,7 @@ run_review_create(
     ERR_R("create_review is not implemented");
     return -1;
   }
+  touch_last_update_time_us(state);
   return state->iface->create_review(state->cnts, run_serial_id, run_id, generation, status, purpose, request_user_id, need_full, p_result);
 }
 
@@ -3379,6 +3394,7 @@ run_review_fetch(
   if (!state->iface->fetch_review) {
     ERR_R("fetch_review is not implemented");
   } else {
+    touch_last_update_time_us(state);
     return state->iface->fetch_review(state->cnts, review_uuid, field_mask, p_result);
   }
   return -1;
@@ -3394,6 +3410,7 @@ run_review_list(
   if (!state->iface->list_reviews) {
     ERR_R("list_reviews is not implemented");
   } else {
+    touch_last_update_time_us(state);
     return state->iface->list_reviews(state->cnts, filter, p_result, p_count);
   }
   return -1;
@@ -3409,6 +3426,7 @@ run_review_update(
   if (!state->iface->update_reviews) {
     ERR_R("update_reviews is not implemented");
   } else {
+    touch_last_update_time_us(state);
     return state->iface->update_reviews(state->cnts, rr, field_mask, filter);
   }
   return -1;
@@ -3426,6 +3444,7 @@ run_review_fetch_by_crg(
     ERR_R("fetch_review_by_crg is not implemented");
     return -1;
   } else {
+    touch_last_update_time_us(state);
     return state->iface->fetch_review_by_crg(state->cnts, run_id, generation, field_mask, p_result);
   }
 }
@@ -3440,6 +3459,7 @@ run_review_update_view_counter(
     ERR_R("update_review_view_counter is not implemented");
     return -1;
   } else {
+    touch_last_update_time_us(state);
     return state->iface->update_review_view_counter(state->cnts, run_id, generation);
   }
 }

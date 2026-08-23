@@ -259,6 +259,16 @@ get_group_scores_func(
         uint32_t index);
 
 static int
+change_review_status_func(
+        struct rldb_plugin_cnts *cdata,
+        int run_id,
+        int review_status,
+        int review_gen,
+        int hidden_review_status,
+        int hidden_review_gen,
+        struct run_entry *ure);
+
+static int
 create_review_func(
         struct rldb_plugin_cnts *cdata,
         int64_t run_serial_id,

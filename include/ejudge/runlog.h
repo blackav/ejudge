@@ -632,6 +632,16 @@ group_scores_calc(
         const int *group_scores,
         int separate_user_score);
 
+int
+run_change_review_status(
+        runlog_state_t state,
+        int run_id,
+        int review_status,
+        int review_gen,
+        int hidden_review_status,
+        int hidden_review_gen,
+        struct run_entry *ure);
+
 // review status
 enum
 {
