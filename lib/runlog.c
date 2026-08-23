@@ -3424,3 +3424,66 @@ run_review_update_view_counter(
     return state->iface->update_review_view_counter(state->cnts, run_id, generation);
   }
 }
+
+_Bool
+run_is_status_for_user_review(int status)
+{
+  static unsigned char const values[RUN_STATUS_SIZE] =
+  {
+    [RUN_OK] = 1,
+    [RUN_ACCEPTED] = 1,
+    [RUN_PENDING_REVIEW] = 1,
+  };
+  if ((unsigned) status >= sizeof(values)/sizeof(values[0])) return 0;
+  return values[status];
+}
+
+_Bool
+run_is_status_for_user_help(int status)
+{
+  static unsigned char const values[RUN_STATUS_SIZE] =
+  {
+    [RUN_COMPILE_ERR] = 1,
+    [RUN_RUN_TIME_ERR] = 1,
+    [RUN_TIME_LIMIT_ERR] = 1,
+    [RUN_PRESENTATION_ERR] = 1,
+    [RUN_WRONG_ANSWER_ERR] = 1,
+    [RUN_PARTIAL] = 1,
+    [RUN_MEM_LIMIT_ERR] = 1,
+    [RUN_SECURITY_ERR] = 1,
+    [RUN_STYLE_ERR] = 1,
+    [RUN_WALL_TIME_LIMIT_ERR] = 1,
+    [RUN_SYNC_ERR] = 1,
+  };
+  if ((unsigned) status >= sizeof(values)/sizeof(values[0])) return 0;
+  return values[status];
+}
+
+_Bool
+run_is_status_for_judge_help(int status)
+{
+  static unsigned char const values[RUN_STATUS_SIZE] =
+  {
+    [RUN_OK] = 1,
+    [RUN_COMPILE_ERR] = 1,
+    [RUN_RUN_TIME_ERR] = 1,
+    [RUN_TIME_LIMIT_ERR] = 1,
+    [RUN_PRESENTATION_ERR] = 1,
+    [RUN_WRONG_ANSWER_ERR] = 1,
+    [RUN_PARTIAL] = 1,
+    [RUN_ACCEPTED] = 1,
+    [RUN_IGNORED] = 1,
+    [RUN_DISQUALIFIED] = 1,
+    [RUN_PENDING] = 1,
+    [RUN_MEM_LIMIT_ERR] = 1,
+    [RUN_SECURITY_ERR] = 1,
+    [RUN_STYLE_ERR] = 1,
+    [RUN_WALL_TIME_LIMIT_ERR] = 1,
+    [RUN_PENDING_REVIEW] = 1,
+    [RUN_REJECTED] = 1,
+    [RUN_SYNC_ERR] = 1,
+    [RUN_SUMMONED] = 1,
+  };
+  if ((unsigned) status >= sizeof(values)/sizeof(values[0])) return 0;
+  return values[status];
+}
