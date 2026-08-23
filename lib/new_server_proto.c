@@ -198,6 +198,7 @@ static const unsigned char * const ns_error_messages[NEW_SRV_ERR_LAST]=
   [NEW_SRV_ERR_USER_LOCKED] = __("User is locked"),
   [NEW_SRV_ERR_NO_CONTESTS] = __("No contests"),
   [NEW_SRV_ERR_NO_AFFECTED_ROWS] = __("No affected rows"),
+  [NEW_SRV_ERR_REVIEW_QUOTA_EXCEEDED] = __("Review quota exceeded"),
 };
 
 static const unsigned char * const ns_error_titles[NEW_SRV_ERR_LAST]=
@@ -368,6 +369,7 @@ static const unsigned char * const ns_error_titles[NEW_SRV_ERR_LAST]=
   [NEW_SRV_ERR_USER_LOCKED] = __("User is locked"),
   [NEW_SRV_ERR_NO_CONTESTS] = __("No contests"),
   [NEW_SRV_ERR_NO_AFFECTED_ROWS] = __("No affected rows"),
+  [NEW_SRV_ERR_REVIEW_QUOTA_EXCEEDED] = __("Review quota exceeded"),
 };
 
 static const unsigned char * const ns_error_symbols[NEW_SRV_ERR_LAST]=
@@ -537,6 +539,7 @@ static const unsigned char * const ns_error_symbols[NEW_SRV_ERR_LAST]=
   [NEW_SRV_ERR_USER_LOCKED] = "ERR_USER_LOCKED",
   [NEW_SRV_ERR_NO_CONTESTS] = "ERR_NO_CONTESTS",
   [NEW_SRV_ERR_NO_AFFECTED_ROWS] = "ERR_NO_AFFECTED_ROWS",
+  [NEW_SRV_ERR_REVIEW_QUOTA_EXCEEDED] = "ERR_REVIEW_QUOTA_EXCEEDED",
 };
 
 const unsigned char *
