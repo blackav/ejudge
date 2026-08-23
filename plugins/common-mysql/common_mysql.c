@@ -1396,6 +1396,7 @@ write_timestamp_us_func(
         int64_t time,
         int flags)
 {
+  if (!pfx) pfx = "";
   if ((flags & EJ_MYSQL_NULLABLE) && !time) {
     fprintf(f, "%sNULL", pfx);
     return;
@@ -1412,12 +1413,13 @@ write_timestamp_us_func(
   }
   struct tm vtm = {};
   localtime_r(&tt, &vtm);
-  fprintf(f, "%s'%04d-%02d-%02d %02d:%02d:%02d'",
+  fprintf(f, "%s'%04d-%02d-%02d %02d:%02d:%02d",
           pfx, vtm.tm_year + 1900, vtm.tm_mon + 1, vtm.tm_mday,
           vtm.tm_hour, vtm.tm_min, vtm.tm_sec);
   if (us != 0) {
     fprintf(f, ".%06d", us);
   }
+  putc_unlocked('\'', f);
 }
 
 static void
