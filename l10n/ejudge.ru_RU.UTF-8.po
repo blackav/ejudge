@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-18 02:31+0300\n"
+"POT-Creation-Date: 2026-08-23 17:44+0300\n"
 "PO-Revision-Date: 2024-03-17 14:09+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -432,6 +432,9 @@ msgstr "Добавление роли %d пользователю %d в турн
 
 msgid "Adding role to user in contest failed"
 msgstr "Добавление роли пользователю в турнире не удалось"
+
+msgid "Additional comments for judge"
+msgstr ""
 
 msgid "Additional information about this error:"
 msgstr "Дополнительная информация об этой ошибке:"
@@ -1874,6 +1877,12 @@ msgstr ""
 
 msgid "Help"
 msgstr "Помощь"
+
+msgid "Hidden run review"
+msgstr ""
+
+msgid "Hidden run review (additional notes)"
+msgstr ""
 
 msgid "Hidden?"
 msgstr "Скрыт?"
@@ -3483,6 +3492,9 @@ msgstr "Комментарии к программе"
 msgid "Review notes"
 msgstr "Заметки для проверки"
 
+msgid "Review quota exceeded"
+msgstr ""
+
 msgid "Role"
 msgstr "Роль"
 
@@ -3491,6 +3503,9 @@ msgstr "Посылка"
 
 msgid "Run ID"
 msgstr "Номер решения"
+
+msgid "Run already reviewed"
+msgstr ""
 
 msgid "Run comment"
 msgstr "Комментарий к программе"
@@ -3519,9 +3534,11 @@ msgstr "Штраф за посылку"
 msgid "Run program on server"
 msgstr "Запустите программу на сервере"
 
-#, fuzzy
 msgid "Run review"
-msgstr "Посылок ожидает подтверждения"
+msgstr ""
+
+msgid "Run review for user"
+msgstr ""
 
 msgid "Run selection"
 msgstr "Выбор посылок"

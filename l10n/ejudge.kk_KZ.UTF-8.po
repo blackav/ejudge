@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-18 02:31+0300\n"
+"POT-Creation-Date: 2026-08-23 17:44+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Kazakh <uk@li.org>\n"
@@ -385,6 +385,9 @@ msgid "Adding role %d to user %d in contest %d failed"
 msgstr ""
 
 msgid "Adding role to user in contest failed"
+msgstr ""
+
+msgid "Additional comments for judge"
 msgstr ""
 
 msgid "Additional information about this error:"
@@ -1750,6 +1753,12 @@ msgid ""
 msgstr ""
 
 msgid "Help"
+msgstr ""
+
+msgid "Hidden run review"
+msgstr ""
+
+msgid "Hidden run review (additional notes)"
 msgstr ""
 
 msgid "Hidden?"
@@ -3328,6 +3337,9 @@ msgstr ""
 msgid "Review notes"
 msgstr ""
 
+msgid "Review quota exceeded"
+msgstr ""
+
 msgid "Role"
 msgstr ""
 
@@ -3335,6 +3347,9 @@ msgid "Run"
 msgstr ""
 
 msgid "Run ID"
+msgstr ""
+
+msgid "Run already reviewed"
 msgstr ""
 
 msgid "Run comment"
@@ -3365,6 +3380,9 @@ msgid "Run program on server"
 msgstr ""
 
 msgid "Run review"
+msgstr ""
+
+msgid "Run review for user"
 msgstr ""
 
 msgid "Run selection"
