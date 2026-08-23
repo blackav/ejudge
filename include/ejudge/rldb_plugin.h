@@ -266,7 +266,6 @@ struct rldb_plugin_iface
   int (*create_review)(
         struct rldb_plugin_cnts *cdata,
         int64_t run_serial_id,
-        int contest_id,
         int run_id,
         int generation,
         int status,

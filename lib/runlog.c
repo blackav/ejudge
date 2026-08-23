@@ -3351,6 +3351,25 @@ run_review_free_array(struct run_review *rrs, size_t count)
 }
 
 int
+run_review_create(
+        runlog_state_t state,
+        int64_t run_serial_id,
+        int run_id,
+        int generation,
+        int status,
+        int purpose,
+        int request_user_id,
+        int need_full,
+        struct run_review *p_result)
+{
+  if (!state->iface->create_review) {
+    ERR_R("create_review is not implemented");
+    return -1;
+  }
+  return state->iface->create_review(state->cnts, run_serial_id, run_id, generation, status, purpose, request_user_id, need_full, p_result);
+}
+
+int
 run_review_fetch(
         runlog_state_t state,
         const ej_uuid_t *review_uuid,

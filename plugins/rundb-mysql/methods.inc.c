@@ -262,7 +262,6 @@ static int
 create_review_func(
         struct rldb_plugin_cnts *cdata,
         int64_t run_serial_id,
-        int contest_id,
         int run_id,
         int generation,
         int status,

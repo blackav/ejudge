@@ -3380,7 +3380,6 @@ static int
 create_review_func(
         struct rldb_plugin_cnts *cdata,
         int64_t run_serial_id,
-        int contest_id,
         int run_id,
         int generation,
         int status,
@@ -3399,7 +3398,7 @@ create_review_func(
   rr.run_serial_id = run_serial_id;
   rr.creation_time = -2; // NOW()
   ej_uuid_generate(&rr.review_uuid);
-  rr.contest_id = contest_id;
+  rr.contest_id = cs->contest_id;
   rr.run_id = run_id;
   rr.generation = generation;
   rr.status = status;

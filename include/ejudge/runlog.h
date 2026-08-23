@@ -810,6 +810,18 @@ void
 run_review_free_array(struct run_review *rr, size_t count);
 
 int
+run_review_create(
+        runlog_state_t state,
+        int64_t run_serial_id,
+        int run_id,
+        int generation,
+        int status,
+        int purpose,
+        int request_user_id,
+        int need_full,
+        struct run_review *p_result);
+
+int
 run_review_fetch(
         runlog_state_t state,
         const ej_uuid_t *review_uuid,
