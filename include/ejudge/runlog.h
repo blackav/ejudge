@@ -755,7 +755,7 @@ struct run_review
   int8_t ai_generation_score;
 };
 
-struct list_review_filter
+struct run_review_filter
 {
   uint64_t field_mask;
   int64_t serial_id;
@@ -784,8 +784,8 @@ struct list_review_filter
   ej_uuid_t review_uuid;
   ej_uuid_t *review_uuid_list;
   int review_uuid_count;
-  int64_t create_time_us_not_before;
-  int64_t create_time_us_before;
+  int64_t creation_time_us_not_before;
+  int64_t creation_time_us_before;
   int64_t last_update_time_us_not_before;
   int64_t last_update_time_us_before;
   int64_t moderation_time_us_not_before;
@@ -819,7 +819,7 @@ run_review_fetch(
 int
 run_review_list(
         runlog_state_t state,
-        const struct list_review_filter *filter,
+        const struct run_review_filter *filter,
         struct run_review **p_result,
         size_t *p_count);
 
@@ -828,7 +828,7 @@ run_review_update(
         runlog_state_t state,
         const struct run_review *rr,
         uint64_t field_mask,
-        const struct list_review_filter *filter);
+        const struct run_review_filter *filter);
 
 int
 run_review_fetch_by_crg(

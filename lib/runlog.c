@@ -3368,7 +3368,7 @@ run_review_fetch(
 int
 run_review_list(
         runlog_state_t state,
-        const struct list_review_filter *filter,
+        const struct run_review_filter *filter,
         struct run_review **p_result,
         size_t *p_count)
 {
@@ -3385,7 +3385,7 @@ run_review_update(
         runlog_state_t state,
         const struct run_review *rr,
         uint64_t field_mask,
-        const struct list_review_filter *filter)
+        const struct run_review_filter *filter)
 {
   if (!state->iface->update_reviews) {
     ERR_R("update_reviews is not implemented");

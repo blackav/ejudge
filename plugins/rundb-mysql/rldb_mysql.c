@@ -3511,7 +3511,7 @@ write_reviews_filter(
         struct common_mysql_iface *mi,
         struct common_mysql_state *md,
         FILE *cmd_f,
-        const struct list_review_filter *filter)
+        const struct run_review_filter *filter)
 {
   static const unsigned char AND_STR[] = " AND ";
   const unsigned char *asep = "";
@@ -3664,7 +3664,7 @@ write_reviews_filter(
     asep = AND_STR; \
     mi->write_timestamp_us(md, cmd_f, NULL, filter->f##_us_before, 0); \
   }} while (0)
-  DO_TIME_FILTER(create_time);
+  DO_TIME_FILTER(creation_time);
   DO_TIME_FILTER(last_update_time);
   DO_TIME_FILTER(moderation_time);
   DO_TIME_FILTER(review_start_time);
@@ -3681,7 +3681,7 @@ write_reviews_filter(
 static int
 list_reviews_func(
         struct rldb_plugin_cnts *cdata,
-        const struct list_review_filter *filter,
+        const struct run_review_filter *filter,
         struct run_review **p_result,
         size_t *p_count)
 {
@@ -3746,7 +3746,7 @@ update_reviews_func(
         struct rldb_plugin_cnts *cdata,
         const struct run_review *rr,
         uint64_t field_mask,
-        const struct list_review_filter *filter)
+        const struct run_review_filter *filter)
 {
   struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts*) cdata;
   struct rldb_mysql_state *state = cs->plugin_state;
