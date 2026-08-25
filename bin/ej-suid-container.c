@@ -1513,7 +1513,7 @@ static struct sock_filter seccomp_filter_default[] =
     // blacklist memfd_create
 #if defined __NR_memfd_create
     /* 15 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_memfd_create, 0, 1),
-    /* 16 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
+    /* 16 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_ERRNO|EPERM),
 #else
     /* 15 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
     /* 16 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
@@ -1531,7 +1531,7 @@ static struct sock_filter seccomp_filter_default[] =
     // blacklist splice and vmsplice
 #if defined __NR_splice
     /* 19 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_splice, 0, 1),
-    /* 20 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
+    /* 20 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_ERRNO|EPERM),
     /* 21 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_vmsplice, 0, 1),
     /* 22 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
 #else
@@ -1544,7 +1544,7 @@ static struct sock_filter seccomp_filter_default[] =
     // blacklist io_uring
 #if defined __NR_io_uring_setup
     /* 23 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_io_uring_setup, 0, 1),
-    /* 24 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
+    /* 24 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_ERRNO|EPERM),
 #else
     /* 23 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
     /* 24 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
@@ -1613,7 +1613,7 @@ static struct sock_filter seccomp_filter_x86_64[] =
     // blacklist memfd_create
 #if defined __NR_memfd_create
     /* 19 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_memfd_create, 0, 1),
-    /* 20 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
+    /* 20 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_ERRNO|EPERM),
 #else
     /* 19 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
     /* 20 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
@@ -1631,7 +1631,7 @@ static struct sock_filter seccomp_filter_x86_64[] =
     // blacklist splice and vmsplice
 #if defined __NR_splice
     /* 23 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_splice, 0, 1),
-    /* 24 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
+    /* 24 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_ERRNO|EPERM),
     /* 25 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_vmsplice, 0, 1),
     /* 26 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
 #else
@@ -1642,9 +1642,9 @@ static struct sock_filter seccomp_filter_x86_64[] =
 #endif
 
     // blacklist io_uring_setup
-#if defined __NR_unshare
+#if defined __NR_io_uring_setup
     /* 27 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_io_uring_setup, 0, 1),
-    /* 28 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
+    /* 28 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_ERRNO|EPERM),
 #else
     /* 27 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
     /* 28 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
@@ -1688,7 +1688,7 @@ static struct sock_filter seccomp_filter_x86_64[] =
     // blacklist memfd_create
 #if defined __NR_32_memfd_create
     /* 43 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_32_memfd_create, 0, 1),
-    /* 44 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
+    /* 44 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_ERRNO|EPERM),
 #else
     /* 41 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
     /* 44 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
@@ -1706,7 +1706,7 @@ static struct sock_filter seccomp_filter_x86_64[] =
     // blacklist splice and vmsplice
 #if defined __NR_32_splice
     /* 47 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_32_splice, 0, 1),
-    /* 48 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
+    /* 48 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_ERRNO|EPERM),
     /* 49 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_32_vmsplice, 0, 1),
     /* 50 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
 #else
@@ -1719,7 +1719,7 @@ static struct sock_filter seccomp_filter_x86_64[] =
     // blacklist unshare
 #if defined __NR_32_io_uring_setup
     /* 51 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_32_io_uring_setup, 0, 1),
-    /* 52 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
+    /* 52 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_ERRNO|EPERM),
 #else
     /* 51 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
     /* 52 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
@@ -2711,7 +2711,7 @@ main(int argc, char *argv[])
             }
 
             if (enable_seccomp) {
-                if (prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER, seccomp_prog_active)) {
+                if (syscall(__NR_seccomp, SECCOMP_SET_MODE_FILTER, SECCOMP_FILTER_FLAG_LOG, seccomp_prog_active)) {
                     fprintf(stderr, "seccomp loading failed: %s\n", strerror(errno));
                     _exit(127);
                 }
