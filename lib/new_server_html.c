@@ -13612,6 +13612,172 @@ done:;
 #undef ERR
 }
 
+static void
+priv_request_review_json(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  serve_state_t cs = extra->serve_state;
+  cJSON *jr = cJSON_CreateObject();
+  int ok = 0;
+  int err_num = NEW_SRV_ERR_INV_PARAM;
+  const unsigned char *err_msg = NULL;
+  int http_status = 400;
+  unsigned err_id = random_u32();
+  int r;
+  int run_id;
+  struct run_entry re;
+  const unsigned char *s = NULL;
+  int unprivileged_mode = 0;
+  int purpose = -1;
+/*
+  struct run_review_filter filter = {.run_id = -1};
+  size_t reviews_count = 0;
+  struct run_review *reviews = NULL;
+*/
+
+#define ERR(msg, ...) err("%s:%d:%08x:" msg, __PRETTY_FUNCTION__, __LINE__, err_id ,##__VA_ARGS__)
+
+  info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
+
+  if (opcaps_check(phr->caps, OPCAP_COMMENT_RUN) < 0) {
+    http_status = 403;
+    err_num = NEW_SRV_ERR_PERMISSION_DENIED;
+    goto done;
+  }
+
+  r = hr_cgi_param(phr, "run_id", &s);
+  if (!r) {
+    err_num = NEW_SRV_ERR_INV_RUN_ID;
+    ERR("run_id undefined");
+    goto done;
+  }
+  if (r < 0) {
+    err_num = NEW_SRV_ERR_INV_RUN_ID;
+    ERR("run_id is binary");
+    goto done;
+  }
+  {
+    char *eptr = NULL;
+    errno = 0;
+    long v = strtol(s, &eptr, 10);
+    if (errno || *eptr || s == (const unsigned char *)eptr || (int) v != v || v < 0) {
+      err_num = NEW_SRV_ERR_INV_RUN_ID;
+      ERR("invalid run_id");
+      goto done;
+    }
+    run_id = v;
+  }
+  if (run_get_entry(cs->runlog_state, run_id, &re) < 0) {
+    err_num = NEW_SRV_ERR_INV_RUN_ID;
+    ERR("invalid run_id");
+    goto done;
+  }
+  hr_cgi_param_int_opt(phr, "unprivileged_mode", &unprivileged_mode, 0);
+
+  if (unprivileged_mode > 0) {
+    if (re.review_gen && (re.review_status != RERS_COMPLETE && re.review_status != RERS_THRASHED)) {
+      // must finish previous review
+      err_num = NEW_SRV_ERR_RUN_REVIEW_INCOMPLETE;
+      ERR("previous run review incomplete for contest_id=%d, run_id=%d", phr->contest_id, run_id);
+      goto done;
+    }
+    if (run_is_status_for_user_review(re.status)) {
+      purpose = RERP_REVIEW;
+    } else if (run_is_status_for_user_help(re.status)) {
+      purpose = RERP_HELP;
+    } else {
+      err_num = NEW_SRV_ERR_INV_STATUS;
+      ERR("invalid status for review");
+      goto done;
+    }
+  } else {
+    if (re.hidden_review_gen && (re.hidden_review_status != RERS_COMPLETE && re.hidden_review_status != RERS_THRASHED)) {
+      // must finish previous review
+      err_num = NEW_SRV_ERR_RUN_REVIEW_INCOMPLETE;
+      ERR("previous run review incomplete for contest_id=%d, run_id=%d", phr->contest_id, run_id);
+      goto done;
+    }
+    purpose = RERP_JUDGE_HELP;
+  }
+
+  const struct section_problem_data *prob = NULL;
+  if (re.prob_id > 0 && re.prob_id <= cs->max_prob) prob = cs->probs[re.prob_id];
+  if (!prob) {
+    err_num = NEW_SRV_ERR_INV_PROB_ID;
+    ERR("invalid problem %d in run_id %d", re.prob_id, run_id);
+    goto done;
+  }
+  if (prob->enable_external_review <= 0) {
+    err_num = NEW_SRV_ERR_INV_PROB_ID;
+    ERR("external review disabled for problem %d in run_id %d", re.prob_id, run_id);
+    goto done;
+  }
+  if (purpose == RERP_REVIEW) {
+    if (prob->enable_user_review_request <= 0) {
+      ERR("user review request disabled for problem %d in run_id %d", re.prob_id, run_id);
+      goto done;
+    }
+  } else if (purpose == RERP_HELP) {
+    if (prob->enable_user_help_request <= 0) {
+      ERR("user help request disabled for problem %d in run_id %d", re.prob_id, run_id);
+      goto done;
+    }
+  }
+
+  int max_gen = 0;
+  if (re.review_gen > max_gen) max_gen = re.review_gen;
+  if (re.hidden_review_gen > max_gen) max_gen = re.hidden_review_gen;
+  int review_status = RERS_REQUESTED_REVIEW;
+  if (prob->disable_pre_moderation > 0 || purpose == RERP_JUDGE_HELP) review_status = RERS_WAITING_REVIEW;
+  r = run_review_create(cs->runlog_state, re.serial_id, run_id, max_gen + 1, review_status, purpose, phr->user_id, 0, NULL);
+  if (r < 0) {
+    err_num = NEW_SRV_ERR_DATABASE_FAILED;
+    http_status = 500;
+    ERR("create review failed");
+    goto done;
+  }
+
+  int new_review_status = re.review_status;
+  int new_review_gen = re.review_gen;
+  int new_hidden_review_status = re.hidden_review_status;
+  int new_hidden_review_gen = re.hidden_review_gen;
+  if (purpose == RERP_JUDGE_HELP) {
+    new_hidden_review_status = review_status;
+    new_hidden_review_gen = max_gen + 1;
+  } else {
+    new_review_status = review_status;
+    new_review_gen = max_gen + 1;
+  }
+
+  struct run_entry ure = {};
+  r = run_change_review_status(cs->runlog_state, run_id,
+                                new_review_status, new_review_gen,
+                                new_hidden_review_status, new_hidden_review_gen, &ure);
+  if (r < 0) {
+    // TODO: remove review entry
+    err_num = NEW_SRV_ERR_DATABASE_FAILED;
+    http_status = 500;
+    ERR("update run review status failed");
+    goto done;
+  }
+
+  ok = 1;
+  err_num = 0;
+  http_status = 200;
+
+done:;
+  phr->json_reply = 1;
+  phr->status_code = http_status;
+  emit_json_result(fout, phr, ok, err_num, err_id, err_msg, jr);
+  if (jr) {
+    cJSON_Delete(jr);
+  }
+#undef ERR
+}
+
 typedef PageInterface *(*external_action_handler_t)(void);
 
 typedef int (*new_action_handler_t)(
@@ -13858,7 +14024,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_CHANGE_REGISTRATIONS] = priv_change_registrations_json,
   [NEW_SRV_ACTION_LIST_PROBLEMS_JSON] = priv_list_problems_json,
   [NEW_SRV_ACTION_GET_PROBLEM_JSON] = priv_get_problem_json,
-  [NEW_SRV_ACTION_REQUEST_REVIEW_JSON] = NULL,
+  [NEW_SRV_ACTION_REQUEST_REVIEW_JSON] = priv_request_review_json,
   [NEW_SRV_ACTION_LIST_REVIEWS_JSON] = priv_list_reviews_json,
   [NEW_SRV_ACTION_GET_REVIEW_JSON] = NULL,
   [NEW_SRV_ACTION_UPDATE_REVIEW_JSON] = NULL,
