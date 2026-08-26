@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -211,6 +211,8 @@ const unsigned char * const ns_submit_button_labels[NEW_SRV_ACTION_LAST]=
   [NEW_SRV_ACTION_DISABLE_VIRTUAL_START] = __("Disable virtual start"),
   [NEW_SRV_ACTION_ENABLE_VIRTUAL_START] = __("Enable virtual start"),
   [NEW_SRV_ACTION_CLEAR_SESSION_CACHE] = __("Clear session cache"),
+  [NEW_SRV_ACTION_REVIEW_DISPLAYED_1] = __("Review displayed runs"),
+  [NEW_SRV_ACTION_REVIEW_DISPLAYED_2] = __("Review displayed runs!"),
 };
 
 const int ns_priv_next_state[NEW_SRV_ACTION_LAST] =

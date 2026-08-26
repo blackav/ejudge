@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-25 02:32+0300\n"
+"POT-Creation-Date: 2026-08-26 08:28+0300\n"
 "PO-Revision-Date: 2024-03-17 14:09+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -3491,6 +3491,12 @@ msgstr "Пароль ещё раз"
 
 msgid "Review comments"
 msgstr "Комментарии к программе"
+
+msgid "Review displayed runs"
+msgstr ""
+
+msgid "Review displayed runs!"
+msgstr ""
 
 msgid "Review notes"
 msgstr "Заметки для проверки"

@@ -8103,6 +8103,7 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_COMPILER_OP] = priv_compiler_operation,
   [NEW_SRV_ACTION_INVOKER_REBOOT] = priv_invoker_operation,
   [NEW_SRV_ACTION_CLEAR_SESSION_CACHE] = priv_contest_operation,
+  [NEW_SRV_ACTION_REVIEW_DISPLAYED_2] = NULL,
 };
 
 static void
@@ -14036,6 +14037,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_LIST_ACTIVE_REVIEWS_JSON] = priv_list_active_reviews_json,
   [NEW_SRV_ACTION_GET_ACTIVE_REVIEW_JSON] = priv_get_active_review_json,
   [NEW_SRV_ACTION_POSTAPPROVE_JSON] = NULL,
+  [NEW_SRV_ACTION_REVIEW_DISPLAYED_2] = priv_generic_operation,
 };
 
 static const unsigned char * const external_priv_action_names[NEW_SRV_ACTION_LAST] =
@@ -14087,6 +14089,7 @@ static const unsigned char * const external_priv_action_names[NEW_SRV_ACTION_LAS
   [NEW_SRV_ACTION_REVIEWS_PAGE] = "priv_reviews_page",
   [NEW_SRV_ACTION_PREMODERATE_PAGE] = "priv_premoderate_page",
   [NEW_SRV_ACTION_POSTAPPROVE_PAGE] = "priv_postapprove_page",
+  [NEW_SRV_ACTION_REVIEW_DISPLAYED_1] = "priv_review_displayed_1_page",
 };
 
 static const int external_priv_action_aliases[NEW_SRV_ACTION_LAST] =

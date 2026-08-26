@@ -60,6 +60,7 @@ SOFILES = \
  csp_priv_priv_users_page.so\
  csp_priv_reload_statement_action.so\
  csp_priv_report_page.so\
+ csp_priv_review_displayed_1_page.so\
  csp_priv_save_cropped_avatar_ajax.so\
  csp_priv_server_info_page.so\
  csp_priv_settings_page.so\
@@ -208,6 +209,7 @@ csp_priv_job_status_page.c : priv_job_status_page.csp priv_includes.csp priv_std
 csp_priv_reviews_page.c : priv_reviews_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 csp_priv_premoderate_page.c : priv_premoderate_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 csp_priv_postapprove_page.c : priv_postapprove_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
+csp_priv_review_displayed_1_page.c : priv_review_displayed_1_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 
 csp_priv_error_internal.c : priv_error_internal.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 csp_priv_error_inv_param.c : priv_error_inv_param.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
