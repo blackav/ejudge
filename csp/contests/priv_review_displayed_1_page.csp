@@ -17,7 +17,7 @@
     int count = 0;
     int token_count = 1;
 
-    if (opcaps_check(phr->caps, OPCAP_EDIT_RUN) < 0) {
+    if (opcaps_check(phr->caps, OPCAP_COMMENT_RUN) < 0) {
         FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
     }
 
@@ -28,14 +28,14 @@
     info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
 
     l10n_setlocale(phr->locale_id);
-    title = _("Change tokens for displayed runs");
+    title = _("Send runs to external review");
 %><%@include "priv_header.csp"
 %>
 </div>
 
 <p><s:a ac="main-page"><s:_>To main page</s:_></s:a></p>
 
-<p><s:_>Runs to change token info:</s:_><%
+<p><s:_>Runs to review:</s:_><%
     s = "";
     for (n = 0; n < 8 * sizeof(mask[0]) * mask_size; n++) {
       i = n / (8 * sizeof(mask[0]));
@@ -57,22 +57,21 @@
 <s:hidden name="run_mask_size" escape="false" value="mask_size_str" />
 <s:hidden name="run_mask" escape="false" value="mask_str" />
 
-<p><s:_>Token counter</s:_>: <s:textfield name="token_count" /></p>
-
 <table>
-    <tr><td><input type="checkbox" name="finalscore_bit" value="1"/></td><td><s:_>Allow viewing the final scores</s:_></td></tr>
     <tr>
         <td>
-            <select name="tests_bits">
+            <select name="review_mode">
                 <option value="0"></option>
-                <option value="2">Basic (open_tests)</option>
-                <option value="4">Token (token_open_tests)</option>
-                <option value="6">Final (final_open_tests)</option>
+                <option value="1">Request user-visible review, skip if already reviewed</option>
+                <option value="2">Request user-visible review, including the runs already reviewed</option>
+                <option value="3">Request hidden review, skip if already reviewed</option>
+                <option value="4">Request hidden review, including the runs already reviewed</option>
+                <option value="5">Clear user-visible review</option>
+                <option value="6">Clear hidden review</option>
             </select>
         </td>
-        <td><s:_>Show tests</s:_></td>
+        <td><s:_>Review mode</s:_></td>
     </tr>
-    <tr><td><input type="checkbox" name="valuer_judge_comment_bit" value="1"/></td><td><s:_>Allow viewing the judge comment of the valuer</s:_></td></tr>
 </table>
 
 <table>
