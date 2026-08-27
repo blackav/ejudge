@@ -361,7 +361,7 @@ main(int argc, char *argv[])
         errno = 0;
         char *eptr = NULL;
         long v = strtol(s, &eptr, 10);
-        if (errno || !*eptr || eptr == s || (int) v != v || v < 0) {
+        if (errno || *eptr || eptr == s || (int) v != v || v < 0) {
             die("invalid EJUDGE_HTML_OUTPUT value: %s", s);
         }
         html_output_flag = v;
@@ -372,7 +372,7 @@ main(int argc, char *argv[])
         errno = 0;
         char *eptr = NULL;
         long v = strtol(s, &eptr, 10);
-        if (errno || !*eptr || eptr == s || (int) v != v || v < 0) {
+        if (errno || *eptr || eptr == s || (int) v != v || v < 0) {
             die("invalid EJUDGE_TUPLES_ONLY value: %s", s);
         }
         tuples_only_flag = v;
