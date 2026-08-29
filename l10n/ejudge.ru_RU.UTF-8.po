@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-26 08:28+0300\n"
+"POT-Creation-Date: 2026-08-29 07:08+0300\n"
 "PO-Revision-Date: 2024-03-17 14:09+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -3498,6 +3498,9 @@ msgstr ""
 msgid "Review displayed runs!"
 msgstr ""
 
+msgid "Review mode"
+msgstr ""
+
 msgid "Review notes"
 msgstr "Заметки для проверки"
 
@@ -3578,6 +3581,9 @@ msgstr "Вызваных на защиту"
 
 msgid "Runs to change token info:"
 msgstr "Посылки для изменения информации о токене:"
+
+msgid "Runs to review:"
+msgstr ""
 
 msgid "STATUS UPDATE FAILED!"
 msgstr "ОШИБКА ОБНОВЛЕНИЯ СТАТУСА!"
@@ -3684,6 +3690,9 @@ msgstr "Отправить комментарий к программе и по�
 
 msgid "Send run comment and ignore run"
 msgstr "Отправить комментарий к программе и игнорировать посылку"
+
+msgid "Send runs to external review"
+msgstr ""
 
 msgid "Send!"
 msgstr "Отправить!"

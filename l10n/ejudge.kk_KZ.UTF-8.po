@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-26 08:28+0300\n"
+"POT-Creation-Date: 2026-08-29 07:08+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Kazakh <uk@li.org>\n"
@@ -3343,6 +3343,9 @@ msgstr ""
 msgid "Review displayed runs!"
 msgstr ""
 
+msgid "Review mode"
+msgstr ""
+
 msgid "Review notes"
 msgstr ""
 
@@ -3422,6 +3425,9 @@ msgid "Runs summoned for defence"
 msgstr ""
 
 msgid "Runs to change token info:"
+msgstr ""
+
+msgid "Runs to review:"
 msgstr ""
 
 msgid "STATUS UPDATE FAILED!"
@@ -3526,6 +3532,9 @@ msgid "Send run comment and SUMMON run"
 msgstr ""
 
 msgid "Send run comment and ignore run"
+msgstr ""
+
+msgid "Send runs to external review"
 msgstr ""
 
 msgid "Send!"

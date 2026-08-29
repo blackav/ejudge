@@ -15,7 +15,6 @@
     int n, i;
     long m;
     int count = 0;
-    int token_count = 1;
 
     if (opcaps_check(phr->caps, OPCAP_COMMENT_RUN) < 0) {
         FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
