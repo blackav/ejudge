@@ -136,6 +136,8 @@ ns_write_priv_all_runs(
   const unsigned char *examinable_str;
   const unsigned char *marked_str;
   const unsigned char *saved_str;
+  const unsigned char *review_status_str;
+  const unsigned char *hidden_review_status_str;
   unsigned long *displayed_mask = 0;
   int displayed_size = 0;
   unsigned char bb[1024];
@@ -838,6 +840,22 @@ ns_write_priv_all_runs(
       if (pe->is_saved) {
         saved_str = "+";
       }
+      review_status_str = "";
+      if (pe->review_gen) {
+        if (pe->review_status == RERS_COMPLETE) {
+          review_status_str = "✅";
+        } else {
+          review_status_str = "🟩";
+        }
+      }
+      hidden_review_status_str = "";
+      if (pe->hidden_review_gen) {
+        if (pe->hidden_review_status == RERS_COMPLETE) {
+          hidden_review_status_str = "✨";
+        } else {
+          hidden_review_status_str = "🟡";
+        }
+      }
       start_time = env.rhead.start_time;
       if (global->is_virtual) {
         start_time = run_get_virtual_start_time(cs->runlog_state, pe->user_id);
@@ -848,8 +866,8 @@ ns_write_priv_all_runs(
                    durstr, 0);
 
       if (run_fields & (1 << RUN_VIEW_RUN_ID)) {
-        fprintf(f, "<td%s>%d%s%s%s%s</td>", cl, rid, imported_str, examinable_str,
-                marked_str, saved_str);
+        fprintf(f, "<td%s>%d%s%s%s%s%s%s</td>", cl, rid, imported_str, examinable_str,
+                marked_str, saved_str, review_status_str, hidden_review_status_str);
       }
       if (run_fields & (1 << RUN_VIEW_RUN_UUID)) {
         fprintf(f, "<td%s>%s</td>", cl, ej_uuid_unparse(&pe->run_uuid, "&nbsp;"));
