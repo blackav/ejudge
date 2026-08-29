@@ -2,7 +2,7 @@
 #ifndef __HTML_H__
 #define __HTML_H__
 
-/* Copyright (C) 2000-2024 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -229,6 +229,7 @@ enum
   RUN_VIEW_EXT_USER,
   RUN_VIEW_NOTIFY,
   RUN_VIEW_GROUP_SCORES,
+  RUN_VIEW_EXT_REVIEW,
 
   RUN_VIEW_LAST,
 

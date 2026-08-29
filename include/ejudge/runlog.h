@@ -866,4 +866,7 @@ run_review_update_view_counter(
         int run_id,
         int generation);
 
+const unsigned char *
+run_unparse_review_status(unsigned val);
+
 #endif /* __RUNLOG_H__ */

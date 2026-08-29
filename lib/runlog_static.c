@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2008-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -499,4 +499,23 @@ run_status_short_str(int status)
     return buf;
   }
   return status_short_str[status];
+}
+
+const unsigned char *
+run_unparse_review_status(unsigned val)
+{
+    static const unsigned char * const values[] =
+    {
+        [RERS_REQUESTED_REVIEW] = "requested_review",
+        [RERS_WAITING_REVIEW] = "waiting_review",
+        [RERS_REVIEWING] = "reviewing",
+        [RERS_WAITING_APPROVAL] = "waiting_approval",
+        [RERS_COMPLETE] = "complete",
+    };
+    if (val >= sizeof(values) / sizeof(values[0])) {
+        return "";
+    }
+    const unsigned char *s = values[val];
+    if (!s) return "";
+    return s;
 }

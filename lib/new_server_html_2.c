@@ -486,6 +486,9 @@ ns_write_priv_all_runs(
     if (run_fields & (1LL << RUN_VIEW_GROUP_SCORES)) {
       fprintf(f, "<th%s>%s</th>", cl, "Group Scores");
     }
+    if (run_fields & (1LL << RUN_VIEW_EXT_REVIEW)) {
+      fprintf(f, "<th%s>%s</th>", cl, "Ext. Review");
+    }
     /*
     if (phr->role == USER_ROLE_ADMIN) {
       fprintf(f, "<th%s>%s</th>", cl, _("New result"));
@@ -636,6 +639,9 @@ ns_write_priv_all_runs(
         if (run_fields & (1LL << RUN_VIEW_GROUP_SCORES)) {
           fprintf(f, "<td%s>&nbsp;</td>", cl);
         }
+        if (run_fields & (1LL << RUN_VIEW_EXT_REVIEW)) {
+          fprintf(f, "<td%s>&nbsp;</td>", cl);
+        }
         fprintf(f, "<td%s>&nbsp;</td>", cl);
         fprintf(f, "<td%s>&nbsp;</td>", cl);
         /*
@@ -756,6 +762,9 @@ ns_write_priv_all_runs(
           fprintf(f, "<td%s>&nbsp;</td>", cl);
         }
         if (run_fields & (1LL << RUN_VIEW_GROUP_SCORES)) {
+          fprintf(f, "<td%s>&nbsp;</td>", cl);
+        }
+        if (run_fields & (1LL << RUN_VIEW_EXT_REVIEW)) {
           fprintf(f, "<td%s>&nbsp;</td>", cl);
         }
 
@@ -1041,6 +1050,22 @@ ns_write_priv_all_runs(
           } else {
             fprintf(f, "<td%s>&nbsp;</td>", cl);
           }
+        } else {
+          fprintf(f, "<td%s>&nbsp;</td>", cl);
+        }
+      }
+      if (run_fields & (1LL << RUN_VIEW_EXT_REVIEW)) {
+        if (pe->review_gen || pe->hidden_review_gen) {
+          const unsigned char *sep = "";
+          fprintf(f, "<td%s>", cl);
+          if (pe->review_gen) {
+            fprintf(f, "%s(%d)", run_unparse_review_status(pe->review_status), pe->review_gen);
+            sep = ";";
+          }
+          if (pe->hidden_review_gen) {
+            fprintf(f, "%s;hidden:%s(%d)", sep, run_unparse_review_status(pe->hidden_review_status), pe->hidden_review_gen);
+          }
+          fprintf(f, "</td>");
         } else {
           fprintf(f, "<td%s>&nbsp;</td>", cl);
         }

@@ -9775,6 +9775,16 @@ priv_list_runs_json(
           }
           fprintf(fout, "]");
         }
+        if (run_fields & (1LL << RUN_VIEW_EXT_REVIEW)) {
+          if (pe->review_gen) {
+            fprintf(fout, ",\"review_gen\":%d", pe->review_gen);
+            fprintf(fout, ",\"review_status\":%d", pe->review_status);
+          }
+          if (pe->hidden_review_gen) {
+            fprintf(fout, ",\"hidden_review_gen\":%d", pe->hidden_review_gen);
+            fprintf(fout, ",\"hidden_review_status\":%d", pe->hidden_review_status);
+          }
+        }
       }
     }
     fprintf(fout, "}");
