@@ -13503,7 +13503,21 @@ priv_finish_review_json(
     goto done;
   }
 
-  // TODO: update run_entry
+  if (res_review.purpose == RERP_JUDGE_HELP && re.hidden_review_gen == res_review.generation) {
+    res = run_change_review_status(review_cs->runlog_state, res_review.run_id,
+      re.review_status, re.review_gen,
+      res_review.status, re.hidden_review_gen, NULL);
+  } else if ((res_review.purpose == RERP_REVIEW || res_review.purpose == RERP_HELP) && re.review_gen == res_review.generation) {
+    res = run_change_review_status(review_cs->runlog_state, res_review.run_id,
+      res_review.status, re.review_gen,
+      re.hidden_review_status, re.hidden_review_gen, NULL);
+  }
+  if (res < 0) {
+    http_status = 500;
+    err_num = NEW_SRV_ERR_DATABASE_FAILED;
+    ERR("failed to update run entry: contest_id=%d, run_id=%d", out_review.contest_id, out_review.run_id);
+    goto done;
+  }
 
   cJSON *jfr = json_serialize_run_review(&res_review, date_mode, final_field_mask, 0);
   cJSON *jres = cJSON_CreateObject();
