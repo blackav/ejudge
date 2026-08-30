@@ -3351,6 +3351,7 @@ run_review_free(struct run_review *rr)
     free(rr->review_agent);
     free(rr->review_judge_result);
     free(rr->review_statistics);
+    free(rr->review_log);
     free(rr->approved_text);
     free(rr->model);
   }

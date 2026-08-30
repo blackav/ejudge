@@ -3344,7 +3344,7 @@ change_review_status_func(
   return do_update_entry(cs, run_id, &te, RE_REVIEW_STATUS, ure);
 }
 
-enum { REVIEW_ROW_WIDTH = 45 };
+enum { REVIEW_ROW_WIDTH = 46 };
 #define REVIEW_OFFSET(f) XOFFSET(struct run_review, f)
 
 static const struct common_mysql_parse_spec reviews_spec[REVIEW_ROW_WIDTH] =
@@ -3367,6 +3367,7 @@ static const struct common_mysql_parse_spec reviews_spec[REVIEW_ROW_WIDTH] =
   { EJ_MYSQL_NULLABLE, 's', "review_result", REVIEW_OFFSET(review_result), 0 },
   { EJ_MYSQL_NULLABLE, 's', "review_judge_result", REVIEW_OFFSET(review_judge_result), 0 },
   { EJ_MYSQL_NULLABLE, 's', "review_statistics", REVIEW_OFFSET(review_statistics), 0 },
+  { EJ_MYSQL_NULLABLE, 's', "review_log", REVIEW_OFFSET(review_log), 0 },
   { EJ_MYSQL_NULLABLE, 's', "approved_text", REVIEW_OFFSET(approved_text), 0 },
   { EJ_MYSQL_NULLABLE, 's', "judge_approved_text", REVIEW_OFFSET(judge_approved_text), 0 },
   { EJ_MYSQL_NULLABLE, 's', "model", REVIEW_OFFSET(model), 0 },

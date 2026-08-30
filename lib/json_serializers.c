@@ -1437,6 +1437,7 @@ append_timestamp(cJSON *j, int64_t ts, int date_mode, const unsigned char *name_
 #define RER_review_result RER_REVIEW_RESULT
 #define RER_review_judge_result RER_REVIEW_JUDGE_RESULT
 #define RER_review_statistics RER_REVIEW_STATISTICS
+#define RER_review_log RER_REVIEW_LOG
 #define RER_approved_text RER_APPROVED_TEXT
 #define RER_judge_approved_text RER_JUDGE_APPROVED_TEXT
 #define RER_model RER_MODEL
@@ -1518,6 +1519,7 @@ json_serialize_run_review(
     ADD_STRING(jrr, rr, review_result);
     ADD_STRING(jrr, rr, review_judge_result);
     ADD_STRING(jrr, rr, review_statistics);
+    ADD_STRING(jrr, rr, review_log);
     ADD_STRING(jrr, rr, approved_text);
     ADD_STRING(jrr, rr, judge_approved_text);
     ADD_STRING(jrr, rr, model);
