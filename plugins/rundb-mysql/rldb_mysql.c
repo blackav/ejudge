@@ -142,6 +142,7 @@ struct rldb_plugin_iface plugin_rldb_mysql =
   update_reviews_func,
   fetch_review_by_crg_func,
   update_review_view_counter_func,
+  change_review_status_func,
 };
 
 static long long
@@ -3324,7 +3325,26 @@ get_group_scores_func(
   return &rls->group_scores.data[index];
 }
 
-enum { REVIEW_ROW_WIDTH = 45 };
+static int
+change_review_status_func(
+        struct rldb_plugin_cnts *cdata,
+        int run_id,
+        int review_status,
+        int review_gen,
+        int hidden_review_status,
+        int hidden_review_gen,
+        struct run_entry *ure)
+{
+  struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts *) cdata;
+  struct run_entry te = {};
+  te.review_status = review_status;
+  te.review_gen = review_gen;
+  te.hidden_review_status = hidden_review_status;
+  te.hidden_review_gen = hidden_review_gen;
+  return do_update_entry(cs, run_id, &te, RE_REVIEW_STATUS, ure);
+}
+
+enum { REVIEW_ROW_WIDTH = 46 };
 #define REVIEW_OFFSET(f) XOFFSET(struct run_review, f)
 
 static const struct common_mysql_parse_spec reviews_spec[REVIEW_ROW_WIDTH] =
@@ -3347,6 +3367,7 @@ static const struct common_mysql_parse_spec reviews_spec[REVIEW_ROW_WIDTH] =
   { EJ_MYSQL_NULLABLE, 's', "review_result", REVIEW_OFFSET(review_result), 0 },
   { EJ_MYSQL_NULLABLE, 's', "review_judge_result", REVIEW_OFFSET(review_judge_result), 0 },
   { EJ_MYSQL_NULLABLE, 's', "review_statistics", REVIEW_OFFSET(review_statistics), 0 },
+  { EJ_MYSQL_NULLABLE, 's', "review_log", REVIEW_OFFSET(review_log), 0 },
   { EJ_MYSQL_NULLABLE, 's', "approved_text", REVIEW_OFFSET(approved_text), 0 },
   { EJ_MYSQL_NULLABLE, 's', "judge_approved_text", REVIEW_OFFSET(judge_approved_text), 0 },
   { EJ_MYSQL_NULLABLE, 's', "model", REVIEW_OFFSET(model), 0 },
@@ -3380,7 +3401,6 @@ static int
 create_review_func(
         struct rldb_plugin_cnts *cdata,
         int64_t run_serial_id,
-        int contest_id,
         int run_id,
         int generation,
         int status,
@@ -3399,7 +3419,7 @@ create_review_func(
   rr.run_serial_id = run_serial_id;
   rr.creation_time = -2; // NOW()
   ej_uuid_generate(&rr.review_uuid);
-  rr.contest_id = contest_id;
+  rr.contest_id = cs->contest_id;
   rr.run_id = run_id;
   rr.generation = generation;
   rr.status = status;
@@ -3511,7 +3531,7 @@ write_reviews_filter(
         struct common_mysql_iface *mi,
         struct common_mysql_state *md,
         FILE *cmd_f,
-        const struct list_review_filter *filter)
+        const struct run_review_filter *filter)
 {
   static const unsigned char AND_STR[] = " AND ";
   const unsigned char *asep = "";
@@ -3664,7 +3684,7 @@ write_reviews_filter(
     asep = AND_STR; \
     mi->write_timestamp_us(md, cmd_f, NULL, filter->f##_us_before, 0); \
   }} while (0)
-  DO_TIME_FILTER(create_time);
+  DO_TIME_FILTER(creation_time);
   DO_TIME_FILTER(last_update_time);
   DO_TIME_FILTER(moderation_time);
   DO_TIME_FILTER(review_start_time);
@@ -3681,7 +3701,7 @@ write_reviews_filter(
 static int
 list_reviews_func(
         struct rldb_plugin_cnts *cdata,
-        const struct list_review_filter *filter,
+        const struct run_review_filter *filter,
         struct run_review **p_result,
         size_t *p_count)
 {
@@ -3746,7 +3766,7 @@ update_reviews_func(
         struct rldb_plugin_cnts *cdata,
         const struct run_review *rr,
         uint64_t field_mask,
-        const struct list_review_filter *filter)
+        const struct run_review_filter *filter)
 {
   struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts*) cdata;
   struct rldb_mysql_state *state = cs->plugin_state;

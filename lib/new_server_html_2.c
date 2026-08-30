@@ -136,6 +136,8 @@ ns_write_priv_all_runs(
   const unsigned char *examinable_str;
   const unsigned char *marked_str;
   const unsigned char *saved_str;
+  const unsigned char *review_status_str;
+  const unsigned char *hidden_review_status_str;
   unsigned long *displayed_mask = 0;
   int displayed_size = 0;
   unsigned char bb[1024];
@@ -484,6 +486,9 @@ ns_write_priv_all_runs(
     if (run_fields & (1LL << RUN_VIEW_GROUP_SCORES)) {
       fprintf(f, "<th%s>%s</th>", cl, "Group Scores");
     }
+    if (run_fields & (1LL << RUN_VIEW_EXT_REVIEW)) {
+      fprintf(f, "<th%s>%s</th>", cl, "Ext. Review");
+    }
     /*
     if (phr->role == USER_ROLE_ADMIN) {
       fprintf(f, "<th%s>%s</th>", cl, _("New result"));
@@ -634,6 +639,9 @@ ns_write_priv_all_runs(
         if (run_fields & (1LL << RUN_VIEW_GROUP_SCORES)) {
           fprintf(f, "<td%s>&nbsp;</td>", cl);
         }
+        if (run_fields & (1LL << RUN_VIEW_EXT_REVIEW)) {
+          fprintf(f, "<td%s>&nbsp;</td>", cl);
+        }
         fprintf(f, "<td%s>&nbsp;</td>", cl);
         fprintf(f, "<td%s>&nbsp;</td>", cl);
         /*
@@ -756,6 +764,9 @@ ns_write_priv_all_runs(
         if (run_fields & (1LL << RUN_VIEW_GROUP_SCORES)) {
           fprintf(f, "<td%s>&nbsp;</td>", cl);
         }
+        if (run_fields & (1LL << RUN_VIEW_EXT_REVIEW)) {
+          fprintf(f, "<td%s>&nbsp;</td>", cl);
+        }
 
         fprintf(f, "<td%s>&nbsp;</td>", cl);
         if (phr->role == USER_ROLE_ADMIN) {
@@ -838,6 +849,26 @@ ns_write_priv_all_runs(
       if (pe->is_saved) {
         saved_str = "+";
       }
+      review_status_str = "";
+      if (pe->review_gen) {
+        if (pe->review_status == RERS_COMPLETE) {
+          review_status_str = "✅";
+        } else if (pe->review_status == RERS_FAILED || pe->review_status == RERS_CANCELED) {
+          review_status_str = "❎";
+        } else {
+          review_status_str = "🟩";
+        }
+      }
+      hidden_review_status_str = "";
+      if (pe->hidden_review_gen) {
+        if (pe->hidden_review_status == RERS_COMPLETE) {
+          hidden_review_status_str = "✨";
+        } else if (pe->hidden_review_status == RERS_FAILED || pe->hidden_review_status == RERS_CANCELED) {
+          hidden_review_status_str = "⚠️";
+        } else {
+          hidden_review_status_str = "🟡";
+        }
+      }
       start_time = env.rhead.start_time;
       if (global->is_virtual) {
         start_time = run_get_virtual_start_time(cs->runlog_state, pe->user_id);
@@ -848,8 +879,8 @@ ns_write_priv_all_runs(
                    durstr, 0);
 
       if (run_fields & (1 << RUN_VIEW_RUN_ID)) {
-        fprintf(f, "<td%s>%d%s%s%s%s</td>", cl, rid, imported_str, examinable_str,
-                marked_str, saved_str);
+        fprintf(f, "<td%s>%d%s%s%s%s%s%s</td>", cl, rid, imported_str, examinable_str,
+                marked_str, saved_str, review_status_str, hidden_review_status_str);
       }
       if (run_fields & (1 << RUN_VIEW_RUN_UUID)) {
         fprintf(f, "<td%s>%s</td>", cl, ej_uuid_unparse(&pe->run_uuid, "&nbsp;"));
@@ -1027,6 +1058,22 @@ ns_write_priv_all_runs(
           fprintf(f, "<td%s>&nbsp;</td>", cl);
         }
       }
+      if (run_fields & (1LL << RUN_VIEW_EXT_REVIEW)) {
+        if (pe->review_gen || pe->hidden_review_gen) {
+          const unsigned char *sep = "";
+          fprintf(f, "<td%s>", cl);
+          if (pe->review_gen) {
+            fprintf(f, "%s(%d)", run_unparse_review_status(pe->review_status), pe->review_gen);
+            sep = ";";
+          }
+          if (pe->hidden_review_gen) {
+            fprintf(f, "%s;hidden:%s(%d)", sep, run_unparse_review_status(pe->hidden_review_status), pe->hidden_review_gen);
+          }
+          fprintf(f, "</td>");
+        } else {
+          fprintf(f, "<td%s>&nbsp;</td>", cl);
+        }
+      }
 
       /*
       if (phr->role == USER_ROLE_ADMIN) {
@@ -1197,6 +1244,7 @@ ns_write_priv_all_runs(
     fprintf(f, "<td>%s</td>", BUTTON(NEW_SRV_ACTION_IGNORE_DISPLAYED_1));
     fprintf(f, "<td>%s</td>", BUTTON(NEW_SRV_ACTION_DISQUALIFY_DISPLAYED_1));
     fprintf(f, "<td>%s</td>", BUTTON(NEW_SRV_ACTION_TOKENIZE_DISPLAYED_1));
+    fprintf(f, "<td>%s</td>", BUTTON(NEW_SRV_ACTION_REVIEW_DISPLAYED_1));
     fprintf(f, "</tr></table></form>\n");
   }
 

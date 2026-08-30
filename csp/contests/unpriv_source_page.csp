@@ -187,10 +187,85 @@ ns_unpriv_parse_run_id(
 <p style="display: inline-block;"><s:a url="ResubmitUrl"><s:_>Resubmit</s:_></s:a>&nbsp;&nbsp;<s:a url="DownloadRunUrl"><s:_>Download run</s:_></s:a></p>
 
 <%
+  int enable_view_request_button = 0;
+  const unsigned char *review_button_label = "";
+  if (prob && prob->enable_external_review > 0) {
+    if (!re.review_gen) {
+      if (prob->enable_user_review_request > 0 && run_is_status_for_user_review(re.status)) {
+        enable_view_request_button = 1;
+        review_button_label = "Request review";
+      } else if (prob->enable_user_help_request > 0 && run_is_status_for_user_help(re.status)) {
+        enable_view_request_button = 1;
+        review_button_label = "Request help";
+      }
+    }
+  }
+
+  if (enable_view_request_button) {
+%>
+
+<div id="RequestReviewButtonDiv"><button id="RequestReviewButton"></button></div>
+
+<script type="text/javascript">
+var request_review_json_ac = <s:ac ac="request-review-json" />;
+$(function() {
+  $("#RequestReviewButton").button({
+    label: "<s:v value="review_button_label" />"
+  });
+  $("#RequestReviewButton").on("click", function() {
+    $.ajax({
+      type: "POST",
+      url: self_url,
+      data: {
+        SID: SID,
+        action: request_review_json_ac,
+        run_id: <s:v value="run_id" />,
+      },
+      contentType: "application/x-www-form-urlencoded; charset=utf-8",
+      dataType: "json",
+      success: function(data) {
+        console.log(data);
+        if (data.ok) {
+          $("#RequestReviewButtonDiv").hide();
+          return;
+        }
+        if (data.error && data.error.message) {
+          alert(data.error.message + ", log_id: " + data.error.log_id);
+        } else {
+          alert("request failed");
+        }
+        $("#RequestReviewButtonDiv").hide();
+      },
+      error: function(data) {
+        if (data.responseJSON && data.responseJSON.error && data.responseJSON.error.message) {
+          alert(data.responseJSON.error.message + ", log_id: " + data.responseJSON.error.log_id);
+        } else {
+          alert("request failed");
+        }
+        $("#RequestReviewButtonDiv").hide();
+      }
+    });
+  });
+});
+</script>
+
+<%
+  }
+%>
+
+<%
+  if (re.review_gen != 0 && re.review_status != RERS_COMPLETE) {
+%>
+  <p>Review is in progress...</p>
+<%
+  }
+%>
+
+<%
     if (re.review_gen > 0 && re.review_status == RERS_COMPLETE) {
       if (run_review_fetch_by_crg(cs->runlog_state, run_id, re.review_gen, 0, &review) > 0) {
         if (review.status == RERS_COMPLETE && (review.purpose == RERP_REVIEW || review.purpose == RERP_HELP)) {
-          if (markdown_parse_str(review.approved_text, &md_review) >= 0 && md_review.size > 0) {
+          if (review.approved_text && markdown_parse_str(review.approved_text, &md_review) >= 0 && md_review.size > 0) {
 %>
 <h2><s:_>Run review</s:_></h2>
 <%

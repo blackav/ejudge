@@ -266,7 +266,6 @@ struct rldb_plugin_iface
   int (*create_review)(
         struct rldb_plugin_cnts *cdata,
         int64_t run_serial_id,
-        int contest_id,
         int run_id,
         int generation,
         int status,
@@ -281,14 +280,14 @@ struct rldb_plugin_iface
         struct run_review *p_result);
   int (*list_reviews)(
         struct rldb_plugin_cnts *cdata,
-        const struct list_review_filter *filter,
+        const struct run_review_filter *filter,
         struct run_review **p_result,
         size_t *p_count);
   int (*update_reviews)(
         struct rldb_plugin_cnts *cdata,
         const struct run_review *rr,
         uint64_t field_mask,
-        const struct list_review_filter *filter);
+        const struct run_review_filter *filter);
   int (*fetch_review_by_crg)(
         struct rldb_plugin_cnts *cdata,
         int run_id,
@@ -299,6 +298,14 @@ struct rldb_plugin_iface
         struct rldb_plugin_cnts *cdata,
         int run_id,
         int generation);
+  int (*change_review_status)(
+        struct rldb_plugin_cnts *cdata,
+        int run_id,
+        int review_status,
+        int review_gen,
+        int hidden_review_status,
+        int hidden_review_gen,
+        struct run_entry *ure);
 };
 
 /* default plugin: compiled into new-server */

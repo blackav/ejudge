@@ -1369,25 +1369,6 @@ json_serialize_problem_id(const struct section_problem_data *p)
 }
 
 static const unsigned char *
-unparse_review_status(unsigned val)
-{
-    static const unsigned char * const values[] =
-    {
-        [RERS_REQUESTED_REVIEW] = "requested_review",
-        [RERS_WAITING_REVIEW] = "waiting_review",
-        [RERS_REVIEWING] = "reviewing",
-        [RERS_WAITING_APPROVAL] = "waiting_approval",
-        [RERS_COMPLETE] = "complete",
-    };
-    if (val >= sizeof(values) / sizeof(values[0])) {
-        return "";
-    }
-    const unsigned char *s = values[val];
-    if (!s) return "";
-    return s;
-}
-
-static const unsigned char *
 unparse_review_purpose(unsigned val)
 {
     static const unsigned char * const values[] =
@@ -1456,6 +1437,7 @@ append_timestamp(cJSON *j, int64_t ts, int date_mode, const unsigned char *name_
 #define RER_review_result RER_REVIEW_RESULT
 #define RER_review_judge_result RER_REVIEW_JUDGE_RESULT
 #define RER_review_statistics RER_REVIEW_STATISTICS
+#define RER_review_log RER_REVIEW_LOG
 #define RER_approved_text RER_APPROVED_TEXT
 #define RER_judge_approved_text RER_JUDGE_APPROVED_TEXT
 #define RER_model RER_MODEL
@@ -1503,7 +1485,7 @@ json_serialize_run_review(
 
     if (rr->status > 0 && (mask & RER_status) != 0) {
         cJSON_AddNumberToObject(jrr, "status", rr->status);
-        cJSON_AddStringToObject(jrr, "status_str", unparse_review_status(rr->status));
+        cJSON_AddStringToObject(jrr, "status_str", run_unparse_review_status(rr->status));
     }
     if (rr->purpose > 0 && (mask & RER_purpose) != 0) {
         cJSON_AddNumberToObject(jrr, "purpose", rr->purpose);
@@ -1537,6 +1519,7 @@ json_serialize_run_review(
     ADD_STRING(jrr, rr, review_result);
     ADD_STRING(jrr, rr, review_judge_result);
     ADD_STRING(jrr, rr, review_statistics);
+    ADD_STRING(jrr, rr, review_log);
     ADD_STRING(jrr, rr, approved_text);
     ADD_STRING(jrr, rr, judge_approved_text);
     ADD_STRING(jrr, rr, model);

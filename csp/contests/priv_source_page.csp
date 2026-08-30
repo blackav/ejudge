@@ -55,6 +55,12 @@
   unsigned char avatar_url[1024];
   unsigned char *vcs_url = NULL;
   int src_res = -1;
+  struct run_review review1 = {};
+  struct run_review review3 = {};
+  struct md_content md_review1 = {};
+  struct md_content md_review2 = {};
+  struct md_content md_review3 = {};
+  struct md_content md_review4 = {};
 
   avatar_url[0] = 0;
 
@@ -650,6 +656,135 @@ function addReviewMsg(serial)
 </div>
 
 <%
+  if (prob && prob->enable_external_review && opcaps_check(phr->caps, OPCAP_COMMENT_RUN) >= 0) {
+%>
+<script type="text/javascript">
+var request_review_json_ac = <s:ac ac="request-review-json" />;
+
+function handleExternalReviewSuccess(data) {
+  if (data.ok) {
+    $("#RequestReviewButtonDiv").hide();
+    $("#RequestHiddenReviewButtonDiv").hide();
+    return;
+  }
+  if (data.error && data.error.message) {
+    alert(data.error.message + ", log_id: " + data.error.log_id);
+  } else {
+    alert("request failed");
+  }
+  $("#RequestReviewButtonDiv").hide();
+  $("#RequestHiddenReviewButtonDiv").hide();
+}
+
+function handleExternalReviewFailure(data) {
+  if (data.responseJSON && data.responseJSON.error && data.responseJSON.error.message) {
+    alert(data.responseJSON.error.message + ", log_id: " + data.responseJSON.error.log_id);
+  } else {
+    alert("request failed");
+  }
+  $("#RequestReviewButtonDiv").hide();
+  $("#RequestHiddenReviewButtonDiv").hide();
+}
+</script>
+<%
+    if (re.review_gen != 0 && re.review_status != RERS_COMPLETE) {
+%>
+<p>Review is in progress...</p>
+<%
+    } else {
+%>
+<div id="RequestReviewButtonDiv"><button id="RequestReviewButton"></button></div>
+<script type="text/javascript">
+$(function() {
+  $("#RequestReviewButton").button({
+    label: "Request user-visible review"
+  });
+  $("#RequestReviewButton").on("click", function() {
+    $.ajax({
+      type: "POST",
+      url: self_url,
+      data: {
+        SID: SID,
+        action: request_review_json_ac,
+        run_id: <s:v value="run_id" />,
+        unprivileged_mode: 1
+      },
+      contentType: "application/x-www-form-urlencoded; charset=utf-8",
+      dataType: "json",
+      success: handleExternalReviewSuccess,
+      error: handleExternalReviewFailure
+    });
+  });
+});
+</script>
+<%
+    }
+    if (re.hidden_review_gen != 0 && re.hidden_review_status != RERS_COMPLETE) {
+%>
+<p>Hidden review is in progress...</p>
+<%
+    } else {
+%>
+<div id="RequestHiddenReviewButtonDiv"><button id="RequestHiddenReviewButton"></button></div>
+<script type="text/javascript">
+$(function() {
+  $("#RequestReviewButton").button({
+    label: "Request user-visible review"
+  });
+  $("#RequestHiddenReviewButton").on("click", function() {
+    $.ajax({
+      type: "POST",
+      url: self_url,
+      data: {
+        SID: SID,
+        action: request_review_json_ac,
+        run_id: <s:v value="run_id" />
+      },
+      contentType: "application/x-www-form-urlencoded; charset=utf-8",
+      dataType: "json",
+      success: handleExternalReviewSuccess,
+      error: handleExternalReviewFailure
+    });
+  });
+});
+</script>
+<%
+    }
+  }
+%>
+
+<%
+  if (re.review_gen > 0 && re.review_status == RERS_COMPLETE) {
+    if (run_review_fetch_by_crg(cs->runlog_state, run_id, re.review_gen, 0, &review1) > 0) {
+      if (review1.status == RERS_COMPLETE && (review1.purpose == RERP_REVIEW || review1.purpose == RERP_HELP)) {
+        if (review1.approved_text && markdown_parse_str(review1.approved_text, &md_review1) >= 0 && md_review1.size > 0) {
+%><h2><s:_>Run review for user</s:_></h2><%
+          fwrite_unlocked(md_review1.data, 1, md_review1.size, out_f);
+        }
+        if (review1.judge_approved_text && markdown_parse_str(review1.judge_approved_text, &md_review2) >= 0 && md_review2.size > 0) {
+%><h2><s:_>Additional comments for judge</s:_></h2><%
+          fwrite_unlocked(md_review2.data, 1, md_review2.size, out_f);
+        }
+      }
+    }
+  }
+  if (re.hidden_review_gen > 0 && re.hidden_review_status == RERS_COMPLETE) {
+    if (run_review_fetch_by_crg(cs->runlog_state, run_id, re.hidden_review_gen, 0, &review3) > 0) {
+      if (review3.status == RERS_COMPLETE && review3.purpose == RERP_JUDGE_HELP) {
+        if (review3.approved_text && markdown_parse_str(review3.approved_text, &md_review3) >= 0 && md_review3.size > 0) {
+%><h2><s:_>Hidden run review</s:_></h2><%
+          fwrite_unlocked(md_review3.data, 1, md_review3.size, out_f);
+        }
+        if (review3.judge_approved_text && markdown_parse_str(review3.judge_approved_text, &md_review4) >= 0 && md_review4.size > 0) {
+%><h2><s:_>Hidden run review (additional notes)</s:_></h2><%
+          fwrite_unlocked(md_review4.data, 1, md_review4.size, out_f);
+        }
+      }
+    }
+  }
+%>
+
+<%
   if (fcev.u > 0) {
 %>
 <div class="h2-long" style="margin-top: 13px; margin-bottom: 10px;">
@@ -829,6 +964,12 @@ Run Id: <s:a url="ViewOtherSourceUrl"><s:v value="fcev2.v[i].e.run_id" /></s:a>
 <%@include "priv_footer.csp"
 %><%
 cleanup:
+  run_review_free(&review1);
+  run_review_free(&review3);
+  markdown_free(&md_review1);
+  markdown_free(&md_review2);
+  markdown_free(&md_review3);
+  markdown_free(&md_review4);
   clar_free_fcev(&fcev);
   clar_free_fcev(&fcev2);
   l10n_resetlocale();

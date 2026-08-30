@@ -210,7 +210,6 @@ const unsigned char * const ns_symbolic_action_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_PRIV_SUBMIT_PAGE] = "priv-submit-page",
   [NEW_SRV_ACTION_USE_TOKEN] = "use-token",
   [NEW_SRV_ACTION_GENERATE_TELEGRAM_TOKEN] = "generate-telegram-token",
-
   [NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE] = "reg-create-account-page",
   [NEW_SRV_ACTION_REG_CREATE_ACCOUNT] = "reg-create-account",
   [NEW_SRV_ACTION_REG_ACCOUNT_CREATED_PAGE] = "reg-account-created-page",
@@ -364,4 +363,6 @@ const unsigned char * const ns_symbolic_action_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_REVIEWS_PAGE] = "reviews-page",
   [NEW_SRV_ACTION_PREMODERATE_PAGE] = "premoderate-page",
   [NEW_SRV_ACTION_POSTAPPROVE_PAGE] = "postapprove-page",
+  [NEW_SRV_ACTION_REVIEW_DISPLAYED_1] = "review-displayed-1",
+  [NEW_SRV_ACTION_REVIEW_DISPLAYED_2] = "review-displayed-2",
 };

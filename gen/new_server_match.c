@@ -8770,6 +8770,64 @@ int ns_match_action(const unsigned char *str)
                             return 0;
                           }
                           return 0;
+                        } else if (c < 's') {
+                          if (c == '-') {
+                            c = str[7];
+                            if (c == 'd') {
+                              c = str[8];
+                              if (c == 'i') {
+                                c = str[9];
+                                if (c == 's') {
+                                  c = str[10];
+                                  if (c == 'p') {
+                                    c = str[11];
+                                    if (c == 'l') {
+                                      c = str[12];
+                                      if (c == 'a') {
+                                        c = str[13];
+                                        if (c == 'y') {
+                                          c = str[14];
+                                          if (c == 'e') {
+                                            c = str[15];
+                                            if (c == 'd') {
+                                              c = str[16];
+                                              if (c == '-') {
+                                                c = str[17];
+                                                if (c == '2') {
+                                                  c = str[18];
+                                                  if (!c) return NEW_SRV_ACTION_REVIEW_DISPLAYED_2;
+                                                  return 0;
+                                                } else if (c < '2') {
+                                                  if (c == '1') {
+                                                    c = str[18];
+                                                    if (!c) return NEW_SRV_ACTION_REVIEW_DISPLAYED_1;
+                                                    return 0;
+                                                  }
+                                                } else {
+                                                }
+                                                return 0;
+                                              }
+                                              return 0;
+                                            }
+                                            return 0;
+                                          }
+                                          return 0;
+                                        }
+                                        return 0;
+                                      }
+                                      return 0;
+                                    }
+                                    return 0;
+                                  }
+                                  return 0;
+                                }
+                                return 0;
+                              }
+                              return 0;
+                            }
+                            return 0;
+                          }
+                        } else {
                         }
                         return 0;
                       }

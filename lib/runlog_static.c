@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2008-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -499,4 +499,39 @@ run_status_short_str(int status)
     return buf;
   }
   return status_short_str[status];
+}
+
+
+static const unsigned char * const review_status_values[] =
+{
+  [RERS_REQUESTED_REVIEW] = "requested_review",
+  [RERS_WAITING_REVIEW] = "waiting_review",
+  [RERS_REVIEWING] = "reviewing",
+  [RERS_WAITING_APPROVAL] = "waiting_approval",
+  [RERS_COMPLETE] = "complete",
+  [RERS_CANCELED] = "canceled",
+  [RERS_FAILED] = "failed",
+};
+
+const unsigned char *
+run_unparse_review_status(unsigned val)
+{
+  if (val >= sizeof(review_status_values) / sizeof(review_status_values[0])) {
+    return "";
+  }
+  const unsigned char *s = review_status_values[val];
+  if (!s) return "";
+  return s;
+}
+
+int
+run_parse_review_status(const char *s)
+{
+  if (!s) return -1;
+  for (unsigned i = 1; i < sizeof(review_status_values) / sizeof(review_status_values[0]); ++i) {
+    if (!strcasecmp(s, review_status_values[i])) {
+      return i;
+    }
+  }
+  return -1;
 }

@@ -616,6 +616,10 @@ static inline _Bool __attribute__((always_inline)) run_is_pseudo_status(unsigned
   return status >= RUN_PSEUDO_FIRST && status <= RUN_PSEUDO_LAST;
 }
 
+_Bool run_is_status_for_user_review(int status);
+_Bool run_is_status_for_user_help(int status);
+_Bool run_is_status_for_judge_help(int status);
+
 void
 group_scores_merge_1(
         int *p_group_count,
@@ -628,6 +632,16 @@ group_scores_calc(
         const int *group_scores,
         int separate_user_score);
 
+int
+run_change_review_status(
+        runlog_state_t state,
+        int run_id,
+        int review_status,
+        int review_gen,
+        int hidden_review_status,
+        int hidden_review_gen,
+        struct run_entry *ure);
+
 // review status
 enum
 {
@@ -636,7 +650,8 @@ enum
   RERS_REVIEWING,
   RERS_WAITING_APPROVAL,
   RERS_COMPLETE,
-  RERS_THRASHED,
+  RERS_CANCELED,
+  RERS_FAILED,
 
   RERS_LAST,
 };
@@ -671,35 +686,36 @@ enum
   RER_REVIEW_RESULT = 0x8000ULL,
   RER_REVIEW_JUDGE_RESULT = 0x10000ULL,
   RER_REVIEW_STATISTICS = 0x20000ULL,
-  RER_APPROVED_TEXT = 0x40000ULL,
-  RER_JUDGE_APPROVED_TEXT = 0x80000ULL,
-  RER_MODEL = 0x100000ULL,
-  RER_APPROVER_FEEDBACK = 0x200000ULL,
-  RER_USER_FEEDBACK = 0x400000ULL,
-  RER_REVIEW_SOURCE_SHA256 = 0x800000ULL,
-  RER_CONTEST_ID = 0x1000000ULL,
-  RER_RUN_ID = 0x2000000ULL,
-  RER_REQUEST_USER_ID = 0x4000000ULL,
-  RER_MODERATOR_USER_ID = 0x8000000ULL,
-  RER_REVIEWER_USER_ID = 0x10000000ULL,
-  RER_APPROVER_USER_ID = 0x20000000ULL,
-  RER_INPUT_TOKENS = 0x40000000ULL,
-  RER_CACHED_INPUT_TOKENS = 0x80000000ULL,
-  RER_OUPUT_TOKENS = 0x100000000ULL,
-  RER_REASONING_TOKENS = 0x200000000ULL,
-  RER_TOTAL_TOKENS = 0x400000000ULL,
-  RER_GENERATION = 0x800000000ULL,
-  RER_STATUS = 0x1000000000ULL,
-  RER_PURPOSE = 0x2000000000ULL,
-  RER_REVIEW_RECOMMENDED_STATUS = 0x4000000000ULL,
-  RER_APPROVER_REVIEW_MARK = 0x8000000000ULL,
-  RER_USER_OPENED_COUNT = 0x10000000000ULL,
-  RER_USER_REVIEW_MARK = 0x20000000000ULL,
-  RER_REVIEW_APPROVED_AS_IS = 0x40000000000ULL,
-  RER_STATUS_APPROVED_AS_IS = 0x80000000000ULL,
-  RER_AI_GENERATION_SCORE = 0x100000000000ULL,
+  RER_REVIEW_LOG = 0x40000ULL,
+  RER_APPROVED_TEXT = 0x80000ULL,
+  RER_JUDGE_APPROVED_TEXT = 0x100000ULL,
+  RER_MODEL = 0x200000ULL,
+  RER_APPROVER_FEEDBACK = 0x400000ULL,
+  RER_USER_FEEDBACK = 0x800000ULL,
+  RER_REVIEW_SOURCE_SHA256 = 0x1000000ULL,
+  RER_CONTEST_ID = 0x2000000ULL,
+  RER_RUN_ID = 0x4000000ULL,
+  RER_REQUEST_USER_ID = 0x8000000ULL,
+  RER_MODERATOR_USER_ID = 0x10000000ULL,
+  RER_REVIEWER_USER_ID = 0x20000000ULL,
+  RER_APPROVER_USER_ID = 0x40000000ULL,
+  RER_INPUT_TOKENS = 0x80000000ULL,
+  RER_CACHED_INPUT_TOKENS = 0x100000000ULL,
+  RER_OUPUT_TOKENS = 0x200000000ULL,
+  RER_REASONING_TOKENS = 0x400000000ULL,
+  RER_TOTAL_TOKENS = 0x800000000ULL,
+  RER_GENERATION = 0x1000000000ULL,
+  RER_STATUS = 0x2000000000ULL,
+  RER_PURPOSE = 0x4000000000ULL,
+  RER_REVIEW_RECOMMENDED_STATUS = 0x8000000000ULL,
+  RER_APPROVER_REVIEW_MARK = 0x10000000000ULL,
+  RER_USER_OPENED_COUNT = 0x20000000000ULL,
+  RER_USER_REVIEW_MARK = 0x40000000000ULL,
+  RER_REVIEW_APPROVED_AS_IS = 0x80000000000ULL,
+  RER_STATUS_APPROVED_AS_IS = 0x100000000000ULL,
+  RER_AI_GENERATION_SCORE = 0x200000000000ULL,
 
-  RER_ALL = 0x1FFFFFFFFFFFULL,
+  RER_ALL = 0x3FFFFFFFFFFFULL,
 };
 
 struct run_review
@@ -722,6 +738,7 @@ struct run_review
   unsigned char *review_result;
   unsigned char *review_judge_result;
   unsigned char *review_statistics;
+  unsigned char *review_log;
   unsigned char *approved_text;
   unsigned char *judge_approved_text;
   unsigned char *model;
@@ -751,7 +768,7 @@ struct run_review
   int8_t ai_generation_score;
 };
 
-struct list_review_filter
+struct run_review_filter
 {
   uint64_t field_mask;
   int64_t serial_id;
@@ -780,8 +797,8 @@ struct list_review_filter
   ej_uuid_t review_uuid;
   ej_uuid_t *review_uuid_list;
   int review_uuid_count;
-  int64_t create_time_us_not_before;
-  int64_t create_time_us_before;
+  int64_t creation_time_us_not_before;
+  int64_t creation_time_us_before;
   int64_t last_update_time_us_not_before;
   int64_t last_update_time_us_before;
   int64_t moderation_time_us_not_before;
@@ -806,6 +823,18 @@ void
 run_review_free_array(struct run_review *rr, size_t count);
 
 int
+run_review_create(
+        runlog_state_t state,
+        int64_t run_serial_id,
+        int run_id,
+        int generation,
+        int status,
+        int purpose,
+        int request_user_id,
+        int need_full,
+        struct run_review *p_result);
+
+int
 run_review_fetch(
         runlog_state_t state,
         const ej_uuid_t *review_uuid,
@@ -815,7 +844,7 @@ run_review_fetch(
 int
 run_review_list(
         runlog_state_t state,
-        const struct list_review_filter *filter,
+        const struct run_review_filter *filter,
         struct run_review **p_result,
         size_t *p_count);
 
@@ -824,7 +853,7 @@ run_review_update(
         runlog_state_t state,
         const struct run_review *rr,
         uint64_t field_mask,
-        const struct list_review_filter *filter);
+        const struct run_review_filter *filter);
 
 int
 run_review_fetch_by_crg(
@@ -839,5 +868,10 @@ run_review_update_view_counter(
         runlog_state_t state,
         int run_id,
         int generation);
+
+const unsigned char *
+run_unparse_review_status(unsigned val);
+int
+run_parse_review_status(const char *s);
 
 #endif /* __RUNLOG_H__ */

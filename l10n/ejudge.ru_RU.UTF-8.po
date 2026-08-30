@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-18 02:31+0300\n"
+"POT-Creation-Date: 2026-08-29 07:08+0300\n"
 "PO-Revision-Date: 2024-03-17 14:09+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -432,6 +432,9 @@ msgstr "Добавление роли %d пользователю %d в турн
 
 msgid "Adding role to user in contest failed"
 msgstr "Добавление роли пользователю в турнире не удалось"
+
+msgid "Additional comments for judge"
+msgstr ""
 
 msgid "Additional information about this error:"
 msgstr "Дополнительная информация об этой ошибке:"
@@ -1875,6 +1878,12 @@ msgstr ""
 msgid "Help"
 msgstr "Помощь"
 
+msgid "Hidden run review"
+msgstr ""
+
+msgid "Hidden run review (additional notes)"
+msgstr ""
+
 msgid "Hidden?"
 msgstr "Скрыт?"
 
@@ -2997,6 +3006,9 @@ msgstr ""
 "Нажмите на кнопку \"Завершить экзамен\" чтобы завершить экзамен. После этого "
 "Ваши ответы будут проверены."
 
+msgid "Previous run review not finished"
+msgstr ""
+
 msgid "Previous submissions of this problem"
 msgstr "Предыдущие решения этой задачи"
 
@@ -3480,8 +3492,20 @@ msgstr "Пароль ещё раз"
 msgid "Review comments"
 msgstr "Комментарии к программе"
 
+msgid "Review displayed runs"
+msgstr ""
+
+msgid "Review displayed runs!"
+msgstr ""
+
+msgid "Review mode"
+msgstr ""
+
 msgid "Review notes"
 msgstr "Заметки для проверки"
+
+msgid "Review quota exceeded"
+msgstr ""
 
 msgid "Role"
 msgstr "Роль"
@@ -3491,6 +3515,9 @@ msgstr "Посылка"
 
 msgid "Run ID"
 msgstr "Номер решения"
+
+msgid "Run already reviewed"
+msgstr ""
 
 msgid "Run comment"
 msgstr "Комментарий к программе"
@@ -3519,9 +3546,11 @@ msgstr "Штраф за посылку"
 msgid "Run program on server"
 msgstr "Запустите программу на сервере"
 
-#, fuzzy
 msgid "Run review"
-msgstr "Посылок ожидает подтверждения"
+msgstr ""
+
+msgid "Run review for user"
+msgstr ""
 
 msgid "Run selection"
 msgstr "Выбор посылок"
@@ -3552,6 +3581,9 @@ msgstr "Вызваных на защиту"
 
 msgid "Runs to change token info:"
 msgstr "Посылки для изменения информации о токене:"
+
+msgid "Runs to review:"
+msgstr ""
 
 msgid "STATUS UPDATE FAILED!"
 msgstr "ОШИБКА ОБНОВЛЕНИЯ СТАТУСА!"
@@ -3658,6 +3690,9 @@ msgstr "Отправить комментарий к программе и по�
 
 msgid "Send run comment and ignore run"
 msgstr "Отправить комментарий к программе и игнорировать посылку"
+
+msgid "Send runs to external review"
+msgstr ""
 
 msgid "Send!"
 msgstr "Отправить!"

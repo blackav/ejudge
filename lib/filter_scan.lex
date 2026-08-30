@@ -1,6 +1,6 @@
 /* -*- mode: fundamental -*- */
 
-/* Copyright (C) 2002-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -207,8 +207,14 @@ lett    [A-Za-z_]
 "curlast_change_us" { TT(TOK_CURLAST_CHANGE_US, FILTER_TYPE_LONG); }
 "ext_user" { TT(TOK_EXT_USER, FILTER_TYPE_STRING); }
 "curext_user" { TT(TOK_EXT_USER, FILTER_TYPE_STRING); }
-
-
+"review_gen" { TT(TOK_REVIEW_GEN, FILTER_TYPE_INT); }
+"curreview_gen" { TT(TOK_CURREVIEW_GEN, FILTER_TYPE_INT); }
+"review_status" { TT(TOK_REVIEW_STATUS, FILTER_TYPE_INT); }
+"curreview_status" { TT(TOK_CURREVIEW_STATUS, FILTER_TYPE_INT); }
+"hidden_review_gen" { TT(TOK_HIDDEN_REVIEW_GEN, FILTER_TYPE_INT); }
+"curhidden_review_gen" { TT(TOK_CURHIDDEN_REVIEW_GEN, FILTER_TYPE_INT); }
+"hidden_review_status" { TT(TOK_HIDDEN_REVIEW_STATUS, FILTER_TYPE_INT); }
+"curhidden_review_status" { TT(TOK_CURHIDDEN_REVIEW_STATUS, FILTER_TYPE_INT); }
 "int" { TT(TOK_INT, FILTER_TYPE_INT); }
 "string" { TT(TOK_STRING, FILTER_TYPE_STRING); }
 "bool" { TT(TOK_BOOL, FILTER_TYPE_BOOL); }

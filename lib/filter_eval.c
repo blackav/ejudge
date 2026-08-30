@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2002-2023 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -331,6 +331,10 @@ do_eval(struct filter_env *env,
   case TOK_VERDICT_BITS:
   case TOK_LAST_CHANGE_US:
   case TOK_EXT_USER:
+  case TOK_REVIEW_GEN:
+  case TOK_REVIEW_STATUS:
+  case TOK_HIDDEN_REVIEW_GEN:
+  case TOK_HIDDEN_REVIEW_STATUS:
     if ((c = do_eval(env, t->v.t[0], &r1)) < 0) return c;
     ASSERT(r1.kind == TOK_INT_L);
     if (r1.v.i < 0) r1.v.i = env->rtotal + r1.v.i;
@@ -681,6 +685,26 @@ do_eval(struct filter_env *env,
       res->v.s = envdup(env, buf);
       break;
     }
+    case TOK_REVIEW_GEN:
+      res->kind = TOK_INT_L;
+      res->type = FILTER_TYPE_INT;
+      res->v.i = env->rentries[r1.v.i].review_gen;
+      break;
+    case TOK_REVIEW_STATUS:
+      res->kind = TOK_INT_L;
+      res->type = FILTER_TYPE_INT;
+      res->v.i = env->rentries[r1.v.i].review_status;
+      break;
+    case TOK_HIDDEN_REVIEW_GEN:
+      res->kind = TOK_INT_L;
+      res->type = FILTER_TYPE_INT;
+      res->v.i = env->rentries[r1.v.i].hidden_review_gen;
+      break;
+    case TOK_HIDDEN_REVIEW_STATUS:
+      res->kind = TOK_INT_L;
+      res->type = FILTER_TYPE_INT;
+      res->v.i = env->rentries[r1.v.i].hidden_review_status;
+      break;
     default:
       abort();
     }
@@ -1054,6 +1078,26 @@ do_eval(struct filter_env *env,
       res->v.s = envdup(env, buf);
     break;
   }
+  case TOK_CURREVIEW_GEN:
+    res->kind = TOK_INT_L;
+    res->type = FILTER_TYPE_INT;
+    res->v.i = env->cur->review_gen;
+    break;
+  case TOK_CURREVIEW_STATUS:
+    res->kind = TOK_INT_L;
+    res->type = FILTER_TYPE_INT;
+    res->v.i = env->cur->review_status;
+    break;
+  case TOK_CURHIDDEN_REVIEW_GEN:
+    res->kind = TOK_INT_L;
+    res->type = FILTER_TYPE_INT;
+    res->v.i = env->cur->hidden_review_gen;
+    break;
+  case TOK_CURHIDDEN_REVIEW_STATUS:
+    res->kind = TOK_INT_L;
+    res->type = FILTER_TYPE_INT;
+    res->v.i = env->cur->hidden_review_status;
+    break;
   case TOK_CURTOTAL_SCORE:
     res->kind = TOK_INT_L;
     res->type = FILTER_TYPE_INT;
