@@ -7931,15 +7931,17 @@ priv_review_displayed(FILE *fout,
   if (ns_parse_run_mask(phr, 0, 0, &mask_size, &mask) < 0) FAIL(NEW_SRV_ERR_INV_PARAM);
   if (!mask_size) FAIL(NEW_SRV_ERR_NO_RUNS_TO_REJUDGE);
   hr_cgi_param_int_opt(phr, "review_mode", &review_mode, 0);
-  if (review_mode <= 0 || review_mode > 6) FAIL(NEW_SRV_ERR_INV_PARAM);
+  if (review_mode <= 0 || review_mode > 8) FAIL(NEW_SRV_ERR_INV_PARAM);
 
 /*
   <option value="1">Request user-visible review, skip if already reviewed</option>
   <option value="2">Request user-visible review, including the runs already reviewed</option>
   <option value="3">Request hidden review, skip if already reviewed</option>
   <option value="4">Request hidden review, including the runs already reviewed</option>
-  <option value="5">Clear user-visible review</option>
-  <option value="6">Clear hidden review</option>
+  <option value="5">Cancel user-visible reviews</option>
+  <option value="6">Cancel hidden reviews</option>
+  <option value="7">Clear user-visible reviews (DANGEROUS)</option>
+  <option value="8">Clear hidden reviews (DANGEROUS)</option>
 */
   if (review_mode == 1 || review_mode == 3) {
     if (opcaps_check(phr->caps, OPCAP_COMMENT_RUN) < 0)
@@ -7967,15 +7969,27 @@ priv_review_displayed(FILE *fout,
     if (run_get_entry(cs->runlog_state, run_id, &re) < 0)
       continue;
     if (review_mode == 5) {
-      // clear user-visible review
-      if (re.review_gen || re.review_status) {
-        _ = run_change_review_status(cs->runlog_state, run_id, 0, 0, re.hidden_review_status, re.hidden_review_gen, NULL);
+      if (re.review_gen && (re.review_status != RERS_FAILED && re.review_status != RERS_CANCELED)) {
+        _ = run_change_review_status(cs->runlog_state, run_id, RERS_CANCELED, re.review_gen, re.hidden_review_status, re.hidden_review_gen, NULL);
       }
       continue;
     }
     if (review_mode == 6) {
+      if (re.hidden_review_gen && (re.hidden_review_status != RERS_FAILED && re.hidden_review_status != RERS_CANCELED)) {
+        _ = run_change_review_status(cs->runlog_state, run_id, re.review_status, re.review_gen, RERS_CANCELED, re.hidden_review_gen, NULL);
+      }
+      continue;
+    }
+    if (review_mode == 7) {
+      // clear user-visible review
+      if (re.review_gen) {
+        _ = run_change_review_status(cs->runlog_state, run_id, 0, 0, re.hidden_review_status, re.hidden_review_gen, NULL);
+      }
+      continue;
+    }
+    if (review_mode == 8) {
       // clear hidden review
-      if (re.hidden_review_gen || re.hidden_review_status) {
+      if (re.hidden_review_gen) {
         _ = run_change_review_status(cs->runlog_state, run_id, re.review_status, re.review_gen, 0, 0, NULL);
       }
       continue;
@@ -13323,6 +13337,24 @@ priv_finish_review_json(
   }
   if (jcur) date_mode = jcur->valueint;
 
+  int new_review_status = RERS_COMPLETE;
+  if ((jcur = cJSON_GetObjectItem(request_json, "status"))) {
+    if (jcur->type != cJSON_String) {
+      ERR("status must be string");
+      goto done;
+    }
+    int r = run_parse_review_status(jcur->valuestring);
+    if (r < 0) {
+      ERR("recommended_status value '%s' is invalid", jcur->valuestring);
+      goto done;
+    }
+    if (r != RERS_COMPLETE && r != RERS_FAILED) {
+      ERR("recommended_status value '%s' is invalid", jcur->valuestring);
+      goto done;
+    }
+    new_review_status = r;
+  }
+  if (new_review_status == RERS_COMPLETE) new_review_status = RERS_WAITING_APPROVAL;
   if ((jcur = cJSON_GetObjectItem(request_json, "recommended_status"))) {
     if (jcur->type != cJSON_String) {
       ERR("recommended_status must be string");
@@ -13371,6 +13403,15 @@ priv_finish_review_json(
     field_mask |= RER_REVIEW_STATISTICS;
     out_review.review_statistics = xstrdup(jcur->valuestring);
     utf8_fix_string(out_review.review_statistics, NULL);
+  }
+  if ((jcur = cJSON_GetObjectItem(request_json, "log"))) {
+    if (jcur->type != cJSON_String) {
+      ERR("model must be string");
+      goto done;
+    }
+    field_mask |= RER_REVIEW_LOG;
+    out_review.review_log = xstrdup(jcur->valuestring);
+    utf8_fix_string(out_review.review_log, NULL);
   }
   if ((jcur = cJSON_GetObjectItem(request_json, "model"))) {
     if (jcur->type != cJSON_String) {
@@ -13464,8 +13505,8 @@ priv_finish_review_json(
   out_review.review_heartbeat_time = 0; field_mask |= RER_REVIEW_HEARTBEAT_TIME;
   out_review.review_heartbeat_status = NULL; field_mask |= RER_REVIEW_HEARTBEAT_STATUS;
   out_review.review_finish_time = -2; field_mask |= RER_REVIEW_FINISH_TIME;
-  out_review.status = RERS_WAITING_APPROVAL; field_mask |= RER_STATUS;
-  if (prob->disable_post_approve > 0) {
+  out_review.status = new_review_status; field_mask |= RER_STATUS;
+  if (new_review_status == RERS_WAITING_APPROVAL && prob->disable_post_approve > 0) {
     out_review.status = RERS_COMPLETE;
     out_review.status_approved_as_is = 1; field_mask |= RER_STATUS_APPROVED_AS_IS;
     out_review.review_approved_as_is = 1; field_mask |= RER_REVIEW_APPROVED_AS_IS;
@@ -13503,11 +13544,11 @@ priv_finish_review_json(
     goto done;
   }
 
-  if (res_review.purpose == RERP_JUDGE_HELP && re.hidden_review_gen == res_review.generation) {
+  if (res_review.purpose == RERP_JUDGE_HELP && re.hidden_review_gen == res_review.generation && re.hidden_review_status == RERS_REVIEWING) {
     res = run_change_review_status(review_cs->runlog_state, res_review.run_id,
       re.review_status, re.review_gen,
       res_review.status, re.hidden_review_gen, NULL);
-  } else if ((res_review.purpose == RERP_REVIEW || res_review.purpose == RERP_HELP) && re.review_gen == res_review.generation) {
+  } else if ((res_review.purpose == RERP_REVIEW || res_review.purpose == RERP_HELP) && re.review_gen == res_review.generation && re.review_status == RERS_REVIEWING) {
     res = run_change_review_status(review_cs->runlog_state, res_review.run_id,
       res_review.status, re.review_gen,
       re.hidden_review_status, re.hidden_review_gen, NULL);
@@ -13749,7 +13790,7 @@ do_request_review(
       retval = 0;
       goto done;
     }
-    if (force_on_incomplete_mode <= 0 && re->review_gen && (re->review_status != RERS_COMPLETE && re->review_status != RERS_THRASHED)) {
+    if (force_on_incomplete_mode <= 0 && re->review_gen && (re->review_status != RERS_COMPLETE && re->review_status != RERS_CANCELED && re->review_status != RERS_FAILED)) {
       // must finish previous review
       retval = -NEW_SRV_ERR_RUN_REVIEW_INCOMPLETE;
       ERR("previous run review incomplete for contest_id=%d, run_id=%d", phr->contest_id, run_id);
@@ -13769,7 +13810,7 @@ do_request_review(
       retval = 0;
       goto done;
     }
-    if (force_on_incomplete_mode <= 0 && re->hidden_review_gen && (re->hidden_review_status != RERS_COMPLETE && re->hidden_review_status != RERS_THRASHED)) {
+    if (force_on_incomplete_mode <= 0 && re->hidden_review_gen && (re->hidden_review_status != RERS_COMPLETE && re->hidden_review_status != RERS_CANCELED && re->hidden_review_status != RERS_FAILED)) {
       // must finish previous review
       retval = -NEW_SRV_ERR_RUN_REVIEW_INCOMPLETE;
       ERR("previous run review incomplete for contest_id=%d, run_id=%d", phr->contest_id, run_id);

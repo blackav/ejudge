@@ -65,8 +65,10 @@
                 <option value="2">Request user-visible review, including the runs already reviewed</option>
                 <option value="3">Request hidden review, skip if already reviewed</option>
                 <option value="4">Request hidden review, including the runs already reviewed</option>
-                <option value="5">Clear user-visible review</option>
-                <option value="6">Clear hidden review</option>
+                <option value="5">Cancel user-visible reviews</option>
+                <option value="6">Cancel hidden reviews</option>
+                <option value="7">Clear user-visible reviews (DANGEROUS)</option>
+                <option value="8">Clear hidden reviews (DANGEROUS)</option>
             </select>
         </td>
         <td><s:_>Review mode</s:_></td>

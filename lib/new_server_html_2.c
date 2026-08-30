@@ -853,6 +853,8 @@ ns_write_priv_all_runs(
       if (pe->review_gen) {
         if (pe->review_status == RERS_COMPLETE) {
           review_status_str = "✅";
+        } else if (pe->review_status == RERS_FAILED || pe->review_status == RERS_CANCELED) {
+          review_status_str = "❎";
         } else {
           review_status_str = "🟩";
         }
@@ -861,6 +863,8 @@ ns_write_priv_all_runs(
       if (pe->hidden_review_gen) {
         if (pe->hidden_review_status == RERS_COMPLETE) {
           hidden_review_status_str = "✨";
+        } else if (pe->hidden_review_status == RERS_FAILED || pe->hidden_review_status == RERS_CANCELED) {
+          hidden_review_status_str = "⚠️";
         } else {
           hidden_review_status_str = "🟡";
         }

@@ -650,7 +650,8 @@ enum
   RERS_REVIEWING,
   RERS_WAITING_APPROVAL,
   RERS_COMPLETE,
-  RERS_THRASHED,
+  RERS_CANCELED,
+  RERS_FAILED,
 
   RERS_LAST,
 };
@@ -870,5 +871,7 @@ run_review_update_view_counter(
 
 const unsigned char *
 run_unparse_review_status(unsigned val);
+int
+run_parse_review_status(const char *s);
 
 #endif /* __RUNLOG_H__ */

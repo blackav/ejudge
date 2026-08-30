@@ -501,21 +501,37 @@ run_status_short_str(int status)
   return status_short_str[status];
 }
 
+
+static const unsigned char * const review_status_values[] =
+{
+  [RERS_REQUESTED_REVIEW] = "requested_review",
+  [RERS_WAITING_REVIEW] = "waiting_review",
+  [RERS_REVIEWING] = "reviewing",
+  [RERS_WAITING_APPROVAL] = "waiting_approval",
+  [RERS_COMPLETE] = "complete",
+  [RERS_CANCELED] = "canceled",
+  [RERS_FAILED] = "failed",
+};
+
 const unsigned char *
 run_unparse_review_status(unsigned val)
 {
-    static const unsigned char * const values[] =
-    {
-        [RERS_REQUESTED_REVIEW] = "requested_review",
-        [RERS_WAITING_REVIEW] = "waiting_review",
-        [RERS_REVIEWING] = "reviewing",
-        [RERS_WAITING_APPROVAL] = "waiting_approval",
-        [RERS_COMPLETE] = "complete",
-    };
-    if (val >= sizeof(values) / sizeof(values[0])) {
-        return "";
+  if (val >= sizeof(review_status_values) / sizeof(review_status_values[0])) {
+    return "";
+  }
+  const unsigned char *s = review_status_values[val];
+  if (!s) return "";
+  return s;
+}
+
+int
+run_parse_review_status(const char *s)
+{
+  if (!s) return -1;
+  for (unsigned i = 1; i < sizeof(review_status_values) / sizeof(review_status_values[0]); ++i) {
+    if (!strcasecmp(s, review_status_values[i])) {
+      return i;
     }
-    const unsigned char *s = values[val];
-    if (!s) return "";
-    return s;
+  }
+  return -1;
 }
