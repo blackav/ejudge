@@ -1,6 +1,38 @@
-/* Copyright (C) 2006-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /* This file is a part of ejudge contest management system. */
+
+@font-face {
+  font-family: 'PT Sans';
+  src: url('/ejudge/PTSans-Regular.ttf');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'PT Sans';
+  src: url('/ejudge/PTSans-Italic.ttf');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'PT Sans';
+  src: url('/ejudge/PTSans-Bold.ttf');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'PT Sans';
+  src: url('/ejudge/PTSans-BoldItalic.ttf');
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
 
 @font-face {
     font-family: Roboto-Regular;
@@ -12,11 +44,9 @@
     src: url(/ejudge/Roboto-Bold.ttf);
 }
 
-/* @import 'https://fonts.googleapis.com/css?family=Roboto:400,400i,700,700i'; */
-
 body 
 {
-    font-family: "Roboto-Regular", "Arial", "Verdana", "Sans-Serif";
+    font-family: "PT Sans", "Roboto-Regular", "Arial", "Verdana", "Sans-Serif";
     font-style: normal;
     font-variant: normal;
     font-weight: normal;
@@ -101,8 +131,7 @@ h4
 
 div.main_phrase /* the title of the current page */
 {
-    font-family: "Roboto-Regular", "Verdana", "Arial";
-    font-weight: 800;
+    font-weight: 700;
     font-size: 16px;
     margin-top: 5px;
     margin-bottom: 5px;
@@ -129,9 +158,8 @@ div.contest_actions /* bottom menu line */
 
 div.user_action_item /* one item in the top menu line */
 {
-    font-family: "Roboto-Regular", "Verdana","Arial";
     font-size: 11px;
-    font-weight: 800;
+    font-weight: 700;
     text-align: center;
     padding-left:10px;
     padding-right:10px;
@@ -139,9 +167,8 @@ div.user_action_item /* one item in the top menu line */
          
 div.contest_actions_item /* one item in the bottom menu line */
 {
-    font-family: "Roboto-Regular", "Verdana","Arial";
     font-size: 11px;
-    font-weight: 800;
+    font-weight: 700;
     text-align: center;
     padding-left:10px;
     padding-right:10px;
@@ -149,7 +176,6 @@ div.contest_actions_item /* one item in the bottom menu line */
          
 select
 { 
-    font-family: "Roboto-Regular", "Verdana","Arial";
     font-weight: normal;
     font-size: 9px;
     padding: 0px 0px 0px 0px;
@@ -157,7 +183,6 @@ select
 
 button
 { 
-    font-family: "Roboto-Regular", "Verdana","Arial";
     font-weight: normal;
     font-size: 9px;    
     padding: 0px 0px 0px 0px;
@@ -165,7 +190,6 @@ button
 
 input
 { 
-    font-family: "Roboto-Regular", "Verdana","Arial";
     font-weight: normal;
     font-size: 9px;    
     padding: 0px 0px 0px 0px;
@@ -182,16 +206,14 @@ input
     background-color: rgb(102, 204, 255);
     padding: 5px 10px 5px 10px;
     text-align: left;
-    font-family: "Roboto-Regular", "Verdana", "Arial";
     font-size: 11px;
-    font-weight: 800;
+    font-weight: 700;
     margin-top: 20px;
     margin-bottom: 20px;
 }
 
 p.ejudge_copyright /* just copyright */
 {
-    font-family: "Roboto-Regular", "Verdana","Arial";         
     font-size: 10px;
 }
          
@@ -233,7 +255,6 @@ p.dotted
 
 div.big_string /* the header for some content section */
 {
-    font-family: "Roboto-Regular", "Verdana","Arial";
     font-weight: normal;
     font-size: 14px;    
     padding: 10px 2px 10px 2px;     

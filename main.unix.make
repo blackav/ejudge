@@ -1,6 +1,6 @@
 # -*- Makefile -*-
 
-# Copyright (C) 2014-2025 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2014-2026 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -199,7 +199,8 @@ STYLEFILES = style/logo.gif style/priv.css style/unpriv.css style/unpriv3.css st
   style/priv_prob_dlg.js style/unpriv.js style/filter_expr.html style/sprintf.js style/ejudge3_ss.css style/ejudge_mobile.css \
   style/jquery.min.js style/jquery.timepicker.css style/jquery.timepicker.min.js style/prism.js style/prism.css \
   style/Roboto-Regular.ttf style/Roboto-Bold.ttf style/Roboto-Italic.ttf style/Roboto-BoldItalic.ttf \
-  style/croppie.css style/croppie.js style/jquery-3.6.0.js style/jquery-ui.css style/jquery-ui.js style/jquery-ui.min.css style/jquery-ui.min.js style/jquery-ui.icon-font.css style/jquery-3.7.1.js
+  style/croppie.css style/croppie.js style/jquery-3.6.0.js style/jquery-ui.css style/jquery-ui.js style/jquery-ui.min.css style/jquery-ui.min.js style/jquery-ui.icon-font.css style/jquery-3.7.1.js \
+  style/PTSans-Bold.ttf style/PTSans-BoldItalic.ttf style/PTSans-Italic.ttf style/PTSans-Regular.ttf
 
 all: prereq_all local_all subdirs_all mo
 local_all: $(TARGETS) ejudge-config

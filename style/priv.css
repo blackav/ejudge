@@ -1,16 +1,45 @@
-/* $Id$ */
+@font-face {
+  font-family: 'PT Sans';
+  src: url('/ejudge/PTSans-Regular.ttf');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'PT Sans';
+  src: url('/ejudge/PTSans-Italic.ttf');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'PT Sans';
+  src: url('/ejudge/PTSans-Bold.ttf');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'PT Sans';
+  src: url('/ejudge/PTSans-BoldItalic.ttf');
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
 
 body 
 {
-        font-family: "Arial","Lucida Grande","Verdana","Sans-Serif";
+        font-family: "PT Sans", "Arial","Lucida Grande","Verdana","Sans-Serif";
         font-style: normal;
         font-variant: normal;
         font-weight: normal;
         font-size: 12px;
         color: #000000;
-        text-align: justify;
+        text-align: left;
 }
-
 
 #container /* the big block, which includes all other blocks */
 {
@@ -51,7 +80,7 @@ body
 div.main_phrase /* the title of the current page */
 {
         font-family: "Verdana", "Arial";
-        font-weight: 800;
+        font-weight: bold;
         font-size: 16px;
         margin-top: 5px;
         margin-bottom: 5px;
@@ -78,9 +107,8 @@ div.contest_actions /* bottom menu line */
 
 div.user_action_item /* one item in the top menu line */
 {
-        font-family: "Verdana","Arial";
         font-size: 11px;
-        font-weight: 800;
+        font-weight: bold;
         text-align: center;
         padding-left:10px;
         padding-right:10px;
@@ -88,9 +116,8 @@ div.user_action_item /* one item in the top menu line */
 	 
 div.contest_actions_item /* one item in the bottom menu line */
 {
-        font-family: "Verdana","Arial";
         font-size: 11px;
-        font-weight: 800;
+        font-weight: bold;
         text-align: center;
         padding-left:10px;
         padding-right:10px;
@@ -98,7 +125,6 @@ div.contest_actions_item /* one item in the bottom menu line */
 	 
 select
 { 
-        font-family: "Verdana","Arial";
         font-weight: normal;
         font-size: 9px;
         padding: 0px 0px 0px 0px;
@@ -106,7 +132,6 @@ select
 
 button
 { 
-        font-family: "Verdana","Arial";
         font-weight: normal;
         font-size: 9px;    
         padding: 0px 0px 0px 0px;
@@ -114,7 +139,6 @@ button
 
 input
 { 
-        font-family: "Verdana","Arial";
         font-weight: normal;
         font-size: 9px;    
         padding: 0px 0px 0px 0px;
@@ -128,7 +152,6 @@ input
 	 
 p.ejudge_copyright /* just copyright */
 {
-        font-family: "Verdana","Arial";	 	
         font-size: 10px;    
 }
 	 
@@ -160,7 +183,6 @@ div.dotted
 
 div.big_string /* the header for some content section */
 {
-        font-family: "Verdana","Arial";
         font-weight: normal;
         font-size: 14px;    
         padding: 10px 2px 10px 2px;	
@@ -357,7 +379,6 @@ table.cnts_edit {
 
 td.cnts_edit_head {
 	font-size: 12pt;
-        font-family: "Sans-Serif";
         font-weight: bold;
         text-align: center;
         height: 30px;
@@ -369,7 +390,6 @@ td.cnts_edit_head {
 
 td.cnts_edit_legend {
 	font-size: 12pt;
-        font-family: "Sans-Serif";
         text-align: left;
         height: 30px;
         border: none;
@@ -387,14 +407,12 @@ td.cnts_edit_data {
 
 div.cnts_edit_data {
 	font-size: 12pt;
-        font-family: "Sans-Serif";
         /* height: 30px; */
 }
 
 div.cnts_edit_inlined {
         display: inline;
 	font-size: 12pt;
-        font-family: "Sans-Serif";
         height: 30px;
         overflow: hidden;
 }
@@ -412,7 +430,6 @@ pre.ip_summary {
 
 th.cnts_edit_legend {
 	font-size: 12pt;
-        font-family: "Sans-Serif";
         font-weight: bold;
         text-align: center;
         height: 30px;
