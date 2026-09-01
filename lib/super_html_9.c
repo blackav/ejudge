@@ -2242,7 +2242,8 @@ set_contest_xml_json(struct http_request_info *phr)
             return;
         }
         char *user_contest_str = NULL;
-        asprintf(&user_contest_str, "%d", value);
+        __attribute__((unused)) int _;
+        _ = asprintf(&user_contest_str, "%d", value);
         xfree(phr->ss->edited_cnts->user_contest);
         phr->ss->edited_cnts->user_contest = user_contest_str;
         phr->ss->edited_cnts->user_contest_num = value;
@@ -2302,7 +2303,8 @@ set_contest_xml_json(struct http_request_info *phr)
             return;
         }
         char *sval = 0;
-        asprintf(&sval, "%04lo", val);
+        __attribute__((unused)) int _;
+        _ = asprintf(&sval, "%04lo", val);
         xfree(*ptr); *ptr = sval;
         cJSON_AddStringToObject(phr->json_result, "result", sval);
         phr->status_code = 200;

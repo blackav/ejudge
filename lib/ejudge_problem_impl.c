@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2025 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2025-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -799,7 +799,8 @@ collect_tests(
                     sol_path = "./";
                 }
                 char *cmd = NULL;
-                asprintf(&cmd, "%s%s < %s > %s", sol_path, sol->path, tdf->path, ans->path);
+                __attribute__((unused)) int _;
+                _ = asprintf(&cmd, "%s%s < %s > %s", sol_path, sol->path, tdf->path, ans->path);
                 depgraph_add_command_move(ans, cmd);
             }
             continue;
@@ -825,7 +826,8 @@ collect_tests(
                 sol_path = "./";
             }
             char *cmd = NULL;
-            asprintf(&cmd, "%s%s < %s > %s", sol_path, sol->path, tdf->path, ans->path);
+            __attribute__((unused)) int _;
+            _ = asprintf(&cmd, "%s%s < %s > %s", sol_path, sol->path, tdf->path, ans->path);
             depgraph_add_command_move(ans, cmd);
         } else if (corr_pat[0]) {
             depgraph_add_file(&ps->dg, corr_path);
