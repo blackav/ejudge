@@ -38,6 +38,8 @@
         <%@expand MENU_YESNO3 "valuer_sets_marked" "checking" "Valuer sets <i>marked</i> flag" "250" %>
         <%@expand MENU_YESNO3 "interactive_valuer" "checking" "Valuer works interactively" "250" %>
         <%@expand MENU_TEXTFIELD "valuer_env" "checking" "Valuer environment" "250" %>
+        <%@expand MENU_TEXTFIELD_WITH_DEFAULT "communication" "checking" "Communication run count" "250" %>
+        <%@expand MENU_TEXTFIELD_WITH_DEFAULT "communication_flags" "checking" "Communication flags" "250" %>
         <%@expand MENU_TEXTFIELD_WITH_DEFAULT "interactor_cmd" "checking" "Interactor name" "250" %>
         <%@expand MENU_TEXTFIELD "interactor_env" "checking" "Interactor environment" "250" %>
         <%@expand MENU_TEXTFIELD_WITH_DEFAULT "interactor_time_limit" "checking" "Time limit for interactor (s)" "250" %>
@@ -89,6 +91,9 @@ $(function() {
     $("#orig-interactive_valuer-div").toggle(has_valuer);
     $("#orig-valuer_env-div").toggle(has_valuer && <s:v type="jsbool" value="prob_id > 0" />);
 
+    var has_communication = <s:v type="jsbool" value="tmp_prob->communication >= 2" />;
+    $("#orig-communication_flags-div").toggle(has_communication);
+
     var has_interactor = <s:v type="jsbool" value="tmp_prob->interactor_cmd" />;
     $("#orig-interactor_time_limit-div").toggle(has_interactor);
     $("#orig-interactor_real_time_limit-div").toggle(has_interactor);
@@ -120,6 +125,8 @@ function popupCheckingDialog(e, skipField)
     <%@expand COPY_YESNO3 "valuer_sets_marked" %>
     <%@expand COPY_YESNO3 "interactive_valuer" %>
     <%@expand COPY_TEXTFIELD "valuer_env" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "communication" "prob->communication < 2" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "communication_flags" "!prob->communication_flags" %>
     <%@expand COPY_TEXTFIELD_WITH_DEFAULT "interactor_cmd" "!prob->interactor_cmd" %>
     <%@expand COPY_TEXTFIELD "interactor_env" %>
     <%@expand COPY_TEXTFIELD_WITH_DEFAULT "interactor_time_limit" "prob->interactor_time_limit < 0" %>
@@ -137,6 +144,8 @@ function popupCheckingDialog(e, skipField)
     <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "valuer_cmd" %>
     <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "standard_valuer" %>
     <%@expand CLEAR_TEXTFIELD "valuer_env" %>
+    <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "communication" %>
+    <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "communication_flags" %>
     <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "interactor_cmd" %>
     <%@expand CLEAR_TEXTFIELD "interactor_env" %>
     <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "interactor_time_limit" %>
@@ -159,6 +168,8 @@ function checkingDialogOnChange(field)
     <%@expand ONCHANGE_WITH_DEFAULT "checker_max_rss_size" %>
     <%@expand ONCHANGE_WITH_DEFAULT "valuer_cmd" %>
     <%@expand ONCHANGE_WITH_DEFAULT "standard_valuer" %>
+    <%@expand ONCHANGE_WITH_DEFAULT "communication" %>
+    <%@expand ONCHANGE_WITH_DEFAULT "communication_flags" %>
     <%@expand ONCHANGE_WITH_DEFAULT "interactor_cmd" %>
     <%@expand ONCHANGE_WITH_DEFAULT "interactor_time_limit" %>
     <%@expand ONCHANGE_WITH_DEFAULT "interactor_real_time_limit" %>
@@ -177,6 +188,14 @@ function checkingDialogOnChange(field)
     $("#edit-valuer_sets_marked-div").toggle(valuer_cmd != "");
     $("#edit-interactive_valuer-div").toggle(valuer_cmd != "");
     $("#edit-valuer_env-div").toggle(valuer_cmd != "" && <s:v type="jsbool" value="prob_id > 0" />);
+
+    var communication = parseInt($("#edit-communication").val(), 10);
+    if (isNaN(communication)) communication = -1;
+    var communication_inherited =
+        $("#edit-communication_dflt").is(':checked') &&
+        <s:v type="jsbool" value="sup_prob && sup_prob->communication >= 2" />;
+    var communication_enabled = (communication >= 2) || communication_inherited;
+    $("#edit-communication_flags-div").toggle(communication_enabled);
 
     var interactor_cmd = $("#edit-interactor_cmd").val();
     if ($("#edit-interactor_cmd_dflt").is(':checked') && <s:v type="jsbool" value="sup_prob && sup_prob->interactor_cmd" />) interactor_cmd = "X";
