@@ -1,0 +1,17 @@
+[Unit]
+Description=Ejudge Contest Management System
+After=network.target
+Wants=network-online.target
+
+[Service]
+Type=forking
+User=ejudge
+Group=ejudge
+ExecStart=/home/ejudge/ejudge-start.sh
+ExecStop=/home/ejudge/ejudge-stop.sh
+Restart=on-failure
+RestartSec=5
+WorkingDirectory=/home/judges
+
+[Install]
+WantedBy=multi-user.target
