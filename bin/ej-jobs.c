@@ -38,6 +38,7 @@
 #include "ejudge/exec.h"
 #include "ejudge/contests.h"
 #include "ejudge/random.h"
+#include "ejudge/sha256utils.h"
 
 #include <stdio.h>
 #include <errno.h>
@@ -2034,6 +2035,7 @@ job_server_force_link_2[] =
     xml_unparse_ip,
     xml_unparse_ipv6,
     contests_get_list,
+    sha256hexsha,
 };
 
 #if HAVE_LIBMONGOC - 0 > 0
