@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2006-2024 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1961,13 +1961,24 @@ int main(int argc, char *argv[])
         return 1;
     }
 
+    int pfd[2] = { -1, -1 };
+
     if (as.daemon_mode) {
+        pipe2(pfd, O_CLOEXEC);
+        if ((pid = fork()) < 0) return 1;
+        if (pid > 0) {
+            unsigned char exitcode = 1;
+            close(pfd[1]);
+            read(pfd[0], &exitcode, sizeof(exitcode));
+            if (exitcode) {
+                err("ej-jobs start failed");
+            }
+            _exit(exitcode);
+        }
+        close(pfd[0]); pfd[0] = -1;
+        setsid();
         if (start_open_log(as.job_server_log) < 0)
             return 1;
-
-        if ((pid = fork()) < 0) return 1;
-        if (pid > 0) _exit(0);
-        setsid();
     } else if (restart_mode) {
         if (start_open_log(as.job_server_log) < 0)
             return 1;
@@ -1977,6 +1988,12 @@ int main(int argc, char *argv[])
 
     if (app_state_prepare(&as) < 0) {
         return 1;
+    }
+
+    if (pfd[1] >= 0) {
+        unsigned char val = 0;
+        write(pfd[1], &val, sizeof(val));
+        close(pfd[1]); pfd[1] = -1;
     }
 
     app_add_command_handler(&as, "stop", handle_stop_packet, &as);
