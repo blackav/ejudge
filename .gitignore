@@ -81,3 +81,4 @@ compile_commands.json
 /ejudge-make
 /ejudge-problem
 /ej-agent-server
+/tools/texttostring

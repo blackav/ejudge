@@ -51,4 +51,4 @@ rldb_mysql.so : $(RLDB_MYSQL_OFILES)
 	$(LD) -shared $(LDFLAGS) $^ -o $@ $(LDLIBS)
 
 reviews_table.inc.c : create-reviews.sql
-	xxd -i -n ejudge_rundb_mysql_reviews $^ > $@
+	../../tools/texttostring -n ejudge_rundb_mysql_reviews $^ > $@
