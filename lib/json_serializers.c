@@ -1484,12 +1484,10 @@ json_serialize_run_review(
 #undef ADD_NUMBER
 
     if (rr->status > 0 && (mask & RER_status) != 0) {
-        cJSON_AddNumberToObject(jrr, "status", rr->status);
-        cJSON_AddStringToObject(jrr, "status_str", run_unparse_review_status(rr->status));
+        cJSON_AddStringToObject(jrr, "status", run_unparse_review_status(rr->status));
     }
     if (rr->purpose > 0 && (mask & RER_purpose) != 0) {
-        cJSON_AddNumberToObject(jrr, "purpose", rr->purpose);
-        cJSON_AddStringToObject(jrr, "purpose_str", unparse_review_purpose(rr->purpose));
+        cJSON_AddStringToObject(jrr, "purpose", unparse_review_purpose(rr->purpose));
     }
 
 #define ADD_TIMESTAMP(f) do { if ((mask & RER_##f)) { append_timestamp(jrr, rr->f, date_mode, #f); }} while(0)
