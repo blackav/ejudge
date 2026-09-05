@@ -1712,7 +1712,6 @@ generate_update_entry_clause(
     fprintf(f, "%sreview_gen = %d", sep, re->review_gen);
     fprintf(f, "%shidden_review_status = %d", sep, re->hidden_review_status);
     fprintf(f, "%shidden_review_gen = %d", sep, re->hidden_review_gen);
-    fprintf(f, "%sis_help_review = %d", sep, re->is_help_review);
   }
 
   fprintf(f, "%slast_change_time = ", sep);
@@ -3446,17 +3445,13 @@ unparse_review_fields(
         uint64_t field_mask)
 {
   int field_count = 0;
-  if (!field_mask) {
-    fprintf(cmd_f, "*");
-    field_count = REVIEW_ROW_WIDTH;
-  } else {
-    const unsigned char *sep = "";
-    for (int i = 0; i < sizeof(reviews_spec) / sizeof(reviews_spec[0]); ++i) {
-      if ((field_mask & (1ULL << i)) != 0) {
-        fprintf(cmd_f, "%s%s", sep, reviews_spec[i].name);
-        sep = ",";
-        ++field_count;
-      }
+  if (!field_mask) field_mask = RER_ALL;
+  const unsigned char *sep = "";
+  for (int i = 0; i < sizeof(reviews_spec) / sizeof(reviews_spec[0]); ++i) {
+    if ((field_mask & (1ULL << i)) != 0) {
+      fprintf(cmd_f, "%s%s", sep, reviews_spec[i].name);
+      sep = ",";
+      ++field_count;
     }
   }
   return field_count;
@@ -3571,6 +3566,10 @@ write_reviews_filter(
     fprintf(cmd_f, "%srun_id IN (", asep);
     asep = AND_STR;
     write_int_list(cmd_f, filter->run_id_list, filter->run_id_count);
+  }
+  if (filter->generation > 0 && filter->generation < 256) {
+    fprintf(cmd_f, "%sgeneration=%d", asep, filter->generation);
+    asep = AND_STR;
   }
   if (filter->include_status_mask) {
     fprintf(cmd_f, "%sstatus IN (", asep);
