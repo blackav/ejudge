@@ -783,6 +783,7 @@ struct run_review_filter
   int run_id;
   int *run_id_list;
   int run_id_count;
+  int generation;
   unsigned include_status_mask;
   unsigned exclude_status_mask;
   unsigned include_purpose_mask;
