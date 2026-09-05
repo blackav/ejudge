@@ -210,8 +210,13 @@
   }
 
   snprintf(title, sizeof(title), "%s %d", _("Viewing run"), run_id);
-%><%@include "priv_header.csp"
+%><%@include "priv_header_jq.csp"
 %>
+<script language="javascript">
+  var SID="<s:v value="phr->session_id" />";
+  var self_url="<s:v value="phr->self_url" escape="false" />";
+</script>
+
 <s:url name="ViewSourceUrl" ac="view-source">
     <s:param name="run_id" value="run_id" />
 </s:url>
@@ -687,7 +692,7 @@ function handleExternalReviewFailure(data) {
 }
 </script>
 <%
-    if (re.review_gen != 0 && re.review_status != RERS_COMPLETE) {
+    if (re.review_gen != 0 && re.review_status != RERS_COMPLETE && re.review_status != RERS_FAILED && re.review_status != RERS_CANCELED) {
 %>
 <p>Review is in progress...</p>
 <%
@@ -719,7 +724,7 @@ $(function() {
 </script>
 <%
     }
-    if (re.hidden_review_gen != 0 && re.hidden_review_status != RERS_COMPLETE) {
+    if (re.hidden_review_gen != 0 && re.hidden_review_status != RERS_COMPLETE && re.hidden_review_status != RERS_FAILED && re.hidden_review_status != RERS_CANCELED) {
 %>
 <p>Hidden review is in progress...</p>
 <%
@@ -728,8 +733,8 @@ $(function() {
 <div id="RequestHiddenReviewButtonDiv"><button id="RequestHiddenReviewButton"></button></div>
 <script type="text/javascript">
 $(function() {
-  $("#RequestReviewButton").button({
-    label: "Request user-visible review"
+  $("#RequestHiddenReviewButton").button({
+    label: "Request hidden review"
   });
   $("#RequestHiddenReviewButton").on("click", function() {
     $.ajax({

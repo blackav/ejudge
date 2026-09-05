@@ -7970,12 +7970,34 @@ priv_review_displayed(FILE *fout,
       continue;
     if (review_mode == 5) {
       if (re.review_gen && (re.review_status != RERS_FAILED && re.review_status != RERS_CANCELED)) {
+        struct run_review newrr =
+        {
+          .status = RERS_CANCELED,
+        };
+        struct run_review_filter rrf =
+        {
+          .contest_id = cnts->id,
+          .run_id = run_id,
+          .generation = re.review_gen,
+        };
+        _ = run_review_update(cs->runlog_state, &newrr, RER_STATUS, &rrf);
         _ = run_change_review_status(cs->runlog_state, run_id, RERS_CANCELED, re.review_gen, re.hidden_review_status, re.hidden_review_gen, NULL);
       }
       continue;
     }
     if (review_mode == 6) {
       if (re.hidden_review_gen && (re.hidden_review_status != RERS_FAILED && re.hidden_review_status != RERS_CANCELED)) {
+        struct run_review newrr =
+        {
+          .status = RERS_CANCELED,
+        };
+        struct run_review_filter rrf =
+        {
+          .contest_id = cnts->id,
+          .run_id = run_id,
+          .generation = re.hidden_review_gen,
+        };
+        _ = run_review_update(cs->runlog_state, &newrr, RER_STATUS, &rrf);
         _ = run_change_review_status(cs->runlog_state, run_id, re.review_status, re.review_gen, RERS_CANCELED, re.hidden_review_gen, NULL);
       }
       continue;
@@ -12301,7 +12323,7 @@ priv_list_pending_reviews_json(
     goto done;
   }
 
-  filter.field_mask = RER_SERIAL_ID|RER_CREATION_TIME|RER_REVIEW_UUID|RER_CONTEST_ID|RER_RUN_ID|RER_STATUS|RER_PURPOSE|RER_STATUS|RER_LAST_UPDATE_TIME;
+  filter.field_mask = RER_SERIAL_ID|RER_CREATION_TIME|RER_REVIEW_UUID|RER_CONTEST_ID|RER_RUN_ID|RER_STATUS|RER_PURPOSE|RER_STATUS|RER_LAST_UPDATE_TIME|RER_GENERATION;
   filter.contest_id_list = contest_ids;
   filter.contest_id_count = contest_count;
   filter.run_id = -1;
@@ -12319,7 +12341,7 @@ priv_list_pending_reviews_json(
   cJSON *jrs = cJSON_CreateArray();
   for (int i = 0; i < review_count; ++i) {
     cJSON *jr = json_serialize_run_review(&reviews[i], date_mode,
-      RER_CREATION_TIME|RER_REVIEW_UUID|RER_CONTEST_ID|RER_RUN_ID|RER_STATUS|RER_PURPOSE|RER_STATUS|RER_LAST_UPDATE_TIME,
+      RER_CREATION_TIME|RER_REVIEW_UUID|RER_CONTEST_ID|RER_RUN_ID|RER_STATUS|RER_PURPOSE|RER_STATUS|RER_LAST_UPDATE_TIME|RER_GENERATION,
       0);
     cJSON_AddItemToArray(jrs, jr);
   }
@@ -12683,7 +12705,8 @@ make_review_document(
         unsigned err_id,
         int contest_id,
         int run_id,
-        int purpose)
+        int purpose,
+        struct run_entry *pre)
 {
   cJSON *result = cJSON_CreateObject();
   unsigned char global_conf_path[PATH_MAX];
@@ -12712,21 +12735,22 @@ make_review_document(
     goto fail;
   }
 
-  struct run_entry re = {};
+  struct run_entry local_re = {};
+  if (!pre) pre = &local_re;
   if (run_id < 0 || run_id >= run_get_total(cs->runlog_state)) {
     ERR("contest %d:run %d:invalid run_id", contest_id, run_id);
     goto fail;
   }
-  if (run_get_entry(cs->runlog_state, run_id, &re) < 0) {
+  if (run_get_entry(cs->runlog_state, run_id, pre) < 0) {
     ERR("contest %d:run %d:failed to get run", contest_id, run_id);
     goto fail;
   }
-  if (!(re.status <= RUN_NORMAL_LAST || re.status == RUN_SUMMONED)) {
-    ERR("contest %d:run %d:invalid status %d", contest_id, run_id, re.status);
+  if (!(pre->status <= RUN_NORMAL_LAST || pre->status == RUN_SUMMONED)) {
+    ERR("contest %d:run %d:invalid status %d", contest_id, run_id, pre->status);
     goto fail;
   }
 
-  int prob_id = re.prob_id;
+  int prob_id = pre->prob_id;
   if (prob_id <= 0 || prob_id > cs->max_prob || !cs->probs[prob_id]) {
     ERR("contest %d:run %d:invalid problem %d", contest_id, run_id, prob_id);
     goto fail;
@@ -12747,7 +12771,7 @@ make_review_document(
 
   unsigned char src_path[PATH_MAX];
   src_path[0] = 0;
-  int src_flags = serve_make_source_read_path(cs, src_path, sizeof(src_path), &re);
+  int src_flags = serve_make_source_read_path(cs, src_path, sizeof(src_path), pre);
   if (src_flags < 0) {
     ERR("contest %d:run %d:source is missing", contest_id, run_id);
     goto fail;
@@ -12760,12 +12784,12 @@ make_review_document(
   cJSON_AddStringToObject(result, "source_code", run_text);
   free(run_text); run_text = NULL; run_size = 0;
 
-  source_language = get_language_name(re.lang_id);
+  source_language = get_language_name(pre->lang_id);
   cJSON_AddStringToObject(result, "source_language", source_language);
 
-  int variant = re.variant;
+  int variant = pre->variant;
   if (prob->variant_num > 0) {
-    if (variant <= 0) variant = find_variant(cs, re.user_id, re.prob_id, NULL);
+    if (variant <= 0) variant = find_variant(cs, pre->user_id, pre->prob_id, NULL);
     if (variant <= 0) {
       ERR("contest %d:run %d:variant is not set", contest_id, run_id);
       goto fail;
@@ -12782,7 +12806,7 @@ make_review_document(
   }
   cJSON_AddStringToObject(result, "problem_statement", text);
   free(text); text = NULL;
-  cJSON_AddStringToObject(result, "interface_language", l10n_unparse_locale(re.locale_id));
+  cJSON_AddStringToObject(result, "interface_language", l10n_unparse_locale(pre->locale_id));
 
   unsigned char filename[PATH_MAX];
   _ = snprintf(filename, sizeof(filename), "review.%s.md", source_language);
@@ -12823,7 +12847,7 @@ make_review_document(
   }
   cJSON_AddItemToObject(result, "problem", jp);
 
-  add_run_report(result, err_id, contest_id, run_id, cs, &re);
+  add_run_report(result, err_id, contest_id, run_id, cs, pre);
 
 #undef ERR
 
@@ -12994,7 +13018,8 @@ priv_start_review_json(
     goto done;
   }
 
-  jdetail = make_review_document(phr->config, err_id, review.contest_id, review.run_id, review.purpose);
+  struct run_entry re = {};
+  jdetail = make_review_document(phr->config, err_id, review.contest_id, review.run_id, review.purpose, &re);
   if (!jdetail) {
     http_status = 400;
     err_num = NEW_SRV_ERR_INV_PARAM;
@@ -13039,13 +13064,19 @@ priv_start_review_json(
   uint64_t final_field_mask = RER_LAST_UPDATE_TIME | RER_REVIEW_START_TIME | RER_REVIEW_HEARTBEAT_TIME
       | RER_REVIEW_UUID | RER_REVIEW_AGENT | RER_REVIEW_HEARTBEAT_STATUS
       | RER_REVIEW_SOURCE_SHA256 | RER_CONTEST_ID | RER_RUN_ID | RER_REVIEWER_USER_ID
-      | RER_GENERATION | RER_STATUS | RER_PURPOSE;
+      | RER_GENERATION | RER_STATUS | RER_PURPOSE | RER_GENERATION;
   if (run_review_fetch(cs->runlog_state, &review_uuid,
       final_field_mask, &res_review) <= 0) {
     http_status = 500;
     err_num = NEW_SRV_ERR_DATABASE_FAILED;
     ERR("failed to reload review '%s'", review_uuid_str);
     goto done;
+  }
+
+  if (res_review.generation == re.review_gen) {
+    run_change_review_status(cs->runlog_state, res_review.run_id, res_review.status, re.review_gen, re.hidden_review_status, re.hidden_review_gen, NULL);
+  } else if (res_review.generation == re.hidden_review_gen) {
+    run_change_review_status(cs->runlog_state, res_review.run_id, re.review_status, re.review_gen, res_review.status, re.hidden_review_gen, NULL);
   }
 
   cJSON *jfr = json_serialize_run_review(&res_review, date_mode, final_field_mask, 0);
@@ -13274,7 +13305,7 @@ priv_finish_review_json(
     goto done;
   }
   if (run_review_fetch(cs->runlog_state, &review_uuid,
-      RER_SERIAL_ID|RER_REVIEW_UUID|RER_CONTEST_ID|RER_RUN_ID, &review) <= 0) {
+      RER_SERIAL_ID|RER_REVIEW_UUID|RER_CONTEST_ID|RER_RUN_ID|RER_REVIEWER_USER_ID, &review) <= 0) {
     http_status = 404;
     err_num = NEW_SRV_ERR_INV_UUID;
     ERR("review '%s' not found", review_uuid_str);
@@ -13645,6 +13676,7 @@ priv_list_active_reviews_json(
   cJSON *jres = cJSON_CreateObject();
   cJSON_AddItemToObject(jres, "reviews", jrs);
   cJSON_AddItemToObject(jr, "result", jres);
+
   ok = 1;
   err_num = 0;
   http_status = 200;
@@ -13878,6 +13910,8 @@ do_request_review(
     ERR("update run review status failed in contest_id=%d, run_id=%d", phr->contest_id, run_id);
     goto done;
   }
+
+  retval = 0;
 
 done:;
   return retval;

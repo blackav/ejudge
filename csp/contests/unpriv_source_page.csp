@@ -254,7 +254,7 @@ $(function() {
 %>
 
 <%
-  if (re.review_gen != 0 && re.review_status != RERS_COMPLETE) {
+  if (re.review_gen != 0 && re.review_status != RERS_COMPLETE && re.review_status != RERS_FAILED && re.review_status != RERS_CANCELED) {
 %>
   <p>Review is in progress...</p>
 <%
