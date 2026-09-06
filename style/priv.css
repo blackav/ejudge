@@ -30,6 +30,14 @@
   font-display: swap;
 }
 
+@font-face {
+  font-family: 'Source Code Pro';
+  src: url('/ejudge/SourceCodePro.ttf');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 body 
 {
         font-family: "PT Sans", "Arial","Lucida Grande","Verdana","Sans-Serif";
@@ -39,6 +47,10 @@ body
         font-size: 12px;
         color: #000000;
         text-align: left;
+}
+
+code, pre, tt, kbd, samp {
+  font-family: "Source Code Pro", monospace;
 }
 
 #container /* the big block, which includes all other blocks */
@@ -79,7 +91,6 @@ body
 
 div.main_phrase /* the title of the current page */
 {
-        font-family: "Verdana", "Arial";
         font-weight: bold;
         font-size: 16px;
         margin-top: 5px;
@@ -451,6 +462,5 @@ div.ej_dd {
 div.ej_stat_menu_item {
         display: block;
         border: 1px solid #aaa;
-        font-family: "DejaVu Sans Mono", "Courier New", "Courier", "monospace";
         width: 180px;
 }
