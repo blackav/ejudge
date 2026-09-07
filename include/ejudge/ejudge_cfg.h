@@ -3,7 +3,7 @@
 #ifndef __EJUDGE_CFG_H__
 #define __EJUDGE_CFG_H__ 1
 
-/* Copyright (C) 2002-2025 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -160,6 +160,9 @@ struct ejudge_cfg
   struct ejudge_cfg_caps_file *caps_file_info;
   unsigned char *ejudge_xml_path;
   struct ejudge_cfg_agent_server *agent_server;
+
+  unsigned char *default_compile_queue;
+  unsigned char *default_run_queue;
 };
 
 struct ejudge_cfg *ejudge_cfg_parse(char const *, int no_system_lookup);
