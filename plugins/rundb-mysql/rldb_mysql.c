@@ -212,7 +212,7 @@ prepare_func(
 
 #include "tables.inc.c"
 
-#define RUN_DB_VERSION 33
+#define RUN_DB_VERSION 34
 
 static int
 do_create(struct rldb_mysql_state *state)
@@ -530,6 +530,10 @@ do_open(struct rldb_mysql_state *state)
       break;
     case 32:
       if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD COLUMN is_help_review TINYINT NOT NULL DEFAULT 0 AFTER hidden_review_gen", md->table_prefix) < 0)
+        return -1;
+      break;
+    case 33:
+      if (mi->simple_fquery(md, "ALTER TABLE %sreviews ADD COLUMN custom_prompt MEDIUMTEXT DEFAULT NULL AFTER review_log", md->table_prefix) < 0)
         return -1;
       break;
     case RUN_DB_VERSION:
@@ -3343,7 +3347,7 @@ change_review_status_func(
   return do_update_entry(cs, run_id, &te, RE_REVIEW_STATUS, ure);
 }
 
-enum { REVIEW_ROW_WIDTH = 46 };
+enum { REVIEW_ROW_WIDTH = 47 };
 #define REVIEW_OFFSET(f) XOFFSET(struct run_review, f)
 
 static const struct common_mysql_parse_spec reviews_spec[REVIEW_ROW_WIDTH] =
@@ -3360,6 +3364,7 @@ static const struct common_mysql_parse_spec reviews_spec[REVIEW_ROW_WIDTH] =
   { EJ_MYSQL_NOW_IS_M2 | EJ_MYSQL_NULLABLE, 'm', "user_opened_time", REVIEW_OFFSET(user_opened_time), 0 },
   { 0, 'g', "review_uuid", REVIEW_OFFSET(review_uuid), 0 },
   { EJ_MYSQL_NULLABLE, 's', "moderation_text", REVIEW_OFFSET(moderation_text), 0 },
+  { EJ_MYSQL_NULLABLE, 's', "custom_prompt", REVIEW_OFFSET(custom_prompt), 0 },
   { EJ_MYSQL_NULLABLE, 's', "review_source", REVIEW_OFFSET(review_source), 0 },
   { EJ_MYSQL_NULLABLE, 's', "review_agent", REVIEW_OFFSET(review_agent), 0 },
   { EJ_MYSQL_NULLABLE, 's', "review_heartbeat_status", REVIEW_OFFSET(review_heartbeat_status), 0 },

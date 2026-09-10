@@ -45,6 +45,7 @@ CREATE TABLE reviews(
     approver_feedback MEDIUMTEXT DEFAULT NULL,
     user_feedback MEDIUMTEXT DEFAULT NULL,
     review_log MEDIUMTEXT DEFAULT NULL,
+    custom_prompt MEDIUMTEXT DEFAULT NULL,
     UNIQUE KEY reviews_generation_idx (contest_id, run_id, generation),
     KEY reviews_run_serial_idx (run_serial_id),
     KEY reviews_requested_idx (request_user_id),

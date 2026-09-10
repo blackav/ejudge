@@ -12706,6 +12706,7 @@ make_review_document(
         int contest_id,
         int run_id,
         int purpose,
+        const unsigned char *custom_prompt,
         struct run_entry *pre)
 {
   cJSON *result = cJSON_CreateObject();
@@ -12807,6 +12808,9 @@ make_review_document(
   cJSON_AddStringToObject(result, "problem_statement", text);
   free(text); text = NULL;
   cJSON_AddStringToObject(result, "interface_language", l10n_unparse_locale(pre->locale_id));
+  if (custom_prompt && custom_prompt[0]) {
+    cJSON_AddStringToObject(result, "custom_prompt", custom_prompt);
+  }
 
   unsigned char filename[PATH_MAX];
   _ = snprintf(filename, sizeof(filename), "review.%s.md", source_language);
@@ -12952,7 +12956,7 @@ priv_start_review_json(
     goto done;
   }
   if (run_review_fetch(cs->runlog_state, &review_uuid,
-      RER_SERIAL_ID|RER_REVIEW_UUID|RER_CONTEST_ID|RER_RUN_ID|RER_STATUS|RER_PURPOSE, &review) <= 0) {
+      RER_SERIAL_ID|RER_REVIEW_UUID|RER_CONTEST_ID|RER_RUN_ID|RER_STATUS|RER_PURPOSE|RER_CUSTOM_PROMPT, &review) <= 0) {
     http_status = 404;
     err_num = NEW_SRV_ERR_INV_UUID;
     ERR("review '%s' not found", review_uuid_str);
@@ -13019,7 +13023,7 @@ priv_start_review_json(
   }
 
   struct run_entry re = {};
-  jdetail = make_review_document(phr->config, err_id, review.contest_id, review.run_id, review.purpose, &re);
+  jdetail = make_review_document(phr->config, err_id, review.contest_id, review.run_id, review.purpose, review.custom_prompt, &re);
   if (!jdetail) {
     http_status = 400;
     err_num = NEW_SRV_ERR_INV_PARAM;
