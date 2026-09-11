@@ -212,7 +212,7 @@ prepare_func(
 
 #include "tables.inc.c"
 
-#define RUN_DB_VERSION 34
+#define RUN_DB_VERSION 35
 
 static int
 do_create(struct rldb_mysql_state *state)
@@ -534,6 +534,10 @@ do_open(struct rldb_mysql_state *state)
       break;
     case 33:
       if (mi->simple_fquery(md, "ALTER TABLE %sreviews ADD COLUMN custom_prompt MEDIUMTEXT DEFAULT NULL AFTER review_log", md->table_prefix) < 0)
+        return -1;
+      break;
+    case 34:
+      if (mi->simple_fquery(md, "ALTER TABLE %sreviews ADD COLUMN options MEDIUMTEXT DEFAULT NULL AFTER custom_prompt", md->table_prefix) < 0)
         return -1;
       break;
     case RUN_DB_VERSION:
@@ -3347,7 +3351,7 @@ change_review_status_func(
   return do_update_entry(cs, run_id, &te, RE_REVIEW_STATUS, ure);
 }
 
-enum { REVIEW_ROW_WIDTH = 47 };
+enum { REVIEW_ROW_WIDTH = 48 };
 #define REVIEW_OFFSET(f) XOFFSET(struct run_review, f)
 
 static const struct common_mysql_parse_spec reviews_spec[REVIEW_ROW_WIDTH] =
@@ -3365,6 +3369,7 @@ static const struct common_mysql_parse_spec reviews_spec[REVIEW_ROW_WIDTH] =
   { 0, 'g', "review_uuid", REVIEW_OFFSET(review_uuid), 0 },
   { EJ_MYSQL_NULLABLE, 's', "moderation_text", REVIEW_OFFSET(moderation_text), 0 },
   { EJ_MYSQL_NULLABLE, 's', "custom_prompt", REVIEW_OFFSET(custom_prompt), 0 },
+  { EJ_MYSQL_NULLABLE, 's', "options", REVIEW_OFFSET(options), 0 },
   { EJ_MYSQL_NULLABLE, 's', "review_source", REVIEW_OFFSET(review_source), 0 },
   { EJ_MYSQL_NULLABLE, 's', "review_agent", REVIEW_OFFSET(review_agent), 0 },
   { EJ_MYSQL_NULLABLE, 's', "review_heartbeat_status", REVIEW_OFFSET(review_heartbeat_status), 0 },

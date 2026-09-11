@@ -1432,6 +1432,7 @@ append_timestamp(cJSON *j, int64_t ts, int date_mode, const unsigned char *name_
 #define RER_review_uuid RER_REVIEW_UUID
 #define RER_moderation_text RER_MODERATION_TEXT
 #define RER_custom_prompt RER_CUSTOM_PROMPT
+#define RER_options RER_OPTIONS
 #define RER_review_source RER_REVIEW_SOURCE
 #define RER_review_agent RER_REVIEW_AGENT
 #define RER_review_heartbeat_status RER_REVIEW_HEARTBEAT_STATUS
@@ -1513,6 +1514,7 @@ json_serialize_run_review(
     }} while (0)
     ADD_STRING(jrr, rr, moderation_text);
     ADD_STRING(jrr, rr, custom_prompt);
+    ADD_STRING(jrr, rr, options);
     ADD_STRING(jrr, rr, review_source);
     ADD_STRING(jrr, rr, review_agent);
     ADD_STRING(jrr, rr, review_heartbeat_status);

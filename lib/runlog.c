@@ -3348,6 +3348,7 @@ run_review_free(struct run_review *rr)
   if (rr) {
     free(rr->moderation_text);
     free(rr->custom_prompt);
+    free(rr->options);
     free(rr->review_source);
     free(rr->review_agent);
     free(rr->review_judge_result);
