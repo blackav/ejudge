@@ -12300,12 +12300,16 @@ priv_list_pending_reviews_json(
   int count = 0;
   struct run_review *reviews = NULL;
   size_t review_count = 0;
+  unsigned err_id = random_u32();
 
   info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
+
+  #define ERR(msg, ...) err("%s:%d:%08x:" msg, __PRETTY_FUNCTION__, __LINE__, err_id ,##__VA_ARGS__)
 
   if (opcaps_check(phr->caps, OPCAP_EXT_REVIEW) < 0) {
     http_status = 403;
     err_num = NEW_SRV_ERR_PERMISSION_DENIED;
+    ERR("no OPCAP_EXT_REVIEW bit");
     goto done;
   }
 
@@ -12316,10 +12320,12 @@ priv_list_pending_reviews_json(
   contest_count = make_contest_id_list(phr, contest_ids_str, &contest_ids);
   if (contest_count < 0) {
     err_num = NEW_SRV_ERR_INV_CONTEST_ID;
+    ERR("invalid contest_ids");
     goto done;
   }
   if (!contest_count) {
     err_num = NEW_SRV_ERR_NO_CONTESTS;
+    ERR("no contest available");
     goto done;
   }
 
@@ -12335,6 +12341,7 @@ priv_list_pending_reviews_json(
   if (run_review_list(cs->runlog_state, &filter, &reviews, &review_count) < 0) {
     http_status = 500;
     err_num = NEW_SRV_ERR_DATABASE_FAILED;
+    ERR("database error");
     goto done;
   }
 
@@ -12359,6 +12366,7 @@ done:;
   if (jr) {
     cJSON_Delete(jr);
   }
+#undef ERR
 }
 
 static int
@@ -13424,15 +13432,6 @@ priv_finish_review_json(
     field_mask |= RER_REVIEW_JUDGE_RESULT;
     out_review.review_judge_result = xstrdup(jcur->valuestring);
     utf8_fix_string(out_review.review_judge_result, NULL);
-  }
-  if ((jcur = cJSON_GetObjectItem(request_json, "agent"))) {
-    if (jcur->type != cJSON_String) {
-      ERR("agent must be string");
-      goto done;
-    }
-    field_mask |= RER_REVIEW_AGENT;
-    out_review.review_agent = xstrdup(jcur->valuestring);
-    utf8_fix_string(out_review.review_agent, NULL);
   }
   if ((jcur = cJSON_GetObjectItem(request_json, "statistics"))) {
     if (jcur->type != cJSON_String) {
