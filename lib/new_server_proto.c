@@ -201,6 +201,7 @@ static const unsigned char * const ns_error_messages[NEW_SRV_ERR_LAST]=
   [NEW_SRV_ERR_RUN_REVIEW_QUOTA_EXCEEDED] = __("Review quota exceeded"),
   [NEW_SRV_ERR_RUN_ALREADY_REVIEWED] = __("Run already reviewed"),
   [NEW_SRV_ERR_RUN_REVIEW_INCOMPLETE] = __("Previous run review not finished"),
+  [NEW_SRV_ERR_RUN_REVIEW_INV_STATE] = __("Run review is in wrong state"),
 };
 
 static const unsigned char * const ns_error_titles[NEW_SRV_ERR_LAST]=
@@ -374,6 +375,7 @@ static const unsigned char * const ns_error_titles[NEW_SRV_ERR_LAST]=
   [NEW_SRV_ERR_RUN_REVIEW_QUOTA_EXCEEDED] = __("Review quota exceeded"),
   [NEW_SRV_ERR_RUN_ALREADY_REVIEWED] = __("Run already reviewed"),
   [NEW_SRV_ERR_RUN_REVIEW_INCOMPLETE] = __("Previous run review not finished"),
+  [NEW_SRV_ERR_RUN_REVIEW_INV_STATE] = __("Run review is in wrong state"),
 };
 
 static const unsigned char * const ns_error_symbols[NEW_SRV_ERR_LAST]=
@@ -546,6 +548,7 @@ static const unsigned char * const ns_error_symbols[NEW_SRV_ERR_LAST]=
   [NEW_SRV_ERR_RUN_REVIEW_QUOTA_EXCEEDED] = "ERR_REVIEW_QUOTA_EXCEEDED",
   [NEW_SRV_ERR_RUN_ALREADY_REVIEWED] = "ERR_ALREADY_REVIEWED",
   [NEW_SRV_ERR_RUN_REVIEW_INCOMPLETE] = "ERR_RUN_REVIEW_INCOMPLETE",
+  [NEW_SRV_ERR_RUN_REVIEW_INV_STATE] = "ERR_RUN_REVIEW_INV_STATE",
 };
 
 const unsigned char *

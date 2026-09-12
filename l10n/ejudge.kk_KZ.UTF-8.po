@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-29 07:08+0300\n"
+"POT-Creation-Date: 2026-09-12 03:29+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Kazakh <uk@li.org>\n"
@@ -3395,6 +3395,9 @@ msgid "Run review"
 msgstr ""
 
 msgid "Run review for user"
+msgstr ""
+
+msgid "Run review is in wrong state"
 msgstr ""
 
 msgid "Run selection"

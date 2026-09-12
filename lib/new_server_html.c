@@ -13034,6 +13034,12 @@ priv_start_review_json(
     goto done;
   }
 
+  // switch to the correct contest
+  extra = ns_get_contest_extra(review_cnts, phr->config);
+  ASSERT(extra);
+  cs = extra->serve_state;
+  ASSERT(cs);
+
   struct run_entry re = {};
   jdetail = make_review_document(phr->config, err_id, review.contest_id, review.run_id, review.purpose, review.custom_prompt, review.options, &re);
   if (!jdetail) {
@@ -14004,6 +14010,172 @@ done:;
 #undef ERR
 }
 
+static void
+priv_review_operation_json(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  serve_state_t cs = extra->serve_state;
+  cJSON *jr = cJSON_CreateObject();
+  int ok = 0;
+  int err_num = NEW_SRV_ERR_INV_PARAM;
+  const unsigned char *err_msg = NULL;
+  int http_status = 400;
+  unsigned err_id = random_u32();
+  const unsigned char *s;
+  int run_id;
+  struct run_entry re;
+  int operation = 0;
+  struct run_review review = {};
+
+  info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
+
+  #define ERR(msg, ...) err("%s:%d:%08x:" msg, __PRETTY_FUNCTION__, __LINE__, err_id ,##__VA_ARGS__)
+
+  if (opcaps_check(phr->caps, OPCAP_PREMOD_REVIEW) < 0) {
+    http_status = 403;
+    err_num = NEW_SRV_ERR_PERMISSION_DENIED;
+    ERR("no OPCAP_PREMOD_REVIEW permission");
+    goto done;
+  }
+
+  if (hr_cgi_param(phr, "run_id", &s) <= 0 || !s) {
+    http_status = 400;
+    err_num = NEW_SRV_ERR_INV_CONTEST_ID;
+    ERR("run_id unset or binary");
+    goto done;
+  }
+  {
+    char *eptr = NULL;
+    errno = 0;
+    long v = strtol(s, &eptr, 10);
+    if (errno || *eptr || eptr == (char*) s || (int) v != v || v < 0) {
+      http_status = 400;
+      err_num = NEW_SRV_ERR_INV_CONTEST_ID;
+      ERR("run_id is invalid");
+      goto done;
+    }
+    run_id = v;
+  }
+  if (run_id >= run_get_total(cs->runlog_state)) {
+    http_status = 400;
+    err_num = NEW_SRV_ERR_INV_CONTEST_ID;
+    ERR("run_id is out of range");
+    goto done;
+  }
+  if (run_get_entry(cs->runlog_state, run_id, &re) < 0) {
+    http_status = 400;
+    err_num = NEW_SRV_ERR_INV_CONTEST_ID;
+    ERR("no entry with run_id %d", run_id);
+    goto done;
+  }
+  if (re.status == RUN_EMPTY || re.status == RUN_VIRTUAL_START || re.status == RUN_VIRTUAL_STOP) {
+    http_status = 400;
+    err_num = NEW_SRV_ERR_INV_CONTEST_ID;
+    ERR("invalid status for run_id %d: %d", run_id, re.status);
+    goto done;
+  }
+  hr_cgi_param_int_opt(phr, "operation", &operation, 0);
+  if (!operation) goto success;
+  if (operation != 1) {
+    http_status = 400;
+    err_num = NEW_SRV_ERR_INV_PARAM;
+    ERR("invalid operation %d", operation);
+    goto done;
+
+  }
+
+
+  if (re.review_gen == 0 && re.hidden_review_gen == 0) {
+    goto success;
+  }
+  if (re.review_gen == 0 && re.hidden_review_gen != 0) {
+    if (re.hidden_review_status != RERS_COMPLETE) {
+      http_status = 400;
+      err_num = NEW_SRV_ERR_RUN_REVIEW_INV_STATE;
+      ERR("invalid status for run_id %d: %d", run_id, re.status);
+      goto done;
+    }
+    if (run_review_fetch_by_crg(cs->runlog_state, run_id, re.hidden_review_gen,
+      RER_REVIEW_UUID | RER_PURPOSE, &review) < 0) {
+      http_status = 500;
+      err_num = NEW_SRV_ERR_DATABASE_FAILED;
+      goto done;
+    }
+    review.purpose = RERP_REVIEW;
+    struct run_review_filter filter =
+    {
+      .run_id = -1,
+      .review_uuid = review.review_uuid,
+    };
+    if (run_review_update(cs->runlog_state, &review, RER_PURPOSE,  &filter) < 0) {
+      http_status = 500;
+      err_num = NEW_SRV_ERR_DATABASE_FAILED;
+      goto done;
+    }
+    if (run_change_review_status(cs->runlog_state, run_id, re.hidden_review_status, re.hidden_review_gen, 0, 0, NULL) < 0) {
+      http_status = 500;
+      err_num = NEW_SRV_ERR_DATABASE_FAILED;
+      goto done;
+    }
+    goto success;
+  }
+  if (re.review_gen != 0 && re.hidden_review_gen == 0) {
+    if (re.review_status != RERS_COMPLETE) {
+      http_status = 400;
+      err_num = NEW_SRV_ERR_RUN_REVIEW_INV_STATE;
+      ERR("invalid status for run_id %d: %d", run_id, re.status);
+      goto done;
+    }
+    if (run_review_fetch_by_crg(cs->runlog_state, run_id, re.review_gen,
+      RER_REVIEW_UUID | RER_PURPOSE, &review) < 0) {
+      http_status = 500;
+      err_num = NEW_SRV_ERR_DATABASE_FAILED;
+      goto done;
+    }
+    review.purpose = RERP_JUDGE_HELP;
+    struct run_review_filter filter =
+    {
+      .run_id = -1,
+      .review_uuid = review.review_uuid,
+    };
+    if (run_review_update(cs->runlog_state, &review, RER_PURPOSE,  &filter) < 0) {
+      http_status = 500;
+      err_num = NEW_SRV_ERR_DATABASE_FAILED;
+      goto done;
+    }
+    if (run_change_review_status(cs->runlog_state, run_id, 0, 0, re.review_status, re.review_gen, NULL) < 0) {
+      http_status = 500;
+      err_num = NEW_SRV_ERR_DATABASE_FAILED;
+      goto done;
+    }
+    goto success;
+  }
+  if (re.review_gen != 0 && re.hidden_review_gen != 0) {
+    http_status = 400;
+    err_num = NEW_SRV_ERR_NOT_SUPPORTED;
+    ERR("both visible and hidden reviews present");
+    goto done;
+  }
+
+success:;
+  ok = 1;
+  err_num = 0;
+  http_status = 200;
+
+done:;
+  phr->json_reply = 1;
+  phr->status_code = http_status;
+  emit_json_result(fout, phr, ok, err_num, err_id, err_msg, jr);
+  if (jr) {
+    cJSON_Delete(jr);
+  }
+  run_review_free(&review);
+#undef ERR
+}
+
 typedef PageInterface *(*external_action_handler_t)(void);
 
 typedef int (*new_action_handler_t)(
@@ -14263,6 +14435,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_GET_ACTIVE_REVIEW_JSON] = priv_get_active_review_json,
   [NEW_SRV_ACTION_POSTAPPROVE_JSON] = NULL,
   [NEW_SRV_ACTION_REVIEW_DISPLAYED_2] = priv_generic_operation,
+  [NEW_SRV_ACTION_REVIEW_OPERATION_JSON] = priv_review_operation_json,
 };
 
 static const unsigned char * const external_priv_action_names[NEW_SRV_ACTION_LAST] =

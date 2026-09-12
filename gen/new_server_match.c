@@ -8773,37 +8773,42 @@ int ns_match_action(const unsigned char *str)
                         } else if (c < 's') {
                           if (c == '-') {
                             c = str[7];
-                            if (c == 'd') {
+                            if (c == 'o') {
                               c = str[8];
-                              if (c == 'i') {
+                              if (c == 'p') {
                                 c = str[9];
-                                if (c == 's') {
+                                if (c == 'e') {
                                   c = str[10];
-                                  if (c == 'p') {
+                                  if (c == 'r') {
                                     c = str[11];
-                                    if (c == 'l') {
+                                    if (c == 'a') {
                                       c = str[12];
-                                      if (c == 'a') {
+                                      if (c == 't') {
                                         c = str[13];
-                                        if (c == 'y') {
+                                        if (c == 'i') {
                                           c = str[14];
-                                          if (c == 'e') {
+                                          if (c == 'o') {
                                             c = str[15];
-                                            if (c == 'd') {
+                                            if (c == 'n') {
                                               c = str[16];
                                               if (c == '-') {
                                                 c = str[17];
-                                                if (c == '2') {
+                                                if (c == 'j') {
                                                   c = str[18];
-                                                  if (!c) return NEW_SRV_ACTION_REVIEW_DISPLAYED_2;
-                                                  return 0;
-                                                } else if (c < '2') {
-                                                  if (c == '1') {
-                                                    c = str[18];
-                                                    if (!c) return NEW_SRV_ACTION_REVIEW_DISPLAYED_1;
+                                                  if (c == 's') {
+                                                    c = str[19];
+                                                    if (c == 'o') {
+                                                      c = str[20];
+                                                      if (c == 'n') {
+                                                        c = str[21];
+                                                        if (!c) return NEW_SRV_ACTION_REVIEW_OPERATION_JSON;
+                                                        return 0;
+                                                      }
+                                                      return 0;
+                                                    }
                                                     return 0;
                                                   }
-                                                } else {
+                                                  return 0;
                                                 }
                                                 return 0;
                                               }
@@ -8824,6 +8829,60 @@ int ns_match_action(const unsigned char *str)
                                 return 0;
                               }
                               return 0;
+                            } else if (c < 'o') {
+                              if (c == 'd') {
+                                c = str[8];
+                                if (c == 'i') {
+                                  c = str[9];
+                                  if (c == 's') {
+                                    c = str[10];
+                                    if (c == 'p') {
+                                      c = str[11];
+                                      if (c == 'l') {
+                                        c = str[12];
+                                        if (c == 'a') {
+                                          c = str[13];
+                                          if (c == 'y') {
+                                            c = str[14];
+                                            if (c == 'e') {
+                                              c = str[15];
+                                              if (c == 'd') {
+                                                c = str[16];
+                                                if (c == '-') {
+                                                  c = str[17];
+                                                  if (c == '2') {
+                                                    c = str[18];
+                                                    if (!c) return NEW_SRV_ACTION_REVIEW_DISPLAYED_2;
+                                                    return 0;
+                                                  } else if (c < '2') {
+                                                    if (c == '1') {
+                                                      c = str[18];
+                                                      if (!c) return NEW_SRV_ACTION_REVIEW_DISPLAYED_1;
+                                                      return 0;
+                                                    }
+                                                  } else {
+                                                  }
+                                                  return 0;
+                                                }
+                                                return 0;
+                                              }
+                                              return 0;
+                                            }
+                                            return 0;
+                                          }
+                                          return 0;
+                                        }
+                                        return 0;
+                                      }
+                                      return 0;
+                                    }
+                                    return 0;
+                                  }
+                                  return 0;
+                                }
+                                return 0;
+                              }
+                            } else {
                             }
                             return 0;
                           }

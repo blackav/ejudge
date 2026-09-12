@@ -365,4 +365,5 @@ const unsigned char * const ns_symbolic_action_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_POSTAPPROVE_PAGE] = "postapprove-page",
   [NEW_SRV_ACTION_REVIEW_DISPLAYED_1] = "review-displayed-1",
   [NEW_SRV_ACTION_REVIEW_DISPLAYED_2] = "review-displayed-2",
+  [NEW_SRV_ACTION_REVIEW_OPERATION_JSON] = "review-operation-json",
 };
