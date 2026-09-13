@@ -91,6 +91,7 @@
 #include "ejudge/logger.h"
 #include "ejudge/osdeps.h"
 
+#include <bits/types/struct_timeval.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
@@ -14029,6 +14030,7 @@ priv_review_operation_json(
   struct run_entry re;
   int operation = 0;
   struct run_review review = {};
+  struct run_review review2 = {};
 
   info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
 
@@ -14079,15 +14081,191 @@ priv_review_operation_json(
   }
   hr_cgi_param_int_opt(phr, "operation", &operation, 0);
   if (!operation) goto success;
+  if (operation == 2 || operation == 3) {
+    // 2 - swap and reject
+    // 3 - swap and ok
+    if (re.hidden_review_gen == 0 || re.status != RUN_PENDING_REVIEW) {
+      goto success;
+    }
+    if (re.hidden_review_status != RERS_COMPLETE) {
+      http_status = 400;
+      err_num = NEW_SRV_ERR_RUN_REVIEW_INV_STATE;
+      ERR("invalid status for run %d review: %d", run_id, re.hidden_review_status);
+      goto done;
+    }
+    if (re.review_gen && re.review_status != RERS_COMPLETE && re.review_status != RERS_CANCELED && re.review_status != RERS_FAILED) {
+      http_status = 400;
+      err_num = NEW_SRV_ERR_RUN_REVIEW_INV_STATE;
+      ERR("invalid status for run %d review: %d", run_id, re.review_status);
+      goto done;
+    }
+    int saved_review_gen = re.review_gen;
+    int saved_review_status = re.review_status;
+    int saved_hidden_review_gen = re.hidden_review_gen;
+    int saved_hidden_review_status = re.hidden_review_status;
+    if (run_review_fetch_by_crg(cs->runlog_state, run_id, re.hidden_review_gen, RER_REVIEW_UUID | RER_PURPOSE, &review) < 0) {
+      http_status = 500;
+      err_num = NEW_SRV_ERR_DATABASE_FAILED;
+      goto done;
+    }
+    if (re.review_gen) {
+      if (run_review_fetch_by_crg(cs->runlog_state, run_id, re.review_gen, RER_REVIEW_UUID | RER_PURPOSE, &review2) < 0) {
+        http_status = 500;
+        err_num = NEW_SRV_ERR_DATABASE_FAILED;
+        goto done;
+      }
+    }
+    review.purpose = RERP_REVIEW;
+    struct run_review_filter filter =
+    {
+      .run_id = -1,
+      .review_uuid = review.review_uuid,
+    };
+    if (run_review_update(cs->runlog_state, &review, RER_PURPOSE,  &filter) < 0) {
+      http_status = 500;
+      err_num = NEW_SRV_ERR_DATABASE_FAILED;
+      goto done;
+    }
+    if (re.review_gen) {
+      review2.purpose = RERP_JUDGE_HELP;
+      struct run_review_filter filter =
+      {
+        .run_id = -1,
+        .review_uuid = review2.review_uuid,
+      };
+      if (run_review_update(cs->runlog_state, &review2, RER_PURPOSE,  &filter) < 0) {
+        http_status = 500;
+        err_num = NEW_SRV_ERR_DATABASE_FAILED;
+        goto done;
+      }
+    }
+    unsigned char subject[256];
+    snprintf(subject, sizeof(subject), "%d %s", run_id, _("is commented"));
+    unsigned char text[256];
+    snprintf(text, sizeof(text), "Subject: %s\n\nSee the detailed report.\n", subject);
+    int text_len = strlen(text);
+    int old_status = re.status + 1;
+    int new_status = 0;
+    if (operation == 2) {
+      new_status = RUN_REJECTED + 1;
+    } else if (operation == 3) {
+      new_status = RUN_OK + 1;
+    } else {
+      abort();
+    }
+    ej_uuid_t clar_uuid = {};
+    struct timeval precise_time;
+    gettimeofday(&precise_time, 0);
+    int clar_id = clar_add_record(cs->clarlog_state, precise_time.tv_sec, precise_time.tv_usec, text_len, &phr->ip, phr->ssl_flag,
+      0, re.user_id, 0, phr->user_id, 0, phr->locale_id, 0, NULL,
+      run_id + 1, &re.run_uuid, 0, old_status, new_status, 1, NULL, subject, &clar_uuid);
+    if (clar_id < 0) {
+      http_status = 500;
+      err_num = NEW_SRV_ERR_CLARLOG_UPDATE_FAILED;
+      ERR("clar_add_record failed");
+      goto done;
+    }
+    if (clar_add_text(cs->clarlog_state, clar_id, &clar_uuid, text, text_len) < 0) {
+      http_status = 500;
+      err_num = NEW_SRV_ERR_CLARLOG_UPDATE_FAILED;
+      ERR("clar_add_text failed");
+      goto done;
+    }
+    if (operation == 2) {
+      if (run_change_status_4(cs->runlog_state, run_id, RUN_REJECTED, &re) < 0) {
+        http_status = 500;
+        err_num = NEW_SRV_ERR_RUNLOG_UPDATE_FAILED;
+        ERR("run_change_status_4 failed");
+        goto done;
+      }
+      serve_notify_run_update(phr->config, cs, &re);
+    } else if (operation == 3) {
+    struct section_problem_data *prob = 0;
+      int full_score = 0;
+      int user_status = 0, user_score = 0;
+      if (re.prob_id > 0 && re.prob_id <= cs->max_prob) prob = cs->probs[re.prob_id];
+      if (prob) full_score = prob->full_score;
+      if (cs->global->separate_user_score > 0 && re.is_saved) {
+        user_status = RUN_OK;
+        user_score = -1;
+        if (prob) user_score = prob->full_user_score;
+        if (prob && user_score < 0) user_score = prob->full_score;
+        if (user_score < 0) user_score = 0;
+      }
+      int res = run_change_status_3(cs->runlog_state, run_id, RUN_OK, re.test, re.passed_mode, full_score, 0,
+        re.saved_score, user_status, re.saved_test, user_score, re.verdict_bits, -2, NULL, &re);
+      if (res < 0) {
+        http_status = 500;
+        err_num = NEW_SRV_ERR_RUNLOG_UPDATE_FAILED;
+        ERR("run_change_status_3 failed");
+        goto done;
+      }
+      serve_notify_run_update(phr->config, cs, &re);
+    } else {
+      abort();
+    }
+    if (run_change_review_status(cs->runlog_state, run_id, saved_hidden_review_status, saved_hidden_review_gen, saved_review_status, saved_review_gen, NULL) < 0) {
+      http_status = 500;
+      err_num = NEW_SRV_ERR_RUNLOG_UPDATE_FAILED;
+      ERR("run_change_review_status failed");
+      goto done;
+    }
+    const unsigned char *audit_cmd = NULL;
+    if (operation == 2) {
+      audit_cmd = "external-comment-run-reject";
+    } else if (operation == 3) {
+      audit_cmd = "external-comment-run-ok";
+    } else {
+      abort();
+    }
+    serve_audit_log(cs, run_id, &re, phr->user_id, &phr->ip, phr->ssl_flag, audit_cmd, "ok", new_status-1, NULL);
+
+    if (cs->global->notify_clar_reply) {
+      unsigned char nsubj[1024];
+      FILE *msg_f = 0;
+      char *msg_t = 0;
+      size_t msg_z = 0;
+
+      if (cnts->default_locale_num > 0)
+        l10n_setlocale(cnts->default_locale_num);
+      snprintf(nsubj, sizeof(nsubj),
+              _("Your submit has been commented in contest %d"),
+              cnts->id);
+      msg_f = open_memstream(&msg_t, &msg_z);
+      if (operation == 2) {
+        fprintf(msg_f, _("Your submit has been commented and rejected\n"));
+      } else if (operation == 3) {
+        fprintf(msg_f, _("Your submit has been commented and accepted\n"));
+      } else {
+        abort();
+      }
+      fprintf(msg_f, _("Contest: %d (%s)\n"), cnts->id, cnts->name);
+      fprintf(msg_f, "Run Id: %d\n", run_id);
+      if (cnts->team_url) {
+        fprintf(msg_f, "URL: %s?contest_id=%d&login=%s\n", cnts->team_url,
+                cnts->id, teamdb_get_login(cs->teamdb_state, re.user_id));
+      }
+      // TODO: include report here?
+      fprintf(msg_f, "%s\n", "See detailed report in ejudge.");
+      fprintf(msg_f, "\n-\nRegards,\nthe ejudge contest management system (www.ejudge.ru)\n");
+      close_memstream(msg_f); msg_f = 0;
+      l10n_resetlocale();
+      serve_send_email_to_user(ejudge_config, cnts, cs, re.user_id, nsubj, msg_t);
+      xfree(msg_t); msg_t = 0; msg_z = 0;
+    }
+
+    if (cnts->enable_user_telegram > 0 && !re.is_hidden) {
+      serve_telegram_user_run_reviewed(ejudge_config, cnts, cs, re.user_id, run_id, new_status-1);
+    }
+
+    goto success;
+  }
   if (operation != 1) {
     http_status = 400;
     err_num = NEW_SRV_ERR_INV_PARAM;
     ERR("invalid operation %d", operation);
     goto done;
-
   }
-
-
   if (re.review_gen == 0 && re.hidden_review_gen == 0) {
     goto success;
   }
@@ -14095,7 +14273,7 @@ priv_review_operation_json(
     if (re.hidden_review_status != RERS_COMPLETE) {
       http_status = 400;
       err_num = NEW_SRV_ERR_RUN_REVIEW_INV_STATE;
-      ERR("invalid status for run_id %d: %d", run_id, re.status);
+      ERR("invalid status for run %d review: %d", run_id, re.hidden_review_status);
       goto done;
     }
     if (run_review_fetch_by_crg(cs->runlog_state, run_id, re.hidden_review_gen,
@@ -14173,6 +14351,7 @@ done:;
     cJSON_Delete(jr);
   }
   run_review_free(&review);
+  run_review_free(&review2);
 #undef ERR
 }
 

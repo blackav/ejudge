@@ -759,6 +759,41 @@ $(function() {
   }
 %>
 
+<script type="text/javascript">
+function doReviewOperation(operation) {
+  $.ajax({
+    type: "POST",
+    url: self_url,
+    data: {
+      SID: SID,
+      action: review_operation_json_ac,
+      run_id: <s:v value="run_id" />,
+      operation: operation
+    },
+    contentType: "application/x-www-form-urlencoded; charset=utf-8",
+    dataType: "json",
+    success: function(data) {
+      if (data.ok) {
+        window.location.reload();
+        return;
+      }
+      if (data.error && data.error.message) {
+        alert(data.error.message + ", log_id: " + data.error.log_id);
+      } else {
+        alert("request failed");
+      }
+    },
+    error: function(data) {
+      if (data.responseJSON && data.responseJSON.error && data.responseJSON.error.message) {
+        alert(data.responseJSON.error.message + ", log_id: " + data.responseJSON.error.log_id);
+      } else {
+        alert("request failed");
+      }
+    }
+  });
+}
+</script>
+
 <%
   if (re.review_gen || re.hidden_review_gen) {
 %>
@@ -769,36 +804,31 @@ $(function() {
     label: "Swap Reviews"
   });
   $("#SwapReviewsButton").on("click", function() {
-    $.ajax({
-      type: "POST",
-      url: self_url,
-      data: {
-        SID: SID,
-        action: review_operation_json_ac,
-        run_id: <s:v value="run_id" />,
-        operation: 1
-      },
-      contentType: "application/x-www-form-urlencoded; charset=utf-8",
-      dataType: "json",
-      success: function(data) {
-        if (data.ok) {
-          window.location.reload();
-          return;
-        }
-        if (data.error && data.error.message) {
-          alert(data.error.message + ", log_id: " + data.error.log_id);
-        } else {
-          alert("request failed");
-        }
-      },
-      error: function(data) {
-        if (data.responseJSON && data.responseJSON.error && data.responseJSON.error.message) {
-          alert(data.responseJSON.error.message + ", log_id: " + data.responseJSON.error.log_id);
-        } else {
-          alert("request failed");
-        }
-      }
-    });
+    doReviewOperation(1);
+  });
+});
+</script>
+<%
+  }
+%>
+
+<%
+  if (re.hidden_review_gen && re.status == RUN_PENDING_REVIEW) {
+%>
+<div><button id="SwapAndRejectButton"></button><button id="SwapAndOkButton"></button></div>
+<script type="text/javascript">
+$(function() {
+  $("#SwapAndRejectButton").button({
+    label: "Swap Reviews and Reject Run"
+  });
+  $("#SwapAndRejectButton").on("click", function() {
+    doReviewOperation(2);
+  });
+  $("#SwapAndOkButton").button({
+    label: "Swap Reviews and Ok run"
+  });
+  $("#SwapAndOkButton").on("click", function() {
+    doReviewOperation(3);
   });
 });
 </script>
