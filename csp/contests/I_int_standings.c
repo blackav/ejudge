@@ -1222,7 +1222,7 @@ csp_execute_int_standings(
         for (int k = pg->r_beg; k < pg->r_tot; k++) {
             if (pg->runs[k].status == RUN_EMPTY) continue;
             if (pg->runs[k].is_hidden) continue;
-            if(pg->runs[k].user_id <= 0 && pg->runs[k].user_id >= pg->t_max) continue;
+            if(pg->runs[k].user_id <= 0 || pg->runs[k].user_id >= pg->t_max) continue;
             t_runs[pg->runs[k].user_id] = 1;
         }
     } else {

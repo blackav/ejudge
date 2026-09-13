@@ -115,10 +115,73 @@ static const struct mime_type_info mime_types[MIME_TYPE_LAST] =
     ".docx",
     "Microsoft Word 2007+",
   },
+  [MIME_TYPE_OFFICE_ODT] =
+  {
+    "application/vnd.oasis.opendocument.text",
+    ".odt",
+    "OpenDocument Text",
+  },
+  [MIME_TYPE_OFFICE_ODS] =
+  {
+    "application/vnd.oasis.opendocument.spreadsheet",
+    ".ods",
+    "OpenDocument Spreadsheet",
+  },
+  [MIME_TYPE_OFFICE_ODP] =
+  {
+    "application/vnd.oasis.opendocument.presentation",
+    ".odp",
+    "OpenDocument Presentation",
+  },
+  [MIME_TYPE_OFFICE_ODG] =
+  {
+    "application/vnd.oasis.opendocument.graphics",
+    ".odg",
+    "OpenDocument Graphics",
+  },
+  [MIME_TYPE_OFFICE_ODC] =
+  {
+    "application/vnd.oasis.opendocument.chart",
+    ".odc",
+    "OpenDocument Chart",
+  },
+  [MIME_TYPE_OFFICE_ODF] =
+  {
+    "application/vnd.oasis.opendocument.formula",
+    ".odf",
+    "OpenDocument Formula",
+  },
+  [MIME_TYPE_OFFICE_ODI] =
+  {
+    "application/vnd.oasis.opendocument.image",
+    ".odi",
+    "OpenDocument Image",
+  },
+  [MIME_TYPE_OFFICE_ODM] =
+  {
+    "application/vnd.oasis.opendocument.text-master",
+    ".odm",
+    "OpenDocument Master Document",
+  },
+  [MIME_TYPE_OFFICE_ODB] =
+  {
+    "application/vnd.oasis.opendocument.base",
+    ".odb",
+    "OpenDocument Database",
+  },
 };
 
 static const int mime_check_order[] =
 {
+  MIME_TYPE_OFFICE_ODT,
+  MIME_TYPE_OFFICE_ODS,
+  MIME_TYPE_OFFICE_ODP,
+  MIME_TYPE_OFFICE_ODG,
+  MIME_TYPE_OFFICE_ODC,
+  MIME_TYPE_OFFICE_ODF,
+  MIME_TYPE_OFFICE_ODI,
+  MIME_TYPE_OFFICE_ODM,
+  MIME_TYPE_OFFICE_ODB,
   MIME_TYPE_OFFICE_PPTX,
   MIME_TYPE_OFFICE_XLSX,
   MIME_TYPE_OFFICE_DOCX,

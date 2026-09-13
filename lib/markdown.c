@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2025 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2025-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -80,4 +80,44 @@ done:;
     if (fhtml) fclose(fhtml);
     free(bhtml);
     return retval;
+}
+
+int
+markdown_parse_str(
+        const unsigned char *str,
+        struct md_content *res)
+{
+    int retval = -1;
+    FILE *fhtml = 0;
+    char *bhtml = 0;
+    size_t zhtml = 0;
+
+    memset(res, 0, sizeof(*res));
+    res->path = xstrdup("str");
+    size_t zstr = strlen(str);
+
+    fhtml = open_memstream(&bhtml, &zhtml);
+    if (!fhtml) goto done;
+    unsigned parser_flags = MD_FLAG_LATEXMATHSPANS;
+    unsigned renderer_flags = MD_HTML_FLAG_SKIP_UTF8_BOM | MD_HTML_FLAG_MATHJAX;
+    if (md_html(str, zstr, output_func, fhtml, parser_flags, renderer_flags) < 0) {
+        goto done;
+    }
+    fclose(fhtml); fhtml = NULL;
+
+    res->data = bhtml; bhtml = NULL;
+    res->size = zhtml; zhtml = 0;
+    retval = 0;
+
+done:;
+    if (fhtml) fclose(fhtml);
+    free(bhtml);
+    return retval;
+}
+
+void
+markdown_free(struct md_content *md)
+{
+    free(md->path);
+    free(md->data);
 }

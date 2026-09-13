@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2008-2024 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -257,3 +257,60 @@ static const int *
 get_group_scores_func(
         struct rldb_plugin_cnts *cdata,
         uint32_t index);
+
+static int
+change_review_status_func(
+        struct rldb_plugin_cnts *cdata,
+        int run_id,
+        int review_status,
+        int review_gen,
+        int hidden_review_status,
+        int hidden_review_gen,
+        struct run_entry *ure);
+
+static int
+create_review_func(
+        struct rldb_plugin_cnts *cdata,
+        int64_t run_serial_id,
+        int run_id,
+        int generation,
+        int status,
+        int purpose,
+        int requested_by,
+        int need_full,
+        struct run_review *p_result);
+
+static int
+fetch_review_func(
+        struct rldb_plugin_cnts *cdata,
+        const ej_uuid_t *p_uuid,
+        uint64_t field_mask,
+        struct run_review *p_result);
+
+static int
+list_reviews_func(
+        struct rldb_plugin_cnts *cdata,
+        const struct run_review_filter *filter,
+        struct run_review **p_result,
+        size_t *p_count);
+
+static int
+update_reviews_func(
+        struct rldb_plugin_cnts *cdata,
+        const struct run_review *rr,
+        uint64_t field_mask,
+        const struct run_review_filter *filter);
+
+static int
+fetch_review_by_crg_func(
+        struct rldb_plugin_cnts *cdata,
+        int run_id,
+        int generation,
+        uint64_t field_mask,
+        struct run_review *p_result);
+
+static int
+update_review_view_counter_func(
+        struct rldb_plugin_cnts *cdata,
+        int run_id,
+        int generation);

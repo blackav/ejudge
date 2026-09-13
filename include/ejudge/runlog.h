@@ -2,7 +2,7 @@
 #ifndef __RUNLOG_H__
 #define __RUNLOG_H__
 
-/* Copyright (C) 2000-2024 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -308,7 +308,8 @@ enum
     RE_EXT_USER      = 0x800000000ULL,
     RE_NOTIFY        = 0x1000000000ULL,
     RE_GROUP_SCORES  = 0x2000000000ULL,
-    RE_ALL           = 0x3FFFFFFFFFULL,
+    RE_REVIEW_STATUS = 0x4000000000ULL,
+    RE_ALL           = 0x7FFFFFFFFFULL,
   };
 
 struct run_entry
@@ -331,7 +332,8 @@ struct run_entry
   unsigned int   is_saved:1;
   unsigned int   is_checked:1;
   unsigned int   is_vcs:1;
-  unsigned int   _pad2:21;
+  unsigned int   is_help_review:1;
+  unsigned int   _pad2:20;
   rint32_t       score;         /* 4 */
   unsigned char  status;        /* 1 */
   signed char    passed_mode;   /* 1 */
@@ -372,7 +374,10 @@ struct run_entry
   ruint32_t      verdict_bits;  /* 4 */
   rint64_t       last_change_us;/* 8 */
   ruint32_t      group_scores;  /* 4 */
-  char _pad1[4];
+  unsigned char  review_status; /* 1 */
+  unsigned char  review_gen;    /* 1 */
+  unsigned char  hidden_review_status; /* 1 */
+  unsigned char  hidden_review_gen;    /* 1 */
   ej_mixed_id_t  ext_user;      /* 16 */
   ej_mixed_id_t  notify_queue;  /* 16 */
   char _pad[32];
@@ -611,6 +616,10 @@ static inline _Bool __attribute__((always_inline)) run_is_pseudo_status(unsigned
   return status >= RUN_PSEUDO_FIRST && status <= RUN_PSEUDO_LAST;
 }
 
+_Bool run_is_status_for_user_review(int status);
+_Bool run_is_status_for_user_help(int status);
+_Bool run_is_status_for_judge_help(int status);
+
 void
 group_scores_merge_1(
         int *p_group_count,
@@ -622,5 +631,252 @@ group_scores_calc(
         int group_count,
         const int *group_scores,
         int separate_user_score);
+
+int
+run_change_review_status(
+        runlog_state_t state,
+        int run_id,
+        int review_status,
+        int review_gen,
+        int hidden_review_status,
+        int hidden_review_gen,
+        struct run_entry *ure);
+
+// review status
+enum
+{
+  RERS_REQUESTED_REVIEW = 1,
+  RERS_WAITING_REVIEW,
+  RERS_REVIEWING,
+  RERS_WAITING_APPROVAL,
+  RERS_COMPLETE,
+  RERS_CANCELED,
+  RERS_FAILED,
+
+  RERS_LAST,
+};
+
+// review purpose
+enum
+{
+  RERP_REVIEW = 1,
+  RERP_HELP,
+  RERP_JUDGE_HELP,
+
+  RERP_LAST,
+};
+
+enum
+{
+  RER_SERIAL_ID = 0x1ULL,
+  RER_RUN_SERIAL_ID = 0x2ULL,
+  RER_CREATION_TIME = 0x4ULL,
+  RER_LAST_UPDATE_TIME = 0x8ULL,
+  RER_MODERATION_TIME = 0x10ULL,
+  RER_REVIEW_START_TIME = 0x20ULL,
+  RER_REVIEW_HEARTBEAT_TIME = 0x40ULL,
+  RER_REVIEW_FINISH_TIME = 0x80ULL,
+  RER_APPROVAL_TIME = 0x100ULL,
+  RER_USER_OPENED_TIME = 0x200ULL,
+  RER_REVIEW_UUID = 0x400ULL,
+  RER_MODERATION_TEXT = 0x800ULL,
+  RER_CUSTOM_PROMPT = 0x1000ULL,
+  RER_OPTIONS = 0x2000ULL,
+  RER_REVIEW_SOURCE = 0x4000ULL,
+  RER_REVIEW_AGENT = 0x8000ULL,
+  RER_REVIEW_HEARTBEAT_STATUS = 0x10000ULL,
+  RER_REVIEW_RESULT = 0x20000ULL,
+  RER_REVIEW_JUDGE_RESULT = 0x40000ULL,
+  RER_REVIEW_STATISTICS = 0x80000ULL,
+  RER_REVIEW_LOG = 0x100000ULL,
+  RER_APPROVED_TEXT = 0x200000ULL,
+  RER_JUDGE_APPROVED_TEXT = 0x400000ULL,
+  RER_MODEL = 0x800000ULL,
+  RER_APPROVER_FEEDBACK = 0x1000000ULL,
+  RER_USER_FEEDBACK = 0x2000000ULL,
+  RER_REVIEW_SOURCE_SHA256 = 0x4000000ULL,
+  RER_CONTEST_ID = 0x8000000ULL,
+  RER_RUN_ID = 0x10000000ULL,
+  RER_REQUEST_USER_ID = 0x20000000ULL,
+  RER_MODERATOR_USER_ID = 0x40000000ULL,
+  RER_REVIEWER_USER_ID = 0x80000000ULL,
+  RER_APPROVER_USER_ID = 0x100000000ULL,
+  RER_INPUT_TOKENS = 0x200000000ULL,
+  RER_CACHED_INPUT_TOKENS = 0x400000000ULL,
+  RER_OUPUT_TOKENS = 0x800000000ULL,
+  RER_REASONING_TOKENS = 0x1000000000ULL,
+  RER_TOTAL_TOKENS = 0x2000000000ULL,
+  RER_GENERATION = 0x4000000000ULL,
+  RER_STATUS = 0x8000000000ULL,
+  RER_PURPOSE = 0x10000000000ULL,
+  RER_REVIEW_RECOMMENDED_STATUS = 0x20000000000ULL,
+  RER_APPROVER_REVIEW_MARK = 0x40000000000ULL,
+  RER_USER_OPENED_COUNT = 0x80000000000ULL,
+  RER_USER_REVIEW_MARK = 0x100000000000ULL,
+  RER_REVIEW_APPROVED_AS_IS = 0x200000000000ULL,
+  RER_STATUS_APPROVED_AS_IS = 0x400000000000ULL,
+  RER_AI_GENERATION_SCORE = 0x800000000000ULL,
+
+  RER_ALL = 0xFFFFFFFFFFFFULL,
+};
+
+struct run_review
+{
+  int64_t serial_id;
+  int64_t run_serial_id;
+  int64_t creation_time;
+  int64_t last_update_time;
+  int64_t moderation_time;
+  int64_t review_start_time;
+  int64_t review_heartbeat_time;
+  int64_t review_finish_time;
+  int64_t approval_time;
+  int64_t user_opened_time;
+  ej_uuid_t review_uuid;
+  unsigned char *moderation_text;
+  unsigned char *custom_prompt;
+  unsigned char *options;
+  unsigned char *review_source;
+  unsigned char *review_agent;
+  unsigned char *review_heartbeat_status;
+  unsigned char *review_result;
+  unsigned char *review_judge_result;
+  unsigned char *review_statistics;
+  unsigned char *review_log;
+  unsigned char *approved_text;
+  unsigned char *judge_approved_text;
+  unsigned char *model;
+  unsigned char *approver_feedback;
+  unsigned char *user_feedback;
+  unsigned char review_source_sha256[32];
+  int contest_id;
+  int run_id;
+  int request_user_id;
+  int moderator_user_id;
+  int reviewer_user_id;
+  int approver_user_id;
+  int input_tokens;
+  int cached_input_tokens;
+  int output_tokens;
+  int reasoning_tokens;
+  int total_tokens;
+  uint8_t generation;
+  uint8_t status;
+  uint8_t purpose;
+  int8_t review_recommended_status;
+  int8_t approver_review_mark;
+  uint8_t user_opened_count;
+  int8_t user_review_mark;
+  int8_t review_approved_as_is;
+  int8_t status_approved_as_is;
+  int8_t ai_generation_score;
+};
+
+struct run_review_filter
+{
+  uint64_t field_mask;
+  int64_t serial_id;
+  int64_t *serial_id_list;
+  int serial_id_count;
+  int64_t run_serial_id;
+  int64_t *run_serial_id_list;
+  int run_serial_id_count;
+  int contest_id;
+  int *contest_id_list;
+  int contest_id_count;
+  int run_id;
+  int *run_id_list;
+  int run_id_count;
+  int generation;
+  unsigned include_status_mask;
+  unsigned exclude_status_mask;
+  unsigned include_purpose_mask;
+  unsigned exclude_purpose_mask;
+  uint64_t null_field_mask;
+  uint64_t not_null_field_mask;
+  int request_user_id;
+  int touch_user_id;
+  int *touch_user_id_list;
+  int touch_user_id_count;
+  int reviewer_user_id;
+  ej_uuid_t review_uuid;
+  ej_uuid_t *review_uuid_list;
+  int review_uuid_count;
+  int64_t creation_time_us_not_before;
+  int64_t creation_time_us_before;
+  int64_t last_update_time_us_not_before;
+  int64_t last_update_time_us_before;
+  int64_t moderation_time_us_not_before;
+  int64_t moderation_time_us_before;
+  int64_t review_start_time_us_not_before;
+  int64_t review_start_time_us_before;
+  int64_t review_finish_time_us_not_before;
+  int64_t review_finish_time_us_before;
+  int64_t approve_time_us_not_before;
+  int64_t approve_time_us_before;
+  int64_t user_open_time_us_not_before;
+  int64_t user_open_time_us_before;
+  int offset;
+  int count;
+  unsigned char *raw_filter_str;
+};
+
+void
+run_review_free(struct run_review *rr);
+
+void
+run_review_free_array(struct run_review *rr, size_t count);
+
+int
+run_review_create(
+        runlog_state_t state,
+        int64_t run_serial_id,
+        int run_id,
+        int generation,
+        int status,
+        int purpose,
+        int request_user_id,
+        int need_full,
+        struct run_review *p_result);
+
+int
+run_review_fetch(
+        runlog_state_t state,
+        const ej_uuid_t *review_uuid,
+        uint64_t field_mask,
+        struct run_review *p_result);
+
+int
+run_review_list(
+        runlog_state_t state,
+        const struct run_review_filter *filter,
+        struct run_review **p_result,
+        size_t *p_count);
+
+int
+run_review_update(
+        runlog_state_t state,
+        const struct run_review *rr,
+        uint64_t field_mask,
+        const struct run_review_filter *filter);
+
+int
+run_review_fetch_by_crg(
+        runlog_state_t state,
+        int run_id,
+        int generation,
+        uint64_t field_mask,
+        struct run_review *p_result);
+
+int
+run_review_update_view_counter(
+        runlog_state_t state,
+        int run_id,
+        int generation);
+
+const unsigned char *
+run_unparse_review_status(unsigned val);
+int
+run_parse_review_status(const char *s);
 
 #endif /* __RUNLOG_H__ */

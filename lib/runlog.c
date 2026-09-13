@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2000-2024 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -3326,4 +3326,206 @@ group_scores_calc(
     }
   }
   return total_group_score;
+}
+
+int
+run_change_review_status(
+        runlog_state_t state,
+        int run_id,
+        int review_status,
+        int review_gen,
+        int hidden_review_status,
+        int hidden_review_gen,
+        struct run_entry *ure)
+{
+  return state->iface->change_review_status(state->cnts, run_id,
+        review_status, review_gen, hidden_review_status, hidden_review_gen, ure);
+}
+
+void
+run_review_free(struct run_review *rr)
+{
+  if (rr) {
+    free(rr->moderation_text);
+    free(rr->custom_prompt);
+    free(rr->options);
+    free(rr->review_source);
+    free(rr->review_agent);
+    free(rr->review_judge_result);
+    free(rr->review_statistics);
+    free(rr->review_log);
+    free(rr->approved_text);
+    free(rr->model);
+  }
+}
+
+void
+run_review_free_array(struct run_review *rrs, size_t count)
+{
+  for (size_t i = 0; i < count; ++i) {
+    run_review_free(&rrs[i]);
+  }
+}
+
+int
+run_review_create(
+        runlog_state_t state,
+        int64_t run_serial_id,
+        int run_id,
+        int generation,
+        int status,
+        int purpose,
+        int request_user_id,
+        int need_full,
+        struct run_review *p_result)
+{
+  if (!state->iface->create_review) {
+    ERR_R("create_review is not implemented");
+    return -1;
+  }
+  touch_last_update_time_us(state);
+  return state->iface->create_review(state->cnts, run_serial_id, run_id, generation, status, purpose, request_user_id, need_full, p_result);
+}
+
+int
+run_review_fetch(
+        runlog_state_t state,
+        const ej_uuid_t *review_uuid,
+        uint64_t field_mask,
+        struct run_review *p_result)
+{
+  if (!state->iface->fetch_review) {
+    ERR_R("fetch_review is not implemented");
+  } else {
+    touch_last_update_time_us(state);
+    return state->iface->fetch_review(state->cnts, review_uuid, field_mask, p_result);
+  }
+  return -1;
+}
+
+int
+run_review_list(
+        runlog_state_t state,
+        const struct run_review_filter *filter,
+        struct run_review **p_result,
+        size_t *p_count)
+{
+  if (!state->iface->list_reviews) {
+    ERR_R("list_reviews is not implemented");
+  } else {
+    touch_last_update_time_us(state);
+    return state->iface->list_reviews(state->cnts, filter, p_result, p_count);
+  }
+  return -1;
+}
+
+int
+run_review_update(
+        runlog_state_t state,
+        const struct run_review *rr,
+        uint64_t field_mask,
+        const struct run_review_filter *filter)
+{
+  if (!state->iface->update_reviews) {
+    ERR_R("update_reviews is not implemented");
+  } else {
+    touch_last_update_time_us(state);
+    return state->iface->update_reviews(state->cnts, rr, field_mask, filter);
+  }
+  return -1;
+}
+
+int
+run_review_fetch_by_crg(
+        runlog_state_t state,
+        int run_id,
+        int generation,
+        uint64_t field_mask,
+        struct run_review *p_result)
+{
+  if (!state->iface->fetch_review_by_crg) {
+    ERR_R("fetch_review_by_crg is not implemented");
+    return -1;
+  } else {
+    touch_last_update_time_us(state);
+    return state->iface->fetch_review_by_crg(state->cnts, run_id, generation, field_mask, p_result);
+  }
+}
+
+int
+run_review_update_view_counter(
+        runlog_state_t state,
+        int run_id,
+        int generation)
+{
+  if (!state->iface->update_review_view_counter) {
+    ERR_R("update_review_view_counter is not implemented");
+    return -1;
+  } else {
+    touch_last_update_time_us(state);
+    return state->iface->update_review_view_counter(state->cnts, run_id, generation);
+  }
+}
+
+_Bool
+run_is_status_for_user_review(int status)
+{
+  static unsigned char const values[RUN_STATUS_SIZE] =
+  {
+    [RUN_OK] = 1,
+    [RUN_ACCEPTED] = 1,
+    [RUN_PENDING_REVIEW] = 1,
+  };
+  if ((unsigned) status >= sizeof(values)/sizeof(values[0])) return 0;
+  return values[status];
+}
+
+_Bool
+run_is_status_for_user_help(int status)
+{
+  static unsigned char const values[RUN_STATUS_SIZE] =
+  {
+    [RUN_COMPILE_ERR] = 1,
+    [RUN_RUN_TIME_ERR] = 1,
+    [RUN_TIME_LIMIT_ERR] = 1,
+    [RUN_PRESENTATION_ERR] = 1,
+    [RUN_WRONG_ANSWER_ERR] = 1,
+    [RUN_PARTIAL] = 1,
+    [RUN_MEM_LIMIT_ERR] = 1,
+    [RUN_SECURITY_ERR] = 1,
+    [RUN_STYLE_ERR] = 1,
+    [RUN_WALL_TIME_LIMIT_ERR] = 1,
+    [RUN_SYNC_ERR] = 1,
+  };
+  if ((unsigned) status >= sizeof(values)/sizeof(values[0])) return 0;
+  return values[status];
+}
+
+_Bool
+run_is_status_for_judge_help(int status)
+{
+  static unsigned char const values[RUN_STATUS_SIZE] =
+  {
+    [RUN_OK] = 1,
+    [RUN_COMPILE_ERR] = 1,
+    [RUN_RUN_TIME_ERR] = 1,
+    [RUN_TIME_LIMIT_ERR] = 1,
+    [RUN_PRESENTATION_ERR] = 1,
+    [RUN_WRONG_ANSWER_ERR] = 1,
+    [RUN_PARTIAL] = 1,
+    [RUN_ACCEPTED] = 1,
+    [RUN_IGNORED] = 1,
+    [RUN_DISQUALIFIED] = 1,
+    [RUN_PENDING] = 1,
+    [RUN_MEM_LIMIT_ERR] = 1,
+    [RUN_SECURITY_ERR] = 1,
+    [RUN_STYLE_ERR] = 1,
+    [RUN_WALL_TIME_LIMIT_ERR] = 1,
+    [RUN_PENDING_REVIEW] = 1,
+    [RUN_REJECTED] = 1,
+    [RUN_SYNC_ERR] = 1,
+    [RUN_SUMMONED] = 1,
+  };
+  if ((unsigned) status >= sizeof(values)/sizeof(values[0])) return 0;
+  return values[status];
 }

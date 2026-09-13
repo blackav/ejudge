@@ -1,7 +1,6 @@
 # -*- Makefile -*-
-# $Id$
 
-# Copyright (C) 2008-2014 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2008-2026 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -46,5 +45,10 @@ deps.make : $(CFILES) $(HFILES)
 
 include deps.make
 
+rldb_mysql.o : reviews_table.inc.c
+
 rldb_mysql.so : $(RLDB_MYSQL_OFILES)
 	$(LD) -shared $(LDFLAGS) $^ -o $@ $(LDLIBS)
+
+reviews_table.inc.c : create-reviews.sql
+	../../tools/texttostring -n ejudge_rundb_mysql_reviews $^ > $@

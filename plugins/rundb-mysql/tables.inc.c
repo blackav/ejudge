@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2008-2024 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -65,6 +65,11 @@ static const char create_runs_query[] =
 "        notify_kind TINYINT NOT NULL DEFAULT 0, "
 "        notify_queue VARCHAR(40) DEFAULT NULL, "
 "        group_scores VARCHAR(256) DEFAULT NULL, "
+"        review_status TINYINT NOT NULL DEFAULT 0, "
+"        review_gen TINYINT UNSIGNED NOT NULL DEFAULT 0,"
+"        hidden_review_status TINYINT NOT NULL DEFAULT 0, "
+"        hidden_review_gen TINYINT UNSIGNED NOT NULL DEFAULT 0,"
+"        is_help_review TINYINT NOT NULL DEFAULT 0,"
 "        UNIQUE KEY runs_run_contest_id_idx(run_id, contest_id), "
 "        KEY runs_contest_id_idx (contest_id) "
 "        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;";
@@ -121,9 +126,14 @@ struct run_entry_internal
   int notify_kind;
   unsigned char *notify_queue;
   unsigned char *group_scores;
+  int review_status;
+  int review_gen;               /* 50 */
+  int hidden_review_status;
+  int hidden_review_gen;
+  int is_help_review;
 };
 
-enum { RUNS_ROW_WIDTH = 49 };
+enum { RUNS_ROW_WIDTH = 54 };
 
 #define RUNS_OFFSET(f) XOFFSET(struct run_entry_internal, f)
 static const struct common_mysql_parse_spec runs_spec[RUNS_ROW_WIDTH] =
@@ -177,6 +187,11 @@ static const struct common_mysql_parse_spec runs_spec[RUNS_ROW_WIDTH] =
   { 0, 'd', "notify_kind", RUNS_OFFSET(notify_kind), 0 },
   { 1, 's', "notify_queue", RUNS_OFFSET(notify_queue), 0 },
   { 1, 's', "group_scores", RUNS_OFFSET(group_scores), 0 },
+  { 0, 'd', "review_status", RUNS_OFFSET(review_status), 0 },
+  { 0, 'd', "review_gen", RUNS_OFFSET(review_gen), 0 },
+  { 0, 'd', "hidden_review_status", RUNS_OFFSET(hidden_review_status), 0 },
+  { 0, 'd', "hidden_review_gen", RUNS_OFFSET(hidden_review_gen), 0 },
+  { 0, 'b', "is_help_review", RUNS_OFFSET(is_help_review), 0 },
 };
 
 enum

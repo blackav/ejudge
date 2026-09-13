@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2003-2020 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -72,6 +72,8 @@ const unsigned char * const opcaps_cap_list [] =
   [OPCAP_LOCAL_1]                 = "LOCAL_1",
   [OPCAP_LOCAL_2]                 = "LOCAL_2",
   [OPCAP_LOCAL_3]                 = "LOCAL_3",
+  [OPCAP_PREMOD_REVIEW]           = "PREMOD_REVIEW",
+  [OPCAP_EXT_REVIEW]              = "EXT_REVIEW",
 
   [OPCAP_LAST]                    = 0
 };
@@ -103,7 +105,8 @@ const opcap_t OPCAP_JUDGE_PERMS =
   | (1ULL << OPCAP_NEW_MESSAGE)
   | (1ULL << OPCAP_REPLY_MESSAGE)
   | (1ULL << OPCAP_PRINT_RUN)
-  | (1ULL << OPCAP_COMMENT_RUN);
+  | (1ULL << OPCAP_COMMENT_RUN)
+  | (1ULL << OPCAP_PREMOD_REVIEW);
 const opcap_t OPCAP_MASTER_PERMS =
   (1ULL << OPCAP_MASTER_LOGIN)
   | (1ULL << OPCAP_JUDGE_LOGIN)
@@ -140,7 +143,8 @@ const opcap_t OPCAP_MASTER_PERMS =
   | (1ULL << OPCAP_EDIT_PASSWD)
   | (1ULL << OPCAP_PRIV_EDIT_PASSWD)
   | (1ULL << OPCAP_RESTART)
-  | (1ULL << OPCAP_COMMENT_RUN);
+  | (1ULL << OPCAP_COMMENT_RUN)
+  | (1ULL << OPCAP_PREMOD_REVIEW);
 const opcap_t OPCAP_FULL_PERMS = (1ULL << OPCAP_LAST) - 1;
 
 int

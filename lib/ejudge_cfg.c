@@ -122,6 +122,8 @@ enum
     TG_TOKEN_FILE,
     TG_SERVICE,
     TG_RULES_FILE,
+    TG_DEFAULT_COMPILE_QUEUE,
+    TG_DEFAULT_RUN_QUEUE,
 
     TG__BARRIER,
     TG__DEFAULT,
@@ -237,6 +239,8 @@ static char const * const elem_map[] =
   "token_file",
   "service",
   "rules_file",
+  "default_compile_queue",
+  "default_run_queue",
   0,
   "_default",
 
@@ -352,6 +356,8 @@ node_free(struct xml_tree *t)
       xfree(p->default_status_plugin);
       xfree(p->caps_file);
       xfree(p->this_config_path);
+      xfree(p->default_compile_queue);
+      xfree(p->default_run_queue);
     }
     break;
   case TG_MAP:
@@ -754,6 +760,8 @@ static const size_t cfg_final_offsets[TG_LAST_TAG] =
   [TG_DEFAULT_CONTENT_URL_PREFIX] = CONFIG_OFFSET(default_content_url_prefix),
   [TG_DEFAULT_STATUS_PLUGIN] = CONFIG_OFFSET(default_status_plugin),
   [TG_CAPS_FILE] = CONFIG_OFFSET(caps_file),
+  [TG_DEFAULT_COMPILE_QUEUE] = CONFIG_OFFSET(default_compile_queue),
+  [TG_DEFAULT_RUN_QUEUE] = CONFIG_OFFSET(default_run_queue),
 };
 
 static struct ejudge_cfg *

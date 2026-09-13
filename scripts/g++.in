@@ -1,10 +1,16 @@
 #! /bin/bash
-# Copyright (c) 2001-2025 Alexander Chernov <cher@ejudge.ru>
+# Copyright (c) 2001-2026 Alexander Chernov <cher@ejudge.ru>
 
 # using EJUDGE_FLAGS we may pass additional flags
 
 LANG_CONFIG_DIR="@lang_config_dir@"
-[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/g++.cfg"
+THIS_LANGUAGE="g++"
+[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/${THIS_LANGUAGE}.cfg"
+
+if [ -f "${LANG_CONFIG_DIR}/${THIS_LANGUAGE}.env" ]
+then
+  . "${LANG_CONFIG_DIR}/${THIS_LANGUAGE}.env"
+fi
 
 if [ -f "${EJUDGE_LANG_CONFIG}" ]
 then
@@ -28,14 +34,14 @@ fi
 
 if [ "${EJUDGE_BUILD_SCRIPT}" != "" ]
 then
-    export EJUDGE_LANGUAGE="g++"
+    export EJUDGE_LANGUAGE="${THIS_LANGUAGE}"
     export EJUDGE_COMPILER="${GPPRUN}"
     exec "${EJUDGE_BUILD_SCRIPT}" $@
 fi
 
 if [ "${EJUDGE_OPT_BUILD_SCRIPT}" != "" -a -x "${EJUDGE_OPT_BUILD_SCRIPT}" ]
 then
-    export EJUDGE_LANGUAGE="g++"
+    export EJUDGE_LANGUAGE="${THIS_LANGUAGE}"
     export EJUDGE_COMPILER="${GPPRUN}"
     exec "${EJUDGE_OPT_BUILD_SCRIPT}" $@
 fi

@@ -2,17 +2,6 @@
 ::-moz-selection {background: #328efe; color:#fff;}
 ::-webkit-selection {background: #328efe; color:#fff;}
 
-body 
-{
-    font-family: "Arial","Lucida Grande","Verdana","Sans-Serif";
-    font-style: normal;
-    font-variant: normal;
-    font-weight: normal;
-    font-size: 12px;
-    color: black;
-	text-align: left;
-}
-
 p
 {
     font-size: 16px;
@@ -88,10 +77,6 @@ a:visited {
 }
 
 /************* LAYOUT ***************/
-
-body {
-	background: url("grad_grey_d.jpg") repeat-x #555555;
-}
 
 #main-cont {
 	padding: 15px 0;
@@ -637,7 +622,6 @@ input {
 	background: -ms-linear-gradient(top,  rgba(247,247,247,1) 0%,rgba(221,221,221,1) 100%); /* IE10+ */
 	background: linear-gradient(to bottom,  rgba(247,247,247,1) 0%,rgba(221,221,221,1) 100%); /* W3C */
 	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#f7f7f7', endColorstr='#dddddd',GradientType=0 ); /* IE6-9 */
-	font-family: "Verdana", "Arial";
 	font-size: 13px;
 	padding: 2px 6px 2px 6px;
 	text-align: center;
@@ -665,7 +649,6 @@ input[type="button"], input[type="submit"], input[type="reset"], button {
 	background: -ms-linear-gradient(top,  rgba(247,247,247,1) 0%,rgba(221,221,221,1) 100%); /* IE10+ */
 	background: linear-gradient(to bottom,  rgba(247,247,247,1) 0%,rgba(221,221,221,1) 100%); /* W3C */
 	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#f7f7f7', endColorstr='#dddddd',GradientType=0 ); /* IE6-9 */
-	font-family: "Verdana", "Arial";
 	font-size: 13px;
 	padding: 1px 6px 1px 6px;
 	border: 1px solid #929292;
@@ -896,7 +879,6 @@ td.a-button-style, td.a-button-style:hover {
 }
 
 .ui-button {
-	font-family: "Verdana", "Arial" !important;
 	padding: .3em .6em .3em .6em !important;
 	border: 1px solid #929292 !important;
 	border-radius: 2px !important;

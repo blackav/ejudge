@@ -1,0 +1,91 @@
+<%
+%><%@include "priv_includes.csp"
+%><%@set getter_name = "csp_get_priv_review_displayed_1_page"
+%><%@set ac_prefix = "NEW_SRV_ACTION_"
+%><%@page csp_view_priv_review_displayed_1_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "priv_stdvars.csp"
+%><%
+    int enable_main_menu = 0;
+    const unsigned char *title = NULL;
+    const unsigned char *mask_size_str = 0;
+    const unsigned char *mask_str = 0;
+    size_t mask_size = 0;
+    unsigned long *mask = 0;
+    const unsigned char *s = 0;
+    int n, i;
+    long m;
+    int count = 0;
+
+    if (opcaps_check(phr->caps, OPCAP_COMMENT_RUN) < 0) {
+        FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+    }
+
+    if (ns_parse_run_mask(phr, &mask_size_str, &mask_str, &mask_size, &mask) < 0) {
+        FAIL(NEW_SRV_ERR_INV_RUN_SELECTION);
+    }
+
+    info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
+
+    l10n_setlocale(phr->locale_id);
+    title = _("Send runs to external review");
+%><%@include "priv_header.csp"
+%>
+</div>
+
+<p><s:a ac="main-page"><s:_>To main page</s:_></s:a></p>
+
+<p><s:_>Runs to review:</s:_><%
+    s = "";
+    for (n = 0; n < 8 * sizeof(mask[0]) * mask_size; n++) {
+      i = n / (8 * sizeof(mask[0]));
+      m = 1L << (n % (8 * sizeof(mask[0])));
+      if ((mask[i] & m)) {
+        fprintf(out_f, "%s%d", s, n);
+        s = ", ";
+        ++count;
+      }
+    }
+    if (!count) {
+%><i>no runs!</i><%
+    } else {
+%> (<b><s:v value="count" /> total</b>)?<%
+    }
+%></p>
+
+<s:form>
+<s:hidden name="run_mask_size" escape="false" value="mask_size_str" />
+<s:hidden name="run_mask" escape="false" value="mask_str" />
+
+<table>
+    <tr>
+        <td>
+            <select name="review_mode">
+                <option value="0"></option>
+                <option value="1">Request user-visible review, skip if already reviewed</option>
+                <option value="2">Request user-visible review, including the runs already reviewed</option>
+                <option value="3">Request hidden review, skip if already reviewed</option>
+                <option value="4">Request hidden review, including the runs already reviewed</option>
+                <option value="5">Cancel user-visible reviews</option>
+                <option value="6">Cancel hidden reviews</option>
+                <option value="7">Clear user-visible reviews (DANGEROUS)</option>
+                <option value="8">Clear hidden reviews (DANGEROUS)</option>
+            </select>
+        </td>
+        <td><s:_>Review mode</s:_></td>
+    </tr>
+</table>
+
+<table>
+    <tr><td><s:submit ac="review-displayed-2" /></td></tr>
+    <tr><td><s:a ac="main-page"><s:_>Main page</s:_></s:a></td></tr>
+</table>
+</s:form>
+
+<%@include "priv_footer.csp"
+%><%
+cleanup:;
+    (void) &&cleanup;
+    l10n_resetlocale();
+    html_armor_free(&ab);
+    xfree(mask);
+%>

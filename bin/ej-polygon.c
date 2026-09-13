@@ -3698,7 +3698,7 @@ process_polygon_zip(
                 if (gi->group_score > 0) {
                     full_user_score += gi->group_score;
                 } else if (gi->test_score > 0) {
-                    for (int j = 0; i < pi->test_u; ++j) {
+                    for (int j = 0; j < pi->test_u; ++j) {
                         const struct TestInfo *ti = &pi->tests[j];
                         if (ti->group && !strcmp(ti->group, gi->name) && ti->score > 0) {
                             full_user_score += ti->score;

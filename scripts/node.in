@@ -1,10 +1,16 @@
 #! /bin/bash
-# Copyright (c) 2017-2024 Alexander Chernov <cher@ejudge.ru>
+# Copyright (c) 2017-2026 Alexander Chernov <cher@ejudge.ru>
 
 # Usage: node <input> <output> [<property-file>]
 
 LANG_CONFIG_DIR="/home/judges/compile/conf/lang.d"
-[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/node.cfg"
+THIS_LANGUAGE="node"
+[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/${THIS_LANGUAGE}.cfg"
+
+if [ -f "${LANG_CONFIG_DIR}/${THIS_LANGUAGE}.env" ]
+then
+  . "${LANG_CONFIG_DIR}/${THIS_LANGUAGE}.env"
+fi
 
 if [ -f "${EJUDGE_LANG_CONFIG}" ]
 then
@@ -22,14 +28,14 @@ fi
 
 if [ "${EJUDGE_BUILD_SCRIPT}" != "" ]
 then
-    export EJUDGE_LANGUAGE="node"
+    export EJUDGE_LANGUAGE="${THIS_LANGUAGE}"
     export EJUDGE_COMPILER="${NODEPATH}"
     exec "${EJUDGE_BUILD_SCRIPT}" $@
 fi
 
 if [ "${EJUDGE_OPT_BUILD_SCRIPT}" != "" -a -x "${EJUDGE_OPT_BUILD_SCRIPT}" ]
 then
-    export EJUDGE_LANGUAGE="node"
+    export EJUDGE_LANGUAGE="${THIS_LANGUAGE}"
     export EJUDGE_COMPILER="${NODEPATH}"
     exec "${EJUDGE_OPT_BUILD_SCRIPT}" $@
 fi

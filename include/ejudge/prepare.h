@@ -830,7 +830,7 @@ struct section_global_data
   unsigned char *notification_spec;
 };
 
-/* sizeof(struct section_problem_data) == ?/1424 */
+/* sizeof(struct section_problem_data) == ?/1448 */
 struct section_problem_data
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));   // 32 bytes
@@ -1035,6 +1035,16 @@ struct section_problem_data
   ejbyteflag_t enable_group_merge;
 
   ejbyteflag_t ignore_sigpipe;
+
+  ejbyteflag_t enable_external_review;
+
+  ejbyteflag_t enable_user_review_request;
+
+  ejbyteflag_t enable_user_help_request;
+
+  ejbyteflag_t disable_pre_moderation;
+
+  ejbyteflag_t disable_post_approve;
 
   // padding to 8-byte boundary
   //unsigned char _pad1[1];

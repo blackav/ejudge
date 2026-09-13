@@ -207,6 +207,14 @@ static void *filter_expr_user_data;
 %token TOK_EXT_USER "ext_user"
 %token TOK_CUREXT_USER "curext_user"
 %token TOK_INUSERGROUPINT
+%token TOK_REVIEW_GEN "review_gen"
+%token TOK_CURREVIEW_GEN "curreview_gen"
+%token TOK_REVIEW_STATUS "review_status"
+%token TOK_CURREVIEW_STATUS "curreview_status"
+%token TOK_HIDDEN_REVIEW_GEN "hidden_review_gen"
+%token TOK_CURHIDDEN_REVIEW_GEN "curhidden_review_gen"
+%token TOK_HIDDEN_REVIEW_STATUS "hidden_review_status"
+%token TOK_CURHIDDEN_REVIEW_STATUS "curhidden_review_status"
 %token TOK_INT       "int"
 %token TOK_STRING    "string"
 %token TOK_BOOL      "bool"
@@ -460,6 +468,18 @@ exprA :
 | "ext_user" { $1->kind = TOK_CUREXT_USER; $$ = $1; }
 | "curext_user" { $$ = $1; }
 | "inusergroup" '(' expr0 ')' { $1->v.t[0] = check_string($3); $$ = $1; }
+| "review_gen" '(' expr0 ')' { $1->v.t[0] = check_string($3); $$ = $1; }
+| "review_gen" { $1->kind = TOK_CURREVIEW_GEN; $$ = $1; }
+| "curreview_gen" { $$ = $1; }
+| "review_status" '(' expr0 ')' { $1->v.t[0] = check_string($3); $$ = $1; }
+| "review_status" { $1->kind = TOK_CURREVIEW_STATUS; $$ = $1; }
+| "curreview_status" { $$ = $1; }
+| "hidden_review_gen" '(' expr0 ')' { $1->v.t[0] = check_string($3); $$ = $1; }
+| "hidden_review_gen" { $1->kind = TOK_CURHIDDEN_REVIEW_GEN; $$ = $1; }
+| "curhidden_review_gen" { $$ = $1; }
+| "hidden_review_status" '(' expr0 ')' { $1->v.t[0] = check_string($3); $$ = $1; }
+| "hidden_review_status" { $1->kind = TOK_CURHIDDEN_REVIEW_STATUS; $$ = $1; }
+| "curhidden_review_status" { $$ = $1; }
 | "int" '(' expr0 ')' { $$ = do_int_cast($1, $3); }
 | "string" '(' expr0 ')' { $$ = do_string_cast($1, $3); }
 | "bool" '(' expr0 ')' { $$ = do_bool_cast($1, $3); }

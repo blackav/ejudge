@@ -54,6 +54,15 @@ enum
   MIME_TYPE_OFFICE_PPTX,        // application/vnd.openxmlformats-officedocument.presentationml.presentation
   MIME_TYPE_OFFICE_XLSX,        // application/vnd.openxmlformats-officedocument.presentationml.presentation
   MIME_TYPE_OFFICE_DOCX,        // application/vnd.openxmlformats-officedocument.wordprocessingml.document
+  MIME_TYPE_OFFICE_ODT,         // application/vnd.oasis.opendocument.text
+  MIME_TYPE_OFFICE_ODS,         // application/vnd.oasis.opendocument.spreadsheet
+  MIME_TYPE_OFFICE_ODP,         // application/vnd.oasis.opendocument.presentation
+  MIME_TYPE_OFFICE_ODG,         // application/vnd.oasis.opendocument.graphics
+  MIME_TYPE_OFFICE_ODC,         // application/vnd.oasis.opendocument.chart
+  MIME_TYPE_OFFICE_ODF,         // application/vnd.oasis.opendocument.formula
+  MIME_TYPE_OFFICE_ODI,         // application/vnd.oasis.opendocument.image
+  MIME_TYPE_OFFICE_ODM,         // application/vnd.oasis.opendocument.text-master
+  MIME_TYPE_OFFICE_ODB,         // application/vnd.oasis.opendocument.base
 
   MIME_TYPE_LAST,
 };

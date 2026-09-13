@@ -701,6 +701,8 @@ serve_build_compile_dirs(
       id = lang->compile_server_id;
     } else if (global->compile_server_id && global->compile_server_id[0]) {
       id = global->compile_server_id;
+    } else if (config->default_compile_queue && config->default_compile_queue[0]) {
+      id = config->default_compile_queue;
     } else {
       id = config->contest_server_id;
     }
@@ -867,7 +869,11 @@ serve_build_run_dirs(
   unsigned char heartbeat_dir[PATH_MAX];
 #endif
 
-  if (cnts && cnts->run_managed) {
+  if (config->default_run_queue && config->default_run_queue[0]) {
+#if defined EJUDGE_RUN_SPOOL_DIR
+    build_run_dir(config, state, cnts, config->default_run_queue, config->default_run_queue, "");
+#endif
+  } else if (cnts && cnts->run_managed) {
 #if defined EJUDGE_RUN_SPOOL_DIR
     build_run_dir(config, state, cnts, config->contest_server_id, config->contest_server_id, "");
 #else
@@ -1852,6 +1858,8 @@ serve_compile_request(
       compile_server_id = lang->compile_server_id;
     } else if (global->compile_server_id && global->compile_server_id[0]) {
       compile_server_id = global->compile_server_id;
+    } else if (config->default_compile_queue && config->default_compile_queue[0]) {
+      compile_server_id = config->default_compile_queue;
     } else {
       compile_server_id = config->contest_server_id;
     }
@@ -2182,6 +2190,8 @@ serve_run_request(
         run_server_id = lang->super_run_dir;
       } else if (global->super_run_dir && global->super_run_dir[0]) {
         run_server_id = global->super_run_dir;
+      } else if (config->default_run_queue && config->default_run_queue[0]) {
+        run_server_id = config->default_run_queue;
       } else {
         run_server_id = config->contest_server_id;
       }

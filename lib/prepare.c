@@ -491,6 +491,11 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(disable_vm_size_limit, "L"),
   PROBLEM_PARAM(enable_group_merge, "L"),
   PROBLEM_PARAM(ignore_sigpipe, "L"),
+  PROBLEM_PARAM(enable_external_review, "L"),
+  PROBLEM_PARAM(enable_user_review_request, "L"),
+  PROBLEM_PARAM(enable_user_help_request, "L"),
+  PROBLEM_PARAM(disable_pre_moderation, "L"),
+  PROBLEM_PARAM(disable_post_approve, "L"),
   PROBLEM_PARAM(score_multiplier, "d"),
   PROBLEM_PARAM(prev_runs_to_show, "d"),
   PROBLEM_PARAM(max_user_run_count, "d"),
@@ -1347,6 +1352,11 @@ prepare_problem_init_func(struct generic_section_config *gp)
   p->disable_vm_size_limit = -1;
   p->enable_group_merge = -1;
   p->ignore_sigpipe = -1;
+  p->enable_external_review = -1;
+  p->enable_user_review_request = -1;
+  p->enable_user_help_request = -1;
+  p->disable_pre_moderation = -1;
+  p->disable_post_approve = -1;
   p->priority_adjustment = -1000;
   p->max_vm_size = -1LL;
   p->max_stack_size = -1LL;
@@ -2708,6 +2718,17 @@ prepare_problem(
   prepare_set_prob_value(CNTSPROB_disable_vm_size_limit, prob, aprob, g);
   prepare_set_prob_value(CNTSPROB_enable_group_merge, prob, aprob, g);
   prepare_set_prob_value(CNTSPROB_ignore_sigpipe, prob, aprob, g);
+  static const int fields[] =
+  {
+    CNTSPROB_enable_external_review,
+    CNTSPROB_enable_user_review_request,
+    CNTSPROB_enable_user_help_request,
+    CNTSPROB_disable_pre_moderation,
+    CNTSPROB_disable_post_approve,
+  };
+  for (int i = 0; i < sizeof(fields)/sizeof(fields[0]); ++i) {
+    prepare_set_prob_value(fields[i], prob, aprob, g);
+  }
   prepare_set_prob_value(CNTSPROB_hide_variant, prob, aprob, g);
   prepare_set_prob_value(CNTSPROB_autoassign_variants, prob, aprob, g);
   prepare_set_prob_value(CNTSPROB_enable_text_form, prob, aprob, g);
@@ -5586,8 +5607,8 @@ prepare_set_abstr_problem_defaults(struct section_problem_data *prob,
   if (prob->time_limit < 0) prob->time_limit = 0;
   if (prob->time_limit_millis < 0) prob->time_limit_millis = 0;
   if (prob->real_time_limit < 0) prob->real_time_limit = 0;
-  if (prob->full_score < 0) prob->full_score = DFLT_P_FULL_SCORE;
-  if (prob->test_score < 0) prob->test_score = DFLT_P_TEST_SCORE;
+  if (prob->full_score < 0) prob->full_score = (global->score_system == SCORE_ACM ? -1 : DFLT_P_FULL_SCORE);
+  if (prob->test_score < 0) prob->test_score = (global->score_system == SCORE_ACM ? -1 : DFLT_P_TEST_SCORE);
   if (prob->variable_full_score < 0)
     prob->variable_full_score = DFLT_P_VARIABLE_FULL_SCORE;
   if (prob->run_penalty == -1) prob->run_penalty = DFLT_P_RUN_PENALTY;
@@ -6137,7 +6158,7 @@ prepare_set_prob_value(
 
   case CNTSPROB_full_score:
     if (out->full_score < 0 && abstr) out->full_score = abstr->full_score;
-    if (out->full_score < 0) out->full_score = DFLT_P_FULL_SCORE;
+    if (out->full_score < 0) out->full_score = (global->score_system == SCORE_ACM ? -1 : DFLT_P_FULL_SCORE);
     break;
 
   case CNTSPROB_full_user_score:
@@ -6211,6 +6232,11 @@ prepare_set_prob_value(
   INHERIT_BOOLEAN(disable_vm_size_limit);
   INHERIT_BOOLEAN(enable_group_merge);
   INHERIT_BOOLEAN(ignore_sigpipe);
+  INHERIT_BOOLEAN(enable_external_review);
+  INHERIT_BOOLEAN(enable_user_review_request);
+  INHERIT_BOOLEAN(enable_user_help_request);
+  INHERIT_BOOLEAN(disable_pre_moderation);
+  INHERIT_BOOLEAN(disable_post_approve);
   INHERIT_BOOLEAN(hide_variant);
   INHERIT_BOOLEAN(autoassign_variants);
   INHERIT_BOOLEAN(enable_text_form);
@@ -6869,6 +6895,11 @@ prepare_set_all_prob_values(
     CNTSPROB_disable_vm_size_limit,
     CNTSPROB_enable_group_merge,
     CNTSPROB_ignore_sigpipe,
+    CNTSPROB_enable_external_review,
+    CNTSPROB_enable_user_review_request,
+    CNTSPROB_enable_user_help_request,
+    CNTSPROB_disable_pre_moderation,
+    CNTSPROB_disable_post_approve,
     CNTSPROB_hide_variant,
     CNTSPROB_test_pat,
     CNTSPROB_corr_pat,

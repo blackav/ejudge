@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2008-2024 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -16,7 +16,7 @@
 
 #include "ejudge/config.h"
 #include "ejudge/ej_limits.h"
-#include "ejudge/ej_limits.h"
+#include "ejudge/ej_types.h"
 #include "ejudge/rldb_plugin.h"
 #include "ejudge/runlog.h"
 #include "ejudge/teamdb.h"
@@ -76,6 +76,8 @@ struct rldb_mysql_cnts
   int next_run_id;
 };
 
+#include "reviews_table.inc.c"
+
 #include "methods.inc.c"
 
 /* plugin entry point */
@@ -134,6 +136,13 @@ struct rldb_plugin_iface plugin_rldb_mysql =
   append_run_func,
   run_set_is_checked_func,
   get_group_scores_func,
+  create_review_func,
+  fetch_review_func,
+  list_reviews_func,
+  update_reviews_func,
+  fetch_review_by_crg_func,
+  update_review_view_counter_func,
+  change_review_status_func,
 };
 
 static long long
@@ -203,7 +212,7 @@ prepare_func(
 
 #include "tables.inc.c"
 
-#define RUN_DB_VERSION 29
+#define RUN_DB_VERSION 35
 
 static int
 do_create(struct rldb_mysql_state *state)
@@ -218,6 +227,10 @@ do_create(struct rldb_mysql_state *state)
     db_error_fail(md);
   if (mi->simple_fquery(md, create_userrunheaders_query, md->table_prefix) < 0)
     db_error_fail(md);
+  unsigned char *s = xmemdup(ejudge_rundb_mysql_reviews, ejudge_rundb_mysql_reviews_len);
+  if (mi->simple_fquery(md, s, md->table_prefix) < 0)
+    db_error_fail(md);
+  free(s);
   if (mi->simple_fquery(md,
                         "INSERT INTO %sconfig VALUES ('run_version', '%d') ;",
                         md->table_prefix, RUN_DB_VERSION) < 0)
@@ -496,6 +509,35 @@ do_open(struct rldb_mysql_state *state)
       break;
     case 28:
       if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD COLUMN group_scores VARCHAR(256) DEFAULT NULL AFTER notify_queue", md->table_prefix) < 0)
+        return -1;
+      break;
+    case 29:
+      if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD COLUMN review_status TINYINT NOT NULL DEFAULT 0 AFTER group_scores", md->table_prefix) < 0)
+        return -1;
+      break;
+    case 30: {
+      unsigned char *s = xmemdup(ejudge_rundb_mysql_reviews, ejudge_rundb_mysql_reviews_len);
+      if (mi->simple_fquery(md, s, md->table_prefix) < 0)
+        return -1;
+      free(s);
+      break;
+    }
+    case 31:
+      if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD COLUMN review_gen TINYINT UNSIGNED NOT NULL DEFAULT 0 AFTER review_status,"
+                                "ADD COLUMN hidden_review_status TINYINT NOT NULL DEFAULT 0 AFTER review_gen,"
+                                "ADD COLUMN hidden_review_gen TINYINT UNSIGNED NOT NULL DEFAULT 0 AFTER hidden_review_status;", md->table_prefix) < 0)
+        return -1;
+      break;
+    case 32:
+      if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD COLUMN is_help_review TINYINT NOT NULL DEFAULT 0 AFTER hidden_review_gen", md->table_prefix) < 0)
+        return -1;
+      break;
+    case 33:
+      if (mi->simple_fquery(md, "ALTER TABLE %sreviews ADD COLUMN custom_prompt MEDIUMTEXT DEFAULT NULL AFTER review_log", md->table_prefix) < 0)
+        return -1;
+      break;
+    case 34:
+      if (mi->simple_fquery(md, "ALTER TABLE %sreviews ADD COLUMN options MEDIUMTEXT DEFAULT NULL AFTER custom_prompt", md->table_prefix) < 0)
         return -1;
       break;
     case RUN_DB_VERSION:
@@ -1060,6 +1102,11 @@ load_runs(struct rldb_mysql_cnts *cs)
     re->notify_kind = ri.notify_kind;
     re->notify_queue = notify_queue;
     re->group_scores = group_scores_index;
+    re->review_status = ri.review_status;
+    re->review_gen = ri.review_gen;
+    re->hidden_review_status = ri.hidden_review_status;
+    re->hidden_review_gen = ri.hidden_review_gen;
+    re->is_help_review = ri.is_help_review;
   }
   return 1;
 
@@ -1667,6 +1714,13 @@ generate_update_entry_clause(
     }
     sep = comma;
   }
+  if ((mask & RE_REVIEW_STATUS)) {
+    fprintf(f, "%sreview_status = %d", sep, re->review_status);
+    sep = comma;
+    fprintf(f, "%sreview_gen = %d", sep, re->review_gen);
+    fprintf(f, "%shidden_review_status = %d", sep, re->hidden_review_status);
+    fprintf(f, "%shidden_review_gen = %d", sep, re->hidden_review_gen);
+  }
 
   fprintf(f, "%slast_change_time = ", sep);
   state->mi->write_timestamp(state->md, f, 0, curtime->tv_sec);
@@ -1796,6 +1850,13 @@ update_entry(
   }
   if ((mask & RE_GROUP_SCORES)) {
     dst->group_scores = src->group_scores;
+  }
+  if ((mask & RE_REVIEW_STATUS)) {
+    dst->review_status = src->review_status;
+    dst->review_gen = src->review_gen;
+    dst->hidden_review_status = src->hidden_review_status;
+    dst->hidden_review_gen = src->hidden_review_gen;
+    dst->is_help_review = src->is_help_review;
   }
 }
 
@@ -2330,6 +2391,11 @@ put_entry_func(
     ri.notify_kind = 0;
     ri.notify_queue = NULL;
   }
+  ri.review_status = re->review_status;
+  ri.review_gen = re->review_gen;
+  ri.hidden_review_status = re->hidden_review_status;
+  ri.hidden_review_gen = re->hidden_review_gen;
+  ri.is_help_review = re->is_help_review;
 
   cmd_f = open_memstream(&cmd_t, &cmd_z);
   fprintf(cmd_f, "INSERT INTO %sruns VALUES ( ", state->md->table_prefix);
@@ -2859,6 +2925,13 @@ append_run_func(
   if ((mask & RE_GROUP_SCORES)) {
     fputs(",group_scores", cmd_f);
   }
+  if ((mask & RE_REVIEW_STATUS)) {
+    fputs(",review_status", cmd_f);
+    fputs(",review_gen", cmd_f);
+    fputs(",hidden_review_status", cmd_f);
+    fputs(",hidden_review_gen", cmd_f);
+    fputs(",is_help_review", cmd_f);
+  }
   fprintf(cmd_f, ") VALUES (%lld, %d, %d, NOW(6), MICROSECOND(NOW(6)) * 1000, '%s', NOW(), MICROSECOND(NOW(6)) * 1000",
           serial_id,
           run_id,
@@ -3017,6 +3090,13 @@ append_run_func(
       }
     }
     fputs("\"", cmd_f);
+  }
+  if ((mask & RE_REVIEW_STATUS)) {
+    fprintf(cmd_f, ",%d", in_re->review_status);
+    fprintf(cmd_f, ",%d", in_re->review_gen);
+    fprintf(cmd_f, ",%d", in_re->hidden_review_status);
+    fprintf(cmd_f, ",%d", in_re->hidden_review_gen);
+    fprintf(cmd_f, ",%d", in_re->is_help_review);
   }
   fprintf(cmd_f, ") ;");
   fclose(cmd_f); cmd_f = NULL;
@@ -3189,6 +3269,13 @@ append_run_func(
   if ((mask & RE_GROUP_SCORES)) {
     new_re->group_scores = alloc_group_scores(cs, group_count, group_scores);
   }
+  if ((mask & RE_REVIEW_STATUS)) {
+    new_re->review_status = in_re->review_status;
+    new_re->review_gen = in_re->review_gen;
+    new_re->hidden_review_status = in_re->hidden_review_status;
+    new_re->hidden_review_gen = in_re->hidden_review_gen;
+    new_re->is_help_review = in_re->is_help_review;
+  }
 
   if (p_tv) *p_tv = current_time_tv;
   if (p_serial_id) *p_serial_id = serial_id;
@@ -3243,4 +3330,547 @@ get_group_scores_func(
     return &rls->group_scores.data[0];
   }
   return &rls->group_scores.data[index];
+}
+
+static int
+change_review_status_func(
+        struct rldb_plugin_cnts *cdata,
+        int run_id,
+        int review_status,
+        int review_gen,
+        int hidden_review_status,
+        int hidden_review_gen,
+        struct run_entry *ure)
+{
+  struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts *) cdata;
+  struct run_entry te = {};
+  te.review_status = review_status;
+  te.review_gen = review_gen;
+  te.hidden_review_status = hidden_review_status;
+  te.hidden_review_gen = hidden_review_gen;
+  return do_update_entry(cs, run_id, &te, RE_REVIEW_STATUS, ure);
+}
+
+enum { REVIEW_ROW_WIDTH = 48 };
+#define REVIEW_OFFSET(f) XOFFSET(struct run_review, f)
+
+static const struct common_mysql_parse_spec reviews_spec[REVIEW_ROW_WIDTH] =
+{
+  { 0, 'l', "serial_id", REVIEW_OFFSET(serial_id), 0 },
+  { 0, 'l', "run_serial_id", REVIEW_OFFSET(run_serial_id), 0 },
+  { EJ_MYSQL_NOW_IS_M2, 'm', "creation_time", REVIEW_OFFSET(creation_time), 0 },
+  { EJ_MYSQL_NOW_IS_M2 | EJ_MYSQL_NULLABLE, 'm', "last_update_time", REVIEW_OFFSET(last_update_time) },
+  { EJ_MYSQL_NOW_IS_M2 | EJ_MYSQL_NULLABLE, 'm', "moderation_time", REVIEW_OFFSET(moderation_time) },
+  { EJ_MYSQL_NOW_IS_M2 | EJ_MYSQL_NULLABLE, 'm', "review_start_time", REVIEW_OFFSET(review_start_time), 0 },
+  { EJ_MYSQL_NOW_IS_M2 | EJ_MYSQL_NULLABLE, 'm', "review_heartbeat_time", REVIEW_OFFSET(review_heartbeat_time), 0 },
+  { EJ_MYSQL_NOW_IS_M2 | EJ_MYSQL_NULLABLE, 'm', "review_finish_time", REVIEW_OFFSET(review_finish_time), 0 },
+  { EJ_MYSQL_NOW_IS_M2 | EJ_MYSQL_NULLABLE, 'm', "approval_time", REVIEW_OFFSET(approval_time), 0 },
+  { EJ_MYSQL_NOW_IS_M2 | EJ_MYSQL_NULLABLE, 'm', "user_opened_time", REVIEW_OFFSET(user_opened_time), 0 },
+  { 0, 'g', "review_uuid", REVIEW_OFFSET(review_uuid), 0 },
+  { EJ_MYSQL_NULLABLE, 's', "moderation_text", REVIEW_OFFSET(moderation_text), 0 },
+  { EJ_MYSQL_NULLABLE, 's', "custom_prompt", REVIEW_OFFSET(custom_prompt), 0 },
+  { EJ_MYSQL_NULLABLE, 's', "options", REVIEW_OFFSET(options), 0 },
+  { EJ_MYSQL_NULLABLE, 's', "review_source", REVIEW_OFFSET(review_source), 0 },
+  { EJ_MYSQL_NULLABLE, 's', "review_agent", REVIEW_OFFSET(review_agent), 0 },
+  { EJ_MYSQL_NULLABLE, 's', "review_heartbeat_status", REVIEW_OFFSET(review_heartbeat_status), 0 },
+  { EJ_MYSQL_NULLABLE, 's', "review_result", REVIEW_OFFSET(review_result), 0 },
+  { EJ_MYSQL_NULLABLE, 's', "review_judge_result", REVIEW_OFFSET(review_judge_result), 0 },
+  { EJ_MYSQL_NULLABLE, 's', "review_statistics", REVIEW_OFFSET(review_statistics), 0 },
+  { EJ_MYSQL_NULLABLE, 's', "review_log", REVIEW_OFFSET(review_log), 0 },
+  { EJ_MYSQL_NULLABLE, 's', "approved_text", REVIEW_OFFSET(approved_text), 0 },
+  { EJ_MYSQL_NULLABLE, 's', "judge_approved_text", REVIEW_OFFSET(judge_approved_text), 0 },
+  { EJ_MYSQL_NULLABLE, 's', "model", REVIEW_OFFSET(model), 0 },
+  { EJ_MYSQL_NULLABLE, 's', "approver_feedback", REVIEW_OFFSET(approver_feedback), 0 },
+  { EJ_MYSQL_NULLABLE, 's', "user_feedback", REVIEW_OFFSET(user_feedback), 0 },
+  { EJ_MYSQL_NULLABLE, 'h', "review_source_sha256", REVIEW_OFFSET(review_source_sha256), 0 },
+  { 0, 'd', "contest_id", REVIEW_OFFSET(contest_id), 0 },
+  { 0, 'd', "run_id", REVIEW_OFFSET(run_id), 0 },
+  { EJ_MYSQL_NULL_IS_M1, 'd', "request_user_id", REVIEW_OFFSET(request_user_id), 0 },
+  { EJ_MYSQL_NULL_IS_M1, 'd', "moderator_user_id", REVIEW_OFFSET(moderator_user_id), 0 },
+  { EJ_MYSQL_NULL_IS_M1, 'd', "reviewer_user_id", REVIEW_OFFSET(reviewer_user_id), 0 },
+  { EJ_MYSQL_NULL_IS_M1, 'd', "approver_user_id", REVIEW_OFFSET(approver_user_id), 0 },
+  { EJ_MYSQL_NULL_IS_M1, 'd', "input_tokens", REVIEW_OFFSET(input_tokens), 0 },
+  { EJ_MYSQL_NULL_IS_M1, 'd', "cached_input_tokens", REVIEW_OFFSET(cached_input_tokens), 0 },
+  { EJ_MYSQL_NULL_IS_M1, 'd', "output_tokens", REVIEW_OFFSET(output_tokens), 0 },
+  { EJ_MYSQL_NULL_IS_M1, 'd', "reasoning_tokens", REVIEW_OFFSET(reasoning_tokens), 0 },
+  { EJ_MYSQL_NULL_IS_M1, 'd', "total_tokens", REVIEW_OFFSET(total_tokens), 0 },
+  { 0, '1', "generation", REVIEW_OFFSET(generation), 0 },
+  { 0, '1', "status", REVIEW_OFFSET(status), 0 },
+  { 0, '1', "purpose", REVIEW_OFFSET(purpose), 0 },
+  { EJ_MYSQL_NULL_IS_M1, '!', "review_recommended_status", REVIEW_OFFSET(review_recommended_status), 0 },
+  { EJ_MYSQL_NULL_IS_M1, '!', "approver_review_mark", REVIEW_OFFSET(approver_review_mark), 0 },
+  { EJ_MYSQL_NULLABLE, '1', "user_opened_count", REVIEW_OFFSET(user_opened_count), 0 },
+  { EJ_MYSQL_NULL_IS_M1, '!', "user_review_mark", REVIEW_OFFSET(user_review_mark), 0 },
+  { EJ_MYSQL_NULL_IS_M1, '!', "review_approved_as_is", REVIEW_OFFSET(review_approved_as_is), 0 },
+  { EJ_MYSQL_NULL_IS_M1, '!', "status_approved_as_is", REVIEW_OFFSET(status_approved_as_is), 0 },
+  { EJ_MYSQL_NULL_IS_M1, '!', "ai_generation_score", REVIEW_OFFSET(ai_generation_score), 0 },
+};
+
+static int
+create_review_func(
+        struct rldb_plugin_cnts *cdata,
+        int64_t run_serial_id,
+        int run_id,
+        int generation,
+        int status,
+        int purpose,
+        int request_user_id,
+        int need_full,
+        struct run_review *p_result)
+{
+  struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts*) cdata;
+  struct rldb_mysql_state *state = cs->plugin_state;
+  char *cmd_s = NULL;
+  size_t cmd_z = 0;
+  FILE *cmd_f = open_memstream(&cmd_s, &cmd_z);
+
+  struct run_review rr = {};
+  rr.run_serial_id = run_serial_id;
+  rr.creation_time = -2; // NOW()
+  ej_uuid_generate(&rr.review_uuid);
+  rr.contest_id = cs->contest_id;
+  rr.run_id = run_id;
+  rr.generation = generation;
+  rr.status = status;
+  rr.purpose = purpose;
+  rr.request_user_id = request_user_id;
+  fprintf(cmd_f, "INSERT INTO %sreviews SET ", state->md->table_prefix);
+  state->mi->unparse_spec_4(state->md, cmd_f, REVIEW_ROW_WIDTH, reviews_spec,
+                            RER_RUN_SERIAL_ID|RER_CREATION_TIME|RER_REVIEW_UUID|RER_CONTEST_ID|RER_RUN_ID|RER_GENERATION|RER_STATUS|RER_PURPOSE|RER_REQUEST_USER_ID,
+                          &rr, "", 1);
+  fclose(cmd_f); cmd_f = NULL;
+
+  if (state->mi->simple_query(state->md, cmd_s, cmd_z) < 0) {
+    free(cmd_s);
+    return -1;
+  }
+  free(cmd_s); cmd_s = NULL;
+
+  return 0;
+}
+
+static int
+unparse_review_fields(
+        FILE *cmd_f,
+        uint64_t field_mask)
+{
+  int field_count = 0;
+  if (!field_mask) field_mask = RER_ALL;
+  const unsigned char *sep = "";
+  for (int i = 0; i < sizeof(reviews_spec) / sizeof(reviews_spec[0]); ++i) {
+    if ((field_mask & (1ULL << i)) != 0) {
+      fprintf(cmd_f, "%s%s", sep, reviews_spec[i].name);
+      sep = ",";
+      ++field_count;
+    }
+  }
+  return field_count;
+}
+
+static int
+fetch_review_func(
+        struct rldb_plugin_cnts *cdata,
+        const ej_uuid_t *p_uuid,
+        uint64_t field_mask,
+        struct run_review *p_result)
+{
+  struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts*) cdata;
+  struct rldb_mysql_state *state = cs->plugin_state;
+  struct common_mysql_iface *mi = state->mi;
+  struct common_mysql_state *md = state->md;
+  unsigned char buf[64];
+  char *cmd_s = NULL;
+  size_t cmd_z = 0;
+  FILE *cmd_f = open_memstream(&cmd_s, &cmd_z);
+  int field_count = 0;
+
+  fprintf(cmd_f, "SELECT ");
+  field_count = unparse_review_fields(cmd_f, field_mask);
+  fprintf(cmd_f, " FROM %sreviews WHERE review_uuid='%s' ;", md->table_prefix,
+          ej_uuid_unparse_r_nonempty(buf, sizeof(buf), p_uuid));
+  fclose(cmd_f); cmd_f = NULL;
+
+  if (mi->query(md, cmd_s, cmd_z, field_count) < 0) {
+    free(cmd_s);
+    return -1;
+  }
+  if (!md->row_count) {
+    mi->free_res(md);
+    free(cmd_s);
+    return 0;
+  }
+
+  free(cmd_s); cmd_s = NULL;
+  if (mi->next_row(md) < 0) {
+    return -1;
+  }
+  int r = mi->parse_spec_2(md, REVIEW_ROW_WIDTH, reviews_spec, field_mask, p_result);
+  if (r < 0) return r;
+  return 1;
+}
+
+static void
+write_int_list(FILE *out_f, int *nums, int count)
+{
+  putc_unlocked('(', out_f);
+  for (int i = 0; i < count; ++i) {
+    if (i > 0) putc_unlocked(',', out_f);
+    fprintf(out_f, "%d", nums[i]);
+  }
+  putc_unlocked(')', out_f);
+}
+
+static void
+write_int64_list(FILE *out_f, int64_t *nums, int count)
+{
+  putc_unlocked('(', out_f);
+  for (int i = 0; i < count; ++i) {
+    if (i > 0) putc_unlocked(',', out_f);
+    fprintf(out_f, "%lld", (long long) nums[i]);
+  }
+  putc_unlocked(')', out_f);
+}
+
+static void
+write_reviews_filter(
+        struct common_mysql_iface *mi,
+        struct common_mysql_state *md,
+        FILE *cmd_f,
+        const struct run_review_filter *filter)
+{
+  static const unsigned char AND_STR[] = " AND ";
+  const unsigned char *asep = "";
+
+  if (filter->serial_id > 0) {
+    fprintf(cmd_f, "%sserial_id=%lld", asep, (long long) filter->serial_id);
+    asep = AND_STR;
+  }
+  if (filter->serial_id_count > 0) {
+    fprintf(cmd_f, "%sserial_id IN ", asep);
+    asep = AND_STR;
+    write_int64_list(cmd_f, filter->serial_id_list, filter->serial_id_count);
+  }
+  if (filter->run_serial_id > 0) {
+    fprintf(cmd_f, "%srun_serial_id=%lld", asep, (long long) filter->run_serial_id);
+    asep = AND_STR;
+  }
+  if (filter->run_serial_id_count > 0) {
+    fprintf(cmd_f, "%srun_serial_id IN ", asep);
+    asep = AND_STR;
+    write_int64_list(cmd_f, filter->run_serial_id_list, filter->run_serial_id_count);
+  }
+  if (filter->contest_id > 0) {
+    fprintf(cmd_f, "%scontest_id=%d", asep, filter->contest_id);
+    asep = AND_STR;
+  }
+  if (filter->contest_id_count > 0) {
+    fprintf(cmd_f, "%scontest_id IN ", asep);
+    asep = AND_STR;
+    write_int_list(cmd_f, filter->contest_id_list, filter->contest_id_count);
+  }
+  if (filter->run_id >= 0) {
+    fprintf(cmd_f, "%srun_id=%d", asep, filter->run_id);
+    asep = AND_STR;
+  }
+  if (filter->run_id_count > 0) {
+    fprintf(cmd_f, "%srun_id IN (", asep);
+    asep = AND_STR;
+    write_int_list(cmd_f, filter->run_id_list, filter->run_id_count);
+  }
+  if (filter->generation > 0 && filter->generation < 256) {
+    fprintf(cmd_f, "%sgeneration=%d", asep, filter->generation);
+    asep = AND_STR;
+  }
+  if (filter->include_status_mask) {
+    fprintf(cmd_f, "%sstatus IN (", asep);
+    asep = AND_STR;
+    const unsigned char *csep = "";
+    for (int i = 1; i < RERS_LAST; ++i) {
+      if ((filter->include_status_mask & (1ULL << i))) {
+        fprintf(cmd_f, "%s%d", csep, i);
+        csep = ",";
+      }
+    }
+    fprintf(cmd_f, ")");
+  }
+  if (filter->exclude_status_mask) {
+    fprintf(cmd_f, "%sstatus NOT IN (", asep);
+    asep = AND_STR;
+    const unsigned char *csep = "";
+    for (int i = 1; i < RERS_LAST; ++i) {
+      if ((filter->exclude_status_mask & (1ULL << i))) {
+        fprintf(cmd_f, "%s%d", csep, i);
+        csep = ",";
+      }
+    }
+    fprintf(cmd_f, ")");
+  }
+  if (filter->include_purpose_mask) {
+    fprintf(cmd_f, "%spurpose IN (", asep);
+    asep = AND_STR;
+    const unsigned char *csep = "";
+    for (int i = 1; i < RERP_LAST; ++i) {
+      if ((filter->include_purpose_mask & (1ULL << i))) {
+        fprintf(cmd_f, "%s%d", csep, i);
+        csep = ",";
+      }
+    }
+    fprintf(cmd_f, ")");
+  }
+  if (filter->exclude_purpose_mask) {
+    fprintf(cmd_f, "%spurpose NOT IN (", asep);
+    asep = AND_STR;
+    const unsigned char *csep = "";
+    for (int i = 1; i < RERP_LAST; ++i) {
+      if ((filter->exclude_purpose_mask & (1ULL << i))) {
+        fprintf(cmd_f, "%s%d", csep, i);
+        csep = ",";
+      }
+    }
+    fprintf(cmd_f, ")");
+  }
+  if (filter->null_field_mask) {
+    for (int i = 0; i < sizeof(reviews_spec) / sizeof(reviews_spec[0]); ++i) {
+      if ((filter->null_field_mask & (1ULL << i)) != 0) {
+        fprintf(cmd_f, "%s%s IS NULL", asep, reviews_spec[i].name);
+        asep = AND_STR;
+      }
+    }
+  }
+  if (filter->not_null_field_mask) {
+    for (int i = 0; i < sizeof(reviews_spec) / sizeof(reviews_spec[0]); ++i) {
+      if ((filter->not_null_field_mask & (1ULL << i)) != 0) {
+        fprintf(cmd_f, "%s%s IS NOT NULL", asep, reviews_spec[i].name);
+        asep = AND_STR;
+      }
+    }
+  }
+  if (filter->request_user_id > 0) {
+    fprintf(cmd_f, "%srequest_user_id=%d", asep, filter->request_user_id);
+    asep = AND_STR;
+  }
+  if (filter->touch_user_id > 0) {
+    fprintf(cmd_f, "%s(moderator_user_id=%d OR reviewer_user_id=%d OR approver_user_id=%d)", asep, filter->touch_user_id, filter->touch_user_id, filter->touch_user_id);
+    asep = AND_STR;
+  }
+  if (filter->touch_user_id_count > 0) {
+    fprintf(cmd_f, "%s(moderator_user_id IN ", asep);
+    write_int_list(cmd_f, filter->touch_user_id_list, filter->touch_user_id_count);
+    fprintf(cmd_f, " OR reviewer_user_id IN ");
+    write_int_list(cmd_f, filter->touch_user_id_list, filter->touch_user_id_count);
+    fprintf(cmd_f, " OR approver_user_id IN ");
+    write_int_list(cmd_f, filter->touch_user_id_list, filter->touch_user_id_count);
+    putc_unlocked(')', cmd_f);
+    asep = AND_STR;
+  }
+  if (filter->reviewer_user_id > 0) {
+    fprintf(cmd_f, "%sreviewer_user_id=%d", asep, filter->reviewer_user_id);
+    asep = AND_STR;
+  }
+  if (ej_uuid_is_nonempty(filter->review_uuid)) {
+    unsigned char uuid_buf[64];
+    fprintf(cmd_f, "%sreview_uuid=\"%s\"", asep, ej_uuid_unparse_r(uuid_buf, sizeof(uuid_buf), &filter->review_uuid, NULL));
+    asep = AND_STR;
+  }
+  if (filter->review_uuid_count > 0) {
+    fprintf(cmd_f, "%sreview_uuid IN (", asep);
+    for (int i = 0; i < filter->review_uuid_count; ++i) {
+      unsigned char uuid_buf[64];
+      if (i > 0) putc_unlocked(',', cmd_f);
+      fprintf(cmd_f, "\"%s\"", ej_uuid_unparse_r(uuid_buf, sizeof(uuid_buf), &filter->review_uuid_list[i], NULL));
+    }
+    putc_unlocked(')', cmd_f);
+    asep = AND_STR;
+  }
+#define DO_TIME_FILTER(f) do { \
+  if (filter->f##_us_not_before > 0) { \
+    fprintf(cmd_f, "%s" #f " >= ", asep); \
+    asep = AND_STR; \
+    mi->write_timestamp_us(md, cmd_f, NULL, filter->f##_us_not_before, 0); \
+  } \
+  if (filter->f##_us_before > 0) { \
+    fprintf(cmd_f, "%s" #f " < ", asep); \
+    asep = AND_STR; \
+    mi->write_timestamp_us(md, cmd_f, NULL, filter->f##_us_before, 0); \
+  }} while (0)
+  DO_TIME_FILTER(creation_time);
+  DO_TIME_FILTER(last_update_time);
+  DO_TIME_FILTER(moderation_time);
+  DO_TIME_FILTER(review_start_time);
+  DO_TIME_FILTER(review_finish_time);
+  DO_TIME_FILTER(approve_time);
+  DO_TIME_FILTER(user_open_time);
+  if (filter->raw_filter_str) {
+    fprintf(cmd_f, "%s%s", asep, filter->raw_filter_str);
+    asep = AND_STR;
+  }
+#undef DO_TIME_FILTER
+}
+
+static int
+list_reviews_func(
+        struct rldb_plugin_cnts *cdata,
+        const struct run_review_filter *filter,
+        struct run_review **p_result,
+        size_t *p_count)
+{
+  struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts*) cdata;
+  struct rldb_mysql_state *state = cs->plugin_state;
+  struct common_mysql_iface *mi = state->mi;
+  struct common_mysql_state *md = state->md;
+  char *cmd_s = NULL;
+  size_t cmd_z = 0;
+  FILE *cmd_f = open_memstream(&cmd_s, &cmd_z);
+  struct run_review *reviews = NULL;
+  size_t count = 0;
+  int field_count = 0;
+
+  fprintf(cmd_f, "SELECT ");
+  field_count = unparse_review_fields(cmd_f, filter->field_mask);
+  fprintf(cmd_f, " FROM %sreviews WHERE ", md->table_prefix);
+
+  write_reviews_filter(mi, md, cmd_f, filter);
+
+  fprintf(cmd_f, " ORDER BY serial_id");
+  if (filter->count > 0) {
+    fprintf(cmd_f, " LIMIT %d, %d", filter->offset, filter->count);
+  }
+  putc_unlocked(';', cmd_f);
+  fclose(cmd_f); cmd_f = NULL;
+  if (mi->query(md, cmd_s, cmd_z, field_count) < 0) {
+    goto fail;
+  }
+  if (!md->row_count) {
+    mi->free_res(md);
+    *p_count = 0;
+    free(cmd_s);
+    return 0;
+  }
+
+  free(cmd_s); cmd_s = NULL;
+  count = md->row_count;
+  XCALLOC(reviews, count);
+  for (size_t i = 0; i < count; ++i) {
+    if (mi->next_row(md) < 0) goto fail;
+    if (mi->parse_spec_2(md, REVIEW_ROW_WIDTH, reviews_spec, filter->field_mask, &reviews[i]) < 0) {
+      goto fail;
+    }
+  }
+
+  *p_result = reviews;
+  *p_count = count;
+
+  return 1;
+
+fail:;
+  if (cmd_f) fclose(cmd_f);
+  free(cmd_s);
+  run_review_free_array(reviews, count);
+  free(reviews);
+  return -1;
+}
+
+static int
+update_reviews_func(
+        struct rldb_plugin_cnts *cdata,
+        const struct run_review *rr,
+        uint64_t field_mask,
+        const struct run_review_filter *filter)
+{
+  struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts*) cdata;
+  struct rldb_mysql_state *state = cs->plugin_state;
+  struct common_mysql_iface *mi = state->mi;
+  struct common_mysql_state *md = state->md;
+  char *cmd_s = NULL;
+  size_t cmd_z = 0;
+  FILE *cmd_f = open_memstream(&cmd_s, &cmd_z);
+
+  fprintf(cmd_f, "UPDATE %sreviews SET ", state->md->table_prefix);
+  mi->unparse_spec_4(md, cmd_f, REVIEW_ROW_WIDTH, reviews_spec, field_mask, rr, "", 1);
+  fprintf(cmd_f, " WHERE ");
+  write_reviews_filter(mi, md, cmd_f, filter);
+  putc_unlocked(';', cmd_f);
+  fclose(cmd_f); cmd_f = NULL;
+
+  if (mi->simple_query(md, cmd_s, cmd_z) < 0) goto fail;
+  xfree(cmd_s); cmd_s = 0; cmd_z = 0;
+
+  return mi->affected_rows(md);
+
+fail:;
+  if (cmd_f) fclose(cmd_f);
+  xfree(cmd_s);
+  return -1;
+}
+
+static int
+fetch_review_by_crg_func(
+        struct rldb_plugin_cnts *cdata,
+        int run_id,
+        int generation,
+        uint64_t field_mask,
+        struct run_review *p_result)
+{
+  struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts*) cdata;
+  struct rldb_mysql_state *state = cs->plugin_state;
+  struct common_mysql_iface *mi = state->mi;
+  struct common_mysql_state *md = state->md;
+  char *cmd_s = NULL;
+  size_t cmd_z = 0;
+  FILE *cmd_f = open_memstream(&cmd_s, &cmd_z);
+  int field_count = 0;
+
+  fprintf(cmd_f, "SELECT ");
+  field_count = unparse_review_fields(cmd_f, field_mask);
+  fprintf(cmd_f, " FROM %sreviews WHERE contest_id = %d AND run_id = %d AND generation = %d ;",
+          md->table_prefix, cs->contest_id, run_id, generation);
+  fclose(cmd_f); cmd_f = NULL;
+
+  if (mi->query(md, cmd_s, cmd_z, field_count) < 0) {
+    free(cmd_s);
+    return -1;
+  }
+  if (!md->row_count) {
+    mi->free_res(md);
+    free(cmd_s);
+    return 0;
+  }
+
+  free(cmd_s); cmd_s = NULL;
+  if (mi->next_row(md) < 0) {
+    return -1;
+  }
+  int r = mi->parse_spec_2(md, REVIEW_ROW_WIDTH, reviews_spec, field_mask, p_result);
+  if (r < 0) return r;
+  return 1;
+}
+
+static int
+update_review_view_counter_func(
+        struct rldb_plugin_cnts *cdata,
+        int run_id,
+        int generation)
+{
+  struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts*) cdata;
+  struct rldb_mysql_state *state = cs->plugin_state;
+  struct common_mysql_iface *mi = state->mi;
+  struct common_mysql_state *md = state->md;
+  char *cmd_s = NULL;
+  size_t cmd_z = 0;
+  FILE *cmd_f = open_memstream(&cmd_s, &cmd_z);
+
+  fprintf(cmd_f,
+          "UPDATE %sreviews SET user_opened_count=user_opened_count+1, user_opened_time=IFNULL(NOW(6),user_opened_time) "
+          " WHERE contest_id=%d,run_id=%d,generation=%d;",
+          state->md->table_prefix, cs->contest_id, run_id, generation);
+  fclose(cmd_f); cmd_f = NULL;
+  if (mi->simple_query(md, cmd_s, cmd_z) < 0) goto fail;
+  xfree(cmd_s); cmd_s = 0; cmd_z = 0;
+
+  return mi->affected_rows(md);
+
+fail:;
+  if (cmd_f) fclose(cmd_f);
+  xfree(cmd_s);
+  return -1;
 }

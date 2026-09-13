@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2024 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -196,6 +196,11 @@ static const unsigned char * const ns_error_messages[NEW_SRV_ERR_LAST]=
   [NEW_SRV_ERR_USER_NOT_REGISTERED] = __("User not registered for contest"),
   [NEW_SRV_ERR_USER_BANNED] = __("User is banned"),
   [NEW_SRV_ERR_USER_LOCKED] = __("User is locked"),
+  [NEW_SRV_ERR_NO_CONTESTS] = __("No contests"),
+  [NEW_SRV_ERR_NO_AFFECTED_ROWS] = __("No affected rows"),
+  [NEW_SRV_ERR_RUN_REVIEW_QUOTA_EXCEEDED] = __("Review quota exceeded"),
+  [NEW_SRV_ERR_RUN_ALREADY_REVIEWED] = __("Run already reviewed"),
+  [NEW_SRV_ERR_RUN_REVIEW_INCOMPLETE] = __("Previous run review not finished"),
 };
 
 static const unsigned char * const ns_error_titles[NEW_SRV_ERR_LAST]=
@@ -364,6 +369,11 @@ static const unsigned char * const ns_error_titles[NEW_SRV_ERR_LAST]=
   [NEW_SRV_ERR_USER_NOT_REGISTERED] = __("User not registered for contest"),
   [NEW_SRV_ERR_USER_BANNED] = __("User is banned"),
   [NEW_SRV_ERR_USER_LOCKED] = __("User is locked"),
+  [NEW_SRV_ERR_NO_CONTESTS] = __("No contests"),
+  [NEW_SRV_ERR_NO_AFFECTED_ROWS] = __("No affected rows"),
+  [NEW_SRV_ERR_RUN_REVIEW_QUOTA_EXCEEDED] = __("Review quota exceeded"),
+  [NEW_SRV_ERR_RUN_ALREADY_REVIEWED] = __("Run already reviewed"),
+  [NEW_SRV_ERR_RUN_REVIEW_INCOMPLETE] = __("Previous run review not finished"),
 };
 
 static const unsigned char * const ns_error_symbols[NEW_SRV_ERR_LAST]=
@@ -531,6 +541,11 @@ static const unsigned char * const ns_error_symbols[NEW_SRV_ERR_LAST]=
   [NEW_SRV_ERR_USER_NOT_REGISTERED] = "ERR_USER_NOT_REGISTERED",
   [NEW_SRV_ERR_USER_BANNED] = "ERR_USER_BANNED",
   [NEW_SRV_ERR_USER_LOCKED] = "ERR_USER_LOCKED",
+  [NEW_SRV_ERR_NO_CONTESTS] = "ERR_NO_CONTESTS",
+  [NEW_SRV_ERR_NO_AFFECTED_ROWS] = "ERR_NO_AFFECTED_ROWS",
+  [NEW_SRV_ERR_RUN_REVIEW_QUOTA_EXCEEDED] = "ERR_REVIEW_QUOTA_EXCEEDED",
+  [NEW_SRV_ERR_RUN_ALREADY_REVIEWED] = "ERR_ALREADY_REVIEWED",
+  [NEW_SRV_ERR_RUN_REVIEW_INCOMPLETE] = "ERR_RUN_REVIEW_INCOMPLETE",
 };
 
 const unsigned char *

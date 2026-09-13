@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-10-02 00:48+0300\n"
+"POT-Creation-Date: 2026-08-29 07:08+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Ukrainian <uk@li.org>\n"
@@ -154,9 +154,9 @@ msgid ""
 "<p class=\"ejudge_copyright\">This program is copyright &copy; %s Alexander "
 "Chernov.</p>\n"
 "<p class=\"ejudge_copyright\">This program is free software; you can "
-"redistribute it and/or modify it under the terms of the <a href=\"http://www."
-"gnu.org/licenses/gpl.html\">GNU General Public License</a> as published by "
-"the <a href=\"http://www.fsf.org\">Free Software Foundation</a>; either "
+"redistribute it and/or modify it under the terms of the <a href=\"http://"
+"www.gnu.org/licenses/gpl.html\">GNU General Public License</a> as published "
+"by the <a href=\"http://www.fsf.org\">Free Software Foundation</a>; either "
 "version 2 of the License, or (at your option) any later version.</p>\n"
 msgstr ""
 
@@ -385,6 +385,9 @@ msgid "Adding role %d to user %d in contest %d failed"
 msgstr ""
 
 msgid "Adding role to user in contest failed"
+msgstr ""
+
+msgid "Additional comments for judge"
 msgstr ""
 
 msgid "Additional information about this error:"
@@ -1752,6 +1755,12 @@ msgstr ""
 msgid "Help"
 msgstr ""
 
+msgid "Hidden run review"
+msgstr ""
+
+msgid "Hidden run review (additional notes)"
+msgstr ""
+
 msgid "Hidden?"
 msgstr ""
 
@@ -2496,6 +2505,9 @@ msgstr ""
 msgid "No advisors are allowed in this contest"
 msgstr ""
 
+msgid "No affected rows"
+msgstr ""
+
 msgid "No answer"
 msgstr ""
 
@@ -2521,6 +2533,9 @@ msgid "No connection to the server"
 msgstr ""
 
 msgid "No contestants are allowed in this contest"
+msgstr ""
+
+msgid "No contests"
 msgstr ""
 
 msgid "No directory structure"
@@ -2830,12 +2845,21 @@ msgstr ""
 msgid "Please, follow the following link."
 msgstr ""
 
+msgid "Postapprove reviews"
+msgstr ""
+
+msgid "Premoderate reviews"
+msgstr ""
+
 msgid "Presentation error"
 msgstr ""
 
 msgid ""
 "Press \"Stop exam\" button to finish the exam. Your answers will be checked "
 "shortly after that."
+msgstr ""
+
+msgid "Previous run review not finished"
 msgstr ""
 
 msgid "Previous submissions of this problem"
@@ -3313,7 +3337,19 @@ msgstr ""
 msgid "Review comments"
 msgstr ""
 
+msgid "Review displayed runs"
+msgstr ""
+
+msgid "Review displayed runs!"
+msgstr ""
+
+msgid "Review mode"
+msgstr ""
+
 msgid "Review notes"
+msgstr ""
+
+msgid "Review quota exceeded"
 msgstr ""
 
 msgid "Role"
@@ -3323,6 +3359,9 @@ msgid "Run"
 msgstr ""
 
 msgid "Run ID"
+msgstr ""
+
+msgid "Run already reviewed"
 msgstr ""
 
 msgid "Run comment"
@@ -3350,6 +3389,12 @@ msgid "Run penalty"
 msgstr ""
 
 msgid "Run program on server"
+msgstr ""
+
+msgid "Run review"
+msgstr ""
+
+msgid "Run review for user"
 msgstr ""
 
 msgid "Run selection"
@@ -3380,6 +3425,9 @@ msgid "Runs summoned for defence"
 msgstr ""
 
 msgid "Runs to change token info:"
+msgstr ""
+
+msgid "Runs to review:"
 msgstr ""
 
 msgid "STATUS UPDATE FAILED!"
@@ -3484,6 +3532,9 @@ msgid "Send run comment and SUMMON run"
 msgstr ""
 
 msgid "Send run comment and ignore run"
+msgstr ""
+
+msgid "Send runs to external review"
 msgstr ""
 
 msgid "Send!"
