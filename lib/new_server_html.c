@@ -12081,6 +12081,13 @@ userlist_error:;
   goto done;
 }
 
+static int
+make_contest_id_list(
+        struct http_request_info *phr,
+        const unsigned char *ids_str,
+        int cap,
+        int **p_ids);
+
 static void
 priv_list_reviews_json(
         FILE *fout,
@@ -12143,6 +12150,7 @@ priv_list_reviews_json(
 static int
 scan_eligible_contests(
         struct http_request_info *phr,
+        int cap,
         int **p_filtered)
 {
   const int *cnts_ids = NULL;
@@ -12160,7 +12168,7 @@ scan_eligible_contests(
 
   XCALLOC(filtered, count);
 
-  if (opcaps_find(&phr->config->capabilities, phr->login, &gcaps) >= 0 && opcaps_check(gcaps, OPCAP_EXT_REVIEW) >= 0) {
+  if (opcaps_find(&phr->config->capabilities, phr->login, &gcaps) >= 0 && opcaps_check(gcaps, cap) >= 0) {
     has_global_perm = 1;
   }
 
@@ -12169,7 +12177,7 @@ scan_eligible_contests(
     if (cnts->closed > 0) continue;
     if (!contests_check_judge_ip_2(cnts, &phr->ip, phr->ssl_flag)) continue;
     if (!has_global_perm && opcaps_find(&cnts->capabilities, phr->login, &caps) < 0) continue;
-    if (!has_global_perm && opcaps_check(caps, OPCAP_EXT_REVIEW) < 0) continue;
+    if (!has_global_perm && opcaps_check(caps, cap) < 0) continue;
     filtered[filtered_count++] = cnts_ids[i];
   }
 
@@ -12216,6 +12224,7 @@ static int
 scan_contests_in_list(
         struct http_request_info *phr,
         const unsigned char *ids_str,
+        int cap,
         int **p_ids)
 {
   int *ids = NULL;
@@ -12235,7 +12244,7 @@ scan_contests_in_list(
   opcap_t gcaps;
   _Bool has_global_perm = 0;
 
-  if (opcaps_find(&phr->config->capabilities, phr->login, &gcaps) >= 0 && opcaps_check(gcaps, OPCAP_EXT_REVIEW) >= 0) {
+  if (opcaps_find(&phr->config->capabilities, phr->login, &gcaps) >= 0 && opcaps_check(gcaps, cap) >= 0) {
     has_global_perm = 1;
   }
   j = 0;
@@ -12246,7 +12255,7 @@ scan_contests_in_list(
     if (cnts->closed > 0) continue;
     if (!contests_check_judge_ip_2(cnts, &phr->ip, phr->ssl_flag)) continue;
     if (!has_global_perm && opcaps_find(&cnts->capabilities, phr->login, &caps) < 0) continue;
-    if (!has_global_perm && opcaps_check(caps, OPCAP_EXT_REVIEW) < 0) continue;
+    if (!has_global_perm && opcaps_check(caps, cap) < 0) continue;
     ids[j++] = ids[i];
   }
   count = j;
@@ -12263,12 +12272,13 @@ static int
 make_contest_id_list(
         struct http_request_info *phr,
         const unsigned char *ids_str,
+        int cap,
         int **p_ids)
 {
   if (ids_str && !strcmp(ids_str, "*")) {
-    return scan_eligible_contests(phr, p_ids);
+    return scan_eligible_contests(phr, cap, p_ids);
   } else if (ids_str) {
-    return scan_contests_in_list(phr, ids_str, p_ids);
+    return scan_contests_in_list(phr, ids_str, cap, p_ids);
   } else {
     if (phr->contest_id <= 0) return 0;
     int *ids = NULL;
@@ -12318,7 +12328,7 @@ priv_list_pending_reviews_json(
   hr_cgi_param_int_opt(phr, "count", &count, 0);
   hr_cgi_param_int_opt(phr, "date_mode", &date_mode, 0);
   hr_cgi_param(phr, "contest_ids", &contest_ids_str);
-  contest_count = make_contest_id_list(phr, contest_ids_str, &contest_ids);
+  contest_count = make_contest_id_list(phr, contest_ids_str, OPCAP_EXT_REVIEW, &contest_ids);
   if (contest_count < 0) {
     err_num = NEW_SRV_ERR_INV_CONTEST_ID;
     ERR("invalid contest_ids");
