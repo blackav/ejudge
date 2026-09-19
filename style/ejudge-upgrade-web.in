@@ -1,5 +1,5 @@
 #! /bin/bash
-# Copyright (c) 2008-2024 Alexander Chernov <cher@ejudge.ru>
+# Copyright (c) 2008-2026 Alexander Chernov <cher@ejudge.ru>
 
 # This script upgrades the web installation of the ejudge system
 
@@ -96,7 +96,7 @@ fi
 # remove old stuff
 # actions.js dojo.js* Storage_* flash6_* storage_* src
 cd "${destdir}${target}"
-if ! rm -fr actions.js dojo.js* storage_* flash6_* storage_* src dojo dojox dijit icons jqgrid jquery-ui images
+if ! rm -fr actions.js dojo.js* storage_* flash6_* storage_* src dojo dojox dijit icons jqgrid jquery-ui images tab
 then
     die "cannot remove old files from ${destdir}${target}"
 fi
@@ -109,7 +109,7 @@ FILES="${FILES} "*.js
 FILES="${FILES} "*.ttf
 FILES="${FILES} "*.gif
 FILES="${FILES} "*.html
-FILES="${FILES} icons images jqgrid jquery-ui font mathjax"
+FILES="${FILES} icons images jqgrid jquery-ui font mathjax tab"
 FILES=`echo $FILES`
 
 # symlink the necessary style files
