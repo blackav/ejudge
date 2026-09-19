@@ -72,6 +72,8 @@ enum
     PPXML_EXTRA_TAG,
     PPXML_EXTRA_TAGS,
     PPXML_INTERACTOR,
+    PPXML_RUNS,
+    PPXML_RUN,
     PPXML_ATTACHMENTS,
     PPXML_SCORER,
     PPXML_STAGE,
@@ -463,11 +465,24 @@ struct ppxml_validators
     XML_TREE_VECTOR_T(ppxml_validator) n;
 };
 
+struct ppxml_run
+{
+    struct xml_tree b;
+    int value;
+};
+
+struct ppxml_runs
+{
+    struct xml_tree b;
+    XML_TREE_VECTOR_T(ppxml_run) n;
+};
+
 struct ppxml_interactor
 {
     struct xml_tree b;
     struct ppxml_source *source;
     struct ppxml_binary *binary;
+    struct ppxml_runs *runs;
 };
 
 struct ppxml_scorer

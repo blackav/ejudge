@@ -77,6 +77,14 @@ struct run_test_info
   struct run_test_file error;
   struct run_test_file chk_out;
   struct run_test_file test_checker;
+  /* communication problems */
+  int                   communication_run_count;
+  long                 *communication_time_ms;
+  long                 *communication_real_time_ms;
+  unsigned long        *communication_max_memory_used;
+  long long            *communication_max_rss;
+  struct run_test_file *communication_inputs;
+  struct run_test_file *communication_outputs;
 };
 
 struct run_test_info_vector

@@ -94,7 +94,8 @@ enum
     Tag_test_checker,
     Tag_verdict_bits,
     Tag_group_scores,
-    Tag_valuer_log
+    Tag_valuer_log,
+    Tag_communication_runs
 };
 static __attribute__((unused)) const char * const tag_table[] =
 {
@@ -193,6 +194,7 @@ static __attribute__((unused)) const char * const tag_table[] =
     "verdict_bits",
     "group_scores",
     "valuer_log",
+    "communication_runs",
 };
 static __attribute__((unused)) int
 match(const char *s)
@@ -248,8 +250,14 @@ match(const char *s)
             if (s[2] == 'l' && s[3] == 'u' && s[4] == 'm' && s[5] == 'n' && !s[6]) {
                 return Tag_column;
             } else if (s[2] == 'm') {
-                if (s[3] == 'm' && s[4] == 'e' && s[5] == 'n' && s[6] == 't' && !s[7]) {
-                    return Tag_comment;
+                if (s[3] == 'm') {
+                    if (s[4] == 'e' && s[5] == 'n' && s[6] == 't' && !s[7]) {
+                        return Tag_comment;
+                    } else if (s[4] == 'u' && s[5] == 'n' && s[6] == 'i' && s[7] == 'c' && s[8] == 'a' && s[9] == 't' && s[10] == 'i' && s[11] == 'o' && s[12] == 'n' && s[13] == '_' && s[14] == 'r' && s[15] == 'u' && s[16] == 'n' && s[17] == 's' && !s[18]) {
+                        return Tag_communication_runs;
+                    } else {
+                        return 0;
+                    }
                 } else if (s[3] == 'p'&& s[4] == 'i'&& s[5] == 'l'&& s[6] == 'e') {
                     if (s[7] == '_' && s[8] == 'e' && s[9] == 'r' && s[10] == 'r' && s[11] == 'o' && s[12] == 'r' && !s[13]) {
                         return Tag_compile_error;

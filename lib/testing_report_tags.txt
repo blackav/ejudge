@@ -92,3 +92,4 @@ test_checker
 verdict_bits
 group_scores
 valuer_log
+communication_runs

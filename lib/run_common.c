@@ -416,6 +416,54 @@ generate_xml_report(
       struct testing_report_test *trt = testing_report_test_alloc(i, tests[i].status);
       tr->tests[i - 1] = trt;
       const struct run_test_info *ti = &tests[i];
+
+      int communication_time_max = -1;
+      int communication_real_time_max = -1;
+      unsigned long communication_mem_max = 0;
+      long long communication_rss_max = 0;
+      if (ti->communication_run_count > 0) {
+        trt->communication_run_count = ti->communication_run_count;
+
+        XCALLOC(trt->communication_time_ms, trt->communication_run_count + 1);
+        XCALLOC(trt->communication_real_time_ms, trt->communication_run_count + 1);
+        XCALLOC(trt->communication_max_memory_used, trt->communication_run_count + 1);
+        XCALLOC(trt->communication_max_rss, trt->communication_run_count + 1);
+        XCALLOC(trt->communication_inputs, trt->communication_run_count + 1);
+        XCALLOC(trt->communication_outputs, trt->communication_run_count + 1);
+
+        for (int ci = 1; ci <= trt->communication_run_count; ++ci) {
+          trt->communication_time_ms[ci] = ti->communication_time_ms ? (int) ti->communication_time_ms[ci] : -1;
+          trt->communication_real_time_ms[ci] = ti->communication_real_time_ms ? (int) ti->communication_real_time_ms[ci] : -1;
+          trt->communication_max_memory_used[ci] = ti->communication_max_memory_used ? ti->communication_max_memory_used[ci] : 0;
+          trt->communication_max_rss[ci] = ti->communication_max_rss ? ti->communication_max_rss[ci] : 0;
+
+          if (ti->communication_time_ms[ci] >= 0 && ti->communication_time_ms[ci] > communication_time_max) {
+            communication_time_max = ti->communication_time_ms[ci];
+          }
+          if (ti->communication_real_time_ms[ci] >= 0 && ti->communication_real_time_ms[ci] > communication_real_time_max) {
+            communication_real_time_max = ti->communication_real_time_ms[ci];
+          }
+          if (ti->communication_max_memory_used[ci] > communication_mem_max) {
+            communication_mem_max = ti->communication_max_memory_used[ci];
+          }
+          if (ti->communication_max_rss[ci] > communication_rss_max) {
+            communication_rss_max = ti->communication_max_rss[ci];
+          }
+
+          trt->communication_inputs[ci].size = -1;
+          trt->communication_inputs[ci].orig_size = -1;
+          trt->communication_outputs[ci].size = -1;
+          trt->communication_outputs[ci].orig_size = -1;
+
+          if (ti->communication_inputs) {
+            make_file_content_2(&trt->communication_inputs[ci], srgp, &ti->communication_inputs[ci]);
+          }
+          if (ti->communication_outputs) {
+            make_file_content_2(&trt->communication_outputs[ci], srgp, &ti->communication_outputs[ci]);
+          }
+        }
+      }
+
       if (ti->status >= 0 && ti->status < (int) (sizeof(status_to_bit_map) / sizeof(status_to_bit_map[0]))) {
         verdict_bits |= status_to_bit_map[ti->status];
       }
@@ -429,14 +477,26 @@ generate_xml_report(
         trt->exit_code = ti->code;
       }
       trt->time = ti->times;
+      if (communication_time_max >= 0 && communication_time_max > trt->time) {
+        trt->time = communication_time_max;
+      }
       if (ti->real_time >= 0 && has_real_time) {
         trt->real_time = ti->real_time;
+      }
+      if (communication_real_time_max >= 0 && communication_real_time_max > trt->real_time) {
+        trt->real_time = communication_real_time_max;
       }
       if (ti->max_memory_used > 0) {
         trt->max_memory_used = ti->max_memory_used;
       }
+      if (communication_mem_max > trt->max_memory_used) {
+        trt->max_memory_used = communication_mem_max;
+      }
       if (ti->max_rss > 0) {
         trt->max_rss = ti->max_rss;
+      }
+      if (communication_rss_max > trt->max_rss) {
+        trt->max_rss = communication_rss_max;
       }
       if (ti->program_stats_str) {
         trt->program_stats_str = xstrdup(ti->program_stats_str);
@@ -3505,6 +3565,14 @@ done:;
   if (fd >= 0) close(fd);
 }
 
+static void
+init_run_test_file_slot(struct run_test_file *rtf)
+{
+  memset(rtf, 0, sizeof(*rtf));
+  rtf->orig_size = -1;
+  rtf->stored_size = -1;
+}
+
 static int
 run_one_test(
         const struct ejudge_cfg *config,
@@ -3520,6 +3588,9 @@ run_one_test(
         const unsigned char *check_cmd,
         const unsigned char *interactor_cmd,
         char **start_env,
+        int communication,
+        int communication_flags_count,
+        const int *communication_flags_val,
         int open_tests_count,
         const int *open_tests_val,
         int test_score_count,
@@ -3608,6 +3679,8 @@ run_one_test(
   char *start_msg_s = NULL;
   size_t start_msg_z = 0;
   int start_msg_need_env = 0;
+  unsigned char *input_file = NULL;
+  unsigned char *output_file = NULL;
 
   char *eff_inf_text = NULL;
 
@@ -3621,6 +3694,19 @@ run_one_test(
 
   uint64_t test_random_value;
   int clean_up_executed = 0;
+
+  int communication_index = 1;
+  int communication_interactive = 0;
+  int is_last_communication_run = 1;
+
+  unsigned char communication_in_path[PATH_MAX];
+  unsigned char communication_out_path[PATH_MAX];
+  unsigned char communication_next_in_path[PATH_MAX];
+  const unsigned char *interactor_test_src = NULL;
+
+  communication_in_path[0] = 0;
+  communication_out_path[0] = 0;
+  communication_next_in_path[0] = 0;
 
   test_checker_out_path[0] = 0;
   memset(&tstinfo, 0, sizeof(tstinfo));
@@ -3704,6 +3790,24 @@ run_one_test(
   cur_info->user_status = -1;
   cur_info->user_score = -1;
   cur_info->user_nominal_score = -1;
+
+  if (communication > 1) {
+    cur_info->communication_run_count = communication;
+
+    XCALLOC(cur_info->communication_time_ms, communication + 1);
+    XCALLOC(cur_info->communication_real_time_ms, communication + 1);
+    XCALLOC(cur_info->communication_max_memory_used, communication + 1);
+    XCALLOC(cur_info->communication_max_rss, communication + 1);
+    XCALLOC(cur_info->communication_inputs, communication + 1);
+    XCALLOC(cur_info->communication_outputs, communication + 1);
+
+    for (int ci = 1; ci <= communication; ++ci) {
+      cur_info->communication_time_ms[ci] = -1;
+      cur_info->communication_real_time_ms[ci] = -1;
+      init_run_test_file_slot(&cur_info->communication_inputs[ci]);
+      init_run_test_file_slot(&cur_info->communication_outputs[ci]);
+    }
+  }
 
   time_limit_value_ms = 0;
   if (srpp->time_limit_ms > 0) {
@@ -4039,6 +4143,14 @@ run_one_test(
   snprintf(output_path, sizeof(output_path), "%s/%s", check_dir, srpp->output_file);
   snprintf(error_path, sizeof(error_path), "%s/%s", check_dir, error_file);
 
+  if (communication > 1) {
+    snprintf(communication_in_path, sizeof(communication_in_path), "%s/comm_1.in", check_dir);
+    if (generic_copy_file(0, NULL, input_path, "", 0, NULL, communication_in_path, "") < 0) {
+      append_msg_to_log(check_out_path, "failed to copy communication input %s -> %s", input_path, communication_in_path);
+      goto check_failed;
+    }
+  }
+
   if (srpp->exchange_dir && srpp->exchange_dir[0]) {
     snprintf(exchange_dir, sizeof(exchange_dir), "%s/%s", check_dir, srpp->exchange_dir);
     if (mkdir(exchange_dir, 0777) < 0) {
@@ -4068,8 +4180,47 @@ run_one_test(
     init_cmd_started = 1;
   }
 
-  if (interactor_cmd) {
-    snprintf(output_path, sizeof(output_path), "%s/%s", global->run_work_dir, srpp->output_file);
+communication_run_start:
+  is_last_communication_run = (communication_index >= communication);
+  if (communication <= 1) {
+    communication_interactive = (interactor_cmd && interactor_cmd[0]);
+    snprintf(input_path, sizeof(input_path), "%s/%s", check_dir, srpp->input_file);
+    snprintf(output_path, sizeof(output_path), "%s/%s", check_dir, srpp->output_file);
+  } else {
+    communication_interactive = 0;
+    if (communication_flags_val && communication_index >= 1 && communication_index < communication_flags_count) {
+      communication_interactive = (communication_flags_val[communication_index] == 1);
+    }
+    if (communication_interactive && (!interactor_cmd || !interactor_cmd[0])) {
+      append_msg_to_log(check_out_path, "communication run %d is interactive, but interactor_cmd is not set", communication_index);
+      goto check_failed;
+    }
+
+    snprintf(communication_in_path, sizeof(communication_in_path), "%s/comm_%d.in", check_dir, communication_index);
+    snprintf(communication_out_path, sizeof(communication_out_path), "%s/comm_%d.out", check_dir, communication_index);
+    snprintf(input_path, sizeof(input_path), "%s", communication_in_path);
+    snprintf(output_path, sizeof(output_path), "%s", communication_out_path);
+
+    if (os_CheckAccess(input_path, REUSE_R_OK) < 0) {
+      append_msg_to_log(check_out_path, "communication input file '%s' does not exist", input_path);
+      goto check_failed;
+    }
+
+    if (cur_info->communication_run_count > 0) {
+      read_run_test_file(srgp, &cur_info->communication_inputs[communication_index], input_path, utf8_mode);
+    }
+  }
+
+  if (communication > 1) {
+    interactor_test_src = input_path;
+  } else {
+    interactor_test_src = test_src;
+  }
+
+  if (communication_interactive) {
+    if (communication <= 1) {
+      snprintf(output_path, sizeof(output_path), "%s/%s", global->run_work_dir, srpp->output_file);
+    }
     if (srpp->enable_control_socket > 0) {
       if (socketpair(PF_UNIX, SOCK_STREAM, 0, cfd) < 0) {
         append_msg_to_log(check_out_path, "socketpair failed: %s", os_ErrorMsg());
@@ -4080,7 +4231,7 @@ run_one_test(
   }
 
 #ifndef __WIN32__
-  if (interactor_cmd) {
+  if (communication_interactive) {
     if (pipe(pfd1) < 0) {
       append_msg_to_log(check_out_path, "pipe() failed: %s", os_ErrorMsg());
       goto check_failed;
@@ -4125,11 +4276,11 @@ run_one_test(
   info("%s", start_msg_s);
   xfree(start_msg_s); start_msg_s = NULL; start_msg_z = 0;
   if (start_msg_need_env) {
-    if (srpp->input_file && srpp->input_file[0]) {
-      task_SetEnv(tsk, "INPUT_FILE", srpp->input_file);
+    if (input_file && input_file[0]) {
+      task_SetEnv(tsk, "INPUT_FILE", input_file);
     }
-    if (srpp->output_file && srpp->output_file[0]) {
-      task_SetEnv(tsk, "OUTPUT_FILE", srpp->output_file);
+    if (output_file && output_file[0]) {
+      task_SetEnv(tsk, "OUTPUT_FILE", output_file);
     }
   }
 
@@ -4215,7 +4366,7 @@ run_one_test(
     task_EnableSubdirMode(tsk);
   }
 
-  if (interactor_cmd) {
+  if (communication_interactive) {
     task_SetRedir(tsk, 0, TSR_DUP, pfd2[0]);
     task_SetRedir(tsk, 1, TSR_DUP, pfd1[1]);
     if (tst->ignore_stderr > 0) {
@@ -4268,11 +4419,11 @@ run_one_test(
                              src_path,
                              state->exec_user_serial,
                              test_random_value);
-    if (srpp->input_file && srpp->input_file[0]) {
-      task_SetEnv(tsk, "INPUT_FILE", srpp->input_file);
+    if (input_file && input_file[0]) {
+      task_SetEnv(tsk, "INPUT_FILE", input_file);
     }
-    if (srpp->output_file && srpp->output_file[0]) {
-      task_SetEnv(tsk, "OUTPUT_FILE", srpp->output_file);
+    if (output_file && output_file[0]) {
+      task_SetEnv(tsk, "OUTPUT_FILE", output_file);
     }
   }
   if (srgp->run_env_file && *srgp->run_env_file) {
@@ -4526,8 +4677,8 @@ run_one_test(
   }
 
 #ifndef __WIN32__
-  if (interactor_cmd) {
-    tsk_int = invoke_interactor(interactor_cmd, test_src, output_path, corr_src, info_src,
+  if (communication_interactive) {
+    tsk_int = invoke_interactor(interactor_cmd, interactor_test_src, output_path, corr_src, info_src,
                                 working_dir, check_out_path,
                                 &tstinfo, pfd1[0], pfd2[1], cfd[1], task_GetPid(tsk), srp, cur_test, src_path,
                                 state->exec_user_serial,
@@ -4568,7 +4719,7 @@ run_one_test(
 
   // postpone "Check failed" failure on interactor start up
 #ifndef __WIN32__
-  if (interactor_cmd && !tsk_int) {
+  if (communication_interactive && !tsk_int) {
     goto check_failed;
   }
 #endif
@@ -4612,6 +4763,17 @@ run_one_test(
   cur_info->program_stats_str = get_process_stats_str(tsk);
   cur_info->max_rss = task_GetMaxRSS(tsk);
   if (cur_info->max_rss > 0) *p_has_max_rss = 1;
+
+  if (cur_info->communication_run_count >= 2) {
+    if (communication_index >= 0 && communication_index <= cur_info->communication_run_count) {
+      cur_info->communication_time_ms[communication_index] = (int) cur_info->times;
+      cur_info->communication_real_time_ms[communication_index] = (int) cur_info->real_time;
+      cur_info->communication_max_memory_used[communication_index] = cur_info->max_memory_used;
+      cur_info->communication_max_rss[communication_index] = cur_info->max_rss;
+
+      read_run_test_file(srgp, &cur_info->communication_outputs[communication_index], output_path, utf8_mode);
+    }
+  }
 
   // input file
   if (user_input_mode) {
@@ -4886,6 +5048,19 @@ run_one_test(
     task_Delete(tsk_int); tsk_int = NULL;
   }
 
+  if (!is_last_communication_run) {
+    snprintf(communication_next_in_path, sizeof(communication_next_in_path), "%s/comm_%d.in", check_dir, communication_index + 1);
+    
+    if (generic_copy_file(0, NULL, output_path, "", 0, NULL, communication_next_in_path, "") < 0) {
+      append_msg_to_log(check_out_path, "cannot pass communication output '%s' to next input '%s': %s",
+                        output_path, communication_next_in_path, os_ErrorMsg());
+      goto check_failed;
+    }
+
+    ++communication_index;
+    goto communication_run_start;
+  }
+
 run_checker:;
   if (user_input_mode) {
     status = RUN_OK;
@@ -4914,7 +5089,7 @@ run_checker:;
 
   if (!output_path_to_check) {
     output_path_to_check = srpp->output_file;
-    if (interactor_cmd) {
+    if (interactor_cmd || communication > 1) {
       output_path_to_check = output_path;
     }
   }
@@ -5054,6 +5229,24 @@ free_testinfo_vector(struct run_test_info_vector *tv)
     xfree(ti->error.data);
     xfree(ti->chk_out.data);
     xfree(ti->test_checker.data);
+
+    if (ti->communication_inputs) {
+      for (int j = 1; j <= ti->communication_run_count; ++j) {
+        xfree(ti->communication_inputs[j].data);
+      }
+    }
+    if (ti->communication_outputs) {
+      for (int j = 1; j <= ti->communication_run_count; ++j) {
+        xfree(ti->communication_outputs[j].data);
+      }
+    }
+
+    xfree(ti->communication_time_ms);
+    xfree(ti->communication_real_time_ms);
+    xfree(ti->communication_max_memory_used);
+    xfree(ti->communication_max_rss);
+    xfree(ti->communication_inputs);
+    xfree(ti->communication_outputs);
   }
   memset(tv->data, 0, sizeof(tv->data[0]) * tv->size);
   xfree(tv->data);
@@ -5546,6 +5739,10 @@ run_tests(
   const unsigned char *test_generator_cmd = NULL;
   unsigned char valuer_cmd[PATH_MAX];
 
+  int communication = 1;
+  int *communication_flags_val = NULL;
+  int communication_flags_count = 0;
+
   int *open_tests_val = NULL;
   int open_tests_count = 0;
 
@@ -5725,6 +5922,32 @@ run_tests(
     goto done;
   }
 
+  if (srpp->communication >= 2) {
+    communication = srpp->communication;
+    if (srpp->communication_flags && srpp->communication_flags[0]) {
+      if (prepare_parse_communication_flags(stderr, srpp->communication_flags,
+                                            &communication_flags_val, &communication_flags_count) < 0) {
+        append_msg_to_log(messages_path, "failed to parse communication_flags = '%s'", srpp->communication_flags);
+        goto check_failed;
+      }
+    }
+
+    if (communication_flags_count <= 0) {
+      XCALLOC(communication_flags_val, communication + 1);
+      communication_flags_val[0] = -1;
+      communication_flags_count = communication + 1;
+    } else if (communication_flags_count < communication + 1) {
+      communication_flags_val = xrealloc(communication_flags_val,
+                                         (size_t) (communication + 1) * sizeof(communication_flags_val[0]));
+                                         memset(communication_flags_val + communication_flags_count, 0,
+                                         (size_t) (communication + 1 - communication_flags_count) * sizeof(communication_flags_val[0]));
+      communication_flags_count = communication + 1;
+    } else if (communication_flags_count > communication + 1) {
+      append_msg_to_log(messages_path, "communication_flags count (%d) exceeds communication + 1 (%d)", communication_flags_count, communication);
+      goto check_failed;
+    }
+  }
+
   if (srpp->open_tests && srpp->open_tests[0]) {
     if (prepare_parse_open_tests(stderr, srpp->open_tests, &open_tests_val, NULL, &open_tests_count) < 0) {
       append_msg_to_log(messages_path, "failed to parse open_tests = '%s'", srpp->open_tests);
@@ -5875,6 +6098,7 @@ run_tests(
                             cur_test, &tests,
                             far, exe_name, report_path, check_cmd,
                             interactor_cmd, start_env,
+                            communication, communication_flags_count, communication_flags_val,
                             open_tests_count, open_tests_val,
                             test_score_count, test_score_val,
                             expected_free_space,
@@ -6311,6 +6535,7 @@ done:;
   free(vlog_s);
   if (far) full_archive_close(far);
   free_testinfo_vector(&tests);
+  xfree(communication_flags_val);
   xfree(open_tests_val);
   xfree(test_score_val);
   prepare_free_testsets(test_sets_count, test_sets_val);

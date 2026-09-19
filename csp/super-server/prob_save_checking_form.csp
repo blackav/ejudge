@@ -42,6 +42,10 @@
     int valuer_sets_marked = -1;
     int interactive_valuer = -1;
     char **valuer_env = NULL;
+    int communication = -1;
+    ejintbool_t communication_dflt = 0;
+    unsigned char *communication_flags = NULL;
+    ejintbool_t communication_flags_dflt = 0;
     unsigned char *interactor_cmd = NULL;
     ejintbool_t interactor_cmd_dflt = 0;
     char **interactor_env = NULL;
@@ -87,6 +91,10 @@
 %><s:read var="valuer_sets_marked" default="-1" /><%
 %><s:read var="interactive_valuer" default="-1" /><%
 %><s:read var="valuer_env" /><%
+%><s:read var="communication" default="-1" /><%
+%><s:read var="communication_dflt" default="0" /><%
+%><s:read var="communication_flags" normalize="yes" nonnull="yes" /><%
+%><s:read var="communication_flags_dflt" default="0" /><%
 %><s:read var="interactor_cmd" normalize="yes" nonnull="yes" /><%
 %><s:read var="interactor_cmd_dflt" default="0" /><%
 %><s:read var="interactor_env" /><%
@@ -150,6 +158,29 @@
     }
     if (valuer_sets_marked > 0) valuer_sets_marked = 1;
     if (interactive_valuer > 0) interactive_valuer = 1;
+    if (communication_dflt) communication = -1;
+    if (communication < 2) communication = -1;
+    if (communication_flags_dflt) {
+        xfree(communication_flags);
+        communication_flags = NULL;
+    }
+    if (communication_flags && !communication_flags[0]) {
+        xfree(communication_flags);
+        communication_flags = NULL;
+    }
+    if (!communication_dflt && communication < 2) {
+        xfree(communication_flags);
+        communication_flags = NULL;
+    } else if (!communication_dflt && communication >= 2 && (!communication_flags || !communication_flags[0])) {
+        xfree(communication_flags);
+        communication_flags = xmalloc(2 * (size_t) communication);
+        int p = 0;
+        for (int i = 0; i < communication; ++i) {
+            if (i) communication_flags[p++] = ' ';
+            communication_flags[p++] = '0';
+        }
+        communication_flags[p] = 0;
+    }
     if (interactor_cmd_dflt) {
         xfree(interactor_cmd);
         interactor_cmd = 0;
@@ -229,6 +260,8 @@
         prob->valuer_sets_marked = valuer_sets_marked;
         prob->interactive_valuer = interactive_valuer;
         MOVEENV(valuer_env);
+        prob->communication = communication;
+        MOVESTR(communication_flags);
         MOVESTR(interactor_cmd);
         MOVEENV(interactor_env);
         prob->interactor_time_limit = interactor_time_limit;
@@ -254,6 +287,7 @@ cleanup:;
     xfree(valuer_cmd);
     xfree(standard_valuer);
     sarray_free(valuer_env);
+    xfree(communication_flags);
     xfree(interactor_cmd);
     sarray_free(interactor_env);
     xfree(init_cmd);

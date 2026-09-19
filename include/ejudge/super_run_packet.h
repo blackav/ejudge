@@ -212,6 +212,8 @@ struct super_run_in_problem_packet
   ejintbool_t ignore_sigpipe;
   int debug_flags;
   unsigned char *exchange_dir;
+  int communication;
+  unsigned char *communication_flags;
 
   int type_val META_ATTRIB((meta_hidden));
 };
