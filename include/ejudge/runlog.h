@@ -818,7 +818,10 @@ struct run_review_filter
   int64_t user_open_time_us_before;
   int offset;
   int count;
+  uint64_t *order_by;
+  int order_by_count;
   unsigned char *raw_filter_str;
+  _Bool need_total_count;
 };
 
 void
@@ -851,7 +854,8 @@ run_review_list(
         runlog_state_t state,
         const struct run_review_filter *filter,
         struct run_review **p_result,
-        size_t *p_count);
+        size_t *p_count,
+        size_t *p_total_count);
 
 int
 run_review_update(

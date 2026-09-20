@@ -3408,13 +3408,14 @@ run_review_list(
         runlog_state_t state,
         const struct run_review_filter *filter,
         struct run_review **p_result,
-        size_t *p_count)
+        size_t *p_count,
+        size_t *p_total_count)
 {
   if (!state->iface->list_reviews) {
     ERR_R("list_reviews is not implemented");
   } else {
     touch_last_update_time_us(state);
-    return state->iface->list_reviews(state->cnts, filter, p_result, p_count);
+    return state->iface->list_reviews(state->cnts, filter, p_result, p_count, p_total_count);
   }
   return -1;
 }

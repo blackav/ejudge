@@ -282,7 +282,8 @@ struct rldb_plugin_iface
         struct rldb_plugin_cnts *cdata,
         const struct run_review_filter *filter,
         struct run_review **p_result,
-        size_t *p_count);
+        size_t *p_count,
+        size_t *p_total_count);
   int (*update_reviews)(
         struct rldb_plugin_cnts *cdata,
         const struct run_review *rr,

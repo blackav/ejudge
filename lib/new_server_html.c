@@ -12167,7 +12167,7 @@ priv_list_reviews_json(
   filter.offset = offset;
   filter.count = count;
 
-  if (run_review_list(cs->runlog_state, &filter, &reviews, &review_count) < 0) {
+  if (run_review_list(cs->runlog_state, &filter, &reviews, &review_count, NULL) < 0) {
     http_status = 500;
     err_num = NEW_SRV_ERR_DATABASE_FAILED;
     ERR("database error");
@@ -12403,7 +12403,7 @@ priv_list_pending_reviews_json(
   filter.offset = offset;
   filter.count = count;
 
-  if (run_review_list(cs->runlog_state, &filter, &reviews, &review_count) < 0) {
+  if (run_review_list(cs->runlog_state, &filter, &reviews, &review_count, NULL) < 0) {
     http_status = 500;
     err_num = NEW_SRV_ERR_DATABASE_FAILED;
     ERR("database error");
@@ -13740,7 +13740,7 @@ priv_list_active_reviews_json(
   if (count <= 0) count = 50;
   filter.offset = offset;
   filter.count = count;
-  if (run_review_list(cs->runlog_state, &filter, &reviews, &review_count) < 0) {
+  if (run_review_list(cs->runlog_state, &filter, &reviews, &review_count, NULL) < 0) {
     http_status = 500;
     err_num = NEW_SRV_ERR_DATABASE_FAILED;
     goto done;
@@ -21919,7 +21919,7 @@ unpriv_request_review_json(
   filter.request_user_id = phr->user_id;
   filter.include_purpose_mask = (1U << RERP_HELP) | (1U << RERP_REVIEW);
   filter.creation_time_us_not_before = phr->current_time_us - 24LL * 60 * 60 * 1000000;
-  if (run_review_list(cs->runlog_state, &filter, &reviews, &reviews_count) < 0) {
+  if (run_review_list(cs->runlog_state, &filter, &reviews, &reviews_count, NULL) < 0) {
     err_num = NEW_SRV_ERR_DATABASE_FAILED;
     http_status = 500;
     ERR("run_review_list request failed");
