@@ -3790,7 +3790,6 @@ run_one_test(
       }
     }
 
-
     if (sizeof(tstinfo.max_vm_size) != sizeof(size_t)) {
       if (tstinfo.max_vm_size > 0 && (size_t) tstinfo.max_vm_size != tstinfo.max_vm_size) {
         append_msg_to_log(check_out_path, "max_vm_size %lld cannot be represented by size_t\n", tstinfo.max_vm_size);
@@ -4632,6 +4631,12 @@ run_one_test(
   }
 
   // output file
+  struct stat ostb;
+  if (lstat(output_path, &ostb) >= 0 && !S_ISREG(ostb.st_mode)) {
+    rtf_printf(&cur_info->chk_out, "output file is not regular\n");
+    status = RUN_SECURITY_ERR;
+    goto cleanup;
+  }
   if (far) {
     file_size = generic_file_size(0, output_path, 0);
     if (file_size >= 0) {
@@ -4645,6 +4650,12 @@ run_one_test(
 
   // error file
   if (error_path[0]) {
+    struct stat estb;
+    if (lstat(error_path, &estb) >= 0 && !S_ISREG(estb.st_mode)) {
+      rtf_printf(&cur_info->chk_out, "error file is not regular\n");
+      status = RUN_SECURITY_ERR;
+      goto cleanup;
+    }
     if (far) {
       file_size = generic_file_size(0, error_path, 0);
       if (file_size >= 0) {
