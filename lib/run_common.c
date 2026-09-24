@@ -4632,8 +4632,8 @@ run_one_test(
 
   // output file
   struct stat ostb;
-  if (lstat(output_path, &ostb) >= 0 && !S_ISREG(ostb.st_mode)) {
-    rtf_printf(&cur_info->chk_out, "output file is not regular\n");
+  if (lstat(output_path, &ostb) >= 0 && (!S_ISREG(ostb.st_mode) || ostb.st_nlink != 1)) {
+    rtf_printf(&cur_info->chk_out, "output file is not regular or has multiple links\n");
     status = RUN_SECURITY_ERR;
     goto cleanup;
   }
@@ -4651,7 +4651,7 @@ run_one_test(
   // error file
   if (error_path[0]) {
     struct stat estb;
-    if (lstat(error_path, &estb) >= 0 && !S_ISREG(estb.st_mode)) {
+    if (lstat(error_path, &estb) >= 0 && (!S_ISREG(estb.st_mode) || estb.st_nlink != 1)) {
       rtf_printf(&cur_info->chk_out, "error file is not regular\n");
       status = RUN_SECURITY_ERR;
       goto cleanup;
