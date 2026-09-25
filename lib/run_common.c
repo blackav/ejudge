@@ -576,11 +576,23 @@ read_error_code(char const *path)
 {
   FILE *f;
   int   n;
+  int fd;
+  struct stat stb;
   __attribute__((unused)) int _;
 
-  if (!(f = fopen(path, "r"))) {
+  if ((fd = open(path, O_RDONLY|O_CLOEXEC|O_NOCTTY|O_NOFOLLOW|O_NONBLOCK, 0)) < 0) {
     return 100;
   }
+  fstat(fd, &stb);
+  if (!S_ISREG(stb.st_mode)) {
+    close(fd);
+    return 100;
+  }
+  if (!(f = fdopen(fd, "r"))) {
+    close(fd);
+    return 100;
+  }
+  fd = -1;
   if (fscanf(f, "%d", &n) != 1) {
     fclose(f);
     return 101;
@@ -594,31 +606,30 @@ read_error_code(char const *path)
   return n;
 }
 
-static void
+static __attribute__((format(printf,2,3))) void
 append_msg_to_log(const unsigned char *path, const char *format, ...)
 {
   va_list args;
   unsigned char buf[1024];
-  FILE *f;
+  int fd;
+  struct stat stb;
 
   va_start(args, format);
   vsnprintf(buf, sizeof(buf), format, args);
   va_end(args);
 
-  if (!(f = fopen(path, "a"))) {
-    err("append_msg_to_log: cannot open %s for appending", path);
+  if ((fd = open(path, O_WRONLY|O_APPEND|O_CREAT|O_CLOEXEC|O_NOCTTY|O_NOFOLLOW|O_NONBLOCK, 0600)) < 0) {
+    err("%s: cannot open %s for appending", __FUNCTION__, path);
     return;
   }
-  fprintf(f, "\n\nrun: %s\n", buf);
-  if (ferror(f)) {
-    err("append_msg_to_log: write error to %s", path);
-    fclose(f);
+  fstat(fd, &stb);
+  if (!S_ISREG(stb.st_mode)) {
+    err("%s: file %s is not regular", __FUNCTION__, path);
+    close(fd);
     return;
   }
-  if (fclose(f) < 0) {
-    err("append_msg_to_log: write error to %s", path);
-    return;
-  }
+  dprintf(fd, "\n\nrun: %s\n", buf);
+  close(fd);
 }
 
 static __attribute__((format(printf, 2, 3))) void
@@ -669,12 +680,18 @@ parse_checker_score(
   char *score_buf = 0;
   size_t score_buf_size = 0;
   int x, n, r;
+  const unsigned char *actual_path = (testlib_mode > 0)?log_path:path;
+  struct stat stb;
 
-  if (testlib_mode > 0) {
-    r = generic_read_file(&score_buf, 0, &score_buf_size, 0, 0, log_path, "");
-  } else {
-    r = generic_read_file(&score_buf, 0, &score_buf_size, 0, 0, path, "");
+  if (lstat(actual_path, &stb) < 0) {
+    append_msg_to_log(log_path, "Cannot stat the %s score output: %s", what, os_ErrorMsg());
+    goto fail;
   }
+  if (!S_ISREG(stb.st_mode)) {
+    append_msg_to_log(log_path, "The %s score output is not regular", what);
+    goto fail;
+  }
+  r = generic_read_file(&score_buf, 0, &score_buf_size, 0, 0, actual_path, "");
   if (r < 0) {
     append_msg_to_log(log_path, "Cannot read the %s score output", what);
     goto fail;
@@ -775,7 +792,7 @@ parse_checker_score(
         case RUN_PARTIAL:
           break;
         default:
-          append_msg_to_log(log_path, "The %s user verdict (%d) is invalid", what, lx);
+          append_msg_to_log(log_path, "The %s user verdict (%ld) is invalid", what, lx);
           goto fail;
         }
         if (p_user_verdict) *p_user_verdict = lx;
@@ -864,7 +881,7 @@ parse_valuer_score(
   buf[in_buf_size] = 0;
   int buflen = strlen(buf);
   if (buflen != in_buf_size) {
-    append_msg_to_log(log_path, "valuer reply contains '\0' byte");
+    append_msg_to_log(log_path, "valuer reply contains '\\0' byte");
     goto fail;
   }
   for (unsigned char *s = buf; *s; ++s) {
@@ -1067,9 +1084,18 @@ read_valuer_score(
   char *score_buf = 0;
   size_t score_buf_size = 0;
   int r;
+  struct stat stb;
 
   if (p_marked) *p_marked = -1;
 
+  if (lstat(path, &stb) < 0) {
+    append_msg_to_log(log_path, "Cannot stat the %s score output: %s", what, os_ErrorMsg());
+    return -1;
+  }
+  if (!S_ISREG(stb.st_mode)) {
+    append_msg_to_log(log_path, "The %s score output is not regular file", what);
+    return -1;
+  }
   r = generic_read_file(&score_buf, 0, &score_buf_size, 0,
                         0, path, "");
   if (r < 0) {
@@ -1289,7 +1315,14 @@ read_log_file(const unsigned char *path, char **p_text)
 {
   char *stext = NULL;
   size_t size = 0;
+  struct stat stb;
 
+  if (lstat(path, &stb) < 0) {
+    return;
+  }
+  if (!S_ISREG(stb.st_mode)) {
+    return;
+  }
   if (p_text) *p_text = NULL;
   if (generic_read_file(&stext, 0, &size, 0, 0, path, "") < 0) {
     return;
@@ -6124,7 +6157,7 @@ run_tests(
     }
 
     if (total_max_score > srpp->full_score && !valuer_cmd[0]) {
-      append_msg_to_log(messages_path, "Max total score (%d) is greater than full_score",
+      append_msg_to_log(messages_path, "Max total score (%d) is greater than full_score (%d)",
                         total_max_score, srpp->full_score);
       goto check_failed;
     }
