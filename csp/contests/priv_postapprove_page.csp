@@ -1,7 +1,6 @@
 <%
 %><%@include "priv_includes.csp"
 %><%
-// includes
 
 %><%@set getter_name = "csp_get_priv_postapprove_page"
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
@@ -23,17 +22,6 @@
 
 <div id="ReviewsTable"></div>
 
-<!--
-serial_id
-creation_time
-review_uuid
-contest_id
-run_id
-status
-purpose
-last_update_time
-generation
--->
 <script language="javascript">
   var SID="<s:v value="phr->session_id" />";
   var self_url="<s:v value="phr->self_url" escape="false" />";
@@ -43,31 +31,44 @@ generation
 <script type="text/javascript">
 $(function() {
     var table = new Tabulator("#ReviewsTable", {
-		ajaxURL: self_url,
-		ajaxParams: {
-			SID: SID,
-			action: "list-reviews-json",
-			json: 1,
-			contest_ids: "*",
-		},
-		ajaxResponse: function(url, params, response) {
-			if (response.ok) {
-				return response.result.reviews;
-			}
-			return [];
-		},
- 		layout:"fitColumns", //fit columns to width of table (optional)
- 		columns:[
-	 		{title:"ID", field:"serial_id", width:60},
-	 		{title:"Contest ID", field:"contest_id", width:60},
-	 		{title:"Run ID", field:"run_id", width:60},
-	 		{title:"Generation", field:"generation", width:60},
-	 		{title:"Purpose", field:"purpose", width:100},
-	 		{title:"Status", field:"status", width:100},
-		],
-	});
+        ajaxURL: self_url,
+        ajaxParams: {
+            SID: SID,
+            action: "list-reviews-json",
+            json: 1,
+            contest_ids: "*",
+            date_mode: 1,
+        },
+        ajaxResponse: function(url, params, response) {
+            if (response.ok) {
+                return response.result;
+            }
+            return [];
+        },
+        dataSendParams: {
+            "size":"count"
+        },
+        dataReceiveParams: {
+            "last_page":"last_page",
+            "data":"reviews"
+        },
+        progressiveLoad: "scroll",
+        progressiveLoadScrollMargin:300,
+        paginationSize: 50,
+        height: "1000px",
+        layout:"fitDataTable",
+        columns:[
+            {title:"ID", field:"serial_id", width:60, headerSort:false},
+            {title:"Contest ID", field:"contest_id", width:100, headerSort:false},
+            {title:"Run ID", field:"run_id", width:100, headerSort:false},
+            {title:"Generation", field:"generation", width:60, headerSort:false},
+            {title:"Purpose", field:"purpose", width:100, headerSort:false},
+            {title:"Status", field:"status", width:100, headerSort:false},
+            {title:"Last updated", field:"last_update_time_iso", width:200, headerSort:false}
+        ],
+    });
     table.on("rowClick", function(e, row){ 
-	    alert("Row " + row.getData().id + " Clicked!!!!");
+        alert("Row " + row.getData().serial_id + " Clicked!!!!");
     });
 });
 </script>

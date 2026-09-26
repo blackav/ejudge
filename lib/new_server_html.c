@@ -12112,6 +12112,8 @@ priv_list_reviews_json(
   int offset = 0;
   int count = 0;
   int list_mode = 0;
+  size_t total_count = 0;
+  int page = 0;
 
   // list_mode == 1 - premoderate list
   // list_mode == 2 - postapprove list
@@ -12141,6 +12143,7 @@ priv_list_reviews_json(
     goto done;
   }
 
+  hr_cgi_param_int_opt(phr, "page", &page, 0);
   hr_cgi_param_int_opt(phr, "offset", &offset, 0);
   hr_cgi_param_int_opt(phr, "count", &count, 0);
   hr_cgi_param_int_opt(phr, "date_mode", &date_mode, 0);
@@ -12164,10 +12167,15 @@ priv_list_reviews_json(
   //filter.include_status_mask = 1U << RERS_WAITING_REVIEW;
   if (count <= 0) count = 50;
   if (count > 1000) count = 1000;
-  filter.offset = offset;
   filter.count = count;
+  if (page > 0) {
+    filter.offset = (page-1) * count;
+  } else if (offset >= 0) {
+    filter.offset = offset;
+  }
+  filter.need_total_count = 1;
 
-  if (run_review_list(cs->runlog_state, &filter, &reviews, &review_count, NULL) < 0) {
+  if (run_review_list(cs->runlog_state, &filter, &reviews, &review_count, &total_count) < 0) {
     http_status = 500;
     err_num = NEW_SRV_ERR_DATABASE_FAILED;
     ERR("database error");
@@ -12183,6 +12191,7 @@ priv_list_reviews_json(
   }
   cJSON *jres = cJSON_CreateObject();
   cJSON_AddItemToObject(jres, "reviews", jrs);
+  cJSON_AddNumberToObject(jres, "last_page", (total_count + count-1)/count);
   cJSON_AddItemToObject(jr, "result", jres);
   ok = 1;
   err_num = 0;
