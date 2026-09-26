@@ -12081,6 +12081,13 @@ userlist_error:;
   goto done;
 }
 
+static int
+make_contest_id_list(
+        struct http_request_info *phr,
+        const unsigned char *ids_str,
+        int cap,
+        int **p_ids);
+
 static void
 priv_list_reviews_json(
         FILE *fout,
@@ -12088,61 +12095,124 @@ priv_list_reviews_json(
         const struct contest_desc *cnts,
         struct contest_extra *extra)
 {
-/*
   serve_state_t cs = extra->serve_state;
-  int ok = 0;
-  int err_num = NEW_SRV_ERR_INV_PARAM;
-  const unsigned char *err_msg = NULL;
   cJSON *jr = cJSON_CreateObject();
+  struct run_review_filter filter = { .run_id = -1 };
+  struct run_review *reviews = NULL;
+  size_t review_count = 0;
+  int *contest_ids = NULL;
+  int contest_count = 0;
+  int ok = 0;
+  const unsigned char *err_msg = NULL;
+  int err_num = NEW_SRV_ERR_INV_PARAM;
   int http_status = 400;
-*/
+  unsigned err_id = random_u32();
+  const unsigned char *contest_ids_str = NULL;
+  int date_mode = 0;
+  int offset = 0;
+  int count = 0;
+  int list_mode = 0;
+  size_t total_count = 0;
+  int page = 0;
 
-  info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
+  // list_mode == 1 - premoderate list
+  // list_mode == 2 - postapprove list
+  hr_cgi_param_int_opt(phr, "list_mode", &list_mode, 0);
 
-/*
-  int date_mode = 0, size_mode = 0;
-  hr_cgi_param_int_opt(phr, "date_mode", &date_mode, 0);
-  hr_cgi_param_int_opt(phr, "size_mode", &size_mode, 0);
-  int abstract = -1;
-  hr_cgi_param_bool_opt(phr, "abstract", &abstract, -1);
-  int prob_id = -1;
-  hr_cgi_param_int_opt(phr, "prob_id", &prob_id, -1);
-  const unsigned char *short_name = NULL;
-  hr_cgi_param(phr, "short_name", &short_name);
-  const unsigned char *long_name = NULL;
-  hr_cgi_param(phr, "long_name", &long_name);
-  const unsigned char *internal_name = NULL;
-  hr_cgi_param(phr, "internal_name", &internal_name);
-  const unsigned char *uuid = NULL;
-  hr_cgi_param(phr, "uuid", &uuid);
-  const unsigned char *extid = NULL;
-  hr_cgi_param(phr, "extid", &extid);
-  struct section_problem_data *prob = NULL;
-  int r = lookup_contest_problem(cs, abstract, prob_id, short_name, long_name, internal_name, uuid, extid, NULL, NULL, &prob);
-  if (r < 0) {
-    http_status = -r;
-  } else if (!prob) {
-    http_status = 404;
-    err_num = NEW_SRV_ERR_INV_PROB_ID;
+  info("audit:%s:%d:%d:%d", phr->action_str, phr->user_id, phr->contest_id, list_mode);
+
+#define ERR(msg, ...) err("%s:%d:%08x:" msg, __PRETTY_FUNCTION__, __LINE__, err_id ,##__VA_ARGS__)
+
+  int capbit = OPCAP_MASTER_LOGIN;
+  if (list_mode == 1) {
+    capbit = OPCAP_PREMOD_REVIEW;
+  } else if (list_mode == 2) {
+    capbit = OPCAP_COMMENT_RUN;
   } else {
-    cJSON_AddItemToObject(jr, "problem", json_serialize_problem(prob, date_mode, size_mode, problem_ignored_fields));
-    ok = 1;
-    err_num = 0;
-    http_status = 200;
+    if (phr->role != USER_ROLE_ADMIN) {
+      http_status = 403;
+      err_num = NEW_SRV_ERR_PERMISSION_DENIED;
+      ERR("no ADMIN role");
+      goto done;
+    }
+  }
+  if (opcaps_check(phr->caps, capbit) < 0) {
+    http_status = 403;
+    err_num = NEW_SRV_ERR_PERMISSION_DENIED;
+    ERR("no required capability bit");
+    goto done;
   }
 
+  hr_cgi_param_int_opt(phr, "page", &page, 0);
+  hr_cgi_param_int_opt(phr, "offset", &offset, 0);
+  hr_cgi_param_int_opt(phr, "count", &count, 0);
+  hr_cgi_param_int_opt(phr, "date_mode", &date_mode, 0);
+  hr_cgi_param(phr, "contest_ids", &contest_ids_str);
+  contest_count = make_contest_id_list(phr, contest_ids_str, OPCAP_EXT_REVIEW, &contest_ids);
+  if (contest_count < 0) {
+    err_num = NEW_SRV_ERR_INV_CONTEST_ID;
+    ERR("invalid contest_ids");
+    goto done;
+  }
+  if (!contest_count) {
+    err_num = NEW_SRV_ERR_NO_CONTESTS;
+    ERR("no contest available");
+    goto done;
+  }
+
+  filter.field_mask = RER_SERIAL_ID|RER_CREATION_TIME|RER_REVIEW_UUID|RER_CONTEST_ID|RER_RUN_ID|RER_STATUS|RER_PURPOSE|RER_STATUS|RER_LAST_UPDATE_TIME|RER_GENERATION;
+  filter.contest_id_list = contest_ids;
+  filter.contest_id_count = contest_count;
+  filter.run_id = -1;
+  //filter.include_status_mask = 1U << RERS_WAITING_REVIEW;
+  if (count <= 0) count = 50;
+  if (count > 1000) count = 1000;
+  filter.count = count;
+  if (page > 0) {
+    filter.offset = (page-1) * count;
+  } else if (offset >= 0) {
+    filter.offset = offset;
+  }
+  filter.need_total_count = 1;
+
+  if (run_review_list(cs->runlog_state, &filter, &reviews, &review_count, &total_count) < 0) {
+    http_status = 500;
+    err_num = NEW_SRV_ERR_DATABASE_FAILED;
+    ERR("database error");
+    goto done;
+  }
+
+  cJSON *jrs = cJSON_CreateArray();
+  for (int i = 0; i < review_count; ++i) {
+    cJSON *jr = json_serialize_run_review(&reviews[i], date_mode,
+      RER_CREATION_TIME|RER_REVIEW_UUID|RER_CONTEST_ID|RER_RUN_ID|RER_STATUS|RER_PURPOSE|RER_STATUS|RER_LAST_UPDATE_TIME|RER_GENERATION|RER_SERIAL_ID,
+      0);
+    cJSON_AddItemToArray(jrs, jr);
+  }
+  cJSON *jres = cJSON_CreateObject();
+  cJSON_AddItemToObject(jres, "reviews", jrs);
+  cJSON_AddNumberToObject(jres, "last_page", (total_count + count-1)/count);
+  cJSON_AddItemToObject(jr, "result", jres);
+  ok = 1;
+  err_num = 0;
+  http_status = 200;
+
+done:;
   phr->json_reply = 1;
   phr->status_code = http_status;
   emit_json_result(fout, phr, ok, err_num, 0, err_msg, jr);
   if (jr) {
     cJSON_Delete(jr);
   }
-*/
+  free(contest_ids);
+  run_review_free_array(reviews, review_count);
+#undef ERR
 }
 
 static int
 scan_eligible_contests(
         struct http_request_info *phr,
+        int cap,
         int **p_filtered)
 {
   const int *cnts_ids = NULL;
@@ -12160,7 +12230,7 @@ scan_eligible_contests(
 
   XCALLOC(filtered, count);
 
-  if (opcaps_find(&phr->config->capabilities, phr->login, &gcaps) >= 0 && opcaps_check(gcaps, OPCAP_EXT_REVIEW) >= 0) {
+  if (opcaps_find(&phr->config->capabilities, phr->login, &gcaps) >= 0 && opcaps_check(gcaps, cap) >= 0) {
     has_global_perm = 1;
   }
 
@@ -12169,7 +12239,7 @@ scan_eligible_contests(
     if (cnts->closed > 0) continue;
     if (!contests_check_judge_ip_2(cnts, &phr->ip, phr->ssl_flag)) continue;
     if (!has_global_perm && opcaps_find(&cnts->capabilities, phr->login, &caps) < 0) continue;
-    if (!has_global_perm && opcaps_check(caps, OPCAP_EXT_REVIEW) < 0) continue;
+    if (!has_global_perm && opcaps_check(caps, cap) < 0) continue;
     filtered[filtered_count++] = cnts_ids[i];
   }
 
@@ -12216,6 +12286,7 @@ static int
 scan_contests_in_list(
         struct http_request_info *phr,
         const unsigned char *ids_str,
+        int cap,
         int **p_ids)
 {
   int *ids = NULL;
@@ -12235,7 +12306,7 @@ scan_contests_in_list(
   opcap_t gcaps;
   _Bool has_global_perm = 0;
 
-  if (opcaps_find(&phr->config->capabilities, phr->login, &gcaps) >= 0 && opcaps_check(gcaps, OPCAP_EXT_REVIEW) >= 0) {
+  if (opcaps_find(&phr->config->capabilities, phr->login, &gcaps) >= 0 && opcaps_check(gcaps, cap) >= 0) {
     has_global_perm = 1;
   }
   j = 0;
@@ -12246,7 +12317,7 @@ scan_contests_in_list(
     if (cnts->closed > 0) continue;
     if (!contests_check_judge_ip_2(cnts, &phr->ip, phr->ssl_flag)) continue;
     if (!has_global_perm && opcaps_find(&cnts->capabilities, phr->login, &caps) < 0) continue;
-    if (!has_global_perm && opcaps_check(caps, OPCAP_EXT_REVIEW) < 0) continue;
+    if (!has_global_perm && opcaps_check(caps, cap) < 0) continue;
     ids[j++] = ids[i];
   }
   count = j;
@@ -12263,12 +12334,13 @@ static int
 make_contest_id_list(
         struct http_request_info *phr,
         const unsigned char *ids_str,
+        int cap,
         int **p_ids)
 {
   if (ids_str && !strcmp(ids_str, "*")) {
-    return scan_eligible_contests(phr, p_ids);
+    return scan_eligible_contests(phr, cap, p_ids);
   } else if (ids_str) {
-    return scan_contests_in_list(phr, ids_str, p_ids);
+    return scan_contests_in_list(phr, ids_str, cap, p_ids);
   } else {
     if (phr->contest_id <= 0) return 0;
     int *ids = NULL;
@@ -12318,7 +12390,7 @@ priv_list_pending_reviews_json(
   hr_cgi_param_int_opt(phr, "count", &count, 0);
   hr_cgi_param_int_opt(phr, "date_mode", &date_mode, 0);
   hr_cgi_param(phr, "contest_ids", &contest_ids_str);
-  contest_count = make_contest_id_list(phr, contest_ids_str, &contest_ids);
+  contest_count = make_contest_id_list(phr, contest_ids_str, OPCAP_EXT_REVIEW, &contest_ids);
   if (contest_count < 0) {
     err_num = NEW_SRV_ERR_INV_CONTEST_ID;
     ERR("invalid contest_ids");
@@ -12336,10 +12408,11 @@ priv_list_pending_reviews_json(
   filter.run_id = -1;
   filter.include_status_mask = 1U << RERS_WAITING_REVIEW;
   if (count <= 0) count = 50;
+  if (count > 100) count = 100;
   filter.offset = offset;
   filter.count = count;
 
-  if (run_review_list(cs->runlog_state, &filter, &reviews, &review_count) < 0) {
+  if (run_review_list(cs->runlog_state, &filter, &reviews, &review_count, NULL) < 0) {
     http_status = 500;
     err_num = NEW_SRV_ERR_DATABASE_FAILED;
     ERR("database error");
@@ -12367,6 +12440,8 @@ done:;
   if (jr) {
     cJSON_Delete(jr);
   }
+  free(contest_ids);
+  run_review_free_array(reviews, review_count);
 #undef ERR
 }
 
@@ -13674,7 +13749,7 @@ priv_list_active_reviews_json(
   if (count <= 0) count = 50;
   filter.offset = offset;
   filter.count = count;
-  if (run_review_list(cs->runlog_state, &filter, &reviews, &review_count) < 0) {
+  if (run_review_list(cs->runlog_state, &filter, &reviews, &review_count, NULL) < 0) {
     http_status = 500;
     err_num = NEW_SRV_ERR_DATABASE_FAILED;
     goto done;
@@ -21853,7 +21928,7 @@ unpriv_request_review_json(
   filter.request_user_id = phr->user_id;
   filter.include_purpose_mask = (1U << RERP_HELP) | (1U << RERP_REVIEW);
   filter.creation_time_us_not_before = phr->current_time_us - 24LL * 60 * 60 * 1000000;
-  if (run_review_list(cs->runlog_state, &filter, &reviews, &reviews_count) < 0) {
+  if (run_review_list(cs->runlog_state, &filter, &reviews, &reviews_count, NULL) < 0) {
     err_num = NEW_SRV_ERR_DATABASE_FAILED;
     http_status = 500;
     ERR("run_review_list request failed");

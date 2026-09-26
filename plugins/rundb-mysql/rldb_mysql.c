@@ -3712,7 +3712,8 @@ list_reviews_func(
         struct rldb_plugin_cnts *cdata,
         const struct run_review_filter *filter,
         struct run_review **p_result,
-        size_t *p_count)
+        size_t *p_count,
+        size_t *p_total_count)
 {
   struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts*) cdata;
   struct rldb_mysql_state *state = cs->plugin_state;
@@ -3724,14 +3725,42 @@ list_reviews_func(
   struct run_review *reviews = NULL;
   size_t count = 0;
   int field_count = 0;
+  char *filt_s = NULL;
+  size_t filt_z = 0;
+  FILE *filt_f = NULL;
 
   fprintf(cmd_f, "SELECT ");
   field_count = unparse_review_fields(cmd_f, filter->field_mask);
   fprintf(cmd_f, " FROM %sreviews WHERE ", md->table_prefix);
 
-  write_reviews_filter(mi, md, cmd_f, filter);
+  if (filter->need_total_count > 0) {
+    filt_f = open_memstream(&filt_s, &filt_z);
+    write_reviews_filter(mi, md, filt_f, filter);
+    fclose(filt_f); filt_f = NULL;
+    fwrite_unlocked(filt_s, 1, filt_z, cmd_f);
+  } else {
+    write_reviews_filter(mi, md, cmd_f, filter);
+  }
 
-  fprintf(cmd_f, " ORDER BY serial_id");
+  if (filter->order_by_count > 0) {
+    for (int i = 0; i < filter->order_by_count; ++i) {
+      const unsigned char *sep = "";
+      fprintf(cmd_f, " ORDER BY ");
+      if ((int64_t) filter->order_by[i] < 0) {
+        // DESC
+        int ind = __builtin_ffsll(~filter->order_by[i]) - 1;
+        fprintf(cmd_f, "%s%s DESC", sep, reviews_spec[ind].name);
+        sep = ",";
+      } else if (filter->order_by[i] > 0) {
+        int ind = __builtin_ffsll(filter->order_by[i]) - 1;
+        fprintf(cmd_f, "%s%s", sep, reviews_spec[ind].name);
+        sep = ",";
+      }
+    }
+  } else {
+    fprintf(cmd_f, " ORDER BY serial_id");
+  }
+
   if (filter->count > 0) {
     fprintf(cmd_f, " LIMIT %d, %d", filter->offset, filter->count);
   }
@@ -3757,12 +3786,43 @@ list_reviews_func(
     }
   }
 
+  if (filter->need_total_count > 0) {
+    cmd_s = NULL; cmd_z = 0;
+    cmd_f = open_memstream(&cmd_s, &cmd_z);
+    fprintf(cmd_f, "SELECT COUNT(*) FROM %sreviews WHERE %s;", md->table_prefix, filt_s);
+    fclose(cmd_f); cmd_f = NULL;
+    if (mi->query(md, cmd_s, cmd_z, 1) < 0) {
+      goto fail;
+    }
+    free(cmd_s); cmd_s = NULL;
+    free(filt_s); filt_s = NULL;
+    if (!md->row_count) {
+      if (p_total_count) *p_total_count = 0;
+    } else {
+      if (mi->next_row(md) < 0) goto fail;
+      if (!md->row[0]) {
+        if (p_total_count) *p_total_count = 0;
+      } else {
+        size_t len = strlen(md->row[0]);
+        if (len != md->lengths[0]) goto fail;
+        const char *s = md->row[0];
+        char *eptr = NULL;
+        errno = 0;
+        unsigned long long value = strtoull(s, &eptr, 10);
+        if (errno || *eptr || s == eptr) goto fail;
+        if (p_total_count) *p_total_count = value;
+      }
+    }
+  }
+
   *p_result = reviews;
   *p_count = count;
 
   return 1;
 
 fail:;
+  if (filt_f) fclose(filt_f);
+  free(filt_s);
   if (cmd_f) fclose(cmd_f);
   free(cmd_s);
   run_review_free_array(reviews, count);
