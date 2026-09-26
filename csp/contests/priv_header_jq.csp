@@ -36,6 +36,7 @@ MathJax = {
 <script src='<s:config name="style-prefix" />jquery-ui/jquery-ui.min.js'></script>
 <script src='<s:config name="style-prefix" />jqgrid/plugins/jquery.contextmenu.js' type="text/javascript"></script>
 <script src='<s:config name="style-prefix" />jquery.timepicker.min.js' type="text/javascript"></script>
+<script src='<s:config name="style-prefix" />luxon.min.js' type="text/javascript"></script>
 
 <%
 #if ENABLE_TABULATOR - 0 == 1
