@@ -87,31 +87,7 @@ ns_unpriv_parse_run_id(
   if (prob && prob->binary) view_enabled = 0;
   if (view_enabled && run_text && run_size != strlen(run_text)) view_enabled = 0;
   if (lang) {
-    if (!strcmp(lang->src_sfx, ".pas")) {
-      language_type = "pascal";
-    } else if (!strcmp(lang->src_sfx, ".c")) {
-      language_type = "c";
-    } else if (!strcmp(lang->src_sfx, ".cpp")) {
-      language_type = "cpp";
-    } else if (!strcmp(lang->src_sfx, ".for")) {
-      language_type = "fortran";
-    } else if (!strcmp(lang->src_sfx, ".py")) {
-      language_type = "python";
-    } else if (!strcmp(lang->src_sfx, ".pl")) {
-      language_type = "perl";
-    } else if (!strcmp(lang->src_sfx, ".pro")) {
-      language_type = "prolog";
-    } else if (!strcmp(lang->src_sfx, ".java")) {
-      language_type = "java";
-    } else if (!strcmp(lang->src_sfx, ".cs")) {
-      language_type = "csharp";
-    } else if (!strcmp(lang->src_sfx, ".vb")) {
-      language_type = "basic";
-    } else if (!strcmp(lang->src_sfx, ".rb")) {
-      language_type = "ruby";
-    } else if (!strcmp(lang->src_sfx, ".php")) {
-      language_type = "php";
-    }
+    language_type = ns_get_language_name(lang->id);
   }
 
 %><s:read var="clar_id" ignoreerrors="yes" default="-1" /><%
