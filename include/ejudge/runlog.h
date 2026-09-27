@@ -878,6 +878,13 @@ run_review_update_view_counter(
         int run_id,
         int generation);
 
+int
+run_review_fetch_by_serial_id(
+        runlog_state_t state,
+        int64_t serial_id,
+        uint64_t field_mask,
+        struct run_review *p_result);
+
 const unsigned char *
 run_unparse_review_status(unsigned val);
 int

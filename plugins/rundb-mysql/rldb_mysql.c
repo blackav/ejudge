@@ -143,6 +143,7 @@ struct rldb_plugin_iface plugin_rldb_mysql =
   fetch_review_by_crg_func,
   update_review_view_counter_func,
   change_review_status_func,
+  fetch_review_by_serial_id_func,
 };
 
 static long long
@@ -3933,4 +3934,44 @@ fail:;
   if (cmd_f) fclose(cmd_f);
   xfree(cmd_s);
   return -1;
+}
+
+static int
+fetch_review_by_serial_id_func(
+        struct rldb_plugin_cnts *cdata,
+        int64_t serial_id,
+        uint64_t field_mask,
+        struct run_review *p_result)
+{
+  struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts*) cdata;
+  struct rldb_mysql_state *state = cs->plugin_state;
+  struct common_mysql_iface *mi = state->mi;
+  struct common_mysql_state *md = state->md;
+  char *cmd_s = NULL;
+  size_t cmd_z = 0;
+  FILE *cmd_f = open_memstream(&cmd_s, &cmd_z);
+  int field_count = 0;
+
+  fprintf(cmd_f, "SELECT ");
+  field_count = unparse_review_fields(cmd_f, field_mask);
+  fprintf(cmd_f, " FROM %sreviews WHERE serial_id = %lld ;", md->table_prefix, (long long) serial_id);
+  fclose(cmd_f); cmd_f = NULL;
+
+  if (mi->query(md, cmd_s, cmd_z, field_count) < 0) {
+    free(cmd_s);
+    return -1;
+  }
+  if (!md->row_count) {
+    mi->free_res(md);
+    free(cmd_s);
+    return 0;
+  }
+
+  free(cmd_s); cmd_s = NULL;
+  if (mi->next_row(md) < 0) {
+    return -1;
+  }
+  int r = mi->parse_spec_2(md, REVIEW_ROW_WIDTH, reviews_spec, field_mask, p_result);
+  if (r < 0) return r;
+  return 1;
 }

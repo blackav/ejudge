@@ -307,6 +307,11 @@ struct rldb_plugin_iface
         int hidden_review_status,
         int hidden_review_gen,
         struct run_entry *ure);
+  int (*fetch_review_by_serial_id)(
+        struct rldb_plugin_cnts *cdata,
+        int64_t serial_id,
+        uint64_t field_mask,
+        struct run_review *p_result);
 };
 
 /* default plugin: compiled into new-server */
