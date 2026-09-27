@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2024 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -352,6 +352,7 @@ cmd_http_request(
   hr.param_sizes = my_param_sizes;
   hr.params = params;
   hr.config = ejudge_config;
+  hr.userlist_clnt = ul_conn;
 
   // ok, generate HTML
   hr.out_f = open_memstream(&hr.out_t, &hr.out_z);
