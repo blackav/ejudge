@@ -24760,6 +24760,7 @@ ns_handle_http_request(
 
   (void) forced_linking;
 
+  phr->load_contest = load_other_contest;
   phr->log_f = open_memstream(&phr->log_t, &phr->log_z);
 
   // make a self-referencing URL

@@ -159,6 +159,12 @@ struct http_request_info
   unsigned char *err_msg;
   int err_num;
 
+  int (*load_contest)(
+        const struct ejudge_cfg *config,
+        struct server_framework_state *fw_state,
+        struct userlist_clnt *ul_conn,
+        int contest_id);
+
   __attribute__((aligned(16))) unsigned char data[0];
 };
 
