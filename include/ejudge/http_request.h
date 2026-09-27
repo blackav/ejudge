@@ -224,6 +224,13 @@ hr_cgi_param_int_opt(
         int default_value);
 
 int
+hr_cgi_param_long_long_opt(
+        struct http_request_info *phr,
+        const unsigned char *name,
+        long long *p_val,
+        long long default_value);
+
+int
 hr_cgi_param_bool_opt(
         struct http_request_info *phr,
         const unsigned char *name,

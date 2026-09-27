@@ -149,6 +149,36 @@ json_to_int(cJSON *jj, int *p_val, int retval)
     }
 }
 
+static int
+json_to_long_long(cJSON *jj, long long *p_val, int retval)
+{
+    if (jj->type == cJSON_False) {
+        if (p_val) *p_val = 0;
+        return retval;
+    } else if (jj->type == cJSON_True) {
+        if (p_val) *p_val = 1;
+        return retval;
+    } else if (jj->type == cJSON_NULL) {
+        if (p_val) *p_val = 0;
+        return 0;
+    } else if (jj->type == cJSON_Number) {
+        if (jj->valueint != jj->valuedouble) return -1;
+        if (p_val) *p_val = jj->valueint;
+        return retval;
+    } else if (jj->type == cJSON_String) {
+        const char *s = jj->valuestring;
+        char *eptr = NULL;
+        errno = 0;
+        long long x = strtoll(s, &eptr, 10);
+        if (errno || eptr == s || *eptr) return -1;
+        if (p_val) *p_val = x;
+        return retval;
+    } else {
+        // invalid value
+        return -1;
+    }
+}
+
 int
 hr_cgi_param_int(
         const struct http_request_info *phr,
@@ -248,6 +278,45 @@ hr_cgi_param_int_opt(
         x = strtol(s, &eptr, 10);
         if (errno || *eptr) return -1;
         if (p_val) *p_val = x;
+        return 0;
+    }
+}
+
+int
+hr_cgi_param_long_long_opt(
+        struct http_request_info *phr,
+        const unsigned char *name,
+        long long *p_val,
+        long long default_value)
+{
+    if (phr->json) {
+        cJSON *jj = cJSON_GetObjectItem(phr->json, name);
+        if (jj) {
+            return json_to_long_long(jj, p_val, 0);
+        } else {
+            if (p_val) *p_val = default_value;
+            return 0;
+        }
+    } else {
+        const unsigned char *s = 0, *p;
+        char *eptr = 0;
+        int x;
+        long long val;
+
+        if (!(x = hr_cgi_param(phr, name, &s))) {
+            if (p_val) *p_val = default_value;
+            return 0;
+        } else if (x < 0) return -1;
+        p = s;
+        while (*p && isspace(*p)) p++;
+        if (!*p) {
+            if (p_val) *p_val = default_value;
+            return 0;
+        }
+        errno = 0;
+        val = strtoll(s, &eptr, 10);
+        if (errno || *eptr || s == (const unsigned char *) eptr) return -1;
+        if (p_val) *p_val = val;
         return 0;
     }
 }
