@@ -1055,4 +1055,11 @@ ns_get_language_name(int lang_id);
 
 void ns_fix_utf8_buf(char **p_text, size_t *p_size);
 
+unsigned char *
+ns_safe_read_utf8_text_file(
+        const unsigned char *dir,
+        const unsigned char *file,
+        unsigned err_id,
+        int missing_is_ok);
+
 #endif /* __NEW_SERVER_H__ */

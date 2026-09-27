@@ -12568,8 +12568,8 @@ ns_get_language_name(int lang_id)
   return standard_languages[lang_id];
 }
 
-static unsigned char *
-safe_read_utf8_text_file(
+unsigned char *
+ns_safe_read_utf8_text_file(
         const unsigned char *dir,
         const unsigned char *file,
         unsigned err_id,
@@ -12886,7 +12886,7 @@ make_review_document(
   }
   get_advanced_layout_path(prob_path, sizeof(prob_path), cs->global, prob, NULL, variant);
 
-  text = safe_read_utf8_text_file(prob_path, prob->md_file, err_id, 0);
+  text = ns_safe_read_utf8_text_file(prob_path, prob->md_file, err_id, 0);
   if (!text) {
     ERR("contest %d:run %d:problem %s: failed to load statement", contest_id, run_id, prob->short_name);
     goto fail;
@@ -12905,38 +12905,38 @@ make_review_document(
   _ = snprintf(filename, sizeof(filename), "review.%s.md", source_language);
 
   cJSON *jg = cJSON_CreateObject();
-  safe_add_to_object(jg, "hint", safe_read_utf8_text_file(global_conf_path, "review.md", err_id, 1));
-  safe_add_to_object(jg, "language_hint", safe_read_utf8_text_file(global_conf_path, filename, err_id, 1));
+  safe_add_to_object(jg, "hint", ns_safe_read_utf8_text_file(global_conf_path, "review.md", err_id, 1));
+  safe_add_to_object(jg, "language_hint", ns_safe_read_utf8_text_file(global_conf_path, filename, err_id, 1));
   if (purpose == RERP_REVIEW) {
-    safe_add_to_object(jg, "review_hint", safe_read_utf8_text_file(global_conf_path, "review_user.md", err_id, 1));
+    safe_add_to_object(jg, "review_hint", ns_safe_read_utf8_text_file(global_conf_path, "review_user.md", err_id, 1));
   } else if (purpose == RERP_JUDGE_HELP) {
-    safe_add_to_object(jg, "judge_help_hint", safe_read_utf8_text_file(global_conf_path, "review_judge_help.md", err_id, 1));
+    safe_add_to_object(jg, "judge_help_hint", ns_safe_read_utf8_text_file(global_conf_path, "review_judge_help.md", err_id, 1));
   } else if (purpose == RERP_HELP) {
-    safe_add_to_object(jg, "help_hint", safe_read_utf8_text_file(global_conf_path, "review_help.md", err_id, 1));
+    safe_add_to_object(jg, "help_hint", ns_safe_read_utf8_text_file(global_conf_path, "review_help.md", err_id, 1));
   }
   cJSON_AddItemToObject(result, "global", jg);
 
   cJSON *jc = cJSON_CreateObject();
-  safe_add_to_object(jc, "hint", safe_read_utf8_text_file(cnts->conf_dir, "review.md", err_id, 1));
-  safe_add_to_object(jc, "language_hint", safe_read_utf8_text_file(cnts->conf_dir, filename, err_id, 1));
+  safe_add_to_object(jc, "hint", ns_safe_read_utf8_text_file(cnts->conf_dir, "review.md", err_id, 1));
+  safe_add_to_object(jc, "language_hint", ns_safe_read_utf8_text_file(cnts->conf_dir, filename, err_id, 1));
   if (purpose == RERP_REVIEW) {
-    safe_add_to_object(jc, "review_hint", safe_read_utf8_text_file(cnts->conf_dir, "review_user.md", err_id, 1));
+    safe_add_to_object(jc, "review_hint", ns_safe_read_utf8_text_file(cnts->conf_dir, "review_user.md", err_id, 1));
   } else if (purpose == RERP_JUDGE_HELP) {
-    safe_add_to_object(jc, "judge_help_hint", safe_read_utf8_text_file(cnts->conf_dir, "review_judge_help.md", err_id, 1));
+    safe_add_to_object(jc, "judge_help_hint", ns_safe_read_utf8_text_file(cnts->conf_dir, "review_judge_help.md", err_id, 1));
   } else if (purpose == RERP_HELP) {
-    safe_add_to_object(jc, "help_hint", safe_read_utf8_text_file(cnts->conf_dir, "review_help.md", err_id, 1));
+    safe_add_to_object(jc, "help_hint", ns_safe_read_utf8_text_file(cnts->conf_dir, "review_help.md", err_id, 1));
   }
   cJSON_AddItemToObject(result, "contest", jc);
 
   cJSON *jp = cJSON_CreateObject();
-  safe_add_to_object(jp, "hint", safe_read_utf8_text_file(prob_path, "review.md", err_id, 1));
-  safe_add_to_object(jp, "language_hint", safe_read_utf8_text_file(prob_path, filename, err_id, 1));
+  safe_add_to_object(jp, "hint", ns_safe_read_utf8_text_file(prob_path, "review.md", err_id, 1));
+  safe_add_to_object(jp, "language_hint", ns_safe_read_utf8_text_file(prob_path, filename, err_id, 1));
   if (purpose == RERP_REVIEW) {
-    safe_add_to_object(jp, "review_hint", safe_read_utf8_text_file(prob_path, "review_user.md", err_id, 1));
+    safe_add_to_object(jp, "review_hint", ns_safe_read_utf8_text_file(prob_path, "review_user.md", err_id, 1));
   } else if (purpose == RERP_JUDGE_HELP) {
-    safe_add_to_object(jp, "judge_help_hint", safe_read_utf8_text_file(prob_path, "review_judge_help.md", err_id, 1));
+    safe_add_to_object(jp, "judge_help_hint", ns_safe_read_utf8_text_file(prob_path, "review_judge_help.md", err_id, 1));
   } else if (purpose == RERP_HELP) {
-    safe_add_to_object(jp, "help_hint", safe_read_utf8_text_file(prob_path, "review_help.md", err_id, 1));
+    safe_add_to_object(jp, "help_hint", ns_safe_read_utf8_text_file(prob_path, "review_help.md", err_id, 1));
   }
   cJSON_AddItemToObject(result, "problem", jp);
 
