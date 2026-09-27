@@ -12492,10 +12492,11 @@ fix_utf8_buf(char **p_text, size_t *p_size)
   free(*p_text);
   *p_text = txt_s;
   *p_size = txt_z;
+  utf8_fix_string(*p_text, NULL);
 }
 
-static const unsigned char *
-get_language_name(int lang_id)
+const unsigned char *
+ns_get_language_name(int lang_id)
 {
   static const unsigned char * const standard_languages[] =
   {
@@ -12518,7 +12519,7 @@ get_language_name(int lang_id)
     [17] = "java",
     [18] = "java",
     [19] = "csharp",
-    [20] = "visual_basic",
+    [20] = "basic",
     [21] = "ruby",
     [22] = "php",
     [23] = "python",
@@ -12551,7 +12552,7 @@ get_language_name(int lang_id)
     [71] = "kotlin",
     [72] = "javascript",
     [73] = "csharp",
-    [74] = "visual_basic",
+    [74] = "basic",
     [75] = "riscv_assembly",
     [76] = "swift",
     [79] = "postgres_sql",
@@ -12870,7 +12871,7 @@ make_review_document(
   cJSON_AddStringToObject(result, "source_code", run_text);
   free(run_text); run_text = NULL; run_size = 0;
 
-  source_language = get_language_name(pre->lang_id);
+  source_language = ns_get_language_name(pre->lang_id);
   cJSON_AddStringToObject(result, "source_language", source_language);
 
   int variant = pre->variant;
