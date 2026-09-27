@@ -12469,8 +12469,8 @@ load_other_contest(
   return serve_state_load_contest(extra, config, contest_id, ul_conn, &callbacks, NULL, 0, ns_load_problem_plugin);
 }
 
-static void
-fix_utf8_buf(char **p_text, size_t *p_size)
+void
+ns_fix_utf8_buf(char **p_text, size_t *p_size)
 {
   if (strlen(*p_text) == *p_size) {
     utf8_fix_string(*p_text, NULL);
@@ -12867,7 +12867,7 @@ make_review_document(
     ERR("contest %d:run %d:source read error", contest_id, run_id);
     goto fail;
   }
-  fix_utf8_buf(&run_text, &run_size);
+  ns_fix_utf8_buf(&run_text, &run_size);
   cJSON_AddStringToObject(result, "source_code", run_text);
   free(run_text); run_text = NULL; run_size = 0;
 
