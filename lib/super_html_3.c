@@ -1371,18 +1371,22 @@ super_html_new_check_tests(
       continue;
     }
 
-    if (tmp_prob->problem_dir && tmp_prob->problem_dir[0]) {
+    if (tmp_prob->problem_dirs && tmp_prob->problem_dirs[0]) {
+      for (variant = 0; tmp_prob->problem_dirs[variant]; ++variant) {
+        fprintf(flog, "problem_dir[%d] = %s\n", variant + 1, tmp_prob->problem_dirs[variant]);
+      }
+    } else if (tmp_prob->problem_dir && tmp_prob->problem_dir[0]) {
       fprintf(flog, "problem_dir = %s\n", tmp_prob->problem_dir);
     }
 
     if (global->advanced_layout > 0) {
-      if (prob->variant_num <= 0) {
+      if (tmp_prob->variant_num <= 0) {
         if (build_generate_makefile(flog, config, cnts, NULL, sstate, global, tmp_prob, 0) < 0)
           goto cleanup;
         if ((j = invoke_make(flog, config, global, tmp_prob, -1)) < 0)
           goto cleanup;
       } else {
-        for (variant = 1; variant <= prob->variant_num; ++variant) {
+        for (variant = 1; variant <= tmp_prob->variant_num; ++variant) {
           if (build_generate_makefile(flog, config, cnts, NULL, sstate, global, tmp_prob, variant) < 0)
             goto cleanup;
           if ((j = invoke_make(flog, config, global, tmp_prob, variant)) < 0)
@@ -1404,11 +1408,11 @@ super_html_new_check_tests(
     }
 
     if (!tmp_prob->standard_checker && !already_compiled) {
-      if (prob->variant_num <= 0) {
+      if (tmp_prob->variant_num <= 0) {
         if (recompile_checker(config, flog, checker_path) < 0)
           goto cleanup;
       } else {
-        for (variant = 1; variant <= prob->variant_num; variant++) {
+        for (variant = 1; variant <= tmp_prob->variant_num; variant++) {
           if (global->advanced_layout > 0) {
             get_advanced_layout_path(v_checker_path, sizeof(v_checker_path),
                                      global, tmp_prob, NULL, variant);
@@ -1422,10 +1426,10 @@ super_html_new_check_tests(
       }
     }
 
-    if (prob->type == PROB_TYPE_TESTS) goto skip_tests;
+    if (tmp_prob->type == PROB_TYPE_TESTS) goto skip_tests;
 
     // check tests
-    if (prob->variant_num <= 0) {
+    if (tmp_prob->variant_num <= 0) {
       if (global->advanced_layout > 0) {
         get_advanced_layout_path(test_path, sizeof(test_path), global,
                                  tmp_prob, DFLT_P_TEST_DIR, -1);
@@ -1543,7 +1547,7 @@ super_html_new_check_tests(
         goto cleanup;
       }
     } else {
-      for (variant = 1; variant <= prob->variant_num; variant++) {
+      for (variant = 1; variant <= tmp_prob->variant_num; variant++) {
         if (global->advanced_layout > 0) {
           get_advanced_layout_path(v_test_path, sizeof(v_test_path), global,
                                    tmp_prob, DFLT_P_TEST_DIR, variant);
