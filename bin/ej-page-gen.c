@@ -5836,6 +5836,34 @@ int64_t_type_handler(
 }
 
 static void
+int8_t_type_handler(
+        FILE *log_f,
+        TypeContext *cntx,
+        struct ProcessorState *ps,
+        FILE *txt_f,
+        FILE *prg_f,
+        const unsigned char *text,
+        const HtmlElement *elem,
+        TypeInfo *type_info)
+{
+    fprintf(prg_f, "fprintf(out_f, \"%%d\", (int)(%s));\n", text);
+}
+
+static void
+uint8_t_type_handler(
+        FILE *log_f,
+        TypeContext *cntx,
+        struct ProcessorState *ps,
+        FILE *txt_f,
+        FILE *prg_f,
+        const unsigned char *text,
+        const HtmlElement *elem,
+        TypeInfo *type_info)
+{
+    fprintf(prg_f, "fprintf(out_f, \"%%d\", (int)(%s));\n", text);
+}
+
+static void
 ej_jsbool_type_handler(
         FILE *log_f,
         TypeContext *cntx,
@@ -6685,6 +6713,10 @@ process_unit(
                                      int_type_handler);
     processor_state_set_type_handler(ps, tc_find_typedef_type(cntx, tc_get_ident(cntx, "int64_t")),
                                      int64_t_type_handler);
+    processor_state_set_type_handler(ps, tc_find_typedef_type(cntx, tc_get_ident(cntx, "int8_t")),
+                                     int8_t_type_handler);
+    processor_state_set_type_handler(ps, tc_find_typedef_type(cntx, tc_get_ident(cntx, "uint8_t")),
+                                     uint8_t_type_handler);
 
     processor_state_set_type_handler(ps, tc_get_typedef_type(cntx, tc_get_i0_type(cntx), tc_get_ident(cntx, "__ej_uuid_t")),
                                      ej_uuid_type_handler);
