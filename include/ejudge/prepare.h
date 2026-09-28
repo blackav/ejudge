@@ -288,6 +288,19 @@ struct section_global_data
   ejintbool_t start_on_first_login;
   /** enable restarting of virtual contest */
   ejintbool_t enable_virtual_restart;
+  /** start personal upsolving after the virtual contest ends */
+  ejintbool_t auto_virtual_upsolving;
+  /** ignore runs in standings after the virtual contest ends  */
+  ejintbool_t auto_upsolving_freeze_result;
+  /** enable viewing source after the virtual contest ends */
+  ejintbool_t auto_upsolving_view_source;
+  /** enable viewing protocol after the virtual contest ends */
+  ejintbool_t auto_upsolving_view_protocol;
+  /** enable viewing full protocol after the virtual contest ends */
+  ejintbool_t auto_upsolving_full_protocol;
+  /** clarification requests are disabled after the virtual contest ends */
+  ejintbool_t auto_upsolving_disable_clars;
+
 
   /** try to preserve the original line numbers in scripts */
   ejintbool_t preserve_line_numbers;

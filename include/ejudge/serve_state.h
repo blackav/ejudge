@@ -824,6 +824,8 @@ int serve_event_remove_matching(serve_state_t state, time_t time, int type,
                                 int user_id);
 
 int serve_collect_virtual_stop_events(serve_state_t cs);
+int serve_is_user_upsolving(serve_state_t state, int user_id, time_t current_time);
+int serve_is_user_auto_upsolving(serve_state_t state, int user_id, time_t current_time);
 void serve_handle_events(
         struct contest_extra *extra,
         const struct ejudge_cfg *config,

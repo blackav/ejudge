@@ -3051,6 +3051,7 @@ priv_contest_operation(FILE *fout,
   case NEW_SRV_ACTION_RESET_2:
     info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
     serve_reset_contest(cnts, cs);
+    serve_update_status_file(ejudge_config, cnts, cs, 1);
     extra->last_access_time = 0;
     expired_contest_last_check_time = 0;
     break;
@@ -7079,7 +7080,7 @@ priv_upsolving_operation(
     break;
   case NEW_SRV_ACTION_UPSOLVING_CONFIG_4: // start upsolving
     run_save_times(cs->runlog_state);
-    run_set_duration(cs->runlog_state, 0);
+    if (cs->global->is_virtual <= 0) run_set_duration(cs->runlog_state, 0);
     run_stop_contest(cs->runlog_state, 0);
     run_set_finish_time(cs->runlog_state, 0);
     cs->upsolving_mode = 1;
@@ -8768,7 +8769,7 @@ priv_run_status_json(
   if (global->is_virtual) {
     start_time = run_get_virtual_start_time(cs->runlog_state, re.user_id);
     stop_time = run_get_virtual_stop_time(cs->runlog_state, re.user_id, cs->current_time);
-    if (stop_time <= 0 || cs->upsolving_mode) accepting_mode = 1;
+    if (stop_time <= 0 || serve_is_user_upsolving(cs, re.user_id, cs->current_time)) accepting_mode = 1;
   } else {
     start_time = run_get_start_time(cs->runlog_state);
     stop_time = run_get_stop_time(cs->runlog_state, 0, 0);
@@ -10641,7 +10642,7 @@ priv_problem_status_json(
   if (global->is_virtual) {
     start_time = run_get_virtual_start_time(cs->runlog_state, other_user_id);
     stop_time = run_get_virtual_stop_time(cs->runlog_state, other_user_id, point_in_time);
-    if (stop_time <= 0 || cs->upsolving_mode) accepting_mode = 1;
+    if (stop_time <= 0 || serve_is_user_upsolving(cs, other_user_id, point_in_time)) accepting_mode = 1;
   } else {
     start_time = run_get_start_time(cs->runlog_state);
     stop_time = run_get_stop_time(cs->runlog_state, other_user_id, point_in_time);
@@ -16459,7 +16460,7 @@ ns_submit_run(
   if (!admin_mode && start_time <= 0) {
     FAIL(NEW_SRV_ERR_CONTEST_NOT_STARTED);
   }
-  if (!admin_mode && stop_time > 0 && !cs->upsolving_mode) {
+  if (!admin_mode && stop_time > 0 && !serve_is_user_upsolving(cs, user_id, cs->current_time)) {
     FAIL(NEW_SRV_ERR_CONTEST_ALREADY_FINISHED);
   }
   if (!admin_mode && serve_check_user_quota(cs, user_id, run_size) < 0) {
@@ -16469,7 +16470,8 @@ ns_submit_run(
     FAIL(NEW_SRV_ERR_PROB_UNAVAILABLE);
   }
   time_t user_deadline = 0;
-  if (!admin_mode && serve_is_problem_deadlined(cs, user_id, phr->login, prob, &user_deadline, 0)) {
+  if (!admin_mode && serve_is_problem_deadlined(cs, user_id, phr->login, prob, &user_deadline, 0)
+      && !serve_is_user_upsolving(cs, user_id, cs->current_time)) {
     FAIL(NEW_SRV_ERR_PROB_DEADLINE_EXPIRED);
   }
 
@@ -16631,7 +16633,9 @@ ns_submit_run(
     if (is_hidden < 0) is_hidden = 0;
     if (is_hidden > 1) is_hidden = 1;
   } else {
-    is_hidden = 0;
+    is_hidden = stop_time > 0 && serve_is_user_upsolving(cs, user_id, cs->current_time)
+                && (cs->upsolving_mode ? cs->upsolving_freeze_standings > 0
+                    : global->auto_upsolving_freeze_result > 0);
     db_variant = 0;
   }
 
@@ -17255,10 +17259,10 @@ unpriv_submit_run(
   if (cs->clients_suspended) {
     FAIL2(NEW_SRV_ERR_CLIENTS_SUSPENDED);
   }
-  if (!start_time && !cs->upsolving_mode) {
+  if (!start_time && !serve_is_user_upsolving(cs, phr->user_id, cs->current_time)) {
     FAIL2(NEW_SRV_ERR_CONTEST_NOT_STARTED);
   }
-  if (stop_time && !cs->upsolving_mode) {
+  if (stop_time && !serve_is_user_upsolving(cs, phr->user_id, cs->current_time)) {
     FAIL2(NEW_SRV_ERR_CONTEST_ALREADY_FINISHED);
   }
   if (serve_check_user_quota(cs, phr->user_id, run_size) < 0) {
@@ -17277,7 +17281,7 @@ unpriv_submit_run(
     user_deadline = 0;
   }
 
-  if (is_deadlined) {
+  if (is_deadlined && !serve_is_user_upsolving(cs, phr->user_id, cs->current_time)) {
     FAIL2(NEW_SRV_ERR_PROB_DEADLINE_EXPIRED);
   }
 
@@ -17431,11 +17435,12 @@ unpriv_submit_run(
     if (testing_report_bson_available() && global->disable_bson_store <= 0) store_flags = STORE_FLAGS_UUID_BSON;
   }
   int is_hidden = 0;
-  if (cs->upsolving_mode) {
+  if (serve_is_user_upsolving(cs, phr->user_id, cs->current_time)) {
     if (start_time <= 0 || cs->current_time < start_time) {
       is_hidden = 1;
     } else if (stop_time > 0 && cs->current_time >= stop_time) {
-      is_hidden = 1;
+      is_hidden = cs->upsolving_mode ? cs->upsolving_freeze_standings > 0
+                  : global->auto_upsolving_freeze_result > 0;
     }
   }
   run_id = run_add_record(cs->runlog_state,
@@ -18061,11 +18066,11 @@ ns_submit_run_input(
       err_num = NEW_SRV_ERR_CLIENTS_SUSPENDED;
       goto done;
     }
-    if (start_time <= 0 && !cs->upsolving_mode) {
+    if (start_time <= 0 && !serve_is_user_upsolving(cs, sender_user_id, cs->current_time)) {
       err_num = NEW_SRV_ERR_CONTEST_NOT_STARTED;
       goto done;
     }
-    if (stop_time > 0 && !cs->upsolving_mode) {
+    if (stop_time > 0 && !serve_is_user_upsolving(cs, sender_user_id, cs->current_time)) {
       err_num = NEW_SRV_ERR_CONTEST_ALREADY_FINISHED;
       goto done;
     }
@@ -18074,7 +18079,8 @@ ns_submit_run_input(
       goto done;
     }
     time_t user_deadline = 0;
-    if (serve_is_problem_deadlined(cs, sender_user_id, phr->login, prob, &user_deadline, 0)) {
+    if (serve_is_problem_deadlined(cs, sender_user_id, phr->login, prob, &user_deadline, 0)
+        && !serve_is_user_upsolving(cs, sender_user_id, cs->current_time)) {
       err_num = NEW_SRV_ERR_PROB_DEADLINE_EXPIRED;
       goto done;
     }
@@ -18505,7 +18511,9 @@ unpriv_submit_clar(FILE *fout,
   if (!start_time) {
     FAIL2(NEW_SRV_ERR_CONTEST_NOT_STARTED);
   }
-  if (stop_time) {
+  if (stop_time && !(cs->upsolving_mode ? cs->upsolving_disable_clars <= 0
+                     : serve_is_user_auto_upsolving(cs, phr->user_id, cs->current_time)
+                       && global->auto_upsolving_disable_clars <= 0)) {
     FAIL2(NEW_SRV_ERR_CONTEST_ALREADY_FINISHED);
   }
 
@@ -18803,6 +18811,9 @@ unpriv_command(
 
   switch (phr->action) {
   case NEW_SRV_ACTION_VIRTUAL_RESTART:
+    if (cs->upsolving_mode) {
+      FAIL2(NEW_SRV_ERR_PERMISSION_DENIED);
+    }
     if (global->enable_virtual_restart <= 0) {
       FAIL2(NEW_SRV_ERR_PERMISSION_DENIED);
     }
@@ -18826,7 +18837,7 @@ unpriv_command(
     run_clear_user_entries(cs->runlog_state, phr->user_id);
     // FALLTHROUGH!
   case NEW_SRV_ACTION_VIRTUAL_START:
-    if (global->disable_virtual_start || cs->disable_virtual_start > 0) {
+    if (cs->upsolving_mode || global->disable_virtual_start || cs->disable_virtual_start > 0) {
       FAIL2(NEW_SRV_ERR_PERMISSION_DENIED);
     }
     if (cnts->open_time > 0 && cs->current_time < cnts->open_time) {
@@ -18974,7 +18985,9 @@ unpriv_download_run(
   if (cs->clients_suspended) {
     FAIL2(NEW_SRV_ERR_CLIENTS_SUSPENDED);
   }
-  if (cs->online_view_source < 0 || (!cs->online_view_source && global->team_enable_src_view <= 0)) {
+  if ((cs->online_view_source < 0 || (!cs->online_view_source && global->team_enable_src_view <= 0))
+      && !(serve_is_user_auto_upsolving(cs, phr->user_id, cs->current_time)
+           && global->auto_upsolving_view_source > 0)) {
     FAIL2(NEW_SRV_ERR_SOURCE_VIEW_DISABLED);
   }
   if (re.user_id != phr->user_id) {
@@ -19067,6 +19080,10 @@ unpriv_view_test(
 
   // report view is explicitly disabled by the current contest setting
   if (cs->online_view_report < 0) enable_rep_view = 0;
+  if (serve_is_user_auto_upsolving(cs, phr->user_id, cs->current_time)
+      && global->auto_upsolving_full_protocol > 0
+      && (global->auto_upsolving_view_protocol > 0
+          || prob->team_enable_rep_view > 0 || cs->online_view_report > 0)) enable_rep_view = 1;
   // report view is explicitly enabled by the current contest setting
   //if (cs->online_view_report > 0) enable_rep_view = 1;
   // report view is disabled by the problem configuration
@@ -19161,7 +19178,8 @@ html_problem_selection(serve_state_t cs,
       user_deadline = 0;
       user_penalty = 0;
       if (serve_is_problem_deadlined(cs, phr->user_id, phr->login,
-                                     prob, &user_deadline, 0))
+                                     prob, &user_deadline, 0)
+          && !serve_is_user_upsolving(cs, phr->user_id, cs->current_time))
         continue;
 
       // check `require' variable
@@ -19254,7 +19272,8 @@ html_problem_selection_2(serve_state_t cs,
     if (start_time <= 0) continue;
 
     if (serve_is_problem_deadlined(cs, phr->user_id, phr->login,
-                                   prob, &user_deadline, 0))
+                                   prob, &user_deadline, 0)
+        && !serve_is_user_upsolving(cs, phr->user_id, cs->current_time))
       continue;
 
     // find date penalty
@@ -19991,7 +20010,8 @@ unpriv_xml_update_answer(
 
   if (cs->clients_suspended) FAIL(NEW_SRV_ERR_CLIENTS_SUSPENDED);
   if (!start_time) FAIL(NEW_SRV_ERR_CONTEST_NOT_STARTED);
-  if (stop_time) FAIL(NEW_SRV_ERR_CONTEST_ALREADY_FINISHED);
+  if (stop_time && !serve_is_user_upsolving(cs, phr->user_id, cs->current_time))
+    FAIL(NEW_SRV_ERR_CONTEST_ALREADY_FINISHED);
   if (serve_check_user_quota(cs, phr->user_id, run_size) < 0)
     FAIL(NEW_SRV_ERR_RUN_QUOTA_EXCEEDED);
   // problem submit start time
@@ -19999,7 +20019,8 @@ unpriv_xml_update_answer(
     FAIL(NEW_SRV_ERR_PROB_UNAVAILABLE);
 
   if (serve_is_problem_deadlined(cs, phr->user_id, phr->login, prob,
-                                 &user_deadline, 0)) {
+                                 &user_deadline, 0)
+      && !serve_is_user_upsolving(cs, phr->user_id, cs->current_time)) {
     FAIL(NEW_SRV_ERR_PROB_DEADLINE_EXPIRED);
   }
 
@@ -20039,7 +20060,9 @@ unpriv_xml_update_answer(
 
   ej_uuid_t run_uuid = {};
   int store_flags = 0;
-  run_id = run_find(cs->runlog_state, -1, 0, phr->user_id, prob->id, 0, &run_uuid, &store_flags);
+  run_id = -1;
+  if (!serve_is_user_upsolving(cs, phr->user_id, cs->current_time))
+    run_id = run_find(cs->runlog_state, -1, 0, phr->user_id, prob->id, 0, &run_uuid, &store_flags);
   if (run_id < 0) {
     if (global->uuid_run_store > 0 && run_get_uuid_hash_state(cs->runlog_state) >= 0) {
       store_flags = STORE_FLAGS_UUID;
@@ -20050,7 +20073,11 @@ unpriv_xml_update_answer(
                             run_size, shaval, &run_uuid,
                             &phr->ip, phr->ssl_flag,
                             phr->locale_id, phr->user_id,
-                            prob_id, 0, 0, 0, 0, 0,
+                            prob_id, 0, 0, 0,
+                            serve_is_user_upsolving(cs, phr->user_id, cs->current_time)
+                              && (cs->upsolving_mode ? cs->upsolving_freeze_standings > 0
+                                  : global->auto_upsolving_freeze_result > 0),
+                            0,
                             prob->uuid,
                             store_flags,
                             0 /* is_vcs */,
@@ -20171,14 +20198,16 @@ unpriv_get_file(
   if (cs->clients_suspended) FAIL(NEW_SRV_ERR_CLIENTS_SUSPENDED);
   if (start_time <= 0) FAIL(NEW_SRV_ERR_CONTEST_NOT_STARTED);
   if (stop_time > 0 && cs->current_time >= stop_time
-      && prob->unrestricted_statement <= 0 && !cs->upsolving_mode)
+      && prob->unrestricted_statement <= 0
+      && !serve_is_user_upsolving(cs, phr->user_id, cs->current_time))
     FAIL(NEW_SRV_ERR_CONTEST_ALREADY_FINISHED);
   if (!serve_is_problem_started(cs, phr->user_id, prob, 0))
     FAIL(NEW_SRV_ERR_PROB_UNAVAILABLE);
 
   if (serve_is_problem_deadlined(cs, phr->user_id, phr->login,
                                  prob, &user_deadline, 0)
-      && prob->unrestricted_statement <= 0)
+      && prob->unrestricted_statement <= 0
+      && !serve_is_user_upsolving(cs, phr->user_id, cs->current_time))
     FAIL(NEW_SRV_ERR_CONTEST_ALREADY_FINISHED);
 
   // FIXME: check requisites
@@ -20276,7 +20305,7 @@ unpriv_contest_status_json(
   if (global->is_virtual) {
     start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
     stop_time = run_get_virtual_stop_time(cs->runlog_state, phr->user_id, cs->current_time);
-    if (stop_time <= 0 || cs->upsolving_mode) accepting_mode = 1;
+    if (stop_time <= 0 || serve_is_user_upsolving(cs, phr->user_id, cs->current_time)) accepting_mode = 1;
     if (stop_time > 0 && cs->current_time >= stop_time) {
       vend_info = global->virtual_end_info;
     }
@@ -20341,7 +20370,7 @@ unpriv_contest_status_json(
   if (global->is_virtual) {
     fprintf(fout, ",\n      \"is_restartable\": %s", to_json_bool(global->enable_virtual_restart));
   }
-  fprintf(fout, ",\n      \"is_upsolving\": %s", to_json_bool(cs->upsolving_mode));
+  fprintf(fout, ",\n      \"is_upsolving\": %s", to_json_bool(serve_is_user_upsolving(cs, phr->user_id, cs->current_time)));
   fprintf(fout, ",\n      \"is_started\": %s", to_json_bool(start_time > 0));
   if (start_time > 0) {
     fprintf(fout, ",\n      \"start_time\": %lld", (long long) start_time);
@@ -20471,7 +20500,7 @@ unpriv_problem_status_json(
   if (global->is_virtual) {
     start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
     stop_time = run_get_virtual_stop_time(cs->runlog_state, phr->user_id, cs->current_time);
-    if (stop_time <= 0 || cs->upsolving_mode) accepting_mode = 1;
+    if (stop_time <= 0 || serve_is_user_upsolving(cs, phr->user_id, cs->current_time)) accepting_mode = 1;
   } else {
     start_time = run_get_start_time(cs->runlog_state);
     stop_time = run_get_stop_time(cs->runlog_state, phr->user_id, cs->current_time);
@@ -20903,7 +20932,7 @@ unpriv_problem_statement_json(
   if (global->is_virtual) {
     start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
     stop_time = run_get_virtual_stop_time(cs->runlog_state, phr->user_id, cs->current_time);
-    if (stop_time <= 0 || cs->upsolving_mode) accepting_mode = 1;
+    if (stop_time <= 0 || serve_is_user_upsolving(cs, phr->user_id, cs->current_time)) accepting_mode = 1;
   } else {
     start_time = run_get_start_time(cs->runlog_state);
     stop_time = run_get_stop_time(cs->runlog_state, phr->user_id, cs->current_time);
@@ -21003,7 +21032,7 @@ unpriv_list_runs_json(
   if (global->is_virtual) {
     start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
     stop_time = run_get_virtual_stop_time(cs->runlog_state, phr->user_id, cs->current_time);
-    if (stop_time <= 0 || cs->upsolving_mode) accepting_mode = 1;
+    if (stop_time <= 0 || serve_is_user_upsolving(cs, phr->user_id, cs->current_time)) accepting_mode = 1;
   } else {
     start_time = run_get_start_time(cs->runlog_state);
     stop_time = run_get_stop_time(cs->runlog_state, phr->user_id, cs->current_time);
@@ -21096,7 +21125,7 @@ unpriv_run_status_json(
   if (global->is_virtual) {
     start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
     stop_time = run_get_virtual_stop_time(cs->runlog_state, phr->user_id, cs->current_time);
-    if (stop_time <= 0 || cs->upsolving_mode) accepting_mode = 1;
+    if (stop_time <= 0 || serve_is_user_upsolving(cs, phr->user_id, cs->current_time)) accepting_mode = 1;
   } else {
     start_time = run_get_start_time(cs->runlog_state);
     stop_time = run_get_stop_time(cs->runlog_state, phr->user_id, cs->current_time);
@@ -21262,7 +21291,7 @@ unpriv_run_test_json(
   if (global->is_virtual) {
     start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
     stop_time = run_get_virtual_stop_time(cs->runlog_state, phr->user_id, cs->current_time);
-    if (stop_time <= 0 || cs->upsolving_mode) accepting_mode = 1;
+    if (stop_time <= 0 || serve_is_user_upsolving(cs, phr->user_id, cs->current_time)) accepting_mode = 1;
   } else {
     start_time = run_get_start_time(cs->runlog_state);
     stop_time = run_get_stop_time(cs->runlog_state, phr->user_id, cs->current_time);
@@ -21377,6 +21406,8 @@ unpriv_run_test_json(
     visibility = TV_HIDDEN;
     if (re.is_marked) visibility = TV_FULL;
   }
+  if (serve_is_user_auto_upsolving(cs, phr->user_id, cs->current_time)
+      && global->auto_upsolving_full_protocol > 0) visibility = TV_FULL;
   if (visibility != TV_FULL) {
     error_page(fout, phr, 0, NEW_SRV_ERR_PERMISSION_DENIED);
     goto cleanup;
