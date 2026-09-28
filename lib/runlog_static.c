@@ -535,3 +535,34 @@ run_parse_review_status(const char *s)
   }
   return -1;
 }
+
+const unsigned char *
+run_unparse_review_purpose(unsigned val)
+{
+    static const unsigned char * const values[] =
+    {
+        [RERP_REVIEW] = "review",
+        [RERP_HELP] = "help",
+        [RERP_JUDGE_HELP] = "judge_help",
+    };
+    if (val >= sizeof(values) / sizeof(values[0])) {
+        return "";
+    }
+    const unsigned char *s = values[val];
+    if (!s) return "";
+    return s;
+}
+
+const unsigned char *
+run_unparse_utime_t(unsigned char *buf, size_t size, int64_t ts)
+{
+  struct tm ttm;
+  time_t t_part = ts / 1000000;
+  int u_part = ts % 1000000;
+  localtime_r(&t_part, &ttm);
+  __attribute__((unused)) int _;
+  _ = snprintf(buf, size, "%04d-%02d-%02d %02d:%02d:%02d.%06d",
+      ttm.tm_year + 1900, ttm.tm_mon + 1, ttm.tm_mday,
+      ttm.tm_hour, ttm.tm_min, ttm.tm_sec, u_part);
+  return buf;
+}

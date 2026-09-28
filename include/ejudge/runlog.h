@@ -890,4 +890,13 @@ run_unparse_review_status(unsigned val);
 int
 run_parse_review_status(const char *s);
 
+const unsigned char *
+run_unparse_review_purpose(unsigned val);
+
+const unsigned char *
+run_unparse_utime_t(
+        unsigned char *buf,
+        size_t size,
+        int64_t ts);
+
 #endif /* __RUNLOG_H__ */
