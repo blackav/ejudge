@@ -35,6 +35,7 @@
     ejintbool_t disable_language = 0;
     ejintbool_t problem_navigation = 0;
     ejintbool_t vertical_navigation = 0;
+    ejintbool_t vertical_navigation_sdate_sort = 0;
     ejintbool_t disable_virtual_start = 0;
     ejintbool_t disable_virtual_auto_judge = 0;
     ejintbool_t enable_auto_print_protocol = 0;
@@ -72,6 +73,7 @@
 %><s:read var="disable_language" default="0" /><%
 %><s:read var="problem_navigation" default="0" /><%
 %><s:read var="vertical_navigation" default="0" /><%
+%><s:read var="vertical_navigation_sdate_sort" default="0" /><%
 %><s:read var="disable_virtual_start" default="0" /><%
 %><s:read var="disable_virtual_auto_judge" default="0" /><%
 %><s:read var="enable_auto_print_protocol" default="0" /><%
@@ -109,6 +111,7 @@
             global->disable_language = disable_language;
             global->problem_navigation = problem_navigation;
             global->vertical_navigation = vertical_navigation;
+            global->vertical_navigation_sdate_sort = vertical_navigation_sdate_sort;
             global->disable_virtual_start = disable_virtual_start;
             global->disable_virtual_auto_judge = disable_virtual_auto_judge;
             global->enable_auto_print_protocol = enable_auto_print_protocol;
