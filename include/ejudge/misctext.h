@@ -116,6 +116,8 @@ unsigned char *filename_armor_bytes(unsigned char *out, size_t outsize,
 
 unsigned char *
 utf8_fix_buf(unsigned char **p_str, size_t *p_size, int has_nul, int need_free);
+char *
+utf8_fix_buf_2(char **p_str, size_t *p_size, int has_nul, int need_free);
 unsigned char *
 utf8_fix_string_2(unsigned char *str);
 

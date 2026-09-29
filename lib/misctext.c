@@ -1409,6 +1409,12 @@ utf8_fix_buf(unsigned char **p_str, size_t *p_size, int has_nul, int need_free)
 #undef EMIT_REPL
 }
 
+char *
+utf8_fix_buf_2(char **p_str, size_t *p_size, int has_nul, int need_free)
+{
+  return utf8_fix_buf((unsigned char**) p_str, p_size, has_nul, need_free);
+}
+
 unsigned char *
 utf8_fix_string_2(unsigned char *str)
 {
