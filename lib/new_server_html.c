@@ -13108,9 +13108,9 @@ priv_start_review_json(
   out_review.review_source = review_source; review_source = NULL;
   out_review.reviewer_user_id = phr->user_id;
   out_review.status = RERS_REVIEWING;
-  out_review.review_agent = xstrdup(agent);
+  out_review.review_agent = utf8_fix_string_dup(agent);
   sha256binbuf(out_review.review_source_sha256, out_review.review_source, review_len);
-  if (heartbeat_status) out_review.review_heartbeat_status = xstrdup(heartbeat_status);
+  if (heartbeat_status) out_review.review_heartbeat_status = utf8_fix_string_dup(heartbeat_status);
 
   int res = run_review_update(cs->runlog_state, &out_review,
     RER_LAST_UPDATE_TIME|RER_REVIEW_START_TIME|RER_REVIEW_HEARTBEAT_TIME
@@ -13474,8 +13474,7 @@ priv_finish_review_json(
       goto done;
     }
     field_mask |= RER_REVIEW_RESULT;
-    out_review.review_result = xstrdup(jcur->valuestring);
-    utf8_fix_string(out_review.review_result, NULL);
+    out_review.review_result = utf8_fix_string_dup(jcur->valuestring);
   }
   if ((jcur = cJSON_GetObjectItem(request_json, "judge_result"))) {
     if (jcur->type != cJSON_String) {
@@ -13483,8 +13482,7 @@ priv_finish_review_json(
       goto done;
     }
     field_mask |= RER_REVIEW_JUDGE_RESULT;
-    out_review.review_judge_result = xstrdup(jcur->valuestring);
-    utf8_fix_string(out_review.review_judge_result, NULL);
+    out_review.review_judge_result = utf8_fix_string_dup(jcur->valuestring);
   }
   if ((jcur = cJSON_GetObjectItem(request_json, "statistics"))) {
     if (jcur->type != cJSON_String) {
@@ -13492,8 +13490,7 @@ priv_finish_review_json(
       goto done;
     }
     field_mask |= RER_REVIEW_STATISTICS;
-    out_review.review_statistics = xstrdup(jcur->valuestring);
-    utf8_fix_string(out_review.review_statistics, NULL);
+    out_review.review_statistics = utf8_fix_string_dup(jcur->valuestring);
   }
   if ((jcur = cJSON_GetObjectItem(request_json, "log"))) {
     if (jcur->type != cJSON_String) {
@@ -13501,8 +13498,7 @@ priv_finish_review_json(
       goto done;
     }
     field_mask |= RER_REVIEW_LOG;
-    out_review.review_log = xstrdup(jcur->valuestring);
-    utf8_fix_string(out_review.review_log, NULL);
+    out_review.review_log = utf8_fix_string_dup(jcur->valuestring);
   }
   if ((jcur = cJSON_GetObjectItem(request_json, "model"))) {
     if (jcur->type != cJSON_String) {
@@ -13510,8 +13506,7 @@ priv_finish_review_json(
       goto done;
     }
     field_mask |= RER_MODEL;
-    out_review.model = xstrdup(jcur->valuestring);
-    utf8_fix_string(out_review.model, NULL);
+    out_review.model = utf8_fix_string_dup(jcur->valuestring);
   }
   if ((jcur = cJSON_GetObjectItem(request_json, "input_tokens"))) {
     if (jcur->type != cJSON_Number) {

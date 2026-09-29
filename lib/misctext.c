@@ -1422,6 +1422,15 @@ utf8_fix_string_2(unsigned char *str)
   return utf8_fix_buf(&str, &len, 1, 1);
 }
 
+unsigned char *
+utf8_fix_string_dup(const unsigned char *str)
+{
+  if (!str) return NULL;
+  unsigned char *s = xstrdup(str);
+  size_t len = strlen(s);
+  return utf8_fix_buf(&s, &len, 1, 1);
+}
+
 int
 utf8_fix_string(unsigned char *str, int *gl_ind)
 {

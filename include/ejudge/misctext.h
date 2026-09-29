@@ -120,6 +120,8 @@ char *
 utf8_fix_buf_2(char **p_str, size_t *p_size, int has_nul, int need_free);
 unsigned char *
 utf8_fix_string_2(unsigned char *str);
+unsigned char *
+utf8_fix_string_dup(const unsigned char *str);
 
 int utf8_fix_string(unsigned char *str, int *gl_ind);
 
