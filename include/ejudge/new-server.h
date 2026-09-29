@@ -1053,8 +1053,6 @@ ns_unparse_md_statement(
 const unsigned char *
 ns_get_language_name(int lang_id);
 
-void ns_fix_utf8_buf(char **p_text, size_t *p_size);
-
 unsigned char *
 ns_safe_read_utf8_text_file(
         const unsigned char *dir,

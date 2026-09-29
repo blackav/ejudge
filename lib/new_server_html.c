@@ -12469,32 +12469,6 @@ load_other_contest(
   return serve_state_load_contest(extra, config, contest_id, ul_conn, &callbacks, NULL, 0, ns_load_problem_plugin);
 }
 
-void
-ns_fix_utf8_buf(char **p_text, size_t *p_size)
-{
-  if (strlen(*p_text) == *p_size) {
-    utf8_fix_string(*p_text, NULL);
-    return;
-  }
-
-  char *txt_s = NULL;
-  size_t txt_z = 0;
-  FILE *txt_f = open_memstream(&txt_s, &txt_z);
-  const unsigned char *p_in = (const unsigned char *) *p_text;
-  for (size_t i = 0; i < *p_size; ++i, ++p_in) {
-    if (!*p_in) {
-      fputs_unlocked("␀",txt_f);
-    } else {
-      putc_unlocked(*p_in, txt_f);
-    }
-  }
-  fclose(txt_f); txt_f = NULL;
-  free(*p_text);
-  *p_text = txt_s;
-  *p_size = txt_z;
-  utf8_fix_string(*p_text, NULL);
-}
-
 const unsigned char *
 ns_get_language_name(int lang_id)
 {
@@ -12618,15 +12592,11 @@ ns_safe_read_utf8_text_file(
     goto fail;
   }
   while ((c = getc_unlocked(fin)) != EOF) {
-    if (!c) {
-      fputs_unlocked("␀",fout);
-    } else {
-      putc_unlocked(c, fout);
-    }
+    putc_unlocked(c, fout);
   }
   fclose(fin);
   fclose(fout);
-  utf8_fix_string(txt_s, NULL);
+  utf8_fix_buf_2(&txt_s, &txt_z, 1, 1);
   return txt_s;
 
 fail:;
@@ -12773,7 +12743,7 @@ add_run_report(
   cJSON_AddItemToObject(result, "run", jr);
 
   if (r->compiler_output) {
-    utf8_fix_string(r->compiler_output, NULL);
+    r->compiler_output = utf8_fix_string_2(r->compiler_output);
     cJSON_AddStringToObject(result, "compiler_messages", r->compiler_output);
   }
 
@@ -12867,7 +12837,7 @@ make_review_document(
     ERR("contest %d:run %d:source read error", contest_id, run_id);
     goto fail;
   }
-  ns_fix_utf8_buf(&run_text, &run_size);
+  utf8_fix_buf_2(&run_text, &run_size, 1, 1);
   cJSON_AddStringToObject(result, "source_code", run_text);
   free(run_text); run_text = NULL; run_size = 0;
 
