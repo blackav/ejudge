@@ -18,6 +18,7 @@
 #include "ejudge/ej_types.h"
 #include "ejudge/ej_limits.h"
 #include "ejudge/http_request.h"
+#include "ejudge/markdown.h"
 #include "ejudge/new-server.h"
 #include "ejudge/new_server_proto.h"
 #include "ejudge/opcaps.h"
@@ -14396,6 +14397,62 @@ done:;
 #undef ERR
 }
 
+static void
+priv_render_markdown(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  cJSON *jr = cJSON_CreateObject();
+  int ok = 0;
+  int err_num = NEW_SRV_ERR_INV_PARAM;
+  const unsigned char *err_msg = NULL;
+  int http_status = 400;
+  unsigned err_id = random_u32();
+  const unsigned char *s;
+  struct md_content md = {};
+  unsigned char *md_text = NULL;
+
+  info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
+
+  #define ERR(msg, ...) err("%s:%d:%08x:" msg, __PRETTY_FUNCTION__, __LINE__, err_id ,##__VA_ARGS__)
+
+  if (phr->role < USER_ROLE_JUDGE) {
+    http_status = 403;
+    err_num = NEW_SRV_ERR_PERMISSION_DENIED;
+    ERR("no JUDGE role");
+    goto done;
+  }
+  if (hr_cgi_param(phr, "markdown", &s) <= 0 || !*s) {
+    ERR("markdown param is not set");
+    goto done;
+  }
+  md_text = utf8_fix_string_dup(s);
+  if (markdown_parse_str(md_text, &md) < 0) {
+    ERR("invalid markdown");
+    goto done;
+  }
+
+  cJSON *jres = cJSON_CreateObject();
+  cJSON_AddStringToObject(jres, "html", md.data);
+  cJSON_AddItemToObject(jr, "result", jres);
+  ok = 1;
+  err_num = 0;
+  http_status = 200;
+
+done:;
+  phr->json_reply = 1;
+  phr->status_code = http_status;
+  emit_json_result(fout, phr, ok, err_num, err_id, err_msg, jr);
+  if (jr) {
+    cJSON_Delete(jr);
+  }
+  markdown_free(&md);
+  free(md_text);
+#undef ERR
+}
+
 typedef PageInterface *(*external_action_handler_t)(void);
 
 typedef int (*new_action_handler_t)(
@@ -14656,6 +14713,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_POSTAPPROVE_JSON] = NULL,
   [NEW_SRV_ACTION_REVIEW_DISPLAYED_2] = priv_generic_operation,
   [NEW_SRV_ACTION_REVIEW_OPERATION_JSON] = priv_review_operation_json,
+  [NEW_SRV_ACTION_RENDER_MARKDOWN] = priv_render_markdown,
 };
 
 static const unsigned char * const external_priv_action_names[NEW_SRV_ACTION_LAST] =
