@@ -14054,6 +14054,92 @@ done:;
 }
 
 static void
+send_email_notification(
+        const struct ejudge_cfg *config,
+        const struct contest_desc *cnts,
+        serve_state_t cs,
+        int run_id,
+        int user_id,
+        int new_status)
+{
+  unsigned char nsubj[1024];
+  FILE *msg_f = 0;
+  char *msg_t = 0;
+  size_t msg_z = 0;
+  const unsigned char *s = NULL;
+
+  if (cnts->default_locale_num > 0)
+    l10n_setlocale(cnts->default_locale_num);
+
+  snprintf(nsubj, sizeof(nsubj),
+          _("Your submit has been commented in contest %d"),
+          cnts->id);
+  msg_f = open_memstream(&msg_t, &msg_z);
+  switch (new_status) {
+  case RUN_OK:
+    s = _("Your submit has been commented and accepted\n");
+    break;
+  case RUN_REJECTED:
+    s = _("Your submit has been commented and rejected\n");
+    break;
+  case RUN_IGNORED:
+    s = _("Your submit has been commented and ignored\n");
+    break;
+  case RUN_DISQUALIFIED:
+    s = _("Your submit has been commented and disqualified\n");
+    break;
+  case RUN_SUMMONED:
+    s = _("Your submit has been commented and you are summoned for defence\n");
+    break;
+  default:
+    abort();
+  }
+  fprintf(msg_f, "%s", s);
+  fprintf(msg_f, _("Contest: %d (%s)\n"), cnts->id, cnts->name);
+  fprintf(msg_f, "Run Id: %d\n", run_id);
+  if (cnts->team_url) {
+    fprintf(msg_f, "URL: %s?contest_id=%d&login=%s\n", cnts->team_url,
+            cnts->id, teamdb_get_login(cs->teamdb_state, user_id));
+  }
+  // TODO: include report here?
+  fprintf(msg_f, "%s\n", "See detailed report in ejudge.");
+  fprintf(msg_f, "\n-\nRegards,\nthe ejudge contest management system (www.ejudge.ru)\n");
+  close_memstream(msg_f); msg_f = NULL;
+  l10n_resetlocale();
+  serve_send_email_to_user(config, cnts, cs, user_id, nsubj, msg_t);
+  xfree(msg_t); msg_t = 0; msg_z = 0;
+}
+
+static int
+add_clar_record(
+        struct http_request_info *phr,
+        serve_state_t cs,
+        int run_id,
+        const struct run_entry *pre,
+        int new_status)
+{
+  unsigned char subject[256];
+  snprintf(subject, sizeof(subject), "%d %s", run_id, _("is commented"));
+  unsigned char text[256];
+  snprintf(text, sizeof(text), "Subject: %s\n\nSee the detailed report.\n", subject);
+  int text_len = strlen(text);
+  int old_status = pre->status + 1;
+  ej_uuid_t clar_uuid = {};
+  struct timeval precise_time;
+  gettimeofday(&precise_time, 0);
+  int clar_id = clar_add_record(cs->clarlog_state, precise_time.tv_sec, precise_time.tv_usec, text_len, &phr->ip, phr->ssl_flag,
+      0, pre->user_id, 0, phr->user_id, 0, phr->locale_id, 0, NULL,
+      run_id + 1, &pre->run_uuid, 0, old_status, new_status+1, 1, NULL, subject, &clar_uuid);
+  if (clar_id < 0) {
+    return -1;
+  }
+  if (clar_add_text(cs->clarlog_state, clar_id, &clar_uuid, text, text_len) < 0) {
+    return -1;
+  }
+  return 0;
+}
+
+static void
 priv_review_operation_json(
         FILE *fout,
         struct http_request_info *phr,
@@ -14181,36 +14267,18 @@ priv_review_operation_json(
         goto done;
       }
     }
-    unsigned char subject[256];
-    snprintf(subject, sizeof(subject), "%d %s", run_id, _("is commented"));
-    unsigned char text[256];
-    snprintf(text, sizeof(text), "Subject: %s\n\nSee the detailed report.\n", subject);
-    int text_len = strlen(text);
-    int old_status = re.status + 1;
     int new_status = 0;
     if (operation == 2) {
-      new_status = RUN_REJECTED + 1;
+      new_status = RUN_REJECTED;
     } else if (operation == 3) {
-      new_status = RUN_OK + 1;
+      new_status = RUN_OK;
     } else {
       abort();
     }
-    ej_uuid_t clar_uuid = {};
-    struct timeval precise_time;
-    gettimeofday(&precise_time, 0);
-    int clar_id = clar_add_record(cs->clarlog_state, precise_time.tv_sec, precise_time.tv_usec, text_len, &phr->ip, phr->ssl_flag,
-      0, re.user_id, 0, phr->user_id, 0, phr->locale_id, 0, NULL,
-      run_id + 1, &re.run_uuid, 0, old_status, new_status, 1, NULL, subject, &clar_uuid);
-    if (clar_id < 0) {
+    if (add_clar_record(phr, cs, run_id, &re, new_status) < 0) {
       http_status = 500;
       err_num = NEW_SRV_ERR_CLARLOG_UPDATE_FAILED;
-      ERR("clar_add_record failed");
-      goto done;
-    }
-    if (clar_add_text(cs->clarlog_state, clar_id, &clar_uuid, text, text_len) < 0) {
-      http_status = 500;
-      err_num = NEW_SRV_ERR_CLARLOG_UPDATE_FAILED;
-      ERR("clar_add_text failed");
+      ERR("add_clar_record failed");
       goto done;
     }
     if (operation == 2) {
@@ -14263,37 +14331,7 @@ priv_review_operation_json(
     serve_audit_log(cs, run_id, &re, phr->user_id, &phr->ip, phr->ssl_flag, audit_cmd, "ok", new_status-1, NULL);
 
     if (cs->global->notify_clar_reply) {
-      unsigned char nsubj[1024];
-      FILE *msg_f = 0;
-      char *msg_t = 0;
-      size_t msg_z = 0;
-
-      if (cnts->default_locale_num > 0)
-        l10n_setlocale(cnts->default_locale_num);
-      snprintf(nsubj, sizeof(nsubj),
-              _("Your submit has been commented in contest %d"),
-              cnts->id);
-      msg_f = open_memstream(&msg_t, &msg_z);
-      if (operation == 2) {
-        fprintf(msg_f, _("Your submit has been commented and rejected\n"));
-      } else if (operation == 3) {
-        fprintf(msg_f, _("Your submit has been commented and accepted\n"));
-      } else {
-        abort();
-      }
-      fprintf(msg_f, _("Contest: %d (%s)\n"), cnts->id, cnts->name);
-      fprintf(msg_f, "Run Id: %d\n", run_id);
-      if (cnts->team_url) {
-        fprintf(msg_f, "URL: %s?contest_id=%d&login=%s\n", cnts->team_url,
-                cnts->id, teamdb_get_login(cs->teamdb_state, re.user_id));
-      }
-      // TODO: include report here?
-      fprintf(msg_f, "%s\n", "See detailed report in ejudge.");
-      fprintf(msg_f, "\n-\nRegards,\nthe ejudge contest management system (www.ejudge.ru)\n");
-      close_memstream(msg_f); msg_f = 0;
-      l10n_resetlocale();
-      serve_send_email_to_user(ejudge_config, cnts, cs, re.user_id, nsubj, msg_t);
-      xfree(msg_t); msg_t = 0; msg_z = 0;
+      send_email_notification(phr->config, cnts, cs, run_id, re.user_id, new_status-1);
     }
 
     if (cnts->enable_user_telegram > 0 && !re.is_hidden) {
