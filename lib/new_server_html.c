@@ -12115,6 +12115,7 @@ priv_list_reviews_json(
   int list_mode = 0;
   size_t total_count = 0;
   int page = 0;
+  long long serial_id_gt;
 
   // list_mode == 1 - premoderate list
   // list_mode == 2 - postapprove list
@@ -12148,6 +12149,7 @@ priv_list_reviews_json(
   hr_cgi_param_int_opt(phr, "offset", &offset, 0);
   hr_cgi_param_int_opt(phr, "count", &count, 0);
   hr_cgi_param_int_opt(phr, "date_mode", &date_mode, 0);
+  hr_cgi_param_i64_opt(phr, "serial_it_gt", &serial_id_gt, 0);
   hr_cgi_param(phr, "contest_ids", &contest_ids_str);
   contest_count = make_contest_id_list(phr, contest_ids_str, OPCAP_EXT_REVIEW, &contest_ids);
   if (contest_count < 0) {
@@ -12165,7 +12167,10 @@ priv_list_reviews_json(
   filter.contest_id_list = contest_ids;
   filter.contest_id_count = contest_count;
   filter.run_id = -1;
-  //filter.include_status_mask = 1U << RERS_WAITING_REVIEW;
+  if (list_mode == 2) {
+    filter.include_status_mask = 1U << RERS_WAITING_APPROVAL;
+  }
+  filter.serial_id_gt = serial_id_gt;
   if (count <= 0) count = 50;
   if (count > 1000) count = 1000;
   filter.count = count;
