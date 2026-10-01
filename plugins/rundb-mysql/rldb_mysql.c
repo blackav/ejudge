@@ -3551,6 +3551,14 @@ write_reviews_filter(
     asep = AND_STR;
     write_int64_list(cmd_f, filter->serial_id_list, filter->serial_id_count);
   }
+  if (filter->serial_id_gt > 0) {
+    fprintf(cmd_f, "%sserial_id > %lld", asep, (long long) filter->serial_id);
+    asep = AND_STR;
+  }
+  if (filter->serial_id_lt > 0) {
+    fprintf(cmd_f, "%sserial_id < %lld", asep, (long long) filter->serial_id);
+    asep = AND_STR;
+  }
   if (filter->run_serial_id > 0) {
     fprintf(cmd_f, "%srun_serial_id=%lld", asep, (long long) filter->run_serial_id);
     asep = AND_STR;

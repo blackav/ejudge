@@ -778,6 +778,8 @@ struct run_review_filter
   int64_t serial_id;
   int64_t *serial_id_list;
   int serial_id_count;
+  int64_t serial_id_gt;
+  int64_t serial_id_lt;
   int64_t run_serial_id;
   int64_t *run_serial_id_list;
   int run_serial_id_count;
