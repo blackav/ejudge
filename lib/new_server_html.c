@@ -14496,6 +14496,377 @@ done:;
 #undef ERR
 }
 
+enum
+{
+  PA_OP_SKIP = 1,
+  PA_OP_REJECT,
+  PA_OP_IGNORE,
+  PA_OP_OK,
+  PA_OP_DISQUALIFY,
+  PA_OP_SUMMON,
+  PA_OP_REREVIEW,
+  PA_OP_CANCEL,
+  PA_OP_LAST,
+};
+
+static void
+priv_postapprove_json(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  serve_state_t cs = extra->serve_state;
+  cJSON *jr = cJSON_CreateObject();
+  int ok = 0;
+  int err_num = NEW_SRV_ERR_INV_PARAM;
+  const unsigned char *err_msg = NULL;
+  int http_status = 400;
+  unsigned err_id = random_u32();
+  const unsigned char *s;
+  long long serial_id;
+  struct run_review review = {};
+  const struct contest_desc *review_cnts = NULL;
+  int operation = 0;
+  struct run_review_filter filter = { .run_id = -1 };
+  unsigned char *approved_text = NULL;
+
+  info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
+
+  #define ERR(msg, ...) err("%s:%d:%08x:" msg, __PRETTY_FUNCTION__, __LINE__, err_id ,##__VA_ARGS__)
+
+  if (opcaps_check(phr->caps, OPCAP_COMMENT_RUN) < 0) {
+    http_status = 403;
+    err_num = NEW_SRV_ERR_PERMISSION_DENIED;
+    ERR("no OPCAP_PREMOD_REVIEW permission");
+    goto done;
+  }
+  if (hr_cgi_param(phr, "serial_id", &s) <= 0 || !s) {
+    http_status = 400;
+    err_num = NEW_SRV_ERR_INV_PARAM;
+    ERR("serial_id unset or binary");
+    goto done;
+  }
+  {
+    char *eptr = NULL;
+    errno = 0;
+    serial_id = strtoll(s, &eptr, 10);
+    if (errno || *eptr || eptr == (char*) s || serial_id <= 0) {
+      http_status = 400;
+      err_num = NEW_SRV_ERR_INV_PARAM;
+      ERR("serial_id is invalid");
+      goto done;
+    }
+  }
+  hr_cgi_param_int_opt(phr, "operation", &operation, 0);
+  if (operation <= 0 || operation > PA_OP_LAST) {
+    err_num = NEW_SRV_ERR_INV_PARAM;
+    ERR("invalid operation %d", operation);
+    goto done;
+  }
+  uint64_t field_mask = RER_SERIAL_ID | RER_REVIEW_UUID | RER_REVIEW_RESULT | RER_REVIEW_JUDGE_RESULT
+    | RER_CONTEST_ID | RER_RUN_ID | RER_GENERATION | RER_STATUS | RER_PURPOSE;
+  int r = run_review_fetch_by_serial_id(cs->runlog_state, serial_id, field_mask, &review);
+  if (r < 0) {
+    http_status = 500;
+    err_num = NEW_SRV_ERR_DATABASE_FAILED;
+    ERR("fetch failed");
+    goto done;
+  }
+  if (r == 0) {
+    http_status = 404;
+    err_num = NEW_SRV_ERR_NO_AFFECTED_ROWS;
+    ERR("serial_id == %lld not found", serial_id);
+    goto done;
+  }
+  if (review.status != RERS_WAITING_APPROVAL) {
+    err_num = NEW_SRV_ERR_INV_STATUS;
+    ERR("serial_id == %lld has invalid status %d", serial_id, review.status);
+    goto done;
+  }
+  if (review.contest_id <= 0) {
+    http_status = 500;
+    err_num = NEW_SRV_ERR_DATABASE_FAILED;
+    ERR("review %lld contest_id <= 0", serial_id);
+    goto done;
+  }
+  if (contests_get(review.contest_id, &review_cnts) < 0 || !review_cnts) {
+    err_num = NEW_SRV_ERR_CNTS_UNAVAILABLE;
+    ERR("review %lld failed to get contest %d", serial_id, review.contest_id);
+    goto done;
+  }
+  opcap_t review_caps = 0;
+  if (opcaps_find(&review_cnts->capabilities, phr->login, &review_caps) < 0 ||
+      opcaps_check(review_caps, OPCAP_COMMENT_RUN) < 0) {
+    http_status = 403;
+    err_num = NEW_SRV_ERR_PERMISSION_DENIED;
+    ERR("no COMMENT_RUN permission in contest %d", review.contest_id);
+    goto done;
+  }
+  if (load_other_contest(phr->config, phr->fw_state, phr->userlist_clnt, review.contest_id) < 0) {
+    http_status = 400;
+    err_num = NEW_SRV_ERR_CNTS_UNAVAILABLE;
+    ERR("failed to load contest %d", review.contest_id);
+    goto done;
+  }
+  struct contest_extra *review_extra = ns_get_contest_extra(review_cnts, phr->config);
+  ASSERT(review_extra);
+  serve_state_t review_cs = review_extra->serve_state;
+  if (!review_cs) {
+    err_num = NEW_SRV_ERR_CNTS_UNAVAILABLE;
+    ERR("failed to load contest %d", review.contest_id);
+    goto done;
+  }
+
+  // work with review_cnts, review_cs
+  if (review.run_id < 0 || review.run_id >= run_get_total(review_cs->runlog_state)) {
+    err_num = NEW_SRV_ERR_CNTS_UNAVAILABLE;
+    ERR("contest %d:run %d:invalid run_id", review.contest_id, review.run_id);
+    goto done;
+  }
+  struct run_entry re = {};
+  if (run_get_entry(review_cs->runlog_state, review.run_id, &re) < 0) {
+    err_num = NEW_SRV_ERR_CNTS_UNAVAILABLE;
+    ERR("contest %d:run %d:failed to get run", review.contest_id, review.run_id);
+    goto done;
+  }
+  if (re.status == RUN_EMPTY || re.status == RUN_VIRTUAL_START || re.status == RUN_VIRTUAL_STOP) {
+    http_status = 400;
+    err_num = NEW_SRV_ERR_INV_CONTEST_ID;
+    ERR("invalid status for run_id %d: %d", review.run_id, re.status);
+    goto done;
+  }
+  if (operation == PA_OP_SKIP) {
+    goto success;
+  }
+
+  _Bool need_update_review_status = 0;
+  _Bool need_update_hidden_review_status = 0;
+  if (review.purpose == RERP_REVIEW || review.purpose == RERP_HELP) {
+    if (re.hidden_review_gen == review.generation) {
+      http_status = 500;
+      err_num = NEW_SRV_ERR_INTERNAL;
+      ERR("review purpose mismatches run_entry review generation");
+      goto done;
+    }
+    if (re.review_gen == review.generation) {
+      if (re.review_status != RERS_WAITING_APPROVAL) {
+        http_status = 500;
+        err_num = NEW_SRV_ERR_INTERNAL;
+        ERR("review purpose mismatches run_entry review status");
+        goto done;
+      }
+      need_update_review_status = 1;
+    }
+  } else if (review.purpose == RERP_JUDGE_HELP) {
+    if (re.review_gen == review.generation) {
+      http_status = 500;
+      err_num = NEW_SRV_ERR_INTERNAL;
+      ERR("review purpose mismatches run_entry review generation");
+      goto done;
+    }
+    if (re.hidden_review_gen == review.generation) {
+      if (re.hidden_review_status != RERS_WAITING_APPROVAL) {
+        http_status = 500;
+        err_num = NEW_SRV_ERR_INTERNAL;
+        ERR("review purpose mismatches run_entry review status");
+        goto done;
+      }
+      need_update_hidden_review_status = 1;
+    }
+  } else {
+    abort();
+  }
+
+  if (operation == PA_OP_CANCEL || operation == PA_OP_REREVIEW) {
+    filter.serial_id = serial_id;
+    filter.include_status_mask = 1U << RERS_WAITING_APPROVAL;
+    review.status = RERS_CANCELED;
+    review.last_update_time = -2;
+    if (run_review_update(review_cs->runlog_state, &review, RER_STATUS | RER_LAST_UPDATE_TIME,  &filter) < 0) {
+      http_status = 500;
+      err_num = NEW_SRV_ERR_DATABASE_FAILED;
+      goto done;
+    }
+    int r = 0;
+    if (need_update_review_status) {
+      r = run_change_review_status(cs->runlog_state, review.run_id, RERS_CANCELED, re.review_gen, re.hidden_review_status, re.hidden_review_gen, NULL);
+    } else if (need_update_hidden_review_status) {
+      r = run_change_review_status(cs->runlog_state, review.run_id, re.review_status, re.review_gen, RERS_CANCELED, re.hidden_review_gen, NULL);
+    }
+    if (r < 0) {
+      http_status = 500;
+      err_num = NEW_SRV_ERR_RUNLOG_UPDATE_FAILED;
+      ERR("run_change_review_status failed");
+      goto done;
+    }
+    if (operation == PA_OP_CANCEL) {
+      goto success;
+    }
+    if (!need_update_review_status && !need_update_hidden_review_status) {
+      goto success;
+    }
+    r = do_request_review(phr, review_cnts, review_cs, review.run_id, &re, need_update_review_status, 0, 0, err_id);
+    if (r < 0) {
+      err_num = -r;
+      goto done;
+    }
+    goto success;
+  }
+
+  int new_run_status = 0;
+  switch (operation) {
+  case PA_OP_REJECT:     new_run_status = RUN_REJECTED; break;
+  case PA_OP_IGNORE:     new_run_status = RUN_IGNORED; break;
+  case PA_OP_OK:         new_run_status = RUN_OK; break;
+  case PA_OP_DISQUALIFY: new_run_status = RUN_DISQUALIFIED; break;
+  case PA_OP_SUMMON:     new_run_status = RUN_SUMMONED; break;
+  default: abort();
+  }
+
+  s = NULL;
+  r = hr_cgi_param(phr, "approved_text", &s);
+  if (r < 0) {
+    http_status = 400;
+    err_num = NEW_SRV_ERR_INV_CONTEST_ID;
+    ERR("approved_text is binary");
+    goto done;
+  }
+  int review_approved_as_is = 0;
+  int status_approved_as_is = 0;
+  if (!r || !s || !*s) {
+    approved_text = utf8_fix_string_dup(review.review_result);
+    review_approved_as_is = 1;
+  } else {
+    approved_text = utf8_fix_string_dup(s);
+    unsigned char *orig_text = utf8_fix_string_dup(review.review_result);
+    if (!strcmp(approved_text, orig_text)) { // FIXME: ignore whitespace?
+      review_approved_as_is = 1;
+      free(approved_text); approved_text = orig_text; orig_text = NULL;
+    }
+    free(orig_text);
+  }
+
+  filter.serial_id = serial_id;
+  filter.include_status_mask = 1U << RERS_WAITING_APPROVAL;
+  review.status = RERS_COMPLETE;
+  review.last_update_time = -2;
+  review.approval_time = -2;
+  review.approver_user_id = phr->user_id;
+  review.approved_text = approved_text; approved_text = NULL;
+  review.review_approved_as_is = review_approved_as_is;
+  review.status_approved_as_is = status_approved_as_is;
+  field_mask = RER_STATUS | RER_LAST_UPDATE_TIME | RER_APPROVAL_TIME |
+    RER_APPROVER_USER_ID | RER_APPROVED_TEXT |
+    RER_REVIEW_APPROVED_AS_IS | RER_STATUS_APPROVED_AS_IS;
+  if (run_review_update(review_cs->runlog_state, &review, field_mask,  &filter) < 0) {
+    http_status = 500;
+    err_num = NEW_SRV_ERR_DATABASE_FAILED;
+    goto done;
+  }
+
+  r = 0;
+  if (need_update_review_status) {
+    r = run_change_review_status(cs->runlog_state, review.run_id, RERS_COMPLETE, re.review_gen, re.hidden_review_status, re.hidden_review_gen, NULL);
+  } else if (need_update_hidden_review_status) {
+    r = run_change_review_status(cs->runlog_state, review.run_id, re.review_status, re.review_gen, RERS_COMPLETE, re.hidden_review_gen, NULL);
+  }
+  if (r < 0) {
+    http_status = 500;
+    err_num = NEW_SRV_ERR_RUNLOG_UPDATE_FAILED;
+    ERR("run_change_review_status failed");
+    goto done;
+  }
+  if (!need_update_review_status) {
+    goto success;
+  }
+  if (re.status != RUN_PENDING_REVIEW) {
+    goto success;
+  }
+
+  if (add_clar_record(phr, review_cs, review.run_id, &re, new_run_status) < 0) {
+    http_status = 500;
+    err_num = NEW_SRV_ERR_CLARLOG_UPDATE_FAILED;
+    ERR("add_clar_record failed");
+    goto done;
+  }
+  if (new_run_status != RUN_OK) {
+    if (run_change_status_4(review_cs->runlog_state, review.run_id, new_run_status, &re) < 0) {
+      http_status = 500;
+      err_num = NEW_SRV_ERR_RUNLOG_UPDATE_FAILED;
+      ERR("run_change_status_4 failed");
+      goto done;
+    }
+    serve_notify_run_update(phr->config, review_cs, &re);
+  } else {
+    struct section_problem_data *prob = 0;
+    int full_score = 0;
+    int user_status = 0, user_score = 0;
+    if (re.prob_id > 0 && re.prob_id <= review_cs->max_prob) prob = review_cs->probs[re.prob_id];
+    if (prob) full_score = prob->full_score;
+    if (review_cs->global->separate_user_score > 0 && re.is_saved) {
+      user_status = RUN_OK;
+      user_score = -1;
+      if (prob) user_score = prob->full_user_score;
+      if (prob && user_score < 0) user_score = prob->full_score;
+      if (user_score < 0) user_score = 0;
+    }
+    r = run_change_status_3(review_cs->runlog_state, review.run_id, RUN_OK,
+      re.test, re.passed_mode, full_score, 0,
+      re.saved_score, user_status, re.saved_test, user_score, re.verdict_bits, -2, NULL, &re);
+    if (r < 0) {
+      http_status = 500;
+      err_num = NEW_SRV_ERR_RUNLOG_UPDATE_FAILED;
+      ERR("run_change_status_3 failed");
+      goto done;
+    }
+    serve_notify_run_update(phr->config, review_cs, &re);
+  }
+
+  const unsigned char *audit_cmd = NULL;
+  switch (new_run_status) {
+  case RUN_OK:
+    audit_cmd = "external-comment-run-ok";
+    break;
+  case RUN_REJECTED:
+    audit_cmd = "external-comment-run-reject";
+    break;
+  case RUN_IGNORED:
+    audit_cmd = "external-comment-run-ignore";
+    break;
+  case RUN_DISQUALIFIED:
+    audit_cmd = "external-comment-run-disqualify";
+    break;
+  case RUN_SUMMONED:
+    audit_cmd = "external-comment-run-summon";
+    break;
+  default: abort();
+  }
+  serve_audit_log(review_cs, review.run_id, &re, phr->user_id, &phr->ip, phr->ssl_flag, audit_cmd, "ok", new_run_status, NULL);
+  if (review_cs->global->notify_clar_reply) {
+    send_email_notification(phr->config, review_cnts, review_cs, review.run_id, re.user_id, new_run_status);
+  }
+  if (review_cnts->enable_user_telegram > 0 && !re.is_hidden) {
+    serve_telegram_user_run_reviewed(phr->config, review_cnts, review_cs, re.user_id, review.run_id, new_run_status);
+  }
+
+success:;
+  ok = 1;
+  err_num = 0;
+  http_status = 200;
+
+done:;
+  phr->json_reply = 1;
+  phr->status_code = http_status;
+  emit_json_result(fout, phr, ok, err_num, err_id, err_msg, jr);
+  if (jr) {
+    cJSON_Delete(jr);
+  }
+  run_review_free(&review);
+  free(approved_text);
+#undef ERR
+}
+
 typedef PageInterface *(*external_action_handler_t)(void);
 
 typedef int (*new_action_handler_t)(
@@ -14753,7 +15124,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_HEARTBEAT_REVIEW_JSON] = priv_heartbeat_review_json,
   [NEW_SRV_ACTION_LIST_ACTIVE_REVIEWS_JSON] = priv_list_active_reviews_json,
   [NEW_SRV_ACTION_GET_ACTIVE_REVIEW_JSON] = priv_get_active_review_json,
-  [NEW_SRV_ACTION_POSTAPPROVE_JSON] = NULL,
+  [NEW_SRV_ACTION_POSTAPPROVE_JSON] = priv_postapprove_json,
   [NEW_SRV_ACTION_REVIEW_DISPLAYED_2] = priv_generic_operation,
   [NEW_SRV_ACTION_REVIEW_OPERATION_JSON] = priv_review_operation_json,
   [NEW_SRV_ACTION_RENDER_MARKDOWN] = priv_render_markdown,
