@@ -128,7 +128,7 @@ ns_priv_list_reviews_json(
   hr_cgi_param_int_opt(phr, "offset", &offset, 0);
   hr_cgi_param_int_opt(phr, "count", &count, 0);
   hr_cgi_param_int_opt(phr, "date_mode", &date_mode, 0);
-  hr_cgi_param_i64_opt(phr, "serial_it_gt", &serial_id_gt, 0);
+  hr_cgi_param_i64_opt(phr, "serial_id_gt", &serial_id_gt, 0);
   hr_cgi_param(phr, "contest_ids", &contest_ids_str);
   contest_count = make_contest_id_list(phr, contest_ids_str, OPCAP_EXT_REVIEW, &contest_ids);
   if (contest_count < 0) {
@@ -2681,9 +2681,9 @@ ns_priv_postapprove_json(
     }
     int r = 0;
     if (need_update_review_status) {
-      r = run_change_review_status(cs->runlog_state, review.run_id, RERS_CANCELED, re.review_gen, re.hidden_review_status, re.hidden_review_gen, NULL);
+      r = run_change_review_status(review_cs->runlog_state, review.run_id, RERS_CANCELED, re.review_gen, re.hidden_review_status, re.hidden_review_gen, NULL);
     } else if (need_update_hidden_review_status) {
-      r = run_change_review_status(cs->runlog_state, review.run_id, re.review_status, re.review_gen, RERS_CANCELED, re.hidden_review_gen, NULL);
+      r = run_change_review_status(review_cs->runlog_state, review.run_id, re.review_status, re.review_gen, RERS_CANCELED, re.hidden_review_gen, NULL);
     }
     if (r < 0) {
       http_status = 500;
@@ -2696,6 +2696,12 @@ ns_priv_postapprove_json(
     }
     if (!need_update_review_status && !need_update_hidden_review_status) {
       goto success;
+    }
+    if (run_get_entry(review_cs->runlog_state, review.run_id, &re) < 0) {
+      http_status = 500;
+      err_num = NEW_SRV_ERR_INV_RUN_ID;
+      ERR("run_get_entry failed");
+      goto done;
     }
     r = do_request_review(phr, review_cnts, review_cs, review.run_id, &re, need_update_review_status, 0, 0, err_id);
     if (r < 0) {
@@ -2758,9 +2764,9 @@ ns_priv_postapprove_json(
 
   r = 0;
   if (need_update_review_status) {
-    r = run_change_review_status(cs->runlog_state, review.run_id, RERS_COMPLETE, re.review_gen, re.hidden_review_status, re.hidden_review_gen, NULL);
+    r = run_change_review_status(review_cs->runlog_state, review.run_id, RERS_COMPLETE, re.review_gen, re.hidden_review_status, re.hidden_review_gen, NULL);
   } else if (need_update_hidden_review_status) {
-    r = run_change_review_status(cs->runlog_state, review.run_id, re.review_status, re.review_gen, RERS_COMPLETE, re.hidden_review_gen, NULL);
+    r = run_change_review_status(review_cs->runlog_state, review.run_id, re.review_status, re.review_gen, RERS_COMPLETE, re.hidden_review_gen, NULL);
   }
   if (r < 0) {
     http_status = 500;
