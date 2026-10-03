@@ -136,6 +136,9 @@
     <% if (phr->role >= USER_ROLE_ADMIN) { %>
             <li><s:a ac="server-info-page"><s:_>Server Info</s:_></s:a></li><br/>
     <% } %>
+    <% if (phr->role >= USER_ROLE_ADMIN) { %>
+            <li><s:a ac="reviews-page"><s:_>All reviews</s:_></s:a></li><br/>
+    <% } %>
     <% if (phr->role >= USER_ROLE_JUDGE && opcaps_check(phr->caps, OPCAP_PREMOD_REVIEW) >= 0) {%>
 <s:url name="PremoderateUrl" ac="reviews-page">
     <s:param name="mode" value="1" />

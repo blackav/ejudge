@@ -47,6 +47,15 @@ MathJax = {
 #endif
 %>
 
+<%
+#if ENABLE_PRISM - 0 == 1
+%>
+<link rel="stylesheet" href="<s:config name="style-prefix" />prism.css" type="text/css" />
+<script src="<s:config name="style-prefix" />prism.js"></script>
+<%
+#endif
+%>
+
 <title><s:v escape="false" value="ns_unparse_role(phr->role)" /><% if (phr->user_id > 0 || phr->contest_id > 0) { %> [<% if (phr->user_id > 0) { %><s:v checkExpr="" escape="false" value="phr->name_arm" /><% } else { %>?<% } %><% if (phr->contest_id > 0) { %>, <s:v value="phr->contest_id" /><% if (extra) { %>, <s:v checkExpr="" escape="false" value="extra->contest_arm" /><% } %><% } %>]<% } %>: <s:v escape="false" value="title" /></title>
 </head>
 <body>
