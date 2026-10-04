@@ -9,8 +9,14 @@
 %><%
     const unsigned char *title = "Approve reviews";
     int enable_main_menu = 0;
+    int mode = 0;
 #define ENABLE_TABULATOR 1
 %><%@include "priv_header_jq.csp"
+%><%
+%><s:read var="mode" ignoreerrors="yes" default="0" /><%
+  if (mode < 0 || mode > 2) {
+    mode = 0;
+  }
 %>
 </div>
 
@@ -38,6 +44,7 @@ $(function() {
             json: 1,
             contest_ids: "*",
             date_mode: 1,
+            list_mode: <s:v value="mode"/>,
         },
         ajaxResponse: function(url, params, response) {
             if (response.ok) {

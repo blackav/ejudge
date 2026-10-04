@@ -315,3 +315,10 @@ update_review_view_counter_func(
         struct rldb_plugin_cnts *cdata,
         int run_id,
         int generation);
+
+static int
+fetch_review_by_serial_id_func(
+        struct rldb_plugin_cnts *cdata,
+        int64_t serial_id,
+        uint64_t field_mask,
+        struct run_review *p_result);

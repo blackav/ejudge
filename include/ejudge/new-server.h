@@ -3,7 +3,7 @@
 #ifndef __NEW_SERVER_H__
 #define __NEW_SERVER_H__
 
-/* Copyright (C) 2006-2025 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1049,5 +1049,15 @@ ns_unparse_md_statement(
         const struct section_problem_data *prob,
         int variant,
         const unsigned char *text);
+
+const unsigned char *
+ns_get_language_name(int lang_id);
+
+unsigned char *
+ns_safe_read_utf8_text_file(
+        const unsigned char *dir,
+        const unsigned char *file,
+        unsigned err_id,
+        int missing_is_ok);
 
 #endif /* __NEW_SERVER_H__ */

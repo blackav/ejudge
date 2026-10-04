@@ -1,6 +1,6 @@
 # -*- Makefile -*-
 
-# Copyright (C) 2002-2025 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2002-2026 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -220,6 +220,7 @@ COMMON_CFILES=\
  lib/new_server_html_3.c\
  lib/new_server_html_4.c\
  lib/new_server_html_5.c\
+ lib/new_server_html_6.c\
  lib/new_server_proto.c\
  lib/new_server_tables.c\
  lib/ncurses_utils.c\

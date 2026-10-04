@@ -2,7 +2,7 @@
 #ifndef __MISCTEXT_H__
 #define __MISCTEXT_H__
 
-/* Copyright (C) 2000-2025 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -113,6 +113,15 @@ unsigned char *text_area_process_string(const unsigned char *s,
 
 unsigned char *filename_armor_bytes(unsigned char *out, size_t outsize,
                                     const unsigned char *in, size_t insize);
+
+unsigned char *
+utf8_fix_buf(unsigned char **p_str, size_t *p_size, int has_nul, int need_free);
+char *
+utf8_fix_buf_2(char **p_str, size_t *p_size, int has_nul, int need_free);
+unsigned char *
+utf8_fix_string_2(unsigned char *str);
+unsigned char *
+utf8_fix_string_dup(const unsigned char *str);
 
 int utf8_fix_string(unsigned char *str, int *gl_ind);
 

@@ -1368,23 +1368,6 @@ json_serialize_problem_id(const struct section_problem_data *p)
     return jp;
 }
 
-static const unsigned char *
-unparse_review_purpose(unsigned val)
-{
-    static const unsigned char * const values[] =
-    {
-        [RERP_REVIEW] = "review",
-        [RERP_HELP] = "help",
-        [RERP_JUDGE_HELP] = "judge_help",
-    };
-    if (val >= sizeof(values) / sizeof(values[0])) {
-        return "";
-    }
-    const unsigned char *s = values[val];
-    if (!s) return "";
-    return s;
-}
-
 // date_mode == 1 - ISO format
 // date_mode == 2 - floating point seconds with microseconds
 
@@ -1489,7 +1472,7 @@ json_serialize_run_review(
         cJSON_AddStringToObject(jrr, "status", run_unparse_review_status(rr->status));
     }
     if (rr->purpose > 0 && (mask & RER_purpose) != 0) {
-        cJSON_AddStringToObject(jrr, "purpose", unparse_review_purpose(rr->purpose));
+        cJSON_AddStringToObject(jrr, "purpose", run_unparse_review_purpose(rr->purpose));
     }
 
 #define ADD_TIMESTAMP(f) do { if ((mask & RER_##f)) { append_timestamp(jrr, rr->f, date_mode, #f); }} while(0)

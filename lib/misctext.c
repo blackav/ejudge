@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2000-2025 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1171,6 +1171,264 @@ is_valid_utf8(const unsigned char *str, size_t size, size_t *p_offset)
 fail:;
   if (p_offset) *p_offset = (size_t)(s - str);
   return 0;
+}
+
+static _Bool
+buf_needs_utf8_fixing(unsigned char *str, size_t size)
+{
+  unsigned char *s = str;
+  unsigned char *end = s + size;
+
+  if (s + 3 <= end && *s == 0xef && s[1] == 0xbb && s[2] == 0xbf) {
+    // UTF8 BOM
+    return 1;
+  }
+  while (s < end) {
+    if (!*s || *s == '\r') {
+      return 1;
+    } else if (*s <= 0x7f) {
+      ++s;
+    } else if (*s <= 0xbf) {
+      // middle of multibyte sequence
+      return 1;
+    } else if (*s <= 0xc1) {
+      // reserved
+      return 1;
+    } else if (*s <= 0xdf) {
+      // two bytes: 0x80-0x7ff
+      if (s + 1 >= end) return 1;
+      if (s[1] < 0x80 || s[1] > 0xbf) {
+        // second byte is invalid
+        return 1;
+      }
+      unsigned w = ((s[0] & 0x1f) << 6) | (s[1] & 0x3f);
+      if (w < 0x80) {
+        // overlong encoding
+        return 1;
+      }
+      s += 2;
+    } else if (*s <= 0xef) {
+      // three bytes: 0x800-0xffff
+      if (s + 2 >= end) return 1;
+      if (s[1] < 0x80 || s[1] > 0xbf) {
+        // second byte is invalid
+        return 1;
+      }
+      if (s[2] < 0x80 || s[2] > 0xbf) {
+        // third byte is invalid
+        return 1;
+      }
+      unsigned w = ((s[0] & 0x0f) << 12) | ((s[1] & 0x3f) << 6) | (s[2] & 0x3f);
+      if (w < 0x800) {
+        // overlong encoding
+        return 1;
+      }
+      if (w == 0xffff || w == 0xfffe) {
+        return 1;
+      }
+      s += 3;
+    } else if (*s <= 0xf7) {
+      // four bytes: 0x10000-0x10ffff
+      if (s + 3 >= end) return 1;
+      if (s[1] < 0x80 || s[1] > 0xbf) {
+        // second byte is invalid
+        return 1;
+      }
+      if (s[2] < 0x80 || s[2] > 0xbf) {
+        // third byte is invalid
+        return 1;
+      }
+      if (s[3] < 0x80 || s[3] > 0xbf) {
+        // fourth byte is invalid
+        return 1;
+      }
+      unsigned w = ((s[0] & 0x07) << 18) | ((s[1] & 0x3f) << 12) | ((s[2] & 0x3f) << 6) | (s[3] & 0x3f);
+      if (w < 0x10000) {
+        // overlong encoding
+        return 1;
+      }
+      s += 4;
+    } else {
+      // reserved
+      return 1;
+    }
+  }
+  return 0;
+}
+
+unsigned char *
+utf8_fix_buf(unsigned char **p_str, size_t *p_size, int has_nul, int need_free)
+{
+#define EMIT_REPL() do { putc_unlocked(0xef, out_f); putc_unlocked(0xbf, out_f); putc_unlocked(0xbd, out_f); } while (0)
+  if (has_nul && !buf_needs_utf8_fixing(*p_str, *p_size)) {
+    return *p_str;
+  }
+
+  unsigned char *s = *p_str;
+  unsigned char *end = s + *p_size;
+  char *out_s = NULL;
+  size_t out_z = 0;
+  FILE *out_f = open_memstream(&out_s, &out_z);
+
+  if (s + 3 <= end && *s == 0xef && s[1] == 0xbb && s[2] == 0xbf) {
+    // UTF8 BOM
+    s += 3;
+  }
+
+  while (s < end) {
+    if (!*s) {
+      fputs_unlocked("␀",out_f);
+      ++s;
+    } else if (*s == '\r') {
+      ++s;
+    } else if (*s <= 0x7f) {
+      putc_unlocked(*s, out_f);
+      ++s;
+    } else if (*s <= 0xbf) {
+      // middle of multibyte sequence
+      EMIT_REPL();
+      ++s;
+    } else if (*s <= 0xc1) {
+      // reserved
+      EMIT_REPL();
+      ++s;
+    } else if (*s <= 0xdf) {
+      // two bytes: 0x80-0x7ff
+      if (s + 1 >= end) {
+        EMIT_REPL();
+        ++s;
+        continue;
+      }
+      if (s[1] < 0x80 || s[1] > 0xbf) {
+        // second byte is invalid
+        EMIT_REPL();
+        ++s;
+        continue;
+      }
+      unsigned w = ((s[0] & 0x1f) << 6) | (s[1] & 0x3f);
+      if (w < 0x80) {
+        if (!w) {
+          fputs_unlocked("␀",out_f);
+        } else if (w == '\r') {
+          // ignore
+        } else {
+          putc_unlocked(w, out_f);
+        }
+        s += 2;
+        continue;
+      }
+      putc_unlocked(*s, out_f);
+      putc_unlocked(s[1], out_f);
+      s += 2;
+    } else if (*s <= 0xef) {
+      // three bytes: 0x800-0xffff
+      if (s + 2 >= end) {
+        EMIT_REPL();
+        ++s;
+        continue;
+      }
+      if (s[1] < 0x80 || s[1] > 0xbf) {
+        // second byte is invalid
+        EMIT_REPL();
+        ++s;
+        continue;
+      }
+      if (s[2] < 0x80 || s[2] > 0xbf) {
+        // third byte is invalid
+        EMIT_REPL();
+        ++s;
+        continue;
+      }
+      unsigned w = ((s[0] & 0x0f) << 12) | ((s[1] & 0x3f) << 6) | (s[2] & 0x3f);
+      if (w < 0x800) {
+        // overlong encoding
+        EMIT_REPL();
+        ++s;
+        continue;
+      }
+      if (w == 0xffff || w == 0xfffe) {
+        EMIT_REPL();
+        ++s;
+        continue;
+      }
+      putc_unlocked(*s, out_f);
+      putc_unlocked(s[1], out_f);
+      putc_unlocked(s[2], out_f);
+      s += 3;
+    } else if (*s <= 0xf7) {
+      // four bytes: 0x10000-0x10ffff
+      if (s + 3 >= end) {
+        EMIT_REPL();
+        ++s;
+        continue;
+      }
+      if (s[1] < 0x80 || s[1] > 0xbf) {
+        // second byte is invalid
+        EMIT_REPL();
+        ++s;
+        continue;
+      }
+      if (s[2] < 0x80 || s[2] > 0xbf) {
+        // third byte is invalid
+        EMIT_REPL();
+        ++s;
+        continue;
+      }
+      if (s[3] < 0x80 || s[3] > 0xbf) {
+        // fourth byte is invalid
+        EMIT_REPL();
+        ++s;
+        continue;
+      }
+      unsigned w = ((s[0] & 0x07) << 18) | ((s[1] & 0x3f) << 12) | ((s[2] & 0x3f) << 6) | (s[3] & 0x3f);
+      if (w < 0x10000) {
+        // overlong encoding
+        EMIT_REPL();
+        ++s;
+        continue;
+      }
+      putc_unlocked(*s, out_f);
+      putc_unlocked(s[1], out_f);
+      putc_unlocked(s[2], out_f);
+      putc_unlocked(s[3], out_f);
+      s += 4;
+    } else {
+      // reserved
+      EMIT_REPL();
+      ++s;
+      continue;
+    }
+  }
+  fclose(out_f);
+  if (need_free) {
+    free(*p_str);
+  }
+  *p_str = out_s;
+  *p_size = out_z;
+  return out_s;
+#undef EMIT_REPL
+}
+
+char *
+utf8_fix_buf_2(char **p_str, size_t *p_size, int has_nul, int need_free)
+{
+  return utf8_fix_buf((unsigned char**) p_str, p_size, has_nul, need_free);
+}
+
+unsigned char *
+utf8_fix_string_2(unsigned char *str)
+{
+  size_t len = strlen(str);
+  return utf8_fix_buf(&str, &len, 1, 1);
+}
+
+unsigned char *
+utf8_fix_string_dup(const unsigned char *str)
+{
+  if (!str) return NULL;
+  unsigned char *s = xstrdup(str);
+  size_t len = strlen(s);
+  return utf8_fix_buf(&s, &len, 1, 1);
 }
 
 int

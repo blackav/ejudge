@@ -2,7 +2,7 @@
 #ifndef __NEW_SERVER_PI_H__
 #define __NEW_SERVER_PI_H__
 
-/* Copyright (C) 2014-2024 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2014-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -298,6 +298,29 @@ typedef struct RunDisplayInfos
 } RunDisplayInfos;
 
 void run_display_info_free(struct RunDisplayInfo *rdi);
+
+struct contest_desc;
+struct serve_state;
+struct run_review;
+struct run_entry;
+
+typedef struct PrivPostapprovePage
+{
+    PageInterface b;
+
+    const unsigned char *source_language; // const string
+    const struct contest_desc *review_cnts;
+    const struct serve_state *review_cs;
+
+    long long serial_id;
+    char *err_id_str;
+    char *err_msg;
+    struct run_entry *pre;
+    struct run_review *prr;
+    unsigned char *run_text;
+    unsigned char *statement_text;
+    int variant;
+} PrivPostapprovePage;
 
 #endif /* __NEW_SERVER_PI_H__ */
 

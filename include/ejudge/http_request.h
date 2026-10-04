@@ -159,6 +159,12 @@ struct http_request_info
   unsigned char *err_msg;
   int err_num;
 
+  int (*load_contest)(
+        const struct ejudge_cfg *config,
+        struct server_framework_state *fw_state,
+        struct userlist_clnt *ul_conn,
+        int contest_id);
+
   __attribute__((aligned(16))) unsigned char data[0];
 };
 
@@ -216,6 +222,13 @@ hr_cgi_param_int_opt(
         const unsigned char *name,
         int *p_val,
         int default_value);
+
+int
+hr_cgi_param_long_long_opt(
+        struct http_request_info *phr,
+        const unsigned char *name,
+        long long *p_val,
+        long long default_value);
 
 int
 hr_cgi_param_bool_opt(

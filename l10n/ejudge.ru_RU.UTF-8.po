@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-12 03:29+0300\n"
+"POT-Creation-Date: 2026-10-03 09:51+0300\n"
 "PO-Revision-Date: 2024-03-17 14:09+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -465,6 +465,9 @@ msgstr "Все записи"
 
 msgid "All headers"
 msgstr "Все заголовки"
+
+msgid "All reviews"
+msgstr ""
 
 msgid "Allow"
 msgstr "Разрешить"
@@ -4932,6 +4935,9 @@ msgstr "Ваша посылка была прокомментирована\n"
 msgid "Your submit has been commented and accepted\n"
 msgstr "Ваша посылка была прокомментирована и принята\n"
 
+msgid "Your submit has been commented and disqualified\n"
+msgstr ""
+
 #, c-format
 msgid "Your submit has been commented and ignored\n"
 msgstr "Ваша посылка была прокомментирована и проигнорирована\n"
@@ -4943,6 +4949,9 @@ msgstr "Ваша посылка была прокомментирована и �
 #, c-format
 msgid "Your submit has been commented and summoned for defence\n"
 msgstr "Ваша посылка была прокомментирована и Вы приглашены на защиту\n"
+
+msgid "Your submit has been commented and you are summoned for defence\n"
+msgstr ""
 
 #, c-format
 msgid "Your submit has been commented in contest %d"

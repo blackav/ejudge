@@ -778,6 +778,8 @@ struct run_review_filter
   int64_t serial_id;
   int64_t *serial_id_list;
   int serial_id_count;
+  int64_t serial_id_gt;
+  int64_t serial_id_lt;
   int64_t run_serial_id;
   int64_t *run_serial_id_list;
   int run_serial_id_count;
@@ -878,9 +880,25 @@ run_review_update_view_counter(
         int run_id,
         int generation);
 
+int
+run_review_fetch_by_serial_id(
+        runlog_state_t state,
+        int64_t serial_id,
+        uint64_t field_mask,
+        struct run_review *p_result);
+
 const unsigned char *
 run_unparse_review_status(unsigned val);
 int
 run_parse_review_status(const char *s);
+
+const unsigned char *
+run_unparse_review_purpose(unsigned val);
+
+const unsigned char *
+run_unparse_utime_t(
+        unsigned char *buf,
+        size_t size,
+        int64_t ts);
 
 #endif /* __RUNLOG_H__ */

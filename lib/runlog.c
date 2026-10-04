@@ -3468,6 +3468,22 @@ run_review_update_view_counter(
   }
 }
 
+int
+run_review_fetch_by_serial_id(
+        runlog_state_t state,
+        int64_t serial_id,
+        uint64_t field_mask,
+        struct run_review *p_result)
+{
+  if (!state->iface->fetch_review_by_crg) {
+    ERR_R("fetch_review_by_serial_id is not implemented");
+    return -1;
+  } else {
+    touch_last_update_time_us(state);
+    return state->iface->fetch_review_by_serial_id(state->cnts, serial_id, field_mask, p_result);
+  }
+}
+
 _Bool
 run_is_status_for_user_review(int status)
 {

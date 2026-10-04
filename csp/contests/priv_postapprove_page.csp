@@ -1,14 +1,25 @@
 <%
 %><%@include "priv_includes.csp"
 %><%
+#include "ejudge/ej_uuid.h"
 
-%><%@set getter_name = "csp_get_priv_postapprove_page"
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
-%><%@page csp_view_priv_postapprove_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@page csp_view_priv_postapprove_page(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 %><%@include "priv_stdvars.csp"
 %><%
     const unsigned char *title = "Approve review";
     int enable_main_menu = 0;
+    PrivPostapprovePage *pg = (PrivPostapprovePage *) ps;
+    unsigned char title_buf[128];
+    unsigned char tbuf[128];
+    struct md_content md_review1 = {};
+    struct md_content md_review2 = {};
+  
+    if (pg->serial_id > 0) {
+        snprintf(title_buf, sizeof(title_buf), "Approve review %lld", pg->serial_id);
+        title = title_buf;
+    }
+#define ENABLE_PRISM 1
 %><%@include "priv_header_jq.csp"
 %>
 </div>
@@ -17,14 +28,659 @@
 <td class="b0"><s:a ac="main-page"><s:_>Main page</s:_></s:a></td>
 </tr></table>
 
+<%
+    if (pg->err_msg && pg->err_msg[0]) {
+%>
+<h2>Request failed<h2>
+
+<p><s:v value="pg->err_msg" /></p>
+<p>Error ID: <s:v value="pg->err_id_str" /></p>
+<%
+        goto done;
+    }
+%>
+
+<table class="b1">
+<tr>
+    <td class="b1">Serial id</td>
+    <td class="b1"><s:v value="pg->prr->serial_id" /></td>
+    <td class="b1">&nbsp;</td>
+</tr>
+<tr>
+    <td class="b1">Review UUID</td>
+    <td class="b1"><s:v value='ej_uuid_unparse(&pg->prr->review_uuid, "")' /></td>
+    <td class="b1">&nbsp;</td>
+</tr>
+<tr>
+    <td class="b1">Contest id</td>
+    <td class="b1"><s:v value="pg->prr->contest_id" /></td>
+    <td class="b1"><s:v value="pg->review_cnts->name" /></td>
+</tr>
+<tr>
+    <td class="b1">Run id</td>
+    <td class="b1"><s:v value="pg->prr->run_id" /></td>
+    <td class="b1">&nbsp;</td>
+</tr>
+<tr>
+    <td class="b1">Generation</td>
+    <td class="b1"><s:v value="pg->prr->generation" /></td>
+    <td class="b1">&nbsp;</td>
+</tr>
+<tr>
+    <td class="b1">Purpose</td>
+    <td class="b1"><s:v value="run_unparse_review_purpose(pg->prr->purpose)" /></td>
+    <td class="b1">&nbsp;</td>
+</tr>
+<tr>
+    <td class="b1">Status</td>
+    <td class="b1"><s:v value="run_unparse_review_status(pg->prr->status)" /></td>
+    <td class="b1">&nbsp;</td>
+</tr>
+<%
+    if (pg->prr->creation_time > 0) {
+%>
+<tr>
+    <td class="b1">Creation time</td>
+    <td class="b1"><s:v value="run_unparse_utime_t(tbuf, sizeof(tbuf), pg->prr->creation_time)" /></td>
+    <td class="b1">&nbsp;</td>
+</tr>
+<%
+    }
+%>
+<%
+    if (pg->prr->last_update_time > 0) {
+%>
+<tr>
+    <td class="b1">Last update time</td>
+    <td class="b1"><s:v value="run_unparse_utime_t(tbuf, sizeof(tbuf), pg->prr->last_update_time)" /></td>
+    <td class="b1">&nbsp;</td>
+</tr>
+<%
+    }
+%>
+<%
+    if (pg->prr->moderation_time > 0) {
+%>
+<tr>
+    <td class="b1">Moderation time</td>
+    <td class="b1"><s:v value="run_unparse_utime_t(tbuf, sizeof(tbuf), pg->prr->moderation_time)" /></td>
+    <td class="b1">&nbsp;</td>
+</tr>
+<%
+    }
+%>
+<%
+    if (pg->prr->review_start_time > 0) {
+%>
+<tr>
+    <td class="b1">Review start time</td>
+    <td class="b1"><s:v value="run_unparse_utime_t(tbuf, sizeof(tbuf), pg->prr->review_start_time)" /></td>
+    <td class="b1">&nbsp;</td>
+</tr>
+<%
+    }
+%>
+<%
+    if (pg->prr->review_finish_time > 0) {
+%>
+<tr>
+    <td class="b1">Review finish time</td>
+    <td class="b1"><s:v value="run_unparse_utime_t(tbuf, sizeof(tbuf), pg->prr->review_finish_time)" /></td>
+    <td class="b1">&nbsp;</td>
+</tr>
+<%
+    }
+%>
+<%
+    if (pg->prr->review_agent && pg->prr->review_agent[0]) {
+%>
+<tr>
+    <td class="b1">Review agent</td>
+    <td class="b1"><s:v value="pg->prr->review_agent" /></td>
+    <td class="b1">&nbsp;</td>
+</tr>
+<%
+    }
+%>
+<%
+    if (pg->prr->model && pg->prr->model[0]) {
+%>
+<tr>
+    <td class="b1">Model</td>
+    <td class="b1"><s:v value="pg->prr->model" /></td>
+    <td class="b1">&nbsp;</td>
+</tr>
+<%
+    }
+%>
+<%
+    if (pg->prr->request_user_id > 0) {
+%>
+<tr>
+    <td class="b1">Request user id</td>
+    <td class="b1"><s:v value="teamdb_get_login_2(pg->review_cs->teamdb_state, pg->prr->request_user_id)" /></td>
+    <td class="b1"><s:v value="teamdb_get_name_2(pg->review_cs->teamdb_state, pg->prr->request_user_id)" /></td>
+</tr>
+<%
+    }
+%>
+<%
+    if (pg->prr->moderator_user_id > 0) {
+%>
+<tr>
+    <td class="b1">Moderator user id</td>
+    <td class="b1"><s:v value="teamdb_get_login_2(pg->review_cs->teamdb_state, pg->prr->moderator_user_id)" /></td>
+    <td class="b1"><s:v value="teamdb_get_name_2(pg->review_cs->teamdb_state, pg->prr->moderator_user_id)" /></td>
+</tr>
+<%
+    }
+%>
+<%
+    if (pg->prr->reviewer_user_id > 0) {
+%>
+<tr>
+    <td class="b1">Reviewer user id</td>
+    <td class="b1"><s:v value="teamdb_get_login_2(pg->review_cs->teamdb_state, pg->prr->reviewer_user_id)" /></td>
+    <td class="b1"><s:v value="teamdb_get_name_2(pg->review_cs->teamdb_state, pg->prr->reviewer_user_id)" /></td>
+</tr>
+<%
+    }
+%>
+<%
+    if (pg->prr->input_tokens >= 0) {
+%>
+<tr>
+    <td class="b1">Input tokens</td>
+    <td class="b1"><s:v value="pg->prr->input_tokens" /></td>
+    <td class="b1">&nbsp;</td>
+</tr>
+<%
+    }
+%>
+<%
+    if (pg->prr->cached_input_tokens >= 0) {
+%>
+<tr>
+    <td class="b1">Cached input tokens</td>
+    <td class="b1"><s:v value="pg->prr->cached_input_tokens" /></td>
+    <td class="b1">&nbsp;</td>
+</tr>
+<%
+    }
+%>
+<%
+    if (pg->prr->output_tokens >= 0) {
+%>
+<tr>
+    <td class="b1">Output tokens</td>
+    <td class="b1"><s:v value="pg->prr->output_tokens" /></td>
+    <td class="b1">&nbsp;</td>
+</tr>
+<%
+    }
+%>
+<%
+    if (pg->prr->reasoning_tokens >= 0) {
+%>
+<tr>
+    <td class="b1">Resoning tokens</td>
+    <td class="b1"><s:v value="pg->prr->reasoning_tokens" /></td>
+    <td class="b1">&nbsp;</td>
+</tr>
+<%
+    }
+%>
+<%
+    if (pg->prr->total_tokens >= 0) {
+%>
+<tr>
+    <td class="b1">Total tokens</td>
+    <td class="b1"><s:v value="pg->prr->total_tokens" /></td>
+    <td class="b1">&nbsp;</td>
+</tr>
+<%
+    }
+%>
+<%
+    const struct section_problem_data *prob = NULL;
+    if (pg->pre->prob_id > 0 && pg->pre->prob_id <= pg->review_cs->max_prob && (prob = pg->review_cs->probs[pg->pre->prob_id])) {
+%>
+<tr>
+    <td class="b1">Problem</td>
+    <td class="b1"><s:v value="prob->short_name" /></td>
+    <td class="b1"><s:v value="prob->long_name" /></td>
+</tr>
+<%
+    }
+%>
+<%
+    if (prob && prob->problem_dir) {
+%>
+<tr>
+    <td class="b1">Problem directory</td>
+    <td class="b1"><s:v value="prob->problem_dir" /></td>
+    <td class="b1">&nbsp;</td>
+</tr>
+<%
+    }
+%>
+<%
+    const struct section_language_data *lang = NULL;
+    if (pg->pre->lang_id > 0 && pg->pre->lang_id <= pg->review_cs->max_lang && (lang = pg->review_cs->langs[pg->pre->lang_id])) {
+%>
+<tr>
+    <td class="b1">Language</td>
+    <td class="b1"><s:v value="lang->short_name" /></td>
+    <td class="b1"><s:v value="lang->long_name" /></td>
+</tr>
+<%
+    }
+%>
+<tr>
+    <td class="b1">Run User id</td>
+    <td class="b1"><s:v value="teamdb_get_login_2(pg->review_cs->teamdb_state, pg->pre->user_id)" /></td>
+    <td class="b1"><s:v value="teamdb_get_name_2(pg->review_cs->teamdb_state, pg->pre->user_id)" /></td>
+</tr>
+</table>
+
+<h2>Problem statement</h2>
+
+<%
+    struct md_content *pmd = NULL;
+    if (prob && prob->variant_num > 0 && pg->variant > 0 && prob->md_size > 0 && pg->variant <= prob->md_size) {
+        pmd = &prob->md_files[pg->variant - 1];
+    } else if (prob && prob->variant_num <= 0 && pg->variant <= 0 && prob->md_size == 1) {
+        pmd = &prob->md_files[0];
+    }
+
+    if (pmd && pmd->data) {
+        putc_unlocked('\n', out_f);
+        ns_unparse_md_statement(out_f, phr, prob, pg->variant, pmd->data);
+        putc_unlocked('\n', out_f);
+    }
+%>
+
+<h2>Source code</h2>
+
+<pre class="line-numbers language-<s:v value="pg->source_language" escape="no" />"><code><s:v value="pg->run_text" /></code></pre>
+
+<%
+    if (pg->prr->review_result && pg->prr->review_result[0]) {
+        if (markdown_parse_str(pg->prr->review_result, &md_review1) >= 0 && md_review1.size > 0) {
+%>
+<script language="javascript">
+var user_review_original_md = "<s:v json="1" value="pg->prr->review_result" />";
+var user_review_edited_md = undefined;
+var SID="<s:v value="phr->session_id" />";
+var self_url="<s:v value="phr->self_url" escape="false" />";
+</script>
+
+<div id="UserReviewOriginalRenderedMdDiv">
+<h2>Review for user</h2>
+<%
+            fwrite_unlocked(md_review1.data, 1, md_review1.size, out_f);
+%>
+<div><button id="EditOriginalMdButton"></button></div>
+</div>
+<%
+        }
+    }
+%>
+
+<div id="UserReviewEditedRenderedMdDiv">
+<h2>Review for user (edited)</h2>
+
+<div id="UserReviewEditedContentDiv"></div>
+
+<div><button id="EditEditedMdButton"></button><button id="RevertEditedMdButton"></button></div>
+
+</div>
+
+<div id="UserReviewEditMdDiv">
+<h2>Edit markdown</h2>
+<textarea id="UserReviewEditTextarea" cols="80" rows="24">
+</textarea>
+<div><button id="EditorSaveButton"></button><button id="EditorCancelButton"></button><button id="EditorRevertButton"></button></div>
+</div>
+
+<script language="javascript">
+function CancelEditing() {
+    $("#UserReviewEditMdDiv").hide();
+    $("#UserReviewEditTextarea").val("");
+    if (user_review_edited_md === undefined) {
+        $("#UserReviewOriginalRenderedMdDiv").show();
+    } else {
+        $("#UserReviewEditedRenderedMdDiv").show();
+    }
+}
+
+$(function() {
+    $("#UserReviewEditedRenderedMdDiv").hide();
+    $("#UserReviewEditMdDiv").hide();
+
+    $("#EditOriginalMdButton").button({
+        label: "Edit"
+    });
+    $("#EditOriginalMdButton").on("click", function() {
+        $("#UserReviewOriginalRenderedMdDiv").hide();
+        $("#UserReviewEditTextarea").val(user_review_original_md);
+        $("#UserReviewEditMdDiv").show();
+    });
+
+    $("#EditorSaveButton").button({
+        label: "Save"
+    });
+    $("#EditorSaveButton").on("click", function() {
+        const newtext = $("#UserReviewEditTextarea").val();
+        if (newtext === undefined || newtext === null || newtext === "" || newtext === user_review_original_md) {
+            $("#UserReviewEditMdDiv").hide();
+            $("#UserReviewEditTextarea").val("");
+            $("#UserReviewOriginalRenderedMdDiv").show();
+            user_review_edited_md = undefined;
+        } else {
+            $("#UserReviewEditMdDiv").hide();
+            $("#UserReviewEditTextarea").val("");
+
+            $.ajax({
+                type: "POST",
+                url: self_url,
+                data: {
+                    SID: SID,
+                    action: "render-markdown",
+                    markdown: newtext,
+                },
+                contentType: "application/x-www-form-urlencoded; charset=utf-8",
+                dataType: "json",
+                success: function(data) {
+                    if (data.ok) {
+                        if (data.result && data.result.html) {
+                            user_review_edited_md = newtext;
+                            $("#UserReviewEditedContentDiv").html(data.result.html);
+                            $("#UserReviewEditedRenderedMdDiv").show();
+                        } else {
+                            alert("invalid response from server");
+                            CancelEditing();
+                        }
+                    } else {
+                        if (data.error && data.error.message) {
+                            alert(data.error.message + ", log_id: " + data.error.log_id);
+                        } else {
+                            alert("request failed");
+                        }
+                        CancelEditing();
+                    }
+                },
+                error: function(data) {
+                    if (data.responseJSON && data.responseJSON.error && data.responseJSON.error.message) {
+                        alert(data.responseJSON.error.message + ", log_id: " + data.responseJSON.error.log_id);
+                    } else {
+                        alert("request failed");
+                    }
+                    CancelEditing();
+                }
+            });
+        }
+    });
+
+    $("#EditorCancelButton").button({
+        label: "Cancel"
+    });
+    $("#EditorCancelButton").on("click", function() {
+        CancelEditing();
+    });
+    $("#EditorRevertButton").button({
+        label: "Discard all edits"
+    });
+    $("#EditorRevertButton").on("click", function() {
+        $("#UserReviewEditMdDiv").hide();
+        $("#UserReviewEditTextarea").val("");
+        user_review_edited_md = undefined;
+        $("#UserReviewOriginalRenderedMdDiv").show();
+    });
+
+    $("#EditEditedMdButton").button({
+        label: "Edit"
+    });
+    $("#EditEditedMdButton").on("click", function() {
+        $("#UserReviewEditedRenderedMdDiv").hide();
+        $("#UserReviewEditTextarea").val(user_review_edited_md);
+        $("#UserReviewEditMdDiv").show();
+    });
+    $("#RevertEditedMdButton").button({
+        label: "Discard all edits"
+    });
+    $("#RevertEditedMdButton").on("click", function() {
+        $("#UserReviewEditedRenderedMdDiv").hide();
+        user_review_edited_md = undefined;
+        $("#UserReviewOriginalRenderedMdDiv").show();
+    });
+});
+</script>
+
+<%
+    if (pg->prr->review_judge_result && pg->prr->review_judge_result[0]) {
+        if (markdown_parse_str(pg->prr->review_judge_result, &md_review2) >= 0 && md_review2.size > 0) {
+%>
+<h2>Hidden part of review</h2>
+<%
+            fwrite_unlocked(md_review2.data, 1, md_review2.size, out_f);
+        }
+    }
+%>
+
+<%
+    if (pg->prr->review_log && pg->prr->review_log[0]) {
+%>
+<h2>Review log</h2>
+<pre><s:v value="pg->prr->review_log" /></pre>
+<%
+    }
+%>
+
+<table class="b0">
+    <tr>
+        <td class="b0"></td>
+        <td class="b0">to Next ⏭️</td>
+        <td class="b0">to List 📜</td>
+        <td class="b0">to Main 🏠</td>
+    </tr>
+    <tr>
+        <td class="b0">Skip ⏩</td>
+        <td class="b0"><button id="SkipToNextButton"></button></td>
+        <td class="b0"><button id="SkipToListButton"></button></td>
+        <td class="b0"><button id="SkipToMainButton"></button></td>
+    </tr>
+    <tr>
+        <td class="b0">Reject 👎</td>
+        <td class="b0"><button id="RejectToNextButton"></button></td>
+        <td class="b0"><button id="RejectToListButton"></button></td>
+        <td class="b0"><button id="RejectToMainButton"></button></td>
+    </tr>
+    <tr>
+        <td class="b0">Ignore 🗑️</td>
+        <td class="b0"><button id="IgnoreToNextButton"></button></td>
+        <td class="b0"><button id="IgnoreToListButton"></button></td>
+        <td class="b0"><button id="IgnoreToMainButton"></button></td>
+    </tr>
+    <tr>
+        <td class="b0">Approve ✅</td>
+        <td class="b0"><button id="ApproveToNextButton"></button></td>
+        <td class="b0"><button id="ApproveToListButton"></button></td>
+        <td class="b0"><button id="ApproveToMainButton"></button></td>
+    </tr>
+    <tr>
+        <td class="b0">Disqualify 🟥</td>
+        <td class="b0"><button id="DisqualifyToNextButton"></button></td>
+        <td class="b0"><button id="DisqualifyToListButton"></button></td>
+        <td class="b0"><button id="DisqualifyToMainButton"></button></td>
+    </tr>
+    <tr>
+        <td class="b0">Summon 🗣️</td>
+        <td class="b0"><button id="SummonToNextButton"></button></td>
+        <td class="b0"><button id="SummonToListButton"></button></td>
+        <td class="b0"><button id="SummonToMainButton"></button></td>
+    </tr>
+    <tr>
+        <td class="b0">Re-Review 🧐</td>
+        <td class="b0"><button id="RereviewToNextButton"></button></td>
+        <td class="b0"><button id="RereviewToListButton"></button></td>
+        <td class="b0"><button id="RereviewToMainButton"></button></td>
+    </tr>
+    <tr>
+        <td class="b0">Cancel ❌</td>
+        <td class="b0"><button id="CancelToNextButton"></button></td>
+        <td class="b0"><button id="CancelToListButton"></button></td>
+        <td class="b0"><button id="CancelToMainButton"></button></td>
+    </tr>
+</table>
+
+<script language="javascript">
+function gotoMain() {
+    document.location.href = self_url + "?SID=" + SID + "&action=main-page";
+}
+function gotoList() {
+    document.location.href = self_url + "?SID=" + SID + "&action=reviews-page&mode=2";
+}
+function handleNext(next) {
+    if (next === "List") {
+        gotoList();
+        return;
+    }
+    if (next === "Main") {
+        gotoMain();
+        return;
+    }
+    serial_id = <s:v value="pg->prr->serial_id" />;
+    $.ajax({
+        type: "GET",
+        url: self_url + "?SID=" + SID + "&action=list-reviews-json&json=1&contest_ids=*&date_mode=1&list_mode=2&count=1&serial_id_gt=" + serial_id,
+        dataType: "json",
+        success: function(data) {
+            if (!data.ok || !data.result || !data.result.reviews || !data.result.reviews.length) {
+                gotoList();
+                return;
+            }
+            window.location.href = self_url + '?SID=' + SID + "&action=postapprove-page&serial_id=" + data.result.reviews[0].serial_id;
+        },
+        error: function(data) {
+            gotoList();
+        },
+    });
+}
+function handleButton(operation, next) {
+    var query = {
+        serial_id: <s:v value="pg->prr->serial_id" />,
+        SID: SID,
+        action: "postapprove-json",
+        operation: operation,
+    };
+    if (user_review_edited_md !== undefined && user_review_edited_md !== null && user_review_edited_md !== "") {
+        query["approved_text"] = user_review_edited_md;
+    }
+    $.ajax({
+        type: "POST",
+        url: self_url,
+        data: query,
+        contentType: "application/x-www-form-urlencoded; charset=utf-8",
+        dataType: "json",
+        success: function(data) {
+            if (data.ok) {
+                handleNext(next);
+            } else {
+                if (data.error && data.error.message) {
+                    alert(data.error.message + ", log_id: " + data.error.log_id);
+                } else {
+                    alert("request failed");
+                }
+            }
+        },
+        error: function(data) {
+            if (data.responseJSON && data.responseJSON.error && data.responseJSON.error.message) {
+                alert(data.responseJSON.error.message + ", log_id: " + data.responseJSON.error.log_id);
+            } else {
+                alert("request failed");
+            }
+        }
+    });
+}
+
+function registerOnClick(id, operation, next) {
+    $(id).on("click", function() {
+        handleButton(operation, next);
+    });
+}
+
+$(function() {
+    const o1 = {
+        "Skip" : {
+            "Label": "Skip ⏩",
+            "Operation": 1,
+        },
+        "Reject" : {
+            "Label": "Reject 👎",
+            "Operation": 2,
+        },
+        "Ignore" : {
+            "Label": "Ignore 🗑️",
+            "Operation": 3,
+        },
+        "Approve" : {
+            "Label": "Approve ✅",
+            "Operation": 4,
+        },
+        "Disqualify" : {
+            "Label": "Disqualify 🟥",
+            "Operation": 5,
+        },
+        "Summon" : {
+            "Label": "Summon 🗣️",
+            "Operation": 6,
+        },
+        "Rereview" : {
+            "Label": "Re-Review 🧐",
+            "Operation": 7,
+        },
+        "Cancel" : {
+            "Label": "Cancel ❌",
+            "Operation": 8,
+        },
+    };
+    const o2 = {
+        "Next" : {
+            "Label": "Next ⏭️",
+        },
+        "List" : {
+            "Label": "List 📜",
+        },
+        "Main" : {
+            "Label": "Main 🏠",
+        },
+    };
+    for (r in o1) {
+        for (c in o2) {
+            const id = "#" + r + "To" + c + "Button";
+            $(id).button({
+                label: o1[r].Label + " to " + o2[c].Label,
+            }).width(180).height(35);
+            registerOnClick(id, o1[r].Operation, c);
+        }
+    }
+});
+</script>
 
 <table class="b0"><tr>
 <td class="b0"><s:a ac="main-page"><s:_>Main page</s:_></s:a></td>
 </tr></table>
 
+<%
+done:;
+%>
+
 <%@include "priv_footer.csp"
 %><%
 cleanup:
+    markdown_free(&md_review1);
+    markdown_free(&md_review2);
     (void) &&cleanup;
     l10n_resetlocale();
     html_armor_free(&ab);
