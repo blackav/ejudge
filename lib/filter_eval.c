@@ -1192,8 +1192,6 @@ do_eval(struct filter_env *env,
     if ((c = do_eval(env, t->v.t[0], &r1)) < 0) return c;
     ASSERT(r1.kind == TOK_STRING_L);
     if ((c = find_user_group(env, r1.v.s)) < 0) return c;
-    t->kind = TOK_INUSERGROUPINT;
-    t->v.t[0] = filter_tree_new_int(env->mem, c);
     res->kind = TOK_BOOL_L;
     res->type = FILTER_TYPE_BOOL;
     res->v.b = check_user_group(env, env->cur->user_id, c);
