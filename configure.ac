@@ -1012,14 +1012,22 @@ fi
 if [[ x"${ac_cv_enable_libmongoc}" != xdisable ]]
 then
   AC_MSG_CHECKING([for libmongoc])
-  if pkg-config --atleast-version 1.13.0 libmongoc-1.0
+  dnl mongo-c-driver 2.x installs its pkg-config file as mongoc2
+  if pkg-config --exists mongoc2
+  then
+    AC_MSG_RESULT([yes (mongoc2)])
+    ac_cv_has_libmongoc=2
+    ac_cv_libmongoc_pc=mongoc2
+  elif pkg-config --atleast-version 1.13.0 libmongoc-1.0
   then
     AC_MSG_RESULT([yes])
     ac_cv_has_libmongoc=2
+    ac_cv_libmongoc_pc=libmongoc-1.0
   elif pkg-config --exists libmongoc-1.0
   then
     AC_MSG_RESULT([yes])
     ac_cv_has_libmongoc=1
+    ac_cv_libmongoc_pc=libmongoc-1.0
   else
     AC_MSG_RESULT([no])
     ac_cv_has_libmongoc=
@@ -1028,8 +1036,8 @@ fi
 
 if [[ x"${ac_cv_has_libmongoc}" != x ]]
 then
-  ac_cv_libmongoc_cflags=`pkg-config --cflags libmongoc-1.0`
-  ac_cv_libmongoc_libs=`pkg-config --libs libmongoc-1.0`
+  ac_cv_libmongoc_cflags=`pkg-config --cflags ${ac_cv_libmongoc_pc}`
+  ac_cv_libmongoc_libs=`pkg-config --libs ${ac_cv_libmongoc_pc}`
 fi
 
 if [[ x"${ac_cv_has_libmongoc}" = x ]]
