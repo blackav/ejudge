@@ -23,7 +23,7 @@
 #include "ejudge/osdeps.h"
 
 #if HAVE_LIBMONGOC - 0 > 1
-#include <mongoc.h>
+#include <mongoc/mongoc.h>
 #elif HAVE_LIBMONGOC - 0 > 0
 #include <mongoc.h>
 #endif

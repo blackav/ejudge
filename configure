@@ -8681,16 +8681,24 @@ if [ x"${ac_cv_enable_libmongoc}" != xdisable ]
 then
   { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for libmongoc" >&5
 printf %s "checking for libmongoc... " >&6; }
-  if pkg-config --atleast-version 1.13.0 libmongoc-1.0
+  if pkg-config --exists mongoc2
+  then
+    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: yes (mongoc2)" >&5
+printf "%s\n" "yes (mongoc2)" >&6; }
+    ac_cv_has_libmongoc=2
+    ac_cv_libmongoc_pc=mongoc2
+  elif pkg-config --atleast-version 1.13.0 libmongoc-1.0
   then
     { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 printf "%s\n" "yes" >&6; }
     ac_cv_has_libmongoc=2
+    ac_cv_libmongoc_pc=libmongoc-1.0
   elif pkg-config --exists libmongoc-1.0
   then
     { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 printf "%s\n" "yes" >&6; }
     ac_cv_has_libmongoc=1
+    ac_cv_libmongoc_pc=libmongoc-1.0
   else
     { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
 printf "%s\n" "no" >&6; }
@@ -8700,8 +8708,8 @@ fi
 
 if [ x"${ac_cv_has_libmongoc}" != x ]
 then
-  ac_cv_libmongoc_cflags=`pkg-config --cflags libmongoc-1.0`
-  ac_cv_libmongoc_libs=`pkg-config --libs libmongoc-1.0`
+  ac_cv_libmongoc_cflags=`pkg-config --cflags ${ac_cv_libmongoc_pc}`
+  ac_cv_libmongoc_libs=`pkg-config --libs ${ac_cv_libmongoc_pc}`
 fi
 
 if [ x"${ac_cv_has_libmongoc}" = x ]

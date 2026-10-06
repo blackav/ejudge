@@ -22,10 +22,8 @@
 #include "telegram_token.h"
 #include "mongo_conn.h"
 
-#if HAVE_LIBMONGOC - 0 > 0
 struct _bson_t;
 typedef struct _bson_t ej_bson_t;
-#endif
 
 #if HAVE_LIBMONGOC - 0 > 1
 #include <mongoc/mongoc.h>
