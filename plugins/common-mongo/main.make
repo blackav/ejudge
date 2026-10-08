@@ -18,7 +18,7 @@ CC = gcc
 LD = gcc
 
 ifneq ($(MONGOC_EXISTS),)
-MONGOC_LIBS = -lmongoc-1.0 -lbson-1.0
+MONGOC_LIBS ?= -lmongoc-1.0 -lbson-1.0
 endif
 
 CFLAGS = -I../../include $(MONGO_CFLAGS) $(MONGOC_CFLAGS) $(CDEBUGFLAGS) $(CCOMPFLAGS) $(CEXTRAFLAGS) $(WPTRSIGN)
