@@ -509,6 +509,7 @@ static const unsigned char * const review_status_values[] =
   [RERS_REVIEWING] = "reviewing",
   [RERS_WAITING_APPROVAL] = "waiting_approval",
   [RERS_COMPLETE] = "complete",
+  [RERS_COMPLETE_HIDDEN] = "complete_hidden",
   [RERS_CANCELED] = "canceled",
   [RERS_FAILED] = "failed",
 };

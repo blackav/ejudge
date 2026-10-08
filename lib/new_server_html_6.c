@@ -1874,7 +1874,7 @@ do_request_review(
       retval = 0;
       goto done;
     }
-    if (force_on_incomplete_mode <= 0 && re->review_gen && (re->review_status != RERS_COMPLETE && re->review_status != RERS_CANCELED && re->review_status != RERS_FAILED)) {
+    if (force_on_incomplete_mode <= 0 && re->review_gen && (re->review_status != RERS_COMPLETE && re->review_status != RERS_COMPLETE_HIDDEN &&re->review_status != RERS_CANCELED && re->review_status != RERS_FAILED)) {
       // must finish previous review
       retval = -NEW_SRV_ERR_RUN_REVIEW_INCOMPLETE;
       ERR("previous run review incomplete for contest_id=%d, run_id=%d", phr->contest_id, run_id);
@@ -1894,7 +1894,7 @@ do_request_review(
       retval = 0;
       goto done;
     }
-    if (force_on_incomplete_mode <= 0 && re->hidden_review_gen && (re->hidden_review_status != RERS_COMPLETE && re->hidden_review_status != RERS_CANCELED && re->hidden_review_status != RERS_FAILED)) {
+    if (force_on_incomplete_mode <= 0 && re->hidden_review_gen && (re->hidden_review_status != RERS_COMPLETE && re->hidden_review_status != RERS_COMPLETE_HIDDEN && re->hidden_review_status != RERS_CANCELED && re->hidden_review_status != RERS_FAILED)) {
       // must finish previous review
       retval = -NEW_SRV_ERR_RUN_REVIEW_INCOMPLETE;
       ERR("previous run review incomplete for contest_id=%d, run_id=%d", phr->contest_id, run_id);
@@ -2211,13 +2211,13 @@ ns_priv_review_operation_json(
     if (re.hidden_review_gen == 0 || re.status != RUN_PENDING_REVIEW) {
       goto success;
     }
-    if (re.hidden_review_status != RERS_COMPLETE) {
+    if (re.hidden_review_status != RERS_COMPLETE && re.hidden_review_status != RERS_COMPLETE_HIDDEN) {
       http_status = 400;
       err_num = NEW_SRV_ERR_RUN_REVIEW_INV_STATE;
       ERR("invalid status for run %d review: %d", run_id, re.hidden_review_status);
       goto done;
     }
-    if (re.review_gen && re.review_status != RERS_COMPLETE && re.review_status != RERS_CANCELED && re.review_status != RERS_FAILED) {
+    if (re.review_gen && re.review_status != RERS_COMPLETE && re.review_status != RERS_COMPLETE_HIDDEN && re.review_status != RERS_CANCELED && re.review_status != RERS_FAILED) {
       http_status = 400;
       err_num = NEW_SRV_ERR_RUN_REVIEW_INV_STATE;
       ERR("invalid status for run %d review: %d", run_id, re.review_status);
@@ -2346,7 +2346,7 @@ ns_priv_review_operation_json(
     goto success;
   }
   if (re.review_gen == 0 && re.hidden_review_gen != 0) {
-    if (re.hidden_review_status != RERS_COMPLETE) {
+    if (re.hidden_review_status != RERS_COMPLETE && re.hidden_review_status != RERS_COMPLETE_HIDDEN) {
       http_status = 400;
       err_num = NEW_SRV_ERR_RUN_REVIEW_INV_STATE;
       ERR("invalid status for run %d review: %d", run_id, re.hidden_review_status);
@@ -2377,7 +2377,7 @@ ns_priv_review_operation_json(
     goto success;
   }
   if (re.review_gen != 0 && re.hidden_review_gen == 0) {
-    if (re.review_status != RERS_COMPLETE) {
+    if (re.review_status != RERS_COMPLETE && re.review_status != RERS_COMPLETE_HIDDEN) {
       http_status = 400;
       err_num = NEW_SRV_ERR_RUN_REVIEW_INV_STATE;
       ERR("invalid status for run_id %d: %d", run_id, re.status);
@@ -2495,6 +2495,7 @@ enum
   PA_OP_OK,
   PA_OP_DISQUALIFY,
   PA_OP_SUMMON,
+  PA_OP_COMMENT_OK,
   PA_OP_REREVIEW,
   PA_OP_CANCEL,
   PA_OP_LAST,
@@ -2712,10 +2713,12 @@ ns_priv_postapprove_json(
   }
 
   int new_run_status = 0;
+  int new_review_status = RERS_COMPLETE;
   switch (operation) {
   case PA_OP_REJECT:     new_run_status = RUN_REJECTED; break;
   case PA_OP_IGNORE:     new_run_status = RUN_IGNORED; break;
-  case PA_OP_OK:         new_run_status = RUN_OK; break;
+  case PA_OP_OK:         new_run_status = RUN_OK; new_review_status = RERS_COMPLETE_HIDDEN; break;
+  case PA_OP_COMMENT_OK: new_run_status = RUN_OK; break;
   case PA_OP_DISQUALIFY: new_run_status = RUN_DISQUALIFIED; break;
   case PA_OP_SUMMON:     new_run_status = RUN_SUMMONED; break;
   default: abort();
@@ -2746,7 +2749,7 @@ ns_priv_postapprove_json(
 
   filter.serial_id = serial_id;
   filter.include_status_mask = 1U << RERS_WAITING_APPROVAL;
-  review.status = RERS_COMPLETE;
+  review.status = new_review_status;
   review.last_update_time = -2;
   review.approval_time = -2;
   review.approver_user_id = phr->user_id;
@@ -2764,9 +2767,9 @@ ns_priv_postapprove_json(
 
   r = 0;
   if (need_update_review_status) {
-    r = run_change_review_status(review_cs->runlog_state, review.run_id, RERS_COMPLETE, re.review_gen, re.hidden_review_status, re.hidden_review_gen, NULL);
+    r = run_change_review_status(review_cs->runlog_state, review.run_id, new_review_status, re.review_gen, re.hidden_review_status, re.hidden_review_gen, NULL);
   } else if (need_update_hidden_review_status) {
-    r = run_change_review_status(review_cs->runlog_state, review.run_id, re.review_status, re.review_gen, RERS_COMPLETE, re.hidden_review_gen, NULL);
+    r = run_change_review_status(review_cs->runlog_state, review.run_id, re.review_status, re.review_gen, new_review_status, re.hidden_review_gen, NULL);
   }
   if (r < 0) {
     http_status = 500;
@@ -2781,11 +2784,13 @@ ns_priv_postapprove_json(
     goto success;
   }
 
-  if (add_clar_record(phr, review_cs, review.run_id, &re, new_run_status) < 0) {
-    http_status = 500;
-    err_num = NEW_SRV_ERR_CLARLOG_UPDATE_FAILED;
-    ERR("add_clar_record failed");
-    goto done;
+  if (new_review_status == RERS_COMPLETE || new_run_status != RUN_OK) {
+    if (add_clar_record(phr, review_cs, review.run_id, &re, new_run_status) < 0) {
+      http_status = 500;
+      err_num = NEW_SRV_ERR_CLARLOG_UPDATE_FAILED;
+      ERR("add_clar_record failed");
+      goto done;
+    }
   }
   if (new_run_status != RUN_OK) {
     if (run_change_status_4(review_cs->runlog_state, review.run_id, new_run_status, &re) < 0) {

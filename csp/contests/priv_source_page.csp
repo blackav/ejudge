@@ -693,7 +693,7 @@ function handleExternalReviewFailure(data) {
 }
 </script>
 <%
-    if (re.review_gen != 0 && re.review_status != RERS_COMPLETE && re.review_status != RERS_FAILED && re.review_status != RERS_CANCELED) {
+    if (re.review_gen != 0 && re.review_status != RERS_COMPLETE && re.review_status != RERS_COMPLETE_HIDDEN && re.review_status != RERS_FAILED && re.review_status != RERS_CANCELED) {
 %>
 <p>Review is in progress...</p>
 <%
@@ -725,7 +725,7 @@ $(function() {
 </script>
 <%
     }
-    if (re.hidden_review_gen != 0 && re.hidden_review_status != RERS_COMPLETE && re.hidden_review_status != RERS_FAILED && re.hidden_review_status != RERS_CANCELED) {
+    if (re.hidden_review_gen != 0 && re.hidden_review_status != RERS_COMPLETE && re.hidden_review_status != RERS_COMPLETE_HIDDEN && re.hidden_review_status != RERS_FAILED && re.hidden_review_status != RERS_CANCELED) {
 %>
 <p>Hidden review is in progress...</p>
 <%
@@ -837,11 +837,11 @@ $(function() {
 %>
 
 <%
-  if (re.review_gen > 0 && re.review_status == RERS_COMPLETE) {
+  if (re.review_gen > 0 && (re.review_status == RERS_COMPLETE || re.review_status == RERS_COMPLETE_HIDDEN)) {
     if (run_review_fetch_by_crg(cs->runlog_state, run_id, re.review_gen, 0, &review1) > 0) {
-      if (review1.status == RERS_COMPLETE && (review1.purpose == RERP_REVIEW || review1.purpose == RERP_HELP)) {
+      if ((review1.status == RERS_COMPLETE || review1.status == RERS_COMPLETE_HIDDEN) && (review1.purpose == RERP_REVIEW || review1.purpose == RERP_HELP)) {
         if (review1.approved_text && markdown_parse_str(review1.approved_text, &md_review1) >= 0 && md_review1.size > 0) {
-%><h2><s:_>Run review for user</s:_></h2><%
+%><h2><s:_>Run review for user</s:_><% if (re.review_status == RERS_COMPLETE_HIDDEN) { %> (hidden from user)<% } %></h2><%
           fwrite_unlocked(md_review1.data, 1, md_review1.size, out_f);
         }
         if (review1.judge_approved_text && markdown_parse_str(review1.judge_approved_text, &md_review2) >= 0 && md_review2.size > 0) {
@@ -851,9 +851,9 @@ $(function() {
       }
     }
   }
-  if (re.hidden_review_gen > 0 && re.hidden_review_status == RERS_COMPLETE) {
+  if (re.hidden_review_gen > 0 && (re.hidden_review_status == RERS_COMPLETE || re.hidden_review_status == RERS_COMPLETE_HIDDEN)) {
     if (run_review_fetch_by_crg(cs->runlog_state, run_id, re.hidden_review_gen, 0, &review3) > 0) {
-      if (review3.status == RERS_COMPLETE && review3.purpose == RERP_JUDGE_HELP) {
+      if ((review3.status == RERS_COMPLETE || review3.status == RERS_COMPLETE_HIDDEN) && review3.purpose == RERP_JUDGE_HELP) {
         if (review3.approved_text && markdown_parse_str(review3.approved_text, &md_review3) >= 0 && md_review3.size > 0) {
 %><h2><s:_>Hidden run review</s:_></h2><%
           fwrite_unlocked(md_review3.data, 1, md_review3.size, out_f);

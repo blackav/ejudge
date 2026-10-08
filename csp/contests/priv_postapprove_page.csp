@@ -521,6 +521,12 @@ $(function() {
         <td class="b0"><button id="SummonToMainButton"></button></td>
     </tr>
     <tr>
+        <td class="b0">Comment and Approve 💡✅</td>
+        <td class="b0"><button id="CommentApproveToNextButton"></button></td>
+        <td class="b0"><button id="CommentApproveToListButton"></button></td>
+        <td class="b0"><button id="CommentApproveToMainButton"></button></td>
+    </tr>
+    <tr>
         <td class="b0">Re-Review 🧐</td>
         <td class="b0"><button id="RereviewToNextButton"></button></td>
         <td class="b0"><button id="RereviewToListButton"></button></td>
@@ -636,13 +642,17 @@ $(function() {
             "Label": "Summon 🗣️",
             "Operation": 6,
         },
+        "CommentApprove": {
+            "Label": "Approve 💡✅",
+            "Operation": 7,
+        },
         "Rereview" : {
             "Label": "Re-Review 🧐",
-            "Operation": 7,
+            "Operation": 8,
         },
         "Cancel" : {
             "Label": "Cancel ❌",
-            "Operation": 8,
+            "Operation": 9,
         },
     };
     const o2 = {

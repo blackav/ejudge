@@ -851,7 +851,7 @@ ns_write_priv_all_runs(
       }
       review_status_str = "";
       if (pe->review_gen) {
-        if (pe->review_status == RERS_COMPLETE) {
+        if (pe->review_status == RERS_COMPLETE || pe->review_status == RERS_COMPLETE_HIDDEN) {
           review_status_str = "✅";
         } else if (pe->review_status == RERS_FAILED || pe->review_status == RERS_CANCELED) {
           review_status_str = "❎";
@@ -861,7 +861,7 @@ ns_write_priv_all_runs(
       }
       hidden_review_status_str = "";
       if (pe->hidden_review_gen) {
-        if (pe->hidden_review_status == RERS_COMPLETE) {
+        if (pe->hidden_review_status == RERS_COMPLETE || pe->hidden_review_status == RERS_COMPLETE_HIDDEN) {
           hidden_review_status_str = "✨";
         } else if (pe->hidden_review_status == RERS_FAILED || pe->hidden_review_status == RERS_CANCELED) {
           hidden_review_status_str = "⚠️";
