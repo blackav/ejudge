@@ -79,6 +79,12 @@ static struct meta_info_item meta_info_section_global_data_data[] =
   [CNTSGLOB_enable_eoln_select] = { CNTSGLOB_enable_eoln_select, 'B', XSIZE(struct section_global_data, enable_eoln_select), "enable_eoln_select", XOFFSET(struct section_global_data, enable_eoln_select) },
   [CNTSGLOB_start_on_first_login] = { CNTSGLOB_start_on_first_login, 'B', XSIZE(struct section_global_data, start_on_first_login), "start_on_first_login", XOFFSET(struct section_global_data, start_on_first_login) },
   [CNTSGLOB_enable_virtual_restart] = { CNTSGLOB_enable_virtual_restart, 'B', XSIZE(struct section_global_data, enable_virtual_restart), "enable_virtual_restart", XOFFSET(struct section_global_data, enable_virtual_restart) },
+  [CNTSGLOB_auto_virtual_upsolving] = { CNTSGLOB_auto_virtual_upsolving, 'B', XSIZE(struct section_global_data, auto_virtual_upsolving), "auto_virtual_upsolving", XOFFSET(struct section_global_data, auto_virtual_upsolving) },
+  [CNTSGLOB_auto_upsolving_freeze_result] = { CNTSGLOB_auto_upsolving_freeze_result, 'B', XSIZE(struct section_global_data, auto_upsolving_freeze_result), "auto_upsolving_freeze_result", XOFFSET(struct section_global_data, auto_upsolving_freeze_result) },
+  [CNTSGLOB_auto_upsolving_view_source] = { CNTSGLOB_auto_upsolving_view_source, 'B', XSIZE(struct section_global_data, auto_upsolving_view_source), "auto_upsolving_view_source", XOFFSET(struct section_global_data, auto_upsolving_view_source) },
+  [CNTSGLOB_auto_upsolving_view_protocol] = { CNTSGLOB_auto_upsolving_view_protocol, 'B', XSIZE(struct section_global_data, auto_upsolving_view_protocol), "auto_upsolving_view_protocol", XOFFSET(struct section_global_data, auto_upsolving_view_protocol) },
+  [CNTSGLOB_auto_upsolving_full_protocol] = { CNTSGLOB_auto_upsolving_full_protocol, 'B', XSIZE(struct section_global_data, auto_upsolving_full_protocol), "auto_upsolving_full_protocol", XOFFSET(struct section_global_data, auto_upsolving_full_protocol) },
+  [CNTSGLOB_auto_upsolving_disable_clars] = { CNTSGLOB_auto_upsolving_disable_clars, 'B', XSIZE(struct section_global_data, auto_upsolving_disable_clars), "auto_upsolving_disable_clars", XOFFSET(struct section_global_data, auto_upsolving_disable_clars) },
   [CNTSGLOB_preserve_line_numbers] = { CNTSGLOB_preserve_line_numbers, 'B', XSIZE(struct section_global_data, preserve_line_numbers), "preserve_line_numbers", XOFFSET(struct section_global_data, preserve_line_numbers) },
   [CNTSGLOB_enable_remote_cache] = { CNTSGLOB_enable_remote_cache, 'B', XSIZE(struct section_global_data, enable_remote_cache), "enable_remote_cache", XOFFSET(struct section_global_data, enable_remote_cache) },
   [CNTSGLOB_enable_run_props] = { CNTSGLOB_enable_run_props, 'B', XSIZE(struct section_global_data, enable_run_props), "enable_run_props", XOFFSET(struct section_global_data, enable_run_props) },
@@ -427,6 +433,12 @@ void cntsglob_copy(struct section_global_data *dst, const struct section_global_
   dst->enable_eoln_select = src->enable_eoln_select;
   dst->start_on_first_login = src->start_on_first_login;
   dst->enable_virtual_restart = src->enable_virtual_restart;
+  dst->auto_virtual_upsolving = src->auto_virtual_upsolving;
+  dst->auto_upsolving_freeze_result = src->auto_upsolving_freeze_result;
+  dst->auto_upsolving_view_source = src->auto_upsolving_view_source;
+  dst->auto_upsolving_view_protocol = src->auto_upsolving_view_protocol;
+  dst->auto_upsolving_full_protocol = src->auto_upsolving_full_protocol;
+  dst->auto_upsolving_disable_clars = src->auto_upsolving_disable_clars;
   dst->preserve_line_numbers = src->preserve_line_numbers;
   dst->enable_remote_cache = src->enable_remote_cache;
   dst->enable_run_props = src->enable_run_props;
@@ -2474,4 +2486,3 @@ const struct meta_methods cntstester_methods =
   (void (*)(void *))cntstester_free,
   meta_info_section_tester_data_data,
 };
-

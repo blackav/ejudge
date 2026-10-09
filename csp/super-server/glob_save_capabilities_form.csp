@@ -43,6 +43,12 @@
     ejintbool_t disable_auto_refresh = 0;
     ejintbool_t start_on_first_login = 0;
     ejintbool_t enable_virtual_restart = 0;
+    ejintbool_t auto_virtual_upsolving = 0;
+    ejintbool_t auto_upsolving_freeze_result = 0;
+    ejintbool_t auto_upsolving_view_source = 0;
+    ejintbool_t auto_upsolving_view_protocol = 0;
+    ejintbool_t auto_upsolving_full_protocol = 0;
+    ejintbool_t auto_upsolving_disable_clars = 0;
 
     char *msg_s = NULL;
     size_t msg_z = 0;
@@ -80,6 +86,12 @@
 %><s:read var="disable_auto_refresh" default="0" /><%
 %><s:read var="start_on_first_login" default="0" /><%
 %><s:read var="enable_virtual_restart" default="0" /><%
+%><s:read var="auto_virtual_upsolving" default="0" /><%
+%><s:read var="auto_upsolving_freeze_result" default="0" /><%
+%><s:read var="auto_upsolving_view_source" default="0" /><%
+%><s:read var="auto_upsolving_view_protocol" default="0" /><%
+%><s:read var="auto_upsolving_full_protocol" default="0" /><%
+%><s:read var="auto_upsolving_disable_clars" default="0" /><%
 
     if (!retval && phr->ss) {
         struct section_global_data *global = phr->ss->global;
@@ -117,6 +129,12 @@
             global->disable_auto_refresh = disable_auto_refresh;
             global->start_on_first_login = start_on_first_login;
             global->enable_virtual_restart = enable_virtual_restart;
+            global->auto_virtual_upsolving = auto_virtual_upsolving;
+            global->auto_upsolving_freeze_result = auto_upsolving_freeze_result;
+            global->auto_upsolving_view_source = auto_upsolving_view_source;
+            global->auto_upsolving_view_protocol = auto_upsolving_view_protocol;
+            global->auto_upsolving_full_protocol = auto_upsolving_full_protocol;
+            global->auto_upsolving_disable_clars = auto_upsolving_disable_clars;
         }
     }
 

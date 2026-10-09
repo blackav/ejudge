@@ -31,6 +31,7 @@ ns_unpriv_parse_run_id(
   path_t rep_path;
   int accepting_mode = 0;
   int enable_rep_view = 0;
+  int auto_full_report = 0;
   int status = -1;
   unsigned char title[1024];
   int clar_id = -1;
@@ -74,6 +75,10 @@ ns_unpriv_parse_run_id(
 
   if (!enable_rep_view) {
     enable_rep_view = (cs->online_view_report > 0 || prob->team_enable_rep_view > 0);
+  }
+  if (serve_is_user_auto_upsolving(cs, phr->user_id, cs->current_time)) {
+    if (global->auto_upsolving_view_protocol > 0) enable_rep_view = 1;
+    auto_full_report = global->auto_upsolving_full_protocol > 0;
   }
 
   status = re.status;
@@ -156,7 +161,7 @@ ns_unpriv_parse_run_id(
         && (status == RUN_COMPILE_ERR
             || status == RUN_STYLE_ERR
             || status == RUN_REJECTED)) {
-    } else if (prob->team_show_judge_report) {
+    } else if (prob->team_show_judge_report || auto_full_report) {
     } else {
       user_mode = 1;
     }
@@ -275,7 +280,7 @@ ns_unpriv_parse_run_id(
 
 
     if (prob->type == PROB_TYPE_TESTS) {
-      if (prob->team_show_judge_report) {
+      if (prob->team_show_judge_report || auto_full_report) {
         write_xml_tests_report(out_f, 1, tr, phr->session_id, phr->self_url, "", "b1", "b0");
       } else {
         write_xml_team_tests_report(cs, prob, out_f, tr, "b1");
@@ -284,7 +289,7 @@ ns_unpriv_parse_run_id(
       if (global->score_system == SCORE_OLYMPIAD && accepting_mode) {
         write_xml_team_accepting_report(out_f, phr, tr, run_id, &re, prob,
                                         cnts->exam_mode, "b1");
-      } else if (prob->team_show_judge_report) {
+      } else if (prob->team_show_judge_report || auto_full_report) {
         write_xml_testing_report(out_f, phr, 1, tr, "b1", "b0");
       } else {
         int token_flags = re.token_flags;

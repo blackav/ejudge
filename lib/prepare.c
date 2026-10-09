@@ -131,6 +131,12 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(score_n_best_problems, "d"),
   GLOBAL_PARAM(start_on_first_login, "d"),
   GLOBAL_PARAM(enable_virtual_restart, "d"),
+  GLOBAL_PARAM(auto_virtual_upsolving, "d"),
+  GLOBAL_PARAM(auto_upsolving_freeze_result, "d"),
+  GLOBAL_PARAM(auto_upsolving_view_source, "d"),
+  GLOBAL_PARAM(auto_upsolving_view_protocol, "d"),
+  GLOBAL_PARAM(auto_upsolving_full_protocol, "d"),
+  GLOBAL_PARAM(auto_upsolving_disable_clars, "d"),
   GLOBAL_PARAM(require_problem_uuid, "d"),
   GLOBAL_PARAM(preserve_line_numbers, "d"),
   GLOBAL_PARAM(enable_remote_cache, "d"),
@@ -935,6 +941,12 @@ global_init_func(struct generic_section_config *gp)
   p->enable_eoln_select = -1;
   p->start_on_first_login = -1;
   p->enable_virtual_restart = -1;
+  p->auto_virtual_upsolving = -1;
+  p->auto_upsolving_freeze_result = -1;
+  p->auto_upsolving_view_source = -1;
+  p->auto_upsolving_view_protocol = -1;
+  p->auto_upsolving_full_protocol = -1;
+  p->auto_upsolving_disable_clars = -1;
   p->preserve_line_numbers = -1;
   p->enable_remote_cache = -1;
   p->enable_run_props = -1;
@@ -3307,6 +3319,12 @@ set_defaults(
     g->enable_eoln_select = 0;
   if (g->start_on_first_login < 0) g->start_on_first_login = 0;
   if (g->enable_virtual_restart < 0) g->enable_virtual_restart = 0;
+  if (g->auto_virtual_upsolving < 0) g->auto_virtual_upsolving = 0;
+  if (g->auto_upsolving_freeze_result < 0) g->auto_upsolving_freeze_result = 1;
+  if (g->auto_upsolving_view_source < 0) g->auto_upsolving_view_source = 1;
+  if (g->auto_upsolving_view_protocol < 0) g->auto_upsolving_view_protocol = 1;
+  if (g->auto_upsolving_full_protocol < 0) g->auto_upsolving_full_protocol = 0;
+  if (g->auto_upsolving_disable_clars < 0) g->auto_upsolving_disable_clars = 1;
   if (g->ignore_compile_errors == -1)
     g->ignore_compile_errors = DFLT_G_IGNORE_COMPILE_ERRORS;
   if (g->disable_failed_test_view == -1)
@@ -5462,6 +5480,12 @@ prepare_set_global_defaults(
   if (g->enable_eoln_select < 0) g->enable_eoln_select = 0;
   if (g->start_on_first_login < 0) g->start_on_first_login = 0;
   if (g->enable_virtual_restart < 0) g->enable_virtual_restart = 0;
+  if (g->auto_virtual_upsolving < 0) g->auto_virtual_upsolving = 0;
+  if (g->auto_upsolving_freeze_result < 0) g->auto_upsolving_freeze_result = 1;
+  if (g->auto_upsolving_view_source < 0) g->auto_upsolving_view_source = 1;
+  if (g->auto_upsolving_view_protocol < 0) g->auto_upsolving_view_protocol = 1;
+  if (g->auto_upsolving_full_protocol < 0) g->auto_upsolving_full_protocol = 0;
+  if (g->auto_upsolving_disable_clars < 0) g->auto_upsolving_disable_clars = 1;
   if (!g->max_file_length) g->max_file_length = DFLT_G_MAX_FILE_LENGTH;
   if (!g->max_line_length) g->max_line_length = DFLT_G_MAX_LINE_LENGTH;
   if (g->ignore_compile_errors < 0)
@@ -5726,6 +5750,12 @@ prepare_new_global_section(int contest_id, const unsigned char *root_dir,
   global->enable_eoln_select = 0;
   global->start_on_first_login = 0;
   global->enable_virtual_restart = 0;
+  global->auto_virtual_upsolving = 0;
+  global->auto_upsolving_freeze_result = 1;
+  global->auto_upsolving_view_source = 1;
+  global->auto_upsolving_view_protocol = 1;
+  global->auto_upsolving_full_protocol = 0;
+  global->auto_upsolving_disable_clars = 1;
   global->max_file_length = DFLT_G_MAX_FILE_LENGTH;
   global->max_line_length = DFLT_G_MAX_LINE_LENGTH;
   global->tests_to_accept = DFLT_G_TESTS_TO_ACCEPT;
