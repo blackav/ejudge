@@ -147,6 +147,7 @@ struct telegram_plugin_data
 
     int curl_verbose_flag;
     unsigned char *password_file;
+    unsigned char *telegram_api_host;
 
     tg_set_command_handler_t set_command_handler;
     void *set_command_handler_self;
@@ -285,6 +286,7 @@ finish_func(struct common_plugin_data *data)
 
     state->conn->vt->free(state->conn);
     xfree(state->password_file);
+    xfree(state->telegram_api_host);
     memset(state, 0, sizeof(*state));
     xfree(state);
     return 0;
@@ -381,10 +383,16 @@ prepare_func(
             if (xml_leaf_elem(p, &state->password_file, 1, 0) < 0) return -1;
         } else if (!strcmp(p->name[0], "curl_verbose")) {
             state->curl_verbose_flag = 1;
+        } else if (!strcmp(p->name[0], "telegram_api_host")) {
+            if (xml_leaf_elem(p, &state->telegram_api_host, 1, 0) < 0) return -1;
         }
     }
 
     state->enable_telegram_registration = config->enable_telegram_registration;
+
+    if (!state->telegram_api_host) {
+        state->telegram_api_host = xstrdup("https://api.telegram.org");
+    }
 
     struct generic_conn *conn = NULL;
     if (!storage || !*storage) storage = "mysql";
@@ -557,7 +565,7 @@ send_message(
     {
         size_t url_z = 0;
         FILE *url_f = open_memstream(&url_s, &url_z);
-        fprintf(url_f, "https://api.telegram.org/bot%s/%s", bs->bot_id, "sendMessage");
+        fprintf(url_f, "%s/bot%s/%s", state->telegram_api_host, bs->bot_id, "sendMessage");
         fclose(url_f);
     }
 
@@ -659,7 +667,7 @@ packet_handler_telegram(int uid, int argc, char **argv, void *user)
     add_bot_id(state, argv[1]);
 
     url_f = open_memstream(&url_s, &url_z);
-    fprintf(url_f, "https://api.telegram.org/bot%s/%s", argv[1], "sendMessage");
+    fprintf(url_f, "%s/bot%s/%s", state->telegram_api_host, argv[1], "sendMessage");
     fclose(url_f); url_f = NULL;
     post_f = open_memstream(&post_s, &post_z);
     fprintf(post_f, "chat_id=");
@@ -1956,7 +1964,7 @@ get_updates(struct telegram_plugin_data *state, struct bot_state *bs)
 
     {
         FILE *url_f = open_memstream(&url_s, &url_z);
-        fprintf(url_f, "https://api.telegram.org/bot%s/%s", bs->bot_id, "getUpdates");
+        fprintf(url_f, "%s/bot%s/%s", state->telegram_api_host, bs->bot_id, "getUpdates");
         if (pbs->update_id) {
             fprintf(url_f, "?offset=%lld", pbs->update_id + 1);
         }
