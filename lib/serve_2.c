@@ -2926,7 +2926,7 @@ serve_send_clar_notify_telegram(
   args[1] = telegram_bot_id;
   args[2] = cnts->telegram_admin_chat_id;
   args[3] = text_s;
-  args[4] = NULL;
+  args[4] = "";
   args[5] = cnts->telegram_admin_thread_id ? cnts->telegram_admin_thread_id : "";
   send_job_packet(config, (unsigned char**) args);
 
