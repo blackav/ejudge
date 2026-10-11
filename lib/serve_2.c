@@ -1136,7 +1136,7 @@ serve_check_telegram_reminder(
   struct telegram_reminder_data trdata;
   collect_telegram_reminder(cnts, state, &trdata);
   if (trdata.pr_total >= 20 || trdata.pr_too_old > 0 || trdata.unans_clars > 0) {
-    const unsigned char *args[10];
+    const unsigned char *args[11];
     char contest_id_buf[32];
     char pr_total_buf[32];
     char pr_too_old_buf[32];
@@ -1154,7 +1154,8 @@ serve_check_telegram_reminder(
     args[6] = pr_too_old_buf;
     snprintf(unans_clar_buf, sizeof(unans_clar_buf), "%d", trdata.unans_clars);
     args[7] = unans_clar_buf;
-    args[8] = NULL;
+    args[8] = cnts->telegram_admin_thread_id ? cnts->telegram_admin_thread_id : "";
+    args[9] = NULL;
     send_job_packet(config, (unsigned char**) args);
   }
 
@@ -2899,7 +2900,7 @@ serve_send_clar_notify_telegram(
         const unsigned char *subject,
         const unsigned char *text)
 {
-  const unsigned char *args[10];
+  const unsigned char *args[11];
   char *text_s = NULL;
   size_t text_z = 0;
   FILE *text_f = NULL;
@@ -2925,7 +2926,8 @@ serve_send_clar_notify_telegram(
   args[1] = telegram_bot_id;
   args[2] = cnts->telegram_admin_chat_id;
   args[3] = text_s;
-  args[4] = NULL;
+  args[4] = cnts->telegram_admin_thread_id ? cnts->telegram_admin_thread_id : "";
+  args[5] = NULL;
   send_job_packet(config, (unsigned char**) args);
 
   free(text_s); text_s = NULL;
@@ -3036,7 +3038,7 @@ serve_telegram_notify_on_submit(
   if (!telegram_bot_id) telegram_bot_id = ejudge_cfg_get_telegram_bot_id(config, NULL);
   if (!telegram_bot_id) return;
 
-  const unsigned char *args[11];
+  const unsigned char *args[12];
   unsigned char buf1[64];
   unsigned char buf2[64];
   unsigned char buf3[64];
@@ -3068,7 +3070,8 @@ serve_telegram_notify_on_submit(
   }
   args[8] = probname;
   args[9] = run_status_str(new_status, buf4, sizeof(buf4), 0, 0);
-  args[10] = NULL;
+  args[10] = cnts->telegram_admin_thread_id ? cnts->telegram_admin_thread_id : "";
+  args[11] = NULL;
   send_job_packet(config, (unsigned char **) args);
 }
 
@@ -3088,7 +3091,7 @@ serve_telegram_check_failed(
   if (!telegram_bot_id) telegram_bot_id = ejudge_cfg_get_telegram_bot_id(config, NULL);
   if (!telegram_bot_id) return;
 
-  const unsigned char *args[10];
+  const unsigned char *args[11];
   unsigned char buf1[64];
   unsigned char buf2[64];
   unsigned char buf3[64];
@@ -3118,7 +3121,8 @@ serve_telegram_check_failed(
     probname = cs->probs[re->prob_id]->short_name;
   }
   args[8] = probname;
-  args[9] = NULL;
+  args[9] = cnts->telegram_admin_thread_id ? cnts->telegram_admin_thread_id : "";
+  args[10] = NULL;
   send_job_packet(config, (unsigned char **) args);
 }
 

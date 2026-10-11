@@ -135,6 +135,7 @@ enum
     CONTEST_TELEGRAM_BOT_ID,
     CONTEST_TELEGRAM_ADMIN_CHAT_ID,
     CONTEST_TELEGRAM_USER_CHAT_ID,
+    CONTEST_TELEGRAM_ADMIN_THREAD_ID,
     CONTEST_AVATAR_PLUGIN,
     CONTEST_CONTENT_PLUGIN,
     CONTEST_CONTENT_URL_PREFIX,
@@ -445,6 +446,7 @@ struct contest_desc
   unsigned char *telegram_bot_id;
   unsigned char *telegram_admin_chat_id;
   unsigned char *telegram_user_chat_id;
+  unsigned char *telegram_admin_thread_id;
   unsigned char *avatar_plugin;
   unsigned char *content_plugin;
   unsigned char *content_url_prefix;
