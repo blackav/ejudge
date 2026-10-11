@@ -175,7 +175,7 @@ VC_CFILES = bin/ej-vcs-compile.c
 VC_OBJECTS = $(VC_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a
 
 PGI_CFILES = bin/ej-postgres-init.c
-PGI_OBJECTS = $(PGE_CFILES:.c=.o)
+PGI_OBJECTS = $(PGI_CFILES:.c=.o)
 
 PGE_CFILES = bin/ej-postgres-exec.c
 PGE_OBJECTS = $(PGE_CFILES:.c=.o)
