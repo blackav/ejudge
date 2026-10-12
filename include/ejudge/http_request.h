@@ -2,7 +2,7 @@
 #ifndef __HTTP_REQUEST_H__
 #define __HTTP_REQUEST_H__
 
-/* Copyright (C) 2014-2024 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2014-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -164,6 +164,8 @@ struct http_request_info
         struct server_framework_state *fw_state,
         struct userlist_clnt *ul_conn,
         int contest_id);
+
+  unsigned char x_request_id[64];   // X-Request-ID header, generated at random if missing
 
   __attribute__((aligned(16))) unsigned char data[0];
 };

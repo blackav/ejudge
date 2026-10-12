@@ -22511,6 +22511,12 @@ parse_bearer(struct http_request_info *phr, const unsigned char *str)
   return 0;
 }
 
+static int
+is_valid_id_char(int c)
+{
+  return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_' || c == '-';
+}
+
 // forced linking
 static void *forced_linking[] =
 {
@@ -22530,6 +22536,7 @@ ns_handle_http_request(
   const unsigned char *protocol = "http";
   const unsigned char *remote_addr = NULL;
   const unsigned char *http_authorization = NULL;
+  const unsigned char *x_request_id = NULL;
   const unsigned char *s;
   path_t self_url;
   path_t context_url;
@@ -22687,6 +22694,23 @@ ns_handle_http_request(
     if (hr_cgi_param(phr, "plain_text", &s) > 0) {
       phr->plain_text = 1;
     }
+  }
+
+  x_request_id = hr_getenv(phr, "HTTP_X_REQUEST_ID");
+  if (x_request_id && *x_request_id) {
+    int xlen = strlen(x_request_id);
+    if (xlen >= (int) sizeof(phr->x_request_id)) {
+      xlen = (int) sizeof(phr->x_request_id) - 1;
+    }
+    memcpy(phr->x_request_id, x_request_id, xlen);
+    phr->x_request_id[xlen] = 0;
+    for (int i = 0; i < xlen; ++i) {
+      if (!is_valid_id_char(x_request_id[i])) {
+        phr->x_request_id[i] = '_';
+      }
+    }
+  } else {
+    sprintf(phr->x_request_id, "%08x", random_u32());
   }
 
   // parse the client IP address
