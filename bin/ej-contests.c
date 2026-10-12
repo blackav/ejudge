@@ -42,6 +42,7 @@
 #include "ejudge/session_cache.h"
 #include "ejudge/server_info.h"
 #include "ejudge/mixed_id.h"
+#include "ejudge/random.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/osdeps.h"
@@ -1046,6 +1047,7 @@ main(int argc, char *argv[])
 #endif
   setup_log_file();
   setup_metrics_file(ejudge_config);
+  random_init();
 
   info("ej-contests %s, compiled %s", compile_version, compile_date);
 
