@@ -22529,6 +22529,9 @@ ns_handle_http_request(
         FILE *fout,
         struct http_request_info *phr)
 {
+#define ERR(msg, ...) err("%s:%d:%s:" msg, __PRETTY_FUNCTION__, __LINE__, phr->x_request_id ,##__VA_ARGS__)
+#define ERR_AND_LOG(msg, ...) do { err("%s:%d:%s:" msg, __PRETTY_FUNCTION__, __LINE__, phr->x_request_id ,##__VA_ARGS__); fprintf(phr->log_f, msg "\n", ##__VA_ARGS__); } while (0)
+
   const unsigned char *script_filename = 0;
   path_t last_name;
   const unsigned char *http_host;
@@ -22719,15 +22722,13 @@ ns_handle_http_request(
   }
   if (!remote_addr) {
     if (!(remote_addr = hr_getenv(phr, "REMOTE_ADDR"))) {
-      err("REMOTE_ADDR does not exist");
-      fprintf(phr->log_f, "REMOTE_ADDR does not exist");
+      ERR_AND_LOG("REMOTE_ADDR does not exist");
       return error_page(fout, phr, 0, NEW_SRV_ERR_INV_PARAM);
     }
   }
   if (!strcmp(remote_addr, "::1")) remote_addr = "127.0.0.1";
   if (xml_parse_ipv6(NULL, 0, 0, 0, remote_addr, &phr->ip) < 0) {
-    err("cannot parse REMOTE_ADDR");
-    fprintf(phr->log_f, "cannot parse REMOTE_ADDR");
+    ERR_AND_LOG("cannot parse REMOTE_ADDR");
     return error_page(fout, phr, 0, NEW_SRV_ERR_INV_PARAM);
   }
 
@@ -22740,7 +22741,7 @@ ns_handle_http_request(
   if (http_authorization) {
     int r = parse_bearer(phr, http_authorization);
     if (r == 0) {
-      fprintf(phr->log_f, "cannot parse authorization bearer");
+      ERR_AND_LOG("cannot parse authorization bearer");
       return error_page(fout, phr, 0, NEW_SRV_ERR_PERMISSION_DENIED);
     }
     const unsigned char *x_contest_id = hr_getenv(phr, "HTTP_X_CONTEST_ID");
@@ -22756,8 +22757,7 @@ ns_handle_http_request(
 
   // parse the contest_id
   if ((r = hr_cgi_param_int_opt(phr, "contest_id", &phr->contest_id, http_x_contest_id)) < 0) {
-    err("cannot parse contest_id");
-    fprintf(phr->log_f, "cannot parse contest_id");
+    ERR_AND_LOG("cannot parse contest_id");
     return error_page(fout, phr, 0, NEW_SRV_ERR_INV_PARAM);
   }
   /*
@@ -22781,22 +22781,19 @@ ns_handle_http_request(
 
   // parse request_id
   if ((r = hr_cgi_param_int_opt(phr, "request_id", &phr->request_id, 0)) < 0) {
-    err("cannot parse request_id");
-    fprintf(phr->log_f, "cannot parse request_id");
+    ERR_AND_LOG("cannot parse request_id");
     return error_page(fout, phr, 0, NEW_SRV_ERR_INV_PARAM);
   }
 
   // parse the session_id
   if (!phr->session_id) {
     if ((r = hr_cgi_param(phr, "SID", &s)) < 0) {
-      err("cannot parse SID");
-      fprintf(phr->log_f, "cannot parse SID");
+      ERR_AND_LOG("cannot parse SID");
       return error_page(fout, phr, 0, NEW_SRV_ERR_INV_PARAM);
     }
     if (r > 0) {
       if (sscanf(s, "%llx%n", &phr->session_id, &n) != 1 || s[n] || !phr->session_id) {
-        err("cannot parse SID");
-        fprintf(phr->log_f, "cannot parse SID");
+        ERR_AND_LOG("cannot parse SID");
         return error_page(fout, phr, 0, NEW_SRV_ERR_INV_PARAM);
       }
     }
@@ -22804,14 +22801,12 @@ ns_handle_http_request(
 
   // parse the locale_id
   if ((r = hr_cgi_param(phr, "locale_id", &s)) < 0) {
-    err("cannot parse locale_id");
-    fprintf(phr->log_f, "cannot parse locale_id");
+    ERR_AND_LOG("cannot parse locale_id");
     return error_page(fout, phr, 0, NEW_SRV_ERR_INV_PARAM);
   }
   if (r > 0) {
     if (sscanf(s, "%d%n", &phr->locale_id, &n) != 1 || s[n] || phr->locale_id < 0) {
-      err("cannot parse locale_id");
-      fprintf(phr->log_f, "cannot parse locale_id");
+      ERR_AND_LOG("cannot parse locale_id");
       return error_page(fout, phr, 0, NEW_SRV_ERR_INV_PARAM);
     }
   }
@@ -22820,19 +22815,16 @@ ns_handle_http_request(
   if (rest_action && *rest_action) {
     phr->action = ns_match_action(rest_action);
     if (phr->action < 0) {
-      err("invalid action");
-      fprintf(phr->log_f, "invalid action");
+      ERR_AND_LOG("invalid action");
       return error_page(fout, phr, 0, NEW_SRV_ERR_INV_PARAM);
     }
   } else if ((s = hr_cgi_nname(phr, "action_", 7))) {
     if (sscanf(s, "action_%d%n", &phr->action, &n) != 1 || s[n] || phr->action <= 0) {
-      err("cannot parse action");
-      fprintf(phr->log_f, "cannot parse action");
+      ERR_AND_LOG("cannot parse action");
       return error_page(fout, phr, 0, NEW_SRV_ERR_INV_PARAM);
     }
   } else if ((r = hr_cgi_param(phr, "action", &s)) < 0) {
-    err("cannot parse action");
-    fprintf(phr->log_f, "cannot parse action");
+    ERR_AND_LOG("cannot parse action");
     return error_page(fout, phr, 0, NEW_SRV_ERR_INV_PARAM);
   } else if (r > 0) {
     if (sscanf(s, "%d%n", &phr->action, &n) != 1 || s[n] || phr->action <= 0) {
@@ -22841,8 +22833,7 @@ ns_handle_http_request(
             && !strcasecmp(ns_symbolic_action_table[r], s))
           break;
       if (r == NEW_SRV_ACTION_LAST) {
-        err("cannot parse action");
-        fprintf(phr->log_f, "cannot parse action");
+        ERR_AND_LOG("cannot parse action");
         return error_page(fout, phr, 0, NEW_SRV_ERR_INV_PARAM);
       }
       phr->action = r;
@@ -22897,8 +22888,7 @@ ns_handle_http_request(
   if (!script_filename) script_filename = hr_getenv(phr, "SCRIPT_FILENAME");
   if (!script_filename && phr->arg_num > 0) script_filename = phr->args[0];
   if (!script_filename) {
-    err("cannot get script filename");
-    fprintf(phr->log_f, "cannot get script filename");
+    ERR_AND_LOG("cannot get script filename");
     error_page(fout, phr, 0, NEW_SRV_ERR_INV_PARAM);
   }
 
