@@ -346,11 +346,13 @@ super_html_read_serve(
           return -1;
         }
         struct section_language_data *serv_lang = NULL;
-        for (int i = 0; i <= csc->max_lang; ++i) {
-          struct section_language_data *sl = csc->langs[i];
-          if (sl && !strcmp(sl->short_name, lang->short_name)) {
-            serv_lang = sl;
-            break;
+        if (csc->max_lang > 0) {
+          for (int i = 0; i <= csc->max_lang; ++i) {
+            struct section_language_data *sl = csc->langs[i];
+            if (sl && !strcmp(sl->short_name, lang->short_name)) {
+              serv_lang = sl;
+              break;
+            }
           }
         }
         if (!serv_lang) {
@@ -413,25 +415,27 @@ super_html_read_serve(
 
     // inject languages from the primary compilation server
     struct compile_server_config *csc = &sstate->cscs->v[0];
-    for (int serv_lang_id = 0; serv_lang_id <= csc->max_lang; ++serv_lang_id) {
-      struct section_language_data *serv_lang = csc->langs[serv_lang_id];
-      if (!serv_lang) continue;
-      int found = 0;
-      for (int lang_id = 0; lang_id < sstate->lang_a; ++lang_id) {
-        if (sstate->serv_langs[lang_id] == serv_lang) {
-          found = 1;
-          break;
+    if (csc->max_lang > 0) {
+      for (int serv_lang_id = 0; serv_lang_id <= csc->max_lang; ++serv_lang_id) {
+        struct section_language_data *serv_lang = csc->langs[serv_lang_id];
+        if (!serv_lang) continue;
+        int found = 0;
+        for (int lang_id = 0; lang_id < sstate->lang_a; ++lang_id) {
+          if (sstate->serv_langs[lang_id] == serv_lang) {
+            found = 1;
+            break;
+          }
         }
-      }
-      if (found) continue;
-/*
-      if (sstate->serv_langs[serv_lang_id]) {
-        fprintf(flog, "Conflicting compile server '%s' languages with id %d: '%s', '%s'\n", csc->id, serv_lang_id, serv_lang->short_name, sstate->serv_langs[serv_lang_id]->short_name);
-        return -1;
-      }
-*/
-      if (!sstate->serv_langs[serv_lang_id]) {
-        sstate->serv_langs[serv_lang_id] = serv_lang;
+        if (found) continue;
+  /*
+        if (sstate->serv_langs[serv_lang_id]) {
+          fprintf(flog, "Conflicting compile server '%s' languages with id %d: '%s', '%s'\n", csc->id, serv_lang_id, serv_lang->short_name, sstate->serv_langs[serv_lang_id]->short_name);
+          return -1;
+        }
+  */
+        if (!sstate->serv_langs[serv_lang_id]) {
+          sstate->serv_langs[serv_lang_id] = serv_lang;
+        }
       }
     }
 
