@@ -57,7 +57,6 @@ ns_emit_json_result(
         struct http_request_info *phr,
         int ok,
         int err_num,
-        unsigned err_id,
         const unsigned char *err_msg,
         cJSON *jr);
 
@@ -86,7 +85,6 @@ ns_priv_list_reviews_json(
   const unsigned char *err_msg = NULL;
   int err_num = NEW_SRV_ERR_INV_PARAM;
   int http_status = 400;
-  unsigned err_id = random_u32();
   const unsigned char *contest_ids_str = NULL;
   int date_mode = 0;
   int offset = 0;
@@ -102,7 +100,7 @@ ns_priv_list_reviews_json(
 
   info("audit:%s:%d:%d:%d", phr->action_str, phr->user_id, phr->contest_id, list_mode);
 
-#define ERR(msg, ...) err("%s:%d:%08x:" msg, __PRETTY_FUNCTION__, __LINE__, err_id ,##__VA_ARGS__)
+#define ERR(msg, ...) err("%s:%d:%08x:" msg, __PRETTY_FUNCTION__, __LINE__, phr->err_id ,##__VA_ARGS__)
 
   int capbit = OPCAP_MASTER_LOGIN;
   if (list_mode == 1) {
@@ -185,7 +183,7 @@ ns_priv_list_reviews_json(
 done:;
   phr->json_reply = 1;
   phr->status_code = http_status;
-  ns_emit_json_result(fout, phr, ok, err_num, 0, err_msg, jr);
+  ns_emit_json_result(fout, phr, ok, err_num, err_msg, jr);
   if (jr) {
     cJSON_Delete(jr);
   }
@@ -368,11 +366,10 @@ ns_priv_list_pending_reviews_json(
   int count = 0;
   struct run_review *reviews = NULL;
   size_t review_count = 0;
-  unsigned err_id = random_u32();
 
   info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
 
-  #define ERR(msg, ...) err("%s:%d:%08x:" msg, __PRETTY_FUNCTION__, __LINE__, err_id ,##__VA_ARGS__)
+  #define ERR(msg, ...) err("%s:%d:%08x:" msg, __PRETTY_FUNCTION__, __LINE__, phr->err_id ,##__VA_ARGS__)
 
   if (opcaps_check(phr->caps, OPCAP_EXT_REVIEW) < 0) {
     http_status = 403;
@@ -431,7 +428,7 @@ ns_priv_list_pending_reviews_json(
 done:;
   phr->json_reply = 1;
   phr->status_code = http_status;
-  ns_emit_json_result(fout, phr, ok, err_num, 0, err_msg, jr);
+  ns_emit_json_result(fout, phr, ok, err_num, err_msg, jr);
   if (jr) {
     cJSON_Delete(jr);
   }
@@ -463,145 +460,6 @@ load_other_contest(
 
   return serve_state_load_contest(extra, config, contest_id, ul_conn, &callbacks, NULL, 0, ns_load_problem_plugin);
 }
-
-/*
-const unsigned char *
-ns_get_language_name(int lang_id)
-{
-  static const unsigned char * const standard_languages[] =
-  {
-    [1] = "pascal",
-    [2] = "c",
-    [3] = "cpp",
-    [4] = "pascal",
-    [5] = "java",
-    [6] = "fortran",
-    [7] = "pascal",
-    [8] = "delphi",
-    [9] = "c",
-    [10] = "cpp",
-    [11] = "basic",
-    [12] = "scheme",
-    [13] = "python",
-    [14] = "perl",
-    [15] = "prolog",
-    [16] = "basic",
-    [17] = "java",
-    [18] = "java",
-    [19] = "csharp",
-    [20] = "basic",
-    [21] = "ruby",
-    [22] = "php",
-    [23] = "python",
-    [24] = "kumir",
-    [25] = "make",
-    [26] = "haskell",
-    [27] = "basic",
-    [28] = "c",
-    [29] = "cpp",
-    [50] = "asm",
-    [51] = "c",
-    [52] = "cpp",
-    [53] = "go",
-    [54] = "make",
-    [55] = "pascal_abc.net",
-    [57] = "c",
-    [58] = "cpp",
-    [59] = "pascal",
-    [60] = "basic",
-    [61] = "c",
-    [62] = "cpp",
-    [63] = "python",
-    [64] = "python",
-    [65] = "kumir",
-    [66] = "asm",
-    [67] = "asm",
-    [68] = "mips_assembly",
-    [69] = "scala",
-    [70] = "rust",
-    [71] = "kotlin",
-    [72] = "javascript",
-    [73] = "csharp",
-    [74] = "basic",
-    [75] = "riscv_assembly",
-    [76] = "swift",
-    [79] = "postgres_sql",
-    [80] = "zig",
-    [81] = "bash",
-  };
-  if ((unsigned) lang_id >= sizeof(standard_languages)/sizeof(standard_languages[0])) {
-    return "unknown";
-  }
-  if (!standard_languages[lang_id]) {
-    return "unknown";
-  }
-  return standard_languages[lang_id];
-}
-
-unsigned char *
-ns_safe_read_utf8_text_file(
-        const unsigned char *dir,
-        const unsigned char *file,
-        unsigned err_id,
-        int missing_is_ok)
-{
-  FILE *fin = NULL;
-  FILE *fout = NULL;
-  int fd = -1;
-  struct stat stb;
-  char *txt_s = NULL;
-  size_t txt_z = 0;
-  int c;
-  unsigned char path_buf[PATH_MAX];
-  const unsigned char *path = file;
-
-  if (dir && *dir) {
-    if (snprintf(path_buf, sizeof(path_buf), "%s/%s", dir, file) >= (int) sizeof(path_buf)) {
-      err("%s:%d:%08x: path is too long, file '%s'", __PRETTY_FUNCTION__, __LINE__, err_id, file);
-      goto fail;
-    }
-    path = path_buf;
-  }
-  fd = open(path, O_RDONLY | O_CLOEXEC | O_NOCTTY | O_NONBLOCK, 0);
-  if (fd < 0) {
-    if (missing_is_ok && errno == ENOENT) return NULL;
-    err("%s:%d:%08x: open '%s' failed: %s", __PRETTY_FUNCTION__, __LINE__, err_id, path, strerror(errno));
-    goto fail;
-  }
-  if (fstat(fd, &stb) < 0) {
-    err("%s:%d:%08x: fstat '%s' failed: %s", __PRETTY_FUNCTION__, __LINE__, err_id, path, strerror(errno));
-    goto fail;
-  }
-  if (!S_ISREG(stb.st_mode)) {
-    err("%s:%d:%08x: '%s' is not regular", __PRETTY_FUNCTION__, __LINE__, err_id, path);
-    goto fail;
-  }
-  fin = fdopen(fd, "r");
-  if (!fin) {
-    err("%s:%d:%08x: fdopen failed: %s", __PRETTY_FUNCTION__, __LINE__, err_id, strerror(errno));
-    goto fail;
-  }
-  fd = -1;
-  fout = open_memstream(&txt_s, &txt_z);
-  if (!fin) {
-    err("%s:%d:%08x: open_memstream failed: %s", __PRETTY_FUNCTION__, __LINE__, err_id, strerror(errno));
-    goto fail;
-  }
-  while ((c = getc_unlocked(fin)) != EOF) {
-    putc_unlocked(c, fout);
-  }
-  fclose(fin);
-  fclose(fout);
-  utf8_fix_buf_2(&txt_s, &txt_z, 1, 1);
-  return txt_s;
-
-fail:;
-  if (fout) fclose(fout);
-  if (fin) fclose(fin);
-  if (fd >= 0) close(fd);
-  return NULL;
-}
-*/
 
 static void
 safe_add_to_object(cJSON *j, const char *n, unsigned char *s)
@@ -921,35 +779,33 @@ fail:;
 }
 
 static cJSON *
-get_request_json(
-        struct http_request_info *phr,
-        unsigned err_id)
+get_request_json(struct http_request_info *phr)
 {
   const unsigned char *s = hr_getenv(phr, "REQUEST_METHOD");
   if (!s) {
-    err("%s:%d:%08x: REQUEST_METHOD undefined", __FUNCTION__, __LINE__, err_id);
+    err("%s:%d:%08x: REQUEST_METHOD undefined", __FUNCTION__, __LINE__, phr->err_id);
     return NULL;
   }
   if (strcmp(s, "POST")) {
-    err("%s:%d:%08x: POST method expected", __FUNCTION__, __LINE__, err_id);
+    err("%s:%d:%08x: POST method expected", __FUNCTION__, __LINE__, phr->err_id);
     return NULL;
   }
   s = hr_getenv(phr, "CONTENT_TYPE");
   if (!s) {
-    err("%s:%d:%08x: CONTENT_TYPE undefined", __FUNCTION__, __LINE__, err_id);
+    err("%s:%d:%08x: CONTENT_TYPE undefined", __FUNCTION__, __LINE__, phr->err_id);
     return NULL;
   }
   if (strcmp(s, "application/json")) {
-    err("%s:%d:%08x: json application type expected", __FUNCTION__, __LINE__, err_id);
+    err("%s:%d:%08x: json application type expected", __FUNCTION__, __LINE__, phr->err_id);
     return NULL;
   }
   if (hr_cgi_param(phr, "JSON", &s) <= 0 && !s) {
-    err("%s:%d:%08x: JSON expected", __FUNCTION__, __LINE__, err_id);
+    err("%s:%d:%08x: JSON expected", __FUNCTION__, __LINE__, phr->err_id);
     return NULL;
   }
   cJSON *res = cJSON_Parse(s);
   if (!res) {
-    err("%s:%d:%08x: parse JSON failed", __FUNCTION__, __LINE__, err_id);
+    err("%s:%d:%08x: parse JSON failed", __FUNCTION__, __LINE__, phr->err_id);
     return NULL;
   }
   return res;
@@ -979,14 +835,13 @@ ns_priv_start_review_json(
   const unsigned char *agent = NULL;
   unsigned char *review_source = NULL;
   size_t review_len = 0;
-  unsigned err_id = random_u32();
   const unsigned char *heartbeat_status = NULL;
   int date_mode = 0;
   cJSON *request_json = NULL;
 
   info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
 
-  #define ERR(msg, ...) err("%s:%d:%08x:" msg, __PRETTY_FUNCTION__, __LINE__, err_id ,##__VA_ARGS__)
+  #define ERR(msg, ...) err("%s:%d:%08x:" msg, __PRETTY_FUNCTION__, __LINE__, phr->err_id ,##__VA_ARGS__)
 
   if (opcaps_check(phr->caps, OPCAP_EXT_REVIEW) < 0) {
     http_status = 403;
@@ -995,7 +850,7 @@ ns_priv_start_review_json(
     goto done;
   }
 
-  if (!(request_json = get_request_json(phr, err_id))) {
+  if (!(request_json = get_request_json(phr))) {
     goto done;
   }
   cJSON *jru = cJSON_GetObjectItem(request_json, "review_uuid");
@@ -1085,7 +940,7 @@ ns_priv_start_review_json(
   ASSERT(cs);
 
   struct run_entry re = {};
-  jdetail = make_review_document(phr->config, err_id, review.contest_id, review.run_id, review.purpose, review.custom_prompt, review.options, &re);
+  jdetail = make_review_document(phr->config, phr->err_id, review.contest_id, review.run_id, review.purpose, review.custom_prompt, review.options, &re);
   if (!jdetail) {
     http_status = 400;
     err_num = NEW_SRV_ERR_INV_PARAM;
@@ -1162,7 +1017,7 @@ done:;
   run_review_free(&res_review);
   phr->json_reply = 1;
   phr->status_code = http_status;
-  ns_emit_json_result(fout, phr, ok, err_num, err_id, err_msg, jr);
+  ns_emit_json_result(fout, phr, ok, err_num, err_msg, jr);
   if (jr) {
     cJSON_Delete(jr);
   }
@@ -1187,7 +1042,6 @@ ns_priv_heartbeat_review_json(
   int err_num = NEW_SRV_ERR_INV_PARAM;
   const unsigned char *err_msg = NULL;
   int http_status = 400;
-  unsigned err_id = random_u32();
   const unsigned char *review_uuid_str = NULL;
   ej_uuid_t review_uuid = {};
   cJSON *jr = cJSON_CreateObject();
@@ -1200,7 +1054,7 @@ ns_priv_heartbeat_review_json(
 
   info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
 
-  #define ERR(msg, ...) err("%s:%d:%08x:" msg, __PRETTY_FUNCTION__, __LINE__, err_id ,##__VA_ARGS__)
+  #define ERR(msg, ...) err("%s:%d:%08x:" msg, __PRETTY_FUNCTION__, __LINE__, phr->err_id ,##__VA_ARGS__)
 
   if (opcaps_check(phr->caps, OPCAP_EXT_REVIEW) < 0) {
     http_status = 403;
@@ -1209,7 +1063,7 @@ ns_priv_heartbeat_review_json(
     goto done;
   }
 
-  if (!(request_json = get_request_json(phr, err_id))) {
+  if (!(request_json = get_request_json(phr))) {
     goto done;
   }
   cJSON *jru = cJSON_GetObjectItem(request_json, "review_uuid");
@@ -1289,7 +1143,7 @@ done:;
   run_review_free(&res_review);
   phr->json_reply = 1;
   phr->status_code = http_status;
-  ns_emit_json_result(fout, phr, ok, err_num, err_id, err_msg, jr);
+  ns_emit_json_result(fout, phr, ok, err_num, err_msg, jr);
   if (jr) {
     cJSON_Delete(jr);
   }
@@ -1331,7 +1185,6 @@ ns_priv_finish_review_json(
   int err_num = NEW_SRV_ERR_INV_PARAM;
   const unsigned char *err_msg = NULL;
   int http_status = 400;
-  unsigned err_id = random_u32();
   const unsigned char *review_uuid_str = NULL;
   ej_uuid_t review_uuid = {};
   cJSON *jr = cJSON_CreateObject();
@@ -1346,7 +1199,7 @@ ns_priv_finish_review_json(
 
   info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
 
-  #define ERR(msg, ...) err("%s:%d:%08x:" msg, __PRETTY_FUNCTION__, __LINE__, err_id ,##__VA_ARGS__)
+  #define ERR(msg, ...) err("%s:%d:%08x:" msg, __PRETTY_FUNCTION__, __LINE__, phr->err_id ,##__VA_ARGS__)
 
   if (opcaps_check(phr->caps, OPCAP_EXT_REVIEW) < 0) {
     http_status = 403;
@@ -1355,7 +1208,7 @@ ns_priv_finish_review_json(
     goto done;
   }
 
-  if (!(request_json = get_request_json(phr, err_id))) {
+  if (!(request_json = get_request_json(phr))) {
     goto done;
   }
   cJSON *jru = cJSON_GetObjectItem(request_json, "review_uuid");
@@ -1655,7 +1508,7 @@ ns_priv_finish_review_json(
 done:;
   phr->json_reply = 1;
   phr->status_code = http_status;
-  ns_emit_json_result(fout, phr, ok, err_num, err_id, err_msg, jr);
+  ns_emit_json_result(fout, phr, ok, err_num, err_msg, jr);
   run_review_free(&review);
   run_review_free(&out_review);
   run_review_free(&res_review);
@@ -1736,7 +1589,7 @@ ns_priv_list_active_reviews_json(
 done:;
   phr->json_reply = 1;
   phr->status_code = http_status;
-  ns_emit_json_result(fout, phr, ok, err_num, 0, err_msg, jr);
+  ns_emit_json_result(fout, phr, ok, err_num, err_msg, jr);
   if (jr) {
     cJSON_Delete(jr);
   }
@@ -1755,7 +1608,6 @@ ns_priv_get_active_review_json(
   int err_num = NEW_SRV_ERR_INV_PARAM;
   const unsigned char *err_msg = NULL;
   int http_status = 400;
-  unsigned err_id = random_u32();
   const unsigned char *review_uuid_str = NULL;
   ej_uuid_t review_uuid = {};
   struct run_review review = {};
@@ -1764,7 +1616,7 @@ ns_priv_get_active_review_json(
 
   info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
 
-  #define ERR(msg, ...) err("%s:%d:%08x:" msg, __PRETTY_FUNCTION__, __LINE__, err_id ,##__VA_ARGS__)
+  #define ERR(msg, ...) err("%s:%d:%08x:" msg, __PRETTY_FUNCTION__, __LINE__, phr->err_id ,##__VA_ARGS__)
 
   if (opcaps_check(phr->caps, OPCAP_EXT_REVIEW) < 0) {
     http_status = 403;
@@ -1841,7 +1693,7 @@ ns_priv_get_active_review_json(
 done:;
   phr->json_reply = 1;
   phr->status_code = http_status;
-  ns_emit_json_result(fout, phr, ok, err_num, err_id, err_msg, jr);
+  ns_emit_json_result(fout, phr, ok, err_num, err_msg, jr);
   run_review_free(&review);
   if (jdetail) {
     cJSON_Delete(jdetail);
@@ -1861,10 +1713,9 @@ do_request_review(
         const struct run_entry *re,
         int unprivileged_mode,
         int skip_existing_mode,
-        int force_on_incomplete_mode,
-        unsigned err_id)
+        int force_on_incomplete_mode)
 {
-#define ERR(msg, ...) err("%s:%d:%08x:" msg, __PRETTY_FUNCTION__, __LINE__, err_id ,##__VA_ARGS__)
+#define ERR(msg, ...) err("%s:%d:%08x:" msg, __PRETTY_FUNCTION__, __LINE__, phr->err_id ,##__VA_ARGS__)
 
   int retval = -NEW_SRV_ERR_INV_PARAM;
   int purpose = 0;
@@ -1983,14 +1834,13 @@ ns_priv_request_review_json(
   int err_num = NEW_SRV_ERR_INV_PARAM;
   const unsigned char *err_msg = NULL;
   int http_status = 400;
-  unsigned err_id = random_u32();
   int r;
   int run_id;
   struct run_entry re;
   const unsigned char *s = NULL;
   int unprivileged_mode = 0;
 
-#define ERR(msg, ...) err("%s:%d:%08x:" msg, __PRETTY_FUNCTION__, __LINE__, err_id ,##__VA_ARGS__)
+#define ERR(msg, ...) err("%s:%d:%08x:" msg, __PRETTY_FUNCTION__, __LINE__, phr->err_id ,##__VA_ARGS__)
 
   info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
 
@@ -2029,7 +1879,7 @@ ns_priv_request_review_json(
   }
   hr_cgi_param_int_opt(phr, "unprivileged_mode", &unprivileged_mode, 0);
 
-  r = do_request_review(phr, cnts, cs, run_id, &re, unprivileged_mode, 0,  0, err_id);
+  r = do_request_review(phr, cnts, cs, run_id, &re, unprivileged_mode, 0,  0);
   if (r < 0) {
     err_num = -r;
     goto done;
@@ -2042,7 +1892,7 @@ ns_priv_request_review_json(
 done:;
   phr->json_reply = 1;
   phr->status_code = http_status;
-  ns_emit_json_result(fout, phr, ok, err_num, err_id, err_msg, jr);
+  ns_emit_json_result(fout, phr, ok, err_num, err_msg, jr);
   if (jr) {
     cJSON_Delete(jr);
   }
@@ -2148,7 +1998,6 @@ ns_priv_review_operation_json(
   int err_num = NEW_SRV_ERR_INV_PARAM;
   const unsigned char *err_msg = NULL;
   int http_status = 400;
-  unsigned err_id = random_u32();
   const unsigned char *s;
   int run_id;
   struct run_entry re;
@@ -2158,7 +2007,7 @@ ns_priv_review_operation_json(
 
   info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
 
-  #define ERR(msg, ...) err("%s:%d:%08x:" msg, __PRETTY_FUNCTION__, __LINE__, err_id ,##__VA_ARGS__)
+  #define ERR(msg, ...) err("%s:%d:%08x:" msg, __PRETTY_FUNCTION__, __LINE__, phr->err_id ,##__VA_ARGS__)
 
   if (opcaps_check(phr->caps, OPCAP_PREMOD_REVIEW) < 0) {
     http_status = 403;
@@ -2422,7 +2271,7 @@ success:;
 done:;
   phr->json_reply = 1;
   phr->status_code = http_status;
-  ns_emit_json_result(fout, phr, ok, err_num, err_id, err_msg, jr);
+  ns_emit_json_result(fout, phr, ok, err_num, err_msg, jr);
   if (jr) {
     cJSON_Delete(jr);
   }
@@ -2443,14 +2292,13 @@ ns_priv_render_markdown(
   int err_num = NEW_SRV_ERR_INV_PARAM;
   const unsigned char *err_msg = NULL;
   int http_status = 400;
-  unsigned err_id = random_u32();
   const unsigned char *s;
   struct md_content md = {};
   unsigned char *md_text = NULL;
 
   info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
 
-  #define ERR(msg, ...) err("%s:%d:%08x:" msg, __PRETTY_FUNCTION__, __LINE__, err_id ,##__VA_ARGS__)
+  #define ERR(msg, ...) err("%s:%d:%08x:" msg, __PRETTY_FUNCTION__, __LINE__, phr->err_id ,##__VA_ARGS__)
 
   if (phr->role < USER_ROLE_JUDGE) {
     http_status = 403;
@@ -2478,7 +2326,7 @@ ns_priv_render_markdown(
 done:;
   phr->json_reply = 1;
   phr->status_code = http_status;
-  ns_emit_json_result(fout, phr, ok, err_num, err_id, err_msg, jr);
+  ns_emit_json_result(fout, phr, ok, err_num, err_msg, jr);
   if (jr) {
     cJSON_Delete(jr);
   }
@@ -2514,7 +2362,6 @@ ns_priv_postapprove_json(
   int err_num = NEW_SRV_ERR_INV_PARAM;
   const unsigned char *err_msg = NULL;
   int http_status = 400;
-  unsigned err_id = random_u32();
   const unsigned char *s;
   long long serial_id;
   struct run_review review = {};
@@ -2525,7 +2372,7 @@ ns_priv_postapprove_json(
 
   info("audit:%s:%d:%d", phr->action_str, phr->user_id, phr->contest_id);
 
-  #define ERR(msg, ...) err("%s:%d:%08x:" msg, __PRETTY_FUNCTION__, __LINE__, err_id ,##__VA_ARGS__)
+  #define ERR(msg, ...) err("%s:%d:%08x:" msg, __PRETTY_FUNCTION__, __LINE__, phr->err_id ,##__VA_ARGS__)
 
   if (opcaps_check(phr->caps, OPCAP_COMMENT_RUN) < 0) {
     http_status = 403;
@@ -2704,7 +2551,7 @@ ns_priv_postapprove_json(
       ERR("run_get_entry failed");
       goto done;
     }
-    r = do_request_review(phr, review_cnts, review_cs, review.run_id, &re, need_update_review_status, 0, 0, err_id);
+    r = do_request_review(phr, review_cnts, review_cs, review.run_id, &re, need_update_review_status, 0, 0);
     if (r < 0) {
       err_num = -r;
       goto done;
@@ -2860,7 +2707,7 @@ success:;
 done:;
   phr->json_reply = 1;
   phr->status_code = http_status;
-  ns_emit_json_result(fout, phr, ok, err_num, err_id, err_msg, jr);
+  ns_emit_json_result(fout, phr, ok, err_num, err_msg, jr);
   if (jr) {
     cJSON_Delete(jr);
   }
@@ -2886,7 +2733,6 @@ ns_priv_review_displayed(
   int retval = 0;
   int review_mode = 0;
   unsigned total_runs = 0;
-  unsigned err_id = random_u32();
   __attribute__((unused)) int _;
 
   if (ns_parse_run_mask(phr, 0, 0, &mask_size, &mask) < 0) FAIL(NEW_SRV_ERR_INV_PARAM);
@@ -2977,7 +2823,7 @@ ns_priv_review_displayed(
       }
       continue;
     }
-    _ = do_request_review(phr, cnts, cs, run_id, &re, unprivileged_mode, skip_existing_mode, force_on_incomplete_mode, err_id);
+    _ = do_request_review(phr, cnts, cs, run_id, &re, unprivileged_mode, skip_existing_mode, force_on_incomplete_mode);
   }
 
   retval = 0;

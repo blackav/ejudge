@@ -179,7 +179,6 @@ emit_json_result(
         struct http_request_info *phr,
         int ok,
         int err_num,
-        unsigned err_id,
         const unsigned char *err_msg,
         cJSON *jr);
 void ns_emit_json_result(
@@ -187,7 +186,6 @@ void ns_emit_json_result(
         struct http_request_info *phr,
         int ok,
         int err_num,
-        unsigned err_id,
         const unsigned char *err_msg,
         cJSON *jr)
   __attribute__((weak,alias("emit_json_result")));
@@ -9942,7 +9940,7 @@ priv_get_user(
 done:;
   phr->json_reply = 1;
   phr->status_code = http_status;
-  emit_json_result(fout, phr, ok, err_num, 0, err_msg, jr);
+  emit_json_result(fout, phr, ok, err_num, err_msg, jr);
   free(xml_text);
   if (u) {
     userlist_free(&u->b);
@@ -10082,7 +10080,7 @@ priv_copy_user_info(
 done:;
   phr->json_reply = 1;
   phr->status_code = http_status;
-  emit_json_result(fout, phr, ok, err_num, 0, err_msg, jr);
+  emit_json_result(fout, phr, ok, err_num, err_msg, jr);
   if (jr) {
     cJSON_Delete(jr);
   }
@@ -10393,7 +10391,7 @@ priv_change_registration(
 done:;
   phr->json_reply = 1;
   phr->status_code = http_status;
-  emit_json_result(fout, phr, ok, err_num, 0, err_msg, jr);
+  emit_json_result(fout, phr, ok, err_num, err_msg, jr);
   if (jr) {
     cJSON_Delete(jr);
   }
@@ -10960,7 +10958,7 @@ priv_problem_status_json(
 done:;
   phr->json_reply = 1;
   phr->status_code = http_status;
-  emit_json_result(fout, phr, ok, err_num, 0, err_msg, jr);
+  emit_json_result(fout, phr, ok, err_num, err_msg, jr);
   if (jr) {
     cJSON_Delete(jr);
   }
@@ -11037,7 +11035,7 @@ priv_list_languages_json(
 
   phr->json_reply = 1;
   phr->status_code = http_status;
-  emit_json_result(fout, phr, ok, err_num, 0, err_msg, jr);
+  emit_json_result(fout, phr, ok, err_num, err_msg, jr);
   if (jr) {
     cJSON_Delete(jr);
   }
@@ -11110,7 +11108,7 @@ priv_list_problems_json(
 
   phr->json_reply = 1;
   phr->status_code = http_status;
-  emit_json_result(fout, phr, ok, err_num, 0, err_msg, jr);
+  emit_json_result(fout, phr, ok, err_num, err_msg, jr);
   if (jr) {
     cJSON_Delete(jr);
   }
@@ -11248,7 +11246,7 @@ priv_get_problem_json(
 
   phr->json_reply = 1;
   phr->status_code = http_status;
-  emit_json_result(fout, phr, ok, err_num, 0, err_msg, jr);
+  emit_json_result(fout, phr, ok, err_num, err_msg, jr);
   if (jr) {
     cJSON_Delete(jr);
   }
@@ -11593,7 +11591,7 @@ priv_create_user_session_json(
 done:;
   phr->json_reply = 1;
   phr->status_code = http_status;
-  emit_json_result(fout, phr, ok, err_num, 0, err_msg, jr);
+  emit_json_result(fout, phr, ok, err_num, err_msg, jr);
   free(xml_text);
   free(base_xml_text);
   if (u) {
@@ -11941,7 +11939,7 @@ priv_change_registrations_json(
 done:;
   phr->json_reply = 1;
   phr->status_code = http_status;
-  emit_json_result(fout, phr, ok, err_num, 0, err_msg, jr);
+  emit_json_result(fout, phr, ok, err_num, err_msg, jr);
   if (jr) {
     cJSON_Delete(jr);
   }
@@ -12776,7 +12774,7 @@ copy_cti_to_phr(
 static int
 priv_check_cached_key(struct http_request_info *phr)
 {
-#define ERR(msg, ...) err("%s:%d:%s:" msg, __PRETTY_FUNCTION__, __LINE__, phr->x_request_id ,##__VA_ARGS__)
+#define ERR(msg, ...) err("%s:%d:%08x:" msg, __PRETTY_FUNCTION__, __LINE__, phr->err_id ,##__VA_ARGS__)
   long long tsc_start;
   long long tsc_end;
   unsigned key_contest_id = phr->contest_id;
@@ -12947,7 +12945,7 @@ priv_check_cached_key(struct http_request_info *phr)
 static int
 priv_check_cached_session(struct http_request_info *phr)
 {
-#define ERR(msg, ...) err("%s:%d:%s:" msg, __PRETTY_FUNCTION__, __LINE__, phr->x_request_id ,##__VA_ARGS__)
+#define ERR(msg, ...) err("%s:%d:%08x:" msg, __PRETTY_FUNCTION__, __LINE__, phr->err_id ,##__VA_ARGS__)
   long long tsc_start;
   long long tsc_end;
 
@@ -13102,7 +13100,7 @@ privileged_entry_point(
         FILE *fout,
         struct http_request_info *phr)
 {
-#define ERR(msg, ...) err("%s:%d:%s:" msg, __PRETTY_FUNCTION__, __LINE__, phr->x_request_id ,##__VA_ARGS__)
+#define ERR(msg, ...) err("%s:%d:%08x:" msg, __PRETTY_FUNCTION__, __LINE__, phr->err_id ,##__VA_ARGS__)
   int r;
   opcap_t caps;
   const struct contest_desc *cnts = 0;
@@ -15505,16 +15503,15 @@ emit_json_result(
         struct http_request_info *phr,
         int ok,
         int err_num,
-        unsigned err_id,
         const unsigned char *err_msg,
         cJSON *jr)
 {
   phr->json_reply = 1;
   if (!ok) {
     if (err_num < 0) err_num = -err_num;
-    if (!err_id) {
+    if (!phr->err_id) {
       random_init();
-      err_id = random_u32();
+      phr->err_id = random_u32();
     }
     if (!err_msg || !*err_msg) {
       err_msg = NULL;
@@ -15531,9 +15528,9 @@ emit_json_result(
       cJSON_AddNumberToObject(jerr, "num", err_num);
       cJSON_AddStringToObject(jerr, "symbol", ns_error_symbol(err_num));
     }
-    if (err_id) {
+    if (phr->err_id) {
       char xbuf[64];
-      sprintf(xbuf, "%08x", err_id);
+      sprintf(xbuf, "%08x", phr->err_id);
       cJSON_AddStringToObject(jerr, "log_id", xbuf);
     }
     if (err_msg) {
@@ -15573,7 +15570,6 @@ ns_submit_run_input(
   int ok = 0;
   int err_num = 0;
   unsigned char *err_msg = 0;
-  unsigned err_id = 0;
   cJSON *jr = cJSON_CreateObject(); // reply object
   const unsigned char *s;
   int prob_id;
@@ -16099,7 +16095,7 @@ ns_submit_run_input(
   ok = 1;
 
 done:;
-  emit_json_result(fout, phr, ok, err_num, err_id, err_msg, jr);
+  emit_json_result(fout, phr, ok, err_num, err_msg, jr);
 
 //cleanup:;
   if (jr) cJSON_Delete(jr);
@@ -16132,7 +16128,6 @@ ns_get_submit(
   int ok = 0;
   int err_num = 0;
   unsigned char *err_msg = NULL;
-  unsigned err_id = 0;
   cJSON *jr = cJSON_CreateObject(); // reply object
   int64_t submit_id = 0;
   const unsigned char *s = NULL;
@@ -16225,7 +16220,7 @@ ns_get_submit(
   ok = 1;
 
 done:;
-  emit_json_result(fout, phr, ok, err_num, err_id, err_msg, jr);
+  emit_json_result(fout, phr, ok, err_num, err_msg, jr);
 
   if (jr) cJSON_Delete(jr);
   free(err_msg);
@@ -19308,7 +19303,6 @@ unpriv_get_userprob(
   int err_num = 0;
   unsigned char *err_msg = NULL;
   cJSON *jr = cJSON_CreateObject(); // reply object
-  unsigned err_id = 0;
   const unsigned char *s = NULL;
   int prob_id;
   const struct section_problem_data *prob = NULL;
@@ -19352,7 +19346,7 @@ unpriv_get_userprob(
   ok = 1;
 
 done:;
-  emit_json_result(fout, phr, ok, err_num, err_id, err_msg, jr);
+  emit_json_result(fout, phr, ok, err_num,  err_msg, jr);
 
   userprob_entry_free(ue);
   if (jr) cJSON_Delete(jr);
@@ -19371,7 +19365,6 @@ unpriv_create_userprob(
   int err_num = 0;
   unsigned char *err_msg = NULL;
   cJSON *jr = cJSON_CreateObject(); // reply object
-  unsigned err_id = 0;
   const unsigned char *s = NULL;
   int prob_id;
   const struct section_problem_data *prob = NULL;
@@ -19416,8 +19409,7 @@ unpriv_create_userprob(
   ok = 1;
 
 done:;
-  emit_json_result(fout, phr, ok, err_num, err_id, err_msg, jr);
-
+  emit_json_result(fout, phr, ok, err_num, err_msg, jr);
   userprob_entry_free(ue);
   if (jr) cJSON_Delete(jr);
   free(err_msg);
@@ -19435,7 +19427,6 @@ unpriv_save_userprob(
   int err_num = 0;
   unsigned char *err_msg = NULL;
   cJSON *jr = cJSON_CreateObject(); // reply object
-  unsigned err_id = 0;
   const unsigned char *s = NULL;
   int64_t serial_id = 0;
   struct userprob_plugin_data *up_plugin = NULL;
@@ -19544,7 +19535,7 @@ unpriv_save_userprob(
   ok = 1;
 
 done:;
-  emit_json_result(fout, phr, ok, err_num, err_id, err_msg, jr);
+  emit_json_result(fout, phr, ok, err_num, err_msg, jr);
 
   userprob_entry_free(ue);
   if (jr) cJSON_Delete(jr);
@@ -19563,7 +19554,6 @@ unpriv_remove_userprob(
   int err_num = 0;
   unsigned char *err_msg = NULL;
   cJSON *jr = cJSON_CreateObject(); // reply object
-  unsigned err_id = 0;
   const unsigned char *s = NULL;
   int64_t serial_id = 0;
   struct userprob_plugin_data *up_plugin = NULL;
@@ -19613,7 +19603,7 @@ unpriv_remove_userprob(
   ok = 1;
 
 done:;
-  emit_json_result(fout, phr, ok, err_num, err_id, err_msg, jr);
+  emit_json_result(fout, phr, ok, err_num, err_msg, jr);
 
   userprob_entry_free(ue);
   if (jr) cJSON_Delete(jr);
@@ -19633,7 +19623,6 @@ unpriv_request_review_json(
   int err_num = NEW_SRV_ERR_INV_PARAM;
   const unsigned char *err_msg = NULL;
   int http_status = 400;
-  unsigned err_id = random_u32();
   const unsigned char *s = NULL;
   int r;
   int run_id;
@@ -19643,7 +19632,7 @@ unpriv_request_review_json(
   size_t reviews_count = 0;
   struct run_review *reviews = NULL;
 
-#define ERR(msg, ...) err("%s:%d:%08x:" msg, __PRETTY_FUNCTION__, __LINE__, err_id ,##__VA_ARGS__)
+#define ERR(msg, ...) err("%s:%d:%08x:" msg, __PRETTY_FUNCTION__, __LINE__, phr->err_id ,##__VA_ARGS__)
 
   r = hr_cgi_param(phr, "run_id", &s);
   if (!r) {
@@ -19767,7 +19756,7 @@ unpriv_request_review_json(
 done:;
   phr->json_reply = 1;
   phr->status_code = http_status;
-  emit_json_result(fout, phr, ok, err_num, err_id, err_msg, jr);
+  emit_json_result(fout, phr, ok, err_num, err_msg, jr);
   if (jr) {
     cJSON_Delete(jr);
   }
@@ -20926,7 +20915,7 @@ done:;
   }
   phr->json_reply = 1;
   phr->status_code = http_status;
-  emit_json_result(fout, phr, ok, err_num, 0, err_msg, jr);
+  emit_json_result(fout, phr, ok, err_num, err_msg, jr);
   if (jr) {
     cJSON_Delete(jr);
   }
@@ -22547,8 +22536,8 @@ ns_handle_http_request(
         FILE *fout,
         struct http_request_info *phr)
 {
-#define ERR(msg, ...) err("%s:%d:%s:" msg, __PRETTY_FUNCTION__, __LINE__, phr->x_request_id ,##__VA_ARGS__)
-#define ERR_AND_LOG(msg, ...) do { err("%s:%d:%s:" msg, __PRETTY_FUNCTION__, __LINE__, phr->x_request_id ,##__VA_ARGS__); fprintf(phr->log_f, msg "\n", ##__VA_ARGS__); } while (0)
+#define ERR(msg, ...) err("%s:%d:%08x:" msg, __PRETTY_FUNCTION__, __LINE__, phr->err_id ,##__VA_ARGS__)
+#define ERR_AND_LOG(msg, ...) do { err("%s:%d:%08x:" msg, __PRETTY_FUNCTION__, __LINE__, phr->err_id ,##__VA_ARGS__); fprintf(phr->log_f, msg "\n", ##__VA_ARGS__); } while (0)
 
   const unsigned char *script_filename = 0;
   path_t last_name;

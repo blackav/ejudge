@@ -158,6 +158,7 @@ struct http_request_info
   struct cJSON *json_result;
   unsigned char *err_msg;
   int err_num;
+  unsigned err_id;
 
   int (*load_contest)(
         const struct ejudge_cfg *config,
