@@ -12776,6 +12776,7 @@ copy_cti_to_phr(
 static int
 priv_check_cached_key(struct http_request_info *phr)
 {
+#define ERR(msg, ...) err("%s:%d:%s:" msg, __PRETTY_FUNCTION__, __LINE__, phr->x_request_id ,##__VA_ARGS__)
   long long tsc_start;
   long long tsc_end;
   unsigned key_contest_id = phr->contest_id;
@@ -12830,6 +12831,7 @@ priv_check_cached_key(struct http_request_info *phr)
       }
       return 0;
     }
+    ERR("ej-users server is not available");
     return -NEW_SRV_ERR_USERLIST_SERVER_DOWN;
   }
 
@@ -12854,24 +12856,33 @@ priv_check_cached_key(struct http_request_info *phr)
       }
       return 0;
     }
+    ERR("ej-users server is not available");
     return -NEW_SRV_ERR_USERLIST_SERVER_DOWN;
   }
 
   if (r <= 0) {
+    ERR("api_key_request failed");
     r = -NEW_SRV_ERR_PERMISSION_DENIED;
   } else if (out_count != 1) {
+    ERR("api_key_request returned %d keys", out_count);
     r = -NEW_SRV_ERR_INTERNAL;
   } else if (cnts_info.user_id == 0 || cnts_info.contest_id == 0) {
+    ERR("user_id == 0 or contest_id == 0");
     r = -NEW_SRV_ERR_PERMISSION_DENIED;
   } else if (phr->contest_id > 0 && cnts_info.contest_id != phr->contest_id) {
+    ERR("contest_id mismatch");
     r = -NEW_SRV_ERR_PERMISSION_DENIED;
   } else if (cnts_info.reg_status != USERLIST_REG_OK) {
+    ERR("registration status is not OK");
     r = -NEW_SRV_ERR_PERMISSION_DENIED;
   } else if ((cnts_info.reg_flags & (USERLIST_UC_BANNED | USERLIST_UC_LOCKED | USERLIST_UC_DISQUALIFIED)) != 0) {
+    ERR("user is banned, or locked, or disqualified");
     r = -NEW_SRV_ERR_PERMISSION_DENIED;
   } else if (phr->role > out_keys[0].role) {
+    ERR("requested role %d but key provides role %d", phr->role, out_keys[0].role);
     r = -NEW_SRV_ERR_PERMISSION_DENIED;
   } else if (out_keys[0].expiry_time > 0 && current_time >= out_keys[0].expiry_time) {
+    ERR("key is expired");
     r = -NEW_SRV_ERR_PERMISSION_DENIED;
   }
 
@@ -12930,11 +12941,13 @@ priv_check_cached_key(struct http_request_info *phr)
     ++metrics.data->get_key_count;
   }
   return 0;
+#undef ERR
 }
 
 static int
 priv_check_cached_session(struct http_request_info *phr)
 {
+#define ERR(msg, ...) err("%s:%d:%s:" msg, __PRETTY_FUNCTION__, __LINE__, phr->x_request_id ,##__VA_ARGS__)
   long long tsc_start;
   long long tsc_end;
 
@@ -12988,6 +13001,7 @@ priv_check_cached_session(struct http_request_info *phr)
       }
       return 0;
     }
+    ERR("ej-users server is not available");
     return -NEW_SRV_ERR_USERLIST_SERVER_DOWN;
   }
 
@@ -13013,6 +13027,7 @@ priv_check_cached_session(struct http_request_info *phr)
       }
       return 0;
     }
+    ERR("ej-users server is not available");
     return -NEW_SRV_ERR_USERLIST_SERVER_DOWN;
   }
   if (r < 0) {
@@ -13021,10 +13036,11 @@ priv_check_cached_session(struct http_request_info *phr)
     case ULS_ERR_CANNOT_PARTICIPATE:
     case ULS_ERR_NOT_REGISTERED:
     case ULS_ERR_INCOMPLETE_REG:
+      ERR("invalid session: error %d", r);
       r = -NEW_SRV_ERR_INV_SESSION;
       break;
     default:
-      fprintf(phr->log_f, "get_cookie failed: %s\n", userlist_strerror(-r));
+      ERR("get_cookie failed: %s", userlist_strerror(-r));
       r = -NEW_SRV_ERR_INTERNAL;
       break;
     }
@@ -13072,6 +13088,7 @@ priv_check_cached_session(struct http_request_info *phr)
     ++metrics.data->get_cookie_count;
   }
   return 0;
+#undef ERR
 }
 
 static struct new_session_info *
@@ -13085,6 +13102,7 @@ privileged_entry_point(
         FILE *fout,
         struct http_request_info *phr)
 {
+#define ERR(msg, ...) err("%s:%d:%s:" msg, __PRETTY_FUNCTION__, __LINE__, phr->x_request_id ,##__VA_ARGS__)
   int r;
   opcap_t caps;
   const struct contest_desc *cnts = 0;
@@ -13101,14 +13119,14 @@ privileged_entry_point(
     if (phr->action == NEW_SRV_ACTION_CREATE_API_KEY || phr->action == NEW_SRV_ACTION_API_KEYS_PAGE || phr->action == NEW_SRV_ACTION_DELETE_API_KEY
         || phr->action == NEW_SRV_ACTION_COOKIE_LOGIN || phr->action == NEW_SRV_ACTION_LOGIN || phr->action == NEW_SRV_ACTION_LOGIN_PAGE
         || phr->action == NEW_SRV_ACTION_LOGIN_JSON) {
-      fprintf(phr->log_f, "invalid action for token auth\n");
+      ERR("invalid action for token auth");
       error_page(fout, phr, 0, -NEW_SRV_ERR_PERMISSION_DENIED);
       goto cleanup;
     }
 
     if (phr->contest_id > 0) {
       if (contests_get(phr->contest_id, &cnts) < 0 || !cnts) {
-        fprintf(phr->log_f, "invalid contest_id %d", phr->contest_id);
+        ERR("invalid contest_id %d", phr->contest_id);
         error_page(fout, phr, 0, -NEW_SRV_ERR_INV_CONTEST_ID);
         goto cleanup;
       }
@@ -13116,6 +13134,7 @@ privileged_entry_point(
 
     r = priv_check_cached_key(phr);
     if (r < 0) {
+      ERR("priv_check_cached_key failed");
       error_page(fout, phr, 0, r);
       goto cleanup;
     }
@@ -13128,6 +13147,7 @@ privileged_entry_point(
 
     r = priv_check_cached_session(phr);
     if (r < 0) {
+      ERR("priv_check_cached_session failed");
       error_page(fout, phr, 1, r);
       goto cleanup;
     }
@@ -13136,12 +13156,12 @@ privileged_entry_point(
   if (phr->locale_id < 0) phr->locale_id = 0;
 
   if (phr->contest_id < 0 || contests_get(phr->contest_id, &cnts) < 0 || !cnts) {
-    fprintf(phr->log_f, "invalid contest_id %d", phr->contest_id);
+    ERR("invalid contest_id %d", phr->contest_id);
     error_page(fout, phr, 1, NEW_SRV_ERR_INV_CONTEST_ID);
     goto cleanup;
   }
   if (!cnts->managed) {
-    fprintf(phr->log_f, "contest is not managed");
+    ERR("contest is not managed");
     error_page(fout, phr, 1, NEW_SRV_ERR_INV_CONTEST_ID);
     goto cleanup;
   }
@@ -13158,7 +13178,7 @@ privileged_entry_point(
   if (phr->role == USER_ROLE_ADMIN) {
     // as for the master program
     if (!contests_check_master_ip(phr->contest_id, &phr->ip, phr->ssl_flag)) {
-      fprintf(phr->log_f, "%s://%s is not allowed for MASTER for contest %d",
+      ERR("%s://%s is not allowed for MASTER for contest %d",
               ns_ssl_flag_str[phr->ssl_flag],
               xml_unparse_ipv6(&phr->ip), phr->contest_id);
       error_page(fout, phr, 1, NEW_SRV_ERR_PERMISSION_DENIED);
@@ -13167,7 +13187,7 @@ privileged_entry_point(
   } else {
     // as for judge program
     if (!contests_check_judge_ip(phr->contest_id, &phr->ip, phr->ssl_flag)) {
-      fprintf(phr->log_f, "%s://%s is not allowed for JUDGE for contest %d",
+      ERR("%s://%s is not allowed for JUDGE for contest %d",
               ns_ssl_flag_str[phr->ssl_flag],
               xml_unparse_ipv6(&phr->ip), phr->contest_id);
       error_page(fout, phr, 1, NEW_SRV_ERR_PERMISSION_DENIED);
@@ -13177,7 +13197,7 @@ privileged_entry_point(
 
   // analyze permissions
   if (phr->role <= 0 || phr->role >= USER_ROLE_LAST) {
-    fprintf(phr->log_f, "invalid role %d", phr->role);
+    ERR("invalid role %d", phr->role);
     error_page(fout, phr, 1, NEW_SRV_ERR_PERMISSION_DENIED);
     goto cleanup;
   }
@@ -13185,8 +13205,7 @@ privileged_entry_point(
     // as for the master program
     if (opcaps_find(&cnts->capabilities, phr->login, &caps) < 0
         || opcaps_check(caps, OPCAP_MASTER_LOGIN) < 0) {
-      fprintf(phr->log_f, "user %s does not have MASTER_LOGIN bit for contest %d",
-              phr->login, phr->contest_id);
+      ERR("user %s does not have MASTER_LOGIN bit for contest %d", phr->login, phr->contest_id);
       error_page(fout, phr, 1, NEW_SRV_ERR_PERMISSION_DENIED);
       goto cleanup;
     }
@@ -13194,16 +13213,14 @@ privileged_entry_point(
     // as for the judge program
     if (opcaps_find(&cnts->capabilities, phr->login, &caps) < 0
         || opcaps_check(caps, OPCAP_JUDGE_LOGIN) < 0) {
-      fprintf(phr->log_f, "user %s does not have JUDGE_LOGIN bit for contest %d",
-              phr->login, phr->contest_id);
+      ERR("user %s does not have JUDGE_LOGIN bit for contest %d", phr->login, phr->contest_id);
       error_page(fout, phr, 1, NEW_SRV_ERR_PERMISSION_DENIED);
       goto cleanup;
     }
   } else {
     // user privileges checked locally
     if (nsdb_check_role(phr->user_id, phr->contest_id, phr->role) < 0) {
-      fprintf(phr->log_f, "user %s has no permission to login as role %d for contest %d",
-              phr->login, phr->role, phr->contest_id);
+      ERR("user %s has no permission to login as role %d for contest %d", phr->login, phr->role, phr->contest_id);
       error_page(fout, phr, 1, NEW_SRV_ERR_PERMISSION_DENIED);
       goto cleanup;
     }
@@ -13283,7 +13300,7 @@ privileged_entry_point(
   if (phr->action > 0 && phr->action < NEW_SRV_ACTION_LAST && actions_table[phr->action]) {
     actions_table[phr->action](fout, phr, cnts, extra);
   } else {
-    fprintf(phr->log_f, "action is undefined");
+    ERR("action is undefined");
     error_page(fout, phr, 0, NEW_SRV_ERR_OPERATION_FAILED);
   }
 
@@ -13293,6 +13310,7 @@ cleanup:
   phr->log_f = NULL;
   phr->log_t = NULL;
   phr->log_z = 0;
+#undef ERR
 }
 
 void
@@ -22889,7 +22907,7 @@ ns_handle_http_request(
   if (!script_filename && phr->arg_num > 0) script_filename = phr->args[0];
   if (!script_filename) {
     ERR_AND_LOG("cannot get script filename");
-    error_page(fout, phr, 0, NEW_SRV_ERR_INV_PARAM);
+    return error_page(fout, phr, 0, NEW_SRV_ERR_INV_PARAM);
   }
 
   os_rGetLastname(script_filename, last_name, sizeof(last_name));
@@ -22936,6 +22954,8 @@ ns_handle_http_request(
     strcpy(phr->role_name, "user");
     unprivileged_entry_point(fout, phr);
   }
+#undef ERR
+#undef ERR_AND_LOG
 }
 
 static int
