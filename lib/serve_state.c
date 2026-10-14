@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2024 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1151,6 +1151,13 @@ serve_state_load_contest(
     goto failure;
   if (prepare_serve_defaults(cnts, state, p_cnts) < 0) goto failure;
   if (create_dirs(cnts, state, PREPARE_SERVE) < 0) goto failure;
+
+  for (int prob_id = 1; prob_id <= state->max_prob; ++prob_id) {
+    const struct section_problem_data *prob = state->probs[prob_id];
+    if (prob && prob->enable_external_review > 0) {
+      state->external_review_enabled = 1;
+    }
+  }
 
   global = state->global;
 

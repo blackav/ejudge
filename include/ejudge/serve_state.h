@@ -2,7 +2,7 @@
 #ifndef __SERVE_STATE_H__
 #define __SERVE_STATE_H__
 
-/* Copyright (C) 2006-2024 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2026 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -269,6 +269,8 @@ struct serve_state
   int testing_finished;
   int standings_updated;
   int has_olympiad_mode;
+  /* has at least one problem with external review enabled */
+  unsigned char external_review_enabled;
 
   // legacy timestamp
   time_t current_time;

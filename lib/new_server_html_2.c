@@ -1396,8 +1396,6 @@ ns_write_all_clars(
     mode_clar = 0;
   }
 
-  fprintf(f, "<hr><h2>%s</h2>\n", _("Messages"));
-
   start = run_get_start_time(cs->runlog_state);
   total = clar_get_total(cs->clarlog_state);
   if (!mode_clar) mode_clar = u->prev_mode_clar;

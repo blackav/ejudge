@@ -613,6 +613,13 @@
 
 <%
   if (opcaps_check(phr->caps, OPCAP_VIEW_CLAR) >= 0) {
+%>
+<hr/><h2><s:_>Messages</s:_><%
+    if (cs->external_review_enabled > 0 && phr->role >= USER_ROLE_JUDGE && opcaps_check(phr->caps, OPCAP_COMMENT_RUN) >= 0) {
+%> [<s:a url="PostapproveUrl"><s:_>Postapprove reviews</s:_></s:a>]<%
+    }
+%></h2>
+<%
     ns_write_all_clars(out_f, phr, cnts, extra, filter_mode_clar,
                        filter_first_clar_str, filter_last_clar_str);
   }
