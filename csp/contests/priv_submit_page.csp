@@ -225,9 +225,21 @@ ns_unparse_answers(
 %>
 
 <%
-        if (prob && prob->problem_dir && prob->problem_dir[0]) {
+        const unsigned char *pdir = NULL;
+        if (prob && prob->problem_dirs && prob->problem_dirs[0]) {
+          if (variant > 0) {
+            int idx = 0;
+            while (prob->problem_dirs[idx] && idx + 1 < variant) ++idx;
+            pdir = prob->problem_dirs[idx];
+          } else {
+            pdir = prob->problem_dirs[0];
+          }
+        } else if (prob && prob->problem_dir && prob->problem_dir[0]) {
+          pdir = prob->problem_dir;
+        }
+        if (pdir && pdir[0]) {
 %>
-    <tr><td><b><s:_>Problem directory</s:_>:</b></td><td><tt><s:v value="prob->problem_dir" /></tt></td></tr>
+    <tr><td><b><s:_>Problem directory</s:_>:</b></td><td><tt><s:v value="pdir" /></tt></td></tr>
 <%
         }
 %>
