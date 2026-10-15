@@ -46,7 +46,7 @@
 %><s:_>The contest is in progress</s:_><%
         }
       }
-    } else if (!cs->upsolving_mode) {
+    } else if (!serve_is_user_upsolving(cs, phr->user_id, cs->current_time)) {
       if (cnts->exam_mode) {
 %><s:_>The exam is not started</s:_><%
       } else {
@@ -56,7 +56,7 @@
 %></b></p>
 
 <%
-    if (cs->upsolving_mode) {
+    if (serve_is_user_upsolving(cs, phr->user_id, cs->current_time)) {
       if (!cs->global->is_virtual || start_time <= 0 || stop_time > 0) {
 %><p><b><s:_>Upsolving mode</s:_></b></p>
 <%      }
@@ -261,7 +261,7 @@ $(function() {
       enable_virtual_start = 0;
     } else if (cnts->close_time > 0 && cs->current_time >= cnts->close_time) {
       enable_virtual_start = 0;
-    } else if (cs->upsolving_mode) {
+    } else if (serve_is_user_upsolving(cs, phr->user_id, cs->current_time)) {
       enable_virtual_start = 0;
     }
     if (enable_virtual_start) {
@@ -291,7 +291,7 @@ $(function() {
 %><p><button class="ui-button ui-widget" id="real-stop-button"><s:_>Finish contest</s:_></button></p><%
     }
 %></s:form><%
-  } else if (!cnts->exam_mode && global->is_virtual > 0 && start_time > 0 && stop_time > 0 && global->enable_virtual_restart > 0 && !cs->upsolving_mode) {
+  } else if (!cnts->exam_mode && global->is_virtual > 0 && start_time > 0 && stop_time > 0 && global->enable_virtual_restart > 0 && !serve_is_user_upsolving(cs, phr->user_id, cs->current_time)) {
 %><p><s:form><s:submit ac="virtual-restart" /></s:form></p>
 <p><b><s:_>ALL PREVIOUS SUBMITS WILL BE LOST!</s:_></b></p><%
   }

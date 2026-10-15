@@ -4943,7 +4943,7 @@ ns_write_olympiads_user_runs(
           accepting_mode = 1;
       }
     }
-    if (cs->upsolving_mode) accepting_mode = 1;
+    if (serve_is_user_upsolving(cs, phr->user_id, cs->current_time)) accepting_mode = 1;
   } else {
     accepting_mode = cs->accepting_mode;
     start_time = run_get_start_time(cs->runlog_state);
@@ -4972,6 +4972,10 @@ ns_write_olympiads_user_runs(
 
   enable_src_view = (cs->online_view_source > 0 || (!cs->online_view_source && global->team_enable_src_view > 0));
   enable_rep_view = (cs->online_view_report > 0 || (!cs->online_view_report && global->team_enable_rep_view > 0));
+  if (serve_is_user_auto_upsolving(cs, phr->user_id, cs->current_time)) {
+    if (global->auto_upsolving_view_source > 0) enable_src_view = 1;
+    if (global->auto_upsolving_view_protocol > 0) enable_rep_view = 1;
+  }
 
   if (enable_src_view)
     fprintf(fout, "<th%s>%s</th>", cl, _("View submitted answer"));
@@ -6233,7 +6237,7 @@ ns_get_user_problems_summary(
   xfree(user_flag);
 
   // nothing before contest start
-  if (start_time <= 0 && !cs->upsolving_mode) return;
+  if (start_time <= 0 && !serve_is_user_upsolving(cs, user_id, point_in_time)) return;
 
   for (int prob_id = 1; prob_id <= cs->max_prob; prob_id++) {
     if (!(cur_prob = cs->probs[prob_id])) continue;
@@ -6320,7 +6324,7 @@ ns_get_user_problems_summary(
     if (start_time > 0 && point_in_time >= start_time && cur_prob->disable_tab <= 0)
       pinfo[prob_id].status |= PROB_STATUS_TABABLE;
 
-    if (cs->upsolving_mode) {
+    if (serve_is_user_upsolving(cs, user_id, point_in_time)) {
       pinfo[prob_id].status |= PROB_STATUS_VIEWABLE | PROB_STATUS_SUBMITTABLE | PROB_STATUS_TABABLE;
     }
   }
@@ -7096,6 +7100,11 @@ fill_user_run_info(
 
   int enable_src_view = (cs->online_view_source > 0 || (!cs->online_view_source && global->team_enable_src_view > 0));
   int enable_rep_view = (cs->online_view_report > 0 || (!cs->online_view_report && global->team_enable_rep_view > 0));
+  int auto_report = serve_is_user_auto_upsolving(cs, pre->user_id, cs->current_time)
+                    && global->auto_upsolving_view_protocol > 0;
+  if (serve_is_user_auto_upsolving(cs, pre->user_id, cs->current_time)
+      && global->auto_upsolving_view_source > 0) enable_src_view = 1;
+  if (auto_report) enable_rep_view = 1;
   int separate_user_score = global->separate_user_score > 0 && cs->online_view_judge_score <= 0;
 
   if (vend_info) {
@@ -7264,7 +7273,7 @@ fill_user_run_info(
     case RUN_PENDING_REVIEW:
     case RUN_SUMMONED:
     case RUN_REJECTED:
-      if (cur_prob->team_enable_rep_view > 0) {
+      if (cur_prob->team_enable_rep_view > 0 || auto_report) {
         enable_report_link = 1;
       } else if ((pre->token_flags & TOKEN_TESTS_MASK)) {
         // report is paid by tokens
@@ -7285,7 +7294,7 @@ fill_user_run_info(
 
     case RUN_COMPILE_ERR:
     case RUN_STYLE_ERR:
-      if (cur_prob->team_enable_ce_view > 0 || cur_prob->team_enable_rep_view > 0) {
+      if (cur_prob->team_enable_ce_view > 0 || cur_prob->team_enable_rep_view > 0 || auto_report) {
         // reports enabled by contest settings
         enable_report_link = 1;
       } else if ((pre->token_flags & TOKEN_TESTS_MASK)) {
@@ -7323,7 +7332,7 @@ fill_user_run_info(
   } else if (enable_rep_view) {
     if (status == RUN_CHECK_FAILED || status == RUN_IGNORED
         || status == RUN_PENDING || !run_is_normal_status(status)
-        || (cur_prob && !cur_prob->team_enable_rep_view)) {
+        || (cur_prob && !cur_prob->team_enable_rep_view && !auto_report)) {
       // nothing
     } else {
       ri->is_report_enabled = 1;
@@ -7428,6 +7437,8 @@ new_write_user_runs(
   int enable_rep_view = 0;
   int separate_user_score = 0;
   struct virtual_end_info_s *vend_info = NULL;
+  int auto_report = serve_is_user_auto_upsolving(state, phr->user_id, state->current_time)
+                    && global->auto_upsolving_view_protocol > 0;
 
   time_t effective_time, *p_eff_time;
   int group_count;
@@ -7479,6 +7490,9 @@ new_write_user_runs(
 
   enable_src_view = (state->online_view_source > 0 || (!state->online_view_source && global->team_enable_src_view > 0));
   enable_rep_view = (state->online_view_report > 0 || (!state->online_view_report && global->team_enable_rep_view > 0));
+  if (serve_is_user_auto_upsolving(state, phr->user_id, state->current_time)
+      && global->auto_upsolving_view_source > 0) enable_src_view = 1;
+  if (auto_report) enable_rep_view = 1;
   separate_user_score = global->separate_user_score > 0 && state->online_view_judge_score <= 0;
 
   if (vend_info) {
@@ -7666,7 +7680,7 @@ new_write_user_runs(
       case RUN_PENDING_REVIEW:
       case RUN_SUMMONED:
       case RUN_REJECTED:
-        if (cur_prob->team_enable_rep_view > 0) {
+        if (cur_prob->team_enable_rep_view > 0 || auto_report) {
           enable_report_link = 1;
         } else if ((re.token_flags & TOKEN_TESTS_MASK)) {
           // report is paid by tokens
@@ -7687,7 +7701,7 @@ new_write_user_runs(
 
       case RUN_COMPILE_ERR:
       case RUN_STYLE_ERR:
-        if (cur_prob->team_enable_ce_view > 0 || cur_prob->team_enable_rep_view > 0) {
+        if (cur_prob->team_enable_ce_view > 0 || cur_prob->team_enable_rep_view > 0 || auto_report) {
           // reports enabled by contest settings
           enable_report_link = 1;
         } else if ((re.token_flags & TOKEN_TESTS_MASK)) {
@@ -7731,7 +7745,7 @@ new_write_user_runs(
       fprintf(f, "<td%s>", cl);
       if (status == RUN_CHECK_FAILED || status == RUN_IGNORED
           || status == RUN_PENDING || !run_is_normal_status(status)
-          || (cur_prob && !cur_prob->team_enable_rep_view)) {
+          || (cur_prob && !cur_prob->team_enable_rep_view && !auto_report)) {
         fprintf(f, "N/A");
       } else {
         fprintf(f, "%s%s</a>", ns_aref(href, sizeof(href), phr, NEW_SRV_ACTION_VIEW_REPORT, "run_id=%d", i),

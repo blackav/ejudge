@@ -1389,7 +1389,10 @@ csp_execute_int_standings(
 
         if (row->start_time <= 0) continue;
         time_t run_time = pe->time;
-        if (row->stop_time > 0 && run_time > row->stop_time && cs->upsolving_freeze_standings > 0) continue;
+        if (row->stop_time > 0 && run_time > row->stop_time
+            && ((cs->upsolving_mode <= 0 && global->is_virtual > 0 && global->auto_virtual_upsolving > 0
+                 && global->auto_upsolving_freeze_result > 0)
+                || cs->upsolving_freeze_standings > 0)) continue;
         time_t run_duration = run_time - row->start_time;
         if (run_duration < 0) run_duration = 0;
 
