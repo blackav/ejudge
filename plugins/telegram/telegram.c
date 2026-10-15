@@ -147,6 +147,7 @@ struct telegram_plugin_data
 
     int curl_verbose_flag;
     unsigned char *password_file;
+    unsigned char *telegram_api_host;
 
     tg_set_command_handler_t set_command_handler;
     void *set_command_handler_self;
@@ -285,6 +286,7 @@ finish_func(struct common_plugin_data *data)
 
     state->conn->vt->free(state->conn);
     xfree(state->password_file);
+    xfree(state->telegram_api_host);
     memset(state, 0, sizeof(*state));
     xfree(state);
     return 0;
@@ -381,10 +383,16 @@ prepare_func(
             if (xml_leaf_elem(p, &state->password_file, 1, 0) < 0) return -1;
         } else if (!strcmp(p->name[0], "curl_verbose")) {
             state->curl_verbose_flag = 1;
+        } else if (!strcmp(p->name[0], "telegram_api_host")) {
+            if (xml_leaf_elem(p, &state->telegram_api_host, 1, 0) < 0) return -1;
         }
     }
 
     state->enable_telegram_registration = config->enable_telegram_registration;
+
+    if (!state->telegram_api_host) {
+        state->telegram_api_host = xstrdup("https://api.telegram.org");
+    }
 
     struct generic_conn *conn = NULL;
     if (!storage || !*storage) storage = "mysql";
@@ -540,7 +548,8 @@ send_message(
         struct telegram_chat *tc,
         const unsigned char *text,
         const unsigned char *parse_mode,
-        const unsigned char *reply_markup)
+        const unsigned char *reply_markup,
+        const unsigned char *message_thread_id)
 {
     CURL *curl = NULL;
     char *url_s = NULL, *post_s = NULL, *resp_s = NULL;
@@ -557,7 +566,7 @@ send_message(
     {
         size_t url_z = 0;
         FILE *url_f = open_memstream(&url_s, &url_z);
-        fprintf(url_f, "https://api.telegram.org/bot%s/%s", bs->bot_id, "sendMessage");
+        fprintf(url_f, "%s/bot%s/%s", state->telegram_api_host, bs->bot_id, "sendMessage");
         fclose(url_f);
     }
 
@@ -565,6 +574,9 @@ send_message(
         size_t post_z = 0;
         FILE *post_f = open_memstream(&post_s, &post_z);
         fprintf(post_f, "chat_id=%lld", tc->_id);
+        if (message_thread_id && *message_thread_id) {
+            fprintf(post_f, "&message_thread_id=%s", message_thread_id);
+        }
         fprintf(post_f, "&text=");
         unsigned char *s = curl_easy_escape(curl, text, 0);
         fprintf(post_f, "%s", s);
@@ -637,7 +649,8 @@ send_message(
  * [1] - auth
  * [2] - chat_id
  * [3] - text
- * [4] - parse_mode
+ * [4] - parse_mode (optional)
+ * [5] - message_thread_id (optional)
  */
 static void
 packet_handler_telegram(int uid, int argc, char **argv, void *user)
@@ -659,7 +672,7 @@ packet_handler_telegram(int uid, int argc, char **argv, void *user)
     add_bot_id(state, argv[1]);
 
     url_f = open_memstream(&url_s, &url_z);
-    fprintf(url_f, "https://api.telegram.org/bot%s/%s", argv[1], "sendMessage");
+    fprintf(url_f, "%s/bot%s/%s", state->telegram_api_host, argv[1], "sendMessage");
     fclose(url_f); url_f = NULL;
     post_f = open_memstream(&post_s, &post_z);
     fprintf(post_f, "chat_id=");
@@ -667,6 +680,9 @@ packet_handler_telegram(int uid, int argc, char **argv, void *user)
     fprintf(stderr, "chat_id: %s\n", s);
     fprintf(post_f, "%s", s);
     free(s);
+    if (argc > 5 && argv[5] && argv[5][0]) {
+        fprintf(post_f, "&message_thread_id=%s", argv[5]);
+    }
     fprintf(post_f, "&text=");
     s = curl_easy_escape(curl, argv[3], 0);
     fprintf(post_f, "%s", s);
@@ -861,7 +877,7 @@ packet_handler_telegram_reviewed(int uid, int argc, char **argv, void *user)
         fclose(msg_f);
     }
 
-    send_result = send_message(state, bs, tc, msg_s, NULL, NULL);
+    send_result = send_message(state, bs, tc, msg_s, NULL, NULL, NULL);
 
 cleanup:
     xfree(msg_s);
@@ -941,7 +957,7 @@ packet_handler_telegram_replied(int uid, int argc, char **argv, void *user)
         fclose(msg_f);
     }
 
-    send_result = send_message(state, bs, tc, msg_s, NULL, NULL);
+    send_result = send_message(state, bs, tc, msg_s, NULL, NULL, NULL);
 
 cleanup:
     xfree(msg_s);
@@ -967,7 +983,8 @@ queue_packet_handler_telegram_replied(int uid, int argc, char **argv, void *user
   args[6] = user_id
   args[7] = user_name
   args[8] = prob_name
-  args[9] = NULL
+  args[9] = telegram_admin_thread_id (optional)
+  args[10] = NULL
  */
 static void
 packet_handler_telegram_cf(int uid, int argc, char **argv, void *user)
@@ -979,12 +996,14 @@ packet_handler_telegram_cf(int uid, int argc, char **argv, void *user)
     struct bot_state *bs = NULL;
     struct telegram_chat *tc = NULL;
 
-    if (argc != 9) {
+    if (argc != 9 && argc != 10) {
         err("wrong number of arguments for telegram_cf: %d", argc);
         goto cleanup;
     }
 
     bs = add_bot_id(state, argv[1]);
+
+    const unsigned char *message_thread_id = (argc >= 10 && argv[9] && *argv[9]) ? argv[9] : NULL;
 
     int contest_id, n;
     if (sscanf(argv[3], "%d%n", &contest_id, &n) != 1 || argv[3][n] || contest_id <= 0) {
@@ -1020,7 +1039,7 @@ packet_handler_telegram_cf(int uid, int argc, char **argv, void *user)
         fclose(msg_f);
     }
 
-    send_result = send_message(state, bs, tc, msg_s, NULL, NULL);
+    send_result = send_message(state, bs, tc, msg_s, NULL, NULL, message_thread_id);
 
 cleanup:
     xfree(msg_s);
@@ -1047,8 +1066,10 @@ queue_packet_handler_telegram_cf(int uid, int argc, char **argv, void *user)
   args[7] = user_name
   args[8] = prob_name
   args[9] = new_status
-  args[10] = NULL
+  args[10] = telegram_admin_thread_id (optional)
+  args[11] = NULL
  */
+
 static void
 packet_handler_telegram_notify(int uid, int argc, char **argv, void *user)
 {
@@ -1059,12 +1080,14 @@ packet_handler_telegram_notify(int uid, int argc, char **argv, void *user)
     struct bot_state *bs = NULL;
     struct telegram_chat *tc = NULL;
 
-    if (argc != 10) {
+    if (argc != 10 && argc != 11) {
         err("wrong number of arguments for telegram_notify: %d", argc);
         goto cleanup;
     }
 
     bs = add_bot_id(state, argv[1]);
+
+    const unsigned char *message_thread_id = (argc >= 11 && argv[10] && *argv[10]) ? argv[10] : NULL;
 
     int contest_id, n;
     if (sscanf(argv[3], "%d%n", &contest_id, &n) != 1 || argv[3][n] || contest_id <= 0) {
@@ -1101,7 +1124,7 @@ packet_handler_telegram_notify(int uid, int argc, char **argv, void *user)
         fclose(msg_f);
     }
 
-    send_result = send_message(state, bs, tc, msg_s, NULL, NULL);
+    send_result = send_message(state, bs, tc, msg_s, NULL, NULL, message_thread_id);
 
 cleanup:
     xfree(msg_s);
@@ -1126,7 +1149,8 @@ queue_packet_handler_telegram_notify(int uid, int argc, char **argv, void *user)
   args[5] = pr_total
   args[6] = pr_too_old
   args[7] = unans_clars
-  args[8] = NULL;
+  args[8] = telegram_admin_thread_id (optional)
+  args[9] = NULL;
  */
 static void
 packet_handler_telegram_reminder(int uid, int argc, char **argv, void *user)
@@ -1138,6 +1162,8 @@ packet_handler_telegram_reminder(int uid, int argc, char **argv, void *user)
     char *msg_s = NULL;
 
     bs = add_bot_id(state, argv[1]);
+
+    const unsigned char *message_thread_id = (argc >= 9 && argv[8] && *argv[8]) ? argv[8] : NULL;
 
     int n;
     long long chat_id;
@@ -1192,7 +1218,7 @@ packet_handler_telegram_reminder(int uid, int argc, char **argv, void *user)
         fclose(msg_f);
     }
 
-    send_result = send_message(state, bs, tc, msg_s, NULL, NULL);
+    send_result = send_message(state, bs, tc, msg_s, NULL, NULL, message_thread_id);
 
 cleanup:
     xfree(msg_s);
@@ -1276,7 +1302,7 @@ packet_handler_telegram_registered(int uid, int argc, char **argv, void *user)
     }
 
     fclose(msg_f); msg_f = NULL;
-    send_result = send_message(state, bs, tc, msg_s, NULL, NULL);
+    send_result = send_message(state, bs, tc, msg_s, NULL, NULL, NULL);
     free(msg_s); msg_s = NULL; msg_z = 0;
 
 cleanup:;
@@ -1464,7 +1490,7 @@ handle_register_0(
 
     if (state->enable_telegram_registration <= 0) {
         send_result = send_message(state, bs, mc,
-                                   "This option is not supported.", NULL, NULL);
+                                   "This option is not supported.", NULL, NULL, NULL);
         goto done;
     }
 
@@ -1499,10 +1525,10 @@ handle_register_0(
     fclose(rpl_f); rpl_f = NULL;
     if (!reply_count) {
         send_result = send_message(state, bs, mc,
-                                   "No contests available.", NULL, NULL);
+                                   "No contests available.", NULL, NULL, NULL);
         goto done;
     }
-    send_result = send_message(state, bs, mc, "Select contest", NULL, rpl_s);
+    send_result = send_message(state, bs, mc, "Select contest", NULL, rpl_s, NULL);
     tcs->command = xstrdup("/register");
     tcs->state = 1;
 
@@ -1529,7 +1555,7 @@ handle_register_1(
 
     if (state->enable_telegram_registration <= 0) {
         send_result = send_message(state, bs, mc,
-                                   "This option is not supported.", NULL, NULL);
+                                   "This option is not supported.", NULL, NULL, NULL);
         goto done;
     }
 
@@ -1541,7 +1567,7 @@ handle_register_1(
         if (errno || *eptr != ' ' || eptr == (char*) tem->text
             || v <= 0 || (int) v != v) {
             send_result = send_message(state, bs, mc,
-                                       "Invalid value.", NULL, NULL);
+                                       "Invalid value.", NULL, NULL, NULL);
             goto done;
         }
         contest_id = v;
@@ -1552,13 +1578,13 @@ handle_register_1(
         || cnts->enable_telegram_registration <= 0
         || cnts->closed > 0) {
         send_result = send_message(state, bs, mc,
-                                   "Invalid contest.", NULL, NULL);
+                                   "Invalid contest.", NULL, NULL, NULL);
         goto done;
     }
 
     if (!cnts->register_url) {
         send_result = send_message(state, bs, mc,
-                                   "Contest is not configured.", NULL, NULL);
+                                   "Contest is not configured.", NULL, NULL, NULL);
         goto done;
     }
 
@@ -1570,7 +1596,7 @@ handle_register_1(
 
     if (!state->conn->vt->registration_save) {
         send_result = send_message(state, bs, mc,
-                                   "Operation not supported.", NULL, NULL);
+                                   "Operation not supported.", NULL, NULL, NULL);
         goto done;
     }
 
@@ -1578,7 +1604,7 @@ handle_register_1(
                                                  mc->_id, contest_id);
     if (res < 0) {
         send_result = send_message(state, bs, mc,
-                                   "Operation failed.", NULL, NULL);
+                                   "Operation failed.", NULL, NULL, NULL);
         goto done;
     }
 
@@ -1587,7 +1613,7 @@ handle_register_1(
             cnts->register_url, key_str, contest_id);
     fclose(rpl_f); rpl_f = NULL;
 
-    send_result = send_message(state, bs, mc, rpl_s, NULL, NULL);
+    send_result = send_message(state, bs, mc, rpl_s, NULL, NULL, NULL);
 
 done:;
     if (rpl_f) fclose(rpl_f);
@@ -1656,7 +1682,7 @@ handle_incoming_message(
             FILE *reply_f = open_memstream(&reply_s, &reply_z);
             fprintf(reply_f, "This chat id is %lld\n", tem->chat->id);
             fclose(reply_f); reply_f = NULL;
-            send_result = send_message(state, bs, mc, reply_s, NULL, NULL);
+            send_result = send_message(state, bs, mc, reply_s, NULL, NULL, NULL);
             free(reply_s);
             goto cleanup;
         } else if (tem->text[0] == '/' && strchr(tem->text, '@')) {
@@ -1670,7 +1696,7 @@ handle_incoming_message(
             fprintf(reply_f, "%s\n", txt);
             xfree(txt); txt = NULL;
             fclose(reply_f); reply_f = NULL;
-            send_result = send_message(state, bs, mc, reply_s, NULL, NULL);
+            send_result = send_message(state, bs, mc, reply_s, NULL, NULL, NULL);
             free(reply_s);
             goto cleanup;
         } else {
@@ -1682,7 +1708,7 @@ handle_incoming_message(
                     "Won't speak in public. Let's use a private chat.\n"
                     "This chat id is %lld\n", tem->chat->id);
             fclose(reply_f); reply_f = NULL;
-            send_result = send_message(state, bs, mc, reply_s, NULL, NULL);
+            send_result = send_message(state, bs, mc, reply_s, NULL, NULL, NULL);
             free(reply_s);
             */
             goto cleanup;
@@ -1704,32 +1730,32 @@ handle_incoming_message(
             tcs->command = xstrdup(tem->text);
             tcs->state = 1;
             update_state = 1;
-            send_result = send_message(state, bs, mc, "Enter Ejudge Telegram Token. You may obtain a token on Settings tab in the ejudge user interface.", NULL, NULL);
+            send_result = send_message(state, bs, mc, "Enter Ejudge Telegram Token. You may obtain a token on Settings tab in the ejudge user interface.", NULL, NULL, NULL);
         } else if (!strcmp(tem->text, "/unsubscribe")) {
             tcs->command = xstrdup(tem->text);
             tcs->state = 1;
             update_state = 1;
-            send_result = send_message(state, bs, mc, "Enter Ejudge Telegram Token. You may obtain a token on Settings tab in the ejudge user interface.", NULL, NULL);
+            send_result = send_message(state, bs, mc, "Enter Ejudge Telegram Token. You may obtain a token on Settings tab in the ejudge user interface.", NULL, NULL, NULL);
         } else if (!strcmp(tem->text, "/cancel")) {
-            send_result = send_message(state, bs, mc, "Operation canceled.", NULL, NULL);
+            send_result = send_message(state, bs, mc, "Operation canceled.", NULL, NULL, NULL);
             telegram_chat_state_reset(tcs);
             update_state = 1;
         } else if (!strcmp(tem->text, "/start")) {
-            send_result = send_message(state, bs, mc, "Hi there! This is Eddie, your shipboard computer, and I'm feeling just great, guys, and I know I'm just going to get a bundle of kicks out of any program you care to run through me.", NULL, NULL);
+            send_result = send_message(state, bs, mc, "Hi there! This is Eddie, your shipboard computer, and I'm feeling just great, guys, and I know I'm just going to get a bundle of kicks out of any program you care to run through me.", NULL, NULL, NULL);
             telegram_chat_state_reset(tcs);
             update_state = 1;
         } else if (!strcmp(tem->text, "/password")) {
             tcs->command = xstrdup(tem->text);
             tcs->state = 1;
             update_state = 1;
-            send_result = send_message(state, bs, mc, "Enter the group number (for example, 201) and the student ID number (for example, 02220001), separated by spaces.", NULL, NULL);
+            send_result = send_message(state, bs, mc, "Enter the group number (for example, 201) and the student ID number (for example, 02220001), separated by spaces.", NULL, NULL, NULL);
         } else if (!strcmp(tem->text, "/chatid")) {
             char *reply_s = NULL;
             size_t reply_z = 0;
             FILE *reply_f = open_memstream(&reply_s, &reply_z);
             fprintf(reply_f, "This chat id is %lld\n", tem->chat->id);
             fclose(reply_f); reply_f = NULL;
-            send_result = send_message(state, bs, mc, reply_s, NULL, NULL);
+            send_result = send_message(state, bs, mc, reply_s, NULL, NULL, NULL);
             free(reply_s);
             telegram_chat_state_reset(tcs);
             update_state = 1;
@@ -1743,19 +1769,19 @@ handle_incoming_message(
                                        "/unsubscribe - unsubscribe from event\n"
                                        "/cancel - cancel the current command\n"
                                        "/help - get this help\n",
-                                       NULL, NULL);
+                                       NULL, NULL, NULL);
         } else {
-            send_result = send_message(state, bs, mc, "Sorry, cannot understand you! Type /help for help.", NULL, NULL);
+            send_result = send_message(state, bs, mc, "Sorry, cannot understand you! Type /help for help.", NULL, NULL, NULL);
         }
     } else if (tcs->state == 1) {
         if (!strcmp(tem->text, "/cancel")) {
-            send_result = send_message(state, bs, mc, "Ok", NULL, NULL);
+            send_result = send_message(state, bs, mc, "Ok", NULL, NULL, NULL);
             telegram_chat_state_reset(tcs);
             update_state = 1;
         } else {
             if (!strcmp(tcs->command, "/password")) {
                 unsigned char *reply = handle_get_password(state, tem);
-                send_result =  send_message(state, bs, mc, reply, NULL, NULL);
+                send_result =  send_message(state, bs, mc, reply, NULL, NULL, NULL);
                 tcs->state = 0;
                 xfree(tcs->command); tcs->command = NULL;
                 xfree(tcs->token); tcs->token = NULL;
@@ -1767,7 +1793,7 @@ handle_incoming_message(
             } else {
                 int token_val, n;
                 if (sscanf(tem->text, "%d%n", &token_val, &n) != 1 || tem->text[n] || token_val < 0 || token_val >= 1000000) {
-                    send_result = send_message(state, bs, mc, "Token is invalid. Try again, or /cancel.", NULL, NULL);
+                    send_result = send_message(state, bs, mc, "Token is invalid. Try again, or /cancel.", NULL, NULL, NULL);
                 } else {
                     unsigned char buf[64];
                     snprintf(buf, sizeof(buf), "%d", token_val);
@@ -1775,11 +1801,11 @@ handle_incoming_message(
 
                     int r = state->conn->vt->token_fetch(state->conn, buf, &token);
                     if (r < 0) {
-                        send_result = send_message(state, bs, mc, "Internal error. Operation canceled.", NULL, NULL);
+                        send_result = send_message(state, bs, mc, "Internal error. Operation canceled.", NULL, NULL, NULL);
                         telegram_chat_state_reset(tcs);
                         update_state = 1;
                     } else if (!r || !token) {
-                        send_result = send_message(state, bs, mc, "No such token. Try again, or /cancel.", NULL, NULL);
+                        send_result = send_message(state, bs, mc, "No such token. Try again, or /cancel.", NULL, NULL, NULL);
                     } else {
                         {
                             char *msg_s = NULL;
@@ -1802,7 +1828,7 @@ handle_incoming_message(
                             fprintf(msg_f, "\n");
                             fprintf(msg_f, "Please, select options. Press /done when done.\n");
                             fclose(msg_f);
-                            send_result = send_message(state, bs, mc, msg_s, NULL, "{ \"keyboard\": [[{\"text\": \"review\"}, {\"text\": \"reply\"},{\"text\": \"/done\"}, {\"text\":\"/cancel\"}]]}");
+                            send_result = send_message(state, bs, mc, msg_s, NULL, "{ \"keyboard\": [[{\"text\": \"review\"}, {\"text\": \"reply\"},{\"text\": \"/done\"}, {\"text\":\"/cancel\"}]]}", NULL);
                             free(msg_s);
                         }
                         if (send_result && send_result->ok) {
@@ -1821,19 +1847,19 @@ handle_incoming_message(
         }
     } else if (tcs->state == 2) {
         if (!strcmp(tem->text, "/cancel")) {
-            send_result = send_message(state, bs, mc, "Operation canceled.", NULL, "{ \"hide_keyboard\": true}");
+            send_result = send_message(state, bs, mc, "Operation canceled.", NULL, "{ \"hide_keyboard\": true}", NULL);
             telegram_chat_state_reset(tcs);
             update_state = 1;
         } else if (!strcmp(tem->text, "/done")) {
             int r = state->conn->vt->token_fetch(state->conn, tcs->token, &token);
             if (r < 0) {
-                send_result = send_message(state, bs, mc, "Internal error. Operation canceled.", NULL, NULL);
+                send_result = send_message(state, bs, mc, "Internal error. Operation canceled.", NULL, NULL, NULL);
             } else if (!r) {
-                send_result = send_message(state, bs, mc, "Token expired. Operation failed.", NULL, NULL);
+                send_result = send_message(state, bs, mc, "Token expired. Operation failed.", NULL, NULL, NULL);
             } else {
                 sub = state->conn->vt->subscription_fetch(state->conn, bs->bot_id, token->user_id, token->contest_id);
                 if (!sub && !strcmp(tcs->command, "/unsubscribe")) {
-                    send_result = send_message(state, bs, mc, "You have no subscriptions. Nothing to unsubscribe.", NULL, "{ \"hide_keyboard\": true}");
+                    send_result = send_message(state, bs, mc, "You have no subscriptions. Nothing to unsubscribe.", NULL, "{ \"hide_keyboard\": true}", NULL);
                 } else {
                     if (!sub) sub = telegram_subscription_create(bs->bot_id, token->user_id, token->contest_id);
                     if (!strcmp(tcs->command, "/subscribe")) {
@@ -1856,7 +1882,7 @@ handle_incoming_message(
                             fprintf(msg_f, "    notify when my message has been answered\n");
                         }
                         fclose(msg_f);
-                        send_result = send_message(state, bs, mc, msg_s, NULL, "{ \"hide_keyboard\": true}");
+                        send_result = send_message(state, bs, mc, msg_s, NULL, "{ \"hide_keyboard\": true}", NULL);
                         free(msg_s);
                     }
                     state->conn->vt->subscription_save(state->conn, sub);
@@ -1866,11 +1892,11 @@ handle_incoming_message(
             telegram_chat_state_reset(tcs);
             update_state = 1;
         } else if (!strcmp(tem->text, "review")) {
-            send_result = send_message(state, bs, mc, "Review Complete notification chosen", NULL, NULL);
+            send_result = send_message(state, bs, mc, "Review Complete notification chosen", NULL, NULL, NULL);
             tcs->review_flag = 1;
             update_state = 1;
         } else if (!strcmp(tem->text, "reply")) {
-            send_result = send_message(state, bs, mc, "Message Replied notification chosen", NULL, NULL);
+            send_result = send_message(state, bs, mc, "Message Replied notification chosen", NULL, NULL, NULL);
             tcs->reply_flag = 1;
             update_state = 1;
         }
@@ -1956,7 +1982,7 @@ get_updates(struct telegram_plugin_data *state, struct bot_state *bs)
 
     {
         FILE *url_f = open_memstream(&url_s, &url_z);
-        fprintf(url_f, "https://api.telegram.org/bot%s/%s", bs->bot_id, "getUpdates");
+        fprintf(url_f, "%s/bot%s/%s", state->telegram_api_host, bs->bot_id, "getUpdates");
         if (pbs->update_id) {
             fprintf(url_f, "?offset=%lld", pbs->update_id + 1);
         }

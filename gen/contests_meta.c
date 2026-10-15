@@ -133,6 +133,7 @@ static struct meta_info_item meta_info_contest_desc_data[] =
   [CNTS_telegram_bot_id] = { CNTS_telegram_bot_id, 's', XSIZE(struct contest_desc, telegram_bot_id), "telegram_bot_id", XOFFSET(struct contest_desc, telegram_bot_id) },
   [CNTS_telegram_admin_chat_id] = { CNTS_telegram_admin_chat_id, 's', XSIZE(struct contest_desc, telegram_admin_chat_id), "telegram_admin_chat_id", XOFFSET(struct contest_desc, telegram_admin_chat_id) },
   [CNTS_telegram_user_chat_id] = { CNTS_telegram_user_chat_id, 's', XSIZE(struct contest_desc, telegram_user_chat_id), "telegram_user_chat_id", XOFFSET(struct contest_desc, telegram_user_chat_id) },
+  [CNTS_telegram_admin_thread_id] = { CNTS_telegram_admin_thread_id, 's', XSIZE(struct contest_desc, telegram_admin_thread_id), "telegram_admin_thread_id", XOFFSET(struct contest_desc, telegram_admin_thread_id) },
   [CNTS_avatar_plugin] = { CNTS_avatar_plugin, 's', XSIZE(struct contest_desc, avatar_plugin), "avatar_plugin", XOFFSET(struct contest_desc, avatar_plugin) },
   [CNTS_content_plugin] = { CNTS_content_plugin, 's', XSIZE(struct contest_desc, content_plugin), "content_plugin", XOFFSET(struct contest_desc, content_plugin) },
   [CNTS_content_url_prefix] = { CNTS_content_url_prefix, 's', XSIZE(struct contest_desc, content_url_prefix), "content_url_prefix", XOFFSET(struct contest_desc, content_url_prefix) },
@@ -444,6 +445,9 @@ void contest_desc_copy(struct contest_desc *dst, const struct contest_desc *src)
   if (src->telegram_user_chat_id) {
     dst->telegram_user_chat_id = strdup(src->telegram_user_chat_id);
   }
+  if (src->telegram_admin_thread_id) {
+    dst->telegram_admin_thread_id = strdup(src->telegram_admin_thread_id);
+  }
   if (src->avatar_plugin) {
     dst->avatar_plugin = strdup(src->avatar_plugin);
   }
@@ -550,6 +554,7 @@ void contest_desc_free(struct contest_desc *ptr)
   free(ptr->telegram_bot_id);
   free(ptr->telegram_admin_chat_id);
   free(ptr->telegram_user_chat_id);
+  free(ptr->telegram_admin_thread_id);
   free(ptr->avatar_plugin);
   free(ptr->content_plugin);
   free(ptr->content_url_prefix);
