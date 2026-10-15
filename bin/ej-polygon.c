@@ -125,6 +125,8 @@ struct ProblemInfo
     int discard_id;
     unsigned char *edit_session;
     int has_hidden_groups;
+    int communication;
+    unsigned char *communication_flags;
 
     // extracted from problem.xml
     int time_limit_ms;
@@ -1425,6 +1427,7 @@ free_problem_infos(struct ProblemSet *probset)
         xfree(pi->xml_main_solution_path);
         xstrarrayfree(&pi->xml_source_path);
         xfree(pi->testlib_h_path);
+        xfree(pi->communication_flags);
 
         for (int i = 0; i < pi->test_u; ++i) {
             struct TestInfo *ti = &pi->tests[i];
@@ -2647,6 +2650,29 @@ save_valuer_cfg(
     return 0;
 }
 
+static unsigned char *
+make_communication_flags(int run_count, int value)
+{
+    if (run_count < 2) return NULL;
+    unsigned char c = value ? '1' : '0';
+    unsigned char *s = xmalloc(2 * run_count);
+    int p = 0;
+    for (int i = 0; i < run_count; ++i) {
+        if (i) s[p++] = ' ';
+        s[p++] = c;
+    }
+    s[p] = 0;
+    return s;
+}
+
+static int
+set_communication_flag(unsigned char *flags, int run_count, int run_num, int value)
+{
+    if (!flags || run_count < 2 || run_num < 1 || run_num > run_count) return -1;
+    flags[(run_num - 1) * 2] = value ? '1' : '0';
+    return 0;
+}
+
 static int
 new_parse_polygon_xml(
         FILE *log_f,
@@ -2705,6 +2731,11 @@ new_parse_polygon_xml(
         }
         if (ppj->output_file && ppj->output_file[0]) {
             pi->output_file = xstrdup(ppj->output_file);
+        }
+        if (ppj->run_count >= 2) {
+            pi->communication = ppj->run_count;
+            xfree(pi->communication_flags);
+            pi->communication_flags = make_communication_flags(ppj->run_count, 0);
         }
         for (int tsi = 0; tsi < ppj->testsets.u; ++tsi) {
             struct ppxml_testset *ppts = ppj->testsets.v[tsi];
@@ -2856,8 +2887,24 @@ new_parse_polygon_xml(
                 pi->xml_checker_path = xstrdup(ppc->source->path);
             }
         }
-        if (ppa->interactor && ppa->interactor->source && ppa->interactor->source->path && ppa->interactor->source->path[0]) {
-            pi->xml_interactor_path = xstrdup(ppa->interactor->source->path);
+        if (ppa->interactor) {
+            if (ppa->interactor->source && ppa->interactor->source->path && ppa->interactor->source->path[0]) {
+                pi->xml_interactor_path = xstrdup(ppa->interactor->source->path);
+            }
+            if (pi->communication >= 2) {
+                if (!pi->communication_flags) {
+                    pi->communication_flags = make_communication_flags(pi->communication, 0);
+                }
+                if (ppa->interactor->runs && ppa->interactor->runs->n.u > 0) {
+                    for (size_t i = 0; i < ppa->interactor->runs->n.u; ++i) {
+                      const struct ppxml_run *rr = ppa->interactor->runs->n.v[i];
+                      if (set_communication_flag(pi->communication_flags, pi->communication, rr->value, 1) < 0) {
+                        fprintf(log_f, "interactor run %d is out of range [1..%d]\n", rr->value, pi->communication);
+                        goto done;
+                      }
+                    }
+                }
+            }
         }
         if (ppa->validators) {
             struct ppxml_validators *ppvv = ppa->validators;
@@ -2975,15 +3022,30 @@ old_parse_polygon_xml(
         } else if (!strcmp(t1->name[0], "judging")) {
             const unsigned char *input_file = NULL;
             const unsigned char *output_file = NULL;
+            int run_count = -1;
             for (a = t1->first; a; a = a->next) {
                 if (!strcmp(a->name[0], "input-file") && a->text[0]) {
                     input_file = a->text;
                 } else if (!strcmp(a->name[0], "output-file") && a->text[0]) {
                     output_file = a->text;
+                } else if (!strcmp(a->name[0], "run-count") && a->text[0]) {
+                    if (xml_parse_int(log_f, file_name, a->line, a->column, a->text, &run_count)) {
+                        fprintf(log_f, "failed to parse run-count attribute\n");
+                        goto done;
+                    }
+                    if (run_count < 0) {
+                        fprintf(log_f, "invalid run-count value %d\n", run_count);
+                        goto done;
+                    }
                 }
             }
             if (input_file) pi->input_file = xstrdup(input_file);
             if (output_file) pi->output_file = xstrdup(output_file);
+            if (run_count >= 2) {
+                pi->communication = run_count;
+                xfree(pi->communication_flags);
+                pi->communication_flags = make_communication_flags(run_count, 0);
+            }
             for (struct xml_tree *t2 = t1->first_down; t2; t2 = t2->right) {
                 if (!strcmp(t2->name[0], "testset")) {
                     const unsigned char *testset_name = NULL;
@@ -3267,6 +3329,37 @@ old_parse_polygon_xml(
                                     src_path = a->text;
                                 }
                             }
+                        } else if (!strcmp(t3->name[0], "runs")) {
+                            for (struct xml_tree *t4 = t3->first_down; t4; t4 = t4->right) {
+                                if (strcmp(t4->name[0], "run")) continue;
+                                int run_num = -1;
+                                if (!t4->text || !t4->text[0]) {
+                                    fprintf(log_f, "empty <run> in <interactor><runs>\n");
+                                    goto done;
+                                }
+                                if (xml_parse_int(log_f, file_name, t4->line, t4->column, t4->text, &run_num)) {
+                                    fprintf(log_f, "failed to parse <run> value '%s'\n", t4->text);
+                                    goto done;
+                                }
+                                if (run_num <= 0) {
+                                    fprintf(log_f, "invalid interactor run value %d\n", run_num);
+                                    goto done;
+                                }
+                                if (pi->communication >= 2) {
+                                    if (!pi->communication_flags) {
+                                        pi->communication_flags = make_communication_flags(pi->communication, 0);
+                                    }
+                                    if (set_communication_flag(pi->communication_flags, pi->communication, run_num, 1) < 0) {
+                                        fprintf(log_f, "interactor run %d is out of range [1..%d]\n", run_num, pi->communication);
+                                        goto done;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    if (pi->communication >= 2) {
+                        if (!pi->communication_flags) {
+                            pi->communication_flags = make_communication_flags(pi->communication, 0);
                         }
                     }
                     if (!src_path) {
@@ -3935,6 +4028,9 @@ process_polygon_zip(
         }
     }
 
+    if (pi->communication >= 2) {
+        fprintf(log_f, "    communication: %d\n", pi->communication);
+    }
     if (pi->standard_checker) {
         fprintf(log_f, "    standard_checker: %s\n", pi->standard_checker);
     }
@@ -4055,6 +4151,12 @@ process_polygon_zip(
     }
     if (pi->solution_cmd && pkt->ignore_main_solution <= 0) {
         prob_cfg->solution_cmd = xstrdup(pi->solution_cmd);
+    }
+    if (pi->communication >= 2) {
+        prob_cfg->communication = pi->communication;
+        if (pi->communication_flags && pi->communication_flags[0]) {
+            prob_cfg->communication_flags = xstrdup(pi->communication_flags);
+        }
     }
     prob_cfg->enable_testlib_mode = 1;
     if (pkt->binary_input > 0) {
