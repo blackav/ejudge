@@ -24,6 +24,7 @@
 #include "ejudge/expat_iface.h"
 #include "ejudge/errlog.h"
 #include "ejudge/xml_utils.h"
+#include "ejudge/misctext.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -1798,4 +1799,64 @@ ejudge_cfg_load_token_from_file(
   while (bufl > 0 && isspace((unsigned char) buf[bufl])) --bufl;
   buf[bufl] = 0;
   return buf;
+}
+
+#define ARMOR(s)  html_armor_buf(&ab, (s))
+
+int
+ejudge_cfg_unparse_capabilities_xml(
+        FILE *f,
+        const struct ejudge_cfg *cfg)
+{
+  if (!cfg->caps_file) return 0;
+  if (!cfg->caps_file_info) return 0;
+  if (!cfg->caps_file_info->root) return 0;
+
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  struct ejudge_cfg *root = cfg->caps_file_info->root;
+  fprintf(f, "<?xml version=\"1.0\" encoding=\"%s\"?>\n"
+          "<config>\n", EJUDGE_CHARSET);
+  fprintf(f, "  <user_map>\n");
+  if (root->user_map) {
+    for (const struct xml_tree *p = root->user_map->first_down; p; p = p->right) {
+      const struct ejudge_cfg_user_map *m = (const struct ejudge_cfg_user_map*) p;
+      fprintf(f, "    <map system_user=\"%s\"", ARMOR(m->system_user_str));
+      fprintf(f, " local_user=\"%s\" />\n", ARMOR(m->local_user_str));
+    }
+  }
+  fprintf(f, "  </user_map>\n");
+  fprintf(f, "  <caps>\n");
+  if (root->capabilities.first) {
+    for (const struct opcap_list_item *p = root->capabilities.first; p;
+         p = (const struct opcap_list_item*) p->b.right) {
+      fprintf(f, "    <cap login=\"%s\">\n", ARMOR(p->login));
+      unsigned char *s = opcaps_unparse(6, 60, p->caps);
+      fprintf(f, "%s", s);
+      xfree(s);
+      fprintf(f, "    </cap>\n");
+    }
+  }
+  fprintf(f, "  </caps>\n");
+  if (root->oauth_user_map) {
+    fprintf(f, "  <oauth_user_map>\n");
+    for (struct xml_tree *q = root->oauth_user_map->first_down; q; q = q->right) {
+      if (q->tag != TG_OAUTH_ENTRY) continue;
+      struct ejudge_cfg_oauth_user_map *m = (struct ejudge_cfg_oauth_user_map *) q;
+      fprintf(f, "    <oauth_entry");
+      if (m->oauth_user_str && m->oauth_user_str[0]) {
+        fprintf(f, " oauth_user=\"%s\"", ARMOR(m->oauth_user_str));
+      }
+      if (m->local_user_str && m->local_user_str[0]) {
+        fprintf(f, " local_user=\"%s\"", ARMOR(m->local_user_str));
+      }
+      if (m->provider && m->provider[0]) {
+        fprintf(f, " provider=\"%s\"", ARMOR(m->provider));
+      }
+      fprintf(f, " />\n");
+    }
+    fprintf(f, "  </oauth_user_map>\n");
+  }
+  fprintf(f, "</config>\n");
+  html_armor_free(&ab);
+  return 0;
 }

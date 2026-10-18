@@ -3909,7 +3909,6 @@ save_caps_file(FILE *log_f, const struct ejudge_cfg *cfg)
   if (!cfg->caps_file_info->root) return 0;
   if (!cfg->caps_file_info->path) return 0;
 
-  struct ejudge_cfg *root = cfg->caps_file_info->root;
   int pid = getpid();
   time_t cur_time = time(0);
   struct tm *ptm = localtime(&cur_time);
@@ -3925,31 +3924,7 @@ save_caps_file(FILE *log_f, const struct ejudge_cfg *cfg)
     fprintf(log_f, "failed to open '%s' for writing\n", caps_xml_tmp_path);
     FAIL(SSERV_ERR_FS_ERROR);
   }
-
-  fprintf(f, "<?xml version=\"1.0\" encoding=\"%s\"?>\n"
-          "<config>\n", EJUDGE_CHARSET);
-  fprintf(f, "  <user_map>\n");
-  if (root->user_map) {
-    for (const struct xml_tree *p = root->user_map->first_down; p; p = p->right) {
-      const struct ejudge_cfg_user_map *m = (const struct ejudge_cfg_user_map*) p;
-      fprintf(f, "    <map system_user=\"%s\"", ARMOR(m->system_user_str));
-      fprintf(f, " local_user=\"%s\" />\n", ARMOR(m->local_user_str));
-    }
-  }
-  fprintf(f, "  </user_map>\n");
-  fprintf(f, "  <caps>\n");
-  if (root->capabilities.first) {
-    for (const struct opcap_list_item *p = root->capabilities.first; p;
-         p = (const struct opcap_list_item*) p->b.right) {
-      fprintf(f, "    <cap login=\"%s\">\n", ARMOR(p->login));
-      unsigned char *s = opcaps_unparse(6, 60, p->caps);
-      fprintf(f, "%s", s);
-      xfree(s);
-      fprintf(f, "    </cap>\n");
-    }
-  }
-  fprintf(f, "  </caps>\n");
-  fprintf(f, "</config>\n");
+  ejudge_cfg_unparse_capabilities_xml(f, cfg);
   fclose(f); f = NULL;
 
   struct stat stb;

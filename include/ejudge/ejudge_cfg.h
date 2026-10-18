@@ -251,4 +251,9 @@ ejudge_cfg_load_token_from_file(
         const struct ejudge_cfg *cfg,
         const unsigned char *token_file);
 
+int
+ejudge_cfg_unparse_capabilities_xml(
+        FILE *f,
+        const struct ejudge_cfg *cfg);
+
 #endif /* __EJUDGE_CFG_H__ */
