@@ -14,12 +14,12 @@
  * GNU General Public License for more details.
  */
 
-#include "ejudge/config.h"
-
 #ifdef __MINGW32__
 #undef HAVE_PWD_H
 #endif
 
+#include "ejudge/config.h"
+#include "ejudge/opcaps.h"
 #include "ejudge/ejudge_cfg.h"
 #include "ejudge/expat_iface.h"
 #include "ejudge/errlog.h"
@@ -1859,4 +1859,178 @@ ejudge_cfg_unparse_capabilities_xml(
   fprintf(f, "</config>\n");
   html_armor_free(&ab);
   return 0;
+}
+
+int
+ejudge_cfg_delete_oauth_entry(
+        struct ejudge_cfg *root,
+        const unsigned char *oauth_user_str)
+{
+  if (!root || !root->oauth_user_map || !oauth_user_str) return 0;
+  int changed = 0;
+  struct xml_tree *p = root->oauth_user_map->first_down;
+  while (p) {
+    if (p->tag == TG_OAUTH_ENTRY) {
+      struct ejudge_cfg_oauth_user_map *pp = (struct ejudge_cfg_oauth_user_map *) p;
+      if (!strcmp(pp->oauth_user_str, oauth_user_str)) {
+        struct xml_tree *q = p->left;
+        xml_unlink_node(p);
+        xml_tree_free(p, &ejudge_config_parse_spec);
+        p = q;
+        changed = 1;
+        continue;
+      }
+    }
+
+    p = p->left;
+  }
+  if (!root->oauth_user_map->first_down) {
+    root->oauth_user_map = NULL;
+    changed = 1;
+  }
+  return changed;
+}
+
+int
+ejudge_cfg_upsert_oauth_entry(
+        struct ejudge_cfg *root,
+        const unsigned char *oauth_user_str,
+        const unsigned char *local_user_str,
+        const unsigned char *provider)
+{
+  if (!root || !oauth_user_str || !local_user_str) return 0;
+  int changed = 0;
+  if (!root->oauth_user_map) {
+    struct xml_tree *p = new_node(TG_OAUTH_USER_MAP);
+    xml_link_node_last(&root->b, p);
+    root->oauth_user_map = p;
+    changed = 1;
+  }
+  for (struct xml_tree *p = root->oauth_user_map->first_down; p; p = p->left) {
+    if (p->tag == TG_OAUTH_ENTRY) {
+      struct ejudge_cfg_oauth_user_map *pp = (struct ejudge_cfg_oauth_user_map *) p;
+      if (pp->oauth_user_str && !strcmp(pp->oauth_user_str, oauth_user_str)) {
+        if (!pp->local_user_str || strcmp(pp->local_user_str, local_user_str) != 0) {
+          xfree(pp->local_user_str);
+          pp->local_user_str = xstrdup(local_user_str);
+          changed = 1;
+        }
+        if (!pp->provider && !provider) {
+          // nothing
+        } else if (!pp->provider) {
+          pp->provider = xstrdup(provider);
+          changed = 1;
+        } else if (!provider) {
+          xfree(pp->provider);
+          pp->provider = NULL;
+          changed = 1;
+        } else if (strcmp(pp->provider, provider) != 0) {
+          xfree(pp->provider);
+          pp->provider = xstrdup(provider);
+          changed = 1;
+        }
+        return changed;
+      }
+    }
+  }
+  struct xml_tree *p = new_node(TG_OAUTH_ENTRY);
+  struct ejudge_cfg_oauth_user_map *pp = (struct ejudge_cfg_oauth_user_map *) p;
+  pp->oauth_user_str = xstrdup(oauth_user_str);
+  pp->local_user_str = xstrdup(local_user_str);
+  if (provider) {
+    pp->provider = xstrdup(provider);
+  }
+  xml_link_node_last(root->oauth_user_map, p);
+  changed = 1;
+  return changed;
+}
+
+int
+ejudge_cfg_upsert_caps(
+        struct ejudge_cfg *root,
+        const unsigned char *login,
+        opcap_t caps,
+        int operation)
+{
+  if (!root || !login) return 0;
+  if (operation < 1 || operation > 4) return 0;
+  int changed = 0;
+
+  // operation: 1: set, 2: clear, 3: flip, 4: copy
+  if (!root->caps_node) {
+    root->caps_node = new_node(TG_CAPS);
+    xml_link_node_last(&root->b, root->caps_node);
+  }
+  for (struct xml_tree *p = root->caps_node->first_down; p; p = p->left) {
+    if (p->tag == TG_CAP) {
+      struct opcap_list_item *pp = (struct opcap_list_item*) p;
+      if (pp->login && !strcmp(pp->login, login)) {
+        opcap_t newcaps = pp->caps;
+        switch (operation) {
+        case 1: newcaps |= caps; break;
+        case 2: newcaps &= ~caps; break;
+        case 3: newcaps ^= caps; break;
+        case 4: newcaps = caps; break;
+        }
+        if (newcaps != pp->caps) {
+          pp->caps = newcaps;
+          changed = 1;
+        }
+        return changed;
+      }
+    }
+  }
+  opcap_t newcaps = 0;
+  switch (operation) {
+  case 1: newcaps |= caps; break;
+  case 2: newcaps &= ~caps; break;
+  case 3: newcaps ^= caps; break;
+  case 4: newcaps = caps; break;
+  }
+  if (newcaps == 0) {
+    return changed;
+  }
+  changed = 1;
+  struct xml_tree *p = new_node(TG_CAP);
+  struct opcap_list_item *pp = (struct opcap_list_item*) p;
+  xml_link_node_last(root->caps_node, p);
+  if (!root->capabilities.first) root->capabilities.first = pp;
+  pp->login = xstrdup(login);
+  pp->caps = newcaps;
+  return changed;
+}
+
+int
+ejudge_cfg_delete_caps(
+        struct ejudge_cfg *root,
+        const unsigned char *login)
+{
+  if (!root || !login) return 0;
+  if (!root->caps_node) return 0;
+  int changed = 0;
+  struct xml_tree *p = root->caps_node->first_down;
+  while (p) {
+    int need_remove = 0;
+    if (p->tag != TG_CAP) {
+      need_remove = 1;
+    } else {
+      struct opcap_list_item *pp = (struct opcap_list_item*) p;
+      if (!pp->login) {
+        need_remove = 1;
+      } else if (!strcmp(pp->login, login)) {
+        need_remove = 1;
+      }
+    }
+    if (need_remove) {
+      struct xml_tree *q = p->left;
+      xml_unlink_node(p);
+      xml_tree_free(p, &ejudge_config_parse_spec);
+      p = q;
+      changed = 1;
+    } else {
+      p = p->left;
+    }
+  }
+  root->capabilities.first = (struct opcap_list_item*) root->caps_node->first_down;
+  return changed;
 }
