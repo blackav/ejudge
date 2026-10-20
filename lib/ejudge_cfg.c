@@ -1816,15 +1816,15 @@ ejudge_cfg_unparse_capabilities_xml(
   struct ejudge_cfg *root = cfg->caps_file_info->root;
   fprintf(f, "<?xml version=\"1.0\" encoding=\"%s\"?>\n"
           "<config>\n", EJUDGE_CHARSET);
-  fprintf(f, "  <user_map>\n");
-  if (root->user_map) {
+  if (root->user_map && root->user_map->first_down) {
+    fprintf(f, "  <user_map>\n");
     for (const struct xml_tree *p = root->user_map->first_down; p; p = p->right) {
       const struct ejudge_cfg_user_map *m = (const struct ejudge_cfg_user_map*) p;
       fprintf(f, "    <map system_user=\"%s\"", ARMOR(m->system_user_str));
       fprintf(f, " local_user=\"%s\" />\n", ARMOR(m->local_user_str));
     }
+    fprintf(f, "  </user_map>\n");
   }
-  fprintf(f, "  </user_map>\n");
   fprintf(f, "  <caps>\n");
   if (root->capabilities.first) {
     for (const struct opcap_list_item *p = root->capabilities.first; p;
@@ -1873,7 +1873,7 @@ ejudge_cfg_delete_oauth_entry(
     if (p->tag == TG_OAUTH_ENTRY) {
       struct ejudge_cfg_oauth_user_map *pp = (struct ejudge_cfg_oauth_user_map *) p;
       if (!strcmp(pp->oauth_user_str, oauth_user_str)) {
-        struct xml_tree *q = p->left;
+        struct xml_tree *q = p->right;
         xml_unlink_node(p);
         xml_tree_free(p, &ejudge_config_parse_spec);
         p = q;
@@ -1882,7 +1882,7 @@ ejudge_cfg_delete_oauth_entry(
       }
     }
 
-    p = p->left;
+    p = p->right;
   }
   if (!root->oauth_user_map->first_down) {
     root->oauth_user_map = NULL;
@@ -1906,7 +1906,7 @@ ejudge_cfg_upsert_oauth_entry(
     root->oauth_user_map = p;
     changed = 1;
   }
-  for (struct xml_tree *p = root->oauth_user_map->first_down; p; p = p->left) {
+  for (struct xml_tree *p = root->oauth_user_map->first_down; p; p = p->right) {
     if (p->tag == TG_OAUTH_ENTRY) {
       struct ejudge_cfg_oauth_user_map *pp = (struct ejudge_cfg_oauth_user_map *) p;
       if (pp->oauth_user_str && !strcmp(pp->oauth_user_str, oauth_user_str)) {
@@ -1961,7 +1961,7 @@ ejudge_cfg_upsert_caps(
     root->caps_node = new_node(TG_CAPS);
     xml_link_node_last(&root->b, root->caps_node);
   }
-  for (struct xml_tree *p = root->caps_node->first_down; p; p = p->left) {
+  for (struct xml_tree *p = root->caps_node->first_down; p; p = p->right) {
     if (p->tag == TG_CAP) {
       struct opcap_list_item *pp = (struct opcap_list_item*) p;
       if (pp->login && !strcmp(pp->login, login)) {
@@ -2022,13 +2022,13 @@ ejudge_cfg_delete_caps(
       }
     }
     if (need_remove) {
-      struct xml_tree *q = p->left;
+      struct xml_tree *q = p->right;
       xml_unlink_node(p);
       xml_tree_free(p, &ejudge_config_parse_spec);
       p = q;
       changed = 1;
     } else {
-      p = p->left;
+      p = p->right;
     }
   }
   root->capabilities.first = (struct opcap_list_item*) root->caps_node->first_down;
