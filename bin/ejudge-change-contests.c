@@ -338,7 +338,7 @@ register_privileged_user(struct State *state, int user_id, int contest_id, const
 
     ui = u->cnts0;
     if (name && name[0]) {
-        if (!ui->name || strcmp(ui->name, name) != 0) {
+        if (!ui || !ui->name || strcmp(ui->name, name) != 0) {
             r = userlist_clnt_edit_field(state->client, ULS_EDIT_FIELD,
                                          user_id, contest_id, 0,
                                          USERLIST_NC_NAME, name);
