@@ -182,12 +182,12 @@ parse_contest_xml(
         }
         p = s;
         p++;
-        while (*p && isspace(*p)) s++;
+        while (*p && isspace((unsigned char) *p)) p++;
         if (!*p) {
             errcode = -1;
             goto failure;
         }
-        if (!strncmp(p, "contest", 7) && p[7] && isspace(p[7])) break;
+        if (!strncmp(p, "contest", 7) && p[7] && isspace((unsigned char) p[7])) break;
         s++;
     }
     if (!*s) {
@@ -311,7 +311,7 @@ unregister_user(struct State *state, int user_id, int contest_id, int lock_flag)
     retval = 0;
 
 done:;
-    userlist_free(&u->b);
+    if (u) userlist_free(&u->b);
     free(info_txt);
     return retval;
 #undef FAIL
@@ -388,7 +388,7 @@ register_privileged_user(struct State *state, int user_id, int contest_id, const
     retval = 0;
 
 done:;
-    userlist_free(&u->b);
+    if (u) userlist_free(&u->b);
     free(info_txt);
     return retval;
 #undef FAIL
@@ -652,7 +652,11 @@ save_caps_file(const struct ejudge_cfg *config)
     ejudge_cfg_unparse_capabilities_xml(f, config);
     fclose(f); f = NULL;
 
-    if (are_files_equal(config->caps_file_info->path, newpath) > 0) {
+    int r = are_files_equal(config->caps_file_info->path, newpath);
+    if (r < 0) {
+        FAIL("cannot compare files '%s' and '%s'", config->caps_file_info->path, newpath);
+    }
+    if (r > 0) {
         printf("file %s is unchanged\n", config->caps_file_info->path);
         retval = 0;
         goto done;
@@ -1144,12 +1148,15 @@ main(int argc, char *argv[])
                         "<!-- audit: ejudge-change-contests: %s, %s -->\n", updates_buf, xml_unparse_date(current_time));
             }
 
+            // txt1 (file header) is not written back intentionally
             if (contests_unparse_and_save(cnts, NULL, "", txt2, audit_str, NULL, NULL, 0) < 0) {
                 printf("%d: failed to save contest\n", contest_id);
                 ++failed_count;
             }
 
             printf("%d: %s\n", contest_id, updates_buf);
+            free(txt1);
+            free(txt2);
         }
 
         if (db_flag) {
@@ -1167,7 +1174,7 @@ main(int argc, char *argv[])
         }
     }
 
-    if (global_flag && state.config->caps_file_info->path && state.config->caps_file_info->root) {
+    if (global_flag && state.config && state.config->caps_file_info && state.config->caps_file_info->path && state.config->caps_file_info->root) {
         int changed = 0;
         struct ejudge_cfg *root = state.config->caps_file_info->root;
         if (remove_cap_flag) {
