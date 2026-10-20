@@ -16,6 +16,7 @@
 
 #include "ejudge/config.h"
 #include "ejudge/ej_types.h"
+#include "ejudge/expat_iface.h"
 #include "ejudge/version.h"
 
 #include "ejudge/contests.h"
@@ -34,10 +35,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
+#include <dirent.h>
+#include <fcntl.h>
+#include <sys/random.h>
+#include <sys/time.h>
 #include <time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <unistd.h>
+#include <sys/mman.h>
 
 struct State
 {
@@ -92,6 +98,7 @@ write_help(void)
            "              disable access to 'register' CGI from all IPs\n"
            "    --no-users\n"
            "              disable access to 'users' CGI from all IPs\n"
+           "    --oauth   update oauth user aliases in capabilities.xml\n"
            "    --open    clear 'closed' flag for contests\n"
            "    --remove-cap USER\n"
            "              remove capabilities for the USER\n"
@@ -267,7 +274,6 @@ unregister_user(struct State *state, int user_id, int contest_id, int lock_flag)
     __attribute__((unused)) const struct userlist_user_info *ui = NULL;
     const struct userlist_contest *uc = NULL;
 
-    printf("demoting user %d from contest %d\n", user_id, contest_id);
     int r = userlist_clnt_get_info(state->client, ULS_PRIV_GET_USER_INFO,
                              user_id, contest_id, &info_txt);
     if (r < 0) {
@@ -279,7 +285,6 @@ unregister_user(struct State *state, int user_id, int contest_id, int lock_flag)
     ui = u->cnts0;
     uc = userlist_get_user_contest(u, contest_id);
     if (!uc) {
-        printf("user %d not registered for contest %d\n", user_id, contest_id);
         retval = 0;
         goto done;
     }
@@ -389,6 +394,313 @@ done:;
 #undef FAIL
 }
 
+enum { PRESERVE_LAST_N_BACKUPS = 10 };
+enum { MAX_COMPARABLE_FILE_SIZE = 1000000 };
+
+struct FileInfo
+{
+    unsigned char *name;
+    long long mtime_us;
+};
+
+static int
+fileinfo_sort_func(const void *p1, const void *p2)
+{
+    const struct FileInfo *f1 = (const struct FileInfo *) p1;
+    const struct FileInfo *f2 = (const struct FileInfo *) p2;
+    return (f1->mtime_us > f2->mtime_us) - (f1->mtime_us < f2->mtime_us);
+}
+
+static int
+remove_old_backups(const unsigned char *path)
+{
+#define FAIL(format, ...) do { fprintf(stderr, "%s:%s:%d:error:" format "\n", progname, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__); goto done; } while(0)
+    int retval = -1;
+    unsigned char dir[PATH_MAX];
+    unsigned char prefix[PATH_MAX];
+    unsigned char fullpath[PATH_MAX];
+    __attribute__((unused)) int _;
+    DIR *d = NULL;
+    size_t prefixlen;
+    struct FileInfo *files = NULL;
+    size_t file_u = 0, file_a = 0;
+
+    if (snprintf(dir, sizeof(dir), "%s.bak.", path) >= (int) sizeof(dir)) {
+        FAIL("path is too long");
+    }
+    unsigned char *p = strrchr(dir, '/');
+    if (!p) {
+        FAIL("expect non-empty directory part");
+    }
+    _ = snprintf(prefix, sizeof(prefix), "%s", p + 1);
+    prefixlen = strlen(prefix);
+    *p = 0;
+    if (!(d = opendir(dir))) {
+        FAIL("cannot open directory '%s': %s", dir, strerror(errno));
+    }
+    struct dirent *dd;
+    while ((dd = readdir(d))) {
+        if (strncmp(prefix, dd->d_name, prefixlen) != 0) {
+            continue;
+        }
+        if (snprintf(fullpath, sizeof(fullpath), "%s/%s", dir, dd->d_name) >= (int) sizeof(fullpath)) {
+            continue;
+        }
+        struct stat stb;
+        if (lstat(fullpath, &stb) < 0) {
+            continue;
+        }
+        if (!S_ISREG(stb.st_mode)) {
+            continue;
+        }
+        if (file_u == file_a) {
+            if (!file_a) file_a = 16;
+            else file_a *= 2;
+            XREALLOC(files, file_a);
+        }
+        files[file_u].name = xstrdup(dd->d_name);
+        files[file_u].mtime_us = stb.st_mtim.tv_sec * 1000000LL + stb.st_mtim.tv_nsec / 1000;
+        ++file_u;
+    }
+    closedir(d); d = NULL;
+    if (file_u >= PRESERVE_LAST_N_BACKUPS) {
+        qsort(files, file_u, sizeof(files[0]), fileinfo_sort_func);
+        for (size_t i = PRESERVE_LAST_N_BACKUPS - 1; i < file_u; ++i) {
+            if (snprintf(fullpath, sizeof(fullpath), "%s/%s", dir, files[i].name) >= (int) sizeof(fullpath)) {
+                continue;
+            }
+            unlink(fullpath);
+        }
+    }
+    retval = 0;
+
+done:;
+    if (d) closedir(d);
+    for (size_t i = 0; i < file_u; ++i) {
+        free(files[i].name);
+    }
+    free(files);
+    return retval;
+#undef FAIL
+}
+
+static int
+are_files_equal(const unsigned char *path1, const unsigned char *path2)
+{
+#define FAIL(format, ...) do { fprintf(stderr, "%s:%s:%d:error:" format "\n", progname, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__); goto done; } while(0)
+    int retval = -1;
+    int fd1 = -1;
+    int fd2 = -1;
+    unsigned char *mem1 = MAP_FAILED;
+    unsigned char *mem2 = MAP_FAILED;
+    size_t mem_size = 0;
+
+    fd1 = open(path1, O_RDONLY | O_CLOEXEC | O_NONBLOCK | O_NOFOLLOW | O_NOCTTY, 0);
+    if (fd1 < 0) {
+        FAIL("cannot open '%s': %s", path1, strerror(errno));
+    }
+    struct stat st1;
+    if (fstat(fd1, &st1) < 0) abort();
+    if (!S_ISREG(st1.st_mode)) {
+        FAIL("file '%s' is not regular", path1);
+    }
+    fd2 = open(path2, O_RDONLY | O_CLOEXEC | O_NONBLOCK | O_NOFOLLOW | O_NOCTTY, 0);
+    if (fd2 < 0) {
+        FAIL("cannot open '%s': %s", path2, strerror(errno));
+    }
+    struct stat st2;
+    if (fstat(fd2, &st2) < 0) abort();
+    if (!S_ISREG(st2.st_mode)) {
+        FAIL("file '%s' is not regular", path2);
+    }
+    if (st1.st_size <= 0 && st2.st_size <= 0) {
+        retval = 1;
+        goto done;
+    }
+    if (st1.st_size != st2.st_size) {
+        retval = 0;
+        goto done;
+    }
+    if (st1.st_size > MAX_COMPARABLE_FILE_SIZE) {
+        FAIL("files are too big (bigger than %d)", MAX_COMPARABLE_FILE_SIZE);
+    }
+
+    mem_size = st1.st_size;
+    mem1 = mmap(NULL, mem_size, PROT_READ, MAP_PRIVATE, fd1, 0);
+    if (mem1 == MAP_FAILED) {
+        FAIL("mmap failed for '%s': %s", path1, strerror(errno));
+    }
+    close(fd1); fd1 = -1;
+    mem2 = mmap(NULL, mem_size, PROT_READ, MAP_PRIVATE, fd2, 0);
+    if (mem2 == MAP_FAILED) {
+        FAIL("mmap failed for '%s': %s", path2, strerror(errno));
+    }
+    close(fd2); fd2 = -1;
+    retval = memcmp(mem1, mem2, mem_size) == 0;
+
+done:;
+    if (fd1 >= 0) close(fd1);
+    if (fd2 >= 0) close(fd2);
+    if (mem1 != MAP_FAILED) munmap(mem1, mem_size);
+    if (mem2 != MAP_FAILED) munmap(mem2, mem_size);
+    return retval;
+#undef FAIL
+}
+
+static int
+replace_with_new_version(const unsigned char *path, const unsigned char *newpath)
+{
+#define FAIL(format, ...) do { fprintf(stderr, "%s:%s:%d:error:" format "\n", progname, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__); goto done; } while(0)
+    int retval = -1;
+    __attribute__((unused)) int _;
+    unsigned char backup_path[PATH_MAX];
+
+    backup_path[0] = 0;
+    struct stat dst;
+    if (lstat(path, &dst) < 0) {
+        FAIL("destination file '%s' lstat failed: %s", path, strerror(errno));
+    }
+    if (!S_ISREG(dst.st_mode)) {
+        FAIL("destination file '%s' is not regular", path);
+    }
+    struct stat nst;
+    if (lstat(newpath, &nst) < 0) {
+        FAIL("new file '%s' lstat failed: %s", newpath, strerror(errno));
+    }
+    if (!S_ISREG(nst.st_mode)) {
+        FAIL("new file '%s' is not regular", newpath);
+    }
+    if ((dst.st_mode & 07777) != (nst.st_mode & 07777)) {
+        if (chmod(newpath, dst.st_mode & 07777) < 0) {
+            FAIL("failed to change permissions for '%s': %s", newpath, strerror(errno));
+        }
+    }
+    if (dst.st_gid != nst.st_gid) {
+        _ = chown(newpath, nst.st_uid, dst.st_gid);
+    }
+
+    struct tm tt;
+    localtime_r(&dst.st_mtim.tv_sec, &tt);
+    if (snprintf(backup_path, sizeof(backup_path), "%s.bak.%04d%02d%02d%02d%02d%02d.%03d",
+                    path,
+                    tt.tm_year + 1900,
+                    tt.tm_mon + 1,
+                    tt.tm_mday,
+                    tt.tm_hour,
+                    tt.tm_min,
+                    tt.tm_sec,
+                    (int)(dst.st_mtim.tv_nsec / 1000000)) >= (int) sizeof(backup_path)) {
+        backup_path[0] = 0;
+        FAIL("backup path is too long");
+    }
+    _ = unlink(backup_path);
+    if (link(path, backup_path) < 0) {
+        FAIL("failed to link '%s' to backup path '%s': %s", path, backup_path, strerror(errno));
+    }
+    if (rename(newpath, path) < 0) {
+        FAIL("failed to rename '%s' to '%s': %s", newpath, path, strerror(errno));
+    }
+
+    backup_path[0] = 0;
+    retval = 0;
+
+done:;
+    if (backup_path[0]) _ = unlink(backup_path);
+    return retval;
+#undef FAIL
+}
+
+static int
+save_caps_file(const struct ejudge_cfg *config)
+{
+#define FAIL(format, ...) do { fprintf(stderr, "%s:%s:%d:error:" format "\n", progname, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__); goto done; } while(0)
+    int retval = -1;
+    unsigned char newpath[PATH_MAX];
+    unsigned long long rnd64 = 0;
+    int fd = -1;
+    FILE *f = NULL;
+    __attribute__((unused)) int _;
+
+    newpath[0] = 0;
+
+    if (!config->caps_file) return 0;
+    if (!config->caps_file_info) return 0;
+    if (!config->caps_file_info->root) return 0;
+    if (!config->caps_file_info->path) return 0;
+
+    ssize_t rr = getrandom(&rnd64, sizeof(rnd64), 0);
+    if (rr < 0) {
+        FAIL("getrandom failed: %s", strerror(errno));
+    }
+    if (rr != (ssize_t) sizeof(rnd64)) {
+        FAIL("getrandom short read");
+    }
+    if (snprintf(newpath, sizeof(newpath), "%s.new.%016llx", config->caps_file_info->path, rnd64) >= (int) sizeof(newpath)) {
+        newpath[0] = 0;
+        FAIL("path is too long");
+    }
+    fd = open(newpath, O_WRONLY | O_CREAT | O_TRUNC | O_EXCL | O_NOCTTY | O_NOFOLLOW | O_NONBLOCK, 0600);
+    if (fd < 0) {
+        FAIL("cannot open file '%s: %s", newpath, strerror(errno));
+    }
+    f = fdopen(fd, "w");
+    if (!f) {
+        FAIL("cannot fdopen file: %s", strerror(errno));
+    }
+    fd = -1;
+    printf("opened %s\n", newpath);
+    ejudge_cfg_unparse_capabilities_xml(f, config);
+    fclose(f); f = NULL;
+
+    if (are_files_equal(config->caps_file_info->path, newpath) > 0) {
+        printf("file %s is unchanged\n", config->caps_file_info->path);
+        retval = 0;
+        goto done;
+    }
+    _ = remove_old_backups(config->caps_file_info->path);
+    if (replace_with_new_version(config->caps_file_info->path, newpath) < 0) {
+        FAIL("replace with new version failed");
+    }
+    newpath[0] = 0;
+    retval = 0;
+
+done:;
+    if (f) fclose(f);
+    if (fd >= 0) close(fd);
+    if (newpath[0]) _ = unlink(newpath);
+    return retval;
+#undef FAIL
+}
+
+enum
+{
+    GLOBAL_JUDGE_CAPS = 
+        (1ULL << OPCAP_JUDGE_LOGIN),
+    GLOBAL_MASTER_CAPS =
+        GLOBAL_JUDGE_CAPS
+        | (1ULL << OPCAP_MASTER_LOGIN)
+        | (1ULL << OPCAP_LIST_USERS)
+        | (1ULL << OPCAP_GET_USER),
+    GLOBAL_FULL_CAPS =
+        GLOBAL_MASTER_CAPS
+        | (1ULL << OPCAP_CREATE_REG)
+        | (1ULL << OPCAP_EDIT_REG)
+        | (1ULL << OPCAP_DELETE_REG)
+        | (1ULL << OPCAP_PRIV_CREATE_REG)
+        | (1ULL << OPCAP_PRIV_EDIT_REG)
+        | (1ULL << OPCAP_PRIV_DELETE_REG)
+        | (1ULL << OPCAP_CREATE_USER)
+        | (1ULL << OPCAP_EDIT_USER)
+        | (1ULL << OPCAP_DELETE_USER)
+        | (1ULL << OPCAP_DUMP_USERS)
+        | (1ULL << OPCAP_EDIT_PASSWD)
+        | (1ULL << OPCAP_PRIV_EDIT_PASSWD)
+        | (1ULL << OPCAP_EDIT_CONTEST)
+        | (1ULL << OPCAP_CONTROL_CONTEST)
+        | (1ULL << OPCAP_RESTART)
+        | (1ULL << OPCAP_UNLOAD_CONTEST),
+};
+
 int
 main(int argc, char *argv[])
 {
@@ -421,6 +733,7 @@ main(int argc, char *argv[])
     int user_id = 0;
     unsigned char *user_name = NULL;
     int lock_flag = 0;
+    int oauth_flag = 0;
 
     struct State state = {};
 
@@ -575,6 +888,9 @@ main(int argc, char *argv[])
         } else if (!strcmp(argv[argi], "--lock")) {
             lock_flag = 1;
             ++argi;
+        } else if (!strcmp(argv[argi], "--oauth")) {
+            oauth_flag = 1;
+            ++argi;
         } else if (!strcmp(argv[argi], "--")) {
             ++argi;
             break;
@@ -585,6 +901,10 @@ main(int argc, char *argv[])
         }
     }
 
+    if (global_flag) {
+        load_ejudge_config(&state);
+        ejudge_cfg_refresh_caps_file(state.config, 1);
+    }
     if (db_flag && cap_user_name && cap_user_name[0]) {
         open_userlist(&state);
         int r = userlist_clnt_lookup_user(state.client, cap_user_name, 0, &user_id, &user_name);
@@ -592,7 +912,7 @@ main(int argc, char *argv[])
             DIE("failed to lookup user: %s", userlist_strerror(-r));
         }
         //fprintf(stderr, "user id: %d, user name: %s\n", user_id, user_name?(const char*) user_name:"null");
-        if (global_flag && (!user_name || strcmp(user_name, name) != 0)) {
+        if (global_flag && name && (!user_name || strcmp(user_name, name) != 0)) {
             r = userlist_clnt_edit_field(state.client, ULS_EDIT_FIELD,
                                          user_id, 0, 0,
                                          USERLIST_NC_NAME, name);
@@ -626,11 +946,6 @@ main(int argc, char *argv[])
             DIE("invalid contest '%s'", argv[i]);
         }
         max_contest_id = (int) v2;
-    }
-
-    if (max_contest_id <= 0) {
-        // no contests to process
-        return 0;
     }
 
     if (max_contest_id == INT_MAX) {
@@ -848,6 +1163,37 @@ main(int argc, char *argv[])
                 if (register_privileged_user(&state, user_id, contest_id, reg_name) < 0) {
                     ++failed_count;
                 }
+            }
+        }
+    }
+
+    if (global_flag && state.config->caps_file_info->path && state.config->caps_file_info->root) {
+        int changed = 0;
+        struct ejudge_cfg *root = state.config->caps_file_info->root;
+        if (remove_cap_flag) {
+            changed |= ejudge_cfg_delete_caps(root, cap_user_name);
+            if (oauth_flag) {
+                changed |= ejudge_cfg_delete_oauth_entry(root, cap_user_name);
+            }
+        } else if (add_judge_cap_flag) {
+            changed |= ejudge_cfg_upsert_caps(root, cap_user_name, GLOBAL_JUDGE_CAPS, 1);
+            if (oauth_flag) {
+                changed |= ejudge_cfg_upsert_oauth_entry(root, cap_user_name, cap_user_name, NULL);
+            }
+        } else if (add_master_cap_flag) {
+            changed |= ejudge_cfg_upsert_caps(root, cap_user_name, GLOBAL_MASTER_CAPS, 1);
+            if (oauth_flag) {
+                changed |= ejudge_cfg_upsert_oauth_entry(root, cap_user_name, cap_user_name, NULL);
+            }
+        } else if (add_full_cap_flag) {
+            changed |= ejudge_cfg_upsert_caps(root, cap_user_name, GLOBAL_FULL_CAPS, 1);
+            if (oauth_flag) {
+                changed |= ejudge_cfg_upsert_oauth_entry(root, cap_user_name, cap_user_name, NULL);
+            }
+        }
+        if (changed) {
+            if (save_caps_file(state.config) < 0) {
+                ++failed_count;
             }
         }
     }
