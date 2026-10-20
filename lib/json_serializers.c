@@ -1049,7 +1049,7 @@ json_serialize_contest_xml_full(const struct contest_desc *cnts, int date_mode)
         CNTS_user_name_comment, CNTS_allowed_languages, CNTS_allowed_regions, CNTS_dir_mode,
         CNTS_dir_group, CNTS_file_mode, CNTS_file_group, CNTS_welcome_file,
         CNTS_reg_welcome_file, CNTS_logo_url, CNTS_css_url, CNTS_ext_id,
-        CNTS_problem_count, CNTS_telegram_bot_id, CNTS_telegram_admin_chat_id, CNTS_telegram_user_chat_id,
+        CNTS_problem_count, CNTS_telegram_bot_id, CNTS_telegram_admin_chat_id, CNTS_telegram_user_chat_id, CNTS_telegram_admin_thread_id,
         CNTS_avatar_plugin, CNTS_content_plugin, CNTS_content_url_prefix, CNTS_special_flow_options,
     };
     for (int i = 0; i < sizeof(string_fields)/sizeof(string_fields[0]); ++i) {
