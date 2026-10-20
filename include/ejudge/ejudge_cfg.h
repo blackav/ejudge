@@ -251,4 +251,32 @@ ejudge_cfg_load_token_from_file(
         const struct ejudge_cfg *cfg,
         const unsigned char *token_file);
 
+int
+ejudge_cfg_unparse_capabilities_xml(
+        FILE *f,
+        const struct ejudge_cfg *cfg);
+
+int
+ejudge_cfg_delete_oauth_entry(
+        struct ejudge_cfg *root,
+        const unsigned char *oauth_user_str);
+int
+ejudge_cfg_upsert_oauth_entry(
+        struct ejudge_cfg *root,
+        const unsigned char *oauth_user_str,
+        const unsigned char *local_user_str,
+        const unsigned char *provider);
+
+int
+ejudge_cfg_delete_caps(
+        struct ejudge_cfg *root,
+        const unsigned char *login);
+
+int
+ejudge_cfg_upsert_caps(
+        struct ejudge_cfg *root,
+        const unsigned char *login,
+        opcap_t caps,
+        int operation);
+
 #endif /* __EJUDGE_CFG_H__ */
