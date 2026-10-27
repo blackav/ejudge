@@ -76,7 +76,7 @@
 %><%
   int enable_submissions = 0;
   if (cnts && cs) {
-    if (cs->upsolving_mode) {
+    if (serve_is_user_upsolving(cs, phr->user_id, cs->current_time)) {
       enable_submissions = 1;
     } else if (start_time > 0) {
       if (cnts->exam_mode <= 0 || stop_time > 0) {
@@ -137,7 +137,10 @@
   }
 %><%
   if (global && global->disable_team_clars <= 0 && global->disable_clars <= 0 && start_time > 0
-      && (stop_time <= 0 || (global->appeal_deadline > 0 && cs->current_time < global->appeal_deadline))) {
+      && (stop_time <= 0 || (global->appeal_deadline > 0 && cs->current_time < global->appeal_deadline)
+          || (cs->upsolving_mode > 0 && cs->upsolving_disable_clars <= 0)
+          || (serve_is_user_auto_upsolving(cs, phr->user_id, cs->current_time)
+              && global->auto_upsolving_disable_clars <= 0))) {
 %><%
     if (phr->action != NEW_SRV_ACTION_VIEW_CLAR_SUBMIT) {
 %><li><div class="contest_actions_item"><s:a class="menu" ac="view-clar-submit"><%

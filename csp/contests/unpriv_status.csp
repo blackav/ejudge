@@ -47,7 +47,7 @@
 %><s:_>RUNNING</s:_><%
       }
     }
-  } else if (!cs->upsolving_mode) {
+  } else if (!serve_is_user_upsolving(cs, phr->user_id, cs->current_time)) {
 %><s:_>NOT STARTED</s:_><%
   }
 %></b><%
@@ -65,7 +65,7 @@
     }
   }
 %><%
-  if (cs->upsolving_mode) {
+  if (serve_is_user_upsolving(cs, phr->user_id, cs->current_time)) {
     if (global->is_virtual > 0 && start_time > 0 && stop_time <= 0) {
     } else {
 %> / <b><s:_>UPSOLVING</s:_></b><%

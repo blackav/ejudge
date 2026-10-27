@@ -297,9 +297,9 @@ serve_set_upsolving_mode(serve_state_t state)
 
   run_get_saved_times(state->runlog_state, &saved_duration, &saved_stop_time,
                       &saved_finish_time);
-  if (saved_stop_time <= 0) return;
+  if (saved_stop_time <= 0 && state->global->is_virtual <= 0) return;
 
-  if (state->upsolving_freeze_standings)
+  if (state->upsolving_freeze_standings && saved_stop_time > 0)
     state->global->stand_ignore_after = saved_stop_time;
   if (state->upsolving_disable_clars)
     state->global->disable_team_clars = 1;
@@ -313,6 +313,22 @@ serve_set_upsolving_mode(serve_state_t state)
     if (state->upsolving_full_protocol)
       prob->team_show_judge_report = 1;
   }
+}
+
+int
+serve_is_user_auto_upsolving(serve_state_t state, int user_id, time_t current_time)
+{
+  if (state->upsolving_mode || state->global->is_virtual <= 0
+      || state->global->auto_virtual_upsolving <= 0
+      || run_get_virtual_start_time(state->runlog_state, user_id) <= 0) return 0;
+  time_t stop_time = run_get_virtual_stop_time(state->runlog_state, user_id, current_time);
+  return stop_time > 0 && stop_time <= current_time;
+}
+
+int
+serve_is_user_upsolving(serve_state_t state, int user_id, time_t current_time)
+{
+  return state->upsolving_mode || serve_is_user_auto_upsolving(state, user_id, current_time);
 }
 
 int
