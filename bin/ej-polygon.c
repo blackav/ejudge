@@ -3362,6 +3362,9 @@ replace(
         const unsigned char *to,
         size_t to_size)
 {
+    if (!from_size || !*p_size) {
+        return;
+    }
     if (from_size >= to_size) {
         unsigned char *p_from = *p_data;
         unsigned char *p_to = *p_data;
@@ -3393,7 +3396,40 @@ replace(
         }
         *p_size = (p_to - *p_data);
     } else {
-        abort();
+        unsigned char *p_from = *p_data;
+        size_t rem_size = *p_size;
+        unsigned char *q;
+        size_t out_size = 0;
+        while (rem_size > 0 && (q = memmem(p_from, rem_size, from, from_size))) {
+            size_t copy_len = (size_t) (q - p_from);
+            out_size += copy_len + to_size;
+            p_from = q + from_size;
+            rem_size -= copy_len + from_size;
+        }
+        out_size += rem_size;
+        unsigned char *new_data = xmalloc(out_size + 1);
+        p_from = *p_data;
+        rem_size = *p_size;
+        unsigned char *p_to = new_data;
+        while (rem_size > 0 && (q = memmem(p_from, rem_size, from, from_size))) {
+            size_t copy_len = q - p_from;
+            memcpy(p_to, p_from, copy_len);
+            p_from += copy_len;
+            p_to += copy_len;
+            rem_size -= copy_len;
+            memcpy(p_to, to, to_size);
+            p_to += to_size;
+            p_from += from_size;
+            rem_size -= from_size;
+        }
+        if (rem_size > 0) {
+            memcpy(p_to, p_from, rem_size);
+            p_to += rem_size;
+            p_from += rem_size;
+        }
+        *p_to = 0;
+        xfree(*p_data); *p_data = new_data; new_data = NULL;
+        *p_size = out_size;
     }
 }
 
