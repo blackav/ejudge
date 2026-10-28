@@ -3363,15 +3363,35 @@ replace(
         size_t to_size)
 {
     if (from_size >= to_size) {
-        // inplace
-        // FIXME: implement it properly!
-        unsigned char *p = *p_data;
+        unsigned char *p_from = *p_data;
+        unsigned char *p_to = *p_data;
+        size_t rem_size = *p_size;
         unsigned char *q;
-        while ((q = strstr(p, from)) != NULL) {
-            memcpy(q, to, to_size);
-            memmove(q + to_size, q + from_size, *p_size - (q - p) - from_size + 1);
-            p = q + to_size;
+        while (rem_size > 0 && (q = memmem(p_from, rem_size, from, from_size))) {
+            // copy non-matching part
+            size_t copy_len = q - p_from;
+            if (copy_len > 0 && p_from != p_to) {
+                memmove(p_to, p_from, copy_len);
+            }
+            p_from += copy_len;
+            p_to += copy_len;
+            rem_size -= copy_len;
+            // change matching part
+            memcpy(p_to, to, to_size);
+            p_to += to_size;
+            p_from += from_size;
+            rem_size -= from_size;
         }
+        // non-matching tail
+        if (rem_size > 0) {
+            memmove(p_to, p_from, rem_size);
+            p_to += rem_size;
+            p_from += rem_size;
+        }
+        if (p_to != p_from) {
+            *p_to = 0;
+        }
+        *p_size = (p_to - *p_data);
     } else {
         abort();
     }
