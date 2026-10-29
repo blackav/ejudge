@@ -3380,7 +3380,7 @@ replace(
             p_to += copy_len;
             rem_size -= copy_len;
             // change matching part
-            memcpy(p_to, to, to_size);
+            if (to_size) memcpy(p_to, to, to_size);
             p_to += to_size;
             p_from += from_size;
             rem_size -= from_size;
@@ -3417,7 +3417,7 @@ replace(
             p_from += copy_len;
             p_to += copy_len;
             rem_size -= copy_len;
-            memcpy(p_to, to, to_size);
+            if (to_size) memcpy(p_to, to, to_size);
             p_to += to_size;
             p_from += from_size;
             rem_size -= from_size;
