@@ -125,6 +125,7 @@ struct ProblemInfo
     int discard_id;
     unsigned char *edit_session;
     int has_hidden_groups;
+    signed char interactive_valuer;
 
     // extracted from problem.xml
     int time_limit_ms;
@@ -1741,6 +1742,7 @@ process_problem_row(
     pi->state = STATE_FAILED;
     pi->problem_id = id;
     pi->problem_name = strdup(buf);
+    pi->interactive_valuer = -1;
 
     const unsigned char *s = text;
     if (!(s = strstr(s, "<td"))) {
@@ -3734,6 +3736,7 @@ process_polygon_zip(
         fclose(ot_f);
         pi->open_tests = ot_s;
         pi->standard_valuer = xstrdup("gvaluer");
+        pi->interactive_valuer = 1;
     }
     if (pi->test_u > 0) {
         int sum = 0;
@@ -4132,6 +4135,9 @@ process_polygon_zip(
     }
     if (pi->standard_valuer && pi->standard_valuer[0]) {
         prob_cfg->standard_valuer = xstrdup(pi->standard_valuer);
+    }
+    if (pi->interactive_valuer >= 0) {
+        prob_cfg->interactive_valuer = pi->interactive_valuer;
     }
     if (full_score > 0) {
         prob_cfg->full_score = full_score;
