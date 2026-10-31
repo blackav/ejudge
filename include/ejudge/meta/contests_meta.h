@@ -126,6 +126,7 @@ enum
   CNTS_telegram_bot_id,
   CNTS_telegram_admin_chat_id,
   CNTS_telegram_user_chat_id,
+  CNTS_telegram_admin_thread_id,
   CNTS_avatar_plugin,
   CNTS_content_plugin,
   CNTS_content_url_prefix,
