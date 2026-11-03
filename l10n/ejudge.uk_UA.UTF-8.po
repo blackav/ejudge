@@ -1,1666 +1,1691 @@
-# Ukrainian message translation
-# This file is put in the public domain.
-# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
-#
+# Ukrainian translation for ejudge.
+# Review technical terminology before production.
 msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-10-03 09:51+0300\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"PO-Revision-Date: 2026-10-10 20:00+0300\n"
+"Last-Translator: Snimshchikov Yaroslav snimshchikov.yaroslav2@gmail.com\n"
 "Language-Team: Ukrainian <uk@li.org>\n"
 "Language: Ukrainian\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#, c-format
+#, c-format, python-format
 msgid ""
 "\n"
 "\n"
 "%d total tests runs, %d passed, %d failed.\n"
 "\n"
 msgstr ""
+"\n"
+"\n"
+"Усього запусків тестів: %d, успішно пройдено: %d, не пройдено: %d.\n"
+"\n"
 
-#, c-format
+#, c-format, python-format
 msgid " (%d of %d)"
-msgstr ""
+msgstr " (%d із %d)"
 
-#, c-format
+#, c-format, python-format
 msgid " (%d token(s) used)"
-msgstr ""
+msgstr " (використано токенів: %d)"
 
-#, c-format
+#, c-format, python-format
 msgid " / <b>%d summoned for defence runs</b>"
-msgstr ""
+msgstr " / <b>викликано на захист для запусків: %d</b>"
 
-#, c-format
+#, c-format, python-format
 msgid " / <b>%d unread message(s)</b>"
-msgstr ""
+msgstr " / <b>непрочитаних повідомлень: %d</b>"
 
 #, c-format
 msgid " memory-limit exceeded"
-msgstr ""
+msgstr " ліміт пам’яті перевищено"
 
 msgid " or standard input"
-msgstr ""
+msgstr " або стандартне введення"
 
 msgid " or standard output"
-msgstr ""
+msgstr " або стандартне виведення"
 
 msgid "(no subject)"
-msgstr ""
+msgstr "(без теми)"
 
 msgid ", REGISTRATION DATA INCOMPLETE"
-msgstr ""
+msgstr ", ДАНІ РЕЄСТРАЦІЇ НЕПОВНІ"
 
 msgid "/&lt;Problem&gt;/&lt;File&gt;"
-msgstr ""
+msgstr "/&lt;задача&gt;/&lt;файл&gt;"
 
 msgid "/&lt;Problem&gt;/&lt;User_Id&gt;/&lt;File&gt;"
-msgstr ""
+msgstr "/&lt;задача&gt;/&lt;User_Id&gt;/&lt;файл&gt;"
 
 msgid "/&lt;Problem&gt;/&lt;User_Login&gt;/&lt;File&gt;"
-msgstr ""
+msgstr "/&lt;задача&gt;/&lt;User_Login&gt;/&lt;файл&gt;"
 
 msgid "/&lt;Problem&gt;/&lt;User_Name&gt;/&lt;File&gt;"
-msgstr ""
+msgstr "/&lt;задача&gt;/&lt;User_Name&gt;/&lt;файл&gt;"
 
 msgid "/&lt;User_Id&gt;/&lt;File&gt;"
-msgstr ""
+msgstr "/&lt;User_Id&gt;/&lt;файл&gt;"
 
 msgid "/&lt;User_Id&gt;/&lt;Problem&gt;/&lt;File&gt;"
-msgstr ""
+msgstr "/&lt;User_Id&gt;/&lt;задача&gt;/&lt;файл&gt;"
 
 msgid "/&lt;User_Login&gt;/&lt;File&gt;"
-msgstr ""
+msgstr "/&lt;User_Login&gt;/&lt;файл&gt;"
 
 msgid "/&lt;User_Login&gt;/&lt;Problem&gt;/&lt;File&gt;"
-msgstr ""
+msgstr "/&lt;User_Login&gt;/&lt;задача&gt;/&lt;файл&gt;"
 
 msgid "/&lt;User_Name&gt;/&lt;File&gt;"
-msgstr ""
+msgstr "/&lt;User_Name&gt;/&lt;файл&gt;"
 
 msgid "/&lt;User_Name&gt;/&lt;Problem&gt;/&lt;File&gt;"
-msgstr ""
+msgstr "/&lt;User_Name&gt;/&lt;задача&gt;/&lt;файл&gt;"
 
 #, c-format
 msgid "; max used memory:"
-msgstr ""
+msgstr "; максимальне використання пам’яті:"
 
-#, c-format
+#, c-format, python-format
 msgid "<b>====== Test #%d =======</b>\n"
-msgstr ""
+msgstr "<b>====== Тест №%d =======</b>\n"
 
 msgid ""
-"<b>Note</b>, that you must log in 24 hours after the form is filled and "
-"submitted, or your registration will be cancelled!"
+"<b>Note</b>, that you must log in 24 hours after the form is filled and submitted, or your "
+"registration will be cancelled!"
 msgstr ""
+"<b>Увага</b>, той ви маєте увійти 24 годин після форма є заповнено й надіслано, або ваш "
+"реєстрація буде скасовано!"
 
 msgid ""
-"<b>Note</b>, that you should log in to the system for the first time no "
-"later, than in 24 hours after this moment, or the new account is removed."
+"<b>Note</b>, that you should log in to the system for the first time no later, than in 24 hours "
+"after this moment, or the new account is removed."
 msgstr ""
+"<b>Увага</b>, той вам слід увійти до система уперше ні пізніше, ніж у 24 годин після цей момент, "
+"або новий обліковий запис є вилучено."
 
-#, c-format
+#, c-format, python-format
 msgid "<big>%d total tests runs, %d passed, %d failed.<br/>\n"
-msgstr ""
+msgstr "<big>%d усього запусків тестів, %d пройдено, %d не пройдено.<br/>\n"
 
-#, c-format
+#, c-format, python-format
 msgid "<big>%d total tests runs, %d passed, %d failed.<br>\n"
-msgstr ""
+msgstr "<big>%d усього запусків тестів, %d пройдено, %d не пройдено.<br>\n"
 
-#, c-format
+#, c-format, python-format
 msgid "<big>Failed test: %d.</big>\n"
-msgstr ""
+msgstr "<big>Тест, на якому сталася помилка: %d.</big>\n"
 
-#, c-format
+#, c-format, python-format
 msgid "<big>Failed test: %d.<br/><br/></big>\n"
-msgstr ""
+msgstr "<big>тест із помилкою: %d.<br/><br/></big>\n"
 
-#, c-format
+#, c-format, python-format
 msgid "<big>Failed test: %d.<br><br></big>\n"
-msgstr ""
+msgstr "<big>тест із помилкою: %d.<br><br></big>\n"
 
-#, c-format
+#, c-format, python-format
 msgid "<big>Score gained: %d (out of %d).</big>\n"
-msgstr ""
+msgstr "<big>Набрано балів: %d (із %d).</big>\n"
 
 msgid "<font color=\"green\">OK</font>"
-msgstr ""
+msgstr "<font color=\"green\">ГАРАЗД</font>"
 
 msgid "<font color=\"magenta\">Pending</font>"
-msgstr ""
+msgstr "<font color=\"magenta\">Очікує</font>"
 
 msgid "<font color=\"red\">Rejected</font>"
-msgstr ""
+msgstr "<font color=\"red\">Відхилено</font>"
 
 #, c-format
 msgid "<i>Command line is too long</i>\n"
-msgstr ""
+msgstr "<i>Командний рядок задовгий</i>\n"
 
-#, c-format
+#, c-format, python-format
 msgid "<i>Invalid answer: %d</i>"
-msgstr ""
+msgstr "<i>Некоректна відповідь: %d</i>"
 
 msgid "<i>Not set</i>"
-msgstr ""
+msgstr "<i>Не встановлено</i>"
 
-#, c-format
+#, c-format, python-format
 msgid ""
-"<p class=\"ejudge_copyright\">This is <a href=\"%s\"><b>ejudge</b></a> "
-"contest administration system, version %s, compiled %s.</p>\n"
-"<p class=\"ejudge_copyright\">This program is copyright &copy; %s Alexander "
+"<p class=\"ejudge_copyright\">This is <a href=\"%s\"><b>ejudge</b></a> contest administration "
+"system, version %s, compiled %s.</p>\n"
+"<p class=\"ejudge_copyright\">This program is copyright &copy; %s Alexander Chernov.</p>\n"
+"<p class=\"ejudge_copyright\">This program is free software; you can redistribute it and/or "
+"modify it under the terms of the <a href=\"http://www.gnu.org/licenses/gpl.html\">GNU General "
+"Public License</a> as published by the <a href=\"http://www.fsf.org\">Free Software "
+"Foundation</a>; either version 2 of the License, or (at your option) any later version.</p>\n"
+msgstr ""
+"<p class=\"ejudge_copyright\">Це система адміністрування змагань <a "
+"href=\"%s\"><b>ejudge</b></a>, версія %s, скомпільовано %s.</p>\n"
+"<p class=\"ejudge_copyright\">Авторські права на цю програму належать &копіювати; %s Alexander "
 "Chernov.</p>\n"
-"<p class=\"ejudge_copyright\">This program is free software; you can "
-"redistribute it and/or modify it under the terms of the <a href=\"http://"
-"www.gnu.org/licenses/gpl.html\">GNU General Public License</a> as published "
-"by the <a href=\"http://www.fsf.org\">Free Software Foundation</a>; either "
-"version 2 of the License, or (at your option) any later version.</p>\n"
-msgstr ""
+"<p class=\"ejudge_copyright\">Ця програма є вільним програмним забезпеченням: ви можете "
+"розповсюджувати її та/або змінювати відповідно до умов <a "
+"href=\"http://www.gnu.org/licenses/gpl.html\">Загальної публічної ліцензії GNU</a>, опублікованої"
+" <a href=\"http://www.fsf.org\">Фондом вільного програмного забезпечення</a>; версії 2 цієї "
+"ліцензії або, на ваш розсуд, будь-якої пізнішої версії.</p>\n"
 
 msgid ""
-"<p class=\"fixed_width\">First stage of password recovery is successful. You "
-"should receive an e-mail message with further instructions. <b>Note,</b> "
-"that you should confirm password recovery in 24 hours, or operation will be "
-"cancelled.</p>"
+"<p class=\"fixed_width\">First stage of password recovery is successful. You should receive an "
+"e-mail message with further instructions. <b>Note,</b> that you should confirm password recovery "
+"in 24 hours, or operation will be cancelled.</p>"
 msgstr ""
+"<p class=\"fixed_width\">Перший етап відновлення пароля успішно завершено. Ви маєте отримати "
+"електронного листа з подальшими інструкціями. <b>Зверніть увагу:</b> потрібно підтвердити "
+"відновлення пароля протягом 24 годин, інакше операцію буде скасовано.</p>"
 
 msgid ""
-"<p class=\"fixed_width\">Password recovery requires several steps. Now, "
-"please, specify the <b>login</b> and the <b>e-mail</b>, which was specified "
-"when the login was created.</p>\n"
-"<p class=\"fixed_width\">Note, that automatic password recovery is not "
-"possible for invisible, banned, locked, or privileged users!</p>"
+"<p class=\"fixed_width\">Password recovery requires several steps. Now, please, specify the "
+"<b>login</b> and the <b>e-mail</b>, which was specified when the login was created.</p>\n"
+"<p class=\"fixed_width\">Note, that automatic password recovery is not possible for invisible, "
+"banned, locked, or privileged users!</p>"
 msgstr ""
+"<p class=\"fixed_width\">відновлення пароля потребує кілька кроків. Зараз, укажіть <b>логін</b> і"
+" <b>електронна пошта</b>, який було указаний під час логін було створено.</p>\n"
+"<p class=\"fixed_width\">Увага, той автоматичний відновлення пароля не можливий для невидимий, "
+"заблокований, заблокований, або привілейований користувачі!</p>"
 
-#, c-format
+#, c-format, python-format
 msgid ""
-"<p%s>New account <tt>%s</tt> is successfully created. Initial password is "
-"generated automatically. You will be able to change your password later. "
+"<p%s>New account <tt>%s</tt> is successfully created. Initial password is generated "
+"automatically. You will be able to change your password later. "
 msgstr ""
+"<p%s>новий обліковий запис <tt>%s</tt> успішно створено. початковий пароль є згенеровано "
+"автоматично. ви зможете змінити ваш пароль пізніше. "
 
-#, c-format
+#, c-format, python-format
+msgid "<p><font color=\"red\">At least %d examiners must be assigned.</font></p>"
+msgstr "<p><font color=\"red\">щонайменше %d екзаменатори потрібно призначити.</font></p>"
+
+#, c-format, python-format
 msgid ""
-"<p><font color=\"red\">At least %d examiners must be assigned.</font></p>"
+"<p><font color=\"red\">Maximal number for this contest is %d, but already %d are "
+"defined.</font></p>\n"
 msgstr ""
+"<p><font color=\"red\">максимальна кількість для це змагання є %d, але вже %d "
+"визначено.</font></p>\n"
 
-#, c-format
+#, c-format, python-format
 msgid ""
-"<p><font color=\"red\">Maximal number for this contest is %d, but already %d "
-"are defined.</font></p>\n"
+"<p><font color=\"red\">Minimal number for this contest is %d, but only %d are defined.</font></p>"
+"\n"
 msgstr ""
+"<p><font color=\"red\">мінімальна кількість для це змагання є %d, але лише %d "
+"визначено.</font></p>\n"
 
-#, c-format
-msgid ""
-"<p><font color=\"red\">Minimal number for this contest is %d, but only %d "
-"are defined.</font></p>\n"
-msgstr ""
-
-#, c-format
+#, c-format, python-format
 msgid "<p>You may define up to %d members.</p>"
-msgstr ""
+msgstr "<p>Можна вказати до %d учасників.</p>"
 
 #, c-format
 msgid "<u>--- Checker output: file is binary, size %lld ---</u>\n"
-msgstr ""
+msgstr "<u>--- вивід перевіряча: файл є двійковим, розмір %lld ---</u>\n"
 
 #, c-format
 msgid "<u>--- Checker output: file is too large, original size %lld ---</u>\n"
-msgstr ""
+msgstr "<u>--- вивід перевіряча: файл завеликий, початковий розмір %lld ---</u>\n"
 
 #, c-format
 msgid "<u>--- Checker output: size %lld ---</u>\n"
-msgstr ""
+msgstr "<u>--- Вивід перевіряча: розмір %lld ---</u>\n"
 
 #, c-format
 msgid "<u>--- Command line arguments ---</u>\n"
-msgstr ""
+msgstr "<u>--- аргументи командного рядка ---</u>\n"
 
 #, c-format
 msgid "<u>--- Correct: file is binary, size %lld ---</u>\n"
-msgstr ""
+msgstr "<u>--- правильний: файл є двійковим, розмір %lld ---</u>\n"
 
 #, c-format
 msgid "<u>--- Correct: file is too large, original size %lld ---</u>\n"
-msgstr ""
+msgstr "<u>--- правильний: файл завеликий, початковий розмір %lld ---</u>\n"
 
 #, c-format
 msgid "<u>--- Correct: size %lld ---</u>\n"
-msgstr ""
+msgstr "<u>--- Правильна відповідь: розмір %lld ---</u>\n"
 
 #, c-format
 msgid "<u>--- Input: file is binary, size %lld ---</u>\n"
-msgstr ""
+msgstr "<u>--- вхідні дані: файл є двійковим, розмір %lld ---</u>\n"
 
 #, c-format
 msgid "<u>--- Input: file is too large, original size %lld ---</u>\n"
-msgstr ""
+msgstr "<u>--- вхідні дані: файл завеликий, початковий розмір %lld ---</u>\n"
 
 #, c-format
 msgid "<u>--- Input: size %lld ---</u>\n"
-msgstr ""
+msgstr "<u>--- Вхідні дані: розмір %lld ---</u>\n"
 
 #, c-format
 msgid "<u>--- Output: file is binary, size %lld ---</u>\n"
-msgstr ""
+msgstr "<u>--- вивід: файл є двійковим, розмір %lld ---</u>\n"
 
 #, c-format
 msgid "<u>--- Output: file is too large, original size %lld ---</u>\n"
-msgstr ""
+msgstr "<u>--- вивід: файл завеликий, початковий розмір %lld ---</u>\n"
 
 #, c-format
 msgid "<u>--- Output: size %lld ---</u>\n"
-msgstr ""
+msgstr "<u>--- Вихідні дані: розмір %lld ---</u>\n"
 
 #, c-format
 msgid "<u>--- Stderr: file is binary, size %lld ---</u>\n"
-msgstr ""
+msgstr "<u>--- потік stderr: файл є двійковим, розмір %lld ---</u>\n"
 
 #, c-format
 msgid "<u>--- Stderr: file is too large, original size %lld ---</u>\n"
-msgstr ""
+msgstr "<u>--- потік stderr: файл завеликий, початковий розмір %lld ---</u>\n"
 
 #, c-format
 msgid "<u>--- Stderr: size %lld ---</u>\n"
-msgstr ""
+msgstr "<u>--- Потік stderr: розмір %lld ---</u>\n"
 
 msgid "ALL PREVIOUS SUBMITS WILL BE LOST!"
-msgstr ""
+msgstr "УСІ ПОПЕРЕДНІ ВІДПРАВЛЕННЯ БУДЕ ВТРАЧЕНО!"
 
 msgid "API Keys"
-msgstr ""
+msgstr "Ключі API"
 
 #, c-format
 msgid "API key created"
-msgstr ""
+msgstr "Ключ API створено"
 
 #, c-format
 msgid "API key creation failed"
-msgstr ""
+msgstr "Не вдалося створити ключ API"
 
 #, c-format
 msgid "API keys"
-msgstr ""
+msgstr "Ключі API"
 
 msgid "Accepted for testing"
-msgstr ""
+msgstr "Прийнято до тестування"
 
 msgid "Access denied"
-msgstr ""
+msgstr "Доступ заборонено"
 
 msgid ""
-"Accounts created using simplified registration procedure cannot be used for "
-"participation in contests, which do not allow simplified registration. If "
-"you want a regular account, you may create an account using the"
+"Accounts created using simplified registration procedure cannot be used for participation in "
+"contests, which do not allow simplified registration. If you want a regular account, you may "
+"create an account using the"
 msgstr ""
+"Облікові записи, створені за спрощеною процедурою реєстрації, не можна використовувати для участі"
+" в змаганнях, у яких спрощену реєстрацію не дозволено. Якщо вам потрібен звичайний обліковий "
+"запис, ви можете створити його за допомогою"
 
 msgid "Actions"
-msgstr ""
+msgstr "Дії"
 
 msgid "Activate"
-msgstr ""
+msgstr "Активувати"
 
 msgid "Activate new user account"
-msgstr ""
+msgstr "Активувати обліковий запис нового користувача"
 
 msgid "Add"
-msgstr ""
+msgstr "Додати"
 
 msgid "Add CHIEF EXAMINER"
-msgstr ""
+msgstr "додати ГОЛОВНИЙ ЕКЗАМЕНАТОР"
 
 msgid "Add COORDINATOR"
-msgstr ""
+msgstr "додати КООРДИНАТОР"
 
 msgid "Add EXAMINER"
-msgstr ""
+msgstr "додати ЕКЗАМЕНАТОР"
 
 msgid "Add OBSERVER"
-msgstr ""
+msgstr "додати СПОСТЕРІГАЧ"
 
 msgid "Add Review Comment"
-msgstr ""
+msgstr "Додати коментар до перевірки"
 
 msgid "Add a new run comment"
-msgstr ""
+msgstr "Додати коментар до нового запуску"
 
 msgid "Add a new user specifying his/her User Id"
-msgstr ""
+msgstr "Додати користувача, указавши його ID"
 
 msgid "Add a new user specifying his/her login"
-msgstr ""
+msgstr "Додати користувача, указавши його логін"
 
 msgid "Add a permanent problem review comment"
-msgstr ""
+msgstr "Додати постійний коментар до перевірки задачі"
 
 msgid "Add by ID"
-msgstr ""
+msgstr "Додати за ID"
 
 msgid "Add by login"
-msgstr ""
+msgstr "Додати за логіном"
 
 msgid "Add new"
-msgstr ""
+msgstr "Додати новий"
 
 msgid "Add new run"
-msgstr ""
+msgstr "Додати новий запуск"
 
 msgid "Add new runs in CSV format"
-msgstr ""
+msgstr "додати новий запуски у CSV формат"
 
 msgid "Add new user"
-msgstr ""
+msgstr "Додати нового користувача"
 
 msgid "Add run"
-msgstr ""
+msgstr "Додати запуск"
 
 msgid "Add runs in CSV format"
-msgstr ""
+msgstr "додати запуски у CSV формат"
 
 msgid "Add runs in CSV format!"
-msgstr ""
+msgstr "додати запуски у CSV формат!"
 
 msgid "Add the CHIEF EXAMINER role to the selected users"
-msgstr ""
+msgstr "додати ГОЛОВНИЙ ЕКЗАМЕНАТОР роль до вибрані користувачі"
 
 msgid "Add the COORDINATOR role to the selected users"
-msgstr ""
+msgstr "додати КООРДИНАТОР роль до вибрані користувачі"
 
 msgid "Add the EXAMINER role to the selected users"
-msgstr ""
+msgstr "додати ЕКЗАМЕНАТОР роль до вибрані користувачі"
 
 msgid "Add the OBSERVER role to the selected users"
-msgstr ""
+msgstr "додати СПОСТЕРІГАЧ роль до вибрані користувачі"
 
 msgid "Add users to another group"
-msgstr ""
+msgstr "Додати користувачів до іншої групи"
 
 msgid "Adding new runs"
-msgstr ""
+msgstr "Додавання нових запусків"
 
-#, c-format
+#, c-format, python-format
 msgid "Adding role %d to user %d in contest %d failed"
-msgstr ""
+msgstr "додавання роль %d до користувач %d у змагання %d не пройдено"
 
 msgid "Adding role to user in contest failed"
-msgstr ""
+msgstr "додавання роль до користувач у змагання не пройдено"
 
 msgid "Additional comments for judge"
-msgstr ""
+msgstr "додатковий коментарі для суддя"
 
 msgid "Additional information about this error:"
-msgstr ""
+msgstr "Додаткова інформація про цю помилку:"
 
 msgid "Additional test information"
-msgstr ""
+msgstr "Додаткова інформація про тест"
 
 msgid "Administrator"
-msgstr ""
+msgstr "Адміністратор"
 
 msgid "Advisor"
-msgstr ""
+msgstr "Радник"
 
 msgid "Advisors"
-msgstr ""
+msgstr "Радники"
 
 msgid "All changes to the old contest will be lost!"
-msgstr ""
+msgstr "Усі зміни старого змагання буде втрачено!"
 
 msgid "All clars"
-msgstr ""
+msgstr "Усі запити на роз’яснення"
 
 msgid "All clars and comments"
-msgstr ""
+msgstr "Усі запити на роз’яснення та коментарі"
 
 msgid "All entries"
-msgstr ""
+msgstr "Усі записи"
 
 msgid "All headers"
-msgstr ""
+msgstr "Усі заголовки"
 
 msgid "All reviews"
-msgstr ""
+msgstr "Усі перевірки"
 
 msgid "Allow"
-msgstr ""
+msgstr "Дозволити"
 
 msgid "Allow edit registration data during contest"
-msgstr ""
+msgstr "Дозволити редагування реєстраційних даних під час змагання"
 
 msgid "Allow viewing full protocol"
-msgstr ""
+msgstr "Дозволити перегляд повного протоколу"
 
 msgid "Allow viewing run report"
-msgstr ""
+msgstr "дозволити перегляд запуск звіт"
 
 msgid "Allow viewing source code"
-msgstr ""
+msgstr "дозволити перегляд вихідний код"
 
 msgid "Allow viewing the final scores"
-msgstr ""
+msgstr "дозволити перегляд підсумковий бали"
 
 msgid "Allow viewing the judge comment of the valuer"
-msgstr ""
+msgstr "дозволити перегляд суддя коментар оцінювач"
 
 msgid "Already exists"
-msgstr ""
+msgstr "Уже існує"
 
-#, c-format
+#, c-format, python-format
 msgid "An e-mail messages is sent to the address <tt>%s</tt>."
-msgstr ""
+msgstr " електронна пошта повідомлення надіслано до адреса <tt>%s</tt>."
 
-#, c-format
+#, c-format, python-format
 msgid "An e-mail with your account parameters is sent to address <tt>%s</tt>. "
-msgstr ""
+msgstr " електронна пошта з ваш обліковий запис параметри надіслано до адреса <tt>%s</tt>. "
 
 msgid "An email message will be sent to you just for your convenience."
-msgstr ""
+msgstr " повідомлення електронної пошти буде надіслано до ви лише для ваш зручність."
 
 msgid "Answer"
-msgstr ""
+msgstr "Відповідь"
 
 msgid "Answer code"
-msgstr ""
+msgstr "Код відповіді"
 
 msgid "Answer is empty"
-msgstr ""
+msgstr "Відповідь порожня"
 
 msgid "Answer is unspecified"
-msgstr ""
+msgstr "Відповідь не вказано"
 
 msgid "Answer text"
-msgstr ""
+msgstr "Текст відповіді"
 
 msgid "Appeals are disabled"
-msgstr ""
+msgstr "Апеляції вимкнено"
 
 msgid "Appeals deadline is exceeded"
-msgstr ""
+msgstr "Строк подання апеляцій минув"
 
 msgid "Apr"
-msgstr ""
+msgstr "Квітень"
 
 msgid "Archive creation with tar failed"
-msgstr ""
+msgstr "Не вдалося створити архів за допомогою tar"
 
 msgid "Are you sure you want to finish your contest?"
-msgstr ""
+msgstr "Ви справді хочете завершити змагання?"
 
 msgid "Are you sure you want to stop your virtual contest?"
-msgstr ""
+msgstr "Ви справді хочете зупинити віртуальне змагання?"
 
 msgid "Area"
-msgstr ""
+msgstr "Область"
 
 msgid "Assign automatically"
-msgstr ""
+msgstr "Призначити автоматично"
 
 msgid "Assign chief examiner"
-msgstr ""
+msgstr "Призначити головного екзаменатора"
 
 msgid "Assign cyphers"
-msgstr ""
+msgstr "призначити шифри"
 
 msgid "Assign examiner"
-msgstr ""
+msgstr "Призначити екзаменатора"
 
 msgid "Assign manually:"
-msgstr ""
+msgstr "Призначити вручну:"
 
 msgid "Assign random cyphers"
-msgstr ""
+msgstr "призначити випадковий шифри"
 
 msgid "Assigned cyphers"
-msgstr ""
+msgstr "Призначені коди"
 
 msgid "Attach a file or copy text below"
-msgstr ""
+msgstr "Прикріпіть файл або скопіюйте текст нижче"
 
 msgid "Attempt to submit a binary file"
-msgstr ""
+msgstr "Спроба надіслати двійковий файл"
 
 msgid "Audit log"
-msgstr ""
+msgstr "Журнал аудиту"
 
 msgid "Audit log file does not exist"
-msgstr ""
+msgstr "Файл журналу аудиту не існує"
 
 msgid "Audit log is empty"
-msgstr ""
+msgstr "Журнал аудиту порожній"
 
 msgid "Aug"
-msgstr ""
+msgstr "Серпень"
 
 msgid "Author"
-msgstr ""
+msgstr "Автор"
 
 msgid "Auto-assign logins"
-msgstr ""
+msgstr "Auto-призначити logins"
 
 msgid "Available"
-msgstr ""
+msgstr "Доступно"
 
 msgid "Available only after contest start"
-msgstr ""
+msgstr "Доступно лише після початку змагання"
 
 msgid "Avatar"
-msgstr ""
+msgstr "Аватар"
 
 msgid "Back"
-msgstr ""
+msgstr "Назад"
 
 msgid "Background jobs"
-msgstr ""
+msgstr "Фонові завдання"
 
 msgid "Bad socket name"
-msgstr ""
+msgstr "Некоректна назва сокета"
 
 msgid "Ban"
-msgstr ""
+msgstr "Заблокувати"
 
 msgid "Banned?"
-msgstr ""
+msgstr "Заблоковано?"
 
 msgid ""
-"Be careful and type the e-mail address correctly. If you make a mistake, you "
-"will not receive a registration e-mail and be unable to complete the "
-"registration process."
+"Be careful and type the e-mail address correctly. If you make a mistake, you will not receive a "
+"registration e-mail and be unable to complete the registration process."
 msgstr ""
+"бути уважно і введіть адреса електронної пошти правильно. якщо ви зробити помилка, ви не отримати"
+" реєстрація електронна пошта і бути не вдалося до завершений процес реєстрації."
 
 msgid "Binary file is not shown"
-msgstr ""
+msgstr "Двійковий файл не відображається"
 
 msgid "Birth Date"
-msgstr ""
+msgstr "Дата народження"
 
 msgid "COMMIT changes!"
-msgstr ""
+msgstr "ЗБЕРЕГТИ ЗМІНИ!"
 
 msgid "Cancel"
-msgstr ""
+msgstr "Скасувати"
 
-#, c-format
+#, c-format, python-format
 msgid "Cannot allocate space to store run row %d\n"
-msgstr ""
+msgstr "не можна виділити простір до зберігати запуск рядок %d\n"
 
 msgid "Cannot calculate the file checksum"
-msgstr ""
+msgstr "не можна обчислити файл контрольна сума"
 
 msgid "Cannot guess the content type"
-msgstr ""
+msgstr "не можна здогадатися тип вмісту"
 
 msgid "Cannot participate"
-msgstr ""
+msgstr "Не можна брати участь"
 
 msgid "Cannot read file!"
-msgstr ""
+msgstr "Не вдалося прочитати файл!"
 
 msgid "Cannot read message text!"
-msgstr ""
+msgstr "Не вдалося прочитати текст повідомлення!"
 
 msgid "Cannot read source text!"
-msgstr ""
+msgstr "Не вдалося прочитати вихідний код!"
 
-#, c-format
+#, c-format, python-format
 msgid "Cannot write run row %d\n"
-msgstr ""
+msgstr "не можна записати запуск рядок %d\n"
 
 msgid "Change"
-msgstr ""
+msgstr "Змінити"
 
 msgid "Change Language"
-msgstr ""
+msgstr "Змінити мову"
 
 msgid "Change Status"
-msgstr ""
+msgstr "Змінити статус"
 
 msgid "Change duration"
-msgstr ""
+msgstr "Змінити тривалість"
 
 msgid "Change flags"
-msgstr ""
+msgstr "Змінити прапорці"
 
 msgid "Change language"
-msgstr ""
+msgstr "Змінити мову"
 
 msgid "Change password"
-msgstr ""
+msgstr "Змінити пароль"
 
 msgid "Change status"
-msgstr ""
+msgstr "Змінити статус"
 
 msgid "Change tokens for displayed runs"
-msgstr ""
+msgstr "змінити токени для відображені запуски"
 
 msgid "Change!"
-msgstr ""
+msgstr "Змінити!"
 
 msgid "Changed by user"
-msgstr ""
+msgstr "Змінено користувачем"
 
-#, c-format
+#, c-format, python-format
 msgid "Changing flags of user %d in contest %d failed: %s"
-msgstr ""
+msgstr "зміна прапорці користувач %d у змагання %d не пройдено: %s"
 
 msgid "Changing flags of user in contest failed"
-msgstr ""
+msgstr "зміна прапорці користувач у змагання не пройдено"
 
-#, c-format
+#, c-format, python-format
 msgid "Changing status of user %d in contest %d failed: %s"
-msgstr ""
+msgstr "зміна статус користувач %d у змагання %d не пройдено: %s"
 
 msgid "Changing status of user in contest failed"
-msgstr ""
+msgstr "зміна статус користувач у змагання не пройдено"
 
 msgid "Charset"
-msgstr ""
+msgstr "Кодування"
 
 msgid "Check again"
-msgstr ""
+msgstr "Перевірити ще раз"
 
 msgid "Check contest settings"
-msgstr ""
+msgstr "Перевірити налаштування змагання"
 
 msgid "Check failed"
-msgstr ""
+msgstr "Перевірка не вдалася"
 
 msgid "Check failed runs"
-msgstr ""
+msgstr "Перевірити невдалі запуски"
 
 msgid "Checked?"
-msgstr ""
+msgstr "Перевірено?"
 
 msgid "Checker Token"
-msgstr ""
+msgstr "перевіряч токен"
 
 msgid "Checker output"
-msgstr ""
+msgstr "Вивід перевіряча"
 
 msgid "Chief examiner"
-msgstr ""
+msgstr "Головний екзаменатор"
 
 msgid "Chief examiner must be assigned."
-msgstr ""
+msgstr "Потрібно призначити головного екзаменатора."
 
 msgid "Choose an answer"
-msgstr ""
+msgstr "Виберіть відповідь"
 
 msgid "City"
-msgstr ""
+msgstr "Місто"
 
 msgid "City (En)"
-msgstr ""
+msgstr "Місто (англійською)"
 
 msgid "Clar ID"
-msgstr ""
+msgstr "Роз’яснення ID"
 
 msgid "Clar log update failed"
-msgstr ""
+msgstr "Роз’яснення журнал оновити не пройдено"
 
 msgid "Clarification"
-msgstr ""
+msgstr "Роз’яснення"
 
 msgid "Clarification requests are disabled"
-msgstr ""
+msgstr "Запити на роз’яснення вимкнено"
 
 msgid "Clars"
-msgstr ""
+msgstr "Запити на роз’яснення"
 
 msgid "Clars to all"
-msgstr ""
+msgstr "Запити на роз’яснення для всіх"
 
 msgid "Clean up"
-msgstr ""
+msgstr "Очистити"
 
 msgid "Clean up and check settings"
-msgstr ""
+msgstr "Очистити й перевірити налаштування"
 
 msgid "Clean up and import settings"
-msgstr ""
+msgstr "Очистити й імпортувати налаштування"
 
 msgid "Clear"
-msgstr ""
+msgstr "Очистити"
 
 msgid "Clear BANNED"
-msgstr ""
+msgstr "очистити ЗАБЛОКОВАНИЙ"
 
 msgid "Clear DISQUALIFIED flag"
-msgstr ""
+msgstr "Зняти позначку «ДИСКВАЛІФІКОВАНО»"
 
 msgid "Clear INCOMPLETE"
-msgstr ""
+msgstr "очистити НЕПОВНИЙ"
 
 msgid "Clear INVISIBLE"
-msgstr ""
+msgstr "Зняти позначку «НЕВИДИМИЙ»"
 
 msgid "Clear LOCKED"
-msgstr ""
+msgstr "очистити ЗАБЛОКОВАНИЙ"
 
 msgid "Clear contest passwords"
-msgstr ""
+msgstr "Очистити паролі змагання"
 
 msgid "Clear contest passwords!"
-msgstr ""
+msgstr "очистити змагання паролі!"
 
 msgid "Clear displayed runs"
-msgstr ""
+msgstr "Очистити показані запуски"
 
 msgid "Clear displayed runs!"
-msgstr ""
+msgstr "очистити відображені запуски!"
 
 msgid "Clear disqualification"
-msgstr ""
+msgstr "Скасувати дискваліфікацію"
 
 msgid "Clear entry"
-msgstr ""
+msgstr "Очистити запис"
 
 msgid "Clear finished flag"
-msgstr ""
+msgstr "Очистити прапорець завершення"
 
 msgid "Clear runs"
-msgstr ""
+msgstr "Очистити запуски"
 
 msgid "Clear session"
-msgstr ""
+msgstr "Очистити сеанс"
 
 msgid "Clear session cache"
-msgstr ""
+msgstr "Очистити кеш сеансу"
 
 msgid "Clear the BANNED flag for the selected users"
-msgstr ""
+msgstr "очистити ЗАБЛОКОВАНИЙ прапорець для вибрані користувачі"
 
 msgid "Clear the DISQUALIFIED flag for the selected users"
-msgstr ""
+msgstr "Зняти позначку «ДИСКВАЛІФІКОВАНО» для вибраних користувачів"
 
 msgid "Clear the INCOMPLETE flag for the selected users"
-msgstr ""
+msgstr "очистити НЕПОВНИЙ прапорець для вибрані користувачі"
 
 msgid "Clear the INVISIBLE flag for the selected users"
-msgstr ""
+msgstr "Зняти позначку «НЕВИДИМИЙ» для вибраних користувачів"
 
 msgid "Clear the LOCKED flag for the selected users"
-msgstr ""
+msgstr "очистити ЗАБЛОКОВАНИЙ прапорець для вибрані користувачі"
 
 msgid "Clear this entry"
-msgstr ""
+msgstr "Очистити цей запис"
 
 msgid "Clear variants"
-msgstr ""
+msgstr "Очистити варіанти"
 
-msgid ""
-"Client's requests are suspended. Please wait until the contest administrator "
-"resumes the contest"
-msgstr ""
+msgid "Client's requests are suspended. Please wait until the contest administrator resumes the contest"
+msgstr "Запити клієнта призупинено. Зачекайте, доки адміністратор відновить змагання."
 
 msgid "Close"
-msgstr ""
+msgstr "Закрити"
 
 msgid "Coach"
-msgstr ""
+msgstr "Тренер"
 
 msgid "Coaches"
-msgstr ""
+msgstr "Тренери"
 
 msgid "Coding style violation"
-msgstr ""
+msgstr "Порушення стилю оформлення коду"
 
-#, c-format
+#, c-format, python-format
 msgid "Column name %s is already defined as column %d\n"
-msgstr ""
+msgstr "Назву стовпця %s уже визначено як стовпець %d\n"
 
 msgid "Command-line parameters"
-msgstr ""
+msgstr "Параметри командного рядка"
 
 msgid "Comment"
-msgstr ""
+msgstr "Коментар"
 
 msgid "Comment for other judges (optional)"
-msgstr ""
+msgstr "Коментар для інших суддів (необов’язково)"
 
 msgid "Common prefix to remove"
-msgstr ""
+msgstr "Спільний префікс до вилучити"
 
 msgid "Compare"
-msgstr ""
+msgstr "Порівняти"
 
 msgid "Compare this run with run"
-msgstr ""
+msgstr "порівняти цей запуск з запуск"
 
 msgid "Compilation error"
-msgstr ""
+msgstr "Помилка компіляції"
 
 msgid "Compiled"
-msgstr ""
+msgstr "Скомпільовано"
 
 msgid "Compiler options"
-msgstr ""
+msgstr "Параметри компілятора"
 
 msgid "Compiler output"
-msgstr ""
+msgstr "Вивід компілятора"
 
 msgid "Compiler/style checker output"
-msgstr ""
+msgstr "Вивід компілятора/перевіряча стилю"
 
 msgid "Compiling and running"
-msgstr ""
+msgstr "Компіляція та запуск"
 
 msgid "Compiling..."
-msgstr ""
+msgstr "Компіляція…"
 
 msgid "Compose a message to all participants"
-msgstr ""
+msgstr "Написати повідомлення всім учасникам"
 
 msgid "Configuration error"
-msgstr ""
+msgstr "Помилка конфігурації"
 
 msgid "Confirm Avatar"
-msgstr ""
+msgstr "підтвердити аватар"
 
 msgid "Confirm action"
-msgstr ""
+msgstr "Підтвердити дію"
 
 msgid "Confirm registration"
-msgstr ""
+msgstr "Підтвердити реєстрацію"
 
-#, c-format
+#, c-format, python-format
 msgid "Conflicting user_id (%d) and user_login (%s)"
-msgstr ""
+msgstr "Конфліктний user_id (%d) і user_login (%s)"
 
 msgid "Conflicting user_id and user_login"
-msgstr ""
+msgstr "Конфліктний user_id і user_login"
 
 msgid "Connection failed"
-msgstr ""
+msgstr "Не вдалося встановити з’єднання"
 
 msgid "Content type"
-msgstr ""
+msgstr "Тип вмісту"
 
-#, c-format
+#, c-format, python-format
 msgid "Content type %s is disabled for problem %s in row %d\n"
-msgstr ""
+msgstr "тип вмісту %s вимкнено для задача %s у рядок %d\n"
 
-#, c-format
+#, c-format, python-format
 msgid "Content type %s is not enabled for problem %s in row %d\n"
-msgstr ""
+msgstr "тип вмісту %s не увімкнено для задача %s у рядок %d\n"
 
-#, c-format
+#, c-format, python-format
 msgid "Content type <tt>%s</tt> is disabled for this problem"
-msgstr ""
+msgstr "тип вмісту <tt>%s</tt> вимкнено для ця задача"
 
-#, c-format
+#, c-format, python-format
 msgid "Content type <tt>%s</tt> is not available for this problem"
-msgstr ""
+msgstr "тип вмісту <tt>%s</tt> не доступний для ця задача"
 
 msgid "Content type is disabled for this problem"
-msgstr ""
+msgstr "тип вмісту вимкнено для ця задача"
 
 msgid "Content type is not available for this problem"
-msgstr ""
+msgstr "тип вмісту не доступний для ця задача"
 
 msgid "Contest"
-msgstr ""
+msgstr "Змагання"
 
 msgid "Contest Flags"
-msgstr ""
+msgstr "Прапорці змагання"
 
 msgid "Contest ID"
-msgstr ""
+msgstr "ID змагання"
 
 msgid "Contest already finished"
-msgstr ""
+msgstr "Змагання вже завершилося"
 
 msgid "Contest already started"
-msgstr ""
+msgstr "Змагання вже почалося"
 
 msgid "Contest configuration directory"
-msgstr ""
+msgstr "Каталог конфігурації змагання"
 
 msgid "Contest directory"
-msgstr ""
+msgstr "Каталог змагання"
 
 msgid "Contest is not available"
-msgstr ""
+msgstr "Змагання недоступне"
 
 msgid "Contest is not finished"
-msgstr ""
+msgstr "Змагання ще не завершилося"
 
 msgid "Contest is not started"
-msgstr ""
+msgstr "Змагання ще не розпочалося"
 
 msgid "Contest is not stopped"
-msgstr ""
+msgstr "Змагання не зупинено"
 
 msgid "Contest is ready for testing"
-msgstr ""
+msgstr "Змагання готове до тестування"
 
 msgid "Contest is unloaded"
-msgstr ""
+msgstr "Змагання не завантажено"
 
 msgid "Contest load time"
-msgstr ""
+msgstr "змагання завантажити час"
 
 msgid "Contest management"
-msgstr ""
+msgstr "Керування змаганням"
 
 msgid "Contest name"
-msgstr ""
+msgstr "Назва змагання"
 
 msgid "Contest password"
-msgstr ""
+msgstr "Пароль змагання"
 
 msgid "Contest passwords"
-msgstr ""
+msgstr "Паролі змагання"
 
 msgid "Contest passwords are disabled"
-msgstr ""
+msgstr "Паролі змагання вимкнено"
 
 msgid "Contest priority"
-msgstr ""
+msgstr "Пріоритет змагання"
 
 msgid "Contest registrations"
-msgstr ""
+msgstr "Реєстрації на змагання"
 
 msgid "Contest selection"
-msgstr ""
+msgstr "Вибір змагання"
 
 msgid "Contest settings"
-msgstr ""
+msgstr "Налаштування змагання"
 
 msgid "Contest start date"
-msgstr ""
+msgstr "Дата початку змагання"
 
 msgid "Contest start time"
-msgstr ""
+msgstr "Час початку змагання"
 
 msgid "Contest status"
-msgstr ""
+msgstr "Статус змагання"
 
 msgid "Contest time"
-msgstr ""
+msgstr "Час змагання"
 
 msgid "Contest update time"
-msgstr ""
+msgstr "змагання оновити час"
 
-#, c-format
+#, c-format, python-format
 msgid "Contest: %d (%s)\n"
-msgstr ""
+msgstr "змагання: %d (%s)\n"
 
 msgid "Contestant"
-msgstr ""
+msgstr "учасник змагання"
 
 msgid "Contestants"
-msgstr ""
+msgstr "учасники змагання"
 
 msgid "Continue"
-msgstr ""
+msgstr "Продовжити"
 
 msgid "Continue in this session"
-msgstr ""
+msgstr "Продовжити в цьому сеансі"
 
 msgid "Continue suspended editing"
-msgstr ""
+msgstr "Продовжити призупинено редагування"
 
 msgid "Coordinator"
-msgstr ""
+msgstr "координатор"
 
 msgid "Copy"
-msgstr ""
+msgstr "копіювати"
 
 msgid "Correct answer"
-msgstr ""
+msgstr "правильний відповідь"
 
 msgid "Correct output"
-msgstr ""
+msgstr "правильний вивід"
 
 msgid "Country"
-msgstr ""
+msgstr "Країна"
 
 msgid "Country (En)"
-msgstr ""
+msgstr "країна (En)"
 
 msgid "Create"
-msgstr ""
+msgstr "Створити"
 
 msgid "Create account"
-msgstr ""
+msgstr "Створити обліковий запис"
 
 msgid "Create another account"
-msgstr ""
+msgstr "створити інший обліковий запис"
 
 msgid "Create contest!"
-msgstr ""
+msgstr "створити змагання!"
 
 msgid "Create new API key"
-msgstr ""
+msgstr "створити новий API ключ"
 
 msgid "Create user account"
-msgstr ""
+msgstr "створити користувач обліковий запис"
 
 msgid "Crop avatar"
-msgstr ""
+msgstr "Обрізати аватар"
 
 msgid "Current penalty"
-msgstr ""
+msgstr "поточний штраф"
 
 msgid "Current standings"
-msgstr ""
+msgstr "поточний таблиця результатів"
 
 msgid "Cypher"
-msgstr ""
+msgstr "Шифр"
 
-#, c-format
+#, c-format, python-format
 msgid "Cypher is empty in row %d\n"
-msgstr ""
+msgstr "Шифр порожній у рядку %d\n"
 
 msgid "Cypher prefix"
-msgstr ""
+msgstr "Шифр префікс"
 
 msgid "DB time"
-msgstr ""
+msgstr "DB час"
 
 msgid "DB timestamp"
-msgstr ""
+msgstr "DB мітка часу"
 
 msgid "DISQUALIFY users"
-msgstr ""
+msgstr "ДИСКВАЛІФІКУВАТИ користувачі"
 
 msgid "Database error"
-msgstr ""
+msgstr "помилка бази даних"
 
 msgid "Date penalty formula"
-msgstr ""
+msgstr "дата штраф формула"
 
 msgid "Deactivate"
-msgstr ""
+msgstr "Деактивувати"
 
 msgid "Deadline"
-msgstr ""
+msgstr "кінцевий термін"
 
 msgid "Deadline for this problem is expired"
-msgstr ""
+msgstr "кінцевий термін для ця задача є минув"
 
 msgid "Dec"
-msgstr ""
+msgstr "Грудень"
 
 msgid "Default"
-msgstr ""
+msgstr "Типовий"
 
 msgid "Default value"
-msgstr ""
+msgstr "Типовий значення"
 
 msgid "Del CHIEF EXAMINER"
-msgstr ""
+msgstr "Del ГОЛОВНИЙ ЕКЗАМЕНАТОР"
 
 msgid "Del COORDINATOR"
-msgstr ""
+msgstr "Del КООРДИНАТОР"
 
 msgid "Del EXAMINER"
-msgstr ""
+msgstr "Del ЕКЗАМЕНАТОР"
 
 msgid "Del OBSERVER"
-msgstr ""
+msgstr "Del СПОСТЕРІГАЧ"
 
 msgid "Delete"
-msgstr ""
+msgstr "Видалити"
 
 msgid "Delete Avatar"
-msgstr ""
+msgstr "видалити аватар"
 
 msgid "Delete all"
-msgstr ""
+msgstr "видалити усі"
 
 msgid "Delete row"
-msgstr ""
+msgstr "видалити рядок"
 
 msgid "Delete this integration?"
-msgstr ""
+msgstr "Видалити цю інтеграцію?"
 
 msgid "Delete!"
-msgstr ""
+msgstr "видалити!"
 
-#, c-format
+#, c-format, python-format
 msgid "Deleting role %d of user %d from contest %d failed"
-msgstr ""
+msgstr "видалення роль %d користувач %d від змагання %d не пройдено"
 
 msgid "Deleting role of user from contest failed"
-msgstr ""
+msgstr "видалення роль користувач від змагання не пройдено"
 
 msgid "Deny"
-msgstr ""
+msgstr "Заборонити"
 
 msgid "Desired EOLN Type"
-msgstr ""
+msgstr "Бажаний EOLN тип"
 
 msgid "Detailed information about participant"
-msgstr ""
+msgstr "Докладний інформація про учасник"
 
 msgid "Detailed information for user (team)"
-msgstr ""
+msgstr "Докладна інформація про користувача (команду)"
 
 msgid "Details"
-msgstr ""
+msgstr "Докладно"
 
 msgid "Details for user "
-msgstr ""
+msgstr "подробиці для користувач "
 
 msgid "Directory structure"
-msgstr ""
+msgstr "Структура каталогів"
 
 msgid "Disable &quot;Name&quot; field"
-msgstr ""
+msgstr "вимкнути &лапки;назва&лапки; поле"
 
 msgid "Disable clarifications"
-msgstr ""
+msgstr "вимкнути роз’яснення"
 
 msgid "Disable locale change"
-msgstr ""
+msgstr "вимкнути локаль змінити"
 
 msgid "Disable password change"
-msgstr ""
+msgstr "вимкнути пароль змінити"
 
 msgid "Disable separate team password"
-msgstr ""
+msgstr "Вимкнути окремий пароль команди"
 
 msgid "Disable team member deletion"
-msgstr ""
+msgstr "Заборонити видалення учасників команди"
 
 msgid "Disable virtual start"
-msgstr ""
+msgstr "вимкнути віртуальний початок"
 
 msgid "Disabled"
-msgstr ""
+msgstr "Вимкнено"
 
 msgid "Discipline"
-msgstr ""
+msgstr "Дисципліна"
 
 msgid "Disk read error (nonexistant file?)"
-msgstr ""
+msgstr "Диск помилка читання (неіснуючий файл?)"
 
 msgid "Disk write error (disk full?)"
-msgstr ""
+msgstr "Диск помилка запису (диск повний?)"
 
 msgid "Disqualification explanation"
-msgstr ""
+msgstr "Дискваліфікація пояснення"
 
 msgid "Disqualified"
-msgstr ""
+msgstr "Дискваліфіковано"
 
 msgid "Disqualified runs"
-msgstr ""
+msgstr "дискваліфікований запуски"
 
 msgid "Disqualified?"
-msgstr ""
+msgstr "дискваліфікований?"
 
 msgid "Disqualify"
-msgstr ""
+msgstr "Дискваліфікувати"
 
 msgid "Disqualify displayed runs"
-msgstr ""
+msgstr "Дискваліфікувати відображені запуски"
 
 msgid "Disqualify displayed runs!"
-msgstr ""
+msgstr "Дискваліфікувати відображені запуски!"
 
 msgid "Disqualify runs"
-msgstr ""
+msgstr "Дискваліфікувати запуски"
 
 msgid "Disqualify selected users"
-msgstr ""
+msgstr "Дискваліфікувати вибрані користувачі"
 
 msgid "Disqualify user"
-msgstr ""
+msgstr "Дискваліфікувати користувач"
 
 msgid "Do not show before the contest starts?"
-msgstr ""
+msgstr "не показати до змагання починається?"
 
 msgid "Down all"
-msgstr ""
+msgstr "униз усі"
 
 msgid "Download"
-msgstr ""
+msgstr "Завантажити"
 
 msgid "Download OK and PR runs"
-msgstr ""
+msgstr "завантажити OK і PR запуски"
 
 msgid "Download OK runs"
-msgstr ""
+msgstr "завантажити OK запуски"
 
 msgid "Download OK, PR, RJ, IG, PD, DQ runs"
-msgstr ""
+msgstr "завантажити OK, PR, RJ, IG, PD, DQ запуски"
 
 msgid "Download all runs"
-msgstr ""
+msgstr "завантажити усі запуски"
 
 msgid "Download archive of runs"
-msgstr ""
+msgstr "завантажити архів запуски"
 
 msgid "Download run"
-msgstr ""
+msgstr "завантажити запуск"
 
 msgid "Download runs"
-msgstr ""
+msgstr "завантажити запуски"
 
 msgid "Download runs configuration"
-msgstr ""
+msgstr "завантажити запуски конфігурація"
 
 msgid "Download selected runs"
-msgstr ""
+msgstr "завантажити вибраний запуски"
 
 msgid "Dump data"
-msgstr ""
+msgstr "Вивантажити дані"
 
 msgid "Dump runs in CSV format"
-msgstr ""
+msgstr "Вивантажити запуски у CSV формат"
 
 msgid "Dump users in CSV format"
-msgstr ""
+msgstr "Вивантажити користувачі у CSV формат"
 
 msgid "Duration"
-msgstr ""
+msgstr "Тривалість"
 
 msgid "E-mail"
-msgstr ""
+msgstr "Електронна пошта"
 
 msgid "E-mail contains invalid characters"
-msgstr ""
+msgstr "електронна пошта містить некоректний символи"
 
 msgid "E-mail is not specified"
-msgstr ""
+msgstr "електронна пошта не указаний"
 
 msgid "EMPTY"
-msgstr ""
+msgstr "ПОРОЖНЬО"
 
 msgid "EOLN Type"
-msgstr ""
+msgstr "EOLN тип"
 
 msgid "EXAM IS RUNNING"
-msgstr ""
+msgstr "ІСПИТ ТРИВАЄ"
 
 msgid "EXAM IS RUNNING (frozen)"
-msgstr ""
+msgstr "ІСПИТ ТРИВАЄ (таблицю результатів заморожено)"
 
 msgid "Edit"
-msgstr ""
+msgstr "Редагувати"
 
 msgid "Edit Registration Form"
-msgstr ""
+msgstr "Редагувати реєстраційну форму"
 
 msgid "Edit comment"
-msgstr ""
+msgstr "Редагувати коментар"
 
 msgid "Editing clar"
-msgstr ""
+msgstr "Редагування роз’яснення"
 
 msgid "Editing general info"
-msgstr ""
+msgstr "Редагування загальний інформація"
 
 msgid "Editing member info"
-msgstr ""
+msgstr "Редагування учасник інформація"
 
 msgid "Editing run"
-msgstr ""
+msgstr "Редагування запуск"
 
 msgid "Elapsed time"
-msgstr ""
+msgstr "Минулий час"
 
 msgid "Empty"
-msgstr ""
+msgstr "порожній"
 
 msgid "Empty submit"
-msgstr ""
+msgstr "порожній відправлення"
 
 msgid "Empty text of warning"
-msgstr ""
+msgstr "порожній текст попередження"
 
 msgid "Enable OAUTH for login"
-msgstr ""
+msgstr "увімкнути OAUTH для логін"
 
 msgid "Enable daily reminders"
-msgstr ""
+msgstr "увімкнути щоденний нагадування"
 
 msgid "Enable password restoration"
-msgstr ""
+msgstr "увімкнути пароль відновлення"
 
 msgid "Enable simple registration (no email)"
-msgstr ""
+msgstr "увімкнути спрощена реєстрація (ні електронна пошта)"
 
 msgid "Enable virtual start"
-msgstr ""
+msgstr "увімкнути віртуальний початок"
 
 msgid "End time"
-msgstr ""
+msgstr "Час завершення"
 
 msgid "Error"
-msgstr ""
+msgstr "Помилка"
 
 msgid "Error details follow"
-msgstr ""
+msgstr "помилка подробиці перейти за"
 
 msgid "Error during run comparison"
-msgstr ""
+msgstr "Помилка під час порівняння запусків"
 
 msgid "Exam Id"
-msgstr ""
+msgstr "Ідентифікатор іспиту"
 
 msgid "Exam finish time"
-msgstr ""
+msgstr "Час завершення іспиту"
 
 msgid "Exam start time"
-msgstr ""
+msgstr "Час початку іспиту"
 
 msgid "Exam status"
-msgstr ""
+msgstr "Статус іспиту"
 
 msgid "Examination information"
-msgstr ""
+msgstr "Іспит інформація"
 
 msgid "Examination mode"
-msgstr ""
+msgstr "Іспит режим"
 
 msgid "Examiner"
-msgstr ""
+msgstr "Екзаменатор"
 
 msgid "Examiners"
-msgstr ""
+msgstr "Екзаменатори"
 
 msgid "Examiners assignments"
-msgstr ""
+msgstr "Екзаменатори призначення"
 
 msgid "Examples"
-msgstr ""
+msgstr "Приклади"
 
 msgid "Exit code"
-msgstr ""
+msgstr "Код завершення"
 
 msgid "Export runs in XML external format"
-msgstr ""
+msgstr "експортувати запуски у XML зовнішній формат"
 
 msgid "External ID"
-msgstr ""
+msgstr "Зовнішній ID"
 
 msgid "Extra info"
-msgstr ""
+msgstr "Додатковий інформація"
 
 msgid "Faculty"
-msgstr ""
+msgstr "Факультет"
 
 msgid "Faculty (En)"
-msgstr ""
+msgstr "Факультет (En)"
 
 msgid "Faculty (abbreviated)"
-msgstr ""
+msgstr "Факультет (скорочений)"
 
 msgid "Faculty (abbreviated) (En)"
-msgstr ""
+msgstr "Факультет (скорочений) (En)"
 
 msgid "Faculty (short)"
-msgstr ""
+msgstr "Факультет (короткий)"
 
 msgid "Faculty (short) (En)"
-msgstr ""
+msgstr "Факультет (короткий) (En)"
 
 msgid "Failed test"
-msgstr ""
+msgstr "Тест, на якому сталася помилка"
 
-#, c-format
+#, c-format, python-format
 msgid "Failed to add row %d to runlog\n"
-msgstr ""
+msgstr "не пройдено до додати рядок %d до runlog\n"
 
 msgid "Failed to fetch run log entry"
-msgstr ""
+msgstr "не пройдено до отримати запуск журнал запис"
 
-#, c-format
+#, c-format, python-format
 msgid "Failed to fetch run log entry %d"
-msgstr ""
+msgstr "не пройдено до отримати запуск журнал запис %d"
 
 msgid "Family name"
-msgstr ""
+msgstr "Сімейство назва"
 
 msgid "Family name (En)"
-msgstr ""
+msgstr "Сімейство назва (En)"
 
 msgid "Feb"
-msgstr ""
+msgstr "Лютий"
 
 msgid "Female"
-msgstr ""
+msgstr "Жіночий"
 
-#, c-format
+#, c-format, python-format
 msgid "Field \"%s\" contains non-printable characters.\n"
-msgstr ""
+msgstr "поле \"%s\" містить non-придатний до друку символи.\n"
 
 msgid "Field \"Name\" contains non-printable characters"
-msgstr ""
+msgstr "поле \"назва\" містить non-придатний до друку символи"
 
 msgid "Field 0"
-msgstr ""
+msgstr "поле 0"
 
 msgid "Field 1"
-msgstr ""
+msgstr "поле 1"
 
 msgid "Field 2"
-msgstr ""
+msgstr "поле 2"
 
 msgid "Field 3"
-msgstr ""
+msgstr "поле 3"
 
 msgid "Field 4"
-msgstr ""
+msgstr "поле 4"
 
 msgid "Field 5"
-msgstr ""
+msgstr "поле 5"
 
 msgid "Field 6"
-msgstr ""
+msgstr "поле 6"
 
 msgid "Field 7"
-msgstr ""
+msgstr "поле 7"
 
 msgid "Field 8"
-msgstr ""
+msgstr "поле 8"
 
 msgid "Field 9"
-msgstr ""
+msgstr "поле 9"
 
 msgid "File"
-msgstr ""
+msgstr "Файл"
 
 msgid "File is empty"
-msgstr ""
+msgstr "файл порожній"
 
 msgid "File is not specified"
-msgstr ""
+msgstr "файл не указаний"
 
 msgid "File name pattern"
-msgstr ""
+msgstr "назва файлу шаблон"
 
 msgid "Filter expression"
-msgstr ""
+msgstr "Фільтр вираз"
 
 msgid "Filter expression errors"
-msgstr ""
+msgstr "Фільтр вираз помилки"
 
 msgid "Filtered"
-msgstr ""
+msgstr "Відфільтрований"
 
 msgid "Final test visibility rules"
-msgstr ""
+msgstr "підсумковий тест видимість правила"
 
 msgid "Final visibility rules are active"
-msgstr ""
+msgstr "підсумковий видимість правила є активний"
 
 msgid "Finish contest"
-msgstr ""
+msgstr "завершити змагання"
 
 msgid "Finish contest?"
-msgstr ""
+msgstr "завершити змагання?"
 
 msgid "Finish exam"
-msgstr ""
+msgstr "Завершити іспит"
 
 msgid "Finish session"
-msgstr ""
+msgstr "завершити сеанс"
 
 msgid "Finish the contest"
-msgstr ""
+msgstr "завершити змагання"
 
 msgid "Finish the exam"
-msgstr ""
+msgstr "Завершити іспит"
 
 msgid "Finish time"
-msgstr ""
+msgstr "завершити час"
 
 msgid "First Run"
-msgstr ""
+msgstr "перший запуск"
 
 msgid "First User_Id"
-msgstr ""
+msgstr "перший User_Id"
 
 msgid "First clar"
-msgstr ""
+msgstr "перший роз’яснення"
 
 msgid "First name"
-msgstr ""
+msgstr "Ім’я"
 
 msgid "First name (En)"
-msgstr ""
+msgstr "перший назва (En)"
 
 msgid "First run"
-msgstr ""
+msgstr "перший запуск"
 
 msgid "Flags"
-msgstr ""
+msgstr "прапорці"
 
 msgid "Force contest registration"
-msgstr ""
+msgstr "Примусово змагання реєстрація"
 
 msgid "Force start virtual contest"
-msgstr ""
+msgstr "Примусово початок віртуальне змагання"
 
 msgid "Force virtual contest start for the selected users"
-msgstr ""
+msgstr "Примусово віртуальне змагання початок для вибрані користувачі"
 
 msgid "Forget changes"
-msgstr ""
+msgstr "Забути зміни"
 
 msgid "Forget editing"
-msgstr ""
+msgstr "Забути редагування"
 
 msgid "Forget it"
-msgstr ""
+msgstr "Забути це"
 
 msgid "Forgot password?"
-msgstr ""
+msgstr "Forgot пароль?"
 
 msgid "Formatting rules violation"
-msgstr ""
+msgstr "Форматування правила порушення"
 
 msgid "Free registration"
-msgstr ""
+msgstr "Вільний реєстрація"
 
 msgid "Freeze contest standings"
-msgstr ""
+msgstr "Заморозити змагання таблиця результатів"
 
 msgid "From"
-msgstr ""
+msgstr "від"
 
 msgid "From scratch"
-msgstr ""
+msgstr "від з нуля"
 
 msgid "Full path"
-msgstr ""
+msgstr "Повний шлях"
 
 msgid "Full rejudge displayed runs"
-msgstr ""
+msgstr "Повторна перевірка всіх відображених запусків"
 
 msgid "Full score"
-msgstr ""
+msgstr "повний бал"
 
 msgid "Fully rejudge displayed runs"
-msgstr ""
+msgstr "Повторно перевірити всі відображені запуски"
 
 msgid "Fully rejudge displayed runs!"
-msgstr ""
+msgstr "Повторно перевірити всі відображені запуски!"
 
 msgid "Fully rejudge runs"
-msgstr ""
+msgstr "Повністю повторно перевірити запуски"
 
 msgid "Further testing information is not available"
-msgstr ""
+msgstr "подальший тестування інформація не доступний"
 
 msgid "Gender"
-msgstr ""
+msgstr "Стать"
 
 msgid "General info"
-msgstr ""
+msgstr "загальний інформація"
 
 msgid "General information"
-msgstr ""
+msgstr "загальний інформація"
 
 msgid "General registration form fields"
-msgstr ""
+msgstr "загальний реєстрація форма поля"
 
 msgid "General settings (contest.xml)"
-msgstr ""
+msgstr "загальний налаштування (змагання.XML)"
 
 msgid "Generate Token for Telegram"
-msgstr ""
+msgstr "Генерувати токен для Telegram"
 
 msgid "Generate contest passwords"
-msgstr ""
+msgstr "Генерувати змагання паролі"
 
 msgid "Generate random contest passwords"
-msgstr ""
+msgstr "Генерувати випадковий змагання паролі"
 
 msgid "Generate random contest passwords!"
-msgstr ""
+msgstr "Генерувати випадковий змагання паролі!"
 
 msgid "Generate random registration passwords"
-msgstr ""
+msgstr "Генерувати випадковий реєстрація паролі"
 
 msgid "Generate random registration passwords!"
-msgstr ""
+msgstr "Генерувати випадковий реєстрація паролі!"
 
 msgid "Generate registration passwords"
-msgstr ""
+msgstr "Генерувати реєстрація паролі"
 
 msgid "Generate!"
-msgstr ""
+msgstr "Генерувати!"
 
 msgid "Global settings (serve.cfg)"
-msgstr ""
+msgstr "Глобальний налаштування (обслуговувати.конфігурація)"
 
 msgid "Good!"
-msgstr ""
+msgstr "Good!"
 
 msgid "Grade"
-msgstr ""
+msgstr "Клас"
 
 msgid "Group"
-msgstr ""
+msgstr "Група"
 
 msgid "Group (En)"
-msgstr ""
+msgstr "група (En)"
 
 msgid "Group Info"
-msgstr ""
+msgstr "група Інформація"
 
 msgid "Group scores"
-msgstr ""
+msgstr "група бали"
 
 msgid "Guest"
-msgstr ""
+msgstr "Гість"
 
 msgid "Guests"
-msgstr ""
+msgstr "Гості"
 
 msgid "Hash value"
-msgstr ""
+msgstr "Хеш значення"
 
-#, c-format
+#, c-format, python-format
 msgid "Header row defines %d columns, but row %d has %zu columns\n"
-msgstr ""
+msgstr "Заголовок рядок визначає %d стовпці, але рядок %d має %zu стовпці\n"
 
 #, c-format
 msgid ""
@@ -1669,6 +1694,10 @@ msgid ""
 "New random password was successfully generated!\n"
 "\n"
 msgstr ""
+"Вітаємо!\n"
+"\n"
+"Новий випадковий пароль успішно згенеровано.\n"
+"\n"
 
 msgid ""
 "Hello,\n"
@@ -1687,8 +1716,23 @@ msgid ""
 "Regards,\n"
 "The ejudge contest administration system (www.ejudge.ru)\n"
 msgstr ""
+"Вітаємо!\n"
+"\n"
+"Хтось (імовірно, ви) зареєстрував новий обліковий запис\n"
+"для участі у змаганні \"%Cn\"%V1\n"
+"за допомогою цієї адреси електронної пошти (%Ue).\n"
+"\n"
+"Реєстрацію успішно завершено. У цьому повідомленні\n"
+"для зручності наведено ваш логін і пароль.\n"
+"\n"
+"логін:    %Ul\n"
+"пароль: %Uz\n"
+"URL:      %Vu\n"
+"\n"
+"З повагою,\n"
+"система адміністрування змагань ejudge (www.ejudge.ru)\n"
 
-#, c-format
+#, c-format, python-format
 msgid ""
 "Hello,\n"
 "\n"
@@ -1696,6 +1740,11 @@ msgid ""
 "regeneration for login `%s'.\n"
 "\n"
 msgstr ""
+"Вітаємо!\n"
+"\n"
+"Хтось (імовірно, ви) надіслав запит на повторне генерування пароля реєстрації\n"
+"для логіна `%s'.\n"
+"\n"
 
 msgid ""
 "Hello,\n"
@@ -1716,6 +1765,23 @@ msgid ""
 "Regards,\n"
 "The ejudge contest administration system (www.ejudge.ru)\n"
 msgstr ""
+"Вітаємо!\n"
+"\n"
+"Хтось (імовірно, ви) вказав цю адресу електронної пошти (%Ue)\n"
+"під час реєстрації облікового запису на %Vn%V1.\n"
+"\n"
+"Щоб підтвердити реєстрацію, введіть надані логін\n"
+"і пароль на сторінці входу на сервері за адресою:\n"
+"%Vu.\n"
+"\n"
+"Зверніть увагу: якщо ви не зробите цього протягом 24 годин\n"
+"з моменту надсилання цього листа, реєстрацію буде анульовано.\n"
+"\n"
+"логін:    %Ul\n"
+"пароль: %Uz\n"
+"\n"
+"З повагою,\n"
+"система адміністрування змагань ejudge (www.ejudge.ru)\n"
 
 msgid ""
 "Hello,\n"
@@ -1736,8 +1802,25 @@ msgid ""
 "Regards,\n"
 "The ejudge contest administration system (www.ejudge.ru)\n"
 msgstr ""
+"Вітаємо!\n"
+"\n"
+"Хтось (імовірно, ви) вказав цю адресу електронної пошти (%Ue)\n"
+"під час реєстрації облікового запису для участі у змаганні \"%Cn\"%V1.\n"
+"\n"
+"Щоб підтвердити реєстрацію, введіть надані логін\n"
+"і пароль на сторінці входу на сервері за адресою:\n"
+"%Vu.\n"
+"\n"
+"Зверніть увагу: якщо ви не зробите цього протягом 24 годин\n"
+"з моменту надсилання цього листа, реєстрацію буде анульовано.\n"
+"\n"
+"логін:    %Ul\n"
+"пароль: %Uz\n"
+"\n"
+"З повагою,\n"
+"система адміністрування змагань ejudge (www.ejudge.ru)\n"
 
-#, c-format
+#, c-format, python-format
 msgid ""
 "Hello,\n"
 "\n"
@@ -1745,8 +1828,13 @@ msgid ""
 "in contest %d from IP %s\n"
 "\n"
 msgstr ""
+"Вітаємо!\n"
+"\n"
+"Користувач `%s' (електронна пошта %s) завершив повторне генерування пароля\n"
+"у змаганні %d з IP-адреси %s\n"
+"\n"
 
-#, c-format
+#, c-format, python-format
 msgid ""
 "Hello,\n"
 "\n"
@@ -1754,845 +1842,854 @@ msgid ""
 "in contest %d from IP %s\n"
 "\n"
 msgstr ""
+"Вітаємо!\n"
+"\n"
+"Користувач `%s' (електронна пошта %s) ініціював повторне генерування пароля\n"
+"у змаганні %d з IP-адреси %s\n"
+"\n"
 
 msgid "Help"
-msgstr ""
+msgstr "Довідка"
 
 msgid "Hidden run review"
-msgstr ""
+msgstr "прихований запуск перевірка"
 
 msgid "Hidden run review (additional notes)"
-msgstr ""
+msgstr "прихований запуск перевірка (додатковий примітки)"
 
 msgid "Hidden?"
-msgstr ""
+msgstr "прихований?"
 
 msgid "Hide closed contests"
-msgstr ""
+msgstr "приховати закрито змагання"
 
 msgid "Hide compiler options"
-msgstr ""
+msgstr "приховати компілятор параметри"
 
 msgid "Hide details"
-msgstr ""
+msgstr "приховати подробиці"
 
 msgid "Hide extended info"
-msgstr ""
+msgstr "приховати розширений інформація"
 
 msgid "Hide hidden contests"
-msgstr ""
+msgstr "приховати прихований змагання"
 
 msgid "Hide unmanageable contests"
-msgstr ""
+msgstr "приховати некерований змагання"
 
 msgid "Homepage"
-msgstr ""
+msgstr "Домашня сторінка"
 
 msgid "IP"
-msgstr ""
+msgstr "IP"
 
 msgid "IP address"
-msgstr ""
+msgstr "IP-адреса"
 
 msgid "IP addresses"
-msgstr ""
+msgstr "IP адреси"
 
 msgid "IP addresses for users"
-msgstr ""
+msgstr "IP адреси для користувачі"
 
 msgid "IPC operation failed"
-msgstr ""
+msgstr "IPC операція не вдалася"
 
-msgid ""
-"If you already have an ejudge account on this server, you may use it. If so, "
-"follow the link"
+msgid "If you already have an ejudge account on this server, you may use it. If so, follow the link"
 msgstr ""
+"якщо ви вже має ejudge обліковий запис на цей сервер, ви можете використовувати це. якщо so, "
+"перейти за посилання"
 
 msgid "Ignore displayed runs"
-msgstr ""
+msgstr "Ігнорувати відображені запуски"
 
 msgid "Ignore displayed runs!"
-msgstr ""
+msgstr "Ігнорувати відображені запуски!"
 
 msgid "Ignore runs"
-msgstr ""
+msgstr "Ігнорувати запуски"
 
 msgid "Ignored"
-msgstr ""
+msgstr "Проігноровано"
 
-#, c-format
+#, c-format, python-format
 msgid "Ignoring empty column %d\n"
-msgstr ""
+msgstr "Порожній стовпець %d проігноровано\n"
 
-#, c-format
+#, c-format, python-format
 msgid "Ignoring unsupported column %d (%s)\n"
-msgstr ""
+msgstr "Ігнорування не підтримується стовпець %d (%s)\n"
 
 msgid "Import"
-msgstr ""
+msgstr "Імпортувати"
 
 msgid "Imported?"
-msgstr ""
+msgstr "Імпортовано?"
 
 msgid "In DB?"
-msgstr ""
+msgstr "У базі даних?"
 
-msgid ""
-"In order to complete the registration procedure, hit the \"Confirm "
-"registration\" link."
-msgstr ""
+msgid "In order to complete the registration procedure, hit the \"Confirm registration\" link."
+msgstr "у порядок до завершений реєстрація процедура, hit \"підтвердити реєстрація\" посилання."
 
 msgid "In reply to"
-msgstr ""
+msgstr "у відповідь до"
 
 msgid "Include hidden (#) runs"
-msgstr ""
+msgstr "Включити прихований (#) запуски"
 
 msgid "Incomplete?"
-msgstr ""
+msgstr "неповний?"
 
 msgid "Info"
-msgstr ""
+msgstr "Інформація"
 
 msgid "Information about run"
-msgstr ""
+msgstr "інформація про запуск"
 
 msgid "Information by your request is not available."
-msgstr ""
+msgstr "інформація за ваш запит не доступний."
 
 msgid "Information is not available"
-msgstr ""
+msgstr "інформація не доступний"
 
 msgid "Information is not available."
-msgstr ""
+msgstr "інформація не доступний."
 
 msgid "Input"
-msgstr ""
+msgstr "Вхідні дані"
 
 msgid "Input data"
-msgstr ""
+msgstr "Вхідні дані"
 
 msgid "Input file name"
-msgstr ""
+msgstr "вхідні дані назва файлу"
 
 msgid "Input format"
-msgstr ""
+msgstr "вхідні дані формат"
 
 msgid "Input in"
-msgstr ""
+msgstr "вхідні дані у"
 
 msgid "Institution"
-msgstr ""
+msgstr "Заклад"
 
 msgid "Institution (En)"
-msgstr ""
+msgstr "Заклад (En)"
 
 msgid "Institution (abbreviated)"
-msgstr ""
+msgstr "Заклад (скорочений)"
 
 msgid "Institution (abbreviated) (En)"
-msgstr ""
+msgstr "Заклад (скорочений) (En)"
 
 msgid "Institution (short)"
-msgstr ""
+msgstr "Заклад (короткий)"
 
 msgid "Institution (short) (En)"
-msgstr ""
+msgstr "Заклад (короткий) (En)"
 
 msgid "Institution entry date"
-msgstr ""
+msgstr "Заклад запис дата"
 
 msgid "Institution graduation date"
-msgstr ""
+msgstr "Заклад випуск дата"
 
 msgid "Institution number"
-msgstr ""
+msgstr "Заклад кількість"
 
 msgid "Instructions"
-msgstr ""
+msgstr "Інструкції"
 
 msgid "Insufficient duration to continue the contest"
-msgstr ""
+msgstr "Недостатній тривалість до продовжити змагання"
 
 msgid "Internal error"
-msgstr ""
+msgstr "Внутрішній помилка"
 
 msgid "Invalid ID"
-msgstr ""
+msgstr "некоректний ID"
 
-#, c-format
+#, c-format, python-format
 msgid "Invalid RunId %s in row %d\n"
-msgstr ""
+msgstr "Некоректний RunId %s у рядку %d\n"
 
-#, c-format
+#, c-format, python-format
 msgid "Invalid UId %s in row %d\n"
-msgstr ""
+msgstr "некоректний UID %s у рядок %d\n"
 
 msgid "Invalid UUID"
-msgstr ""
+msgstr "некоректний UUID"
 
 msgid "Invalid action"
-msgstr ""
+msgstr "некоректний дія"
 
 msgid "Invalid character"
-msgstr ""
+msgstr "некоректний символ"
 
 msgid "Invalid characters"
-msgstr ""
+msgstr "некоректний символи"
 
 msgid "Invalid clar_id"
-msgstr ""
+msgstr "некоректний clar_id"
 
 msgid "Invalid configuration"
-msgstr ""
+msgstr "некоректний конфігурація"
 
 msgid "Invalid contest"
-msgstr ""
+msgstr "некоректний змагання"
 
-#, c-format
+#, c-format, python-format
 msgid "Invalid cypher `%s' in row %d\n"
-msgstr ""
+msgstr "некоректний шифр `%s' у рядок %d\n"
 
 msgid "Invalid directory structure type"
-msgstr ""
+msgstr "некоректний каталог структура тип"
 
 msgid "Invalid duration specification"
-msgstr ""
+msgstr "некоректний тривалість специфікація"
 
 msgid "Invalid error code"
-msgstr ""
+msgstr "некоректний помилка код"
 
 msgid "Invalid external user"
-msgstr ""
+msgstr "некоректний зовнішній користувач"
 
 msgid "Invalid file name"
-msgstr ""
+msgstr "некоректний назва файлу"
 
 msgid "Invalid filter expression"
-msgstr ""
+msgstr "некоректний фільтр вираз"
 
 msgid "Invalid language"
-msgstr ""
+msgstr "некоректний мова"
 
-#, c-format
+#, c-format, python-format
 msgid "Invalid language `%s' in row %d\n"
-msgstr ""
+msgstr "некоректний мова `%s' у рядок %d\n"
 
 msgid "Invalid locale_id"
-msgstr ""
+msgstr "некоректний locale_id"
 
 msgid "Invalid login"
-msgstr ""
+msgstr "некоректний логін"
 
-#, c-format
+#, c-format, python-format
 msgid "Invalid login `%s' in row %d\n"
-msgstr ""
+msgstr "некоректний логін `%s' у рядок %d\n"
 
-#, c-format
+#, c-format, python-format
 msgid "Invalid name `%s' in row %d\n"
-msgstr ""
+msgstr "Некоректна назва `%s' у рядку %d\n"
 
 msgid "Invalid notification"
-msgstr ""
+msgstr "некоректний сповіщення"
 
 msgid "Invalid pages count"
-msgstr ""
+msgstr "некоректний сторінки кількість"
 
 msgid "Invalid parameter"
-msgstr ""
+msgstr "некоректний параметр"
 
 msgid "Invalid problem"
-msgstr ""
+msgstr "некоректний задача"
 
-#, c-format
+#, c-format, python-format
 msgid "Invalid problem `%s' in row %d\n"
-msgstr ""
+msgstr "некоректний задача `%s' у рядок %d\n"
 
-#, c-format
+#, c-format, python-format
 msgid "Invalid problem in run %d in row %d\n"
-msgstr ""
+msgstr "некоректний задача у запуск %d у рядок %d\n"
 
 msgid "Invalid role"
-msgstr ""
+msgstr "некоректний роль"
 
 msgid "Invalid run selection type"
-msgstr ""
+msgstr "некоректний запуск вибір тип"
 
 msgid "Invalid run to compare to"
-msgstr ""
+msgstr "некоректний запуск до порівняти до"
 
 msgid "Invalid score"
-msgstr ""
+msgstr "некоректний бал"
 
 msgid "Invalid score adjustment"
-msgstr ""
+msgstr "некоректний бал коригування"
 
 msgid "Invalid session"
-msgstr ""
+msgstr "некоректний сеанс"
 
 msgid "Invalid session identifier. The possible reasons are as follows."
-msgstr ""
+msgstr "некоректний сеанс ідентифікатор. можливий причини є як наведено далі."
 
 msgid "Invalid status"
-msgstr ""
+msgstr "некоректний статус"
 
-#, c-format
+#, c-format, python-format
 msgid "Invalid status `%s' (%d) in row %d\n"
-msgstr ""
+msgstr "некоректний статус `%s' (%d) у рядок %d\n"
 
-#, c-format
+#, c-format, python-format
 msgid "Invalid status `%s' in row %d\n"
-msgstr ""
+msgstr "некоректний статус `%s' у рядок %d\n"
 
 msgid "Invalid submit ID"
-msgstr ""
+msgstr "некоректний відправлення ID"
 
 msgid "Invalid test"
-msgstr ""
+msgstr "некоректний тест"
 
 msgid "Invalid text of warning"
-msgstr ""
+msgstr "некоректний текст попередження"
 
 msgid "Invalid text of warning comment"
-msgstr ""
+msgstr "некоректний текст попередження коментар"
 
 msgid "Invalid time specification"
-msgstr ""
+msgstr "некоректний час специфікація"
 
 msgid "Invalid token"
-msgstr ""
+msgstr "некоректний токен"
 
 msgid "Invalid user role"
-msgstr ""
+msgstr "некоректний користувач роль"
 
 msgid "Invalid user_id"
-msgstr ""
+msgstr "некоректний user_id"
 
 msgid "Invalid user_login"
-msgstr ""
+msgstr "некоректний user_login"
 
 msgid "Invalid variant"
-msgstr ""
+msgstr "некоректний варіант"
 
 msgid "Invisible?"
-msgstr ""
+msgstr "невидимий?"
 
 msgid "Issue a warning"
-msgstr ""
+msgstr "Проблема попередження"
 
 msgid "Issue warning"
-msgstr ""
+msgstr "Проблема попередження"
 
 msgid "It's not allowed to answer to judge's messages"
-msgstr ""
+msgstr "це's не дозволено до відповідь до суддя's повідомлення"
 
 msgid "Jan"
-msgstr ""
+msgstr "Січень"
 
 msgid "Job status"
-msgstr ""
+msgstr "Завдання статус"
 
 msgid "Judge"
-msgstr ""
+msgstr "суддя"
 
 msgid "Judge Request Time"
-msgstr ""
+msgstr "суддя запит час"
 
 msgid "Judge scores are opened"
-msgstr ""
+msgstr "суддя бали є відкрито"
 
 msgid "Judge suspended runs"
-msgstr ""
+msgstr "суддя призупинено запуски"
 
 msgid "Judge suspended runs!"
-msgstr ""
+msgstr "суддя призупинено запуски!"
 
 msgid "Judge's comment"
-msgstr ""
+msgstr "суддя's коментар"
 
 msgid "Judge's report"
-msgstr ""
+msgstr "суддя's звіт"
 
 msgid "Judging priorities"
-msgstr ""
+msgstr "перевірка пріоритети"
 
 msgid "Jul"
-msgstr ""
+msgstr "Липень"
 
 msgid "Jump to contest"
-msgstr ""
+msgstr "Перейти до змагання"
 
 msgid "Jump to group"
-msgstr ""
+msgstr "Перейти до група"
 
 msgid "Jun"
-msgstr ""
+msgstr "Червень"
 
 msgid "Just OK the run"
-msgstr ""
+msgstr "Лише OK запуск"
 
 msgid "Just SUMMON the run"
-msgstr ""
+msgstr "Лише ВИКЛИКАТИ запуск"
 
 msgid "Just ignore the run"
-msgstr ""
+msgstr "Лише ігнорувати запуск"
 
 msgid "Keywords"
-msgstr ""
+msgstr "Ключові слова"
 
 msgid "Language"
-msgstr ""
+msgstr "Мова"
 
-#, c-format
+#, c-format, python-format
 msgid "Language %s is disabled for problem %s in row %d\n"
-msgstr ""
+msgstr "мова %s вимкнено для задача %s у рядок %d\n"
 
-#, c-format
+#, c-format, python-format
 msgid "Language %s is disabled in row %d\n"
-msgstr ""
+msgstr "мова %s вимкнено у рядок %d\n"
 
-#, c-format
+#, c-format, python-format
 msgid "Language %s is not enabled for problem %s in row %d\n"
-msgstr ""
+msgstr "мова %s не увімкнено для задача %s у рядок %d\n"
 
 #, c-format
 msgid "Language column is undefined\n"
-msgstr ""
+msgstr "мова стовпець є не визначено\n"
 
-#, c-format
+#, c-format, python-format
 msgid "Language is empty in row %d\n"
-msgstr ""
+msgstr "Мова порожня у рядку %d\n"
 
 msgid "Language settings (serve.cfg)"
-msgstr ""
+msgstr "мова налаштування (обслуговувати.конфігурація)"
 
 msgid "Language statistics"
-msgstr ""
+msgstr "мова статистика"
 
 msgid "Last Change"
-msgstr ""
+msgstr "останній змінити"
 
 msgid "Last Change Time"
-msgstr ""
+msgstr "останній змінити час"
 
 msgid "Last Run"
-msgstr ""
+msgstr "останній запуск"
 
 msgid "Last User_Id (incl.)"
-msgstr ""
+msgstr "останній User_Id (incl.)"
 
 msgid "Last clar"
-msgstr ""
+msgstr "останній роз’яснення"
 
 msgid "Last login time"
-msgstr ""
+msgstr "останній логін час"
 
 msgid "Last run"
-msgstr ""
+msgstr "останній запуск"
 
 msgid "Last submit"
-msgstr ""
+msgstr "останній відправлення"
 
 msgid "Last success"
-msgstr ""
+msgstr "останній успіх"
 
 msgid "Link"
-msgstr ""
+msgstr "Посилання"
 
 msgid "Links"
-msgstr ""
+msgstr "Посилання"
 
 msgid "List of API keys"
-msgstr ""
+msgstr "Список ключів API"
 
 msgid "List of registered participants"
-msgstr ""
+msgstr "Список зареєстрованих учасників"
 
 msgid "Locale ID"
-msgstr ""
+msgstr "Локаль ID"
 
 msgid "Locale code"
-msgstr ""
+msgstr "Локаль код"
 
 msgid "Location"
-msgstr ""
+msgstr "Розташування"
 
 msgid "Lock"
-msgstr ""
+msgstr "Заблокувати"
 
 msgid "Lock filter"
-msgstr ""
+msgstr "Заблокувати фільтр"
 
 msgid "Locked?"
-msgstr ""
+msgstr "заблокований?"
 
 msgid "Log in"
-msgstr ""
+msgstr "увійти"
 
 msgid "Log in to edit registration data"
-msgstr ""
+msgstr "Увійдіть, щоб редагувати реєстраційні дані"
 
 msgid "Login"
-msgstr ""
+msgstr "Логін"
 
 msgid "Login contains invalid characters"
-msgstr ""
+msgstr "логін містить некоректний символи"
 
-#, c-format
+#, c-format, python-format
 msgid "Login is empty in row %d\n"
-msgstr ""
+msgstr "Логін порожній у рядку %d\n"
 
 msgid "Login is not specified"
-msgstr ""
+msgstr "логін не указаний"
 
 msgid ""
-"Login may contain only latin letters, digits, <tt>.</tt> (dot), <tt>-</tt> "
-"(minus sign), <tt>_</tt> (undescore)."
+"Login may contain only latin letters, digits, <tt>.</tt> (dot), <tt>-</tt> (minus sign), "
+"<tt>_</tt> (undescore)."
 msgstr ""
+"логін може містити лише латинські літери, цифри, <tt>.</tt> (крапка), <tt>-</tt> (мінус знак), "
+"<tt>_</tt> (підкреслення)."
 
 msgid "Login page"
-msgstr ""
+msgstr "сторінка входу"
 
 msgid "Login successfull. Now entering the main page."
-msgstr ""
+msgstr "логін успішно. Зараз введення головний сторінка."
 
 msgid "Logout"
-msgstr ""
+msgstr "Вийти"
 
 msgid "Long name"
-msgstr ""
+msgstr "довгий назва"
 
-#, c-format
+#, c-format, python-format
 msgid "Lost password recovery [%s]"
-msgstr ""
+msgstr "Відновлення забутого пароля [%s]"
 
 msgid "Magistrant"
-msgstr ""
+msgstr "Магістрант"
 
 msgid "Main URL"
-msgstr ""
+msgstr "головний URL"
 
 msgid "Main page"
-msgstr ""
+msgstr "головний сторінка"
 
 msgid "Make &quot;Name&quot; field read-only"
-msgstr ""
+msgstr "зробити &лапки;назва&лапки; поле прочитати-лише"
 
 msgid "Make invisible"
-msgstr ""
+msgstr "зробити невидимий"
 
 msgid "Make visible"
-msgstr ""
+msgstr "зробити видимий"
 
 msgid "Male"
-msgstr ""
+msgstr "Чоловічий"
 
 msgid "Mandatory"
-msgstr ""
+msgstr "обов’язковий"
 
 msgid "Mar"
-msgstr ""
+msgstr "Березень"
 
 msgid "Mark BANNED"
-msgstr ""
+msgstr "Позначити ЗАБЛОКОВАНИЙ"
 
 msgid "Mark INCOMPLETE"
-msgstr ""
+msgstr "Позначити НЕПОВНИЙ"
 
 msgid "Mark INVISIBLE"
-msgstr ""
+msgstr "Позначити як «НЕВИДИМИЙ»"
 
 msgid "Mark LOCKED"
-msgstr ""
+msgstr "Позначити ЗАБЛОКОВАНИЙ"
 
 msgid "Mark OK"
-msgstr ""
+msgstr "Позначити OK"
 
 msgid "Mark PENDING"
-msgstr ""
+msgstr "Позначити ОЧІКУЄ"
 
 msgid "Mark REJECTED"
-msgstr ""
+msgstr "Позначити як відхилене"
 
 msgid "Mark displayed runs"
-msgstr ""
+msgstr "Позначити відображені запуски"
 
 msgid "Marked?"
-msgstr ""
+msgstr "Позначено?"
 
 msgid "Master"
-msgstr ""
+msgstr "Головний"
 
 msgid "Max RSS used"
-msgstr ""
+msgstr "Максимум RSS використано"
 
 msgid "Max memory used"
-msgstr ""
+msgstr "Максимум пам’ять використано"
 
 msgid "Max number of users was"
-msgstr ""
+msgstr "Максимум кількість користувачі було"
 
 msgid "Max problem submit count is exceeded"
-msgstr ""
+msgstr "Максимум задача відправлення кількість є перевищено"
 
 #, c-format
 msgid "Max running time:"
-msgstr ""
+msgstr "Максимум виконується час:"
 
-#, c-format
+#, c-format, python-format
 msgid ""
 "Max. CPU time: %d.%03d\n"
 "\n"
 msgstr ""
+"Максимальний час CPU: %d.%03d\n"
+"\n"
 
-#, c-format
+#, c-format, python-format
 msgid ""
 "Max. CPU time: %d.%03d (time-limit exceeded)\n"
 "\n"
 msgstr ""
+"Максимальний час CPU: %d.%03d (перевищено ліміт часу)\n"
+"\n"
 
 msgid "Maximal random number"
-msgstr ""
+msgstr "максимальний випадковий кількість"
 
 msgid "May"
-msgstr ""
+msgstr "може"
 
 msgid "May change!"
-msgstr ""
+msgstr "може змінити!"
 
 msgid "Memory RSS limit"
-msgstr ""
+msgstr "RSS пам’яті ліміт"
 
 msgid "Memory limit"
-msgstr ""
+msgstr "ліміт пам’яті"
 
 msgid "Memory limit exceeded"
-msgstr ""
+msgstr "перевищено ліміт пам’яті"
 
 msgid "Merge runs in XML format"
-msgstr ""
+msgstr "Об’єднати запуски у XML формат"
 
 msgid "Merging runs"
-msgstr ""
+msgstr "Об’єднання запуски"
 
 msgid "Message"
-msgstr ""
+msgstr "Повідомлення"
 
 msgid "Message is empty"
-msgstr ""
+msgstr "повідомлення порожній"
 
 msgid "Message length is too big"
-msgstr ""
+msgstr "повідомлення довжина є надто великий"
 
 #, c-format
 msgid "Message length is too big (%zu)"
-msgstr ""
+msgstr "повідомлення довжина є надто великий (%zu)"
 
 msgid "Messages"
-msgstr ""
+msgstr "повідомлення"
 
 msgid "Middle name"
-msgstr ""
+msgstr "Середній назва"
 
 msgid "Middle name (En)"
-msgstr ""
+msgstr "Середній назва (En)"
 
 msgid "Minimal random number"
-msgstr ""
+msgstr "мінімальний випадковий кількість"
 
 msgid "Mkdir failed"
-msgstr ""
+msgstr "Mkdir не пройдено"
 
-#, c-format
+#, c-format, python-format
 msgid "Mkdir(%s) failed: %s"
-msgstr ""
+msgstr "Mkdir(%s) не пройдено: %s"
 
 msgid "Moderated registration"
-msgstr ""
+msgstr "Moderated реєстрація"
 
 msgid "More info"
-msgstr ""
+msgstr "Більше інформація"
 
 msgid "Move down"
-msgstr ""
+msgstr "Перемістити униз"
 
 msgid "Move to advisors"
-msgstr ""
+msgstr "Перемістити до радники"
 
 msgid "Move to coaches"
-msgstr ""
+msgstr "Перемістити до тренери"
 
 msgid "Move to contestants"
-msgstr ""
+msgstr "Перемістити до учасники змагання"
 
 msgid "Move to reserves"
-msgstr ""
+msgstr "Перемістити до резерви"
 
 msgid "Move up"
-msgstr ""
+msgstr "Перемістити угору"
 
 msgid "Mult parameter"
-msgstr ""
+msgstr "Mult параметр"
 
 msgid "N/A"
-msgstr ""
+msgstr "N/"
 
 msgid "NO"
-msgstr ""
+msgstr "ні"
 
 msgid "NOT REGISTERED"
-msgstr ""
+msgstr "НЕ ЗАРЕЄСТРОВАНО"
 
 msgid "NOT STARTED"
-msgstr ""
+msgstr "НЕ РОЗПОЧАТО"
 
 msgid "Name"
-msgstr ""
+msgstr "Назва"
 
 msgid "Name (English)"
-msgstr ""
+msgstr "назва (Англійська)"
 
-#, c-format
+#, c-format, python-format
 msgid "Name is empty in row %d\n"
-msgstr ""
+msgstr "Назва порожня у рядку %d\n"
 
 #, c-format
 msgid "Neither user_id, login, name, nor cypher are specified\n"
-msgstr ""
+msgstr "Neither user_id, логін, назва, nor шифр є указаний\n"
 
 #, c-format
 msgid "Neither user_id, login, nor name are specified\n"
-msgstr ""
+msgstr "Neither user_id, логін, nor назва є указаний\n"
 
-#, c-format
+#, c-format, python-format
 msgid "New account <tt>%s</tt> is successfully created."
-msgstr ""
+msgstr "новий обліковий запис <tt>%s</tt> успішно створено."
 
 msgid "New account is successfully created."
-msgstr ""
+msgstr "новий обліковий запис успішно створено."
 
 msgid "New duration is too small"
-msgstr ""
+msgstr "новий тривалість є надто малий"
 
 msgid "New password"
-msgstr ""
+msgstr "новий пароль"
 
 msgid "New password (1) is invalid"
-msgstr ""
+msgstr "новий пароль (1) некоректний"
 
 msgid "New password (2) is invalid"
-msgstr ""
+msgstr "новий пароль (2) некоректний"
 
 msgid "New password is generated."
-msgstr ""
+msgstr "новий пароль є згенеровано."
 
 msgid "New password is too long"
-msgstr ""
+msgstr "новий пароль є надто довгий"
 
 msgid "New passwords do not match"
-msgstr ""
+msgstr "новий паролі не збіг"
 
-#, c-format
+#, c-format, python-format
 msgid "New status: %s\n"
-msgstr ""
+msgstr "новий статус: %s\n"
 
 msgid "New user account is created"
-msgstr ""
+msgstr "новий користувач обліковий запис є створено"
 
 msgid "Next soft deadline"
-msgstr ""
+msgstr "наступний soft кінцевий термін"
 
 msgid "No"
-msgstr ""
+msgstr "Ні"
 
 msgid "No advisors are allowed in this contest"
-msgstr ""
+msgstr "ні радники є дозволено у це змагання"
 
 msgid "No affected rows"
-msgstr ""
+msgstr "ні affected rows"
 
 msgid "No answer"
-msgstr ""
+msgstr "ні відповідь"
 
 msgid "No answer is given"
-msgstr ""
+msgstr "ні відповідь є given"
 
 msgid "No assignable runs."
-msgstr ""
+msgstr "ні assignable запуски."
 
 msgid "No assigned variant"
-msgstr ""
+msgstr "Варіант не призначено"
 
 msgid "No coaches are allowed in this contest"
-msgstr ""
+msgstr "ні тренери є дозволено у це змагання"
 
 msgid "No comments"
-msgstr ""
+msgstr "ні коментарі"
 
 msgid "No comments."
-msgstr ""
+msgstr "ні коментарі."
 
 msgid "No connection to the server"
-msgstr ""
+msgstr "немає з’єднання до сервер"
 
 msgid "No contestants are allowed in this contest"
-msgstr ""
+msgstr "ні учасники змагання є дозволено у це змагання"
 
 msgid "No contests"
-msgstr ""
+msgstr "ні змагання"
 
 msgid "No directory structure"
-msgstr ""
+msgstr "ні каталог структура"
 
 msgid "No email message at all will be sent to you."
-msgstr ""
+msgstr "ні повідомлення електронної пошти о усі буде надіслано до ви."
 
-#, c-format
+#, c-format, python-format
 msgid "No entry for %d/%s\n"
-msgstr ""
+msgstr "ні запис для %d/%s\n"
 
-#, c-format
+#, c-format, python-format
 msgid "No entry for %s/%s\n"
-msgstr ""
+msgstr "ні запис для %s/%s\n"
 
 msgid "No guests are allowed in this contest"
-msgstr ""
+msgstr "У цьому змаганні гості не допускаються"
 
 msgid "No integration is defined. Create a new one?"
-msgstr ""
+msgstr "Інтеграцію не налаштовано. Створити нову?"
 
 msgid "No plugin is available for problem"
-msgstr ""
+msgstr "ні plugin є доступний для задача"
 
 msgid "No reserves are allowed in this contest"
-msgstr ""
+msgstr "ні резерви є дозволено у це змагання"
 
 msgid "No runs to rejudge"
-msgstr ""
+msgstr "Немає запусків для повторної перевірки"
 
 msgid "No users registered for this contest"
-msgstr ""
+msgstr "ні користувачі зареєстрований для це змагання"
 
 msgid "No warnings"
-msgstr ""
+msgstr "ні попередження"
 
 msgid "No."
-msgstr ""
+msgstr "ні."
 
 msgid "Not a virtual contest"
-msgstr ""
+msgstr "не віртуальне змагання"
 
 msgid "Not all pre-required problems are solved"
-msgstr ""
+msgstr "не усі pre-обов’язковий задачі є розв’язано"
 
 msgid "Not connected"
-msgstr ""
+msgstr "Не підключено"
 
 msgid "Not set"
-msgstr ""
+msgstr "не встановлено"
 
 msgid "Note, lines are numbered just for your convinience."
-msgstr ""
+msgstr "Увага, рядки є numbered лише для ваш convinience."
 
 #, c-format
 msgid ""
@@ -2603,1418 +2700,1426 @@ msgid ""
 "message\n"
 "\n"
 msgstr ""
+"Зверніть увагу: якщо ви не зробите цього протягом 24 годин\n"
+"з моменту надсилання цього листа, операцію буде скасовано.\n"
+"\n"
+"Якщо ви не хочете генерувати пароль повторно, просто проігноруйте це\n"
+"повідомлення.\n"
+"\n"
 
 msgid "Note, that the exact reason is not reported due to security reasons."
-msgstr ""
+msgstr "Увага, той exact причина не reported через до безпека причини."
 
 msgid "Notes"
-msgstr ""
+msgstr "Примітки"
 
 msgid "Nov"
-msgstr ""
+msgstr "Nov"
 
 msgid "Number"
-msgstr ""
+msgstr "кількість"
 
 msgid "Number of Clars"
-msgstr ""
+msgstr "кількість запити на роз’яснення"
 
 msgid "Number of Runs"
-msgstr ""
+msgstr "кількість запуски"
 
 msgid "Number of printed pages"
-msgstr ""
+msgstr "кількість надруковано сторінки"
 
 msgid "Number of warnings"
-msgstr ""
+msgstr "кількість попередження"
 
 msgid "OK"
-msgstr ""
+msgstr "Гаразд"
 
 msgid "OVER"
-msgstr ""
+msgstr "ЗАВЕРШЕНО"
 
 msgid "OVER (frozen)"
-msgstr ""
+msgstr "ЗАВЕРШЕНО (заморожено)"
 
 msgid "Observer"
-msgstr ""
+msgstr "спостерігач"
 
 msgid "Occupation"
-msgstr ""
+msgstr "Заняття"
 
 msgid "Occupation (En)"
-msgstr ""
+msgstr "Заняття (En)"
 
 msgid "Oct"
-msgstr ""
+msgstr "Oct"
 
 msgid "Old password"
-msgstr ""
+msgstr "старий пароль"
 
 msgid "Old password is invalid"
-msgstr ""
+msgstr "старий пароль некоректний"
 
 msgid "Old password is too long"
-msgstr ""
+msgstr "старий пароль є надто довгий"
 
 msgid "On-line users in this contest"
-msgstr ""
+msgstr "на-line користувачі у це змагання"
 
 msgid "Online users"
-msgstr ""
+msgstr "Online користувачі"
 
 msgid "Open"
-msgstr ""
+msgstr "Відкрити"
 
 msgid "Open date"
-msgstr ""
+msgstr "відкрити дата"
 
 msgid "Open for participation"
-msgstr ""
+msgstr "відкрити для участь"
 
 msgid "Open tests"
-msgstr ""
+msgstr "Відкриті тести"
 
 msgid "Operation completed"
-msgstr ""
+msgstr "операція завершено"
 
 msgid "Operation completed with errors"
-msgstr ""
+msgstr "операція завершено з помилки"
 
 msgid "Operation errors"
-msgstr ""
+msgstr "операція помилки"
 
 msgid "Operation failed"
-msgstr ""
+msgstr "операція не вдалася"
 
 msgid "Operation is not supported"
-msgstr ""
+msgstr "операція не підтримується"
 
 msgid "Operation succeeded"
-msgstr ""
+msgstr "операція succeeded"
 
 msgid "Optional"
-msgstr ""
+msgstr "необов’язковий"
 
 msgid "Originator IP"
-msgstr ""
+msgstr "Originator IP"
 
 msgid "Other"
-msgstr ""
+msgstr "інший"
 
 msgid "Output"
-msgstr ""
+msgstr "Вихідні дані"
 
 msgid "Output error"
-msgstr ""
+msgstr "вивід помилка"
 
 msgid "Output file name"
-msgstr ""
+msgstr "вивід назва файлу"
 
 msgid "Output format"
-msgstr ""
+msgstr "вивід формат"
 
 msgid "Output in"
-msgstr ""
+msgstr "вивід у"
 
 msgid "Packet is too big"
-msgstr ""
+msgstr "Пакет є надто великий"
 
 msgid "Packet is too small"
-msgstr ""
+msgstr "Пакет є надто малий"
 
 msgid "Packet name"
-msgstr ""
+msgstr "Пакет назва"
 
 msgid "Page generation time"
-msgstr ""
+msgstr "сторінка генерування час"
 
 msgid "Pages printed"
-msgstr ""
+msgstr "Сторінки надруковано"
 
 msgid "Parameter is out of range"
-msgstr ""
+msgstr "параметр є поза допустимим діапазоном"
 
 msgid "Parameter value"
-msgstr ""
+msgstr "параметр значення"
 
 msgid "Partial solution"
-msgstr ""
+msgstr "Partial розв’язок"
 
 msgid "Participant"
-msgstr ""
+msgstr "учасник"
 
 msgid "Participants can view testing reports"
-msgstr ""
+msgstr "учасники може переглянути тестування звіти"
 
 msgid "Participants can view their source code"
-msgstr ""
+msgstr "учасники може переглянути their вихідний код"
 
 msgid "Participants view judge score"
-msgstr ""
+msgstr "учасники переглянути суддя бал"
 
 msgid "Participants' requests are suspended"
-msgstr ""
+msgstr "учасники' запити є призупинено"
 
 msgid "Participants' solutions are being accepted"
-msgstr ""
+msgstr "Приймаються рішення учасників"
 
 msgid "Participants' solutions are being judged"
-msgstr ""
+msgstr "Рішення учасників перевіряються"
 
 msgid "Participants' solutions are judged"
-msgstr ""
+msgstr "Рішення учасників перевіряються"
 
 msgid "Participate"
-msgstr ""
+msgstr "брати участь"
 
 msgid "Passed tests"
-msgstr ""
+msgstr "пройдено тести"
 
 msgid "Password"
-msgstr ""
+msgstr "Пароль"
 
 msgid "Password generation failed"
-msgstr ""
+msgstr "пароль генерування не пройдено"
 
-#, c-format
+#, c-format, python-format
 msgid "Password generation failed: %s"
-msgstr ""
+msgstr "пароль генерування не пройдено: %s"
 
-#, c-format
+#, c-format, python-format
 msgid "Password recovery completed [%s, %s]"
-msgstr ""
+msgstr "відновлення пароля завершено [%s, %s]"
 
 #, c-format
 msgid "Password recovery error"
-msgstr ""
+msgstr "відновлення пароля помилка"
 
 msgid "Password recovery is not possible because of the following error."
-msgstr ""
+msgstr "відновлення пароля не можливий тому що наступні помилка."
 
-#, c-format
+#, c-format, python-format
 msgid "Password recovery, stage 1 [%s, %s]"
-msgstr ""
+msgstr "відновлення пароля, stage 1 [%s, %s]"
 
 msgid "Password regeneration requested"
-msgstr ""
+msgstr "відновлення пароля запитаний"
 
 msgid "Password regeneration successful"
-msgstr ""
+msgstr "Пароль успішно згенеровано повторно"
 
 msgid "Password update failed"
-msgstr ""
+msgstr "пароль оновити не пройдено"
 
-#, c-format
+#, c-format, python-format
 msgid "Password update failed: %s"
-msgstr ""
+msgstr "пароль оновити не пройдено: %s"
 
 msgid "Penalty"
-msgstr ""
+msgstr "Штраф"
 
 msgid "Pending XML import already exists"
-msgstr ""
+msgstr "очікує XML імпортувати вже існує"
 
 msgid "Pending check"
-msgstr ""
+msgstr "очікує перевірити"
 
 msgid "Pending review"
-msgstr ""
+msgstr "очікує перевірка"
 
 msgid "Permission denied"
-msgstr ""
+msgstr "Дозвіл відмовлено"
 
 msgid "Permission denied. The possible reasons are as follows."
-msgstr ""
+msgstr "Дозвіл відмовлено. можливий причини є як наведено далі."
 
 msgid "PhD student"
-msgstr ""
+msgstr "PhD учень"
 
 msgid "Phone"
-msgstr ""
+msgstr "Телефон"
 
 msgid "Place"
-msgstr ""
+msgstr "Place"
 
 msgid "Planned start time"
-msgstr ""
+msgstr "Запланований початок час"
 
-msgid ""
-"Please, enter your valid e-mail address and press the \"Create account\" "
-"button."
+msgid "Please, enter your valid e-mail address and press the \"Create account\" button."
 msgstr ""
+"будь ласка, введіть ваш дійсна адреса електронної пошти і натисніть \"створити обліковий запис\" "
+"кнопка."
 
 msgid "Please, follow the following link."
-msgstr ""
+msgstr "будь ласка, перейти за наступні посилання."
 
 msgid "Postapprove reviews"
-msgstr ""
+msgstr "Postapprove перевірки"
 
 msgid "Premoderate reviews"
-msgstr ""
+msgstr "Premoderate перевірки"
 
 msgid "Presentation error"
-msgstr ""
+msgstr "помилка формату відповіді"
 
-msgid ""
-"Press \"Stop exam\" button to finish the exam. Your answers will be checked "
-"shortly after that."
+msgid "Press \"Stop exam\" button to finish the exam. Your answers will be checked shortly after that."
 msgstr ""
+"Натисніть кнопку «Зупинити іспит», щоб завершити іспит. Незабаром після цього ваші відповіді буде"
+" перевірено."
 
 msgid "Previous run review not finished"
-msgstr ""
+msgstr "попередній запуск перевірка не завершено"
 
 msgid "Previous submissions of this problem"
-msgstr ""
+msgstr "попередній відправлення ця задача"
 
 msgid "Print"
-msgstr ""
+msgstr "друкувати"
 
 msgid "Print problem protocol"
-msgstr ""
+msgstr "друкувати задача протокол"
 
 msgid "Print requests are suspended"
-msgstr ""
+msgstr "друкувати запити є призупинено"
 
 msgid "Print sources"
-msgstr ""
+msgstr "друкувати sources"
 
 msgid "Print the exam full cyphered protocols"
-msgstr ""
+msgstr "Друкувати повні зашифровані протоколи іспиту"
 
 msgid "Print the exam full protocols"
-msgstr ""
+msgstr "Друкувати повні протоколи іспиту"
 
 msgid "Print the exam protocols"
-msgstr ""
+msgstr "Друкувати протоколи іспиту"
 
 msgid "Print the user examination protocols for the selected users"
-msgstr ""
+msgstr "друкувати користувач іспит протоколи для вибрані користувачі"
 
-msgid ""
-"Print the user full cyphered examination protocols for the selected users"
-msgstr ""
+msgid "Print the user full cyphered examination protocols for the selected users"
+msgstr "друкувати користувач повний зашифрований іспит протоколи для вибрані користувачі"
 
 msgid "Print the user full examination protocols for the selected users"
-msgstr ""
+msgstr "друкувати користувач повний іспит протоколи для вибрані користувачі"
 
 msgid "Print user examination protocol"
-msgstr ""
+msgstr "друкувати користувач іспит протокол"
 
 msgid "Print user full cyphered examination protocol"
-msgstr ""
+msgstr "друкувати користувач повний зашифрований іспит протокол"
 
 msgid "Print user full examination protocol"
-msgstr ""
+msgstr "друкувати користувач повний іспит протокол"
 
 msgid "Printing error"
-msgstr ""
+msgstr "Друк помилка"
 
 msgid "Printing is disabled"
-msgstr ""
+msgstr "Друк вимкнено"
 
 msgid "Printing problem protocol"
-msgstr ""
+msgstr "Друк задача протокол"
 
-#, c-format
+#, c-format, python-format
 msgid "Printing quota (%d pages) is exceeded"
-msgstr ""
+msgstr "Друк квота (%d сторінки) є перевищено"
 
 msgid "Printing quota is exceeded"
-msgstr ""
+msgstr "Друк квота є перевищено"
 
 msgid "Printing user protocol"
-msgstr ""
+msgstr "Друк користувач протокол"
 
 msgid "Priority"
-msgstr ""
+msgstr "пріоритет"
 
 msgid "Priority adjustment"
-msgstr ""
+msgstr "пріоритет коригування"
 
 msgid ""
-"Priority value must be in range [-16, 15]. The less the priority value, the "
-"more the judging priority."
+"Priority value must be in range [-16, 15]. The less the priority value, the more the judging "
+"priority."
 msgstr ""
+"пріоритет значення має бути у range [-16, 15]. менше пріоритет значення, більше перевірка "
+"пріоритет."
 
 msgid "Privileged users"
-msgstr ""
+msgstr "привілейований користувачі"
 
 msgid "Privileged users page"
-msgstr ""
+msgstr "привілейований користувачі сторінка"
 
 msgid "Privileged?"
-msgstr ""
+msgstr "привілейований?"
 
 msgid "Problem"
-msgstr ""
+msgstr "Задача"
 
 #, c-format
 msgid "Problem column is undefined\n"
-msgstr ""
+msgstr "задача стовпець є не визначено\n"
 
 msgid "Problem configuration error"
-msgstr ""
+msgstr "задача конфігурація помилка"
 
 msgid "Problem directory"
-msgstr ""
+msgstr "задача каталог"
 
 msgid "Problem filter expression"
-msgstr ""
+msgstr "задача фільтр вираз"
 
-#, c-format
+#, c-format, python-format
 msgid "Problem is empty in row %d\n"
-msgstr ""
+msgstr "Назва задачі порожня у рядку %d\n"
 
 msgid "Problem priority"
-msgstr ""
+msgstr "задача пріоритет"
 
 msgid "Problem statements"
-msgstr ""
+msgstr "задача умови задач"
 
 msgid "Problem statistics"
-msgstr ""
+msgstr "задача статистика"
 
 msgid "Problem status summary"
-msgstr ""
+msgstr "задача статус підсумок"
 
 msgid "Problem summary"
-msgstr ""
+msgstr "задача підсумок"
 
 msgid "Problems"
-msgstr ""
+msgstr "задачі"
 
 msgid "Problems (serve.cfg)"
-msgstr ""
+msgstr "задачі (обслуговувати.конфігурація)"
 
 msgid "Professor"
-msgstr ""
+msgstr "Professor"
 
 msgid "Prog. languages"
-msgstr ""
+msgstr "Prog. мови"
 
 msgid "Program output"
-msgstr ""
+msgstr "Вивід програми"
 
 msgid "Program output to stderr"
-msgstr ""
+msgstr "Вивід програми до stderr"
 
 msgid "Program stderr output"
-msgstr ""
+msgstr "Вивід stderr програми"
 
 msgid "Programming language"
-msgstr ""
+msgstr "Програмування мова"
 
 msgid "Programming language statistics"
-msgstr ""
+msgstr "Програмування мова статистика"
 
 msgid "Programming languages"
-msgstr ""
+msgstr "Програмування мови"
 
 msgid "Protocol error"
-msgstr ""
+msgstr "помилка протоколу"
 
 msgid "READ-ONLY"
-msgstr ""
+msgstr "ЛИШЕ ДЛЯ ЧИТАННЯ"
 
 msgid "REFRESH"
-msgstr ""
+msgstr "ОНОВИТИ"
 
 msgid "REFRESH PAGE MANUALLY!"
-msgstr ""
+msgstr "ОНОВІТЬ СТОРІНКУ ВРУЧНУ!"
 
 msgid "REGISTERED"
-msgstr ""
+msgstr "ЗАРЕЄСТРОВАНО"
 
 msgid "REGISTERED (INVISIBLE)"
-msgstr ""
+msgstr "ЗАРЕЄСТРОВАНО (НЕВИДИМИЙ)"
 
 msgid "REGISTERED, BANNED"
-msgstr ""
+msgstr "ЗАРЕЄСТРОВАНО, ЗАБЛОКОВАНО"
 
 msgid "REGISTERED, LOCKED"
-msgstr ""
+msgstr "ЗАРЕЄСТРОВАНО, ЗАБЛОКОВАНО"
 
 msgid "REGISTERED, PENDING APPROVAL"
-msgstr ""
+msgstr "ЗАРЕЄСТРОВАНО, ОЧІКУЄ ПІДТВЕРДЖЕННЯ"
 
 msgid "REGISTRATION REJECTED"
-msgstr ""
+msgstr "У РЕЄСТРАЦІЇ ВІДМОВЛЕНО"
 
 msgid "RUNNING"
-msgstr ""
+msgstr "ТРИВАЄ"
 
 msgid "RUNNING (frozen)"
-msgstr ""
+msgstr "ТРИВАЄ (заморожено)"
 
 msgid "Random seed"
-msgstr ""
+msgstr "Випадковий seed"
 
 msgid "Random variants"
-msgstr ""
+msgstr "Випадковий варіанти"
 
 msgid "Rate exceeded"
-msgstr ""
+msgstr "Rate перевищено"
 
 msgid "Re"
-msgstr ""
+msgstr "Re"
 
 msgid "Re: Your question"
-msgstr ""
+msgstr "Re: ваш question"
 
 msgid "Read error"
-msgstr ""
+msgstr "помилка читання"
 
 msgid "Read the problem"
-msgstr ""
+msgstr "прочитати задача"
 
 msgid "Read the problem."
-msgstr ""
+msgstr "прочитати задача."
 
 msgid "Read-only?"
-msgstr ""
+msgstr "прочитати-лише?"
 
 msgid "Real time (sec)"
-msgstr ""
+msgstr "Real час (с)"
 
 msgid "Real time limit"
-msgstr ""
+msgstr "Real ліміт часу"
 
 msgid "Recover forgot password"
-msgstr ""
+msgstr "Відновити forgot пароль"
 
 msgid "Recover password"
-msgstr ""
+msgstr "Відновити пароль"
 
 msgid "Refresh"
-msgstr ""
+msgstr "Оновити"
 
 msgid "Reg. read-only?"
-msgstr ""
+msgstr "Reg. прочитати-лише?"
 
 #, c-format
 msgid ""
 "Regards,\n"
 "The ejudge contest administration system (www.ejudge.ru)\n"
 msgstr ""
+"З повагою,\n"
+"система адміністрування змагань ejudge (www.ejudge.ru)\n"
 
 msgid "Regenerate contest passwords!"
-msgstr ""
+msgstr "Згенерувати повторно змагання паролі!"
 
 msgid "Regenerate registration passwords!"
-msgstr ""
+msgstr "Згенерувати повторно реєстрація паролі!"
 
 msgid "Regenerate static content"
-msgstr ""
+msgstr "Згенерувати повторно статичний content"
 
 msgid "Region"
-msgstr ""
+msgstr "Region"
 
 msgid "Register for another contest"
-msgstr ""
+msgstr "зареєструвати для інший змагання"
 
 msgid "Register for another contest and copy data"
-msgstr ""
+msgstr "Зареєструватися на інше змагання та скопіювати дані"
 
 msgid "Registration"
-msgstr ""
+msgstr "Реєстрація"
 
 msgid "Registration deadline"
-msgstr ""
+msgstr "реєстрація кінцевий термін"
 
 msgid "Registration errors"
-msgstr ""
+msgstr "реєстрація помилки"
 
 msgid "Registration failed"
-msgstr ""
+msgstr "реєстрація не пройдено"
 
-#, c-format
+#, c-format, python-format
 msgid "Registration failed: %s"
-msgstr ""
+msgstr "реєстрація не пройдено: %s"
 
 msgid "Registration for contest failed"
-msgstr ""
+msgstr "реєстрація для змагання не пройдено"
 
 msgid "Registration incomplete"
-msgstr ""
+msgstr "реєстрація неповний"
 
 msgid "Registration is incomplete"
-msgstr ""
+msgstr "реєстрація є неповний"
 
 msgid "Registration mode"
-msgstr ""
+msgstr "реєстрація режим"
 
 msgid "Registration password"
-msgstr ""
+msgstr "реєстрація пароль"
 
 msgid "Registration passwords"
-msgstr ""
+msgstr "реєстрація паролі"
 
 msgid "Registration rules"
-msgstr ""
+msgstr "реєстрація правила"
 
 msgid "Registration time"
-msgstr ""
+msgstr "реєстрація час"
 
 msgid "Regular users"
-msgstr ""
+msgstr "звичайний користувачі"
 
 msgid "Rejected"
-msgstr ""
+msgstr "Відхилено"
 
 msgid "Rejected runs"
-msgstr ""
+msgstr "відхилено запуски"
 
 msgid "Rejudge all"
-msgstr ""
+msgstr "Повторно перевірити все"
 
 msgid "Rejudge all runs"
-msgstr ""
+msgstr "Повторно перевірити всі запуски"
 
 msgid "Rejudge all!!!"
-msgstr ""
+msgstr "Повторно перевірити все!!!"
 
 msgid "Rejudge displayed runs"
-msgstr ""
+msgstr "Повторно перевірити відображені запуски"
 
 msgid "Rejudge displayed runs!"
-msgstr ""
+msgstr "Повторно перевірити відображені запуски!"
 
 msgid "Rejudge problem"
-msgstr ""
+msgstr "Повторно перевірити задача"
 
 msgid "Rejudge problem!"
-msgstr ""
+msgstr "Повторно перевірити задача!"
 
 msgid "Rejudge runs"
-msgstr ""
+msgstr "Повторно перевірити запуски"
 
 msgid "Reload"
-msgstr ""
+msgstr "Перезавантажити"
 
 msgid "Reload ALL Contest Pages"
-msgstr ""
+msgstr "Перезавантажити УСІ змагання Сторінки"
 
 msgid "Reload Contest Pages"
-msgstr ""
+msgstr "Перезавантажити змагання Сторінки"
 
 msgid "Reload Statement"
-msgstr ""
+msgstr "Перезавантажити Умова задачі"
 
 msgid "Reload Statement In All Contests"
-msgstr ""
+msgstr "Перезавантажити Умова задачі у усі Змагання"
 
 msgid "Reload config files"
-msgstr ""
+msgstr "Перезавантажити конфігурація файли"
 
 msgid "Reload config files for ALL contests"
-msgstr ""
+msgstr "Перезавантажити конфігурація файли для УСІ змагання"
 
 msgid "Remaining"
-msgstr ""
+msgstr "Залишилося"
 
 msgid "Remaining attempts"
-msgstr ""
+msgstr "Залишилося attempts"
 
 msgid "Remaining time"
-msgstr ""
+msgstr "Залишилося час"
 
 msgid "Remember or write down the password!"
-msgstr ""
+msgstr "Remember або записати униз пароль!"
 
-#, c-format
+#, c-format, python-format
 msgid "Removal of privileged user %d from contest %d failed"
-msgstr ""
+msgstr "Видалення привілейований користувач %d від змагання %d не пройдено"
 
 msgid "Removal of privileged user from contest failed"
-msgstr ""
+msgstr "Видалення привілейований користувач від змагання не пройдено"
 
-#, c-format
+#, c-format, python-format
 msgid "Removal of user %d from contest %d failed: %s"
-msgstr ""
+msgstr "Видалення користувач %d від змагання %d не пройдено: %s"
 
 msgid "Removal of user from contest failed"
-msgstr ""
+msgstr "Видалення користувач від змагання не пройдено"
 
 msgid "Remove"
-msgstr ""
+msgstr "Вилучити"
 
 msgid "Remove ban"
-msgstr ""
+msgstr "вилучити ban"
 
 msgid "Remove examiner"
-msgstr ""
+msgstr "вилучити екзаменатор"
 
 msgid "Remove from group"
-msgstr ""
+msgstr "вилучити від група"
 
 msgid "Remove registrations"
-msgstr ""
+msgstr "вилучити registrations"
 
 msgid "Remove the CHIEF EXAMINER role from the selected users"
-msgstr ""
+msgstr "вилучити ГОЛОВНИЙ ЕКЗАМЕНАТОР роль від вибрані користувачі"
 
 msgid "Remove the COORDINATOR role from the selected users"
-msgstr ""
+msgstr "вилучити КООРДИНАТОР роль від вибрані користувачі"
 
 msgid "Remove the EXAMINER role from the selected users"
-msgstr ""
+msgstr "вилучити ЕКЗАМЕНАТОР роль від вибрані користувачі"
 
 msgid "Remove the OBSERVER role from the selected users"
-msgstr ""
+msgstr "вилучити СПОСТЕРІГАЧ роль від вибрані користувачі"
 
 msgid "Remove the selected users from the list"
-msgstr ""
+msgstr "Вилучити вибраних користувачів зі списку"
 
-msgid ""
-"Remove the selected users from the list (ADMINISTRATORs cannot be removed)"
-msgstr ""
+msgid "Remove the selected users from the list (ADMINISTRATORs cannot be removed)"
+msgstr "Вилучити вибраних користувачів зі списку (АДМІНІСТРАТОРІВ не можна вилучити)"
 
 msgid "Reply to all"
-msgstr ""
+msgstr "Відповідь до усі"
 
 msgid "Reply to sender"
-msgstr ""
+msgstr "Відповідь до відправник"
 
 msgid "Report"
-msgstr ""
+msgstr "Звіт"
 
 msgid "Report file does not exist"
-msgstr ""
+msgstr "Файл звіту не існує"
 
 msgid "Report for run"
-msgstr ""
+msgstr "звіт для запуск"
 
 msgid "Report is not available"
-msgstr ""
+msgstr "звіт не доступний"
 
 msgid "Report viewing is disabled"
-msgstr ""
+msgstr "звіт перегляд вимкнено"
 
 msgid "Reschedule"
-msgstr ""
+msgstr "Reschedule"
 
 msgid "Reserve"
-msgstr ""
+msgstr "Reserve"
 
 msgid "Reserves"
-msgstr ""
+msgstr "Резерви"
 
 msgid "Reset filter"
-msgstr ""
+msgstr "Скинути фільтр"
 
 msgid "Reset the contest"
-msgstr ""
+msgstr "Скинути змагання"
 
 msgid "Reset the contest!"
-msgstr ""
+msgstr "Скинути змагання!"
 
 msgid "Reset the contest!!!"
-msgstr ""
+msgstr "Скинути змагання!!!"
 
 msgid "Restart virtual contest"
-msgstr ""
+msgstr "Restart віртуальне змагання"
 
 msgid "Resubmit"
-msgstr ""
+msgstr "Resubmit"
 
 msgid "Result"
-msgstr ""
+msgstr "Результат"
 
 msgid "Resume clients"
-msgstr ""
+msgstr "відновити клієнти"
 
 msgid "Resume printing"
-msgstr ""
+msgstr "відновити друк"
 
 msgid "Resume testing"
-msgstr ""
+msgstr "відновити тестування"
 
 msgid "Return to the main page"
-msgstr ""
+msgstr "Return до головний сторінка"
 
 msgid "Retype new password"
-msgstr ""
+msgstr "Retype новий пароль"
 
 msgid "Review comments"
-msgstr ""
+msgstr "перевірка коментарі"
 
 msgid "Review displayed runs"
-msgstr ""
+msgstr "перевірка відображені запуски"
 
 msgid "Review displayed runs!"
-msgstr ""
+msgstr "перевірка відображені запуски!"
 
 msgid "Review mode"
-msgstr ""
+msgstr "Режим перевірки"
 
 msgid "Review notes"
-msgstr ""
+msgstr "перевірка примітки"
 
 msgid "Review quota exceeded"
-msgstr ""
+msgstr "перевірка квота перевищено"
 
 msgid "Role"
-msgstr ""
+msgstr "роль"
 
 msgid "Run"
-msgstr ""
+msgstr "запуск"
 
 msgid "Run ID"
-msgstr ""
+msgstr "ID запуску"
 
 msgid "Run already reviewed"
-msgstr ""
+msgstr "запуск вже reviewed"
 
 msgid "Run comment"
-msgstr ""
+msgstr "Коментар до запуску"
 
 msgid "Run comments"
-msgstr ""
+msgstr "запуск коментарі"
 
 msgid "Run comments for previous runs"
-msgstr ""
+msgstr "запуск коментарі для попередній запуски"
 
 msgid "Run filter expression"
-msgstr ""
+msgstr "запуск фільтр вираз"
 
 msgid "Run is read-only"
-msgstr ""
+msgstr "запуск є прочитати-лише"
 
 msgid "Run log update failed"
-msgstr ""
+msgstr "запуск журнал оновити не пройдено"
 
 msgid "Run on server"
-msgstr ""
+msgstr "запуск на сервер"
 
 msgid "Run penalty"
-msgstr ""
+msgstr "запуск штраф"
 
 msgid "Run program on server"
-msgstr ""
+msgstr "Запустити програму на сервері"
 
 msgid "Run review"
-msgstr ""
+msgstr "запуск перевірка"
 
 msgid "Run review for user"
-msgstr ""
+msgstr "запуск перевірка для користувач"
 
 msgid "Run review is in wrong state"
-msgstr ""
+msgstr "запуск перевірка є у неправильний state"
 
 msgid "Run selection"
-msgstr ""
+msgstr "запуск вибір"
 
 msgid "Run to compare to is not specified"
-msgstr ""
+msgstr "запуск до порівняти до не указаний"
 
 msgid "Run-time error"
-msgstr ""
+msgstr "час виконання помилка"
 
 msgid "Running..."
-msgstr ""
+msgstr "виконується..."
 
 msgid "Runs accepted for testing"
-msgstr ""
+msgstr "запуски прийнято для тестування"
 
 msgid "Runs being processed"
-msgstr ""
+msgstr "запуски будучи processed"
 
 msgid "Runs pending review"
-msgstr ""
+msgstr "запуски очікує перевірка"
 
 msgid "Runs pending testing"
-msgstr ""
+msgstr "запуски очікує тестування"
 
 msgid "Runs summoned for defence"
-msgstr ""
+msgstr "запуски викликаний на захист"
 
 msgid "Runs to change token info:"
-msgstr ""
+msgstr "запуски до змінити токен інформація:"
 
 msgid "Runs to review:"
-msgstr ""
+msgstr "запуски до перевірка:"
 
 msgid "STATUS UPDATE FAILED!"
-msgstr ""
+msgstr "НЕ ВДАЛОСЯ ОНОВИТИ СТАТУС!"
 
 msgid "Save"
-msgstr ""
+msgstr "Зберегти"
 
 msgid "Saved?"
-msgstr ""
+msgstr "Saved?"
 
 msgid "Scheduled end time"
-msgstr ""
+msgstr "Запланований час завершення"
 
 msgid "School student"
-msgstr ""
+msgstr "школа учень"
 
 msgid "School teacher"
-msgstr ""
+msgstr "школа teacher"
 
 msgid "Scientist"
-msgstr ""
+msgstr "Scientist"
 
 msgid "Score"
-msgstr ""
+msgstr "бал"
 
 msgid "Score adjustment"
-msgstr ""
+msgstr "бал коригування"
 
 msgid "Score bonus"
-msgstr ""
+msgstr "бал bonus"
 
 #, c-format
 msgid "Score column is undefined\n"
-msgstr ""
+msgstr "бал стовпець є не визначено\n"
 
 msgid "Score gained"
-msgstr ""
+msgstr "набрано балів"
 
-#, c-format
+#, c-format, python-format
 msgid ""
 "Score gained: %d (out of %d).\n"
 "\n"
 msgstr ""
+"Набрано балів: %d із %d.\n"
+"\n"
 
-#, c-format
+#, c-format, python-format
 msgid "Score gained: %d (out of %d).</big>\n"
-msgstr ""
+msgstr "набрано балів: %d (із %d).</big>\n"
 
-#, c-format
+#, c-format, python-format
 msgid "Score gained: %d (out of %d).<br><br></big>\n"
-msgstr ""
+msgstr "набрано балів: %d (із %d).<br><br></big>\n"
 
-#, c-format
+#, c-format, python-format
 msgid "Score is empty in row %d\n"
-msgstr ""
+msgstr "бал порожній у рядок %d\n"
 
-#, c-format
+#, c-format, python-format
 msgid "Score value `%s' is invalid in row %d\n"
-msgstr ""
+msgstr "бал значення `%s' некоректний у рядок %d\n"
 
 msgid "Security violation"
-msgstr ""
+msgstr "Безпека порушення"
 
 msgid "Select another problem"
-msgstr ""
+msgstr "вибрати інший задача"
 
 msgid "Select one of available contests"
-msgstr ""
+msgstr "вибрати один доступний змагання"
 
 msgid "Select problem"
-msgstr ""
+msgstr "вибрати задача"
 
 msgid "Select variant"
-msgstr ""
+msgstr "вибрати варіант"
 
 msgid "Send a message"
-msgstr ""
+msgstr "надіслати повідомлення"
 
 msgid "Send a message to judges"
-msgstr ""
+msgstr "надіслати повідомлення до судді"
 
 msgid "Send an appeal"
-msgstr ""
+msgstr "надіслати апеляція"
 
 msgid "Send clarification"
-msgstr ""
+msgstr "надіслати роз’яснення"
 
 msgid "Send e-mail with password anyway"
-msgstr ""
+msgstr "надіслати електронна пошта з пароль anyway"
 
 msgid "Send run comment"
-msgstr ""
+msgstr "надіслати запуск коментар"
 
 msgid "Send run comment and OK run"
-msgstr ""
+msgstr "надіслати запуск коментар і OK запуск"
 
 msgid "Send run comment and REJECT run"
-msgstr ""
+msgstr "надіслати запуск коментар і REJECT запуск"
 
 msgid "Send run comment and SUMMON run"
-msgstr ""
+msgstr "надіслати запуск коментар і ВИКЛИКАТИ запуск"
 
 msgid "Send run comment and ignore run"
-msgstr ""
+msgstr "надіслати запуск коментар і ігнорувати запуск"
 
 msgid "Send runs to external review"
-msgstr ""
+msgstr "надіслати запуски до зовнішній перевірка"
 
 msgid "Send!"
-msgstr ""
+msgstr "надіслати!"
 
 msgid "Sender"
-msgstr ""
+msgstr "Відправник"
 
 msgid "Sent submissions"
-msgstr ""
+msgstr "надіслано відправлення"
 
 msgid "Sep"
-msgstr ""
+msgstr "Sep"
 
 msgid "Serial No"
-msgstr ""
+msgstr "Serial ні"
 
 msgid "Server Info"
-msgstr ""
+msgstr "сервер Інформація"
 
 msgid "Server error"
-msgstr ""
+msgstr "сервер помилка"
 
 msgid "Server information"
-msgstr ""
+msgstr "сервер інформація"
 
 msgid "Server is down"
-msgstr ""
+msgstr "сервер є униз"
 
 msgid "Server start time"
-msgstr ""
+msgstr "сервер початок час"
 
 msgid "Server status"
-msgstr ""
+msgstr "сервер статус"
 
 msgid "Server time"
-msgstr ""
+msgstr "сервер час"
 
 msgid "Service is not available"
-msgstr ""
+msgstr "Сервіс недоступний"
 
 msgid "Service is not available. Please, come later."
-msgstr ""
+msgstr "Сервіс недоступний. Будь ласка, спробуйте пізніше."
 
 msgid "Service not available"
-msgstr ""
+msgstr "Сервіс недоступний"
 
 msgid "Service that you requested is not available."
-msgstr ""
+msgstr "Сервіс той ви запитаний не доступний."
 
 msgid "Session update failed"
-msgstr ""
+msgstr "сеанс оновити не пройдено"
 
-#, c-format
+#, c-format, python-format
 msgid "Session update failed: %s"
-msgstr ""
+msgstr "сеанс оновити не пройдено: %s"
 
 msgid "Set"
-msgstr ""
+msgstr "встановити"
 
 msgid "Set REJECTED run status"
-msgstr ""
+msgstr "встановити ВІДХИЛЕНО запуск статус"
 
 msgid "Set accepting mode"
-msgstr ""
+msgstr "встановити accepting режим"
 
 msgid "Set filter"
-msgstr ""
+msgstr "встановити фільтр"
 
 msgid "Set finished flag"
-msgstr ""
+msgstr "встановити завершено прапорець"
 
 msgid "Set judging mode"
-msgstr ""
+msgstr "встановити перевірка режим"
 
 msgid "Set permissions"
-msgstr ""
+msgstr "встановити дозволи"
 
 msgid "Set priorities"
-msgstr ""
+msgstr "встановити пріоритети"
 
 msgid "Set status"
-msgstr ""
+msgstr "встановити статус"
 
 msgid "Set the BANNED flag for the selected users"
-msgstr ""
+msgstr "встановити ЗАБЛОКОВАНИЙ прапорець для вибрані користувачі"
 
 msgid "Set the INCOMPLETE flag for the selected users"
-msgstr ""
+msgstr "встановити НЕПОВНИЙ прапорець для вибрані користувачі"
 
 msgid "Set the INVISIBLE flag for the selected users"
-msgstr ""
+msgstr "Позначити вибраних користувачів як «НЕВИДИМИЙ»"
 
 msgid "Set the LOCKED flag for the selected users"
-msgstr ""
+msgstr "встановити ЗАБЛОКОВАНИЙ прапорець для вибрані користувачі"
 
 msgid "Set the registration status of the selected users to OK"
-msgstr ""
+msgstr "встановити реєстрація статус вибрані користувачі до OK"
 
 msgid "Set the registration status of the selected users to PENDING"
-msgstr ""
+msgstr "встановити реєстрація статус вибрані користувачі до ОЧІКУЄ"
 
 msgid "Set the registration status of the selected users to REJECTED"
-msgstr ""
+msgstr "встановити реєстрація статус вибрані користувачі до ВІДХИЛЕНО"
 
 msgid "Set up github/gitlab integration and push solution"
-msgstr ""
+msgstr "встановити угору github/gitlab інтеграція і push розв’язок"
 
 msgid "Settings"
-msgstr ""
+msgstr "Налаштування"
 
 msgid "Setup Version Control System Integration"
-msgstr ""
+msgstr "Setup версія Control система Інтеграція"
 
 msgid "Shift parameter"
-msgstr ""
+msgstr "Shift параметр"
 
 msgid "Short name"
-msgstr ""
+msgstr "короткий назва"
 
 msgid "Show closed contests"
-msgstr ""
+msgstr "показати закрито змагання"
 
 msgid "Show hidden contests"
-msgstr ""
+msgstr "показати прихований змагання"
 
 msgid "Show tests"
-msgstr ""
+msgstr "показати тести"
 
 msgid "Show unmanageable contests"
-msgstr ""
+msgstr "показати некерований змагання"
 
 msgid "Shown"
-msgstr ""
+msgstr "Показано"
 
 msgid "Signal"
-msgstr ""
+msgstr "Signal"
 
 msgid "Simplified registration"
-msgstr ""
+msgstr "спрощений реєстрація"
 
 msgid "Size"
-msgstr ""
+msgstr "розмір"
 
 msgid "Skipped"
-msgstr ""
+msgstr "Skipped"
 
 msgid "Solved"
-msgstr ""
+msgstr "Розв’язано"
 
 msgid "Source"
-msgstr ""
+msgstr "вихідний код"
 
 msgid "Source code"
-msgstr ""
+msgstr "вихідний код"
 
 msgid "Source code is closed"
-msgstr ""
+msgstr "вихідний код є закрито"
 
 msgid "Source code is open"
-msgstr ""
+msgstr "вихідний код є відкрити"
 
 msgid "Source file does not exist"
-msgstr ""
+msgstr "вихідний код файл не існує"
 
 msgid "Source for run"
-msgstr ""
+msgstr "вихідний код для запуск"
 
 msgid "Source for this run is not available"
-msgstr ""
+msgstr "вихідний код для цей запуск не доступний"
 
 msgid "Squeeze runs"
-msgstr ""
+msgstr "Squeeze запуски"
 
 msgid "Stack limit"
-msgstr ""
+msgstr "Stack ліміт"
 
 msgid "Standings"
-msgstr ""
+msgstr "таблиця результатів"
 
-#, c-format
+#, c-format, python-format
 msgid "Standings [%s, frozen]"
-msgstr ""
+msgstr "таблиця результатів [%s, заморожено]"
 
 #, c-format
 msgid "Standings [not started]"
-msgstr ""
+msgstr "таблиця результатів [не розпочато]"
 
 #, c-format
 msgid "Standings [over, frozen]"
-msgstr ""
+msgstr "таблиця результатів [завершено, заморожено]"
 
 #, c-format
 msgid "Standings [over]"
-msgstr ""
+msgstr "таблиця результатів [завершено]"
 
 msgid "Standings freeze time"
-msgstr ""
+msgstr "таблиця результатів заморозити час"
 
 msgid "Standings unfreeze time"
-msgstr ""
+msgstr "таблиця результатів unfreeze час"
 
 msgid "Start"
-msgstr ""
+msgstr "Почати"
 
 msgid "Start Time"
-msgstr ""
+msgstr "початок час"
 
 msgid "Start at"
-msgstr ""
+msgstr "початок о"
 
 msgid "Start exam"
-msgstr ""
+msgstr "Розпочати іспит"
 
 msgid "Start new"
-msgstr ""
+msgstr "початок новий"
 
 msgid "Start new editing"
-msgstr ""
+msgstr "початок новий редагування"
 
 msgid "Start upsolving"
-msgstr ""
+msgstr "початок розв’язування після туру"
 
 msgid "Start virtual contest"
-msgstr ""
+msgstr "початок віртуальне змагання"
 
 msgid "Statement"
-msgstr ""
+msgstr "Умова задачі"
 
 msgid "Statements"
-msgstr ""
+msgstr "Умови задач"
 
 msgid "Static priority"
-msgstr ""
+msgstr "Статичний пріоритет"
 
 msgid "Status"
-msgstr ""
+msgstr "Статус"
 
-#, c-format
+#, c-format, python-format
 msgid "Status is empty in row %d\n"
-msgstr ""
+msgstr "статус порожній у рядок %d\n"
 
-#, c-format
+#, c-format, python-format
 msgid "Status of your submit %d is changed in contest %d"
-msgstr ""
+msgstr "статус ваше відправлення %d є змінено у змагання %d"
 
 #, c-format
 msgid "Status of your submit is changed\n"
-msgstr ""
+msgstr "статус ваше відправлення є змінено\n"
 
 msgid "Stop"
-msgstr ""
+msgstr "Зупинити"
 
 msgid "Stop Time"
-msgstr ""
+msgstr "зупинка час"
 
 msgid "Stop exam"
-msgstr ""
+msgstr "Зупинити іспит"
 
 msgid "Stop upsolving"
-msgstr ""
+msgstr "зупинка розв’язування після туру"
 
 msgid "Stop virtual contest"
-msgstr ""
+msgstr "зупинка віртуальне змагання"
 
 msgid "Stop virtual contest?"
-msgstr ""
+msgstr "зупинка віртуальне змагання?"
 
 msgid "Street address"
-msgstr ""
+msgstr "Street адреса"
 
 msgid "Student"
-msgstr ""
+msgstr "Учень"
 
 msgid "Subject"
-msgstr ""
+msgstr "Тема"
 
 msgid "Subject is empty"
-msgstr ""
+msgstr "Тема порожній"
 
 msgid "Subject length is too big"
-msgstr ""
+msgstr "Тема довжина є надто великий"
 
 #, c-format
 msgid "Subject length is too big (%zu)"
-msgstr ""
+msgstr "Тема довжина є надто великий (%zu)"
 
 msgid "Submission time"
-msgstr ""
+msgstr "відправлення час"
 
 msgid "Submissions"
-msgstr ""
+msgstr "відправлення"
 
 msgid "Submit"
-msgstr ""
+msgstr "Надіслати"
 
 msgid "Submit a solution"
-msgstr ""
+msgstr "відправлення розв’язок"
 
 msgid "Submit a solution for"
-msgstr ""
+msgstr "відправлення розв’язок для"
 
 msgid "Submit appeal"
-msgstr ""
+msgstr "відправлення апеляція"
 
 msgid "Submit clar"
-msgstr ""
+msgstr "відправлення роз’яснення"
 
 msgid "Submit for judgement"
-msgstr ""
+msgstr "відправлення для judgement"
 
 msgid "Submit image"
-msgstr ""
+msgstr "відправлення image"
 
 msgid "Submit solution!"
-msgstr ""
+msgstr "відправлення розв’язок!"
 
 msgid "Submit source viewing is disabled"
-msgstr ""
+msgstr "відправлення вихідний код перегляд вимкнено"
 
 msgid "Submit testing mode"
-msgstr ""
+msgstr "відправлення тестування режим"
 
 msgid "Success"
-msgstr ""
+msgstr "Успішно"
 
 msgid "Summary"
-msgstr ""
+msgstr "Підсумок"
 
 msgid "Summoned for defence"
-msgstr ""
+msgstr "викликаний на захист"
 
 msgid "Suspend clients"
-msgstr ""
+msgstr "призупинити клієнти"
 
 msgid "Suspend printing"
-msgstr ""
+msgstr "призупинити друк"
 
 msgid "Suspend testing"
-msgstr ""
+msgstr "призупинити тестування"
 
 msgid "Switch language"
-msgstr ""
+msgstr "Switch мова"
 
 msgid "Synchronization error"
-msgstr ""
+msgstr "Synchronization помилка"
 
 msgid "System error"
-msgstr ""
+msgstr "система помилка"
 
 msgid "TESTING COMPLETED"
-msgstr ""
+msgstr "ТЕСТУВАННЯ ЗАВЕРШЕНО"
 
 msgid "TESTING IN PROGRESS..."
-msgstr ""
+msgstr "ТЕСТУВАННЯ У ВИКОНУЄТЬСЯ..."
 
 msgid "Team name"
-msgstr ""
+msgstr "Назва команди"
 
 msgid "Telegram Token"
-msgstr ""
+msgstr "Telegram токен"
 
 msgid "Terminate download"
-msgstr ""
+msgstr "Terminate завантажити"
 
 msgid "Test file does not exist"
-msgstr ""
+msgstr "тест файл не існує"
 
 msgid "Test file is not available"
-msgstr ""
+msgstr "тест файл не доступний"
 
 msgid "Test information"
-msgstr ""
+msgstr "тест інформація"
 
 msgid "Test input"
-msgstr ""
+msgstr "тест вхідні дані"
 
 msgid "Test input data"
-msgstr ""
+msgstr "Вхідні дані тесту"
 
 msgid "Test number"
-msgstr ""
+msgstr "тест кількість"
 
 msgid "Testing comments"
-msgstr ""
+msgstr "тестування коментарі"
 
 msgid "Testing is in progress..."
-msgstr ""
+msgstr "тестування є у виконується..."
 
 msgid "Testing messages"
-msgstr ""
+msgstr "тестування повідомлення"
 
 msgid "Testing of participants' submits is suspended"
-msgstr ""
+msgstr "тестування учасники' відправлення є призупинено"
 
 msgid "Testing queue"
-msgstr ""
+msgstr "тестування queue"
 
 msgid "Testing reports are closed"
-msgstr ""
+msgstr "тестування звіти є закрито"
 
 msgid "Testing reports are open"
-msgstr ""
+msgstr "Звіти тестування відкриті"
 
 msgid "Tests"
-msgstr ""
+msgstr "тести"
 
-#, c-format
+#, c-format, python-format
 msgid "Tests is empty in row %d\n"
-msgstr ""
+msgstr "тести порожній у рядок %d\n"
 
 msgid "Tests passed"
-msgstr ""
+msgstr "тести пройдено"
 
-#, c-format
+#, c-format, python-format
 msgid "Tests value `%s' is invalid in row %d\n"
-msgstr ""
+msgstr "тести значення `%s' некоректний у рядок %d\n"
 
 msgid "The account parameters are as follows:"
-msgstr ""
+msgstr " параметри облікового запису є як наведено далі:"
 
 msgid "The contest is closed for participation."
-msgstr ""
+msgstr "змагання є закрито для участь."
 
 msgid "The contest is in progress"
-msgstr ""
+msgstr "змагання є у виконується"
 
 msgid "The contest is in progress (standings are frozen)"
-msgstr ""
+msgstr "змагання є у виконується (таблиця результатів є заморожено)"
 
 msgid "The contest is not started"
-msgstr ""
+msgstr "змагання не розпочато"
 
 msgid "The contest is over"
-msgstr ""
+msgstr "змагання є завершено"
 
 msgid "The contest is over (standings are frozen)"
-msgstr ""
+msgstr "змагання є завершено (таблиця результатів є заморожено)"
 
 msgid "The contest is personal"
-msgstr ""
+msgstr "змагання є personal"
 
-msgid ""
-"The contest is temporarily not available. Please, retry the request a bit "
-"later."
-msgstr ""
+msgid "The contest is temporarily not available. Please, retry the request a bit later."
+msgstr "змагання є temporarily недоступний. будь ласка, повторити запит bit пізніше."
 
 msgid "The exam is in progress"
-msgstr ""
+msgstr "Іспит триває"
 
 msgid "The exam is in progress (standings are frozen)"
-msgstr ""
+msgstr "Іспит триває (таблицю результатів заморожено)"
 
 msgid "The exam is not started"
-msgstr ""
+msgstr "Іспит ще не розпочато"
 
 msgid "The exam is over"
-msgstr ""
+msgstr "Іспит завершено"
 
 msgid "The exam is over (standings are frozen)"
-msgstr ""
+msgstr "Іспит завершено (таблицю результатів заморожено)"
 
-#, c-format
+#, c-format, python-format
 msgid "The language %s is disabled for this problem"
-msgstr ""
+msgstr " мова %s вимкнено для ця задача"
 
 msgid "The language is disabled for this problem"
-msgstr ""
+msgstr " мова вимкнено для ця задача"
 
 msgid "The problem statement is not available"
-msgstr ""
+msgstr "задача умова задачі не доступний"
 
 msgid "The server is down. Try again later."
-msgstr ""
+msgstr "сервер є униз. Спробувати знову пізніше."
 
 msgid ""
 "The server was unable to send a registration e-mail\n"
@@ -4022,1112 +4127,1135 @@ msgid ""
 "to heavy server load rather than to an invalid\n"
 "e-mail address. You should try to register later.\n"
 msgstr ""
+"сервер було не вдалося до надіслати реєстрація електронна пошта\n"
+"до указаний адреса. цей є імовірно через\n"
+"до heavy сервер завантажити rather ніж до некоректний\n"
+"адреса електронної пошти. вам слід спробувати до зареєструвати пізніше.\n"
 
-msgid ""
-"The session was created from a different IP-address or protocol, that yours."
-msgstr ""
+msgid "The session was created from a different IP-address or protocol, that yours."
+msgstr " сеанс було створено від different IP-адреса або протокол, той yours."
 
 msgid "The session was removed by an administrator."
-msgstr ""
+msgstr " сеанс було вилучено за адміністратора."
 
 msgid "The specified session does not exist."
-msgstr ""
+msgstr " указаний сеанс не існує."
 
 msgid "The specified session has expired."
-msgstr ""
+msgstr " указаний термін дії сеансу завершився."
 
 msgid "The submission is binary and thus is not shown."
-msgstr ""
+msgstr " відправлення є двійковим і thus не показано."
 
-msgid ""
-"The user database server is currently not available. Please, retry the "
-"request later."
-msgstr ""
+msgid "The user database server is currently not available. Please, retry the request later."
+msgstr "користувач база даних сервер є currently недоступний. будь ласка, повторити запит пізніше."
 
 msgid "This contest cannot be continued"
-msgstr ""
+msgstr "це змагання не можна бути continued"
 
 msgid ""
-"This contest operates in \"simplified registration\" mode. You will get your "
-"login and password immediately after account is created."
+"This contest operates in \"simplified registration\" mode. You will get your login and password "
+"immediately after account is created."
 msgstr ""
+"це змагання працює у \"спрощений реєстрація\" режим. ви отримати ваш логін і пароль негайно після"
+" обліковий запис є створено."
 
 msgid ""
-"This contest operates in \\\"simplified registration\\\" mode. You will get "
-"your login and password immediately after account is created."
+"This contest operates in \\\"simplified registration\\\" mode. You will get your login and "
+"password immediately after account is created."
 msgstr ""
+"це змагання працює у \\\"спрощений реєстрація\\\" режим. ви отримати ваш логін і пароль негайно "
+"після обліковий запис є створено."
 
 msgid "This language is disabled for use"
-msgstr ""
+msgstr "цей мова вимкнено для використовувати"
 
 msgid "This language is not available for this problem"
-msgstr ""
+msgstr "цей мова не доступний для ця задача"
 
 msgid ""
-"This message contains the login name, assigned to you, as well as your "
-"password for initial log in. You will be able to change the password later."
+"This message contains the login name, assigned to you, as well as your password for initial log "
+"in. You will be able to change the password later."
 msgstr ""
+"це повідомлення містить логін назва, призначено до ви, як well як ваш пароль для перший вхід. ви "
+"зможете змінити пароль пізніше."
 
 msgid ""
-"This message contains the password for the initial log in. You will be able "
-"to change the password later."
-msgstr ""
+"This message contains the password for the initial log in. You will be able to change the "
+"password later."
+msgstr "це повідомлення містить пароль для перший вхід. ви зможете змінити пароль пізніше."
 
 msgid "This problem is already solved"
-msgstr ""
+msgstr "ця задача є вже розв’язано"
 
 msgid "This problem is not yet available"
-msgstr ""
+msgstr "ця задача не yet доступний"
 
 msgid ""
-"This program is configured incorrectly and cannot perform normal operation. "
-"Please contact the site (or contest) administrator."
+"This program is configured incorrectly and cannot perform normal operation. Please contact the "
+"site (or contest) administrator."
 msgstr ""
+"Цю програму неправильно налаштовано, тому вона не може працювати належним чином. Зверніться до "
+"адміністратора сайту (або змагання)."
 
 msgid "This submit is already printed"
-msgstr ""
+msgstr "це відправлення є вже надруковано"
 
 msgid "This submit is duplicate of another run"
-msgstr ""
+msgstr "це відправлення є дублікат інший запуск"
 
-#, c-format
+#, c-format, python-format
 msgid "This submit is duplicate of the run %d"
-msgstr ""
+msgstr "це відправлення є дублікат запуск %d"
 
 msgid "This test program is correct, but failed on some tests"
-msgstr ""
+msgstr "Ця тестувальна програма правильна, але не пройшла деякі тести"
 
 msgid "This test program is incorrect, but passed all tests"
-msgstr ""
+msgstr "Ця тестувальна програма неправильна, але пройшла всі тести"
 
 msgid "Time"
-msgstr ""
+msgstr "Час"
 
 msgid "Time (sec)"
-msgstr ""
+msgstr "час (с)"
 
 msgid "Time expression"
-msgstr ""
+msgstr "час вираз"
 
 msgid "Time limit"
-msgstr ""
+msgstr "ліміт часу"
 
 msgid "Time-limit exceeded"
-msgstr ""
+msgstr "Перевищено ліміт часу"
 
 msgid "Timestamp"
-msgstr ""
+msgstr "Мітка часу"
 
 msgid "To"
-msgstr ""
+msgstr "до"
 
-#, c-format
+#, c-format, python-format
 msgid ""
 "To confirm password regeneration, you should visit the following URL:\n"
 "%s?contest_id=%d&locale_id=%d&SID=%016llx&action=%d.\n"
 "\n"
 msgstr ""
+"Щоб підтвердити повторне генерування пароля, перейдіть за цією адресою:\n"
+"%s?contest_id=%d&locale_id=%d&SID=%016llx&action=%d.\n"
+"\n"
 
 msgid "To contest details"
-msgstr ""
+msgstr "до змагання подробиці"
 
 msgid "To contests list"
-msgstr ""
+msgstr "До списку змагань"
 
 msgid ""
-"To create an account, please think out, a login and provide your valid e-"
-"mail address in the form above. Then press the \\\"Create account\\\" button."
+"To create an account, please think out, a login and provide your valid e-mail address in the form"
+" above. Then press the \\\"Create account\\\" button."
 msgstr ""
+"до створити обліковий запис, будь ласка think out, логін і provide ваш дійсна адреса електронної "
+"пошти у форма вище. тоді натисніть \\\"створити обліковий запис\\\" кнопка."
 
 msgid "To main page"
-msgstr ""
+msgstr "до головний сторінка"
 
 msgid "To the top"
-msgstr ""
+msgstr "до угорі"
 
 msgid "To the top (postpone editing)"
-msgstr ""
+msgstr "до угорі (postpone редагування)"
 
 msgid "To user id"
-msgstr ""
+msgstr "до ID користувача"
 
 msgid "To user login"
-msgstr ""
+msgstr "до логін користувача"
 
 msgid ""
-"To validate your e-mail and enable your participation in this contest you "
-"may use the password recovery link below."
+"To validate your e-mail and enable your participation in this contest you may use the password "
+"recovery link below."
 msgstr ""
+"до validate ваш електронна пошта і увімкнути ваш участь у це змагання ви можете використовувати "
+"відновлення пароля посилання below."
 
 msgid "Token counter"
-msgstr ""
+msgstr "токен counter"
 
 msgid "Tokenize displayed runs"
-msgstr ""
+msgstr "Tokenize відображені запуски"
 
 msgid "Tokenize displayed runs!"
-msgstr ""
+msgstr "Tokenize відображені запуски!"
 
 msgid "Too few lines in CSV file"
-msgstr ""
+msgstr "Надто few рядки у CSV файл"
 
 msgid "Total"
-msgstr ""
+msgstr "Усього"
 
 msgid "Total messages"
-msgstr ""
+msgstr "усього повідомлення"
 
 msgid "Total number of sample programs in the test suite"
-msgstr ""
+msgstr "загальна кількість sample programs у набір тестів"
 
 msgid "Total number of submitted tests"
-msgstr ""
+msgstr "загальна кількість надіслано тести"
 
 msgid "Total priority"
-msgstr ""
+msgstr "усього пріоритет"
 
 msgid "Total score"
-msgstr ""
+msgstr "усього бал"
 
 msgid "Total size of Clars"
-msgstr ""
+msgstr "усього розмір запити на роз’яснення"
 
 msgid "Total size of Runs"
-msgstr ""
+msgstr "усього розмір запуски"
 
 msgid "Total submissions"
-msgstr ""
+msgstr "усього відправлення"
 
 msgid "Try again this operation later"
-msgstr ""
+msgstr "Спробувати знову ця операція пізніше"
 
 msgid ""
-"Type the login and the password in to the form above and press the \"Log "
-"in\" button to activate the account."
-msgstr ""
+"Type the login and the password in to the form above and press the \"Log in\" button to activate "
+"the account."
+msgstr "введіть логін і пароль у до форма вище і натисніть \"увійти\" кнопка до activate обліковий запис."
 
-#, c-format
+#, c-format, python-format
 msgid "UId is empty in row %d\n"
-msgstr ""
+msgstr "UID порожній у рядок %d\n"
 
 msgid "UPSOLVING"
-msgstr ""
+msgstr "РОЗВ’ЯЗУВАННЯ ПІСЛЯ ТУРУ"
 
 msgid "Unanswered clars"
-msgstr ""
+msgstr "без відповіді запити на роз’яснення"
 
 msgid "Undefined user_id and login"
-msgstr ""
+msgstr "Не визначено user_id і логін"
 
 msgid "Unexpected EOF"
-msgstr ""
+msgstr "неочікуваний кінець файлу"
 
 msgid "Unhandled action"
-msgstr ""
+msgstr "Необроблений дія"
 
-#, c-format
+#, c-format, python-format
 msgid "Unhandled action: %d"
-msgstr ""
+msgstr "Необроблений дія: %d"
 
 msgid "Unknown error"
-msgstr ""
+msgstr "Невідома помилка"
 
-#, c-format
+#, c-format, python-format
 msgid "Unknown error %d"
-msgstr ""
+msgstr "Невідома помилка %d"
 
-#, c-format
+#, c-format, python-format
 msgid "Unknown error %d.\n"
-msgstr ""
+msgstr "Невідома помилка %d.\n"
 
-#, c-format
+#, c-format, python-format
 msgid "Unknown: %d"
-msgstr ""
+msgstr "невідомий: %d"
 
 msgid "Unlimited"
-msgstr ""
+msgstr "Unlimited"
 
 msgid "Unlock"
-msgstr ""
+msgstr "Unlock"
 
 msgid "Unmark displayed runs"
-msgstr ""
+msgstr "Unmark відображені запуски"
 
 msgid "Up all"
-msgstr ""
+msgstr "угору усі"
 
 msgid "Update"
-msgstr ""
+msgstr "Оновити"
 
 msgid "Update public standings"
-msgstr ""
+msgstr "оновити публічна таблиця результатів"
 
 msgid "Update standings!"
-msgstr ""
+msgstr "оновити таблиця результатів!"
 
 msgid "Update the public standings"
-msgstr ""
+msgstr "оновити публічна таблиця результатів"
 
 msgid "Update versions"
-msgstr ""
+msgstr "оновити versions"
 
 msgid "Upload avatar"
-msgstr ""
+msgstr "завантажити аватар"
 
 msgid "Upload judging protocol"
-msgstr ""
+msgstr "завантажити перевірка протокол"
 
 msgid "Upload!"
-msgstr ""
+msgstr "завантажити!"
 
 msgid "Upsolving"
-msgstr ""
+msgstr "Розв’язування після туру"
 
 msgid "Upsolving configuration"
-msgstr ""
+msgstr "Розв’язування після туру конфігурація"
 
 msgid "Upsolving mode"
-msgstr ""
+msgstr "Розв’язування після туру режим"
 
 msgid "Use 'extid' as problem name"
-msgstr ""
+msgstr "використовувати 'extid' як задача назва"
 
 msgid "Use 'problem_dir' as problem name"
-msgstr ""
+msgstr "використовувати 'problem_dir' як задача назва"
 
 msgid "Use Contest Id"
-msgstr ""
+msgstr "використовувати ID змагання"
 
 msgid "Use an existing account"
-msgstr ""
+msgstr "використовувати наявний обліковий запис"
 
 msgid "Use existing contest:"
-msgstr ""
+msgstr "використовувати наявний змагання:"
 
 msgid "Use problem short name"
-msgstr ""
+msgstr "використовувати задача короткий назва"
 
 msgid "Use programming language short name"
-msgstr ""
+msgstr "використовувати програмування мова короткий назва"
 
 msgid "Use run number"
-msgstr ""
+msgstr "використовувати запуск кількість"
 
 msgid "Use source language or content type suffix"
-msgstr ""
+msgstr "використовувати мова вихідного коду або тип вмісту suffix"
 
 msgid "Use submit time"
-msgstr ""
+msgstr "використовувати відправлення час"
 
 msgid "Use token"
-msgstr ""
+msgstr "використовувати токен"
 
 msgid "Use user Id"
-msgstr ""
+msgstr "використовувати ID користувача"
 
 msgid "Use user Login"
-msgstr ""
+msgstr "використовувати логін користувача"
 
 msgid "Use user Name"
-msgstr ""
+msgstr "використовувати ім’я користувача"
 
 msgid "Used memory RSS (KiB)"
-msgstr ""
+msgstr "використано RSS пам’яті (KiB)"
 
 msgid "User"
-msgstr ""
+msgstr "Користувач"
 
-#, c-format
+#, c-format, python-format
 msgid "User <tt>%s</tt> does not exist"
-msgstr ""
+msgstr "користувач <tt>%s</tt> не існує"
 
 msgid "User ID"
-msgstr ""
+msgstr "ID користувача"
 
 msgid "User Id"
-msgstr ""
+msgstr "ID користувача"
 
-#, c-format
+#, c-format, python-format
 msgid "User Id %d does not exist"
-msgstr ""
+msgstr "ID користувача %d не існує"
 
 msgid "User Id does not exist"
-msgstr ""
+msgstr "ID користувача не існує"
 
 msgid "User Login"
-msgstr ""
+msgstr "логін користувача"
 
 msgid "User Name"
-msgstr ""
+msgstr "ім’я користувача"
 
 msgid "User database server is down"
-msgstr ""
+msgstr "користувач база даних сервер є униз"
 
 msgid "User does not exist"
-msgstr ""
+msgstr "користувач не існує"
 
 msgid "User filter expression"
-msgstr ""
+msgstr "користувач фільтр вираз"
 
 msgid "User info"
-msgstr ""
+msgstr "користувач інформація"
 
 msgid "User is banned"
-msgstr ""
+msgstr "користувач є заблокований"
 
 msgid "User is locked"
-msgstr ""
+msgstr "користувач є заблокований"
 
 msgid "User is simple registered"
-msgstr ""
+msgstr "користувач є спрощений зареєстрований"
 
 msgid "User login"
-msgstr ""
+msgstr "логін користувача"
 
 msgid "User login page"
-msgstr ""
+msgstr "логін користувача сторінка"
 
 msgid "User login/ID"
-msgstr ""
+msgstr "логін користувача/ID"
 
 msgid "User mode"
-msgstr ""
+msgstr "користувач режим"
 
 msgid "User name"
-msgstr ""
+msgstr "ім’я користувача"
 
 msgid "User name (for standings)"
-msgstr ""
+msgstr "ім’я користувача (для таблиця результатів)"
 
 msgid "User not registered for contest"
-msgstr ""
+msgstr "користувач не зареєстрований для змагання"
 
 msgid ""
-"User quota exceeded. This clarification request is too large, you already "
-"have too many clarification requests, or the total size of your "
-"clarification requests is too big"
+"User quota exceeded. This clarification request is too large, you already have too many "
+"clarification requests, or the total size of your clarification requests is too big"
 msgstr ""
+"Перевищено квоту користувача. Запит на роз’яснення завеликий, у вас уже забагато запитів на "
+"роз’яснення або їхній сумарний розмір надто великий."
 
 msgid ""
-"User quota exceeded. This submit is too large, you already have too many "
-"submits,\n"
+"User quota exceeded. This submit is too large, you already have too many submits,\n"
 "or the total size of your submits is too big"
 msgstr ""
+"користувач квота перевищено. це відправлення є завеликий, ви вже має забагато відправлення,\n"
+"або усього розмір ваш відправлення є надто великий"
 
 msgid "User report"
-msgstr ""
+msgstr "користувач звіт"
 
 msgid "User run header"
-msgstr ""
+msgstr "користувач запуск заголовок"
 
 msgid "User run headers"
-msgstr ""
+msgstr "користувач запуск headers"
 
 msgid "User standings"
-msgstr ""
+msgstr "користувач таблиця результатів"
 
 msgid "User's report"
-msgstr ""
+msgstr "користувач's звіт"
 
 msgid "Userlist server is down"
-msgstr ""
+msgstr "Userlist сервер є униз"
 
 msgid "Users"
-msgstr ""
+msgstr "Користувачі"
 
 msgid "Users for IP addresses"
-msgstr ""
+msgstr "користувачі для IP адреси"
 
 msgid "Users page"
-msgstr ""
+msgstr "користувачі сторінка"
 
-#, c-format
+#, c-format, python-format
 msgid "Value of field \"%s\" is invalid.\n"
-msgstr ""
+msgstr "значення поле \"%s\" некоректний.\n"
 
 msgid "Valuer comments"
-msgstr ""
+msgstr "Оцінювач коментарі"
 
 msgid "Valuer errors"
-msgstr ""
+msgstr "Оцінювач помилки"
 
 msgid "Valuer information"
-msgstr ""
+msgstr "Оцінювач інформація"
 
 msgid "Valuer judge comments"
-msgstr ""
+msgstr "Оцінювач суддя коментарі"
 
 msgid "Valuer judge comments are displayed"
-msgstr ""
+msgstr "Оцінювач суддя коментарі є відображені"
 
 msgid "Variant"
-msgstr ""
+msgstr "Варіант"
 
 msgid "Variants (variant.map)"
-msgstr ""
+msgstr "Варіанти (варіант.map)"
 
 msgid "View"
-msgstr ""
+msgstr "Переглянути"
 
 msgid "View Editing Sessions"
-msgstr ""
+msgstr "переглянути Редагування Sessions"
 
 msgid "View all"
-msgstr ""
+msgstr "переглянути усі"
 
 msgid "View check details"
-msgstr ""
+msgstr "переглянути перевірити подробиці"
 
 msgid "View contest passwords"
-msgstr ""
+msgstr "переглянути змагання паролі"
 
 msgid "View details"
-msgstr ""
+msgstr "переглянути подробиці"
 
 msgid "View last 15"
-msgstr ""
+msgstr "переглянути останній 15"
 
 msgid "View registration passwords"
-msgstr ""
+msgstr "переглянути реєстрація паролі"
 
 msgid "View regular users"
-msgstr ""
+msgstr "переглянути звичайний користувачі"
 
 msgid "View report"
-msgstr ""
+msgstr "переглянути звіт"
 
 msgid "View serve.cfg"
-msgstr ""
+msgstr "переглянути обслуговувати.конфігурація"
 
 msgid "View source"
-msgstr ""
+msgstr "переглянути вихідний код"
 
 msgid "View submitted answer"
-msgstr ""
+msgstr "переглянути надіслано відповідь"
 
 msgid "View the problem statement and send a submission"
-msgstr ""
+msgstr "переглянути задача умова задачі і надіслати відправлення"
 
 msgid "Viewing advisors"
-msgstr ""
+msgstr "перегляд радники"
 
 msgid "Viewing audit log for"
-msgstr ""
+msgstr "перегляд аудит журнал для"
 
 msgid "Viewing clar"
-msgstr ""
+msgstr "перегляд роз’яснення"
 
 msgid "Viewing coaches"
-msgstr ""
+msgstr "перегляд тренери"
 
 msgid "Viewing contestants"
-msgstr ""
+msgstr "перегляд учасники змагання"
 
 msgid "Viewing general info"
-msgstr ""
+msgstr "перегляд загальний інформація"
 
 msgid "Viewing guests"
-msgstr ""
+msgstr "перегляд гості"
 
 msgid "Viewing report"
-msgstr ""
+msgstr "перегляд звіт"
 
 msgid "Viewing reserves"
-msgstr ""
+msgstr "перегляд резерви"
 
 msgid "Viewing run"
-msgstr ""
+msgstr "перегляд запуск"
 
 msgid "Viewing settings"
-msgstr ""
+msgstr "перегляд налаштування"
 
 msgid "Viewing user report"
-msgstr ""
+msgstr "перегляд користувач звіт"
 
 msgid "Virtual contest close date"
-msgstr ""
+msgstr "віртуальне змагання закрити дата"
 
 msgid "Virtual contest close time"
-msgstr ""
+msgstr "віртуальне змагання закрити час"
 
 msgid "Virtual contest is not started"
-msgstr ""
+msgstr "Віртуальне змагання ще не розпочалося"
 
 msgid "Virtual contest open date"
-msgstr ""
+msgstr "віртуальне змагання відкрити дата"
 
 msgid "Virtual contest open time"
-msgstr ""
+msgstr "віртуальне змагання відкрити час"
 
 msgid "Virtual start"
-msgstr ""
+msgstr "віртуальний початок"
 
 msgid "Virtual start failed"
-msgstr ""
+msgstr "віртуальний початок не пройдено"
 
 msgid "Virtual start is disabled"
-msgstr ""
+msgstr "віртуальний початок вимкнено"
 
 msgid "Virtual start is disabled by config"
-msgstr ""
+msgstr "віртуальний початок вимкнено за конфігурація"
 
 msgid "Virtual stop"
-msgstr ""
+msgstr "віртуальний зупинка"
 
 msgid "Virtual?"
-msgstr ""
+msgstr "віртуальний?"
 
 msgid "Wall time-limit exceeded"
-msgstr ""
+msgstr "Wall перевищено ліміт часу"
 
 msgid "Warning explanation for the user (mandatory)"
-msgstr ""
+msgstr "попередження пояснення для користувач (обов’язковий)"
 
 msgid "Warning text for the user"
-msgstr ""
+msgstr "попередження текст для користувач"
 
 msgid "Warnings"
-msgstr ""
+msgstr "Попередження"
 
 msgid "Write error"
-msgstr ""
+msgstr "помилка запису"
 
 msgid "Write runs in XML internal format"
-msgstr ""
+msgstr "записати запуски у XML внутрішній формат"
 
 msgid "Write runs in XML internal format with source"
-msgstr ""
+msgstr "записати запуски у XML внутрішній формат з вихідний код"
 
 msgid "Wrong answer"
-msgstr ""
+msgstr "Неправильна відповідь"
 
 msgid "Wrong output format"
-msgstr ""
+msgstr "Неправильний формат виводу"
 
 msgid "XML parse error"
-msgstr ""
+msgstr "XML parse помилка"
 
 msgid "YES"
-msgstr ""
+msgstr "ТАК"
 
 msgid "Yes"
-msgstr ""
+msgstr "Так"
 
 msgid "Yes."
-msgstr ""
+msgstr "Так."
 
 msgid "You are disqualified"
-msgstr ""
+msgstr "ви є дискваліфікований"
 
 msgid "You are disqualified by the contest administration."
-msgstr ""
+msgstr "ви є дискваліфікований за змагання administration."
 
 msgid "You are not registered for this contest."
-msgstr ""
+msgstr "ви не зареєстрований для це змагання."
+
+msgid "You cannot participate in the contest because your registration is incomplete."
+msgstr "ви не може брати участь у змагання тому що ваш реєстрація є неповний."
 
 msgid ""
-"You cannot participate in the contest because your registration is "
-"incomplete."
+"You cannot participate in this contest. Your account was created using the simple registration "
+"procedure, i.e. your e-mail address was not verified. This contest requires e-mail verification, "
+"so your account cannot be accepted."
 msgstr ""
-
-msgid ""
-"You cannot participate in this contest. Your account was created using the "
-"simple registration procedure, i.e. your e-mail address was not verified. "
-"This contest requires e-mail verification, so your account cannot be "
-"accepted."
-msgstr ""
+"Ви не можете брати участь у цьому змаганні. Ваш обліковий запис створено за спрощеною процедурою "
+"реєстрації, тобто вашу адресу електронної пошти не підтверджено. Для участі в цьому змаганні "
+"потрібно підтвердити адресу електронної пошти, тому ваш обліковий запис не може бути прийнятий."
 
 msgid "You do not have permissions to use this service"
-msgstr ""
+msgstr "ви не має дозволи до використовувати ця служба"
 
 msgid "You do not have permissions to use this service."
-msgstr ""
+msgstr "ви не має дозволи до використовувати ця служба."
 
 msgid "You have been registered"
-msgstr ""
+msgstr "ви було зареєстрований"
 
 msgid "You have no permissions to view this contest."
-msgstr ""
+msgstr "ви ні дозволи до переглянути це змагання."
 
 #, c-format
 msgid "You have received a message from judges\n"
-msgstr ""
+msgstr "ви отримано повідомлення від судді\n"
 
-#, c-format
+#, c-format, python-format
 msgid "You have received a message from judges in contest %d"
-msgstr ""
+msgstr "ви отримано повідомлення від судді у змагання %d"
 
 #, c-format
 msgid "You have received a reply from judges\n"
-msgstr ""
+msgstr "ви отримано відповідь від судді\n"
 
-#, c-format
+#, c-format, python-format
 msgid "You have received a reply from judges in contest %d"
-msgstr ""
+msgstr "ви отримано відповідь від судді у змагання %d"
 
 msgid "You have typed an invalid or non-existing login."
-msgstr ""
+msgstr "ви введений некоректний або non-existing логін."
 
 msgid "You have typed an invalid or wrong password."
-msgstr ""
+msgstr "ви введений некоректний або неправильний пароль."
 
 msgid "You must set up new password!"
-msgstr ""
+msgstr "ви маєте встановити угору новий пароль!"
 
 msgid ""
-"You should receive an e-mail message with a login and a password to the "
-"system. Use this password for the first log in. After the first login you "
-"will be able to change the password."
+"You should receive an e-mail message with a login and a password to the system. Use this password"
+" for the first log in. After the first login you will be able to change the password."
 msgstr ""
+"вам слід отримати повідомлення електронної пошти з логін і пароль до система. використовувати цей"
+" пароль для перший увійти. після перший вхід ви зможете змінити пароль."
 
 msgid ""
-"You should receive an e-mail message with a password to the system. Use this "
-"password for the first log in. After the first login you will be able to "
-"change the password."
+"You should receive an e-mail message with a password to the system. Use this password for the "
+"first log in. After the first login you will be able to change the password."
 msgstr ""
+"вам слід отримати повідомлення електронної пошти з пароль до система. використовувати цей пароль "
+"для перший увійти. після перший вхід ви зможете змінити пароль."
 
 msgid ""
-"You will need to specify this token when interacting with Ejudge Telegram "
-"Bot. This token is valid for 300 seconds. The token is good for one Ejudge "
-"Bot interaction."
+"You will need to specify this token when interacting with Ejudge Telegram Bot. This token is "
+"valid for 300 seconds. The token is good for one Ejudge Bot interaction."
 msgstr ""
+"ви need до укажіть цей токен коли interacting з Ejudge Telegram Бот. цей токен є valid для 300 "
+"секунд. токен є good для один Ejudge Бот interaction."
 
 msgid "Your IP-address or protocol is banned."
-msgstr ""
+msgstr "ваш IP-адреса або протокол є заблокований."
 
 msgid "Your Telegram token:"
-msgstr ""
+msgstr "Ваш токен Telegram:"
 
 msgid "Your have been banned by the administrator."
-msgstr ""
+msgstr "ваш було заблокований за адміністратора."
 
 msgid "Your registration has not been confirmed."
-msgstr ""
+msgstr "ваш реєстрація має не було підтверджено."
 
-msgid ""
-"Your request has caused an internal server error. Please, report it as a bug."
-msgstr ""
+msgid "Your request has caused an internal server error. Please, report it as a bug."
+msgstr "ваш запит спричинив внутрішня помилка сервера. будь ласка, повідомте про помилку."
 
 msgid "Your session has expired."
-msgstr ""
+msgstr "ваш термін дії сеансу завершився."
 
 #, c-format
 msgid "Your submit has been commented\n"
-msgstr ""
+msgstr "ваше відправлення прокоментовано\n"
 
 #, c-format
 msgid "Your submit has been commented and accepted\n"
-msgstr ""
+msgstr "ваше відправлення прокоментовано і прийнято\n"
 
 msgid "Your submit has been commented and disqualified\n"
-msgstr ""
+msgstr "ваше відправлення прокоментовано і дискваліфікований\n"
 
 #, c-format
 msgid "Your submit has been commented and ignored\n"
-msgstr ""
+msgstr "ваше відправлення прокоментовано і проігноровано\n"
 
 #, c-format
 msgid "Your submit has been commented and rejected\n"
-msgstr ""
+msgstr "ваше відправлення прокоментовано і відхилено\n"
 
 #, c-format
 msgid "Your submit has been commented and summoned for defence\n"
-msgstr ""
+msgstr "ваше відправлення прокоментовано і викликаний на захист\n"
 
 msgid "Your submit has been commented and you are summoned for defence\n"
-msgstr ""
+msgstr "ваше відправлення прокоментовано і ви є викликаний на захист\n"
 
-#, c-format
+#, c-format, python-format
 msgid "Your submit has been commented in contest %d"
-msgstr ""
+msgstr "ваше відправлення прокоментовано у змагання %d"
 
 msgid "Zip code"
-msgstr ""
+msgstr "поштовий індекс"
 
 msgid "[Edit current contest]"
-msgstr ""
+msgstr "[Редагувати поточне змагання]"
 
 msgid "`run_id' parameter is undefined"
-msgstr ""
+msgstr "`run_id' параметр є не визначено"
 
-#, c-format
+#, c-format, python-format
 msgid "`run_id' parameter value %d is out of range"
-msgstr ""
+msgstr "`run_id' параметр значення %d є поза допустимим діапазоном"
 
 msgid "`run_id' parameter value is invalid."
-msgstr ""
+msgstr "`run_id' параметр значення некоректний."
 
 msgid "`run_id' parameter value is out of range"
-msgstr ""
+msgstr "`run_id' параметр значення є поза допустимим діапазоном"
 
 msgid "accepting"
-msgstr ""
+msgstr "приймається"
 
 msgid "access denied"
-msgstr ""
+msgstr "access відмовлено"
 
 msgid "action is temporarily unavailable"
-msgstr ""
+msgstr "дія є тимчасово недоступний"
 
 msgid "all"
-msgstr ""
+msgstr "усі"
 
 msgid "allowed only in virtual contest"
-msgstr ""
+msgstr "дозволено лише у віртуальне змагання"
 
 msgid "bad XML"
-msgstr ""
+msgstr "неправильний XML"
 
 msgid "bad contest identifier"
-msgstr ""
+msgstr "неправильний змагання ідентифікатор"
 
 msgid "bad user identifier"
-msgstr ""
+msgstr "неправильний користувач ідентифікатор"
 
 msgid "cannot connect to the server"
-msgstr ""
+msgstr "не можна connect до сервер"
 
 msgid "clarification requests are disabled"
-msgstr ""
+msgstr "запити на роз’яснення є вимкнено"
 
 msgid "clients suspended"
-msgstr ""
+msgstr "клієнтів призупинено"
 
 msgid "contains invalid characters"
-msgstr ""
+msgstr "містить некоректний символи"
 
 msgid "contest deadline exceeded"
-msgstr ""
+msgstr "змагання кінцевий термін перевищено"
 
 msgid "conversion from string to bool failed"
-msgstr ""
+msgstr "перетворення від рядок до bool не пройдено"
 
 msgid "conversion from string to dur_t failed"
-msgstr ""
+msgstr "Не вдалося перетворити рядок на значення типу dur_t"
 
 msgid "conversion from string to hash_t failed"
-msgstr ""
+msgstr "перетворення від рядок до hash_t не пройдено"
 
 msgid "conversion from string to int failed"
-msgstr ""
+msgstr "Не вдалося перетворити рядок на ціле число"
 
 msgid "conversion from string to ip_t failed"
-msgstr ""
+msgstr "перетворення від рядок до ip_t не пройдено"
 
 msgid "conversion from string to result_t failed"
-msgstr ""
+msgstr "перетворення від рядок до result_t не пройдено"
 
 msgid "conversion from string to time_t failed"
-msgstr ""
+msgstr "перетворення від рядок до time_t не пройдено"
 
 msgid "data format error"
-msgstr ""
+msgstr "помилка формату даних"
 
 msgid "database error"
-msgstr ""
+msgstr "помилка бази даних"
 
 msgid "division by zero"
-msgstr ""
+msgstr "ділення на нуль"
 
 msgid "duplicated submission"
-msgstr ""
+msgstr "дубльоване відправлення"
 
 msgid "e-mail sending failed"
-msgstr ""
+msgstr "електронна пошта надсилання не пройдено"
 
 msgid "error code 1"
-msgstr ""
+msgstr "помилка код 1"
 
 msgid "finished"
-msgstr ""
+msgstr "завершено"
 
 msgid "frozen"
-msgstr ""
+msgstr "заморожено"
 
 msgid "generic server error"
-msgstr ""
+msgstr "generic сервер помилка"
 
 msgid "group with this name already exists"
-msgstr ""
+msgstr "група з такою назвою вже існує"
 
 msgid "in progress"
-msgstr ""
+msgstr "у процесі виконання"
 
 msgid "incomplete registration"
-msgstr ""
+msgstr "неповний реєстрація"
 
 msgid "integer overflow"
-msgstr ""
+msgstr "переповнення цілого числа"
 
 msgid "invalid argument"
-msgstr ""
+msgstr "некоректний аргумент"
 
 msgid "invalid argument type"
-msgstr ""
+msgstr "некоректний аргумент тип"
 
 msgid "invalid clar_id"
-msgstr ""
+msgstr "некоректний clar_id"
 
 msgid "invalid contest duration"
-msgstr ""
+msgstr "некоректний змагання тривалість"
 
 msgid "invalid contest_id"
-msgstr ""
+msgstr "некоректний contest_id"
 
 msgid "invalid field"
-msgstr ""
+msgstr "некоректний поле"
 
 msgid "invalid filter expression"
-msgstr ""
+msgstr "некоректний фільтр вираз"
 
 msgid "invalid group id"
-msgstr ""
+msgstr "некоректний група id"
 
 msgid "invalid language"
-msgstr ""
+msgstr "некоректна мова"
 
 msgid "invalid login"
-msgstr ""
+msgstr "некоректний логін"
 
 msgid "invalid member"
-msgstr ""
+msgstr "некоректний учасник"
 
 msgid "invalid password"
-msgstr ""
+msgstr "некоректний пароль"
 
 msgid "invalid prob_id"
-msgstr ""
+msgstr "некоректний prob_id"
 
 msgid "invalid run status"
-msgstr ""
+msgstr "некоректний запуск статус"
 
 msgid "invalid run_id"
-msgstr ""
+msgstr "некоректний run_id"
 
 msgid "invalid socket path"
-msgstr ""
+msgstr "некоректний сокет шлях"
 
 msgid "invalid test number"
-msgstr ""
+msgstr "некоректний тест кількість"
 
 msgid "invalid user group"
-msgstr ""
+msgstr "некоректний користувач група"
 
 msgid "invalid user_id"
-msgstr ""
+msgstr "некоректний user_id"
 
 msgid ""
-"is available for this contest. Note, however, that simplified registration "
-"imposes certain restrictions on further use of the account!"
+"is available for this contest. Note, however, that simplified registration imposes certain "
+"restrictions on further use of the account!"
 msgstr ""
+"є доступний для це змагання. Увага, however, той спрощений реєстрація imposes certain "
+"restrictions на подальший використовувати обліковий запис!"
 
 msgid "is commented"
-msgstr ""
+msgstr "є commented"
 
 msgid "judged"
-msgstr ""
+msgstr "перевірено"
 
 msgid "judges"
-msgstr ""
+msgstr "судді"
 
 msgid "judging"
-msgstr ""
+msgstr "перевірка"
 
 msgid "language"
-msgstr ""
+msgstr "мова"
 
 msgid "last 15"
-msgstr ""
+msgstr "останні 15"
 
 msgid "login"
-msgstr ""
+msgstr "логін"
 
 msgid "login already used"
-msgstr ""
+msgstr "логін уже використовується"
 
 msgid "message subject is too long"
-msgstr ""
+msgstr "тема повідомлення задовга"
 
 msgid "moderated"
-msgstr ""
+msgstr "moderated"
 
 msgid "ms"
-msgstr ""
+msgstr "мс"
 
 msgid "msec"
-msgstr ""
+msgstr "мс"
 
 msgid "must be specified"
-msgstr ""
+msgstr "має бути указаний"
 
 msgid "no connection to server"
-msgstr ""
+msgstr "немає з’єднання до сервер"
 
 msgid "no error"
-msgstr ""
+msgstr "немає помилки"
 
 msgid "nonexistent cookie"
-msgstr ""
+msgstr "nonexistent cookie"
 
 msgid "not connected to server"
-msgstr ""
+msgstr "не підключено до сервер"
 
 msgid "not implemented"
-msgstr ""
+msgstr "не implemented"
 
 msgid "open"
-msgstr ""
+msgstr "відкрито"
 
 msgid "operation is not supported"
-msgstr ""
+msgstr "операція не підтримується"
 
 msgid "out of memory"
-msgstr ""
+msgstr "недостатньо пам’яті"
 
 msgid "packet receive failed"
-msgstr ""
+msgstr "не вдалося отримати пакет"
 
 msgid "packet sending failed"
-msgstr ""
+msgstr "не вдалося надіслати пакет"
 
 msgid "password"
-msgstr ""
+msgstr "пароль"
 
 msgid "peer closed connection"
-msgstr ""
+msgstr "peer закрито з’єднання"
 
 msgid "permission denied"
-msgstr ""
+msgstr "доступ заборонено"
 
 msgid "printing suspended"
-msgstr ""
+msgstr "друк призупинено"
 
 msgid "protocol error"
-msgstr ""
+msgstr "помилка протоколу"
 
 msgid "range error"
-msgstr ""
+msgstr "помилка діапазону"
 
 msgid "read error"
-msgstr ""
+msgstr "помилка читання"
 
 msgid "read error from server"
-msgstr ""
+msgstr "помилка читання від сервер"
 
 msgid "regular registration"
-msgstr ""
+msgstr "звичайний реєстрація"
 
 msgid "report is not available"
-msgstr ""
+msgstr "звіт не доступний"
 
 msgid "s"
-msgstr ""
+msgstr "с"
 
 msgid "some component of request is too large"
-msgstr ""
+msgstr "один із компонентів запиту завеликий"
 
 msgid "standings"
-msgstr ""
+msgstr "таблиця результатів"
 
 msgid "system call failed"
-msgstr ""
+msgstr "системний виклик не вдався"
 
 msgid "team pages quota is exceeded"
-msgstr ""
+msgstr "перевищено квоту сторінок команди"
 
 msgid "testing suspended"
-msgstr ""
+msgstr "тестування призупинено"
 
 msgid "the contest is already finished"
-msgstr ""
+msgstr "змагання є вже завершено"
 
 msgid "the contest is already started"
-msgstr ""
+msgstr "змагання є вже розпочато"
 
 msgid "the contest is not finished"
-msgstr ""
+msgstr "змагання не завершено"
 
 msgid "the contest is not started"
-msgstr ""
+msgstr "Змагання ще не розпочалося"
 
 msgid "the program is already printed"
-msgstr ""
+msgstr "Програму вже надруковано"
 
 msgid "the requested file does not exist"
-msgstr ""
+msgstr "запитуваний файл не існує"
 
 msgid "the run is read-only"
-msgstr ""
+msgstr "запуск доступний лише для читання"
 
 msgid "the session identifier is invalid"
-msgstr ""
+msgstr "ідентифікатор сеансу некоректний"
 
 msgid "the user quota is exceeded"
-msgstr ""
+msgstr "перевищено квоту користувача"
 
 msgid "there are transient runs"
-msgstr ""
+msgstr "there є transient запуски"
 
 msgid "this IP address is not allowed to use this service"
-msgstr ""
+msgstr "цей IP-адреса не дозволено до використовувати ця служба"
 
 msgid "this field cannot be changed"
-msgstr ""
+msgstr "це поле не можна змінити"
 
 msgid "this field cannot be deleted"
-msgstr ""
+msgstr "це поле не можна видалити"
 
 msgid "this language is disabled for this problem"
-msgstr ""
+msgstr "цю мову вимкнено для цієї задачі"
 
 msgid "this user cannot participate in this contest"
-msgstr ""
+msgstr "цей користувач не може брати участь у цьому змаганні"
 
 msgid "this user is not registered for this contest"
-msgstr ""
+msgstr "цей користувач не зареєстрований на це змагання"
 
 #, c-format
 msgid "time-limit exceeded"
-msgstr ""
+msgstr "перевищено ліміт часу"
 
 msgid "transitive user contest sharing"
-msgstr ""
+msgstr "transitive користувач змагання sharing"
 
 msgid "unexpected EOF"
-msgstr ""
+msgstr "неочікуваний кінець файлу"
 
 msgid "unexpected EOF from server"
-msgstr ""
+msgstr "неочікуваний кінець файлу від сервер"
 
 msgid "unknown error"
-msgstr ""
+msgstr "невідома помилка"
 
 msgid "unspecified error"
-msgstr ""
+msgstr "unspecified помилка"
 
 msgid "user"
-msgstr ""
+msgstr "користувач"
 
 msgid "user is simple_registered"
-msgstr ""
+msgstr "користувач є simple_registered"
 
 msgid "user tries to download runs too often"
-msgstr ""
+msgstr "користувач намагається завантажувати запуски надто часто"
 
 msgid "user's runs downloading disabled"
-msgstr ""
+msgstr "користувач's запуски downloading вимкнено"
 
 msgid "variant"
-msgstr ""
+msgstr "варіант"
 
 msgid "viewing report is disabled"
-msgstr ""
+msgstr "перегляд звіту вимкнено"
 
 msgid "viewing run source is disabled"
-msgstr ""
+msgstr "перегляд вихідного коду запуску вимкнено"
 
 msgid "write error"
-msgstr ""
+msgstr "помилка запису"
 
 msgid "write error to server"
-msgstr ""
+msgstr "помилка запису до сервер"
+
