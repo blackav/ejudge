@@ -52,6 +52,12 @@ static const unsigned char MSG_notify_status_change[] = "Enable e-mail status ch
 static const unsigned char MSG_disable_auto_refresh[] = "Disable auto-refreshing";
 static const unsigned char MSG_start_on_first_login[] = "Start virtual contest on first login";
 static const unsigned char MSG_enable_virtual_restart[] = "Enable virtual contest restart option";
+static const unsigned char MSG_auto_virtual_upsolving[] = "Start upsolving after the personal's virtual contest ends";
+static const unsigned char MSG_auto_upsolving_freeze_result[] = "Freeze result in standings in unsolving mode";
+static const unsigned char MSG_auto_upsolving_view_source[] = "Allow viewing source code during upsolving";
+static const unsigned char MSG_auto_upsolving_view_protocol[] = "Allow viewing run report during upsolving";
+static const unsigned char MSG_auto_upsolving_full_protocol[] = "Allow viewing full protocol during upsolving";
+static const unsigned char MSG_auto_upsolving_disable_clars[] = "Disable clarifications during upsolving";
 static const unsigned char MSG_advanced_layout[] = "Advanced problem files layout";
 static const unsigned char MSG_uuid_run_store[] = "Use UUID instead of run_id to store runs";
 static const unsigned char MSG_disable_bson_store[] = "Do not use BSON for protocols";
@@ -337,6 +343,12 @@ static const unsigned char * const form_row_attrs[]=
         <%@expand EDIT_BOOL_ROW "disable_auto_refresh" "caps" "400px" %>
         <%@expand EDIT_BOOL_ROW "start_on_first_login" "caps" "400px" %>
         <%@expand EDIT_BOOL_ROW "enable_virtual_restart" "caps" "400px" %>
+        <%@expand EDIT_BOOL_ROW "auto_virtual_upsolving" "caps" "400px" %>
+        <%@expand EDIT_BOOL_ROW "auto_upsolving_freeze_result" "caps" "400px" %>
+        <%@expand EDIT_BOOL_ROW "auto_upsolving_view_source" "caps" "400px" %>
+        <%@expand EDIT_BOOL_ROW "auto_upsolving_view_protocol" "caps" "400px" %>
+        <%@expand EDIT_BOOL_ROW "auto_upsolving_full_protocol" "caps" "400px" %>
+        <%@expand EDIT_BOOL_ROW "auto_upsolving_disable_clars" "caps" "400px" %>
     </s:form>
 </div>
 
@@ -562,6 +574,12 @@ $(function() {
     $("#orig-printout_uses_login-div").toggle(<s:v type="jsbool" value="global->enable_printing > 0 && global->disable_banner_page > 0" />);
     $("#orig-vertical_navigation-div").toggle(<s:v type="jsbool" value="global->problem_navigation > 0" />);
     $("#orig-disable_virtual_start-div").toggle(<s:v type="jsbool" value="global->is_virtual > 0" />);
+    $("#orig-auto_virtual_upsolving-div").toggle(<s:v type="jsbool" value="global->is_virtual > 0" />);
+    $("#orig-auto_upsolving_freeze_result-div").toggle(<s:v type="jsbool" value="global->is_virtual > 0 && global->auto_virtual_upsolving > 0" />);
+    $("#orig-auto_upsolving_view_source-div").toggle(<s:v type="jsbool" value="global->is_virtual > 0 && global->auto_virtual_upsolving > 0" />);
+    $("#orig-auto_upsolving_view_protocol-div").toggle(<s:v type="jsbool" value="global->is_virtual > 0 && global->auto_virtual_upsolving > 0" />);
+    $("#orig-auto_upsolving_full_protocol-div").toggle(<s:v type="jsbool" value="global->is_virtual > 0 && global->auto_virtual_upsolving > 0" />);
+    $("#orig-auto_upsolving_disable_clars-div").toggle(<s:v type="jsbool" value="global->is_virtual > 0 && global->auto_virtual_upsolving > 0" />);
     $("#orig-disable_virtual_auto_judge-div").toggle(<s:v type="jsbool" value="global->score_system == SCORE_OLYMPIAD" />);
     $("#orig-enable_auto_print_protocol-div").toggle(<s:v type="jsbool" value="global->score_system == SCORE_OLYMPIAD" />);
 
@@ -905,7 +923,13 @@ function popupCapsDialog(e, skipField)
         "notify_status_change",
         "disable_auto_refresh",
         "start_on_first_login",
-        "enable_virtual_restart"
+        "enable_virtual_restart",
+        "auto_virtual_upsolving",
+        "auto_upsolving_freeze_result",
+        "auto_upsolving_view_source",
+        "auto_upsolving_view_protocol",
+        "auto_upsolving_full_protocol",
+        "auto_upsolving_disable_clars"
     ];
 
     for (var i in fields) {
@@ -929,6 +953,12 @@ function capsDialogOnChange()
     $("#caps-printout_uses_login-div").toggle($("#caps-enable_printing").is(':checked') && $("#caps-disable_banner_page").is(':checked'));
     $("#caps-vertical_navigation-div").toggle($("#caps-problem_navigation").is(':checked'));
     $("#caps-disable_virtual_start-div").toggle(<s:v type="jsbool" value="global->is_virtual > 0" />);
+    $("#caps-auto_virtual_upsolving-div").toggle(<s:v type="jsbool" value="global->is_virtual > 0" />);
+    $("#caps-auto_upsolving_freeze_result-div").toggle(<s:v type="jsbool" value="global->is_virtual > 0" /> && $("#caps-auto_virtual_upsolving").is(':checked'));
+    $("#caps-auto_upsolving_view_source-div").toggle(<s:v type="jsbool" value="global->is_virtual > 0" /> && $("#caps-auto_virtual_upsolving").is(':checked'));
+    $("#caps-auto_upsolving_view_protocol-div").toggle(<s:v type="jsbool" value="global->is_virtual > 0" /> && $("#caps-auto_virtual_upsolving").is(':checked'));
+    $("#caps-auto_upsolving_full_protocol-div").toggle(<s:v type="jsbool" value="global->is_virtual > 0" /> && $("#caps-auto_virtual_upsolving").is(':checked'));
+    $("#caps-auto_upsolving_disable_clars-div").toggle(<s:v type="jsbool" value="global->is_virtual > 0" /> && $("#caps-auto_virtual_upsolving").is(':checked'));
     $("#caps-disable_virtual_auto_judge-div").toggle(<s:v type="jsbool" value="global->score_system == SCORE_OLYMPIAD" />);
     $("#caps-enable_auto_print_protocol-div").toggle(<s:v type="jsbool" value="global->score_system == SCORE_OLYMPIAD" />);
 }
@@ -1449,6 +1479,12 @@ function advancedDialogOnChange()
             <%@expand ORIG_BOOL_ROW "disable_auto_refresh" %>
             <%@expand ORIG_BOOL_ROW "start_on_first_login" %>
             <%@expand ORIG_BOOL_ROW "enable_virtual_restart" %>
+            <%@expand ORIG_BOOL_ROW "auto_virtual_upsolving" %>
+            <%@expand ORIG_BOOL_ROW "auto_upsolving_freeze_result" %>
+            <%@expand ORIG_BOOL_ROW "auto_upsolving_view_source" %>
+            <%@expand ORIG_BOOL_ROW "auto_upsolving_view_protocol" %>
+            <%@expand ORIG_BOOL_ROW "auto_upsolving_full_protocol" %>
+            <%@expand ORIG_BOOL_ROW "auto_upsolving_disable_clars" %>
         </table>
     </div>
 

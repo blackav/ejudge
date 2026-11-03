@@ -67,6 +67,8 @@ ns_unpriv_parse_run_id(
 
   if (cs->online_view_source > 0) page_enabled = 1;
   if (global->team_enable_src_view > 0) page_enabled = 1;
+  if (serve_is_user_auto_upsolving(cs, phr->user_id, cs->current_time)
+      && global->auto_upsolving_view_source > 0) page_enabled = 1;
   if (vend_info && vend_info->source_mode > 0) page_enabled = 1;
   if (!page_enabled) {
     FAIL(NEW_SRV_ERR_SOURCE_VIEW_DISABLED);

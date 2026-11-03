@@ -23,7 +23,7 @@
     }
 
     int time_ok = 0;
-    if (cs->upsolving_mode) {
+    if (serve_is_user_upsolving(cs, phr->user_id, cs->current_time)) {
       time_ok = 1;
     } else if (start_time > 0 && stop_time <= 0) {
       time_ok = 1;

@@ -6304,6 +6304,13 @@ serve_reset_contest(const struct contest_desc *cnts, serve_state_t state)
   run_set_duration(state->runlog_state,
                    global->contest_time);
   clar_reset(state->clarlog_state);
+  // turn off the upsolving mode
+  state->upsolving_mode = 0;
+  state->upsolving_freeze_standings = 0;
+  state->upsolving_view_source = 0;
+  state->upsolving_view_protocol = 0;
+  state->upsolving_full_protocol = 0;
+  state->upsolving_disable_clars = 0;
 
   /* clear all submissions and clarifications */
   if (global->xml_report_archive_dir && global->xml_report_archive_dir[0])

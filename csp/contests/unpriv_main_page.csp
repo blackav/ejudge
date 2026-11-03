@@ -107,7 +107,7 @@ ns_unparse_answers(
     start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
     stop_time = run_get_virtual_stop_time(cs->runlog_state, phr->user_id,
                                             cs->current_time);
-    if (stop_time <= 0 || cs->upsolving_mode) accepting_mode = 1;
+    if (stop_time <= 0 || serve_is_user_upsolving(cs, phr->user_id, cs->current_time)) accepting_mode = 1;
     if (stop_time > 0 && cs->current_time >= stop_time)
       vend_info = global->virtual_end_info;
 
@@ -162,7 +162,7 @@ ns_unparse_answers(
   // top navigation
   int enable_problem_navigation = 0;
   if (global->problem_navigation > 0) {
-    if (cs->upsolving_mode) {
+    if (serve_is_user_upsolving(cs, phr->user_id, cs->current_time)) {
       enable_problem_navigation = 1;
     } else if (start_time > 0 && stop_time <= 0) {
       enable_problem_navigation = 1;
@@ -254,7 +254,7 @@ ns_unparse_answers(
   }
 %>
 <%
-  if (phr->action == NEW_SRV_ACTION_VIEW_SUBMISSIONS && (start_time > 0 || cs->upsolving_mode)) {
+  if (phr->action == NEW_SRV_ACTION_VIEW_SUBMISSIONS && (start_time > 0 || serve_is_user_upsolving(cs, phr->user_id, cs->current_time))) {
 %><%@include "unpriv_main_runs.csp"
 %><%
   }

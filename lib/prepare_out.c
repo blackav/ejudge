@@ -310,6 +310,18 @@ prepare_unparse_global(
     unparse_bool(f, "start_on_first_login", global->start_on_first_login);
   if (global->enable_virtual_restart > 0)
     unparse_bool(f, "enable_virtual_restart", global->enable_virtual_restart);
+  if (global->auto_virtual_upsolving > 0)
+    unparse_bool(f, "auto_virtual_upsolving", global->auto_virtual_upsolving);
+  if (global->auto_upsolving_freeze_result != 1)
+    unparse_bool(f, "auto_upsolving_freeze_result", global->auto_upsolving_freeze_result);
+  if (global->auto_upsolving_view_source != 1)
+    unparse_bool(f, "auto_upsolving_view_source", global->auto_upsolving_view_source);
+  if (global->auto_upsolving_view_protocol != 1)
+    unparse_bool(f, "auto_upsolving_view_protocol", global->auto_upsolving_view_protocol);
+  if (global->auto_upsolving_full_protocol > 0)
+    unparse_bool(f, "auto_upsolving_full_protocol", global->auto_upsolving_full_protocol);
+  if (global->auto_upsolving_disable_clars != 1)
+    unparse_bool(f, "auto_upsolving_disable_clars", global->auto_upsolving_disable_clars);
   if (global->preserve_line_numbers > 0)
     unparse_bool(f, "preserve_line_numbers", global->preserve_line_numbers);
   if (global->enable_remote_cache > 0)
