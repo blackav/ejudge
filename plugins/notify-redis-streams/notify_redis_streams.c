@@ -310,11 +310,18 @@ notify_func(
     if (nrpd->cntx->err) {
         err("%s: redis publish error: %s", fname, nrpd->cntx->errstr);
         freeReplyObject(r);
+        /* a hiredis context is unusable once it carries an error: every later
+         * command fails immediately. Drop it so the next notification
+         * reconnects, as the connect path above already does. Without this one
+         * broken connection silences notifications until the process is
+         * restarted, while testing carries on unaffected. */
+        redisFree(nrpd->cntx); nrpd->cntx = NULL;
         return -1;
     }
     if (r == NULL) {
         err("%s: redis publish returned NULL", fname);
         freeReplyObject(r);
+        redisFree(nrpd->cntx); nrpd->cntx = NULL;
         return -1;
     }
     if (r->type == REDIS_REPLY_ERROR) {
