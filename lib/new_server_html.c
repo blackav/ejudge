@@ -5620,6 +5620,10 @@ priv_clear_displayed(FILE *fout,
     serve_ignore_by_mask(phr->config, cs, phr->user_id, &phr->ip, phr->ssl_flag,
                          mask_size, mask, RUN_DISQUALIFIED);
     break;
+  case NEW_SRV_ACTION_OK_DISPLAYED_2:
+    serve_ok_by_mask(phr->config, cs, phr->user_id, &phr->ip, phr->ssl_flag,
+                     mask_size, mask);
+    break;
   case NEW_SRV_ACTION_MARK_DISPLAYED_2:
     serve_mark_by_mask(phr->config, cs, phr->user_id, &phr->ip, phr->ssl_flag,
                        mask_size, mask, 1);
@@ -6106,6 +6110,7 @@ static const unsigned char * const confirmation_headers[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_CLEAR_DISPLAYED_1] = __("Clear displayed runs"),
   [NEW_SRV_ACTION_IGNORE_DISPLAYED_1] = __("Ignore displayed runs"),
   [NEW_SRV_ACTION_DISQUALIFY_DISPLAYED_1] = __("Disqualify displayed runs"),
+  [NEW_SRV_ACTION_OK_DISPLAYED_1] = __("OK displayed runs"),
 };
 
 static const int confirm_next_action[NEW_SRV_ACTION_LAST] =
@@ -6123,6 +6128,7 @@ static const int confirm_next_action[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_CLEAR_DISPLAYED_1] = NEW_SRV_ACTION_CLEAR_DISPLAYED_2,
   [NEW_SRV_ACTION_IGNORE_DISPLAYED_1] = NEW_SRV_ACTION_IGNORE_DISPLAYED_2,
   [NEW_SRV_ACTION_DISQUALIFY_DISPLAYED_1]=NEW_SRV_ACTION_DISQUALIFY_DISPLAYED_2,
+  [NEW_SRV_ACTION_OK_DISPLAYED_1] = NEW_SRV_ACTION_OK_DISPLAYED_2,
 };
 
 static const unsigned char * const confirmation_message[NEW_SRV_ACTION_LAST] =
@@ -6132,6 +6138,7 @@ static const unsigned char * const confirmation_message[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_CLEAR_DISPLAYED_1] = __("Clear runs"),
   [NEW_SRV_ACTION_IGNORE_DISPLAYED_1] = __("Ignore runs"),
   [NEW_SRV_ACTION_DISQUALIFY_DISPLAYED_1] = __("Disqualify runs"),
+  [NEW_SRV_ACTION_OK_DISPLAYED_1] = __("OK runs"),
 };
 
 static int
@@ -6161,6 +6168,7 @@ priv_confirmation_page(FILE *fout,
   case NEW_SRV_ACTION_CLEAR_DISPLAYED_1:
   case NEW_SRV_ACTION_IGNORE_DISPLAYED_1:
   case NEW_SRV_ACTION_DISQUALIFY_DISPLAYED_1:
+  case NEW_SRV_ACTION_OK_DISPLAYED_1:
     // run_mask_size, run_mask
     errmsg = "cannot parse run mask";
     if (ns_parse_run_mask(phr, &run_mask_size_str, &run_mask_str,
@@ -6192,6 +6200,7 @@ priv_confirmation_page(FILE *fout,
   case NEW_SRV_ACTION_CLEAR_DISPLAYED_1:
   case NEW_SRV_ACTION_IGNORE_DISPLAYED_1:
   case NEW_SRV_ACTION_DISQUALIFY_DISPLAYED_1:
+  case NEW_SRV_ACTION_OK_DISPLAYED_1:
     fprintf(fout, "<p>%s ", gettext(confirmation_message[phr->action]));
     s = "";
     for (n = 0; n < 8 * sizeof(run_mask[0]) * run_mask_size; n++) {
@@ -6233,6 +6242,7 @@ priv_confirmation_page(FILE *fout,
   case NEW_SRV_ACTION_CLEAR_DISPLAYED_1:
   case NEW_SRV_ACTION_IGNORE_DISPLAYED_1:
   case NEW_SRV_ACTION_DISQUALIFY_DISPLAYED_1:
+  case NEW_SRV_ACTION_OK_DISPLAYED_1:
     html_hidden(fout, "run_mask_size", "%s", run_mask_size_str);
     html_hidden(fout, "run_mask", "%s", run_mask_str);
     break;
@@ -8022,6 +8032,7 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_CLEAR_DISPLAYED_2] = priv_clear_displayed,
   [NEW_SRV_ACTION_IGNORE_DISPLAYED_2] = priv_clear_displayed,
   [NEW_SRV_ACTION_DISQUALIFY_DISPLAYED_2] = priv_clear_displayed,
+  [NEW_SRV_ACTION_OK_DISPLAYED_2] = priv_clear_displayed,
   [NEW_SRV_ACTION_TOKENIZE_DISPLAYED_2] = priv_tokenize_displayed,
   [NEW_SRV_ACTION_UPSOLVING_CONFIG_2] = priv_upsolving_operation,
   [NEW_SRV_ACTION_UPSOLVING_CONFIG_3] = priv_upsolving_operation,
@@ -8100,6 +8111,7 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_CLEAR_DISPLAYED_1] = priv_confirmation_page,
   [NEW_SRV_ACTION_IGNORE_DISPLAYED_1] = priv_confirmation_page,
   [NEW_SRV_ACTION_DISQUALIFY_DISPLAYED_1] = priv_confirmation_page,
+  [NEW_SRV_ACTION_OK_DISPLAYED_1] = priv_confirmation_page,
   [NEW_SRV_ACTION_EXAMINERS_PAGE] = priv_examiners_page,
   [NEW_SRV_ACTION_PRINT_USER_PROTOCOL] = priv_print_user_exam_protocol,
   [NEW_SRV_ACTION_PRINT_USER_FULL_PROTOCOL] = priv_print_user_exam_protocol,
@@ -12352,6 +12364,8 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_IGNORE_DISPLAYED_2] = priv_generic_operation,
   [NEW_SRV_ACTION_DISQUALIFY_DISPLAYED_1] = priv_generic_page,
   [NEW_SRV_ACTION_DISQUALIFY_DISPLAYED_2] = priv_generic_operation,
+  [NEW_SRV_ACTION_OK_DISPLAYED_1] = priv_generic_page,
+  [NEW_SRV_ACTION_OK_DISPLAYED_2] = priv_generic_operation,
   [NEW_SRV_ACTION_TOKENIZE_DISPLAYED_2] = priv_generic_operation,
   [NEW_SRV_ACTION_UPSOLVING_CONFIG_2] = priv_generic_operation,
   [NEW_SRV_ACTION_UPSOLVING_CONFIG_3] = priv_generic_operation,

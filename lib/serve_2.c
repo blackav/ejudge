@@ -6812,6 +6812,45 @@ serve_ignore_by_mask(
 }
 
 void
+serve_ok_by_mask(
+        const struct ejudge_cfg *config,
+        serve_state_t state,
+        int user_id,
+        const ej_ip_t *ip,
+        int ssl_flag,
+        int mask_size,
+        unsigned long *mask)
+{
+  int total_runs, r;
+  struct run_entry re;
+
+  ASSERT(mask_size > 0);
+
+  total_runs = run_get_total(state->runlog_state);
+  if (total_runs > mask_size * BITS_PER_LONG) {
+    total_runs = mask_size * BITS_PER_LONG;
+  }
+
+  for (r = total_runs - 1; r >= 0; r--) {
+    if (!(mask[r / BITS_PER_LONG] & (1L << (r % BITS_PER_LONG)))
+        || run_is_readonly(state->runlog_state, r))
+      continue;
+    if (run_get_entry(state->runlog_state, r, &re) < 0) continue;
+    if (!run_is_valid_status(re.status)) continue;
+    // do not change EMPTY, VIRTUAL_START, VIRTUAL_STOP runs
+    if (!run_is_normal_or_transient_status(re.status)) continue;
+    if (re.status == RUN_OK) continue;
+
+    re.status = RUN_OK;
+    if (run_set_entry(state->runlog_state, r, RE_STATUS, &re, &re) >= 0) {
+      serve_audit_log(state, r, &re, user_id, ip, ssl_flag,
+                      "set-ok", "ok", RUN_OK, NULL);
+      serve_notify_run_update(config, state, &re);
+    }
+  }
+}
+
+void
 serve_mark_by_mask(
         const struct ejudge_cfg *config,
         serve_state_t state,

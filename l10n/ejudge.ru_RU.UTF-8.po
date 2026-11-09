@@ -2774,6 +2774,15 @@ msgstr "Число предупреждений"
 msgid "OK"
 msgstr "OK"
 
+msgid "OK displayed runs"
+msgstr "Выставить OK отображённым посылкам"
+
+msgid "OK displayed runs!"
+msgstr "Выставить OK отображённым посылкам!"
+
+msgid "OK runs"
+msgstr "Выставить OK посылкам"
+
 msgid "OVER"
 msgstr "ЗАКОНЧЕН"
 
