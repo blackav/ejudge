@@ -2631,6 +2631,15 @@ msgstr ""
 msgid "OK"
 msgstr ""
 
+msgid "OK displayed runs"
+msgstr ""
+
+msgid "OK displayed runs!"
+msgstr ""
+
+msgid "OK runs"
+msgstr ""
+
 msgid "OVER"
 msgstr ""
 
